@@ -1,0 +1,44 @@
+{
+    "name": "k-kinzal/ztd-query-php",
+    "type": "library",
+    "license": "MIT",
+    "repositories": [
+        {
+            "type": "path",
+            "url": "packages/sql-faker"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "ZtdQuery\\": "src/"
+        }
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^2.1",
+        "friendsofphp/php-cs-fixer": "^3.92",
+        "phpunit/phpunit": "^10.0",
+        "k-kinzal/testcontainers-php": "^0.4.0",
+        "giorgiosironi/eris": "^1.0",
+        "k-kinzal/sql-faker": "@dev",
+        "nikic/php-fuzzer": "^0.0.11"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/",
+            "Fuzz\\": "fuzz/"
+        }
+    },
+    "require": {
+        "php": "^8.1",
+        "phpmyadmin/sql-parser": "^5.11"
+    },
+    "scripts": {
+        "test": "phpunit",
+        "test:unit": "phpunit tests/Unit/",
+        "test:integration": "phpunit tests/Integration/",
+        "lint": "phpstan analyse --memory-limit=512M",
+        "format": "php-cs-fixer fix --allow-risky=yes",
+        "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
+        "fuzz": "php-fuzzer fuzz fuzz/target.php fuzz/corpus/"
+    }
+}

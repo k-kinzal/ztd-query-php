@@ -1,0 +1,92 @@
+name: Fuzz
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Daily at UTC 00:00
+  workflow_dispatch:
+    inputs:
+      max_runs:
+        description: 'Max fuzzing iterations'
+        default: '10000'
+        type: string
+      mysql_version:
+        description: 'MySQL version (leave empty for matrix)'
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  fuzz:
+    name: Fuzz (MySQL ${{ matrix.mysql }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        mysql: ${{ inputs.mysql_version && fromJson(format('["{0}"]', inputs.mysql_version)) || fromJson('["8.0.44", "8.4.7"]') }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: mbstring, pdo, pdo_mysql, pcntl
+          coverage: none
+
+      - uses: ramsey/composer-install@v3
+
+      - name: Restore corpus cache
+        uses: actions/cache/restore@v4
+        with:
+          path: fuzz/corpus
+          key: fuzz-corpus-${{ matrix.mysql }}-${{ github.run_id }}
+          restore-keys: |
+            fuzz-corpus-${{ matrix.mysql }}-
+
+      - name: Run fuzzer
+        env:
+          MYSQL_VERSION: ${{ matrix.mysql }}
+        run: |
+          vendor/bin/php-fuzzer fuzz fuzz/target.php fuzz/corpus/ \
+            --max-runs=${{ inputs.max_runs || '10000' }}
+
+      - name: Save corpus cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: fuzz/corpus
+          key: fuzz-corpus-${{ matrix.mysql }}-${{ github.run_id }}
+
+      - name: Upload crash artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-crashes-${{ matrix.mysql }}
+          path: |
+            fuzz/corpus/crash-*
+            fuzz/corpus/timeout-*
+
+      - name: Create issue on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'fuzz',
+              state: 'open'
+            });
+            if (issues.length > 0) {
+              console.log('Open fuzz issue already exists, skipping creation');
+              return;
+            }
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Fuzz: Crash detected (MySQL ${{ matrix.mysql }})`,
+              body: `Fuzzing found a crash on MySQL ${{ matrix.mysql }}.\n\nRun: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n\nCheck the uploaded artifacts for crash details.`,
+              labels: ['bug', 'fuzz']
+            });

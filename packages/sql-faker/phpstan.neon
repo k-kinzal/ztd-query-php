@@ -1,0 +1,13 @@
+parameters:
+    level: max
+    paths:
+        - src
+        - tests
+    ignoreErrors:
+        # Faker uses __call magic method for provider methods
+        -
+            identifier: method.notFound
+            path: src/MySql/SqlGenerator.php
+        -
+            identifier: cast.string
+            path: src/MySql/SqlGenerator.php

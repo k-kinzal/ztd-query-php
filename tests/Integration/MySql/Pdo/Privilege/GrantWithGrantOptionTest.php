@@ -1,0 +1,62 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Integration\MySql\Pdo\Privilege;
+
+use Tests\Integration\MySqlIntegrationTestCase;
+use ZtdQuery\Config\UnsupportedSqlBehavior;
+use ZtdQuery\Config\ZtdConfig;
+use ZtdQuery\Exception\UnsupportedSqlException;
+
+final class GrantWithGrantOptionTest extends MySqlIntegrationTestCase
+{
+    public function testGrantWithGrantOptionThrowsExceptionInExceptionMode(): void
+    {
+        $ztdPdo = $this->createZtdPdoWithConfig(new ZtdConfig(
+            unsupportedBehavior: UnsupportedSqlBehavior::Exception
+        ));
+
+        $this->expectException(UnsupportedSqlException::class);
+
+        $ztdPdo->exec("GRANT SELECT ON *.* TO 'test_user'@'localhost' WITH GRANT OPTION");
+    }
+
+    public function testGrantWithGrantOptionIsIgnoredInIgnoreMode(): void
+    {
+        $ztdPdo = $this->createZtdPdoWithConfig(new ZtdConfig(
+            unsupportedBehavior: UnsupportedSqlBehavior::Ignore
+        ));
+
+        $result = $ztdPdo->exec("GRANT SELECT ON *.* TO 'test_user'@'localhost' WITH GRANT OPTION");
+
+        $this->assertSame(0, $result);
+    }
+
+    public function testGrantWithGrantOptionTriggersNoticeInNoticeMode(): void
+    {
+        $ztdPdo = $this->createZtdPdoWithConfig(new ZtdConfig(
+            unsupportedBehavior: UnsupportedSqlBehavior::Notice
+        ));
+
+        $capturedNotices = [];
+        set_error_handler(function (int $errno, string $errstr) use (&$capturedNotices): bool {
+            if ($errno === E_USER_NOTICE) {
+                $capturedNotices[] = $errstr;
+                return true;
+            }
+            return false;
+        }, E_USER_NOTICE);
+
+        try {
+            $result = $ztdPdo->exec("GRANT SELECT ON *.* TO 'test_user'@'localhost' WITH GRANT OPTION");
+
+            $this->assertSame(0, $result);
+            $this->assertCount(1, $capturedNotices);
+            $this->assertStringContainsString('[ZTD Notice]', $capturedNotices[0]);
+            $this->assertStringContainsString('GRANT', $capturedNotices[0]);
+        } finally {
+            restore_error_handler();
+        }
+    }
+}
