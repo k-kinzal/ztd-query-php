@@ -1,0 +1,61 @@
+{
+    "name": "k-kinzal/ztd-query-monorepo",
+    "type": "project",
+    "license": "MIT",
+    "config": {
+        "process-timeout": 0
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "packages/ztd-query-core"
+        },
+        {
+            "type": "path",
+            "url": "packages/sql-faker"
+        },
+        {
+            "type": "path",
+            "url": "packages/sql-fixture"
+        },
+        {
+            "type": "path",
+            "url": "packages/ztd-query-mysql"
+        },
+        {
+            "type": "path",
+            "url": "packages/ztd-query-pdo-adapter"
+        },
+        {
+            "type": "path",
+            "url": "packages/ztd-query-mysqli-adapter"
+        },
+        {
+            "type": "path",
+            "url": "packages/phpstan-custom-rules"
+        }
+    ],
+    "require-dev": {
+        "k-kinzal/ztd-query-php": "@dev",
+        "k-kinzal/sql-faker": "@dev",
+        "k-kinzal/sql-fixture": "@dev",
+        "k-kinzal/ztd-query-mysql": "@dev",
+        "k-kinzal/ztd-query-pdo-adapter": "@dev",
+        "k-kinzal/ztd-query-mysqli-adapter": "@dev",
+        "k-kinzal/phpstan-custom-rules": "@dev"
+    },
+    "scripts": {
+        "test:core": "cd packages/ztd-query-core && composer test:unit",
+        "test:mysql": "cd packages/ztd-query-mysql && composer test",
+        "test:pdo-adapter:unit": "cd packages/ztd-query-pdo-adapter && composer test:unit",
+        "test:pdo-adapter:integration": "cd packages/ztd-query-pdo-adapter && composer test:integration",
+        "test:mysqli-adapter:unit": "cd packages/ztd-query-mysqli-adapter && composer test:unit",
+        "test:mysqli-adapter:integration": "cd packages/ztd-query-mysqli-adapter && composer test:integration",
+        "test:phpstan-custom-rules": "cd packages/phpstan-custom-rules && composer test",
+        "lint:core": "cd packages/ztd-query-core && composer lint",
+        "lint:mysql": "cd packages/ztd-query-mysql && composer lint",
+        "lint:pdo-adapter": "cd packages/ztd-query-pdo-adapter && composer lint",
+        "lint:mysqli-adapter": "cd packages/ztd-query-mysqli-adapter && composer lint",
+        "lint:phpstan-custom-rules": "cd packages/phpstan-custom-rules && composer lint"
+    }
+}

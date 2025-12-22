@@ -1,0 +1,61 @@
+parametersSchema:
+    customRules: structure([
+        srcUnitTestPairExcludePatterns: listOf(string())
+    ])
+
+parameters:
+    customRules:
+        srcUnitTestPairExcludePatterns: []
+
+services:
+    customRules.rule.forbiddenComment:
+        class: ZtdQuery\PhpStanCustomRules\Rule\ForbiddenCommentRule
+        tags:
+            - phpstan.rules.rule
+
+    customRules.rule.noPropertyInTestClass:
+        class: ZtdQuery\PhpStanCustomRules\Rule\NoPropertyInTestClassRule
+        tags:
+            - phpstan.rules.rule
+
+    customRules.rule.noClassConstantInTestClass:
+        class: ZtdQuery\PhpStanCustomRules\Rule\NoClassConstantInTestClassRule
+        tags:
+            - phpstan.rules.rule
+
+    customRules.rule.noPrivateMethodInTestClass:
+        class: ZtdQuery\PhpStanCustomRules\Rule\NoPrivateMethodInTestClassRule
+        tags:
+            - phpstan.rules.rule
+
+    customRules.rule.phpUnitMockApi:
+        class: ZtdQuery\PhpStanCustomRules\Rule\PhpUnitMockApiRule
+        tags:
+            - phpstan.rules.rule
+
+    customRules.rule.forbiddenMagicMethodCall:
+        class: ZtdQuery\PhpStanCustomRules\Rule\ForbiddenMagicMethodCallRule
+        tags:
+            - phpstan.rules.rule
+
+    customRules.rule.noNonOverrideMethodInTestClass:
+        class: ZtdQuery\PhpStanCustomRules\Rule\NoNonOverrideMethodInTestClassRule
+        tags:
+            - phpstan.rules.rule
+
+    customRules.rule.noControlFlowInTestMethod:
+        class: ZtdQuery\PhpStanCustomRules\Rule\NoControlFlowInTestMethodRule
+        tags:
+            - phpstan.rules.rule
+
+    customRules.rule.noTraitUseInTestClass:
+        class: ZtdQuery\PhpStanCustomRules\Rule\NoTraitUseInTestClassRule
+        tags:
+            - phpstan.rules.rule
+
+    customRules.rule.srcUnitTestPair:
+        class: ZtdQuery\PhpStanCustomRules\Rule\SrcUnitTestPairRule
+        arguments:
+            excludePatterns: %customRules.srcUnitTestPairExcludePatterns%
+        tags:
+            - phpstan.rules.rule

@@ -1,0 +1,113 @@
+name: CI (ztd-query-pdo-adapter)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - 'packages/ztd-query-pdo-adapter/**'
+      - 'packages/ztd-query-mysql/**'
+      - 'packages/ztd-query-postgres/**'
+      - 'packages/ztd-query-sqlite/**'
+      - 'packages/ztd-query-core/**'
+      - 'packages/sql-faker/**'
+      - 'packages/sql-fixture/**'
+      - 'packages/phpstan-custom-rules/**'
+      - '.github/workflows/ztd-query-pdo-adapter.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: packages/ztd-query-pdo-adapter
+
+jobs:
+  test-unit:
+    name: Unit Test (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.1', '8.2', '8.3', '8.4', '8.5']
+    steps:
+      - uses: actions/checkout@v6
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, pdo, pdo_mysql
+          coverage: none
+      - uses: ramsey/composer-install@v3
+        with:
+          working-directory: packages/ztd-query-pdo-adapter
+      - run: composer test:unit
+
+  test-integration:
+    name: Integration (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.1', '8.2', '8.3', '8.4', '8.5']
+    steps:
+      - uses: actions/checkout@v6
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, pdo, pdo_mysql, pdo_pgsql, pdo_sqlite
+          coverage: none
+      - uses: ramsey/composer-install@v3
+        with:
+          working-directory: packages/ztd-query-pdo-adapter
+      - run: composer test:integration
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: mbstring
+          coverage: none
+      - uses: ramsey/composer-install@v3
+        with:
+          working-directory: packages/ztd-query-pdo-adapter
+      - run: composer lint
+
+  mutation:
+    name: Mutation Testing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: mbstring, pdo, pdo_mysql
+          coverage: pcov
+      - uses: ramsey/composer-install@v3
+        with:
+          working-directory: packages/ztd-query-pdo-adapter
+      - name: infection
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch origin $GITHUB_BASE_REF
+            php -d memory_limit=256M vendor/bin/infection \
+              --threads=max \
+              --git-diff-lines \
+              --git-diff-base=origin/$GITHUB_BASE_REF \
+              --min-covered-msi=100 \
+              --ignore-msi-with-no-mutations \
+              --only-covering-test-cases \
+              --no-progress \
+              --logger-github
+          else
+            php -d memory_limit=512M vendor/bin/infection \
+              --threads=max \
+              --min-covered-msi=80 \
+              --no-progress \
+              --logger-github
+          fi

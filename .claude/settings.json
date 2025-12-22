@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [],
+    "deny": [
+      "Write(docs/**)",
+      "Write(AGENTS.md)",
+      "Write(CLAUDE.md)",
+      "Write(**/.php-cs-fixer.dist.php)",
+      "Write(**/infection.json5)",
+      "Write(**/phpstan.neon)",
+      "Write(**/phpunit.xml.dist)",
+      "Edit(docs/**)",
+      "Edit(AGENTS.md)",
+      "Edit(CLAUDE.md)",
+      "Edit(**/.php-cs-fixer.dist.php)",
+      "Edit(**/infection.json5)",
+      "Edit(**/phpstan.neon)",
+      "Edit(**/phpunit.xml.dist)",
+      "Bash(*docs/*)",
+      "Bash(*AGENTS.md*)",
+      "Bash(*CLAUDE.md*)",
+      "Bash(*.php-cs-fixer*)",
+      "Bash(*infection.json5*)",
+      "Bash(*phpstan.neon*)",
+      "Bash(*phpunit.xml.dist*)"
+    ]
+  }
+}

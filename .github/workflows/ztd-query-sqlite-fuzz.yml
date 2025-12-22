@@ -1,0 +1,96 @@
+name: Fuzz (ztd-query-sqlite)
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      max_runs:
+        description: 'Max fuzzing iterations'
+        default: '10000'
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  robustness:
+    name: Robustness / ${{ matrix.target.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - { name: classify, script: fuzz_robustness_classify.php, corpus: robustness-classify }
+          - { name: rewrite, script: fuzz_robustness_rewrite.php, corpus: robustness-rewrite }
+          - { name: full, script: fuzz_robustness.php, corpus: robustness }
+    defaults:
+      run:
+        working-directory: packages/ztd-query-sqlite
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: mbstring, pcntl
+          coverage: none
+
+      - uses: ramsey/composer-install@v3
+        with:
+          working-directory: packages/ztd-query-sqlite
+
+      - uses: actions/cache/restore@v5
+        with:
+          path: packages/ztd-query-sqlite/fuzz/corpus/${{ matrix.target.corpus }}
+          key: fuzz-ztd-query-sqlite-${{ matrix.target.corpus }}-${{ github.run_id }}
+          restore-keys: |
+            fuzz-ztd-query-sqlite-${{ matrix.target.corpus }}-
+
+      - name: fuzzer
+        run: |
+          vendor/bin/php-fuzzer fuzz fuzz/${{ matrix.target.script }} \
+            fuzz/corpus/${{ matrix.target.corpus }}/ \
+            --max-runs=${{ inputs.max_runs || '10000' }}
+
+      - if: always()
+        uses: actions/cache/save@v5
+        with:
+          path: packages/ztd-query-sqlite/fuzz/corpus/${{ matrix.target.corpus }}
+          key: fuzz-ztd-query-sqlite-${{ matrix.target.corpus }}-${{ github.run_id }}
+
+      - if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: fuzz-crashes-ztd-query-sqlite-robustness-${{ matrix.target.name }}
+          path: |
+            packages/ztd-query-sqlite/fuzz/corpus/${{ matrix.target.corpus }}/crash-*
+            packages/ztd-query-sqlite/fuzz/corpus/${{ matrix.target.corpus }}/timeout-*
+
+  notify:
+    name: Notify on failure
+    runs-on: ubuntu-latest
+    needs: [robustness]
+    if: failure()
+    steps:
+      - uses: actions/github-script@v8
+        with:
+          script: |
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'fuzz',
+              state: 'open'
+            });
+            if (issues.length > 0) {
+              console.log('Open fuzz issue already exists, skipping creation');
+              return;
+            }
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Fuzz: Crash detected (ztd-query-sqlite)`,
+              body: `Fuzzing found a crash.\n\nRun: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n\nCheck the uploaded artifacts for crash details.`,
+              labels: ['bug', 'fuzz']
+            });

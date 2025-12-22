@@ -1,0 +1,118 @@
+{
+    "name": "k-kinzal/ztd-query-pdo-adapter",
+    "description": "PDO adapter for ZTD Query",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": "^8.1",
+        "ext-pdo": "*",
+        "k-kinzal/ztd-query-php": "@dev"
+    },
+    "suggest": {
+        "k-kinzal/ztd-query-mysql": "Required for MySQL support (PDO driver: mysql)",
+        "k-kinzal/ztd-query-postgres": "Required for PostgreSQL support (PDO driver: pgsql)",
+        "k-kinzal/ztd-query-sqlite": "Required for SQLite support (PDO driver: sqlite)"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.92",
+        "infection/infection": "^0.28 || ^0.29 || ^0.30 || ^0.31 || ^0.32",
+        "k-kinzal/sql-faker": "@dev",
+        "k-kinzal/sql-fixture": "@dev",
+        "k-kinzal/testcontainers-php": "^0.5.1",
+        "k-kinzal/ztd-query-mysql": "@dev",
+        "k-kinzal/ztd-query-postgres": "@dev",
+        "k-kinzal/ztd-query-sqlite": "@dev",
+        "nikic/php-fuzzer": "^0.0.11",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpunit/phpunit": "^10.5 || ^11 || ^12 || ^13",
+        "k-kinzal/phpstan-custom-rules": "@dev",
+        "brianium/paratest": "^6.11 || ^7"
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../ztd-query-core"
+        },
+        {
+            "type": "path",
+            "url": "../ztd-query-mysql"
+        },
+        {
+            "type": "path",
+            "url": "../ztd-query-sqlite"
+        },
+        {
+            "type": "path",
+            "url": "../ztd-query-postgres"
+        },
+        {
+            "type": "path",
+            "url": "../sql-faker"
+        },
+        {
+            "type": "path",
+            "url": "../sql-fixture"
+        },
+        {
+            "type": "path",
+            "url": "../phpstan-custom-rules"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "ZtdQuery\\Adapter\\Pdo\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/",
+            "Fuzz\\": "fuzz/"
+        }
+    },
+    "scripts": {
+        "test": "paratest --processes=auto",
+        "test:unit": "phpunit tests/Unit/",
+        "test:integration": "phpunit tests/Integration/",
+        "lint": [
+            "@format:check",
+            "phpstan analyse --memory-limit=512M"
+        ],
+        "format": "php-cs-fixer fix --allow-risky=yes",
+        "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
+        "fuzz": [
+            "@fuzz:robustness",
+            "@fuzz:correctness:select",
+            "@fuzz:correctness:insert",
+            "@fuzz:correctness:update",
+            "@fuzz:correctness:delete",
+            "@fuzz:correctness:sqlite:select",
+            "@fuzz:correctness:sqlite:insert",
+            "@fuzz:correctness:sqlite:update",
+            "@fuzz:correctness:sqlite:delete",
+            "@fuzz:correctness:pg:select",
+            "@fuzz:correctness:pg:insert",
+            "@fuzz:correctness:pg:update",
+            "@fuzz:correctness:pg:delete"
+        ],
+        "fuzz:robustness": "php-fuzzer fuzz fuzz/fuzz_robustness_execute.php fuzz/corpus/robustness-execute/",
+        "fuzz:correctness:select": "php-fuzzer fuzz fuzz/fuzz_correctness_select.php fuzz/corpus/correctness-select/",
+        "fuzz:correctness:insert": "php-fuzzer fuzz fuzz/fuzz_correctness_insert.php fuzz/corpus/correctness-insert/",
+        "fuzz:correctness:update": "php-fuzzer fuzz fuzz/fuzz_correctness_update.php fuzz/corpus/correctness-update/",
+        "fuzz:correctness:delete": "php-fuzzer fuzz fuzz/fuzz_correctness_delete.php fuzz/corpus/correctness-delete/",
+        "fuzz:correctness:sqlite:select": "php-fuzzer fuzz fuzz/fuzz_correctness_sqlite_select.php fuzz/corpus/correctness-sqlite-select/",
+        "fuzz:correctness:sqlite:insert": "php-fuzzer fuzz fuzz/fuzz_correctness_sqlite_insert.php fuzz/corpus/correctness-sqlite-insert/",
+        "fuzz:correctness:sqlite:update": "php-fuzzer fuzz fuzz/fuzz_correctness_sqlite_update.php fuzz/corpus/correctness-sqlite-update/",
+        "fuzz:correctness:sqlite:delete": "php-fuzzer fuzz fuzz/fuzz_correctness_sqlite_delete.php fuzz/corpus/correctness-sqlite-delete/",
+        "fuzz:correctness:pg:select": "php-fuzzer fuzz fuzz/fuzz_correctness_pg_select.php fuzz/corpus/correctness-pg-select/",
+        "fuzz:correctness:pg:insert": "php-fuzzer fuzz fuzz/fuzz_correctness_pg_insert.php fuzz/corpus/correctness-pg-insert/",
+        "fuzz:correctness:pg:update": "php-fuzzer fuzz fuzz/fuzz_correctness_pg_update.php fuzz/corpus/correctness-pg-update/",
+        "fuzz:correctness:pg:delete": "php-fuzzer fuzz fuzz/fuzz_correctness_pg_delete.php fuzz/corpus/correctness-pg-delete/",
+        "infection": "infection --threads=max --show-mutations --no-progress"
+    },
+    "config": {
+        "allow-plugins": {
+            "infection/extension-installer": true
+        }
+    }
+}
