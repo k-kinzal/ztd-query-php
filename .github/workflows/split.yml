@@ -1,0 +1,99 @@
+name: Split Monorepo
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+
+jobs:
+  split:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - local_path: ztd-query-core
+            split_repository: ztd-query-core
+          - local_path: sql-faker
+            split_repository: sql-faker
+          - local_path: sql-fixture
+            split_repository: sql-fixture
+          - local_path: ztd-query-mysql
+            split_repository: ztd-query-mysql
+          - local_path: ztd-query-postgres
+            split_repository: ztd-query-postgres
+          - local_path: ztd-query-sqlite
+            split_repository: ztd-query-sqlite
+          - local_path: ztd-query-pdo-adapter
+            split_repository: ztd-query-pdo-adapter
+          - local_path: ztd-query-mysqli-adapter
+            split_repository: ztd-query-mysqli-adapter
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determine version constraint
+        id: version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          TAG="${GITHUB_REF#refs/tags/v}"
+          MAJOR="${TAG%%.*}"
+          MINOR="${TAG#*.}"
+          MINOR="${MINOR%%.*}"
+          echo "constraint=^${MAJOR}.${MINOR}" >> "$GITHUB_OUTPUT"
+          echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+
+      - name: Transform composer.json
+        run: |
+          FILE="packages/${{ matrix.package.local_path }}/composer.json"
+          CONSTRAINT="${{ steps.version.outputs.constraint }}"
+
+          if [ -n "$CONSTRAINT" ]; then
+            jq --arg v "$CONSTRAINT" '
+              (if .repositories then .repositories |= [.[] | select(.type == "path" | not)] else . end) |
+              (if .repositories == [] then del(.repositories) else . end) |
+              (if ."require-dev"."k-kinzal/phpstan-custom-rules" then del(."require-dev"."k-kinzal/phpstan-custom-rules") else . end) |
+              (if ."autoload-dev"."psr-4" then
+                ."autoload-dev"."psr-4" |= with_entries(
+                  if (.value | type) == "array" then
+                    .value |= [.[] | select(startswith("../") | not)] |
+                    if (.value | length) == 1 then .value = .value[0] else . end
+                  else . end
+                )
+              else . end) |
+              .require |= with_entries(
+                if (.key | startswith("k-kinzal/")) and .value == "@dev" then .value = $v else . end
+              ) |
+              ."require-dev" |= with_entries(
+                if (.key | startswith("k-kinzal/")) and .value == "@dev" then .value = $v else . end
+              )
+            ' "$FILE" > "${FILE}.tmp" && mv "${FILE}.tmp" "$FILE"
+          else
+            jq '
+              (if .repositories then .repositories |= [.[] | select(.type == "path" | not)] else . end) |
+              (if .repositories == [] then del(.repositories) else . end) |
+              (if ."require-dev"."k-kinzal/phpstan-custom-rules" then del(."require-dev"."k-kinzal/phpstan-custom-rules") else . end) |
+              (if ."autoload-dev"."psr-4" then
+                ."autoload-dev"."psr-4" |= with_entries(
+                  if (.value | type) == "array" then
+                    .value |= [.[] | select(startswith("../") | not)] |
+                    if (.value | length) == 1 then .value = .value[0] else . end
+                  else . end
+                )
+              else . end)
+            ' "$FILE" > "${FILE}.tmp" && mv "${FILE}.tmp" "$FILE"
+          fi
+
+      - uses: danharrin/monorepo-split-github-action@v2.3.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+        with:
+          package_directory: packages/${{ matrix.package.local_path }}
+          repository_organization: k-kinzal
+          repository_name: ${{ matrix.package.split_repository }}
+          user_name: k-kinzal
+          user_email: k-kinzal@users.noreply.github.com
+          tag: ${{ steps.version.outputs.tag }}

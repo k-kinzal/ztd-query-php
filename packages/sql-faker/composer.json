@@ -1,18 +1,8 @@
 {
     "name": "k-kinzal/sql-faker",
+    "description": "Faker Provider for generating syntactically valid SQL statements",
     "type": "library",
     "license": "MIT",
-    "autoload": {
-        "psr-4": {
-            "SqlFaker\\": "src/"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "Tests\\Unit\\SqlFaker\\": "tests/Unit/",
-            "Fuzz\\": "fuzz/"
-        }
-    },
     "require": {
         "php": "^8.1",
         "fakerphp/faker": "^1.23"
@@ -28,6 +18,23 @@
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^10.5 || ^11 || ^12 || ^13"
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../phpstan-custom-rules"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "SqlFaker\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\Unit\\SqlFaker\\": "tests/Unit/",
+            "Fuzz\\": "fuzz/"
+        }
     },
     "scripts": {
         "build-mysql": "php bin/build-mysql.php",
@@ -57,11 +64,5 @@
             "infection/extension-installer": true
         },
         "sort-packages": true
-    },
-    "repositories": [
-        {
-            "type": "path",
-            "url": "../phpstan-custom-rules"
-        }
-    ]
+    }
 }

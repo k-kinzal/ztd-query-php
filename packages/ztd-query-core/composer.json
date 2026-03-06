@@ -15,6 +15,12 @@
         "k-kinzal/phpstan-custom-rules": "@dev",
         "brianium/paratest": "^6.11 || ^7"
     },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../phpstan-custom-rules"
+        }
+    ],
     "autoload": {
         "psr-4": {
             "ZtdQuery\\": "src/"
@@ -40,11 +46,5 @@
         "allow-plugins": {
             "infection/extension-installer": true
         }
-    },
-    "repositories": [
-        {
-            "type": "path",
-            "url": "../phpstan-custom-rules"
-        }
-    ]
+    }
 }

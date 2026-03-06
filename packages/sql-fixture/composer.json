@@ -3,17 +3,6 @@
     "description": "Generate PHP-Faker based fixtures from SQL schemas",
     "type": "library",
     "license": "MIT",
-    "autoload": {
-        "psr-4": {
-            "SqlFixture\\": "src/"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "Tests\\": "tests/",
-            "Fuzz\\": "fuzz/"
-        }
-    },
     "require": {
         "php": "^8.1",
         "fakerphp/faker": "^1.23",
@@ -41,6 +30,17 @@
             "url": "../phpstan-custom-rules"
         }
     ],
+    "autoload": {
+        "psr-4": {
+            "SqlFixture\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/",
+            "Fuzz\\": "fuzz/"
+        }
+    },
     "scripts": {
         "test": "paratest --processes=auto",
         "test:unit": "phpunit tests/Unit/",
