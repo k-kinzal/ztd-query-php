@@ -1,7 +1,5 @@
 # ZTD Query PHP
 
-[![CI](https://github.com/k-kinzal/ztd-query-php/actions/workflows/ci.yml/badge.svg)](https://github.com/k-kinzal/ztd-query-php/actions/workflows/ci.yml)
-[![Fuzz](https://github.com/k-kinzal/ztd-query-php/actions/workflows/fuzz.yml/badge.svg)](https://github.com/k-kinzal/ztd-query-php/actions/workflows/fuzz.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 
@@ -189,6 +187,22 @@ $pdo = new ZtdPdo($dsn, $user, $password, config: $config);
 - Database/schema operations
 - User/permission management
 - Server operations (FLUSH, RESET, etc.)
+
+## Development
+
+```bash
+# Run tests
+composer test
+
+# Run unit tests
+composer test:unit
+
+# Run linter (PHP-CS-Fixer + PHPStan level max)
+composer lint
+
+# Fix code style
+composer format
+```
 
 ## License
 

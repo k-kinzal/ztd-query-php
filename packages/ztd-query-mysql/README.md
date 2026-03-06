@@ -1,10 +1,9 @@
 # ZTD Query MySQL
 
-[![CI](https://github.com/k-kinzal/ztd-query-php/actions/workflows/ztd-query-mysql.yml/badge.svg)](https://github.com/k-kinzal/ztd-query-php/actions/workflows/ztd-query-mysql.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 
-MySQL platform support for [ZTD Query PHP](https://github.com/k-kinzal/ztd-query-php). Provides SQL parsing, classification, rewriting, and schema management for MySQL.
+MySQL platform support for [ZTD Query PHP](https://github.com/k-kinzal/ztd-query-core). Provides SQL parsing, classification, rewriting, and schema management for MySQL.
 
 ## Overview
 
@@ -17,12 +16,12 @@ This package implements the MySQL-specific logic for ZTD (Zero Table Dependency)
 - **Schema Management** - Reflect and track MySQL table definitions for virtual DDL operations
 - **Error Classification** - Identify MySQL-specific error codes for unknown schema detection
 
-This package is used internally by the [PDO adapter](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-pdo-adapter) and [MySQLi adapter](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-mysqli-adapter), but can also be used directly for custom adapter implementations.
+This package is used internally by the [PDO adapter](https://github.com/k-kinzal/ztd-query-pdo-adapter) and [MySQLi adapter](https://github.com/k-kinzal/ztd-query-mysqli-adapter), but can also be used directly for custom adapter implementations.
 
 ## Requirements
 
 - PHP 8.1 or higher
-- [k-kinzal/ztd-query-php](https://github.com/k-kinzal/ztd-query-php) (core)
+- [k-kinzal/ztd-query-php](https://github.com/k-kinzal/ztd-query-core) (core)
 
 ## Installation
 
@@ -164,4 +163,4 @@ composer format
 
 ## License
 
-MIT License. See [LICENSE](../../LICENSE) for details.
+MIT License. See [LICENSE](LICENSE) for details.

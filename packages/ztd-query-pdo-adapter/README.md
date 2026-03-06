@@ -1,10 +1,9 @@
 # ZTD Query PDO Adapter
 
-[![CI](https://github.com/k-kinzal/ztd-query-php/actions/workflows/ztd-query-pdo-adapter.yml/badge.svg)](https://github.com/k-kinzal/ztd-query-php/actions/workflows/ztd-query-pdo-adapter.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 
-PDO adapter for [ZTD Query PHP](https://github.com/k-kinzal/ztd-query-php). Drop-in replacement for PDO that transparently applies Zero Table Dependency query transformation.
+PDO adapter for [ZTD Query PHP](https://github.com/k-kinzal/ztd-query-core). Drop-in replacement for PDO that transparently applies Zero Table Dependency query transformation.
 
 ## Overview
 
@@ -20,8 +19,8 @@ This package provides `ZtdPdo` and `ZtdPdoStatement`, which extend `PDO` and `PD
 - PHP 8.1 or higher
 - PDO extension
 - MySQL 5.6 - 9.1
-- [k-kinzal/ztd-query-php](https://github.com/k-kinzal/ztd-query-php) (core)
-- [k-kinzal/ztd-query-mysql](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-mysql) (MySQL platform)
+- [k-kinzal/ztd-query-php](https://github.com/k-kinzal/ztd-query-core) (core)
+- [k-kinzal/ztd-query-mysql](https://github.com/k-kinzal/ztd-query-mysql) (MySQL platform)
 
 ## Installation
 
@@ -171,4 +170,4 @@ composer format
 
 ## License
 
-MIT License. See [LICENSE](../../LICENSE) for details.
+MIT License. See [LICENSE](LICENSE) for details.

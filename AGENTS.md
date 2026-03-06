@@ -5,7 +5,7 @@ This file is for agents to understand the context of the project.
 
 ## Project Goal
 
-Implement a Zero Downtime Deployment (ZTD) mechanism for PHP 8.1+ using a PDO Proxy.
+Implement a Zero Table Dependencies (ZTD) mechanism for PHP 8.1+ using a PDO Proxy.
 The goal is to enable testing without modifying the physical database by using CTEs to shadow tables and simulate writes.
 
 ## Core Concepts
