@@ -1,6 +1,6 @@
 {
-    "name": "k-kinzal/ztd-query-php",
-    "description": "Zero Downtime Deployment query layer for PHP",
+    "name": "k-kinzal/ztd-query-core",
+    "description": "Zero Table Dependencies query layer for PHP",
     "type": "library",
     "license": "MIT",
     "require": {

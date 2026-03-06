@@ -6,7 +6,7 @@
     "require": {
         "php": "^8.1",
         "ext-mysqli": "*",
-        "k-kinzal/ztd-query-php": "@dev",
+        "k-kinzal/ztd-query-core": "@dev",
         "k-kinzal/ztd-query-mysql": "@dev"
     },
     "require-dev": {
