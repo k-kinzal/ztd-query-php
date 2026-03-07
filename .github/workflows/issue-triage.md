@@ -72,7 +72,7 @@ You triage newly reported issues for this monorepo.
    - `package:sql-fixture`
    - `package:phpstan-custom-rules`
    - `package:docs`
-5. Check for duplicates by searching existing open and closed issues in this repository. Treat an issue as a duplicate only when the scope and symptoms materially overlap. When uncertain, err on the side of linking issues as potentially related in the comment rather than marking the new report as a duplicate.
+5. Check for duplicates by searching existing open and closed issues in this repository. Apply the `duplicate` label only when an existing issue already tracks the same underlying request, defect, or specification gap. When uncertain, err on the side of linking issues as potentially related in the comment rather than marking the new report as a duplicate.
 6. When possible, inspect the repository code or documentation and identify the most relevant files, packages, or specification documents related to the report. Prefer concrete paths such as:
    - `docs/mysql-spec.md`
    - `docs/postgres-spec.md`
