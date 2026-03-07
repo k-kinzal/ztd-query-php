@@ -60,7 +60,7 @@ You triage newly reported issues for this monorepo.
    - any relevant `package:*` labels
    - `duplicate` if a substantially similar issue already exists
    - `needs:clarification` if the report is missing the details needed to route it confidently
-3. Before adding labels, inspect the repository labels and only add labels that already exist. If a useful label from the allowed list does not exist yet, mention the missing label in your comment instead of retrying.
+3. Before adding labels, verify they exist in the repository. The allowed list defines which labels you may add, but only add labels that actually exist. If a useful label from the allowed list has not been created in the repository, mention the missing label in your comment instead of attempting to add it.
 4. Identify the most relevant packages from this repository:
    - `package:ztd-query-core`
    - `package:ztd-query-mysql`
@@ -72,7 +72,7 @@ You triage newly reported issues for this monorepo.
    - `package:sql-fixture`
    - `package:phpstan-custom-rules`
    - `package:docs`
-5. Check for duplicates by searching existing open and closed issues in this repository. Treat an issue as a duplicate only when the scope and symptoms materially overlap. Prefer linking likely duplicates in the comment with a short explanation.
+5. Check for duplicates by searching existing open and closed issues in this repository. Treat an issue as a duplicate only when the scope and symptoms materially overlap. When uncertain, err on the side of linking issues as potentially related in the comment rather than marking the new report as a duplicate.
 6. When possible, inspect the repository code or documentation and identify the most relevant files, packages, or specification documents related to the report. Prefer concrete paths such as:
    - `docs/mysql-spec.md`
    - `docs/postgres-spec.md`
