@@ -45,6 +45,7 @@ safe-outputs:
   add-comment:
     max: 1
     discussions: false
+    pull-requests: false
 
 ---
 
