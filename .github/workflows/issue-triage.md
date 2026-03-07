@@ -44,6 +44,7 @@ safe-outputs:
       - "needs:clarification"
   add-comment:
     max: 1
+    discussions: false
 
 ---
 
