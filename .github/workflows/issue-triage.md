@@ -54,10 +54,10 @@ You triage newly reported issues for this monorepo.
 ## Instructions
 
 1. Read the triggering issue carefully, including the title and body.
-2. Classify the issue with at most:
+2. Classify the issue while staying within a total of at most 8 labels:
    - one `type:*` label
    - one `priority:*` label
-   - any relevant `package:*` labels
+   - up to four relevant `package:*` labels
    - `duplicate` if a substantially similar issue already exists
    - `needs:clarification` if the report is missing the details needed to route it confidently
 3. Before adding labels, verify they exist in the repository. The allowed list defines which labels you may add, but only add labels that actually exist. If a useful label from the allowed list has not been created in the repository, mention the missing label in your comment instead of attempting to add it.
