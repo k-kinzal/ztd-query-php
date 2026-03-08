@@ -197,6 +197,33 @@ final class SqlGeneratorTest extends TestCase
         )));
     }
 
+    #[DataProvider('providerNoOpAugmentMethod')]
+    public function testAugmentMethodsLeaveUnrelatedRuleMapsUntouchedWhenPrerequisitesAreMissing(string $methodName): void
+    {
+        $faker = Factory::create();
+        $generator = new SqlGenerator(new Grammar('stmt', []), $faker, new PostgreSqlProvider($faker));
+        $method = (new ReflectionClass($generator))->getMethod($methodName);
+
+        $ruleA = new ProductionRule('unrelated_a', [
+            new Production([new Terminal('A')]),
+        ]);
+        $ruleB = new ProductionRule('unrelated_b', [
+            new Production([new Terminal('B')]),
+        ]);
+
+        $ruleMap = [
+            'unrelated_a' => $ruleA,
+            'unrelated_b' => $ruleB,
+        ];
+
+        /** @var array<string, ProductionRule> $result */
+        $result = $method->invoke($generator, $ruleMap);
+
+        self::assertSame(['unrelated_a', 'unrelated_b'], array_keys($result), $methodName);
+        self::assertSame($ruleA, $result['unrelated_a'], $methodName);
+        self::assertSame($ruleB, $result['unrelated_b'], $methodName);
+    }
+
     #[DataProvider('providerGenerateOperator')]
     public function testGenerateOperator(string $terminalName, string $expected): void
     {
@@ -2125,6 +2152,61 @@ final class SqlGeneratorTest extends TestCase
         yield 'ColLabel' => ['ColLabel'];
         yield 'type_function_name' => ['type_function_name'];
         yield 'NonReservedWord' => ['NonReservedWord'];
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerNoOpAugmentMethod(): iterable
+    {
+        yield 'augmentQualifiedNames' => ['augmentQualifiedNames'];
+        yield 'augmentFunctionNames' => ['augmentFunctionNames'];
+        yield 'augmentCreatePolicyRule' => ['augmentCreatePolicyRule'];
+        yield 'augmentCreatePartitionOfRule' => ['augmentCreatePartitionOfRule'];
+        yield 'augmentAlterDatabaseRule' => ['augmentAlterDatabaseRule'];
+        yield 'augmentAlterRoutineRule' => ['augmentAlterRoutineRule'];
+        yield 'augmentCreateRoleRule' => ['augmentCreateRoleRule'];
+        yield 'augmentDropRoleRule' => ['augmentDropRoleRule'];
+        yield 'augmentAlterTableRule' => ['augmentAlterTableRule'];
+        yield 'augmentAlterIndexRule' => ['augmentAlterIndexRule'];
+        yield 'augmentAlterDomainRule' => ['augmentAlterDomainRule'];
+        yield 'augmentAlterViewRule' => ['augmentAlterViewRule'];
+        yield 'augmentAlterTypeRule' => ['augmentAlterTypeRule'];
+        yield 'augmentAlterSequenceRule' => ['augmentAlterSequenceRule'];
+        yield 'augmentAlterStatisticsRule' => ['augmentAlterStatisticsRule'];
+        yield 'augmentAccessMethodRule' => ['augmentAccessMethodRule'];
+        yield 'augmentAlterEnumRule' => ['augmentAlterEnumRule'];
+        yield 'augmentFunctionWithArgtypesRule' => ['augmentFunctionWithArgtypesRule'];
+        yield 'augmentEventTriggerRule' => ['augmentEventTriggerRule'];
+        yield 'augmentAnalyzeVacuumRule' => ['augmentAnalyzeVacuumRule'];
+        yield 'augmentOptionListRules' => ['augmentOptionListRules'];
+        yield 'augmentUtilityStatementRules' => ['augmentUtilityStatementRules'];
+        yield 'augmentGrantRoleRule' => ['augmentGrantRoleRule'];
+        yield 'augmentParameterTargetRule' => ['augmentParameterTargetRule'];
+        yield 'augmentAlterExtensionContentsRule' => ['augmentAlterExtensionContentsRule'];
+        yield 'augmentLargeObjectTargetRule' => ['augmentLargeObjectTargetRule'];
+        yield 'augmentPartitionSpecRule' => ['augmentPartitionSpecRule'];
+        yield 'augmentPublicationRule' => ['augmentPublicationRule'];
+        yield 'augmentTextSearchTemplateRule' => ['augmentTextSearchTemplateRule'];
+        yield 'augmentDefineOperatorRule' => ['augmentDefineOperatorRule'];
+        yield 'augmentDefineAggregateRule' => ['augmentDefineAggregateRule'];
+        yield 'augmentCommentRule' => ['augmentCommentRule'];
+        yield 'augmentCreateCastRule' => ['augmentCreateCastRule'];
+        yield 'augmentDropCastRule' => ['augmentDropCastRule'];
+        yield 'augmentCreateAssertionRule' => ['augmentCreateAssertionRule'];
+        yield 'augmentTriggerRule' => ['augmentTriggerRule'];
+        yield 'augmentTargetElementRule' => ['augmentTargetElementRule'];
+        yield 'augmentSelectRules' => ['augmentSelectRules'];
+        yield 'augmentCreateAsRule' => ['augmentCreateAsRule'];
+        yield 'augmentViewRule' => ['augmentViewRule'];
+        yield 'augmentInsertRule' => ['augmentInsertRule'];
+        yield 'augmentCteRule' => ['augmentCteRule'];
+        yield 'augmentCreateMaterializedViewRule' => ['augmentCreateMaterializedViewRule'];
+        yield 'augmentMergeRule' => ['augmentMergeRule'];
+        yield 'augmentRevokeRoleRule' => ['augmentRevokeRoleRule'];
+        yield 'augmentDoStmtRule' => ['augmentDoStmtRule'];
+        yield 'augmentCreateFunctionRule' => ['augmentCreateFunctionRule'];
+        yield 'augmentDropTypeRule' => ['augmentDropTypeRule'];
     }
 
     /**
