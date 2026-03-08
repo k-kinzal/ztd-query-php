@@ -152,6 +152,8 @@ final class SupportedLanguageTest extends TestCase
     public function testGeneratesChangeReplicationSourceWitnessForSupportedVersions(
         string $version,
         array $expectedAnchorRules,
+        int $expectedSeed,
+        string $expectedSql,
     ): void {
         $language = SupportedLanguagePool::mysql($version);
         $witness = $language->generateWitness(new FamilyRequest('mysql.constraint.change_replication_source'));
@@ -160,16 +162,57 @@ final class SupportedLanguageTest extends TestCase
             $expectedAnchorRules,
             $language->family('mysql.constraint.change_replication_source')->anchorRules,
         );
-        self::assertStringStartsWith('CHANGE REPLICATION SOURCE TO ', $witness->sql);
+        self::assertSame($expectedSeed, $witness->seed);
+        self::assertSame($expectedSql, $witness->sql);
+    }
+
+    #[DataProvider('providerLegacyVersionWithoutChangeReplicationSource')]
+    public function testDoesNotExposeChangeReplicationSourceForLegacyVersions(string $version): void
+    {
+        $language = SupportedLanguagePool::mysql($version);
+        $familyIds = array_map(
+            static fn (FamilyDefinition $family): string => $family->id,
+            $language->familyCatalog(),
+        );
+
+        self::assertNotContains('mysql.constraint.change_replication_source', $familyIds);
+    }
+
+    #[DataProvider('providerLegacyVersionWithoutChangeReplicationSource')]
+    public function testRejectsChangeReplicationSourceWitnessForLegacyVersions(string $version): void
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Unknown family: mysql.constraint.change_replication_source');
+        $language = SupportedLanguagePool::mysql($version);
+        $language->generateWitness(new FamilyRequest('mysql.constraint.change_replication_source'));
     }
 
     /**
-     * @return iterable<string, array{0: string, 1: list<string>}>
+     * @return iterable<string, array{0: string, 1: list<string>, 2: int, 3: string}>
      */
     public static function providerChangeReplicationSourceVersion(): iterable
     {
-        yield 'mysql 8.0 source alias' => ['mysql-8.0.44', ['change']];
-        yield 'mysql 8.4 dedicated statement' => ['mysql-8.4.7', ['change_replication_stmt']];
+        yield 'mysql 8.0 source alias' => [
+            'mysql-8.0.44',
+            ['change'],
+            2,
+            "CHANGE REPLICATION SOURCE TO SOURCE_PASSWORD = 'BO18ZkuUmDkM'",
+        ];
+        yield 'mysql 8.4 dedicated statement' => [
+            'mysql-8.4.7',
+            ['change_replication_stmt'],
+            1,
+            "CHANGE REPLICATION SOURCE TO SOURCE_SSL_KEY = '4fJTlWtA62'",
+        ];
+    }
+
+    /**
+     * @return iterable<string, array{0: string}>
+     */
+    public static function providerLegacyVersionWithoutChangeReplicationSource(): iterable
+    {
+        yield 'mysql 5.6' => ['mysql-5.6.51'];
+        yield 'mysql 5.7' => ['mysql-5.7.44'];
     }
 
     /**

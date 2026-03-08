@@ -159,6 +159,22 @@ final class GrammarInvariantCheckerTest extends TestCase
         self::assertSame(['other'], $checker->unreachableRules(['missing', 'stmt']));
     }
 
+    public function testReachableRulesSkipUnknownEntriesWithoutStoppingRemainingTraversal(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([new Terminal('A')]),
+            ]),
+            'other' => new ProductionRule('other', [
+                new Production([new Terminal('B')]),
+            ]),
+        ]);
+
+        $checker = new GrammarInvariantChecker($grammar);
+
+        self::assertSame(['other', 'stmt'], $checker->reachableRules(['stmt', 'other', 'missing']));
+    }
+
     public function testNonTerminatingReachableRulesAreReportedForTheEntryClosure(): void
     {
         $grammar = new Grammar('stmt', [
