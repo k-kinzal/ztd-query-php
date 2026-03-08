@@ -1473,6 +1473,54 @@ final class SqlGeneratorTest extends TestCase
         ));
     }
 
+    public function testAugmentGrammarRewritesLaterEncryptionFamiliesWhenEarlierOneIsAbsent(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([new NonTerminal('alter_database_option')]),
+            ]),
+            'alter_database_option' => new ProductionRule('alter_database_option', [
+                new Production([
+                    new Terminal('READ_SYM'),
+                    new Terminal('ONLY_SYM'),
+                    new NonTerminal('legacy_equal'),
+                    new NonTerminal('legacy_value'),
+                ]),
+            ]),
+            'ts_option_encryption' => new ProductionRule('ts_option_encryption', [
+                new Production([new NonTerminal('TEXT_STRING_sys')]),
+            ]),
+            'create_table_option' => new ProductionRule('create_table_option', [
+                new Production([new NonTerminal('TEXT_STRING_sys')]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+
+        $compiled = $generator->compiledGrammar();
+
+        self::assertSame(['safe_encryption_literal'], array_map(
+            static function ($symbol): string {
+                return match (true) {
+                    $symbol instanceof NonTerminal => $symbol->value,
+                    $symbol instanceof Terminal => $symbol->value,
+                    default => throw new LogicException('Unexpected symbol type.'),
+                };
+            },
+            $compiled->ruleMap['ts_option_encryption']->alternatives[0]->symbols,
+        ));
+        self::assertSame(['safe_encryption_literal'], array_map(
+            static function ($symbol): string {
+                return match (true) {
+                    $symbol instanceof NonTerminal => $symbol->value,
+                    $symbol instanceof Terminal => $symbol->value,
+                    default => throw new LogicException('Unexpected symbol type.'),
+                };
+            },
+            $compiled->ruleMap['create_table_option']->alternatives[0]->symbols,
+        ));
+    }
+
     public function testAugmentGrammarConstrainsTopLevelTableValueConstructorsToNonEmptyRows(): void
     {
         $grammar = Grammar::load();
