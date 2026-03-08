@@ -49,7 +49,7 @@ final class SupportedLanguageTest extends TestCase
         self::assertNotSame('', $witness->sql);
     }
 
-    #[DataProvider('temporaryRelationFamilies')]
+    #[DataProvider('providerTemporaryRelationFamily')]
     public function testTemporaryRelationFamiliesBindObjectNamesToUnqualifiedRelations(string $familyId): void
     {
         $language = new SupportedLanguage();
@@ -59,7 +59,10 @@ final class SupportedLanguageTest extends TestCase
         self::assertFalse($witness->properties['schema_qualified'], $familyId);
     }
 
-    public static function temporaryRelationFamilies(): iterable
+    /**
+     * @return iterable<string, array{0: string}>
+     */
+    public static function providerTemporaryRelationFamily(): iterable
     {
         yield 'create table' => ['postgresql.constraint.create_table.temp_name_binding'];
         yield 'create table as' => ['postgresql.constraint.create_table_as.temp_name_binding'];

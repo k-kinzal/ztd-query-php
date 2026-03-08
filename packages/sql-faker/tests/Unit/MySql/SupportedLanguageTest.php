@@ -53,7 +53,10 @@ final class SupportedLanguageTest extends TestCase
         self::assertStringStartsWith('VALUES ROW(', $witness->sql);
     }
 
-    #[DataProvider('changeReplicationSourceVersions')]
+    /**
+     * @param list<string> $expectedAnchorRules
+     */
+    #[DataProvider('providerChangeReplicationSourceVersion')]
     public function testGeneratesChangeReplicationSourceWitnessForSupportedVersions(
         string $version,
         array $expectedAnchorRules,
@@ -68,7 +71,10 @@ final class SupportedLanguageTest extends TestCase
         self::assertStringStartsWith('CHANGE REPLICATION SOURCE TO ', $witness->sql);
     }
 
-    public static function changeReplicationSourceVersions(): iterable
+    /**
+     * @return iterable<string, array{0: string, 1: list<string>}>
+     */
+    public static function providerChangeReplicationSourceVersion(): iterable
     {
         yield 'mysql 8.0 source alias' => ['mysql-8.0.44', ['change']];
         yield 'mysql 8.4 dedicated statement' => ['mysql-8.4.7', ['change_replication_stmt']];
