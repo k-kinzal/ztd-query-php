@@ -95,21 +95,28 @@ jobs:
         with:
           working-directory: packages/sql-faker
       - name: infection
+        env:
+          GIT_CONFIG_COUNT: 1
+          GIT_CONFIG_KEY_0: diff.relative
+          GIT_CONFIG_VALUE_0: 'true'
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             git fetch origin $GITHUB_BASE_REF
-            php -d memory_limit=256M vendor/bin/infection \
+            php -d memory_limit=1024M vendor/bin/infection \
               --threads=max \
               --git-diff-lines \
               --git-diff-base=origin/$GITHUB_BASE_REF \
+              --initial-tests-php-options='-d memory_limit=1024M' \
               --min-covered-msi=100 \
               --ignore-msi-with-no-mutations \
               --only-covering-test-cases \
+              --map-source-class-to-test \
               --no-progress \
               --logger-github
           else
-            php -d memory_limit=512M vendor/bin/infection \
+            php -d memory_limit=1024M vendor/bin/infection \
               --threads=max \
+              --initial-tests-php-options='-d memory_limit=1024M' \
               --min-covered-msi=80 \
               --no-progress \
               --logger-github

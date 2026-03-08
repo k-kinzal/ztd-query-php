@@ -8,38 +8,27 @@ use Faker\Factory;
 use Fuzz\Policy\SqliteFuzzPolicy;
 use Fuzz\Probe\ProbePhase as FuzzProbePhase;
 use Fuzz\Probe\ProbeResult as FuzzProbeResult;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
 use Spec\Policy\OutcomeKind;
 use Spec\Policy\SqlitePolicy;
 use Spec\Probe\ProbePhase as SpecProbePhase;
 use Spec\Probe\ProbeResult as SpecProbeResult;
-use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
+use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\Grammar\Terminal;
 use SqlFaker\Grammar\TerminationAnalyzer;
-use SqlFaker\Sqlite\Grammar\SqliteGrammar;
 use SqlFaker\Sqlite\SqlGenerator;
 use SqlFaker\Sqlite\StatementType;
-use SqlFaker\Grammar\RandomStringGenerator;
-use SqlFaker\Grammar\TokenJoiner;
 use SqlFaker\SqliteProvider;
-use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(SqliteProvider::class)]
-#[CoversClass(TokenJoiner::class)]
 #[CoversClass(RandomStringGenerator::class)]
 #[CoversClass(SqlGenerator::class)]
-#[CoversClass(SqliteGrammar::class)]
-#[CoversClass(Grammar::class)]
-#[CoversClass(NonTerminal::class)]
-#[CoversClass(Production::class)]
-#[CoversClass(ProductionRule::class)]
-#[CoversClass(Terminal::class)]
-#[CoversClass(TerminationAnalyzer::class)]
-#[CoversClass(StatementType::class)]
 final class SqliteProviderTest extends TestCase
 {
     #[\Override]

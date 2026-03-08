@@ -6,34 +6,25 @@ namespace Tests\Unit\SqlFaker\Sqlite;
 
 use Faker\Factory;
 use LogicException;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\Symbol;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
+use SqlFaker\Grammar\RandomStringGenerator;
+use SqlFaker\Grammar\Symbol;
 use SqlFaker\Grammar\Terminal;
 use SqlFaker\Grammar\TerminationAnalyzer;
 use SqlFaker\Sqlite\Grammar\SqliteGrammar;
 use SqlFaker\Sqlite\SqlGenerator;
-use SqlFaker\Grammar\RandomStringGenerator;
-use SqlFaker\Grammar\TokenJoiner;
 use SqlFaker\SqliteProvider;
-use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(SqlGenerator::class)]
-#[CoversClass(TokenJoiner::class)]
 #[CoversClass(RandomStringGenerator::class)]
-#[CoversClass(Grammar::class)]
-#[CoversClass(ProductionRule::class)]
-#[CoversClass(Production::class)]
-#[CoversClass(Terminal::class)]
-#[CoversClass(NonTerminal::class)]
 #[CoversClass(SqliteProvider::class)]
-#[CoversClass(SqliteGrammar::class)]
-#[CoversClass(TerminationAnalyzer::class)]
 #[Large]
 final class SqlGeneratorTest extends TestCase
 {

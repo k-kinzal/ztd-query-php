@@ -5,34 +5,23 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker;
 
 use Faker\Factory;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
+use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\Grammar\Terminal;
 use SqlFaker\Grammar\TerminationAnalyzer;
-use SqlFaker\PostgreSql\Grammar\PgGrammar;
 use SqlFaker\PostgreSql\SqlGenerator;
 use SqlFaker\PostgreSql\StatementType;
-use SqlFaker\Grammar\RandomStringGenerator;
-use SqlFaker\Grammar\TokenJoiner;
 use SqlFaker\PostgreSqlProvider;
-use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(PostgreSqlProvider::class)]
-#[CoversClass(TokenJoiner::class)]
 #[CoversClass(RandomStringGenerator::class)]
 #[CoversClass(SqlGenerator::class)]
-#[CoversClass(PgGrammar::class)]
-#[CoversClass(Grammar::class)]
-#[CoversClass(NonTerminal::class)]
-#[CoversClass(Production::class)]
-#[CoversClass(ProductionRule::class)]
-#[CoversClass(Terminal::class)]
-#[CoversClass(TerminationAnalyzer::class)]
-#[CoversClass(StatementType::class)]
 final class PostgreSqlProviderTest extends TestCase
 {
     #[\Override]

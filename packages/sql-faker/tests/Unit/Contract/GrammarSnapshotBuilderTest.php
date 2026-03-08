@@ -6,11 +6,21 @@ namespace Tests\Unit\SqlFaker\Contract;
 
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Contract\FamilyDefinition;
+use SqlFaker\Contract\GrammarAlternativeSnapshot;
+use SqlFaker\Contract\GrammarRuleSnapshot;
+use SqlFaker\Contract\GrammarSnapshot;
 use SqlFaker\Contract\GrammarSnapshotBuilder;
+use SqlFaker\Contract\GrammarSymbolSnapshot;
 
 #[CoversClass(GrammarSnapshotBuilder::class)]
+#[UsesClass(FamilyDefinition::class)]
+#[UsesClass(GrammarSnapshot::class)]
+#[UsesClass(GrammarRuleSnapshot::class)]
+#[UsesClass(GrammarAlternativeSnapshot::class)]
+#[UsesClass(GrammarSymbolSnapshot::class)]
 final class GrammarSnapshotBuilderTest extends TestCase
 {
     public function testBuildNormalizesCompiledGrammarObjects(): void

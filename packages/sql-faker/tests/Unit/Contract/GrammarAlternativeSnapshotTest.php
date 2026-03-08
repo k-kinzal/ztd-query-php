@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\Contract;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Contract\GrammarAlternativeSnapshot;
 use SqlFaker\Contract\GrammarSymbolSnapshot;
 
 #[CoversClass(GrammarAlternativeSnapshot::class)]
+#[UsesClass(GrammarSymbolSnapshot::class)]
 final class GrammarAlternativeSnapshotTest extends TestCase
 {
     public function testReferencesReturnsOnlyNonTerminalSymbols(): void

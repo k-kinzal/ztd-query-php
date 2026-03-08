@@ -5,33 +5,24 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker;
 
 use Faker\Factory;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\MySql\Grammar\Grammar;
 use SqlFaker\MySql\Grammar\NonTerminal;
 use SqlFaker\MySql\Grammar\Production;
 use SqlFaker\MySql\Grammar\ProductionRule;
 use SqlFaker\MySql\Grammar\Terminal;
 use SqlFaker\MySql\Grammar\TerminationAnalyzer;
-use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\MySql\SqlGenerator;
 use SqlFaker\MySql\StatementType;
-use SqlFaker\Grammar\TokenJoiner;
 use SqlFaker\MySqlProvider;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Medium;
 
 #[CoversClass(MySqlProvider::class)]
-#[CoversClass(TokenJoiner::class)]
 #[CoversClass(RandomStringGenerator::class)]
 #[CoversClass(SqlGenerator::class)]
-#[CoversClass(Grammar::class)]
-#[CoversClass(NonTerminal::class)]
-#[CoversClass(Production::class)]
-#[CoversClass(ProductionRule::class)]
-#[CoversClass(Terminal::class)]
-#[CoversClass(TerminationAnalyzer::class)]
-#[CoversClass(StatementType::class)]
 #[Medium]
 final class MySqlProviderTest extends TestCase
 {

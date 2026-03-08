@@ -6,13 +6,19 @@ namespace Tests\Unit\SqlFaker\Contract;
 
 use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Contract\AbstractSupportedLanguage;
 use SqlFaker\Contract\FamilyDefinition;
 use SqlFaker\Contract\FamilyRequest;
 use SqlFaker\Contract\GrammarSnapshot;
+use SqlFaker\Contract\SqlWitness;
 
 #[CoversClass(AbstractSupportedLanguage::class)]
+#[UsesClass(FamilyDefinition::class)]
+#[UsesClass(FamilyRequest::class)]
+#[UsesClass(GrammarSnapshot::class)]
+#[UsesClass(SqlWitness::class)]
 final class AbstractSupportedLanguageTest extends TestCase
 {
     public function testGrammarSnapshotAndFamilyCatalogAreCached(): void

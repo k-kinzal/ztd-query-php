@@ -6,32 +6,23 @@ namespace Tests\Unit\SqlFaker\MySql;
 
 use Faker\Factory;
 use LogicException;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use PHPUnit\Framework\Attributes\UsesClass;
+use SqlFaker\MySql\SqlGenerator;
+use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\MySql\Grammar\Grammar;
 use SqlFaker\MySql\Grammar\NonTerminal;
 use SqlFaker\MySql\Grammar\Production;
 use SqlFaker\MySql\Grammar\ProductionRule;
 use SqlFaker\MySql\Grammar\Terminal;
 use SqlFaker\MySql\Grammar\TerminationAnalyzer;
-use SqlFaker\MySql\SqlGenerator;
-use SqlFaker\Grammar\RandomStringGenerator;
-use SqlFaker\Grammar\TokenJoiner;
 use SqlFaker\MySqlProvider;
-use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(SqlGenerator::class)]
 #[CoversClass(RandomStringGenerator::class)]
 #[CoversClass(MySqlProvider::class)]
-#[UsesClass(TokenJoiner::class)]
-#[UsesClass(Grammar::class)]
-#[UsesClass(ProductionRule::class)]
-#[UsesClass(Production::class)]
-#[UsesClass(Terminal::class)]
-#[UsesClass(NonTerminal::class)]
-#[UsesClass(TerminationAnalyzer::class)]
 #[Medium]
 final class SqlGeneratorTest extends TestCase
 {
