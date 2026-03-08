@@ -91,6 +91,26 @@ final class SupportedLanguageContractAssertions
         return hash('sha256', json_encode($payload, JSON_THROW_ON_ERROR));
     }
 
+    public static function witnessFingerprint(SupportedLanguageContract $language): string
+    {
+        $witnesses = [];
+
+        foreach ($language->familyCatalog() as $family) {
+            foreach (self::parameterSetsFor($family) as $parameters) {
+                $witness = $language->generateWitness(new FamilyRequest($family->id, $parameters));
+                $witnesses[] = [
+                    'familyId' => $witness->familyId,
+                    'seed' => $witness->seed,
+                    'sql' => $witness->sql,
+                    'parameters' => $witness->parameters,
+                    'properties' => $witness->properties,
+                ];
+            }
+        }
+
+        return hash('sha256', json_encode($witnesses, JSON_THROW_ON_ERROR));
+    }
+
     /**
      * @return list<array<string, bool|int>>
      */

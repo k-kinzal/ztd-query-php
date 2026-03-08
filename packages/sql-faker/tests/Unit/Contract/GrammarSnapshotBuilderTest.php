@@ -96,4 +96,137 @@ final class GrammarSnapshotBuilderTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         (new GrammarSnapshotBuilder())->build('mysql', $grammar, [], [], \stdClass::class);
     }
+
+    public function testBuildPreservesEveryRuleInTheCompiledGrammarMap(): void
+    {
+        $terminal = new class ('SELECT') {
+            public function __construct(public string $value)
+            {
+            }
+        };
+
+        $grammar = new class ($terminal) {
+            public string $startSymbol = 'stmt';
+
+            /** @var array<string, object> */
+            public array $ruleMap;
+
+            public function __construct(object $terminal)
+            {
+                $this->ruleMap = [
+                    'expr' => new class ($terminal) {
+                        /** @var list<object> */
+                        public array $alternatives;
+
+                        public function __construct(object $terminal)
+                        {
+                            $this->alternatives = [
+                                new class ($terminal) {
+                                    /** @var list<object> */
+                                    public array $symbols;
+
+                                    public function __construct(object $terminal)
+                                    {
+                                        $this->symbols = [$terminal];
+                                    }
+                                },
+                            ];
+                        }
+                    },
+                    'stmt' => new class ($terminal) {
+                        /** @var list<object> */
+                        public array $alternatives;
+
+                        public function __construct(object $terminal)
+                        {
+                            $this->alternatives = [
+                                new class ($terminal) {
+                                    /** @var list<object> */
+                                    public array $symbols;
+
+                                    public function __construct(object $terminal)
+                                    {
+                                        $this->symbols = [$terminal];
+                                    }
+                                },
+                            ];
+                        }
+                    },
+                ];
+            }
+        };
+
+        $snapshot = (new GrammarSnapshotBuilder())->build('mysql', $grammar, ['stmt'], [], \stdClass::class);
+
+        self::assertSame(['expr', 'stmt'], array_keys($snapshot->rules));
+    }
+
+    public function testBuildRejectsObjectMapsWithNonStringKeys(): void
+    {
+        $grammar = new class () {
+            public string $startSymbol = 'stmt';
+
+            /** @var array<int, object> */
+            public array $ruleMap;
+
+            public function __construct()
+            {
+                $this->ruleMap = [
+                    new class () {
+                        /** @var list<object> */
+                        public array $alternatives = [];
+                    },
+                ];
+            }
+        };
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Object property ruleMap must be an object map.');
+        (new GrammarSnapshotBuilder())->build('mysql', $grammar, [], [], \stdClass::class);
+    }
+
+    public function testBuildRejectsAlternativeCollectionsThatAreNotLists(): void
+    {
+        $terminal = new class ('SELECT') {
+            public function __construct(public string $value)
+            {
+            }
+        };
+
+        $grammar = new class ($terminal) {
+            public string $startSymbol = 'stmt';
+
+            /** @var array<string, object> */
+            public array $ruleMap;
+
+            public function __construct(object $terminal)
+            {
+                $this->ruleMap = [
+                    'stmt' => new class ($terminal) {
+                        /** @var array<string, object> */
+                        public array $alternatives;
+
+                        public function __construct(object $terminal)
+                        {
+                            $this->alternatives = [
+                                'first' => new class ($terminal) {
+                                    /** @var list<object> */
+                                    public array $symbols;
+
+                                    public function __construct(object $terminal)
+                                    {
+                                        $this->symbols = [$terminal];
+                                    }
+                                },
+                            ];
+                        }
+                    },
+                ];
+            }
+        };
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Production rule must expose an alternatives array.');
+        (new GrammarSnapshotBuilder())->build('mysql', $grammar, [], [], \stdClass::class);
+    }
 }

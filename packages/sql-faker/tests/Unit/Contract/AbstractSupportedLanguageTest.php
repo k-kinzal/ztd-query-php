@@ -71,6 +71,7 @@ final class AbstractSupportedLanguageTest extends TestCase
         self::assertSame($firstCatalog, $secondCatalog);
         self::assertSame(1, $language->snapshotBuilds);
         self::assertSame(1, $language->familyBuilds);
+        self::assertSame([0], array_keys($firstCatalog));
     }
 
     public function testGenerateWitnessUsesValidatedParametersAndSearchLoop(): void
@@ -123,6 +124,96 @@ final class AbstractSupportedLanguageTest extends TestCase
         self::assertSame('SELECT 3, 2', $witness->sql);
     }
 
+    public function testGenerateWitnessDefaultSearchStartsAtSeedOne(): void
+    {
+        $language = new class () extends AbstractSupportedLanguage {
+            public int $seedValue = 0;
+
+            public function dialect(): string
+            {
+                return 'stub';
+            }
+
+            public function generateWitness(FamilyRequest $request): \SqlFaker\Contract\SqlWitness
+            {
+                return $this->searchWitness(
+                    $request->familyId,
+                    $request->parameters,
+                    fn (): string => sprintf('SELECT %d', $this->seedValue),
+                    fn (): bool => $this->seedValue === 1,
+                    fn (): array => ['seed_seen' => $this->seedValue],
+                );
+            }
+
+            protected function buildFamilies(): array
+            {
+                return [
+                    new FamilyDefinition('stub.family', 'stub', 'contract', ['stmt'], [], ['seed_seen']),
+                ];
+            }
+
+            protected function buildGrammarSnapshot(): GrammarSnapshot
+            {
+                return new GrammarSnapshot('stub', 'stmt', ['stmt'], [], ['stub.family' => ['stmt']]);
+            }
+
+            protected function seed(int $seed): void
+            {
+                $this->seedValue = $seed;
+            }
+        };
+
+        $witness = $language->generateWitness(new FamilyRequest('stub.family'));
+
+        self::assertSame(1, $witness->seed);
+        self::assertSame(['seed_seen' => 1], $witness->properties);
+    }
+
+    public function testGenerateWitnessDefaultSearchStopsAfter512Attempts(): void
+    {
+        $language = new class () extends AbstractSupportedLanguage {
+            public int $seedValue = 0;
+
+            public function dialect(): string
+            {
+                return 'stub';
+            }
+
+            public function generateWitness(FamilyRequest $request): \SqlFaker\Contract\SqlWitness
+            {
+                return $this->searchWitness(
+                    $request->familyId,
+                    $request->parameters,
+                    fn (): string => sprintf('SELECT %d', $this->seedValue),
+                    fn (): bool => $this->seedValue === 512,
+                    fn (): array => ['seed_seen' => $this->seedValue],
+                );
+            }
+
+            protected function buildFamilies(): array
+            {
+                return [
+                    new FamilyDefinition('stub.family', 'stub', 'contract', ['stmt'], [], ['seed_seen']),
+                ];
+            }
+
+            protected function buildGrammarSnapshot(): GrammarSnapshot
+            {
+                return new GrammarSnapshot('stub', 'stmt', ['stmt'], [], ['stub.family' => ['stmt']]);
+            }
+
+            protected function seed(int $seed): void
+            {
+                $this->seedValue = $seed;
+            }
+        };
+
+        $witness = $language->generateWitness(new FamilyRequest('stub.family'));
+
+        self::assertSame(512, $witness->seed);
+        self::assertSame(['seed_seen' => 512], $witness->properties);
+    }
+
     public function testGenerateWitnessRejectsUnknownAndMissingParameters(): void
     {
         $language = new class () extends AbstractSupportedLanguage {
@@ -164,6 +255,49 @@ final class AbstractSupportedLanguageTest extends TestCase
 
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('Missing required parameter arity');
+        $language->generateWitness(new FamilyRequest('stub.family'));
+    }
+
+    public function testGenerateWitnessReportsDefaultAttemptBudgetInFailureMessage(): void
+    {
+        $language = new class () extends AbstractSupportedLanguage {
+            public int $seedValue = 0;
+
+            public function dialect(): string
+            {
+                return 'stub';
+            }
+
+            public function generateWitness(FamilyRequest $request): \SqlFaker\Contract\SqlWitness
+            {
+                return $this->searchWitness(
+                    $request->familyId,
+                    $request->parameters,
+                    fn (): string => sprintf('SELECT %d', $this->seedValue),
+                    static fn (): bool => false,
+                );
+            }
+
+            protected function buildFamilies(): array
+            {
+                return [
+                    new FamilyDefinition('stub.family', 'stub', 'contract', ['stmt']),
+                ];
+            }
+
+            protected function buildGrammarSnapshot(): GrammarSnapshot
+            {
+                return new GrammarSnapshot('stub', 'stmt', ['stmt'], [], ['stub.family' => ['stmt']]);
+            }
+
+            protected function seed(int $seed): void
+            {
+                $this->seedValue = $seed;
+            }
+        };
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('No witness found for family stub.family after 512 attempts.');
         $language->generateWitness(new FamilyRequest('stub.family'));
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\Grammar;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Grammar;
@@ -62,6 +63,22 @@ final class GrammarInvariantCheckerTest extends TestCase
         self::assertSame(['missing'], $checker->missingEntryRules(['stmt', 'missing']));
     }
 
+    public function testMissingEntryRulesDeduplicatesAndSortsUnknownEntries(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([new Terminal('SELECT')]),
+            ]),
+        ]);
+
+        $checker = new GrammarInvariantChecker($grammar);
+
+        self::assertSame(
+            ['missing_a', 'missing_b'],
+            $checker->missingEntryRules(['missing_b', 'stmt', 'missing_a', 'missing_b']),
+        );
+    }
+
     public function testCanTerminateDistinguishesFiniteAndInfiniteRuleFamilies(): void
     {
         $grammar = new Grammar('stmt', [
@@ -103,6 +120,25 @@ final class GrammarInvariantCheckerTest extends TestCase
         self::assertSame(['unused'], $checker->unreachableRules(['stmt']));
     }
 
+    public function testReachableRulesDeduplicateEntriesAndReturnSortedRuleNames(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([new NonTerminal('expr')]),
+            ]),
+            'expr' => new ProductionRule('expr', [
+                new Production([new Terminal('A')]),
+            ]),
+            'other' => new ProductionRule('other', [
+                new Production([new Terminal('B')]),
+            ]),
+        ]);
+
+        $checker = new GrammarInvariantChecker($grammar);
+
+        self::assertSame(['expr', 'other', 'stmt'], $checker->reachableRules(['other', 'stmt', 'other']));
+    }
+
     public function testNonTerminatingReachableRulesAreReportedForTheEntryClosure(): void
     {
         $grammar = new Grammar('stmt', [
@@ -120,5 +156,47 @@ final class GrammarInvariantCheckerTest extends TestCase
         $checker = new GrammarInvariantChecker($grammar);
 
         self::assertSame(['loop', 'stmt'], $checker->nonTerminatingReachableRules(['stmt']));
+    }
+
+    public function testConstructorRejectsMissingStringStartSymbol(): void
+    {
+        $grammar = new class () {
+            public int $startSymbol = 1;
+
+            /** @var array<string, object> */
+            public array $ruleMap = [];
+        };
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Object property startSymbol must be a string.');
+        new GrammarInvariantChecker($grammar);
+    }
+
+    public function testUndefinedReferencesDeduplicatesAndSortsTargetsPerRule(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([new NonTerminal('missing_b'), new NonTerminal('missing_a'), new NonTerminal('missing_b')]),
+            ]),
+        ]);
+
+        $checker = new GrammarInvariantChecker($grammar);
+
+        self::assertSame(['stmt' => ['missing_a', 'missing_b']], $checker->undefinedReferences());
+    }
+
+    public function testRulesWithoutAlternativesReturnsSortedEmptyRuleNames(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([new Terminal('SELECT')]),
+            ]),
+            'z_rule' => new ProductionRule('z_rule', []),
+            'a_rule' => new ProductionRule('a_rule', []),
+        ]);
+
+        $checker = new GrammarInvariantChecker($grammar);
+
+        self::assertSame(['a_rule', 'z_rule'], $checker->rulesWithoutAlternatives());
     }
 }

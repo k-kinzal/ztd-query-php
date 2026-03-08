@@ -74,6 +74,14 @@ final class SupportedLanguageTest extends TestCase
         );
     }
 
+    public function testMySqlSupportedLanguageWitnessFingerprintIsStable(): void
+    {
+        self::assertSame(
+            'c5c182dd3ff6204c46e6ce5fb2cc1d74dd280c2f85c7c96578687c362edc3618',
+            SupportedLanguageContractAssertions::witnessFingerprint(new MySqlSupportedLanguage('mysql-8.0.44')),
+        );
+    }
+
     public function testMySqlSupportedLanguageGeneratesWitnessesForEveryFamily(): void
     {
         SupportedLanguageContractAssertions::assertGeneratesWitnessesForEveryFamily(
@@ -106,6 +114,14 @@ final class SupportedLanguageTest extends TestCase
         );
     }
 
+    public function testPostgreSqlSupportedLanguageWitnessFingerprintIsStable(): void
+    {
+        self::assertSame(
+            'd6062ff9edab79fc70ee62cd06e5047a53e6c165a5e0a5882bdb4cf20fe54d54',
+            SupportedLanguageContractAssertions::witnessFingerprint(new PostgreSqlSupportedLanguage()),
+        );
+    }
+
     public function testPostgreSqlSupportedLanguageGeneratesWitnessesForEveryFamily(): void
     {
         SupportedLanguageContractAssertions::assertGeneratesWitnessesForEveryFamily(
@@ -135,6 +151,14 @@ final class SupportedLanguageTest extends TestCase
         self::assertSame(
             '38d44310096587006d846b11cb076c2205810fd5a036ea61b416719aba064b36',
             SupportedLanguageContractAssertions::contractFingerprint(new SqliteSupportedLanguage()),
+        );
+    }
+
+    public function testSqliteSupportedLanguageWitnessFingerprintIsStable(): void
+    {
+        self::assertSame(
+            'b7e7f7e2174dd83b729fba1c1df8bc5704d3f2bfdc56433ddb6d6013236f1892',
+            SupportedLanguageContractAssertions::witnessFingerprint(new SqliteSupportedLanguage()),
         );
     }
 
