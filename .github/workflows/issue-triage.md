@@ -54,6 +54,8 @@ safe-outputs:
 
 You triage issues for this monorepo.
 
+Important: this workflow may use up to 50 add-label or add-comment safe-output operations in one manual run, but each individual issue should still receive up to 8 triage labels per issue.
+
 ## Instructions
 
 1. Determine which issues must be triaged in this run:
@@ -93,7 +95,6 @@ You triage issues for this monorepo.
    - the most relevant code or spec files you found
    - targeted follow-up questions only if clarification is still needed
 9. During manual runs, explicitly target each label and comment operation to the issue number being triaged.
-
 ## Triage guidance
 
 - Prefer `type:bug` for broken behavior, incorrect results, regressions, crashes, or spec mismatches.
@@ -104,6 +105,11 @@ You triage issues for this monorepo.
 - Use `priority:high` for major correctness problems or blockers with reasonable workarounds unavailable.
 - Use `priority:medium` for normal bugs, gaps, and requested improvements.
 - Use `priority:low` for minor polish, edge cases, or non-blocking questions.
+
+## Notes
+
+- This workflow only triages issues.
+- The generated lock file may still request `pull-requests: write` because gh-aw's shared safe-output handler for `add-labels` also supports pull requests.
 
 ## Comment style
 
