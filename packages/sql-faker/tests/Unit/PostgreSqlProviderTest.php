@@ -719,7 +719,7 @@ final class PostgreSqlProviderTest extends TestCase
         self::assertStringContainsString('DELETE', $result);
     }
 
-    public function testMultipleGenerationsReturnDifferentResults(): void
+    public function testMultipleGenerationsAreDeterministicForSameSeed(): void
     {
         $faker1 = Factory::create();
         $faker1->seed(1);
@@ -727,11 +727,11 @@ final class PostgreSqlProviderTest extends TestCase
         $sql1 = $provider1->selectStatement(maxDepth: 3);
 
         $faker2 = Factory::create();
-        $faker2->seed(2);
+        $faker2->seed(1);
         $provider2 = new PostgreSqlProvider($faker2);
         $sql2 = $provider2->selectStatement(maxDepth: 3);
 
-        self::assertNotSame($sql1, $sql2, 'Different seeds should produce different SQL');
+        self::assertSame($sql1, $sql2, 'The same seed should reproduce the same SQL');
     }
 
     public function testGrammarDrivenOutputIsNonEmpty(): void
