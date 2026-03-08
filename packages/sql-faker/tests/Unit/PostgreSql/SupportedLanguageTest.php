@@ -83,7 +83,7 @@ final class SupportedLanguageTest extends TestCase
     /**
      * @param array<string, scalar> $parameters
      * @param array<string, scalar> $expectedParameters
-     * @param array<string, int> $expectedProperties
+     * @param array<string, scalar> $expectedProperties
      */
     #[DataProvider('providerDeterministicWitnessWithProperties')]
     public function testGenerateWitnessUsesDeterministicCanonicalSqlForPropertyBearingFamilies(
@@ -152,14 +152,26 @@ final class SupportedLanguageTest extends TestCase
         yield 'revoke role name list' => ['postgresql.constraint.revoke_role.name_list', 1, 'REVOKE _i0, _i1 FROM _i2'];
         yield 'create user name and options' => ['postgresql.constraint.create_user.name_and_options', 1, 'CREATE USER _i0 IN GROUP _i1, _i2'];
         yield 'create group name and options' => ['postgresql.constraint.create_group.name_and_options', 1, 'CREATE GROUP _i0 IN GROUP _i1, _i2'];
+        yield 'alter extension content target' => ['postgresql.constraint.alter_extension.content_target', 1, 'ALTER EXTENSION _i0 ADD OPERATOR _i1.% (_i2, _i3)'];
+        yield 'grant large object target' => ['postgresql.constraint.grant.large_object_target', 2, 'GRANT ALL PRIVILEGES ON LARGE OBJECT 1024 TO _i0, _i1'];
         yield 'insert conflict update' => ['postgresql.constraint.insert.conflict_update', 1, 'INSERT INTO _i0 OVERRIDING SYSTEM VALUE SELECT _i1 ON CONFLICT(_i2) DO UPDATE SET _i3 = 2143362695'];
         yield 'partition strategy' => ['postgresql.constraint.create_table.partition_strategy', 16, 'CREATE LOCAL TEMPORARY TABLE _i0() PARTITION BY RANGE(_i1)'];
+        yield 'partition of' => ['postgresql.constraint.create_table.partition_of', 1, 'CREATE TABLE IF NOT EXISTS _i0 PARTITION OF _i1._i2 DEFAULT'];
         yield 'grant parameter target' => ['postgresql.constraint.grant.parameter_target', 15, 'GRANT ALL PRIVILEGES(_i0) ON PARAMETER search_path TO _i1'];
+        yield 'text search template define' => ['postgresql.constraint.text_search_template.define', 1, 'CREATE TEXT SEARCH TEMPLATE _i0._i1(INIT = _i2, LEXIZE = _i3)'];
+        yield 'create operator definition' => ['postgresql.constraint.create_operator.definition', 1, 'CREATE OPERATOR _i0.- (PROCEDURE = _i1, LEFTARG = INTEGER, RIGHTARG = NONE)'];
+        yield 'create aggregate definition' => ['postgresql.constraint.create_aggregate.definition', 1, 'CREATE AGGREGATE _i0(_i1, _i2, _i3 ORDER BY _i4) (SFUNC = _i5, STYPE = INTEGER)'];
+        yield 'comment type reference' => ['postgresql.constraint.comment.type_reference', 1, 'COMMENT ON DOMAIN _i0._i1 IS NULL'];
+        yield 'create cast type reference' => ['postgresql.constraint.create_cast.type_reference', 1, 'CREATE CAST(BYTEA AS TEXT) WITHOUT FUNCTION AS IMPLICIT'];
+        yield 'drop cast type reference' => ['postgresql.constraint.drop_cast.type_reference', 1, 'DROP CAST(BYTEA AS TEXT)'];
+        yield 'create assertion check expression' => ['postgresql.constraint.create_assertion.check_expression', 1, 'CREATE ASSERTION _i0._i1 CHECK(2143362695 != 630311760) DEFERRABLE'];
+        yield 'create routine complete definition' => ['postgresql.constraint.create_routine.complete_definition', 1, 'CREATE FUNCTION _i0() RETURNS INT RETURN 1'];
+        yield 'drop type object name' => ['postgresql.constraint.drop_type.object_name', 11, 'DROP DOMAIN IF EXISTS _i0, _i1._i2'];
         yield 'identifier context' => ['postgresql.lex.identifier.context', 1, 'SELECT _i0'];
     }
 
     /**
-     * @return iterable<string, array{0: string, 1: array<string, scalar>, 2: array<string, scalar>, 3: int, 4: array<string, int>, 5: string}>
+     * @return iterable<string, array{0: string, 1: array<string, scalar>, 2: array<string, scalar>, 3: int, 4: array<string, scalar>, 5: string}>
      */
     public static function providerDeterministicWitnessWithProperties(): iterable
     {
@@ -178,6 +190,110 @@ final class SupportedLanguageTest extends TestCase
             1,
             ['column_list_arity' => 3, 'projection_arity' => 3],
             'CREATE GLOBAL TEMP TABLE _i0(_i1, _i2, _i3) AS SELECT 2143362695, 630311760, 1013994433',
+        ];
+        yield 'temp table name binding' => [
+            'postgresql.constraint.create_table.temp_name_binding',
+            [],
+            [],
+            1,
+            ['schema_qualified' => false],
+            'CREATE GLOBAL TEMP TABLE _i0 OF _i1._i2',
+        ];
+        yield 'temp table as name binding' => [
+            'postgresql.constraint.create_table_as.temp_name_binding',
+            [],
+            [],
+            1,
+            ['schema_qualified' => false],
+            'CREATE GLOBAL TEMP TABLE _i0(_i1, _i2, _i3) AS SELECT 2143362695, 630311760, 1013994433',
+        ];
+        yield 'execute temp table as name binding' => [
+            'postgresql.constraint.execute_create_table_as.temp_name_binding',
+            [],
+            [],
+            10,
+            ['schema_qualified' => false],
+            'CREATE LOCAL TEMP TABLE _i0 AS EXECUTE _i1',
+        ];
+        yield 'temp sequence name binding' => [
+            'postgresql.constraint.create_sequence.temp_name_binding',
+            [],
+            [],
+            1,
+            ['schema_qualified' => false],
+            'CREATE GLOBAL TEMP SEQUENCE _i0',
+        ];
+        yield 'view explicit columns arity 1' => [
+            'postgresql.constraint.create_view.explicit_columns',
+            ['arity' => 1],
+            ['arity' => 1],
+            6,
+            ['column_list_arity' => 1, 'projection_arity' => 1],
+            'CREATE OR REPLACE VIEW _i0._i1(_i2) AS SELECT 1589607787',
+        ];
+        yield 'view explicit columns arity 3 as string' => [
+            'postgresql.constraint.create_view.explicit_columns',
+            ['arity' => '3'],
+            ['arity' => 3],
+            8,
+            ['column_list_arity' => 3, 'projection_arity' => 3],
+            'CREATE OR REPLACE GLOBAL TEMPORARY RECURSIVE VIEW _i0(_i1, _i2, _i3) AS SELECT 1359190869, 999560553, 1813982912',
+        ];
+        yield 'temp view name binding' => [
+            'postgresql.constraint.create_view.temp_name_binding',
+            [],
+            [],
+            1,
+            ['schema_qualified' => false],
+            'CREATE GLOBAL TEMP VIEW _i0(_i1, _i2, _i3, _i4, _i5, _i6, _i7) AS SELECT 2143362695, 630311760, 1013994433, 396591249, 1703301250, 799981517, 1666063944',
+        ];
+        yield 'insert explicit columns arity 1' => [
+            'postgresql.constraint.insert.explicit_columns',
+            ['arity' => 1],
+            ['arity' => 1],
+            33,
+            ['column_list_arity' => 1, 'projection_arity' => 1],
+            'INSERT INTO _i0(_i1) SELECT 472197316',
+        ];
+        yield 'insert explicit columns arity 3 as string' => [
+            'postgresql.constraint.insert.explicit_columns',
+            ['arity' => '3'],
+            ['arity' => 3],
+            6,
+            ['column_list_arity' => 3, 'projection_arity' => 3],
+            'INSERT INTO _i0 AS _i1(_i2, _i3, _i4) SELECT 1589607787, 462381905, 2083182912',
+        ];
+        yield 'set operation arity 1' => [
+            'postgresql.constraint.select.set_operation',
+            ['arity' => 1],
+            ['arity' => 1],
+            1,
+            ['left_projection_arity' => 1, 'right_projection_arity' => 1],
+            '(SELECT 30311759.32 AS _i0) INTERSECT SELECT 396591249',
+        ];
+        yield 'set operation arity 3 as string' => [
+            'postgresql.constraint.select.set_operation',
+            ['arity' => '3'],
+            ['arity' => 3],
+            1,
+            ['left_projection_arity' => 3, 'right_projection_arity' => 3],
+            '(SELECT 30311759.32 AS _i0, 396591249, 1703301250) INTERSECT SELECT 799981517, 1666063944, 1484172014',
+        ];
+        yield 'values clause arity 1' => [
+            'postgresql.constraint.select.values_clause',
+            ['arity' => 1],
+            ['arity' => 1],
+            1,
+            ['row_arity' => 1],
+            'VALUES(NULL), (2143362695)',
+        ];
+        yield 'values clause arity 3 as string' => [
+            'postgresql.constraint.select.values_clause',
+            ['arity' => '3'],
+            ['arity' => 3],
+            1,
+            ['row_arity' => 3],
+            'VALUES(NULL, NULL, 2143362695), (630311760, 1013994433, 396591249)',
         ];
     }
 }
