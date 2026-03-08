@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\PostgreSql;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Contract\FamilyDefinition;
@@ -46,5 +47,24 @@ final class SupportedLanguageTest extends TestCase
             $language->family('postgresql.constraint.distinct_on')->anchorRules,
         );
         self::assertNotSame('', $witness->sql);
+    }
+
+    #[DataProvider('temporaryRelationFamilies')]
+    public function testTemporaryRelationFamiliesBindObjectNamesToUnqualifiedRelations(string $familyId): void
+    {
+        $language = new SupportedLanguage();
+        $witness = $language->generateWitness(new FamilyRequest($familyId));
+
+        self::assertSame([], $language->family($familyId)->parameterNames, $familyId);
+        self::assertFalse($witness->properties['schema_qualified'], $familyId);
+    }
+
+    public static function temporaryRelationFamilies(): iterable
+    {
+        yield 'create table' => ['postgresql.constraint.create_table.temp_name_binding'];
+        yield 'create table as' => ['postgresql.constraint.create_table_as.temp_name_binding'];
+        yield 'execute create table as' => ['postgresql.constraint.execute_create_table_as.temp_name_binding'];
+        yield 'create sequence' => ['postgresql.constraint.create_sequence.temp_name_binding'];
+        yield 'create view' => ['postgresql.constraint.create_view.temp_name_binding'];
     }
 }
