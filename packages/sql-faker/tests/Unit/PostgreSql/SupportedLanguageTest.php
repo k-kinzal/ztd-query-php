@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\PostgreSql;
 
 require_once dirname(__DIR__, 2) . '/Support/SupportedLanguagePool.php';
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -114,6 +113,21 @@ final class SupportedLanguageTest extends TestCase
     }
 
     /**
+     * @param array<string, scalar> $parameters
+     */
+    #[DataProvider('providerInvalidArityWitnessRequest')]
+    public function testGenerateWitnessRejectsMissingAndOutOfRangeArityForParameterizedFamilies(
+        string $familyId,
+        array $parameters,
+        string $expectedMessage,
+    ): void {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage($expectedMessage);
+        $language = SupportedLanguagePool::postgresql();
+        $language->generateWitness(new FamilyRequest($familyId, $parameters));
+    }
+
+    /**
      * @return iterable<string, array{0: string}>
      */
     public static function providerTemporaryRelationFamily(): iterable
@@ -123,6 +137,88 @@ final class SupportedLanguageTest extends TestCase
         yield 'execute create table as' => ['postgresql.constraint.execute_create_table_as.temp_name_binding'];
         yield 'create sequence' => ['postgresql.constraint.create_sequence.temp_name_binding'];
         yield 'create view' => ['postgresql.constraint.create_view.temp_name_binding'];
+    }
+
+    /**
+     * @return iterable<string, array{0: string, 1: array<string, scalar>, 2: string}>
+     */
+    public static function providerInvalidArityWitnessRequest(): iterable
+    {
+        yield 'ctas missing arity' => [
+            'postgresql.constraint.create_table_as.explicit_columns',
+            [],
+            'Missing required parameter arity for family postgresql.constraint.create_table_as.explicit_columns.',
+        ];
+        yield 'ctas arity below range' => [
+            'postgresql.constraint.create_table_as.explicit_columns',
+            ['arity' => 0],
+            'arity parameter must be between 1 and 8.',
+        ];
+        yield 'ctas arity above range' => [
+            'postgresql.constraint.create_table_as.explicit_columns',
+            ['arity' => 9],
+            'arity parameter must be between 1 and 8.',
+        ];
+        yield 'view missing arity' => [
+            'postgresql.constraint.create_view.explicit_columns',
+            [],
+            'Missing required parameter arity for family postgresql.constraint.create_view.explicit_columns.',
+        ];
+        yield 'view arity below range' => [
+            'postgresql.constraint.create_view.explicit_columns',
+            ['arity' => 0],
+            'arity parameter must be between 1 and 8.',
+        ];
+        yield 'view arity above range' => [
+            'postgresql.constraint.create_view.explicit_columns',
+            ['arity' => 9],
+            'arity parameter must be between 1 and 8.',
+        ];
+        yield 'insert missing arity' => [
+            'postgresql.constraint.insert.explicit_columns',
+            [],
+            'Missing required parameter arity for family postgresql.constraint.insert.explicit_columns.',
+        ];
+        yield 'insert arity below range' => [
+            'postgresql.constraint.insert.explicit_columns',
+            ['arity' => 0],
+            'arity parameter must be between 1 and 8.',
+        ];
+        yield 'insert arity above range' => [
+            'postgresql.constraint.insert.explicit_columns',
+            ['arity' => 9],
+            'arity parameter must be between 1 and 8.',
+        ];
+        yield 'set operation missing arity' => [
+            'postgresql.constraint.select.set_operation',
+            [],
+            'Missing required parameter arity for family postgresql.constraint.select.set_operation.',
+        ];
+        yield 'set operation arity below range' => [
+            'postgresql.constraint.select.set_operation',
+            ['arity' => 0],
+            'arity parameter must be between 1 and 8.',
+        ];
+        yield 'set operation arity above range' => [
+            'postgresql.constraint.select.set_operation',
+            ['arity' => 9],
+            'arity parameter must be between 1 and 8.',
+        ];
+        yield 'values clause missing arity' => [
+            'postgresql.constraint.select.values_clause',
+            [],
+            'Missing required parameter arity for family postgresql.constraint.select.values_clause.',
+        ];
+        yield 'values clause arity below range' => [
+            'postgresql.constraint.select.values_clause',
+            ['arity' => 0],
+            'arity parameter must be between 1 and 8.',
+        ];
+        yield 'values clause arity above range' => [
+            'postgresql.constraint.select.values_clause',
+            ['arity' => 9],
+            'arity parameter must be between 1 and 8.',
+        ];
     }
 
     /**
