@@ -102,6 +102,18 @@ final class SqlGeneratorTest extends TestCase
         self::assertNotSame('', $result);
     }
 
+    public function testAugmentGrammarDoesNotInventRulesWhenOptionalFamiliesAreAbsent(): void
+    {
+        $faker = Factory::create();
+        $grammar = new Grammar('stmt', []);
+        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+
+        $compiled = $generator->compiledGrammar();
+
+        self::assertSame('stmt', $compiled->startSymbol);
+        self::assertSame([], $compiled->ruleMap);
+    }
+
     #[DataProvider('providerCanonicalIdentifierRule')]
     public function testAugmentGrammarKeepsCanonicalIdentifierAlternatives(string $ruleName): void
     {
