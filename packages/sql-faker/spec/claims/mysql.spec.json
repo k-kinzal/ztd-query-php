@@ -1,0 +1,101 @@
+[
+  {
+    "id": "MYSQL-SPEC-IDENTIFIER-CONTEXT",
+    "level": "spec",
+    "dialect": "mysql",
+    "statement": "WHERE MySQL identifier contexts are supported, the generator SHALL emit canonical identifiers that remain acceptable to the engine lexer.",
+    "subject": { "kind": "family", "family": "mysql.lex.identifier.context" },
+    "evidence": [
+      { "kind": "witness.generates" },
+      { "kind": "outcome.kind_in", "allowedKinds": ["accepted", "state"] }
+    ]
+  },
+  {
+    "id": "MYSQL-SPEC-SHOW-WARNINGS-LIMIT",
+    "level": "spec",
+    "dialect": "mysql",
+    "statement": "WHERE SHOW WARNINGS LIMIT statements are retained, the generator SHALL produce engine-acceptable witnesses from that family.",
+    "subject": { "kind": "family", "family": "mysql.constraint.show_warnings.limit" },
+    "evidence": [
+      { "kind": "witness.generates" },
+      { "kind": "outcome.kind_in", "allowedKinds": ["accepted"] }
+    ]
+  },
+  {
+    "id": "MYSQL-SPEC-SIGNAL-SQLSTATE",
+    "level": "spec",
+    "dialect": "mysql",
+    "statement": "WHERE SIGNAL SQLSTATE statements are retained, the generator SHALL produce witnesses whose SQLSTATE values stay inside the engine-accepted canonical subset.",
+    "subject": { "kind": "family", "family": "mysql.constraint.signal_sqlstate" },
+    "evidence": [
+      { "kind": "witness.generates" },
+      { "kind": "outcome.kind_in", "allowedKinds": ["accepted"] }
+    ]
+  },
+  {
+    "id": "MYSQL-SPEC-SET-SYSTEM-VARIABLE",
+    "level": "spec",
+    "dialect": "mysql",
+    "statement": "WHERE SET system variable statements are retained, the generator SHALL produce witnesses that stay inside the accepted system-variable subset.",
+    "subject": { "kind": "family", "family": "mysql.constraint.set_system_variable" },
+    "evidence": [
+      { "kind": "witness.generates" },
+      { "kind": "outcome.kind_in", "allowedKinds": ["accepted"] }
+    ]
+  },
+  {
+    "id": "MYSQL-SPEC-CREATE-SRS",
+    "level": "spec",
+    "dialect": "mysql",
+    "statement": "WHERE CREATE SPATIAL REFERENCE SYSTEM is retained, the generator SHALL produce witnesses that satisfy the engine's mandatory NAME and DEFINITION contract.",
+    "subject": { "kind": "family", "family": "mysql.constraint.create_srs" },
+    "evidence": [
+      { "kind": "witness.generates" },
+      { "kind": "outcome.kind_in", "allowedKinds": ["accepted"] }
+    ]
+  },
+  {
+    "id": "MYSQL-SPEC-TABLE-VALUE-CONSTRUCTOR",
+    "level": "spec",
+    "dialect": "mysql",
+    "statement": "WHERE top-level VALUES table constructors are retained, the generator SHALL produce witnesses whose rows remain engine-acceptable outside INSERT context.",
+    "subject": { "kind": "family", "family": "mysql.constraint.table_value_constructor" },
+    "cases": [
+      { "arity": 1 },
+      { "arity": 2 },
+      { "arity": 3 },
+      { "arity": 4 },
+      { "arity": 5 },
+      { "arity": 6 },
+      { "arity": 7 },
+      { "arity": 8 }
+    ],
+    "evidence": [
+      { "kind": "witness.generates" },
+      { "kind": "witness.property_equals_parameter", "property": "row_arity", "parameter": "arity" },
+      { "kind": "outcome.kind_in", "allowedKinds": ["accepted"] }
+    ]
+  },
+  {
+    "id": "MYSQL-SPEC-ALTER-DATABASE-ENCRYPTION",
+    "level": "spec",
+    "dialect": "mysql",
+    "statement": "WHERE ALTER DATABASE ENCRYPTION is retained, the generator SHALL produce witnesses that stay inside the engine-accepted encryption literal subset.",
+    "subject": { "kind": "family", "family": "mysql.constraint.alter_database.encryption" },
+    "evidence": [
+      { "kind": "witness.generates" },
+      { "kind": "outcome.kind_in", "allowedKinds": ["accepted", "state"] }
+    ]
+  },
+  {
+    "id": "MYSQL-SPEC-CHANGE-REPLICATION-SOURCE",
+    "level": "spec",
+    "dialect": "mysql",
+    "statement": "WHERE CHANGE REPLICATION SOURCE TO statements are retained, the generator SHALL produce witnesses that stay inside the engine-accepted scalar option subset.",
+    "subject": { "kind": "family", "family": "mysql.constraint.change_replication_source" },
+    "evidence": [
+      { "kind": "witness.generates" },
+      { "kind": "outcome.kind_in", "allowedKinds": ["accepted"] }
+    ]
+  }
+]

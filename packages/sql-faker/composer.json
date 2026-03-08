@@ -32,6 +32,7 @@
     },
     "autoload-dev": {
         "psr-4": {
+            "Spec\\": "spec/",
             "Tests\\Unit\\SqlFaker\\": "tests/Unit/",
             "Fuzz\\": "fuzz/"
         }
@@ -43,6 +44,12 @@
         "bench:full": "phpbench run bench --bootstrap=vendor/autoload.php --report=aggregate --php-config='{\"memory_limit\":\"512M\"}' --warmup=2 --iterations=8 --revs=100",
         "test": "paratest --processes=auto",
         "test:unit": "phpunit tests/Unit/",
+        "spec": [
+            "@spec:contract",
+            "@spec:supported"
+        ],
+        "spec:contract": "php spec/spec.php contract",
+        "spec:supported": "php spec/spec.php spec",
         "lint": [
             "@format:check",
             "phpstan analyse --memory-limit=512M"

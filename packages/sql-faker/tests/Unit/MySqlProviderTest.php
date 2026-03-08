@@ -280,6 +280,17 @@ final class MySqlProviderTest extends TestCase
         self::assertNotSame('', $result);
     }
 
+    #[DataProvider('providerCanonicalIdentifierSeed')]
+    public function testIdentifierAvoidsContextSensitiveKeywords(int $seed): void
+    {
+        $faker = Factory::create();
+        $provider = new MySqlProvider($faker);
+
+        $faker->seed($seed);
+
+        self::assertDoesNotMatchRegularExpression('/^(ACTION|EVENT|VIEW|CURRENT_USER)$/i', $provider->identifier(3));
+    }
+
     public function testQuotedIdentifier(): void
     {
         $faker = Factory::create();
@@ -299,7 +310,7 @@ final class MySqlProviderTest extends TestCase
 
         $result = $provider->stringLiteral();
 
-        self::assertMatchesRegularExpression("/^'[a-zA-Z0-9_]{1,255}'$/", $result);
+        self::assertMatchesRegularExpression("/^'[a-zA-Z0-9_]{1,32}'$/", $result);
     }
 
     public function testStringLiteralLengthRange(): void
@@ -312,7 +323,7 @@ final class MySqlProviderTest extends TestCase
         $content = substr($literal, 1, -1);
 
         self::assertGreaterThanOrEqual(1, strlen($content));
-        self::assertLessThanOrEqual(255, strlen($content));
+        self::assertLessThanOrEqual(32, strlen($content));
     }
 
     public function testNationalStringLiteral(): void
@@ -323,7 +334,7 @@ final class MySqlProviderTest extends TestCase
 
         $result = $provider->nationalStringLiteral();
 
-        self::assertMatchesRegularExpression("/^N'[a-zA-Z0-9_]{1,255}'$/", $result);
+        self::assertMatchesRegularExpression("/^N'[a-zA-Z0-9_]{1,32}'$/", $result);
     }
 
     public function testDollarQuotedString(): void
@@ -334,7 +345,7 @@ final class MySqlProviderTest extends TestCase
 
         $result = $provider->dollarQuotedString();
 
-        self::assertMatchesRegularExpression('/^\$\$[a-zA-Z0-9_]{1,255}\$\$$/', $result);
+        self::assertMatchesRegularExpression('/^\$\$[a-zA-Z0-9_]{1,32}\$\$$/', $result);
     }
 
     public function testIntegerLiteral(): void
@@ -651,7 +662,7 @@ final class MySqlProviderTest extends TestCase
         $faker->seed(42);
         $a = $p->stringLiteral();
         $faker->seed(42);
-        self::assertSame($a, $p->stringLiteral(1, 255));
+        self::assertSame($a, $p->stringLiteral(1, 32));
     }
 
     public function testNationalStringLiteralDefaultMatchesExplicit(): void
@@ -661,7 +672,7 @@ final class MySqlProviderTest extends TestCase
         $faker->seed(42);
         $a = $p->nationalStringLiteral();
         $faker->seed(42);
-        self::assertSame($a, $p->nationalStringLiteral(1, 255));
+        self::assertSame($a, $p->nationalStringLiteral(1, 32));
     }
 
     public function testDollarQuotedStringDefaultMatchesExplicit(): void
@@ -671,7 +682,7 @@ final class MySqlProviderTest extends TestCase
         $faker->seed(42);
         $a = $p->dollarQuotedString();
         $faker->seed(42);
-        self::assertSame($a, $p->dollarQuotedString(1, 255));
+        self::assertSame($a, $p->dollarQuotedString(1, 32));
     }
 
     public function testIntegerLiteralDefaultMatchesExplicit(): void
@@ -751,7 +762,7 @@ final class MySqlProviderTest extends TestCase
         $faker->seed(42);
         $a = $p->hostname();
         $faker->seed(42);
-        self::assertSame($a, $p->hostname(1, 4, 63));
+        self::assertSame($a, $p->hostname(1, 1, 16));
     }
 
     public function testQuotedIdentifierCustomLength(): void
@@ -905,5 +916,15 @@ final class MySqlProviderTest extends TestCase
     {
         yield 'seeds 0 and 1' => [0, 1];
         yield 'seeds 5 and 10' => [5, 10];
+    }
+
+    /**
+     * @return iterable<string, array{int}>
+     */
+    public static function providerCanonicalIdentifierSeed(): iterable
+    {
+        foreach (range(0, 512) as $seed) {
+            yield "seed {$seed}" => [$seed];
+        }
     }
 }

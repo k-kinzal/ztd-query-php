@@ -8,13 +8,5 @@ parameters:
     paths:
         - src
         - fuzz
+        - spec
         - tests
-    ignoreErrors:
-        -
-            message: '#Line comments using // are prohibited#'
-            path: fuzz/Target/MySqlSyntaxTarget.php
-            count: 24
-        -
-            message: '#Line comments using // are prohibited#'
-            path: fuzz/Target/PgSyntaxTarget.php
-            count: 26

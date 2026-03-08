@@ -1,0 +1,168 @@
+[
+  {
+    "id": "SQLITE-SPEC-IDENTIFIER-CONTEXT",
+    "level": "spec",
+    "dialect": "sqlite",
+    "statement": "WHERE SQLite identifier contexts are supported, the generator SHALL emit canonical identifiers that remain acceptable to the engine lexer.",
+    "subject": { "kind": "family", "family": "sqlite.lex.identifier.context" },
+    "evidence": [
+      { "kind": "witness.generates" },
+      { "kind": "outcome.kind_in", "allowedKinds": ["accepted", "state"] }
+    ]
+  },
+  {
+    "id": "SQLITE-SPEC-SELECT-STATEMENT",
+    "level": "spec",
+    "dialect": "sqlite",
+    "statement": "WHERE SQLite SELECT statements are retained, the generator SHALL produce engine-acceptable witnesses from that family.",
+    "subject": { "kind": "family", "family": "sqlite.statement.select" },
+    "evidence": [
+      { "kind": "witness.generates" },
+      { "kind": "outcome.kind_in", "allowedKinds": ["accepted", "state"] }
+    ]
+  },
+  {
+    "id": "SQLITE-SPEC-SELECT-SET-OPERATION",
+    "level": "spec",
+    "dialect": "sqlite",
+    "statement": "WHERE SQLite compound SELECT statements are retained, the generator SHALL produce engine-acceptable witnesses for arities 1 through 8.",
+    "subject": { "kind": "family", "family": "sqlite.constraint.select.set_operation" },
+    "cases": [
+      { "parameters": { "arity": 1 } },
+      { "parameters": { "arity": 2 } },
+      { "parameters": { "arity": 3 } },
+      { "parameters": { "arity": 4 } },
+      { "parameters": { "arity": 5 } },
+      { "parameters": { "arity": 6 } },
+      { "parameters": { "arity": 7 } },
+      { "parameters": { "arity": 8 } }
+    ],
+    "evidence": [
+      { "kind": "witness.generates" },
+      { "kind": "witness.property_equals_parameter", "property": "left_projection_arity", "parameter": "arity" },
+      { "kind": "witness.property_equals_parameter", "property": "right_projection_arity", "parameter": "arity" },
+      { "kind": "outcome.kind_in", "allowedKinds": ["accepted"] }
+    ]
+  },
+  {
+    "id": "SQLITE-SPEC-SELECT-VALUES-CLAUSE",
+    "level": "spec",
+    "dialect": "sqlite",
+    "statement": "WHERE SQLite VALUES clauses are retained for SELECT-family generation, the generator SHALL produce engine-acceptable witnesses for arities 1 through 8.",
+    "subject": { "kind": "family", "family": "sqlite.constraint.select.values_clause" },
+    "cases": [
+      { "parameters": { "arity": 1 } },
+      { "parameters": { "arity": 2 } },
+      { "parameters": { "arity": 3 } },
+      { "parameters": { "arity": 4 } },
+      { "parameters": { "arity": 5 } },
+      { "parameters": { "arity": 6 } },
+      { "parameters": { "arity": 7 } },
+      { "parameters": { "arity": 8 } }
+    ],
+    "evidence": [
+      { "kind": "witness.generates" },
+      { "kind": "witness.property_equals_parameter", "property": "row_arity", "parameter": "arity" },
+      { "kind": "outcome.kind_in", "allowedKinds": ["accepted"] }
+    ]
+  },
+  {
+    "id": "SQLITE-SPEC-INSERT-STATEMENT",
+    "level": "spec",
+    "dialect": "sqlite",
+    "statement": "WHERE SQLite INSERT statements are retained, the generator SHALL produce engine-acceptable witnesses from that family.",
+    "subject": { "kind": "family", "family": "sqlite.statement.insert" },
+    "evidence": [
+      { "kind": "witness.generates" },
+      { "kind": "outcome.kind_in", "allowedKinds": ["accepted", "state"] }
+    ]
+  },
+  {
+    "id": "SQLITE-SPEC-UPDATE-STATEMENT",
+    "level": "spec",
+    "dialect": "sqlite",
+    "statement": "WHERE SQLite UPDATE statements are retained, the generator SHALL produce engine-acceptable witnesses from that family.",
+    "subject": { "kind": "family", "family": "sqlite.statement.update" },
+    "evidence": [
+      { "kind": "witness.generates" },
+      { "kind": "outcome.kind_in", "allowedKinds": ["accepted", "state"] }
+    ]
+  },
+  {
+    "id": "SQLITE-SPEC-DELETE-STATEMENT",
+    "level": "spec",
+    "dialect": "sqlite",
+    "statement": "WHERE SQLite DELETE statements are retained, the generator SHALL produce engine-acceptable witnesses from that family.",
+    "subject": { "kind": "family", "family": "sqlite.statement.delete" },
+    "evidence": [
+      { "kind": "witness.generates" },
+      { "kind": "outcome.kind_in", "allowedKinds": ["accepted", "state"] }
+    ]
+  },
+  {
+    "id": "SQLITE-SPEC-CREATE-TABLE-STATEMENT",
+    "level": "spec",
+    "dialect": "sqlite",
+    "statement": "WHERE SQLite CREATE TABLE statements are retained, the generator SHALL produce engine-acceptable witnesses from that family.",
+    "subject": { "kind": "family", "family": "sqlite.statement.create_table" },
+    "evidence": [
+      { "kind": "witness.generates" },
+      { "kind": "outcome.kind_in", "allowedKinds": ["accepted", "state"] }
+    ]
+  },
+  {
+    "id": "SQLITE-SPEC-ALTER-TABLE-STATEMENT",
+    "level": "spec",
+    "dialect": "sqlite",
+    "statement": "WHERE SQLite ALTER TABLE statements are retained, the generator SHALL produce engine-acceptable witnesses from that family.",
+    "subject": { "kind": "family", "family": "sqlite.statement.alter_table" },
+    "evidence": [
+      { "kind": "witness.generates" },
+      { "kind": "outcome.kind_in", "allowedKinds": ["accepted", "state"] }
+    ]
+  },
+  {
+    "id": "SQLITE-SPEC-DROP-TABLE-STATEMENT",
+    "level": "spec",
+    "dialect": "sqlite",
+    "statement": "WHERE SQLite DROP TABLE statements are retained, the generator SHALL produce engine-acceptable witnesses from that family.",
+    "subject": { "kind": "family", "family": "sqlite.statement.drop_table" },
+    "evidence": [
+      { "kind": "witness.generates" },
+      { "kind": "outcome.kind_in", "allowedKinds": ["accepted", "state"] }
+    ]
+  },
+  {
+    "id": "SQLITE-SPEC-ATTACH-STATEMENT",
+    "level": "spec",
+    "dialect": "sqlite",
+    "statement": "WHERE SQLite ATTACH statements are retained, the generator SHALL produce engine-acceptable witnesses from the safe filename and schema-expression subset.",
+    "subject": { "kind": "family", "family": "sqlite.constraint.attach.expression" },
+    "evidence": [
+      { "kind": "witness.generates" },
+      { "kind": "outcome.kind_in", "allowedKinds": ["accepted", "state"] }
+    ]
+  },
+  {
+    "id": "SQLITE-SPEC-DETACH-STATEMENT",
+    "level": "spec",
+    "dialect": "sqlite",
+    "statement": "WHERE SQLite DETACH statements are retained, the generator SHALL produce engine-acceptable witnesses from the safe schema-expression subset.",
+    "subject": { "kind": "family", "family": "sqlite.constraint.detach.expression" },
+    "evidence": [
+      { "kind": "witness.generates" },
+      { "kind": "outcome.kind_in", "allowedKinds": ["accepted", "state"] }
+    ]
+  },
+  {
+    "id": "SQLITE-SPEC-VACUUM-STATEMENT",
+    "level": "spec",
+    "dialect": "sqlite",
+    "statement": "WHERE SQLite VACUUM statements are retained, the generator SHALL produce engine-acceptable witnesses from the safe INTO-expression subset.",
+    "subject": { "kind": "family", "family": "sqlite.constraint.vacuum.into_expression" },
+    "evidence": [
+      { "kind": "witness.generates" },
+      { "kind": "outcome.kind_in", "allowedKinds": ["accepted", "state"] }
+    ]
+  }
+]

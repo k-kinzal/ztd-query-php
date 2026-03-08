@@ -110,6 +110,49 @@ final class SqlGeneratorTest extends TestCase
         self::assertNotSame('', $result);
     }
 
+    #[DataProvider('providerCanonicalIdentifierRule')]
+    public function testAugmentGrammarKeepsCanonicalIdentifierAlternatives(string $ruleName): void
+    {
+        $grammar = Grammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+
+        $ref = new \ReflectionClass($generator);
+        $prop = $ref->getProperty('grammar');
+        /** @var Grammar $augmented */
+        $augmented = $prop->getValue($generator);
+
+        $rule = $augmented->ruleMap[$ruleName];
+        self::assertCount(1, $rule->alternatives, "{$ruleName} should be reduced to its canonical identifier form");
+        $symbol = $rule->alternatives[0]->symbols[0] ?? null;
+        self::assertInstanceOf(NonTerminal::class, $symbol);
+        self::assertSame('IDENT_sys', $symbol->value);
+    }
+
+    public function testAugmentGrammarCanonicalizesUserRule(): void
+    {
+        $grammar = Grammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+
+        $ref = new \ReflectionClass($generator);
+        $prop = $ref->getProperty('grammar');
+        /** @var Grammar $augmented */
+        $augmented = $prop->getValue($generator);
+
+        self::assertCount(1, $augmented->ruleMap['user']->alternatives);
+        self::assertSame(['TEXT_STRING_sys', '@', 'TEXT_STRING_sys'], array_map(
+            static function ($symbol): string {
+                return match (true) {
+                    $symbol instanceof NonTerminal => $symbol->value,
+                    $symbol instanceof Terminal => $symbol->value,
+                    default => throw new LogicException('Unexpected symbol type.'),
+                };
+            },
+            $augmented->ruleMap['user']->alternatives[0]->symbols,
+        ));
+    }
+
     public function testGenerateTreatsTargetDepthLessThanOneAsOne(): void
     {
         $faker = Factory::create();
@@ -713,42 +756,40 @@ final class SqlGeneratorTest extends TestCase
         self::assertSame('@var', $result);
     }
 
-    public function testGenerateSanitizesEqualSymBeforeAll(): void
+    public function testAugmentGrammarExcludesNullSafeEqualsFromAllOrAnyComparisons(): void
     {
+        $grammar = Grammar::load();
         $faker = Factory::create();
-        $faker->seed(12345);
-        $grammar = new Grammar('stmt', [
-            'stmt' => new ProductionRule('stmt', [
-                new Production([
-                    new Terminal('EQUAL_SYM'),
-                    new Terminal('ALL_SYM'),
-                ]),
-            ]),
-        ]);
         $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
 
-        $result = $generator->generate('stmt');
+        $ref = new \ReflectionClass($generator);
+        $prop = $ref->getProperty('grammar');
+        /** @var Grammar $augmented */
+        $augmented = $prop->getValue($generator);
 
-        self::assertSame('= ALL', $result);
-    }
+        self::assertArrayHasKey('comp_op_all_or_any', $augmented->ruleMap);
+        self::assertSame([], array_values(array_filter(
+            $augmented->ruleMap['comp_op_all_or_any']->alternatives,
+            static function (Production $alt): bool {
+                $first = $alt->symbols[0] ?? null;
 
-    public function testGenerateSanitizesEqualSymBeforeAny(): void
-    {
-        $faker = Factory::create();
-        $faker->seed(12345);
-        $grammar = new Grammar('stmt', [
-            'stmt' => new ProductionRule('stmt', [
-                new Production([
-                    new Terminal('EQUAL_SYM'),
-                    new Terminal('ANY_SYM'),
-                ]),
-            ]),
-        ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
-
-        $result = $generator->generate('stmt');
-
-        self::assertSame('= ANY', $result);
+                return $first instanceof Terminal && $first->value === 'EQUAL_SYM';
+            },
+        )));
+        self::assertNotSame([], array_values(array_filter(
+            $augmented->ruleMap['bool_pri']->alternatives,
+            static function (Production $alt): bool {
+                return count($alt->symbols) === 4
+                    && $alt->symbols[0] instanceof NonTerminal
+                    && $alt->symbols[0]->value === 'bool_pri'
+                    && $alt->symbols[1] instanceof NonTerminal
+                    && $alt->symbols[1]->value === 'comp_op_all_or_any'
+                    && $alt->symbols[2] instanceof NonTerminal
+                    && $alt->symbols[2]->value === 'all_or_any'
+                    && $alt->symbols[3] instanceof NonTerminal
+                    && $alt->symbols[3]->value === 'table_subquery';
+            },
+        )));
     }
 
     public function testGenerateKeepsEqualSymBeforeOtherTokens(): void
@@ -789,25 +830,34 @@ final class SqlGeneratorTest extends TestCase
         self::assertSame('a <=>', $result);
     }
 
-    public function testGenerateSanitizesChainBeforeRelease(): void
+    public function testAugmentGrammarExcludesCommitAndChainReleaseCombination(): void
     {
+        $grammar = Grammar::load();
         $faker = Factory::create();
-        $faker->seed(12345);
-        $grammar = new Grammar('stmt', [
-            'stmt' => new ProductionRule('stmt', [
-                new Production([
-                    new Terminal('COMMIT_SYM'),
-                    new Terminal('AND_SYM'),
-                    new Terminal('CHAIN_SYM'),
-                    new Terminal('RELEASE_SYM'),
-                ]),
-            ]),
-        ]);
         $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
 
-        $result = $generator->generate('stmt');
+        $ref = new \ReflectionClass($generator);
+        $prop = $ref->getProperty('grammar');
+        /** @var Grammar $augmented */
+        $augmented = $prop->getValue($generator);
 
-        self::assertSame('COMMIT AND CHAIN', $result);
+        self::assertSame([], array_values(array_filter(
+            $augmented->ruleMap['commit']->alternatives,
+            static function (Production $alt): bool {
+                $names = array_map(
+                    static function ($symbol): string {
+                        return match (true) {
+                            $symbol instanceof NonTerminal => $symbol->value,
+                            $symbol instanceof Terminal => $symbol->value,
+                            default => throw new LogicException('Unexpected symbol type.'),
+                        };
+                    },
+                    $alt->symbols,
+                );
+
+                return array_slice($names, -3) === ['AND_SYM', 'CHAIN_SYM', 'RELEASE_SYM'];
+            },
+        )));
     }
 
     public function testGenerateKeepsNoChainBeforeRelease(): void
@@ -854,65 +904,630 @@ final class SqlGeneratorTest extends TestCase
         self::assertSame('COMMIT AND CHAIN NO RELEASE', $result);
     }
 
-    public function testGenerateSanitizesFloatAfterColon(): void
+    public function testAugmentGrammarRemovesCloneEndpointVariant(): void
     {
+        $grammar = Grammar::load();
         $faker = Factory::create();
-        $faker->seed(12345);
-        $grammar = new Grammar('stmt', [
-            'stmt' => new ProductionRule('stmt', [
-                new Production([
-                    new Terminal(':'),
-                    new Terminal('FLOAT_NUM'),
-                ]),
-            ]),
-        ]);
         $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
 
-        $result = $generator->generate('stmt');
+        $ref = new \ReflectionClass($generator);
+        $prop = $ref->getProperty('grammar');
+        /** @var Grammar $augmented */
+        $augmented = $prop->getValue($generator);
 
-        self::assertMatchesRegularExpression('/^: \d+$/', $result);
+        self::assertCount(1, $augmented->ruleMap['clone_stmt']->alternatives);
+        self::assertSame([
+            'CLONE_SYM',
+            'LOCAL_SYM',
+            'DATA_SYM',
+            'DIRECTORY_SYM',
+            'opt_equal',
+            'TEXT_STRING_filesystem',
+        ], array_map(
+            static function ($symbol): string {
+                return match (true) {
+                    $symbol instanceof NonTerminal => $symbol->value,
+                    $symbol instanceof Terminal => $symbol->value,
+                    default => throw new LogicException('Unexpected symbol type.'),
+                };
+            },
+            $augmented->ruleMap['clone_stmt']->alternatives[0]->symbols,
+        ));
     }
 
-    public function testGenerateSanitizesDecimalAfterSystem(): void
+    public function testAugmentGrammarCanonicalizesFlushOptions(): void
     {
+        $grammar = Grammar::load();
         $faker = Factory::create();
-        $faker->seed(12345);
-        $grammar = new Grammar('stmt', [
-            'stmt' => new ProductionRule('stmt', [
-                new Production([
-                    new Terminal('SYSTEM_SYM'),
-                    new Terminal('DECIMAL_NUM'),
-                ]),
-            ]),
-        ]);
         $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
 
-        $result = $generator->generate('stmt');
+        $ref = new \ReflectionClass($generator);
+        $prop = $ref->getProperty('grammar');
+        /** @var Grammar $augmented */
+        $augmented = $prop->getValue($generator);
 
-        self::assertMatchesRegularExpression('/^SYSTEM \d+$/', $result);
+        self::assertSame([], array_values(array_filter(
+            $augmented->ruleMap['opt_no_write_to_binlog']->alternatives,
+            static function (Production $alt): bool {
+                return in_array('LOCAL_SYM', array_map(
+                    static function ($symbol): string {
+                        return match (true) {
+                            $symbol instanceof NonTerminal => $symbol->value,
+                            $symbol instanceof Terminal => $symbol->value,
+                            default => throw new LogicException('Unexpected symbol type.'),
+                        };
+                    },
+                    $alt->symbols,
+                ), true);
+            },
+        )));
+        self::assertCount(1, $augmented->ruleMap['flush_options_list']->alternatives);
+        self::assertSame(['safe_flush_option'], array_map(
+            static function ($symbol): string {
+                return match (true) {
+                    $symbol instanceof NonTerminal => $symbol->value,
+                    $symbol instanceof Terminal => $symbol->value,
+                    default => throw new LogicException('Unexpected symbol type.'),
+                };
+            },
+            $augmented->ruleMap['flush_options_list']->alternatives[0]->symbols,
+        ));
+        self::assertSame([], array_values(array_filter(
+            $augmented->ruleMap['safe_flush_option']->alternatives,
+            static function (Production $alt): bool {
+                return in_array('RESOURCES', array_map(
+                    static function ($symbol): string {
+                        return match (true) {
+                            $symbol instanceof NonTerminal => $symbol->value,
+                            $symbol instanceof Terminal => $symbol->value,
+                            default => throw new LogicException('Unexpected symbol type.'),
+                        };
+                    },
+                    $alt->symbols,
+                ), true);
+            },
+        )));
     }
 
-    public function testGenerateSanitizesDottedIdentBeforeAt(): void
+    public function testAugmentGrammarSeparatesRoleRevokeFromPrivilegeRevoke(): void
     {
+        $grammar = Grammar::load();
         $faker = Factory::create();
-        $faker->seed(12345);
-        $grammar = new Grammar('stmt', [
-            'stmt' => new ProductionRule('stmt', [
-                new Production([
-                    new Terminal('IDENT'),
-                    new Terminal('.'),
-                    new Terminal('IDENT'),
-                    new Terminal('@'),
-                    new Terminal('LEX_HOSTNAME'),
-                ]),
-            ]),
-        ]);
         $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
 
-        $result = $generator->generate('stmt');
+        $ref = new \ReflectionClass($generator);
+        $prop = $ref->getProperty('grammar');
+        /** @var Grammar $augmented */
+        $augmented = $prop->getValue($generator);
 
-        self::assertStringNotContainsString('.', explode('@', $result)[0]);
-        self::assertStringContainsString('@', $result);
+        self::assertSame([], array_values(array_filter(
+            $augmented->ruleMap['revoke']->alternatives,
+            static function (Production $alt): bool {
+                $names = array_map(
+                    static function ($symbol): string {
+                        return match (true) {
+                            $symbol instanceof NonTerminal => $symbol->value,
+                            $symbol instanceof Terminal => $symbol->value,
+                            default => throw new LogicException('Unexpected symbol type.'),
+                        };
+                    },
+                    $alt->symbols,
+                );
+
+                return $names === ['REVOKE', 'if_exists', 'role_or_privilege_list', 'FROM', 'user_list', 'opt_ignore_unknown_user']
+                    || $names === ['REVOKE', 'if_exists', 'role_or_privilege_list', 'ON_SYM', 'opt_acl_type', 'grant_ident', 'FROM', 'user_list', 'opt_ignore_unknown_user'];
+            },
+        )));
+        self::assertNotSame([], array_values(array_filter(
+            $augmented->ruleMap['revoke']->alternatives,
+            static function (Production $alt): bool {
+                $names = array_map(
+                    static function ($symbol): string {
+                        return match (true) {
+                            $symbol instanceof NonTerminal => $symbol->value,
+                            $symbol instanceof Terminal => $symbol->value,
+                            default => throw new LogicException('Unexpected symbol type.'),
+                        };
+                    },
+                    $alt->symbols,
+                );
+
+                return $names === ['REVOKE', 'if_exists', 'revoked_role_list', 'FROM', 'user_list', 'opt_ignore_unknown_user'];
+            },
+        )));
+    }
+
+    public function testAugmentGrammarNormalizesRollbackCombinations(): void
+    {
+        $grammar = Grammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+
+        $ref = new \ReflectionClass($generator);
+        $prop = $ref->getProperty('grammar');
+        /** @var Grammar $augmented */
+        $augmented = $prop->getValue($generator);
+
+        self::assertSame([], array_values(array_filter(
+            $augmented->ruleMap['rollback']->alternatives,
+            static function (Production $alt): bool {
+                $names = array_map(
+                    static function ($symbol): string {
+                        return match (true) {
+                            $symbol instanceof NonTerminal => $symbol->value,
+                            $symbol instanceof Terminal => $symbol->value,
+                            default => throw new LogicException('Unexpected symbol type.'),
+                        };
+                    },
+                    $alt->symbols,
+                );
+
+                return $names === ['ROLLBACK_SYM', 'opt_work', 'AND_SYM', 'CHAIN_SYM', 'RELEASE_SYM'];
+            },
+        )));
+        self::assertNotSame([], array_values(array_filter(
+            $augmented->ruleMap['rollback']->alternatives,
+            static function (Production $alt): bool {
+                $names = array_map(
+                    static function ($symbol): string {
+                        return match (true) {
+                            $symbol instanceof NonTerminal => $symbol->value,
+                            $symbol instanceof Terminal => $symbol->value,
+                            default => throw new LogicException('Unexpected symbol type.'),
+                        };
+                    },
+                    $alt->symbols,
+                );
+
+                return $names === ['ROLLBACK_SYM', 'opt_work', 'AND_SYM', 'CHAIN_SYM', 'NO_SYM', 'RELEASE_SYM'];
+            },
+        )));
+    }
+
+    public function testAugmentGrammarConstrainsLimitOptionsToFiniteSafeSubset(): void
+    {
+        $grammar = Grammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+
+        $ref = new \ReflectionClass($generator);
+        $prop = $ref->getProperty('grammar');
+        /** @var Grammar $augmented */
+        $augmented = $prop->getValue($generator);
+
+        self::assertArrayHasKey('safe_limit_literal', $augmented->ruleMap);
+        self::assertSame(['safe_limit_literal'], array_map(
+            static function ($symbol): string {
+                return match (true) {
+                    $symbol instanceof NonTerminal => $symbol->value,
+                    $symbol instanceof Terminal => $symbol->value,
+                    default => throw new LogicException('Unexpected symbol type.'),
+                };
+            },
+            $augmented->ruleMap['limit_option']->alternatives[0]->symbols,
+        ));
+        self::assertSame(['0', '1', '2', '10', '100'], array_map(
+            static fn (Production $alt): string => $alt->symbols[0] instanceof Terminal ? $alt->symbols[0]->value : '',
+            $augmented->ruleMap['safe_limit_literal']->alternatives,
+        ));
+    }
+
+    public function testAugmentGrammarRestrictsChangeReplicationSourceOptionsToSafeScalarSubset(): void
+    {
+        $grammar = Grammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+
+        $ref = new \ReflectionClass($generator);
+        $prop = $ref->getProperty('grammar');
+        /** @var Grammar $augmented */
+        $augmented = $prop->getValue($generator);
+
+        self::assertArrayHasKey('change_replication_source_stmt', $augmented->ruleMap);
+        self::assertSame(['source_def'], array_map(
+            static function ($symbol): string {
+                return match (true) {
+                    $symbol instanceof NonTerminal => $symbol->value,
+                    $symbol instanceof Terminal => $symbol->value,
+                    default => throw new LogicException('Unexpected symbol type.'),
+                };
+            },
+            $augmented->ruleMap['source_defs']->alternatives[0]->symbols,
+        ));
+        self::assertSame([], array_values(array_filter(
+            $augmented->ruleMap['source_def']->alternatives,
+            static function (Production $alt): bool {
+                $names = array_map(
+                    static function ($symbol): string {
+                        return match (true) {
+                            $symbol instanceof NonTerminal => $symbol->value,
+                            $symbol instanceof Terminal => $symbol->value,
+                            default => throw new LogicException('Unexpected symbol type.'),
+                        };
+                    },
+                    $alt->symbols,
+                );
+
+                return $names === ['change_replication_source_compression_algorithm', 'EQ', 'TEXT_STRING_sys']
+                    || $names === ['source_file_def']
+                    || $names === ['PRIVILEGE_CHECKS_USER_SYM', 'EQ', 'privilege_check_def']
+                    || $names === ['ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS_SYM', 'EQ', 'assign_gtids_to_anonymous_transactions_def'];
+            },
+        )));
+    }
+
+    public function testAugmentGrammarConstrainsSrsIdentifiersToCanonicalNumericTokens(): void
+    {
+        $grammar = Grammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+
+        $ref = new \ReflectionClass($generator);
+        $prop = $ref->getProperty('grammar');
+        /** @var Grammar $augmented */
+        $augmented = $prop->getValue($generator);
+
+        self::assertArrayHasKey('srs_numeric_id', $augmented->ruleMap);
+        self::assertNotSame([], $augmented->ruleMap['srs_numeric_id']->alternatives);
+        self::assertSame([], array_values(array_filter(
+            $augmented->ruleMap['srs_numeric_id']->alternatives,
+            static function (Production $alt): bool {
+                return count($alt->symbols) !== 1 || !$alt->symbols[0] instanceof Terminal;
+            },
+        )));
+        self::assertSame(['1', '999999'], array_map(
+            static fn (Production $alt): string => $alt->symbols[0] instanceof Terminal ? $alt->symbols[0]->value : '',
+            $augmented->ruleMap['srs_numeric_id']->alternatives,
+        ));
+
+        self::assertNotSame([], array_values(array_filter(
+            $augmented->ruleMap['create_srs_stmt']->alternatives,
+            static function (Production $alt): bool {
+                return in_array('srs_numeric_id', array_map(
+                    static function ($symbol): string {
+                        return match (true) {
+                            $symbol instanceof NonTerminal => $symbol->value,
+                            $symbol instanceof Terminal => $symbol->value,
+                            default => throw new LogicException('Unexpected symbol type.'),
+                        };
+                    },
+                    $alt->symbols,
+                ), true);
+            },
+        )));
+        self::assertNotSame([], array_values(array_filter(
+            $augmented->ruleMap['drop_srs_stmt']->alternatives,
+            static function (Production $alt): bool {
+                return in_array('srs_numeric_id', array_map(
+                    static function ($symbol): string {
+                        return match (true) {
+                            $symbol instanceof NonTerminal => $symbol->value,
+                            $symbol instanceof Terminal => $symbol->value,
+                            default => throw new LogicException('Unexpected symbol type.'),
+                        };
+                    },
+                    $alt->symbols,
+                ), true);
+            },
+        )));
+    }
+
+    public function testAugmentGrammarRequiresAlterEventOptionClause(): void
+    {
+        $grammar = Grammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+
+        $ref = new \ReflectionClass($generator);
+        $prop = $ref->getProperty('grammar');
+        /** @var Grammar $augmented */
+        $augmented = $prop->getValue($generator);
+
+        self::assertCount(5, $augmented->ruleMap['alter_event_stmt']->alternatives);
+        self::assertSame([], array_values(array_filter(
+            $augmented->ruleMap['alter_event_stmt']->alternatives,
+            static function (Production $alt): bool {
+                return count(array_filter(
+                    $alt->symbols,
+                    static fn ($symbol): bool => $symbol instanceof NonTerminal
+                        && str_starts_with($symbol->value, 'nonempty_'),
+                )) !== 1;
+            },
+        )));
+    }
+
+    public function testAugmentGrammarFactorsAlterDatabaseEncryptionFamilyIntoDedicatedRoot(): void
+    {
+        $grammar = Grammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+
+        $ref = new \ReflectionClass($generator);
+        $prop = $ref->getProperty('grammar');
+        /** @var Grammar $augmented */
+        $augmented = $prop->getValue($generator);
+
+        self::assertArrayHasKey('alter_database_encryption_stmt', $augmented->ruleMap);
+        self::assertNotSame([], array_values(array_filter(
+            $augmented->ruleMap['alter_database_stmt']->alternatives,
+            static function (Production $alt): bool {
+                $names = array_map(
+                    static function ($symbol): string {
+                        return match (true) {
+                            $symbol instanceof NonTerminal => $symbol->value,
+                            $symbol instanceof Terminal => $symbol->value,
+                            default => throw new LogicException('Unexpected symbol type.'),
+                        };
+                    },
+                    $alt->symbols,
+                );
+
+                return $names === ['alter_database_encryption_stmt'];
+            },
+        )));
+        self::assertNotSame([], array_values(array_filter(
+            $augmented->ruleMap['alter_database_encryption_stmt']->alternatives,
+            static function (Production $alt): bool {
+                $names = array_map(
+                    static function ($symbol): string {
+                        return match (true) {
+                            $symbol instanceof NonTerminal => $symbol->value,
+                            $symbol instanceof Terminal => $symbol->value,
+                            default => throw new LogicException('Unexpected symbol type.'),
+                        };
+                    },
+                    $alt->symbols,
+                );
+
+                return $names === ['ALTER', 'DATABASE', 'ident', 'alter_database_options_with_encryption'];
+            },
+        )));
+    }
+
+    public function testAugmentGrammarConstrainsTopLevelTableValueConstructorsToNonEmptyRows(): void
+    {
+        $grammar = Grammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+
+        $ref = new \ReflectionClass($generator);
+        $prop = $ref->getProperty('grammar');
+        /** @var Grammar $augmented */
+        $augmented = $prop->getValue($generator);
+
+        self::assertArrayHasKey('table_value_constructor_1', $augmented->ruleMap);
+        self::assertArrayHasKey('table_value_constructor_8', $augmented->ruleMap);
+        self::assertSame(['table_value_constructor_1'], array_map(
+            static function ($symbol): string {
+                return match (true) {
+                    $symbol instanceof NonTerminal => $symbol->value,
+                    $symbol instanceof Terminal => $symbol->value,
+                    default => throw new LogicException('Unexpected symbol type.'),
+                };
+            },
+            $augmented->ruleMap['table_value_constructor']->alternatives[0]->symbols,
+        ));
+        self::assertSame(['VALUES', 'table_value_values_row_list_1'], array_map(
+            static function ($symbol): string {
+                return match (true) {
+                    $symbol instanceof NonTerminal => $symbol->value,
+                    $symbol instanceof Terminal => $symbol->value,
+                    default => throw new LogicException('Unexpected symbol type.'),
+                };
+            },
+            $augmented->ruleMap['table_value_constructor_1']->alternatives[0]->symbols,
+        ));
+        self::assertSame(['ROW_SYM', '(', 'table_value_values_8', ')'], array_map(
+            static function ($symbol): string {
+                return match (true) {
+                    $symbol instanceof NonTerminal => $symbol->value,
+                    $symbol instanceof Terminal => $symbol->value,
+                    default => throw new LogicException('Unexpected symbol type.'),
+                };
+            },
+            $augmented->ruleMap['table_value_row_value_explicit_8']->alternatives[0]->symbols,
+        ));
+        self::assertSame(['signed_literal'], array_map(
+            static function ($symbol): string {
+                return match (true) {
+                    $symbol instanceof NonTerminal => $symbol->value,
+                    $symbol instanceof Terminal => $symbol->value,
+                    default => throw new LogicException('Unexpected symbol type.'),
+                };
+            },
+            $augmented->ruleMap['table_value_expr']->alternatives[0]->symbols,
+        ));
+    }
+
+    public function testAugmentGrammarConstrainsSignalSqlstateToCanonicalLiterals(): void
+    {
+        $grammar = Grammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+
+        $ref = new \ReflectionClass($generator);
+        $prop = $ref->getProperty('grammar');
+        /** @var Grammar $augmented */
+        $augmented = $prop->getValue($generator);
+
+        self::assertArrayHasKey('signal_sqlstate_stmt', $augmented->ruleMap);
+        self::assertSame(['signal_sqlstate_stmt'], array_map(
+            static function ($symbol): string {
+                return match (true) {
+                    $symbol instanceof NonTerminal => $symbol->value,
+                    $symbol instanceof Terminal => $symbol->value,
+                    default => throw new LogicException('Unexpected symbol type.'),
+                };
+            },
+            $augmented->ruleMap['signal_stmt']->alternatives[0]->symbols,
+        ));
+        self::assertSame(['SQLSTATE_SYM', 'opt_value', 'safe_sqlstate_literal'], array_map(
+            static function ($symbol): string {
+                return match (true) {
+                    $symbol instanceof NonTerminal => $symbol->value,
+                    $symbol instanceof Terminal => $symbol->value,
+                    default => throw new LogicException('Unexpected symbol type.'),
+                };
+            },
+            $augmented->ruleMap['sqlstate']->alternatives[0]->symbols,
+        ));
+    }
+
+    public function testAugmentGrammarRequiresNameAndDefinitionForCreateSrs(): void
+    {
+        $grammar = Grammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+
+        $ref = new \ReflectionClass($generator);
+        $prop = $ref->getProperty('grammar');
+        /** @var Grammar $augmented */
+        $augmented = $prop->getValue($generator);
+
+        self::assertArrayHasKey('safe_srs_definition_literal', $augmented->ruleMap);
+        self::assertSame(['srs_name_attribute', 'srs_definition_attribute'], array_map(
+            static function ($symbol): string {
+                return match (true) {
+                    $symbol instanceof NonTerminal => $symbol->value,
+                    $symbol instanceof Terminal => $symbol->value,
+                    default => throw new LogicException('Unexpected symbol type.'),
+                };
+            },
+            $augmented->ruleMap['srs_attributes']->alternatives[0]->symbols,
+        ));
+        self::assertSame(['DEFINITION_SYM', 'safe_srs_definition_literal'], array_map(
+            static function ($symbol): string {
+                return match (true) {
+                    $symbol instanceof NonTerminal => $symbol->value,
+                    $symbol instanceof Terminal => $symbol->value,
+                    default => throw new LogicException('Unexpected symbol type.'),
+                };
+            },
+            $augmented->ruleMap['srs_definition_attribute']->alternatives[0]->symbols,
+        ));
+    }
+
+    public function testAugmentGrammarConstrainsSetSystemVariableFamily(): void
+    {
+        $grammar = Grammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+
+        $ref = new \ReflectionClass($generator);
+        $prop = $ref->getProperty('grammar');
+        /** @var Grammar $augmented */
+        $augmented = $prop->getValue($generator);
+
+        self::assertArrayHasKey('set_system_variable_stmt', $augmented->ruleMap);
+        self::assertSame(['set_system_variable_stmt'], array_map(
+            static function ($symbol): string {
+                return match (true) {
+                    $symbol instanceof NonTerminal => $symbol->value,
+                    $symbol instanceof Terminal => $symbol->value,
+                    default => throw new LogicException('Unexpected symbol type.'),
+                };
+            },
+            $augmented->ruleMap['set']->alternatives[0]->symbols,
+        ));
+        self::assertSame(['autocommit', 'equal', 'boolean_numeric_option'], array_map(
+            static function ($symbol): string {
+                return match (true) {
+                    $symbol instanceof NonTerminal => $symbol->value,
+                    $symbol instanceof Terminal => $symbol->value,
+                    default => throw new LogicException('Unexpected symbol type.'),
+                };
+            },
+            $augmented->ruleMap['safe_set_system_assignment']->alternatives[0]->symbols,
+        ));
+    }
+
+    public function testAugmentGrammarConstrainsReplicaUntilToAcceptedPairs(): void
+    {
+        $grammar = Grammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+
+        $ref = new \ReflectionClass($generator);
+        $prop = $ref->getProperty('grammar');
+        /** @var Grammar $augmented */
+        $augmented = $prop->getValue($generator);
+
+        self::assertSame(['source_log_file', 'EQ', 'TEXT_STRING_sys_nonewline', ',', 'source_log_pos', 'EQ', 'ulonglong_num'], array_map(
+            static function ($symbol): string {
+                return match (true) {
+                    $symbol instanceof NonTerminal => $symbol->value,
+                    $symbol instanceof Terminal => $symbol->value,
+                    default => throw new LogicException('Unexpected symbol type.'),
+                };
+            },
+            $augmented->ruleMap['replica_until']->alternatives[0]->symbols,
+        ));
+    }
+
+    public function testAugmentGrammarConstrainsDiagnosticsTargetsToUserVariables(): void
+    {
+        $grammar = Grammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+
+        $ref = new \ReflectionClass($generator);
+        $prop = $ref->getProperty('grammar');
+        /** @var Grammar $augmented */
+        $augmented = $prop->getValue($generator);
+
+        self::assertSame(['@', 'ident_or_text'], array_map(
+            static function ($symbol): string {
+                return match (true) {
+                    $symbol instanceof NonTerminal => $symbol->value,
+                    $symbol instanceof Terminal => $symbol->value,
+                    default => throw new LogicException('Unexpected symbol type.'),
+                };
+            },
+            $augmented->ruleMap['simple_target_specification']->alternatives[0]->symbols,
+        ));
+    }
+
+    public function testAugmentGrammarConstrainsExplainFormatAndAlterUserFactorDomains(): void
+    {
+        $grammar = Grammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+
+        $ref = new \ReflectionClass($generator);
+        $prop = $ref->getProperty('grammar');
+        /** @var Grammar $augmented */
+        $augmented = $prop->getValue($generator);
+
+        self::assertSame(['FORMAT_SYM', 'EQ', 'safe_explain_format_name'], array_map(
+            static function ($symbol): string {
+                return match (true) {
+                    $symbol instanceof NonTerminal => $symbol->value,
+                    $symbol instanceof Terminal => $symbol->value,
+                    default => throw new LogicException('Unexpected symbol type.'),
+                };
+            },
+            $augmented->ruleMap['opt_explain_format']->alternatives[1]->symbols,
+        ));
+        self::assertSame(['2', 'FACTOR_SYM'], array_map(
+            static function ($symbol): string {
+                return match (true) {
+                    $symbol instanceof NonTerminal => $symbol->value,
+                    $symbol instanceof Terminal => $symbol->value,
+                    default => throw new LogicException('Unexpected symbol type.'),
+                };
+            },
+            $augmented->ruleMap['factor']->alternatives[0]->symbols,
+        ));
+        self::assertSame(['alter_user_add_two_factors'], array_map(
+            static function ($symbol): string {
+                return match (true) {
+                    $symbol instanceof NonTerminal => $symbol->value,
+                    $symbol instanceof Terminal => $symbol->value,
+                    default => throw new LogicException('Unexpected symbol type.'),
+                };
+            },
+            $augmented->ruleMap['alter_user']->alternatives[11]->symbols,
+        ));
     }
 
     public function testGenerateKeepsSimpleIdentBeforeAt(): void
@@ -936,77 +1551,6 @@ final class SqlGeneratorTest extends TestCase
         self::assertStringNotContainsString('.', explode('@', $result)[0]);
     }
 
-    public function testGenerateSanitizesMultipleDottedIdentsBeforeAt(): void
-    {
-        $faker = Factory::create();
-        $faker->seed(12345);
-        $grammar = new Grammar('stmt', [
-            'stmt' => new ProductionRule('stmt', [
-                new Production([
-                    new Terminal('IDENT'),
-                    new Terminal('.'),
-                    new Terminal('IDENT'),
-                    new Terminal('.'),
-                    new Terminal('IDENT'),
-                    new Terminal('@'),
-                    new Terminal('LEX_HOSTNAME'),
-                ]),
-            ]),
-        ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
-
-        $result = $generator->generate('stmt');
-
-        self::assertStringNotContainsString('.', explode('@', $result)[0]);
-        self::assertStringContainsString('@', $result);
-    }
-
-    public function testGenerateSanitizesEmbeddedDotsInTokenBeforeAt(): void
-    {
-        $faker = Factory::create();
-        $faker->seed(12345);
-        $grammar = new Grammar('stmt', [
-            'stmt' => new ProductionRule('stmt', [
-                new Production([
-                    new Terminal('LEX_HOSTNAME'),
-                    new Terminal('@'),
-                    new Terminal('LEX_HOSTNAME'),
-                ]),
-            ]),
-        ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
-
-        $result = $generator->generate('stmt');
-
-        $parts = explode('@', $result);
-        self::assertStringNotContainsString('.', $parts[0]);
-        self::assertStringContainsString('@', $result);
-    }
-
-    public function testGenerateSanitizesCurrentUserParensBeforeColon(): void
-    {
-        $faker = Factory::create();
-        $faker->seed(12345);
-        $grammar = new Grammar('stmt', [
-            'stmt' => new ProductionRule('stmt', [
-                new Production([
-                    new Terminal('CURRENT_USER_SYM'),
-                    new Terminal('('),
-                    new Terminal(')'),
-                    new Terminal(':'),
-                    new Terminal('NUM'),
-                ]),
-            ]),
-        ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
-
-        $result = $generator->generate('stmt');
-
-        self::assertStringNotContainsString('(', $result);
-        self::assertStringContainsString('CURRENT_USER', $result);
-        self::assertStringContainsString(':', $result);
-    }
-
     public function testGenerateKeepsCurrentUserParensWithoutColon(): void
     {
         $faker = Factory::create();
@@ -1025,48 +1569,6 @@ final class SqlGeneratorTest extends TestCase
         $result = $generator->generate('stmt');
 
         self::assertSame('CURRENT_USER()', $result);
-    }
-
-    public function testGenerateAppendsEnableToIncompleteAlterEvent(): void
-    {
-        $faker = Factory::create();
-        $faker->seed(12345);
-        $grammar = new Grammar('stmt', [
-            'stmt' => new ProductionRule('stmt', [
-                new Production([
-                    new Terminal('ALTER_SYM'),
-                    new Terminal('EVENT_SYM'),
-                    new Terminal('IDENT'),
-                ]),
-            ]),
-        ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
-
-        $result = $generator->generate('stmt');
-
-        self::assertStringEndsWith('ENABLE', $result);
-    }
-
-    public function testGenerateAppendsEnableToIncompleteAlterEventQualified(): void
-    {
-        $faker = Factory::create();
-        $faker->seed(12345);
-        $grammar = new Grammar('stmt', [
-            'stmt' => new ProductionRule('stmt', [
-                new Production([
-                    new Terminal('ALTER_SYM'),
-                    new Terminal('EVENT_SYM'),
-                    new Terminal('IDENT'),
-                    new Terminal('.'),
-                    new Terminal('IDENT'),
-                ]),
-            ]),
-        ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
-
-        $result = $generator->generate('stmt');
-
-        self::assertStringEndsWith('ENABLE', $result);
     }
 
     public function testGenerateKeepsCompleteAlterEvent(): void
@@ -1150,6 +1652,29 @@ final class SqlGeneratorTest extends TestCase
         self::assertMatchesRegularExpression('/^SELECT \d+\.\d+e-?\d+$/', $result);
     }
 
+    public function testGenerateUsesFreshCanonicalIdentifiersWithinSingleStatement(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([
+                    new Terminal('SELECT_SYM'),
+                    new Terminal('IDENT'),
+                    new Terminal(','),
+                    new Terminal('IDENT'),
+                    new Terminal(','),
+                    new Terminal('IDENT_QUOTED'),
+                ]),
+            ]),
+        ]);
+        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+
+        $result = $generator->generate('stmt');
+
+        self::assertSame('SELECT _i0, _i1, `_i2`', $result);
+    }
+
     /**
      * @return iterable<string, array{int, int}>
      */
@@ -1157,6 +1682,17 @@ final class SqlGeneratorTest extends TestCase
     {
         yield 'seeds 0 and 4' => [0, 4];
         yield 'seeds 0 and 7' => [0, 7];
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerCanonicalIdentifierRule(): iterable
+    {
+        yield 'ident' => ['ident'];
+        yield 'label_ident' => ['label_ident'];
+        yield 'role_ident' => ['role_ident'];
+        yield 'lvalue_ident' => ['lvalue_ident'];
     }
 
     /**

@@ -227,7 +227,7 @@ final class MySqlProvider extends Base
      *
      * @example $faker->stringLiteral() // "'hello'"
      */
-    public function stringLiteral(int $minLength = 1, int $maxLength = 255): string
+    public function stringLiteral(int $minLength = 1, int $maxLength = 32): string
     {
         return "'" . $this->rsg->mixedAlnumString($minLength, $maxLength) . "'";
     }
@@ -239,7 +239,7 @@ final class MySqlProvider extends Base
      *
      * @example $faker->nationalStringLiteral() // "N'hello'"
      */
-    public function nationalStringLiteral(int $minLength = 1, int $maxLength = 255): string
+    public function nationalStringLiteral(int $minLength = 1, int $maxLength = 32): string
     {
         return 'N' . $this->stringLiteral($minLength, $maxLength);
     }
@@ -251,7 +251,7 @@ final class MySqlProvider extends Base
      *
      * @example $faker->dollarQuotedString() // "$$hello$$"
      */
-    public function dollarQuotedString(int $minLength = 1, int $maxLength = 255): string
+    public function dollarQuotedString(int $minLength = 1, int $maxLength = 32): string
     {
         return '$$' . $this->rsg->mixedAlnumString($minLength, $maxLength) . '$$';
     }
@@ -347,9 +347,25 @@ final class MySqlProvider extends Base
      *
      * @example $faker->hostname() // "abc.def"
      */
-    public function hostname(int $minParts = 1, int $maxParts = 4, int $maxPartLength = 63): string
+    public function hostname(int $minParts = 1, int $maxParts = 1, int $maxPartLength = 16): string
     {
         return $this->rsg->hostnameString($minParts, $maxParts, 1, $maxPartLength);
+    }
+
+    /**
+     * Generate a replication filter wildcard pattern in db.table form.
+     */
+    public function filterWildcardPattern(int $maxPartLength = 12): string
+    {
+        return sprintf("'%s.%s'", $this->hostname(1, 1, $maxPartLength), $this->hostname(1, 1, $maxPartLength));
+    }
+
+    /**
+     * Generate a valid RESET MASTER TO index.
+     */
+    public function resetMasterIndex(): string
+    {
+        return $this->rsg->integerString(1, 2_000_000_000);
     }
 
     /**

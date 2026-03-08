@@ -14,9 +14,10 @@ use Faker\Generator as FakerGenerator;
  */
 final class RandomStringGenerator
 {
-    private const ALPHA_UNDERSCORE = 'abcdefghijklmnopqrstuvwxyz_';
+    private const INITIAL_IDENTIFIER_CHARS = '_';
     private const ALNUM_UNDERSCORE = 'abcdefghijklmnopqrstuvwxyz0123456789_';
     private const MIXED_ALNUM_UNDERSCORE = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_';
+    private const HOSTNAME_INITIAL_CHARS = 'abcdefghijklmnopqrstuvwxyz';
     private const HOSTNAME_CHARS = 'abcdefghijklmnopqrstuvwxyz0123456789';
     private const HEX_CHARS = '0123456789abcdef';
     private const DIGIT_CHARS = '0123456789';
@@ -36,8 +37,16 @@ final class RandomStringGenerator
     {
         $length = $this->faker->numberBetween(max($minLength, 1), $maxLength);
 
-        return $this->randomChar(self::ALPHA_UNDERSCORE)
+        return $this->randomChar(self::INITIAL_IDENTIFIER_CHARS)
             . $this->randomString(self::ALNUM_UNDERSCORE, $length - 1);
+    }
+
+    /**
+     * Generate a canonical fresh identifier for statement-local rendering.
+     */
+    public function canonicalIdentifier(int $ordinal): string
+    {
+        return '_i' . base_convert((string) max($ordinal, 0), 10, 36);
     }
 
     /**
@@ -95,7 +104,9 @@ final class RandomStringGenerator
         $parts = $this->faker->numberBetween($minParts, $maxParts);
         $segments = [];
         for ($p = 0; $p < $parts; $p++) {
-            $segments[] = $this->randomString(self::HOSTNAME_CHARS, $this->faker->numberBetween($minPartLength, $maxPartLength));
+            $partLength = $this->faker->numberBetween($minPartLength, $maxPartLength);
+            $segments[] = $this->randomChar(self::HOSTNAME_INITIAL_CHARS)
+                . $this->randomString(self::HOSTNAME_CHARS, $partLength - 1);
         }
 
         return implode('.', $segments);

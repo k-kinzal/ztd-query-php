@@ -1,0 +1,145 @@
+[
+  {
+    "id": "SQLITE-CONTRACT-GRAMMAR-STRUCTURE",
+    "level": "contract",
+    "dialect": "sqlite",
+    "statement": "WHEN the SQLite constrained grammar is compiled, THEN the designated entry and retained families SHALL remain closed, non-empty, terminating, and reachable.",
+    "subject": { "kind": "grammar" },
+    "evidence": [
+      { "kind": "grammar.no_undefined_references" },
+      { "kind": "grammar.no_empty_rules" },
+      { "kind": "grammar.entries.present" },
+      { "kind": "grammar.entries.terminate" },
+      {
+        "kind": "grammar.families.reachable",
+        "families": [
+          "sqlite.statement.any",
+          "sqlite.statement.select",
+          "sqlite.constraint.select.star_requires_from",
+          "sqlite.constraint.select.set_operation",
+          "sqlite.constraint.select.values_clause",
+          "sqlite.constraint.temporary_object_name_binding",
+          "sqlite.statement.insert",
+          "sqlite.statement.update",
+          "sqlite.statement.delete",
+          "sqlite.statement.create_table",
+          "sqlite.statement.alter_table",
+          "sqlite.statement.drop_table",
+          "sqlite.constraint.attach.expression",
+          "sqlite.constraint.detach.expression",
+          "sqlite.constraint.vacuum.into_expression",
+          "sqlite.lex.identifier.context"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "SQLITE-CONTRACT-CREATE-TABLE-COMPLETE-STATEMENT",
+    "level": "contract",
+    "dialect": "sqlite",
+    "statement": "WHEN SQLite CREATE TABLE is exposed as a start rule, THEN it SHALL denote a complete statement with create-table arguments, identifier-only table names, and unqualified TEMP table names.",
+    "subject": { "kind": "grammar" },
+    "evidence": [
+      { "kind": "grammar.rule.contains_sequence", "rule": "create_table", "sequence": ["nt:create_table_head", "nt:create_table_args"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "create_table_head", "sequence": ["nt:createkw", "t:TABLE", "nt:ifnotexists", "nt:nm", "nt:safe_dbnm"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "create_table_head", "sequence": ["nt:createkw", "t:TEMP", "t:TABLE", "nt:ifnotexists", "nt:nm"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "cmd", "sequence": ["nt:create_table", "nt:create_table_args"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "nm", "sequence": ["t:STRING"] }
+    ]
+  },
+  {
+    "id": "SQLITE-CONTRACT-TEMPORARY-OBJECT-NAME-BINDING",
+    "level": "contract",
+    "dialect": "sqlite",
+    "statement": "WHEN SQLite temporary TABLE, VIEW, and TRIGGER statements are refined, THEN temporary object names SHALL remain unqualified while non-temporary branches may carry the optional schema suffix.",
+    "subject": { "kind": "grammar" },
+    "evidence": [
+      { "kind": "grammar.rule.contains_sequence", "rule": "create_table_head", "sequence": ["nt:createkw", "t:TEMP", "t:TABLE", "nt:ifnotexists", "nt:nm"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "create_view_stmt", "sequence": ["nt:createkw", "t:TEMP", "t:VIEW", "nt:ifnotexists", "nt:nm", "nt:eidlist_opt", "t:AS", "nt:select"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "trigger_decl", "sequence": ["t:TEMP", "t:TRIGGER", "nt:ifnotexists", "nt:nm", "nt:trigger_time", "nt:trigger_event", "t:ON", "nt:fullname", "nt:foreach_clause", "nt:when_clause"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "trigger_decl", "sequence": ["t:TEMP", "t:TRIGGER", "nt:ifnotexists", "nt:nm", "nt:safe_dbnm", "nt:trigger_time", "nt:trigger_event", "t:ON", "nt:fullname", "nt:foreach_clause", "nt:when_clause"] }
+    ]
+  },
+  {
+    "id": "SQLITE-CONTRACT-ATTACH-DETACH-EXPRESSIONS",
+    "level": "contract",
+    "dialect": "sqlite",
+    "statement": "WHEN SQLite ATTACH and DETACH statements are refined, THEN database filenames and schema names SHALL come from dedicated safe expression families instead of unrestricted expr branches.",
+    "subject": { "kind": "grammar" },
+    "evidence": [
+      { "kind": "grammar.rule.contains_sequence", "rule": "attach_stmt", "sequence": ["t:ATTACH", "nt:database_kw_opt", "nt:safe_attach_filename_expr", "t:AS", "nt:safe_attach_schema_expr", "nt:key_opt"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "detach_stmt", "sequence": ["t:DETACH", "nt:database_kw_opt", "nt:safe_attach_schema_expr"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "safe_attach_filename_expr", "sequence": ["t:STRING"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "safe_attach_schema_expr", "sequence": ["nt:nm"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "cmd", "sequence": ["t:ATTACH", "nt:database_kw_opt", "nt:expr", "t:AS", "nt:expr", "nt:key_opt"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "cmd", "sequence": ["t:DETACH", "nt:database_kw_opt", "nt:expr"] }
+    ]
+  },
+  {
+    "id": "SQLITE-CONTRACT-VACUUM-INTO-EXPRESSION",
+    "level": "contract",
+    "dialect": "sqlite",
+    "statement": "WHEN SQLite VACUUM statements are refined, THEN INTO targets SHALL come from a dedicated safe filename-expression family instead of unrestricted expr branches.",
+    "subject": { "kind": "grammar" },
+    "evidence": [
+      { "kind": "grammar.rule.contains_sequence", "rule": "vacuum_stmt", "sequence": ["t:VACUUM", "nt:safe_vinto"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "vacuum_stmt", "sequence": ["t:VACUUM", "nt:nm", "nt:safe_vinto"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "safe_vinto", "sequence": ["t:INTO", "nt:safe_vacuum_into_expr"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "safe_vacuum_into_expr", "sequence": ["t:STRING"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "cmd", "sequence": ["t:VACUUM", "nt:vinto"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "cmd", "sequence": ["t:VACUUM", "nt:nm", "nt:vinto"] }
+    ]
+  },
+  {
+    "id": "SQLITE-CONTRACT-SELECT-STAR-REQUIRES-FROM",
+    "level": "contract",
+    "dialect": "sqlite",
+    "statement": "WHEN SQLite SELECT statements are refined, THEN STAR result columns SHALL remain only in branches with an explicit FROM clause, while FROM-free branches SHALL use expression result columns.",
+    "subject": { "kind": "grammar" },
+    "evidence": [
+      { "kind": "grammar.rule.contains_sequence", "rule": "oneselect", "sequence": ["t:SELECT", "nt:distinct", "nt:safe_selcollist_no_from", "nt:where_opt", "nt:groupby_opt", "nt:having_opt", "nt:window_clause", "nt:orderby_opt", "nt:limit_opt"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "oneselect", "sequence": ["t:SELECT", "nt:distinct", "nt:selcollist", "nt:safe_from_clause", "nt:where_opt", "nt:groupby_opt", "nt:having_opt", "nt:orderby_opt", "nt:limit_opt"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "safe_selcollist_no_from", "sequence": ["nt:sclp", "nt:scanpt", "t:STAR"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "safe_selcollist_no_from", "sequence": ["nt:sclp", "nt:scanpt", "nt:nm", "t:DOT", "t:STAR"] }
+    ]
+  },
+  {
+    "id": "SQLITE-CONTRACT-SELECT-SET-OPERATION",
+    "level": "contract",
+    "dialect": "sqlite",
+    "statement": "WHEN SQLite compound SELECT statements are refined, THEN set-operation operands SHALL come from finite equal-arity operand families instead of the raw recursive selectnowith plus oneselect combination.",
+    "subject": { "kind": "grammar" },
+    "evidence": [
+      { "kind": "grammar.rule.contains_sequence", "rule": "selectnowith", "sequence": ["nt:oneselect"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "selectnowith", "sequence": ["nt:setop_select_stmt"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "selectnowith", "sequence": ["nt:selectnowith", "nt:multiselect_op", "nt:oneselect"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "setop_select_stmt_1", "sequence": ["nt:setop_select_operand_1", "nt:multiselect_op", "nt:setop_select_operand_1"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "setop_select_stmt_8", "sequence": ["nt:setop_select_operand_8", "nt:multiselect_op", "nt:setop_select_operand_8"] }
+    ]
+  },
+  {
+    "id": "SQLITE-CONTRACT-SELECT-VALUES-CLAUSE",
+    "level": "contract",
+    "dialect": "sqlite",
+    "statement": "WHEN SQLite VALUES clauses are refined for SELECT-family generation, THEN row expressions SHALL come from finite row-arity families and multirow clauses SHALL preserve a single row arity.",
+    "subject": { "kind": "grammar" },
+    "evidence": [
+      { "kind": "grammar.rule.contains_sequence", "rule": "oneselect", "sequence": ["nt:select_values_clause"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "select_values_clause", "sequence": ["nt:select_values_clause_1"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "select_values_clause", "sequence": ["nt:select_values_clause_8"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "safe_select_value_expr", "sequence": ["nt:term"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "select_value_row_list_8", "sequence": ["nt:select_value_row_list_8", "t:COMMA", "nt:select_value_row_8"] }
+    ]
+  },
+  {
+    "id": "SQLITE-CONTRACT-GENERAL-EXPR-EXCLUDES-TRIGGER-RAISE",
+    "level": "contract",
+    "dialect": "sqlite",
+    "statement": "WHEN SQLite general expressions are refined for top-level statement generation, THEN trigger-program-only RAISE expressions SHALL be excluded from the public expr surface.",
+    "subject": { "kind": "grammar" },
+    "evidence": [
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "expr", "sequence": ["t:RAISE", "t:LP", "t:IGNORE", "t:RP"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "expr", "sequence": ["t:RAISE", "t:LP", "nt:raisetype", "t:COMMA", "nt:expr", "t:RP"] }
+    ]
+  }
+]

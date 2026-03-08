@@ -354,6 +354,17 @@ final class PostgreSqlProviderTest extends TestCase
         self::assertNotSame('', $result);
     }
 
+    #[DataProvider('providerCanonicalIdentifierSeed')]
+    public function testIdentifierAvoidsKeywordAlternatives(int $seed): void
+    {
+        $faker = Factory::create();
+        $provider = new PostgreSqlProvider($faker);
+
+        $faker->seed($seed);
+
+        self::assertDoesNotMatchRegularExpression('/^(VALUES|DELETE|UPDATE|BY|SET|INDEX)$/i', $provider->identifier(3));
+    }
+
     public function testQuotedIdentifier(): void
     {
         $faker = Factory::create();
@@ -373,7 +384,7 @@ final class PostgreSqlProviderTest extends TestCase
 
         $result = $provider->stringLiteral();
 
-        self::assertMatchesRegularExpression("/^'[a-zA-Z0-9_]{1,255}'$/", $result);
+        self::assertMatchesRegularExpression("/^'[a-zA-Z0-9_]{1,32}'$/", $result);
     }
 
     public function testIntegerLiteral(): void
@@ -439,7 +450,7 @@ final class PostgreSqlProviderTest extends TestCase
 
         $result = $provider->dollarQuotedString();
 
-        self::assertMatchesRegularExpression('/^\$\$[a-zA-Z0-9_]{1,255}\$\$$/', $result);
+        self::assertMatchesRegularExpression('/^\$\$[a-zA-Z0-9_]{1,32}\$\$$/', $result);
     }
 
     public function testParameterMarker(): void
@@ -470,7 +481,7 @@ final class PostgreSqlProviderTest extends TestCase
         $faker->seed(42);
         $a = $p->stringLiteral();
         $faker->seed(42);
-        self::assertSame($a, $p->stringLiteral(1, 255));
+        self::assertSame($a, $p->stringLiteral(1, 32));
     }
 
     public function testIntegerLiteralDefaultMatchesExplicit(): void
@@ -530,7 +541,7 @@ final class PostgreSqlProviderTest extends TestCase
         $faker->seed(42);
         $a = $p->dollarQuotedString();
         $faker->seed(42);
-        self::assertSame($a, $p->dollarQuotedString(1, 255));
+        self::assertSame($a, $p->dollarQuotedString(1, 32));
     }
 
     public function testParameterMarkerDefaultMatchesExplicit(): void
@@ -755,5 +766,15 @@ final class PostgreSqlProviderTest extends TestCase
         yield 'CreateTable' => [StatementType::CreateTable];
         yield 'AlterTable' => [StatementType::AlterTable];
         yield 'DropTable' => [StatementType::DropTable];
+    }
+
+    /**
+     * @return iterable<string, array{int}>
+     */
+    public static function providerCanonicalIdentifierSeed(): iterable
+    {
+        foreach (range(0, 512) as $seed) {
+            yield "seed {$seed}" => [$seed];
+        }
     }
 }

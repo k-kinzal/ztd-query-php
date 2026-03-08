@@ -1,0 +1,252 @@
+[
+  {
+    "id": "MYSQL-CONTRACT-GRAMMAR-STRUCTURE",
+    "level": "contract",
+    "dialect": "mysql",
+    "statement": "WHEN the MySQL constrained grammar is compiled, THEN the designated entry and retained families SHALL remain closed, non-empty, terminating, and reachable.",
+    "subject": { "kind": "grammar" },
+    "evidence": [
+      { "kind": "grammar.no_undefined_references" },
+      { "kind": "grammar.no_empty_rules" },
+      { "kind": "grammar.entries.present" },
+      { "kind": "grammar.entries.terminate" },
+      {
+        "kind": "grammar.families.reachable",
+        "families": [
+          "mysql.statement.any",
+          "mysql.statement.select",
+          "mysql.statement.insert",
+          "mysql.statement.update",
+          "mysql.statement.delete",
+          "mysql.constraint.transaction.commit",
+          "mysql.constraint.transaction.rollback",
+          "mysql.constraint.table_value_constructor",
+          "mysql.constraint.set_system_variable",
+          "mysql.constraint.create_srs",
+          "mysql.constraint.signal_sqlstate",
+          "mysql.constraint.show_warnings.limit",
+          "mysql.constraint.alter_database.encryption",
+          "mysql.constraint.change_replication_source",
+          "mysql.lex.identifier.context"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MYSQL-CONTRACT-ROLLBACK-COMBINATION",
+    "level": "contract",
+    "dialect": "mysql",
+    "statement": "WHEN the ROLLBACK family is refined, THEN only documented valid transaction-control combinations SHALL remain derivable.",
+    "subject": { "kind": "grammar" },
+    "evidence": [
+      { "kind": "grammar.rule.contains_sequence", "rule": "rollback", "sequence": ["t:ROLLBACK_SYM", "nt:opt_work"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "rollback", "sequence": ["t:ROLLBACK_SYM", "nt:opt_work", "t:RELEASE_SYM"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "rollback", "sequence": ["t:ROLLBACK_SYM", "nt:opt_work", "t:NO_SYM", "t:RELEASE_SYM"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "rollback", "sequence": ["t:ROLLBACK_SYM", "nt:opt_work", "t:AND_SYM", "t:CHAIN_SYM"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "rollback", "sequence": ["t:ROLLBACK_SYM", "nt:opt_work", "t:AND_SYM", "t:CHAIN_SYM", "t:NO_SYM", "t:RELEASE_SYM"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "rollback", "sequence": ["t:ROLLBACK_SYM", "nt:opt_work", "t:AND_SYM", "t:NO_SYM", "t:CHAIN_SYM"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "rollback", "sequence": ["t:ROLLBACK_SYM", "nt:opt_work", "t:AND_SYM", "t:NO_SYM", "t:CHAIN_SYM", "t:RELEASE_SYM"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "rollback", "sequence": ["t:ROLLBACK_SYM", "nt:opt_work", "t:AND_SYM", "t:NO_SYM", "t:CHAIN_SYM", "t:NO_SYM", "t:RELEASE_SYM"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "rollback", "sequence": ["t:ROLLBACK_SYM", "nt:opt_work", "t:AND_SYM", "t:CHAIN_SYM", "t:RELEASE_SYM"] }
+    ]
+  },
+  {
+    "id": "MYSQL-CONTRACT-REPLICA-UNTIL",
+    "level": "contract",
+    "dialect": "mysql",
+    "statement": "WHEN START REPLICA UNTIL is refined, THEN file-based UNTIL clauses SHALL keep the required file-and-position pair and stand-alone gaps mode SHALL not combine with file options.",
+    "subject": { "kind": "grammar" },
+    "evidence": [
+      { "kind": "grammar.rule.contains_sequence", "rule": "replica_until", "sequence": ["nt:source_log_file", "t:EQ", "nt:TEXT_STRING_sys_nonewline", "t:,", "nt:source_log_pos", "t:EQ", "nt:ulonglong_num"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "replica_until", "sequence": ["t:SQL_AFTER_MTS_GAPS"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "replica_until", "sequence": ["nt:source_file_def"] }
+    ]
+  },
+  {
+    "id": "MYSQL-CONTRACT-CHANGE-REPLICATION-SOURCE",
+    "level": "contract",
+    "dialect": "mysql",
+    "statement": "WHEN CHANGE REPLICATION SOURCE TO is refined, THEN source options SHALL stay inside the scalar canonical subset and exclude version-sensitive or pair-sensitive option families.",
+    "subject": { "kind": "grammar" },
+    "evidence": [
+      { "kind": "grammar.rule.contains_sequence", "rule": "change", "sequence": ["nt:change_replication_source_stmt"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "source_def", "sequence": ["nt:safe_replication_text_option"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "source_def", "sequence": ["nt:safe_replication_numeric_option"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "source_def", "sequence": ["nt:change_replication_source_compression_algorithm", "t:EQ", "nt:TEXT_STRING_sys"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "source_def", "sequence": ["nt:source_file_def"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "source_def", "sequence": ["t:PRIVILEGE_CHECKS_USER_SYM", "t:EQ", "nt:privilege_check_def"] }
+    ]
+  },
+  {
+    "id": "MYSQL-CONTRACT-RESIGNAL-INFORMATION",
+    "level": "contract",
+    "dialect": "mysql",
+    "statement": "WHEN SIGNAL or RESIGNAL condition information is refined, THEN duplicate information item names SHALL be excluded by canonical subset ordering.",
+    "subject": { "kind": "grammar" },
+    "evidence": [
+      { "kind": "grammar.rule.contains_sequence", "rule": "opt_set_signal_information", "sequence": ["t:SET_SYM", "nt:safe_signal_information_item_list"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "opt_set_signal_information", "sequence": ["t:SET_SYM", "nt:signal_information_item_list"] }
+    ]
+  },
+  {
+    "id": "MYSQL-CONTRACT-DIAGNOSTICS-TARGET",
+    "level": "contract",
+    "dialect": "mysql",
+    "statement": "WHEN diagnostics statements are refined, THEN targets SHALL be user variables rather than undeclared local identifiers.",
+    "subject": { "kind": "grammar" },
+    "evidence": [
+      { "kind": "grammar.rule.contains_sequence", "rule": "simple_target_specification", "sequence": ["t:@", "nt:ident_or_text"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "simple_target_specification", "sequence": ["nt:ident"] }
+    ]
+  },
+  {
+    "id": "MYSQL-CONTRACT-UNDO-TABLESPACE-OPTIONS",
+    "level": "contract",
+    "dialect": "mysql",
+    "statement": "WHEN DROP UNDO TABLESPACE is refined, THEN ENGINE options SHALL not repeat.",
+    "subject": { "kind": "grammar" },
+    "evidence": [
+      { "kind": "grammar.rule.contains_sequence", "rule": "opt_undo_tablespace_options", "sequence": ["nt:undo_tablespace_option"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "opt_undo_tablespace_options", "sequence": ["nt:undo_tablespace_option_list"] }
+    ]
+  },
+  {
+    "id": "MYSQL-CONTRACT-EXPLAIN-FORMAT",
+    "level": "contract",
+    "dialect": "mysql",
+    "statement": "WHEN EXPLAIN FORMAT is refined, THEN format names SHALL come from a canonical accepted subset.",
+    "subject": { "kind": "grammar" },
+    "evidence": [
+      { "kind": "grammar.rule.contains_sequence", "rule": "opt_explain_format", "sequence": ["t:FORMAT_SYM", "t:EQ", "nt:safe_explain_format_name"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "safe_explain_format_name", "sequence": ["t:TREE"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "safe_explain_format_name", "sequence": ["t:JSON"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "opt_explain_format", "sequence": ["t:FORMAT_SYM", "t:EQ", "nt:ident_or_text"] }
+    ]
+  },
+  {
+    "id": "MYSQL-CONTRACT-ALTER-USER-FACTOR",
+    "level": "contract",
+    "dialect": "mysql",
+    "statement": "WHEN ALTER USER multifactor clauses are refined, THEN factor numbers SHALL remain inside the accepted 2 or 3 subset.",
+    "subject": { "kind": "grammar" },
+    "evidence": [
+      { "kind": "grammar.rule.contains_sequence", "rule": "factor", "sequence": ["t:2", "t:FACTOR_SYM"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "factor", "sequence": ["t:3", "t:FACTOR_SYM"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "alter_user", "sequence": ["nt:alter_user_add_two_factors"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "alter_user", "sequence": ["nt:alter_user_drop_two_factors"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "factor", "sequence": ["t:NUM", "t:FACTOR_SYM"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "alter_user", "sequence": ["nt:user", "t:DROP", "nt:factor", "t:DROP", "nt:factor"] }
+    ]
+  },
+  {
+    "id": "MYSQL-CONTRACT-TABLE-VALUE-CONSTRUCTOR",
+    "level": "contract",
+    "dialect": "mysql",
+    "statement": "WHEN top-level VALUES table constructors are refined, THEN each ROW in that family SHALL remain finite-arity, non-empty, and free of INSERT-only DEFAULT values.",
+    "subject": { "kind": "grammar" },
+    "evidence": [
+      { "kind": "grammar.rule.contains_sequence", "rule": "table_value_constructor", "sequence": ["nt:table_value_constructor_1"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "table_value_constructor", "sequence": ["nt:table_value_constructor_8"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "table_value_constructor_1", "sequence": ["t:VALUES", "nt:table_value_values_row_list_1"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "table_value_row_value_explicit_1", "sequence": ["t:ROW_SYM", "t:(", "nt:table_value_values_1", "t:)"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "table_value_row_value_explicit_8", "sequence": ["t:ROW_SYM", "t:(", "nt:table_value_values_8", "t:)"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "table_value_expr", "sequence": ["nt:signed_literal"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "table_value_expr", "sequence": ["nt:null_as_literal"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "table_value_constructor_1", "sequence": ["t:VALUES", "nt:values_row_list"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "table_value_expr", "sequence": ["t:DEFAULT_SYM"] }
+    ]
+  },
+  {
+    "id": "MYSQL-CONTRACT-SET-SYSTEM-VARIABLE",
+    "level": "contract",
+    "dialect": "mysql",
+    "statement": "WHEN SET system variable statements are refined, THEN variable names and scope types SHALL come from a canonical accepted subset.",
+    "subject": { "kind": "grammar" },
+    "evidence": [
+      { "kind": "grammar.rule.contains_sequence", "rule": "set", "sequence": ["nt:set_system_variable_stmt"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "set_system_variable_stmt", "sequence": ["t:SET_SYM", "nt:safe_set_system_assignment"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "set_system_variable_stmt", "sequence": ["t:SET_SYM", "nt:safe_option_type", "nt:safe_set_system_assignment"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "safe_set_system_assignment", "sequence": ["t:autocommit", "nt:equal", "nt:boolean_numeric_option"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "safe_set_system_assignment", "sequence": ["t:sql_mode", "nt:equal", "nt:safe_sql_mode_literal"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "option_value_following_option_type", "sequence": ["nt:lvalue_variable", "nt:equal", "nt:set_expr_or_default"] }
+    ]
+  },
+  {
+    "id": "MYSQL-CONTRACT-CREATE-SRS",
+    "level": "contract",
+    "dialect": "mysql",
+    "statement": "WHEN CREATE SPATIAL REFERENCE SYSTEM is refined, THEN NAME and DEFINITION SHALL both be present and DEFINITION SHALL come from a canonical valid subset.",
+    "subject": { "kind": "grammar" },
+    "evidence": [
+      { "kind": "grammar.rule.contains_sequence", "rule": "srs_numeric_id", "sequence": ["t:1"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "srs_numeric_id", "sequence": ["t:999999"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "srs_attributes", "sequence": ["nt:srs_name_attribute", "nt:srs_definition_attribute"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "srs_attributes", "sequence": ["nt:srs_definition_attribute", "nt:srs_name_attribute"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "srs_definition_attribute", "sequence": ["t:DEFINITION_SYM", "nt:safe_srs_definition_literal"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "safe_srs_definition_literal", "sequence": ["t:'GEOGCS[\"WGS 84\",DATUM[\"World Geodetic System 1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.017453292519943278]]'"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "srs_definition_attribute", "sequence": ["t:DEFINITION_SYM", "nt:TEXT_STRING_sys_nonewline"] }
+    ]
+  },
+  {
+    "id": "MYSQL-CONTRACT-SIGNAL-SQLSTATE",
+    "level": "contract",
+    "dialect": "mysql",
+    "statement": "WHEN SIGNAL SQLSTATE is refined, THEN SQLSTATE literals SHALL come from a canonical accepted subset instead of arbitrary strings.",
+    "subject": { "kind": "grammar" },
+    "evidence": [
+      { "kind": "grammar.rule.contains_sequence", "rule": "signal_stmt", "sequence": ["nt:signal_sqlstate_stmt"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "signal_sqlstate_stmt", "sequence": ["t:SIGNAL_SYM", "nt:sqlstate", "nt:opt_set_signal_information"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "sqlstate", "sequence": ["t:SQLSTATE_SYM", "nt:opt_value", "nt:safe_sqlstate_literal"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "safe_sqlstate_literal", "sequence": ["t:'45000'"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "safe_sqlstate_literal", "sequence": ["t:'01000'"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "sqlstate", "sequence": ["t:SQLSTATE_SYM", "nt:opt_value", "nt:TEXT_STRING_literal"] }
+    ]
+  },
+  {
+    "id": "MYSQL-CONTRACT-IDENTIFIER-FRESHNESS",
+    "level": "contract",
+    "dialect": "mysql",
+    "statement": "WHEN canonical bare identifiers are rendered within one statement, THEN the rendering layer SHALL allocate fresh values from the statement-local identifier stream.",
+    "subject": { "kind": "family", "family": "mysql.lex.identifier.freshness" },
+    "evidence": [
+      { "kind": "witness.generates" },
+      { "kind": "witness.properties_distinct", "properties": ["first_identifier", "second_identifier"] },
+      { "kind": "outcome.kind_in", "allowedKinds": ["accepted", "state"] }
+    ]
+  },
+  {
+    "id": "MYSQL-CONTRACT-LIMIT-OPTION-DOMAIN",
+    "level": "contract",
+    "dialect": "mysql",
+    "statement": "WHEN MySQL LIMIT options are refined for syntax fuzzing, THEN only numeric canonical representatives SHALL remain in the limit domain.",
+    "subject": { "kind": "grammar" },
+    "evidence": [
+      { "kind": "grammar.rule.contains_sequence", "rule": "limit_option", "sequence": ["nt:safe_limit_literal"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "safe_limit_literal", "sequence": ["t:0"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "safe_limit_literal", "sequence": ["t:100"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "limit_option", "sequence": ["nt:ident"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "limit_option", "sequence": ["nt:param_marker"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "limit_option", "sequence": ["t:ULONGLONG_NUM"] }
+    ]
+  },
+  {
+    "id": "MYSQL-CONTRACT-ENCRYPTION-LITERAL-DOMAIN",
+    "level": "contract",
+    "dialect": "mysql",
+    "statement": "WHEN ENCRYPTION options are refined, THEN encryption literals SHALL be emitted from the canonical Y or N subset rather than arbitrary strings.",
+    "subject": { "kind": "grammar" },
+    "evidence": [
+      { "kind": "grammar.rule.contains_sequence", "rule": "safe_encryption_literal", "sequence": ["t:'Y'"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "safe_encryption_literal", "sequence": ["t:'N'"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "default_encryption", "sequence": ["nt:opt_default", "t:ENCRYPTION_SYM", "nt:opt_equal", "nt:safe_encryption_literal"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "alter_database_stmt", "sequence": ["nt:alter_database_encryption_stmt"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "alter_database_encryption_stmt", "sequence": ["t:ALTER", "t:DATABASE", "nt:ident", "nt:alter_database_options_with_encryption"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "alter_database_options_with_encryption", "sequence": ["nt:default_encryption"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "alter_database_stmt", "sequence": ["t:ALTER", "t:DATABASE", "nt:ident", "nt:alter_database_options"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "alter_database_stmt", "sequence": ["t:ALTER", "t:DATABASE", "nt:ident_or_empty", "nt:alter_database_options"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "default_encryption", "sequence": ["nt:opt_default", "t:ENCRYPTION_SYM", "nt:opt_equal", "nt:TEXT_STRING_sys"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "ts_option_encryption", "sequence": ["t:ENCRYPTION_SYM", "nt:opt_equal", "nt:TEXT_STRING_sys"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "create_table_option", "sequence": ["t:ENCRYPTION_SYM", "nt:opt_equal", "nt:TEXT_STRING_sys"] }
+    ]
+  }
+]

@@ -5,7 +5,14 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker;
 
 use Faker\Factory;
+use Fuzz\Policy\SqliteFuzzPolicy;
+use Fuzz\Probe\ProbePhase as FuzzProbePhase;
+use Fuzz\Probe\ProbeResult as FuzzProbeResult;
 use PHPUnit\Framework\Attributes\DataProvider;
+use Spec\Policy\OutcomeKind;
+use Spec\Policy\SqlitePolicy;
+use Spec\Probe\ProbePhase as SpecProbePhase;
+use Spec\Probe\ProbeResult as SpecProbeResult;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\NonTerminal;
@@ -324,7 +331,7 @@ final class SqliteProviderTest extends TestCase
 
         $result = $provider->stringLiteral();
 
-        self::assertMatchesRegularExpression("/^'[a-zA-Z0-9_]{1,255}'$/", $result);
+        self::assertMatchesRegularExpression("/^'[a-zA-Z0-9_]{1,32}'$/", $result);
     }
 
     public function testIntegerLiteral(): void
@@ -366,7 +373,7 @@ final class SqliteProviderTest extends TestCase
         $faker->seed(42);
         $a = $p->stringLiteral();
         $faker->seed(42);
-        self::assertSame($a, $p->stringLiteral(1, 255));
+        self::assertSame($a, $p->stringLiteral(1, 32));
     }
 
     public function testIntegerLiteralDefaultMatchesExplicit(): void
@@ -582,6 +589,35 @@ final class SqliteProviderTest extends TestCase
         $sql = $provider->createTableStatement(maxDepth: 6);
 
         self::assertStringContainsString('TABLE', $sql, "CREATE TABLE must contain TABLE: {$sql}");
+    }
+
+    public function testSpecPolicyTreatsNearSyntaxErrorAsSyntax(): void
+    {
+        $kind = (new SqlitePolicy())->classify(
+            SpecProbeResult::failed(
+                SpecProbePhase::Prepare,
+                null,
+                null,
+                'SQLSTATE[HY000]: General error: 1 near "FROM": syntax error',
+            ),
+        );
+
+        self::assertSame(OutcomeKind::Syntax, $kind);
+    }
+
+    public function testFuzzPolicyTreatsNearSyntaxErrorAsSyntax(): void
+    {
+        $decision = (new SqliteFuzzPolicy())->classify(
+            FuzzProbeResult::failed(
+                FuzzProbePhase::Prepare,
+                null,
+                null,
+                'SQLSTATE[HY000]: General error: 1 near "FROM": syntax error',
+            ),
+        );
+
+        self::assertSame('syntax', $decision->classification);
+        self::assertTrue($decision->shouldCrash);
     }
 
     /**

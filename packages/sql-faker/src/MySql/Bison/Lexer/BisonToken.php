@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace SqlFaker\MySql\Bison\Lexer;
 
+/**
+ * Value object representing one token emitted by the MySQL Bison lexer.
+ */
 final class BisonToken
 {
     public function __construct(

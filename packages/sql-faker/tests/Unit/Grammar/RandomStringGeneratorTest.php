@@ -19,13 +19,13 @@ final class RandomStringGeneratorTest extends TestCase
         gc_collect_cycles();
     }
 
-    public function testRawIdentifierStartsWithLetterOrUnderscore(): void
+    public function testRawIdentifierStartsWithSafeCanonicalPrefix(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
         $rsg = new RandomStringGenerator($faker);
         $results = array_map(static fn (): string => $rsg->rawIdentifier(), range(1, 50));
-        self::assertCount(50, array_filter($results, static fn (string $s): bool => preg_match('/^[a-z_][a-z0-9_]*$/', $s) === 1));
+        self::assertCount(50, array_filter($results, static fn (string $s): bool => preg_match('/^_[a-z0-9_]*$/', $s) === 1));
     }
 
     public function testRawIdentifierLengthRange(): void
@@ -36,6 +36,27 @@ final class RandomStringGeneratorTest extends TestCase
         $lengths = array_map(static fn (): int => strlen($rsg->rawIdentifier()), range(1, 200));
         self::assertGreaterThanOrEqual(1, min($lengths));
         self::assertLessThanOrEqual(12, max($lengths));
+    }
+
+    public function testCanonicalIdentifierUsesStableSafePrefix(): void
+    {
+        $faker = Factory::create();
+        $rsg = new RandomStringGenerator($faker);
+
+        self::assertSame('_i0', $rsg->canonicalIdentifier(0));
+        self::assertSame('_i1', $rsg->canonicalIdentifier(1));
+        self::assertSame('_iz', $rsg->canonicalIdentifier(35));
+        self::assertSame('_i10', $rsg->canonicalIdentifier(36));
+    }
+
+    public function testCanonicalIdentifierRemainsUniqueAcrossOrdinals(): void
+    {
+        $faker = Factory::create();
+        $rsg = new RandomStringGenerator($faker);
+        $values = array_map(static fn (int $ordinal): string => $rsg->canonicalIdentifier($ordinal), range(0, 128));
+
+        self::assertCount(129, array_unique($values));
+        self::assertCount(129, array_filter($values, static fn (string $value): bool => preg_match('/^_i[a-z0-9]+$/', $value) === 1));
     }
 
     public function testMixedAlnumStringCharacterSet(): void
@@ -130,6 +151,24 @@ final class RandomStringGeneratorTest extends TestCase
         $rsg = new RandomStringGenerator($faker);
         $results = array_map(static fn (): string => $rsg->hostnameString(), range(1, 50));
         self::assertCount(50, array_filter($results, static fn (string $s): bool => preg_match('/^[a-z0-9]+(\.[a-z0-9]+)*$/', $s) === 1));
+    }
+
+    public function testHostnameStringStartsWithLetterInEachSegment(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(42);
+        $rsg = new RandomStringGenerator($faker);
+        $results = array_map(static fn (): string => $rsg->hostnameString(), range(1, 50));
+
+        self::assertCount(50, array_filter($results, static function (string $hostname): bool {
+            foreach (explode('.', $hostname) as $segment) {
+                if (preg_match('/^[a-z][a-z0-9]*$/', $segment) !== 1) {
+                    return false;
+                }
+            }
+
+            return true;
+        }));
     }
 
     public function testUnsignedBigIntStringFormat(): void

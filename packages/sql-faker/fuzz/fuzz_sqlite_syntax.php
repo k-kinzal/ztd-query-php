@@ -12,12 +12,13 @@
 
 declare(strict_types=1);
 
+use Fuzz\Support\FuzzerRuntime;
 use Fuzz\Target\SqliteSyntaxTarget;
 
-/* Configuration from environment */
-$maxDepth = (int) (getenv('MAX_DEPTH') !== false ? getenv('MAX_DEPTH') : 8);
+FuzzerRuntime::suppressPhpFuzzerWarnings();
 
-/* SQLite requires no container — use in-memory database */
+$maxDepth = FuzzerRuntime::intEnv('MAX_DEPTH', 8);
+
 $pdo = new PDO(
     'sqlite::memory:',
     null,
@@ -31,9 +32,7 @@ fwrite(STDERR, "SQLite ready (in-memory)\n");
 fwrite(STDERR, "Max depth: $maxDepth\n");
 fwrite(STDERR, "Starting fuzzer...\n\n");
 
-/* Create fuzz target */
 $target = new SqliteSyntaxTarget($pdo, $maxDepth);
 
-/* Configure fuzzer via $config (provided by php-fuzzer) */
 /** @var \PhpFuzzer\Config $config */
 $config->setTarget(Closure::fromCallable($target));

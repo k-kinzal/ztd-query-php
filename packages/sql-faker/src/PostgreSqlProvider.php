@@ -262,7 +262,7 @@ final class PostgreSqlProvider extends Base
     /**
      * Generate a PostgreSQL string literal.
      */
-    public function stringLiteral(int $minLength = 1, int $maxLength = 255): string
+    public function stringLiteral(int $minLength = 1, int $maxLength = 32): string
     {
         return "'" . $this->rsg->mixedAlnumString($minLength, $maxLength) . "'";
     }
@@ -310,9 +310,17 @@ final class PostgreSqlProvider extends Base
     /**
      * Generate a PostgreSQL dollar-quoted string ($$...$$).
      */
-    public function dollarQuotedString(int $minLength = 1, int $maxLength = 255): string
+    public function dollarQuotedString(int $minLength = 1, int $maxLength = 32): string
     {
         return '$$' . $this->rsg->mixedAlnumString($minLength, $maxLength) . '$$';
+    }
+
+    /**
+     * Generate a deterministic DO body that parses under PostgreSQL's default plpgsql language.
+     */
+    public function doBodyLiteral(): string
+    {
+        return "'BEGIN NULL; END'";
     }
 
     /**

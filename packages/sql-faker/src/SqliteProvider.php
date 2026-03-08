@@ -222,7 +222,7 @@ final class SqliteProvider extends Base
     /**
      * Generate a SQLite string literal.
      */
-    public function stringLiteral(int $minLength = 1, int $maxLength = 255): string
+    public function stringLiteral(int $minLength = 1, int $maxLength = 32): string
     {
         return "'" . $this->rsg->mixedAlnumString($minLength, $maxLength) . "'";
     }

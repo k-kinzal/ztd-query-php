@@ -8,6 +8,9 @@ use Testcontainers\Containers\GenericContainer\GenericContainer;
 use Testcontainers\Containers\WaitStrategy\PDO\MySQLDSN;
 use Testcontainers\Containers\WaitStrategy\PDO\PDOConnectWaitStrategy;
 
+/**
+ * Reusable Testcontainers definition for the MySQL 9.0.1 fuzz target.
+ */
 final class MySql90Container extends GenericContainer
 {
     /**
@@ -30,6 +33,7 @@ final class MySql90Container extends GenericContainer
      */
     protected static $ENVIRONMENTS = [
         'MYSQL_ROOT_PASSWORD' => 'root',
+        'MYSQL_ROOT_HOST' => '%',
     ];
 
     /**
@@ -54,6 +58,9 @@ final class MySql90Container extends GenericContainer
             ->withRetryInterval(250000);
     }
 
+    /**
+     * Returns the grammar snapshot identifier that should be exercised against this image.
+     */
     public static function getGrammarVersion(): string
     {
         return 'mysql-9.0.1';

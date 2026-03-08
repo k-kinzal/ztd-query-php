@@ -735,6 +735,28 @@ final class SqlGeneratorTest extends TestCase
         });
     }
 
+    public function testAugmentGrammarRemovesTriggerRaiseFromGeneralExpr(): void
+    {
+        $grammar = SqliteGrammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        $ref = new \ReflectionClass($generator);
+        $prop = $ref->getProperty('grammar');
+        /** @var Grammar $augmented */
+        $augmented = $prop->getValue($generator);
+        $exprRule = $augmented->ruleMap['expr'];
+
+        self::assertSame([], array_values(array_filter(
+            $exprRule->alternatives,
+            static function (Production $alt): bool {
+                $first = $alt->symbols[0] ?? null;
+
+                return $first instanceof Terminal && $first->value === 'RAISE';
+            },
+        )));
+    }
+
     public function testAugmentGrammarRemovesOrderByFromDelete(): void
     {
         $grammar = SqliteGrammar::load();
@@ -790,6 +812,319 @@ final class SqlGeneratorTest extends TestCase
         self::assertCount(0, $altsWithoutTerminal, 'window alternative should contain at least one terminal keyword');
     }
 
+    public function testAugmentGrammarRemovesKeywordOnlyNmnumAlternatives(): void
+    {
+        $grammar = SqliteGrammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        $ref = new \ReflectionClass($generator);
+        $prop = $ref->getProperty('grammar');
+        /** @var Grammar $augmented */
+        $augmented = $prop->getValue($generator);
+
+        self::assertSame([], array_values(array_filter(
+            $augmented->ruleMap['nmnum']->alternatives,
+            static function (Production $alt): bool {
+                $first = $alt->symbols[0] ?? null;
+
+                return $first instanceof Terminal && in_array($first->value, ['ON', 'DELETE', 'DEFAULT'], true);
+            },
+        )));
+    }
+
+    public function testAugmentGrammarRestrictsNmToIdentifierTokens(): void
+    {
+        $grammar = SqliteGrammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        $ref = new \ReflectionClass($generator);
+        $prop = $ref->getProperty('grammar');
+        /** @var Grammar $augmented */
+        $augmented = $prop->getValue($generator);
+
+        self::assertSame([], array_values(array_filter(
+            $augmented->ruleMap['nm']->alternatives,
+            static function (Production $alt): bool {
+                $first = $alt->symbols[0] ?? null;
+
+                return $first instanceof Terminal && $first->value === 'STRING';
+            },
+        )));
+    }
+
+    public function testAugmentGrammarPromotesCreateTableToCompleteStatement(): void
+    {
+        $grammar = SqliteGrammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        $ref = new \ReflectionClass($generator);
+        $prop = $ref->getProperty('grammar');
+        /** @var Grammar $augmented */
+        $augmented = $prop->getValue($generator);
+
+        self::assertArrayHasKey('create_table_head', $augmented->ruleMap);
+        self::assertArrayHasKey('safe_dbnm', $augmented->ruleMap);
+        self::assertSame(['create_table_head', 'create_table_args'], array_map(
+            static function (Symbol $symbol): string {
+                return match (true) {
+                    $symbol instanceof NonTerminal => $symbol->value,
+                    $symbol instanceof Terminal => $symbol->value,
+                    default => throw new LogicException('Unexpected symbol type.'),
+                };
+            },
+            $augmented->ruleMap['create_table']->alternatives[0]->symbols,
+        ));
+        self::assertSame([], array_values(array_filter(
+            $augmented->ruleMap['cmd']->alternatives,
+            static function (Production $alt): bool {
+                $names = array_map(
+                    static function (Symbol $symbol): string {
+                        return match (true) {
+                            $symbol instanceof NonTerminal => $symbol->value,
+                            $symbol instanceof Terminal => $symbol->value,
+                            default => throw new LogicException('Unexpected symbol type.'),
+                        };
+                    },
+                    $alt->symbols,
+                );
+
+                return $names === ['create_table', 'create_table_args'];
+            },
+        )));
+    }
+
+    public function testAugmentGrammarConstrainsAttachAndDetachExpressions(): void
+    {
+        $grammar = SqliteGrammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        $ref = new \ReflectionClass($generator);
+        $prop = $ref->getProperty('grammar');
+        /** @var Grammar $augmented */
+        $augmented = $prop->getValue($generator);
+
+        self::assertArrayHasKey('attach_stmt', $augmented->ruleMap);
+        self::assertArrayHasKey('detach_stmt', $augmented->ruleMap);
+        self::assertArrayHasKey('safe_attach_filename_expr', $augmented->ruleMap);
+        self::assertArrayHasKey('safe_attach_schema_expr', $augmented->ruleMap);
+        self::assertSame([], array_values(array_filter(
+            $augmented->ruleMap['cmd']->alternatives,
+            static function (Production $alt): bool {
+                $names = array_map(
+                    static function (Symbol $symbol): string {
+                        return match (true) {
+                            $symbol instanceof NonTerminal => $symbol->value,
+                            $symbol instanceof Terminal => $symbol->value,
+                            default => throw new LogicException('Unexpected symbol type.'),
+                        };
+                    },
+                    $alt->symbols,
+                );
+
+                return $names === ['ATTACH', 'database_kw_opt', 'expr', 'AS', 'expr', 'key_opt']
+                    || $names === ['DETACH', 'database_kw_opt', 'expr'];
+            },
+        )));
+    }
+
+    public function testAugmentGrammarConstrainsVacuumIntoExpressions(): void
+    {
+        $grammar = SqliteGrammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        $ref = new \ReflectionClass($generator);
+        $prop = $ref->getProperty('grammar');
+        /** @var Grammar $augmented */
+        $augmented = $prop->getValue($generator);
+
+        self::assertArrayHasKey('vacuum_stmt', $augmented->ruleMap);
+        self::assertArrayHasKey('safe_vinto', $augmented->ruleMap);
+        self::assertArrayHasKey('safe_vacuum_into_expr', $augmented->ruleMap);
+        self::assertSame([], array_values(array_filter(
+            $augmented->ruleMap['cmd']->alternatives,
+            static function (Production $alt): bool {
+                $names = array_map(
+                    static function (Symbol $symbol): string {
+                        return match (true) {
+                            $symbol instanceof NonTerminal => $symbol->value,
+                            $symbol instanceof Terminal => $symbol->value,
+                            default => throw new LogicException('Unexpected symbol type.'),
+                        };
+                    },
+                    $alt->symbols,
+                );
+
+                return $names === ['VACUUM', 'vinto']
+                    || $names === ['VACUUM', 'nm', 'vinto'];
+            },
+        )));
+    }
+
+    public function testAugmentGrammarBindsTemporaryObjectNamesToUnqualifiedForms(): void
+    {
+        $grammar = SqliteGrammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        $ref = new \ReflectionClass($generator);
+        $prop = $ref->getProperty('grammar');
+        /** @var Grammar $augmented */
+        $augmented = $prop->getValue($generator);
+
+        self::assertArrayHasKey('create_view_stmt', $augmented->ruleMap);
+        self::assertArrayHasKey('create_trigger_stmt', $augmented->ruleMap);
+        self::assertNotSame([], array_values(array_filter(
+            $augmented->ruleMap['trigger_decl']->alternatives,
+            static function (Production $alt): bool {
+                $names = array_map(
+                    static function (Symbol $symbol): string {
+                        return match (true) {
+                            $symbol instanceof NonTerminal => $symbol->value,
+                            $symbol instanceof Terminal => $symbol->value,
+                            default => throw new LogicException('Unexpected symbol type.'),
+                        };
+                    },
+                    $alt->symbols,
+                );
+
+                return $names === ['TEMP', 'TRIGGER', 'ifnotexists', 'nm', 'trigger_time', 'trigger_event', 'ON', 'fullname', 'foreach_clause', 'when_clause'];
+            },
+        )));
+        self::assertSame([], array_values(array_filter(
+            $augmented->ruleMap['trigger_decl']->alternatives,
+            static function (Production $alt): bool {
+                $names = array_map(
+                    static function (Symbol $symbol): string {
+                        return match (true) {
+                            $symbol instanceof NonTerminal => $symbol->value,
+                            $symbol instanceof Terminal => $symbol->value,
+                            default => throw new LogicException('Unexpected symbol type.'),
+                        };
+                    },
+                    $alt->symbols,
+                );
+
+                return $names === ['TEMP', 'TRIGGER', 'ifnotexists', 'nm', 'safe_dbnm', 'trigger_time', 'trigger_event', 'ON', 'fullname', 'foreach_clause', 'when_clause'];
+            },
+        )));
+    }
+
+    public function testAugmentGrammarBindsStarResultColumnsToFromClauses(): void
+    {
+        $grammar = SqliteGrammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        $ref = new \ReflectionClass($generator);
+        $prop = $ref->getProperty('grammar');
+        /** @var Grammar $augmented */
+        $augmented = $prop->getValue($generator);
+
+        self::assertArrayHasKey('safe_selcollist_no_from', $augmented->ruleMap);
+        self::assertArrayHasKey('safe_from_clause', $augmented->ruleMap);
+        self::assertSame([], array_values(array_filter(
+            $augmented->ruleMap['safe_selcollist_no_from']->alternatives,
+            static function (Production $alt): bool {
+                foreach ($alt->symbols as $symbol) {
+                    if ($symbol instanceof Terminal && $symbol->value === 'STAR') {
+                        return true;
+                    }
+                }
+
+                return false;
+            },
+        )));
+        self::assertNotSame([], array_values(array_filter(
+            $augmented->ruleMap['oneselect']->alternatives,
+            static function (Production $alt): bool {
+                $names = array_map(
+                    static function (Symbol $symbol): string {
+                        return match (true) {
+                            $symbol instanceof NonTerminal => $symbol->value,
+                            $symbol instanceof Terminal => $symbol->value,
+                            default => throw new LogicException('Unexpected symbol type.'),
+                        };
+                    },
+                    $alt->symbols,
+                );
+
+                return $names === ['SELECT', 'distinct', 'safe_selcollist_no_from', 'where_opt', 'groupby_opt', 'having_opt', 'window_clause', 'orderby_opt', 'limit_opt']
+                    || $names === ['SELECT', 'distinct', 'selcollist', 'safe_from_clause', 'where_opt', 'groupby_opt', 'having_opt', 'orderby_opt', 'limit_opt'];
+            },
+        )));
+    }
+
+    public function testAugmentGrammarIntroducesFiniteSetOperationFamilies(): void
+    {
+        $grammar = SqliteGrammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        $ref = new \ReflectionClass($generator);
+        $prop = $ref->getProperty('grammar');
+        /** @var Grammar $augmented */
+        $augmented = $prop->getValue($generator);
+
+        self::assertArrayHasKey('setop_select_stmt', $augmented->ruleMap);
+        self::assertArrayHasKey('setop_select_stmt_1', $augmented->ruleMap);
+        self::assertArrayHasKey('setop_select_stmt_8', $augmented->ruleMap);
+        self::assertSame([], array_values(array_filter(
+            $augmented->ruleMap['selectnowith']->alternatives,
+            static function (Production $alt): bool {
+                $names = array_map(
+                    static function (Symbol $symbol): string {
+                        return match (true) {
+                            $symbol instanceof NonTerminal => $symbol->value,
+                            $symbol instanceof Terminal => $symbol->value,
+                            default => throw new LogicException('Unexpected symbol type.'),
+                        };
+                    },
+                    $alt->symbols,
+                );
+
+                return $names === ['selectnowith', 'multiselect_op', 'oneselect'];
+            },
+        )));
+    }
+
+    public function testAugmentGrammarIntroducesFiniteValuesClauseFamilies(): void
+    {
+        $grammar = SqliteGrammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        $ref = new \ReflectionClass($generator);
+        $prop = $ref->getProperty('grammar');
+        /** @var Grammar $augmented */
+        $augmented = $prop->getValue($generator);
+
+        self::assertArrayHasKey('select_values_clause', $augmented->ruleMap);
+        self::assertArrayHasKey('select_values_clause_1', $augmented->ruleMap);
+        self::assertArrayHasKey('select_values_clause_8', $augmented->ruleMap);
+        self::assertSame([], array_values(array_filter(
+            $augmented->ruleMap['oneselect']->alternatives,
+            static function (Production $alt): bool {
+                $names = array_map(
+                    static function (Symbol $symbol): string {
+                        return match (true) {
+                            $symbol instanceof NonTerminal => $symbol->value,
+                            $symbol instanceof Terminal => $symbol->value,
+                            default => throw new LogicException('Unexpected symbol type.'),
+                        };
+                    },
+                    $alt->symbols,
+                );
+
+                return $names === ['values'] || $names === ['mvalues'];
+            },
+        )));
+    }
+
     public function testGenerateIdentifierQuotesReservedWords(): void
     {
         $grammar = new Grammar('stmt', [
@@ -815,6 +1150,8 @@ final class SqlGeneratorTest extends TestCase
                 self::assertStringEndsWith('"', $result, "Seed $seed: reserved word '$result' should be quoted");
             }
         }, range(0, 9999));
+
+        self::addToAssertionCount(1);
     }
 
     /**
@@ -864,7 +1201,7 @@ final class SqlGeneratorTest extends TestCase
         yield 'ID' => ['ID', '/^[a-z_][a-z0-9_]*$/'];
         yield 'id' => ['id', '/^[a-z_][a-z0-9_]*$/'];
         yield 'idj' => ['idj', '/^[a-z_][a-z0-9_]*$/'];
-        yield 'ids' => ['ids', "/^'[a-zA-Z0-9_]+'$/"];
+        yield 'ids' => ['ids', '/^"[a-zA-Z0-9_]+"$/'];
         yield 'STRING' => ['STRING', "/^'[a-zA-Z0-9_]+'$/"];
         yield 'INTEGER' => ['INTEGER', '/^[1-9]\d*$/'];
         yield 'number' => ['number', '/^[1-9]\d*$/'];

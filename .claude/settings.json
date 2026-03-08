@@ -16,13 +16,21 @@
       "Edit(**/infection.json5)",
       "Edit(**/phpstan.neon)",
       "Edit(**/phpunit.xml.dist)",
+      "Read(packages/sql-faker/spec/**)",
+      "Write(packages/sql-faker/spec/**)",
+      "Edit(packages/sql-faker/spec/**)",
+      "Read(packages/sql-faker/fuzz/**)",
+      "Write(packages/sql-faker/fuzz/**)",
+      "Edit(packages/sql-faker/fuzz/**)",
       "Bash(*docs/*)",
       "Bash(*AGENTS.md*)",
       "Bash(*CLAUDE.md*)",
       "Bash(*.php-cs-fixer*)",
       "Bash(*infection.json5*)",
       "Bash(*phpstan.neon*)",
-      "Bash(*phpunit.xml.dist*)"
+      "Bash(*phpunit.xml.dist*)",
+      "Bash(*packages/sql-faker/spec*)",
+      "Bash(*packages/sql-faker/fuzz*)"
     ]
   }
 }
