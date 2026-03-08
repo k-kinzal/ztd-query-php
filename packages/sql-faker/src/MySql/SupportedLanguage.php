@@ -89,7 +89,7 @@ final class SupportedLanguage extends AbstractSupportedLanguage
             'mysql.constraint.change_replication_source' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('change_replication_source_stmt', 6),
+                fn (): string => $this->generator->generate('change_replication_stmt', 6),
             ),
             'mysql.lex.identifier.context' => $this->searchWitness(
                 $request->familyId,
@@ -120,7 +120,7 @@ final class SupportedLanguage extends AbstractSupportedLanguage
             new FamilyDefinition('mysql.constraint.signal_sqlstate', 'SIGNAL SQLSTATE statements after canonical SQLSTATE refinement.', 'contract', ['signal_sqlstate_stmt']),
             new FamilyDefinition('mysql.constraint.show_warnings.limit', 'SHOW WARNINGS statements that include a LIMIT clause.', 'contract', ['show_warnings_stmt']),
             new FamilyDefinition('mysql.constraint.alter_database.encryption', 'ALTER DATABASE statements that include ENCRYPTION options.', 'contract', ['alter_database_encryption_stmt']),
-            new FamilyDefinition('mysql.constraint.change_replication_source', 'CHANGE REPLICATION SOURCE statements after scalar option refinement.', 'contract', ['change_replication_source_stmt']),
+            new FamilyDefinition('mysql.constraint.change_replication_source', 'CHANGE REPLICATION SOURCE statements after scalar option refinement.', 'contract', ['change_replication_stmt']),
             new FamilyDefinition('mysql.lex.identifier.context', 'Identifier rendering inside a distinguishing SELECT context.', 'spec', ['ident']),
             new FamilyDefinition('mysql.lex.identifier.freshness', 'Statement-local canonical identifier rendering with fresh values.', 'contract', [], [], ['first_identifier', 'second_identifier']),
         ];

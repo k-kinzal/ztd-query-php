@@ -1123,7 +1123,24 @@ final class SqlGeneratorTest extends TestCase
         /** @var Grammar $augmented */
         $augmented = $prop->getValue($generator);
 
-        self::assertArrayHasKey('change_replication_source_stmt', $augmented->ruleMap);
+        self::assertCount(1, $augmented->ruleMap['change_replication_stmt']->alternatives);
+        self::assertSame([
+            'CHANGE',
+            'REPLICATION',
+            'SOURCE_SYM',
+            'TO_SYM',
+            'source_defs',
+            'opt_channel',
+        ], array_map(
+            static function ($symbol): string {
+                return match (true) {
+                    $symbol instanceof NonTerminal => $symbol->value,
+                    $symbol instanceof Terminal => $symbol->value,
+                    default => throw new LogicException('Unexpected symbol type.'),
+                };
+            },
+            $augmented->ruleMap['change_replication_stmt']->alternatives[0]->symbols,
+        ));
         self::assertSame(['source_def'], array_map(
             static function ($symbol): string {
                 return match (true) {
@@ -1148,7 +1165,7 @@ final class SqlGeneratorTest extends TestCase
                     $alt->symbols,
                 );
 
-                return $names === ['change_replication_source_compression_algorithm', 'EQ', 'TEXT_STRING_sys']
+                return $names === ['SOURCE_COMPRESSION_ALGORITHM_SYM', 'EQ', 'TEXT_STRING_sys']
                     || $names === ['source_file_def']
                     || $names === ['PRIVILEGE_CHECKS_USER_SYM', 'EQ', 'privilege_check_def']
                     || $names === ['ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS_SYM', 'EQ', 'assign_gtids_to_anonymous_transactions_def'];
@@ -1452,7 +1469,7 @@ final class SqlGeneratorTest extends TestCase
         /** @var Grammar $augmented */
         $augmented = $prop->getValue($generator);
 
-        self::assertSame(['source_log_file', 'EQ', 'TEXT_STRING_sys_nonewline', ',', 'source_log_pos', 'EQ', 'ulonglong_num'], array_map(
+        self::assertSame(['SOURCE_LOG_FILE_SYM', 'EQ', 'TEXT_STRING_sys_nonewline', ',', 'SOURCE_LOG_POS_SYM', 'EQ', 'ulonglong_num'], array_map(
             static function ($symbol): string {
                 return match (true) {
                     $symbol instanceof NonTerminal => $symbol->value,

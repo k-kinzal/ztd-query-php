@@ -948,41 +948,39 @@ final class SqlGenerator
             ]);
         }
 
-        $booleanOptionNonTerminals = [
-            'change_replication_source_ssl',
-            'change_replication_source_ssl_verify_server_cert',
-            'change_replication_source_get_source_public_key',
-            'change_replication_source_auto_position',
-        ];
         $booleanOptionTerminals = [
+            'SOURCE_SSL_SYM',
+            'SOURCE_SSL_VERIFY_SERVER_CERT_SYM',
+            'GET_SOURCE_PUBLIC_KEY_SYM',
+            'SOURCE_AUTO_POSITION_SYM',
             'REQUIRE_ROW_FORMAT_SYM',
             'SOURCE_CONNECTION_AUTO_FAILOVER_SYM',
             'GTID_ONLY_SYM',
         ];
 
         $ruleMap['safe_replication_text_option'] = new ProductionRule('safe_replication_text_option', [
-            new Production([new NonTerminal('change_replication_source_host'), new Terminal('EQ'), new NonTerminal('TEXT_STRING_sys_nonewline')]),
+            new Production([new Terminal('SOURCE_HOST_SYM'), new Terminal('EQ'), new NonTerminal('TEXT_STRING_sys_nonewline')]),
             new Production([new Terminal('NETWORK_NAMESPACE_SYM'), new Terminal('EQ'), new NonTerminal('TEXT_STRING_sys_nonewline')]),
-            new Production([new NonTerminal('change_replication_source_bind'), new Terminal('EQ'), new NonTerminal('TEXT_STRING_sys_nonewline')]),
-            new Production([new NonTerminal('change_replication_source_user'), new Terminal('EQ'), new NonTerminal('TEXT_STRING_sys_nonewline')]),
-            new Production([new NonTerminal('change_replication_source_password'), new Terminal('EQ'), new NonTerminal('TEXT_STRING_sys_nonewline')]),
-            new Production([new NonTerminal('change_replication_source_ssl_ca'), new Terminal('EQ'), new NonTerminal('TEXT_STRING_sys_nonewline')]),
-            new Production([new NonTerminal('change_replication_source_ssl_capath'), new Terminal('EQ'), new NonTerminal('TEXT_STRING_sys_nonewline')]),
-            new Production([new NonTerminal('change_replication_source_tls_version'), new Terminal('EQ'), new NonTerminal('TEXT_STRING_sys_nonewline')]),
-            new Production([new NonTerminal('change_replication_source_ssl_cert'), new Terminal('EQ'), new NonTerminal('TEXT_STRING_sys_nonewline')]),
-            new Production([new NonTerminal('change_replication_source_ssl_cipher'), new Terminal('EQ'), new NonTerminal('TEXT_STRING_sys_nonewline')]),
-            new Production([new NonTerminal('change_replication_source_ssl_key'), new Terminal('EQ'), new NonTerminal('TEXT_STRING_sys_nonewline')]),
-            new Production([new NonTerminal('change_replication_source_ssl_crl'), new Terminal('EQ'), new NonTerminal('TEXT_STRING_sys_nonewline')]),
-            new Production([new NonTerminal('change_replication_source_ssl_crlpath'), new Terminal('EQ'), new NonTerminal('TEXT_STRING_sys_nonewline')]),
-            new Production([new NonTerminal('change_replication_source_public_key'), new Terminal('EQ'), new NonTerminal('TEXT_STRING_sys_nonewline')]),
+            new Production([new Terminal('SOURCE_BIND_SYM'), new Terminal('EQ'), new NonTerminal('TEXT_STRING_sys_nonewline')]),
+            new Production([new Terminal('SOURCE_USER_SYM'), new Terminal('EQ'), new NonTerminal('TEXT_STRING_sys_nonewline')]),
+            new Production([new Terminal('SOURCE_PASSWORD_SYM'), new Terminal('EQ'), new NonTerminal('TEXT_STRING_sys_nonewline')]),
+            new Production([new Terminal('SOURCE_SSL_CA_SYM'), new Terminal('EQ'), new NonTerminal('TEXT_STRING_sys_nonewline')]),
+            new Production([new Terminal('SOURCE_SSL_CAPATH_SYM'), new Terminal('EQ'), new NonTerminal('TEXT_STRING_sys_nonewline')]),
+            new Production([new Terminal('SOURCE_TLS_VERSION_SYM'), new Terminal('EQ'), new NonTerminal('TEXT_STRING_sys_nonewline')]),
+            new Production([new Terminal('SOURCE_SSL_CERT_SYM'), new Terminal('EQ'), new NonTerminal('TEXT_STRING_sys_nonewline')]),
+            new Production([new Terminal('SOURCE_SSL_CIPHER_SYM'), new Terminal('EQ'), new NonTerminal('TEXT_STRING_sys_nonewline')]),
+            new Production([new Terminal('SOURCE_SSL_KEY_SYM'), new Terminal('EQ'), new NonTerminal('TEXT_STRING_sys_nonewline')]),
+            new Production([new Terminal('SOURCE_SSL_CRL_SYM'), new Terminal('EQ'), new NonTerminal('TEXT_STRING_sys_nonewline')]),
+            new Production([new Terminal('SOURCE_SSL_CRLPATH_SYM'), new Terminal('EQ'), new NonTerminal('TEXT_STRING_sys_nonewline')]),
+            new Production([new Terminal('SOURCE_PUBLIC_KEY_PATH_SYM'), new Terminal('EQ'), new NonTerminal('TEXT_STRING_sys_nonewline')]),
         ]);
         $ruleMap['safe_replication_numeric_option'] = new ProductionRule('safe_replication_numeric_option', [
-            new Production([new NonTerminal('change_replication_source_port'), new Terminal('EQ'), new NonTerminal('ulong_num')]),
-            new Production([new NonTerminal('change_replication_source_connect_retry'), new Terminal('EQ'), new NonTerminal('ulong_num')]),
-            new Production([new NonTerminal('change_replication_source_retry_count'), new Terminal('EQ'), new NonTerminal('ulong_num')]),
-            new Production([new NonTerminal('change_replication_source_delay'), new Terminal('EQ'), new NonTerminal('ulong_num')]),
-            new Production([new NonTerminal('change_replication_source_heartbeat_period'), new Terminal('EQ'), new NonTerminal('NUM_literal')]),
-            new Production([new NonTerminal('change_replication_source_zstd_compression_level'), new Terminal('EQ'), new NonTerminal('ulong_num')]),
+            new Production([new Terminal('SOURCE_PORT_SYM'), new Terminal('EQ'), new NonTerminal('ulong_num')]),
+            new Production([new Terminal('SOURCE_CONNECT_RETRY_SYM'), new Terminal('EQ'), new NonTerminal('ulong_num')]),
+            new Production([new Terminal('SOURCE_RETRY_COUNT_SYM'), new Terminal('EQ'), new NonTerminal('ulong_num')]),
+            new Production([new Terminal('SOURCE_DELAY_SYM'), new Terminal('EQ'), new NonTerminal('ulong_num')]),
+            new Production([new Terminal('SOURCE_HEARTBEAT_PERIOD_SYM'), new Terminal('EQ'), new NonTerminal('NUM_literal')]),
+            new Production([new Terminal('SOURCE_ZSTD_COMPRESSION_LEVEL_SYM'), new Terminal('EQ'), new NonTerminal('ulong_num')]),
         ]);
 
         $ruleMap['replication_filter_pattern'] = new ProductionRule('replication_filter_pattern', [
@@ -997,14 +995,6 @@ final class SqlGenerator
             new Production([new NonTerminal('safe_replication_numeric_option')]),
             ...array_map(
                 static fn (string $token): Production => new Production([
-                    new NonTerminal($token),
-                    new Terminal('EQ'),
-                    new NonTerminal('boolean_numeric_option'),
-                ]),
-                $booleanOptionNonTerminals,
-            ),
-            ...array_map(
-                static fn (string $token): Production => new Production([
                     new Terminal($token),
                     new Terminal('EQ'),
                     new NonTerminal('boolean_numeric_option'),
@@ -1013,40 +1003,27 @@ final class SqlGenerator
             ),
         ]);
 
-        $ruleMap['change_replication_source_stmt'] = new ProductionRule('change_replication_source_stmt', [
-            new Production([
-                new Terminal('CHANGE'),
-                new NonTerminal('change_replication_source'),
-                new Terminal('TO_SYM'),
-                new NonTerminal('source_defs'),
-                new NonTerminal('opt_channel'),
-            ]),
-        ]);
-
-        if (isset($ruleMap['change'])) {
-            $filtered = array_values(array_filter(
-                $ruleMap['change']->alternatives,
-                static function (Production $alt): bool {
-                    $names = array_map(self::symbolValue(...), $alt->symbols);
-
-                    return $names !== ['CHANGE', 'change_replication_source', 'TO_SYM', 'source_defs', 'opt_channel'];
-                },
-            ));
-
-            $ruleMap['change'] = new ProductionRule('change', [
-                new Production([new NonTerminal('change_replication_source_stmt')]),
-                ...$filtered,
+        if (isset($ruleMap['change_replication_stmt'])) {
+            $ruleMap['change_replication_stmt'] = new ProductionRule('change_replication_stmt', [
+                new Production([
+                    new Terminal('CHANGE'),
+                    new Terminal('REPLICATION'),
+                    new Terminal('SOURCE_SYM'),
+                    new Terminal('TO_SYM'),
+                    new NonTerminal('source_defs'),
+                    new NonTerminal('opt_channel'),
+                ]),
             ]);
         }
 
         if (isset($ruleMap['replica_until'])) {
             $ruleMap['replica_until'] = new ProductionRule('replica_until', [
                 new Production([
-                    new NonTerminal('source_log_file'),
+                    new Terminal('SOURCE_LOG_FILE_SYM'),
                     new Terminal('EQ'),
                     new NonTerminal('TEXT_STRING_sys_nonewline'),
                     new Terminal(','),
-                    new NonTerminal('source_log_pos'),
+                    new Terminal('SOURCE_LOG_POS_SYM'),
                     new Terminal('EQ'),
                     new NonTerminal('ulonglong_num'),
                 ]),

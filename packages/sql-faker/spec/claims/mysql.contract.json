@@ -57,7 +57,7 @@
     "statement": "WHEN START REPLICA UNTIL is refined, THEN file-based UNTIL clauses SHALL keep the required file-and-position pair and stand-alone gaps mode SHALL not combine with file options.",
     "subject": { "kind": "grammar" },
     "evidence": [
-      { "kind": "grammar.rule.contains_sequence", "rule": "replica_until", "sequence": ["nt:source_log_file", "t:EQ", "nt:TEXT_STRING_sys_nonewline", "t:,", "nt:source_log_pos", "t:EQ", "nt:ulonglong_num"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "replica_until", "sequence": ["t:SOURCE_LOG_FILE_SYM", "t:EQ", "nt:TEXT_STRING_sys_nonewline", "t:,", "t:SOURCE_LOG_POS_SYM", "t:EQ", "nt:ulonglong_num"] },
       { "kind": "grammar.rule.contains_sequence", "rule": "replica_until", "sequence": ["t:SQL_AFTER_MTS_GAPS"] },
       { "kind": "grammar.rule.not_contains_sequence", "rule": "replica_until", "sequence": ["nt:source_file_def"] }
     ]
@@ -69,7 +69,8 @@
     "statement": "WHEN CHANGE REPLICATION SOURCE TO is refined, THEN source options SHALL stay inside the scalar canonical subset and exclude version-sensitive or pair-sensitive option families.",
     "subject": { "kind": "grammar" },
     "evidence": [
-      { "kind": "grammar.rule.contains_sequence", "rule": "change", "sequence": ["nt:change_replication_source_stmt"] },
+      { "kind": "grammar.rule.contains_sequence", "rule": "change_replication_stmt", "sequence": ["t:CHANGE", "t:REPLICATION", "t:SOURCE_SYM", "t:TO_SYM", "nt:source_defs", "nt:opt_channel"] },
+      { "kind": "grammar.rule.not_contains_sequence", "rule": "change_replication_stmt", "sequence": ["t:CHANGE", "t:REPLICATION", "t:FILTER_SYM", "nt:filter_defs", "nt:opt_channel"] },
       { "kind": "grammar.rule.contains_sequence", "rule": "source_def", "sequence": ["nt:safe_replication_text_option"] },
       { "kind": "grammar.rule.contains_sequence", "rule": "source_def", "sequence": ["nt:safe_replication_numeric_option"] },
       { "kind": "grammar.rule.not_contains_sequence", "rule": "source_def", "sequence": ["nt:change_replication_source_compression_algorithm", "t:EQ", "nt:TEXT_STRING_sys"] },
