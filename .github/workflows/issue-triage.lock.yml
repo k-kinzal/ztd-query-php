@@ -21,9 +21,9 @@
 #
 # For more information: https://github.github.com/gh-aw/introduction/overview/
 #
-# Triage newly reported issues by type, priority, package, duplicates, and likely code or spec references.
+# Triage new issues immediately and manually triage any existing untriaged issues by type, priority, package, duplicates, and likely code or spec references.
 #
-# gh-aw-metadata: {"schema_version":"v2","frontmatter_hash":"ea0b292312aff5c7f8259d2d0c124fe7a5c679633aa2a51a8e9d7b1f5dbc145f","compiler_version":"v0.55.0","strict":true}
+# gh-aw-metadata: {"schema_version":"v2","frontmatter_hash":"567b901f9f3cce8e34d0e5b2f4b72b20a3e5080d1c0f9b82fa609978317f996e","compiler_version":"v0.55.0","strict":true}
 
 name: "Issue Triage"
 "on":
@@ -31,6 +31,7 @@ name: "Issue Triage"
     types:
     - opened
   # roles: all # Roles processed as role check in pre-activation job
+  workflow_dispatch:
 
 permissions: {}
 
@@ -322,12 +323,12 @@ jobs:
           mkdir -p /tmp/gh-aw/safeoutputs
           mkdir -p /tmp/gh-aw/mcp-logs/safeoutputs
           cat > /opt/gh-aw/safeoutputs/config.json << 'GH_AW_SAFE_OUTPUTS_CONFIG_EOF'
-          {"add_comment":{"max":1},"add_labels":{"allowed":["type:bug","type:feature","type:question","type:documentation","priority:critical","priority:high","priority:medium","priority:low","package:ztd-query-core","package:ztd-query-mysql","package:ztd-query-postgres","package:ztd-query-sqlite","package:ztd-query-pdo-adapter","package:ztd-query-mysqli-adapter","package:sql-faker","package:sql-fixture","package:phpstan-custom-rules","package:docs","duplicate","needs:clarification"],"max":8},"missing_data":{},"missing_tool":{},"noop":{"max":1}}
+          {"add_comment":{"max":50},"add_labels":{"allowed":["type:bug","type:feature","type:question","type:documentation","priority:critical","priority:high","priority:medium","priority:low","package:ztd-query-core","package:ztd-query-mysql","package:ztd-query-postgres","package:ztd-query-sqlite","package:ztd-query-pdo-adapter","package:ztd-query-mysqli-adapter","package:sql-faker","package:sql-fixture","package:phpstan-custom-rules","package:docs","duplicate","needs:clarification"],"max":50},"missing_data":{},"missing_tool":{},"noop":{"max":1}}
           GH_AW_SAFE_OUTPUTS_CONFIG_EOF
           cat > /opt/gh-aw/safeoutputs/tools.json << 'GH_AW_SAFE_OUTPUTS_TOOLS_EOF'
           [
             {
-              "description": "Add a comment to an existing GitHub issue, pull request, or discussion. Use this to provide feedback, answer questions, or add information to an existing conversation. For creating new items, use create_issue, create_discussion, or create_pull_request instead. IMPORTANT: Comments are subject to validation constraints enforced by the MCP server - maximum 65536 characters for the complete comment (including footer which is added automatically), 10 mentions (@username), and 50 links. Exceeding these limits will result in an immediate error with specific guidance. NOTE: By default, this tool requires discussions:write permission. If your GitHub App lacks Discussions permission, set 'discussions: false' in the workflow's safe-outputs.add-comment configuration to exclude this permission. CONSTRAINTS: Maximum 1 comment(s) can be added.",
+              "description": "Add a comment to an existing GitHub issue, pull request, or discussion. Use this to provide feedback, answer questions, or add information to an existing conversation. For creating new items, use create_issue, create_discussion, or create_pull_request instead. IMPORTANT: Comments are subject to validation constraints enforced by the MCP server - maximum 65536 characters for the complete comment (including footer which is added automatically), 10 mentions (@username), and 50 links. Exceeding these limits will result in an immediate error with specific guidance. NOTE: By default, this tool requires discussions:write permission. If your GitHub App lacks Discussions permission, set 'discussions: false' in the workflow's safe-outputs.add-comment configuration to exclude this permission. CONSTRAINTS: Maximum 50 comment(s) can be added.",
               "inputSchema": {
                 "additionalProperties": false,
                 "properties": {
@@ -364,7 +365,7 @@ jobs:
               "name": "add_comment"
             },
             {
-              "description": "Add labels to an existing GitHub issue or pull request for categorization and filtering. Labels must already exist in the repository. For creating new issues with labels, use create_issue with the labels property instead. CONSTRAINTS: Maximum 8 label(s) can be added. Only these labels are allowed: [\"type:bug\" \"type:feature\" \"type:question\" \"type:documentation\" \"priority:critical\" \"priority:high\" \"priority:medium\" \"priority:low\" \"package:ztd-query-core\" \"package:ztd-query-mysql\" \"package:ztd-query-postgres\" \"package:ztd-query-sqlite\" \"package:ztd-query-pdo-adapter\" \"package:ztd-query-mysqli-adapter\" \"package:sql-faker\" \"package:sql-fixture\" \"package:phpstan-custom-rules\" \"package:docs\" \"duplicate\" \"needs:clarification\"].",
+              "description": "Add labels to an existing GitHub issue or pull request for categorization and filtering. Labels must already exist in the repository. For creating new issues with labels, use create_issue with the labels property instead. CONSTRAINTS: Maximum 50 label(s) can be added. Only these labels are allowed: [\"type:bug\" \"type:feature\" \"type:question\" \"type:documentation\" \"priority:critical\" \"priority:high\" \"priority:medium\" \"priority:low\" \"package:ztd-query-core\" \"package:ztd-query-mysql\" \"package:ztd-query-postgres\" \"package:ztd-query-sqlite\" \"package:ztd-query-pdo-adapter\" \"package:ztd-query-mysqli-adapter\" \"package:sql-faker\" \"package:sql-fixture\" \"package:phpstan-custom-rules\" \"package:docs\" \"duplicate\" \"needs:clarification\"].",
               "inputSchema": {
                 "additionalProperties": false,
                 "properties": {
@@ -709,7 +710,7 @@ jobs:
           GH_AW_SAFE_OUTPUTS: ${{ env.GH_AW_SAFE_OUTPUTS }}
           GITHUB_API_URL: ${{ github.api_url }}
           GITHUB_HEAD_REF: ${{ github.head_ref }}
-          GITHUB_MCP_SERVER_TOKEN: ${{ secrets.GH_AW_GITHUB_MCP_SERVER_TOKEN || '' }}
+          GITHUB_MCP_SERVER_TOKEN: ${{ secrets.GH_AW_GITHUB_MCP_SERVER_TOKEN || secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           GITHUB_REF_NAME: ${{ github.ref_name }}
           GITHUB_SERVER_URL: ${{ github.server_url }}
           GITHUB_STEP_SUMMARY: /tmp/gh-aw/agent-step-summary.md
@@ -898,7 +899,7 @@ jobs:
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           WORKFLOW_NAME: "Issue Triage"
-          WORKFLOW_DESCRIPTION: "Triage newly reported issues by type, priority, package, duplicates, and likely code or spec references."
+          WORKFLOW_DESCRIPTION: "Triage new issues immediately and manually triage any existing untriaged issues by type, priority, package, duplicates, and likely code or spec references."
           HAS_PATCH: ${{ steps.collect_output.outputs.has_patch }}
         with:
           script: |
@@ -989,6 +990,7 @@ jobs:
     permissions:
       contents: read
       issues: write
+      pull-requests: write
     concurrency:
       group: "gh-aw-conclusion-issue-triage"
       cancel-in-progress: false
@@ -1087,6 +1089,7 @@ jobs:
     permissions:
       contents: read
       issues: write
+      pull-requests: write
     timeout-minutes: 15
     env:
       GH_AW_CALLER_WORKFLOW_ID: "${{ github.repository }}/issue-triage"
@@ -1128,7 +1131,7 @@ jobs:
           GH_AW_ALLOWED_DOMAINS: "api.business.githubcopilot.com,api.enterprise.githubcopilot.com,api.github.com,api.githubcopilot.com,api.individual.githubcopilot.com,github.com,host.docker.internal,raw.githubusercontent.com,registry.npmjs.org,telemetry.enterprise.githubcopilot.com"
           GITHUB_SERVER_URL: ${{ github.server_url }}
           GITHUB_API_URL: ${{ github.api_url }}
-          GH_AW_SAFE_OUTPUTS_HANDLER_CONFIG: "{\"add_comment\":{\"max\":1},\"add_labels\":{\"allowed\":[\"type:bug\",\"type:feature\",\"type:question\",\"type:documentation\",\"priority:critical\",\"priority:high\",\"priority:medium\",\"priority:low\",\"package:ztd-query-core\",\"package:ztd-query-mysql\",\"package:ztd-query-postgres\",\"package:ztd-query-sqlite\",\"package:ztd-query-pdo-adapter\",\"package:ztd-query-mysqli-adapter\",\"package:sql-faker\",\"package:sql-fixture\",\"package:phpstan-custom-rules\",\"package:docs\",\"duplicate\",\"needs:clarification\"],\"max\":8},\"missing_data\":{},\"missing_tool\":{}}"
+          GH_AW_SAFE_OUTPUTS_HANDLER_CONFIG: "{\"add_comment\":{\"max\":50},\"add_labels\":{\"allowed\":[\"type:bug\",\"type:feature\",\"type:question\",\"type:documentation\",\"priority:critical\",\"priority:high\",\"priority:medium\",\"priority:low\",\"package:ztd-query-core\",\"package:ztd-query-mysql\",\"package:ztd-query-postgres\",\"package:ztd-query-sqlite\",\"package:ztd-query-pdo-adapter\",\"package:ztd-query-mysqli-adapter\",\"package:sql-faker\",\"package:sql-fixture\",\"package:phpstan-custom-rules\",\"package:docs\",\"duplicate\",\"needs:clarification\"],\"max\":50},\"missing_data\":{},\"missing_tool\":{}}"
         with:
           github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
@@ -1143,3 +1146,4 @@ jobs:
           name: safe-output-items
           path: /tmp/safe-output-items.jsonl
           if-no-files-found: warn
+
