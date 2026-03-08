@@ -2,7 +2,7 @@
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in this project, please report it through [GitHub's private vulnerability reporting](https://github.com/k-kinzal/ztd-query-php/security/advisories/new).
+If you discover a security vulnerability in this project, please report it through [GitHub's private vulnerability reporting](/security/advisories/new).
 
 Please do **not** open a public issue for security vulnerabilities.
 
