@@ -25,6 +25,7 @@ final class SupportedLanguage extends AbstractSupportedLanguage
 {
     private FakerGenerator $faker;
     private MySqlProvider $provider;
+    private Grammar $grammar;
     private SqlGenerator $generator;
     private GrammarSnapshotBuilder $snapshotBuilder;
 
@@ -32,7 +33,8 @@ final class SupportedLanguage extends AbstractSupportedLanguage
     {
         $this->faker = Factory::create();
         $this->provider = new MySqlProvider($this->faker, $version);
-        $this->generator = new SqlGenerator(Grammar::load($version), $this->faker, $this->provider);
+        $this->grammar = Grammar::load($version);
+        $this->generator = new SqlGenerator($this->grammar, $this->faker, $this->provider);
         $this->snapshotBuilder = new GrammarSnapshotBuilder();
     }
 
@@ -86,11 +88,7 @@ final class SupportedLanguage extends AbstractSupportedLanguage
                 $request->parameters,
                 fn (): string => $this->generator->generate('alter_database_encryption_stmt', 6),
             ),
-            'mysql.constraint.change_replication_source' => $this->searchWitness(
-                $request->familyId,
-                $request->parameters,
-                fn (): string => $this->generator->generate('change_replication_stmt', 6),
-            ),
+            'mysql.constraint.change_replication_source' => $this->generateChangeReplicationSourceWitness($request),
             'mysql.lex.identifier.context' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
@@ -120,9 +118,16 @@ final class SupportedLanguage extends AbstractSupportedLanguage
             new FamilyDefinition('mysql.constraint.signal_sqlstate', 'SIGNAL SQLSTATE statements after canonical SQLSTATE refinement.', 'contract', ['signal_sqlstate_stmt']),
             new FamilyDefinition('mysql.constraint.show_warnings.limit', 'SHOW WARNINGS statements that include a LIMIT clause.', 'contract', ['show_warnings_stmt']),
             new FamilyDefinition('mysql.constraint.alter_database.encryption', 'ALTER DATABASE statements that include ENCRYPTION options.', 'contract', ['alter_database_encryption_stmt']),
-            new FamilyDefinition('mysql.constraint.change_replication_source', 'CHANGE REPLICATION SOURCE statements after scalar option refinement.', 'contract', ['change_replication_stmt']),
             new FamilyDefinition('mysql.lex.identifier.context', 'Identifier rendering inside a distinguishing SELECT context.', 'spec', ['ident']),
             new FamilyDefinition('mysql.lex.identifier.freshness', 'Statement-local canonical identifier rendering with fresh values.', 'contract', [], [], ['first_identifier', 'second_identifier']),
+            ...($this->supportsChangeReplicationSource()
+                ? [new FamilyDefinition(
+                    'mysql.constraint.change_replication_source',
+                    'CHANGE REPLICATION SOURCE statements after scalar option refinement.',
+                    'contract',
+                    [$this->changeReplicationSourceRule()],
+                )]
+                : []),
         ];
     }
 
@@ -170,6 +175,35 @@ final class SupportedLanguage extends AbstractSupportedLanguage
         }
 
         return substr_count($matches[1], ',') + 1;
+    }
+
+    private function generateChangeReplicationSourceWitness(FamilyRequest $request): SqlWitness
+    {
+        return $this->searchWitness(
+            $request->familyId,
+            $request->parameters,
+            fn (): string => $this->generator->generate($this->changeReplicationSourceRule(), 6),
+            static fn (string $sql): bool => str_starts_with($sql, 'CHANGE REPLICATION SOURCE TO '),
+        );
+    }
+
+    private function supportsChangeReplicationSource(): bool
+    {
+        return isset($this->grammar->ruleMap['change_replication_stmt'])
+            || isset($this->grammar->ruleMap['change_replication_source']);
+    }
+
+    private function changeReplicationSourceRule(): string
+    {
+        if (isset($this->grammar->ruleMap['change_replication_stmt'])) {
+            return 'change_replication_stmt';
+        }
+
+        if (isset($this->grammar->ruleMap['change'])) {
+            return 'change';
+        }
+
+        throw new \LogicException('CHANGE REPLICATION SOURCE is not supported by this grammar.');
     }
 
     private function generateIdentifierFreshnessWitness(FamilyRequest $request): SqlWitness

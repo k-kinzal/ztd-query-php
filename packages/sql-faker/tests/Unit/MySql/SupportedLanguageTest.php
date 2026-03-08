@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\MySql;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Contract\FamilyDefinition;
@@ -50,5 +51,26 @@ final class SupportedLanguageTest extends TestCase
         );
         self::assertSame(3, $witness->properties['row_arity']);
         self::assertStringStartsWith('VALUES ROW(', $witness->sql);
+    }
+
+    #[DataProvider('changeReplicationSourceVersions')]
+    public function testGeneratesChangeReplicationSourceWitnessForSupportedVersions(
+        string $version,
+        array $expectedAnchorRules,
+    ): void {
+        $language = new SupportedLanguage($version);
+        $witness = $language->generateWitness(new FamilyRequest('mysql.constraint.change_replication_source'));
+
+        self::assertSame(
+            $expectedAnchorRules,
+            $language->family('mysql.constraint.change_replication_source')->anchorRules,
+        );
+        self::assertStringStartsWith('CHANGE REPLICATION SOURCE TO ', $witness->sql);
+    }
+
+    public static function changeReplicationSourceVersions(): iterable
+    {
+        yield 'mysql 8.0 source alias' => ['mysql-8.0.44', ['change']];
+        yield 'mysql 8.4 dedicated statement' => ['mysql-8.4.7', ['change_replication_stmt']];
     }
 }
