@@ -429,6 +429,19 @@ final class MySqlProviderTest extends TestCase
         self::assertMatchesRegularExpression('/^[a-z0-9]+(\.[a-z0-9]+)*$/', $result);
     }
 
+    #[DataProvider('providerDeterministicHelperOutput')]
+    /**
+     * @param \Closure(MySqlProvider): string $generate
+     */
+    public function testDeterministicHelperOutput(\Closure $generate, string $expected): void
+    {
+        $faker = Factory::create();
+        $faker->seed(0);
+        $provider = new MySqlProvider($faker);
+
+        self::assertSame($expected, $generate($provider));
+    }
+
     public function testExpr(): void
     {
         $faker = Factory::create();
@@ -883,6 +896,25 @@ final class MySqlProviderTest extends TestCase
         $result = $provider->hostname(2, 3, 5);
 
         self::assertMatchesRegularExpression('/^[a-z0-9]+(\.[a-z0-9]+)+$/', $result);
+    }
+
+    /**
+     * @return iterable<string, array{\Closure(MySqlProvider): string, string}>
+     */
+    public static function providerDeterministicHelperOutput(): iterable
+    {
+        yield 'default string literal' => [static fn (MySqlProvider $provider): string => $provider->stringLiteral(), "'T4ZRZIkU2S4pm'"];
+        yield 'custom string literal' => [static fn (MySqlProvider $provider): string => $provider->stringLiteral(3, 8), "'T4ZRZ'"];
+        yield 'default national string literal' => [static fn (MySqlProvider $provider): string => $provider->nationalStringLiteral(), "N'T4ZRZIkU2S4pm'"];
+        yield 'custom national string literal' => [static fn (MySqlProvider $provider): string => $provider->nationalStringLiteral(2, 5), "N'T4'"];
+        yield 'default dollar quoted string' => [static fn (MySqlProvider $provider): string => $provider->dollarQuotedString(), '$$T4ZRZIkU2S4pm$$'];
+        yield 'custom dollar quoted string' => [static fn (MySqlProvider $provider): string => $provider->dollarQuotedString(2, 6), '$$T4ZRZI$$'];
+        yield 'default hostname' => [static fn (MySqlProvider $provider): string => $provider->hostname(), 'byhphtb1rcydkuaa'];
+        yield 'custom hostname' => [static fn (MySqlProvider $provider): string => $provider->hostname(2, 3, 5), 'byhph.r1rc'];
+        yield 'custom single-part hostname' => [static fn (MySqlProvider $provider): string => $provider->hostname(1, 1, 12), 'byhp'];
+        yield 'default filter wildcard pattern' => [static fn (MySqlProvider $provider): string => $provider->filterWildcardPattern(), "'byhp.r1rcydku'"];
+        yield 'custom filter wildcard pattern' => [static fn (MySqlProvider $provider): string => $provider->filterWildcardPattern(13), "'byh.zb1r'"];
+        yield 'reset master index' => [static fn (MySqlProvider $provider): string => $provider->resetMasterIndex(), '357136045'];
     }
 
     /**
