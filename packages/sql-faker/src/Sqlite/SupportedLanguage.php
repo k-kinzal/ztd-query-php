@@ -58,8 +58,10 @@ final class SupportedLanguage extends AbstractSupportedLanguage
             'sqlite.statement.create_table' => $this->searchWitness($request->familyId, $request->parameters, fn (): string => $this->provider->createTableStatement(8)),
             'sqlite.statement.alter_table' => $this->searchWitness($request->familyId, $request->parameters, fn (): string => $this->provider->alterTableStatement(8)),
             'sqlite.statement.drop_table' => $this->searchWitness($request->familyId, $request->parameters, fn (): string => $this->provider->dropTableStatement(8)),
+            'sqlite.constraint.select.star_requires_from' => $this->generateStarRequiresFromWitness($request),
             'sqlite.constraint.attach.expression' => $this->searchWitness($request->familyId, $request->parameters, fn (): string => $this->generator->generate('attach_stmt', 8)),
             'sqlite.constraint.detach.expression' => $this->searchWitness($request->familyId, $request->parameters, fn (): string => $this->generator->generate('detach_stmt', 8)),
+            'sqlite.constraint.temporary_object_name_binding' => $this->generateTemporaryObjectNameBindingWitness($request),
             'sqlite.constraint.vacuum.into_expression' => $this->searchWitness($request->familyId, $request->parameters, fn (): string => $this->generator->generate('vacuum_stmt', 8)),
             'sqlite.constraint.select.set_operation' => $this->generateSetOperationWitness($request),
             'sqlite.constraint.select.values_clause' => $this->generateValuesClauseWitness($request),
@@ -116,6 +118,38 @@ final class SupportedLanguage extends AbstractSupportedLanguage
     protected function seed(int $seed): void
     {
         $this->faker->seed($seed);
+    }
+
+    private function generateStarRequiresFromWitness(FamilyRequest $request): SqlWitness
+    {
+        return $this->searchWitness(
+            $request->familyId,
+            $request->parameters,
+            fn (): string => $this->generator->generate('oneselect', 8),
+            static fn (string $sql): bool => str_starts_with($sql, 'SELECT '),
+            null,
+            128,
+        );
+    }
+
+    private function generateTemporaryObjectNameBindingWitness(FamilyRequest $request): SqlWitness
+    {
+        $rules = ['create_table', 'create_view_stmt', 'create_trigger_stmt'];
+        $ruleIndex = 0;
+
+        return $this->searchWitness(
+            $request->familyId,
+            $request->parameters,
+            function () use (&$ruleIndex, $rules): string {
+                $rule = $rules[$ruleIndex % count($rules)];
+                $ruleIndex++;
+
+                return $this->generator->generate($rule, 8);
+            },
+            fn (string $sql): bool => $this->isTemporaryObjectNameBindingWitness($sql),
+            null,
+            512,
+        );
     }
 
     private function generateSetOperationWitness(FamilyRequest $request): SqlWitness
@@ -391,6 +425,19 @@ final class SupportedLanguage extends AbstractSupportedLanguage
         }
 
         return trim(substr($sql, $segmentStart));
+    }
+
+    private function isTemporaryObjectNameBindingWitness(string $sql): bool
+    {
+        if (preg_match(
+            '/^CREATE\s+TEMP(?:ORARY)?\s+(?:TABLE|VIEW|TRIGGER)\s+(?:IF\s+NOT\s+EXISTS\s+)?([^\s(]+)/',
+            $sql,
+            $matches,
+        ) !== 1) {
+            return false;
+        }
+
+        return !str_contains($matches[1], '.');
     }
 
     private function topLevelCsvArity(string $segment): int

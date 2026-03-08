@@ -51,4 +51,23 @@ final class SupportedLanguageTest extends TestCase
         self::assertSame(3, $witness->properties['row_arity']);
         self::assertStringStartsWith('VALUES(', $witness->sql);
     }
+
+    public function testGeneratesStarRequiresFromWitness(): void
+    {
+        $language = new SupportedLanguage();
+        $witness = $language->generateWitness(new FamilyRequest('sqlite.constraint.select.star_requires_from'));
+
+        self::assertStringStartsWith('SELECT ', $witness->sql);
+    }
+
+    public function testGeneratesTemporaryObjectNameBindingWitness(): void
+    {
+        $language = new SupportedLanguage();
+        $witness = $language->generateWitness(new FamilyRequest('sqlite.constraint.temporary_object_name_binding'));
+
+        self::assertMatchesRegularExpression(
+            '/^CREATE\s+TEMP(?:ORARY)?\s+(?:TABLE|VIEW|TRIGGER)\s+(?:IF\s+NOT\s+EXISTS\s+)?[^\s.(]+/',
+            $witness->sql,
+        );
+    }
 }
