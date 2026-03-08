@@ -54,45 +54,45 @@ final class SupportedLanguage extends AbstractSupportedLanguage
         $this->assertFamilyParameters($request);
 
         return match ($request->familyId) {
-            'mysql.statement.any' => $this->searchWitness($request->familyId, $request->parameters, fn (): string => $this->provider->sql(null, 8)),
-            'mysql.statement.select' => $this->searchWitness($request->familyId, $request->parameters, fn (): string => $this->provider->selectStatement(8)),
-            'mysql.statement.insert' => $this->searchWitness($request->familyId, $request->parameters, fn (): string => $this->provider->insertStatement(8)),
-            'mysql.statement.update' => $this->searchWitness($request->familyId, $request->parameters, fn (): string => $this->provider->updateStatement(8)),
-            'mysql.statement.delete' => $this->searchWitness($request->familyId, $request->parameters, fn (): string => $this->provider->deleteStatement(8)),
-            'mysql.constraint.transaction.commit' => $this->searchWitness($request->familyId, $request->parameters, fn (): string => $this->generator->generate('commit', 2)),
-            'mysql.constraint.transaction.rollback' => $this->searchWitness($request->familyId, $request->parameters, fn (): string => $this->generator->generate('rollback', 2)),
+            'mysql.statement.any' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters): string => $this->provider->sql(null, 8)),
+            'mysql.statement.select' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters): string => $this->provider->selectStatement(8)),
+            'mysql.statement.insert' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters): string => $this->provider->insertStatement(8)),
+            'mysql.statement.update' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters): string => $this->provider->updateStatement(8)),
+            'mysql.statement.delete' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters): string => $this->provider->deleteStatement(8)),
+            'mysql.constraint.transaction.commit' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters): string => $this->generator->generate('commit', 2)),
+            'mysql.constraint.transaction.rollback' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters): string => $this->generator->generate('rollback', 2)),
             'mysql.constraint.table_value_constructor' => $this->generateTableValueConstructorWitness($request),
             'mysql.constraint.set_system_variable' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('set_system_variable_stmt', 4),
+                fn (array $parameters): string => $this->generator->generate('set_system_variable_stmt', 4),
             ),
             'mysql.constraint.create_srs' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('create_srs_stmt', 6),
+                fn (array $parameters): string => $this->generator->generate('create_srs_stmt', 6),
             ),
             'mysql.constraint.signal_sqlstate' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('signal_sqlstate_stmt', 4),
+                fn (array $parameters): string => $this->generator->generate('signal_sqlstate_stmt', 4),
             ),
             'mysql.constraint.show_warnings.limit' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('show_warnings_stmt', 6),
-                static fn (string $sql): bool => str_contains($sql, 'LIMIT'),
+                fn (array $parameters): string => $this->generator->generate('show_warnings_stmt', 6),
+                static fn (string $sql, array $parameters): bool => str_contains($sql, 'LIMIT'),
             ),
             'mysql.constraint.alter_database.encryption' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('alter_database_encryption_stmt', 6),
+                fn (array $parameters): string => $this->generator->generate('alter_database_encryption_stmt', 6),
             ),
             'mysql.constraint.change_replication_source' => $this->generateChangeReplicationSourceWitness($request),
             'mysql.lex.identifier.context' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => 'SELECT ' . $this->provider->identifier(1),
+                fn (array $parameters): string => 'SELECT ' . $this->provider->identifier(1),
             ),
             'mysql.lex.identifier.freshness' => $this->generateIdentifierFreshnessWitness($request),
             default => throw new \LogicException(sprintf('Unsupported family: %s', $request->familyId)),
@@ -162,9 +162,9 @@ final class SupportedLanguage extends AbstractSupportedLanguage
         return $this->searchWitness(
             $request->familyId,
             ['arity' => $expectedArity],
-            fn (): string => $this->generator->generate(sprintf('table_value_constructor_%d', $expectedArity), 6),
+            fn (array $parameters): string => $this->generator->generate(sprintf('table_value_constructor_%d', $expectedArity), 6),
             null,
-            fn (string $sql): array => ['row_arity' => $this->extractTableValueArity($sql)],
+            fn (string $sql, array $parameters): array => ['row_arity' => $this->extractTableValueArity($sql)],
         );
     }
 
@@ -182,8 +182,8 @@ final class SupportedLanguage extends AbstractSupportedLanguage
         return $this->searchWitness(
             $request->familyId,
             $request->parameters,
-            fn (): string => $this->generator->generate($this->changeReplicationSourceRule(), 6),
-            static fn (string $sql): bool => str_starts_with($sql, 'CHANGE REPLICATION SOURCE TO '),
+            fn (array $parameters): string => $this->generator->generate($this->changeReplicationSourceRule(), 6),
+            static fn (string $sql, array $parameters): bool => str_starts_with($sql, 'CHANGE REPLICATION SOURCE TO '),
         );
     }
 
@@ -211,7 +211,7 @@ final class SupportedLanguage extends AbstractSupportedLanguage
         return $this->searchWitness(
             $request->familyId,
             $request->parameters,
-            function (): string {
+            function (array $parameters): string {
                 $generator = new SqlGenerator(new Grammar('stmt', [
                     'stmt' => new ProductionRule('stmt', [
                         new Production([
@@ -226,7 +226,7 @@ final class SupportedLanguage extends AbstractSupportedLanguage
                 return $generator->generate('stmt', 2);
             },
             null,
-            function (string $sql): array {
+            function (string $sql, array $parameters): array {
                 if (preg_match('/^SELECT\s+([^,]+),\s+(.+)$/', $sql, $matches) !== 1) {
                     return [
                         'first_identifier' => '',

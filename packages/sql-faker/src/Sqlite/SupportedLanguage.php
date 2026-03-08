@@ -50,22 +50,22 @@ final class SupportedLanguage extends AbstractSupportedLanguage
         $this->assertFamilyParameters($request);
 
         return match ($request->familyId) {
-            'sqlite.statement.any' => $this->searchWitness($request->familyId, $request->parameters, fn (): string => $this->provider->sql(null, 8)),
-            'sqlite.statement.select' => $this->searchWitness($request->familyId, $request->parameters, fn (): string => $this->provider->selectStatement(8)),
-            'sqlite.statement.insert' => $this->searchWitness($request->familyId, $request->parameters, fn (): string => $this->provider->insertStatement(8)),
-            'sqlite.statement.update' => $this->searchWitness($request->familyId, $request->parameters, fn (): string => $this->provider->updateStatement(8)),
-            'sqlite.statement.delete' => $this->searchWitness($request->familyId, $request->parameters, fn (): string => $this->provider->deleteStatement(8)),
-            'sqlite.statement.create_table' => $this->searchWitness($request->familyId, $request->parameters, fn (): string => $this->provider->createTableStatement(8)),
-            'sqlite.statement.alter_table' => $this->searchWitness($request->familyId, $request->parameters, fn (): string => $this->provider->alterTableStatement(8)),
-            'sqlite.statement.drop_table' => $this->searchWitness($request->familyId, $request->parameters, fn (): string => $this->provider->dropTableStatement(8)),
+            'sqlite.statement.any' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters): string => $this->provider->sql(null, 8)),
+            'sqlite.statement.select' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters): string => $this->provider->selectStatement(8)),
+            'sqlite.statement.insert' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters): string => $this->provider->insertStatement(8)),
+            'sqlite.statement.update' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters): string => $this->provider->updateStatement(8)),
+            'sqlite.statement.delete' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters): string => $this->provider->deleteStatement(8)),
+            'sqlite.statement.create_table' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters): string => $this->provider->createTableStatement(8)),
+            'sqlite.statement.alter_table' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters): string => $this->provider->alterTableStatement(8)),
+            'sqlite.statement.drop_table' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters): string => $this->provider->dropTableStatement(8)),
             'sqlite.constraint.select.star_requires_from' => $this->generateStarRequiresFromWitness($request),
-            'sqlite.constraint.attach.expression' => $this->searchWitness($request->familyId, $request->parameters, fn (): string => $this->generator->generate('attach_stmt', 8)),
-            'sqlite.constraint.detach.expression' => $this->searchWitness($request->familyId, $request->parameters, fn (): string => $this->generator->generate('detach_stmt', 8)),
+            'sqlite.constraint.attach.expression' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters): string => $this->generator->generate('attach_stmt', 8)),
+            'sqlite.constraint.detach.expression' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters): string => $this->generator->generate('detach_stmt', 8)),
             'sqlite.constraint.temporary_object_name_binding' => $this->generateTemporaryObjectNameBindingWitness($request),
-            'sqlite.constraint.vacuum.into_expression' => $this->searchWitness($request->familyId, $request->parameters, fn (): string => $this->generator->generate('vacuum_stmt', 8)),
+            'sqlite.constraint.vacuum.into_expression' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters): string => $this->generator->generate('vacuum_stmt', 8)),
             'sqlite.constraint.select.set_operation' => $this->generateSetOperationWitness($request),
             'sqlite.constraint.select.values_clause' => $this->generateValuesClauseWitness($request),
-            'sqlite.lex.identifier.context' => $this->searchWitness($request->familyId, $request->parameters, fn (): string => 'SELECT ' . $this->provider->identifier(1)),
+            'sqlite.lex.identifier.context' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters): string => 'SELECT ' . $this->provider->identifier(1)),
             default => throw new LogicException(sprintf('Unsupported family: %s', $request->familyId)),
         };
     }
@@ -125,8 +125,8 @@ final class SupportedLanguage extends AbstractSupportedLanguage
         return $this->searchWitness(
             $request->familyId,
             $request->parameters,
-            fn (): string => $this->generator->generate('oneselect', 8),
-            static fn (string $sql): bool => str_starts_with($sql, 'SELECT '),
+            fn (array $parameters): string => $this->generator->generate('oneselect', 8),
+            static fn (string $sql, array $parameters): bool => str_starts_with($sql, 'SELECT '),
             null,
             128,
         );
@@ -146,7 +146,7 @@ final class SupportedLanguage extends AbstractSupportedLanguage
 
                 return $this->generator->generate($rule, 8);
             },
-            fn (string $sql): bool => $this->isTemporaryObjectNameBindingWitness($sql),
+            fn (string $sql, array $parameters): bool => $this->isTemporaryObjectNameBindingWitness($sql),
             null,
             512,
         );

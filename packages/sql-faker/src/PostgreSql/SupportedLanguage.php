@@ -50,31 +50,31 @@ final class SupportedLanguage extends AbstractSupportedLanguage
         $this->assertFamilyParameters($request);
 
         return match ($request->familyId) {
-            'postgresql.statement.any' => $this->searchWitness($request->familyId, $request->parameters, fn (): string => $this->provider->sql(null, 8)),
-            'postgresql.statement.select' => $this->searchWitness($request->familyId, $request->parameters, fn (): string => $this->provider->selectStatement(8)),
-            'postgresql.statement.insert' => $this->searchWitness($request->familyId, $request->parameters, fn (): string => $this->provider->insertStatement(8)),
-            'postgresql.statement.update' => $this->searchWitness($request->familyId, $request->parameters, fn (): string => $this->provider->updateStatement(8)),
-            'postgresql.statement.delete' => $this->searchWitness($request->familyId, $request->parameters, fn (): string => $this->provider->deleteStatement(8)),
+            'postgresql.statement.any' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters): string => $this->provider->sql(null, 8)),
+            'postgresql.statement.select' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters): string => $this->provider->selectStatement(8)),
+            'postgresql.statement.insert' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters): string => $this->provider->insertStatement(8)),
+            'postgresql.statement.update' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters): string => $this->provider->updateStatement(8)),
+            'postgresql.statement.delete' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters): string => $this->provider->deleteStatement(8)),
             'postgresql.constraint.distinct_on' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('SelectStmt', 8),
-                static fn (string $sql): bool => str_contains($sql, 'DISTINCT ON('),
+                fn (array $parameters): string => $this->generator->generate('SelectStmt', 8),
+                static fn (string $sql, array $parameters): bool => str_contains($sql, 'DISTINCT ON('),
                 null,
                 4096,
             ),
             'postgresql.constraint.alter_materialized_view' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('AlterTableStmt', 8),
-                static fn (string $sql): bool => str_starts_with($sql, 'ALTER MATERIALIZED VIEW') || str_starts_with($sql, 'ALTER MATERIALIZED VIEW IF EXISTS'),
+                fn (array $parameters): string => $this->generator->generate('AlterTableStmt', 8),
+                static fn (string $sql, array $parameters): bool => str_starts_with($sql, 'ALTER MATERIALIZED VIEW') || str_starts_with($sql, 'ALTER MATERIALIZED VIEW IF EXISTS'),
                 null,
                 2048,
             ),
             'postgresql.constraint.alter_index.commands' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('AlterIndexStmt', 8),
+                fn (array $parameters): string => $this->generator->generate('AlterIndexStmt', 8),
                 null,
                 null,
                 2048,
@@ -82,41 +82,41 @@ final class SupportedLanguage extends AbstractSupportedLanguage
             'postgresql.constraint.alter_view.commands' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('AlterTableStmt', 8),
-                static fn (string $sql): bool => str_starts_with($sql, 'ALTER VIEW ') || str_starts_with($sql, 'ALTER VIEW IF EXISTS '),
+                fn (array $parameters): string => $this->generator->generate('AlterTableStmt', 8),
+                static fn (string $sql, array $parameters): bool => str_starts_with($sql, 'ALTER VIEW ') || str_starts_with($sql, 'ALTER VIEW IF EXISTS '),
                 null,
                 2048,
             ),
             'postgresql.constraint.alter_domain.add' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('AlterDomainStmt', 8),
-                static fn (string $sql): bool => str_contains($sql, ' ADD '),
+                fn (array $parameters): string => $this->generator->generate('AlterDomainStmt', 8),
+                static fn (string $sql, array $parameters): bool => str_contains($sql, ' ADD '),
             ),
             'postgresql.constraint.create_table_as.explicit_columns' => $this->generateExplicitCtasWitness($request),
             'postgresql.constraint.alter_sequence' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('AlterTableStmt', 8),
-                static fn (string $sql): bool => str_starts_with($sql, 'ALTER SEQUENCE '),
+                fn (array $parameters): string => $this->generator->generate('AlterTableStmt', 8),
+                static fn (string $sql, array $parameters): bool => str_starts_with($sql, 'ALTER SEQUENCE '),
                 null,
                 4096,
             ),
             'postgresql.constraint.alter_statistics' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('AlterStatsStmt', 8),
+                fn (array $parameters): string => $this->generator->generate('AlterStatsStmt', 8),
             ),
             'postgresql.constraint.alter_type.options' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('AlterTypeStmt', 8),
+                fn (array $parameters): string => $this->generator->generate('AlterTypeStmt', 8),
             ),
             'postgresql.constraint.alter_routine.options' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('AlterFunctionStmt', 8),
-                static fn (string $sql): bool => str_starts_with($sql, 'ALTER FUNCTION ')
+                fn (array $parameters): string => $this->generator->generate('AlterFunctionStmt', 8),
+                static fn (string $sql, array $parameters): bool => str_starts_with($sql, 'ALTER FUNCTION ')
                     || str_starts_with($sql, 'ALTER PROCEDURE ')
                     || str_starts_with($sql, 'ALTER ROUTINE '),
                 null,
@@ -125,8 +125,8 @@ final class SupportedLanguage extends AbstractSupportedLanguage
             'postgresql.constraint.alter_database.options' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('AlterDatabaseStmt', 8),
-                static fn (string $sql): bool => str_contains($sql, 'CONNECTION LIMIT')
+                fn (array $parameters): string => $this->generator->generate('AlterDatabaseStmt', 8),
+                static fn (string $sql, array $parameters): bool => str_contains($sql, 'CONNECTION LIMIT')
                     || str_contains($sql, 'ALLOW_CONNECTIONS')
                     || str_contains($sql, 'IS_TEMPLATE'),
                 null,
@@ -135,24 +135,24 @@ final class SupportedLanguage extends AbstractSupportedLanguage
             'postgresql.constraint.alter_role.valid_until' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('AlterRoleStmt', 8),
-                static fn (string $sql): bool => str_contains($sql, 'VALID UNTIL'),
+                fn (array $parameters): string => $this->generator->generate('AlterRoleStmt', 8),
+                static fn (string $sql, array $parameters): bool => str_contains($sql, 'VALID UNTIL'),
                 null,
                 2048,
             ),
             'postgresql.constraint.create_role.name_and_options' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('CreateRoleStmt', 8),
-                static fn (string $sql): bool => str_starts_with($sql, 'CREATE ROLE '),
+                fn (array $parameters): string => $this->generator->generate('CreateRoleStmt', 8),
+                static fn (string $sql, array $parameters): bool => str_starts_with($sql, 'CREATE ROLE '),
                 null,
                 2048,
             ),
             'postgresql.constraint.drop_role.name_list' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('DropRoleStmt', 8),
-                static fn (string $sql): bool => str_starts_with($sql, 'DROP ROLE ')
+                fn (array $parameters): string => $this->generator->generate('DropRoleStmt', 8),
+                static fn (string $sql, array $parameters): bool => str_starts_with($sql, 'DROP ROLE ')
                     || str_starts_with($sql, 'DROP ROLE IF EXISTS ')
                     || str_starts_with($sql, 'DROP USER ')
                     || str_starts_with($sql, 'DROP USER IF EXISTS ')
@@ -164,63 +164,63 @@ final class SupportedLanguage extends AbstractSupportedLanguage
             'postgresql.constraint.grant_role.name_list' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('GrantRoleStmt', 8),
-                static fn (string $sql): bool => str_starts_with($sql, 'GRANT '),
+                fn (array $parameters): string => $this->generator->generate('GrantRoleStmt', 8),
+                static fn (string $sql, array $parameters): bool => str_starts_with($sql, 'GRANT '),
                 null,
                 2048,
             ),
             'postgresql.constraint.revoke_role.name_list' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('RevokeRoleStmt', 8),
-                static fn (string $sql): bool => str_starts_with($sql, 'REVOKE '),
+                fn (array $parameters): string => $this->generator->generate('RevokeRoleStmt', 8),
+                static fn (string $sql, array $parameters): bool => str_starts_with($sql, 'REVOKE '),
                 null,
                 2048,
             ),
             'postgresql.constraint.create_user.name_and_options' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('CreateUserStmt', 8),
-                static fn (string $sql): bool => str_starts_with($sql, 'CREATE USER '),
+                fn (array $parameters): string => $this->generator->generate('CreateUserStmt', 8),
+                static fn (string $sql, array $parameters): bool => str_starts_with($sql, 'CREATE USER '),
                 null,
                 2048,
             ),
             'postgresql.constraint.create_group.name_and_options' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('CreateGroupStmt', 8),
-                static fn (string $sql): bool => str_starts_with($sql, 'CREATE GROUP '),
+                fn (array $parameters): string => $this->generator->generate('CreateGroupStmt', 8),
+                static fn (string $sql, array $parameters): bool => str_starts_with($sql, 'CREATE GROUP '),
                 null,
                 2048,
             ),
             'postgresql.constraint.alter_extension.content_target' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('AlterExtensionContentsStmt', 8),
-                static fn (string $sql): bool => str_starts_with($sql, 'ALTER EXTENSION '),
+                fn (array $parameters): string => $this->generator->generate('AlterExtensionContentsStmt', 8),
+                static fn (string $sql, array $parameters): bool => str_starts_with($sql, 'ALTER EXTENSION '),
                 null,
                 4096,
             ),
             'postgresql.constraint.grant.large_object_target' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('GrantStmt', 8),
-                static fn (string $sql): bool => str_contains($sql, ' ON LARGE OBJECT '),
+                fn (array $parameters): string => $this->generator->generate('GrantStmt', 8),
+                static fn (string $sql, array $parameters): bool => str_contains($sql, ' ON LARGE OBJECT '),
                 null,
                 4096,
             ),
             'postgresql.constraint.create_table.partition_strategy' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('CreateStmt', 8),
-                static fn (string $sql): bool => str_contains($sql, ' PARTITION BY '),
+                fn (array $parameters): string => $this->generator->generate('CreateStmt', 8),
+                static fn (string $sql, array $parameters): bool => str_contains($sql, ' PARTITION BY '),
                 null,
                 4096,
             ),
             'postgresql.constraint.create_table.partition_of' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('CreatePartitionOfStmt', 8),
+                fn (array $parameters): string => $this->generator->generate('CreatePartitionOfStmt', 8),
                 null,
                 null,
                 2048,
@@ -228,32 +228,32 @@ final class SupportedLanguage extends AbstractSupportedLanguage
             'postgresql.constraint.create_table.temp_name_binding' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('CreateStmt', 8),
-                fn (string $sql): bool => $this->isTemporaryCreateTableWitness($sql),
+                fn (array $parameters): string => $this->generator->generate('CreateStmt', 8),
+                fn (string $sql, array $parameters): bool => $this->isTemporaryCreateTableWitness($sql),
                 fn (string $sql, array $parameters): array => $this->extractTemporaryRelationProperties($sql, 'TABLE'),
                 4096,
             ),
             'postgresql.constraint.create_table_as.temp_name_binding' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('CreateAsStmt', 8),
-                fn (string $sql): bool => $this->isTemporaryCreateTableAsWitness($sql),
+                fn (array $parameters): string => $this->generator->generate('CreateAsStmt', 8),
+                fn (string $sql, array $parameters): bool => $this->isTemporaryCreateTableAsWitness($sql),
                 fn (string $sql, array $parameters): array => $this->extractTemporaryRelationProperties($sql, 'TABLE'),
                 4096,
             ),
             'postgresql.constraint.execute_create_table_as.temp_name_binding' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('ExecuteStmt', 8),
-                fn (string $sql): bool => $this->isTemporaryExecuteCreateTableAsWitness($sql),
+                fn (array $parameters): string => $this->generator->generate('ExecuteStmt', 8),
+                fn (string $sql, array $parameters): bool => $this->isTemporaryExecuteCreateTableAsWitness($sql),
                 fn (string $sql, array $parameters): array => $this->extractTemporaryRelationProperties($sql, 'TABLE'),
                 4096,
             ),
             'postgresql.constraint.create_sequence.temp_name_binding' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('CreateSeqStmt', 8),
-                fn (string $sql): bool => $this->isTemporaryCreateSequenceWitness($sql),
+                fn (array $parameters): string => $this->generator->generate('CreateSeqStmt', 8),
+                fn (string $sql, array $parameters): bool => $this->isTemporaryCreateSequenceWitness($sql),
                 fn (string $sql, array $parameters): array => $this->extractTemporaryRelationProperties($sql, 'SEQUENCE'),
                 4096,
             ),
@@ -261,8 +261,8 @@ final class SupportedLanguage extends AbstractSupportedLanguage
             'postgresql.constraint.create_view.temp_name_binding' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('ViewStmt', 8),
-                fn (string $sql): bool => $this->isTemporaryCreateViewWitness($sql),
+                fn (array $parameters): string => $this->generator->generate('ViewStmt', 8),
+                fn (string $sql, array $parameters): bool => $this->isTemporaryCreateViewWitness($sql),
                 fn (string $sql, array $parameters): array => $this->extractTemporaryCreateViewProperties($sql),
                 4096,
             ),
@@ -270,7 +270,7 @@ final class SupportedLanguage extends AbstractSupportedLanguage
             'postgresql.constraint.insert.conflict_update' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('insert_conflict_update_stmt', 8),
+                fn (array $parameters): string => $this->generator->generate('insert_conflict_update_stmt', 8),
                 null,
                 null,
                 2048,
@@ -278,8 +278,8 @@ final class SupportedLanguage extends AbstractSupportedLanguage
             'postgresql.constraint.grant.parameter_target' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('GrantStmt', 8),
-                static fn (string $sql): bool => str_contains($sql, ' ON PARAMETER '),
+                fn (array $parameters): string => $this->generator->generate('GrantStmt', 8),
+                static fn (string $sql, array $parameters): bool => str_contains($sql, ' ON PARAMETER '),
                 null,
                 4096,
             ),
@@ -288,12 +288,12 @@ final class SupportedLanguage extends AbstractSupportedLanguage
             'postgresql.constraint.text_search_template.define' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('DefineTextSearchTemplateStmt', 8),
+                fn (array $parameters): string => $this->generator->generate('DefineTextSearchTemplateStmt', 8),
             ),
             'postgresql.constraint.create_operator.definition' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('DefineOperatorStmt', 8),
+                fn (array $parameters): string => $this->generator->generate('DefineOperatorStmt', 8),
                 null,
                 null,
                 512,
@@ -301,7 +301,7 @@ final class SupportedLanguage extends AbstractSupportedLanguage
             'postgresql.constraint.create_aggregate.definition' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('DefineAggregateStmt', 8),
+                fn (array $parameters): string => $this->generator->generate('DefineAggregateStmt', 8),
                 null,
                 null,
                 512,
@@ -309,7 +309,7 @@ final class SupportedLanguage extends AbstractSupportedLanguage
             'postgresql.constraint.comment.type_reference' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('CommentTypeReferenceStmt', 8),
+                fn (array $parameters): string => $this->generator->generate('CommentTypeReferenceStmt', 8),
                 null,
                 null,
                 512,
@@ -317,7 +317,7 @@ final class SupportedLanguage extends AbstractSupportedLanguage
             'postgresql.constraint.create_cast.type_reference' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('CreateCastStmt', 8),
+                fn (array $parameters): string => $this->generator->generate('CreateCastStmt', 8),
                 null,
                 null,
                 512,
@@ -325,7 +325,7 @@ final class SupportedLanguage extends AbstractSupportedLanguage
             'postgresql.constraint.drop_cast.type_reference' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('DropCastStmt', 8),
+                fn (array $parameters): string => $this->generator->generate('DropCastStmt', 8),
                 null,
                 null,
                 512,
@@ -333,7 +333,7 @@ final class SupportedLanguage extends AbstractSupportedLanguage
             'postgresql.constraint.create_assertion.check_expression' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('CreateAssertionStmt', 8),
+                fn (array $parameters): string => $this->generator->generate('CreateAssertionStmt', 8),
                 null,
                 null,
                 512,
@@ -341,8 +341,8 @@ final class SupportedLanguage extends AbstractSupportedLanguage
             'postgresql.constraint.create_routine.complete_definition' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('CreateFunctionStmt', 8),
-                static fn (string $sql): bool => str_starts_with($sql, 'CREATE FUNCTION')
+                fn (array $parameters): string => $this->generator->generate('CreateFunctionStmt', 8),
+                static fn (string $sql, array $parameters): bool => str_starts_with($sql, 'CREATE FUNCTION')
                     || str_starts_with($sql, 'CREATE OR REPLACE FUNCTION')
                     || str_starts_with($sql, 'CREATE PROCEDURE')
                     || str_starts_with($sql, 'CREATE OR REPLACE PROCEDURE'),
@@ -352,15 +352,15 @@ final class SupportedLanguage extends AbstractSupportedLanguage
             'postgresql.constraint.drop_type.object_name' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => $this->generator->generate('DropStmt', 8),
-                static fn (string $sql): bool => str_starts_with($sql, 'DROP TYPE') || str_starts_with($sql, 'DROP DOMAIN'),
+                fn (array $parameters): string => $this->generator->generate('DropStmt', 8),
+                static fn (string $sql, array $parameters): bool => str_starts_with($sql, 'DROP TYPE') || str_starts_with($sql, 'DROP DOMAIN'),
                 null,
                 2048,
             ),
             'postgresql.lex.identifier.context' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (): string => 'SELECT ' . $this->provider->identifier(1),
+                fn (array $parameters): string => 'SELECT ' . $this->provider->identifier(1),
             ),
             default => throw new LogicException(sprintf('Unsupported family: %s', $request->familyId)),
         };
@@ -454,9 +454,9 @@ final class SupportedLanguage extends AbstractSupportedLanguage
         return $this->searchWitness(
             $request->familyId,
             ['arity' => $expectedArity],
-            fn (): string => $this->generator->generate('CreateAsStmt', 8),
+            fn (array $parameters): string => $this->generator->generate('CreateAsStmt', 8),
             fn (string $sql, array $parameters): bool => $this->isExplicitCtasArityWitness($sql, (int) $parameters['arity']),
-            fn (string $sql): array => $this->extractExplicitCtasProperties($sql),
+            fn (string $sql, array $parameters): array => $this->extractExplicitCtasProperties($sql),
             4096,
         );
     }
@@ -476,9 +476,9 @@ final class SupportedLanguage extends AbstractSupportedLanguage
         return $this->searchWitness(
             $request->familyId,
             ['arity' => $expectedArity],
-            fn (): string => $this->generator->generate('ViewStmt', 8),
+            fn (array $parameters): string => $this->generator->generate('ViewStmt', 8),
             fn (string $sql, array $parameters): bool => $this->isExplicitViewArityWitness($sql, (int) $parameters['arity']),
-            fn (string $sql): array => $this->extractExplicitViewProperties($sql),
+            fn (string $sql, array $parameters): array => $this->extractExplicitViewProperties($sql),
             4096,
         );
     }
@@ -498,9 +498,9 @@ final class SupportedLanguage extends AbstractSupportedLanguage
         return $this->searchWitness(
             $request->familyId,
             ['arity' => $expectedArity],
-            fn (): string => $this->generator->generate('InsertStmt', 8),
+            fn (array $parameters): string => $this->generator->generate('InsertStmt', 8),
             fn (string $sql, array $parameters): bool => $this->isExplicitInsertArityWitness($sql, (int) $parameters['arity']),
-            fn (string $sql): array => $this->extractExplicitInsertProperties($sql),
+            fn (string $sql, array $parameters): array => $this->extractExplicitInsertProperties($sql),
             4096,
         );
     }
@@ -522,7 +522,7 @@ final class SupportedLanguage extends AbstractSupportedLanguage
             ['arity' => $expectedArity],
             fn (array $parameters): string => $this->generator->generate(sprintf('setop_select_stmt_%d', (int) $parameters['arity']), 8),
             fn (string $sql, array $parameters): bool => $this->isSetOperationArityWitness($sql, (int) $parameters['arity']),
-            fn (string $sql): array => $this->extractSetOperationProperties($sql),
+            fn (string $sql, array $parameters): array => $this->extractSetOperationProperties($sql),
             64,
         );
     }
@@ -544,7 +544,7 @@ final class SupportedLanguage extends AbstractSupportedLanguage
             ['arity' => $expectedArity],
             fn (array $parameters): string => $this->generator->generate(sprintf('select_values_clause_%d', (int) $parameters['arity']), 8),
             fn (string $sql, array $parameters): bool => $this->isValuesClauseArityWitness($sql, (int) $parameters['arity']),
-            fn (string $sql): array => $this->extractValuesClauseProperties($sql),
+            fn (string $sql, array $parameters): array => $this->extractValuesClauseProperties($sql),
             64,
         );
     }
