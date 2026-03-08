@@ -426,6 +426,26 @@ final class SqlGeneratorTest extends TestCase
         self::assertMatchesRegularExpression($pattern, $result);
     }
 
+    #[DataProvider('providerGenerateTightJoinPair')]
+    public function testGenerateKeepsTightJoinPairsWithoutSpaces(string $left, string $right, string $expected): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([
+                    new Terminal($left),
+                    new Terminal($right),
+                ]),
+            ]),
+        ]);
+        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+
+        $result = $generator->generate('stmt');
+
+        self::assertSame($expected, $result);
+    }
+
     public function testGenerateSkipsEndOfInput(): void
     {
         $faker = Factory::create();
@@ -1556,8 +1576,7 @@ final class SqlGeneratorTest extends TestCase
 
         $result = $generator->generate('stmt');
 
-        self::assertStringContainsString('@', $result);
-        self::assertStringNotContainsString('.', explode('@', $result)[0]);
+        self::assertMatchesRegularExpression('/^_i0@[a-z][a-z0-9]*$/', $result);
     }
 
     public function testGenerateKeepsCurrentUserParensWithoutColon(): void
@@ -1598,7 +1617,7 @@ final class SqlGeneratorTest extends TestCase
 
         $result = $generator->generate('stmt');
 
-        self::assertSame(1, substr_count($result, 'ENABLE'));
+        self::assertSame('ALTER EVENT _i0 ENABLE', $result);
     }
 
     public function testGenerateStripsDotsFromLexHostnameWithoutAt(): void
@@ -1618,28 +1637,7 @@ final class SqlGeneratorTest extends TestCase
 
         $result = $generator->generate('stmt');
 
-        self::assertStringNotContainsString('.', $result);
-        self::assertStringStartsWith('CREATE ROLE ', $result);
-    }
-
-    public function testGenerateKeepsLexHostnameBeforeAt(): void
-    {
-        $faker = Factory::create();
-        $faker->seed(12345);
-        $grammar = new Grammar('stmt', [
-            'stmt' => new ProductionRule('stmt', [
-                new Production([
-                    new Terminal('IDENT'),
-                    new Terminal('@'),
-                    new Terminal('LEX_HOSTNAME'),
-                ]),
-            ]),
-        ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
-
-        $result = $generator->generate('stmt');
-
-        self::assertStringContainsString('@', $result);
+        self::assertMatchesRegularExpression('/^CREATE ROLE [a-z][a-z0-9]*$/', $result);
     }
 
     public function testGenerateKeepsFloatInNormalContext(): void
@@ -1746,7 +1744,20 @@ final class SqlGeneratorTest extends TestCase
         yield 'FLOAT_NUM' => ['FLOAT_NUM', '/^\d+\.\d+e-?\d+$/'];
         yield 'HEX_NUM' => ['HEX_NUM', '/^0x[0-9a-f]+$/'];
         yield 'BIN_NUM' => ['BIN_NUM', '/^0b[01]+$/'];
-        yield 'LEX_HOSTNAME' => ['LEX_HOSTNAME', '/^.+$/'];
+        yield 'LEX_HOSTNAME' => ['LEX_HOSTNAME', '/^[a-z][a-z0-9]*$/'];
+        yield 'FILTER_DB_TABLE_PATTERN' => ['FILTER_DB_TABLE_PATTERN', "/^'[a-z][a-z0-9]*\\.[a-z][a-z0-9]*'$/"];
+        yield 'RESET_MASTER_INDEX' => ['RESET_MASTER_INDEX', '/^[1-9]\d*$/'];
+    }
+
+    /**
+     * @return iterable<string, array{string, string, string}>
+     */
+    public static function providerGenerateTightJoinPair(): iterable
+    {
+        yield 'star before at' => ['*', '@', '*@'];
+        yield 'at before star' => ['@', '*', '@*'];
+        yield 'star before colon' => ['*', ':', '*:'];
+        yield 'colon before star' => [':', '*', ':*'];
     }
 
     /**
