@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\MySql;
 
+require_once dirname(__DIR__, 2) . '/Support/SupportedLanguagePool.php';
+
 use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use SqlFakerTestSupport\SupportedLanguagePool;
 use SqlFaker\Contract\FamilyDefinition;
 use SqlFaker\Contract\FamilyRequest;
 use SqlFaker\Contract\GrammarAlternativeSnapshot;
@@ -36,9 +39,24 @@ use SqlFaker\MySqlProvider;
 #[UsesClass(MySqlProvider::class)]
 final class SupportedLanguageTest extends TestCase
 {
+    #[\Override]
+    protected function setUp(): void
+    {
+        parent::setUp();
+        gc_collect_cycles();
+    }
+
+    #[\Override]
+    public static function tearDownAfterClass(): void
+    {
+        SupportedLanguagePool::clear();
+
+        parent::tearDownAfterClass();
+    }
+
     public function testExposesMySqlSupportedLanguageContract(): void
     {
-        $language = new SupportedLanguage('mysql-8.0.44');
+        $language = SupportedLanguagePool::mysql('mysql-8.0.44');
         $witness = $language->generateWitness(new FamilyRequest(
             'mysql.constraint.table_value_constructor',
             ['arity' => 3],
@@ -59,8 +77,7 @@ final class SupportedLanguageTest extends TestCase
         string $familyId,
         string $expectedSql,
     ): void {
-        $language = new SupportedLanguage('mysql-8.0.44');
-
+        $language = SupportedLanguagePool::mysql('mysql-8.0.44');
         $witness = $language->generateWitness(new FamilyRequest($familyId));
 
         self::assertSame(1, $witness->seed);
@@ -69,19 +86,17 @@ final class SupportedLanguageTest extends TestCase
 
     public function testGenerateWitnessRejectsUnknownParametersBeforeSearching(): void
     {
-        $language = new SupportedLanguage('mysql-8.0.44');
-
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('Unknown parameters for family mysql.statement.select: unexpected');
+        $language = SupportedLanguagePool::mysql('mysql-8.0.44');
         $language->generateWitness(new FamilyRequest('mysql.statement.select', ['unexpected' => 1]));
     }
 
     public function testGenerateWitnessRejectsUnknownFamiliesBeforeDispatch(): void
     {
-        $language = new SupportedLanguage('mysql-8.0.44');
-
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('Unknown family: mysql.unknown.family');
+        $language = SupportedLanguagePool::mysql('mysql-8.0.44');
         $language->generateWitness(new FamilyRequest('mysql.unknown.family'));
     }
 
@@ -94,8 +109,7 @@ final class SupportedLanguageTest extends TestCase
         array $expectedProperties,
         string $expectedSql,
     ): void {
-        $language = new SupportedLanguage('mysql-8.0.44');
-
+        $language = SupportedLanguagePool::mysql('mysql-8.0.44');
         $witness = $language->generateWitness(new FamilyRequest('mysql.constraint.table_value_constructor', ['arity' => $arity]));
 
         self::assertSame(1, $witness->seed);
@@ -112,17 +126,15 @@ final class SupportedLanguageTest extends TestCase
         array $parameters,
         string $expectedMessage,
     ): void {
-        $language = new SupportedLanguage('mysql-8.0.44');
-
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage($expectedMessage);
+        $language = SupportedLanguagePool::mysql('mysql-8.0.44');
         $language->generateWitness(new FamilyRequest('mysql.constraint.table_value_constructor', $parameters));
     }
 
     public function testGenerateWitnessUsesDeterministicIdentifierFreshnessWitness(): void
     {
-        $language = new SupportedLanguage('mysql-8.0.44');
-
+        $language = SupportedLanguagePool::mysql('mysql-8.0.44');
         $witness = $language->generateWitness(new FamilyRequest('mysql.lex.identifier.freshness'));
 
         self::assertSame(1, $witness->seed);
@@ -141,7 +153,7 @@ final class SupportedLanguageTest extends TestCase
         string $version,
         array $expectedAnchorRules,
     ): void {
-        $language = new SupportedLanguage($version);
+        $language = SupportedLanguagePool::mysql($version);
         $witness = $language->generateWitness(new FamilyRequest('mysql.constraint.change_replication_source'));
 
         self::assertSame(

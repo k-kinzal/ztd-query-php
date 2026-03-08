@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\PostgreSql;
 
+require_once dirname(__DIR__, 2) . '/Support/SupportedLanguagePool.php';
+
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use SqlFakerTestSupport\SupportedLanguagePool;
 use SqlFaker\Contract\FamilyDefinition;
 use SqlFaker\Contract\FamilyRequest;
 use SqlFaker\Contract\GrammarAlternativeSnapshot;
@@ -35,9 +38,24 @@ use SqlFaker\PostgreSqlProvider;
 #[UsesClass(PostgreSqlProvider::class)]
 final class SupportedLanguageTest extends TestCase
 {
+    #[\Override]
+    protected function setUp(): void
+    {
+        parent::setUp();
+        gc_collect_cycles();
+    }
+
+    #[\Override]
+    public static function tearDownAfterClass(): void
+    {
+        SupportedLanguagePool::clear();
+
+        parent::tearDownAfterClass();
+    }
+
     public function testExposesPostgreSqlSupportedLanguageContract(): void
     {
-        $language = new SupportedLanguage();
+        $language = SupportedLanguagePool::postgresql();
         $witness = $language->generateWitness(new FamilyRequest('postgresql.statement.select'));
 
         self::assertSame('postgresql', $language->dialect());
@@ -52,7 +70,7 @@ final class SupportedLanguageTest extends TestCase
     #[DataProvider('providerTemporaryRelationFamily')]
     public function testTemporaryRelationFamiliesBindObjectNamesToUnqualifiedRelations(string $familyId): void
     {
-        $language = new SupportedLanguage();
+        $language = SupportedLanguagePool::postgresql();
         $witness = $language->generateWitness(new FamilyRequest($familyId));
 
         self::assertSame([], $language->family($familyId)->parameterNames, $familyId);
