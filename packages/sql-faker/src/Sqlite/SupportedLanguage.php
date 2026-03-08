@@ -127,7 +127,7 @@ final class SupportedLanguage extends AbstractSupportedLanguage
             ['arity' => $expectedArity],
             fn (array $parameters): string => $this->generator->generate(sprintf('setop_select_stmt_%d', (int) $parameters['arity']), 8),
             fn (string $sql, array $parameters): bool => $this->isSetOperationArityWitness($sql, (int) $parameters['arity']),
-            fn (string $sql): array => $this->extractSetOperationProperties($sql),
+            fn (string $sql, array $parameters): array => $this->extractSetOperationProperties($sql),
             128,
         );
     }
@@ -141,7 +141,7 @@ final class SupportedLanguage extends AbstractSupportedLanguage
             ['arity' => $expectedArity],
             fn (array $parameters): string => $this->generator->generate(sprintf('select_values_clause_%d', (int) $parameters['arity']), 8),
             fn (string $sql, array $parameters): bool => $this->isValuesClauseArityWitness($sql, (int) $parameters['arity']),
-            fn (string $sql): array => $this->extractValuesClauseProperties($sql),
+            fn (string $sql, array $parameters): array => $this->extractValuesClauseProperties($sql),
             64,
         );
     }
