@@ -66,7 +66,7 @@ foreach ($claims as $claim) {
     $dialects[$claim->dialect] = true;
 }
 
-$mysqlVersion = getenv('MYSQL_VERSION') !== false ? (string) getenv('MYSQL_VERSION') : defaultMySqlVersion();
+$mysqlVersion = getenv('MYSQL_VERSION') !== false ? (string) getenv('MYSQL_VERSION') : defaultSpecMySqlVersion();
 $subjects = [];
 foreach (array_keys($dialects) as $selectedDialect) {
     $subjects[$selectedDialect] = match ($selectedDialect) {
@@ -309,7 +309,7 @@ function mysqlGrammarVersion(string $mysqlVersion): string
     return mysqlContainerMap()[$mysqlVersion][1] ?? throw new InvalidArgumentException(sprintf('Unsupported MYSQL_VERSION: %s', $mysqlVersion));
 }
 
-function defaultMySqlVersion(): string
+function defaultSpecMySqlVersion(): string
 {
     /** @var array{default?: mixed} $meta */
     $meta = require __DIR__ . '/../resources/ast.php';
