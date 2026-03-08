@@ -86,6 +86,54 @@ final class SupportedLanguageTest extends TestCase
     }
 
     /**
+     * @param array<string, int> $expectedProperties
+     */
+    #[DataProvider('providerDeterministicTableValueConstructorWitness')]
+    public function testGenerateWitnessUsesDeterministicCanonicalSqlForTableValueConstructor(
+        int|string $arity,
+        array $expectedProperties,
+        string $expectedSql,
+    ): void {
+        $language = new SupportedLanguage('mysql-8.0.44');
+
+        $witness = $language->generateWitness(new FamilyRequest('mysql.constraint.table_value_constructor', ['arity' => $arity]));
+
+        self::assertSame(1, $witness->seed);
+        self::assertSame(['arity' => (int) $arity], $witness->parameters);
+        self::assertSame($expectedProperties, $witness->properties);
+        self::assertSame($expectedSql, $witness->sql);
+    }
+
+    /**
+     * @param array<string, scalar> $parameters
+     */
+    #[DataProvider('providerInvalidTableValueConstructorRequest')]
+    public function testGenerateWitnessRejectsMissingAndOutOfRangeTableValueConstructorArities(
+        array $parameters,
+        string $expectedMessage,
+    ): void {
+        $language = new SupportedLanguage('mysql-8.0.44');
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage($expectedMessage);
+        $language->generateWitness(new FamilyRequest('mysql.constraint.table_value_constructor', $parameters));
+    }
+
+    public function testGenerateWitnessUsesDeterministicIdentifierFreshnessWitness(): void
+    {
+        $language = new SupportedLanguage('mysql-8.0.44');
+
+        $witness = $language->generateWitness(new FamilyRequest('mysql.lex.identifier.freshness'));
+
+        self::assertSame(1, $witness->seed);
+        self::assertSame('SELECT _i0, _i1', $witness->sql);
+        self::assertSame([
+            'first_identifier' => '_i0',
+            'second_identifier' => '_i1',
+        ], $witness->properties);
+    }
+
+    /**
      * @param list<string> $expectedAnchorRules
      */
     #[DataProvider('providerChangeReplicationSourceVersion')]
@@ -122,7 +170,52 @@ final class SupportedLanguageTest extends TestCase
         yield 'statement insert' => ['mysql.statement.insert', 'INSERT HIGH_PRIORITY `_i0`._i1 SET _i2 = _i3'];
         yield 'statement update' => ['mysql.statement.update', 'WITH _i0 AS(SELECT _i1), _i2 AS(SELECT _i3) UPDATE _i4 SET _i5 = _i6'];
         yield 'statement delete' => ['mysql.statement.delete', 'WITH _i0 AS(SELECT _i1), _i2 AS(SELECT _i3) DELETE _i4 FROM _i5'];
+        yield 'set system variable' => ['mysql.constraint.set_system_variable', 'SET SESSION autocommit = 0'];
         yield 'create srs' => ['mysql.constraint.create_srs', 'CREATE SPATIAL REFERENCE SYSTEM IF NOT EXISTS 1 DESCRIPTION \'4fJTlWtA62\' ORGANIZATION \'ylRyZ1I\' IDENTIFIED BY 878115724 DEFINITION \'GEOGCS["WGS 84",DATUM["World Geodetic System 1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.017453292519943278]]\' NAME \'9SrOoVZgqH1pllyYYGTpsyu65m6Hj\''];
+        yield 'signal sqlstate' => ['mysql.constraint.signal_sqlstate', 'SIGNAL SQLSTATE \'45000\''];
+        yield 'show warnings limit' => ['mysql.constraint.show_warnings.limit', 'SHOW WARNINGS LIMIT 0 OFFSET 0'];
         yield 'alter database encryption' => ['mysql.constraint.alter_database.encryption', 'ALTER DATABASE _i0 ENCRYPTION \'Y\''];
+        yield 'identifier context' => ['mysql.lex.identifier.context', 'SELECT _i0'];
+    }
+
+    /**
+     * @return iterable<string, array{0: int|string, 1: array<string, int>, 2: string}>
+     */
+    public static function providerDeterministicTableValueConstructorWitness(): iterable
+    {
+        yield 'arity 1' => [
+            1,
+            ['row_arity' => 1],
+            "VALUES ROW('4fJTlWtA62'), ROW('ylRyZ1I')",
+        ];
+        yield 'arity 3 as string' => [
+            '3',
+            ['row_arity' => 3],
+            "VALUES ROW('4fJTlWtA62', 'ylRyZ1I', '29SrOoVZgqH1'), ROW('llyYYGTpsyu65m6HjhGS5dFzvGEEqoC', 'w4VS05VWAI5BiKt8IO0yYOtQs', 'BMMqPYHROykG8qLn_HbApbxWezMlVlh')",
+        ];
+        yield 'arity 8' => [
+            8,
+            ['row_arity' => 8],
+            "VALUES ROW('4fJTlWtA62', 'ylRyZ1I', '29SrOoVZgqH1', 'llyYYGTpsyu65m6HjhGS5dFzvGEEqoC', 'w4VS05VWAI5BiKt8IO0yYOtQs', 'BMMqPYHROykG8qLn_HbApbxWezMlVlh', 't', 'ZrmdtoEBHj8O7PjST45zTJZy6TzT0t'), ROW('TAW1zQM6pkrY7NOEKrWz7NvL', 'TqYB_YgfPgWuAKbuN13HRZy', 'boMljGPT6TDmjWNQaVylMw', 'yOYLhcmYBdJ9Wl6YYz9RG5lk1TDK', '38xa6IkTSykOqn2bDJSzi', '9SOeqUz9Bk8JzZKF0yZBSWGRQwHoZnIy', 'gWCL', '770xykT3ukLzlGImUyt2')",
+        ];
+    }
+
+    /**
+     * @return iterable<string, array{0: array<string, scalar>, 1: string}>
+     */
+    public static function providerInvalidTableValueConstructorRequest(): iterable
+    {
+        yield 'missing arity' => [
+            [],
+            'Missing required parameter arity for family mysql.constraint.table_value_constructor.',
+        ];
+        yield 'arity below range' => [
+            ['arity' => 0],
+            'arity parameter must be between 1 and 8.',
+        ];
+        yield 'arity above range' => [
+            ['arity' => 9],
+            'arity parameter must be between 1 and 8.',
+        ];
     }
 }
