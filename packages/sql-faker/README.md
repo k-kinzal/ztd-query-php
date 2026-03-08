@@ -22,7 +22,7 @@ It currently ships providers for MySQL, PostgreSQL, and SQLite and is intended f
 ## Supported Dialects
 
 | Dialect | Provider | Package grammar coverage | Default grammar snapshot | Available grammar snapshots |
-|---------|----------|----------------|--------------------------|--------------------------|-----------------------------|
+|---------|----------|--------------------------|--------------------------|-----------------------------|
 | MySQL | `SqlFaker\MySqlProvider` | `MySQL 5.6`, `5.7`, `8.0`, `8.1`, `8.2`, `8.3`, `8.4`, `9.0`, `9.1` | `mysql-8.4.7` | `mysql-5.6.51`, `mysql-5.7.44`, `mysql-8.0.44`, `mysql-8.1.0`, `mysql-8.2.0`, `mysql-8.3.0`, `mysql-8.4.7`, `mysql-9.0.1`, `mysql-9.1.0` |
 | PostgreSQL | `SqlFaker\PostgreSqlProvider` | `PostgreSQL 17` | `pg-17.2` | `pg-17.2` |
 | SQLite | `SqlFaker\SqliteProvider` | `SQLite 3` | `sqlite-3.47.2` | `sqlite-3.47.2` |
