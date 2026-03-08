@@ -74,6 +74,52 @@ final class AbstractSupportedLanguageTest extends TestCase
         self::assertSame([0], array_keys($firstCatalog));
     }
 
+    public function testFamilyCatalogReindexesNonSequentialFamilyArrays(): void
+    {
+        $language = new class () extends AbstractSupportedLanguage {
+            public function dialect(): string
+            {
+                return 'stub';
+            }
+
+            public function generateWitness(FamilyRequest $request): \SqlFaker\Contract\SqlWitness
+            {
+                throw new LogicException('unreachable');
+            }
+
+            protected function buildFamilies(): array
+            {
+                return [];
+            }
+
+            protected function buildGrammarSnapshot(): GrammarSnapshot
+            {
+                return new GrammarSnapshot('stub', 'stmt', ['stmt'], [], [
+                    'stub.alpha' => ['stmt'],
+                    'stub.beta' => ['stmt'],
+                ]);
+            }
+
+            protected function seed(int $seed): void
+            {
+            }
+        };
+
+        $property = (new \ReflectionClass(AbstractSupportedLanguage::class))->getProperty('familyMap');
+        $property->setValue($language, [
+            3 => new FamilyDefinition('stub.alpha', 'alpha', 'contract', ['stmt']),
+            9 => new FamilyDefinition('stub.beta', 'beta', 'contract', ['stmt']),
+        ]);
+
+        $catalog = $language->familyCatalog();
+
+        self::assertSame([0, 1], array_keys($catalog));
+        self::assertSame(['stub.alpha', 'stub.beta'], array_map(
+            static fn (FamilyDefinition $family): string => $family->id,
+            $catalog,
+        ));
+    }
+
     public function testGenerateWitnessUsesValidatedParametersAndSearchLoop(): void
     {
         $language = new class () extends AbstractSupportedLanguage {
