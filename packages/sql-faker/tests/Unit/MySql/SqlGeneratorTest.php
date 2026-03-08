@@ -804,6 +804,84 @@ final class SqlGeneratorTest extends TestCase
         )));
     }
 
+    public function testAugmentGrammarRewritesOnlyMatchingBoolPriAllOrAnyAlternatives(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([new NonTerminal('bool_pri')]),
+            ]),
+            'comp_op' => new ProductionRule('comp_op', [
+                new Production([new Terminal('EQUAL_SYM')]),
+                new Production([new Terminal('LT')]),
+            ]),
+            'bool_pri' => new ProductionRule('bool_pri', [
+                new Production([
+                    new NonTerminal('bool_pri'),
+                    new NonTerminal('comp_op'),
+                    new NonTerminal('all_or_any'),
+                    new NonTerminal('table_subquery'),
+                ]),
+                new Production([
+                    new NonTerminal('bool_pri'),
+                    new NonTerminal('comp_op'),
+                    new NonTerminal('all_or_any'),
+                    new NonTerminal('expr'),
+                ]),
+                new Production([
+                    new NonTerminal('expr'),
+                    new NonTerminal('comp_op'),
+                    new NonTerminal('all_or_any'),
+                    new NonTerminal('table_subquery'),
+                ]),
+                new Production([
+                    new NonTerminal('bool_pri'),
+                    new NonTerminal('comp_op'),
+                    new NonTerminal('all_or_any'),
+                ]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+
+        $compiled = $generator->compiledGrammar();
+
+        self::assertSame([['LT']], array_map(
+            static function (Production $alt): array {
+                return array_map(
+                    static function ($symbol): string {
+                        return match (true) {
+                            $symbol instanceof NonTerminal => $symbol->value,
+                            $symbol instanceof Terminal => $symbol->value,
+                            default => throw new LogicException('Unexpected symbol type.'),
+                        };
+                    },
+                    $alt->symbols,
+                );
+            },
+            $compiled->ruleMap['comp_op_all_or_any']->alternatives,
+        ));
+        self::assertSame([
+            ['bool_pri', 'comp_op_all_or_any', 'all_or_any', 'table_subquery'],
+            ['bool_pri', 'comp_op', 'all_or_any', 'expr'],
+            ['expr', 'comp_op', 'all_or_any', 'table_subquery'],
+            ['bool_pri', 'comp_op', 'all_or_any'],
+        ], array_map(
+            static function (Production $alt): array {
+                return array_map(
+                    static function ($symbol): string {
+                        return match (true) {
+                            $symbol instanceof NonTerminal => $symbol->value,
+                            $symbol instanceof Terminal => $symbol->value,
+                            default => throw new LogicException('Unexpected symbol type.'),
+                        };
+                    },
+                    $alt->symbols,
+                );
+            },
+            $compiled->ruleMap['bool_pri']->alternatives,
+        ));
+    }
+
     public function testGenerateKeepsEqualSymBeforeOtherTokens(): void
     {
         $faker = Factory::create();
@@ -1313,6 +1391,76 @@ final class SqlGeneratorTest extends TestCase
         )));
     }
 
+    public function testAugmentGrammarRewritesOnlyReadOnlyAlterDatabaseOptions(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([new NonTerminal('alter_database_option')]),
+            ]),
+            'alter_database_option' => new ProductionRule('alter_database_option', [
+                new Production([
+                    new Terminal('READ_SYM'),
+                    new Terminal('ONLY_SYM'),
+                    new NonTerminal('legacy_equal'),
+                    new NonTerminal('legacy_value'),
+                ]),
+                new Production([
+                    new Terminal('READ_SYM'),
+                    new Terminal('WRITE_SYM'),
+                    new NonTerminal('legacy_equal'),
+                    new NonTerminal('legacy_value'),
+                ]),
+                new Production([
+                    new Terminal('READ_SYM'),
+                    new Terminal('ONLY_SYM'),
+                    new NonTerminal('legacy_value'),
+                ]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+
+        $compiled = $generator->compiledGrammar();
+
+        self::assertSame([
+            ['READ_SYM', 'ONLY_SYM', 'opt_equal', 'read_only_option_value'],
+            ['READ_SYM', 'WRITE_SYM', 'legacy_equal', 'legacy_value'],
+            ['READ_SYM', 'ONLY_SYM', 'legacy_value'],
+        ], array_map(
+            static function (Production $alt): array {
+                return array_map(
+                    static function ($symbol): string {
+                        return match (true) {
+                            $symbol instanceof NonTerminal => $symbol->value,
+                            $symbol instanceof Terminal => $symbol->value,
+                            default => throw new LogicException('Unexpected symbol type.'),
+                        };
+                    },
+                    $alt->symbols,
+                );
+            },
+            $compiled->ruleMap['alter_database_option']->alternatives,
+        ));
+        self::assertSame([
+            ['boolean_numeric_option'],
+            ['DEFAULT_SYM'],
+        ], array_map(
+            static function (Production $alt): array {
+                return array_map(
+                    static function ($symbol): string {
+                        return match (true) {
+                            $symbol instanceof NonTerminal => $symbol->value,
+                            $symbol instanceof Terminal => $symbol->value,
+                            default => throw new LogicException('Unexpected symbol type.'),
+                        };
+                    },
+                    $alt->symbols,
+                );
+            },
+            $compiled->ruleMap['read_only_option_value']->alternatives,
+        ));
+    }
+
     public function testAugmentGrammarConstrainsTopLevelTableValueConstructorsToNonEmptyRows(): void
     {
         $grammar = Grammar::load();
@@ -1470,6 +1618,93 @@ final class SqlGeneratorTest extends TestCase
         ));
     }
 
+    public function testAugmentGrammarFiltersOnlyUnsafeSetOptionForms(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([new NonTerminal('option_value_no_option_type')]),
+            ]),
+            'option_value_following_option_type' => new ProductionRule('option_value_following_option_type', [
+                new Production([new NonTerminal('legacy_option_value_following_option_type')]),
+            ]),
+            'option_value_no_option_type' => new ProductionRule('option_value_no_option_type', [
+                new Production([
+                    new NonTerminal('lvalue_variable'),
+                    new NonTerminal('equal'),
+                    new NonTerminal('set_expr_or_default'),
+                ]),
+                new Production([
+                    new Terminal('@'),
+                    new Terminal('@'),
+                    new NonTerminal('opt_set_var_ident_type'),
+                    new NonTerminal('lvalue_variable'),
+                    new NonTerminal('equal'),
+                    new NonTerminal('set_expr_or_default'),
+                ]),
+                new Production([
+                    new Terminal('NAMES_SYM'),
+                    new Terminal('charset_name'),
+                    new NonTerminal('expr'),
+                ]),
+                new Production([
+                    new NonTerminal('lvalue_variable'),
+                    new NonTerminal('equal'),
+                    new NonTerminal('safe_expr'),
+                ]),
+                new Production([
+                    new Terminal('NAMES_SYM'),
+                    new Terminal('charset_name'),
+                    new NonTerminal('safe_expr'),
+                ]),
+            ]),
+            'set' => new ProductionRule('set', [
+                new Production([new NonTerminal('legacy_set_stmt')]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+
+        $compiled = $generator->compiledGrammar();
+
+        self::assertSame([
+            ['safe_set_system_assignment'],
+            ['safe_set_system_assignment_with_atat'],
+            ['lvalue_variable', 'equal', 'safe_expr'],
+            ['NAMES_SYM', 'charset_name', 'safe_expr'],
+        ], array_map(
+            static function (Production $alt): array {
+                return array_map(
+                    static function ($symbol): string {
+                        return match (true) {
+                            $symbol instanceof NonTerminal => $symbol->value,
+                            $symbol instanceof Terminal => $symbol->value,
+                            default => throw new LogicException('Unexpected symbol type.'),
+                        };
+                    },
+                    $alt->symbols,
+                );
+            },
+            $compiled->ruleMap['option_value_no_option_type']->alternatives,
+        ));
+        self::assertSame([
+            ['safe_set_system_assignment'],
+        ], array_map(
+            static function (Production $alt): array {
+                return array_map(
+                    static function ($symbol): string {
+                        return match (true) {
+                            $symbol instanceof NonTerminal => $symbol->value,
+                            $symbol instanceof Terminal => $symbol->value,
+                            default => throw new LogicException('Unexpected symbol type.'),
+                        };
+                    },
+                    $alt->symbols,
+                );
+            },
+            $compiled->ruleMap['option_value_following_option_type']->alternatives,
+        ));
+    }
+
     public function testAugmentGrammarConstrainsReplicaUntilToAcceptedPairs(): void
     {
         $grammar = Grammar::load();
@@ -1556,6 +1791,100 @@ final class SqlGeneratorTest extends TestCase
                 };
             },
             $augmented->ruleMap['alter_user']->alternatives[11]->symbols,
+        ));
+    }
+
+    public function testAugmentGrammarRewritesOnlyTargetedAlterUserFactorPatterns(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([new NonTerminal('alter_user')]),
+            ]),
+            'factor' => new ProductionRule('factor', [
+                new Production([new Terminal('legacy_factor')]),
+            ]),
+            'user' => new ProductionRule('user', [
+                new Production([new Terminal('user_name')]),
+            ]),
+            'identification' => new ProductionRule('identification', [
+                new Production([new Terminal('IDENTIFIED')]),
+            ]),
+            'alter_user' => new ProductionRule('alter_user', [
+                new Production([
+                    new NonTerminal('user'),
+                    new Terminal('ADD'),
+                    new NonTerminal('factor'),
+                    new NonTerminal('identification'),
+                    new Terminal('ADD'),
+                    new NonTerminal('factor'),
+                    new NonTerminal('identification'),
+                ]),
+                new Production([
+                    new NonTerminal('user'),
+                    new Terminal('MODIFY_SYM'),
+                    new NonTerminal('factor'),
+                    new NonTerminal('identification'),
+                    new Terminal('MODIFY_SYM'),
+                    new NonTerminal('factor'),
+                    new NonTerminal('identification'),
+                ]),
+                new Production([
+                    new NonTerminal('user'),
+                    new Terminal('DROP'),
+                    new NonTerminal('factor'),
+                    new Terminal('DROP'),
+                    new NonTerminal('factor'),
+                ]),
+                new Production([
+                    new NonTerminal('user'),
+                    new Terminal('ADD'),
+                    new NonTerminal('factor'),
+                    new NonTerminal('identification'),
+                ]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+
+        $compiled = $generator->compiledGrammar();
+
+        self::assertSame([
+            ['2', 'FACTOR_SYM'],
+            ['3', 'FACTOR_SYM'],
+        ], array_map(
+            static function (Production $alt): array {
+                return array_map(
+                    static function ($symbol): string {
+                        return match (true) {
+                            $symbol instanceof NonTerminal => $symbol->value,
+                            $symbol instanceof Terminal => $symbol->value,
+                            default => throw new LogicException('Unexpected symbol type.'),
+                        };
+                    },
+                    $alt->symbols,
+                );
+            },
+            $compiled->ruleMap['factor']->alternatives,
+        ));
+        self::assertSame([
+            ['alter_user_add_two_factors'],
+            ['alter_user_modify_two_factors'],
+            ['alter_user_drop_two_factors'],
+            ['user', 'ADD', 'factor', 'identification'],
+        ], array_map(
+            static function (Production $alt): array {
+                return array_map(
+                    static function ($symbol): string {
+                        return match (true) {
+                            $symbol instanceof NonTerminal => $symbol->value,
+                            $symbol instanceof Terminal => $symbol->value,
+                            default => throw new LogicException('Unexpected symbol type.'),
+                        };
+                    },
+                    $alt->symbols,
+                );
+            },
+            $compiled->ruleMap['alter_user']->alternatives,
         ));
     }
 
