@@ -67,7 +67,7 @@ final class SupportedLanguage extends AbstractSupportedLanguage
                 $request->familyId,
                 $request->parameters,
                 fn (array $parameters): string => $this->generator->generate('AlterTableStmt', 8),
-                static fn (string $sql, array $parameters): bool => str_starts_with($sql, 'ALTER MATERIALIZED VIEW') || str_starts_with($sql, 'ALTER MATERIALIZED VIEW IF EXISTS'),
+                fn (string $sql, array $parameters): bool => $this->isAlterMaterializedViewWitness($sql),
                 null,
                 2048,
             ),
@@ -83,7 +83,7 @@ final class SupportedLanguage extends AbstractSupportedLanguage
                 $request->familyId,
                 $request->parameters,
                 fn (array $parameters): string => $this->generator->generate('AlterTableStmt', 8),
-                static fn (string $sql, array $parameters): bool => str_starts_with($sql, 'ALTER VIEW ') || str_starts_with($sql, 'ALTER VIEW IF EXISTS '),
+                fn (string $sql, array $parameters): bool => $this->isAlterViewCommandWitness($sql),
                 null,
                 2048,
             ),
@@ -91,7 +91,7 @@ final class SupportedLanguage extends AbstractSupportedLanguage
                 $request->familyId,
                 $request->parameters,
                 fn (array $parameters): string => $this->generator->generate('AlterDomainStmt', 8),
-                static fn (string $sql, array $parameters): bool => str_contains($sql, ' ADD '),
+                fn (string $sql, array $parameters): bool => $this->isAlterDomainAddWitness($sql),
             ),
             'postgresql.constraint.create_table_as.explicit_columns' => $this->generateExplicitCtasWitness($request),
             'postgresql.constraint.alter_sequence' => $this->searchWitness(
@@ -116,9 +116,7 @@ final class SupportedLanguage extends AbstractSupportedLanguage
                 $request->familyId,
                 $request->parameters,
                 fn (array $parameters): string => $this->generator->generate('AlterFunctionStmt', 8),
-                static fn (string $sql, array $parameters): bool => str_starts_with($sql, 'ALTER FUNCTION ')
-                    || str_starts_with($sql, 'ALTER PROCEDURE ')
-                    || str_starts_with($sql, 'ALTER ROUTINE '),
+                fn (string $sql, array $parameters): bool => $this->isAlterRoutineOptionsWitness($sql),
                 null,
                 2048,
             ),
@@ -126,9 +124,7 @@ final class SupportedLanguage extends AbstractSupportedLanguage
                 $request->familyId,
                 $request->parameters,
                 fn (array $parameters): string => $this->generator->generate('AlterDatabaseStmt', 8),
-                static fn (string $sql, array $parameters): bool => str_contains($sql, 'CONNECTION LIMIT')
-                    || str_contains($sql, 'ALLOW_CONNECTIONS')
-                    || str_contains($sql, 'IS_TEMPLATE'),
+                fn (string $sql, array $parameters): bool => $this->isAlterDatabaseOptionsWitness($sql),
                 null,
                 2048,
             ),
@@ -152,12 +148,7 @@ final class SupportedLanguage extends AbstractSupportedLanguage
                 $request->familyId,
                 $request->parameters,
                 fn (array $parameters): string => $this->generator->generate('DropRoleStmt', 8),
-                static fn (string $sql, array $parameters): bool => str_starts_with($sql, 'DROP ROLE ')
-                    || str_starts_with($sql, 'DROP ROLE IF EXISTS ')
-                    || str_starts_with($sql, 'DROP USER ')
-                    || str_starts_with($sql, 'DROP USER IF EXISTS ')
-                    || str_starts_with($sql, 'DROP GROUP ')
-                    || str_starts_with($sql, 'DROP GROUP IF EXISTS '),
+                fn (string $sql, array $parameters): bool => $this->isDropRoleNameListWitness($sql),
                 null,
                 2048,
             ),
@@ -342,10 +333,7 @@ final class SupportedLanguage extends AbstractSupportedLanguage
                 $request->familyId,
                 $request->parameters,
                 fn (array $parameters): string => $this->generator->generate('CreateFunctionStmt', 8),
-                static fn (string $sql, array $parameters): bool => str_starts_with($sql, 'CREATE FUNCTION')
-                    || str_starts_with($sql, 'CREATE OR REPLACE FUNCTION')
-                    || str_starts_with($sql, 'CREATE PROCEDURE')
-                    || str_starts_with($sql, 'CREATE OR REPLACE PROCEDURE'),
+                fn (string $sql, array $parameters): bool => $this->isCreateRoutineCompleteDefinitionWitness($sql),
                 null,
                 2048,
             ),
@@ -619,6 +607,55 @@ final class SupportedLanguage extends AbstractSupportedLanguage
             '/^CREATE(?:\s+OR\s+REPLACE)?\s+(?:(?:LOCAL|GLOBAL)\s+TEMP(?:ORARY)?|TEMP(?:ORARY)?)\s+(?:RECURSIVE\s+)?VIEW\b/',
             $sql,
         ) === 1;
+    }
+
+    private function isAlterMaterializedViewWitness(string $sql): bool
+    {
+        return str_starts_with($sql, 'ALTER MATERIALIZED VIEW')
+            || str_starts_with($sql, 'ALTER MATERIALIZED VIEW IF EXISTS');
+    }
+
+    private function isAlterViewCommandWitness(string $sql): bool
+    {
+        return str_starts_with($sql, 'ALTER VIEW ')
+            || str_starts_with($sql, 'ALTER VIEW IF EXISTS ');
+    }
+
+    private function isAlterDomainAddWitness(string $sql): bool
+    {
+        return str_contains($sql, ' ADD ');
+    }
+
+    private function isAlterRoutineOptionsWitness(string $sql): bool
+    {
+        return str_starts_with($sql, 'ALTER FUNCTION ')
+            || str_starts_with($sql, 'ALTER PROCEDURE ')
+            || str_starts_with($sql, 'ALTER ROUTINE ');
+    }
+
+    private function isAlterDatabaseOptionsWitness(string $sql): bool
+    {
+        return str_contains($sql, 'CONNECTION LIMIT')
+            || str_contains($sql, 'ALLOW_CONNECTIONS')
+            || str_contains($sql, 'IS_TEMPLATE');
+    }
+
+    private function isDropRoleNameListWitness(string $sql): bool
+    {
+        return str_starts_with($sql, 'DROP ROLE ')
+            || str_starts_with($sql, 'DROP ROLE IF EXISTS ')
+            || str_starts_with($sql, 'DROP USER ')
+            || str_starts_with($sql, 'DROP USER IF EXISTS ')
+            || str_starts_with($sql, 'DROP GROUP ')
+            || str_starts_with($sql, 'DROP GROUP IF EXISTS ');
+    }
+
+    private function isCreateRoutineCompleteDefinitionWitness(string $sql): bool
+    {
+        return str_starts_with($sql, 'CREATE FUNCTION')
+            || str_starts_with($sql, 'CREATE OR REPLACE FUNCTION')
+            || str_starts_with($sql, 'CREATE PROCEDURE')
+            || str_starts_with($sql, 'CREATE OR REPLACE PROCEDURE');
     }
 
     /**

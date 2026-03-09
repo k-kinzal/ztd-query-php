@@ -112,6 +112,24 @@ final class SupportedLanguageTest extends TestCase
         self::assertFalse($witness->properties['schema_qualified'], $familyId);
     }
 
+    #[DataProvider('providerFamilyPredicateAcceptance')]
+    public function testFamilyPredicatesAcceptEverySupportedBranch(string $method, string $sql): void
+    {
+        $language = SupportedLanguagePool::postgresql();
+        $predicate = new \ReflectionMethod($language, $method);
+
+        self::assertTrue($predicate->invoke($language, $sql));
+    }
+
+    #[DataProvider('providerFamilyPredicateRejection')]
+    public function testFamilyPredicatesRejectStatementsOutsideTheirContract(string $method, string $sql): void
+    {
+        $language = SupportedLanguagePool::postgresql();
+        $predicate = new \ReflectionMethod($language, $method);
+
+        self::assertFalse($predicate->invoke($language, $sql));
+    }
+
     /**
      * @param array<string, scalar> $parameters
      */
@@ -137,6 +155,48 @@ final class SupportedLanguageTest extends TestCase
         yield 'execute create table as' => ['postgresql.constraint.execute_create_table_as.temp_name_binding'];
         yield 'create sequence' => ['postgresql.constraint.create_sequence.temp_name_binding'];
         yield 'create view' => ['postgresql.constraint.create_view.temp_name_binding'];
+    }
+
+    /**
+     * @return iterable<string, array{0: string, 1: string}>
+     */
+    public static function providerFamilyPredicateAcceptance(): iterable
+    {
+        yield 'alter materialized view' => ['isAlterMaterializedViewWitness', 'ALTER MATERIALIZED VIEW _i0 SET TABLESPACE _i1'];
+        yield 'alter materialized view if exists' => ['isAlterMaterializedViewWitness', 'ALTER MATERIALIZED VIEW IF EXISTS _i0 SET TABLESPACE _i1'];
+        yield 'alter view' => ['isAlterViewCommandWitness', 'ALTER VIEW _i0 RESET(_i1)'];
+        yield 'alter view if exists' => ['isAlterViewCommandWitness', 'ALTER VIEW IF EXISTS _i0 SET(_i1 = _i2)'];
+        yield 'alter domain add' => ['isAlterDomainAddWitness', 'ALTER DOMAIN _i0 ADD CONSTRAINT _i1 CHECK(_i2)'];
+        yield 'alter function' => ['isAlterRoutineOptionsWitness', 'ALTER FUNCTION _i0() STRICT'];
+        yield 'alter procedure' => ['isAlterRoutineOptionsWitness', 'ALTER PROCEDURE _i0() EXTERNAL SECURITY INVOKER'];
+        yield 'alter routine' => ['isAlterRoutineOptionsWitness', 'ALTER ROUTINE _i0() IMMUTABLE'];
+        yield 'alter database connection limit' => ['isAlterDatabaseOptionsWitness', 'ALTER DATABASE _i0 CONNECTION LIMIT DEFAULT'];
+        yield 'alter database allow connections' => ['isAlterDatabaseOptionsWitness', 'ALTER DATABASE _i0 ALLOW_CONNECTIONS false'];
+        yield 'alter database is template' => ['isAlterDatabaseOptionsWitness', 'ALTER DATABASE _i0 IS_TEMPLATE false'];
+        yield 'drop role' => ['isDropRoleNameListWitness', 'DROP ROLE _i0'];
+        yield 'drop role if exists' => ['isDropRoleNameListWitness', 'DROP ROLE IF EXISTS _i0'];
+        yield 'drop user' => ['isDropRoleNameListWitness', 'DROP USER _i0'];
+        yield 'drop user if exists' => ['isDropRoleNameListWitness', 'DROP USER IF EXISTS _i0'];
+        yield 'drop group' => ['isDropRoleNameListWitness', 'DROP GROUP _i0'];
+        yield 'drop group if exists' => ['isDropRoleNameListWitness', 'DROP GROUP IF EXISTS _i0'];
+        yield 'create function' => ['isCreateRoutineCompleteDefinitionWitness', 'CREATE FUNCTION _i0() RETURNS INT RETURN 1'];
+        yield 'create or replace function' => ['isCreateRoutineCompleteDefinitionWitness', 'CREATE OR REPLACE FUNCTION _i0() RETURNS INT RETURN 1'];
+        yield 'create procedure' => ['isCreateRoutineCompleteDefinitionWitness', 'CREATE PROCEDURE _i0() LANGUAGE SQL BEGIN ATOMIC SELECT 1; END'];
+        yield 'create or replace procedure' => ['isCreateRoutineCompleteDefinitionWitness', 'CREATE OR REPLACE PROCEDURE _i0() LANGUAGE SQL BEGIN ATOMIC SELECT 1; END'];
+    }
+
+    /**
+     * @return iterable<string, array{0: string, 1: string}>
+     */
+    public static function providerFamilyPredicateRejection(): iterable
+    {
+        yield 'reject non materialized view' => ['isAlterMaterializedViewWitness', 'ALTER TABLE _i0 SET TABLESPACE _i1'];
+        yield 'reject non view command' => ['isAlterViewCommandWitness', 'ALTER TABLE _i0 ADD COLUMN _i1 INTEGER'];
+        yield 'reject non add domain command' => ['isAlterDomainAddWitness', 'ALTER DOMAIN _i0 DROP CONSTRAINT _i1'];
+        yield 'reject non routine command' => ['isAlterRoutineOptionsWitness', 'CREATE FUNCTION _i0() RETURNS INT RETURN 1'];
+        yield 'reject unrelated database option' => ['isAlterDatabaseOptionsWitness', 'ALTER DATABASE _i0 REFRESH COLLATION VERSION'];
+        yield 'reject non role drop command' => ['isDropRoleNameListWitness', 'CREATE ROLE _i0'];
+        yield 'reject alter routine definition' => ['isCreateRoutineCompleteDefinitionWitness', 'ALTER FUNCTION _i0() STRICT'];
     }
 
     /**
