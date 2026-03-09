@@ -1355,6 +1355,40 @@ final class SqlGeneratorTest extends TestCase
         )));
     }
 
+    public function testAugmentGrammarEnumeratesEveryAlterEventMandatoryOptionVariant(): void
+    {
+        $grammar = Grammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+
+        $ref = new \ReflectionClass($generator);
+        $prop = $ref->getProperty('grammar');
+        /** @var Grammar $augmented */
+        $augmented = $prop->getValue($generator);
+
+        self::assertSame([
+            ['ALTER', 'definer_opt', 'EVENT_SYM', 'sp_name', 'nonempty_ev_alter_on_schedule_completion', 'opt_ev_rename_to', 'opt_ev_status', 'opt_ev_comment', 'opt_ev_sql_stmt'],
+            ['ALTER', 'definer_opt', 'EVENT_SYM', 'sp_name', 'ev_alter_on_schedule_completion', 'nonempty_opt_ev_rename_to', 'opt_ev_status', 'opt_ev_comment', 'opt_ev_sql_stmt'],
+            ['ALTER', 'definer_opt', 'EVENT_SYM', 'sp_name', 'ev_alter_on_schedule_completion', 'opt_ev_rename_to', 'nonempty_opt_ev_status', 'opt_ev_comment', 'opt_ev_sql_stmt'],
+            ['ALTER', 'definer_opt', 'EVENT_SYM', 'sp_name', 'ev_alter_on_schedule_completion', 'opt_ev_rename_to', 'opt_ev_status', 'nonempty_opt_ev_comment', 'opt_ev_sql_stmt'],
+            ['ALTER', 'definer_opt', 'EVENT_SYM', 'sp_name', 'ev_alter_on_schedule_completion', 'opt_ev_rename_to', 'opt_ev_status', 'opt_ev_comment', 'nonempty_opt_ev_sql_stmt'],
+        ], array_map(
+            static function (Production $alt): array {
+                return array_map(
+                    static function ($symbol): string {
+                        return match (true) {
+                            $symbol instanceof NonTerminal => $symbol->value,
+                            $symbol instanceof Terminal => $symbol->value,
+                            default => throw new LogicException('Unexpected symbol type.'),
+                        };
+                    },
+                    $alt->symbols,
+                );
+            },
+            $augmented->ruleMap['alter_event_stmt']->alternatives,
+        ));
+    }
+
     public function testAugmentGrammarFactorsAlterDatabaseEncryptionFamilyIntoDedicatedRoot(): void
     {
         $grammar = Grammar::load();
