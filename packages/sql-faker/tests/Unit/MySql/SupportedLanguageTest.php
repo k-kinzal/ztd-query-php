@@ -145,6 +145,29 @@ final class SupportedLanguageTest extends TestCase
         ], $witness->properties);
     }
 
+    #[DataProvider('providerExtractTableValueArity')]
+    public function testExtractTableValueArityCountsValuesRows(string $sql, int $expectedArity): void
+    {
+        $language = SupportedLanguagePool::mysql('mysql-8.0.44');
+        $method = (new \ReflectionClass($language))->getMethod('extractTableValueArity');
+
+        self::assertSame($expectedArity, $method->invoke($language, $sql));
+    }
+
+    /**
+     * @param array<string, string> $expectedProperties
+     */
+    #[DataProvider('providerExtractIdentifierFreshnessProperties')]
+    public function testExtractIdentifierFreshnessPropertiesNormalizesCanonicalIdentifiers(
+        string $sql,
+        array $expectedProperties,
+    ): void {
+        $language = SupportedLanguagePool::mysql('mysql-8.0.44');
+        $method = (new \ReflectionClass($language))->getMethod('extractIdentifierFreshnessProperties');
+
+        self::assertSame($expectedProperties, $method->invoke($language, $sql));
+    }
+
     /**
      * @param list<string> $expectedAnchorRules
      */
@@ -271,6 +294,51 @@ final class SupportedLanguageTest extends TestCase
         yield 'arity above range' => [
             ['arity' => 9],
             'arity parameter must be between 1 and 8.',
+        ];
+    }
+
+    /**
+     * @return iterable<string, array{0: string, 1: int}>
+     */
+    public static function providerExtractTableValueArity(): iterable
+    {
+        yield 'single value row' => ['VALUES ROW(1)', 1];
+        yield 'multiple value row' => ['VALUES ROW(1, 2, 3)', 3];
+        yield 'non values statement' => ['SELECT 1', 0];
+    }
+
+    /**
+     * @return iterable<string, array{0: string, 1: array<string, string>}>
+     */
+    public static function providerExtractIdentifierFreshnessProperties(): iterable
+    {
+        yield 'canonical identifiers' => [
+            'SELECT _i0, _i1',
+            [
+                'first_identifier' => '_i0',
+                'second_identifier' => '_i1',
+            ],
+        ];
+        yield 'identifiers are trimmed' => [
+            'SELECT   _i0  ,   _i1   ',
+            [
+                'first_identifier' => '_i0',
+                'second_identifier' => '_i1',
+            ],
+        ];
+        yield 'trailing content is rejected' => [
+            "SELECT _i0, _i1\nFROM _i2",
+            [
+                'first_identifier' => '',
+                'second_identifier' => '',
+            ],
+        ];
+        yield 'unrelated statement is rejected' => [
+            'ALTER TABLE _i0',
+            [
+                'first_identifier' => '',
+                'second_identifier' => '',
+            ],
         ];
     }
 }

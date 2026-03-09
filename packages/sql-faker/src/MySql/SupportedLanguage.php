@@ -226,19 +226,25 @@ final class SupportedLanguage extends AbstractSupportedLanguage
                 return $generator->generate('stmt', 2);
             },
             null,
-            function (string $sql, array $parameters): array {
-                if (preg_match('/^SELECT\s+([^,]+),\s+(.+)$/', $sql, $matches) !== 1) {
-                    return [
-                        'first_identifier' => '',
-                        'second_identifier' => '',
-                    ];
-                }
-
-                return [
-                    'first_identifier' => trim($matches[1]),
-                    'second_identifier' => trim($matches[2]),
-                ];
-            },
+            fn (string $sql, array $parameters): array => $this->extractIdentifierFreshnessProperties($sql),
         );
+    }
+
+    /**
+     * @return array{first_identifier: string, second_identifier: string}
+     */
+    private function extractIdentifierFreshnessProperties(string $sql): array
+    {
+        if (preg_match('/^SELECT\s+([^,]+),\s+(.+)$/', $sql, $matches) !== 1) {
+            return [
+                'first_identifier' => '',
+                'second_identifier' => '',
+            ];
+        }
+
+        return [
+            'first_identifier' => trim($matches[1]),
+            'second_identifier' => trim($matches[2]),
+        ];
     }
 }
