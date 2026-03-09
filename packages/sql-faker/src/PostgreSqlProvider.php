@@ -6,6 +6,10 @@ namespace SqlFaker;
 
 use Faker\Generator;
 use Faker\Provider\Base;
+use SqlFaker\Contract\GenerationRequest;
+use SqlFaker\Contract\Grammar as ContractGrammar;
+use SqlFaker\Contract\Runtime;
+use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\PostgreSql\Grammar\PgGrammar;
 use SqlFaker\PostgreSql\SqlGenerator;
@@ -29,8 +33,9 @@ use SqlFaker\PostgreSql\StatementType;
  *   $faker->selectStatement();
  *   $faker->insertStatement();
  */
-final class PostgreSqlProvider extends Base
+final class PostgreSqlProvider extends Base implements Runtime
 {
+    private \SqlFaker\Grammar\Grammar $grammar;
     private SqlGenerator $sql;
     private RandomStringGenerator $rsg;
 
@@ -45,7 +50,27 @@ final class PostgreSqlProvider extends Base
         $generator->addProvider($this);
 
         $this->rsg = new RandomStringGenerator($generator);
-        $this->sql = new SqlGenerator(PgGrammar::load($version), $generator, $this);
+        $this->grammar = PgGrammar::load($version);
+        $this->sql = new SqlGenerator($this->grammar, $generator, $this);
+    }
+
+    public function snapshot(): ContractGrammar
+    {
+        return ContractGrammar::from($this->grammar, NonTerminal::class);
+    }
+
+    public function supportedGrammar(): ContractGrammar
+    {
+        return ContractGrammar::from($this->sql->compiledGrammar(), NonTerminal::class);
+    }
+
+    public function generate(GenerationRequest $request): string
+    {
+        if ($request->seed !== null) {
+            $this->generator->seed($request->seed);
+        }
+
+        return $this->sql->generate($request->startRule, $request->maxDepth);
     }
 
     /**
@@ -62,7 +87,7 @@ final class PostgreSqlProvider extends Base
             $type = $this->generator->randomElement(StatementType::cases());
         }
 
-        return $this->sql->generate($type->value, $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: $type->value, maxDepth: $maxDepth));
     }
 
     /**
@@ -70,7 +95,7 @@ final class PostgreSqlProvider extends Base
      */
     public function selectStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(StatementType::Select->value, $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: StatementType::Select->value, maxDepth: $maxDepth));
     }
 
     /**
@@ -78,7 +103,7 @@ final class PostgreSqlProvider extends Base
      */
     public function insertStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(StatementType::Insert->value, $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: StatementType::Insert->value, maxDepth: $maxDepth));
     }
 
     /**
@@ -86,7 +111,7 @@ final class PostgreSqlProvider extends Base
      */
     public function updateStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(StatementType::Update->value, $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: StatementType::Update->value, maxDepth: $maxDepth));
     }
 
     /**
@@ -94,7 +119,7 @@ final class PostgreSqlProvider extends Base
      */
     public function deleteStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(StatementType::Delete->value, $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: StatementType::Delete->value, maxDepth: $maxDepth));
     }
 
     /**
@@ -102,7 +127,7 @@ final class PostgreSqlProvider extends Base
      */
     public function createTableStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(StatementType::CreateTable->value, $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: StatementType::CreateTable->value, maxDepth: $maxDepth));
     }
 
     /**
@@ -110,7 +135,7 @@ final class PostgreSqlProvider extends Base
      */
     public function alterTableStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(StatementType::AlterTable->value, $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: StatementType::AlterTable->value, maxDepth: $maxDepth));
     }
 
     /**
@@ -118,7 +143,7 @@ final class PostgreSqlProvider extends Base
      */
     public function dropTableStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(StatementType::DropTable->value, $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: StatementType::DropTable->value, maxDepth: $maxDepth));
     }
 
     /**
@@ -126,7 +151,7 @@ final class PostgreSqlProvider extends Base
      */
     public function simpleStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(StatementType::SimpleStatement->value, $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: StatementType::SimpleStatement->value, maxDepth: $maxDepth));
     }
 
     /**
@@ -134,7 +159,7 @@ final class PostgreSqlProvider extends Base
      */
     public function truncateStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('TruncateStmt', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'TruncateStmt', maxDepth: $maxDepth));
     }
 
     /**
@@ -142,7 +167,7 @@ final class PostgreSqlProvider extends Base
      */
     public function createIndexStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('IndexStmt', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'IndexStmt', maxDepth: $maxDepth));
     }
 
     /**
@@ -150,7 +175,7 @@ final class PostgreSqlProvider extends Base
      */
     public function transactionStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('TransactionStmt', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'TransactionStmt', maxDepth: $maxDepth));
     }
 
     /**
@@ -158,7 +183,7 @@ final class PostgreSqlProvider extends Base
      */
     public function expr(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('a_expr', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'a_expr', maxDepth: $maxDepth));
     }
 
     /**
@@ -166,7 +191,7 @@ final class PostgreSqlProvider extends Base
      */
     public function simpleExpr(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('c_expr', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'c_expr', maxDepth: $maxDepth));
     }
 
     /**
@@ -174,7 +199,7 @@ final class PostgreSqlProvider extends Base
      */
     public function literal(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('AexprConst', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'AexprConst', maxDepth: $maxDepth));
     }
 
     /**
@@ -182,7 +207,7 @@ final class PostgreSqlProvider extends Base
      */
     public function whereClause(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('where_clause', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'where_clause', maxDepth: $maxDepth));
     }
 
     /**
@@ -190,7 +215,7 @@ final class PostgreSqlProvider extends Base
      */
     public function sortClause(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('sort_clause', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'sort_clause', maxDepth: $maxDepth));
     }
 
     /**
@@ -198,7 +223,7 @@ final class PostgreSqlProvider extends Base
      */
     public function selectLimit(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('select_limit', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'select_limit', maxDepth: $maxDepth));
     }
 
     /**
@@ -206,7 +231,7 @@ final class PostgreSqlProvider extends Base
      */
     public function tableRef(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('table_ref', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'table_ref', maxDepth: $maxDepth));
     }
 
     /**
@@ -214,7 +239,7 @@ final class PostgreSqlProvider extends Base
      */
     public function joinedTable(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('joined_table', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'joined_table', maxDepth: $maxDepth));
     }
 
     /**
@@ -222,7 +247,7 @@ final class PostgreSqlProvider extends Base
      */
     public function qualifiedName(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('qualified_name', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'qualified_name', maxDepth: $maxDepth));
     }
 
     /**
@@ -230,7 +255,7 @@ final class PostgreSqlProvider extends Base
      */
     public function subquery(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('select_with_parens', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'select_with_parens', maxDepth: $maxDepth));
     }
 
     /**
@@ -238,7 +263,7 @@ final class PostgreSqlProvider extends Base
      */
     public function withClause(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('with_clause', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'with_clause', maxDepth: $maxDepth));
     }
 
     /**
@@ -248,7 +273,7 @@ final class PostgreSqlProvider extends Base
      */
     public function identifier(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('ColId', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'ColId', maxDepth: $maxDepth));
     }
 
     /**

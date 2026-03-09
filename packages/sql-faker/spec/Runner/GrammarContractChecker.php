@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Spec\Runner;
 
-use SqlFaker\Contract\GrammarAlternativeSnapshot;
-use SqlFaker\Contract\GrammarSnapshot;
+use SqlFaker\Contract\Grammar;
+use SqlFaker\Contract\Production;
 
 /**
- * Answers structural questions about a grammar snapshot, such as undefined
+ * Answers structural questions about a grammar, such as undefined
  * references, reachability, and whether entry rules can terminate.
  */
 final class GrammarContractChecker
@@ -17,7 +17,9 @@ final class GrammarContractChecker
     private array $terminatingRules;
 
     public function __construct(
-        private readonly GrammarSnapshot $snapshot,
+        private readonly Grammar $grammar,
+        /** @var array<string, list<string>> */
+        private readonly array $familyAnchors = [],
     ) {
         $this->terminatingRules = $this->computeTerminatingRules();
     }
@@ -28,10 +30,10 @@ final class GrammarContractChecker
     public function undefinedReferences(): array
     {
         $undefined = [];
-        foreach ($this->snapshot->rules as $ruleName => $rule) {
+        foreach ($this->grammar->rules as $ruleName => $rule) {
             foreach ($rule->alternatives as $alternative) {
                 foreach ($alternative->references() as $reference) {
-                    if (!isset($this->snapshot->rules[$reference])) {
+                    if (!isset($this->grammar->rules[$reference])) {
                         $undefined[$ruleName][$reference] = true;
                     }
                 }
@@ -59,7 +61,7 @@ final class GrammarContractChecker
     {
         $missing = [];
         foreach ($entries as $entry) {
-            if (!isset($this->snapshot->rules[$entry])) {
+            if (!isset($this->grammar->rules[$entry])) {
                 $missing[] = $entry;
             }
         }
@@ -75,7 +77,7 @@ final class GrammarContractChecker
     public function rulesWithoutAlternatives(): array
     {
         $empty = [];
-        foreach ($this->snapshot->rules as $ruleName => $rule) {
+        foreach ($this->grammar->rules as $ruleName => $rule) {
             if ($rule->alternatives === []) {
                 $empty[] = $ruleName;
             }
@@ -106,12 +108,12 @@ final class GrammarContractChecker
         while ($stack !== []) {
             /** @var string $ruleName */
             $ruleName = array_pop($stack);
-            if (isset($reachable[$ruleName]) || !isset($this->snapshot->rules[$ruleName])) {
+            if (isset($reachable[$ruleName]) || !isset($this->grammar->rules[$ruleName])) {
                 continue;
             }
 
             $reachable[$ruleName] = true;
-            foreach ($this->snapshot->rules[$ruleName]->alternatives as $alternative) {
+            foreach ($this->grammar->rules[$ruleName]->alternatives as $alternative) {
                 foreach ($alternative->references() as $reference) {
                     if (!isset($reachable[$reference])) {
                         $stack[] = $reference;
@@ -155,7 +157,7 @@ final class GrammarContractChecker
         $unreachable = [];
 
         foreach ($families as $familyId) {
-            $anchors = $this->snapshot->familyAnchors[$familyId] ?? [];
+            $anchors = $this->familyAnchors[$familyId] ?? [];
             $isReachable = false;
             foreach ($anchors as $anchor) {
                 if (isset($reachable[$anchor])) {
@@ -183,7 +185,7 @@ final class GrammarContractChecker
         $changed = true;
         while ($changed) {
             $changed = false;
-            foreach ($this->snapshot->rules as $ruleName => $rule) {
+            foreach ($this->grammar->rules as $ruleName => $rule) {
                 if (isset($terminating[$ruleName])) {
                     continue;
                 }
@@ -204,7 +206,7 @@ final class GrammarContractChecker
     /**
      * @param array<string, true> $terminating
      */
-    private function alternativeTerminates(GrammarAlternativeSnapshot $alternative, array $terminating): bool
+    private function alternativeTerminates(Production $alternative, array $terminating): bool
     {
         foreach ($alternative->references() as $reference) {
             if (!isset($terminating[$reference])) {

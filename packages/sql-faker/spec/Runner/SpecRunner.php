@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace Spec\Runner;
 
 use InvalidArgumentException;
-use SqlFaker\Contract\FamilyRequest;
-use SqlFaker\Contract\SqlWitness;
-use SqlFaker\Contract\SupportedLanguage;
 use Spec\Claim\ClaimDefinition;
 use Spec\Claim\EvidenceDefinition;
 use Spec\Policy\OutcomePolicy;
 use Spec\Probe\EngineProbe;
+use Spec\Subject\FamilyDefinition;
+use Spec\Subject\FamilyRequest;
+use Spec\Subject\SqlWitness;
+use Spec\Subject\SupportedLanguage;
 
 /**
  * Runs claim catalogs end-to-end by selecting a dialect contract, generating a
@@ -213,7 +214,7 @@ final class SpecRunner
      */
     private function checkEntriesPresent(SupportedLanguage $subject, ?SqlWitness $witness): array
     {
-        $entryRules = $subject->grammarSnapshot()->entryRules;
+        $entryRules = $subject->entryRules();
         $missing = $this->grammarChecker($subject)->missingEntries($entryRules);
         $passed = $missing === [];
 
@@ -234,7 +235,7 @@ final class SpecRunner
      */
     private function checkEntriesTerminate(SupportedLanguage $subject, ?SqlWitness $witness): array
     {
-        $entryRules = $subject->grammarSnapshot()->entryRules;
+        $entryRules = $subject->entryRules();
         $nonTerminating = $this->grammarChecker($subject)->nonTerminatingReachableRules($entryRules);
         $passed = $nonTerminating === [];
 
@@ -272,7 +273,7 @@ final class SpecRunner
             $familyIds[] = $familyId;
         }
 
-        $unreachable = $this->grammarChecker($subject)->unreachableFamilies($subject->grammarSnapshot()->entryRules, $familyIds);
+        $unreachable = $this->grammarChecker($subject)->unreachableFamilies($subject->entryRules(), $familyIds);
         $passed = $unreachable === [];
 
         return [
@@ -310,8 +311,7 @@ final class SpecRunner
             $expected[] = $symbol;
         }
 
-        $snapshot = $subject->grammarSnapshot();
-        $ruleSnapshot = $snapshot->rules[$rule] ?? null;
+        $ruleSnapshot = $subject->supportedGrammar()->rule($rule);
         $baseFacts = [
             'rule' => $rule,
             'expectation' => $shouldExist ? 'sequence must exist' : 'sequence must be excluded',
@@ -558,7 +558,23 @@ final class SpecRunner
 
     private function grammarChecker(SupportedLanguage $subject): GrammarContractChecker
     {
-        return $this->grammarCheckers[$subject->dialect()] ??= new GrammarContractChecker($subject->grammarSnapshot());
+        return $this->grammarCheckers[$subject->dialect()] ??= new GrammarContractChecker(
+            $subject->supportedGrammar(),
+            $this->familyAnchors($subject),
+        );
+    }
+
+    /**
+     * @return array<string, list<string>>
+     */
+    private function familyAnchors(SupportedLanguage $subject): array
+    {
+        $anchors = [];
+        foreach ($subject->familyCatalog() as $family) {
+            $anchors[$family->id] = $family->anchorRules;
+        }
+
+        return $anchors;
     }
 
     /**

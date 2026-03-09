@@ -27,9 +27,9 @@ use Spec\Probe\MySqlEngineProbe;
 use Spec\Probe\PostgreSqlEngineProbe;
 use Spec\Probe\SqliteEngineProbe;
 use Spec\Runner\SpecRunner;
-use SqlFaker\MySql\SupportedLanguage as MySqlSupportedLanguage;
-use SqlFaker\PostgreSql\SupportedLanguage as PostgreSqlSupportedLanguage;
-use SqlFaker\Sqlite\SupportedLanguage as SqliteSupportedLanguage;
+use Spec\MySql\SupportedLanguage as MySqlSupportedLanguage;
+use Spec\PostgreSql\SupportedLanguage as PostgreSqlSupportedLanguage;
+use Spec\Sqlite\SupportedLanguage as SqliteSupportedLanguage;
 
 const CLAIM_DIR = __DIR__ . '/../spec/claims';
 

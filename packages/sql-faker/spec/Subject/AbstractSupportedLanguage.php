@@ -2,35 +2,16 @@
 
 declare(strict_types=1);
 
-namespace SqlFaker\Contract;
+namespace Spec\Subject;
 
 use LogicException;
 
-/**
- * Shared base for dialect-specific supported language contracts.
- *
- * It provides lazy caching for grammar snapshots and family catalogs, validates
- * family parameters, and offers the bounded witness search loop used by the
- * concrete dialect subjects.
- */
 abstract class AbstractSupportedLanguage implements SupportedLanguage
 {
     /** @var array<string, FamilyDefinition>|null */
     private ?array $familyMap = null;
 
-    private ?GrammarSnapshot $snapshot = null;
-
     /**
-     * Lazily builds and caches the grammar snapshot exposed by this subject.
-     */
-    final public function grammarSnapshot(): GrammarSnapshot
-    {
-        return $this->snapshot ??= $this->buildGrammarSnapshot();
-    }
-
-    /**
-     * Returns the family catalog as a stable list suitable for reporting and iteration.
-     *
      * @return list<FamilyDefinition>
      */
     final public function familyCatalog(): array
@@ -38,9 +19,6 @@ abstract class AbstractSupportedLanguage implements SupportedLanguage
         return array_values($this->familyMap());
     }
 
-    /**
-     * Resolves one family definition by id and fails fast when the subject does not expose it.
-     */
     final public function family(string $familyId): FamilyDefinition
     {
         $family = $this->familyMap()[$familyId] ?? null;
@@ -73,13 +51,9 @@ abstract class AbstractSupportedLanguage implements SupportedLanguage
      */
     abstract protected function buildFamilies(): array;
 
-    abstract protected function buildGrammarSnapshot(): GrammarSnapshot;
-
-    abstract protected function seed(int $seed): void;
-
     /**
      * @param array<string, scalar> $parameters
-     * @param callable(array<string, scalar>): string $render
+     * @param callable(array<string, scalar>, int): string $render
      * @param null|callable(string, array<string, scalar>): bool $predicate
      * @param null|callable(string, array<string, scalar>): array<string, scalar> $properties
      */
@@ -92,8 +66,7 @@ abstract class AbstractSupportedLanguage implements SupportedLanguage
         int $maxAttempts = 512,
     ): SqlWitness {
         for ($seed = 1; $seed <= $maxAttempts; $seed++) {
-            $this->seed($seed);
-            $sql = $render($parameters);
+            $sql = $render($parameters, $seed);
             if ($predicate !== null && !$predicate($sql, $parameters)) {
                 continue;
             }

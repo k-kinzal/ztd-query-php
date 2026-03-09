@@ -8,6 +8,7 @@ use Faker\Factory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use SqlFaker\Contract\GenerationRequest;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
@@ -741,6 +742,20 @@ final class PostgreSqlProviderTest extends TestCase
         $provider = new PostgreSqlProvider($faker);
 
         self::assertNotSame('', $provider->simpleStatement(maxDepth: 6));
+    }
+
+    public function testRuntimeContractExposesSnapshotSupportedGrammarAndDeterministicGeneration(): void
+    {
+        $faker = Factory::create();
+        $provider = new PostgreSqlProvider($faker);
+
+        self::assertNotSame('', $provider->snapshot()->startSymbol);
+        self::assertSame($provider->snapshot()->startSymbol, $provider->supportedGrammar()->startSymbol);
+        self::assertNotNull($provider->supportedGrammar()->rule('SelectStmt'));
+        self::assertSame(
+            $provider->generate(new GenerationRequest('ColId', 13, 1)),
+            $provider->generate(new GenerationRequest('ColId', 13, 1)),
+        );
     }
 
     /**

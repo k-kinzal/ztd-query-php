@@ -6,6 +6,10 @@ namespace SqlFaker;
 
 use Faker\Generator;
 use Faker\Provider\Base;
+use SqlFaker\Contract\GenerationRequest;
+use SqlFaker\Contract\Grammar as ContractGrammar;
+use SqlFaker\Contract\Runtime;
+use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\Sqlite\Grammar\SqliteGrammar;
 use SqlFaker\Sqlite\SqlGenerator;
@@ -29,8 +33,9 @@ use SqlFaker\Sqlite\StatementType;
  *   $faker->selectStatement();
  *   $faker->insertStatement();
  */
-final class SqliteProvider extends Base
+final class SqliteProvider extends Base implements Runtime
 {
+    private \SqlFaker\Grammar\Grammar $grammar;
     private SqlGenerator $sql;
     private RandomStringGenerator $rsg;
 
@@ -45,7 +50,27 @@ final class SqliteProvider extends Base
         $generator->addProvider($this);
 
         $this->rsg = new RandomStringGenerator($generator);
-        $this->sql = new SqlGenerator(SqliteGrammar::load($version), $generator, $this);
+        $this->grammar = SqliteGrammar::load($version);
+        $this->sql = new SqlGenerator($this->grammar, $generator, $this);
+    }
+
+    public function snapshot(): ContractGrammar
+    {
+        return ContractGrammar::from($this->grammar, NonTerminal::class);
+    }
+
+    public function supportedGrammar(): ContractGrammar
+    {
+        return ContractGrammar::from($this->sql->compiledGrammar(), NonTerminal::class);
+    }
+
+    public function generate(GenerationRequest $request): string
+    {
+        if ($request->seed !== null) {
+            $this->generator->seed($request->seed);
+        }
+
+        return $this->sql->generate($request->startRule, $request->maxDepth);
     }
 
     /**
@@ -62,7 +87,7 @@ final class SqliteProvider extends Base
             $type = $this->generator->randomElement(StatementType::cases());
         }
 
-        return $this->sql->generate($type->value, $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: $type->value, maxDepth: $maxDepth));
     }
 
     /**
@@ -70,7 +95,7 @@ final class SqliteProvider extends Base
      */
     public function selectStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(StatementType::Select->value, $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: StatementType::Select->value, maxDepth: $maxDepth));
     }
 
     /**
@@ -78,7 +103,7 @@ final class SqliteProvider extends Base
      */
     public function insertStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(StatementType::Insert->value, $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: StatementType::Insert->value, maxDepth: $maxDepth));
     }
 
     /**
@@ -86,7 +111,7 @@ final class SqliteProvider extends Base
      */
     public function updateStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(StatementType::Update->value, $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: StatementType::Update->value, maxDepth: $maxDepth));
     }
 
     /**
@@ -94,7 +119,7 @@ final class SqliteProvider extends Base
      */
     public function deleteStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(StatementType::Delete->value, $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: StatementType::Delete->value, maxDepth: $maxDepth));
     }
 
     /**
@@ -102,7 +127,7 @@ final class SqliteProvider extends Base
      */
     public function createTableStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(StatementType::CreateTable->value, $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: StatementType::CreateTable->value, maxDepth: $maxDepth));
     }
 
     /**
@@ -110,7 +135,7 @@ final class SqliteProvider extends Base
      */
     public function alterTableStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(StatementType::AlterTable->value, $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: StatementType::AlterTable->value, maxDepth: $maxDepth));
     }
 
     /**
@@ -118,7 +143,7 @@ final class SqliteProvider extends Base
      */
     public function dropTableStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(StatementType::DropTable->value, $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: StatementType::DropTable->value, maxDepth: $maxDepth));
     }
 
     /**
@@ -126,7 +151,7 @@ final class SqliteProvider extends Base
      */
     public function simpleStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(StatementType::SimpleStatement->value, $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: StatementType::SimpleStatement->value, maxDepth: $maxDepth));
     }
 
     /**
@@ -134,7 +159,7 @@ final class SqliteProvider extends Base
      */
     public function expr(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('expr', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'expr', maxDepth: $maxDepth));
     }
 
     /**
@@ -142,7 +167,7 @@ final class SqliteProvider extends Base
      */
     public function term(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('term', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'term', maxDepth: $maxDepth));
     }
 
     /**
@@ -150,7 +175,7 @@ final class SqliteProvider extends Base
      */
     public function whereClause(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('where_opt', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'where_opt', maxDepth: $maxDepth));
     }
 
     /**
@@ -158,7 +183,7 @@ final class SqliteProvider extends Base
      */
     public function orderByClause(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('orderby_opt', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'orderby_opt', maxDepth: $maxDepth));
     }
 
     /**
@@ -166,7 +191,7 @@ final class SqliteProvider extends Base
      */
     public function limitClause(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('limit_opt', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'limit_opt', maxDepth: $maxDepth));
     }
 
     /**
@@ -174,7 +199,7 @@ final class SqliteProvider extends Base
      */
     public function groupByClause(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('groupby_opt', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'groupby_opt', maxDepth: $maxDepth));
     }
 
     /**
@@ -182,7 +207,7 @@ final class SqliteProvider extends Base
      */
     public function havingClause(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('having_opt', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'having_opt', maxDepth: $maxDepth));
     }
 
     /**
@@ -190,7 +215,7 @@ final class SqliteProvider extends Base
      */
     public function fullname(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('fullname', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'fullname', maxDepth: $maxDepth));
     }
 
     /**
@@ -198,7 +223,7 @@ final class SqliteProvider extends Base
      */
     public function withClause(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('with', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'with', maxDepth: $maxDepth));
     }
 
     /**
@@ -208,7 +233,7 @@ final class SqliteProvider extends Base
      */
     public function identifier(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('nm', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'nm', maxDepth: $maxDepth));
     }
 
     /**

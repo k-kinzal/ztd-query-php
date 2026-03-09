@@ -15,6 +15,7 @@ use Spec\Policy\OutcomeKind;
 use Spec\Policy\SqlitePolicy;
 use Spec\Probe\ProbePhase as SpecProbePhase;
 use Spec\Probe\ProbeResult as SpecProbeResult;
+use SqlFaker\Contract\GenerationRequest;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
@@ -607,6 +608,20 @@ final class SqliteProviderTest extends TestCase
 
         self::assertSame('syntax', $decision->classification);
         self::assertTrue($decision->shouldCrash);
+    }
+
+    public function testRuntimeContractExposesSnapshotSupportedGrammarAndDeterministicGeneration(): void
+    {
+        $faker = Factory::create();
+        $provider = new SqliteProvider($faker);
+
+        self::assertNotSame('', $provider->snapshot()->startSymbol);
+        self::assertSame($provider->snapshot()->startSymbol, $provider->supportedGrammar()->startSymbol);
+        self::assertNotNull($provider->supportedGrammar()->rule('selectnowith'));
+        self::assertSame(
+            $provider->generate(new GenerationRequest('nm', 17, 1)),
+            $provider->generate(new GenerationRequest('nm', 17, 1)),
+        );
     }
 
     /**

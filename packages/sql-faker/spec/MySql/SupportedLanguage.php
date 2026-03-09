@@ -2,40 +2,36 @@
 
 declare(strict_types=1);
 
-namespace SqlFaker\MySql;
+namespace Spec\MySql;
 
 use Faker\Factory;
 use Faker\Generator as FakerGenerator;
-use SqlFaker\Contract\AbstractSupportedLanguage;
-use SqlFaker\Contract\FamilyDefinition;
-use SqlFaker\Contract\FamilyRequest;
-use SqlFaker\Contract\GrammarSnapshot;
-use SqlFaker\Contract\GrammarSnapshotBuilder;
-use SqlFaker\Contract\SqlWitness;
+use SqlFaker\Contract\GenerationRequest;
+use SqlFaker\Contract\Grammar as ContractGrammar;
 use SqlFaker\MySql\Grammar\Grammar;
 use SqlFaker\MySql\Grammar\Production;
 use SqlFaker\MySql\Grammar\ProductionRule;
+use SqlFaker\MySql\SqlGenerator;
+use SqlFaker\MySql\StatementType;
 use SqlFaker\MySql\Grammar\Terminal;
 use SqlFaker\MySqlProvider;
+use Spec\Subject\AbstractSupportedLanguage;
+use Spec\Subject\FamilyDefinition;
+use Spec\Subject\FamilyRequest;
+use Spec\Subject\SqlWitness;
 
 /**
- * Public supported-language contract for MySQL.
+ * Spec harness for MySQL family-based checks.
  */
 final class SupportedLanguage extends AbstractSupportedLanguage
 {
     private FakerGenerator $faker;
     private MySqlProvider $provider;
-    private Grammar $grammar;
-    private SqlGenerator $generator;
-    private GrammarSnapshotBuilder $snapshotBuilder;
 
     public function __construct(?string $version = null)
     {
         $this->faker = Factory::create();
         $this->provider = new MySqlProvider($this->faker, $version);
-        $this->grammar = Grammar::load($version);
-        $this->generator = new SqlGenerator($this->grammar, $this->faker, $this->provider);
-        $this->snapshotBuilder = new GrammarSnapshotBuilder();
     }
 
     /**
@@ -46,6 +42,16 @@ final class SupportedLanguage extends AbstractSupportedLanguage
         return 'mysql';
     }
 
+    public function supportedGrammar(): ContractGrammar
+    {
+        return $this->provider->supportedGrammar();
+    }
+
+    public function entryRules(): array
+    {
+        return ['simple_statement_or_begin'];
+    }
+
     /**
      * Generates one MySQL witness that satisfies the requested family constraints.
      */
@@ -54,45 +60,45 @@ final class SupportedLanguage extends AbstractSupportedLanguage
         $this->assertFamilyParameters($request);
 
         return match ($request->familyId) {
-            'mysql.statement.any' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters): string => $this->provider->sql(null, 8)),
-            'mysql.statement.select' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters): string => $this->provider->selectStatement(8)),
-            'mysql.statement.insert' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters): string => $this->provider->insertStatement(8)),
-            'mysql.statement.update' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters): string => $this->provider->updateStatement(8)),
-            'mysql.statement.delete' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters): string => $this->provider->deleteStatement(8)),
-            'mysql.constraint.transaction.commit' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters): string => $this->generator->generate('commit', 2)),
-            'mysql.constraint.transaction.rollback' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters): string => $this->generator->generate('rollback', 2)),
+            'mysql.statement.any' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => $this->provider->generate(new GenerationRequest(seed: $seed, maxDepth: 8))),
+            'mysql.statement.select' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => $this->provider->generate(new GenerationRequest(startRule: StatementType::Select->value, seed: $seed, maxDepth: 8))),
+            'mysql.statement.insert' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => $this->provider->generate(new GenerationRequest(startRule: StatementType::Insert->value, seed: $seed, maxDepth: 8))),
+            'mysql.statement.update' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => $this->provider->generate(new GenerationRequest(startRule: StatementType::Update->value, seed: $seed, maxDepth: 8))),
+            'mysql.statement.delete' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => $this->provider->generate(new GenerationRequest(startRule: StatementType::Delete->value, seed: $seed, maxDepth: 8))),
+            'mysql.constraint.transaction.commit' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => $this->provider->generate(new GenerationRequest(startRule: 'commit', seed: $seed, maxDepth: 2))),
+            'mysql.constraint.transaction.rollback' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => $this->provider->generate(new GenerationRequest(startRule: 'rollback', seed: $seed, maxDepth: 2))),
             'mysql.constraint.table_value_constructor' => $this->generateTableValueConstructorWitness($request),
             'mysql.constraint.set_system_variable' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters): string => $this->generator->generate('set_system_variable_stmt', 4),
+                fn (array $parameters, int $seed): string => $this->provider->generate(new GenerationRequest(startRule: 'set_system_variable_stmt', seed: $seed, maxDepth: 4)),
             ),
             'mysql.constraint.create_srs' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters): string => $this->generator->generate('create_srs_stmt', 6),
+                fn (array $parameters, int $seed): string => $this->provider->generate(new GenerationRequest(startRule: 'create_srs_stmt', seed: $seed, maxDepth: 6)),
             ),
             'mysql.constraint.signal_sqlstate' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters): string => $this->generator->generate('signal_sqlstate_stmt', 4),
+                fn (array $parameters, int $seed): string => $this->provider->generate(new GenerationRequest(startRule: 'signal_sqlstate_stmt', seed: $seed, maxDepth: 4)),
             ),
             'mysql.constraint.show_warnings.limit' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters): string => $this->generator->generate('show_warnings_stmt', 6),
+                fn (array $parameters, int $seed): string => $this->provider->generate(new GenerationRequest(startRule: 'show_warnings_stmt', seed: $seed, maxDepth: 6)),
                 static fn (string $sql, array $parameters): bool => str_contains($sql, 'LIMIT'),
             ),
             'mysql.constraint.alter_database.encryption' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters): string => $this->generator->generate('alter_database_encryption_stmt', 6),
+                fn (array $parameters, int $seed): string => $this->provider->generate(new GenerationRequest(startRule: 'alter_database_encryption_stmt', seed: $seed, maxDepth: 6)),
             ),
             'mysql.constraint.change_replication_source' => $this->generateChangeReplicationSourceWitness($request),
             'mysql.lex.identifier.context' => $this->searchWitness(
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters): string => 'SELECT ' . $this->provider->identifier(1),
+                fn (array $parameters, int $seed): string => 'SELECT ' . $this->provider->generate(new GenerationRequest(startRule: 'ident', seed: $seed, maxDepth: 1)),
             ),
             'mysql.lex.identifier.freshness' => $this->generateIdentifierFreshnessWitness($request),
             default => throw new \LogicException(sprintf('Unsupported family: %s', $request->familyId)),
@@ -131,22 +137,6 @@ final class SupportedLanguage extends AbstractSupportedLanguage
         ];
     }
 
-    protected function buildGrammarSnapshot(): GrammarSnapshot
-    {
-        return $this->snapshotBuilder->build(
-            $this->dialect(),
-            $this->generator->compiledGrammar(),
-            ['simple_statement_or_begin'],
-            $this->familyCatalog(),
-            \SqlFaker\MySql\Grammar\NonTerminal::class,
-        );
-    }
-
-    protected function seed(int $seed): void
-    {
-        $this->faker->seed($seed);
-    }
-
     private function generateTableValueConstructorWitness(FamilyRequest $request): SqlWitness
     {
         $arity = $request->parameters['arity'] ?? null;
@@ -162,7 +152,7 @@ final class SupportedLanguage extends AbstractSupportedLanguage
         return $this->searchWitness(
             $request->familyId,
             ['arity' => $expectedArity],
-            fn (array $parameters): string => $this->generator->generate(sprintf('table_value_constructor_%d', $expectedArity), 6),
+            fn (array $parameters, int $seed): string => $this->provider->generate(new GenerationRequest(startRule: sprintf('table_value_constructor_%d', $expectedArity), seed: $seed, maxDepth: 6)),
             null,
             fn (string $sql, array $parameters): array => ['row_arity' => $this->extractTableValueArity($sql)],
         );
@@ -182,24 +172,24 @@ final class SupportedLanguage extends AbstractSupportedLanguage
         return $this->searchWitness(
             $request->familyId,
             $request->parameters,
-            fn (array $parameters): string => $this->generator->generate($this->changeReplicationSourceRule(), 6),
+            fn (array $parameters, int $seed): string => $this->provider->generate(new GenerationRequest(startRule: $this->changeReplicationSourceRule(), seed: $seed, maxDepth: 6)),
             static fn (string $sql, array $parameters): bool => str_starts_with($sql, 'CHANGE REPLICATION SOURCE TO '),
         );
     }
 
     private function supportsChangeReplicationSource(): bool
     {
-        return isset($this->grammar->ruleMap['change_replication_stmt'])
-            || isset($this->grammar->ruleMap['change_replication_source']);
+        return $this->provider->snapshot()->rule('change_replication_stmt') !== null
+            || $this->provider->snapshot()->rule('change_replication_source') !== null;
     }
 
     private function changeReplicationSourceRule(): string
     {
-        if (isset($this->grammar->ruleMap['change_replication_stmt'])) {
+        if ($this->provider->snapshot()->rule('change_replication_stmt') !== null) {
             return 'change_replication_stmt';
         }
 
-        if (isset($this->grammar->ruleMap['change'])) {
+        if ($this->provider->snapshot()->rule('change') !== null) {
             return 'change';
         }
 
@@ -211,7 +201,8 @@ final class SupportedLanguage extends AbstractSupportedLanguage
         return $this->searchWitness(
             $request->familyId,
             $request->parameters,
-            function (array $parameters): string {
+            function (array $parameters, int $seed): string {
+                $this->faker->seed($seed);
                 $generator = new SqlGenerator(new Grammar('stmt', [
                     'stmt' => new ProductionRule('stmt', [
                         new Production([

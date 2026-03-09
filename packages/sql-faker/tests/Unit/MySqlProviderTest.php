@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlFaker\Contract\GenerationRequest;
 use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\MySql\Grammar\Grammar;
 use SqlFaker\MySql\Grammar\NonTerminal;
@@ -915,6 +916,20 @@ final class MySqlProviderTest extends TestCase
         yield 'default filter wildcard pattern' => [static fn (MySqlProvider $provider): string => $provider->filterWildcardPattern(), "'byhp.r1rcydku'"];
         yield 'custom filter wildcard pattern' => [static fn (MySqlProvider $provider): string => $provider->filterWildcardPattern(13), "'byh.zb1r'"];
         yield 'reset master index' => [static fn (MySqlProvider $provider): string => $provider->resetMasterIndex(), '357136045'];
+    }
+
+    public function testRuntimeContractExposesSnapshotSupportedGrammarAndDeterministicGeneration(): void
+    {
+        $faker = Factory::create();
+        $provider = new MySqlProvider($faker, 'mysql-8.0.44');
+
+        self::assertNotSame('', $provider->snapshot()->startSymbol);
+        self::assertSame($provider->snapshot()->startSymbol, $provider->supportedGrammar()->startSymbol);
+        self::assertNotNull($provider->supportedGrammar()->rule('rollback'));
+        self::assertSame(
+            $provider->generate(new GenerationRequest('ident', 11, 1)),
+            $provider->generate(new GenerationRequest('ident', 11, 1)),
+        );
     }
 
     /**
