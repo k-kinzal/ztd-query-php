@@ -8,6 +8,7 @@ use Faker\Factory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Contract\GenerationRequest;
 use SqlFaker\Grammar\RandomStringGenerator;
@@ -24,6 +25,11 @@ use SqlFaker\MySqlProvider;
 #[CoversClass(MySqlProvider::class)]
 #[CoversClass(RandomStringGenerator::class)]
 #[CoversClass(SqlGenerator::class)]
+#[UsesClass(GenerationRequest::class)]
+#[UsesClass(\SqlFaker\Contract\Grammar::class)]
+#[UsesClass(\SqlFaker\Contract\ProductionRule::class)]
+#[UsesClass(\SqlFaker\Contract\Production::class)]
+#[UsesClass(\SqlFaker\Contract\Symbol::class)]
 #[Medium]
 final class MySqlProviderTest extends TestCase
 {

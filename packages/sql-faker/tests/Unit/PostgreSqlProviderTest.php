@@ -7,6 +7,7 @@ namespace Tests\Unit\SqlFaker;
 use Faker\Factory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Contract\GenerationRequest;
 use SqlFaker\Grammar\Grammar;
@@ -23,6 +24,11 @@ use SqlFaker\PostgreSqlProvider;
 #[CoversClass(PostgreSqlProvider::class)]
 #[CoversClass(RandomStringGenerator::class)]
 #[CoversClass(SqlGenerator::class)]
+#[UsesClass(GenerationRequest::class)]
+#[UsesClass(\SqlFaker\Contract\Grammar::class)]
+#[UsesClass(\SqlFaker\Contract\ProductionRule::class)]
+#[UsesClass(\SqlFaker\Contract\Production::class)]
+#[UsesClass(\SqlFaker\Contract\Symbol::class)]
 final class PostgreSqlProviderTest extends TestCase
 {
     #[\Override]

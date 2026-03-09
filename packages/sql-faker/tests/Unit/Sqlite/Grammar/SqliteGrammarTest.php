@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\Sqlite\Grammar;
 
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlFaker\Grammar\Grammar;
@@ -12,14 +13,8 @@ use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\Terminal;
 use SqlFaker\Sqlite\Grammar\SqliteGrammar;
-use PHPUnit\Framework\Attributes\CoversClass;
 
-#[CoversClass(SqliteGrammar::class)]
-#[CoversClass(Grammar::class)]
-#[CoversClass(ProductionRule::class)]
-#[CoversClass(Production::class)]
-#[CoversClass(Terminal::class)]
-#[CoversClass(NonTerminal::class)]
+#[CoversNothing]
 final class SqliteGrammarTest extends TestCase
 {
     public function testLoad(): void

@@ -10,6 +10,7 @@ use Fuzz\Probe\ProbePhase as FuzzProbePhase;
 use Fuzz\Probe\ProbeResult as FuzzProbeResult;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Spec\Policy\OutcomeKind;
 use Spec\Policy\SqlitePolicy;
@@ -30,6 +31,11 @@ use SqlFaker\SqliteProvider;
 #[CoversClass(SqliteProvider::class)]
 #[CoversClass(RandomStringGenerator::class)]
 #[CoversClass(SqlGenerator::class)]
+#[UsesClass(GenerationRequest::class)]
+#[UsesClass(\SqlFaker\Contract\Grammar::class)]
+#[UsesClass(\SqlFaker\Contract\ProductionRule::class)]
+#[UsesClass(\SqlFaker\Contract\Production::class)]
+#[UsesClass(\SqlFaker\Contract\Symbol::class)]
 final class SqliteProviderTest extends TestCase
 {
     #[\Override]

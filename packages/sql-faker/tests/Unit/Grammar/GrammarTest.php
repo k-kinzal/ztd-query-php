@@ -5,18 +5,15 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\Grammar;
 
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\Terminal;
-use PHPUnit\Framework\Attributes\CoversClass;
 
-#[CoversClass(Grammar::class)]
-#[CoversClass(ProductionRule::class)]
-#[CoversClass(Production::class)]
-#[CoversClass(Terminal::class)]
+#[CoversNothing]
 final class GrammarTest extends TestCase
 {
     public function testConstructor(): void
