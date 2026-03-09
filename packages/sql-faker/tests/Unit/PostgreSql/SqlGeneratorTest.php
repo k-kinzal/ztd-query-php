@@ -224,6 +224,38 @@ final class SqlGeneratorTest extends TestCase
         self::assertSame($ruleB, $result['unrelated_b'], $methodName);
     }
 
+    /**
+     * @param list<mixed> $arguments
+     */
+    #[DataProvider('providerNoOpFilterMethodWithArguments')]
+    public function testFilterHelpersLeaveUnrelatedRuleMapsUntouchedWhenTargetRulesAreMissing(
+        string $methodName,
+        array $arguments,
+    ): void {
+        $faker = Factory::create();
+        $generator = new SqlGenerator(new Grammar('stmt', []), $faker, new PostgreSqlProvider($faker));
+        $method = (new ReflectionClass($generator))->getMethod($methodName);
+
+        $ruleA = new ProductionRule('unrelated_a', [
+            new Production([new Terminal('A')]),
+        ]);
+        $ruleB = new ProductionRule('unrelated_b', [
+            new Production([new Terminal('B')]),
+        ]);
+
+        $ruleMap = [
+            'unrelated_a' => $ruleA,
+            'unrelated_b' => $ruleB,
+        ];
+
+        /** @var array<string, ProductionRule> $result */
+        $result = $method->invokeArgs($generator, [$ruleMap, ...$arguments]);
+
+        self::assertSame(['unrelated_a', 'unrelated_b'], array_keys($result), $methodName);
+        self::assertSame($ruleA, $result['unrelated_a'], $methodName);
+        self::assertSame($ruleB, $result['unrelated_b'], $methodName);
+    }
+
     #[DataProvider('providerGenerateOperator')]
     public function testGenerateOperator(string $terminalName, string $expected): void
     {
@@ -2207,6 +2239,21 @@ final class SqlGeneratorTest extends TestCase
         yield 'augmentDoStmtRule' => ['augmentDoStmtRule'];
         yield 'augmentCreateFunctionRule' => ['augmentCreateFunctionRule'];
         yield 'augmentDropTypeRule' => ['augmentDropTypeRule'];
+    }
+
+    /**
+     * @return iterable<string, array{0: string, 1: list<mixed>}>
+     */
+    public static function providerNoOpFilterMethodWithArguments(): iterable
+    {
+        yield 'keepSingleTerminalAlternatives' => [
+            'keepSingleTerminalAlternatives',
+            ['missing_rule', ['IDENT']],
+        ];
+        yield 'filterIndirectionElements' => ['filterIndirectionElements', []];
+        yield 'filterOperatorDefinitionRule' => ['filterOperatorDefinitionRule', []];
+        yield 'filterOperatorArgTypesRule' => ['filterOperatorArgTypesRule', []];
+        yield 'filterPublicationObjectSpecRule' => ['filterPublicationObjectSpecRule', []];
     }
 
     /**
