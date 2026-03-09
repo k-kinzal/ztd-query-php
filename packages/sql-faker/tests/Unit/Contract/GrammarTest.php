@@ -73,4 +73,120 @@ final class GrammarTest extends TestCase
 
         Grammar::from((object) ['startSymbol' => '', 'ruleMap' => []], $nonTerminal::class);
     }
+
+    public function testRejectsNonStringRuleKeys(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Grammar rules must be keyed by non-empty strings.');
+
+        new Grammar('stmt', [
+            0 => new ProductionRule('stmt', []),
+        ]);
+    }
+
+    public function testRejectsNonProductionRuleValues(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Grammar rules must contain only ProductionRule values.');
+
+        new Grammar('stmt', [
+            'stmt' => new \stdClass(),
+        ]);
+    }
+
+    public function testRejectsNonObjectRuleMapEntriesWhenConvertingGrammarSource(): void
+    {
+        $nonTerminal = new class ('expr') {
+            public function __construct(public string $value)
+            {
+            }
+        };
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Grammar source ruleMap must be an object map keyed by strings.');
+
+        Grammar::from((object) [
+            'startSymbol' => 'stmt',
+            'ruleMap' => [
+                'stmt' => 'invalid',
+            ],
+        ], $nonTerminal::class);
+    }
+
+    public function testRejectsAssociativeAlternativeListsWhenConvertingGrammarSource(): void
+    {
+        $nonTerminal = new class ('expr') {
+            public function __construct(public string $value)
+            {
+            }
+        };
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Production rule source must expose an alternatives list.');
+
+        Grammar::from((object) [
+            'startSymbol' => 'stmt',
+            'ruleMap' => [
+                'stmt' => (object) [
+                    'alternatives' => [
+                        'named' => (object) ['symbols' => []],
+                    ],
+                ],
+            ],
+        ], $nonTerminal::class);
+    }
+
+    public function testRejectsAssociativeSymbolListsWhenConvertingGrammarSource(): void
+    {
+        $nonTerminal = new class ('expr') {
+            public function __construct(public string $value)
+            {
+            }
+        };
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Production source must expose a symbols list.');
+
+        Grammar::from((object) [
+            'startSymbol' => 'stmt',
+            'ruleMap' => [
+                'stmt' => (object) [
+                    'alternatives' => [
+                        (object) [
+                            'symbols' => [
+                                'named' => (object) ['value' => 'SELECT'],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ], $nonTerminal::class);
+    }
+
+    public function testRejectsEmptySymbolValuesWhenConvertingGrammarSource(): void
+    {
+        $nonTerminal = new class ('expr') {
+            public function __construct(public string $value)
+            {
+            }
+        };
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Grammar symbol source must expose a non-empty value string.');
+
+        Grammar::from((object) [
+            'startSymbol' => 'stmt',
+            'ruleMap' => [
+                'stmt' => (object) [
+                    'alternatives' => [
+                        (object) [
+                            'symbols' => [
+                                (object) ['value' => ''],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ], $nonTerminal::class);
+    }
 }

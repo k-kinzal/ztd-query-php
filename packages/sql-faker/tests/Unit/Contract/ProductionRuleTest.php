@@ -44,4 +44,12 @@ final class ProductionRuleTest extends TestCase
 
         new ProductionRule('stmt', $alternatives);
     }
+
+    public function testRejectsNonProductionAlternatives(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Production rule alternatives must contain only Production values.');
+
+        new ProductionRule('stmt', [new \stdClass()]);
+    }
 }

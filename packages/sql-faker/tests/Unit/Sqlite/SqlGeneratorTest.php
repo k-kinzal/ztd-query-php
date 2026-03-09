@@ -91,6 +91,21 @@ final class SqlGeneratorTest extends TestCase
         self::assertSame('a', $result2);
     }
 
+    public function testGenerateResetsIdentifierOrdinalBetweenCalls(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([new Terminal('ID')]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        self::assertSame('_i0', $generator->generate('stmt'));
+        self::assertSame('_i0', $generator->generate('stmt'));
+    }
+
     public function testGenerateSelectsShortestAlternativeAtTargetDepth(): void
     {
         $grammar = new Grammar('stmt', [
@@ -824,6 +839,56 @@ final class SqlGeneratorTest extends TestCase
         )));
     }
 
+    public function testAugmentGrammarLeavesNmnumRuleMapUntouchedWhenNmnumIsMissing(): void
+    {
+        $grammar = new Grammar('cmd', [
+            'cmd' => new ProductionRule('cmd', [
+                new Production([new Terminal('SELECT')]),
+            ]),
+            'helper' => new ProductionRule('helper', [
+                new Production([new Terminal('VALUE')]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        self::assertArrayHasKey('cmd', $generator->compiledGrammar()->ruleMap);
+        self::assertArrayHasKey('helper', $generator->compiledGrammar()->ruleMap);
+        self::assertArrayNotHasKey('nmnum', $generator->compiledGrammar()->ruleMap);
+    }
+
+    public function testAugmentGrammarPreservesNonTerminalNmnumAlternativesAndReindexesTheList(): void
+    {
+        $grammar = new Grammar('cmd', [
+            'cmd' => new ProductionRule('cmd', [
+                new Production([new Terminal('SELECT')]),
+            ]),
+            'nmnum' => new ProductionRule('nmnum', [
+                new Production([new NonTerminal('ON')]),
+                new Production([new Terminal('ON')]),
+                new Production([new Terminal('VALUE')]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        $alternatives = $generator->compiledGrammar()->ruleMap['nmnum']->alternatives;
+
+        self::assertSame([0, 1], array_keys($alternatives));
+        self::assertSame(
+            [
+                ['nt:ON'],
+                ['t:VALUE'],
+            ],
+            array_map(static fn (Production $alt): array => array_map(
+                static fn (Symbol $symbol): string => $symbol instanceof NonTerminal
+                    ? 'nt:' . $symbol->value()
+                    : 't:' . $symbol->value(),
+                $alt->symbols,
+            ), $alternatives),
+        );
+    }
+
     public function testAugmentGrammarRestrictsNmToIdentifierTokens(): void
     {
         $grammar = SqliteGrammar::load();
@@ -845,6 +910,52 @@ final class SqlGeneratorTest extends TestCase
         )));
     }
 
+    public function testAugmentGrammarLeavesNmRuleMapUntouchedWhenNmIsMissing(): void
+    {
+        $grammar = new Grammar('cmd', [
+            'cmd' => new ProductionRule('cmd', [
+                new Production([new Terminal('SELECT')]),
+            ]),
+            'helper' => new ProductionRule('helper', [
+                new Production([new Terminal('VALUE')]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        self::assertArrayHasKey('cmd', $generator->compiledGrammar()->ruleMap);
+        self::assertArrayHasKey('helper', $generator->compiledGrammar()->ruleMap);
+        self::assertArrayNotHasKey('nm', $generator->compiledGrammar()->ruleMap);
+    }
+
+    public function testAugmentGrammarReindexesFilteredNmAlternatives(): void
+    {
+        $grammar = new Grammar('cmd', [
+            'cmd' => new ProductionRule('cmd', [
+                new Production([new Terminal('SELECT')]),
+            ]),
+            'nm' => new ProductionRule('nm', [
+                new Production([new Terminal('STRING')]),
+                new Production([new Terminal('ID')]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        $alternatives = $generator->compiledGrammar()->ruleMap['nm']->alternatives;
+
+        self::assertSame([0], array_keys($alternatives));
+        self::assertSame([['t:ID']], array_map(
+            static fn (Production $alt): array => array_map(
+                static fn (Symbol $symbol): string => $symbol instanceof NonTerminal
+                    ? 'nt:' . $symbol->value()
+                    : 't:' . $symbol->value(),
+                $alt->symbols,
+            ),
+            $alternatives,
+        ));
+    }
+
     public function testAugmentGrammarPromotesCreateTableToCompleteStatement(): void
     {
         $grammar = SqliteGrammar::load();
@@ -858,6 +969,32 @@ final class SqlGeneratorTest extends TestCase
 
         self::assertArrayHasKey('create_table_head', $augmented->ruleMap);
         self::assertArrayHasKey('safe_dbnm', $augmented->ruleMap);
+        self::assertSame(
+            [
+                [],
+                ['DOT', 'nm'],
+            ],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $augmented->ruleMap['safe_dbnm']->alternatives,
+            ),
+        );
+        self::assertSame(
+            [
+                ['createkw', 'TABLE', 'ifnotexists', 'nm', 'safe_dbnm'],
+                ['createkw', 'TEMP', 'TABLE', 'ifnotexists', 'nm'],
+            ],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $augmented->ruleMap['create_table_head']->alternatives,
+            ),
+        );
         self::assertSame(['create_table_head', 'create_table_args'], array_map(
             static function (Symbol $symbol): string {
                 return match (true) {
@@ -887,6 +1024,57 @@ final class SqlGeneratorTest extends TestCase
         )));
     }
 
+    public function testAugmentGrammarLeavesCreateTableRulesUntouchedWhenRequiredRulesAreMissing(): void
+    {
+        $grammar = new Grammar('cmd', [
+            'cmd' => new ProductionRule('cmd', [
+                new Production([new NonTerminal('create_table'), new NonTerminal('create_table_args')]),
+            ]),
+            'create_table' => new ProductionRule('create_table', [
+                new Production([new Terminal('CREATE')]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        self::assertArrayNotHasKey('safe_dbnm', $generator->compiledGrammar()->ruleMap);
+        self::assertArrayHasKey('cmd', $generator->compiledGrammar()->ruleMap);
+        self::assertArrayHasKey('create_table', $generator->compiledGrammar()->ruleMap);
+        self::assertArrayNotHasKey('create_table_head', $generator->compiledGrammar()->ruleMap);
+    }
+
+    public function testAugmentGrammarExtractsInsertRuleFromTwoSymbolCommandAlternatives(): void
+    {
+        $grammar = new Grammar('cmd', [
+            'cmd' => new ProductionRule('cmd', [
+                new Production([
+                    new NonTerminal('prefix'),
+                    new NonTerminal('insert_cmd'),
+                ]),
+            ]),
+            'prefix' => new ProductionRule('prefix', [
+                new Production([]),
+            ]),
+            'insert_cmd' => new ProductionRule('insert_cmd', [
+                new Production([new Terminal('INSERT')]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        self::assertArrayHasKey('insert', $generator->compiledGrammar()->ruleMap);
+        self::assertSame(
+            [['prefix', 'insert_cmd']],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $generator->compiledGrammar()->ruleMap['insert']->alternatives,
+            ),
+        );
+    }
+
     public function testAugmentGrammarConstrainsAttachAndDetachExpressions(): void
     {
         $grammar = SqliteGrammar::load();
@@ -902,6 +1090,46 @@ final class SqlGeneratorTest extends TestCase
         self::assertArrayHasKey('detach_stmt', $augmented->ruleMap);
         self::assertArrayHasKey('safe_attach_filename_expr', $augmented->ruleMap);
         self::assertArrayHasKey('safe_attach_schema_expr', $augmented->ruleMap);
+        self::assertSame(
+            [['STRING']],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $augmented->ruleMap['safe_attach_filename_expr']->alternatives,
+            ),
+        );
+        self::assertSame(
+            [['nm']],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $augmented->ruleMap['safe_attach_schema_expr']->alternatives,
+            ),
+        );
+        self::assertSame(
+            [['ATTACH', 'database_kw_opt', 'safe_attach_filename_expr', 'AS', 'safe_attach_schema_expr', 'key_opt']],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $augmented->ruleMap['attach_stmt']->alternatives,
+            ),
+        );
+        self::assertSame(
+            [['DETACH', 'database_kw_opt', 'safe_attach_schema_expr']],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $augmented->ruleMap['detach_stmt']->alternatives,
+            ),
+        );
         self::assertSame([], array_values(array_filter(
             $augmented->ruleMap['cmd']->alternatives,
             static function (Production $alt): bool {
@@ -936,6 +1164,42 @@ final class SqlGeneratorTest extends TestCase
         self::assertArrayHasKey('vacuum_stmt', $augmented->ruleMap);
         self::assertArrayHasKey('safe_vinto', $augmented->ruleMap);
         self::assertArrayHasKey('safe_vacuum_into_expr', $augmented->ruleMap);
+        self::assertSame(
+            [['STRING']],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $augmented->ruleMap['safe_vacuum_into_expr']->alternatives,
+            ),
+        );
+        self::assertSame(
+            [
+                [],
+                ['INTO', 'safe_vacuum_into_expr'],
+            ],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $augmented->ruleMap['safe_vinto']->alternatives,
+            ),
+        );
+        self::assertSame(
+            [
+                ['VACUUM', 'safe_vinto'],
+                ['VACUUM', 'nm', 'safe_vinto'],
+            ],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $augmented->ruleMap['vacuum_stmt']->alternatives,
+            ),
+        );
         self::assertSame([], array_values(array_filter(
             $augmented->ruleMap['cmd']->alternatives,
             static function (Production $alt): bool {
@@ -969,6 +1233,42 @@ final class SqlGeneratorTest extends TestCase
 
         self::assertArrayHasKey('create_view_stmt', $augmented->ruleMap);
         self::assertArrayHasKey('create_trigger_stmt', $augmented->ruleMap);
+        self::assertSame(
+            [
+                ['createkw', 'VIEW', 'ifnotexists', 'nm', 'safe_dbnm', 'eidlist_opt', 'AS', 'select'],
+                ['createkw', 'TEMP', 'VIEW', 'ifnotexists', 'nm', 'eidlist_opt', 'AS', 'select'],
+            ],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $augmented->ruleMap['create_view_stmt']->alternatives,
+            ),
+        );
+        self::assertSame(
+            [
+                ['TRIGGER', 'ifnotexists', 'nm', 'safe_dbnm', 'trigger_time', 'trigger_event', 'ON', 'fullname', 'foreach_clause', 'when_clause'],
+                ['TEMP', 'TRIGGER', 'ifnotexists', 'nm', 'trigger_time', 'trigger_event', 'ON', 'fullname', 'foreach_clause', 'when_clause'],
+            ],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $augmented->ruleMap['trigger_decl']->alternatives,
+            ),
+        );
+        self::assertSame(
+            [['createkw', 'trigger_decl', 'BEGIN', 'trigger_cmd_list', 'END']],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $augmented->ruleMap['create_trigger_stmt']->alternatives,
+            ),
+        );
         self::assertNotSame([], array_values(array_filter(
             $augmented->ruleMap['trigger_decl']->alternatives,
             static function (Production $alt): bool {
@@ -1018,6 +1318,36 @@ final class SqlGeneratorTest extends TestCase
 
         self::assertArrayHasKey('safe_selcollist_no_from', $augmented->ruleMap);
         self::assertArrayHasKey('safe_from_clause', $augmented->ruleMap);
+        self::assertSame(
+            [['FROM', 'seltablist']],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $augmented->ruleMap['safe_from_clause']->alternatives,
+            ),
+        );
+        self::assertSame(
+            [['expr']],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $augmented->ruleMap['safe_select_result_expr']->alternatives,
+            ),
+        );
+        self::assertSame(
+            [['term']],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $augmented->ruleMap['safe_select_value_expr']->alternatives,
+            ),
+        );
         self::assertSame([], array_values(array_filter(
             $augmented->ruleMap['safe_selcollist_no_from']->alternatives,
             static function (Production $alt): bool {
@@ -1064,6 +1394,19 @@ final class SqlGeneratorTest extends TestCase
         self::assertArrayHasKey('setop_select_stmt', $augmented->ruleMap);
         self::assertArrayHasKey('setop_select_stmt_1', $augmented->ruleMap);
         self::assertArrayHasKey('setop_select_stmt_8', $augmented->ruleMap);
+        self::assertSame(
+            [
+                ['setop_select_operand_1', 'multiselect_op', 'setop_select_operand_1'],
+                ['setop_select_stmt_1', 'multiselect_op', 'setop_select_operand_1'],
+            ],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $augmented->ruleMap['setop_select_stmt_1']->alternatives,
+            ),
+        );
         self::assertSame([], array_values(array_filter(
             $augmented->ruleMap['selectnowith']->alternatives,
             static function (Production $alt): bool {
@@ -1097,6 +1440,16 @@ final class SqlGeneratorTest extends TestCase
         self::assertArrayHasKey('select_values_clause', $augmented->ruleMap);
         self::assertArrayHasKey('select_values_clause_1', $augmented->ruleMap);
         self::assertArrayHasKey('select_values_clause_8', $augmented->ruleMap);
+        self::assertSame(
+            [['VALUES', 'select_value_row_list_1']],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $augmented->ruleMap['select_values_clause_1']->alternatives,
+            ),
+        );
         self::assertSame([], array_values(array_filter(
             $augmented->ruleMap['oneselect']->alternatives,
             static function (Production $alt): bool {
