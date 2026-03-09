@@ -134,6 +134,10 @@ final class SupportedLanguageTest extends TestCase
             ['row_arity' => 3],
             $method->invoke($language, 'VALUES(1, (2,3), "x,y")'),
         );
+        self::assertSame(
+            ['row_arity' => 3],
+            $method->invoke($language, "VALUES('a,b', 2, \"x,y\")"),
+        );
         self::assertSame([], $method->invoke($language, 'SELECT 1, 2, 3'));
     }
 
@@ -150,6 +154,21 @@ final class SupportedLanguageTest extends TestCase
             ['left_projection_arity' => 2, 'right_projection_arity' => 2],
             $method->invoke($language, 'VALUES(1, 2) UNION ALL SELECT 3, 4'),
         );
+        self::assertSame(
+            ['left_projection_arity' => 1, 'right_projection_arity' => 2],
+            $method->invoke($language, 'SELECT 1 UNION SELECT 2, 3'),
+        );
+    }
+
+    public function testSetOperationArityHelpersRejectMismatchedOperands(): void
+    {
+        $language = new SupportedLanguage();
+        $witnessMethod = (new \ReflectionClass($language))->getMethod('isSetOperationArityWitness');
+        $arityMethod = (new \ReflectionClass($language))->getMethod('setOperationOperandArity');
+
+        self::assertFalse($witnessMethod->invoke($language, 'SELECT 1 UNION SELECT 2, 3', 1));
+        self::assertFalse($witnessMethod->invoke($language, 'SELECT 1 UNION SELECT 2, 3', 2));
+        self::assertNull($arityMethod->invoke($language, 'SELECT 1 UNION SELECT 2 UNION SELECT 3, 4'));
     }
 
     public function testSplitTopLevelSetOperationIgnoresQuotedAndNestedOperators(): void
@@ -169,6 +188,14 @@ final class SupportedLanguageTest extends TestCase
             ['VALUES(1)', 'VALUES(2)'],
             $method->invoke($language, 'VALUES(1) UNION ALL VALUES(2)'),
         );
+        self::assertSame(
+            ['SELECT 1', 'SELECT 2'],
+            $method->invoke($language, 'SELECT 1  UNION SELECT 2'),
+        );
+        self::assertSame(
+            ['SELECT 1', 'VALUES(2)'],
+            $method->invoke($language, 'SELECT 1 UNION ALL  VALUES(2)'),
+        );
     }
 
     public function testSelectProjectionSegmentSkipsModifiersAndStopsAtTopLevelDelimiters(): void
@@ -179,6 +206,8 @@ final class SupportedLanguageTest extends TestCase
         self::assertSame('1, 2', $method->invoke($language, 'SELECT DISTINCT 1, 2 FROM t'));
         self::assertSame('1, 2', $method->invoke($language, 'SELECT ALL 1, 2 WHERE 1'));
         self::assertSame('"a,b", (1,2)', $method->invoke($language, 'SELECT "a,b", (1,2) ORDER BY 1'));
+        self::assertSame('1, 2', $method->invoke($language, 'SELECT 1, 2   FROM t'));
+        self::assertSame('1, 2', $method->invoke($language, 'SELECT 1, 2   '));
     }
 
     public function testTopLevelCsvArityIgnoresQuotedAndNestedCommas(): void
@@ -187,6 +216,7 @@ final class SupportedLanguageTest extends TestCase
         $method = (new \ReflectionClass($language))->getMethod('topLevelCsvArity');
 
         self::assertSame(3, $method->invoke($language, '"a,b", 2, 3'));
+        self::assertSame(3, $method->invoke($language, "'a,b', 2, 3"));
         self::assertSame(3, $method->invoke($language, '1, (2,3), "x,y"'));
         self::assertSame(1, $method->invoke($language, '1'));
     }
@@ -199,6 +229,7 @@ final class SupportedLanguageTest extends TestCase
         self::assertTrue($method->invoke($language, 'CREATE TEMP TABLE foo AS SELECT 1'));
         self::assertFalse($method->invoke($language, 'CREATE TEMP VIEW main.foo AS SELECT 1'));
         self::assertTrue($method->invoke($language, 'CREATE TEMP TRIGGER foo AFTER INSERT ON bar BEGIN SELECT 1; END'));
+        self::assertTrue($method->invoke($language, 'CREATE TEMP TRIGGER foo AFTER INSERT ON main.bar BEGIN SELECT 1; END'));
     }
 
     /**
@@ -274,6 +305,11 @@ final class SupportedLanguageTest extends TestCase
             'sqlite.constraint.select.values_clause',
             [],
             'Missing required parameter arity for family sqlite.constraint.select.values_clause.',
+        ];
+        yield 'values clause non scalar arity' => [
+            'sqlite.constraint.select.values_clause',
+            ['arity' => 1.5],
+            'arity parameter must be present for family sqlite.constraint.select.values_clause.',
         ];
         yield 'values clause arity below range' => [
             'sqlite.constraint.select.values_clause',
