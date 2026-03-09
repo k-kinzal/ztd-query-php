@@ -287,6 +287,10 @@ final class SupportedLanguageTest extends TestCase
             [],
             'Missing required parameter arity for family mysql.constraint.table_value_constructor.',
         ];
+        yield 'non scalar arity type' => [
+            ['arity' => 1.5],
+            'arity parameter must be present for table value constructor witnesses.',
+        ];
         yield 'arity below range' => [
             ['arity' => 0],
             'arity parameter must be between 1 and 8.',
@@ -304,6 +308,7 @@ final class SupportedLanguageTest extends TestCase
     {
         yield 'single value row' => ['VALUES ROW(1)', 1];
         yield 'multiple value row' => ['VALUES ROW(1, 2, 3)', 3];
+        yield 'multiple rows use first row arity' => ['VALUES ROW(1, 2, 3), ROW(4, 5, 6)', 3];
         yield 'non values statement' => ['SELECT 1', 0];
     }
 
