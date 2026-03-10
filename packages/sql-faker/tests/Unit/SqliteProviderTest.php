@@ -505,6 +505,150 @@ final class SqliteProviderTest extends TestCase
         self::assertSame($seed0, $seed0Again);
     }
 
+    public function testQuotedIdentifierMatchesPattern(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new SqliteProvider($faker);
+
+        self::assertMatchesRegularExpression('/^"[a-z_][a-z0-9_]*"$/', $provider->quotedIdentifier());
+    }
+
+    public function testStringLiteralMatchesPattern(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new SqliteProvider($faker);
+
+        self::assertMatchesRegularExpression("/^'[a-zA-Z0-9_]{1,32}'$/", $provider->stringLiteral());
+    }
+
+    public function testIntegerLiteralMatchesPattern(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new SqliteProvider($faker);
+
+        self::assertMatchesRegularExpression('/^[1-9]\d*$/', $provider->integerLiteral());
+    }
+
+    public function testDecimalLiteralMatchesPattern(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new SqliteProvider($faker);
+
+        self::assertMatchesRegularExpression('/^\d+\.\d{2,}$/', $provider->decimalLiteral());
+    }
+
+    public function testQuotedIdentifierDefaultMatchesExplicitBounds(): void
+    {
+        $faker = Factory::create();
+        $provider = new SqliteProvider($faker);
+        $faker->seed(42);
+        $result = $provider->quotedIdentifier();
+        $faker->seed(42);
+
+        self::assertSame($result, $provider->quotedIdentifier(1, 128));
+    }
+
+    public function testStringLiteralDefaultMatchesExplicitBounds(): void
+    {
+        $faker = Factory::create();
+        $provider = new SqliteProvider($faker);
+        $faker->seed(42);
+        $result = $provider->stringLiteral();
+        $faker->seed(42);
+
+        self::assertSame($result, $provider->stringLiteral(1, 32));
+    }
+
+    public function testStringLiteralDefaultUsesCanonicalBoundsForSensitiveSeed(): void
+    {
+        $faker = Factory::create();
+        $provider = new SqliteProvider($faker);
+        $faker->seed(0);
+        $default = $provider->stringLiteral();
+        $faker->seed(0);
+        $explicit = $provider->stringLiteral(1, 32);
+
+        self::assertSame($explicit, $default);
+        self::assertSame(13, strlen(substr($default, 1, -1)));
+        $faker->seed(0);
+        self::assertNotSame($default, $provider->stringLiteral(0, 32));
+        $faker->seed(0);
+        self::assertNotSame($default, $provider->stringLiteral(1, 31));
+        $faker->seed(0);
+        self::assertNotSame($default, $provider->stringLiteral(2, 32));
+        $faker->seed(0);
+        self::assertNotSame($default, $provider->stringLiteral(1, 33));
+    }
+
+    public function testIntegerLiteralDefaultMatchesExplicitBounds(): void
+    {
+        $faker = Factory::create();
+        $provider = new SqliteProvider($faker);
+        $faker->seed(42);
+        $result = $provider->integerLiteral();
+        $faker->seed(42);
+
+        self::assertSame($result, $provider->integerLiteral(1, PHP_INT_MAX));
+    }
+
+    public function testDecimalLiteralDefaultMatchesExplicitBounds(): void
+    {
+        $faker = Factory::create();
+        $provider = new SqliteProvider($faker);
+        $faker->seed(42);
+        $result = $provider->decimalLiteral();
+        $faker->seed(42);
+
+        self::assertSame($result, $provider->decimalLiteral(15, 2));
+    }
+
+    public function testQuotedIdentifierCustomLength(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new SqliteProvider($faker);
+
+        self::assertMatchesRegularExpression('/^"[a-z_][a-z0-9_]{4,9}"$/', $provider->quotedIdentifier(5, 10));
+    }
+
+    public function testStringLiteralCustomLength(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new SqliteProvider($faker);
+
+        $result = $provider->stringLiteral(3, 8);
+        $content = substr($result, 1, -1);
+
+        self::assertGreaterThanOrEqual(3, strlen($content));
+        self::assertLessThanOrEqual(8, strlen($content));
+    }
+
+    public function testIntegerLiteralCustomRange(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new SqliteProvider($faker);
+
+        $result = $provider->integerLiteral(100, 500);
+
+        self::assertGreaterThanOrEqual(100, (int) $result);
+        self::assertLessThanOrEqual(500, (int) $result);
+    }
+
+    public function testDecimalLiteralCustomPrecision(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new SqliteProvider($faker);
+
+        self::assertMatchesRegularExpression('/^\d+\.\d{2,}$/', $provider->decimalLiteral(5, 2));
+    }
+
     /**
      * @return iterable<string, array{StatementType}>
      */
