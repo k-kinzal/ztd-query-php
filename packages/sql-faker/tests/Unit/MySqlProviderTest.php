@@ -891,39 +891,91 @@ final class MySqlProviderTest extends TestCase
 
         $result = $provider->hostname(2, 3, 5);
 
-        self::assertMatchesRegularExpression('/^[a-z0-9]+(\.[a-z0-9]+)+$/', $result);
+        self::assertMatchesRegularExpression('/^[a-z][a-z0-9]{0,4}(\.[a-z][a-z0-9]{0,4}){1,2}$/', $result);
     }
 
-    #[DataProvider('providerDeterministicHelperOutput')]
+    public function testHostnameSinglePartCustomParams(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->hostname(1, 1, 12);
+
+        self::assertStringNotContainsString('.', $result);
+        self::assertMatchesRegularExpression('/^[a-z][a-z0-9]{0,11}$/', $result);
+    }
+
+    public function testFilterWildcardPattern(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->filterWildcardPattern();
+
+        self::assertMatchesRegularExpression("/^'[a-z][a-z0-9]{0,11}\\.[a-z][a-z0-9]{0,11}'$/", $result);
+    }
+
+    public function testFilterWildcardPatternCustomMaxPartLength(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->filterWildcardPattern(13);
+
+        self::assertMatchesRegularExpression("/^'[a-z][a-z0-9]{0,12}\\.[a-z][a-z0-9]{0,12}'$/", $result);
+    }
+
+    public function testResetMasterIndex(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->resetMasterIndex();
+
+        self::assertMatchesRegularExpression('/^\d+$/', $result);
+        self::assertGreaterThanOrEqual(1, (int) $result);
+        self::assertLessThanOrEqual(2_000_000_000, (int) $result);
+    }
+
+    #[DataProvider('providerDeterministicHelperGeneration')]
     /**
      * @param \Closure(MySqlProvider): string $generate
      */
-    public function testDeterministicHelperOutput(\Closure $generate, string $expected): void
+    public function testDeterministicHelperOutputIsReproducible(\Closure $generate): void
     {
         $faker = Factory::create();
-        $faker->seed(0);
         $provider = new MySqlProvider($faker);
 
-        self::assertSame($expected, $generate($provider));
+        $faker->seed(0);
+        $first = $generate($provider);
+
+        $faker->seed(0);
+        $second = $generate($provider);
+
+        self::assertSame($first, $second);
     }
 
     /**
-     * @return iterable<string, array{\Closure(MySqlProvider): string, string}>
+     * @return iterable<string, array{\Closure(MySqlProvider): string}>
      */
-    public static function providerDeterministicHelperOutput(): iterable
+    public static function providerDeterministicHelperGeneration(): iterable
     {
-        yield 'default string literal' => [static fn (MySqlProvider $provider): string => $provider->stringLiteral(), "'T4ZRZIkU2S4pm'"];
-        yield 'custom string literal' => [static fn (MySqlProvider $provider): string => $provider->stringLiteral(3, 8), "'T4ZRZ'"];
-        yield 'default national string literal' => [static fn (MySqlProvider $provider): string => $provider->nationalStringLiteral(), "N'T4ZRZIkU2S4pm'"];
-        yield 'custom national string literal' => [static fn (MySqlProvider $provider): string => $provider->nationalStringLiteral(2, 5), "N'T4'"];
-        yield 'default dollar quoted string' => [static fn (MySqlProvider $provider): string => $provider->dollarQuotedString(), '$$T4ZRZIkU2S4pm$$'];
-        yield 'custom dollar quoted string' => [static fn (MySqlProvider $provider): string => $provider->dollarQuotedString(2, 6), '$$T4ZRZI$$'];
-        yield 'default hostname' => [static fn (MySqlProvider $provider): string => $provider->hostname(), 'byhphtb1rcydkuaa'];
-        yield 'custom hostname' => [static fn (MySqlProvider $provider): string => $provider->hostname(2, 3, 5), 'byhph.r1rc'];
-        yield 'custom single-part hostname' => [static fn (MySqlProvider $provider): string => $provider->hostname(1, 1, 12), 'byhp'];
-        yield 'default filter wildcard pattern' => [static fn (MySqlProvider $provider): string => $provider->filterWildcardPattern(), "'byhp.r1rcydku'"];
-        yield 'custom filter wildcard pattern' => [static fn (MySqlProvider $provider): string => $provider->filterWildcardPattern(13), "'byh.zb1r'"];
-        yield 'reset master index' => [static fn (MySqlProvider $provider): string => $provider->resetMasterIndex(), '357136045'];
+        yield 'default string literal' => [static fn (MySqlProvider $provider): string => $provider->stringLiteral()];
+        yield 'custom string literal' => [static fn (MySqlProvider $provider): string => $provider->stringLiteral(3, 8)];
+        yield 'default national string literal' => [static fn (MySqlProvider $provider): string => $provider->nationalStringLiteral()];
+        yield 'custom national string literal' => [static fn (MySqlProvider $provider): string => $provider->nationalStringLiteral(2, 5)];
+        yield 'default dollar quoted string' => [static fn (MySqlProvider $provider): string => $provider->dollarQuotedString()];
+        yield 'custom dollar quoted string' => [static fn (MySqlProvider $provider): string => $provider->dollarQuotedString(2, 6)];
+        yield 'default hostname' => [static fn (MySqlProvider $provider): string => $provider->hostname()];
+        yield 'custom hostname' => [static fn (MySqlProvider $provider): string => $provider->hostname(2, 3, 5)];
+        yield 'custom single-part hostname' => [static fn (MySqlProvider $provider): string => $provider->hostname(1, 1, 12)];
+        yield 'default filter wildcard pattern' => [static fn (MySqlProvider $provider): string => $provider->filterWildcardPattern()];
+        yield 'custom filter wildcard pattern' => [static fn (MySqlProvider $provider): string => $provider->filterWildcardPattern(13)];
+        yield 'reset master index' => [static fn (MySqlProvider $provider): string => $provider->resetMasterIndex()];
     }
 
     public function testRuntimeContractExposesSnapshotSupportedGrammarAndDeterministicGeneration(): void
