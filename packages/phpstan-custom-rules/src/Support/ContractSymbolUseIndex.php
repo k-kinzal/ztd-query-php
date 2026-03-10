@@ -119,7 +119,7 @@ final class ContractSymbolUseIndex
     {
         foreach ($statement->uses as $use) {
             $type = $use->type === Use_::TYPE_UNKNOWN ? $statement->type : $use->type;
-            if ($type !== Use_::TYPE_NORMAL && $type !== Use_::TYPE_FUNCTION) {
+            if ($type !== Use_::TYPE_NORMAL && $type !== Use_::TYPE_FUNCTION && $type !== Use_::TYPE_CONSTANT) {
                 continue;
             }
 

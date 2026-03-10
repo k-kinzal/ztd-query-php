@@ -11,6 +11,7 @@ use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
 use PhpParser\Node;
 use PhpParser\Node\Stmt\ClassLike;
+use PhpParser\Node\Stmt\Const_;
 use PhpParser\Node\Stmt\Function_;
 use PhpParser\Node\Stmt\Namespace_;
 use ZtdQuery\PhpStanCustomRules\Support\ContractSymbolUseIndex;
@@ -88,6 +89,13 @@ final class ContractSymbolMustBeUsedRule implements Rule
             foreach ($statement->stmts as $namespaceStatement) {
                 if ($namespaceStatement instanceof Function_) {
                     $declarations[] = [$namespace . '\\' . $namespaceStatement->name->toString(), $namespaceStatement->getLine()];
+                    continue;
+                }
+
+                if ($namespaceStatement instanceof Const_) {
+                    foreach ($namespaceStatement->consts as $const) {
+                        $declarations[] = [$namespace . '\\' . $const->name->toString(), $const->getLine()];
+                    }
                     continue;
                 }
 

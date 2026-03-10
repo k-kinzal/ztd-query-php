@@ -71,4 +71,16 @@ final class ContractSymbolMustBeUsedRuleTest extends RuleTestCase
             ],
         ]);
     }
+
+    public function testReportsOnlyUnusedContractConstants(): void
+    {
+        $this->analyse([
+            __DIR__ . '/../../Fixture/ContractUsagePackage/src/Contract/constants.php',
+        ], [
+            [
+                'Contract symbol "SqlFaker\Contract\UNUSED_LIMIT" must be imported by at least one non-contract SqlFaker source file using a use statement.',
+                8,
+            ],
+        ]);
+    }
 }
