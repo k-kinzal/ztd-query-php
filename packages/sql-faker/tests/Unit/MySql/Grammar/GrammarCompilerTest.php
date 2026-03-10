@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\MySql\Grammar;
 
-use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\MySql\Bison\Ast\BisonAlternativeNode;
 use SqlFaker\MySql\Bison\Ast\BisonAst;
@@ -19,7 +19,7 @@ use SqlFaker\MySql\Grammar\NonTerminal;
 use SqlFaker\MySql\Grammar\Terminal;
 use SqlFaker\MySql\Grammar\UnknownSymbolException;
 
-#[CoversMethod(GrammarCompiler::class, 'compile')]
+#[CoversNothing]
 final class GrammarCompilerTest extends TestCase
 {
     public function testCompile(): void

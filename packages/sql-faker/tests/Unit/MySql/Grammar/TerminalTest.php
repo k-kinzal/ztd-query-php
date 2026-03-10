@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\MySql\Grammar;
 
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\MySql\Grammar\Symbol;
 use SqlFaker\MySql\Grammar\Terminal;
-use PHPUnit\Framework\Attributes\CoversClass;
 
-#[CoversClass(Terminal::class)]
+#[CoversNothing]
 final class TerminalTest extends TestCase
 {
     public function testValue(): void

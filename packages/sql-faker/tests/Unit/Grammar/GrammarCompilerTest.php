@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\Grammar;
 
-use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\GrammarCompiler;
 use SqlFaker\Grammar\Terminal;
@@ -17,7 +17,7 @@ use SqlFaker\MySql\Bison\Ast\BisonSymbolType;
 use SqlFaker\MySql\Bison\Ast\BisonTokenDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonTokenInfo;
 
-#[CoversMethod(GrammarCompiler::class, 'compile')]
+#[CoversNothing]
 final class GrammarCompilerTest extends TestCase
 {
     public function testCompile(): void
