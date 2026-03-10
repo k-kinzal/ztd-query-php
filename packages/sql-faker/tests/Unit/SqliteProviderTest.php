@@ -17,6 +17,7 @@ use Spec\Policy\SqlitePolicy;
 use Spec\Probe\ProbePhase as SpecProbePhase;
 use Spec\Probe\ProbeResult as SpecProbeResult;
 use SqlFaker\Contract\GenerationRequest;
+use SqlFaker\Grammar\ContractGrammarProjector;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
@@ -32,6 +33,7 @@ use SqlFaker\SqliteProvider;
 #[CoversClass(RandomStringGenerator::class)]
 #[CoversClass(SqlGenerator::class)]
 #[UsesClass(GenerationRequest::class)]
+#[UsesClass(ContractGrammarProjector::class)]
 #[UsesClass(\SqlFaker\Contract\Grammar::class)]
 #[UsesClass(\SqlFaker\Contract\ProductionRule::class)]
 #[UsesClass(\SqlFaker\Contract\Production::class)]

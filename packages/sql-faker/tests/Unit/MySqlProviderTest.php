@@ -11,6 +11,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Contract\GenerationRequest;
+use SqlFaker\Grammar\ContractGrammarProjector;
 use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\MySql\Grammar\Grammar;
 use SqlFaker\MySql\Grammar\NonTerminal;
@@ -26,6 +27,7 @@ use SqlFaker\MySqlProvider;
 #[CoversClass(RandomStringGenerator::class)]
 #[CoversClass(SqlGenerator::class)]
 #[UsesClass(GenerationRequest::class)]
+#[UsesClass(ContractGrammarProjector::class)]
 #[UsesClass(\SqlFaker\Contract\Grammar::class)]
 #[UsesClass(\SqlFaker\Contract\ProductionRule::class)]
 #[UsesClass(\SqlFaker\Contract\Production::class)]
@@ -434,19 +436,6 @@ final class MySqlProviderTest extends TestCase
         $result = $provider->hostname();
 
         self::assertMatchesRegularExpression('/^[a-z0-9]+(\.[a-z0-9]+)*$/', $result);
-    }
-
-    #[DataProvider('providerDeterministicHelperOutput')]
-    /**
-     * @param \Closure(MySqlProvider): string $generate
-     */
-    public function testDeterministicHelperOutput(\Closure $generate, string $expected): void
-    {
-        $faker = Factory::create();
-        $faker->seed(0);
-        $provider = new MySqlProvider($faker);
-
-        self::assertSame($expected, $generate($provider));
     }
 
     public function testExpr(): void
@@ -903,6 +892,19 @@ final class MySqlProviderTest extends TestCase
         $result = $provider->hostname(2, 3, 5);
 
         self::assertMatchesRegularExpression('/^[a-z0-9]+(\.[a-z0-9]+)+$/', $result);
+    }
+
+    #[DataProvider('providerDeterministicHelperOutput')]
+    /**
+     * @param \Closure(MySqlProvider): string $generate
+     */
+    public function testDeterministicHelperOutput(\Closure $generate, string $expected): void
+    {
+        $faker = Factory::create();
+        $faker->seed(0);
+        $provider = new MySqlProvider($faker);
+
+        self::assertSame($expected, $generate($provider));
     }
 
     /**

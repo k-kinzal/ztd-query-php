@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Contract\GenerationRequest;
+use SqlFaker\Grammar\ContractGrammarProjector;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
@@ -25,6 +26,7 @@ use SqlFaker\PostgreSqlProvider;
 #[CoversClass(RandomStringGenerator::class)]
 #[CoversClass(SqlGenerator::class)]
 #[UsesClass(GenerationRequest::class)]
+#[UsesClass(ContractGrammarProjector::class)]
 #[UsesClass(\SqlFaker\Contract\Grammar::class)]
 #[UsesClass(\SqlFaker\Contract\ProductionRule::class)]
 #[UsesClass(\SqlFaker\Contract\Production::class)]
