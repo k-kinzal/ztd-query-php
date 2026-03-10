@@ -484,6 +484,41 @@ final class SqlGeneratorTest extends TestCase
         self::assertMatchesRegularExpression($pattern, $result);
     }
 
+    #[DataProvider('providerCanonicalIdentifierToken')]
+    public function testGenerateCanonicalIdentifierToken(string $terminalName): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([new Terminal($terminalName)]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new SqliteProvider($faker);
+        $generator = new SqlGenerator($grammar, $faker, $provider);
+
+        self::assertSame('_i0', $generator->generate('stmt'));
+    }
+
+    public function testGenerateAllocatesFreshCanonicalIdentifiersAcrossIdentifierVariants(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([
+                    new Terminal('ID'),
+                    new Terminal('id'),
+                    new Terminal('idj'),
+                ]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new SqliteProvider($faker);
+        $generator = new SqlGenerator($grammar, $faker, $provider);
+
+        self::assertSame('_i0 _i1 _i2', $generator->generate('stmt'));
+    }
+
     #[DataProvider('providerGenerateCompoundKeyword')]
     public function testGenerateCompoundKeyword(string $terminalName, string $pattern): void
     {
@@ -1651,6 +1686,16 @@ final class SqlGeneratorTest extends TestCase
         yield 'number' => ['number', '/^[1-9]\d*$/'];
         yield 'QNUMBER' => ['QNUMBER', '/^[1-9]\d*$/'];
         yield 'VARIABLE' => ['VARIABLE', '/^\?\d{1,2}$/'];
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerCanonicalIdentifierToken(): iterable
+    {
+        yield 'ID' => ['ID'];
+        yield 'id' => ['id'];
+        yield 'idj' => ['idj'];
     }
 
     /**
