@@ -6,23 +6,23 @@ deptrac:
   layers:
     - name: Contract
       collectors:
-        - type: classLike
-          value: '^SqlFaker\\Contract\\'
+        - type: directory
+          value: '^.*/src/Contract/.*\.php$'
 
     - name: SqlFakerImplementation
       collectors:
         - type: bool
           must:
-            - type: classLike
-              value: '^SqlFaker\\'
+            - type: directory
+              value: '^.*/src/.*\.php$'
           must_not:
-            - type: classLike
-              value: '^SqlFaker\\Contract\\'
+            - type: directory
+              value: '^.*/src/Contract/.*\.php$'
 
     - name: Spec
       collectors:
-        - type: classLike
-          value: '^Spec\\'
+        - type: directory
+          value: '^.*/spec/.*\.php$'
 
   ruleset:
     Contract: []
