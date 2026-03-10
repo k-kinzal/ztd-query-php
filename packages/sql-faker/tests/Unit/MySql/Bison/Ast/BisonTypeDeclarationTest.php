@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\MySql\Bison\Ast;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use SqlFaker\MySql\Bison\Ast\BisonDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonTypeDeclaration;
-use PHPUnit\Framework\Attributes\CoversClass;
 
-#[CoversClass(BisonTypeDeclaration::class)]
+#[CoversNothing]
 final class BisonTypeDeclarationTest extends TestCase
 {
     public function testTypeTag(): void

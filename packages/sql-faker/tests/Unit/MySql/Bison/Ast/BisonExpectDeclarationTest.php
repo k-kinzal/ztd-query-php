@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\MySql\Bison\Ast;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use SqlFaker\MySql\Bison\Ast\BisonDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonExpectDeclaration;
-use PHPUnit\Framework\Attributes\CoversClass;
 
-#[CoversClass(BisonExpectDeclaration::class)]
+#[CoversNothing]
 final class BisonExpectDeclarationTest extends TestCase
 {
     public function testCount(): void

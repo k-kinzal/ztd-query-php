@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\MySql\Bison\Ast;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use SqlFaker\MySql\Bison\Ast\BisonSymbolType;
-use PHPUnit\Framework\Attributes\CoversClass;
 
-#[CoversClass(BisonSymbolType::class)]
+#[CoversNothing]
 final class BisonSymbolTypeTest extends TestCase
 {
     public function testIdentifierCase(): void
