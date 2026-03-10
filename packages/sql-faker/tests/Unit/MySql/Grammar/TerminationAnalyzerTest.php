@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\MySql\Grammar;
 
+use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use SqlFaker\MySql\Grammar\Grammar;
 use SqlFaker\MySql\Grammar\NonTerminal;
 use SqlFaker\MySql\Grammar\Production;
@@ -14,12 +13,8 @@ use SqlFaker\MySql\Grammar\ProductionRule;
 use SqlFaker\MySql\Grammar\Terminal;
 use SqlFaker\MySql\Grammar\TerminationAnalyzer;
 
-#[CoversClass(TerminationAnalyzer::class)]
-#[UsesClass(Grammar::class)]
-#[UsesClass(ProductionRule::class)]
-#[UsesClass(Production::class)]
-#[UsesClass(Terminal::class)]
-#[UsesClass(NonTerminal::class)]
+#[CoversMethod(TerminationAnalyzer::class, 'getMinLength')]
+#[CoversMethod(TerminationAnalyzer::class, 'estimateProductionLength')]
 final class TerminationAnalyzerTest extends TestCase
 {
     public function testGetMinLengthForTerminalOnlyRule(): void

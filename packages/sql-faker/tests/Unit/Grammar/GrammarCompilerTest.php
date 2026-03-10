@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\Grammar;
 
+use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\TestCase;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use SqlFaker\Grammar\GrammarCompiler;
 use SqlFaker\Grammar\Terminal;
 use SqlFaker\Grammar\UnknownSymbolException;
@@ -18,19 +17,7 @@ use SqlFaker\MySql\Bison\Ast\BisonSymbolType;
 use SqlFaker\MySql\Bison\Ast\BisonTokenDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonTokenInfo;
 
-#[CoversClass(GrammarCompiler::class)]
-#[UsesClass(BisonAst::class)]
-#[UsesClass(BisonRuleNode::class)]
-#[UsesClass(BisonAlternativeNode::class)]
-#[UsesClass(BisonSymbolNode::class)]
-#[UsesClass(BisonTokenDeclaration::class)]
-#[UsesClass(BisonTokenInfo::class)]
-#[UsesClass(Terminal::class)]
-#[UsesClass(UnknownSymbolException::class)]
-#[UsesClass(\SqlFaker\Grammar\Grammar::class)]
-#[UsesClass(\SqlFaker\Grammar\NonTerminal::class)]
-#[UsesClass(\SqlFaker\Grammar\Production::class)]
-#[UsesClass(\SqlFaker\Grammar\ProductionRule::class)]
+#[CoversMethod(GrammarCompiler::class, 'compile')]
 final class GrammarCompilerTest extends TestCase
 {
     public function testCompile(): void
