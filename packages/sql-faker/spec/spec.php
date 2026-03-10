@@ -5,6 +5,10 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
+use Faker\Factory;
+use SqlFaker\MySqlProvider;
+use SqlFaker\PostgreSqlProvider;
+use SqlFaker\SqliteProvider;
 use Spec\Container\MySql56Container;
 use Spec\Container\MySql57Container;
 use Spec\Container\MySql80Container;
@@ -70,9 +74,9 @@ $mysqlVersion = getenv('MYSQL_VERSION') !== false ? (string) getenv('MYSQL_VERSI
 $subjects = [];
 foreach (array_keys($dialects) as $selectedDialect) {
     $subjects[$selectedDialect] = match ($selectedDialect) {
-        'mysql' => new MySqlSupportedLanguage(mysqlGrammarVersion($mysqlVersion)),
-        'postgresql' => new PostgreSqlSupportedLanguage(),
-        'sqlite' => new SqliteSupportedLanguage(),
+        'mysql' => new MySqlSupportedLanguage(new MySqlProvider(Factory::create(), mysqlGrammarVersion($mysqlVersion))),
+        'postgresql' => new PostgreSqlSupportedLanguage(new PostgreSqlProvider(Factory::create())),
+        'sqlite' => new SqliteSupportedLanguage(new SqliteProvider(Factory::create())),
         default => throw new InvalidArgumentException(sprintf('Unsupported dialect: %s', $selectedDialect)),
     };
 }

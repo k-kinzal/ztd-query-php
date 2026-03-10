@@ -4,13 +4,10 @@ declare(strict_types=1);
 
 namespace Spec\Sqlite;
 
-use Faker\Factory;
-use Faker\Generator as FakerGenerator;
 use LogicException;
 use SqlFaker\Contract\GenerationRequest;
 use SqlFaker\Contract\Grammar as ContractGrammar;
-use SqlFaker\Sqlite\StatementType;
-use SqlFaker\SqliteProvider;
+use SqlFaker\Contract\Runtime;
 use Spec\Subject\AbstractSupportedLanguage;
 use Spec\Subject\FamilyDefinition;
 use Spec\Subject\FamilyRequest;
@@ -21,13 +18,9 @@ use Spec\Subject\SqlWitness;
  */
 final class SupportedLanguage extends AbstractSupportedLanguage
 {
-    private FakerGenerator $faker;
-    private SqliteProvider $provider;
-
-    public function __construct()
-    {
-        $this->faker = Factory::create();
-        $this->provider = new SqliteProvider($this->faker);
+    public function __construct(
+        private readonly Runtime $runtime,
+    ) {
     }
 
     /**
@@ -40,20 +33,20 @@ final class SupportedLanguage extends AbstractSupportedLanguage
 
     public function supportedGrammar(): ContractGrammar
     {
-        return $this->provider->supportedGrammar();
+        return $this->runtime->supportedGrammar();
     }
 
     public function entryRules(): array
     {
         return [
             'cmd',
-            StatementType::Select->value,
-            StatementType::Insert->value,
-            StatementType::Update->value,
-            StatementType::Delete->value,
-            StatementType::CreateTable->value,
-            StatementType::AlterTable->value,
-            StatementType::DropTable->value,
+            'select',
+            'insert',
+            'update',
+            'delete',
+            'create_table',
+            'alter_table',
+            'drop_table',
         ];
     }
 
@@ -65,22 +58,22 @@ final class SupportedLanguage extends AbstractSupportedLanguage
         $this->assertFamilyParameters($request);
 
         return match ($request->familyId) {
-            'sqlite.statement.any' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => $this->provider->generate(new GenerationRequest(seed: $seed, maxDepth: 8))),
-            'sqlite.statement.select' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => $this->provider->generate(new GenerationRequest(startRule: StatementType::Select->value, seed: $seed, maxDepth: 8))),
-            'sqlite.statement.insert' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => $this->provider->generate(new GenerationRequest(startRule: StatementType::Insert->value, seed: $seed, maxDepth: 8))),
-            'sqlite.statement.update' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => $this->provider->generate(new GenerationRequest(startRule: StatementType::Update->value, seed: $seed, maxDepth: 8))),
-            'sqlite.statement.delete' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => $this->provider->generate(new GenerationRequest(startRule: StatementType::Delete->value, seed: $seed, maxDepth: 8))),
-            'sqlite.statement.create_table' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => $this->provider->generate(new GenerationRequest(startRule: StatementType::CreateTable->value, seed: $seed, maxDepth: 8))),
-            'sqlite.statement.alter_table' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => $this->provider->generate(new GenerationRequest(startRule: StatementType::AlterTable->value, seed: $seed, maxDepth: 8))),
-            'sqlite.statement.drop_table' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => $this->provider->generate(new GenerationRequest(startRule: StatementType::DropTable->value, seed: $seed, maxDepth: 8))),
+            'sqlite.statement.any' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(seed: $seed, maxDepth: 8))),
+            'sqlite.statement.select' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'select', seed: $seed, maxDepth: 8))),
+            'sqlite.statement.insert' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'insert', seed: $seed, maxDepth: 8))),
+            'sqlite.statement.update' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'update', seed: $seed, maxDepth: 8))),
+            'sqlite.statement.delete' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'delete', seed: $seed, maxDepth: 8))),
+            'sqlite.statement.create_table' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'create_table', seed: $seed, maxDepth: 8))),
+            'sqlite.statement.alter_table' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'alter_table', seed: $seed, maxDepth: 8))),
+            'sqlite.statement.drop_table' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'drop_table', seed: $seed, maxDepth: 8))),
             'sqlite.constraint.select.star_requires_from' => $this->generateStarRequiresFromWitness($request),
-            'sqlite.constraint.attach.expression' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => $this->provider->generate(new GenerationRequest(startRule: 'attach_stmt', seed: $seed, maxDepth: 8))),
-            'sqlite.constraint.detach.expression' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => $this->provider->generate(new GenerationRequest(startRule: 'detach_stmt', seed: $seed, maxDepth: 8))),
+            'sqlite.constraint.attach.expression' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'attach_stmt', seed: $seed, maxDepth: 8))),
+            'sqlite.constraint.detach.expression' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'detach_stmt', seed: $seed, maxDepth: 8))),
             'sqlite.constraint.temporary_object_name_binding' => $this->generateTemporaryObjectNameBindingWitness($request),
-            'sqlite.constraint.vacuum.into_expression' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => $this->provider->generate(new GenerationRequest(startRule: 'vacuum_stmt', seed: $seed, maxDepth: 8))),
+            'sqlite.constraint.vacuum.into_expression' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'vacuum_stmt', seed: $seed, maxDepth: 8))),
             'sqlite.constraint.select.set_operation' => $this->generateSetOperationWitness($request),
             'sqlite.constraint.select.values_clause' => $this->generateValuesClauseWitness($request),
-            'sqlite.lex.identifier.context' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters): string => 'SELECT ' . $this->provider->identifier(1)),
+            'sqlite.lex.identifier.context' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => 'SELECT ' . $this->runtime->generate(new GenerationRequest(startRule: 'nm', seed: $seed, maxDepth: 1))),
             default => throw new LogicException(sprintf('Unsupported family: %s', $request->familyId)),
         };
     }
@@ -92,17 +85,17 @@ final class SupportedLanguage extends AbstractSupportedLanguage
     {
         return [
             new FamilyDefinition('sqlite.statement.any', 'Any SQLite statement through the default provider entry.', 'spec', ['cmd']),
-            new FamilyDefinition('sqlite.statement.select', 'SELECT statements through the provider surface.', 'spec', [StatementType::Select->value]),
-            new FamilyDefinition('sqlite.constraint.select.star_requires_from', 'SELECT result-column family after star/from binding.', 'contract', [StatementType::Select->value, 'oneselect', 'safe_selcollist_no_from', 'safe_from_clause']),
+            new FamilyDefinition('sqlite.statement.select', 'SELECT statements through the provider surface.', 'spec', ['select']),
+            new FamilyDefinition('sqlite.constraint.select.star_requires_from', 'SELECT result-column family after star/from binding.', 'contract', ['select', 'oneselect', 'safe_selcollist_no_from', 'safe_from_clause']),
             new FamilyDefinition('sqlite.constraint.select.set_operation', 'SELECT set-operation family after finite equal-arity operand refinement.', 'contract', ['selectnowith', 'setop_select_stmt', 'setop_select_stmt_1', 'setop_select_stmt_8'], ['arity'], ['left_projection_arity', 'right_projection_arity']),
             new FamilyDefinition('sqlite.constraint.select.values_clause', 'VALUES clause family after finite row-arity refinement.', 'contract', ['oneselect', 'select_values_clause', 'select_values_clause_1', 'select_values_clause_8'], ['arity'], ['row_arity']),
             new FamilyDefinition('sqlite.constraint.temporary_object_name_binding', 'TEMP TABLE, VIEW, and TRIGGER families after unqualified-name binding.', 'contract', ['create_table', 'create_view_stmt', 'create_trigger_stmt', 'trigger_decl']),
             new FamilyDefinition('sqlite.statement.insert', 'INSERT statements through the provider surface.', 'spec', ['cmd']),
             new FamilyDefinition('sqlite.statement.update', 'UPDATE statements through the provider surface.', 'spec', ['cmd']),
             new FamilyDefinition('sqlite.statement.delete', 'DELETE statements through the provider surface.', 'spec', ['cmd']),
-            new FamilyDefinition('sqlite.statement.create_table', 'CREATE TABLE statements through the provider surface.', 'spec', [StatementType::CreateTable->value]),
-            new FamilyDefinition('sqlite.statement.alter_table', 'ALTER TABLE statements through the provider surface.', 'spec', [StatementType::AlterTable->value]),
-            new FamilyDefinition('sqlite.statement.drop_table', 'DROP TABLE statements through the provider surface.', 'spec', [StatementType::DropTable->value]),
+            new FamilyDefinition('sqlite.statement.create_table', 'CREATE TABLE statements through the provider surface.', 'spec', ['create_table']),
+            new FamilyDefinition('sqlite.statement.alter_table', 'ALTER TABLE statements through the provider surface.', 'spec', ['alter_table']),
+            new FamilyDefinition('sqlite.statement.drop_table', 'DROP TABLE statements through the provider surface.', 'spec', ['drop_table']),
             new FamilyDefinition('sqlite.constraint.attach.expression', 'ATTACH DATABASE statements after filename/schema expression restriction.', 'contract', ['attach_stmt', 'safe_attach_filename_expr', 'safe_attach_schema_expr']),
             new FamilyDefinition('sqlite.constraint.detach.expression', 'DETACH DATABASE statements after schema expression restriction.', 'contract', ['detach_stmt', 'safe_attach_schema_expr']),
             new FamilyDefinition('sqlite.constraint.vacuum.into_expression', 'VACUUM statements after INTO expression restriction.', 'contract', ['vacuum_stmt', 'safe_vinto', 'safe_vacuum_into_expr']),
@@ -115,7 +108,7 @@ final class SupportedLanguage extends AbstractSupportedLanguage
         return $this->searchWitness(
             $request->familyId,
             $request->parameters,
-            fn (array $parameters, int $seed): string => $this->provider->generate(new GenerationRequest(startRule: 'oneselect', seed: $seed, maxDepth: 8)),
+            fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'oneselect', seed: $seed, maxDepth: 8)),
             static fn (string $sql, array $parameters): bool => str_starts_with($sql, 'SELECT '),
             null,
             128,
@@ -134,7 +127,7 @@ final class SupportedLanguage extends AbstractSupportedLanguage
                 $rule = $rules[$ruleIndex % count($rules)];
                 $ruleIndex++;
 
-                return $this->provider->generate(new GenerationRequest(startRule: $rule, seed: $seed, maxDepth: 8));
+                return $this->runtime->generate(new GenerationRequest(startRule: $rule, seed: $seed, maxDepth: 8));
             },
             fn (string $sql, array $parameters): bool => $this->isTemporaryObjectNameBindingWitness($sql),
             null,
@@ -149,7 +142,7 @@ final class SupportedLanguage extends AbstractSupportedLanguage
         return $this->searchWitness(
             $request->familyId,
             ['arity' => $expectedArity],
-            fn (array $parameters, int $seed): string => $this->provider->generate(new GenerationRequest(startRule: sprintf('setop_select_stmt_%d', (int) $parameters['arity']), seed: $seed, maxDepth: 8)),
+            fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: sprintf('setop_select_stmt_%d', (int) $parameters['arity']), seed: $seed, maxDepth: 8)),
             fn (string $sql, array $parameters): bool => $this->isSetOperationArityWitness($sql, (int) $parameters['arity']),
             fn (string $sql, array $parameters): array => $this->extractSetOperationProperties($sql),
             128,
@@ -163,7 +156,7 @@ final class SupportedLanguage extends AbstractSupportedLanguage
         return $this->searchWitness(
             $request->familyId,
             ['arity' => $expectedArity],
-            fn (array $parameters, int $seed): string => $this->provider->generate(new GenerationRequest(startRule: sprintf('select_values_clause_%d', (int) $parameters['arity']), seed: $seed, maxDepth: 8)),
+            fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: sprintf('select_values_clause_%d', (int) $parameters['arity']), seed: $seed, maxDepth: 8)),
             fn (string $sql, array $parameters): bool => $this->isValuesClauseArityWitness($sql, (int) $parameters['arity']),
             fn (string $sql, array $parameters): array => $this->extractValuesClauseProperties($sql),
             64,
