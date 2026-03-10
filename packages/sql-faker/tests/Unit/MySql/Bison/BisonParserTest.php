@@ -6,6 +6,8 @@ namespace Tests\Unit\SqlFaker\MySql\Bison;
 
 use LogicException;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlFaker\MySql\Bison\Ast\BisonDefineDeclaration;
@@ -26,26 +28,25 @@ use SqlFaker\MySql\Bison\BisonParser;
 use SqlFaker\MySql\Bison\Lexer\BisonLexer;
 use SqlFaker\MySql\Bison\Lexer\BisonToken;
 use SqlFaker\MySql\Bison\Lexer\BisonTokenType;
-use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(BisonParser::class)]
-#[CoversClass(BisonLexer::class)]
-#[CoversClass(BisonToken::class)]
-#[CoversClass(BisonTokenType::class)]
-#[CoversClass(BisonAst::class)]
-#[CoversClass(BisonRuleNode::class)]
-#[CoversClass(BisonAlternativeNode::class)]
-#[CoversClass(BisonSymbolNode::class)]
-#[CoversClass(BisonSymbolType::class)]
-#[CoversClass(BisonDefineDeclaration::class)]
-#[CoversClass(BisonExpectDeclaration::class)]
-#[CoversClass(BisonParamDeclaration::class)]
-#[CoversClass(BisonPrecedenceDeclaration::class)]
-#[CoversClass(BisonStartDeclaration::class)]
-#[CoversClass(BisonTokenDeclaration::class)]
-#[CoversClass(BisonTokenInfo::class)]
-#[CoversClass(BisonTypeDeclaration::class)]
-#[CoversClass(BisonUnknownDeclaration::class)]
+#[UsesClass(BisonLexer::class)]
+#[UsesClass(BisonToken::class)]
+#[UsesClass(BisonTokenType::class)]
+#[UsesClass(BisonAst::class)]
+#[UsesClass(BisonRuleNode::class)]
+#[UsesClass(BisonAlternativeNode::class)]
+#[UsesClass(BisonSymbolNode::class)]
+#[UsesClass(BisonSymbolType::class)]
+#[UsesClass(BisonDefineDeclaration::class)]
+#[UsesClass(BisonExpectDeclaration::class)]
+#[UsesClass(BisonParamDeclaration::class)]
+#[UsesClass(BisonPrecedenceDeclaration::class)]
+#[UsesClass(BisonStartDeclaration::class)]
+#[UsesClass(BisonTokenDeclaration::class)]
+#[UsesClass(BisonTokenInfo::class)]
+#[UsesClass(BisonTypeDeclaration::class)]
+#[UsesClass(BisonUnknownDeclaration::class)]
 final class BisonParserTest extends TestCase
 {
     public function testParseMinimalGrammar(): void
