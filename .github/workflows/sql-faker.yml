@@ -110,7 +110,6 @@ jobs:
               --min-covered-msi=100 \
               --ignore-msi-with-no-mutations \
               --only-covering-test-cases \
-              --map-source-class-to-test \
               --no-progress \
               --logger-github
           else
