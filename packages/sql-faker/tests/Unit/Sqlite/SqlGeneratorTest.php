@@ -1767,6 +1767,33 @@ final class SqlGeneratorTest extends TestCase
         );
     }
 
+    public function testAugmentGrammarReindexesSafeNoFromAlternativesAfterFilteringStarColumns(): void
+    {
+        $grammar = new Grammar('cmd', [
+            'cmd' => new ProductionRule('cmd', [
+                new Production([new Terminal('SELECT')]),
+            ]),
+            'selectnowith' => new ProductionRule('selectnowith', [
+                new Production([new NonTerminal('oneselect')]),
+            ]),
+            'oneselect' => new ProductionRule('oneselect', [
+                new Production([new Terminal('SELECT'), new NonTerminal('selcollist')]),
+            ]),
+            'selcollist' => new ProductionRule('selcollist', [
+                new Production([new NonTerminal('expr')]),
+                new Production([new Terminal('STAR')]),
+                new Production([new NonTerminal('alias')]),
+            ]),
+            'multiselect_op' => new ProductionRule('multiselect_op', [
+                new Production([new Terminal('UNION')]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        self::assertSame([0, 1], array_keys($generator->compiledGrammar()->ruleMap['safe_selcollist_no_from']->alternatives));
+    }
+
     public function testAugmentGrammarExtractsDeleteAndUpdateRulesFromTerminalCommandAlternatives(): void
     {
         $grammar = new Grammar('cmd', [
