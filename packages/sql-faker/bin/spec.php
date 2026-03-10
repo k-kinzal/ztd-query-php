@@ -17,19 +17,19 @@ use Spec\Container\MySql84Container;
 use Spec\Container\MySql90Container;
 use Spec\Container\MySql91Container;
 use Spec\Container\PostgreSqlContainer;
-use Spec\MySql\SupportedLanguage as MySqlSupportedLanguage;
+use Spec\MySql\Specification as MySqlSpecification;
 use Spec\Output\HumanReadableRenderer;
 use Spec\Policy\MySqlPolicy;
 use Spec\Policy\OutcomePolicy;
 use Spec\Policy\PostgreSqlPolicy;
 use Spec\Policy\SqlitePolicy;
-use Spec\PostgreSql\SupportedLanguage as PostgreSqlSupportedLanguage;
+use Spec\PostgreSql\Specification as PostgreSqlSpecification;
 use Spec\Probe\EngineProbe;
 use Spec\Probe\MySqlEngineProbe;
 use Spec\Probe\PostgreSqlEngineProbe;
 use Spec\Probe\SqliteEngineProbe;
 use Spec\Runner\SpecRunner;
-use Spec\Sqlite\SupportedLanguage as SqliteSupportedLanguage;
+use Spec\Sqlite\Specification as SqliteSpecification;
 use SqlFaker\MySqlProvider;
 use SqlFaker\PostgreSqlProvider;
 use SqlFaker\SqliteProvider;
@@ -71,12 +71,20 @@ foreach ($claims as $claim) {
 }
 
 $mysqlVersion = getenv('MYSQL_VERSION') !== false ? (string) getenv('MYSQL_VERSION') : defaultSpecMySqlVersion();
-$subjects = [];
+$runtimes = [];
+$specifications = [];
 foreach (array_keys($dialects) as $selectedDialect) {
-    $subjects[$selectedDialect] = match ($selectedDialect) {
-        'mysql' => new MySqlSupportedLanguage(new MySqlProvider(Factory::create(), mysqlGrammarVersion($mysqlVersion))),
-        'postgresql' => new PostgreSqlSupportedLanguage(new PostgreSqlProvider(Factory::create())),
-        'sqlite' => new SqliteSupportedLanguage(new SqliteProvider(Factory::create())),
+    $runtimes[$selectedDialect] = match ($selectedDialect) {
+        'mysql' => new MySqlProvider(Factory::create(), mysqlGrammarVersion($mysqlVersion)),
+        'postgresql' => new PostgreSqlProvider(Factory::create()),
+        'sqlite' => new SqliteProvider(Factory::create()),
+        default => throw new InvalidArgumentException(sprintf('Unsupported dialect: %s', $selectedDialect)),
+    };
+
+    $specifications[$selectedDialect] = match ($selectedDialect) {
+        'mysql' => new MySqlSpecification(),
+        'postgresql' => new PostgreSqlSpecification(),
+        'sqlite' => new SqliteSpecification(),
         default => throw new InvalidArgumentException(sprintf('Unsupported dialect: %s', $selectedDialect)),
     };
 }
@@ -94,7 +102,7 @@ foreach ($claims as $claim) {
 $probes = $needsOutcome ? buildProbes(array_keys($dialects), $mysqlVersion) : [];
 $policies = $needsOutcome ? buildPolicies(array_keys($dialects)) : [];
 
-$runner = new SpecRunner($subjects, $probes, $policies);
+$runner = new SpecRunner($runtimes, $specifications, $probes, $policies);
 $claimResults = $runner->run($claims);
 $report = buildReport($claimResults, $command, $level, $dialect, isset($dialects['mysql']), $mysqlVersion);
 

@@ -2,11 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Spec\Subject;
+namespace Spec\Specification;
 
 use LogicException;
+use Spec\Subject\FamilyDefinition;
+use Spec\Subject\FamilyRequest;
+use Spec\Subject\SqlWitness;
+use SqlFaker\Contract\Runtime;
 
-abstract class AbstractSupportedLanguage implements SupportedLanguage
+abstract class AbstractDialectSpecification implements DialectSpecification
 {
     /** @var array<string, FamilyDefinition>|null */
     private ?array $familyMap = null;
@@ -53,11 +57,12 @@ abstract class AbstractSupportedLanguage implements SupportedLanguage
 
     /**
      * @param array<string, scalar> $parameters
-     * @param callable(array<string, scalar>, int): string $render
+     * @param callable(Runtime, array<string, scalar>, int): string $render
      * @param null|callable(string, array<string, scalar>): bool $predicate
      * @param null|callable(string, array<string, scalar>): array<string, scalar> $properties
      */
     protected function searchWitness(
+        Runtime $runtime,
         string $familyId,
         array $parameters,
         callable $render,
@@ -66,7 +71,7 @@ abstract class AbstractSupportedLanguage implements SupportedLanguage
         int $maxAttempts = 512,
     ): SqlWitness {
         for ($seed = 1; $seed <= $maxAttempts; $seed++) {
-            $sql = $render($parameters, $seed);
+            $sql = $render($runtime, $parameters, $seed);
             if ($predicate !== null && !$predicate($sql, $parameters)) {
                 continue;
             }

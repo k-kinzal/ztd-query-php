@@ -2,16 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Spec\Subject;
+namespace Spec\Specification;
 
-use SqlFaker\Contract\Grammar;
+use Spec\Subject\FamilyDefinition;
+use Spec\Subject\FamilyRequest;
+use Spec\Subject\SqlWitness;
+use SqlFaker\Contract\Runtime;
 
-interface SupportedLanguage
+interface DialectSpecification
 {
-    public function dialect(): string;
-
-    public function supportedGrammar(): Grammar;
-
     /**
      * @return list<string>
      */
@@ -24,5 +23,5 @@ interface SupportedLanguage
 
     public function family(string $familyId): FamilyDefinition;
 
-    public function generateWitness(FamilyRequest $request): SqlWitness;
+    public function generateWitness(Runtime $runtime, FamilyRequest $request): SqlWitness;
 }

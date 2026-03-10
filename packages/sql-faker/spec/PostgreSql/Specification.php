@@ -6,36 +6,17 @@ namespace Spec\PostgreSql;
 
 use LogicException;
 use SqlFaker\Contract\GenerationRequest;
-use SqlFaker\Contract\Grammar as ContractGrammar;
 use SqlFaker\Contract\Runtime;
-use Spec\Subject\AbstractSupportedLanguage;
+use Spec\Specification\AbstractDialectSpecification;
 use Spec\Subject\FamilyDefinition;
 use Spec\Subject\FamilyRequest;
 use Spec\Subject\SqlWitness;
 
 /**
- * Spec harness for PostgreSQL family-based checks.
+ * Spec-local PostgreSQL witness generation and family metadata.
  */
-final class SupportedLanguage extends AbstractSupportedLanguage
+final class Specification extends AbstractDialectSpecification
 {
-    public function __construct(
-        private readonly Runtime $runtime,
-    ) {
-    }
-
-    /**
-     * Returns the SQL dialect served by this subject.
-     */
-    public function dialect(): string
-    {
-        return 'postgresql';
-    }
-
-    public function supportedGrammar(): ContractGrammar
-    {
-        return $this->runtime->supportedGrammar();
-    }
-
     public function entryRules(): array
     {
         return ['stmtmulti'];
@@ -44,310 +25,348 @@ final class SupportedLanguage extends AbstractSupportedLanguage
     /**
      * Generates one PostgreSQL witness that satisfies the requested family constraints.
      */
-    public function generateWitness(FamilyRequest $request): SqlWitness
+    public function generateWitness(Runtime $runtime, FamilyRequest $request): SqlWitness
     {
         $this->assertFamilyParameters($request);
 
         return match ($request->familyId) {
-            'postgresql.statement.any' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(seed: $seed, maxDepth: 8))),
-            'postgresql.statement.select' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'SelectStmt', seed: $seed, maxDepth: 8))),
-            'postgresql.statement.insert' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'InsertStmt', seed: $seed, maxDepth: 8))),
-            'postgresql.statement.update' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'UpdateStmt', seed: $seed, maxDepth: 8))),
-            'postgresql.statement.delete' => $this->searchWitness($request->familyId, $request->parameters, fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'DeleteStmt', seed: $seed, maxDepth: 8))),
+            'postgresql.statement.any' => $this->searchWitness($runtime, $request->familyId, $request->parameters, fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(seed: $seed, maxDepth: 8))),
+            'postgresql.statement.select' => $this->searchWitness($runtime, $request->familyId, $request->parameters, fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'SelectStmt', seed: $seed, maxDepth: 8))),
+            'postgresql.statement.insert' => $this->searchWitness($runtime, $request->familyId, $request->parameters, fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'InsertStmt', seed: $seed, maxDepth: 8))),
+            'postgresql.statement.update' => $this->searchWitness($runtime, $request->familyId, $request->parameters, fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'UpdateStmt', seed: $seed, maxDepth: 8))),
+            'postgresql.statement.delete' => $this->searchWitness($runtime, $request->familyId, $request->parameters, fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'DeleteStmt', seed: $seed, maxDepth: 8))),
             'postgresql.constraint.distinct_on' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'SelectStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'SelectStmt', seed: $seed, maxDepth: 8)),
                 static fn (string $sql, array $parameters): bool => str_contains($sql, 'DISTINCT ON('),
                 null,
                 4096,
             ),
             'postgresql.constraint.alter_materialized_view' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'AlterTableStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'AlterTableStmt', seed: $seed, maxDepth: 8)),
                 fn (string $sql, array $parameters): bool => $this->isAlterMaterializedViewWitness($sql),
                 null,
                 2048,
             ),
             'postgresql.constraint.alter_index.commands' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'AlterIndexStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'AlterIndexStmt', seed: $seed, maxDepth: 8)),
                 null,
                 null,
                 2048,
             ),
             'postgresql.constraint.alter_view.commands' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'AlterTableStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'AlterTableStmt', seed: $seed, maxDepth: 8)),
                 fn (string $sql, array $parameters): bool => $this->isAlterViewCommandWitness($sql),
                 null,
                 2048,
             ),
             'postgresql.constraint.alter_domain.add' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'AlterDomainStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'AlterDomainStmt', seed: $seed, maxDepth: 8)),
                 fn (string $sql, array $parameters): bool => $this->isAlterDomainAddWitness($sql),
             ),
-            'postgresql.constraint.create_table_as.explicit_columns' => $this->generateExplicitCtasWitness($request),
+            'postgresql.constraint.create_table_as.explicit_columns' => $this->generateExplicitCtasWitness($runtime, $request),
             'postgresql.constraint.alter_sequence' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'AlterTableStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'AlterTableStmt', seed: $seed, maxDepth: 8)),
                 static fn (string $sql, array $parameters): bool => str_starts_with($sql, 'ALTER SEQUENCE '),
                 null,
                 4096,
             ),
             'postgresql.constraint.alter_statistics' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'AlterStatsStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'AlterStatsStmt', seed: $seed, maxDepth: 8)),
             ),
             'postgresql.constraint.alter_type.options' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'AlterTypeStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'AlterTypeStmt', seed: $seed, maxDepth: 8)),
             ),
             'postgresql.constraint.alter_routine.options' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'AlterFunctionStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'AlterFunctionStmt', seed: $seed, maxDepth: 8)),
                 fn (string $sql, array $parameters): bool => $this->isAlterRoutineOptionsWitness($sql),
                 null,
                 2048,
             ),
             'postgresql.constraint.alter_database.options' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'AlterDatabaseStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'AlterDatabaseStmt', seed: $seed, maxDepth: 8)),
                 fn (string $sql, array $parameters): bool => $this->isAlterDatabaseOptionsWitness($sql),
                 null,
                 2048,
             ),
             'postgresql.constraint.alter_role.valid_until' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'AlterRoleStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'AlterRoleStmt', seed: $seed, maxDepth: 8)),
                 static fn (string $sql, array $parameters): bool => str_contains($sql, 'VALID UNTIL'),
                 null,
                 2048,
             ),
             'postgresql.constraint.create_role.name_and_options' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'CreateRoleStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'CreateRoleStmt', seed: $seed, maxDepth: 8)),
                 static fn (string $sql, array $parameters): bool => str_starts_with($sql, 'CREATE ROLE '),
                 null,
                 2048,
             ),
             'postgresql.constraint.drop_role.name_list' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'DropRoleStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'DropRoleStmt', seed: $seed, maxDepth: 8)),
                 fn (string $sql, array $parameters): bool => $this->isDropRoleNameListWitness($sql),
                 null,
                 2048,
             ),
             'postgresql.constraint.grant_role.name_list' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'GrantRoleStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'GrantRoleStmt', seed: $seed, maxDepth: 8)),
                 static fn (string $sql, array $parameters): bool => str_starts_with($sql, 'GRANT '),
                 null,
                 2048,
             ),
             'postgresql.constraint.revoke_role.name_list' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'RevokeRoleStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'RevokeRoleStmt', seed: $seed, maxDepth: 8)),
                 static fn (string $sql, array $parameters): bool => str_starts_with($sql, 'REVOKE '),
                 null,
                 2048,
             ),
             'postgresql.constraint.create_user.name_and_options' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'CreateUserStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'CreateUserStmt', seed: $seed, maxDepth: 8)),
                 static fn (string $sql, array $parameters): bool => str_starts_with($sql, 'CREATE USER '),
                 null,
                 2048,
             ),
             'postgresql.constraint.create_group.name_and_options' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'CreateGroupStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'CreateGroupStmt', seed: $seed, maxDepth: 8)),
                 static fn (string $sql, array $parameters): bool => str_starts_with($sql, 'CREATE GROUP '),
                 null,
                 2048,
             ),
             'postgresql.constraint.alter_extension.content_target' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'AlterExtensionContentsStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'AlterExtensionContentsStmt', seed: $seed, maxDepth: 8)),
                 static fn (string $sql, array $parameters): bool => str_starts_with($sql, 'ALTER EXTENSION '),
                 null,
                 4096,
             ),
             'postgresql.constraint.grant.large_object_target' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'GrantStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'GrantStmt', seed: $seed, maxDepth: 8)),
                 static fn (string $sql, array $parameters): bool => str_contains($sql, ' ON LARGE OBJECT '),
                 null,
                 4096,
             ),
             'postgresql.constraint.create_table.partition_strategy' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'CreateStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'CreateStmt', seed: $seed, maxDepth: 8)),
                 static fn (string $sql, array $parameters): bool => str_contains($sql, ' PARTITION BY '),
                 null,
                 4096,
             ),
             'postgresql.constraint.create_table.partition_of' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'CreatePartitionOfStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'CreatePartitionOfStmt', seed: $seed, maxDepth: 8)),
                 null,
                 null,
                 2048,
             ),
             'postgresql.constraint.create_table.temp_name_binding' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'CreateStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'CreateStmt', seed: $seed, maxDepth: 8)),
                 fn (string $sql, array $parameters): bool => $this->isTemporaryCreateTableWitness($sql),
                 fn (string $sql, array $parameters): array => $this->extractTemporaryRelationProperties($sql, 'TABLE'),
                 4096,
             ),
             'postgresql.constraint.create_table_as.temp_name_binding' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'CreateAsStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'CreateAsStmt', seed: $seed, maxDepth: 8)),
                 fn (string $sql, array $parameters): bool => $this->isTemporaryCreateTableAsWitness($sql),
                 fn (string $sql, array $parameters): array => $this->extractTemporaryRelationProperties($sql, 'TABLE'),
                 4096,
             ),
             'postgresql.constraint.execute_create_table_as.temp_name_binding' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'ExecuteStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'ExecuteStmt', seed: $seed, maxDepth: 8)),
                 fn (string $sql, array $parameters): bool => $this->isTemporaryExecuteCreateTableAsWitness($sql),
                 fn (string $sql, array $parameters): array => $this->extractTemporaryRelationProperties($sql, 'TABLE'),
                 4096,
             ),
             'postgresql.constraint.create_sequence.temp_name_binding' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'CreateSeqStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'CreateSeqStmt', seed: $seed, maxDepth: 8)),
                 fn (string $sql, array $parameters): bool => $this->isTemporaryCreateSequenceWitness($sql),
                 fn (string $sql, array $parameters): array => $this->extractTemporaryRelationProperties($sql, 'SEQUENCE'),
                 4096,
             ),
-            'postgresql.constraint.create_view.explicit_columns' => $this->generateExplicitViewWitness($request),
+            'postgresql.constraint.create_view.explicit_columns' => $this->generateExplicitViewWitness($runtime, $request),
             'postgresql.constraint.create_view.temp_name_binding' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'ViewStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'ViewStmt', seed: $seed, maxDepth: 8)),
                 fn (string $sql, array $parameters): bool => $this->isTemporaryCreateViewWitness($sql),
                 fn (string $sql, array $parameters): array => $this->extractTemporaryCreateViewProperties($sql),
                 4096,
             ),
-            'postgresql.constraint.insert.explicit_columns' => $this->generateExplicitInsertWitness($request),
+            'postgresql.constraint.insert.explicit_columns' => $this->generateExplicitInsertWitness($runtime, $request),
             'postgresql.constraint.insert.conflict_update' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'insert_conflict_update_stmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'insert_conflict_update_stmt', seed: $seed, maxDepth: 8)),
                 null,
                 null,
                 2048,
             ),
             'postgresql.constraint.grant.parameter_target' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'GrantStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'GrantStmt', seed: $seed, maxDepth: 8)),
                 static fn (string $sql, array $parameters): bool => str_contains($sql, ' ON PARAMETER '),
                 null,
                 4096,
             ),
-            'postgresql.constraint.select.set_operation' => $this->generateSetOperationWitness($request),
-            'postgresql.constraint.select.values_clause' => $this->generateValuesClauseWitness($request),
+            'postgresql.constraint.select.set_operation' => $this->generateSetOperationWitness($runtime, $request),
+            'postgresql.constraint.select.values_clause' => $this->generateValuesClauseWitness($runtime, $request),
             'postgresql.constraint.text_search_template.define' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'DefineTextSearchTemplateStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'DefineTextSearchTemplateStmt', seed: $seed, maxDepth: 8)),
             ),
             'postgresql.constraint.create_operator.definition' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'DefineOperatorStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'DefineOperatorStmt', seed: $seed, maxDepth: 8)),
                 null,
                 null,
                 512,
             ),
             'postgresql.constraint.create_aggregate.definition' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'DefineAggregateStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'DefineAggregateStmt', seed: $seed, maxDepth: 8)),
                 null,
                 null,
                 512,
             ),
             'postgresql.constraint.comment.type_reference' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'CommentTypeReferenceStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'CommentTypeReferenceStmt', seed: $seed, maxDepth: 8)),
                 null,
                 null,
                 512,
             ),
             'postgresql.constraint.create_cast.type_reference' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'CreateCastStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'CreateCastStmt', seed: $seed, maxDepth: 8)),
                 null,
                 null,
                 512,
             ),
             'postgresql.constraint.drop_cast.type_reference' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'DropCastStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'DropCastStmt', seed: $seed, maxDepth: 8)),
                 null,
                 null,
                 512,
             ),
             'postgresql.constraint.create_assertion.check_expression' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'CreateAssertionStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'CreateAssertionStmt', seed: $seed, maxDepth: 8)),
                 null,
                 null,
                 512,
             ),
             'postgresql.constraint.create_routine.complete_definition' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'CreateFunctionStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'CreateFunctionStmt', seed: $seed, maxDepth: 8)),
                 fn (string $sql, array $parameters): bool => $this->isCreateRoutineCompleteDefinitionWitness($sql),
                 null,
                 2048,
             ),
             'postgresql.constraint.drop_type.object_name' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'DropStmt', seed: $seed, maxDepth: 8)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'DropStmt', seed: $seed, maxDepth: 8)),
                 static fn (string $sql, array $parameters): bool => str_starts_with($sql, 'DROP TYPE') || str_starts_with($sql, 'DROP DOMAIN'),
                 null,
                 2048,
             ),
             'postgresql.lex.identifier.context' => $this->searchWitness(
+                $runtime,
                 $request->familyId,
                 $request->parameters,
-                fn (array $parameters, int $seed): string => 'SELECT ' . $this->runtime->generate(new GenerationRequest(startRule: 'ColId', seed: $seed, maxDepth: 1)),
+                fn (Runtime $runtime, array $parameters, int $seed): string => 'SELECT ' . $runtime->generate(new GenerationRequest(startRule: 'ColId', seed: $seed, maxDepth: 1)),
             ),
             default => throw new LogicException(sprintf('Unsupported family: %s', $request->familyId)),
         };
@@ -410,7 +429,7 @@ final class SupportedLanguage extends AbstractSupportedLanguage
         ];
     }
 
-    private function generateExplicitCtasWitness(FamilyRequest $request): SqlWitness
+    private function generateExplicitCtasWitness(Runtime $runtime, FamilyRequest $request): SqlWitness
     {
         $arity = $request->parameters['arity'] ?? null;
         if (!is_int($arity) && !is_string($arity)) {
@@ -423,16 +442,17 @@ final class SupportedLanguage extends AbstractSupportedLanguage
         }
 
         return $this->searchWitness(
+            $runtime,
             $request->familyId,
             ['arity' => $expectedArity],
-            fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'CreateAsStmt', seed: $seed, maxDepth: 8)),
+            fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'CreateAsStmt', seed: $seed, maxDepth: 8)),
             fn (string $sql, array $parameters): bool => $this->isExplicitCtasArityWitness($sql, (int) $parameters['arity']),
             fn (string $sql, array $parameters): array => $this->extractExplicitCtasProperties($sql),
             4096,
         );
     }
 
-    private function generateExplicitViewWitness(FamilyRequest $request): SqlWitness
+    private function generateExplicitViewWitness(Runtime $runtime, FamilyRequest $request): SqlWitness
     {
         $arity = $request->parameters['arity'] ?? null;
         if (!is_int($arity) && !is_string($arity)) {
@@ -445,16 +465,17 @@ final class SupportedLanguage extends AbstractSupportedLanguage
         }
 
         return $this->searchWitness(
+            $runtime,
             $request->familyId,
             ['arity' => $expectedArity],
-            fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'ViewStmt', seed: $seed, maxDepth: 8)),
+            fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'ViewStmt', seed: $seed, maxDepth: 8)),
             fn (string $sql, array $parameters): bool => $this->isExplicitViewArityWitness($sql, (int) $parameters['arity']),
             fn (string $sql, array $parameters): array => $this->extractExplicitViewProperties($sql),
             4096,
         );
     }
 
-    private function generateExplicitInsertWitness(FamilyRequest $request): SqlWitness
+    private function generateExplicitInsertWitness(Runtime $runtime, FamilyRequest $request): SqlWitness
     {
         $arity = $request->parameters['arity'] ?? null;
         if (!is_int($arity) && !is_string($arity)) {
@@ -467,16 +488,17 @@ final class SupportedLanguage extends AbstractSupportedLanguage
         }
 
         return $this->searchWitness(
+            $runtime,
             $request->familyId,
             ['arity' => $expectedArity],
-            fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: 'InsertStmt', seed: $seed, maxDepth: 8)),
+            fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: 'InsertStmt', seed: $seed, maxDepth: 8)),
             fn (string $sql, array $parameters): bool => $this->isExplicitInsertArityWitness($sql, (int) $parameters['arity']),
             fn (string $sql, array $parameters): array => $this->extractExplicitInsertProperties($sql),
             4096,
         );
     }
 
-    private function generateSetOperationWitness(FamilyRequest $request): SqlWitness
+    private function generateSetOperationWitness(Runtime $runtime, FamilyRequest $request): SqlWitness
     {
         $arity = $request->parameters['arity'] ?? null;
         if (!is_int($arity) && !is_string($arity)) {
@@ -489,16 +511,17 @@ final class SupportedLanguage extends AbstractSupportedLanguage
         }
 
         return $this->searchWitness(
+            $runtime,
             $request->familyId,
             ['arity' => $expectedArity],
-            fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: sprintf('setop_select_stmt_%d', (int) $parameters['arity']), seed: $seed, maxDepth: 8)),
+            fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: sprintf('setop_select_stmt_%d', (int) $parameters['arity']), seed: $seed, maxDepth: 8)),
             fn (string $sql, array $parameters): bool => $this->isSetOperationArityWitness($sql, (int) $parameters['arity']),
             fn (string $sql, array $parameters): array => $this->extractSetOperationProperties($sql),
             64,
         );
     }
 
-    private function generateValuesClauseWitness(FamilyRequest $request): SqlWitness
+    private function generateValuesClauseWitness(Runtime $runtime, FamilyRequest $request): SqlWitness
     {
         $arity = $request->parameters['arity'] ?? null;
         if (!is_int($arity) && !is_string($arity)) {
@@ -511,9 +534,10 @@ final class SupportedLanguage extends AbstractSupportedLanguage
         }
 
         return $this->searchWitness(
+            $runtime,
             $request->familyId,
             ['arity' => $expectedArity],
-            fn (array $parameters, int $seed): string => $this->runtime->generate(new GenerationRequest(startRule: sprintf('select_values_clause_%d', (int) $parameters['arity']), seed: $seed, maxDepth: 8)),
+            fn (Runtime $runtime, array $parameters, int $seed): string => $runtime->generate(new GenerationRequest(startRule: sprintf('select_values_clause_%d', (int) $parameters['arity']), seed: $seed, maxDepth: 8)),
             fn (string $sql, array $parameters): bool => $this->isValuesClauseArityWitness($sql, (int) $parameters['arity']),
             fn (string $sql, array $parameters): array => $this->extractValuesClauseProperties($sql),
             64,
