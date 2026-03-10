@@ -1371,6 +1371,54 @@ final class SqlGeneratorTest extends TestCase
         )));
     }
 
+    public function testAugmentGrammarRewritesCmdAlternativesToTemporaryViewAndTriggerWrappers(): void
+    {
+        $grammar = SqliteGrammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        self::assertContains(
+            ['create_view_stmt'],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $generator->compiledGrammar()->ruleMap['cmd']->alternatives,
+            ),
+        );
+        self::assertContains(
+            ['create_trigger_stmt'],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $generator->compiledGrammar()->ruleMap['cmd']->alternatives,
+            ),
+        );
+        self::assertNotContains(
+            ['createkw', 'temp', 'VIEW', 'ifnotexists', 'nm', 'dbnm', 'eidlist_opt', 'AS', 'select'],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $generator->compiledGrammar()->ruleMap['cmd']->alternatives,
+            ),
+        );
+        self::assertNotContains(
+            ['createkw', 'trigger_decl', 'BEGIN', 'trigger_cmd_list', 'END'],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $generator->compiledGrammar()->ruleMap['cmd']->alternatives,
+            ),
+        );
+    }
+
     public function testAugmentGrammarBindsStarResultColumnsToFromClauses(): void
     {
         $grammar = SqliteGrammar::load();
@@ -1426,6 +1474,18 @@ final class SqlGeneratorTest extends TestCase
                 return false;
             },
         )));
+        self::assertSame(
+            [
+                ['sclp', 'scanpt', 'expr', 'scanpt', 'as'],
+            ],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $augmented->ruleMap['safe_selcollist_no_from']->alternatives,
+            ),
+        );
         self::assertNotSame([], array_values(array_filter(
             $augmented->ruleMap['oneselect']->alternatives,
             static function (Production $alt): bool {
@@ -1513,6 +1573,47 @@ final class SqlGeneratorTest extends TestCase
         );
     }
 
+    public function testAugmentGrammarAccumulatesFiniteSetOperationFamilies(): void
+    {
+        $grammar = SqliteGrammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        self::assertSame(
+            [
+                ['setop_select_stmt_1'],
+                ['setop_select_stmt_2'],
+                ['setop_select_stmt_3'],
+                ['setop_select_stmt_4'],
+                ['setop_select_stmt_5'],
+                ['setop_select_stmt_6'],
+                ['setop_select_stmt_7'],
+                ['setop_select_stmt_8'],
+            ],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $generator->compiledGrammar()->ruleMap['setop_select_stmt']->alternatives,
+            ),
+        );
+        self::assertSame(
+            [
+                ['SELECT', 'distinct', 'select_result_list_1', 'from', 'where_opt', 'groupby_opt', 'having_opt', 'orderby_opt', 'limit_opt'],
+                ['SELECT', 'distinct', 'select_result_list_1', 'from', 'where_opt', 'groupby_opt', 'having_opt', 'window_clause', 'orderby_opt', 'limit_opt'],
+                ['select_values_clause_1'],
+            ],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $generator->compiledGrammar()->ruleMap['setop_select_operand_1']->alternatives,
+            ),
+        );
+    }
+
     public function testAugmentGrammarKeepsCompleteSelectWithFromAlternatives(): void
     {
         $grammar = SqliteGrammar::load();
@@ -1552,6 +1653,25 @@ final class SqlGeneratorTest extends TestCase
         self::assertArrayHasKey('select_values_clause_1', $augmented->ruleMap);
         self::assertArrayHasKey('select_values_clause_8', $augmented->ruleMap);
         self::assertSame(
+            [
+                ['select_values_clause_1'],
+                ['select_values_clause_2'],
+                ['select_values_clause_3'],
+                ['select_values_clause_4'],
+                ['select_values_clause_5'],
+                ['select_values_clause_6'],
+                ['select_values_clause_7'],
+                ['select_values_clause_8'],
+            ],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $augmented->ruleMap['select_values_clause']->alternatives,
+            ),
+        );
+        self::assertSame(
             [['VALUES', 'select_value_row_list_1']],
             array_map(
                 static fn (Production $alt): array => array_map(
@@ -1559,6 +1679,29 @@ final class SqlGeneratorTest extends TestCase
                     $alt->symbols,
                 ),
                 $augmented->ruleMap['select_values_clause_1']->alternatives,
+            ),
+        );
+        self::assertSame(
+            [['LP', 'select_value_expr_list_1', 'RP']],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $augmented->ruleMap['select_value_row_1']->alternatives,
+            ),
+        );
+        self::assertSame(
+            [
+                ['select_value_row_1'],
+                ['select_value_row_list_1', 'COMMA', 'select_value_row_1'],
+            ],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $augmented->ruleMap['select_value_row_list_1']->alternatives,
             ),
         );
         self::assertSame([], array_values(array_filter(
