@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\MySql\Bison\Lexer;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -12,7 +12,7 @@ use SqlFaker\MySql\Bison\Lexer\BisonLexer;
 use SqlFaker\MySql\Bison\Lexer\BisonToken;
 use SqlFaker\MySql\Bison\Lexer\BisonTokenType;
 
-#[CoversClass(BisonLexer::class)]
+#[CoversNothing]
 final class BisonLexerTest extends TestCase
 {
     public function testNextReturnsEofForEmptyInput(): void
@@ -808,6 +808,33 @@ YY;
         self::assertSame($expectedValue, $token->value);
     }
 
+    /**
+     * @return iterable<string, array{string, BisonTokenType, string|int}>
+     */
+    public static function providerNextTokenTypes(): iterable
+    {
+        yield 'identifier' => ['foo', BisonTokenType::Identifier, 'foo'];
+        yield 'identifier with digits' => ['foo123', BisonTokenType::Identifier, 'foo123'];
+        yield 'number' => ['42', BisonTokenType::Number, 42];
+        yield 'number zero' => ['0', BisonTokenType::Number, 0];
+        yield 'string literal' => ['"str"', BisonTokenType::StringLiteral, 'str'];
+        yield 'char literal' => ["'x'", BisonTokenType::CharLiteral, 'x'];
+        yield 'colon' => [':', BisonTokenType::Colon, ':'];
+        yield 'semicolon' => [';', BisonTokenType::Semicolon, ';'];
+        yield 'pipe' => ['|', BisonTokenType::Pipe, '|'];
+        yield 'percent percent' => ['%%', BisonTokenType::PercentPercent, '%%'];
+        yield 'directive token' => ['%token', BisonTokenType::Directive, '%token'];
+        yield 'directive start' => ['%start', BisonTokenType::Directive, '%start'];
+        yield 'directive left' => ['%left', BisonTokenType::Directive, '%left'];
+        yield 'type tag' => ['<type>', BisonTokenType::TypeTag, 'type'];
+        yield 'prologue' => ['%{ code %}', BisonTokenType::Prologue, ' code '];
+        yield 'action' => ['{ code }', BisonTokenType::Action, ' code '];
+    }
+}
+
+#[CoversNothing]
+final class BisonLexerPeekTest extends TestCase
+{
     public function testPeekReturnsSameToken(): void
     {
         $lexer = new BisonLexer('identifier');
@@ -844,8 +871,11 @@ YY;
         $peek2 = $lexer->peek();
         self::assertSame('bar', $peek2->value);
     }
+}
 
-
+#[CoversNothing]
+final class BisonLexerPeekNTest extends TestCase
+{
     public function testPeekNReturnsNthToken(): void
     {
         $lexer = new BisonLexer('foo bar baz');
@@ -916,28 +946,5 @@ YY;
         $this->expectExceptionMessage('peekN($n) requires $n >= 1');
 
         $lexer->peekN(-1);
-    }
-
-    /**
-     * @return iterable<string, array{string, BisonTokenType, string|int}>
-     */
-    public static function providerNextTokenTypes(): iterable
-    {
-        yield 'identifier' => ['foo', BisonTokenType::Identifier, 'foo'];
-        yield 'identifier with digits' => ['foo123', BisonTokenType::Identifier, 'foo123'];
-        yield 'number' => ['42', BisonTokenType::Number, 42];
-        yield 'number zero' => ['0', BisonTokenType::Number, 0];
-        yield 'string literal' => ['"str"', BisonTokenType::StringLiteral, 'str'];
-        yield 'char literal' => ["'x'", BisonTokenType::CharLiteral, 'x'];
-        yield 'colon' => [':', BisonTokenType::Colon, ':'];
-        yield 'semicolon' => [';', BisonTokenType::Semicolon, ';'];
-        yield 'pipe' => ['|', BisonTokenType::Pipe, '|'];
-        yield 'percent percent' => ['%%', BisonTokenType::PercentPercent, '%%'];
-        yield 'directive token' => ['%token', BisonTokenType::Directive, '%token'];
-        yield 'directive start' => ['%start', BisonTokenType::Directive, '%start'];
-        yield 'directive left' => ['%left', BisonTokenType::Directive, '%left'];
-        yield 'type tag' => ['<type>', BisonTokenType::TypeTag, 'type'];
-        yield 'prologue' => ['%{ code %}', BisonTokenType::Prologue, ' code '];
-        yield 'action' => ['{ code }', BisonTokenType::Action, ' code '];
     }
 }
