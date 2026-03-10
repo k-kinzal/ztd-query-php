@@ -298,153 +298,6 @@ final class MySqlProviderTest extends TestCase
         self::assertDoesNotMatchRegularExpression('/^(ACTION|EVENT|VIEW|CURRENT_USER)$/i', $provider->identifier(3));
     }
 
-    public function testQuotedIdentifier(): void
-    {
-        $faker = Factory::create();
-        $faker->seed(12345);
-        $provider = new MySqlProvider($faker);
-
-        $result = $provider->quotedIdentifier();
-
-        self::assertMatchesRegularExpression('/^`[a-z_][a-z0-9_]*`$/', $result);
-    }
-
-    public function testStringLiteral(): void
-    {
-        $faker = Factory::create();
-        $faker->seed(12345);
-        $provider = new MySqlProvider($faker);
-
-        $result = $provider->stringLiteral();
-
-        self::assertMatchesRegularExpression("/^'[a-zA-Z0-9_]{1,32}'$/", $result);
-    }
-
-    public function testStringLiteralLengthRange(): void
-    {
-        $faker = Factory::create();
-        $faker->seed(12345);
-        $provider = new MySqlProvider($faker);
-
-        $literal = $provider->stringLiteral();
-        $content = substr($literal, 1, -1);
-
-        self::assertGreaterThanOrEqual(1, strlen($content));
-        self::assertLessThanOrEqual(32, strlen($content));
-    }
-
-    public function testNationalStringLiteral(): void
-    {
-        $faker = Factory::create();
-        $faker->seed(12345);
-        $provider = new MySqlProvider($faker);
-
-        $result = $provider->nationalStringLiteral();
-
-        self::assertMatchesRegularExpression("/^N'[a-zA-Z0-9_]{1,32}'$/", $result);
-    }
-
-    public function testDollarQuotedString(): void
-    {
-        $faker = Factory::create();
-        $faker->seed(12345);
-        $provider = new MySqlProvider($faker);
-
-        $result = $provider->dollarQuotedString();
-
-        self::assertMatchesRegularExpression('/^\$\$[a-zA-Z0-9_]{1,32}\$\$$/', $result);
-    }
-
-    public function testIntegerLiteral(): void
-    {
-        $faker = Factory::create();
-        $faker->seed(12345);
-        $provider = new MySqlProvider($faker);
-
-        $result = $provider->integerLiteral();
-
-        self::assertMatchesRegularExpression('/^[1-9]\d*$/', $result);
-    }
-
-    public function testLongIntegerLiteral(): void
-    {
-        $faker = Factory::create();
-        $faker->seed(12345);
-        $provider = new MySqlProvider($faker);
-
-        $result = $provider->longIntegerLiteral();
-
-        self::assertMatchesRegularExpression('/^\d+$/', $result);
-        self::assertGreaterThanOrEqual(0, (int) $result);
-        self::assertLessThanOrEqual(2147483647, (int) $result);
-    }
-
-    public function testUnsignedBigIntLiteral(): void
-    {
-        $faker = Factory::create();
-        $faker->seed(12345);
-        $provider = new MySqlProvider($faker);
-
-        $result = $provider->unsignedBigIntLiteral();
-
-        self::assertMatchesRegularExpression('/^\d+$/', $result);
-    }
-
-    public function testDecimalLiteral(): void
-    {
-        $faker = Factory::create();
-        $faker->seed(12345);
-        $provider = new MySqlProvider($faker);
-
-        $result = $provider->decimalLiteral();
-
-        self::assertMatchesRegularExpression('/^\d+\.\d{2,}$/', $result);
-    }
-
-    public function testFloatLiteral(): void
-    {
-        $faker = Factory::create();
-        $faker->seed(12345);
-        $provider = new MySqlProvider($faker);
-
-        $result = $provider->floatLiteral();
-
-        self::assertMatchesRegularExpression('/^\d+\.\d+e-?\d+$/', $result);
-    }
-
-    public function testHexLiteral(): void
-    {
-        $faker = Factory::create();
-        $faker->seed(12345);
-        $provider = new MySqlProvider($faker);
-
-        $result = $provider->hexLiteral();
-
-        self::assertMatchesRegularExpression('/^0x[0-9a-f]{1,16}$/', $result);
-    }
-
-    public function testBinaryLiteral(): void
-    {
-        $faker = Factory::create();
-        $faker->seed(12345);
-        $provider = new MySqlProvider($faker);
-
-        $result = $provider->binaryLiteral();
-
-        self::assertMatchesRegularExpression('/^0b[01]{1,64}$/', $result);
-    }
-
-    public function testHostname(): void
-    {
-        $faker = Factory::create();
-        $faker->seed(12345);
-        $provider = new MySqlProvider($faker);
-
-        $result = $provider->hostname();
-
-        self::assertMatchesRegularExpression('/^[a-z0-9]+(\.[a-z0-9]+)*$/', $result);
-    }
-
     public function testExpr(): void
     {
         $faker = Factory::create();
@@ -652,124 +505,343 @@ final class MySqlProviderTest extends TestCase
         self::assertNotSame($provider1->selectStatement(maxDepth: 3), $provider2->selectStatement(maxDepth: 3));
     }
 
+    public function testRuntimeContractExposesSnapshotSupportedGrammarAndDeterministicGeneration(): void
+    {
+        $faker = Factory::create();
+        $provider = new MySqlProvider($faker, 'mysql-8.0.44');
+
+        self::assertNotSame('', $provider->snapshot()->startSymbol);
+        self::assertSame($provider->snapshot()->startSymbol, $provider->supportedGrammar()->startSymbol);
+        self::assertNotNull($provider->supportedGrammar()->rule('rollback'));
+        self::assertSame(
+            $provider->generate(new GenerationRequest('ident', 11, 1)),
+            $provider->generate(new GenerationRequest('ident', 11, 1)),
+        );
+    }
+
+    /**
+     * @return iterable<string, array{StatementType}>
+     */
+    public static function providerStatementTypeValue(): iterable
+    {
+        yield 'Select' => [StatementType::Select];
+        yield 'Insert' => [StatementType::Insert];
+        yield 'Update' => [StatementType::Update];
+        yield 'Delete' => [StatementType::Delete];
+        yield 'CreateTable' => [StatementType::CreateTable];
+        yield 'AlterTable' => [StatementType::AlterTable];
+        yield 'DropTable' => [StatementType::DropTable];
+        yield 'SimpleStatement' => [StatementType::SimpleStatement];
+    }
+
+    /**
+     * @return iterable<string, array{int, int}>
+     */
+    public static function providerMultipleGenerationSeeds(): iterable
+    {
+        yield 'seeds 0 and 1' => [0, 1];
+        yield 'seeds 5 and 10' => [5, 10];
+    }
+
+    /**
+     * @return iterable<string, array{int}>
+     */
+    public static function providerCanonicalIdentifierSeed(): iterable
+    {
+        foreach (range(0, 512) as $seed) {
+            yield "seed {$seed}" => [$seed];
+        }
+    }
+}
+
+#[CoversClass(MySqlProvider::class)]
+#[CoversClass(RandomStringGenerator::class)]
+final class MySqlProviderHelperTest extends TestCase
+{
+    #[\Override]
+    protected function setUp(): void
+    {
+        parent::setUp();
+        gc_collect_cycles();
+    }
+
+    public function testQuotedIdentifier(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->quotedIdentifier();
+
+        self::assertMatchesRegularExpression('/^`[a-z_][a-z0-9_]*`$/', $result);
+    }
+
+    public function testStringLiteral(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->stringLiteral();
+
+        self::assertMatchesRegularExpression("/^'[a-zA-Z0-9_]{1,32}'$/", $result);
+    }
+
+    public function testStringLiteralLengthRange(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->stringLiteral();
+        $content = substr($result, 1, -1);
+
+        self::assertGreaterThanOrEqual(1, strlen($content));
+        self::assertLessThanOrEqual(32, strlen($content));
+    }
+
+    public function testNationalStringLiteral(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->nationalStringLiteral();
+
+        self::assertMatchesRegularExpression("/^N'[a-zA-Z0-9_]{1,32}'$/", $result);
+    }
+
+    public function testDollarQuotedString(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->dollarQuotedString();
+
+        self::assertMatchesRegularExpression('/^\$\$[a-zA-Z0-9_]{1,32}\$\$$/', $result);
+    }
+
+    public function testIntegerLiteral(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->integerLiteral();
+
+        self::assertMatchesRegularExpression('/^[1-9]\d*$/', $result);
+    }
+
+    public function testLongIntegerLiteral(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->longIntegerLiteral();
+
+        self::assertMatchesRegularExpression('/^\d+$/', $result);
+        self::assertGreaterThanOrEqual(0, (int) $result);
+        self::assertLessThanOrEqual(2147483647, (int) $result);
+    }
+
+    public function testUnsignedBigIntLiteral(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->unsignedBigIntLiteral();
+
+        self::assertMatchesRegularExpression('/^\d+$/', $result);
+    }
+
+    public function testDecimalLiteral(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->decimalLiteral();
+
+        self::assertMatchesRegularExpression('/^\d+\.\d{2,}$/', $result);
+    }
+
+    public function testFloatLiteral(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->floatLiteral();
+
+        self::assertMatchesRegularExpression('/^\d+\.\d+e-?\d+$/', $result);
+    }
+
+    public function testHexLiteral(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->hexLiteral();
+
+        self::assertMatchesRegularExpression('/^0x[0-9a-f]{1,16}$/', $result);
+    }
+
+    public function testBinaryLiteral(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->binaryLiteral();
+
+        self::assertMatchesRegularExpression('/^0b[01]{1,64}$/', $result);
+    }
+
+    public function testHostname(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->hostname();
+
+        self::assertMatchesRegularExpression('/^[a-z0-9]+(\.[a-z0-9]+)*$/', $result);
+    }
+
     public function testQuotedIdentifierDefaultMatchesExplicit(): void
     {
         $faker = Factory::create();
-        $p = new MySqlProvider($faker);
+        $provider = new MySqlProvider($faker);
         $faker->seed(42);
-        $a = $p->quotedIdentifier();
+        $result = $provider->quotedIdentifier();
         $faker->seed(42);
-        self::assertSame($a, $p->quotedIdentifier(1, 64));
+
+        self::assertSame($result, $provider->quotedIdentifier(1, 64));
     }
 
     public function testStringLiteralDefaultMatchesExplicit(): void
     {
         $faker = Factory::create();
-        $p = new MySqlProvider($faker);
+        $provider = new MySqlProvider($faker);
         $faker->seed(42);
-        $a = $p->stringLiteral();
+        $result = $provider->stringLiteral();
         $faker->seed(42);
-        self::assertSame($a, $p->stringLiteral(1, 32));
+
+        self::assertSame($result, $provider->stringLiteral(1, 32));
     }
 
     public function testNationalStringLiteralDefaultMatchesExplicit(): void
     {
         $faker = Factory::create();
-        $p = new MySqlProvider($faker);
+        $provider = new MySqlProvider($faker);
         $faker->seed(42);
-        $a = $p->nationalStringLiteral();
+        $result = $provider->nationalStringLiteral();
         $faker->seed(42);
-        self::assertSame($a, $p->nationalStringLiteral(1, 32));
+
+        self::assertSame($result, $provider->nationalStringLiteral(1, 32));
     }
 
     public function testDollarQuotedStringDefaultMatchesExplicit(): void
     {
         $faker = Factory::create();
-        $p = new MySqlProvider($faker);
+        $provider = new MySqlProvider($faker);
         $faker->seed(42);
-        $a = $p->dollarQuotedString();
+        $result = $provider->dollarQuotedString();
         $faker->seed(42);
-        self::assertSame($a, $p->dollarQuotedString(1, 32));
+
+        self::assertSame($result, $provider->dollarQuotedString(1, 32));
     }
 
     public function testIntegerLiteralDefaultMatchesExplicit(): void
     {
         $faker = Factory::create();
-        $p = new MySqlProvider($faker);
+        $provider = new MySqlProvider($faker);
         $faker->seed(42);
-        $a = $p->integerLiteral();
+        $result = $provider->integerLiteral();
         $faker->seed(42);
-        self::assertSame($a, $p->integerLiteral(1, 2147483647));
+
+        self::assertSame($result, $provider->integerLiteral(1, 2147483647));
     }
 
     public function testLongIntegerLiteralDefaultMatchesExplicit(): void
     {
         $faker = Factory::create();
-        $p = new MySqlProvider($faker);
+        $provider = new MySqlProvider($faker);
         $faker->seed(42);
-        $a = $p->longIntegerLiteral();
+        $result = $provider->longIntegerLiteral();
         $faker->seed(42);
-        self::assertSame($a, $p->longIntegerLiteral(0, 2147483647));
+
+        self::assertSame($result, $provider->longIntegerLiteral(0, 2147483647));
     }
 
     public function testUnsignedBigIntLiteralDefaultMatchesExplicit(): void
     {
         $faker = Factory::create();
-        $p = new MySqlProvider($faker);
+        $provider = new MySqlProvider($faker);
         $faker->seed(42);
-        $a = $p->unsignedBigIntLiteral();
+        $result = $provider->unsignedBigIntLiteral();
         $faker->seed(42);
-        self::assertSame($a, $p->unsignedBigIntLiteral(1, 20));
+
+        self::assertSame($result, $provider->unsignedBigIntLiteral(1, 20));
     }
 
     public function testDecimalLiteralDefaultMatchesExplicit(): void
     {
         $faker = Factory::create();
-        $p = new MySqlProvider($faker);
+        $provider = new MySqlProvider($faker);
         $faker->seed(42);
-        $a = $p->decimalLiteral();
+        $result = $provider->decimalLiteral();
         $faker->seed(42);
-        self::assertSame($a, $p->decimalLiteral(10, 2));
+
+        self::assertSame($result, $provider->decimalLiteral(10, 2));
     }
 
     public function testFloatLiteralDefaultMatchesExplicit(): void
     {
         $faker = Factory::create();
-        $p = new MySqlProvider($faker);
+        $provider = new MySqlProvider($faker);
         $faker->seed(42);
-        $a = $p->floatLiteral();
+        $result = $provider->floatLiteral();
         $faker->seed(42);
-        self::assertSame($a, $p->floatLiteral(10, 2, -38, 38));
+
+        self::assertSame($result, $provider->floatLiteral(10, 2, -38, 38));
     }
 
     public function testHexLiteralDefaultMatchesExplicit(): void
     {
         $faker = Factory::create();
-        $p = new MySqlProvider($faker);
+        $provider = new MySqlProvider($faker);
         $faker->seed(42);
-        $a = $p->hexLiteral();
+        $result = $provider->hexLiteral();
         $faker->seed(42);
-        self::assertSame($a, $p->hexLiteral(1, 16));
+
+        self::assertSame($result, $provider->hexLiteral(1, 16));
     }
 
     public function testBinaryLiteralDefaultMatchesExplicit(): void
     {
         $faker = Factory::create();
-        $p = new MySqlProvider($faker);
+        $provider = new MySqlProvider($faker);
         $faker->seed(42);
-        $a = $p->binaryLiteral();
+        $result = $provider->binaryLiteral();
         $faker->seed(42);
-        self::assertSame($a, $p->binaryLiteral(1, 64));
+
+        self::assertSame($result, $provider->binaryLiteral(1, 64));
     }
 
     public function testHostnameDefaultMatchesExplicit(): void
     {
         $faker = Factory::create();
-        $p = new MySqlProvider($faker);
+        $provider = new MySqlProvider($faker);
         $faker->seed(42);
-        $a = $p->hostname();
+        $result = $provider->hostname();
         $faker->seed(42);
-        self::assertSame($a, $p->hostname(1, 1, 16));
+
+        self::assertSame($result, $provider->hostname(1, 1, 16));
     }
 
     public function testQuotedIdentifierCustomLength(): void
@@ -983,53 +1055,5 @@ final class MySqlProviderTest extends TestCase
         yield 'default filter wildcard pattern' => [static fn (MySqlProvider $provider): string => $provider->filterWildcardPattern()];
         yield 'custom filter wildcard pattern' => [static fn (MySqlProvider $provider): string => $provider->filterWildcardPattern(13)];
         yield 'reset master index' => [static fn (MySqlProvider $provider): string => $provider->resetMasterIndex()];
-    }
-
-    public function testRuntimeContractExposesSnapshotSupportedGrammarAndDeterministicGeneration(): void
-    {
-        $faker = Factory::create();
-        $provider = new MySqlProvider($faker, 'mysql-8.0.44');
-
-        self::assertNotSame('', $provider->snapshot()->startSymbol);
-        self::assertSame($provider->snapshot()->startSymbol, $provider->supportedGrammar()->startSymbol);
-        self::assertNotNull($provider->supportedGrammar()->rule('rollback'));
-        self::assertSame(
-            $provider->generate(new GenerationRequest('ident', 11, 1)),
-            $provider->generate(new GenerationRequest('ident', 11, 1)),
-        );
-    }
-
-    /**
-     * @return iterable<string, array{StatementType}>
-     */
-    public static function providerStatementTypeValue(): iterable
-    {
-        yield 'Select' => [StatementType::Select];
-        yield 'Insert' => [StatementType::Insert];
-        yield 'Update' => [StatementType::Update];
-        yield 'Delete' => [StatementType::Delete];
-        yield 'CreateTable' => [StatementType::CreateTable];
-        yield 'AlterTable' => [StatementType::AlterTable];
-        yield 'DropTable' => [StatementType::DropTable];
-        yield 'SimpleStatement' => [StatementType::SimpleStatement];
-    }
-
-    /**
-     * @return iterable<string, array{int, int}>
-     */
-    public static function providerMultipleGenerationSeeds(): iterable
-    {
-        yield 'seeds 0 and 1' => [0, 1];
-        yield 'seeds 5 and 10' => [5, 10];
-    }
-
-    /**
-     * @return iterable<string, array{int}>
-     */
-    public static function providerCanonicalIdentifierSeed(): iterable
-    {
-        foreach (range(0, 512) as $seed) {
-            yield "seed {$seed}" => [$seed];
-        }
     }
 }
