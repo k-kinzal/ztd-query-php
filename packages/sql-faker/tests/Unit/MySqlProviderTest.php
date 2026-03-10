@@ -16,6 +16,43 @@ use SqlFaker\MySql\SqlGenerator;
 use SqlFaker\MySql\StatementType;
 use SqlFaker\MySqlProvider;
 
+/**
+ * @param list<int> $numberBetweenValues
+ */
+function deterministicNumberFaker(array $numberBetweenValues): \Faker\Generator
+{
+    return new class ($numberBetweenValues) extends \Faker\Generator {
+        /** @var list<int> */
+        private array $numberBetweenValues;
+
+        /**
+         * @param list<int> $numberBetweenValues
+         */
+        public function __construct(array $numberBetweenValues)
+        {
+            parent::__construct();
+            $this->numberBetweenValues = $numberBetweenValues;
+        }
+
+        /**
+         * @param mixed $int1
+         * @param mixed $int2
+         */
+        #[\Override]
+        public function numberBetween($int1 = 0, $int2 = 2147483647): int
+        {
+            $next = array_shift($this->numberBetweenValues);
+            $lower = is_int($int1) ? $int1 : 0;
+            $upper = is_int($int2) ? $int2 : 2147483647;
+            $value = is_int($next) ? $next : min($lower, $upper);
+            $min = min($lower, $upper);
+            $max = max($lower, $upper);
+
+            return max($min, min($max, $value));
+        }
+    };
+}
+
 #[CoversClass(MySqlProvider::class)]
 #[CoversClass(RandomStringGenerator::class)]
 #[CoversClass(SqlGenerator::class)]
@@ -501,6 +538,81 @@ final class MySqlProviderTest extends TestCase
         );
     }
 
+    public function testStringLiteralDefaultKeepsMinimumLengthAtOne(): void
+    {
+        $provider = new MySqlProvider(deterministicNumberFaker([0, 0]));
+
+        self::assertSame("'a'", $provider->stringLiteral());
+    }
+
+    public function testStringLiteralDefaultKeepsMaximumLengthAtThirtyTwo(): void
+    {
+        $provider = new MySqlProvider(deterministicNumberFaker(array_merge([33], array_fill(0, 32, 0))));
+
+        self::assertSame(32, strlen(substr($provider->stringLiteral(), 1, -1)));
+    }
+
+    public function testNationalStringLiteralDefaultKeepsMinimumLengthAtOne(): void
+    {
+        $provider = new MySqlProvider(deterministicNumberFaker([0, 0]));
+
+        self::assertSame("N'a'", $provider->nationalStringLiteral());
+    }
+
+    public function testNationalStringLiteralDefaultKeepsMaximumLengthAtThirtyTwo(): void
+    {
+        $provider = new MySqlProvider(deterministicNumberFaker(array_merge([33], array_fill(0, 32, 0))));
+
+        self::assertSame(32, strlen(substr($provider->nationalStringLiteral(), 2, -1)));
+    }
+
+    public function testDollarQuotedStringDefaultKeepsMinimumLengthAtOne(): void
+    {
+        $provider = new MySqlProvider(deterministicNumberFaker([0, 0]));
+
+        self::assertSame('$$a$$', $provider->dollarQuotedString());
+    }
+
+    public function testDollarQuotedStringDefaultKeepsMaximumLengthAtThirtyTwo(): void
+    {
+        $provider = new MySqlProvider(deterministicNumberFaker(array_merge([33], array_fill(0, 32, 0))));
+
+        self::assertSame(32, strlen(substr($provider->dollarQuotedString(), 2, -2)));
+    }
+
+    public function testHostnameDefaultUsesSinglePartWithinSixteenCharacters(): void
+    {
+        $provider = new MySqlProvider(deterministicNumberFaker(array_merge([0, 17], array_fill(0, 16, 0))));
+
+        self::assertSame('aaaaaaaaaaaaaaaa', $provider->hostname());
+    }
+
+    public function testFilterWildcardPatternUsesSinglePartHostnamesWithinTwelveCharacters(): void
+    {
+        $provider = new MySqlProvider(deterministicNumberFaker(array_merge(
+            [0, 13],
+            array_fill(0, 12, 0),
+            [0, 13],
+            array_fill(0, 12, 0),
+        )));
+
+        self::assertSame("'aaaaaaaaaaaa.aaaaaaaaaaaa'", $provider->filterWildcardPattern());
+    }
+
+    public function testResetMasterIndexDefaultKeepsMinimumAtOne(): void
+    {
+        $provider = new MySqlProvider(deterministicNumberFaker([0]));
+
+        self::assertSame('1', $provider->resetMasterIndex());
+    }
+
+    public function testResetMasterIndexDefaultKeepsMaximumAtTwoBillion(): void
+    {
+        $provider = new MySqlProvider(deterministicNumberFaker([2_000_000_001]));
+
+        self::assertSame('2000000000', $provider->resetMasterIndex());
+    }
+
     /**
      * @return iterable<string, array{StatementType}>
      */
@@ -534,4 +646,5 @@ final class MySqlProviderTest extends TestCase
             yield "seed {$seed}" => [$seed];
         }
     }
+
 }
