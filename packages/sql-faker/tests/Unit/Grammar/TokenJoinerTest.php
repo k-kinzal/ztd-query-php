@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\Grammar;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\TokenJoiner;
 
-#[CoversClass(TokenJoiner::class)]
+#[CoversNothing]
 final class TokenJoinerTest extends TestCase
 {
     public function testJoinEmptyArrayReturnsEmptyString(): void

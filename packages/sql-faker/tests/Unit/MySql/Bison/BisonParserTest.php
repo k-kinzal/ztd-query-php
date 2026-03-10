@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\MySql\Bison;
 
 use LogicException;
-use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -28,8 +28,7 @@ use SqlFaker\MySql\Bison\Lexer\BisonLexer;
 use SqlFaker\MySql\Bison\Lexer\BisonToken;
 use SqlFaker\MySql\Bison\Lexer\BisonTokenType;
 
-#[CoversMethod(BisonParser::class, 'parse')]
-#[CoversMethod(BisonParser::class, 'parseFile')]
+#[CoversNothing]
 final class BisonParserTest extends TestCase
 {
     public function testParseMinimalGrammar(): void
