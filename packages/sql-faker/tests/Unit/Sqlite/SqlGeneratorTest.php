@@ -763,6 +763,37 @@ final class SqlGeneratorTest extends TestCase
         )));
     }
 
+    public function testAugmentGrammarPreservesNonWithinAndNonRaiseExprAlternatives(): void
+    {
+        $grammar = new Grammar('cmd', [
+            'cmd' => new ProductionRule('cmd', [
+                new Production([new Terminal('SELECT')]),
+            ]),
+            'expr' => new ProductionRule('expr', [
+                new Production([new Terminal('WITHIN'), new NonTerminal('group_clause')]),
+                new Production([new Terminal('RAISE'), new NonTerminal('term')]),
+                new Production([new NonTerminal('term')]),
+                new Production([new Terminal('ABS'), new NonTerminal('term')]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        self::assertSame(
+            [
+                ['term'],
+                ['ABS', 'term'],
+            ],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $generator->compiledGrammar()->ruleMap['expr']->alternatives,
+            ),
+        );
+    }
+
     public function testAugmentGrammarRemovesOrderByFromDelete(): void
     {
         $grammar = SqliteGrammar::load();
@@ -1426,6 +1457,51 @@ final class SqlGeneratorTest extends TestCase
         )));
     }
 
+    public function testAugmentGrammarKeepsDirectAndSetOperationSelectNowithAlternatives(): void
+    {
+        $grammar = SqliteGrammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        self::assertSame(
+            [
+                ['oneselect'],
+                ['setop_select_stmt'],
+            ],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $generator->compiledGrammar()->ruleMap['selectnowith']->alternatives,
+            ),
+        );
+    }
+
+    public function testAugmentGrammarKeepsCompleteSelectWithFromAlternatives(): void
+    {
+        $grammar = SqliteGrammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        self::assertSame(
+            [
+                ['SELECT', 'distinct', 'safe_selcollist_no_from', 'where_opt', 'groupby_opt', 'having_opt', 'orderby_opt', 'limit_opt'],
+                ['SELECT', 'distinct', 'safe_selcollist_no_from', 'where_opt', 'groupby_opt', 'having_opt', 'window_clause', 'orderby_opt', 'limit_opt'],
+                ['SELECT', 'distinct', 'selcollist', 'safe_from_clause', 'where_opt', 'groupby_opt', 'having_opt', 'orderby_opt', 'limit_opt'],
+                ['SELECT', 'distinct', 'selcollist', 'safe_from_clause', 'where_opt', 'groupby_opt', 'having_opt', 'window_clause', 'orderby_opt', 'limit_opt'],
+                ['select_values_clause'],
+            ],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $generator->compiledGrammar()->ruleMap['oneselect']->alternatives,
+            ),
+        );
+    }
+
     public function testAugmentGrammarIntroducesFiniteValuesClauseFamilies(): void
     {
         $grammar = SqliteGrammar::load();
@@ -1467,6 +1543,30 @@ final class SqlGeneratorTest extends TestCase
                 return $names === ['values'] || $names === ['mvalues'];
             },
         )));
+    }
+
+    public function testAugmentGrammarBuildsExactCommaSeparatedValueExpressionLists(): void
+    {
+        $grammar = SqliteGrammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        self::assertSame(
+            [[
+                'safe_select_value_expr',
+                'COMMA',
+                'safe_select_value_expr',
+                'COMMA',
+                'safe_select_value_expr',
+            ]],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $generator->compiledGrammar()->ruleMap['select_value_expr_list_3']->alternatives,
+            ),
+        );
     }
 
     public function testGenerateIdentifierQuotesReservedWords(): void
