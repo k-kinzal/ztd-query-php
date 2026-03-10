@@ -62,4 +62,92 @@ final class ContractGrammarProjectorTest extends TestCase
 
         ContractGrammarProjector::project((object) ['startSymbol' => '', 'ruleMap' => []], $nonTerminal::class);
     }
+
+    public function testRejectsRuleMapsThatAreNotObjectMaps(): void
+    {
+        $nonTerminal = new class ('expr') {
+            public function __construct(public string $value)
+            {
+            }
+        };
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Grammar source ruleMap must be an object map keyed by strings.');
+
+        ContractGrammarProjector::project((object) [
+            'startSymbol' => 'stmt',
+            'ruleMap' => [
+                0 => (object) ['alternatives' => []],
+            ],
+        ], $nonTerminal::class);
+    }
+
+    public function testRejectsRuleSourcesWithoutAlternativeLists(): void
+    {
+        $nonTerminal = new class ('expr') {
+            public function __construct(public string $value)
+            {
+            }
+        };
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Production rule source must expose an alternatives list.');
+
+        ContractGrammarProjector::project((object) [
+            'startSymbol' => 'stmt',
+            'ruleMap' => [
+                'stmt' => (object) ['alternatives' => (object) []],
+            ],
+        ], $nonTerminal::class);
+    }
+
+    public function testRejectsProductionSourcesWithoutSymbolLists(): void
+    {
+        $nonTerminal = new class ('expr') {
+            public function __construct(public string $value)
+            {
+            }
+        };
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Production source must expose a symbols list.');
+
+        ContractGrammarProjector::project((object) [
+            'startSymbol' => 'stmt',
+            'ruleMap' => [
+                'stmt' => (object) [
+                    'alternatives' => [
+                        (object) ['symbols' => (object) []],
+                    ],
+                ],
+            ],
+        ], $nonTerminal::class);
+    }
+
+    public function testRejectsSymbolsWithoutNonEmptyValueStrings(): void
+    {
+        $nonTerminal = new class ('expr') {
+            public function __construct(public string $value)
+            {
+            }
+        };
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Grammar symbol source must expose a non-empty value string.');
+
+        ContractGrammarProjector::project((object) [
+            'startSymbol' => 'stmt',
+            'ruleMap' => [
+                'stmt' => (object) [
+                    'alternatives' => [
+                        (object) [
+                            'symbols' => [
+                                (object) ['value' => ''],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ], $nonTerminal::class);
+    }
 }

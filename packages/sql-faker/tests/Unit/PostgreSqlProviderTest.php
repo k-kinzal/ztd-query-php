@@ -9,18 +9,15 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
 use SqlFaker\Contract\GenerationRequest;
-use SqlFaker\Grammar\ContractGrammarProjector;
 use SqlFaker\Grammar\RandomStringGenerator;
-use SqlFaker\PostgreSql\SqlGenerator;
 use SqlFaker\PostgreSql\StatementType;
 use SqlFaker\PostgreSqlProvider;
 
 #[CoversClass(PostgreSqlProvider::class)]
 #[CoversClass(RandomStringGenerator::class)]
-#[CoversClass(SqlGenerator::class)]
 #[CoversClass(GenerationRequest::class)]
-#[CoversClass(ContractGrammarProjector::class)]
 #[Medium]
 final class PostgreSqlProviderTest extends TestCase
 {
@@ -450,18 +447,21 @@ final class PostgreSqlProviderTest extends TestCase
         self::assertNotSame('', $provider->simpleStatement(maxDepth: 6));
     }
 
-    public function testRuntimeContractExposesSnapshotSupportedGrammarAndDeterministicGeneration(): void
+    public function testGenerateUsesRequestSeedDeterministically(): void
     {
         $faker = Factory::create();
         $provider = new PostgreSqlProvider($faker);
 
-        self::assertNotSame('', $provider->snapshot()->startSymbol);
-        self::assertSame($provider->snapshot()->startSymbol, $provider->supportedGrammar()->startSymbol);
-        self::assertNotNull($provider->supportedGrammar()->rule('SelectStmt'));
         self::assertSame(
             $provider->generate(new GenerationRequest('ColId', 13, 1)),
             $provider->generate(new GenerationRequest('ColId', 13, 1)),
         );
+    }
+
+    #[DataProvider('providerPublicApiMethod')]
+    public function testPublicApiMethodsRemainPublic(string $methodName): void
+    {
+        self::assertTrue((new ReflectionMethod(PostgreSqlProvider::class, $methodName))->isPublic());
     }
 
     /**
@@ -486,5 +486,45 @@ final class PostgreSqlProviderTest extends TestCase
         foreach (range(0, 512) as $seed) {
             yield "seed {$seed}" => [$seed];
         }
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerPublicApiMethod(): iterable
+    {
+        yield 'selectStatement' => ['selectStatement'];
+        yield 'insertStatement' => ['insertStatement'];
+        yield 'updateStatement' => ['updateStatement'];
+        yield 'deleteStatement' => ['deleteStatement'];
+        yield 'createTableStatement' => ['createTableStatement'];
+        yield 'alterTableStatement' => ['alterTableStatement'];
+        yield 'dropTableStatement' => ['dropTableStatement'];
+        yield 'simpleStatement' => ['simpleStatement'];
+        yield 'truncateStatement' => ['truncateStatement'];
+        yield 'createIndexStatement' => ['createIndexStatement'];
+        yield 'transactionStatement' => ['transactionStatement'];
+        yield 'expr' => ['expr'];
+        yield 'simpleExpr' => ['simpleExpr'];
+        yield 'literal' => ['literal'];
+        yield 'whereClause' => ['whereClause'];
+        yield 'sortClause' => ['sortClause'];
+        yield 'selectLimit' => ['selectLimit'];
+        yield 'tableRef' => ['tableRef'];
+        yield 'joinedTable' => ['joinedTable'];
+        yield 'qualifiedName' => ['qualifiedName'];
+        yield 'subquery' => ['subquery'];
+        yield 'withClause' => ['withClause'];
+        yield 'identifier' => ['identifier'];
+        yield 'quotedIdentifier' => ['quotedIdentifier'];
+        yield 'stringLiteral' => ['stringLiteral'];
+        yield 'integerLiteral' => ['integerLiteral'];
+        yield 'decimalLiteral' => ['decimalLiteral'];
+        yield 'floatLiteral' => ['floatLiteral'];
+        yield 'hexLiteral' => ['hexLiteral'];
+        yield 'binaryLiteral' => ['binaryLiteral'];
+        yield 'dollarQuotedString' => ['dollarQuotedString'];
+        yield 'doBodyLiteral' => ['doBodyLiteral'];
+        yield 'parameterMarker' => ['parameterMarker'];
     }
 }

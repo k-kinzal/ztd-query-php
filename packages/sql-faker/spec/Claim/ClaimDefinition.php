@@ -11,6 +11,7 @@ final class ClaimDefinition
 {
     /**
      * @param list<array<string, scalar>> $cases
+     * @param array<string, scalar> $subjectOptions
      * @param list<EvidenceDefinition> $evidence
      */
     public function __construct(
@@ -20,7 +21,7 @@ final class ClaimDefinition
         public readonly string $statement,
         public readonly string $sourceLocation,
         public readonly string $subjectKind,
-        public readonly ?string $familyId,
+        public readonly array $subjectOptions,
         public readonly array $cases,
         public readonly array $evidence,
     ) {

@@ -12,22 +12,19 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
 use Spec\Policy\OutcomeKind;
 use Spec\Policy\SqlitePolicy;
 use Spec\Probe\ProbePhase as SpecProbePhase;
 use Spec\Probe\ProbeResult as SpecProbeResult;
 use SqlFaker\Contract\GenerationRequest;
-use SqlFaker\Grammar\ContractGrammarProjector;
 use SqlFaker\Grammar\RandomStringGenerator;
-use SqlFaker\Sqlite\SqlGenerator;
 use SqlFaker\Sqlite\StatementType;
 use SqlFaker\SqliteProvider;
 
 #[CoversClass(SqliteProvider::class)]
 #[CoversClass(RandomStringGenerator::class)]
-#[CoversClass(SqlGenerator::class)]
 #[CoversClass(GenerationRequest::class)]
-#[CoversClass(ContractGrammarProjector::class)]
 #[Medium]
 final class SqliteProviderTest extends TestCase
 {
@@ -478,14 +475,11 @@ final class SqliteProviderTest extends TestCase
         self::assertTrue($decision->shouldCrash);
     }
 
-    public function testRuntimeContractExposesSnapshotSupportedGrammarAndDeterministicGeneration(): void
+    public function testGenerateUsesRequestSeedDeterministically(): void
     {
         $faker = Factory::create();
         $provider = new SqliteProvider($faker);
 
-        self::assertNotSame('', $provider->snapshot()->startSymbol);
-        self::assertSame($provider->snapshot()->startSymbol, $provider->supportedGrammar()->startSymbol);
-        self::assertNotNull($provider->supportedGrammar()->rule('selectnowith'));
         self::assertSame(
             $provider->generate(new GenerationRequest('nm', 17, 1)),
             $provider->generate(new GenerationRequest('nm', 17, 1)),
@@ -739,6 +733,12 @@ final class SqliteProviderTest extends TestCase
         self::assertMatchesRegularExpression('/^\d+\.\d{2,}$/', $provider->decimalLiteral(5, 2));
     }
 
+    #[DataProvider('providerPublicApiMethod')]
+    public function testPublicApiMethodsRemainPublic(string $methodName): void
+    {
+        self::assertTrue((new ReflectionMethod(SqliteProvider::class, $methodName))->isPublic());
+    }
+
     /**
      * @return iterable<string, array{StatementType}>
      */
@@ -751,5 +751,34 @@ final class SqliteProviderTest extends TestCase
         yield 'CreateTable' => [StatementType::CreateTable];
         yield 'AlterTable' => [StatementType::AlterTable];
         yield 'DropTable' => [StatementType::DropTable];
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerPublicApiMethod(): iterable
+    {
+        yield 'selectStatement' => ['selectStatement'];
+        yield 'insertStatement' => ['insertStatement'];
+        yield 'updateStatement' => ['updateStatement'];
+        yield 'deleteStatement' => ['deleteStatement'];
+        yield 'createTableStatement' => ['createTableStatement'];
+        yield 'alterTableStatement' => ['alterTableStatement'];
+        yield 'dropTableStatement' => ['dropTableStatement'];
+        yield 'simpleStatement' => ['simpleStatement'];
+        yield 'expr' => ['expr'];
+        yield 'term' => ['term'];
+        yield 'whereClause' => ['whereClause'];
+        yield 'orderByClause' => ['orderByClause'];
+        yield 'limitClause' => ['limitClause'];
+        yield 'groupByClause' => ['groupByClause'];
+        yield 'havingClause' => ['havingClause'];
+        yield 'fullname' => ['fullname'];
+        yield 'withClause' => ['withClause'];
+        yield 'identifier' => ['identifier'];
+        yield 'quotedIdentifier' => ['quotedIdentifier'];
+        yield 'stringLiteral' => ['stringLiteral'];
+        yield 'integerLiteral' => ['integerLiteral'];
+        yield 'decimalLiteral' => ['decimalLiteral'];
     }
 }

@@ -15,7 +15,7 @@ use SqlFaker\Grammar\Symbol;
 use SqlFaker\Grammar\Terminal;
 use SqlFaker\Grammar\TerminationAnalyzer;
 use SqlFaker\Grammar\TokenJoiner;
-use SqlFaker\PostgreSqlProvider;
+use SqlFaker\PostgreSql\LexicalValueSource;
 
 /**
  * Grammar-driven SQL generator for PostgreSQL.
@@ -32,7 +32,7 @@ final class SqlGenerator
 
     private Grammar $grammar;
     private FakerGenerator $faker;
-    private PostgreSqlProvider $provider;
+    private LexicalValueSource $lexicalValues;
     private TerminationAnalyzer $terminationAnalyzer;
     private RandomStringGenerator $rsg;
 
@@ -40,11 +40,11 @@ final class SqlGenerator
     private int $derivationSteps = 0;
     private int $identifierOrdinal = 0;
 
-    public function __construct(Grammar $grammar, FakerGenerator $faker, PostgreSqlProvider $provider)
+    public function __construct(Grammar $grammar, FakerGenerator $faker, LexicalValueSource $lexicalValues)
     {
         $this->grammar = $this->augmentGrammar($grammar);
         $this->faker = $faker;
-        $this->provider = $provider;
+        $this->lexicalValues = $lexicalValues;
         $this->terminationAnalyzer = new TerminationAnalyzer($this->grammar);
         $this->rsg = new RandomStringGenerator($faker);
     }
@@ -3345,15 +3345,15 @@ final class SqlGenerator
 
                 'IDENT' => $this->nextCanonicalIdentifier(),
                 'UIDENT' => sprintf('U&"%s"', $this->nextCanonicalIdentifier()),
-                'SCONST' => $this->provider->stringLiteral(),
-                'DO_BODY_SCONST' => $this->provider->doBodyLiteral(),
+                'SCONST' => $this->lexicalValues->stringLiteral(),
+                'DO_BODY_SCONST' => $this->lexicalValues->doBodyLiteral(),
                 'USCONST' => sprintf("U&'%s'", $this->rsg->mixedAlnumString()),
-                'ICONST' => $this->provider->integerLiteral(),
-                'FCONST' => $this->provider->decimalLiteral(),
-                'BCONST' => $this->provider->binaryLiteral(),
-                'XCONST' => $this->provider->hexLiteral(),
+                'ICONST' => $this->lexicalValues->integerLiteral(),
+                'FCONST' => $this->lexicalValues->decimalLiteral(),
+                'BCONST' => $this->lexicalValues->binaryLiteral(),
+                'XCONST' => $this->lexicalValues->hexLiteral(),
                 'Op' => $this->generateOperator(),
-                'PARAM' => $this->provider->parameterMarker(),
+                'PARAM' => $this->lexicalValues->parameterMarker(),
 
                 default => str_ends_with($name, '_P')
                     ? substr($name, 0, -2)

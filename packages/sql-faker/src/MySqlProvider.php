@@ -7,13 +7,9 @@ namespace SqlFaker;
 use Faker\Generator;
 use Faker\Provider\Base;
 use SqlFaker\Contract\GenerationRequest;
-use SqlFaker\Contract\Grammar as ContractGrammar;
-use SqlFaker\Contract\Runtime;
-use SqlFaker\Grammar\ContractGrammarProjector;
-use SqlFaker\Grammar\RandomStringGenerator;
-use SqlFaker\MySql\Grammar\Grammar;
-use SqlFaker\MySql\Grammar\NonTerminal;
-use SqlFaker\MySql\SqlGenerator;
+use SqlFaker\MySql\LexicalValueGenerator;
+use SqlFaker\MySql\LexicalValueSource;
+use SqlFaker\MySql\StatementGenerator as MySqlStatementGenerator;
 use SqlFaker\MySql\StatementType;
 
 /**
@@ -54,11 +50,10 @@ use SqlFaker\MySql\StatementType;
  *   $faker->sql(StatementType::Select);
  *   $faker->sql(StatementType::Insert, maxDepth: 6);
  */
-final class MySqlProvider extends Base implements Runtime
+final class MySqlProvider extends Base implements LexicalValueSource
 {
-    private Grammar $grammar;
-    private SqlGenerator $sql;
-    private RandomStringGenerator $rsg;
+    private LexicalValueGenerator $lexicalValues;
+    private MySqlStatementGenerator $statementGenerator;
 
     /**
      * @param Generator $generator Faker generator
@@ -70,28 +65,21 @@ final class MySqlProvider extends Base implements Runtime
 
         $generator->addProvider($this);
 
-        $this->rsg = new RandomStringGenerator($generator);
-        $this->grammar = Grammar::load($version);
-        $this->sql = new SqlGenerator($this->grammar, $generator, $this);
-    }
-
-    public function snapshot(): ContractGrammar
-    {
-        return ContractGrammarProjector::project($this->grammar, NonTerminal::class);
-    }
-
-    public function supportedGrammar(): ContractGrammar
-    {
-        return ContractGrammarProjector::project($this->sql->compiledGrammar(), NonTerminal::class);
+        $this->lexicalValues = new LexicalValueGenerator($generator);
+        $this->statementGenerator = new MySqlStatementGenerator($generator, $version, $this->lexicalValues);
     }
 
     public function generate(GenerationRequest $request): string
     {
-        if ($request->seed !== null) {
-            $this->generator->seed($request->seed);
+        if ($request->seed === null) {
+            $request = new GenerationRequest(
+                startRule: $request->startRule,
+                seed: $this->generator->numberBetween(1, 2_147_483_647),
+                maxDepth: $request->maxDepth,
+            );
         }
 
-        return $this->sql->generate($request->startRule, $request->maxDepth);
+        return $this->statementGenerator->generate($request);
     }
 
     /**
@@ -246,7 +234,7 @@ final class MySqlProvider extends Base implements Runtime
      */
     public function quotedIdentifier(int $minLength = 1, int $maxLength = 64): string
     {
-        return '`' . $this->rsg->rawIdentifier($minLength, $maxLength) . '`';
+        return $this->lexicalValues->quotedIdentifier($minLength, $maxLength);
     }
 
     /**
@@ -258,7 +246,7 @@ final class MySqlProvider extends Base implements Runtime
      */
     public function stringLiteral(int $minLength = 1, int $maxLength = 32): string
     {
-        return "'" . $this->rsg->mixedAlnumString($minLength, $maxLength) . "'";
+        return $this->lexicalValues->stringLiteral($minLength, $maxLength);
     }
 
     /**
@@ -270,7 +258,7 @@ final class MySqlProvider extends Base implements Runtime
      */
     public function nationalStringLiteral(int $minLength = 1, int $maxLength = 32): string
     {
-        return 'N' . $this->stringLiteral($minLength, $maxLength);
+        return $this->lexicalValues->nationalStringLiteral($minLength, $maxLength);
     }
 
     /**
@@ -282,7 +270,7 @@ final class MySqlProvider extends Base implements Runtime
      */
     public function dollarQuotedString(int $minLength = 1, int $maxLength = 32): string
     {
-        return '$$' . $this->rsg->mixedAlnumString($minLength, $maxLength) . '$$';
+        return $this->lexicalValues->dollarQuotedString($minLength, $maxLength);
     }
 
     /**
@@ -294,7 +282,7 @@ final class MySqlProvider extends Base implements Runtime
      */
     public function integerLiteral(int $min = 1, int $max = 2147483647): string
     {
-        return $this->rsg->integerString($min, $max);
+        return $this->lexicalValues->integerLiteral($min, $max);
     }
 
     /**
@@ -306,7 +294,7 @@ final class MySqlProvider extends Base implements Runtime
      */
     public function longIntegerLiteral(int $min = 0, int $max = 2147483647): string
     {
-        return $this->rsg->longIntString($min, $max);
+        return $this->lexicalValues->longIntegerLiteral($min, $max);
     }
 
     /**
@@ -318,7 +306,7 @@ final class MySqlProvider extends Base implements Runtime
      */
     public function unsignedBigIntLiteral(int $minLength = 1, int $maxLength = 20): string
     {
-        return $this->rsg->unsignedBigIntString($minLength, $maxLength);
+        return $this->lexicalValues->unsignedBigIntLiteral($minLength, $maxLength);
     }
 
     /**
@@ -330,7 +318,7 @@ final class MySqlProvider extends Base implements Runtime
      */
     public function decimalLiteral(int $precision = 10, int $scale = 2): string
     {
-        return $this->rsg->decimalString($precision, $scale);
+        return $this->lexicalValues->decimalLiteral($precision, $scale);
     }
 
     /**
@@ -342,7 +330,7 @@ final class MySqlProvider extends Base implements Runtime
      */
     public function floatLiteral(int $precision = 10, int $scale = 2, int $minExponent = -38, int $maxExponent = 38): string
     {
-        return $this->rsg->floatString($this->decimalLiteral($precision, $scale), $minExponent, $maxExponent);
+        return $this->lexicalValues->floatLiteral($precision, $scale, $minExponent, $maxExponent);
     }
 
     /**
@@ -354,7 +342,7 @@ final class MySqlProvider extends Base implements Runtime
      */
     public function hexLiteral(int $minLength = 1, int $maxLength = 16): string
     {
-        return '0x' . $this->rsg->hexString($minLength, $maxLength);
+        return $this->lexicalValues->hexLiteral($minLength, $maxLength);
     }
 
     /**
@@ -366,7 +354,7 @@ final class MySqlProvider extends Base implements Runtime
      */
     public function binaryLiteral(int $minLength = 1, int $maxLength = 64): string
     {
-        return '0b' . $this->rsg->binaryString($minLength, $maxLength);
+        return $this->lexicalValues->binaryLiteral($minLength, $maxLength);
     }
 
     /**
@@ -378,7 +366,7 @@ final class MySqlProvider extends Base implements Runtime
      */
     public function hostname(int $minParts = 1, int $maxParts = 1, int $maxPartLength = 16): string
     {
-        return $this->rsg->hostnameString($minParts, $maxParts, 1, $maxPartLength);
+        return $this->lexicalValues->hostname($minParts, $maxParts, $maxPartLength);
     }
 
     /**
@@ -386,7 +374,7 @@ final class MySqlProvider extends Base implements Runtime
      */
     public function filterWildcardPattern(int $maxPartLength = 12): string
     {
-        return sprintf("'%s.%s'", $this->hostname(1, 1, $maxPartLength), $this->hostname(1, 1, $maxPartLength));
+        return $this->lexicalValues->filterWildcardPattern($maxPartLength);
     }
 
     /**
@@ -394,7 +382,7 @@ final class MySqlProvider extends Base implements Runtime
      */
     public function resetMasterIndex(): string
     {
-        return $this->rsg->integerString(1, 2_000_000_000);
+        return $this->lexicalValues->resetMasterIndex();
     }
 
     /**
@@ -407,7 +395,7 @@ final class MySqlProvider extends Base implements Runtime
      */
     public function replaceStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('replace_stmt', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'replace_stmt', maxDepth: $maxDepth));
     }
 
     /**
@@ -420,7 +408,7 @@ final class MySqlProvider extends Base implements Runtime
      */
     public function truncateStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('truncate_stmt', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'truncate_stmt', maxDepth: $maxDepth));
     }
 
     /**
@@ -433,7 +421,7 @@ final class MySqlProvider extends Base implements Runtime
      */
     public function createIndexStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('create_index_stmt', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'create_index_stmt', maxDepth: $maxDepth));
     }
 
     /**
@@ -446,7 +434,7 @@ final class MySqlProvider extends Base implements Runtime
      */
     public function dropIndexStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('drop_index_stmt', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'drop_index_stmt', maxDepth: $maxDepth));
     }
 
     /**
@@ -459,7 +447,7 @@ final class MySqlProvider extends Base implements Runtime
      */
     public function beginStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('begin_stmt', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'begin_stmt', maxDepth: $maxDepth));
     }
 
     /**
@@ -472,7 +460,7 @@ final class MySqlProvider extends Base implements Runtime
      */
     public function commitStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('commit', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'commit', maxDepth: $maxDepth));
     }
 
     /**
@@ -485,7 +473,7 @@ final class MySqlProvider extends Base implements Runtime
      */
     public function rollbackStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('rollback', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'rollback', maxDepth: $maxDepth));
     }
 
     /**
@@ -498,7 +486,7 @@ final class MySqlProvider extends Base implements Runtime
      */
     public function expr(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('expr', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'expr', maxDepth: $maxDepth));
     }
 
     /**
@@ -511,7 +499,7 @@ final class MySqlProvider extends Base implements Runtime
      */
     public function simpleExpr(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('simple_expr', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'simple_expr', maxDepth: $maxDepth));
     }
 
     /**
@@ -524,7 +512,7 @@ final class MySqlProvider extends Base implements Runtime
      */
     public function literal(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('literal', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'literal', maxDepth: $maxDepth));
     }
 
     /**
@@ -537,7 +525,7 @@ final class MySqlProvider extends Base implements Runtime
      */
     public function predicate(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('predicate', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'predicate', maxDepth: $maxDepth));
     }
 
     /**
@@ -550,7 +538,7 @@ final class MySqlProvider extends Base implements Runtime
      */
     public function whereClause(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('where_clause', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'where_clause', maxDepth: $maxDepth));
     }
 
     /**
@@ -563,7 +551,7 @@ final class MySqlProvider extends Base implements Runtime
      */
     public function orderClause(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('order_clause', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'order_clause', maxDepth: $maxDepth));
     }
 
     /**
@@ -576,7 +564,7 @@ final class MySqlProvider extends Base implements Runtime
      */
     public function limitClause(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('limit_clause', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'limit_clause', maxDepth: $maxDepth));
     }
 
     /**
@@ -589,7 +577,7 @@ final class MySqlProvider extends Base implements Runtime
      */
     public function tableReference(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('table_reference', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'table_reference', maxDepth: $maxDepth));
     }
 
     /**
@@ -602,7 +590,7 @@ final class MySqlProvider extends Base implements Runtime
      */
     public function joinedTable(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('joined_table', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'joined_table', maxDepth: $maxDepth));
     }
 
     /**
@@ -615,7 +603,7 @@ final class MySqlProvider extends Base implements Runtime
      */
     public function tableIdent(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('table_ident', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'table_ident', maxDepth: $maxDepth));
     }
 
     /**
@@ -628,7 +616,7 @@ final class MySqlProvider extends Base implements Runtime
      */
     public function subquery(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('subquery', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'subquery', maxDepth: $maxDepth));
     }
 
     /**
@@ -641,7 +629,7 @@ final class MySqlProvider extends Base implements Runtime
      */
     public function withClause(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('with_clause', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'with_clause', maxDepth: $maxDepth));
     }
 
 }

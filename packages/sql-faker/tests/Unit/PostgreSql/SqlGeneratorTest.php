@@ -9,8 +9,17 @@ use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
+use Spec\Runner\GrammarContractChecker;
+use Spec\Support\GrammarClaimLoader;
+use Spec\Support\GrammarEvidenceAssert;
+use SqlFaker\Contract\Grammar as ContractGrammar;
+use SqlFaker\Contract\Production as ContractProduction;
+use SqlFaker\Contract\ProductionRule as ContractProductionRule;
+use SqlFaker\Contract\Symbol as ContractSymbol;
+use SqlFaker\Grammar\ContractGrammarProjector;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
@@ -21,9 +30,22 @@ use SqlFaker\Grammar\TerminationAnalyzer;
 use SqlFaker\PostgreSql\SqlGenerator;
 use SqlFaker\PostgreSqlProvider;
 
+function postgreSqlSqlGeneratorContractGrammar(): ContractGrammar
+{
+    $faker = Factory::create();
+    $generator = new SqlGenerator(\SqlFaker\PostgreSql\Grammar\PgGrammar::load(), $faker, new PostgreSqlProvider($faker));
+
+    return ContractGrammarProjector::project($generator->compiledGrammar(), NonTerminal::class);
+}
+
 #[CoversClass(SqlGenerator::class)]
 #[CoversClass(RandomStringGenerator::class)]
 #[CoversClass(PostgreSqlProvider::class)]
+#[UsesClass(ContractGrammarProjector::class)]
+#[UsesClass(ContractGrammar::class)]
+#[UsesClass(ContractProductionRule::class)]
+#[UsesClass(ContractProduction::class)]
+#[UsesClass(ContractSymbol::class)]
 #[Medium]
 final class SqlGeneratorTest extends TestCase
 {
@@ -88,6 +110,22 @@ final class SqlGeneratorTest extends TestCase
 
         self::assertSame('a', $result1);
         self::assertSame('a', $result2);
+    }
+
+    /**
+     * @param array<string, mixed> $evidence
+     */
+    #[DataProvider('providerContractGrammarEvidence')]
+    public function testCompiledGrammarSatisfiesPostgreSqlContractClaims(array $evidence, string $claimId): void
+    {
+        $grammar = postgreSqlSqlGeneratorContractGrammar();
+
+        GrammarEvidenceAssert::assert(
+            $grammar,
+            new GrammarContractChecker($grammar),
+            $evidence,
+            $claimId,
+        );
     }
 
     public function testGenerateSelectsShortestAlternativeAtTargetDepth(): void
@@ -174,6 +212,37 @@ final class SqlGeneratorTest extends TestCase
         $symbol = $rule->alternatives[0]->symbols[0] ?? null;
         self::assertInstanceOf(Terminal::class, $symbol);
         self::assertSame('IDENT', $symbol->value);
+    }
+
+    public function testAugmentGrammarReindexesCanonicalIdentifierTerminalRules(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([new NonTerminal('ColId')]),
+            ]),
+            'ColId' => new ProductionRule('ColId', [
+                new Production([new NonTerminal('not_allowed')]),
+                new Production([new Terminal('IDENT')]),
+                new Production([new Terminal('OTHER')]),
+                new Production([new Terminal('IDENT')]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new PostgreSqlProvider($faker));
+
+        $alternatives = $generator->compiledGrammar()->ruleMap['ColId']->alternatives;
+
+        self::assertSame([0, 1], array_keys($alternatives));
+        self::assertSame([
+            ['IDENT'],
+            ['IDENT'],
+        ], array_map(
+            static fn (Production $alt): array => array_map(
+                static fn ($symbol): string => $symbol instanceof Terminal ? $symbol->value : ($symbol instanceof NonTerminal ? $symbol->value : ''),
+                $alt->symbols,
+            ),
+            $alternatives,
+        ));
     }
 
     public function testAugmentGrammarRemovesBracketIndirection(): void
@@ -306,6 +375,29 @@ final class SqlGeneratorTest extends TestCase
         $result = $generator->generate('stmt');
 
         self::assertSame($expected, $result);
+    }
+
+    public function testGenerateSkipsModeTokensWhileAdvancingIdentifierOrdinals(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([
+                    new Terminal('MODE_TYPE_NAME'),
+                    new Terminal('IDENT'),
+                    new Terminal('MODE_PLPGSQL_EXPR'),
+                    new Terminal('UIDENT'),
+                    new Terminal('MODE_PLPGSQL_ASSIGN1'),
+                    new Terminal('IDENT'),
+                    new Terminal('MODE_PLPGSQL_ASSIGN2'),
+                    new Terminal('MODE_PLPGSQL_ASSIGN3'),
+                ]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $generator = new SqlGenerator($grammar, $faker, new PostgreSqlProvider($faker));
+
+        self::assertSame('_i0 U&"_i1" _i2', $generator->generate('stmt'));
     }
 
     #[DataProvider('providerGenerateStripsPSuffix')]
@@ -483,6 +575,36 @@ final class SqlGeneratorTest extends TestCase
                     && $alt->symbols[2]->value === ')';
             },
         )));
+    }
+
+    public function testAugmentGrammarReindexesOperatorArgTypesAfterRemovingSingleTypenameVariant(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([new NonTerminal('oper_argtypes')]),
+            ]),
+            'oper_argtypes' => new ProductionRule('oper_argtypes', [
+                new Production([new Terminal('('), new NonTerminal('Typename'), new Terminal(')')]),
+                new Production([new Terminal('NONE')]),
+                new Production([new Terminal('('), new NonTerminal('Typename'), new Terminal(','), new NonTerminal('Typename'), new Terminal(')')]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new PostgreSqlProvider($faker));
+
+        $alternatives = $generator->compiledGrammar()->ruleMap['oper_argtypes']->alternatives;
+
+        self::assertSame([0, 1], array_keys($alternatives));
+        self::assertSame([
+            ['NONE'],
+            ['(', 'Typename', ',', 'Typename', ')'],
+        ], array_map(
+            static fn (Production $alt): array => array_map(
+                static fn ($symbol): string => $symbol instanceof Terminal ? $symbol->value : ($symbol instanceof NonTerminal ? $symbol->value : ''),
+                $alt->symbols,
+            ),
+            $alternatives,
+        ));
     }
 
     public function testGenerateKeepsTwoTypeOperatorArgs(): void
@@ -760,6 +882,37 @@ final class SqlGeneratorTest extends TestCase
 
                 return ($names === ['ALTER', 'MATERIALIZED', 'VIEW', 'qualified_name', 'alter_table_cmds'])
                     || ($names === ['ALTER', 'MATERIALIZED', 'VIEW', 'IF_P', 'EXISTS', 'qualified_name', 'alter_table_cmds']);
+            },
+        )));
+    }
+
+    public function testAugmentGrammarRewritesMaterializedViewAlterTableFamiliesInPlace(): void
+    {
+        $grammar = \SqlFaker\PostgreSql\Grammar\PgGrammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new PostgreSqlProvider($faker));
+
+        $ref = new ReflectionClass($generator);
+        $prop = $ref->getProperty('grammar');
+        /** @var Grammar $augmented */
+        $augmented = $prop->getValue($generator);
+
+        self::assertNotSame([], array_values(array_filter(
+            $augmented->ruleMap['AlterTableStmt']->alternatives,
+            static function (Production $alt): bool {
+                $names = array_map(
+                    static function ($symbol): string {
+                        return match (true) {
+                            $symbol instanceof NonTerminal => $symbol->value,
+                            $symbol instanceof Terminal => $symbol->value,
+                            default => throw new LogicException('Unexpected symbol type.'),
+                        };
+                    },
+                    $alt->symbols,
+                );
+
+                return $names === ['ALTER', 'MATERIALIZED', 'VIEW', 'qualified_name', 'materialized_view_alter_table_cmds']
+                    || $names === ['ALTER', 'MATERIALIZED', 'VIEW', 'IF_P', 'EXISTS', 'qualified_name', 'materialized_view_alter_table_cmds'];
             },
         )));
     }
@@ -1299,6 +1452,36 @@ final class SqlGeneratorTest extends TestCase
         )));
     }
 
+    public function testAugmentGrammarRemovesStarTargetElementsAndReindexesTheRemainder(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([new NonTerminal('target_el')]),
+            ]),
+            'target_el' => new ProductionRule('target_el', [
+                new Production([new Terminal('*')]),
+                new Production([new NonTerminal('a_expr')]),
+                new Production([new NonTerminal('a_expr'), new Terminal('AS'), new NonTerminal('ColLabel')]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new PostgreSqlProvider($faker));
+
+        $alternatives = $generator->compiledGrammar()->ruleMap['target_el']->alternatives;
+
+        self::assertSame([0, 1], array_keys($alternatives));
+        self::assertSame([
+            ['a_expr'],
+            ['a_expr', 'AS', 'ColLabel'],
+        ], array_map(
+            static fn (Production $alt): array => array_map(
+                static fn ($symbol): string => $symbol instanceof Terminal ? $symbol->value : ($symbol instanceof NonTerminal ? $symbol->value : ''),
+                $alt->symbols,
+            ),
+            $alternatives,
+        ));
+    }
+
     public function testAugmentGrammarConstrainsGrantParameterTargetsToCanonicalConfigurationNames(): void
     {
         $grammar = \SqlFaker\PostgreSql\Grammar\PgGrammar::load();
@@ -1633,6 +1816,29 @@ final class SqlGeneratorTest extends TestCase
                 return $names === ['CREATE', 'safe_temporary_relation_modifier', 'VIEW', 'safe_temporary_relation_name', 'opt_reloptions', 'AS', 'SelectStmt', 'opt_check_option'];
             },
         )));
+    }
+
+    public function testAugmentGrammarIntroducesSafeNonTemporaryTableModifierDefaults(): void
+    {
+        $grammar = \SqlFaker\PostgreSql\Grammar\PgGrammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new PostgreSqlProvider($faker));
+
+        $ref = new ReflectionClass($generator);
+        $prop = $ref->getProperty('grammar');
+        /** @var Grammar $augmented */
+        $augmented = $prop->getValue($generator);
+
+        self::assertSame([
+            ['UNLOGGED'],
+            [],
+        ], array_map(
+            static fn (Production $alt): array => array_map(
+                static fn ($symbol): string => $symbol instanceof Terminal ? $symbol->value : ($symbol instanceof NonTerminal ? $symbol->value : ''),
+                $alt->symbols,
+            ),
+            $augmented->ruleMap['safe_table_non_temp_modifier']->alternatives,
+        ));
     }
 
     public function testAugmentGrammarConstrainsAlterExtensionContentTargets(): void
@@ -2077,6 +2283,37 @@ final class SqlGeneratorTest extends TestCase
         ));
     }
 
+    public function testAugmentGrammarRewritesDropTypeAndDomainIfExistsVariantsToSafeNameLists(): void
+    {
+        $grammar = \SqlFaker\PostgreSql\Grammar\PgGrammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new PostgreSqlProvider($faker));
+
+        $ref = new ReflectionClass($generator);
+        $prop = $ref->getProperty('grammar');
+        /** @var Grammar $augmented */
+        $augmented = $prop->getValue($generator);
+
+        self::assertNotSame([], array_values(array_filter(
+            $augmented->ruleMap['DropStmt']->alternatives,
+            static function (Production $alt): bool {
+                $names = array_map(
+                    static function ($symbol): string {
+                        return match (true) {
+                            $symbol instanceof NonTerminal => $symbol->value,
+                            $symbol instanceof Terminal => $symbol->value,
+                            default => throw new LogicException('Unexpected symbol type.'),
+                        };
+                    },
+                    $alt->symbols,
+                );
+
+                return $names === ['DROP', 'TYPE_P', 'IF_P', 'EXISTS', 'safe_drop_type_name_list', 'opt_drop_behavior']
+                    || $names === ['DROP', 'DOMAIN_P', 'IF_P', 'EXISTS', 'safe_drop_type_name_list', 'opt_drop_behavior'];
+            },
+        )));
+    }
+
     public function testAugmentGrammarConstrainsAlterTypeToSafeOptionSubset(): void
     {
         $grammar = \SqlFaker\PostgreSql\Grammar\PgGrammar::load();
@@ -2184,6 +2421,16 @@ final class SqlGeneratorTest extends TestCase
         yield 'ColLabel' => ['ColLabel'];
         yield 'type_function_name' => ['type_function_name'];
         yield 'NonReservedWord' => ['NonReservedWord'];
+    }
+
+    /**
+     * @return iterable<string, array{array<string, mixed>, string}>
+     */
+    public static function providerContractGrammarEvidence(): iterable
+    {
+        foreach (GrammarClaimLoader::loadGrammarEvidence(__DIR__ . '/../../../spec/claims/postgresql.contract.json') as $index => $case) {
+            yield sprintf('%s #%d', $case['claim_id'], $index) => [$case['evidence'], $case['claim_id']];
+        }
     }
 
     /**

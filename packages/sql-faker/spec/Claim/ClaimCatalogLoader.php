@@ -19,12 +19,11 @@ final class ClaimCatalogLoader
         'grammar.no_empty_rules',
         'grammar.entries.present',
         'grammar.entries.terminate',
-        'grammar.families.reachable',
+        'grammar.rules.reachable',
         'grammar.rule.contains_sequence',
         'grammar.rule.not_contains_sequence',
-        'witness.generates',
-        'witness.property_equals_parameter',
-        'witness.properties_distinct',
+        'generation.generates',
+        'generation.sql_matches',
         'outcome.kind_in',
     ];
 
@@ -105,19 +104,23 @@ final class ClaimCatalogLoader
         /** @var array<string, mixed> $subject */
 
         $subjectKind = $this->requiredString($subject, 'kind', $location . '.subject');
-        if (!in_array($subjectKind, ['grammar', 'family'], true)) {
+        if (!in_array($subjectKind, ['grammar', 'generation'], true)) {
             throw new InvalidArgumentException(sprintf('Claim %s has unsupported subject kind: %s', $location, $subjectKind));
         }
 
-        $familyId = null;
-        if ($subjectKind === 'family') {
-            $familyId = $this->requiredString($subject, 'family', $location . '.subject');
+        $subjectOptions = $subject;
+        unset($subjectOptions['kind']);
+        foreach ($subjectOptions as $key => $value) {
+            if (!is_scalar($value)) {
+                throw new InvalidArgumentException(sprintf('Claim %s subject option %s must be scalar.', $location, $key));
+            }
         }
 
         $cases = $this->parseCases($data['cases'] ?? [[]], $location);
         $evidence = $this->parseEvidence($data['evidence'] ?? null, $location);
 
-        return new ClaimDefinition($id, $level, $dialect, $statement, $location, $subjectKind, $familyId, $cases, $evidence);
+        /** @var array<string, scalar> $subjectOptions */
+        return new ClaimDefinition($id, $level, $dialect, $statement, $location, $subjectKind, $subjectOptions, $cases, $evidence);
     }
 
     /**

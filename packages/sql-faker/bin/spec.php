@@ -17,22 +17,36 @@ use Spec\Container\MySql84Container;
 use Spec\Container\MySql90Container;
 use Spec\Container\MySql91Container;
 use Spec\Container\PostgreSqlContainer;
-use Spec\MySql\Specification as MySqlSpecification;
 use Spec\Output\HumanReadableRenderer;
 use Spec\Policy\MySqlPolicy;
 use Spec\Policy\OutcomePolicy;
 use Spec\Policy\PostgreSqlPolicy;
 use Spec\Policy\SqlitePolicy;
-use Spec\PostgreSql\Specification as PostgreSqlSpecification;
 use Spec\Probe\EngineProbe;
 use Spec\Probe\MySqlEngineProbe;
 use Spec\Probe\PostgreSqlEngineProbe;
 use Spec\Probe\SqliteEngineProbe;
+use Spec\Runner\DialectContracts;
 use Spec\Runner\SpecRunner;
-use Spec\Sqlite\Specification as SqliteSpecification;
-use SqlFaker\MySqlProvider;
-use SqlFaker\PostgreSqlProvider;
-use SqlFaker\SqliteProvider;
+use SqlFaker\Generation\TerminationLengthComputer;
+use SqlFaker\MySql\LexicalValueGenerator as MySqlLexicalValueGenerator;
+use SqlFaker\MySql\SnapshotLoader as MySqlSnapshotLoader;
+use SqlFaker\MySql\SupportedGrammarBuilder as MySqlSupportedGrammarBuilder;
+use SqlFaker\MySql\TerminalDeriver as MySqlTerminalDeriver;
+use SqlFaker\MySql\TerminalRenderer as MySqlTerminalRenderer;
+use SqlFaker\MySql\TokenJoiner as MySqlTokenJoiner;
+use SqlFaker\PostgreSql\LexicalValueGenerator as PostgreSqlLexicalValueGenerator;
+use SqlFaker\PostgreSql\SnapshotLoader as PostgreSqlSnapshotLoader;
+use SqlFaker\PostgreSql\SupportedGrammarBuilder as PostgreSqlSupportedGrammarBuilder;
+use SqlFaker\PostgreSql\TerminalDeriver as PostgreSqlTerminalDeriver;
+use SqlFaker\PostgreSql\TerminalRenderer as PostgreSqlTerminalRenderer;
+use SqlFaker\PostgreSql\TokenJoiner as PostgreSqlTokenJoiner;
+use SqlFaker\Sqlite\LexicalValueGenerator as SqliteLexicalValueGenerator;
+use SqlFaker\Sqlite\SnapshotLoader as SqliteSnapshotLoader;
+use SqlFaker\Sqlite\SupportedGrammarBuilder as SqliteSupportedGrammarBuilder;
+use SqlFaker\Sqlite\TerminalDeriver as SqliteTerminalDeriver;
+use SqlFaker\Sqlite\TerminalRenderer as SqliteTerminalRenderer;
+use SqlFaker\Sqlite\TokenJoiner as SqliteTokenJoiner;
 use Testcontainers\Testcontainers;
 
 const CLAIM_DIR = __DIR__ . '/../spec/claims';
@@ -71,20 +85,12 @@ foreach ($claims as $claim) {
 }
 
 $mysqlVersion = getenv('MYSQL_VERSION') !== false ? (string) getenv('MYSQL_VERSION') : defaultSpecMySqlVersion();
-$runtimes = [];
-$specifications = [];
+$dialectContracts = [];
 foreach (array_keys($dialects) as $selectedDialect) {
-    $runtimes[$selectedDialect] = match ($selectedDialect) {
-        'mysql' => new MySqlProvider(Factory::create(), mysqlGrammarVersion($mysqlVersion)),
-        'postgresql' => new PostgreSqlProvider(Factory::create()),
-        'sqlite' => new SqliteProvider(Factory::create()),
-        default => throw new InvalidArgumentException(sprintf('Unsupported dialect: %s', $selectedDialect)),
-    };
-
-    $specifications[$selectedDialect] = match ($selectedDialect) {
-        'mysql' => new MySqlSpecification(),
-        'postgresql' => new PostgreSqlSpecification(),
-        'sqlite' => new SqliteSpecification(),
+    $dialectContracts[$selectedDialect] = match ($selectedDialect) {
+        'mysql' => buildMySqlContracts(mysqlGrammarVersion($mysqlVersion)),
+        'postgresql' => buildPostgreSqlContracts(),
+        'sqlite' => buildSqliteContracts(),
         default => throw new InvalidArgumentException(sprintf('Unsupported dialect: %s', $selectedDialect)),
     };
 }
@@ -102,7 +108,7 @@ foreach ($claims as $claim) {
 $probes = $needsOutcome ? buildProbes(array_keys($dialects), $mysqlVersion) : [];
 $policies = $needsOutcome ? buildPolicies(array_keys($dialects)) : [];
 
-$runner = new SpecRunner($runtimes, $specifications, $probes, $policies);
+$runner = new SpecRunner($dialectContracts, $probes, $policies);
 $claimResults = $runner->run($claims);
 $report = buildReport($claimResults, $command, $level, $dialect, isset($dialects['mysql']), $mysqlVersion);
 
@@ -142,6 +148,51 @@ function parseArguments(array $argv): array
     }
 
     return [$command, $options];
+}
+
+function buildMySqlContracts(string $version): DialectContracts
+{
+    $faker = Factory::create();
+    $lexicalValues = new MySqlLexicalValueGenerator($faker);
+
+    return new DialectContracts(
+        new MySqlSnapshotLoader($version),
+        new MySqlSupportedGrammarBuilder(),
+        new TerminationLengthComputer(),
+        new MySqlTerminalDeriver($faker),
+        new MySqlTerminalRenderer($faker, $lexicalValues),
+        new MySqlTokenJoiner(),
+    );
+}
+
+function buildPostgreSqlContracts(): DialectContracts
+{
+    $faker = Factory::create();
+    $lexicalValues = new PostgreSqlLexicalValueGenerator($faker);
+
+    return new DialectContracts(
+        new PostgreSqlSnapshotLoader(),
+        new PostgreSqlSupportedGrammarBuilder(),
+        new TerminationLengthComputer(),
+        new PostgreSqlTerminalDeriver($faker),
+        new PostgreSqlTerminalRenderer($faker, $lexicalValues),
+        new PostgreSqlTokenJoiner(),
+    );
+}
+
+function buildSqliteContracts(): DialectContracts
+{
+    $faker = Factory::create();
+    $lexicalValues = new SqliteLexicalValueGenerator($faker);
+
+    return new DialectContracts(
+        new SqliteSnapshotLoader(),
+        new SqliteSupportedGrammarBuilder(),
+        new TerminationLengthComputer(),
+        new SqliteTerminalDeriver($faker),
+        new SqliteTerminalRenderer($faker, $lexicalValues),
+        new SqliteTokenJoiner(),
+    );
 }
 
 /**

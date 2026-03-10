@@ -9,22 +9,16 @@ use Spec\Claim\ClaimDefinition;
 use Spec\Claim\EvidenceDefinition;
 use Spec\Policy\OutcomePolicy;
 use Spec\Probe\EngineProbe;
-use Spec\Specification\DialectSpecification;
-use Spec\Subject\FamilyRequest;
-use Spec\Subject\SqlWitness;
-use SqlFaker\Contract\Runtime;
+use SqlFaker\Contract\GenerationRequest;
+use SqlFaker\Contract\Grammar;
 
 /**
- * Runs claim catalogs against the Runtime contract, using spec-local dialect
- * metadata only for entry rules, family anchors, and witness generation.
+ * Runs claim catalogs directly against the algorithm-phase contracts.
  */
 final class SpecRunner
 {
-    /** @var array<string, Runtime> */
-    private array $runtimes;
-
-    /** @var array<string, DialectSpecification> */
-    private array $specifications;
+    /** @var array<string, DialectContracts> */
+    private array $dialectContracts;
 
     /** @var array<string, EngineProbe> */
     private array $probes;
@@ -36,15 +30,13 @@ final class SpecRunner
     private array $grammarCheckers = [];
 
     /**
-     * @param array<string, Runtime> $runtimes
-     * @param array<string, DialectSpecification> $specifications
+     * @param array<string, DialectContracts> $dialectContracts
      * @param array<string, EngineProbe> $probes
      * @param array<string, OutcomePolicy> $policies
      */
-    public function __construct(array $runtimes, array $specifications, array $probes = [], array $policies = [])
+    public function __construct(array $dialectContracts, array $probes = [], array $policies = [])
     {
-        $this->runtimes = $runtimes;
-        $this->specifications = $specifications;
+        $this->dialectContracts = $dialectContracts;
         $this->probes = $probes;
         $this->policies = $policies;
     }
@@ -68,19 +60,14 @@ final class SpecRunner
      */
     private function runClaim(ClaimDefinition $claim): array
     {
-        $runtime = $this->runtimes[$claim->dialect] ?? null;
-        if ($runtime === null) {
-            throw new InvalidArgumentException(sprintf('No runtime registered for dialect %s.', $claim->dialect));
-        }
-
-        $specification = $this->specifications[$claim->dialect] ?? null;
-        if ($specification === null) {
-            throw new InvalidArgumentException(sprintf('No specification registered for dialect %s.', $claim->dialect));
+        $contracts = $this->dialectContracts[$claim->dialect] ?? null;
+        if ($contracts === null) {
+            throw new InvalidArgumentException(sprintf('No contracts registered for dialect %s.', $claim->dialect));
         }
 
         $cases = [];
         foreach ($claim->cases as $index => $parameters) {
-            $cases[] = $this->runClaimCase($claim, $runtime, $specification, $parameters, $index + 1);
+            $cases[] = $this->runClaimCase($claim, $contracts, $parameters, $index + 1);
         }
 
         $caseSummary = $this->summarizeEntries($cases);
@@ -95,10 +82,7 @@ final class SpecRunner
             'source' => [
                 'location' => $claim->sourceLocation,
             ],
-            'subject' => [
-                'kind' => $claim->subjectKind,
-                'family_id' => $claim->familyId,
-            ],
+            'subject' => ['kind' => $claim->subjectKind] + $claim->subjectOptions,
             'summary' => [
                 'cases' => $caseSummary,
                 'checks' => $checkSummary,
@@ -113,15 +97,14 @@ final class SpecRunner
      */
     private function runClaimCase(
         ClaimDefinition $claim,
-        Runtime $runtime,
-        DialectSpecification $specification,
+        DialectContracts $contracts,
         array $parameters,
         int $caseNumber,
     ): array {
         $checks = [];
-        $witness = null;
+        $generation = null;
         foreach ($claim->evidence as $index => $evidence) {
-            [$passed, $message, $facts, $witness] = $this->evaluateEvidence($claim, $runtime, $specification, $parameters, $evidence, $witness);
+            [$passed, $message, $facts, $generation] = $this->evaluateEvidence($claim, $contracts, $parameters, $evidence, $generation);
             $checks[] = [
                 'check_number' => $index + 1,
                 'kind' => $evidence->kind,
@@ -145,14 +128,8 @@ final class SpecRunner
             'checks' => $checks,
         ];
 
-        if ($witness !== null) {
-            $caseResult['witness'] = [
-                'family_id' => $witness->familyId,
-                'seed' => $witness->seed,
-                'sql' => $witness->sql,
-                'parameters' => $witness->parameters,
-                'properties' => $witness->properties,
-            ];
+        if ($generation !== null) {
+            $caseResult['generation'] = $generation;
         }
 
         return $caseResult;
@@ -160,38 +137,38 @@ final class SpecRunner
 
     /**
      * @param array<string, scalar> $parameters
-     * @return array{bool, string, array<string, mixed>, ?SqlWitness}
+     * @param null|array{request: array<string, scalar|null>, sql: string} $generation
+     * @return array{bool, string, array<string, mixed>, null|array{request: array<string, scalar|null>, sql: string}}
      */
     private function evaluateEvidence(
         ClaimDefinition $claim,
-        Runtime $runtime,
-        DialectSpecification $specification,
+        DialectContracts $contracts,
         array $parameters,
         EvidenceDefinition $evidence,
-        ?SqlWitness $witness,
+        ?array $generation,
     ): array {
         return match ($evidence->kind) {
-            'grammar.no_undefined_references' => $this->checkUndefinedReferences($claim->dialect, $runtime, $specification, $witness),
-            'grammar.no_empty_rules' => $this->checkNoEmptyRules($claim->dialect, $runtime, $specification, $witness),
-            'grammar.entries.present' => $this->checkEntriesPresent($claim->dialect, $runtime, $specification, $witness),
-            'grammar.entries.terminate' => $this->checkEntriesTerminate($claim->dialect, $runtime, $specification, $witness),
-            'grammar.families.reachable' => $this->checkFamiliesReachable($claim, $runtime, $specification, $evidence, $witness),
-            'grammar.rule.contains_sequence' => $this->checkRuleSequence($claim->dialect, $runtime, $specification, $evidence, true, $witness),
-            'grammar.rule.not_contains_sequence' => $this->checkRuleSequence($claim->dialect, $runtime, $specification, $evidence, false, $witness),
-            'witness.generates' => $this->checkWitnessGenerates($claim, $runtime, $specification, $parameters, $witness),
-            'witness.property_equals_parameter' => $this->checkWitnessPropertyEqualsParameter($claim, $runtime, $specification, $parameters, $evidence, $witness),
-            'witness.properties_distinct' => $this->checkWitnessPropertiesDistinct($claim, $runtime, $specification, $parameters, $evidence, $witness),
-            'outcome.kind_in' => $this->checkOutcomeKind($claim, $runtime, $specification, $parameters, $evidence, $witness),
+            'grammar.no_undefined_references' => $this->checkUndefinedReferences($claim->dialect, $contracts, $generation),
+            'grammar.no_empty_rules' => $this->checkNoEmptyRules($claim->dialect, $contracts, $generation),
+            'grammar.entries.present' => $this->checkEntriesPresent($claim->dialect, $contracts, $evidence, $generation),
+            'grammar.entries.terminate' => $this->checkEntriesTerminate($claim->dialect, $contracts, $evidence, $generation),
+            'grammar.rules.reachable' => $this->checkRulesReachable($claim->dialect, $contracts, $evidence, $generation),
+            'grammar.rule.contains_sequence' => $this->checkRuleSequence($claim->dialect, $contracts, $evidence, true, $generation),
+            'grammar.rule.not_contains_sequence' => $this->checkRuleSequence($claim->dialect, $contracts, $evidence, false, $generation),
+            'generation.generates' => $this->checkGenerationGenerates($claim, $contracts, $parameters, $generation),
+            'generation.sql_matches' => $this->checkGenerationSqlMatches($claim, $contracts, $parameters, $evidence, $generation),
+            'outcome.kind_in' => $this->checkOutcomeKind($claim, $contracts, $parameters, $evidence, $generation),
             default => throw new InvalidArgumentException(sprintf('Unsupported evidence kind: %s', $evidence->kind)),
         };
     }
 
     /**
-     * @return array{bool, string, array<string, mixed>, ?SqlWitness}
+     * @param null|array{request: array<string, scalar|null>, sql: string} $generation
+     * @return array{bool, string, array<string, mixed>, null|array{request: array<string, scalar|null>, sql: string}}
      */
-    private function checkUndefinedReferences(string $dialect, Runtime $runtime, DialectSpecification $specification, ?SqlWitness $witness): array
+    private function checkUndefinedReferences(string $dialect, DialectContracts $contracts, ?array $generation): array
     {
-        $undefinedReferences = $this->grammarChecker($dialect, $runtime, $specification)->undefinedReferences();
+        $undefinedReferences = $this->grammarChecker($dialect, $contracts)->undefinedReferences();
         $passed = $undefinedReferences === [];
 
         return [
@@ -201,16 +178,17 @@ final class SpecRunner
                 'undefined_references' => $undefinedReferences,
                 'count' => count($undefinedReferences),
             ],
-            $witness,
+            $generation,
         ];
     }
 
     /**
-     * @return array{bool, string, array<string, mixed>, ?SqlWitness}
+     * @param null|array{request: array<string, scalar|null>, sql: string} $generation
+     * @return array{bool, string, array<string, mixed>, null|array{request: array<string, scalar|null>, sql: string}}
      */
-    private function checkNoEmptyRules(string $dialect, Runtime $runtime, DialectSpecification $specification, ?SqlWitness $witness): array
+    private function checkNoEmptyRules(string $dialect, DialectContracts $contracts, ?array $generation): array
     {
-        $rules = $this->grammarChecker($dialect, $runtime, $specification)->rulesWithoutAlternatives();
+        $rules = $this->grammarChecker($dialect, $contracts)->rulesWithoutAlternatives();
         $passed = $rules === [];
 
         return [
@@ -220,17 +198,22 @@ final class SpecRunner
                 'rules' => $rules,
                 'count' => count($rules),
             ],
-            $witness,
+            $generation,
         ];
     }
 
     /**
-     * @return array{bool, string, array<string, mixed>, ?SqlWitness}
+     * @param null|array{request: array<string, scalar|null>, sql: string} $generation
+     * @return array{bool, string, array<string, mixed>, null|array{request: array<string, scalar|null>, sql: string}}
      */
-    private function checkEntriesPresent(string $dialect, Runtime $runtime, DialectSpecification $specification, ?SqlWitness $witness): array
-    {
-        $entryRules = $specification->entryRules();
-        $missing = $this->grammarChecker($dialect, $runtime, $specification)->missingEntries($entryRules);
+    private function checkEntriesPresent(
+        string $dialect,
+        DialectContracts $contracts,
+        EvidenceDefinition $evidence,
+        ?array $generation,
+    ): array {
+        $entryRules = $this->requireStringListOption($evidence, 'entries');
+        $missing = $this->grammarChecker($dialect, $contracts)->missingEntries($entryRules);
         $passed = $missing === [];
 
         return [
@@ -241,17 +224,22 @@ final class SpecRunner
                 'missing_entries' => $missing,
                 'count' => count($missing),
             ],
-            $witness,
+            $generation,
         ];
     }
 
     /**
-     * @return array{bool, string, array<string, mixed>, ?SqlWitness}
+     * @param null|array{request: array<string, scalar|null>, sql: string} $generation
+     * @return array{bool, string, array<string, mixed>, null|array{request: array<string, scalar|null>, sql: string}}
      */
-    private function checkEntriesTerminate(string $dialect, Runtime $runtime, DialectSpecification $specification, ?SqlWitness $witness): array
-    {
-        $entryRules = $specification->entryRules();
-        $nonTerminating = $this->grammarChecker($dialect, $runtime, $specification)->nonTerminatingReachableRules($entryRules);
+    private function checkEntriesTerminate(
+        string $dialect,
+        DialectContracts $contracts,
+        EvidenceDefinition $evidence,
+        ?array $generation,
+    ): array {
+        $entryRules = $this->requireStringListOption($evidence, 'entries');
+        $nonTerminating = $this->grammarChecker($dialect, $contracts)->nonTerminatingReachableRules($entryRules);
         $passed = $nonTerminating === [];
 
         return [
@@ -262,58 +250,48 @@ final class SpecRunner
                 'non_terminating_rules' => $nonTerminating,
                 'count' => count($nonTerminating),
             ],
-            $witness,
+            $generation,
         ];
     }
 
     /**
-     * @return array{bool, string, array<string, mixed>, ?SqlWitness}
+     * @param null|array{request: array<string, scalar|null>, sql: string} $generation
+     * @return array{bool, string, array<string, mixed>, null|array{request: array<string, scalar|null>, sql: string}}
      */
-    private function checkFamiliesReachable(
-        ClaimDefinition $claim,
-        Runtime $runtime,
-        DialectSpecification $specification,
+    private function checkRulesReachable(
+        string $dialect,
+        DialectContracts $contracts,
         EvidenceDefinition $evidence,
-        ?SqlWitness $witness,
+        ?array $generation,
     ): array {
-        $families = $evidence->options['families'] ?? ($claim->familyId !== null ? [$claim->familyId] : null);
-        if (!is_array($families) || $families === []) {
-            throw new InvalidArgumentException('grammar.families.reachable requires families or a family subject.');
-        }
-
-        $familyIds = [];
-        foreach ($families as $familyId) {
-            if (!is_string($familyId) || $familyId === '') {
-                throw new InvalidArgumentException('grammar.families.reachable requires string family ids.');
-            }
-            $familyIds[] = $familyId;
-        }
-
-        $unreachable = $this->grammarChecker($claim->dialect, $runtime, $specification)->unreachableFamilies($specification->entryRules(), $familyIds);
+        $entryRules = $this->requireStringListOption($evidence, 'entries');
+        $rules = $this->requireStringListOption($evidence, 'rules');
+        $unreachable = $this->grammarChecker($dialect, $contracts)->unreachableRules($entryRules, $rules);
         $passed = $unreachable === [];
 
         return [
             $passed,
-            $passed ? 'all required families are reachable' : 'unreachable families found',
+            $passed ? 'all required rules are reachable' : 'unreachable rules found',
             [
-                'families' => $familyIds,
-                'unreachable_families' => $unreachable,
+                'entry_rules' => $entryRules,
+                'rules' => $rules,
+                'unreachable_rules' => $unreachable,
                 'count' => count($unreachable),
             ],
-            $witness,
+            $generation,
         ];
     }
 
     /**
-     * @return array{bool, string, array<string, mixed>, ?SqlWitness}
+     * @param null|array{request: array<string, scalar|null>, sql: string} $generation
+     * @return array{bool, string, array<string, mixed>, null|array{request: array<string, scalar|null>, sql: string}}
      */
     private function checkRuleSequence(
         string $dialect,
-        Runtime $runtime,
-        DialectSpecification $specification,
+        DialectContracts $contracts,
         EvidenceDefinition $evidence,
         bool $shouldExist,
-        ?SqlWitness $witness,
+        ?array $generation,
     ): array {
         $rule = $evidence->options['rule'] ?? null;
         $sequence = $evidence->options['sequence'] ?? null;
@@ -333,7 +311,7 @@ final class SpecRunner
             $expected[] = $symbol;
         }
 
-        $ruleSnapshot = $runtime->supportedGrammar()->rule($rule);
+        $ruleSnapshot = $this->supportedGrammar($dialect, $contracts)->rule($rule);
         $baseFacts = [
             'rule' => $rule,
             'expectation' => $shouldExist ? 'sequence must exist' : 'sequence must be excluded',
@@ -348,7 +326,7 @@ final class SpecRunner
                     'sequence_present' => false,
                     'matched' => false,
                 ],
-                $witness,
+                $generation,
             ];
         }
 
@@ -375,144 +353,73 @@ final class SpecRunner
                 'sequence_present' => $sequencePresent,
                 'matched' => $passed,
             ],
-            $witness,
+            $generation,
         ];
     }
 
     /**
      * @param array<string, scalar> $parameters
-     * @return array{bool, string, array<string, mixed>, ?SqlWitness}
+     * @param null|array{request: array<string, scalar|null>, sql: string} $generation
+     * @return array{bool, string, array<string, mixed>, array{request: array<string, scalar|null>, sql: string}}
      */
-    private function checkWitnessGenerates(
+    private function checkGenerationGenerates(
         ClaimDefinition $claim,
-        Runtime $runtime,
-        DialectSpecification $specification,
+        DialectContracts $contracts,
         array $parameters,
-        ?SqlWitness $witness,
+        ?array $generation,
     ): array {
-        $witness = $this->requireWitness($claim, $runtime, $specification, $parameters, $witness);
+        $generation = $this->requireGeneration($claim, $contracts, $parameters, $generation);
 
         return [
-            true,
-            'witness generated',
+            $generation['sql'] !== '',
+            $generation['sql'] !== '' ? 'generation completed' : 'generation returned an empty string',
             [
-                'family_id' => $witness->familyId,
-                'seed' => $witness->seed,
-                'properties' => $witness->properties,
+                'request' => $generation['request'],
+                'sql_length' => strlen($generation['sql']),
             ],
-            $witness,
+            $generation,
         ];
     }
 
     /**
      * @param array<string, scalar> $parameters
-     * @return array{bool, string, array<string, mixed>, ?SqlWitness}
+     * @param null|array{request: array<string, scalar|null>, sql: string} $generation
+     * @return array{bool, string, array<string, mixed>, array{request: array<string, scalar|null>, sql: string}}
      */
-    private function checkWitnessPropertyEqualsParameter(
+    private function checkGenerationSqlMatches(
         ClaimDefinition $claim,
-        Runtime $runtime,
-        DialectSpecification $specification,
-        array $parameters,
-        EvidenceDefinition $evidence,
-        ?SqlWitness $witness,
-    ): array {
-        $property = $evidence->options['property'] ?? null;
-        $parameter = $evidence->options['parameter'] ?? null;
-        if (!is_string($property) || !is_string($parameter)) {
-            throw new InvalidArgumentException('witness.property_equals_parameter requires property and parameter options.');
-        }
-
-        $witness = $this->requireWitness($claim, $runtime, $specification, $parameters, $witness);
-        $actual = $witness->properties[$property] ?? null;
-        $expected = $parameters[$parameter] ?? null;
-        $passed = $actual === $expected;
-
-        return [
-            $passed,
-            $passed
-                ? sprintf('witness property %s matches parameter %s', $property, $parameter)
-                : sprintf('witness property %s does not match parameter %s', $property, $parameter),
-            [
-                'property' => $property,
-                'parameter' => $parameter,
-                'actual' => $actual,
-                'expected' => $expected,
-                'matched' => $passed,
-            ],
-            $witness,
-        ];
-    }
-
-    /**
-     * @param array<string, scalar> $parameters
-     * @return array{bool, string, array<string, mixed>, ?SqlWitness}
-     */
-    private function checkWitnessPropertiesDistinct(
-        ClaimDefinition $claim,
-        Runtime $runtime,
-        DialectSpecification $specification,
+        DialectContracts $contracts,
         array $parameters,
         EvidenceDefinition $evidence,
-        ?SqlWitness $witness,
+        ?array $generation,
     ): array {
-        $propertyNames = $evidence->options['properties'] ?? null;
-        if (!is_array($propertyNames) || count($propertyNames) < 2) {
-            throw new InvalidArgumentException('witness.properties_distinct requires a properties list with at least two entries.');
-        }
-
-        $witness = $this->requireWitness($claim, $runtime, $specification, $parameters, $witness);
-
-        $values = [];
-        foreach ($propertyNames as $propertyName) {
-            if (!is_string($propertyName) || $propertyName === '') {
-                throw new InvalidArgumentException('witness.properties_distinct property names must be non-empty strings.');
-            }
-
-            $value = $witness->properties[$propertyName] ?? null;
-            if (!is_scalar($value)) {
-                return [
-                    false,
-                    sprintf('missing scalar witness property %s', $propertyName),
-                    [
-                        'properties' => $values,
-                        'missing_property' => $propertyName,
-                        'distinct' => false,
-                    ],
-                    $witness,
-                ];
-            }
-
-            $values[$propertyName] = $value;
-        }
-
-        $distinct = array_unique(array_map(
-            static fn (string|int|float|bool $value): string => is_bool($value) ? ($value ? 'true' : 'false') : (string) $value,
-            array_values($values),
-        ));
-        $passed = count($distinct) === count($values);
+        $generation = $this->requireGeneration($claim, $contracts, $parameters, $generation);
+        $pattern = $this->requirePattern($parameters, $evidence);
+        $matched = preg_match($pattern, $generation['sql']) === 1;
 
         return [
-            $passed,
-            $passed ? 'witness properties are distinct' : 'witness properties are not distinct',
+            $matched,
+            $matched ? 'generated SQL matches the expected pattern' : 'generated SQL does not match the expected pattern',
             [
-                'properties' => $values,
-                'distinct' => $passed,
+                'request' => $generation['request'],
+                'pattern' => $pattern,
+                'matched' => $matched,
             ],
-            $witness,
+            $generation,
         ];
     }
 
     /**
      * @param array<string, scalar> $parameters
-     * @return array{bool, string, array<string, mixed>, ?SqlWitness}
+     * @param null|array{request: array<string, scalar|null>, sql: string} $generation
+     * @return array{bool, string, array<string, mixed>, array{request: array<string, scalar|null>, sql: string}}
      */
     private function checkOutcomeKind(
         ClaimDefinition $claim,
-        Runtime $runtime,
-        DialectSpecification $specification,
+        DialectContracts $contracts,
         array $parameters,
         EvidenceDefinition $evidence,
-        ?SqlWitness $witness,
+        ?array $generation,
     ): array {
         $allowedKinds = $evidence->options['allowedKinds'] ?? null;
         if (!is_array($allowedKinds) || $allowedKinds === []) {
@@ -539,8 +446,8 @@ final class SpecRunner
             throw new InvalidArgumentException(sprintf('No outcome policy registered for dialect %s.', $claim->dialect));
         }
 
-        $witness = $this->requireWitness($claim, $runtime, $specification, $parameters, $witness);
-        $probeResult = $probe->observe($witness->sql);
+        $generation = $this->requireGeneration($claim, $contracts, $parameters, $generation);
+        $probeResult = $probe->observe($generation['sql']);
         $kind = $policy->classify($probeResult)->value;
         $passed = isset($allowed[$kind]);
 
@@ -550,6 +457,7 @@ final class SpecRunner
                 ? sprintf('observed outcome %s is allowed', $kind)
                 : sprintf('observed outcome %s is not allowed', $kind),
             [
+                'request' => $generation['request'],
                 'allowed_kinds' => $normalizedAllowedKinds,
                 'actual_kind' => $kind,
                 'accepted' => $probeResult->accepted,
@@ -558,50 +466,166 @@ final class SpecRunner
                 'error_code' => $probeResult->errorCode,
                 'error_message' => $probeResult->message,
             ],
-            $witness,
+            $generation,
+        ];
+    }
+
+    /**
+     * @param array<string, scalar> $parameters
+     * @param null|array{request: array<string, scalar|null>, sql: string} $generation
+     * @return array{request: array<string, scalar|null>, sql: string}
+     */
+    private function requireGeneration(
+        ClaimDefinition $claim,
+        DialectContracts $contracts,
+        array $parameters,
+        ?array $generation,
+    ): array {
+        if ($generation !== null) {
+            return $generation;
+        }
+
+        if ($claim->subjectKind !== 'generation') {
+            throw new InvalidArgumentException(sprintf('Claim %s requires a generation subject.', $claim->id));
+        }
+
+        $request = $this->generationRequest($claim, $parameters);
+
+        return [
+            'request' => [
+                'start_rule' => $request->startRule,
+                'seed' => $request->seed,
+                'max_depth' => $request->maxDepth,
+            ],
+            'sql' => $contracts->statementGenerator->generate($request),
         ];
     }
 
     /**
      * @param array<string, scalar> $parameters
      */
-    private function requireWitness(
-        ClaimDefinition $claim,
-        Runtime $runtime,
-        DialectSpecification $specification,
-        array $parameters,
-        ?SqlWitness $witness,
-    ): SqlWitness {
-        if ($witness !== null) {
-            return $witness;
-        }
-
-        if ($claim->subjectKind !== 'family' || $claim->familyId === null) {
-            throw new InvalidArgumentException(sprintf('Claim %s requires a family subject to generate witnesses.', $claim->id));
-        }
-
-        return $specification->generateWitness($runtime, new FamilyRequest($claim->familyId, $parameters));
-    }
-
-    private function grammarChecker(string $dialect, Runtime $runtime, DialectSpecification $specification): GrammarContractChecker
+    private function generationRequest(ClaimDefinition $claim, array $parameters): GenerationRequest
     {
-        return $this->grammarCheckers[$dialect] ??= new GrammarContractChecker(
-            $runtime->supportedGrammar(),
-            $this->familyAnchors($specification),
+        $startRule = $this->stringSetting($claim, $parameters, 'start_rule');
+        $seed = $this->requiredIntSetting($claim, $parameters, 'seed');
+        $maxDepth = $this->intSetting($claim, $parameters, 'max_depth') ?? PHP_INT_MAX;
+
+        return new GenerationRequest(
+            startRule: $startRule,
+            seed: $seed,
+            maxDepth: $maxDepth,
         );
     }
 
     /**
-     * @return array<string, list<string>>
+     * @param array<string, scalar> $parameters
      */
-    private function familyAnchors(DialectSpecification $specification): array
+    private function requirePattern(array $parameters, EvidenceDefinition $evidence): string
     {
-        $anchors = [];
-        foreach ($specification->familyCatalog() as $family) {
-            $anchors[$family->id] = $family->anchorRules;
+        $pattern = $evidence->options['pattern'] ?? null;
+        if ($pattern === null) {
+            $parameterName = $evidence->options['parameter'] ?? null;
+            if (!is_string($parameterName) || $parameterName === '') {
+                throw new InvalidArgumentException('generation.sql_matches requires a pattern or parameter option.');
+            }
+
+            $pattern = $parameters[$parameterName] ?? null;
         }
 
-        return $anchors;
+        if (!is_string($pattern) || $pattern === '') {
+            throw new InvalidArgumentException('generation.sql_matches requires a non-empty pattern.');
+        }
+
+        if (@preg_match($pattern, '') === false) {
+            throw new InvalidArgumentException(sprintf('generation.sql_matches received an invalid pattern: %s', $pattern));
+        }
+
+        return $pattern;
+    }
+
+    /**
+     * @param array<string, scalar> $parameters
+     */
+    private function stringSetting(ClaimDefinition $claim, array $parameters, string $key): ?string
+    {
+        $value = $parameters[$key] ?? ($claim->subjectOptions[$key] ?? null);
+        if ($value === null) {
+            return null;
+        }
+
+        if (!is_string($value) || $value === '') {
+            throw new InvalidArgumentException(sprintf('Claim %s requires %s to be a non-empty string when provided.', $claim->id, $key));
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param array<string, scalar> $parameters
+     */
+    private function intSetting(ClaimDefinition $claim, array $parameters, string $key): ?int
+    {
+        $value = $parameters[$key] ?? ($claim->subjectOptions[$key] ?? null);
+        if ($value === null) {
+            return null;
+        }
+
+        if (is_int($value)) {
+            return $value;
+        }
+
+        if (is_string($value) && preg_match('/^-?\d+$/', $value) === 1) {
+            return (int) $value;
+        }
+
+        throw new InvalidArgumentException(sprintf('Claim %s requires %s to be an integer.', $claim->id, $key));
+    }
+
+    /**
+     * @param array<string, scalar> $parameters
+     */
+    private function requiredIntSetting(ClaimDefinition $claim, array $parameters, string $key): int
+    {
+        $value = $this->intSetting($claim, $parameters, $key);
+        if ($value === null) {
+            throw new InvalidArgumentException(sprintf('Claim %s requires %s.', $claim->id, $key));
+        }
+
+        return $value;
+    }
+
+    private function grammarChecker(string $dialect, DialectContracts $contracts): GrammarContractChecker
+    {
+        return $this->grammarCheckers[$dialect] ??= new GrammarContractChecker(
+            $this->supportedGrammar($dialect, $contracts),
+        );
+    }
+
+    private function supportedGrammar(string $dialect, DialectContracts $contracts): Grammar
+    {
+        return $contracts->supportedGrammar();
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function requireStringListOption(EvidenceDefinition $evidence, string $key): array
+    {
+        $values = $evidence->options[$key] ?? null;
+        if (!is_array($values) || $values === []) {
+            throw new InvalidArgumentException(sprintf('Evidence kind %s requires a non-empty %s list.', $evidence->kind, $key));
+        }
+
+        $result = [];
+        foreach ($values as $value) {
+            if (!is_string($value) || $value === '') {
+                throw new InvalidArgumentException(sprintf('Evidence kind %s requires %s entries to be non-empty strings.', $evidence->kind, $key));
+            }
+
+            $result[] = $value;
+        }
+
+        return $result;
     }
 
     /**

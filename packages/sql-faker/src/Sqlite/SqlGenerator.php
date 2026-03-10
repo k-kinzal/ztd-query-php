@@ -15,7 +15,7 @@ use SqlFaker\Grammar\Symbol;
 use SqlFaker\Grammar\Terminal;
 use SqlFaker\Grammar\TerminationAnalyzer;
 use SqlFaker\Grammar\TokenJoiner;
-use SqlFaker\SqliteProvider;
+use SqlFaker\Sqlite\LexicalValueSource;
 
 /**
  * Grammar-driven SQL generator for SQLite.
@@ -32,7 +32,7 @@ final class SqlGenerator
 
     private Grammar $grammar;
     private FakerGenerator $faker;
-    private SqliteProvider $provider;
+    private LexicalValueSource $lexicalValues;
     private TerminationAnalyzer $terminationAnalyzer;
     private RandomStringGenerator $rsg;
 
@@ -40,11 +40,11 @@ final class SqlGenerator
     private int $derivationSteps = 0;
     private int $identifierOrdinal = 0;
 
-    public function __construct(Grammar $grammar, FakerGenerator $faker, SqliteProvider $provider)
+    public function __construct(Grammar $grammar, FakerGenerator $faker, LexicalValueSource $lexicalValues)
     {
         $this->grammar = $this->augmentGrammar($grammar);
         $this->faker = $faker;
-        $this->provider = $provider;
+        $this->lexicalValues = $lexicalValues;
         $this->terminationAnalyzer = new TerminationAnalyzer($this->grammar);
         $this->rsg = new RandomStringGenerator($faker);
     }
@@ -863,11 +863,11 @@ final class SqlGenerator
             $token = match ($name) {
                 'ID', 'id' => $this->generateSqliteIdentifier(),
                 'idj' => $this->generateSqliteIdentifier(),
-                'ids' => $this->provider->quotedIdentifier(),
-                'STRING' => $this->provider->stringLiteral(),
-                'number' => $this->provider->integerLiteral(),
-                'INTEGER' => $this->provider->integerLiteral(),
-                'QNUMBER' => $this->provider->integerLiteral(),
+                'ids' => $this->lexicalValues->quotedIdentifier(),
+                'STRING' => $this->lexicalValues->stringLiteral(),
+                'number' => $this->lexicalValues->integerLiteral(),
+                'INTEGER' => $this->lexicalValues->integerLiteral(),
+                'QNUMBER' => $this->lexicalValues->integerLiteral(),
                 'VARIABLE' => '?' . $this->rsg->parameterIndex(),
 
                 'LP' => '(',

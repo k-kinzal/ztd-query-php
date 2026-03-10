@@ -7,13 +7,9 @@ namespace SqlFaker;
 use Faker\Generator;
 use Faker\Provider\Base;
 use SqlFaker\Contract\GenerationRequest;
-use SqlFaker\Contract\Grammar as ContractGrammar;
-use SqlFaker\Contract\Runtime;
-use SqlFaker\Grammar\ContractGrammarProjector;
-use SqlFaker\Grammar\NonTerminal;
-use SqlFaker\Grammar\RandomStringGenerator;
-use SqlFaker\PostgreSql\Grammar\PgGrammar;
-use SqlFaker\PostgreSql\SqlGenerator;
+use SqlFaker\PostgreSql\LexicalValueGenerator;
+use SqlFaker\PostgreSql\LexicalValueSource;
+use SqlFaker\PostgreSql\StatementGenerator as PostgreSqlStatementGenerator;
 use SqlFaker\PostgreSql\StatementType;
 
 /**
@@ -34,11 +30,10 @@ use SqlFaker\PostgreSql\StatementType;
  *   $faker->selectStatement();
  *   $faker->insertStatement();
  */
-final class PostgreSqlProvider extends Base implements Runtime
+final class PostgreSqlProvider extends Base implements LexicalValueSource
 {
-    private \SqlFaker\Grammar\Grammar $grammar;
-    private SqlGenerator $sql;
-    private RandomStringGenerator $rsg;
+    private LexicalValueGenerator $lexicalValues;
+    private PostgreSqlStatementGenerator $statementGenerator;
 
     /**
      * @param Generator $generator Faker generator
@@ -50,28 +45,21 @@ final class PostgreSqlProvider extends Base implements Runtime
 
         $generator->addProvider($this);
 
-        $this->rsg = new RandomStringGenerator($generator);
-        $this->grammar = PgGrammar::load($version);
-        $this->sql = new SqlGenerator($this->grammar, $generator, $this);
-    }
-
-    public function snapshot(): ContractGrammar
-    {
-        return ContractGrammarProjector::project($this->grammar, NonTerminal::class);
-    }
-
-    public function supportedGrammar(): ContractGrammar
-    {
-        return ContractGrammarProjector::project($this->sql->compiledGrammar(), NonTerminal::class);
+        $this->lexicalValues = new LexicalValueGenerator($generator);
+        $this->statementGenerator = new PostgreSqlStatementGenerator($generator, $version, $this->lexicalValues);
     }
 
     public function generate(GenerationRequest $request): string
     {
-        if ($request->seed !== null) {
-            $this->generator->seed($request->seed);
+        if ($request->seed === null) {
+            $request = new GenerationRequest(
+                startRule: $request->startRule,
+                seed: $this->generator->numberBetween(1, 2_147_483_647),
+                maxDepth: $request->maxDepth,
+            );
         }
 
-        return $this->sql->generate($request->startRule, $request->maxDepth);
+        return $this->statementGenerator->generate($request);
     }
 
     /**
@@ -282,7 +270,7 @@ final class PostgreSqlProvider extends Base implements Runtime
      */
     public function quotedIdentifier(int $minLength = 1, int $maxLength = 63): string
     {
-        return '"' . $this->rsg->rawIdentifier($minLength, $maxLength) . '"';
+        return $this->lexicalValues->quotedIdentifier($minLength, $maxLength);
     }
 
     /**
@@ -290,7 +278,7 @@ final class PostgreSqlProvider extends Base implements Runtime
      */
     public function stringLiteral(int $minLength = 1, int $maxLength = 32): string
     {
-        return "'" . $this->rsg->mixedAlnumString($minLength, $maxLength) . "'";
+        return $this->lexicalValues->stringLiteral($minLength, $maxLength);
     }
 
     /**
@@ -298,7 +286,7 @@ final class PostgreSqlProvider extends Base implements Runtime
      */
     public function integerLiteral(int $min = 1, int $max = 2147483647): string
     {
-        return $this->rsg->integerString($min, $max);
+        return $this->lexicalValues->integerLiteral($min, $max);
     }
 
     /**
@@ -306,7 +294,7 @@ final class PostgreSqlProvider extends Base implements Runtime
      */
     public function decimalLiteral(int $precision = 10, int $scale = 2): string
     {
-        return $this->rsg->decimalString($precision, $scale);
+        return $this->lexicalValues->decimalLiteral($precision, $scale);
     }
 
     /**
@@ -314,7 +302,7 @@ final class PostgreSqlProvider extends Base implements Runtime
      */
     public function floatLiteral(int $precision = 10, int $scale = 2, int $minExponent = -307, int $maxExponent = 308): string
     {
-        return $this->rsg->floatString($this->decimalLiteral($precision, $scale), $minExponent, $maxExponent);
+        return $this->lexicalValues->floatLiteral($precision, $scale, $minExponent, $maxExponent);
     }
 
     /**
@@ -322,7 +310,7 @@ final class PostgreSqlProvider extends Base implements Runtime
      */
     public function hexLiteral(int $minLength = 1, int $maxLength = 16): string
     {
-        return "X'" . $this->rsg->hexString($minLength, $maxLength) . "'";
+        return $this->lexicalValues->hexLiteral($minLength, $maxLength);
     }
 
     /**
@@ -330,7 +318,7 @@ final class PostgreSqlProvider extends Base implements Runtime
      */
     public function binaryLiteral(int $minLength = 1, int $maxLength = 64): string
     {
-        return "B'" . $this->rsg->binaryString($minLength, $maxLength) . "'";
+        return $this->lexicalValues->binaryLiteral($minLength, $maxLength);
     }
 
     /**
@@ -338,7 +326,7 @@ final class PostgreSqlProvider extends Base implements Runtime
      */
     public function dollarQuotedString(int $minLength = 1, int $maxLength = 32): string
     {
-        return '$$' . $this->rsg->mixedAlnumString($minLength, $maxLength) . '$$';
+        return $this->lexicalValues->dollarQuotedString($minLength, $maxLength);
     }
 
     /**
@@ -346,7 +334,7 @@ final class PostgreSqlProvider extends Base implements Runtime
      */
     public function doBodyLiteral(): string
     {
-        return "'BEGIN NULL; END'";
+        return $this->lexicalValues->doBodyLiteral();
     }
 
     /**
@@ -354,6 +342,6 @@ final class PostgreSqlProvider extends Base implements Runtime
      */
     public function parameterMarker(int $min = 1, int $max = 99): string
     {
-        return '$' . $this->rsg->parameterIndex($min, $max);
+        return $this->lexicalValues->parameterMarker($min, $max);
     }
 }

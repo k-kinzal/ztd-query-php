@@ -7,13 +7,9 @@ namespace SqlFaker;
 use Faker\Generator;
 use Faker\Provider\Base;
 use SqlFaker\Contract\GenerationRequest;
-use SqlFaker\Contract\Grammar as ContractGrammar;
-use SqlFaker\Contract\Runtime;
-use SqlFaker\Grammar\ContractGrammarProjector;
-use SqlFaker\Grammar\NonTerminal;
-use SqlFaker\Grammar\RandomStringGenerator;
-use SqlFaker\Sqlite\Grammar\SqliteGrammar;
-use SqlFaker\Sqlite\SqlGenerator;
+use SqlFaker\Sqlite\LexicalValueGenerator;
+use SqlFaker\Sqlite\LexicalValueSource;
+use SqlFaker\Sqlite\StatementGenerator as SqliteStatementGenerator;
 use SqlFaker\Sqlite\StatementType;
 
 /**
@@ -34,11 +30,10 @@ use SqlFaker\Sqlite\StatementType;
  *   $faker->selectStatement();
  *   $faker->insertStatement();
  */
-final class SqliteProvider extends Base implements Runtime
+final class SqliteProvider extends Base implements LexicalValueSource
 {
-    private \SqlFaker\Grammar\Grammar $grammar;
-    private SqlGenerator $sql;
-    private RandomStringGenerator $rsg;
+    private LexicalValueGenerator $lexicalValues;
+    private SqliteStatementGenerator $statementGenerator;
 
     /**
      * @param Generator $generator Faker generator
@@ -50,28 +45,21 @@ final class SqliteProvider extends Base implements Runtime
 
         $generator->addProvider($this);
 
-        $this->rsg = new RandomStringGenerator($generator);
-        $this->grammar = SqliteGrammar::load($version);
-        $this->sql = new SqlGenerator($this->grammar, $generator, $this);
-    }
-
-    public function snapshot(): ContractGrammar
-    {
-        return ContractGrammarProjector::project($this->grammar, NonTerminal::class);
-    }
-
-    public function supportedGrammar(): ContractGrammar
-    {
-        return ContractGrammarProjector::project($this->sql->compiledGrammar(), NonTerminal::class);
+        $this->lexicalValues = new LexicalValueGenerator($generator);
+        $this->statementGenerator = new SqliteStatementGenerator($generator, $version, $this->lexicalValues);
     }
 
     public function generate(GenerationRequest $request): string
     {
-        if ($request->seed !== null) {
-            $this->generator->seed($request->seed);
+        if ($request->seed === null) {
+            $request = new GenerationRequest(
+                startRule: $request->startRule,
+                seed: $this->generator->numberBetween(1, 2_147_483_647),
+                maxDepth: $request->maxDepth,
+            );
         }
 
-        return $this->sql->generate($request->startRule, $request->maxDepth);
+        return $this->statementGenerator->generate($request);
     }
 
     /**
@@ -242,7 +230,7 @@ final class SqliteProvider extends Base implements Runtime
      */
     public function quotedIdentifier(int $minLength = 1, int $maxLength = 128): string
     {
-        return '"' . $this->rsg->rawIdentifier($minLength, $maxLength) . '"';
+        return $this->lexicalValues->quotedIdentifier($minLength, $maxLength);
     }
 
     /**
@@ -250,7 +238,7 @@ final class SqliteProvider extends Base implements Runtime
      */
     public function stringLiteral(int $minLength = 1, int $maxLength = 32): string
     {
-        return "'" . $this->rsg->mixedAlnumString($minLength, $maxLength) . "'";
+        return $this->lexicalValues->stringLiteral($minLength, $maxLength);
     }
 
     /**
@@ -258,7 +246,7 @@ final class SqliteProvider extends Base implements Runtime
      */
     public function integerLiteral(int $min = 1, int $max = PHP_INT_MAX): string
     {
-        return $this->rsg->integerString($min, $max);
+        return $this->lexicalValues->integerLiteral($min, $max);
     }
 
     /**
@@ -266,6 +254,6 @@ final class SqliteProvider extends Base implements Runtime
      */
     public function decimalLiteral(int $precision = 15, int $scale = 2): string
     {
-        return $this->rsg->decimalString($precision, $scale);
+        return $this->lexicalValues->decimalLiteral($precision, $scale);
     }
 }

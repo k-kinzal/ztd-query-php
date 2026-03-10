@@ -18,8 +18,6 @@ final class GrammarContractChecker
 
     public function __construct(
         private readonly Grammar $grammar,
-        /** @var array<string, list<string>> */
-        private readonly array $familyAnchors = [],
     ) {
         $this->terminatingRules = $this->computeTerminatingRules();
     }
@@ -148,25 +146,17 @@ final class GrammarContractChecker
 
     /**
      * @param list<string> $entries
-     * @param list<string> $families
+     * @param list<string> $rules
      * @return list<string>
      */
-    public function unreachableFamilies(array $entries, array $families): array
+    public function unreachableRules(array $entries, array $rules): array
     {
         $reachable = array_fill_keys($this->reachableRules($entries), true);
         $unreachable = [];
 
-        foreach ($families as $familyId) {
-            $anchors = $this->familyAnchors[$familyId] ?? [];
-            $isReachable = false;
-            foreach ($anchors as $anchor) {
-                if (isset($reachable[$anchor])) {
-                    $isReachable = true;
-                    break;
-                }
-            }
-            if (!$isReachable) {
-                $unreachable[] = $familyId;
+        foreach ($rules as $ruleName) {
+            if (!isset($reachable[$ruleName])) {
+                $unreachable[] = $ruleName;
             }
         }
 

@@ -15,7 +15,7 @@ use SqlFaker\MySql\Grammar\ProductionRule;
 use SqlFaker\MySql\Grammar\Symbol;
 use SqlFaker\MySql\Grammar\Terminal;
 use SqlFaker\MySql\Grammar\TerminationAnalyzer;
-use SqlFaker\MySqlProvider;
+use SqlFaker\MySql\LexicalValueSource;
 
 /**
  * Grammar-driven SQL generator for MySQL.
@@ -32,7 +32,7 @@ final class SqlGenerator
 
     private Grammar $grammar;
     private FakerGenerator $faker;
-    private MySqlProvider $provider;
+    private LexicalValueSource $lexicalValues;
     private TerminationAnalyzer $terminationAnalyzer;
     private RandomStringGenerator $rsg;
 
@@ -40,11 +40,11 @@ final class SqlGenerator
     private int $derivationSteps = 0;
     private int $identifierOrdinal = 0;
 
-    public function __construct(Grammar $grammar, FakerGenerator $faker, MySqlProvider $provider)
+    public function __construct(Grammar $grammar, FakerGenerator $faker, LexicalValueSource $lexicalValues)
     {
         $this->grammar = $this->augmentGrammar($grammar);
         $this->faker = $faker;
-        $this->provider = $provider;
+        $this->lexicalValues = $lexicalValues;
         $this->terminationAnalyzer = new TerminationAnalyzer($this->grammar);
         $this->rsg = new RandomStringGenerator($faker);
     }
@@ -1638,19 +1638,19 @@ final class SqlGenerator
 
                 'IDENT' => $this->nextCanonicalIdentifier(),
                 'IDENT_QUOTED' => '`' . $this->nextCanonicalIdentifier() . '`',
-                'TEXT_STRING' => $this->provider->stringLiteral(),
-                'NCHAR_STRING' => $this->provider->nationalStringLiteral(),
-                'DOLLAR_QUOTED_STRING_SYM' => $this->provider->dollarQuotedString(),
-                'NUM' => $this->provider->integerLiteral(),
-                'LONG_NUM' => $this->provider->longIntegerLiteral(),
-                'ULONGLONG_NUM' => $this->provider->unsignedBigIntLiteral(),
-                'DECIMAL_NUM' => $this->provider->decimalLiteral(),
-                'FLOAT_NUM' => $this->provider->floatLiteral(),
-                'HEX_NUM' => $this->provider->hexLiteral(),
-                'BIN_NUM' => $this->provider->binaryLiteral(),
-                'LEX_HOSTNAME' => $this->provider->hostname(),
-                'FILTER_DB_TABLE_PATTERN' => $this->provider->filterWildcardPattern(),
-                'RESET_MASTER_INDEX' => $this->provider->resetMasterIndex(),
+                'TEXT_STRING' => $this->lexicalValues->stringLiteral(),
+                'NCHAR_STRING' => $this->lexicalValues->nationalStringLiteral(),
+                'DOLLAR_QUOTED_STRING_SYM' => $this->lexicalValues->dollarQuotedString(),
+                'NUM' => $this->lexicalValues->integerLiteral(),
+                'LONG_NUM' => $this->lexicalValues->longIntegerLiteral(),
+                'ULONGLONG_NUM' => $this->lexicalValues->unsignedBigIntLiteral(),
+                'DECIMAL_NUM' => $this->lexicalValues->decimalLiteral(),
+                'FLOAT_NUM' => $this->lexicalValues->floatLiteral(),
+                'HEX_NUM' => $this->lexicalValues->hexLiteral(),
+                'BIN_NUM' => $this->lexicalValues->binaryLiteral(),
+                'LEX_HOSTNAME' => $this->lexicalValues->hostname(),
+                'FILTER_DB_TABLE_PATTERN' => $this->lexicalValues->filterWildcardPattern(),
+                'RESET_MASTER_INDEX' => $this->lexicalValues->resetMasterIndex(),
 
                 'WITH_ROLLUP_SYM' => 'WITH ROLLUP',
 

@@ -9,7 +9,16 @@ use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Large;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use Spec\Runner\GrammarContractChecker;
+use Spec\Support\GrammarClaimLoader;
+use Spec\Support\GrammarEvidenceAssert;
+use SqlFaker\Contract\Grammar as ContractGrammar;
+use SqlFaker\Contract\Production as ContractProduction;
+use SqlFaker\Contract\ProductionRule as ContractProductionRule;
+use SqlFaker\Contract\Symbol as ContractSymbol;
+use SqlFaker\Grammar\ContractGrammarProjector;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
@@ -22,9 +31,22 @@ use SqlFaker\Sqlite\Grammar\SqliteGrammar;
 use SqlFaker\Sqlite\SqlGenerator;
 use SqlFaker\SqliteProvider;
 
+function sqliteSqlGeneratorContractGrammar(): ContractGrammar
+{
+    $faker = Factory::create();
+    $generator = new SqlGenerator(SqliteGrammar::load(), $faker, new SqliteProvider($faker));
+
+    return ContractGrammarProjector::project($generator->compiledGrammar(), NonTerminal::class);
+}
+
 #[CoversClass(SqlGenerator::class)]
 #[CoversClass(RandomStringGenerator::class)]
 #[CoversClass(SqliteProvider::class)]
+#[UsesClass(ContractGrammarProjector::class)]
+#[UsesClass(ContractGrammar::class)]
+#[UsesClass(ContractProductionRule::class)]
+#[UsesClass(ContractProduction::class)]
+#[UsesClass(ContractSymbol::class)]
 #[Large]
 final class SqlGeneratorTest extends TestCase
 {
@@ -104,6 +126,22 @@ final class SqlGeneratorTest extends TestCase
 
         self::assertSame('_i0', $generator->generate('stmt'));
         self::assertSame('_i0', $generator->generate('stmt'));
+    }
+
+    /**
+     * @param array<string, mixed> $evidence
+     */
+    #[DataProvider('providerContractGrammarEvidence')]
+    public function testCompiledGrammarSatisfiesSqliteContractClaims(array $evidence, string $claimId): void
+    {
+        $grammar = sqliteSqlGeneratorContractGrammar();
+
+        GrammarEvidenceAssert::assert(
+            $grammar,
+            new GrammarContractChecker($grammar),
+            $evidence,
+            $claimId,
+        );
     }
 
     public function testGenerateSelectsShortestAlternativeAtTargetDepth(): void
@@ -2123,6 +2161,16 @@ final class SqlGeneratorTest extends TestCase
         }
 
         yield 'exact boundary chain' => [new Grammar('n0', $ruleMap)];
+    }
+
+    /**
+     * @return iterable<string, array{array<string, mixed>, string}>
+     */
+    public static function providerContractGrammarEvidence(): iterable
+    {
+        foreach (GrammarClaimLoader::loadGrammarEvidence(__DIR__ . '/../../../spec/claims/sqlite.contract.json') as $index => $case) {
+            yield sprintf('%s #%d', $case['claim_id'], $index) => [$case['evidence'], $case['claim_id']];
+        }
     }
 
     /**

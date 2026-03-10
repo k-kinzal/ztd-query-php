@@ -9,10 +9,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
 use SqlFaker\Contract\GenerationRequest;
-use SqlFaker\Grammar\ContractGrammarProjector;
 use SqlFaker\Grammar\RandomStringGenerator;
-use SqlFaker\MySql\SqlGenerator;
 use SqlFaker\MySql\StatementType;
 use SqlFaker\MySqlProvider;
 
@@ -55,9 +54,7 @@ function deterministicNumberFaker(array $numberBetweenValues): \Faker\Generator
 
 #[CoversClass(MySqlProvider::class)]
 #[CoversClass(RandomStringGenerator::class)]
-#[CoversClass(SqlGenerator::class)]
 #[CoversClass(GenerationRequest::class)]
-#[CoversClass(ContractGrammarProjector::class)]
 #[Medium]
 final class MySqlProviderTest extends TestCase
 {
@@ -524,14 +521,11 @@ final class MySqlProviderTest extends TestCase
         self::assertNotSame($provider1->selectStatement(maxDepth: 3), $provider2->selectStatement(maxDepth: 3));
     }
 
-    public function testRuntimeContractExposesSnapshotSupportedGrammarAndDeterministicGeneration(): void
+    public function testGenerateUsesRequestSeedDeterministically(): void
     {
         $faker = Factory::create();
         $provider = new MySqlProvider($faker, 'mysql-8.0.44');
 
-        self::assertNotSame('', $provider->snapshot()->startSymbol);
-        self::assertSame($provider->snapshot()->startSymbol, $provider->supportedGrammar()->startSymbol);
-        self::assertNotNull($provider->supportedGrammar()->rule('rollback'));
         self::assertSame(
             $provider->generate(new GenerationRequest('ident', 11, 1)),
             $provider->generate(new GenerationRequest('ident', 11, 1)),
@@ -613,6 +607,12 @@ final class MySqlProviderTest extends TestCase
         self::assertSame('2000000000', $provider->resetMasterIndex());
     }
 
+    #[DataProvider('providerPublicApiMethod')]
+    public function testPublicApiMethodsRemainPublic(string $methodName): void
+    {
+        self::assertTrue((new ReflectionMethod(MySqlProvider::class, $methodName))->isPublic());
+    }
+
     /**
      * @return iterable<string, array{StatementType}>
      */
@@ -645,6 +645,55 @@ final class MySqlProviderTest extends TestCase
         foreach (range(0, 512) as $seed) {
             yield "seed {$seed}" => [$seed];
         }
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerPublicApiMethod(): iterable
+    {
+        yield 'selectStatement' => ['selectStatement'];
+        yield 'insertStatement' => ['insertStatement'];
+        yield 'updateStatement' => ['updateStatement'];
+        yield 'deleteStatement' => ['deleteStatement'];
+        yield 'createTableStatement' => ['createTableStatement'];
+        yield 'alterTableStatement' => ['alterTableStatement'];
+        yield 'dropTableStatement' => ['dropTableStatement'];
+        yield 'simpleStatement' => ['simpleStatement'];
+        yield 'identifier' => ['identifier'];
+        yield 'quotedIdentifier' => ['quotedIdentifier'];
+        yield 'stringLiteral' => ['stringLiteral'];
+        yield 'nationalStringLiteral' => ['nationalStringLiteral'];
+        yield 'dollarQuotedString' => ['dollarQuotedString'];
+        yield 'integerLiteral' => ['integerLiteral'];
+        yield 'longIntegerLiteral' => ['longIntegerLiteral'];
+        yield 'unsignedBigIntLiteral' => ['unsignedBigIntLiteral'];
+        yield 'decimalLiteral' => ['decimalLiteral'];
+        yield 'floatLiteral' => ['floatLiteral'];
+        yield 'hexLiteral' => ['hexLiteral'];
+        yield 'binaryLiteral' => ['binaryLiteral'];
+        yield 'hostname' => ['hostname'];
+        yield 'filterWildcardPattern' => ['filterWildcardPattern'];
+        yield 'resetMasterIndex' => ['resetMasterIndex'];
+        yield 'replaceStatement' => ['replaceStatement'];
+        yield 'truncateStatement' => ['truncateStatement'];
+        yield 'createIndexStatement' => ['createIndexStatement'];
+        yield 'dropIndexStatement' => ['dropIndexStatement'];
+        yield 'beginStatement' => ['beginStatement'];
+        yield 'commitStatement' => ['commitStatement'];
+        yield 'rollbackStatement' => ['rollbackStatement'];
+        yield 'expr' => ['expr'];
+        yield 'simpleExpr' => ['simpleExpr'];
+        yield 'literal' => ['literal'];
+        yield 'predicate' => ['predicate'];
+        yield 'whereClause' => ['whereClause'];
+        yield 'orderClause' => ['orderClause'];
+        yield 'limitClause' => ['limitClause'];
+        yield 'tableReference' => ['tableReference'];
+        yield 'joinedTable' => ['joinedTable'];
+        yield 'tableIdent' => ['tableIdent'];
+        yield 'subquery' => ['subquery'];
+        yield 'withClause' => ['withClause'];
     }
 
 }

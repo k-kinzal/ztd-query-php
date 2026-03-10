@@ -140,16 +140,16 @@ final class HumanReadableRenderer
             $lines[] = sprintf('   Failed Case %d', $caseNumber);
             $lines[] = '   - parameters: ' . $this->inlineJson($case['parameters'] ?? []);
 
-            $witness = $case['witness'] ?? [];
-            if (is_array($witness) && $witness !== []) {
-                $seed = $witness['seed'] ?? null;
-                if (is_int($seed)) {
-                    $lines[] = '   - witness seed: ' . (string) $seed;
+            $generation = $case['generation'] ?? [];
+            if (is_array($generation) && $generation !== []) {
+                $request = $generation['request'] ?? null;
+                if (is_array($request)) {
+                    $lines[] = '   - generation request: ' . $this->inlineJson($request);
                 }
 
-                $sql = $this->stringOr($witness['sql'] ?? null, '');
+                $sql = $this->stringOr($generation['sql'] ?? null, '');
                 if ($sql !== '') {
-                    $lines[] = '   - witness sql:';
+                    $lines[] = '   - generated sql:';
                     $lines = [...$lines, ...$this->indentBlock($sql, '     ')];
                 }
             }
@@ -209,14 +209,13 @@ final class HumanReadableRenderer
     {
         return match ($kind) {
             'outcome.kind_in' => $this->formatOutcomeFacts($facts),
-            'witness.property_equals_parameter' => $this->formatPropertyFacts($facts),
-            'witness.properties_distinct' => $this->formatDistinctFacts($facts),
+            'generation.sql_matches' => $this->formatGenerationMatchFacts($facts),
             'grammar.rule.contains_sequence', 'grammar.rule.not_contains_sequence' => $this->formatRuleSequenceFacts($facts),
             'grammar.no_undefined_references' => $this->formatListFacts('undefined references', $facts['undefined_references'] ?? []),
             'grammar.no_empty_rules' => $this->formatListFacts('empty rules', $facts['rules'] ?? []),
             'grammar.entries.present' => $this->formatListFacts('missing entries', $facts['missing_entries'] ?? []),
             'grammar.entries.terminate' => $this->formatListFacts('non-terminating rules', $facts['non_terminating_rules'] ?? []),
-            'grammar.families.reachable' => $this->formatListFacts('unreachable families', $facts['unreachable_families'] ?? []),
+            'grammar.rules.reachable' => $this->formatListFacts('unreachable rules', $facts['unreachable_rules'] ?? []),
             default => $facts === [] ? [] : ['facts: ' . $this->inlineJson($facts)],
         };
     }
@@ -259,39 +258,19 @@ final class HumanReadableRenderer
      * @param array<string, mixed> $facts
      * @return list<string>
      */
-    private function formatPropertyFacts(array $facts): array
+    private function formatGenerationMatchFacts(array $facts): array
     {
         $lines = [];
-        foreach (['property', 'parameter'] as $key) {
-            $value = $this->stringOr($facts[$key] ?? null, '');
-            if ($value !== '') {
-                $lines[] = sprintf('%s: %s', $key, $value);
-            }
+        $pattern = $this->stringOr($facts['pattern'] ?? null, '');
+        if ($pattern !== '') {
+            $lines[] = 'pattern: ' . $pattern;
         }
 
-        if (array_key_exists('expected', $facts)) {
-            $lines[] = 'expected: ' . $this->scalarToString($facts['expected']);
-        }
-
-        if (array_key_exists('actual', $facts)) {
-            $lines[] = 'actual: ' . $this->scalarToString($facts['actual']);
+        if (array_key_exists('matched', $facts)) {
+            $lines[] = 'matched: ' . ($facts['matched'] === true ? 'yes' : 'no');
         }
 
         return $lines;
-    }
-
-    /**
-     * @param array<string, mixed> $facts
-     * @return list<string>
-     */
-    private function formatDistinctFacts(array $facts): array
-    {
-        $properties = $facts['properties'] ?? [];
-        if (!is_array($properties)) {
-            return [];
-        }
-
-        return ['properties: ' . $this->inlineJson($properties)];
     }
 
     /**
@@ -372,23 +351,6 @@ final class HumanReadableRenderer
     private function inlineJson(mixed $value): string
     {
         return json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
-    }
-
-    private function scalarToString(mixed $value): string
-    {
-        if ($value === null) {
-            return 'null';
-        }
-
-        if (is_bool($value)) {
-            return $value ? 'true' : 'false';
-        }
-
-        if (is_scalar($value)) {
-            return (string) $value;
-        }
-
-        return $this->inlineJson($value);
     }
 
     private function stringOr(mixed $value, string $fallback): string
