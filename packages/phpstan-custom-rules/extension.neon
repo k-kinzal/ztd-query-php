@@ -13,6 +13,11 @@ services:
         tags:
             - phpstan.rules.rule
 
+    customRules.rule.contractSymbolMustBeUsed:
+        class: ZtdQuery\PhpStanCustomRules\Rule\ContractSymbolMustBeUsedRule
+        tags:
+            - phpstan.rules.rule
+
     customRules.rule.noPropertyInTestClass:
         class: ZtdQuery\PhpStanCustomRules\Rule\NoPropertyInTestClassRule
         tags:
