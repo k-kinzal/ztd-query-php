@@ -9,6 +9,7 @@ use Faker\Provider\Base;
 use SqlFaker\Contract\GenerationRequest;
 use SqlFaker\Contract\Grammar as ContractGrammar;
 use SqlFaker\Contract\Runtime;
+use SqlFaker\Grammar\ContractGrammarProjector;
 use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\PostgreSql\Grammar\PgGrammar;
@@ -56,12 +57,12 @@ final class PostgreSqlProvider extends Base implements Runtime
 
     public function snapshot(): ContractGrammar
     {
-        return ContractGrammar::from($this->grammar, NonTerminal::class);
+        return ContractGrammarProjector::project($this->grammar, NonTerminal::class);
     }
 
     public function supportedGrammar(): ContractGrammar
     {
-        return ContractGrammar::from($this->sql->compiledGrammar(), NonTerminal::class);
+        return ContractGrammarProjector::project($this->sql->compiledGrammar(), NonTerminal::class);
     }
 
     public function generate(GenerationRequest $request): string
