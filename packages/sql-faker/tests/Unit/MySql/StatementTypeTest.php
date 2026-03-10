@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\MySql;
 
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\MySql\StatementType;
-use PHPUnit\Framework\Attributes\CoversClass;
 
-#[CoversClass(StatementType::class)]
+#[CoversNothing]
 final class StatementTypeTest extends TestCase
 {
     public function testSelectHasExpectedValue(): void

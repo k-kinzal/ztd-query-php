@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\Sqlite;
 
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Sqlite\StatementType;
-use PHPUnit\Framework\Attributes\CoversClass;
 
-#[CoversClass(StatementType::class)]
+#[CoversNothing]
 final class StatementTypeTest extends TestCase
 {
     public function testSelectHasExpectedValue(): void
