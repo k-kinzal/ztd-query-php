@@ -563,25 +563,115 @@ final class SqliteProviderTest extends TestCase
         self::assertSame($result, $provider->stringLiteral(1, 32));
     }
 
-    public function testStringLiteralDefaultUsesCanonicalBoundsForSensitiveSeed(): void
+    public function testStringLiteralDefaultKeepsMinimumLengthAtOne(): void
     {
-        $faker = Factory::create();
-        $provider = new SqliteProvider($faker);
-        $faker->seed(0);
-        $default = $provider->stringLiteral();
-        $faker->seed(0);
-        $explicit = $provider->stringLiteral(1, 32);
+        $faker = new class ([0, 0]) extends \Faker\Generator {
+            /** @var list<int> */
+            private array $numberBetweenValues;
 
-        self::assertSame($explicit, $default);
-        self::assertSame(13, strlen(substr($default, 1, -1)));
-        $faker->seed(0);
-        self::assertNotSame($default, $provider->stringLiteral(0, 32));
-        $faker->seed(0);
-        self::assertNotSame($default, $provider->stringLiteral(1, 31));
-        $faker->seed(0);
-        self::assertNotSame($default, $provider->stringLiteral(2, 32));
-        $faker->seed(0);
-        self::assertNotSame($default, $provider->stringLiteral(1, 33));
+            /**
+             * @param list<int> $numberBetweenValues
+             */
+            public function __construct(array $numberBetweenValues)
+            {
+                parent::__construct();
+                $this->numberBetweenValues = $numberBetweenValues;
+            }
+
+            /**
+             * @param mixed $int1
+             * @param mixed $int2
+             */
+            #[\Override]
+            public function numberBetween($int1 = 0, $int2 = 2147483647): int
+            {
+                $next = array_shift($this->numberBetweenValues);
+                $lower = is_int($int1) ? $int1 : 0;
+                $upper = is_int($int2) ? $int2 : 2147483647;
+                $value = is_int($next) ? $next : min($lower, $upper);
+                $min = min($lower, $upper);
+                $max = max($lower, $upper);
+
+                return max($min, min($max, $value));
+            }
+        };
+        $provider = new SqliteProvider($faker);
+
+        self::assertSame("'a'", $provider->stringLiteral());
+    }
+
+    public function testStringLiteralDefaultKeepsMaximumLengthAtThirtyTwo(): void
+    {
+        $faker = new class (array_merge([32], array_fill(0, 32, 0))) extends \Faker\Generator {
+            /** @var list<int> */
+            private array $numberBetweenValues;
+
+            /**
+             * @param list<int> $numberBetweenValues
+             */
+            public function __construct(array $numberBetweenValues)
+            {
+                parent::__construct();
+                $this->numberBetweenValues = $numberBetweenValues;
+            }
+
+            /**
+             * @param mixed $int1
+             * @param mixed $int2
+             */
+            #[\Override]
+            public function numberBetween($int1 = 0, $int2 = 2147483647): int
+            {
+                $next = array_shift($this->numberBetweenValues);
+                $lower = is_int($int1) ? $int1 : 0;
+                $upper = is_int($int2) ? $int2 : 2147483647;
+                $value = is_int($next) ? $next : min($lower, $upper);
+                $min = min($lower, $upper);
+                $max = max($lower, $upper);
+
+                return max($min, min($max, $value));
+            }
+        };
+        $provider = new SqliteProvider($faker);
+
+        self::assertSame(32, strlen(substr($provider->stringLiteral(), 1, -1)));
+    }
+
+    public function testStringLiteralDefaultRejectsLengthsAboveThirtyTwo(): void
+    {
+        $faker = new class (array_merge([33], array_fill(0, 32, 0))) extends \Faker\Generator {
+            /** @var list<int> */
+            private array $numberBetweenValues;
+
+            /**
+             * @param list<int> $numberBetweenValues
+             */
+            public function __construct(array $numberBetweenValues)
+            {
+                parent::__construct();
+                $this->numberBetweenValues = $numberBetweenValues;
+            }
+
+            /**
+             * @param mixed $int1
+             * @param mixed $int2
+             */
+            #[\Override]
+            public function numberBetween($int1 = 0, $int2 = 2147483647): int
+            {
+                $next = array_shift($this->numberBetweenValues);
+                $lower = is_int($int1) ? $int1 : 0;
+                $upper = is_int($int2) ? $int2 : 2147483647;
+                $value = is_int($next) ? $next : min($lower, $upper);
+                $min = min($lower, $upper);
+                $max = max($lower, $upper);
+
+                return max($min, min($max, $value));
+            }
+        };
+        $provider = new SqliteProvider($faker);
+
+        self::assertSame(32, strlen(substr($provider->stringLiteral(), 1, -1)));
     }
 
     public function testIntegerLiteralDefaultMatchesExplicitBounds(): void

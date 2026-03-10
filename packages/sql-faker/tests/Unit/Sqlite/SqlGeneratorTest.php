@@ -195,9 +195,37 @@ final class SqlGeneratorTest extends TestCase
                 new Production([new Terminal('2')]),
             ]),
         ]);
-        $faker = Factory::create();
-        $faker->seed(1);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $faker = new class ([0, 1, 0]) extends \Faker\Generator {
+            /** @var list<int> */
+            private array $numberBetweenValues;
+
+            /**
+             * @param list<int> $numberBetweenValues
+             */
+            public function __construct(array $numberBetweenValues)
+            {
+                parent::__construct();
+                $this->numberBetweenValues = $numberBetweenValues;
+            }
+
+            /**
+             * @param mixed $int1
+             * @param mixed $int2
+             */
+            #[\Override]
+            public function numberBetween($int1 = 0, $int2 = 2147483647): int
+            {
+                $next = array_shift($this->numberBetweenValues);
+                $lower = is_int($int1) ? $int1 : 0;
+                $upper = is_int($int2) ? $int2 : 2147483647;
+                $value = is_int($next) ? $next : min($lower, $upper);
+                $min = min($lower, $upper);
+                $max = max($lower, $upper);
+
+                return max($min, min($max, $value));
+            }
+        };
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider(Factory::create()));
 
         self::assertSame('B 1', $generator->generate('stmt'));
     }
@@ -592,16 +620,34 @@ final class SqlGeneratorTest extends TestCase
     }
 
     #[DataProvider('providerGenerateExactCompoundKeyword')]
-    public function testGenerateExactCompoundKeyword(string $terminalName, int $seed, string $expected): void
+    public function testGenerateExactCompoundKeyword(string $terminalName, string $expected): void
     {
         $grammar = new Grammar('stmt', [
             'stmt' => new ProductionRule('stmt', [
                 new Production([new Terminal($terminalName)]),
             ]),
         ]);
-        $faker = Factory::create();
-        $faker->seed($seed);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $faker = new class () extends \Faker\Generator {
+            public function __construct()
+            {
+                parent::__construct();
+            }
+
+            /**
+             * @param array<array-key, mixed> $elements
+             */
+            public function randomElement($elements = ['a', 'b', 'c']): mixed
+            {
+                if ($elements === []) {
+                    throw new LogicException('randomElement requires a non-empty array.');
+                }
+
+                $resolved = array_values($elements);
+
+                return $resolved[0];
+            }
+        };
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider(Factory::create()));
 
         self::assertSame($expected, $generator->generate('stmt'));
     }
@@ -2119,12 +2165,12 @@ final class SqlGeneratorTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{string, int, string}>
+     * @return iterable<string, array{string, string}>
      */
     public static function providerGenerateExactCompoundKeyword(): iterable
     {
-        yield 'join left' => ['JOIN_KW', 10, 'LEFT'];
-        yield 'ctime current_time' => ['CTIME_KW', 0, 'CURRENT_TIME'];
-        yield 'like like' => ['LIKE_KW', 3, 'LIKE'];
+        yield 'join left' => ['JOIN_KW', 'LEFT'];
+        yield 'ctime current_time' => ['CTIME_KW', 'CURRENT_TIME'];
+        yield 'like like' => ['LIKE_KW', 'LIKE'];
     }
 }
