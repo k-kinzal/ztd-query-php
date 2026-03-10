@@ -177,6 +177,31 @@ final class SqlGeneratorTest extends TestCase
         self::assertSame('FIRST', $result);
     }
 
+    public function testGenerateConsumesRandomChoicesInLeftmostDerivationOrder(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([
+                    new NonTerminal('first'),
+                    new NonTerminal('second'),
+                ]),
+            ]),
+            'first' => new ProductionRule('first', [
+                new Production([new Terminal('A')]),
+                new Production([new Terminal('B')]),
+            ]),
+            'second' => new ProductionRule('second', [
+                new Production([new Terminal('1')]),
+                new Production([new Terminal('2')]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $faker->seed(1);
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        self::assertSame('B 1', $generator->generate('stmt'));
+    }
+
     #[DataProvider('providerRandomAlternativeSeeds')]
     public function testGenerateSelectsRandomAlternativeBeforeTargetDepth(int $seed1, int $seed2): void
     {
@@ -382,6 +407,16 @@ final class SqlGeneratorTest extends TestCase
         $generator->generate('infinite');
     }
 
+    #[DataProvider('providerExactDerivationLimitGrammar')]
+    public function testGenerateAllowsDerivationAtExactLimitBoundary(Grammar $grammar): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        self::assertSame('DONE', $generator->generate('n0'));
+    }
+
     public function testGenerateThrowsOnEmptyAlternatives(): void
     {
         $grammar = new Grammar('empty', [
@@ -414,6 +449,26 @@ final class SqlGeneratorTest extends TestCase
         $result = $generator->generate('stmt');
 
         self::assertSame('SELECT unknown_rule', $result);
+    }
+
+    public function testGenerateContinuesAfterReplacingUnknownNonTerminalWithTerminal(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([
+                    new NonTerminal('unknown_rule'),
+                    new NonTerminal('known'),
+                ]),
+            ]),
+            'known' => new ProductionRule('known', [
+                new Production([new Terminal('OK')]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        self::assertSame('unknown_rule OK', $generator->generate('stmt'));
     }
 
     public function testGenerateDefaultTerminalRendersAsIs(): void
@@ -534,6 +589,21 @@ final class SqlGeneratorTest extends TestCase
         $result = $generator->generate('stmt');
 
         self::assertMatchesRegularExpression($pattern, $result);
+    }
+
+    #[DataProvider('providerGenerateExactCompoundKeyword')]
+    public function testGenerateExactCompoundKeyword(string $terminalName, int $seed, string $expected): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([new Terminal($terminalName)]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        self::assertSame($expected, $generator->generate('stmt'));
     }
 
     public function testGenerateSpacingFunctionParen(): void
@@ -884,6 +954,36 @@ final class SqlGeneratorTest extends TestCase
         self::assertCount(0, $altsWithoutTerminal, 'window alternative should contain at least one terminal keyword');
     }
 
+    public function testAugmentGrammarRetainsOnlyWindowAlternativesThatAreNotFrameOptOnly(): void
+    {
+        $grammar = new Grammar('cmd', [
+            'cmd' => new ProductionRule('cmd', [
+                new Production([new Terminal('SELECT')]),
+            ]),
+            'window' => new ProductionRule('window', [
+                new Production([new NonTerminal('nm'), new NonTerminal('frame_opt')]),
+                new Production([new Terminal('PARTITION'), new NonTerminal('nm'), new NonTerminal('frame_opt')]),
+                new Production([new NonTerminal('other'), new NonTerminal('frame_opt')]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        self::assertSame(
+            [
+                ['PARTITION', 'nm', 'frame_opt'],
+                ['other', 'frame_opt'],
+            ],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $generator->compiledGrammar()->ruleMap['window']->alternatives,
+            ),
+        );
+    }
+
     public function testAugmentGrammarRemovesKeywordOnlyNmnumAlternatives(): void
     {
         $grammar = SqliteGrammar::load();
@@ -1109,6 +1209,24 @@ final class SqlGeneratorTest extends TestCase
         self::assertArrayNotHasKey('create_table_head', $generator->compiledGrammar()->ruleMap);
     }
 
+    public function testAugmentGrammarRewritesCreateTableCommandAlternativeToWrapperRule(): void
+    {
+        $grammar = SqliteGrammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        self::assertContains(
+            ['create_table'],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $generator->compiledGrammar()->ruleMap['cmd']->alternatives,
+            ),
+        );
+    }
+
     public function testAugmentGrammarExtractsInsertRuleFromTwoSymbolCommandAlternatives(): void
     {
         $grammar = new Grammar('cmd', [
@@ -1216,6 +1334,34 @@ final class SqlGeneratorTest extends TestCase
         )));
     }
 
+    public function testAugmentGrammarRewritesAttachAndDetachCommandAlternativesToWrapperRules(): void
+    {
+        $grammar = SqliteGrammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        self::assertContains(
+            ['attach_stmt'],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $generator->compiledGrammar()->ruleMap['cmd']->alternatives,
+            ),
+        );
+        self::assertContains(
+            ['detach_stmt'],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $generator->compiledGrammar()->ruleMap['cmd']->alternatives,
+            ),
+        );
+    }
+
     public function testAugmentGrammarConstrainsVacuumIntoExpressions(): void
     {
         $grammar = SqliteGrammar::load();
@@ -1284,6 +1430,38 @@ final class SqlGeneratorTest extends TestCase
                     || $names === ['VACUUM', 'nm', 'vinto'];
             },
         )));
+    }
+
+    public function testAugmentGrammarRewritesVacuumCommandAlternativesToWrapperRule(): void
+    {
+        $grammar = SqliteGrammar::load();
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        self::assertContains(
+            ['vacuum_stmt'],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $generator->compiledGrammar()->ruleMap['cmd']->alternatives,
+            ),
+        );
+    }
+
+    public function testAugmentGrammarLeavesTemporaryObjectRulesUntouchedWhenRequiredRulesAreMissing(): void
+    {
+        $grammar = new Grammar('cmd', [
+            'cmd' => new ProductionRule('cmd', [
+                new Production([new Terminal('CREATE'), new Terminal('VIEW')]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        self::assertArrayNotHasKey('create_view_stmt', $generator->compiledGrammar()->ruleMap);
+        self::assertArrayNotHasKey('create_trigger_stmt', $generator->compiledGrammar()->ruleMap);
     }
 
     public function testAugmentGrammarBindsTemporaryObjectNamesToUnqualifiedForms(): void
@@ -1504,6 +1682,78 @@ final class SqlGeneratorTest extends TestCase
                     || $names === ['SELECT', 'distinct', 'selcollist', 'safe_from_clause', 'where_opt', 'groupby_opt', 'having_opt', 'orderby_opt', 'limit_opt'];
             },
         )));
+    }
+
+    public function testAugmentGrammarRetainsNonStarSelectResultColumnsForFromFreeSelects(): void
+    {
+        $grammar = new Grammar('cmd', [
+            'cmd' => new ProductionRule('cmd', [
+                new Production([new Terminal('SELECT')]),
+            ]),
+            'selectnowith' => new ProductionRule('selectnowith', [
+                new Production([new NonTerminal('oneselect')]),
+            ]),
+            'oneselect' => new ProductionRule('oneselect', [
+                new Production([new Terminal('SELECT'), new NonTerminal('selcollist')]),
+            ]),
+            'selcollist' => new ProductionRule('selcollist', [
+                new Production([new NonTerminal('expr'), new Terminal('AS'), new NonTerminal('alias')]),
+                new Production([new Terminal('STAR')]),
+            ]),
+            'multiselect_op' => new ProductionRule('multiselect_op', [
+                new Production([new Terminal('UNION')]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        self::assertSame(
+            [
+                ['expr', 'AS', 'alias'],
+            ],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $generator->compiledGrammar()->ruleMap['safe_selcollist_no_from']->alternatives,
+            ),
+        );
+    }
+
+    public function testAugmentGrammarExtractsDeleteAndUpdateRulesFromTerminalCommandAlternatives(): void
+    {
+        $grammar = new Grammar('cmd', [
+            'cmd' => new ProductionRule('cmd', [
+                new Production([new Terminal('DELETE'), new NonTerminal('from')]),
+                new Production([new Terminal('UPDATE'), new NonTerminal('qualified_table_name'), new Terminal('SET')]),
+                new Production([new Terminal('ALTER'), new Terminal('TABLE'), new NonTerminal('nm')]),
+                new Production([new Terminal('DROP'), new Terminal('TABLE'), new NonTerminal('nm')]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        self::assertSame(
+            [['DELETE', 'from']],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $generator->compiledGrammar()->ruleMap['delete']->alternatives,
+            ),
+        );
+        self::assertSame(
+            [['UPDATE', 'qualified_table_name', 'SET']],
+            array_map(
+                static fn (Production $alt): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $alt->symbols,
+                ),
+                $generator->compiledGrammar()->ruleMap['update']->alternatives,
+            ),
+        );
     }
 
     public function testAugmentGrammarIntroducesFiniteSetOperationFamilies(): void
@@ -1786,6 +2036,23 @@ final class SqlGeneratorTest extends TestCase
     }
 
     /**
+     * @return iterable<string, array{Grammar}>
+     */
+    public static function providerExactDerivationLimitGrammar(): iterable
+    {
+        $ruleMap = [];
+        foreach (range(0, 4999) as $index) {
+            $ruleMap["n{$index}"] = new ProductionRule("n{$index}", [
+                new Production([
+                    $index === 4999 ? new Terminal('DONE') : new NonTerminal('n' . ($index + 1)),
+                ]),
+            ]);
+        }
+
+        yield 'exact boundary chain' => [new Grammar('n0', $ruleMap)];
+    }
+
+    /**
      * @return iterable<string, array{string, string}>
      */
     public static function providerGenerateSpecialToken(): iterable
@@ -1849,5 +2116,15 @@ final class SqlGeneratorTest extends TestCase
         yield 'JOIN_KW' => ['JOIN_KW', '/^(LEFT|RIGHT|INNER|CROSS|NATURAL LEFT|NATURAL INNER|NATURAL CROSS)$/'];
         yield 'CTIME_KW' => ['CTIME_KW', '/^(CURRENT_TIME|CURRENT_DATE|CURRENT_TIMESTAMP)$/'];
         yield 'LIKE_KW' => ['LIKE_KW', '/^(LIKE|GLOB)$/'];
+    }
+
+    /**
+     * @return iterable<string, array{string, int, string}>
+     */
+    public static function providerGenerateExactCompoundKeyword(): iterable
+    {
+        yield 'join left' => ['JOIN_KW', 10, 'LEFT'];
+        yield 'ctime current_time' => ['CTIME_KW', 0, 'CURRENT_TIME'];
+        yield 'like like' => ['LIKE_KW', 3, 'LIKE'];
     }
 }
