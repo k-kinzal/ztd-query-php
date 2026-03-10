@@ -8,17 +8,10 @@ use Faker\Factory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Contract\GenerationRequest;
 use SqlFaker\Grammar\ContractGrammarProjector;
 use SqlFaker\Grammar\RandomStringGenerator;
-use SqlFaker\MySql\Grammar\Grammar;
-use SqlFaker\MySql\Grammar\NonTerminal;
-use SqlFaker\MySql\Grammar\Production;
-use SqlFaker\MySql\Grammar\ProductionRule;
-use SqlFaker\MySql\Grammar\Terminal;
-use SqlFaker\MySql\Grammar\TerminationAnalyzer;
 use SqlFaker\MySql\SqlGenerator;
 use SqlFaker\MySql\StatementType;
 use SqlFaker\MySqlProvider;
@@ -26,19 +19,8 @@ use SqlFaker\MySqlProvider;
 #[CoversClass(MySqlProvider::class)]
 #[CoversClass(RandomStringGenerator::class)]
 #[CoversClass(SqlGenerator::class)]
-#[UsesClass(GenerationRequest::class)]
-#[UsesClass(ContractGrammarProjector::class)]
-#[UsesClass(Grammar::class)]
-#[UsesClass(NonTerminal::class)]
-#[UsesClass(Production::class)]
-#[UsesClass(ProductionRule::class)]
-#[UsesClass(Terminal::class)]
-#[UsesClass(TerminationAnalyzer::class)]
-#[UsesClass(\SqlFaker\Grammar\TokenJoiner::class)]
-#[UsesClass(\SqlFaker\Contract\Grammar::class)]
-#[UsesClass(\SqlFaker\Contract\ProductionRule::class)]
-#[UsesClass(\SqlFaker\Contract\Production::class)]
-#[UsesClass(\SqlFaker\Contract\Symbol::class)]
+#[CoversClass(GenerationRequest::class)]
+#[CoversClass(ContractGrammarProjector::class)]
 #[Medium]
 final class MySqlProviderTest extends TestCase
 {

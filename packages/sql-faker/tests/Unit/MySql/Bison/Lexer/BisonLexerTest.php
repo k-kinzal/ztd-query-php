@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\MySql\Bison\Lexer;
 
-use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -12,9 +12,7 @@ use SqlFaker\MySql\Bison\Lexer\BisonLexer;
 use SqlFaker\MySql\Bison\Lexer\BisonToken;
 use SqlFaker\MySql\Bison\Lexer\BisonTokenType;
 
-#[CoversMethod(BisonLexer::class, 'next')]
-#[CoversMethod(BisonLexer::class, 'peek')]
-#[CoversMethod(BisonLexer::class, 'peekN')]
+#[CoversClass(BisonLexer::class)]
 final class BisonLexerTest extends TestCase
 {
     public function testNextReturnsEofForEmptyInput(): void

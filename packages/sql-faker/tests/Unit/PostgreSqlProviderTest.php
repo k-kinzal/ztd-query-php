@@ -7,17 +7,11 @@ namespace Tests\Unit\SqlFaker;
 use Faker\Factory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\Attributes\UsesClass;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Contract\GenerationRequest;
 use SqlFaker\Grammar\ContractGrammarProjector;
-use SqlFaker\Grammar\Grammar;
-use SqlFaker\Grammar\NonTerminal;
-use SqlFaker\Grammar\Production;
-use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\RandomStringGenerator;
-use SqlFaker\Grammar\Terminal;
-use SqlFaker\Grammar\TerminationAnalyzer;
 use SqlFaker\PostgreSql\SqlGenerator;
 use SqlFaker\PostgreSql\StatementType;
 use SqlFaker\PostgreSqlProvider;
@@ -25,20 +19,9 @@ use SqlFaker\PostgreSqlProvider;
 #[CoversClass(PostgreSqlProvider::class)]
 #[CoversClass(RandomStringGenerator::class)]
 #[CoversClass(SqlGenerator::class)]
-#[UsesClass(GenerationRequest::class)]
-#[UsesClass(ContractGrammarProjector::class)]
-#[UsesClass(Grammar::class)]
-#[UsesClass(NonTerminal::class)]
-#[UsesClass(Production::class)]
-#[UsesClass(ProductionRule::class)]
-#[UsesClass(Terminal::class)]
-#[UsesClass(TerminationAnalyzer::class)]
-#[UsesClass(\SqlFaker\Grammar\TokenJoiner::class)]
-#[UsesClass(\SqlFaker\PostgreSql\Grammar\PgGrammar::class)]
-#[UsesClass(\SqlFaker\Contract\Grammar::class)]
-#[UsesClass(\SqlFaker\Contract\ProductionRule::class)]
-#[UsesClass(\SqlFaker\Contract\Production::class)]
-#[UsesClass(\SqlFaker\Contract\Symbol::class)]
+#[CoversClass(GenerationRequest::class)]
+#[CoversClass(ContractGrammarProjector::class)]
+#[Medium]
 final class PostgreSqlProviderTest extends TestCase
 {
     #[\Override]

@@ -10,7 +10,7 @@ use Fuzz\Probe\ProbePhase as FuzzProbePhase;
 use Fuzz\Probe\ProbeResult as FuzzProbeResult;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\Attributes\UsesClass;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use Spec\Policy\OutcomeKind;
 use Spec\Policy\SqlitePolicy;
@@ -18,13 +18,7 @@ use Spec\Probe\ProbePhase as SpecProbePhase;
 use Spec\Probe\ProbeResult as SpecProbeResult;
 use SqlFaker\Contract\GenerationRequest;
 use SqlFaker\Grammar\ContractGrammarProjector;
-use SqlFaker\Grammar\Grammar;
-use SqlFaker\Grammar\NonTerminal;
-use SqlFaker\Grammar\Production;
-use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\RandomStringGenerator;
-use SqlFaker\Grammar\Terminal;
-use SqlFaker\Grammar\TerminationAnalyzer;
 use SqlFaker\Sqlite\SqlGenerator;
 use SqlFaker\Sqlite\StatementType;
 use SqlFaker\SqliteProvider;
@@ -32,20 +26,9 @@ use SqlFaker\SqliteProvider;
 #[CoversClass(SqliteProvider::class)]
 #[CoversClass(RandomStringGenerator::class)]
 #[CoversClass(SqlGenerator::class)]
-#[UsesClass(GenerationRequest::class)]
-#[UsesClass(ContractGrammarProjector::class)]
-#[UsesClass(Grammar::class)]
-#[UsesClass(NonTerminal::class)]
-#[UsesClass(Production::class)]
-#[UsesClass(ProductionRule::class)]
-#[UsesClass(Terminal::class)]
-#[UsesClass(TerminationAnalyzer::class)]
-#[UsesClass(\SqlFaker\Grammar\TokenJoiner::class)]
-#[UsesClass(\SqlFaker\Sqlite\Grammar\SqliteGrammar::class)]
-#[UsesClass(\SqlFaker\Contract\Grammar::class)]
-#[UsesClass(\SqlFaker\Contract\ProductionRule::class)]
-#[UsesClass(\SqlFaker\Contract\Production::class)]
-#[UsesClass(\SqlFaker\Contract\Symbol::class)]
+#[CoversClass(GenerationRequest::class)]
+#[CoversClass(ContractGrammarProjector::class)]
+#[Medium]
 final class SqliteProviderTest extends TestCase
 {
     #[\Override]
