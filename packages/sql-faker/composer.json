@@ -9,6 +9,7 @@
     },
     "require-dev": {
         "brianium/paratest": "^6.11 || ^7",
+        "deptrac/deptrac": "^4.2",
         "friendsofphp/php-cs-fixer": "^3.92",
         "infection/infection": "^0.28 || ^0.29 || ^0.30 || ^0.31 || ^0.32",
         "k-kinzal/phpstan-custom-rules": "@dev",
@@ -52,8 +53,10 @@
         "spec:supported": "php spec/spec.php spec",
         "lint": [
             "@format:check",
-            "phpstan analyse --memory-limit=512M"
+            "phpstan analyse --memory-limit=512M",
+            "@deptrac"
         ],
+        "deptrac": "deptrac analyse --no-cache",
         "format": "php-cs-fixer fix --allow-risky=yes",
         "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
         "fuzz": [

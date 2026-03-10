@@ -1,0 +1,32 @@
+deptrac:
+  paths:
+    - ./src
+    - ./spec
+
+  layers:
+    - name: Contract
+      collectors:
+        - type: classLike
+          value: '^SqlFaker\\Contract\\'
+
+    - name: SqlFakerImplementation
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: '^SqlFaker\\'
+          must_not:
+            - type: classLike
+              value: '^SqlFaker\\Contract\\'
+
+    - name: Spec
+      collectors:
+        - type: classLike
+          value: '^Spec\\'
+
+  ruleset:
+    Contract: []
+    SqlFakerImplementation:
+      - Contract
+    Spec:
+      - Contract
