@@ -5,20 +5,21 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\Grammar;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\Terminal;
 use SqlFaker\Grammar\TerminationAnalyzer;
-use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(TerminationAnalyzer::class)]
-#[CoversClass(Grammar::class)]
-#[CoversClass(NonTerminal::class)]
-#[CoversClass(Production::class)]
-#[CoversClass(ProductionRule::class)]
-#[CoversClass(Terminal::class)]
+#[UsesClass(Grammar::class)]
+#[UsesClass(NonTerminal::class)]
+#[UsesClass(Production::class)]
+#[UsesClass(ProductionRule::class)]
+#[UsesClass(Terminal::class)]
 final class TerminationAnalyzerTest extends TestCase
 {
     public function testGetMinLengthTerminalOnly(): void
