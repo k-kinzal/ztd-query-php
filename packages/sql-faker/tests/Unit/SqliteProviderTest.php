@@ -492,6 +492,19 @@ final class SqliteProviderTest extends TestCase
         );
     }
 
+    public function testGenerateUsesRequestSeedOnTheSameProviderInstance(): void
+    {
+        $faker = Factory::create();
+        $provider = new SqliteProvider($faker);
+
+        $seed0 = $provider->generate(new GenerationRequest('select', 0, 6));
+        $seed1 = $provider->generate(new GenerationRequest('select', 1, 6));
+        $seed0Again = $provider->generate(new GenerationRequest('select', 0, 6));
+
+        self::assertNotSame($seed0, $seed1);
+        self::assertSame($seed0, $seed0Again);
+    }
+
     /**
      * @return iterable<string, array{StatementType}>
      */
@@ -582,6 +595,19 @@ final class SqliteProviderHelperTest extends TestCase
         $faker->seed(42);
 
         self::assertSame($result, $provider->stringLiteral(1, 32));
+    }
+
+    public function testStringLiteralDefaultMatchesExplicitForSensitiveSeed(): void
+    {
+        $faker = Factory::create();
+        $provider = new SqliteProvider($faker);
+        $faker->seed(0);
+        $default = $provider->stringLiteral();
+        $faker->seed(0);
+        $explicit = $provider->stringLiteral(1, 32);
+
+        self::assertSame($explicit, $default);
+        self::assertSame(13, strlen(substr($default, 1, -1)));
     }
 
     public function testIntegerLiteralDefaultMatchesExplicit(): void
