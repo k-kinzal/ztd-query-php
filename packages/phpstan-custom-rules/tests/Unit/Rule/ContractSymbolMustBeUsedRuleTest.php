@@ -29,6 +29,13 @@ final class ContractSymbolMustBeUsedRuleTest extends RuleTestCase
         ], []);
     }
 
+    public function testPassesWhenContractClassIsImportedByNonContractSource(): void
+    {
+        $this->analyse([
+            __DIR__ . '/../../Fixture/ContractUsagePackage/src/Contract/UsedGrammar.php',
+        ], []);
+    }
+
     public function testReportsUnusedContractInterface(): void
     {
         $this->analyse([
@@ -36,6 +43,18 @@ final class ContractSymbolMustBeUsedRuleTest extends RuleTestCase
         ], [
             [
                 'Contract symbol "SqlFaker\Contract\UnusedRuntime" must be imported by at least one non-contract SqlFaker source file using a use statement.',
+                7,
+            ],
+        ]);
+    }
+
+    public function testReportsUnusedContractClass(): void
+    {
+        $this->analyse([
+            __DIR__ . '/../../Fixture/ContractUsagePackage/src/Contract/UnusedGrammar.php',
+        ], [
+            [
+                'Contract symbol "SqlFaker\Contract\UnusedGrammar" must be imported by at least one non-contract SqlFaker source file using a use statement.',
                 7,
             ],
         ]);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlFaker\Internal;
 
+use SqlFaker\Contract\UsedGrammar;
 use SqlFaker\Contract\UsedRuntime;
 
 use function SqlFaker\Contract\used_helper;
@@ -13,6 +14,11 @@ final class UsesContract
     public function __construct(
         private readonly UsedRuntime $runtime,
     ) {
+    }
+
+    public function grammar(): UsedGrammar
+    {
+        return new UsedGrammar();
     }
 
     public function run(): void
