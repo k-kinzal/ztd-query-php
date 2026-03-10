@@ -6,12 +6,12 @@ namespace SqlFaker\Contract;
 
 use InvalidArgumentException;
 
-final readonly class Production
+final class Production
 {
     /**
      * @var list<Symbol>
      */
-    public array $symbols;
+    public readonly array $symbols;
 
     /**
      * @param array<array-key, mixed> $symbols

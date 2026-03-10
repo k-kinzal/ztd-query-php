@@ -6,11 +6,11 @@ namespace SqlFaker\Contract;
 
 use InvalidArgumentException;
 
-final readonly class Symbol
+final class Symbol
 {
     public function __construct(
-        public string $name,
-        public bool $isNonTerminal,
+        public readonly string $name,
+        public readonly bool $isNonTerminal,
     ) {
         if ($this->name === '') {
             throw new InvalidArgumentException('Symbol name must be non-empty.');

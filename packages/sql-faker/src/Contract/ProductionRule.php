@@ -6,14 +6,14 @@ namespace SqlFaker\Contract;
 
 use InvalidArgumentException;
 
-final readonly class ProductionRule
+final class ProductionRule
 {
-    public string $name;
+    public readonly string $name;
 
     /**
      * @var list<Production>
      */
-    public array $alternatives;
+    public readonly array $alternatives;
 
     /**
      * @param array<array-key, mixed> $alternatives

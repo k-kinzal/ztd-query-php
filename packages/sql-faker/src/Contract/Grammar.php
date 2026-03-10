@@ -6,14 +6,14 @@ namespace SqlFaker\Contract;
 
 use InvalidArgumentException;
 
-final readonly class Grammar
+final class Grammar
 {
-    public string $startSymbol;
+    public readonly string $startSymbol;
 
     /**
      * @var array<string, ProductionRule>
      */
-    public array $rules;
+    public readonly array $rules;
 
     /**
      * @param array<array-key, mixed> $rules

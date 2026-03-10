@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Spec\Subject;
 
-final readonly class FamilyDefinition
+final class FamilyDefinition
 {
     /**
      * @param list<string> $anchorRules
@@ -12,12 +12,12 @@ final readonly class FamilyDefinition
      * @param list<string> $propertyNames
      */
     public function __construct(
-        public string $id,
-        public string $description,
-        public string $layer,
-        public array $anchorRules = [],
-        public array $parameterNames = [],
-        public array $propertyNames = [],
+        public readonly string $id,
+        public readonly string $description,
+        public readonly string $layer,
+        public readonly array $anchorRules = [],
+        public readonly array $parameterNames = [],
+        public readonly array $propertyNames = [],
     ) {
     }
 }

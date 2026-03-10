@@ -6,12 +6,12 @@ namespace SqlFaker\Contract;
 
 use InvalidArgumentException;
 
-final readonly class GenerationRequest
+final class GenerationRequest
 {
     public function __construct(
-        public ?string $startRule = null,
-        public ?int $seed = null,
-        public int $maxDepth = PHP_INT_MAX,
+        public readonly ?string $startRule = null,
+        public readonly ?int $seed = null,
+        public readonly int $maxDepth = PHP_INT_MAX,
     ) {
         if ($this->startRule !== null && $this->startRule === '') {
             throw new InvalidArgumentException('startRule must be a non-empty string when provided.');

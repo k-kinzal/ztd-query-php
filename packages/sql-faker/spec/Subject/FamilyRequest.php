@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Spec\Subject;
 
-final readonly class FamilyRequest
+final class FamilyRequest
 {
     /**
      * @param array<string, scalar> $parameters
      */
     public function __construct(
-        public string $familyId,
-        public array $parameters = [],
+        public readonly string $familyId,
+        public readonly array $parameters = [],
     ) {
     }
 }

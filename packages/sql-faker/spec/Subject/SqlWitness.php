@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace Spec\Subject;
 
-final readonly class SqlWitness
+final class SqlWitness
 {
     /**
      * @param array<string, scalar> $parameters
      * @param array<string, scalar> $properties
      */
     public function __construct(
-        public string $familyId,
-        public int $seed,
-        public string $sql,
-        public array $parameters = [],
-        public array $properties = [],
+        public readonly string $familyId,
+        public readonly int $seed,
+        public readonly string $sql,
+        public readonly array $parameters = [],
+        public readonly array $properties = [],
     ) {
     }
 }
