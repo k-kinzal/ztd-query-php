@@ -1,0 +1,2263 @@
+[
+    {
+        "id": "POSTGRESQL-CONTRACT-SNAPSHOT-STRUCTURE",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN the PostgreSQL snapshot is loaded, THEN the upstream grammar snapshot SHALL remain closed, non-empty, terminating, reachable, and fingerprint-pinned.",
+        "subject": {
+            "kind": "snapshot"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.no_undefined_references"
+            },
+            {
+                "kind": "grammar.no_empty_rules"
+            },
+            {
+                "kind": "grammar.entries.present",
+                "entries": [
+                    "stmtmulti"
+                ]
+            },
+            {
+                "kind": "grammar.entries.terminate",
+                "entries": [
+                    "stmtmulti"
+                ]
+            },
+            {
+                "kind": "grammar.rules.reachable",
+                "entries": [
+                    "stmtmulti"
+                ],
+                "rules": [
+                    "stmtmulti",
+                    "SelectStmt",
+                    "InsertStmt",
+                    "UpdateStmt",
+                    "DeleteStmt",
+                    "AlterDatabaseStmt",
+                    "CreateStmt",
+                    "ColId"
+                ]
+            },
+            {
+                "kind": "grammar.fingerprint_matches",
+                "sha256": "9ed76c5b24adf3db22e418436b00f0ca4be67d22f22b509a0b8e91e291061922"
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-GRAMMAR-STRUCTURE",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN the PostgreSQL constrained grammar is compiled, THEN the designated entry and retained rules SHALL remain closed, non-empty, terminating, and reachable.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.no_undefined_references"
+            },
+            {
+                "kind": "grammar.no_empty_rules"
+            },
+            {
+                "kind": "grammar.entries.present",
+                "entries": [
+                    "stmtmulti"
+                ]
+            },
+            {
+                "kind": "grammar.entries.terminate",
+                "entries": [
+                    "stmtmulti"
+                ]
+            },
+            {
+                "kind": "grammar.rules.reachable",
+                "entries": [
+                    "stmtmulti"
+                ],
+                "rules": [
+                    "stmtmulti",
+                    "SelectStmt",
+                    "InsertStmt",
+                    "UpdateStmt",
+                    "DeleteStmt",
+                    "AlterTableStmt",
+                    "AlterIndexStmt",
+                    "AlterDomainStmt",
+                    "CreateAsStmt",
+                    "AlterSeqStmt",
+                    "AlterStatsStmt",
+                    "AlterTypeStmt",
+                    "AlterFunctionStmt",
+                    "AlterDatabaseStmt",
+                    "AlterRoleStmt",
+                    "CreateRoleStmt",
+                    "DropRoleStmt",
+                    "GrantRoleStmt",
+                    "RevokeRoleStmt",
+                    "AlterExtensionContentsStmt",
+                    "GrantStmt",
+                    "CreateStmt",
+                    "CreatePartitionOfStmt",
+                    "ExecuteStmt",
+                    "CreateSeqStmt",
+                    "ViewStmt",
+                    "opt_on_conflict",
+                    "DefineTextSearchTemplateStmt",
+                    "DefineAggregateStmt",
+                    "DropCastStmt",
+                    "CreateAssertionStmt",
+                    "CreateFunctionStmt",
+                    "DropStmt",
+                    "ColId"
+                ]
+            },
+            {
+                "kind": "grammar.fingerprint_matches",
+                "sha256": "870c86d04881bafb3764d422065d4275b06a6404fea59389b5ecc16c12f232bc"
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-GENERATION-DETERMINISM",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN the PostgreSQL runtime generates SQL from a fixed request, THEN repeated runs SHALL remain deterministic.",
+        "subject": {
+            "kind": "generation",
+            "start_rule": "stmtmulti",
+            "max_depth": 6
+        },
+        "cases": [
+            {
+                "seed": 17
+            }
+        ],
+        "evidence": [
+            {
+                "kind": "generation.generates"
+            },
+            {
+                "kind": "generation.deterministic"
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-REWRITE-PROGRAM",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN the PostgreSQL constrained grammar is compiled, THEN the runtime SHALL expose the documented rewrite program order.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rewrite_steps_match",
+                "step_ids": [
+                    "canonicalize.identifier_like_rules",
+                    "canonicalize.qualified_names",
+                    "canonicalize.function_names",
+                    "filter.indirection_shapes",
+                    "collapse.row_security_defaults",
+                    "split.create_partition_of",
+                    "split.alter_database",
+                    "restrict.utility_statement_targets",
+                    "split.alter_table_families",
+                    "split.alter_index_families",
+                    "split.alter_view_families",
+                    "split.alter_sequence_families",
+                    "split.alter_statistics_families",
+                    "split.alter_access_method_families",
+                    "split.alter_domain_families",
+                    "split.alter_type_families",
+                    "split.alter_enum_families",
+                    "restrict.role_and_routine_families",
+                    "restrict.utility_and_definition_families",
+                    "rebuild.bounded_dml_and_select_families"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-TERMINATION-LENGTHS",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN the PostgreSQL constrained grammar is compiled, THEN the runtime SHALL expose the expected minimum termination lengths for core rules.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.termination_lengths_match",
+                "lengths": {
+                    "stmtmulti": 0,
+                    "ColId": 1,
+                    "TransactionStmt": 1,
+                    "SelectStmt": 2
+                }
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-TARGET-DEPTH-SHORTEST-TRANSACTION",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN PostgreSQL generation starts at TransactionStmt with max depth one, THEN the runtime SHALL choose the shortest terminating alternative at the target-depth boundary.",
+        "subject": {
+            "kind": "generation",
+            "start_rule": "TransactionStmt",
+            "max_depth": 1
+        },
+        "cases": [
+            {
+                "seed": 17
+            }
+        ],
+        "evidence": [
+            {
+                "kind": "generation.terminals_equal",
+                "terminals": [
+                    "ABORT_P"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-UNKNOWN-RULE-FAILS",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN the PostgreSQL runtime receives an unknown start rule, THEN generation SHALL fail with the algorithm contract error.",
+        "subject": {
+            "kind": "generation",
+            "max_depth": 1
+        },
+        "cases": [
+            {
+                "start_rule": "__missing_postgresql_rule__",
+                "seed": 17
+            }
+        ],
+        "evidence": [
+            {
+                "kind": "generation.fails",
+                "pattern": "/Unknown grammar rule: __missing_postgresql_rule__/"
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-DISTINCT-ON-EXPRESSION",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN DISTINCT ON is retained, THEN its expression list SHALL come from the safe identifier-or-constant subset instead of the unrestricted expr_list family.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "distinct_clause",
+                "sequence": [
+                    "t:DISTINCT",
+                    "t:ON",
+                    "t:(",
+                    "nt:safe_distinct_on_expr_list",
+                    "t:)"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "safe_distinct_on_expr",
+                "sequence": [
+                    "nt:ColId"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "safe_distinct_on_expr",
+                "sequence": [
+                    "nt:AexprConst"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "distinct_clause",
+                "sequence": [
+                    "t:DISTINCT",
+                    "t:ON",
+                    "t:(",
+                    "nt:expr_list",
+                    "t:)"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-MATERIALIZED-VIEW-COMMANDS",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN ALTER MATERIALIZED VIEW is refined, THEN table-only SET EXPRESSION commands SHALL be absent from the materialized-view command family.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "materialized_view_alter_table_cmd",
+                "sequence": [
+                    "t:SET",
+                    "t:TABLESPACE",
+                    "nt:name"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "materialized_view_alter_table_cmd",
+                "sequence": [
+                    "t:OWNER",
+                    "t:TO",
+                    "nt:RoleSpec"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "materialized_view_alter_table_cmd",
+                "sequence": [
+                    "t:ALTER",
+                    "nt:opt_column",
+                    "nt:safe_materialized_view_column_position",
+                    "t:SET",
+                    "t:STATISTICS",
+                    "nt:safe_materialized_view_statistics_value"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "materialized_view_alter_table_cmd",
+                "sequence": [
+                    "t:ALTER",
+                    "nt:opt_column",
+                    "nt:ColId",
+                    "t:SET",
+                    "t:EXPRESSION",
+                    "t:AS",
+                    "t:(",
+                    "nt:a_expr",
+                    "t:)"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "materialized_view_alter_table_cmd",
+                "sequence": [
+                    "t:ALTER",
+                    "nt:opt_column",
+                    "nt:ColId",
+                    "t:DROP",
+                    "t:EXPRESSION"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "materialized_view_alter_table_cmd",
+                "sequence": [
+                    "t:ALTER",
+                    "nt:opt_column",
+                    "nt:Iconst",
+                    "t:SET",
+                    "t:STATISTICS",
+                    "nt:set_statistics_value"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-ALTER-INDEX-COMMANDS",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN ALTER INDEX is refined, THEN index commands SHALL come from an index-specific command family with bounded statistics values.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "AlterTableStmt",
+                "sequence": [
+                    "nt:AlterIndexStmt"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "AlterIndexStmt",
+                "sequence": [
+                    "t:ALTER",
+                    "t:INDEX",
+                    "nt:qualified_name",
+                    "nt:index_alter_table_cmds"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "index_alter_table_cmd",
+                "sequence": [
+                    "t:ALTER",
+                    "nt:opt_column",
+                    "nt:safe_index_column_position",
+                    "t:SET",
+                    "t:STATISTICS",
+                    "nt:safe_index_statistics_value"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "AlterTableStmt",
+                "sequence": [
+                    "t:ALTER",
+                    "t:INDEX",
+                    "nt:qualified_name",
+                    "nt:alter_table_cmds"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-ALTER-VIEW-COMMANDS",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN ALTER VIEW is refined, THEN view commands SHALL come from a view-specific command family instead of generic table commands.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "AlterTableStmt",
+                "sequence": [
+                    "t:ALTER",
+                    "t:VIEW",
+                    "nt:qualified_name",
+                    "nt:view_alter_table_cmds"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "view_alter_table_cmd",
+                "sequence": [
+                    "t:ALTER",
+                    "nt:opt_column",
+                    "nt:ColId",
+                    "t:SET",
+                    "t:DEFAULT",
+                    "nt:a_expr"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "view_alter_table_cmd",
+                "sequence": [
+                    "t:OWNER",
+                    "t:TO",
+                    "nt:RoleSpec"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "AlterTableStmt",
+                "sequence": [
+                    "t:ALTER",
+                    "t:VIEW",
+                    "nt:qualified_name",
+                    "nt:alter_table_cmds"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "view_alter_table_cmd",
+                "sequence": [
+                    "t:ALTER",
+                    "nt:opt_column",
+                    "nt:ColId",
+                    "t:SET",
+                    "t:EXPRESSION",
+                    "t:AS",
+                    "t:(",
+                    "nt:a_expr",
+                    "t:)"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-ALTER-DOMAIN-ADD",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN ALTER DOMAIN ADD is refined, THEN only the documented add-constraint family SHALL remain derivable.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "AlterDomainStmt",
+                "sequence": [
+                    "t:ALTER",
+                    "t:DOMAIN_P",
+                    "nt:any_name",
+                    "t:ADD_P",
+                    "nt:domain_add_constraint"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "AlterDomainStmt",
+                "sequence": [
+                    "t:ALTER",
+                    "t:DOMAIN_P",
+                    "nt:any_name",
+                    "t:ADD_P",
+                    "t:NOT",
+                    "t:NULL_P"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-ALTER-DATABASE-OPTIONS",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN ALTER DATABASE options are refined, THEN the option family SHALL remain inside the engine-valid connection-limit and boolean subset.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "createdb_opt_item",
+                "sequence": [
+                    "t:CONNECTION",
+                    "t:LIMIT",
+                    "nt:opt_equal",
+                    "nt:SignedIconst"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "createdb_opt_item",
+                "sequence": [
+                    "t:CONNECTION",
+                    "t:LIMIT",
+                    "nt:opt_equal",
+                    "t:DEFAULT"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "createdb_opt_item",
+                "sequence": [
+                    "t:ALLOW_CONNECTIONS",
+                    "nt:opt_equal",
+                    "nt:database_bool_option_value"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "createdb_opt_item",
+                "sequence": [
+                    "t:IS_TEMPLATE",
+                    "nt:opt_equal",
+                    "nt:database_bool_option_value"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "createdb_opt_item",
+                "sequence": [
+                    "t:OWNER",
+                    "nt:opt_equal",
+                    "nt:name"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "createdb_opt_item",
+                "sequence": [
+                    "t:TEMPLATE",
+                    "nt:opt_equal",
+                    "nt:name"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "createdb_opt_item",
+                "sequence": [
+                    "t:TABLESPACE",
+                    "nt:opt_equal",
+                    "nt:name"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-ALTER-SEQUENCE-COMMANDS",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN ALTER SEQUENCE table commands are refined, THEN the sequence branch SHALL use sequence-specific command families instead of generic table commands.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "AlterTableStmt",
+                "sequence": [
+                    "t:ALTER",
+                    "t:SEQUENCE",
+                    "nt:qualified_name",
+                    "nt:sequence_alter_table_cmds"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "sequence_alter_table_cmd",
+                "sequence": [
+                    "t:OWNER",
+                    "t:TO",
+                    "nt:RoleSpec"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "AlterTableStmt",
+                "sequence": [
+                    "t:ALTER",
+                    "t:SEQUENCE",
+                    "nt:qualified_name",
+                    "nt:alter_table_cmds"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-ALTER-STATISTICS-VALUE",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN ALTER STATISTICS is refined, THEN statistics values SHALL come from the canonical positive integer subset and exclude DEFAULT.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "AlterStatsStmt",
+                "sequence": [
+                    "t:ALTER",
+                    "t:STATISTICS",
+                    "nt:any_name",
+                    "t:SET",
+                    "t:STATISTICS",
+                    "nt:safe_alter_statistics_value"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "safe_alter_statistics_value",
+                "sequence": [
+                    "t:1"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "safe_alter_statistics_value",
+                "sequence": [
+                    "t:DEFAULT"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-ALTER-TYPE-OPTIONS",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN ALTER TYPE is refined, THEN type options SHALL come from the documented safe option-name subset and exclude generic operator-definition lists.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "AlterTypeStmt",
+                "sequence": [
+                    "t:ALTER",
+                    "t:TYPE_P",
+                    "nt:any_name",
+                    "t:SET",
+                    "t:(",
+                    "nt:safe_alter_type_option_list",
+                    "t:)"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "safe_alter_type_option",
+                "sequence": [
+                    "t:RECEIVE",
+                    "t:=",
+                    "t:NONE"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "safe_alter_type_option",
+                "sequence": [
+                    "t:ANALYZE",
+                    "t:=",
+                    "t:NONE"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "AlterTypeStmt",
+                "sequence": [
+                    "t:ALTER",
+                    "t:TYPE_P",
+                    "nt:any_name",
+                    "t:SET",
+                    "t:(",
+                    "nt:operator_def_list",
+                    "t:)"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-ALTER-ROUTINE-OPTIONS",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN ALTER FUNCTION, PROCEDURE, and ROUTINE are refined, THEN option lists SHALL be generated from a singleton safe subset that excludes duplicate or conflicting combinations.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "AlterFunctionStmt",
+                "sequence": [
+                    "t:ALTER",
+                    "t:ROUTINE",
+                    "nt:function_with_argtypes",
+                    "nt:safe_alter_routine_option_list",
+                    "nt:opt_restrict"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "safe_alter_routine_option",
+                "sequence": [
+                    "t:STRICT_P"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "safe_alter_routine_option",
+                "sequence": [
+                    "t:PARALLEL",
+                    "nt:safe_alter_routine_parallel_value"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "AlterFunctionStmt",
+                "sequence": [
+                    "t:ALTER",
+                    "t:ROUTINE",
+                    "nt:function_with_argtypes",
+                    "nt:alterfunc_opt_list",
+                    "nt:opt_restrict"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-QUALIFIED-NAME-DEPTH",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN PostgreSQL qualified names are canonicalized, THEN they SHALL remain within one-part or schema-qualified two-part depth.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "qualified_name",
+                "sequence": [
+                    "nt:ColId"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "qualified_name",
+                "sequence": [
+                    "nt:ColId",
+                    "t:.",
+                    "nt:attr_name"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "qualified_name",
+                "sequence": [
+                    "nt:ColId",
+                    "t:.",
+                    "nt:attr_name",
+                    "t:.",
+                    "nt:attr_name"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "any_name",
+                "sequence": [
+                    "nt:ColId",
+                    "t:.",
+                    "nt:attr_name",
+                    "t:.",
+                    "nt:attr_name"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-VALID-UNTIL-LITERAL",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN ALTER ROLE VALID UNTIL is refined for syntax fuzzing, THEN timestamp literals SHALL come from a canonical valid subset.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "AlterOptRoleElem",
+                "sequence": [
+                    "t:VALID",
+                    "t:UNTIL",
+                    "nt:valid_until_literal"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "AlterOptRoleElem",
+                "sequence": [
+                    "t:VALID",
+                    "t:UNTIL",
+                    "nt:Sconst"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "valid_until_literal",
+                "sequence": [
+                    "t:'2000-01-01 00:00:00+00'"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "valid_until_literal",
+                "sequence": [
+                    "t:'2030-12-31 23:59:59+00'"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-GRANT-PARAMETER-TARGET",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN GRANT and REVOKE parameter targets are refined, THEN configuration-parameter names SHALL come from a canonical engine-valid subset instead of generic identifier families.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "privilege_target",
+                "sequence": [
+                    "t:PARAMETER",
+                    "nt:safe_configuration_parameter_name_list"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "privilege_target",
+                "sequence": [
+                    "t:PARAMETER",
+                    "nt:parameter_name_list"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "safe_configuration_parameter_name",
+                "sequence": [
+                    "t:search_path"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "safe_configuration_parameter_name",
+                "sequence": [
+                    "t:work_mem"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-CREATE-ROLE-NAME-AND-OPTIONS",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN CREATE ROLE is refined, THEN reserved pseudo-role names SHALL be excluded and the option list SHALL stay inside the singleton safe subset.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "CreateRoleStmt",
+                "sequence": [
+                    "t:CREATE",
+                    "t:ROLE",
+                    "nt:safe_create_role_name",
+                    "nt:opt_with",
+                    "nt:safe_create_role_option_list"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "CreateRoleStmt",
+                "sequence": [
+                    "t:CREATE",
+                    "t:ROLE",
+                    "nt:RoleId",
+                    "nt:opt_with",
+                    "nt:OptRoleList"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "safe_create_role_name",
+                "sequence": [
+                    "nt:NonReservedWord"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "safe_create_role_option_list",
+                "sequence": [
+                    "nt:safe_create_role_option"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "safe_create_role_option",
+                "sequence": [
+                    "t:SESSION_USER"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-CREATE-USER-NAME-AND-OPTIONS",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN CREATE USER is refined, THEN reserved pseudo-role names SHALL be excluded and the option list SHALL stay inside the singleton safe subset.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "CreateUserStmt",
+                "sequence": [
+                    "t:CREATE",
+                    "t:USER",
+                    "nt:safe_create_role_name",
+                    "nt:opt_with",
+                    "nt:safe_create_role_option_list"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "CreateUserStmt",
+                "sequence": [
+                    "t:CREATE",
+                    "t:USER",
+                    "nt:RoleId",
+                    "nt:opt_with",
+                    "nt:OptRoleList"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "safe_create_role_name",
+                "sequence": [
+                    "nt:NonReservedWord"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-ROLE-STATEMENT-NAMES",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN PostgreSQL role membership and drop statements are refined, THEN all role-name positions SHALL come from the canonical safe role-name family instead of generic role lists or pseudo-role specifiers.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "DropRoleStmt",
+                "sequence": [
+                    "t:DROP",
+                    "t:GROUP_P",
+                    "t:IF_P",
+                    "t:EXISTS",
+                    "nt:safe_role_name_list"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "DropRoleStmt",
+                "sequence": [
+                    "t:DROP",
+                    "t:GROUP_P",
+                    "t:IF_P",
+                    "t:EXISTS",
+                    "nt:role_list"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "GrantRoleStmt",
+                "sequence": [
+                    "t:GRANT",
+                    "nt:safe_role_name_list",
+                    "t:TO",
+                    "nt:safe_role_name_list",
+                    "nt:opt_granted_by"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "GrantRoleStmt",
+                "sequence": [
+                    "t:GRANT",
+                    "nt:privilege_list",
+                    "t:TO",
+                    "nt:role_list",
+                    "nt:opt_granted_by"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "RevokeRoleStmt",
+                "sequence": [
+                    "t:REVOKE",
+                    "nt:safe_role_name_list",
+                    "t:FROM",
+                    "nt:safe_role_name_list",
+                    "nt:opt_granted_by",
+                    "nt:opt_drop_behavior"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "RevokeRoleStmt",
+                "sequence": [
+                    "t:REVOKE",
+                    "nt:privilege_list",
+                    "t:FROM",
+                    "nt:role_list",
+                    "nt:opt_granted_by",
+                    "nt:opt_drop_behavior"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-CREATE-GROUP-NAME-AND-OPTIONS",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN CREATE GROUP is refined, THEN reserved pseudo-role names SHALL be excluded and the option list SHALL stay inside the singleton safe subset.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "CreateGroupStmt",
+                "sequence": [
+                    "t:CREATE",
+                    "t:GROUP_P",
+                    "nt:safe_create_role_name",
+                    "nt:opt_with",
+                    "nt:safe_create_role_option_list"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "CreateGroupStmt",
+                "sequence": [
+                    "t:CREATE",
+                    "t:GROUP_P",
+                    "nt:RoleId",
+                    "nt:opt_with",
+                    "nt:OptRoleList"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "safe_create_role_name",
+                "sequence": [
+                    "nt:NonReservedWord"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-ALTER-EXTENSION-CONTENT-TARGET",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN ALTER EXTENSION content members are refined, THEN member object targets SHALL stay inside extension-valid object families instead of generic object-name families.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "AlterExtensionContentsStmt",
+                "sequence": [
+                    "t:ALTER",
+                    "t:EXTENSION",
+                    "nt:name",
+                    "nt:add_drop",
+                    "nt:safe_extension_object_type_name",
+                    "nt:name"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "AlterExtensionContentsStmt",
+                "sequence": [
+                    "t:ALTER",
+                    "t:EXTENSION",
+                    "nt:name",
+                    "nt:add_drop",
+                    "t:TYPE_P",
+                    "nt:any_name"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "AlterExtensionContentsStmt",
+                "sequence": [
+                    "t:ALTER",
+                    "t:EXTENSION",
+                    "nt:name",
+                    "nt:add_drop",
+                    "t:CAST",
+                    "nt:safe_cast_signature"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "AlterExtensionContentsStmt",
+                "sequence": [
+                    "t:ALTER",
+                    "t:EXTENSION",
+                    "nt:name",
+                    "nt:add_drop",
+                    "t:TRANSFORM",
+                    "t:FOR",
+                    "nt:safe_type_reference",
+                    "t:LANGUAGE",
+                    "nt:name"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "safe_extension_object_type_name",
+                "sequence": [
+                    "t:SCHEMA"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "safe_extension_object_type_name",
+                "sequence": [
+                    "t:EXTENSION"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "safe_extension_object_type_name",
+                "sequence": [
+                    "t:ROLE"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-GRANT-LARGE-OBJECT-TARGET",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN GRANT and REVOKE large-object targets are refined, THEN large-object OIDs SHALL come from a canonical integer subset instead of generic numeric families.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "privilege_target",
+                "sequence": [
+                    "t:LARGE_P",
+                    "t:OBJECT_P",
+                    "nt:safe_large_object_oid_list"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "privilege_target",
+                "sequence": [
+                    "t:LARGE_P",
+                    "t:OBJECT_P",
+                    "nt:NumericOnly_list"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "safe_large_object_oid",
+                "sequence": [
+                    "t:1"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "safe_large_object_oid",
+                "sequence": [
+                    "t:42"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-CREATE-TABLE-PARTITION-STRATEGY",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN CREATE TABLE partitioning is refined, THEN partition strategies SHALL come from the canonical engine keyword subset instead of generic identifiers.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "PartitionSpec",
+                "sequence": [
+                    "t:PARTITION",
+                    "t:BY",
+                    "nt:safe_partition_strategy",
+                    "t:(",
+                    "nt:part_params",
+                    "t:)"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "PartitionSpec",
+                "sequence": [
+                    "t:PARTITION",
+                    "t:BY",
+                    "nt:ColId",
+                    "t:(",
+                    "nt:part_params",
+                    "t:)"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "safe_partition_strategy",
+                "sequence": [
+                    "t:RANGE"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "safe_partition_strategy",
+                "sequence": [
+                    "t:LIST"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "safe_partition_strategy",
+                "sequence": [
+                    "t:HASH"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-CREATE-TABLE-PARTITION-OF",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN CREATE TABLE PARTITION OF is refined, THEN that family SHALL exclude temporary table modifiers that conflict with non-temporary schemas.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "CreateStmt",
+                "sequence": [
+                    "nt:CreatePartitionOfStmt"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "CreatePartitionOfStmt",
+                "sequence": [
+                    "t:CREATE",
+                    "nt:safe_partition_of_opt_temp",
+                    "t:TABLE",
+                    "nt:qualified_name",
+                    "t:PARTITION",
+                    "t:OF",
+                    "nt:qualified_name",
+                    "nt:OptTypedTableElementList",
+                    "nt:PartitionBoundSpec",
+                    "nt:OptPartitionSpec",
+                    "nt:table_access_method_clause",
+                    "nt:OptWith",
+                    "nt:OnCommitOption",
+                    "nt:OptTableSpace"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "safe_partition_of_opt_temp",
+                "sequence": [
+                    "t:TEMP"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-TEMPORARY-RELATION-NAME-BINDING",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN temporary relation-creation families are refined, THEN temporary modifiers SHALL bind only to unqualified canonical relation names while non-temporary branches retain qualified names.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "CreateStmt",
+                "sequence": [
+                    "t:CREATE",
+                    "nt:safe_temporary_relation_modifier",
+                    "t:TABLE",
+                    "nt:safe_temporary_relation_name",
+                    "t:(",
+                    "nt:OptTableElementList",
+                    "t:)",
+                    "nt:OptInherit",
+                    "nt:OptPartitionSpec",
+                    "nt:table_access_method_clause",
+                    "nt:OptWith",
+                    "nt:OnCommitOption",
+                    "nt:OptTableSpace"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "CreateStmt",
+                "sequence": [
+                    "t:CREATE",
+                    "nt:OptTemp",
+                    "t:TABLE",
+                    "nt:qualified_name",
+                    "t:(",
+                    "nt:OptTableElementList",
+                    "t:)",
+                    "nt:OptInherit",
+                    "nt:OptPartitionSpec",
+                    "nt:table_access_method_clause",
+                    "nt:OptWith",
+                    "nt:OnCommitOption",
+                    "nt:OptTableSpace"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "CreateAsStmt",
+                "sequence": [
+                    "t:CREATE",
+                    "nt:safe_temporary_relation_modifier",
+                    "t:TABLE",
+                    "nt:create_as_target_no_columns_temp",
+                    "t:AS",
+                    "nt:SelectStmt",
+                    "nt:opt_with_data"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "CreateAsStmt",
+                "sequence": [
+                    "t:CREATE",
+                    "nt:OptTemp",
+                    "t:TABLE",
+                    "nt:create_as_target_no_columns",
+                    "t:AS",
+                    "nt:SelectStmt",
+                    "nt:opt_with_data"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "ExecuteStmt",
+                "sequence": [
+                    "t:CREATE",
+                    "nt:safe_temporary_relation_modifier",
+                    "t:TABLE",
+                    "nt:execute_create_as_target_temp",
+                    "t:AS",
+                    "t:EXECUTE",
+                    "nt:name",
+                    "nt:execute_param_clause",
+                    "nt:opt_with_data"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "CreateSeqStmt",
+                "sequence": [
+                    "t:CREATE",
+                    "nt:safe_temporary_relation_modifier",
+                    "t:SEQUENCE",
+                    "nt:safe_temporary_relation_name",
+                    "nt:OptSeqOptList"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "CreateSeqStmt",
+                "sequence": [
+                    "t:CREATE",
+                    "nt:OptTemp",
+                    "t:SEQUENCE",
+                    "nt:qualified_name",
+                    "nt:OptSeqOptList"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "ViewStmt",
+                "sequence": [
+                    "t:CREATE",
+                    "nt:safe_temporary_relation_modifier",
+                    "t:VIEW",
+                    "nt:safe_temporary_relation_name",
+                    "nt:opt_reloptions",
+                    "t:AS",
+                    "nt:SelectStmt",
+                    "nt:opt_check_option"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "ViewStmt",
+                "sequence": [
+                    "t:CREATE",
+                    "nt:OptTemp",
+                    "t:VIEW",
+                    "nt:qualified_name",
+                    "nt:opt_reloptions",
+                    "t:AS",
+                    "nt:SelectStmt",
+                    "nt:opt_check_option"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-CREATE-VIEW-EXPLICIT-COLUMNS",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN CREATE VIEW explicit columns are refined, THEN the view family SHALL use finite arity select/column families and exclude the unlogged temp modifier.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "ViewStmt",
+                "sequence": [
+                    "t:CREATE",
+                    "nt:safe_view_non_temp_modifier",
+                    "t:VIEW",
+                    "nt:qualified_name",
+                    "nt:view_column_list_1",
+                    "nt:opt_reloptions",
+                    "t:AS",
+                    "nt:view_select_stmt_1",
+                    "nt:opt_check_option"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "ViewStmt",
+                "sequence": [
+                    "t:CREATE",
+                    "nt:safe_temporary_relation_modifier",
+                    "t:RECURSIVE",
+                    "t:VIEW",
+                    "nt:safe_temporary_relation_name",
+                    "nt:view_column_list_8",
+                    "nt:opt_reloptions",
+                    "t:AS",
+                    "nt:view_select_stmt_8",
+                    "nt:opt_check_option"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "ViewStmt",
+                "sequence": [
+                    "t:CREATE",
+                    "nt:OptTemp",
+                    "t:RECURSIVE",
+                    "t:VIEW",
+                    "nt:qualified_name",
+                    "t:(",
+                    "nt:columnList",
+                    "t:)",
+                    "nt:opt_reloptions",
+                    "t:AS",
+                    "nt:SelectStmt",
+                    "nt:opt_check_option"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "safe_view_non_temp_modifier",
+                "sequence": [
+                    "t:UNLOGGED"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-INSERT-EXPLICIT-COLUMNS",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN INSERT explicit columns are refined, THEN the insert family SHALL use finite arity select/column families instead of raw column-list plus bare SelectStmt combinations.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "insert_rest",
+                "sequence": [
+                    "t:(",
+                    "nt:insert_column_list_1",
+                    "t:)",
+                    "nt:insert_select_stmt_1"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "insert_rest",
+                "sequence": [
+                    "t:(",
+                    "nt:insert_column_list_8",
+                    "t:)",
+                    "t:OVERRIDING",
+                    "nt:override_kind",
+                    "t:VALUE_P",
+                    "nt:insert_select_stmt_8"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "insert_rest",
+                "sequence": [
+                    "t:(",
+                    "nt:insert_column_list",
+                    "t:)",
+                    "nt:SelectStmt"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-INSERT-CONFLICT-UPDATE",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN INSERT ON CONFLICT DO UPDATE is refined, THEN the conflict-update family SHALL require a non-empty inference specification.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "opt_on_conflict",
+                "sequence": [
+                    "t:ON",
+                    "t:CONFLICT",
+                    "nt:safe_conf_expr",
+                    "t:DO",
+                    "t:UPDATE",
+                    "t:SET",
+                    "nt:safe_insert_conflict_set_clause_list",
+                    "nt:where_clause"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "opt_on_conflict",
+                "sequence": [
+                    "t:ON",
+                    "t:CONFLICT",
+                    "nt:opt_conf_expr",
+                    "t:DO",
+                    "t:UPDATE",
+                    "t:SET",
+                    "nt:set_clause_list",
+                    "nt:where_clause"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-CREATE-ROUTINE-DEFINITION",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN CREATE FUNCTION and PROCEDURE statements are refined, THEN retained routine definitions SHALL include either a canonical SQL language body or a canonical RETURN body instead of an empty definition.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "CreateFunctionStmt",
+                "sequence": [
+                    "t:CREATE",
+                    "nt:opt_or_replace",
+                    "t:FUNCTION",
+                    "nt:func_name",
+                    "nt:safe_create_routine_args",
+                    "t:RETURNS",
+                    "nt:safe_create_routine_return_type",
+                    "nt:safe_create_routine_sql_options"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "CreateFunctionStmt",
+                "sequence": [
+                    "t:CREATE",
+                    "nt:opt_or_replace",
+                    "t:FUNCTION",
+                    "nt:func_name",
+                    "nt:safe_create_routine_args",
+                    "t:RETURNS",
+                    "nt:safe_create_routine_return_type",
+                    "nt:safe_create_routine_return_body"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "CreateFunctionStmt",
+                "sequence": [
+                    "t:CREATE",
+                    "nt:opt_or_replace",
+                    "t:PROCEDURE",
+                    "nt:func_name",
+                    "nt:safe_create_routine_args",
+                    "nt:safe_create_routine_sql_options"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "CreateFunctionStmt",
+                "sequence": [
+                    "t:CREATE",
+                    "nt:opt_or_replace",
+                    "t:FUNCTION",
+                    "nt:func_name",
+                    "nt:func_args_with_defaults",
+                    "t:RETURNS",
+                    "nt:func_return",
+                    "nt:opt_createfunc_opt_list",
+                    "nt:opt_routine_body"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-DROP-TYPE-OBJECT-NAME",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN DROP TYPE and DROP DOMAIN statements are refined, THEN dropped objects SHALL be named by object-name families rather than type-expression families.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "DropStmt",
+                "sequence": [
+                    "t:DROP",
+                    "t:TYPE_P",
+                    "nt:safe_drop_type_name_list",
+                    "nt:opt_drop_behavior"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "DropStmt",
+                "sequence": [
+                    "t:DROP",
+                    "t:DOMAIN_P",
+                    "nt:safe_drop_type_name_list",
+                    "nt:opt_drop_behavior"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "DropStmt",
+                "sequence": [
+                    "t:DROP",
+                    "t:TYPE_P",
+                    "nt:type_name_list",
+                    "nt:opt_drop_behavior"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "DropStmt",
+                "sequence": [
+                    "t:DROP",
+                    "t:DOMAIN_P",
+                    "nt:type_name_list",
+                    "nt:opt_drop_behavior"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-TEXT-SEARCH-TEMPLATE-DEFINITION",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN CREATE TEXT SEARCH TEMPLATE is refined, THEN only the documented INIT and LEXIZE option names SHALL remain in that family.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "DefineStmt",
+                "sequence": [
+                    "nt:DefineTextSearchTemplateStmt"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "DefineTextSearchTemplateStmt",
+                "sequence": [
+                    "t:CREATE",
+                    "t:TEXT_P",
+                    "t:SEARCH",
+                    "t:TEMPLATE",
+                    "nt:any_name",
+                    "nt:text_search_template_definition"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "text_search_template_lexize_option",
+                "sequence": [
+                    "t:LEXIZE",
+                    "t:=",
+                    "nt:func_name"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "text_search_template_init_option",
+                "sequence": [
+                    "t:INIT",
+                    "t:=",
+                    "nt:func_name"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-SELECT-SET-OPERATION",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN SELECT set operations are refined, THEN plain SELECT SHALL require a target list and set-operation operands SHALL come from finite equal-arity operand families.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "simple_select",
+                "sequence": [
+                    "t:SELECT",
+                    "nt:opt_all_clause",
+                    "nt:target_list",
+                    "nt:into_clause",
+                    "nt:from_clause",
+                    "nt:where_clause",
+                    "nt:group_clause",
+                    "nt:having_clause",
+                    "nt:window_clause"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "simple_select",
+                "sequence": [
+                    "nt:set_operation_select_stmt"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "simple_select",
+                "sequence": [
+                    "t:SELECT",
+                    "nt:opt_all_clause",
+                    "nt:opt_target_list",
+                    "nt:into_clause",
+                    "nt:from_clause",
+                    "nt:where_clause",
+                    "nt:group_clause",
+                    "nt:having_clause",
+                    "nt:window_clause"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "simple_select",
+                "sequence": [
+                    "nt:select_clause",
+                    "t:UNION",
+                    "nt:set_quantifier",
+                    "nt:select_clause"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "simple_select",
+                "sequence": [
+                    "nt:select_clause",
+                    "t:INTERSECT",
+                    "nt:set_quantifier",
+                    "nt:select_clause"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "simple_select",
+                "sequence": [
+                    "nt:select_clause",
+                    "t:EXCEPT",
+                    "nt:set_quantifier",
+                    "nt:select_clause"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "setop_select_stmt_1",
+                "sequence": [
+                    "nt:setop_select_operand_1",
+                    "t:UNION",
+                    "nt:set_quantifier",
+                    "nt:setop_select_operand_1"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "setop_select_stmt_8",
+                "sequence": [
+                    "nt:setop_select_operand_8",
+                    "t:EXCEPT",
+                    "nt:set_quantifier",
+                    "nt:setop_select_operand_8"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-SELECT-VALUES-CLAUSE",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN VALUES clauses are refined for SELECT-family generation, THEN row expressions SHALL come from constant-expression families and multirow clauses SHALL preserve a single finite row arity.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "select_values_clause",
+                "sequence": [
+                    "nt:select_values_clause_1"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "select_values_clause",
+                "sequence": [
+                    "nt:select_values_clause_8"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "select_value_expr_list_1",
+                "sequence": [
+                    "nt:safe_select_value_expr"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "safe_select_value_expr",
+                "sequence": [
+                    "t:ICONST"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "select_value_row_list_8",
+                "sequence": [
+                    "nt:select_value_row_list_8",
+                    "t:,",
+                    "nt:select_value_row_8"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-CREATE-OPERATOR-DEFINITION",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN CREATE OPERATOR is refined, THEN the operator definition SHALL require an explicit procedure and safe type references.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "DefineStmt",
+                "sequence": [
+                    "nt:DefineOperatorStmt"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "DefineOperatorStmt",
+                "sequence": [
+                    "t:CREATE",
+                    "t:OPERATOR",
+                    "nt:any_operator",
+                    "nt:safe_operator_definition"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "safe_operator_definition",
+                "sequence": [
+                    "t:(",
+                    "t:PROCEDURE",
+                    "t:=",
+                    "nt:func_name",
+                    "t:,",
+                    "t:LEFTARG",
+                    "t:=",
+                    "nt:safe_type_reference",
+                    "t:,",
+                    "t:RIGHTARG",
+                    "t:=",
+                    "nt:safe_type_reference",
+                    "t:)"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-CREATE-AGGREGATE-DEFINITION",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN CREATE AGGREGATE is refined, THEN the aggregate definition SHALL require explicit SFUNC and STYPE options from the safe subset.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "DefineStmt",
+                "sequence": [
+                    "nt:DefineAggregateStmt"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "DefineAggregateStmt",
+                "sequence": [
+                    "t:CREATE",
+                    "nt:opt_or_replace",
+                    "t:AGGREGATE",
+                    "nt:func_name",
+                    "nt:aggr_args",
+                    "nt:safe_aggregate_definition"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "safe_aggregate_definition",
+                "sequence": [
+                    "t:(",
+                    "nt:safe_aggregate_sfunc_option",
+                    "t:,",
+                    "nt:safe_aggregate_stype_option",
+                    "t:)"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "DefineStmt",
+                "sequence": [
+                    "t:CREATE",
+                    "nt:opt_or_replace",
+                    "t:AGGREGATE",
+                    "nt:func_name",
+                    "nt:aggr_args",
+                    "nt:definition"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-COMMENT-TYPE-REFERENCE",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN COMMENT ON type-like objects is refined, THEN TYPE and DOMAIN comments SHALL use object-name families and CAST or TRANSFORM comments SHALL use safe type references.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "CommentTypeReferenceStmt",
+                "sequence": [
+                    "t:COMMENT",
+                    "t:ON",
+                    "t:TYPE_P",
+                    "nt:any_name",
+                    "t:IS",
+                    "nt:comment_text"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "CommentTypeReferenceStmt",
+                "sequence": [
+                    "t:COMMENT",
+                    "t:ON",
+                    "t:DOMAIN_P",
+                    "nt:any_name",
+                    "t:IS",
+                    "nt:comment_text"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "CommentTypeReferenceStmt",
+                "sequence": [
+                    "t:COMMENT",
+                    "t:ON",
+                    "t:CAST",
+                    "nt:safe_cast_signature",
+                    "t:IS",
+                    "nt:comment_text"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "CommentStmt",
+                "sequence": [
+                    "t:COMMENT",
+                    "t:ON",
+                    "t:TYPE_P",
+                    "nt:Typename",
+                    "t:IS",
+                    "nt:comment_text"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "CommentStmt",
+                "sequence": [
+                    "t:COMMENT",
+                    "t:ON",
+                    "t:DOMAIN_P",
+                    "nt:Typename",
+                    "t:IS",
+                    "nt:comment_text"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-CREATE-CAST-TYPE-REFERENCE",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN CREATE CAST is refined, THEN cast source and target types SHALL come from a bounded canonical type subset.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "CreateCastStmt",
+                "sequence": [
+                    "t:CREATE",
+                    "t:CAST",
+                    "nt:safe_cast_signature",
+                    "t:WITH",
+                    "t:FUNCTION",
+                    "nt:safe_cast_function_with_argtypes",
+                    "nt:cast_context"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "CreateCastStmt",
+                "sequence": [
+                    "t:CREATE",
+                    "t:CAST",
+                    "t:(",
+                    "nt:Typename",
+                    "t:AS",
+                    "nt:Typename",
+                    "t:)",
+                    "t:WITH",
+                    "t:FUNCTION",
+                    "nt:function_with_argtypes",
+                    "nt:cast_context"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-DROP-CAST-TYPE-REFERENCE",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN DROP CAST is refined, THEN cast source and target types SHALL come from the bounded canonical type subset.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "DropCastStmt",
+                "sequence": [
+                    "t:DROP",
+                    "t:CAST",
+                    "nt:opt_if_exists",
+                    "nt:safe_cast_signature",
+                    "nt:opt_drop_behavior"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "DropCastStmt",
+                "sequence": [
+                    "t:DROP",
+                    "t:CAST",
+                    "nt:opt_if_exists",
+                    "t:(",
+                    "nt:Typename",
+                    "t:AS",
+                    "nt:Typename",
+                    "t:)",
+                    "nt:opt_drop_behavior"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-CREATE-ASSERTION-CHECK-EXPRESSION",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN CREATE ASSERTION is refined, THEN CHECK expressions SHALL come from the safe boolean subset instead of the unrestricted a_expr family.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "CreateAssertionStmt",
+                "sequence": [
+                    "t:CREATE",
+                    "t:ASSERTION",
+                    "nt:any_name",
+                    "t:CHECK",
+                    "t:(",
+                    "nt:safe_assertion_check_expr",
+                    "t:)",
+                    "nt:ConstraintAttributeSpec"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "safe_assertion_check_expr",
+                "sequence": [
+                    "t:TRUE_P"
+                ]
+            },
+            {
+                "kind": "grammar.rule.contains_sequence",
+                "rule": "safe_assertion_check_expr",
+                "sequence": [
+                    "t:ICONST",
+                    "t:=",
+                    "t:ICONST"
+                ]
+            },
+            {
+                "kind": "grammar.rule.not_contains_sequence",
+                "rule": "CreateAssertionStmt",
+                "sequence": [
+                    "t:CREATE",
+                    "t:ASSERTION",
+                    "nt:any_name",
+                    "t:CHECK",
+                    "t:(",
+                    "nt:a_expr",
+                    "t:)",
+                    "nt:ConstraintAttributeSpec"
+                ]
+            }
+        ]
+    }
+]

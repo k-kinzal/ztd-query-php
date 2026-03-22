@@ -1,6 +1,6 @@
 {
     "name": "k-kinzal/sql-faker",
-    "description": "Faker Provider for generating syntactically valid SQL statements",
+    "description": "Grammar-snapshot SQL faker for verifiable supported-language generation",
     "type": "library",
     "license": "MIT",
     "require": {
@@ -9,6 +9,7 @@
     },
     "require-dev": {
         "brianium/paratest": "^6.11 || ^7",
+        "deptrac/deptrac": "^4.2",
         "friendsofphp/php-cs-fixer": "^3.92",
         "infection/infection": "^0.28 || ^0.29 || ^0.30 || ^0.31 || ^0.32",
         "k-kinzal/phpstan-custom-rules": "@dev",
@@ -32,21 +33,53 @@
     },
     "autoload-dev": {
         "psr-4": {
+            "Spec\\": "spec/",
             "Tests\\Unit\\SqlFaker\\": "tests/Unit/",
             "Fuzz\\": "fuzz/"
         }
     },
     "scripts": {
-        "build-mysql": "php bin/build-mysql.php",
+        "build": [
+            "@build:mysql",
+            "@build:postgresql",
+            "@build:sqlite"
+        ],
+        "build:mysql": "php bin/build-mysql.php",
+        "build:postgresql": "php bin/build-pg.php",
+        "build:sqlite": "php bin/build-sqlite.php",
+        "build:verify": [
+            "@build:verify:mysql",
+            "@build:verify:postgresql",
+            "@build:verify:sqlite"
+        ],
+        "build:verify:mysql": "php bin/build-mysql.php --all --verify",
+        "build:verify:postgresql": "php bin/build-pg.php --all --verify",
+        "build:verify:sqlite": "php bin/build-sqlite.php --all --verify",
+        "build-mysql": "@build:mysql",
         "bench": "@bench:quick",
         "bench:quick": "phpbench run bench --bootstrap=vendor/autoload.php --report=aggregate --php-config='{\"memory_limit\":\"512M\"}' --warmup=1 --iterations=3 --revs=25",
         "bench:full": "phpbench run bench --bootstrap=vendor/autoload.php --report=aggregate --php-config='{\"memory_limit\":\"512M\"}' --warmup=2 --iterations=8 --revs=100",
-        "test": "paratest --processes=auto",
-        "test:unit": "phpunit tests/Unit/",
+        "test": [
+            "Composer\\Config::disableProcessTimeout",
+            "paratest --processes=auto tests"
+        ],
+        "test:unit": [
+            "Composer\\Config::disableProcessTimeout",
+            "phpunit tests/Unit/ tests/Spec/"
+        ],
+        "spec": [
+            "Composer\\Config::disableProcessTimeout",
+            "@spec:contract",
+            "@spec:supported"
+        ],
+        "spec:contract": "php bin/spec.php contract",
+        "spec:supported": "php bin/spec.php spec",
         "lint": [
             "@format:check",
-            "phpstan analyse --memory-limit=512M"
+            "phpstan analyse --memory-limit=512M",
+            "@deptrac"
         ],
+        "deptrac": "deptrac analyse --no-cache --report-uncovered --fail-on-uncovered",
         "format": "php-cs-fixer fix --allow-risky=yes",
         "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
         "fuzz": [

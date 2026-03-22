@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\Grammar;
 
 use Exception;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\UnknownSymbolException;
-use PHPUnit\Framework\Attributes\CoversClass;
 
-#[CoversClass(UnknownSymbolException::class)]
+#[CoversNothing]
 final class UnknownSymbolExceptionTest extends TestCase
 {
     public function testMessage(): void

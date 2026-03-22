@@ -7,6 +7,9 @@ namespace Fuzz\Container;
 use Testcontainers\Containers\GenericContainer\GenericContainer;
 use Testcontainers\Containers\WaitStrategy\PDO\PDOConnectWaitStrategy;
 
+/**
+ * Reusable Testcontainers definition for the PostgreSQL 16 fuzz target.
+ */
 final class PostgreSqlContainer extends GenericContainer
 {
     /**

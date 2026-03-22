@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\Grammar;
 
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\GrammarCompiler;
 use SqlFaker\Grammar\Terminal;
@@ -15,21 +16,8 @@ use SqlFaker\MySql\Bison\Ast\BisonSymbolNode;
 use SqlFaker\MySql\Bison\Ast\BisonSymbolType;
 use SqlFaker\MySql\Bison\Ast\BisonTokenDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonTokenInfo;
-use PHPUnit\Framework\Attributes\CoversClass;
 
-#[CoversClass(GrammarCompiler::class)]
-#[CoversClass(BisonAst::class)]
-#[CoversClass(BisonRuleNode::class)]
-#[CoversClass(BisonAlternativeNode::class)]
-#[CoversClass(BisonSymbolNode::class)]
-#[CoversClass(BisonTokenDeclaration::class)]
-#[CoversClass(BisonTokenInfo::class)]
-#[CoversClass(Terminal::class)]
-#[CoversClass(UnknownSymbolException::class)]
-#[CoversClass(\SqlFaker\Grammar\Grammar::class)]
-#[CoversClass(\SqlFaker\Grammar\NonTerminal::class)]
-#[CoversClass(\SqlFaker\Grammar\Production::class)]
-#[CoversClass(\SqlFaker\Grammar\ProductionRule::class)]
+#[CoversNothing]
 final class GrammarCompilerTest extends TestCase
 {
     public function testCompile(): void

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlFaker\MySql\Grammar;
 
 use InvalidArgumentException;
-use RuntimeException;
 
 /**
  * Represents a formal grammar for SQL generation.
@@ -18,9 +17,6 @@ use RuntimeException;
  */
 final class Grammar
 {
-    private const AST_DIR = __DIR__ . '/../../../resources/ast';
-    private const AST_META = __DIR__ . '/../../../resources/ast.php';
-
     /**
      * @param string $startSymbol The grammar's start symbol
      * @param array<string, ProductionRule> $ruleMap Non-terminal name => ProductionRule
@@ -36,39 +32,5 @@ final class Grammar
                 );
             }
         }
-    }
-
-    /**
-     * Load a pre-compiled grammar.
-     *
-     * @param string|null $version MySQL version tag (e.g., "mysql-8.4.0"). Null for default.
-     */
-    public static function load(?string $version = null): self
-    {
-        if ($version === null) {
-            /** @var array{default: string} $meta */
-            $meta = require self::AST_META;
-            $version = $meta['default'];
-        }
-
-        $path = self::AST_DIR . '/' . $version . '.php';
-
-        if (!file_exists($path)) {
-            throw new RuntimeException("Grammar file not found: {$path}");
-        }
-
-        /** @var array<string, string> $data */
-        $data = require $path;
-        $hash = array_key_first($data);
-        if ($hash === null) {
-            throw new RuntimeException("Invalid grammar file: {$path}");
-        }
-        $grammar = unserialize($data[$hash]);
-
-        if (!$grammar instanceof self) {
-            throw new RuntimeException("Failed to load grammar from: {$path}");
-        }
-
-        return $grammar;
     }
 }

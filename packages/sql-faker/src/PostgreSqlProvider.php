@@ -6,17 +6,20 @@ namespace SqlFaker;
 
 use Faker\Generator;
 use Faker\Provider\Base;
-use SqlFaker\Grammar\RandomStringGenerator;
-use SqlFaker\PostgreSql\Grammar\PgGrammar;
-use SqlFaker\PostgreSql\SqlGenerator;
+use SqlFaker\Contract\GenerationRequest;
+use SqlFaker\Generation\FakerRandomSource;
+use SqlFaker\PostgreSql\LexicalValueGenerator;
+use SqlFaker\PostgreSql\LexicalValueSource;
+use SqlFaker\PostgreSql\StatementGenerator as PostgreSqlStatementGenerator;
 use SqlFaker\PostgreSql\StatementType;
 
 /**
- * Faker Provider for generating syntactically valid PostgreSQL SQL statements.
+ * Faker Provider for generating PostgreSQL SQL from the documented supported language.
  *
- * This provider uses PostgreSQL's official Bison grammar (gram.y) to generate
- * SQL that is syntactically valid. Note that generated SQL may not be semantically
- * valid (tables/columns may not exist).
+ * This provider compiles a constrained grammar from PostgreSQL's upstream grammar
+ * snapshot and generates SQL through the runtime algorithm contract. Generated SQL
+ * is syntax-oriented fuzzing input, not a guarantee of semantic validity against a
+ * live schema.
  *
  * Usage:
  *   $faker = \Faker\Factory::create();
@@ -29,10 +32,10 @@ use SqlFaker\PostgreSql\StatementType;
  *   $faker->selectStatement();
  *   $faker->insertStatement();
  */
-final class PostgreSqlProvider extends Base
+final class PostgreSqlProvider extends Base implements LexicalValueSource
 {
-    private SqlGenerator $sql;
-    private RandomStringGenerator $rsg;
+    private LexicalValueGenerator $lexicalValues;
+    private PostgreSqlStatementGenerator $statementGenerator;
 
     /**
      * @param Generator $generator Faker generator
@@ -44,25 +47,36 @@ final class PostgreSqlProvider extends Base
 
         $generator->addProvider($this);
 
-        $this->rsg = new RandomStringGenerator($generator);
-        $this->sql = new SqlGenerator(PgGrammar::load($version), $generator, $this);
+        $this->lexicalValues = new LexicalValueGenerator(new FakerRandomSource($generator));
+        $this->statementGenerator = new PostgreSqlStatementGenerator($generator, $version, $this->lexicalValues);
+    }
+
+    public function generate(GenerationRequest $request): string
+    {
+        if ($request->seed === null) {
+            $request = new GenerationRequest(
+                startRule: $request->startRule,
+                seed: $this->generator->numberBetween(1, 2_147_483_647),
+                maxDepth: $request->maxDepth,
+            );
+        }
+
+        return $this->statementGenerator->generate($request);
     }
 
     /**
-     * Generate a syntactically valid PostgreSQL SQL statement.
+     * Generate a PostgreSQL SQL statement from the supported-language contract.
      *
-     * @param StatementType|null $type Statement type (null for random)
+     * @param StatementType|null $type Statement type (null uses the default `stmtmulti` entry rule)
      * @param int $maxDepth Maximum recursion depth (PHP_INT_MAX = unlimited)
      * @return string Generated SQL statement
      */
     public function sql(?StatementType $type = null, int $maxDepth = PHP_INT_MAX): string
     {
-        if ($type === null) {
-            /** @var StatementType $type */
-            $type = $this->generator->randomElement(StatementType::cases());
-        }
-
-        return $this->sql->generate($type->value, $maxDepth);
+        return $this->generate(new GenerationRequest(
+            startRule: $type !== null ? $type->value : 'stmtmulti',
+            maxDepth: $maxDepth,
+        ));
     }
 
     /**
@@ -70,7 +84,7 @@ final class PostgreSqlProvider extends Base
      */
     public function selectStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(StatementType::Select->value, $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: StatementType::Select->value, maxDepth: $maxDepth));
     }
 
     /**
@@ -78,7 +92,7 @@ final class PostgreSqlProvider extends Base
      */
     public function insertStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(StatementType::Insert->value, $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: StatementType::Insert->value, maxDepth: $maxDepth));
     }
 
     /**
@@ -86,7 +100,7 @@ final class PostgreSqlProvider extends Base
      */
     public function updateStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(StatementType::Update->value, $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: StatementType::Update->value, maxDepth: $maxDepth));
     }
 
     /**
@@ -94,7 +108,7 @@ final class PostgreSqlProvider extends Base
      */
     public function deleteStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(StatementType::Delete->value, $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: StatementType::Delete->value, maxDepth: $maxDepth));
     }
 
     /**
@@ -102,7 +116,7 @@ final class PostgreSqlProvider extends Base
      */
     public function createTableStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(StatementType::CreateTable->value, $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: StatementType::CreateTable->value, maxDepth: $maxDepth));
     }
 
     /**
@@ -110,7 +124,7 @@ final class PostgreSqlProvider extends Base
      */
     public function alterTableStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(StatementType::AlterTable->value, $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: StatementType::AlterTable->value, maxDepth: $maxDepth));
     }
 
     /**
@@ -118,7 +132,7 @@ final class PostgreSqlProvider extends Base
      */
     public function dropTableStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(StatementType::DropTable->value, $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: StatementType::DropTable->value, maxDepth: $maxDepth));
     }
 
     /**
@@ -126,7 +140,7 @@ final class PostgreSqlProvider extends Base
      */
     public function simpleStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(StatementType::SimpleStatement->value, $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: StatementType::SimpleStatement->value, maxDepth: $maxDepth));
     }
 
     /**
@@ -134,7 +148,7 @@ final class PostgreSqlProvider extends Base
      */
     public function truncateStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('TruncateStmt', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'TruncateStmt', maxDepth: $maxDepth));
     }
 
     /**
@@ -142,7 +156,7 @@ final class PostgreSqlProvider extends Base
      */
     public function createIndexStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('IndexStmt', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'IndexStmt', maxDepth: $maxDepth));
     }
 
     /**
@@ -150,7 +164,7 @@ final class PostgreSqlProvider extends Base
      */
     public function transactionStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('TransactionStmt', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'TransactionStmt', maxDepth: $maxDepth));
     }
 
     /**
@@ -158,7 +172,7 @@ final class PostgreSqlProvider extends Base
      */
     public function expr(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('a_expr', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'a_expr', maxDepth: $maxDepth));
     }
 
     /**
@@ -166,7 +180,7 @@ final class PostgreSqlProvider extends Base
      */
     public function simpleExpr(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('c_expr', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'c_expr', maxDepth: $maxDepth));
     }
 
     /**
@@ -174,7 +188,7 @@ final class PostgreSqlProvider extends Base
      */
     public function literal(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('AexprConst', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'AexprConst', maxDepth: $maxDepth));
     }
 
     /**
@@ -182,7 +196,7 @@ final class PostgreSqlProvider extends Base
      */
     public function whereClause(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('where_clause', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'where_clause', maxDepth: $maxDepth));
     }
 
     /**
@@ -190,7 +204,7 @@ final class PostgreSqlProvider extends Base
      */
     public function sortClause(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('sort_clause', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'sort_clause', maxDepth: $maxDepth));
     }
 
     /**
@@ -198,7 +212,7 @@ final class PostgreSqlProvider extends Base
      */
     public function selectLimit(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('select_limit', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'select_limit', maxDepth: $maxDepth));
     }
 
     /**
@@ -206,7 +220,7 @@ final class PostgreSqlProvider extends Base
      */
     public function tableRef(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('table_ref', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'table_ref', maxDepth: $maxDepth));
     }
 
     /**
@@ -214,7 +228,7 @@ final class PostgreSqlProvider extends Base
      */
     public function joinedTable(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('joined_table', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'joined_table', maxDepth: $maxDepth));
     }
 
     /**
@@ -222,7 +236,7 @@ final class PostgreSqlProvider extends Base
      */
     public function qualifiedName(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('qualified_name', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'qualified_name', maxDepth: $maxDepth));
     }
 
     /**
@@ -230,7 +244,7 @@ final class PostgreSqlProvider extends Base
      */
     public function subquery(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('select_with_parens', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'select_with_parens', maxDepth: $maxDepth));
     }
 
     /**
@@ -238,7 +252,7 @@ final class PostgreSqlProvider extends Base
      */
     public function withClause(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('with_clause', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'with_clause', maxDepth: $maxDepth));
     }
 
     /**
@@ -248,7 +262,7 @@ final class PostgreSqlProvider extends Base
      */
     public function identifier(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate('ColId', $maxDepth);
+        return $this->generate(new GenerationRequest(startRule: 'ColId', maxDepth: $maxDepth));
     }
 
     /**
@@ -256,15 +270,15 @@ final class PostgreSqlProvider extends Base
      */
     public function quotedIdentifier(int $minLength = 1, int $maxLength = 63): string
     {
-        return '"' . $this->rsg->rawIdentifier($minLength, $maxLength) . '"';
+        return $this->lexicalValues->quotedIdentifier($minLength, $maxLength);
     }
 
     /**
      * Generate a PostgreSQL string literal.
      */
-    public function stringLiteral(int $minLength = 1, int $maxLength = 255): string
+    public function stringLiteral(int $minLength = 1, int $maxLength = 32): string
     {
-        return "'" . $this->rsg->mixedAlnumString($minLength, $maxLength) . "'";
+        return $this->lexicalValues->stringLiteral($minLength, $maxLength);
     }
 
     /**
@@ -272,7 +286,7 @@ final class PostgreSqlProvider extends Base
      */
     public function integerLiteral(int $min = 1, int $max = 2147483647): string
     {
-        return $this->rsg->integerString($min, $max);
+        return $this->lexicalValues->integerLiteral($min, $max);
     }
 
     /**
@@ -280,7 +294,7 @@ final class PostgreSqlProvider extends Base
      */
     public function decimalLiteral(int $precision = 10, int $scale = 2): string
     {
-        return $this->rsg->decimalString($precision, $scale);
+        return $this->lexicalValues->decimalLiteral($precision, $scale);
     }
 
     /**
@@ -288,7 +302,7 @@ final class PostgreSqlProvider extends Base
      */
     public function floatLiteral(int $precision = 10, int $scale = 2, int $minExponent = -307, int $maxExponent = 308): string
     {
-        return $this->rsg->floatString($this->decimalLiteral($precision, $scale), $minExponent, $maxExponent);
+        return $this->lexicalValues->floatLiteral($precision, $scale, $minExponent, $maxExponent);
     }
 
     /**
@@ -296,7 +310,7 @@ final class PostgreSqlProvider extends Base
      */
     public function hexLiteral(int $minLength = 1, int $maxLength = 16): string
     {
-        return "X'" . $this->rsg->hexString($minLength, $maxLength) . "'";
+        return $this->lexicalValues->hexLiteral($minLength, $maxLength);
     }
 
     /**
@@ -304,15 +318,23 @@ final class PostgreSqlProvider extends Base
      */
     public function binaryLiteral(int $minLength = 1, int $maxLength = 64): string
     {
-        return "B'" . $this->rsg->binaryString($minLength, $maxLength) . "'";
+        return $this->lexicalValues->binaryLiteral($minLength, $maxLength);
     }
 
     /**
      * Generate a PostgreSQL dollar-quoted string ($$...$$).
      */
-    public function dollarQuotedString(int $minLength = 1, int $maxLength = 255): string
+    public function dollarQuotedString(int $minLength = 1, int $maxLength = 32): string
     {
-        return '$$' . $this->rsg->mixedAlnumString($minLength, $maxLength) . '$$';
+        return $this->lexicalValues->dollarQuotedString($minLength, $maxLength);
+    }
+
+    /**
+     * Generate a deterministic DO body that parses under PostgreSQL's default plpgsql language.
+     */
+    public function doBodyLiteral(): string
+    {
+        return $this->lexicalValues->doBodyLiteral();
     }
 
     /**
@@ -320,6 +342,6 @@ final class PostgreSqlProvider extends Base
      */
     public function parameterMarker(int $min = 1, int $max = 99): string
     {
-        return '$' . $this->rsg->parameterIndex($min, $max);
+        return $this->lexicalValues->parameterMarker($min, $max);
     }
 }

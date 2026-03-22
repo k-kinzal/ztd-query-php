@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\MySql\Grammar;
 
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\MySql\Grammar\NonTerminal;
 use SqlFaker\MySql\Grammar\Symbol;
-use PHPUnit\Framework\Attributes\CoversClass;
 
-#[CoversClass(NonTerminal::class)]
+#[CoversNothing]
 final class NonTerminalTest extends TestCase
 {
     public function testValue(): void

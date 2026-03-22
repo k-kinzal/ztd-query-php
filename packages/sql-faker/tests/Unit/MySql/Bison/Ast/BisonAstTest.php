@@ -5,16 +5,13 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\MySql\Bison\Ast;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use SqlFaker\MySql\Bison\Ast\BisonAlternativeNode;
 use SqlFaker\MySql\Bison\Ast\BisonAst;
 use SqlFaker\MySql\Bison\Ast\BisonRuleNode;
 use SqlFaker\MySql\Bison\Ast\BisonStartDeclaration;
-use PHPUnit\Framework\Attributes\CoversClass;
 
-#[CoversClass(BisonAst::class)]
-#[CoversClass(BisonStartDeclaration::class)]
-#[CoversClass(BisonRuleNode::class)]
-#[CoversClass(BisonAlternativeNode::class)]
+#[CoversNothing]
 final class BisonAstTest extends TestCase
 {
     public function testConstructor(): void

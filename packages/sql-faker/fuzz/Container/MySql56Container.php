@@ -8,6 +8,9 @@ use Testcontainers\Containers\GenericContainer\GenericContainer;
 use Testcontainers\Containers\WaitStrategy\PDO\MySQLDSN;
 use Testcontainers\Containers\WaitStrategy\PDO\PDOConnectWaitStrategy;
 
+/**
+ * Reusable Testcontainers definition for the MySQL 5.6.51 fuzz target.
+ */
 final class MySql56Container extends GenericContainer
 {
     /**
@@ -54,6 +57,9 @@ final class MySql56Container extends GenericContainer
             ->withRetryInterval(250000);
     }
 
+    /**
+     * Returns the grammar snapshot identifier that should be exercised against this image.
+     */
     public static function getGrammarVersion(): string
     {
         return 'mysql-5.6.51';

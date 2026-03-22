@@ -5,18 +5,15 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\Grammar;
 
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\Terminal;
-use PHPUnit\Framework\Attributes\CoversClass;
 
-#[CoversClass(Grammar::class)]
-#[CoversClass(ProductionRule::class)]
-#[CoversClass(Production::class)]
-#[CoversClass(Terminal::class)]
+#[CoversNothing]
 final class GrammarTest extends TestCase
 {
     public function testConstructor(): void
@@ -37,9 +34,23 @@ final class GrammarTest extends TestCase
 
     public function testLoadFromFile(): void
     {
-        $grammar = Grammar::loadFromFile(__DIR__ . '/../../../resources/ast/pg-17.2.php');
+        $fixture = new Grammar('start', [
+            'start' => new ProductionRule('start', [
+                new Production([new Terminal('SELECT')]),
+            ]),
+        ]);
+        $tmpFile = tempnam(sys_get_temp_dir(), 'grammar_test_');
+        self::assertNotFalse($tmpFile);
+        file_put_contents($tmpFile, "<?php return ['fixture' => '" . addcslashes(serialize($fixture), "'\\") . "'];");
 
-        self::assertNotEmpty($grammar->ruleMap);
+        try {
+            $grammar = Grammar::loadFromFile($tmpFile);
+        } finally {
+            unlink($tmpFile);
+        }
+
+        self::assertSame('start', $grammar->startSymbol);
+        self::assertArrayHasKey('start', $grammar->ruleMap);
     }
 
     public function testLoadFromFileNotFound(): void

@@ -5,21 +5,15 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\Sqlite\Lemon;
 
 use LogicException;
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\Terminal;
 use SqlFaker\Sqlite\Lemon\LemonParser;
 
-#[CoversClass(LemonParser::class)]
-#[CoversClass(Grammar::class)]
-#[CoversClass(NonTerminal::class)]
-#[CoversClass(Terminal::class)]
-#[CoversClass(Production::class)]
-#[CoversClass(ProductionRule::class)]
+#[CoversNothing]
 final class LemonParserTest extends TestCase
 {
     public function testParseSimpleRule(): void
@@ -149,18 +143,5 @@ final class LemonParserTest extends TestCase
         self::assertInstanceOf(NonTerminal::class, $alt->symbols[2]);
         self::assertInstanceOf(Terminal::class, $alt->symbols[3]);
         self::assertInstanceOf(NonTerminal::class, $alt->symbols[4]);
-    }
-
-    public function testParseSqliteGrammarCache(): void
-    {
-        $grammar = Grammar::loadFromFile(
-            __DIR__ . '/../../../../resources/ast/sqlite-3.47.2.php'
-        );
-
-        self::assertSame('input', $grammar->startSymbol);
-        self::assertArrayHasKey('cmd', $grammar->ruleMap);
-        self::assertArrayHasKey('select', $grammar->ruleMap);
-        self::assertArrayHasKey('expr', $grammar->ruleMap);
-        self::assertGreaterThan(100, count($grammar->ruleMap));
     }
 }

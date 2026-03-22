@@ -7,6 +7,9 @@ namespace Fuzz\Container;
 use Testcontainers\Containers\WaitStrategy\PDO\DSN;
 use Testcontainers\Utility\Stringable;
 
+/**
+ * Mutable DSN builder used by the PostgreSQL fuzz container wait strategy.
+ */
 final class PostgreSqlDSN implements DSN, Stringable
 {
     private ?string $host = null;
@@ -28,6 +31,9 @@ final class PostgreSqlDSN implements DSN, Stringable
         return $this;
     }
 
+    /**
+     * Returns the configured host component.
+     */
     public function getHost(): ?string
     {
         return $this->host;
@@ -43,6 +49,9 @@ final class PostgreSqlDSN implements DSN, Stringable
         return $this;
     }
 
+    /**
+     * Returns the configured port component.
+     */
     public function getPort(): ?int
     {
         return $this->port;
@@ -57,6 +66,9 @@ final class PostgreSqlDSN implements DSN, Stringable
         return $this;
     }
 
+    /**
+     * Formats the accumulated connection settings as a PDO PostgreSQL DSN.
+     */
     public function toString(): string
     {
         if ($this->host === null) {
@@ -72,6 +84,9 @@ final class PostgreSqlDSN implements DSN, Stringable
         return $dsn;
     }
 
+    /**
+     * Indicates that the wait strategy must inject both host and port before use.
+     */
     public function requiresHostPort(): bool
     {
         return true;

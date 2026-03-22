@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace SqlFaker\MySql\Bison\Lexer;
 
+/**
+ * Enumerates token kinds emitted by the MySQL Bison lexer.
+ */
 enum BisonTokenType
 {
     case Directive;

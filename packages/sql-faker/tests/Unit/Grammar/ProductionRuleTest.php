@@ -4,15 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\Grammar;
 
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\Terminal;
-use PHPUnit\Framework\Attributes\CoversClass;
 
-#[CoversClass(ProductionRule::class)]
-#[CoversClass(Production::class)]
-#[CoversClass(Terminal::class)]
+#[CoversNothing]
 final class ProductionRuleTest extends TestCase
 {
     public function testConstructor(): void

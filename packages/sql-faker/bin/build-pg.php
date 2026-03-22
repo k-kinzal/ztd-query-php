@@ -5,8 +5,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use SqlFaker\Grammar\GrammarCompiler;
-use SqlFaker\MySql\Bison\BisonParser;
+use SqlFaker\PostgreSql\SnapshotCompiler;
 
 /**
  * Build script for generating AST cache from PostgreSQL's gram.y
@@ -15,11 +14,11 @@ use SqlFaker\MySql\Bison\BisonParser;
  *   php bin/build-pg.php                      # Use default version (pg-17.2)
  *   php bin/build-pg.php --tag REL_17_STABLE  # Use specific tag
  *   php bin/build-pg.php --all                # Build all supported versions
+ *   php bin/build-pg.php --all --verify       # Verify snapshots against rebuilt grammars
  */
 
 const PG_SUPPORTED_VERSIONS = [
-    'pg-16.8' => 'REL_16_STABLE',
-    'pg-17.2' => 'REL_17_STABLE',
+    'pg-17.2' => 'REL_17_2',
 ];
 
 const PG_DEFAULT_VERSION = 'pg-17.2';
@@ -28,10 +27,13 @@ function pgParseArguments(array $argv): array
 {
     $versions = [];
     $buildAll = false;
+    $verify = false;
 
     for ($i = 1; $i < count($argv); $i++) {
         if ($argv[$i] === '--all') {
             $buildAll = true;
+        } elseif ($argv[$i] === '--verify') {
+            $verify = true;
         } elseif ($argv[$i] === '--tag' && isset($argv[$i + 1])) {
             $versions[] = $argv[$i + 1];
             $i++;
@@ -39,21 +41,21 @@ function pgParseArguments(array $argv): array
     }
 
     if ($buildAll) {
-        return ['versions' => array_keys(PG_SUPPORTED_VERSIONS)];
+        return ['versions' => array_keys(PG_SUPPORTED_VERSIONS), 'verify' => $verify];
     }
 
     if (empty($versions)) {
         $versions = [PG_DEFAULT_VERSION];
     }
 
-    return ['versions' => $versions];
+    return ['versions' => $versions, 'verify' => $verify];
 }
 
 function pgBuildUrl(string $version): string
 {
-    $branch = PG_SUPPORTED_VERSIONS[$version] ?? $version;
+    $tag = PG_SUPPORTED_VERSIONS[$version] ?? $version;
 
-    return "https://raw.githubusercontent.com/postgres/postgres/refs/heads/{$branch}/src/backend/parser/gram.y";
+    return "https://raw.githubusercontent.com/postgres/postgres/refs/tags/{$tag}/src/backend/parser/gram.y";
 }
 
 function pgFetchGramFile(string $url): string
@@ -85,7 +87,37 @@ function pgFetchGramFile(string $url): string
     return $contents;
 }
 
-function pgBuildVersion(string $version, BisonParser $parser, GrammarCompiler $compiler): bool
+function pgVerifyExistingSnapshot(string $outputPath, string $serialized): bool
+{
+    if (!file_exists($outputPath)) {
+        fwrite(STDERR, "Error: Snapshot file not found for verification: {$outputPath}\n");
+        return false;
+    }
+
+    /** @var mixed $data */
+    $data = require $outputPath;
+    if (!is_array($data) || $data === []) {
+        fwrite(STDERR, "Error: Snapshot file is invalid: {$outputPath}\n");
+        return false;
+    }
+
+    $existing = $data[array_key_first($data)] ?? null;
+    if (!is_string($existing)) {
+        fwrite(STDERR, "Error: Snapshot payload is invalid: {$outputPath}\n");
+        return false;
+    }
+
+    if ($existing !== $serialized) {
+        fwrite(STDERR, "Error: Snapshot drift detected: {$outputPath}\n");
+        return false;
+    }
+
+    fwrite(STDOUT, "Verified: {$outputPath}\n");
+
+    return true;
+}
+
+function pgBuildVersion(string $version, SnapshotCompiler $compiler, bool $verify): bool
 {
     $url = pgBuildUrl($version);
 
@@ -100,26 +132,29 @@ function pgBuildVersion(string $version, BisonParser $parser, GrammarCompiler $c
     fwrite(STDOUT, "Parsing grammar...\n");
 
     try {
-        $ast = $parser->parse($contents);
-        $grammar = $compiler->compile($ast);
+        $grammar = $compiler->compile($contents);
     } catch (\Throwable $e) {
         fwrite(STDERR, "Error parsing {$version}: {$e->getMessage()}\n");
         fwrite(STDERR, "Trace: {$e->getTraceAsString()}\n");
         return false;
     }
 
-    fwrite(STDOUT, "Rules: " . count($grammar->ruleMap) . "\n");
+    fwrite(STDOUT, "Rules: " . count($grammar->rules) . "\n");
     fwrite(STDOUT, "Start symbol: {$grammar->startSymbol}\n");
     fwrite(STDOUT, "Serializing AST...\n");
 
     $serialized = serialize($grammar);
 
     $outputDir = __DIR__ . '/../resources/ast';
+    $outputPath = $outputDir . '/' . $version . '.php';
+
+    if ($verify) {
+        return pgVerifyExistingSnapshot($outputPath, $serialized);
+    }
+
     if (!is_dir($outputDir)) {
         mkdir($outputDir, 0755, true);
     }
-
-    $outputPath = $outputDir . '/' . $version . '.php';
 
     $output = <<<PHP
 <?php
@@ -161,18 +196,18 @@ function pgMain(array $argv): int
 {
     $args = pgParseArguments($argv);
     $versions = $args['versions'];
+    $verify = $args['verify'];
 
-    fwrite(STDOUT, "Building " . count($versions) . " PostgreSQL version(s): " . implode(', ', $versions) . "\n");
+    fwrite(STDOUT, ($verify ? 'Verifying ' : 'Building ') . count($versions) . " PostgreSQL version(s): " . implode(', ', $versions) . "\n");
 
-    $parser = new BisonParser();
-    $compiler = new GrammarCompiler();
+    $compiler = new SnapshotCompiler();
 
     $success = 0;
     $failed = 0;
     $failedVersions = [];
 
     foreach ($versions as $version) {
-        if (pgBuildVersion($version, $parser, $compiler)) {
+        if (pgBuildVersion($version, $compiler, $verify)) {
             $success++;
         } else {
             $failed++;
