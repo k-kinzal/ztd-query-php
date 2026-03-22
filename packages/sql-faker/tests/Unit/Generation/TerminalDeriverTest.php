@@ -67,7 +67,7 @@ final class TerminalDeriverTest extends TestCase
                 new Production([new Symbol('SHORT', false)]),
             ]),
         ]);
-        $lengths = new TerminationLengthComputer()->compute($grammar);
+        $lengths = (new TerminationLengthComputer())->compute($grammar);
         $deriver = new TerminalDeriver(new FakerRandomSource(Factory::create()), 'stmt');
 
         self::assertSame(['SHORT'], $deriver->derive($grammar, $lengths, new GenerationRequest(startRule: 'stmt', maxDepth: 0))->terminals);
@@ -94,7 +94,7 @@ final class TerminalDeriverTest extends TestCase
                 new Production([new Symbol('t', false)]),
             ]),
         ]);
-        $lengths = new TerminationLengthComputer()->compute($grammar);
+        $lengths = (new TerminationLengthComputer())->compute($grammar);
         $deriver = new TerminalDeriver(new FakerRandomSource(Factory::create()), 'stmt');
 
         self::assertSame(
@@ -214,7 +214,7 @@ final class TerminalDeriverTest extends TestCase
                 new Production([new Symbol('SHORT', false)]),
             ]),
         ]);
-        $lengths = new TerminationLengthComputer()->compute($grammar);
+        $lengths = (new TerminationLengthComputer())->compute($grammar);
         $deriver = new TerminalDeriver(new FakerRandomSource(Factory::create()), 'stmt');
 
         self::assertSame(
@@ -248,7 +248,7 @@ final class TerminalDeriverTest extends TestCase
 
         self::assertSame(
             ['DONE'],
-            $deriver->derive($grammar, new TerminationLengthComputer()->compute($grammar), new GenerationRequest(startRule: 'n0'))->terminals,
+            $deriver->derive($grammar, (new TerminationLengthComputer())->compute($grammar), new GenerationRequest(startRule: 'n0'))->terminals,
         );
     }
 

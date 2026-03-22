@@ -228,12 +228,21 @@ final class PgSqlMutationResolver
             $item = trim($item);
             if (preg_match('/\bAS\s+"?([a-zA-Z_]\w*)"?\s*$/i', $item, $aliasMatch) === 1) {
                 $columns[] = $aliasMatch[1];
-            } elseif (preg_match('/^(?:(?:"[^"]+"|\w+)\.)?("([^"]+)"|([a-zA-Z_]\w*))\s*$/', $item, $colMatch) === 1) {
-                $columns[] = $colMatch[2] !== '' ? $colMatch[2] : $colMatch[3];
-            } else {
-                $replaced = preg_replace('/[^a-zA-Z0-9_]/', '_', $item);
-                $columns[] = is_string($replaced) ? $replaced : 'col';
+                continue;
             }
+
+            if (preg_match('/^(?:(?:"[^"]+"|\w+)\.)?"([^"]+)"\s*$/', $item, $quotedColumnMatch) === 1) {
+                $columns[] = $quotedColumnMatch[1];
+                continue;
+            }
+
+            if (preg_match('/^(?:(?:"[^"]+"|\w+)\.)?([a-zA-Z_]\w*)\s*$/', $item, $unquotedColumnMatch) === 1) {
+                $columns[] = $unquotedColumnMatch[1];
+                continue;
+            }
+
+            $replaced = preg_replace('/[^a-zA-Z0-9_]/', '_', $item);
+            $columns[] = is_string($replaced) ? $replaced : 'col';
         }
 
         return $columns;

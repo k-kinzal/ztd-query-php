@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlFixture\Platform\MySql;
 
 use Faker\Generator;
+use LogicException;
 use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\TypeMapper\TypeMapperInterface;
 
@@ -196,8 +197,26 @@ final class MySqlTypeMapper implements TypeMapperInterface
             return null;
         }
         $count = $faker->numberBetween(1, count($values));
-        $selected = $faker->randomElements($values, $count);
+        $selected = $this->requireStringValues($faker->randomElements($values, $count));
         return implode(',', $selected);
+    }
+
+    /**
+     * @param array<mixed> $values
+     * @return list<string>
+     */
+    private function requireStringValues(array $values): array
+    {
+        $normalized = [];
+        foreach ($values as $value) {
+            if (!is_string($value)) {
+                throw new LogicException('Expected string enum values.');
+            }
+
+            $normalized[] = $value;
+        }
+
+        return $normalized;
     }
 
     private function generatePoint(Generator $faker): string

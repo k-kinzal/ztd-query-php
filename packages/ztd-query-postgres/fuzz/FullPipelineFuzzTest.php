@@ -406,11 +406,15 @@ final class FullPipelineFuzzTest extends TestCase
      */
     private function extractTableName(string $createSql): ?string
     {
-        if (preg_match('/CREATE\s+(?:TEMPORARY\s+|TEMP\s+|UNLOGGED\s+)?TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:(?:"([^"]+)"|([a-zA-Z_]\w*))\.)?(?:"([^"]+)"|([a-zA-Z_]\w*))/i', $createSql, $m) !== 1) {
-            return null;
+        if (preg_match('/CREATE\s+(?:TEMPORARY\s+|TEMP\s+|UNLOGGED\s+)?TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:(?:"[^"]+"|[a-zA-Z_]\w*)\.)?"([^"]+)"/i', $createSql, $quotedTableMatch) === 1) {
+            return $quotedTableMatch[1];
         }
 
-        return $m[3] !== '' ? $m[3] : ($m[4] ?? null);
+        if (preg_match('/CREATE\s+(?:TEMPORARY\s+|TEMP\s+|UNLOGGED\s+)?TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:(?:"[^"]+"|[a-zA-Z_]\w*)\.)?([a-zA-Z_]\w*)/i', $createSql, $unquotedTableMatch) === 1) {
+            return $unquotedTableMatch[1];
+        }
+
+        return null;
     }
 
     private function quoteIdentifier(string $name): string
