@@ -6,5 +6,7 @@ namespace SqlFaker\Contract;
 
 interface SnapshotLoader
 {
+    public function version(): string;
+
     public function load(): Grammar;
 }

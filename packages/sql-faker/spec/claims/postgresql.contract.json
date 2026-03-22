@@ -1,5 +1,54 @@
 [
     {
+        "id": "POSTGRESQL-CONTRACT-SNAPSHOT-STRUCTURE",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN the PostgreSQL snapshot is loaded, THEN the upstream grammar snapshot SHALL remain closed, non-empty, terminating, reachable, and fingerprint-pinned.",
+        "subject": {
+            "kind": "snapshot"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.no_undefined_references"
+            },
+            {
+                "kind": "grammar.no_empty_rules"
+            },
+            {
+                "kind": "grammar.entries.present",
+                "entries": [
+                    "stmtmulti"
+                ]
+            },
+            {
+                "kind": "grammar.entries.terminate",
+                "entries": [
+                    "stmtmulti"
+                ]
+            },
+            {
+                "kind": "grammar.rules.reachable",
+                "entries": [
+                    "stmtmulti"
+                ],
+                "rules": [
+                    "stmtmulti",
+                    "SelectStmt",
+                    "InsertStmt",
+                    "UpdateStmt",
+                    "DeleteStmt",
+                    "AlterDatabaseStmt",
+                    "CreateStmt",
+                    "ColId"
+                ]
+            },
+            {
+                "kind": "grammar.fingerprint_matches",
+                "sha256": "9ed76c5b24adf3db22e418436b00f0ca4be67d22f22b509a0b8e91e291061922"
+            }
+        ]
+    },
+    {
         "id": "POSTGRESQL-CONTRACT-GRAMMAR-STRUCTURE",
         "level": "contract",
         "dialect": "postgresql",
@@ -67,6 +116,136 @@
                     "DropStmt",
                     "ColId"
                 ]
+            },
+            {
+                "kind": "grammar.fingerprint_matches",
+                "sha256": "870c86d04881bafb3764d422065d4275b06a6404fea59389b5ecc16c12f232bc"
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-GENERATION-DETERMINISM",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN the PostgreSQL runtime generates SQL from a fixed request, THEN repeated runs SHALL remain deterministic.",
+        "subject": {
+            "kind": "generation",
+            "start_rule": "stmtmulti",
+            "max_depth": 6
+        },
+        "cases": [
+            {
+                "seed": 17
+            }
+        ],
+        "evidence": [
+            {
+                "kind": "generation.generates"
+            },
+            {
+                "kind": "generation.deterministic"
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-REWRITE-PROGRAM",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN the PostgreSQL constrained grammar is compiled, THEN the runtime SHALL expose the documented rewrite program order.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rewrite_steps_match",
+                "step_ids": [
+                    "canonicalize.identifier_like_rules",
+                    "canonicalize.qualified_names",
+                    "canonicalize.function_names",
+                    "filter.indirection_shapes",
+                    "collapse.row_security_defaults",
+                    "split.create_partition_of",
+                    "split.alter_database",
+                    "restrict.utility_statement_targets",
+                    "split.alter_table_families",
+                    "split.alter_index_families",
+                    "split.alter_view_families",
+                    "split.alter_sequence_families",
+                    "split.alter_statistics_families",
+                    "split.alter_access_method_families",
+                    "split.alter_domain_families",
+                    "split.alter_type_families",
+                    "split.alter_enum_families",
+                    "restrict.role_and_routine_families",
+                    "restrict.utility_and_definition_families",
+                    "rebuild.bounded_dml_and_select_families"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-TERMINATION-LENGTHS",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN the PostgreSQL constrained grammar is compiled, THEN the runtime SHALL expose the expected minimum termination lengths for core rules.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.termination_lengths_match",
+                "lengths": {
+                    "stmtmulti": 0,
+                    "ColId": 1,
+                    "TransactionStmt": 1,
+                    "SelectStmt": 2
+                }
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-TARGET-DEPTH-SHORTEST-TRANSACTION",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN PostgreSQL generation starts at TransactionStmt with max depth one, THEN the runtime SHALL choose the shortest terminating alternative at the target-depth boundary.",
+        "subject": {
+            "kind": "generation",
+            "start_rule": "TransactionStmt",
+            "max_depth": 1
+        },
+        "cases": [
+            {
+                "seed": 17
+            }
+        ],
+        "evidence": [
+            {
+                "kind": "generation.terminals_equal",
+                "terminals": [
+                    "ABORT_P"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "POSTGRESQL-CONTRACT-UNKNOWN-RULE-FAILS",
+        "level": "contract",
+        "dialect": "postgresql",
+        "statement": "WHEN the PostgreSQL runtime receives an unknown start rule, THEN generation SHALL fail with the algorithm contract error.",
+        "subject": {
+            "kind": "generation",
+            "max_depth": 1
+        },
+        "cases": [
+            {
+                "start_rule": "__missing_postgresql_rule__",
+                "seed": 17
+            }
+        ],
+        "evidence": [
+            {
+                "kind": "generation.fails",
+                "pattern": "/Unknown grammar rule: __missing_postgresql_rule__/"
             }
         ]
     },

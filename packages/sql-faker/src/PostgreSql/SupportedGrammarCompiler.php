@@ -16,7 +16,6 @@ use SqlFaker\Grammar\Terminal;
 use SqlFaker\Grammar\TerminationAnalyzer;
 use SqlFaker\Grammar\TokenJoiner;
 use SqlFaker\PostgreSql\LexicalValueSource;
-
 /**
  * Grammar-driven SQL generator for PostgreSQL.
  *
@@ -25,54 +24,111 @@ use SqlFaker\PostgreSql\LexicalValueSource;
  * repeatedly replacing non-terminals with production rule right-hand sides
  * until only terminal symbols remain.
  */
-final class SqlGenerator
+use SqlFaker\Contract\Grammar as ContractGrammar;
+use SqlFaker\Contract\RewriteProgram;
+use SqlFaker\Contract\RewriteStep;
+use SqlFaker\Grammar\ContractGrammarHydrator;
+use SqlFaker\Grammar\ContractGrammarProjector;
+
+final class SupportedGrammarCompiler
 {
-    private const DERIVATION_LIMIT = 5000;
     private const CTAS_ARITY_LIMIT = 8;
 
-    private Grammar $grammar;
-    private FakerGenerator $faker;
-    private LexicalValueSource $lexicalValues;
-    private TerminationAnalyzer $terminationAnalyzer;
-    private RandomStringGenerator $rsg;
-
-    private int $targetDepth = PHP_INT_MAX;
-    private int $derivationSteps = 0;
-    private int $identifierOrdinal = 0;
-
-    public function __construct(Grammar $grammar, FakerGenerator $faker, LexicalValueSource $lexicalValues)
+    public function compile(ContractGrammar $snapshot): ContractGrammar
     {
-        $this->grammar = $this->augmentGrammar($grammar);
-        $this->faker = $faker;
-        $this->lexicalValues = $lexicalValues;
-        $this->terminationAnalyzer = new TerminationAnalyzer($this->grammar);
-        $this->rsg = new RandomStringGenerator($faker);
+        return ContractGrammarProjector::project(
+            $this->compileSourceGrammar(ContractGrammarHydrator::hydrate($snapshot)),
+            NonTerminal::class,
+        );
     }
 
-    private function augmentGrammar(Grammar $grammar): Grammar
+    public function rewriteProgram(): RewriteProgram
+    {
+        return new RewriteProgram([
+            new RewriteStep('canonicalize.identifier_like_rules', 'Canonicalize identifier-like rules to the IDENT terminal.'),
+            new RewriteStep('canonicalize.qualified_names', 'Canonicalize qualified names to a bounded family.'),
+            new RewriteStep('canonicalize.function_names', 'Canonicalize function names to bounded identifier families.'),
+            new RewriteStep('filter.indirection_shapes', 'Remove unsafe indirection shapes.'),
+            new RewriteStep('collapse.row_security_defaults', 'Collapse permissive policy defaults to the empty production.'),
+            new RewriteStep('split.create_partition_of', 'Split CREATE TABLE PARTITION OF into explicit safe forms.'),
+            new RewriteStep('split.alter_database', 'Split ALTER DATABASE into explicit safe branches.'),
+            new RewriteStep('restrict.utility_statement_targets', 'Restrict utility-statement targets to safe canonical names.'),
+            new RewriteStep('split.alter_table_families', 'Split broad ALTER TABLE families into table-safe branches.'),
+            new RewriteStep('split.alter_index_families', 'Split broad ALTER INDEX families into index-safe branches.'),
+            new RewriteStep('split.alter_view_families', 'Split broad ALTER VIEW families into view-safe branches.'),
+            new RewriteStep('split.alter_sequence_families', 'Split broad ALTER SEQUENCE families into sequence-safe branches.'),
+            new RewriteStep('split.alter_statistics_families', 'Split broad ALTER STATISTICS families into statistics-safe branches.'),
+            new RewriteStep('split.alter_access_method_families', 'Split broad access-method families into safe branches.'),
+            new RewriteStep('split.alter_domain_families', 'Split broad ALTER DOMAIN families into safe branches.'),
+            new RewriteStep('split.alter_type_families', 'Split broad ALTER TYPE families into safe branches.'),
+            new RewriteStep('split.alter_enum_families', 'Split broad ALTER ENUM families into safe branches.'),
+            new RewriteStep('restrict.role_and_routine_families', 'Restrict role-related and routine-related families to safe domains.'),
+            new RewriteStep('restrict.utility_and_definition_families', 'Restrict utility targets, type references, operator definitions, publications, casts, comments, and assertions.'),
+            new RewriteStep('rebuild.bounded_dml_and_select_families', 'Rebuild SELECT, CTAS, CREATE VIEW, INSERT, CTE, materialized view, MERGE, CREATE FUNCTION, DO, and related bounded families.'),
+        ]);
+    }
+
+    public function compileSourceGrammar(Grammar $grammar): Grammar
     {
         $ruleMap = $grammar->ruleMap;
 
+        foreach ($this->rewriteProgram()->steps as $step) {
+            $ruleMap = $this->applyRewriteStep($step->id, $ruleMap);
+        }
+
+        return new Grammar($grammar->startSymbol, $ruleMap);
+    }
+
+    /**
+     * @param array<string, ProductionRule> $ruleMap
+     * @return array<string, ProductionRule>
+     */
+    private function applyRewriteStep(string $stepId, array $ruleMap): array
+    {
+        return match ($stepId) {
+            'canonicalize.identifier_like_rules' => $this->canonicalizeIdentifierLikeRules($ruleMap),
+            'canonicalize.qualified_names' => $this->augmentQualifiedNames($ruleMap),
+            'canonicalize.function_names' => $this->augmentFunctionNames($ruleMap),
+            'filter.indirection_shapes' => $this->filterIndirectionElements($ruleMap),
+            'collapse.row_security_defaults' => $this->augmentCreatePolicyRule($ruleMap),
+            'split.create_partition_of' => $this->augmentCreatePartitionOfRule($ruleMap),
+            'split.alter_database' => $this->augmentAlterDatabaseRule($ruleMap),
+            'restrict.utility_statement_targets' => $this->augmentUtilityStatementRules($ruleMap),
+            'split.alter_table_families' => $this->augmentAlterTableRule($ruleMap),
+            'split.alter_index_families' => $this->augmentAlterIndexRule($ruleMap),
+            'split.alter_view_families' => $this->augmentAlterViewRule($ruleMap),
+            'split.alter_sequence_families' => $this->augmentAlterSequenceRule($ruleMap),
+            'split.alter_statistics_families' => $this->augmentAlterStatisticsRule($ruleMap),
+            'split.alter_access_method_families' => $this->augmentAccessMethodRule($ruleMap),
+            'split.alter_domain_families' => $this->augmentAlterDomainRule($ruleMap),
+            'split.alter_type_families' => $this->augmentAlterTypeRule($ruleMap),
+            'split.alter_enum_families' => $this->augmentAlterEnumRule($ruleMap),
+            'restrict.role_and_routine_families' => $this->restrictRoleAndRoutineFamilies($ruleMap),
+            'restrict.utility_and_definition_families' => $this->restrictUtilityAndDefinitionFamilies($ruleMap),
+            'rebuild.bounded_dml_and_select_families' => $this->rebuildBoundedDmlAndSelectFamilies($ruleMap),
+            default => throw new LogicException(sprintf('Unknown PostgreSQL rewrite step: %s', $stepId)),
+        };
+    }
+
+    /**
+     * @param array<string, ProductionRule> $ruleMap
+     * @return array<string, ProductionRule>
+     */
+    private function canonicalizeIdentifierLikeRules(array $ruleMap): array
+    {
         foreach (['ColId', 'ColLabel', 'type_function_name', 'NonReservedWord'] as $ruleName) {
             $ruleMap = $this->keepSingleTerminalAlternatives($ruleMap, $ruleName, ['IDENT']);
         }
 
-        $ruleMap = $this->augmentQualifiedNames($ruleMap);
-        $ruleMap = $this->augmentFunctionNames($ruleMap);
-        $ruleMap = $this->filterIndirectionElements($ruleMap);
-        $ruleMap = $this->augmentCreatePolicyRule($ruleMap);
-        $ruleMap = $this->augmentCreatePartitionOfRule($ruleMap);
-        $ruleMap = $this->augmentAlterDatabaseRule($ruleMap);
-        $ruleMap = $this->augmentUtilityStatementRules($ruleMap);
-        $ruleMap = $this->augmentAlterTableRule($ruleMap);
-        $ruleMap = $this->augmentAlterIndexRule($ruleMap);
-        $ruleMap = $this->augmentAlterViewRule($ruleMap);
-        $ruleMap = $this->augmentAlterSequenceRule($ruleMap);
-        $ruleMap = $this->augmentAlterStatisticsRule($ruleMap);
-        $ruleMap = $this->augmentAccessMethodRule($ruleMap);
-        $ruleMap = $this->augmentAlterDomainRule($ruleMap);
-        $ruleMap = $this->augmentAlterTypeRule($ruleMap);
-        $ruleMap = $this->augmentAlterEnumRule($ruleMap);
+        return $ruleMap;
+    }
+
+    /**
+     * @param array<string, ProductionRule> $ruleMap
+     * @return array<string, ProductionRule>
+     */
+    private function restrictRoleAndRoutineFamilies(array $ruleMap): array
+    {
         $ruleMap = $this->augmentAlterRoleRule($ruleMap);
         $ruleMap = $this->augmentAlterRoutineRule($ruleMap);
         $ruleMap = $this->augmentCreateRoleRule($ruleMap);
@@ -81,7 +137,16 @@ final class SqlGenerator
         $ruleMap = $this->augmentEventTriggerRule($ruleMap);
         $ruleMap = $this->augmentAnalyzeVacuumRule($ruleMap);
         $ruleMap = $this->augmentOptionListRules($ruleMap);
-        $ruleMap = $this->augmentGrantRoleRule($ruleMap);
+
+        return $this->augmentGrantRoleRule($ruleMap);
+    }
+
+    /**
+     * @param array<string, ProductionRule> $ruleMap
+     * @return array<string, ProductionRule>
+     */
+    private function restrictUtilityAndDefinitionFamilies(array $ruleMap): array
+    {
         $ruleMap = $this->augmentParameterTargetRule($ruleMap);
         $ruleMap = $this->augmentLargeObjectTargetRule($ruleMap);
         $ruleMap = $this->ensureSafeTypeReferenceRules($ruleMap);
@@ -99,7 +164,16 @@ final class SqlGenerator
         $ruleMap = $this->augmentCreateCastRule($ruleMap);
         $ruleMap = $this->augmentDropCastRule($ruleMap);
         $ruleMap = $this->augmentTriggerRule($ruleMap);
-        $ruleMap = $this->augmentTargetElementRule($ruleMap);
+
+        return $this->augmentTargetElementRule($ruleMap);
+    }
+
+    /**
+     * @param array<string, ProductionRule> $ruleMap
+     * @return array<string, ProductionRule>
+     */
+    private function rebuildBoundedDmlAndSelectFamilies(array $ruleMap): array
+    {
         $ruleMap = $this->augmentSelectRules($ruleMap);
         $ruleMap = $this->augmentCreateAsRule($ruleMap);
         $ruleMap = $this->augmentViewRule($ruleMap);
@@ -111,9 +185,8 @@ final class SqlGenerator
         $ruleMap = $this->augmentRevokeRoleRule($ruleMap);
         $ruleMap = $this->augmentDropTypeRule($ruleMap);
         $ruleMap = $this->augmentCreateFunctionRule($ruleMap);
-        $ruleMap = $this->augmentDoStmtRule($ruleMap);
 
-        return new Grammar($grammar->startSymbol, $ruleMap);
+        return $this->augmentDoStmtRule($ruleMap);
     }
 
     /**
@@ -3225,161 +3298,5 @@ final class SqlGenerator
             new Production([new Terminal('GLOBAL'), new Terminal('TEMPORARY')]),
             new Production([new Terminal('GLOBAL'), new Terminal('TEMP')]),
         ];
-    }
-
-    /**
-     * Generate a syntactically valid SQL string.
-     *
-     * @param string|null $startRule Grammar rule to start from (null for default)
-     * @param int $targetDepth Depth at which generator starts seeking termination
-     */
-    public function generate(?string $startRule = null, int $targetDepth = PHP_INT_MAX): string
-    {
-        $this->derivationSteps = 0;
-        $this->identifierOrdinal = 0;
-        $this->targetDepth = max(1, $targetDepth);
-
-        $start = $startRule ?? 'stmtmulti';
-
-        $terminals = $this->derive($start);
-
-        return $this->render($terminals);
-    }
-
-    public function compiledGrammar(): Grammar
-    {
-        return $this->grammar;
-    }
-
-    /**
-     * @return list<Terminal>
-     */
-    private function derive(string $startSymbol): array
-    {
-        /** @var list<Symbol> $form */
-        $form = [new NonTerminal($startSymbol)];
-
-        while (true) {
-            $index = null;
-            foreach ($form as $i => $sym) {
-                if ($sym instanceof NonTerminal) {
-                    $index = $i;
-                    break;
-                }
-            }
-
-            if ($index === null) {
-                break;
-            }
-
-            $this->derivationSteps++;
-            if ($this->derivationSteps > self::DERIVATION_LIMIT) {
-                throw new LogicException('Exceeded derivation limit while generating SQL.');
-            }
-
-            /** @var NonTerminal $nonTerminal */
-            $nonTerminal = $form[$index];
-            $rule = $this->grammar->ruleMap[$nonTerminal->value] ?? throw new LogicException("Unknown grammar rule: {$nonTerminal->value}");
-            $alternatives = $rule->alternatives;
-
-            if ($alternatives === []) {
-                throw new LogicException('Production rule has no alternatives.');
-            }
-
-            if ($this->derivationSteps >= $this->targetDepth) {
-                $selectedIndex = 0;
-                $bestLength = PHP_INT_MAX;
-                foreach ($alternatives as $i => $alt) {
-                    $length = $this->terminationAnalyzer->estimateProductionLength($alt);
-                    if ($length < $bestLength) {
-                        $bestLength = $length;
-                        $selectedIndex = $i;
-                    }
-                }
-            } else {
-                $selectedIndex = $this->faker->numberBetween(0, count($alternatives) - 1);
-            }
-
-            $production = $alternatives[$selectedIndex];
-
-            $form = [
-                ...array_slice($form, 0, $index),
-                ...$production->symbols,
-                ...array_slice($form, $index + 1),
-            ];
-        }
-
-        /** @var list<Terminal> $form */
-        return $form;
-    }
-
-    /**
-     * Render terminals into an SQL string.
-     *
-     * Handles PostgreSQL-specific terminal resolution and spacing rules.
-     *
-     * @param list<Terminal> $terminals
-     */
-    private function render(array $terminals): string
-    {
-        $tokens = [];
-        foreach ($terminals as $terminal) {
-            $name = $terminal->value;
-
-            $token = match ($name) {
-                'MODE_TYPE_NAME', 'MODE_PLPGSQL_EXPR', 'MODE_PLPGSQL_ASSIGN1',
-                'MODE_PLPGSQL_ASSIGN2', 'MODE_PLPGSQL_ASSIGN3' => null,
-
-                'TYPECAST' => '::',
-                'DOT_DOT' => '..',
-                'COLON_EQUALS' => ':=',
-                'EQUALS_GREATER' => '=>',
-                'NOT_EQUALS' => '!=',
-                'LESS_EQUALS' => '<=',
-                'GREATER_EQUALS' => '>=',
-                'NOT_LA' => 'NOT',
-                'WITH_LA' => 'WITH',
-                'WITHOUT_LA' => 'WITHOUT',
-                'FORMAT_LA' => 'FORMAT',
-                'NULLS_LA' => 'NULLS',
-
-                'IDENT' => $this->nextCanonicalIdentifier(),
-                'UIDENT' => sprintf('U&"%s"', $this->nextCanonicalIdentifier()),
-                'SCONST' => $this->lexicalValues->stringLiteral(),
-                'DO_BODY_SCONST' => $this->lexicalValues->doBodyLiteral(),
-                'USCONST' => sprintf("U&'%s'", $this->rsg->mixedAlnumString()),
-                'ICONST' => $this->lexicalValues->integerLiteral(),
-                'FCONST' => $this->lexicalValues->decimalLiteral(),
-                'BCONST' => $this->lexicalValues->binaryLiteral(),
-                'XCONST' => $this->lexicalValues->hexLiteral(),
-                'Op' => $this->generateOperator(),
-                'PARAM' => $this->lexicalValues->parameterMarker(),
-
-                default => str_ends_with($name, '_P')
-                    ? substr($name, 0, -2)
-                    : $name,
-            };
-
-            if ($token !== null) {
-                $tokens[] = $token;
-            }
-        }
-
-        return TokenJoiner::join($tokens, [
-            ['::', '*'],
-            ['*', '::'],
-        ]);
-    }
-
-    private function nextCanonicalIdentifier(): string
-    {
-        return $this->rsg->canonicalIdentifier($this->identifierOrdinal++);
-    }
-
-    private function generateOperator(): string
-    {
-        /** @var string $op */
-        $op = $this->faker->randomElement(['+', '-', '*', '/', '<', '>', '=', '~', '!', '@', '#', '%', '^', '&', '|']);
-        return $op;
     }
 }

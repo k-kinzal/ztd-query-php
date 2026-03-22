@@ -18,6 +18,10 @@
                 "parameter": "pattern"
             },
             {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
+            },
+            {
                 "kind": "outcome.kind_in",
                 "allowedKinds": [
                     "accepted",
@@ -45,6 +49,10 @@
         "evidence": [
             {
                 "kind": "generation.generates"
+            },
+            {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
             },
             {
                 "kind": "outcome.kind_in",
@@ -75,6 +83,10 @@
                 "kind": "generation.generates"
             },
             {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
+            },
+            {
                 "kind": "outcome.kind_in",
                 "allowedKinds": [
                     "accepted",
@@ -101,6 +113,10 @@
         "evidence": [
             {
                 "kind": "generation.generates"
+            },
+            {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
             },
             {
                 "kind": "outcome.kind_in",
@@ -131,6 +147,10 @@
                 "kind": "generation.generates"
             },
             {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
+            },
+            {
                 "kind": "outcome.kind_in",
                 "allowedKinds": [
                     "accepted",
@@ -157,6 +177,10 @@
         "evidence": [
             {
                 "kind": "generation.generates"
+            },
+            {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
             },
             {
                 "kind": "outcome.kind_in",
@@ -187,6 +211,10 @@
                 "kind": "generation.generates"
             },
             {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
+            },
+            {
                 "kind": "outcome.kind_in",
                 "allowedKinds": [
                     "accepted",
@@ -213,6 +241,10 @@
         "evidence": [
             {
                 "kind": "generation.generates"
+            },
+            {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
             },
             {
                 "kind": "outcome.kind_in",
@@ -243,6 +275,10 @@
                 "kind": "generation.generates"
             },
             {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
+            },
+            {
                 "kind": "outcome.kind_in",
                 "allowedKinds": [
                     "accepted",
@@ -269,6 +305,10 @@
         "evidence": [
             {
                 "kind": "generation.generates"
+            },
+            {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
             },
             {
                 "kind": "outcome.kind_in",
@@ -333,6 +373,10 @@
                 "kind": "generation.generates"
             },
             {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
+            },
+            {
                 "kind": "outcome.kind_in",
                 "allowedKinds": [
                     "accepted",
@@ -354,6 +398,10 @@
         "evidence": [
             {
                 "kind": "generation.generates"
+            },
+            {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
             },
             {
                 "kind": "outcome.kind_in",
@@ -384,6 +432,10 @@
                 "kind": "generation.generates"
             },
             {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
+            },
+            {
                 "kind": "outcome.kind_in",
                 "allowedKinds": [
                     "accepted",
@@ -410,6 +462,10 @@
         "evidence": [
             {
                 "kind": "generation.generates"
+            },
+            {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
             },
             {
                 "kind": "outcome.kind_in",
@@ -440,6 +496,10 @@
                 "kind": "generation.generates"
             },
             {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
+            },
+            {
                 "kind": "outcome.kind_in",
                 "allowedKinds": [
                     "accepted",
@@ -466,6 +526,10 @@
         "evidence": [
             {
                 "kind": "generation.generates"
+            },
+            {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
             },
             {
                 "kind": "outcome.kind_in",
@@ -496,6 +560,10 @@
                 "kind": "generation.generates"
             },
             {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
+            },
+            {
                 "kind": "outcome.kind_in",
                 "allowedKinds": [
                     "accepted",
@@ -522,6 +590,10 @@
         "evidence": [
             {
                 "kind": "generation.generates"
+            },
+            {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
             },
             {
                 "kind": "outcome.kind_in",
@@ -552,6 +624,10 @@
                 "kind": "generation.generates"
             },
             {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
+            },
+            {
                 "kind": "outcome.kind_in",
                 "allowedKinds": [
                     "accepted",
@@ -578,6 +654,10 @@
         "evidence": [
             {
                 "kind": "generation.generates"
+            },
+            {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
             },
             {
                 "kind": "outcome.kind_in",
@@ -608,6 +688,10 @@
                 "kind": "generation.generates"
             },
             {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
+            },
+            {
                 "kind": "outcome.kind_in",
                 "allowedKinds": [
                     "accepted",
@@ -634,6 +718,10 @@
         "evidence": [
             {
                 "kind": "generation.generates"
+            },
+            {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
             },
             {
                 "kind": "outcome.kind_in",
@@ -670,6 +758,10 @@
                 "kind": "generation.generates"
             },
             {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
+            },
+            {
                 "kind": "outcome.kind_in",
                 "allowedKinds": [
                     "accepted",
@@ -697,6 +789,10 @@
         "evidence": [
             {
                 "kind": "generation.generates"
+            },
+            {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
             },
             {
                 "kind": "outcome.kind_in",
@@ -728,6 +824,10 @@
                 "kind": "generation.generates"
             },
             {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
+            },
+            {
                 "kind": "outcome.kind_in",
                 "allowedKinds": [
                     "accepted",
@@ -755,6 +855,10 @@
         "evidence": [
             {
                 "kind": "generation.generates"
+            },
+            {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
             },
             {
                 "kind": "outcome.kind_in",
@@ -814,6 +918,10 @@
                 "kind": "generation.generates"
             },
             {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
+            },
+            {
                 "kind": "outcome.kind_in",
                 "allowedKinds": [
                     "accepted",
@@ -841,6 +949,10 @@
         "evidence": [
             {
                 "kind": "generation.generates"
+            },
+            {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
             },
             {
                 "kind": "outcome.kind_in",
@@ -900,6 +1012,10 @@
                 "kind": "generation.generates"
             },
             {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
+            },
+            {
                 "kind": "outcome.kind_in",
                 "allowedKinds": [
                     "accepted",
@@ -921,6 +1037,10 @@
         "evidence": [
             {
                 "kind": "generation.generates"
+            },
+            {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
             },
             {
                 "kind": "outcome.kind_in",
@@ -949,6 +1069,10 @@
         "evidence": [
             {
                 "kind": "generation.generates"
+            },
+            {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
             },
             {
                 "kind": "outcome.kind_in",
@@ -1021,6 +1145,10 @@
                 "kind": "generation.generates"
             },
             {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
+            },
+            {
                 "kind": "outcome.kind_in",
                 "allowedKinds": [
                     "accepted"
@@ -1085,6 +1213,10 @@
                 "kind": "generation.generates"
             },
             {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
+            },
+            {
                 "kind": "outcome.kind_in",
                 "allowedKinds": [
                     "accepted"
@@ -1105,6 +1237,10 @@
         "evidence": [
             {
                 "kind": "generation.generates"
+            },
+            {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
             },
             {
                 "kind": "outcome.kind_in",
@@ -1135,6 +1271,10 @@
                 "kind": "generation.generates"
             },
             {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
+            },
+            {
                 "kind": "outcome.kind_in",
                 "allowedKinds": [
                     "accepted",
@@ -1161,6 +1301,10 @@
         "evidence": [
             {
                 "kind": "generation.generates"
+            },
+            {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
             },
             {
                 "kind": "outcome.kind_in",
@@ -1191,6 +1335,10 @@
                 "kind": "generation.generates"
             },
             {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
+            },
+            {
                 "kind": "outcome.kind_in",
                 "allowedKinds": [
                     "accepted",
@@ -1217,6 +1365,10 @@
         "evidence": [
             {
                 "kind": "generation.generates"
+            },
+            {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
             },
             {
                 "kind": "outcome.kind_in",
@@ -1247,6 +1399,10 @@
                 "kind": "generation.generates"
             },
             {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
+            },
+            {
                 "kind": "outcome.kind_in",
                 "allowedKinds": [
                     "accepted",
@@ -1273,6 +1429,10 @@
         "evidence": [
             {
                 "kind": "generation.generates"
+            },
+            {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
             },
             {
                 "kind": "outcome.kind_in",
@@ -1304,6 +1464,10 @@
                 "kind": "generation.generates"
             },
             {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
+            },
+            {
                 "kind": "outcome.kind_in",
                 "allowedKinds": [
                     "accepted"
@@ -1329,6 +1493,10 @@
         "evidence": [
             {
                 "kind": "generation.generates"
+            },
+            {
+                "kind": "outcome.phase_is",
+                "phase": "execute"
             },
             {
                 "kind": "outcome.kind_in",

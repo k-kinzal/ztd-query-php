@@ -51,19 +51,56 @@ jobs:
           working-directory: packages/sql-faker
       - run: composer lint
 
-  spec:
+  snapshot-build:
+    name: Snapshot Build Verification
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.5'
-          extensions: mbstring, pdo, pdo_mysql, pdo_pgsql, pdo_sqlite
+          extensions: mbstring
           coverage: none
       - uses: ramsey/composer-install@v3
         with:
           working-directory: packages/sql-faker
-      - run: composer spec
+      - run: composer build:verify
+
+  spec-mysql:
+    name: Spec (MySQL ${{ matrix.mysql_version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        mysql_version: ['mysql-5.6.51', 'mysql-5.7.44', 'mysql-8.0.44', 'mysql-8.1.0', 'mysql-8.2.0', 'mysql-8.3.0', 'mysql-8.4.7', 'mysql-9.0.1', 'mysql-9.1.0']
+    env:
+      MYSQL_VERSION: ${{ matrix.mysql_version }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: mbstring, pdo, pdo_mysql
+          coverage: none
+      - uses: ramsey/composer-install@v3
+        with:
+          working-directory: packages/sql-faker
+      - run: php bin/spec.php all --dialect=mysql
+
+  spec-other:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: mbstring, pdo, pdo_pgsql, pdo_sqlite
+          coverage: none
+      - uses: ramsey/composer-install@v3
+        with:
+          working-directory: packages/sql-faker
+      - run: php bin/spec.php all --dialect=postgresql
+      - run: php bin/spec.php all --dialect=sqlite
 
   bench:
     runs-on: ubuntu-latest

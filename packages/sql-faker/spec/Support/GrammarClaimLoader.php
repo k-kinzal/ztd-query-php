@@ -10,16 +10,17 @@ use JsonException;
 final class GrammarClaimLoader
 {
     /**
+     * @param list<string> $subjectKinds
      * @return list<array{claim_id: string, evidence: array<string, mixed>}>
      */
-    public static function loadGrammarEvidence(string $claimsPath): array
+    public static function loadGrammarEvidence(string $claimsPath, array $subjectKinds = ['grammar']): array
     {
         $claims = self::decodeClaims($claimsPath);
         $evidenceCases = [];
 
         foreach ($claims as $claim) {
             $subject = $claim['subject'] ?? null;
-            if (!is_array($subject) || ($subject['kind'] ?? null) !== 'grammar') {
+            if (!is_array($subject) || !in_array($subject['kind'] ?? null, $subjectKinds, true)) {
                 continue;
             }
 

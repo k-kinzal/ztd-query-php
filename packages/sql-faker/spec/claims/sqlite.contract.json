@@ -1,5 +1,52 @@
 [
     {
+        "id": "SQLITE-CONTRACT-SNAPSHOT-STRUCTURE",
+        "level": "contract",
+        "dialect": "sqlite",
+        "statement": "WHEN the SQLite snapshot is loaded, THEN the upstream grammar snapshot SHALL remain closed, non-empty, terminating, reachable, and fingerprint-pinned.",
+        "subject": {
+            "kind": "snapshot"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.no_undefined_references"
+            },
+            {
+                "kind": "grammar.no_empty_rules"
+            },
+            {
+                "kind": "grammar.entries.present",
+                "entries": [
+                    "cmd"
+                ]
+            },
+            {
+                "kind": "grammar.entries.terminate",
+                "entries": [
+                    "cmd"
+                ]
+            },
+            {
+                "kind": "grammar.rules.reachable",
+                "entries": [
+                    "cmd"
+                ],
+                "rules": [
+                    "cmd",
+                    "selectnowith",
+                    "insert_cmd",
+                    "upsert",
+                    "vinto",
+                    "nm"
+                ]
+            },
+            {
+                "kind": "grammar.fingerprint_matches",
+                "sha256": "1a4a3d73399b2608b4989b47bf386b5f2ec2ab75d257f6b65c5ef04849d84196"
+            }
+        ]
+    },
+    {
         "id": "SQLITE-CONTRACT-GRAMMAR-STRUCTURE",
         "level": "contract",
         "dialect": "sqlite",
@@ -65,6 +112,128 @@
                     "vacuum_stmt",
                     "nm"
                 ]
+            },
+            {
+                "kind": "grammar.fingerprint_matches",
+                "sha256": "f69ed004f773817a588728ed51b31898d193c8b699cfc54dbc40b53c86431ed2"
+            }
+        ]
+    },
+    {
+        "id": "SQLITE-CONTRACT-GENERATION-DETERMINISM",
+        "level": "contract",
+        "dialect": "sqlite",
+        "statement": "WHEN the SQLite runtime generates SQL from a fixed request, THEN repeated runs SHALL remain deterministic.",
+        "subject": {
+            "kind": "generation",
+            "start_rule": "cmd",
+            "max_depth": 6
+        },
+        "cases": [
+            {
+                "seed": 17
+            }
+        ],
+        "evidence": [
+            {
+                "kind": "generation.generates"
+            },
+            {
+                "kind": "generation.deterministic"
+            }
+        ]
+    },
+    {
+        "id": "SQLITE-CONTRACT-REWRITE-PROGRAM",
+        "level": "contract",
+        "dialect": "sqlite",
+        "statement": "WHEN the SQLite constrained grammar is compiled, THEN the runtime SHALL expose the documented rewrite program order.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rewrite_steps_match",
+                "step_ids": [
+                    "extract.statement_entry_rules",
+                    "filter.delete_order_by_forms",
+                    "filter.unsafe_expression_branches",
+                    "filter.window_branches",
+                    "filter.keyword_like_identifier_branches",
+                    "rebuild.create_table",
+                    "rebuild.attach_detach_vacuum",
+                    "rebuild.temporary_object_families",
+                    "rebuild.bounded_select_families",
+                    "publish.extracted_statement_rules"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "SQLITE-CONTRACT-TERMINATION-LENGTHS",
+        "level": "contract",
+        "dialect": "sqlite",
+        "statement": "WHEN the SQLite constrained grammar is compiled, THEN the runtime SHALL expose the expected minimum termination lengths for core rules.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.termination_lengths_match",
+                "lengths": {
+                    "cmd": 1,
+                    "nm": 1,
+                    "create_table": 6
+                }
+            }
+        ]
+    },
+    {
+        "id": "SQLITE-CONTRACT-TARGET-DEPTH-SHORTEST-CMD",
+        "level": "contract",
+        "dialect": "sqlite",
+        "statement": "WHEN SQLite generation starts at cmd with max depth one, THEN the runtime SHALL choose the shortest terminating alternative at the target-depth boundary.",
+        "subject": {
+            "kind": "generation",
+            "start_rule": "cmd",
+            "max_depth": 1
+        },
+        "cases": [
+            {
+                "seed": 17
+            }
+        ],
+        "evidence": [
+            {
+                "kind": "generation.terminals_equal",
+                "terminals": [
+                    "BEGIN"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "SQLITE-CONTRACT-UNKNOWN-RULE-LITERAL-FALLBACK",
+        "level": "contract",
+        "dialect": "sqlite",
+        "statement": "WHEN the SQLite runtime receives an unknown start rule, THEN generation SHALL treat it as a literal token according to the algorithm contract.",
+        "subject": {
+            "kind": "generation",
+            "max_depth": 1
+        },
+        "cases": [
+            {
+                "start_rule": "__missing_sqlite_rule__",
+                "seed": 17
+            }
+        ],
+        "evidence": [
+            {
+                "kind": "generation.generates"
+            },
+            {
+                "kind": "generation.sql_matches",
+                "pattern": "/^__missing_sqlite_rule__$/"
             }
         ]
     },

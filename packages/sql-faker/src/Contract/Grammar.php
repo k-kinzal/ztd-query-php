@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlFaker\Contract;
 
 use InvalidArgumentException;
+use RuntimeException;
 
 final class Grammar
 {
@@ -42,6 +43,36 @@ final class Grammar
     public function rule(string $ruleName): ?ProductionRule
     {
         return $this->rules[$ruleName] ?? null;
+    }
+
+    public static function loadFromFile(string $path): self
+    {
+        if (!file_exists($path)) {
+            throw new RuntimeException("Grammar file not found: {$path}");
+        }
+
+        /** @var mixed $data */
+        $data = require $path;
+        if (!is_array($data) || $data === []) {
+            throw new RuntimeException("Invalid grammar file: {$path}");
+        }
+
+        $hash = array_key_first($data);
+        if (!is_string($hash) || $hash === '') {
+            throw new RuntimeException("Invalid grammar file: {$path}");
+        }
+
+        $serialized = $data[$hash] ?? null;
+        if (!is_string($serialized) || $serialized === '') {
+            throw new RuntimeException("Invalid grammar file: {$path}");
+        }
+
+        $grammar = unserialize($serialized);
+        if (!$grammar instanceof self) {
+            throw new RuntimeException("Failed to load grammar from: {$path}");
+        }
+
+        return $grammar;
     }
 
     public static function from(object $grammar, string $nonTerminalClass): self

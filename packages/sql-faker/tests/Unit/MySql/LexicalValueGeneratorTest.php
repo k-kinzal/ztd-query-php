@@ -7,6 +7,7 @@ namespace Tests\Unit\SqlFaker\MySql;
 use Faker\Factory;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
+use SqlFaker\Generation\FakerRandomSource;
 use SqlFaker\MySql\LexicalValueGenerator;
 
 #[CoversNothing]
@@ -16,7 +17,7 @@ final class LexicalValueGeneratorTest extends TestCase
     {
         $faker = Factory::create();
         $faker->seed(123);
-        $generator = new LexicalValueGenerator($faker);
+        $generator = new LexicalValueGenerator(new FakerRandomSource($faker));
 
         self::assertMatchesRegularExpression('/^`[a-z_][a-z0-9_]*`$/', $generator->quotedIdentifier());
         self::assertMatchesRegularExpression('/^0x[0-9a-f]+$/', $generator->hexLiteral());

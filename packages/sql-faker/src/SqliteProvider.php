@@ -7,17 +7,19 @@ namespace SqlFaker;
 use Faker\Generator;
 use Faker\Provider\Base;
 use SqlFaker\Contract\GenerationRequest;
+use SqlFaker\Generation\FakerRandomSource;
 use SqlFaker\Sqlite\LexicalValueGenerator;
 use SqlFaker\Sqlite\LexicalValueSource;
 use SqlFaker\Sqlite\StatementGenerator as SqliteStatementGenerator;
 use SqlFaker\Sqlite\StatementType;
 
 /**
- * Faker Provider for generating syntactically valid SQLite SQL statements.
+ * Faker Provider for generating SQLite SQL from the documented supported language.
  *
- * This provider uses SQLite's official Lemon grammar (parse.y) to generate
- * SQL that is syntactically valid. Note that generated SQL may not be semantically
- * valid (tables/columns may not exist).
+ * This provider compiles a constrained grammar from SQLite's upstream Lemon
+ * grammar snapshot and generates SQL through the runtime algorithm contract.
+ * Generated SQL is syntax-oriented fuzzing input, not a guarantee of semantic
+ * validity against a live schema.
  *
  * Usage:
  *   $faker = \Faker\Factory::create();
@@ -45,7 +47,7 @@ final class SqliteProvider extends Base implements LexicalValueSource
 
         $generator->addProvider($this);
 
-        $this->lexicalValues = new LexicalValueGenerator($generator);
+        $this->lexicalValues = new LexicalValueGenerator(new FakerRandomSource($generator));
         $this->statementGenerator = new SqliteStatementGenerator($generator, $version, $this->lexicalValues);
     }
 
@@ -63,20 +65,18 @@ final class SqliteProvider extends Base implements LexicalValueSource
     }
 
     /**
-     * Generate a syntactically valid SQLite SQL statement.
+     * Generate a SQLite SQL statement from the supported-language contract.
      *
-     * @param StatementType|null $type Statement type (null for random)
+     * @param StatementType|null $type Statement type (null uses the default `cmd` entry rule)
      * @param int $maxDepth Maximum recursion depth (PHP_INT_MAX = unlimited)
      * @return string Generated SQL statement
      */
     public function sql(?StatementType $type = null, int $maxDepth = PHP_INT_MAX): string
     {
-        if ($type === null) {
-            /** @var StatementType $type */
-            $type = $this->generator->randomElement(StatementType::cases());
-        }
-
-        return $this->generate(new GenerationRequest(startRule: $type->value, maxDepth: $maxDepth));
+        return $this->generate(new GenerationRequest(
+            startRule: $type !== null ? $type->value : 'cmd',
+            maxDepth: $maxDepth,
+        ));
     }
 
     /**

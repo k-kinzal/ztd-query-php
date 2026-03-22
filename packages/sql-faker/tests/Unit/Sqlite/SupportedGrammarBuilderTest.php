@@ -19,5 +19,6 @@ final class SupportedGrammarBuilderTest extends TestCase
 
         self::assertSame($snapshot->startSymbol, $supportedGrammar->startSymbol);
         self::assertNotNull($supportedGrammar->rule('selectnowith'));
+        self::assertNotSame([], (new SupportedGrammarBuilder())->rewriteProgram()->stepIds());
     }
 }

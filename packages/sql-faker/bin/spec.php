@@ -6,7 +6,9 @@ declare(strict_types=1);
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use Faker\Factory;
+use Spec\Adapter\GenerationRuntimeAdapter;
 use Spec\Claim\ClaimCatalogLoader;
+use Spec\Claim\ClaimDefinition;
 use Spec\Container\MySql56Container;
 use Spec\Container\MySql57Container;
 use Spec\Container\MySql80Container;
@@ -26,27 +28,11 @@ use Spec\Probe\EngineProbe;
 use Spec\Probe\MySqlEngineProbe;
 use Spec\Probe\PostgreSqlEngineProbe;
 use Spec\Probe\SqliteEngineProbe;
-use Spec\Runner\DialectContracts;
+use Spec\Runner\DialectRuntime;
 use Spec\Runner\SpecRunner;
-use SqlFaker\Generation\TerminationLengthComputer;
-use SqlFaker\MySql\LexicalValueGenerator as MySqlLexicalValueGenerator;
-use SqlFaker\MySql\SnapshotLoader as MySqlSnapshotLoader;
-use SqlFaker\MySql\SupportedGrammarBuilder as MySqlSupportedGrammarBuilder;
-use SqlFaker\MySql\TerminalDeriver as MySqlTerminalDeriver;
-use SqlFaker\MySql\TerminalRenderer as MySqlTerminalRenderer;
-use SqlFaker\MySql\TokenJoiner as MySqlTokenJoiner;
-use SqlFaker\PostgreSql\LexicalValueGenerator as PostgreSqlLexicalValueGenerator;
-use SqlFaker\PostgreSql\SnapshotLoader as PostgreSqlSnapshotLoader;
-use SqlFaker\PostgreSql\SupportedGrammarBuilder as PostgreSqlSupportedGrammarBuilder;
-use SqlFaker\PostgreSql\TerminalDeriver as PostgreSqlTerminalDeriver;
-use SqlFaker\PostgreSql\TerminalRenderer as PostgreSqlTerminalRenderer;
-use SqlFaker\PostgreSql\TokenJoiner as PostgreSqlTokenJoiner;
-use SqlFaker\Sqlite\LexicalValueGenerator as SqliteLexicalValueGenerator;
-use SqlFaker\Sqlite\SnapshotLoader as SqliteSnapshotLoader;
-use SqlFaker\Sqlite\SupportedGrammarBuilder as SqliteSupportedGrammarBuilder;
-use SqlFaker\Sqlite\TerminalDeriver as SqliteTerminalDeriver;
-use SqlFaker\Sqlite\TerminalRenderer as SqliteTerminalRenderer;
-use SqlFaker\Sqlite\TokenJoiner as SqliteTokenJoiner;
+use SqlFaker\MySql\RuntimeFactory as MySqlRuntimeFactory;
+use SqlFaker\PostgreSql\RuntimeFactory as PostgreSqlRuntimeFactory;
+use SqlFaker\Sqlite\RuntimeFactory as SqliteRuntimeFactory;
 use Testcontainers\Testcontainers;
 
 const CLAIM_DIR = __DIR__ . '/../spec/claims';
@@ -79,20 +65,31 @@ if ($claims === []) {
     exit(1);
 }
 
-$dialects = [];
+$selectedDialects = [];
 foreach ($claims as $claim) {
-    $dialects[$claim->dialect] = true;
+    $selectedDialects[$claim->dialect] = true;
 }
 
 $mysqlVersion = getenv('MYSQL_VERSION') !== false ? (string) getenv('MYSQL_VERSION') : defaultSpecMySqlVersion();
-$dialectContracts = [];
-foreach (array_keys($dialects) as $selectedDialect) {
-    $dialectContracts[$selectedDialect] = match ($selectedDialect) {
-        'mysql' => buildMySqlContracts(mysqlGrammarVersion($mysqlVersion)),
-        'postgresql' => buildPostgreSqlContracts(),
-        'sqlite' => buildSqliteContracts(),
+$dialectRuntimes = [];
+foreach (array_keys($selectedDialects) as $selectedDialect) {
+    $dialectRuntimes[$selectedDialect] = match ($selectedDialect) {
+        'mysql' => buildMySqlRuntime(mysqlGrammarVersion($mysqlVersion)),
+        'postgresql' => buildPostgreSqlRuntime(),
+        'sqlite' => buildSqliteRuntime(),
         default => throw new InvalidArgumentException(sprintf('Unsupported dialect: %s', $selectedDialect)),
     };
+}
+
+$claims = filterClaimsByRuntimeVersion($claims, $dialectRuntimes);
+if ($claims === []) {
+    fwrite(STDERR, "No claims selected.\n");
+    exit(1);
+}
+
+$dialects = [];
+foreach ($claims as $claim) {
+    $dialects[$claim->dialect] = true;
 }
 
 $needsOutcome = false;
@@ -108,7 +105,7 @@ foreach ($claims as $claim) {
 $probes = $needsOutcome ? buildProbes(array_keys($dialects), $mysqlVersion) : [];
 $policies = $needsOutcome ? buildPolicies(array_keys($dialects)) : [];
 
-$runner = new SpecRunner($dialectContracts, $probes, $policies);
+$runner = new SpecRunner($dialectRuntimes, $probes, $policies);
 $claimResults = $runner->run($claims);
 $report = buildReport($claimResults, $command, $level, $dialect, isset($dialects['mysql']), $mysqlVersion);
 
@@ -150,49 +147,43 @@ function parseArguments(array $argv): array
     return [$command, $options];
 }
 
-function buildMySqlContracts(string $version): DialectContracts
+/**
+ * @param list<ClaimDefinition> $claims
+ * @param array<string, DialectRuntime> $dialectRuntimes
+ * @return list<ClaimDefinition>
+ */
+function filterClaimsByRuntimeVersion(array $claims, array $dialectRuntimes): array
 {
-    $faker = Factory::create();
-    $lexicalValues = new MySqlLexicalValueGenerator($faker);
+    return array_values(array_filter(
+        $claims,
+        static function (ClaimDefinition $claim) use ($dialectRuntimes): bool {
+            if ($claim->versions === null) {
+                return true;
+            }
 
-    return new DialectContracts(
-        new MySqlSnapshotLoader($version),
-        new MySqlSupportedGrammarBuilder(),
-        new TerminationLengthComputer(),
-        new MySqlTerminalDeriver($faker),
-        new MySqlTerminalRenderer($faker, $lexicalValues),
-        new MySqlTokenJoiner(),
-    );
+            $runtime = $dialectRuntimes[$claim->dialect] ?? null;
+            if ($runtime === null) {
+                return true;
+            }
+
+            return in_array($runtime->version(), $claim->versions, true);
+        },
+    ));
 }
 
-function buildPostgreSqlContracts(): DialectContracts
+function buildMySqlRuntime(string $version): DialectRuntime
 {
-    $faker = Factory::create();
-    $lexicalValues = new PostgreSqlLexicalValueGenerator($faker);
-
-    return new DialectContracts(
-        new PostgreSqlSnapshotLoader(),
-        new PostgreSqlSupportedGrammarBuilder(),
-        new TerminationLengthComputer(),
-        new PostgreSqlTerminalDeriver($faker),
-        new PostgreSqlTerminalRenderer($faker, $lexicalValues),
-        new PostgreSqlTokenJoiner(),
-    );
+    return new GenerationRuntimeAdapter(MySqlRuntimeFactory::build(Factory::create(), $version));
 }
 
-function buildSqliteContracts(): DialectContracts
+function buildPostgreSqlRuntime(): DialectRuntime
 {
-    $faker = Factory::create();
-    $lexicalValues = new SqliteLexicalValueGenerator($faker);
+    return new GenerationRuntimeAdapter(PostgreSqlRuntimeFactory::build(Factory::create()));
+}
 
-    return new DialectContracts(
-        new SqliteSnapshotLoader(),
-        new SqliteSupportedGrammarBuilder(),
-        new TerminationLengthComputer(),
-        new SqliteTerminalDeriver($faker),
-        new SqliteTerminalRenderer($faker, $lexicalValues),
-        new SqliteTokenJoiner(),
-    );
+function buildSqliteRuntime(): DialectRuntime
+{
+    return new GenerationRuntimeAdapter(SqliteRuntimeFactory::build(Factory::create()));
 }
 
 /**
@@ -277,7 +268,7 @@ function buildProbes(array $dialects, string $mysqlVersion): array
 
     foreach ($dialects as $dialect) {
         if ($dialect === 'mysql') {
-            [$containerClass] = mysqlContainerMap()[$mysqlVersion] ?? throw new InvalidArgumentException(sprintf('Unsupported MYSQL_VERSION: %s', $mysqlVersion));
+            [$containerClass] = mysqlContainerConfig($mysqlVersion);
             $instance = Testcontainers::run($containerClass);
             $host = str_replace('localhost', '127.0.0.1', $instance->getHost());
             $port = $instance->getMappedPort(3306);
@@ -367,9 +358,24 @@ function mysqlContainerMap(): array
     ];
 }
 
+/**
+ * @return array{class-string<\Testcontainers\Containers\Container>, string}
+ */
+function mysqlContainerConfig(string $mysqlVersion): array
+{
+    $normalizedVersion = normalizeMySqlVersion($mysqlVersion);
+
+    return mysqlContainerMap()[$normalizedVersion] ?? throw new InvalidArgumentException(sprintf('Unsupported MYSQL_VERSION: %s', $mysqlVersion));
+}
+
 function mysqlGrammarVersion(string $mysqlVersion): string
 {
-    return mysqlContainerMap()[$mysqlVersion][1] ?? throw new InvalidArgumentException(sprintf('Unsupported MYSQL_VERSION: %s', $mysqlVersion));
+    return mysqlContainerConfig($mysqlVersion)[1];
+}
+
+function normalizeMySqlVersion(string $mysqlVersion): string
+{
+    return str_starts_with($mysqlVersion, 'mysql-') ? substr($mysqlVersion, strlen('mysql-')) : $mysqlVersion;
 }
 
 function defaultSpecMySqlVersion(): string

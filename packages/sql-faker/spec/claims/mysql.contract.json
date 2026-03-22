@@ -1,8 +1,84 @@
 [
     {
+        "id": "MYSQL-CONTRACT-SNAPSHOT-STRUCTURE",
+        "level": "contract",
+        "dialect": "mysql",
+        "versions": [
+            "mysql-8.0.44",
+            "mysql-8.1.0",
+            "mysql-8.2.0",
+            "mysql-8.3.0",
+            "mysql-8.4.7",
+            "mysql-9.0.1",
+            "mysql-9.1.0"
+        ],
+        "statement": "WHEN the MySQL snapshot is loaded, THEN the upstream grammar snapshot SHALL remain closed, non-empty, terminating, reachable, and version-pinned.",
+        "subject": {
+            "kind": "snapshot"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.no_undefined_references"
+            },
+            {
+                "kind": "grammar.no_empty_rules"
+            },
+            {
+                "kind": "grammar.entries.present",
+                "entries": [
+                    "simple_statement_or_begin"
+                ]
+            },
+            {
+                "kind": "grammar.entries.terminate",
+                "entries": [
+                    "simple_statement_or_begin"
+                ]
+            },
+            {
+                "kind": "grammar.rules.reachable",
+                "entries": [
+                    "simple_statement_or_begin"
+                ],
+                "rules": [
+                    "simple_statement_or_begin",
+                    "select_stmt",
+                    "insert_stmt",
+                    "update_stmt",
+                    "delete_stmt",
+                    "rollback",
+                    "ident"
+                ]
+            },
+            {
+                "kind": "grammar.fingerprint_matches",
+                "sha256_by_version": {
+                    "mysql-5.6.51": "c8e96e39923462c24ef695cfccca0ce61b79f039dd057b0c6e50cc2d49a6661b",
+                    "mysql-5.7.44": "c25856fb1391fa54c340dac7627e78dbd439ca1cf7fcc96aa0e92ce268399f2d",
+                    "mysql-8.0.44": "a25284b9f79276a2e4cce1bfb4ca40ffeaa054dae7f3e4d1b21555e7afbcbce0",
+                    "mysql-8.1.0": "d8818591d221862aa40728430893ce2ae7202436369b9ceefd69fd54dc6a0966",
+                    "mysql-8.2.0": "ef73fcc570addb49e04f34288ac2cedd4288a7354cdbe1338ae0a2c546754f6e",
+                    "mysql-8.3.0": "a50e4a5fa1cc07bc8ab927a1b6bdb9b4cfd6889ae9db6e6692b2c1adf62468c6",
+                    "mysql-8.4.7": "b3cbdfb15c4b0a76de9ec22c647d01cf636f257edb89047ade7c83a01b8583d9",
+                    "mysql-9.0.1": "27a23cf869ad804790203c10ffde9c3de93ec0796ed14161e6375ac7c84c7d6d",
+                    "mysql-9.1.0": "4c6d23cbf18936bf6bdf3488c4ca37d5db9b783b9dbd1d90b523b11287bbcafa"
+                }
+            }
+        ]
+    },
+    {
         "id": "MYSQL-CONTRACT-GRAMMAR-STRUCTURE",
         "level": "contract",
         "dialect": "mysql",
+        "versions": [
+            "mysql-8.0.44",
+            "mysql-8.1.0",
+            "mysql-8.2.0",
+            "mysql-8.3.0",
+            "mysql-8.4.7",
+            "mysql-9.0.1",
+            "mysql-9.1.0"
+        ],
         "statement": "WHEN the MySQL constrained grammar is compiled, THEN the designated entry and retained rules SHALL remain closed, non-empty, terminating, and reachable.",
         "subject": {
             "kind": "grammar"
@@ -45,9 +121,161 @@
                     "signal_sqlstate_stmt",
                     "show_warnings_stmt",
                     "alter_database_encryption_stmt",
-                    "change_replication_stmt",
                     "ident"
                 ]
+            },
+            {
+                "kind": "grammar.fingerprint_matches",
+                "sha256_by_version": {
+                    "mysql-5.6.51": "12aef09bf76a5b127e67a93802c1a795cb9d68be0373af80bff1a662890baf96",
+                    "mysql-5.7.44": "2178f082e77cd4dfb962473a35a2cfe0225aa1abc29bcc338bd11dfe151e483f",
+                    "mysql-8.0.44": "239c026bc40286673112204de32bb5a2c33d72ff09d0825a6efacc0c10344580",
+                    "mysql-8.1.0": "ee87ce73b04f3e36514ff2bbdcc83e3d91ec3a6e2dc2c2888bc5ac1cf3fc067d",
+                    "mysql-8.2.0": "612325b90226c5e6a3652629bbb9eb32ce7bb347bbee5046ceda6ec15c1a2d1a",
+                    "mysql-8.3.0": "fe833cf359d3264bbca3435ef92b6e150daac36b0ebf9ce33ec87cbe07f2a930",
+                    "mysql-8.4.7": "8326f1aa72b778e5f4e6c56635e8d8dceba369d5b244b288f7fb336c19ef16ec",
+                    "mysql-9.0.1": "a089752daae6208769f64a532b720f1020cd9f1e5f223489ae6f6aaaef9b01d5",
+                    "mysql-9.1.0": "58fd7dc74cec3f89ae711d50a0fb5e5fc5fa24a7dd28ed8371ee5331d7e57416"
+                }
+            }
+        ]
+    },
+    {
+        "id": "MYSQL-CONTRACT-GENERATION-DETERMINISM",
+        "level": "contract",
+        "dialect": "mysql",
+        "versions": [
+            "mysql-8.0.44",
+            "mysql-8.1.0",
+            "mysql-8.2.0",
+            "mysql-8.3.0",
+            "mysql-8.4.7",
+            "mysql-9.0.1",
+            "mysql-9.1.0"
+        ],
+        "statement": "WHEN the MySQL runtime generates SQL from a fixed request, THEN repeated runs SHALL remain deterministic.",
+        "subject": {
+            "kind": "generation",
+            "start_rule": "simple_statement_or_begin",
+            "max_depth": 6
+        },
+        "cases": [
+            {
+                "seed": 17
+            }
+        ],
+        "evidence": [
+            {
+                "kind": "generation.generates"
+            },
+            {
+                "kind": "generation.deterministic"
+            }
+        ]
+    },
+    {
+        "id": "MYSQL-CONTRACT-REWRITE-PROGRAM",
+        "level": "contract",
+        "dialect": "mysql",
+        "statement": "WHEN the MySQL constrained grammar is compiled, THEN the runtime SHALL expose the documented rewrite program order.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.rewrite_steps_match",
+                "step_ids": [
+                    "canonicalize.identifier_entry_points",
+                    "canonicalize.user",
+                    "force.alter_event_real_change",
+                    "enumerate.commit_spellings",
+                    "enumerate.rollback_spellings",
+                    "filter.alter_instance_action",
+                    "filter.bool_pri_all_any_comparison",
+                    "enumerate.start_transaction_options",
+                    "split.grant_families",
+                    "split.revoke_families",
+                    "canonicalize.clone",
+                    "bound.table_value_constructor_arity",
+                    "restrict.sqlstate_literals",
+                    "split.alter_database_safe_families",
+                    "restrict.limit_literals",
+                    "restrict.charset_and_collation_domains",
+                    "split.set_system_variable_assignments",
+                    "collapse.replication_option_lists",
+                    "split.signal_information_items",
+                    "canonicalize.reset",
+                    "canonicalize.flush",
+                    "bound.srs_attributes",
+                    "restrict.undo_tablespace_diagnostics_explain",
+                    "restrict.resource_group_cpu_ranges",
+                    "expand.alter_user_mfa"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "MYSQL-CONTRACT-TERMINATION-LENGTHS",
+        "level": "contract",
+        "dialect": "mysql",
+        "statement": "WHEN the MySQL constrained grammar is compiled, THEN the runtime SHALL expose the expected minimum termination lengths for core rules.",
+        "subject": {
+            "kind": "grammar"
+        },
+        "evidence": [
+            {
+                "kind": "grammar.termination_lengths_match",
+                "lengths": {
+                    "ident": 1,
+                    "rollback": 1,
+                    "commit": 1
+                }
+            }
+        ]
+    },
+    {
+        "id": "MYSQL-CONTRACT-TARGET-DEPTH-SHORTEST-ROLLBACK",
+        "level": "contract",
+        "dialect": "mysql",
+        "statement": "WHEN MySQL generation starts at ROLLBACK with max depth one, THEN the runtime SHALL choose the shortest terminating alternative at the target-depth boundary.",
+        "subject": {
+            "kind": "generation",
+            "start_rule": "rollback",
+            "max_depth": 1
+        },
+        "cases": [
+            {
+                "seed": 17
+            }
+        ],
+        "evidence": [
+            {
+                "kind": "generation.terminals_equal",
+                "terminals": [
+                    "ROLLBACK_SYM"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "MYSQL-CONTRACT-UNKNOWN-RULE-FAILS",
+        "level": "contract",
+        "dialect": "mysql",
+        "statement": "WHEN the MySQL runtime receives an unknown start rule, THEN generation SHALL fail with the algorithm contract error.",
+        "subject": {
+            "kind": "generation",
+            "max_depth": 1
+        },
+        "cases": [
+            {
+                "start_rule": "__missing_mysql_rule__",
+                "seed": 17
+            }
+        ],
+        "evidence": [
+            {
+                "kind": "generation.fails",
+                "pattern": "/Unknown grammar rule: __missing_mysql_rule__/"
             }
         ]
     },
@@ -162,6 +390,15 @@
         "id": "MYSQL-CONTRACT-REPLICA-UNTIL",
         "level": "contract",
         "dialect": "mysql",
+        "versions": [
+            "mysql-8.0.44",
+            "mysql-8.1.0",
+            "mysql-8.2.0",
+            "mysql-8.3.0",
+            "mysql-8.4.7",
+            "mysql-9.0.1",
+            "mysql-9.1.0"
+        ],
         "statement": "WHEN START REPLICA UNTIL is refined, THEN file-based UNTIL clauses SHALL keep the required file-and-position pair and stand-alone gaps mode SHALL not combine with file options.",
         "subject": {
             "kind": "grammar"
@@ -200,11 +437,25 @@
         "id": "MYSQL-CONTRACT-CHANGE-REPLICATION-SOURCE",
         "level": "contract",
         "dialect": "mysql",
+        "versions": [
+            "mysql-8.4.7",
+            "mysql-9.0.1",
+            "mysql-9.1.0"
+        ],
         "statement": "WHEN CHANGE REPLICATION SOURCE TO is refined, THEN source options SHALL stay inside the scalar canonical subset and exclude version-sensitive or pair-sensitive option families.",
         "subject": {
             "kind": "grammar"
         },
         "evidence": [
+            {
+                "kind": "grammar.rules.reachable",
+                "entries": [
+                    "simple_statement_or_begin"
+                ],
+                "rules": [
+                    "change_replication_stmt"
+                ]
+            },
             {
                 "kind": "grammar.rule.contains_sequence",
                 "rule": "change_replication_stmt",
@@ -326,6 +577,15 @@
         "id": "MYSQL-CONTRACT-UNDO-TABLESPACE-OPTIONS",
         "level": "contract",
         "dialect": "mysql",
+        "versions": [
+            "mysql-8.0.44",
+            "mysql-8.1.0",
+            "mysql-8.2.0",
+            "mysql-8.3.0",
+            "mysql-8.4.7",
+            "mysql-9.0.1",
+            "mysql-9.1.0"
+        ],
         "statement": "WHEN DROP UNDO TABLESPACE is refined, THEN ENGINE options SHALL not repeat.",
         "subject": {
             "kind": "grammar"
@@ -351,6 +611,15 @@
         "id": "MYSQL-CONTRACT-EXPLAIN-FORMAT",
         "level": "contract",
         "dialect": "mysql",
+        "versions": [
+            "mysql-8.0.44",
+            "mysql-8.1.0",
+            "mysql-8.2.0",
+            "mysql-8.3.0",
+            "mysql-8.4.7",
+            "mysql-9.0.1",
+            "mysql-9.1.0"
+        ],
         "statement": "WHEN EXPLAIN FORMAT is refined, THEN format names SHALL come from a canonical accepted subset.",
         "subject": {
             "kind": "grammar"
@@ -394,6 +663,15 @@
         "id": "MYSQL-CONTRACT-ALTER-USER-FACTOR",
         "level": "contract",
         "dialect": "mysql",
+        "versions": [
+            "mysql-8.0.44",
+            "mysql-8.1.0",
+            "mysql-8.2.0",
+            "mysql-8.3.0",
+            "mysql-8.4.7",
+            "mysql-9.0.1",
+            "mysql-9.1.0"
+        ],
         "statement": "WHEN ALTER USER multifactor clauses are refined, THEN factor numbers SHALL remain inside the accepted 2 or 3 subset.",
         "subject": {
             "kind": "grammar"
@@ -454,6 +732,15 @@
         "id": "MYSQL-CONTRACT-TABLE-VALUE-CONSTRUCTOR",
         "level": "contract",
         "dialect": "mysql",
+        "versions": [
+            "mysql-8.0.44",
+            "mysql-8.1.0",
+            "mysql-8.2.0",
+            "mysql-8.3.0",
+            "mysql-8.4.7",
+            "mysql-9.0.1",
+            "mysql-9.1.0"
+        ],
         "statement": "WHEN top-level VALUES table constructors are refined, THEN each ROW in that family SHALL remain finite-arity, non-empty, and free of INSERT-only DEFAULT values.",
         "subject": {
             "kind": "grammar"
@@ -721,6 +1008,15 @@
         "id": "MYSQL-CONTRACT-IDENTIFIER-FRESHNESS",
         "level": "contract",
         "dialect": "mysql",
+        "versions": [
+            "mysql-8.0.44",
+            "mysql-8.1.0",
+            "mysql-8.2.0",
+            "mysql-8.3.0",
+            "mysql-8.4.7",
+            "mysql-9.0.1",
+            "mysql-9.1.0"
+        ],
         "statement": "WHEN canonical bare identifiers are rendered within one statement, THEN the rendering layer SHALL allocate fresh values from the statement-local identifier stream.",
         "subject": {
             "kind": "generation",
@@ -807,6 +1103,15 @@
         "id": "MYSQL-CONTRACT-ENCRYPTION-LITERAL-DOMAIN",
         "level": "contract",
         "dialect": "mysql",
+        "versions": [
+            "mysql-8.0.44",
+            "mysql-8.1.0",
+            "mysql-8.2.0",
+            "mysql-8.3.0",
+            "mysql-8.4.7",
+            "mysql-9.0.1",
+            "mysql-9.1.0"
+        ],
         "statement": "WHEN ENCRYPTION options are refined, THEN encryption literals SHALL be emitted from the canonical Y or N subset rather than arbitrary strings.",
         "subject": {
             "kind": "grammar"

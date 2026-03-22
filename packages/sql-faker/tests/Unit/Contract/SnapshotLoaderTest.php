@@ -18,6 +18,11 @@ final class SnapshotLoaderTest extends TestCase
     public function testSnapshotLoaderCanExposeConfiguredGrammarSnapshot(): void
     {
         $loader = new class () implements SnapshotLoader {
+            public function version(): string
+            {
+                return 'fixture-1.0';
+            }
+
             public function load(): Grammar
             {
                 return new Grammar('stmt', [
@@ -28,6 +33,7 @@ final class SnapshotLoaderTest extends TestCase
             }
         };
 
+        self::assertSame('fixture-1.0', $loader->version());
         self::assertSame('stmt', $loader->load()->startSymbol);
     }
 }

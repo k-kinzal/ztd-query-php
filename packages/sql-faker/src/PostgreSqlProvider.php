@@ -7,17 +7,19 @@ namespace SqlFaker;
 use Faker\Generator;
 use Faker\Provider\Base;
 use SqlFaker\Contract\GenerationRequest;
+use SqlFaker\Generation\FakerRandomSource;
 use SqlFaker\PostgreSql\LexicalValueGenerator;
 use SqlFaker\PostgreSql\LexicalValueSource;
 use SqlFaker\PostgreSql\StatementGenerator as PostgreSqlStatementGenerator;
 use SqlFaker\PostgreSql\StatementType;
 
 /**
- * Faker Provider for generating syntactically valid PostgreSQL SQL statements.
+ * Faker Provider for generating PostgreSQL SQL from the documented supported language.
  *
- * This provider uses PostgreSQL's official Bison grammar (gram.y) to generate
- * SQL that is syntactically valid. Note that generated SQL may not be semantically
- * valid (tables/columns may not exist).
+ * This provider compiles a constrained grammar from PostgreSQL's upstream grammar
+ * snapshot and generates SQL through the runtime algorithm contract. Generated SQL
+ * is syntax-oriented fuzzing input, not a guarantee of semantic validity against a
+ * live schema.
  *
  * Usage:
  *   $faker = \Faker\Factory::create();
@@ -45,7 +47,7 @@ final class PostgreSqlProvider extends Base implements LexicalValueSource
 
         $generator->addProvider($this);
 
-        $this->lexicalValues = new LexicalValueGenerator($generator);
+        $this->lexicalValues = new LexicalValueGenerator(new FakerRandomSource($generator));
         $this->statementGenerator = new PostgreSqlStatementGenerator($generator, $version, $this->lexicalValues);
     }
 
@@ -63,20 +65,18 @@ final class PostgreSqlProvider extends Base implements LexicalValueSource
     }
 
     /**
-     * Generate a syntactically valid PostgreSQL SQL statement.
+     * Generate a PostgreSQL SQL statement from the supported-language contract.
      *
-     * @param StatementType|null $type Statement type (null for random)
+     * @param StatementType|null $type Statement type (null uses the default `stmtmulti` entry rule)
      * @param int $maxDepth Maximum recursion depth (PHP_INT_MAX = unlimited)
      * @return string Generated SQL statement
      */
     public function sql(?StatementType $type = null, int $maxDepth = PHP_INT_MAX): string
     {
-        if ($type === null) {
-            /** @var StatementType $type */
-            $type = $this->generator->randomElement(StatementType::cases());
-        }
-
-        return $this->generate(new GenerationRequest(startRule: $type->value, maxDepth: $maxDepth));
+        return $this->generate(new GenerationRequest(
+            startRule: $type !== null ? $type->value : 'stmtmulti',
+            maxDepth: $maxDepth,
+        ));
     }
 
     /**

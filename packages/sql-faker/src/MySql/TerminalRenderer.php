@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlFaker\MySql;
 
-use Faker\Generator as FakerGenerator;
+use SqlFaker\Contract\RandomSource;
 use SqlFaker\Contract\TerminalRenderer as TerminalRendererContract;
 use SqlFaker\Contract\TerminalSequence;
 use SqlFaker\Contract\TokenSequence;
@@ -16,10 +16,10 @@ final class TerminalRenderer implements TerminalRendererContract
     private int $identifierOrdinal = 0;
 
     public function __construct(
-        FakerGenerator $faker,
+        RandomSource $random,
         private readonly LexicalValueSource $lexicalValues,
     ) {
-        $this->rsg = new RandomStringGenerator($faker);
+        $this->rsg = new RandomStringGenerator($random);
     }
 
     public function render(TerminalSequence $terminals): TokenSequence

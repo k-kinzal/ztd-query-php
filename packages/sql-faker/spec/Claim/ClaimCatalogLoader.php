@@ -20,11 +20,18 @@ final class ClaimCatalogLoader
         'grammar.entries.present',
         'grammar.entries.terminate',
         'grammar.rules.reachable',
+        'grammar.fingerprint_matches',
+        'grammar.rewrite_steps_match',
+        'grammar.termination_lengths_match',
         'grammar.rule.contains_sequence',
         'grammar.rule.not_contains_sequence',
         'generation.generates',
+        'generation.deterministic',
+        'generation.fails',
+        'generation.terminals_equal',
         'generation.sql_matches',
         'outcome.kind_in',
+        'outcome.phase_is',
     ];
 
     /**
@@ -104,7 +111,7 @@ final class ClaimCatalogLoader
         /** @var array<string, mixed> $subject */
 
         $subjectKind = $this->requiredString($subject, 'kind', $location . '.subject');
-        if (!in_array($subjectKind, ['grammar', 'generation'], true)) {
+        if (!in_array($subjectKind, ['snapshot', 'grammar', 'generation'], true)) {
             throw new InvalidArgumentException(sprintf('Claim %s has unsupported subject kind: %s', $location, $subjectKind));
         }
 
@@ -118,9 +125,10 @@ final class ClaimCatalogLoader
 
         $cases = $this->parseCases($data['cases'] ?? [[]], $location);
         $evidence = $this->parseEvidence($data['evidence'] ?? null, $location);
+        $versions = $this->parseVersions($data['versions'] ?? null, $location);
 
         /** @var array<string, scalar> $subjectOptions */
-        return new ClaimDefinition($id, $level, $dialect, $statement, $location, $subjectKind, $subjectOptions, $cases, $evidence);
+        return new ClaimDefinition($id, $level, $dialect, $statement, $location, $subjectKind, $subjectOptions, $cases, $evidence, $versions);
     }
 
     /**
@@ -188,6 +196,32 @@ final class ClaimCatalogLoader
         }
 
         return $definitions;
+    }
+
+    /**
+     * @param mixed $versions
+     * @return list<string>|null
+     */
+    private function parseVersions(mixed $versions, string $location): ?array
+    {
+        if ($versions === null) {
+            return null;
+        }
+
+        if (!is_array($versions) || !array_is_list($versions) || $versions === []) {
+            throw new InvalidArgumentException(sprintf('Claim %s versions must be a non-empty JSON list when present.', $location));
+        }
+
+        $normalized = [];
+        foreach ($versions as $index => $version) {
+            if (!is_string($version) || $version === '') {
+                throw new InvalidArgumentException(sprintf('Claim %s versions[%d] must be a non-empty string.', $location, $index));
+            }
+
+            $normalized[] = $version;
+        }
+
+        return $normalized;
     }
 
     /**

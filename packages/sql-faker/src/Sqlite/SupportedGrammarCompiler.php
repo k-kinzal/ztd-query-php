@@ -4,169 +4,57 @@ declare(strict_types=1);
 
 namespace SqlFaker\Sqlite;
 
-use Faker\Generator as FakerGenerator;
-use LogicException;
+use SqlFaker\Contract\Grammar as ContractGrammar;
+use SqlFaker\Contract\RewriteProgram;
+use SqlFaker\Contract\RewriteStep;
+use SqlFaker\Grammar\ContractGrammarHydrator;
+use SqlFaker\Grammar\ContractGrammarProjector;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
-use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\Grammar\Symbol;
 use SqlFaker\Grammar\Terminal;
-use SqlFaker\Grammar\TerminationAnalyzer;
-use SqlFaker\Grammar\TokenJoiner;
-use SqlFaker\Sqlite\LexicalValueSource;
 
-/**
- * Grammar-driven SQL generator for SQLite.
- *
- * Generates syntactically valid SQL strings using SQLite's official Lemon grammar.
- * It implements formal grammar derivation: starting from a non-terminal symbol,
- * repeatedly replacing non-terminals with production rule right-hand sides
- * until only terminal symbols remain.
- */
-final class SqlGenerator
+final class SupportedGrammarCompiler
 {
-    private const DERIVATION_LIMIT = 5000;
     private const SELECT_ARITY_LIMIT = 8;
 
-    private Grammar $grammar;
-    private FakerGenerator $faker;
-    private LexicalValueSource $lexicalValues;
-    private TerminationAnalyzer $terminationAnalyzer;
-    private RandomStringGenerator $rsg;
-
-    private int $targetDepth = PHP_INT_MAX;
-    private int $derivationSteps = 0;
-    private int $identifierOrdinal = 0;
-
-    public function __construct(Grammar $grammar, FakerGenerator $faker, LexicalValueSource $lexicalValues)
+    public function compile(ContractGrammar $snapshot): ContractGrammar
     {
-        $this->grammar = $this->augmentGrammar($grammar);
-        $this->faker = $faker;
-        $this->lexicalValues = $lexicalValues;
-        $this->terminationAnalyzer = new TerminationAnalyzer($this->grammar);
-        $this->rsg = new RandomStringGenerator($faker);
+        return ContractGrammarProjector::project(
+            $this->compileSourceGrammar(ContractGrammarHydrator::hydrate($snapshot)),
+            NonTerminal::class,
+        );
     }
 
-    /**
-     * Generate a syntactically valid SQL string.
-     *
-     * @param string|null $startRule Grammar rule to start from (null for default)
-     * @param int $targetDepth Depth at which generator starts seeking termination
-     */
-    public function generate(?string $startRule = null, int $targetDepth = PHP_INT_MAX): string
+    public function rewriteProgram(): RewriteProgram
     {
-        $this->derivationSteps = 0;
-        $this->identifierOrdinal = 0;
-        $this->targetDepth = max(1, $targetDepth);
-
-        $start = $startRule ?? 'cmd';
-
-        $terminals = $this->derive($start);
-
-        return $this->render($terminals);
+        return new RewriteProgram([
+            new RewriteStep('extract.statement_entry_rules', 'Extract statement-specific entry rules from cmd.'),
+            new RewriteStep('filter.delete_order_by_forms', 'Remove unsupported DELETE ORDER BY forms.'),
+            new RewriteStep('filter.unsafe_expression_branches', 'Remove unsafe expression branches.'),
+            new RewriteStep('filter.window_branches', 'Remove underconstrained window branches.'),
+            new RewriteStep('filter.keyword_like_identifier_branches', 'Remove keyword-like identifier branches.'),
+            new RewriteStep('rebuild.create_table', 'Rebuild CREATE TABLE around safe wrapper rules.'),
+            new RewriteStep('rebuild.attach_detach_vacuum', 'Rebuild ATTACH, DETACH, and VACUUM around safe wrappers.'),
+            new RewriteStep('rebuild.temporary_object_families', 'Rebuild temporary-object families around explicit wrappers.'),
+            new RewriteStep('rebuild.bounded_select_families', 'Rebuild SELECT around bounded safe families.'),
+            new RewriteStep('publish.extracted_statement_rules', 'Publish the extracted statement rules as named entry points.'),
+        ]);
     }
 
-    public function compiledGrammar(): Grammar
-    {
-        return $this->grammar;
-    }
-
-    /**
-     * @return list<Terminal>
-     */
-    private function derive(string $startSymbol): array
-    {
-        /** @var list<Symbol> $form */
-        $form = [new NonTerminal($startSymbol)];
-
-        while (true) {
-            $index = null;
-            foreach ($form as $i => $sym) {
-                if ($sym instanceof NonTerminal) {
-                    $index = $i;
-                    break;
-                }
-            }
-
-            if ($index === null) {
-                break;
-            }
-
-            $this->derivationSteps++;
-            if ($this->derivationSteps > self::DERIVATION_LIMIT) {
-                throw new LogicException('Exceeded derivation limit while generating SQL.');
-            }
-
-            /** @var NonTerminal $nonTerminal */
-            $nonTerminal = $form[$index];
-
-            if (!isset($this->grammar->ruleMap[$nonTerminal->value])) {
-                $form[$index] = new Terminal($nonTerminal->value);
-                continue;
-            }
-
-            $rule = $this->grammar->ruleMap[$nonTerminal->value];
-            $alternatives = $rule->alternatives;
-
-            if ($alternatives === []) {
-                throw new LogicException("Production rule '{$nonTerminal->value}' has no alternatives.");
-            }
-
-            if ($this->derivationSteps >= $this->targetDepth) {
-                $selectedIndex = 0;
-                $bestLength = PHP_INT_MAX;
-                foreach ($alternatives as $i => $alt) {
-                    $length = $this->terminationAnalyzer->estimateProductionLength($alt);
-                    if ($length < $bestLength) {
-                        $bestLength = $length;
-                        $selectedIndex = $i;
-                    }
-                }
-            } else {
-                $selectedIndex = $this->faker->numberBetween(0, count($alternatives) - 1);
-            }
-
-            $production = $alternatives[$selectedIndex];
-
-            $form = [
-                ...array_slice($form, 0, $index),
-                ...$production->symbols,
-                ...array_slice($form, $index + 1),
-            ];
-        }
-
-        /** @var list<Terminal> $form */
-        return $form;
-    }
-
-    /**
-     * Augment the grammar with synthetic wrapper rules for statement types
-     * that don't have their own top-level rules in SQLite's grammar.
-     *
-     * In SQLite's parse.y, DELETE/UPDATE/INSERT/ALTER TABLE/DROP TABLE are embedded
-     * directly as cmd alternatives. We extract these into dedicated rules.
-     */
-    private function augmentGrammar(Grammar $grammar): Grammar
+    public function compileSourceGrammar(Grammar $grammar): Grammar
     {
         $ruleMap = $grammar->ruleMap;
         $cmd = $ruleMap['cmd'] ?? null;
-
         if ($cmd === null) {
             return $grammar;
         }
 
-        $ruleMap = $this->filterExprRule($ruleMap);
-        $ruleMap = $this->filterWindowRule($ruleMap);
-        $ruleMap = $this->filterNmRule($ruleMap);
-        $ruleMap = $this->filterNmnumRule($ruleMap);
-        $ruleMap = $this->augmentCreateTableRule($ruleMap);
-        $ruleMap = $this->augmentTemporaryObjectRule($ruleMap);
-        $ruleMap = $this->augmentAttachRule($ruleMap);
-        $ruleMap = $this->augmentVacuumRule($ruleMap);
-        $ruleMap = $this->augmentSelectRule($ruleMap);
-        $ruleMap = $this->extractStatementRules($ruleMap, $cmd);
+        foreach ($this->rewriteProgram()->steps as $step) {
+            $ruleMap = $this->applyRewriteStep($step->id, $ruleMap, $cmd);
+        }
 
         return new Grammar($grammar->startSymbol, $ruleMap);
     }
@@ -175,27 +63,103 @@ final class SqlGenerator
      * @param array<string, ProductionRule> $ruleMap
      * @return array<string, ProductionRule>
      */
-    private function extractStatementRules(array $ruleMap, ProductionRule $cmd): array
+    private function applyRewriteStep(string $stepId, array $ruleMap, ProductionRule $cmd): array
+    {
+        return match ($stepId) {
+            'extract.statement_entry_rules' => $this->extractStatementGroups($ruleMap, $cmd),
+            'filter.delete_order_by_forms' => $this->filterDeleteOrderByForms($ruleMap),
+            'filter.unsafe_expression_branches' => $this->filterExprRule($ruleMap),
+            'filter.window_branches' => $this->filterWindowRule($ruleMap),
+            'filter.keyword_like_identifier_branches' => $this->filterKeywordLikeIdentifierBranches($ruleMap),
+            'rebuild.create_table' => $this->augmentCreateTableRule($ruleMap),
+            'rebuild.attach_detach_vacuum' => $this->rebuildAttachDetachVacuumFamilies($ruleMap),
+            'rebuild.temporary_object_families' => $this->augmentTemporaryObjectRule($ruleMap),
+            'rebuild.bounded_select_families' => $this->augmentSelectRule($ruleMap),
+            'publish.extracted_statement_rules' => $this->publishStatementRules($ruleMap),
+            default => throw new \LogicException(sprintf('Unknown SQLite rewrite step: %s', $stepId)),
+        };
+    }
+
+    /**
+     * @param array<string, ProductionRule> $ruleMap
+     * @return array<string, ProductionRule>
+     */
+    private function extractStatementGroups(array $ruleMap, ProductionRule $cmd): array
     {
         $groups = $this->classifyCmdAlternatives($cmd);
 
-        $groups['delete'] = array_values(array_filter(
-            $groups['delete'],
-            fn (Production $alt): bool => !$this->hasNonTerminal($alt, 'orderby_opt'),
-        ));
+        foreach ($groups as $key => $alternatives) {
+            $ruleMap['__extracted_' . $key] = new ProductionRule('__extracted_' . $key, $alternatives);
+        }
 
+        return $ruleMap;
+    }
+
+    /**
+     * @param array<string, ProductionRule> $ruleMap
+     * @return array<string, ProductionRule>
+     */
+    private function filterDeleteOrderByForms(array $ruleMap): array
+    {
+        $rule = $ruleMap['__extracted_delete'] ?? null;
+        if ($rule === null) {
+            return $ruleMap;
+        }
+
+        $ruleMap['__extracted_delete'] = new ProductionRule('__extracted_delete', array_values(array_filter(
+            $rule->alternatives,
+            fn (Production $alt): bool => !$this->hasNonTerminal($alt, 'orderby_opt'),
+        )));
+
+        return $ruleMap;
+    }
+
+    /**
+     * @param array<string, ProductionRule> $ruleMap
+     * @return array<string, ProductionRule>
+     */
+    private function filterKeywordLikeIdentifierBranches(array $ruleMap): array
+    {
+        $ruleMap = $this->filterNmRule($ruleMap);
+
+        return $this->filterNmnumRule($ruleMap);
+    }
+
+    /**
+     * @param array<string, ProductionRule> $ruleMap
+     * @return array<string, ProductionRule>
+     */
+    private function rebuildAttachDetachVacuumFamilies(array $ruleMap): array
+    {
+        $ruleMap = $this->augmentAttachRule($ruleMap);
+        $ruleMap = $this->augmentVacuumRule($ruleMap);
+
+        return $ruleMap;
+    }
+
+    /**
+     * @param array<string, ProductionRule> $ruleMap
+     * @return array<string, ProductionRule>
+     */
+    private function publishStatementRules(array $ruleMap): array
+    {
         $ruleNames = [
-            'insert' => 'insert',
-            'delete' => 'delete',
-            'update' => 'update',
-            'drop_table' => 'drop_table',
-            'alter_table' => 'alter_table',
+            'insert' => '__extracted_insert',
+            'delete' => '__extracted_delete',
+            'update' => '__extracted_update',
+            'drop_table' => '__extracted_drop_table',
+            'alter_table' => '__extracted_alter_table',
         ];
 
-        foreach ($ruleNames as $key => $ruleName) {
-            if ($groups[$key] !== []) {
-                $ruleMap[$ruleName] = new ProductionRule($ruleName, $groups[$key]);
+        foreach ($ruleNames as $ruleName => $extractedRuleName) {
+            $rule = $ruleMap[$extractedRuleName] ?? null;
+            unset($ruleMap[$extractedRuleName]);
+
+            if ($rule === null || $rule->alternatives === []) {
+                continue;
             }
+
+            $ruleMap[$ruleName] = new ProductionRule($ruleName, $rule->alternatives);
         }
 
         return $ruleMap;
@@ -847,114 +811,4 @@ final class SqlGenerator
         return $symbols;
     }
 
-    /**
-     * Render terminals into an SQL string.
-     *
-     * Handles SQLite-specific terminal resolution and spacing rules.
-     *
-     * @param list<Terminal> $terminals
-     */
-    private function render(array $terminals): string
-    {
-        $tokens = [];
-        foreach ($terminals as $terminal) {
-            $name = $terminal->value;
-
-            $token = match ($name) {
-                'ID', 'id' => $this->generateSqliteIdentifier(),
-                'idj' => $this->generateSqliteIdentifier(),
-                'ids' => $this->lexicalValues->quotedIdentifier(),
-                'STRING' => $this->lexicalValues->stringLiteral(),
-                'number' => $this->lexicalValues->integerLiteral(),
-                'INTEGER' => $this->lexicalValues->integerLiteral(),
-                'QNUMBER' => $this->lexicalValues->integerLiteral(),
-                'VARIABLE' => '?' . $this->rsg->parameterIndex(),
-
-                'LP' => '(',
-                'RP' => ')',
-                'SEMI' => ';',
-                'COMMA' => ',',
-                'DOT' => '.',
-                'EQ' => '=',
-                'LT' => '<',
-                'PLUS' => '+',
-                'MINUS' => '-',
-                'STAR' => '*',
-                'BITAND' => '&',
-                'BITNOT' => '~',
-                'CONCAT' => '||',
-                'PTR' => '->',
-
-                'JOIN_KW' => $this->generateJoinKeyword(),
-                'CTIME_KW' => $this->generateCtimeKeyword(),
-                'LIKE_KW' => $this->generateLikeKeyword(),
-
-                'AUTOINCR' => 'AUTOINCREMENT',
-                'COLUMNKW' => 'COLUMN',
-
-                default => $name,
-            };
-
-            $tokens[] = $token;
-        }
-
-        return TokenJoiner::join($tokens, [
-            ['->', '*'],
-            ['*', '->'],
-        ]);
-    }
-
-    /**
-     * @param list<string> $tokens
-     */
-    /** @var array<string, true> */
-    private const SQLITE_RESERVED_WORDS = [
-        'add' => true, 'all' => true, 'alter' => true, 'and' => true, 'as' => true,
-        'between' => true, 'by' => true, 'case' => true, 'check' => true,
-        'collate' => true, 'commit' => true, 'create' => true, 'default' => true,
-        'delete' => true, 'distinct' => true, 'do' => true, 'drop' => true,
-        'else' => true, 'end' => true, 'escape' => true, 'except' => true,
-        'exists' => true, 'for' => true, 'foreign' => true, 'from' => true,
-        'group' => true, 'having' => true, 'if' => true, 'in' => true,
-        'index' => true, 'insert' => true, 'into' => true, 'is' => true,
-        'join' => true, 'key' => true, 'limit' => true, 'match' => true,
-        'no' => true, 'not' => true, 'null' => true, 'of' => true,
-        'on' => true, 'or' => true, 'order' => true, 'primary' => true,
-        'references' => true, 'select' => true, 'set' => true, 'table' => true,
-        'then' => true, 'to' => true, 'union' => true, 'unique' => true,
-        'update' => true, 'using' => true, 'values' => true, 'when' => true,
-        'where' => true, 'with' => true,
-    ];
-
-    private function generateSqliteIdentifier(): string
-    {
-        $buf = $this->rsg->canonicalIdentifier($this->identifierOrdinal++);
-
-        if (isset(self::SQLITE_RESERVED_WORDS[strtolower($buf)])) {
-            return '"' . $buf . '"';
-        }
-
-        return $buf;
-    }
-
-    private function generateJoinKeyword(): string
-    {
-        /** @var string $kw */
-        $kw = $this->faker->randomElement(['LEFT', 'RIGHT', 'INNER', 'CROSS', 'NATURAL LEFT', 'NATURAL INNER', 'NATURAL CROSS']);
-        return $kw;
-    }
-
-    private function generateCtimeKeyword(): string
-    {
-        /** @var string $kw */
-        $kw = $this->faker->randomElement(['CURRENT_TIME', 'CURRENT_DATE', 'CURRENT_TIMESTAMP']);
-        return $kw;
-    }
-
-    private function generateLikeKeyword(): string
-    {
-        /** @var string $kw */
-        $kw = $this->faker->randomElement(['LIKE', 'GLOB']);
-        return $kw;
-    }
 }

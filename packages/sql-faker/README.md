@@ -3,15 +3,16 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 
-`sql-faker` is a [FakerPHP](https://github.com/FakerPHP/Faker) provider for generating syntactically valid SQL from grammar snapshots derived from upstream database grammars.
+`sql-faker` is a [FakerPHP](https://github.com/FakerPHP/Faker) provider for generating SQL from supported-language grammars compiled from upstream database grammar snapshots.
 It currently ships providers for MySQL, PostgreSQL, and SQLite and is intended for syntax fuzzing, parser testing, and SQL-heavy test fixture generation.
 
 ## Overview
 
 - Grammar-driven generation from upstream grammars: MySQL `sql_yacc.yy`, PostgreSQL `gram.y`, and SQLite `parse.y`
+- Supported-language compilation is an explicit phase before generation; there is no post-generation syntax repair
 - Full statement generation plus dialect-specific fragments and lexical helpers
 - Seeded Faker generators produce deterministic output for a fixed dialect, grammar version, start rule, and `maxDepth`
-- `maxDepth` bounds recursive growth; once reached, the generator prefers the shortest terminating branch
+- `maxDepth` bounds recursive growth; once reached, the generator prefers the shortest terminating branch defined by the contract
 - The package targets a documented supported language for syntax fuzzing, not full semantic validity against a live database
 
 ## Requirements
@@ -74,6 +75,21 @@ $faker = Factory::create();
 new SqliteProvider($faker);
 
 $sql = $faker->sql(StatementType::CreateTable, maxDepth: 6);
+```
+
+## Development
+
+Relevant design documents:
+
+- [`docs/algorithm.md`](docs/algorithm.md): generation algorithm, contract phases, and derivation rules
+- [`docs/supported-language-design.md`](docs/supported-language-design.md): supported-language breadth, rewrite judgment, and ZTD-fuzzing-oriented sufficiency criteria
+
+Rebuild or verify the upstream grammar snapshots with the package build scripts:
+
+```bash
+composer build
+composer build:verify
+composer spec
 ```
 
 ## License

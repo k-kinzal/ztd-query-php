@@ -13,6 +13,7 @@ use SqlFaker\Contract\Production;
 use SqlFaker\Contract\ProductionRule;
 use SqlFaker\Contract\Symbol;
 use SqlFaker\Contract\TerminationLengths;
+use SqlFaker\Generation\FakerRandomSource;
 use SqlFaker\PostgreSql\TerminalDeriver;
 
 #[CoversNothing]
@@ -26,7 +27,7 @@ final class TerminalDeriverTest extends TestCase
             ]),
         ]);
 
-        $deriver = new TerminalDeriver(Factory::create());
+        $deriver = new TerminalDeriver(new FakerRandomSource(Factory::create()));
 
         self::assertSame(
             ['IDENT'],

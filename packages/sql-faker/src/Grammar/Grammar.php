@@ -50,12 +50,16 @@ final class Grammar
         if ($hash === null) {
             throw new RuntimeException("Invalid grammar file: {$path}");
         }
-        $grammar = unserialize($data[$hash]);
-
-        if (!$grammar instanceof self) {
-            throw new RuntimeException("Failed to load grammar from: {$path}");
+        $serialized = $data[$hash] ?? null;
+        if (!is_string($serialized) || $serialized === '') {
+            throw new RuntimeException("Invalid grammar file: {$path}");
         }
 
-        return $grammar;
+        $grammar = unserialize($serialized);
+        if ($grammar instanceof self) {
+            return $grammar;
+        }
+
+        throw new RuntimeException("Failed to load grammar from: {$path}");
     }
 }

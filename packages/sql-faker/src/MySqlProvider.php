@@ -7,17 +7,19 @@ namespace SqlFaker;
 use Faker\Generator;
 use Faker\Provider\Base;
 use SqlFaker\Contract\GenerationRequest;
+use SqlFaker\Generation\FakerRandomSource;
 use SqlFaker\MySql\LexicalValueGenerator;
 use SqlFaker\MySql\LexicalValueSource;
 use SqlFaker\MySql\StatementGenerator as MySqlStatementGenerator;
 use SqlFaker\MySql\StatementType;
 
 /**
- * Faker Provider for generating syntactically valid MySQL SQL statements.
+ * Faker Provider for generating MySQL SQL from the documented supported language.
  *
- * This provider uses MySQL's official Bison grammar (sql_yacc.yy) to generate
- * SQL that is syntactically valid. Note that generated SQL may not be semantically
- * valid (tables/columns may not exist).
+ * This provider compiles a constrained grammar from MySQL's upstream grammar
+ * snapshot and generates SQL through the runtime algorithm contract. Generated SQL
+ * is syntax-oriented fuzzing input, not a guarantee of semantic validity against a
+ * live schema.
  *
  * Supported MySQL versions:
  *   - mysql-5.6.51
@@ -65,7 +67,7 @@ final class MySqlProvider extends Base implements LexicalValueSource
 
         $generator->addProvider($this);
 
-        $this->lexicalValues = new LexicalValueGenerator($generator);
+        $this->lexicalValues = new LexicalValueGenerator(new FakerRandomSource($generator));
         $this->statementGenerator = new MySqlStatementGenerator($generator, $version, $this->lexicalValues);
     }
 
@@ -83,9 +85,9 @@ final class MySqlProvider extends Base implements LexicalValueSource
     }
 
     /**
-     * Generate a syntactically valid SQL statement.
+     * Generate a MySQL SQL statement from the supported-language contract.
      *
-     * @param StatementType|null $startRule Start rule (null for default)
+     * @param StatementType|null $startRule Start rule (null uses the default `simple_statement_or_begin` entry rule)
      * @param int $maxDepth Maximum recursion depth (PHP_INT_MAX = unlimited)
      * @return string Generated SQL statement
      *

@@ -6,10 +6,14 @@ namespace Tests\Unit\SqlFaker\Grammar;
 
 use Faker\Factory;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use SqlFaker\Contract\RandomSource;
+use SqlFaker\Generation\FakerRandomSource;
 use SqlFaker\Grammar\RandomStringGenerator;
 
 #[CoversClass(RandomStringGenerator::class)]
+#[UsesClass(FakerRandomSource::class)]
 final class RandomStringGeneratorTest extends TestCase
 {
     #[\Override]
@@ -23,7 +27,7 @@ final class RandomStringGeneratorTest extends TestCase
     {
         $faker = Factory::create();
         $faker->seed(42);
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
         $results = array_map(static fn (): string => $rsg->rawIdentifier(), range(1, 50));
         self::assertCount(50, array_filter($results, static fn (string $s): bool => preg_match('/^_[a-z0-9_]*$/', $s) === 1));
     }
@@ -32,16 +36,44 @@ final class RandomStringGeneratorTest extends TestCase
     {
         $faker = Factory::create();
         $faker->seed(42);
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
         $lengths = array_map(static fn (): int => strlen($rsg->rawIdentifier()), range(1, 200));
         self::assertGreaterThanOrEqual(1, min($lengths));
         self::assertLessThanOrEqual(12, max($lengths));
     }
 
+    public function testRawIdentifierEnforcesAMinimumLengthOfOneEvenWhenZeroIsRequested(): void
+    {
+        $random = new class () implements RandomSource {
+            /** @var list<array{int, int}> */
+            public array $calls = [];
+
+            public function seed(int $seed): void
+            {
+            }
+
+            public function numberBetween(int $min, int $max): int
+            {
+                $this->calls[] = [$min, $max];
+
+                return $min;
+            }
+
+            public function stringElement(array $elements): string
+            {
+                return $elements[0];
+            }
+        };
+        $rsg = new RandomStringGenerator($random);
+
+        self::assertSame('_', $rsg->rawIdentifier(0, 12));
+        self::assertSame([1, 12], $random->calls[0]);
+    }
+
     public function testCanonicalIdentifierUsesStableSafePrefix(): void
     {
         $faker = Factory::create();
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
 
         self::assertSame('_i0', $rsg->canonicalIdentifier(0));
         self::assertSame('_i1', $rsg->canonicalIdentifier(1));
@@ -52,7 +84,7 @@ final class RandomStringGeneratorTest extends TestCase
     public function testCanonicalIdentifierRemainsUniqueAcrossOrdinals(): void
     {
         $faker = Factory::create();
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
         $values = array_map(static fn (int $ordinal): string => $rsg->canonicalIdentifier($ordinal), range(0, 128));
 
         self::assertCount(129, array_unique($values));
@@ -63,7 +95,7 @@ final class RandomStringGeneratorTest extends TestCase
     {
         $faker = Factory::create();
         $faker->seed(42);
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
         $results = array_map(static fn (): string => $rsg->mixedAlnumString(), range(1, 50));
         self::assertCount(50, array_filter($results, static fn (string $s): bool => preg_match('/^[a-zA-Z0-9_]+$/', $s) === 1));
     }
@@ -72,7 +104,7 @@ final class RandomStringGeneratorTest extends TestCase
     {
         $faker = Factory::create();
         $faker->seed(42);
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
         $lengths = array_map(static fn (): int => strlen($rsg->mixedAlnumString()), range(1, 200));
         self::assertGreaterThanOrEqual(1, min($lengths));
         self::assertLessThanOrEqual(24, max($lengths));
@@ -82,7 +114,7 @@ final class RandomStringGeneratorTest extends TestCase
     {
         $faker = Factory::create();
         $faker->seed(42);
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
         $results = array_map(static fn (): string => $rsg->integerString(), range(1, 50));
         self::assertCount(50, array_filter($results, static fn (string $s): bool => preg_match('/^[1-9][0-9]*$/', $s) === 1));
     }
@@ -91,7 +123,7 @@ final class RandomStringGeneratorTest extends TestCase
     {
         $faker = Factory::create();
         $faker->seed(42);
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
         $lengths = array_map(static fn (): int => strlen($rsg->integerString()), range(1, 200));
         self::assertGreaterThanOrEqual(1, min($lengths));
         self::assertLessThanOrEqual(10, max($lengths));
@@ -101,7 +133,7 @@ final class RandomStringGeneratorTest extends TestCase
     {
         $faker = Factory::create();
         $faker->seed(42);
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
         $results = array_map(static fn (): string => $rsg->hexString(), range(1, 50));
         self::assertCount(50, array_filter($results, static fn (string $s): bool => preg_match('/^[0-9a-f]+$/', $s) === 1));
     }
@@ -110,7 +142,7 @@ final class RandomStringGeneratorTest extends TestCase
     {
         $faker = Factory::create();
         $faker->seed(42);
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
         $lengths = array_map(static fn (): int => strlen($rsg->hexString()), range(1, 200));
         self::assertGreaterThanOrEqual(1, min($lengths));
         self::assertLessThanOrEqual(16, max($lengths));
@@ -120,7 +152,7 @@ final class RandomStringGeneratorTest extends TestCase
     {
         $faker = Factory::create();
         $faker->seed(42);
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
         $results = array_map(static fn (): string => $rsg->binaryString(), range(1, 50));
         self::assertCount(50, array_filter($results, static fn (string $s): bool => preg_match('/^[01]+$/', $s) === 1));
     }
@@ -129,7 +161,7 @@ final class RandomStringGeneratorTest extends TestCase
     {
         $faker = Factory::create();
         $faker->seed(42);
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
         $lengths = array_map(static fn (): int => strlen($rsg->binaryString()), range(1, 200));
         self::assertGreaterThanOrEqual(1, min($lengths));
         self::assertLessThanOrEqual(32, max($lengths));
@@ -139,16 +171,38 @@ final class RandomStringGeneratorTest extends TestCase
     {
         $faker = Factory::create();
         $faker->seed(42);
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
         $results = array_map(static fn (): string => $rsg->decimalString(), range(1, 50));
         self::assertCount(50, array_filter($results, static fn (string $s): bool => preg_match('/^\d+\.\d{2,}$/', $s) === 1));
+    }
+
+    public function testDecimalStringAllowsZeroForBothIntegerAndFractionalParts(): void
+    {
+        $random = new class () implements RandomSource {
+            public function seed(int $seed): void
+            {
+            }
+
+            public function numberBetween(int $min, int $max): int
+            {
+                return $min;
+            }
+
+            public function stringElement(array $elements): string
+            {
+                return $elements[0];
+            }
+        };
+        $rsg = new RandomStringGenerator($random);
+
+        self::assertSame('0.00', $rsg->decimalString(2, 2));
     }
 
     public function testHostnameStringFormat(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
         $results = array_map(static fn (): string => $rsg->hostnameString(), range(1, 50));
         self::assertCount(50, array_filter($results, static fn (string $s): bool => preg_match('/^[a-z0-9]+(\.[a-z0-9]+)*$/', $s) === 1));
     }
@@ -157,7 +211,7 @@ final class RandomStringGeneratorTest extends TestCase
     {
         $faker = Factory::create();
         $faker->seed(42);
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
         $results = array_map(static fn (): string => $rsg->hostnameString(), range(1, 50));
 
         self::assertCount(50, array_filter($results, static function (string $hostname): bool {
@@ -175,7 +229,7 @@ final class RandomStringGeneratorTest extends TestCase
     {
         $faker = Factory::create();
         $faker->seed(42);
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
         $results = array_map(static fn (): string => $rsg->unsignedBigIntString(), range(1, 50));
         self::assertCount(50, array_filter($results, static fn (string $s): bool => preg_match('/^(0|[1-9][0-9]*)$/', $s) === 1));
     }
@@ -184,7 +238,7 @@ final class RandomStringGeneratorTest extends TestCase
     {
         $faker = Factory::create();
         $faker->seed(42);
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
         $lengths = array_map(static fn (): int => strlen($rsg->unsignedBigIntString()), range(1, 200));
         self::assertGreaterThanOrEqual(1, min($lengths));
         self::assertLessThanOrEqual(20, max($lengths));
@@ -193,7 +247,7 @@ final class RandomStringGeneratorTest extends TestCase
     public function testRawIdentifierDefaultMatchesExplicit(): void
     {
         $faker = Factory::create();
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
 
         $faker->seed(42);
         $a = $rsg->rawIdentifier();
@@ -205,7 +259,7 @@ final class RandomStringGeneratorTest extends TestCase
     public function testMixedAlnumStringDefaultMatchesExplicit(): void
     {
         $faker = Factory::create();
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
 
         $faker->seed(42);
         $a = $rsg->mixedAlnumString();
@@ -217,7 +271,7 @@ final class RandomStringGeneratorTest extends TestCase
     public function testIntegerStringDefaultMatchesExplicit(): void
     {
         $faker = Factory::create();
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
 
         $faker->seed(42);
         $a = $rsg->integerString();
@@ -229,7 +283,7 @@ final class RandomStringGeneratorTest extends TestCase
     public function testHexStringDefaultMatchesExplicit(): void
     {
         $faker = Factory::create();
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
 
         $faker->seed(42);
         $a = $rsg->hexString();
@@ -241,7 +295,7 @@ final class RandomStringGeneratorTest extends TestCase
     public function testBinaryStringDefaultMatchesExplicit(): void
     {
         $faker = Factory::create();
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
 
         $faker->seed(42);
         $a = $rsg->binaryString();
@@ -253,7 +307,7 @@ final class RandomStringGeneratorTest extends TestCase
     public function testDecimalStringDefaultMatchesExplicit(): void
     {
         $faker = Factory::create();
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
 
         $faker->seed(42);
         $a = $rsg->decimalString();
@@ -265,7 +319,7 @@ final class RandomStringGeneratorTest extends TestCase
     public function testHostnameStringDefaultMatchesExplicit(): void
     {
         $faker = Factory::create();
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
 
         $faker->seed(42);
         $a = $rsg->hostnameString();
@@ -277,7 +331,7 @@ final class RandomStringGeneratorTest extends TestCase
     public function testUnsignedBigIntStringDefaultMatchesExplicit(): void
     {
         $faker = Factory::create();
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
 
         $faker->seed(42);
         $a = $rsg->unsignedBigIntString();
@@ -289,7 +343,7 @@ final class RandomStringGeneratorTest extends TestCase
     public function testLongIntStringDefaultMatchesExplicit(): void
     {
         $faker = Factory::create();
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
 
         $faker->seed(42);
         $a = $rsg->longIntString();
@@ -301,7 +355,7 @@ final class RandomStringGeneratorTest extends TestCase
     public function testFloatStringDefaultMatchesExplicit(): void
     {
         $faker = Factory::create();
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
 
         $faker->seed(42);
         $a = $rsg->floatString('1.0');
@@ -313,7 +367,7 @@ final class RandomStringGeneratorTest extends TestCase
     public function testParameterIndexDefaultMatchesExplicit(): void
     {
         $faker = Factory::create();
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
 
         $faker->seed(42);
         $a = $rsg->parameterIndex();
@@ -326,7 +380,7 @@ final class RandomStringGeneratorTest extends TestCase
     {
         $faker = Factory::create();
         $faker->seed(42);
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
         $lengths = array_map(static fn (): int => strlen($rsg->rawIdentifier(3, 5)), range(1, 100));
         self::assertGreaterThanOrEqual(3, min($lengths));
         self::assertLessThanOrEqual(5, max($lengths));
@@ -336,7 +390,7 @@ final class RandomStringGeneratorTest extends TestCase
     {
         $faker = Factory::create();
         $faker->seed(42);
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
         $lengths = array_map(static fn (): int => strlen($rsg->mixedAlnumString(10, 15)), range(1, 100));
         self::assertGreaterThanOrEqual(10, min($lengths));
         self::assertLessThanOrEqual(15, max($lengths));
@@ -346,7 +400,7 @@ final class RandomStringGeneratorTest extends TestCase
     {
         $faker = Factory::create();
         $faker->seed(42);
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
         $values = array_map(static fn (): int => (int) $rsg->integerString(100, 200), range(1, 100));
         self::assertGreaterThanOrEqual(100, min($values));
         self::assertLessThanOrEqual(200, max($values));
@@ -356,7 +410,7 @@ final class RandomStringGeneratorTest extends TestCase
     {
         $faker = Factory::create();
         $faker->seed(42);
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
         $lengths = array_map(static fn (): int => strlen($rsg->hexString(4, 8)), range(1, 100));
         self::assertGreaterThanOrEqual(4, min($lengths));
         self::assertLessThanOrEqual(8, max($lengths));
@@ -366,7 +420,7 @@ final class RandomStringGeneratorTest extends TestCase
     {
         $faker = Factory::create();
         $faker->seed(42);
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
         $lengths = array_map(static fn (): int => strlen($rsg->binaryString(8, 16)), range(1, 100));
         self::assertGreaterThanOrEqual(8, min($lengths));
         self::assertLessThanOrEqual(16, max($lengths));
@@ -376,7 +430,7 @@ final class RandomStringGeneratorTest extends TestCase
     {
         $faker = Factory::create();
         $faker->seed(42);
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
         $result = $rsg->decimalString(5, 2);
         self::assertMatchesRegularExpression('/^\d+\.\d{2,}$/', $result);
     }
@@ -385,7 +439,7 @@ final class RandomStringGeneratorTest extends TestCase
     {
         $faker = Factory::create();
         $faker->seed(42);
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
         $result = $rsg->decimalString(2, 2);
         self::assertMatchesRegularExpression('/^\d\.\d{2}$/', $result);
     }
@@ -394,7 +448,7 @@ final class RandomStringGeneratorTest extends TestCase
     {
         $faker = Factory::create();
         $faker->seed(42);
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
         $result = $rsg->decimalString(8, 4);
         $parts = explode('.', $result);
         self::assertSame(4, strlen($parts[1]));
@@ -404,7 +458,7 @@ final class RandomStringGeneratorTest extends TestCase
     {
         $faker = Factory::create();
         $faker->seed(42);
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
         $result = $rsg->decimalString(5, 1);
         $parts = explode('.', $result);
         self::assertSame(2, strlen($parts[1]));
@@ -414,7 +468,7 @@ final class RandomStringGeneratorTest extends TestCase
     {
         $faker = Factory::create();
         $faker->seed(42);
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
         $result = $rsg->decimalString(4, 2);
         $parts = explode('.', $result);
         $trimmed = ltrim($parts[0], '0');
@@ -426,7 +480,7 @@ final class RandomStringGeneratorTest extends TestCase
     {
         $faker = Factory::create();
         $faker->seed(42);
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
         $lengths = array_map(static fn (): int => strlen($rsg->unsignedBigIntString(5, 10)), range(1, 100));
         self::assertGreaterThanOrEqual(1, min($lengths));
         self::assertLessThanOrEqual(10, max($lengths));
@@ -436,7 +490,7 @@ final class RandomStringGeneratorTest extends TestCase
     {
         $faker = Factory::create();
         $faker->seed(42);
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
         $values = array_map(static fn (): int => (int) $rsg->longIntString(50, 100), range(1, 100));
         self::assertGreaterThanOrEqual(50, min($values));
         self::assertLessThanOrEqual(100, max($values));
@@ -446,7 +500,7 @@ final class RandomStringGeneratorTest extends TestCase
     {
         $faker = Factory::create();
         $faker->seed(42);
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
         $result = $rsg->floatString('1.5', -5, 5);
         self::assertMatchesRegularExpression('/^1\.5e-?\d+$/', $result);
     }
@@ -455,7 +509,7 @@ final class RandomStringGeneratorTest extends TestCase
     {
         $faker = Factory::create();
         $faker->seed(42);
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
         $values = array_map(static fn (): int => (int) $rsg->parameterIndex(1, 3), range(1, 100));
         self::assertGreaterThanOrEqual(1, min($values));
         self::assertLessThanOrEqual(3, max($values));
@@ -465,7 +519,7 @@ final class RandomStringGeneratorTest extends TestCase
     {
         $faker = Factory::create();
         $faker->seed(42);
-        $rsg = new RandomStringGenerator($faker);
+        $rsg = new RandomStringGenerator(new FakerRandomSource($faker));
         $result = $rsg->hostnameString(2, 2, 3, 3);
         self::assertMatchesRegularExpression('/^[a-z0-9]{3}\.[a-z0-9]{3}$/', $result);
     }

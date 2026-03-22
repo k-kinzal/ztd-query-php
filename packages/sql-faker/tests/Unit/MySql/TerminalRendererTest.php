@@ -8,6 +8,7 @@ use Faker\Factory;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Contract\TerminalSequence;
+use SqlFaker\Generation\FakerRandomSource;
 use SqlFaker\MySql\LexicalValueGenerator;
 use SqlFaker\MySql\TerminalRenderer;
 
@@ -17,7 +18,8 @@ final class TerminalRendererTest extends TestCase
     public function testRenderMapsTerminalNamesToTokens(): void
     {
         $faker = Factory::create();
-        $renderer = new TerminalRenderer($faker, new LexicalValueGenerator($faker));
+        $random = new FakerRandomSource($faker);
+        $renderer = new TerminalRenderer($random, new LexicalValueGenerator($random));
 
         $tokens = $renderer->render(new TerminalSequence(['IDENT', 'EQ', 'NUM']))->tokens;
 

@@ -6,19 +6,44 @@ namespace SqlFaker\PostgreSql;
 
 use SqlFaker\Contract\Grammar;
 use SqlFaker\Contract\SnapshotLoader as SnapshotLoaderContract;
-use SqlFaker\Grammar\ContractGrammarProjector;
-use SqlFaker\Grammar\NonTerminal;
-use SqlFaker\PostgreSql\Grammar\PgGrammar;
+use RuntimeException;
 
 final class SnapshotLoader implements SnapshotLoaderContract
 {
+    private const AST_DIR = __DIR__ . '/../../resources/ast';
+    private const AST_META = __DIR__ . '/../../resources/ast.php';
+
+    private readonly string $resolvedVersion;
+
     public function __construct(
-        private readonly ?string $version = null,
+        ?string $version = null,
     ) {
+        $this->resolvedVersion = self::resolveVersion($version);
+    }
+
+    public function version(): string
+    {
+        return $this->resolvedVersion;
     }
 
     public function load(): Grammar
     {
-        return ContractGrammarProjector::project(PgGrammar::load($this->version), NonTerminal::class);
+        return Grammar::loadFromFile(self::AST_DIR . '/' . $this->resolvedVersion . '.php');
+    }
+
+    private static function resolveVersion(?string $version): string
+    {
+        if (is_string($version) && $version !== '') {
+            return $version;
+        }
+
+        /** @var array{default_pg?: mixed} $meta */
+        $meta = require self::AST_META;
+        $resolved = $meta['default_pg'] ?? null;
+        if (!is_string($resolved) || $resolved === '') {
+            throw new RuntimeException('No default PostgreSQL version configured in ast.php');
+        }
+
+        return $resolved;
     }
 }

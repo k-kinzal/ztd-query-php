@@ -152,6 +152,17 @@ final class HumanReadableRenderer
                     $lines[] = '   - generated sql:';
                     $lines = [...$lines, ...$this->indentBlock($sql, '     ')];
                 }
+
+                $exceptionClass = $this->stringOr($generation['exception_class'] ?? null, '');
+                if ($exceptionClass !== '') {
+                    $lines[] = '   - generation exception class: ' . $exceptionClass;
+                }
+
+                $exceptionMessage = $this->stringOr($generation['exception_message'] ?? null, '');
+                if ($exceptionMessage !== '') {
+                    $lines[] = '   - generation exception message:';
+                    $lines = [...$lines, ...$this->indentBlock($exceptionMessage, '     ')];
+                }
             }
 
             $checks = $case['checks'] ?? [];
@@ -209,7 +220,10 @@ final class HumanReadableRenderer
     {
         return match ($kind) {
             'outcome.kind_in' => $this->formatOutcomeFacts($facts),
+            'generation.deterministic' => $this->formatDeterminismFacts($facts),
+            'generation.fails' => $this->formatFailureFacts($facts),
             'generation.sql_matches' => $this->formatGenerationMatchFacts($facts),
+            'grammar.fingerprint_matches' => $this->formatFingerprintFacts($facts),
             'grammar.rule.contains_sequence', 'grammar.rule.not_contains_sequence' => $this->formatRuleSequenceFacts($facts),
             'grammar.no_undefined_references' => $this->formatListFacts('undefined references', $facts['undefined_references'] ?? []),
             'grammar.no_empty_rules' => $this->formatListFacts('empty rules', $facts['rules'] ?? []),
@@ -258,12 +272,98 @@ final class HumanReadableRenderer
      * @param array<string, mixed> $facts
      * @return list<string>
      */
+    private function formatFingerprintFacts(array $facts): array
+    {
+        $lines = [];
+
+        $subjectKind = $this->stringOr($facts['subject_kind'] ?? null, '');
+        if ($subjectKind !== '') {
+            $lines[] = 'subject: ' . $subjectKind;
+        }
+
+        $version = $this->stringOr($facts['version'] ?? null, '');
+        if ($version !== '') {
+            $lines[] = 'version: ' . $version;
+        }
+
+        $expected = $this->stringOr($facts['expected_sha256'] ?? null, '');
+        if ($expected !== '') {
+            $lines[] = 'expected sha256: ' . $expected;
+        }
+
+        $actual = $this->stringOr($facts['actual_sha256'] ?? null, '');
+        if ($actual !== '') {
+            $lines[] = 'actual sha256: ' . $actual;
+        }
+
+        return $lines;
+    }
+
+    /**
+     * @param array<string, mixed> $facts
+     * @return list<string>
+     */
     private function formatGenerationMatchFacts(array $facts): array
     {
         $lines = [];
         $pattern = $this->stringOr($facts['pattern'] ?? null, '');
         if ($pattern !== '') {
             $lines[] = 'pattern: ' . $pattern;
+        }
+
+        if (array_key_exists('matched', $facts)) {
+            $lines[] = 'matched: ' . ($facts['matched'] === true ? 'yes' : 'no');
+        }
+
+        return $lines;
+    }
+
+    /**
+     * @param array<string, mixed> $facts
+     * @return list<string>
+     */
+    private function formatDeterminismFacts(array $facts): array
+    {
+        $lines = [];
+
+        if (array_key_exists('matched', $facts)) {
+            $lines[] = 'matched: ' . ($facts['matched'] === true ? 'yes' : 'no');
+        }
+
+        $firstSql = $this->stringOr($facts['first_sql'] ?? null, '');
+        if ($firstSql !== '') {
+            $lines[] = 'first_sql: ' . $firstSql;
+        }
+
+        $secondSql = $this->stringOr($facts['second_sql'] ?? null, '');
+        if ($secondSql !== '') {
+            $lines[] = 'second_sql: ' . $secondSql;
+        }
+
+        return $lines;
+    }
+
+    /**
+     * @param array<string, mixed> $facts
+     * @return list<string>
+     */
+    private function formatFailureFacts(array $facts): array
+    {
+        $lines = [];
+
+        $pattern = $this->stringOr($facts['pattern'] ?? null, '');
+        if ($pattern !== '') {
+            $lines[] = 'pattern: ' . $pattern;
+        }
+
+        $exceptionClass = $this->stringOr($facts['exception_class'] ?? null, '');
+        if ($exceptionClass !== '') {
+            $lines[] = 'exception_class: ' . $exceptionClass;
+        }
+
+        $exceptionMessage = $this->stringOr($facts['exception_message'] ?? null, '');
+        if ($exceptionMessage !== '') {
+            $lines[] = 'exception_message: ' . $exceptionMessage;
         }
 
         if (array_key_exists('matched', $facts)) {

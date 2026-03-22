@@ -6,8 +6,10 @@ namespace Tests\Unit\SqlFaker\Contract;
 
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use SqlFaker\Contract\Grammar;
 use SqlFaker\Contract\Production;
 use SqlFaker\Contract\ProductionRule;
@@ -188,5 +190,55 @@ final class GrammarTest extends TestCase
                 ],
             ],
         ], $nonTerminal::class);
+    }
+
+    public function testLoadsSerializedContractGrammarFromFile(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([new Symbol('SELECT', false)]),
+            ]),
+        ]);
+        $path = tempnam(sys_get_temp_dir(), 'sql-faker-contract-grammar-');
+        self::assertNotFalse($path);
+
+        file_put_contents($path, "<?php\n\ndeclare(strict_types=1);\n\nreturn ['fixture' => '" . addcslashes(serialize($grammar), "'\\") . "'];\n");
+
+        try {
+            $loaded = Grammar::loadFromFile($path);
+        } finally {
+            unlink($path);
+        }
+
+        self::assertSame($grammar->startSymbol, $loaded->startSymbol);
+        self::assertSame($grammar->rule('stmt')?->alternatives[0]->sequence(), $loaded->rule('stmt')?->alternatives[0]->sequence());
+    }
+
+    #[DataProvider('providerInvalidGrammarFilePayloads')]
+    public function testRejectsInvalidSerializedContractGrammarFiles(string $payload): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'sql-faker-contract-grammar-invalid-');
+        self::assertNotFalse($path);
+
+        file_put_contents($path, "<?php\n\ndeclare(strict_types=1);\n\nreturn {$payload};\n");
+
+        try {
+            $this->expectException(RuntimeException::class);
+            $this->expectExceptionMessage("Invalid grammar file: {$path}");
+
+            Grammar::loadFromFile($path);
+        } finally {
+            unlink($path);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerInvalidGrammarFilePayloads(): iterable
+    {
+        yield 'non-array payload' => [var_export('not-an-array', true)];
+        yield 'empty hash key' => [var_export(['' => 'serialized-value'], true)];
+        yield 'empty serialized grammar' => [var_export(['fixture' => ''], true)];
     }
 }

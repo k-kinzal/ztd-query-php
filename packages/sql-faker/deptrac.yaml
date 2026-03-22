@@ -3,30 +3,111 @@ deptrac:
     - ./src
     - ./spec
 
+  # Conceptually the package remains a 3-layer design:
+  # Contract -> Runtime -> Spec.
+  # Runtime is partitioned by shared/dialect code, and Spec is partitioned into
+  # adapters plus core spec logic so only adapters may touch runtime code.
   layers:
     - name: Contract
       collectors:
         - type: directory
           value: '^.*/src/Contract/.*\.php$'
 
-    - name: SqlFakerImplementation
+    - name: SharedRuntime
       collectors:
-        - type: bool
-          must:
-            - type: directory
-              value: '^.*/src/.*\.php$'
-          must_not:
-            - type: directory
-              value: '^.*/src/Contract/.*\.php$'
+        - type: directory
+          value: '^.*/src/Generation/.*\.php$'
+        - type: directory
+          value: '^.*/src/Grammar/.*\.php$'
+        # The Bison parser is shared infrastructure used by MySQL and
+        # PostgreSQL build flows, so it is treated as runtime-common.
+        - type: directory
+          value: '^.*/src/MySql/Bison/.*\.php$'
+
+    - name: MySqlRuntime
+      collectors:
+        - type: directory
+          value: '^.*/src/MySql/(?!Bison/).+\.php$'
+        - type: directory
+          value: '^.*/src/MySqlProvider\.php$'
+
+    - name: PostgreSqlRuntime
+      collectors:
+        - type: directory
+          value: '^.*/src/PostgreSql/.*\.php$'
+        - type: directory
+          value: '^.*/src/PostgreSqlProvider\.php$'
+
+    - name: SqliteRuntime
+      collectors:
+        - type: directory
+          value: '^.*/src/Sqlite/.*\.php$'
+        - type: directory
+          value: '^.*/src/SqliteProvider\.php$'
+
+    - name: SpecAdapter
+      collectors:
+        - type: directory
+          value: '^.*/spec/Adapter/.*\.php$'
 
     - name: Spec
       collectors:
         - type: directory
-          value: '^.*/spec/.*\.php$'
+          value: '^.*/spec/(?!Adapter/).+\.php$'
+
+    - name: Faker
+      collectors:
+        - type: classLike
+          value: '^Faker\\.*'
+
+    - name: PhpUnit
+      collectors:
+        - type: classLike
+          value: '^PHPUnit\\.*'
+
+    - name: Testcontainers
+      collectors:
+        - type: classLike
+          value: '^Testcontainers\\.*'
 
   ruleset:
-    Contract: []
-    SqlFakerImplementation:
+    Contract:
       - Contract
+    SharedRuntime:
+      - Contract
+      - SharedRuntime
+      - Faker
+    MySqlRuntime:
+      - Contract
+      - SharedRuntime
+      - MySqlRuntime
+      - Faker
+    PostgreSqlRuntime:
+      - Contract
+      - SharedRuntime
+      - PostgreSqlRuntime
+      - Faker
+    SqliteRuntime:
+      - Contract
+      - SharedRuntime
+      - SqliteRuntime
+      - Faker
+    SpecAdapter:
+      - Contract
+      - SharedRuntime
+      - MySqlRuntime
+      - PostgreSqlRuntime
+      - SqliteRuntime
+      - Spec
+      - SpecAdapter
     Spec:
       - Contract
+      - Spec
+      - PhpUnit
+      - Testcontainers
+    Faker:
+      - Faker
+    PhpUnit:
+      - PhpUnit
+    Testcontainers:
+      - Testcontainers

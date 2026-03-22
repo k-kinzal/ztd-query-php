@@ -13,6 +13,7 @@ final class ClaimDefinition
      * @param list<array<string, scalar>> $cases
      * @param array<string, scalar> $subjectOptions
      * @param list<EvidenceDefinition> $evidence
+     * @param list<string>|null $versions
      */
     public function __construct(
         public readonly string $id,
@@ -24,6 +25,7 @@ final class ClaimDefinition
         public readonly array $subjectOptions,
         public readonly array $cases,
         public readonly array $evidence,
+        public readonly ?array $versions = null,
     ) {
     }
 }

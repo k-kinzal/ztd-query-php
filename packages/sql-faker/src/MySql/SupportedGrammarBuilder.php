@@ -4,26 +4,24 @@ declare(strict_types=1);
 
 namespace SqlFaker\MySql;
 
-use Faker\Generator as FakerGenerator;
 use SqlFaker\Contract\Grammar;
+use SqlFaker\Contract\RewriteProgram;
 use SqlFaker\Contract\SupportedGrammarBuilder as SupportedGrammarBuilderContract;
-use SqlFaker\Grammar\ContractGrammarProjector;
-use SqlFaker\MySql\Grammar\ContractGrammarHydrator;
-use SqlFaker\MySql\Grammar\NonTerminal;
 
 final class SupportedGrammarBuilder implements SupportedGrammarBuilderContract
 {
+    public function __construct(
+        private readonly SupportedGrammarCompiler $compiler = new SupportedGrammarCompiler(),
+    ) {
+    }
+
     public function build(Grammar $snapshot): Grammar
     {
-        $faker = new FakerGenerator();
+        return $this->compiler->compile($snapshot);
+    }
 
-        return ContractGrammarProjector::project(
-            (new SqlGenerator(
-                ContractGrammarHydrator::hydrate($snapshot),
-                $faker,
-                new LexicalValueGenerator($faker),
-            ))->compiledGrammar(),
-            NonTerminal::class,
-        );
+    public function rewriteProgram(): RewriteProgram
+    {
+        return $this->compiler->rewriteProgram();
     }
 }

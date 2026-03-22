@@ -15,6 +15,43 @@ use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\PostgreSql\StatementType;
 use SqlFaker\PostgreSqlProvider;
 
+/**
+ * @param list<int> $numberBetweenValues
+ */
+function deterministicPostgreSqlNumberFaker(array $numberBetweenValues): \Faker\Generator
+{
+    return new class ($numberBetweenValues) extends \Faker\Generator {
+        /** @var list<int> */
+        private array $numberBetweenValues;
+
+        /**
+         * @param list<int> $numberBetweenValues
+         */
+        public function __construct(array $numberBetweenValues)
+        {
+            parent::__construct();
+            $this->numberBetweenValues = $numberBetweenValues;
+        }
+
+        /**
+         * @param mixed $int1
+         * @param mixed $int2
+         */
+        #[\Override]
+        public function numberBetween($int1 = 0, $int2 = 2147483647): int
+        {
+            $next = array_shift($this->numberBetweenValues);
+            $lower = is_int($int1) ? $int1 : 0;
+            $upper = is_int($int2) ? $int2 : 2147483647;
+            $value = is_int($next) ? $next : min($lower, $upper);
+            $min = min($lower, $upper);
+            $max = max($lower, $upper);
+
+            return max($min, min($max, $value));
+        }
+    };
+}
+
 #[CoversClass(PostgreSqlProvider::class)]
 #[CoversClass(RandomStringGenerator::class)]
 #[CoversClass(GenerationRequest::class)]
@@ -63,15 +100,17 @@ final class PostgreSqlProviderTest extends TestCase
         self::assertMatchesRegularExpression('/SELECT|VALUES|TABLE/', $result);
     }
 
-    public function testSqlWithNullStatementTypeUsesRandom(): void
+    public function testSqlWithNullStatementTypeUsesStmtmultiDefault(): void
     {
-        $faker = Factory::create();
-        $faker->seed(12345);
+        $faker = deterministicPostgreSqlNumberFaker([77]);
         $provider = new PostgreSqlProvider($faker);
 
         $result = $provider->sql(null, maxDepth: 6);
 
-        self::assertNotSame('', $result);
+        self::assertSame(
+            $provider->generate(new GenerationRequest('stmtmulti', 77, 6)),
+            $result,
+        );
     }
 
     public function testSqlWithMaxDepth(): void

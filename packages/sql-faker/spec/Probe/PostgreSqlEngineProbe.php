@@ -41,7 +41,7 @@ final class PostgreSqlEngineProbe implements EngineProbe
         try {
             $this->pdo->exec('SAVEPOINT probe_check');
             $this->pdo->exec($sql);
-            $this->pdo->exec('RELEASE SAVEPOINT probe_check');
+            $this->discardSavepoint();
 
             return ProbeResult::accepted(ProbePhase::Execute);
         } catch (PDOException $e) {
@@ -54,10 +54,16 @@ final class PostgreSqlEngineProbe implements EngineProbe
         }
     }
 
+    private function discardSavepoint(): void
+    {
+        $this->pdo->exec('ROLLBACK TO SAVEPOINT probe_check');
+        $this->pdo->exec('RELEASE SAVEPOINT probe_check');
+    }
+
     private function resetSavepoint(): void
     {
         try {
-            $this->pdo->exec('ROLLBACK TO SAVEPOINT probe_check');
+            $this->discardSavepoint();
         } catch (PDOException) {
             try {
                 $this->pdo->exec('ROLLBACK');

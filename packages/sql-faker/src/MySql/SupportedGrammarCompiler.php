@@ -16,7 +16,6 @@ use SqlFaker\MySql\Grammar\Symbol;
 use SqlFaker\MySql\Grammar\Terminal;
 use SqlFaker\MySql\Grammar\TerminationAnalyzer;
 use SqlFaker\MySql\LexicalValueSource;
-
 /**
  * Grammar-driven SQL generator for MySQL.
  *
@@ -25,66 +24,125 @@ use SqlFaker\MySql\LexicalValueSource;
  * repeatedly replacing non-terminals with production rule right-hand sides
  * until only terminal symbols remain.
  */
-final class SqlGenerator
+use SqlFaker\Contract\Grammar as ContractGrammar;
+use SqlFaker\Contract\RewriteProgram;
+use SqlFaker\Contract\RewriteStep;
+use SqlFaker\Grammar\ContractGrammarProjector;
+use SqlFaker\MySql\Grammar\ContractGrammarHydrator;
+
+final class SupportedGrammarCompiler
 {
-    private const DERIVATION_LIMIT = 5000;
     private const TABLE_VALUE_ARITY_LIMIT = 8;
 
-    private Grammar $grammar;
-    private FakerGenerator $faker;
-    private LexicalValueSource $lexicalValues;
-    private TerminationAnalyzer $terminationAnalyzer;
-    private RandomStringGenerator $rsg;
-
-    private int $targetDepth = PHP_INT_MAX;
-    private int $derivationSteps = 0;
-    private int $identifierOrdinal = 0;
-
-    public function __construct(Grammar $grammar, FakerGenerator $faker, LexicalValueSource $lexicalValues)
+    public function compile(ContractGrammar $snapshot): ContractGrammar
     {
-        $this->grammar = $this->augmentGrammar($grammar);
-        $this->faker = $faker;
-        $this->lexicalValues = $lexicalValues;
-        $this->terminationAnalyzer = new TerminationAnalyzer($this->grammar);
-        $this->rsg = new RandomStringGenerator($faker);
+        return ContractGrammarProjector::project(
+            $this->compileSourceGrammar(ContractGrammarHydrator::hydrate($snapshot)),
+            NonTerminal::class,
+        );
     }
 
-    private function augmentGrammar(Grammar $grammar): Grammar
+    public function rewriteProgram(): RewriteProgram
+    {
+        return new RewriteProgram([
+            new RewriteStep('canonicalize.identifier_entry_points', 'Canonicalize identifier entry points to IDENT_sys.'),
+            new RewriteStep('canonicalize.user', 'Canonicalize user into TEXT_STRING_sys @ TEXT_STRING_sys.'),
+            new RewriteStep('force.alter_event_real_change', 'Require ALTER EVENT to contain a non-empty change clause.'),
+            new RewriteStep('enumerate.commit_spellings', 'Enumerate valid COMMIT spellings explicitly.'),
+            new RewriteStep('enumerate.rollback_spellings', 'Enumerate valid ROLLBACK spellings explicitly.'),
+            new RewriteStep('filter.alter_instance_action', 'Remove unsafe ALTER INSTANCE branches.'),
+            new RewriteStep('filter.bool_pri_all_any_comparison', 'Prevent <=> from preceding ALL or ANY subqueries.'),
+            new RewriteStep('enumerate.start_transaction_options', 'Enumerate valid START TRANSACTION option lists.'),
+            new RewriteStep('split.grant_families', 'Split role grants, object grants, and proxy grants.'),
+            new RewriteStep('split.revoke_families', 'Split role revokes from other revoke families.'),
+            new RewriteStep('canonicalize.clone', 'Canonicalize CLONE to a single safe LOCAL DATA DIRECTORY form.'),
+            new RewriteStep('bound.table_value_constructor_arity', 'Bound table value constructor arity to a finite safe domain.'),
+            new RewriteStep('restrict.sqlstate_literals', 'Restrict SIGNAL and RESIGNAL SQLSTATE literals.'),
+            new RewriteStep('split.alter_database_safe_families', 'Split ALTER DATABASE into explicit safe subfamilies.'),
+            new RewriteStep('restrict.limit_literals', 'Restrict LIMIT literals to a finite safe domain.'),
+            new RewriteStep('restrict.charset_and_collation_domains', 'Restrict charset and collation names to safe representatives.'),
+            new RewriteStep('split.set_system_variable_assignments', 'Split SET into explicit safe system-variable assignments.'),
+            new RewriteStep('collapse.replication_option_lists', 'Collapse replication option lists to safe finite forms.'),
+            new RewriteStep('split.signal_information_items', 'Split SIGNAL information items into finite explicit families.'),
+            new RewriteStep('canonicalize.reset', 'Canonicalize RESET to safe explicit subcommands.'),
+            new RewriteStep('canonicalize.flush', 'Canonicalize FLUSH to a safe finite option domain.'),
+            new RewriteStep('bound.srs_attributes', 'Bound SRS identifiers, definitions, and attribute permutations.'),
+            new RewriteStep('restrict.undo_tablespace_diagnostics_explain', 'Restrict undo tablespace, diagnostics, and explain subfamilies.'),
+            new RewriteStep('restrict.resource_group_cpu_ranges', 'Restrict resource-group CPU ranges to a tiny fixed domain.'),
+            new RewriteStep('expand.alter_user_mfa', 'Expand multi-factor ALTER USER syntax explicitly.'),
+        ]);
+    }
+
+    public function compileSourceGrammar(Grammar $grammar): Grammar
     {
         $ruleMap = $grammar->ruleMap;
 
+        foreach ($this->rewriteProgram()->steps as $step) {
+            $ruleMap = $this->applyRewriteStep($step->id, $ruleMap);
+        }
+
+        return new Grammar($grammar->startSymbol, $ruleMap);
+    }
+
+    /**
+     * @param array<string, ProductionRule> $ruleMap
+     * @return array<string, ProductionRule>
+     */
+    private function applyRewriteStep(string $stepId, array $ruleMap): array
+    {
+        return match ($stepId) {
+            'canonicalize.identifier_entry_points' => $this->canonicalizeIdentifierEntryPoints($ruleMap),
+            'canonicalize.user' => $this->augmentUserRule($ruleMap),
+            'force.alter_event_real_change' => $this->augmentAlterEventRule($ruleMap),
+            'enumerate.commit_spellings' => $this->augmentCommitRule($ruleMap),
+            'enumerate.rollback_spellings' => $this->augmentRollbackRule($ruleMap),
+            'filter.alter_instance_action' => $this->augmentAlterInstanceRule($ruleMap),
+            'filter.bool_pri_all_any_comparison' => $this->augmentBoolPriRule($ruleMap),
+            'enumerate.start_transaction_options' => $this->augmentStartTransactionRule($ruleMap),
+            'split.grant_families' => $this->augmentGrantRule($ruleMap),
+            'split.revoke_families' => $this->augmentRevokeRule($ruleMap),
+            'canonicalize.clone' => $this->augmentCloneRule($ruleMap),
+            'bound.table_value_constructor_arity' => $this->augmentTableValueConstructorRule($ruleMap),
+            'restrict.sqlstate_literals' => $this->augmentSignalRule($ruleMap),
+            'split.alter_database_safe_families' => $this->augmentAlterDatabaseRule($ruleMap),
+            'restrict.limit_literals' => $this->augmentLimitRules($ruleMap),
+            'restrict.charset_and_collation_domains' => $this->augmentCharsetRules($ruleMap),
+            'split.set_system_variable_assignments' => $this->augmentSetRule($ruleMap),
+            'collapse.replication_option_lists' => $this->augmentReplicationRules($ruleMap),
+            'split.signal_information_items' => $this->augmentSignalInformationRules($ruleMap),
+            'canonicalize.reset' => $this->augmentResetRule($ruleMap),
+            'canonicalize.flush' => $this->augmentFlushRule($ruleMap),
+            'bound.srs_attributes' => $this->augmentSrsRules($ruleMap),
+            'restrict.undo_tablespace_diagnostics_explain' => $this->restrictUndoTablespaceDiagnosticsExplain($ruleMap),
+            'restrict.resource_group_cpu_ranges' => $this->augmentResourceGroupRule($ruleMap),
+            'expand.alter_user_mfa' => $this->augmentAlterUserRule($ruleMap),
+            default => throw new LogicException(sprintf('Unknown MySQL rewrite step: %s', $stepId)),
+        };
+    }
+
+    /**
+     * @param array<string, ProductionRule> $ruleMap
+     * @return array<string, ProductionRule>
+     */
+    private function canonicalizeIdentifierEntryPoints(array $ruleMap): array
+    {
         $ruleMap = $this->keepSingleNonTerminalAlternatives($ruleMap, 'ident', ['IDENT_sys']);
         $ruleMap = $this->keepSingleNonTerminalAlternatives($ruleMap, 'label_ident', ['IDENT_sys']);
         $ruleMap = $this->keepSingleNonTerminalAlternatives($ruleMap, 'role_ident', ['IDENT_sys']);
-        $ruleMap = $this->keepSingleNonTerminalAlternatives($ruleMap, 'lvalue_ident', ['IDENT_sys']);
-        $ruleMap = $this->augmentUserRule($ruleMap);
-        $ruleMap = $this->augmentAlterEventRule($ruleMap);
-        $ruleMap = $this->augmentAlterInstanceRule($ruleMap);
-        $ruleMap = $this->augmentCommitRule($ruleMap);
-        $ruleMap = $this->augmentRollbackRule($ruleMap);
-        $ruleMap = $this->augmentBoolPriRule($ruleMap);
-        $ruleMap = $this->augmentStartTransactionRule($ruleMap);
-        $ruleMap = $this->augmentGrantRule($ruleMap);
-        $ruleMap = $this->augmentRevokeRule($ruleMap);
-        $ruleMap = $this->augmentCloneRule($ruleMap);
-        $ruleMap = $this->augmentTableValueConstructorRule($ruleMap);
-        $ruleMap = $this->augmentSignalRule($ruleMap);
-        $ruleMap = $this->augmentLimitRules($ruleMap);
-        $ruleMap = $this->augmentAlterDatabaseRule($ruleMap);
-        $ruleMap = $this->augmentCharsetRules($ruleMap);
-        $ruleMap = $this->augmentSetRule($ruleMap);
-        $ruleMap = $this->augmentReplicationRules($ruleMap);
-        $ruleMap = $this->augmentSignalInformationRules($ruleMap);
-        $ruleMap = $this->augmentResetRule($ruleMap);
-        $ruleMap = $this->augmentFlushRule($ruleMap);
-        $ruleMap = $this->augmentSrsRules($ruleMap);
+
+        return $this->keepSingleNonTerminalAlternatives($ruleMap, 'lvalue_ident', ['IDENT_sys']);
+    }
+
+    /**
+     * @param array<string, ProductionRule> $ruleMap
+     * @return array<string, ProductionRule>
+     */
+    private function restrictUndoTablespaceDiagnosticsExplain(array $ruleMap): array
+    {
         $ruleMap = $this->augmentUndoTablespaceRules($ruleMap);
         $ruleMap = $this->augmentDiagnosticsRule($ruleMap);
-        $ruleMap = $this->augmentExplainRule($ruleMap);
-        $ruleMap = $this->augmentResourceGroupRule($ruleMap);
-        $ruleMap = $this->augmentAlterUserRule($ruleMap);
 
-        return new Grammar($grammar->startSymbol, $ruleMap);
+        return $this->augmentExplainRule($ruleMap);
     }
 
     /**
@@ -1508,167 +1566,5 @@ final class SqlGenerator
         }
 
         return $ruleMap;
-    }
-
-    /**
-     * Generate a syntactically valid SQL string.
-     *
-     * @param string|null $startRule Grammar rule to start from (null for default)
-     * @param int $targetDepth Depth at which generator starts seeking termination (PHP_INT_MAX = unlimited)
-     */
-    public function generate(?string $startRule = null, int $targetDepth = PHP_INT_MAX): string
-    {
-        $this->derivationSteps = 0;
-        $this->identifierOrdinal = 0;
-        $this->targetDepth = max(1, $targetDepth);
-
-        $start = $startRule ?? 'simple_statement_or_begin';
-
-        $terminals = $this->derive($start);
-
-        return $this->render($terminals);
-    }
-
-    public function compiledGrammar(): Grammar
-    {
-        return $this->grammar;
-    }
-
-    /**
-     * Derivation: repeatedly replace non-terminals with production rule right-hand sides
-     * until only terminal symbols remain.
-     *
-     * @return list<Terminal>
-     */
-    private function derive(string $startSymbol): array
-    {
-        /** @var list<Symbol> $form */
-        $form = [new NonTerminal($startSymbol)];
-
-        while (true) {
-            $index = null;
-            foreach ($form as $i => $sym) {
-                if ($sym instanceof NonTerminal) {
-                    $index = $i;
-                    break;
-                }
-            }
-
-            if ($index === null) {
-                break;
-            }
-
-            $this->derivationSteps++;
-            if ($this->derivationSteps > self::DERIVATION_LIMIT) {
-                throw new LogicException('Exceeded derivation limit while generating SQL.');
-            }
-
-            /** @var NonTerminal $nonTerminal */
-            $nonTerminal = $form[$index];
-            $rule = $this->grammar->ruleMap[$nonTerminal->value] ?? throw new LogicException("Unknown grammar rule: {$nonTerminal->value}");
-            $alternatives = $rule->alternatives;
-
-            if ($alternatives === []) {
-                throw new LogicException('Production rule has no alternatives.');
-            }
-
-            if ($this->derivationSteps >= $this->targetDepth) {
-                $selectedIndex = 0;
-                $bestLength = PHP_INT_MAX;
-                foreach ($alternatives as $i => $alt) {
-                    $length = $this->terminationAnalyzer->estimateProductionLength($alt);
-                    if ($length < $bestLength) {
-                        $bestLength = $length;
-                        $selectedIndex = $i;
-                    }
-                }
-            } else {
-                $selectedIndex = $this->faker->numberBetween(0, count($alternatives) - 1);
-            }
-
-            $production = $alternatives[$selectedIndex];
-
-            $form = [
-                ...array_slice($form, 0, $index),
-                ...$production->symbols,
-                ...array_slice($form, $index + 1),
-            ];
-        }
-
-        /** @var list<Terminal> $form */
-        return $form;
-    }
-
-    /**
-     * Render terminals into an SQL string.
-     *
-     * This method handles:
-     * 1. Terminal resolution: converts Terminal symbols to their string representation
-     * 2. Spacing: MySQL's lexer distinguishes some function tokens by requiring
-     *    the '(' to follow immediately (e.g. COUNT(*)).
-     *
-     * @param list<Terminal> $terminals
-     */
-    private function render(array $terminals): string
-    {
-        $tokens = [];
-        foreach ($terminals as $terminal) {
-            $name = $terminal->value;
-
-            $token = match ($name) {
-                'END_OF_INPUT' => null,
-
-                'EQ' => '=',
-                'EQUAL_SYM' => '<=>',
-                'LT' => '<',
-                'GT_SYM' => '>',
-                'LE' => '<=',
-                'GE' => '>=',
-                'NE' => '<>',
-                'SHIFT_LEFT' => '<<',
-                'SHIFT_RIGHT' => '>>',
-                'AND_AND_SYM' => '&&',
-                'OR2_SYM', 'OR_OR_SYM' => '||',
-                'NOT2_SYM' => 'NOT',
-                'SET_VAR' => ':=',
-                'JSON_SEPARATOR_SYM' => '->',
-                'JSON_UNQUOTED_SEPARATOR_SYM' => '->>',
-                'NEG' => '-',
-                'PARAM_MARKER' => '?',
-
-                'IDENT' => $this->nextCanonicalIdentifier(),
-                'IDENT_QUOTED' => '`' . $this->nextCanonicalIdentifier() . '`',
-                'TEXT_STRING' => $this->lexicalValues->stringLiteral(),
-                'NCHAR_STRING' => $this->lexicalValues->nationalStringLiteral(),
-                'DOLLAR_QUOTED_STRING_SYM' => $this->lexicalValues->dollarQuotedString(),
-                'NUM' => $this->lexicalValues->integerLiteral(),
-                'LONG_NUM' => $this->lexicalValues->longIntegerLiteral(),
-                'ULONGLONG_NUM' => $this->lexicalValues->unsignedBigIntLiteral(),
-                'DECIMAL_NUM' => $this->lexicalValues->decimalLiteral(),
-                'FLOAT_NUM' => $this->lexicalValues->floatLiteral(),
-                'HEX_NUM' => $this->lexicalValues->hexLiteral(),
-                'BIN_NUM' => $this->lexicalValues->binaryLiteral(),
-                'LEX_HOSTNAME' => $this->lexicalValues->hostname(),
-                'FILTER_DB_TABLE_PATTERN' => $this->lexicalValues->filterWildcardPattern(),
-                'RESET_MASTER_INDEX' => $this->lexicalValues->resetMasterIndex(),
-
-                'WITH_ROLLUP_SYM' => 'WITH ROLLUP',
-
-                default => str_ends_with($name, '_SYM')
-                    ? substr($name, 0, -4)
-                    : $name,
-            };
-
-            if ($token !== null) {
-                $tokens[] = $token;
-            }
-        }
-
-        return TokenJoiner::join($tokens, [['@', '*'], ['*', '@'], ['*', ':'], [':', '*']]);
-    }
-
-    private function nextCanonicalIdentifier(): string
-    {
-        return $this->rsg->canonicalIdentifier($this->identifierOrdinal++);
     }
 }

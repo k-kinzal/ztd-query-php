@@ -9,16 +9,18 @@ use Spec\Claim\ClaimDefinition;
 use Spec\Claim\EvidenceDefinition;
 use Spec\Policy\OutcomePolicy;
 use Spec\Probe\EngineProbe;
+use Spec\Support\GrammarFingerprint;
 use SqlFaker\Contract\GenerationRequest;
 use SqlFaker\Contract\Grammar;
+use Throwable;
 
 /**
  * Runs claim catalogs directly against the algorithm-phase contracts.
  */
 final class SpecRunner
 {
-    /** @var array<string, DialectContracts> */
-    private array $dialectContracts;
+    /** @var array<string, DialectRuntime> */
+    private array $dialectRuntimes;
 
     /** @var array<string, EngineProbe> */
     private array $probes;
@@ -30,13 +32,26 @@ final class SpecRunner
     private array $grammarCheckers = [];
 
     /**
-     * @param array<string, DialectContracts> $dialectContracts
+     * @var null|array{
+     *     sql: string,
+     *     actual_kind: string,
+     *     accepted: bool,
+     *     phase: string,
+     *     sqlstate: null|string,
+     *     error_code: null|int,
+     *     error_message: null|string
+     * }
+     */
+    private ?array $outcomeObservation = null;
+
+    /**
+     * @param array<string, DialectRuntime> $dialectRuntimes
      * @param array<string, EngineProbe> $probes
      * @param array<string, OutcomePolicy> $policies
      */
-    public function __construct(array $dialectContracts, array $probes = [], array $policies = [])
+    public function __construct(array $dialectRuntimes, array $probes = [], array $policies = [])
     {
-        $this->dialectContracts = $dialectContracts;
+        $this->dialectRuntimes = $dialectRuntimes;
         $this->probes = $probes;
         $this->policies = $policies;
     }
@@ -60,14 +75,14 @@ final class SpecRunner
      */
     private function runClaim(ClaimDefinition $claim): array
     {
-        $contracts = $this->dialectContracts[$claim->dialect] ?? null;
-        if ($contracts === null) {
-            throw new InvalidArgumentException(sprintf('No contracts registered for dialect %s.', $claim->dialect));
+        $runtime = $this->dialectRuntimes[$claim->dialect] ?? null;
+        if ($runtime === null) {
+            throw new InvalidArgumentException(sprintf('No runtimes registered for dialect %s.', $claim->dialect));
         }
 
         $cases = [];
         foreach ($claim->cases as $index => $parameters) {
-            $cases[] = $this->runClaimCase($claim, $contracts, $parameters, $index + 1);
+            $cases[] = $this->runClaimCase($claim, $runtime, $parameters, $index + 1);
         }
 
         $caseSummary = $this->summarizeEntries($cases);
@@ -97,14 +112,15 @@ final class SpecRunner
      */
     private function runClaimCase(
         ClaimDefinition $claim,
-        DialectContracts $contracts,
+        DialectRuntime $runtime,
         array $parameters,
         int $caseNumber,
     ): array {
+        $this->outcomeObservation = null;
         $checks = [];
         $generation = null;
         foreach ($claim->evidence as $index => $evidence) {
-            [$passed, $message, $facts, $generation] = $this->evaluateEvidence($claim, $contracts, $parameters, $evidence, $generation);
+            [$passed, $message, $facts, $generation] = $this->evaluateEvidence($claim, $runtime, $parameters, $evidence, $generation);
             $checks[] = [
                 'check_number' => $index + 1,
                 'kind' => $evidence->kind,
@@ -132,43 +148,86 @@ final class SpecRunner
             $caseResult['generation'] = $generation;
         }
 
+        $this->outcomeObservation = null;
+
         return $caseResult;
     }
 
     /**
      * @param array<string, scalar> $parameters
-     * @param null|array{request: array<string, scalar|null>, sql: string} $generation
-     * @return array{bool, string, array<string, mixed>, null|array{request: array<string, scalar|null>, sql: string}}
+     * @param null|array{
+     *     request: array<string, scalar|null>,
+     *     succeeded: bool,
+     *     sql: null|string,
+     *     exception_class: null|string,
+     *     exception_message: null|string
+     * } $generation
+     * @return array{
+     *     bool,
+     *     string,
+     *     array<string, mixed>,
+     *     null|array{
+     *         request: array<string, scalar|null>,
+     *         succeeded: bool,
+     *         sql: null|string,
+     *         exception_class: null|string,
+     *         exception_message: null|string
+     *     }
+     * }
      */
     private function evaluateEvidence(
         ClaimDefinition $claim,
-        DialectContracts $contracts,
+        DialectRuntime $runtime,
         array $parameters,
         EvidenceDefinition $evidence,
         ?array $generation,
     ): array {
         return match ($evidence->kind) {
-            'grammar.no_undefined_references' => $this->checkUndefinedReferences($claim->dialect, $contracts, $generation),
-            'grammar.no_empty_rules' => $this->checkNoEmptyRules($claim->dialect, $contracts, $generation),
-            'grammar.entries.present' => $this->checkEntriesPresent($claim->dialect, $contracts, $evidence, $generation),
-            'grammar.entries.terminate' => $this->checkEntriesTerminate($claim->dialect, $contracts, $evidence, $generation),
-            'grammar.rules.reachable' => $this->checkRulesReachable($claim->dialect, $contracts, $evidence, $generation),
-            'grammar.rule.contains_sequence' => $this->checkRuleSequence($claim->dialect, $contracts, $evidence, true, $generation),
-            'grammar.rule.not_contains_sequence' => $this->checkRuleSequence($claim->dialect, $contracts, $evidence, false, $generation),
-            'generation.generates' => $this->checkGenerationGenerates($claim, $contracts, $parameters, $generation),
-            'generation.sql_matches' => $this->checkGenerationSqlMatches($claim, $contracts, $parameters, $evidence, $generation),
-            'outcome.kind_in' => $this->checkOutcomeKind($claim, $contracts, $parameters, $evidence, $generation),
+            'grammar.no_undefined_references' => $this->checkUndefinedReferences($claim, $runtime, $generation),
+            'grammar.no_empty_rules' => $this->checkNoEmptyRules($claim, $runtime, $generation),
+            'grammar.entries.present' => $this->checkEntriesPresent($claim, $runtime, $evidence, $generation),
+            'grammar.entries.terminate' => $this->checkEntriesTerminate($claim, $runtime, $evidence, $generation),
+            'grammar.rules.reachable' => $this->checkRulesReachable($claim, $runtime, $evidence, $generation),
+            'grammar.fingerprint_matches' => $this->checkGrammarFingerprint($claim, $runtime, $evidence, $generation),
+            'grammar.rewrite_steps_match' => $this->checkRewriteStepsMatch($claim, $runtime, $evidence, $generation),
+            'grammar.termination_lengths_match' => $this->checkTerminationLengthsMatch($claim, $runtime, $evidence, $generation),
+            'grammar.rule.contains_sequence' => $this->checkRuleSequence($claim, $runtime, $evidence, true, $generation),
+            'grammar.rule.not_contains_sequence' => $this->checkRuleSequence($claim, $runtime, $evidence, false, $generation),
+            'generation.generates' => $this->checkGenerationGenerates($claim, $runtime, $parameters, $generation),
+            'generation.deterministic' => $this->checkGenerationDeterministic($claim, $runtime, $parameters, $generation),
+            'generation.fails' => $this->checkGenerationFails($claim, $runtime, $parameters, $evidence, $generation),
+            'generation.terminals_equal' => $this->checkGenerationTerminalsEqual($claim, $runtime, $parameters, $evidence, $generation),
+            'generation.sql_matches' => $this->checkGenerationSqlMatches($claim, $runtime, $parameters, $evidence, $generation),
+            'outcome.kind_in' => $this->checkOutcomeKind($claim, $runtime, $parameters, $evidence, $generation),
+            'outcome.phase_is' => $this->checkOutcomePhase($claim, $runtime, $parameters, $evidence, $generation),
             default => throw new InvalidArgumentException(sprintf('Unsupported evidence kind: %s', $evidence->kind)),
         };
     }
 
     /**
-     * @param null|array{request: array<string, scalar|null>, sql: string} $generation
-     * @return array{bool, string, array<string, mixed>, null|array{request: array<string, scalar|null>, sql: string}}
+     * @param null|array{
+     *     request: array<string, scalar|null>,
+     *     succeeded: bool,
+     *     sql: null|string,
+     *     exception_class: null|string,
+     *     exception_message: null|string
+     * } $generation
+     * @return array{
+     *     bool,
+     *     string,
+     *     array<string, mixed>,
+     *     null|array{
+     *         request: array<string, scalar|null>,
+     *         succeeded: bool,
+     *         sql: null|string,
+     *         exception_class: null|string,
+     *         exception_message: null|string
+     *     }
+     * }
      */
-    private function checkUndefinedReferences(string $dialect, DialectContracts $contracts, ?array $generation): array
+    private function checkUndefinedReferences(ClaimDefinition $claim, DialectRuntime $runtime, ?array $generation): array
     {
-        $undefinedReferences = $this->grammarChecker($dialect, $contracts)->undefinedReferences();
+        $undefinedReferences = $this->grammarChecker($claim, $runtime)->undefinedReferences();
         $passed = $undefinedReferences === [];
 
         return [
@@ -183,12 +242,29 @@ final class SpecRunner
     }
 
     /**
-     * @param null|array{request: array<string, scalar|null>, sql: string} $generation
-     * @return array{bool, string, array<string, mixed>, null|array{request: array<string, scalar|null>, sql: string}}
+     * @param null|array{
+     *     request: array<string, scalar|null>,
+     *     succeeded: bool,
+     *     sql: null|string,
+     *     exception_class: null|string,
+     *     exception_message: null|string
+     * } $generation
+     * @return array{
+     *     bool,
+     *     string,
+     *     array<string, mixed>,
+     *     null|array{
+     *         request: array<string, scalar|null>,
+     *         succeeded: bool,
+     *         sql: null|string,
+     *         exception_class: null|string,
+     *         exception_message: null|string
+     *     }
+     * }
      */
-    private function checkNoEmptyRules(string $dialect, DialectContracts $contracts, ?array $generation): array
+    private function checkNoEmptyRules(ClaimDefinition $claim, DialectRuntime $runtime, ?array $generation): array
     {
-        $rules = $this->grammarChecker($dialect, $contracts)->rulesWithoutAlternatives();
+        $rules = $this->grammarChecker($claim, $runtime)->rulesWithoutAlternatives();
         $passed = $rules === [];
 
         return [
@@ -203,17 +279,34 @@ final class SpecRunner
     }
 
     /**
-     * @param null|array{request: array<string, scalar|null>, sql: string} $generation
-     * @return array{bool, string, array<string, mixed>, null|array{request: array<string, scalar|null>, sql: string}}
+     * @param null|array{
+     *     request: array<string, scalar|null>,
+     *     succeeded: bool,
+     *     sql: null|string,
+     *     exception_class: null|string,
+     *     exception_message: null|string
+     * } $generation
+     * @return array{
+     *     bool,
+     *     string,
+     *     array<string, mixed>,
+     *     null|array{
+     *         request: array<string, scalar|null>,
+     *         succeeded: bool,
+     *         sql: null|string,
+     *         exception_class: null|string,
+     *         exception_message: null|string
+     *     }
+     * }
      */
     private function checkEntriesPresent(
-        string $dialect,
-        DialectContracts $contracts,
+        ClaimDefinition $claim,
+        DialectRuntime $contracts,
         EvidenceDefinition $evidence,
         ?array $generation,
     ): array {
         $entryRules = $this->requireStringListOption($evidence, 'entries');
-        $missing = $this->grammarChecker($dialect, $contracts)->missingEntries($entryRules);
+        $missing = $this->grammarChecker($claim, $contracts)->missingEntries($entryRules);
         $passed = $missing === [];
 
         return [
@@ -229,17 +322,34 @@ final class SpecRunner
     }
 
     /**
-     * @param null|array{request: array<string, scalar|null>, sql: string} $generation
-     * @return array{bool, string, array<string, mixed>, null|array{request: array<string, scalar|null>, sql: string}}
+     * @param null|array{
+     *     request: array<string, scalar|null>,
+     *     succeeded: bool,
+     *     sql: null|string,
+     *     exception_class: null|string,
+     *     exception_message: null|string
+     * } $generation
+     * @return array{
+     *     bool,
+     *     string,
+     *     array<string, mixed>,
+     *     null|array{
+     *         request: array<string, scalar|null>,
+     *         succeeded: bool,
+     *         sql: null|string,
+     *         exception_class: null|string,
+     *         exception_message: null|string
+     *     }
+     * }
      */
     private function checkEntriesTerminate(
-        string $dialect,
-        DialectContracts $contracts,
+        ClaimDefinition $claim,
+        DialectRuntime $contracts,
         EvidenceDefinition $evidence,
         ?array $generation,
     ): array {
         $entryRules = $this->requireStringListOption($evidence, 'entries');
-        $nonTerminating = $this->grammarChecker($dialect, $contracts)->nonTerminatingReachableRules($entryRules);
+        $nonTerminating = $this->grammarChecker($claim, $contracts)->nonTerminatingReachableRules($entryRules);
         $passed = $nonTerminating === [];
 
         return [
@@ -255,18 +365,35 @@ final class SpecRunner
     }
 
     /**
-     * @param null|array{request: array<string, scalar|null>, sql: string} $generation
-     * @return array{bool, string, array<string, mixed>, null|array{request: array<string, scalar|null>, sql: string}}
+     * @param null|array{
+     *     request: array<string, scalar|null>,
+     *     succeeded: bool,
+     *     sql: null|string,
+     *     exception_class: null|string,
+     *     exception_message: null|string
+     * } $generation
+     * @return array{
+     *     bool,
+     *     string,
+     *     array<string, mixed>,
+     *     null|array{
+     *         request: array<string, scalar|null>,
+     *         succeeded: bool,
+     *         sql: null|string,
+     *         exception_class: null|string,
+     *         exception_message: null|string
+     *     }
+     * }
      */
     private function checkRulesReachable(
-        string $dialect,
-        DialectContracts $contracts,
+        ClaimDefinition $claim,
+        DialectRuntime $contracts,
         EvidenceDefinition $evidence,
         ?array $generation,
     ): array {
         $entryRules = $this->requireStringListOption($evidence, 'entries');
         $rules = $this->requireStringListOption($evidence, 'rules');
-        $unreachable = $this->grammarChecker($dialect, $contracts)->unreachableRules($entryRules, $rules);
+        $unreachable = $this->grammarChecker($claim, $contracts)->unreachableRules($entryRules, $rules);
         $passed = $unreachable === [];
 
         return [
@@ -283,12 +410,29 @@ final class SpecRunner
     }
 
     /**
-     * @param null|array{request: array<string, scalar|null>, sql: string} $generation
-     * @return array{bool, string, array<string, mixed>, null|array{request: array<string, scalar|null>, sql: string}}
+     * @param null|array{
+     *     request: array<string, scalar|null>,
+     *     succeeded: bool,
+     *     sql: null|string,
+     *     exception_class: null|string,
+     *     exception_message: null|string
+     * } $generation
+     * @return array{
+     *     bool,
+     *     string,
+     *     array<string, mixed>,
+     *     null|array{
+     *         request: array<string, scalar|null>,
+     *         succeeded: bool,
+     *         sql: null|string,
+     *         exception_class: null|string,
+     *         exception_message: null|string
+     *     }
+     * }
      */
     private function checkRuleSequence(
-        string $dialect,
-        DialectContracts $contracts,
+        ClaimDefinition $claim,
+        DialectRuntime $contracts,
         EvidenceDefinition $evidence,
         bool $shouldExist,
         ?array $generation,
@@ -311,9 +455,10 @@ final class SpecRunner
             $expected[] = $symbol;
         }
 
-        $ruleSnapshot = $this->supportedGrammar($dialect, $contracts)->rule($rule);
+        $ruleSnapshot = $this->grammar($claim, $contracts)->rule($rule);
         $baseFacts = [
             'rule' => $rule,
+            'subject_kind' => $claim->subjectKind,
             'expectation' => $shouldExist ? 'sequence must exist' : 'sequence must be excluded',
             'expected_sequence' => $expected,
         ];
@@ -358,24 +503,101 @@ final class SpecRunner
     }
 
     /**
-     * @param array<string, scalar> $parameters
-     * @param null|array{request: array<string, scalar|null>, sql: string} $generation
-     * @return array{bool, string, array<string, mixed>, array{request: array<string, scalar|null>, sql: string}}
+     * @param null|array{
+     *     request: array<string, scalar|null>,
+     *     succeeded: bool,
+     *     sql: null|string,
+     *     exception_class: null|string,
+     *     exception_message: null|string
+     * } $generation
+     * @return array{
+     *     bool,
+     *     string,
+     *     array<string, mixed>,
+     *     null|array{
+     *         request: array<string, scalar|null>,
+     *         succeeded: bool,
+     *         sql: null|string,
+     *         exception_class: null|string,
+     *         exception_message: null|string
+     *     }
+     * }
      */
-    private function checkGenerationGenerates(
+    private function checkRewriteStepsMatch(
         ClaimDefinition $claim,
-        DialectContracts $contracts,
-        array $parameters,
+        DialectRuntime $runtime,
+        EvidenceDefinition $evidence,
         ?array $generation,
     ): array {
-        $generation = $this->requireGeneration($claim, $contracts, $parameters, $generation);
+        if ($claim->subjectKind !== 'grammar') {
+            throw new InvalidArgumentException(sprintf('Claim %s requires a grammar subject for grammar.rewrite_steps_match.', $claim->id));
+        }
+
+        $expected = $this->requireStringListOption($evidence, 'step_ids');
+        $actual = $runtime->rewriteProgram()->stepIds();
+        $matched = $actual === $expected;
 
         return [
-            $generation['sql'] !== '',
-            $generation['sql'] !== '' ? 'generation completed' : 'generation returned an empty string',
+            $matched,
+            $matched ? 'rewrite step order matches' : 'rewrite step order does not match',
             [
-                'request' => $generation['request'],
-                'sql_length' => strlen($generation['sql']),
+                'expected_step_ids' => $expected,
+                'actual_step_ids' => $actual,
+                'matched' => $matched,
+            ],
+            $generation,
+        ];
+    }
+
+    /**
+     * @param null|array{
+     *     request: array<string, scalar|null>,
+     *     succeeded: bool,
+     *     sql: null|string,
+     *     exception_class: null|string,
+     *     exception_message: null|string
+     * } $generation
+     * @return array{
+     *     bool,
+     *     string,
+     *     array<string, mixed>,
+     *     null|array{
+     *         request: array<string, scalar|null>,
+     *         succeeded: bool,
+     *         sql: null|string,
+     *         exception_class: null|string,
+     *         exception_message: null|string
+     *     }
+     * }
+     */
+    private function checkTerminationLengthsMatch(
+        ClaimDefinition $claim,
+        DialectRuntime $runtime,
+        EvidenceDefinition $evidence,
+        ?array $generation,
+    ): array {
+        if ($claim->subjectKind !== 'grammar') {
+            throw new InvalidArgumentException(sprintf('Claim %s requires a grammar subject for grammar.termination_lengths_match.', $claim->id));
+        }
+
+        $expected = $this->requireLengthMapOption($evidence, 'lengths');
+        $actual = [];
+        $matched = true;
+        $lengths = $runtime->terminationLengths();
+        foreach ($expected as $rule => $expectedLength) {
+            $actual[$rule] = $lengths->lengthOf($rule);
+            if ($actual[$rule] !== $expectedLength) {
+                $matched = false;
+            }
+        }
+
+        return [
+            $matched,
+            $matched ? 'termination lengths match' : 'termination lengths do not match',
+            [
+                'expected_lengths' => $expected,
+                'actual_lengths' => $actual,
+                'matched' => $matched,
             ],
             $generation,
         ];
@@ -383,17 +605,289 @@ final class SpecRunner
 
     /**
      * @param array<string, scalar> $parameters
-     * @param null|array{request: array<string, scalar|null>, sql: string} $generation
-     * @return array{bool, string, array<string, mixed>, array{request: array<string, scalar|null>, sql: string}}
+     * @param null|array{
+     *     request: array<string, scalar|null>,
+     *     succeeded: bool,
+     *     sql: null|string,
+     *     exception_class: null|string,
+     *     exception_message: null|string
+     * } $generation
+     * @return array{
+     *     bool,
+     *     string,
+     *     array<string, mixed>,
+     *     array{
+     *         request: array<string, scalar|null>,
+     *         succeeded: bool,
+     *         sql: null|string,
+     *         exception_class: null|string,
+     *         exception_message: null|string
+     *     }
+     * }
      */
-    private function checkGenerationSqlMatches(
+    private function checkGenerationGenerates(
         ClaimDefinition $claim,
-        DialectContracts $contracts,
+        DialectRuntime $contracts,
+        array $parameters,
+        ?array $generation,
+    ): array {
+        $generation = $this->generationAttempt($claim, $contracts, $parameters, $generation);
+
+        return [
+            $generation['succeeded'] && $generation['sql'] !== '',
+            $generation['succeeded'] && $generation['sql'] !== ''
+                ? 'generation completed'
+                : ($generation['succeeded'] ? 'generation returned an empty string' : 'generation failed'),
+            [
+                'request' => $generation['request'],
+                'succeeded' => $generation['succeeded'],
+                'sql_length' => strlen((string) $generation['sql']),
+                'exception_class' => $generation['exception_class'],
+                'exception_message' => $generation['exception_message'],
+            ],
+            $generation,
+        ];
+    }
+
+    /**
+     * @param array<string, scalar> $parameters
+     * @param null|array{
+     *     request: array<string, scalar|null>,
+     *     succeeded: bool,
+     *     sql: null|string,
+     *     exception_class: null|string,
+     *     exception_message: null|string
+     * } $generation
+     * @return array{
+     *     bool,
+     *     string,
+     *     array<string, mixed>,
+     *     null|array{
+     *         request: array<string, scalar|null>,
+     *         succeeded: bool,
+     *         sql: null|string,
+     *         exception_class: null|string,
+     *         exception_message: null|string
+     *     }
+     * }
+     */
+    private function checkGenerationTerminalsEqual(
+        ClaimDefinition $claim,
+        DialectRuntime $runtime,
         array $parameters,
         EvidenceDefinition $evidence,
         ?array $generation,
     ): array {
-        $generation = $this->requireGeneration($claim, $contracts, $parameters, $generation);
+        if ($claim->subjectKind !== 'generation') {
+            throw new InvalidArgumentException(sprintf('Claim %s requires a generation subject.', $claim->id));
+        }
+
+        $expected = $this->requireStringListOption($evidence, 'terminals');
+        $request = $this->generationRequest($claim, $parameters);
+        $requestFacts = [
+            'start_rule' => $request->startRule,
+            'seed' => $request->seed,
+            'max_depth' => $request->maxDepth,
+        ];
+
+        try {
+            $terminals = $runtime->derive($request)->terminals;
+        } catch (Throwable $e) {
+            return [
+                false,
+                'terminal derivation failed before comparison',
+                [
+                    'request' => $requestFacts,
+                    'expected_terminals' => $expected,
+                    'exception_class' => $e::class,
+                    'exception_message' => $e->getMessage(),
+                ],
+                $generation,
+            ];
+        }
+
+        $matched = $terminals === $expected;
+
+        return [
+            $matched,
+            $matched ? 'derived terminals match the expected sequence' : 'derived terminals do not match the expected sequence',
+            [
+                'request' => $requestFacts,
+                'expected_terminals' => $expected,
+                'actual_terminals' => $terminals,
+                'matched' => $matched,
+            ],
+            $generation,
+        ];
+    }
+
+    /**
+     * @param array<string, scalar> $parameters
+     * @param null|array{
+     *     request: array<string, scalar|null>,
+     *     succeeded: bool,
+     *     sql: null|string,
+     *     exception_class: null|string,
+     *     exception_message: null|string
+     * } $generation
+     * @return array{
+     *     bool,
+     *     string,
+     *     array<string, mixed>,
+     *     array{
+     *         request: array<string, scalar|null>,
+     *         succeeded: bool,
+     *         sql: null|string,
+     *         exception_class: null|string,
+     *         exception_message: null|string
+     *     }
+     * }
+     */
+    private function checkGenerationDeterministic(
+        ClaimDefinition $claim,
+        DialectRuntime $contracts,
+        array $parameters,
+        ?array $generation,
+    ): array {
+        $generation = $this->generationAttempt($claim, $contracts, $parameters, $generation);
+        if (!$generation['succeeded'] || !is_string($generation['sql'])) {
+            return [
+                false,
+                'generation failed before determinism could be checked',
+                [
+                    'request' => $generation['request'],
+                    'succeeded' => false,
+                    'exception_class' => $generation['exception_class'],
+                    'exception_message' => $generation['exception_message'],
+                ],
+                $generation,
+            ];
+        }
+
+        $request = $this->generationRequest($claim, $parameters);
+        try {
+            $secondSql = $contracts->generate($request);
+            $matched = $generation['sql'] === $secondSql;
+        } catch (Throwable $e) {
+            return [
+                false,
+                'second generation failed during determinism check',
+                [
+                    'request' => $generation['request'],
+                    'first_sql' => $generation['sql'],
+                    'second_generation_exception_class' => $e::class,
+                    'second_generation_exception_message' => $e->getMessage(),
+                ],
+                $generation,
+            ];
+        }
+
+        return [
+            $matched,
+            $matched ? 'repeated generation is deterministic' : 'repeated generation is not deterministic',
+            [
+                'request' => $generation['request'],
+                'first_sql' => $generation['sql'],
+                'second_sql' => $secondSql,
+                'matched' => $matched,
+            ],
+            $generation,
+        ];
+    }
+
+    /**
+     * @param array<string, scalar> $parameters
+     * @param null|array{
+     *     request: array<string, scalar|null>,
+     *     succeeded: bool,
+     *     sql: null|string,
+     *     exception_class: null|string,
+     *     exception_message: null|string
+     * } $generation
+     * @return array{
+     *     bool,
+     *     string,
+     *     array<string, mixed>,
+     *     array{
+     *         request: array<string, scalar|null>,
+     *         succeeded: bool,
+     *         sql: null|string,
+     *         exception_class: null|string,
+     *         exception_message: null|string
+     *     }
+     * }
+     */
+    private function checkGenerationFails(
+        ClaimDefinition $claim,
+        DialectRuntime $contracts,
+        array $parameters,
+        EvidenceDefinition $evidence,
+        ?array $generation,
+    ): array {
+        $generation = $this->generationAttempt($claim, $contracts, $parameters, $generation);
+        $pattern = $this->requireFailurePattern($parameters, $evidence);
+        $exceptionMessage = $generation['exception_message'] ?? '';
+        $matched = !$generation['succeeded'] && preg_match($pattern, $exceptionMessage) === 1;
+
+        return [
+            $matched,
+            $matched ? 'generation failed as expected' : 'generation did not fail with the expected message',
+            [
+                'request' => $generation['request'],
+                'succeeded' => $generation['succeeded'],
+                'pattern' => $pattern,
+                'exception_class' => $generation['exception_class'],
+                'exception_message' => $generation['exception_message'],
+                'matched' => $matched,
+            ],
+            $generation,
+        ];
+    }
+
+    /**
+     * @param array<string, scalar> $parameters
+     * @param null|array{
+     *     request: array<string, scalar|null>,
+     *     succeeded: bool,
+     *     sql: null|string,
+     *     exception_class: null|string,
+     *     exception_message: null|string
+     * } $generation
+     * @return array{
+     *     bool,
+     *     string,
+     *     array<string, mixed>,
+     *     array{
+     *         request: array<string, scalar|null>,
+     *         succeeded: bool,
+     *         sql: null|string,
+     *         exception_class: null|string,
+     *         exception_message: null|string
+     *     }
+     * }
+     */
+    private function checkGenerationSqlMatches(
+        ClaimDefinition $claim,
+        DialectRuntime $contracts,
+        array $parameters,
+        EvidenceDefinition $evidence,
+        ?array $generation,
+    ): array {
+        $generation = $this->generationAttempt($claim, $contracts, $parameters, $generation);
+        if (!$generation['succeeded'] || !is_string($generation['sql'])) {
+            return [
+                false,
+                'generation failed before SQL pattern matching',
+                [
+                    'request' => $generation['request'],
+                    'succeeded' => false,
+                    'exception_class' => $generation['exception_class'],
+                    'exception_message' => $generation['exception_message'],
+                ],
+                $generation,
+            ];
+        }
+
         $pattern = $this->requirePattern($parameters, $evidence);
         $matched = preg_match($pattern, $generation['sql']) === 1;
 
@@ -411,12 +905,29 @@ final class SpecRunner
 
     /**
      * @param array<string, scalar> $parameters
-     * @param null|array{request: array<string, scalar|null>, sql: string} $generation
-     * @return array{bool, string, array<string, mixed>, array{request: array<string, scalar|null>, sql: string}}
+     * @param null|array{
+     *     request: array<string, scalar|null>,
+     *     succeeded: bool,
+     *     sql: null|string,
+     *     exception_class: null|string,
+     *     exception_message: null|string
+     * } $generation
+     * @return array{
+     *     bool,
+     *     string,
+     *     array<string, mixed>,
+     *     array{
+     *         request: array<string, scalar|null>,
+     *         succeeded: bool,
+     *         sql: null|string,
+     *         exception_class: null|string,
+     *         exception_message: null|string
+     *     }
+     * }
      */
     private function checkOutcomeKind(
         ClaimDefinition $claim,
-        DialectContracts $contracts,
+        DialectRuntime $contracts,
         array $parameters,
         EvidenceDefinition $evidence,
         ?array $generation,
@@ -446,9 +957,24 @@ final class SpecRunner
             throw new InvalidArgumentException(sprintf('No outcome policy registered for dialect %s.', $claim->dialect));
         }
 
-        $generation = $this->requireGeneration($claim, $contracts, $parameters, $generation);
-        $probeResult = $probe->observe($generation['sql']);
-        $kind = $policy->classify($probeResult)->value;
+        $generation = $this->generationAttempt($claim, $contracts, $parameters, $generation);
+        if (!$generation['succeeded'] || !is_string($generation['sql'])) {
+            return [
+                false,
+                'generation failed before probing the engine',
+                [
+                    'request' => $generation['request'],
+                    'allowed_kinds' => $normalizedAllowedKinds,
+                    'succeeded' => false,
+                    'exception_class' => $generation['exception_class'],
+                    'exception_message' => $generation['exception_message'],
+                ],
+                $generation,
+            ];
+        }
+
+        $observation = $this->observeOutcome($claim, $generation, $probe, $policy);
+        $kind = $observation['actual_kind'];
         $passed = isset($allowed[$kind]);
 
         return [
@@ -459,12 +985,12 @@ final class SpecRunner
             [
                 'request' => $generation['request'],
                 'allowed_kinds' => $normalizedAllowedKinds,
-                'actual_kind' => $kind,
-                'accepted' => $probeResult->accepted,
-                'phase' => $probeResult->phase->value,
-                'sqlstate' => $probeResult->sqlState,
-                'error_code' => $probeResult->errorCode,
-                'error_message' => $probeResult->message,
+                'actual_kind' => $observation['actual_kind'],
+                'accepted' => $observation['accepted'],
+                'phase' => $observation['phase'],
+                'sqlstate' => $observation['sqlstate'],
+                'error_code' => $observation['error_code'],
+                'error_message' => $observation['error_message'],
             ],
             $generation,
         ];
@@ -472,12 +998,144 @@ final class SpecRunner
 
     /**
      * @param array<string, scalar> $parameters
-     * @param null|array{request: array<string, scalar|null>, sql: string} $generation
-     * @return array{request: array<string, scalar|null>, sql: string}
+     * @param null|array{
+     *     request: array<string, scalar|null>,
+     *     succeeded: bool,
+     *     sql: null|string,
+     *     exception_class: null|string,
+     *     exception_message: null|string
+     * } $generation
+     * @return array{
+     *     bool,
+     *     string,
+     *     array<string, mixed>,
+     *     array{
+     *         request: array<string, scalar|null>,
+     *         succeeded: bool,
+     *         sql: null|string,
+     *         exception_class: null|string,
+     *         exception_message: null|string
+     *     }
+     * }
      */
-    private function requireGeneration(
+    private function checkOutcomePhase(
         ClaimDefinition $claim,
-        DialectContracts $contracts,
+        DialectRuntime $contracts,
+        array $parameters,
+        EvidenceDefinition $evidence,
+        ?array $generation,
+    ): array {
+        $expectedPhase = $this->requirePhaseOption($evidence);
+
+        $probe = $this->probes[$claim->dialect] ?? null;
+        if ($probe === null) {
+            throw new InvalidArgumentException(sprintf('No engine probe registered for dialect %s.', $claim->dialect));
+        }
+
+        $policy = $this->policies[$claim->dialect] ?? null;
+        if ($policy === null) {
+            throw new InvalidArgumentException(sprintf('No outcome policy registered for dialect %s.', $claim->dialect));
+        }
+
+        $generation = $this->generationAttempt($claim, $contracts, $parameters, $generation);
+        if (!$generation['succeeded'] || !is_string($generation['sql'])) {
+            return [
+                false,
+                'generation failed before probing the engine',
+                [
+                    'request' => $generation['request'],
+                    'expected_phase' => $expectedPhase,
+                    'succeeded' => false,
+                    'exception_class' => $generation['exception_class'],
+                    'exception_message' => $generation['exception_message'],
+                ],
+                $generation,
+            ];
+        }
+
+        $observation = $this->observeOutcome($claim, $generation, $probe, $policy);
+        $passed = $observation['phase'] === $expectedPhase;
+
+        return [
+            $passed,
+            $passed
+                ? sprintf('observed phase %s matches', $expectedPhase)
+                : sprintf('observed phase %s does not match expected %s', $observation['phase'], $expectedPhase),
+            [
+                'request' => $generation['request'],
+                'expected_phase' => $expectedPhase,
+                'actual_phase' => $observation['phase'],
+                'actual_kind' => $observation['actual_kind'],
+                'accepted' => $observation['accepted'],
+                'sqlstate' => $observation['sqlstate'],
+                'error_code' => $observation['error_code'],
+                'error_message' => $observation['error_message'],
+            ],
+            $generation,
+        ];
+    }
+
+    /**
+     * @param array{
+     *     request: array<string, scalar|null>,
+     *     succeeded: bool,
+     *     sql: string,
+     *     exception_class: null|string,
+     *     exception_message: null|string
+     * } $generation
+     * @return array{
+     *     sql: string,
+     *     actual_kind: string,
+     *     accepted: bool,
+     *     phase: string,
+     *     sqlstate: null|string,
+     *     error_code: null|int,
+     *     error_message: null|string
+     * }
+     */
+    private function observeOutcome(
+        ClaimDefinition $claim,
+        array $generation,
+        EngineProbe $probe,
+        OutcomePolicy $policy,
+    ): array {
+        if ($this->outcomeObservation !== null && $this->outcomeObservation['sql'] === $generation['sql']) {
+            return $this->outcomeObservation;
+        }
+
+        $probeResult = $probe->observe($generation['sql']);
+
+        return $this->outcomeObservation = [
+            'sql' => $generation['sql'],
+            'actual_kind' => $policy->classify($probeResult)->value,
+            'accepted' => $probeResult->accepted,
+            'phase' => $probeResult->phase->value,
+            'sqlstate' => $probeResult->sqlState,
+            'error_code' => $probeResult->errorCode,
+            'error_message' => $probeResult->message,
+        ];
+    }
+
+    /**
+     * @param array<string, scalar> $parameters
+     * @param null|array{
+     *     request: array<string, scalar|null>,
+     *     succeeded: bool,
+     *     sql: null|string,
+     *     exception_class: null|string,
+     *     exception_message: null|string
+     * } $generation
+     * @return array{
+     *     request: array<string, scalar|null>,
+     *     succeeded: bool,
+     *     sql: null|string,
+     *     exception_class: null|string,
+     *     exception_message: null|string
+     * }
+     */
+    private function generationAttempt(
+        ClaimDefinition $claim,
+        DialectRuntime $contracts,
         array $parameters,
         ?array $generation,
     ): array {
@@ -490,15 +1148,29 @@ final class SpecRunner
         }
 
         $request = $this->generationRequest($claim, $parameters);
-
-        return [
-            'request' => [
-                'start_rule' => $request->startRule,
-                'seed' => $request->seed,
-                'max_depth' => $request->maxDepth,
-            ],
-            'sql' => $contracts->statementGenerator->generate($request),
+        $requestFacts = [
+            'start_rule' => $request->startRule,
+            'seed' => $request->seed,
+            'max_depth' => $request->maxDepth,
         ];
+
+        try {
+            return [
+                'request' => $requestFacts,
+                'succeeded' => true,
+                'sql' => $contracts->generate($request),
+                'exception_class' => null,
+                'exception_message' => null,
+            ];
+        } catch (Throwable $e) {
+            return [
+                'request' => $requestFacts,
+                'succeeded' => false,
+                'sql' => null,
+                'exception_class' => $e::class,
+                'exception_message' => $e->getMessage(),
+            ];
+        }
     }
 
     /**
@@ -538,6 +1210,32 @@ final class SpecRunner
 
         if (@preg_match($pattern, '') === false) {
             throw new InvalidArgumentException(sprintf('generation.sql_matches received an invalid pattern: %s', $pattern));
+        }
+
+        return $pattern;
+    }
+
+    /**
+     * @param array<string, scalar> $parameters
+     */
+    private function requireFailurePattern(array $parameters, EvidenceDefinition $evidence): string
+    {
+        $pattern = $evidence->options['pattern'] ?? null;
+        if ($pattern === null) {
+            $parameterName = $evidence->options['parameter'] ?? null;
+            if (!is_string($parameterName) || $parameterName === '') {
+                throw new InvalidArgumentException('generation.fails requires a pattern or parameter option.');
+            }
+
+            $pattern = $parameters[$parameterName] ?? null;
+        }
+
+        if (!is_string($pattern) || $pattern === '') {
+            throw new InvalidArgumentException('generation.fails requires a non-empty pattern.');
+        }
+
+        if (@preg_match($pattern, '') === false) {
+            throw new InvalidArgumentException(sprintf('generation.fails received an invalid pattern: %s', $pattern));
         }
 
         return $pattern;
@@ -594,16 +1292,22 @@ final class SpecRunner
         return $value;
     }
 
-    private function grammarChecker(string $dialect, DialectContracts $contracts): GrammarContractChecker
+    private function grammarChecker(ClaimDefinition $claim, DialectRuntime $contracts): GrammarContractChecker
     {
-        return $this->grammarCheckers[$dialect] ??= new GrammarContractChecker(
-            $this->supportedGrammar($dialect, $contracts),
+        $key = $claim->dialect . ':' . $claim->subjectKind;
+
+        return $this->grammarCheckers[$key] ??= new GrammarContractChecker(
+            $this->grammar($claim, $contracts),
         );
     }
 
-    private function supportedGrammar(string $dialect, DialectContracts $contracts): Grammar
+    private function grammar(ClaimDefinition $claim, DialectRuntime $contracts): Grammar
     {
-        return $contracts->supportedGrammar();
+        return match ($claim->subjectKind) {
+            'snapshot' => $contracts->snapshot(),
+            'grammar' => $contracts->supportedGrammar(),
+            default => throw new InvalidArgumentException(sprintf('Subject kind %s is not a grammar subject.', $claim->subjectKind)),
+        };
     }
 
     /**
@@ -623,6 +1327,32 @@ final class SpecRunner
             }
 
             $result[] = $value;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function requireLengthMapOption(EvidenceDefinition $evidence, string $key): array
+    {
+        $values = $evidence->options[$key] ?? null;
+        if (!is_array($values) || $values === []) {
+            throw new InvalidArgumentException(sprintf('Evidence kind %s requires a non-empty %s map.', $evidence->kind, $key));
+        }
+
+        $result = [];
+        foreach ($values as $rule => $length) {
+            if (!is_string($rule) || $rule === '') {
+                throw new InvalidArgumentException(sprintf('Evidence kind %s requires %s keys to be non-empty strings.', $evidence->kind, $key));
+            }
+
+            if (!is_int($length) || $length < 0) {
+                throw new InvalidArgumentException(sprintf('Evidence kind %s requires %s values to be non-negative integers.', $evidence->kind, $key));
+            }
+
+            $result[$rule] = $length;
         }
 
         return $result;
@@ -686,6 +1416,91 @@ final class SpecRunner
         }
 
         return $summary;
+    }
+
+    /**
+     * @param null|array{
+     *     request: array<string, scalar|null>,
+     *     succeeded: bool,
+     *     sql: null|string,
+     *     exception_class: null|string,
+     *     exception_message: null|string
+     * } $generation
+     * @return array{
+     *     bool,
+     *     string,
+     *     array<string, mixed>,
+     *     null|array{
+     *         request: array<string, scalar|null>,
+     *         succeeded: bool,
+     *         sql: null|string,
+     *         exception_class: null|string,
+     *         exception_message: null|string
+     *     }
+     * }
+     */
+    private function checkGrammarFingerprint(
+        ClaimDefinition $claim,
+        DialectRuntime $runtime,
+        EvidenceDefinition $evidence,
+        ?array $generation,
+    ): array {
+        $grammar = $this->grammar($claim, $runtime);
+        $actual = GrammarFingerprint::sha256($grammar);
+        $expected = $this->expectedFingerprint($runtime, $evidence);
+        $matched = $actual === $expected;
+
+        return [
+            $matched,
+            $matched ? 'grammar fingerprint matches' : 'grammar fingerprint does not match',
+            [
+                'subject_kind' => $claim->subjectKind,
+                'version' => $runtime->version(),
+                'expected_sha256' => $expected,
+                'actual_sha256' => $actual,
+                'matched' => $matched,
+            ],
+            $generation,
+        ];
+    }
+
+    private function expectedFingerprint(DialectRuntime $runtime, EvidenceDefinition $evidence): string
+    {
+        $sha256 = $evidence->options['sha256'] ?? null;
+        if (is_string($sha256) && $sha256 !== '') {
+            return $sha256;
+        }
+
+        $sha256ByVersion = $evidence->options['sha256_by_version'] ?? null;
+        if (!is_array($sha256ByVersion)) {
+            throw new InvalidArgumentException('grammar.fingerprint_matches requires sha256 or sha256_by_version.');
+        }
+
+        $version = $runtime->version();
+        if ($version === '') {
+            throw new InvalidArgumentException('grammar.fingerprint_matches requires a runtime version when sha256_by_version is used.');
+        }
+
+        $resolved = $sha256ByVersion[$version] ?? null;
+        if (!is_string($resolved) || $resolved === '') {
+            throw new InvalidArgumentException(sprintf('No fingerprint configured for runtime version %s.', $version));
+        }
+
+        return $resolved;
+    }
+
+    private function requirePhaseOption(EvidenceDefinition $evidence): string
+    {
+        $phase = $evidence->options['phase'] ?? null;
+        if (!is_string($phase) || $phase === '') {
+            throw new InvalidArgumentException('outcome.phase_is requires a non-empty phase option.');
+        }
+
+        if (!in_array($phase, ['none', 'prepare', 'execute'], true)) {
+            throw new InvalidArgumentException(sprintf('outcome.phase_is has unsupported phase: %s', $phase));
+        }
+
+        return $phase;
     }
 
     /**

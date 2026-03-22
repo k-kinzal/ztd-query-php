@@ -18,9 +18,159 @@ use Spec\Policy\SqlitePolicy;
 use Spec\Probe\ProbePhase as SpecProbePhase;
 use Spec\Probe\ProbeResult as SpecProbeResult;
 use SqlFaker\Contract\GenerationRequest;
+use SqlFaker\Contract\Grammar;
+use SqlFaker\Contract\Production;
+use SqlFaker\Contract\ProductionRule;
+use SqlFaker\Contract\RewriteProgram;
+use SqlFaker\Contract\RewriteStep;
+use SqlFaker\Contract\SnapshotLoader;
+use SqlFaker\Contract\SupportedGrammarBuilder;
+use SqlFaker\Contract\Symbol;
+use SqlFaker\Contract\TerminalDeriver;
+use SqlFaker\Contract\TerminalRenderer;
+use SqlFaker\Contract\TerminalSequence;
+use SqlFaker\Contract\TerminationLengthComputer;
+use SqlFaker\Contract\TerminationLengths;
+use SqlFaker\Contract\TokenJoiner;
+use SqlFaker\Contract\TokenSequence;
+use SqlFaker\Generation\GenerationRuntime;
 use SqlFaker\Grammar\RandomStringGenerator;
+use SqlFaker\Sqlite\StatementGenerator as SqliteStatementGenerator;
 use SqlFaker\Sqlite\StatementType;
 use SqlFaker\SqliteProvider;
+
+/**
+ * @param list<int> $numberBetweenValues
+ */
+function deterministicSqliteNumberFaker(array $numberBetweenValues): \Faker\Generator
+{
+    return new class ($numberBetweenValues) extends \Faker\Generator {
+        /** @var list<int> */
+        private array $numberBetweenValues;
+
+        /**
+         * @param list<int> $numberBetweenValues
+         */
+        public function __construct(array $numberBetweenValues)
+        {
+            parent::__construct();
+            $this->numberBetweenValues = $numberBetweenValues;
+        }
+
+        /**
+         * @param mixed $int1
+         * @param mixed $int2
+         */
+        #[\Override]
+        public function numberBetween($int1 = 0, $int2 = 2147483647): int
+        {
+            $next = array_shift($this->numberBetweenValues);
+            $lower = is_int($int1) ? $int1 : 0;
+            $upper = is_int($int2) ? $int2 : 2147483647;
+            $value = is_int($next) ? $next : min($lower, $upper);
+            $min = min($lower, $upper);
+            $max = max($lower, $upper);
+
+            return max($min, min($max, $value));
+        }
+    };
+}
+
+/**
+ * @return \ArrayObject<string, GenerationRequest|null>
+ */
+function installCapturingSqliteStatementGenerator(SqliteProvider $provider, \Faker\Generator $faker): \ArrayObject
+{
+    $grammar = new Grammar('cmd', [
+        'cmd' => new ProductionRule('cmd', [
+            new Production([new Symbol('SELECT', false)]),
+        ]),
+    ]);
+    /** @var \ArrayObject<string, GenerationRequest|null> $capture */
+    $capture = new \ArrayObject(['request' => null]);
+    $runtime = new GenerationRuntime(
+        new class ($grammar) implements SnapshotLoader {
+            public function __construct(private readonly Grammar $grammar)
+            {
+            }
+
+            public function version(): string
+            {
+                return 'fixture-1.0';
+            }
+
+            public function load(): Grammar
+            {
+                return $this->grammar;
+            }
+        },
+        new class ($grammar) implements SupportedGrammarBuilder {
+            public function __construct(private readonly Grammar $grammar)
+            {
+            }
+
+            public function build(Grammar $snapshot): Grammar
+            {
+                return $this->grammar;
+            }
+
+            public function rewriteProgram(): RewriteProgram
+            {
+                return new RewriteProgram([
+                    new RewriteStep('capture.request', 'capture request'),
+                ]);
+            }
+        },
+        new class () implements TerminationLengthComputer {
+            public function compute(Grammar $grammar): TerminationLengths
+            {
+                return new TerminationLengths(['cmd' => 1]);
+            }
+        },
+        new class ($capture) implements TerminalDeriver {
+            /**
+             * @param \ArrayObject<string, GenerationRequest|null> $capture
+             */
+            public function __construct(private readonly \ArrayObject $capture)
+            {
+            }
+
+            public function derive(Grammar $grammar, TerminationLengths $terminationLengths, GenerationRequest $request): TerminalSequence
+            {
+                $capture = $this->capture;
+                $capture['request'] = $request;
+
+                return new TerminalSequence(['terminal']);
+            }
+        },
+        new class ($capture) implements TerminalRenderer {
+            /**
+             * @param \ArrayObject<string, GenerationRequest|null> $capture
+             */
+            public function __construct(private readonly \ArrayObject $capture)
+            {
+            }
+
+            public function render(TerminalSequence $terminals): TokenSequence
+            {
+                $request = $this->capture['request'];
+
+                return new TokenSequence([$request instanceof GenerationRequest ? (string) $request->seed : 'missing']);
+            }
+        },
+        new class () implements TokenJoiner {
+            public function join(TokenSequence $tokens): string
+            {
+                return $tokens->tokens[0];
+            }
+        },
+    );
+    $statementGenerator = new SqliteStatementGenerator($faker, runtime: $runtime);
+    $property = new \ReflectionProperty(SqliteProvider::class, 'statementGenerator');
+    $property->setValue($provider, $statementGenerator);
+
+    return $capture;
+}
 
 #[CoversClass(SqliteProvider::class)]
 #[CoversClass(RandomStringGenerator::class)]
@@ -73,15 +223,43 @@ final class SqliteProviderTest extends TestCase
         );
     }
 
-    public function testSqlWithNullStatementTypeUsesRandom(): void
+    public function testSqlWithNullStatementTypeUsesCmdDefault(): void
     {
-        $faker = Factory::create();
-        $faker->seed(12345);
+        $faker = deterministicSqliteNumberFaker([73]);
         $provider = new SqliteProvider($faker);
 
         $result = $provider->sql(null, maxDepth: 6);
 
-        self::assertNotSame('', $result);
+        self::assertSame(
+            $provider->generate(new GenerationRequest('cmd', 73, 6)),
+            $result,
+        );
+    }
+
+    public function testGenerateClampsAutoGeneratedSeedToTheMinimumSupportedBoundary(): void
+    {
+        $faker = deterministicSqliteNumberFaker([0]);
+        $provider = new SqliteProvider($faker);
+        $capture = installCapturingSqliteStatementGenerator($provider, $faker);
+
+        self::assertSame(
+            '1',
+            $provider->generate(new GenerationRequest('cmd', null, 6)),
+        );
+        self::assertSame(1, $capture['request']?->seed);
+    }
+
+    public function testGenerateClampsAutoGeneratedSeedToTheMaximumSupportedBoundary(): void
+    {
+        $faker = deterministicSqliteNumberFaker([2_147_483_648]);
+        $provider = new SqliteProvider($faker);
+        $capture = installCapturingSqliteStatementGenerator($provider, $faker);
+
+        self::assertSame(
+            '2147483647',
+            $provider->generate(new GenerationRequest('cmd', null, 6)),
+        );
+        self::assertSame(2_147_483_647, $capture['request']?->seed);
     }
 
     public function testSqlWithMaxDepth(): void

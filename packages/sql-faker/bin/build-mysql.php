@@ -5,8 +5,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use SqlFaker\MySql\Bison\BisonParser;
-use SqlFaker\MySql\Grammar\GrammarCompiler;
+use SqlFaker\MySql\SnapshotCompiler;
 
 /**
  * Build script for generating AST cache from MySQL's sql_yacc.yy
@@ -16,6 +15,7 @@ use SqlFaker\MySql\Grammar\GrammarCompiler;
  *   php bin/build-mysql.php --tag trunk        # Use trunk branch
  *   php bin/build-mysql.php --tag mysql-8.4.7  # Use specific tag
  *   php bin/build-mysql.php --all              # Build all supported versions
+ *   php bin/build-mysql.php --all --verify     # Verify snapshots against rebuilt grammars
  */
 
 /**
@@ -39,10 +39,13 @@ function parseArguments(array $argv): array
 {
     $tags = [];
     $buildAll = false;
+    $verify = false;
 
     for ($i = 1; $i < count($argv); $i++) {
         if ($argv[$i] === '--all') {
             $buildAll = true;
+        } elseif ($argv[$i] === '--verify') {
+            $verify = true;
         } elseif ($argv[$i] === '--tag' && isset($argv[$i + 1])) {
             $tags[] = $argv[$i + 1];
             $i++;
@@ -50,14 +53,14 @@ function parseArguments(array $argv): array
     }
 
     if ($buildAll) {
-        return ['tags' => SUPPORTED_VERSIONS];
+        return ['tags' => SUPPORTED_VERSIONS, 'verify' => $verify];
     }
 
     if (empty($tags)) {
         $tags = [DEFAULT_VERSION];
     }
 
-    return ['tags' => $tags];
+    return ['tags' => $tags, 'verify' => $verify];
 }
 
 function buildUrl(string $tag): string
@@ -100,7 +103,37 @@ function fetchYaccFile(string $url): string
     return $contents;
 }
 
-function buildVersion(string $tag, BisonParser $parser, GrammarCompiler $compiler): bool
+function verifyExistingSnapshot(string $outputPath, string $serialized): bool
+{
+    if (!file_exists($outputPath)) {
+        fwrite(STDERR, "Error: Snapshot file not found for verification: {$outputPath}\n");
+        return false;
+    }
+
+    /** @var mixed $data */
+    $data = require $outputPath;
+    if (!is_array($data) || $data === []) {
+        fwrite(STDERR, "Error: Snapshot file is invalid: {$outputPath}\n");
+        return false;
+    }
+
+    $existing = $data[array_key_first($data)] ?? null;
+    if (!is_string($existing)) {
+        fwrite(STDERR, "Error: Snapshot payload is invalid: {$outputPath}\n");
+        return false;
+    }
+
+    if ($existing !== $serialized) {
+        fwrite(STDERR, "Error: Snapshot drift detected: {$outputPath}\n");
+        return false;
+    }
+
+    fwrite(STDOUT, "Verified: {$outputPath}\n");
+
+    return true;
+}
+
+function buildVersion(string $tag, SnapshotCompiler $compiler, bool $verify): bool
 {
     $url = buildUrl($tag);
 
@@ -115,8 +148,7 @@ function buildVersion(string $tag, BisonParser $parser, GrammarCompiler $compile
     fwrite(STDOUT, "Parsing grammar...\n");
 
     try {
-        $ast = $parser->parse($contents);
-        $grammar = $compiler->compile($ast);
+        $grammar = $compiler->compile($contents);
     } catch (\Throwable $e) {
         fwrite(STDERR, "Error parsing {$tag}: {$e->getMessage()}\n");
         return false;
@@ -126,13 +158,17 @@ function buildVersion(string $tag, BisonParser $parser, GrammarCompiler $compile
 
     $serialized = serialize($grammar);
 
-    // Ensure output directory exists
     $outputDir = __DIR__ . '/../resources/ast';
+    $outputPath = $outputDir . '/' . $tag . '.php';
+
+    if ($verify) {
+        return verifyExistingSnapshot($outputPath, $serialized);
+    }
+
+    // Ensure output directory exists
     if (!is_dir($outputDir)) {
         mkdir($outputDir, 0755, true);
     }
-
-    $outputPath = $outputDir . '/' . $tag . '.php';
 
     $output = <<<PHP
 <?php
@@ -174,18 +210,18 @@ function main(array $argv): int
 {
     $args = parseArguments($argv);
     $tags = $args['tags'];
+    $verify = $args['verify'];
 
-    fwrite(STDOUT, "Building " . count($tags) . " version(s): " . implode(', ', $tags) . "\n");
+    fwrite(STDOUT, ($verify ? 'Verifying ' : 'Building ') . count($tags) . " version(s): " . implode(', ', $tags) . "\n");
 
-    $parser = new BisonParser();
-    $compiler = new GrammarCompiler();
+    $compiler = new SnapshotCompiler();
 
     $success = 0;
     $failed = 0;
     $failedTags = [];
 
     foreach ($tags as $tag) {
-        if (buildVersion($tag, $parser, $compiler)) {
+        if (buildVersion($tag, $compiler, $verify)) {
             $success++;
         } else {
             $failed++;

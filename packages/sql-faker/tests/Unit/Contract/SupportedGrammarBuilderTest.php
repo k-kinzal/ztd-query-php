@@ -9,6 +9,8 @@ use PHPUnit\Framework\TestCase;
 use SqlFaker\Contract\Grammar;
 use SqlFaker\Contract\Production;
 use SqlFaker\Contract\ProductionRule;
+use SqlFaker\Contract\RewriteProgram;
+use SqlFaker\Contract\RewriteStep;
 use SqlFaker\Contract\SupportedGrammarBuilder;
 use SqlFaker\Contract\Symbol;
 
@@ -28,8 +30,16 @@ final class SupportedGrammarBuilderTest extends TestCase
             {
                 return $snapshot;
             }
+
+            public function rewriteProgram(): RewriteProgram
+            {
+                return new RewriteProgram([
+                    new RewriteStep('step', 'fixture step'),
+                ]);
+            }
         };
 
         self::assertSame('stmt', $builder->build($snapshot)->startSymbol);
+        self::assertSame(['step'], $builder->rewriteProgram()->stepIds());
     }
 }

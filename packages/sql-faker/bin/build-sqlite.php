@@ -5,7 +5,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use SqlFaker\Sqlite\Lemon\LemonParser;
+use SqlFaker\Sqlite\SnapshotCompiler;
 
 /**
  * Build script for generating AST cache from SQLite's parse.y (Lemon grammar)
@@ -14,6 +14,7 @@ use SqlFaker\Sqlite\Lemon\LemonParser;
  *   php bin/build-sqlite.php                      # Use default version (sqlite-3.47.2)
  *   php bin/build-sqlite.php --tag version-3.47.2 # Use specific tag
  *   php bin/build-sqlite.php --all                # Build all supported versions
+ *   php bin/build-sqlite.php --all --verify       # Verify snapshots against rebuilt grammars
  */
 
 const SQLITE_SUPPORTED_VERSIONS = [
@@ -26,10 +27,13 @@ function sqliteParseArguments(array $argv): array
 {
     $versions = [];
     $buildAll = false;
+    $verify = false;
 
     for ($i = 1; $i < count($argv); $i++) {
         if ($argv[$i] === '--all') {
             $buildAll = true;
+        } elseif ($argv[$i] === '--verify') {
+            $verify = true;
         } elseif ($argv[$i] === '--tag' && isset($argv[$i + 1])) {
             $versions[] = $argv[$i + 1];
             $i++;
@@ -37,14 +41,14 @@ function sqliteParseArguments(array $argv): array
     }
 
     if ($buildAll) {
-        return ['versions' => array_keys(SQLITE_SUPPORTED_VERSIONS)];
+        return ['versions' => array_keys(SQLITE_SUPPORTED_VERSIONS), 'verify' => $verify];
     }
 
     if (empty($versions)) {
         $versions = [SQLITE_DEFAULT_VERSION];
     }
 
-    return ['versions' => $versions];
+    return ['versions' => $versions, 'verify' => $verify];
 }
 
 function sqliteBuildUrl(string $version): string
@@ -83,7 +87,37 @@ function sqliteFetchGramFile(string $url): string
     return $contents;
 }
 
-function sqliteBuildVersion(string $version, LemonParser $parser): bool
+function sqliteVerifyExistingSnapshot(string $outputPath, string $serialized): bool
+{
+    if (!file_exists($outputPath)) {
+        fwrite(STDERR, "Error: Snapshot file not found for verification: {$outputPath}\n");
+        return false;
+    }
+
+    /** @var mixed $data */
+    $data = require $outputPath;
+    if (!is_array($data) || $data === []) {
+        fwrite(STDERR, "Error: Snapshot file is invalid: {$outputPath}\n");
+        return false;
+    }
+
+    $existing = $data[array_key_first($data)] ?? null;
+    if (!is_string($existing)) {
+        fwrite(STDERR, "Error: Snapshot payload is invalid: {$outputPath}\n");
+        return false;
+    }
+
+    if ($existing !== $serialized) {
+        fwrite(STDERR, "Error: Snapshot drift detected: {$outputPath}\n");
+        return false;
+    }
+
+    fwrite(STDOUT, "Verified: {$outputPath}\n");
+
+    return true;
+}
+
+function sqliteBuildVersion(string $version, SnapshotCompiler $compiler, bool $verify): bool
 {
     $url = sqliteBuildUrl($version);
 
@@ -98,25 +132,29 @@ function sqliteBuildVersion(string $version, LemonParser $parser): bool
     fwrite(STDOUT, "Parsing grammar...\n");
 
     try {
-        $grammar = $parser->parse($contents);
+        $grammar = $compiler->compile($contents);
     } catch (\Throwable $e) {
         fwrite(STDERR, "Error parsing {$version}: {$e->getMessage()}\n");
         fwrite(STDERR, "Trace: {$e->getTraceAsString()}\n");
         return false;
     }
 
-    fwrite(STDOUT, "Rules: " . count($grammar->ruleMap) . "\n");
+    fwrite(STDOUT, "Rules: " . count($grammar->rules) . "\n");
     fwrite(STDOUT, "Start symbol: {$grammar->startSymbol}\n");
     fwrite(STDOUT, "Serializing AST...\n");
 
     $serialized = serialize($grammar);
 
     $outputDir = __DIR__ . '/../resources/ast';
+    $outputPath = $outputDir . '/' . $version . '.php';
+
+    if ($verify) {
+        return sqliteVerifyExistingSnapshot($outputPath, $serialized);
+    }
+
     if (!is_dir($outputDir)) {
         mkdir($outputDir, 0755, true);
     }
-
-    $outputPath = $outputDir . '/' . $version . '.php';
 
     $output = <<<PHP
 <?php
@@ -158,17 +196,18 @@ function sqliteMain(array $argv): int
 {
     $args = sqliteParseArguments($argv);
     $versions = $args['versions'];
+    $verify = $args['verify'];
 
-    fwrite(STDOUT, "Building " . count($versions) . " SQLite version(s): " . implode(', ', $versions) . "\n");
+    fwrite(STDOUT, ($verify ? 'Verifying ' : 'Building ') . count($versions) . " SQLite version(s): " . implode(', ', $versions) . "\n");
 
-    $parser = new LemonParser();
+    $compiler = new SnapshotCompiler();
 
     $success = 0;
     $failed = 0;
     $failedVersions = [];
 
     foreach ($versions as $version) {
-        if (sqliteBuildVersion($version, $parser)) {
+        if (sqliteBuildVersion($version, $compiler, $verify)) {
             $success++;
         } else {
             $failed++;

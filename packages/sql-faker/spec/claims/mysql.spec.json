@@ -3,6 +3,15 @@
         "id": "MYSQL-SPEC-IDENTIFIER-CONTEXT",
         "level": "spec",
         "dialect": "mysql",
+        "versions": [
+            "mysql-8.0.44",
+            "mysql-8.1.0",
+            "mysql-8.2.0",
+            "mysql-8.3.0",
+            "mysql-8.4.7",
+            "mysql-9.0.1",
+            "mysql-9.1.0"
+        ],
         "statement": "WHERE MySQL identifier contexts are supported, the generator SHALL emit canonical identifiers that remain acceptable to the engine lexer.",
         "subject": {
             "kind": "generation",
@@ -16,6 +25,10 @@
             {
                 "kind": "generation.sql_matches",
                 "parameter": "pattern"
+            },
+            {
+                "kind": "outcome.phase_is",
+                "phase": "prepare"
             },
             {
                 "kind": "outcome.kind_in",
@@ -36,6 +49,15 @@
         "id": "MYSQL-SPEC-SHOW-WARNINGS-LIMIT",
         "level": "spec",
         "dialect": "mysql",
+        "versions": [
+            "mysql-8.0.44",
+            "mysql-8.1.0",
+            "mysql-8.2.0",
+            "mysql-8.3.0",
+            "mysql-8.4.7",
+            "mysql-9.0.1",
+            "mysql-9.1.0"
+        ],
         "statement": "WHERE SHOW WARNINGS LIMIT statements are retained, the generator SHALL produce engine-acceptable witnesses from that family.",
         "subject": {
             "kind": "generation",
@@ -45,6 +67,10 @@
         "evidence": [
             {
                 "kind": "generation.generates"
+            },
+            {
+                "kind": "outcome.phase_is",
+                "phase": "prepare"
             },
             {
                 "kind": "outcome.kind_in",
@@ -74,6 +100,10 @@
                 "kind": "generation.generates"
             },
             {
+                "kind": "outcome.phase_is",
+                "phase": "prepare"
+            },
+            {
                 "kind": "outcome.kind_in",
                 "allowedKinds": [
                     "accepted"
@@ -90,6 +120,15 @@
         "id": "MYSQL-SPEC-SET-SYSTEM-VARIABLE",
         "level": "spec",
         "dialect": "mysql",
+        "versions": [
+            "mysql-8.0.44",
+            "mysql-8.1.0",
+            "mysql-8.2.0",
+            "mysql-8.3.0",
+            "mysql-8.4.7",
+            "mysql-9.0.1",
+            "mysql-9.1.0"
+        ],
         "statement": "WHERE SET system variable statements are retained, the generator SHALL produce witnesses that stay inside the accepted system-variable subset.",
         "subject": {
             "kind": "generation",
@@ -99,6 +138,10 @@
         "evidence": [
             {
                 "kind": "generation.generates"
+            },
+            {
+                "kind": "outcome.phase_is",
+                "phase": "prepare"
             },
             {
                 "kind": "outcome.kind_in",
@@ -117,6 +160,15 @@
         "id": "MYSQL-SPEC-CREATE-SRS",
         "level": "spec",
         "dialect": "mysql",
+        "versions": [
+            "mysql-8.0.44",
+            "mysql-8.1.0",
+            "mysql-8.2.0",
+            "mysql-8.3.0",
+            "mysql-8.4.7",
+            "mysql-9.0.1",
+            "mysql-9.1.0"
+        ],
         "statement": "WHERE CREATE SPATIAL REFERENCE SYSTEM is retained, the generator SHALL produce witnesses that satisfy the engine's mandatory NAME and DEFINITION contract.",
         "subject": {
             "kind": "generation",
@@ -126,6 +178,10 @@
         "evidence": [
             {
                 "kind": "generation.generates"
+            },
+            {
+                "kind": "outcome.phase_is",
+                "phase": "prepare"
             },
             {
                 "kind": "outcome.kind_in",
@@ -144,6 +200,15 @@
         "id": "MYSQL-SPEC-TABLE-VALUE-CONSTRUCTOR",
         "level": "spec",
         "dialect": "mysql",
+        "versions": [
+            "mysql-8.0.44",
+            "mysql-8.1.0",
+            "mysql-8.2.0",
+            "mysql-8.3.0",
+            "mysql-8.4.7",
+            "mysql-9.0.1",
+            "mysql-9.1.0"
+        ],
         "statement": "WHERE top-level VALUES table constructors are retained, the generator SHALL produce witnesses whose rows remain engine-acceptable outside INSERT context.",
         "subject": {
             "kind": "generation",
@@ -197,6 +262,10 @@
                 "kind": "generation.generates"
             },
             {
+                "kind": "outcome.phase_is",
+                "phase": "prepare"
+            },
+            {
                 "kind": "outcome.kind_in",
                 "allowedKinds": [
                     "accepted"
@@ -208,6 +277,15 @@
         "id": "MYSQL-SPEC-ALTER-DATABASE-ENCRYPTION",
         "level": "spec",
         "dialect": "mysql",
+        "versions": [
+            "mysql-8.0.44",
+            "mysql-8.1.0",
+            "mysql-8.2.0",
+            "mysql-8.3.0",
+            "mysql-8.4.7",
+            "mysql-9.0.1",
+            "mysql-9.1.0"
+        ],
         "statement": "WHERE ALTER DATABASE ENCRYPTION is retained, the generator SHALL produce witnesses that stay inside the engine-accepted encryption literal subset.",
         "subject": {
             "kind": "generation",
@@ -217,6 +295,10 @@
         "evidence": [
             {
                 "kind": "generation.generates"
+            },
+            {
+                "kind": "outcome.phase_is",
+                "phase": "prepare"
             },
             {
                 "kind": "outcome.kind_in",
@@ -236,6 +318,11 @@
         "id": "MYSQL-SPEC-CHANGE-REPLICATION-SOURCE",
         "level": "spec",
         "dialect": "mysql",
+        "versions": [
+            "mysql-8.4.7",
+            "mysql-9.0.1",
+            "mysql-9.1.0"
+        ],
         "statement": "WHERE CHANGE REPLICATION SOURCE TO statements are retained, the generator SHALL produce witnesses that stay inside the engine-accepted scalar option subset.",
         "subject": {
             "kind": "generation",
@@ -245,6 +332,10 @@
         "evidence": [
             {
                 "kind": "generation.generates"
+            },
+            {
+                "kind": "outcome.phase_is",
+                "phase": "prepare"
             },
             {
                 "kind": "outcome.kind_in",

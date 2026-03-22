@@ -8,6 +8,8 @@ use InvalidArgumentException;
 use PHPUnit\Framework\Assert;
 use Spec\Runner\GrammarContractChecker;
 use SqlFaker\Contract\Grammar;
+use SqlFaker\Contract\RewriteProgram;
+use SqlFaker\Contract\TerminationLengths;
 
 final class GrammarEvidenceAssert
 {
@@ -19,6 +21,9 @@ final class GrammarEvidenceAssert
         GrammarContractChecker $checker,
         array $evidence,
         string $claimId,
+        ?string $version = null,
+        ?RewriteProgram $rewriteProgram = null,
+        ?TerminationLengths $terminationLengths = null,
     ): void {
         $kind = self::requireString($evidence, 'kind', $claimId);
 
@@ -50,6 +55,33 @@ final class GrammarEvidenceAssert
                 );
                 return;
 
+            case 'grammar.fingerprint_matches':
+                $expected = self::requireFingerprint($evidence, $claimId, $version);
+                Assert::assertSame($expected, GrammarFingerprint::sha256($grammar), $claimId);
+                return;
+
+            case 'grammar.rewrite_steps_match':
+                if ($rewriteProgram === null) {
+                    throw new InvalidArgumentException(sprintf('Claim %s requires a rewrite program.', $claimId));
+                }
+
+                Assert::assertSame(
+                    self::requireStringList($evidence, 'step_ids', $claimId),
+                    $rewriteProgram->stepIds(),
+                    $claimId,
+                );
+                return;
+
+            case 'grammar.termination_lengths_match':
+                if ($terminationLengths === null) {
+                    throw new InvalidArgumentException(sprintf('Claim %s requires termination lengths.', $claimId));
+                }
+
+                foreach (self::requireLengthMap($evidence, $claimId) as $rule => $expectedLength) {
+                    Assert::assertSame($expectedLength, $terminationLengths->lengthOf($rule), sprintf('%s: %s', $claimId, $rule));
+                }
+                return;
+
             case 'grammar.rule.contains_sequence':
                 self::assertRuleSequence($grammar, $evidence, $claimId, true);
                 return;
@@ -61,6 +93,33 @@ final class GrammarEvidenceAssert
             default:
                 throw new InvalidArgumentException(sprintf('Unsupported grammar evidence kind: %s', $kind));
         }
+    }
+
+    /**
+     * @param array<string, mixed> $evidence
+     */
+    private static function requireFingerprint(array $evidence, string $claimId, ?string $version): string
+    {
+        $sha256 = $evidence['sha256'] ?? null;
+        if (is_string($sha256) && $sha256 !== '') {
+            return $sha256;
+        }
+
+        $sha256ByVersion = $evidence['sha256_by_version'] ?? null;
+        if (!is_array($sha256ByVersion)) {
+            throw new InvalidArgumentException(sprintf('Claim %s requires sha256 or sha256_by_version.', $claimId));
+        }
+
+        if ($version === null || $version === '') {
+            throw new InvalidArgumentException(sprintf('Claim %s requires a version to resolve sha256_by_version.', $claimId));
+        }
+
+        $resolved = $sha256ByVersion[$version] ?? null;
+        if (!is_string($resolved) || $resolved === '') {
+            throw new InvalidArgumentException(sprintf('Claim %s has no fingerprint for version %s.', $claimId, $version));
+        }
+
+        return $resolved;
     }
 
     /**
@@ -128,6 +187,33 @@ final class GrammarEvidenceAssert
             }
 
             $result[] = $value;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param array<string, mixed> $evidence
+     * @return array<string, int>
+     */
+    private static function requireLengthMap(array $evidence, string $claimId): array
+    {
+        $values = $evidence['lengths'] ?? null;
+        if (!is_array($values) || $values === []) {
+            throw new InvalidArgumentException(sprintf('Claim %s requires a non-empty lengths map.', $claimId));
+        }
+
+        $result = [];
+        foreach ($values as $rule => $length) {
+            if (!is_string($rule) || $rule === '') {
+                throw new InvalidArgumentException(sprintf('Claim %s contains an invalid lengths key.', $claimId));
+            }
+
+            if (!is_int($length) || $length < 0) {
+                throw new InvalidArgumentException(sprintf('Claim %s contains an invalid length for %s.', $claimId, $rule));
+            }
+
+            $result[$rule] = $length;
         }
 
         return $result;

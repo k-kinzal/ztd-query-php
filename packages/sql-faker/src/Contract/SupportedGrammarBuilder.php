@@ -7,4 +7,6 @@ namespace SqlFaker\Contract;
 interface SupportedGrammarBuilder
 {
     public function build(Grammar $snapshot): Grammar;
+
+    public function rewriteProgram(): RewriteProgram;
 }

@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace SqlFaker\PostgreSql;
 
-use Faker\Generator as FakerGenerator;
+use SqlFaker\Contract\RandomSource;
 use SqlFaker\Grammar\RandomStringGenerator;
 
 final class LexicalValueGenerator implements LexicalValueSource
 {
     private RandomStringGenerator $rsg;
 
-    public function __construct(FakerGenerator $faker)
+    public function __construct(RandomSource $random)
     {
-        $this->rsg = new RandomStringGenerator($faker);
+        $this->rsg = new RandomStringGenerator($random);
     }
 
     public function quotedIdentifier(int $minLength = 1, int $maxLength = 63): string

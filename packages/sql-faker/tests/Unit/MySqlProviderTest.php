@@ -100,15 +100,17 @@ final class MySqlProviderTest extends TestCase
         self::assertMatchesRegularExpression('/\bSELECT\b/i', $result);
     }
 
-    public function testSqlWithNullStatementTypeUsesDefault(): void
+    public function testSqlWithNullStatementTypeUsesSimpleStatementOrBeginDefault(): void
     {
-        $faker = Factory::create();
-        $faker->seed(12345);
+        $faker = deterministicNumberFaker([91]);
         $provider = new MySqlProvider($faker);
 
         $result = $provider->sql(null, maxDepth: 3);
 
-        self::assertNotSame('', $result);
+        self::assertSame(
+            $provider->generate(new GenerationRequest('simple_statement_or_begin', 91, 3)),
+            $result,
+        );
     }
 
     public function testSqlWithMaxDepth(): void
