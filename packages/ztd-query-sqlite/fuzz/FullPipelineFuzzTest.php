@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Fuzz;
 
 use Faker\Factory;
+use PHPUnit\Framework\Attributes\CoversNothing;
+use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\SqliteProvider;
 use ZtdQuery\Exception\UnknownSchemaException;
@@ -40,6 +42,8 @@ use ZtdQuery\Shadow\ShadowStore;
  * - INV-L2-02: WRITE_SIMULATED/DDL_SIMULATED plans must have non-null mutation
  * - INV-L2-03: READ plans must have null mutation
  */
+#[CoversNothing]
+#[Large]
 final class FullPipelineFuzzTest extends TestCase
 {
     private const ITERATIONS = 50;

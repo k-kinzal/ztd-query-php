@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Fuzz;
 
 use Faker\Factory;
+use PHPUnit\Framework\Attributes\CoversNothing;
+use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\SqliteProvider;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
@@ -19,6 +21,8 @@ use ZtdQuery\Rewrite\QueryKind;
  * - INV-L1-02: classify() is deterministic (same input -> same output)
  * - Kind correctness: SELECT->READ, INSERT/UPDATE/DELETE->WRITE_SIMULATED, DDL->DDL_SIMULATED
  */
+#[CoversNothing]
+#[Large]
 final class ClassifyFuzzTest extends TestCase
 {
     private const ITERATIONS = 100;
