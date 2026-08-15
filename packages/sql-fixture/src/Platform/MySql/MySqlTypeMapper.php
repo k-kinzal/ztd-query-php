@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlFixture\Platform\MySql;
 
 use Faker\Generator;
+use LogicException;
 use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\TypeMapper\TypeMapperInterface;
 
@@ -196,7 +197,13 @@ final class MySqlTypeMapper implements TypeMapperInterface
             return null;
         }
         $count = $faker->numberBetween(1, count($values));
-        $selected = $faker->randomElements($values, $count);
+        $selected = [];
+        foreach ($faker->randomElements($values, $count) as $value) {
+            if (!is_string($value)) {
+                throw new LogicException('Faker returned a non-string SET value.');
+            }
+            $selected[] = $value;
+        }
         return implode(',', $selected);
     }
 
