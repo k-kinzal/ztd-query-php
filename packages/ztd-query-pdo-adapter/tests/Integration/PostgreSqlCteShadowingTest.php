@@ -398,4 +398,33 @@ final class PostgreSqlCteShadowingTest extends TestCase
         }
     }
 
+    public function testPostgreSqlQuotedStringFormsPreserveWhereOffsets(): void
+    {
+        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $table = 'literal_' . bin2hex(random_bytes(8));
+
+        try {
+            $rawPdo->exec(sprintf('CREATE TABLE %s (id INTEGER PRIMARY KEY, body TEXT)', $table));
+            $ztdPdo = ZtdPdo::fromPdo($rawPdo, null);
+            $ztdPdo->exec(sprintf("INSERT INTO %s VALUES (1, 'original')", $table));
+
+            $ztdPdo->exec(sprintf("UPDATE %s SET body = 'it''s updated' WHERE id = 1", $table));
+            $body = $ztdPdo->query(sprintf('SELECT body FROM %s WHERE id = 1', $table));
+            self::assertNotFalse($body);
+            self::assertSame("it's updated", $body->fetchColumn());
+
+            $ztdPdo->exec(sprintf('UPDATE %s SET body = $text$reference to table$text$ WHERE id = 1', $table));
+            $body = $ztdPdo->query(sprintf('SELECT body FROM %s WHERE id = 1', $table));
+            self::assertNotFalse($body);
+            self::assertSame('reference to table', $body->fetchColumn());
+
+            $ztdPdo->exec(sprintf("UPDATE %s SET body = E'line1\\nline2' WHERE id = 1", $table));
+            $body = $ztdPdo->query(sprintf('SELECT body FROM %s WHERE id = 1', $table));
+            self::assertNotFalse($body);
+            self::assertSame("line1\nline2", $body->fetchColumn());
+        } finally {
+            $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
+        }
+    }
+
 }

@@ -2971,4 +2971,40 @@ final class PgSqlRewriterTest extends RewriterContractTest
         self::assertInstanceOf(DeleteMutation::class, $plan->mutation());
         self::assertSame('users', $plan->mutation()->tableName());
     }
+
+    public function testUpdatePreservesDoubledQuoteStringBeforeWhere(): void
+    {
+        $registry = new TableDefinitionRegistry();
+        $registry->register('notes', new TableDefinition(['id', 'body'], ['id' => 'INTEGER', 'body' => 'TEXT'], ['id'], [], []));
+        $rewriter = $this->createRewriter(new ShadowStore(), $registry);
+
+        $plan = $rewriter->rewrite("UPDATE notes SET body = 'it''s updated' WHERE id = 1");
+
+        self::assertStringContainsString("'it''s updated' AS \"body\"", $plan->sql());
+        self::assertStringContainsString('WHERE id = 1', $plan->sql());
+    }
+
+    public function testUpdatePreservesDollarQuotedStringBeforeWhere(): void
+    {
+        $registry = new TableDefinitionRegistry();
+        $registry->register('notes', new TableDefinition(['id', 'body'], ['id' => 'INTEGER', 'body' => 'TEXT'], ['id'], [], []));
+        $rewriter = $this->createRewriter(new ShadowStore(), $registry);
+
+        $plan = $rewriter->rewrite('UPDATE notes SET body = $$reference to notes table$$ WHERE id = 1');
+
+        self::assertStringContainsString('$$reference to notes table$$ AS "body"', $plan->sql());
+        self::assertStringContainsString('WHERE id = 1', $plan->sql());
+    }
+
+    public function testUpdatePreservesEscapeStringBeforeWhere(): void
+    {
+        $registry = new TableDefinitionRegistry();
+        $registry->register('notes', new TableDefinition(['id', 'body'], ['id' => 'INTEGER', 'body' => 'TEXT'], ['id'], [], []));
+        $rewriter = $this->createRewriter(new ShadowStore(), $registry);
+
+        $plan = $rewriter->rewrite("UPDATE notes SET body = E'line1\\nline2' WHERE id = 1");
+
+        self::assertStringContainsString("E'line1\\nline2' AS \"body\"", $plan->sql());
+        self::assertStringContainsString('WHERE id = 1', $plan->sql());
+    }
 }

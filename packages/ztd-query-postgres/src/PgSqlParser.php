@@ -366,61 +366,13 @@ final class PgSqlParser
             return null;
         }
 
-        $strippedOffset = $m[0][1];
-        $originalOffset = $this->mapStrippedOffsetToOriginal($sql, $stripped, $strippedOffset);
-
-        $whereClause = substr($sql, $originalOffset + strlen('WHERE'));
+        $whereClause = substr($sql, $m[0][1] + strlen('WHERE'));
         $strippedTail = $this->stripStringLiterals($whereClause);
         if (preg_match('/\s+(?:RETURNING|ORDER\s+BY|LIMIT)\b/is', $strippedTail, $tailMatch, PREG_OFFSET_CAPTURE) === 1) {
-            $tailOffset = $this->mapStrippedOffsetToOriginal($whereClause, $strippedTail, $tailMatch[0][1]);
-            $whereClause = substr($whereClause, 0, $tailOffset);
+            $whereClause = substr_replace($whereClause, '', $tailMatch[0][1]);
         }
 
         return trim($whereClause);
-    }
-
-    /**
-     * Map an offset in a stripped string back to the corresponding position in the original.
-     */
-    private function mapStrippedOffsetToOriginal(string $original, string $stripped, int $strippedOffset): int
-    {
-        if (strlen($original) === strlen($stripped)) {
-            return $strippedOffset;
-        }
-
-        $origLen = strlen($original);
-        $stripLen = strlen($stripped);
-        $si = 0;
-        $oi = 0;
-
-        while ($si < $strippedOffset && $oi < $origLen && $si < $stripLen) {
-            $char = $original[$oi];
-
-            if ($char === "'") {
-                $oi++;
-                while ($oi < $origLen) {
-                    if ($original[$oi] === '\\') {
-                        $oi += 2;
-                        continue;
-                    }
-                    if ($original[$oi] === "'") {
-                        if ($oi + 1 < $origLen && $original[$oi + 1] === "'") {
-                            $oi += 2;
-                            continue;
-                        }
-                        $oi++;
-                        break;
-                    }
-                    $oi++;
-                }
-                $si += 2;
-            } else {
-                $oi++;
-                $si++;
-            }
-        }
-
-        return $oi;
     }
 
     /**
@@ -957,11 +909,7 @@ final class PgSqlParser
 
     private function stripStringLiterals(string $sql): string
     {
-        $result = preg_replace("/E?'(?:[^'\\\\]|\\\\.)*'/", "''", $sql);
-        $result = $result !== null ? $result : $sql;
-        $result = preg_replace('/\$\w*\$.*?\$\w*\$/s', "''", $result);
-
-        return $result !== null ? $result : $sql;
+        return PostgreSqlLexicalMasker::maskStringLiterals($sql);
     }
 
     private function extractDollarTag(string $sql, int $pos): ?string

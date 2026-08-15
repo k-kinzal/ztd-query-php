@@ -6,6 +6,39 @@ namespace ZtdQuery\Platform\Postgres;
 
 final class PostgreSqlLexicalMasker
 {
+    public static function maskStringLiterals(string $sql): string
+    {
+        $result = '';
+        $length = strlen($sql);
+        $i = 0;
+
+        while ($i < $length) {
+            $char = $sql[$i];
+            if ($char === '\'') {
+                $tail = substr($sql, $i);
+                $quotedLength = self::quotedLength($tail, $char, self::isEscapeStringStart($sql, $i));
+                $result .= str_repeat(' ', $quotedLength);
+                $i += $quotedLength;
+                continue;
+            }
+
+            if ($char === '$' && self::isDollarQuoteStart($sql, $i)) {
+                $tail = substr($sql, $i);
+                $quotedLength = self::dollarQuotedLength($tail);
+                if ($quotedLength !== null) {
+                    $result .= str_repeat(' ', $quotedLength);
+                    $i += $quotedLength;
+                    continue;
+                }
+            }
+
+            $result .= $char;
+            $i++;
+        }
+
+        return $result;
+    }
+
     public static function maskComments(string $sql): string
     {
         $result = '';
@@ -23,7 +56,7 @@ final class PostgreSqlLexicalMasker
                 continue;
             }
 
-            if ($char === '$') {
+            if ($char === '$' && self::isDollarQuoteStart($sql, $i)) {
                 $tail = substr($sql, $i);
                 $quotedLength = self::dollarQuotedLength($tail);
                 if ($quotedLength !== null) {
@@ -135,6 +168,11 @@ final class PostgreSqlLexicalMasker
         }
 
         return substr($sql, 0, $i) . '$';
+    }
+
+    private static function isDollarQuoteStart(string $sql, int $position): bool
+    {
+        return $position === 0 || !self::isIdentifierContinuation($sql[$position - 1]);
     }
 
     private static function isEscapeStringStart(string $sql, int $quotePosition): bool

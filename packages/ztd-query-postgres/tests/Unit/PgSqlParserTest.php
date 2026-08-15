@@ -394,6 +394,34 @@ SELECT * FROM users'));
         self::assertSame('$tag$-- not comment$tag$', $sets['payload']);
     }
 
+    public function testExtractWhereClauseAfterDoubledQuoteString(): void
+    {
+        $parser = new PgSqlParser();
+        $where = $parser->extractWhereClause("UPDATE test SET body = 'it''s updated' WHERE id = 1");
+        self::assertSame('id = 1', $where);
+    }
+
+    public function testExtractWhereClauseAfterDollarQuotedString(): void
+    {
+        $parser = new PgSqlParser();
+        $where = $parser->extractWhereClause('UPDATE notes SET body = $$reference to notes table$$ WHERE id = 1');
+        self::assertSame('id = 1', $where);
+    }
+
+    public function testExtractWhereClauseAfterTaggedDollarQuotedString(): void
+    {
+        $parser = new PgSqlParser();
+        $where = $parser->extractWhereClause('UPDATE notes SET body = $text$WHERE id = fake$text$ WHERE id = 1');
+        self::assertSame('id = 1', $where);
+    }
+
+    public function testExtractWhereClauseAfterEscapeString(): void
+    {
+        $parser = new PgSqlParser();
+        $where = $parser->extractWhereClause("UPDATE docs SET content = E'line1\\nline2' WHERE id = 1");
+        self::assertSame('id = 1', $where);
+    }
+
     public function testClassifyCreateTempTable(): void
     {
         $parser = new PgSqlParser();
