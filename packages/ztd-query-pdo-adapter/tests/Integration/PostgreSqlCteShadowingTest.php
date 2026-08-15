@@ -456,4 +456,40 @@ final class PostgreSqlCteShadowingTest extends TestCase
         }
     }
 
+    public function testQuotedInsertSourceKeywordsRemainIdentifiers(): void
+    {
+        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+
+        try {
+            $rawPdo->exec('CREATE TABLE "select" (id INTEGER PRIMARY KEY, val TEXT)');
+            $rawPdo->exec('CREATE TABLE "values" (id INTEGER PRIMARY KEY, val TEXT)');
+            $rawPdo->exec('CREATE TABLE keyword_columns (id INTEGER PRIMARY KEY, "select" TEXT, "values" TEXT)');
+            $ztdPdo = ZtdPdo::fromPdo($rawPdo, null);
+
+            self::assertSame(1, $ztdPdo->exec("INSERT INTO \"select\" VALUES (1, 'table-select')"));
+            self::assertSame(1, $ztdPdo->exec("INSERT INTO \"values\" VALUES (2, 'table-values')"));
+            self::assertSame(1, $ztdPdo->exec("INSERT INTO keyword_columns (id, \"select\", \"values\") VALUES (3, 'column-select', 'column-values')"));
+            self::assertSame(1, $ztdPdo->exec("INSERT INTO \"select\" SELECT 4 AS id, 'insert-select' AS val"));
+
+            $selectRows = $ztdPdo->query('SELECT * FROM "select" ORDER BY id');
+            self::assertNotFalse($selectRows);
+            self::assertSame([
+                ['id' => 1, 'val' => 'table-select'],
+                ['id' => 4, 'val' => 'insert-select'],
+            ], $selectRows->fetchAll());
+
+            $valuesRows = $ztdPdo->query('SELECT * FROM "values"');
+            self::assertNotFalse($valuesRows);
+            self::assertSame([['id' => 2, 'val' => 'table-values']], $valuesRows->fetchAll());
+
+            $columnRows = $ztdPdo->query('SELECT id, "select", "values" FROM keyword_columns');
+            self::assertNotFalse($columnRows);
+            self::assertSame([
+                ['id' => 3, 'select' => 'column-select', 'values' => 'column-values'],
+            ], $columnRows->fetchAll());
+        } finally {
+            $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
+        }
+    }
+
 }

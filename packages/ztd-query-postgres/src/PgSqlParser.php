@@ -201,11 +201,15 @@ final class PgSqlParser
     {
         $sql = $this->maskComments($sql);
         $rows = [];
-        if (preg_match('/\bVALUES\s*(\(.+)/is', $sql, $m) !== 1) {
+        $source = $this->findInsertSourceClause($sql);
+        if ($source === null) {
+            return [];
+        }
+        if ($source['keyword'] !== 'VALUES') {
             return [];
         }
 
-        $rest = $m[1];
+        $rest = substr($sql, $source['offset'] + strlen($source['keyword']));
         $pos = 0;
         $len = strlen($rest);
 
@@ -278,12 +282,9 @@ final class PgSqlParser
     public function hasInsertSelect(string $sql): bool
     {
         $sql = $this->maskComments($sql);
-        $stripped = $this->stripStringLiterals($sql);
-        if (preg_match('/\bVALUES\b/i', $stripped) === 1) {
-            return false;
-        }
+        $source = $this->findInsertSourceClause($sql);
 
-        return preg_match('/INSERT\s+INTO\s+.*?\bSELECT\b/is', $stripped) === 1;
+        return $source !== null && $source['keyword'] === 'SELECT';
     }
 
     /**
@@ -292,11 +293,9 @@ final class PgSqlParser
     public function extractInsertSelectSql(string $sql): ?string
     {
         $sql = $this->maskComments($sql);
-        $stripped = $this->stripStringLiterals($sql);
-        if (preg_match('/\bSELECT\b/i', $stripped, $m, PREG_OFFSET_CAPTURE) === 1) {
-            $offset = $m[0][1];
-
-            return substr($sql, $offset);
+        $source = $this->findInsertSourceClause($sql);
+        if ($source !== null && $source['keyword'] === 'SELECT') {
+            return substr($sql, $source['offset']);
         }
 
         return null;
@@ -910,6 +909,63 @@ final class PgSqlParser
     private function stripStringLiterals(string $sql): string
     {
         return PostgreSqlLexicalMasker::maskStringLiterals($sql);
+    }
+
+    /**
+     * @return array{keyword: string, offset: int}|null
+     */
+    private function findInsertSourceClause(string $sql): ?array
+    {
+        $searchable = $this->stripStringLiterals($sql);
+        $length = strlen($searchable);
+        $depth = 0;
+        $foundInsert = false;
+
+        for ($i = 0; $i < $length; $i++) {
+            if ($searchable[$i] === '"') {
+                for ($i++; $i < $length; $i++) {
+                    if ($searchable[$i] !== '"') {
+                        continue;
+                    }
+                    break;
+                }
+                continue;
+            }
+
+            if ($searchable[$i] === '(') {
+                $depth++;
+                continue;
+            }
+
+            if ($searchable[$i] === ')') {
+                if ($depth > 0) {
+                    $depth--;
+                }
+                continue;
+            }
+
+            $tokenLength = strspn(
+                $searchable,
+                'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_$',
+                $i,
+            );
+            if ($tokenLength === 0) {
+                continue;
+            }
+
+            if ($depth === 0 && ctype_alpha($searchable[$i])) {
+                $keyword = strtoupper(substr($searchable, $i, $tokenLength));
+                if (!$foundInsert) {
+                    $foundInsert = $keyword === 'INSERT';
+                } elseif ($keyword === 'VALUES' || $keyword === 'SELECT') {
+                    return ['keyword' => $keyword, 'offset' => $i];
+                }
+            }
+
+            $i += $tokenLength - 1;
+        }
+
+        return null;
     }
 
     private function extractDollarTag(string $sql, int $pos): ?string

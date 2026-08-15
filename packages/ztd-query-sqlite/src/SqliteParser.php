@@ -259,13 +259,15 @@ final class SqliteParser
     public function extractInsertValues(string $sql): array
     {
         $sql = $this->stripComments($sql);
-        $upper = strtoupper($sql);
-        $valuesPos = strpos($upper, 'VALUES');
-        if ($valuesPos === false) {
+        $source = $this->findInsertSourceClause($sql);
+        if ($source === null) {
+            return [];
+        }
+        if ($source['keyword'] !== 'VALUES') {
             return [];
         }
 
-        $rest = substr($sql, $valuesPos + 6);
+        $rest = substr($sql, $source['offset'] + strlen($source['keyword']));
 
         return $this->parseValueSets($rest);
     }
@@ -376,7 +378,9 @@ final class SqliteParser
     public function hasInsertSelect(string $sql): bool
     {
         $sql = $this->stripComments($sql);
-        return preg_match('/\bINTO\s+(?:"(?:[^"]|"")*"|[^\s(]+)\s*(?:\([^)]*\)\s*)?SELECT\b/i', $sql) === 1;
+        $source = $this->findInsertSourceClause($sql);
+
+        return $source !== null && $source['keyword'] === 'SELECT';
     }
 
     /**
@@ -385,8 +389,9 @@ final class SqliteParser
     public function extractInsertSelect(string $sql): ?string
     {
         $sql = $this->stripComments($sql);
-        if (preg_match('/\bINTO\s+(?:"(?:[^"]|"")*"|[^\s(]+)\s*(?:\([^)]*\)\s*)?(SELECT\b.+)$/is', $sql, $matches) === 1) {
-            return trim($matches[1]);
+        $source = $this->findInsertSourceClause($sql);
+        if ($source !== null && $source['keyword'] === 'SELECT') {
+            return substr($sql, $source['offset']);
         }
 
         return null;
@@ -460,7 +465,7 @@ final class SqliteParser
     }
 
     /**
-     * @return array<int, array{keyword: string, afterGroup: bool}>
+     * @return array<int, array{keyword: string, afterGroup: bool, offset: int}>
      */
     private function scanTopLevelKeywords(string $sql): array
     {
@@ -527,6 +532,7 @@ final class SqliteParser
                 continue;
             }
 
+            $start = $i;
             $tokenLength = strspn($sql, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_$', $i);
             if ($tokenLength === 0) {
                 continue;
@@ -538,11 +544,35 @@ final class SqliteParser
                 $keywords[] = [
                     'keyword' => strtoupper($token),
                     'afterGroup' => $completedGroup,
+                    'offset' => $start,
                 ];
             }
         }
 
         return $keywords;
+    }
+
+    /**
+     * @return array{keyword: string, offset: int}|null
+     */
+    private function findInsertSourceClause(string $sql): ?array
+    {
+        $foundInsert = false;
+        foreach ($this->scanTopLevelKeywords($sql) as $token) {
+            if (!$foundInsert) {
+                $foundInsert = $token['keyword'] === 'INSERT' || $token['keyword'] === 'REPLACE';
+                continue;
+            }
+
+            if ($token['keyword'] === 'VALUES' || $token['keyword'] === 'SELECT') {
+                return [
+                    'keyword' => $token['keyword'],
+                    'offset' => $token['offset'],
+                ];
+            }
+        }
+
+        return null;
     }
 
     private function extractInsertTable(string $sql): ?string

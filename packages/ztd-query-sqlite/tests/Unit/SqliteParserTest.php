@@ -2804,4 +2804,60 @@ SELECT * FROM users'));
         $parser = new SqliteParser();
         self::assertSame('t', $parser->extractTargetTable('replace t values (1)'));
     }
+
+    public function testInsertValuesSourceIgnoresQuotedKeywordIdentifiers(): void
+    {
+        $parser = new SqliteParser();
+        $tableSelect = "INSERT INTO \"select\" (id, val) VALUES (1, 'table-select')";
+        $tableValues = "INSERT INTO \"values\" (id, val) VALUES (2, 'table-values')";
+        $columnKeywords = "INSERT INTO test (id, \"select\", \"values\") VALUES (3, 'column-select', 'column-values')";
+
+        self::assertFalse($parser->hasInsertSelect($tableSelect));
+        self::assertNull($parser->extractInsertSelect($tableSelect));
+        self::assertSame([['1', "'table-select'"]], $parser->extractInsertValues($tableSelect));
+        self::assertFalse($parser->hasInsertSelect($tableValues));
+        self::assertNull($parser->extractInsertSelect($tableValues));
+        self::assertSame([['2', "'table-values'"]], $parser->extractInsertValues($tableValues));
+        self::assertFalse($parser->hasInsertSelect($columnKeywords));
+        self::assertNull($parser->extractInsertSelect($columnKeywords));
+        self::assertSame([['3', "'column-select'", "'column-values'"]], $parser->extractInsertValues($columnKeywords));
+    }
+
+    public function testInsertSelectSourceStartsAfterQuotedKeywordIdentifiers(): void
+    {
+        $parser = new SqliteParser();
+        $sql = 'INSERT INTO "select" ("select", "values") SELECT 1, 2';
+
+        self::assertTrue($parser->hasInsertSelect($sql));
+        self::assertSame('SELECT 1, 2', $parser->extractInsertSelect($sql));
+    }
+
+    public function testInsertSourceRequiresInsertOrReplaceStatement(): void
+    {
+        $parser = new SqliteParser();
+
+        self::assertSame([], $parser->extractInsertValues('SELECT VALUES (1)'));
+        self::assertSame([], $parser->extractInsertValues('VALUES (1)'));
+        self::assertFalse($parser->hasInsertSelect('VALUES SELECT 1'));
+        self::assertNull($parser->extractInsertSelect('VALUES SELECT 1'));
+    }
+
+    public function testReplaceUsesValuesAndSelectSources(): void
+    {
+        $parser = new SqliteParser();
+        $values = 'REPLACE INTO target VALUES (1)';
+        $select = 'REPLACE INTO target SELECT 1';
+
+        self::assertSame([['1']], $parser->extractInsertValues($values));
+        self::assertFalse($parser->hasInsertSelect($values));
+        self::assertTrue($parser->hasInsertSelect($select));
+        self::assertSame('SELECT 1', $parser->extractInsertSelect($select));
+    }
+
+    public function testInsertSelectSourceTrimsTrailingWhitespace(): void
+    {
+        $parser = new SqliteParser();
+
+        self::assertSame('SELECT 1', $parser->extractInsertSelect("INSERT INTO target SELECT 1 \n\t"));
+    }
 }
