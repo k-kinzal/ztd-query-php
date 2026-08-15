@@ -427,4 +427,33 @@ final class PostgreSqlCteShadowingTest extends TestCase
         }
     }
 
+    public function testInsertWithoutColumnListSupportsConstraintKeywordPrefixes(): void
+    {
+        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $table = 'booking_' . bin2hex(random_bytes(8));
+
+        try {
+            $rawPdo->exec(sprintf('CREATE TABLE %s (id INT PRIMARY KEY, guest TEXT, check_in TEXT, check_out TEXT)', $table));
+            $ztdPdo = ZtdPdo::fromPdo($rawPdo, null);
+
+            self::assertSame(1, $ztdPdo->exec(sprintf(
+                "INSERT INTO %s VALUES (1, 'Alice', '2024-01-01', '2024-01-03')",
+                $table,
+            )));
+
+            $bookings = $ztdPdo->query(sprintf('SELECT * FROM %s', $table));
+            self::assertNotFalse($bookings);
+            self::assertSame([
+                [
+                    'id' => 1,
+                    'guest' => 'Alice',
+                    'check_in' => '2024-01-01',
+                    'check_out' => '2024-01-03',
+                ],
+            ], $bookings->fetchAll());
+        } finally {
+            $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
+        }
+    }
+
 }

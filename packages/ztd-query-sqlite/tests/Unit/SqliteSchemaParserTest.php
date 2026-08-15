@@ -1905,4 +1905,17 @@ final class SqliteSchemaParserTest extends SchemaParserContractTest
         self::assertSame('TEXT', $result->columnTypes['col one']);
         self::assertSame('INTEGER', $result->columnTypes['col two']);
     }
+
+    public function testConstraintKeywordPrefixesRemainColumnNames(): void
+    {
+        $parser = new SqliteSchemaParser();
+        $sql = 'CREATE TABLE bookings (id INT, check_in TEXT, checkout_date TEXT, unique_value TEXT, constraint_name TEXT, foreign_key_id INT)';
+        $result = $parser->parse($sql);
+
+        self::assertNotNull($result);
+        self::assertSame(
+            ['id', 'check_in', 'checkout_date', 'unique_value', 'constraint_name', 'foreign_key_id'],
+            $result->columns,
+        );
+    }
 }

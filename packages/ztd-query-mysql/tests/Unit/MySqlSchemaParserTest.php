@@ -529,4 +529,17 @@ final class MySqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame('unique_0', $keys[0]);
         self::assertSame('unique_1', $keys[1]);
     }
+
+    public function testConstraintKeywordPrefixesRemainColumnNames(): void
+    {
+        $schemaParser = new MySqlSchemaParser(new MySqlParser());
+        $sql = 'CREATE TABLE bookings (id INT, check_in TEXT, checkout_date TEXT, unique_value TEXT, constraint_name TEXT, foreign_key_id INT)';
+        $definition = $schemaParser->parse($sql);
+
+        self::assertNotNull($definition);
+        self::assertSame(
+            ['id', 'check_in', 'checkout_date', 'unique_value', 'constraint_name', 'foreign_key_id'],
+            $definition->columns,
+        );
+    }
 }

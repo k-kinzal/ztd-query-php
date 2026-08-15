@@ -494,4 +494,24 @@ final class SqliteCteShadowingTest extends TestCase
         self::assertNotFalse($join);
         self::assertSame([['id' => 1, 'label' => 'join items']], $join->fetchAll());
     }
+
+    public function testInsertWithoutColumnListSupportsConstraintKeywordPrefixes(): void
+    {
+        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo->exec('CREATE TABLE bookings (id INT PRIMARY KEY, guest TEXT, check_in TEXT, check_out TEXT)');
+        $ztdPdo = ZtdPdo::fromPdo($rawPdo, null);
+
+        self::assertSame(1, $ztdPdo->exec("INSERT INTO bookings VALUES (1, 'Alice', '2024-01-01', '2024-01-03')"));
+
+        $bookings = $ztdPdo->query('SELECT * FROM bookings');
+        self::assertNotFalse($bookings);
+        self::assertSame([
+            [
+                'id' => 1,
+                'guest' => 'Alice',
+                'check_in' => '2024-01-01',
+                'check_out' => '2024-01-03',
+            ],
+        ], $bookings->fetchAll());
+    }
 }
