@@ -372,4 +372,30 @@ final class PostgreSqlCteShadowingTest extends TestCase
         }
     }
 
+    public function testCommentsRemainLexicalWhitespaceAcrossPostgreSqlMutations(): void
+    {
+        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $table = 'comment_' . bin2hex(random_bytes(8));
+
+        try {
+            $rawPdo->exec(sprintf('CREATE TABLE %s (id INTEGER PRIMARY KEY, status INTEGER)', $table));
+            $ztdPdo = ZtdPdo::fromPdo($rawPdo, null);
+
+            $ztdPdo->exec(sprintf('INSERT INTO %s VALUES (1, 1)', $table));
+            $ztdPdo->exec(sprintf('INSERT INTO/* table */%s VALUES (2, 1)', $table));
+            $ztdPdo->exec(sprintf("-- deactivate item\nUPDATE/* table */%s SET status = 0 WHERE id = 1", $table));
+            $ztdPdo->exec(sprintf('DELETE FROM/* table */%s WHERE id = 2', $table));
+
+            $status = $ztdPdo->query(sprintf('SELECT status FROM/* table */%s WHERE id = 1', $table));
+            self::assertNotFalse($status);
+            self::assertSame(0, $status->fetchColumn());
+
+            $ids = $ztdPdo->query(sprintf("-- SELECT * FROM other_table WHERE DELETE UPDATE INSERT\nSELECT id FROM %s ORDER BY id", $table));
+            self::assertNotFalse($ids);
+            self::assertSame([1], $ids->fetchAll(\PDO::FETCH_COLUMN));
+        } finally {
+            $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
+        }
+    }
+
 }

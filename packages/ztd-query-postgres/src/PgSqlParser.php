@@ -23,7 +23,7 @@ final class PgSqlParser
      */
     public function classifyStatement(string $sql): ?string
     {
-        $trimmed = $this->stripLeadingComments($sql);
+        $trimmed = $this->maskComments($sql);
 
         if (preg_match('/^\s*WITH\b/i', $trimmed) === 1) {
             return $this->classifyWithStatement($trimmed);
@@ -169,6 +169,7 @@ final class PgSqlParser
      */
     public function extractInsertTable(string $sql): ?string
     {
+        $sql = $this->maskComments($sql);
         if (preg_match('/INSERT\s+INTO\s+(?:ONLY\s+)?("[^"]+"|[a-zA-Z_]\w*(?:\."[^"]+"|\.(?:[a-zA-Z_]\w*))?)(?:\s+AS\s+"?(\w+)"?)?/i', $sql, $m) === 1) {
             return $this->unquoteIdentifier($this->stripSchemaPrefix($m[1]));
         }
@@ -183,6 +184,7 @@ final class PgSqlParser
      */
     public function extractInsertColumns(string $sql): array
     {
+        $sql = $this->maskComments($sql);
         if (preg_match('/INSERT\s+INTO\s+(?:ONLY\s+)?(?:"[^"]+"|[a-zA-Z_]\w*(?:\."[^"]+"|\.(?:[a-zA-Z_]\w*))?)\s*\(([^)]+)\)\s*(?:VALUES|SELECT|DEFAULT)/i', $sql, $m) === 1) {
             return $this->parseColumnList($m[1]);
         }
@@ -197,6 +199,7 @@ final class PgSqlParser
      */
     public function extractInsertValues(string $sql): array
     {
+        $sql = $this->maskComments($sql);
         $rows = [];
         if (preg_match('/\bVALUES\s*(\(.+)/is', $sql, $m) !== 1) {
             return [];
@@ -231,6 +234,7 @@ final class PgSqlParser
      */
     public function hasOnConflict(string $sql): bool
     {
+        $sql = $this->maskComments($sql);
         return preg_match('/\bON\s+CONFLICT\b/i', $sql) === 1;
     }
 
@@ -241,6 +245,7 @@ final class PgSqlParser
      */
     public function extractOnConflictUpdateColumns(string $sql): array
     {
+        $sql = $this->maskComments($sql);
         $columns = [];
         /** @var array<string, string> $values */
         $values = [];
@@ -272,6 +277,7 @@ final class PgSqlParser
      */
     public function hasInsertSelect(string $sql): bool
     {
+        $sql = $this->maskComments($sql);
         $stripped = $this->stripStringLiterals($sql);
         if (preg_match('/\bVALUES\b/i', $stripped) === 1) {
             return false;
@@ -285,6 +291,7 @@ final class PgSqlParser
      */
     public function extractInsertSelectSql(string $sql): ?string
     {
+        $sql = $this->maskComments($sql);
         $stripped = $this->stripStringLiterals($sql);
         if (preg_match('/\bSELECT\b/i', $stripped, $m, PREG_OFFSET_CAPTURE) === 1) {
             $offset = $m[0][1];
@@ -300,6 +307,7 @@ final class PgSqlParser
      */
     public function extractUpdateTable(string $sql): ?string
     {
+        $sql = $this->maskComments($sql);
         if (preg_match('/UPDATE\s+(?:ONLY\s+)?("[^"]+"|[a-zA-Z_]\w*(?:\."[^"]+"|\.(?:[a-zA-Z_]\w*))?)(?:\s+(?:AS\s+)?("[^"]+"|[a-zA-Z_]\w*))?/i', $sql, $m) === 1) {
             return $this->unquoteIdentifier($this->stripSchemaPrefix($m[1]));
         }
@@ -312,6 +320,7 @@ final class PgSqlParser
      */
     public function extractUpdateAlias(string $sql): ?string
     {
+        $sql = $this->maskComments($sql);
         if (preg_match('/UPDATE\s+(?:ONLY\s+)?(?:"[^"]+"|[a-zA-Z_]\w*(?:\."[^"]+"|\.(?:[a-zA-Z_]\w*))?)\s+(?:AS\s+)?("[^"]+"|[a-zA-Z_]\w*)\s+SET\b/i', $sql, $m) === 1) {
             return $this->unquoteIdentifier($m[1]);
         }
@@ -326,6 +335,7 @@ final class PgSqlParser
      */
     public function extractUpdateSets(string $sql): array
     {
+        $sql = $this->maskComments($sql);
         if (preg_match('/\bSET\s+(.+?)(?:\s+FROM\s+|\s+WHERE\s+|\s+RETURNING\s+|$)/is', $sql, $m) !== 1) {
             return [];
         }
@@ -350,6 +360,7 @@ final class PgSqlParser
      */
     public function extractWhereClause(string $sql): ?string
     {
+        $sql = $this->maskComments($sql);
         $stripped = $this->stripStringLiterals($sql);
         if (preg_match('/\bWHERE\b/i', $stripped, $m, PREG_OFFSET_CAPTURE) !== 1) {
             return null;
@@ -417,6 +428,7 @@ final class PgSqlParser
      */
     public function extractUpdateFromClause(string $sql): ?string
     {
+        $sql = $this->maskComments($sql);
         if (preg_match('/\bFROM\s+(.+?)(?:\s+WHERE\s+|\s+RETURNING\s+|$)/is', $sql, $m) === 1) {
             $stripped = $this->stripStringLiterals($sql);
             if (preg_match('/\bSET\b.*?\bFROM\b/is', $stripped) === 1) {
@@ -432,6 +444,7 @@ final class PgSqlParser
      */
     public function extractDeleteTable(string $sql): ?string
     {
+        $sql = $this->maskComments($sql);
         if (preg_match('/DELETE\s+FROM\s+(?:ONLY\s+)?("[^"]+"|[a-zA-Z_]\w*(?:\."[^"]+"|\.(?:[a-zA-Z_]\w*))?)(?:\s+(?:AS\s+)?("[^"]+"|[a-zA-Z_]\w*))?/i', $sql, $m) === 1) {
             return $this->unquoteIdentifier($this->stripSchemaPrefix($m[1]));
         }
@@ -444,6 +457,7 @@ final class PgSqlParser
      */
     public function extractDeleteAlias(string $sql): ?string
     {
+        $sql = $this->maskComments($sql);
         if (preg_match('/DELETE\s+FROM\s+(?:ONLY\s+)?(?:"[^"]+"|[a-zA-Z_]\w*(?:\."[^"]+"|\.(?:[a-zA-Z_]\w*))?)\s+(?:AS\s+)?("[^"]+"|[a-zA-Z_]\w*)\s+(?:USING\b|WHERE\b|RETURNING\b|$)/i', $sql, $m) === 1) {
             return $this->unquoteIdentifier($m[1]);
         }
@@ -456,6 +470,7 @@ final class PgSqlParser
      */
     public function extractDeleteUsingClause(string $sql): ?string
     {
+        $sql = $this->maskComments($sql);
         if (preg_match('/\bUSING\s+(.+?)(?:\s+WHERE\s+|\s+RETURNING\s+|$)/is', $sql, $m) === 1) {
             return trim($m[1]);
         }
@@ -468,6 +483,7 @@ final class PgSqlParser
      */
     public function extractTruncateTable(string $sql): ?string
     {
+        $sql = $this->maskComments($sql);
         if (preg_match('/TRUNCATE\s+(?:TABLE\s+)?(?:ONLY\s+)?("[^"]+"|[a-zA-Z_]\w*(?:\."[^"]+"|\.(?:[a-zA-Z_]\w*))?)/i', $sql, $m) === 1) {
             return $this->unquoteIdentifier($this->stripSchemaPrefix($m[1]));
         }
@@ -480,6 +496,7 @@ final class PgSqlParser
      */
     public function extractCreateTableName(string $sql): ?string
     {
+        $sql = $this->maskComments($sql);
         if (preg_match('/CREATE\s+(?:TEMPORARY\s+|TEMP\s+|UNLOGGED\s+)?TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?("[^"]+"|[a-zA-Z_]\w*(?:\."[^"]+"|\.(?:[a-zA-Z_]\w*))?)/i', $sql, $m) === 1) {
             return $this->unquoteIdentifier($this->stripSchemaPrefix($m[1]));
         }
@@ -492,6 +509,7 @@ final class PgSqlParser
      */
     public function hasIfNotExists(string $sql): bool
     {
+        $sql = $this->maskComments($sql);
         return preg_match('/CREATE\s+(?:TEMPORARY\s+|TEMP\s+|UNLOGGED\s+)?TABLE\s+IF\s+NOT\s+EXISTS\b/i', $sql) === 1;
     }
 
@@ -500,6 +518,7 @@ final class PgSqlParser
      */
     public function hasCreateTableAsSelect(string $sql): bool
     {
+        $sql = $this->maskComments($sql);
         return preg_match('/CREATE\s+(?:TEMPORARY\s+|TEMP\s+|UNLOGGED\s+)?TABLE\s+.*?\bAS\s+SELECT\b/is', $sql) === 1;
     }
 
@@ -508,6 +527,7 @@ final class PgSqlParser
      */
     public function extractCreateTableSelectSql(string $sql): ?string
     {
+        $sql = $this->maskComments($sql);
         if (preg_match('/\bAS\s+(SELECT\b.+)$/is', $sql, $m) === 1) {
             return trim($m[1]);
         }
@@ -520,6 +540,7 @@ final class PgSqlParser
      */
     public function hasCreateTableLike(string $sql): bool
     {
+        $sql = $this->maskComments($sql);
         return preg_match('/CREATE\s+(?:TEMPORARY\s+|TEMP\s+|UNLOGGED\s+)?TABLE\s+.*?\(\s*LIKE\s+/is', $sql) === 1;
     }
 
@@ -528,6 +549,7 @@ final class PgSqlParser
      */
     public function extractCreateTableLikeSource(string $sql): ?string
     {
+        $sql = $this->maskComments($sql);
         if (preg_match('/\(\s*LIKE\s+("[^"]+"|[a-zA-Z_]\w*(?:\."[^"]+"|\.(?:[a-zA-Z_]\w*))?)/i', $sql, $m) === 1) {
             return $this->unquoteIdentifier($this->stripSchemaPrefix($m[1]));
         }
@@ -540,6 +562,7 @@ final class PgSqlParser
      */
     public function extractDropTableName(string $sql): ?string
     {
+        $sql = $this->maskComments($sql);
         if (preg_match('/DROP\s+TABLE\s+(?:IF\s+EXISTS\s+)?("[^"]+"|[a-zA-Z_]\w*(?:\."[^"]+"|\.(?:[a-zA-Z_]\w*))?)/i', $sql, $m) === 1) {
             return $this->unquoteIdentifier($this->stripSchemaPrefix($m[1]));
         }
@@ -552,6 +575,7 @@ final class PgSqlParser
      */
     public function hasDropTableIfExists(string $sql): bool
     {
+        $sql = $this->maskComments($sql);
         return preg_match('/DROP\s+TABLE\s+IF\s+EXISTS\b/i', $sql) === 1;
     }
 
@@ -560,6 +584,7 @@ final class PgSqlParser
      */
     public function extractAlterTableName(string $sql): ?string
     {
+        $sql = $this->maskComments($sql);
         if (preg_match('/ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:ONLY\s+)?("[^"]+"|[a-zA-Z_]\w*(?:\."[^"]+"|\.(?:[a-zA-Z_]\w*))?)/i', $sql, $m) === 1) {
             return $this->unquoteIdentifier($this->stripSchemaPrefix($m[1]));
         }
@@ -604,6 +629,7 @@ final class PgSqlParser
      */
     public function extractSelectTableNames(string $sql): array
     {
+        $sql = $this->maskComments($sql);
         $tables = [];
         $stripped = $this->stripStringLiterals($sql);
 
@@ -754,28 +780,6 @@ final class PgSqlParser
         }
 
         return null;
-    }
-
-    private function stripLeadingComments(string $sql): string
-    {
-        $result = $sql;
-        $changed = true;
-        while ($changed) {
-            $changed = false;
-            $result = ltrim($result);
-            if (str_starts_with($result, '--')) {
-                $pos = strpos($result, "\n");
-                $result = $pos !== false ? substr($result, $pos + 1) : '';
-                $changed = true;
-            }
-            if (str_starts_with($result, '/*')) {
-                $pos = strpos($result, '*/');
-                $result = $pos !== false ? substr($result, $pos + 2) : '';
-                $changed = true;
-            }
-        }
-
-        return $result;
     }
 
     /**
@@ -944,6 +948,11 @@ final class PgSqlParser
         }
 
         return $parts;
+    }
+
+    private function maskComments(string $sql): string
+    {
+        return PostgreSqlLexicalMasker::maskComments($sql);
     }
 
     private function stripStringLiterals(string $sql): string

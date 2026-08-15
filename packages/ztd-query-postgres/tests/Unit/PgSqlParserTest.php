@@ -6,9 +6,12 @@ namespace Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
+use ZtdQuery\Platform\Postgres\PostgreSqlLexicalMasker;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 
 #[CoversClass(PgSqlParser::class)]
+#[UsesClass(PostgreSqlLexicalMasker::class)]
 final class PgSqlParserTest extends TestCase
 {
     public function testClassifySelect(): void
@@ -349,6 +352,46 @@ SELECT * FROM users'));
     {
         $parser = new PgSqlParser();
         self::assertSame('SELECT', $parser->classifyStatement('/* comment */ SELECT 1'));
+    }
+
+    public function testExtractSelectTableAfterBlockComment(): void
+    {
+        $parser = new PgSqlParser();
+        self::assertSame(['my_table'], $parser->extractSelectTableNames('SELECT * FROM/* table */my_table'));
+    }
+
+    public function testExtractSelectTableIgnoresKeywordsInsideLineComment(): void
+    {
+        $parser = new PgSqlParser();
+        $sql = "-- SELECT * FROM other_table WHERE DELETE UPDATE INSERT\nSELECT * FROM items ORDER BY id";
+        self::assertSame(['items'], $parser->extractSelectTableNames($sql));
+    }
+
+    public function testExtractUpdateTableAfterNestedBlockComment(): void
+    {
+        $parser = new PgSqlParser();
+        self::assertSame('my_table', $parser->extractUpdateTable('UPDATE/* outer /* inner */ outer */my_table SET value = 1'));
+    }
+
+    public function testExtractDeleteTableAfterBlockComment(): void
+    {
+        $parser = new PgSqlParser();
+        self::assertSame('my_table', $parser->extractDeleteTable('DELETE FROM/* table */my_table WHERE id = 1'));
+    }
+
+    public function testExtractInsertTableAfterBlockComment(): void
+    {
+        $parser = new PgSqlParser();
+        self::assertSame('my_table', $parser->extractInsertTable('INSERT INTO/* table */my_table VALUES (1)'));
+    }
+
+    public function testCommentMarkersInsideQuotedValuesRemainData(): void
+    {
+        $parser = new PgSqlParser();
+        $sql = 'UPDATE users SET note = \'/* not comment */\', payload = $tag$-- not comment$tag$';
+        $sets = $parser->extractUpdateSets($sql);
+        self::assertSame("'/* not comment */'", $sets['note']);
+        self::assertSame('$tag$-- not comment$tag$', $sets['payload']);
     }
 
     public function testClassifyCreateTempTable(): void
