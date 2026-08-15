@@ -206,6 +206,7 @@ final class SqliteParser
      */
     public function extractSelectTables(string $sql): array
     {
+        $sql = $this->stripComments($sql);
         $tables = [];
 
         if (preg_match('/\bFROM\s+(.+?)(?:\s+WHERE\b|\s+GROUP\s+BY\b|\s+HAVING\b|\s+ORDER\s+BY\b|\s+LIMIT\b|\s+UNION\b|$)/is', $sql, $matches) === 1) {
@@ -241,6 +242,7 @@ final class SqliteParser
      */
     public function extractInsertColumns(string $sql): array
     {
+        $sql = $this->stripComments($sql);
         if (preg_match('/\bINTO\s+(?:"(?:[^"]|"")*"|[^\s(]+)\s*\(([^)]+)\)\s*(?:VALUES|SELECT)/i', $sql, $matches) === 1) {
             return $this->parseColumnList($matches[1]);
         }
@@ -255,6 +257,7 @@ final class SqliteParser
      */
     public function extractInsertValues(string $sql): array
     {
+        $sql = $this->stripComments($sql);
         $upper = strtoupper($sql);
         $valuesPos = strpos($upper, 'VALUES');
         if ($valuesPos === false) {
@@ -273,6 +276,7 @@ final class SqliteParser
      */
     public function extractUpdateAssignments(string $sql): array
     {
+        $sql = $this->stripComments($sql);
         if (preg_match('/\bSET\s+(.+?)(?:\s+WHERE\b|\s+ORDER\s+BY\b|\s+LIMIT\b|$)/is', $sql, $matches) !== 1) {
             return [];
         }
@@ -285,6 +289,7 @@ final class SqliteParser
      */
     public function extractWhereClause(string $sql): ?string
     {
+        $sql = $this->stripComments($sql);
         if (preg_match('/\bWHERE\s+(.+?)(?:\s+ORDER\s+BY\b|\s+LIMIT\b|\s+GROUP\s+BY\b|\s+HAVING\b|$)/is', $sql, $matches) === 1) {
             return trim($matches[1]);
         }
@@ -297,6 +302,7 @@ final class SqliteParser
      */
     public function extractOrderByClause(string $sql): ?string
     {
+        $sql = $this->stripComments($sql);
         if (preg_match('/\bORDER\s+BY\s+(.+?)(?:\s+LIMIT\b|$)/is', $sql, $matches) === 1) {
             return trim($matches[1]);
         }
@@ -309,6 +315,7 @@ final class SqliteParser
      */
     public function extractLimitClause(string $sql): ?string
     {
+        $sql = $this->stripComments($sql);
         if (preg_match('/\bLIMIT\s+(.+?)$/is', $sql, $matches) === 1) {
             return trim($matches[1]);
         }
@@ -321,6 +328,7 @@ final class SqliteParser
      */
     public function hasOnConflict(string $sql): bool
     {
+        $sql = $this->stripComments($sql);
         return preg_match('/\bON\s+CONFLICT\b/i', $sql) === 1;
     }
 
@@ -353,6 +361,7 @@ final class SqliteParser
      */
     public function extractOnConflictUpdates(string $sql): array
     {
+        $sql = $this->stripComments($sql);
         if (preg_match('/\bON\s+CONFLICT\s*(?:\([^)]*\))?\s*DO\s+UPDATE\s+SET\s+(.+?)$/is', $sql, $matches) !== 1) {
             return [];
         }
@@ -365,7 +374,7 @@ final class SqliteParser
      */
     public function hasInsertSelect(string $sql): bool
     {
-        $upper = strtoupper($sql);
+        $sql = $this->stripComments($sql);
         return preg_match('/\bINTO\s+(?:"(?:[^"]|"")*"|[^\s(]+)\s*(?:\([^)]*\)\s*)?SELECT\b/i', $sql) === 1;
     }
 
@@ -374,6 +383,7 @@ final class SqliteParser
      */
     public function extractInsertSelect(string $sql): ?string
     {
+        $sql = $this->stripComments($sql);
         if (preg_match('/\bINTO\s+(?:"(?:[^"]|"")*"|[^\s(]+)\s*(?:\([^)]*\)\s*)?(SELECT\b.+)$/is', $sql, $matches) === 1) {
             return trim($matches[1]);
         }
@@ -386,11 +396,7 @@ final class SqliteParser
      */
     public function stripComments(string $sql): string
     {
-        $result = (string) preg_replace('/\/\*.*?\*\//s', '', $sql);
-        $result = (string) preg_replace('/--[^\n]*/', '', $result);
-        $result = (string) preg_replace('/#[^\n]*/', '', $result);
-
-        return trim($result);
+        return trim(SqliteLexicalMasker::maskComments($sql));
     }
 
     /**
@@ -507,6 +513,7 @@ final class SqliteParser
 
     private function extractInsertTable(string $sql): ?string
     {
+        $sql = $this->stripComments($sql);
         if (preg_match('/\bINTO\s+("(?:[^"]|"")*"|`(?:[^`]|``)*`|\[(?:[^\]])*\]|[^\s(]+)/i', $sql, $matches) === 1) {
             return $this->unquoteIdentifier($matches[1]);
         }
@@ -520,6 +527,7 @@ final class SqliteParser
 
     private function extractUpdateTable(string $sql): ?string
     {
+        $sql = $this->stripComments($sql);
         if (preg_match('/^UPDATE\s+(?:OR\s+(?:ROLLBACK|ABORT|REPLACE|FAIL|IGNORE)\s+)?("(?:[^"]|"")*"|`(?:[^`]|``)*`|\[(?:[^\]])*\]|[^\s,]+)/i', trim($sql), $matches) === 1) {
             return $this->unquoteIdentifier($matches[1]);
         }
@@ -529,6 +537,7 @@ final class SqliteParser
 
     private function extractDeleteTable(string $sql): ?string
     {
+        $sql = $this->stripComments($sql);
         if (preg_match('/\bFROM\s+("(?:[^"]|"")*"|`(?:[^`]|``)*`|\[(?:[^\]])*\]|[^\s,]+)/i', $sql, $matches) === 1) {
             return $this->unquoteIdentifier($matches[1]);
         }
@@ -538,6 +547,7 @@ final class SqliteParser
 
     private function extractCreateTableName(string $sql): ?string
     {
+        $sql = $this->stripComments($sql);
         if (preg_match('/^CREATE\s+(?:TEMPORARY\s+)?TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?("(?:[^"]|"")*"|`(?:[^`]|``)*`|\[(?:[^\]])*\]|[^\s(]+)/i', trim($sql), $matches) === 1) {
             return $this->unquoteIdentifier($matches[1]);
         }
@@ -547,6 +557,7 @@ final class SqliteParser
 
     private function extractDropTableName(string $sql): ?string
     {
+        $sql = $this->stripComments($sql);
         if (preg_match('/^DROP\s+TABLE\s+(?:IF\s+EXISTS\s+)?("(?:[^"]|"")*"|`(?:[^`]|``)*`|\[(?:[^\]])*\]|[^\s;]+)/i', trim($sql), $matches) === 1) {
             return $this->unquoteIdentifier($matches[1]);
         }
@@ -556,6 +567,7 @@ final class SqliteParser
 
     private function extractAlterTableName(string $sql): ?string
     {
+        $sql = $this->stripComments($sql);
         if (preg_match('/^ALTER\s+TABLE\s+("(?:[^"]|"")*"|`(?:[^`]|``)*`|\[(?:[^\]])*\]|[^\s]+)/i', trim($sql), $matches) === 1) {
             return $this->unquoteIdentifier($matches[1]);
         }

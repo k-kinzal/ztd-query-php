@@ -454,4 +454,24 @@ final class SqliteCteShadowingTest extends TestCase
         self::assertSame('Test', $rows[0]['name']);
         self::assertNull($rows[0]['bio']);
     }
+
+    public function testCommentsRemainLexicalWhitespaceAcrossSqliteMutations(): void
+    {
+        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo->exec('CREATE TABLE items (id INTEGER PRIMARY KEY, status INTEGER)');
+        $ztdPdo = ZtdPdo::fromPdo($rawPdo, null);
+
+        $ztdPdo->exec('INSERT INTO items VALUES (1, 1)');
+        $ztdPdo->exec('INSERT INTO/* table */items VALUES (2, 1)');
+        $ztdPdo->exec('UPDATE/* table */items SET status = 0 WHERE id = 1');
+        $ztdPdo->exec('DELETE FROM/* table */items WHERE id = 2');
+
+        $status = $ztdPdo->query('SELECT status FROM/* table */items WHERE id = 1');
+        self::assertNotFalse($status);
+        self::assertSame(0, $status->fetchColumn());
+
+        $ids = $ztdPdo->query("-- SELECT * FROM other_table WHERE DELETE UPDATE INSERT\nSELECT id FROM items ORDER BY id");
+        self::assertNotFalse($ids);
+        self::assertSame([1], $ids->fetchAll(\PDO::FETCH_COLUMN));
+    }
 }

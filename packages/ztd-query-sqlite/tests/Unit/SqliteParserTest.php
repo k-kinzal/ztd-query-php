@@ -6,10 +6,13 @@ namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Platform\Sqlite\SqliteLexicalMasker;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
 
 #[CoversClass(SqliteParser::class)]
+#[UsesClass(SqliteLexicalMasker::class)]
 final class SqliteParserTest extends TestCase
 {
     public function testClassifySelect(): void
@@ -343,7 +346,57 @@ SELECT * FROM users'));
     public function testStripBlockComment(): void
     {
         $parser = new SqliteParser();
-        self::assertSame('SELECT 1  FROM t', $parser->stripComments('SELECT 1 /* comment */ FROM t'));
+        self::assertSame('SELECT 1   FROM t', $parser->stripComments('SELECT 1 /* comment */ FROM t'));
+    }
+
+    public function testStripBlockCommentPreservesLexicalBoundaryWithoutSurroundingSpaces(): void
+    {
+        $parser = new SqliteParser();
+        self::assertSame('SELECT FROM', $parser->stripComments('SELECT/* comment */FROM'));
+    }
+
+    public function testStripCommentsTrimsOuterWhitespace(): void
+    {
+        $parser = new SqliteParser();
+        self::assertSame('SELECT', $parser->stripComments(" \n/* comment */ SELECT \t"));
+    }
+
+    public function testStripCommentsPreservesQuotedCommentMarkers(): void
+    {
+        $parser = new SqliteParser();
+        $sql = "SELECT '/* value */', \"-- identifier\", `# identifier`, [/* identifier */] FROM users";
+        self::assertSame($sql, $parser->stripComments($sql));
+    }
+
+    public function testExtractSelectTableAfterBlockComment(): void
+    {
+        $parser = new SqliteParser();
+        self::assertSame(['my_table'], $parser->extractSelectTables('SELECT * FROM /* table */ my_table'));
+    }
+
+    public function testExtractSelectTableIgnoresKeywordsInsideLineComment(): void
+    {
+        $parser = new SqliteParser();
+        $sql = "-- SELECT * FROM other_table WHERE DELETE UPDATE INSERT\nSELECT * FROM items ORDER BY id";
+        self::assertSame(['items'], $parser->extractSelectTables($sql));
+    }
+
+    public function testExtractUpdateTargetAcrossBlockComment(): void
+    {
+        $parser = new SqliteParser();
+        self::assertSame('my_table', $parser->extractTargetTable('UPDATE/* table */my_table SET value = 1'));
+    }
+
+    public function testExtractDeleteTargetAcrossBlockComment(): void
+    {
+        $parser = new SqliteParser();
+        self::assertSame('my_table', $parser->extractTargetTable('DELETE FROM/* table */my_table WHERE id = 1'));
+    }
+
+    public function testExtractInsertTargetAcrossBlockComment(): void
+    {
+        $parser = new SqliteParser();
+        self::assertSame('my_table', $parser->extractTargetTable('INSERT INTO/* table */my_table VALUES (1)'));
     }
 
     public function testStripHashComment(): void
