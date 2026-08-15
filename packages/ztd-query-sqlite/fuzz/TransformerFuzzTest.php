@@ -39,6 +39,7 @@ final class TransformerFuzzTest extends TestCase
         $this->transformer = new SelectTransformer(new SqliteCastRenderer(), new SqliteIdentifierQuoter());
         $faker = Factory::create();
         $this->provider = new SqliteProvider($faker);
+        $faker->seed(20260815);
     }
 
     public function testTransformDoesNotCrashOnRandomSelectWithEmptyTables(): void

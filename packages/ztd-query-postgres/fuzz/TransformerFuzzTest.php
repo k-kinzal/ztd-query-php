@@ -39,6 +39,7 @@ final class TransformerFuzzTest extends TestCase
         $this->transformer = new SelectTransformer(new PgSqlCastRenderer(), new PgSqlIdentifierQuoter());
         $faker = Factory::create();
         $this->provider = new PostgreSqlProvider($faker);
+        $faker->seed(20260815);
     }
 
     public function testTransformDoesNotCrashOnRandomSelectWithEmptyTables(): void

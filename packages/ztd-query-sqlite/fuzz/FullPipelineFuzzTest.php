@@ -58,6 +58,7 @@ final class FullPipelineFuzzTest extends TestCase
     {
         $this->schemaParser = new SqliteSchemaParser();
         $this->faker = Factory::create();
+        $this->faker->seed(20260815);
         $this->provider = new SqliteProvider($this->faker);
     }
 
@@ -119,6 +120,7 @@ final class FullPipelineFuzzTest extends TestCase
 
     public function testCreateTableThenSelectDoesNotCrash(): void
     {
+        $this->faker->seed(20260815);
         for ($i = 0; $i < self::ITERATIONS; $i++) {
             $createSql = $this->provider->createTableStatement(maxDepth: 5);
             $definition = $this->schemaParser->parse($createSql);
@@ -156,6 +158,7 @@ final class FullPipelineFuzzTest extends TestCase
 
     public function testCreateTableThenInsertDoesNotCrash(): void
     {
+        $this->faker->seed(20260815);
         for ($i = 0; $i < self::ITERATIONS; $i++) {
             $createSql = $this->provider->createTableStatement(maxDepth: 5);
             $definition = $this->schemaParser->parse($createSql);
@@ -207,6 +210,7 @@ final class FullPipelineFuzzTest extends TestCase
 
     public function testCreateTableThenUpdateDoesNotCrash(): void
     {
+        $this->faker->seed(20260815);
         for ($i = 0; $i < self::ITERATIONS; $i++) {
             $createSql = $this->provider->createTableStatement(maxDepth: 5);
             $definition = $this->schemaParser->parse($createSql);
@@ -257,6 +261,7 @@ final class FullPipelineFuzzTest extends TestCase
 
     public function testCreateTableThenDeleteDoesNotCrash(): void
     {
+        $this->faker->seed(20260815);
         for ($i = 0; $i < self::ITERATIONS; $i++) {
             $createSql = $this->provider->createTableStatement(maxDepth: 5);
             $definition = $this->schemaParser->parse($createSql);
@@ -299,6 +304,7 @@ final class FullPipelineFuzzTest extends TestCase
 
     public function testCreateTableRewriteRegistersThenDmlSucceeds(): void
     {
+        $this->faker->seed(20260815);
         for ($i = 0; $i < self::ITERATIONS; $i++) {
             $createSql = $this->provider->createTableStatement(maxDepth: 5);
             $definition = $this->schemaParser->parse($createSql);
@@ -338,6 +344,7 @@ final class FullPipelineFuzzTest extends TestCase
 
     public function testShadowStoreIntegrityAfterMultipleOperations(): void
     {
+        $this->faker->seed(20260815);
         for ($i = 0; $i < self::ITERATIONS; $i++) {
             $createSql = $this->provider->createTableStatement(maxDepth: 5);
             $definition = $this->schemaParser->parse($createSql);

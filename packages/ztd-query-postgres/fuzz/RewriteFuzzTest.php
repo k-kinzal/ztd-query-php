@@ -80,6 +80,7 @@ final class RewriteFuzzTest extends TestCase
 
         $faker = Factory::create();
         $this->provider = new PostgreSqlProvider($faker);
+        $faker->seed(20260815);
     }
 
     public function testRewriteSelectReturnsReadKind(): void

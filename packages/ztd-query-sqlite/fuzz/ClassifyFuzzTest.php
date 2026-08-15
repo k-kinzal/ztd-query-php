@@ -36,6 +36,7 @@ final class ClassifyFuzzTest extends TestCase
         $this->guard = new SqliteQueryGuard(new SqliteParser());
         $faker = Factory::create();
         $this->provider = new SqliteProvider($faker);
+        $faker->seed(20260815);
     }
 
     /**

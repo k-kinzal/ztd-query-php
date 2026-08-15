@@ -40,6 +40,7 @@ final class SchemaParserFuzzTest extends TestCase
         $this->parser = new PgSqlSchemaParser();
         $faker = Factory::create();
         $this->provider = new PostgreSqlProvider($faker);
+        $faker->seed(20260815);
     }
 
     public function testParseDoesNotCrashOnRandomCreateTable(): void
