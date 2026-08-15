@@ -476,6 +476,9 @@ final class LexicalGrammar implements LexicalGrammarContract
         if (str_contains(self::OPERATOR_CHARACTERS, $char)) {
             $end = $offset;
             while (isset($sql[$end]) && str_contains(self::OPERATOR_CHARACTERS, $sql[$end])) {
+                if ($end > $offset && in_array(substr($sql, $end, 2), ['/*', '--'], true)) {
+                    break;
+                }
                 $end++;
             }
             $lexeme = substr($sql, $offset, $end - $offset);

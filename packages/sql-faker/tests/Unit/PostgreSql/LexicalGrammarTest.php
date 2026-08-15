@@ -57,6 +57,17 @@ SQL;
         );
     }
 
+    public function testTokenizesCommentsAdjacentToOperators(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'pg-17.2');
+        $sql = "SELECT a=/* outer /* inner */ outer */b, c/-- line\nd, e///* block */f";
+
+        self::assertSame(
+            ['SELECT', 'IDENT', '=', 'IDENT', ',', 'IDENT', '/', 'IDENT', ',', 'IDENT', 'Op', 'IDENT'],
+            $lexical->tokenize($sql),
+        );
+    }
+
     public function testRealizesLookaheadTokenWithRequiredFollower(): void
     {
         $lexical = new LexicalGrammar(Factory::create(), 'pg-17.2');

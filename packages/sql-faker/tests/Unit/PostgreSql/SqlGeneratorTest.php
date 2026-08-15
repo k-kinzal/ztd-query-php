@@ -100,6 +100,15 @@ final class SqlGeneratorTest extends TestCase
         self::assertNotEmpty($generator->generate('stmt'));
     }
 
+    public function testFixedSeedWithOperatorAdjacentToCommentGeneratesSql(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(72);
+        $provider = new PostgreSqlProvider($faker, 'pg-17.2');
+
+        self::assertNotEmpty($provider->sql(maxDepth: 50));
+    }
+
     public function testGenerateResetsBetweenCalls(): void
     {
         $grammar = new Grammar('stmt', [
