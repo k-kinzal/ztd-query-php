@@ -7,9 +7,9 @@ namespace Tests\Unit\SqlFaker\MySql\Bison\Ast;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\MySql\Bison\Ast\BisonDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonUnknownDeclaration;
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 
-#[CoversClass(BisonUnknownDeclaration::class)]
+#[CoversNothing]
 final class BisonUnknownDeclarationTest extends TestCase
 {
     public function testDirective(): void

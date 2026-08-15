@@ -7,14 +7,15 @@ namespace SqlFaker\Sqlite;
 use Faker\Generator as FakerGenerator;
 use LogicException;
 use SqlFaker\Grammar\Grammar;
+use SqlFaker\Grammar\LexicalException;
 use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
-use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\Grammar\Symbol;
 use SqlFaker\Grammar\Terminal;
+use SqlFaker\Grammar\TerminalInventory;
 use SqlFaker\Grammar\TerminationAnalyzer;
-use SqlFaker\Grammar\TokenJoiner;
+use SqlFaker\Sqlite\Grammar\SqliteGrammar;
 use SqlFaker\SqliteProvider;
 
 /**
@@ -28,23 +29,37 @@ use SqlFaker\SqliteProvider;
 final class SqlGenerator
 {
     private const DERIVATION_LIMIT = 5000;
+    private const LEXICAL_ATTEMPT_LIMIT = 32;
 
     private Grammar $grammar;
     private FakerGenerator $faker;
-    private SqliteProvider $provider;
+    private LexicalGrammar $lexicalGrammar;
     private TerminationAnalyzer $terminationAnalyzer;
-    private RandomStringGenerator $rsg;
 
     private int $targetDepth = PHP_INT_MAX;
     private int $derivationSteps = 0;
 
-    public function __construct(Grammar $grammar, FakerGenerator $faker, SqliteProvider $provider)
-    {
+    public function __construct(
+        Grammar $grammar,
+        FakerGenerator $faker,
+        SqliteProvider $provider,
+        ?string $version = null,
+    ) {
+        unset($provider);
         $this->grammar = $this->augmentGrammar($grammar);
         $this->faker = $faker;
-        $this->provider = $provider;
-        $this->terminationAnalyzer = new TerminationAnalyzer($this->grammar);
-        $this->rsg = new RandomStringGenerator($faker);
+        $this->lexicalGrammar = new LexicalGrammar(
+            $faker,
+            SqliteGrammar::resolveVersion($version),
+            $version === null,
+        );
+        if ($version !== null) {
+            $this->lexicalGrammar->assertTerminalsCovered(TerminalInventory::fromGrammar($this->grammar));
+        }
+        $this->terminationAnalyzer = new TerminationAnalyzer(
+            $this->grammar,
+            $this->lexicalGrammar->supports(...),
+        );
     }
 
     /**
@@ -55,14 +70,23 @@ final class SqlGenerator
      */
     public function generate(?string $startRule = null, int $targetDepth = PHP_INT_MAX): string
     {
-        $this->derivationSteps = 0;
         $this->targetDepth = max(1, $targetDepth);
-
         $start = $startRule ?? 'cmd';
+        $lastException = null;
+        for ($attempt = 0; $attempt < self::LEXICAL_ATTEMPT_LIMIT; $attempt++) {
+            $this->derivationSteps = 0;
+            $terminals = $this->derive($start);
+            try {
+                return $this->lexicalGrammar->realize(array_map(
+                    static fn (Terminal $terminal): string => $terminal->value,
+                    $terminals,
+                ));
+            } catch (LexicalException $exception) {
+                $lastException = $exception;
+            }
+        }
 
-        $terminals = $this->derive($start);
-
-        return $this->render($terminals);
+        throw $lastException ?? new LogicException('SQLite lexical realization failed.');
     }
 
     /**
@@ -100,10 +124,16 @@ final class SqlGenerator
             }
 
             $rule = $this->grammar->ruleMap[$nonTerminal->value];
-            $alternatives = $rule->alternatives;
+            if ($rule->alternatives === []) {
+                throw new LogicException("Production rule '{$nonTerminal->value}' has no alternatives.");
+            }
+            $alternatives = array_values(array_filter(
+                $rule->alternatives,
+                $this->terminationAnalyzer->isProductionViable(...),
+            ));
 
             if ($alternatives === []) {
-                throw new LogicException("Production rule '{$nonTerminal->value}' has no alternatives.");
+                throw new LogicException("Grammar rule has no lexically realizable alternative: {$nonTerminal->value}");
             }
 
             if ($this->derivationSteps >= $this->targetDepth) {
@@ -318,114 +348,4 @@ final class SqlGenerator
         return false;
     }
 
-    /**
-     * Render terminals into an SQL string.
-     *
-     * Handles SQLite-specific terminal resolution and spacing rules.
-     *
-     * @param list<Terminal> $terminals
-     */
-    private function render(array $terminals): string
-    {
-        $tokens = [];
-        foreach ($terminals as $terminal) {
-            $name = $terminal->value;
-
-            $token = match ($name) {
-                'ID', 'id' => $this->generateSqliteIdentifier(),
-                'idj' => $this->generateSqliteIdentifier(),
-                'ids' => $this->provider->stringLiteral(),
-                'STRING' => $this->provider->stringLiteral(),
-                'number' => $this->provider->integerLiteral(),
-                'INTEGER' => $this->provider->integerLiteral(),
-                'QNUMBER' => $this->provider->integerLiteral(),
-                'VARIABLE' => '?' . $this->rsg->parameterIndex(),
-
-                'LP' => '(',
-                'RP' => ')',
-                'SEMI' => ';',
-                'COMMA' => ',',
-                'DOT' => '.',
-                'EQ' => '=',
-                'LT' => '<',
-                'PLUS' => '+',
-                'MINUS' => '-',
-                'STAR' => '*',
-                'BITAND' => '&',
-                'BITNOT' => '~',
-                'CONCAT' => '||',
-                'PTR' => '->',
-
-                'JOIN_KW' => $this->generateJoinKeyword(),
-                'CTIME_KW' => $this->generateCtimeKeyword(),
-                'LIKE_KW' => $this->generateLikeKeyword(),
-
-                'AUTOINCR' => 'AUTOINCREMENT',
-                'COLUMNKW' => 'COLUMN',
-
-                default => $name,
-            };
-
-            $tokens[] = $token;
-        }
-
-        return TokenJoiner::join($tokens, [
-            ['->', '*'],
-            ['*', '->'],
-        ]);
-    }
-
-    /**
-     * @param list<string> $tokens
-     */
-    /** @var array<string, true> */
-    private const SQLITE_RESERVED_WORDS = [
-        'add' => true, 'all' => true, 'alter' => true, 'and' => true, 'as' => true,
-        'between' => true, 'by' => true, 'case' => true, 'check' => true,
-        'collate' => true, 'commit' => true, 'create' => true, 'default' => true,
-        'delete' => true, 'distinct' => true, 'do' => true, 'drop' => true,
-        'else' => true, 'end' => true, 'escape' => true, 'except' => true,
-        'exists' => true, 'for' => true, 'foreign' => true, 'from' => true,
-        'group' => true, 'having' => true, 'if' => true, 'in' => true,
-        'index' => true, 'insert' => true, 'into' => true, 'is' => true,
-        'join' => true, 'key' => true, 'limit' => true, 'match' => true,
-        'no' => true, 'not' => true, 'null' => true, 'of' => true,
-        'on' => true, 'or' => true, 'order' => true, 'primary' => true,
-        'references' => true, 'select' => true, 'set' => true, 'table' => true,
-        'then' => true, 'to' => true, 'union' => true, 'unique' => true,
-        'update' => true, 'using' => true, 'values' => true, 'when' => true,
-        'where' => true, 'with' => true,
-    ];
-
-    private function generateSqliteIdentifier(): string
-    {
-        $buf = $this->rsg->rawIdentifier();
-
-        if (isset(self::SQLITE_RESERVED_WORDS[strtolower($buf)])) {
-            return '"' . $buf . '"';
-        }
-
-        return $buf;
-    }
-
-    private function generateJoinKeyword(): string
-    {
-        /** @var string $kw */
-        $kw = $this->faker->randomElement(['LEFT', 'RIGHT', 'INNER', 'CROSS', 'NATURAL LEFT', 'NATURAL INNER', 'NATURAL CROSS']);
-        return $kw;
-    }
-
-    private function generateCtimeKeyword(): string
-    {
-        /** @var string $kw */
-        $kw = $this->faker->randomElement(['CURRENT_TIME', 'CURRENT_DATE', 'CURRENT_TIMESTAMP']);
-        return $kw;
-    }
-
-    private function generateLikeKeyword(): string
-    {
-        /** @var string $kw */
-        $kw = $this->faker->randomElement(['LIKE', 'GLOB']);
-        return $kw;
-    }
 }

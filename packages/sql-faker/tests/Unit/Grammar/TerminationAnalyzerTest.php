@@ -135,6 +135,15 @@ final class TerminationAnalyzerTest extends TestCase
         self::assertSame(0, $analyzer->estimateProductionLength($production));
     }
 
+    public function testTreatsUnknownSupportedNonTerminalAsOneToken(): void
+    {
+        $analyzer = new TerminationAnalyzer(new Grammar('start', []));
+        $production = new Production([new NonTerminal('lexer_token')]);
+
+        self::assertSame(1, $analyzer->getMinLength('lexer_token'));
+        self::assertSame(1, $analyzer->estimateProductionLength($production));
+    }
+
     public function testEstimateProductionLengthMixed(): void
     {
         $grammar = new Grammar(
@@ -158,5 +167,30 @@ final class TerminationAnalyzerTest extends TestCase
         ]);
 
         self::assertSame(3, $analyzer->estimateProductionLength($production));
+    }
+
+    public function testComputesAViewThatExcludesUnsupportedTerminals(): void
+    {
+        $unsupported = new Production([new Terminal('UNSUPPORTED')]);
+        $supported = new Production([new Terminal('SUPPORTED')]);
+        $grammar = new Grammar('start', [
+            'start' => new ProductionRule('start', [$unsupported, $supported]),
+        ]);
+        $analyzer = new TerminationAnalyzer($grammar, static fn (string $terminal): bool => $terminal !== 'UNSUPPORTED');
+
+        self::assertFalse($analyzer->isProductionViable($unsupported));
+        self::assertTrue($analyzer->isProductionViable($supported));
+        self::assertSame(1, $analyzer->getMinLength('start'));
+    }
+
+    public function testPropagatesLexicalImpossibilityThroughNonTerminals(): void
+    {
+        $grammar = new Grammar('start', [
+            'start' => new ProductionRule('start', [new Production([new NonTerminal('nested')])]),
+            'nested' => new ProductionRule('nested', [new Production([new Terminal('UNSUPPORTED')])]),
+        ]);
+        $analyzer = new TerminationAnalyzer($grammar, static fn (string $terminal): bool => $terminal !== 'UNSUPPORTED');
+
+        self::assertSame(PHP_INT_MAX, $analyzer->getMinLength('start'));
     }
 }

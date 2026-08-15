@@ -6,6 +6,7 @@ namespace Tests\Unit\SqlFaker\Sqlite;
 
 use Faker\Factory;
 use LogicException;
+use RuntimeException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
@@ -16,6 +17,7 @@ use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\Terminal;
 use SqlFaker\Grammar\TerminationAnalyzer;
+use SqlFaker\Sqlite\LexicalGrammar;
 use SqlFaker\Sqlite\Grammar\SqliteGrammar;
 use SqlFaker\Sqlite\SqlGenerator;
 use SqlFaker\Grammar\RandomStringGenerator;
@@ -61,6 +63,21 @@ final class SqlGeneratorTest extends TestCase
         $result = $generator->generate('stmt');
 
         self::assertSame('SELECT foo', $result);
+    }
+
+    public function testVersionBoundGeneratorRejectsAnUnknownGrammarTerminal(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([new Terminal('NOT_A_SQLITE_TERMINAL')]),
+            ]),
+        ]);
+        $faker = Factory::create();
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('NOT_A_SQLITE_TERMINAL');
+
+        new SqlGenerator($grammar, $faker, new SqliteProvider($faker), 'sqlite-3.47.2');
     }
 
     public function testGenerateDefaultStartRule(): void
@@ -240,7 +257,7 @@ final class SqlGeneratorTest extends TestCase
 
         $result = $generator->generate('stmt');
 
-        self::assertSame('1ST 2ND', $result);
+        self::assertSame(['INTEGER', 'ID', 'INTEGER', 'ID'], (new LexicalGrammar($faker, 'sqlite-3.47.2', true))->tokenize($result));
     }
 
     public function testGenerateWithNestedNonTerminals(): void
@@ -265,7 +282,7 @@ final class SqlGeneratorTest extends TestCase
 
         $result = $generator->generate('stmt');
 
-        self::assertSame('SELECT 42', $result);
+        self::assertSame(['SELECT', 'INTEGER'], (new LexicalGrammar($faker, 'sqlite-3.47.2', true))->tokenize($result));
     }
 
     public function testGenerateWithEmptyProductionSymbols(): void
@@ -371,7 +388,7 @@ final class SqlGeneratorTest extends TestCase
         $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
 
         $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('Exceeded derivation limit while generating SQL.');
+        $this->expectExceptionMessage('Grammar rule has no lexically realizable alternative: infinite');
 
         $generator->generate('infinite');
     }
@@ -469,9 +486,9 @@ final class SqlGeneratorTest extends TestCase
             ]),
         ]);
         $faker = Factory::create();
-        $faker->seed(12345);
         $provider = new SqliteProvider($faker);
         $generator = new SqlGenerator($grammar, $faker, $provider);
+        $faker->seed(12345);
 
         $result = $generator->generate('stmt');
 
@@ -547,7 +564,10 @@ final class SqlGeneratorTest extends TestCase
         $faker->seed(12345);
         $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
 
-        self::assertSame('[x]', $generator->generate('stmt'));
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Unterminated SQLite bracket identifier.');
+
+        $generator->generate('stmt');
     }
 
     public function testGenerateSpacingCommaNoSpaceBefore(): void
@@ -792,29 +812,39 @@ final class SqlGeneratorTest extends TestCase
 
     public function testGenerateIdentifierQuotesReservedWords(): void
     {
+        $reservedWords = ['as', 'by', 'do', 'if', 'in', 'is', 'no', 'of', 'on', 'or', 'to',
+            'add', 'all', 'and', 'for', 'key', 'not', 'set'];
         $grammar = new Grammar('stmt', [
             'stmt' => new ProductionRule('stmt', [
                 new Production([new Terminal('ID')]),
             ]),
+            'keyword_catalog' => new ProductionRule('keyword_catalog', [
+                new Production(array_map(
+                    static fn (string $keyword): Terminal => new Terminal(strtoupper($keyword)),
+                    $reservedWords,
+                )),
+            ]),
         ]);
-
-        $reservedWords = ['as', 'by', 'do', 'if', 'in', 'is', 'no', 'of', 'on', 'or', 'to',
-            'add', 'all', 'and', 'for', 'key', 'not', 'set'];
 
         $faker = Factory::create();
         $provider = new SqliteProvider($faker);
         $generator = new SqlGenerator($grammar, $faker, $provider);
 
-        array_map(static function (int $seed) use ($faker, $generator, $reservedWords): void {
+        $invalid = array_filter(array_map(static function (int $seed) use ($faker, $generator, $reservedWords): ?string {
             $faker->seed($seed);
             $result = $generator->generate('stmt');
 
-            $bare = strtolower(trim($result, '"'));
-            if (in_array($bare, $reservedWords, true)) {
-                self::assertStringStartsWith('"', $result, "Seed $seed: reserved word '$result' should be quoted");
-                self::assertStringEndsWith('"', $result, "Seed $seed: reserved word '$result' should be quoted");
+            $bare = strtolower(trim($result, '"`[]'));
+            if (!in_array($bare, $reservedWords, true)) {
+                return null;
             }
-        }, range(0, 9999));
+
+            return preg_match('/^(?:"(?:""|[^"])*"|`(?:``|[^`])*`|\[[^]]*])$/', $result) === 1
+                ? null
+                : "Seed {$seed}: {$result}";
+        }, range(0, 9999)));
+
+        self::assertSame([], $invalid);
     }
 
     /**
@@ -861,15 +891,16 @@ final class SqlGeneratorTest extends TestCase
      */
     public static function providerGenerateLexicalToken(): iterable
     {
-        yield 'ID' => ['ID', '/^[a-z_][a-z0-9_]*$/'];
-        yield 'id' => ['id', '/^[a-z_][a-z0-9_]*$/'];
-        yield 'idj' => ['idj', '/^[a-z_][a-z0-9_]*$/'];
-        yield 'ids' => ['ids', "/^'[a-zA-Z0-9_]+'$/"];
-        yield 'STRING' => ['STRING', "/^'[a-zA-Z0-9_]+'$/"];
-        yield 'INTEGER' => ['INTEGER', '/^[1-9]\d*$/'];
-        yield 'number' => ['number', '/^[1-9]\d*$/'];
-        yield 'QNUMBER' => ['QNUMBER', '/^[1-9]\d*$/'];
-        yield 'VARIABLE' => ['VARIABLE', '/^\?\d{1,2}$/'];
+        yield 'ID' => ['ID', '/^(?:[a-z_][a-z0-9_]*|"(?:""|[^"])*"|`(?:``|[^`])*`|\[[^]]*])$/'];
+        yield 'id' => ['id', '/^(?:[a-z_][a-z0-9_]*|"(?:""|[^"])*"|`(?:``|[^`])*`|\[[^]]*])$/'];
+        yield 'idj' => ['idj', '/^(?:[a-z_][a-z0-9_]*|"(?:""|[^"])*"|`(?:``|[^`])*`|\[[^]]*])$/'];
+        yield 'ids' => ['ids', "/^'(?:''|[^'])*'$/s"];
+        yield 'STRING' => ['STRING', "/^'(?:''|[^'])*'$/s"];
+        yield 'BLOB' => ['BLOB', "/^X'(?:[0-9a-f]{2})*'$/"];
+        yield 'INTEGER' => ['INTEGER', '/^\d+$/'];
+        yield 'number' => ['number', '/^\d+$/'];
+        yield 'QNUMBER' => ['QNUMBER', '/^\d(?:_?\d)*$/'];
+        yield 'VARIABLE' => ['VARIABLE', '/^(?:\?\d*|[:@$][A-Za-z_][A-Za-z0-9_]*)$/'];
     }
 
     /**
@@ -877,7 +908,7 @@ final class SqlGeneratorTest extends TestCase
      */
     public static function providerGenerateCompoundKeyword(): iterable
     {
-        yield 'JOIN_KW' => ['JOIN_KW', '/^(LEFT|RIGHT|INNER|CROSS|NATURAL LEFT|NATURAL INNER|NATURAL CROSS)$/'];
+        yield 'JOIN_KW' => ['JOIN_KW', '/^(CROSS|FULL|INNER|LEFT|NATURAL|OUTER|RIGHT)$/'];
         yield 'CTIME_KW' => ['CTIME_KW', '/^(CURRENT_TIME|CURRENT_DATE|CURRENT_TIMESTAMP)$/'];
         yield 'LIKE_KW' => ['LIKE_KW', '/^(LIKE|GLOB)$/'];
     }

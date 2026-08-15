@@ -5,35 +5,20 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
+use SqlFaker\Grammar\LexicalProfileBuilder;
+use SqlFaker\Grammar\SqlVersion;
 use SqlFaker\MySql\Bison\BisonParser;
 use SqlFaker\MySql\Grammar\GrammarCompiler;
+use SqlFaker\MySql\Grammar\TerminalInventory;
 
 /**
- * Build script for generating AST cache from MySQL's sql_yacc.yy
+ * Build script for generating a versioned grammar and lexical profile from MySQL sources.
  *
  * Usage:
- *   php bin/build-mysql.php                    # Use default version (mysql-8.4.7)
- *   php bin/build-mysql.php --tag trunk        # Use trunk branch
+ *   php bin/build-mysql.php                    # Use the default supported version
  *   php bin/build-mysql.php --tag mysql-8.4.7  # Use specific tag
  *   php bin/build-mysql.php --all              # Build all supported versions
  */
-
-/**
- * Supported MySQL versions (latest patch for each minor version)
- */
-const SUPPORTED_VERSIONS = [
-    'mysql-5.6.51',
-    'mysql-5.7.44',
-    'mysql-8.0.44',
-    'mysql-8.1.0',
-    'mysql-8.2.0',
-    'mysql-8.3.0',
-    'mysql-8.4.7',
-    'mysql-9.0.1',
-    'mysql-9.1.0',
-];
-
-const DEFAULT_VERSION = 'mysql-8.4.7';
 
 function parseArguments(array $argv): array
 {
@@ -50,11 +35,11 @@ function parseArguments(array $argv): array
     }
 
     if ($buildAll) {
-        return ['tags' => SUPPORTED_VERSIONS];
+        return ['tags' => SqlVersion::names('mysql')];
     }
 
     if (empty($tags)) {
-        $tags = [DEFAULT_VERSION];
+        $tags = [SqlVersion::resolve('mysql')->name];
     }
 
     return ['tags' => $tags];
@@ -63,10 +48,6 @@ function parseArguments(array $argv): array
 function buildUrl(string $tag): string
 {
     $baseUrl = 'https://raw.githubusercontent.com/mysql/mysql-server';
-
-    if ($tag === 'trunk') {
-        return "{$baseUrl}/refs/heads/trunk/sql/sql_yacc.yy";
-    }
 
     return "{$baseUrl}/refs/tags/{$tag}/sql/sql_yacc.yy";
 }
@@ -100,8 +81,19 @@ function fetchYaccFile(string $url): string
     return $contents;
 }
 
-function buildVersion(string $tag, BisonParser $parser, GrammarCompiler $compiler): bool
-{
+function buildVersion(
+    string $tag,
+    BisonParser $parser,
+    GrammarCompiler $compiler,
+    LexicalProfileBuilder $lexical,
+): bool {
+    try {
+        $version = SqlVersion::resolve('mysql', $tag);
+    } catch (Throwable $throwable) {
+        fwrite(STDERR, $throwable->getMessage() . "\n");
+
+        return false;
+    }
     $url = buildUrl($tag);
 
     fwrite(STDOUT, "\n" . str_repeat('=', 60) . "\n");
@@ -117,22 +109,17 @@ function buildVersion(string $tag, BisonParser $parser, GrammarCompiler $compile
     try {
         $ast = $parser->parse($contents);
         $grammar = $compiler->compile($ast);
+        fwrite(STDOUT, "Building lexical profile...\n");
+        $profile = $lexical->mysql($tag, $grammar);
+        $lexical->assertCompatible($profile, 'mysql', $tag, TerminalInventory::fromGrammar($grammar));
     } catch (\Throwable $e) {
-        fwrite(STDERR, "Error parsing {$tag}: {$e->getMessage()}\n");
+        fwrite(STDERR, "Error building {$tag}: {$e->getMessage()}\n");
         return false;
     }
 
     fwrite(STDOUT, "Serializing AST...\n");
 
     $serialized = serialize($grammar);
-
-    // Ensure output directory exists
-    $outputDir = __DIR__ . '/../resources/ast';
-    if (!is_dir($outputDir)) {
-        mkdir($outputDir, 0755, true);
-    }
-
-    $outputPath = $outputDir . '/' . $tag . '.php';
 
     $output = <<<PHP
 <?php
@@ -160,12 +147,13 @@ PHP;
         addcslashes($serialized, "'\\")
     );
 
-    if (file_put_contents($outputPath, $output) === false) {
-        fwrite(STDERR, "Error: Failed to write {$outputPath}\n");
+    try {
+        $lexical->publishVersion($version, $output, $profile);
+    } catch (Throwable $throwable) {
+        fwrite(STDERR, "Error publishing {$tag}: {$throwable->getMessage()}\n");
+
         return false;
     }
-
-    fwrite(STDOUT, "Generated: {$outputPath}\n");
 
     return true;
 }
@@ -179,13 +167,14 @@ function main(array $argv): int
 
     $parser = new BisonParser();
     $compiler = new GrammarCompiler();
+    $lexical = new LexicalProfileBuilder();
 
     $success = 0;
     $failed = 0;
     $failedTags = [];
 
     foreach ($tags as $tag) {
-        if (buildVersion($tag, $parser, $compiler)) {
+        if (buildVersion($tag, $parser, $compiler, $lexical)) {
             $success++;
         } else {
             $failed++;

@@ -6,67 +6,172 @@ namespace SqlFaker\MySql;
 
 use Faker\Generator as FakerGenerator;
 use LogicException;
-use SqlFaker\Grammar\RandomStringGenerator;
-use SqlFaker\Grammar\TokenJoiner;
+use SqlFaker\Grammar\LexicalException;
 use SqlFaker\MySql\Grammar\Grammar;
 use SqlFaker\MySql\Grammar\NonTerminal;
+use SqlFaker\MySql\Grammar\Production;
 use SqlFaker\MySql\Grammar\Symbol;
 use SqlFaker\MySql\Grammar\Terminal;
+use SqlFaker\MySql\Grammar\TerminalInventory;
 use SqlFaker\MySql\Grammar\TerminationAnalyzer;
 use SqlFaker\MySqlProvider;
 
 /**
- * Grammar-driven SQL generator for MySQL.
- *
- * This class generates syntactically valid SQL strings using MySQL's official grammar.
- * It implements formal grammar derivation: starting from a non-terminal symbol,
- * repeatedly replacing non-terminals with production rule right-hand sides
- * until only terminal symbols remain.
+ * Derives MySQL parser terminals and realizes them through the versioned lexer model.
  */
 final class SqlGenerator
 {
     private const DERIVATION_LIMIT = 5000;
+    private const LEXICAL_ATTEMPT_LIMIT = 32;
 
     private Grammar $grammar;
     private FakerGenerator $faker;
-    private MySqlProvider $provider;
+    private LexicalGrammar $lexicalGrammar;
     private TerminationAnalyzer $terminationAnalyzer;
-    private RandomStringGenerator $rsg;
-
     private int $targetDepth = PHP_INT_MAX;
     private int $derivationSteps = 0;
 
-    public function __construct(Grammar $grammar, FakerGenerator $faker, MySqlProvider $provider)
-    {
+    public function __construct(
+        Grammar $grammar,
+        FakerGenerator $faker,
+        MySqlProvider $provider,
+        ?string $version = null,
+    ) {
+        unset($provider);
         $this->grammar = $grammar;
         $this->faker = $faker;
-        $this->provider = $provider;
-        $this->terminationAnalyzer = new TerminationAnalyzer($grammar);
-        $this->rsg = new RandomStringGenerator($faker);
+        $this->lexicalGrammar = new LexicalGrammar(
+            $faker,
+            Grammar::resolveVersion($version),
+            $version === null,
+        );
+        if ($version !== null) {
+            $this->lexicalGrammar->assertTerminalsCovered(TerminalInventory::fromGrammar($this->grammar));
+        }
+        $this->terminationAnalyzer = new TerminationAnalyzer($grammar, $this->lexicalGrammar->supports(...));
     }
 
-    /**
-     * Generate a syntactically valid SQL string.
-     *
-     * @param string|null $startRule Grammar rule to start from (null for default)
-     * @param int $targetDepth Depth at which generator starts seeking termination (PHP_INT_MAX = unlimited)
-     */
     public function generate(?string $startRule = null, int $targetDepth = PHP_INT_MAX): string
     {
-        $this->derivationSteps = 0;
         $this->targetDepth = max(1, $targetDepth);
+        $startSymbol = $this->resolveStartSymbol($startRule);
+        $lastException = null;
+        for ($attempt = 0; $attempt < self::LEXICAL_ATTEMPT_LIMIT; $attempt++) {
+            $this->derivationSteps = 0;
+            $terminals = $this->derive($startSymbol);
+            $terminalNames = $this->normalizeParserSemantics(array_map(
+                static fn (Terminal $terminal): string => $terminal->value,
+                $terminals,
+            ));
+            try {
+                return $this->lexicalGrammar->realize($terminalNames);
+            } catch (LexicalException $exception) {
+                $lastException = $exception;
+            }
+        }
 
-        $start = $startRule ?? 'simple_statement_or_begin';
+        throw $lastException ?? new LogicException('MySQL lexical realization failed.');
+    }
 
-        $terminals = $this->derive($start);
+    private function resolveStartSymbol(?string $requested): string
+    {
+        if ($requested === null) {
+            if (isset($this->grammar->ruleMap['simple_statement_or_begin'])) {
+                return 'simple_statement_or_begin';
+            }
 
-        return $this->render($terminals);
+            return isset($this->grammar->ruleMap['statement']) ? 'statement' : $this->grammar->startSymbol;
+        }
+        if (isset($this->grammar->ruleMap[$requested])) {
+            return $requested;
+        }
+
+        $fallbacks = [
+            'select_stmt' => 'select',
+            'insert_stmt' => 'insert',
+            'update_stmt' => 'update',
+            'delete_stmt' => 'delete',
+            'create_table_stmt' => 'create',
+            'alter_table_stmt' => 'alter',
+            'drop_table_stmt' => 'drop',
+            'simple_statement' => 'statement',
+            'simple_statement_or_begin' => $this->grammar->startSymbol,
+        ];
+        $fallback = $fallbacks[$requested] ?? $requested;
+
+        return isset($this->grammar->ruleMap[$fallback]) ? $fallback : $requested;
     }
 
     /**
-     * Derivation: repeatedly replace non-terminals with production rule right-hand sides
-     * until only terminal symbols remain.
+     * Applies constraints enforced by parser semantic actions rather than the lexer or Bison grammar.
      *
+     * @param list<string> $terminals
+     * @return list<string>
+     */
+    private function normalizeParserSemantics(array $terminals): array
+    {
+        $remove = [];
+        foreach ($terminals as $index => $terminal) {
+            if ($terminal !== '@') {
+                continue;
+            }
+            for ($dot = $index - 2; $dot >= 1 && $terminals[$dot] === '.'; $dot -= 2) {
+                $remove[$dot] = true;
+                $remove[$dot - 1] = true;
+            }
+        }
+        if ($remove !== []) {
+            $terminals = array_values(array_diff_key($terminals, $remove));
+        }
+
+        foreach ($terminals as $index => $terminal) {
+            if (in_array($terminal, ['CURRENT_USER', 'CURRENT_USER_SYM'], true)
+                && ($terminals[$index + 1] ?? null) === '('
+                && ($terminals[$index + 2] ?? null) === ')'
+                && ($terminals[$index + 3] ?? null) === ':'
+            ) {
+                array_splice($terminals, $index + 1, 2);
+            }
+        }
+
+        $event = array_search('EVENT_SYM', $terminals, true);
+        $alter = array_search('ALTER_SYM', $terminals, true);
+        if ($event !== false && $alter !== false) {
+            $afterName = $event + 2;
+            if (($terminals[$afterName] ?? null) === '.' && isset($terminals[$afterName + 1])) {
+                $afterName += 2;
+            }
+            if ($afterName >= count($terminals)) {
+                $terminals[] = 'ENABLE_SYM';
+            }
+        }
+
+        $result = [];
+        foreach ($terminals as $index => $terminal) {
+            $previous = $result[count($result) - 1] ?? null;
+            if ($terminal === 'EQUAL_SYM'
+                && in_array($terminals[$index + 1] ?? null, ['ALL', 'ALL_SYM', 'ANY', 'ANY_SYM', 'SOME', 'SOME_SYM'], true)
+            ) {
+                $terminal = 'EQ';
+            }
+            if (in_array($terminal, ['RELEASE', 'RELEASE_SYM'], true)
+                && in_array($previous, ['CHAIN', 'CHAIN_SYM'], true)
+                && !in_array($result[count($result) - 2] ?? null, ['NO', 'NO_SYM'], true)
+            ) {
+                continue;
+            }
+            if (in_array($terminal, ['DECIMAL_NUM', 'FLOAT_NUM'], true)
+                && ($previous === ':' || in_array($previous, ['SYSTEM', 'SYSTEM_SYM'], true))
+            ) {
+                $terminal = 'NUM';
+            }
+            $result[] = $terminal;
+        }
+
+        return $result;
+    }
+
+    /**
      * @return list<Terminal>
      */
     private function derive(string $startSymbol): array
@@ -75,14 +180,7 @@ final class SqlGenerator
         $form = [new NonTerminal($startSymbol)];
 
         while (true) {
-            $index = null;
-            foreach ($form as $i => $sym) {
-                if ($sym instanceof NonTerminal) {
-                    $index = $i;
-                    break;
-                }
-            }
-
+            $index = $this->firstNonTerminal($form);
             if ($index === null) {
                 break;
             }
@@ -94,29 +192,20 @@ final class SqlGenerator
 
             /** @var NonTerminal $nonTerminal */
             $nonTerminal = $form[$index];
-            $rule = $this->grammar->ruleMap[$nonTerminal->value] ?? throw new LogicException("Unknown grammar rule: {$nonTerminal->value}");
-            $alternatives = $rule->alternatives;
-
-            if ($alternatives === []) {
+            $rule = $this->grammar->ruleMap[$nonTerminal->value]
+                ?? throw new LogicException("Unknown grammar rule: {$nonTerminal->value}");
+            if ($rule->alternatives === []) {
                 throw new LogicException('Production rule has no alternatives.');
             }
-
-            if ($this->derivationSteps >= $this->targetDepth) {
-                $selectedIndex = 0;
-                $bestLength = PHP_INT_MAX;
-                foreach ($alternatives as $i => $alt) {
-                    $length = $this->terminationAnalyzer->estimateProductionLength($alt);
-                    if ($length < $bestLength) {
-                        $bestLength = $length;
-                        $selectedIndex = $i;
-                    }
-                }
-            } else {
-                $selectedIndex = $this->faker->numberBetween(0, count($alternatives) - 1);
+            $alternatives = array_values(array_filter(
+                $rule->alternatives,
+                $this->terminationAnalyzer->isProductionViable(...),
+            ));
+            if ($alternatives === []) {
+                throw new LogicException("Grammar rule has no lexically realizable alternative: {$nonTerminal->value}");
             }
 
-            $production = $alternatives[$selectedIndex];
-
+            $production = $this->selectProduction($alternatives);
             $form = [
                 ...array_slice($form, 0, $index),
                 ...$production->symbols,
@@ -129,163 +218,38 @@ final class SqlGenerator
     }
 
     /**
-     * Render terminals into an SQL string.
-     *
-     * This method handles:
-     * 1. Terminal resolution: converts Terminal symbols to their string representation
-     * 2. Sanitization: fixes for constructs that exist in the grammar but are
-     *    rejected by MySQL via semantic actions (manual parse errors).
-     * 3. Spacing: MySQL's lexer distinguishes some function tokens by requiring
-     *    the '(' to follow immediately (e.g. COUNT(*)).
-     *
-     * @param list<Terminal> $terminals
+     * @param list<Symbol> $form
      */
-    private function render(array $terminals): string
+    private function firstNonTerminal(array $form): ?int
     {
-        $tokens = [];
-        foreach ($terminals as $terminal) {
-            $name = $terminal->value;
-
-            $token = match ($name) {
-                'END_OF_INPUT' => null,
-
-                'EQ' => '=',
-                'EQUAL_SYM' => '<=>',
-                'LT' => '<',
-                'GT_SYM' => '>',
-                'LE' => '<=',
-                'GE' => '>=',
-                'NE' => '<>',
-                'SHIFT_LEFT' => '<<',
-                'SHIFT_RIGHT' => '>>',
-                'AND_AND_SYM' => '&&',
-                'OR2_SYM', 'OR_OR_SYM' => '||',
-                'NOT2_SYM' => 'NOT',
-                'SET_VAR' => ':=',
-                'JSON_SEPARATOR_SYM' => '->',
-                'JSON_UNQUOTED_SEPARATOR_SYM' => '->>',
-                'NEG' => '-',
-                'PARAM_MARKER' => '?',
-
-                'IDENT' => $this->rsg->rawIdentifier(),
-                'IDENT_QUOTED' => '`' . $this->rsg->rawIdentifier() . '`',
-                'TEXT_STRING' => $this->provider->stringLiteral(),
-                'NCHAR_STRING' => $this->provider->nationalStringLiteral(),
-                'DOLLAR_QUOTED_STRING_SYM' => $this->provider->dollarQuotedString(),
-                'NUM' => $this->provider->integerLiteral(),
-                'LONG_NUM' => $this->provider->longIntegerLiteral(),
-                'ULONGLONG_NUM' => $this->provider->unsignedBigIntLiteral(),
-                'DECIMAL_NUM' => $this->provider->decimalLiteral(),
-                'FLOAT_NUM' => $this->provider->floatLiteral(),
-                'HEX_NUM' => $this->provider->hexLiteral(),
-                'BIN_NUM' => $this->provider->binaryLiteral(),
-                'LEX_HOSTNAME' => $this->provider->hostname(),
-
-                'WITH_ROLLUP_SYM' => 'WITH ROLLUP',
-
-                default => str_ends_with($name, '_SYM')
-                    ? substr($name, 0, -4)
-                    : $name,
-            };
-
-            if ($token !== null) {
-                $tokens[] = $token;
+        foreach ($form as $index => $symbol) {
+            if ($symbol instanceof NonTerminal) {
+                return $index;
             }
         }
 
-        $tokens = $this->sanitizeTokens($tokens);
-
-        return TokenJoiner::join($tokens, [['@', '*'], ['*', '@']]);
+        return null;
     }
 
     /**
-     * @param list<string> $tokens
-     * @return list<string>
+     * @param list<Production> $alternatives
      */
-    private function sanitizeTokens(array $tokens): array
+    private function selectProduction(array $alternatives): Production
     {
-        $tokens = $this->sanitizeDotAndAtTokens($tokens);
+        if ($this->derivationSteps < $this->targetDepth) {
+            return $alternatives[$this->faker->numberBetween(0, count($alternatives) - 1)];
+        }
 
-        foreach ($tokens as $j => $tok) {
-            if ($tok === 'CURRENT_USER'
-                && ($tokens[$j + 1] ?? null) === '('
-                && ($tokens[$j + 2] ?? null) === ')'
-                && ($tokens[$j + 3] ?? null) === ':'
-            ) {
-                array_splice($tokens, $j + 1, 2);
+        $selected = $alternatives[0];
+        $bestLength = $this->terminationAnalyzer->estimateProductionLength($selected);
+        foreach (array_slice($alternatives, 1) as $alternative) {
+            $length = $this->terminationAnalyzer->estimateProductionLength($alternative);
+            if ($length < $bestLength) {
+                $selected = $alternative;
+                $bestLength = $length;
             }
         }
 
-        $eventPos = array_search('EVENT', $tokens, true);
-        if ($eventPos !== false && in_array('ALTER', $tokens, true)) {
-            $afterName = $eventPos + 2;
-            $cnt = count($tokens);
-            if ($afterName < $cnt && $tokens[$afterName] === '.' && isset($tokens[$afterName + 1])) {
-                $afterName += 2;
-            }
-            if ($afterName >= $cnt) {
-                $tokens[] = 'ENABLE';
-            }
-        }
-
-        /** @var list<string> $result */
-        $result = [];
-        $count = count($tokens);
-
-        for ($i = 0; $i < $count; $i++) {
-            $token = $tokens[$i];
-            $prev = $result !== [] ? $result[count($result) - 1] : null;
-
-            if ($token === '<=>' && isset($tokens[$i + 1]) && ($tokens[$i + 1] === 'ALL' || $tokens[$i + 1] === 'ANY')) {
-                $token = '=';
-            }
-
-            if ($token === 'RELEASE' && $prev === 'CHAIN'
-                && ($result[count($result) - 2] ?? null) !== 'NO') {
-                continue;
-            }
-
-            if (($prev === ':' || $prev === 'SYSTEM') && preg_match('/^\d+\.\d+/', $token) === 1) {
-                $token = substr($token, 0, (int) strpos($token, '.'));
-            }
-
-            $result[] = $token;
-        }
-
-        return $result;
-    }
-
-    /**
-     * @param list<string> $tokens
-     * @return list<string>
-     */
-    private function sanitizeDotAndAtTokens(array $tokens): array
-    {
-        $remove = [];
-        foreach ($tokens as $j => $tok) {
-            if ($tok !== '@') {
-                continue;
-            }
-            for ($k = $j - 2; $k >= 1 && $tokens[$k] === '.'; $k -= 2) {
-                $remove[$k] = true;
-                $remove[$k - 1] = true;
-            }
-        }
-        if ($remove !== []) {
-            $tokens = array_values(array_diff_key($tokens, $remove));
-        }
-
-        foreach ($tokens as $j => $tok) {
-            if (($tokens[$j + 1] ?? null) === '@') {
-                $dotPos = strrpos($tok, '.');
-                if ($dotPos !== false) {
-                    $tokens[$j] = substr($tok, $dotPos + 1);
-                }
-            } elseif (preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*\./', $tok) === 1) {
-                $tokens[$j] = substr($tok, 0, (int) strpos($tok, '.'));
-            }
-        }
-
-        return $tokens;
+        return $selected;
     }
 }

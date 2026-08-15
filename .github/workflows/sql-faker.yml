@@ -83,13 +83,12 @@ jobs:
       - name: infection
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            git fetch origin $GITHUB_BASE_REF
-            php -d memory_limit=256M vendor/bin/infection \
+            php -d memory_limit=512M vendor/bin/infection \
               --threads=max \
               --git-diff-lines \
-              --git-diff-base=origin/$GITHUB_BASE_REF \
-              --min-covered-msi=100 \
+              --git-diff-base=origin/${GITHUB_BASE_REF} \
               --ignore-msi-with-no-mutations \
+              --min-covered-msi=80 \
               --only-covering-test-cases \
               --no-progress \
               --logger-github

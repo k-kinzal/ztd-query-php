@@ -14,12 +14,17 @@ use SqlFaker\MySql\Grammar\ProductionRule;
 use SqlFaker\MySql\Grammar\Terminal;
 use SqlFaker\MySql\Grammar\TerminationAnalyzer;
 use SqlFaker\Grammar\RandomStringGenerator;
+use SqlFaker\MySql\LexicalGrammar;
 use SqlFaker\MySql\SqlGenerator;
 use SqlFaker\MySql\StatementType;
 use SqlFaker\Grammar\TokenJoiner;
 use SqlFaker\MySqlProvider;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\UsesClass;
+use SqlFaker\Grammar\LexicalCatalog;
+use SqlFaker\Grammar\SqlVersion;
+use SqlFaker\MySql\Grammar\TerminalInventory;
 
 #[CoversClass(MySqlProvider::class)]
 #[CoversClass(TokenJoiner::class)]
@@ -32,6 +37,10 @@ use PHPUnit\Framework\Attributes\Medium;
 #[CoversClass(Terminal::class)]
 #[CoversClass(TerminationAnalyzer::class)]
 #[CoversClass(StatementType::class)]
+#[CoversClass(LexicalGrammar::class)]
+#[UsesClass(LexicalCatalog::class)]
+#[UsesClass(SqlVersion::class)]
+#[UsesClass(TerminalInventory::class)]
 #[Medium]
 final class MySqlProviderTest extends TestCase
 {
@@ -490,7 +499,10 @@ final class MySqlProviderTest extends TestCase
 
         $result = $provider->orderClause(maxDepth: 3);
 
-        self::assertMatchesRegularExpression('/\bORDER\s+BY\b/i', $result);
+        self::assertSame(
+            ['ORDER_SYM', 'BY'],
+            array_slice((new LexicalGrammar($faker, 'mysql-8.4.7'))->tokenize($result), 0, 2),
+        );
     }
 
     public function testLimitClause(): void

@@ -13,6 +13,8 @@ use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\Terminal;
 use SqlFaker\Sqlite\Grammar\SqliteGrammar;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
+use SqlFaker\Grammar\SqlVersion;
 
 #[CoversClass(SqliteGrammar::class)]
 #[CoversClass(Grammar::class)]
@@ -20,6 +22,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(Production::class)]
 #[CoversClass(Terminal::class)]
 #[CoversClass(NonTerminal::class)]
+#[UsesClass(SqlVersion::class)]
 final class SqliteGrammarTest extends TestCase
 {
     public function testLoad(): void
@@ -34,6 +37,12 @@ final class SqliteGrammarTest extends TestCase
         $grammar = SqliteGrammar::load('sqlite-3.47.2');
 
         self::assertInstanceOf(Grammar::class, $grammar);
+    }
+
+    public function testResolveVersionUsesExactConfiguredDefault(): void
+    {
+        self::assertSame('sqlite-3.47.2', SqliteGrammar::resolveVersion());
+        self::assertSame('sqlite-3.47.2', SqliteGrammar::resolveVersion('sqlite-3.47.2'));
     }
 
     public function testLoadWithNonExistentVersionThrows(): void

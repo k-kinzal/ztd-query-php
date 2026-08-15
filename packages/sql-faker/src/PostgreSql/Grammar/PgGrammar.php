@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlFaker\PostgreSql\Grammar;
 
-use RuntimeException;
 use SqlFaker\Grammar\Grammar;
+use SqlFaker\Grammar\SqlVersion;
 
 /**
  * PostgreSQL grammar loader.
@@ -14,9 +14,6 @@ use SqlFaker\Grammar\Grammar;
  */
 final class PgGrammar
 {
-    private const AST_DIR = __DIR__ . '/../../../resources/ast';
-    private const AST_META = __DIR__ . '/../../../resources/ast.php';
-
     /**
      * Load a pre-compiled PostgreSQL grammar.
      *
@@ -24,17 +21,13 @@ final class PgGrammar
      */
     public static function load(?string $version = null): Grammar
     {
-        if ($version === null) {
-            /** @var array{default_pg?: string} $meta */
-            $meta = require self::AST_META;
-            $version = $meta['default_pg'] ?? null;
-            if ($version === null) {
-                throw new RuntimeException('No default PostgreSQL version configured in ast.php');
-            }
-        }
-
-        $path = self::AST_DIR . '/' . $version . '.php';
+        $path = SqlVersion::resolve('postgresql', $version)->astPath;
 
         return Grammar::loadFromFile($path);
+    }
+
+    public static function resolveVersion(?string $version = null): string
+    {
+        return SqlVersion::resolve('postgresql', $version)->name;
     }
 }

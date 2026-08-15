@@ -44,8 +44,9 @@ final class PostgreSqlProvider extends Base
 
         $generator->addProvider($this);
 
+        $resolvedVersion = PgGrammar::resolveVersion($version);
         $this->rsg = new RandomStringGenerator($generator);
-        $this->sql = new SqlGenerator(PgGrammar::load($version), $generator, $this);
+        $this->sql = new SqlGenerator(PgGrammar::load($resolvedVersion), $generator, $this, $resolvedVersion);
     }
 
     /**

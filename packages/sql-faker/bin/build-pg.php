@@ -6,23 +6,19 @@ declare(strict_types=1);
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use SqlFaker\Grammar\GrammarCompiler;
+use SqlFaker\Grammar\LexicalProfileBuilder;
+use SqlFaker\Grammar\SqlVersion;
+use SqlFaker\Grammar\TerminalInventory;
 use SqlFaker\MySql\Bison\BisonParser;
 
 /**
- * Build script for generating AST cache from PostgreSQL's gram.y
+ * Build script for generating a versioned grammar and lexical profile from PostgreSQL sources.
  *
  * Usage:
- *   php bin/build-pg.php                      # Use default version (pg-17.2)
- *   php bin/build-pg.php --tag REL_17_STABLE  # Use specific tag
+ *   php bin/build-pg.php                 # Use the default supported version
+ *   php bin/build-pg.php --tag pg-17.2   # Use specific version
  *   php bin/build-pg.php --all                # Build all supported versions
  */
-
-const PG_SUPPORTED_VERSIONS = [
-    'pg-16.8' => 'REL_16_STABLE',
-    'pg-17.2' => 'REL_17_STABLE',
-];
-
-const PG_DEFAULT_VERSION = 'pg-17.2';
 
 function pgParseArguments(array $argv): array
 {
@@ -39,11 +35,11 @@ function pgParseArguments(array $argv): array
     }
 
     if ($buildAll) {
-        return ['versions' => array_keys(PG_SUPPORTED_VERSIONS)];
+        return ['versions' => SqlVersion::names('postgresql')];
     }
 
     if (empty($versions)) {
-        $versions = [PG_DEFAULT_VERSION];
+        $versions = [SqlVersion::resolve('postgresql')->name];
     }
 
     return ['versions' => $versions];
@@ -51,9 +47,9 @@ function pgParseArguments(array $argv): array
 
 function pgBuildUrl(string $version): string
 {
-    $branch = PG_SUPPORTED_VERSIONS[$version] ?? $version;
+    $tag = strtoupper(str_replace(['pg-', '.'], ['REL_', '_'], $version));
 
-    return "https://raw.githubusercontent.com/postgres/postgres/refs/heads/{$branch}/src/backend/parser/gram.y";
+    return "https://raw.githubusercontent.com/postgres/postgres/refs/tags/{$tag}/src/backend/parser/gram.y";
 }
 
 function pgFetchGramFile(string $url): string
@@ -85,8 +81,19 @@ function pgFetchGramFile(string $url): string
     return $contents;
 }
 
-function pgBuildVersion(string $version, BisonParser $parser, GrammarCompiler $compiler): bool
-{
+function pgBuildVersion(
+    string $version,
+    BisonParser $parser,
+    GrammarCompiler $compiler,
+    LexicalProfileBuilder $lexical,
+): bool {
+    try {
+        $sqlVersion = SqlVersion::resolve('postgresql', $version);
+    } catch (Throwable $throwable) {
+        fwrite(STDERR, $throwable->getMessage() . "\n");
+
+        return false;
+    }
     $url = pgBuildUrl($version);
 
     fwrite(STDOUT, "\n" . str_repeat('=', 60) . "\n");
@@ -102,8 +109,11 @@ function pgBuildVersion(string $version, BisonParser $parser, GrammarCompiler $c
     try {
         $ast = $parser->parse($contents);
         $grammar = $compiler->compile($ast);
+        fwrite(STDOUT, "Building lexical profile...\n");
+        $profile = $lexical->postgreSql($version);
+        $lexical->assertCompatible($profile, 'postgresql', $version, TerminalInventory::fromGrammar($grammar));
     } catch (\Throwable $e) {
-        fwrite(STDERR, "Error parsing {$version}: {$e->getMessage()}\n");
+        fwrite(STDERR, "Error building {$version}: {$e->getMessage()}\n");
         fwrite(STDERR, "Trace: {$e->getTraceAsString()}\n");
         return false;
     }
@@ -113,13 +123,6 @@ function pgBuildVersion(string $version, BisonParser $parser, GrammarCompiler $c
     fwrite(STDOUT, "Serializing AST...\n");
 
     $serialized = serialize($grammar);
-
-    $outputDir = __DIR__ . '/../resources/ast';
-    if (!is_dir($outputDir)) {
-        mkdir($outputDir, 0755, true);
-    }
-
-    $outputPath = $outputDir . '/' . $version . '.php';
 
     $output = <<<PHP
 <?php
@@ -147,12 +150,13 @@ PHP;
         addcslashes($serialized, "'\\")
     );
 
-    if (file_put_contents($outputPath, $output) === false) {
-        fwrite(STDERR, "Error: Failed to write {$outputPath}\n");
+    try {
+        $lexical->publishVersion($sqlVersion, $output, $profile);
+    } catch (Throwable $throwable) {
+        fwrite(STDERR, "Error publishing {$version}: {$throwable->getMessage()}\n");
+
         return false;
     }
-
-    fwrite(STDOUT, "Generated: {$outputPath}\n");
 
     return true;
 }
@@ -166,13 +170,14 @@ function pgMain(array $argv): int
 
     $parser = new BisonParser();
     $compiler = new GrammarCompiler();
+    $lexical = new LexicalProfileBuilder();
 
     $success = 0;
     $failed = 0;
     $failedVersions = [];
 
     foreach ($versions as $version) {
-        if (pgBuildVersion($version, $parser, $compiler)) {
+        if (pgBuildVersion($version, $parser, $compiler, $lexical)) {
             $success++;
         } else {
             $failed++;

@@ -13,6 +13,8 @@ use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\Terminal;
 use SqlFaker\PostgreSql\Grammar\PgGrammar;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
+use SqlFaker\Grammar\SqlVersion;
 
 #[CoversClass(PgGrammar::class)]
 #[CoversClass(Grammar::class)]
@@ -20,6 +22,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(Production::class)]
 #[CoversClass(Terminal::class)]
 #[CoversClass(NonTerminal::class)]
+#[UsesClass(SqlVersion::class)]
 final class PgGrammarTest extends TestCase
 {
     public function testLoad(): void
@@ -34,6 +37,12 @@ final class PgGrammarTest extends TestCase
         $grammar = PgGrammar::load('pg-17.2');
 
         self::assertInstanceOf(Grammar::class, $grammar);
+    }
+
+    public function testResolveVersionUsesExactConfiguredDefault(): void
+    {
+        self::assertSame('pg-17.2', PgGrammar::resolveVersion());
+        self::assertSame('pg-17.2', PgGrammar::resolveVersion('pg-17.2'));
     }
 
     public function testLoadWithNonExistentVersionThrows(): void

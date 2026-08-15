@@ -26,6 +26,45 @@ final class TokenJoinerTest extends TestCase
         self::assertSame('SELECT a FROM b', TokenJoiner::join(['SELECT', 'a', 'FROM', 'b']));
     }
 
+    public function testJoinUsesGeneratedTriviaAtSeparatedBoundaries(): void
+    {
+        self::assertSame('SELECT/* comment */a', TokenJoiner::join(
+            ['SELECT', 'a'],
+            [],
+            static fn (): string => '/* comment */',
+        ));
+    }
+
+    public function testJoinUsesOptionalTriviaAtOuterBoundaries(): void
+    {
+        self::assertSame('/* comment */SELECT a/* comment */', TokenJoiner::join(
+            ['SELECT', 'a'],
+            [],
+            null,
+            static fn (): string => '/* comment */',
+        ));
+    }
+
+    public function testJoinUsesOptionalTriviaAtCompactBoundaries(): void
+    {
+        self::assertSame('/* comment */COUNT/* comment */(/* comment */*/* comment */)/* comment */', TokenJoiner::join(
+            ['COUNT', '(', '*', ')'],
+            [],
+            null,
+            static fn (): string => '/* comment */',
+        ));
+    }
+
+    public function testJoinDoesNotAddOptionalTriviaToEmptyInput(): void
+    {
+        self::assertSame('', TokenJoiner::join(
+            [],
+            [],
+            null,
+            static fn (): string => '/* comment */',
+        ));
+    }
+
     public function testJoinIdentifierFollowedByOpenParen(): void
     {
         self::assertSame('COUNT(*)', TokenJoiner::join(['COUNT', '(', '*', ')']));

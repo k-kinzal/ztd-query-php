@@ -17,25 +17,39 @@ final class TokenJoiner
      * @param list<string> $tokens SQL tokens to join
      * @param list<list<string>> $noSpacePairs Additional [prev, token] pairs that need no space.
      *                                          Use '*' as wildcard for either position.
+     * @param (callable(): string)|null $separator Generates trivia for boundaries that require separation.
+     * @param (callable(): string)|null $optionalTrivia Generates optional trivia at the outer and compact boundaries.
      */
-    public static function join(array $tokens, array $noSpacePairs = []): string
-    {
+    public static function join(
+        array $tokens,
+        array $noSpacePairs = [],
+        ?callable $separator = null,
+        ?callable $optionalTrivia = null,
+    ): string {
+        if ($tokens === []) {
+            return '';
+        }
+
         $out = '';
         $prev = null;
         $count = count($tokens);
 
+        if ($optionalTrivia !== null) {
+            $out .= $optionalTrivia();
+        }
+
         for ($i = 0; $i < $count; $i++) {
             $token = $tokens[$i];
 
-            if ($out === '') {
-                $out = $token;
+            if ($prev === null) {
+                $out .= $token;
                 $prev = $token;
                 continue;
             }
 
             $needsSpace = true;
 
-            if ($token === '(' && $prev !== null && self::isIdentifier($prev)) {
+            if ($token === '(' && self::isIdentifier($prev)) {
                 $needsSpace = false;
             } elseif ($token === ')' || $prev === '(' || $token === ',' || $token === ';') {
                 $needsSpace = false;
@@ -48,11 +62,17 @@ final class TokenJoiner
             }
 
             if ($needsSpace) {
-                $out .= ' ';
+                $out .= $separator !== null ? $separator() : ' ';
+            } elseif ($optionalTrivia !== null) {
+                $out .= $optionalTrivia();
             }
 
             $out .= $token;
             $prev = $token;
+        }
+
+        if ($optionalTrivia !== null) {
+            $out .= $optionalTrivia();
         }
 
         return $out;
