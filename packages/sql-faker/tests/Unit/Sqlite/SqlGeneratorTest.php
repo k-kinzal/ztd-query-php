@@ -188,6 +188,62 @@ final class SqlGeneratorTest extends TestCase
         self::assertSame('FIRST', $result);
     }
 
+    public function testGenerateSelectsTerminatingAlternativeOnRecursiveLengthTie(): void
+    {
+        $grammar = new Grammar('value', [
+            'value' => new ProductionRule('value', [
+                new Production([new NonTerminal('value')]),
+                new Production([new Terminal('VALUE')]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        self::assertSame('VALUE', $generator->generate('value', 1));
+    }
+
+    public function testFixedSeedRejectsAProductionThatCannotFitTheDerivationBudget(): void
+    {
+        $grammar = new Grammar('value', [
+            'value' => new ProductionRule('value', [
+                new Production(array_fill(0, 5001, new NonTerminal('value'))),
+                new Production([new Terminal('VALUE')]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+
+        self::assertSame('VALUE', $generator->generate('value'));
+    }
+
+    public function testDerivationBudgetIncludesEveryRemainingNonTerminal(): void
+    {
+        $remaining = array_fill(0, 4998, new NonTerminal('leaf'));
+        $grammar = new Grammar('start', [
+            'start' => new ProductionRule('start', [
+                new Production([new NonTerminal('choice'), ...$remaining]),
+            ]),
+            'choice' => new ProductionRule('choice', [
+                new Production([new NonTerminal('extra')]),
+                new Production([new Terminal('EXPECTED')]),
+            ]),
+            'extra' => new ProductionRule('extra', [
+                new Production([new Terminal('UNEXPECTED')]),
+            ]),
+            'leaf' => new ProductionRule('leaf', [
+                new Production([new Terminal('x')]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $provider = new SqliteProvider($faker);
+        $generator = new SqlGenerator($grammar, $faker, $provider);
+        $faker->seed(3);
+
+        self::assertStringStartsWith('EXPECTED ', $generator->generate('start'));
+    }
+
     #[DataProvider('providerRandomAlternativeSeeds')]
     public function testGenerateSelectsRandomAlternativeBeforeTargetDepth(int $seed1, int $seed2): void
     {
