@@ -80,6 +80,26 @@ final class SqlGeneratorTest extends TestCase
         self::assertSame('DEFAULT_RULE_USED', $result);
     }
 
+    public function testGenerateNormalizesParserLookaheadTerminals(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([
+                    new Terminal('WITH_LA'),
+                    new Terminal('IDENT'),
+                    new Terminal('WITH'),
+                    new Terminal('TIME'),
+                ]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $provider = new PostgreSqlProvider($faker, 'pg-17.2');
+        $generator = new SqlGenerator($grammar, $faker, $provider, 'pg-17.2');
+        $faker->seed(12345);
+
+        self::assertNotEmpty($generator->generate('stmt'));
+    }
+
     public function testGenerateResetsBetweenCalls(): void
     {
         $grammar = new Grammar('stmt', [
