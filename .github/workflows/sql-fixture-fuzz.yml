@@ -11,6 +11,7 @@ on:
         type: string
 
 permissions:
+  actions: read
   contents: read
   issues: write
 
@@ -59,23 +60,29 @@ jobs:
           path: packages/sql-fixture/fuzz/corpus/${{ matrix.target.corpus }}
           key: fuzz-sql-fixture-${{ matrix.target.corpus }}-${{ github.run_id }}
 
-      - if: failure()
+      - if: ${{ always() && hashFiles('packages/sql-fixture/crash-*') != '' }}
         uses: actions/upload-artifact@v6
         with:
           name: fuzz-crashes-sql-fixture-${{ matrix.target.name }}
-          path: |
-            packages/sql-fixture/fuzz/corpus/${{ matrix.target.corpus }}/crash-*
-            packages/sql-fixture/fuzz/corpus/${{ matrix.target.corpus }}/timeout-*
+          path: packages/sql-fixture/crash-*
 
   notify:
-    name: Notify on failure
+    name: Notify on crash
     runs-on: ubuntu-latest
     needs: [fuzz]
-    if: failure()
     steps:
       - uses: actions/github-script@v8
         with:
           script: |
+            const { data } = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.runId
+            });
+            if (!data.artifacts.some(({ name }) => name.startsWith('fuzz-crashes-'))) {
+              console.log('No fuzz crash artifacts found');
+              return;
+            }
             const { data: issues } = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
               repo: context.repo.repo,
