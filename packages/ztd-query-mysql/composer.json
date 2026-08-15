@@ -16,7 +16,7 @@
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^10.5 || ^11 || ^12 || >=13.0 <13.3",
         "brianium/paratest": "^6.11 || ^7",
-        "infection/infection": "^0.28 || ^0.29 || ^0.30 || ^0.31 || ^0.32",
+        "infection/infection": "^0.28 || ^0.29 || ^0.30 || ^0.31 || ^0.32 || ^0.34.1",
         "k-kinzal/phpstan-custom-rules": "@dev",
         "phpbench/phpbench": "^1.4"
     },
