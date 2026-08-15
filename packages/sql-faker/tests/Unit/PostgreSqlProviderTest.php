@@ -6,6 +6,7 @@ namespace Tests\Unit\SqlFaker;
 
 use Faker\Factory;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\NonTerminal;
@@ -14,12 +15,17 @@ use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\Terminal;
 use SqlFaker\Grammar\TerminationAnalyzer;
 use SqlFaker\PostgreSql\Grammar\PgGrammar;
+use SqlFaker\PostgreSql\LexicalGrammar;
 use SqlFaker\PostgreSql\SqlGenerator;
 use SqlFaker\PostgreSql\StatementType;
 use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\Grammar\TokenJoiner;
 use SqlFaker\PostgreSqlProvider;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
+use SqlFaker\Grammar\LexicalCatalog;
+use SqlFaker\Grammar\SqlVersion;
+use SqlFaker\Grammar\TerminalInventory;
 
 #[CoversClass(PostgreSqlProvider::class)]
 #[CoversClass(TokenJoiner::class)]
@@ -33,6 +39,11 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(Terminal::class)]
 #[CoversClass(TerminationAnalyzer::class)]
 #[CoversClass(StatementType::class)]
+#[CoversClass(LexicalGrammar::class)]
+#[UsesClass(LexicalCatalog::class)]
+#[UsesClass(SqlVersion::class)]
+#[UsesClass(TerminalInventory::class)]
+#[Medium]
 final class PostgreSqlProviderTest extends TestCase
 {
     #[\Override]
@@ -273,7 +284,7 @@ final class PostgreSqlProviderTest extends TestCase
 
         $result = $provider->sortClause(maxDepth: 3);
 
-        self::assertMatchesRegularExpression('/\bORDER\s+BY\b/', $result);
+        self::assertSame(['ORDER', 'BY'], array_slice((new LexicalGrammar($faker, 'pg-17.2'))->tokenize($result), 0, 2));
     }
 
     public function testSelectLimit(): void

@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * Source: https://raw.githubusercontent.com/mysql/mysql-server/refs/tags/mysql-8.4.7/sql/sql_yacc.yy
  * Version: mysql-8.4.7
- * Generated: 2026-01-09 04:49:28 UTC
+ * Generated: 2026-08-14 16:38:16 UTC
  *
  * @return array<string, string>
  */

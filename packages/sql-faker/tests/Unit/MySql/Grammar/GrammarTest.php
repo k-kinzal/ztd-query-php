@@ -12,12 +12,15 @@ use SqlFaker\MySql\Grammar\Production;
 use SqlFaker\MySql\Grammar\ProductionRule;
 use SqlFaker\MySql\Grammar\Terminal;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
+use SqlFaker\Grammar\SqlVersion;
 
 #[CoversClass(Grammar::class)]
 #[CoversClass(ProductionRule::class)]
 #[CoversClass(Production::class)]
 #[CoversClass(Terminal::class)]
 #[CoversClass(NonTerminal::class)]
+#[UsesClass(SqlVersion::class)]
 final class GrammarTest extends TestCase
 {
     public function testLoad(): void
@@ -35,6 +38,12 @@ final class GrammarTest extends TestCase
         self::assertSame('start_entry', $grammar->startSymbol);
     }
 
+    public function testResolveVersionUsesExactConfiguredDefault(): void
+    {
+        self::assertSame('mysql-8.4.7', Grammar::resolveVersion());
+        self::assertSame('mysql-5.7.44', Grammar::resolveVersion('mysql-5.7.44'));
+    }
+
     public function testLoadWithExplicitVersion(): void
     {
         $grammar = Grammar::load('mysql-8.4.7');
@@ -46,7 +55,7 @@ final class GrammarTest extends TestCase
     public function testLoadWithNonExistentVersionThrowsException(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Grammar file not found');
+        $this->expectExceptionMessage('Unsupported mysql version');
 
         Grammar::load('non-existent-version');
     }

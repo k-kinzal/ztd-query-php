@@ -13,6 +13,7 @@ use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\Terminal;
 use SqlFaker\Grammar\TerminationAnalyzer;
+use SqlFaker\Sqlite\LexicalGrammar;
 use SqlFaker\Sqlite\Grammar\SqliteGrammar;
 use SqlFaker\Sqlite\SqlGenerator;
 use SqlFaker\Sqlite\StatementType;
@@ -20,6 +21,10 @@ use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\Grammar\TokenJoiner;
 use SqlFaker\SqliteProvider;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
+use SqlFaker\Grammar\LexicalCatalog;
+use SqlFaker\Grammar\SqlVersion;
+use SqlFaker\Grammar\TerminalInventory;
 
 #[CoversClass(SqliteProvider::class)]
 #[CoversClass(TokenJoiner::class)]
@@ -33,6 +38,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(Terminal::class)]
 #[CoversClass(TerminationAnalyzer::class)]
 #[CoversClass(StatementType::class)]
+#[CoversClass(LexicalGrammar::class)]
+#[UsesClass(LexicalCatalog::class)]
+#[UsesClass(SqlVersion::class)]
+#[UsesClass(TerminalInventory::class)]
 final class SqliteProviderTest extends TestCase
 {
     #[\Override]
@@ -559,7 +568,11 @@ final class SqliteProviderTest extends TestCase
 
         $sql = $provider->dropTableStatement(maxDepth: 6);
 
-        self::assertStringContainsString('DROP TABLE', $sql, "DROP TABLE must be present: {$sql}");
+        self::assertSame(
+            ['DROP', 'TABLE'],
+            array_slice((new LexicalGrammar(Factory::create(), 'sqlite-3.47.2'))->tokenize($sql), 0, 2),
+            "DROP TABLE must be present: {$sql}",
+        );
     }
 
     public function testInsertContainsInto(): void

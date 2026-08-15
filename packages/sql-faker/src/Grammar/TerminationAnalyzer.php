@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlFaker\Grammar;
 
+use Closure;
+
 /**
  * Analyzes grammar to compute minimum termination lengths for non-terminals.
  *
@@ -15,8 +17,17 @@ final class TerminationAnalyzer
     /** @var array<string, int> Non-terminal name => minimum tokens to terminate */
     private array $lengths;
 
-    public function __construct(Grammar $grammar)
+    /** @var Closure(string): bool */
+    private Closure $terminalSupported;
+
+    /**
+     * @param (callable(string): bool)|null $terminalSupported
+     */
+    public function __construct(Grammar $grammar, ?callable $terminalSupported = null)
     {
+        $this->terminalSupported = $terminalSupported !== null
+            ? Closure::fromCallable($terminalSupported)
+            : static fn (string $terminal): bool => true;
         $this->lengths = $this->computeMinTerminationLengths($grammar);
     }
 
@@ -25,7 +36,7 @@ final class TerminationAnalyzer
      */
     public function getMinLength(string $nonTerminal): int
     {
-        return $this->lengths[$nonTerminal] ?? 1;
+        return $this->lengths[$nonTerminal] ?? (($this->terminalSupported)($nonTerminal) ? 1 : PHP_INT_MAX);
     }
 
     /**
@@ -33,15 +44,12 @@ final class TerminationAnalyzer
      */
     public function estimateProductionLength(Production $production): int
     {
-        $length = 0;
-        foreach ($production->symbols as $sym) {
-            if ($sym instanceof Terminal) {
-                $length += 1;
-            } elseif ($sym instanceof NonTerminal) {
-                $length += $this->lengths[$sym->value] ?? 1;
-            }
-        }
-        return $length;
+        return $this->sumProductionLength($production->symbols, $this->lengths);
+    }
+
+    public function isProductionViable(Production $production): bool
+    {
+        return $this->estimateProductionLength($production) !== PHP_INT_MAX;
     }
 
     /**
@@ -79,12 +87,6 @@ final class TerminationAnalyzer
             }
         }
 
-        foreach ($lengths as $name => $value) {
-            if ($value === $inf) {
-                $lengths[$name] = 1;
-            }
-        }
-
         return $lengths;
     }
 
@@ -100,12 +102,19 @@ final class TerminationAnalyzer
         $total = 0;
         foreach ($symbols as $sym) {
             if ($sym instanceof Terminal) {
+                if (!(($this->terminalSupported)($sym->value))) {
+                    return PHP_INT_MAX;
+                }
                 $total++;
                 continue;
             }
             if ($sym instanceof NonTerminal) {
-                $symLen = $lengths[$sym->value] ?? PHP_INT_MAX;
+                $symLen = $lengths[$sym->value]
+                    ?? (($this->terminalSupported)($sym->value) ? 1 : PHP_INT_MAX);
                 if ($symLen === PHP_INT_MAX) {
+                    return PHP_INT_MAX;
+                }
+                if ($total > PHP_INT_MAX - $symLen) {
                     return PHP_INT_MAX;
                 }
                 $total += $symLen;

@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * Source: https://raw.githubusercontent.com/sqlite/sqlite/refs/tags/version-3.47.2/src/parse.y
  * Version: sqlite-3.47.2
- * Generated: 2026-02-07 15:38:47 UTC
+ * Generated: 2026-08-15 06:19:14 UTC
  *
  * @return array<string, string>
  */

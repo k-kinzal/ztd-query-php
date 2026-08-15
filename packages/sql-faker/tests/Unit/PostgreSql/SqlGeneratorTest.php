@@ -145,7 +145,7 @@ final class SqlGeneratorTest extends TestCase
         $generator = new SqlGenerator($grammar, $faker, new PostgreSqlProvider($faker));
 
         $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('Exceeded derivation limit while generating SQL.');
+        $this->expectExceptionMessage('Grammar rule has no lexically realizable alternative: infinite');
 
         $generator->generate('infinite');
     }
@@ -183,7 +183,7 @@ final class SqlGeneratorTest extends TestCase
     }
 
     #[DataProvider('providerGenerateLexicalToken')]
-    public function testGenerateLexicalToken(string $terminalName, string $pattern): void
+    public function testGenerateLexicalToken(string $terminalName, string $pattern, int $seed = 12345): void
     {
         $grammar = new Grammar('stmt', [
             'stmt' => new ProductionRule('stmt', [
@@ -191,9 +191,9 @@ final class SqlGeneratorTest extends TestCase
             ]),
         ]);
         $faker = Factory::create();
-        $faker->seed(12345);
         $provider = new PostgreSqlProvider($faker);
         $generator = new SqlGenerator($grammar, $faker, $provider);
+        $faker->seed($seed);
 
         $result = $generator->generate('stmt');
 
@@ -567,13 +567,18 @@ final class SqlGeneratorTest extends TestCase
     public static function providerGenerateLexicalToken(): iterable
     {
         yield 'IDENT' => ['IDENT', '/^[a-z_][a-z0-9_]*$/'];
-        yield 'SCONST' => ['SCONST', "/^'[a-zA-Z0-9_]+'$/"];
+        yield 'SCONST' => ['SCONST', "/^(?:'(?:''|[^'])*'|E'.*'|\\$.*\\$)$/s"];
         yield 'ICONST' => ['ICONST', '/^[1-9]\d*$/'];
-        yield 'FCONST' => ['FCONST', '/^\d+\.\d+$/'];
-        yield 'BCONST' => ['BCONST', "/^B'[01]+'$/"];
-        yield 'XCONST' => ['XCONST', "/^X'[0-9a-f]+'$/"];
-        yield 'Op' => ['Op', '/^[+\-*\/<>=~!@#%^&|]$/'];
+        yield 'FCONST' => ['FCONST', '/^(?:\d+\.\d*|\.\d+)$/'];
+        yield 'BCONST' => ['BCONST', "/^B'[01]*'$/"];
+        yield 'XCONST' => ['XCONST', "/^X'[0-9a-f]*'$/"];
+        yield 'Op' => ['Op', '/^[+\-*\/<>=~!@#%^&|`?]{1,4}$/'];
         yield 'PARAM' => ['PARAM', '/^\$\d+$/'];
+        yield 'escape string' => ['SCONST', '/^E\'/', 3];
+        yield 'dollar-quoted string' => ['SCONST', '/^\$.*\$$/s', 6];
+        yield 'question operator' => ['Op', '/^\?$/', 3];
+        yield 'question-or operator' => ['Op', '/^\?\|$/', 6];
+        yield 'question-and operator' => ['Op', '/^\?&$/', 20];
     }
 
     /**

@@ -6,6 +6,7 @@ namespace SqlFaker\MySql\Grammar;
 
 use InvalidArgumentException;
 use RuntimeException;
+use SqlFaker\Grammar\SqlVersion;
 
 /**
  * Represents a formal grammar for SQL generation.
@@ -18,9 +19,6 @@ use RuntimeException;
  */
 final class Grammar
 {
-    private const AST_DIR = __DIR__ . '/../../../resources/ast';
-    private const AST_META = __DIR__ . '/../../../resources/ast.php';
-
     /**
      * @param string $startSymbol The grammar's start symbol
      * @param array<string, ProductionRule> $ruleMap Non-terminal name => ProductionRule
@@ -45,13 +43,7 @@ final class Grammar
      */
     public static function load(?string $version = null): self
     {
-        if ($version === null) {
-            /** @var array{default: string} $meta */
-            $meta = require self::AST_META;
-            $version = $meta['default'];
-        }
-
-        $path = self::AST_DIR . '/' . $version . '.php';
+        $path = SqlVersion::resolve('mysql', $version)->astPath;
 
         if (!file_exists($path)) {
             throw new RuntimeException("Grammar file not found: {$path}");
@@ -70,5 +62,10 @@ final class Grammar
         }
 
         return $grammar;
+    }
+
+    public static function resolveVersion(?string $version = null): string
+    {
+        return SqlVersion::resolve('mysql', $version)->name;
     }
 }

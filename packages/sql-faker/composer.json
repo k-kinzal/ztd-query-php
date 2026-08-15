@@ -10,7 +10,7 @@
     "require-dev": {
         "brianium/paratest": "^6.11 || ^7",
         "friendsofphp/php-cs-fixer": "^3.92",
-        "infection/infection": "^0.28 || ^0.29 || ^0.30 || ^0.31 || ^0.32",
+        "infection/infection": "^0.28 || ^0.29 || ^0.30 || ^0.31 || ^0.32 || ^0.34.1",
         "k-kinzal/phpstan-custom-rules": "@dev",
         "k-kinzal/testcontainers-php": "^0.5.1",
         "nikic/php-fuzzer": "^0.0.11",
@@ -38,6 +38,8 @@
     },
     "scripts": {
         "build-mysql": "php bin/build-mysql.php",
+        "build-pg": "php bin/build-pg.php",
+        "build-sqlite": "php bin/build-sqlite.php",
         "bench": "@bench:quick",
         "bench:quick": "phpbench run bench --bootstrap=vendor/autoload.php --report=aggregate --php-config='{\"memory_limit\":\"512M\"}' --warmup=1 --iterations=3 --revs=25",
         "bench:full": "phpbench run bench --bootstrap=vendor/autoload.php --report=aggregate --php-config='{\"memory_limit\":\"512M\"}' --warmup=2 --iterations=8 --revs=100",

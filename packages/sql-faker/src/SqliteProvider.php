@@ -44,8 +44,9 @@ final class SqliteProvider extends Base
 
         $generator->addProvider($this);
 
+        $resolvedVersion = SqliteGrammar::resolveVersion($version);
         $this->rsg = new RandomStringGenerator($generator);
-        $this->sql = new SqlGenerator(SqliteGrammar::load($version), $generator, $this);
+        $this->sql = new SqlGenerator(SqliteGrammar::load($resolvedVersion), $generator, $this, $resolvedVersion);
     }
 
     /**

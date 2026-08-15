@@ -64,8 +64,9 @@ final class MySqlProvider extends Base
 
         $generator->addProvider($this);
 
+        $resolvedVersion = Grammar::resolveVersion($version);
         $this->rsg = new RandomStringGenerator($generator);
-        $this->sql = new SqlGenerator(Grammar::load($version), $generator, $this);
+        $this->sql = new SqlGenerator(Grammar::load($resolvedVersion), $generator, $this, $resolvedVersion);
     }
 
     /**
@@ -81,7 +82,7 @@ final class MySqlProvider extends Base
      */
     public function sql(?StatementType $startRule = null, int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate($startRule !== null ? $startRule->value : 'simple_statement_or_begin', $maxDepth);
+        return $this->sql->generate($startRule?->value, $maxDepth);
     }
 
     /**

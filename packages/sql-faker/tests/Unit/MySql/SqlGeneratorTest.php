@@ -18,6 +18,7 @@ use SqlFaker\MySql\Grammar\TerminationAnalyzer;
 use SqlFaker\MySql\SqlGenerator;
 use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\Grammar\TokenJoiner;
+use SqlFaker\MySql\LexicalGrammar;
 use SqlFaker\MySqlProvider;
 use PHPUnit\Framework\Attributes\CoversClass;
 
@@ -252,7 +253,7 @@ final class SqlGeneratorTest extends TestCase
 
         $result = $generator->generate('stmt');
 
-        self::assertSame('1ST 2ND', $result);
+        self::assertSame(['NUM', 'IDENT', 'NUM', 'IDENT'], (new LexicalGrammar($faker, 'mysql-8.4.7', true))->tokenize($result));
     }
 
     public function testGenerateWithNestedNonTerminals(): void
@@ -279,7 +280,7 @@ final class SqlGeneratorTest extends TestCase
 
         $result = $generator->generate('stmt');
 
-        self::assertSame('SELECT 42', $result);
+        self::assertSame(['SELECT_SYM', 'NUM'], (new LexicalGrammar($faker, 'mysql-8.4.7', true))->tokenize($result));
     }
 
     public function testGenerateWithEmptyProductionSymbols(): void
@@ -320,7 +321,7 @@ final class SqlGeneratorTest extends TestCase
         $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
 
         $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('Exceeded derivation limit while generating SQL.');
+        $this->expectExceptionMessage('Grammar rule has no lexically realizable alternative: infinite');
 
         $generator->generate('infinite');
     }
@@ -374,10 +375,9 @@ final class SqlGeneratorTest extends TestCase
     }
 
     #[DataProvider('providerGenerateLexicalToken')]
-    public function testGenerateLexicalToken(string $terminalName, string $pattern): void
+    public function testGenerateLexicalToken(string $terminalName, string $pattern, int $seed = 12345): void
     {
         $faker = Factory::create();
-        $faker->seed(12345);
         $provider = new MySqlProvider($faker);
         $grammar = new Grammar('stmt', [
             'stmt' => new ProductionRule('stmt', [
@@ -385,6 +385,7 @@ final class SqlGeneratorTest extends TestCase
             ]),
         ]);
         $generator = new SqlGenerator($grammar, $faker, $provider);
+        $faker->seed($seed);
 
         $result = $generator->generate('stmt');
 
@@ -647,9 +648,10 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
 
-        $result = $generator->generate('stmt');
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Unterminated MySQL quoted token');
 
-        self::assertSame('`incomplete ()', $result);
+        $generator->generate('stmt');
     }
 
     public function testGenerateSpaceBeforeOpenParenWhenPrecededByOperator(): void
@@ -1147,7 +1149,7 @@ final class SqlGeneratorTest extends TestCase
 
         $result = $generator->generate('stmt');
 
-        self::assertMatchesRegularExpression('/^SELECT \d+\.\d+e-?\d+$/', $result);
+        self::assertMatchesRegularExpression('/^SELECT\s+(?:\d+(?:\.\d*)?|\.\d+)[eE][+-]?\d+$/', $result);
     }
 
     /**
@@ -1190,18 +1192,20 @@ final class SqlGeneratorTest extends TestCase
     public static function providerGenerateLexicalToken(): iterable
     {
         yield 'IDENT' => ['IDENT', '/^[a-z_][a-z0-9_]*$/'];
-        yield 'IDENT_QUOTED' => ['IDENT_QUOTED', '/^`[a-z_][a-z0-9_]*`$/'];
-        yield 'TEXT_STRING' => ['TEXT_STRING', "/^'[a-zA-Z0-9_]+'$/"];
-        yield 'NCHAR_STRING' => ['NCHAR_STRING', "/^N'[a-zA-Z0-9_]+'$/"];
-        yield 'DOLLAR_QUOTED_STRING_SYM' => ['DOLLAR_QUOTED_STRING_SYM', '/^\$\$[a-zA-Z0-9_]+\$\$$/'];
+        yield 'IDENT_QUOTED' => ['IDENT_QUOTED', '/^`(?:``|[^`])+`$/'];
+        yield 'TEXT_STRING' => ['TEXT_STRING', "/^'(?:''|[^'])*'$/s"];
+        yield 'NCHAR_STRING' => ['NCHAR_STRING', "/^N'(?:''|[^'])*'$/s"];
+        yield 'DOLLAR_QUOTED_STRING_SYM' => ['DOLLAR_QUOTED_STRING_SYM', '/^\$\$.*\$\$$/s'];
         yield 'NUM' => ['NUM', '/^\d+$/'];
         yield 'LONG_NUM' => ['LONG_NUM', '/^\d+$/'];
         yield 'ULONGLONG_NUM' => ['ULONGLONG_NUM', '/^\d+$/'];
-        yield 'DECIMAL_NUM' => ['DECIMAL_NUM', '/^\d+\.\d+$/'];
-        yield 'FLOAT_NUM' => ['FLOAT_NUM', '/^\d+\.\d+e-?\d+$/'];
-        yield 'HEX_NUM' => ['HEX_NUM', '/^0x[0-9a-f]+$/'];
-        yield 'BIN_NUM' => ['BIN_NUM', '/^0b[01]+$/'];
+        yield 'DECIMAL_NUM' => ['DECIMAL_NUM', '/^(?:\d+\.\d*|\.\d+)$/'];
+        yield 'FLOAT_NUM' => ['FLOAT_NUM', '/^(?:\d+(?:\.\d*)?|\.\d+)[eE][+-]?\d+$/'];
+        yield 'HEX_NUM' => ['HEX_NUM', "/^(?:0x[0-9a-f]+|X'(?:[0-9a-f]{2})*')$/"];
+        yield 'BIN_NUM' => ['BIN_NUM', "/^(?:0b[01]+|B'[01]*')$/"];
         yield 'LEX_HOSTNAME' => ['LEX_HOSTNAME', '/^.+$/'];
+        yield 'numeric hex notation' => ['HEX_NUM', '/^0x[0-9a-f]+$/', 3];
+        yield 'quoted hex notation' => ['HEX_NUM', "/^X'(?:[0-9a-f]{2})*'$/", 0];
     }
 
     /**
