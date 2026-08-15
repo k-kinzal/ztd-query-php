@@ -7,7 +7,7 @@ namespace ZtdQuery\Platform\Sqlite;
 /**
  * Lightweight SQL parser for SQLite.
  *
- * Uses regex-based parsing focused on the SQL subset needed by ZTD:
+ * Uses lexical statement classification and focused extraction for the SQL subset needed by ZTD:
  * SELECT, INSERT, UPDATE, DELETE, CREATE TABLE, DROP TABLE, ALTER TABLE ADD COLUMN.
  *
  * Returns structured representations of parsed statements.
@@ -22,48 +22,51 @@ final class SqliteParser
      */
     public function classifyStatement(string $sql): ?string
     {
-        $trimmed = $this->stripComments($sql);
-        $trimmed = ltrim($trimmed);
-
-        if ($trimmed === '') {
+        $keywords = $this->scanTopLevelKeywords($sql);
+        if ($keywords === []) {
             return null;
         }
 
-        $upper = strtoupper($trimmed);
+        $first = $keywords[0]['keyword'];
+        $result = null;
+        if ($first === 'WITH') {
+            foreach ($keywords as $token) {
+                if (!$token['afterGroup']) {
+                    continue;
+                }
 
-        if (str_starts_with($upper, 'WITH')) {
-            return $this->classifyWithStatement($trimmed);
+                $result = match ($token['keyword']) {
+                    'SELECT' => 'SELECT',
+                    'INSERT', 'REPLACE' => 'INSERT',
+                    'UPDATE' => 'UPDATE',
+                    'DELETE' => 'DELETE',
+                    default => null,
+                };
+
+                if ($result !== null) {
+                    break;
+                }
+            }
+        } else {
+            $second = $keywords[1]['keyword'] ?? null;
+            $third = $keywords[2]['keyword'] ?? null;
+            $result = match ($first) {
+                'SELECT' => 'SELECT',
+                'INSERT', 'REPLACE' => 'INSERT',
+                'UPDATE' => 'UPDATE',
+                'DELETE' => 'DELETE',
+                'CREATE' => match ($second) {
+                    'TABLE' => 'CREATE_TABLE',
+                    'TEMPORARY' => $third === 'TABLE' ? 'CREATE_TABLE' : null,
+                    default => null,
+                },
+                'DROP' => $second === 'TABLE' ? 'DROP_TABLE' : null,
+                'ALTER' => $second === 'TABLE' ? 'ALTER_TABLE' : null,
+                default => null,
+            };
         }
 
-        if (str_starts_with($upper, 'SELECT')) {
-            return 'SELECT';
-        }
-
-        if (str_starts_with($upper, 'INSERT') || str_starts_with($upper, 'REPLACE')) {
-            return 'INSERT';
-        }
-
-        if (str_starts_with($upper, 'UPDATE')) {
-            return 'UPDATE';
-        }
-
-        if (str_starts_with($upper, 'DELETE')) {
-            return 'DELETE';
-        }
-
-        if (preg_match('/^CREATE\s+(TEMPORARY\s+)?TABLE\b/i', $trimmed) === 1) {
-            return 'CREATE_TABLE';
-        }
-
-        if (preg_match('/^DROP\s+TABLE\b/i', $trimmed) === 1) {
-            return 'DROP_TABLE';
-        }
-
-        if (preg_match('/^ALTER\s+TABLE\b/i', $trimmed) === 1) {
-            return 'ALTER_TABLE';
-        }
-
-        return null;
+        return $result;
     }
 
     /**
@@ -416,78 +419,90 @@ final class SqliteParser
         return $trimmed;
     }
 
-    private function classifyWithStatement(string $sql): ?string
+    /**
+     * @return array<int, array{keyword: string, afterGroup: bool}>
+     */
+    private function scanTopLevelKeywords(string $sql): array
     {
-        $upper = strtoupper($sql);
-        $len = strlen($upper);
+        $keywords = [];
+        $len = strlen($sql);
         $depth = 0;
-        $seenCteBody = false;
-        $quote = '';
+        $completedGroup = false;
 
         for ($i = 0; $i < $len; $i++) {
-            $char = $upper[$i];
+            $char = $sql[$i];
+            $pair = substr($sql, $i, 2);
 
-            if ($quote !== '') {
-                if ($char === $quote) {
-                    if ($i + 1 < $len && $upper[$i + 1] === $quote) {
-                        $i++;
-                    } else {
-                        $quote = '';
+            if ($pair === '--' || $char === '#') {
+                $commentLength = strcspn($sql, "\r\n", $i);
+                $i += $commentLength;
+                continue;
+            }
+
+            if ($pair === '/*') {
+                $end = strpos($sql, '*/', $i + 2);
+                if ($end === false) {
+                    break;
+                }
+                $i = $end + 1;
+                continue;
+            }
+
+            if ($char === '\'' || $char === '"' || $char === '`') {
+                $quote = $char;
+                while (true) {
+                    $end = strpos($sql, $quote, $i + 1);
+                    if ($end === false) {
+                        $i = $len;
+                        break;
                     }
+                    $i = $end;
+                    if (str_starts_with(substr($sql, $i), $quote . $quote)) {
+                        $i++;
+                        continue;
+                    }
+                    break;
                 }
                 continue;
             }
 
-            if ($char === '\'' || $char === '"') {
-                $quote = $char;
+            if ($char === '[') {
+                $end = strpos($sql, ']', $i);
+                $i = $end === false ? $len : $end;
                 continue;
             }
 
             if ($char === '(') {
                 $depth++;
-                $seenCteBody = true;
                 continue;
             }
 
             if ($char === ')') {
                 if ($depth > 0) {
                     $depth--;
+                    if ($depth === 0) {
+                        $completedGroup = true;
+                    }
                 }
                 continue;
             }
 
-            if (!$seenCteBody || $depth !== 0 || !ctype_alpha($char)) {
+            $tokenLength = strspn($sql, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_$', $i);
+            if ($tokenLength === 0) {
                 continue;
             }
 
-            $prev = $i > 0 ? $upper[$i - 1] : '';
-            if (ctype_alpha($prev)) {
-                continue;
+            $token = substr($sql, $i, $tokenLength);
+            $i += $tokenLength - 1;
+            if ($depth === 0 && strspn($token, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz') > 0) {
+                $keywords[] = [
+                    'keyword' => strtoupper($token),
+                    'afterGroup' => $completedGroup,
+                ];
             }
-
-            $j = $i;
-            while ($j < $len && ctype_alpha($upper[$j])) {
-                $j++;
-            }
-
-            $keyword = substr($upper, $i, $j - $i);
-
-            $result = match ($keyword) {
-                'SELECT' => 'SELECT',
-                'INSERT', 'REPLACE' => 'INSERT',
-                'UPDATE' => 'UPDATE',
-                'DELETE' => 'DELETE',
-                default => null,
-            };
-
-            if ($result !== null) {
-                return $result;
-            }
-
-            $i = $j - 1;
         }
 
-        return null;
+        return $keywords;
     }
 
     private function extractInsertTable(string $sql): ?string

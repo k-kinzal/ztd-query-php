@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
 
@@ -393,6 +394,68 @@ SELECT * FROM users'));
     {
         $parser = new SqliteParser();
         self::assertSame('SELECT', $parser->classifyStatement("WITH cte AS (SELECT '()') SELECT * FROM cte"));
+    }
+
+    public function testClassifyWithReplaceTreatsBlockCommentsAsLexicalSeparators(): void
+    {
+        $parser = new SqliteParser();
+        $sql = '/* lead */WITH/* separator */[select] ([select])/* separator */AS/* separator */(VALUES ("select"))/* separator */REPLACE/* separator */INTO/* separator */`select` DEFAULT/* separator */VALUES';
+        self::assertSame('INSERT', $parser->classifyStatement($sql));
+    }
+
+    public function testClassifyWithUpdateTreatsLineCommentsAsLexicalSeparators(): void
+    {
+        $parser = new SqliteParser();
+        $sql = "WITH-- separator\n\"select\" (`select`) AS (VALUES (name))-- separator\nUPDATE/* separator */name SET name = `select`";
+        self::assertSame('UPDATE', $parser->classifyStatement($sql));
+    }
+
+    public function testClassifyWithDeleteIgnoresQuotedKeywordCteNames(): void
+    {
+        $parser = new SqliteParser();
+        $sql = "WITH name AS (VALUES (name)),-- separator\n[select] AS (VALUES (`select`))-- separator\nDELETE FROM [select]";
+        self::assertSame('DELETE', $parser->classifyStatement($sql));
+    }
+
+    #[DataProvider('providerLexicalClassificationBoundaries')]
+    public function testClassifyStatementUsesLexicalBoundaries(string $sql, ?string $expected): void
+    {
+        $parser = new SqliteParser();
+        self::assertSame($expected, $parser->classifyStatement($sql));
+    }
+
+    /**
+     * @return \Generator<string, array{string, ?string}>
+     */
+    public static function providerLexicalClassificationBoundaries(): \Generator
+    {
+        yield 'with requires completed group' => ['WITH SELECT', null];
+        yield 'line comment with newline' => ["-- SELECT\nUPDATE name SET value = 1", 'UPDATE'];
+        yield 'line comment with carriage return' => ["-- SELECT\rDELETE FROM name", 'DELETE'];
+        yield 'hash comment' => ["# SELECT\nINSERT INTO name DEFAULT VALUES", 'INSERT'];
+        yield 'line comment at end' => ['-- SELECT', null];
+        yield 'minimal block comment' => ['/**/SELECT 1', 'SELECT'];
+        yield 'overlapping block delimiter is unterminated' => ['/*/SELECT 1', null];
+        yield 'block comment closing boundary' => ['/**/*SELECT 1', 'SELECT'];
+        yield 'unterminated block comment' => ['/* SELECT */ UPDATE /* SELECT', 'UPDATE'];
+        yield 'double quoted keyword' => ['"SELECT" UPDATE name SET value = 1', 'UPDATE'];
+        yield 'backtick quoted keyword' => ['`SELECT` DELETE FROM name', 'DELETE'];
+        yield 'empty single quoted string' => ["''SELECT 1", 'SELECT'];
+        yield 'empty double quoted identifier' => ['""SELECT 1', 'SELECT'];
+        yield 'doubled single quote' => ["'value''SELECT' UPDATE name SET value = 1", 'UPDATE'];
+        yield 'doubled double quote' => ['"value""SELECT" DELETE FROM name', 'DELETE'];
+        yield 'doubled backtick' => ['`value``SELECT` INSERT INTO name DEFAULT VALUES', 'INSERT'];
+        yield 'unterminated single quote' => ["'SELECT UPDATE", null];
+        yield 'unterminated double quote' => ['"SELECT UPDATE', null];
+        yield 'empty bracket identifier' => ['[]SELECT 1', 'SELECT'];
+        yield 'bracket quoted keyword' => ['[SELECT] UPDATE name SET value = 1', 'UPDATE'];
+        yield 'unterminated bracket identifier' => ['[SELECT UPDATE', null];
+        yield 'underscore identifier' => ['_SELECT UPDATE name SET value = 1', 'UPDATE'];
+        yield 'dollar identifier' => ['$SELECT DELETE FROM name', 'DELETE'];
+        yield 'numeric identifier' => ['1SELECT INSERT INTO name DEFAULT VALUES', 'INSERT'];
+        yield 'parenthesized keyword' => ['(SELECT) UPDATE name SET value = 1', 'UPDATE'];
+        yield 'nested parenthesized keyword' => ['((SELECT)) DELETE FROM name', 'DELETE'];
+        yield 'temporary non-table create' => ['CREATE TEMPORARY INDEX name', null];
     }
 
     public function testSplitStatementsIgnoresSemicolonInDoubleQuote(): void
