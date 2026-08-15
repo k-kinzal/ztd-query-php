@@ -45,7 +45,7 @@ final class ClassifyFuzzTest extends TestCase
     public function testClassifyNeverThrowsAndIsDeterministic(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->sql();
+            $sql = $this->provider->sql(maxDepth: 8);
             try {
                 $result1 = $this->guard->classify($sql);
                 $result2 = $this->guard->classify($sql);
@@ -60,7 +60,7 @@ final class ClassifyFuzzTest extends TestCase
     public function testClassifySelectReturnsReadOrNull(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->selectStatement();
+            $sql = $this->provider->selectStatement(maxDepth: 8);
             try {
                 $result = $this->guard->classify($sql);
                 if ($result !== null) {
@@ -80,7 +80,7 @@ final class ClassifyFuzzTest extends TestCase
     public function testClassifyInsertReturnsWriteSimulatedOrNull(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->insertStatement();
+            $sql = $this->provider->insertStatement(maxDepth: 8);
             try {
                 $result = $this->guard->classify($sql);
                 if ($result !== null) {
@@ -100,7 +100,7 @@ final class ClassifyFuzzTest extends TestCase
     public function testClassifyUpdateReturnsWriteSimulatedOrNull(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->updateStatement();
+            $sql = $this->provider->updateStatement(maxDepth: 8);
             try {
                 $result = $this->guard->classify($sql);
                 if ($result !== null) {
@@ -120,7 +120,7 @@ final class ClassifyFuzzTest extends TestCase
     public function testClassifyDeleteReturnsWriteSimulatedOrNull(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->deleteStatement();
+            $sql = $this->provider->deleteStatement(maxDepth: 8);
             try {
                 $result = $this->guard->classify($sql);
                 if ($result !== null) {
@@ -140,7 +140,7 @@ final class ClassifyFuzzTest extends TestCase
     public function testClassifyCreateTableReturnsDdlSimulatedOrNull(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->createTableStatement();
+            $sql = $this->provider->createTableStatement(maxDepth: 5);
             try {
                 $result = $this->guard->classify($sql);
                 if ($result !== null) {
@@ -160,7 +160,7 @@ final class ClassifyFuzzTest extends TestCase
     public function testClassifyDropTableReturnsDdlSimulatedOrNull(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->dropTableStatement();
+            $sql = $this->provider->dropTableStatement(maxDepth: 3);
             try {
                 $result = $this->guard->classify($sql);
                 if ($result !== null) {
@@ -180,7 +180,7 @@ final class ClassifyFuzzTest extends TestCase
     public function testClassifyAlterTableReturnsDdlSimulatedOrNull(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->alterTableStatement();
+            $sql = $this->provider->alterTableStatement(maxDepth: 5);
             try {
                 $result = $this->guard->classify($sql);
                 if ($result !== null) {

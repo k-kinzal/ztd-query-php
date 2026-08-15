@@ -45,7 +45,7 @@ final class SchemaParserFuzzTest extends TestCase
     public function testParseDoesNotCrashOnRandomCreateTable(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->createTableStatement();
+            $sql = $this->provider->createTableStatement(maxDepth: 5);
             try {
                 $result = $this->parser->parse($sql);
                 if ($result !== null) {
@@ -61,7 +61,7 @@ final class SchemaParserFuzzTest extends TestCase
     public function testParseStructuralInvariantsOnRandomCreateTable(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->createTableStatement();
+            $sql = $this->provider->createTableStatement(maxDepth: 5);
             try {
                 $result = $this->parser->parse($sql);
                 if ($result === null) {
@@ -121,7 +121,7 @@ final class SchemaParserFuzzTest extends TestCase
     public function testParseReturnsNullOnNonCreateTableSql(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->selectStatement();
+            $sql = $this->provider->selectStatement(maxDepth: 8);
             try {
                 $result = $this->parser->parse($sql);
                 self::assertNull($result, "parse() should return null for SELECT on iteration $i with SQL: $sql");

@@ -85,7 +85,7 @@ final class RewriteFuzzTest extends TestCase
     public function testRewriteSelectReturnsReadKind(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->selectStatement();
+            $sql = $this->provider->selectStatement(maxDepth: 8);
             try {
                 $plan = $this->rewriter->rewrite($sql);
                 self::assertNotEmpty($plan->sql());
@@ -102,7 +102,7 @@ final class RewriteFuzzTest extends TestCase
     public function testRewriteInsertReturnsWriteSimulatedKind(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->insertStatement();
+            $sql = $this->provider->insertStatement(maxDepth: 8);
             try {
                 $plan = $this->rewriter->rewrite($sql);
                 self::assertNotEmpty($plan->sql());
@@ -119,7 +119,7 @@ final class RewriteFuzzTest extends TestCase
     public function testRewriteUpdateReturnsWriteSimulatedKind(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->updateStatement();
+            $sql = $this->provider->updateStatement(maxDepth: 8);
             try {
                 $plan = $this->rewriter->rewrite($sql);
                 self::assertNotEmpty($plan->sql());
@@ -136,7 +136,7 @@ final class RewriteFuzzTest extends TestCase
     public function testRewriteDeleteReturnsWriteSimulatedKind(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->deleteStatement();
+            $sql = $this->provider->deleteStatement(maxDepth: 8);
             try {
                 $plan = $this->rewriter->rewrite($sql);
                 self::assertNotEmpty($plan->sql());
@@ -153,7 +153,7 @@ final class RewriteFuzzTest extends TestCase
     public function testRewriteCreateTableReturnsDdlSimulatedKind(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->createTableStatement();
+            $sql = $this->provider->createTableStatement(maxDepth: 5);
             try {
                 $plan = $this->rewriter->rewrite($sql);
                 self::assertNotEmpty($plan->sql());
@@ -169,7 +169,7 @@ final class RewriteFuzzTest extends TestCase
     public function testRewriteDropTableReturnsDdlSimulatedKind(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->dropTableStatement();
+            $sql = $this->provider->dropTableStatement(maxDepth: 3);
             try {
                 $plan = $this->rewriter->rewrite($sql);
                 self::assertNotEmpty($plan->sql());
@@ -189,7 +189,7 @@ final class RewriteFuzzTest extends TestCase
     public function testRewriteExceptionTypesAndPlanConsistency(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->sql();
+            $sql = $this->provider->sql(maxDepth: 8);
             try {
                 $plan = $this->rewriter->rewrite($sql);
                 self::assertNotEmpty($plan->sql(), "Rewritten SQL is empty on iteration $i");
@@ -213,7 +213,7 @@ final class RewriteFuzzTest extends TestCase
     public function testClassifyRewriteAgreement(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->sql();
+            $sql = $this->provider->sql(maxDepth: 8);
             try {
                 $classifyResult = $this->guard->classify($sql);
             } catch (\Throwable) {

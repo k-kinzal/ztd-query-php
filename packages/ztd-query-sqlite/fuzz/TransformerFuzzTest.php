@@ -44,7 +44,7 @@ final class TransformerFuzzTest extends TestCase
     public function testTransformDoesNotCrashOnRandomSelectWithEmptyTables(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->selectStatement();
+            $sql = $this->provider->selectStatement(maxDepth: 8);
             try {
                 $result = $this->transformer->transform($sql, []);
                 self::assertNotEmpty($result, "transform() returned empty string on iteration $i");
@@ -75,7 +75,7 @@ final class TransformerFuzzTest extends TestCase
         ];
 
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->selectStatement();
+            $sql = $this->provider->selectStatement(maxDepth: 8);
             try {
                 $result = $this->transformer->transform($sql, $tables);
                 self::assertNotEmpty($result, "transform() returned empty string on iteration $i");
@@ -105,7 +105,7 @@ final class TransformerFuzzTest extends TestCase
         ];
 
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->selectStatement();
+            $sql = $this->provider->selectStatement(maxDepth: 8);
             try {
                 $result = $this->transformer->transform($sql, $tables);
                 self::assertNotEmpty($result, "transform() returned empty string on iteration $i");
