@@ -187,7 +187,7 @@ final class LexicalGrammar implements LexicalGrammarContract
         return match ($terminal) {
             'ID', 'id', 'idj' => [$this->identifier(), ['ID']],
             'ids', 'STRING' => [$this->stringLiteral(), ['STRING']],
-            'BLOB' => ["X'" . $this->strings->hexString(0, 16) . "'", ['BLOB']],
+            'BLOB' => [$this->blobLiteral(), ['BLOB']],
             'number', 'INTEGER' => [$this->strings->integerString(0, PHP_INT_MAX), ['INTEGER']],
             'QNUMBER' => ['1_0', ['QNUMBER']],
             'VARIABLE' => [$this->parameter(), ['VARIABLE']],
@@ -246,6 +246,13 @@ final class LexicalGrammar implements LexicalGrammarContract
         };
 
         return "'" . str_replace("'", "''", $body) . "'";
+    }
+
+    private function blobLiteral(): string
+    {
+        $length = $this->faker->numberBetween(0, 8) * 2;
+
+        return "X'" . $this->strings->hexString($length, $length) . "'";
     }
 
     private function parameter(): string

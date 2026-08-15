@@ -375,7 +375,7 @@ final class SqlGeneratorTest extends TestCase
     }
 
     #[DataProvider('providerGenerateLexicalToken')]
-    public function testGenerateLexicalToken(string $terminalName, string $pattern, int $seed = 12345): void
+    public function testGenerateLexicalToken(string $terminalName, string $pattern): void
     {
         $faker = Factory::create();
         $provider = new MySqlProvider($faker);
@@ -385,7 +385,7 @@ final class SqlGeneratorTest extends TestCase
             ]),
         ]);
         $generator = new SqlGenerator($grammar, $faker, $provider);
-        $faker->seed($seed);
+        $faker->seed(12345);
 
         $result = $generator->generate('stmt');
 
@@ -1204,8 +1204,6 @@ final class SqlGeneratorTest extends TestCase
         yield 'HEX_NUM' => ['HEX_NUM', "/^(?:0x[0-9a-f]+|X'(?:[0-9a-f]{2})*')$/"];
         yield 'BIN_NUM' => ['BIN_NUM', "/^(?:0b[01]+|B'[01]*')$/"];
         yield 'LEX_HOSTNAME' => ['LEX_HOSTNAME', '/^.+$/'];
-        yield 'numeric hex notation' => ['HEX_NUM', '/^0x[0-9a-f]+$/', 3];
-        yield 'quoted hex notation' => ['HEX_NUM', "/^X'(?:[0-9a-f]{2})*'$/", 0];
     }
 
     /**

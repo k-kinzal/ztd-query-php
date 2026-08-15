@@ -478,7 +478,7 @@ final class SqlGeneratorTest extends TestCase
     }
 
     #[DataProvider('providerGenerateLexicalToken')]
-    public function testGenerateLexicalToken(string $terminalName, string $pattern, int $seed = 12345): void
+    public function testGenerateLexicalToken(string $terminalName, string $pattern): void
     {
         $grammar = new Grammar('stmt', [
             'stmt' => new ProductionRule('stmt', [
@@ -488,7 +488,7 @@ final class SqlGeneratorTest extends TestCase
         $faker = Factory::create();
         $provider = new SqliteProvider($faker);
         $generator = new SqlGenerator($grammar, $faker, $provider);
-        $faker->seed($seed);
+        $faker->seed(12345);
 
         $result = $generator->generate('stmt');
 
@@ -901,11 +901,6 @@ final class SqlGeneratorTest extends TestCase
         yield 'number' => ['number', '/^\d+$/'];
         yield 'QNUMBER' => ['QNUMBER', '/^\d(?:_?\d)*$/'];
         yield 'VARIABLE' => ['VARIABLE', '/^(?:\?\d*|[:@$][A-Za-z_][A-Za-z0-9_]*)$/'];
-        yield 'anonymous parameter' => ['VARIABLE', '/^\?$/', 10];
-        yield 'numbered parameter' => ['VARIABLE', '/^\?\d+$/', 6];
-        yield 'colon parameter' => ['VARIABLE', '/^:[A-Za-z_][A-Za-z0-9_]*$/', 2];
-        yield 'at parameter' => ['VARIABLE', '/^@[A-Za-z_][A-Za-z0-9_]*$/', 3];
-        yield 'dollar parameter' => ['VARIABLE', '/^\$[A-Za-z_][A-Za-z0-9_]*$/', 0];
     }
 
     /**

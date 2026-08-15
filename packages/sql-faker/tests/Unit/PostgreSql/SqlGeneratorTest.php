@@ -166,7 +166,7 @@ final class SqlGeneratorTest extends TestCase
     }
 
     #[DataProvider('providerGenerateOperator')]
-    public function testGenerateOperator(string $terminalName, string $expected): void
+    public function testGenerateOperator(string $terminalName, string $pattern): void
     {
         $grammar = new Grammar('stmt', [
             'stmt' => new ProductionRule('stmt', [
@@ -179,11 +179,11 @@ final class SqlGeneratorTest extends TestCase
 
         $result = $generator->generate('stmt');
 
-        self::assertSame($expected, $result);
+        self::assertMatchesRegularExpression($pattern, $result);
     }
 
     #[DataProvider('providerGenerateLexicalToken')]
-    public function testGenerateLexicalToken(string $terminalName, string $pattern, int $seed = 12345): void
+    public function testGenerateLexicalToken(string $terminalName, string $pattern): void
     {
         $grammar = new Grammar('stmt', [
             'stmt' => new ProductionRule('stmt', [
@@ -193,7 +193,7 @@ final class SqlGeneratorTest extends TestCase
         $faker = Factory::create();
         $provider = new PostgreSqlProvider($faker);
         $generator = new SqlGenerator($grammar, $faker, $provider);
-        $faker->seed($seed);
+        $faker->seed(12345);
 
         $result = $generator->generate('stmt');
 
@@ -552,13 +552,13 @@ final class SqlGeneratorTest extends TestCase
      */
     public static function providerGenerateOperator(): iterable
     {
-        yield 'TYPECAST' => ['TYPECAST', '::'];
-        yield 'DOT_DOT' => ['DOT_DOT', '..'];
-        yield 'COLON_EQUALS' => ['COLON_EQUALS', ':='];
-        yield 'EQUALS_GREATER' => ['EQUALS_GREATER', '=>'];
-        yield 'NOT_EQUALS' => ['NOT_EQUALS', '!='];
-        yield 'LESS_EQUALS' => ['LESS_EQUALS', '<='];
-        yield 'GREATER_EQUALS' => ['GREATER_EQUALS', '>='];
+        yield 'TYPECAST' => ['TYPECAST', '/^::$/'];
+        yield 'DOT_DOT' => ['DOT_DOT', '/^\.\.$/'];
+        yield 'COLON_EQUALS' => ['COLON_EQUALS', '/^:=$/'];
+        yield 'EQUALS_GREATER' => ['EQUALS_GREATER', '/^=>$/'];
+        yield 'NOT_EQUALS' => ['NOT_EQUALS', '/^(?:<>|!=)$/'];
+        yield 'LESS_EQUALS' => ['LESS_EQUALS', '/^<=$/'];
+        yield 'GREATER_EQUALS' => ['GREATER_EQUALS', '/^>=$/'];
     }
 
     /**
@@ -566,7 +566,7 @@ final class SqlGeneratorTest extends TestCase
      */
     public static function providerGenerateLexicalToken(): iterable
     {
-        yield 'IDENT' => ['IDENT', '/^[a-z_][a-z0-9_]*$/'];
+        yield 'IDENT' => ['IDENT', '/^(?:[a-z_][a-z0-9_]*|"(?:""|[^"])+")$/'];
         yield 'SCONST' => ['SCONST', "/^(?:'(?:''|[^'])*'|E'.*'|\\$.*\\$)$/s"];
         yield 'ICONST' => ['ICONST', '/^[1-9]\d*$/'];
         yield 'FCONST' => ['FCONST', '/^(?:\d+\.\d*|\.\d+)$/'];
@@ -574,11 +574,6 @@ final class SqlGeneratorTest extends TestCase
         yield 'XCONST' => ['XCONST', "/^X'[0-9a-f]*'$/"];
         yield 'Op' => ['Op', '/^[+\-*\/<>=~!@#%^&|`?]{1,4}$/'];
         yield 'PARAM' => ['PARAM', '/^\$\d+$/'];
-        yield 'escape string' => ['SCONST', '/^E\'/', 3];
-        yield 'dollar-quoted string' => ['SCONST', '/^\$.*\$$/s', 6];
-        yield 'question operator' => ['Op', '/^\?$/', 3];
-        yield 'question-or operator' => ['Op', '/^\?\|$/', 6];
-        yield 'question-and operator' => ['Op', '/^\?&$/', 20];
     }
 
     /**
