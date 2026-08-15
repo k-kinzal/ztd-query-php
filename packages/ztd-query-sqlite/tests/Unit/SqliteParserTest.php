@@ -381,6 +381,61 @@ SELECT * FROM users'));
         self::assertSame(['items'], $parser->extractSelectTables($sql));
     }
 
+    public function testExtractSelectTableIgnoresFromInsideStringLiteral(): void
+    {
+        $parser = new SqliteParser();
+        $sql = "SELECT id, 'from other_table' AS label FROM items LIMIT 1";
+        self::assertSame(['items'], $parser->extractSelectTables($sql));
+    }
+
+    public function testExtractSelectTableIgnoresJoinInsideStringLiteral(): void
+    {
+        $parser = new SqliteParser();
+        $sql = "SELECT id, 'JOIN other_table' AS label FROM items LIMIT 1";
+        self::assertSame(['items'], $parser->extractSelectTables($sql));
+    }
+
+    public function testStringLiteralMaskPreservesOffsetsAndQuotedIdentifiers(): void
+    {
+        $parser = new SqliteParser();
+        $sql = "SELECT 'FROM hidden', \"quoted\", `backtick`, [bracket] FROM items";
+        $masked = $parser->maskStringLiterals($sql);
+        self::assertSame(strlen($sql), strlen($masked));
+        self::assertSame(strpos($sql, 'FROM items'), strpos($masked, 'FROM items'));
+        self::assertStringContainsString('"quoted"', $masked);
+        self::assertStringContainsString('`backtick`', $masked);
+        self::assertStringContainsString('[bracket]', $masked);
+    }
+
+    #[DataProvider('providerStringLiteralMasks')]
+    public function testMaskStringLiteralsUsesSqliteQuoteBoundaries(string $sql, string $expected): void
+    {
+        $parser = new SqliteParser();
+        $masked = $parser->maskStringLiterals($sql);
+        self::assertSame($expected, $masked);
+        self::assertSame(strlen($sql), strlen($masked));
+    }
+
+    /**
+     * @return \Generator<string, array{string, string}>
+     */
+    public static function providerStringLiteralMasks(): \Generator
+    {
+        yield 'empty query' => ['', ''];
+        yield 'query without strings' => ['SELECT value FROM items', 'SELECT value FROM items'];
+        yield 'empty string' => ["''", '  '];
+        yield 'single quoted string' => ["SELECT 'FROM hidden' FROM items", 'SELECT ' . str_repeat(' ', 13) . ' FROM items'];
+        yield 'doubled single quote' => ["'value''FROM' FROM items", str_repeat(' ', 13) . ' FROM items'];
+        yield 'doubled quote before closing quote' => ["'a''' FROM items", str_repeat(' ', 5) . ' FROM items'];
+        yield 'unterminated string' => ["'FROM hidden", str_repeat(' ', 12)];
+        yield 'multiple strings' => ["'FROM' || 'JOIN' FROM items", str_repeat(' ', 6) . ' || ' . str_repeat(' ', 6) . ' FROM items'];
+        yield 'newline in string' => ["'FROM\nJOIN' FROM items", str_repeat(' ', 11) . ' FROM items'];
+        yield 'double quoted identifier' => ['"FROM" FROM items', '"FROM" FROM items'];
+        yield 'backtick identifier' => ['`FROM` FROM items', '`FROM` FROM items'];
+        yield 'bracket identifier' => ['[FROM] FROM items', '[FROM] FROM items'];
+        yield 'backslash does not escape quote' => ["'closed \\' FROM items", str_repeat(' ', 10) . ' FROM items'];
+    }
+
     public function testExtractUpdateTargetAcrossBlockComment(): void
     {
         $parser = new SqliteParser();

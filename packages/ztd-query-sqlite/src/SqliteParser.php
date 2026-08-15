@@ -207,6 +207,7 @@ final class SqliteParser
     public function extractSelectTables(string $sql): array
     {
         $sql = $this->stripComments($sql);
+        $sql = $this->maskStringLiterals($sql);
         $tables = [];
 
         if (preg_match('/\bFROM\s+(.+?)(?:\s+WHERE\b|\s+GROUP\s+BY\b|\s+HAVING\b|\s+ORDER\s+BY\b|\s+LIMIT\b|\s+UNION\b|$)/is', $sql, $matches) === 1) {
@@ -397,6 +398,39 @@ final class SqliteParser
     public function stripComments(string $sql): string
     {
         return trim(SqliteLexicalMasker::maskComments($sql));
+    }
+
+    public function maskStringLiterals(string $sql): string
+    {
+        $result = '';
+        $length = strlen($sql);
+        $i = 0;
+
+        while ($i < $length) {
+            if ($sql[$i] !== '\'') {
+                $result .= $sql[$i++];
+                continue;
+            }
+
+            $start = $i++;
+            while (true) {
+                $end = strpos($sql, '\'', $i);
+                if ($end === false) {
+                    $i = $length;
+                    break;
+                }
+                $i = $end;
+                if (str_starts_with(substr($sql, $i), "''")) {
+                    $i += 2;
+                    continue;
+                }
+                $i++;
+                break;
+            }
+            $result .= str_repeat(' ', $i - $start);
+        }
+
+        return $result;
     }
 
     /**

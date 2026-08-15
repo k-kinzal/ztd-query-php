@@ -474,4 +474,24 @@ final class SqliteCteShadowingTest extends TestCase
         self::assertNotFalse($ids);
         self::assertSame([1], $ids->fetchAll(\PDO::FETCH_COLUMN));
     }
+
+    public function testSqliteStringLiteralsDoNotCreateTableReferences(): void
+    {
+        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo->exec('CREATE TABLE items (id INTEGER PRIMARY KEY, name TEXT)');
+        $ztdPdo = ZtdPdo::fromPdo($rawPdo, null);
+        $ztdPdo->exec("INSERT INTO items VALUES (1, 'test')");
+
+        $lower = $ztdPdo->query("SELECT id, 'from items' AS label FROM items LIMIT 1");
+        self::assertNotFalse($lower);
+        self::assertSame([['id' => 1, 'label' => 'from items']], $lower->fetchAll());
+
+        $upper = $ztdPdo->query("SELECT id, 'FROM items' AS label FROM items LIMIT 1");
+        self::assertNotFalse($upper);
+        self::assertSame([['id' => 1, 'label' => 'FROM items']], $upper->fetchAll());
+
+        $join = $ztdPdo->query("SELECT id, 'join items' AS label FROM items LIMIT 1");
+        self::assertNotFalse($join);
+        self::assertSame([['id' => 1, 'label' => 'join items']], $join->fetchAll());
+    }
 }
