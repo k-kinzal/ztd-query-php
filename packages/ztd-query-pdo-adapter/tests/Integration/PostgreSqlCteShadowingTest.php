@@ -492,4 +492,41 @@ final class PostgreSqlCteShadowingTest extends TestCase
         }
     }
 
+    public function testJsonExistenceOperatorsRemainDistinctFromPlaceholders(): void
+    {
+        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $table = 'json_docs_' . bin2hex(random_bytes(8));
+
+        try {
+            $rawPdo->exec(sprintf('CREATE TABLE %s (id INTEGER PRIMARY KEY, name TEXT, meta JSONB)', $table));
+            $ztdPdo = ZtdPdo::fromPdo($rawPdo, null);
+            $ztdPdo->exec(sprintf("INSERT INTO %s VALUES (1, 'Doc A', '{\"author\":\"Alice\",\"reviewed\":true}'::jsonb)", $table));
+            $ztdPdo->exec(sprintf("INSERT INTO %s VALUES (2, 'Doc B', '{\"author\":\"Bob\"}'::jsonb)", $table));
+
+            $exists = $ztdPdo->query(sprintf("SELECT name FROM %s WHERE meta ? 'reviewed'", $table));
+            self::assertNotFalse($exists);
+            self::assertSame(['Doc A'], $exists->fetchAll(\PDO::FETCH_COLUMN));
+
+            $existsAny = $ztdPdo->query(sprintf("SELECT name FROM %s WHERE meta ?| array['reviewed', 'missing']", $table));
+            self::assertNotFalse($existsAny);
+            self::assertSame(['Doc A'], $existsAny->fetchAll(\PDO::FETCH_COLUMN));
+
+            $existsAll = $ztdPdo->query(sprintf("SELECT name FROM %s WHERE meta ?& array['author', 'reviewed']", $table));
+            self::assertNotFalse($existsAll);
+            self::assertSame(['Doc A'], $existsAll->fetchAll(\PDO::FETCH_COLUMN));
+
+            $preparedOperator = $ztdPdo->prepare(sprintf('SELECT name FROM %s WHERE meta ? ? ORDER BY name', $table));
+            self::assertNotFalse($preparedOperator);
+            self::assertTrue($preparedOperator->execute(['author']));
+            self::assertSame(['Doc A', 'Doc B'], $preparedOperator->fetchAll(\PDO::FETCH_COLUMN));
+
+            $preparedValue = $ztdPdo->prepare(sprintf('SELECT name FROM %s WHERE id = ?', $table));
+            self::assertNotFalse($preparedValue);
+            self::assertTrue($preparedValue->execute([2]));
+            self::assertSame(['Doc B'], $preparedValue->fetchAll(\PDO::FETCH_COLUMN));
+        } finally {
+            $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
+        }
+    }
+
 }
