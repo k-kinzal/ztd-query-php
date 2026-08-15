@@ -17,7 +17,7 @@
         "phpbench/phpbench": "^1.4",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-strict-rules": "^2.0",
-        "phpunit/phpunit": "^10.5 || ^11 || ^12 || ^13"
+        "phpunit/phpunit": "^10.5 || ^11 || ^12 || ~13.0.0"
     },
     "repositories": [
         {
@@ -43,7 +43,7 @@
         "bench": "@bench:quick",
         "bench:quick": "phpbench run bench --bootstrap=vendor/autoload.php --report=aggregate --php-config='{\"memory_limit\":\"512M\"}' --warmup=1 --iterations=3 --revs=25",
         "bench:full": "phpbench run bench --bootstrap=vendor/autoload.php --report=aggregate --php-config='{\"memory_limit\":\"512M\"}' --warmup=2 --iterations=8 --revs=100",
-        "test": "paratest --processes=auto --do-not-fail-on-phpunit-deprecation",
+        "test": "paratest --processes=auto",
         "test:unit": "phpunit tests/Unit/",
         "lint": [
             "@format:check",
