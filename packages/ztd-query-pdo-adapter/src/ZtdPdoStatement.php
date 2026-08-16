@@ -49,6 +49,8 @@ final class ZtdPdoStatement extends NativePdoStatement
 
     private ?PdoPreparedExecution $preparedExecution;
 
+    private int $defaultFetchMode;
+
     /** @var array<int|string, array{value: mixed, type: int}> */
     private array $boundValues = [];
 
@@ -63,11 +65,13 @@ final class ZtdPdoStatement extends NativePdoStatement
         Session $session,
         ?RewritePlan $plan,
         ?PdoPreparedExecution $preparedExecution = null,
+        int $defaultFetchMode = PDO::FETCH_BOTH,
     ) {
         $this->statement = $statement;
         $this->session = $session;
         $this->plan = $plan;
         $this->preparedExecution = $preparedExecution;
+        $this->defaultFetchMode = $defaultFetchMode;
     }
 
     /**
@@ -203,6 +207,13 @@ final class ZtdPdoStatement extends NativePdoStatement
             if (!$this->result->hasResultSet()) {
                 return false;
             }
+
+            $row = $this->result->fetch();
+            if ($row === false) {
+                return false;
+            }
+
+            return $this->formatBufferedRow($row, $mode);
         }
 
         /** @see NativePdoStatement */
@@ -220,6 +231,18 @@ final class ZtdPdoStatement extends NativePdoStatement
             if (!$this->result->hasResultSet()) {
                 return [];
             }
+
+            $rows = $this->result->fetchAll();
+            if ($this->resolveFetchMode($mode) === PDO::FETCH_COLUMN) {
+                $column = is_int($args[0] ?? null) ? $args[0] : 0;
+
+                return array_map(
+                    static fn (array $row): mixed => array_values($row)[$column] ?? false,
+                    $rows,
+                );
+            }
+
+            return array_map(fn (array $row): mixed => $this->formatBufferedRow($row, $mode), $rows);
         }
 
         /** @see NativePdoStatement */
@@ -244,6 +267,10 @@ final class ZtdPdoStatement extends NativePdoStatement
             if (!$this->result->hasResultSet()) {
                 return false;
             }
+
+            $row = $this->result->fetch();
+
+            return $row === false ? false : (array_values($row)[$column] ?? false);
         }
 
         /** @see NativePdoStatement */
@@ -267,6 +294,27 @@ final class ZtdPdoStatement extends NativePdoStatement
             if (!$this->result->hasResultSet()) {
                 return false;
             }
+
+            $row = $this->result->fetch();
+            if ($row === false) {
+                return false;
+            }
+            $object = new $resolvedClass(...$constructorArgs);
+            if ($object instanceof \stdClass) {
+                foreach ($row as $property => $value) {
+                    $object->{$property} = $value;
+                }
+
+                return $object;
+            }
+            $reflection = new \ReflectionObject($object);
+            foreach ($row as $property => $value) {
+                if ($reflection->hasProperty($property)) {
+                    $reflection->getProperty($property)->setValue($object, $value);
+                }
+            }
+
+            return $object;
         }
 
         /** @see NativePdoStatement */
@@ -379,9 +427,56 @@ final class ZtdPdoStatement extends NativePdoStatement
      */
     public function getIterator(): Iterator
     {
+        if ($this->result !== null && !$this->result->isPassthrough() && $this->result->hasResultSet()) {
+            /** @var Iterator<mixed, array<int|string, mixed>> $iterator */
+            $iterator = new \ArrayIterator($this->fetchAll());
+
+            return $iterator;
+        }
+
         /** @var Iterator<mixed, array<int|string, mixed>> $iterator */
         $iterator = $this->statement->getIterator();
 
         return $iterator;
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     */
+    private function formatBufferedRow(array $row, int $mode): mixed
+    {
+        return match ($this->resolveFetchMode($mode)) {
+            PDO::FETCH_ASSOC, PDO::FETCH_NAMED => $row,
+            PDO::FETCH_NUM => array_values($row),
+            PDO::FETCH_OBJ => (object) $row,
+            PDO::FETCH_COLUMN => array_values($row)[0] ?? false,
+            default => $this->both($row),
+        };
+    }
+
+    private function resolveFetchMode(int $mode): int
+    {
+        if ($mode !== PDO::FETCH_DEFAULT) {
+            return $mode;
+        }
+
+        return $this->fetchMode['mode'] ?? $this->defaultFetchMode;
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     * @return array<int|string, mixed>
+     */
+    private function both(array $row): array
+    {
+        $both = [];
+        $index = 0;
+        foreach ($row as $column => $value) {
+            $both[$column] = $value;
+            $both[$index] = $value;
+            $index++;
+        }
+
+        return $both;
     }
 }

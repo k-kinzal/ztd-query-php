@@ -32,19 +32,29 @@ final class RewritePlan
      */
     private ?ShadowMutation $mutation;
 
+    private ?ReturningProjection $returningProjection;
+
+    private AffectedRowsMode $affectedRowsMode;
+
     /**
      * @param string $sql Rewritten SQL.
      * @param QueryKind $kind Classified kind of the statement.
      * @param ShadowMutation|null $mutation Optional mutation to apply after execution.
+     * @param ReturningProjection|null $returningProjection Optional client-visible write projection.
+     * @param AffectedRowsMode $affectedRowsMode Native affected-row convention.
      */
     public function __construct(
         string $sql,
         QueryKind $kind,
-        ?ShadowMutation $mutation = null
+        ?ShadowMutation $mutation = null,
+        ?ReturningProjection $returningProjection = null,
+        AffectedRowsMode $affectedRowsMode = AffectedRowsMode::Changed,
     ) {
         $this->sql = $sql;
         $this->kind = $kind;
         $this->mutation = $mutation;
+        $this->returningProjection = $returningProjection;
+        $this->affectedRowsMode = $affectedRowsMode;
     }
 
     /**
@@ -69,5 +79,15 @@ final class RewritePlan
     public function mutation(): ?ShadowMutation
     {
         return $this->mutation;
+    }
+
+    public function returningProjection(): ?ReturningProjection
+    {
+        return $this->returningProjection;
+    }
+
+    public function affectedRowsMode(): AffectedRowsMode
+    {
+        return $this->affectedRowsMode;
     }
 }

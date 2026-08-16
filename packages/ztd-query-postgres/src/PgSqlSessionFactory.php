@@ -56,6 +56,7 @@ final class PgSqlSessionFactory implements SessionFactory
             $config,
             $connection,
             new ShadowTransactionManager($shadowStore, $registry),
+            $registry,
         );
     }
 }

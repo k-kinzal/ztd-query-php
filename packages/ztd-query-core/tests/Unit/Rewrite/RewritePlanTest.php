@@ -5,15 +5,22 @@ declare(strict_types=1);
 namespace Tests\Unit\Rewrite;
 
 use ZtdQuery\Rewrite\QueryKind;
+use ZtdQuery\Rewrite\AffectedRowsMode;
+use ZtdQuery\Rewrite\ReturningProjection;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Schema\CandidateKeySet;
 use ZtdQuery\Shadow\Mutation\InsertMutation;
+use ZtdQuery\Sql\SqlToken;
+use ZtdQuery\Sql\SqlTokenStream;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 
 #[UsesClass(InsertMutation::class)]
 #[UsesClass(CandidateKeySet::class)]
+#[UsesClass(ReturningProjection::class)]
+#[UsesClass(SqlToken::class)]
+#[UsesClass(SqlTokenStream::class)]
 #[CoversClass(RewritePlan::class)]
 final class RewritePlanTest extends TestCase
 {
@@ -32,5 +39,20 @@ final class RewritePlanTest extends TestCase
         $plan = new RewritePlan('SELECT 1', QueryKind::READ);
 
         self::assertNull($plan->mutation());
+    }
+
+    public function testPlanCarriesReturningAndAffectedRowsMetadata(): void
+    {
+        $projection = ReturningProjection::parse('INSERT INTO users VALUES (1) RETURNING id');
+        $plan = new RewritePlan(
+            'SELECT 1 AS id',
+            QueryKind::WRITE_SIMULATED,
+            new InsertMutation('users'),
+            $projection,
+            AffectedRowsMode::Matched,
+        );
+
+        self::assertSame($projection, $plan->returningProjection());
+        self::assertSame(AffectedRowsMode::Matched, $plan->affectedRowsMode());
     }
 }

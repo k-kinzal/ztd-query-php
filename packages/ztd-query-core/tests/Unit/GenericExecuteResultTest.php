@@ -163,6 +163,19 @@ final class GenericExecuteResultTest extends TestCase
         self::assertFalse($result->hasResultSet());
     }
 
+    public function testBufferedReturningUsesIndependentAffectedCount(): void
+    {
+        $result = GenericExecuteResult::fromBufferedRows(
+            [['id' => 1]],
+            affectedRowCount: 3,
+            hasResultSet: true,
+        );
+
+        self::assertTrue($result->hasResultSet());
+        self::assertSame(3, $result->rowCount());
+        self::assertSame([['id' => 1]], $result->fetchAll());
+    }
+
     public function testPassthroughFetchReturnsFalse(): void
     {
         $result = GenericExecuteResult::passthrough();

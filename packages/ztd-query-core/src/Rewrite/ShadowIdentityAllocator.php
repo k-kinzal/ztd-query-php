@@ -9,7 +9,20 @@ use ZtdQuery\Schema\IdentityGenerationStrategy;
 final class ShadowIdentityAllocator
 {
     /** @var array<string, array<string, int>> */
-    private array $nextValues = [];
+    private array $committedNextValues = [];
+
+    /** @var array<string, array<string, int>> */
+    private array $projectionNextValues = [];
+
+    public function beginProjection(): void
+    {
+        $this->projectionNextValues = $this->committedNextValues;
+    }
+
+    public function commitProjection(): void
+    {
+        $this->committedNextValues = $this->projectionNextValues;
+    }
 
     /**
      * @param array<string, IdentityGenerationStrategy> $strategies
@@ -31,7 +44,7 @@ final class ShadowIdentityAllocator
 
             $next = $this->nextValue($table, $column, $strategy, $existingRows);
             $allocated[$column] = $next;
-            $this->nextValues[$table][$column] = $next + 1;
+            $this->projectionNextValues[$table][$column] = $next + 1;
         }
 
         return $allocated;
@@ -55,7 +68,7 @@ final class ShadowIdentityAllocator
                 continue;
             }
             $next = $this->nextValue($table, $column, $strategy, $existingRows);
-            $this->nextValues[$table][$column] = $next;
+            $this->projectionNextValues[$table][$column] = $next;
             $starts[$column] = $next;
         }
 
@@ -69,11 +82,11 @@ final class ShadowIdentityAllocator
         IdentityGenerationStrategy $strategy,
         array $existingRows,
     ): int {
-        $next = $this->nextValues[$table][$column] ?? 1;
+        $next = $this->projectionNextValues[$table][$column] ?? 1;
         if ($strategy === IdentityGenerationStrategy::MaxValue) {
             return $this->nextAfterExistingRows($column, $existingRows, $next);
         }
-        if (isset($this->nextValues[$table][$column])) {
+        if (isset($this->projectionNextValues[$table][$column])) {
             return $this->nextAfterExistingRows($column, $existingRows, $next);
         }
 

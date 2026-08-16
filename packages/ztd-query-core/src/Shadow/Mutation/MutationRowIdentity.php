@@ -15,6 +15,21 @@ final class MutationRowIdentity
 
     /**
      * @param array<string, mixed> $row
+     * @return array<string, mixed>
+     */
+    public function strip(array $row): array
+    {
+        foreach (array_keys($row) as $column) {
+            if (str_starts_with($column, self::PREFIX)) {
+                unset($row[$column]);
+            }
+        }
+
+        return $row;
+    }
+
+    /**
+     * @param array<string, mixed> $row
      * @param array<int, string> $primaryKeys
      * @return array{row: array<string, mixed>, identity: array<string, mixed>}
      */

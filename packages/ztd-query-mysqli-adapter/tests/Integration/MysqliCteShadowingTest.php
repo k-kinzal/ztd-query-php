@@ -20,6 +20,24 @@ use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
 #[Large]
 final class MysqliCteShadowingTest extends TestCase
 {
+    public function testAffectedRowsCountsOnlyChangedMySqlRows(): void
+    {
+        [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();
+        $table = 'prefix_' . bin2hex(random_bytes(8));
+        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, score INT)', $table));
+        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
+        try {
+            $ztdMysqli->query(sprintf('INSERT INTO `%s` VALUES (1, 10)', $table));
+            $ztdMysqli->query(sprintf('UPDATE `%s` SET score = 10 WHERE id = 1', $table));
+            self::assertSame(0, $ztdMysqli->lastAffectedRows());
+            $ztdMysqli->query(sprintf('UPDATE `%s` SET score = 11 WHERE id = 1', $table));
+            self::assertSame(1, $ztdMysqli->lastAffectedRows());
+        } finally {
+            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+        }
+    }
+
     public function testTransactionsAndSavepointsRestoreShadowRows(): void
     {
         [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();

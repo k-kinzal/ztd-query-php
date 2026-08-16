@@ -48,6 +48,7 @@ final class InsertTransformer implements SqlTransformer
      */
     public function transform(string $sql, array $tables): string
     {
+        $this->identityAllocator->beginProjection();
         $tableName = $this->parser->extractInsertTable($sql);
         if ($tableName === null) {
             throw new UnsupportedSqlException($sql, 'Cannot resolve INSERT target');
@@ -128,6 +129,11 @@ final class InsertTransformer implements SqlTransformer
             $this->cteComposer->carryPrefix($sql, $selectSql),
             $tables,
         );
+    }
+
+    public function commitRewriteState(): void
+    {
+        $this->identityAllocator->commitProjection();
     }
 
     /**

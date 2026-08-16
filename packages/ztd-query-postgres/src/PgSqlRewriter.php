@@ -8,11 +8,14 @@ use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Rewrite\MultiRewritePlan;
 use ZtdQuery\Rewrite\QueryKind;
+use ZtdQuery\Rewrite\AffectedRowsMode;
+use ZtdQuery\Rewrite\ReturningProjection;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
-use ZtdQuery\Sql\TransactionStatement;
+use ZtdQuery\Rewrite\RewriteStateCommitter;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
+use ZtdQuery\Sql\TransactionStatement;
 
 /**
  * PostgreSQL rewrite implementation for ZTD.
@@ -20,7 +23,7 @@ use ZtdQuery\Shadow\ShadowStore;
  * Orchestrates parsing, classification, transformation, and mutation resolution.
  * Uses Result Select Query approach (not RETURNING) for consistency across platforms.
  */
-final class PgSqlRewriter implements SqlRewriter
+final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
 {
     public function transactionStatement(string $sql): ?TransactionStatement
     {
@@ -101,6 +104,11 @@ final class PgSqlRewriter implements SqlRewriter
         return new MultiRewritePlan($plans);
     }
 
+    public function commitRewriteState(): void
+    {
+        $this->transformer->commitRewriteState();
+    }
+
     private function rewriteStatement(string $sql): RewritePlan
     {
         $kind = $this->guard->classify($sql);
@@ -153,7 +161,13 @@ final class PgSqlRewriter implements SqlRewriter
 
         $transformedSql = $this->transformer->transform($sql, $tableContext);
 
-        return new RewritePlan($transformedSql, QueryKind::WRITE_SIMULATED, $mutation);
+        return new RewritePlan(
+            $transformedSql,
+            QueryKind::WRITE_SIMULATED,
+            $mutation,
+            ReturningProjection::parse($sql),
+            AffectedRowsMode::Matched,
+        );
     }
 
     /**

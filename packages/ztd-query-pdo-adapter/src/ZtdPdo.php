@@ -173,11 +173,14 @@ class ZtdPdo extends PDO
             throw new ZtdPdoException($e->getMessage(), 0, $e);
         }
 
+        $defaultFetchMode = $this->pdo->getAttribute(PDO::ATTR_DEFAULT_FETCH_MODE);
+
         return new ZtdPdoStatement(
             $prepared['statement'],
             $this->session,
             $prepared['plan'],
             $execution,
+            is_int($defaultFetchMode) ? $defaultFetchMode : PDO::FETCH_BOTH,
         );
     }
 
@@ -310,6 +313,13 @@ class ZtdPdo extends PDO
      */
     public function lastInsertId(?string $name = null): string|false
     {
+        if ($this->session->isEnabled() && $name === null) {
+            $lastInsertId = $this->session->lastInsertId();
+            if ($lastInsertId !== false) {
+                return $lastInsertId;
+            }
+        }
+
         return $this->pdo->lastInsertId($name);
     }
 

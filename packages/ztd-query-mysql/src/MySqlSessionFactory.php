@@ -59,6 +59,7 @@ final class MySqlSessionFactory implements SessionFactory
             $config,
             $connection,
             new ShadowTransactionManager($shadowStore, $registry),
+            $registry,
         );
     }
 }

@@ -40,4 +40,17 @@ final class MutationRowIdentityTest extends TestCase
             (new MutationRowIdentity())->extract(['id' => 1], ['id']),
         );
     }
+
+    public function testStripRemovesEveryInternalIdentityColumn(): void
+    {
+        self::assertSame(
+            ['id' => 2, 'name' => 'updated'],
+            (new MutationRowIdentity())->strip([
+                'id' => 2,
+                'name' => 'updated',
+                '__ztd_original_id' => 1,
+                '__ztd_original_tenant_id' => 10,
+            ]),
+        );
+    }
 }

@@ -9,7 +9,10 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\Sqlite\Transformer\SqliteTransformer;
 use ZtdQuery\Rewrite\MultiRewritePlan;
 use ZtdQuery\Rewrite\QueryKind;
+use ZtdQuery\Rewrite\AffectedRowsMode;
+use ZtdQuery\Rewrite\ReturningProjection;
 use ZtdQuery\Rewrite\RewritePlan;
+use ZtdQuery\Rewrite\RewriteStateCommitter;
 use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Sql\TransactionStatement;
 use ZtdQuery\Schema\TableDefinition;
@@ -22,7 +25,7 @@ use ZtdQuery\Shadow\ShadowStore;
  * Orchestrates parsing, classification, transformation, and mutation resolution.
  * Uses Result Select Query approach (not RETURNING) for consistency.
  */
-final class SqliteRewriter implements SqlRewriter
+final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
 {
     public function transactionStatement(string $sql): ?TransactionStatement
     {
@@ -94,6 +97,11 @@ final class SqliteRewriter implements SqlRewriter
         return new MultiRewritePlan($plans);
     }
 
+    public function commitRewriteState(): void
+    {
+        $this->transformer->commitRewriteState();
+    }
+
     private function rewriteStatement(string $stmtSql, string $originalSql): RewritePlan
     {
         $kind = $this->guard->classify($stmtSql);
@@ -126,7 +134,13 @@ final class SqliteRewriter implements SqlRewriter
 
         $transformedSql = $this->transformer->transform($stmtSql, $tableContext);
 
-        return new RewritePlan($transformedSql, QueryKind::WRITE_SIMULATED, $mutation);
+        return new RewritePlan(
+            $transformedSql,
+            QueryKind::WRITE_SIMULATED,
+            $mutation,
+            ReturningProjection::parse($stmtSql),
+            AffectedRowsMode::Matched,
+        );
     }
 
     /**

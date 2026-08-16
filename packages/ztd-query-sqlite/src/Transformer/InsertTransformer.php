@@ -54,6 +54,7 @@ final class InsertTransformer implements SqlTransformer
      */
     public function transform(string $sql, array $tables): string
     {
+        $this->identityAllocator->beginProjection();
         $type = $this->parser->classifyStatement($sql);
         if ($type !== 'INSERT') {
             throw new UnsupportedSqlException($sql, 'Expected INSERT/REPLACE statement');
@@ -89,6 +90,11 @@ final class InsertTransformer implements SqlTransformer
             $this->cteComposer->carryPrefix($sql, $selectSql),
             $tables,
         );
+    }
+
+    public function commitRewriteState(): void
+    {
+        $this->identityAllocator->commitProjection();
     }
 
     /**

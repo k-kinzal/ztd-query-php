@@ -99,4 +99,9 @@ final class MySqlTransformer implements SqlTransformer
 
         throw new UnsupportedSqlException($sql, 'Statement type not supported by transformer');
     }
+
+    public function commitRewriteState(): void
+    {
+        $this->insertTransformer->commitRewriteState();
+    }
 }

@@ -10,6 +10,7 @@ use ZtdQuery\Rewrite\MultiRewritePlan;
 use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
+use ZtdQuery\Rewrite\RewriteStateCommitter;
 use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Sql\TransactionStatement;
 use PhpMyAdmin\SqlParser\Statement;
@@ -28,7 +29,7 @@ use PhpMyAdmin\SqlParser\Statements\WithStatement;
  *
  * Orchestrates parsing, classification, transformation, and mutation resolution.
  */
-final class MySqlRewriter implements SqlRewriter
+final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
 {
     public function transactionStatement(string $sql): ?TransactionStatement
     {
@@ -108,6 +109,11 @@ final class MySqlRewriter implements SqlRewriter
         }
 
         return new MultiRewritePlan($plans);
+    }
+
+    public function commitRewriteState(): void
+    {
+        $this->transformer->commitRewriteState();
     }
 
     /**

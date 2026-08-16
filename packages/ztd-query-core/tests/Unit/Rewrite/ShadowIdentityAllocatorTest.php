@@ -180,4 +180,18 @@ final class ShadowIdentityAllocatorTest extends TestCase
             ),
         );
     }
+
+    public function testUncommittedPreparationDoesNotConsumeIdentity(): void
+    {
+        $allocator = new ShadowIdentityAllocator();
+        $strategies = ['id' => IdentityGenerationStrategy::Sequence];
+
+        $allocator->beginProjection();
+        self::assertSame(['id' => '1'], $allocator->allocateMissing('users', $strategies, ['name'], ["'preview'"], []));
+        $allocator->beginProjection();
+        self::assertSame(['id' => '1'], $allocator->allocateMissing('users', $strategies, ['name'], ["'execute'"], []));
+        $allocator->commitProjection();
+        $allocator->beginProjection();
+        self::assertSame(['id' => '2'], $allocator->allocateMissing('users', $strategies, ['name'], ["'next'"], [['id' => 1]]));
+    }
 }
