@@ -16,6 +16,20 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(ShadowTableState::class)]
 class ShadowStoreTest extends TestCase
 {
+    public function testSnapshotRestoreIncludesRowsAndInitializedPresence(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', [['id' => 1]]);
+        $snapshot = $store->snapshot();
+
+        $store->insert('users', [['id' => 2]]);
+        $store->set('temporary_table', []);
+        $store->restore($snapshot);
+
+        self::assertSame([['id' => 1]], $store->get('users'));
+        self::assertFalse($store->has('temporary_table'));
+    }
+
     public function testInsertAppendsRows(): void
     {
         $store = new ShadowStore();

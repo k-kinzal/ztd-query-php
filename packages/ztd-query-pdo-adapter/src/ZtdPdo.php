@@ -12,6 +12,7 @@ use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\Session;
 use ZtdQuery\Platform\SessionFactory;
+use ZtdQuery\Sql\TransactionStatement;
 
 /**
  * PDO proxy that enforces ZTD behavior for reads and writes.
@@ -188,6 +189,18 @@ class ZtdPdo extends PDO
      */
     public function query(string $query, ?int $fetchMode = null, mixed ...$fetchModeArgs): PDOStatement|false
     {
+        if ($this->session->isEnabled()) {
+            $transactionStatement = TransactionStatement::parse($query);
+            if ($transactionStatement !== null) {
+                $statement = $this->pdo->query($query, $fetchMode, ...$fetchModeArgs);
+                if ($statement !== false) {
+                    $this->session->applyTransactionStatement($transactionStatement);
+                }
+
+                return $statement;
+            }
+        }
+
         $stmt = $this->prepare($query);
         if ($stmt === false) {
             return false;
@@ -213,6 +226,16 @@ class ZtdPdo extends PDO
     {
         if (!$this->session->isEnabled()) {
             return $this->pdo->exec($statement);
+        }
+
+        $transactionStatement = TransactionStatement::parse($statement);
+        if ($transactionStatement !== null) {
+            $result = $this->pdo->exec($statement);
+            if ($result !== false) {
+                $this->session->applyTransactionStatement($transactionStatement);
+            }
+
+            return $result;
         }
 
         try {
@@ -241,7 +264,12 @@ class ZtdPdo extends PDO
      */
     public function beginTransaction(): bool
     {
-        return $this->pdo->beginTransaction();
+        $result = $this->pdo->beginTransaction();
+        if ($result) {
+            $this->session->beginTransaction();
+        }
+
+        return $result;
     }
 
     /**
@@ -249,7 +277,12 @@ class ZtdPdo extends PDO
      */
     public function commit(): bool
     {
-        return $this->pdo->commit();
+        $result = $this->pdo->commit();
+        if ($result) {
+            $this->session->commitTransaction();
+        }
+
+        return $result;
     }
 
     /**
@@ -257,7 +290,12 @@ class ZtdPdo extends PDO
      */
     public function rollBack(): bool
     {
-        return $this->pdo->rollBack();
+        $result = $this->pdo->rollBack();
+        if ($result) {
+            $this->session->rollBackTransaction();
+        }
+
+        return $result;
     }
 
     /**

@@ -20,6 +20,43 @@ use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
 #[Large]
 final class MysqliCteShadowingTest extends TestCase
 {
+    public function testTransactionsAndSavepointsRestoreShadowRows(): void
+    {
+        [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();
+        $table = 'prefix_' . bin2hex(random_bytes(8));
+        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, name VARCHAR(20))', $table));
+        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
+        try {
+            $ztdMysqli->query(sprintf("INSERT INTO `%s` VALUES (1, 'one')", $table));
+            $ztdMysqli->begin_transaction();
+            $ztdMysqli->query(sprintf("INSERT INTO `%s` VALUES (2, 'two')", $table));
+            $ztdMysqli->savepoint('nested');
+            $ztdMysqli->query(sprintf("INSERT INTO `%s` VALUES (3, 'three')", $table));
+            $ztdMysqli->query('ROLLBACK TO SAVEPOINT nested');
+            $ztdMysqli->commit();
+
+            $committed = $ztdMysqli->query(sprintf('SELECT * FROM `%s` ORDER BY id', $table));
+            self::assertInstanceOf(\mysqli_result::class, $committed);
+            self::assertSame([
+                ['id' => 1, 'name' => 'one'],
+                ['id' => 2, 'name' => 'two'],
+            ], $committed->fetch_all(MYSQLI_ASSOC));
+
+            $ztdMysqli->begin_transaction();
+            $ztdMysqli->query(sprintf("UPDATE `%s` SET name = 'changed'", $table));
+            $ztdMysqli->rollback();
+            $rolledBack = $ztdMysqli->query(sprintf('SELECT * FROM `%s` ORDER BY id', $table));
+            self::assertInstanceOf(\mysqli_result::class, $rolledBack);
+            self::assertSame([
+                ['id' => 1, 'name' => 'one'],
+                ['id' => 2, 'name' => 'two'],
+            ], $rolledBack->fetch_all(MYSQLI_ASSOC));
+        } finally {
+            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+        }
+    }
+
     public function testRecursiveAndUserOwnedCteNamespacesRemainValid(): void
     {
         [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();

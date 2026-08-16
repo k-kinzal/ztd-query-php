@@ -16,6 +16,7 @@ use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Session;
 use ZtdQuery\Platform\SessionFactory;
 use ZtdQuery\Shadow\ShadowStore;
+use ZtdQuery\Shadow\ShadowTransactionManager;
 
 /**
  * Factory for creating Session instances pre-configured for SQLite.
@@ -54,7 +55,8 @@ final class SqliteSessionFactory implements SessionFactory
             $shadowStore,
             new ResultSelectRunner(),
             $config,
-            $connection
+            $connection,
+            new ShadowTransactionManager($shadowStore, $registry),
         );
     }
 }

@@ -19,6 +19,8 @@ use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Shadow\Mutation\ShadowMutation;
 use ZtdQuery\Shadow\ShadowStore;
+use ZtdQuery\Shadow\ShadowTransactionManager;
+use ZtdQuery\Sql\TransactionStatement;
 
 /**
  * Aggregates ZTD session state and core collaborators.
@@ -67,6 +69,8 @@ final class Session
      */
     private bool $enabled = true;
 
+    private ShadowTransactionManager $transactions;
+
     /**
      * @param SqlRewriter $rewriter Rewrite pipeline for SQL.
      * @param ShadowStore $shadowStore Target shadow store for mutation application.
@@ -79,13 +83,15 @@ final class Session
         ShadowStore $shadowStore,
         ResultSelectRunner $resultSelectRunner,
         ZtdConfig $config,
-        ConnectionInterface $connection
+        ConnectionInterface $connection,
+        ?ShadowTransactionManager $transactions = null,
     ) {
         $this->rewriter = $rewriter;
         $this->shadowStore = $shadowStore;
         $this->resultSelectRunner = $resultSelectRunner;
         $this->config = $config;
         $this->connection = $connection;
+        $this->transactions = $transactions ?? new ShadowTransactionManager($shadowStore);
     }
 
     /**
@@ -135,6 +141,26 @@ final class Session
     public function isEnabled(): bool
     {
         return $this->enabled;
+    }
+
+    public function beginTransaction(): void
+    {
+        $this->transactions->begin();
+    }
+
+    public function commitTransaction(): void
+    {
+        $this->transactions->commit();
+    }
+
+    public function rollBackTransaction(): void
+    {
+        $this->transactions->rollBack();
+    }
+
+    public function applyTransactionStatement(TransactionStatement $statement): void
+    {
+        $statement->apply($this->transactions);
     }
 
 

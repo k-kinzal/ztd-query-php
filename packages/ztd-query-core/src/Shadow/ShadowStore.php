@@ -90,6 +90,17 @@ class ShadowStore
         $this->initializedTables = [];
     }
 
+    public function snapshot(): self
+    {
+        return clone $this;
+    }
+
+    public function restore(self $snapshot): void
+    {
+        $this->fixtures = $snapshot->fixtures;
+        $this->initializedTables = $snapshot->initializedTables;
+    }
+
     /**
      * Ensure a table key exists in the store.
      */

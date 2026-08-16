@@ -64,6 +64,16 @@ final class TableDefinitionRegistry
         $this->definitions = [];
     }
 
+    public function snapshot(): self
+    {
+        return clone $this;
+    }
+
+    public function restore(self $snapshot): void
+    {
+        $this->definitions = $snapshot->definitions;
+    }
+
     /**
      * Remove a registered table.
      */
