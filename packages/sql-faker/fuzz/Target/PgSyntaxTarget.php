@@ -14,7 +14,7 @@ use SqlFaker\PostgreSqlProvider;
  * Fuzz target for PostgreSQL SQL syntax validation.
  *
  * This target converts fuzzer input to RNG seed, generates SQL via grammar,
- * and validates it against PostgreSQL. Errors (not Exceptions) indicate bugs.
+ * and validates it against PostgreSQL. Unexpected throwables indicate bugs.
  */
 final class PgSyntaxTarget
 {
@@ -83,10 +83,6 @@ final class PgSyntaxTarget
 
     private function validateSyntax(string $sql, int $seed): void
     {
-        if ($sql === '') {
-            return;
-        }
-
         try {
             $this->pdo->exec('SAVEPOINT fuzz_check');
             $this->pdo->exec($sql);

@@ -54,4 +54,5 @@ $target = new PgSyntaxTarget($pdo, $maxDepth);
 
 /* Configure fuzzer via $config (provided by php-fuzzer) */
 /** @var \PhpFuzzer\Config $config */
+$config->setAllowedExceptions([]);
 $config->setTarget(Closure::fromCallable($target));
