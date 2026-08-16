@@ -8,6 +8,7 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\Sqlite\SqliteCastRenderer;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
+use ZtdQuery\Rewrite\CteShadowComposer;
 use ZtdQuery\Rewrite\ShadowIdentityAllocator;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
@@ -32,6 +33,7 @@ final class InsertTransformer implements SqlTransformer
     private InsertRowRenderer $rowRenderer;
     private ShadowIdentityAllocator $identityAllocator;
     private InsertSelectRenderer $insertSelectRenderer;
+    private CteShadowComposer $cteComposer;
 
     public function __construct(
         SqliteParser $parser,
@@ -44,6 +46,7 @@ final class InsertTransformer implements SqlTransformer
         $this->rowRenderer = new InsertRowRenderer();
         $this->identityAllocator = new ShadowIdentityAllocator();
         $this->insertSelectRenderer = new InsertSelectRenderer();
+        $this->cteComposer = new CteShadowComposer();
     }
 
     /**
@@ -82,7 +85,10 @@ final class InsertTransformer implements SqlTransformer
             $existingRows,
         );
 
-        return $this->selectTransformer->transform($selectSql, $tables);
+        return $this->selectTransformer->transform(
+            $this->cteComposer->carryPrefix($sql, $selectSql),
+            $tables,
+        );
     }
 
     /**

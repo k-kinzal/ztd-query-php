@@ -11,6 +11,7 @@ use PhpMyAdmin\SqlParser\Components\OrderKeyword;
 use PhpMyAdmin\SqlParser\Statements\UpdateStatement;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\MySqlParser;
+use ZtdQuery\Rewrite\CteShadowComposer;
 use ZtdQuery\Rewrite\SqlTransformer;
 
 /**
@@ -20,11 +21,16 @@ final class UpdateTransformer implements SqlTransformer
 {
     private MySqlParser $parser;
     private SelectTransformer $selectTransformer;
+    private CteShadowComposer $cteComposer;
 
-    public function __construct(MySqlParser $parser, SelectTransformer $selectTransformer)
-    {
+    public function __construct(
+        MySqlParser $parser,
+        SelectTransformer $selectTransformer,
+        ?CteShadowComposer $cteComposer = null,
+    ) {
         $this->parser = $parser;
         $this->selectTransformer = $selectTransformer;
+        $this->cteComposer = $cteComposer ?? new CteShadowComposer();
     }
 
     /**
@@ -57,7 +63,10 @@ final class UpdateTransformer implements SqlTransformer
 
         $projection = $this->buildProjection($statement, $columns);
 
-        return $this->selectTransformer->transform($projection['sql'], $tables);
+        return $this->selectTransformer->transform(
+            $this->cteComposer->carryPrefix($sql, $projection['sql']),
+            $tables,
+        );
     }
 
     /**

@@ -1634,6 +1634,33 @@ final class MySqlRewriterTest extends RewriterContractTest
         self::assertSame(QueryKind::READ, $plan->kind());
     }
 
+    public function testRewriteWithStatementInsertResolvesItsInnerMutation(): void
+    {
+        $shadowStore = new ShadowStore();
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $registry = new TableDefinitionRegistry();
+        $definition = $schemaParser->parse('CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255))');
+        self::assertNotNull($definition);
+        $registry->register('users', $definition);
+
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($shadowStore, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $shadowStore, $registry, $transformer, $mutationResolver, $parser);
+
+        $plan = $rewriter->rewrite("WITH source AS (SELECT 1 AS id, 'Alice' AS name) INSERT INTO users SELECT * FROM source");
+
+        self::assertSame(QueryKind::WRITE_SIMULATED, $plan->kind());
+        self::assertInstanceOf(InsertMutation::class, $plan->mutation());
+        self::assertStringStartsWith('WITH source AS', $plan->sql());
+        self::assertSame(1, substr_count($plan->sql(), 'WITH'));
+    }
+
     public function testRewriteAlterTableConvertToCharsetThrows(): void
     {
         $shadowStore = new ShadowStore();

@@ -483,7 +483,7 @@ final class SqliteParser
 
     private function extractInsertTable(string $sql): ?string
     {
-        $sql = $this->stripComments($sql);
+        $sql = $this->statementTail($sql, ['INSERT', 'REPLACE']);
         if (preg_match('/\bINTO\s+("(?:[^"]|"")*"|`(?:[^`]|``)*`|\[(?:[^\]])*\]|[^\s(]+)/i', $sql, $matches) === 1) {
             return $this->unquoteIdentifier($matches[1]);
         }
@@ -497,7 +497,7 @@ final class SqliteParser
 
     private function extractUpdateTable(string $sql): ?string
     {
-        $sql = $this->stripComments($sql);
+        $sql = $this->statementTail($sql, ['UPDATE']);
         if (preg_match('/^UPDATE\s+(?:OR\s+(?:ROLLBACK|ABORT|REPLACE|FAIL|IGNORE)\s+)?("(?:[^"]|"")*"|`(?:[^`]|``)*`|\[(?:[^\]])*\]|[^\s,]+)/i', trim($sql), $matches) === 1) {
             return $this->unquoteIdentifier($matches[1]);
         }
@@ -507,12 +507,29 @@ final class SqliteParser
 
     private function extractDeleteTable(string $sql): ?string
     {
-        $sql = $this->stripComments($sql);
+        $sql = $this->statementTail($sql, ['DELETE']);
         if (preg_match('/\bFROM\s+("(?:[^"]|"")*"|`(?:[^`]|``)*`|\[(?:[^\]])*\]|[^\s,]+)/i', $sql, $matches) === 1) {
             return $this->unquoteIdentifier($matches[1]);
         }
 
         return null;
+    }
+
+    /** @param non-empty-list<string> $keywords */
+    private function statementTail(string $sql, array $keywords): string
+    {
+        foreach (SqlTokenStream::tokenize($sql)->significantTokens() as $token) {
+            if (!$token->isTopLevel()) {
+                continue;
+            }
+            foreach ($keywords as $keyword) {
+                if ($token->isKeyword($keyword)) {
+                    return $this->stripComments(substr($sql, $token->offset));
+                }
+            }
+        }
+
+        return $this->stripComments($sql);
     }
 
     private function extractCreateTableName(string $sql): ?string

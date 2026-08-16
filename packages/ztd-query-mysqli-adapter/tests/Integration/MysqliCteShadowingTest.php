@@ -20,6 +20,50 @@ use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
 #[Large]
 final class MysqliCteShadowingTest extends TestCase
 {
+    public function testRecursiveAndUserOwnedCteNamespacesRemainValid(): void
+    {
+        [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();
+        $table = 'prefix_' . bin2hex(random_bytes(8));
+        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, parent_id INT)', $table));
+        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
+        try {
+            $ztdMysqli->query(sprintf('INSERT INTO `%s` VALUES (1, NULL), (2, 1), (3, 2)', $table));
+            $recursive = $ztdMysqli->query(sprintf(
+                'WITH RECURSIVE tree AS (SELECT id, parent_id FROM `%1$s` WHERE parent_id IS NULL UNION ALL SELECT n.id, n.parent_id FROM `%1$s` n JOIN tree t ON n.parent_id = t.id) SELECT id FROM tree ORDER BY id',
+                $table,
+            ));
+            self::assertInstanceOf(\mysqli_result::class, $recursive);
+            self::assertSame([['id' => 1], ['id' => 2], ['id' => 3]], $recursive->fetch_all(MYSQLI_ASSOC));
+
+            $owned = $ztdMysqli->query(sprintf('WITH `%1$s` AS (SELECT 9 AS id, NULL AS parent_id) SELECT id FROM `%1$s`', $table));
+            self::assertInstanceOf(\mysqli_result::class, $owned);
+            self::assertSame([['id' => 9]], $owned->fetch_all(MYSQLI_ASSOC));
+        } finally {
+            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+        }
+    }
+
+    public function testCteDefinitionsRemainVisibleToSimulatedDml(): void
+    {
+        [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();
+        $table = 'prefix_' . bin2hex(random_bytes(8));
+        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, value VARCHAR(20))', $table));
+        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
+        try {
+            self::assertNotFalse($ztdMysqli->query(sprintf("WITH source AS (SELECT 1 AS id, 'one' AS value UNION ALL SELECT 2, 'two') INSERT INTO `%s` SELECT * FROM source", $table)));
+            self::assertNotFalse($ztdMysqli->query(sprintf("WITH chosen AS (SELECT id FROM `%1\$s` WHERE value = 'two') UPDATE `%1\$s` SET value = 'changed' WHERE id IN (SELECT id FROM chosen)", $table)));
+            self::assertNotFalse($ztdMysqli->query(sprintf("WITH chosen AS (SELECT id FROM `%1\$s` WHERE value = 'one') DELETE FROM `%1\$s` WHERE id IN (SELECT id FROM chosen)", $table)));
+
+            $result = $ztdMysqli->query(sprintf('SELECT * FROM `%s`', $table));
+            self::assertInstanceOf(\mysqli_result::class, $result);
+            self::assertSame([['id' => 2, 'value' => 'changed']], $result->fetch_all(MYSQLI_ASSOC));
+        } finally {
+            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+        }
+    }
+
     public function testInsertSelectPreservesStarJoinsAggregatesDistinctAndRollup(): void
     {
         [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();

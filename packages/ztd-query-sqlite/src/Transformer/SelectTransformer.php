@@ -6,10 +6,10 @@ namespace ZtdQuery\Platform\Sqlite\Transformer;
 
 use ZtdQuery\Platform\Sqlite\SqliteCastRenderer;
 use ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter;
-use ZtdQuery\Platform\Sqlite\SqliteParser;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\IdentifierQuoter;
 use ZtdQuery\Platform\ValueRenderer;
+use ZtdQuery\Rewrite\CteShadowComposer;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
@@ -24,18 +24,19 @@ final class SelectTransformer implements SqlTransformer
 {
     private CastRenderer $castRenderer;
     private IdentifierQuoter $quoter;
-    private SqliteParser $parser;
     private ValueRenderer $valueRenderer;
+    private CteShadowComposer $cteComposer;
 
     public function __construct(
         ?CastRenderer $castRenderer = null,
         ?IdentifierQuoter $quoter = null,
         ?ValueRenderer $valueRenderer = null,
+        ?CteShadowComposer $cteComposer = null,
     ) {
         $this->castRenderer = $castRenderer ?? new SqliteCastRenderer();
         $this->quoter = $quoter ?? new SqliteIdentifierQuoter();
-        $this->parser = new SqliteParser();
         $this->valueRenderer = $valueRenderer ?? new \ZtdQuery\Platform\Sqlite\SqliteValueRenderer($this->castRenderer);
+        $this->cteComposer = $cteComposer ?? new CteShadowComposer();
     }
 
     /**
@@ -43,13 +44,8 @@ final class SelectTransformer implements SqlTransformer
      */
     public function transform(string $sql, array $tables): string
     {
-        $searchableSql = $this->parser->maskStringLiterals($this->parser->stripComments($sql));
         $ctes = [];
         foreach ($tables as $tableName => $tableContext) {
-            if (stripos($searchableSql, $tableName) === false) {
-                continue;
-            }
-
             $rows = $tableContext['rows'];
             $columns = $tableContext['columns'];
             $columnTypes = $tableContext['columnTypes'];
@@ -69,20 +65,10 @@ final class SelectTransformer implements SqlTransformer
                 continue;
             }
 
-            $ctes[] = $this->generateCte($tableName, $rows, $columns, $columnTypes);
+            $ctes[$tableName] = $this->generateCte($tableName, $rows, $columns, $columnTypes);
         }
 
-        if ($ctes === []) {
-            return $sql;
-        }
-
-        $cteString = implode(",\n", $ctes);
-        $pattern = '/^(\s*(?:(?:\/\*.*?\*\/)|(?:--.*?\n)|(?:#.*?\n)|\s)*)WITH\b/is';
-        if (preg_match($pattern, $sql) === 1) {
-            return (string) preg_replace($pattern, '$1WITH ' . $cteString . ",\n", $sql, 1);
-        }
-
-        return "WITH $cteString\n$sql";
+        return $this->cteComposer->compose($sql, $ctes);
     }
 
     /**

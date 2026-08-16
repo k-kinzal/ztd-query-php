@@ -7,6 +7,7 @@ namespace ZtdQuery\Platform\MySql;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Rewrite\MultiRewritePlan;
+use ZtdQuery\Rewrite\CteShadowComposer;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
@@ -34,6 +35,7 @@ final class MySqlRewriter implements SqlRewriter
     private MySqlTransformer $transformer;
     private MySqlMutationResolver $mutationResolver;
     private MySqlParser $parser;
+    private CteShadowComposer $cteComposer;
 
     public function __construct(
         MySqlQueryGuard $guard,
@@ -49,6 +51,7 @@ final class MySqlRewriter implements SqlRewriter
         $this->transformer = $transformer;
         $this->mutationResolver = $mutationResolver;
         $this->parser = $parser;
+        $this->cteComposer = new CteShadowComposer();
     }
 
     /**
@@ -136,6 +139,12 @@ final class MySqlRewriter implements SqlRewriter
             throw new UnsupportedSqlException($sql, 'Statement type not supported');
         }
 
+        $mutationStatement = $statement;
+        if ($statement instanceof WithStatement && $kind !== QueryKind::READ) {
+            $mainStatements = $this->parser->parse($this->cteComposer->statementSql($sql));
+            $mutationStatement = $mainStatements[0] ?? $statement;
+        }
+
         $tableContext = $this->buildTableContext();
 
         if ($kind === QueryKind::READ) {
@@ -168,7 +177,7 @@ final class MySqlRewriter implements SqlRewriter
             return new RewritePlan($this->emptyResultSelect(), QueryKind::DDL_SIMULATED, $mutation);
         }
 
-        $mutation = $this->mutationResolver->resolve($sql, $statement, $kind);
+        $mutation = $this->mutationResolver->resolve($sql, $mutationStatement, $kind);
 
         if ($statement instanceof TruncateStatement) {
             return new RewritePlan($this->emptyResultSelect(), QueryKind::WRITE_SIMULATED, $mutation);

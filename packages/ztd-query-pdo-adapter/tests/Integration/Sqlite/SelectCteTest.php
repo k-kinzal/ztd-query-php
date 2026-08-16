@@ -62,4 +62,19 @@ final class SelectCteTest extends TestCase
         $ztdRows = $stmt->fetchAll();
         self::assertNotEmpty($ztdRows);
     }
+
+    public function testUserCteMayOwnTheSameNameAsAPhysicalTable(): void
+    {
+        $rawPdo = new \PDO('sqlite::memory:', null, null, [
+            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        ]);
+        $rawPdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL)');
+        $ztdPdo = ZtdPdo::fromPdo($rawPdo);
+        $ztdPdo->exec("INSERT INTO users VALUES (1, 'shadow', 30)");
+
+        $statement = $ztdPdo->query("WITH users AS (SELECT 9 AS id, 'cte' AS name, 99 AS age) SELECT * FROM users");
+        self::assertNotFalse($statement);
+        self::assertSame([['id' => 9, 'name' => 'cte', 'age' => 99]], $statement->fetchAll());
+    }
 }
