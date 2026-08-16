@@ -3382,6 +3382,16 @@ SELECT * FROM users'));
         self::assertSame('5', $rows[0][1]);
     }
 
+    public function testExtractInsertValuesKeepsArrayConstructorTogether(): void
+    {
+        $parser = new PgSqlParser();
+
+        self::assertSame(
+            [['1', 'ARRAY[90,85,92]', 'NULL']],
+            $parser->extractInsertValues('INSERT INTO scores (id, values, payload) VALUES (1, ARRAY[90,85,92], NULL)'),
+        );
+    }
+
     public function testHasInsertSelectWithSubqueryInValues(): void
     {
         $parser = new PgSqlParser();

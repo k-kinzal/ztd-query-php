@@ -186,7 +186,7 @@ final class InsertTransformerTest extends TestCase
         ];
 
         $result = $transformer->transform($sql, $tables);
-        self::assertStringContainsString('1 AS "id"', $result);
+        self::assertStringContainsString('CAST(1 AS INTEGER) AS "id"', $result);
         self::assertStringNotContainsString(' 1  AS', $result);
     }
 

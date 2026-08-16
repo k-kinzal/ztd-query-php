@@ -8,6 +8,7 @@ use ZtdQuery\Platform\MySql\MySqlCastRenderer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\IdentifierQuoter;
+use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
@@ -22,11 +23,16 @@ final class SelectTransformer implements SqlTransformer
 {
     private CastRenderer $castRenderer;
     private IdentifierQuoter $quoter;
+    private ValueRenderer $valueRenderer;
 
-    public function __construct(?CastRenderer $castRenderer = null, ?IdentifierQuoter $quoter = null)
-    {
+    public function __construct(
+        ?CastRenderer $castRenderer = null,
+        ?IdentifierQuoter $quoter = null,
+        ?ValueRenderer $valueRenderer = null,
+    ) {
         $this->castRenderer = $castRenderer ?? new MySqlCastRenderer();
         $this->quoter = $quoter ?? new MySqlIdentifierQuoter();
+        $this->valueRenderer = $valueRenderer ?? new \ZtdQuery\Platform\MySql\MySqlValueRenderer($this->castRenderer);
     }
 
     /**
@@ -144,49 +150,16 @@ final class SelectTransformer implements SqlTransformer
 
     private function formatValue(mixed $val, ?ColumnType $type = null): string
     {
-        if (is_null($val)) {
-            return "NULL";
+        if ($type !== null
+            && $val !== null
+            && is_scalar($val)
+            && $type->family === ColumnTypeFamily::STRING
+            && str_starts_with(strtoupper($type->nativeType), 'SET(')
+        ) {
+            $val = $this->normalizeSetValue((string) $val, $type->nativeType);
         }
 
-        if ($type !== null) {
-            return $this->formatWithColumnType($val, $type);
-        }
-
-        if (is_int($val)) {
-            return $this->castRenderer->renderCast(
-                (string) $val,
-                new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-            );
-        }
-        if (is_string($val)) {
-            return $this->castRenderer->renderCast(
-                $this->quoteValue($val),
-                new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR'),
-            );
-        }
-        if (is_bool($val)) {
-            return $val ? "TRUE" : "FALSE";
-        }
-        if (is_float($val)) {
-            return (string) $val;
-        }
-        if (is_object($val) && method_exists($val, '__toString')) {
-            return (string) $val;
-        }
-        throw new \RuntimeException('Unsupported value type for CTE shadowing.');
-    }
-
-    private function formatWithColumnType(mixed $val, ColumnType $type): string
-    {
-        $strVal = is_scalar($val) ? (string) $val : ($val === null ? '' : serialize($val));
-
-        if ($type->family === ColumnTypeFamily::STRING && str_starts_with(strtoupper($type->nativeType), 'SET(')) {
-            $strVal = $this->normalizeSetValue($strVal, $type->nativeType);
-        }
-
-        $quotedVal = $this->quoteValue($strVal);
-
-        return $this->castRenderer->renderCast($quotedVal, $type);
+        return $this->valueRenderer->renderValue($val, $type);
     }
 
     private function renderFallbackNullCast(): string
@@ -194,11 +167,6 @@ final class SelectTransformer implements SqlTransformer
         return $this->castRenderer->renderNullCast(
             new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR'),
         );
-    }
-
-    private function quoteValue(string $val): string
-    {
-        return "'" . str_replace("'", "''", $val) . "'";
     }
 
     private function normalizeSetValue(string $value, string $mysqlType): string

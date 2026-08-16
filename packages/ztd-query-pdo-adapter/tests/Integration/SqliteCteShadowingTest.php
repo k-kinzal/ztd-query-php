@@ -545,4 +545,55 @@ final class SqliteCteShadowingTest extends TestCase
             ['id' => 3, 'select' => 'column-select', 'values' => 'column-values'],
         ], $columnRows->fetchAll());
     }
+
+    public function testBinaryPreparedValueRoundTripsThroughShadowCte(): void
+    {
+        $rawPdo = new \PDO('sqlite::memory:', null, null, [
+            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        ]);
+        $rawPdo->exec('CREATE TABLE events (id INTEGER PRIMARY KEY, payload BLOB)');
+        $ztdPdo = ZtdPdo::fromPdo($rawPdo, null);
+        $payload = "\x00\x01\x02\xFF\xFE";
+
+        $insert = $ztdPdo->prepare('INSERT INTO events (id, payload) VALUES (?, ?)');
+        self::assertNotFalse($insert);
+        self::assertTrue($insert->execute([1, $payload]));
+
+        $result = $ztdPdo->query('SELECT payload FROM events WHERE id = 1');
+        self::assertNotFalse($result);
+        self::assertSame($payload, $result->fetchColumn());
+    }
+
+    public function testRealValuesRetainRoundTripPrecision(): void
+    {
+        $rawPdo = new \PDO('sqlite::memory:', null, null, [
+            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        ]);
+        $rawPdo->exec('CREATE TABLE measurements (id INTEGER PRIMARY KEY, value REAL)');
+        $ztdPdo = ZtdPdo::fromPdo($rawPdo, null);
+
+        $ztdPdo->exec('INSERT INTO measurements VALUES (1, 2.718281828459045), (2, 0.30000000000000004)');
+
+        $result = $ztdPdo->query('SELECT value FROM measurements ORDER BY id');
+        self::assertNotFalse($result);
+        self::assertSame([2.718281828459045, 0.30000000000000004], $result->fetchAll(\PDO::FETCH_COLUMN));
+    }
+
+    public function testShadowValuesRetainSqliteStorageClasses(): void
+    {
+        $rawPdo = new \PDO('sqlite::memory:', null, null, [
+            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        ]);
+        $rawPdo->exec('CREATE TABLE values_table (id INTEGER PRIMARY KEY, int_value INTEGER, real_value REAL, text_value TEXT, nullable_value TEXT)');
+        $ztdPdo = ZtdPdo::fromPdo($rawPdo, null);
+
+        $ztdPdo->exec("INSERT INTO values_table VALUES (1, 42, 3.14, 'hello', NULL)");
+
+        $result = $ztdPdo->query('SELECT typeof(int_value), typeof(real_value), typeof(text_value), typeof(nullable_value) FROM values_table');
+        self::assertNotFalse($result);
+        self::assertSame(['integer', 'real', 'text', 'null'], $result->fetch(\PDO::FETCH_NUM));
+    }
 }

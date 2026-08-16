@@ -763,6 +763,7 @@ final class PgSqlParser
         $items = [];
         $current = '';
         $depth = 0;
+        $bracketDepth = 0;
         $len = strlen($str);
         $inSingleQuote = false;
 
@@ -809,7 +810,19 @@ final class PgSqlParser
                 continue;
             }
 
-            if ($char === ',' && $depth === 1) {
+            if ($char === '[') {
+                $bracketDepth++;
+                $current .= $char;
+                continue;
+            }
+
+            if ($char === ']' && $bracketDepth > 0) {
+                $bracketDepth--;
+                $current .= $char;
+                continue;
+            }
+
+            if ($char === ',' && $depth === 1 && $bracketDepth === 0) {
                 $items[] = trim($current);
                 $current = '';
                 continue;

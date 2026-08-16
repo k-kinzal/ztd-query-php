@@ -47,6 +47,26 @@ final class PgSqlCastRendererTest extends CastRendererContractTest
         self::assertSame("CAST('42' AS INTEGER)", $renderer->renderCast("'42'", $type));
     }
 
+    public function testRenderCastBigIntPreservesWidth(): void
+    {
+        $renderer = new PgSqlCastRenderer();
+
+        self::assertSame(
+            'CAST(9223372036854775807 AS BIGINT)',
+            $renderer->renderCast('9223372036854775807', new ColumnType(ColumnTypeFamily::INTEGER, 'BIGINT')),
+        );
+    }
+
+    public function testRenderCastPreservesArrayType(): void
+    {
+        $renderer = new PgSqlCastRenderer();
+
+        self::assertSame(
+            "CAST('{1,2}' AS INT4[])",
+            $renderer->renderCast("'{1,2}'", new ColumnType(ColumnTypeFamily::INTEGER, 'INT4[]')),
+        );
+    }
+
     public function testRenderNullCastInteger(): void
     {
         $renderer = new PgSqlCastRenderer();

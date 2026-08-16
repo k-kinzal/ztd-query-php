@@ -16,8 +16,11 @@ use PhpMyAdmin\SqlParser\Statements\InsertStatement;
 use PhpMyAdmin\SqlParser\Statements\SelectStatement as PhpMyAdminSelectStatement;
 use RuntimeException;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\CastRenderer;
+use ZtdQuery\Platform\MySql\MySqlCastRenderer;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Rewrite\SqlTransformer;
+use ZtdQuery\Schema\ColumnType;
 
 /**
  * Transforms INSERT statements into SELECT queries that return the inserted rows.
@@ -27,11 +30,16 @@ final class InsertTransformer implements SqlTransformer
 {
     private MySqlParser $parser;
     private SelectTransformer $selectTransformer;
+    private CastRenderer $castRenderer;
 
-    public function __construct(MySqlParser $parser, SelectTransformer $selectTransformer)
-    {
+    public function __construct(
+        MySqlParser $parser,
+        SelectTransformer $selectTransformer,
+        ?CastRenderer $castRenderer = null,
+    ) {
         $this->parser = $parser;
         $this->selectTransformer = $selectTransformer;
+        $this->castRenderer = $castRenderer ?? new MySqlCastRenderer();
     }
 
     /**
@@ -65,20 +73,22 @@ final class InsertTransformer implements SqlTransformer
             throw new UnsupportedSqlException($sql, 'Cannot determine columns');
         }
 
-        $selectSql = $this->buildInsertSelect($statement, $columns);
+        $columnTypes = $tables[$tableName]['columnTypes'] ?? [];
+        $selectSql = $this->buildInsertSelect($statement, $columns, $columnTypes);
 
         return $this->selectTransformer->transform($selectSql, $tables);
     }
 
     /**
      * @param array<int, string> $columns
+     * @param array<string, ColumnType> $columnTypes
      */
-    private function buildInsertSelect(InsertStatement $statement, array $columns): string
+    private function buildInsertSelect(InsertStatement $statement, array $columns, array $columnTypes): string
     {
         if ($statement->values !== null && $statement->values !== []) {
             $rows = [];
             foreach ($statement->values as $valueSet) {
-                $rows[] = $this->buildInsertRowSelect($valueSet, $columns);
+                $rows[] = $this->buildInsertRowSelect($valueSet, $columns, $columnTypes);
             }
 
             return implode(' UNION ALL ', $rows);
@@ -97,8 +107,9 @@ final class InsertTransformer implements SqlTransformer
 
     /**
      * @param array<int, string> $columns
+     * @param array<string, ColumnType> $columnTypes
      */
-    private function buildInsertRowSelect(ArrayObj $valueSet, array $columns): string
+    private function buildInsertRowSelect(ArrayObj $valueSet, array $columns, array $columnTypes): string
     {
         $values = $valueSet->raw !== [] ? $valueSet->raw : $valueSet->values;
         if (count($values) !== count($columns)) {
@@ -108,6 +119,10 @@ final class InsertTransformer implements SqlTransformer
         $selects = [];
         foreach ($columns as $index => $column) {
             $expr = trim($values[$index]);
+            $type = $columnTypes[$column] ?? null;
+            if ($type instanceof ColumnType) {
+                $expr = $this->castRenderer->renderCast($expr, $type);
+            }
             $selects[] = $expr . ' AS `' . $column . '`';
         }
 

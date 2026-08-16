@@ -8,6 +8,7 @@ use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
 use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\IdentifierQuoter;
+use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
@@ -26,11 +27,16 @@ final class SelectTransformer implements SqlTransformer
 {
     private CastRenderer $castRenderer;
     private IdentifierQuoter $quoter;
+    private ValueRenderer $valueRenderer;
 
-    public function __construct(?CastRenderer $castRenderer = null, ?IdentifierQuoter $quoter = null)
-    {
+    public function __construct(
+        ?CastRenderer $castRenderer = null,
+        ?IdentifierQuoter $quoter = null,
+        ?ValueRenderer $valueRenderer = null,
+    ) {
         $this->castRenderer = $castRenderer ?? new PgSqlCastRenderer();
         $this->quoter = $quoter ?? new PgSqlIdentifierQuoter();
+        $this->valueRenderer = $valueRenderer ?? new \ZtdQuery\Platform\Postgres\PgSqlValueRenderer($this->castRenderer);
     }
 
     /**
@@ -179,44 +185,7 @@ final class SelectTransformer implements SqlTransformer
 
     private function formatValue(mixed $val, ?ColumnType $colType = null): string
     {
-        if (is_null($val)) {
-            return 'NULL';
-        }
-
-        if ($colType !== null) {
-            if (is_string($val)) {
-                $quotedVal = $this->quoteValue($val);
-            } elseif (is_int($val) || is_float($val) || is_bool($val)) {
-                $quotedVal = $this->quoteValue((string) $val);
-            } else {
-                $quotedVal = $this->quoteValue(serialize($val));
-            }
-
-            return $this->castRenderer->renderCast($quotedVal, $colType);
-        }
-
-        if (is_int($val)) {
-            return $this->castRenderer->renderCast(
-                (string) $val,
-                new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-            );
-        }
-        if (is_string($val)) {
-            return $this->castRenderer->renderCast(
-                $this->quoteValue($val),
-                new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
-            );
-        }
-        if (is_bool($val)) {
-            return $val ? 'TRUE' : 'FALSE';
-        }
-        if (is_float($val)) {
-            return (string) $val;
-        }
-        if (is_object($val) && method_exists($val, '__toString')) {
-            return (string) $val;
-        }
-        throw new \RuntimeException('Unsupported value type for CTE shadowing.');
+        return $this->valueRenderer->renderValue($val, $colType);
     }
 
     private function renderFallbackNullCast(): string
@@ -226,8 +195,4 @@ final class SelectTransformer implements SqlTransformer
         );
     }
 
-    private function quoteValue(string $val): string
-    {
-        return "'" . str_replace("'", "''", $val) . "'";
-    }
 }

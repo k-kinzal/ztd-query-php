@@ -395,4 +395,28 @@ final class MysqliCteShadowingTest extends TestCase
             $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
         }
     }
+
+    public function testPreparedBackslashesRoundTripWithoutMysqlEscapeCorruption(): void
+    {
+        [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();
+        $table = 'typed_' . bin2hex(random_bytes(8));
+        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, value VARCHAR(255))', $table));
+        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
+        try {
+            $insert = $ztdMysqli->prepare(sprintf('INSERT INTO `%s` (id, value) VALUES (?, ?)', $table));
+            self::assertNotFalse($insert);
+            $id = 1;
+            $value = 'path\\to\\file';
+            self::assertTrue($insert->bind_param('is', $id, $value));
+            self::assertTrue($insert->execute());
+
+            $result = $ztdMysqli->query(sprintf('SELECT value FROM `%s` WHERE id = 1', $table));
+            self::assertNotFalse($result);
+            self::assertInstanceOf(\mysqli_result::class, $result);
+            self::assertSame([['value' => $value]], $result->fetch_all(MYSQLI_ASSOC));
+        } finally {
+            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+        }
+    }
 }
