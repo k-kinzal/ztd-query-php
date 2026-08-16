@@ -48,6 +48,13 @@ final class PgSchemaPool
             ['id']
         );
 
+        self::$schemas['bit_types'] = new SchemaDefinition(
+            'bit_types',
+            'CREATE TABLE bit_types (id SERIAL PRIMARY KEY, col_bit8 BIT(8), col_varbit BIT VARYING(8))',
+            ['id', 'col_bit8', 'col_varbit'],
+            ['id']
+        );
+
         self::$schemas['composite_pk'] = new SchemaDefinition(
             'composite_pk',
             'CREATE TABLE composite_pk (order_id INTEGER NOT NULL, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL DEFAULT 1, PRIMARY KEY (order_id, product_id))',

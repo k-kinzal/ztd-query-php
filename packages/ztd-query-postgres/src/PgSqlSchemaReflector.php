@@ -182,6 +182,7 @@ final class PgSqlSchemaReflector implements SchemaReflector
         return match ($dataType) {
             'CHARACTER VARYING' => $this->buildVarcharType($col),
             'CHARACTER' => $this->buildCharType($col),
+            'BIT', 'BIT VARYING' => $this->buildBitType($dataType, $col),
             'NUMERIC' => $this->buildNumericType($col),
             'INTEGER' => 'INTEGER',
             'SMALLINT' => 'SMALLINT',
@@ -229,6 +230,19 @@ final class PgSqlSchemaReflector implements SchemaReflector
         }
 
         return 'CHAR(1)';
+    }
+
+    /**
+     * @param array<string, mixed> $col
+     */
+    private function buildBitType(string $dataType, array $col): string
+    {
+        $maxLen = $col['character_maximum_length'] ?? null;
+        if (is_int($maxLen) || (is_string($maxLen) && ctype_digit($maxLen))) {
+            return "$dataType($maxLen)";
+        }
+
+        return $dataType;
     }
 
     /**

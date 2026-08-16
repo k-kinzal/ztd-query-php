@@ -130,6 +130,10 @@ final class PgSchemaAwareSqlBuilder
     {
         $col = strtolower($column);
 
+        if (str_contains($col, 'bit')) {
+            return "B'10101010'";
+        }
+
         if (str_contains($col, 'id') || str_contains($col, 'quantity') || str_contains($col, 'int') || str_contains($col, 'bigint') || str_contains($col, 'smallint')) {
             return (string) $this->faker->numberBetween(1, 100);
         }

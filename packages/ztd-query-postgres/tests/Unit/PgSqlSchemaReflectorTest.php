@@ -296,6 +296,40 @@ final class PgSqlSchemaReflectorTest extends TestCase
         self::assertSame("CREATE TABLE \"t\" (\n  \"x\" CHAR(1)\n)", $r->getCreateStatement('t'));
     }
 
+    public function testExactSqlPreservesBitWidths(): void
+    {
+        $r = new PgSqlSchemaReflector(new FakeSequentialConnection([
+            new FakeStatement([
+                ['column_name' => 'fixed', 'data_type' => 'bit', 'character_maximum_length' => 8, 'numeric_precision' => null, 'numeric_scale' => null, 'is_nullable' => 'YES', 'column_default' => null, 'udt_name' => 'bit'],
+                ['column_name' => 'varying', 'data_type' => 'bit varying', 'character_maximum_length' => '16', 'numeric_precision' => null, 'numeric_scale' => null, 'is_nullable' => 'YES', 'column_default' => null, 'udt_name' => 'varbit'],
+            ]),
+            new FakeStatement([]),
+            new FakeStatement([]),
+        ]));
+
+        self::assertSame(
+            "CREATE TABLE \"t\" (\n  \"fixed\" BIT(8),\n  \"varying\" BIT VARYING(16)\n)",
+            $r->getCreateStatement('t'),
+        );
+    }
+
+    public function testExactSqlPreservesUnboundedBitTypes(): void
+    {
+        $r = new PgSqlSchemaReflector(new FakeSequentialConnection([
+            new FakeStatement([
+                ['column_name' => 'fixed', 'data_type' => 'bit', 'character_maximum_length' => null, 'numeric_precision' => null, 'numeric_scale' => null, 'is_nullable' => 'YES', 'column_default' => null, 'udt_name' => 'bit'],
+                ['column_name' => 'varying', 'data_type' => 'bit varying', 'character_maximum_length' => null, 'numeric_precision' => null, 'numeric_scale' => null, 'is_nullable' => 'YES', 'column_default' => null, 'udt_name' => 'varbit'],
+            ]),
+            new FakeStatement([]),
+            new FakeStatement([]),
+        ]));
+
+        self::assertSame(
+            "CREATE TABLE \"t\" (\n  \"fixed\" BIT,\n  \"varying\" BIT VARYING\n)",
+            $r->getCreateStatement('t'),
+        );
+    }
+
     public function testExactSqlForNumericPrecisionScale(): void
     {
         $r = new PgSqlSchemaReflector(new FakeSequentialConnection([
