@@ -167,22 +167,18 @@ class ZtdPdo extends PDO
         }
 
         try {
-            $plan = $this->session->rewrite($query);
+            $execution = new PdoPreparedExecution($this->pdo, $this->session, $query, $options);
+            $prepared = $execution->prepare(null);
         } catch (DatabaseException $e) {
             throw new ZtdPdoException($e->getMessage(), 0, $e);
         }
 
-        $preparedSql = $plan->sql();
-        if ($this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'pgsql') {
-            $preparedSql = PostgreSqlPlaceholderEscaper::escape($preparedSql);
-        }
-
-        $stmt = $this->pdo->prepare($preparedSql, $options);
-        if ($stmt === false) {
-            return false;
-        }
-
-        return new ZtdPdoStatement($stmt, $this->session, $plan);
+        return new ZtdPdoStatement(
+            $prepared['statement'],
+            $this->session,
+            $prepared['plan'],
+            $execution,
+        );
     }
 
     /**

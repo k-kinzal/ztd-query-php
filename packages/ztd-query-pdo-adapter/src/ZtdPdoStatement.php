@@ -47,11 +47,27 @@ final class ZtdPdoStatement extends NativePdoStatement
      */
     private ?ExecuteResult $result = null;
 
-    public function __construct(NativePdoStatement $statement, Session $session, ?RewritePlan $plan)
-    {
+    private ?PdoPreparedExecution $preparedExecution;
+
+    /** @var array<int|string, array{value: mixed, type: int}> */
+    private array $boundValues = [];
+
+    /** @var array<int|string, array{value: mixed, type: int, maxLength: int, driverOptions: mixed}> */
+    private array $boundParams = [];
+
+    /** @var array{mode: int, args: array<mixed>}|null */
+    private ?array $fetchMode = null;
+
+    public function __construct(
+        NativePdoStatement $statement,
+        Session $session,
+        ?RewritePlan $plan,
+        ?PdoPreparedExecution $preparedExecution = null,
+    ) {
         $this->statement = $statement;
         $this->session = $session;
         $this->plan = $plan;
+        $this->preparedExecution = $preparedExecution;
     }
 
     /**
@@ -59,6 +75,8 @@ final class ZtdPdoStatement extends NativePdoStatement
      */
     public function bindValue(int|string $param, mixed $value, int $type = PDO::PARAM_STR): bool
     {
+        $this->boundValues[$param] = ['value' => $value, 'type' => $type];
+
         return $this->statement->bindValue($param, $value, $type);
     }
 
@@ -72,6 +90,13 @@ final class ZtdPdoStatement extends NativePdoStatement
         int $maxLength = 0,
         mixed $driverOptions = null
     ): bool {
+        $this->boundParams[$param] = [
+            'value' => &$var,
+            'type' => $type,
+            'maxLength' => $maxLength,
+            'driverOptions' => $driverOptions,
+        ];
+
         return $this->statement->bindParam($param, $var, $type, $maxLength, $driverOptions);
     }
 
@@ -97,8 +122,19 @@ final class ZtdPdoStatement extends NativePdoStatement
     {
         $this->result = null;
 
+        if ($this->preparedExecution !== null) {
+            $prepared = $this->preparedExecution->prepare($params);
+            $this->statement = $prepared['statement'];
+            $this->plan = $prepared['plan'];
+            $params = $prepared['params'];
+            $this->rebindParameters();
+            if ($this->fetchMode !== null) {
+                $this->statement->setFetchMode($this->fetchMode['mode'], ...$this->fetchMode['args']);
+            }
+        }
+
         if ($this->plan === null) {
-            return $this->statement->execute($params);
+            return $this->executeStatement($params);
         }
 
         if (!$this->session->shouldExecute($this->plan)) {
@@ -106,10 +142,10 @@ final class ZtdPdoStatement extends NativePdoStatement
         }
 
         if (!$this->session->needsPostProcessing($this->plan)) {
-            return $this->statement->execute($params);
+            return $this->executeStatement($params);
         }
 
-        if (!$this->statement->execute($params)) {
+        if (!$this->executeStatement($params)) {
             return false;
         }
 
@@ -123,6 +159,33 @@ final class ZtdPdoStatement extends NativePdoStatement
         }
 
         return $this->result->isSuccess();
+    }
+
+    /** @param array<int|string, mixed>|null $params */
+    private function executeStatement(?array $params): bool
+    {
+        if ($this->preparedExecution === null) {
+            return $this->statement->execute($params);
+        }
+
+        return $this->preparedExecution->parameterBinder()->execute($this->statement, $params);
+    }
+
+    private function rebindParameters(): void
+    {
+        foreach ($this->boundValues as $parameter => $binding) {
+            $this->statement->bindValue($parameter, $binding['value'], $binding['type']);
+        }
+        foreach (array_keys($this->boundParams) as $parameter) {
+            $binding = &$this->boundParams[$parameter];
+            $this->statement->bindParam(
+                $parameter,
+                $binding['value'],
+                $binding['type'],
+                $binding['maxLength'],
+                $binding['driverOptions'],
+            );
+        }
     }
 
     /**
@@ -230,6 +293,8 @@ final class ZtdPdoStatement extends NativePdoStatement
     #[\ReturnTypeWillChange]
     public function setFetchMode(int $mode, mixed ...$args): bool
     {
+        $this->fetchMode = ['mode' => $mode, 'args' => $args];
+
         return $this->statement->setFetchMode($mode, ...$args);
     }
 
