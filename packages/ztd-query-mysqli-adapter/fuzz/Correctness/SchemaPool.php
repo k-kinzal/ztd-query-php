@@ -6,29 +6,6 @@ namespace Fuzz\Correctness;
 
 use Faker\Generator;
 
-final class SchemaDefinition
-{
-    /** @var array<int, string> */
-    public readonly array $columns;
-
-    /** @var array<int, string> */
-    public readonly array $primaryKeys;
-
-    /**
-     * @param array<int, string> $columns
-     * @param array<int, string> $primaryKeys
-     */
-    public function __construct(
-        public readonly string $name,
-        public readonly string $sql,
-        array $columns,
-        array $primaryKeys
-    ) {
-        $this->columns = $columns;
-        $this->primaryKeys = $primaryKeys;
-    }
-}
-
 final class SchemaPool
 {
     /** @var array<string, SchemaDefinition> */
@@ -74,7 +51,16 @@ final class SchemaPool
             'composite_pk',
             'CREATE TABLE composite_pk (order_id INT NOT NULL, product_id INT NOT NULL, quantity INT NOT NULL DEFAULT 1, PRIMARY KEY (order_id, product_id))',
             ['order_id', 'product_id', 'quantity'],
-            ['order_id', 'product_id']
+            ['order_id', 'product_id'],
+            ['quantity']
+        );
+
+        self::$schemas['default_values'] = new SchemaDefinition(
+            'default_values',
+            "CREATE TABLE default_values (id INT DEFAULT 7, col_enum ENUM('a','b','c') DEFAULT 'b')",
+            ['id', 'col_enum'],
+            [],
+            ['id', 'col_enum']
         );
 
         self::$schemas['nullable_heavy'] = new SchemaDefinition(

@@ -8,9 +8,11 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
+use ZtdQuery\Rewrite\InsertRowProjector;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
+use ZtdQuery\Sql\SqlTokenStream;
 
 /**
  * Transforms INSERT statements into SELECT queries that return the inserted rows.
@@ -21,15 +23,18 @@ final class InsertTransformer implements SqlTransformer
     private PgSqlParser $parser;
     private SelectTransformer $selectTransformer;
     private CastRenderer $castRenderer;
+    private InsertRowProjector $rowProjector;
 
     public function __construct(
         PgSqlParser $parser,
         SelectTransformer $selectTransformer,
         ?CastRenderer $castRenderer = null,
+        ?InsertRowProjector $rowProjector = null,
     ) {
         $this->parser = $parser;
         $this->selectTransformer = $selectTransformer;
         $this->castRenderer = $castRenderer ?? new PgSqlCastRenderer();
+        $this->rowProjector = $rowProjector ?? new InsertRowProjector();
     }
 
     /**
@@ -42,11 +47,9 @@ final class InsertTransformer implements SqlTransformer
             throw new UnsupportedSqlException($sql, 'Cannot resolve INSERT target');
         }
 
-        $columns = $this->parser->extractInsertColumns($sql);
-        if ($columns === [] && isset($tables[$tableName])) {
-            $columns = $tables[$tableName]['columns'];
-        }
-        if ($columns === []) {
+        $insertColumns = $this->parser->extractInsertColumns($sql);
+        $tableColumns = array_values($tables[$tableName]['columns'] ?? $insertColumns);
+        if ($tableColumns === []) {
             throw new UnsupportedSqlException($sql, 'Cannot determine columns');
         }
 
@@ -59,21 +62,26 @@ final class InsertTransformer implements SqlTransformer
             return $this->selectTransformer->transform($selectSql, $tables);
         }
 
-        $valueRows = $this->parser->extractInsertValues($sql);
+        $valueRows = SqlTokenStream::tokenize($sql)->topLevelClause(['DEFAULT', 'VALUES']) !== null
+            ? [[]]
+            : $this->parser->extractInsertValues($sql);
         if ($valueRows === []) {
             throw new UnsupportedSqlException($sql, 'Cannot extract INSERT values');
         }
 
         $selectParts = [];
         $columnTypes = $tables[$tableName]['columnTypes'] ?? [];
+        $columnDefaults = $tables[$tableName]['columnDefaults'] ?? [];
         foreach ($valueRows as $values) {
-            if (count($values) !== count($columns)) {
+            $sourceColumns = $insertColumns !== [] || $values === [] ? $insertColumns : $tableColumns;
+            try {
+                $projected = $this->rowProjector->project($tableColumns, $sourceColumns, $values, $columnDefaults);
+            } catch (\InvalidArgumentException) {
                 throw new UnsupportedSqlException($sql, 'Insert values count does not match column count');
             }
 
             $selects = [];
-            foreach ($columns as $index => $column) {
-                $expr = trim($values[$index]);
+            foreach ($projected as $column => $expr) {
                 $type = $columnTypes[$column] ?? null;
                 if ($type instanceof ColumnType) {
                     $expr = $this->castInsertExpression($expr, $type);

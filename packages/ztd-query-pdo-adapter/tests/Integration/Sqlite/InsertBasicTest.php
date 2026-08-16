@@ -84,4 +84,25 @@ final class InsertBasicTest extends TestCase
         $rawRows = $stmt->fetchAll();
         self::assertCount(0, $rawRows);
     }
+
+    public function testOmittedColumnsAndDefaultValuesMatchSqlite(): void
+    {
+        $rawPdo = new \PDO('sqlite::memory:', null, null, [
+            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        ]);
+        $rawPdo->exec("CREATE TABLE settings (id INTEGER DEFAULT 7, status TEXT DEFAULT 'active', note TEXT)");
+        $ztdPdo = ZtdPdo::fromPdo($rawPdo);
+
+        $rawPdo->exec('INSERT INTO settings (id) VALUES (1)');
+        $rawPdo->exec('INSERT INTO settings DEFAULT VALUES');
+        $ztdPdo->exec('INSERT INTO settings (id) VALUES (1)');
+        $ztdPdo->exec('INSERT INTO settings DEFAULT VALUES');
+
+        $raw = $rawPdo->query('SELECT * FROM settings ORDER BY id');
+        $ztd = $ztdPdo->query('SELECT * FROM settings ORDER BY id');
+        self::assertNotFalse($raw);
+        self::assertNotFalse($ztd);
+        self::assertSame($raw->fetchAll(), $ztd->fetchAll());
+    }
 }

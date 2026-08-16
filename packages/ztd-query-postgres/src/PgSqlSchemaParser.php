@@ -8,6 +8,7 @@ use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\TableDefinition;
+use ZtdQuery\Sql\SqlTokenStream;
 
 /**
  * PostgreSQL implementation of SchemaParser.
@@ -32,6 +33,7 @@ final class PgSqlSchemaParser implements SchemaParser
         $columnTypes = [];
         /** @var array<string, ColumnType> $typedColumns */
         $typedColumns = [];
+        $columnDefaults = [];
         $primaryKeys = [];
         $notNullColumns = [];
         /** @var array<string, list<string>> $uniqueConstraints */
@@ -75,6 +77,10 @@ final class PgSqlSchemaParser implements SchemaParser
                 $keyName = $columnDef['name'] . '_UNIQUE';
                 $uniqueConstraints[$keyName] = [$columnDef['name']];
             }
+
+            if ($columnDef['default'] !== null && preg_match('/^nextval\s*\(/i', ltrim($columnDef['default'], '(')) !== 1) {
+                $columnDefaults[$columnDef['name']] = $columnDef['default'];
+            }
         }
 
         if ($columns === []) {
@@ -96,11 +102,12 @@ final class PgSqlSchemaParser implements SchemaParser
             $notNullColumns,
             $uniqueConstraints,
             $typedColumns,
+            $columnDefaults,
         );
     }
 
     /**
-     * @return array{name: string, type: string, columnType: ColumnType, notNull: bool, primaryKey: bool, unique: bool}|null
+     * @return array{name: string, type: string, columnType: ColumnType, notNull: bool, primaryKey: bool, unique: bool, default: string|null}|null
      */
     private function parseColumnDefinition(string $entry): ?array
     {
@@ -122,6 +129,13 @@ final class PgSqlSchemaParser implements SchemaParser
         $notNull = preg_match('/\bNOT\s+NULL\b/i', $afterType) === 1;
         $primaryKey = preg_match('/\bPRIMARY\s+KEY\b/i', $afterType) === 1;
         $unique = preg_match('/\bUNIQUE\b/i', $afterType) === 1;
+        $default = SqlTokenStream::tokenize($afterType)->topLevelClause(
+            ['DEFAULT'],
+            [
+                ['NOT', 'NULL'], ['PRIMARY', 'KEY'], ['UNIQUE'], ['CHECK'],
+                ['REFERENCES'], ['COLLATE'], ['CONSTRAINT'], ['GENERATED'], ['DEFERRABLE'],
+            ],
+        );
 
         $family = $this->mapTypeToFamily($nativeType);
         $columnType = new ColumnType($family, strtoupper($nativeType));
@@ -133,6 +147,7 @@ final class PgSqlSchemaParser implements SchemaParser
             'notNull' => $notNull,
             'primaryKey' => $primaryKey,
             'unique' => $unique,
+            'default' => $default,
         ];
     }
 

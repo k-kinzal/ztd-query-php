@@ -351,6 +351,33 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['id', 'status', 'created_at'], $def->columns);
         self::assertContains('status', $def->notNullColumns);
+        self::assertSame([
+            'status' => "'active'",
+            'created_at' => 'NOW()',
+        ], $def->columnDefaults);
+    }
+
+    public function testParseKeepsConstraintWordsInsideDefaultExpressions(): void
+    {
+        $definition = (new PgSqlSchemaParser())->parse(
+            "CREATE TABLE t (label TEXT DEFAULT ('not null, still default') NOT NULL, enabled BOOLEAN DEFAULT TRUE)"
+        );
+
+        self::assertNotNull($definition);
+        self::assertSame([
+            'label' => "('not null, still default')",
+            'enabled' => 'TRUE',
+        ], $definition->columnDefaults);
+    }
+
+    public function testParseDoesNotTreatSequenceAsOrdinaryDefault(): void
+    {
+        $definition = (new PgSqlSchemaParser())->parse(
+            "CREATE TABLE t (id BIGINT DEFAULT nextval('t_id_seq'::regclass), name TEXT DEFAULT 'new')"
+        );
+
+        self::assertNotNull($definition);
+        self::assertSame(['name' => "'new'"], $definition->columnDefaults);
     }
 
     public function testParseMultipleUniqueConstraints(): void

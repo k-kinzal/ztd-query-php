@@ -58,10 +58,22 @@ final class PgSchemaAwareSqlBuilder
         if ($columns === []) {
             $columns = $schema->columns;
         }
+        $variant = $schema->defaultColumns === [] ? 0 : $this->faker->numberBetween(0, 2);
+        if ($variant === 2 && count($schema->defaultColumns) === count($schema->columns)) {
+            return "INSERT INTO $table DEFAULT VALUES";
+        }
+        if ($variant === 1) {
+            $columns = array_values(array_diff($columns, $schema->defaultColumns));
+            if ($columns === []) {
+                return "INSERT INTO $table DEFAULT VALUES";
+            }
+        }
         $values = [];
 
         foreach ($columns as $col) {
-            $values[] = $this->generateLiteral($col);
+            $values[] = $variant === 2 && in_array($col, $schema->defaultColumns, true)
+                ? 'DEFAULT'
+                : $this->generateLiteral($col);
         }
 
         $colList = implode(', ', array_map(fn ($c) => $this->quoteIdentifier($c), $columns));

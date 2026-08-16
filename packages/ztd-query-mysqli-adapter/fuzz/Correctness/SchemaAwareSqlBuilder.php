@@ -64,10 +64,19 @@ final class SchemaAwareSqlBuilder
     {
         $table = $schema->name;
         $columns = $schema->columns;
+        $variant = $schema->defaultColumns === [] ? 0 : $this->faker->numberBetween(0, 2);
+        if ($variant === 2 && count($schema->defaultColumns) === count($columns)) {
+            return "INSERT INTO `$table` () VALUES ()";
+        }
+        if ($variant === 1) {
+            $columns = array_values(array_diff($columns, $schema->defaultColumns));
+        }
         $values = [];
 
         foreach ($columns as $col) {
-            $values[] = $this->generateLiteral($col, $schema);
+            $values[] = $variant === 2 && in_array($col, $schema->defaultColumns, true)
+                ? 'DEFAULT'
+                : $this->generateLiteral($col, $schema);
         }
 
         $colList = implode(', ', array_map(fn (string $c) => "`$c`", $columns));

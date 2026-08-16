@@ -348,4 +348,37 @@ final class InsertTransformerTest extends TestCase
         $result = $transformer->transform($sql, []);
         self::assertStringStartsWith('SELECT ', $result);
     }
+
+    public function testTransformProjectsOmittedAndExplicitDefaults(): void
+    {
+        $transformer = new InsertTransformer(new SqliteParser(), new SelectTransformer());
+        $tables = ['users' => [
+            'rows' => [],
+            'columns' => ['id', 'status', 'note'],
+            'columnTypes' => [],
+            'columnDefaults' => ['status' => "'active'"],
+        ]];
+
+        $result = $transformer->transform('INSERT INTO users (id, status) VALUES (1, DEFAULT)', $tables);
+
+        self::assertStringContainsString('1 AS "id"', $result);
+        self::assertStringContainsString("'active' AS \"status\"", $result);
+        self::assertStringContainsString('NULL AS "note"', $result);
+    }
+
+    public function testTransformDefaultValuesProjectsCompleteRow(): void
+    {
+        $transformer = new InsertTransformer(new SqliteParser(), new SelectTransformer());
+        $tables = ['settings' => [
+            'rows' => [],
+            'columns' => ['enabled', 'label'],
+            'columnTypes' => [],
+            'columnDefaults' => ['enabled' => '1', 'label' => "'new'"],
+        ]];
+
+        $result = $transformer->transform('INSERT INTO settings DEFAULT VALUES', $tables);
+
+        self::assertStringContainsString('1 AS "enabled"', $result);
+        self::assertStringContainsString("'new' AS \"label\"", $result);
+    }
 }

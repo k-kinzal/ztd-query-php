@@ -54,6 +54,16 @@ final class SqliteSchemaAwareSqlBuilder
     {
         $table = $this->quoteIdentifier($schema->name);
         $columns = $schema->columns;
+        $variant = $schema->defaultColumns === [] ? 0 : $this->faker->numberBetween(0, 2);
+        if ($variant === 2 && count($schema->defaultColumns) === count($columns)) {
+            return "INSERT INTO $table DEFAULT VALUES";
+        }
+        if ($variant !== 0) {
+            $columns = array_values(array_diff($columns, $schema->defaultColumns));
+            if ($columns === []) {
+                return "INSERT INTO $table DEFAULT VALUES";
+            }
+        }
         $values = [];
 
         foreach ($columns as $col) {

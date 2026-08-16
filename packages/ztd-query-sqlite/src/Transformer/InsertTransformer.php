@@ -8,8 +8,10 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\Sqlite\SqliteCastRenderer;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
+use ZtdQuery\Rewrite\InsertRowProjector;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Sql\SqlTokenStream;
 
 /**
  * Transforms INSERT/REPLACE statements into SELECT queries that return the inserted rows.
@@ -27,15 +29,18 @@ final class InsertTransformer implements SqlTransformer
     private SqliteParser $parser;
     private SelectTransformer $selectTransformer;
     private CastRenderer $castRenderer;
+    private InsertRowProjector $rowProjector;
 
     public function __construct(
         SqliteParser $parser,
         SelectTransformer $selectTransformer,
         ?CastRenderer $castRenderer = null,
+        ?InsertRowProjector $rowProjector = null,
     ) {
         $this->parser = $parser;
         $this->selectTransformer = $selectTransformer;
         $this->castRenderer = $castRenderer ?? new SqliteCastRenderer();
+        $this->rowProjector = $rowProjector ?? new InsertRowProjector();
     }
 
     /**
@@ -53,26 +58,32 @@ final class InsertTransformer implements SqlTransformer
             throw new UnsupportedSqlException($sql, 'Cannot resolve INSERT target');
         }
 
-        $columns = $this->parser->extractInsertColumns($sql);
-        if ($columns === [] && isset($tables[$tableName])) {
-            $columns = $tables[$tableName]['columns'];
-        }
-        if ($columns === []) {
+        $insertColumns = array_values($this->parser->extractInsertColumns($sql));
+        $tableColumns = array_values($tables[$tableName]['columns'] ?? $insertColumns);
+        if ($tableColumns === []) {
             throw new UnsupportedSqlException($sql, 'Cannot determine columns');
         }
 
         $columnTypes = $tables[$tableName]['columnTypes'] ?? [];
-        $selectSql = $this->buildInsertSelect($sql, $columns, $columnTypes);
+        $columnDefaults = $tables[$tableName]['columnDefaults'] ?? [];
+        $selectSql = $this->buildInsertSelect($sql, $tableColumns, $insertColumns, $columnTypes, $columnDefaults);
 
         return $this->selectTransformer->transform($selectSql, $tables);
     }
 
     /**
-     * @param array<int, string> $columns
+     * @param list<string> $tableColumns
+     * @param list<string> $insertColumns
      * @param array<string, ColumnType> $columnTypes
+     * @param array<string, string> $columnDefaults
      */
-    private function buildInsertSelect(string $sql, array $columns, array $columnTypes): string
-    {
+    private function buildInsertSelect(
+        string $sql,
+        array $tableColumns,
+        array $insertColumns,
+        array $columnTypes,
+        array $columnDefaults,
+    ): string {
         if ($this->parser->hasInsertSelect($sql)) {
             $selectSql = $this->parser->extractInsertSelect($sql);
             if ($selectSql === null) {
@@ -82,11 +93,13 @@ final class InsertTransformer implements SqlTransformer
             return $selectSql;
         }
 
-        $valueSets = $this->parser->extractInsertValues($sql);
+        $valueSets = SqlTokenStream::tokenize($sql)->topLevelClause(['DEFAULT', 'VALUES']) !== null
+            ? [[]]
+            : $this->parser->extractInsertValues($sql);
         if ($valueSets !== []) {
             $rows = [];
             foreach ($valueSets as $values) {
-                $rows[] = $this->buildInsertRowSelect($values, $columns, $columnTypes);
+                $rows[] = $this->buildInsertRowSelect($values, $tableColumns, $insertColumns, $columnTypes, $columnDefaults);
             }
 
             return implode(' UNION ALL ', $rows);
@@ -97,18 +110,28 @@ final class InsertTransformer implements SqlTransformer
 
     /**
      * @param array<int, string> $values
-     * @param array<int, string> $columns
+     * @param list<string> $tableColumns
+     * @param list<string> $insertColumns
      * @param array<string, ColumnType> $columnTypes
+     * @param array<string, string> $columnDefaults
      */
-    private function buildInsertRowSelect(array $values, array $columns, array $columnTypes): string
-    {
-        if (count($values) !== count($columns)) {
-            throw new \RuntimeException('Insert values count does not match column count.');
+    private function buildInsertRowSelect(
+        array $values,
+        array $tableColumns,
+        array $insertColumns,
+        array $columnTypes,
+        array $columnDefaults,
+    ): string {
+        $values = array_values($values);
+        $sourceColumns = $insertColumns !== [] || $values === [] ? $insertColumns : $tableColumns;
+        try {
+            $projected = $this->rowProjector->project($tableColumns, $sourceColumns, $values, $columnDefaults);
+        } catch (\InvalidArgumentException $exception) {
+            throw new \RuntimeException($exception->getMessage(), 0, $exception);
         }
 
         $selects = [];
-        foreach ($columns as $index => $column) {
-            $expr = trim($values[$index]);
+        foreach ($projected as $column => $expr) {
             $type = $columnTypes[$column] ?? null;
             if ($type instanceof ColumnType) {
                 $expr = $this->castRenderer->renderCast($expr, $type);

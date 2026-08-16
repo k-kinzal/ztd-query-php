@@ -26,6 +26,7 @@ final class TableDefinitionTest extends TestCase
             ['id'],
             ['unique_name' => ['name']],
             $typedColumns,
+            ['name' => "'anonymous'"],
         );
 
         self::assertSame(['id', 'name'], $definition->columns);
@@ -34,6 +35,7 @@ final class TableDefinitionTest extends TestCase
         self::assertSame(['id'], $definition->notNullColumns);
         self::assertSame(['unique_name' => ['name']], $definition->uniqueConstraints);
         self::assertSame($typedColumns, $definition->typedColumns);
+        self::assertSame(['name' => "'anonymous'"], $definition->columnDefaults);
     }
 
     public function testTypedColumnsDefaultsToEmpty(): void
@@ -47,5 +49,6 @@ final class TableDefinitionTest extends TestCase
         );
 
         self::assertSame([], $definition->typedColumns);
+        self::assertSame([], $definition->columnDefaults);
     }
 }

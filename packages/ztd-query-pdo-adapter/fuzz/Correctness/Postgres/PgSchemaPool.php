@@ -59,7 +59,16 @@ final class PgSchemaPool
             'composite_pk',
             'CREATE TABLE composite_pk (order_id INTEGER NOT NULL, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL DEFAULT 1, PRIMARY KEY (order_id, product_id))',
             ['order_id', 'product_id', 'quantity'],
-            ['order_id', 'product_id']
+            ['order_id', 'product_id'],
+            ['quantity']
+        );
+
+        self::$schemas['default_values'] = new SchemaDefinition(
+            'default_values',
+            "CREATE TABLE default_values (id INTEGER DEFAULT 7, status TEXT DEFAULT 'active')",
+            ['id', 'status'],
+            [],
+            ['id', 'status']
         );
 
         self::$schemas['nullable_heavy'] = new SchemaDefinition(

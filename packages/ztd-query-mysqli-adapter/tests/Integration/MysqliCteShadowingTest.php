@@ -20,6 +20,34 @@ use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
 #[Large]
 final class MysqliCteShadowingTest extends TestCase
 {
+    public function testOmittedExplicitAndDefaultOnlyValuesMatchMySql(): void
+    {
+        [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();
+        $table = 'prefix_' . bin2hex(random_bytes(8));
+        $rawMysqli->query(sprintf(
+            "CREATE TABLE `%s` (id INT DEFAULT 7, status ENUM('new','active') DEFAULT 'active', note VARCHAR(20) DEFAULT NULL)",
+            $table,
+        ));
+        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
+        try {
+            $rawMysqli->query(sprintf("INSERT INTO `%s` (id, status) VALUES (1, DEFAULT)", $table));
+            $rawMysqli->query(sprintf('INSERT INTO `%s` () VALUES ()', $table));
+            $ztdMysqli->query(sprintf("INSERT INTO `%s` (id, status) VALUES (1, DEFAULT)", $table));
+            $ztdMysqli->query(sprintf('INSERT INTO `%s` () VALUES ()', $table));
+
+            $raw = $rawMysqli->query(sprintf('SELECT * FROM `%s` ORDER BY id', $table));
+            $ztd = $ztdMysqli->query(sprintf('SELECT * FROM `%s` ORDER BY id', $table));
+            self::assertInstanceOf(\mysqli_result::class, $raw);
+            self::assertInstanceOf(\mysqli_result::class, $ztd);
+            $rawRows = $raw->fetch_all(MYSQLI_ASSOC);
+            $ztdRows = $ztd->fetch_all(MYSQLI_ASSOC);
+            self::assertEquals($rawRows, $ztdRows);
+        } finally {
+            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+        }
+    }
+
     public function testEnumUsesDeclarationRanksForOrderingAndComparison(): void
     {
         [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();

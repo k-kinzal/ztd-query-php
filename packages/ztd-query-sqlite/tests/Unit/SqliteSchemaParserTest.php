@@ -127,6 +127,23 @@ final class SqliteSchemaParserTest extends SchemaParserContractTest
 
         self::assertNotNull($result);
         self::assertSame(['id', 'status', 'created_at'], $result->columns);
+        self::assertSame([
+            'status' => "'active'",
+            'created_at' => 'CURRENT_TIMESTAMP',
+        ], $result->columnDefaults);
+    }
+
+    public function testParsePreservesParenthesizedDefaultExpressionBeforeConstraint(): void
+    {
+        $result = (new SqliteSchemaParser())->parse(
+            "CREATE TABLE t (label TEXT DEFAULT (printf('%s,%s', 'a', 'b')) NOT NULL, enabled INTEGER DEFAULT 1)"
+        );
+
+        self::assertNotNull($result);
+        self::assertSame([
+            'label' => "(printf('%s,%s', 'a', 'b'))",
+            'enabled' => '1',
+        ], $result->columnDefaults);
     }
 
     public function testParseWithForeignKey(): void

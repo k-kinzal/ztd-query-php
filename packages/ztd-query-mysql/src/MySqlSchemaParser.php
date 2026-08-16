@@ -45,6 +45,7 @@ final class MySqlSchemaParser implements SchemaParser
         $columnTypes = [];
         /** @var array<string, ColumnType> $typedColumns */
         $typedColumns = [];
+        $columnDefaults = [];
         $primaryKeys = [];
         $notNullColumns = [];
         $uniqueConstraints = [];
@@ -84,6 +85,11 @@ final class MySqlSchemaParser implements SchemaParser
                     $keyName = $columnName . '_UNIQUE';
                     $uniqueConstraints[$keyName] = [$columnName];
                 }
+
+                $default = $field->options?->has('DEFAULT');
+                if (is_string($default)) {
+                    $columnDefaults[$columnName] = $default;
+                }
             }
 
             if ($field->key !== null && $field->key->type === 'PRIMARY KEY') {
@@ -117,6 +123,7 @@ final class MySqlSchemaParser implements SchemaParser
             $notNullColumns,
             $uniqueConstraints,
             $typedColumns,
+            $columnDefaults,
         );
     }
 

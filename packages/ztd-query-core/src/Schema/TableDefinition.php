@@ -14,6 +14,9 @@ final class TableDefinition
      */
     public readonly array $typedColumns;
 
+    /** @var array<string, string> */
+    public readonly array $columnDefaults;
+
     /**
      * @param array<int, string> $columns Column names in declaration order.
      * @param array<string, string> $columnTypes Column name => MySQL type string.
@@ -21,6 +24,7 @@ final class TableDefinition
      * @param array<int, string> $notNullColumns Columns with NOT NULL constraint.
      * @param array<string, array<int, string>> $uniqueConstraints Key name => column list.
      * @param array<string, ColumnType> $typedColumns Column name => structured ColumnType.
+     * @param array<string, string> $columnDefaults Column name => SQL default expression.
      */
     public function __construct(
         public readonly array $columns,
@@ -29,7 +33,9 @@ final class TableDefinition
         public readonly array $notNullColumns,
         public readonly array $uniqueConstraints,
         array $typedColumns = [],
+        array $columnDefaults = [],
     ) {
         $this->typedColumns = $typedColumns;
+        $this->columnDefaults = $columnDefaults;
     }
 }

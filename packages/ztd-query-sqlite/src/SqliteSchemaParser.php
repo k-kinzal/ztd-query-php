@@ -8,6 +8,7 @@ use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\TableDefinition;
+use ZtdQuery\Sql\SqlTokenStream;
 
 /**
  * SQLite implementation of SchemaParser.
@@ -35,6 +36,7 @@ final class SqliteSchemaParser implements SchemaParser
         $primaryKeys = [];
         $notNullColumns = [];
         $uniqueConstraints = [];
+        $columnDefaults = [];
         $uniqueIndex = 0;
 
         $definitions = $this->splitColumnDefinitions($body);
@@ -111,6 +113,10 @@ final class SqliteSchemaParser implements SchemaParser
                 $keyName = $colInfo['name'] . '_UNIQUE';
                 $uniqueConstraints[$keyName] = [$colInfo['name']];
             }
+
+            if ($colInfo['default'] !== null) {
+                $columnDefaults[$colInfo['name']] = $colInfo['default'];
+            }
         }
 
         if ($columns === []) {
@@ -141,6 +147,7 @@ final class SqliteSchemaParser implements SchemaParser
             array_values(array_unique($notNullColumns)),
             $uniqueConstraints,
             $typedColumns,
+            $columnDefaults,
         );
     }
 
@@ -213,7 +220,7 @@ final class SqliteSchemaParser implements SchemaParser
     /**
      * Parse a single column definition.
      *
-     * @return array{name: string, type: string|null, notNull: bool, primaryKey: bool, unique: bool}|null
+     * @return array{name: string, type: string|null, notNull: bool, primaryKey: bool, unique: bool, default: string|null}|null
      */
     private function parseColumnDefinition(string $def): ?array
     {
@@ -251,6 +258,13 @@ final class SqliteSchemaParser implements SchemaParser
         $notNull = str_contains($upperDef, 'NOT NULL');
         $primaryKey = (bool) preg_match('/\bPRIMARY\s+KEY\b/i', $def);
         $unique = (bool) preg_match('/\bUNIQUE\b/i', $def) && !$primaryKey;
+        $default = SqlTokenStream::tokenize($rest)->topLevelClause(
+            ['DEFAULT'],
+            [
+                ['PRIMARY', 'KEY'], ['NOT', 'NULL'], ['UNIQUE'], ['CHECK'],
+                ['REFERENCES'], ['COLLATE'], ['CONSTRAINT'], ['GENERATED'], ['AS'],
+            ],
+        );
 
         return [
             'name' => $name,
@@ -258,6 +272,7 @@ final class SqliteSchemaParser implements SchemaParser
             'notNull' => $notNull,
             'primaryKey' => $primaryKey,
             'unique' => $unique,
+            'default' => $default,
         ];
     }
 

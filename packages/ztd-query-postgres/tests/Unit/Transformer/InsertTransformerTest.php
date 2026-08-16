@@ -286,4 +286,37 @@ final class InsertTransformerTest extends TestCase
         $this->expectException(UnsupportedSqlException::class);
         $transformer->transform($sql, $tables);
     }
+
+    public function testInsertProjectsOmittedAndExplicitDefaults(): void
+    {
+        $transformer = new InsertTransformer(new PgSqlParser(), new SelectTransformer());
+        $tables = ['users' => [
+            'rows' => [],
+            'columns' => ['id', 'status', 'note'],
+            'columnTypes' => [],
+            'columnDefaults' => ['status' => "'active'"],
+        ]];
+
+        $result = $transformer->transform('INSERT INTO users (id, status) VALUES (1, DEFAULT)', $tables);
+
+        self::assertStringContainsString('1 AS "id"', $result);
+        self::assertStringContainsString("'active' AS \"status\"", $result);
+        self::assertStringContainsString('NULL AS "note"', $result);
+    }
+
+    public function testInsertDefaultValuesProjectsCompleteRow(): void
+    {
+        $transformer = new InsertTransformer(new PgSqlParser(), new SelectTransformer());
+        $tables = ['settings' => [
+            'rows' => [],
+            'columns' => ['enabled', 'label'],
+            'columnTypes' => [],
+            'columnDefaults' => ['enabled' => 'TRUE', 'label' => "'new'"],
+        ]];
+
+        $result = $transformer->transform('INSERT INTO settings DEFAULT VALUES', $tables);
+
+        self::assertStringContainsString('TRUE AS "enabled"', $result);
+        self::assertStringContainsString("'new' AS \"label\"", $result);
+    }
 }

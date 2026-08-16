@@ -99,4 +99,28 @@ final class InsertBasicTest extends TestCase
             $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
         }
     }
+
+    public function testOmittedExplicitAndDefaultValuesMatchPostgreSql(): void
+    {
+        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $table = 'prefix_' . bin2hex(random_bytes(8));
+
+        try {
+            $rawPdo->exec("CREATE TABLE {$table} (id INTEGER DEFAULT 7, status TEXT DEFAULT 'active', note TEXT)");
+            $ztdPdo = ZtdPdo::fromPdo($rawPdo);
+
+            $rawPdo->exec("INSERT INTO {$table} (id, status) VALUES (1, DEFAULT)");
+            $rawPdo->exec("INSERT INTO {$table} DEFAULT VALUES");
+            $ztdPdo->exec("INSERT INTO {$table} (id, status) VALUES (1, DEFAULT)");
+            $ztdPdo->exec("INSERT INTO {$table} DEFAULT VALUES");
+
+            $raw = $rawPdo->query("SELECT * FROM {$table} ORDER BY id");
+            $ztd = $ztdPdo->query("SELECT * FROM {$table} ORDER BY id");
+            self::assertNotFalse($raw);
+            self::assertNotFalse($ztd);
+            self::assertSame($raw->fetchAll(), $ztd->fetchAll());
+        } finally {
+            $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
+        }
+    }
 }

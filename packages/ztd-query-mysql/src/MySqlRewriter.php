@@ -188,7 +188,8 @@ final class MySqlRewriter implements SqlRewriter
      * @return array<string, array{
      *     rows: array<int, array<string, mixed>>,
      *     columns: array<int, string>,
-     *     columnTypes: array<string, \ZtdQuery\Schema\ColumnType>
+     *     columnTypes: array<string, \ZtdQuery\Schema\ColumnType>,
+     *     columnDefaults: array<string, string>
      * }>
      */
     private function buildTableContext(): array
@@ -211,11 +212,13 @@ final class MySqlRewriter implements SqlRewriter
             }
 
             $columnTypes = $definition !== null ? $definition->typedColumns : [];
+            $columnDefaults = $definition !== null ? $definition->columnDefaults : [];
 
             $context[$tableName] = [
                 'rows' => $rows,
                 'columns' => $columns ?? [],
                 'columnTypes' => $columnTypes,
+                'columnDefaults' => $columnDefaults,
             ];
         }
 
@@ -229,6 +232,7 @@ final class MySqlRewriter implements SqlRewriter
                 'rows' => [],
                 'columns' => $definition->columns,
                 'columnTypes' => $definition->typedColumns,
+                'columnDefaults' => $definition->columnDefaults,
             ];
         }
 

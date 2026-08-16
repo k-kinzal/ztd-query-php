@@ -21,7 +21,8 @@ interface SqlTransformer
      * @param array<string, array{
      *     rows: array<int, array<string, mixed>>,
      *     columns: array<int, string>,
-     *     columnTypes: array<string, ColumnType>
+     *     columnTypes: array<string, ColumnType>,
+     *     columnDefaults?: array<string, string>
      * }> $tables Table name => shadow data and column information.
      * @return string The transformed SQL.
      */

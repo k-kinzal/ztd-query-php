@@ -542,4 +542,19 @@ final class MySqlSchemaParserTest extends SchemaParserContractTest
             $definition->columns,
         );
     }
+
+    public function testParsePreservesColumnDefaultExpressions(): void
+    {
+        $schemaParser = new MySqlSchemaParser(new MySqlParser());
+        $definition = $schemaParser->parse(
+            "CREATE TABLE t (id INT DEFAULT 7, status ENUM('new','done') DEFAULT 'new', label VARCHAR(20) DEFAULT (concat('a','b')))"
+        );
+
+        self::assertNotNull($definition);
+        self::assertSame([
+            'id' => '7',
+            'status' => "'new'",
+            'label' => "(concat('a','b'))",
+        ], $definition->columnDefaults);
+    }
 }
