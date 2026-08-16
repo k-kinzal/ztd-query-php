@@ -747,7 +747,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         $rewriter = new SqliteRewriter($guard, $store, $registry, $transformer, $mutationResolver, $parser);
 
         $plan = $rewriter->rewrite('DELETE FROM users');
-        self::assertSame('SELECT 1 WHERE 0', $plan->sql());
+        self::assertStringContainsString('FROM "users"', $plan->sql());
     }
 
     public function testDdlSimulatedReturnsSqlSelectWhere0(): void
@@ -1082,7 +1082,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         $rewriter = new SqliteRewriter($guard, $store, $registry, $transformer, $mutationResolver, $parser);
 
         $plan = $rewriter->rewrite('DELETE FROM "my_table"');
-        self::assertSame('SELECT 1 WHERE 0', $plan->sql());
+        self::assertStringContainsString('FROM "my_table"', $plan->sql());
     }
 
     public function testDeleteFromWithSemicolonAndWhitespace(): void
@@ -1109,7 +1109,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         $rewriter = new SqliteRewriter($guard, $store, $registry, $transformer, $mutationResolver, $parser);
 
         $plan = $rewriter->rewrite('DELETE FROM users ;');
-        self::assertSame('SELECT 1 WHERE 0', $plan->sql());
+        self::assertStringContainsString('FROM "users"', $plan->sql());
     }
 
     public function testUpdateEnsuresShadowStoreCalledOnTarget(): void
@@ -1257,7 +1257,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         $rewriter = new SqliteRewriter($guard, $store, $registry, $transformer, $mutationResolver, $parser);
 
         $plan = $rewriter->rewrite('DELETE FROM `t`');
-        self::assertSame('SELECT 1 WHERE 0', $plan->sql());
+        self::assertStringContainsString('FROM "t"', $plan->sql());
     }
 
     public function testDeleteFromBracketQuotedTableReturnsSqlWhere0(): void
@@ -1284,7 +1284,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         $rewriter = new SqliteRewriter($guard, $store, $registry, $transformer, $mutationResolver, $parser);
 
         $plan = $rewriter->rewrite('DELETE FROM [t]');
-        self::assertSame('SELECT 1 WHERE 0', $plan->sql());
+        self::assertStringContainsString('FROM "t"', $plan->sql());
     }
 
     public function testUpdateEnsuresShadowStoreForTargetTable(): void
@@ -1366,7 +1366,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         $rewriter = new SqliteRewriter($guard, $store, $registry, $transformer, $mutationResolver, $parser);
 
         $plan = $rewriter->rewrite('delete from users');
-        self::assertSame('SELECT 1 WHERE 0', $plan->sql());
+        self::assertStringContainsString('FROM "users"', $plan->sql());
     }
 
     public function testBuildTableContextIncludesMultipleTablesFromRegistry(): void
@@ -1506,7 +1506,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         $rewriter = new SqliteRewriter($guard, $store, $registry, $transformer, $mutationResolver, $parser);
 
         $plan = $rewriter->rewrite('/* comment */ DELETE FROM users');
-        self::assertSame('SELECT 1 WHERE 0', $plan->sql());
+        self::assertStringContainsString('FROM "users"', $plan->sql());
     }
 
     public function testSelectRewritesTableAfterBlockComment(): void

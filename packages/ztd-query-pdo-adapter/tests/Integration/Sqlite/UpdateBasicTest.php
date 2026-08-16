@@ -76,4 +76,25 @@ final class UpdateBasicTest extends TestCase
         $rawRows = $stmt->fetchAll();
         self::assertSame('Alice', $rawRows[0]['name']);
     }
+
+    public function testPrimaryKeyChangesAndColumnSwapsRetainOriginalRowIdentity(): void
+    {
+        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo->exec('CREATE TABLE pairs (id INTEGER PRIMARY KEY, left_value TEXT, right_value TEXT)');
+        $ztdPdo = ZtdPdo::fromPdo($rawPdo);
+        $ztdPdo->exec("INSERT INTO pairs VALUES (1, 'left', 'right'), (2, 'second', 'row')");
+
+        self::assertSame(1, $ztdPdo->exec('UPDATE pairs SET id = 10, left_value = right_value, right_value = left_value WHERE id = 1'));
+        $statement = $ztdPdo->query('SELECT * FROM pairs ORDER BY id');
+        self::assertNotFalse($statement);
+        self::assertSame([
+            ['id' => 2, 'left_value' => 'second', 'right_value' => 'row'],
+            ['id' => 10, 'left_value' => 'right', 'right_value' => 'left'],
+        ], $statement->fetchAll());
+
+        self::assertSame(2, $ztdPdo->exec('DELETE FROM pairs'));
+        $statement = $ztdPdo->query('SELECT * FROM pairs');
+        self::assertNotFalse($statement);
+        self::assertSame([], $statement->fetchAll());
+    }
 }

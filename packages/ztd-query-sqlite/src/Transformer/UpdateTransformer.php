@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\Sqlite\Transformer;
 
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\Sqlite\SqliteParser;
 use ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer;
+use ZtdQuery\Platform\Sqlite\SqliteParser;
 use ZtdQuery\Rewrite\SqlTransformer;
+use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
 
 /**
  * Transforms UPDATE statements into SELECT projections with CTE shadowing for SQLite.
@@ -46,7 +47,12 @@ final class UpdateTransformer implements SqlTransformer
 
         $columns = $tables[$targetTable]['columns'] ?? [];
 
-        $projection = $this->buildProjection($sql, $targetTable, $columns);
+        $projection = $this->buildProjection(
+            $sql,
+            $targetTable,
+            $columns,
+            $tables[$targetTable]['primaryKeys'] ?? [],
+        );
 
         return $this->selectTransformer->transform(
             $this->cteComposer->carryPrefix($sql, $projection),
@@ -60,10 +66,15 @@ final class UpdateTransformer implements SqlTransformer
      * @param string $sql
      * @param string $targetTable
      * @param array<int, string> $columns
+     * @param array<int, string> $primaryKeys
      * @return string
      */
-    public function buildProjection(string $sql, string $targetTable, array $columns): string
-    {
+    public function buildProjection(
+        string $sql,
+        string $targetTable,
+        array $columns,
+        array $primaryKeys = [],
+    ): string {
         $assignments = $this->parser->extractUpdateAssignments($sql);
 
         $selectCols = [];
@@ -78,6 +89,11 @@ final class UpdateTransformer implements SqlTransformer
             if (!isset($coveredCols[$col])) {
                 $selectCols[] = "\"$targetTable\".\"$col\"";
             }
+        }
+
+        $identity = new MutationRowIdentity();
+        foreach ($primaryKeys as $primaryKey) {
+            $selectCols[] = '"' . $targetTable . '"."' . $primaryKey . '" AS "' . $identity->column($primaryKey) . '"';
         }
 
         if ($selectCols === []) {

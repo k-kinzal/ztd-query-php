@@ -22,6 +22,7 @@ interface SqlTransformer
      *     rows: array<int, array<string, mixed>>,
      *     columns: array<int, string>,
      *     columnTypes: array<string, ColumnType>,
+     *     primaryKeys?: array<int, string>,
      *     columnDefaults?: array<string, string>,
      *     identityStrategies?: array<string, \ZtdQuery\Schema\IdentityGenerationStrategy>
      * }> $tables Table name => shadow data and column information.

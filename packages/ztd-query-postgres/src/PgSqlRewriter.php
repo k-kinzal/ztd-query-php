@@ -190,6 +190,7 @@ final class PgSqlRewriter implements SqlRewriter
                 'columnTypes' => $columnTypes,
                 'columnDefaults' => $columnDefaults,
                 'identityStrategies' => $identityStrategies,
+                'primaryKeys' => $definition !== null ? $definition->primaryKeys : [],
             ];
         }
 
@@ -205,6 +206,7 @@ final class PgSqlRewriter implements SqlRewriter
                 'columnTypes' => $definition->typedColumns,
                 'columnDefaults' => $definition->columnDefaults,
                 'identityStrategies' => $definition->identityStrategies,
+                'primaryKeys' => $definition->primaryKeys,
             ];
         }
 

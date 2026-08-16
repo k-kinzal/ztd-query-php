@@ -181,6 +181,30 @@ class ShadowStore
     }
 
     /**
+     * @param list<array{row: array<string, mixed>, identity: array<string, mixed>}> $updates
+     * @param array<int, string> $primaryKeys
+     */
+    public function updateIdentified(string $tableName, array $updates, array $primaryKeys): void
+    {
+        if (!isset($this->fixtures[$tableName])) {
+            return;
+        }
+        if ($primaryKeys === []) {
+            throw new MissingPrimaryKeyException($tableName);
+        }
+
+        $currentRows = &$this->fixtures[$tableName];
+        foreach ($updates as $update) {
+            foreach ($currentRows as &$currentRow) {
+                if ($this->rowsMatch($currentRow, $update['identity'], $primaryKeys)) {
+                    $currentRow = $update['row'];
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
      * @param array<string, mixed> $left
      * @param array<string, mixed> $right
      * @param array<int, string> $primaryKeys

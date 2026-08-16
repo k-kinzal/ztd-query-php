@@ -75,6 +75,13 @@ final class UpdateMutation implements ShadowMutation
      */
     public function apply(ShadowStore $store, array $rows): void
     {
+        $identity = new MutationRowIdentity();
+        $updates = [];
+        foreach ($rows as $row) {
+            $updates[] = $identity->extract($row, $this->primaryKeys);
+        }
+        $rows = array_column($updates, 'row');
+
         if ($this->validateConstraints && $this->tableDefinition !== null) {
             $existingRows = $store->get($this->tableName);
 
@@ -84,7 +91,7 @@ final class UpdateMutation implements ShadowMutation
             }
         }
 
-        $store->update($this->tableName, $rows, $this->primaryKeys);
+        $store->updateIdentified($this->tableName, $updates, $this->primaryKeys);
     }
 
     /**

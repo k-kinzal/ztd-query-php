@@ -578,7 +578,7 @@ final class UpdateTransformerTest extends TestCase
         self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['id', 'name']);
-        self::assertSame("SELECT 'X' AS `name`, `users`.`id` FROM `users` ORDER BY id ASC LIMIT 0, 5", $result['sql']);
+        self::assertSame("SELECT 'X' AS `name`, `users`.`id` FROM (SELECT * FROM `users` ORDER BY id ASC LIMIT 0, 5) AS `users`", $result['sql']);
     }
 
     public function testBuildProjectionExactSqlForUpdateWithJoin(): void

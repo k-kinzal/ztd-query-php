@@ -10,9 +10,10 @@ use PhpMyAdmin\SqlParser\Components\Limit;
 use PhpMyAdmin\SqlParser\Components\OrderKeyword;
 use PhpMyAdmin\SqlParser\Statements\UpdateStatement;
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
+use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Rewrite\SqlTransformer;
+use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
 
 /**
  * Transforms UPDATE statements into SELECT projections with CTE shadowing.
@@ -60,7 +61,11 @@ final class UpdateTransformer implements SqlTransformer
 
         $columns = $tables[$targetTable]['columns'] ?? [];
 
-        $projection = $this->buildProjection($statement, $columns);
+        $projection = $this->buildProjection(
+            $statement,
+            $columns,
+            $tables[$targetTable]['primaryKeys'] ?? [],
+        );
 
         return $this->selectTransformer->transform(
             $this->cteComposer->carryPrefix($sql, $projection['sql']),
@@ -73,9 +78,10 @@ final class UpdateTransformer implements SqlTransformer
      *
      * @param UpdateStatement $stmt
      * @param array<int, string> $columns
+     * @param array<int, string> $primaryKeys
      * @return array{sql: string, table: string, tables: array<string, array{alias: string}>}
      */
-    public function buildProjection(UpdateStatement $stmt, array $columns): array
+    public function buildProjection(UpdateStatement $stmt, array $columns, array $primaryKeys = []): array
     {
         if ($stmt->tables === null || $stmt->tables === []) {
             throw new \RuntimeException("Update statement has no tables?");
@@ -121,6 +127,11 @@ final class UpdateTransformer implements SqlTransformer
             }
         }
 
+        $identity = new MutationRowIdentity();
+        foreach ($primaryKeys as $primaryKey) {
+            $selectCols[] = "`$qualifier`.`$primaryKey` AS `" . $identity->column($primaryKey) . '`';
+        }
+
         if ($selectCols === []) {
             $selectCols[] = "*";
         }
@@ -154,7 +165,12 @@ final class UpdateTransformer implements SqlTransformer
             $limitClause = " LIMIT " . Limit::build($stmt->limit);
         }
 
-        $sql = "SELECT $selectList FROM `$targetTableName`$aliasClause$additionalTables$joinClause$whereClause$orderByClause$limitClause";
+        if ($additionalTables === '' && $joinClause === '' && ($orderByClause !== '' || $limitClause !== '')) {
+            $selectedRows = "SELECT * FROM `$targetTableName`$aliasClause$whereClause$orderByClause$limitClause";
+            $sql = "SELECT $selectList FROM ($selectedRows) AS `$qualifier`";
+        } else {
+            $sql = "SELECT $selectList FROM `$targetTableName`$aliasClause$additionalTables$joinClause$whereClause$orderByClause$limitClause";
+        }
 
         return ['sql' => $sql, 'table' => $targetTableName, 'tables' => $allTargetTables];
     }

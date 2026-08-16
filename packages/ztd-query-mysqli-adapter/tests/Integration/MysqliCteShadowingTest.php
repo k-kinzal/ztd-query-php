@@ -64,6 +64,29 @@ final class MysqliCteShadowingTest extends TestCase
         }
     }
 
+    public function testOrderedLimitedUpdateKeepsOriginalIdentityAndSwapSnapshot(): void
+    {
+        [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();
+        $table = 'prefix_' . bin2hex(random_bytes(8));
+        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, left_value VARCHAR(20), right_value VARCHAR(20))', $table));
+        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
+        try {
+            $ztdMysqli->query(sprintf("INSERT INTO `%s` VALUES (1, 'a1', 'b1'), (2, 'a2', 'b2'), (3, 'a3', 'b3')", $table));
+            $ztdMysqli->query(sprintf('UPDATE `%s` SET id = 30, left_value = right_value, right_value = left_value ORDER BY id DESC LIMIT 1', $table));
+
+            $result = $ztdMysqli->query(sprintf('SELECT * FROM `%s` ORDER BY id', $table));
+            self::assertInstanceOf(\mysqli_result::class, $result);
+            self::assertSame([
+                ['id' => 1, 'left_value' => 'a1', 'right_value' => 'b1'],
+                ['id' => 2, 'left_value' => 'a2', 'right_value' => 'b2'],
+                ['id' => 30, 'left_value' => 'b3', 'right_value' => 'a3'],
+            ], $result->fetch_all(MYSQLI_ASSOC));
+        } finally {
+            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+        }
+    }
+
     public function testInsertSelectPreservesStarJoinsAggregatesDistinctAndRollup(): void
     {
         [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();
