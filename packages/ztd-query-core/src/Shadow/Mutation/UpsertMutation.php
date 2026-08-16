@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow\Mutation;
 
+use ZtdQuery\Schema\CandidateKeySet;
 use ZtdQuery\Shadow\ShadowStore;
 
 /**
@@ -39,18 +40,27 @@ final class UpsertMutation implements ShadowMutation
      */
     private array $updateValues;
 
+    private CandidateKeySet $candidateKeys;
+
     /**
      * @param string $tableName Target table.
      * @param array<int, string> $primaryKeys Primary key columns.
      * @param array<int, string> $updateColumns Columns to update on duplicate.
      * @param array<string, string> $updateValues Values to use for update on duplicate.
+     * @param CandidateKeySet|null $candidateKeys Candidate keys used for conflict detection.
      */
-    public function __construct(string $tableName, array $primaryKeys, array $updateColumns = [], array $updateValues = [])
-    {
+    public function __construct(
+        string $tableName,
+        array $primaryKeys,
+        array $updateColumns = [],
+        array $updateValues = [],
+        ?CandidateKeySet $candidateKeys = null,
+    ) {
         $this->tableName = $tableName;
         $this->primaryKeys = $primaryKeys;
         $this->updateColumns = $updateColumns;
         $this->updateValues = $updateValues;
+        $this->candidateKeys = $candidateKeys ?? CandidateKeySet::fromSchema($primaryKeys);
     }
 
     /**
@@ -63,8 +73,9 @@ final class UpsertMutation implements ShadowMutation
         $updateRows = [];
 
         foreach ($rows as $row) {
-            $existingIndex = $this->findDuplicateIndex($row, $existingRows);
-            if ($existingIndex !== null) {
+            $conflict = $this->candidateKeys->findConflict($row, $existingRows);
+            if ($conflict !== null) {
+                $existingIndex = $conflict->rowIndex;
                 $updatedRow = $existingRows[$existingIndex];
                 foreach ($this->updateColumns as $col) {
                     if (isset($this->updateValues[$col])) {
@@ -116,32 +127,4 @@ final class UpsertMutation implements ShadowMutation
         return $this->tableName;
     }
 
-    /**
-     * Find the index of a duplicate row based on primary keys.
-     *
-     * @param array<string, mixed> $row Row to check.
-     * @param array<int, array<string, mixed>> $existingRows Existing rows in the store.
-     * @return int|null Index of duplicate row, or null if no duplicate.
-     */
-    private function findDuplicateIndex(array $row, array $existingRows): ?int
-    {
-        foreach ($existingRows as $index => $existing) {
-            $match = true;
-            foreach ($this->primaryKeys as $key) {
-                if (!isset($row[$key]) || !isset($existing[$key])) {
-                    $match = false;
-                    break;
-                }
-                if ($row[$key] !== $existing[$key]) {
-                    $match = false;
-                    break;
-                }
-            }
-            if ($match) {
-                return $index;
-            }
-        }
-
-        return null;
-    }
 }

@@ -85,13 +85,29 @@ final class PgSqlMutationResolver
                     $resolvedValues[$col] = $value;
                 }
 
-                return new UpsertMutation($tableName, $primaryKeys, $updateColumns, $resolvedValues);
+                return new UpsertMutation(
+                    $tableName,
+                    $primaryKeys,
+                    $updateColumns,
+                    $resolvedValues,
+                    $definition?->candidateKeys(),
+                );
             }
 
-            return new InsertMutation($tableName, $primaryKeys, true);
+            return new InsertMutation(
+                $tableName,
+                $primaryKeys,
+                true,
+                candidateKeys: $definition?->candidateKeys(),
+            );
         }
 
-        return new InsertMutation($tableName, $primaryKeys, false);
+        return new InsertMutation(
+            $tableName,
+            $primaryKeys,
+            false,
+            candidateKeys: $definition?->candidateKeys(),
+        );
     }
 
     private function resolveUpdate(string $sql): ShadowMutation

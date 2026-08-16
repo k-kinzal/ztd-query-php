@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow\Mutation;
 
+use ZtdQuery\Schema\CandidateKeySet;
 use ZtdQuery\Shadow\ShadowStore;
 
 /**
@@ -19,21 +20,17 @@ final class ReplaceMutation implements ShadowMutation
      */
     private string $tableName;
 
-    /**
-     * Primary key columns for duplicate detection.
-     *
-     * @var array<int, string>
-     */
-    private array $primaryKeys;
+    private CandidateKeySet $candidateKeys;
 
     /**
      * @param string $tableName Target table.
      * @param array<int, string> $primaryKeys Primary key columns.
+     * @param CandidateKeySet|null $candidateKeys Candidate keys used for conflict detection.
      */
-    public function __construct(string $tableName, array $primaryKeys = [])
+    public function __construct(string $tableName, array $primaryKeys = [], ?CandidateKeySet $candidateKeys = null)
     {
         $this->tableName = $tableName;
-        $this->primaryKeys = $primaryKeys;
+        $this->candidateKeys = $candidateKeys ?? CandidateKeySet::fromSchema($primaryKeys);
     }
 
     /**
@@ -44,9 +41,10 @@ final class ReplaceMutation implements ShadowMutation
         $existingRows = $store->get($this->tableName);
 
         foreach ($rows as $row) {
-            $existingRows = array_filter($existingRows, function ($existing) use ($row) {
-                return !$this->rowsMatch($existing, $row);
-            });
+            while (($conflict = $this->candidateKeys->findConflict($row, $existingRows)) !== null) {
+                unset($existingRows[$conflict->rowIndex]);
+                $existingRows = array_values($existingRows);
+            }
         }
 
         $existingRows = array_values($existingRows);
@@ -60,30 +58,5 @@ final class ReplaceMutation implements ShadowMutation
     public function tableName(): string
     {
         return $this->tableName;
-    }
-
-    /**
-     * Check if rows match based on primary keys.
-     *
-     * @param array<string, mixed> $existing Existing row.
-     * @param array<string, mixed> $new New row.
-     * @return bool True if rows match on primary keys.
-     */
-    private function rowsMatch(array $existing, array $new): bool
-    {
-        if ($this->primaryKeys === []) {
-            return $existing === $new;
-        }
-
-        foreach ($this->primaryKeys as $key) {
-            if (!isset($existing[$key]) || !isset($new[$key])) {
-                return false;
-            }
-            if ($existing[$key] !== $new[$key]) {
-                return false;
-            }
-        }
-
-        return true;
     }
 }

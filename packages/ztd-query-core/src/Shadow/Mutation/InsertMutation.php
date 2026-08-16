@@ -6,6 +6,7 @@ namespace ZtdQuery\Shadow\Mutation;
 
 use ZtdQuery\Exception\DuplicateKeyException;
 use ZtdQuery\Exception\NotNullViolationException;
+use ZtdQuery\Schema\CandidateKeySet;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Shadow\ShadowStore;
 
@@ -20,13 +21,6 @@ final class InsertMutation implements ShadowMutation
      * @var string
      */
     private string $tableName;
-
-    /**
-     * Primary key columns for duplicate detection.
-     *
-     * @var array<int, string>
-     */
-    private array $primaryKeys;
 
     /**
      * Whether to ignore duplicate key errors.
@@ -56,6 +50,8 @@ final class InsertMutation implements ShadowMutation
      */
     private bool $validateConstraints;
 
+    private CandidateKeySet $candidateKeys;
+
     /**
      * @param string $tableName Target table.
      * @param array<int, string> $primaryKeys Primary key columns.
@@ -63,6 +59,7 @@ final class InsertMutation implements ShadowMutation
      * @param TableDefinition|null $tableDefinition Table definition for constraint validation.
      * @param string $sql Original SQL statement for exception messages.
      * @param bool $validateConstraints Whether to validate constraints.
+     * @param CandidateKeySet|null $candidateKeys Candidate keys used for duplicate detection.
      */
     public function __construct(
         string $tableName,
@@ -70,14 +67,15 @@ final class InsertMutation implements ShadowMutation
         bool $ignore = false,
         ?TableDefinition $tableDefinition = null,
         string $sql = '',
-        bool $validateConstraints = false
+        bool $validateConstraints = false,
+        ?CandidateKeySet $candidateKeys = null,
     ) {
         $this->tableName = $tableName;
-        $this->primaryKeys = $primaryKeys;
         $this->ignore = $ignore;
         $this->tableDefinition = $tableDefinition;
         $this->sql = $sql;
         $this->validateConstraints = $validateConstraints;
+        $this->candidateKeys = $candidateKeys ?? CandidateKeySet::fromSchema($primaryKeys);
     }
 
     /**
@@ -93,23 +91,19 @@ final class InsertMutation implements ShadowMutation
                 $this->validateNotNullConstraints($row);
             }
 
-            if ($this->primaryKeys !== []) {
-                $isDuplicate = $this->isDuplicate($row, $existingRows);
+            $conflict = $this->candidateKeys->findConflict($row, $existingRows);
+            if ($conflict !== null) {
+                if ($this->ignore) {
+                    continue;
+                }
 
-                if ($isDuplicate) {
-                    if ($this->ignore) {
-                        continue;
-                    }
-
-                    if ($this->validateConstraints) {
-                        $keyValues = $this->extractKeyValues($row, $this->primaryKeys);
-                        throw new DuplicateKeyException(
-                            $this->sql,
-                            $this->tableName,
-                            'PRIMARY',
-                            $keyValues
-                        );
-                    }
+                if ($this->validateConstraints) {
+                    throw new DuplicateKeyException(
+                        $this->sql,
+                        $this->tableName,
+                        $conflict->keyName,
+                        $conflict->values
+                    );
                 }
             }
 
@@ -130,35 +124,6 @@ final class InsertMutation implements ShadowMutation
     public function tableName(): string
     {
         return $this->tableName;
-    }
-
-    /**
-     * Check if a row would be a duplicate based on primary keys.
-     *
-     * @param array<string, mixed> $row Row to check.
-     * @param array<int, array<string, mixed>> $existingRows Existing rows in the store.
-     * @return bool True if duplicate.
-     */
-    private function isDuplicate(array $row, array $existingRows): bool
-    {
-        foreach ($existingRows as $existing) {
-            $match = true;
-            foreach ($this->primaryKeys as $key) {
-                if (!isset($row[$key]) || !isset($existing[$key])) {
-                    $match = false;
-                    break;
-                }
-                if ($row[$key] !== $existing[$key]) {
-                    $match = false;
-                    break;
-                }
-            }
-            if ($match) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**

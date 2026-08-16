@@ -5,12 +5,18 @@ declare(strict_types=1);
 namespace Tests\Unit\Shadow\Mutation;
 
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Schema\CandidateKeyConflict;
+use ZtdQuery\Schema\CandidateKeySet;
+use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Shadow\Mutation\UpsertMutation;
 use ZtdQuery\Shadow\ShadowStore;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 
 #[UsesClass(ShadowStore::class)]
+#[UsesClass(CandidateKeyConflict::class)]
+#[UsesClass(CandidateKeySet::class)]
+#[UsesClass(TableDefinition::class)]
 #[CoversClass(UpsertMutation::class)]
 final class UpsertMutationTest extends TestCase
 {
@@ -42,6 +48,32 @@ final class UpsertMutationTest extends TestCase
         $rows = $store->get('users');
         self::assertCount(1, $rows);
         self::assertSame(11, $rows[0]['visits']);
+    }
+
+    public function testApplyUpdatesExistingRowOnUniqueKeyConflict(): void
+    {
+        $definition = new TableDefinition(
+            ['id', 'email', 'name'],
+            ['id' => 'INT', 'email' => 'TEXT', 'name' => 'TEXT'],
+            ['id'],
+            ['id'],
+            ['users_email' => ['email']],
+        );
+        $store = new ShadowStore();
+        $store->set('users', [['id' => 1, 'email' => 'alice@example.com', 'name' => 'Alice']]);
+
+        $mutation = new UpsertMutation(
+            'users',
+            ['id'],
+            ['name'],
+            ['name' => 'EXCLUDED.name'],
+            $definition->candidateKeys(),
+        );
+        $mutation->apply($store, [['id' => 2, 'email' => 'alice@example.com', 'name' => 'Updated']]);
+
+        self::assertSame([
+            ['id' => 1, 'email' => 'alice@example.com', 'name' => 'Updated'],
+        ], $store->get('users'));
     }
 
     public function testTableNameReturnsTableName(): void

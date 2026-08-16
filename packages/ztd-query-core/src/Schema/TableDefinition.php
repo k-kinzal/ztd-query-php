@@ -44,4 +44,9 @@ final class TableDefinition
         $this->columnDefaults = $columnDefaults;
         $this->identityStrategies = $identityStrategies;
     }
+
+    public function candidateKeys(): CandidateKeySet
+    {
+        return CandidateKeySet::fromSchema($this->primaryKeys, $this->uniqueConstraints);
+    }
 }

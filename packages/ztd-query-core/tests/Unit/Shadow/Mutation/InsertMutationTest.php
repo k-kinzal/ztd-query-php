@@ -6,6 +6,8 @@ namespace Tests\Unit\Shadow\Mutation;
 
 use ZtdQuery\Exception\DuplicateKeyException;
 use ZtdQuery\Exception\NotNullViolationException;
+use ZtdQuery\Schema\CandidateKeyConflict;
+use ZtdQuery\Schema\CandidateKeySet;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Shadow\Mutation\InsertMutation;
 use ZtdQuery\Shadow\ShadowStore;
@@ -17,6 +19,8 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(NotNullViolationException::class)]
 #[UsesClass(TableDefinition::class)]
 #[UsesClass(ShadowStore::class)]
+#[UsesClass(CandidateKeyConflict::class)]
+#[UsesClass(CandidateKeySet::class)]
 #[CoversClass(InsertMutation::class)]
 final class InsertMutationTest extends TestCase
 {
@@ -43,6 +47,35 @@ final class InsertMutationTest extends TestCase
         self::assertCount(2, $store->get('users'));
         self::assertSame('Alice', $store->get('users')[0]['name']);
         self::assertSame('Carol', $store->get('users')[1]['name']);
+    }
+
+    public function testInsertIgnoreSkipsUniqueKeyConflict(): void
+    {
+        $definition = new TableDefinition(
+            ['id', 'email'],
+            ['id' => 'INT', 'email' => 'VARCHAR(255)'],
+            ['id'],
+            ['id'],
+            ['users_email' => ['email']],
+        );
+        $store = new ShadowStore();
+        $store->set('users', [['id' => 1, 'email' => 'alice@example.com']]);
+
+        $mutation = new InsertMutation(
+            'users',
+            ['id'],
+            true,
+            candidateKeys: $definition->candidateKeys(),
+        );
+        $mutation->apply($store, [
+            ['id' => 2, 'email' => 'alice@example.com'],
+            ['id' => 3, 'email' => 'bob@example.com'],
+        ]);
+
+        self::assertSame([
+            ['id' => 1, 'email' => 'alice@example.com'],
+            ['id' => 3, 'email' => 'bob@example.com'],
+        ], $store->get('users'));
     }
 
     public function testValidatePrimaryKeyDuplicateThrowsException(): void

@@ -121,7 +121,7 @@ final class SqliteMutationResolver
             $definition = $this->registry->get($tableName);
             $primaryKeys = $definition !== null ? $definition->primaryKeys : [];
 
-            return new ReplaceMutation($tableName, $primaryKeys);
+            return new ReplaceMutation($tableName, $primaryKeys, $definition?->candidateKeys());
         }
 
         if ($this->parser->hasOnConflict($sql)) {
@@ -138,8 +138,24 @@ final class SqliteMutationResolver
                 $definition = $this->registry->get($tableName);
                 $primaryKeys = $definition !== null ? $definition->primaryKeys : [];
 
-                return new UpsertMutation($tableName, $primaryKeys, $updateColumns, $updateValues);
+                return new UpsertMutation(
+                    $tableName,
+                    $primaryKeys,
+                    $updateColumns,
+                    $updateValues,
+                    $definition?->candidateKeys(),
+                );
             }
+
+            $definition = $this->registry->get($tableName);
+            $primaryKeys = $definition !== null ? $definition->primaryKeys : [];
+
+            return new InsertMutation(
+                $tableName,
+                $primaryKeys,
+                true,
+                candidateKeys: $definition?->candidateKeys(),
+            );
         }
 
         $isIgnore = $this->parser->isInsertIgnore($sql);
@@ -147,7 +163,12 @@ final class SqliteMutationResolver
         $definition = $this->registry->get($tableName);
         $primaryKeys = $isIgnore ? ($definition !== null ? $definition->primaryKeys : []) : [];
 
-        return new InsertMutation($tableName, $primaryKeys, $isIgnore);
+        return new InsertMutation(
+            $tableName,
+            $primaryKeys,
+            $isIgnore,
+            candidateKeys: $definition?->candidateKeys(),
+        );
     }
 
     private function resolveCreateTable(string $sql): ShadowMutation

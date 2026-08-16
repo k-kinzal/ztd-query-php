@@ -234,12 +234,23 @@ final class MySqlMutationResolver
         if ($isOnDuplicateKeyUpdate) {
             $definition = $this->registry->get($tableName);
             $primaryKeys = $definition !== null ? $definition->primaryKeys : [];
-            return new UpsertMutation($tableName, $primaryKeys, $updateColumns, $updateValues);
+            return new UpsertMutation(
+                $tableName,
+                $primaryKeys,
+                $updateColumns,
+                $updateValues,
+                $definition?->candidateKeys(),
+            );
         }
 
         $definition = $this->registry->get($tableName);
         $primaryKeys = $isIgnore ? ($definition !== null ? $definition->primaryKeys : []) : [];
-        return new InsertMutation($tableName, $primaryKeys, $isIgnore);
+        return new InsertMutation(
+            $tableName,
+            $primaryKeys,
+            $isIgnore,
+            candidateKeys: $definition?->candidateKeys(),
+        );
     }
 
     private function resolveTruncate(TruncateStatement $statement, string $sql): ShadowMutation
@@ -261,7 +272,7 @@ final class MySqlMutationResolver
 
         $definition = $this->registry->get($tableName);
         $primaryKeys = $definition !== null ? $definition->primaryKeys : [];
-        return new ReplaceMutation($tableName, $primaryKeys);
+        return new ReplaceMutation($tableName, $primaryKeys, $definition?->candidateKeys());
     }
 
     /**

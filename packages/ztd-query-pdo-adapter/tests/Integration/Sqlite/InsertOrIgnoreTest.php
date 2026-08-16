@@ -71,4 +71,33 @@ final class InsertOrIgnoreTest extends TestCase
 
         self::assertSame($rawRows, $ztdRows);
     }
+
+    public function testInsertOrIgnoreUsesUniqueCandidateKeyAndNullSemantics(): void
+    {
+        $rawPdo = new \PDO('sqlite::memory:', null, null, [
+            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        ]);
+        $rawPdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, email TEXT UNIQUE)');
+        $ztdPdo = ZtdPdo::fromPdo($rawPdo);
+
+        $insert = "INSERT INTO users (id, email) VALUES (1, 'alice@example.com')";
+        $uniqueConflict = "INSERT OR IGNORE INTO users (id, email) VALUES (2, 'alice@example.com')";
+        $firstNull = 'INSERT OR IGNORE INTO users (id, email) VALUES (3, NULL)';
+        $secondNull = 'INSERT OR IGNORE INTO users (id, email) VALUES (4, NULL)';
+        $rawPdo->exec($insert);
+        $ztdPdo->exec($insert);
+        $rawPdo->exec($uniqueConflict);
+        $ztdPdo->exec($uniqueConflict);
+        $rawPdo->exec($firstNull);
+        $ztdPdo->exec($firstNull);
+        $rawPdo->exec($secondNull);
+        $ztdPdo->exec($secondNull);
+
+        $rawStatement = $rawPdo->query('SELECT * FROM users ORDER BY id');
+        $ztdStatement = $ztdPdo->query('SELECT * FROM users ORDER BY id');
+        self::assertNotFalse($rawStatement);
+        self::assertNotFalse($ztdStatement);
+        self::assertSame($rawStatement->fetchAll(), $ztdStatement->fetchAll());
+    }
 }
