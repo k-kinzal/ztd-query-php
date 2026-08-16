@@ -5,22 +5,18 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\MySql\Transformer;
 
 use PhpMyAdmin\SqlParser\Components\ArrayObj;
-use PhpMyAdmin\SqlParser\Components\CaseExpression;
-use PhpMyAdmin\SqlParser\Components\Condition;
-use PhpMyAdmin\SqlParser\Components\Expression;
-use PhpMyAdmin\SqlParser\Components\GroupKeyword;
-use PhpMyAdmin\SqlParser\Components\Limit;
-use PhpMyAdmin\SqlParser\Components\OrderKeyword;
 use PhpMyAdmin\SqlParser\Components\SetOperation;
 use PhpMyAdmin\SqlParser\Statements\InsertStatement;
-use PhpMyAdmin\SqlParser\Statements\SelectStatement as PhpMyAdminSelectStatement;
 use RuntimeException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
+use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Rewrite\InsertRowProjector;
+use ZtdQuery\Rewrite\InsertSelectProjector;
 use ZtdQuery\Rewrite\ShadowIdentityAllocator;
+use ZtdQuery\Rewrite\SelectListAliaser;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
@@ -36,6 +32,7 @@ final class InsertTransformer implements SqlTransformer
     private CastRenderer $castRenderer;
     private InsertRowProjector $rowProjector;
     private ShadowIdentityAllocator $identityAllocator;
+    private InsertSelectProjector $insertSelectProjector;
 
     public function __construct(
         MySqlParser $parser,
@@ -47,6 +44,11 @@ final class InsertTransformer implements SqlTransformer
         $this->castRenderer = $castRenderer ?? new MySqlCastRenderer();
         $this->rowProjector = new InsertRowProjector();
         $this->identityAllocator = new ShadowIdentityAllocator();
+        $this->insertSelectProjector = new InsertSelectProjector(
+            new MySqlIdentifierQuoter(),
+            new InsertRowProjector(),
+            new SelectListAliaser(),
+        );
     }
 
     /**
@@ -144,7 +146,29 @@ final class InsertTransformer implements SqlTransformer
         }
 
         if ($statement->select !== null) {
-            return $this->buildInsertFromSelect($statement, $insertColumns !== [] ? $insertColumns : $tableColumns);
+            $sourceColumns = $insertColumns !== [] ? $insertColumns : $tableColumns;
+            $hasWildcard = false;
+            foreach ($statement->select->expr as $expression) {
+                if (is_string($expression->expr) && str_ends_with(trim($expression->expr), '*')) {
+                    $hasWildcard = true;
+                }
+            }
+            if (!$hasWildcard && count($statement->select->expr) !== count($sourceColumns)) {
+                throw new RuntimeException('INSERT column count does not match SELECT column count.');
+            }
+            $generatedValues = $this->identityAllocator->allocateSelectExpressions(
+                $tableName,
+                array_diff_key($identityStrategies, array_flip($sourceColumns)),
+                $existingRows,
+            );
+
+            return $this->insertSelectProjector->project(
+                $statement->select->build(),
+                $tableColumns,
+                $sourceColumns,
+                $columnDefaults,
+                $generatedValues,
+            );
         }
 
         throw new RuntimeException('Insert statement has no values to project.');
@@ -245,32 +269,6 @@ final class InsertTransformer implements SqlTransformer
     }
 
     /**
-     * @param array<int, string> $columns
-     */
-    private function buildInsertFromSelect(InsertStatement $statement, array $columns): string
-    {
-        $select = $statement->select;
-        if ($select === null) {
-            throw new RuntimeException('INSERT ... SELECT requires a SELECT clause.');
-        }
-
-        $selectSql = $select->build();
-
-        if ($columns !== []) {
-            $aliasedColumns = [];
-            foreach ($columns as $index => $column) {
-                $aliasedColumns[] = sprintf('__ztd_subq.`col_%d` AS `%s`', $index, $column);
-            }
-
-            $wrappedSql = $this->wrapSelectWithNumberedAliases($selectSql, count($columns));
-
-            return 'SELECT ' . implode(', ', $aliasedColumns) . ' FROM (' . $wrappedSql . ') AS __ztd_subq';
-        }
-
-        return $selectSql;
-    }
-
-    /**
      * @template T
      * @param array<array-key, T> $values
      * @return list<T>
@@ -285,71 +283,4 @@ final class InsertTransformer implements SqlTransformer
         return $ordered;
     }
 
-    private function wrapSelectWithNumberedAliases(string $selectSql, int $columnCount): string
-    {
-        $statements = $this->parser->parse($selectSql);
-        if (!isset($statements[0]) || !$statements[0] instanceof PhpMyAdminSelectStatement) {
-            throw new RuntimeException('Failed to parse INSERT ... SELECT subquery.');
-        }
-
-        $selectStmt = $statements[0];
-        $expressions = $selectStmt->expr;
-
-        if (count($expressions) !== $columnCount) {
-            throw new RuntimeException(sprintf(
-                'INSERT column count (%d) does not match SELECT column count (%d).',
-                $columnCount,
-                count($expressions)
-            ));
-        }
-
-        $aliasedExprs = [];
-        foreach ($expressions as $index => $expr) {
-            if ($expr instanceof CaseExpression) {
-                $exprStr = CaseExpression::build($expr);
-            } else {
-                $exprStr = Expression::build($expr);
-                if ($expr->alias !== null && $expr->alias !== '') {
-                    $exprStr = $expr->expr ?? $exprStr;
-                }
-            }
-            $aliasedExprs[] = sprintf('%s AS `col_%d`', $exprStr, $index);
-        }
-
-        $newSelectClause = 'SELECT ' . implode(', ', $aliasedExprs);
-
-        $restOfQuery = '';
-        if ($selectStmt->from !== []) {
-            $fromParts = [];
-            foreach ($selectStmt->from as $fromExpr) {
-                $fromParts[] = Expression::build($fromExpr);
-            }
-            $restOfQuery .= ' FROM ' . implode(', ', $fromParts);
-        }
-        if ($selectStmt->where !== null && $selectStmt->where !== []) {
-            $restOfQuery .= ' WHERE ' . Condition::build($selectStmt->where);
-        }
-        if ($selectStmt->group !== null && $selectStmt->group !== []) {
-            $groupParts = [];
-            foreach ($selectStmt->group as $group) {
-                $groupParts[] = GroupKeyword::build($group);
-            }
-            $restOfQuery .= ' GROUP BY ' . implode(', ', $groupParts);
-        }
-        if ($selectStmt->having !== null && $selectStmt->having !== []) {
-            $restOfQuery .= ' HAVING ' . Condition::build($selectStmt->having);
-        }
-        if ($selectStmt->order !== null && $selectStmt->order !== []) {
-            $orderParts = [];
-            foreach ($selectStmt->order as $order) {
-                $orderParts[] = OrderKeyword::build($order);
-            }
-            $restOfQuery .= ' ORDER BY ' . implode(', ', $orderParts);
-        }
-        if ($selectStmt->limit !== null) {
-            $restOfQuery .= ' LIMIT ' . Limit::build($selectStmt->limit);
-        }
-
-        return $newSelectClause . $restOfQuery;
-    }
 }

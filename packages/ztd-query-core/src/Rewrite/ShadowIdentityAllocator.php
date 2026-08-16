@@ -36,7 +36,7 @@ final class ShadowIdentityAllocator
             }
 
             $next = $this->nextValues[$table][$column] ?? 1;
-            if ($strategy === IdentityGenerationStrategy::MaxValue) {
+            if ($strategy === IdentityGenerationStrategy::MaxValue || isset($this->nextValues[$table][$column])) {
                 $next = $this->nextAfterExistingRows($column, $existingRows, $next);
             }
             $allocated[$column] = (string) $next;
@@ -44,6 +44,26 @@ final class ShadowIdentityAllocator
         }
 
         return $allocated;
+    }
+
+    /**
+     * @param array<string, IdentityGenerationStrategy> $strategies
+     * @param array<int, array<string, mixed>> $existingRows
+     * @return array<string, string>
+     */
+    public function allocateSelectExpressions(string $table, array $strategies, array $existingRows): array
+    {
+        $expressions = [];
+        foreach ($strategies as $column => $strategy) {
+            $next = $this->nextValues[$table][$column] ?? 1;
+            if ($strategy === IdentityGenerationStrategy::MaxValue || isset($this->nextValues[$table][$column])) {
+                $next = $this->nextAfterExistingRows($column, $existingRows, $next);
+            }
+            $this->nextValues[$table][$column] = $next;
+            $expressions[$column] = $next . ' + ROW_NUMBER() OVER () - 1';
+        }
+
+        return $expressions;
     }
 
     /** @param array<int, array<string, mixed>> $rows */

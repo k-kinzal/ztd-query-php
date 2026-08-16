@@ -373,10 +373,9 @@ final class InsertTransformerTest extends TestCase
         ];
 
         $result = $transformer->transform($sql, $tables);
-        self::assertStringContainsString('__ztd_subq', $result);
-        self::assertStringContainsString('FROM (', $result);
-        self::assertStringContainsString(') AS __ztd_subq', $result);
-        self::assertStringContainsString('SELECT __ztd_subq', $result);
+        self::assertStringContainsString('`__ztd_insert_source`', $result);
+        self::assertStringContainsString('AS (SELECT id AS `__ztd_insert_0`, name AS `__ztd_insert_1` FROM users WHERE active = 0)', $result);
+        self::assertStringContainsString('SELECT `__ztd_insert_0` AS `id`', $result);
     }
 
     public function testTransformInsertFromSelectUsesTableColumnsWhenColumnListIsOmitted(): void
@@ -542,7 +541,7 @@ final class InsertTransformerTest extends TestCase
 
         $result = $transformer->transform($sql, $tables);
         self::assertStringContainsString('SELECT', $result);
-        self::assertStringContainsString('__ztd_subq', $result);
+        self::assertStringContainsString('__ztd_insert_source', $result);
     }
 
     public function testTransformInsertFromSelectGroupByValueIncluded(): void
@@ -575,7 +574,7 @@ final class InsertTransformerTest extends TestCase
         $tables = [];
 
         $result = $transformer->transform($sql, $tables);
-        self::assertSame('SELECT __ztd_subq.`col_0` AS `a`, __ztd_subq.`col_1` AS `b` FROM (SELECT x AS `col_0`, y AS `col_1` FROM src WHERE x > 0) AS __ztd_subq', $result);
+        self::assertSame('WITH `__ztd_insert_source` (`__ztd_insert_0`, `__ztd_insert_1`) AS (SELECT x AS `__ztd_insert_0`, y AS `__ztd_insert_1` FROM src WHERE x > 0) SELECT `__ztd_insert_0` AS `a`, `__ztd_insert_1` AS `b` FROM `__ztd_insert_source`', $result);
     }
 
     public function testTransformInsertFromSelectAliasedExpressionDropsAlias(): void
@@ -594,8 +593,8 @@ final class InsertTransformerTest extends TestCase
         ];
 
         $result = $transformer->transform($sql, $tables);
-        self::assertStringContainsString('`col_0`', $result);
-        self::assertStringContainsString('__ztd_subq', $result);
+        self::assertStringContainsString('`__ztd_insert_0`', $result);
+        self::assertStringContainsString('__ztd_insert_source', $result);
         self::assertStringNotContainsString('AS `alias`', $result);
     }
 
@@ -699,7 +698,7 @@ final class InsertTransformerTest extends TestCase
 
         $result = $transformer->transform($sql, $tables);
         self::assertSame(
-            'SELECT __ztd_subq.`col_0` AS `a` FROM (SELECT x AS `col_0` FROM src WHERE x > 0) AS __ztd_subq',
+            'WITH `__ztd_insert_source` (`__ztd_insert_0`) AS (SELECT x AS `__ztd_insert_0` FROM src WHERE x > 0) SELECT `__ztd_insert_0` AS `a` FROM `__ztd_insert_source`',
             $result
         );
     }
@@ -749,7 +748,7 @@ final class InsertTransformerTest extends TestCase
 
         $result = $transformer->transform($sql, $tables);
         self::assertSame(
-            'SELECT __ztd_subq.`col_0` AS `val` FROM (SELECT x AS `col_0` FROM src) AS __ztd_subq',
+            'WITH `__ztd_insert_source` (`__ztd_insert_0`) AS (SELECT x AS `__ztd_insert_0` FROM src) SELECT `__ztd_insert_0` AS `val` FROM `__ztd_insert_source`',
             $result
         );
     }

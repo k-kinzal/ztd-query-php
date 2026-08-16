@@ -82,6 +82,10 @@ final class SchemaAwareSqlBuilder
         $colList = implode(', ', array_map(fn ($c) => "`$c`", $columns));
         $valList = implode(', ', $values);
 
+        if ($variant === 0 && $this->faker->boolean(25)) {
+            return "INSERT INTO `$table` ($colList) SELECT $valList";
+        }
+
         return "INSERT INTO `$table` ($colList) VALUES ($valList)";
     }
 

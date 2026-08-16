@@ -7,8 +7,10 @@ namespace ZtdQuery\Platform\Sqlite\Transformer;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\Sqlite\SqliteCastRenderer;
+use ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
 use ZtdQuery\Rewrite\InsertRowProjector;
+use ZtdQuery\Rewrite\InsertSelectProjector;
 use ZtdQuery\Rewrite\ShadowIdentityAllocator;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
@@ -32,6 +34,7 @@ final class InsertTransformer implements SqlTransformer
     private CastRenderer $castRenderer;
     private InsertRowProjector $rowProjector;
     private ShadowIdentityAllocator $identityAllocator;
+    private InsertSelectProjector $insertSelectProjector;
 
     public function __construct(
         SqliteParser $parser,
@@ -43,6 +46,7 @@ final class InsertTransformer implements SqlTransformer
         $this->castRenderer = $castRenderer ?? new SqliteCastRenderer();
         $this->rowProjector = new InsertRowProjector();
         $this->identityAllocator = new ShadowIdentityAllocator();
+        $this->insertSelectProjector = new InsertSelectProjector(new SqliteIdentifierQuoter());
     }
 
     /**
@@ -108,7 +112,20 @@ final class InsertTransformer implements SqlTransformer
                 throw new \RuntimeException('Failed to extract SELECT from INSERT ... SELECT.');
             }
 
-            return $selectSql;
+            $sourceColumns = $insertColumns !== [] ? $insertColumns : $tableColumns;
+            $generatedValues = $this->identityAllocator->allocateSelectExpressions(
+                $tableName,
+                array_diff_key($identityStrategies, array_flip($sourceColumns)),
+                $existingRows,
+            );
+
+            return $this->insertSelectProjector->project(
+                $selectSql,
+                $tableColumns,
+                $sourceColumns,
+                $columnDefaults,
+                $generatedValues,
+            );
         }
 
         $valueSets = SqlTokenStream::tokenize($sql)->topLevelClause(['DEFAULT', 'VALUES']) !== null

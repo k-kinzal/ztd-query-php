@@ -122,4 +122,19 @@ final class ShadowIdentityAllocatorTest extends TestCase
             ),
         );
     }
+
+    public function testSelectAllocationContinuesFromMaterializedRows(): void
+    {
+        $allocator = new ShadowIdentityAllocator();
+        $strategies = ['id' => IdentityGenerationStrategy::Sequence];
+
+        self::assertSame(
+            ['id' => '1 + ROW_NUMBER() OVER () - 1'],
+            $allocator->allocateSelectExpressions('users', $strategies, []),
+        );
+        self::assertSame(
+            ['id' => '3'],
+            $allocator->allocateMissing('users', $strategies, ['name'], ["'c'"], [['id' => 1], ['id' => 2]]),
+        );
+    }
 }

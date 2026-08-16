@@ -124,4 +124,45 @@ final class InsertBasicTest extends TestCase
         self::assertSame([['id' => 1, 'name' => 'Alice'], ['id' => 2, 'name' => 'Bob']], $ztdRows->fetchAll());
         self::assertSame([], $rawRows->fetchAll());
     }
+
+    public function testInsertSelectPreservesExpressionsDistinctAndWindows(): void
+    {
+        $rawPdo = new \PDO('sqlite::memory:', null, null, [
+            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        ]);
+        $rawPdo->exec('CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT, price REAL, dept TEXT)');
+        $rawPdo->exec('CREATE TABLE archive (id INTEGER PRIMARY KEY, name TEXT, doubled REAL, rank_in_dept INTEGER)');
+        $rawPdo->exec('CREATE TABLE departments (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)');
+        $rawPdo->exec('CREATE TABLE popular (dept TEXT, total REAL, item_count INTEGER)');
+        $rawPdo->exec('CREATE TABLE conditional_users (id INTEGER PRIMARY KEY, name TEXT)');
+        $ztdPdo = ZtdPdo::fromPdo($rawPdo);
+
+        $ztdPdo->exec("INSERT INTO products VALUES (1, 'A', 10, 'x'), (2, 'B', 30, 'x'), (3, 'C', 20, 'y')");
+        $ztdPdo->exec('INSERT INTO archive SELECT id, name, price * 2, CAST(ROW_NUMBER() OVER (PARTITION BY dept ORDER BY price DESC) AS INTEGER) FROM products');
+        $ztdPdo->exec('INSERT INTO departments (name) SELECT DISTINCT dept FROM products ORDER BY dept');
+        $popularInsert = $ztdPdo->prepare('INSERT INTO popular SELECT dept, SUM(price), COUNT(*) FROM products GROUP BY dept HAVING SUM(price) > ?');
+        self::assertInstanceOf(\PDOStatement::class, $popularInsert);
+        $popularInsert->bindValue(1, 15, \PDO::PARAM_INT);
+        $popularInsert->execute();
+        $ztdPdo->exec("INSERT INTO conditional_users SELECT 1, 'alice' WHERE NOT EXISTS (SELECT 1 FROM conditional_users WHERE name = 'alice')");
+        $ztdPdo->exec("INSERT INTO conditional_users SELECT 1, 'alice' WHERE NOT EXISTS (SELECT 1 FROM conditional_users WHERE name = 'alice')");
+
+        $archive = $ztdPdo->query('SELECT * FROM archive ORDER BY id');
+        $departments = $ztdPdo->query('SELECT * FROM departments ORDER BY id');
+        $popular = $ztdPdo->query('SELECT * FROM popular ORDER BY dept');
+        $conditional = $ztdPdo->query('SELECT * FROM conditional_users');
+        self::assertNotFalse($archive);
+        self::assertNotFalse($departments);
+        self::assertNotFalse($popular);
+        self::assertNotFalse($conditional);
+        self::assertEquals([
+            ['id' => 1, 'name' => 'A', 'doubled' => 20, 'rank_in_dept' => 2],
+            ['id' => 2, 'name' => 'B', 'doubled' => 60, 'rank_in_dept' => 1],
+            ['id' => 3, 'name' => 'C', 'doubled' => 40, 'rank_in_dept' => 1],
+        ], $archive->fetchAll());
+        self::assertSame([['id' => 1, 'name' => 'x'], ['id' => 2, 'name' => 'y']], $departments->fetchAll());
+        self::assertEquals([['dept' => 'x', 'total' => 40, 'item_count' => 2], ['dept' => 'y', 'total' => 20, 'item_count' => 1]], $popular->fetchAll());
+        self::assertSame([['id' => 1, 'name' => 'alice']], $conditional->fetchAll());
+    }
 }

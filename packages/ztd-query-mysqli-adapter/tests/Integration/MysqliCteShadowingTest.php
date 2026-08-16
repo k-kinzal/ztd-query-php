@@ -20,6 +20,55 @@ use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
 #[Large]
 final class MysqliCteShadowingTest extends TestCase
 {
+    public function testInsertSelectPreservesStarJoinsAggregatesDistinctAndRollup(): void
+    {
+        [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();
+        $source = 'prefix_' . bin2hex(random_bytes(8));
+        $target = 'prefix_' . bin2hex(random_bytes(8));
+        $orders = 'prefix_' . bin2hex(random_bytes(8));
+        $summary = 'prefix_' . bin2hex(random_bytes(8));
+        $regions = 'prefix_' . bin2hex(random_bytes(8));
+        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, region VARCHAR(20), amount INT)', $source));
+        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, region VARCHAR(20), amount INT)', $target));
+        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, source_id INT)', $orders));
+        $rawMysqli->query(sprintf('CREATE TABLE `%s` (region VARCHAR(20), order_count INT, total_amount INT)', $summary));
+        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(20))', $regions));
+        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
+        try {
+            $ztdMysqli->query(sprintf("INSERT INTO `%s` VALUES (1, 'east', 100), (2, 'east', 200), (3, 'west', 300)", $source));
+            $ztdMysqli->query(sprintf('INSERT INTO `%s` VALUES (1, 1), (2, 1), (3, 3)', $orders));
+            $ztdMysqli->query(sprintf('INSERT INTO `%s` SELECT * FROM `%s`', $target, $source));
+            $ztdMysqli->query(sprintf(
+                'INSERT INTO `%s` (region, order_count, total_amount) SELECT s.region, COUNT(o.id), SUM(s.amount) FROM `%s` s JOIN `%s` o ON o.source_id = s.id GROUP BY s.region WITH ROLLUP',
+                $summary,
+                $source,
+                $orders,
+            ));
+            $ztdMysqli->query(sprintf('INSERT INTO `%s` (name) SELECT DISTINCT region FROM `%s` ORDER BY region', $regions, $source));
+
+            $targetRows = $ztdMysqli->query(sprintf('SELECT * FROM `%s` ORDER BY id', $target));
+            $summaryRows = $ztdMysqli->query(sprintf('SELECT * FROM `%s` ORDER BY region', $summary));
+            $regionRows = $ztdMysqli->query(sprintf('SELECT * FROM `%s` ORDER BY id', $regions));
+            self::assertInstanceOf(\mysqli_result::class, $targetRows);
+            self::assertInstanceOf(\mysqli_result::class, $summaryRows);
+            self::assertInstanceOf(\mysqli_result::class, $regionRows);
+            self::assertEquals([
+                ['id' => 1, 'region' => 'east', 'amount' => 100],
+                ['id' => 2, 'region' => 'east', 'amount' => 200],
+                ['id' => 3, 'region' => 'west', 'amount' => 300],
+            ], $targetRows->fetch_all(MYSQLI_ASSOC));
+            self::assertEquals([
+                ['region' => null, 'order_count' => 3, 'total_amount' => 500],
+                ['region' => 'east', 'order_count' => 2, 'total_amount' => 200],
+                ['region' => 'west', 'order_count' => 1, 'total_amount' => 300],
+            ], $summaryRows->fetch_all(MYSQLI_ASSOC));
+            self::assertEquals([['id' => 1, 'name' => 'east'], ['id' => 2, 'name' => 'west']], $regionRows->fetch_all(MYSQLI_ASSOC));
+        } finally {
+            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+        }
+    }
+
     public function testAutoIncrementUsesShadowCounterWithoutModifyingPhysicalTable(): void
     {
         [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();
