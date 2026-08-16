@@ -14,10 +14,16 @@ final class InsertRowProjector
      * @param list<string> $insertColumns
      * @param list<string> $values
      * @param array<string, string> $defaults
+     * @param array<string, string> $generatedValues
      * @return array<string, string>
      */
-    public function project(array $tableColumns, array $insertColumns, array $values, array $defaults): array
-    {
+    public function project(
+        array $tableColumns,
+        array $insertColumns,
+        array $values,
+        array $defaults,
+        array $generatedValues = [],
+    ): array {
         if (count($insertColumns) !== count($values)) {
             throw new \InvalidArgumentException('Insert values count does not match column count.');
         }
@@ -32,7 +38,7 @@ final class InsertRowProjector
         foreach ($columns as $column) {
             $expression = $provided[$column] ?? null;
             if ($expression === null || strcasecmp($expression, 'DEFAULT') === 0) {
-                $expression = $defaults[$column] ?? 'NULL';
+                $expression = $generatedValues[$column] ?? $defaults[$column] ?? 'NULL';
             }
             $projected[$column] = $expression;
         }

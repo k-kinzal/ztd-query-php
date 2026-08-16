@@ -20,6 +20,27 @@ use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
 #[Large]
 final class MysqliCteShadowingTest extends TestCase
 {
+    public function testAutoIncrementUsesShadowCounterWithoutModifyingPhysicalTable(): void
+    {
+        [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();
+        $table = 'prefix_' . bin2hex(random_bytes(8));
+        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(20) NOT NULL)', $table));
+        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
+        try {
+            $ztdMysqli->query(sprintf("INSERT INTO `%s` (name) VALUES ('Alice'), ('Bob')", $table));
+
+            $ztdRows = $ztdMysqli->query(sprintf('SELECT id, name FROM `%s` ORDER BY id', $table));
+            $rawRows = $rawMysqli->query(sprintf('SELECT * FROM `%s`', $table));
+            self::assertInstanceOf(\mysqli_result::class, $ztdRows);
+            self::assertInstanceOf(\mysqli_result::class, $rawRows);
+            self::assertEquals([['id' => 1, 'name' => 'Alice'], ['id' => 2, 'name' => 'Bob']], $ztdRows->fetch_all(MYSQLI_ASSOC));
+            self::assertSame([], $rawRows->fetch_all(MYSQLI_ASSOC));
+        } finally {
+            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+        }
+    }
+
     public function testOmittedExplicitAndDefaultOnlyValuesMatchMySql(): void
     {
         [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();

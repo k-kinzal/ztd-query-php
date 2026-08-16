@@ -12,6 +12,7 @@ use ZtdQuery\Platform\Sqlite\SqliteLexicalMasker;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
 use ZtdQuery\Platform\Sqlite\SqliteSchemaParser;
 use ZtdQuery\Schema\ColumnTypeFamily;
+use ZtdQuery\Schema\IdentityGenerationStrategy;
 
 #[CoversClass(SqliteSchemaParser::class)]
 #[UsesClass(SqliteLexicalMasker::class)]
@@ -153,6 +154,26 @@ final class SqliteSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($result);
         self::assertSame(['id' => '7'], $result->columnDefaults);
         self::assertSame(['id'], $result->primaryKeys);
+    }
+
+    public function testParseIntegerPrimaryKeyAsMaxValueIdentity(): void
+    {
+        $definition = (new SqliteSchemaParser())->parse(
+            'CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)'
+        );
+
+        self::assertNotNull($definition);
+        self::assertSame(['id' => IdentityGenerationStrategy::MaxValue], $definition->identityStrategies);
+    }
+
+    public function testWithoutRowidPrimaryKeyIsNotIdentity(): void
+    {
+        $definition = (new SqliteSchemaParser())->parse(
+            'CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT) WITHOUT ROWID'
+        );
+
+        self::assertNotNull($definition);
+        self::assertSame([], $definition->identityStrategies);
     }
 
     public function testParseWithForeignKey(): void

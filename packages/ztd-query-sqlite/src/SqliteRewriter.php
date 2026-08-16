@@ -134,7 +134,8 @@ final class SqliteRewriter implements SqlRewriter
      *     rows: array<int, array<string, mixed>>,
      *     columns: array<int, string>,
      *     columnTypes: array<string, \ZtdQuery\Schema\ColumnType>,
-     *     columnDefaults: array<string, string>
+     *     columnDefaults: array<string, string>,
+     *     identityStrategies: array<string, \ZtdQuery\Schema\IdentityGenerationStrategy>
      * }>
      */
     private function buildTableContext(): array
@@ -158,12 +159,14 @@ final class SqliteRewriter implements SqlRewriter
 
             $columnTypes = $definition !== null ? $definition->typedColumns : [];
             $columnDefaults = $definition !== null ? $definition->columnDefaults : [];
+            $identityStrategies = $definition !== null ? $definition->identityStrategies : [];
 
             $context[$tableName] = [
                 'rows' => $rows,
                 'columns' => $columns ?? [],
                 'columnTypes' => $columnTypes,
                 'columnDefaults' => $columnDefaults,
+                'identityStrategies' => $identityStrategies,
             ];
         }
 
@@ -178,6 +181,7 @@ final class SqliteRewriter implements SqlRewriter
                 'columns' => $definition->columns,
                 'columnTypes' => $definition->typedColumns,
                 'columnDefaults' => $definition->columnDefaults,
+                'identityStrategies' => $definition->identityStrategies,
             ];
         }
 

@@ -7,6 +7,7 @@ namespace ZtdQuery\Platform\MySql;
 use PhpMyAdmin\SqlParser\Statements\CreateStatement;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
+use ZtdQuery\Schema\IdentityGenerationStrategy;
 use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\TableDefinition;
 
@@ -46,6 +47,7 @@ final class MySqlSchemaParser implements SchemaParser
         /** @var array<string, ColumnType> $typedColumns */
         $typedColumns = [];
         $columnDefaults = [];
+        $identityStrategies = [];
         $primaryKeys = [];
         $notNullColumns = [];
         $uniqueConstraints = [];
@@ -92,6 +94,9 @@ final class MySqlSchemaParser implements SchemaParser
                         $columnDefaults[$columnName] = $default;
                     }
                 }
+                if ($field->options !== null && self::optionSet($field->options, 'AUTO_INCREMENT')) {
+                    $identityStrategies[$columnName] = IdentityGenerationStrategy::MaxValue;
+                }
             }
 
             if ($field->key !== null && $field->key->type === 'PRIMARY KEY') {
@@ -126,6 +131,7 @@ final class MySqlSchemaParser implements SchemaParser
             $uniqueConstraints,
             $typedColumns,
             $columnDefaults,
+            $identityStrategies,
         );
     }
 

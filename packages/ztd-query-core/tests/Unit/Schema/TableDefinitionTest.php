@@ -7,6 +7,7 @@ namespace Tests\Unit\Schema;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
+use ZtdQuery\Schema\IdentityGenerationStrategy;
 use ZtdQuery\Schema\TableDefinition;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -27,6 +28,7 @@ final class TableDefinitionTest extends TestCase
             ['unique_name' => ['name']],
             $typedColumns,
             ['name' => "'anonymous'"],
+            ['id' => IdentityGenerationStrategy::MaxValue],
         );
 
         self::assertSame(['id', 'name'], $definition->columns);
@@ -36,6 +38,7 @@ final class TableDefinitionTest extends TestCase
         self::assertSame(['unique_name' => ['name']], $definition->uniqueConstraints);
         self::assertSame($typedColumns, $definition->typedColumns);
         self::assertSame(['name' => "'anonymous'"], $definition->columnDefaults);
+        self::assertSame(['id' => IdentityGenerationStrategy::MaxValue], $definition->identityStrategies);
     }
 
     public function testTypedColumnsDefaultsToEmpty(): void
@@ -50,5 +53,6 @@ final class TableDefinitionTest extends TestCase
 
         self::assertSame([], $definition->typedColumns);
         self::assertSame([], $definition->columnDefaults);
+        self::assertSame([], $definition->identityStrategies);
     }
 }

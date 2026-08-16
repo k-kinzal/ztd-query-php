@@ -11,6 +11,7 @@ use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlSchemaParser;
 use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\ColumnTypeFamily;
+use ZtdQuery\Schema\IdentityGenerationStrategy;
 
 #[CoversClass(MySqlSchemaParser::class)]
 #[UsesClass(MySqlParser::class)]
@@ -556,5 +557,15 @@ final class MySqlSchemaParserTest extends SchemaParserContractTest
             'status' => "'new'",
             'label' => "(concat('a','b'))",
         ], $definition->columnDefaults);
+    }
+
+    public function testParseAutoIncrementIdentityStrategy(): void
+    {
+        $definition = (new MySqlSchemaParser(new MySqlParser()))->parse(
+            'CREATE TABLE users (id BIGINT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(20))'
+        );
+
+        self::assertNotNull($definition);
+        self::assertSame(['id' => IdentityGenerationStrategy::MaxValue], $definition->identityStrategies);
     }
 }

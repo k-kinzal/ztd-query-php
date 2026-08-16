@@ -14,6 +14,7 @@ use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\Transformer\InsertTransformer;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
+use ZtdQuery\Schema\IdentityGenerationStrategy;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
@@ -831,5 +832,23 @@ final class InsertTransformerTest extends TestCase
 
         self::assertStringContainsString('1 AS `id`', $result);
         self::assertStringContainsString("'Alice' AS `name`", $result);
+    }
+
+    public function testTransformAllocatesMonotonicAutoIncrementValues(): void
+    {
+        $transformer = new InsertTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = ['users' => [
+            'rows' => [],
+            'columns' => ['id', 'name'],
+            'columnTypes' => [],
+            'identityStrategies' => ['id' => IdentityGenerationStrategy::MaxValue],
+        ]];
+
+        $first = $transformer->transform("INSERT INTO users (name) VALUES ('Alice'), ('Bob')", $tables);
+        $second = $transformer->transform("INSERT INTO users (name) VALUES ('Carol')", $tables);
+
+        self::assertStringContainsString('1 AS `id`', $first);
+        self::assertStringContainsString('2 AS `id`', $first);
+        self::assertStringContainsString('3 AS `id`', $second);
     }
 }

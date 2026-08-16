@@ -17,6 +17,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
+use ZtdQuery\Schema\IdentityGenerationStrategy;
 
 #[CoversClass(InsertTransformer::class)]
 #[UsesClass(SqliteLexicalMasker::class)]
@@ -396,5 +397,23 @@ final class InsertTransformerTest extends TestCase
 
         self::assertStringContainsString('1 AS "id"', $result);
         self::assertStringContainsString("'Alice' AS \"name\"", $result);
+    }
+
+    public function testTransformAllocatesRowidValuesMonotonically(): void
+    {
+        $transformer = new InsertTransformer(new SqliteParser(), new SelectTransformer());
+        $tables = ['users' => [
+            'rows' => [],
+            'columns' => ['id', 'name'],
+            'columnTypes' => [],
+            'identityStrategies' => ['id' => IdentityGenerationStrategy::MaxValue],
+        ]];
+
+        $first = $transformer->transform("INSERT INTO users (name) VALUES ('Alice'), ('Bob')", $tables);
+        $second = $transformer->transform("INSERT INTO users (name) VALUES ('Carol')", $tables);
+
+        self::assertStringContainsString('1 AS "id"', $first);
+        self::assertStringContainsString('2 AS "id"', $first);
+        self::assertStringContainsString('3 AS "id"', $second);
     }
 }

@@ -9,6 +9,7 @@ use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
 use ZtdQuery\Rewrite\InsertRowProjector;
+use ZtdQuery\Rewrite\ShadowIdentityAllocator;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
@@ -24,6 +25,7 @@ final class InsertTransformer implements SqlTransformer
     private SelectTransformer $selectTransformer;
     private CastRenderer $castRenderer;
     private InsertRowProjector $rowProjector;
+    private ShadowIdentityAllocator $identityAllocator;
 
     public function __construct(
         PgSqlParser $parser,
@@ -34,6 +36,7 @@ final class InsertTransformer implements SqlTransformer
         $this->selectTransformer = $selectTransformer;
         $this->castRenderer = $castRenderer ?? new PgSqlCastRenderer();
         $this->rowProjector = new InsertRowProjector();
+        $this->identityAllocator = new ShadowIdentityAllocator();
     }
 
     /**
@@ -71,10 +74,19 @@ final class InsertTransformer implements SqlTransformer
         $selectParts = [];
         $columnTypes = $tables[$tableName]['columnTypes'] ?? [];
         $columnDefaults = $tables[$tableName]['columnDefaults'] ?? [];
+        $identityStrategies = $tables[$tableName]['identityStrategies'] ?? [];
+        $existingRows = $tables[$tableName]['rows'] ?? [];
         foreach ($valueRows as $values) {
             $sourceColumns = $insertColumns !== [] || $values === [] ? $insertColumns : $tableColumns;
+            $generatedValues = $this->identityAllocator->allocateMissing(
+                $tableName,
+                $identityStrategies,
+                $sourceColumns,
+                $values,
+                $existingRows,
+            );
             try {
-                $projected = $this->rowProjector->project($tableColumns, $sourceColumns, $values, $columnDefaults);
+                $projected = $this->rowProjector->project($tableColumns, $sourceColumns, $values, $columnDefaults, $generatedValues);
             } catch (\InvalidArgumentException) {
                 throw new UnsupportedSqlException($sql, 'Insert values count does not match column count');
             }

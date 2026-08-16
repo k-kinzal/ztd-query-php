@@ -6,6 +6,7 @@ namespace ZtdQuery\Platform\Sqlite;
 
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
+use ZtdQuery\Schema\IdentityGenerationStrategy;
 use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Sql\SqlTokenStream;
@@ -140,6 +141,14 @@ final class SqliteSchemaParser implements SchemaParser
             );
         }
 
+        $identityStrategies = [];
+        if (!str_contains(strtoupper($trimmed), 'WITHOUT ROWID') && count(array_unique($primaryKeys)) === 1) {
+            $identityColumn = array_values(array_unique($primaryKeys))[0];
+            if (($columnTypes[$identityColumn] ?? null) === 'INTEGER') {
+                $identityStrategies[$identityColumn] = IdentityGenerationStrategy::MaxValue;
+            }
+        }
+
         return new TableDefinition(
             $columns,
             $columnTypes,
@@ -148,6 +157,7 @@ final class SqliteSchemaParser implements SchemaParser
             $uniqueConstraints,
             $typedColumns,
             $columnDefaults,
+            $identityStrategies,
         );
     }
 

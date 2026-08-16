@@ -9,6 +9,7 @@ use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\Sqlite\SqliteCastRenderer;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
 use ZtdQuery\Rewrite\InsertRowProjector;
+use ZtdQuery\Rewrite\ShadowIdentityAllocator;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Sql\SqlTokenStream;
@@ -30,6 +31,7 @@ final class InsertTransformer implements SqlTransformer
     private SelectTransformer $selectTransformer;
     private CastRenderer $castRenderer;
     private InsertRowProjector $rowProjector;
+    private ShadowIdentityAllocator $identityAllocator;
 
     public function __construct(
         SqliteParser $parser,
@@ -40,6 +42,7 @@ final class InsertTransformer implements SqlTransformer
         $this->selectTransformer = $selectTransformer;
         $this->castRenderer = $castRenderer ?? new SqliteCastRenderer();
         $this->rowProjector = new InsertRowProjector();
+        $this->identityAllocator = new ShadowIdentityAllocator();
     }
 
     /**
@@ -65,7 +68,18 @@ final class InsertTransformer implements SqlTransformer
 
         $columnTypes = $tables[$tableName]['columnTypes'] ?? [];
         $columnDefaults = $tables[$tableName]['columnDefaults'] ?? [];
-        $selectSql = $this->buildInsertSelect($sql, $tableColumns, $insertColumns, $columnTypes, $columnDefaults);
+        $identityStrategies = $tables[$tableName]['identityStrategies'] ?? [];
+        $existingRows = $tables[$tableName]['rows'] ?? [];
+        $selectSql = $this->buildInsertSelect(
+            $sql,
+            $tableName,
+            $tableColumns,
+            $insertColumns,
+            $columnTypes,
+            $columnDefaults,
+            $identityStrategies,
+            $existingRows,
+        );
 
         return $this->selectTransformer->transform($selectSql, $tables);
     }
@@ -75,13 +89,18 @@ final class InsertTransformer implements SqlTransformer
      * @param list<string> $insertColumns
      * @param array<string, ColumnType> $columnTypes
      * @param array<string, string> $columnDefaults
+     * @param array<string, \ZtdQuery\Schema\IdentityGenerationStrategy> $identityStrategies
+     * @param array<int, array<string, mixed>> $existingRows
      */
     private function buildInsertSelect(
         string $sql,
+        string $tableName,
         array $tableColumns,
         array $insertColumns,
         array $columnTypes,
         array $columnDefaults,
+        array $identityStrategies,
+        array $existingRows,
     ): string {
         if ($this->parser->hasInsertSelect($sql)) {
             $selectSql = $this->parser->extractInsertSelect($sql);
@@ -98,7 +117,16 @@ final class InsertTransformer implements SqlTransformer
         if ($valueSets !== []) {
             $rows = [];
             foreach ($valueSets as $values) {
-                $rows[] = $this->buildInsertRowSelect($values, $tableColumns, $insertColumns, $columnTypes, $columnDefaults);
+                $rows[] = $this->buildInsertRowSelect(
+                    $values,
+                    $tableName,
+                    $tableColumns,
+                    $insertColumns,
+                    $columnTypes,
+                    $columnDefaults,
+                    $identityStrategies,
+                    $existingRows,
+                );
             }
 
             return implode(' UNION ALL ', $rows);
@@ -113,18 +141,30 @@ final class InsertTransformer implements SqlTransformer
      * @param list<string> $insertColumns
      * @param array<string, ColumnType> $columnTypes
      * @param array<string, string> $columnDefaults
+     * @param array<string, \ZtdQuery\Schema\IdentityGenerationStrategy> $identityStrategies
+     * @param array<int, array<string, mixed>> $existingRows
      */
     private function buildInsertRowSelect(
         array $values,
+        string $tableName,
         array $tableColumns,
         array $insertColumns,
         array $columnTypes,
         array $columnDefaults,
+        array $identityStrategies,
+        array $existingRows,
     ): string {
         $values = self::orderedValues($values);
         $sourceColumns = $insertColumns !== [] || $values === [] ? $insertColumns : $tableColumns;
+        $generatedValues = $this->identityAllocator->allocateMissing(
+            $tableName,
+            $identityStrategies,
+            $sourceColumns,
+            $values,
+            $existingRows,
+        );
         try {
-            $projected = $this->rowProjector->project($tableColumns, $sourceColumns, $values, $columnDefaults);
+            $projected = $this->rowProjector->project($tableColumns, $sourceColumns, $values, $columnDefaults, $generatedValues);
         } catch (\InvalidArgumentException $exception) {
             throw new \RuntimeException($exception->getMessage(), 0, $exception);
         }

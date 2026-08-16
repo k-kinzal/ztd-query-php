@@ -6,6 +6,7 @@ namespace ZtdQuery\Platform\Postgres;
 
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
+use ZtdQuery\Schema\IdentityGenerationStrategy;
 use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Sql\SqlTokenStream;
@@ -34,6 +35,7 @@ final class PgSqlSchemaParser implements SchemaParser
         /** @var array<string, ColumnType> $typedColumns */
         $typedColumns = [];
         $columnDefaults = [];
+        $identityStrategies = [];
         $primaryKeys = [];
         $notNullColumns = [];
         /** @var array<string, list<string>> $uniqueConstraints */
@@ -81,6 +83,9 @@ final class PgSqlSchemaParser implements SchemaParser
             if ($columnDef['default'] !== null && !self::isSequenceDefault($columnDef['default'])) {
                 $columnDefaults[$columnDef['name']] = $columnDef['default'];
             }
+            if ($columnDef['identity']) {
+                $identityStrategies[$columnDef['name']] = IdentityGenerationStrategy::Sequence;
+            }
         }
 
         if ($columns === []) {
@@ -103,6 +108,7 @@ final class PgSqlSchemaParser implements SchemaParser
             $uniqueConstraints,
             $typedColumns,
             $columnDefaults,
+            $identityStrategies,
         );
     }
 
@@ -120,7 +126,7 @@ final class PgSqlSchemaParser implements SchemaParser
     }
 
     /**
-     * @return array{name: string, type: string, columnType: ColumnType, notNull: bool, primaryKey: bool, unique: bool, default: string|null}|null
+     * @return array{name: string, type: string, columnType: ColumnType, notNull: bool, primaryKey: bool, unique: bool, default: string|null, identity: bool}|null
      */
     private function parseColumnDefinition(string $entry): ?array
     {
@@ -149,6 +155,9 @@ final class PgSqlSchemaParser implements SchemaParser
                 ['REFERENCES'], ['COLLATE'], ['CONSTRAINT'], ['GENERATED'], ['DEFERRABLE'],
             ],
         );
+        $identity = in_array(strtoupper($nativeType), ['SMALLSERIAL', 'SERIAL', 'BIGSERIAL'], true)
+            || ($default !== null && preg_match('/^nextval\s*\(/i', ltrim($default, '(')) === 1)
+            || preg_match('/\bGENERATED\s+(?:ALWAYS|BY\s+DEFAULT)\s+AS\s+IDENTITY\b/i', $afterType) === 1;
 
         $family = $this->mapTypeToFamily($nativeType);
         $columnType = new ColumnType($family, strtoupper($nativeType));
@@ -161,6 +170,7 @@ final class PgSqlSchemaParser implements SchemaParser
             'primaryKey' => $primaryKey,
             'unique' => $unique,
             'default' => $default,
+            'identity' => $identity,
         ];
     }
 

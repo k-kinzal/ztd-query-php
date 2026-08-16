@@ -12,6 +12,7 @@ use ZtdQuery\Platform\Postgres\Transformer\InsertTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
+use ZtdQuery\Schema\IdentityGenerationStrategy;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
@@ -333,5 +334,23 @@ final class InsertTransformerTest extends TestCase
 
         self::assertStringContainsString('1 AS "id"', $result);
         self::assertStringContainsString("'Alice' AS \"name\"", $result);
+    }
+
+    public function testInsertAllocatesSerialValuesWithoutPhysicalSequence(): void
+    {
+        $transformer = new InsertTransformer(new PgSqlParser(), new SelectTransformer());
+        $tables = ['users' => [
+            'rows' => [],
+            'columns' => ['id', 'name'],
+            'columnTypes' => [],
+            'identityStrategies' => ['id' => IdentityGenerationStrategy::Sequence],
+        ]];
+
+        $first = $transformer->transform("INSERT INTO users (name) VALUES ('Alice'), ('Bob')", $tables);
+        $second = $transformer->transform("INSERT INTO users (name) VALUES ('Carol')", $tables);
+
+        self::assertStringContainsString('1 AS "id"', $first);
+        self::assertStringContainsString('2 AS "id"', $first);
+        self::assertStringContainsString('3 AS "id"', $second);
     }
 }

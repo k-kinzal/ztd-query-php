@@ -105,4 +105,23 @@ final class InsertBasicTest extends TestCase
         self::assertNotFalse($ztd);
         self::assertSame($raw->fetchAll(), $ztd->fetchAll());
     }
+
+    public function testOmittedIntegerPrimaryKeyUsesShadowIdentity(): void
+    {
+        $rawPdo = new \PDO('sqlite::memory:', null, null, [
+            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        ]);
+        $rawPdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $ztdPdo = ZtdPdo::fromPdo($rawPdo);
+
+        $ztdPdo->exec("INSERT INTO users (name) VALUES ('Alice'), ('Bob')");
+
+        $ztdRows = $ztdPdo->query('SELECT id, name FROM users ORDER BY id');
+        $rawRows = $rawPdo->query('SELECT * FROM users');
+        self::assertNotFalse($ztdRows);
+        self::assertNotFalse($rawRows);
+        self::assertSame([['id' => 1, 'name' => 'Alice'], ['id' => 2, 'name' => 'Bob']], $ztdRows->fetchAll());
+        self::assertSame([], $rawRows->fetchAll());
+    }
 }

@@ -123,4 +123,26 @@ final class InsertBasicTest extends TestCase
             $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
         }
     }
+
+    public function testSerialUsesShadowSequenceWithoutAdvancingPhysicalSequence(): void
+    {
+        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $table = 'prefix_' . bin2hex(random_bytes(8));
+
+        try {
+            $rawPdo->exec("CREATE TABLE {$table} (id SERIAL PRIMARY KEY, name TEXT NOT NULL)");
+            $ztdPdo = ZtdPdo::fromPdo($rawPdo);
+
+            $ztdPdo->exec("INSERT INTO {$table} (name) VALUES ('Alice'), ('Bob')");
+
+            $rows = $ztdPdo->query("SELECT id, name FROM {$table} ORDER BY id");
+            $sequence = $rawPdo->query("SELECT last_value, is_called FROM {$table}_id_seq");
+            self::assertNotFalse($rows);
+            self::assertNotFalse($sequence);
+            self::assertSame([['id' => 1, 'name' => 'Alice'], ['id' => 2, 'name' => 'Bob']], $rows->fetchAll());
+            self::assertSame(['last_value' => 1, 'is_called' => false], $sequence->fetch());
+        } finally {
+            $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
+        }
+    }
 }
