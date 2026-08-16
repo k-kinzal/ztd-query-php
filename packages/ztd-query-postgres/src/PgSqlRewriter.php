@@ -12,6 +12,7 @@ use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
+use ZtdQuery\Shadow\ShadowTableState;
 
 /**
  * PostgreSQL rewrite implementation for ZTD.
@@ -211,14 +212,14 @@ final class PgSqlRewriter implements SqlRewriter
     {
         if ($statementType === 'UPDATE') {
             $targetTable = $this->parser->extractUpdateTable($sql);
-            if ($targetTable !== null) {
+            if ($targetTable !== null && $this->mutationTableExists($targetTable)) {
                 $this->shadowStore->ensure($targetTable);
             }
         }
 
         if ($statementType === 'DELETE') {
             $targetTable = $this->parser->extractDeleteTable($sql);
-            if ($targetTable !== null) {
+            if ($targetTable !== null && $this->mutationTableExists($targetTable)) {
                 $this->shadowStore->ensure($targetTable);
             }
         }
@@ -226,7 +227,7 @@ final class PgSqlRewriter implements SqlRewriter
 
     private function tableExists(string $tableName): bool
     {
-        if ($this->shadowStore->get($tableName) !== []) {
+        if ($this->shadowStore->has($tableName)) {
             return true;
         }
 
@@ -235,6 +236,12 @@ final class PgSqlRewriter implements SqlRewriter
         }
 
         return false;
+    }
+
+    private function mutationTableExists(string $tableName): bool
+    {
+        return $this->registry->has($tableName)
+            || $this->shadowStore->state($tableName) === ShadowTableState::Initialized;
     }
 
     private function hasSchemaContext(): bool

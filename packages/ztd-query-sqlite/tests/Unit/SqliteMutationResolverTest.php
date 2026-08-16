@@ -910,14 +910,13 @@ final class SqliteMutationResolverTest extends TestCase
         self::assertSame('orders', $mutation->tableName());
     }
 
-    public function testResolveUpdateEnsuresShadowStore(): void
+    public function testResolveUpdateWithoutContextThrowsUnknownSchema(): void
     {
         $store = new ShadowStore();
         $registry = new TableDefinitionRegistry();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
-        $mutation = $resolver->resolve("UPDATE t SET x = 1", QueryKind::WRITE_SIMULATED);
-        self::assertInstanceOf(UpdateMutation::class, $mutation);
-        self::assertSame('t', $mutation->tableName());
+        $this->expectException(UnknownSchemaException::class);
+        $resolver->resolve("UPDATE t SET x = 1", QueryKind::WRITE_SIMULATED);
     }
 
     public function testResolveDeleteTableName(): void
@@ -1671,14 +1670,13 @@ final class SqliteMutationResolverTest extends TestCase
         self::assertArrayNotHasKey('val', $def->columnTypes);
     }
 
-    public function testResolveUpdateReturnsMutationWithTargetTable(): void
+    public function testResolveUpdateWithoutTargetContextThrowsUnknownSchema(): void
     {
         $store = new ShadowStore();
         $registry = new TableDefinitionRegistry();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
-        $mutation = $resolver->resolve("UPDATE users SET x = 1", QueryKind::WRITE_SIMULATED);
-        self::assertNotNull($mutation);
-        self::assertSame('users', $mutation->tableName());
+        $this->expectException(UnknownSchemaException::class);
+        $resolver->resolve("UPDATE users SET x = 1", QueryKind::WRITE_SIMULATED);
     }
 
     public function testResolveInsertIsReplaceReturnsPrimaryKeys(): void
@@ -2454,14 +2452,17 @@ final class SqliteMutationResolverTest extends TestCase
         self::assertSame(['id'], $def->notNullColumns);
     }
 
-    public function testResolveUpdateEnsuresShadowStoreEntryCreated(): void
+    public function testResolveUnknownUpdateDoesNotCreateShadowStoreEntry(): void
     {
         $store = new ShadowStore();
         $registry = new TableDefinitionRegistry();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
-        self::assertSame([], $store->getAll());
-        $resolver->resolve("UPDATE t SET x = 1", QueryKind::WRITE_SIMULATED);
-        self::assertArrayHasKey('t', $store->getAll());
+        try {
+            $resolver->resolve("UPDATE t SET x = 1", QueryKind::WRITE_SIMULATED);
+            self::fail('Expected an unknown schema exception.');
+        } catch (UnknownSchemaException) {
+            self::assertSame([], $store->getAll());
+        }
     }
 
     public function testResolveDeleteEnsuresShadowStoreEntryCreated(): void
@@ -2615,5 +2616,20 @@ final class SqliteMutationResolverTest extends TestCase
         self::assertNotNull($def);
         self::assertSame([0, 1], array_keys($def->primaryKeys));
         self::assertSame(['a', 'c'], $def->primaryKeys);
+    }
+
+    public function testUpdateDoesNotTreatRowsFromUnknownInsertAsSchema(): void
+    {
+        $store = new ShadowStore();
+        $store->insert('late_table', [['id' => 1, 'name' => 'Alice']]);
+        $resolver = new SqliteMutationResolver(
+            $store,
+            new TableDefinitionRegistry(),
+            new SqliteSchemaParser(),
+            new SqliteParser(),
+        );
+
+        $this->expectException(UnknownSchemaException::class);
+        $resolver->resolve("UPDATE late_table SET name = 'Bob' WHERE id = 1", QueryKind::WRITE_SIMULATED);
     }
 }

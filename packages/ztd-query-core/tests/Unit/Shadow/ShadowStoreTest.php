@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\MissingPrimaryKeyException;
 use ZtdQuery\Shadow\ShadowStore;
+use ZtdQuery\Shadow\ShadowTableState;
 
 #[CoversClass(ShadowStore::class)]
 #[UsesClass(MissingPrimaryKeyException::class)]
@@ -31,6 +32,42 @@ class ShadowStoreTest extends TestCase
         $store = new ShadowStore();
 
         self::assertSame([], $store->get('missing'));
+    }
+
+    public function testHasDistinguishesMissingFromIntentionallyEmptyTable(): void
+    {
+        $store = new ShadowStore();
+
+        self::assertFalse($store->has('events'));
+
+        $store->ensure('events');
+
+        self::assertTrue($store->has('events'));
+        self::assertSame([], $store->get('events'));
+    }
+
+    public function testStateDistinguishesMutationMaterializationFromInitialization(): void
+    {
+        $store = new ShadowStore();
+
+        self::assertSame(ShadowTableState::Missing, $store->state('events'));
+
+        $store->insert('events', [['id' => 1]]);
+        self::assertSame(ShadowTableState::Materialized, $store->state('events'));
+
+        $store->ensure('events');
+        self::assertSame(ShadowTableState::Initialized, $store->state('events'));
+    }
+
+    public function testRemoveClearsRowsAndInitialization(): void
+    {
+        $store = new ShadowStore();
+        $store->set('events', [['id' => 1]]);
+
+        $store->remove('events');
+
+        self::assertSame(ShadowTableState::Missing, $store->state('events'));
+        self::assertSame([], $store->get('events'));
     }
 
     public function testGetAllReturnsCurrentTables(): void

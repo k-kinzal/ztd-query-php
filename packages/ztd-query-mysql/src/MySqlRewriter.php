@@ -15,6 +15,7 @@ use PhpMyAdmin\SqlParser\Statements\SelectStatement;
 use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
+use ZtdQuery\Shadow\ShadowTableState;
 use PhpMyAdmin\SqlParser\Statements\AlterStatement;
 use PhpMyAdmin\SqlParser\Statements\CreateStatement;
 use PhpMyAdmin\SqlParser\Statements\DeleteStatement;
@@ -220,7 +221,7 @@ final class MySqlRewriter implements SqlRewriter
             }
             $targetExpr = $statement->tables[0];
             $targetTable = self::resolveExprTableName($targetExpr);
-            if ($targetTable !== null) {
+            if ($targetTable !== null && $this->mutationTableExists($targetTable)) {
                 $this->shadowStore->ensure($targetTable);
             }
         }
@@ -229,7 +230,7 @@ final class MySqlRewriter implements SqlRewriter
             if ($statement->from !== null && $statement->from !== []) {
                 $targetExpr = $statement->from[0];
                 $targetTable = self::resolveExprTableName($targetExpr);
-                if ($targetTable !== null) {
+                if ($targetTable !== null && $this->mutationTableExists($targetTable)) {
                     $this->shadowStore->ensure($targetTable);
                 }
             }
@@ -310,7 +311,7 @@ final class MySqlRewriter implements SqlRewriter
 
     private function tableExists(string $tableName): bool
     {
-        if ($this->shadowStore->get($tableName) !== []) {
+        if ($this->shadowStore->has($tableName)) {
             return true;
         }
 
@@ -319,6 +320,12 @@ final class MySqlRewriter implements SqlRewriter
         }
 
         return false;
+    }
+
+    private function mutationTableExists(string $tableName): bool
+    {
+        return $this->registry->has($tableName)
+            || $this->shadowStore->state($tableName) === ShadowTableState::Initialized;
     }
 
     private function hasSchemaContext(): bool

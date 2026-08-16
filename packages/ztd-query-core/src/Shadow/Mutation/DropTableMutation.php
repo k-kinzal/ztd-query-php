@@ -41,7 +41,7 @@ final class DropTableMutation implements ShadowMutation
         }
 
         $this->registry->unregister($this->tableName);
-        $store->set($this->tableName, []);
+        $store->remove($this->tableName);
     }
 
     /**

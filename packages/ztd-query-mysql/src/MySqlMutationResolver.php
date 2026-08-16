@@ -36,6 +36,7 @@ use ZtdQuery\Shadow\Mutation\TruncateMutation;
 use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\Mutation\UpsertMutation;
 use ZtdQuery\Shadow\ShadowStore;
+use ZtdQuery\Shadow\ShadowTableState;
 
 /**
  * Resolves the appropriate ShadowMutation for a given SQL statement.
@@ -119,12 +120,15 @@ final class MySqlMutationResolver
         if ($targetTable === null) {
             throw new UnsupportedSqlException($sql, 'Cannot resolve table name');
         }
-        $this->shadowStore->ensure($targetTable);
+        $definition = $this->registry->get($targetTable);
+        if ($definition === null && $this->shadowStore->state($targetTable) !== ShadowTableState::Initialized) {
+            throw new UnknownSchemaException($sql, $targetTable, 'table');
+        }
 
+        $this->shadowStore->ensure($targetTable);
         $columns = $this->shadowStore->get($targetTable);
         $columnNames = $columns !== [] ? array_keys($columns[0]) : null;
         if ($columnNames === null) {
-            $definition = $this->registry->get($targetTable);
             $columnNames = $definition?->columns;
         }
         if ($columnNames === null) {
@@ -139,8 +143,7 @@ final class MySqlMutationResolver
             $tablesPrimaryKeys = [];
             foreach ($tables as $tableName => $tableInfo) {
                 $definition = $this->registry->get($tableName);
-                $existingRows = $this->shadowStore->get($tableName);
-                if ($definition === null && $existingRows === []) {
+                if ($definition === null && $this->shadowStore->state($tableName) !== ShadowTableState::Initialized) {
                     throw new UnknownSchemaException($sql, $tableName, 'table');
                 }
                 $this->shadowStore->ensure($tableName);
@@ -176,6 +179,10 @@ final class MySqlMutationResolver
             throw new UnsupportedSqlException($sql, 'Cannot resolve DELETE target');
         }
 
+        if (!$this->registry->has($targetTable) && $this->shadowStore->state($targetTable) !== ShadowTableState::Initialized) {
+            throw new UnknownSchemaException($sql, $targetTable, 'table');
+        }
+
         $this->shadowStore->ensure($targetTable);
 
         $tables = $projection['tables'];
@@ -184,8 +191,7 @@ final class MySqlMutationResolver
             $tablesPrimaryKeys = [];
             foreach ($tables as $tableName => $tableInfo) {
                 $definition = $this->registry->get($tableName);
-                $existingRows = $this->shadowStore->get($tableName);
-                if ($definition === null && $existingRows === []) {
+                if ($definition === null && $this->shadowStore->state($tableName) !== ShadowTableState::Initialized) {
                     throw new UnknownSchemaException($sql, $tableName, 'table');
                 }
                 $this->shadowStore->ensure($tableName);
@@ -195,10 +201,6 @@ final class MySqlMutationResolver
         }
 
         $definition = $this->registry->get($targetTable);
-        $existingRows = $this->shadowStore->get($targetTable);
-        if ($definition === null && $existingRows === []) {
-            throw new UnknownSchemaException($sql, $targetTable, 'table');
-        }
 
         $primaryKeys = $definition !== null ? $definition->primaryKeys : [];
         return new DeleteMutation($targetTable, $primaryKeys);

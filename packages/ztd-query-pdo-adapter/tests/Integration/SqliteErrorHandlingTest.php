@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 use ZtdQuery\Adapter\Pdo\ZtdPdoException;
+use ZtdQuery\Config\UnknownSchemaBehavior;
 use ZtdQuery\Config\UnsupportedSqlBehavior;
 use ZtdQuery\Config\ZtdConfig;
 
@@ -21,6 +22,56 @@ use ZtdQuery\Config\ZtdConfig;
 #[Large]
 final class SqliteErrorHandlingTest extends TestCase
 {
+    public function testLateTableUpdateAndDeletePassThroughByDefault(): void
+    {
+        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $ztd = ZtdPdo::fromPdo($rawPdo);
+
+        $rawPdo->exec('CREATE TABLE late_table (id INTEGER PRIMARY KEY, value TEXT NOT NULL)');
+        $rawPdo->exec("INSERT INTO late_table VALUES (1, 'physical')");
+
+        self::assertSame(1, $ztd->exec("UPDATE late_table SET value = 'updated' WHERE id = 1"));
+        $valueStatement = $rawPdo->query('SELECT value FROM late_table WHERE id = 1');
+        self::assertNotFalse($valueStatement);
+        self::assertSame('updated', $valueStatement->fetchColumn());
+        self::assertSame(1, $ztd->exec('DELETE FROM late_table WHERE id = 1'));
+        $countStatement = $rawPdo->query('SELECT COUNT(*) FROM late_table');
+        self::assertNotFalse($countStatement);
+        self::assertSame(0, $countStatement->fetchColumn());
+    }
+
+    public function testLateTableMutationRespectsExceptionBehavior(): void
+    {
+        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $config = new ZtdConfig(
+            UnsupportedSqlBehavior::Ignore,
+            UnknownSchemaBehavior::Exception,
+        );
+        $ztd = ZtdPdo::fromPdo($rawPdo, $config);
+
+        $rawPdo->exec('CREATE TABLE late_table (id INTEGER PRIMARY KEY, value TEXT NOT NULL)');
+        $rawPdo->exec("INSERT INTO late_table VALUES (1, 'physical')");
+
+        $this->expectException(ZtdPdoException::class);
+        $this->expectExceptionMessage('Unknown table: late_table');
+        $ztd->exec("UPDATE late_table SET value = 'updated' WHERE id = 1");
+    }
+
+    public function testRowsFromLateTableInsertDoNotBypassPassthroughBehavior(): void
+    {
+        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $ztd = ZtdPdo::fromPdo($rawPdo);
+
+        $rawPdo->exec('CREATE TABLE late_table (id INTEGER PRIMARY KEY, value TEXT NOT NULL)');
+        $rawPdo->exec("INSERT INTO late_table VALUES (1, 'physical')");
+        self::assertSame(1, $ztd->exec("INSERT INTO late_table (id, value) VALUES (2, 'shadow')"));
+
+        self::assertSame(1, $ztd->exec("UPDATE late_table SET value = 'updated' WHERE id = 1"));
+        $statement = $rawPdo->query('SELECT value FROM late_table WHERE id = 1');
+        self::assertNotFalse($statement);
+        self::assertSame('updated', $statement->fetchColumn());
+    }
+
     public function testUnsupportedSqlWithExceptionBehavior(): void
     {
         $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);

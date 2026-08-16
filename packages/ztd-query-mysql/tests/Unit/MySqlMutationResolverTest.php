@@ -7,6 +7,7 @@ namespace Tests\Unit;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlMutationResolver;
@@ -1610,5 +1611,23 @@ final class MySqlMutationResolverTest extends TestCase
         $mutation = $resolver->resolve($sql, $statements[0], QueryKind::DDL_SIMULATED);
 
         self::assertInstanceOf(CreateTableLikeMutation::class, $mutation);
+    }
+
+    public function testUpdateDoesNotTreatRowsFromUnknownInsertAsSchema(): void
+    {
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $shadowStore = new ShadowStore();
+        $shadowStore->insert('late_table', [['id' => 1, 'name' => 'Alice']]);
+        $registry = new TableDefinitionRegistry();
+        $selectTransformer = new SelectTransformer();
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $resolver = new MySqlMutationResolver($shadowStore, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $sql = "UPDATE late_table SET name = 'Bob' WHERE id = 1";
+        $statements = $parser->parse($sql);
+
+        $this->expectException(UnknownSchemaException::class);
+        $resolver->resolve($sql, $statements[0], QueryKind::WRITE_SIMULATED);
     }
 }

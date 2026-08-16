@@ -20,6 +20,7 @@ use ZtdQuery\Shadow\Mutation\ShadowMutation;
 use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\Mutation\UpsertMutation;
 use ZtdQuery\Shadow\ShadowStore;
+use ZtdQuery\Shadow\ShadowTableState;
 
 /**
  * Resolves the appropriate ShadowMutation for a given SQLite SQL statement.
@@ -74,9 +75,12 @@ final class SqliteMutationResolver
             throw new UnsupportedSqlException($sql, 'Cannot resolve UPDATE target');
         }
 
-        $this->shadowStore->ensure($targetTable);
-
         $definition = $this->registry->get($targetTable);
+        if ($definition === null && $this->shadowStore->state($targetTable) !== ShadowTableState::Initialized) {
+            throw new UnknownSchemaException($sql, $targetTable, 'table');
+        }
+
+        $this->shadowStore->ensure($targetTable);
         $primaryKeys = $definition !== null ? $definition->primaryKeys : [];
 
         return new UpdateMutation($targetTable, $primaryKeys);
@@ -95,14 +99,12 @@ final class SqliteMutationResolver
         if (preg_match('/^DELETE\s+FROM\s+(?:"(?:[^"]|"")*"|`(?:[^`]|``)*`|\[(?:[^\]])*\]|[^\s;]+)\s*;?\s*$/i', $trimmed) === 1) {
         }
 
-        $this->shadowStore->ensure($targetTable);
-
         $definition = $this->registry->get($targetTable);
-        $existingRows = $this->shadowStore->get($targetTable);
-        if ($definition === null && $existingRows === []) {
+        if ($definition === null && $this->shadowStore->state($targetTable) !== ShadowTableState::Initialized) {
             throw new UnknownSchemaException($sql, $targetTable, 'table');
         }
 
+        $this->shadowStore->ensure($targetTable);
         $primaryKeys = $definition !== null ? $definition->primaryKeys : [];
 
         return new DeleteMutation($targetTable, $primaryKeys);

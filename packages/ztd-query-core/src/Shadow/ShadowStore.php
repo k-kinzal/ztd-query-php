@@ -19,6 +19,13 @@ class ShadowStore
     private array $fixtures = [];
 
     /**
+     * Tables explicitly initialized as fixtures or virtual schema entries.
+     *
+     * @var array<string, true>
+     */
+    private array $initializedTables = [];
+
+    /**
      * Replace all shadow rows for a table.
      *
      * @param array<int, array<string, mixed>> $rows
@@ -26,6 +33,7 @@ class ShadowStore
     public function set(string $tableName, array $rows): void
     {
         $this->fixtures[$tableName] = $rows;
+        $this->initializedTables[$tableName] = true;
     }
 
     /**
@@ -36,6 +44,31 @@ class ShadowStore
     public function get(string $tableName): array
     {
         return $this->fixtures[$tableName] ?? [];
+    }
+
+    /**
+     * Whether the store contains a shadow entry for a table, including an
+     * intentionally empty table.
+     */
+    public function has(string $tableName): bool
+    {
+        return array_key_exists($tableName, $this->fixtures);
+    }
+
+    /**
+     * Return the typed presence state for a shadow table.
+     */
+    public function state(string $tableName): ShadowTableState
+    {
+        if (!$this->has($tableName)) {
+            return ShadowTableState::Missing;
+        }
+
+        if (isset($this->initializedTables[$tableName])) {
+            return ShadowTableState::Initialized;
+        }
+
+        return ShadowTableState::Materialized;
     }
 
     /**
@@ -54,6 +87,7 @@ class ShadowStore
     public function clear(): void
     {
         $this->fixtures = [];
+        $this->initializedTables = [];
     }
 
     /**
@@ -64,6 +98,15 @@ class ShadowStore
         if (!array_key_exists($tableName, $this->fixtures)) {
             $this->fixtures[$tableName] = [];
         }
+        $this->initializedTables[$tableName] = true;
+    }
+
+    /**
+     * Remove both rows and explicit table context from the store.
+     */
+    public function remove(string $tableName): void
+    {
+        unset($this->fixtures[$tableName], $this->initializedTables[$tableName]);
     }
 
     /**

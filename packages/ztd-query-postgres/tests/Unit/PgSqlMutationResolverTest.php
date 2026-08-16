@@ -1700,7 +1700,7 @@ final class PgSqlMutationResolverTest extends TestCase
         self::assertSame('new_table', $mutation->tableName());
     }
 
-    public function testResolveUpdateNoRegistryStillWorks(): void
+    public function testResolveUpdateNoRegistryThrowsUnknownSchema(): void
     {
         $shadowStore = new ShadowStore();
         $registry = new TableDefinitionRegistry();
@@ -1710,14 +1710,12 @@ final class PgSqlMutationResolverTest extends TestCase
             new PgSqlSchemaParser(),
             new PgSqlParser()
         );
-        $mutation = $resolver->resolve(
+        $this->expectException(UnknownSchemaException::class);
+        $resolver->resolve(
             "UPDATE new_table SET name = 'Bob' WHERE id = 1",
             'UPDATE',
             QueryKind::WRITE_SIMULATED
         );
-
-        self::assertInstanceOf(UpdateMutation::class, $mutation);
-        self::assertSame('new_table', $mutation->tableName());
     }
 
     public function testResolveCreateTableAsSelectWithLowercaseSelectAndAs(): void
@@ -2312,7 +2310,7 @@ final class PgSqlMutationResolverTest extends TestCase
         self::assertInstanceOf(UpsertMutation::class, $mutation);
     }
 
-    public function testResolveUpdateNoRegistryCreatesEmptyPrimaryKeys(): void
+    public function testResolveUpdateNoRegistryDoesNotCreateUnsafeMutation(): void
     {
         $shadowStore = new ShadowStore();
         $registry = new TableDefinitionRegistry();
@@ -2322,13 +2320,12 @@ final class PgSqlMutationResolverTest extends TestCase
             new PgSqlSchemaParser(),
             new PgSqlParser()
         );
-        $mutation = $resolver->resolve(
+        $this->expectException(UnknownSchemaException::class);
+        $resolver->resolve(
             "UPDATE unknown_table SET name = 'Bob' WHERE id = 1",
             'UPDATE',
             QueryKind::WRITE_SIMULATED
         );
-
-        self::assertInstanceOf(UpdateMutation::class, $mutation);
     }
 
     public function testResolveCreateTableAsSelectLowercaseSelectExtractsCorrectColumns(): void
@@ -2745,5 +2742,24 @@ final class PgSqlMutationResolverTest extends TestCase
         $rows = $shadowStore->get('users');
         self::assertNotEmpty($rows);
         self::assertSame('Bob', $rows[0]['name']);
+    }
+
+    public function testUpdateDoesNotTreatRowsFromUnknownInsertAsSchema(): void
+    {
+        $shadowStore = new ShadowStore();
+        $shadowStore->insert('late_table', [['id' => 1, 'name' => 'Alice']]);
+        $resolver = new PgSqlMutationResolver(
+            $shadowStore,
+            new TableDefinitionRegistry(),
+            new PgSqlSchemaParser(),
+            new PgSqlParser()
+        );
+
+        $this->expectException(UnknownSchemaException::class);
+        $resolver->resolve(
+            "UPDATE late_table SET name = 'Bob' WHERE id = 1",
+            'UPDATE',
+            QueryKind::WRITE_SIMULATED
+        );
     }
 }

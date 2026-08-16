@@ -20,6 +20,7 @@ use ZtdQuery\Shadow\Mutation\TruncateMutation;
 use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\Mutation\UpsertMutation;
 use ZtdQuery\Shadow\ShadowStore;
+use ZtdQuery\Shadow\ShadowTableState;
 
 /**
  * Resolves the appropriate ShadowMutation for a given PostgreSQL SQL statement.
@@ -100,9 +101,12 @@ final class PgSqlMutationResolver
             throw new UnsupportedSqlException($sql, 'Cannot resolve UPDATE target');
         }
 
-        $this->shadowStore->ensure($targetTable);
-
         $definition = $this->registry->get($targetTable);
+        if ($definition === null && $this->shadowStore->state($targetTable) !== ShadowTableState::Initialized) {
+            throw new UnknownSchemaException($sql, $targetTable, 'table');
+        }
+
+        $this->shadowStore->ensure($targetTable);
         $primaryKeys = $definition !== null ? $definition->primaryKeys : [];
 
         return new UpdateMutation($targetTable, $primaryKeys);
@@ -115,14 +119,12 @@ final class PgSqlMutationResolver
             throw new UnsupportedSqlException($sql, 'Cannot resolve DELETE target');
         }
 
-        $this->shadowStore->ensure($targetTable);
-
         $definition = $this->registry->get($targetTable);
-        $existingRows = $this->shadowStore->get($targetTable);
-        if ($definition === null && $existingRows === []) {
+        if ($definition === null && $this->shadowStore->state($targetTable) !== ShadowTableState::Initialized) {
             throw new UnknownSchemaException($sql, $targetTable, 'table');
         }
 
+        $this->shadowStore->ensure($targetTable);
         $primaryKeys = $definition !== null ? $definition->primaryKeys : [];
 
         return new DeleteMutation($targetTable, $primaryKeys);
