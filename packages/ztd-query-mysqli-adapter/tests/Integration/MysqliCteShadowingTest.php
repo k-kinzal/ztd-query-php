@@ -20,6 +20,34 @@ use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
 #[Large]
 final class MysqliCteShadowingTest extends TestCase
 {
+    public function testSelfReferencingUpsertMatchesNativeMySql(): void
+    {
+        [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();
+        $nativeTable = 'prefix_' . bin2hex(random_bytes(8));
+        $shadowTable = 'prefix_' . bin2hex(random_bytes(8));
+        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, quantity INT NOT NULL)', $nativeTable));
+        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, quantity INT NOT NULL)', $shadowTable));
+        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
+        try {
+            $rawMysqli->query(sprintf('INSERT INTO `%s` VALUES (1, 100)', $nativeTable));
+            $ztdMysqli->query(sprintf('INSERT INTO `%s` VALUES (1, 100)', $shadowTable));
+            $rawMysqli->query(sprintf('INSERT INTO `%1$s` VALUES (1, 5), (1, 7) ON DUPLICATE KEY UPDATE quantity = `%1$s`.quantity + VALUES(quantity)', $nativeTable));
+            $ztdMysqli->query(sprintf('INSERT INTO `%1$s` VALUES (1, 5), (1, 7) ON DUPLICATE KEY UPDATE quantity = `%1$s`.quantity + VALUES(quantity)', $shadowTable));
+
+            $rawRows = $rawMysqli->query(sprintf('SELECT id, quantity FROM `%s`', $nativeTable));
+            $ztdRows = $ztdMysqli->query(sprintf('SELECT id, quantity FROM `%s`', $shadowTable));
+            $physicalShadowRows = $rawMysqli->query(sprintf('SELECT * FROM `%s`', $shadowTable));
+            self::assertInstanceOf(\mysqli_result::class, $rawRows);
+            self::assertInstanceOf(\mysqli_result::class, $ztdRows);
+            self::assertInstanceOf(\mysqli_result::class, $physicalShadowRows);
+            self::assertEquals($rawRows->fetch_all(MYSQLI_ASSOC), $ztdRows->fetch_all(MYSQLI_ASSOC));
+            self::assertSame([], $physicalShadowRows->fetch_all(MYSQLI_ASSOC));
+        } finally {
+            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+        }
+    }
+
     public function testAffectedRowsCountsOnlyChangedMySqlRows(): void
     {
         [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();

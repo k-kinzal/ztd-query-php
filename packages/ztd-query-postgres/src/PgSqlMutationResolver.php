@@ -91,6 +91,7 @@ final class PgSqlMutationResolver
                     $updateColumns,
                     $resolvedValues,
                     $definition?->candidateKeys(),
+                    $this->parser->extractOnConflictUpdateWhere($sql),
                 );
             }
 

@@ -71,6 +71,20 @@ final class SqlTokenStreamTest extends TestCase
         self::assertSame('', SqlTokenStream::tokenize('SET')->topLevelClause(['SET']));
     }
 
+    public function testClauseAfterAnchorSkipsEarlierMatchingKeyword(): void
+    {
+        $sql = 'INSERT INTO items SELECT * FROM source WHERE active ON CONFLICT (id) DO UPDATE SET score = excluded.score WHERE items.score >= 80 RETURNING id';
+
+        self::assertSame(
+            'items.score >= 80',
+            SqlTokenStream::tokenize($sql)->topLevelClauseAfter(
+                ['DO', 'UPDATE', 'SET'],
+                ['WHERE'],
+                [['RETURNING']],
+            ),
+        );
+    }
+
     public function testSplitsCommasOutsideParenthesesArraysAndStrings(): void
     {
         $stream = SqlTokenStream::tokenize("ARRAY[1,2], COALESCE(a, b), 'x,y', plain");

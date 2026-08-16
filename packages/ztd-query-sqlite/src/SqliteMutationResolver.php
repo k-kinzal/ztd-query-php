@@ -144,6 +144,7 @@ final class SqliteMutationResolver
                     $updateColumns,
                     $updateValues,
                     $definition?->candidateKeys(),
+                    $this->parser->extractOnConflictUpdateWhere($sql),
                 );
             }
 

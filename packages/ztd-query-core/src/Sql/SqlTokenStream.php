@@ -93,6 +93,38 @@ final class SqlTokenStream
     }
 
     /**
+     * @param non-empty-list<string> $anchorKeywords
+     * @param non-empty-list<string> $startKeywords
+     * @param list<non-empty-list<string>> $endKeywords
+     */
+    public function topLevelClauseAfter(
+        array $anchorKeywords,
+        array $startKeywords,
+        array $endKeywords = [],
+    ): ?string {
+        $tokens = $this->significantTokens();
+        $anchor = $this->findKeywordSequence($tokens, $anchorKeywords, 0);
+        if ($anchor === null) {
+            return null;
+        }
+        $start = $this->findKeywordSequence($tokens, $startKeywords, $anchor + count($anchorKeywords));
+        if ($start === null) {
+            return null;
+        }
+
+        $contentStart = $tokens[$start + count($startKeywords) - 1]->endOffset();
+        $contentEnd = strlen($this->sql);
+        foreach ($endKeywords as $sequence) {
+            $candidate = $this->findKeywordSequence($tokens, $sequence, $start + count($startKeywords));
+            if ($candidate !== null) {
+                $contentEnd = min($contentEnd, $tokens[$candidate]->offset);
+            }
+        }
+
+        return trim(substr($this->sql, $contentStart, $contentEnd - $contentStart));
+    }
+
+    /**
      * @return list<string>
      */
     public function splitTopLevel(string $delimiter = ','): array

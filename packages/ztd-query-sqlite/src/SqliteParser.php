@@ -278,6 +278,15 @@ final class SqliteParser
         return $this->parseAssignments($setClause);
     }
 
+    public function extractOnConflictUpdateWhere(string $sql): ?string
+    {
+        return SqlTokenStream::tokenize($sql)->topLevelClauseAfter(
+            ['DO', 'UPDATE', 'SET'],
+            ['WHERE'],
+            [['RETURNING']],
+        );
+    }
+
     /**
      * Check if an INSERT has a SELECT subquery.
      */

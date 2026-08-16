@@ -161,6 +161,15 @@ final class PgSqlParser
         return ['columns' => $columns, 'values' => $values];
     }
 
+    public function extractOnConflictUpdateWhere(string $sql): ?string
+    {
+        return SqlTokenStream::tokenize($sql)->topLevelClauseAfter(
+            ['DO', 'UPDATE', 'SET'],
+            ['WHERE'],
+            [['RETURNING']],
+        );
+    }
+
     /**
      * Check if INSERT has a SELECT subquery (INSERT ... SELECT).
      */

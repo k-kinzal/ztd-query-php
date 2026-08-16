@@ -14,6 +14,23 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(PostgreSqlLexicalMasker::class)]
 final class PgSqlParserTest extends TestCase
 {
+    public function testExtractsOnConflictUpdateWhereAfterInsertSelectWhere(): void
+    {
+        $parser = new PgSqlParser();
+        $sql = 'INSERT INTO items SELECT * FROM source WHERE active ON CONFLICT (id) DO UPDATE SET score = EXCLUDED.score WHERE items.score >= 80 RETURNING id';
+
+        self::assertSame('items.score >= 80', $parser->extractOnConflictUpdateWhere($sql));
+    }
+
+    public function testReturnsNullWithoutOnConflictUpdateWhere(): void
+    {
+        $parser = new PgSqlParser();
+
+        self::assertNull($parser->extractOnConflictUpdateWhere(
+            'INSERT INTO items VALUES (1, 90) ON CONFLICT (id) DO UPDATE SET score = EXCLUDED.score',
+        ));
+    }
+
     public function testClassifySelect(): void
     {
         $parser = new PgSqlParser();

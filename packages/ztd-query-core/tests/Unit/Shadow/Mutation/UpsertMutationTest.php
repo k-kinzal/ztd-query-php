@@ -9,6 +9,7 @@ use ZtdQuery\Schema\CandidateKeyConflict;
 use ZtdQuery\Schema\CandidateKeySet;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Shadow\Mutation\UpsertMutation;
+use ZtdQuery\Shadow\Mutation\UpsertExpression;
 use ZtdQuery\Shadow\ShadowStore;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -17,6 +18,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(CandidateKeyConflict::class)]
 #[UsesClass(CandidateKeySet::class)]
 #[UsesClass(TableDefinition::class)]
+#[UsesClass(UpsertExpression::class)]
 #[CoversClass(UpsertMutation::class)]
 final class UpsertMutationTest extends TestCase
 {
@@ -220,5 +222,68 @@ final class UpsertMutationTest extends TestCase
 
         $rows = $store->get('users');
         self::assertSame('Charlie', $rows[0]['name']);
+    }
+
+    public function testApplyAccumulatesExistingAndIncomingValues(): void
+    {
+        $store = new ShadowStore();
+        $store->set('items', [
+            ['id' => 1, 'quantity' => 100],
+        ]);
+
+        $mutation = new UpsertMutation(
+            'items',
+            ['id'],
+            ['quantity'],
+            ['quantity' => 'items.quantity + VALUES(quantity)'],
+        );
+        $mutation->apply($store, [['id' => 1, 'quantity' => 5]]);
+
+        self::assertSame([['id' => 1, 'quantity' => 105]], $store->get('items'));
+    }
+
+    public function testApplyAccumulatesSequentialConflictsAgainstLatestRow(): void
+    {
+        $store = new ShadowStore();
+        $store->set('items', [
+            ['id' => 1, 'quantity' => 100],
+        ]);
+
+        $mutation = new UpsertMutation(
+            'items',
+            ['id'],
+            ['quantity'],
+            ['quantity' => 'quantity + EXCLUDED.quantity'],
+        );
+        $mutation->apply($store, [
+            ['id' => 1, 'quantity' => 5],
+            ['id' => 1, 'quantity' => 7],
+        ]);
+
+        self::assertSame([['id' => 1, 'quantity' => 112]], $store->get('items'));
+    }
+
+    public function testApplyUsesConflictPredicateAndReportsOnlyAppliedRows(): void
+    {
+        $store = new ShadowStore();
+        $store->set('items', [
+            ['id' => 1, 'name' => 'original', 'score' => 50],
+        ]);
+        $mutation = new UpsertMutation(
+            'items',
+            ['id'],
+            ['name'],
+            ['name' => 'EXCLUDED.name'],
+            updatePredicate: 'items.score >= 80',
+        );
+
+        $mutation->apply($store, [['id' => 1, 'name' => 'skipped', 'score' => 95]]);
+        self::assertSame([['id' => 1, 'name' => 'original', 'score' => 50]], $store->get('items'));
+        self::assertSame([], $mutation->resultRows());
+
+        $store->set('items', [['id' => 1, 'name' => 'original', 'score' => 85]]);
+        $mutation->apply($store, [['id' => 1, 'name' => 'updated', 'score' => 95]]);
+        self::assertSame([['id' => 1, 'name' => 'updated', 'score' => 85]], $store->get('items'));
+        self::assertSame([['id' => 1, 'name' => 'updated', 'score' => 85]], $mutation->resultRows());
     }
 }

@@ -15,6 +15,23 @@ use ZtdQuery\Platform\Sqlite\SqliteParser;
 #[UsesClass(SqliteLexicalMasker::class)]
 final class SqliteParserTest extends TestCase
 {
+    public function testExtractsOnConflictUpdateWhereAfterInsertSelectWhere(): void
+    {
+        $parser = new SqliteParser();
+        $sql = 'INSERT INTO items SELECT * FROM source WHERE active ON CONFLICT (id) DO UPDATE SET score = excluded.score WHERE items.score >= 80 RETURNING id';
+
+        self::assertSame('items.score >= 80', $parser->extractOnConflictUpdateWhere($sql));
+    }
+
+    public function testReturnsNullWithoutOnConflictUpdateWhere(): void
+    {
+        $parser = new SqliteParser();
+
+        self::assertNull($parser->extractOnConflictUpdateWhere(
+            'INSERT INTO items VALUES (1, 90) ON CONFLICT (id) DO UPDATE SET score = excluded.score',
+        ));
+    }
+
     public function testClassifySelect(): void
     {
         $parser = new SqliteParser();

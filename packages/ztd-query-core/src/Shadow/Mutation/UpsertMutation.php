@@ -34,13 +34,18 @@ final class UpsertMutation implements ShadowMutation
     private array $updateColumns;
 
     /**
-     * Values to use for update on duplicate.
+     * Parsed values to use for update on duplicate.
      *
-     * @var array<string, string>
+     * @var array<string, UpsertExpression>
      */
     private array $updateValues;
 
     private CandidateKeySet $candidateKeys;
+
+    private ?UpsertExpression $updatePredicate;
+
+    /** @var array<int, array<string, mixed>> */
+    private array $resultRows = [];
 
     /**
      * @param string $tableName Target table.
@@ -48,6 +53,7 @@ final class UpsertMutation implements ShadowMutation
      * @param array<int, string> $updateColumns Columns to update on duplicate.
      * @param array<string, string> $updateValues Values to use for update on duplicate.
      * @param CandidateKeySet|null $candidateKeys Candidate keys used for conflict detection.
+     * @param string|null $updatePredicate Condition that controls the conflict update.
      */
     public function __construct(
         string $tableName,
@@ -55,12 +61,14 @@ final class UpsertMutation implements ShadowMutation
         array $updateColumns = [],
         array $updateValues = [],
         ?CandidateKeySet $candidateKeys = null,
+        ?string $updatePredicate = null,
     ) {
         $this->tableName = $tableName;
         $this->primaryKeys = $primaryKeys;
         $this->updateColumns = $updateColumns;
-        $this->updateValues = $updateValues;
+        $this->updateValues = array_map(UpsertExpression::parse(...), $updateValues);
         $this->candidateKeys = $candidateKeys ?? CandidateKeySet::fromSchema($primaryKeys);
+        $this->updatePredicate = $updatePredicate !== null ? UpsertExpression::parse($updatePredicate) : null;
     }
 
     /**
@@ -70,28 +78,20 @@ final class UpsertMutation implements ShadowMutation
     {
         $existingRows = $store->get($this->tableName);
         $insertRows = [];
-        $updateRows = [];
-
+        $this->resultRows = [];
         foreach ($rows as $row) {
             $conflict = $this->candidateKeys->findConflict($row, $existingRows);
             if ($conflict !== null) {
                 $existingIndex = $conflict->rowIndex;
                 $updatedRow = $existingRows[$existingIndex];
+                if ($this->updatePredicate !== null
+                    && !$this->updatePredicate->matches($updatedRow, $row, $this->tableName)
+                ) {
+                    continue;
+                }
                 foreach ($this->updateColumns as $col) {
                     if (isset($this->updateValues[$col])) {
-                        $value = $this->updateValues[$col];
-
-                        if (preg_match('/^VALUES\s*\(\s*`?(\w+)`?\s*\)\s*$/i', $value, $m) === 1) {
-                            $refCol = $m[1];
-                            $updatedRow[$col] = $row[$refCol] ?? $updatedRow[$col] ?? null;
-                        } elseif (preg_match('/^EXCLUDED\."?(\w+)"?\s*$/i', $value, $m) === 1) {
-                            $refCol = $m[1];
-                            $updatedRow[$col] = $row[$refCol] ?? $updatedRow[$col] ?? null;
-                        } elseif (preg_match('/^[\'"](.*)[\'"]\s*$/s', $value, $m) === 1) {
-                            $updatedRow[$col] = $m[1];
-                        } else {
-                            $updatedRow[$col] = $value;
-                        }
+                        $updatedRow[$col] = $this->updateValues[$col]->evaluate($updatedRow, $row, $this->tableName);
                     } elseif (isset($row[$col])) {
                         $updatedRow[$col] = $row[$col];
                     }
@@ -103,14 +103,12 @@ final class UpsertMutation implements ShadowMutation
                         }
                     }
                 }
-                $updateRows[$existingIndex] = $updatedRow;
+                $existingRows[$existingIndex] = $updatedRow;
+                $this->resultRows[] = $updatedRow;
             } else {
                 $insertRows[] = $row;
+                $this->resultRows[] = $row;
             }
-        }
-
-        foreach ($updateRows as $index => $updatedRow) {
-            $existingRows[$index] = $updatedRow;
         }
 
         $store->set($this->tableName, $existingRows);
@@ -125,6 +123,12 @@ final class UpsertMutation implements ShadowMutation
     public function tableName(): string
     {
         return $this->tableName;
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    public function resultRows(): array
+    {
+        return $this->resultRows;
     }
 
 }

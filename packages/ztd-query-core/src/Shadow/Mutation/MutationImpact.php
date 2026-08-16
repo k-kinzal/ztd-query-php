@@ -26,6 +26,9 @@ final class MutationImpact
 
     public function affectedRowCount(AffectedRowsMode $mode): int
     {
+        if ($mode === AffectedRowsMode::Matched && $this->mutation instanceof UpsertMutation) {
+            return count($this->mutation->resultRows());
+        }
         if ($mode === AffectedRowsMode::Matched && $this->mutation instanceof UpdateMutation) {
             return count($this->input);
         }
@@ -41,6 +44,9 @@ final class MutationImpact
      */
     public function returningRows(): array
     {
+        if ($this->mutation instanceof UpsertMutation) {
+            return $this->clean($this->mutation->resultRows());
+        }
         if ($this->mutation instanceof UpdateMutation || $this->mutation instanceof DeleteMutation) {
             return $this->clean($this->input);
         }
@@ -48,10 +54,6 @@ final class MutationImpact
         $added = $this->difference($this->after, $this->before);
         if ($added !== []) {
             return $added;
-        }
-
-        if ($this->mutation instanceof UpsertMutation) {
-            return $this->clean($this->input);
         }
 
         return [];

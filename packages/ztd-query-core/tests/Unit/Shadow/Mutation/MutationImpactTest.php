@@ -14,6 +14,7 @@ use ZtdQuery\Shadow\Mutation\InsertMutation;
 use ZtdQuery\Shadow\Mutation\MutationImpact;
 use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
 use ZtdQuery\Shadow\Mutation\ReplaceMutation;
+use ZtdQuery\Shadow\Mutation\UpsertExpression;
 use ZtdQuery\Shadow\Mutation\UpsertMutation;
 use ZtdQuery\Shadow\Mutation\UpdateMutation;
 
@@ -23,6 +24,7 @@ use ZtdQuery\Shadow\Mutation\UpdateMutation;
 #[UsesClass(InsertMutation::class)]
 #[UsesClass(MutationRowIdentity::class)]
 #[UsesClass(ReplaceMutation::class)]
+#[UsesClass(UpsertExpression::class)]
 #[UsesClass(UpsertMutation::class)]
 #[UsesClass(UpdateMutation::class)]
 final class MutationImpactTest extends TestCase
@@ -129,5 +131,25 @@ final class MutationImpactTest extends TestCase
         );
 
         self::assertSame(3, $impact->affectedRowCount(AffectedRowsMode::Changed));
+    }
+
+    public function testSkippedConditionalUpsertHasNoAffectedOrReturningRows(): void
+    {
+        $row = ['id' => 1, 'name' => 'original', 'score' => 50];
+        $mutation = new UpsertMutation(
+            'items',
+            ['id'],
+            ['name'],
+            ['name' => 'EXCLUDED.name'],
+            updatePredicate: 'score >= 80',
+        );
+        $store = new \ZtdQuery\Shadow\ShadowStore();
+        $store->set('items', [$row]);
+        $input = [['id' => 1, 'name' => 'skipped', 'score' => 95]];
+        $mutation->apply($store, $input);
+        $impact = new MutationImpact($mutation, [$row], $input, $store->get('items'));
+
+        self::assertSame(0, $impact->affectedRowCount(AffectedRowsMode::Matched));
+        self::assertSame([], $impact->returningRows());
     }
 }
