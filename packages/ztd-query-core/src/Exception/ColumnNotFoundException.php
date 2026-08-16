@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Exception;
 
-use RuntimeException;
-
 /**
  * Exception thrown when a referenced column does not exist.
  */
-final class ColumnNotFoundException extends RuntimeException
+final class ColumnNotFoundException extends SimulationException
 {
     /**
      * The SQL statement that referenced the non-existent column.

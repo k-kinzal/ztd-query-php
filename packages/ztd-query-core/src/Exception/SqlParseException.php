@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Exception;
 
-use RuntimeException;
-
 /**
  * Exception thrown when SQL parsing fails due to syntax errors.
  */
-final class SqlParseException extends RuntimeException
+final class SqlParseException extends SimulationException
 {
     /**
      * The SQL statement that failed to parse.

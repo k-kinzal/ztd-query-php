@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Exception;
 
-use RuntimeException;
-
 /**
  * Exception thrown when a referenced table does not exist.
  */
-final class SchemaNotFoundException extends RuntimeException
+final class SchemaNotFoundException extends SimulationException
 {
     /**
      * The SQL statement that referenced the non-existent table.

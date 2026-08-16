@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow;
 
+use ZtdQuery\Exception\MissingPrimaryKeyException;
+
 /**
  * Holds in-memory shadow rows for tables.
  */
@@ -120,7 +122,7 @@ class ShadowStore
         }
 
         if ($primaryKeys === []) {
-            throw new \RuntimeException("UPDATE simulation requires primary keys for '$tableName'.");
+            throw new MissingPrimaryKeyException($tableName);
         }
 
         $currentRows = &$this->fixtures[$tableName];

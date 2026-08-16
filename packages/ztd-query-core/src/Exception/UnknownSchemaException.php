@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Exception;
 
-use RuntimeException;
-
 /**
  * Exception thrown when a query references unknown tables or columns.
  */
-final class UnknownSchemaException extends RuntimeException
+final class UnknownSchemaException extends SimulationException
 {
     /**
      * The SQL statement that referenced unknown schema.

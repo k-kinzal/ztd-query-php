@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Exception;
 
-use RuntimeException;
-
 /**
  * Exception thrown when a FOREIGN KEY constraint is violated.
  */
-final class ForeignKeyViolationException extends RuntimeException
+final class ForeignKeyViolationException extends SimulationException
 {
     /**
      * The SQL statement that caused the violation.

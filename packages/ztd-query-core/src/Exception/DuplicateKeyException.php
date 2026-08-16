@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Exception;
 
-use RuntimeException;
-
 /**
  * Exception thrown when a PRIMARY KEY or UNIQUE constraint is violated.
  */
-final class DuplicateKeyException extends RuntimeException
+final class DuplicateKeyException extends SimulationException
 {
     /**
      * The SQL statement that caused the violation.

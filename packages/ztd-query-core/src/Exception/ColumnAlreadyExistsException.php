@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Exception;
 
-use RuntimeException;
-
 /**
  * Exception thrown when attempting to add a column that already exists.
  */
-final class ColumnAlreadyExistsException extends RuntimeException
+final class ColumnAlreadyExistsException extends SimulationException
 {
     /**
      * The SQL statement that attempted to add the column.

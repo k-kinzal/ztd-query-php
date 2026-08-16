@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Exception;
 
-use RuntimeException;
-
 /**
  * Exception thrown when a NOT NULL constraint is violated.
  */
-final class NotNullViolationException extends RuntimeException
+final class NotNullViolationException extends SimulationException
 {
     /**
      * The SQL statement that caused the violation.

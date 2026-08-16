@@ -7,6 +7,7 @@ namespace ZtdQuery\Adapter\Mysqli;
 use mysqli_result;
 use mysqli_stmt;
 use mysqli_warning;
+use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\ExecuteResult;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Session;
@@ -179,10 +180,14 @@ final class ZtdMysqliStatement extends mysqli_stmt
         $this->cachedMysqliResult = $this->delegate->get_result();
 
         if ($this->cachedMysqliResult !== false) {
-            $this->result = $this->session->processExecutedStatement(
-                $this->plan,
-                new MysqliResultStatement($this->cachedMysqliResult, $this->delegate->affected_rows)
-            );
+            try {
+                $this->result = $this->session->processExecutedStatement(
+                    $this->plan,
+                    new MysqliResultStatement($this->cachedMysqliResult, $this->delegate->affected_rows)
+                );
+            } catch (DatabaseException $e) {
+                throw new ZtdMysqliException($e->getMessage(), 0, $e);
+            }
         } else {
             // No result set (e.g., for WRITE operations that don't return rows)
             $this->result = $this->session->createEmptyWriteResult();
