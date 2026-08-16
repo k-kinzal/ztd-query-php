@@ -50,6 +50,8 @@ final class RandomStringGenerator
 
     /**
      * Generate a random integer literal string.
+     *
+     * @return non-empty-string
      */
     public function integerString(int $min = 1, int $max = 9999999999): string
     {
@@ -74,6 +76,8 @@ final class RandomStringGenerator
 
     /**
      * Generate a random decimal literal string.
+     *
+     * @return non-empty-string
      */
     public function decimalString(int $precision = 13, int $scale = 6): string
     {
@@ -124,6 +128,8 @@ final class RandomStringGenerator
 
     /**
      * Generate a random float literal string with exponent.
+     *
+     * @return non-empty-string
      */
     public function floatString(string $mantissa, int $minExponent = -20, int $maxExponent = 20): string
     {
@@ -132,6 +138,8 @@ final class RandomStringGenerator
 
     /**
      * Generate a random parameter index string.
+     *
+     * @return non-empty-string
      */
     public function parameterIndex(int $min = 1, int $max = 10): string
     {

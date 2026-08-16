@@ -146,6 +146,20 @@ final class SqlGeneratorTest extends TestCase
         self::assertSame('SHORT', $result);
     }
 
+    public function testGeneratePreservesEmptyStartProduction(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([]),
+                new Production([new Terminal('SELECT')]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker, new PostgreSqlProvider($faker));
+
+        self::assertSame('', $generator->generate('stmt', 1));
+    }
+
     public function testGenerateThrowsOnDerivationLimit(): void
     {
         $reflection = new ReflectionClass(SqlGenerator::class);

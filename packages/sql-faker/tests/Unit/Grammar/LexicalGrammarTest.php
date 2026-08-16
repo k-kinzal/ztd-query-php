@@ -12,6 +12,7 @@ use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\LexicalGrammar;
 use SqlFaker\MySqlProvider;
 use SqlFaker\PostgreSqlProvider;
+use SqlFaker\PostgreSql\StatementType as PostgreSqlStatementType;
 use SqlFaker\SqliteProvider;
 
 #[CoversNothing]
@@ -54,14 +55,24 @@ final class LexicalGrammarTest extends TestCase
         yield 'MySQL 9.1' => ['mysql-9.1.0'];
     }
 
-    public function testSupportedPostgreSqlVersionBindsGrammarAndLexerProfileTogether(): void
+    #[DataProvider('providerPostgreSqlStatementType')]
+    public function testSupportedPostgreSqlVersionBindsGrammarAndLexerProfileTogether(PostgreSqlStatementType $type): void
     {
         $faker = Factory::create();
         $faker->seed(20260814);
         $provider = new PostgreSqlProvider($faker, 'pg-17.2');
-        $statements = array_map(static fn (int $iteration): string => $provider->sql(maxDepth: 20), range(1, 20));
 
-        self::assertNotContains('', $statements);
+        self::assertNotSame('', $provider->sql($type, maxDepth: 20), $type->name);
+    }
+
+    /**
+     * @return iterable<string, array{PostgreSqlStatementType}>
+     */
+    public static function providerPostgreSqlStatementType(): iterable
+    {
+        foreach (PostgreSqlStatementType::cases() as $type) {
+            yield $type->name => [$type];
+        }
     }
 
     public function testSupportedSqliteVersionBindsGrammarAndLexerProfileTogether(): void
