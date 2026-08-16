@@ -20,6 +20,27 @@ use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
 #[Large]
 final class MysqliCteShadowingTest extends TestCase
 {
+    public function testEnumUsesDeclarationRanksForOrderingAndComparison(): void
+    {
+        [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();
+        $table = 'prefix_' . bin2hex(random_bytes(8));
+        $rawMysqli->query(sprintf("CREATE TABLE `%s` (id INT PRIMARY KEY, size ENUM('small','medium','large'))", $table));
+        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
+        try {
+            $ztdMysqli->query(sprintf("INSERT INTO `%s` VALUES (1, 'large'), (2, 'small'), (3, 'medium')", $table));
+
+            $ordered = $ztdMysqli->query(sprintf('SELECT size FROM `%s` ORDER BY size', $table));
+            $compared = $ztdMysqli->query(sprintf("SELECT size FROM `%s` WHERE size > 'small' ORDER BY size", $table));
+            self::assertInstanceOf(\mysqli_result::class, $ordered);
+            self::assertInstanceOf(\mysqli_result::class, $compared);
+            self::assertSame(['small', 'medium', 'large'], array_column($ordered->fetch_all(MYSQLI_ASSOC), 'size'));
+            self::assertSame(['medium', 'large'], array_column($compared->fetch_all(MYSQLI_ASSOC), 'size'));
+        } finally {
+            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+        }
+    }
+
     public function testSetExpressionsRemainSingleStatements(): void
     {
         [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();

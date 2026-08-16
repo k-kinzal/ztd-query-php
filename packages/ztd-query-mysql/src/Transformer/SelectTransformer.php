@@ -6,6 +6,7 @@ namespace ZtdQuery\Platform\MySql\Transformer;
 
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
+use ZtdQuery\Platform\MySql\MySqlTypeSemantics;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\IdentifierQuoter;
 use ZtdQuery\Platform\ValueRenderer;
@@ -24,15 +25,18 @@ final class SelectTransformer implements SqlTransformer
     private CastRenderer $castRenderer;
     private IdentifierQuoter $quoter;
     private ValueRenderer $valueRenderer;
+    private MySqlTypeSemantics $typeSemantics;
 
     public function __construct(
         ?CastRenderer $castRenderer = null,
         ?IdentifierQuoter $quoter = null,
         ?ValueRenderer $valueRenderer = null,
+        ?MySqlTypeSemantics $typeSemantics = null,
     ) {
         $this->castRenderer = $castRenderer ?? new MySqlCastRenderer();
         $this->quoter = $quoter ?? new MySqlIdentifierQuoter();
         $this->valueRenderer = $valueRenderer ?? new \ZtdQuery\Platform\MySql\MySqlValueRenderer($this->castRenderer);
+        $this->typeSemantics = $typeSemantics ?? new MySqlTypeSemantics();
     }
 
     /**
@@ -40,6 +44,7 @@ final class SelectTransformer implements SqlTransformer
      */
     public function transform(string $sql, array $tables): string
     {
+        $sql = $this->typeSemantics->rewrite($sql, $tables);
         $sql = $this->rewriteSetOrderBy($sql, $tables);
 
         $ctes = [];

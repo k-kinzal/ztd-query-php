@@ -19,7 +19,7 @@ final class SchemaAwareSqlBuilder
     {
         $table = $schema->name;
         $columns = $schema->columns;
-        $variant = $this->faker->numberBetween(0, 4);
+        $variant = $this->faker->numberBetween(0, 5);
 
         switch ($variant) {
             case 0:
@@ -44,6 +44,17 @@ final class SchemaAwareSqlBuilder
                 /** @var string $col */
                 $col = $this->faker->randomElement($columns);
                 return "SELECT DISTINCT `$col` FROM `$table`";
+            case 5:
+                $enumColumns = array_values(array_filter(
+                    $columns,
+                    static fn (string $column): bool => str_contains(strtolower($column), 'enum'),
+                ));
+                if ($enumColumns === []) {
+                    return "SELECT * FROM `$table`";
+                }
+                /** @var string $enumColumn */
+                $enumColumn = $this->faker->randomElement($enumColumns);
+                return "SELECT `$enumColumn` FROM `$table` WHERE `$enumColumn` > 'a' ORDER BY `$enumColumn`";
             default:
                 return "SELECT * FROM `$table`";
         }

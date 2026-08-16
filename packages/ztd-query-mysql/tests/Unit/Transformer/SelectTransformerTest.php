@@ -12,6 +12,7 @@ use ZtdQuery\Platform\IdentifierQuoter;
 use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
+use ZtdQuery\Platform\MySql\MySqlTypeSemantics;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
@@ -21,6 +22,7 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 #[UsesClass(MySqlCastRenderer::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
+#[UsesClass(MySqlTypeSemantics::class)]
 final class SelectTransformerTest extends TransformerContractTest
 {
     public function testUsesInjectedValueRenderer(): void
@@ -1496,7 +1498,7 @@ final class SelectTransformerTest extends TransformerContractTest
         self::assertStringContainsString("'hello'", $result);
     }
 
-    public function testTransformSetOrderByNonSetTypeSkipsRewriting(): void
+    public function testTransformEnumOrderByUsesDeclarationRank(): void
     {
         $transformer = new SelectTransformer();
         $sql = 'SELECT * FROM items ORDER BY `status`';
@@ -1512,8 +1514,7 @@ final class SelectTransformerTest extends TransformerContractTest
         ];
 
         $result = $transformer->transform($sql, $tables);
-        self::assertStringNotContainsString('FIND_IN_SET', $result);
-        self::assertStringContainsString('ORDER BY `status`', $result);
+        self::assertStringContainsString("ORDER BY FIELD(`status`, 'active', 'inactive')", $result);
     }
 
     public function testTransformSetOrderByWithNonBacktickedColumnNotRewritten(): void
