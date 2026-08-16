@@ -125,7 +125,7 @@ final class SqlGenerator
             }
         }
 
-        return $terminals;
+        return $this->lexicalGrammar->normalizeLookahead($terminals);
     }
 
     /**

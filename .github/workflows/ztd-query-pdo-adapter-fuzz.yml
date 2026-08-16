@@ -15,6 +15,7 @@ on:
         type: string
 
 permissions:
+  actions: read
   contents: read
   issues: write
 
@@ -63,13 +64,11 @@ jobs:
           path: packages/ztd-query-pdo-adapter/fuzz/corpus/robustness-execute
           key: fuzz-robustness-execute-pdo-${{ matrix.mysql }}-${{ github.run_id }}
 
-      - if: failure()
+      - if: ${{ always() && hashFiles('packages/ztd-query-pdo-adapter/crash-*') != '' }}
         uses: actions/upload-artifact@v6
         with:
           name: fuzz-crashes-robustness-execute-pdo-${{ matrix.mysql }}
-          path: |
-            packages/ztd-query-pdo-adapter/fuzz/corpus/robustness-execute/crash-*
-            packages/ztd-query-pdo-adapter/fuzz/corpus/robustness-execute/timeout-*
+          path: packages/ztd-query-pdo-adapter/crash-*
 
   correctness-mysql:
     name: Correctness / ${{ matrix.target.name }}-pdo (MySQL ${{ matrix.mysql }})
@@ -120,13 +119,11 @@ jobs:
           path: packages/ztd-query-pdo-adapter/fuzz/corpus/${{ matrix.target.corpus }}
           key: fuzz-${{ matrix.target.corpus }}-pdo-${{ matrix.mysql }}-${{ github.run_id }}
 
-      - if: failure()
+      - if: ${{ always() && hashFiles('packages/ztd-query-pdo-adapter/crash-*') != '' }}
         uses: actions/upload-artifact@v6
         with:
           name: fuzz-crashes-${{ matrix.target.name }}-pdo-${{ matrix.mysql }}
-          path: |
-            packages/ztd-query-pdo-adapter/fuzz/corpus/${{ matrix.target.corpus }}/crash-*
-            packages/ztd-query-pdo-adapter/fuzz/corpus/${{ matrix.target.corpus }}/timeout-*
+          path: packages/ztd-query-pdo-adapter/crash-*
 
   correctness-sqlite:
     name: Correctness / ${{ matrix.target.name }}-pdo-sqlite
@@ -164,6 +161,7 @@ jobs:
 
       - name: fuzzer
         run: |
+          mkdir -p fuzz/corpus/${{ matrix.target.corpus }}
           vendor/bin/php-fuzzer fuzz fuzz/${{ matrix.target.script }} \
             fuzz/corpus/${{ matrix.target.corpus }}/ \
             --max-runs=${{ inputs.max_runs || '10000' }}
@@ -174,13 +172,11 @@ jobs:
           path: packages/ztd-query-pdo-adapter/fuzz/corpus/${{ matrix.target.corpus }}
           key: fuzz-${{ matrix.target.corpus }}-pdo-sqlite-${{ github.run_id }}
 
-      - if: failure()
+      - if: ${{ always() && hashFiles('packages/ztd-query-pdo-adapter/crash-*') != '' }}
         uses: actions/upload-artifact@v6
         with:
           name: fuzz-crashes-${{ matrix.target.name }}-pdo-sqlite
-          path: |
-            packages/ztd-query-pdo-adapter/fuzz/corpus/${{ matrix.target.corpus }}/crash-*
-            packages/ztd-query-pdo-adapter/fuzz/corpus/${{ matrix.target.corpus }}/timeout-*
+          path: packages/ztd-query-pdo-adapter/crash-*
 
   correctness-pg:
     name: Correctness / ${{ matrix.target.name }}-pdo-pg
@@ -218,6 +214,7 @@ jobs:
 
       - name: fuzzer
         run: |
+          mkdir -p fuzz/corpus/${{ matrix.target.corpus }}
           vendor/bin/php-fuzzer fuzz fuzz/${{ matrix.target.script }} \
             fuzz/corpus/${{ matrix.target.corpus }}/ \
             --max-runs=${{ inputs.max_runs || '10000' }}
@@ -228,27 +225,33 @@ jobs:
           path: packages/ztd-query-pdo-adapter/fuzz/corpus/${{ matrix.target.corpus }}
           key: fuzz-${{ matrix.target.corpus }}-pdo-pg-${{ github.run_id }}
 
-      - if: failure()
+      - if: ${{ always() && hashFiles('packages/ztd-query-pdo-adapter/crash-*') != '' }}
         uses: actions/upload-artifact@v6
         with:
           name: fuzz-crashes-${{ matrix.target.name }}-pdo-pg
-          path: |
-            packages/ztd-query-pdo-adapter/fuzz/corpus/${{ matrix.target.corpus }}/crash-*
-            packages/ztd-query-pdo-adapter/fuzz/corpus/${{ matrix.target.corpus }}/timeout-*
+          path: packages/ztd-query-pdo-adapter/crash-*
 
   notify:
-    name: Notify on failure
+    name: Notify on crash
     runs-on: ubuntu-latest
     needs:
       - robustness-execute
       - correctness-mysql
       - correctness-sqlite
       - correctness-pg
-    if: failure()
     steps:
       - uses: actions/github-script@v8
         with:
           script: |
+            const { data } = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.runId
+            });
+            if (!data.artifacts.some(({ name }) => name.startsWith('fuzz-crashes-'))) {
+              console.log('No fuzz crash artifacts found');
+              return;
+            }
             const { data: issues } = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
               repo: context.repo.repo,

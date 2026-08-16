@@ -372,4 +372,161 @@ final class PostgreSqlCteShadowingTest extends TestCase
         }
     }
 
+    public function testCommentsRemainLexicalWhitespaceAcrossPostgreSqlMutations(): void
+    {
+        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $table = 'comment_' . bin2hex(random_bytes(8));
+
+        try {
+            $rawPdo->exec(sprintf('CREATE TABLE %s (id INTEGER PRIMARY KEY, status INTEGER)', $table));
+            $ztdPdo = ZtdPdo::fromPdo($rawPdo, null);
+
+            $ztdPdo->exec(sprintf('INSERT INTO %s VALUES (1, 1)', $table));
+            $ztdPdo->exec(sprintf('INSERT INTO/* table */%s VALUES (2, 1)', $table));
+            $ztdPdo->exec(sprintf("-- deactivate item\nUPDATE/* table */%s SET status = 0 WHERE id = 1", $table));
+            $ztdPdo->exec(sprintf('DELETE FROM/* table */%s WHERE id = 2', $table));
+
+            $status = $ztdPdo->query(sprintf('SELECT status FROM/* table */%s WHERE id = 1', $table));
+            self::assertNotFalse($status);
+            self::assertSame(0, $status->fetchColumn());
+
+            $ids = $ztdPdo->query(sprintf("-- SELECT * FROM other_table WHERE DELETE UPDATE INSERT\nSELECT id FROM %s ORDER BY id", $table));
+            self::assertNotFalse($ids);
+            self::assertSame([1], $ids->fetchAll(\PDO::FETCH_COLUMN));
+        } finally {
+            $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
+        }
+    }
+
+    public function testPostgreSqlQuotedStringFormsPreserveWhereOffsets(): void
+    {
+        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $table = 'literal_' . bin2hex(random_bytes(8));
+
+        try {
+            $rawPdo->exec(sprintf('CREATE TABLE %s (id INTEGER PRIMARY KEY, body TEXT)', $table));
+            $ztdPdo = ZtdPdo::fromPdo($rawPdo, null);
+            $ztdPdo->exec(sprintf("INSERT INTO %s VALUES (1, 'original')", $table));
+
+            $ztdPdo->exec(sprintf("UPDATE %s SET body = 'it''s updated' WHERE id = 1", $table));
+            $body = $ztdPdo->query(sprintf('SELECT body FROM %s WHERE id = 1', $table));
+            self::assertNotFalse($body);
+            self::assertSame("it's updated", $body->fetchColumn());
+
+            $ztdPdo->exec(sprintf('UPDATE %s SET body = $text$reference to table$text$ WHERE id = 1', $table));
+            $body = $ztdPdo->query(sprintf('SELECT body FROM %s WHERE id = 1', $table));
+            self::assertNotFalse($body);
+            self::assertSame('reference to table', $body->fetchColumn());
+
+            $ztdPdo->exec(sprintf("UPDATE %s SET body = E'line1\\nline2' WHERE id = 1", $table));
+            $body = $ztdPdo->query(sprintf('SELECT body FROM %s WHERE id = 1', $table));
+            self::assertNotFalse($body);
+            self::assertSame("line1\nline2", $body->fetchColumn());
+        } finally {
+            $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
+        }
+    }
+
+    public function testInsertWithoutColumnListSupportsConstraintKeywordPrefixes(): void
+    {
+        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $table = 'booking_' . bin2hex(random_bytes(8));
+
+        try {
+            $rawPdo->exec(sprintf('CREATE TABLE %s (id INT PRIMARY KEY, guest TEXT, check_in TEXT, check_out TEXT)', $table));
+            $ztdPdo = ZtdPdo::fromPdo($rawPdo, null);
+
+            self::assertSame(1, $ztdPdo->exec(sprintf(
+                "INSERT INTO %s VALUES (1, 'Alice', '2024-01-01', '2024-01-03')",
+                $table,
+            )));
+
+            $bookings = $ztdPdo->query(sprintf('SELECT * FROM %s', $table));
+            self::assertNotFalse($bookings);
+            self::assertSame([
+                [
+                    'id' => 1,
+                    'guest' => 'Alice',
+                    'check_in' => '2024-01-01',
+                    'check_out' => '2024-01-03',
+                ],
+            ], $bookings->fetchAll());
+        } finally {
+            $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
+        }
+    }
+
+    public function testQuotedInsertSourceKeywordsRemainIdentifiers(): void
+    {
+        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+
+        try {
+            $rawPdo->exec('CREATE TABLE "select" (id INTEGER PRIMARY KEY, val TEXT)');
+            $rawPdo->exec('CREATE TABLE "values" (id INTEGER PRIMARY KEY, val TEXT)');
+            $rawPdo->exec('CREATE TABLE keyword_columns (id INTEGER PRIMARY KEY, "select" TEXT, "values" TEXT)');
+            $ztdPdo = ZtdPdo::fromPdo($rawPdo, null);
+
+            self::assertSame(1, $ztdPdo->exec("INSERT INTO \"select\" VALUES (1, 'table-select')"));
+            self::assertSame(1, $ztdPdo->exec("INSERT INTO \"values\" VALUES (2, 'table-values')"));
+            self::assertSame(1, $ztdPdo->exec("INSERT INTO keyword_columns (id, \"select\", \"values\") VALUES (3, 'column-select', 'column-values')"));
+            self::assertSame(1, $ztdPdo->exec("INSERT INTO \"select\" SELECT 4 AS id, 'insert-select' AS val"));
+
+            $selectRows = $ztdPdo->query('SELECT * FROM "select" ORDER BY id');
+            self::assertNotFalse($selectRows);
+            self::assertSame([
+                ['id' => 1, 'val' => 'table-select'],
+                ['id' => 4, 'val' => 'insert-select'],
+            ], $selectRows->fetchAll());
+
+            $valuesRows = $ztdPdo->query('SELECT * FROM "values"');
+            self::assertNotFalse($valuesRows);
+            self::assertSame([['id' => 2, 'val' => 'table-values']], $valuesRows->fetchAll());
+
+            $columnRows = $ztdPdo->query('SELECT id, "select", "values" FROM keyword_columns');
+            self::assertNotFalse($columnRows);
+            self::assertSame([
+                ['id' => 3, 'select' => 'column-select', 'values' => 'column-values'],
+            ], $columnRows->fetchAll());
+        } finally {
+            $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
+        }
+    }
+
+    public function testJsonExistenceOperatorsRemainDistinctFromPlaceholders(): void
+    {
+        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $table = 'json_docs_' . bin2hex(random_bytes(8));
+
+        try {
+            $rawPdo->exec(sprintf('CREATE TABLE %s (id INTEGER PRIMARY KEY, name TEXT, meta JSONB)', $table));
+            $ztdPdo = ZtdPdo::fromPdo($rawPdo, null);
+            $ztdPdo->exec(sprintf("INSERT INTO %s VALUES (1, 'Doc A', '{\"author\":\"Alice\",\"reviewed\":true}'::jsonb)", $table));
+            $ztdPdo->exec(sprintf("INSERT INTO %s VALUES (2, 'Doc B', '{\"author\":\"Bob\"}'::jsonb)", $table));
+
+            $exists = $ztdPdo->query(sprintf("SELECT name FROM %s WHERE meta ? 'reviewed'", $table));
+            self::assertNotFalse($exists);
+            self::assertSame(['Doc A'], $exists->fetchAll(\PDO::FETCH_COLUMN));
+
+            $existsAny = $ztdPdo->query(sprintf("SELECT name FROM %s WHERE meta ?| array['reviewed', 'missing']", $table));
+            self::assertNotFalse($existsAny);
+            self::assertSame(['Doc A'], $existsAny->fetchAll(\PDO::FETCH_COLUMN));
+
+            $existsAll = $ztdPdo->query(sprintf("SELECT name FROM %s WHERE meta ?& array['author', 'reviewed']", $table));
+            self::assertNotFalse($existsAll);
+            self::assertSame(['Doc A'], $existsAll->fetchAll(\PDO::FETCH_COLUMN));
+
+            $preparedOperator = $ztdPdo->prepare(sprintf('SELECT name FROM %s WHERE meta ? ? ORDER BY name', $table));
+            self::assertNotFalse($preparedOperator);
+            self::assertTrue($preparedOperator->execute(['author']));
+            self::assertSame(['Doc A', 'Doc B'], $preparedOperator->fetchAll(\PDO::FETCH_COLUMN));
+
+            $preparedValue = $ztdPdo->prepare(sprintf('SELECT name FROM %s WHERE id = ?', $table));
+            self::assertNotFalse($preparedValue);
+            self::assertTrue($preparedValue->execute([2]));
+            self::assertSame(['Doc B'], $preparedValue->fetchAll(\PDO::FETCH_COLUMN));
+        } finally {
+            $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
+        }
+    }
+
 }

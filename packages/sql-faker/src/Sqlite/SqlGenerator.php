@@ -136,12 +136,31 @@ final class SqlGenerator
                 throw new LogicException("Grammar rule has no lexically realizable alternative: {$nonTerminal->value}");
             }
 
+            $remainingForm = new Production(array_slice($form, $index + 1));
+            $remainingSteps = $this->terminationAnalyzer->estimateProductionSteps($remainingForm);
+            $remainingBudget = self::DERIVATION_LIMIT - $this->derivationSteps;
+            if ($remainingSteps > $remainingBudget) {
+                throw new LogicException('Exceeded derivation limit while generating SQL.');
+            }
+            $productionBudget = $remainingBudget - $remainingSteps;
+            $alternatives = array_values(array_filter(
+                $alternatives,
+                fn (Production $alternative): bool => $this->terminationAnalyzer
+                    ->estimateProductionSteps($alternative) <= $productionBudget,
+            ));
+            if ($alternatives === []) {
+                throw new LogicException('Exceeded derivation limit while generating SQL.');
+            }
+
             if ($this->derivationSteps >= $this->targetDepth) {
                 $selectedIndex = 0;
+                $bestSteps = PHP_INT_MAX;
                 $bestLength = PHP_INT_MAX;
                 foreach ($alternatives as $i => $alt) {
+                    $steps = $this->terminationAnalyzer->estimateProductionSteps($alt);
                     $length = $this->terminationAnalyzer->estimateProductionLength($alt);
-                    if ($length < $bestLength) {
+                    if ($steps < $bestSteps || ($steps === $bestSteps && $length < $bestLength)) {
+                        $bestSteps = $steps;
                         $bestLength = $length;
                         $selectedIndex = $i;
                     }

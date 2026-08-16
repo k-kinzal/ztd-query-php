@@ -454,4 +454,95 @@ final class SqliteCteShadowingTest extends TestCase
         self::assertSame('Test', $rows[0]['name']);
         self::assertNull($rows[0]['bio']);
     }
+
+    public function testCommentsRemainLexicalWhitespaceAcrossSqliteMutations(): void
+    {
+        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo->exec('CREATE TABLE items (id INTEGER PRIMARY KEY, status INTEGER)');
+        $ztdPdo = ZtdPdo::fromPdo($rawPdo, null);
+
+        $ztdPdo->exec('INSERT INTO items VALUES (1, 1)');
+        $ztdPdo->exec('INSERT INTO/* table */items VALUES (2, 1)');
+        $ztdPdo->exec('UPDATE/* table */items SET status = 0 WHERE id = 1');
+        $ztdPdo->exec('DELETE FROM/* table */items WHERE id = 2');
+
+        $status = $ztdPdo->query('SELECT status FROM/* table */items WHERE id = 1');
+        self::assertNotFalse($status);
+        self::assertSame(0, $status->fetchColumn());
+
+        $ids = $ztdPdo->query("-- SELECT * FROM other_table WHERE DELETE UPDATE INSERT\nSELECT id FROM items ORDER BY id");
+        self::assertNotFalse($ids);
+        self::assertSame([1], $ids->fetchAll(\PDO::FETCH_COLUMN));
+    }
+
+    public function testSqliteStringLiteralsDoNotCreateTableReferences(): void
+    {
+        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo->exec('CREATE TABLE items (id INTEGER PRIMARY KEY, name TEXT)');
+        $ztdPdo = ZtdPdo::fromPdo($rawPdo, null);
+        $ztdPdo->exec("INSERT INTO items VALUES (1, 'test')");
+
+        $lower = $ztdPdo->query("SELECT id, 'from items' AS label FROM items LIMIT 1");
+        self::assertNotFalse($lower);
+        self::assertSame([['id' => 1, 'label' => 'from items']], $lower->fetchAll());
+
+        $upper = $ztdPdo->query("SELECT id, 'FROM items' AS label FROM items LIMIT 1");
+        self::assertNotFalse($upper);
+        self::assertSame([['id' => 1, 'label' => 'FROM items']], $upper->fetchAll());
+
+        $join = $ztdPdo->query("SELECT id, 'join items' AS label FROM items LIMIT 1");
+        self::assertNotFalse($join);
+        self::assertSame([['id' => 1, 'label' => 'join items']], $join->fetchAll());
+    }
+
+    public function testInsertWithoutColumnListSupportsConstraintKeywordPrefixes(): void
+    {
+        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo->exec('CREATE TABLE bookings (id INT PRIMARY KEY, guest TEXT, check_in TEXT, check_out TEXT)');
+        $ztdPdo = ZtdPdo::fromPdo($rawPdo, null);
+
+        self::assertSame(1, $ztdPdo->exec("INSERT INTO bookings VALUES (1, 'Alice', '2024-01-01', '2024-01-03')"));
+
+        $bookings = $ztdPdo->query('SELECT * FROM bookings');
+        self::assertNotFalse($bookings);
+        self::assertSame([
+            [
+                'id' => 1,
+                'guest' => 'Alice',
+                'check_in' => '2024-01-01',
+                'check_out' => '2024-01-03',
+            ],
+        ], $bookings->fetchAll());
+    }
+
+    public function testQuotedInsertSourceKeywordsRemainIdentifiers(): void
+    {
+        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo->exec('CREATE TABLE "select" (id INTEGER PRIMARY KEY, val TEXT)');
+        $rawPdo->exec('CREATE TABLE "values" (id INTEGER PRIMARY KEY, val TEXT)');
+        $rawPdo->exec('CREATE TABLE keyword_columns (id INTEGER PRIMARY KEY, "select" TEXT, "values" TEXT)');
+        $ztdPdo = ZtdPdo::fromPdo($rawPdo, null);
+
+        self::assertSame(1, $ztdPdo->exec("INSERT INTO \"select\" VALUES (1, 'table-select')"));
+        self::assertSame(1, $ztdPdo->exec("INSERT INTO \"values\" VALUES (2, 'table-values')"));
+        self::assertSame(1, $ztdPdo->exec("INSERT INTO keyword_columns (id, \"select\", \"values\") VALUES (3, 'column-select', 'column-values')"));
+        self::assertSame(1, $ztdPdo->exec("INSERT INTO \"select\" SELECT 4 AS id, 'insert-select' AS val"));
+
+        $selectRows = $ztdPdo->query('SELECT * FROM "select" ORDER BY id');
+        self::assertNotFalse($selectRows);
+        self::assertSame([
+            ['id' => 1, 'val' => 'table-select'],
+            ['id' => 4, 'val' => 'insert-select'],
+        ], $selectRows->fetchAll());
+
+        $valuesRows = $ztdPdo->query('SELECT * FROM "values"');
+        self::assertNotFalse($valuesRows);
+        self::assertSame([['id' => 2, 'val' => 'table-values']], $valuesRows->fetchAll());
+
+        $columnRows = $ztdPdo->query('SELECT id, "select", "values" FROM keyword_columns');
+        self::assertNotFalse($columnRows);
+        self::assertSame([
+            ['id' => 3, 'select' => 'column-select', 'values' => 'column-values'],
+        ], $columnRows->fetchAll());
+    }
 }

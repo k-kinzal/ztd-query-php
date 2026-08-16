@@ -11,6 +11,7 @@ on:
         type: string
 
 permissions:
+  actions: read
   contents: read
   issues: write
 
@@ -60,23 +61,29 @@ jobs:
           path: packages/ztd-query-postgres/fuzz/corpus/${{ matrix.target.corpus }}
           key: fuzz-ztd-query-postgres-${{ matrix.target.corpus }}-${{ github.run_id }}
 
-      - if: failure()
+      - if: ${{ always() && hashFiles('packages/ztd-query-postgres/crash-*') != '' }}
         uses: actions/upload-artifact@v6
         with:
           name: fuzz-crashes-ztd-query-postgres-robustness-${{ matrix.target.name }}
-          path: |
-            packages/ztd-query-postgres/fuzz/corpus/${{ matrix.target.corpus }}/crash-*
-            packages/ztd-query-postgres/fuzz/corpus/${{ matrix.target.corpus }}/timeout-*
+          path: packages/ztd-query-postgres/crash-*
 
   notify:
-    name: Notify on failure
+    name: Notify on crash
     runs-on: ubuntu-latest
     needs: [robustness]
-    if: failure()
     steps:
       - uses: actions/github-script@v8
         with:
           script: |
+            const { data } = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.runId
+            });
+            if (!data.artifacts.some(({ name }) => name.startsWith('fuzz-crashes-'))) {
+              console.log('No fuzz crash artifacts found');
+              return;
+            }
             const { data: issues } = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
               repo: context.repo.repo,

@@ -17,6 +17,9 @@ final class TerminationAnalyzer
     /** @var array<string, int> Non-terminal name => minimum tokens to terminate */
     private array $lengths;
 
+    /** @var array<string, int> Non-terminal name => minimum derivation steps to terminate */
+    private array $steps;
+
     /** @var Closure(string): bool */
     private Closure $terminalSupported;
 
@@ -29,6 +32,7 @@ final class TerminationAnalyzer
             ? Closure::fromCallable($terminalSupported)
             : static fn (string $terminal): bool => true;
         $this->lengths = $this->computeMinTerminationLengths($grammar);
+        $this->steps = $this->computeMinTerminationSteps($grammar);
     }
 
     /**
@@ -45,6 +49,14 @@ final class TerminationAnalyzer
     public function estimateProductionLength(Production $production): int
     {
         return $this->sumProductionLength($production->symbols, $this->lengths);
+    }
+
+    /**
+     * Estimate the minimum number of non-terminal expansions required to terminate a production.
+     */
+    public function estimateProductionSteps(Production $production): int
+    {
+        return $this->sumProductionSteps($production->symbols, $this->steps);
     }
 
     public function isProductionViable(Production $production): bool
@@ -91,6 +103,37 @@ final class TerminationAnalyzer
     }
 
     /**
+     * @return array<string, int>
+     */
+    private function computeMinTerminationSteps(Grammar $grammar): array
+    {
+        $steps = array_fill_keys(array_keys($grammar->ruleMap), PHP_INT_MAX);
+
+        $changed = true;
+        while ($changed) {
+            $changed = false;
+
+            foreach ($grammar->ruleMap as $name => $rule) {
+                $best = $steps[$name];
+
+                foreach ($rule->alternatives as $alternative) {
+                    $remaining = $this->sumProductionSteps($alternative->symbols, $steps);
+                    if ($remaining !== PHP_INT_MAX && $remaining < PHP_INT_MAX - 1) {
+                        $best = min($best, $remaining + 1);
+                    }
+                }
+
+                if ($best !== $steps[$name]) {
+                    $steps[$name] = $best;
+                    $changed = true;
+                }
+            }
+        }
+
+        return $steps;
+    }
+
+    /**
      * Sum the minimum token count for a list of symbols given current length estimates.
      * Returns PHP_INT_MAX if any non-terminal has no known finite length.
      *
@@ -120,6 +163,36 @@ final class TerminationAnalyzer
                 $total += $symLen;
             }
         }
+        return $total;
+    }
+
+    /**
+     * @param list<Symbol> $symbols
+     * @param array<string, int> $steps
+     */
+    private function sumProductionSteps(array $symbols, array $steps): int
+    {
+        $total = 0;
+        foreach ($symbols as $symbol) {
+            if ($symbol instanceof Terminal) {
+                if (!(($this->terminalSupported)($symbol->value))) {
+                    return PHP_INT_MAX;
+                }
+                continue;
+            }
+
+            if (!$symbol instanceof NonTerminal) {
+                continue;
+            }
+
+            $symbolSteps = $steps[$symbol->value]
+                ?? (($this->terminalSupported)($symbol->value) ? 1 : PHP_INT_MAX);
+            if ($symbolSteps === PHP_INT_MAX || $total > PHP_INT_MAX - $symbolSteps) {
+                return PHP_INT_MAX;
+            }
+            $total += $symbolSteps;
+        }
+
         return $total;
     }
 }

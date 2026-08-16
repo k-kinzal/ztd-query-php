@@ -135,6 +135,21 @@ final class TerminationAnalyzerTest extends TestCase
         self::assertSame(0, $analyzer->estimateProductionLength($production));
     }
 
+    public function testEstimateProductionStepsBreaksARecursiveLengthTie(): void
+    {
+        $recursive = new Production([new NonTerminal('value')]);
+        $terminal = new Production([new Terminal('VALUE')]);
+        $grammar = new Grammar('value', [
+            'value' => new ProductionRule('value', [$recursive, $terminal]),
+        ]);
+        $analyzer = new TerminationAnalyzer($grammar);
+
+        self::assertSame(1, $analyzer->estimateProductionLength($recursive));
+        self::assertSame(1, $analyzer->estimateProductionLength($terminal));
+        self::assertSame(1, $analyzer->estimateProductionSteps($recursive));
+        self::assertSame(0, $analyzer->estimateProductionSteps($terminal));
+    }
+
     public function testTreatsUnknownSupportedNonTerminalAsOneToken(): void
     {
         $analyzer = new TerminationAnalyzer(new Grammar('start', []));
@@ -142,6 +157,20 @@ final class TerminationAnalyzerTest extends TestCase
 
         self::assertSame(1, $analyzer->getMinLength('lexer_token'));
         self::assertSame(1, $analyzer->estimateProductionLength($production));
+        self::assertSame(1, $analyzer->estimateProductionSteps($production));
+    }
+
+    public function testEstimateProductionStepsRejectsUnsupportedTerminal(): void
+    {
+        $analyzer = new TerminationAnalyzer(
+            new Grammar('start', []),
+            static fn (string $terminal): bool => $terminal !== 'UNSUPPORTED',
+        );
+
+        self::assertSame(
+            PHP_INT_MAX,
+            $analyzer->estimateProductionSteps(new Production([new Terminal('UNSUPPORTED')])),
+        );
     }
 
     public function testEstimateProductionLengthMixed(): void

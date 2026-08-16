@@ -210,6 +210,30 @@ final class LexicalGrammar implements LexicalGrammarContract
     }
 
     /**
+     * Applies the lookahead filter used by PostgreSQL's parser frontend.
+     *
+     * @param list<string> $terminals
+     * @return list<string>
+     */
+    public function normalizeLookahead(array $terminals): array
+    {
+        foreach ($terminals as $index => $terminal) {
+            foreach ($this->lookahead as $base => $rule) {
+                if ($terminal !== $base && $terminal !== $rule['token']) {
+                    continue;
+                }
+
+                $terminals[$index] = in_array($terminals[$index + 1] ?? null, $rule['followed_by'], true)
+                    ? $rule['token']
+                    : $base;
+                break;
+            }
+        }
+
+        return $terminals;
+    }
+
+    /**
      * @return array{string|null, list<string>}
      */
     private function realizeTerminal(string $terminal): array
@@ -452,6 +476,9 @@ final class LexicalGrammar implements LexicalGrammarContract
         if (str_contains(self::OPERATOR_CHARACTERS, $char)) {
             $end = $offset;
             while (isset($sql[$end]) && str_contains(self::OPERATOR_CHARACTERS, $sql[$end])) {
+                if ($end > $offset && in_array(substr($sql, $end, 2), ['/*', '--'], true)) {
+                    break;
+                }
                 $end++;
             }
             $lexeme = substr($sql, $offset, $end - $offset);

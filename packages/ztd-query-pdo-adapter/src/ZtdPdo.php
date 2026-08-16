@@ -172,7 +172,12 @@ class ZtdPdo extends PDO
             throw new ZtdPdoException($e->getMessage(), 0, $e);
         }
 
-        $stmt = $this->pdo->prepare($plan->sql(), $options);
+        $preparedSql = $plan->sql();
+        if ($this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'pgsql') {
+            $preparedSql = PostgreSqlPlaceholderEscaper::escape($preparedSql);
+        }
+
+        $stmt = $this->pdo->prepare($preparedSql, $options);
         if ($stmt === false) {
             return false;
         }

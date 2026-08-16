@@ -45,6 +45,29 @@ SQL;
         self::assertSame(['WITH', 'RETURNS'], $lexical->tokenize('WITH RETURNS'));
     }
 
+    public function testNormalizesDerivedLookaheadTokensFromTheirFollowers(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'pg-17.2');
+
+        self::assertSame(
+            ['WITH', 'IDENT', 'WITH_LA', 'TIME', 'FORMAT', 'IDENT', 'FORMAT_LA', 'JSON'],
+            $lexical->normalizeLookahead([
+                'WITH_LA', 'IDENT', 'WITH', 'TIME', 'FORMAT_LA', 'IDENT', 'FORMAT', 'JSON',
+            ]),
+        );
+    }
+
+    public function testTokenizesCommentsAdjacentToOperators(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'pg-17.2');
+        $sql = "SELECT a=/* outer /* inner */ outer */b, c/-- line\nd, e///* block */f";
+
+        self::assertSame(
+            ['SELECT', 'IDENT', '=', 'IDENT', ',', 'IDENT', '/', 'IDENT', ',', 'IDENT', 'Op', 'IDENT'],
+            $lexical->tokenize($sql),
+        );
+    }
+
     public function testRealizesLookaheadTokenWithRequiredFollower(): void
     {
         $lexical = new LexicalGrammar(Factory::create(), 'pg-17.2');

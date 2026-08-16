@@ -271,9 +271,9 @@ final class PostgreSqlProviderTest extends TestCase
         $faker->seed(0);
         $provider = new PostgreSqlProvider($faker);
 
-        $result = $provider->whereClause(maxDepth: 6);
+        $result = $provider->whereClause(maxDepth: 1);
 
-        self::assertMatchesRegularExpression('/^$|WHERE/', $result);
+        self::assertSame('', $result);
     }
 
     public function testSortClause(): void
@@ -745,13 +745,32 @@ final class PostgreSqlProviderTest extends TestCase
         self::assertNotSame('', $result);
     }
 
-    public function testSimpleStatementReturnsNonEmpty(): void
+    #[DataProvider('providerNullableSimpleStatementSeed')]
+    public function testSimpleStatementReturnsNonEmpty(int $seed): void
     {
         $faker = Factory::create();
-        $faker->seed(12345);
+        $faker->seed($seed);
         $provider = new PostgreSqlProvider($faker);
 
-        self::assertNotSame('', $provider->simpleStatement(maxDepth: 6));
+        self::assertNotSame('', $provider->simpleStatement(maxDepth: 20));
+    }
+
+    public function testSimpleStatementReturnsNonEmptyAtMinimumDepth(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(0);
+        $provider = new PostgreSqlProvider($faker);
+
+        self::assertNotSame('', $provider->simpleStatement(maxDepth: 1));
+    }
+
+    /**
+     * @return iterable<string, array{int}>
+     */
+    public static function providerNullableSimpleStatementSeed(): iterable
+    {
+        yield 'PHP 8.1 and 8.2 random mode' => [252];
+        yield 'PHP 8.3 and later random mode' => [68];
     }
 
     /**
