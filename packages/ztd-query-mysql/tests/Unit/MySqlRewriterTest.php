@@ -147,6 +147,32 @@ final class MySqlRewriterTest extends RewriterContractTest
         self::assertStringStartsWith('WITH `users` AS', $plan->sql());
     }
 
+    public function testRewritesSingleSetExpressionsWithoutTreatingThemAsMultipleStatements(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+
+        $except = $rewriter->rewrite('SELECT 1 EXCEPT SELECT 2');
+        $intersect = $rewriter->rewrite('SELECT 1 INTERSECT SELECT 2');
+        $caseExists = $rewriter->rewrite('SELECT 1 WHERE CASE WHEN EXISTS(SELECT 1) THEN TRUE ELSE FALSE END');
+
+        self::assertSame(QueryKind::READ, $except->kind());
+        self::assertSame('SELECT 1 EXCEPT SELECT 2', $except->sql());
+        self::assertSame(QueryKind::READ, $intersect->kind());
+        self::assertSame('SELECT 1 INTERSECT SELECT 2', $intersect->sql());
+        self::assertSame(QueryKind::READ, $caseExists->kind());
+    }
+
+    public function testRewriteMultipleUsesLexicalStatementBoundaries(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+
+        $plan = $rewriter->rewriteMultiple('SELECT 1 EXCEPT SELECT 2; SELECT 3');
+
+        self::assertCount(2, $plan->plans());
+        self::assertSame('SELECT 1 EXCEPT SELECT 2', $plan->plans()[0]->sql());
+        self::assertSame('SELECT 3', $plan->plans()[1]->sql());
+    }
+
     public function testRewriteUpdateCreatesMutation(): void
     {
         $shadowStore = new ShadowStore();

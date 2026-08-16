@@ -3541,4 +3541,40 @@ SELECT * FROM users'));
             $parser->extractInsertValues('INSERT INTO target (a, b) VALUES (1], 2)'),
         );
     }
+
+    public function testUpdateClausesIgnoreKeywordsInsideExpressionsAndSubqueries(): void
+    {
+        $parser = new PgSqlParser();
+        $sql = "UPDATE products SET name = TRIM(BOTH 'x' FROM name), price = CAST(raw AS NUMERIC(10,2)), maximum = (SELECT MAX(price) FROM products p2 WHERE p2.category_id = products.category_id) FROM categories c WHERE products.category_id = c.id RETURNING *";
+
+        self::assertSame([
+            'name' => "TRIM(BOTH 'x' FROM name)",
+            'price' => 'CAST(raw AS NUMERIC(10,2))',
+            'maximum' => '(SELECT MAX(price) FROM products p2 WHERE p2.category_id = products.category_id)',
+        ], $parser->extractUpdateSets($sql));
+        self::assertSame('categories c', $parser->extractUpdateFromClause($sql));
+        self::assertSame('products.category_id = c.id', $parser->extractWhereClause($sql));
+    }
+
+    public function testConflictAssignmentsIgnoreNestedWhereAndReturningKeywords(): void
+    {
+        $parser = new PgSqlParser();
+        $sql = 'INSERT INTO target (id, value) VALUES (1, 2) ON CONFLICT (id) DO UPDATE SET value = (SELECT value FROM source WHERE source.id = excluded.id), meta = jsonb_build_object(\'returning\', excluded.value) WHERE target.active RETURNING *';
+
+        self::assertSame([
+            'columns' => ['value', 'meta'],
+            'values' => [
+                'value' => '(SELECT value FROM source WHERE source.id = excluded.id)',
+                'meta' => "jsonb_build_object('returning', excluded.value)",
+            ],
+        ], $parser->extractOnConflictUpdateColumns($sql));
+    }
+
+    public function testSelectTablesIgnoreFromKeywordInsideExtract(): void
+    {
+        $parser = new PgSqlParser();
+        $sql = 'SELECT EXTRACT(YEAR FROM event_date) FROM events WHERE id IN (SELECT event_id FROM archived_events)';
+
+        self::assertSame(['events', 'archived_events'], $parser->extractSelectTableNames($sql));
+    }
 }

@@ -58,6 +58,16 @@ class MySqlQueryGuardTest extends QueryClassifierContractTest
         self::assertSame(QueryKind::READ, $guard->classify('WITH cte AS (SELECT 1) SELECT * FROM users'));
     }
 
+    public function testClassifiesSingleSelectExpressionsSplitByThirdPartyParser(): void
+    {
+        $guard = new MySqlQueryGuard(new MySqlParser());
+
+        self::assertSame(QueryKind::READ, $guard->classify('SELECT 1 EXCEPT SELECT 2'));
+        self::assertSame(QueryKind::READ, $guard->classify('SELECT 1 INTERSECT SELECT 2'));
+        self::assertSame(QueryKind::READ, $guard->classify('SELECT 1 WHERE CASE WHEN EXISTS(SELECT 1) THEN TRUE ELSE FALSE END'));
+        self::assertNull($guard->classify('SELECT 1; SELECT 2'));
+    }
+
     public function testClassifiesWriteStatements(): void
     {
         $guard = new MySqlQueryGuard(new MySqlParser());

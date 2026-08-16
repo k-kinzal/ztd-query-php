@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Sqlite;
 
+use ZtdQuery\Sql\SqlTokenStream;
+
 /**
  * Lightweight SQL parser for SQLite.
  *
@@ -76,106 +78,7 @@ final class SqliteParser
      */
     public function splitStatements(string $sql): array
     {
-        $statements = [];
-        $current = '';
-        $len = strlen($sql);
-        $inSingleQuote = false;
-        $inDoubleQuote = false;
-        $depth = 0;
-
-        for ($i = 0; $i < $len; $i++) {
-            $char = $sql[$i];
-
-            if ($inSingleQuote) {
-                $current .= $char;
-                if ($char === '\'' && ($i + 1 < $len) && $sql[$i + 1] === '\'') {
-                    $current .= $sql[$i + 1];
-                    $i++;
-                } elseif ($char === '\'') {
-                    $inSingleQuote = false;
-                }
-                continue;
-            }
-
-            if ($inDoubleQuote) {
-                $current .= $char;
-                if ($char === '"' && ($i + 1 < $len) && $sql[$i + 1] === '"') {
-                    $current .= $sql[$i + 1];
-                    $i++;
-                } elseif ($char === '"') {
-                    $inDoubleQuote = false;
-                }
-                continue;
-            }
-
-            if ($char === '\'') {
-                $inSingleQuote = true;
-                $current .= $char;
-                continue;
-            }
-
-            if ($char === '"') {
-                $inDoubleQuote = true;
-                $current .= $char;
-                continue;
-            }
-
-            if ($char === '(') {
-                $depth++;
-                $current .= $char;
-                continue;
-            }
-
-            if ($char === ')') {
-                if ($depth > 0) {
-                    $depth--;
-                }
-                $current .= $char;
-                continue;
-            }
-
-            if ($char === '-' && ($i + 1 < $len) && $sql[$i + 1] === '-') {
-                $end = strpos($sql, "\n", $i);
-                if ($end === false) {
-                    $current .= substr($sql, $i);
-                    $i = $len;
-                } else {
-                    $current .= substr($sql, $i, $end - $i);
-                    $i = $end - 1;
-                }
-                continue;
-            }
-
-            if ($char === '/' && ($i + 1 < $len) && $sql[$i + 1] === '*') {
-                $end = strpos($sql, '*/', $i + 2);
-                if ($end === false) {
-                    $current .= substr($sql, $i);
-                    $i = $len;
-                } else {
-                    $current .= substr($sql, $i, $end + 2 - $i);
-                    $i = $end + 1;
-                }
-                continue;
-            }
-
-            if ($char === ';' && $depth === 0) {
-                $stmt = trim($current);
-                if ($stmt !== '') {
-                    $statements[] = $stmt;
-                }
-                $current = '';
-                continue;
-            }
-
-            $current .= $char;
-        }
-
-        $stmt = trim($current);
-        if ($stmt !== '') {
-            $statements[] = $stmt;
-        }
-
-        return $statements;
+        return SqlTokenStream::tokenize($sql)->splitStatements();
     }
 
     /**
@@ -206,34 +109,30 @@ final class SqliteParser
      */
     public function extractSelectTables(string $sql): array
     {
-        $sql = $this->stripComments($sql);
-        $sql = $this->maskStringLiterals($sql);
         $tables = [];
-
-        if (preg_match('/\bFROM\s+(.+?)(?:\s+WHERE\b|\s+GROUP\s+BY\b|\s+HAVING\b|\s+ORDER\s+BY\b|\s+LIMIT\b|\s+UNION\b|$)/is', $sql, $matches) === 1) {
-            $fromClause = $matches[1];
+        foreach (SqlTokenStream::tokenize($sql)->selectFromClauses() as $fromClause) {
+            $fromClause = $this->stripComments($fromClause);
             $fromOnly = preg_replace('/\b(?:INNER|LEFT|RIGHT|CROSS|NATURAL)\s+JOIN\b.*/is', '', $fromClause);
             $fromOnly = preg_replace('/\bJOIN\b.*/is', '', $fromOnly ?? $fromClause);
 
-            $parts = explode(',', $fromOnly ?? $fromClause);
+            $parts = SqlTokenStream::tokenize($fromOnly ?? $fromClause)->splitTopLevel();
             foreach ($parts as $part) {
                 $table = $this->extractTableFromExpr(trim($part));
                 if ($table !== null) {
                     $tables[] = $table;
                 }
             }
-        }
-
-        if (preg_match_all('/\bJOIN\s+("(?:[^"]|"")*"|[^\s(]+)/i', $sql, $joinMatches) > 0) {
-            foreach ($joinMatches[1] as $joinTable) {
-                $table = $this->unquoteIdentifier($joinTable);
-                if ($table !== '') {
-                    $tables[] = $table;
+            if (preg_match_all('/\bJOIN\s+("(?:[^"]|"")*"|[^\s(]+)/i', $fromClause, $joinMatches) > 0) {
+                foreach ($joinMatches[1] as $joinTable) {
+                    $table = $this->unquoteIdentifier($joinTable);
+                    if ($table !== '') {
+                        $tables[] = $table;
+                    }
                 }
             }
         }
 
-        return $tables;
+        return array_values(array_unique($tables));
     }
 
     /**
@@ -279,12 +178,15 @@ final class SqliteParser
      */
     public function extractUpdateAssignments(string $sql): array
     {
-        $sql = $this->stripComments($sql);
-        if (preg_match('/\bSET\s+(.+?)(?:\s+WHERE\b|\s+ORDER\s+BY\b|\s+LIMIT\b|$)/is', $sql, $matches) !== 1) {
+        $setClause = SqlTokenStream::tokenize($sql)->topLevelClause(
+            ['SET'],
+            [['FROM'], ['WHERE'], ['ORDER', 'BY'], ['LIMIT'], ['RETURNING']],
+        );
+        if ($setClause === null) {
             return [];
         }
 
-        return $this->parseAssignments($matches[1]);
+        return $this->parseAssignments($setClause);
     }
 
     /**
@@ -292,12 +194,10 @@ final class SqliteParser
      */
     public function extractWhereClause(string $sql): ?string
     {
-        $sql = $this->stripComments($sql);
-        if (preg_match('/\bWHERE\s+(.+?)(?:\s+ORDER\s+BY\b|\s+LIMIT\b|\s+GROUP\s+BY\b|\s+HAVING\b|$)/is', $sql, $matches) === 1) {
-            return trim($matches[1]);
-        }
-
-        return null;
+        return SqlTokenStream::tokenize($sql)->topLevelClause(
+            ['WHERE'],
+            [['ORDER', 'BY'], ['LIMIT'], ['GROUP', 'BY'], ['HAVING'], ['RETURNING']],
+        );
     }
 
     /**
@@ -305,12 +205,10 @@ final class SqliteParser
      */
     public function extractOrderByClause(string $sql): ?string
     {
-        $sql = $this->stripComments($sql);
-        if (preg_match('/\bORDER\s+BY\s+(.+?)(?:\s+LIMIT\b|$)/is', $sql, $matches) === 1) {
-            return trim($matches[1]);
-        }
-
-        return null;
+        return SqlTokenStream::tokenize($sql)->topLevelClause(
+            ['ORDER', 'BY'],
+            [['LIMIT'], ['RETURNING']],
+        );
     }
 
     /**
@@ -318,12 +216,7 @@ final class SqliteParser
      */
     public function extractLimitClause(string $sql): ?string
     {
-        $sql = $this->stripComments($sql);
-        if (preg_match('/\bLIMIT\s+(.+?)$/is', $sql, $matches) === 1) {
-            return trim($matches[1]);
-        }
-
-        return null;
+        return SqlTokenStream::tokenize($sql)->topLevelClause(['LIMIT'], [['RETURNING']]);
     }
 
     /**
@@ -364,12 +257,15 @@ final class SqliteParser
      */
     public function extractOnConflictUpdates(string $sql): array
     {
-        $sql = $this->stripComments($sql);
-        if (preg_match('/\bON\s+CONFLICT\s*(?:\([^)]*\))?\s*DO\s+UPDATE\s+SET\s+(.+?)$/is', $sql, $matches) !== 1) {
+        $setClause = SqlTokenStream::tokenize($sql)->topLevelClause(
+            ['DO', 'UPDATE', 'SET'],
+            [['WHERE'], ['RETURNING']],
+        );
+        if ($setClause === null) {
             return [];
         }
 
-        return $this->parseAssignments($matches[1]);
+        return $this->parseAssignments($setClause);
     }
 
     /**

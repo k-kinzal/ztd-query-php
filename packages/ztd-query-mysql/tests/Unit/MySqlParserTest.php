@@ -54,4 +54,13 @@ final class MySqlParserTest extends TestCase
 
         self::assertCount(1, $statements);
     }
+
+    public function testSplitsActualStatementsWithoutSplittingSetExpressions(): void
+    {
+        $parser = new MySqlParser();
+
+        self::assertSame(['SELECT 1 EXCEPT SELECT 2'], $parser->splitStatements('SELECT 1 EXCEPT SELECT 2'));
+        self::assertSame(['SELECT 1 INTERSECT SELECT 2'], $parser->splitStatements('SELECT 1 INTERSECT SELECT 2'));
+        self::assertSame(['SELECT 1', 'SELECT 2'], $parser->splitStatements('SELECT 1; SELECT 2'));
+    }
 }

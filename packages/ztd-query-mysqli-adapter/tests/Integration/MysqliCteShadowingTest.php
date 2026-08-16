@@ -20,6 +20,38 @@ use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
 #[Large]
 final class MysqliCteShadowingTest extends TestCase
 {
+    public function testSetExpressionsRemainSingleStatements(): void
+    {
+        [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();
+        $users = 'prefix_' . bin2hex(random_bytes(8));
+        $vip = 'prefix_' . bin2hex(random_bytes(8));
+        $rawMysqli->query(sprintf('CREATE TABLE `%s` (name VARCHAR(255) PRIMARY KEY)', $users));
+        $rawMysqli->query(sprintf('CREATE TABLE `%s` (name VARCHAR(255) PRIMARY KEY)', $vip));
+        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
+        try {
+            $ztdMysqli->query(sprintf("INSERT INTO `%s` (name) VALUES ('Alice'), ('Bob')", $users));
+            $ztdMysqli->query(sprintf("INSERT INTO `%s` (name) VALUES ('Alice')", $vip));
+
+            $except = $ztdMysqli->query(sprintf(
+                'SELECT name FROM `%s` EXCEPT SELECT name FROM `%s` ORDER BY name',
+                $users,
+                $vip,
+            ));
+            $intersect = $ztdMysqli->query(sprintf(
+                'SELECT name FROM `%s` INTERSECT SELECT name FROM `%s` ORDER BY name',
+                $users,
+                $vip,
+            ));
+            self::assertInstanceOf(\mysqli_result::class, $except);
+            self::assertInstanceOf(\mysqli_result::class, $intersect);
+            self::assertSame([['name' => 'Bob']], $except->fetch_all(MYSQLI_ASSOC));
+            self::assertSame([['name' => 'Alice']], $intersect->fetch_all(MYSQLI_ASSOC));
+        } finally {
+            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+        }
+    }
+
     public function testSelectOnCleanShadowReturnsEmpty(): void
     {
         [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();

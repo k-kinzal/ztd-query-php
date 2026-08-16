@@ -34,9 +34,17 @@ final class MySqlQueryGuard
      */
     public function classify(string $sql): ?QueryKind
     {
-        $statements = $this->parser->parse($sql);
-        if ($statements === [] || count($statements) !== 1) {
+        if (count($this->parser->splitStatements($sql)) !== 1) {
             return null;
+        }
+
+        $statements = $this->parser->parse($sql);
+        if ($statements === []) {
+            return null;
+        }
+
+        if (count($statements) > 1) {
+            return $this->classifyCompositeRead($statements);
         }
 
         $statement = $statements[0];
@@ -48,6 +56,22 @@ final class MySqlQueryGuard
         }
 
         return $this->classifyStatement($statement);
+    }
+
+    /**
+     * phpmyadmin/sql-parser represents some single set expressions as several SELECT statements.
+     *
+     * @param list<Statement> $statements
+     */
+    private function classifyCompositeRead(array $statements): ?QueryKind
+    {
+        foreach ($statements as $statement) {
+            if (!$statement instanceof SelectStatement || $statement->into !== null) {
+                return null;
+            }
+        }
+
+        return QueryKind::READ;
     }
 
     /**

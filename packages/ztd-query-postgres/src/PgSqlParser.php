@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Postgres;
 
+use ZtdQuery\Sql\SqlTokenStream;
+
 /**
  * Focused PostgreSQL SQL parser.
  *
@@ -39,129 +41,7 @@ final class PgSqlParser
      */
     public function splitStatements(string $sql): array
     {
-        $statements = [];
-        $current = '';
-        $len = strlen($sql);
-        $inSingleQuote = false;
-        $inDoubleQuote = false;
-        $inDollarQuote = false;
-        $dollarTag = '';
-        $inLineComment = false;
-        $inBlockComment = false;
-
-        for ($i = 0; $i < $len; $i++) {
-            $char = $sql[$i];
-            $next = $i + 1 < $len ? $sql[$i + 1] : '';
-
-            if ($inLineComment) {
-                $current .= $char;
-                if ($char === "\n") {
-                    $inLineComment = false;
-                }
-                continue;
-            }
-
-            if ($inBlockComment) {
-                $current .= $char;
-                if ($char === '*' && $next === '/') {
-                    $current .= '/';
-                    $i++;
-                    $inBlockComment = false;
-                }
-                continue;
-            }
-
-            if ($inDollarQuote) {
-                if ($char === '$') {
-                    $endTag = '$' . $dollarTag . '$';
-                    $remaining = substr($sql, $i, strlen($endTag));
-                    if ($remaining === $endTag) {
-                        $current .= $endTag;
-                        $i += strlen($endTag) - 1;
-                        $inDollarQuote = false;
-                        continue;
-                    }
-                }
-                $current .= $char;
-                continue;
-            }
-
-            if ($inSingleQuote) {
-                $current .= $char;
-                if ($char === "'" && $next === "'") {
-                    $current .= "'";
-                    $i++;
-                } elseif ($char === "'") {
-                    $inSingleQuote = false;
-                }
-                continue;
-            }
-
-            if ($inDoubleQuote) {
-                $current .= $char;
-                if ($char === '"' && $next === '"') {
-                    $current .= '"';
-                    $i++;
-                } elseif ($char === '"') {
-                    $inDoubleQuote = false;
-                }
-                continue;
-            }
-
-            if ($char === '-' && $next === '-') {
-                $current .= $char;
-                $inLineComment = true;
-                continue;
-            }
-
-            if ($char === '/' && $next === '*') {
-                $current .= $char;
-                $inBlockComment = true;
-                continue;
-            }
-
-            if ($char === "'") {
-                $current .= $char;
-                $inSingleQuote = true;
-                continue;
-            }
-
-            if ($char === '"') {
-                $current .= $char;
-                $inDoubleQuote = true;
-                continue;
-            }
-
-            if ($char === '$') {
-                $tag = $this->extractDollarTag($sql, $i);
-                if ($tag !== null) {
-                    $dollarTag = $tag;
-                    $fullTag = '$' . $tag . '$';
-                    $current .= $fullTag;
-                    $i += strlen($fullTag) - 1;
-                    $inDollarQuote = true;
-                    continue;
-                }
-            }
-
-            if ($char === ';') {
-                $stmt = trim($current);
-                if ($stmt !== '') {
-                    $statements[] = $stmt;
-                }
-                $current = '';
-                continue;
-            }
-
-            $current .= $char;
-        }
-
-        $stmt = trim($current);
-        if ($stmt !== '') {
-            $statements[] = $stmt;
-        }
-
-        return $statements;
+        return SqlTokenStream::tokenize($sql)->splitStatements();
     }
 
     /**
@@ -249,20 +129,20 @@ final class PgSqlParser
      */
     public function extractOnConflictUpdateColumns(string $sql): array
     {
-        $sql = $this->maskComments($sql);
         $columns = [];
         /** @var array<string, string> $values */
         $values = [];
 
-        if (preg_match('/\bON\s+CONFLICT\b.*?\bDO\s+UPDATE\s+SET\s+(.+?)$/is', $sql, $m) !== 1) {
+        $setClause = SqlTokenStream::tokenize($sql)->topLevelClause(
+            ['DO', 'UPDATE', 'SET'],
+            [['WHERE'], ['RETURNING']],
+        );
+        if ($setClause === null) {
             return ['columns' => [], 'values' => []];
         }
-
-        $setClause = $m[1];
-        $setClause = preg_replace('/\s+WHERE\s+.+$/is', '', $setClause) ?? $setClause;
         $setClause = rtrim($setClause, '; ');
 
-        $assignments = $this->splitByTopLevelComma($setClause);
+        $assignments = SqlTokenStream::tokenize($setClause)->splitTopLevel();
 
         foreach ($assignments as $assignment) {
             $assignment = trim($assignment);
@@ -334,13 +214,15 @@ final class PgSqlParser
      */
     public function extractUpdateSets(string $sql): array
     {
-        $sql = $this->maskComments($sql);
-        if (preg_match('/\bSET\s+(.+?)(?:\s+FROM\s+|\s+WHERE\s+|\s+RETURNING\s+|$)/is', $sql, $m) !== 1) {
+        $setClause = SqlTokenStream::tokenize($sql)->topLevelClause(
+            ['SET'],
+            [['FROM'], ['WHERE'], ['RETURNING']],
+        );
+        if ($setClause === null) {
             return [];
         }
 
-        $setClause = $m[1];
-        $assignments = $this->splitByTopLevelComma($setClause);
+        $assignments = SqlTokenStream::tokenize($setClause)->splitTopLevel();
         $result = [];
 
         foreach ($assignments as $assignment) {
@@ -359,19 +241,10 @@ final class PgSqlParser
      */
     public function extractWhereClause(string $sql): ?string
     {
-        $sql = $this->maskComments($sql);
-        $stripped = $this->stripStringLiterals($sql);
-        if (preg_match('/\bWHERE\b/i', $stripped, $m, PREG_OFFSET_CAPTURE) !== 1) {
-            return null;
-        }
-
-        $whereClause = substr($sql, $m[0][1] + strlen('WHERE'));
-        $strippedTail = $this->stripStringLiterals($whereClause);
-        if (preg_match('/\s+(?:RETURNING|ORDER\s+BY|LIMIT)\b/is', $strippedTail, $tailMatch, PREG_OFFSET_CAPTURE) === 1) {
-            $whereClause = substr_replace($whereClause, '', $tailMatch[0][1]);
-        }
-
-        return trim($whereClause);
+        return SqlTokenStream::tokenize($sql)->topLevelClause(
+            ['WHERE'],
+            [['RETURNING'], ['ORDER', 'BY'], ['LIMIT']],
+        );
     }
 
     /**
@@ -379,15 +252,10 @@ final class PgSqlParser
      */
     public function extractUpdateFromClause(string $sql): ?string
     {
-        $sql = $this->maskComments($sql);
-        if (preg_match('/\bFROM\s+(.+?)(?:\s+WHERE\s+|\s+RETURNING\s+|$)/is', $sql, $m) === 1) {
-            $stripped = $this->stripStringLiterals($sql);
-            if (preg_match('/\bSET\b.*?\bFROM\b/is', $stripped) === 1) {
-                return trim($m[1]);
-            }
-        }
-
-        return null;
+        return SqlTokenStream::tokenize($sql)->topLevelClause(
+            ['FROM'],
+            [['WHERE'], ['RETURNING']],
+        );
     }
 
     /**
@@ -421,12 +289,10 @@ final class PgSqlParser
      */
     public function extractDeleteUsingClause(string $sql): ?string
     {
-        $sql = $this->maskComments($sql);
-        if (preg_match('/\bUSING\s+(.+?)(?:\s+WHERE\s+|\s+RETURNING\s+|$)/is', $sql, $m) === 1) {
-            return trim($m[1]);
-        }
-
-        return null;
+        return SqlTokenStream::tokenize($sql)->topLevelClause(
+            ['USING'],
+            [['WHERE'], ['RETURNING']],
+        );
     }
 
     /**
@@ -580,19 +446,14 @@ final class PgSqlParser
      */
     public function extractSelectTableNames(string $sql): array
     {
-        $sql = $this->maskComments($sql);
         $tables = [];
-        $stripped = $this->stripStringLiterals($sql);
-
-        if (preg_match_all('/\bFROM\s+(.+?)(?:\s+WHERE\b|\s+GROUP\b|\s+HAVING\b|\s+ORDER\b|\s+LIMIT\b|\s+OFFSET\b|\s+UNION\b|\s+INTERSECT\b|\s+EXCEPT\b|\s+FOR\b|\s*;|\s*$)/is', $stripped, $fromMatches) > 0) {
-            foreach ($fromMatches[1] as $fromClause) {
-                $tables = array_merge($tables, $this->extractTableRefsFromClause($fromClause));
-            }
-        }
-
-        if (preg_match_all('/\bJOIN\s+("[^"]+"|[a-zA-Z_]\w*(?:\."[^"]+"|\.(?:[a-zA-Z_]\w*))?)/i', $stripped, $joinMatches) > 0) {
-            foreach ($joinMatches[1] as $joinTable) {
-                $tables[] = $this->unquoteIdentifier($this->stripSchemaPrefix($joinTable));
+        foreach (SqlTokenStream::tokenize($sql)->selectFromClauses() as $fromClause) {
+            $fromClause = $this->maskComments($fromClause);
+            $tables = array_merge($tables, $this->extractTableRefsFromClause($fromClause));
+            if (preg_match_all('/\bJOIN\s+("[^"]+"|[a-zA-Z_]\w*(?:\."[^"]+"|\.(?:[a-zA-Z_]\w*))?)/i', $fromClause, $joinMatches) > 0) {
+                foreach ($joinMatches[1] as $joinTable) {
+                    $tables[] = $this->unquoteIdentifier($this->stripSchemaPrefix($joinTable));
+                }
             }
         }
 
@@ -976,28 +837,6 @@ final class PgSqlParser
             }
 
             $i += $tokenLength - 1;
-        }
-
-        return null;
-    }
-
-    private function extractDollarTag(string $sql, int $pos): ?string
-    {
-        $len = strlen($sql);
-        $i = $pos + 1;
-
-        if ($i < $len && $sql[$i] === '$') {
-            return '';
-        }
-
-        $tag = '';
-        while ($i < $len && (ctype_alnum($sql[$i]) || $sql[$i] === '_')) {
-            $tag .= $sql[$i];
-            $i++;
-        }
-
-        if ($i < $len && $sql[$i] === '$' && $tag !== '') {
-            return $tag;
         }
 
         return null;

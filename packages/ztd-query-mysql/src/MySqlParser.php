@@ -6,6 +6,7 @@ namespace ZtdQuery\Platform\MySql;
 
 use PhpMyAdmin\SqlParser\Parser;
 use PhpMyAdmin\SqlParser\Statement;
+use ZtdQuery\Sql\SqlTokenStream;
 
 /**
  * MySQL parser implementation backed by phpMyAdmin SQL parser.
@@ -18,7 +19,7 @@ final class MySqlParser
      * Suppresses warnings for large number to int conversion that occur
      * in phpmyadmin/sql-parser when parsing SQL with very large numeric literals.
      *
-     * @return array<int, Statement>
+     * @return list<Statement>
      */
     public function parse(string $sql): array
     {
@@ -35,5 +36,11 @@ final class MySqlParser
         } finally {
             restore_error_handler();
         }
+    }
+
+    /** @return list<string> */
+    public function splitStatements(string $sql): array
+    {
+        return SqlTokenStream::tokenize($sql)->splitStatements();
     }
 }

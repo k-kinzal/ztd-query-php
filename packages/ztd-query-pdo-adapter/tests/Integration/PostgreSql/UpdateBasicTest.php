@@ -108,4 +108,30 @@ final class UpdateBasicTest extends TestCase
             $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
         }
     }
+
+    public function testUpdateSetPreservesFromKeywordsInsideFunctions(): void
+    {
+        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $table = 'prefix_' . bin2hex(random_bytes(8));
+
+        try {
+            $rawPdo->exec("CREATE TABLE {$table} (id INTEGER PRIMARY KEY, name TEXT NOT NULL, code TEXT NOT NULL)");
+            $rawPdo->exec("INSERT INTO {$table} (id, name, code) VALUES (1, '  Alice  ', 'abcdef')");
+
+            $ztdPdo = ZtdPdo::fromPdo($rawPdo);
+            $ztdPdo->exec("INSERT INTO {$table} (id, name, code) VALUES (1, '  Alice  ', 'abcdef')");
+
+            $sql = "UPDATE {$table} SET name = TRIM(BOTH ' ' FROM name), code = SUBSTRING(code FROM 2 FOR 3) WHERE id = 1";
+            $rawPdo->exec($sql);
+            $ztdPdo->exec($sql);
+
+            $rawStatement = $rawPdo->query("SELECT * FROM {$table}");
+            $ztdStatement = $ztdPdo->query("SELECT * FROM {$table}");
+            self::assertNotFalse($rawStatement);
+            self::assertNotFalse($ztdStatement);
+            self::assertSame($rawStatement->fetchAll(), $ztdStatement->fetchAll());
+        } finally {
+            $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
+        }
+    }
 }

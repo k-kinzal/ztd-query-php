@@ -83,6 +83,14 @@ final class PgSchemaAwareSqlBuilder
         /** @var string $updateCol */
         $updateCol = $this->faker->randomElement($nonPkCols);
         $newValue = $this->generateLiteral($updateCol);
+        if ($this->isTextColumn($updateCol) && $this->faker->boolean(35)) {
+            $column = $this->quoteIdentifier($updateCol);
+            /** @var string $newValue */
+            $newValue = $this->faker->randomElement([
+                "TRIM(BOTH 'x' FROM $column)",
+                "SUBSTRING($column FROM 1 FOR 3)",
+            ]);
+        }
 
         $whereClause = $this->buildPkWhere($schema);
 
@@ -140,6 +148,18 @@ final class PgSchemaAwareSqlBuilder
 
         $str = $this->faker->lexify('????');
         return "'" . str_replace("'", "''", $str) . "'";
+    }
+
+    private function isTextColumn(string $column): bool
+    {
+        $column = strtolower($column);
+
+        return str_contains($column, 'name')
+            || str_contains($column, 'email')
+            || str_contains($column, 'status')
+            || str_contains($column, 'text')
+            || str_contains($column, 'varchar')
+            || str_contains($column, 'char');
     }
 
     private function quoteIdentifier(string $name): string

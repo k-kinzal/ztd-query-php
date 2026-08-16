@@ -59,6 +59,14 @@ final class MySqlRewriter implements SqlRewriter
      */
     public function rewrite(string $sql): RewritePlan
     {
+        $logicalStatements = $this->parser->splitStatements($sql);
+        if ($logicalStatements === []) {
+            throw new UnsupportedSqlException($sql, 'Empty or unparseable');
+        }
+        if (count($logicalStatements) !== 1) {
+            throw new UnsupportedSqlException($sql, 'Multi-statement');
+        }
+
         $statements = $this->parser->parse($sql);
         if ($statements === []) {
             throw new UnsupportedSqlException($sql, 'Empty or unparseable');
@@ -68,7 +76,7 @@ final class MySqlRewriter implements SqlRewriter
             return $this->rewriteStatement($statements[0], $sql);
         }
 
-        throw new UnsupportedSqlException($sql, 'Multi-statement');
+        return $this->rewriteCompositeRead($statements, $sql);
     }
 
     /**
@@ -79,7 +87,7 @@ final class MySqlRewriter implements SqlRewriter
      */
     public function rewriteMultiple(string $sql): MultiRewritePlan
     {
-        $statements = $this->parser->parse($sql);
+        $statements = $this->parser->splitStatements($sql);
 
         if ($statements === []) {
             throw new UnsupportedSqlException($sql, 'Empty or unparseable');
@@ -87,11 +95,36 @@ final class MySqlRewriter implements SqlRewriter
 
         $plans = [];
         foreach ($statements as $statement) {
-            $stmtSql = $statement->build();
-            $plans[] = $this->rewriteStatement($statement, $stmtSql);
+            $plans[] = $this->rewrite($statement);
         }
 
         return new MultiRewritePlan($plans);
+    }
+
+    /**
+     * phpmyadmin/sql-parser represents EXCEPT, INTERSECT, and some nested EXISTS
+     * expressions as several SELECT statements even though the SQL has one statement.
+     *
+     * @param list<Statement> $statements
+     */
+    private function rewriteCompositeRead(array $statements, string $sql): RewritePlan
+    {
+        foreach ($statements as $statement) {
+            if (!$statement instanceof SelectStatement || $statement->into !== null) {
+                throw new UnsupportedSqlException($sql, 'Statement type not supported');
+            }
+            if ($this->hasSchemaContext()) {
+                $unknownTable = $this->findUnknownTable($statement);
+                if ($unknownTable !== null) {
+                    throw new UnknownSchemaException($sql, $unknownTable, 'table');
+                }
+            }
+        }
+
+        return new RewritePlan(
+            $this->transformer->transform($sql, $this->buildTableContext()),
+            QueryKind::READ,
+        );
     }
 
     private function rewriteStatement(Statement $statement, string $sql): RewritePlan
