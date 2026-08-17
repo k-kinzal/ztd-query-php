@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker;
 
 use Faker\Factory;
+use Faker\Generator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\GenerationPlan;
@@ -77,33 +78,56 @@ final class SqliteProviderTest extends TestCase
         self::assertContains('UPDATE', $tokens);
     }
 
-    #[DataProvider('providerMultiDmlSeed')]
-    public function testMultiDmlStatementGeneratesExecutableBatch(int $seed, string $expected): void
+    public function testMultiDmlStatementGeneratesExecutableBatch(): void
     {
-        $faker = Factory::create();
-        $provider = new SqliteProvider($faker);
-        $faker->seed($seed);
+        $minimum = new class () extends Generator {
+            /**
+             * @param mixed $int1
+             * @param mixed $int2
+             */
+            #[\Override]
+            public function numberBetween($int1 = 0, $int2 = 2147483647): int
+            {
+                return $int1 === 100 && $int2 === 999 ? 100 : 0;
+            }
+        };
+        $middle = new class () extends Generator {
+            /**
+             * @param mixed $int1
+             * @param mixed $int2
+             */
+            #[\Override]
+            public function numberBetween($int1 = 0, $int2 = 2147483647): int
+            {
+                return $int1 === 100 && $int2 === 999 ? 500 : 1;
+            }
+        };
+        $maximum = new class () extends Generator {
+            /**
+             * @param mixed $int1
+             * @param mixed $int2
+             */
+            #[\Override]
+            public function numberBetween($int1 = 0, $int2 = 2147483647): int
+            {
+                return $int1 === 100 && $int2 === 999 ? 999 : 2;
+            }
+        };
 
-        self::assertSame($expected, $provider->multiDmlStatement());
-    }
-
-    /** @return iterable<string, array{int, string}> */
-    public static function providerMultiDmlSeed(): iterable
-    {
-        yield 'insert then insert' => [
-            0,
-            "INSERT INTO users (id, name, email) VALUES (144, 'batch-a', 'a@example.com'); "
-                . "INSERT INTO users (id, name, email) VALUES (145, 'batch-b', 'b@example.com')",
-        ];
-        yield 'insert then update' => [
-            7,
-            "INSERT INTO users (id, name, email) VALUES (415, 'before', 'before@example.com'); "
-                . "UPDATE users SET name = 'after' WHERE id = 415",
-        ];
-        yield 'delete then delete' => [
-            1,
-            'DELETE FROM users WHERE id = 545; DELETE FROM users WHERE id = 546',
-        ];
+        self::assertSame(
+            "INSERT INTO users (id, name, email) VALUES (100, 'batch-a', 'a@example.com'); "
+                . "INSERT INTO users (id, name, email) VALUES (101, 'batch-b', 'b@example.com')",
+            (new SqliteProvider($minimum))->multiDmlStatement(),
+        );
+        self::assertSame(
+            "INSERT INTO users (id, name, email) VALUES (500, 'before', 'before@example.com'); "
+                . "UPDATE users SET name = 'after' WHERE id = 500",
+            (new SqliteProvider($middle))->multiDmlStatement(),
+        );
+        self::assertSame(
+            'DELETE FROM users WHERE id = 999; DELETE FROM users WHERE id = 1000',
+            (new SqliteProvider($maximum))->multiDmlStatement(),
+        );
     }
 
     #[DataProvider('providerTargetedGenerationSeed')]
