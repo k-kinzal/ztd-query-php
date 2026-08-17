@@ -118,6 +118,35 @@ final class PostgreSqlProviderTest extends TestCase
         self::assertGreaterThan($where, $update);
     }
 
+    #[DataProvider('providerFullTextSearchSeed')]
+    public function testFullTextSearchStatement(int $seed, string $expected): void
+    {
+        $faker = Factory::create();
+        $provider = new PostgreSqlProvider($faker);
+        $faker->seed($seed);
+
+        self::assertSame($expected, $provider->fullTextSearchStatement());
+    }
+
+    /** @return iterable<string, array{int, string}> */
+    public static function providerFullTextSearchSeed(): iterable
+    {
+        yield 'plain query' => [
+            2,
+            "SELECT id FROM users WHERE to_tsvector('english', name) "
+                . "@@ plainto_tsquery('english', 'search terms')",
+        ];
+        yield 'structured query' => [
+            1,
+            "SELECT id FROM users WHERE to_tsvector('english', coalesce(name, '') || ' ' || coalesce(email, '')) "
+                . "@@ to_tsquery('english', 'search & terms')",
+        ];
+        yield 'prepared query' => [
+            0,
+            "SELECT id FROM users WHERE to_tsvector('english', name) @@ plainto_tsquery('english', $1)",
+        ];
+    }
+
     #[DataProvider('providerTargetedGenerationSeed')]
     public function testTemporaryTableStatement(int $seed): void
     {

@@ -8,6 +8,7 @@ use ZtdQuery\Platform\MySql\MySqlCastRenderer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlTypeSemantics;
 use ZtdQuery\Platform\MySql\MySqlPartitionSelectionRewriter;
+use ZtdQuery\Platform\MySql\MySqlFullTextSearchRewriter;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\IdentifierQuoter;
 use ZtdQuery\Platform\ValueRenderer;
@@ -32,6 +33,7 @@ final class SelectTransformer implements SqlTransformer
     private MySqlCteShadowComposer $cteComposer;
     private MySqlGeneratedColumnProjector $generatedColumnProjector;
     private MySqlPartitionSelectionRewriter $partitionSelectionRewriter;
+    private MySqlFullTextSearchRewriter $fullTextSearchRewriter;
 
     public function __construct(
         ?CastRenderer $castRenderer = null,
@@ -45,6 +47,7 @@ final class SelectTransformer implements SqlTransformer
         $this->cteComposer = new MySqlCteShadowComposer();
         $this->generatedColumnProjector = new MySqlGeneratedColumnProjector();
         $this->partitionSelectionRewriter = new MySqlPartitionSelectionRewriter();
+        $this->fullTextSearchRewriter = new MySqlFullTextSearchRewriter();
     }
 
     /**
@@ -57,6 +60,7 @@ final class SelectTransformer implements SqlTransformer
         }
         $sql = $this->typeSemantics->rewrite($sql, $tables);
         $sql = $this->rewriteSetOrderBy($sql, $tables);
+        $sql = $this->fullTextSearchRewriter->rewrite($sql);
 
         $ctes = [];
         foreach ($tables as $tableName => $tableContext) {

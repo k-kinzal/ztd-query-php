@@ -63,6 +63,7 @@ final class ClassifyTarget
             fn () => $this->provider->truncateStatement(maxDepth: 3),
             fn (): string => $this->provider->partitionSelectStatement(),
             fn (): string => $this->provider->loadDataStatement(maxDepth: 8),
+            fn (): string => $this->provider->fullTextSearchStatement(),
         ];
 
         $index = ord($input[0] ?? "\0") % count($generators);

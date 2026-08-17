@@ -95,6 +95,34 @@ final class MySqlProviderTest extends TestCase
         self::assertContains('DUPLICATE_SYM', $tokens);
     }
 
+    #[DataProvider('providerFullTextSearchSeed')]
+    public function testFullTextSearchStatement(int $seed, string $expected): void
+    {
+        $faker = Factory::create();
+        $provider = new MySqlProvider($faker);
+        $faker->seed($seed);
+
+        self::assertSame($expected, $provider->fullTextSearchStatement());
+    }
+
+    /** @return iterable<string, array{int, string}> */
+    public static function providerFullTextSearchSeed(): iterable
+    {
+        yield 'natural language' => [
+            2,
+            "SELECT id FROM users WHERE MATCH(name, email) AGAINST ('search terms')",
+        ];
+        yield 'boolean parameter' => [
+            1,
+            'SELECT id FROM users WHERE MATCH(name, email) AGAINST (? IN BOOLEAN MODE)',
+        ];
+        yield 'relevance ordering' => [
+            0,
+            "SELECT id, MATCH(name, email) AGAINST ('search') AS relevance "
+                . "FROM users ORDER BY MATCH(name, email) AGAINST ('search') DESC",
+        ];
+    }
+
     #[DataProvider('providerTargetedGenerationSeed')]
     public function testTemporaryTableStatement(int $seed): void
     {

@@ -14,6 +14,7 @@ use ZtdQuery\Platform\MySql\MySqlCastRenderer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlTypeSemantics;
 use ZtdQuery\Platform\MySql\MySqlPartitionSelectionRewriter;
+use ZtdQuery\Platform\MySql\MySqlFullTextSearchRewriter;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
@@ -29,6 +30,7 @@ use ZtdQuery\Schema\TablePartitioning;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlGeneratedColumnProjector::class)]
 #[UsesClass(MySqlPartitionSelectionRewriter::class)]
+#[UsesClass(MySqlFullTextSearchRewriter::class)]
 final class SelectTransformerTest extends TransformerContractTest
 {
     public function testTransformsPartitionSelectionBeforeComposingShadowCte(): void

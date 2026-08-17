@@ -26,6 +26,7 @@ use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
 #[UsesClass(MySqlParser::class)]
 #[UsesClass(MySqlUpsertAssignmentExtractor::class)]
 #[UsesClass(SelectTransformer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlFullTextSearchRewriter::class)]
 #[UsesClass(InsertTransformer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Transformer\InsertRowRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Transformer\InsertSelectRenderer::class)]

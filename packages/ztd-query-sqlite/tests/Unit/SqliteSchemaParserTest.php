@@ -96,6 +96,57 @@ final class SqliteSchemaParserTest extends SchemaParserContractTest
         self::assertSame(['id', 'name'], $result->columns);
     }
 
+    public function testParseFts5VirtualTableColumnsAndOptions(): void
+    {
+        $parser = new SqliteSchemaParser();
+        $result = $parser->parse(
+            "CREATE VIRTUAL TABLE IF NOT EXISTS main.fts_articles USING fts5("
+            . 'title, "article body" UNINDEXED, '
+            . "tokenize='porter unicode61', prefix='2 3')",
+        );
+
+        self::assertNotNull($result);
+        self::assertSame(['title', 'article body'], $result->columns);
+        self::assertSame(['title' => 'TEXT', 'article body' => 'TEXT'], $result->columnTypes);
+        self::assertSame(ColumnTypeFamily::TEXT, $result->typedColumns['title']->family);
+    }
+
+    public function testParseFts5OptionsBeforeColumns(): void
+    {
+        $result = (new SqliteSchemaParser())->parse(
+            "CREATE VIRTUAL TABLE articles USING fts5(tokenize='porter', content='source', "
+            . 'title, body UNINDEXED);',
+        );
+
+        self::assertNotNull($result);
+        self::assertSame(['title', 'body'], $result->columns);
+    }
+
+    #[DataProvider('providerInvalidFts5Declaration')]
+    public function testRejectsInvalidFts5Declaration(string $sql): void
+    {
+        self::assertNull((new SqliteSchemaParser())->parse($sql));
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function providerInvalidFts5Declaration(): iterable
+    {
+        yield 'missing virtual' => ['CREATE TABLE articles USING fts5(title)'];
+        yield 'wrong virtual keyword' => ['CREATE WRONG TABLE articles USING fts5(title)'];
+        yield 'missing table' => ['CREATE VIRTUAL INDEX articles USING fts5(title)'];
+        yield 'missing using' => ['CREATE VIRTUAL TABLE articles'];
+        yield 'missing module' => ['CREATE VIRTUAL TABLE articles USING'];
+        yield 'wrong module' => ['CREATE VIRTUAL TABLE articles USING fts4(title)'];
+        yield 'missing opening parenthesis' => ['CREATE VIRTUAL TABLE articles USING fts5 title'];
+        yield 'missing closing parenthesis' => ['CREATE VIRTUAL TABLE articles USING fts5(title'];
+        yield 'empty body' => ['CREATE VIRTUAL TABLE articles USING fts5()'];
+        yield 'options only' => ["CREATE VIRTUAL TABLE articles USING fts5(tokenize='porter')"];
+        yield 'typed column' => ['CREATE VIRTUAL TABLE articles USING fts5(title TEXT)'];
+        yield 'extra column modifier' => ['CREATE VIRTUAL TABLE articles USING fts5(title UNINDEXED extra)'];
+        yield 'non-identifier column' => ['CREATE VIRTUAL TABLE articles USING fts5(42)'];
+        yield 'unexpected suffix' => ['CREATE VIRTUAL TABLE articles USING fts5(title) WITHOUT ROWID'];
+    }
+
     public function testParseWithQuotedIdentifiers(): void
     {
         $parser = new SqliteSchemaParser();

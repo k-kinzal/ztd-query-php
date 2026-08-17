@@ -28,6 +28,7 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 #[UsesClass(MySqlSelectRelationParser::class)]
 #[UsesClass(MySqlUpsertAssignmentExtractor::class)]
 #[UsesClass(SelectTransformer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlFullTextSearchRewriter::class)]
 #[UsesClass(InsertSelectSourceExtractor::class)]
 #[UsesClass(MySqlCastRenderer::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]

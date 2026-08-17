@@ -44,6 +44,7 @@ use ZtdQuery\Session;
 #[UsesClass(MySqlTransformer::class)]
 #[UsesClass(ReplaceTransformer::class)]
 #[UsesClass(SelectTransformer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlFullTextSearchRewriter::class)]
 #[UsesClass(UpdateTransformer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlTypeSemantics::class)]

@@ -716,6 +716,12 @@ final class MySqlProvider extends Base
         );
     }
     /** @return non-empty-string */
+    public function fullTextSearchStatement(int $maxDepth = 40): string
+    {
+        return $this->sql->generateFullTextSearchStatement($maxDepth);
+    }
+
+    /** @return non-empty-string */
     public function temporaryTableStatement(int $maxDepth = 40): string
     {
         return $this->sql->generate(

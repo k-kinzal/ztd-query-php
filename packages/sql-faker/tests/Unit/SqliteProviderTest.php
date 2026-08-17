@@ -147,6 +147,24 @@ final class SqliteProviderTest extends TestCase
         self::assertSame($second, $tokens[$separator + 1]);
     }
 
+    #[DataProvider('providerFullTextSearchSeed')]
+    public function testFullTextSearchStatement(int $seed, string $expected): void
+    {
+        $faker = Factory::create();
+        $provider = new SqliteProvider($faker);
+        $faker->seed($seed);
+
+        self::assertSame($expected, $provider->fullTextSearchStatement());
+    }
+
+    /** @return iterable<string, array{int, string}> */
+    public static function providerFullTextSearchSeed(): iterable
+    {
+        yield 'table match' => [2, "SELECT id FROM users WHERE users MATCH 'search terms'"];
+        yield 'column parameter' => [1, 'SELECT id FROM users WHERE name MATCH ?'];
+        yield 'equals form' => [0, "SELECT id FROM users WHERE users = 'search'"];
+    }
+
     #[DataProvider('providerTargetedGenerationSeed')]
     public function testTemporaryTableStatement(int $seed): void
     {

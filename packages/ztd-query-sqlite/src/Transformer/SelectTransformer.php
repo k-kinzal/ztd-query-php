@@ -7,6 +7,7 @@ namespace ZtdQuery\Platform\Sqlite\Transformer;
 use ZtdQuery\Platform\Sqlite\SqliteCastRenderer;
 use ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter;
 use ZtdQuery\Platform\Sqlite\SqliteIndexHintStripper;
+use ZtdQuery\Platform\Sqlite\SqliteFullTextSearchRewriter;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\IdentifierQuoter;
 use ZtdQuery\Platform\ValueRenderer;
@@ -30,6 +31,7 @@ final class SelectTransformer implements SqlTransformer
     private SqliteCteShadowComposer $cteComposer;
     private SqliteIndexHintStripper $indexHintStripper;
     private SqliteGeneratedColumnProjector $generatedColumnProjector;
+    private SqliteFullTextSearchRewriter $fullTextSearchRewriter;
 
     public function __construct(
         ?CastRenderer $castRenderer = null,
@@ -42,6 +44,7 @@ final class SelectTransformer implements SqlTransformer
         $this->cteComposer = new SqliteCteShadowComposer();
         $this->indexHintStripper = new SqliteIndexHintStripper();
         $this->generatedColumnProjector = new SqliteGeneratedColumnProjector();
+        $this->fullTextSearchRewriter = new SqliteFullTextSearchRewriter();
     }
 
     /**
@@ -49,6 +52,7 @@ final class SelectTransformer implements SqlTransformer
      */
     public function transform(string $sql, array $tables): string
     {
+        $sql = $this->fullTextSearchRewriter->rewrite($sql, $tables);
         $ctes = [];
         foreach ($tables as $tableName => $tableContext) {
             if (isset($tableContext['viewSql'])) {

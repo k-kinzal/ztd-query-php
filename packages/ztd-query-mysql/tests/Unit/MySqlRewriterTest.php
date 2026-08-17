@@ -64,6 +64,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlTransactionStatementParser::class)]
 #[UsesClass(MySqlTransformer::class)]
 #[UsesClass(SelectTransformer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlFullTextSearchRewriter::class)]
 #[UsesClass(InsertTransformer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Transformer\InsertRowRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Transformer\InsertSelectRenderer::class)]

@@ -28,7 +28,7 @@ final class SqliteSchemaParser implements SchemaParser
 
         $body = $this->tableBody($trimmed);
         if ($body === null) {
-            return null;
+            return $this->parseFts5VirtualTable($trimmed);
         }
 
         $columns = [];
@@ -171,6 +171,99 @@ final class SqliteSchemaParser implements SchemaParser
             $generatedExpressions,
             $foreignKeys,
         );
+    }
+
+    private function parseFts5VirtualTable(string $sql): ?TableDefinition
+    {
+        $tokens = SqlTokenStream::tokenize($sql)->significantTokens();
+        if (count($tokens) < 4
+            || !$tokens[0]->isKeyword('CREATE')
+            || !$tokens[1]->isKeyword('VIRTUAL')
+            || !$tokens[2]->isKeyword('TABLE')
+        ) {
+            return null;
+        }
+
+        $usingIndex = null;
+        foreach ($tokens as $index => $token) {
+            if ($token->isTopLevel() && $token->isKeyword('USING')) {
+                $usingIndex = $index;
+                break;
+            }
+        }
+        if ($usingIndex === null) {
+            return null;
+        }
+
+        $module = $tokens[$usingIndex + 1] ?? null;
+        $opening = $tokens[$usingIndex + 2] ?? null;
+        if ($module === null
+            || !$module->isKeyword('FTS5')
+            || $opening === null
+            || $opening->kind !== SqlTokenKind::Symbol
+            || $opening->text !== '('
+        ) {
+            return null;
+        }
+
+        $closing = null;
+        for ($index = $usingIndex + 3, $count = count($tokens); $index < $count; $index++) {
+            $token = $tokens[$index];
+            if ($token->isTopLevel()
+                && $token->kind === SqlTokenKind::Symbol
+                && $token->text === ')'
+            ) {
+                $closing = $token;
+                break;
+            }
+        }
+        if ($closing === null) {
+            return null;
+        }
+        $suffix = trim(substr($sql, $closing->endOffset()));
+        if ($suffix !== '' && $suffix !== ';') {
+            return null;
+        }
+
+        $body = substr($sql, $opening->endOffset(), $closing->offset - $opening->endOffset());
+        $columns = [];
+        $parser = new SqliteParser();
+        foreach (SqlTokenStream::tokenize($body)->splitTopLevel() as $definition) {
+            $definitionTokens = SqlTokenStream::tokenize($definition)->significantTokens();
+            $name = $definitionTokens[0] ?? null;
+            $assignment = $definitionTokens[1] ?? null;
+            if ($assignment !== null
+                && $assignment->kind === SqlTokenKind::Symbol
+                && $assignment->text === '='
+            ) {
+                continue;
+            }
+            if ($name === null
+                || !in_array($name->kind, [SqlTokenKind::Word, SqlTokenKind::QuotedIdentifier], true)
+            ) {
+                return null;
+            }
+            if (count($definitionTokens) > 2) {
+                return null;
+            }
+            $modifier = $definitionTokens[1] ?? null;
+            if ($modifier !== null && !$modifier->isKeyword('UNINDEXED')) {
+                return null;
+            }
+
+            $columns[] = $parser->unquoteIdentifier($name->text);
+        }
+        if ($columns === []) {
+            return null;
+        }
+
+        $columnTypes = array_fill_keys($columns, 'TEXT');
+        $typedColumns = array_fill_keys(
+            $columns,
+            new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+        );
+
+        return new TableDefinition($columns, $columnTypes, [], [], [], $typedColumns);
     }
 
     private function tableBody(string $sql): ?string

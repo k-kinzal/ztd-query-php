@@ -68,6 +68,7 @@ final class ClassifyTarget
             fn (): string => $this->provider->partialIndexUpsertStatement(),
             fn (): string => $this->provider->createDomainStatement(maxDepth: 8),
             fn (): string => $this->provider->domainDmlStatement(),
+            fn (): string => $this->provider->fullTextSearchStatement(),
         ];
 
         $index = ord($input[0] ?? "\0") % count($generators);
