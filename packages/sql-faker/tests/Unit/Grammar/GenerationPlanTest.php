@@ -45,6 +45,41 @@ final class GenerationPlanTest extends TestCase
         self::assertNull($plan->patternAt('unknown', 0));
     }
 
+    public function testPatternForEveryOccurrenceProducesANewPlanAndActsAsFallback(): void
+    {
+        $specific = ProductionPattern::exactly();
+        $recurring = ProductionPattern::nonEmpty();
+        $plan = GenerationPlan::constrained('insert', ['opt_values' => [$specific]]);
+        $directed = $plan->withPatternForEveryOccurrence('opt_values', $recurring);
+
+        self::assertNotSame($plan, $directed);
+        self::assertNull($plan->patternAt('opt_values', 1));
+        self::assertSame($specific, $directed->patternAt('opt_values', 0));
+        self::assertSame($recurring, $directed->patternAt('opt_values', 1));
+        self::assertSame($recurring, $directed->patternAt('opt_values', 100));
+        self::assertNull($directed->patternAt('unknown', 0));
+    }
+
+    public function testPatternsForEveryOccurrenceAccumulateAcrossRules(): void
+    {
+        $values = ProductionPattern::nonEmpty();
+        $columns = ProductionPattern::containing('IDENT');
+        $plan = GenerationPlan::all()
+            ->withPatternForEveryOccurrence('opt_values', $values)
+            ->withPatternForEveryOccurrence('opt_columns', $columns);
+
+        self::assertSame($values, $plan->patternAt('opt_values', 100));
+        self::assertSame($columns, $plan->patternAt('opt_columns', 100));
+    }
+
+    public function testRejectsAnEmptyRuleForEveryOccurrencePattern(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('generation plan rule must not be empty');
+
+        GenerationPlan::all()->withPatternForEveryOccurrence('', ProductionPattern::nonEmpty());
+    }
+
     public function testNonEmptyRequirementProducesANewPlan(): void
     {
         $plan = GenerationPlan::fromRule('statement');
@@ -52,6 +87,19 @@ final class GenerationPlanTest extends TestCase
 
         self::assertNotSame($plan, $required);
         self::assertSame('statement', $required->startRule());
+    }
+
+    public function testNonEmptyRequirementHasCorrectRuntimeState(): void
+    {
+        /** @param GenerationPlan<bool> $plan */
+        $requiresNonEmpty = static fn (GenerationPlan $plan): bool => $plan->requiresNonEmpty();
+
+        self::assertFalse($requiresNonEmpty(GenerationPlan::all()));
+        self::assertFalse($requiresNonEmpty(GenerationPlan::fromRule('statement')));
+        self::assertFalse($requiresNonEmpty(GenerationPlan::constrained('statement', [
+            'statement' => [ProductionPattern::nonEmpty()],
+        ])));
+        self::assertTrue($requiresNonEmpty(GenerationPlan::all()->requiringNonEmpty()));
     }
 
     public function testMaxDepthProducesANewPlanAndNormalizesItsLowerBound(): void

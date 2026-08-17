@@ -16,6 +16,25 @@ use SqlFaker\MySql\GenerationPlans;
 #[UsesClass(ProductionPattern::class)]
 final class GenerationPlansTest extends TestCase
 {
+    public function testWithoutEmptyRowsPlanConstrainsEveryOptionalValuesOccurrence(): void
+    {
+        $all = GenerationPlans::withoutEmptyRows();
+        $insert = GenerationPlans::withoutEmptyRows('insert_stmt');
+        $firstPattern = $all->patternAt('opt_values', 0);
+        $laterPattern = $all->patternAt('opt_values', 100);
+        $insertPattern = $insert->patternAt('opt_values', 100);
+
+        self::assertNull($all->startRule());
+        self::assertSame('insert_stmt', $insert->startRule());
+        self::assertNotNull($firstPattern);
+        self::assertNotNull($laterPattern);
+        self::assertNotNull($insertPattern);
+        self::assertFalse($firstPattern->matches([]));
+        self::assertTrue($firstPattern->matches(['values']));
+        self::assertFalse($laterPattern->matches([]));
+        self::assertTrue($insertPattern->matches(['values']));
+    }
+
     public function testMultiTableUpdatePlanRestrictsTheUpdateGrammar(): void
     {
         $plan = GenerationPlans::multiTableUpdateStatement();

@@ -17,6 +17,7 @@ use SqlFaker\MySql\Grammar\Production;
 use SqlFaker\MySql\Grammar\ProductionRule;
 use SqlFaker\MySql\Grammar\Terminal;
 use SqlFaker\MySql\Grammar\TerminationAnalyzer;
+use SqlFaker\MySql\GenerationPlans;
 use SqlFaker\MySql\SqlGenerator;
 use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\Grammar\TokenJoiner;
@@ -103,6 +104,81 @@ final class SqlGeneratorTest extends TestCase
         $plan = GenerationPlan::fromRule('stmt')->requiringNonEmpty();
 
         self::assertSame('EXPECTED', $generator->generate($plan->withMaxDepth(1)));
+    }
+
+    public function testGeneratePreservesAnEmptyInsertRowAllowedByTheGrammar(): void
+    {
+        $faker = Factory::create();
+        $grammar = new Grammar('insert_stmt', [
+            'insert_stmt' => new ProductionRule('insert_stmt', [
+                new Production([
+                    new Terminal('INSERT_SYM'),
+                    new Terminal('INTO'),
+                    new Terminal('IDENT'),
+                    new Terminal('VALUES'),
+                    new NonTerminal('row_value'),
+                ]),
+            ]),
+            'row_value' => new ProductionRule('row_value', [
+                new Production([
+                    new Terminal('('),
+                    new NonTerminal('opt_values'),
+                    new Terminal(')'),
+                ]),
+            ]),
+            'opt_values' => new ProductionRule('opt_values', [
+                new Production([]),
+                new Production([new Terminal('DEFAULT_SYM')]),
+            ]),
+        ]);
+        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+
+        $result = $generator->generate(GenerationPlan::fromRule('insert_stmt')->withMaxDepth(1));
+
+        self::assertSame(
+            ['INSERT_SYM', 'INTO', 'IDENT', 'VALUES', '(', ')'],
+            (new LexicalGrammar($faker, 'mysql-8.4.7', true))->tokenize($result),
+        );
+    }
+
+    public function testGenerateCanExcludeEveryEmptyRowThroughThePlan(): void
+    {
+        $faker = Factory::create();
+        $grammar = new Grammar('insert_stmt', [
+            'insert_stmt' => new ProductionRule('insert_stmt', [
+                new Production([
+                    new Terminal('INSERT_SYM'),
+                    new Terminal('INTO'),
+                    new Terminal('IDENT'),
+                    new Terminal('VALUES'),
+                    new NonTerminal('row_value'),
+                    new Terminal(','),
+                    new NonTerminal('row_value'),
+                ]),
+            ]),
+            'row_value' => new ProductionRule('row_value', [
+                new Production([
+                    new Terminal('('),
+                    new NonTerminal('opt_values'),
+                    new Terminal(')'),
+                ]),
+            ]),
+            'opt_values' => new ProductionRule('opt_values', [
+                new Production([]),
+                new Production([new Terminal('DEFAULT_SYM')]),
+            ]),
+        ]);
+        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+
+        $result = $generator->generate(GenerationPlans::withoutEmptyRows('insert_stmt')->withMaxDepth(1));
+
+        self::assertSame(
+            [
+                'INSERT_SYM', 'INTO', 'IDENT', 'VALUES',
+                '(', 'DEFAULT_SYM', ')', ',', '(', 'DEFAULT_SYM', ')',
+            ],
+            (new LexicalGrammar($faker, 'mysql-8.4.7', true))->tokenize($result),
+        );
     }
 
     public function testGenerateUsesSimpleStatementOrBeginAsDefaultStartRule(): void

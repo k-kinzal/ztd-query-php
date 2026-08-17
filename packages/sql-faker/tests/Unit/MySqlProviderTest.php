@@ -13,6 +13,7 @@ use SqlFaker\MySql\Grammar\Production;
 use SqlFaker\MySql\Grammar\ProductionRule;
 use SqlFaker\MySql\Grammar\Terminal;
 use SqlFaker\MySql\Grammar\TerminationAnalyzer;
+use SqlFaker\MySql\GenerationPlans;
 use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\MySql\LexicalGrammar;
 use SqlFaker\MySql\SqlGenerator;
@@ -42,6 +43,7 @@ use SqlFaker\MySql\Grammar\TerminalInventory;
 #[CoversClass(LexicalGrammar::class)]
 #[UsesClass(LexicalCatalog::class)]
 #[UsesClass(GenerationPlan::class)]
+#[UsesClass(GenerationPlans::class)]
 #[UsesClass(ProductionPattern::class)]
 #[UsesClass(SqlVersion::class)]
 #[UsesClass(TerminalInventory::class)]
@@ -108,6 +110,30 @@ final class MySqlProviderTest extends TestCase
         $provider = new MySqlProvider($faker);
 
         $result = $provider->sql(maxDepth: 5);
+
+        self::assertNotSame('', $result);
+    }
+
+    #[DataProvider('providerSupportedMySqlVersion')]
+    public function testSqlWithoutEmptyRowsUsesTheRestrictedGenerationPlan(string $version): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker, $version);
+
+        $result = $provider->sqlWithoutEmptyRows(StatementType::Insert, maxDepth: 10);
+
+        self::assertMatchesRegularExpression('/\bINSERT\b/i', $result);
+        self::assertDoesNotMatchRegularExpression('/\bVALUES?\s*(?:ROW\s*)?\(\s*\)/i', $result);
+    }
+
+    public function testSqlWithoutEmptyRowsCanGenerateFromTheWholeGrammar(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->sqlWithoutEmptyRows(maxDepth: 3);
 
         self::assertNotSame('', $result);
     }
@@ -969,5 +995,19 @@ final class MySqlProviderTest extends TestCase
         foreach (range(0, 15) as $seed) {
             yield "seed {$seed}" => [$seed];
         }
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function providerSupportedMySqlVersion(): iterable
+    {
+        yield 'MySQL 5.6' => ['mysql-5.6.51'];
+        yield 'MySQL 5.7' => ['mysql-5.7.44'];
+        yield 'MySQL 8.0' => ['mysql-8.0.44'];
+        yield 'MySQL 8.1' => ['mysql-8.1.0'];
+        yield 'MySQL 8.2' => ['mysql-8.2.0'];
+        yield 'MySQL 8.3' => ['mysql-8.3.0'];
+        yield 'MySQL 8.4' => ['mysql-8.4.7'];
+        yield 'MySQL 9.0' => ['mysql-9.0.1'];
+        yield 'MySQL 9.1' => ['mysql-9.1.0'];
     }
 }

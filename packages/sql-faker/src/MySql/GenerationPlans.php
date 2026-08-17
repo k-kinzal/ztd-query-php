@@ -10,6 +10,18 @@ use SqlFaker\Grammar\ProductionPattern;
 final class GenerationPlans
 {
     /** @return GenerationPlan<true> */
+    public static function withoutEmptyRows(?string $startRule = null): GenerationPlan
+    {
+        $plan = $startRule === null
+            ? GenerationPlan::all()
+            : GenerationPlan::fromRule($startRule);
+
+        return $plan
+            ->withPatternForEveryOccurrence('opt_values', ProductionPattern::nonEmpty())
+            ->requiringNonEmpty();
+    }
+
+    /** @return GenerationPlan<true> */
     public static function multiTableUpdateStatement(): GenerationPlan
     {
         return GenerationPlan::constrained('update_stmt', [

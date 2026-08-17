@@ -11,11 +11,13 @@ final class GenerationPlan
 {
     /**
      * @param array<string, non-empty-list<ProductionPattern>> $patterns
+     * @param array<string, ProductionPattern> $patternsForEveryOccurrence
      * @param TRequiresNonEmpty $requiresNonEmpty
      */
     private function __construct(
         private readonly ?string $startRule,
         private readonly array $patterns,
+        private readonly array $patternsForEveryOccurrence,
         private readonly bool $requiresNonEmpty,
         private readonly int $maxDepth,
     ) {
@@ -24,7 +26,7 @@ final class GenerationPlan
     /** @return self<false> */
     public static function all(): self
     {
-        return new self(null, [], false, PHP_INT_MAX);
+        return new self(null, [], [], false, PHP_INT_MAX);
     }
 
     /** @return self<false> */
@@ -32,7 +34,7 @@ final class GenerationPlan
     {
         self::assertStartRule($startRule);
 
-        return new self($startRule, [], false, PHP_INT_MAX);
+        return new self($startRule, [], [], false, PHP_INT_MAX);
     }
 
     /**
@@ -46,19 +48,31 @@ final class GenerationPlan
             throw new InvalidArgumentException('A constrained generation plan requires production patterns.');
         }
 
-        return new self($startRule, $patterns, false, PHP_INT_MAX);
+        return new self($startRule, $patterns, [], false, PHP_INT_MAX);
     }
 
     /** @return self<true> */
     public function requiringNonEmpty(): self
     {
-        return new self($this->startRule, $this->patterns, true, $this->maxDepth);
+        return new self(
+            $this->startRule,
+            $this->patterns,
+            $this->patternsForEveryOccurrence,
+            true,
+            $this->maxDepth,
+        );
     }
 
     /** @return self<TRequiresNonEmpty> */
     public function withMaxDepth(int $maxDepth): self
     {
-        return new self($this->startRule, $this->patterns, $this->requiresNonEmpty, max(1, $maxDepth));
+        return new self(
+            $this->startRule,
+            $this->patterns,
+            $this->patternsForEveryOccurrence,
+            $this->requiresNonEmpty,
+            max(1, $maxDepth),
+        );
     }
 
     public function startRule(): ?string
@@ -68,7 +82,23 @@ final class GenerationPlan
 
     public function patternAt(string $rule, int $occurrence): ?ProductionPattern
     {
-        return $this->patterns[$rule][$occurrence] ?? null;
+        return $this->patterns[$rule][$occurrence] ?? $this->patternsForEveryOccurrence[$rule] ?? null;
+    }
+
+    /** @return self<TRequiresNonEmpty> */
+    public function withPatternForEveryOccurrence(string $rule, ProductionPattern $pattern): self
+    {
+        if ($rule === '') {
+            throw new InvalidArgumentException('A generation plan rule must not be empty.');
+        }
+
+        return new self(
+            $this->startRule,
+            $this->patterns,
+            [...$this->patternsForEveryOccurrence, $rule => $pattern],
+            $this->requiresNonEmpty,
+            $this->maxDepth,
+        );
     }
 
     /** @return TRequiresNonEmpty */

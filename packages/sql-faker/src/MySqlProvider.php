@@ -87,6 +87,16 @@ final class MySqlProvider extends Base
         return $this->generate($startRule?->value, $maxDepth);
     }
 
+    /** Generate SQL while requiring every MySQL row-value production to be non-empty. */
+    public function sqlWithoutEmptyRows(
+        ?StatementType $startRule = null,
+        int $maxDepth = PHP_INT_MAX,
+    ): string {
+        return $this->sql->generate(
+            GenerationPlans::withoutEmptyRows($startRule?->value)->withMaxDepth($maxDepth),
+        );
+    }
+
     /**
      * Generate a SELECT statement.
      *
