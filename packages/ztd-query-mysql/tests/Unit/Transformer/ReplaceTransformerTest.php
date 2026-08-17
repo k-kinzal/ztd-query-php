@@ -67,6 +67,23 @@ final class ReplaceTransformerTest extends TestCase
         self::assertStringContainsString('SELECT', $result);
     }
 
+    public function testTransformReplaceIgnoresLeadingHashComment(): void
+    {
+        $transformer = new ReplaceTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = [
+            'users' => [
+                'rows' => [],
+                'columns' => ['id', 'name'],
+                'columnTypes' => [],
+            ],
+        ];
+
+        $result = $transformer->transform("# REPLACE INTO hidden VALUES (0)\nREPLACE INTO users VALUES (1, 'Alice')", $tables);
+
+        self::assertStringContainsString("1 AS `id`", $result);
+        self::assertStringContainsString("'Alice' AS `name`", $result);
+    }
+
     public function testTransformThrowsForNonReplaceStatement(): void
     {
         $parser = new MySqlParser();
