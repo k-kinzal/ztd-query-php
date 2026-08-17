@@ -10,6 +10,7 @@ use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Platform\Sqlite\SqliteCastRenderer;
 use ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter;
+use ZtdQuery\Platform\Sqlite\SqliteInMemoryAttachStatement;
 use ZtdQuery\Platform\Sqlite\SqliteMutationResolver;
 use ZtdQuery\Platform\Sqlite\SqliteLexicalMasker;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
@@ -31,6 +32,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(SqliteCastRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteValueRenderer::class)]
 #[UsesClass(SqliteIdentifierQuoter::class)]
+#[UsesClass(SqliteInMemoryAttachStatement::class)]
 #[UsesClass(SqliteLexicalMasker::class)]
 #[UsesClass(SqliteMutationResolver::class)]
 #[UsesClass(SqliteParser::class)]

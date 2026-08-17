@@ -12,71 +12,47 @@ final class SqliteInMemoryAttachStatement
 {
     public static function isSafe(string $sql): bool
     {
-        $stream = SqlTokenStream::tokenize($sql);
-        if (count($stream->splitStatements()) !== 1) {
-            return false;
-        }
-
-        $tokens = $stream->significantTokens();
+        $tokens = SqlTokenStream::tokenize($sql)->significantTokens();
         $last = $tokens[count($tokens) - 1] ?? null;
         if ($last !== null && self::isSymbol($last, ';')) {
             array_pop($tokens);
         }
 
-        $index = 0;
-        if (($tokens[$index] ?? null)?->isKeyword('ATTACH') !== true) {
+        if (count($tokens) < 4 || !$tokens[0]->isKeyword('ATTACH')) {
             return false;
         }
-        $index++;
-        if (($tokens[$index] ?? null)?->isKeyword('DATABASE') === true) {
-            $index++;
+
+        $pathIndex = 1;
+        if ($tokens[$pathIndex]->isKeyword('DATABASE')) {
+            $pathIndex++;
         }
 
-        $path = $tokens[$index] ?? null;
-        if ($path === null || $path->kind !== SqlTokenKind::String || self::stringValue($path) !== ':memory:') {
+        $path = $tokens[$pathIndex];
+        if ($path->kind !== SqlTokenKind::String || $path->text !== "':memory:'") {
             return false;
         }
-        $index++;
-        if (($tokens[$index] ?? null)?->isKeyword('AS') !== true) {
+
+        $as = $tokens[$pathIndex + 1];
+        if (!$as->isKeyword('AS')) {
             return false;
         }
-        $index++;
 
-        $aliasEnd = self::identifierEndIndex($tokens, $index);
-
-        return $aliasEnd !== null && $aliasEnd === count($tokens);
-    }
-
-    private static function stringValue(SqlToken $token): string
-    {
-        $inner = substr($token->text, 1, -1);
-
-        return str_replace("''", "'", $inner);
+        return self::isIdentifierSuffix($tokens, $pathIndex + 2);
     }
 
     /**
      * @param list<SqlToken> $tokens
      */
-    private static function identifierEndIndex(array $tokens, int $index): ?int
+    private static function isIdentifierSuffix(array $tokens, int $index): bool
     {
-        $token = $tokens[$index] ?? null;
-        if ($token === null) {
-            return null;
-        }
-        if ($token->kind === SqlTokenKind::Word || $token->kind === SqlTokenKind::QuotedIdentifier) {
-            return $index + 1;
-        }
-        if (!self::isSymbol($token, '[')) {
-            return null;
-        }
-
-        $name = $tokens[$index + 1] ?? null;
-        $end = $tokens[$index + 2] ?? null;
-        if ($name?->kind !== SqlTokenKind::Word || $end === null || !self::isSymbol($end, ']')) {
-            return null;
-        }
-
-        return $index + 3;
+        return match (count($tokens) - $index) {
+            1 => $tokens[$index]->kind === SqlTokenKind::Word
+                || $tokens[$index]->kind === SqlTokenKind::QuotedIdentifier,
+            3 => self::isSymbol($tokens[$index], '[')
+                && $tokens[$index + 1]->kind === SqlTokenKind::Word
+                && self::isSymbol($tokens[$index + 2], ']'),
+            default => false,
+        };
     }
 
     private static function isSymbol(SqlToken $token, string $symbol): bool
