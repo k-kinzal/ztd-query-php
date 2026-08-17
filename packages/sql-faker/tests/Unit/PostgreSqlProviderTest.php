@@ -930,6 +930,21 @@ final class PostgreSqlProviderTest extends TestCase
         );
     }
 
+    public function testMergeStatementTargetsFuzzFixtureAndCoversEveryAction(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new PostgreSqlProvider($faker);
+
+        $sql = $provider->mergeStatement();
+
+        self::assertStringContainsString('MERGE INTO users AS target USING', $sql);
+        self::assertStringContainsString('WHEN MATCHED AND source.remove_row THEN DELETE', $sql);
+        self::assertStringContainsString('WHEN MATCHED AND source.name IS NULL THEN DO NOTHING', $sql);
+        self::assertStringContainsString('WHEN MATCHED THEN UPDATE SET name = source.name', $sql);
+        self::assertStringContainsString('WHEN NOT MATCHED THEN INSERT', $sql);
+    }
+
     #[DataProvider('providerNullableSimpleStatementSeed')]
     public function testSimpleStatementReturnsNonEmpty(int $seed): void
     {

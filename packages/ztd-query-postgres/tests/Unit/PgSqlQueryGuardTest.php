@@ -76,6 +76,15 @@ final class PgSqlQueryGuardTest extends QueryClassifierContractTest
         self::assertSame(QueryKind::WRITE_SIMULATED, $guard->classify('DELETE FROM users WHERE id = 1'));
     }
 
+    public function testMergeClassifiesAsWriteSimulated(): void
+    {
+        $guard = new PgSqlQueryGuard(new PgSqlParser());
+
+        self::assertSame(QueryKind::WRITE_SIMULATED, $guard->classify(
+            'MERGE INTO users USING source ON users.id = source.id WHEN MATCHED THEN DELETE',
+        ));
+    }
+
     public function testTruncateClassifiesAsWriteSimulated(): void
     {
         $guard = new PgSqlQueryGuard(new PgSqlParser());

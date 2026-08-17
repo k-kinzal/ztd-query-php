@@ -185,7 +185,7 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
             QueryKind::WRITE_SIMULATED,
             $mutation,
             $this->returningProjectionParser->parse($sql),
-            AffectedRowsMode::Matched,
+            $statementType === 'MERGE' ? AffectedRowsMode::Changed : AffectedRowsMode::Matched,
         );
     }
 

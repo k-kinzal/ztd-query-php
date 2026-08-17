@@ -13,6 +13,7 @@ use ZtdQuery\Shadow\Mutation\MultiDeleteMutation;
 use ZtdQuery\Shadow\Mutation\MultiTruncateMutation;
 use ZtdQuery\Shadow\Mutation\MultiUpdateMutation;
 use ZtdQuery\Shadow\Mutation\ReplaceMutation;
+use ZtdQuery\Shadow\Mutation\SynchronizeMutation;
 use ZtdQuery\Shadow\Mutation\TruncateMutation;
 use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\Mutation\UpsertMutation;
@@ -31,5 +32,6 @@ final class DataMutationTest extends TestCase
         self::assertInstanceOf(DataMutation::class, new MultiUpdateMutation([]));
         self::assertInstanceOf(DataMutation::class, new MultiDeleteMutation([]));
         self::assertInstanceOf(DataMutation::class, new MultiTruncateMutation([]));
+        self::assertInstanceOf(DataMutation::class, new SynchronizeMutation('items'));
     }
 }

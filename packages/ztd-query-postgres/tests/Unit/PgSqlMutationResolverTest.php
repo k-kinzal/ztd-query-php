@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\Postgres\PgSqlMutationResolver;
+use ZtdQuery\Platform\Postgres\PgSqlMergeParser;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
 use ZtdQuery\Platform\Postgres\PgSqlSchemaParser;
 use ZtdQuery\Platform\Postgres\PgSqlPartitionParser;
@@ -21,6 +22,7 @@ use ZtdQuery\Shadow\Mutation\DeleteMutation;
 use ZtdQuery\Shadow\Mutation\DropTableMutation;
 use ZtdQuery\Shadow\Mutation\InsertMutation;
 use ZtdQuery\Shadow\Mutation\MultiTruncateMutation;
+use ZtdQuery\Shadow\Mutation\SynchronizeMutation;
 use ZtdQuery\Shadow\Mutation\TruncateMutation;
 use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\Mutation\UpsertMutation;
@@ -36,6 +38,11 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PostgreSqlLexicalMasker::class)]
 #[UsesClass(PgSqlSchemaParser::class)]
 #[UsesClass(PgSqlPartitionParser::class)]
+#[UsesClass(PgSqlMergeParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlMergeStatement::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlMergeClause::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlMergeMatchKind::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlMergeActionKind::class)]
 final class PgSqlMutationResolverTest extends TestCase
 {
     public function testPartitionDdlInheritsParentSchemaAndChildDmlUsesParentStorage(): void
@@ -2959,5 +2966,33 @@ final class PgSqlMutationResolverTest extends TestCase
             'UPDATE',
             QueryKind::WRITE_SIMULATED
         );
+    }
+
+    public function testResolveMergeReturnsAtomicTableSynchronization(): void
+    {
+        $shadowStore = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $registry->register('users', new TableDefinition(
+            ['id', 'name'],
+            ['id' => 'INTEGER', 'name' => 'TEXT'],
+            ['id'],
+            ['id'],
+            [],
+        ));
+        $resolver = new PgSqlMutationResolver(
+            $shadowStore,
+            $registry,
+            new PgSqlSchemaParser(),
+            new PgSqlParser(),
+        );
+
+        $mutation = $resolver->resolve(
+            'MERGE INTO users u USING source s ON u.id = s.id WHEN MATCHED THEN DELETE',
+            'MERGE',
+            QueryKind::WRITE_SIMULATED,
+        );
+
+        self::assertInstanceOf(SynchronizeMutation::class, $mutation);
+        self::assertSame('users', $mutation->tableName());
     }
 }

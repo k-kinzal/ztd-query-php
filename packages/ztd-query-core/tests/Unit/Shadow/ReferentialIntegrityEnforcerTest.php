@@ -17,6 +17,7 @@ use ZtdQuery\Shadow\Mutation\DeleteMutation;
 use ZtdQuery\Shadow\Mutation\CreateTableMutation;
 use ZtdQuery\Shadow\Mutation\InsertMutation;
 use ZtdQuery\Shadow\Mutation\MultiTruncateMutation;
+use ZtdQuery\Shadow\Mutation\SynchronizeMutation;
 use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
 use ZtdQuery\Shadow\ReferentialIntegrityEnforcer;
@@ -32,11 +33,42 @@ use ZtdQuery\Shadow\ShadowStore;
 #[UsesClass(CreateTableMutation::class)]
 #[UsesClass(InsertMutation::class)]
 #[UsesClass(MultiTruncateMutation::class)]
+#[UsesClass(SynchronizeMutation::class)]
 #[UsesClass(UpdateMutation::class)]
 #[UsesClass(MutationRowIdentity::class)]
 #[UsesClass(ShadowStore::class)]
 final class ReferentialIntegrityEnforcerTest extends TestCase
 {
+    public function testSynchronizationCascadesDeletedRows(): void
+    {
+        $registry = new TableDefinitionRegistry();
+        $parent = new TableDefinition(['id'], ['id' => 'INT'], ['id'], ['id'], []);
+        $registry->register('parents', $parent);
+        $registry->register('children', new TableDefinition(
+            ['id', 'parent_id'],
+            ['id' => 'INT', 'parent_id' => 'INT'],
+            ['id'],
+            ['id'],
+            [],
+            foreignKeys: ['fk_parent' => new ForeignKeyDefinition(
+                ['parent_id'],
+                'parents',
+                ['id'],
+                onDelete: ReferentialAction::Cascade,
+            )],
+        ));
+        $store = new ShadowStore();
+        $store->set('parents', [['id' => 1]]);
+        $store->set('children', [['id' => 10, 'parent_id' => 1]]);
+        $before = $store->snapshot();
+        $mutation = new SynchronizeMutation('parents', $parent);
+        $mutation->apply($store, []);
+
+        (new ReferentialIntegrityEnforcer($registry))->synchronize($before, $store, $mutation, [], 'MERGE');
+
+        self::assertSame([], $store->get('children'));
+    }
+
     public function testRejectsInsertWhoseParentDoesNotExist(): void
     {
         $registry = new TableDefinitionRegistry();

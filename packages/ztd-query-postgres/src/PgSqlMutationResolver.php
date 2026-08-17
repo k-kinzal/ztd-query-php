@@ -17,6 +17,7 @@ use ZtdQuery\Shadow\Mutation\DropTableMutation;
 use ZtdQuery\Shadow\Mutation\InsertMutation;
 use ZtdQuery\Shadow\Mutation\MultiTruncateMutation;
 use ZtdQuery\Shadow\Mutation\ShadowMutation;
+use ZtdQuery\Shadow\Mutation\SynchronizeMutation;
 use ZtdQuery\Shadow\Mutation\TruncateMutation;
 use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\Mutation\UpsertMutation;
@@ -59,6 +60,7 @@ final class PgSqlMutationResolver
             'INSERT' => $this->resolveInsert($sql),
             'UPDATE' => $this->resolveUpdate($sql),
             'DELETE' => $this->resolveDelete($sql),
+            'MERGE' => $this->resolveMerge($sql),
             'TRUNCATE' => $this->resolveTruncate($sql),
             'CREATE_TABLE' => $this->resolveCreateTable($sql),
             'DROP_TABLE' => $this->resolveDropTable($sql),
@@ -163,6 +165,23 @@ final class PgSqlMutationResolver
         $primaryKeys = $definition !== null ? $definition->primaryKeys : [];
 
         return new DeleteMutation($storageTable, $primaryKeys);
+    }
+
+    private function resolveMerge(string $sql): ShadowMutation
+    {
+        $statement = (new PgSqlMergeParser())->parse($sql);
+        $definition = $this->registry->get($statement->targetTable);
+        if ($definition === null
+            && $this->shadowStore->state($statement->targetTable) !== ShadowTableState::Initialized
+        ) {
+            throw new UnknownSchemaException($sql, $statement->targetTable, 'table');
+        }
+
+        return new SynchronizeMutation(
+            $this->storageTable($statement->targetTable),
+            $definition,
+            $sql,
+        );
     }
 
     private function resolveTruncate(string $sql): ShadowMutation

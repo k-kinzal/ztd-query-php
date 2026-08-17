@@ -22,9 +22,11 @@ use ZtdQuery\Platform\Postgres\PgSqlTransformer;
 use ZtdQuery\Platform\Postgres\PgSqlViewDefinitionParser;
 use ZtdQuery\Platform\Postgres\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\InsertTransformer;
+use ZtdQuery\Platform\Postgres\Transformer\MergeTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer;
 use ZtdQuery\Rewrite\QueryKind;
+use ZtdQuery\Rewrite\AffectedRowsMode;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\TableDefinition;
@@ -36,6 +38,7 @@ use ZtdQuery\Shadow\Mutation\CreateTableMutation;
 use ZtdQuery\Shadow\Mutation\DeleteMutation;
 use ZtdQuery\Shadow\Mutation\DropTableMutation;
 use ZtdQuery\Shadow\Mutation\InsertMutation;
+use ZtdQuery\Shadow\Mutation\SynchronizeMutation;
 use ZtdQuery\Shadow\Mutation\TruncateMutation;
 use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\ShadowStore;
@@ -63,6 +66,12 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(InsertTransformer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\InsertRowRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\InsertSelectRenderer::class)]
+#[UsesClass(MergeTransformer::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlMergeParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlMergeStatement::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlMergeClause::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlMergeMatchKind::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlMergeActionKind::class)]
 #[UsesClass(UpdateTransformer::class)]
 #[UsesClass(DeleteTransformer::class)]
 #[UsesClass(PgSqlCastRenderer::class)]
@@ -76,6 +85,34 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlPartitionPredicateRenderer::class)]
 final class PgSqlRewriterTest extends RewriterContractTest
 {
+    public function testMergeBuildsAtomicSynchronizationPlan(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', [['id' => 1, 'name' => 'old', 'email' => null]]);
+        $store->set('source', [['id' => 1, 'name' => 'updated'], ['id' => 2, 'name' => 'inserted']]);
+        $registry = new TableDefinitionRegistry();
+        $users = $this->createSchemaParser()->parse($this->usersCreateTableSql());
+        $source = $this->createSchemaParser()->parse(
+            'CREATE TABLE source (id INTEGER PRIMARY KEY, name TEXT NOT NULL)',
+        );
+        self::assertNotNull($users);
+        self::assertNotNull($source);
+        $registry->register('users', $users);
+        $registry->register('source', $source);
+
+        $plan = $this->createRewriter($store, $registry)->rewrite(
+            'MERGE INTO users AS target USING source ON target.id = source.id '
+            . 'WHEN MATCHED THEN UPDATE SET name = source.name '
+            . 'WHEN NOT MATCHED THEN INSERT (id, name) VALUES (source.id, source.name)',
+        );
+
+        self::assertSame(QueryKind::WRITE_SIMULATED, $plan->kind());
+        self::assertSame(AffectedRowsMode::Changed, $plan->affectedRowsMode());
+        self::assertInstanceOf(SynchronizeMutation::class, $plan->mutation());
+        self::assertStringContainsString('WHERE NOT (EXISTS', $plan->sql());
+        self::assertStringContainsString('UNION ALL', $plan->sql());
+    }
+
     public function testDoBlockPassesThroughWithoutInspectingBodyTables(): void
     {
         $sql = "DO \$body\$ BEGIN INSERT INTO physical_only VALUES (1); END \$body\$ LANGUAGE plpgsql";

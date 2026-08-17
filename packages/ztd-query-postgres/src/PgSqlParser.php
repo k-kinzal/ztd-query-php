@@ -21,7 +21,7 @@ final class PgSqlParser
     /**
      * Classify a SQL statement type.
      *
-     * @return 'SELECT'|'INSERT'|'UPDATE'|'DELETE'|'TRUNCATE'|'CREATE_TABLE'|'DROP_TABLE'|'ALTER_TABLE'|'DO'|'TCL'|null
+     * @return 'SELECT'|'INSERT'|'UPDATE'|'DELETE'|'MERGE'|'TRUNCATE'|'CREATE_TABLE'|'DROP_TABLE'|'ALTER_TABLE'|'DO'|'TCL'|null
      */
     public function classifyStatement(string $sql): ?string
     {
@@ -593,6 +593,7 @@ final class PgSqlParser
                 'INSERT' => 'INSERT',
                 'UPDATE' => 'UPDATE',
                 'DELETE' => 'DELETE',
+                'MERGE' => 'MERGE',
                 default => null,
             };
 
@@ -622,6 +623,9 @@ final class PgSqlParser
         }
         if (preg_match('/^DELETE\b/i', $trimmed) === 1) {
             return 'DELETE';
+        }
+        if (preg_match('/^MERGE\b/i', $trimmed) === 1) {
+            return 'MERGE';
         }
         if (preg_match('/^TRUNCATE\b/i', $trimmed) === 1) {
             return 'TRUNCATE';

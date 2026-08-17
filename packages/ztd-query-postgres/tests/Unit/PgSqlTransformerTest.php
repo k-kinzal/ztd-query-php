@@ -14,6 +14,7 @@ use ZtdQuery\Platform\Postgres\PgSqlParser;
 use ZtdQuery\Platform\Postgres\PgSqlTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\InsertTransformer;
+use ZtdQuery\Platform\Postgres\Transformer\MergeTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer;
 use ZtdQuery\Schema\ColumnType;
@@ -29,6 +30,12 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 #[UsesClass(InsertTransformer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\InsertRowRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\InsertSelectRenderer::class)]
+#[UsesClass(MergeTransformer::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlMergeParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlMergeStatement::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlMergeClause::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlMergeMatchKind::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlMergeActionKind::class)]
 #[UsesClass(UpdateTransformer::class)]
 #[UsesClass(DeleteTransformer::class)]
 #[UsesClass(PgSqlCastRenderer::class)]
@@ -85,6 +92,37 @@ final class PgSqlTransformerTest extends TestCase
         $transformer = new PgSqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer);
         $result = $transformer->transform('DELETE FROM users WHERE id = 1', ['users' => ['alias' => '"users"', 'rows' => [['id' => 1, 'name' => 'Alice']], 'columns' => ['id', 'name'], 'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'), 'name' => new ColumnType(ColumnTypeFamily::STRING, 'TEXT')]]]);
         self::assertNotEmpty($result);
+    }
+
+    public function testTransformMergeDelegatesToMergeTransformer(): void
+    {
+        $parser = new PgSqlParser();
+        $selectTransformer = new SelectTransformer();
+        $transformer = new PgSqlTransformer(
+            $parser,
+            $selectTransformer,
+            new InsertTransformer($parser, $selectTransformer),
+            new UpdateTransformer($parser, $selectTransformer),
+            new DeleteTransformer($parser, $selectTransformer),
+        );
+        $result = $transformer->transform(
+            'MERGE INTO users u USING source s ON u.id = s.id WHEN MATCHED THEN DELETE',
+            [
+                'users' => [
+                    'rows' => [['id' => 1]],
+                    'columns' => ['id'],
+                    'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER')],
+                ],
+                'source' => [
+                    'rows' => [['id' => 1]],
+                    'columns' => ['id'],
+                    'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER')],
+                ],
+            ],
+        );
+
+        self::assertStringContainsString('WHERE NOT (EXISTS', $result);
+        $transformer->commitRewriteState();
     }
 
     public function testTransformUnsupportedStatementThrows(): void

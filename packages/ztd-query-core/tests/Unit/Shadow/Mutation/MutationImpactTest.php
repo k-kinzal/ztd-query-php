@@ -10,11 +10,13 @@ use PHPUnit\Framework\TestCase;
 use ZtdQuery\Rewrite\AffectedRowsMode;
 use ZtdQuery\Schema\CandidateKeyConflict;
 use ZtdQuery\Schema\CandidateKeySet;
+use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Shadow\Mutation\DeleteMutation;
 use ZtdQuery\Shadow\Mutation\InsertMutation;
 use ZtdQuery\Shadow\Mutation\MutationImpact;
 use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
 use ZtdQuery\Shadow\Mutation\ReplaceMutation;
+use ZtdQuery\Shadow\Mutation\SynchronizeMutation;
 use ZtdQuery\Shadow\Mutation\UpsertExpression;
 use ZtdQuery\Shadow\Mutation\UpsertColumnSource;
 use ZtdQuery\Shadow\Mutation\UpsertExpressionKind;
@@ -31,6 +33,8 @@ use ZtdQuery\Sql\SqlTokenStream;
 #[UsesClass(InsertMutation::class)]
 #[UsesClass(MutationRowIdentity::class)]
 #[UsesClass(ReplaceMutation::class)]
+#[UsesClass(SynchronizeMutation::class)]
+#[UsesClass(TableDefinition::class)]
 #[UsesClass(UpsertExpression::class)]
 #[UsesClass(UpsertMutation::class)]
 #[UsesClass(UpdateMutation::class)]
@@ -160,6 +164,27 @@ final class MutationImpactTest extends TestCase
         );
 
         self::assertSame(3, $impact->affectedRowCount(AffectedRowsMode::Changed));
+    }
+
+    public function testSynchronizationCountsMixedOperationsOnceEach(): void
+    {
+        $definition = new TableDefinition(
+            ['id', 'name'],
+            ['id' => 'INTEGER', 'name' => 'TEXT'],
+            ['id'],
+            ['id'],
+            [],
+        );
+        $mutation = new SynchronizeMutation('items', $definition);
+        $impact = new MutationImpact(
+            $mutation,
+            [['id' => 1, 'name' => 'old'], ['id' => 3, 'name' => 'deleted']],
+            [['id' => 1, 'name' => 'updated'], ['id' => 2, 'name' => 'inserted']],
+            [['id' => 1, 'name' => 'updated'], ['id' => 2, 'name' => 'inserted']],
+        );
+
+        self::assertSame(3, $impact->affectedRowCount(AffectedRowsMode::Changed));
+        self::assertTrue($impact->isInsertLike());
     }
 
     public function testSkippedConditionalUpsertHasNoAffectedOrReturningRows(): void

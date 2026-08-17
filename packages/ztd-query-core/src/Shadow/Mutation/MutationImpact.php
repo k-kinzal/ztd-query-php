@@ -35,6 +35,9 @@ final class MutationImpact
         if ($mode === AffectedRowsMode::Matched && $this->mutation instanceof UpdateMutation) {
             return count($this->input);
         }
+        if ($mode === AffectedRowsMode::Changed && $this->mutation instanceof SynchronizeMutation) {
+            return $this->mutation->affectedRowCount($this->before, $this->after);
+        }
 
         return max(
             count($this->difference($this->before, $this->after)),
@@ -66,6 +69,7 @@ final class MutationImpact
     {
         return $this->mutation instanceof InsertMutation
             || $this->mutation instanceof ReplaceMutation
+            || $this->mutation instanceof SynchronizeMutation
             || $this->mutation instanceof UpsertMutation;
     }
 

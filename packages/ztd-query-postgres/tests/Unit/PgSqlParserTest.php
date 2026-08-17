@@ -77,6 +77,19 @@ final class PgSqlParserTest extends TestCase
         self::assertSame('DELETE', $parser->classifyStatement('DELETE FROM users WHERE id = 1'));
     }
 
+    public function testClassifiesMergeWithAndWithoutCtePrefix(): void
+    {
+        $parser = new PgSqlParser();
+
+        self::assertSame('MERGE', $parser->classifyStatement(
+            'MERGE INTO users USING source ON users.id = source.id WHEN MATCHED THEN DELETE',
+        ));
+        self::assertSame('MERGE', $parser->classifyStatement(
+            'WITH source AS (SELECT 1 AS id) '
+            . 'MERGE INTO users USING source ON users.id = source.id WHEN MATCHED THEN DELETE',
+        ));
+    }
+
     public function testClassifyTruncate(): void
     {
         $parser = new PgSqlParser();
