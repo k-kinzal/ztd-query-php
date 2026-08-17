@@ -165,4 +165,9 @@ final class GenerationPlansTest extends TestCase
             $plan->patternAt('merge_when_clause', 3)?->matches(['merge_when_tgt_not_matched', 'merge_insert']) ?? false,
         );
     }
+
+    public function testCopyPlanStartsFromTheCopyGrammar(): void
+    {
+        self::assertSame('CopyStmt', GenerationPlans::copyStatement()->startRule());
+    }
 }

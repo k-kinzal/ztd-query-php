@@ -169,6 +169,16 @@ final class PostgreSqlProvider extends Base
     }
 
     /**
+     * Generate a PostgreSQL COPY statement.
+     *
+     * @return non-empty-string
+     */
+    public function copyStatement(int $maxDepth = PHP_INT_MAX): string
+    {
+        return $this->sql->generate(GenerationPlans::copyStatement()->withMaxDepth($maxDepth));
+    }
+
+    /**
      * Generate a PostgreSQL CREATE INDEX statement.
      *
      * @return non-empty-string

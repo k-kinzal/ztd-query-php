@@ -73,6 +73,25 @@ final class SessionTest extends TestCase
         self::assertTrue($session->isEnabled());
     }
 
+    public function testTableDefinitionReturnsRegisteredSchemaOrNull(): void
+    {
+        $shadowStore = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $definition = new TableDefinition(['id'], ['id' => 'INTEGER'], ['id'], ['id'], []);
+        $registry->register('users', $definition);
+        $session = new Session(
+            new FakeSqlRewriter($shadowStore, $registry),
+            $shadowStore,
+            new ResultSelectRunner(),
+            ZtdConfig::default(),
+            new FakeConnection(),
+            registry: $registry,
+        );
+
+        self::assertSame($definition, $session->tableDefinition('users'));
+        self::assertNull($session->tableDefinition('missing'));
+    }
+
     public function testUsesProvidedTransactionManagerForSchemaRollback(): void
     {
         $shadowStore = new ShadowStore();

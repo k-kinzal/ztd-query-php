@@ -960,6 +960,15 @@ final class PostgreSqlProviderTest extends TestCase
         self::assertLessThan($insert, $update);
     }
 
+    public function testCopyStatementUsesOfficialGrammarRule(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new PostgreSqlProvider($faker);
+
+        self::assertStringContainsString('COPY', $provider->copyStatement(maxDepth: 8));
+    }
+
     #[DataProvider('providerNullableSimpleStatementSeed')]
     public function testSimpleStatementReturnsNonEmpty(int $seed): void
     {

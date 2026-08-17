@@ -12,6 +12,7 @@ use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\Session;
 use ZtdQuery\Platform\SessionFactory;
+use ZtdQuery\Sql\SqlTokenStream;
 
 /**
  * PDO proxy that enforces ZTD behavior for reads and writes.
@@ -166,6 +167,8 @@ class ZtdPdo extends PDO
             return $this->pdo->prepare($query, $options);
         }
 
+        $this->guardRawPostgreSqlCopy($query);
+
         try {
             $execution = new PdoPreparedExecution($this->pdo, $this->session, $query, $options);
             $prepared = $execution->prepare(null);
@@ -229,6 +232,8 @@ class ZtdPdo extends PDO
         if (!$this->session->isEnabled()) {
             return $this->pdo->exec($statement);
         }
+
+        $this->guardRawPostgreSqlCopy($statement);
 
         $transactionStatement = $this->session->transactionStatement($statement);
         if ($transactionStatement !== null) {
@@ -364,6 +369,272 @@ class ZtdPdo extends PDO
     public function quote(string $string, int $type = PDO::PARAM_STR): string|false
     {
         return $this->pdo->quote($string, $type);
+    }
+
+    /** @return array<int, string>|false */
+    public function pgsqlCopyToArray(
+        mixed $tableName,
+        mixed $separator = "\t",
+        mixed $nullAs = '\\N',
+        mixed $fields = null,
+    ): array|false {
+        return $this->copyToArrayThroughZtd(
+            $this->copyStringArgument($tableName, 'tableName'),
+            $this->copyStringArgument($separator, 'separator'),
+            $this->copyStringArgument($nullAs, 'nullAs'),
+            $this->copyOptionalStringArgument($fields, 'fields'),
+        );
+    }
+
+    /** @return array<int, string>|false */
+    public function copyToArray(
+        string $tableName,
+        string $separator = "\t",
+        string $nullAs = '\\N',
+        ?string $fields = null,
+    ): array|false {
+        return $this->copyToArrayThroughZtd($tableName, $separator, $nullAs, $fields);
+    }
+
+    /** @param array<mixed>|\Traversable<mixed> $rows */
+    public function pgsqlCopyFromArray(
+        mixed $tableName,
+        array|\Traversable $rows,
+        mixed $separator = "\t",
+        mixed $nullAs = '\\N',
+        mixed $fields = null,
+    ): bool {
+        return $this->copyFromArrayThroughZtd(
+            $this->copyStringArgument($tableName, 'tableName'),
+            $rows,
+            $this->copyStringArgument($separator, 'separator'),
+            $this->copyStringArgument($nullAs, 'nullAs'),
+            $this->copyOptionalStringArgument($fields, 'fields'),
+        );
+    }
+
+    /** @param array<mixed>|\Traversable<mixed> $rows */
+    public function copyFromArray(
+        string $tableName,
+        array|\Traversable $rows,
+        string $separator = "\t",
+        string $nullAs = '\\N',
+        ?string $fields = null,
+    ): bool {
+        return $this->copyFromArrayThroughZtd($tableName, $rows, $separator, $nullAs, $fields);
+    }
+
+    public function pgsqlCopyToFile(
+        mixed $tableName,
+        mixed $filename,
+        mixed $separator = "\t",
+        mixed $nullAs = '\\N',
+        mixed $fields = null,
+    ): bool {
+        return $this->copyToFileThroughZtd(
+            $this->copyStringArgument($tableName, 'tableName'),
+            $this->copyStringArgument($filename, 'filename'),
+            $this->copyStringArgument($separator, 'separator'),
+            $this->copyStringArgument($nullAs, 'nullAs'),
+            $this->copyOptionalStringArgument($fields, 'fields'),
+        );
+    }
+
+    public function copyToFile(
+        string $tableName,
+        string $filename,
+        string $separator = "\t",
+        string $nullAs = '\\N',
+        ?string $fields = null,
+    ): bool {
+        return $this->copyToFileThroughZtd($tableName, $filename, $separator, $nullAs, $fields);
+    }
+
+    public function pgsqlCopyFromFile(
+        mixed $tableName,
+        mixed $filename,
+        mixed $separator = "\t",
+        mixed $nullAs = '\\N',
+        mixed $fields = null,
+    ): bool {
+        return $this->copyFromFileThroughZtd(
+            $this->copyStringArgument($tableName, 'tableName'),
+            $this->copyStringArgument($filename, 'filename'),
+            $this->copyStringArgument($separator, 'separator'),
+            $this->copyStringArgument($nullAs, 'nullAs'),
+            $this->copyOptionalStringArgument($fields, 'fields'),
+        );
+    }
+
+    public function copyFromFile(
+        string $tableName,
+        string $filename,
+        string $separator = "\t",
+        string $nullAs = '\\N',
+        ?string $fields = null,
+    ): bool {
+        return $this->copyFromFileThroughZtd($tableName, $filename, $separator, $nullAs, $fields);
+    }
+
+    /** @return array<int, string>|false */
+    private function copyToArrayThroughZtd(
+        string $tableName,
+        string $separator,
+        string $nullAs,
+        ?string $fields,
+    ): array|false {
+        [$codec, $relation, $columns] = $this->postgreSqlCopyTarget($tableName, $fields);
+        $statement = $this->query(sprintf(
+            'SELECT %s FROM %s',
+            $codec->columnListSql($columns),
+            $relation,
+        ));
+        if ($statement === false) {
+            return false;
+        }
+
+        $rows = [];
+        while (($values = $statement->fetch(PDO::FETCH_NUM)) !== false) {
+            if (!is_array($values)) {
+                throw new ZtdPdoException('PostgreSQL COPY query returned an invalid row.');
+            }
+            $rows[] = $codec->encodeRow(array_values($values), $separator, $nullAs);
+        }
+
+        return $rows;
+    }
+
+    /** @param array<mixed>|\Traversable<mixed> $rows */
+    private function copyFromArrayThroughZtd(
+        string $tableName,
+        array|\Traversable $rows,
+        string $separator,
+        string $nullAs,
+        ?string $fields,
+    ): bool {
+        [$codec, $relation, $columns] = $this->postgreSqlCopyTarget($tableName, $fields);
+        $decodedRows = [];
+        foreach ($rows as $row) {
+            if (!is_string($row)) {
+                throw new \TypeError(sprintf('PostgreSQL COPY rows must be strings, %s given.', get_debug_type($row)));
+            }
+            $decodedRow = $codec->decodeRow($row, $separator, $nullAs);
+            if (count($decodedRow) !== count($columns)) {
+                throw new \ValueError(sprintf(
+                    'PostgreSQL COPY row has %d fields, but %d fields are required.',
+                    count($decodedRow),
+                    count($columns),
+                ));
+            }
+            $decodedRows[] = $decodedRow;
+        }
+        if ($decodedRows === []) {
+            return true;
+        }
+
+        $parameter = 1;
+        $valueRows = [];
+        $parameters = [];
+        foreach ($decodedRows as $parameterValues) {
+            $placeholders = [];
+            foreach ($parameterValues as $value) {
+                $placeholders[] = '$' . $parameter++;
+                $parameters[] = $value;
+            }
+            $valueRows[] = '(' . implode(', ', $placeholders) . ')';
+        }
+
+        $statement = $this->prepare(sprintf(
+            'INSERT INTO %s (%s)%s VALUES %s',
+            $relation,
+            $codec->columnListSql($columns),
+            $this->session->isEnabled() ? '' : ' OVERRIDING SYSTEM VALUE',
+            implode(', ', $valueRows),
+        ));
+
+        return $statement !== false && $statement->execute($parameters);
+    }
+
+    private function copyToFileThroughZtd(
+        string $tableName,
+        string $filename,
+        string $separator,
+        string $nullAs,
+        ?string $fields,
+    ): bool {
+        $rows = $this->copyToArrayThroughZtd($tableName, $separator, $nullAs, $fields);
+        if ($rows === false) {
+            return false;
+        }
+
+        return file_put_contents($filename, implode('', $rows)) !== false;
+    }
+
+    private function copyFromFileThroughZtd(
+        string $tableName,
+        string $filename,
+        string $separator,
+        string $nullAs,
+        ?string $fields,
+    ): bool {
+        $rows = file($filename);
+        if ($rows === false) {
+            return false;
+        }
+
+        return $this->copyFromArrayThroughZtd($tableName, $rows, $separator, $nullAs, $fields);
+    }
+
+    /**
+     * @return array{PostgreSqlCopyCodec, string, list<string>}
+     */
+    private function postgreSqlCopyTarget(string $tableName, ?string $fields): array
+    {
+        if ($this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME) !== 'pgsql') {
+            throw new ZtdPdoException('PostgreSQL COPY methods require the PDO PostgreSQL driver.');
+        }
+
+        $codec = new PostgreSqlCopyCodec();
+        $target = $codec->relation($tableName);
+        $definition = $this->session->tableDefinition($target['name']);
+        if ($definition === null) {
+            throw new ZtdPdoException(sprintf(
+                'PostgreSQL COPY cannot resolve the schema for table "%s".',
+                $target['name'],
+            ));
+        }
+
+        return [$codec, $target['sql'], $codec->columns($fields, $definition)];
+    }
+
+    private function guardRawPostgreSqlCopy(string $sql): void
+    {
+        if ($this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'pgsql'
+            && SqlTokenStream::tokenize($sql)->firstTopLevelKeyword() === 'COPY'
+        ) {
+            throw new ZtdPdoException(
+                'ZTD Write Protection: Raw PostgreSQL COPY cannot preserve shadow isolation; '
+                . 'use the pgsqlCopyToArray(), pgsqlCopyFromArray(), pgsqlCopyToFile(), or pgsqlCopyFromFile() methods.',
+            );
+        }
+    }
+
+    private function copyStringArgument(mixed $value, string $name): string
+    {
+        if (!is_string($value)) {
+            throw new \TypeError(sprintf('PostgreSQL COPY argument $%s must be a string, %s given.', $name, get_debug_type($value)));
+        }
+
+        return $value;
+    }
+
+    private function copyOptionalStringArgument(mixed $value, string $name): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        return $this->copyStringArgument($value, $name);
     }
 
     /**

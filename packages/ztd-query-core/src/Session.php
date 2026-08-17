@@ -19,6 +19,7 @@ use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Rewrite\RewriteStateCommitter;
+use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\Mutation\MutationImpact;
 use ZtdQuery\Shadow\Mutation\ShadowMutation;
@@ -188,6 +189,10 @@ final class Session
         return $this->lastInsertId ?? false;
     }
 
+    public function tableDefinition(string $tableName): ?TableDefinition
+    {
+        return $this->registry?->get($tableName);
+    }
 
     /**
      * Rewrite SQL using the configured rewriter.

@@ -139,6 +139,12 @@ final class GenerationPlans
     }
 
     /** @return GenerationPlan<true> */
+    public static function copyStatement(): GenerationPlan
+    {
+        return GenerationPlan::fromRule('CopyStmt')->requiringNonEmpty();
+    }
+
+    /** @return GenerationPlan<true> */
     public static function foreignKeyConstraint(): GenerationPlan
     {
         return GenerationPlan::constrained('TableConstraint', [
