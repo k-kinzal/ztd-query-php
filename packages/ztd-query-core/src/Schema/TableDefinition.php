@@ -32,6 +32,9 @@ final class TableDefinition
 
     public readonly ?TablePartitionRelation $partitionRelation;
 
+    /** @var array<string, PartialUniqueIndex> */
+    public readonly array $partialUniqueIndexes;
+
     /**
      * @param list<string> $columns Column names in declaration order.
      * @param array<string, string> $columnTypes Column name => MySQL type string.
@@ -46,6 +49,7 @@ final class TableDefinition
      * @param TablePartitioning|null $partitioning Named partition selection predicates.
      * @param TablePartitionKey|null $partitionKey Declarative partition key metadata.
      * @param TablePartitionRelation|null $partitionRelation Parent partition relationship.
+     * @param array<string, PartialUniqueIndex> $partialUniqueIndexes Partial unique indexes keyed by name.
      */
     public function __construct(
         public readonly array $columns,
@@ -61,6 +65,7 @@ final class TableDefinition
         ?TablePartitioning $partitioning = null,
         ?TablePartitionKey $partitionKey = null,
         ?TablePartitionRelation $partitionRelation = null,
+        array $partialUniqueIndexes = [],
     ) {
         $this->typedColumns = $typedColumns;
         $this->columnDefaults = $columnDefaults;
@@ -70,6 +75,7 @@ final class TableDefinition
         $this->partitioning = $partitioning;
         $this->partitionKey = $partitionKey;
         $this->partitionRelation = $partitionRelation;
+        $this->partialUniqueIndexes = $partialUniqueIndexes;
     }
 
     public function candidateKeys(): CandidateKeySet
@@ -93,6 +99,7 @@ final class TableDefinition
             $partitioning,
             $this->partitionKey,
             $this->partitionRelation,
+            $this->partialUniqueIndexes,
         );
     }
 
@@ -112,6 +119,7 @@ final class TableDefinition
             $this->partitioning,
             $partitionKey,
             $this->partitionRelation,
+            $this->partialUniqueIndexes,
         );
     }
 
@@ -131,6 +139,30 @@ final class TableDefinition
             $this->partitioning,
             $this->partitionKey,
             $partitionRelation,
+            $this->partialUniqueIndexes,
+        );
+    }
+
+    public function withPartialUniqueIndex(PartialUniqueIndex $index): self
+    {
+        $indexes = $this->partialUniqueIndexes;
+        $indexes[$index->name] = $index;
+
+        return new self(
+            $this->columns,
+            $this->columnTypes,
+            $this->primaryKeys,
+            $this->notNullColumns,
+            $this->uniqueConstraints,
+            $this->typedColumns,
+            $this->columnDefaults,
+            $this->identityStrategies,
+            $this->generatedExpressions,
+            $this->foreignKeys,
+            $this->partitioning,
+            $this->partitionKey,
+            $this->partitionRelation,
+            $indexes,
         );
     }
 }

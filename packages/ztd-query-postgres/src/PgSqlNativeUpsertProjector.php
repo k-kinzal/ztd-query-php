@@ -43,6 +43,7 @@ final class PgSqlNativeUpsertProjector
         array $candidateKeys,
         array $assignments,
         ?string $predicate = null,
+        ?string $conflictPredicate = null,
     ): string {
         if ($assignments === [] || $candidateKeys === []) {
             return $incomingSql;
@@ -52,6 +53,21 @@ final class PgSqlNativeUpsertProjector
         $existingAlias = $this->quoter->quote(self::EXISTING_ALIAS);
         $table = $this->quoter->quote($tableName);
         $conflict = $this->conflictPredicate($candidateKeys, $existingAlias, $incomingAlias);
+        if ($conflictPredicate !== null) {
+            $existingPredicate = $this->bindExpression(
+                $conflictPredicate,
+                $tableName,
+                $tableColumns,
+                self::EXISTING_ALIAS,
+            );
+            $incomingPredicate = $this->bindExpression(
+                $conflictPredicate,
+                $tableName,
+                $tableColumns,
+                self::INCOMING_ALIAS,
+            );
+            $conflict = "($conflict AND ($existingPredicate) AND ($incomingPredicate))";
+        }
         $selects = [];
         foreach ($tableColumns as $column) {
             $quoted = $this->quoter->quote($column);

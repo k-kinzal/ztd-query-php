@@ -28,6 +28,7 @@ use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Schema\TableDefinitionRegistry;
+use ZtdQuery\Schema\PartialUniqueIndex;
 use ZtdQuery\Shadow\ShadowStore;
 
 final class RobustnessTarget
@@ -136,6 +137,11 @@ final class RobustnessTarget
         foreach ($schemas as $tableName => $createSql) {
             $definition = $schemaParser->parse($createSql);
             if ($definition !== null) {
+                if ($tableName === 'users') {
+                    $definition = $definition->withPartialUniqueIndex(
+                        new PartialUniqueIndex('users_active_email', ['email'], "status = 'active'"),
+                    );
+                }
                 $registry->register($tableName, $definition);
             }
         }
@@ -193,6 +199,7 @@ final class RobustnessTarget
             fn (): string => $this->provider->doStatement(),
             fn (): string => $this->provider->mergeStatement(),
             fn (): string => $this->provider->copyStatement(maxDepth: 8),
+            fn (): string => $this->provider->partialIndexUpsertStatement(),
         ];
 
         $index = ord($input[0] ?? "\0") % count($generators);

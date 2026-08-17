@@ -14,6 +14,7 @@ use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
+use ZtdQuery\Schema\PartialUniqueIndex;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
@@ -22,6 +23,7 @@ use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 #[CoversClass(InsertTransformer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser::class)]
 #[UsesClass(PgSqlParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlConflictTarget::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PostgreSqlLexicalMasker::class)]
 #[UsesClass(SelectTransformer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlTableSampleParser::class)]
@@ -56,6 +58,34 @@ final class InsertTransformerTest extends TestCase
         self::assertStringContainsString('"__ztd_incoming"."name"', $result);
         self::assertStringContainsString('__ztd_upsert_value_0', $result);
         self::assertStringNotContainsString('EXCLUDED.', $result);
+    }
+
+    public function testProjectsPartialIndexPredicateForBothCandidateRows(): void
+    {
+        $transformer = new InsertTransformer(new PgSqlParser(), new SelectTransformer());
+        $partial = new PartialUniqueIndex('users_active_email', ['email'], "status = 'active'::text");
+        $tables = [
+            'users' => [
+                'rows' => [],
+                'columns' => ['email', 'status', 'login_count'],
+                'columnTypes' => [],
+                'candidateKeys' => [],
+                'partialUniqueIndexes' => [$partial->name => $partial],
+            ],
+        ];
+
+        $result = $transformer->transform(
+            "INSERT INTO users VALUES ('alice@example.com', 'active', 1) "
+            . "ON CONFLICT (email) WHERE status = 'active' "
+            . 'DO UPDATE SET login_count = users.login_count + EXCLUDED.login_count',
+            $tables,
+        );
+
+        self::assertStringContainsString(
+            '("__ztd_existing"."status" = \'active\') AND ("__ztd_incoming"."status" = \'active\')',
+            $result,
+        );
+        self::assertStringContainsString('__ztd_upsert_value_0', $result);
     }
 
     public function testUsesInjectedCastRendererForTypedValue(): void

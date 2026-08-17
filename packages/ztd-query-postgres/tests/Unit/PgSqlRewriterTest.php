@@ -50,6 +50,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlForeignKeyDefinitionParser::class)]
 #[UsesClass(PgSqlParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlUpsertExpressionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlConflictTarget::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PostgreSqlLexicalMasker::class)]
 #[UsesClass(PgSqlSchemaParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser::class)]

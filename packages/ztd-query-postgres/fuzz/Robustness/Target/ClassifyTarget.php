@@ -65,6 +65,7 @@ final class ClassifyTarget
             fn (): string => $this->provider->doStatement(),
             fn (): string => $this->provider->mergeStatement(),
             fn (): string => $this->provider->copyStatement(maxDepth: 8),
+            fn (): string => $this->provider->partialIndexUpsertStatement(),
         ];
 
         $index = ord($input[0] ?? "\0") % count($generators);

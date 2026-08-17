@@ -83,12 +83,24 @@ final class PgSqlMutationResolver
         if ($this->parser->hasOnConflict($sql)) {
             $conflictInfo = $this->parser->extractOnConflictUpdateColumns($sql);
             $updateColumns = $conflictInfo['columns'];
+            $candidateKeys = $definition?->candidateKeys();
+            $conflictPredicate = null;
+            $target = $this->parser->extractOnConflictTarget($sql);
+            if ($target !== null && $definition !== null) {
+                $resolved = $target->resolve(
+                    $definition->candidateKeys(),
+                    $definition->partialUniqueIndexes,
+                    $sql,
+                );
+                $candidateKeys = $resolved['keys'];
+                $conflictPredicate = $resolved['predicate'];
+            }
+            $expressionParser = new PgSqlUpsertExpressionParser();
 
             if ($updateColumns !== []) {
-                $databaseEvaluated = $definition !== null && $definition->candidateKeys()->keys() !== [];
+                $databaseEvaluated = $candidateKeys !== null && $candidateKeys->keys() !== [];
                 /** @var array<string, \ZtdQuery\Shadow\Mutation\UpsertExpression|null> $resolvedValues */
                 $resolvedValues = [];
-                $expressionParser = new PgSqlUpsertExpressionParser();
                 foreach ($conflictInfo['values'] as $col => $value) {
                     $resolvedValues[$col] = $databaseEvaluated
                         ? $expressionParser->parseIfSupported($value, $tableName)
@@ -101,7 +113,7 @@ final class PgSqlMutationResolver
                     $primaryKeys,
                     $updateColumns,
                     $resolvedValues,
-                    $definition?->candidateKeys(),
+                    $candidateKeys,
                     $predicate !== null
                         ? ($databaseEvaluated
                             ? $expressionParser->parseIfSupported($predicate, $tableName)
@@ -110,6 +122,9 @@ final class PgSqlMutationResolver
                     databaseEvaluated: $databaseEvaluated,
                     updateSqlValues: $conflictInfo['values'],
                     updateSqlPredicate: $predicate,
+                    conflictPredicate: $conflictPredicate !== null
+                        ? $expressionParser->parse($conflictPredicate, $tableName)
+                        : null,
                 );
             }
 
@@ -117,7 +132,10 @@ final class PgSqlMutationResolver
                 $storageTable,
                 $primaryKeys,
                 true,
-                candidateKeys: $definition?->candidateKeys(),
+                candidateKeys: $candidateKeys,
+                conflictPredicate: $conflictPredicate !== null
+                    ? $expressionParser->parse($conflictPredicate, $tableName)
+                    : null,
             );
         }
 

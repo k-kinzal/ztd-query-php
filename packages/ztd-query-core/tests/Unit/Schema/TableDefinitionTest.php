@@ -10,6 +10,7 @@ use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
 use ZtdQuery\Schema\ForeignKeyDefinition;
+use ZtdQuery\Schema\PartialUniqueIndex;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TablePartitioning;
 use ZtdQuery\Schema\TablePartitionKey;
@@ -21,6 +22,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(ColumnType::class)]
 #[UsesClass(CandidateKeySet::class)]
 #[UsesClass(ForeignKeyDefinition::class)]
+#[UsesClass(PartialUniqueIndex::class)]
 #[UsesClass(TablePartitioning::class)]
 #[UsesClass(TablePartitionKey::class)]
 #[UsesClass(TablePartitionRelation::class)]
@@ -76,6 +78,7 @@ final class TableDefinitionTest extends TestCase
         self::assertNull($definition->partitioning);
         self::assertNull($definition->partitionKey);
         self::assertNull($definition->partitionRelation);
+        self::assertSame([], $definition->partialUniqueIndexes);
     }
 
     public function testWithPartitioningPreservesSchemaAndReturnsNewDefinition(): void
@@ -103,5 +106,18 @@ final class TableDefinitionTest extends TestCase
         self::assertSame($relation, $partition->partitionRelation);
         self::assertSame($definition->columns, $partition->columns);
         self::assertSame($definition->candidateKeys()->keys(), $partition->candidateKeys()->keys());
+    }
+
+    public function testWithPartialUniqueIndexPreservesSchemaAndIndexesByName(): void
+    {
+        $definition = new TableDefinition(['email', 'status'], ['email' => 'TEXT', 'status' => 'TEXT'], [], [], []);
+        $index = new PartialUniqueIndex('users_active_email', ['email'], "status = 'active'");
+
+        $indexed = $definition->withPartialUniqueIndex($index);
+
+        self::assertNotSame($definition, $indexed);
+        self::assertSame([], $definition->partialUniqueIndexes);
+        self::assertSame($index, $indexed->partialUniqueIndexes['users_active_email']);
+        self::assertSame($definition->columns, $indexed->columns);
     }
 }

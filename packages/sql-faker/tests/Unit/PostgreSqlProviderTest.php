@@ -96,6 +96,15 @@ final class PostgreSqlProviderTest extends TestCase
         self::assertContains('UPDATE', $tokens);
     }
 
+    public function testPartialIndexUpsertStatementIncludesArbiterPredicate(): void
+    {
+        $sql = (new PostgreSqlProvider(Factory::create()))->partialIndexUpsertStatement();
+
+        self::assertStringStartsWith('INSERT INTO users ', $sql);
+        self::assertStringContainsString("ON CONFLICT (email) WHERE status = 'active'", $sql);
+        self::assertStringEndsWith('DO UPDATE SET name = EXCLUDED.name', $sql);
+    }
+
     #[DataProvider('providerTargetedGenerationSeed')]
     public function testTemporaryTableStatement(int $seed): void
     {

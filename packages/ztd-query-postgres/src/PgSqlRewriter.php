@@ -236,6 +236,7 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
                 'generatedExpressions' => $generatedExpressions,
                 'primaryKeys' => $definition !== null ? $definition->primaryKeys : [],
                 'candidateKeys' => $definition !== null ? $definition->candidateKeys()->keys() : [],
+                'partialUniqueIndexes' => $definition !== null ? $definition->partialUniqueIndexes : [],
             ];
         }
 
@@ -254,6 +255,7 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
                 'generatedExpressions' => $definition->generatedExpressions,
                 'primaryKeys' => $definition->primaryKeys,
                 'candidateKeys' => $definition->candidateKeys()->keys(),
+                'partialUniqueIndexes' => $definition->partialUniqueIndexes,
             ];
         }
 

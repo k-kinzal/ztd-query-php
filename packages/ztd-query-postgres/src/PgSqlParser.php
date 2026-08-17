@@ -122,6 +122,96 @@ final class PgSqlParser
         return preg_match('/\bON\s+CONFLICT\b/i', $sql) === 1;
     }
 
+    public function extractOnConflictTarget(string $sql): ?PgSqlConflictTarget
+    {
+        $tokens = SqlTokenStream::tokenize($sql)->significantTokens();
+        $conflict = null;
+        foreach ($tokens as $index => $token) {
+            if ($token->isTopLevel()
+                && $token->isKeyword('ON')
+                && ($tokens[$index + 1] ?? null)?->isKeyword('CONFLICT') === true
+            ) {
+                $conflict = $index + 2;
+                break;
+            }
+        }
+        if ($conflict === null) {
+            return null;
+        }
+
+        $next = $tokens[$conflict] ?? null;
+        if ($next?->isKeyword('DO') === true) {
+            return new PgSqlConflictTarget(false);
+        }
+        if ($next?->isKeyword('ON') === true && ($tokens[$conflict + 1] ?? null)?->isKeyword('CONSTRAINT') === true) {
+            $constraintToken = $tokens[$conflict + 2] ?? null;
+            if ($constraintToken === null) {
+                return null;
+            }
+            $identifier = SqlTokenStream::tokenize($constraintToken->text)->identifierAt();
+            if ($identifier === null) {
+                return null;
+            }
+
+            return new PgSqlConflictTarget(true, constraint: $identifier['name']);
+        }
+        if ($next?->kind !== SqlTokenKind::Symbol || $next->text !== '(') {
+            return null;
+        }
+
+        $closing = null;
+        foreach ($tokens as $index => $token) {
+            if ($index > $conflict && $token->isTopLevel() && $token->kind === SqlTokenKind::Symbol && $token->text === ')') {
+                $closing = $index;
+                break;
+            }
+        }
+        if ($closing === null) {
+            return null;
+        }
+
+        $columnSql = substr(
+            $sql,
+            $next->endOffset(),
+            $tokens[$closing]->offset - $next->endOffset(),
+        );
+        $columns = [];
+        foreach (SqlTokenStream::tokenize($columnSql)->splitTopLevel() as $part) {
+            $stream = SqlTokenStream::tokenize($part);
+            $identifier = $stream->identifierAt();
+            if ($identifier === null || $identifier['next'] !== count($stream->significantTokens())) {
+                return null;
+            }
+            $columns[] = $identifier['name'];
+        }
+
+        $do = null;
+        foreach ($tokens as $index => $token) {
+            if ($index > $closing && $token->isTopLevel() && $token->isKeyword('DO')) {
+                $do = $index;
+                break;
+            }
+        }
+        if ($do === null) {
+            return null;
+        }
+
+        $predicate = null;
+        $afterColumns = $tokens[$closing + 1] ?? null;
+        if ($afterColumns?->isKeyword('WHERE') === true) {
+            $predicate = trim(substr(
+                $sql,
+                $afterColumns->endOffset(),
+                $tokens[$do]->offset - $afterColumns->endOffset(),
+            ));
+            if ($predicate === '') {
+                return null;
+            }
+        }
+
+        return new PgSqlConflictTarget(true, $columns, $predicate);
+    }
+
     /**
      * Extract ON CONFLICT ... DO UPDATE SET columns and values.
      *

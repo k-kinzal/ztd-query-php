@@ -12,8 +12,10 @@ use ZtdQuery\Platform\Postgres\PgSqlParser;
 use ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer;
 use ZtdQuery\Rewrite\ShadowIdentityAllocator;
 use ZtdQuery\Rewrite\SqlTransformer;
+use ZtdQuery\Schema\CandidateKeySet;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
+use ZtdQuery\Schema\PartialUniqueIndex;
 use ZtdQuery\Sql\SqlTokenStream;
 
 /**
@@ -139,7 +141,10 @@ final class InsertTransformer implements SqlTransformer
 
     /**
      * @param list<string> $tableColumns
-     * @param array<string, array{candidateKeys?: array<string, array<int, string>>}> $tables
+     * @param array<string, array{
+     *     candidateKeys?: array<string, array<int, string>>,
+     *     partialUniqueIndexes?: array<string, PartialUniqueIndex>
+     * }> $tables
      */
     private function projectUpsert(
         string $sql,
@@ -149,14 +154,31 @@ final class InsertTransformer implements SqlTransformer
         array $tables,
     ): string {
         $conflict = $this->parser->extractOnConflictUpdateColumns($sql);
+        $candidateKeys = new CandidateKeySet(
+            isset($tables[$tableName]['candidateKeys']) ? $tables[$tableName]['candidateKeys'] : [],
+        );
+        $conflictPredicate = null;
+        $target = $this->parser->extractOnConflictTarget($sql);
+        if ($target !== null) {
+            $resolved = $target->resolve(
+                $candidateKeys,
+                isset($tables[$tableName]['partialUniqueIndexes'])
+                    ? $tables[$tableName]['partialUniqueIndexes']
+                    : [],
+                $sql,
+            );
+            $candidateKeys = $resolved['keys'];
+            $conflictPredicate = $resolved['predicate'];
+        }
 
         return $this->upsertProjector->project(
             $selectSql,
             $tableName,
             $tableColumns,
-            isset($tables[$tableName]['candidateKeys']) ? $tables[$tableName]['candidateKeys'] : [],
+            $candidateKeys->keys(),
             $conflict['values'],
             $this->parser->extractOnConflictUpdateWhere($sql),
+            $conflictPredicate,
         );
     }
 

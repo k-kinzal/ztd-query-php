@@ -45,6 +45,8 @@ final class UpsertMutation implements DataMutation
 
     private ?UpsertExpression $updatePredicate;
 
+    private ?UpsertExpression $conflictPredicate;
+
     private bool $databaseEvaluated;
 
     /** @var array<string, string> */
@@ -74,6 +76,7 @@ final class UpsertMutation implements DataMutation
         bool $databaseEvaluated = false,
         array $updateSqlValues = [],
         ?string $updateSqlPredicate = null,
+        ?UpsertExpression $conflictPredicate = null,
     ) {
         $this->tableName = $tableName;
         $this->primaryKeys = $primaryKeys;
@@ -84,6 +87,7 @@ final class UpsertMutation implements DataMutation
         $this->candidateKeys = $candidateKeys ?? CandidateKeySet::fromSchema($primaryKeys);
         $this->updatePredicate = $updatePredicate;
         $this->databaseEvaluated = $databaseEvaluated;
+        $this->conflictPredicate = $conflictPredicate;
     }
 
     /**
@@ -99,7 +103,7 @@ final class UpsertMutation implements DataMutation
             $incomingRow = $this->databaseEvaluated
                 ? $codec->incomingRow($row, count($this->updateColumns))
                 : $row;
-            $conflict = $this->candidateKeys->findConflict($incomingRow, $existingRows);
+            $conflict = $this->findConflict($incomingRow, $existingRows);
             if ($conflict !== null) {
                 $existingIndex = $conflict->rowIndex;
                 $updatedRow = $existingRows[$existingIndex];
@@ -203,5 +207,27 @@ final class UpsertMutation implements DataMutation
     public function resultRows(): array
     {
         return $this->resultRows;
+    }
+    /**
+     * @param array<string, mixed> $incomingRow
+     * @param array<int, array<string, mixed>> $existingRows
+     */
+    private function findConflict(array $incomingRow, array $existingRows): ?\ZtdQuery\Schema\CandidateKeyConflict
+    {
+        if ($this->conflictPredicate === null) {
+            return $this->candidateKeys->findConflict($incomingRow, $existingRows);
+        }
+        if (!$this->conflictPredicate->matches($incomingRow, $incomingRow, $this->tableName)) {
+            return null;
+        }
+
+        $eligibleRows = [];
+        foreach ($existingRows as $index => $existingRow) {
+            if ($this->conflictPredicate->matches($existingRow, $existingRow, $this->tableName)) {
+                $eligibleRows[$index] = $existingRow;
+            }
+        }
+
+        return $this->candidateKeys->findConflict($incomingRow, $eligibleRows);
     }
 }

@@ -10,6 +10,9 @@ use ZtdQuery\Schema\CandidateKeyConflict;
 use ZtdQuery\Schema\CandidateKeySet;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Shadow\Mutation\InsertMutation;
+use ZtdQuery\Shadow\Mutation\UpsertColumnSource;
+use ZtdQuery\Shadow\Mutation\UpsertExpression;
+use ZtdQuery\Shadow\Mutation\UpsertExpressionKind;
 use ZtdQuery\Shadow\ShadowStore;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -21,6 +24,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(ShadowStore::class)]
 #[UsesClass(CandidateKeyConflict::class)]
 #[UsesClass(CandidateKeySet::class)]
+#[UsesClass(UpsertExpression::class)]
 #[CoversClass(InsertMutation::class)]
 final class InsertMutationTest extends TestCase
 {
@@ -249,5 +253,36 @@ final class InsertMutationTest extends TestCase
 
         self::assertCount(1, $store->get('users'));
         self::assertSame('Alice', $store->get('users')[0]['name']);
+    }
+
+    public function testInsertIgnoreUsesPartialConflictPredicate(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', [[
+            'email' => 'alice@example.com',
+            'status' => 'inactive',
+        ]]);
+        $mutation = new InsertMutation(
+            'users',
+            ignore: true,
+            candidateKeys: CandidateKeySet::fromSchema([], ['users_active_email' => ['email']]),
+            conflictPredicate: UpsertExpression::binary(
+                UpsertExpressionKind::Equal,
+                UpsertExpression::column(UpsertColumnSource::Existing, 'status'),
+                UpsertExpression::literal('active'),
+            ),
+        );
+
+        $mutation->apply($store, [
+            ['email' => 'alice@example.com', 'status' => 'active'],
+            ['email' => 'alice@example.com', 'status' => 'active'],
+            ['email' => 'alice@example.com', 'status' => 'inactive'],
+        ]);
+
+        self::assertSame([
+            ['email' => 'alice@example.com', 'status' => 'inactive'],
+            ['email' => 'alice@example.com', 'status' => 'active'],
+            ['email' => 'alice@example.com', 'status' => 'inactive'],
+        ], $store->get('users'));
     }
 }

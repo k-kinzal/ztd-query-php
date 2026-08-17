@@ -492,4 +492,42 @@ final class UpsertMutationTest extends TestCase
             ['id' => 1, 'quantity' => 7, $codec->valueColumn(0) => 107],
         ]);
     }
+
+    public function testConflictPredicateRestrictsIncomingAndExistingCandidateRows(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', [[
+            'email' => 'alice@example.com',
+            'status' => 'inactive',
+            'login_count' => 2,
+        ]]);
+        $mutation = new UpsertMutation(
+            'users',
+            [],
+            ['login_count'],
+            ['login_count' => UpsertExpression::binary(
+                UpsertExpressionKind::Add,
+                UpsertExpression::column(UpsertColumnSource::Existing, 'login_count'),
+                UpsertExpression::literal(1),
+            )],
+            CandidateKeySet::fromSchema([], ['users_active_email' => ['email']]),
+            conflictPredicate: UpsertExpression::binary(
+                UpsertExpressionKind::Equal,
+                UpsertExpression::column(UpsertColumnSource::Existing, 'status'),
+                UpsertExpression::literal('active'),
+            ),
+        );
+
+        $mutation->apply($store, [
+            ['email' => 'alice@example.com', 'status' => 'active', 'login_count' => 5],
+            ['email' => 'alice@example.com', 'status' => 'active', 'login_count' => 1],
+            ['email' => 'alice@example.com', 'status' => 'inactive', 'login_count' => 9],
+        ]);
+
+        self::assertSame([
+            ['email' => 'alice@example.com', 'status' => 'inactive', 'login_count' => 2],
+            ['email' => 'alice@example.com', 'status' => 'active', 'login_count' => 6],
+            ['email' => 'alice@example.com', 'status' => 'inactive', 'login_count' => 9],
+        ], $store->get('users'));
+    }
 }

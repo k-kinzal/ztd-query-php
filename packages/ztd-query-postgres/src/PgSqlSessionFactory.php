@@ -40,6 +40,16 @@ final class PgSqlSessionFactory implements SessionFactory
                 $registry->register($tableName, $definition);
             }
         }
+        foreach ($reflector->partialUniqueIndexes() as $tableName => $indexes) {
+            $definition = $registry->get($tableName);
+            if ($definition === null) {
+                continue;
+            }
+            foreach ($indexes as $index) {
+                $definition = $definition->withPartialUniqueIndex($index);
+            }
+            $registry->register($tableName, $definition);
+        }
         $partitionMetadata = (new PgSqlPartitionReflector($connection))->reflect();
         foreach ($partitionMetadata['keys'] as $tableName => $partitionKey) {
             $definition = $registry->get($tableName);

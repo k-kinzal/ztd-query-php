@@ -6,6 +6,7 @@ namespace Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
+use ZtdQuery\Platform\Postgres\PgSqlConflictTarget;
 use ZtdQuery\Platform\Postgres\PostgreSqlLexicalMasker;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -13,6 +14,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[CoversClass(PgSqlParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser::class)]
 #[UsesClass(PostgreSqlLexicalMasker::class)]
+#[UsesClass(PgSqlConflictTarget::class)]
 final class PgSqlParserTest extends TestCase
 {
     public function testClassifiesAnonymousDoBlockWithoutSplittingItsBody(): void
@@ -3690,5 +3692,37 @@ SELECT * FROM users'));
         $sql = 'SELECT EXTRACT(YEAR FROM event_date) FROM events WHERE id IN (SELECT event_id FROM archived_events)';
 
         self::assertSame(['events', 'archived_events'], $parser->extractSelectTableNames($sql));
+    }
+
+    public function testExtractsPartialConflictTargetStructurally(): void
+    {
+        $target = (new PgSqlParser())->extractOnConflictTarget(
+            "INSERT INTO users (email, status) VALUES ('a@example.com', 'active') "
+            . "ON CONFLICT (email, tenant_id) WHERE status = 'active' "
+            . 'DO UPDATE SET status = EXCLUDED.status',
+        );
+
+        self::assertInstanceOf(PgSqlConflictTarget::class, $target);
+        self::assertTrue($target->specified);
+        self::assertSame(['email', 'tenant_id'], $target->columns);
+        self::assertSame("status = 'active'", $target->predicate);
+        self::assertNull($target->constraint);
+    }
+
+    public function testExtractsNamedAndUnspecifiedConflictTargets(): void
+    {
+        $parser = new PgSqlParser();
+        $named = $parser->extractOnConflictTarget(
+            'INSERT INTO users VALUES (1) ON CONFLICT ON CONSTRAINT "Users_Email" DO NOTHING',
+        );
+        $unspecified = $parser->extractOnConflictTarget(
+            'INSERT INTO users VALUES (1) ON CONFLICT DO NOTHING',
+        );
+
+        self::assertInstanceOf(PgSqlConflictTarget::class, $named);
+        self::assertSame('Users_Email', $named->constraint);
+        self::assertInstanceOf(PgSqlConflictTarget::class, $unspecified);
+        self::assertFalse($unspecified->specified);
+        self::assertNull($parser->extractOnConflictTarget('INSERT INTO users VALUES (1)'));
     }
 }

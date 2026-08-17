@@ -599,6 +599,29 @@ final class PgSqlSchemaReflectorTest extends TestCase
         );
     }
 
+    public function testReflectsPartialUniqueIndexesWithoutFlatteningTheirPredicate(): void
+    {
+        $reflector = new PgSqlSchemaReflector(new FakeSequentialConnection([
+            new FakeStatement([
+                ['column_name' => 'email', 'data_type' => 'text', 'character_maximum_length' => null, 'numeric_precision' => null, 'numeric_scale' => null, 'is_nullable' => 'YES', 'column_default' => null, 'udt_name' => 'text'],
+                ['column_name' => 'status', 'data_type' => 'text', 'character_maximum_length' => null, 'numeric_precision' => null, 'numeric_scale' => null, 'is_nullable' => 'YES', 'column_default' => null, 'udt_name' => 'text'],
+            ]),
+            new FakeStatement([]),
+            new FakeStatement([
+                ['constraint_name' => 'users_active_email', 'column_name' => 'email', 'predicate' => "status = 'active'::text"],
+                ['constraint_name' => 'users_expression', 'column_name' => null, 'predicate' => 'lower(email) IS NOT NULL'],
+            ]),
+        ]));
+
+        $createSql = $reflector->getCreateStatement('users');
+        $indexes = $reflector->partialUniqueIndexes();
+
+        self::assertSame("CREATE TABLE \"users\" (\n  \"email\" TEXT,\n  \"status\" TEXT\n)", $createSql);
+        self::assertSame(['users_active_email'], array_keys($indexes['users']));
+        self::assertSame(['email'], $indexes['users']['users_active_email']->columns);
+        self::assertSame("status = 'active'::text", $indexes['users']['users_active_email']->predicate);
+    }
+
     public function testVerifyColumnsQueryExact(): void
     {
         $queries = [];
@@ -748,15 +771,22 @@ final class PgSqlSchemaReflectorTest extends TestCase
         );
 
         self::assertSame(
-            "SELECT tc.constraint_name, kcu.column_name "
-            . "FROM information_schema.table_constraints tc "
-            . "JOIN information_schema.key_column_usage kcu "
-            . "  ON tc.constraint_name = kcu.constraint_name "
-            . "  AND tc.table_schema = kcu.table_schema "
-            . "WHERE tc.table_schema = current_schema() "
-            . "  AND tc.table_name = 'my_table' "
-            . "  AND tc.constraint_type = 'UNIQUE' "
-            . "ORDER BY tc.constraint_name, kcu.ordinal_position",
+            'SELECT index_relation.relname AS constraint_name, attribute.attname AS column_name, '
+            . 'pg_get_expr(index_metadata.indpred, index_metadata.indrelid) AS predicate '
+            . 'FROM pg_catalog.pg_class table_relation '
+            . 'JOIN pg_catalog.pg_namespace namespace ON namespace.oid = table_relation.relnamespace '
+            . 'JOIN pg_catalog.pg_index index_metadata ON index_metadata.indrelid = table_relation.oid '
+            . 'JOIN pg_catalog.pg_class index_relation ON index_relation.oid = index_metadata.indexrelid '
+            . 'JOIN LATERAL unnest(index_metadata.indkey) WITH ORDINALITY key_column(attnum, ordinality) '
+            . '  ON key_column.ordinality <= index_metadata.indnkeyatts '
+            . 'LEFT JOIN pg_catalog.pg_attribute attribute '
+            . '  ON attribute.attrelid = table_relation.oid AND attribute.attnum = key_column.attnum '
+            . 'WHERE namespace.nspname = current_schema() '
+            . "  AND table_relation.relname = 'my_table' "
+            . '  AND index_metadata.indisunique '
+            . '  AND index_metadata.indisvalid '
+            . '  AND NOT index_metadata.indisprimary '
+            . 'ORDER BY index_relation.relname, key_column.ordinality',
             $queries[2]
         );
     }

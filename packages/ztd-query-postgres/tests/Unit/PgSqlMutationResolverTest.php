@@ -15,6 +15,7 @@ use ZtdQuery\Platform\Postgres\PgSqlPartitionParser;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
+use ZtdQuery\Schema\PartialUniqueIndex;
 use ZtdQuery\Shadow\Mutation\CreateTableAsSelectMutation;
 use ZtdQuery\Shadow\Mutation\CreateTableLikeMutation;
 use ZtdQuery\Shadow\Mutation\CreateTableMutation;
@@ -35,6 +36,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlForeignKeyDefinitionParser::class)]
 #[UsesClass(PgSqlParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlUpsertExpressionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlConflictTarget::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PostgreSqlLexicalMasker::class)]
 #[UsesClass(PgSqlSchemaParser::class)]
 #[UsesClass(PgSqlPartitionParser::class)]
@@ -2948,6 +2950,48 @@ final class PgSqlMutationResolverTest extends TestCase
         $rows = $shadowStore->get('users');
         self::assertNotEmpty($rows);
         self::assertSame('Bob', $rows[0]['name']);
+    }
+
+    public function testResolveUpsertUsesPartialIndexPredicateForConflictDetection(): void
+    {
+        $shadowStore = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $definition = new TableDefinition(
+            ['email', 'status', 'login_count'],
+            ['email' => 'TEXT', 'status' => 'TEXT', 'login_count' => 'INTEGER'],
+            [],
+            [],
+            [],
+        );
+        $registry->register('users', $definition->withPartialUniqueIndex(
+            new PartialUniqueIndex('users_active_email', ['email'], "status = 'active'::text"),
+        ));
+        $shadowStore->set('users', [
+            ['email' => 'alice@example.com', 'status' => 'inactive', 'login_count' => 2],
+            ['email' => 'alice@example.com', 'status' => 'active', 'login_count' => 5],
+        ]);
+        $resolver = new PgSqlMutationResolver(
+            $shadowStore,
+            $registry,
+            new PgSqlSchemaParser(),
+            new PgSqlParser(),
+        );
+        $sql = "INSERT INTO users VALUES ('alice@example.com', 'active', 1) "
+            . "ON CONFLICT (email) WHERE status = 'active' "
+            . 'DO UPDATE SET login_count = users.login_count + EXCLUDED.login_count';
+
+        $mutation = $resolver->resolve($sql, 'INSERT', QueryKind::WRITE_SIMULATED);
+        self::assertInstanceOf(UpsertMutation::class, $mutation);
+        $mutation->apply($shadowStore, [[
+            'email' => 'alice@example.com',
+            'status' => 'active',
+            'login_count' => 1,
+        ]]);
+
+        self::assertSame([
+            ['email' => 'alice@example.com', 'status' => 'inactive', 'login_count' => 2],
+            ['email' => 'alice@example.com', 'status' => 'active', 'login_count' => 6],
+        ], $shadowStore->get('users'));
     }
 
     public function testUpdateDoesNotTreatRowsFromUnknownInsertAsSchema(): void

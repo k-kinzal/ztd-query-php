@@ -52,6 +52,8 @@ final class InsertMutation implements DataMutation
 
     private CandidateKeySet $candidateKeys;
 
+    private ?UpsertExpression $conflictPredicate;
+
     /**
      * @param string $tableName Target table.
      * @param array<int, string> $primaryKeys Primary key columns.
@@ -60,6 +62,7 @@ final class InsertMutation implements DataMutation
      * @param string $sql Original SQL statement for exception messages.
      * @param bool $validateConstraints Whether to validate constraints.
      * @param CandidateKeySet|null $candidateKeys Candidate keys used for duplicate detection.
+     * @param UpsertExpression|null $conflictPredicate Condition that controls candidate-key eligibility.
      */
     public function __construct(
         string $tableName,
@@ -69,6 +72,7 @@ final class InsertMutation implements DataMutation
         string $sql = '',
         bool $validateConstraints = false,
         ?CandidateKeySet $candidateKeys = null,
+        ?UpsertExpression $conflictPredicate = null,
     ) {
         $this->tableName = $tableName;
         $this->ignore = $ignore;
@@ -76,6 +80,7 @@ final class InsertMutation implements DataMutation
         $this->sql = $sql;
         $this->validateConstraints = $validateConstraints;
         $this->candidateKeys = $candidateKeys ?? CandidateKeySet::fromSchema($primaryKeys);
+        $this->conflictPredicate = $conflictPredicate;
     }
 
     /**
@@ -91,7 +96,7 @@ final class InsertMutation implements DataMutation
                 $this->validateNotNullConstraints($row);
             }
 
-            $conflict = $this->candidateKeys->findConflict($row, $existingRows);
+            $conflict = $this->findConflict($row, $existingRows);
             if ($conflict !== null) {
                 if ($this->ignore) {
                     continue;
@@ -204,5 +209,28 @@ final class InsertMutation implements DataMutation
             $values[$col] = $row[$col] ?? null;
         }
         return $values;
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     * @param array<int, array<string, mixed>> $existingRows
+     */
+    private function findConflict(array $row, array $existingRows): ?\ZtdQuery\Schema\CandidateKeyConflict
+    {
+        if ($this->conflictPredicate === null) {
+            return $this->candidateKeys->findConflict($row, $existingRows);
+        }
+        if (!$this->conflictPredicate->matches($row, $row, $this->tableName)) {
+            return null;
+        }
+
+        $eligibleRows = [];
+        foreach ($existingRows as $index => $existingRow) {
+            if ($this->conflictPredicate->matches($existingRow, $existingRow, $this->tableName)) {
+                $eligibleRows[$index] = $existingRow;
+            }
+        }
+
+        return $this->candidateKeys->findConflict($row, $eligibleRows);
     }
 }

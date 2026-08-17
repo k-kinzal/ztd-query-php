@@ -43,6 +43,7 @@ final class MySqlNativeUpsertProjector
         array $candidateKeys,
         array $assignments,
         ?string $predicate = null,
+        ?string $conflictPredicate = null,
         ?string $incomingNamespace = null,
     ): string {
         if ($assignments === [] || $candidateKeys === []) {
@@ -53,6 +54,23 @@ final class MySqlNativeUpsertProjector
         $existingAlias = $this->quoter->quote(self::EXISTING_ALIAS);
         $table = $this->quoter->quote($tableName);
         $conflict = $this->conflictPredicate($candidateKeys, $existingAlias, $incomingAlias);
+        if ($conflictPredicate !== null) {
+            $existingPredicate = $this->bindExpression(
+                $conflictPredicate,
+                $tableName,
+                $tableColumns,
+                self::EXISTING_ALIAS,
+                $incomingNamespace,
+            );
+            $incomingPredicate = $this->bindExpression(
+                $conflictPredicate,
+                $tableName,
+                $tableColumns,
+                self::INCOMING_ALIAS,
+                $incomingNamespace,
+            );
+            $conflict = "($conflict AND ($existingPredicate) AND ($incomingPredicate))";
+        }
         $selects = [];
         foreach ($tableColumns as $column) {
             $quoted = $this->quoter->quote($column);
@@ -61,12 +79,22 @@ final class MySqlNativeUpsertProjector
 
         $codec = new UpsertMutationRow();
         foreach (array_values($assignments) as $index => $expression) {
-            $evaluated = $this->bindExpression($expression, $tableName, $tableColumns, $incomingNamespace);
+            $evaluated = $this->bindExpression(
+                $expression,
+                $tableName,
+                $tableColumns,
+                incomingNamespace: $incomingNamespace,
+            );
             $metadata = $this->quoter->quote($codec->valueColumn($index));
             $selects[] = "(SELECT $evaluated FROM $table AS $existingAlias WHERE $conflict LIMIT 1) AS $metadata";
         }
         if ($predicate !== null) {
-            $evaluated = $this->bindExpression($predicate, $tableName, $tableColumns, $incomingNamespace);
+            $evaluated = $this->bindExpression(
+                $predicate,
+                $tableName,
+                $tableColumns,
+                incomingNamespace: $incomingNamespace,
+            );
             $metadata = $this->quoter->quote($codec->predicateColumn());
             $selects[] = "(SELECT $evaluated FROM $table AS $existingAlias WHERE $conflict LIMIT 1) AS $metadata";
         }
@@ -100,7 +128,8 @@ final class MySqlNativeUpsertProjector
         string $expression,
         string $tableName,
         array $tableColumns,
-        ?string $incomingNamespace,
+        string $unqualifiedAlias = self::EXISTING_ALIAS,
+        ?string $incomingNamespace = null,
     ): string {
         $tokens = SqlTokenStream::tokenize($expression, $this->dialect)->significantTokens();
         $subqueryTokens = $this->subqueryTokenIndexes($tokens);
@@ -160,7 +189,7 @@ final class MySqlNativeUpsertProjector
             $replacements[] = [
                 'offset' => $token->offset,
                 'length' => strlen($token->text),
-                'value' => $this->qualified(self::EXISTING_ALIAS, $name),
+                'value' => $this->qualified($unqualifiedAlias, $name),
             ];
         }
 

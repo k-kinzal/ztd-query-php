@@ -181,4 +181,25 @@ final class MySqlNativeUpsertProjectorTest extends TestCase
             $result,
         );
     }
+
+    public function testBindsPartialConflictPredicateToExistingAndIncomingRows(): void
+    {
+        $result = (new MySqlNativeUpsertProjector())->project(
+            'SELECT \'alice@example.com\' AS `email`, \'active\' AS `status`, 1 AS `login_count`',
+            'users',
+            ['email', 'status', 'login_count'],
+            ['users_active_email' => ['email']],
+            ['login_count' => 'GREATEST(login_count, VALUES(login_count))'],
+            conflictPredicate: "status = 'active'",
+        );
+
+        self::assertStringContainsString(
+            '`__ztd_existing`.`email` = `__ztd_incoming`.`email`',
+            $result,
+        );
+        self::assertStringContainsString(
+            '(`__ztd_existing`.`status` = \'active\') AND (`__ztd_incoming`.`status` = \'active\')',
+            $result,
+        );
+    }
 }
