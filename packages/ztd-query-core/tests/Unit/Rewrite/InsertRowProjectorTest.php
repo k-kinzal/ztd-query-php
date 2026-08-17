@@ -34,4 +34,19 @@ final class InsertRowProjectorTest extends TestCase
 
         (new InsertRowProjector())->project(['id'], ['id'], [], []);
     }
+
+    public function testTrimsProvidedExpressionsBeforeDefaultResolution(): void
+    {
+        $projector = new InsertRowProjector();
+
+        self::assertSame(
+            ['id' => '1', 'name' => "'anonymous'"],
+            $projector->project(
+                ['id', 'name'],
+                ['id', 'name'],
+                ['  1  ', '  default  '],
+                ['name' => "'anonymous'"],
+            ),
+        );
+    }
 }

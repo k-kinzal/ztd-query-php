@@ -264,6 +264,21 @@ final class MySqlRewriterTest extends RewriterContractTest
         self::assertMatchesRegularExpression('/^(?:WITH\b|SELECT\b)/i', $plan->sql(), 'INSERT result-select must start with SELECT or WITH...SELECT');
     }
 
+    public function testRewriteInsertUsesDefaultsFromRegistryWithoutShadowRows(): void
+    {
+        $schemaParser = new MySqlSchemaParser(new MySqlParser());
+        $definition = $schemaParser->parse("CREATE TABLE settings (id INT, label VARCHAR(20) DEFAULT 'new')");
+        self::assertNotNull($definition);
+        $registry = new TableDefinitionRegistry();
+        $registry->register('settings', $definition);
+        $rewriter = $this->createRewriter(new ShadowStore(), $registry);
+
+        $plan = $rewriter->rewrite('INSERT INTO settings (id) VALUES (1)');
+
+        self::assertStringContainsString("'new'", $plan->sql());
+        self::assertStringContainsString('AS `label`', $plan->sql());
+    }
+
     public function testRewriteDeleteCreatesMutation(): void
     {
         $shadowStore = new ShadowStore();

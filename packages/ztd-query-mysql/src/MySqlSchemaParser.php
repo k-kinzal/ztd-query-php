@@ -86,9 +86,11 @@ final class MySqlSchemaParser implements SchemaParser
                     $uniqueConstraints[$keyName] = [$columnName];
                 }
 
-                $default = $field->options?->has('DEFAULT');
-                if (is_string($default)) {
-                    $columnDefaults[$columnName] = $default;
+                if ($field->options !== null) {
+                    $default = $field->options->has('DEFAULT');
+                    if (is_string($default)) {
+                        $columnDefaults[$columnName] = $default;
+                    }
                 }
             }
 

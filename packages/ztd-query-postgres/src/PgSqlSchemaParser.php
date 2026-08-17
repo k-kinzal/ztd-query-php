@@ -78,7 +78,7 @@ final class PgSqlSchemaParser implements SchemaParser
                 $uniqueConstraints[$keyName] = [$columnDef['name']];
             }
 
-            if ($columnDef['default'] !== null && preg_match('/^nextval\s*\(/i', ltrim($columnDef['default'], '(')) !== 1) {
+            if ($columnDef['default'] !== null && !self::isSequenceDefault($columnDef['default'])) {
                 $columnDefaults[$columnDef['name']] = $columnDef['default'];
             }
         }
@@ -104,6 +104,19 @@ final class PgSqlSchemaParser implements SchemaParser
             $typedColumns,
             $columnDefaults,
         );
+    }
+
+    private static function isSequenceDefault(string $expression): bool
+    {
+        foreach (SqlTokenStream::tokenize($expression)->significantTokens() as $token) {
+            if ($token->text === '(') {
+                continue;
+            }
+
+            return $token->isKeyword('NEXTVAL');
+        }
+
+        return false;
     }
 
     /**

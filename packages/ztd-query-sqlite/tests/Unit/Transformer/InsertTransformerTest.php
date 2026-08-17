@@ -173,6 +173,7 @@ final class InsertTransformerTest extends TestCase
         $sql = "INSERT INTO users (id, name, email) VALUES (1, 'Alice')";
 
         $this->expectException(\RuntimeException::class);
+        $this->expectExceptionCode(0);
         $transformer->transform($sql, []);
     }
 
@@ -380,5 +381,20 @@ final class InsertTransformerTest extends TestCase
 
         self::assertStringContainsString('1 AS "enabled"', $result);
         self::assertStringContainsString("'new' AS \"label\"", $result);
+    }
+
+    public function testTransformNormalizesSparseTableColumnKeys(): void
+    {
+        $transformer = new InsertTransformer(new SqliteParser(), new SelectTransformer());
+        $tables = ['users' => [
+            'rows' => [],
+            'columns' => [2 => 'id', 5 => 'name'],
+            'columnTypes' => [],
+        ]];
+
+        $result = $transformer->transform("INSERT INTO users (id, name) VALUES (1, 'Alice')", $tables);
+
+        self::assertStringContainsString('1 AS "id"', $result);
+        self::assertStringContainsString("'Alice' AS \"name\"", $result);
     }
 }

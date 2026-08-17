@@ -35,12 +35,11 @@ final class InsertTransformer implements SqlTransformer
         SqliteParser $parser,
         SelectTransformer $selectTransformer,
         ?CastRenderer $castRenderer = null,
-        ?InsertRowProjector $rowProjector = null,
     ) {
         $this->parser = $parser;
         $this->selectTransformer = $selectTransformer;
         $this->castRenderer = $castRenderer ?? new SqliteCastRenderer();
-        $this->rowProjector = $rowProjector ?? new InsertRowProjector();
+        $this->rowProjector = new InsertRowProjector();
     }
 
     /**
@@ -58,8 +57,8 @@ final class InsertTransformer implements SqlTransformer
             throw new UnsupportedSqlException($sql, 'Cannot resolve INSERT target');
         }
 
-        $insertColumns = array_values($this->parser->extractInsertColumns($sql));
-        $tableColumns = array_values($tables[$tableName]['columns'] ?? $insertColumns);
+        $insertColumns = self::orderedValues($this->parser->extractInsertColumns($sql));
+        $tableColumns = self::orderedValues($tables[$tableName]['columns'] ?? $insertColumns);
         if ($tableColumns === []) {
             throw new UnsupportedSqlException($sql, 'Cannot determine columns');
         }
@@ -122,7 +121,7 @@ final class InsertTransformer implements SqlTransformer
         array $columnTypes,
         array $columnDefaults,
     ): string {
-        $values = array_values($values);
+        $values = self::orderedValues($values);
         $sourceColumns = $insertColumns !== [] || $values === [] ? $insertColumns : $tableColumns;
         try {
             $projected = $this->rowProjector->project($tableColumns, $sourceColumns, $values, $columnDefaults);
@@ -140,5 +139,20 @@ final class InsertTransformer implements SqlTransformer
         }
 
         return 'SELECT ' . implode(', ', $selects);
+    }
+
+    /**
+     * @template T
+     * @param array<array-key, T> $values
+     * @return list<T>
+     */
+    private static function orderedValues(array $values): array
+    {
+        $ordered = [];
+        foreach ($values as $value) {
+            $ordered[] = $value;
+        }
+
+        return $ordered;
     }
 }

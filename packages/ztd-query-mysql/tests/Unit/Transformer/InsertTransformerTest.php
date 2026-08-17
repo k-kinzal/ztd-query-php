@@ -378,6 +378,23 @@ final class InsertTransformerTest extends TestCase
         self::assertStringContainsString('SELECT __ztd_subq', $result);
     }
 
+    public function testTransformInsertFromSelectUsesTableColumnsWhenColumnListIsOmitted(): void
+    {
+        $transformer = new InsertTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = ['archive' => [
+            'rows' => [],
+            'columns' => ['id', 'name'],
+            'columnTypes' => [],
+        ]];
+
+        $result = $transformer->transform('INSERT INTO archive SELECT id, name FROM users', $tables);
+
+        self::assertSame(
+            'SELECT __ztd_subq.`col_0` AS `id`, __ztd_subq.`col_1` AS `name` FROM (SELECT id AS `col_0`, name AS `col_1` FROM users) AS __ztd_subq',
+            $result,
+        );
+    }
+
     public function testTransformInsertFromSelectColumnCountMismatchThrows(): void
     {
         $parser = new MySqlParser();
@@ -427,6 +444,7 @@ final class InsertTransformerTest extends TestCase
         $tables = [];
 
         $this->expectException(\RuntimeException::class);
+        $this->expectExceptionCode(0);
         $transformer->transform($sql, $tables);
     }
 
@@ -780,5 +798,20 @@ final class InsertTransformerTest extends TestCase
 
         self::assertStringContainsString('1 AS `enabled`', $result);
         self::assertStringContainsString("'new' AS `label`", $result);
+    }
+
+    public function testTransformNormalizesSparseTableColumnKeys(): void
+    {
+        $transformer = new InsertTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = ['users' => [
+            'rows' => [],
+            'columns' => [2 => 'id', 5 => 'name'],
+            'columnTypes' => [],
+        ]];
+
+        $result = $transformer->transform("INSERT INTO users (id, name) VALUES (1, 'Alice')", $tables);
+
+        self::assertStringContainsString('1 AS `id`', $result);
+        self::assertStringContainsString("'Alice' AS `name`", $result);
     }
 }

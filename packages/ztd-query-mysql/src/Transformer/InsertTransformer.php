@@ -38,12 +38,11 @@ final class InsertTransformer implements SqlTransformer
         MySqlParser $parser,
         SelectTransformer $selectTransformer,
         ?CastRenderer $castRenderer = null,
-        ?InsertRowProjector $rowProjector = null,
     ) {
         $this->parser = $parser;
         $this->selectTransformer = $selectTransformer;
         $this->castRenderer = $castRenderer ?? new MySqlCastRenderer();
-        $this->rowProjector = $rowProjector ?? new InsertRowProjector();
+        $this->rowProjector = new InsertRowProjector();
     }
 
     /**
@@ -68,8 +67,8 @@ final class InsertTransformer implements SqlTransformer
             throw new UnsupportedSqlException($sql, 'Cannot resolve table name');
         }
 
-        $insertColumns = array_values(array_filter($statement->into->columns ?? [], 'is_string'));
-        $tableColumns = array_values($tables[$tableName]['columns'] ?? $insertColumns);
+        $insertColumns = self::orderedValues($statement->into->columns ?? []);
+        $tableColumns = self::orderedValues($tables[$tableName]['columns'] ?? $insertColumns);
         if ($tableColumns === []) {
             throw new UnsupportedSqlException($sql, 'Cannot determine columns');
         }
@@ -104,7 +103,7 @@ final class InsertTransformer implements SqlTransformer
         }
 
         if ($statement->set !== null && $statement->set !== []) {
-            return $this->buildInsertSetSelect(array_values($statement->set), $tableColumns, $columnTypes, $columnDefaults);
+            return $this->buildInsertSetSelect(self::orderedValues($statement->set), $tableColumns, $columnTypes, $columnDefaults);
         }
 
         if ($statement->select !== null) {
@@ -127,7 +126,7 @@ final class InsertTransformer implements SqlTransformer
         array $columnTypes,
         array $columnDefaults,
     ): string {
-        $values = array_values($valueSet->raw !== [] ? $valueSet->raw : $valueSet->values);
+        $values = self::orderedValues($valueSet->raw !== [] ? $valueSet->raw : $valueSet->values);
         $sourceColumns = $insertColumns !== [] || $values === [] ? $insertColumns : $tableColumns;
         try {
             $projected = $this->rowProjector->project($tableColumns, $sourceColumns, $values, $columnDefaults);
@@ -202,6 +201,21 @@ final class InsertTransformer implements SqlTransformer
         }
 
         return $selectSql;
+    }
+
+    /**
+     * @template T
+     * @param array<array-key, T> $values
+     * @return list<T>
+     */
+    private static function orderedValues(array $values): array
+    {
+        $ordered = [];
+        foreach ($values as $value) {
+            $ordered[] = $value;
+        }
+
+        return $ordered;
     }
 
     private function wrapSelectWithNumberedAliases(string $selectSql, int $columnCount): string

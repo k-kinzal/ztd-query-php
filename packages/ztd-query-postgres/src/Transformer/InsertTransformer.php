@@ -29,12 +29,11 @@ final class InsertTransformer implements SqlTransformer
         PgSqlParser $parser,
         SelectTransformer $selectTransformer,
         ?CastRenderer $castRenderer = null,
-        ?InsertRowProjector $rowProjector = null,
     ) {
         $this->parser = $parser;
         $this->selectTransformer = $selectTransformer;
         $this->castRenderer = $castRenderer ?? new PgSqlCastRenderer();
-        $this->rowProjector = $rowProjector ?? new InsertRowProjector();
+        $this->rowProjector = new InsertRowProjector();
     }
 
     /**
@@ -48,7 +47,7 @@ final class InsertTransformer implements SqlTransformer
         }
 
         $insertColumns = $this->parser->extractInsertColumns($sql);
-        $tableColumns = array_values($tables[$tableName]['columns'] ?? $insertColumns);
+        $tableColumns = self::orderedValues($tables[$tableName]['columns'] ?? $insertColumns);
         if ($tableColumns === []) {
             throw new UnsupportedSqlException($sql, 'Cannot determine columns');
         }
@@ -94,6 +93,21 @@ final class InsertTransformer implements SqlTransformer
         $selectSql = implode(' UNION ALL ', $selectParts);
 
         return $this->selectTransformer->transform($selectSql, $tables);
+    }
+
+    /**
+     * @template T
+     * @param array<array-key, T> $values
+     * @return list<T>
+     */
+    private static function orderedValues(array $values): array
+    {
+        $ordered = [];
+        foreach ($values as $value) {
+            $ordered[] = $value;
+        }
+
+        return $ordered;
     }
 
     private function castInsertExpression(string $expression, ColumnType $type): string

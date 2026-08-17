@@ -319,4 +319,19 @@ final class InsertTransformerTest extends TestCase
         self::assertStringContainsString('TRUE AS "enabled"', $result);
         self::assertStringContainsString("'new' AS \"label\"", $result);
     }
+
+    public function testInsertNormalizesSparseTableColumnKeys(): void
+    {
+        $transformer = new InsertTransformer(new PgSqlParser(), new SelectTransformer());
+        $tables = ['users' => [
+            'rows' => [],
+            'columns' => [2 => 'id', 5 => 'name'],
+            'columnTypes' => [],
+        ]];
+
+        $result = $transformer->transform("INSERT INTO users (id, name) VALUES (1, 'Alice')", $tables);
+
+        self::assertStringContainsString('1 AS "id"', $result);
+        self::assertStringContainsString("'Alice' AS \"name\"", $result);
+    }
 }

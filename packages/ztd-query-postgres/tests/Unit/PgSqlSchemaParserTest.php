@@ -380,6 +380,28 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame(['name' => "'new'"], $definition->columnDefaults);
     }
 
+    public function testParseDetectsParenthesizedUppercaseSequenceDefault(): void
+    {
+        $definition = (new PgSqlSchemaParser())->parse(
+            "CREATE TABLE t (id BIGINT DEFAULT ((NEXTVAL('t_id_seq'::regclass))), fallback BIGINT DEFAULT coalesce(nextval('fallback_seq'), 1), offset_id BIGINT DEFAULT +nextval('offset_seq'))"
+        );
+
+        self::assertNotNull($definition);
+        self::assertSame([
+            'fallback' => "coalesce(nextval('fallback_seq'), 1)",
+            'offset_id' => "+nextval('offset_seq')",
+        ], $definition->columnDefaults);
+    }
+
+    public function testParseStopsDefaultAtInlinePrimaryKeyConstraint(): void
+    {
+        $definition = (new PgSqlSchemaParser())->parse('CREATE TABLE t (id INTEGER DEFAULT 7 PRIMARY KEY)');
+
+        self::assertNotNull($definition);
+        self::assertSame(['id' => '7'], $definition->columnDefaults);
+        self::assertSame(['id'], $definition->primaryKeys);
+    }
+
     public function testParseMultipleUniqueConstraints(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1616,6 +1638,7 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         $def = $parser->parse("CREATE TABLE t (id INTEGER DEFAULT (nextval('seq')))");
         self::assertNotNull($def);
         self::assertSame(['id'], $def->columns);
+        self::assertSame([], $def->columnDefaults);
     }
 
     public function testParseBitVaryingMultiWordType(): void

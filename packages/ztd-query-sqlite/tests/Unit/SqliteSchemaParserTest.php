@@ -146,6 +146,15 @@ final class SqliteSchemaParserTest extends SchemaParserContractTest
         ], $result->columnDefaults);
     }
 
+    public function testParseStopsDefaultAtInlinePrimaryKeyConstraint(): void
+    {
+        $result = (new SqliteSchemaParser())->parse('CREATE TABLE t (id INTEGER DEFAULT 7 PRIMARY KEY)');
+
+        self::assertNotNull($result);
+        self::assertSame(['id' => '7'], $result->columnDefaults);
+        self::assertSame(['id'], $result->primaryKeys);
+    }
+
     public function testParseWithForeignKey(): void
     {
         $parser = new SqliteSchemaParser();

@@ -538,6 +538,20 @@ final class SqliteRewriterTest extends RewriterContractTest
         self::assertInstanceOf(InsertMutation::class, $plan->mutation());
     }
 
+    public function testInsertUsesDefaultsFromRegistryWithoutShadowRows(): void
+    {
+        $definition = (new SqliteSchemaParser())->parse("CREATE TABLE settings (id INTEGER, label TEXT DEFAULT 'new')");
+        self::assertNotNull($definition);
+        $registry = new TableDefinitionRegistry();
+        $registry->register('settings', $definition);
+        $rewriter = $this->createRewriter(new ShadowStore(), $registry);
+
+        $plan = $rewriter->rewrite('INSERT INTO settings (id) VALUES (1)');
+
+        self::assertStringContainsString("'new'", $plan->sql());
+        self::assertStringContainsString('AS "label"', $plan->sql());
+    }
+
     public function testRewriteMultiple(): void
     {
         $registry = new TableDefinitionRegistry();
