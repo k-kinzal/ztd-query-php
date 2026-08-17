@@ -105,7 +105,9 @@ final class SchemaAwareSqlBuilder
         }
         /** @var string $updateCol */
         $updateCol = $this->faker->randomElement($nonPkCols);
-        $newValue = $this->generateLiteral($updateCol, $schema);
+        $newValue = $this->isTextColumn($updateCol) && $this->faker->boolean(25)
+            ? "''"
+            : $this->generateLiteral($updateCol, $schema);
 
         $whereClause = $this->buildPkWhere($schema);
 
@@ -193,5 +195,17 @@ final class SchemaAwareSqlBuilder
 
         $str = $this->faker->lexify('????');
         return "'" . addslashes($str) . "'";
+    }
+
+    private function isTextColumn(string $column): bool
+    {
+        $column = strtolower($column);
+
+        return str_contains($column, 'name')
+            || str_contains($column, 'email')
+            || str_contains($column, 'status')
+            || str_contains($column, 'text')
+            || str_contains($column, 'varchar')
+            || str_contains($column, 'char');
     }
 }

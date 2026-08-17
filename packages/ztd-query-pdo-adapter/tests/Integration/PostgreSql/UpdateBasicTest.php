@@ -19,6 +19,26 @@ use ZtdQuery\Adapter\Pdo\ZtdPdo;
 #[Large]
 final class UpdateBasicTest extends TestCase
 {
+    public function testUpdateReplacesExistingTextWithEmptyString(): void
+    {
+        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $table = 'prefix_' . bin2hex(random_bytes(8));
+
+        try {
+            $rawPdo->exec("CREATE TABLE {$table} (id INTEGER PRIMARY KEY, name TEXT, notes TEXT)");
+            $ztdPdo = ZtdPdo::fromPdo($rawPdo);
+            $ztdPdo->exec("INSERT INTO {$table} VALUES (1, 'Alice', 'some notes')");
+
+            self::assertSame(1, $ztdPdo->exec("UPDATE {$table} SET notes = '' WHERE name = 'Alice'"));
+
+            $statement = $ztdPdo->query("SELECT notes FROM {$table} WHERE id = 1");
+            self::assertNotFalse($statement);
+            self::assertSame('', $statement->fetchColumn());
+        } finally {
+            $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
+        }
+    }
+
     public function testUpdateSingleRow(): void
     {
         [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();

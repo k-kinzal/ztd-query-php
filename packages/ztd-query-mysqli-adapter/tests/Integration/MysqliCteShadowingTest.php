@@ -20,6 +20,25 @@ use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
 #[Large]
 final class MysqliCteShadowingTest extends TestCase
 {
+    public function testUpdateReplacesExistingTextWithEmptyString(): void
+    {
+        [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();
+        $table = 'prefix_' . bin2hex(random_bytes(8));
+        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, name VARCHAR(100), notes TEXT)', $table));
+        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
+        try {
+            self::assertNotFalse($ztdMysqli->query(sprintf("INSERT INTO `%s` VALUES (1, 'Alice', 'some notes')", $table)));
+            self::assertNotFalse($ztdMysqli->query(sprintf("UPDATE `%s` SET notes = '' WHERE name = 'Alice'", $table)));
+
+            $result = $ztdMysqli->query(sprintf('SELECT notes FROM `%s` WHERE id = 1', $table));
+            self::assertInstanceOf(\mysqli_result::class, $result);
+            self::assertSame([['notes' => '']], $result->fetch_all(MYSQLI_ASSOC));
+        } finally {
+            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+        }
+    }
+
     public function testSelfReferencingUpsertMatchesNativeMySql(): void
     {
         [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();

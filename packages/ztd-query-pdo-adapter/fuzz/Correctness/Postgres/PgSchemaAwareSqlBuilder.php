@@ -104,7 +104,9 @@ final class PgSchemaAwareSqlBuilder
         /** @var string $updateCol */
         $updateCol = $this->faker->randomElement($nonPkCols);
         $newValue = $this->generateLiteral($updateCol);
-        if ($this->isTextColumn($updateCol) && $this->faker->boolean(35)) {
+        if ($this->isTextColumn($updateCol) && $this->faker->boolean(25)) {
+            $newValue = "''";
+        } elseif ($this->isTextColumn($updateCol) && $this->faker->boolean(35)) {
             $column = $this->quoteIdentifier($updateCol);
             /** @var string $newValue */
             $newValue = $this->faker->randomElement([
