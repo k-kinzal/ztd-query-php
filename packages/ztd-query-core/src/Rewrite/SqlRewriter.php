@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Rewrite;
 
+use ZtdQuery\Sql\TransactionStatement;
+
 /**
  * Contract for SQL rewrite implementations.
  */
 interface SqlRewriter
 {
+    public function transactionStatement(string $sql): ?TransactionStatement;
+
     /**
      * Return a dialect-valid SELECT statement that yields no rows.
      */

@@ -11,6 +11,7 @@ use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
+use ZtdQuery\Sql\TransactionStatement;
 use PhpMyAdmin\SqlParser\Statement;
 use PhpMyAdmin\SqlParser\Statements\SelectStatement;
 use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
@@ -29,6 +30,11 @@ use PhpMyAdmin\SqlParser\Statements\WithStatement;
  */
 final class MySqlRewriter implements SqlRewriter
 {
+    public function transactionStatement(string $sql): ?TransactionStatement
+    {
+        return (new MySqlTransactionStatementParser())->parse($sql);
+    }
+
     private MySqlQueryGuard $guard;
     private ShadowStore $shadowStore;
     private TableDefinitionRegistry $registry;

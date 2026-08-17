@@ -42,6 +42,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PostgreSqlLexicalMasker::class)]
 #[UsesClass(PgSqlSchemaParser::class)]
 #[UsesClass(PgSqlQueryGuard::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlTransactionStatementParser::class)]
 #[UsesClass(PgSqlMutationResolver::class)]
 #[UsesClass(PgSqlTransformer::class)]
 #[UsesClass(SelectTransformer::class)]

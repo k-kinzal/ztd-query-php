@@ -12,7 +12,6 @@ use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\Session;
 use ZtdQuery\Platform\SessionFactory;
-use ZtdQuery\Sql\TransactionStatement;
 
 /**
  * PDO proxy that enforces ZTD behavior for reads and writes.
@@ -190,7 +189,7 @@ class ZtdPdo extends PDO
     public function query(string $query, ?int $fetchMode = null, mixed ...$fetchModeArgs): PDOStatement|false
     {
         if ($this->session->isEnabled()) {
-            $transactionStatement = TransactionStatement::parse($query);
+            $transactionStatement = $this->session->transactionStatement($query);
             if ($transactionStatement !== null) {
                 $statement = $this->pdo->query($query, $fetchMode, ...$fetchModeArgs);
                 if ($statement !== false) {
@@ -228,7 +227,7 @@ class ZtdPdo extends PDO
             return $this->pdo->exec($statement);
         }
 
-        $transactionStatement = TransactionStatement::parse($statement);
+        $transactionStatement = $this->session->transactionStatement($statement);
         if ($transactionStatement !== null) {
             $result = $this->pdo->exec($statement);
             if ($result !== false) {

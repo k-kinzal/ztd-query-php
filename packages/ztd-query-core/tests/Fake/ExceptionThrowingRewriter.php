@@ -7,12 +7,18 @@ namespace Tests\Fake;
 use ZtdQuery\Rewrite\MultiRewritePlan;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
+use ZtdQuery\Sql\TransactionStatement;
 
 /**
  * Rewriter that throws an exception when rewrite() is called.
  */
 final class ExceptionThrowingRewriter implements SqlRewriter
 {
+    public function transactionStatement(string $sql): ?TransactionStatement
+    {
+        return null;
+    }
+
     private \Throwable $exception;
 
     public function __construct(\Throwable $exception)

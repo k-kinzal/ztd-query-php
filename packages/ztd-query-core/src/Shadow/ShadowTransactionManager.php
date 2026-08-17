@@ -12,7 +12,7 @@ use ZtdQuery\Schema\TableDefinitionRegistry;
 final class ShadowTransactionManager
 {
     /**
-     * @var list<array{name: string|null, store: ShadowStore, registry: TableDefinitionRegistry|null}>
+     * @var list<array{name: string|null, store: ShadowStore, registry: TableDefinitionRegistry}>
      */
     private array $frames = [];
 
@@ -69,34 +69,30 @@ final class ShadowTransactionManager
     public function release(string $name): void
     {
         $index = $this->findSavepoint($name);
-        if ($index === null) {
-            return;
+        if ($index !== null) {
+            $this->frames = array_slice($this->frames, 0, $index);
         }
-
-        $this->frames = array_slice($this->frames, 0, $index);
     }
 
     /**
-     * @return array{name: string|null, store: ShadowStore, registry: TableDefinitionRegistry|null}
+     * @return array{name: string|null, store: ShadowStore, registry: TableDefinitionRegistry}
      */
     private function snapshot(?string $name): array
     {
         return [
             'name' => $name,
             'store' => $this->store->snapshot(),
-            'registry' => $this->registry?->snapshot(),
+            'registry' => $this->registry?->snapshot() ?? new TableDefinitionRegistry(),
         ];
     }
 
     /**
-     * @param array{name: string|null, store: ShadowStore, registry: TableDefinitionRegistry|null} $frame
+     * @param array{name: string|null, store: ShadowStore, registry: TableDefinitionRegistry} $frame
      */
     private function restore(array $frame): void
     {
         $this->store->restore($frame['store']);
-        if ($this->registry !== null && $frame['registry'] !== null) {
-            $this->registry->restore($frame['registry']);
-        }
+        $this->registry?->restore($frame['registry']);
     }
 
     private function findSavepoint(string $name): ?int

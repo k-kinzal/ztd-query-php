@@ -223,7 +223,7 @@ class ZtdMysqli extends mysqli
             return $this->innerMysqli->query($query, $resultMode);
         }
 
-        $transactionStatement = TransactionStatement::parse($query);
+        $transactionStatement = $this->session->transactionStatement($query);
         if ($transactionStatement !== null) {
             $result = $this->innerMysqli->query($query, $resultMode);
             if ($result !== false) {
@@ -269,7 +269,7 @@ class ZtdMysqli extends mysqli
             return $this->innerMysqli->real_query($query);
         }
 
-        $transactionStatement = TransactionStatement::parse($query);
+        $transactionStatement = $this->session->transactionStatement($query);
         if ($transactionStatement !== null) {
             $result = $this->innerMysqli->real_query($query);
             if ($result) {
@@ -577,10 +577,7 @@ class ZtdMysqli extends mysqli
     {
         $result = $this->innerMysqli->release_savepoint($name);
         if ($result) {
-            $statement = TransactionStatement::parse('RELEASE SAVEPOINT `' . str_replace('`', '``', $name) . '`');
-            if ($statement !== null) {
-                $this->session->applyTransactionStatement($statement);
-            }
+            $this->session->applyTransactionStatement(TransactionStatement::release($name));
         }
 
         return $result;
@@ -593,10 +590,7 @@ class ZtdMysqli extends mysqli
     {
         $result = $this->innerMysqli->savepoint($name);
         if ($result) {
-            $statement = TransactionStatement::parse('SAVEPOINT `' . str_replace('`', '``', $name) . '`');
-            if ($statement !== null) {
-                $this->session->applyTransactionStatement($statement);
-            }
+            $this->session->applyTransactionStatement(TransactionStatement::savepoint($name));
         }
 
         return $result;

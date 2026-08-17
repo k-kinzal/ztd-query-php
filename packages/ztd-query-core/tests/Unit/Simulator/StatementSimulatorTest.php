@@ -17,6 +17,7 @@ use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Schema\CandidateKeySet;
 use ZtdQuery\Shadow\Mutation\InsertMutation;
 use ZtdQuery\Shadow\ShadowStore;
+use ZtdQuery\Shadow\ShadowTransactionManager;
 use ZtdQuery\Simulator\StatementSimulator;
 use ZtdQuery\Session;
 use PHPUnit\Framework\TestCase;
@@ -31,6 +32,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(InsertMutation::class)]
 #[UsesClass(CandidateKeySet::class)]
 #[UsesClass(ShadowStore::class)]
+#[UsesClass(ShadowTransactionManager::class)]
 #[UsesClass(Session::class)]
 #[CoversClass(StatementSimulator::class)]
 final class StatementSimulatorTest extends TestCase

@@ -10,6 +10,7 @@ use ZtdQuery\Rewrite\MultiRewritePlan;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
+use ZtdQuery\Sql\TransactionStatement;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
 
@@ -21,6 +22,11 @@ use ZtdQuery\Shadow\ShadowStore;
  */
 final class PgSqlRewriter implements SqlRewriter
 {
+    public function transactionStatement(string $sql): ?TransactionStatement
+    {
+        return (new PgSqlTransactionStatementParser())->parse($sql);
+    }
+
     private PgSqlQueryGuard $guard;
     private ShadowStore $shadowStore;
     private TableDefinitionRegistry $registry;

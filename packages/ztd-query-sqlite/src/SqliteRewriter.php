@@ -11,6 +11,7 @@ use ZtdQuery\Rewrite\MultiRewritePlan;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
+use ZtdQuery\Sql\TransactionStatement;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
@@ -23,6 +24,11 @@ use ZtdQuery\Shadow\ShadowStore;
  */
 final class SqliteRewriter implements SqlRewriter
 {
+    public function transactionStatement(string $sql): ?TransactionStatement
+    {
+        return (new SqliteTransactionStatementParser())->parse($sql);
+    }
+
     private SqliteQueryGuard $guard;
     private ShadowStore $shadowStore;
     private TableDefinitionRegistry $registry;

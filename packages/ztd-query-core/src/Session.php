@@ -163,6 +163,11 @@ final class Session
         $statement->apply($this->transactions);
     }
 
+    public function transactionStatement(string $sql): ?TransactionStatement
+    {
+        return $this->rewriter->transactionStatement($sql);
+    }
+
 
     /**
      * Rewrite SQL using the configured rewriter.

@@ -73,4 +73,67 @@ final class ShadowTransactionManagerTest extends TestCase
 
         self::assertSame([['id' => 1], ['id' => 2]], $store->get('items'));
     }
+
+    public function testReplacingSavepointUsesMostRecentSnapshot(): void
+    {
+        $store = new ShadowStore();
+        $store->set('items', [['id' => 1]]);
+        $transactions = new ShadowTransactionManager($store);
+
+        $transactions->begin();
+        $transactions->savepoint('point');
+        $store->insert('items', [['id' => 2]]);
+        $transactions->savepoint('point');
+        $store->insert('items', [['id' => 3]]);
+        $transactions->rollBackTo('point');
+
+        self::assertSame([['id' => 1], ['id' => 2]], $store->get('items'));
+        $transactions->release('point');
+        $store->insert('items', [['id' => 4]]);
+        $transactions->rollBackTo('point');
+        self::assertSame([['id' => 1], ['id' => 2], ['id' => 4]], $store->get('items'));
+    }
+
+    public function testRollbackToKeepsTargetForAnotherRollback(): void
+    {
+        $store = new ShadowStore();
+        $store->set('items', [['id' => 1]]);
+        $transactions = new ShadowTransactionManager($store);
+
+        $transactions->begin();
+        $store->insert('items', [['id' => 2]]);
+        $transactions->savepoint('outer');
+        $store->insert('items', [['id' => 3]]);
+        $transactions->savepoint('inner');
+        $store->insert('items', [['id' => 4]]);
+        $transactions->rollBackTo('outer');
+        $transactions->rollBackTo('inner');
+        self::assertSame([['id' => 1], ['id' => 2]], $store->get('items'));
+        $store->insert('items', [['id' => 5]]);
+        $transactions->rollBackTo('outer');
+        self::assertSame([['id' => 1], ['id' => 2]], $store->get('items'));
+        $store->insert('items', [['id' => 6]]);
+        $transactions->rollBack();
+        self::assertSame([['id' => 1]], $store->get('items'));
+    }
+
+    public function testReleaseKeepsEarlierSavepointAndUnknownNameDoesNothing(): void
+    {
+        $store = new ShadowStore();
+        $store->set('items', [['id' => 1]]);
+        $transactions = new ShadowTransactionManager($store);
+
+        $transactions->savepoint('outer');
+        $store->insert('items', [['id' => 2]]);
+        $transactions->savepoint('inner');
+        $store->insert('items', [['id' => 3]]);
+        $transactions->release('missing');
+        $transactions->release('inner');
+        $store->insert('items', [['id' => 4]]);
+        $transactions->rollBackTo('inner');
+        self::assertSame([['id' => 1], ['id' => 2], ['id' => 3], ['id' => 4]], $store->get('items'));
+        $transactions->rollBackTo('outer');
+
+        self::assertSame([['id' => 1]], $store->get('items'));
+    }
 }

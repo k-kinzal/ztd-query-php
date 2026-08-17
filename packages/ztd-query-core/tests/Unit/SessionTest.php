@@ -16,16 +16,20 @@ use ZtdQuery\Exception\MissingPrimaryKeyException;
 use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
+use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Session;
 use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
 use ZtdQuery\Shadow\ShadowStore;
+use ZtdQuery\Shadow\ShadowTransactionManager;
 
 #[CoversClass(Session::class)]
 #[UsesClass(ZtdConfig::class)]
 #[UsesClass(ShadowStore::class)]
+#[UsesClass(ShadowTransactionManager::class)]
 #[UsesClass(TableDefinitionRegistry::class)]
+#[UsesClass(TableDefinition::class)]
 #[UsesClass(ResultSelectRunner::class)]
 #[UsesClass(DatabaseException::class)]
 #[UsesClass(RewritePlan::class)]
@@ -55,6 +59,28 @@ final class SessionTest extends TestCase
 
         $session->enable();
         self::assertTrue($session->isEnabled());
+    }
+
+    public function testUsesProvidedTransactionManagerForSchemaRollback(): void
+    {
+        $shadowStore = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $definition = new TableDefinition(['id'], ['id' => 'INT'], ['id'], [], []);
+        $registry->register('users', $definition);
+        $session = new Session(
+            new FakeSqlRewriter($shadowStore, $registry),
+            $shadowStore,
+            new ResultSelectRunner(),
+            ZtdConfig::default(),
+            new FakeConnection(),
+            new ShadowTransactionManager($shadowStore, $registry),
+        );
+
+        $session->beginTransaction();
+        $registry->unregister('users');
+        $session->rollBackTransaction();
+
+        self::assertSame($definition, $registry->get('users'));
     }
 
     public function testMutationFailureIsConvertedToDatabaseException(): void

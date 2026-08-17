@@ -7,9 +7,15 @@ namespace Tests\Fake;
 use ZtdQuery\Rewrite\MultiRewritePlan;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
+use ZtdQuery\Sql\TransactionStatement;
 
 final class FixedRewriter implements SqlRewriter
 {
+    public function transactionStatement(string $sql): ?TransactionStatement
+    {
+        return null;
+    }
+
     /**
      * Predefined plan to return from rewrite().
      *
