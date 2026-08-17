@@ -170,7 +170,8 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
      *     columnTypes: array<string, \ZtdQuery\Schema\ColumnType>,
      *     columnDefaults: array<string, string>,
      *     identityStrategies: array<string, \ZtdQuery\Schema\IdentityGenerationStrategy>,
-     *     primaryKeys: array<int, string>
+     *     primaryKeys: array<int, string>,
+     *     candidateKeys: array<string, array<int, string>>
      * }>
      */
     private function buildTableContext(): array
@@ -202,6 +203,7 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
                     'columnDefaults' => [],
                     'identityStrategies' => [],
                     'primaryKeys' => [],
+                    'candidateKeys' => [],
                 ];
             }
         }
@@ -229,7 +231,8 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
      *     columnTypes: array<string, \ZtdQuery\Schema\ColumnType>,
      *     columnDefaults: array<string, string>,
      *     identityStrategies: array<string, \ZtdQuery\Schema\IdentityGenerationStrategy>,
-     *     primaryKeys: array<int, string>
+     *     primaryKeys: array<int, string>,
+     *     candidateKeys: array<string, array<int, string>>
      * }
      */
     private static function contextFromDefinition(TableDefinition $definition, array $rows): array
@@ -241,6 +244,7 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
             'columnDefaults' => $definition->columnDefaults,
             'identityStrategies' => $definition->identityStrategies,
             'primaryKeys' => $definition->primaryKeys,
+            'candidateKeys' => $definition->candidateKeys()->keys(),
         ];
     }
 

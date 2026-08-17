@@ -50,6 +50,16 @@ use SqlFaker\Grammar\TerminalInventory;
 #[UsesClass(GenerationPlans::class)]
 final class SqliteProviderTest extends TestCase
 {
+    public function testInsertFunctionUpsertStatementIncludesNativeJsonFunction(): void
+    {
+        $provider = new SqliteProvider(Factory::create());
+
+        $sql = $provider->insertFunctionUpsertStatement();
+
+        self::assertStringContainsString('ON CONFLICT', $sql);
+        self::assertStringContainsString('json_set(', $sql);
+    }
+
     #[\Override]
     protected function setUp(): void
     {

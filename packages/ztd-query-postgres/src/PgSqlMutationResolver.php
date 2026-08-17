@@ -80,12 +80,16 @@ final class PgSqlMutationResolver
             $updateColumns = $conflictInfo['columns'];
 
             if ($updateColumns !== []) {
-                /** @var array<string, \ZtdQuery\Shadow\Mutation\UpsertExpression> $resolvedValues */
+                $databaseEvaluated = $definition !== null && $definition->candidateKeys()->keys() !== [];
+                /** @var array<string, \ZtdQuery\Shadow\Mutation\UpsertExpression|null> $resolvedValues */
                 $resolvedValues = [];
                 $expressionParser = new PgSqlUpsertExpressionParser();
                 foreach ($conflictInfo['values'] as $col => $value) {
-                    $resolvedValues[$col] = $expressionParser->parse($value, $tableName);
+                    $resolvedValues[$col] = $databaseEvaluated
+                        ? $expressionParser->parseIfSupported($value, $tableName)
+                        : $expressionParser->parse($value, $tableName);
                 }
+                $predicate = $this->parser->extractOnConflictUpdateWhere($sql);
 
                 return new UpsertMutation(
                     $tableName,
@@ -93,9 +97,14 @@ final class PgSqlMutationResolver
                     $updateColumns,
                     $resolvedValues,
                     $definition?->candidateKeys(),
-                    ($predicate = $this->parser->extractOnConflictUpdateWhere($sql)) !== null
-                        ? $expressionParser->parse($predicate, $tableName)
+                    $predicate !== null
+                        ? ($databaseEvaluated
+                            ? $expressionParser->parseIfSupported($predicate, $tableName)
+                            : $expressionParser->parse($predicate, $tableName))
                         : null,
+                    databaseEvaluated: $databaseEvaluated,
+                    updateSqlValues: $conflictInfo['values'],
+                    updateSqlPredicate: $predicate,
                 );
             }
 

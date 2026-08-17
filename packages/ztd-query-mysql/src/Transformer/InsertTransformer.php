@@ -12,8 +12,10 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\MySql\InsertSelectSourceExtractor;
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
+use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
+use ZtdQuery\Rewrite\NativeUpsertProjector;
 use ZtdQuery\Rewrite\ShadowIdentityAllocator;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
@@ -33,6 +35,7 @@ final class InsertTransformer implements SqlTransformer
     private ShadowIdentityAllocator $identityAllocator;
     private InsertSelectRenderer $insertSelectRenderer;
     private MySqlCteShadowComposer $cteComposer;
+    private NativeUpsertProjector $upsertProjector;
 
     public function __construct(
         MySqlParser $parser,
@@ -46,6 +49,11 @@ final class InsertTransformer implements SqlTransformer
         $this->identityAllocator = new ShadowIdentityAllocator();
         $this->insertSelectRenderer = new InsertSelectRenderer();
         $this->cteComposer = new MySqlCteShadowComposer();
+        $this->upsertProjector = new NativeUpsertProjector(
+            new MySqlIdentifierQuoter(),
+            SqlTokenDialect::MySql,
+            ['VALUES'],
+        );
     }
 
     /**
@@ -92,6 +100,13 @@ final class InsertTransformer implements SqlTransformer
             $identityStrategies,
             $existingRows,
             $sourceSelectSql,
+        );
+        $selectSql = $this->upsertProjector->project(
+            $selectSql,
+            $tableName,
+            $tableColumns,
+            isset($tables[$tableName]['candidateKeys']) ? $tables[$tableName]['candidateKeys'] : [],
+            (new \ZtdQuery\Platform\MySql\MySqlUpsertAssignmentExtractor())->extract($sql),
         );
 
         return $this->selectTransformer->transform(

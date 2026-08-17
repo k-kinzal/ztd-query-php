@@ -256,6 +256,16 @@ final class SqliteProvider extends Base
         return $this->rsg->decimalString($precision, $scale);
     }
 
+    /** @return non-empty-string */
+    public function insertFunctionUpsertStatement(): string
+    {
+        $table = $this->rsg->rawIdentifier();
+        $keyColumn = $this->rsg->rawIdentifier();
+        $valueColumn = $this->rsg->rawIdentifier();
+
+        return "INSERT INTO $table ($keyColumn, $valueColumn) VALUES (1, '{}') ON CONFLICT ($keyColumn) DO UPDATE SET $valueColumn = json_set($table.$valueColumn, '$.status', 'updated')";
+    }
+
     private function generate(string $startRule, int $maxDepth): string
     {
         return $this->sql->generate(GenerationPlan::fromRule($startRule)->withMaxDepth($maxDepth));

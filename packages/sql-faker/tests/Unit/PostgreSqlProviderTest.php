@@ -52,6 +52,16 @@ use SqlFaker\Grammar\TerminalInventory;
 #[Medium]
 final class PostgreSqlProviderTest extends TestCase
 {
+    public function testInsertFunctionUpsertStatementIncludesNativeJsonFunction(): void
+    {
+        $provider = new PostgreSqlProvider(Factory::create());
+
+        $sql = $provider->insertFunctionUpsertStatement();
+
+        self::assertStringContainsString('ON CONFLICT', $sql);
+        self::assertStringContainsString('jsonb_set(', $sql);
+    }
+
     #[\Override]
     protected function setUp(): void
     {

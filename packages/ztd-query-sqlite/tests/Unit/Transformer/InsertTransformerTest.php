@@ -34,6 +34,28 @@ use ZtdQuery\Schema\IdentityGenerationStrategy;
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer::class)]
 final class InsertTransformerTest extends TestCase
 {
+    public function testProjectsConflictExpressionUsingCandidateKeys(): void
+    {
+        $transformer = new InsertTransformer(new SqliteParser(), new SelectTransformer());
+        $tables = [
+            'users' => [
+                'rows' => [],
+                'columns' => ['id', 'name'],
+                'columnTypes' => [],
+                'candidateKeys' => ['PRIMARY' => ['id']],
+            ],
+        ];
+
+        $result = $transformer->transform(
+            "INSERT INTO users (id, name) VALUES (1, 'Alice') ON CONFLICT (id) DO UPDATE SET name = excluded.name",
+            $tables,
+        );
+
+        self::assertStringContainsString('"__ztd_incoming"."name"', $result);
+        self::assertStringContainsString('__ztd_upsert_value_0', $result);
+        self::assertStringNotContainsString('excluded.', $result);
+    }
+
     public function testUsesInjectedCastRendererAndColumnTypes(): void
     {
         $castRenderer = self::createStub(CastRenderer::class);

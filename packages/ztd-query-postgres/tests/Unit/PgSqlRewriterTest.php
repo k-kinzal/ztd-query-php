@@ -62,6 +62,41 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer::class)]
 final class PgSqlRewriterTest extends RewriterContractTest
 {
+    public function testRegisteredTableUpsertProjectsConflictExpression(): void
+    {
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $definition = $this->createSchemaParser()->parse($this->usersCreateTableSql());
+        self::assertNotNull($definition);
+        $registry->register('users', $definition);
+
+        $plan = $this->createRewriter($store, $registry)->rewrite(
+            "INSERT INTO users (id, name, email) VALUES (1, 'Alice', 'a@example.com') "
+            . 'ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name',
+        );
+
+        self::assertStringContainsString('__ztd_upsert_value_0', $plan->sql());
+        self::assertStringNotContainsString('EXCLUDED.', $plan->sql());
+    }
+
+    public function testStoredTableUpsertProjectsConflictExpression(): void
+    {
+        $store = new ShadowStore();
+        $store->ensure('users');
+        $registry = new TableDefinitionRegistry();
+        $definition = $this->createSchemaParser()->parse($this->usersCreateTableSql());
+        self::assertNotNull($definition);
+        $registry->register('users', $definition);
+
+        $plan = $this->createRewriter($store, $registry)->rewrite(
+            "INSERT INTO users (id, name, email) VALUES (1, 'Alice', 'a@example.com') "
+            . 'ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name',
+        );
+
+        self::assertStringContainsString('__ztd_upsert_value_0', $plan->sql());
+        self::assertStringNotContainsString('EXCLUDED.', $plan->sql());
+    }
+
     public function testSchemaQualifiedSelectUsesShadowCte(): void
     {
         $store = new ShadowStore();

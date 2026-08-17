@@ -158,7 +158,7 @@ final class MySqlMutationResolverTest extends TestCase
         $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
         $resolver = new MySqlMutationResolver($shadowStore, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
 
-        $sql = "INSERT INTO users (id, name) VALUES (1, 'Alice') ON DUPLICATE KEY UPDATE name = 'Alice'";
+        $sql = "INSERT INTO users (id, name) VALUES (1, 'Alice') ON DUPLICATE KEY UPDATE name = CONCAT(name, ' updated')";
         $statements = $parser->parse($sql);
         $mutation = $resolver->resolve($sql, $statements[0], QueryKind::WRITE_SIMULATED);
 

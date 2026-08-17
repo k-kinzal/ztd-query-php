@@ -32,6 +32,28 @@ use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer::class)]
 final class InsertTransformerTest extends TestCase
 {
+    public function testProjectsConflictExpressionUsingCandidateKeys(): void
+    {
+        $transformer = new InsertTransformer(new PgSqlParser(), new SelectTransformer());
+        $tables = [
+            'users' => [
+                'rows' => [],
+                'columns' => ['id', 'name'],
+                'columnTypes' => [],
+                'candidateKeys' => ['PRIMARY' => ['id']],
+            ],
+        ];
+
+        $result = $transformer->transform(
+            "INSERT INTO users (id, name) VALUES (1, 'Alice') ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name",
+            $tables,
+        );
+
+        self::assertStringContainsString('"__ztd_incoming"."name"', $result);
+        self::assertStringContainsString('__ztd_upsert_value_0', $result);
+        self::assertStringNotContainsString('EXCLUDED.', $result);
+    }
+
     public function testUsesInjectedCastRendererForTypedValue(): void
     {
         $castRenderer = self::createStub(CastRenderer::class);

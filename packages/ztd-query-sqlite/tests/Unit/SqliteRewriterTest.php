@@ -433,6 +433,8 @@ final class SqliteRewriterTest extends RewriterContractTest
 
         self::assertSame(QueryKind::WRITE_SIMULATED, $plan->kind());
         self::assertInstanceOf(UpsertMutation::class, $plan->mutation());
+        self::assertStringContainsString('__ztd_upsert_value_0', $plan->sql());
+        self::assertStringNotContainsString('excluded.', $plan->sql());
     }
 
     public function testCreateTableReturnsDdlSimulated(): void

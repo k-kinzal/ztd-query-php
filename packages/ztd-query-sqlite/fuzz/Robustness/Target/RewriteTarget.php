@@ -131,6 +131,7 @@ final class RewriteTarget
             fn () => $this->provider->createTableStatement(maxDepth: 5),
             fn () => $this->provider->alterTableStatement(maxDepth: 5),
             fn () => $this->provider->dropTableStatement(maxDepth: 3),
+            fn (): string => $this->provider->insertFunctionUpsertStatement(),
         ];
 
         $index = ord($input[0] ?? "\0") % count($generators);

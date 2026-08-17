@@ -13,6 +13,7 @@ use ZtdQuery\Platform\MySql\InsertSelectSourceExtractor;
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlParser;
+use ZtdQuery\Platform\MySql\MySqlUpsertAssignmentExtractor;
 use ZtdQuery\Platform\MySql\Transformer\InsertSelectRenderer;
 use ZtdQuery\Platform\MySql\Transformer\InsertTransformer;
 use ZtdQuery\Platform\MySql\Transformer\MySqlSelectListAliaser;
@@ -23,6 +24,7 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(InsertTransformer::class)]
 #[UsesClass(MySqlParser::class)]
+#[UsesClass(MySqlUpsertAssignmentExtractor::class)]
 #[UsesClass(SelectTransformer::class)]
 #[UsesClass(InsertSelectSourceExtractor::class)]
 #[UsesClass(MySqlCastRenderer::class)]
@@ -35,6 +37,28 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
 final class InsertTransformerTest extends TestCase
 {
+    public function testProjectsUpsertExpressionUsingCandidateKeys(): void
+    {
+        $transformer = new InsertTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = [
+            'users' => [
+                'rows' => [],
+                'columns' => ['id', 'name'],
+                'columnTypes' => [],
+                'candidateKeys' => ['PRIMARY' => ['id']],
+            ],
+        ];
+
+        $result = $transformer->transform(
+            "INSERT INTO users (id, name) VALUES (1, 'Alice') ON DUPLICATE KEY UPDATE name = VALUES(name)",
+            $tables,
+        );
+
+        self::assertStringContainsString('`__ztd_incoming`.`name`', $result);
+        self::assertStringContainsString('__ztd_upsert_value_0', $result);
+        self::assertStringNotContainsString('VALUES(', $result);
+    }
+
     public function testTransformInsertFromCompoundSelectPreservesEveryBranch(): void
     {
         $transformer = new InsertTransformer(new MySqlParser(), new SelectTransformer());

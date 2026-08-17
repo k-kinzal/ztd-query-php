@@ -10,10 +10,12 @@ use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
 use ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer;
 use ZtdQuery\Rewrite\ShadowIdentityAllocator;
+use ZtdQuery\Rewrite\NativeUpsertProjector;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Sql\SqlTokenStream;
+use ZtdQuery\Sql\SqlTokenDialect;
 
 /**
  * Transforms INSERT statements into SELECT queries that return the inserted rows.
@@ -28,6 +30,7 @@ final class InsertTransformer implements SqlTransformer
     private ShadowIdentityAllocator $identityAllocator;
     private InsertSelectRenderer $insertSelectRenderer;
     private PgSqlCteShadowComposer $cteComposer;
+    private NativeUpsertProjector $upsertProjector;
 
     public function __construct(
         PgSqlParser $parser,
@@ -41,6 +44,11 @@ final class InsertTransformer implements SqlTransformer
         $this->identityAllocator = new ShadowIdentityAllocator();
         $this->insertSelectRenderer = new InsertSelectRenderer();
         $this->cteComposer = new PgSqlCteShadowComposer();
+        $this->upsertProjector = new NativeUpsertProjector(
+            new PgSqlIdentifierQuoter(),
+            SqlTokenDialect::Standard,
+            ['EXCLUDED'],
+        );
     }
 
     /**
@@ -84,6 +92,7 @@ final class InsertTransformer implements SqlTransformer
                 $columnDefaults,
                 $generatedIdentityStarts,
             );
+            $projectedSql = $this->projectUpsert($sql, $projectedSql, $tableName, $tableColumns, $tables);
 
             return $this->selectTransformer->transform($projectedSql, $tables);
         }
@@ -124,10 +133,34 @@ final class InsertTransformer implements SqlTransformer
         }
 
         $selectSql = implode(' UNION ALL ', $selectParts);
+        $selectSql = $this->projectUpsert($sql, $selectSql, $tableName, $tableColumns, $tables);
 
         return $this->selectTransformer->transform(
             $this->cteComposer->carryPrefix($sql, $selectSql),
             $tables,
+        );
+    }
+
+    /**
+     * @param list<string> $tableColumns
+     * @param array<string, array{candidateKeys?: array<string, array<int, string>>}> $tables
+     */
+    private function projectUpsert(
+        string $sql,
+        string $selectSql,
+        string $tableName,
+        array $tableColumns,
+        array $tables,
+    ): string {
+        $conflict = $this->parser->extractOnConflictUpdateColumns($sql);
+
+        return $this->upsertProjector->project(
+            $selectSql,
+            $tableName,
+            $tableColumns,
+            isset($tables[$tableName]['candidateKeys']) ? $tables[$tableName]['candidateKeys'] : [],
+            $conflict['values'],
+            $this->parser->extractOnConflictUpdateWhere($sql),
         );
     }
 

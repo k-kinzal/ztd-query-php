@@ -70,6 +70,17 @@ final class MySqlProviderTest extends TestCase
         self::assertNotSame('', $identifier);
     }
 
+    public function testInsertFunctionUpsertStatementIncludesNativeConditionalAndJsonFunctions(): void
+    {
+        $provider = new MySqlProvider(Factory::create());
+
+        $sql = $provider->insertFunctionUpsertStatement();
+
+        self::assertStringContainsString('ON DUPLICATE KEY UPDATE', $sql);
+        self::assertStringContainsString('IF(VALUES(', $sql);
+        self::assertStringContainsString('JSON_SET(', $sql);
+    }
+
     public function testSql(): void
     {
         $faker = Factory::create();

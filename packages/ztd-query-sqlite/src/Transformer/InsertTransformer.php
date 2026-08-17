@@ -11,8 +11,10 @@ use ZtdQuery\Platform\Sqlite\SqliteParser;
 use ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer;
 use ZtdQuery\Rewrite\ShadowIdentityAllocator;
 use ZtdQuery\Rewrite\SqlTransformer;
+use ZtdQuery\Rewrite\NativeUpsertProjector;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Sql\SqlTokenStream;
+use ZtdQuery\Sql\SqlTokenDialect;
 
 /**
  * Transforms INSERT/REPLACE statements into SELECT queries that return the inserted rows.
@@ -34,6 +36,7 @@ final class InsertTransformer implements SqlTransformer
     private ShadowIdentityAllocator $identityAllocator;
     private InsertSelectRenderer $insertSelectRenderer;
     private SqliteCteShadowComposer $cteComposer;
+    private NativeUpsertProjector $upsertProjector;
 
     public function __construct(
         SqliteParser $parser,
@@ -47,6 +50,11 @@ final class InsertTransformer implements SqlTransformer
         $this->identityAllocator = new ShadowIdentityAllocator();
         $this->insertSelectRenderer = new InsertSelectRenderer();
         $this->cteComposer = new SqliteCteShadowComposer();
+        $this->upsertProjector = new NativeUpsertProjector(
+            new SqliteIdentifierQuoter(),
+            SqlTokenDialect::Standard,
+            ['EXCLUDED'],
+        );
     }
 
     /**
@@ -84,6 +92,14 @@ final class InsertTransformer implements SqlTransformer
             $columnDefaults,
             $identityStrategies,
             $existingRows,
+        );
+        $selectSql = $this->upsertProjector->project(
+            $selectSql,
+            $tableName,
+            $tableColumns,
+            isset($tables[$tableName]['candidateKeys']) ? $tables[$tableName]['candidateKeys'] : [],
+            $this->parser->extractOnConflictUpdates($sql),
+            $this->parser->extractOnConflictUpdateWhere($sql),
         );
 
         return $this->selectTransformer->transform(

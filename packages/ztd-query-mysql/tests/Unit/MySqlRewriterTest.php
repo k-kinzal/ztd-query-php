@@ -1657,6 +1657,54 @@ final class MySqlRewriterTest extends RewriterContractTest
         $plan = $rewriter->rewrite("INSERT INTO users (id, name) VALUES (1, 'Alice') ON DUPLICATE KEY UPDATE name = 'Bob'");
         self::assertSame(QueryKind::WRITE_SIMULATED, $plan->kind());
         self::assertNotNull($plan->mutation());
+        self::assertStringContainsString('__ztd_upsert_value_0', $plan->sql());
+    }
+
+    public function testRewriteUpsertUsesCandidateKeysForStoredTableContext(): void
+    {
+        $shadowStore = new ShadowStore();
+        $shadowStore->ensure('users');
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $registry = new TableDefinitionRegistry();
+        $definition = $schemaParser->parse('CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255))');
+        self::assertNotNull($definition);
+        $registry->register('users', $definition);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer(
+            $parser,
+            $selectTransformer,
+            $insertTransformer,
+            $updateTransformer,
+            $deleteTransformer,
+            $replaceTransformer,
+        );
+        $resolver = new MySqlMutationResolver(
+            $shadowStore,
+            $registry,
+            $schemaParser,
+            $updateTransformer,
+            $deleteTransformer,
+        );
+        $rewriter = new MySqlRewriter(
+            new MySqlQueryGuard($parser),
+            $shadowStore,
+            $registry,
+            $transformer,
+            $resolver,
+            $parser,
+        );
+
+        $plan = $rewriter->rewrite(
+            "INSERT INTO users (id, name) VALUES (1, 'Alice') ON DUPLICATE KEY UPDATE name = VALUES(name)",
+        );
+
+        self::assertStringContainsString('`__ztd_incoming`.`name`', $plan->sql());
+        self::assertStringContainsString('__ztd_upsert_value_0', $plan->sql());
     }
 
     public function testRewriteCreateTableAsSelectTransformsCte(): void

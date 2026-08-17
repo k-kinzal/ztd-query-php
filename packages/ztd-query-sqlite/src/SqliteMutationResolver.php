@@ -134,18 +134,22 @@ final class SqliteMutationResolver
 
         if ($this->parser->hasOnConflict($sql)) {
             $updateColumns = [];
-            /** @var array<string, \ZtdQuery\Shadow\Mutation\UpsertExpression> $updateValues */
+            $definition = $this->registry->get($tableName);
+            $databaseEvaluated = $definition !== null && $definition->candidateKeys()->keys() !== [];
+            /** @var array<string, \ZtdQuery\Shadow\Mutation\UpsertExpression|null> $updateValues */
             $updateValues = [];
             $expressionParser = new SqliteUpsertExpressionParser();
             $onConflictUpdates = $this->parser->extractOnConflictUpdates($sql);
             foreach ($onConflictUpdates as $colName => $value) {
                 $updateColumns[] = $colName;
-                $updateValues[$colName] = $expressionParser->parse($value, $tableName);
+                $updateValues[$colName] = $databaseEvaluated
+                    ? $expressionParser->parseIfSupported($value, $tableName)
+                    : $expressionParser->parse($value, $tableName);
             }
 
             if ($updateColumns !== []) {
-                $definition = $this->registry->get($tableName);
                 $primaryKeys = $definition !== null ? $definition->primaryKeys : [];
+                $predicate = $this->parser->extractOnConflictUpdateWhere($sql);
 
                 return new UpsertMutation(
                     $tableName,
@@ -153,9 +157,14 @@ final class SqliteMutationResolver
                     $updateColumns,
                     $updateValues,
                     $definition?->candidateKeys(),
-                    ($predicate = $this->parser->extractOnConflictUpdateWhere($sql)) !== null
-                        ? $expressionParser->parse($predicate, $tableName)
+                    $predicate !== null
+                        ? ($databaseEvaluated
+                            ? $expressionParser->parseIfSupported($predicate, $tableName)
+                            : $expressionParser->parse($predicate, $tableName))
                         : null,
+                    databaseEvaluated: $databaseEvaluated,
+                    updateSqlValues: $onConflictUpdates,
+                    updateSqlPredicate: $predicate,
                 );
             }
 

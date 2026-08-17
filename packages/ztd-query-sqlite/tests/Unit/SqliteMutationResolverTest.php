@@ -102,7 +102,7 @@ final class SqliteMutationResolverTest extends TestCase
         ));
         $resolver = new SqliteMutationResolver(new ShadowStore(), $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve(
-            "INSERT INTO users (id, name) VALUES (1, 'Alice') ON CONFLICT (id) DO UPDATE SET name = excluded.name",
+            "INSERT INTO users (id, name) VALUES (1, 'Alice') ON CONFLICT (id) DO UPDATE SET name = upper(users.name)",
             QueryKind::WRITE_SIMULATED
         );
 

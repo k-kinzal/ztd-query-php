@@ -146,6 +146,7 @@ final class RewriteTarget
             fn (): string => $this->provider->updateJoinDerivedStatement(),
             fn (): string => $this->provider->insertSelectCompoundStatement(),
             fn (): string => $this->provider->insertRowAliasUpsertStatement(),
+            fn (): string => $this->provider->insertFunctionUpsertStatement(),
         ];
 
         $index = ord($input[0] ?? "\0") % count($generators);

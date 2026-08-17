@@ -12,6 +12,7 @@ use ZtdQuery\Shadow\Mutation\UpsertMutation;
 use ZtdQuery\Shadow\Mutation\UpsertColumnSource;
 use ZtdQuery\Shadow\Mutation\UpsertExpression;
 use ZtdQuery\Shadow\Mutation\UpsertExpressionKind;
+use ZtdQuery\Shadow\Mutation\UpsertMutationRow;
 use ZtdQuery\Shadow\ShadowStore;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -21,6 +22,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(CandidateKeySet::class)]
 #[UsesClass(TableDefinition::class)]
 #[UsesClass(UpsertExpression::class)]
+#[UsesClass(UpsertMutationRow::class)]
 #[CoversClass(UpsertMutation::class)]
 final class UpsertMutationTest extends TestCase
 {
@@ -331,5 +333,39 @@ final class UpsertMutationTest extends TestCase
         $mutation->apply($store, [['id' => 1, 'name' => 'updated', 'score' => 95]]);
         self::assertSame([['id' => 1, 'name' => 'updated', 'score' => 85]], $store->get('items'));
         self::assertSame([['id' => 1, 'name' => 'updated', 'score' => 85]], $mutation->resultRows());
+    }
+
+    public function testApplyUsesDatabaseEvaluatedValuesAndStripsMetadata(): void
+    {
+        $store = new ShadowStore();
+        $store->set('items', [['id' => 1, 'value' => 'original']]);
+        $codec = new UpsertMutationRow();
+        $mutation = new UpsertMutation(
+            'items',
+            ['id'],
+            ['value'],
+            ['value' => null],
+            databaseEvaluated: true,
+            updateSqlValues: ['value' => 'unsupported(native_expression)'],
+            updateSqlPredicate: 'unsupported(native_predicate)',
+        );
+
+        $mutation->apply($store, [[
+            'id' => 1,
+            'value' => 'incoming',
+            $codec->valueColumn(0) => 'evaluated',
+            $codec->predicateColumn() => 1,
+        ]]);
+
+        self::assertSame([['id' => 1, 'value' => 'evaluated']], $store->get('items'));
+        self::assertSame([['id' => 1, 'value' => 'evaluated']], $mutation->resultRows());
+
+        $mutation->apply($store, [[
+            'id' => 2,
+            'value' => 'inserted',
+            $codec->valueColumn(0) => null,
+            $codec->predicateColumn() => null,
+        ]]);
+        self::assertSame(['id' => 2, 'value' => 'inserted'], $store->get('items')[1]);
     }
 }

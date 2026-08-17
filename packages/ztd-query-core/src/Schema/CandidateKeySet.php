@@ -30,6 +30,12 @@ final class CandidateKeySet
         return new self($keys);
     }
 
+    /** @return array<string, array<int, string>> */
+    public function keys(): array
+    {
+        return $this->keys;
+    }
+
     /**
      * @param array<string, mixed> $row
      * @param array<int, array<string, mixed>> $existingRows

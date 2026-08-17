@@ -82,7 +82,7 @@ final class PgSqlMutationResolverTest extends TestCase
             []
         ));
         $mutation = $resolver->resolve(
-            "INSERT INTO users (id, name) VALUES (1, 'Alice') ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name",
+            "INSERT INTO users (id, name) VALUES (1, 'Alice') ON CONFLICT (id) DO UPDATE SET name = upper(users.name)",
             'INSERT',
             QueryKind::WRITE_SIMULATED
         );

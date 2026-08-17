@@ -216,6 +216,7 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
                 'columnDefaults' => $columnDefaults,
                 'identityStrategies' => $identityStrategies,
                 'primaryKeys' => $definition !== null ? $definition->primaryKeys : [],
+                'candidateKeys' => $definition !== null ? $definition->candidateKeys()->keys() : [],
             ];
         }
 
@@ -232,6 +233,7 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
                 'columnDefaults' => $definition->columnDefaults,
                 'identityStrategies' => $definition->identityStrategies,
                 'primaryKeys' => $definition->primaryKeys,
+                'candidateKeys' => $definition->candidateKeys()->keys(),
             ];
         }
 

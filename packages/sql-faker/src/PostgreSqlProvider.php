@@ -407,6 +407,16 @@ final class PostgreSqlProvider extends Base
         return '$' . $this->rsg->parameterIndex($min, $max);
     }
 
+    /** @return non-empty-string */
+    public function insertFunctionUpsertStatement(): string
+    {
+        $table = $this->rsg->rawIdentifier();
+        $keyColumn = $this->rsg->rawIdentifier();
+        $valueColumn = $this->rsg->rawIdentifier();
+
+        return "INSERT INTO $table ($keyColumn, $valueColumn) VALUES (1, '{}') ON CONFLICT ($keyColumn) DO UPDATE SET $valueColumn = jsonb_set($table.$valueColumn, '{status}', '\"updated\"')";
+    }
+
     /**
      * @template TRequiresNonEmpty of bool
      * @param GenerationPlan<TRequiresNonEmpty> $plan

@@ -224,9 +224,14 @@ final class MySqlMutationResolver
         $extractor = new MySqlUpsertAssignmentExtractor();
         $incomingAlias = $extractor->incomingAlias($sql);
         $expressionParser = new MySqlUpsertExpressionParser();
+        $rawUpdateValues = $extractor->extract($sql);
+        $definition = $this->registry->get($tableName);
+        $databaseEvaluated = $definition !== null && $definition->candidateKeys()->keys() !== [];
         $updateValues = [];
-        foreach ($extractor->extract($sql) as $column => $expression) {
-            $updateValues[$column] = $expressionParser->parse($expression, $tableName, $incomingAlias);
+        foreach ($rawUpdateValues as $column => $expression) {
+            $updateValues[$column] = $databaseEvaluated
+                ? $expressionParser->parseIfSupported($expression, $tableName, $incomingAlias)
+                : $expressionParser->parse($expression, $tableName, $incomingAlias);
         }
         $updateColumns = array_keys($updateValues);
         $isOnDuplicateKeyUpdate = $updateColumns !== [];
@@ -234,7 +239,6 @@ final class MySqlMutationResolver
         $isIgnore = $statement->options !== null && self::optionSet($statement->options, 'IGNORE');
 
         if ($isOnDuplicateKeyUpdate) {
-            $definition = $this->registry->get($tableName);
             $primaryKeys = $definition !== null ? $definition->primaryKeys : [];
             return new UpsertMutation(
                 $tableName,
@@ -242,6 +246,8 @@ final class MySqlMutationResolver
                 $updateColumns,
                 $updateValues,
                 $definition?->candidateKeys(),
+                databaseEvaluated: $databaseEvaluated,
+                updateSqlValues: $rawUpdateValues,
             );
         }
 
