@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker;
 
 use Faker\Factory;
+use Faker\Generator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
@@ -892,17 +893,58 @@ final class PostgreSqlProviderTest extends TestCase
         self::assertNotSame('', $result);
     }
 
-    public function testTableSampleStatementTargetsFuzzFixture(): void
+    public function testTableSampleStatementCoversMethodsBoundsAndRepeatability(): void
     {
-        $faker = Factory::create();
-        $faker->seed(12345);
-        $provider = new PostgreSqlProvider($faker);
+        $maximum = new class () extends Generator {
+            /**
+             * @param mixed $int1
+             * @param mixed $int2
+             */
+            #[\Override]
+            public function numberBetween($int1 = 0, $int2 = 2147483647): int
+            {
+                return $int2 === 100 ? 100 : 2147483647;
+            }
 
-        $sql = $provider->tableSampleStatement();
+            /**
+             * @param string $method
+             * @param array<mixed> $attributes
+             */
+            #[\Override]
+            public function __call($method, $attributes): bool
+            {
+                return true;
+            }
+        };
+        $minimum = new class () extends Generator {
+            /**
+             * @param mixed $int1
+             * @param mixed $int2
+             */
+            #[\Override]
+            public function numberBetween($int1 = 0, $int2 = 2147483647): int
+            {
+                return 0;
+            }
 
-        self::assertMatchesRegularExpression(
-            '/^SELECT \* FROM users TABLESAMPLE (?:BERNOULLI|SYSTEM) \((?:100|[1-9]?[0-9])\)(?: REPEATABLE \([0-9]+\))?$/',
-            $sql,
+            /**
+             * @param string $method
+             * @param array<mixed> $attributes
+             */
+            #[\Override]
+            public function __call($method, $attributes): bool
+            {
+                return false;
+            }
+        };
+
+        self::assertSame(
+            'SELECT * FROM users TABLESAMPLE BERNOULLI (100) REPEATABLE (2147483647)',
+            (new PostgreSqlProvider($maximum))->tableSampleStatement(),
+        );
+        self::assertSame(
+            'SELECT * FROM users TABLESAMPLE SYSTEM (0)',
+            (new PostgreSqlProvider($minimum))->tableSampleStatement(),
         );
     }
 
