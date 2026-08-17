@@ -11,12 +11,10 @@ use ZtdQuery\Platform\Sqlite\SqliteLexicalMasker;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
 use ZtdQuery\Platform\Sqlite\SqliteQueryGuard;
 use ZtdQuery\Rewrite\QueryKind;
-use ZtdQuery\Sql\ReadOnlyDiagnosticStatement;
 
 #[CoversClass(SqliteQueryGuard::class)]
 #[UsesClass(SqliteLexicalMasker::class)]
 #[UsesClass(SqliteParser::class)]
-#[UsesClass(ReadOnlyDiagnosticStatement::class)]
 final class SqliteQueryGuardTest extends QueryClassifierContractTest
 {
     protected function classify(string $sql): ?QueryKind

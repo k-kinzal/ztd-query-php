@@ -37,7 +37,6 @@ use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTableState;
-use ZtdQuery\Sql\ReadOnlyDiagnosticStatement;
 
 #[CoversClass(SqliteRewriter::class)]
 #[UsesClass(SqliteLexicalMasker::class)]
@@ -58,7 +57,6 @@ use ZtdQuery\Sql\ReadOnlyDiagnosticStatement;
 #[UsesClass(DeleteTransformer::class)]
 #[UsesClass(SqliteCastRenderer::class)]
 #[UsesClass(SqliteIdentifierQuoter::class)]
-#[UsesClass(ReadOnlyDiagnosticStatement::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteValueRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer::class)]
 final class SqliteRewriterTest extends RewriterContractTest

@@ -11,11 +11,9 @@ use Tests\Contract\QueryClassifierContractTest;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlQueryGuard;
 use ZtdQuery\Rewrite\QueryKind;
-use ZtdQuery\Sql\ReadOnlyDiagnosticStatement;
 
 #[CoversClass(MySqlQueryGuard::class)]
 #[UsesClass(MySqlParser::class)]
-#[UsesClass(ReadOnlyDiagnosticStatement::class)]
 class MySqlQueryGuardTest extends QueryClassifierContractTest
 {
     protected function classify(string $sql): ?QueryKind

@@ -35,7 +35,6 @@ use ZtdQuery\Shadow\Mutation\TruncateMutation;
 use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTableState;
-use ZtdQuery\Sql\ReadOnlyDiagnosticStatement;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 
@@ -58,7 +57,6 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(DeleteTransformer::class)]
 #[UsesClass(PgSqlCastRenderer::class)]
 #[UsesClass(PgSqlIdentifierQuoter::class)]
-#[UsesClass(ReadOnlyDiagnosticStatement::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlValueRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer::class)]
 final class PgSqlRewriterTest extends RewriterContractTest

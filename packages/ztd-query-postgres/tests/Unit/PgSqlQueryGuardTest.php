@@ -8,12 +8,10 @@ use Tests\Contract\QueryClassifierContractTest;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
 use ZtdQuery\Platform\Postgres\PgSqlQueryGuard;
 use ZtdQuery\Rewrite\QueryKind;
-use ZtdQuery\Sql\ReadOnlyDiagnosticStatement;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 
 #[CoversClass(PgSqlQueryGuard::class)]
-#[UsesClass(ReadOnlyDiagnosticStatement::class)]
 #[UsesClass(PgSqlParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PostgreSqlLexicalMasker::class)]
 final class PgSqlQueryGuardTest extends QueryClassifierContractTest

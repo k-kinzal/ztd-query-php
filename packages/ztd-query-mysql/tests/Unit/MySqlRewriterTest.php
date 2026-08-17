@@ -36,7 +36,6 @@ use ZtdQuery\Shadow\Mutation\TruncateMutation;
 use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTableState;
-use ZtdQuery\Sql\ReadOnlyDiagnosticStatement;
 
 #[CoversClass(MySqlRewriter::class)]
 #[UsesClass(MySqlParser::class)]
@@ -56,7 +55,6 @@ use ZtdQuery\Sql\ReadOnlyDiagnosticStatement;
 #[UsesClass(DeleteTransformer::class)]
 #[UsesClass(ReplaceTransformer::class)]
 #[UsesClass(AlterTableMutation::class)]
-#[UsesClass(ReadOnlyDiagnosticStatement::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlCastRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlIdentifierQuoter::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]

@@ -8,9 +8,13 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Sql\ReadOnlyDiagnosticStatement;
+use ZtdQuery\Sql\SqlToken;
+use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(ReadOnlyDiagnosticStatement::class)]
+#[UsesClass(SqlToken::class)]
+#[UsesClass(SqlTokenKind::class)]
 #[UsesClass(SqlTokenStream::class)]
 final class ReadOnlyDiagnosticStatementTest extends TestCase
 {
