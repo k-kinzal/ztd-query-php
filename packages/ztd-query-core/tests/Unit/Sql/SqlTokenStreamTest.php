@@ -35,6 +35,26 @@ final class SqlTokenStreamTest extends TestCase
         self::assertSame(['orders'], SqlTokenStream::tokenize($sql)->selectTableNames());
     }
 
+    public function testExtractsEveryJoinedAndCommaSeparatedRelation(): void
+    {
+        $sql = 'SELECT * FROM Users JOIN users AS duplicate ON TRUE, ONLY accounts, "audit"';
+
+        self::assertSame(
+            ['Users', 'accounts', 'audit'],
+            SqlTokenStream::tokenize($sql)->selectTableNames(),
+        );
+    }
+
+    public function testContinuesOuterScopeAfterNestedDerivedTable(): void
+    {
+        $sql = 'SELECT * FROM (SELECT * FROM nested_source) AS nested JOIN physical_source ON TRUE';
+
+        self::assertSame(
+            ['physical_source', 'nested_source'],
+            SqlTokenStream::tokenize($sql)->selectTableNames(),
+        );
+    }
+
     public function testSplitsOnlyTopLevelStatementTerminators(): void
     {
         $sql = 'SELECT \';\' AS value; SELECT $$a;b$$; /* ; */ SELECT (3; 4); SELECT [5; 6];;';

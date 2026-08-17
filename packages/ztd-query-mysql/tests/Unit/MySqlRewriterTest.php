@@ -75,6 +75,20 @@ final class MySqlRewriterTest extends RewriterContractTest
         self::assertStringStartsWith('WITH `users` AS', $plan->sql());
     }
 
+    public function testCteReferencesAreMatchedCaseInsensitivelyDuringSchemaValidation(): void
+    {
+        $registry = new TableDefinitionRegistry();
+        $definition = $this->createSchemaParser()->parse('CREATE TABLE known_table (id INT PRIMARY KEY)');
+        self::assertNotNull($definition);
+        $registry->register('known_table', $definition);
+
+        $plan = $this->createRewriter(new ShadowStore(), $registry)->rewrite(
+            'WITH users AS (SELECT 1 AS id) SELECT * FROM Users',
+        );
+
+        self::assertSame(QueryKind::READ, $plan->kind());
+    }
+
     protected function createRewriter(ShadowStore $store, TableDefinitionRegistry $registry): SqlRewriter
     {
         $parser = new MySqlParser();

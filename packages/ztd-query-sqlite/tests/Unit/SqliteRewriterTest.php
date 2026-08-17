@@ -60,6 +60,20 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer::class)]
 final class SqliteRewriterTest extends RewriterContractTest
 {
+    public function testCteReferencesAreMatchedCaseInsensitivelyDuringSchemaValidation(): void
+    {
+        $registry = new TableDefinitionRegistry();
+        $definition = $this->createSchemaParser()->parse('CREATE TABLE known_table (id INTEGER PRIMARY KEY)');
+        self::assertNotNull($definition);
+        $registry->register('known_table', $definition);
+
+        $plan = $this->createRewriter(new ShadowStore(), $registry)->rewrite(
+            'WITH users AS (SELECT 1 AS id) SELECT * FROM Users',
+        );
+
+        self::assertSame(QueryKind::READ, $plan->kind());
+    }
+
     protected function createRewriter(ShadowStore $store, TableDefinitionRegistry $registry): SqlRewriter
     {
         $parser = new SqliteParser();
