@@ -56,8 +56,12 @@ final class MySqlSchemaParser implements SchemaParser
         foreach ($stmt->fields as $field) {
             $name = $field->name ?? null;
 
-            if (is_string($name) && $name !== '' && $field->type !== null) {
-                $columnName = str_replace('`', '', $name);
+            if ($field->type !== null) {
+                $columnName = $name ?? '';
+                if ($columnName === '') {
+                    continue;
+                }
+
                 $columns[] = $columnName;
 
                 if ($field->type->name !== null) {
