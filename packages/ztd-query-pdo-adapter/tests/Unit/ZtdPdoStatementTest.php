@@ -95,6 +95,7 @@ final class ZtdPdoStatementTest extends TestCase
             $stmt->execute();
             self::fail('Expected a ZTD PDO exception.');
         } catch (ZtdPdoException $exception) {
+            self::assertSame(0, $exception->getCode());
             $databaseException = $exception->getPrevious();
             self::assertInstanceOf(DatabaseException::class, $databaseException);
             self::assertInstanceOf(MissingPrimaryKeyException::class, $databaseException->getPrevious());

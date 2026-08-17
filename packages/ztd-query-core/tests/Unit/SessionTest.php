@@ -26,6 +26,8 @@ use ZtdQuery\Shadow\ShadowStore;
 #[UsesClass(ShadowStore::class)]
 #[UsesClass(TableDefinitionRegistry::class)]
 #[UsesClass(ResultSelectRunner::class)]
+#[UsesClass(DatabaseException::class)]
+#[UsesClass(RewritePlan::class)]
 #[UsesClass(UpdateMutation::class)]
 #[UsesClass(MissingPrimaryKeyException::class)]
 final class SessionTest extends TestCase
@@ -75,6 +77,7 @@ final class SessionTest extends TestCase
             $session->processExecutedStatement($plan, new FakeStatement([['id' => 1, 'name' => 'Bob']]));
             self::fail('Expected a database exception.');
         } catch (DatabaseException $exception) {
+            self::assertSame(0, $exception->getCode());
             self::assertInstanceOf(MissingPrimaryKeyException::class, $exception->getPrevious());
         }
     }
