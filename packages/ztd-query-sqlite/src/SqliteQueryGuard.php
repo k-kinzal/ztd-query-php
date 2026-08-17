@@ -23,6 +23,9 @@ final class SqliteQueryGuard
      */
     public function classify(string $sql): ?QueryKind
     {
+        if (SqliteInMemoryAttachStatement::isSafe($sql)) {
+            return QueryKind::READ;
+        }
         if (SqliteReadOnlyDiagnosticStatement::isSafe($sql)) {
             return QueryKind::READ;
         }

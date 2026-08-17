@@ -46,6 +46,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteReadOnlyDiagnosticStatement::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteTransactionStatementParser::class)]
 #[UsesClass(SqliteReturningProjectionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteInMemoryAttachStatement::class)]
 #[UsesClass(SqliteSchemaParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser::class)]
 #[UsesClass(SqliteMutationResolver::class)]
@@ -90,6 +91,26 @@ final class SqliteRewriterTest extends RewriterContractTest
         $this->createRewriter(new ShadowStore(), $registry)->rewrite(
             'WITH users AS (SELECT 1 AS id) SELECT * FROM Users JOIN missing_table ON TRUE',
         );
+    }
+
+    public function testInMemoryAttachPassesThroughUnchanged(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        $sql = "ATTACH DATABASE ':memory:' AS db2";
+
+        $plan = $rewriter->rewrite($sql);
+
+        self::assertSame(QueryKind::READ, $plan->kind());
+        self::assertSame($sql, $plan->sql());
+    }
+
+    public function testPersistentAttachRemainsUnsupported(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+
+        $this->expectException(UnsupportedSqlException::class);
+
+        $rewriter->rewrite("ATTACH 'test.sqlite' AS db2");
     }
 
     public function testSchemaQualifiedSelectUsesShadowCte(): void

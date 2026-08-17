@@ -107,6 +107,9 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
 
     private function rewriteStatement(string $stmtSql, string $originalSql): RewritePlan
     {
+        if (SqliteInMemoryAttachStatement::isSafe($stmtSql)) {
+            return new RewritePlan($stmtSql, QueryKind::READ);
+        }
         if (SqliteReadOnlyDiagnosticStatement::isSafe($stmtSql)) {
             return new RewritePlan($stmtSql, QueryKind::READ);
         }

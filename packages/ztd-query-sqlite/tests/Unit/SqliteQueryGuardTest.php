@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use Tests\Contract\QueryClassifierContractTest;
 use ZtdQuery\Platform\Sqlite\SqliteLexicalMasker;
+use ZtdQuery\Platform\Sqlite\SqliteInMemoryAttachStatement;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
 use ZtdQuery\Platform\Sqlite\SqliteQueryGuard;
 use ZtdQuery\Rewrite\QueryKind;
@@ -16,6 +17,7 @@ use ZtdQuery\Rewrite\QueryKind;
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteReadOnlyDiagnosticStatement::class)]
 #[UsesClass(SqliteLexicalMasker::class)]
 #[UsesClass(SqliteParser::class)]
+#[UsesClass(SqliteInMemoryAttachStatement::class)]
 final class SqliteQueryGuardTest extends QueryClassifierContractTest
 {
     protected function classify(string $sql): ?QueryKind
@@ -121,6 +123,14 @@ final class SqliteQueryGuardTest extends QueryClassifierContractTest
         self::assertSame(QueryKind::READ, $guard->classify('EXPLAIN QUERY PLAN SELECT * FROM users'));
         self::assertSame(QueryKind::READ, $guard->classify('EXPLAIN QUERY PLAN DELETE FROM users'));
         self::assertNull($guard->classify('EXPLAIN ANALYZE DELETE FROM users'));
+    }
+
+    public function testClassifiesOnlyInMemoryAttachAsRead(): void
+    {
+        $guard = new SqliteQueryGuard(new SqliteParser());
+
+        self::assertSame(QueryKind::READ, $guard->classify("ATTACH DATABASE ':memory:' AS db2"));
+        self::assertNull($guard->classify("ATTACH 'test.sqlite' AS db2"));
     }
 
     public function testEmptyReturnsNull(): void
