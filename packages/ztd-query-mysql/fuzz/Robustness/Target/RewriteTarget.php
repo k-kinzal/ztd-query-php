@@ -87,6 +87,7 @@ final class RewriteTarget
             'orders' => 'CREATE TABLE orders (id INT PRIMARY KEY, user_id INT NOT NULL, amount DECIMAL(10,2), created_at DATETIME)',
             'order_items' => 'CREATE TABLE order_items (order_id INT NOT NULL, product_id INT NOT NULL, quantity INT NOT NULL DEFAULT 1, PRIMARY KEY (order_id, product_id))',
             'products' => 'CREATE TABLE products (id INT PRIMARY KEY, name VARCHAR(255) NOT NULL, price DECIMAL(10,2), category VARCHAR(100))',
+            'events' => 'CREATE TABLE events (id INT PRIMARY KEY, event_date DATE) PARTITION BY RANGE (YEAR(event_date)) (PARTITION p2023 VALUES LESS THAN (2024), PARTITION p2024 VALUES LESS THAN (2025), PARTITION pmax VALUES LESS THAN MAXVALUE)',
         ];
 
         foreach ($schemas as $tableName => $createSql) {
@@ -116,6 +117,10 @@ final class RewriteTarget
         $store->set('products', [
             ['id' => '1', 'name' => 'Widget', 'price' => '19.99', 'category' => 'tools'],
             ['id' => '2', 'name' => 'Gadget', 'price' => '49.99', 'category' => 'electronics'],
+        ]);
+        $store->set('events', [
+            ['id' => '1', 'event_date' => '2023-06-01'],
+            ['id' => '2', 'event_date' => '2024-06-01'],
         ]);
     }
 
@@ -151,6 +156,7 @@ final class RewriteTarget
             fn (): string => $this->provider->viewStatement(),
             fn (): string => $this->provider->generatedColumnStatement(),
             fn (): string => $this->provider->foreignKeyCascadeStatement(),
+            fn (): string => $this->provider->partitionSelectStatement(),
         ];
 
         $index = ord($input[0] ?? "\0") % count($generators);

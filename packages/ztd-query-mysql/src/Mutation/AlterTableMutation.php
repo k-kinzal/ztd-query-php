@@ -73,6 +73,9 @@ final class AlterTableMutation implements ShadowMutation
         if ($newDefinition === null) {
             throw new \RuntimeException("Failed to parse altered schema for '{$this->tableName}'.");
         }
+        if ($definition->partitioning !== null) {
+            $newDefinition = $newDefinition->withPartitioning($definition->partitioning);
+        }
 
         $this->registry->unregister($this->tableName);
         $this->registry->register($this->tableName, $newDefinition);

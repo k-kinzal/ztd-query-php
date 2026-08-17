@@ -165,6 +165,13 @@ final class MySqlProviderTest extends TestCase
         self::assertStringContainsString('ON_SYM DELETE_SYM CASCADE', implode(' ', $tokens));
     }
 
+    public function testPartitionSelectStatement(): void
+    {
+        $sql = (new MySqlProvider(Factory::create()))->partitionSelectStatement();
+
+        self::assertSame('SELECT * FROM events PARTITION (p2024)', $sql);
+    }
+
     public function testSql(): void
     {
         $faker = Factory::create();

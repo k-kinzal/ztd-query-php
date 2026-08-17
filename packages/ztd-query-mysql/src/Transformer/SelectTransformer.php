@@ -7,6 +7,7 @@ namespace ZtdQuery\Platform\MySql\Transformer;
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlTypeSemantics;
+use ZtdQuery\Platform\MySql\MySqlPartitionSelectionRewriter;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\IdentifierQuoter;
 use ZtdQuery\Platform\ValueRenderer;
@@ -30,6 +31,7 @@ final class SelectTransformer implements SqlTransformer
     private MySqlTypeSemantics $typeSemantics;
     private MySqlCteShadowComposer $cteComposer;
     private MySqlGeneratedColumnProjector $generatedColumnProjector;
+    private MySqlPartitionSelectionRewriter $partitionSelectionRewriter;
 
     public function __construct(
         ?CastRenderer $castRenderer = null,
@@ -42,6 +44,7 @@ final class SelectTransformer implements SqlTransformer
         $this->typeSemantics = new MySqlTypeSemantics();
         $this->cteComposer = new MySqlCteShadowComposer();
         $this->generatedColumnProjector = new MySqlGeneratedColumnProjector();
+        $this->partitionSelectionRewriter = new MySqlPartitionSelectionRewriter();
     }
 
     /**
@@ -49,6 +52,9 @@ final class SelectTransformer implements SqlTransformer
      */
     public function transform(string $sql, array $tables): string
     {
+        if (stripos($sql, 'PARTITION') !== false) {
+            $sql = $this->partitionSelectionRewriter->rewrite($sql, $tables);
+        }
         $sql = $this->typeSemantics->rewrite($sql, $tables);
         $sql = $this->rewriteSetOrderBy($sql, $tables);
 

@@ -1004,4 +1004,34 @@ final class MysqliCteShadowingTest extends TestCase
             $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
         }
     }
+
+    public function testRangePartitionSelectionMatchesShadowRows(): void
+    {
+        [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();
+        $rawMysqli->query('CREATE TABLE events (id INT NOT NULL, event_date DATE NOT NULL, '
+            . 'PRIMARY KEY (id, event_date)) PARTITION BY RANGE (YEAR(event_date)) ('
+            . 'PARTITION p2023 VALUES LESS THAN (2024), '
+            . 'PARTITION p2024 VALUES LESS THAN (2025), '
+            . 'PARTITION pmax VALUES LESS THAN MAXVALUE)');
+        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
+        try {
+            self::assertNotFalse($ztdMysqli->query("INSERT INTO events VALUES "
+                . "(1, '2023-06-01'), (2, '2024-01-15'), (3, '2024-11-20'), (4, '2025-02-01')"));
+
+            $selected = $ztdMysqli->query('SELECT id FROM events PARTITION (p2024) ORDER BY id');
+            self::assertInstanceOf(\mysqli_result::class, $selected);
+            self::assertSame([['id' => 2], ['id' => 3]], $selected->fetch_all(MYSQLI_ASSOC));
+
+            $combined = $ztdMysqli->query('SELECT e.id FROM events PARTITION (p2023, pmax) e ORDER BY e.id');
+            self::assertInstanceOf(\mysqli_result::class, $combined);
+            self::assertSame([['id' => 1], ['id' => 4]], $combined->fetch_all(MYSQLI_ASSOC));
+
+            $physical = $rawMysqli->query('SELECT COUNT(*) AS total FROM events');
+            self::assertInstanceOf(\mysqli_result::class, $physical);
+            self::assertSame([['total' => '0']], $physical->fetch_all(MYSQLI_ASSOC));
+        } finally {
+            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+        }
+    }
 }

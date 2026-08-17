@@ -10,11 +10,13 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
 use ZtdQuery\Schema\ForeignKeyDefinition;
 use ZtdQuery\Schema\TableDefinition;
+use ZtdQuery\Schema\TablePartitioning;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 
 #[UsesClass(ColumnType::class)]
 #[UsesClass(ForeignKeyDefinition::class)]
+#[UsesClass(TablePartitioning::class)]
 #[CoversClass(TableDefinition::class)]
 final class TableDefinitionTest extends TestCase
 {
@@ -33,6 +35,7 @@ final class TableDefinitionTest extends TestCase
             ['id' => IdentityGenerationStrategy::MaxValue],
             ['name' => "CONCAT('user-', id)"],
             ['fk_parent' => new ForeignKeyDefinition(['id'], 'parents', ['id'])],
+            new TablePartitioning(['p0' => 'id < 10']),
         );
 
         self::assertSame(['id', 'name'], $definition->columns);
@@ -45,6 +48,7 @@ final class TableDefinitionTest extends TestCase
         self::assertSame(['id' => IdentityGenerationStrategy::MaxValue], $definition->identityStrategies);
         self::assertSame(['name' => "CONCAT('user-', id)"], $definition->generatedExpressions);
         self::assertSame(['fk_parent'], array_keys($definition->foreignKeys));
+        self::assertSame('(id < 10)', $definition->partitioning?->predicateFor(['p0']));
     }
 
     public function testTypedColumnsDefaultsToEmpty(): void
@@ -62,5 +66,19 @@ final class TableDefinitionTest extends TestCase
         self::assertSame([], $definition->identityStrategies);
         self::assertSame([], $definition->generatedExpressions);
         self::assertSame([], $definition->foreignKeys);
+        self::assertNull($definition->partitioning);
+    }
+
+    public function testWithPartitioningPreservesSchemaAndReturnsNewDefinition(): void
+    {
+        $definition = new TableDefinition(['id'], ['id' => 'INT'], ['id'], ['id'], []);
+        $partitioning = new TablePartitioning(['p0' => 'id < 10']);
+
+        $partitioned = $definition->withPartitioning($partitioning);
+
+        self::assertNotSame($definition, $partitioned);
+        self::assertSame($definition->columns, $partitioned->columns);
+        self::assertSame($definition->primaryKeys, $partitioned->primaryKeys);
+        self::assertSame($partitioning, $partitioned->partitioning);
     }
 }

@@ -14,6 +14,8 @@ use ZtdQuery\Platform\MySql\InsertSelectSourceExtractor;
 use ZtdQuery\Platform\MySql\Mutation\AlterTableMutation;
 use ZtdQuery\Platform\MySql\MySqlMutationResolver;
 use ZtdQuery\Platform\MySql\MySqlParser;
+use ZtdQuery\Platform\MySql\MySqlPartitioningParser;
+use ZtdQuery\Platform\MySql\MySqlPartitionSelectionRewriter;
 use ZtdQuery\Platform\MySql\MySqlQueryGuard;
 use ZtdQuery\Platform\MySql\MySqlRewriter;
 use ZtdQuery\Platform\MySql\MySqlSchemaParser;
@@ -52,6 +54,8 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlUpsertExpressionParser::class)]
 #[UsesClass(MySqlSchemaParser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlSelectRelationParser::class)]
+#[UsesClass(MySqlPartitioningParser::class)]
+#[UsesClass(MySqlPartitionSelectionRewriter::class)]
 #[UsesClass(MySqlUpsertAssignmentExtractor::class)]
 #[UsesClass(MySqlQueryGuard::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlReadOnlyDiagnosticStatement::class)]
@@ -81,6 +85,53 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlGeneratedColumnProjector::class)]
 final class MySqlRewriterTest extends RewriterContractTest
 {
+    public function testPartitionSelectionUsesRegisteredPartitionMetadata(): void
+    {
+        $store = new ShadowStore();
+        $store->set('events', [
+            ['id' => 1, 'event_date' => '2023-06-01'],
+            ['id' => 2, 'event_date' => '2024-06-01'],
+        ]);
+        $registry = new TableDefinitionRegistry();
+        $definition = $this->createSchemaParser()->parse(
+            'CREATE TABLE events (id INT, event_date DATE) '
+            . 'PARTITION BY RANGE (YEAR(event_date)) ('
+            . 'PARTITION p2023 VALUES LESS THAN (2024), '
+            . 'PARTITION p2024 VALUES LESS THAN (2025), '
+            . 'PARTITION pmax VALUES LESS THAN MAXVALUE)',
+        );
+        self::assertNotNull($definition);
+        $registry->register('events', $definition);
+
+        $sql = $this->createRewriter($store, $registry)
+            ->rewrite('SELECT id FROM events PARTITION (p2024)')
+            ->sql();
+
+        self::assertStringStartsWith('WITH `events` AS', $sql);
+        self::assertStringContainsString(
+            'FROM (SELECT * FROM events WHERE ((YEAR(event_date)) >= 2024 AND (YEAR(event_date)) < 2025)) AS events',
+            $sql,
+        );
+    }
+
+    public function testPartitionSelectionUsesDefinitionWithoutMaterializedRows(): void
+    {
+        $registry = new TableDefinitionRegistry();
+        $definition = $this->createSchemaParser()->parse(
+            'CREATE TABLE events (id INT) PARTITION BY RANGE (id) ('
+            . 'PARTITION p0 VALUES LESS THAN (10), PARTITION pmax VALUES LESS THAN MAXVALUE)',
+        );
+        self::assertNotNull($definition);
+        $registry->register('events', $definition);
+
+        $sql = $this->createRewriter(new ShadowStore(), $registry)
+            ->rewrite('SELECT id FROM events PARTITION (p0)')
+            ->sql();
+
+        self::assertStringContainsString('FROM (SELECT * FROM events WHERE ((id) IS NULL OR (id) < 10)) AS events', $sql);
+    }
+
+
     public function testGeneratedExpressionIsPresentBeforeTheFirstShadowWrite(): void
     {
         $store = new ShadowStore();

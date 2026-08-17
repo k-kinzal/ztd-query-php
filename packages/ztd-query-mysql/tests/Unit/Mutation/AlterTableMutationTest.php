@@ -16,6 +16,7 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\Mutation\AlterTableMutation;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlSchemaParser;
+use ZtdQuery\Platform\MySql\MySqlPartitioningParser;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\TableDefinition;
@@ -26,6 +27,7 @@ use ZtdQuery\Shadow\ShadowStore;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlForeignKeyDefinitionParser::class)]
 #[UsesClass(MySqlParser::class)]
 #[UsesClass(MySqlSchemaParser::class)]
+#[UsesClass(MySqlPartitioningParser::class)]
 final class AlterTableMutationTest extends TestCase
 {
     public function testApplyAddColumnAddsNewColumn(): void
@@ -71,6 +73,30 @@ final class AlterTableMutationTest extends TestCase
         self::assertSame(['id'], $foreignKey->referencedColumns);
         self::assertSame('CASCADE', $foreignKey->onDelete->value);
         self::assertSame('CASCADE', $foreignKey->onUpdate->value);
+    }
+
+    public function testApplyAddColumnPreservesPartitionMetadata(): void
+    {
+        $schemaParser = new MySqlSchemaParser(new MySqlParser());
+        $registry = new TableDefinitionRegistry();
+        $definition = $schemaParser->parse('CREATE TABLE events (id INT, event_date DATE) '
+            . 'PARTITION BY RANGE (YEAR(event_date)) ('
+            . 'PARTITION p2024 VALUES LESS THAN (2025), PARTITION pmax VALUES LESS THAN MAXVALUE)');
+        self::assertNotNull($definition);
+        $registry->register('events', $definition);
+
+        $parser = new Parser('ALTER TABLE events ADD COLUMN label VARCHAR(255)');
+        $alterStmt = $parser->statements[0] ?? null;
+        self::assertInstanceOf(AlterStatement::class, $alterStmt);
+        (new AlterTableMutation('events', $alterStmt, $registry, $schemaParser))->apply(new ShadowStore(), []);
+
+        $newDefinition = $registry->get('events');
+        self::assertNotNull($newDefinition);
+        self::assertContains('label', $newDefinition->columns);
+        self::assertSame(
+            '((YEAR(event_date)) >= 2025)',
+            $newDefinition->partitioning?->predicateFor(['pmax']),
+        );
     }
 
     public function testApplyAddColumnPreservesQuotedForeignKeyIdentifiers(): void

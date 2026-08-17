@@ -13,10 +13,12 @@ use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlTypeSemantics;
+use ZtdQuery\Platform\MySql\MySqlPartitionSelectionRewriter;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
+use ZtdQuery\Schema\TablePartitioning;
 
 #[CoversClass(SelectTransformer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlSelectRelationParser::class)]
@@ -26,8 +28,27 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 #[UsesClass(MySqlTypeSemantics::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlGeneratedColumnProjector::class)]
+#[UsesClass(MySqlPartitionSelectionRewriter::class)]
 final class SelectTransformerTest extends TransformerContractTest
 {
+    public function testTransformsPartitionSelectionBeforeComposingShadowCte(): void
+    {
+        $result = (new SelectTransformer())->transform('SELECT id FROM events PARTITION (p0)', [
+            'events' => [
+                'rows' => [['id' => 1], ['id' => 11]],
+                'columns' => ['id'],
+                'columnTypes' => [],
+                'partitioning' => new TablePartitioning(['p0' => 'id < 10']),
+            ],
+        ]);
+
+        self::assertStringStartsWith('WITH `events` AS', $result);
+        self::assertStringContainsString(
+            'SELECT id FROM (SELECT * FROM events WHERE (id < 10)) AS events',
+            $result,
+        );
+    }
+
     public function testGeneratedColumnsAreRecomputedFromBaseRow(): void
     {
         $result = (new SelectTransformer())->transform('SELECT total FROM orders', [

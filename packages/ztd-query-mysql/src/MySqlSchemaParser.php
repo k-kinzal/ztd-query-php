@@ -54,6 +54,9 @@ final class MySqlSchemaParser implements SchemaParser
         $uniqueConstraints = [];
         $uniqueIndex = 0;
         $foreignKeys = (new MySqlForeignKeyDefinitionParser())->parseCreateTable($createTableSql);
+        $partitioning = is_string($stmt->partitionBy)
+            ? (new MySqlPartitioningParser())->parse($stmt)
+            : null;
 
         foreach ($stmt->fields as $field) {
             $name = $field->name ?? null;
@@ -146,6 +149,7 @@ final class MySqlSchemaParser implements SchemaParser
             $identityStrategies,
             $generatedExpressions,
             $foreignKeys,
+            $partitioning,
         );
     }
 

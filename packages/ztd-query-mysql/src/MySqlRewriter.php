@@ -188,7 +188,8 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
      *     columnTypes: array<string, \ZtdQuery\Schema\ColumnType>,
      *     columnDefaults: array<string, string>,
      *     identityStrategies: array<string, \ZtdQuery\Schema\IdentityGenerationStrategy>,
-     *     generatedExpressions: array<string, string>
+     *     generatedExpressions: array<string, string>,
+     *     partitioning: \ZtdQuery\Schema\TablePartitioning|null
      * }>
      */
     private function buildTableContext(): array
@@ -222,6 +223,7 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
                 'columnDefaults' => $columnDefaults,
                 'identityStrategies' => $identityStrategies,
                 'generatedExpressions' => $generatedExpressions,
+                'partitioning' => $definition?->partitioning,
                 'primaryKeys' => $definition !== null ? $definition->primaryKeys : [],
                 'candidateKeys' => $definition !== null ? $definition->candidateKeys()->keys() : [],
             ];
@@ -240,6 +242,7 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
                 'columnDefaults' => $definition->columnDefaults,
                 'identityStrategies' => $definition->identityStrategies,
                 'generatedExpressions' => $definition->generatedExpressions,
+                'partitioning' => $definition->partitioning,
                 'primaryKeys' => $definition->primaryKeys,
                 'candidateKeys' => $definition->candidateKeys()->keys(),
             ];

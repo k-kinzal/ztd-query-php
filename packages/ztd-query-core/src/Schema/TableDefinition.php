@@ -26,6 +26,8 @@ final class TableDefinition
     /** @var array<string, ForeignKeyDefinition> */
     public readonly array $foreignKeys;
 
+    public readonly ?TablePartitioning $partitioning;
+
     /**
      * @param array<int, string> $columns Column names in declaration order.
      * @param array<string, string> $columnTypes Column name => MySQL type string.
@@ -37,6 +39,7 @@ final class TableDefinition
      * @param array<string, IdentityGenerationStrategy> $identityStrategies Column name => shadow generation strategy.
      * @param array<string, string> $generatedExpressions Column name => database generated expression.
      * @param array<string, ForeignKeyDefinition> $foreignKeys Constraint name => foreign-key definition.
+     * @param TablePartitioning|null $partitioning Named partition selection predicates.
      */
     public function __construct(
         public readonly array $columns,
@@ -49,16 +52,35 @@ final class TableDefinition
         array $identityStrategies = [],
         array $generatedExpressions = [],
         array $foreignKeys = [],
+        ?TablePartitioning $partitioning = null,
     ) {
         $this->typedColumns = $typedColumns;
         $this->columnDefaults = $columnDefaults;
         $this->identityStrategies = $identityStrategies;
         $this->generatedExpressions = $generatedExpressions;
         $this->foreignKeys = $foreignKeys;
+        $this->partitioning = $partitioning;
     }
 
     public function candidateKeys(): CandidateKeySet
     {
         return CandidateKeySet::fromSchema($this->primaryKeys, $this->uniqueConstraints);
+    }
+
+    public function withPartitioning(?TablePartitioning $partitioning): self
+    {
+        return new self(
+            $this->columns,
+            $this->columnTypes,
+            $this->primaryKeys,
+            $this->notNullColumns,
+            $this->uniqueConstraints,
+            $this->typedColumns,
+            $this->columnDefaults,
+            $this->identityStrategies,
+            $this->generatedExpressions,
+            $this->foreignKeys,
+            $partitioning,
+        );
     }
 }

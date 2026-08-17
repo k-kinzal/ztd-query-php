@@ -12,10 +12,12 @@ use ZtdQuery\Platform\MySql\MySqlSchemaParser;
 use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
+use ZtdQuery\Platform\MySql\MySqlPartitioningParser;
 
 #[CoversClass(MySqlSchemaParser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlForeignKeyDefinitionParser::class)]
 #[UsesClass(MySqlParser::class)]
+#[UsesClass(MySqlPartitioningParser::class)]
 final class MySqlSchemaParserTest extends SchemaParserContractTest
 {
     protected function createParser(): SchemaParser
@@ -54,6 +56,22 @@ final class MySqlSchemaParserTest extends SchemaParserContractTest
             'total' => '(qty * unit_price)',
             'label' => '(CONCAT(qty, unit_price))',
         ], $definition->generatedExpressions);
+    }
+
+    public function testParsesPartitionMetadataWithTableSchema(): void
+    {
+        $definition = (new MySqlSchemaParser(new MySqlParser()))->parse(
+            'CREATE TABLE events (id INT, event_date DATE) '
+            . 'PARTITION BY RANGE (YEAR(event_date)) ('
+            . 'PARTITION p2024 VALUES LESS THAN (2025), '
+            . 'PARTITION pmax VALUES LESS THAN MAXVALUE)',
+        );
+
+        self::assertNotNull($definition);
+        self::assertSame(
+            '((YEAR(event_date)) IS NULL OR (YEAR(event_date)) < 2025)',
+            $definition->partitioning?->predicateFor(['p2024']),
+        );
     }
 
     public function testParseSimpleCreateTable(): void
