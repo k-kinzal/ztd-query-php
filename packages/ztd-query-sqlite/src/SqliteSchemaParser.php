@@ -456,7 +456,7 @@ final class SqliteSchemaParser implements SchemaParser
     /**
      * Parse a comma-separated column name list.
      *
-     * @return array<int, string>
+     * @return list<string>
      */
     private function parseColumnNameList(string $list): array
     {
