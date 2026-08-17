@@ -9,13 +9,13 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
 use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\TableDefinition;
+use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
 /**
  * SQLite implementation of SchemaParser.
  *
- * Parses CREATE TABLE statements using regex-based parsing
- * appropriate for SQLite's simpler DDL syntax.
+ * Parses CREATE TABLE statements while preserving nested SQL expressions.
  */
 final class SqliteSchemaParser implements SchemaParser
 {
@@ -26,11 +26,10 @@ final class SqliteSchemaParser implements SchemaParser
     {
         $trimmed = trim($createTableSql);
 
-        if (preg_match('/^CREATE\s+(?:TEMPORARY\s+)?TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:"(?:[^"]|"")*"|`(?:[^`]|``)*`|\[(?:[^\]])*\]|[^\s(]+)\s*\((.+)\)\s*(?:WITHOUT\s+ROWID\s*)?;?\s*$/is', $trimmed, $matches) !== 1) {
+        $body = $this->tableBody($trimmed);
+        if ($body === null) {
             return null;
         }
-
-        $body = $matches[1];
 
         $columns = [];
         $columnTypes = [];
@@ -165,6 +164,84 @@ final class SqliteSchemaParser implements SchemaParser
             $columnDefaults,
             $identityStrategies,
         );
+    }
+
+    private function tableBody(string $sql): ?string
+    {
+        $tablePrefix = '/^CREATE\s+(?:(?:TEMP|TEMPORARY)\s+)?TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:"(?:[^"]|"")*"|`(?:[^`]|``)*`|\[(?:[^\]])*\]|[^\s(]+)\s*\(/is';
+        if (preg_match($tablePrefix, $sql, $matches) !== 1) {
+            return null;
+        }
+
+        $openingOffset = strlen($matches[0]) - 1;
+        $closing = null;
+        foreach (SqlTokenStream::tokenize($sql)->significantTokens() as $token) {
+            if ($token->isTopLevel()
+                && $token->kind === SqlTokenKind::Symbol
+                && $token->text === ')'
+            ) {
+                $closing = $token;
+                break;
+            }
+        }
+        if ($closing === null) {
+            return null;
+        }
+
+        $suffix = substr($sql, $closing->endOffset());
+        if (!self::hasValidTableOptions($suffix)) {
+            return null;
+        }
+
+        return substr($sql, $openingOffset + 1, $closing->offset - $openingOffset - 1);
+    }
+
+    private static function hasValidTableOptions(string $suffix): bool
+    {
+        $tokens = SqlTokenStream::tokenize($suffix)->significantTokens();
+        $last = $tokens[count($tokens) - 1] ?? null;
+        if ($last !== null
+            && $last->kind === SqlTokenKind::Symbol
+            && $last->text === ';'
+        ) {
+            array_pop($tokens);
+        }
+        if ($tokens === []) {
+            return true;
+        }
+
+        $seen = [];
+        $index = 0;
+        while ($index < count($tokens)) {
+            if ($tokens[$index]->isKeyword('STRICT')) {
+                $option = 'STRICT';
+                $index++;
+            } elseif ($tokens[$index]->isKeyword('WITHOUT')
+                && ($tokens[$index + 1] ?? null)?->isKeyword('ROWID') === true
+            ) {
+                $option = 'WITHOUT ROWID';
+                $index += 2;
+            } else {
+                return false;
+            }
+
+            if (isset($seen[$option])) {
+                return false;
+            }
+            $seen[$option] = $option;
+
+            if ($index === count($tokens)) {
+                return true;
+            }
+            if ($tokens[$index]->kind !== SqlTokenKind::Symbol
+                || $tokens[$index]->text !== ','
+            ) {
+                return false;
+            }
+            $index++;
+        }
+
+        return false;
     }
 
     private static function hasWithoutRowid(string $sql): bool

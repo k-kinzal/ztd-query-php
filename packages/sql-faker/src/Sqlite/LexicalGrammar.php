@@ -18,6 +18,8 @@ use SqlFaker\Grammar\TokenJoiner;
  */
 final class LexicalGrammar implements LexicalGrammarContract
 {
+    public const STRICT_TABLE_OPTION = 'STRICT_TABLE_OPTION';
+
     /** @var array<string, list<string>> */
     private array $keywords;
 
@@ -56,7 +58,9 @@ final class LexicalGrammar implements LexicalGrammarContract
 
     public function supports(string $terminal): bool
     {
-        return $this->allowSyntheticTerminals || $this->catalog->supports($terminal);
+        return $terminal === self::STRICT_TABLE_OPTION
+            || $this->allowSyntheticTerminals
+            || $this->catalog->supports($terminal);
     }
 
     /**
@@ -64,7 +68,14 @@ final class LexicalGrammar implements LexicalGrammarContract
      */
     public function assertTerminalsCovered(array $terminals): void
     {
-        $this->catalog->assertTerminalsCovered($terminals);
+        $catalogTerminals = [];
+        foreach ($terminals as $terminal) {
+            if ($terminal !== self::STRICT_TABLE_OPTION) {
+                $catalogTerminals[] = $terminal;
+            }
+        }
+
+        $this->catalog->assertTerminalsCovered($catalogTerminals);
     }
 
     public function realize(array $terminals): string
@@ -175,6 +186,10 @@ final class LexicalGrammar implements LexicalGrammarContract
     {
         if (!$this->supports($terminal)) {
             throw new LexicalException("Unsupported SQLite terminal for {$this->profileVersion}: {$terminal}");
+        }
+
+        if ($terminal === self::STRICT_TABLE_OPTION) {
+            return ['STRICT', ['ID']];
         }
 
         if (!$this->allowSyntheticTerminals) {

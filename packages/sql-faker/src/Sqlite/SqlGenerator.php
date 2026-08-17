@@ -191,11 +191,11 @@ final class SqlGenerator
      */
     private function augmentGrammar(Grammar $grammar): Grammar
     {
-        $ruleMap = $grammar->ruleMap;
+        $ruleMap = $this->addStrictTableOption($grammar->ruleMap);
         $cmd = $ruleMap['cmd'] ?? null;
 
         if ($cmd === null) {
-            return $grammar;
+            return new Grammar($grammar->startSymbol, $ruleMap);
         }
 
         $ruleMap = $this->filterExprRule($ruleMap);
@@ -203,6 +203,29 @@ final class SqlGenerator
         $ruleMap = $this->extractStatementRules($ruleMap, $cmd);
 
         return new Grammar($grammar->startSymbol, $ruleMap);
+    }
+
+    /**
+     * SQLite's grammar represents STRICT as a generic table-option identifier.
+     * Add a fixed lexical witness so fuzz generation can deliberately reach it.
+     *
+     * @param array<string, ProductionRule> $ruleMap
+     * @return array<string, ProductionRule>
+     */
+    private function addStrictTableOption(array $ruleMap): array
+    {
+        $tableOption = $ruleMap['table_option'] ?? null;
+        if ($tableOption === null) {
+            return $ruleMap;
+        }
+
+        $alternatives = $tableOption->alternatives;
+        $alternatives[] = new Production([
+            new Terminal(LexicalGrammar::STRICT_TABLE_OPTION),
+        ]);
+        $ruleMap['table_option'] = new ProductionRule('table_option', $alternatives);
+
+        return $ruleMap;
     }
 
     /**

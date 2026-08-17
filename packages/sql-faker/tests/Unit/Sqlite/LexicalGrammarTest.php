@@ -85,6 +85,18 @@ SQL;
         $lexical->assertTerminalsCovered(['NOT_A_TERMINAL']);
     }
 
+    public function testRealizesStrictTableOptionAsIdentifierToken(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'sqlite-3.47.2');
+
+        self::assertTrue($lexical->supports(LexicalGrammar::STRICT_TABLE_OPTION));
+        $lexical->assertTerminalsCovered(['ID', LexicalGrammar::STRICT_TABLE_OPTION]);
+        $sql = $lexical->realize([LexicalGrammar::STRICT_TABLE_OPTION]);
+        self::assertStringContainsString('STRICT', $sql);
+        self::assertSame(['ID'], $lexical->tokenize($sql));
+        self::assertSame(['ID'], $lexical->tokenize('STRICT'));
+    }
+
     #[DataProvider('providerInvalidSql')]
     public function testRejectsInvalidSql(string $sql, string $message): void
     {

@@ -65,6 +65,22 @@ final class SqlGeneratorTest extends TestCase
         self::assertSame('SELECT foo', $result);
     }
 
+    public function testGenerateCanDeliberatelyProduceStrictTableOption(): void
+    {
+        $grammar = new Grammar('table_option', [
+            'table_option' => new ProductionRule('table_option', []),
+        ]);
+        $faker = Factory::create();
+        $generator = new SqlGenerator(
+            $grammar,
+            $faker,
+            new SqliteProvider($faker),
+            'sqlite-3.47.2',
+        );
+
+        self::assertStringContainsString('STRICT', $generator->generate('table_option'));
+    }
+
     public function testVersionBoundGeneratorRejectsAnUnknownGrammarTerminal(): void
     {
         $grammar = new Grammar('stmt', [

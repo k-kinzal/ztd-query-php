@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use Tests\Contract\SchemaParserContractTest;
 use ZtdQuery\Platform\SchemaParser;
@@ -174,6 +175,69 @@ final class SqliteSchemaParserTest extends SchemaParserContractTest
 
         self::assertNotNull($definition);
         self::assertSame([], $definition->identityStrategies);
+    }
+
+    public function testStrictTableRetainsColumnsTypesAndRowidIdentity(): void
+    {
+        $definition = (new SqliteSchemaParser())->parse(
+            'CREATE TABLE measurements (id INTEGER PRIMARY KEY, sensor TEXT NOT NULL, reading REAL NOT NULL) STRICT'
+        );
+
+        self::assertNotNull($definition);
+        self::assertSame(['id', 'sensor', 'reading'], $definition->columns);
+        self::assertSame([
+            'id' => 'INTEGER',
+            'sensor' => 'TEXT',
+            'reading' => 'REAL',
+        ], $definition->columnTypes);
+        self::assertSame(['id' => IdentityGenerationStrategy::MaxValue], $definition->identityStrategies);
+    }
+
+    public function testStrictAndWithoutRowidOptionsAreAcceptedInEitherOrder(): void
+    {
+        $strictLast = (new SqliteSchemaParser())->parse(
+            'CREATE TABLE events (id INTEGER PRIMARY KEY, payload BLOB) WITHOUT ROWID, STRICT;'
+        );
+        $withoutLast = (new SqliteSchemaParser())->parse(
+            'CREATE TABLE events (id INTEGER PRIMARY KEY, payload BLOB) STRICT, WITHOUT ROWID'
+        );
+
+        self::assertNotNull($strictLast);
+        self::assertNotNull($withoutLast);
+        self::assertSame([], $strictLast->identityStrategies);
+        self::assertSame([], $withoutLast->identityStrategies);
+    }
+
+    public function testTempStrictTableIsAcceptedWithTriviaBeforeOption(): void
+    {
+        $definition = (new SqliteSchemaParser())->parse(
+            "CREATE TEMP TABLE events (id INTEGER PRIMARY KEY, payload BLOB) /* option */ STRICT\n"
+        );
+
+        self::assertNotNull($definition);
+        self::assertSame(['id', 'payload'], $definition->columns);
+    }
+
+    #[DataProvider('providerInvalidTableOptionSuffixes')]
+    public function testRejectsInvalidTableOptionSuffix(string $suffix): void
+    {
+        self::assertNull((new SqliteSchemaParser())->parse(
+            'CREATE TABLE events (id INTEGER PRIMARY KEY) ' . $suffix
+        ));
+    }
+
+    /** @return \Generator<string, array{string}> */
+    public static function providerInvalidTableOptionSuffixes(): \Generator
+    {
+        yield 'unknown option' => ['COMPRESS'];
+        yield 'missing rowid' => ['WITHOUT'];
+        yield 'missing comma' => ['STRICT WITHOUT ROWID'];
+        yield 'symbol instead of comma' => ['STRICT + WITHOUT ROWID'];
+        yield 'trailing comma' => ['STRICT,'];
+        yield 'duplicate strict' => ['STRICT, STRICT'];
+        yield 'duplicate without rowid' => ['WITHOUT ROWID, WITHOUT ROWID'];
+        yield 'extra closing parenthesis' => [') STRICT'];
+        yield 'statement after semicolon' => ['STRICT; SELECT 1'];
     }
 
     public function testLowercaseWithoutRowidIsNotIdentity(): void
