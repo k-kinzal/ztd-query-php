@@ -47,6 +47,55 @@ final class AlterTableMutationTest extends TestCase
         self::assertContains('email', $newDef->columns);
     }
 
+    public function testApplyAddColumnPreservesForeignKeyMetadata(): void
+    {
+        $schemaParser = new MySqlSchemaParser(new MySqlParser());
+        $registry = new TableDefinitionRegistry();
+        $definition = $schemaParser->parse(
+            'CREATE TABLE children (id INT PRIMARY KEY, parent_id INT, CONSTRAINT fk_parent '
+            . 'FOREIGN KEY (parent_id) REFERENCES parents (id) ON DELETE CASCADE ON UPDATE CASCADE)'
+        );
+        self::assertNotNull($definition);
+        $registry->register('children', $definition);
+        $store = new ShadowStore();
+
+        $parser = new Parser('ALTER TABLE children ADD COLUMN label VARCHAR(255)');
+        $alterStmt = $parser->statements[0];
+        self::assertInstanceOf(AlterStatement::class, $alterStmt);
+        (new AlterTableMutation('children', $alterStmt, $registry, $schemaParser))->apply($store, []);
+
+        $foreignKey = $registry->get('children')?->foreignKeys['fk_parent'] ?? null;
+        self::assertNotNull($foreignKey);
+        self::assertSame(['parent_id'], $foreignKey->columns);
+        self::assertSame(['id'], $foreignKey->referencedColumns);
+        self::assertSame('CASCADE', $foreignKey->onDelete->value);
+        self::assertSame('CASCADE', $foreignKey->onUpdate->value);
+    }
+
+    public function testApplyAddColumnPreservesQuotedForeignKeyIdentifiers(): void
+    {
+        $schemaParser = new MySqlSchemaParser(new MySqlParser());
+        $registry = new TableDefinitionRegistry();
+        $definition = $schemaParser->parse(
+            'CREATE TABLE children (`child id` INT PRIMARY KEY, `parent id` INT, CONSTRAINT `fk parent` '
+            . 'FOREIGN KEY (`parent id`) REFERENCES `parent table` (`parent key`) '
+            . 'ON DELETE CASCADE ON UPDATE CASCADE)'
+        );
+        self::assertNotNull($definition);
+        $registry->register('children', $definition);
+
+        $parser = new Parser('ALTER TABLE children ADD COLUMN label VARCHAR(255)');
+        $alterStmt = $parser->statements[0];
+        self::assertInstanceOf(AlterStatement::class, $alterStmt);
+        (new AlterTableMutation('children', $alterStmt, $registry, $schemaParser))->apply(new ShadowStore(), []);
+
+        $foreignKey = $registry->get('children')?->foreignKeys['fk parent'] ?? null;
+        self::assertNotNull($foreignKey);
+        self::assertSame(['parent id'], $foreignKey->columns);
+        self::assertSame('parent table', $foreignKey->referencedTable);
+        self::assertSame(['parent key'], $foreignKey->referencedColumns);
+    }
+
     public function testApplyAddColumnWithoutColumnKeyword(): void
     {
         $schemaParser = new MySqlSchemaParser(new MySqlParser());

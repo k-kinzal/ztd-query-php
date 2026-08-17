@@ -159,6 +159,60 @@ final class PgSqlSchemaReflector implements SchemaReflector, ViewReflector
             }
         }
 
+        $foreignKeyStmt = $this->connection->query(
+            "SELECT fk.constraint_name, fk.column_name, "
+            . "pk.table_name AS foreign_table_name, pk.column_name AS foreign_column_name, "
+            . "rc.update_rule, rc.delete_rule "
+            . "FROM information_schema.referential_constraints rc "
+            . "JOIN information_schema.key_column_usage fk "
+            . "  ON fk.constraint_catalog = rc.constraint_catalog "
+            . "  AND fk.constraint_schema = rc.constraint_schema "
+            . "  AND fk.constraint_name = rc.constraint_name "
+            . "JOIN information_schema.key_column_usage pk "
+            . "  ON pk.constraint_catalog = rc.unique_constraint_catalog "
+            . "  AND pk.constraint_schema = rc.unique_constraint_schema "
+            . "  AND pk.constraint_name = rc.unique_constraint_name "
+            . "  AND pk.ordinal_position = fk.position_in_unique_constraint "
+            . "WHERE fk.table_schema = current_schema() "
+            . "  AND fk.table_name = '" . str_replace("'", "''", $tableName) . "' "
+            . "ORDER BY fk.constraint_name, fk.ordinal_position"
+        );
+
+        /** @var array<string, array{columns: list<string>, table: string, referencedColumns: list<string>, onUpdate: string, onDelete: string}> $foreignKeys */
+        $foreignKeys = [];
+        if ($foreignKeyStmt !== false) {
+            foreach ($foreignKeyStmt->fetchAll() as $foreignKeyRow) {
+                $constraintName = $foreignKeyRow['constraint_name'] ?? null;
+                $columnName = $foreignKeyRow['column_name'] ?? null;
+                $foreignTable = $foreignKeyRow['foreign_table_name'] ?? null;
+                $foreignColumn = $foreignKeyRow['foreign_column_name'] ?? null;
+                $onUpdate = $foreignKeyRow['update_rule'] ?? null;
+                $onDelete = $foreignKeyRow['delete_rule'] ?? null;
+                if (!is_string($constraintName)
+                    || !is_string($columnName)
+                    || !is_string($foreignTable)
+                    || !is_string($foreignColumn)
+                    || !is_string($onUpdate)
+                    || !is_string($onDelete)
+                ) {
+                    continue;
+                }
+                if (!isset($foreignKeys[$constraintName])) {
+                    $foreignKeys[$constraintName] = [
+                        'columns' => ['"' . $columnName . '"'],
+                        'table' => $foreignTable,
+                        'referencedColumns' => ['"' . $foreignColumn . '"'],
+                        'onUpdate' => $onUpdate,
+                        'onDelete' => $onDelete,
+                    ];
+
+                    continue;
+                }
+                $foreignKeys[$constraintName]['columns'][] = '"' . $columnName . '"';
+                $foreignKeys[$constraintName]['referencedColumns'][] = '"' . $foreignColumn . '"';
+            }
+        }
+
         $parts = $columnDefs;
 
         if ($primaryKeyCols !== []) {
@@ -167,6 +221,14 @@ final class PgSqlSchemaReflector implements SchemaReflector, ViewReflector
 
         foreach ($uniqueConstraints as $constraintName => $constraintCols) {
             $parts[] = 'CONSTRAINT "' . $constraintName . '" UNIQUE (' . implode(', ', $constraintCols) . ')';
+        }
+
+        foreach ($foreignKeys as $constraintName => $foreignKey) {
+            $parts[] = 'CONSTRAINT "' . $constraintName . '" FOREIGN KEY ('
+                . implode(', ', $foreignKey['columns']) . ') REFERENCES "'
+                . $foreignKey['table'] . '" (' . implode(', ', $foreignKey['referencedColumns']) . ')'
+                . ' ON UPDATE ' . $foreignKey['onUpdate']
+                . ' ON DELETE ' . $foreignKey['onDelete'];
         }
 
         return 'CREATE TABLE "' . $tableName . '" (' . "\n  " . implode(",\n  ", $parts) . "\n)";

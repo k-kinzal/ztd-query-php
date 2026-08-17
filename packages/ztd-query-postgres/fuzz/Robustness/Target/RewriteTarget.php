@@ -138,6 +138,7 @@ final class RewriteTarget
             fn (): string => $this->provider->temporaryTableStatement(),
             fn (): string => $this->provider->viewStatement(),
             fn (): string => $this->provider->generatedColumnStatement(),
+            fn (): string => $this->provider->foreignKeyCascadeStatement(),
         ];
 
         $index = ord($input[0] ?? "\0") % count($generators);

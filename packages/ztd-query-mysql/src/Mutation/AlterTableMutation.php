@@ -111,6 +111,17 @@ final class AlterTableMutation implements ShadowMutation
             $columnDefs[] = "UNIQUE KEY `{$keyName}` (" . implode(', ', $ukCols) . ')';
         }
 
+        foreach ($definition->foreignKeys as $keyName => $foreignKey) {
+            $columns = array_map(fn (string $column) => "`{$column}`", $foreignKey->columns);
+            $referencedColumns = array_map(
+                fn (string $column) => "`{$column}`",
+                $foreignKey->referencedColumns,
+            );
+            $columnDefs[] = "CONSTRAINT `{$keyName}` FOREIGN KEY (" . implode(', ', $columns)
+                . ") REFERENCES `{$foreignKey->referencedTable}` (" . implode(', ', $referencedColumns) . ')'
+                . " ON DELETE {$foreignKey->onDelete->value} ON UPDATE {$foreignKey->onUpdate->value}";
+        }
+
         return "CREATE TABLE `{$this->tableName}` (" . implode(', ', $columnDefs) . ')';
     }
 

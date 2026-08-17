@@ -8,11 +8,13 @@ use PHPUnit\Framework\TestCase;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
+use ZtdQuery\Schema\ForeignKeyDefinition;
 use ZtdQuery\Schema\TableDefinition;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 
 #[UsesClass(ColumnType::class)]
+#[UsesClass(ForeignKeyDefinition::class)]
 #[CoversClass(TableDefinition::class)]
 final class TableDefinitionTest extends TestCase
 {
@@ -30,6 +32,7 @@ final class TableDefinitionTest extends TestCase
             ['name' => "'anonymous'"],
             ['id' => IdentityGenerationStrategy::MaxValue],
             ['name' => "CONCAT('user-', id)"],
+            ['fk_parent' => new ForeignKeyDefinition(['id'], 'parents', ['id'])],
         );
 
         self::assertSame(['id', 'name'], $definition->columns);
@@ -41,6 +44,7 @@ final class TableDefinitionTest extends TestCase
         self::assertSame(['name' => "'anonymous'"], $definition->columnDefaults);
         self::assertSame(['id' => IdentityGenerationStrategy::MaxValue], $definition->identityStrategies);
         self::assertSame(['name' => "CONCAT('user-', id)"], $definition->generatedExpressions);
+        self::assertSame(['fk_parent'], array_keys($definition->foreignKeys));
     }
 
     public function testTypedColumnsDefaultsToEmpty(): void
@@ -57,5 +61,6 @@ final class TableDefinitionTest extends TestCase
         self::assertSame([], $definition->columnDefaults);
         self::assertSame([], $definition->identityStrategies);
         self::assertSame([], $definition->generatedExpressions);
+        self::assertSame([], $definition->foreignKeys);
     }
 }

@@ -6,6 +6,7 @@ namespace ZtdQuery\Platform\Sqlite;
 
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
+use ZtdQuery\Schema\ForeignKeyDefinitionParser;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
 use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\TableDefinition;
@@ -40,6 +41,7 @@ final class SqliteSchemaParser implements SchemaParser
         $columnDefaults = [];
         $generatedExpressions = [];
         $uniqueIndex = 0;
+        $foreignKeys = (new ForeignKeyDefinitionParser())->parseCreateTable($createTableSql);
 
         $definitions = $this->splitColumnDefinitions($body);
 
@@ -168,6 +170,7 @@ final class SqliteSchemaParser implements SchemaParser
             $columnDefaults,
             $identityStrategies,
             $generatedExpressions,
+            $foreignKeys,
         );
     }
 

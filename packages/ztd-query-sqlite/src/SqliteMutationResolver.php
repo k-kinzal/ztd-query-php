@@ -11,6 +11,7 @@ use ZtdQuery\Exception\ColumnNotFoundException;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Platform\Sqlite\Mutation\AlterTableMutation;
+use ZtdQuery\Schema\ForeignKeyDefinition;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\Mutation\CreateTableMutation;
@@ -279,6 +280,14 @@ final class SqliteMutationResolver
             throw new ColumnAlreadyExistsException($sql, $tableName, $columnName);
         }
 
+        $foreignKeys = $existing->foreignKeys;
+        foreach ($added->foreignKeys as $name => $foreignKey) {
+            while (isset($foreignKeys[$name])) {
+                $name .= '_added';
+            }
+            $foreignKeys[$name] = $foreignKey;
+        }
+
         $definition = new TableDefinition(
             [...$existing->columns, $columnName],
             array_merge($existing->columnTypes, $added->columnTypes),
@@ -289,6 +298,7 @@ final class SqliteMutationResolver
             array_merge($existing->columnDefaults, $added->columnDefaults),
             $existing->identityStrategies,
             array_merge($existing->generatedExpressions, $added->generatedExpressions),
+            $foreignKeys,
         );
         $projection = $this->quotedColumns($existing->columns);
         $projection[] = ($added->columnDefaults[$columnName] ?? 'NULL')
@@ -316,6 +326,14 @@ final class SqliteMutationResolver
         $newDefaults = self::withoutMapKey($existing->columnDefaults, $columnName);
         $newIdentityStrategies = self::withoutMapKey($existing->identityStrategies, $columnName);
         $newGeneratedExpressions = self::withoutMapKey($existing->generatedExpressions, $columnName);
+        $newForeignKeys = array_filter(
+            $existing->foreignKeys,
+            static fn (\ZtdQuery\Schema\ForeignKeyDefinition $foreignKey): bool => !in_array(
+                $columnName,
+                $foreignKey->columns,
+                true,
+            ),
+        );
         $newNotNull = self::withoutColumn($existing->notNullColumns, $columnName);
         $newPrimaryKeys = self::withoutColumn($existing->primaryKeys, $columnName);
         $newUniqueConstraints = [];
@@ -336,6 +354,7 @@ final class SqliteMutationResolver
             $newDefaults,
             $newIdentityStrategies,
             $newGeneratedExpressions,
+            $newForeignKeys,
         );
 
         return $this->alterMutation(
@@ -399,6 +418,14 @@ final class SqliteMutationResolver
             self::renamedMapKey($existing->columnDefaults, $oldName, $newName),
             self::renamedMapKey($existing->identityStrategies, $oldName, $newName),
             self::renamedMapKey($existing->generatedExpressions, $oldName, $newName),
+            array_map(
+                static fn (ForeignKeyDefinition $foreignKey): ForeignKeyDefinition => self::renamedForeignKey(
+                    $foreignKey,
+                    $oldName,
+                    $newName,
+                ),
+                $existing->foreignKeys,
+            ),
         );
         $projection = [];
         foreach ($existing->columns as $column) {
@@ -623,6 +650,25 @@ final class SqliteMutationResolver
         }
 
         return $renamed;
+    }
+
+    private static function renamedForeignKey(
+        ForeignKeyDefinition $foreignKey,
+        string $old,
+        string $new,
+    ): ForeignKeyDefinition {
+        $columns = self::renamedColumns($foreignKey->columns, $old, $new);
+        if ($columns === []) {
+            return $foreignKey;
+        }
+
+        return new ForeignKeyDefinition(
+            $columns,
+            $foreignKey->referencedTable,
+            $foreignKey->referencedColumns,
+            $foreignKey->onDelete,
+            $foreignKey->onUpdate,
+        );
     }
 
     /**

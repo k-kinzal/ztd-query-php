@@ -625,4 +625,20 @@ final class MySqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($definition);
         self::assertSame(['id' => IdentityGenerationStrategy::MaxValue], $definition->identityStrategies);
     }
+
+    public function testParsePreservesCompositeForeignKeyActions(): void
+    {
+        $definition = (new MySqlSchemaParser(new MySqlParser()))->parse(
+            'CREATE TABLE child (tenant_id INT, parent_id INT, CONSTRAINT `fk_parent` '
+            . 'FOREIGN KEY (tenant_id, parent_id) REFERENCES `parents` (tenant_id, id) '
+            . 'ON DELETE CASCADE ON UPDATE CASCADE)'
+        );
+
+        self::assertNotNull($definition);
+        self::assertSame(['fk_parent'], array_keys($definition->foreignKeys));
+        self::assertSame(['tenant_id', 'parent_id'], $definition->foreignKeys['fk_parent']->columns);
+        self::assertSame(['tenant_id', 'id'], $definition->foreignKeys['fk_parent']->referencedColumns);
+        self::assertSame('CASCADE', $definition->foreignKeys['fk_parent']->onDelete->value);
+        self::assertSame('CASCADE', $definition->foreignKeys['fk_parent']->onUpdate->value);
+    }
 }

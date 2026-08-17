@@ -1673,6 +1673,9 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         $def = $parser->parse('CREATE TABLE t (id INTEGER, foreign key (id) REFERENCES other(id))');
         self::assertNotNull($def);
         self::assertSame(['id'], $def->columns);
+        self::assertCount(1, $def->foreignKeys);
+        self::assertSame('other', array_values($def->foreignKeys)[0]->referencedTable);
+        self::assertSame(['id'], array_values($def->foreignKeys)[0]->columns);
     }
 
     public function testParseColumnWithDefaultContainingParenthesis(): void

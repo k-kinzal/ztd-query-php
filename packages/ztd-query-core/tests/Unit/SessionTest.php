@@ -14,14 +14,19 @@ use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\Connection\ResultSet;
 use ZtdQuery\Exception\MissingPrimaryKeyException;
+use ZtdQuery\Exception\ForeignKeyViolationException;
 use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Schema\TableDefinition;
+use ZtdQuery\Schema\ForeignKeyDefinition;
+use ZtdQuery\Schema\CandidateKeySet;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Session;
 use ZtdQuery\Shadow\Mutation\UpdateMutation;
+use ZtdQuery\Shadow\Mutation\InsertMutation;
 use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
+use ZtdQuery\Shadow\ReferentialIntegrityEnforcer;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTransactionManager;
 
@@ -31,12 +36,17 @@ use ZtdQuery\Shadow\ShadowTransactionManager;
 #[UsesClass(ShadowTransactionManager::class)]
 #[UsesClass(TableDefinitionRegistry::class)]
 #[UsesClass(TableDefinition::class)]
+#[UsesClass(CandidateKeySet::class)]
 #[UsesClass(ResultSelectRunner::class)]
 #[UsesClass(ResultSet::class)]
 #[UsesClass(DatabaseException::class)]
 #[UsesClass(RewritePlan::class)]
 #[UsesClass(UpdateMutation::class)]
+#[UsesClass(InsertMutation::class)]
 #[UsesClass(MutationRowIdentity::class)]
+#[UsesClass(ForeignKeyDefinition::class)]
+#[UsesClass(ForeignKeyViolationException::class)]
+#[UsesClass(ReferentialIntegrityEnforcer::class)]
 #[UsesClass(MissingPrimaryKeyException::class)]
 final class SessionTest extends TestCase
 {
@@ -109,6 +119,44 @@ final class SessionTest extends TestCase
         } catch (DatabaseException $exception) {
             self::assertSame(0, $exception->getCode());
             self::assertInstanceOf(MissingPrimaryKeyException::class, $exception->getPrevious());
+        }
+    }
+
+    public function testForeignKeyFailureRestoresShadowState(): void
+    {
+        $shadowStore = new ShadowStore();
+        $shadowStore->set('parents', []);
+        $shadowStore->set('children', []);
+        $registry = new TableDefinitionRegistry();
+        $registry->register('parents', new TableDefinition(['id'], ['id' => 'INT'], ['id'], ['id'], []));
+        $registry->register('children', new TableDefinition(
+            ['id', 'parent_id'],
+            ['id' => 'INT', 'parent_id' => 'INT'],
+            ['id'],
+            ['id'],
+            [],
+            foreignKeys: ['fk_parent' => new ForeignKeyDefinition(['parent_id'], 'parents', ['id'])],
+        ));
+        $session = new Session(
+            new FakeSqlRewriter($shadowStore, $registry),
+            $shadowStore,
+            new ResultSelectRunner(),
+            ZtdConfig::default(),
+            new FakeConnection(),
+            registry: $registry,
+        );
+        $plan = new RewritePlan(
+            'SELECT 1 AS id, 999 AS parent_id',
+            QueryKind::WRITE_SIMULATED,
+            new InsertMutation('children'),
+        );
+
+        try {
+            $session->processExecutedStatement($plan, new FakeStatement([['id' => 1, 'parent_id' => 999]]));
+            self::fail('Expected a database exception.');
+        } catch (DatabaseException $exception) {
+            self::assertInstanceOf(ForeignKeyViolationException::class, $exception->getPrevious());
+            self::assertSame([], $shadowStore->get('children'));
         }
     }
 }

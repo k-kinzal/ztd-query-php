@@ -25,6 +25,7 @@ use ZtdQuery\Shadow\Mutation\ShadowMutation;
 use ZtdQuery\Shadow\Mutation\ResultSetMutation;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTransactionManager;
+use ZtdQuery\Shadow\ReferentialIntegrityEnforcer;
 use ZtdQuery\Sql\TransactionStatement;
 
 /**
@@ -78,6 +79,8 @@ final class Session
 
     private ?TableDefinitionRegistry $registry;
 
+    private ?ReferentialIntegrityEnforcer $referentialIntegrity;
+
     private ?string $lastInsertId = null;
 
     /**
@@ -103,6 +106,7 @@ final class Session
         $this->connection = $connection;
         $this->transactions = $transactions ?? new ShadowTransactionManager($shadowStore);
         $this->registry = $registry;
+        $this->referentialIntegrity = $registry !== null ? new ReferentialIntegrityEnforcer($registry) : null;
     }
 
     /**
@@ -257,7 +261,7 @@ final class Session
         if ($mutation === null) {
             throw new RuntimeException('ZTD Write Protection: Missing shadow mutation for write simulation.');
         }
-        $impact = $this->applyMutation($mutation, $resultSet);
+        $impact = $this->applyMutation($mutation, $resultSet, $plan->sql());
         $returningProjection = $plan->returningProjection();
         $resultRows = $returningProjection !== null
             ? $returningProjection->project($impact->returningRows())
@@ -290,7 +294,7 @@ final class Session
         }
 
         $resultSet = $this->resultSelectRunner->runResultSet($plan->sql(), $executor);
-        $this->applyMutation($mutation, $resultSet);
+        $this->applyMutation($mutation, $resultSet, $plan->sql());
 
         return $resultSet->rows;
     }
@@ -327,7 +331,7 @@ final class Session
             $plan->sql(),
             fn (string $s) => $this->connection->query($s),
         );
-        $impact = $this->applyMutation($mutation, $resultSet);
+        $impact = $this->applyMutation($mutation, $resultSet, $sql);
 
         return $impact->affectedRowCount($plan->affectedRowsMode());
     }
@@ -338,16 +342,28 @@ final class Session
      *
      * @throws DatabaseException When shadow mutation application fails.
      */
-    private function applyMutation(ShadowMutation $mutation, ResultSet $resultSet): MutationImpact
-    {
+    private function applyMutation(
+        ShadowMutation $mutation,
+        ResultSet $resultSet,
+        string $sql,
+    ): MutationImpact {
         $before = $this->shadowStore->get($mutation->tableName());
+        $snapshot = $this->shadowStore->snapshot();
         try {
             if ($mutation instanceof ResultSetMutation) {
                 $mutation->applyResultSet($this->shadowStore, $resultSet);
             } else {
                 $mutation->apply($this->shadowStore, $resultSet->rows);
             }
+            $this->referentialIntegrity?->synchronize(
+                $snapshot,
+                $this->shadowStore,
+                $mutation,
+                $resultSet->rows,
+                $sql,
+            );
         } catch (SimulationException $e) {
+            $this->shadowStore->restore($snapshot);
             throw new DatabaseException($e->getMessage(), null, 0, $e);
         }
         $impact = new MutationImpact(

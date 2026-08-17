@@ -288,4 +288,14 @@ final class SqliteProvider extends Base
     {
         return $this->sql->generate(GenerationPlans::generatedColumnStatement()->withMaxDepth($maxDepth));
     }
+
+    /** @return non-empty-string */
+    public function foreignKeyCascadeStatement(): string
+    {
+        $child = $this->rsg->rawIdentifier();
+        $parent = $this->rsg->rawIdentifier();
+
+        return "CREATE TABLE $child (id INTEGER PRIMARY KEY, parent_id INTEGER, CONSTRAINT fk_parent "
+            . "FOREIGN KEY (parent_id) REFERENCES $parent (id) ON DELETE CASCADE ON UPDATE CASCADE)";
+    }
 }

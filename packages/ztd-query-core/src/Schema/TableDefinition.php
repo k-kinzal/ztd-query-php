@@ -23,6 +23,9 @@ final class TableDefinition
     /** @var array<string, string> */
     public readonly array $generatedExpressions;
 
+    /** @var array<string, ForeignKeyDefinition> */
+    public readonly array $foreignKeys;
+
     /**
      * @param array<int, string> $columns Column names in declaration order.
      * @param array<string, string> $columnTypes Column name => MySQL type string.
@@ -33,6 +36,7 @@ final class TableDefinition
      * @param array<string, string> $columnDefaults Column name => SQL default expression.
      * @param array<string, IdentityGenerationStrategy> $identityStrategies Column name => shadow generation strategy.
      * @param array<string, string> $generatedExpressions Column name => database generated expression.
+     * @param array<string, ForeignKeyDefinition> $foreignKeys Constraint name => foreign-key definition.
      */
     public function __construct(
         public readonly array $columns,
@@ -44,11 +48,13 @@ final class TableDefinition
         array $columnDefaults = [],
         array $identityStrategies = [],
         array $generatedExpressions = [],
+        array $foreignKeys = [],
     ) {
         $this->typedColumns = $typedColumns;
         $this->columnDefaults = $columnDefaults;
         $this->identityStrategies = $identityStrategies;
         $this->generatedExpressions = $generatedExpressions;
+        $this->foreignKeys = $foreignKeys;
     }
 
     public function candidateKeys(): CandidateKeySet

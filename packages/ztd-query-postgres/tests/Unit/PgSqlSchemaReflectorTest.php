@@ -1056,9 +1056,11 @@ final class PgSqlSchemaReflectorTest extends TestCase
                     2 => $colStmtA,
                     3 => $emptyStmt,
                     4 => $emptyStmt,
-                    5 => $colStmtB,
-                    6 => $emptyStmt,
+                    5 => $emptyStmt,
+                    6 => $colStmtB,
                     7 => $emptyStmt,
+                    8 => $emptyStmt,
+                    9 => $emptyStmt,
                     default => false,
                 };
             }
@@ -1104,7 +1106,8 @@ final class PgSqlSchemaReflectorTest extends TestCase
                     2 => $colStmtGood,
                     3 => $emptyStmt,
                     4 => $emptyStmt,
-                    5 => $colStmtEmpty,
+                    5 => $emptyStmt,
+                    6 => $colStmtEmpty,
                     default => false,
                 };
             }
@@ -1234,5 +1237,111 @@ final class PgSqlSchemaReflectorTest extends TestCase
         ]));
 
         self::assertSame("CREATE TABLE \"t\" (\n  \"id\" INTEGER\n)", $r->getCreateStatement('t'));
+    }
+
+    public function testForeignKeysAreReconstructedWithCompositeColumnsAndActions(): void
+    {
+        $r = new PgSqlSchemaReflector(new FakeSequentialConnection([
+            new FakeStatement([
+                ['column_name' => 'tenant_id', 'data_type' => 'integer', 'is_nullable' => 'NO', 'udt_name' => 'int4'],
+                ['column_name' => 'parent_id', 'data_type' => 'integer', 'is_nullable' => 'NO', 'udt_name' => 'int4'],
+            ]),
+            new FakeStatement([]),
+            new FakeStatement([]),
+            new FakeStatement([
+                ['constraint_name' => 'fk_parent', 'column_name' => 'tenant_id', 'foreign_table_name' => 'parents', 'foreign_column_name' => 'tenant_id', 'update_rule' => 'CASCADE', 'delete_rule' => 'CASCADE'],
+                ['constraint_name' => 'fk_parent', 'column_name' => 'parent_id', 'foreign_table_name' => 'parents', 'foreign_column_name' => 'id', 'update_rule' => 'CASCADE', 'delete_rule' => 'CASCADE'],
+            ]),
+        ]));
+
+        self::assertSame(
+            "CREATE TABLE \"children\" (\n"
+            . "  \"tenant_id\" INTEGER NOT NULL,\n"
+            . "  \"parent_id\" INTEGER NOT NULL,\n"
+            . "  CONSTRAINT \"fk_parent\" FOREIGN KEY (\"tenant_id\", \"parent_id\") "
+            . "REFERENCES \"parents\" (\"tenant_id\", \"id\") ON UPDATE CASCADE ON DELETE CASCADE\n)",
+            $r->getCreateStatement('children'),
+        );
+    }
+
+    public function testForeignKeyQueryIsExactAndEscapesTableName(): void
+    {
+        $queries = [];
+        $columnStatement = static::createStub(StatementInterface::class);
+        $columnStatement->method('fetchAll')->willReturn([
+            ['column_name' => 'id', 'data_type' => 'integer', 'is_nullable' => 'NO', 'udt_name' => 'int4'],
+        ]);
+        $emptyStatement = static::createStub(StatementInterface::class);
+        $emptyStatement->method('fetchAll')->willReturn([]);
+        $connection = static::createStub(ConnectionInterface::class);
+        $callCount = 0;
+        $connection->method('query')->willReturnCallback(
+            function (string $query) use (&$callCount, &$queries, $columnStatement, $emptyStatement) {
+                $queries[] = $query;
+                $callCount++;
+
+                return $callCount === 1 ? $columnStatement : $emptyStatement;
+            }
+        );
+
+        (new PgSqlSchemaReflector($connection))->getCreateStatement("child'ren");
+
+        self::assertSame(
+            "SELECT fk.constraint_name, fk.column_name, "
+            . "pk.table_name AS foreign_table_name, pk.column_name AS foreign_column_name, "
+            . "rc.update_rule, rc.delete_rule "
+            . "FROM information_schema.referential_constraints rc "
+            . "JOIN information_schema.key_column_usage fk "
+            . "  ON fk.constraint_catalog = rc.constraint_catalog "
+            . "  AND fk.constraint_schema = rc.constraint_schema "
+            . "  AND fk.constraint_name = rc.constraint_name "
+            . "JOIN information_schema.key_column_usage pk "
+            . "  ON pk.constraint_catalog = rc.unique_constraint_catalog "
+            . "  AND pk.constraint_schema = rc.unique_constraint_schema "
+            . "  AND pk.constraint_name = rc.unique_constraint_name "
+            . "  AND pk.ordinal_position = fk.position_in_unique_constraint "
+            . "WHERE fk.table_schema = current_schema() "
+            . "  AND fk.table_name = 'child''ren' "
+            . "ORDER BY fk.constraint_name, fk.ordinal_position",
+            $queries[3],
+        );
+    }
+
+    public function testMalformedForeignKeyRowsAreSkippedIndependently(): void
+    {
+        $valid = [
+            'constraint_name' => 'fk_parent',
+            'column_name' => 'parent_id',
+            'foreign_table_name' => 'parents',
+            'foreign_column_name' => 'id',
+            'update_rule' => 'CASCADE',
+            'delete_rule' => 'CASCADE',
+        ];
+        $rows = [
+            array_replace($valid, ['constraint_name' => null]),
+            array_replace($valid, ['column_name' => null]),
+            array_replace($valid, ['foreign_table_name' => null]),
+            array_replace($valid, ['foreign_column_name' => null]),
+            array_replace($valid, ['update_rule' => null]),
+            array_replace($valid, ['delete_rule' => null]),
+            $valid,
+        ];
+
+        $r = new PgSqlSchemaReflector(new FakeSequentialConnection([
+            new FakeStatement([
+                ['column_name' => 'parent_id', 'data_type' => 'integer', 'is_nullable' => 'NO', 'udt_name' => 'int4'],
+            ]),
+            new FakeStatement([]),
+            new FakeStatement([]),
+            new FakeStatement($rows),
+        ]));
+
+        self::assertSame(
+            "CREATE TABLE \"children\" (\n"
+            . "  \"parent_id\" INTEGER NOT NULL,\n"
+            . "  CONSTRAINT \"fk_parent\" FOREIGN KEY (\"parent_id\") "
+            . "REFERENCES \"parents\" (\"id\") ON UPDATE CASCADE ON DELETE CASCADE\n)",
+            $r->getCreateStatement('children'),
+        );
     }
 }

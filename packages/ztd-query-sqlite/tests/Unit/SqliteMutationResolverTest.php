@@ -23,6 +23,7 @@ use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
+use ZtdQuery\Schema\ForeignKeyDefinition;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\Mutation\CreateTableMutation;
@@ -261,6 +262,76 @@ final class SqliteMutationResolverTest extends TestCase
             'doubled' => '(source * 2)',
             'tripled' => '(source * 3)',
         ], $registry->get('metrics')?->generatedExpressions);
+    }
+
+    public function testAlterColumnMutationsPreserveRenameAndRemoveForeignKeys(): void
+    {
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $registry->register('children', new TableDefinition(
+            ['id', 'old_parent'],
+            ['id' => 'INTEGER', 'old_parent' => 'INTEGER'],
+            ['id'],
+            [],
+            [],
+            foreignKeys: ['fk_parent' => new ForeignKeyDefinition(['old_parent'], 'parents', ['id'])],
+        ));
+        $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
+        $rename = $resolver->resolve(
+            'ALTER TABLE children RENAME COLUMN old_parent TO parent_id',
+            QueryKind::DDL_SIMULATED,
+        );
+
+        self::assertInstanceOf(AlterTableMutation::class, $rename);
+        $rename->apply($store, []);
+        $definition = $registry->get('children');
+        self::assertNotNull($definition);
+        self::assertSame(['parent_id'], $definition->foreignKeys['fk_parent']->columns);
+
+        $add = $resolver->resolve('ALTER TABLE children ADD COLUMN label TEXT', QueryKind::DDL_SIMULATED);
+        self::assertInstanceOf(AlterTableMutation::class, $add);
+        $add->apply($store, []);
+        $definition = $registry->get('children');
+        self::assertNotNull($definition);
+        self::assertArrayHasKey('fk_parent', $definition->foreignKeys);
+
+        $drop = $resolver->resolve('ALTER TABLE children DROP COLUMN parent_id', QueryKind::DDL_SIMULATED);
+        self::assertInstanceOf(AlterTableMutation::class, $drop);
+        $drop->apply($store, []);
+        $definition = $registry->get('children');
+        self::assertNotNull($definition);
+        self::assertSame([], $definition->foreignKeys);
+    }
+
+    public function testAlterAddColumnPreservesExistingAndAddedForeignKeys(): void
+    {
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $registry->register('children', new TableDefinition(
+            ['parent_id'],
+            ['parent_id' => 'INTEGER'],
+            [],
+            [],
+            [],
+            foreignKeys: ['foreign_0' => new ForeignKeyDefinition(['parent_id'], 'parents', ['id'])],
+        ));
+        $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
+        $mutation = $resolver->resolve(
+            'ALTER TABLE children ADD COLUMN owner_id INTEGER REFERENCES owners(id) ON DELETE CASCADE',
+            QueryKind::DDL_SIMULATED,
+        );
+
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
+        $mutation->apply($store, []);
+        $definition = $registry->get('children');
+        self::assertNotNull($definition);
+        $foreignKeys = $definition->foreignKeys;
+        self::assertCount(2, $foreignKeys);
+        self::assertSame(['foreign_0', 'foreign_0_added'], array_keys($foreignKeys));
+        self::assertSame(['parents', 'owners'], array_map(
+            static fn (ForeignKeyDefinition $foreignKey): string => $foreignKey->referencedTable,
+            array_values($foreignKeys),
+        ));
     }
 
     public function testResolveAlterTableDropColumn(): void

@@ -147,6 +147,15 @@ final class MySqlProviderTest extends TestCase
         self::assertContains('STORED_SYM', $tokens);
     }
 
+    public function testForeignKeyCascadeStatement(): void
+    {
+        $sql = (new MySqlProvider(Factory::create()))->foreignKeyCascadeStatement();
+
+        self::assertMatchesRegularExpression('/^CREATE TABLE \w+ \(id INT PRIMARY KEY, parent_id INT,/', $sql);
+        self::assertStringContainsString('CONSTRAINT fk_parent FOREIGN KEY (parent_id) REFERENCES ', $sql);
+        self::assertStringEndsWith('(id) ON DELETE CASCADE ON UPDATE CASCADE)', $sql);
+    }
+
     public function testSql(): void
     {
         $faker = Factory::create();

@@ -821,6 +821,9 @@ final class SqliteSchemaParserTest extends SchemaParserContractTest
         $result = $parser->parse($sql);
         self::assertNotNull($result);
         self::assertSame(['id', 'uid'], $result->columns);
+        self::assertCount(1, $result->foreignKeys);
+        self::assertSame('users', array_values($result->foreignKeys)[0]->referencedTable);
+        self::assertSame(['uid'], array_values($result->foreignKeys)[0]->columns);
     }
 
     public function testParseLowercaseCheck(): void
