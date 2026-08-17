@@ -26,4 +26,11 @@ final class TablePartitionKeyTest extends TestCase
 
         new TablePartitionKey(TablePartitionStrategy::List, ['']);
     }
+
+    public function testRejectsWhitespaceOnlyExpression(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        new TablePartitionKey(TablePartitionStrategy::List, ['  ']);
+    }
 }

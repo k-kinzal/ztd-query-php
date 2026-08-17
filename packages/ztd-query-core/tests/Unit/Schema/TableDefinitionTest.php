@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Schema;
 
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Schema\CandidateKeySet;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
@@ -18,6 +19,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 
 #[UsesClass(ColumnType::class)]
+#[UsesClass(CandidateKeySet::class)]
 #[UsesClass(ForeignKeyDefinition::class)]
 #[UsesClass(TablePartitioning::class)]
 #[UsesClass(TablePartitionKey::class)]

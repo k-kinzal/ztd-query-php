@@ -37,6 +37,13 @@ final class TablePartitionRelationTest extends TestCase
         new TablePartitionRelation('', 'id = 1');
     }
 
+    public function testRejectsWhitespaceOnlyParent(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        new TablePartitionRelation('  ', 'id = 1');
+    }
+
     public function testRejectsBlankPredicate(): void
     {
         $this->expectException(\InvalidArgumentException::class);
