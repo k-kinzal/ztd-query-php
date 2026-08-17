@@ -124,6 +124,16 @@ final class PgSqlQueryGuardTest extends QueryClassifierContractTest
         self::assertNull($guard->classify('CREATE DATABASE test'));
     }
 
+    public function testDoBlockClassifiesAsPassthroughRead(): void
+    {
+        $guard = new PgSqlQueryGuard(new PgSqlParser());
+
+        self::assertSame(
+            QueryKind::READ,
+            $guard->classify("DO \$\$ BEGIN INSERT INTO users VALUES (1); END \$\$"),
+        );
+    }
+
     public function testWithSelectClassifiesAsRead(): void
     {
         $guard = new PgSqlQueryGuard(new PgSqlParser());

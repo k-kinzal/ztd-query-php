@@ -453,6 +453,14 @@ final class PostgreSqlProvider extends Base
         return $this->sql->generate(GenerationPlans::tableSampleStatement()->withMaxDepth($maxDepth));
     }
 
+    /** @return non-empty-string */
+    public function doStatement(): string
+    {
+        $id = $this->rsg->integerString(1, 2147483647);
+
+        return "DO \$ztd\$ BEGIN INSERT INTO users (id, name) VALUES ($id, 'fuzz'); END \$ztd\$";
+    }
+
     /**
      * @template TRequiresNonEmpty of bool
      * @param GenerationPlan<TRequiresNonEmpty> $plan

@@ -22,7 +22,7 @@ final class PgSqlParser
      * Classify a SQL statement type.
      *
      * @return string|null One of: 'SELECT', 'INSERT', 'UPDATE', 'DELETE',
-     *                     'TRUNCATE', 'CREATE_TABLE', 'DROP_TABLE', 'ALTER_TABLE', or null.
+     *                     'TRUNCATE', 'CREATE_TABLE', 'DROP_TABLE', 'ALTER_TABLE', 'DO', or null.
      */
     public function classifyStatement(string $sql): ?string
     {
@@ -633,6 +633,9 @@ final class PgSqlParser
         }
         if (preg_match('/^ALTER\s+TABLE\b/i', $trimmed) === 1) {
             return 'ALTER_TABLE';
+        }
+        if (preg_match('/^DO(?:\s|$)/i', $trimmed) === 1) {
+            return 'DO';
         }
 
         if (preg_match('/^(?:BEGIN|START\s+TRANSACTION|COMMIT|ROLLBACK|SAVEPOINT|RELEASE\s+SAVEPOINT|SET\s+TRANSACTION)\b/i', $trimmed) === 1) {

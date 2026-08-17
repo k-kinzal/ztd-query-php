@@ -132,8 +132,11 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
             return new RewritePlan($sql, QueryKind::SKIPPED);
         }
 
-        $tableContext = $this->buildTableContext();
         $statementType = $this->parser->classifyStatement($sql);
+        if ($statementType === 'DO') {
+            return new RewritePlan($sql, QueryKind::READ);
+        }
+        $tableContext = $this->buildTableContext();
 
         if ($kind === QueryKind::READ) {
             if ($this->hasSchemaContext()) {

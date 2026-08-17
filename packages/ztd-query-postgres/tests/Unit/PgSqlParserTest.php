@@ -15,6 +15,17 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(PostgreSqlLexicalMasker::class)]
 final class PgSqlParserTest extends TestCase
 {
+    public function testClassifiesAnonymousDoBlockWithoutSplittingItsBody(): void
+    {
+        $parser = new PgSqlParser();
+        $sql = "DO \$body\$ BEGIN INSERT INTO users VALUES (1); UPDATE users SET id = 2; END \$body\$";
+
+        self::assertSame('DO', $parser->classifyStatement($sql));
+        self::assertSame([$sql], $parser->splitStatements($sql));
+        self::assertSame('DO', $parser->classifyStatement('do language plpgsql $$ begin null; end $$'));
+        self::assertNull($parser->classifyStatement('DOUBLE PRECISION'));
+    }
+
     public function testExtractsOnConflictUpdateWhereAfterInsertSelectWhere(): void
     {
         $parser = new PgSqlParser();

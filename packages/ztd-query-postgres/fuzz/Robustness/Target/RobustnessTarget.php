@@ -190,6 +190,7 @@ final class RobustnessTarget
             fn (): string => 'SELECT * FROM public.users',
             fn (): string => $this->provider->partitionOfStatement(),
             fn (): string => $this->provider->tableSampleStatement(),
+            fn (): string => $this->provider->doStatement(),
         ];
 
         $index = ord($input[0] ?? "\0") % count($generators);

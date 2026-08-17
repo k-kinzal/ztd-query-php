@@ -76,6 +76,16 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlPartitionPredicateRenderer::class)]
 final class PgSqlRewriterTest extends RewriterContractTest
 {
+    public function testDoBlockPassesThroughWithoutInspectingBodyTables(): void
+    {
+        $sql = "DO \$body\$ BEGIN INSERT INTO physical_only VALUES (1); END \$body\$ LANGUAGE plpgsql";
+        $plan = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry())->rewrite($sql);
+
+        self::assertSame(QueryKind::READ, $plan->kind());
+        self::assertSame($sql, $plan->sql());
+        self::assertNull($plan->mutation());
+    }
+
     public function testChildPartitionSelectUsesFilteredParentShadowSource(): void
     {
         $store = new ShadowStore();

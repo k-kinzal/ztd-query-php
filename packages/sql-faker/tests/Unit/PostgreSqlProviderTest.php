@@ -910,6 +910,18 @@ final class PostgreSqlProviderTest extends TestCase
         self::assertContains('TABLESAMPLE', $tokens);
     }
 
+    public function testDoStatementTargetsFuzzFixture(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new PostgreSqlProvider($faker);
+
+        self::assertMatchesRegularExpression(
+            '/^DO \$ztd\$ BEGIN INSERT INTO users \(id, name\) VALUES \([1-9][0-9]*, \'fuzz\'\); END \$ztd\$$/',
+            $provider->doStatement(),
+        );
+    }
+
     #[DataProvider('providerNullableSimpleStatementSeed')]
     public function testSimpleStatementReturnsNonEmpty(int $seed): void
     {
