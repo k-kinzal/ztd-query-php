@@ -21,7 +21,7 @@ class ShadowStore
     /**
      * Tables explicitly initialized as fixtures or virtual schema entries.
      *
-     * @var array<string, true>
+     * @var array<string, string>
      */
     private array $initializedTables = [];
 
@@ -33,7 +33,7 @@ class ShadowStore
     public function set(string $tableName, array $rows): void
     {
         $this->fixtures[$tableName] = $rows;
-        $this->initializedTables[$tableName] = true;
+        $this->initializedTables[$tableName] = $tableName;
     }
 
     /**
@@ -98,7 +98,7 @@ class ShadowStore
         if (!array_key_exists($tableName, $this->fixtures)) {
             $this->fixtures[$tableName] = [];
         }
-        $this->initializedTables[$tableName] = true;
+        $this->initializedTables[$tableName] = $tableName;
     }
 
     /**

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use Tests\Contract\RewriterContractTest;
+use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Exception\UnsupportedSqlException;
@@ -32,6 +33,7 @@ use ZtdQuery\Shadow\Mutation\InsertMutation;
 use ZtdQuery\Shadow\Mutation\TruncateMutation;
 use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\ShadowStore;
+use ZtdQuery\Shadow\ShadowTableState;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 
@@ -3006,5 +3008,19 @@ final class PgSqlRewriterTest extends RewriterContractTest
 
         self::assertStringContainsString("E'line1\\nline2' AS \"body\"", $plan->sql());
         self::assertStringContainsString('WHERE id = 1', $plan->sql());
+    }
+
+    public function testUpdateDoesNotPromoteMaterializedUnknownTable(): void
+    {
+        $store = new ShadowStore();
+        $store->insert('late_table', [['id' => 1, 'name' => 'Alice']]);
+        $rewriter = $this->createRewriter($store, new TableDefinitionRegistry());
+
+        try {
+            $rewriter->rewrite("UPDATE late_table SET name = 'Bob' WHERE id = 1");
+            self::fail('Expected an unknown schema exception.');
+        } catch (UnknownSchemaException) {
+            self::assertSame(ShadowTableState::Materialized, $store->state('late_table'));
+        }
     }
 }

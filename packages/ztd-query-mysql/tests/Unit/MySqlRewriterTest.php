@@ -35,6 +35,7 @@ use ZtdQuery\Shadow\Mutation\ReplaceMutation;
 use ZtdQuery\Shadow\Mutation\TruncateMutation;
 use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\ShadowStore;
+use ZtdQuery\Shadow\ShadowTableState;
 
 #[CoversClass(MySqlRewriter::class)]
 #[UsesClass(MySqlParser::class)]
@@ -2792,5 +2793,19 @@ final class MySqlRewriterTest extends RewriterContractTest
         self::assertSame('SELECT 1 WHERE FALSE', $plan->sql());
         self::assertNotNull($plan->mutation());
         self::assertInstanceOf(TruncateMutation::class, $plan->mutation());
+    }
+
+    public function testUpdateDoesNotPromoteMaterializedUnknownTable(): void
+    {
+        $store = new ShadowStore();
+        $store->insert('late_table', [['id' => 1, 'name' => 'Alice']]);
+        $rewriter = $this->createRewriter($store, new TableDefinitionRegistry());
+
+        try {
+            $rewriter->rewrite("UPDATE late_table SET name = 'Bob' WHERE id = 1");
+            self::fail('Expected an unknown schema exception.');
+        } catch (UnknownSchemaException) {
+            self::assertSame(ShadowTableState::Materialized, $store->state('late_table'));
+        }
     }
 }

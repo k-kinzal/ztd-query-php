@@ -13,7 +13,6 @@ use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
-use ZtdQuery\Shadow\ShadowTableState;
 
 /**
  * SQLite rewrite implementation for ZTD.
@@ -116,15 +115,6 @@ final class SqliteRewriter implements SqlRewriter
             return new RewritePlan('SELECT 1 WHERE 0', QueryKind::DDL_SIMULATED, $mutation);
         }
 
-        $type = $this->parser->classifyStatement($stmtSql);
-
-        if ($type === 'UPDATE' || $type === 'DELETE') {
-            $targetTable = $this->parser->extractTargetTable($stmtSql);
-            if ($targetTable !== null && $this->mutationTableExists($targetTable)) {
-                $this->shadowStore->ensure($targetTable);
-            }
-        }
-
         $mutation = $this->mutationResolver->resolve($stmtSql, $kind);
 
         $stripped = trim($this->parser->stripComments($stmtSql));
@@ -219,12 +209,6 @@ final class SqliteRewriter implements SqlRewriter
         }
 
         return false;
-    }
-
-    private function mutationTableExists(string $tableName): bool
-    {
-        return $this->registry->has($tableName)
-            || $this->shadowStore->state($tableName) === ShadowTableState::Initialized;
     }
 
     private function hasSchemaContext(): bool

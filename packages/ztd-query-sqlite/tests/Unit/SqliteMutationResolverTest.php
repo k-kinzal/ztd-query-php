@@ -24,6 +24,7 @@ use ZtdQuery\Shadow\Mutation\ReplaceMutation;
 use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\Mutation\UpsertMutation;
 use ZtdQuery\Shadow\ShadowStore;
+use ZtdQuery\Shadow\ShadowTableState;
 
 #[CoversClass(SqliteMutationResolver::class)]
 #[UsesClass(SqliteLexicalMasker::class)]
@@ -1154,7 +1155,7 @@ final class SqliteMutationResolverTest extends TestCase
         $mutation = $resolver->resolve("UPDATE users SET name = 'Bob' WHERE id = 1", QueryKind::WRITE_SIMULATED);
         self::assertNotNull($mutation);
         self::assertInstanceOf(UpdateMutation::class, $mutation);
-        self::assertSame([], $store->get('users'));
+        self::assertSame(ShadowTableState::Initialized, $store->state('users'));
     }
 
     public function testResolveUpdatePrimaryKeysFromDefinition(): void

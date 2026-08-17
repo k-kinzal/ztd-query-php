@@ -13,6 +13,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 
 #[CoversClass(ShadowStore::class)]
 #[UsesClass(MissingPrimaryKeyException::class)]
+#[UsesClass(ShadowTableState::class)]
 class ShadowStoreTest extends TestCase
 {
     public function testInsertAppendsRows(): void

@@ -23,6 +23,7 @@ use ZtdQuery\Shadow\Mutation\TruncateMutation;
 use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\Mutation\UpsertMutation;
 use ZtdQuery\Shadow\ShadowStore;
+use ZtdQuery\Shadow\ShadowTableState;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 
@@ -173,7 +174,7 @@ final class PgSqlMutationResolverTest extends TestCase
             QueryKind::WRITE_SIMULATED
         );
 
-        self::assertSame([], $shadowStore->get('users'));
+        self::assertSame(ShadowTableState::Initialized, $shadowStore->state('users'));
     }
 
     public function testResolveUpdateWithoutTableThrows(): void

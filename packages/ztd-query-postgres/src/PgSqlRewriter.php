@@ -12,7 +12,6 @@ use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
-use ZtdQuery\Shadow\ShadowTableState;
 
 /**
  * PostgreSQL rewrite implementation for ZTD.
@@ -140,10 +139,6 @@ final class PgSqlRewriter implements SqlRewriter
             return new RewritePlan('SELECT 1 WHERE FALSE', QueryKind::DDL_SIMULATED, $mutation);
         }
 
-        if ($statementType === 'UPDATE' || $statementType === 'DELETE') {
-            $this->ensureDmlTarget($sql, $statementType);
-        }
-
         $mutation = $this->mutationResolver->resolve($sql, $statementType ?? '', $kind);
 
         if ($statementType === 'TRUNCATE') {
@@ -208,23 +203,6 @@ final class PgSqlRewriter implements SqlRewriter
         return $context;
     }
 
-    private function ensureDmlTarget(string $sql, string $statementType): void
-    {
-        if ($statementType === 'UPDATE') {
-            $targetTable = $this->parser->extractUpdateTable($sql);
-            if ($targetTable !== null && $this->mutationTableExists($targetTable)) {
-                $this->shadowStore->ensure($targetTable);
-            }
-        }
-
-        if ($statementType === 'DELETE') {
-            $targetTable = $this->parser->extractDeleteTable($sql);
-            if ($targetTable !== null && $this->mutationTableExists($targetTable)) {
-                $this->shadowStore->ensure($targetTable);
-            }
-        }
-    }
-
     private function tableExists(string $tableName): bool
     {
         if ($this->shadowStore->has($tableName)) {
@@ -236,12 +214,6 @@ final class PgSqlRewriter implements SqlRewriter
         }
 
         return false;
-    }
-
-    private function mutationTableExists(string $tableName): bool
-    {
-        return $this->registry->has($tableName)
-            || $this->shadowStore->state($tableName) === ShadowTableState::Initialized;
     }
 
     private function hasSchemaContext(): bool

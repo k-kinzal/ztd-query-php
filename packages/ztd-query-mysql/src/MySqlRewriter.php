@@ -15,14 +15,10 @@ use PhpMyAdmin\SqlParser\Statements\SelectStatement;
 use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
-use ZtdQuery\Shadow\ShadowTableState;
 use PhpMyAdmin\SqlParser\Statements\AlterStatement;
 use PhpMyAdmin\SqlParser\Statements\CreateStatement;
-use PhpMyAdmin\SqlParser\Statements\DeleteStatement;
-use PhpMyAdmin\SqlParser\Statements\InsertStatement;
 use PhpMyAdmin\SqlParser\Statements\ReplaceStatement;
 use PhpMyAdmin\SqlParser\Statements\TruncateStatement;
-use PhpMyAdmin\SqlParser\Statements\UpdateStatement;
 use PhpMyAdmin\SqlParser\Statements\WithStatement;
 
 /**
@@ -139,10 +135,6 @@ final class MySqlRewriter implements SqlRewriter
             return new RewritePlan('SELECT 1 WHERE FALSE', QueryKind::DDL_SIMULATED, $mutation);
         }
 
-        if ($statement instanceof UpdateStatement || $statement instanceof DeleteStatement || $statement instanceof InsertStatement) {
-            $this->ensureDmlTables($statement, $sql);
-        }
-
         $mutation = $this->mutationResolver->resolve($sql, $statement, $kind);
 
         if ($statement instanceof TruncateStatement) {
@@ -208,33 +200,6 @@ final class MySqlRewriter implements SqlRewriter
         }
 
         return $context;
-    }
-
-    /**
-     * Ensure DML target tables exist in shadow store.
-     */
-    private function ensureDmlTables(Statement $statement, string $sql): void
-    {
-        if ($statement instanceof UpdateStatement) {
-            if ($statement->tables === [] || !isset($statement->tables[0])) {
-                return;
-            }
-            $targetExpr = $statement->tables[0];
-            $targetTable = self::resolveExprTableName($targetExpr);
-            if ($targetTable !== null && $this->mutationTableExists($targetTable)) {
-                $this->shadowStore->ensure($targetTable);
-            }
-        }
-
-        if ($statement instanceof DeleteStatement) {
-            if ($statement->from !== null && $statement->from !== []) {
-                $targetExpr = $statement->from[0];
-                $targetTable = self::resolveExprTableName($targetExpr);
-                if ($targetTable !== null && $this->mutationTableExists($targetTable)) {
-                    $this->shadowStore->ensure($targetTable);
-                }
-            }
-        }
     }
 
     /**
@@ -320,12 +285,6 @@ final class MySqlRewriter implements SqlRewriter
         }
 
         return false;
-    }
-
-    private function mutationTableExists(string $tableName): bool
-    {
-        return $this->registry->has($tableName)
-            || $this->shadowStore->state($tableName) === ShadowTableState::Initialized;
     }
 
     private function hasSchemaContext(): bool

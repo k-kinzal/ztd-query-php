@@ -33,6 +33,7 @@ use ZtdQuery\Shadow\Mutation\MultiUpdateMutation;
 use ZtdQuery\Shadow\Mutation\UpsertMutation;
 use ZtdQuery\Platform\MySql\Mutation\AlterTableMutation;
 use ZtdQuery\Shadow\ShadowStore;
+use ZtdQuery\Shadow\ShadowTableState;
 
 #[CoversClass(MySqlMutationResolver::class)]
 #[UsesClass(MySqlParser::class)]
@@ -834,6 +835,7 @@ final class MySqlMutationResolverTest extends TestCase
         self::assertInstanceOf(UpdateMutation::class, $mutation);
         self::assertSame('users', $mutation->tableName());
         self::assertSame([], $shadowStore->get('users'));
+        self::assertSame(ShadowTableState::Initialized, $shadowStore->state('users'));
     }
 
     public function testResolveUpdateThrowsWhenNoSchemaAvailable(): void
