@@ -55,6 +55,34 @@ final class PgSchemaAwareSqlBuilder
         }
     }
 
+    public function buildJoinSelect(SchemaDefinition $left, SchemaDefinition $right): string
+    {
+        $leftTable = $this->quoteIdentifier($left->name);
+        $rightTable = $this->quoteIdentifier($right->name);
+        $leftKey = $left->primaryKeys[0] ?? $left->columns[0];
+        $rightKey = $right->columns[0];
+        /** @var string $leftColumn */
+        $leftColumn = $this->faker->randomElement($left->columns);
+        /** @var string $rightColumn */
+        $rightColumn = $this->faker->randomElement($right->columns);
+        /** @var string $join */
+        $join = $this->faker->randomElement([
+            'JOIN',
+            'INNER JOIN',
+            'LEFT JOIN',
+            'RIGHT JOIN',
+            'FULL OUTER JOIN',
+        ]);
+
+        return 'SELECT l.' . $this->quoteIdentifier($leftColumn) . ' AS "left_value", '
+            . 'r.' . $this->quoteIdentifier($rightColumn) . ' AS "right_value" '
+            . "FROM $leftTable AS l $join $rightTable AS r "
+            . 'ON l.' . $this->quoteIdentifier($leftKey) . ' = r.' . $this->quoteIdentifier($rightKey) . ' '
+            . 'ORDER BY l.' . $this->quoteIdentifier($leftKey) . ' NULLS LAST, '
+            . 'r.' . $this->quoteIdentifier($rightKey) . ' NULLS LAST, '
+            . '"left_value" NULLS LAST, "right_value" NULLS LAST';
+    }
+
     public function buildInsert(SchemaDefinition $schema): string
     {
         $table = $this->quoteIdentifier($schema->name);

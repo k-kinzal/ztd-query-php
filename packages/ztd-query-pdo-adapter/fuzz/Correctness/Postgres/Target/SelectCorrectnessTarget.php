@@ -42,16 +42,40 @@ final class SelectCorrectnessTarget
 
         $schema = PgSchemaPool::random($this->faker);
         $this->harness->setup($schema, $seed);
+        $joinSchema = new SchemaDefinition(
+            '_ztd_join_no_pk',
+            'CREATE TABLE "_ztd_join_no_pk" (item_id INTEGER NOT NULL, tag VARCHAR(50) NOT NULL)',
+            ['item_id', 'tag'],
+            [],
+        );
 
         try {
+            $this->setupJoinTable($joinSchema);
+            $this->compareSelect($this->sqlBuilder->buildJoinSelect($schema, $joinSchema), $schema, $seed);
+
             $queryCount = $this->faker->numberBetween(1, 5);
             for ($i = 0; $i < $queryCount; $i++) {
                 $sql = $this->sqlBuilder->buildSelect($schema);
                 $this->compareSelect($sql, $schema, $seed);
             }
         } finally {
+            $this->harness->getRawPdo()->exec('DROP TABLE IF EXISTS "_ztd_join_no_pk" CASCADE');
             $this->harness->teardown();
         }
+    }
+
+    private function setupJoinTable(SchemaDefinition $schema): void
+    {
+        $this->harness->getRawPdo()->exec('DROP TABLE IF EXISTS "_ztd_join_no_pk" CASCADE');
+        $this->harness->getRawPdo()->exec($schema->sql);
+        $this->harness->getRawPdo()->exec(
+            "INSERT INTO \"_ztd_join_no_pk\" VALUES (1, 'new'), (1, 'sale'), (2, 'blue'), (99, 'orphan')",
+        );
+
+        $this->harness->getZtdPdo()->exec($schema->sql);
+        $this->harness->getZtdPdo()->exec(
+            "INSERT INTO \"_ztd_join_no_pk\" VALUES (1, 'new'), (1, 'sale'), (2, 'blue'), (99, 'orphan')",
+        );
     }
 
     private function compareSelect(string $sql, SchemaDefinition $schema, int $seed): void
