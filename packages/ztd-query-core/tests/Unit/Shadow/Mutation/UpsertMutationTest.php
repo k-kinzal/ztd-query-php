@@ -9,7 +9,9 @@ use ZtdQuery\Schema\CandidateKeyConflict;
 use ZtdQuery\Schema\CandidateKeySet;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Shadow\Mutation\UpsertMutation;
+use ZtdQuery\Shadow\Mutation\UpsertColumnSource;
 use ZtdQuery\Shadow\Mutation\UpsertExpression;
+use ZtdQuery\Shadow\Mutation\UpsertExpressionKind;
 use ZtdQuery\Shadow\ShadowStore;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -52,6 +54,38 @@ final class UpsertMutationTest extends TestCase
         self::assertSame(11, $rows[0]['visits']);
     }
 
+    public function testSkippedConditionalRowDoesNotStopFollowingRows(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', [
+            ['id' => 1, 'name' => 'first', 'score' => 10],
+        ]);
+        $mutation = new UpsertMutation(
+            'users',
+            ['id'],
+            ['name'],
+            ['name' => UpsertExpression::column(UpsertColumnSource::Incoming, 'name')],
+            updatePredicate: UpsertExpression::binary(
+                UpsertExpressionKind::GreaterOrEqual,
+                UpsertExpression::column(UpsertColumnSource::Existing, 'score'),
+                UpsertExpression::literal(80),
+            ),
+        );
+
+        $mutation->apply($store, [
+            ['id' => 1, 'name' => 'skipped', 'score' => 20],
+            ['id' => 2, 'name' => 'inserted', 'score' => 90],
+        ]);
+
+        self::assertSame([
+            ['id' => 1, 'name' => 'first', 'score' => 10],
+            ['id' => 2, 'name' => 'inserted', 'score' => 90],
+        ], $store->get('users'));
+        self::assertSame([
+            ['id' => 2, 'name' => 'inserted', 'score' => 90],
+        ], $mutation->resultRows());
+    }
+
     public function testApplyUpdatesExistingRowOnUniqueKeyConflict(): void
     {
         $definition = new TableDefinition(
@@ -68,7 +102,7 @@ final class UpsertMutationTest extends TestCase
             'users',
             ['id'],
             ['name'],
-            ['name' => 'EXCLUDED.name'],
+            ['name' => UpsertExpression::column(UpsertColumnSource::Incoming, 'name')],
             $definition->candidateKeys(),
         );
         $mutation->apply($store, [['id' => 2, 'email' => 'alice@example.com', 'name' => 'Updated']]);
@@ -96,7 +130,7 @@ final class UpsertMutationTest extends TestCase
             'users',
             ['id'],
             ['visits'],
-            ['visits' => 'VALUES(`visits`)']
+            ['visits' => UpsertExpression::column(UpsertColumnSource::Incoming, 'visits')]
         );
         $mutation->apply($store, [['id' => 1, 'name' => 'Alice', 'visits' => 15]]);
 
@@ -115,7 +149,7 @@ final class UpsertMutationTest extends TestCase
             'users',
             ['id'],
             ['status'],
-            ['status' => "'updated'"]
+            ['status' => UpsertExpression::literal('updated')]
         );
         $mutation->apply($store, [['id' => 1, 'name' => 'Alice', 'status' => 'ignored']]);
 
@@ -197,7 +231,7 @@ final class UpsertMutationTest extends TestCase
             'users',
             ['id'],
             ['name'],
-            ['name' => 'EXCLUDED.name']
+            ['name' => UpsertExpression::column(UpsertColumnSource::Incoming, 'name')]
         );
         $mutation->apply($store, [['id' => 1, 'name' => 'Bob', 'visits' => 15]]);
 
@@ -216,7 +250,7 @@ final class UpsertMutationTest extends TestCase
             'users',
             ['id'],
             ['name'],
-            ['name' => 'EXCLUDED."name"']
+            ['name' => UpsertExpression::column(UpsertColumnSource::Incoming, 'name')]
         );
         $mutation->apply($store, [['id' => 1, 'name' => 'Charlie']]);
 
@@ -235,7 +269,11 @@ final class UpsertMutationTest extends TestCase
             'items',
             ['id'],
             ['quantity'],
-            ['quantity' => 'items.quantity + VALUES(quantity)'],
+            ['quantity' => UpsertExpression::binary(
+                UpsertExpressionKind::Add,
+                UpsertExpression::column(UpsertColumnSource::Existing, 'quantity'),
+                UpsertExpression::column(UpsertColumnSource::Incoming, 'quantity'),
+            )],
         );
         $mutation->apply($store, [['id' => 1, 'quantity' => 5]]);
 
@@ -253,7 +291,11 @@ final class UpsertMutationTest extends TestCase
             'items',
             ['id'],
             ['quantity'],
-            ['quantity' => 'quantity + EXCLUDED.quantity'],
+            ['quantity' => UpsertExpression::binary(
+                UpsertExpressionKind::Add,
+                UpsertExpression::column(UpsertColumnSource::Existing, 'quantity'),
+                UpsertExpression::column(UpsertColumnSource::Incoming, 'quantity'),
+            )],
         );
         $mutation->apply($store, [
             ['id' => 1, 'quantity' => 5],
@@ -273,8 +315,12 @@ final class UpsertMutationTest extends TestCase
             'items',
             ['id'],
             ['name'],
-            ['name' => 'EXCLUDED.name'],
-            updatePredicate: 'items.score >= 80',
+            ['name' => UpsertExpression::column(UpsertColumnSource::Incoming, 'name')],
+            updatePredicate: UpsertExpression::binary(
+                UpsertExpressionKind::GreaterOrEqual,
+                UpsertExpression::column(UpsertColumnSource::Existing, 'score'),
+                UpsertExpression::literal(80),
+            ),
         );
 
         $mutation->apply($store, [['id' => 1, 'name' => 'skipped', 'score' => 95]]);

@@ -51,9 +51,9 @@ final class UpsertMutation implements ShadowMutation
      * @param string $tableName Target table.
      * @param array<int, string> $primaryKeys Primary key columns.
      * @param array<int, string> $updateColumns Columns to update on duplicate.
-     * @param array<string, string> $updateValues Values to use for update on duplicate.
+     * @param array<string, UpsertExpression> $updateValues Values to use for update on duplicate.
      * @param CandidateKeySet|null $candidateKeys Candidate keys used for conflict detection.
-     * @param string|null $updatePredicate Condition that controls the conflict update.
+     * @param UpsertExpression|null $updatePredicate Condition that controls the conflict update.
      */
     public function __construct(
         string $tableName,
@@ -61,14 +61,14 @@ final class UpsertMutation implements ShadowMutation
         array $updateColumns = [],
         array $updateValues = [],
         ?CandidateKeySet $candidateKeys = null,
-        ?string $updatePredicate = null,
+        ?UpsertExpression $updatePredicate = null,
     ) {
         $this->tableName = $tableName;
         $this->primaryKeys = $primaryKeys;
         $this->updateColumns = $updateColumns;
-        $this->updateValues = array_map(UpsertExpression::parse(...), $updateValues);
+        $this->updateValues = $updateValues;
         $this->candidateKeys = $candidateKeys ?? CandidateKeySet::fromSchema($primaryKeys);
-        $this->updatePredicate = $updatePredicate !== null ? UpsertExpression::parse($updatePredicate) : null;
+        $this->updatePredicate = $updatePredicate;
     }
 
     /**

@@ -85,6 +85,18 @@ final class SqlTokenStreamTest extends TestCase
         );
     }
 
+    public function testClauseAfterAnchorCanBeginAtFirstToken(): void
+    {
+        self::assertSame(
+            'earlier',
+            SqlTokenStream::tokenize('DO UPDATE SET WHERE earlier WHERE later')->topLevelClauseAfter(
+                ['DO', 'UPDATE', 'SET'],
+                ['WHERE'],
+                [['WHERE']],
+            ),
+        );
+    }
+
     public function testSplitsCommasOutsideParenthesesArraysAndStrings(): void
     {
         $stream = SqlTokenStream::tokenize("ARRAY[1,2], COALESCE(a, b), 'x,y', plain");

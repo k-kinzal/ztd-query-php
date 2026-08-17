@@ -5,41 +5,62 @@ declare(strict_types=1);
 namespace ZtdQuery\Shadow\Mutation;
 
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Sql\SqlToken;
-use ZtdQuery\Sql\SqlTokenKind;
-use ZtdQuery\Sql\SqlTokenStream;
 
 /**
- * Parsed scalar expression used by an UPSERT assignment.
+ * Dialect-independent scalar expression used by an UPSERT assignment.
  */
 final class UpsertExpression
 {
-    private const LITERAL = 'literal';
-    private const COLUMN = 'column';
-    private const UNARY = 'unary';
-    private const BINARY = 'binary';
-
+    /** @param list<self> $operands */
     private function __construct(
-        private readonly string $kind,
+        private readonly UpsertExpressionKind $kind,
         private readonly mixed $literal = null,
-        private readonly ?string $qualifier = null,
+        private readonly ?UpsertColumnSource $columnSource = null,
         private readonly ?string $column = null,
-        private readonly ?string $operator = null,
-        private readonly ?self $left = null,
-        private readonly ?self $right = null,
+        private readonly array $operands = [],
     ) {
     }
 
-    public static function parse(string $sql): self
+    public static function literal(mixed $value): self
     {
-        $tokens = SqlTokenStream::tokenize($sql)->significantTokens();
-        $index = 0;
-        $expression = self::parseOr($sql, $tokens, $index);
-        if (isset($tokens[$index])) {
-            throw self::unsupported($sql);
+        return new self(UpsertExpressionKind::Literal, literal: $value);
+    }
+
+    public static function column(UpsertColumnSource $source, string $column): self
+    {
+        if ($column === '') {
+            throw new \InvalidArgumentException('UPSERT column must not be empty');
         }
 
-        return $expression;
+        return new self(UpsertExpressionKind::Column, columnSource: $source, column: $column);
+    }
+
+    public static function unary(UpsertExpressionKind $kind, self $operand): self
+    {
+        if (!in_array($kind, [
+            UpsertExpressionKind::UnaryPlus,
+            UpsertExpressionKind::UnaryMinus,
+            UpsertExpressionKind::Not,
+        ], true)) {
+            throw new \InvalidArgumentException('Expected a unary UPSERT expression kind');
+        }
+
+        return new self($kind, operands: [$operand]);
+    }
+
+    public static function binary(UpsertExpressionKind $kind, self $left, self $right): self
+    {
+        if (in_array($kind, [
+            UpsertExpressionKind::Literal,
+            UpsertExpressionKind::Column,
+            UpsertExpressionKind::UnaryPlus,
+            UpsertExpressionKind::UnaryMinus,
+            UpsertExpressionKind::Not,
+        ], true)) {
+            throw new \InvalidArgumentException('Expected a binary UPSERT expression kind');
+        }
+
+        return new self($kind, operands: [$left, $right]);
     }
 
     /**
@@ -49,11 +70,63 @@ final class UpsertExpression
     public function evaluate(array $existingRow, array $incomingRow, string $tableName): mixed
     {
         return match ($this->kind) {
-            self::LITERAL => $this->literal,
-            self::COLUMN => $this->resolveColumn($existingRow, $incomingRow, $tableName),
-            self::UNARY => $this->evaluateUnary($existingRow, $incomingRow, $tableName),
-            self::BINARY => $this->evaluateBinary($existingRow, $incomingRow, $tableName),
-            default => throw self::unsupported($this->kind),
+            UpsertExpressionKind::Literal => $this->literal,
+            UpsertExpressionKind::Column => $this->resolveColumn($existingRow, $incomingRow),
+            UpsertExpressionKind::UnaryPlus => self::unaryPlus($this->operand(0, $existingRow, $incomingRow, $tableName)),
+            UpsertExpressionKind::UnaryMinus => self::unaryMinus($this->operand(0, $existingRow, $incomingRow, $tableName)),
+            UpsertExpressionKind::Not => self::not($this->operand(0, $existingRow, $incomingRow, $tableName)),
+            UpsertExpressionKind::Add => self::add(
+                $this->operand(0, $existingRow, $incomingRow, $tableName),
+                $this->operand(1, $existingRow, $incomingRow, $tableName),
+            ),
+            UpsertExpressionKind::Subtract => self::subtract(
+                $this->operand(0, $existingRow, $incomingRow, $tableName),
+                $this->operand(1, $existingRow, $incomingRow, $tableName),
+            ),
+            UpsertExpressionKind::Multiply => self::multiply(
+                $this->operand(0, $existingRow, $incomingRow, $tableName),
+                $this->operand(1, $existingRow, $incomingRow, $tableName),
+            ),
+            UpsertExpressionKind::Divide => self::divide(
+                $this->operand(0, $existingRow, $incomingRow, $tableName),
+                $this->operand(1, $existingRow, $incomingRow, $tableName),
+            ),
+            UpsertExpressionKind::Modulo => self::modulo(
+                $this->operand(0, $existingRow, $incomingRow, $tableName),
+                $this->operand(1, $existingRow, $incomingRow, $tableName),
+            ),
+            UpsertExpressionKind::Equal => self::equal(
+                $this->operand(0, $existingRow, $incomingRow, $tableName),
+                $this->operand(1, $existingRow, $incomingRow, $tableName),
+            ),
+            UpsertExpressionKind::NotEqual => self::notEqual(
+                $this->operand(0, $existingRow, $incomingRow, $tableName),
+                $this->operand(1, $existingRow, $incomingRow, $tableName),
+            ),
+            UpsertExpressionKind::Less => self::less(
+                $this->operand(0, $existingRow, $incomingRow, $tableName),
+                $this->operand(1, $existingRow, $incomingRow, $tableName),
+            ),
+            UpsertExpressionKind::LessOrEqual => self::lessOrEqual(
+                $this->operand(0, $existingRow, $incomingRow, $tableName),
+                $this->operand(1, $existingRow, $incomingRow, $tableName),
+            ),
+            UpsertExpressionKind::Greater => self::greater(
+                $this->operand(0, $existingRow, $incomingRow, $tableName),
+                $this->operand(1, $existingRow, $incomingRow, $tableName),
+            ),
+            UpsertExpressionKind::GreaterOrEqual => self::greaterOrEqual(
+                $this->operand(0, $existingRow, $incomingRow, $tableName),
+                $this->operand(1, $existingRow, $incomingRow, $tableName),
+            ),
+            UpsertExpressionKind::And => self::and(
+                self::truth($this->operand(0, $existingRow, $incomingRow, $tableName)),
+                self::truth($this->operand(1, $existingRow, $incomingRow, $tableName)),
+            ),
+            UpsertExpressionKind::Or => self::or(
+                self::truth($this->operand(0, $existingRow, $incomingRow, $tableName)),
+                self::truth($this->operand(1, $existingRow, $incomingRow, $tableName)),
+            ),
         };
     }
 
@@ -67,216 +140,14 @@ final class UpsertExpression
     }
 
     /**
-     * @param list<SqlToken> $tokens
-     */
-    private static function parseOr(string $sql, array $tokens, int &$index): self
-    {
-        $left = self::parseAnd($sql, $tokens, $index);
-        while (($tokens[$index] ?? null)?->isKeyword('OR') === true) {
-            $index++;
-            $left = self::binary('OR', $left, self::parseAnd($sql, $tokens, $index));
-        }
-
-        return $left;
-    }
-
-    /**
-     * @param list<SqlToken> $tokens
-     */
-    private static function parseAnd(string $sql, array $tokens, int &$index): self
-    {
-        $left = self::parseComparison($sql, $tokens, $index);
-        while (($tokens[$index] ?? null)?->isKeyword('AND') === true) {
-            $index++;
-            $left = self::binary('AND', $left, self::parseComparison($sql, $tokens, $index));
-        }
-
-        return $left;
-    }
-
-    /**
-     * @param list<SqlToken> $tokens
-     */
-    private static function parseComparison(string $sql, array $tokens, int &$index): self
-    {
-        $left = self::parseAdditive($sql, $tokens, $index);
-        $operator = self::comparisonOperator($sql, $tokens, $index);
-        if ($operator === null) {
-            return $left;
-        }
-
-        return self::binary($operator, $left, self::parseAdditive($sql, $tokens, $index));
-    }
-
-    /**
-     * @param list<SqlToken> $tokens
-     */
-    private static function parseAdditive(string $sql, array $tokens, int &$index): self
-    {
-        $left = self::parseMultiplicative($sql, $tokens, $index);
-        while (isset($tokens[$index]) && self::isSymbol($tokens[$index], ['+', '-'])) {
-            $operator = $tokens[$index]->text;
-            $index++;
-            $left = self::binary($operator, $left, self::parseMultiplicative($sql, $tokens, $index));
-        }
-
-        return $left;
-    }
-
-    /**
-     * @param list<SqlToken> $tokens
-     */
-    private static function parseMultiplicative(string $sql, array $tokens, int &$index): self
-    {
-        $left = self::parseUnary($sql, $tokens, $index);
-        while (isset($tokens[$index]) && self::isSymbol($tokens[$index], ['*', '/', '%'])) {
-            $operator = $tokens[$index]->text;
-            $index++;
-            $left = self::binary($operator, $left, self::parseUnary($sql, $tokens, $index));
-        }
-
-        return $left;
-    }
-
-    /**
-     * @param list<SqlToken> $tokens
-     */
-    private static function parseUnary(string $sql, array $tokens, int &$index): self
-    {
-        $token = $tokens[$index] ?? null;
-        if ($token?->isKeyword('NOT') === true) {
-            $index++;
-
-            return self::unary('NOT', self::parseUnary($sql, $tokens, $index));
-        }
-        if ($token !== null && self::isSymbol($token, ['+', '-'])) {
-            $index++;
-
-            return self::unary($token->text, self::parseUnary($sql, $tokens, $index));
-        }
-
-        return self::parsePrimary($sql, $tokens, $index);
-    }
-
-    /**
-     * @param list<SqlToken> $tokens
-     */
-    private static function parsePrimary(string $sql, array $tokens, int &$index): self
-    {
-        $token = $tokens[$index] ?? null;
-        if ($token === null) {
-            throw self::unsupported($sql);
-        }
-        if (self::isSymbol($token, ['('])) {
-            $index++;
-            $expression = self::parseOr($sql, $tokens, $index);
-            if (!isset($tokens[$index]) || !self::isSymbol($tokens[$index], [')'])) {
-                throw self::unsupported($sql);
-            }
-            $index++;
-
-            return $expression;
-        }
-        if ($token->kind === SqlTokenKind::Number) {
-            $index++;
-
-            return self::literal(self::number($token->text));
-        }
-        if ($token->kind === SqlTokenKind::String) {
-            $index++;
-
-            return self::literal(self::string($token->text));
-        }
-        if ($token->isKeyword('NULL')) {
-            $index++;
-
-            return self::literal(null);
-        }
-        if ($token->isKeyword('TRUE') || $token->isKeyword('FALSE')) {
-            $index++;
-
-            return self::literal($token->isKeyword('TRUE'));
-        }
-        if (!self::isIdentifier($token)) {
-            throw self::unsupported($sql);
-        }
-
-        $identifier = self::identifier($token);
-        $index++;
-        if (strcasecmp($identifier, 'VALUES') === 0 && isset($tokens[$index]) && self::isSymbol($tokens[$index], ['('])) {
-            return self::parseValuesReference($sql, $tokens, $index);
-        }
-        if (isset($tokens[$index]) && self::isSymbol($tokens[$index], ['.'])) {
-            $index++;
-            $column = $tokens[$index] ?? null;
-            if ($column === null || !self::isIdentifier($column)) {
-                throw self::unsupported($sql);
-            }
-            $index++;
-
-            return self::column($identifier, self::identifier($column));
-        }
-
-        return self::column(null, $identifier);
-    }
-
-    /**
-     * @param list<SqlToken> $tokens
-     */
-    private static function parseValuesReference(string $sql, array $tokens, int &$index): self
-    {
-        $index++;
-        $column = $tokens[$index] ?? null;
-        if ($column === null || !self::isIdentifier($column)) {
-            throw self::unsupported($sql);
-        }
-        $index++;
-        if (!isset($tokens[$index]) || !self::isSymbol($tokens[$index], [')'])) {
-            throw self::unsupported($sql);
-        }
-        $index++;
-
-        return self::column('VALUES', self::identifier($column));
-    }
-
-    /**
-     * @param list<SqlToken> $tokens
-     */
-    private static function comparisonOperator(string $sql, array $tokens, int &$index): ?string
-    {
-        $first = $tokens[$index] ?? null;
-        if ($first === null || !self::isSymbol($first, ['=', '!', '<', '>'])) {
-            return null;
-        }
-        $operator = $first->text;
-        $second = $tokens[$index + 1] ?? null;
-        if ($second !== null && self::isSymbol($second, ['=', '>']) && $operator !== '=') {
-            $operator .= $second->text;
-            $index++;
-        }
-        $index++;
-
-        if (!in_array($operator, ['=', '!=', '<>', '<', '<=', '>', '>='], true)) {
-            throw self::unsupported($sql);
-        }
-
-        return $operator;
-    }
-
-    /**
      * @param array<string, mixed> $existingRow
      * @param array<string, mixed> $incomingRow
      */
-    private function resolveColumn(array $existingRow, array $incomingRow, string $tableName): mixed
+    private function resolveColumn(array $existingRow, array $incomingRow): mixed
     {
         $column = $this->column ?? '';
-        if ($this->qualifier !== null
-            && (strcasecmp($this->qualifier, 'EXCLUDED') === 0 || strcasecmp($this->qualifier, 'VALUES') === 0)
-        ) {
+        if ($this->columnSource === UpsertColumnSource::Incoming) {
             return self::rowValue($incomingRow, $column);
-        }
-        if ($this->qualifier !== null && strcasecmp($this->qualifier, $tableName) !== 0) {
-            throw self::unsupported($this->qualifier . '.' . $column);
         }
 
         return self::rowValue($existingRow, $column);
@@ -286,102 +157,11 @@ final class UpsertExpression
      * @param array<string, mixed> $existingRow
      * @param array<string, mixed> $incomingRow
      */
-    private function evaluateUnary(array $existingRow, array $incomingRow, string $tableName): mixed
+    private function operand(int $index, array $existingRow, array $incomingRow, string $tableName): mixed
     {
-        $value = $this->left?->evaluate($existingRow, $incomingRow, $tableName);
-
-        return match ($this->operator) {
-            '+' => $value === null ? null : self::numeric($value),
-            '-' => $value === null ? null : -self::numeric($value),
-            'NOT' => ($truth = self::truth($value)) === null ? null : !$truth,
-            default => throw self::unsupported((string) $this->operator),
-        };
+        return $this->operands[$index]->evaluate($existingRow, $incomingRow, $tableName);
     }
 
-    /**
-     * @param array<string, mixed> $existingRow
-     * @param array<string, mixed> $incomingRow
-     */
-    private function evaluateBinary(array $existingRow, array $incomingRow, string $tableName): mixed
-    {
-        $left = $this->left?->evaluate($existingRow, $incomingRow, $tableName);
-        $right = $this->right?->evaluate($existingRow, $incomingRow, $tableName);
-        if ($this->operator === 'AND' || $this->operator === 'OR') {
-            return self::logical($this->operator, self::truth($left), self::truth($right));
-        }
-        if ($left === null || $right === null) {
-            return null;
-        }
-
-        return match ($this->operator) {
-            '+' => self::numeric($left) + self::numeric($right),
-            '-' => self::numeric($left) - self::numeric($right),
-            '*' => self::numeric($left) * self::numeric($right),
-            '/' => self::divide($left, $right),
-            '%' => self::modulo($left, $right),
-            '=', '!=', '<>', '<', '<=', '>', '>=' => self::compare($this->operator, $left, $right),
-            default => throw self::unsupported((string) $this->operator),
-        };
-    }
-
-    private static function literal(mixed $value): self
-    {
-        return new self(self::LITERAL, literal: $value);
-    }
-
-    private static function column(?string $qualifier, string $column): self
-    {
-        return new self(self::COLUMN, qualifier: $qualifier, column: $column);
-    }
-
-    private static function unary(string $operator, self $operand): self
-    {
-        return new self(self::UNARY, operator: $operator, left: $operand);
-    }
-
-    private static function binary(string $operator, self $left, self $right): self
-    {
-        return new self(self::BINARY, operator: $operator, left: $left, right: $right);
-    }
-
-    /** @param list<string> $symbols */
-    private static function isSymbol(SqlToken $token, array $symbols): bool
-    {
-        return $token->kind === SqlTokenKind::Symbol && in_array($token->text, $symbols, true);
-    }
-
-    private static function isIdentifier(SqlToken $token): bool
-    {
-        return $token->kind === SqlTokenKind::Word || $token->kind === SqlTokenKind::QuotedIdentifier;
-    }
-
-    private static function identifier(SqlToken $token): string
-    {
-        if ($token->kind === SqlTokenKind::Word) {
-            return $token->text;
-        }
-        $quote = $token->text[0] ?? '';
-        $inner = substr($token->text, 1, -1);
-
-        return str_replace($quote . $quote, $quote, $inner);
-    }
-
-    private static function number(string $literal): int|float
-    {
-        $literal = str_replace('_', '', $literal);
-        if (str_starts_with(strtolower($literal), '0x')) {
-            return intval(substr($literal, 2), 16);
-        }
-
-        return strpbrk($literal, '.eE') === false ? (int) $literal : (float) $literal;
-    }
-
-    private static function string(string $literal): string
-    {
-        $inner = substr($literal, 1, -1);
-
-        return str_replace(["''", "\\'", '\\\\'], ["'", "'", '\\'], $inner);
-    }
 
     /** @param array<string, mixed> $row */
     private static function rowValue(array $row, string $column): mixed
@@ -400,18 +180,68 @@ final class UpsertExpression
 
     private static function numeric(mixed $value): int|float
     {
-        if (is_int($value) || is_float($value)) {
+        if (is_int($value)) {
             return $value;
         }
-        if (is_string($value) && is_numeric($value)) {
-            return strpbrk($value, '.eE') === false ? (int) $value : (float) $value;
+        if (is_float($value)) {
+            return $value;
+        }
+        if (!is_string($value) || !is_numeric($value)) {
+            throw self::unsupported('non-numeric UPSERT operand');
         }
 
-        throw self::unsupported('non-numeric UPSERT operand');
+        return strpbrk($value, '.eE') === false ? (int) $value : (float) $value;
     }
 
-    private static function divide(mixed $left, mixed $right): float|int
+    private static function unaryPlus(mixed $value): int|float|null
     {
+        return $value === null ? null : self::numeric($value);
+    }
+
+    private static function unaryMinus(mixed $value): int|float|null
+    {
+        return $value === null ? null : -self::numeric($value);
+    }
+
+    private static function not(mixed $value): ?bool
+    {
+        $truth = self::truth($value);
+
+        return $truth === null ? null : !$truth;
+    }
+
+    private static function add(mixed $left, mixed $right): int|float|null
+    {
+        if ($left === null || $right === null) {
+            return null;
+        }
+
+        return self::numeric($left) + self::numeric($right);
+    }
+
+    private static function subtract(mixed $left, mixed $right): int|float|null
+    {
+        if ($left === null || $right === null) {
+            return null;
+        }
+
+        return self::numeric($left) - self::numeric($right);
+    }
+
+    private static function multiply(mixed $left, mixed $right): int|float|null
+    {
+        if ($left === null || $right === null) {
+            return null;
+        }
+
+        return self::numeric($left) * self::numeric($right);
+    }
+
+    private static function divide(mixed $left, mixed $right): float|int|null
+    {
+        if ($left === null || $right === null) {
+            return null;
+        }
         $divisor = self::numeric($right);
         if ($divisor === 0 || $divisor === 0.0) {
             throw self::unsupported('division by zero in UPSERT expression');
@@ -420,60 +250,136 @@ final class UpsertExpression
         return self::numeric($left) / $divisor;
     }
 
-    private static function modulo(mixed $left, mixed $right): int
+    private static function modulo(mixed $left, mixed $right): ?int
     {
-        $divisor = (int) self::numeric($right);
+        if ($left === null || $right === null) {
+            return null;
+        }
+        $divisor = intval(self::numeric($right));
         if ($divisor === 0) {
             throw self::unsupported('division by zero in UPSERT expression');
         }
 
-        return (int) self::numeric($left) % $divisor;
+        return intval(self::numeric($left)) % $divisor;
     }
 
-    private static function compare(string $operator, mixed $left, mixed $right): bool
+    private static function comparison(mixed $left, mixed $right): ?int
     {
-        if ((is_int($left) || is_float($left) || is_numeric($left))
-            && (is_int($right) || is_float($right) || is_numeric($right))
-        ) {
-            $comparison = self::numeric($left) <=> self::numeric($right);
-        } elseif ((is_string($left) || is_bool($left)) && (is_string($right) || is_bool($right))) {
-            $comparison = (string) $left <=> (string) $right;
-        } else {
+        if ($left === null || $right === null) {
+            return null;
+        }
+        if (self::isNumericValue($left)) {
+            if (!self::isNumericValue($right)) {
+                throw self::unsupported('incomparable UPSERT operands');
+            }
+
+            return self::numeric($left) <=> self::numeric($right);
+        }
+        if (self::isNumericValue($right)) {
             throw self::unsupported('incomparable UPSERT operands');
         }
 
-        return match ($operator) {
-            '=' => $comparison === 0,
-            '!=', '<>' => $comparison !== 0,
-            '<' => $comparison < 0,
-            '<=' => $comparison <= 0,
-            '>' => $comparison > 0,
-            '>=' => $comparison >= 0,
-            default => throw self::unsupported($operator),
-        };
+        return self::text($left) <=> self::text($right);
+    }
+
+    private static function equal(mixed $left, mixed $right): ?bool
+    {
+        $comparison = self::comparison($left, $right);
+
+        return $comparison === null ? null : $comparison === 0;
+    }
+
+    private static function notEqual(mixed $left, mixed $right): ?bool
+    {
+        $comparison = self::comparison($left, $right);
+
+        return $comparison === null ? null : $comparison !== 0;
+    }
+
+    private static function less(mixed $left, mixed $right): ?bool
+    {
+        $comparison = self::comparison($left, $right);
+
+        return $comparison === null ? null : $comparison < 0;
+    }
+
+    private static function lessOrEqual(mixed $left, mixed $right): ?bool
+    {
+        $comparison = self::comparison($left, $right);
+
+        return $comparison === null ? null : $comparison <= 0;
+    }
+
+    private static function greater(mixed $left, mixed $right): ?bool
+    {
+        $comparison = self::comparison($left, $right);
+
+        return $comparison === null ? null : $comparison > 0;
+    }
+
+    private static function greaterOrEqual(mixed $left, mixed $right): ?bool
+    {
+        $comparison = self::comparison($left, $right);
+
+        return $comparison === null ? null : $comparison >= 0;
+    }
+
+    private static function isNumericValue(mixed $value): bool
+    {
+        if (is_int($value) || is_float($value)) {
+            return true;
+        }
+
+        return is_string($value) && is_numeric($value);
+    }
+
+    private static function text(mixed $value): string
+    {
+        if (is_string($value)) {
+            return $value;
+        }
+        if (is_bool($value)) {
+            return $value ? '1' : '';
+        }
+
+        throw self::unsupported('incomparable UPSERT operands');
     }
 
     private static function truth(mixed $value): ?bool
     {
-        if ($value === null || is_bool($value)) {
+        if ($value === null) {
+            return null;
+        }
+        if (is_bool($value)) {
             return $value;
         }
-        if (is_int($value) || is_float($value) || (is_string($value) && is_numeric($value))) {
-            $numeric = self::numeric($value);
+        $numeric = self::numeric($value);
 
-            return $numeric !== 0 && $numeric !== 0.0;
-        }
-
-        throw self::unsupported('non-boolean UPSERT operand');
+        return !in_array($numeric, [0, 0.0], true);
     }
 
-    private static function logical(string $operator, ?bool $left, ?bool $right): ?bool
+    private static function and(?bool $left, ?bool $right): ?bool
     {
-        if ($operator === 'AND') {
-            return $left === false || $right === false ? false : ($left === null || $right === null ? null : true);
+        if ($left === false || $right === false) {
+            return false;
+        }
+        if ($left === null || $right === null) {
+            return null;
         }
 
-        return $left === true || $right === true ? true : ($left === null || $right === null ? null : false);
+        return true;
+    }
+
+    private static function or(?bool $left, ?bool $right): ?bool
+    {
+        if ($left === true || $right === true) {
+            return true;
+        }
+        if ($left === null || $right === null) {
+            return null;
+        }
+
+        return false;
     }
 
     private static function unsupported(string $sql): UnsupportedSqlException

@@ -214,8 +214,9 @@ final class MySqlMutationResolver
         }
 
         $updateColumns = [];
-        /** @var array<string, string> $updateValues */
+        /** @var array<string, \ZtdQuery\Shadow\Mutation\UpsertExpression> $updateValues */
         $updateValues = [];
+        $expressionParser = new MySqlUpsertExpressionParser();
         if ($statement->onDuplicateSet !== null && $statement->onDuplicateSet !== []) {
             foreach ($statement->onDuplicateSet as $set) {
                 $colName = trim($set->column, '`"\'');
@@ -224,7 +225,7 @@ final class MySqlMutationResolver
                     $colName = trim(end($parts), '`"\'');
                 }
                 $updateColumns[] = $colName;
-                $updateValues[$colName] = $set->value;
+                $updateValues[$colName] = $expressionParser->parse($set->value, $tableName);
             }
         }
         $isOnDuplicateKeyUpdate = $updateColumns !== [];

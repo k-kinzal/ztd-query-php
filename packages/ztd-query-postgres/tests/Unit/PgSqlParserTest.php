@@ -31,6 +31,15 @@ final class PgSqlParserTest extends TestCase
         ));
     }
 
+    public function testRequiresCompleteDoUpdateSetAnchor(): void
+    {
+        $parser = new PgSqlParser();
+
+        self::assertNull($parser->extractOnConflictUpdateWhere(
+            'INSERT INTO items VALUES (1, 90) ON CONFLICT (id) UPDATE SET score = excluded.score WHERE items.score >= 80',
+        ));
+    }
+
     public function testClassifySelect(): void
     {
         $parser = new PgSqlParser();

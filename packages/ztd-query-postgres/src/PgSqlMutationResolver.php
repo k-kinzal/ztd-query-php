@@ -79,10 +79,11 @@ final class PgSqlMutationResolver
             $updateColumns = $conflictInfo['columns'];
 
             if ($updateColumns !== []) {
-                /** @var array<string, string> $resolvedValues */
+                /** @var array<string, \ZtdQuery\Shadow\Mutation\UpsertExpression> $resolvedValues */
                 $resolvedValues = [];
+                $expressionParser = new PgSqlUpsertExpressionParser();
                 foreach ($conflictInfo['values'] as $col => $value) {
-                    $resolvedValues[$col] = $value;
+                    $resolvedValues[$col] = $expressionParser->parse($value, $tableName);
                 }
 
                 return new UpsertMutation(
@@ -91,7 +92,9 @@ final class PgSqlMutationResolver
                     $updateColumns,
                     $resolvedValues,
                     $definition?->candidateKeys(),
-                    $this->parser->extractOnConflictUpdateWhere($sql),
+                    ($predicate = $this->parser->extractOnConflictUpdateWhere($sql)) !== null
+                        ? $expressionParser->parse($predicate, $tableName)
+                        : null,
                 );
             }
 

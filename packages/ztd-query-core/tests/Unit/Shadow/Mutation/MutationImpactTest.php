@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Rewrite\AffectedRowsMode;
+use ZtdQuery\Schema\CandidateKeyConflict;
 use ZtdQuery\Schema\CandidateKeySet;
 use ZtdQuery\Shadow\Mutation\DeleteMutation;
 use ZtdQuery\Shadow\Mutation\InsertMutation;
@@ -15,10 +16,16 @@ use ZtdQuery\Shadow\Mutation\MutationImpact;
 use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
 use ZtdQuery\Shadow\Mutation\ReplaceMutation;
 use ZtdQuery\Shadow\Mutation\UpsertExpression;
+use ZtdQuery\Shadow\Mutation\UpsertColumnSource;
+use ZtdQuery\Shadow\Mutation\UpsertExpressionKind;
 use ZtdQuery\Shadow\Mutation\UpsertMutation;
 use ZtdQuery\Shadow\Mutation\UpdateMutation;
+use ZtdQuery\Shadow\ShadowStore;
+use ZtdQuery\Sql\SqlToken;
+use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(MutationImpact::class)]
+#[UsesClass(CandidateKeyConflict::class)]
 #[UsesClass(CandidateKeySet::class)]
 #[UsesClass(DeleteMutation::class)]
 #[UsesClass(InsertMutation::class)]
@@ -27,6 +34,9 @@ use ZtdQuery\Shadow\Mutation\UpdateMutation;
 #[UsesClass(UpsertExpression::class)]
 #[UsesClass(UpsertMutation::class)]
 #[UsesClass(UpdateMutation::class)]
+#[UsesClass(ShadowStore::class)]
+#[UsesClass(SqlToken::class)]
+#[UsesClass(SqlTokenStream::class)]
 final class MutationImpactTest extends TestCase
 {
     public function testInsertImpactContainsOnlyRowsActuallyAdded(): void
@@ -85,12 +95,19 @@ final class MutationImpactTest extends TestCase
         self::assertSame([], $impact->returningRows());
     }
 
-    public function testUpsertFallsBackToInputAndIsInsertLike(): void
+    public function testAppliedUpsertReturnsResultRowsAndIsInsertLike(): void
     {
-        $row = ['id' => 1, 'name' => 'updated'];
-        $impact = new MutationImpact(new UpsertMutation('items', ['id']), [$row], [$row], [$row]);
+        $before = ['id' => 1, 'name' => 'same'];
+        $input = $before;
+        $mutation = new UpsertMutation('items', ['id']);
+        $store = new ShadowStore();
+        $store->set('items', [$before]);
+        $mutation->apply($store, [$input]);
+        $impact = new MutationImpact($mutation, [$before], [$input], $store->get('items'));
 
-        self::assertSame([$row], $impact->returningRows());
+        self::assertSame([$input], $impact->returningRows());
+        self::assertSame(1, $impact->affectedRowCount(AffectedRowsMode::Matched));
+        self::assertSame(0, $impact->affectedRowCount(AffectedRowsMode::Changed));
         self::assertTrue($impact->isInsertLike());
     }
 
@@ -140,10 +157,14 @@ final class MutationImpactTest extends TestCase
             'items',
             ['id'],
             ['name'],
-            ['name' => 'EXCLUDED.name'],
-            updatePredicate: 'score >= 80',
+            ['name' => UpsertExpression::column(UpsertColumnSource::Incoming, 'name')],
+            updatePredicate: UpsertExpression::binary(
+                UpsertExpressionKind::GreaterOrEqual,
+                UpsertExpression::column(UpsertColumnSource::Existing, 'score'),
+                UpsertExpression::literal(80),
+            ),
         );
-        $store = new \ZtdQuery\Shadow\ShadowStore();
+        $store = new ShadowStore();
         $store->set('items', [$row]);
         $input = [['id' => 1, 'name' => 'skipped', 'score' => 95]];
         $mutation->apply($store, $input);

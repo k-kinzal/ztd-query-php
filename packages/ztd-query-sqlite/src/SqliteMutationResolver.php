@@ -126,12 +126,13 @@ final class SqliteMutationResolver
 
         if ($this->parser->hasOnConflict($sql)) {
             $updateColumns = [];
-            /** @var array<string, string> $updateValues */
+            /** @var array<string, \ZtdQuery\Shadow\Mutation\UpsertExpression> $updateValues */
             $updateValues = [];
+            $expressionParser = new SqliteUpsertExpressionParser();
             $onConflictUpdates = $this->parser->extractOnConflictUpdates($sql);
             foreach ($onConflictUpdates as $colName => $value) {
                 $updateColumns[] = $colName;
-                $updateValues[$colName] = $value;
+                $updateValues[$colName] = $expressionParser->parse($value, $tableName);
             }
 
             if ($updateColumns !== []) {
@@ -144,7 +145,9 @@ final class SqliteMutationResolver
                     $updateColumns,
                     $updateValues,
                     $definition?->candidateKeys(),
-                    $this->parser->extractOnConflictUpdateWhere($sql),
+                    ($predicate = $this->parser->extractOnConflictUpdateWhere($sql)) !== null
+                        ? $expressionParser->parse($predicate, $tableName)
+                        : null,
                 );
             }
 
