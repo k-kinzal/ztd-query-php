@@ -21,6 +21,7 @@ use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 #[UsesClass(MySqlIdentifierQuoter::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlTypeSemantics::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
 final class ReplaceTransformerTest extends TestCase
 {
     public function testTransformReplaceWithValues(): void

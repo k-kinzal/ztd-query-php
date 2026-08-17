@@ -46,6 +46,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlTypeSemantics::class)]
 #[UsesClass(AlterTableMutation::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
 final class MySqlMutationResolverTest extends TestCase
 {
     public function testResolveInsertReturnsInsertMutation(): void

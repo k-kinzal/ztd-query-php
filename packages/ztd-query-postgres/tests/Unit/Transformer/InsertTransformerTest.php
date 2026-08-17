@@ -28,6 +28,7 @@ use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 #[UsesClass(PgSqlIdentifierQuoter::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\InsertRowRenderer::class)]
 #[UsesClass(InsertSelectRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer::class)]
 final class InsertTransformerTest extends TestCase
 {
     public function testUsesInjectedCastRendererForTypedValue(): void

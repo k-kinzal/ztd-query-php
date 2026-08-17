@@ -22,6 +22,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(SqliteCastRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteValueRenderer::class)]
 #[UsesClass(SqliteIdentifierQuoter::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer::class)]
 final class UpdateTransformerTest extends TestCase
 {
     public function testTransformSimpleUpdate(): void

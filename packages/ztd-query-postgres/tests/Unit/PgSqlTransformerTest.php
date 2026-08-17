@@ -31,6 +31,7 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 #[UsesClass(PgSqlCastRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlValueRenderer::class)]
 #[UsesClass(PgSqlIdentifierQuoter::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer::class)]
 final class PgSqlTransformerTest extends TestCase
 {
     public function testTransformSelectDelegatesToSelectTransformer(): void

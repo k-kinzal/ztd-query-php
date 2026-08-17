@@ -10,7 +10,7 @@ use ZtdQuery\Platform\MySql\MySqlTypeSemantics;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\IdentifierQuoter;
 use ZtdQuery\Platform\ValueRenderer;
-use ZtdQuery\Rewrite\CteShadowComposer;
+use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
@@ -27,7 +27,7 @@ final class SelectTransformer implements SqlTransformer
     private IdentifierQuoter $quoter;
     private ValueRenderer $valueRenderer;
     private MySqlTypeSemantics $typeSemantics;
-    private CteShadowComposer $cteComposer;
+    private MySqlCteShadowComposer $cteComposer;
 
     public function __construct(
         ?CastRenderer $castRenderer = null,
@@ -38,7 +38,7 @@ final class SelectTransformer implements SqlTransformer
         $this->quoter = $quoter ?? new MySqlIdentifierQuoter();
         $this->valueRenderer = $valueRenderer ?? new \ZtdQuery\Platform\MySql\MySqlValueRenderer($this->castRenderer);
         $this->typeSemantics = new MySqlTypeSemantics();
-        $this->cteComposer = new CteShadowComposer();
+        $this->cteComposer = new MySqlCteShadowComposer();
     }
 
     /**

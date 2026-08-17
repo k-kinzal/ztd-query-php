@@ -9,7 +9,7 @@ use ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\IdentifierQuoter;
 use ZtdQuery\Platform\ValueRenderer;
-use ZtdQuery\Rewrite\CteShadowComposer;
+use ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
@@ -25,7 +25,7 @@ final class SelectTransformer implements SqlTransformer
     private CastRenderer $castRenderer;
     private IdentifierQuoter $quoter;
     private ValueRenderer $valueRenderer;
-    private CteShadowComposer $cteComposer;
+    private SqliteCteShadowComposer $cteComposer;
 
     public function __construct(
         ?CastRenderer $castRenderer = null,
@@ -35,7 +35,7 @@ final class SelectTransformer implements SqlTransformer
         $this->castRenderer = $castRenderer ?? new SqliteCastRenderer();
         $this->quoter = $quoter ?? new SqliteIdentifierQuoter();
         $this->valueRenderer = $valueRenderer ?? new \ZtdQuery\Platform\Sqlite\SqliteValueRenderer($this->castRenderer);
-        $this->cteComposer = new CteShadowComposer();
+        $this->cteComposer = new SqliteCteShadowComposer();
     }
 
     /**

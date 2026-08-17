@@ -29,6 +29,7 @@ use ZtdQuery\Schema\IdentityGenerationStrategy;
 #[UsesClass(SqliteIdentifierQuoter::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\Transformer\InsertRowRenderer::class)]
 #[UsesClass(InsertSelectRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer::class)]
 final class InsertTransformerTest extends TestCase
 {
     public function testUsesInjectedCastRendererAndColumnTypes(): void

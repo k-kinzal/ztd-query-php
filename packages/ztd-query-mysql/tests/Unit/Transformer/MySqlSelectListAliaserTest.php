@@ -34,6 +34,16 @@ final class MySqlSelectListAliaserTest extends TestCase
         self::assertSame('SELECT id, source.* FROM source', $aliaser->alias('SELECT id, source.* FROM source'));
     }
 
+    public function testIgnoresHashCommentsWhenAliasingMySqlProjection(): void
+    {
+        $sql = "SELECT # FROM ignored\n id, name FROM users";
+
+        self::assertSame(
+            "SELECT # FROM ignored\n id AS `__ztd_insert_0`, name AS `__ztd_insert_1` FROM users",
+            (new MySqlSelectListAliaser())->alias($sql),
+        );
+    }
+
     public function testCountsStructuredProjectionWithoutTreatingFunctionArgumentAsWildcard(): void
     {
         $aliaser = new MySqlSelectListAliaser();

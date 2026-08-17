@@ -12,7 +12,7 @@ use PhpMyAdmin\SqlParser\Components\OrderKeyword;
 use PhpMyAdmin\SqlParser\Statements\DeleteStatement;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\MySqlParser;
-use ZtdQuery\Rewrite\CteShadowComposer;
+use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
 use ZtdQuery\Rewrite\SqlTransformer;
 
 /**
@@ -22,7 +22,7 @@ final class DeleteTransformer implements SqlTransformer
 {
     private MySqlParser $parser;
     private SelectTransformer $selectTransformer;
-    private CteShadowComposer $cteComposer;
+    private MySqlCteShadowComposer $cteComposer;
 
     public function __construct(
         MySqlParser $parser,
@@ -30,7 +30,7 @@ final class DeleteTransformer implements SqlTransformer
     ) {
         $this->parser = $parser;
         $this->selectTransformer = $selectTransformer;
-        $this->cteComposer = new CteShadowComposer();
+        $this->cteComposer = new MySqlCteShadowComposer();
     }
 
     /**

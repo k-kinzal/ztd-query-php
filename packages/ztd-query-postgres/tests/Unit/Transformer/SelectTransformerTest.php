@@ -19,6 +19,7 @@ use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 #[UsesClass(PgSqlCastRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlValueRenderer::class)]
 #[UsesClass(PgSqlIdentifierQuoter::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer::class)]
 final class SelectTransformerTest extends TransformerContractTest
 {
     public function testUsesInjectedValueRenderer(): void

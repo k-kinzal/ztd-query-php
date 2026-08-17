@@ -25,6 +25,7 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 #[UsesClass(SqliteIdentifierQuoter::class)]
 #[UsesClass(SqliteLexicalMasker::class)]
 #[UsesClass(SqliteParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer::class)]
 final class SelectTransformerTest extends TransformerContractTest
 {
     public function testUsesInjectedValueRenderer(): void

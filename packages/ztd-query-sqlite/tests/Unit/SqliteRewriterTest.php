@@ -53,6 +53,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(SqliteCastRenderer::class)]
 #[UsesClass(SqliteIdentifierQuoter::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteValueRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer::class)]
 final class SqliteRewriterTest extends RewriterContractTest
 {
     protected function createRewriter(ShadowStore $store, TableDefinitionRegistry $registry): SqlRewriter

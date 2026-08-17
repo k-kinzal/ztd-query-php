@@ -18,9 +18,11 @@ final class SqlTokenStream
     ) {
     }
 
-    public static function tokenize(string $sql): self
-    {
-        return new self($sql, self::scan($sql));
+    public static function tokenize(
+        string $sql,
+        SqlTokenDialect $dialect = SqlTokenDialect::Standard,
+    ): self {
+        return new self($sql, self::scan($sql, $dialect));
     }
 
     /** @return list<SqlToken> */
@@ -244,7 +246,7 @@ final class SqlTokenStream
     }
 
     /** @return list<SqlToken> */
-    private static function scan(string $sql): array
+    private static function scan(string $sql, SqlTokenDialect $dialect): array
     {
         $tokens = [];
         $length = strlen($sql);
@@ -266,6 +268,13 @@ final class SqlTokenStream
             }
 
             if ($char === '-' && $next === '-') {
+                $lineEnd = strpos($sql, "\n", $offset);
+                $offset = $lineEnd === false ? $length : $lineEnd;
+                $tokens[] = self::token($sql, SqlTokenKind::Comment, $start, $offset, $depth, $bracketDepth);
+                continue;
+            }
+
+            if ($dialect === SqlTokenDialect::MySql && $char === '#') {
                 $lineEnd = strpos($sql, "\n", $offset);
                 $offset = $lineEnd === false ? $length : $lineEnd;
                 $tokens[] = self::token($sql, SqlTokenKind::Comment, $start, $offset, $depth, $bracketDepth);

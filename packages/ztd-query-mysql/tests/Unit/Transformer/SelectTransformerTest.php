@@ -23,6 +23,7 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 #[UsesClass(MySqlIdentifierQuoter::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
 #[UsesClass(MySqlTypeSemantics::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
 final class SelectTransformerTest extends TransformerContractTest
 {
     public function testUsesInjectedValueRenderer(): void

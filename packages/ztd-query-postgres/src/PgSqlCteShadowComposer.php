@@ -2,14 +2,22 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Rewrite;
+namespace ZtdQuery\Platform\Postgres;
 
 use ZtdQuery\Sql\SqlToken;
+use ZtdQuery\Sql\SqlTokenDialect;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
-final class CteShadowComposer
+final class PgSqlCteShadowComposer
 {
+    private readonly SqlTokenDialect $dialect;
+
+    public function __construct()
+    {
+        $this->dialect = SqlTokenDialect::Standard;
+    }
+
     /**
      * @param array<string, string> $tableCtes
      */
@@ -29,7 +37,7 @@ final class CteShadowComposer
             return $sql;
         }
 
-        $tokens = SqlTokenStream::tokenize($sql)->significantTokens();
+        $tokens = SqlTokenStream::tokenize($sql, $this->dialect)->significantTokens();
         $with = $tokens[0] ?? null;
         if ($with === null || !$with->isKeyword('WITH')) {
             return 'WITH ' . implode(",\n", $ctes) . "\n" . $sql;
@@ -64,7 +72,7 @@ final class CteShadowComposer
 
         $prefix = rtrim(substr($originalSql, 0, $header['statementOffset']));
 
-        $rewrittenTokens = SqlTokenStream::tokenize($rewrittenStatement)->significantTokens();
+        $rewrittenTokens = SqlTokenStream::tokenize($rewrittenStatement, $this->dialect)->significantTokens();
         $rewrittenWith = $rewrittenTokens[0] ?? null;
         if ($rewrittenWith !== null && $rewrittenWith->isKeyword('WITH')) {
             $rewrittenHeader = $this->parseHeader($rewrittenStatement);
@@ -89,7 +97,7 @@ final class CteShadowComposer
                 return $prefix . ",\n" . $rewrittenBody . "\n" . $rewrittenTail;
             }
 
-            $originalTokens = SqlTokenStream::tokenize($originalSql)->significantTokens();
+            $originalTokens = SqlTokenStream::tokenize($originalSql, $this->dialect)->significantTokens();
             $originalWith = $originalTokens[0];
             $originalContentToken = $originalWith;
             $recursive = false;
@@ -129,7 +137,7 @@ final class CteShadowComposer
     private function parseHeader(string $sql): array
     {
         $tokens = [];
-        foreach (SqlTokenStream::tokenize($sql)->significantTokens() as $token) {
+        foreach (SqlTokenStream::tokenize($sql, $this->dialect)->significantTokens() as $token) {
             if ($token->isTopLevel()) {
                 $tokens[] = $token;
             }
@@ -211,7 +219,7 @@ final class CteShadowComposer
 
     private function referencesIdentifier(string $sql, string $identifier): bool
     {
-        foreach (SqlTokenStream::tokenize($sql)->significantTokens() as $token) {
+        foreach (SqlTokenStream::tokenize($sql, $this->dialect)->significantTokens() as $token) {
             $candidate = $this->identifierName($token);
             if ($candidate !== null && strcasecmp($candidate, $identifier) === 0) {
                 return true;

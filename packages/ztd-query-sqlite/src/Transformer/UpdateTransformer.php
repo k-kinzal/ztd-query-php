@@ -6,7 +6,7 @@ namespace ZtdQuery\Platform\Sqlite\Transformer;
 
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
-use ZtdQuery\Rewrite\CteShadowComposer;
+use ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer;
 use ZtdQuery\Rewrite\SqlTransformer;
 
 /**
@@ -18,7 +18,7 @@ final class UpdateTransformer implements SqlTransformer
 {
     private SqliteParser $parser;
     private SelectTransformer $selectTransformer;
-    private CteShadowComposer $cteComposer;
+    private SqliteCteShadowComposer $cteComposer;
 
     public function __construct(
         SqliteParser $parser,
@@ -26,7 +26,7 @@ final class UpdateTransformer implements SqlTransformer
     ) {
         $this->parser = $parser;
         $this->selectTransformer = $selectTransformer;
-        $this->cteComposer = new CteShadowComposer();
+        $this->cteComposer = new SqliteCteShadowComposer();
     }
 
     /**

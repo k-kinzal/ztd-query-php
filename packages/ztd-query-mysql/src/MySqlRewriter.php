@@ -7,7 +7,7 @@ namespace ZtdQuery\Platform\MySql;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Rewrite\MultiRewritePlan;
-use ZtdQuery\Rewrite\CteShadowComposer;
+use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
@@ -35,7 +35,7 @@ final class MySqlRewriter implements SqlRewriter
     private MySqlTransformer $transformer;
     private MySqlMutationResolver $mutationResolver;
     private MySqlParser $parser;
-    private CteShadowComposer $cteComposer;
+    private MySqlCteShadowComposer $cteComposer;
 
     public function __construct(
         MySqlQueryGuard $guard,
@@ -51,7 +51,7 @@ final class MySqlRewriter implements SqlRewriter
         $this->transformer = $transformer;
         $this->mutationResolver = $mutationResolver;
         $this->parser = $parser;
-        $this->cteComposer = new CteShadowComposer();
+        $this->cteComposer = new MySqlCteShadowComposer();
     }
 
     /**

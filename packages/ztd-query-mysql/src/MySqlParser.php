@@ -9,6 +9,7 @@ use PhpMyAdmin\SqlParser\Parser;
 use PhpMyAdmin\SqlParser\Statement;
 use PhpMyAdmin\SqlParser\Token;
 use ZtdQuery\Sql\SqlTokenStream;
+use ZtdQuery\Sql\SqlTokenDialect;
 
 /**
  * MySQL parser implementation backed by phpMyAdmin SQL parser.
@@ -43,7 +44,7 @@ final class MySqlParser
     /** @return list<string> */
     public function splitStatements(string $sql): array
     {
-        return SqlTokenStream::tokenize($sql)->splitStatements();
+        return SqlTokenStream::tokenize($sql, SqlTokenDialect::MySql)->splitStatements();
     }
 
     private function normalizeOptionalInsertInto(string $sql): string

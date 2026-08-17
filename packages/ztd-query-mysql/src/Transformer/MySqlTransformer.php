@@ -13,7 +13,7 @@ use PhpMyAdmin\SqlParser\Statements\WithStatement;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Rewrite\SqlTransformer;
-use ZtdQuery\Rewrite\CteShadowComposer;
+use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
 
 /**
  * Composite SQL transformer for MySQL.
@@ -29,7 +29,7 @@ final class MySqlTransformer implements SqlTransformer
     private UpdateTransformer $updateTransformer;
     private DeleteTransformer $deleteTransformer;
     private ReplaceTransformer $replaceTransformer;
-    private CteShadowComposer $cteComposer;
+    private MySqlCteShadowComposer $cteComposer;
 
     public function __construct(
         MySqlParser $parser,
@@ -45,7 +45,7 @@ final class MySqlTransformer implements SqlTransformer
         $this->updateTransformer = $updateTransformer;
         $this->deleteTransformer = $deleteTransformer;
         $this->replaceTransformer = $replaceTransformer;
-        $this->cteComposer = new CteShadowComposer();
+        $this->cteComposer = new MySqlCteShadowComposer();
     }
 
     /**

@@ -30,6 +30,7 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 #[UsesClass(MySqlSelectListAliaser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlTypeSemantics::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
 final class InsertTransformerTest extends TestCase
 {
     public function testUsesInjectedCastRendererAndColumnTypes(): void

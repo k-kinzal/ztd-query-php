@@ -8,11 +8,13 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Sql\SqlToken;
+use ZtdQuery\Sql\SqlTokenDialect;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(SqlTokenStream::class)]
 #[UsesClass(SqlToken::class)]
+#[UsesClass(SqlTokenDialect::class)]
 #[UsesClass(SqlTokenKind::class)]
 final class SqlTokenStreamTest extends TestCase
 {
@@ -156,6 +158,26 @@ final class SqlTokenStreamTest extends TestCase
             array_map(
                 static fn (SqlToken $token): array => [$token->kind, $token->text],
                 SqlTokenStream::tokenize("prefix --\nnext")->tokens(),
+            ),
+        );
+    }
+
+    public function testMySqlHashCommentsRemainDialectSpecific(): void
+    {
+        $sql = "# SELECT hidden\nDELETE FROM users WHERE payload #>> '$.name' = 'Alice'";
+
+        self::assertSame(
+            ['DELETE', 'FROM', 'users', 'WHERE', 'payload'],
+            array_map(
+                static fn (SqlToken $token): string => $token->text,
+                SqlTokenStream::tokenize($sql, SqlTokenDialect::MySql)->significantTokens(),
+            ),
+        );
+        self::assertSame(
+            ['#', 'SELECT', 'hidden', 'DELETE', 'FROM', 'users', 'WHERE', 'payload', '#', '>', '>', "'$.name'", '=', "'Alice'"],
+            array_map(
+                static fn (SqlToken $token): string => $token->text,
+                SqlTokenStream::tokenize($sql)->significantTokens(),
             ),
         );
     }

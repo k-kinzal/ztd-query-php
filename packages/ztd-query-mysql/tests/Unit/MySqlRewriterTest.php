@@ -56,6 +56,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlIdentifierQuoter::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlTypeSemantics::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
 final class MySqlRewriterTest extends RewriterContractTest
 {
     protected function createRewriter(ShadowStore $store, TableDefinitionRegistry $registry): SqlRewriter
@@ -1659,6 +1660,38 @@ final class MySqlRewriterTest extends RewriterContractTest
         self::assertInstanceOf(InsertMutation::class, $plan->mutation());
         self::assertStringStartsWith('WITH source AS', $plan->sql());
         self::assertSame(1, substr_count($plan->sql(), 'WITH'));
+    }
+
+    public function testRewriteWithStatementDeleteIgnoresHashCommentsAroundItsCteHeader(): void
+    {
+        $shadowStore = new ShadowStore();
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $registry = new TableDefinitionRegistry();
+        $definition = $schemaParser->parse('CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255))');
+        self::assertNotNull($definition);
+        $registry->register('users', $definition);
+
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($shadowStore, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $shadowStore, $registry, $transformer, $mutationResolver, $parser);
+        $sql = <<<'SQL'
+            WITH RECURSIVE # modifier
+            chosen AS (SELECT 1 AS id) # body
+            DELETE # target
+            FROM users WHERE id IN (SELECT id FROM chosen)
+            SQL;
+
+        $plan = $rewriter->rewrite($sql);
+
+        self::assertSame(QueryKind::WRITE_SIMULATED, $plan->kind());
+        self::assertInstanceOf(DeleteMutation::class, $plan->mutation());
+        self::assertStringContainsString('SELECT', $plan->sql());
     }
 
     public function testRewriteAlterTableConvertToCharsetThrows(): void

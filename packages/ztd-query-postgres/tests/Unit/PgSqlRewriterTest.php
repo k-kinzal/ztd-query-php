@@ -53,6 +53,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(PgSqlCastRenderer::class)]
 #[UsesClass(PgSqlIdentifierQuoter::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlValueRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer::class)]
 final class PgSqlRewriterTest extends RewriterContractTest
 {
     protected function createRewriter(ShadowStore $store, TableDefinitionRegistry $registry): SqlRewriter

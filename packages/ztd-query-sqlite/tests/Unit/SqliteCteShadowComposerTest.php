@@ -2,19 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Rewrite;
+namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use ZtdQuery\Rewrite\CteShadowComposer;
-use ZtdQuery\Sql\SqlToken;
-use ZtdQuery\Sql\SqlTokenStream;
+use ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer;
 
-#[CoversClass(CteShadowComposer::class)]
-#[UsesClass(SqlToken::class)]
-#[UsesClass(SqlTokenStream::class)]
-final class CteShadowComposerTest extends TestCase
+#[CoversClass(SqliteCteShadowComposer::class)]
+final class SqliteCteShadowComposerTest extends TestCase
 {
     public function testAddsShadowsAfterRecursiveModifier(): void
     {
@@ -22,7 +17,7 @@ final class CteShadowComposerTest extends TestCase
 
         self::assertSame(
             "WITH RECURSIVE \"nodes\" AS (SELECT 1 AS id),\n tree AS (SELECT id FROM nodes UNION ALL SELECT n.id FROM nodes n JOIN tree t ON n.parent_id = t.id) SELECT * FROM tree",
-            (new CteShadowComposer())->compose($sql, ['nodes' => '"nodes" AS (SELECT 1 AS id)']),
+            (new SqliteCteShadowComposer())->compose($sql, ['nodes' => '"nodes" AS (SELECT 1 AS id)']),
         );
     }
 
@@ -32,7 +27,7 @@ final class CteShadowComposerTest extends TestCase
 
         self::assertSame(
             $sql,
-            (new CteShadowComposer())->compose($sql, ['users' => '"users" AS (SELECT 2 AS id)']),
+            (new SqliteCteShadowComposer())->compose($sql, ['users' => '"users" AS (SELECT 2 AS id)']),
         );
     }
 
@@ -42,7 +37,7 @@ final class CteShadowComposerTest extends TestCase
 
         self::assertSame(
             "WITH \"users\" AS (SELECT 1 AS id),\n filtered AS (SELECT * FROM users WHERE active) SELECT * FROM filtered",
-            (new CteShadowComposer())->compose($sql, ['users' => '"users" AS (SELECT 1 AS id)']),
+            (new SqliteCteShadowComposer())->compose($sql, ['users' => '"users" AS (SELECT 1 AS id)']),
         );
     }
 
@@ -52,7 +47,7 @@ final class CteShadowComposerTest extends TestCase
 
         self::assertSame(
             $sql,
-            (new CteShadowComposer())->compose($sql, ['users' => '"users" AS (SELECT 1 AS id)']),
+            (new SqliteCteShadowComposer())->compose($sql, ['users' => '"users" AS (SELECT 1 AS id)']),
         );
     }
 
@@ -60,7 +55,7 @@ final class CteShadowComposerTest extends TestCase
     {
         self::assertSame(
             ['first', 'second'],
-            (new CteShadowComposer())->declaredCteNames('WITH "first"(id) AS MATERIALIZED (SELECT 1), second AS (SELECT 2) SELECT * FROM second'),
+            (new SqliteCteShadowComposer())->declaredCteNames('WITH "first"(id) AS MATERIALIZED (SELECT 1), second AS (SELECT 2) SELECT * FROM second'),
         );
     }
 
@@ -70,7 +65,7 @@ final class CteShadowComposerTest extends TestCase
 
         self::assertSame(
             "WITH first AS (SELECT 1), second(id) AS (SELECT * FROM first)\nSELECT 2 AS id FROM users",
-            (new CteShadowComposer())->carryPrefix($sql, 'SELECT 2 AS id FROM users'),
+            (new SqliteCteShadowComposer())->carryPrefix($sql, 'SELECT 2 AS id FROM users'),
         );
     }
 
@@ -78,7 +73,7 @@ final class CteShadowComposerTest extends TestCase
     {
         self::assertSame(
             "WITH source AS (SELECT 1),\nprojected AS (SELECT * FROM source)\nSELECT * FROM projected",
-            (new CteShadowComposer())->carryPrefix(
+            (new SqliteCteShadowComposer())->carryPrefix(
                 'WITH source AS (SELECT 1) INSERT INTO target SELECT * FROM source',
                 'WITH projected AS (SELECT * FROM source) SELECT * FROM projected',
             ),
@@ -89,7 +84,7 @@ final class CteShadowComposerTest extends TestCase
     {
         self::assertSame(
             "WITH users AS (SELECT 1 AS id),\nchosen AS (SELECT id FROM users)\nSELECT * FROM users WHERE id IN (SELECT id FROM chosen)",
-            (new CteShadowComposer())->carryPrefix(
+            (new SqliteCteShadowComposer())->carryPrefix(
                 'WITH chosen AS (SELECT id FROM users) UPDATE users SET id = 2',
                 'WITH users AS (SELECT 1 AS id) SELECT * FROM users WHERE id IN (SELECT id FROM chosen)',
             ),
@@ -100,7 +95,7 @@ final class CteShadowComposerTest extends TestCase
     {
         self::assertSame(
             'DELETE FROM users WHERE id IN (SELECT id FROM chosen)',
-            (new CteShadowComposer())->statementSql('WITH chosen AS (SELECT 1 AS id) DELETE FROM users WHERE id IN (SELECT id FROM chosen)'),
+            (new SqliteCteShadowComposer())->statementSql('WITH chosen AS (SELECT 1 AS id) DELETE FROM users WHERE id IN (SELECT id FROM chosen)'),
         );
     }
 
@@ -108,7 +103,7 @@ final class CteShadowComposerTest extends TestCase
     {
         self::assertSame(
             "WITH users AS (SELECT 1 AS id)\nSELECT * FROM users",
-            (new CteShadowComposer())->compose(
+            (new SqliteCteShadowComposer())->compose(
                 'SELECT * FROM users',
                 ['users' => 'users AS (SELECT 1 AS id)'],
             ),
@@ -117,7 +112,7 @@ final class CteShadowComposerTest extends TestCase
 
     public function testSkipsEntriesIndependentlyAndMatchesDeclaredNamesCaseInsensitively(): void
     {
-        $composer = new CteShadowComposer();
+        $composer = new SqliteCteShadowComposer();
 
         self::assertSame(
             "WITH orders AS (SELECT 2 AS id)\nSELECT * FROM orders",
@@ -140,7 +135,7 @@ final class CteShadowComposerTest extends TestCase
     {
         self::assertSame(
             "WITH shadow AS (SELECT 1),\n",
-            (new CteShadowComposer())->compose('WITH', ['WITH' => 'shadow AS (SELECT 1)']),
+            (new SqliteCteShadowComposer())->compose('WITH', ['WITH' => 'shadow AS (SELECT 1)']),
         );
     }
 
@@ -148,7 +143,7 @@ final class CteShadowComposerTest extends TestCase
     {
         self::assertSame(
             "WITH source AS (SELECT 1)\n",
-            (new CteShadowComposer())->carryPrefix(
+            (new SqliteCteShadowComposer())->carryPrefix(
                 'WITH source AS (SELECT 1) UPDATE users SET id = 2',
                 '',
             ),
@@ -159,7 +154,7 @@ final class CteShadowComposerTest extends TestCase
     {
         self::assertSame(
             "/* lead */ WITH RECURSIVE projected AS (SELECT 2),\noriginal AS (SELECT 1)\nSELECT * FROM projected",
-            (new CteShadowComposer())->carryPrefix(
+            (new SqliteCteShadowComposer())->carryPrefix(
                 '/* lead */ WITH RECURSIVE original AS (SELECT 1) UPDATE users SET id = 2',
                 'WITH projected AS (SELECT 2) SELECT * FROM projected',
             ),
@@ -170,7 +165,7 @@ final class CteShadowComposerTest extends TestCase
     {
         self::assertSame(
             "WITH source AS (SELECT 1),\nprojected AS (SELECT * FROM source)\nSELECT * FROM projected",
-            (new CteShadowComposer())->carryPrefix(
+            (new SqliteCteShadowComposer())->carryPrefix(
                 'WITH source AS (SELECT 1) INSERT INTO target SELECT * FROM source',
                 'WITH RECURSIVE projected AS (SELECT * FROM source) SELECT * FROM projected',
             ),
@@ -180,7 +175,7 @@ final class CteShadowComposerTest extends TestCase
     public function testParsesRecursiveMaterializationAndNestedCteBodies(): void
     {
         $sql = 'WITH RECURSIVE "FIRST"(id) AS MATERIALIZED (SELECT (1)), second AS NOT MATERIALIZED (SELECT id FROM "FIRST") DELETE FROM target';
-        $composer = new CteShadowComposer();
+        $composer = new SqliteCteShadowComposer();
 
         self::assertSame(['first', 'second'], $composer->declaredCteNames($sql));
         self::assertSame('DELETE FROM target', $composer->statementSql($sql));
@@ -188,7 +183,7 @@ final class CteShadowComposerTest extends TestCase
 
     public function testHandlesNonHeadersIncompleteHeadersAndEmptyInput(): void
     {
-        $composer = new CteShadowComposer();
+        $composer = new SqliteCteShadowComposer();
 
         self::assertSame([], $composer->declaredCteNames(''));
         self::assertSame('SELECT 1', $composer->statementSql('SELECT 1'));
@@ -208,7 +203,7 @@ final class CteShadowComposerTest extends TestCase
 
     public function testUnquotesEmptyAndEscapedCteIdentifiers(): void
     {
-        $composer = new CteShadowComposer();
+        $composer = new SqliteCteShadowComposer();
 
         self::assertSame([''], $composer->declaredCteNames('WITH "" AS (SELECT 1) SELECT 1'));
         self::assertSame(

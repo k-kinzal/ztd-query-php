@@ -31,6 +31,7 @@ use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
 #[UsesClass(MySqlIdentifierQuoter::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlTypeSemantics::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
 final class MySqlTransformerTest extends TestCase
 {
     public function testTransformSelectPassthrough(): void
