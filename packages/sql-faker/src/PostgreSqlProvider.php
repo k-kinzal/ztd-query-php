@@ -415,6 +415,16 @@ final class PostgreSqlProvider extends Base
         );
     }
 
+    /** @return non-empty-string */
+    public function temporaryTableStatement(): string
+    {
+        $table = $this->rsg->rawIdentifier();
+        $keyColumn = $this->rsg->rawIdentifier();
+        $valueColumn = $this->rsg->rawIdentifier();
+
+        return "CREATE TEMP TABLE $table ($keyColumn INTEGER PRIMARY KEY, $valueColumn TEXT)";
+    }
+
     /**
      * @template TRequiresNonEmpty of bool
      * @param GenerationPlan<TRequiresNonEmpty> $plan

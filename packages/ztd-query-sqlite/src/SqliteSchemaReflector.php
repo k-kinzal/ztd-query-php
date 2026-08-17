@@ -25,7 +25,12 @@ final class SqliteSchemaReflector implements SchemaReflector
     public function getCreateStatement(string $tableName): ?string
     {
         $stmt = $this->connection->query(
-            "SELECT sql FROM sqlite_master WHERE type='table' AND name='" . str_replace("'", "''", $tableName) . "'"
+            "SELECT sql FROM ("
+            . "SELECT sql, 0 AS precedence FROM sqlite_temp_master WHERE type='table' AND name='"
+            . str_replace("'", "''", $tableName)
+            . "' UNION ALL SELECT sql, 1 AS precedence FROM sqlite_master WHERE type='table' AND name='"
+            . str_replace("'", "''", $tableName)
+            . "') ORDER BY precedence LIMIT 1"
         );
         if ($stmt === false) {
             return null;
@@ -45,7 +50,12 @@ final class SqliteSchemaReflector implements SchemaReflector
     public function reflectAll(): array
     {
         $stmt = $this->connection->query(
-            "SELECT name, sql FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
+            "SELECT name, sql FROM ("
+            . "SELECT name, sql, 0 AS precedence FROM sqlite_temp_master "
+            . "WHERE type='table' AND name NOT LIKE 'sqlite_%' UNION ALL "
+            . "SELECT name, sql, 1 AS precedence FROM sqlite_master "
+            . "WHERE type='table' AND name NOT LIKE 'sqlite_%'"
+            . ') ORDER BY precedence, name'
         );
         if ($stmt === false) {
             return [];
@@ -59,6 +69,9 @@ final class SqliteSchemaReflector implements SchemaReflector
             $createSql = $row['sql'] ?? null;
 
             if (!is_string($tableName) || $tableName === '' || !is_string($createSql) || $createSql === '') {
+                continue;
+            }
+            if (isset($result[$tableName])) {
                 continue;
             }
 

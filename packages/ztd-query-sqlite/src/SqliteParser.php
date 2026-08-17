@@ -60,7 +60,7 @@ final class SqliteParser
                 'DELETE' => 'DELETE',
                 'CREATE' => match ($second) {
                     'TABLE' => 'CREATE_TABLE',
-                    'TEMPORARY' => $third === 'TABLE' ? 'CREATE_TABLE' : null,
+                    'TEMP', 'TEMPORARY' => $third === 'TABLE' ? 'CREATE_TABLE' : null,
                     default => null,
                 },
                 'DROP' => $second === 'TABLE' ? 'DROP_TABLE' : null,
@@ -591,7 +591,7 @@ final class SqliteParser
     private function extractCreateTableName(string $sql): ?string
     {
         $sql = $this->stripComments($sql);
-        if (preg_match('/^CREATE\s+(?:TEMPORARY\s+)?TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?("(?:[^"]|"")*"|`(?:[^`]|``)*`|\[(?:[^\]])*\]|[^\s(]+)/i', trim($sql), $matches) === 1) {
+        if (preg_match('/^CREATE\s+(?:(?:TEMP|TEMPORARY)\s+)?TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?("(?:[^"]|"")*"|`(?:[^`]|``)*`|\[(?:[^\]])*\]|[^\s(]+)/i', $sql, $matches) === 1) {
             return $this->unquoteIdentifier($matches[1]);
         }
 

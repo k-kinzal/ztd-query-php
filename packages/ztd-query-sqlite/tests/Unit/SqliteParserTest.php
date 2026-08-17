@@ -94,6 +94,9 @@ final class SqliteParserTest extends TestCase
     {
         $parser = new SqliteParser();
         self::assertSame('CREATE_TABLE', $parser->classifyStatement('CREATE TEMPORARY TABLE tmp (id INTEGER)'));
+        self::assertSame('CREATE_TABLE', $parser->classifyStatement('CREATE TEMP TABLE tmp (id INTEGER)'));
+        self::assertSame('tmp', $parser->extractTargetTable('CREATE TEMP TABLE tmp (id INTEGER)'));
+        self::assertSame('tmp', $parser->extractTargetTable('  CREATE TEMP TABLE tmp (id INTEGER)'));
     }
 
     public function testClassifyDropTable(): void

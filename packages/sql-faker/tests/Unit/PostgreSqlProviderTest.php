@@ -78,6 +78,16 @@ final class PostgreSqlProviderTest extends TestCase
         self::assertContains('UPDATE', $tokens);
     }
 
+    public function testTemporaryTableStatement(): void
+    {
+        $provider = new PostgreSqlProvider(Factory::create());
+
+        self::assertMatchesRegularExpression(
+            '/^CREATE TEMP(?:ORARY)? TABLE \w+ \(\w+ INTEGER PRIMARY KEY, \w+ TEXT\)$/',
+            $provider->temporaryTableStatement(),
+        );
+    }
+
     #[\Override]
     protected function setUp(): void
     {

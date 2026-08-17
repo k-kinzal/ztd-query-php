@@ -87,6 +87,28 @@ final class SqliteSchemaReflectorTest extends TestCase
         self::assertArrayHasKey('orders', $result);
     }
 
+    public function testReflectAllPrefersTemporaryTableWhenNamesCollide(): void
+    {
+        $statement = static::createStub(StatementInterface::class);
+        $statement->method('fetchAll')->willReturn([
+            ['name' => 'staging', 'sql' => 'CREATE TABLE staging (temporary_value TEXT)'],
+            ['name' => 'staging', 'sql' => 'CREATE TABLE staging (persistent_value TEXT)'],
+            ['name' => 'after', 'sql' => 'CREATE TABLE after (id INTEGER)'],
+        ]);
+        $connection = static::createMock(ConnectionInterface::class);
+        $connection->expects(self::once())->method('query')->with(
+            "SELECT name, sql FROM (SELECT name, sql, 0 AS precedence FROM sqlite_temp_master "
+            . "WHERE type='table' AND name NOT LIKE 'sqlite_%' UNION ALL "
+            . "SELECT name, sql, 1 AS precedence FROM sqlite_master "
+            . "WHERE type='table' AND name NOT LIKE 'sqlite_%') ORDER BY precedence, name",
+        )->willReturn($statement);
+
+        $result = (new SqliteSchemaReflector($connection))->reflectAll();
+
+        self::assertSame('CREATE TABLE staging (temporary_value TEXT)', $result['staging']);
+        self::assertSame('CREATE TABLE after (id INTEGER)', $result['after']);
+    }
+
     public function testReflectAllSkipsInvalidRows(): void
     {
         $statement = static::createStub(StatementInterface::class);
@@ -237,8 +259,12 @@ final class SqliteSchemaReflectorTest extends TestCase
             ['sql' => "CREATE TABLE \"it's\" (id INTEGER)"],
         ]);
 
-        $connection = static::createStub(ConnectionInterface::class);
-        $connection->method('query')->willReturn($statement);
+        $connection = static::createMock(ConnectionInterface::class);
+        $connection->expects(self::once())->method('query')->with(
+            "SELECT sql FROM (SELECT sql, 0 AS precedence FROM sqlite_temp_master WHERE type='table' AND name='it''s' "
+            . "UNION ALL SELECT sql, 1 AS precedence FROM sqlite_master WHERE type='table' AND name='it''s') "
+            . 'ORDER BY precedence LIMIT 1',
+        )->willReturn($statement);
 
         $reflector = new SqliteSchemaReflector($connection);
         $result = $reflector->getCreateStatement("it's");

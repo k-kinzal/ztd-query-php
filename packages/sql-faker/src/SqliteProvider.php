@@ -268,4 +268,14 @@ final class SqliteProvider extends Base
     {
         return $this->sql->generate(GenerationPlan::fromRule($startRule)->withMaxDepth($maxDepth));
     }
+
+    /** @return non-empty-string */
+    public function temporaryTableStatement(): string
+    {
+        $table = $this->rsg->rawIdentifier();
+        $keyColumn = $this->rsg->rawIdentifier();
+        $valueColumn = $this->rsg->rawIdentifier();
+
+        return "CREATE TEMP TABLE $table ($keyColumn INTEGER PRIMARY KEY, $valueColumn TEXT)";
+    }
 }

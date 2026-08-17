@@ -707,4 +707,13 @@ final class MySqlProvider extends Base
             GenerationPlans::insertFunctionUpsertStatement()->withMaxDepth($maxDepth),
         );
     }
+    /** @return non-empty-string */
+    public function temporaryTableStatement(): string
+    {
+        $table = $this->rsg->rawIdentifier();
+        $keyColumn = $this->rsg->rawIdentifier();
+        $valueColumn = $this->rsg->rawIdentifier();
+
+        return "CREATE TEMPORARY TABLE $table ($keyColumn INT PRIMARY KEY, $valueColumn VARCHAR(255))";
+    }
 }
