@@ -61,6 +61,20 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
 final class MySqlRewriterTest extends RewriterContractTest
 {
+    public function testDerivedTableKeepsNestedPhysicalRelationInShadowScope(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', [['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com']]);
+        $registry = new TableDefinitionRegistry();
+        $definition = $this->createSchemaParser()->parse($this->usersCreateTableSql());
+        self::assertNotNull($definition);
+        $registry->register('users', $definition);
+
+        $plan = $this->createRewriter($store, $registry)->rewrite('SELECT * FROM (SELECT id, name FROM users) AS selected');
+
+        self::assertStringStartsWith('WITH `users` AS', $plan->sql());
+    }
+
     protected function createRewriter(ShadowStore $store, TableDefinitionRegistry $registry): SqlRewriter
     {
         $parser = new MySqlParser();

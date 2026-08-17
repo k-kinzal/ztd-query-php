@@ -18,6 +18,7 @@ use PhpMyAdmin\SqlParser\Statements\SelectStatement;
 use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
+use ZtdQuery\Sql\SqlTokenStream;
 use PhpMyAdmin\SqlParser\Statements\AlterStatement;
 use PhpMyAdmin\SqlParser\Statements\CreateStatement;
 use PhpMyAdmin\SqlParser\Statements\ReplaceStatement;
@@ -128,11 +129,11 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
             if (!$statement instanceof SelectStatement || $statement->into !== null) {
                 throw new UnsupportedSqlException($sql, 'Statement type not supported');
             }
-            if ($this->hasSchemaContext()) {
-                $unknownTable = $this->findUnknownTable($statement);
-                if ($unknownTable !== null) {
-                    throw new UnknownSchemaException($sql, $unknownTable, 'table');
-                }
+        }
+        if ($this->hasSchemaContext()) {
+            $unknownTable = $this->findUnknownTable($sql);
+            if ($unknownTable !== null) {
+                throw new UnknownSchemaException($sql, $unknownTable, 'table');
             }
         }
 
@@ -154,8 +155,8 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
         $tableContext = $this->buildTableContext();
 
         if ($kind === QueryKind::READ) {
-            if ($statement instanceof SelectStatement && $this->hasSchemaContext()) {
-                $unknownTable = $this->findUnknownTable($statement);
+            if ($this->hasSchemaContext()) {
+                $unknownTable = $this->findUnknownTable($sql);
                 if ($unknownTable !== null) {
                     throw new UnknownSchemaException($sql, $unknownTable, 'table');
                 }
@@ -295,47 +296,21 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
         throw new UnsupportedSqlException($sql, 'Cannot determine columns');
     }
 
-    private function findUnknownTable(SelectStatement $statement): ?string
+    private function findUnknownTable(string $sql): ?string
     {
-        $tableNames = $this->extractTableNames($statement);
+        $tableNames = SqlTokenStream::tokenize($sql)->selectTableNames();
+        $declaredCtes = array_fill_keys($this->cteComposer->declaredCteNames($sql), true);
 
         foreach ($tableNames as $tableName) {
+            if (isset($declaredCtes[strtolower($tableName)])) {
+                continue;
+            }
             if (!$this->tableExists($tableName)) {
                 return $tableName;
             }
         }
 
         return null;
-    }
-
-    /**
-     * @return array<int, string>
-     */
-    private function extractTableNames(SelectStatement $statement): array
-    {
-        $tableNames = [];
-
-        if ($statement->from !== []) {
-            foreach ($statement->from as $fromExpr) {
-                $tableName = self::resolveExprTableName($fromExpr);
-                if (is_string($tableName) && $tableName !== '') {
-                    $tableNames[] = $tableName;
-                }
-            }
-        }
-
-        if ($statement->join !== null && $statement->join !== []) {
-            foreach ($statement->join as $joinExpr) {
-                if ($joinExpr->expr !== null) {
-                    $tableName = self::resolveExprTableName($joinExpr->expr);
-                    if (is_string($tableName) && $tableName !== '') {
-                        $tableNames[] = $tableName;
-                    }
-                }
-            }
-        }
-
-        return $tableNames;
     }
 
     private function tableExists(string $tableName): bool
@@ -471,16 +446,6 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
         }
 
         return false;
-    }
-
-    /**
-     * Resolve table name from an Expression, trying ->table first then ->expr.
-     *
-     * @param \PhpMyAdmin\SqlParser\Components\Expression $expr
-     */
-    private static function resolveExprTableName(\PhpMyAdmin\SqlParser\Components\Expression $expr): ?string
-    {
-        return $expr->table ?? $expr->expr ?? null;
     }
 
     /**

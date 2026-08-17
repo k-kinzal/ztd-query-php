@@ -18,6 +18,23 @@ use ZtdQuery\Sql\SqlTokenStream;
 #[UsesClass(SqlTokenKind::class)]
 final class SqlTokenStreamTest extends TestCase
 {
+    public function testExtractsRelationsAcrossNestedSelectScopes(): void
+    {
+        $sql = 'SELECT * FROM (SELECT * FROM public.users UNION ALL SELECT * FROM "archived_users") AS people JOIN json_each(people.meta) AS item ON TRUE';
+
+        self::assertSame(
+            ['users', 'archived_users'],
+            SqlTokenStream::tokenize($sql)->selectTableNames(),
+        );
+    }
+
+    public function testExtractsLateralRelationWithoutTreatingFunctionAsTable(): void
+    {
+        $sql = 'SELECT * FROM generate_series(1, 3) AS day LEFT JOIN LATERAL (SELECT * FROM orders WHERE orders.day = day) AS totals ON TRUE';
+
+        self::assertSame(['orders'], SqlTokenStream::tokenize($sql)->selectTableNames());
+    }
+
     public function testSplitsOnlyTopLevelStatementTerminators(): void
     {
         $sql = 'SELECT \';\' AS value; SELECT $$a;b$$; /* ; */ SELECT (3; 4); SELECT [5; 6];;';

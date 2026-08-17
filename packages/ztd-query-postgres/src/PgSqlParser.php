@@ -460,45 +460,7 @@ final class PgSqlParser
      */
     public function extractSelectTableNames(string $sql): array
     {
-        $tables = [];
-        foreach (SqlTokenStream::tokenize($sql)->selectFromClauses() as $fromClause) {
-            $fromClause = $this->maskComments($fromClause);
-            $tables = array_merge($tables, $this->extractTableRefsFromClause($fromClause));
-            preg_match_all('/\bJOIN\s+("[^"]+"|[a-zA-Z_]\w*(?:\."[^"]+"|\.(?:[a-zA-Z_]\w*))?)/i', $fromClause, $joinMatches);
-            foreach ($joinMatches[1] as $joinTable) {
-                $tables[] = $this->unquoteIdentifier($this->stripSchemaPrefix($joinTable));
-            }
-        }
-
-        return array_values(array_unique($tables));
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function extractTableRefsFromClause(string $clause): array
-    {
-        $tables = [];
-        $parts = $this->splitByTopLevelComma($clause);
-
-        foreach ($parts as $part) {
-            $part = trim($part);
-            if (str_starts_with($part, '(')) {
-                continue;
-            }
-            $part = preg_replace('/\b(?:INNER|LEFT|RIGHT|FULL|CROSS|NATURAL)\s+(?:OUTER\s+)?JOIN\b.*/is', '', $part) ?? $part;
-            $part = preg_replace('/\bJOIN\b.*/is', '', $part) ?? $part;
-            $part = trim($part);
-
-            if (preg_match('/^("[^"]+"|[a-zA-Z_]\w*(?:\."[^"]+"|\.(?:[a-zA-Z_]\w*))?)(?:\s+(?:AS\s+)?("[^"]+"|[a-zA-Z_]\w*))?/i', $part, $m) === 1) {
-                $tableName = $this->unquoteIdentifier($this->stripSchemaPrefix($m[1]));
-                if ($tableName !== '' && !$this->isSqlKeyword($tableName)) {
-                    $tables[] = $tableName;
-                }
-            }
-        }
-
-        return $tables;
+        return SqlTokenStream::tokenize($sql)->selectTableNames();
     }
 
     private function classifyWithStatement(string $sql): ?string
@@ -708,86 +670,6 @@ final class PgSqlParser
         return null;
     }
 
-    /**
-     * Split a string by commas, respecting parentheses and quotes.
-     *
-     * @return list<string>
-     */
-    private function splitByTopLevelComma(string $str): array
-    {
-        $parts = [];
-        $current = '';
-        $depth = 0;
-        $inSingleQuote = false;
-        $inDoubleQuote = false;
-        $len = strlen($str);
-
-        for ($i = 0; $i < $len; $i++) {
-            $char = $str[$i];
-
-            if ($inSingleQuote) {
-                $current .= $char;
-                if ($char === "'" && isset($str[$i + 1]) && $str[$i + 1] === "'") {
-                    $current .= "'";
-                    $i++;
-                } elseif ($char === "'") {
-                    $inSingleQuote = false;
-                }
-                continue;
-            }
-
-            if ($inDoubleQuote) {
-                $current .= $char;
-                if ($char === '"' && isset($str[$i + 1]) && $str[$i + 1] === '"') {
-                    $current .= '"';
-                    $i++;
-                } elseif ($char === '"') {
-                    $inDoubleQuote = false;
-                }
-                continue;
-            }
-
-            if ($char === "'") {
-                $current .= $char;
-                $inSingleQuote = true;
-                continue;
-            }
-
-            if ($char === '"') {
-                $current .= $char;
-                $inDoubleQuote = true;
-                continue;
-            }
-
-            if ($char === '(') {
-                $depth++;
-                $current .= $char;
-                continue;
-            }
-
-            if ($char === ')') {
-                $depth--;
-                $current .= $char;
-                continue;
-            }
-
-            if ($char === ',' && $depth === 0) {
-                $parts[] = trim($current);
-                $current = '';
-                continue;
-            }
-
-            $current .= $char;
-        }
-
-        $val = trim($current);
-        if ($val !== '') {
-            $parts[] = $val;
-        }
-
-        return $parts;
-    }
-
     private function maskComments(string $sql): string
     {
         return PostgreSqlLexicalMasker::maskComments($sql);
@@ -855,18 +737,4 @@ final class PgSqlParser
         return null;
     }
 
-    private function isSqlKeyword(string $word): bool
-    {
-        $upper = strtoupper($word);
-
-        return in_array($upper, [
-            'SELECT', 'FROM', 'WHERE', 'AND', 'OR', 'NOT', 'IN', 'EXISTS',
-            'BETWEEN', 'LIKE', 'IS', 'NULL', 'TRUE', 'FALSE', 'AS', 'ON',
-            'JOIN', 'INNER', 'LEFT', 'RIGHT', 'FULL', 'OUTER', 'CROSS',
-            'NATURAL', 'USING', 'ORDER', 'BY', 'GROUP', 'HAVING', 'LIMIT',
-            'OFFSET', 'UNION', 'ALL', 'INTERSECT', 'EXCEPT', 'INSERT',
-            'INTO', 'VALUES', 'UPDATE', 'SET', 'DELETE', 'WITH', 'RECURSIVE',
-            'CASE', 'WHEN', 'THEN', 'ELSE', 'END', 'CAST', 'RETURNING',
-        ], true);
-    }
 }

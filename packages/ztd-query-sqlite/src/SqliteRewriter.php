@@ -10,6 +10,7 @@ use ZtdQuery\Platform\Sqlite\Transformer\SqliteTransformer;
 use ZtdQuery\Rewrite\MultiRewritePlan;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\AffectedRowsMode;
+use ZtdQuery\Rewrite\CteShadowComposer;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\RewriteStateCommitter;
 use ZtdQuery\Rewrite\SqlRewriter;
@@ -38,6 +39,7 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
     private SqliteMutationResolver $mutationResolver;
     private SqliteParser $parser;
     private SqliteReturningProjectionParser $returningProjectionParser;
+    private CteShadowComposer $cteComposer;
 
     public function __construct(
         SqliteQueryGuard $guard,
@@ -54,6 +56,7 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
         $this->mutationResolver = $mutationResolver;
         $this->parser = $parser;
         $this->returningProjectionParser = new SqliteReturningProjectionParser();
+        $this->cteComposer = new CteShadowComposer();
     }
 
     /**
@@ -232,8 +235,12 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
         }
 
         $tableNames = $this->parser->extractSelectTables($sql);
+        $declaredCtes = array_fill_keys($this->cteComposer->declaredCteNames($sql), true);
 
         foreach ($tableNames as $tableName) {
+            if (isset($declaredCtes[strtolower($tableName)])) {
+                continue;
+            }
             if (!$this->tableExists($tableName)) {
                 return $tableName;
             }

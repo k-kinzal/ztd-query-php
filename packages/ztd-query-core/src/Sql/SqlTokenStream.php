@@ -197,6 +197,144 @@ final class SqlTokenStream
     }
 
     /**
+     * Return physical relation names used as SELECT sources in every nested scope.
+     *
+     * Derived tables and table-valued functions are containers or producers rather
+     * than reflected relations. Their nested SELECT clauses are inspected separately.
+     * Schema qualifiers are intentionally removed because table registries are keyed
+     * by relation name.
+     *
+     * @return list<string>
+     */
+    public function selectTableNames(): array
+    {
+        $names = [];
+        foreach ($this->selectFromClauses() as $clause) {
+            foreach (self::tableNamesFromClause($clause) as $name) {
+                $normalized = strtolower($name);
+                if (!isset($names[$normalized])) {
+                    $names[$normalized] = $name;
+                }
+            }
+        }
+
+        return array_values($names);
+    }
+
+    /** @return list<string> */
+    private static function tableNamesFromClause(string $clause): array
+    {
+        $tokens = self::tokenize($clause)->significantTokens();
+        $names = [];
+        $expectSource = true;
+
+        foreach ($tokens as $index => $token) {
+            if (!$token->isTopLevel()) {
+                continue;
+            }
+            if ($token->isKeyword('JOIN')) {
+                $expectSource = true;
+                continue;
+            }
+            if ($token->kind === SqlTokenKind::Symbol && $token->text === ',') {
+                $expectSource = true;
+                continue;
+            }
+            if (!$expectSource) {
+                continue;
+            }
+            if ($token->isKeyword('LATERAL') || $token->isKeyword('ONLY')) {
+                continue;
+            }
+
+            $expectSource = false;
+            $source = self::relationNameAt($clause, $tokens, $index);
+            if ($source !== null) {
+                $names[] = $source;
+            }
+        }
+
+        return $names;
+    }
+
+    /**
+     * @param list<SqlToken> $tokens
+     */
+    private static function relationNameAt(string $sql, array $tokens, int $index): ?string
+    {
+        $token = $tokens[$index] ?? null;
+        if ($token === null
+            || ($token->kind === SqlTokenKind::Symbol && $token->text === '(')
+            || $token->isKeyword('VALUES')
+            || $token->isKeyword('SELECT')
+        ) {
+            return null;
+        }
+
+        $component = self::identifierAt($sql, $tokens, $index);
+        if ($component === null) {
+            return null;
+        }
+        [$name, $nextIndex] = $component;
+
+        while (($tokens[$nextIndex] ?? null)?->kind === SqlTokenKind::Symbol
+            && $tokens[$nextIndex]->text === '.'
+        ) {
+            $component = self::identifierAt($sql, $tokens, $nextIndex + 1);
+            if ($component === null) {
+                break;
+            }
+            [$name, $nextIndex] = $component;
+        }
+
+        $next = $tokens[$nextIndex] ?? null;
+        if ($next !== null && $next->kind === SqlTokenKind::Symbol && $next->text === '(') {
+            return null;
+        }
+
+        return $name;
+    }
+
+    /**
+     * @param list<SqlToken> $tokens
+     * @return array{string, int}|null
+     */
+    private static function identifierAt(string $sql, array $tokens, int $index): ?array
+    {
+        $token = $tokens[$index] ?? null;
+        if ($token === null) {
+            return null;
+        }
+        if ($token->kind === SqlTokenKind::Word) {
+            return [$token->text, $index + 1];
+        }
+        if ($token->kind === SqlTokenKind::QuotedIdentifier && strlen($token->text) >= 2) {
+            $quote = $token->text[0];
+            $name = substr($token->text, 1, -1);
+
+            return [str_replace($quote . $quote, $quote, $name), $index + 1];
+        }
+        if ($token->kind !== SqlTokenKind::Symbol || $token->text !== '[') {
+            return null;
+        }
+
+        foreach ($tokens as $endIndex => $endToken) {
+            if ($endIndex <= $index
+                || $endToken->kind !== SqlTokenKind::Symbol
+                || $endToken->text !== ']'
+                || !$endToken->isTopLevel()
+            ) {
+                continue;
+            }
+            $name = substr($sql, $token->endOffset(), $endToken->offset - $token->endOffset());
+
+            return [str_replace(']]', ']', $name), $endIndex + 1];
+        }
+
+        return null;
+    }
+
+    /**
      * @param list<SqlToken> $tokens
      * @param non-empty-list<string> $keywords
      */

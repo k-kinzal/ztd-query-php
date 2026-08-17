@@ -19,7 +19,7 @@ final class SchemaAwareSqlBuilder
     {
         $table = $schema->name;
         $columns = $schema->columns;
-        $variant = $this->faker->numberBetween(0, 5);
+        $variant = $this->faker->numberBetween(0, 6);
 
         switch ($variant) {
             case 0:
@@ -55,6 +55,10 @@ final class SchemaAwareSqlBuilder
                 /** @var string $enumColumn */
                 $enumColumn = $this->faker->randomElement($enumColumns);
                 return "SELECT `$enumColumn` FROM `$table` WHERE `$enumColumn` > 'a' ORDER BY `$enumColumn`";
+            case 6:
+                /** @var string $derivedColumn */
+                $derivedColumn = $this->faker->randomElement($columns);
+                return "SELECT `$derivedColumn` FROM (SELECT `$derivedColumn` FROM `$table`) AS `_ztd_derived`";
             default:
                 return "SELECT * FROM `$table`";
         }

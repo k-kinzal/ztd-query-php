@@ -2769,7 +2769,7 @@ SELECT * FROM users'));
     {
         $parser = new SqliteParser();
         $tables = $parser->extractSelectTables('SELECT * FROM (SELECT 1)');
-        self::assertNotEmpty($tables);
+        self::assertSame([], $tables);
     }
 
     public function testExtractSelectTablesMultiline(): void

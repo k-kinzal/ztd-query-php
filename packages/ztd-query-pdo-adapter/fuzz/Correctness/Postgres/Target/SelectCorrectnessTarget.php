@@ -72,10 +72,11 @@ final class SelectCorrectnessTarget
         try {
             $stmt = $this->harness->getZtdPdo()->query($sql);
             $ztdResult = $stmt !== false ? $stmt->fetchAll(PDO::FETCH_ASSOC) : null;
-        } catch (UnsupportedSqlException | UnknownSchemaException) {
-            return;
-        } catch (DatabaseException) {
-            return;
+        } catch (UnsupportedSqlException | UnknownSchemaException | DatabaseException $e) {
+            if ($rawError !== null) {
+                return;
+            }
+            throw new Error("ZTD SELECT failed after native success\nSeed: $seed\nSQL: $sql", 0, $e);
         } catch (PDOException $e) {
             $ztdError = $e;
         }
@@ -84,8 +85,11 @@ final class SelectCorrectnessTarget
             return;
         }
 
-        if ($rawError !== null || $ztdError !== null) {
+        if ($rawError !== null) {
             return;
+        }
+        if ($ztdError !== null) {
+            throw new Error("ZTD SELECT failed after native success\nSeed: $seed\nSQL: $sql", 0, $ztdError);
         }
 
         if ($rawResult !== null && $ztdResult !== null) {

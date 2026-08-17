@@ -20,7 +20,7 @@ final class PgSchemaAwareSqlBuilder
     {
         $table = $this->quoteIdentifier($schema->name);
         $columns = $schema->columns;
-        $variant = $this->faker->numberBetween(0, 4);
+        $variant = $this->faker->numberBetween(0, 5);
 
         switch ($variant) {
             case 0:
@@ -45,6 +45,11 @@ final class PgSchemaAwareSqlBuilder
                 /** @var string $col */
                 $col = $this->faker->randomElement($columns);
                 return "SELECT DISTINCT " . $this->quoteIdentifier($col) . " FROM $table";
+            case 5:
+                /** @var string $derivedColumn */
+                $derivedColumn = $this->faker->randomElement($columns);
+                $quotedColumn = $this->quoteIdentifier($derivedColumn);
+                return "SELECT $quotedColumn FROM (SELECT $quotedColumn FROM $table) AS \"_ztd_derived\"";
             default:
                 return "SELECT * FROM $table";
         }

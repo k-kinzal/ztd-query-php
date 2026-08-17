@@ -109,35 +109,7 @@ final class SqliteParser
      */
     public function extractSelectTables(string $sql): array
     {
-        $tables = [];
-        foreach (SqlTokenStream::tokenize($sql)->selectFromClauses() as $fromClause) {
-            $fromClause = $this->stripComments($fromClause);
-            $fromOnly = preg_replace('/\b(?:INNER|LEFT|RIGHT|CROSS|NATURAL)\s+JOIN\b.*/is', '', $fromClause);
-            if ($fromOnly === null) {
-                continue;
-            }
-            $fromOnly = preg_replace('/\bJOIN\b.*/is', '', $fromOnly);
-            if ($fromOnly === null) {
-                continue;
-            }
-
-            $parts = SqlTokenStream::tokenize($fromOnly)->splitTopLevel();
-            foreach ($parts as $part) {
-                $table = $this->extractTableFromExpr(trim($part));
-                if ($table !== null) {
-                    $tables[] = $table;
-                }
-            }
-            preg_match_all('/\bJOIN\s+("(?:[^"]|"")*"|[^\s(]+)/i', $fromClause, $joinMatches);
-            foreach ($joinMatches[1] as $joinTable) {
-                $table = $this->unquoteIdentifier($joinTable);
-                if ($table !== '') {
-                    $tables[] = $table;
-                }
-            }
-        }
-
-        return array_values(array_unique($tables));
+        return SqlTokenStream::tokenize($sql)->selectTableNames();
     }
 
     /**
@@ -569,28 +541,6 @@ final class SqliteParser
         }
 
         return null;
-    }
-
-    private function extractTableFromExpr(string $expr): ?string
-    {
-        if ($expr === '') {
-            return null;
-        }
-
-        $parts = preg_split('/\s+AS\s+/i', $expr, 2);
-        if ($parts === false) {
-            $parts = [$expr];
-        }
-        $tablePart = trim($parts[0]);
-
-        if (count($parts) === 1) {
-            $spaceParts = preg_split('/\s+/', $tablePart);
-            if ($spaceParts !== false && $spaceParts !== []) {
-                $tablePart = $spaceParts[0];
-            }
-        }
-
-        return $this->unquoteIdentifier($tablePart);
     }
 
     /**

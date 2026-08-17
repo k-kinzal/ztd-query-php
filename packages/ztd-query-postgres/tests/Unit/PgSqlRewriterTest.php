@@ -60,6 +60,35 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer::class)]
 final class PgSqlRewriterTest extends RewriterContractTest
 {
+    public function testTableFunctionDoesNotHideJoinedShadowRelation(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', [['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com']]);
+        $registry = new TableDefinitionRegistry();
+        $definition = $this->createSchemaParser()->parse($this->usersCreateTableSql());
+        self::assertNotNull($definition);
+        $registry->register('users', $definition);
+
+        $plan = $this->createRewriter($store, $registry)->rewrite('SELECT day.value, users.name FROM generate_series(1, 3) AS day(value) LEFT JOIN users ON users.id = day.value');
+
+        self::assertStringStartsWith('WITH "users" AS MATERIALIZED', $plan->sql());
+        self::assertStringContainsString('generate_series(1, 3)', $plan->sql());
+    }
+
+    public function testLateralDerivedTableKeepsNestedPhysicalRelationInShadowScope(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', [['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com']]);
+        $registry = new TableDefinitionRegistry();
+        $definition = $this->createSchemaParser()->parse($this->usersCreateTableSql());
+        self::assertNotNull($definition);
+        $registry->register('users', $definition);
+
+        $plan = $this->createRewriter($store, $registry)->rewrite('SELECT selected.id FROM LATERAL (SELECT id FROM users) AS selected');
+
+        self::assertStringStartsWith('WITH "users" AS MATERIALIZED', $plan->sql());
+    }
+
     protected function createRewriter(ShadowStore $store, TableDefinitionRegistry $registry): SqlRewriter
     {
         $parser = new PgSqlParser();

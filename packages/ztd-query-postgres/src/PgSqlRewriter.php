@@ -9,6 +9,7 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Rewrite\MultiRewritePlan;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\AffectedRowsMode;
+use ZtdQuery\Rewrite\CteShadowComposer;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Rewrite\RewriteStateCommitter;
@@ -36,6 +37,7 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
     private PgSqlMutationResolver $mutationResolver;
     private PgSqlParser $parser;
     private PgSqlReturningProjectionParser $returningProjectionParser;
+    private CteShadowComposer $cteComposer;
 
     public function __construct(
         PgSqlQueryGuard $guard,
@@ -52,6 +54,7 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
         $this->mutationResolver = $mutationResolver;
         $this->parser = $parser;
         $this->returningProjectionParser = new PgSqlReturningProjectionParser();
+        $this->cteComposer = new CteShadowComposer();
     }
 
     /**
@@ -127,7 +130,11 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
         if ($kind === QueryKind::READ) {
             if ($this->hasSchemaContext()) {
                 $tableNames = $this->parser->extractSelectTableNames($sql);
+                $declaredCtes = array_fill_keys($this->cteComposer->declaredCteNames($sql), true);
                 foreach ($tableNames as $tableName) {
+                    if (isset($declaredCtes[strtolower($tableName)])) {
+                        continue;
+                    }
                     if (!$this->tableExists($tableName)) {
                         throw new UnknownSchemaException($sql, $tableName, 'table');
                     }
