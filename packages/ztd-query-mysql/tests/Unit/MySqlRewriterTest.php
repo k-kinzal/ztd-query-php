@@ -36,6 +36,7 @@ use ZtdQuery\Shadow\Mutation\TruncateMutation;
 use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTableState;
+use ZtdQuery\Sql\ReadOnlyDiagnosticStatement;
 
 #[CoversClass(MySqlRewriter::class)]
 #[UsesClass(MySqlParser::class)]
@@ -55,6 +56,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(DeleteTransformer::class)]
 #[UsesClass(ReplaceTransformer::class)]
 #[UsesClass(AlterTableMutation::class)]
+#[UsesClass(ReadOnlyDiagnosticStatement::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlCastRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlIdentifierQuoter::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
@@ -62,6 +64,39 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
 final class MySqlRewriterTest extends RewriterContractTest
 {
+    public function testExplainPassesThroughUnchanged(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        $sql = 'EXPLAIN SELECT * FROM users';
+
+        $plan = $rewriter->rewrite($sql);
+
+        self::assertSame(QueryKind::READ, $plan->kind());
+        self::assertSame($sql, $plan->sql());
+    }
+
+    public function testDescribePassesThroughUnchanged(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        $sql = 'DESCRIBE users';
+
+        $plan = $rewriter->rewrite($sql);
+
+        self::assertSame(QueryKind::READ, $plan->kind());
+        self::assertSame($sql, $plan->sql());
+    }
+
+    public function testShowCreateTablePassesThroughUnchanged(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        $sql = 'SHOW CREATE TABLE users';
+
+        $plan = $rewriter->rewrite($sql);
+
+        self::assertSame(QueryKind::READ, $plan->kind());
+        self::assertSame($sql, $plan->sql());
+    }
+
     public function testDerivedTableKeepsNestedPhysicalRelationInShadowScope(): void
     {
         $store = new ShadowStore();

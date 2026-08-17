@@ -11,9 +11,11 @@ use Tests\Contract\QueryClassifierContractTest;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlQueryGuard;
 use ZtdQuery\Rewrite\QueryKind;
+use ZtdQuery\Sql\ReadOnlyDiagnosticStatement;
 
 #[CoversClass(MySqlQueryGuard::class)]
 #[UsesClass(MySqlParser::class)]
+#[UsesClass(ReadOnlyDiagnosticStatement::class)]
 class MySqlQueryGuardTest extends QueryClassifierContractTest
 {
     protected function classify(string $sql): ?QueryKind
@@ -84,6 +86,16 @@ class MySqlQueryGuardTest extends QueryClassifierContractTest
         self::assertNull($guard->classify('DROP DATABASE test'));
         self::assertNull($guard->classify('CREATE DATABASE test'));
         self::assertNull($guard->classify('SELECT 1; SELECT 2'));
+    }
+
+    public function testClassifiesReadOnlyDiagnosticsAsRead(): void
+    {
+        $guard = new MySqlQueryGuard(new MySqlParser());
+
+        self::assertSame(QueryKind::READ, $guard->classify('EXPLAIN SELECT * FROM users'));
+        self::assertSame(QueryKind::READ, $guard->classify('DESCRIBE users'));
+        self::assertSame(QueryKind::READ, $guard->classify('SHOW CREATE TABLE users'));
+        self::assertNull($guard->classify('EXPLAIN ANALYZE UPDATE users SET active = FALSE'));
     }
 
     public function testClassifiesDdlStatements(): void

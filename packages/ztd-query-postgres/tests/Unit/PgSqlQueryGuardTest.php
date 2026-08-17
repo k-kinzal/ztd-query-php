@@ -8,10 +8,12 @@ use Tests\Contract\QueryClassifierContractTest;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
 use ZtdQuery\Platform\Postgres\PgSqlQueryGuard;
 use ZtdQuery\Rewrite\QueryKind;
+use ZtdQuery\Sql\ReadOnlyDiagnosticStatement;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 
 #[CoversClass(PgSqlQueryGuard::class)]
+#[UsesClass(ReadOnlyDiagnosticStatement::class)]
 #[UsesClass(PgSqlParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PostgreSqlLexicalMasker::class)]
 final class PgSqlQueryGuardTest extends QueryClassifierContractTest
@@ -165,10 +167,10 @@ final class PgSqlQueryGuardTest extends QueryClassifierContractTest
         self::assertNull($guard->classify('SET search_path TO public'));
     }
 
-    public function testShowCommandReturnsNull(): void
+    public function testShowCommandClassifiesAsRead(): void
     {
         $guard = new PgSqlQueryGuard(new PgSqlParser());
-        self::assertNull($guard->classify('SHOW server_version'));
+        self::assertSame(QueryKind::READ, $guard->classify('SHOW server_version'));
     }
 
     public function testSavepointClassifiesAsSkipped(): void
@@ -191,10 +193,12 @@ final class PgSqlQueryGuardTest extends QueryClassifierContractTest
         self::assertNotSame(QueryKind::SKIPPED, $result);
     }
 
-    public function testClassifyReturnsNullForGarbageInput(): void
+    public function testClassifiesSafeExplainAndRejectsExecutingWrite(): void
     {
         $guard = new PgSqlQueryGuard(new PgSqlParser());
-        self::assertNull($guard->classify('EXPLAIN SELECT 1'));
+        self::assertSame(QueryKind::READ, $guard->classify('EXPLAIN SELECT 1'));
+        self::assertSame(QueryKind::READ, $guard->classify('EXPLAIN (ANALYZE TRUE, FORMAT JSON) SELECT 1'));
+        self::assertNull($guard->classify('EXPLAIN ANALYZE UPDATE users SET active = FALSE'));
     }
 
     public function testClassifySelectLowercaseIsRead(): void

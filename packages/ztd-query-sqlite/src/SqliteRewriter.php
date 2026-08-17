@@ -17,6 +17,7 @@ use ZtdQuery\Sql\TransactionStatement;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
+use ZtdQuery\Sql\ReadOnlyDiagnosticStatement;
 
 /**
  * SQLite rewrite implementation for ZTD.
@@ -107,6 +108,9 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
 
     private function rewriteStatement(string $stmtSql, string $originalSql): RewritePlan
     {
+        if (ReadOnlyDiagnosticStatement::isSafe($stmtSql)) {
+            return new RewritePlan($stmtSql, QueryKind::READ);
+        }
         $kind = $this->guard->classify($stmtSql);
         if ($kind === null) {
             throw new UnsupportedSqlException($originalSql, 'Statement type not supported');

@@ -181,6 +181,7 @@ final class RobustnessTarget
             fn (): string => $this->provider->createTableStatement(maxDepth: 5),
             fn (): string => $this->provider->alterTableStatement(maxDepth: 5),
             fn (): string => $this->provider->dropTableStatement(maxDepth: 3),
+            fn (): string => 'EXPLAIN (FORMAT JSON) SELECT * FROM users',
         ];
 
         $index = ord($input[0] ?? "\0") % count($generators);

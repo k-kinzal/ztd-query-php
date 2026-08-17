@@ -18,6 +18,7 @@ use PhpMyAdmin\SqlParser\Statements\SelectStatement;
 use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
+use ZtdQuery\Sql\ReadOnlyDiagnosticStatement;
 use PhpMyAdmin\SqlParser\Statements\AlterStatement;
 use PhpMyAdmin\SqlParser\Statements\CreateStatement;
 use PhpMyAdmin\SqlParser\Statements\ReplaceStatement;
@@ -75,6 +76,9 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
         }
         if (count($logicalStatements) !== 1) {
             throw new UnsupportedSqlException($sql, 'Multi-statement');
+        }
+        if (ReadOnlyDiagnosticStatement::isSafe($sql)) {
+            return new RewritePlan($sql, QueryKind::READ);
         }
 
         $statements = $this->parser->parse($sql);

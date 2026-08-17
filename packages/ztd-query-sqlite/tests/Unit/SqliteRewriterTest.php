@@ -37,6 +37,7 @@ use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTableState;
+use ZtdQuery\Sql\ReadOnlyDiagnosticStatement;
 
 #[CoversClass(SqliteRewriter::class)]
 #[UsesClass(SqliteLexicalMasker::class)]
@@ -57,6 +58,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(DeleteTransformer::class)]
 #[UsesClass(SqliteCastRenderer::class)]
 #[UsesClass(SqliteIdentifierQuoter::class)]
+#[UsesClass(ReadOnlyDiagnosticStatement::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteValueRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer::class)]
 final class SqliteRewriterTest extends RewriterContractTest
@@ -88,6 +90,17 @@ final class SqliteRewriterTest extends RewriterContractTest
         $this->createRewriter(new ShadowStore(), $registry)->rewrite(
             'WITH users AS (SELECT 1 AS id) SELECT * FROM Users JOIN missing_table ON TRUE',
         );
+    }
+
+    public function testReadOnlyDiagnosticsPassThroughUnchanged(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        $sql = 'EXPLAIN QUERY PLAN SELECT * FROM users';
+
+        $plan = $rewriter->rewrite($sql);
+
+        self::assertSame(QueryKind::READ, $plan->kind());
+        self::assertSame($sql, $plan->sql());
     }
 
     protected function createRewriter(ShadowStore $store, TableDefinitionRegistry $registry): SqlRewriter

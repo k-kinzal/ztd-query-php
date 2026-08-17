@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\Postgres;
 
 use ZtdQuery\Rewrite\QueryKind;
+use ZtdQuery\Sql\ReadOnlyDiagnosticStatement;
 
 /**
  * Classifies PostgreSQL SQL statements into QueryKind categories.
@@ -23,6 +24,9 @@ final class PgSqlQueryGuard
      */
     public function classify(string $sql): ?QueryKind
     {
+        if (ReadOnlyDiagnosticStatement::isSafe($sql)) {
+            return QueryKind::READ;
+        }
         $type = $this->parser->classifyStatement($sql);
         if ($type === null) {
             return null;

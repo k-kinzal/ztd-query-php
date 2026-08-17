@@ -11,10 +11,12 @@ use ZtdQuery\Platform\Sqlite\SqliteLexicalMasker;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
 use ZtdQuery\Platform\Sqlite\SqliteQueryGuard;
 use ZtdQuery\Rewrite\QueryKind;
+use ZtdQuery\Sql\ReadOnlyDiagnosticStatement;
 
 #[CoversClass(SqliteQueryGuard::class)]
 #[UsesClass(SqliteLexicalMasker::class)]
 #[UsesClass(SqliteParser::class)]
+#[UsesClass(ReadOnlyDiagnosticStatement::class)]
 final class SqliteQueryGuardTest extends QueryClassifierContractTest
 {
     protected function classify(string $sql): ?QueryKind
@@ -110,6 +112,15 @@ final class SqliteQueryGuardTest extends QueryClassifierContractTest
     {
         $guard = new SqliteQueryGuard(new SqliteParser());
         self::assertNull($guard->classify('CREATE INDEX idx ON users (name)'));
+    }
+
+    public function testClassifiesReadOnlyExplainAsRead(): void
+    {
+        $guard = new SqliteQueryGuard(new SqliteParser());
+
+        self::assertSame(QueryKind::READ, $guard->classify('EXPLAIN SELECT * FROM users'));
+        self::assertSame(QueryKind::READ, $guard->classify('EXPLAIN QUERY PLAN SELECT * FROM users'));
+        self::assertNull($guard->classify('EXPLAIN QUERY PLAN DELETE FROM users'));
     }
 
     public function testEmptyReturnsNull(): void

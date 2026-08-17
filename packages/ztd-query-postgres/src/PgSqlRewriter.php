@@ -14,6 +14,7 @@ use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Rewrite\RewriteStateCommitter;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
+use ZtdQuery\Sql\ReadOnlyDiagnosticStatement;
 use ZtdQuery\Sql\TransactionStatement;
 
 /**
@@ -114,6 +115,9 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
 
     private function rewriteStatement(string $sql): RewritePlan
     {
+        if (ReadOnlyDiagnosticStatement::isSafe($sql)) {
+            return new RewritePlan($sql, QueryKind::READ);
+        }
         $kind = $this->guard->classify($sql);
         if ($kind === null) {
             throw new UnsupportedSqlException($sql, 'Statement type not supported');

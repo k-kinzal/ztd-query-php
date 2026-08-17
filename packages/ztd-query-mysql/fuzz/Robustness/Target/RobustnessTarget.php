@@ -184,6 +184,7 @@ final class RobustnessTarget
             fn () => $this->provider->alterTableStatement(maxDepth: 5),
             fn () => $this->provider->replaceStatement(maxDepth: 5),
             fn () => $this->provider->truncateStatement(maxDepth: 3),
+            fn (): string => 'EXPLAIN SELECT * FROM users',
         ];
 
         $index = ord($input[0] ?? "\0") % count($generators);
