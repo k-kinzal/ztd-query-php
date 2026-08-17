@@ -14,6 +14,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
 use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
+use ZtdQuery\Platform\Postgres\PgSqlTableSample;
+use ZtdQuery\Platform\Postgres\PgSqlTableSampleParser;
+use ZtdQuery\Platform\Postgres\PgSqlTableSampleRewriter;
 
 #[CoversClass(SelectTransformer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser::class)]
@@ -22,8 +25,27 @@ use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 #[UsesClass(PgSqlIdentifierQuoter::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlGeneratedColumnProjector::class)]
+#[UsesClass(PgSqlTableSampleParser::class)]
+#[UsesClass(PgSqlTableSampleRewriter::class)]
+#[UsesClass(PgSqlTableSample::class)]
 final class SelectTransformerTest extends TransformerContractTest
 {
+    public function testTableSampleReadsFromGeneratedShadowCte(): void
+    {
+        $result = (new SelectTransformer())->transform(
+            'SELECT id FROM data TABLESAMPLE BERNOULLI (100)',
+            ['data' => [
+                'rows' => [['id' => 1], ['id' => 2]],
+                'columns' => ['id'],
+                'columnTypes' => [],
+            ]],
+        );
+
+        self::assertStringStartsWith('WITH "data" AS MATERIALIZED', $result);
+        self::assertStringNotContainsString('TABLESAMPLE', $result);
+        self::assertStringContainsString('FROM data)', $result);
+    }
+
     public function testGeneratedColumnsAreRecomputedFromBaseRow(): void
     {
         $result = (new SelectTransformer())->transform('SELECT total FROM orders', [

@@ -447,6 +447,18 @@ final class PostgreSqlProvider extends Base
         return $this->sql->generate(GenerationPlans::partitionOfStatement()->withMaxDepth($maxDepth));
     }
 
+    /** @return non-empty-string */
+    public function tableSampleStatement(): string
+    {
+        $method = $this->generator->boolean() ? 'BERNOULLI' : 'SYSTEM';
+        $percentage = $this->rsg->integerString(0, 100);
+        $repeatable = $this->generator->boolean()
+            ? ' REPEATABLE (' . $this->rsg->integerString(0, 2147483647) . ')'
+            : '';
+
+        return "SELECT * FROM users TABLESAMPLE $method ($percentage)$repeatable";
+    }
+
     /**
      * @template TRequiresNonEmpty of bool
      * @param GenerationPlan<TRequiresNonEmpty> $plan

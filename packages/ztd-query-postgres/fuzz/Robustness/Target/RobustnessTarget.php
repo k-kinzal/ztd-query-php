@@ -189,6 +189,7 @@ final class RobustnessTarget
             fn (): string => 'EXPLAIN (FORMAT JSON) SELECT * FROM users',
             fn (): string => 'SELECT * FROM public.users',
             fn (): string => $this->provider->partitionOfStatement(),
+            fn (): string => $this->provider->tableSampleStatement(),
         ];
 
         $index = ord($input[0] ?? "\0") % count($generators);

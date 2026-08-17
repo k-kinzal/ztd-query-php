@@ -6,6 +6,7 @@ namespace ZtdQuery\Platform\Postgres\Transformer;
 
 use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
 use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
+use ZtdQuery\Platform\Postgres\PgSqlTableSampleRewriter;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\IdentifierQuoter;
 use ZtdQuery\Platform\ValueRenderer;
@@ -32,17 +33,20 @@ final class SelectTransformer implements SqlTransformer
     private ValueRenderer $valueRenderer;
     private PgSqlCteShadowComposer $cteComposer;
     private PgSqlGeneratedColumnProjector $generatedColumnProjector;
+    private PgSqlTableSampleRewriter $tableSampleRewriter;
 
     public function __construct(
         ?CastRenderer $castRenderer = null,
         ?IdentifierQuoter $quoter = null,
         ?ValueRenderer $valueRenderer = null,
+        ?PgSqlTableSampleRewriter $tableSampleRewriter = null,
     ) {
         $this->castRenderer = $castRenderer ?? new PgSqlCastRenderer();
         $this->quoter = $quoter ?? new PgSqlIdentifierQuoter();
         $this->valueRenderer = $valueRenderer ?? new \ZtdQuery\Platform\Postgres\PgSqlValueRenderer($this->castRenderer);
         $this->cteComposer = new PgSqlCteShadowComposer();
         $this->generatedColumnProjector = new PgSqlGeneratedColumnProjector();
+        $this->tableSampleRewriter = $tableSampleRewriter ?? new PgSqlTableSampleRewriter();
     }
 
     /**
@@ -50,6 +54,7 @@ final class SelectTransformer implements SqlTransformer
      */
     public function transform(string $sql, array $tables): string
     {
+        $sql = $this->tableSampleRewriter->rewrite($sql, $tables);
         $ctes = [];
         foreach ($tables as $tableName => $tableContext) {
             if (isset($tableContext['viewSql'])) {

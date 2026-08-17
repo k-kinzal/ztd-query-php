@@ -892,6 +892,20 @@ final class PostgreSqlProviderTest extends TestCase
         self::assertNotSame('', $result);
     }
 
+    public function testTableSampleStatementTargetsFuzzFixture(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new PostgreSqlProvider($faker);
+
+        $sql = $provider->tableSampleStatement();
+
+        self::assertMatchesRegularExpression(
+            '/^SELECT \* FROM users TABLESAMPLE (?:BERNOULLI|SYSTEM) \((?:100|[1-9]?[0-9])\)(?: REPEATABLE \([0-9]+\))?$/',
+            $sql,
+        );
+    }
+
     #[DataProvider('providerNullableSimpleStatementSeed')]
     public function testSimpleStatementReturnsNonEmpty(int $seed): void
     {

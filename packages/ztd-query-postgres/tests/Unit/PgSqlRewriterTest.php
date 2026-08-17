@@ -58,6 +58,8 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(PgSqlMutationResolver::class)]
 #[UsesClass(PgSqlTransformer::class)]
 #[UsesClass(SelectTransformer::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlTableSampleParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlTableSampleRewriter::class)]
 #[UsesClass(InsertTransformer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\InsertRowRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\InsertSelectRenderer::class)]
