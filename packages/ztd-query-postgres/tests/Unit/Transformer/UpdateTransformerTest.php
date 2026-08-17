@@ -115,12 +115,14 @@ final class UpdateTransformerTest extends TestCase
                     'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
                     'name' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
                 ],
+                'primaryKeys' => ['id'],
             ],
         ];
 
         $result = $transformer->transform($sql, $tables);
         self::assertStringContainsString('WITH', $result);
         self::assertStringContainsString('"users" AS MATERIALIZED', $result);
+        self::assertStringContainsString('"users"."id" AS "__ztd_original_id"', $result);
     }
 
     public function testTransformThrowsOnUnresolvableTarget(): void

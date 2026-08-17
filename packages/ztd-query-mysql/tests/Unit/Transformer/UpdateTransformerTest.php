@@ -172,12 +172,14 @@ final class UpdateTransformerTest extends TestCase
                 'rows' => [],
                 'columns' => ['id', 'name'],
                 'columnTypes' => [],
+                'primaryKeys' => ['id'],
             ],
         ];
 
         $result = $transformer->transform($sql, $tables);
         self::assertStringContainsString('SELECT', $result);
         self::assertStringContainsString("'Bob' AS `name`", $result);
+        self::assertStringContainsString('`users`.`id` AS `__ztd_original_id`', $result);
     }
 
     public function testTransformUpdateWithPartitionThrows(): void
@@ -201,6 +203,51 @@ final class UpdateTransformerTest extends TestCase
 
         self::assertStringContainsString('ORDER BY', $result['sql']);
         self::assertStringContainsString('LIMIT', $result['sql']);
+    }
+
+    public function testBuildUpdateSelectWithOnlyOrderBySelectsRowsBeforeProjecting(): void
+    {
+        $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
+        $parser = new Parser("UPDATE users SET name = 'Bob' ORDER BY id");
+        $statement = $parser->statements[0];
+        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+
+        $result = $transformer->buildProjection($statement, ['id', 'name']);
+
+        self::assertSame(
+            "SELECT 'Bob' AS `name`, `users`.`id` FROM (SELECT * FROM `users` ORDER BY id ASC) AS `users`",
+            $result['sql'],
+        );
+    }
+
+    public function testBuildUpdateSelectWithOnlyLimitSelectsRowsBeforeProjecting(): void
+    {
+        $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
+        $parser = new Parser("UPDATE users SET name = 'Bob' LIMIT 2");
+        $statement = $parser->statements[0];
+        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+
+        $result = $transformer->buildProjection($statement, ['id', 'name']);
+
+        self::assertSame(
+            "SELECT 'Bob' AS `name`, `users`.`id` FROM (SELECT * FROM `users` LIMIT 0, 2) AS `users`",
+            $result['sql'],
+        );
+    }
+
+    public function testBuildUpdateSelectWithJoinAndLimitKeepsJoinInResultSelect(): void
+    {
+        $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
+        $parser = new Parser("UPDATE users JOIN orders ON users.id = orders.user_id SET users.name = 'Bob' LIMIT 2");
+        $statement = $parser->statements[0];
+        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+
+        $result = $transformer->buildProjection($statement, ['id', 'name']);
+
+        self::assertSame(
+            "SELECT 'Bob' AS `name`, `users`.`id` FROM `users` JOIN `orders` ON users.id = orders.user_id LIMIT 0, 2",
+            $result['sql'],
+        );
     }
 
     public function testBuildUpdateSelectWithEmptyColumnsUsesWildcard(): void

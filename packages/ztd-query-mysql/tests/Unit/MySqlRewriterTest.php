@@ -220,7 +220,7 @@ final class MySqlRewriterTest extends RewriterContractTest
         $parser = new MySqlParser();
         $schemaParser = new MySqlSchemaParser($parser);
         $registry = new TableDefinitionRegistry();
-        $def = $schemaParser->parse('CREATE TABLE users (id INT, name VARCHAR(255))');
+        $def = $schemaParser->parse('CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255))');
         self::assertNotNull($def);
         $registry->register('users', $def);
 
@@ -238,6 +238,7 @@ final class MySqlRewriterTest extends RewriterContractTest
         self::assertSame(QueryKind::WRITE_SIMULATED, $plan->kind());
         self::assertInstanceOf(UpdateMutation::class, $plan->mutation());
         self::assertSame('users', $plan->mutation()->tableName());
+        self::assertStringContainsString('`users`.`id` AS `__ztd_original_id`', $plan->sql());
         self::assertMatchesRegularExpression('/^(?:WITH\b|SELECT\b)/i', $plan->sql(), 'UPDATE result-select must start with SELECT or WITH...SELECT');
     }
 

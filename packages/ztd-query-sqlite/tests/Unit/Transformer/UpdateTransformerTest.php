@@ -36,6 +36,7 @@ final class UpdateTransformerTest extends TestCase
                 'rows' => [],
                 'columns' => ['id', 'name', 'email'],
                 'columnTypes' => [],
+                'primaryKeys' => ['id'],
             ],
         ];
 
@@ -45,6 +46,7 @@ final class UpdateTransformerTest extends TestCase
         self::assertStringContainsString("'Bob'", $result);
         self::assertStringContainsString('"name"', $result);
         self::assertStringContainsString('WHERE id = 1', $result);
+        self::assertStringContainsString('"users"."id" AS "__ztd_original_id"', $result);
     }
 
     public function testTransformUpdateWithMultipleAssignments(): void

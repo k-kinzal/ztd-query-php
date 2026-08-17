@@ -11,6 +11,11 @@ use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
 #[CoversClass(MutationRowIdentity::class)]
 final class MutationRowIdentityTest extends TestCase
 {
+    public function testBuildsReservedMetadataColumnName(): void
+    {
+        self::assertSame('__ztd_original_id', (new MutationRowIdentity())->column('id'));
+    }
+
     public function testSeparatesOriginalCompositeKeyFromTheUpdatedRow(): void
     {
         self::assertSame(

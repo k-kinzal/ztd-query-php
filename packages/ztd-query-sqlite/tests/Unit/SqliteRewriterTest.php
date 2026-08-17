@@ -202,6 +202,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         self::assertSame(QueryKind::WRITE_SIMULATED, $plan->kind());
         self::assertInstanceOf(UpdateMutation::class, $plan->mutation());
         self::assertSame('users', $plan->mutation()->tableName());
+        self::assertStringContainsString('"users"."id" AS "__ztd_original_id"', $plan->sql());
         self::assertMatchesRegularExpression('/^(?:WITH\b|SELECT\b)/i', $plan->sql());
     }
 

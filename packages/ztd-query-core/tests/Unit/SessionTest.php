@@ -19,6 +19,7 @@ use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Session;
 use ZtdQuery\Shadow\Mutation\UpdateMutation;
+use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
 use ZtdQuery\Shadow\ShadowStore;
 
 #[CoversClass(Session::class)]
@@ -29,6 +30,7 @@ use ZtdQuery\Shadow\ShadowStore;
 #[UsesClass(DatabaseException::class)]
 #[UsesClass(RewritePlan::class)]
 #[UsesClass(UpdateMutation::class)]
+#[UsesClass(MutationRowIdentity::class)]
 #[UsesClass(MissingPrimaryKeyException::class)]
 final class SessionTest extends TestCase
 {

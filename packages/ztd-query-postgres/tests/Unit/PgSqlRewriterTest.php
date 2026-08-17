@@ -252,6 +252,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
         self::assertSame(QueryKind::WRITE_SIMULATED, $plan->kind());
         self::assertNotNull($plan->mutation());
         self::assertInstanceOf(UpdateMutation::class, $plan->mutation());
+        self::assertStringContainsString('"users"."id" AS "__ztd_original_id"', $plan->sql());
     }
 
     public function testDeleteReturnsWriteSimulatedWithMutation(): void

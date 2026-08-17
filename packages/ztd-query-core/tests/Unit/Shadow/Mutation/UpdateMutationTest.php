@@ -8,6 +8,7 @@ use ZtdQuery\Exception\DuplicateKeyException;
 use ZtdQuery\Exception\NotNullViolationException;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Shadow\Mutation\UpdateMutation;
+use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
 use ZtdQuery\Shadow\ShadowStore;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -17,6 +18,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(NotNullViolationException::class)]
 #[UsesClass(TableDefinition::class)]
 #[UsesClass(ShadowStore::class)]
+#[UsesClass(MutationRowIdentity::class)]
 #[CoversClass(UpdateMutation::class)]
 final class UpdateMutationTest extends TestCase
 {

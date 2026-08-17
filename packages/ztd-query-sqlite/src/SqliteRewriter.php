@@ -11,6 +11,7 @@ use ZtdQuery\Rewrite\MultiRewritePlan;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
+use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
 
@@ -135,7 +136,8 @@ final class SqliteRewriter implements SqlRewriter
      *     columns: array<int, string>,
      *     columnTypes: array<string, \ZtdQuery\Schema\ColumnType>,
      *     columnDefaults: array<string, string>,
-     *     identityStrategies: array<string, \ZtdQuery\Schema\IdentityGenerationStrategy>
+     *     identityStrategies: array<string, \ZtdQuery\Schema\IdentityGenerationStrategy>,
+     *     primaryKeys: array<int, string>
      * }>
      */
     private function buildTableContext(): array
@@ -145,30 +147,30 @@ final class SqliteRewriter implements SqlRewriter
 
         foreach ($allData as $tableName => $rows) {
             $definition = $this->registry->get($tableName);
-            $columns = $definition?->columns;
-            if ($columns === null && $rows !== []) {
-                $columns = array_keys($rows[0]);
-                foreach ($rows as $row) {
-                    foreach (array_keys($row) as $column) {
-                        if (!in_array($column, $columns, true)) {
-                            $columns[] = $column;
+            if ($definition !== null) {
+                $context[$tableName] = self::contextFromDefinition($definition, $rows);
+            } else {
+                $columns = [];
+                if ($rows !== []) {
+                    $columns = array_keys($rows[0]);
+                    foreach ($rows as $row) {
+                        foreach (array_keys($row) as $column) {
+                            if (!in_array($column, $columns, true)) {
+                                $columns[] = $column;
+                            }
                         }
                     }
                 }
+
+                $context[$tableName] = [
+                    'rows' => $rows,
+                    'columns' => $columns,
+                    'columnTypes' => [],
+                    'columnDefaults' => [],
+                    'identityStrategies' => [],
+                    'primaryKeys' => [],
+                ];
             }
-
-            $columnTypes = $definition !== null ? $definition->typedColumns : [];
-            $columnDefaults = $definition !== null ? $definition->columnDefaults : [];
-            $identityStrategies = $definition !== null ? $definition->identityStrategies : [];
-
-            $context[$tableName] = [
-                'rows' => $rows,
-                'columns' => $columns ?? [],
-                'columnTypes' => $columnTypes,
-                'columnDefaults' => $columnDefaults,
-                'identityStrategies' => $identityStrategies,
-                'primaryKeys' => $definition !== null ? $definition->primaryKeys : [],
-            ];
         }
 
         $allDefinitions = $this->registry->getAll();
@@ -177,17 +179,33 @@ final class SqliteRewriter implements SqlRewriter
                 continue;
             }
 
-            $context[$tableName] = [
-                'rows' => [],
-                'columns' => $definition->columns,
-                'columnTypes' => $definition->typedColumns,
-                'columnDefaults' => $definition->columnDefaults,
-                'identityStrategies' => $definition->identityStrategies,
-                'primaryKeys' => $definition->primaryKeys,
-            ];
+            $context[$tableName] = self::contextFromDefinition($definition, []);
         }
 
         return $context;
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $rows
+     * @return array{
+     *     rows: array<int, array<string, mixed>>,
+     *     columns: array<int, string>,
+     *     columnTypes: array<string, \ZtdQuery\Schema\ColumnType>,
+     *     columnDefaults: array<string, string>,
+     *     identityStrategies: array<string, \ZtdQuery\Schema\IdentityGenerationStrategy>,
+     *     primaryKeys: array<int, string>
+     * }
+     */
+    private static function contextFromDefinition(TableDefinition $definition, array $rows): array
+    {
+        return [
+            'rows' => $rows,
+            'columns' => $definition->columns,
+            'columnTypes' => $definition->typedColumns,
+            'columnDefaults' => $definition->columnDefaults,
+            'identityStrategies' => $definition->identityStrategies,
+            'primaryKeys' => $definition->primaryKeys,
+        ];
     }
 
     private function findUnknownTable(string $sql): ?string
