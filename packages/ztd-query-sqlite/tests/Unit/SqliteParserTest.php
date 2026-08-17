@@ -197,6 +197,39 @@ SELECT * FROM users'));
         self::assertNull($parser->extractUpdateAlias('UPDATE users SET name = \'Alice\' WHERE id = 1'));
     }
 
+    public function testExtractUpdateAliasHandlesConflictSchemaAndBracketedTarget(): void
+    {
+        $parser = new SqliteParser();
+
+        self::assertSame(
+            'target',
+            $parser->extractUpdateAlias(
+                'UPDATE OR REPLACE main.[user table] AS target SET name = \'Alice\' WHERE target.id = 1',
+            ),
+        );
+    }
+
+    public function testExtractUpdateAliasSkipsNestedUpdateKeyword(): void
+    {
+        $parser = new SqliteParser();
+
+        self::assertSame(
+            'target',
+            $parser->extractUpdateAlias(
+                'WITH source AS (SELECT UPDATE FROM audit) UPDATE users AS target SET name = \'Alice\'',
+            ),
+        );
+    }
+
+    public function testExtractUpdateAliasRejectsIncompleteTargets(): void
+    {
+        $parser = new SqliteParser();
+
+        self::assertNull($parser->extractUpdateAlias('UPDATE'));
+        self::assertNull($parser->extractUpdateAlias('UPDATE users'));
+        self::assertNull($parser->extractUpdateAlias('UPDATE users target'));
+    }
+
     public function testExtractUpdateFromClausePreservesJoinSource(): void
     {
         $parser = new SqliteParser();
@@ -204,6 +237,18 @@ SELECT * FROM users'));
         self::assertSame(
             'incoming AS source',
             $parser->extractUpdateFromClause('UPDATE inventory SET quantity = source.quantity FROM incoming AS source WHERE inventory.id = source.id'),
+        );
+    }
+
+    public function testExtractUpdateFromClauseStopsBeforeOrderedLimit(): void
+    {
+        $parser = new SqliteParser();
+
+        self::assertSame(
+            'incoming AS source',
+            $parser->extractUpdateFromClause(
+                'UPDATE inventory SET quantity = source.quantity FROM incoming AS source ORDER BY source.id LIMIT 1',
+            ),
         );
     }
 
