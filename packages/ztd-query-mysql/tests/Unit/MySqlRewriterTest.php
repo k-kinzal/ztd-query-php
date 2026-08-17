@@ -21,6 +21,7 @@ use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
 use ZtdQuery\Platform\MySql\Transformer\ReplaceTransformer;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
+use ZtdQuery\Platform\MySql\UpdateAssignmentExtractor;
 use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\SqlRewriter;
@@ -53,6 +54,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\MySql\Transformer\InsertSelectRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Transformer\MySqlSelectListAliaser::class)]
 #[UsesClass(UpdateTransformer::class)]
+#[UsesClass(UpdateAssignmentExtractor::class)]
 #[UsesClass(DeleteTransformer::class)]
 #[UsesClass(ReplaceTransformer::class)]
 #[UsesClass(AlterTableMutation::class)]

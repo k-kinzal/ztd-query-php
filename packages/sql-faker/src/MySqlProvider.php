@@ -366,7 +366,9 @@ final class MySqlProvider extends Base
      */
     public function quotedHexLiteral(int $minBytes = 1, int $maxBytes = 8): string
     {
-        return "X'" . $this->rsg->hexString($minBytes * 2, $maxBytes * 2) . "'";
+        $bytes = $this->generator->numberBetween($minBytes, $maxBytes);
+
+        return "X'" . $this->rsg->hexString($bytes * 2, $bytes * 2) . "'";
     }
 
     /**

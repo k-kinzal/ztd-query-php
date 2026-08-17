@@ -488,9 +488,9 @@ final class MySqlProviderTest extends TestCase
         $faker->seed(12345);
         $provider = new MySqlProvider($faker);
 
-        $result = $provider->quotedHexLiteral(2, 4);
+        $result = $provider->quotedHexLiteral(4, 4);
 
-        self::assertMatchesRegularExpression("/^X'[0-9a-f]{4,8}'$/", $result);
+        self::assertMatchesRegularExpression("/^X'[0-9a-f]{8}'$/", $result);
     }
 
     public function testQuotedHexLiteralDefaultsToOneThroughEightBytes(): void
