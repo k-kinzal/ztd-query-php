@@ -38,7 +38,9 @@ final class PgSchemaPool
             'text_types',
             'CREATE TABLE text_types (id SERIAL PRIMARY KEY, col_text TEXT, col_varchar VARCHAR(255), col_char CHAR(10))',
             ['id', 'col_text', 'col_varchar', 'col_char'],
-            ['id']
+            ['id'],
+            [],
+            ['col_char' => 'CHAR(10)'],
         );
 
         self::$schemas['boolean_type'] = new SchemaDefinition(

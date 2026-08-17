@@ -154,4 +154,32 @@ final class UpdateBasicTest extends TestCase
             $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
         }
     }
+
+    public function testUpdateWithGroupedInSubquery(): void
+    {
+        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $users = 'prefix_' . bin2hex(random_bytes(8));
+        $orders = 'prefix_' . bin2hex(random_bytes(8));
+
+        try {
+            $rawPdo->exec("CREATE TABLE {$users} (id INTEGER PRIMARY KEY, name TEXT, tier TEXT)");
+            $rawPdo->exec("CREATE TABLE {$orders} (id INTEGER PRIMARY KEY, user_id INTEGER, total NUMERIC, status TEXT)");
+            $rawPdo->exec("INSERT INTO {$users} VALUES (1, 'Alice', 'standard'), (2, 'Bob', 'standard')");
+            $rawPdo->exec("INSERT INTO {$orders} VALUES (1, 1, 500, 'completed'), (2, 1, 300, 'completed'), (3, 2, 100, 'completed')");
+            $ztdPdo = ZtdPdo::fromPdo($rawPdo);
+            $ztdPdo->exec("INSERT INTO {$users} VALUES (1, 'Alice', 'standard'), (2, 'Bob', 'standard')");
+            $ztdPdo->exec("INSERT INTO {$orders} VALUES (1, 1, 500, 'completed'), (2, 1, 300, 'completed'), (3, 2, 100, 'completed')");
+
+            $sql = "UPDATE {$users} SET tier = 'premium' WHERE id IN (SELECT user_id FROM {$orders} WHERE status = 'completed' GROUP BY user_id HAVING SUM(total) > 400)";
+            self::assertSame($rawPdo->exec($sql), $ztdPdo->exec($sql));
+
+            $raw = $rawPdo->query("SELECT * FROM {$users} ORDER BY id");
+            $shadow = $ztdPdo->query("SELECT * FROM {$users} ORDER BY id");
+            self::assertNotFalse($raw);
+            self::assertNotFalse($shadow);
+            self::assertSame($raw->fetchAll(), $shadow->fetchAll());
+        } finally {
+            $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
+        }
+    }
 }

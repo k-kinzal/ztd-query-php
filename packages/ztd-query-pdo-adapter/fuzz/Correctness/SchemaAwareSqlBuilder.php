@@ -109,7 +109,9 @@ final class SchemaAwareSqlBuilder
             ? "''"
             : $this->generateLiteral($updateCol, $schema);
 
-        $whereClause = $this->buildPkWhere($schema);
+        $whereClause = $this->faker->boolean(25)
+            ? $this->buildGroupedSubqueryWhere($schema)
+            : $this->buildPkWhere($schema);
 
         return "UPDATE `$table` SET `$updateCol` = $newValue WHERE $whereClause";
     }
@@ -117,7 +119,9 @@ final class SchemaAwareSqlBuilder
     public function buildDelete(SchemaDefinition $schema): string
     {
         $table = $schema->name;
-        $whereClause = $this->buildPkWhere($schema);
+        $whereClause = $this->faker->boolean(25)
+            ? $this->buildGroupedSubqueryWhere($schema)
+            : $this->buildPkWhere($schema);
 
         return "DELETE FROM `$table` WHERE $whereClause";
     }
@@ -130,6 +134,15 @@ final class SchemaAwareSqlBuilder
             $conditions[] = "`$pk` = $literal";
         }
         return implode(' AND ', $conditions);
+    }
+
+    private function buildGroupedSubqueryWhere(SchemaDefinition $schema): string
+    {
+        $table = $schema->name;
+        $key = $schema->primaryKeys[0] ?? $schema->columns[0];
+
+        return "`$key` IN (SELECT `_ztd_grouped`.`$key` FROM "
+            . "(SELECT `$key` FROM `$table` GROUP BY `$key` HAVING COUNT(*) > 1) AS `_ztd_grouped`)";
     }
 
     /**

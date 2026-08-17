@@ -143,7 +143,9 @@ final class PgSchemaAwareSqlBuilder
             ]);
         }
 
-        $whereClause = $this->buildPkWhere($schema);
+        $whereClause = $this->faker->boolean(25)
+            ? $this->buildGroupedSubqueryWhere($schema)
+            : $this->buildPkWhere($schema);
 
         return "UPDATE $table SET " . $this->quoteIdentifier($updateCol) . " = $newValue WHERE $whereClause";
     }
@@ -151,7 +153,9 @@ final class PgSchemaAwareSqlBuilder
     public function buildDelete(SchemaDefinition $schema): string
     {
         $table = $this->quoteIdentifier($schema->name);
-        $whereClause = $this->buildPkWhere($schema);
+        $whereClause = $this->faker->boolean(25)
+            ? $this->buildGroupedSubqueryWhere($schema)
+            : $this->buildPkWhere($schema);
 
         return "DELETE FROM $table WHERE $whereClause";
     }
@@ -164,6 +168,14 @@ final class PgSchemaAwareSqlBuilder
             $conditions[] = $this->quoteIdentifier($pk) . " = $literal";
         }
         return implode(' AND ', $conditions);
+    }
+
+    private function buildGroupedSubqueryWhere(SchemaDefinition $schema): string
+    {
+        $table = $this->quoteIdentifier($schema->name);
+        $key = $this->quoteIdentifier($schema->primaryKeys[0] ?? $schema->columns[0]);
+
+        return "$key IN (SELECT $key FROM $table GROUP BY $key HAVING COUNT(*) > 1)";
     }
 
     /**

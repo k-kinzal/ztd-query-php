@@ -282,6 +282,60 @@ final class MysqliCteShadowingTest extends TestCase
         }
     }
 
+    public function testGroupedSelfReferencingSubqueryRestrictsUpdate(): void
+    {
+        [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();
+        $table = 'prefix_' . bin2hex(random_bytes(8));
+        $definition = '(id INT PRIMARY KEY, name VARCHAR(50), dept_id INT, salary DECIMAL(10,2), active TINYINT DEFAULT 1)';
+        $rawMysqli->query(sprintf('CREATE TABLE `%s` %s', $table, $definition));
+        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
+        try {
+            $rows = "VALUES (1, 'Alice', 1, 120000, 1), (2, 'Bob', 1, 110000, 1), (3, 'Charlie', 2, 90000, 1), (4, 'Diana', 3, 95000, 1), (5, 'Eve', 1, 130000, 1)";
+            $ztdMysqli->query(sprintf('INSERT INTO `%s` %s', $table, $rows));
+
+            $ztdMysqli->query(sprintf('UPDATE `%1$s` SET active = 0 WHERE dept_id IN (SELECT dept_id FROM `%1$s` GROUP BY dept_id HAVING AVG(salary) > 100000)', $table));
+
+            $result = $ztdMysqli->query(sprintf('SELECT id, active FROM `%s` ORDER BY id', $table));
+            self::assertInstanceOf(\mysqli_result::class, $result);
+            self::assertSame([
+                ['id' => 1, 'active' => 0],
+                ['id' => 2, 'active' => 0],
+                ['id' => 3, 'active' => 1],
+                ['id' => 4, 'active' => 1],
+                ['id' => 5, 'active' => 0],
+            ], $result->fetch_all(MYSQLI_ASSOC));
+        } finally {
+            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+        }
+    }
+
+    public function testGroupedSelfReferencingSubqueryRestrictsDelete(): void
+    {
+        [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();
+        $table = 'prefix_' . bin2hex(random_bytes(8));
+        $definition = '(id INT PRIMARY KEY, customer_id INT, amount DECIMAL(10,2), status VARCHAR(20))';
+        $rawMysqli->query(sprintf('CREATE TABLE `%s` %s', $table, $definition));
+        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
+        try {
+            $rows = "VALUES (1, 1, 50, 'completed'), (2, 1, 75, 'completed'), (3, 1, 30, 'cancelled'), (4, 2, 200, 'completed'), (5, 3, 10, 'completed'), (6, 3, 15, 'completed')";
+            $ztdMysqli->query(sprintf('INSERT INTO `%s` %s', $table, $rows));
+
+            $ztdMysqli->query(sprintf("DELETE FROM `%1\$s` WHERE customer_id IN (SELECT customer_id FROM `%1\$s` WHERE status = 'cancelled' GROUP BY customer_id HAVING COUNT(*) >= 1)", $table));
+
+            $result = $ztdMysqli->query(sprintf('SELECT * FROM `%s` ORDER BY id', $table));
+            self::assertInstanceOf(\mysqli_result::class, $result);
+            self::assertSame([
+                ['id' => 4, 'customer_id' => 2, 'amount' => '200.00', 'status' => 'completed'],
+                ['id' => 5, 'customer_id' => 3, 'amount' => '10.00', 'status' => 'completed'],
+                ['id' => 6, 'customer_id' => 3, 'amount' => '15.00', 'status' => 'completed'],
+            ], $result->fetch_all(MYSQLI_ASSOC));
+        } finally {
+            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+        }
+    }
+
     public function testAutoIncrementUsesShadowCounterWithoutModifyingPhysicalTable(): void
     {
         [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();

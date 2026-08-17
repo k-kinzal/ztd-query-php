@@ -117,4 +117,28 @@ final class DeleteBasicTest extends TestCase
 
         self::assertSame($rawRows, $ztdRows);
     }
+
+    public function testDeleteWithGroupedInSubquery(): void
+    {
+        $rawPdo = new \PDO('sqlite::memory:', null, null, [
+            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        ]);
+        $rawPdo->exec('CREATE TABLE customers (id INTEGER PRIMARY KEY, name TEXT)');
+        $rawPdo->exec('CREATE TABLE orders (id INTEGER PRIMARY KEY, customer_id INTEGER, amount REAL, status TEXT)');
+        $rawPdo->exec("INSERT INTO customers VALUES (1, 'Alice'), (2, 'Bob')");
+        $rawPdo->exec("INSERT INTO orders VALUES (1, 1, 50, 'completed'), (2, 1, 75, 'completed'), (3, 2, 10, 'completed')");
+        $ztdPdo = ZtdPdo::fromPdo($rawPdo);
+        $ztdPdo->exec("INSERT INTO customers VALUES (1, 'Alice'), (2, 'Bob')");
+        $ztdPdo->exec("INSERT INTO orders VALUES (1, 1, 50, 'completed'), (2, 1, 75, 'completed'), (3, 2, 10, 'completed')");
+
+        $sql = "DELETE FROM customers WHERE id IN (SELECT customer_id FROM orders WHERE status = 'completed' GROUP BY customer_id HAVING SUM(amount) < 50)";
+        self::assertSame($rawPdo->exec($sql), $ztdPdo->exec($sql));
+
+        $raw = $rawPdo->query('SELECT * FROM customers ORDER BY id');
+        $shadow = $ztdPdo->query('SELECT * FROM customers ORDER BY id');
+        self::assertNotFalse($raw);
+        self::assertNotFalse($shadow);
+        self::assertSame($raw->fetchAll(), $shadow->fetchAll());
+    }
 }

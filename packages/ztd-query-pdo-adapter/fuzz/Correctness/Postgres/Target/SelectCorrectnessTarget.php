@@ -120,7 +120,7 @@ final class SelectCorrectnessTarget
             /** @var array<int, array<string, mixed>> $rawResult */
             /** @var array<int, array<string, mixed>> $ztdResult */
             $hasOrderBy = stripos($sql, 'ORDER BY') !== false;
-            if (!$this->comparator->compareRows($rawResult, $ztdResult, $schema->primaryKeys, [], !$hasOrderBy)) {
+            if (!$this->comparator->compareRows($rawResult, $ztdResult, $schema->primaryKeys, $schema->columnTypes, !$hasOrderBy)) {
                 throw new Error(
                     "SELECT result mismatch\n" .
                     "Seed: $seed\n" .

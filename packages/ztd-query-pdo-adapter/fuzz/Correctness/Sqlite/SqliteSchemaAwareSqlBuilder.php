@@ -99,8 +99,11 @@ final class SqliteSchemaAwareSqlBuilder
         $updateCol = $this->faker->randomElement($nonPkCols);
         $newValue = $this->generateLiteral($updateCol);
 
-        $alias = $this->faker->boolean(35) ? '_ztd_target' : null;
-        $whereClause = $this->buildPkWhere($schema, $alias);
+        $groupedSubquery = $this->faker->boolean(25);
+        $alias = !$groupedSubquery && $this->faker->boolean(35) ? '_ztd_target' : null;
+        $whereClause = $groupedSubquery
+            ? $this->buildGroupedSubqueryWhere($schema)
+            : $this->buildPkWhere($schema, $alias);
         $target = $alias === null ? $table : "$table AS " . $this->quoteIdentifier($alias);
 
         return "UPDATE $target SET " . $this->quoteIdentifier($updateCol) . " = $newValue WHERE $whereClause";
@@ -109,7 +112,9 @@ final class SqliteSchemaAwareSqlBuilder
     public function buildDelete(SchemaDefinition $schema): string
     {
         $table = $this->quoteIdentifier($schema->name);
-        $whereClause = $this->buildPkWhere($schema);
+        $whereClause = $this->faker->boolean(25)
+            ? $this->buildGroupedSubqueryWhere($schema)
+            : $this->buildPkWhere($schema);
 
         return "DELETE FROM $table WHERE $whereClause";
     }
@@ -126,6 +131,14 @@ final class SqliteSchemaAwareSqlBuilder
             $conditions[] = $column . " = $literal";
         }
         return implode(' AND ', $conditions);
+    }
+
+    private function buildGroupedSubqueryWhere(SchemaDefinition $schema): string
+    {
+        $table = $this->quoteIdentifier($schema->name);
+        $key = $this->quoteIdentifier($schema->primaryKeys[0] ?? $schema->columns[0]);
+
+        return "$key IN (SELECT $key FROM $table GROUP BY $key HAVING COUNT(*) > 1)";
     }
 
     /**

@@ -80,7 +80,7 @@ final class InsertCorrectnessTarget
         /** @var array<int, array<string, mixed>> $ztdRows */
         $ztdRows = $stmt !== false ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
 
-        if (!$this->comparator->compareRows($rawRows, $ztdRows, $schema->primaryKeys)) {
+        if (!$this->comparator->compareRows($rawRows, $ztdRows, $schema->primaryKeys, $schema->columnTypes)) {
             throw new Error(
                 "INSERT table state mismatch\n" .
                 "Seed: $seed\n" .

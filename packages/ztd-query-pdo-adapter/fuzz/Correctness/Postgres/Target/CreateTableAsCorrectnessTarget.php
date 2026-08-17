@@ -93,15 +93,9 @@ final class CreateTableAsCorrectnessTarget
 
     private function compareQuery(string $query, string $createSql, int $seed, SchemaDefinition $schema): void
     {
-        $rawRows = $this->normalizeFixedCharacterRows(
-            $this->fetchAll($this->harness->getRawPdo(), $query),
-            $schema,
-        );
+        $rawRows = $this->fetchAll($this->harness->getRawPdo(), $query);
         try {
-            $ztdRows = $this->normalizeFixedCharacterRows(
-                $this->fetchAll($this->harness->getZtdPdo(), $query),
-                $schema,
-            );
+            $ztdRows = $this->fetchAll($this->harness->getZtdPdo(), $query);
         } catch (Throwable $exception) {
             throw new Error(
                 "ZTD CTAS query failed after native success\nSeed: $seed\nSQL: $createSql\nQuery: $query",
@@ -110,7 +104,7 @@ final class CreateTableAsCorrectnessTarget
             );
         }
 
-        if (!$this->comparator->compareRows($rawRows, $ztdRows, [], [], true)) {
+        if (!$this->comparator->compareRows($rawRows, $ztdRows, [], $schema->columnTypes, true)) {
             throw new Error(
                 "CTAS result mismatch\n"
                 . "Seed: $seed\n"
@@ -120,29 +114,6 @@ final class CreateTableAsCorrectnessTarget
                 . 'ZTD: ' . json_encode($ztdRows, JSON_THROW_ON_ERROR),
             );
         }
-    }
-
-    /**
-     * PostgreSQL pads CHAR values when reading a physical table, while the existing
-     * shadow source stores their semantically equivalent unpadded representation.
-     *
-     * @param array<int, array<string, mixed>> $rows
-     * @return array<int, array<string, mixed>>
-     */
-    private function normalizeFixedCharacterRows(array $rows, SchemaDefinition $schema): array
-    {
-        if ($schema->name !== 'text_types') {
-            return $rows;
-        }
-
-        foreach ($rows as $index => $row) {
-            $value = $row['col_char'] ?? null;
-            if (is_string($value)) {
-                $rows[$index]['col_char'] = rtrim($value, ' ');
-            }
-        }
-
-        return $rows;
     }
 
     /** @return array<int, array<string, mixed>> */
