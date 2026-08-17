@@ -15,6 +15,7 @@ use ZtdQuery\Platform\Sqlite\SqliteMutationResolver;
 use ZtdQuery\Platform\Sqlite\SqliteLexicalMasker;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
 use ZtdQuery\Platform\Sqlite\SqliteQueryGuard;
+use ZtdQuery\Platform\Sqlite\SqliteReturningProjectionParser;
 use ZtdQuery\Platform\Sqlite\SqliteRewriter;
 use ZtdQuery\Platform\Sqlite\SqliteSchemaParser;
 use ZtdQuery\Platform\Sqlite\Transformer\DeleteTransformer;
@@ -42,6 +43,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(SqliteParser::class)]
 #[UsesClass(SqliteQueryGuard::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteTransactionStatementParser::class)]
+#[UsesClass(SqliteReturningProjectionParser::class)]
 #[UsesClass(SqliteSchemaParser::class)]
 #[UsesClass(SqliteMutationResolver::class)]
 #[UsesClass(SqliteTransformer::class)]

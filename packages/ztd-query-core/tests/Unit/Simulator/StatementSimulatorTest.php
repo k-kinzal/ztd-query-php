@@ -16,6 +16,7 @@ use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Schema\CandidateKeySet;
 use ZtdQuery\Shadow\Mutation\InsertMutation;
+use ZtdQuery\Shadow\Mutation\MutationImpact;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTransactionManager;
 use ZtdQuery\Simulator\StatementSimulator;
@@ -30,6 +31,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(RewritePlan::class)]
 #[UsesClass(ResultSelectRunner::class)]
 #[UsesClass(InsertMutation::class)]
+#[UsesClass(MutationImpact::class)]
 #[UsesClass(CandidateKeySet::class)]
 #[UsesClass(ShadowStore::class)]
 #[UsesClass(ShadowTransactionManager::class)]

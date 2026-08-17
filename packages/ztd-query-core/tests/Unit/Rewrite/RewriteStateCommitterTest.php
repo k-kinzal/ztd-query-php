@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Rewrite;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Rewrite\RewriteStateCommitter;
 
-#[CoversClass(RewriteStateCommitter::class)]
+#[CoversNothing]
 final class RewriteStateCommitterTest extends TestCase
 {
     public function testDefinesSuccessfulExecutionCommitBoundary(): void

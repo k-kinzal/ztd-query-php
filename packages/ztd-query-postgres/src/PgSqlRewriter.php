@@ -9,7 +9,6 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Rewrite\MultiRewritePlan;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\AffectedRowsMode;
-use ZtdQuery\Rewrite\ReturningProjection;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Rewrite\RewriteStateCommitter;
@@ -36,6 +35,7 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
     private PgSqlTransformer $transformer;
     private PgSqlMutationResolver $mutationResolver;
     private PgSqlParser $parser;
+    private PgSqlReturningProjectionParser $returningProjectionParser;
 
     public function __construct(
         PgSqlQueryGuard $guard,
@@ -51,6 +51,7 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
         $this->transformer = $transformer;
         $this->mutationResolver = $mutationResolver;
         $this->parser = $parser;
+        $this->returningProjectionParser = new PgSqlReturningProjectionParser();
     }
 
     /**
@@ -165,7 +166,7 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
             $transformedSql,
             QueryKind::WRITE_SIMULATED,
             $mutation,
-            ReturningProjection::parse($sql),
+            $this->returningProjectionParser->parse($sql),
             AffectedRowsMode::Matched,
         );
     }

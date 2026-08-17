@@ -30,6 +30,7 @@ final class GenericExecuteResultTest extends TestCase
         self::assertFalse($result->isPassthrough());
         self::assertFalse($result->isSuccess());
         self::assertSame(QueryKind::WRITE_SIMULATED, $result->kind());
+        self::assertFalse($result->hasResultSet());
     }
 
     public function testFromBufferedRows(): void

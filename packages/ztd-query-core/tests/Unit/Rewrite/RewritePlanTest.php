@@ -10,8 +10,6 @@ use ZtdQuery\Rewrite\ReturningProjection;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Schema\CandidateKeySet;
 use ZtdQuery\Shadow\Mutation\InsertMutation;
-use ZtdQuery\Sql\SqlToken;
-use ZtdQuery\Sql\SqlTokenStream;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -19,8 +17,6 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(InsertMutation::class)]
 #[UsesClass(CandidateKeySet::class)]
 #[UsesClass(ReturningProjection::class)]
-#[UsesClass(SqlToken::class)]
-#[UsesClass(SqlTokenStream::class)]
 #[CoversClass(RewritePlan::class)]
 final class RewritePlanTest extends TestCase
 {
@@ -43,7 +39,7 @@ final class RewritePlanTest extends TestCase
 
     public function testPlanCarriesReturningAndAffectedRowsMetadata(): void
     {
-        $projection = ReturningProjection::parse('INSERT INTO users VALUES (1) RETURNING id');
+        $projection = ReturningProjection::fromItems([['source' => 'id', 'output' => null]]);
         $plan = new RewritePlan(
             'SELECT 1 AS id',
             QueryKind::WRITE_SIMULATED,

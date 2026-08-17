@@ -10,7 +10,6 @@ use ZtdQuery\Platform\Sqlite\Transformer\SqliteTransformer;
 use ZtdQuery\Rewrite\MultiRewritePlan;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\AffectedRowsMode;
-use ZtdQuery\Rewrite\ReturningProjection;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\RewriteStateCommitter;
 use ZtdQuery\Rewrite\SqlRewriter;
@@ -38,6 +37,7 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
     private SqliteTransformer $transformer;
     private SqliteMutationResolver $mutationResolver;
     private SqliteParser $parser;
+    private SqliteReturningProjectionParser $returningProjectionParser;
 
     public function __construct(
         SqliteQueryGuard $guard,
@@ -53,6 +53,7 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
         $this->transformer = $transformer;
         $this->mutationResolver = $mutationResolver;
         $this->parser = $parser;
+        $this->returningProjectionParser = new SqliteReturningProjectionParser();
     }
 
     /**
@@ -138,7 +139,7 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
             $transformedSql,
             QueryKind::WRITE_SIMULATED,
             $mutation,
-            ReturningProjection::parse($stmtSql),
+            $this->returningProjectionParser->parse($stmtSql),
             AffectedRowsMode::Matched,
         );
     }

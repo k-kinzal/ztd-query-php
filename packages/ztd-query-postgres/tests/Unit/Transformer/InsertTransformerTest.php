@@ -376,6 +376,23 @@ final class InsertTransformerTest extends TestCase
         self::assertStringContainsString('3 AS "id"', $second);
     }
 
+    public function testUncommittedTransformDoesNotConsumeSerialValue(): void
+    {
+        $transformer = new InsertTransformer(new PgSqlParser(), new SelectTransformer());
+        $tables = ['users' => [
+            'rows' => [],
+            'columns' => ['id', 'name'],
+            'columnTypes' => [],
+            'identityStrategies' => ['id' => IdentityGenerationStrategy::Sequence],
+        ]];
+
+        $preview = $transformer->transform("INSERT INTO users (name) VALUES ('preview')", $tables);
+        $executed = $transformer->transform("INSERT INTO users (name) VALUES ('executed')", $tables);
+
+        self::assertStringContainsString('1 AS "id"', $preview);
+        self::assertStringContainsString('1 AS "id"', $executed);
+    }
+
     public function testInsertAllocatesSerialValueAfterExistingRows(): void
     {
         $transformer = new InsertTransformer(new PgSqlParser(), new SelectTransformer());

@@ -71,14 +71,13 @@ final class MutationImpact
      */
     private function difference(array $left, array $right): array
     {
-        $remaining = array_values($right);
+        $remaining = $right;
         $difference = [];
         foreach ($left as $row) {
             $match = null;
             foreach ($remaining as $index => $candidate) {
                 if ($this->rowsEqual($row, $candidate)) {
                     $match = $index;
-                    break;
                 }
             }
             if ($match === null) {

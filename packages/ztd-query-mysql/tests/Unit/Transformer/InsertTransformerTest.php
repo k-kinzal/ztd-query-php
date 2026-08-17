@@ -858,6 +858,23 @@ final class InsertTransformerTest extends TestCase
         self::assertStringContainsString('3 AS `id`', $second);
     }
 
+    public function testUncommittedTransformDoesNotConsumeAutoIncrementValue(): void
+    {
+        $transformer = new InsertTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = ['users' => [
+            'rows' => [],
+            'columns' => ['id', 'name'],
+            'columnTypes' => [],
+            'identityStrategies' => ['id' => IdentityGenerationStrategy::MaxValue],
+        ]];
+
+        $preview = $transformer->transform("INSERT INTO users (name) VALUES ('preview')", $tables);
+        $executed = $transformer->transform("INSERT INTO users (name) VALUES ('executed')", $tables);
+
+        self::assertStringContainsString('1 AS `id`', $preview);
+        self::assertStringContainsString('1 AS `id`', $executed);
+    }
+
     public function testTransformAllocatesAfterExistingAutoIncrementRows(): void
     {
         $transformer = new InsertTransformer(new MySqlParser(), new SelectTransformer());

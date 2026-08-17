@@ -14,6 +14,7 @@ use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 use ZtdQuery\Platform\Postgres\PgSqlMutationResolver;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
 use ZtdQuery\Platform\Postgres\PgSqlQueryGuard;
+use ZtdQuery\Platform\Postgres\PgSqlReturningProjectionParser;
 use ZtdQuery\Platform\Postgres\PgSqlRewriter;
 use ZtdQuery\Platform\Postgres\PgSqlSchemaParser;
 use ZtdQuery\Platform\Postgres\PgSqlTransformer;
@@ -43,6 +44,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(PgSqlSchemaParser::class)]
 #[UsesClass(PgSqlQueryGuard::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlTransactionStatementParser::class)]
+#[UsesClass(PgSqlReturningProjectionParser::class)]
 #[UsesClass(PgSqlMutationResolver::class)]
 #[UsesClass(PgSqlTransformer::class)]
 #[UsesClass(SelectTransformer::class)]

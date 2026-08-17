@@ -187,11 +187,11 @@ final class ShadowIdentityAllocatorTest extends TestCase
         $strategies = ['id' => IdentityGenerationStrategy::Sequence];
 
         $allocator->beginProjection();
-        self::assertSame(['id' => '1'], $allocator->allocateMissing('users', $strategies, ['name'], ["'preview'"], []));
+        self::assertSame(['id' => 1], $allocator->allocateMissing('users', $strategies, ['name'], []));
         $allocator->beginProjection();
-        self::assertSame(['id' => '1'], $allocator->allocateMissing('users', $strategies, ['name'], ["'execute'"], []));
+        self::assertSame(['id' => 1], $allocator->allocateMissing('users', $strategies, ['name'], []));
         $allocator->commitProjection();
         $allocator->beginProjection();
-        self::assertSame(['id' => '2'], $allocator->allocateMissing('users', $strategies, ['name'], ["'next'"], [['id' => 1]]));
+        self::assertSame(['id' => 2], $allocator->allocateMissing('users', $strategies, ['name'], [['id' => 1]]));
     }
 }

@@ -439,6 +439,23 @@ final class InsertTransformerTest extends TestCase
         self::assertStringContainsString('3 AS "id"', $second);
     }
 
+    public function testUncommittedTransformDoesNotConsumeRowidValue(): void
+    {
+        $transformer = new InsertTransformer(new SqliteParser(), new SelectTransformer());
+        $tables = ['users' => [
+            'rows' => [],
+            'columns' => ['id', 'name'],
+            'columnTypes' => [],
+            'identityStrategies' => ['id' => IdentityGenerationStrategy::MaxValue],
+        ]];
+
+        $preview = $transformer->transform("INSERT INTO users (name) VALUES ('preview')", $tables);
+        $executed = $transformer->transform("INSERT INTO users (name) VALUES ('executed')", $tables);
+
+        self::assertStringContainsString('1 AS "id"', $preview);
+        self::assertStringContainsString('1 AS "id"', $executed);
+    }
+
     public function testTransformAllocatesRowidAfterExistingRows(): void
     {
         $transformer = new InsertTransformer(new SqliteParser(), new SelectTransformer());

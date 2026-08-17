@@ -5,50 +5,59 @@ declare(strict_types=1);
 namespace Tests\Unit\Rewrite;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Rewrite\ReturningProjection;
-use ZtdQuery\Sql\SqlToken;
-use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(ReturningProjection::class)]
-#[UsesClass(SqlToken::class)]
-#[UsesClass(SqlTokenStream::class)]
-#[UsesClass(UnsupportedSqlException::class)]
 final class ReturningProjectionTest extends TestCase
 {
-    public function testProjectsQualifiedQuotedColumnsAndAliases(): void
+    public function testProjectsNamedWildcardAndAliasedItemsForEveryRow(): void
     {
-        $projection = ReturningProjection::parse(
-            'UPDATE users SET name = \'x\' RETURNING users.id, "name" AS display_name',
-        );
-        self::assertNotNull($projection);
+        $projection = ReturningProjection::fromItems([
+            ['source' => 'id', 'output' => 'original_id'],
+            ['source' => null, 'output' => null],
+            ['source' => 'name', 'output' => 'display_name'],
+            ['source' => 'missing', 'output' => null],
+        ]);
 
         self::assertSame([
-            ['id' => 1, 'display_name' => 'Alice'],
-        ], $projection->project([['id' => 1, 'name' => 'Alice', 'ignored' => true]]));
-    }
-
-    public function testWildcardPreservesTheWholeMutationRow(): void
-    {
-        $projection = ReturningProjection::parse('DELETE FROM users RETURNING users.*');
-        self::assertNotNull($projection);
-
-        self::assertSame([['id' => 1, 'name' => 'Alice']], $projection->project([
+            ['original_id' => 1, 'id' => 1, 'name' => 'Alice', 'display_name' => 'Alice', 'missing' => null],
+            ['original_id' => 2, 'id' => 2, 'name' => 'Bob', 'display_name' => 'Bob', 'missing' => null],
+        ], $projection->project([
             ['id' => 1, 'name' => 'Alice'],
+            ['id' => 2, 'name' => 'Bob'],
         ]));
     }
 
-    public function testReturnsNullWhenStatementHasNoReturningClause(): void
+    public function testRejectsEmptyProjection(): void
     {
-        self::assertNull(ReturningProjection::parse('INSERT INTO users VALUES (1)'));
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Returning projection requires at least one item.');
+
+        ReturningProjection::fromItems([]);
     }
 
-    public function testRejectsExpressionsInsteadOfReturningWrongValues(): void
+    public function testRejectsWildcardOutputName(): void
     {
-        $this->expectException(UnsupportedSqlException::class);
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Wildcard returning projections cannot have an output name.');
 
-        ReturningProjection::parse('INSERT INTO users VALUES (1) RETURNING id + 1');
+        ReturningProjection::fromItems([['source' => null, 'output' => 'all']]);
+    }
+
+    public function testRejectsEmptySourceName(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Returning projection names must not be empty.');
+
+        ReturningProjection::fromItems([['source' => '', 'output' => null]]);
+    }
+
+    public function testRejectsEmptyOutputName(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Returning projection names must not be empty.');
+
+        ReturningProjection::fromItems([['source' => 'id', 'output' => '']]);
     }
 }
