@@ -912,13 +912,36 @@ final class PostgreSqlProviderTest extends TestCase
 
     public function testDoStatementTargetsFuzzFixture(): void
     {
-        $faker = Factory::create();
-        $faker->seed(12345);
-        $provider = new PostgreSqlProvider($faker);
+        $maximum = new class () extends Generator {
+            /**
+             * @param mixed $int1
+             * @param mixed $int2
+             */
+            #[\Override]
+            public function numberBetween($int1 = 0, $int2 = 2147483647): int
+            {
+                return is_int($int2) ? $int2 : 2147483647;
+            }
+        };
+        $minimum = new class () extends Generator {
+            /**
+             * @param mixed $int1
+             * @param mixed $int2
+             */
+            #[\Override]
+            public function numberBetween($int1 = 0, $int2 = 2147483647): int
+            {
+                return is_int($int1) ? $int1 : 1;
+            }
+        };
 
-        self::assertMatchesRegularExpression(
-            '/^DO \$ztd\$ BEGIN INSERT INTO users \(id, name\) VALUES \([1-9][0-9]*, \'fuzz\'\); END \$ztd\$$/',
-            $provider->doStatement(),
+        self::assertSame(
+            "DO \$ztd\$ BEGIN INSERT INTO users (id, name) VALUES (2147483647, 'fuzz'); END \$ztd\$",
+            (new PostgreSqlProvider($maximum))->doStatement(),
+        );
+        self::assertSame(
+            "DO \$ztd\$ BEGIN INSERT INTO users (id, name) VALUES (1, 'fuzz'); END \$ztd\$",
+            (new PostgreSqlProvider($minimum))->doStatement(),
         );
     }
 
