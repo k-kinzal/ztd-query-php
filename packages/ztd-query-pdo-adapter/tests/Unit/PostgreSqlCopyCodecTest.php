@@ -32,6 +32,14 @@ final class PostgreSqlCopyCodecTest extends TestCase
         );
     }
 
+    public function testRelationRejectsEmptyQualifierWithSpecificReason(): void
+    {
+        $this->expectException(\ValueError::class);
+        $this->expectExceptionMessage('must not contain an empty qualifier component');
+
+        (new PostgreSqlCopyCodec())->relation('users.');
+    }
+
     #[DataProvider('providerInvalidRelation')]
     public function testRelationRejectsInvalidStructure(string $relation): void
     {
@@ -141,6 +149,18 @@ final class PostgreSqlCopyCodecTest extends TestCase
             $codec->decodeRow('\\0|\\7|\\12|\\1014|\\x4|\\x4F|\\x4Fa', '|', '\\N'),
         );
         self::assertSame(['S', 'tail'], $codec->decodeRow('\\1232tail', '2', '\\N'));
+        self::assertSame(
+            ['prefixN', 'octal-A', 'hex-A'],
+            $codec->decodeRow('prefix\\N|octal-\\101|hex-\\x41', '|', '\\N'),
+        );
+        self::assertSame(
+            ["\xff", '?', "\0", "\xff"],
+            $codec->decodeRow('\\377|\\77|\\x0|\\xff', '|', '\\N'),
+        );
+        self::assertSame(["\x01/"], $codec->decodeRow('\\1/', '|', '\\N'));
+        self::assertSame([null], $codec->decodeRow('prefix\\101', '|', 'prefix\\101'));
+        self::assertSame([null], $codec->decodeRow('prefix\\x41', '|', 'prefix\\x41'));
+        self::assertSame(['value', null, 'tail'], $codec->decodeRow('value|NULL|tail', '|', 'NULL'));
     }
 
     #[DataProvider('providerLineEnding')]

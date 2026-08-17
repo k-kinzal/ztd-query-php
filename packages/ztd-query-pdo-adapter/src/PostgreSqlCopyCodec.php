@@ -14,30 +14,24 @@ final class PostgreSqlCopyCodec
     /** @return array{name: string, sql: string} */
     public function relation(string $tableName): array
     {
-        $tokens = SqlTokenStream::tokenize($tableName)->significantTokens();
-        if ($tokens === []) {
+        $parts = SqlTokenStream::tokenize($tableName)->splitTopLevel('.');
+        if ($parts === []) {
             throw new \ValueError('PostgreSQL COPY table name must not be empty.');
+        }
+        if (in_array('', $parts, true)) {
+            throw new \ValueError('PostgreSQL COPY table name must not contain an empty qualifier component.');
+        }
+        if (count($parts) > 2) {
+            throw new \ValueError('PostgreSQL COPY table name may contain at most a schema and table component.');
         }
 
         $components = [];
-        for ($index = 0; isset($tokens[$index]); $index++) {
-            $components[] = $this->identifier($tokens[$index], 'table name');
-            $index++;
-            if (!isset($tokens[$index])) {
-                continue;
-            }
-
-            $separator = $tokens[$index];
-            if ($separator->kind !== SqlTokenKind::Symbol || $separator->text !== '.') {
+        foreach ($parts as $part) {
+            $tokens = SqlTokenStream::tokenize($part)->significantTokens();
+            if (count($tokens) !== 1) {
                 throw new \ValueError('PostgreSQL COPY table name must be an identifier or schema-qualified identifier.');
             }
-            if (!isset($tokens[$index + 1])) {
-                throw new \ValueError('PostgreSQL COPY table name must not end with a qualifier separator.');
-            }
-        }
-
-        if (count($components) > 2) {
-            throw new \ValueError('PostgreSQL COPY table name may contain at most a schema and table component.');
+            $components[] = $this->identifier($tokens[0], 'table name');
         }
 
         return [
@@ -129,10 +123,6 @@ final class PostgreSqlCopyCodec
 
     private function identifier(SqlToken $token, string $subject): string
     {
-        if (!in_array($token->kind, [SqlTokenKind::Word, SqlTokenKind::QuotedIdentifier], true)) {
-            throw new \ValueError(sprintf('PostgreSQL COPY %s must be a valid identifier.', $subject));
-        }
-
         $parsed = SqlTokenStream::tokenize($token->text)->identifierAt();
         if ($parsed === null) {
             throw new \ValueError(sprintf('PostgreSQL COPY %s must be a valid identifier.', $subject));
@@ -199,37 +189,45 @@ final class PostgreSqlCopyCodec
     private function decodeFields(string $row, string $separator, string $nullAs): array
     {
         $values = [];
-        $raw = '';
         $decoded = '';
+        $fieldStart = 0;
         $length = strlen($row);
         for ($index = 0; $index <= $length; $index++) {
             if ($index === $length || $row[$index] === $separator) {
+                $raw = substr($row, $fieldStart, $index - $fieldStart);
                 $values[] = $raw === $nullAs ? null : $decoded;
-                $raw = '';
                 $decoded = '';
+                $fieldStart = $index + 1;
                 continue;
             }
 
             $character = $row[$index];
             if ($character !== '\\') {
-                $raw .= $character;
                 $decoded .= $character;
                 continue;
             }
 
-            $raw .= $character;
             $next = $row[$index + 1] ?? null;
             if ($next === null) {
                 throw new \ValueError('PostgreSQL COPY field ends with an incomplete backslash escape.');
             }
-            $raw .= $next;
             $index++;
 
             if ($next >= '0' && $next <= '7') {
                 $digits = $next;
-                while (strlen($digits) < 3 && isset($row[$index + 1]) && $row[$index + 1] >= '0' && $row[$index + 1] <= '7') {
-                    $digit = $row[++$index];
-                    $raw .= $digit;
+                while (strlen($digits) < 3) {
+                    $following = $row[$index + 1] ?? null;
+                    if ($following === null) {
+                        break;
+                    }
+                    if ($following < '0') {
+                        break;
+                    }
+                    if ($following > '7') {
+                        break;
+                    }
+                    $index++;
+                    $digit = $following;
                     $digits .= $digit;
                 }
                 $byte = intval($digits, 8);
@@ -239,17 +237,22 @@ final class PostgreSqlCopyCodec
                 $decoded .= chr($byte);
                 continue;
             }
-            if ($next === 'x' && isset($row[$index + 1]) && ctype_xdigit($row[$index + 1])) {
-                $digit = $row[++$index];
-                $raw .= $digit;
+            $following = $row[$index + 1] ?? null;
+            if ($next === 'x' && $following !== null && ctype_xdigit($following)) {
+                $index++;
+                $digit = $following;
                 $digits = $digit;
-                if (isset($row[$index + 1]) && ctype_xdigit($row[$index + 1])) {
-                    $digit = $row[++$index];
-                    $raw .= $digit;
+                $following = $row[$index + 1] ?? null;
+                if ($following !== null && ctype_xdigit($following)) {
+                    $index++;
+                    $digit = $following;
                     $digits .= $digit;
                 }
                 $byte = intval($digits, 16);
-                if ($byte < 0 || $byte > 255) {
+                if ($byte < 0) {
+                    throw new \ValueError('PostgreSQL COPY hexadecimal escape must not be negative.');
+                }
+                if ($byte > 255) {
                     throw new \ValueError('PostgreSQL COPY hexadecimal escape must fit in one byte.');
                 }
                 $decoded .= chr($byte);

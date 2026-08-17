@@ -65,6 +65,7 @@ final class SessionTest extends TestCase
         );
 
         self::assertTrue($session->isEnabled());
+        self::assertNull($session->tableDefinition('users'));
 
         $session->disable();
         self::assertFalse($session->isEnabled());
