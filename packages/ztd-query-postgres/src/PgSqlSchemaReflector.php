@@ -6,6 +6,8 @@ namespace ZtdQuery\Platform\Postgres;
 
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Platform\SchemaReflector;
+use ZtdQuery\Platform\ViewReflector;
+use ZtdQuery\Schema\ViewDefinition;
 
 /**
  * Fetches PostgreSQL schema information via information_schema queries.
@@ -13,7 +15,7 @@ use ZtdQuery\Platform\SchemaReflector;
  * Reconstructs CREATE TABLE statements from pg_catalog/information_schema
  * since PostgreSQL has no SHOW CREATE TABLE equivalent.
  */
-final class PgSqlSchemaReflector implements SchemaReflector
+final class PgSqlSchemaReflector implements SchemaReflector, ViewReflector
 {
     private ConnectionInterface $connection;
 
@@ -60,6 +62,29 @@ final class PgSqlSchemaReflector implements SchemaReflector
         }
 
         return $result;
+    }
+
+    /** {@inheritDoc} */
+    public function reflectViews(): array
+    {
+        $stmt = $this->connection->query(
+            'SELECT viewname, definition FROM pg_views WHERE schemaname = current_schema() ORDER BY viewname',
+        );
+        if ($stmt === false) {
+            return [];
+        }
+
+        $definitions = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $viewName = $row['viewname'] ?? null;
+            $query = $row['definition'] ?? null;
+            if (!is_string($viewName) || $viewName === '' || !is_string($query) || trim($query) === '') {
+                continue;
+            }
+            $definitions[$viewName] = ViewDefinition::fromQuery($query);
+        }
+
+        return $definitions;
     }
 
     private function buildCreateTableSql(string $tableName): ?string

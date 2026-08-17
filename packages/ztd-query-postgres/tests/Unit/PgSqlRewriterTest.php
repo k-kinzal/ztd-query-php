@@ -27,6 +27,8 @@ use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
+use ZtdQuery\Schema\ViewDefinition;
+use ZtdQuery\Schema\ViewDefinitionSet;
 use ZtdQuery\Shadow\Mutation\CreateTableMutation;
 use ZtdQuery\Shadow\Mutation\DeleteMutation;
 use ZtdQuery\Shadow\Mutation\DropTableMutation;
@@ -63,6 +65,41 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlNativeUpsertProjector::class)]
 final class PgSqlRewriterTest extends RewriterContractTest
 {
+    public function testRegisteredViewIsKnownAndMaterialized(): void
+    {
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $parser = new PgSqlParser();
+        $schemaParser = new PgSqlSchemaParser();
+        $definition = $schemaParser->parse($this->usersCreateTableSql());
+        self::assertNotNull($definition);
+        $registry->register('users', $definition);
+        $store->set('users', [['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com']]);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $transformer = new PgSqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer);
+        $resolver = new PgSqlMutationResolver($store, $registry, $schemaParser, $parser);
+        $views = new ViewDefinitionSet();
+        $views->register('active_users', ViewDefinition::fromQuery('SELECT id FROM public.users'));
+        $rewriter = new PgSqlRewriter(new PgSqlQueryGuard($parser), $store, $registry, $transformer, $resolver, $parser, $views);
+
+        $sql = $rewriter->rewrite('SELECT * FROM active_users')->sql();
+        self::assertStringStartsWith('WITH "users" AS MATERIALIZED', $sql);
+        self::assertStringContainsString('"active_users" AS MATERIALIZED (SELECT id FROM users)', $sql);
+
+        $viewOnlyStore = new ShadowStore();
+        $viewOnlyRegistry = new TableDefinitionRegistry();
+        $viewOnlyViews = new ViewDefinitionSet();
+        $viewOnlyViews->register('constant_view', ViewDefinition::fromQuery('SELECT 1 AS id'));
+        $viewOnlyResolver = new PgSqlMutationResolver($viewOnlyStore, $viewOnlyRegistry, $schemaParser, $parser);
+        $viewOnlyRewriter = new PgSqlRewriter(new PgSqlQueryGuard($parser), $viewOnlyStore, $viewOnlyRegistry, $transformer, $viewOnlyResolver, $parser, $viewOnlyViews);
+
+        $this->expectException(UnknownSchemaException::class);
+        $viewOnlyRewriter->rewrite('SELECT * FROM missing_table');
+    }
+
     public function testRegisteredTableUpsertProjectsConflictExpression(): void
     {
         $store = new ShadowStore();

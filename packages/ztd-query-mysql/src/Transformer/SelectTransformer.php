@@ -51,6 +51,11 @@ final class SelectTransformer implements SqlTransformer
 
         $ctes = [];
         foreach ($tables as $tableName => $tableContext) {
+            if (isset($tableContext['viewSql'])) {
+                $ctes[$tableName] = $this->quoter->quote($tableName) . " AS ({$tableContext['viewSql']})";
+                continue;
+            }
+
             $rows = $tableContext['rows'];
             $columns = $tableContext['columns'];
             $columnTypes = $tableContext['columnTypes'];
@@ -228,7 +233,7 @@ final class SelectTransformer implements SqlTransformer
     /**
      * Rewrite ORDER BY on SET columns to MySQL-compatible bit-order ranking.
      *
-     * @param array<string, array{
+     * @param array<string, array{viewSql: string}|array{
      *     rows: array<int, array<string, mixed>>,
      *     columns: array<int, string>,
      *     columnTypes: array<string, ColumnType>
@@ -244,6 +249,9 @@ final class SelectTransformer implements SqlTransformer
         $unqualifiedSetMap = [];
 
         foreach ($tables as $tableName => $tableContext) {
+            if (isset($tableContext['viewSql'])) {
+                continue;
+            }
             if (stripos($sql, $tableName) === false) {
                 continue;
             }

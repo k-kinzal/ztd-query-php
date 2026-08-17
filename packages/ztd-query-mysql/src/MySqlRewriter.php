@@ -16,6 +16,7 @@ use ZtdQuery\Sql\TransactionStatement;
 use PhpMyAdmin\SqlParser\Statement;
 use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
 use ZtdQuery\Schema\TableDefinitionRegistry;
+use ZtdQuery\Schema\ViewDefinitionSet;
 use ZtdQuery\Shadow\ShadowStore;
 use PhpMyAdmin\SqlParser\Statements\AlterStatement;
 use PhpMyAdmin\SqlParser\Statements\CreateStatement;
@@ -42,6 +43,7 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
     private MySqlMutationResolver $mutationResolver;
     private MySqlParser $parser;
     private MySqlCteShadowComposer $cteComposer;
+    private ViewDefinitionSet $views;
 
     public function __construct(
         MySqlQueryGuard $guard,
@@ -49,7 +51,8 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
         TableDefinitionRegistry $registry,
         MySqlTransformer $transformer,
         MySqlMutationResolver $mutationResolver,
-        MySqlParser $parser
+        MySqlParser $parser,
+        ?ViewDefinitionSet $views = null,
     ) {
         $this->guard = $guard;
         $this->shadowStore = $shadowStore;
@@ -58,6 +61,7 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
         $this->mutationResolver = $mutationResolver;
         $this->parser = $parser;
         $this->cteComposer = new MySqlCteShadowComposer();
+        $this->views = $views ?? new ViewDefinitionSet();
     }
 
     /**
@@ -178,7 +182,7 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
     /**
      * Build the table context map for transformers.
      *
-     * @return array<string, array{
+     * @return array<string, array{viewSql: string}|array{
      *     rows: array<int, array<string, mixed>>,
      *     columns: array<int, string>,
      *     columnTypes: array<string, \ZtdQuery\Schema\ColumnType>,
@@ -235,6 +239,13 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
                 'primaryKeys' => $definition->primaryKeys,
                 'candidateKeys' => $definition->candidateKeys()->keys(),
             ];
+        }
+
+        foreach ($this->views->shadowQueries(array_keys($context)) as $viewName => $viewSql) {
+            if (isset($context[$viewName])) {
+                continue;
+            }
+            $context[$viewName] = ['viewSql' => $viewSql];
         }
 
         return $context;
@@ -296,6 +307,10 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
             return true;
         }
 
+        if ($this->views->has($tableName)) {
+            return true;
+        }
+
         return false;
     }
 
@@ -306,6 +321,10 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
         }
 
         if ($this->registry->hasAnyTables()) {
+            return true;
+        }
+
+        if ($this->views->hasAnyViews()) {
             return true;
         }
 

@@ -23,6 +23,28 @@ use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer::class)]
 final class SelectTransformerTest extends TransformerContractTest
 {
+    public function testTransformMaterializesViewAfterItsShadowTable(): void
+    {
+        $tables = [
+            'users' => [
+                'rows' => [['id' => 1]],
+                'columns' => ['id'],
+                'columnTypes' => [],
+            ],
+            'active_users' => [
+                'viewSql' => 'SELECT * FROM users WHERE id > 0',
+            ],
+            'active_user_count' => [
+                'viewSql' => 'SELECT count(*) AS total FROM active_users',
+            ],
+        ];
+
+        self::assertSame(
+            "WITH \"users\" AS MATERIALIZED (SELECT CAST(1 AS INTEGER) AS \"id\"),\n\"active_users\" AS MATERIALIZED (SELECT * FROM users WHERE id > 0),\n\"active_user_count\" AS MATERIALIZED (SELECT count(*) AS total FROM active_users)\nSELECT * FROM active_user_count",
+            (new SelectTransformer())->transform('SELECT * FROM active_user_count', $tables),
+        );
+    }
+
     public function testUsesInjectedValueRenderer(): void
     {
         $valueRenderer = self::createStub(ValueRenderer::class);

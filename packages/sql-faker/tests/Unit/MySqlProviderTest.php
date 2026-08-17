@@ -113,6 +113,16 @@ final class MySqlProviderTest extends TestCase
         self::assertContains('TABLE_SYM', $tokens);
     }
 
+    public function testViewStatement(): void
+    {
+        $sql = (new MySqlProvider(Factory::create()))->viewStatement();
+
+        self::assertStringStartsWith('CREATE VIEW ', $sql);
+        self::assertStringContainsString(' AS SELECT ', $sql);
+        self::assertStringContainsString(' FROM ', $sql);
+        self::assertStringEndsWith(' IS NOT NULL', $sql);
+    }
+
     public function testSql(): void
     {
         $faker = Factory::create();

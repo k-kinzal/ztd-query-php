@@ -55,7 +55,7 @@ final class DeleteTransformer implements SqlTransformer
         }
 
         $columnNames = [];
-        if ($targetTable !== null && isset($tables[$targetTable])) {
+        if ($targetTable !== null && isset($tables[$targetTable]['columns'])) {
             $columnNames = $tables[$targetTable]['columns'];
         }
 
@@ -242,7 +242,7 @@ final class DeleteTransformer implements SqlTransformer
 
     /**
      * @param array<string, array{alias: string}> $resolvedTables
-     * @param array<string, array{rows: array<int, array<string, mixed>>, columns: array<int, string>, columnTypes: array<string, \ZtdQuery\Schema\ColumnType>, primaryKeys?: array<int, string>}> $contexts
+     * @param array<string, array{viewSql: string}|array{rows: array<int, array<string, mixed>>, columns: array<int, string>, columnTypes: array<string, \ZtdQuery\Schema\ColumnType>, primaryKeys?: array<int, string>}> $contexts
      * @return list<MultiTableMutationTarget>
      */
     private function targetsFromContexts(array $resolvedTables, array $contexts): array
@@ -250,7 +250,7 @@ final class DeleteTransformer implements SqlTransformer
         $targets = [];
         foreach ($resolvedTables as $tableName => $tableInfo) {
             $context = $contexts[$tableName] ?? null;
-            if ($context === null) {
+            if (!isset($context['columns'])) {
                 continue;
             }
             $targets[] = new MultiTableMutationTarget(

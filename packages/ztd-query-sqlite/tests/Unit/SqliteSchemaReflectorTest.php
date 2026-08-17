@@ -13,6 +13,39 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(SqliteSchemaReflector::class)]
 final class SqliteSchemaReflectorTest extends TestCase
 {
+    public function testReflectViewsReturnsEmptyWhenQueryFails(): void
+    {
+        $connection = self::createStub(ConnectionInterface::class);
+        $connection->method('query')->willReturn(false);
+
+        self::assertSame([], (new SqliteSchemaReflector($connection))->reflectViews());
+    }
+
+    public function testReflectViewsPrefersTemporaryAndSkipsMalformedRows(): void
+    {
+        $statement = self::createStub(StatementInterface::class);
+        $statement->method('fetchAll')->willReturn([
+            ['name' => null, 'sql' => 'CREATE VIEW ignored AS SELECT 1'],
+            ['name' => '', 'sql' => 'CREATE VIEW ignored AS SELECT 1'],
+            ['name' => 'non_string', 'sql' => null],
+            ['name' => 'invalid', 'sql' => 'CREATE VIEW invalid'],
+            ['name' => 'active_users', 'sql' => 'CREATE TEMP VIEW active_users AS SELECT * FROM temp.users'],
+            ['name' => 'active_users', 'sql' => 'CREATE VIEW active_users AS SELECT * FROM main.users'],
+            ['name' => 'all_users', 'sql' => 'CREATE VIEW all_users AS SELECT * FROM main.users'],
+        ]);
+        $connection = self::createMock(ConnectionInterface::class);
+        $connection->expects(self::once())->method('query')->with(
+            "SELECT name, sql FROM (SELECT name, sql, 0 AS precedence FROM sqlite_temp_master "
+            . "WHERE type='view' UNION ALL SELECT name, sql, 1 AS precedence FROM sqlite_master "
+            . "WHERE type='view') ORDER BY precedence, name",
+        )->willReturn($statement);
+
+        $definitions = (new SqliteSchemaReflector($connection))->reflectViews();
+
+        self::assertSame(['active_users', 'all_users'], array_keys($definitions));
+        self::assertSame('SELECT * FROM temp.users', $definitions['active_users']->query);
+    }
+
     public function testGetCreateStatementReturnsNullWhenQueryFails(): void
     {
         $connection = static::createStub(ConnectionInterface::class);

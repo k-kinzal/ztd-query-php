@@ -27,6 +27,8 @@ use ZtdQuery\Platform\Sqlite\Transformer\UpdateTransformer;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
+use ZtdQuery\Schema\ViewDefinition;
+use ZtdQuery\Schema\ViewDefinitionSet;
 use ZtdQuery\Shadow\Mutation\CreateTableMutation;
 use ZtdQuery\Shadow\Mutation\DeleteMutation;
 use ZtdQuery\Shadow\Mutation\DropTableMutation;
@@ -67,6 +69,41 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteNativeUpsertProjector::class)]
 final class SqliteRewriterTest extends RewriterContractTest
 {
+    public function testRegisteredViewIsKnownAndMaterialized(): void
+    {
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $parser = new SqliteParser();
+        $schemaParser = new SqliteSchemaParser();
+        $definition = $schemaParser->parse($this->usersCreateTableSql());
+        self::assertNotNull($definition);
+        $registry->register('users', $definition);
+        $store->set('users', [['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com']]);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $transformer = new SqliteTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer);
+        $resolver = new SqliteMutationResolver($store, $registry, $schemaParser, $parser);
+        $views = new ViewDefinitionSet();
+        $views->register('active_users', ViewDefinition::fromQuery('SELECT id FROM main.users'));
+        $rewriter = new SqliteRewriter(new SqliteQueryGuard($parser), $store, $registry, $transformer, $resolver, $parser, $views);
+
+        $sql = $rewriter->rewrite('SELECT * FROM active_users')->sql();
+        self::assertStringStartsWith('WITH "users" AS', $sql);
+        self::assertStringContainsString('"active_users" AS (SELECT id FROM users)', $sql);
+
+        $viewOnlyStore = new ShadowStore();
+        $viewOnlyRegistry = new TableDefinitionRegistry();
+        $viewOnlyViews = new ViewDefinitionSet();
+        $viewOnlyViews->register('constant_view', ViewDefinition::fromQuery('SELECT 1 AS id'));
+        $viewOnlyResolver = new SqliteMutationResolver($viewOnlyStore, $viewOnlyRegistry, $schemaParser, $parser);
+        $viewOnlyRewriter = new SqliteRewriter(new SqliteQueryGuard($parser), $viewOnlyStore, $viewOnlyRegistry, $transformer, $viewOnlyResolver, $parser, $viewOnlyViews);
+
+        $this->expectException(UnknownSchemaException::class);
+        $viewOnlyRewriter->rewrite('SELECT * FROM missing_table');
+    }
+
     public function testCteReferencesAreMatchedCaseInsensitivelyDuringSchemaValidation(): void
     {
         $registry = new TableDefinitionRegistry();

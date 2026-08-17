@@ -16,7 +16,7 @@ use ZtdQuery\Sql\SqlTokenDialect;
 final class MySqlTypeSemantics
 {
     /**
-     * @param array<string, array{
+     * @param array<string, array{viewSql: string}|array{
      *     rows: array<int, array<string, mixed>>,
      *     columns: array<int, string>,
      *     columnTypes: array<string, ColumnType>
@@ -40,7 +40,7 @@ final class MySqlTypeSemantics
     }
 
     /**
-     * @param array<string, array{
+     * @param array<string, array{viewSql: string}|array{
      *     rows: array<int, array<string, mixed>>,
      *     columns: array<int, string>,
      *     columnTypes: array<string, ColumnType>
@@ -52,6 +52,9 @@ final class MySqlTypeSemantics
         $qualified = [];
         $unqualified = [];
         foreach ($tables as $table => $context) {
+            if (isset($context['viewSql'])) {
+                continue;
+            }
             foreach ($context['columnTypes'] as $column => $type) {
                 $members = $this->enumMembers($type->nativeType);
                 if ($members === []) {

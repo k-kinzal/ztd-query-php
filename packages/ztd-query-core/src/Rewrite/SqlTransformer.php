@@ -18,7 +18,7 @@ interface SqlTransformer
      * Transform a SQL statement using the provided table context.
      *
      * @param string $sql The original SQL statement.
-     * @param array<string, array{
+     * @param array<string, array{viewSql: string}|array{
      *     rows: array<int, array<string, mixed>>,
      *     columns: array<int, string>,
      *     columnTypes: array<string, ColumnType>,

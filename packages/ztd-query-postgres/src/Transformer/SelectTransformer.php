@@ -49,6 +49,11 @@ final class SelectTransformer implements SqlTransformer
     {
         $ctes = [];
         foreach ($tables as $tableName => $tableContext) {
+            if (isset($tableContext['viewSql'])) {
+                $ctes[$tableName] = $this->quoter->quote($tableName) . " AS MATERIALIZED ({$tableContext['viewSql']})";
+                continue;
+            }
+
             $rows = $tableContext['rows'];
             $columns = $tableContext['columns'];
             /** @var array<string, ColumnType> $columnTypes */

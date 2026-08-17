@@ -6,11 +6,13 @@ namespace ZtdQuery\Platform\Sqlite;
 
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Platform\SchemaReflector;
+use ZtdQuery\Platform\ViewReflector;
+use ZtdQuery\Schema\ViewDefinition;
 
 /**
  * Fetches SQLite schema information via sqlite_master and PRAGMA queries.
  */
-final class SqliteSchemaReflector implements SchemaReflector
+final class SqliteSchemaReflector implements SchemaReflector, ViewReflector
 {
     private ConnectionInterface $connection;
 
@@ -79,5 +81,33 @@ final class SqliteSchemaReflector implements SchemaReflector
         }
 
         return $result;
+    }
+
+    /** {@inheritDoc} */
+    public function reflectViews(): array
+    {
+        $stmt = $this->connection->query(
+            "SELECT name, sql FROM (SELECT name, sql, 0 AS precedence FROM sqlite_temp_master "
+            . "WHERE type='view' UNION ALL SELECT name, sql, 1 AS precedence FROM sqlite_master "
+            . "WHERE type='view') ORDER BY precedence, name",
+        );
+        if ($stmt === false) {
+            return [];
+        }
+
+        $definitions = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $viewName = $row['name'] ?? null;
+            $createSql = $row['sql'] ?? null;
+            if (!is_string($viewName) || $viewName === '' || isset($definitions[$viewName]) || !is_string($createSql)) {
+                continue;
+            }
+            $definition = ViewDefinition::fromCreateStatement($createSql);
+            if ($definition !== null) {
+                $definitions[$viewName] = $definition;
+            }
+        }
+
+        return $definitions;
     }
 }

@@ -13,6 +13,7 @@ use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Rewrite\RewriteStateCommitter;
 use ZtdQuery\Schema\TableDefinitionRegistry;
+use ZtdQuery\Schema\ViewDefinitionSet;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Sql\TransactionStatement;
 
@@ -37,6 +38,7 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
     private PgSqlParser $parser;
     private PgSqlReturningProjectionParser $returningProjectionParser;
     private PgSqlCteShadowComposer $cteComposer;
+    private ViewDefinitionSet $views;
 
     public function __construct(
         PgSqlQueryGuard $guard,
@@ -44,7 +46,8 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
         TableDefinitionRegistry $registry,
         PgSqlTransformer $transformer,
         PgSqlMutationResolver $mutationResolver,
-        PgSqlParser $parser
+        PgSqlParser $parser,
+        ?ViewDefinitionSet $views = null,
     ) {
         $this->guard = $guard;
         $this->shadowStore = $shadowStore;
@@ -54,6 +57,7 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
         $this->parser = $parser;
         $this->returningProjectionParser = new PgSqlReturningProjectionParser();
         $this->cteComposer = new PgSqlCteShadowComposer();
+        $this->views = $views ?? new ViewDefinitionSet();
     }
 
     /**
@@ -183,7 +187,7 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
     /**
      * Build the table context map for transformers.
      *
-     * @return array<string, array{
+     * @return array<string, array{viewSql: string}|array{
      *     rows: array<int, array<string, mixed>>,
      *     columns: array<int, string>,
      *     columnTypes: array<string, \ZtdQuery\Schema\ColumnType>,
@@ -242,6 +246,13 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
             ];
         }
 
+        foreach ($this->views->shadowQueries(array_keys($context)) as $viewName => $viewSql) {
+            if (isset($context[$viewName])) {
+                continue;
+            }
+            $context[$viewName] = ['viewSql' => $viewSql];
+        }
+
         return $context;
     }
 
@@ -255,6 +266,10 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
             return true;
         }
 
+        if ($this->views->has($tableName)) {
+            return true;
+        }
+
         return false;
     }
 
@@ -265,6 +280,10 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
         }
 
         if ($this->registry->hasAnyTables()) {
+            return true;
+        }
+
+        if ($this->views->hasAnyViews()) {
             return true;
         }
 

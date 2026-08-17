@@ -30,6 +30,8 @@ use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Schema\TableDefinitionRegistry;
+use ZtdQuery\Schema\ViewDefinition;
+use ZtdQuery\Schema\ViewDefinitionSet;
 use ZtdQuery\Shadow\Mutation\CreateTableAsSelectMutation;
 use ZtdQuery\Shadow\Mutation\CreateTableLikeMutation;
 use ZtdQuery\Shadow\Mutation\CreateTableMutation;
@@ -74,6 +76,42 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlNativeUpsertProjector::class)]
 final class MySqlRewriterTest extends RewriterContractTest
 {
+    public function testRegisteredViewIsKnownAndMaterialized(): void
+    {
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $definition = $schemaParser->parse($this->usersCreateTableSql());
+        self::assertNotNull($definition);
+        $registry->register('users', $definition);
+        $store->set('users', [['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com']]);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $resolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $views = new ViewDefinitionSet();
+        $views->register('active_users', ViewDefinition::fromQuery('SELECT id FROM app.users'));
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $resolver, $parser, $views);
+
+        $sql = $rewriter->rewrite('SELECT * FROM active_users')->sql();
+        self::assertStringStartsWith('WITH `users` AS', $sql);
+        self::assertStringContainsString('`active_users` AS (SELECT id FROM users)', $sql);
+
+        $viewOnlyStore = new ShadowStore();
+        $viewOnlyRegistry = new TableDefinitionRegistry();
+        $viewOnlyViews = new ViewDefinitionSet();
+        $viewOnlyViews->register('constant_view', ViewDefinition::fromQuery('SELECT 1 AS id'));
+        $viewOnlyResolver = new MySqlMutationResolver($viewOnlyStore, $viewOnlyRegistry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $viewOnlyRewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $viewOnlyStore, $viewOnlyRegistry, $transformer, $viewOnlyResolver, $parser, $viewOnlyViews);
+
+        $this->expectException(UnknownSchemaException::class);
+        $viewOnlyRewriter->rewrite('SELECT * FROM missing_table');
+    }
+
     public function testDatabaseQualifiedSelectUsesShadowCte(): void
     {
         $store = new ShadowStore();

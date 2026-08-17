@@ -223,7 +223,7 @@ final class UpdateTransformer implements SqlTransformer
 
     /**
      * @param array<string, array{alias: string}> $targetTables
-     * @param array<string, array{rows: array<int, array<string, mixed>>, columns: array<int, string>, columnTypes: array<string, \ZtdQuery\Schema\ColumnType>, primaryKeys?: array<int, string>}> $contexts
+     * @param array<string, array{viewSql: string}|array{rows: array<int, array<string, mixed>>, columns: array<int, string>, columnTypes: array<string, \ZtdQuery\Schema\ColumnType>, primaryKeys?: array<int, string>}> $contexts
      * @return list<MultiTableMutationTarget>
      */
     private function targetsFromContexts(array $targetTables, array $contexts): array
@@ -231,7 +231,7 @@ final class UpdateTransformer implements SqlTransformer
         $targets = [];
         foreach ($targetTables as $tableName => $tableInfo) {
             $context = $contexts[$tableName] ?? null;
-            if ($context === null) {
+            if (!isset($context['columns'])) {
                 continue;
             }
             $targets[] = new MultiTableMutationTarget(

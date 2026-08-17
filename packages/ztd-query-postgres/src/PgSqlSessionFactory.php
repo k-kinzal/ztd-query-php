@@ -12,6 +12,7 @@ use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer;
 use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Schema\TableDefinitionRegistry;
+use ZtdQuery\Schema\ViewDefinitionSet;
 use ZtdQuery\Session;
 use ZtdQuery\Platform\SessionFactory;
 use ZtdQuery\Shadow\ShadowStore;
@@ -39,6 +40,10 @@ final class PgSqlSessionFactory implements SessionFactory
                 $registry->register($tableName, $definition);
             }
         }
+        $views = new ViewDefinitionSet();
+        foreach ($reflector->reflectViews() as $viewName => $definition) {
+            $views->register($viewName, $definition);
+        }
 
         $guard = new PgSqlQueryGuard($parser);
         $selectTransformer = new SelectTransformer();
@@ -47,7 +52,7 @@ final class PgSqlSessionFactory implements SessionFactory
         $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
         $transformer = new PgSqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer);
         $mutationResolver = new PgSqlMutationResolver($shadowStore, $registry, $schemaParser, $parser);
-        $rewriter = new PgSqlRewriter($guard, $shadowStore, $registry, $transformer, $mutationResolver, $parser);
+        $rewriter = new PgSqlRewriter($guard, $shadowStore, $registry, $transformer, $mutationResolver, $parser, $views);
 
         return new Session(
             $rewriter,

@@ -50,6 +50,27 @@ use ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlNativeUpsertProjector::class)]
 final class PgSqlSessionFactoryTest extends TestCase
 {
+    public function testCreateRegistersReflectedViews(): void
+    {
+        $empty = self::createStub(StatementInterface::class);
+        $empty->method('fetchAll')->willReturn([]);
+        $views = self::createStub(StatementInterface::class);
+        $views->method('fetchAll')->willReturn([
+            ['viewname' => 'active_users', 'definition' => 'SELECT 1 AS id'],
+        ]);
+        $connection = self::createStub(ConnectionInterface::class);
+        $connection->method('query')->willReturnCallback(
+            static fn (string $sql): StatementInterface => str_contains($sql, 'pg_views') ? $views : $empty,
+        );
+
+        $session = (new PgSqlSessionFactory())->create($connection, ZtdConfig::default());
+
+        self::assertSame(
+            "WITH \"active_users\" AS MATERIALIZED (SELECT 1 AS id)\nSELECT * FROM active_users",
+            $session->rewrite('SELECT * FROM active_users')->sql(),
+        );
+    }
+
     public function testCreateReturnsSession(): void
     {
         $connection = static::createStub(ConnectionInterface::class);

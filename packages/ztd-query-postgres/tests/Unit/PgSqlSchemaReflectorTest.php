@@ -15,6 +15,35 @@ use ZtdQuery\Platform\Postgres\PgSqlSchemaReflector;
 #[CoversClass(PgSqlSchemaReflector::class)]
 final class PgSqlSchemaReflectorTest extends TestCase
 {
+    public function testReflectViewsReturnsEmptyWhenQueryFails(): void
+    {
+        $connection = self::createStub(ConnectionInterface::class);
+        $connection->method('query')->willReturn(false);
+
+        self::assertSame([], (new PgSqlSchemaReflector($connection))->reflectViews());
+    }
+
+    public function testReflectViewsSkipsMalformedRows(): void
+    {
+        $statement = self::createStub(StatementInterface::class);
+        $statement->method('fetchAll')->willReturn([
+            ['viewname' => null, 'definition' => 'SELECT 1'],
+            ['viewname' => '', 'definition' => 'SELECT 1'],
+            ['viewname' => 'missing_query'],
+            ['viewname' => 'non_string', 'definition' => null],
+            ['viewname' => 'blank', 'definition' => '   '],
+            ['viewname' => 'active_users', 'definition' => 'SELECT * FROM public.users WHERE active'],
+            ['viewname' => 'all_users', 'definition' => 'SELECT * FROM public.users'],
+        ]);
+        $connection = self::createStub(ConnectionInterface::class);
+        $connection->method('query')->willReturn($statement);
+
+        $definitions = (new PgSqlSchemaReflector($connection))->reflectViews();
+
+        self::assertSame(['active_users', 'all_users'], array_keys($definitions));
+        self::assertSame(['users'], $definitions['active_users']->dependencies);
+    }
+
     public function testGetCreateStatementReturnsNullWhenNoColumns(): void
     {
         $colStmt = static::createStub(StatementInterface::class);

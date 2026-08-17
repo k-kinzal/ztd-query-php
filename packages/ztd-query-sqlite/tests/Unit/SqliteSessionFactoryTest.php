@@ -54,6 +54,27 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteNativeUpsertProjector::class)]
 final class SqliteSessionFactoryTest extends TestCase
 {
+    public function testCreateRegistersReflectedViews(): void
+    {
+        $empty = self::createStub(StatementInterface::class);
+        $empty->method('fetchAll')->willReturn([]);
+        $views = self::createStub(StatementInterface::class);
+        $views->method('fetchAll')->willReturn([
+            ['name' => 'active_users', 'sql' => 'CREATE VIEW active_users AS SELECT 1 AS id'],
+        ]);
+        $connection = self::createStub(ConnectionInterface::class);
+        $connection->method('query')->willReturnCallback(
+            static fn (string $sql): StatementInterface => str_contains($sql, "type='view'") ? $views : $empty,
+        );
+
+        $session = (new SqliteSessionFactory())->create($connection, ZtdConfig::default());
+
+        self::assertSame(
+            "WITH \"active_users\" AS (SELECT 1 AS id)\nSELECT * FROM active_users",
+            $session->rewrite('SELECT * FROM active_users')->sql(),
+        );
+    }
+
     public function testCreateReturnsSession(): void
     {
         $statement = static::createStub(StatementInterface::class);

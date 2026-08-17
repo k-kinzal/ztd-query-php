@@ -423,6 +423,17 @@ final class PostgreSqlProvider extends Base
         );
     }
 
+    /** @return non-empty-string */
+    public function viewStatement(): string
+    {
+        $view = $this->rsg->rawIdentifier();
+        $table = $this->rsg->rawIdentifier();
+        $keyColumn = $this->rsg->rawIdentifier();
+        $valueColumn = $this->rsg->rawIdentifier();
+
+        return "CREATE VIEW $view AS SELECT $keyColumn, $valueColumn FROM $table WHERE $keyColumn IS NOT NULL";
+    }
+
     /**
      * @template TRequiresNonEmpty of bool
      * @param GenerationPlan<TRequiresNonEmpty> $plan

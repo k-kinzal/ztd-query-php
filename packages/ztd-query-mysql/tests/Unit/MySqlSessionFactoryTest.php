@@ -11,6 +11,9 @@ use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Platform\MySql\MySqlMutationResolver;
+use ZtdQuery\Platform\MySql\MySqlCastRenderer;
+use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
+use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlQueryGuard;
 use ZtdQuery\Platform\MySql\MySqlRewriter;
 use ZtdQuery\Platform\MySql\MySqlSchemaParser;
@@ -26,6 +29,9 @@ use ZtdQuery\Session;
 
 #[CoversClass(MySqlSessionFactory::class)]
 #[UsesClass(MySqlMutationResolver::class)]
+#[UsesClass(MySqlCastRenderer::class)]
+#[UsesClass(MySqlIdentifierQuoter::class)]
+#[UsesClass(MySqlParser::class)]
 #[UsesClass(MySqlQueryGuard::class)]
 #[UsesClass(MySqlRewriter::class)]
 #[UsesClass(MySqlSchemaParser::class)]
@@ -45,6 +51,34 @@ use ZtdQuery\Session;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlNativeUpsertProjector::class)]
 final class MySqlSessionFactoryTest extends TestCase
 {
+    public function testCreateRegistersReflectedViews(): void
+    {
+        $empty = self::createStub(StatementInterface::class);
+        $empty->method('fetchAll')->willReturn([]);
+        $views = self::createStub(StatementInterface::class);
+        $views->method('fetchAll')->willReturn([['name' => 'active_users']]);
+        $create = self::createStub(StatementInterface::class);
+        $create->method('fetchAll')->willReturn([
+            ['Create View' => 'CREATE VIEW active_users AS SELECT 1 AS id'],
+        ]);
+        $connection = self::createStub(ConnectionInterface::class);
+        $connection->method('query')->willReturnCallback(
+            static fn (string $sql): StatementInterface => match ($sql) {
+                'SHOW TABLES' => $empty,
+                "SHOW FULL TABLES WHERE Table_type = 'VIEW'" => $views,
+                'SHOW CREATE VIEW `active_users`' => $create,
+                default => $empty,
+            },
+        );
+
+        $session = (new MySqlSessionFactory())->create($connection, ZtdConfig::default());
+
+        self::assertSame(
+            "WITH `active_users` AS (SELECT 1 AS id)\nSELECT * FROM active_users",
+            $session->rewrite('SELECT * FROM active_users')->sql(),
+        );
+    }
+
     public function testCreateReturnsSession(): void
     {
         $statement = self::createStub(StatementInterface::class);

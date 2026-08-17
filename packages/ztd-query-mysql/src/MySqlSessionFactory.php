@@ -14,6 +14,7 @@ use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
 use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Schema\TableDefinitionRegistry;
+use ZtdQuery\Schema\ViewDefinitionSet;
 use ZtdQuery\Session;
 use ZtdQuery\Platform\SessionFactory;
 use ZtdQuery\Shadow\ShadowStore;
@@ -41,6 +42,10 @@ final class MySqlSessionFactory implements SessionFactory
                 $registry->register($tableName, $definition);
             }
         }
+        $views = new ViewDefinitionSet();
+        foreach ($reflector->reflectViews() as $viewName => $definition) {
+            $views->register($viewName, $definition);
+        }
 
         $guard = new MySqlQueryGuard($parser);
         $selectTransformer = new SelectTransformer();
@@ -50,7 +55,7 @@ final class MySqlSessionFactory implements SessionFactory
         $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
         $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
         $mutationResolver = new MySqlMutationResolver($shadowStore, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
-        $rewriter = new MySqlRewriter($guard, $shadowStore, $registry, $transformer, $mutationResolver, $parser);
+        $rewriter = new MySqlRewriter($guard, $shadowStore, $registry, $transformer, $mutationResolver, $parser, $views);
 
         return new Session(
             $rewriter,

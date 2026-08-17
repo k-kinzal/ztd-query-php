@@ -17,6 +17,7 @@ use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Sql\TransactionStatement;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
+use ZtdQuery\Schema\ViewDefinitionSet;
 use ZtdQuery\Shadow\ShadowStore;
 
 /**
@@ -40,6 +41,7 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
     private SqliteParser $parser;
     private SqliteReturningProjectionParser $returningProjectionParser;
     private SqliteCteShadowComposer $cteComposer;
+    private ViewDefinitionSet $views;
 
     public function __construct(
         SqliteQueryGuard $guard,
@@ -47,7 +49,8 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
         TableDefinitionRegistry $registry,
         SqliteTransformer $transformer,
         SqliteMutationResolver $mutationResolver,
-        SqliteParser $parser
+        SqliteParser $parser,
+        ?ViewDefinitionSet $views = null,
     ) {
         $this->guard = $guard;
         $this->shadowStore = $shadowStore;
@@ -57,6 +60,7 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
         $this->parser = $parser;
         $this->returningProjectionParser = new SqliteReturningProjectionParser();
         $this->cteComposer = new SqliteCteShadowComposer();
+        $this->views = $views ?? new ViewDefinitionSet();
     }
 
     /**
@@ -164,7 +168,7 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
     /**
      * Build the table context map for transformers.
      *
-     * @return array<string, array{
+     * @return array<string, array{viewSql: string}|array{
      *     rows: array<int, array<string, mixed>>,
      *     columns: array<int, string>,
      *     columnTypes: array<string, \ZtdQuery\Schema\ColumnType>,
@@ -218,6 +222,13 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
         }
         foreach ($this->registry->getAllRemoved() as $tableName => $definition) {
             $context[$tableName] = self::contextFromDefinition($definition, []);
+        }
+
+        foreach ($this->views->shadowQueries(array_keys($context)) as $viewName => $viewSql) {
+            if (isset($context[$viewName])) {
+                continue;
+            }
+            $context[$viewName] = ['viewSql' => $viewSql];
         }
 
         return $context;
@@ -284,6 +295,10 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
             return true;
         }
 
+        if ($this->views->has($tableName)) {
+            return true;
+        }
+
         return false;
     }
 
@@ -294,6 +309,10 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
         }
 
         if ($this->registry->hasAnyTables()) {
+            return true;
+        }
+
+        if ($this->views->hasAnyViews()) {
             return true;
         }
 

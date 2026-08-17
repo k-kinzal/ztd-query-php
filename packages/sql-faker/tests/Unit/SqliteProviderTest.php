@@ -95,6 +95,16 @@ final class SqliteProviderTest extends TestCase
         self::assertContains('TABLE', $tokens);
     }
 
+    public function testViewStatement(): void
+    {
+        $sql = (new SqliteProvider(Factory::create()))->viewStatement();
+
+        self::assertStringStartsWith('CREATE VIEW ', $sql);
+        self::assertStringContainsString(' AS SELECT ', $sql);
+        self::assertStringContainsString(' FROM ', $sql);
+        self::assertStringEndsWith(' IS NOT NULL', $sql);
+    }
+
     #[\Override]
     protected function setUp(): void
     {

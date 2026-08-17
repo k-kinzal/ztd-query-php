@@ -13,6 +13,7 @@ use ZtdQuery\Platform\Sqlite\Transformer\SqliteTransformer;
 use ZtdQuery\Platform\Sqlite\Transformer\UpdateTransformer;
 use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Schema\TableDefinitionRegistry;
+use ZtdQuery\Schema\ViewDefinitionSet;
 use ZtdQuery\Session;
 use ZtdQuery\Platform\SessionFactory;
 use ZtdQuery\Shadow\ShadowStore;
@@ -40,6 +41,10 @@ final class SqliteSessionFactory implements SessionFactory
                 $registry->register($tableName, $definition);
             }
         }
+        $views = new ViewDefinitionSet();
+        foreach ($reflector->reflectViews() as $viewName => $definition) {
+            $views->register($viewName, $definition);
+        }
 
         $guard = new SqliteQueryGuard($parser);
         $selectTransformer = new SelectTransformer();
@@ -48,7 +53,7 @@ final class SqliteSessionFactory implements SessionFactory
         $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
         $transformer = new SqliteTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer);
         $mutationResolver = new SqliteMutationResolver($shadowStore, $registry, $schemaParser, $parser);
-        $rewriter = new SqliteRewriter($guard, $shadowStore, $registry, $transformer, $mutationResolver, $parser);
+        $rewriter = new SqliteRewriter($guard, $shadowStore, $registry, $transformer, $mutationResolver, $parser, $views);
 
         return new Session(
             $rewriter,

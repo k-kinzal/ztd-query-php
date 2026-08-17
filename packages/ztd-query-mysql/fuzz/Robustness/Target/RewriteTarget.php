@@ -148,6 +148,7 @@ final class RewriteTarget
             fn (): string => $this->provider->insertRowAliasUpsertStatement(),
             fn (): string => $this->provider->insertFunctionUpsertStatement(),
             fn (): string => $this->provider->temporaryTableStatement(),
+            fn (): string => $this->provider->viewStatement(),
         ];
 
         $index = ord($input[0] ?? "\0") % count($generators);
