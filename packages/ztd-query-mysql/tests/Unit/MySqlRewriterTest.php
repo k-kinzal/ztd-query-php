@@ -279,6 +279,20 @@ final class MySqlRewriterTest extends RewriterContractTest
         self::assertStringContainsString('AS `label`', $plan->sql());
     }
 
+    public function testRewriteInsertUsesIdentityStrategyFromRegistryWithoutShadowRows(): void
+    {
+        $schemaParser = new MySqlSchemaParser(new MySqlParser());
+        $definition = $schemaParser->parse('CREATE TABLE users (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(20))');
+        self::assertNotNull($definition);
+        $registry = new TableDefinitionRegistry();
+        $registry->register('users', $definition);
+        $rewriter = $this->createRewriter(new ShadowStore(), $registry);
+
+        $plan = $rewriter->rewrite("INSERT INTO users (name) VALUES ('Alice')");
+
+        self::assertStringContainsString('CAST(1 AS SIGNED) AS `id`', $plan->sql());
+    }
+
     public function testRewriteDeleteCreatesMutation(): void
     {
         $shadowStore = new ShadowStore();

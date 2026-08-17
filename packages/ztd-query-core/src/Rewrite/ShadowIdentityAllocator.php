@@ -8,7 +8,7 @@ use ZtdQuery\Schema\IdentityGenerationStrategy;
 
 final class ShadowIdentityAllocator
 {
-    /** @var array<string, int> */
+    /** @var array<string, array<string, int>> */
     private array $nextValues = [];
 
     /**
@@ -28,33 +28,48 @@ final class ShadowIdentityAllocator
         $allocated = [];
         foreach ($strategies as $column => $strategy) {
             $index = array_search($column, $insertColumns, true);
-            if ($index !== false && strcasecmp(trim($values[$index]), 'DEFAULT') !== 0) {
-                continue;
+            if ($index !== false) {
+                $providedValue = trim($values[$index]);
+                if (strcasecmp($providedValue, 'DEFAULT') !== 0) {
+                    continue;
+                }
             }
 
-            $key = $table . "\0" . $column;
-            $next = $this->nextValues[$key] ?? 1;
+            $next = $this->nextValues[$table][$column] ?? 1;
             if ($strategy === IdentityGenerationStrategy::MaxValue) {
-                $next = max($next, $this->nextAfterExistingRows($column, $existingRows));
+                $next = $this->nextAfterExistingRows($column, $existingRows, $next);
             }
             $allocated[$column] = (string) $next;
-            $this->nextValues[$key] = $next + 1;
+            $this->nextValues[$table][$column] = $next + 1;
         }
 
         return $allocated;
     }
 
     /** @param array<int, array<string, mixed>> $rows */
-    private function nextAfterExistingRows(string $column, array $rows): int
+    private function nextAfterExistingRows(string $column, array $rows, int $next): int
     {
-        $maximum = 0;
         foreach ($rows as $row) {
-            $value = $row[$column] ?? null;
-            if (is_int($value) || is_float($value) || (is_string($value) && preg_match('/^-?\d+$/D', $value) === 1)) {
-                $maximum = max($maximum, (int) $value);
+            $value = self::integerValue($row[$column] ?? null);
+            if ($value !== null) {
+                $next = max($next, $value + 1);
             }
         }
 
-        return $maximum + 1;
+        return $next;
+    }
+
+    private static function integerValue(mixed $value): ?int
+    {
+        if (is_int($value)) {
+            return $value;
+        }
+        if (!is_string($value)) {
+            return null;
+        }
+
+        $parsed = filter_var($value, FILTER_VALIDATE_INT);
+
+        return is_int($parsed) ? $parsed : null;
     }
 }

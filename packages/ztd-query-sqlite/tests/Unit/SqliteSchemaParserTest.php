@@ -176,6 +176,65 @@ final class SqliteSchemaParserTest extends SchemaParserContractTest
         self::assertSame([], $definition->identityStrategies);
     }
 
+    public function testLowercaseWithoutRowidIsNotIdentity(): void
+    {
+        $definition = (new SqliteSchemaParser())->parse(
+            'CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT) without rowid'
+        );
+
+        self::assertNotNull($definition);
+        self::assertSame([], $definition->identityStrategies);
+    }
+
+    public function testWithoutRowidTextInsideDefaultDoesNotDisableIdentity(): void
+    {
+        $definition = (new SqliteSchemaParser())->parse(
+            "CREATE TABLE users (id INTEGER PRIMARY KEY, note TEXT DEFAULT 'WITHOUT ROWID')"
+        );
+
+        self::assertNotNull($definition);
+        self::assertSame(['id' => IdentityGenerationStrategy::MaxValue], $definition->identityStrategies);
+    }
+
+    public function testNestedWithoutRowidTokensDoNotDisableIdentity(): void
+    {
+        $definition = (new SqliteSchemaParser())->parse(
+            'CREATE TABLE users (id INTEGER PRIMARY KEY, value TEXT CHECK (WITHOUT ROWID))'
+        );
+
+        self::assertNotNull($definition);
+        self::assertSame(['id' => IdentityGenerationStrategy::MaxValue], $definition->identityStrategies);
+    }
+
+    public function testNestedWithoutRowidDoesNotHideRealWithoutRowidClause(): void
+    {
+        $definition = (new SqliteSchemaParser())->parse(
+            'CREATE TABLE users (id INTEGER PRIMARY KEY, value TEXT CHECK (WITHOUT ROWID)) WITHOUT ROWID'
+        );
+
+        self::assertNotNull($definition);
+        self::assertSame([], $definition->identityStrategies);
+    }
+
+    public function testNonIntegerPrimaryKeyIsNotIdentity(): void
+    {
+        $definition = (new SqliteSchemaParser())->parse('CREATE TABLE users (id TEXT PRIMARY KEY)');
+
+        self::assertNotNull($definition);
+        self::assertSame([], $definition->identityStrategies);
+    }
+
+    public function testDuplicatePrimaryKeySourcesStillProduceOneIdentity(): void
+    {
+        $definition = (new SqliteSchemaParser())->parse(
+            'CREATE TABLE users (id INTEGER PRIMARY KEY, PRIMARY KEY (id))'
+        );
+
+        self::assertNotNull($definition);
+        self::assertSame(['id'], $definition->primaryKeys);
+        self::assertSame(['id' => IdentityGenerationStrategy::MaxValue], $definition->identityStrategies);
+    }
+
     public function testParseWithForeignKey(): void
     {
         $parser = new SqliteSchemaParser();

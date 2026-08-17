@@ -353,4 +353,19 @@ final class InsertTransformerTest extends TestCase
         self::assertStringContainsString('2 AS "id"', $first);
         self::assertStringContainsString('3 AS "id"', $second);
     }
+
+    public function testInsertAllocatesSerialValueAfterExistingRows(): void
+    {
+        $transformer = new InsertTransformer(new PgSqlParser(), new SelectTransformer());
+        $tables = ['users' => [
+            'rows' => [['id' => 7, 'name' => 'Existing']],
+            'columns' => ['id', 'name'],
+            'columnTypes' => [],
+            'identityStrategies' => ['id' => IdentityGenerationStrategy::MaxValue],
+        ]];
+
+        $result = $transformer->transform("INSERT INTO users (name) VALUES ('Alice')", $tables);
+
+        self::assertStringContainsString('8 AS "id"', $result);
+    }
 }

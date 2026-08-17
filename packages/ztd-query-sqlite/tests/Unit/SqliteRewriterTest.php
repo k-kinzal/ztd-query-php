@@ -552,6 +552,19 @@ final class SqliteRewriterTest extends RewriterContractTest
         self::assertStringContainsString('AS "label"', $plan->sql());
     }
 
+    public function testInsertUsesIdentityStrategyFromRegistryWithoutShadowRows(): void
+    {
+        $definition = (new SqliteSchemaParser())->parse('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
+        self::assertNotNull($definition);
+        $registry = new TableDefinitionRegistry();
+        $registry->register('users', $definition);
+        $rewriter = $this->createRewriter(new ShadowStore(), $registry);
+
+        $plan = $rewriter->rewrite("INSERT INTO users (name) VALUES ('Alice')");
+
+        self::assertStringContainsString('CAST(1 AS INTEGER) AS "id"', $plan->sql());
+    }
+
     public function testRewriteMultiple(): void
     {
         $registry = new TableDefinitionRegistry();

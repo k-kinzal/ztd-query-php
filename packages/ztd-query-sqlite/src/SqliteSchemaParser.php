@@ -34,7 +34,8 @@ final class SqliteSchemaParser implements SchemaParser
 
         $columns = [];
         $columnTypes = [];
-        $primaryKeys = [];
+        /** @var array<string, string> $primaryKeyMap */
+        $primaryKeyMap = [];
         $notNullColumns = [];
         $uniqueConstraints = [];
         $columnDefaults = [];
@@ -53,7 +54,9 @@ final class SqliteSchemaParser implements SchemaParser
             if ($leadingKeyword === 'PRIMARY') {
                 if (preg_match('/^PRIMARY\s+KEY\s*\(([^)]+)\)/i', $def, $pkMatches) === 1) {
                     $pkCols = $this->parseColumnNameList($pkMatches[1]);
-                    $primaryKeys = array_merge($primaryKeys, $pkCols);
+                    foreach ($pkCols as $primaryKey) {
+                        $primaryKeyMap[$primaryKey] = $primaryKey;
+                    }
                 }
                 continue;
             }
@@ -72,7 +75,9 @@ final class SqliteSchemaParser implements SchemaParser
             if ($leadingKeyword === 'CONSTRAINT') {
                 if (preg_match('/^CONSTRAINT\s+(?:"(?:[^"]|"")*"|`(?:[^`]|``)*`|[^\s]+)\s+PRIMARY\s+KEY\s*\(([^)]+)\)/i', $def, $pkMatches) === 1) {
                     $pkCols = $this->parseColumnNameList($pkMatches[1]);
-                    $primaryKeys = array_merge($primaryKeys, $pkCols);
+                    foreach ($pkCols as $primaryKey) {
+                        $primaryKeyMap[$primaryKey] = $primaryKey;
+                    }
                 }
                 if (preg_match('/^CONSTRAINT\s+(?:"(?:[^"]|"")*"|`(?:[^`]|``)*`|[^\s]+)\s+UNIQUE\s*\(([^)]+)\)/i', $def, $uniqueMatches) === 1) {
                     $uniqueCols = $this->parseColumnNameList($uniqueMatches[1]);
@@ -104,7 +109,7 @@ final class SqliteSchemaParser implements SchemaParser
             }
 
             if ($colInfo['primaryKey']) {
-                $primaryKeys[] = $colInfo['name'];
+                $primaryKeyMap[$colInfo['name']] = $colInfo['name'];
                 if (!in_array($colInfo['name'], $notNullColumns, true)) {
                     $notNullColumns[] = $colInfo['name'];
                 }
@@ -141,9 +146,10 @@ final class SqliteSchemaParser implements SchemaParser
             );
         }
 
+        $primaryKeys = array_values($primaryKeyMap);
         $identityStrategies = [];
-        if (!str_contains(strtoupper($trimmed), 'WITHOUT ROWID') && count(array_unique($primaryKeys)) === 1) {
-            $identityColumn = array_values(array_unique($primaryKeys))[0];
+        if (!self::hasWithoutRowid($trimmed) && count($primaryKeys) === 1) {
+            $identityColumn = $primaryKeys[0];
             if (($columnTypes[$identityColumn] ?? null) === 'INTEGER') {
                 $identityStrategies[$identityColumn] = IdentityGenerationStrategy::MaxValue;
             }
@@ -152,13 +158,23 @@ final class SqliteSchemaParser implements SchemaParser
         return new TableDefinition(
             $columns,
             $columnTypes,
-            array_values(array_unique($primaryKeys)),
+            $primaryKeys,
             array_values(array_unique($notNullColumns)),
             $uniqueConstraints,
             $typedColumns,
             $columnDefaults,
             $identityStrategies,
         );
+    }
+
+    private static function hasWithoutRowid(string $sql): bool
+    {
+        $withoutClause = SqlTokenStream::tokenize($sql)->topLevelClause(['WITHOUT']);
+        if ($withoutClause === null) {
+            return false;
+        }
+
+        return SqlTokenStream::tokenize($withoutClause)->firstTopLevelKeyword() === 'ROWID';
     }
 
     /**

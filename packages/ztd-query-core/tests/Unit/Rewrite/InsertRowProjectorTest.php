@@ -49,4 +49,18 @@ final class InsertRowProjectorTest extends TestCase
             ),
         );
     }
+
+    public function testGeneratedIdentityTakesPrecedenceOverSchemaDefault(): void
+    {
+        self::assertSame(
+            ['id' => '10'],
+            (new InsertRowProjector())->project(
+                ['id'],
+                [],
+                [],
+                ['id' => '99'],
+                ['id' => '10'],
+            ),
+        );
+    }
 }

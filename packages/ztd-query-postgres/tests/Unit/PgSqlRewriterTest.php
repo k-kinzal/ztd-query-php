@@ -2594,6 +2594,19 @@ final class PgSqlRewriterTest extends RewriterContractTest
         self::assertStringContainsString('AS "label"', $plan->sql());
     }
 
+    public function testRewriteInsertUsesIdentityStrategyFromRegistryWithoutShadowRows(): void
+    {
+        $definition = (new PgSqlSchemaParser())->parse('CREATE TABLE users (id SERIAL PRIMARY KEY, name TEXT)');
+        self::assertNotNull($definition);
+        $registry = new TableDefinitionRegistry();
+        $registry->register('users', $definition);
+        $rewriter = $this->createRewriter(new ShadowStore(), $registry);
+
+        $plan = $rewriter->rewrite("INSERT INTO users (name) VALUES ('Alice')");
+
+        self::assertStringContainsString('CAST(1 AS INTEGER) AS "id"', $plan->sql());
+    }
+
     public function testRewriteUpdateReturnsWriteSimulated(): void
     {
         $shadowStore = new ShadowStore();

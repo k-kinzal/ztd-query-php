@@ -155,9 +155,9 @@ final class PgSqlSchemaParser implements SchemaParser
                 ['REFERENCES'], ['COLLATE'], ['CONSTRAINT'], ['GENERATED'], ['DEFERRABLE'],
             ],
         );
-        $identity = in_array(strtoupper($nativeType), ['SMALLSERIAL', 'SERIAL', 'BIGSERIAL'], true)
-            || ($default !== null && preg_match('/^nextval\s*\(/i', ltrim($default, '(')) === 1)
-            || preg_match('/\bGENERATED\s+(?:ALWAYS|BY\s+DEFAULT)\s+AS\s+IDENTITY\b/i', $afterType) === 1;
+        $identity = self::isSerialType($nativeType)
+            || ($default !== null && self::isSequenceDefault($default))
+            || self::hasGeneratedIdentity($afterType);
 
         $family = $this->mapTypeToFamily($nativeType);
         $columnType = new ColumnType($family, strtoupper($nativeType));
@@ -172,6 +172,40 @@ final class PgSqlSchemaParser implements SchemaParser
             'default' => $default,
             'identity' => $identity,
         ];
+    }
+
+    private static function isSerialType(string $nativeType): bool
+    {
+        foreach (['SMALLSERIAL', 'SERIAL', 'BIGSERIAL'] as $serialType) {
+            if (strcasecmp($nativeType, $serialType) === 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function hasGeneratedIdentity(string $constraints): bool
+    {
+        $tokens = SqlTokenStream::tokenize($constraints)->significantTokens();
+        $sequences = [
+            ['GENERATED', 'ALWAYS', 'AS', 'IDENTITY'],
+            ['GENERATED', 'BY', 'DEFAULT', 'AS', 'IDENTITY'],
+        ];
+        foreach ($tokens as $index => $token) {
+            foreach ($sequences as $sequence) {
+                foreach ($sequence as $relative => $keyword) {
+                    $candidate = $tokens[$index + $relative] ?? null;
+                    if ($candidate === null || !$candidate->isTopLevel() || !$candidate->isKeyword($keyword)) {
+                        continue 2;
+                    }
+                }
+
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
