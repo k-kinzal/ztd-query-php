@@ -134,29 +134,29 @@ final class SqlTokenStream
     public function selectFromClauses(): array
     {
         $tokens = $this->significantTokens();
+        /** @var array<int, array<int, bool>> $selectScopes */
         $selectScopes = [];
         $clauses = [];
 
         foreach ($tokens as $index => $token) {
-            $scope = $token->depth . ':' . $token->bracketDepth;
             if ($token->isKeyword('SELECT')) {
-                $selectScopes[$scope] = true;
+                $selectScopes[$token->depth][$token->bracketDepth] = true;
                 continue;
             }
             if ($token->isKeyword('UNION') || $token->isKeyword('INTERSECT') || $token->isKeyword('EXCEPT')) {
-                $selectScopes[$scope] = false;
+                $selectScopes[$token->depth][$token->bracketDepth] = false;
                 continue;
             }
-            if (!$token->isKeyword('FROM') || ($selectScopes[$scope] ?? false) !== true) {
+            if (!$token->isKeyword('FROM') || ($selectScopes[$token->depth][$token->bracketDepth] ?? false) !== true) {
                 continue;
             }
 
-            $end = $this->findSelectFromEnd($tokens, $index + 1, $token);
+            $end = $this->findSelectFromEnd($tokens, $token);
             $clause = trim(substr($this->sql, $token->endOffset(), $end - $token->endOffset()));
             if ($clause !== '') {
                 $clauses[] = $clause;
             }
-            $selectScopes[$scope] = false;
+            $selectScopes[$token->depth][$token->bracketDepth] = false;
         }
 
         return $clauses;
@@ -188,7 +188,7 @@ final class SqlTokenStream
     }
 
     /** @param list<SqlToken> $tokens */
-    private function findSelectFromEnd(array $tokens, int $from, SqlToken $fromToken): int
+    private function findSelectFromEnd(array $tokens, SqlToken $fromToken): int
     {
         $terminators = [
             ['WHERE'], ['GROUP', 'BY'], ['HAVING'], ['ORDER', 'BY'],
@@ -196,16 +196,23 @@ final class SqlTokenStream
             ['FOR'], ['RETURNING'],
         ];
 
-        for ($index = $from, $count = count($tokens); $index < $count; $index++) {
-            $token = $tokens[$index];
+        $afterFrom = false;
+        foreach ($tokens as $index => $token) {
+            if (!$afterFrom) {
+                $afterFrom = $token === $fromToken;
+                continue;
+            }
             if ($token->depth < $fromToken->depth || $token->bracketDepth < $fromToken->bracketDepth) {
                 return $token->offset;
             }
-            if ($token->depth !== $fromToken->depth || $token->bracketDepth !== $fromToken->bracketDepth) {
+            if ($token->depth !== $fromToken->depth) {
+                continue;
+            }
+            if ($token->bracketDepth !== $fromToken->bracketDepth) {
                 continue;
             }
             foreach ($terminators as $sequence) {
-                if ($this->matchesKeywordSequenceAtDepth($tokens, $index, $sequence, $fromToken)) {
+                if ($this->matchesKeywordSequence($tokens, $index, $sequence)) {
                     return $token->offset;
                 }
             }
@@ -218,19 +225,17 @@ final class SqlTokenStream
      * @param list<SqlToken> $tokens
      * @param non-empty-list<string> $keywords
      */
-    private function matchesKeywordSequenceAtDepth(
+    private function matchesKeywordSequence(
         array $tokens,
         int $index,
         array $keywords,
-        SqlToken $reference,
     ): bool {
         foreach ($keywords as $relative => $keyword) {
             $candidate = $tokens[$index + $relative] ?? null;
-            if ($candidate === null
-                || $candidate->depth !== $reference->depth
-                || $candidate->bracketDepth !== $reference->bracketDepth
-                || !$candidate->isKeyword($keyword)
-            ) {
+            if ($candidate === null) {
+                return false;
+            }
+            if (!$candidate->isKeyword($keyword)) {
                 return false;
             }
         }
@@ -261,10 +266,8 @@ final class SqlTokenStream
             }
 
             if ($char === '-' && $next === '-') {
-                $offset += 2;
-                while ($offset < $length && $sql[$offset] !== "\n") {
-                    $offset++;
-                }
+                $lineEnd = strpos($sql, "\n", $offset);
+                $offset = $lineEnd === false ? $length : $lineEnd;
                 $tokens[] = self::token($sql, SqlTokenKind::Comment, $start, $offset, $depth, $bracketDepth);
                 continue;
             }
@@ -272,13 +275,17 @@ final class SqlTokenStream
             if ($char === '/' && $next === '*') {
                 $offset += 2;
                 $commentDepth = 1;
-                while ($offset < $length && $commentDepth > 0) {
-                    if (($sql[$offset] ?? '') === '/' && ($sql[$offset + 1] ?? '') === '*') {
+                while ($commentDepth > 0) {
+                    if (!isset($sql[$offset])) {
+                        break;
+                    }
+                    $pair = substr($sql, $offset, 2);
+                    if ($pair === '/*') {
                         $commentDepth++;
                         $offset += 2;
                         continue;
                     }
-                    if (($sql[$offset] ?? '') === '*' && ($sql[$offset + 1] ?? '') === '/') {
+                    if ($pair === '*/') {
                         $commentDepth--;
                         $offset += 2;
                         continue;
@@ -311,10 +318,8 @@ final class SqlTokenStream
                     continue;
                 }
                 if (ctype_digit($next)) {
-                    $offset += 2;
-                    while ($offset < $length && ctype_digit($sql[$offset])) {
-                        $offset++;
-                    }
+                    $offset++;
+                    $offset += strspn($sql, '0123456789', $offset);
                     $tokens[] = self::token($sql, SqlTokenKind::Parameter, $start, $offset, $depth, $bracketDepth);
                     continue;
                 }
@@ -342,18 +347,12 @@ final class SqlTokenStream
                 $offset++;
                 if ($char === '0' && (($sql[$offset] ?? '') === 'x' || ($sql[$offset] ?? '') === 'X')) {
                     $offset++;
-                    while ($offset < $length && preg_match('/[0-9A-Fa-f_]/', $sql[$offset]) === 1) {
-                        $offset++;
-                    }
+                    $offset += strspn($sql, '0123456789ABCDEFabcdef_', $offset);
                 } else {
-                    while ($offset < $length && (ctype_digit($sql[$offset]) || $sql[$offset] === '_')) {
-                        $offset++;
-                    }
+                    $offset += strspn($sql, '0123456789_', $offset);
                     if (($sql[$offset] ?? '') === '.') {
                         $offset++;
-                        while ($offset < $length && (ctype_digit($sql[$offset]) || $sql[$offset] === '_')) {
-                            $offset++;
-                        }
+                        $offset += strspn($sql, '0123456789_', $offset);
                     }
                     if (($sql[$offset] ?? '') === 'e' || ($sql[$offset] ?? '') === 'E') {
                         $offset++;
@@ -388,9 +387,8 @@ final class SqlTokenStream
 
     private static function scanQuoted(string $sql, int $offset, string $quote): int
     {
-        $length = strlen($sql);
         $offset++;
-        while ($offset < $length) {
+        while (isset($sql[$offset])) {
             if ($sql[$offset] === $quote) {
                 if (($sql[$offset + 1] ?? '') === $quote) {
                     $offset += 2;
@@ -399,14 +397,14 @@ final class SqlTokenStream
 
                 return $offset + 1;
             }
-            if ($sql[$offset] === '\\' && isset($sql[$offset + 1])) {
+            if ($sql[$offset] === '\\') {
                 $offset += 2;
                 continue;
             }
             $offset++;
         }
 
-        return $offset;
+        return strlen($sql);
     }
 
     private static function dollarTagLength(string $tail): ?int

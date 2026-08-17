@@ -133,10 +133,15 @@ final class PgSqlParser
         /** @var array<string, string> $values */
         $values = [];
 
-        $setClause = SqlTokenStream::tokenize($sql)->topLevelClause(
-            ['DO', 'UPDATE', 'SET'],
-            [['WHERE'], ['RETURNING']],
-        );
+        $action = SqlTokenStream::tokenize($sql)->topLevelClause(['DO'], [['RETURNING']]);
+        if ($action === null) {
+            return ['columns' => [], 'values' => []];
+        }
+        $actionStream = SqlTokenStream::tokenize($action);
+        if ($actionStream->firstTopLevelKeyword() !== 'UPDATE') {
+            return ['columns' => [], 'values' => []];
+        }
+        $setClause = $actionStream->topLevelClause(['SET'], [['WHERE']]);
         if ($setClause === null) {
             return ['columns' => [], 'values' => []];
         }
@@ -450,10 +455,9 @@ final class PgSqlParser
         foreach (SqlTokenStream::tokenize($sql)->selectFromClauses() as $fromClause) {
             $fromClause = $this->maskComments($fromClause);
             $tables = array_merge($tables, $this->extractTableRefsFromClause($fromClause));
-            if (preg_match_all('/\bJOIN\s+("[^"]+"|[a-zA-Z_]\w*(?:\."[^"]+"|\.(?:[a-zA-Z_]\w*))?)/i', $fromClause, $joinMatches) > 0) {
-                foreach ($joinMatches[1] as $joinTable) {
-                    $tables[] = $this->unquoteIdentifier($this->stripSchemaPrefix($joinTable));
-                }
+            preg_match_all('/\bJOIN\s+("[^"]+"|[a-zA-Z_]\w*(?:\."[^"]+"|\.(?:[a-zA-Z_]\w*))?)/i', $fromClause, $joinMatches);
+            foreach ($joinMatches[1] as $joinTable) {
+                $tables[] = $this->unquoteIdentifier($this->stripSchemaPrefix($joinTable));
             }
         }
 

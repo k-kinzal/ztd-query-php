@@ -27,4 +27,25 @@ final class SqlTokenTest extends TestCase
 
         self::assertFalse($token->isTopLevel());
     }
+
+    public function testBracketNestedTokenIsNotTopLevel(): void
+    {
+        $token = new SqlToken(SqlTokenKind::Word, 'WHERE', 0, 0, 1);
+
+        self::assertFalse($token->isTopLevel());
+    }
+
+    public function testNonWordTokenIsNotAKeyword(): void
+    {
+        $token = new SqlToken(SqlTokenKind::String, 'SELECT', 0, 0, 0);
+
+        self::assertFalse($token->isKeyword('SELECT'));
+    }
+
+    public function testDifferentWordIsNotAKeyword(): void
+    {
+        $token = new SqlToken(SqlTokenKind::Word, 'SELECTED', 0, 0, 0);
+
+        self::assertFalse($token->isKeyword('SELECT'));
+    }
 }

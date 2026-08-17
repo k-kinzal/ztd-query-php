@@ -162,6 +162,42 @@ final class MySqlRewriterTest extends RewriterContractTest
         self::assertSame(QueryKind::READ, $caseExists->kind());
     }
 
+    public function testCompositeReadRejectsSelectInto(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+
+        $this->expectException(UnsupportedSqlException::class);
+        $this->expectExceptionMessage('Statement type not supported');
+
+        $rewriter->rewrite('SELECT 1 INTO @result EXCEPT SELECT 2');
+    }
+
+    public function testCompositeReadAllowsTablesWithoutSchemaContext(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+
+        $plan = $rewriter->rewrite('SELECT * FROM missing EXCEPT SELECT * FROM other');
+
+        self::assertSame(QueryKind::READ, $plan->kind());
+        self::assertSame('SELECT * FROM missing EXCEPT SELECT * FROM other', $plan->sql());
+    }
+
+    public function testCompositeReadRejectsUnknownTableWithSchemaContext(): void
+    {
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $registry = new TableDefinitionRegistry();
+        $definition = $schemaParser->parse('CREATE TABLE known (id INT)');
+        self::assertNotNull($definition);
+        $registry->register('known', $definition);
+        $rewriter = $this->createRewriter(new ShadowStore(), $registry);
+
+        $this->expectException(UnknownSchemaException::class);
+        $this->expectExceptionMessage('unknown_table');
+
+        $rewriter->rewrite('SELECT * FROM known EXCEPT SELECT * FROM unknown_table');
+    }
+
     public function testRewriteMultipleUsesLexicalStatementBoundaries(): void
     {
         $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());

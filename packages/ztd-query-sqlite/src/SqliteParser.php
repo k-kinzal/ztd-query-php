@@ -113,21 +113,26 @@ final class SqliteParser
         foreach (SqlTokenStream::tokenize($sql)->selectFromClauses() as $fromClause) {
             $fromClause = $this->stripComments($fromClause);
             $fromOnly = preg_replace('/\b(?:INNER|LEFT|RIGHT|CROSS|NATURAL)\s+JOIN\b.*/is', '', $fromClause);
-            $fromOnly = preg_replace('/\bJOIN\b.*/is', '', $fromOnly ?? $fromClause);
+            if ($fromOnly === null) {
+                continue;
+            }
+            $fromOnly = preg_replace('/\bJOIN\b.*/is', '', $fromOnly);
+            if ($fromOnly === null) {
+                continue;
+            }
 
-            $parts = SqlTokenStream::tokenize($fromOnly ?? $fromClause)->splitTopLevel();
+            $parts = SqlTokenStream::tokenize($fromOnly)->splitTopLevel();
             foreach ($parts as $part) {
                 $table = $this->extractTableFromExpr(trim($part));
                 if ($table !== null) {
                     $tables[] = $table;
                 }
             }
-            if (preg_match_all('/\bJOIN\s+("(?:[^"]|"")*"|[^\s(]+)/i', $fromClause, $joinMatches) > 0) {
-                foreach ($joinMatches[1] as $joinTable) {
-                    $table = $this->unquoteIdentifier($joinTable);
-                    if ($table !== '') {
-                        $tables[] = $table;
-                    }
+            preg_match_all('/\bJOIN\s+("(?:[^"]|"")*"|[^\s(]+)/i', $fromClause, $joinMatches);
+            foreach ($joinMatches[1] as $joinTable) {
+                $table = $this->unquoteIdentifier($joinTable);
+                if ($table !== '') {
+                    $tables[] = $table;
                 }
             }
         }
@@ -257,10 +262,15 @@ final class SqliteParser
      */
     public function extractOnConflictUpdates(string $sql): array
     {
-        $setClause = SqlTokenStream::tokenize($sql)->topLevelClause(
-            ['DO', 'UPDATE', 'SET'],
-            [['WHERE'], ['RETURNING']],
-        );
+        $action = SqlTokenStream::tokenize($sql)->topLevelClause(['DO'], [['RETURNING']]);
+        if ($action === null) {
+            return [];
+        }
+        $actionStream = SqlTokenStream::tokenize($action);
+        if ($actionStream->firstTopLevelKeyword() !== 'UPDATE') {
+            return [];
+        }
+        $setClause = $actionStream->topLevelClause(['SET'], [['WHERE']]);
         if ($setClause === null) {
             return [];
         }

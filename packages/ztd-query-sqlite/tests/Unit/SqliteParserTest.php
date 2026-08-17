@@ -194,6 +194,18 @@ SELECT * FROM users'));
         self::assertContains('orders', $tables);
     }
 
+    public function testExtractSelectTablesDeduplicatesAndReindexesInFirstSeenOrder(): void
+    {
+        $parser = new SqliteParser();
+
+        self::assertSame(
+            ['users', 'orders'],
+            $parser->extractSelectTables(
+                'SELECT * FROM users UNION SELECT * FROM users UNION SELECT * FROM orders'
+            ),
+        );
+    }
+
     public function testExtractInsertColumns(): void
     {
         $parser = new SqliteParser();
@@ -288,6 +300,30 @@ SELECT * FROM users'));
         );
         self::assertArrayHasKey('name', $updates);
         self::assertSame('excluded.name', $updates['name']);
+    }
+
+    public function testExtractOnConflictStopsBeforeReturningWithoutWhere(): void
+    {
+        $parser = new SqliteParser();
+
+        self::assertSame(
+            ['name' => 'excluded.name'],
+            $parser->extractOnConflictUpdates(
+                'INSERT INTO users (id, name) VALUES (1, "Alice") ON CONFLICT (id) DO UPDATE SET name = excluded.name RETURNING id'
+            ),
+        );
+    }
+
+    public function testExtractOnConflictRejectsNonUpdateActionContainingSet(): void
+    {
+        $parser = new SqliteParser();
+
+        self::assertSame(
+            [],
+            $parser->extractOnConflictUpdates(
+                'INSERT INTO users (id, name) VALUES (1, "Alice") ON CONFLICT (id) DO NOTHING SET name = excluded.name'
+            ),
+        );
     }
 
     public function testHasInsertSelect(): void
@@ -871,6 +907,16 @@ SELECT * FROM users'));
     {
         $parser = new SqliteParser();
         self::assertSame('id', $parser->extractOrderByClause('SELECT * FROM users ORDER BY id LIMIT 5'));
+    }
+
+    public function testExtractOrderByClauseRequiresOrderBeforeBy(): void
+    {
+        $parser = new SqliteParser();
+
+        self::assertSame(
+            'value',
+            $parser->extractOrderByClause('SELECT value AS by FROM users ORDER BY value'),
+        );
     }
 
     public function testExtractOrderByClauseNone(): void

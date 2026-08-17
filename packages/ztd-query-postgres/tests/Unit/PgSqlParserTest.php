@@ -596,6 +596,29 @@ SELECT * FROM users'));
         self::assertSame('EXCLUDED.v', $result['values']['v']);
     }
 
+    public function testExtractOnConflictStopsBeforeReturningWithoutWhere(): void
+    {
+        $parser = new PgSqlParser();
+        $result = $parser->extractOnConflictUpdateColumns(
+            "INSERT INTO t (id, v) VALUES (1, 2) ON CONFLICT (id) DO UPDATE SET v = EXCLUDED.v RETURNING id"
+        );
+
+        self::assertSame(['v'], $result['columns']);
+        self::assertSame('EXCLUDED.v', $result['values']['v']);
+    }
+
+    public function testExtractOnConflictRejectsNonUpdateActionContainingSet(): void
+    {
+        $parser = new PgSqlParser();
+
+        self::assertSame(
+            ['columns' => [], 'values' => []],
+            $parser->extractOnConflictUpdateColumns(
+                'INSERT INTO t (id, v) VALUES (1, 2) ON CONFLICT (id) DO NOTHING SET v = EXCLUDED.v'
+            ),
+        );
+    }
+
     public function testExtractOnConflictQuotedColumn(): void
     {
         $parser = new PgSqlParser();
