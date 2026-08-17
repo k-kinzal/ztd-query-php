@@ -20,6 +20,7 @@ use ZtdQuery\Schema\ViewDefinitionSet;
 use ZtdQuery\Shadow\ShadowStore;
 use PhpMyAdmin\SqlParser\Statements\AlterStatement;
 use PhpMyAdmin\SqlParser\Statements\CreateStatement;
+use PhpMyAdmin\SqlParser\Statements\LoadStatement;
 use PhpMyAdmin\SqlParser\Statements\ReplaceStatement;
 use PhpMyAdmin\SqlParser\Statements\TruncateStatement;
 use PhpMyAdmin\SqlParser\Statements\WithStatement;
@@ -125,6 +126,10 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
             : $this->guard->classifyStatement($statement);
         if ($kind === null) {
             throw new UnsupportedSqlException($sql, 'Statement type not supported');
+        }
+
+        if ($statement instanceof LoadStatement) {
+            return $this->rewrite((new MySqlLoadDataProjector($this->registry))->project($sql, $statement));
         }
 
         $tableContext = $this->buildTableContext();

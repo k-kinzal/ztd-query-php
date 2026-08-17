@@ -156,6 +156,14 @@ final class MySqlProvider extends Base
     }
 
     /**
+     * Generate a LOAD DATA statement from MySQL's official load_stmt rule.
+     */
+    public function loadDataStatement(int $maxDepth = PHP_INT_MAX): string
+    {
+        return $this->sql->generate(GenerationPlans::loadDataStatement()->withMaxDepth($maxDepth));
+    }
+
+    /**
      * Generate a two-target UPDATE statement.
      */
     public function multiTableUpdateStatement(int $maxDepth = PHP_INT_MAX): string

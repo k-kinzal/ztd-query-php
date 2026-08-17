@@ -255,6 +255,19 @@ final class MySqlProviderTest extends TestCase
         self::assertNotSame('', $result);
     }
 
+    public function testLoadDataStatementUsesOfficialGrammarRule(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(164);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->loadDataStatement(maxDepth: 8);
+
+        self::assertStringStartsWith('LOAD', strtoupper($result));
+        self::assertStringContainsString('INFILE', strtoupper($result));
+        self::assertStringContainsString('INTO', strtoupper($result));
+    }
+
     public function testSelectStatement(): void
     {
         $faker = Factory::create();

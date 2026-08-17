@@ -204,6 +204,7 @@ final class RobustnessTarget
             fn (): string => $this->provider->insertSelectCompoundStatement(),
             fn (): string => $this->provider->insertRowAliasUpsertStatement(),
             fn (): string => $this->provider->partitionSelectStatement(),
+            fn (): string => $this->provider->loadDataStatement(maxDepth: 8),
         ];
 
         $index = ord($input[0] ?? "\0") % count($generators);

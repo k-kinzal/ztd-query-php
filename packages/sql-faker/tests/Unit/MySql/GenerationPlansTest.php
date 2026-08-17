@@ -263,4 +263,9 @@ final class GenerationPlansTest extends TestCase
         self::assertTrue($plan->patternAt('table_factor', 0)?->matches(['single_table']) ?? false);
         self::assertTrue($plan->patternAt('opt_use_partition', 0)?->matches(['PARTITION_SYM']) ?? false);
     }
+
+    public function testLoadDataPlanStartsFromTheLoadGrammar(): void
+    {
+        self::assertSame('load_stmt', GenerationPlans::loadDataStatement()->startRule());
+    }
 }

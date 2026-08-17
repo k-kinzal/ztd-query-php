@@ -159,6 +159,16 @@ class MySqlQueryGuardTest extends QueryClassifierContractTest
         self::assertSame(QueryKind::WRITE_SIMULATED, $guard->classify("REPLACE INTO users (id, name) VALUES (1, 'Alice')"));
     }
 
+    public function testClassifiesLoadDataAsWriteSimulated(): void
+    {
+        $guard = new MySqlQueryGuard(new MySqlParser());
+
+        self::assertSame(
+            QueryKind::WRITE_SIMULATED,
+            $guard->classify("LOAD DATA LOCAL INFILE '/tmp/users.tsv' INTO TABLE users"),
+        );
+    }
+
     public function testClassifiesEmptySqlAsNull(): void
     {
         $guard = new MySqlQueryGuard(new MySqlParser());

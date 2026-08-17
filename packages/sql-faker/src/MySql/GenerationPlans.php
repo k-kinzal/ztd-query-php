@@ -209,6 +209,12 @@ final class GenerationPlans
     }
 
     /** @return GenerationPlan<true> */
+    public static function loadDataStatement(): GenerationPlan
+    {
+        return GenerationPlan::fromRule('load_stmt')->requiringNonEmpty();
+    }
+
+    /** @return GenerationPlan<true> */
     public static function multiTableDeleteStatement(): GenerationPlan
     {
         return GenerationPlan::constrained('delete_stmt', [

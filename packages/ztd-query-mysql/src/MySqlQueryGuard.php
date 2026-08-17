@@ -11,6 +11,7 @@ use PhpMyAdmin\SqlParser\Statements\CreateStatement;
 use PhpMyAdmin\SqlParser\Statements\DeleteStatement;
 use PhpMyAdmin\SqlParser\Statements\DropStatement;
 use PhpMyAdmin\SqlParser\Statements\InsertStatement;
+use PhpMyAdmin\SqlParser\Statements\LoadStatement;
 use PhpMyAdmin\SqlParser\Statements\ReplaceStatement;
 use PhpMyAdmin\SqlParser\Statements\SelectStatement;
 use PhpMyAdmin\SqlParser\Statements\TruncateStatement;
@@ -76,7 +77,7 @@ final class MySqlQueryGuard
             return QueryKind::READ;
         }
 
-        if ($statement instanceof UpdateStatement || $statement instanceof DeleteStatement || $statement instanceof InsertStatement || $statement instanceof TruncateStatement || $statement instanceof ReplaceStatement) {
+        if ($statement instanceof UpdateStatement || $statement instanceof DeleteStatement || $statement instanceof InsertStatement || $statement instanceof TruncateStatement || $statement instanceof ReplaceStatement || $statement instanceof LoadStatement) {
             return QueryKind::WRITE_SIMULATED;
         }
 

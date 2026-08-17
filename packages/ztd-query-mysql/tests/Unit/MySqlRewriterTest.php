@@ -13,6 +13,7 @@ use ZtdQuery\Platform\MySql\DmlWhereClauseExtractor;
 use ZtdQuery\Platform\MySql\InsertSelectSourceExtractor;
 use ZtdQuery\Platform\MySql\Mutation\AlterTableMutation;
 use ZtdQuery\Platform\MySql\MySqlMutationResolver;
+use ZtdQuery\Platform\MySql\MySqlLoadDataProjector;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlPartitioningParser;
 use ZtdQuery\Platform\MySql\MySqlPartitionSelectionRewriter;
@@ -52,6 +53,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(MySqlParser::class)]
 #[UsesClass(MySqlMutationResolver::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlUpsertExpressionParser::class)]
+#[UsesClass(MySqlLoadDataProjector::class)]
 #[UsesClass(MySqlSchemaParser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlSelectRelationParser::class)]
 #[UsesClass(MySqlPartitioningParser::class)]
