@@ -174,6 +174,7 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
      *     columnTypes: array<string, \ZtdQuery\Schema\ColumnType>,
      *     columnDefaults: array<string, string>,
      *     identityStrategies: array<string, \ZtdQuery\Schema\IdentityGenerationStrategy>,
+     *     generatedExpressions: array<string, string>,
      *     primaryKeys: array<int, string>,
      *     candidateKeys: array<string, array<int, string>>
      * }>
@@ -206,6 +207,7 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
                     'columnTypes' => [],
                     'columnDefaults' => [],
                     'identityStrategies' => [],
+                    'generatedExpressions' => [],
                     'primaryKeys' => [],
                     'candidateKeys' => [],
                 ];
@@ -242,6 +244,7 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
      *     columnTypes: array<string, \ZtdQuery\Schema\ColumnType>,
      *     columnDefaults: array<string, string>,
      *     identityStrategies: array<string, \ZtdQuery\Schema\IdentityGenerationStrategy>,
+     *     generatedExpressions: array<string, string>,
      *     primaryKeys: array<int, string>,
      *     candidateKeys: array<string, array<int, string>>
      * }
@@ -254,6 +257,7 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
             'columnTypes' => $definition->typedColumns,
             'columnDefaults' => $definition->columnDefaults,
             'identityStrategies' => $definition->identityStrategies,
+            'generatedExpressions' => $definition->generatedExpressions,
             'primaryKeys' => $definition->primaryKeys,
             'candidateKeys' => $definition->candidateKeys()->keys(),
         ];

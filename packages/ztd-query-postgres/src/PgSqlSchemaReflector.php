@@ -92,7 +92,7 @@ final class PgSqlSchemaReflector implements SchemaReflector, ViewReflector
         $stmt = $this->connection->query(
             "SELECT column_name, data_type, character_maximum_length, "
             . "numeric_precision, numeric_scale, is_nullable, column_default, "
-            . "udt_name "
+            . "udt_name, is_identity, identity_generation, is_generated, generation_expression "
             . "FROM information_schema.columns "
             . "WHERE table_schema = current_schema() AND table_name = '" . str_replace("'", "''", $tableName) . "' "
             . "ORDER BY ordinal_position"
@@ -191,9 +191,22 @@ final class PgSqlSchemaReflector implements SchemaReflector, ViewReflector
             $def .= ' NOT NULL';
         }
 
-        $default = $col['column_default'] ?? null;
-        if (is_string($default) && $default !== '') {
-            $def .= ' DEFAULT ' . $default;
+        $generationExpression = $col['generation_expression'] ?? null;
+        if (($col['is_generated'] ?? 'NEVER') === 'ALWAYS'
+            && is_string($generationExpression)
+            && trim($generationExpression) !== ''
+        ) {
+            $def .= ' GENERATED ALWAYS AS (' . $generationExpression . ') STORED';
+        } elseif (($col['is_identity'] ?? 'NO') === 'YES') {
+            $identityGeneration = ($col['identity_generation'] ?? 'BY DEFAULT') === 'ALWAYS'
+                ? 'ALWAYS'
+                : 'BY DEFAULT';
+            $def .= " GENERATED $identityGeneration AS IDENTITY";
+        } else {
+            $default = $col['column_default'] ?? null;
+            if (is_string($default) && $default !== '') {
+                $def .= ' DEFAULT ' . $default;
+            }
         }
 
         return $def;

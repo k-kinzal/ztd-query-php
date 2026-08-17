@@ -130,6 +130,15 @@ final class MySqlProviderTest extends TestCase
         self::assertContains('SELECT_SYM', $tokens);
     }
 
+    public function testGeneratedColumnStatement(): void
+    {
+        $sql = (new MySqlProvider(Factory::create()))->generatedColumnStatement();
+
+        self::assertStringStartsWith('CREATE TABLE ', $sql);
+        self::assertStringContainsString(' GENERATED ALWAYS AS (', $sql);
+        self::assertStringEndsWith(' STORED)', $sql);
+    }
+
     public function testSql(): void
     {
         $faker = Factory::create();

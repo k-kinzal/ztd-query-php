@@ -40,6 +40,21 @@ final class MySqlSchemaParserTest extends SchemaParserContractTest
         return 'SELECT * FROM users WHERE id = 1';
     }
 
+    public function testParsesStoredAndVirtualGeneratedExpressions(): void
+    {
+        $definition = (new MySqlSchemaParser(new MySqlParser()))->parse(
+            'CREATE TABLE orders (qty INT, unit_price DECIMAL(10,2), '
+            . 'total DECIMAL(10,2) GENERATED ALWAYS AS (qty * unit_price) STORED, '
+            . 'label VARCHAR(255) AS (CONCAT(qty, unit_price)) VIRTUAL)',
+        );
+
+        self::assertNotNull($definition);
+        self::assertSame([
+            'total' => '(qty * unit_price)',
+            'label' => '(CONCAT(qty, unit_price))',
+        ], $definition->generatedExpressions);
+    }
+
     public function testParseSimpleCreateTable(): void
     {
         $parser = new MySqlParser();

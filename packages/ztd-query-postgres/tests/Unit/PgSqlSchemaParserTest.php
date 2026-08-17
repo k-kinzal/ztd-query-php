@@ -419,16 +419,19 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
 
         self::assertNotNull($definition);
         self::assertSame([], $definition->identityStrategies);
+        self::assertSame(['computed' => '(source + 1)'], $definition->generatedExpressions);
     }
 
     public function testUnprefixedAndIncompleteIdentityClausesAreNotIdentities(): void
     {
         $definition = (new PgSqlSchemaParser())->parse(
-            'CREATE TABLE t (always_value BIGINT ALWAYS AS IDENTITY, default_value BIGINT BY DEFAULT AS IDENTITY, incomplete BIGINT GENERATED)'
+            'CREATE TABLE t (always_value BIGINT ALWAYS AS IDENTITY, default_value BIGINT BY DEFAULT AS IDENTITY, '
+            . 'incomplete BIGINT GENERATED, unprefixed_computed INTEGER ALWAYS AS (1) STORED)'
         );
 
         self::assertNotNull($definition);
         self::assertSame([], $definition->identityStrategies);
+        self::assertSame([], $definition->generatedExpressions);
     }
 
     public function testParseStopsDefaultAtInlinePrimaryKeyConstraint(): void

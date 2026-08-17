@@ -234,6 +234,35 @@ final class SqliteMutationResolverTest extends TestCase
         self::assertInstanceOf(AlterTableMutation::class, $mutation);
     }
 
+    public function testAlterAddGeneratedColumnPreservesExistingAndAddedExpressions(): void
+    {
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $registry->register('metrics', new TableDefinition(
+            ['source', 'doubled'],
+            ['source' => 'INTEGER', 'doubled' => 'INTEGER'],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            ['doubled' => '(source * 2)'],
+        ));
+        $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
+        $mutation = $resolver->resolve(
+            'ALTER TABLE metrics ADD COLUMN tripled INTEGER GENERATED ALWAYS AS (source * 3) STORED',
+            QueryKind::DDL_SIMULATED,
+        );
+
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
+        $mutation->apply($store, []);
+        self::assertSame([
+            'doubled' => '(source * 2)',
+            'tripled' => '(source * 3)',
+        ], $registry->get('metrics')?->generatedExpressions);
+    }
+
     public function testResolveAlterTableDropColumn(): void
     {
         $registry = new TableDefinitionRegistry();

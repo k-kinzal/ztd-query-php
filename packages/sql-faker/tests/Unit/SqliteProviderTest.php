@@ -112,6 +112,15 @@ final class SqliteProviderTest extends TestCase
         self::assertContains('SELECT', $tokens);
     }
 
+    public function testGeneratedColumnStatement(): void
+    {
+        $sql = (new SqliteProvider(Factory::create()))->generatedColumnStatement();
+
+        self::assertStringStartsWith('CREATE TABLE ', $sql);
+        self::assertStringContainsString(' GENERATED ALWAYS AS (', $sql);
+        self::assertStringEndsWith(' STORED)', $sql);
+    }
+
     #[\Override]
     protected function setUp(): void
     {

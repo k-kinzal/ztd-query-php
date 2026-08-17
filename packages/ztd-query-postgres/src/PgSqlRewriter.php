@@ -192,7 +192,8 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
      *     columns: array<int, string>,
      *     columnTypes: array<string, \ZtdQuery\Schema\ColumnType>,
      *     columnDefaults: array<string, string>,
-     *     identityStrategies: array<string, \ZtdQuery\Schema\IdentityGenerationStrategy>
+     *     identityStrategies: array<string, \ZtdQuery\Schema\IdentityGenerationStrategy>,
+     *     generatedExpressions: array<string, string>
      * }>
      */
     private function buildTableContext(): array
@@ -217,6 +218,7 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
             $columnTypes = $definition !== null ? $definition->typedColumns : [];
             $columnDefaults = $definition !== null ? $definition->columnDefaults : [];
             $identityStrategies = $definition !== null ? $definition->identityStrategies : [];
+            $generatedExpressions = $definition !== null ? $definition->generatedExpressions : [];
 
             $context[$tableName] = [
                 'rows' => $rows,
@@ -224,6 +226,7 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
                 'columnTypes' => $columnTypes,
                 'columnDefaults' => $columnDefaults,
                 'identityStrategies' => $identityStrategies,
+                'generatedExpressions' => $generatedExpressions,
                 'primaryKeys' => $definition !== null ? $definition->primaryKeys : [],
                 'candidateKeys' => $definition !== null ? $definition->candidateKeys()->keys() : [],
             ];
@@ -241,6 +244,7 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
                 'columnTypes' => $definition->typedColumns,
                 'columnDefaults' => $definition->columnDefaults,
                 'identityStrategies' => $definition->identityStrategies,
+                'generatedExpressions' => $definition->generatedExpressions,
                 'primaryKeys' => $definition->primaryKeys,
                 'candidateKeys' => $definition->candidateKeys()->keys(),
             ];

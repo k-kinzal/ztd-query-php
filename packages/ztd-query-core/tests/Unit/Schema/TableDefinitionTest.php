@@ -29,6 +29,7 @@ final class TableDefinitionTest extends TestCase
             $typedColumns,
             ['name' => "'anonymous'"],
             ['id' => IdentityGenerationStrategy::MaxValue],
+            ['name' => "CONCAT('user-', id)"],
         );
 
         self::assertSame(['id', 'name'], $definition->columns);
@@ -39,6 +40,7 @@ final class TableDefinitionTest extends TestCase
         self::assertSame($typedColumns, $definition->typedColumns);
         self::assertSame(['name' => "'anonymous'"], $definition->columnDefaults);
         self::assertSame(['id' => IdentityGenerationStrategy::MaxValue], $definition->identityStrategies);
+        self::assertSame(['name' => "CONCAT('user-', id)"], $definition->generatedExpressions);
     }
 
     public function testTypedColumnsDefaultsToEmpty(): void
@@ -54,5 +56,6 @@ final class TableDefinitionTest extends TestCase
         self::assertSame([], $definition->typedColumns);
         self::assertSame([], $definition->columnDefaults);
         self::assertSame([], $definition->identityStrategies);
+        self::assertSame([], $definition->generatedExpressions);
     }
 }

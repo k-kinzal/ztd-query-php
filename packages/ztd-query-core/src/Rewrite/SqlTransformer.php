@@ -25,7 +25,8 @@ interface SqlTransformer
      *     primaryKeys?: array<int, string>,
      *     candidateKeys?: array<string, array<int, string>>,
      *     columnDefaults?: array<string, string>,
-     *     identityStrategies?: array<string, \ZtdQuery\Schema\IdentityGenerationStrategy>
+     *     identityStrategies?: array<string, \ZtdQuery\Schema\IdentityGenerationStrategy>,
+     *     generatedExpressions?: array<string, string>
      * }> $tables Table name => shadow data and column information.
      * @return string The transformed SQL.
      */

@@ -72,6 +72,21 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteViewShadowRenderer::class)]
 final class SqliteRewriterTest extends RewriterContractTest
 {
+    public function testGeneratedExpressionIsPresentBeforeTheFirstShadowWrite(): void
+    {
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $definition = $this->createSchemaParser()->parse(
+            'CREATE TABLE orders (qty INTEGER, total INTEGER GENERATED ALWAYS AS (qty * 2) STORED)',
+        );
+        self::assertNotNull($definition);
+        $registry->register('orders', $definition);
+
+        $sql = $this->createRewriter($store, $registry)->rewrite('SELECT total FROM orders')->sql();
+
+        self::assertStringContainsString('(qty * 2) AS "total"', $sql);
+    }
+
     public function testRegisteredViewIsKnownAndMaterialized(): void
     {
         $store = new ShadowStore();

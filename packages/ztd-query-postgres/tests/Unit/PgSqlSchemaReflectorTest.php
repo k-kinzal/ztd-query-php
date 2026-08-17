@@ -621,11 +621,82 @@ final class PgSqlSchemaReflectorTest extends TestCase
         self::assertSame(
             "SELECT column_name, data_type, character_maximum_length, "
             . "numeric_precision, numeric_scale, is_nullable, column_default, "
-            . "udt_name "
+            . "udt_name, is_identity, identity_generation, is_generated, generation_expression "
             . "FROM information_schema.columns "
             . "WHERE table_schema = current_schema() AND table_name = 'users' "
             . "ORDER BY ordinal_position",
             $queries[0]
+        );
+    }
+
+    public function testReflectsGeneratedAndIdentityColumns(): void
+    {
+        $reflector = new PgSqlSchemaReflector(new FakeSequentialConnection([
+            new FakeStatement([
+                [
+                    'column_name' => 'total',
+                    'data_type' => 'numeric',
+                    'character_maximum_length' => null,
+                    'numeric_precision' => 10,
+                    'numeric_scale' => 2,
+                    'is_nullable' => 'YES',
+                    'column_default' => null,
+                    'udt_name' => 'numeric',
+                    'is_identity' => 'NO',
+                    'identity_generation' => null,
+                    'is_generated' => 'ALWAYS',
+                    'generation_expression' => 'qty * unit_price',
+                ],
+                [
+                    'column_name' => 'id',
+                    'data_type' => 'bigint',
+                    'character_maximum_length' => null,
+                    'numeric_precision' => 64,
+                    'numeric_scale' => 0,
+                    'is_nullable' => 'NO',
+                    'column_default' => null,
+                    'udt_name' => 'int8',
+                    'is_identity' => 'YES',
+                    'identity_generation' => 'ALWAYS',
+                    'is_generated' => 'NEVER',
+                    'generation_expression' => null,
+                ],
+                [
+                    'column_name' => 'ordinary',
+                    'data_type' => 'integer',
+                    'character_maximum_length' => null,
+                    'numeric_precision' => 32,
+                    'numeric_scale' => 0,
+                    'is_nullable' => 'YES',
+                    'column_default' => null,
+                    'udt_name' => 'int4',
+                    'is_identity' => 'NO',
+                    'identity_generation' => null,
+                    'is_generated' => 'NEVER',
+                    'generation_expression' => 'qty + 1',
+                ],
+                [
+                    'column_name' => 'blank',
+                    'data_type' => 'integer',
+                    'character_maximum_length' => null,
+                    'numeric_precision' => 32,
+                    'numeric_scale' => 0,
+                    'is_nullable' => 'YES',
+                    'column_default' => null,
+                    'udt_name' => 'int4',
+                    'is_identity' => 'NO',
+                    'identity_generation' => null,
+                    'is_generated' => 'ALWAYS',
+                    'generation_expression' => '   ',
+                ],
+            ]),
+            new FakeStatement([]),
+            new FakeStatement([]),
+        ]));
+
+        self::assertSame(
+            "CREATE TABLE \"orders\" (\n  \"total\" NUMERIC(10,2) GENERATED ALWAYS AS (qty * unit_price) STORED,\n  \"id\" BIGINT NOT NULL GENERATED ALWAYS AS IDENTITY,\n  \"ordinary\" INTEGER,\n  \"blank\" INTEGER\n)",
+            $reflector->getCreateStatement('orders'),
         );
     }
 

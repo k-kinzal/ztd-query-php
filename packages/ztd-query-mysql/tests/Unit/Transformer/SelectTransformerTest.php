@@ -27,6 +27,21 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
 final class SelectTransformerTest extends TransformerContractTest
 {
+    public function testGeneratedColumnsAreRecomputedFromBaseRow(): void
+    {
+        $result = (new SelectTransformer())->transform('SELECT total FROM orders', [
+            'orders' => [
+                'rows' => [['qty' => 5, 'unit_price' => 10, 'total' => null]],
+                'columns' => ['qty', 'unit_price', 'total'],
+                'columnTypes' => [],
+                'generatedExpressions' => ['total' => '(qty * unit_price)'],
+            ],
+        ]);
+
+        self::assertStringContainsString('(qty * unit_price) AS `total`', $result);
+        self::assertStringContainsString('AS `__ztd_generated_source`', $result);
+    }
+
     public function testTransformMaterializesViewAfterItsShadowTable(): void
     {
         $tables = [

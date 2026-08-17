@@ -11,6 +11,7 @@ use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\IdentifierQuoter;
 use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer;
+use ZtdQuery\Rewrite\GeneratedColumnProjector;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
@@ -28,6 +29,7 @@ final class SelectTransformer implements SqlTransformer
     private ValueRenderer $valueRenderer;
     private SqliteCteShadowComposer $cteComposer;
     private SqliteIndexHintStripper $indexHintStripper;
+    private GeneratedColumnProjector $generatedColumnProjector;
 
     public function __construct(
         ?CastRenderer $castRenderer = null,
@@ -39,6 +41,7 @@ final class SelectTransformer implements SqlTransformer
         $this->valueRenderer = $valueRenderer ?? new \ZtdQuery\Platform\Sqlite\SqliteValueRenderer($this->castRenderer);
         $this->cteComposer = new SqliteCteShadowComposer();
         $this->indexHintStripper = new SqliteIndexHintStripper();
+        $this->generatedColumnProjector = new GeneratedColumnProjector($this->quoter);
     }
 
     /**
@@ -56,6 +59,7 @@ final class SelectTransformer implements SqlTransformer
             $rows = $tableContext['rows'];
             $columns = $tableContext['columns'];
             $columnTypes = $tableContext['columnTypes'];
+            $generatedExpressions = $tableContext['generatedExpressions'] ?? [];
 
             if ($columns === [] && $rows !== []) {
                 $columns = array_keys($rows[0]);
@@ -72,7 +76,13 @@ final class SelectTransformer implements SqlTransformer
                 continue;
             }
 
-            $ctes[$tableName] = $this->generateCte($tableName, $rows, $columns, $columnTypes);
+            $ctes[$tableName] = $this->generateCte(
+                $tableName,
+                $rows,
+                $columns,
+                $columnTypes,
+                $generatedExpressions,
+            );
         }
 
         $sql = $this->indexHintStripper->strip($sql, array_keys($ctes));
@@ -87,12 +97,14 @@ final class SelectTransformer implements SqlTransformer
      * @param array<int, array<string, mixed>> $rows
      * @param array<int, string> $columns
      * @param array<string, ColumnType> $columnTypes
+     * @param array<string, string> $generatedExpressions
      */
     private function generateCte(
         string $tableName,
         array $rows,
         array $columns,
-        array $columnTypes
+        array $columnTypes,
+        array $generatedExpressions,
     ): string {
         $quotedTable = $this->quoter->quote($tableName);
 
@@ -107,7 +119,12 @@ final class SelectTransformer implements SqlTransformer
                     $selects[] = "$nullCast AS " . $this->quoter->quote($col);
                 }
 
-                return "$quotedTable AS (SELECT " . implode(', ', $selects) . ' WHERE 0)';
+                return $this->wrapCte(
+                    $quotedTable,
+                    'SELECT ' . implode(', ', $selects) . ' WHERE 0',
+                    $columns,
+                    $generatedExpressions,
+                );
             }
 
             $ctes = [];
@@ -123,7 +140,7 @@ final class SelectTransformer implements SqlTransformer
 
             $union = implode(' UNION ALL ', $ctes);
 
-            return "$quotedTable AS ($union)";
+            return $this->wrapCte($quotedTable, $union, $columns, $generatedExpressions);
         }
 
         if ($rows === []) {
@@ -144,7 +161,22 @@ final class SelectTransformer implements SqlTransformer
 
         $union = implode(' UNION ALL ', $ctes);
 
-        return "$quotedTable AS ($union)";
+        return $this->wrapCte($quotedTable, $union, array_keys($rows[0]), $generatedExpressions);
+    }
+
+    /**
+     * @param array<int, string> $columns
+     * @param array<string, string> $generatedExpressions
+     */
+    private function wrapCte(
+        string $quotedTable,
+        string $baseSql,
+        array $columns,
+        array $generatedExpressions,
+    ): string {
+        $sql = $this->generatedColumnProjector->project($baseSql, $columns, $generatedExpressions);
+
+        return "$quotedTable AS ($sql)";
     }
 
     private function formatValue(mixed $val, ?ColumnType $type = null): string

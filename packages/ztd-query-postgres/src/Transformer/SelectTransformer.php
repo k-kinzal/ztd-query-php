@@ -10,6 +10,7 @@ use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\IdentifierQuoter;
 use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer;
+use ZtdQuery\Rewrite\GeneratedColumnProjector;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
@@ -30,6 +31,7 @@ final class SelectTransformer implements SqlTransformer
     private IdentifierQuoter $quoter;
     private ValueRenderer $valueRenderer;
     private PgSqlCteShadowComposer $cteComposer;
+    private GeneratedColumnProjector $generatedColumnProjector;
 
     public function __construct(
         ?CastRenderer $castRenderer = null,
@@ -40,6 +42,7 @@ final class SelectTransformer implements SqlTransformer
         $this->quoter = $quoter ?? new PgSqlIdentifierQuoter();
         $this->valueRenderer = $valueRenderer ?? new \ZtdQuery\Platform\Postgres\PgSqlValueRenderer($this->castRenderer);
         $this->cteComposer = new PgSqlCteShadowComposer();
+        $this->generatedColumnProjector = new GeneratedColumnProjector($this->quoter);
     }
 
     /**
@@ -58,6 +61,7 @@ final class SelectTransformer implements SqlTransformer
             $columns = $tableContext['columns'];
             /** @var array<string, ColumnType> $columnTypes */
             $columnTypes = $tableContext['columnTypes'];
+            $generatedExpressions = $tableContext['generatedExpressions'] ?? [];
 
             if ($columns === [] && $rows !== []) {
                 $columns = array_keys($rows[0]);
@@ -74,7 +78,13 @@ final class SelectTransformer implements SqlTransformer
                 continue;
             }
 
-            $ctes[$tableName] = $this->generateCte($tableName, $rows, $columns, $columnTypes);
+            $ctes[$tableName] = $this->generateCte(
+                $tableName,
+                $rows,
+                $columns,
+                $columnTypes,
+                $generatedExpressions,
+            );
         }
 
         return $this->cteComposer->compose($sql, $ctes);
@@ -84,12 +94,14 @@ final class SelectTransformer implements SqlTransformer
      * @param array<int, array<string, mixed>> $rows
      * @param array<int, string> $columns
      * @param array<string, ColumnType> $columnTypes
+     * @param array<string, string> $generatedExpressions
      */
     private function generateCte(
         string $tableName,
         array $rows,
         array $columns,
-        array $columnTypes
+        array $columnTypes,
+        array $generatedExpressions,
     ): string {
         $quotedTable = $this->quoter->quote($tableName);
 
@@ -104,7 +116,12 @@ final class SelectTransformer implements SqlTransformer
                     $selects[] = "$nullCast AS " . $this->quoter->quote($col);
                 }
 
-                return "$quotedTable AS MATERIALIZED (SELECT " . implode(', ', $selects) . ' WHERE FALSE)';
+                return $this->wrapCte(
+                    $quotedTable,
+                    'SELECT ' . implode(', ', $selects) . ' WHERE FALSE',
+                    $columns,
+                    $generatedExpressions,
+                );
             }
 
             if (count($rows) === 1) {
@@ -116,10 +133,17 @@ final class SelectTransformer implements SqlTransformer
                     $selects[] = "$valStr AS " . $this->quoter->quote($col);
                 }
 
-                return "$quotedTable AS MATERIALIZED (SELECT " . implode(', ', $selects) . ')';
+                return $this->wrapCte(
+                    $quotedTable,
+                    'SELECT ' . implode(', ', $selects),
+                    $columns,
+                    $generatedExpressions,
+                );
             }
 
-            return $this->generateMultiRowCte($tableName, $rows, $columns, $columnTypes);
+            $baseSql = $this->generateMultiRowSource($rows, $columns, $columnTypes);
+
+            return $this->wrapCte($quotedTable, $baseSql, $columns, $generatedExpressions);
         }
 
         if ($rows === []) {
@@ -140,7 +164,7 @@ final class SelectTransformer implements SqlTransformer
 
         $union = implode(' UNION ALL ', $ctes);
 
-        return "$quotedTable AS MATERIALIZED ($union)";
+        return $this->wrapCte($quotedTable, $union, array_keys($rows[0]), $generatedExpressions);
     }
 
     /**
@@ -148,14 +172,11 @@ final class SelectTransformer implements SqlTransformer
      * @param array<int, string> $columns
      * @param array<string, ColumnType> $columnTypes
      */
-    private function generateMultiRowCte(
-        string $tableName,
+    private function generateMultiRowSource(
         array $rows,
         array $columns,
         array $columnTypes
     ): string {
-        $quotedTable = $this->quoter->quote($tableName);
-
         $valueRows = [];
         foreach ($rows as $row) {
             $values = [];
@@ -174,7 +195,22 @@ final class SelectTransformer implements SqlTransformer
         $valuesClause = implode(",\n    ", $valueRows);
         $columnList = implode(', ', $quotedColumns);
 
-        return "$quotedTable AS MATERIALIZED (\n  SELECT * FROM (VALUES\n    $valuesClause\n  ) AS t($columnList)\n)";
+        return "\n  SELECT * FROM (VALUES\n    $valuesClause\n  ) AS t($columnList)\n";
+    }
+
+    /**
+     * @param array<int, string> $columns
+     * @param array<string, string> $generatedExpressions
+     */
+    private function wrapCte(
+        string $quotedTable,
+        string $baseSql,
+        array $columns,
+        array $generatedExpressions,
+    ): string {
+        $sql = $this->generatedColumnProjector->project($baseSql, $columns, $generatedExpressions);
+
+        return "$quotedTable AS MATERIALIZED ($sql)";
     }
 
     private function formatValue(mixed $val, ?ColumnType $colType = null): string

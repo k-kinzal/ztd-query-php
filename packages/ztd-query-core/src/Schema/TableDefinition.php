@@ -20,6 +20,9 @@ final class TableDefinition
     /** @var array<string, IdentityGenerationStrategy> */
     public readonly array $identityStrategies;
 
+    /** @var array<string, string> */
+    public readonly array $generatedExpressions;
+
     /**
      * @param array<int, string> $columns Column names in declaration order.
      * @param array<string, string> $columnTypes Column name => MySQL type string.
@@ -29,6 +32,7 @@ final class TableDefinition
      * @param array<string, ColumnType> $typedColumns Column name => structured ColumnType.
      * @param array<string, string> $columnDefaults Column name => SQL default expression.
      * @param array<string, IdentityGenerationStrategy> $identityStrategies Column name => shadow generation strategy.
+     * @param array<string, string> $generatedExpressions Column name => database generated expression.
      */
     public function __construct(
         public readonly array $columns,
@@ -39,10 +43,12 @@ final class TableDefinition
         array $typedColumns = [],
         array $columnDefaults = [],
         array $identityStrategies = [],
+        array $generatedExpressions = [],
     ) {
         $this->typedColumns = $typedColumns;
         $this->columnDefaults = $columnDefaults;
         $this->identityStrategies = $identityStrategies;
+        $this->generatedExpressions = $generatedExpressions;
     }
 
     public function candidateKeys(): CandidateKeySet

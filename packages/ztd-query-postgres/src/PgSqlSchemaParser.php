@@ -36,6 +36,7 @@ final class PgSqlSchemaParser implements SchemaParser
         $typedColumns = [];
         $columnDefaults = [];
         $identityStrategies = [];
+        $generatedExpressions = [];
         $primaryKeys = [];
         $notNullColumns = [];
         /** @var array<string, list<string>> $uniqueConstraints */
@@ -86,6 +87,9 @@ final class PgSqlSchemaParser implements SchemaParser
             if ($columnDef['identity']) {
                 $identityStrategies[$columnDef['name']] = IdentityGenerationStrategy::Sequence;
             }
+            if ($columnDef['generatedExpression'] !== null) {
+                $generatedExpressions[$columnDef['name']] = $columnDef['generatedExpression'];
+            }
         }
 
         if ($columns === []) {
@@ -109,6 +113,7 @@ final class PgSqlSchemaParser implements SchemaParser
             $typedColumns,
             $columnDefaults,
             $identityStrategies,
+            $generatedExpressions,
         );
     }
 
@@ -126,7 +131,7 @@ final class PgSqlSchemaParser implements SchemaParser
     }
 
     /**
-     * @return array{name: string, type: string, columnType: ColumnType, notNull: bool, primaryKey: bool, unique: bool, default: string|null, identity: bool}|null
+     * @return array{name: string, type: string, columnType: ColumnType, notNull: bool, primaryKey: bool, unique: bool, default: string|null, identity: bool, generatedExpression: string|null}|null
      */
     private function parseColumnDefinition(string $entry): ?array
     {
@@ -158,6 +163,16 @@ final class PgSqlSchemaParser implements SchemaParser
         $identity = self::isSerialType($nativeType)
             || ($default !== null && self::isSequenceDefault($default))
             || self::hasGeneratedIdentity($afterType);
+        $generatedExpression = null;
+        if (!$identity) {
+            $generatedExpression = SqlTokenStream::tokenize($afterType)->topLevelClause(
+                ['GENERATED', 'ALWAYS', 'AS'],
+                [['STORED']],
+            );
+            if ($generatedExpression === '') {
+                $generatedExpression = null;
+            }
+        }
 
         $family = $this->mapTypeToFamily($nativeType);
         $columnType = new ColumnType($family, strtoupper($nativeType));
@@ -171,6 +186,7 @@ final class PgSqlSchemaParser implements SchemaParser
             'unique' => $unique,
             'default' => $default,
             'identity' => $identity,
+            'generatedExpression' => $generatedExpression,
         ];
     }
 

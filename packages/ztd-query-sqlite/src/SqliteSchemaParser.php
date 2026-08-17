@@ -38,6 +38,7 @@ final class SqliteSchemaParser implements SchemaParser
         $notNullColumns = [];
         $uniqueConstraints = [];
         $columnDefaults = [];
+        $generatedExpressions = [];
         $uniqueIndex = 0;
 
         $definitions = $this->splitColumnDefinitions($body);
@@ -122,6 +123,9 @@ final class SqliteSchemaParser implements SchemaParser
             if ($colInfo['default'] !== null) {
                 $columnDefaults[$colInfo['name']] = $colInfo['default'];
             }
+            if ($colInfo['generatedExpression'] !== null) {
+                $generatedExpressions[$colInfo['name']] = $colInfo['generatedExpression'];
+            }
         }
 
         if ($columns === []) {
@@ -163,6 +167,7 @@ final class SqliteSchemaParser implements SchemaParser
             $typedColumns,
             $columnDefaults,
             $identityStrategies,
+            $generatedExpressions,
         );
     }
 
@@ -323,7 +328,7 @@ final class SqliteSchemaParser implements SchemaParser
     /**
      * Parse a single column definition.
      *
-     * @return array{name: string, type: string|null, notNull: bool, primaryKey: bool, unique: bool, default: string|null}|null
+     * @return array{name: string, type: string|null, notNull: bool, primaryKey: bool, unique: bool, default: string|null, generatedExpression: string|null}|null
      */
     private function parseColumnDefinition(string $def): ?array
     {
@@ -368,6 +373,14 @@ final class SqliteSchemaParser implements SchemaParser
                 ['REFERENCES'], ['COLLATE'], ['CONSTRAINT'], ['GENERATED'], ['AS'],
             ],
         );
+        $stream = SqlTokenStream::tokenize($rest);
+        $generatedExpression = $stream->topLevelClause(
+            ['AS'],
+            [['STORED'], ['VIRTUAL']],
+        );
+        if ($generatedExpression === '') {
+            $generatedExpression = null;
+        }
 
         return [
             'name' => $name,
@@ -376,6 +389,7 @@ final class SqliteSchemaParser implements SchemaParser
             'primaryKey' => $primaryKey,
             'unique' => $unique,
             'default' => $default,
+            'generatedExpression' => $generatedExpression,
         ];
     }
 

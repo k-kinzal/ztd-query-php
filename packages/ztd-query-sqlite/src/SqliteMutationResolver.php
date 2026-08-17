@@ -288,6 +288,7 @@ final class SqliteMutationResolver
             array_merge($existing->typedColumns, $added->typedColumns),
             array_merge($existing->columnDefaults, $added->columnDefaults),
             $existing->identityStrategies,
+            array_merge($existing->generatedExpressions, $added->generatedExpressions),
         );
         $projection = $this->quotedColumns($existing->columns);
         $projection[] = ($added->columnDefaults[$columnName] ?? 'NULL')
@@ -314,6 +315,7 @@ final class SqliteMutationResolver
         $newTypedColumns = self::withoutMapKey($existing->typedColumns, $columnName);
         $newDefaults = self::withoutMapKey($existing->columnDefaults, $columnName);
         $newIdentityStrategies = self::withoutMapKey($existing->identityStrategies, $columnName);
+        $newGeneratedExpressions = self::withoutMapKey($existing->generatedExpressions, $columnName);
         $newNotNull = self::withoutColumn($existing->notNullColumns, $columnName);
         $newPrimaryKeys = self::withoutColumn($existing->primaryKeys, $columnName);
         $newUniqueConstraints = [];
@@ -333,6 +335,7 @@ final class SqliteMutationResolver
             $newTypedColumns,
             $newDefaults,
             $newIdentityStrategies,
+            $newGeneratedExpressions,
         );
 
         return $this->alterMutation(
@@ -395,6 +398,7 @@ final class SqliteMutationResolver
             self::renamedMapKey($existing->typedColumns, $oldName, $newName),
             self::renamedMapKey($existing->columnDefaults, $oldName, $newName),
             self::renamedMapKey($existing->identityStrategies, $oldName, $newName),
+            self::renamedMapKey($existing->generatedExpressions, $oldName, $newName),
         );
         $projection = [];
         foreach ($existing->columns as $column) {

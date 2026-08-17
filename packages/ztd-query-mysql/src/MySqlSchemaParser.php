@@ -48,6 +48,7 @@ final class MySqlSchemaParser implements SchemaParser
         $typedColumns = [];
         $columnDefaults = [];
         $identityStrategies = [];
+        $generatedExpressions = [];
         $primaryKeys = [];
         $notNullColumns = [];
         $uniqueConstraints = [];
@@ -101,6 +102,12 @@ final class MySqlSchemaParser implements SchemaParser
                 if ($field->options !== null && self::optionSet($field->options, 'AUTO_INCREMENT')) {
                     $identityStrategies[$columnName] = IdentityGenerationStrategy::MaxValue;
                 }
+                if ($field->options !== null) {
+                    $generatedExpression = $field->options->has('AS');
+                    if (is_string($generatedExpression) && $generatedExpression !== '') {
+                        $generatedExpressions[$columnName] = $generatedExpression;
+                    }
+                }
             }
 
             if ($field->key !== null && $field->key->type === 'PRIMARY KEY') {
@@ -136,6 +143,7 @@ final class MySqlSchemaParser implements SchemaParser
             $typedColumns,
             $columnDefaults,
             $identityStrategies,
+            $generatedExpressions,
         );
     }
 

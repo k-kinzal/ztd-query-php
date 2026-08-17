@@ -429,6 +429,14 @@ final class PostgreSqlProvider extends Base
         return $this->sql->generate(GenerationPlans::viewStatement()->withMaxDepth($maxDepth));
     }
 
+    /** @return non-empty-string */
+    public function generatedColumnStatement(): string
+    {
+        $table = $this->rsg->rawIdentifier();
+
+        return "CREATE TABLE $table (base_value INTEGER, generated_value INTEGER GENERATED ALWAYS AS (base_value + 1) STORED)";
+    }
+
     /**
      * @template TRequiresNonEmpty of bool
      * @param GenerationPlan<TRequiresNonEmpty> $plan

@@ -650,6 +650,21 @@ final class SqliteSchemaParserTest extends SchemaParserContractTest
         $result = $parser->parse($sql);
         self::assertNotNull($result);
         self::assertContains('b', $result->columns);
+        self::assertSame(['b' => '(a * 2)'], $result->generatedExpressions);
+    }
+
+    public function testGeneratedExpressionExcludesStoredAndVirtualStorageKeywords(): void
+    {
+        $result = (new SqliteSchemaParser())->parse(
+            'CREATE TABLE t (a INTEGER, stored_value INTEGER GENERATED ALWAYS AS (a * 2) STORED, '
+            . 'virtual_value INTEGER AS (a * 3) VIRTUAL)',
+        );
+
+        self::assertNotNull($result);
+        self::assertSame([
+            'stored_value' => '(a * 2)',
+            'virtual_value' => '(a * 3)',
+        ], $result->generatedExpressions);
     }
 
     public function testParseColumnWithReferences(): void
@@ -1340,6 +1355,7 @@ final class SqliteSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($result);
         self::assertContains('id', $result->columns);
         self::assertArrayNotHasKey('id', $result->columnTypes);
+        self::assertSame(['id' => '(1)'], $result->generatedExpressions);
     }
 
     public function testColumnWithAsKeywordHasNullType(): void
@@ -1350,6 +1366,7 @@ final class SqliteSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($result);
         self::assertContains('id', $result->columns);
         self::assertArrayNotHasKey('id', $result->columnTypes);
+        self::assertSame(['id' => '(1 + 1)'], $result->generatedExpressions);
     }
 
     public function testDuplicatePrimaryKeysDeduped(): void
