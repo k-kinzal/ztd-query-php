@@ -23,6 +23,7 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 #[UsesClass(MySqlCastRenderer::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlTypeSemantics::class)]
 final class InsertTransformerTest extends TestCase
 {
     public function testUsesInjectedCastRendererAndColumnTypes(): void

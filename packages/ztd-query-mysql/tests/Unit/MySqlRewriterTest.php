@@ -52,6 +52,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlCastRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlIdentifierQuoter::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlTypeSemantics::class)]
 final class MySqlRewriterTest extends RewriterContractTest
 {
     protected function createRewriter(ShadowStore $store, TableDefinitionRegistry $registry): SqlRewriter

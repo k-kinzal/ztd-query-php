@@ -44,6 +44,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(MySqlCastRenderer::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlTypeSemantics::class)]
 #[UsesClass(AlterTableMutation::class)]
 final class MySqlMutationResolverTest extends TestCase
 {

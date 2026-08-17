@@ -24,10 +24,6 @@ final class MySqlTypeSemantics
     public function rewrite(string $sql, array $tables): string
     {
         [$qualified, $unqualified] = $this->enumColumns($tables);
-        if ($qualified === [] && $unqualified === []) {
-            return $sql;
-        }
-
         $tokens = SqlTokenStream::tokenize($sql)->significantTokens();
         $edits = $this->comparisonEdits($sql, $tokens, $qualified, $unqualified);
         foreach ($this->orderByEdits($sql, $tokens, $qualified, $unqualified) as $key => $edit) {
@@ -77,12 +73,12 @@ final class MySqlTypeSemantics
      * @param list<SqlToken> $tokens
      * @param array<string, list<string>> $qualified
      * @param array<string, list<string>|null> $unqualified
-     * @return array<string, array{start: int, end: int, replacement: string}>
+     * @return array<int, array{start: int, end: int, replacement: string}>
      */
     private function comparisonEdits(string $sql, array $tokens, array $qualified, array $unqualified): array
     {
         $edits = [];
-        for ($index = 0, $count = count($tokens); $index < $count; $index++) {
+        foreach ($tokens as $index => $token) {
             $column = $this->columnAt($sql, $tokens, $index, $qualified, $unqualified);
             if ($column === null) {
                 continue;
@@ -99,7 +95,6 @@ final class MySqlTypeSemantics
 
             $this->addRankEdit($edits, $column['token'], $column['members']);
             $this->addRankEdit($edits, $value, $column['members']);
-            $index = $operatorIndex + $operator['length'];
         }
 
         return $edits;
@@ -109,21 +104,26 @@ final class MySqlTypeSemantics
      * @param list<SqlToken> $tokens
      * @param array<string, list<string>> $qualified
      * @param array<string, list<string>|null> $unqualified
-     * @return array<string, array{start: int, end: int, replacement: string}>
+     * @return array<int, array{start: int, end: int, replacement: string}>
      */
     private function orderByEdits(string $sql, array $tokens, array $qualified, array $unqualified): array
     {
         $edits = [];
-        for ($index = 0, $count = count($tokens); $index < $count - 1; $index++) {
-            if (!$tokens[$index]->isKeyword('ORDER') || !$tokens[$index + 1]->isKeyword('BY')) {
+        foreach ($tokens as $index => $order) {
+            if (!$order->isKeyword('ORDER')) {
                 continue;
             }
-            $depth = $tokens[$index]->depth;
-            $bracketDepth = $tokens[$index]->bracketDepth;
-            for ($item = $index + 2; $item < $count; $item++) {
-                $token = $tokens[$item];
-                if ($token->depth < $depth || $token->bracketDepth < $bracketDepth) {
-                    break;
+            $by = $tokens[$index + 1] ?? null;
+            if ($by === null || !$by->isKeyword('BY')) {
+                continue;
+            }
+            $depth = $order->depth;
+            $bracketDepth = $order->bracketDepth;
+            $afterBy = false;
+            foreach ($tokens as $item => $token) {
+                if (!$afterBy) {
+                    $afterBy = $token === $by;
+                    continue;
                 }
                 if ($token->depth !== $depth || $token->bracketDepth !== $bracketDepth) {
                     continue;
@@ -149,7 +149,6 @@ final class MySqlTypeSemantics
                     continue;
                 }
                 $this->addRankEdit($edits, $column['token'], $column['members']);
-                $item += $column['length'] - 1;
             }
         }
 
@@ -164,22 +163,25 @@ final class MySqlTypeSemantics
      */
     private function columnAt(string $sql, array $tokens, int $index, array $qualified, array $unqualified): ?array
     {
-        $first = $tokens[$index] ?? null;
-        if ($first === null || !$this->isIdentifier($first)) {
+        $first = $tokens[$index];
+        if (($tokens[$index - 1] ?? null)?->text === '.') {
             return null;
         }
 
         $length = 1;
-        $column = $this->unquoteIdentifier($first->text);
+        $column = $this->identifierName($first);
         $qualifiedKey = null;
-        if (($tokens[$index + 1] ?? null)?->text === '.' && isset($tokens[$index + 2]) && $this->isIdentifier($tokens[$index + 2])) {
+        $dot = $tokens[$index + 1] ?? null;
+        $qualifiedColumn = $tokens[$index + 2] ?? null;
+        if ($dot?->text === '.' && $qualifiedColumn !== null && $this->isIdentifier($qualifiedColumn)) {
             $length = 3;
-            $column = $this->unquoteIdentifier($tokens[$index + 2]->text);
-            $qualifiedKey = strtolower($this->unquoteIdentifier($first->text) . '.' . $column);
+            $column = $this->identifierName($qualifiedColumn);
+            $qualifiedKey = strtolower($this->identifierName($first) . '.' . $column);
         }
 
-        $members = $qualifiedKey !== null ? ($qualified[$qualifiedKey] ?? null) : null;
-        $members ??= $unqualified[strtolower($column)] ?? null;
+        $members = $qualifiedKey === null
+            ? ($unqualified[strtolower($column)] ?? null)
+            : ($qualified[$qualifiedKey] ?? null);
         if ($members === null) {
             return null;
         }
@@ -215,17 +217,16 @@ final class MySqlTypeSemantics
     }
 
     /**
-     * @param array<string, array{start: int, end: int, replacement: string}> $edits
+     * @param array<int, array{start: int, end: int, replacement: string}> $edits
      * @param list<string> $members
      */
     private function addRankEdit(array &$edits, SqlToken $token, array $members): void
     {
         $memberSql = array_map(
-            static fn (string $member): string => "'" . str_replace("'", "''", $member) . "'",
+            static fn (string $member): string => "'" . str_replace(['\\', "'"], ['\\\\', "''"], $member) . "'",
             $members,
         );
-        $key = $token->offset . ':' . $token->endOffset();
-        $edits[$key] = [
+        $edits[$token->offset] = [
             'start' => $token->offset,
             'end' => $token->endOffset(),
             'replacement' => 'FIELD(' . $token->text . ', ' . implode(', ', $memberSql) . ')',
@@ -236,18 +237,23 @@ final class MySqlTypeSemantics
     private function enumMembers(string $nativeType): array
     {
         $open = strpos($nativeType, '(');
-        if ($open === false || strtoupper(trim(substr($nativeType, 0, $open))) !== 'ENUM' || !str_ends_with(trim($nativeType), ')')) {
+        if ($open === false) {
+            return [];
+        }
+        if (strtoupper(trim(substr($nativeType, 0, $open))) !== 'ENUM') {
             return [];
         }
         $inner = substr(trim($nativeType), $open + 1, -1);
         $members = [];
         foreach (SqlTokenStream::tokenize($inner)->splitTopLevel() as $literal) {
-            $literal = trim($literal);
             if (strlen($literal) < 2) {
                 return [];
             }
             $quote = $literal[0];
-            if (($quote !== "'" && $quote !== '"') || $literal[strlen($literal) - 1] !== $quote) {
+            if ($quote !== "'" && $quote !== '"') {
+                return [];
+            }
+            if ($literal[strlen($literal) - 1] !== $quote) {
                 return [];
             }
             $value = substr($literal, 1, -1);
@@ -259,17 +265,13 @@ final class MySqlTypeSemantics
 
     private function isIdentifier(SqlToken $token): bool
     {
-        return $token->kind === SqlTokenKind::Word || $token->kind === SqlTokenKind::QuotedIdentifier;
+        return in_array($token->kind, [SqlTokenKind::Word, SqlTokenKind::QuotedIdentifier], true);
     }
 
-    private function unquoteIdentifier(string $identifier): string
+    private function identifierName(SqlToken $token): string
     {
-        if ((str_starts_with($identifier, '`') && str_ends_with($identifier, '`'))
-            || (str_starts_with($identifier, '"') && str_ends_with($identifier, '"'))
-        ) {
-            return substr($identifier, 1, -1);
-        }
-
-        return $identifier;
+        return $token->kind === SqlTokenKind::QuotedIdentifier
+            ? substr($token->text, 1, -1)
+            : $token->text;
     }
 }

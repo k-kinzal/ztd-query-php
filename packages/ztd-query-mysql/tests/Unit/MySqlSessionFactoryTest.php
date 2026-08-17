@@ -37,6 +37,7 @@ use ZtdQuery\Session;
 #[UsesClass(SelectTransformer::class)]
 #[UsesClass(UpdateTransformer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlTypeSemantics::class)]
 final class MySqlSessionFactoryTest extends TestCase
 {
     public function testCreateReturnsSession(): void

@@ -31,12 +31,11 @@ final class SelectTransformer implements SqlTransformer
         ?CastRenderer $castRenderer = null,
         ?IdentifierQuoter $quoter = null,
         ?ValueRenderer $valueRenderer = null,
-        ?MySqlTypeSemantics $typeSemantics = null,
     ) {
         $this->castRenderer = $castRenderer ?? new MySqlCastRenderer();
         $this->quoter = $quoter ?? new MySqlIdentifierQuoter();
         $this->valueRenderer = $valueRenderer ?? new \ZtdQuery\Platform\MySql\MySqlValueRenderer($this->castRenderer);
-        $this->typeSemantics = $typeSemantics ?? new MySqlTypeSemantics();
+        $this->typeSemantics = new MySqlTypeSemantics();
     }
 
     /**
