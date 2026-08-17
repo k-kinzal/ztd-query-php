@@ -10,7 +10,7 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\Sqlite\SqliteQueryGuard;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\SqlRewriter;
-use ZtdQuery\Sql\ReadOnlyDiagnosticStatement;
+use ZtdQuery\Platform\Sqlite\SqliteReadOnlyDiagnosticStatement;
 
 final class ClassifyRewriteAgreementChecker implements InvariantChecker
 {
@@ -25,7 +25,7 @@ final class ClassifyRewriteAgreementChecker implements InvariantChecker
 
     public function check(string $sql): ?InvariantViolation
     {
-        $diagnostic = ReadOnlyDiagnosticStatement::isSafe($sql);
+        $diagnostic = SqliteReadOnlyDiagnosticStatement::isSafe($sql);
 
         try {
             $classifyResult = $this->guard->classify($sql);

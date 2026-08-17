@@ -16,7 +16,6 @@ use PhpMyAdmin\SqlParser\Statements\SelectStatement;
 use PhpMyAdmin\SqlParser\Statements\TruncateStatement;
 use PhpMyAdmin\SqlParser\Statements\UpdateStatement;
 use PhpMyAdmin\SqlParser\Statements\WithStatement;
-use ZtdQuery\Sql\ReadOnlyDiagnosticStatement;
 
 /**
  * Classifies SQL and enforces ZTD write-protection rules.
@@ -35,7 +34,7 @@ final class MySqlQueryGuard
      */
     public function classify(string $sql): ?QueryKind
     {
-        if (ReadOnlyDiagnosticStatement::isSafe($sql)) {
+        if (MySqlReadOnlyDiagnosticStatement::isSafe($sql)) {
             return QueryKind::READ;
         }
         if (count($this->parser->splitStatements($sql)) !== 1) {

@@ -195,6 +195,7 @@ final class PgSqlQueryGuardTest extends QueryClassifierContractTest
     {
         $guard = new PgSqlQueryGuard(new PgSqlParser());
         self::assertSame(QueryKind::READ, $guard->classify('EXPLAIN SELECT 1'));
+        self::assertSame(QueryKind::READ, $guard->classify('EXPLAIN UPDATE users SET active = FALSE'));
         self::assertSame(QueryKind::READ, $guard->classify('EXPLAIN (ANALYZE TRUE, FORMAT JSON) SELECT 1'));
         self::assertNull($guard->classify('EXPLAIN ANALYZE UPDATE users SET active = FALSE'));
     }

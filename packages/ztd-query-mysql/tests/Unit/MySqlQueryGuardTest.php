@@ -91,6 +91,7 @@ class MySqlQueryGuardTest extends QueryClassifierContractTest
         $guard = new MySqlQueryGuard(new MySqlParser());
 
         self::assertSame(QueryKind::READ, $guard->classify('EXPLAIN SELECT * FROM users'));
+        self::assertSame(QueryKind::READ, $guard->classify('EXPLAIN UPDATE users SET active = FALSE'));
         self::assertSame(QueryKind::READ, $guard->classify('DESCRIBE users'));
         self::assertSame(QueryKind::READ, $guard->classify('SHOW CREATE TABLE users'));
         self::assertNull($guard->classify('EXPLAIN ANALYZE UPDATE users SET active = FALSE'));

@@ -118,7 +118,8 @@ final class SqliteQueryGuardTest extends QueryClassifierContractTest
 
         self::assertSame(QueryKind::READ, $guard->classify('EXPLAIN SELECT * FROM users'));
         self::assertSame(QueryKind::READ, $guard->classify('EXPLAIN QUERY PLAN SELECT * FROM users'));
-        self::assertNull($guard->classify('EXPLAIN QUERY PLAN DELETE FROM users'));
+        self::assertSame(QueryKind::READ, $guard->classify('EXPLAIN QUERY PLAN DELETE FROM users'));
+        self::assertNull($guard->classify('EXPLAIN ANALYZE DELETE FROM users'));
     }
 
     public function testEmptyReturnsNull(): void

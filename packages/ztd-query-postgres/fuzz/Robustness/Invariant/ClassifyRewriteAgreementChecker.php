@@ -10,7 +10,7 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\Postgres\PgSqlQueryGuard;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\SqlRewriter;
-use ZtdQuery\Sql\ReadOnlyDiagnosticStatement;
+use ZtdQuery\Platform\Postgres\PgSqlReadOnlyDiagnosticStatement;
 
 final class ClassifyRewriteAgreementChecker implements InvariantChecker
 {
@@ -25,7 +25,7 @@ final class ClassifyRewriteAgreementChecker implements InvariantChecker
 
     public function check(string $sql): ?InvariantViolation
     {
-        $diagnostic = ReadOnlyDiagnosticStatement::isSafe($sql);
+        $diagnostic = PgSqlReadOnlyDiagnosticStatement::isSafe($sql);
 
         try {
             $classifyResult = $this->guard->classify($sql);
