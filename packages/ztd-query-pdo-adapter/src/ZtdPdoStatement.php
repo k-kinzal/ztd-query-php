@@ -141,17 +141,23 @@ final class ZtdPdoStatement extends NativePdoStatement
             return false;
         }
 
-        if (!$this->session->needsPostProcessing($this->plan)) {
-            return $this->executeStatement($params);
+        if ($this->session->needsPostProcessing($this->plan)) {
+            return $this->executeAndPostProcess($this->plan, $params);
         }
 
+        return $this->executeStatement($params);
+    }
+
+    /** @param array<int|string, mixed>|null $params */
+    private function executeAndPostProcess(RewritePlan $plan, ?array $params): bool
+    {
         if (!$this->executeStatement($params)) {
             return false;
         }
 
         try {
             $this->result = $this->session->processExecutedStatement(
-                $this->plan,
+                $plan,
                 new PdoStatement($this->statement)
             );
         } catch (DatabaseException $e) {

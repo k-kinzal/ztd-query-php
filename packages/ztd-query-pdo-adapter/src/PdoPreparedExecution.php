@@ -46,8 +46,9 @@ final class PdoPreparedExecution
 
     private function driver(): string
     {
+        /** @var string $driver */
         $driver = $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
 
-        return is_string($driver) ? $driver : '';
+        return $driver;
     }
 }

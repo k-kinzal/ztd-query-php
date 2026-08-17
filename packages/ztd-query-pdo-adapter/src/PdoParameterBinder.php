@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Adapter\Pdo;
 
-use PDO;
 use PDOStatement;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
@@ -17,6 +16,13 @@ final class PdoParameterBinder
      */
     public function compile(string $sql, string $driver, ?array $params): array
     {
+        if ($driver !== 'pgsql' && $driver !== 'sqlite') {
+            return ['sql' => $sql, 'params' => $params];
+        }
+        if ($driver === 'sqlite' && $params === null) {
+            return ['sql' => $sql, 'params' => null];
+        }
+
         $tokens = SqlTokenStream::tokenize($sql)->tokens();
         $replacements = [];
         $positionalIndex = 0;
@@ -27,9 +33,19 @@ final class PdoParameterBinder
                 continue;
             }
 
-            if ($driver === 'pgsql' && preg_match('/^\$(\d+)$/', $token->text, $matches) === 1) {
-                $position = (int) $matches[1];
-                $nativePositions[$position] = true;
+            if ($driver === 'pgsql') {
+                if (!str_starts_with($token->text, '$')) {
+                    continue;
+                }
+                $position = filter_var(
+                    substr($token->text, 1),
+                    FILTER_VALIDATE_INT,
+                    ['options' => ['min_range' => 1]],
+                );
+                if (!is_int($position)) {
+                    continue;
+                }
+                $nativePositions[$position] = $position;
                 $replacements[$token->offset] = [
                     'length' => strlen($token->text),
                     'sql' => ':__ztd_pdo_' . $position,
@@ -37,30 +53,17 @@ final class PdoParameterBinder
                 continue;
             }
 
-            if ($driver !== 'sqlite') {
+            if ($token->text === '?') {
+                $parameterKey = $positionalIndex;
+                $positionalIndex++;
+            } else {
+                $name = ltrim($token->text, ':');
+                $parameterKey = array_key_exists($name, $params) ? $name : $token->text;
+            }
+            if (!array_key_exists($parameterKey, $params)) {
                 continue;
             }
-
-            $value = null;
-            $hasValue = false;
-            if ($token->text === '?') {
-                if ($params !== null && array_key_exists($positionalIndex, $params)) {
-                    $value = $params[$positionalIndex];
-                    $hasValue = true;
-                }
-                $positionalIndex++;
-            } elseif ($params !== null) {
-                $name = ltrim($token->text, ':');
-                if (array_key_exists($name, $params)) {
-                    $value = $params[$name];
-                    $hasValue = true;
-                } elseif (array_key_exists($token->text, $params)) {
-                    $value = $params[$token->text];
-                    $hasValue = true;
-                }
-            }
-
-            $cast = $hasValue ? $this->sqliteCast($value) : null;
+            $cast = $this->sqliteCast($params[$parameterKey]);
             if ($cast !== null) {
                 $replacements[$token->offset] = [
                     'length' => strlen($token->text),
@@ -85,7 +88,7 @@ final class PdoParameterBinder
         }
 
         $mapped = [];
-        foreach (array_keys($nativePositions) as $position) {
+        foreach ($nativePositions as $position) {
             if (array_key_exists($position - 1, $params)) {
                 $mapped['__ztd_pdo_' . $position] = $params[$position - 1];
             }
@@ -103,13 +106,22 @@ final class PdoParameterBinder
 
         $position = 1;
         foreach ($params as $key => $value) {
-            $parameter = is_int($key) ? $position++ : ':' . ltrim($key, ':');
-            if (!$statement->bindValue($parameter, $value, $this->pdoType($value))) {
+            $parameter = is_int($key) ? $position++ : $this->parameterName($key);
+            if (!$statement->bindValue($parameter, $value, PdoParameterType::fromValue($value))) {
                 return false;
             }
         }
 
         return $statement->execute();
+    }
+
+    private function parameterName(string $parameter): string
+    {
+        if (str_starts_with($parameter, ':')) {
+            return $parameter;
+        }
+
+        return sprintf(':%s', $parameter);
     }
 
     private function sqliteCast(mixed $value): ?string
@@ -122,16 +134,5 @@ final class PdoParameterBinder
         }
 
         return null;
-    }
-
-    private function pdoType(mixed $value): int
-    {
-        return match (true) {
-            $value === null => PDO::PARAM_NULL,
-            is_bool($value) => PDO::PARAM_BOOL,
-            is_int($value) => PDO::PARAM_INT,
-            is_resource($value) => PDO::PARAM_LOB,
-            default => PDO::PARAM_STR,
-        };
     }
 }

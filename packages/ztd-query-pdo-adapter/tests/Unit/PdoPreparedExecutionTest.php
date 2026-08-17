@@ -6,13 +6,21 @@ namespace Tests\Unit;
 
 use PDO;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Adapter\Pdo\PdoConnection;
+use ZtdQuery\Adapter\Pdo\PdoParameterBinder;
+use ZtdQuery\Adapter\Pdo\PdoParameterType;
 use ZtdQuery\Adapter\Pdo\PdoPreparedExecution;
+use ZtdQuery\Adapter\Pdo\PdoStatement;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Platform\Sqlite\SqliteSessionFactory;
 
 #[CoversClass(PdoPreparedExecution::class)]
+#[UsesClass(PdoConnection::class)]
+#[UsesClass(PdoParameterBinder::class)]
+#[UsesClass(PdoParameterType::class)]
+#[UsesClass(PdoStatement::class)]
 final class PdoPreparedExecutionTest extends TestCase
 {
     public function testRewritesAgainstCurrentShadowStateForEveryPreparation(): void
