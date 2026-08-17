@@ -124,7 +124,7 @@ final class MySqlCteShadowComposerTest extends TestCase
     {
         self::assertSame(
             "WITH users AS (SELECT 1 AS id)\nSELECT * FROM \"users\"",
-            (new CteShadowComposer())->compose(
+            (new MySqlCteShadowComposer())->compose(
                 'SELECT * FROM public."users"',
                 ['users' => 'users AS (SELECT 1 AS id)'],
             ),
