@@ -14,6 +14,7 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
+use ZtdQuery\Schema\CandidateKeySet;
 use ZtdQuery\Shadow\Mutation\InsertMutation;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Simulator\StatementSimulator;
@@ -28,6 +29,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(RewritePlan::class)]
 #[UsesClass(ResultSelectRunner::class)]
 #[UsesClass(InsertMutation::class)]
+#[UsesClass(CandidateKeySet::class)]
 #[UsesClass(ShadowStore::class)]
 #[UsesClass(Session::class)]
 #[CoversClass(StatementSimulator::class)]

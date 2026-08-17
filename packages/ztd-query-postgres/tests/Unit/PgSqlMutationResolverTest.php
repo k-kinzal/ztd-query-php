@@ -50,6 +50,7 @@ final class PgSqlMutationResolverTest extends TestCase
             [],
             []
         ));
+        $shadowStore->set('users', [['id' => 1, 'name' => 'Existing']]);
         $mutation = $resolver->resolve(
             "INSERT INTO users (id, name) VALUES (1, 'Alice')",
             'INSERT',
@@ -57,6 +58,8 @@ final class PgSqlMutationResolverTest extends TestCase
         );
 
         self::assertInstanceOf(InsertMutation::class, $mutation);
+        $mutation->apply($shadowStore, [['id' => 1, 'name' => 'Inserted']]);
+        self::assertCount(2, $shadowStore->get('users'));
     }
 
     public function testResolveInsertWithOnConflictDoUpdateReturnsUpsertMutation(): void
@@ -102,6 +105,47 @@ final class PgSqlMutationResolverTest extends TestCase
             [],
             []
         ));
+        $shadowStore->set('users', [['id' => 1, 'name' => 'Existing']]);
+        $mutation = $resolver->resolve(
+            "INSERT INTO users (id, name) VALUES (1, 'Alice') ON CONFLICT DO NOTHING",
+            'INSERT',
+            QueryKind::WRITE_SIMULATED
+        );
+
+        self::assertInstanceOf(InsertMutation::class, $mutation);
+        $mutation->apply($shadowStore, [['id' => 1, 'name' => 'Ignored']]);
+        self::assertSame([['id' => 1, 'name' => 'Existing']], $shadowStore->get('users'));
+    }
+
+    public function testResolveOnConflictDoUpdateWithoutRegisteredSchema(): void
+    {
+        $shadowStore = new ShadowStore();
+        $resolver = new PgSqlMutationResolver(
+            $shadowStore,
+            new TableDefinitionRegistry(),
+            new PgSqlSchemaParser(),
+            new PgSqlParser()
+        );
+
+        $mutation = $resolver->resolve(
+            "INSERT INTO users (id, name) VALUES (1, 'Alice') ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name",
+            'INSERT',
+            QueryKind::WRITE_SIMULATED
+        );
+
+        self::assertInstanceOf(UpsertMutation::class, $mutation);
+    }
+
+    public function testResolveOnConflictDoNothingWithoutRegisteredSchema(): void
+    {
+        $shadowStore = new ShadowStore();
+        $resolver = new PgSqlMutationResolver(
+            $shadowStore,
+            new TableDefinitionRegistry(),
+            new PgSqlSchemaParser(),
+            new PgSqlParser()
+        );
+
         $mutation = $resolver->resolve(
             "INSERT INTO users (id, name) VALUES (1, 'Alice') ON CONFLICT DO NOTHING",
             'INSERT',

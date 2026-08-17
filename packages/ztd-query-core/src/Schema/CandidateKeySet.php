@@ -65,7 +65,7 @@ final class CandidateKeySet
 
         $values = [];
         foreach ($columns as $column) {
-            if (!array_key_exists($column, $row) || $row[$column] === null) {
+            if (!isset($row[$column])) {
                 return null;
             }
             $values[$column] = $row[$column];
@@ -81,7 +81,7 @@ final class CandidateKeySet
     private function matches(array $values, array $row): bool
     {
         foreach ($values as $column => $value) {
-            if (!array_key_exists($column, $row) || $row[$column] === null || $row[$column] !== $value) {
+            if (($row[$column] ?? null) !== $value) {
                 return false;
             }
         }

@@ -7,6 +7,7 @@ namespace Tests\Unit\Shadow\Mutation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use Tests\Contract\MutationContractTest;
+use ZtdQuery\Schema\CandidateKeySet;
 use ZtdQuery\Shadow\Mutation\DeleteMutation;
 use ZtdQuery\Shadow\Mutation\InsertMutation;
 use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
@@ -20,6 +21,7 @@ use ZtdQuery\Shadow\ShadowStore;
 #[CoversClass(TruncateMutation::class)]
 #[UsesClass(ShadowStore::class)]
 #[UsesClass(MutationRowIdentity::class)]
+#[UsesClass(CandidateKeySet::class)]
 final class ShadowMutationTest extends MutationContractTest
 {
     protected function initialRows(): array

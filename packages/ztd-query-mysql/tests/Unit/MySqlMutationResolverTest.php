@@ -159,6 +159,24 @@ final class MySqlMutationResolverTest extends TestCase
         self::assertSame('users', $mutation->tableName());
     }
 
+    public function testResolveInsertOnDuplicateKeyWithoutRegisteredSchema(): void
+    {
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $shadowStore = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $selectTransformer = new SelectTransformer();
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $resolver = new MySqlMutationResolver($shadowStore, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $sql = "INSERT INTO users (id, name) VALUES (1, 'Alice') ON DUPLICATE KEY UPDATE name = VALUES(name)";
+        $statements = $parser->parse($sql);
+
+        $mutation = $resolver->resolve($sql, $statements[0], QueryKind::WRITE_SIMULATED);
+
+        self::assertInstanceOf(UpsertMutation::class, $mutation);
+    }
+
     public function testResolveUpdateReturnsUpdateMutation(): void
     {
         $parser = new MySqlParser();
@@ -228,6 +246,24 @@ final class MySqlMutationResolverTest extends TestCase
 
         self::assertInstanceOf(ReplaceMutation::class, $mutation);
         self::assertSame('users', $mutation->tableName());
+    }
+
+    public function testResolveReplaceWithoutRegisteredSchema(): void
+    {
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $shadowStore = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $selectTransformer = new SelectTransformer();
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $resolver = new MySqlMutationResolver($shadowStore, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $sql = "REPLACE INTO users (id, name) VALUES (1, 'Alice')";
+        $statements = $parser->parse($sql);
+
+        $mutation = $resolver->resolve($sql, $statements[0], QueryKind::WRITE_SIMULATED);
+
+        self::assertInstanceOf(ReplaceMutation::class, $mutation);
     }
 
     public function testResolveUpdateMultiTableReturnsMultiUpdateMutation(): void

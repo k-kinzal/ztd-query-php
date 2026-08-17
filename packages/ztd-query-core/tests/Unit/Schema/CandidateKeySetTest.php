@@ -41,6 +41,32 @@ final class CandidateKeySetTest extends TestCase
         self::assertNull($keys->findConflict(['tenant_id' => 1, 'slug' => null], $rows));
     }
 
+    public function testIncompletePrimaryKeyDoesNotPreventUniqueKeyConflictDetection(): void
+    {
+        $keys = CandidateKeySet::fromSchema(['id'], ['users_email' => ['email']]);
+        $rows = [['id' => 1, 'email' => 'alice@example.com']];
+
+        $conflict = $keys->findConflict(['id' => null, 'email' => 'alice@example.com'], $rows);
+
+        self::assertInstanceOf(CandidateKeyConflict::class, $conflict);
+        self::assertSame('users_email', $conflict->keyName);
+    }
+
+    public function testMissingCandidateKeyValueDoesNotConflictWithStoredNull(): void
+    {
+        $keys = CandidateKeySet::fromSchema([], ['tenant_slug' => ['tenant_id', 'slug']]);
+        $rows = [['tenant_id' => 1, 'slug' => null]];
+
+        self::assertNull($keys->findConflict(['tenant_id' => 1], $rows));
+    }
+
+    public function testMissingStoredKeyValueDoesNotConflict(): void
+    {
+        $keys = CandidateKeySet::fromSchema([], ['users_email' => ['email']]);
+
+        self::assertNull($keys->findConflict(['email' => 'alice@example.com'], [['id' => 1]]));
+    }
+
     public function testEmptyKeySetNeverTreatsEqualRowsAsConflicting(): void
     {
         $keys = CandidateKeySet::fromSchema([]);

@@ -43,7 +43,6 @@ final class ReplaceMutation implements ShadowMutation
         foreach ($rows as $row) {
             while (($conflict = $this->candidateKeys->findConflict($row, $existingRows)) !== null) {
                 unset($existingRows[$conflict->rowIndex]);
-                $existingRows = array_values($existingRows);
             }
         }
 

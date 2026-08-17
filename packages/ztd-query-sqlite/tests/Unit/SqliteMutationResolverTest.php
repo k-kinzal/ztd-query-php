@@ -1571,6 +1571,7 @@ final class SqliteMutationResolverTest extends TestCase
     public function testResolveInsertOnConflictDoNothingIsIgnore(): void
     {
         $store = new ShadowStore();
+        $store->set('users', [['id' => 1, 'name' => 'existing']]);
         $registry = new TableDefinitionRegistry();
         $registry->register('users', new TableDefinition(
             ['id', 'name'],
@@ -1582,6 +1583,8 @@ final class SqliteMutationResolverTest extends TestCase
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve("INSERT INTO users (id, name) VALUES (1, 'a') ON CONFLICT DO NOTHING", QueryKind::WRITE_SIMULATED);
         self::assertInstanceOf(InsertMutation::class, $mutation);
+        $mutation->apply($store, [['id' => 1, 'name' => 'ignored']]);
+        self::assertSame([['id' => 1, 'name' => 'existing']], $store->get('users'));
     }
 
     public function testResolveAlterAddColumnTypeDefaultKeywordExcluded(): void
