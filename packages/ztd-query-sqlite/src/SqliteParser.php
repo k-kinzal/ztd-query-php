@@ -527,15 +527,25 @@ final class SqliteParser
     private function identifierEndIndex(array $tokens, int $index): int
     {
         $token = $tokens[$index] ?? null;
-        if ($token === null || $token->kind !== SqlTokenKind::Symbol || $token->text !== '[') {
+        if ($token?->text !== '[') {
             return $index + 1;
         }
 
-        for ($index++; isset($tokens[$index]); $index++) {
-            $token = $tokens[$index];
-            if ($token->kind === SqlTokenKind::Symbol && $token->text === ']' && $token->isTopLevel()) {
-                return $index + 1;
+        for (; isset($tokens[$index]); $index++) {
+            $endToken = $tokens[$index];
+            if ($endToken->text !== ']') {
+                continue;
             }
+            if (!$endToken->isTopLevel()) {
+                continue;
+            }
+            $following = $tokens[$index + 1] ?? null;
+            if ($following?->text === ']' && $following->isTopLevel()) {
+                $index++;
+                continue;
+            }
+
+            return $index + 1;
         }
 
         return $index;

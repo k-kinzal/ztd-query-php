@@ -209,6 +209,21 @@ SELECT * FROM users'));
         );
     }
 
+    public function testExtractUpdateAliasHandlesEscapedBracketTargetWithoutAs(): void
+    {
+        $parser = new SqliteParser();
+
+        self::assertSame(
+            'target',
+            $parser->extractUpdateAlias(
+                'UPDATE main.[user]]table] target SET name = \'Alice\' WHERE target.id = 1',
+            ),
+        );
+        self::assertNull(
+            $parser->extractUpdateAlias('UPDATE + ignored ] AS target SET name = \'Alice\''),
+        );
+    }
+
     public function testExtractUpdateAliasSkipsNestedUpdateKeyword(): void
     {
         $parser = new SqliteParser();
@@ -227,6 +242,7 @@ SELECT * FROM users'));
 
         self::assertNull($parser->extractUpdateAlias('UPDATE'));
         self::assertNull($parser->extractUpdateAlias('UPDATE users'));
+        self::assertNull($parser->extractUpdateAlias('UPDATE [users]'));
         self::assertNull($parser->extractUpdateAlias('UPDATE users target'));
     }
 

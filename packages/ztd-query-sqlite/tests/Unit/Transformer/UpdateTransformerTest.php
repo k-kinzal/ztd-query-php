@@ -172,6 +172,44 @@ final class UpdateTransformerTest extends TestCase
         self::assertStringContainsString('"users"."id"', $projection);
     }
 
+    public function testBuildProjectionPreservesAliasFromSourceAndIdentityQualifier(): void
+    {
+        $parser = new SqliteParser();
+        $selectTransformer = new SelectTransformer();
+        $transformer = new UpdateTransformer($parser, $selectTransformer);
+
+        $projection = $transformer->buildProjection(
+            'UPDATE users AS target SET name = source.name FROM incoming AS source WHERE target.id = source.id',
+            'users',
+            ['id', 'name'],
+            ['id'],
+        );
+
+        self::assertSame(
+            'SELECT source.name AS "name", "target"."id", "target"."id" AS "__ztd_original_id" FROM "users" AS "target", incoming AS source WHERE target.id = source.id',
+            $projection,
+        );
+    }
+
+    public function testBuildProjectionWithoutAliasOrFromHasNoExtraSourceSyntax(): void
+    {
+        $parser = new SqliteParser();
+        $selectTransformer = new SelectTransformer();
+        $transformer = new UpdateTransformer($parser, $selectTransformer);
+
+        $projection = $transformer->buildProjection(
+            "UPDATE users SET name = 'Bob' WHERE id = 1",
+            'users',
+            ['id', 'name'],
+            ['id'],
+        );
+
+        self::assertSame(
+            'SELECT \'Bob\' AS "name", "users"."id", "users"."id" AS "__ztd_original_id" FROM "users" WHERE id = 1',
+            $projection,
+        );
+    }
+
     public function testBuildProjectionNoColumnsUsesStarFallback(): void
     {
         $parser = new SqliteParser();
