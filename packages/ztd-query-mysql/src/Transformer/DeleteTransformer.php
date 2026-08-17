@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\MySql\Transformer;
 
-use PhpMyAdmin\SqlParser\Components\Condition;
 use PhpMyAdmin\SqlParser\Components\Expression;
 use PhpMyAdmin\SqlParser\Components\JoinKeyword;
 use PhpMyAdmin\SqlParser\Components\Limit;
@@ -182,9 +181,6 @@ final class DeleteTransformer implements SqlTransformer
 
         $whereClause = "";
         $whereExpression = (new DmlWhereClauseExtractor())->extract($originalSql);
-        if ($whereExpression === null && $stmt->where !== null && $stmt->where !== []) {
-            $whereExpression = Condition::build($stmt->where);
-        }
         if ($whereExpression !== null && $whereExpression !== '') {
             $whereClause = " WHERE " . $whereExpression;
         }

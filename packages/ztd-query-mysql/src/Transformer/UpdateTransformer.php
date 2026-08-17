@@ -184,10 +184,10 @@ final class UpdateTransformer implements SqlTransformer
         $joinClause = $this->buildJoinClause($stmt);
 
         $whereClause = "";
-        if ($whereExpression === null && $stmt->where !== null && $stmt->where !== []) {
-            $whereExpression = Condition::build($stmt->where);
+        if ($whereExpression === null) {
+            $whereExpression = Condition::build($stmt->where ?? []);
         }
-        if ($whereExpression !== null && $whereExpression !== '') {
+        if ($whereExpression !== '') {
             $whereClause = " WHERE " . $whereExpression;
         }
 

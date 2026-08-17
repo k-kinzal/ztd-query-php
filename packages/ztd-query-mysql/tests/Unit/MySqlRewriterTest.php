@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use Tests\Contract\RewriterContractTest;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\MySql\DmlWhereClauseExtractor;
 use ZtdQuery\Platform\MySql\Mutation\AlterTableMutation;
 use ZtdQuery\Platform\MySql\MySqlMutationResolver;
 use ZtdQuery\Platform\MySql\MySqlParser;
@@ -56,6 +57,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(UpdateTransformer::class)]
 #[UsesClass(UpdateAssignmentExtractor::class)]
 #[UsesClass(DeleteTransformer::class)]
+#[UsesClass(DmlWhereClauseExtractor::class)]
 #[UsesClass(ReplaceTransformer::class)]
 #[UsesClass(AlterTableMutation::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlCastRenderer::class)]

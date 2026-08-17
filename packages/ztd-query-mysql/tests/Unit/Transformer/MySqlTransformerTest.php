@@ -7,6 +7,7 @@ namespace Tests\Unit\Transformer;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Platform\MySql\DmlWhereClauseExtractor;
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlParser;
@@ -27,6 +28,7 @@ use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
 #[UsesClass(\ZtdQuery\Platform\MySql\Transformer\MySqlSelectListAliaser::class)]
 #[UsesClass(UpdateTransformer::class)]
 #[UsesClass(DeleteTransformer::class)]
+#[UsesClass(DmlWhereClauseExtractor::class)]
 #[UsesClass(ReplaceTransformer::class)]
 #[UsesClass(MySqlCastRenderer::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]

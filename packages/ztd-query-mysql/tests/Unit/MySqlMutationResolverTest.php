@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnknownSchemaException;
+use ZtdQuery\Platform\MySql\DmlWhereClauseExtractor;
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlMutationResolver;
@@ -42,6 +43,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(SelectTransformer::class)]
 #[UsesClass(UpdateTransformer::class)]
 #[UsesClass(DeleteTransformer::class)]
+#[UsesClass(DmlWhereClauseExtractor::class)]
 #[UsesClass(MySqlCastRenderer::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
