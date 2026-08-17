@@ -10,11 +10,12 @@ use PhpMyAdmin\SqlParser\Components\Limit;
 use PhpMyAdmin\SqlParser\Components\OrderKeyword;
 use PhpMyAdmin\SqlParser\Statements\UpdateStatement;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\MySql\DmlWhereClauseExtractor;
 use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlParser;
-use ZtdQuery\Platform\MySql\DmlWhereClauseExtractor;
 use ZtdQuery\Platform\MySql\UpdateAssignmentExtractor;
+use ZtdQuery\Platform\MySql\UpdateSourceExtractor;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
 use ZtdQuery\Shadow\Mutation\MultiTableMutationRow;
@@ -71,6 +72,7 @@ final class UpdateTransformer implements SqlTransformer
         $primaryKeys = $tables[$targetTable]['primaryKeys'] ?? [];
         $assignmentValues = (new UpdateAssignmentExtractor())->values($sql);
         $whereExpression = (new DmlWhereClauseExtractor())->extract($sql);
+        $sourceExpression = (new UpdateSourceExtractor())->extract($sql);
         $projection = $this->buildProjection(
             $statement,
             $columns,
@@ -78,6 +80,7 @@ final class UpdateTransformer implements SqlTransformer
             [],
             $assignmentValues,
             $whereExpression,
+            $sourceExpression,
         );
         $targetTableNames = array_keys($projection['tables']);
         if (isset($targetTableNames[1])) {
@@ -89,6 +92,7 @@ final class UpdateTransformer implements SqlTransformer
                 $targets,
                 $assignmentValues,
                 $whereExpression,
+                $sourceExpression,
             );
         }
 
@@ -115,6 +119,7 @@ final class UpdateTransformer implements SqlTransformer
         array $targets = [],
         array $assignmentValues = [],
         ?string $whereExpression = null,
+        ?string $sourceExpression = null,
     ): array {
         if ($stmt->tables === null || $stmt->tables === []) {
             throw new \RuntimeException("Update statement has no tables?");
@@ -205,11 +210,12 @@ final class UpdateTransformer implements SqlTransformer
             $limitClause = " LIMIT " . Limit::build($stmt->limit);
         }
 
+        $sourceClause = $sourceExpression ?? "`$targetTableName`$aliasClause$additionalTables$joinClause";
         if ($additionalTables === '' && $joinClause === '' && ($orderByClause !== '' || $limitClause !== '')) {
-            $selectedRows = "SELECT * FROM `$targetTableName`$aliasClause$whereClause$orderByClause$limitClause";
+            $selectedRows = "SELECT * FROM $sourceClause$whereClause$orderByClause$limitClause";
             $sql = "SELECT $selectList FROM ($selectedRows) AS `$qualifier`";
         } else {
-            $sql = "SELECT $selectList FROM `$targetTableName`$aliasClause$additionalTables$joinClause$whereClause$orderByClause$limitClause";
+            $sql = "SELECT $selectList FROM $sourceClause$whereClause$orderByClause$limitClause";
         }
 
         return ['sql' => $sql, 'table' => $targetTableName, 'tables' => $allTargetTables];

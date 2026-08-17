@@ -11,6 +11,7 @@ use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
 use ZtdQuery\Platform\MySql\UpdateAssignmentExtractor;
+use ZtdQuery\Platform\MySql\UpdateSourceExtractor;
 use PhpMyAdmin\SqlParser\Parser;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -24,11 +25,36 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(MySqlIdentifierQuoter::class)]
 #[UsesClass(DmlWhereClauseExtractor::class)]
 #[UsesClass(UpdateAssignmentExtractor::class)]
+#[UsesClass(UpdateSourceExtractor::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlTypeSemantics::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
 final class UpdateTransformerTest extends TestCase
 {
+    public function testBuildProjectionPreservesDerivedJoinSource(): void
+    {
+        $sql = 'UPDATE summary s JOIN (SELECT category, COUNT(*) AS cnt, MIN(price) AS mn FROM products GROUP BY category) p ON s.category = p.category SET s.min_price = p.mn, s.item_count = p.cnt';
+        $parser = new Parser($sql);
+        $statement = $parser->statements[0];
+        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
+
+        $result = $transformer->buildProjection(
+            $statement,
+            ['id', 'category', 'min_price', 'item_count'],
+            ['id'],
+            [],
+            ['p.mn', 'p.cnt'],
+            null,
+            (new UpdateSourceExtractor())->extract($sql),
+        );
+
+        self::assertSame(
+            'SELECT p.mn AS `min_price`, p.cnt AS `item_count`, `s`.`id`, `s`.`category`, `s`.`id` AS `__ztd_original_id` FROM summary s JOIN (SELECT category, COUNT(*) AS cnt, MIN(price) AS mn FROM products GROUP BY category) p ON s.category = p.category',
+            $result['sql'],
+        );
+    }
+
     public function testTransformPreservesIntroducedHexLiteral(): void
     {
         $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
@@ -744,7 +770,7 @@ final class UpdateTransformerTest extends TestCase
         $result = $transformer->transform($sql, $tables);
         self::assertSame(
             'WITH `users` AS (SELECT CAST(1 AS SIGNED) AS `id`, CAST(' . "'" . 'Alice' . "'" . ' AS CHAR) AS `name`)' . "\n"
-            . "SELECT 'Bob' AS `name`, `users`.`id` FROM `users` WHERE id = 1",
+            . "SELECT 'Bob' AS `name`, `users`.`id` FROM users WHERE id = 1",
             $result
         );
     }
@@ -764,7 +790,7 @@ final class UpdateTransformerTest extends TestCase
         $result = $transformer->transform($sql, $tables);
         self::assertSame(
             'WITH `users` AS (SELECT CAST(NULL AS CHAR) AS `id`, CAST(NULL AS CHAR) AS `name` FROM DUAL WHERE 0)' . "\n"
-            . "SELECT 'Bob' AS `name`, `users`.`id` FROM `users` WHERE id = 1",
+            . "SELECT 'Bob' AS `name`, `users`.`id` FROM users WHERE id = 1",
             $result
         );
     }

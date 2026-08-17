@@ -664,4 +664,19 @@ final class MySqlProvider extends Base
             GenerationPlans::foreignKeyConstraint($this->grammar)->withMaxDepth($maxDepth),
         );
     }
+
+    /**
+     * Generate an UPDATE whose joined source is a derived aggregate query.
+     *
+     * @return non-empty-string
+     */
+    public function updateJoinDerivedStatement(): string
+    {
+        $target = $this->rsg->rawIdentifier();
+        $source = $this->rsg->rawIdentifier();
+        $groupColumn = $this->rsg->rawIdentifier();
+        $valueColumn = $this->rsg->rawIdentifier();
+
+        return "UPDATE $target AS t JOIN (SELECT $groupColumn, COUNT(*) AS aggregate_value FROM $source GROUP BY $groupColumn) AS s ON t.$groupColumn = s.$groupColumn SET t.$valueColumn = s.aggregate_value";
+    }
 }

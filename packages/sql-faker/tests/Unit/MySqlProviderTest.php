@@ -522,6 +522,21 @@ final class MySqlProviderTest extends TestCase
         );
     }
 
+    public function testUpdateJoinDerivedStatement(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $tokens = (new LexicalGrammar($faker, 'mysql-8.4.7', true))->tokenize($provider->updateJoinDerivedStatement());
+
+        self::assertSame('UPDATE_SYM', $tokens[0]);
+        self::assertContains('JOIN_SYM', $tokens);
+        self::assertContains('SELECT_SYM', $tokens);
+        self::assertContains('GROUP_SYM', $tokens);
+        self::assertContains('SET_SYM', $tokens);
+    }
+
     public function testBinaryLiteral(): void
     {
         $faker = Factory::create();
