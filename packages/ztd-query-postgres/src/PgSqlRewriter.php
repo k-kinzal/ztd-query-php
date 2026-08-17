@@ -9,7 +9,6 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Rewrite\MultiRewritePlan;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\AffectedRowsMode;
-use ZtdQuery\Rewrite\CteShadowComposer;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Rewrite\RewriteStateCommitter;
@@ -37,7 +36,7 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
     private PgSqlMutationResolver $mutationResolver;
     private PgSqlParser $parser;
     private PgSqlReturningProjectionParser $returningProjectionParser;
-    private CteShadowComposer $cteComposer;
+    private PgSqlCteShadowComposer $cteComposer;
 
     public function __construct(
         PgSqlQueryGuard $guard,
@@ -54,7 +53,7 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
         $this->mutationResolver = $mutationResolver;
         $this->parser = $parser;
         $this->returningProjectionParser = new PgSqlReturningProjectionParser();
-        $this->cteComposer = new CteShadowComposer();
+        $this->cteComposer = new PgSqlCteShadowComposer();
     }
 
     /**

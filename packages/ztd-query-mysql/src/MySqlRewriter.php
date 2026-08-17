@@ -18,7 +18,6 @@ use PhpMyAdmin\SqlParser\Statements\SelectStatement;
 use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
-use ZtdQuery\Sql\SqlTokenStream;
 use PhpMyAdmin\SqlParser\Statements\AlterStatement;
 use PhpMyAdmin\SqlParser\Statements\CreateStatement;
 use PhpMyAdmin\SqlParser\Statements\ReplaceStatement;
@@ -298,7 +297,7 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
 
     private function findUnknownTable(string $sql): ?string
     {
-        $tableNames = SqlTokenStream::tokenize($sql)->selectTableNames();
+        $tableNames = (new MySqlSelectRelationParser())->tableNames($sql);
         $declaredCtes = array_fill_keys($this->cteComposer->declaredCteNames($sql), true);
 
         foreach ($tableNames as $tableName) {

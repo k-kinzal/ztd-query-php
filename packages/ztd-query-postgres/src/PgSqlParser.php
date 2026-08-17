@@ -460,7 +460,7 @@ final class PgSqlParser
      */
     public function extractSelectTableNames(string $sql): array
     {
-        return SqlTokenStream::tokenize($sql)->selectTableNames();
+        return (new PgSqlSelectRelationParser())->tableNames($sql);
     }
 
     private function classifyWithStatement(string $sql): ?string

@@ -75,6 +75,21 @@ final class MySqlRewriterTest extends RewriterContractTest
         self::assertStringStartsWith('WITH `users` AS', $plan->sql());
     }
 
+    public function testHashCommentDoesNotCreateAPhantomSelectSource(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', [['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com']]);
+        $registry = new TableDefinitionRegistry();
+        $definition = $this->createSchemaParser()->parse($this->usersCreateTableSql());
+        self::assertNotNull($definition);
+        $registry->register('users', $definition);
+
+        $plan = $this->createRewriter($store, $registry)->rewrite("# SELECT * FROM unknown_table\nSELECT * FROM users");
+
+        self::assertSame(QueryKind::READ, $plan->kind());
+        self::assertStringContainsString('FROM users', $plan->sql());
+    }
+
     public function testCteReferencesAreMatchedCaseInsensitivelyDuringSchemaValidation(): void
     {
         $registry = new TableDefinitionRegistry();

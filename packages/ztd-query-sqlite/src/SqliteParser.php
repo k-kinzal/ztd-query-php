@@ -109,7 +109,7 @@ final class SqliteParser
      */
     public function extractSelectTables(string $sql): array
     {
-        return SqlTokenStream::tokenize($sql)->selectTableNames();
+        return (new SqliteSelectRelationParser())->tableNames($sql);
     }
 
     /**
