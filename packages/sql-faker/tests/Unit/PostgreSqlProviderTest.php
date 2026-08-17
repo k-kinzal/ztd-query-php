@@ -1057,21 +1057,55 @@ final class PostgreSqlProviderTest extends TestCase
         yield 'DropTable' => [StatementType::DropTable];
     }
 
-    #[DataProvider('providerDomainDmlSeed')]
-    public function testDomainDmlStatementTargetsDomainFixture(int $seed, string $expected): void
+    public function testDomainDmlStatementTargetsDomainFixture(): void
     {
-        $faker = Factory::create();
-        $provider = new PostgreSqlProvider($faker);
-        $faker->seed($seed);
+        $minimum = new class () extends Generator {
+            /**
+             * @param mixed $int1
+             * @param mixed $int2
+             */
+            #[\Override]
+            public function numberBetween($int1 = 0, $int2 = 2147483647): int
+            {
+                return is_int($int1) ? $int1 : 0;
+            }
+        };
+        $middle = new class () extends Generator {
+            /**
+             * @param mixed $int1
+             * @param mixed $int2
+             */
+            #[\Override]
+            public function numberBetween($int1 = 0, $int2 = 2147483647): int
+            {
+                unset($int1, $int2);
 
-        self::assertSame($expected, $provider->domainDmlStatement());
-    }
+                return 1;
+            }
+        };
+        $maximum = new class () extends Generator {
+            /**
+             * @param mixed $int1
+             * @param mixed $int2
+             */
+            #[\Override]
+            public function numberBetween($int1 = 0, $int2 = 2147483647): int
+            {
+                return is_int($int2) ? $int2 : 2;
+            }
+        };
 
-    /** @return iterable<string, array{int, string}> */
-    public static function providerDomainDmlSeed(): iterable
-    {
-        yield 'insert variant' => [2, 'INSERT INTO contacts (age, satisfaction) VALUES ($1, $2)'];
-        yield 'update variant' => [1, 'UPDATE contacts SET satisfaction = 99.99 WHERE age > 0'];
-        yield 'delete variant' => [0, 'DELETE FROM contacts WHERE satisfaction > 90'];
+        self::assertSame(
+            'INSERT INTO contacts (age, satisfaction) VALUES ($1, $2)',
+            (new PostgreSqlProvider($minimum))->domainDmlStatement(),
+        );
+        self::assertSame(
+            'UPDATE contacts SET satisfaction = 99.99 WHERE age > 0',
+            (new PostgreSqlProvider($middle))->domainDmlStatement(),
+        );
+        self::assertSame(
+            'DELETE FROM contacts WHERE satisfaction > 90',
+            (new PostgreSqlProvider($maximum))->domainDmlStatement(),
+        );
     }
 }

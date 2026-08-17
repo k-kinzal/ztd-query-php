@@ -740,6 +740,29 @@ final class PgSqlSchemaReflectorTest extends TestCase
         );
     }
 
+    public function testReflectsDomainWithoutSchemaAsAQuotedType(): void
+    {
+        $reflector = new PgSqlSchemaReflector(new FakeSequentialConnection([
+            new FakeStatement([
+                [
+                    'column_name' => 'age',
+                    'data_type' => 'integer',
+                    'is_nullable' => 'YES',
+                    'udt_name' => 'int4',
+                    'domain_schema' => null,
+                    'domain_name' => 'PositiveValue',
+                ],
+            ]),
+            new FakeStatement([]),
+            new FakeStatement([]),
+        ]));
+
+        self::assertSame(
+            "CREATE TABLE \"contacts\" (\n  \"age\" \"PositiveValue\"\n)",
+            $reflector->getCreateStatement('contacts'),
+        );
+    }
+
     public function testReflectsGeneratedAndIdentityColumns(): void
     {
         $reflector = new PgSqlSchemaReflector(new FakeSequentialConnection([

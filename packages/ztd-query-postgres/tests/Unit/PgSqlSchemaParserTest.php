@@ -47,6 +47,21 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNull((new PgSqlSchemaParser())->parse(
             'CREATE TABLE contacts (age "tenant". NOT NULL)',
         ));
+        self::assertNull((new PgSqlSchemaParser())->parse(
+            'CREATE TABLE contacts (age "tenant". not null)',
+        ));
+    }
+
+    public function testQuotedConstraintWordsRemainValidDomainNames(): void
+    {
+        $definition = (new PgSqlSchemaParser())->parse(
+            'CREATE TABLE contacts (flag "tenant"."NOT", note "NOT NULL")',
+        );
+
+        self::assertNotNull($definition);
+        self::assertSame('"tenant"."NOT"', $definition->columnTypes['flag']);
+        self::assertSame('"NOT NULL"', $definition->columnTypes['note']);
+        self::assertSame([], $definition->notNullColumns);
     }
 
     protected function createParser(): SchemaParser

@@ -336,17 +336,23 @@ final class PgSqlSchemaReflector implements SchemaReflector, ViewReflector
     private function domainTypeSql(array $col): ?string
     {
         $domainName = $col['domain_name'] ?? null;
-        if (!is_string($domainName) || $domainName === '') {
+        if (!is_string($domainName)) {
+            return null;
+        }
+        if ($domainName === '') {
             return null;
         }
 
         $quoter = new PgSqlIdentifierQuoter();
         $domainSchema = $col['domain_schema'] ?? null;
-        if (is_string($domainSchema) && $domainSchema !== '') {
-            return $quoter->quote($domainSchema) . '.' . $quoter->quote($domainName);
+        if (!is_string($domainSchema)) {
+            return $quoter->quote($domainName);
+        }
+        if ($domainSchema === '') {
+            return $quoter->quote($domainName);
         }
 
-        return $quoter->quote($domainName);
+        return $quoter->quote($domainSchema) . '.' . $quoter->quote($domainName);
     }
 
     /**

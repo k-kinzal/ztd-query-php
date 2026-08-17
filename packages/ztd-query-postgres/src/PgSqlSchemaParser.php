@@ -399,35 +399,56 @@ final class PgSqlSchemaParser implements SchemaParser
     {
         $tokens = SqlTokenStream::tokenize($str)->significantTokens();
         $first = $tokens[0] ?? null;
-        if ($first?->kind !== SqlTokenKind::QuotedIdentifier) {
+        if ($first === null) {
+            return null;
+        }
+        if ($first->kind !== SqlTokenKind::QuotedIdentifier) {
             return null;
         }
 
         $last = $first;
         $index = 1;
-        if (($tokens[$index] ?? null)?->text === '.') {
-            $qualifiedName = $tokens[$index + 1] ?? null;
-            if (!$qualifiedName instanceof SqlToken || !$this->isIdentifier($qualifiedName)) {
+        $separator = $tokens[$index] ?? null;
+        if ($separator !== null && $separator->text === '.') {
+            $index++;
+            $qualifiedName = $tokens[$index] ?? null;
+            if ($qualifiedName === null) {
                 return null;
             }
-            if ($qualifiedName->kind === SqlTokenKind::Word
-                && in_array(strtoupper($qualifiedName->text), self::CONSTRAINT_KEYWORDS, true)
-            ) {
+            if (!self::isTypeIdentifier($qualifiedName)) {
                 return null;
+            }
+            if ($qualifiedName->kind === SqlTokenKind::Word) {
+                if (in_array(strtoupper($qualifiedName->text), self::CONSTRAINT_KEYWORDS, true)) {
+                    return null;
+                }
             }
             $last = $qualifiedName;
-            $index += 2;
+            $index++;
         }
 
-        while (($tokens[$index] ?? null)?->text === '[' && ($tokens[$index + 1] ?? null)?->text === ']') {
-            $last = $tokens[$index + 1];
-            $index += 2;
+        while (isset($tokens[$index]) && $tokens[$index]->text === '[') {
+            $index++;
+            $arrayClosing = $tokens[$index] ?? null;
+            if ($arrayClosing === null) {
+                return null;
+            }
+            if ($arrayClosing->text !== ']') {
+                return null;
+            }
+            $last = $arrayClosing;
+            $index++;
         }
 
         return [
             'type' => substr($str, 0, $last->endOffset()),
-            'rest' => trim(substr($str, $last->endOffset())),
+            'rest' => substr($str, $last->endOffset()),
         ];
+    }
+
+    private static function isTypeIdentifier(SqlToken $token): bool
+    {
+        return in_array($token->kind, [SqlTokenKind::Word, SqlTokenKind::QuotedIdentifier], true);
     }
 
     private function mapTypeToFamily(string $nativeType): ColumnTypeFamily
