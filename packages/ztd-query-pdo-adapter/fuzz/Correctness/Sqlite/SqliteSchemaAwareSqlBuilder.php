@@ -99,9 +99,11 @@ final class SqliteSchemaAwareSqlBuilder
         $updateCol = $this->faker->randomElement($nonPkCols);
         $newValue = $this->generateLiteral($updateCol);
 
-        $whereClause = $this->buildPkWhere($schema);
+        $alias = $this->faker->boolean(35) ? '_ztd_target' : null;
+        $whereClause = $this->buildPkWhere($schema, $alias);
+        $target = $alias === null ? $table : "$table AS " . $this->quoteIdentifier($alias);
 
-        return "UPDATE $table SET " . $this->quoteIdentifier($updateCol) . " = $newValue WHERE $whereClause";
+        return "UPDATE $target SET " . $this->quoteIdentifier($updateCol) . " = $newValue WHERE $whereClause";
     }
 
     public function buildDelete(SchemaDefinition $schema): string
@@ -112,12 +114,16 @@ final class SqliteSchemaAwareSqlBuilder
         return "DELETE FROM $table WHERE $whereClause";
     }
 
-    private function buildPkWhere(SchemaDefinition $schema): string
+    private function buildPkWhere(SchemaDefinition $schema, ?string $qualifier = null): string
     {
         $conditions = [];
         foreach ($schema->primaryKeys as $pk) {
             $literal = $this->generateLiteral($pk);
-            $conditions[] = $this->quoteIdentifier($pk) . " = $literal";
+            $column = $this->quoteIdentifier($pk);
+            if ($qualifier !== null) {
+                $column = $this->quoteIdentifier($qualifier) . '.' . $column;
+            }
+            $conditions[] = $column . " = $literal";
         }
         return implode(' AND ', $conditions);
     }

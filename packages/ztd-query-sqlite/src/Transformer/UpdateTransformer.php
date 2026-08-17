@@ -76,6 +76,8 @@ final class UpdateTransformer implements SqlTransformer
         array $primaryKeys = [],
     ): string {
         $assignments = $this->parser->extractUpdateAssignments($sql);
+        $alias = $this->parser->extractUpdateAlias($sql);
+        $qualifier = $alias ?? $targetTable;
 
         $selectCols = [];
         $coveredCols = [];
@@ -87,13 +89,13 @@ final class UpdateTransformer implements SqlTransformer
 
         foreach ($columns as $col) {
             if (!isset($coveredCols[$col])) {
-                $selectCols[] = "\"$targetTable\".\"$col\"";
+                $selectCols[] = "\"$qualifier\".\"$col\"";
             }
         }
 
         $identity = new MutationRowIdentity();
         foreach ($primaryKeys as $primaryKey) {
-            $selectCols[] = '"' . $targetTable . '"."' . $primaryKey . '" AS "' . $identity->column($primaryKey) . '"';
+            $selectCols[] = '"' . $qualifier . '"."' . $primaryKey . '" AS "' . $identity->column($primaryKey) . '"';
         }
 
         if ($selectCols === []) {
@@ -101,6 +103,10 @@ final class UpdateTransformer implements SqlTransformer
         }
 
         $selectList = implode(', ', $selectCols);
+
+        $aliasClause = $alias === null ? '' : ' AS "' . $alias . '"';
+        $fromClause = $this->parser->extractUpdateFromClause($sql);
+        $additionalFrom = $fromClause === null ? '' : ', ' . $fromClause;
 
         $whereClause = '';
         $where = $this->parser->extractWhereClause($sql);
@@ -120,7 +126,7 @@ final class UpdateTransformer implements SqlTransformer
             $limitClause = " LIMIT $limit";
         }
 
-        return "SELECT $selectList FROM \"$targetTable\"$whereClause$orderByClause$limitClause";
+        return "SELECT $selectList FROM \"$targetTable\"$aliasClause$additionalFrom$whereClause$orderByClause$limitClause";
     }
 
     /**

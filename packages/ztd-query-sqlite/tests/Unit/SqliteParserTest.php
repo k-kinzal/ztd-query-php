@@ -188,6 +188,25 @@ SELECT * FROM users'));
         self::assertSame('users', $parser->extractTargetTable('DELETE FROM users WHERE id = 1'));
     }
 
+    public function testExtractUpdateAliasFromStructuredTarget(): void
+    {
+        $parser = new SqliteParser();
+
+        self::assertSame('target', $parser->extractUpdateAlias('UPDATE users AS target SET name = \'Alice\' WHERE target.id = 1'));
+        self::assertSame('target', $parser->extractUpdateAlias('UPDATE users target SET name = \'Alice\' WHERE target.id = 1'));
+        self::assertNull($parser->extractUpdateAlias('UPDATE users SET name = \'Alice\' WHERE id = 1'));
+    }
+
+    public function testExtractUpdateFromClausePreservesJoinSource(): void
+    {
+        $parser = new SqliteParser();
+
+        self::assertSame(
+            'incoming AS source',
+            $parser->extractUpdateFromClause('UPDATE inventory SET quantity = source.quantity FROM incoming AS source WHERE inventory.id = source.id'),
+        );
+    }
+
     public function testExtractCreateTableTarget(): void
     {
         $parser = new SqliteParser();

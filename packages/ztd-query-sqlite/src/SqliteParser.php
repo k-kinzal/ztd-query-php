@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\Sqlite;
 
 use ZtdQuery\Sql\SqlTokenStream;
+use ZtdQuery\Sql\SqlTokenKind;
 
 /**
  * Lightweight SQL parser for SQLite.
@@ -164,6 +165,52 @@ final class SqliteParser
         }
 
         return $this->parseAssignments($setClause);
+    }
+
+    public function extractUpdateAlias(string $sql): ?string
+    {
+        $tokens = SqlTokenStream::tokenize($sql)->significantTokens();
+        foreach ($tokens as $index => $token) {
+            if (!$token->isTopLevel() || !$token->isKeyword('UPDATE')) {
+                continue;
+            }
+
+            $index++;
+            if (($tokens[$index] ?? null)?->isKeyword('OR') === true) {
+                $index += 2;
+            }
+            $index = $this->identifierEndIndex($tokens, $index);
+            if (($tokens[$index] ?? null)?->kind === SqlTokenKind::Symbol
+                && $tokens[$index]->text === '.'
+            ) {
+                $index = $this->identifierEndIndex($tokens, $index + 1);
+            }
+            if (($tokens[$index] ?? null)?->isKeyword('AS') === true) {
+                $index++;
+            }
+
+            $alias = $tokens[$index] ?? null;
+            $set = $tokens[$index + 1] ?? null;
+            if ($alias === null
+                || $set === null
+                || !$set->isKeyword('SET')
+                || !in_array($alias->kind, [SqlTokenKind::Word, SqlTokenKind::QuotedIdentifier], true)
+            ) {
+                return null;
+            }
+
+            return $this->unquoteIdentifier($alias->text);
+        }
+
+        return null;
+    }
+
+    public function extractUpdateFromClause(string $sql): ?string
+    {
+        return SqlTokenStream::tokenize($sql)->topLevelClause(
+            ['FROM'],
+            [['WHERE'], ['ORDER', 'BY'], ['LIMIT'], ['RETURNING']],
+        );
     }
 
     /**
@@ -474,6 +521,24 @@ final class SqliteParser
         }
 
         return null;
+    }
+
+    /** @param list<\ZtdQuery\Sql\SqlToken> $tokens */
+    private function identifierEndIndex(array $tokens, int $index): int
+    {
+        $token = $tokens[$index] ?? null;
+        if ($token === null || $token->kind !== SqlTokenKind::Symbol || $token->text !== '[') {
+            return $index + 1;
+        }
+
+        for ($index++; isset($tokens[$index]); $index++) {
+            $token = $tokens[$index];
+            if ($token->kind === SqlTokenKind::Symbol && $token->text === ']' && $token->isTopLevel()) {
+                return $index + 1;
+            }
+        }
+
+        return $index;
     }
 
     private function extractUpdateTable(string $sql): ?string
