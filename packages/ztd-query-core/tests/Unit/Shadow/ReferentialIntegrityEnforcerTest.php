@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\ForeignKeyViolationException;
+use ZtdQuery\Schema\CandidateKeySet;
 use ZtdQuery\Schema\ForeignKeyDefinition;
 use ZtdQuery\Schema\ReferentialAction;
 use ZtdQuery\Schema\TableDefinition;
@@ -21,6 +22,7 @@ use ZtdQuery\Shadow\ShadowStore;
 
 #[CoversClass(ReferentialIntegrityEnforcer::class)]
 #[UsesClass(ForeignKeyViolationException::class)]
+#[UsesClass(CandidateKeySet::class)]
 #[UsesClass(ForeignKeyDefinition::class)]
 #[UsesClass(TableDefinition::class)]
 #[UsesClass(TableDefinitionRegistry::class)]
