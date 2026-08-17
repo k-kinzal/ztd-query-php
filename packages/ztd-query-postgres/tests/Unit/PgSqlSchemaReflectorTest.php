@@ -622,6 +622,64 @@ final class PgSqlSchemaReflectorTest extends TestCase
         self::assertSame("status = 'active'::text", $indexes['users']['users_active_email']->predicate);
     }
 
+    public function testCollectsCompositePartialIndexesAndDiscardsMalformedMetadata(): void
+    {
+        $reflector = new PgSqlSchemaReflector(new FakeSequentialConnection([
+            new FakeStatement([
+                ['column_name' => 'email', 'data_type' => 'text', 'is_nullable' => 'YES', 'udt_name' => 'text'],
+                ['column_name' => 'tenant_id', 'data_type' => 'integer', 'is_nullable' => 'NO', 'udt_name' => 'int4'],
+                ['column_name' => 'status', 'data_type' => 'text', 'is_nullable' => 'YES', 'udt_name' => 'text'],
+            ]),
+            new FakeStatement([]),
+            new FakeStatement([
+                ['constraint_name' => null, 'column_name' => null, 'predicate' => null],
+                ['constraint_name' => '', 'column_name' => 'email', 'predicate' => null],
+                ['constraint_name' => 'users_active_email', 'column_name' => 'email', 'predicate' => "status = 'active'"],
+                ['constraint_name' => 'users_active_email', 'column_name' => 'tenant_id', 'predicate' => "status = 'active'"],
+                ['constraint_name' => 'users_broken', 'column_name' => null, 'predicate' => 'lower(email) IS NOT NULL'],
+                ['constraint_name' => 'users_broken', 'column_name' => 'email', 'predicate' => 'lower(email) IS NOT NULL'],
+                ['constraint_name' => 'users_status', 'column_name' => 'status', 'predicate' => '   '],
+                ['constraint_name' => 'users_pending_email', 'column_name' => 'email', 'predicate' => "status = 'pending'"],
+            ]),
+            new FakeStatement([]),
+        ]));
+
+        $createSql = $reflector->getCreateStatement('users');
+        $indexes = $reflector->partialUniqueIndexes()['users'];
+
+        self::assertNotNull($createSql);
+        self::assertStringContainsString('CONSTRAINT "users_status" UNIQUE ("status")', $createSql);
+        self::assertStringNotContainsString('users_broken', $createSql);
+        self::assertSame(['users_active_email', 'users_pending_email'], array_keys($indexes));
+        self::assertSame(['email', 'tenant_id'], $indexes['users_active_email']->columns);
+        self::assertSame("status = 'active'", $indexes['users_active_email']->predicate);
+    }
+
+    public function testEscapesTableNameInEveryMetadataQuery(): void
+    {
+        $queries = [];
+        $columns = new FakeStatement([
+            ['column_name' => 'id', 'data_type' => 'integer', 'is_nullable' => 'NO', 'udt_name' => 'int4'],
+        ]);
+        $empty = new FakeStatement([]);
+        $connection = self::createStub(ConnectionInterface::class);
+        $connection->method('query')->willReturnCallback(
+            function (string $sql) use (&$queries, $columns, $empty): StatementInterface {
+                $queries[] = $sql;
+
+                return str_contains($sql, 'information_schema.columns') ? $columns : $empty;
+            },
+        );
+
+        self::assertNotNull((new PgSqlSchemaReflector($connection))->getCreateStatement("it's"));
+
+        self::assertCount(4, $queries);
+        self::assertStringContainsString("'it''s'", $queries[0]);
+        self::assertStringContainsString("'it''s'", $queries[1]);
+        self::assertStringContainsString("'it''s'", $queries[2]);
+        self::assertStringContainsString("'it''s'", $queries[3]);
+    }
+
     public function testVerifyColumnsQueryExact(): void
     {
         $queries = [];

@@ -38,7 +38,7 @@ final class PgSqlConflictTargetTest extends TestCase
 
     public function testResolvesPartialIndexWithOrderIndependentColumns(): void
     {
-        $target = new PgSqlConflictTarget(true, ['email', 'tenant_id'], "status = 'active'");
+        $target = new PgSqlConflictTarget(true, ['EMAIL', 'TENANT_ID'], "status = 'active'");
         $partial = new PartialUniqueIndex(
             'users_active_email',
             ['tenant_id', 'email'],
@@ -49,6 +49,16 @@ final class PgSqlConflictTargetTest extends TestCase
 
         self::assertSame(['users_active_email' => ['tenant_id', 'email']], $resolved['keys']->keys());
         self::assertSame("status = 'active'", $resolved['predicate']);
+    }
+
+    public function testRejectsPartialIndexWithDifferentColumnArity(): void
+    {
+        $target = new PgSqlConflictTarget(true, ['email', 'tenant_id'], "status = 'active'");
+        $partial = new PartialUniqueIndex('users_active_email', ['email'], "status = 'active'");
+
+        $this->expectException(UnsupportedSqlException::class);
+
+        $target->resolve(new CandidateKeySet([]), [$partial->name => $partial], 'INSERT');
     }
 
     public function testResolvesNamedConstraintCaseInsensitively(): void

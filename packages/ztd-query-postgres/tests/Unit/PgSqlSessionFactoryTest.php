@@ -386,4 +386,45 @@ final class PgSqlSessionFactoryTest extends TestCase
         $session = $factory->create($connection, ZtdConfig::default());
         self::assertInstanceOf(Session::class, $session);
     }
+
+    public function testCreateRegistersReflectedPartialUniqueIndexes(): void
+    {
+        $tables = new FakeStatement([
+            ['table_name' => 'users'],
+        ]);
+        $columns = new FakeStatement([
+            ['column_name' => 'id', 'data_type' => 'integer', 'is_nullable' => 'NO', 'udt_name' => 'int4'],
+            ['column_name' => 'email', 'data_type' => 'text', 'is_nullable' => 'NO', 'udt_name' => 'text'],
+            ['column_name' => 'status', 'data_type' => 'text', 'is_nullable' => 'NO', 'udt_name' => 'text'],
+        ]);
+        $primaryKey = new FakeStatement([
+            ['column_name' => 'id'],
+        ]);
+        $unique = new FakeStatement([
+            ['constraint_name' => 'users_active_email', 'column_name' => 'email', 'predicate' => "status = 'active'"],
+        ]);
+        $empty = new FakeStatement([]);
+        $connection = self::createStub(ConnectionInterface::class);
+        $connection->method('query')->willReturnCallback(
+            static function (string $sql) use ($tables, $columns, $primaryKey, $unique, $empty): StatementInterface {
+                return match (true) {
+                    str_contains($sql, 'information_schema.tables') => $tables,
+                    str_contains($sql, 'information_schema.columns') => $columns,
+                    str_contains($sql, "constraint_type = 'PRIMARY KEY'") => $primaryKey,
+                    str_contains($sql, 'pg_catalog.pg_index') => $unique,
+                    default => $empty,
+                };
+            },
+        );
+
+        $session = (new PgSqlSessionFactory())->create($connection, ZtdConfig::default());
+        $plan = $session->rewrite(
+            "INSERT INTO users (id, email, status) VALUES (1, 'a@example.com', 'active') "
+                . "ON CONFLICT (email) WHERE status = 'active' "
+                . 'DO UPDATE SET status = EXCLUDED.status',
+        );
+
+        self::assertStringContainsString('"__ztd_existing"."email" = "__ztd_incoming"."email"', $plan->sql());
+        self::assertStringContainsString('"__ztd_existing"."status" = \'active\'', $plan->sql());
+    }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Postgres;
 
+use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
@@ -125,25 +126,26 @@ final class PgSqlParser
     public function extractOnConflictTarget(string $sql): ?PgSqlConflictTarget
     {
         $tokens = SqlTokenStream::tokenize($sql)->significantTokens();
-        $conflict = null;
-        foreach ($tokens as $index => $token) {
-            if ($token->isTopLevel()
-                && $token->isKeyword('ON')
-                && ($tokens[$index + 1] ?? null)?->isKeyword('CONFLICT') === true
-            ) {
-                $conflict = $index + 2;
-                break;
-            }
-        }
+        $conflict = self::findOnConflictTargetStart($tokens);
         if ($conflict === null) {
             return null;
         }
 
         $next = $tokens[$conflict] ?? null;
-        if ($next?->isKeyword('DO') === true) {
+        if ($next === null) {
+            return null;
+        }
+        if ($next->isKeyword('DO')) {
             return new PgSqlConflictTarget(false);
         }
-        if ($next?->isKeyword('ON') === true && ($tokens[$conflict + 1] ?? null)?->isKeyword('CONSTRAINT') === true) {
+        if ($next->isKeyword('ON')) {
+            $constraintKeyword = $tokens[$conflict + 1] ?? null;
+            if ($constraintKeyword === null) {
+                return null;
+            }
+            if (!$constraintKeyword->isKeyword('CONSTRAINT')) {
+                return null;
+            }
             $constraintToken = $tokens[$conflict + 2] ?? null;
             if ($constraintToken === null) {
                 return null;
@@ -155,17 +157,11 @@ final class PgSqlParser
 
             return new PgSqlConflictTarget(true, constraint: $identifier['name']);
         }
-        if ($next?->kind !== SqlTokenKind::Symbol || $next->text !== '(') {
+        if ($next->text !== '(') {
             return null;
         }
 
-        $closing = null;
-        foreach ($tokens as $index => $token) {
-            if ($index > $conflict && $token->isTopLevel() && $token->kind === SqlTokenKind::Symbol && $token->text === ')') {
-                $closing = $index;
-                break;
-            }
-        }
+        $closing = self::findTopLevelSymbol($tokens, $conflict, ')');
         if ($closing === null) {
             return null;
         }
@@ -179,37 +175,93 @@ final class PgSqlParser
         foreach (SqlTokenStream::tokenize($columnSql)->splitTopLevel() as $part) {
             $stream = SqlTokenStream::tokenize($part);
             $identifier = $stream->identifierAt();
-            if ($identifier === null || $identifier['next'] !== count($stream->significantTokens())) {
+            if ($identifier === null) {
+                return null;
+            }
+            if ($identifier['next'] !== count($stream->significantTokens())) {
                 return null;
             }
             $columns[] = $identifier['name'];
         }
 
-        $do = null;
-        foreach ($tokens as $index => $token) {
-            if ($index > $closing && $token->isTopLevel() && $token->isKeyword('DO')) {
-                $do = $index;
-                break;
-            }
-        }
+        $do = self::findTopLevelKeyword($tokens, $closing, 'DO');
         if ($do === null) {
             return null;
         }
 
         $predicate = null;
         $afterColumns = $tokens[$closing + 1] ?? null;
-        if ($afterColumns?->isKeyword('WHERE') === true) {
-            $predicate = trim(substr(
-                $sql,
-                $afterColumns->endOffset(),
-                $tokens[$do]->offset - $afterColumns->endOffset(),
-            ));
-            if ($predicate === '') {
-                return null;
+        if ($afterColumns !== null) {
+            if ($afterColumns->isKeyword('WHERE')) {
+                $predicate = trim(substr(
+                    $sql,
+                    $afterColumns->endOffset(),
+                    $tokens[$do]->offset - $afterColumns->endOffset(),
+                ));
+                if ($predicate === '') {
+                    return null;
+                }
             }
         }
 
         return new PgSqlConflictTarget(true, $columns, $predicate);
+    }
+
+    /**
+     * @param list<SqlToken> $tokens
+     */
+    private static function findOnConflictTargetStart(array $tokens): ?int
+    {
+        foreach ($tokens as $index => $token) {
+            if (!$token->isTopLevel()) {
+                continue;
+            }
+            if (!$token->isKeyword('ON')) {
+                continue;
+            }
+            $following = $tokens[$index + 1] ?? $token;
+            if ($following->isKeyword('CONFLICT')) {
+                return $index + 2;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param list<SqlToken> $tokens
+     */
+    private static function findTopLevelSymbol(array $tokens, int $start, string $symbol): ?int
+    {
+        for ($index = $start, $count = count($tokens); $index < $count; $index++) {
+            $token = $tokens[$index];
+            if (!$token->isTopLevel()) {
+                continue;
+            }
+            if ($token->kind !== SqlTokenKind::Symbol) {
+                continue;
+            }
+            if ($token->text === $symbol) {
+                return $index;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param list<SqlToken> $tokens
+     */
+    private static function findTopLevelKeyword(array $tokens, int $start, string $keyword): ?int
+    {
+        for ($index = $start, $count = count($tokens); $index < $count; $index++) {
+            $token = $tokens[$index];
+            if ($token->isTopLevel() && $token->isKeyword($keyword)) {
+                return $index;
+            }
+        }
+
+        return null;
     }
 
     /**

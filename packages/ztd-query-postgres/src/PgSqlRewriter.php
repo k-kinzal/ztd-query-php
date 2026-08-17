@@ -246,7 +246,7 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
                 continue;
             }
 
-            $context[$tableName] = [
+            $definitionContext = [
                 'rows' => [],
                 'columns' => $definition->columns,
                 'columnTypes' => $definition->typedColumns,
@@ -255,8 +255,9 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
                 'generatedExpressions' => $definition->generatedExpressions,
                 'primaryKeys' => $definition->primaryKeys,
                 'candidateKeys' => $definition->candidateKeys()->keys(),
-                'partialUniqueIndexes' => $definition->partialUniqueIndexes,
             ];
+            $definitionContext['partialUniqueIndexes'] = $definition->partialUniqueIndexes;
+            $context[$tableName] = $definitionContext;
         }
 
         $quoter = new PgSqlIdentifierQuoter();

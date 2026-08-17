@@ -23,6 +23,7 @@ final class PartialUniqueIndexTest extends TestCase
 
     /** @param list<string> $columns */
     #[TestWith(['', ['email'], "status = 'active'"], 'missing name')]
+    #[TestWith([' ', ['email'], "status = 'active'"], 'blank name')]
     #[TestWith(['users_active_email', [], "status = 'active'"], 'missing columns')]
     #[TestWith(['users_active_email', ['email'], ' '], 'missing predicate')]
     public function testRejectsIncompleteIndexMetadata(string $name, array $columns, string $predicate): void
