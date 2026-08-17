@@ -360,7 +360,7 @@ final class MySqlMutationResolver
     /**
      * Extract column names from a SELECT statement for CREATE TABLE AS SELECT.
      *
-     * @return array<int, string>
+     * @return list<string>
      */
     private function extractSelectColumnNames(\PhpMyAdmin\SqlParser\Statements\SelectStatement $selectStatement): array
     {
