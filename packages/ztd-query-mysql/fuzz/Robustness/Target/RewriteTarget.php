@@ -142,6 +142,7 @@ final class RewriteTarget
             fn (): string => "UPDATE orders SET created_at = created_at + INTERVAL {$this->provider->integerLiteral(1, 30)} DAY WHERE id = 1",
             fn (): string => 'UPDATE users SET status = 0 WHERE CASE WHEN id > 1 THEN 1 ELSE 0 END = 1',
             fn (): string => 'DELETE FROM users WHERE CASE WHEN id > 1 THEN 1 ELSE 0 END = 1',
+            fn (): string => "CREATE TABLE child (id INT, parent_id INT, {$this->provider->foreignKeyConstraint()})",
         ];
 
         $index = ord($input[0] ?? "\0") % count($generators);

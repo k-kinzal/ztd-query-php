@@ -225,6 +225,31 @@ final class MysqliCteShadowingTest extends TestCase
         }
     }
 
+    public function testInsertWithoutColumnListIgnoresNamedForeignKeyConstraint(): void
+    {
+        [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();
+        $parent = 'prefix_' . bin2hex(random_bytes(8));
+        $child = 'prefix_' . bin2hex(random_bytes(8));
+        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, name VARCHAR(50)) ENGINE=InnoDB', $parent));
+        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, parent_id INT NOT NULL, label VARCHAR(50) NOT NULL, CONSTRAINT `fk_parent` FOREIGN KEY (parent_id) REFERENCES `%s`(id)) ENGINE=InnoDB', $child, $parent));
+        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
+        try {
+            self::assertNotFalse($ztdMysqli->query(sprintf("INSERT INTO `%s` VALUES (1, 'Parent')", $parent)));
+            self::assertNotFalse($ztdMysqli->query(sprintf("INSERT INTO `%s` VALUES (10, 1, 'Child')", $child)));
+
+            $result = $ztdMysqli->query(sprintf('SELECT * FROM `%s`', $child));
+            self::assertInstanceOf(\mysqli_result::class, $result);
+            self::assertSame([['id' => 10, 'parent_id' => 1, 'label' => 'Child']], $result->fetch_all(MYSQLI_ASSOC));
+
+            $physical = $rawMysqli->query(sprintf('SELECT * FROM `%s`', $child));
+            self::assertInstanceOf(\mysqli_result::class, $physical);
+            self::assertSame([], $physical->fetch_all(MYSQLI_ASSOC));
+        } finally {
+            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+        }
+    }
+
     public function testSelfReferencingUpsertMatchesNativeMySql(): void
     {
         [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();

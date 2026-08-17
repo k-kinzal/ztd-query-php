@@ -84,6 +84,48 @@ final class MySqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame(['order_id', 'product_id'], $definition->primaryKeys);
     }
 
+    public function testParseDoesNotTreatNamedForeignKeyAsColumn(): void
+    {
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $sql = <<<'SQL'
+            CREATE TABLE child (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                parent_id INT NOT NULL,
+                label VARCHAR(50) NOT NULL,
+                CONSTRAINT fk_parent FOREIGN KEY (parent_id) REFERENCES parent(id)
+            )
+            SQL;
+
+        $definition = $schemaParser->parse($sql);
+
+        self::assertNotNull($definition);
+        self::assertSame(['id', 'parent_id', 'label'], $definition->columns);
+        self::assertArrayNotHasKey('fk_parent', $definition->columnTypes);
+        self::assertArrayNotHasKey('fk_parent', $definition->typedColumns);
+    }
+
+    public function testParseDoesNotTreatNamedTableConstraintsAsColumns(): void
+    {
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $sql = <<<'SQL'
+            CREATE TABLE child (
+                id INT,
+                parent_id INT,
+                CONSTRAINT pk_child PRIMARY KEY (id),
+                CONSTRAINT uq_parent UNIQUE (parent_id),
+                CONSTRAINT fk_parent FOREIGN KEY (parent_id) REFERENCES parent(id),
+                CONSTRAINT ck_id CHECK (id > 0)
+            )
+            SQL;
+
+        $definition = $schemaParser->parse($sql);
+
+        self::assertNotNull($definition);
+        self::assertSame(['id', 'parent_id'], $definition->columns);
+    }
+
     public function testParseUniqueConstraint(): void
     {
         $parser = new MySqlParser();

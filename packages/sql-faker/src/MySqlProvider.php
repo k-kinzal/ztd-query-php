@@ -650,4 +650,19 @@ final class MySqlProvider extends Base
 
         return $this->sql->generate($plan->requiringNonEmpty()->withMaxDepth($maxDepth));
     }
+
+    /**
+     * Generate a named MySQL foreign-key table constraint.
+     *
+     * @return non-empty-string
+     */
+    public function foreignKeyConstraint(): string
+    {
+        $name = $this->identifier();
+        $column = $this->identifier();
+        $table = $this->identifier();
+        $referencedColumn = $this->identifier();
+
+        return "CONSTRAINT $name FOREIGN KEY ($column) REFERENCES $table ($referencedColumn)";
+    }
 }

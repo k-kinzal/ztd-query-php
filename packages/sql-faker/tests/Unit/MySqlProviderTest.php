@@ -507,6 +507,28 @@ final class MySqlProviderTest extends TestCase
         self::assertSame(0, (strlen($result) - 3) % 2);
     }
 
+    public function testForeignKeyConstraint(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->foreignKeyConstraint();
+
+        $tokens = (new LexicalGrammar($faker, 'mysql-8.4.7', true))->tokenize($result);
+        self::assertCount(12, $tokens);
+        self::assertSame('CONSTRAINT', $tokens[0]);
+        self::assertSame('FOREIGN', $tokens[2]);
+        self::assertSame('KEY_SYM', $tokens[3]);
+        self::assertSame(['(', ')', 'REFERENCES', '(', ')'], [
+            $tokens[4],
+            $tokens[6],
+            $tokens[7],
+            $tokens[9],
+            $tokens[11],
+        ]);
+    }
+
     public function testBinaryLiteral(): void
     {
         $faker = Factory::create();
