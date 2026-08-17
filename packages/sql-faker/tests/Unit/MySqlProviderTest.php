@@ -496,11 +496,13 @@ final class MySqlProviderTest extends TestCase
     public function testQuotedHexLiteralDefaultsToOneThroughEightBytes(): void
     {
         $faker = Factory::create();
-        $faker->seed(12345);
+        $faker->seed(5);
         $provider = new MySqlProvider($faker);
 
         $result = $provider->quotedHexLiteral();
+        $faker->seed(5);
 
+        self::assertSame($provider->quotedHexLiteral(1, 8), $result);
         self::assertMatchesRegularExpression("/^X'[0-9a-f]{2,16}'$/", $result);
         self::assertSame(0, (strlen($result) - 3) % 2);
     }
