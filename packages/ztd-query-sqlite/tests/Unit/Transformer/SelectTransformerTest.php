@@ -71,6 +71,23 @@ final class SelectTransformerTest extends TransformerContractTest
         self::assertSame($sql, $result);
     }
 
+    public function testTransformStripsIndexHintForMaterializedShadow(): void
+    {
+        $transformer = new SelectTransformer();
+        $tables = [
+            'products' => [
+                'rows' => [['id' => 1]],
+                'columns' => ['id'],
+                'columnTypes' => [],
+            ],
+        ];
+
+        $result = $transformer->transform('SELECT * FROM products INDEXED BY idx_products', $tables);
+
+        self::assertStringNotContainsString('INDEXED BY', $result);
+        self::assertStringContainsString('SELECT * FROM products ', $result);
+    }
+
     public function testTransformWithEmptyRowsGeneratesEmptyCte(): void
     {
         $transformer = new SelectTransformer();
