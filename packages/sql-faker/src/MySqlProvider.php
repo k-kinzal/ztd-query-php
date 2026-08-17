@@ -688,4 +688,19 @@ final class MySqlProvider extends Base
             GenerationPlans::insertSelectCompoundStatement()->withMaxDepth($maxDepth),
         );
     }
+
+    /**
+     * Generate a MySQL row-alias upsert introduced in MySQL 8.0.19.
+     *
+     * @return non-empty-string
+     */
+    public function insertRowAliasUpsertStatement(): string
+    {
+        $table = $this->rsg->rawIdentifier();
+        $keyColumn = $this->rsg->rawIdentifier();
+        $valueColumn = $this->rsg->rawIdentifier();
+        $rowAlias = $this->rsg->rawIdentifier();
+
+        return "INSERT INTO $table ($keyColumn, $valueColumn) VALUES (1, 2) AS $rowAlias ON DUPLICATE KEY UPDATE $valueColumn = $rowAlias.$valueColumn";
+    }
 }

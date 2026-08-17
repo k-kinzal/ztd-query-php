@@ -568,6 +568,21 @@ final class MySqlProviderTest extends TestCase
         );
     }
 
+    public function testInsertRowAliasUpsertStatement(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $tokens = (new LexicalGrammar($faker, 'mysql-8.4.7', true))->tokenize($provider->insertRowAliasUpsertStatement());
+
+        self::assertSame('INSERT_SYM', $tokens[0]);
+        self::assertContains('VALUES', $tokens);
+        self::assertContains('AS', $tokens);
+        self::assertContains('DUPLICATE_SYM', $tokens);
+        self::assertContains('UPDATE_SYM', $tokens);
+    }
+
     public function testBinaryLiteral(): void
     {
         $faker = Factory::create();

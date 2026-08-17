@@ -221,21 +221,14 @@ final class MySqlMutationResolver
             throw new UnsupportedSqlException($sql, 'Cannot resolve INSERT target');
         }
 
-        $updateColumns = [];
-        /** @var array<string, \ZtdQuery\Shadow\Mutation\UpsertExpression> $updateValues */
-        $updateValues = [];
+        $extractor = new MySqlUpsertAssignmentExtractor();
+        $incomingAlias = $extractor->incomingAlias($sql);
         $expressionParser = new MySqlUpsertExpressionParser();
-        if ($statement->onDuplicateSet !== null && $statement->onDuplicateSet !== []) {
-            foreach ($statement->onDuplicateSet as $set) {
-                $colName = trim($set->column, '`"\'');
-                if (str_contains($colName, '.')) {
-                    $parts = explode('.', $colName);
-                    $colName = trim(end($parts), '`"\'');
-                }
-                $updateColumns[] = $colName;
-                $updateValues[$colName] = $expressionParser->parse($set->value, $tableName);
-            }
+        $updateValues = [];
+        foreach ($extractor->extract($sql) as $column => $expression) {
+            $updateValues[$column] = $expressionParser->parse($expression, $tableName, $incomingAlias);
         }
+        $updateColumns = array_keys($updateValues);
         $isOnDuplicateKeyUpdate = $updateColumns !== [];
 
         $isIgnore = $statement->options !== null && self::optionSet($statement->options, 'IGNORE');

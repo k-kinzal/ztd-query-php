@@ -14,6 +14,7 @@ use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlMutationResolver;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlSchemaParser;
+use ZtdQuery\Platform\MySql\MySqlUpsertAssignmentExtractor;
 use ZtdQuery\Platform\MySql\UpdateSourceExtractor;
 use ZtdQuery\Platform\MySql\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
@@ -41,6 +42,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(MySqlParser::class)]
 #[UsesClass(MySqlSchemaParser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlUpsertExpressionParser::class)]
+#[UsesClass(MySqlUpsertAssignmentExtractor::class)]
 #[UsesClass(SelectTransformer::class)]
 #[UsesClass(UpdateTransformer::class)]
 #[UsesClass(DeleteTransformer::class)]
@@ -162,6 +164,38 @@ final class MySqlMutationResolverTest extends TestCase
 
         self::assertInstanceOf(UpsertMutation::class, $mutation);
         self::assertSame('users', $mutation->tableName());
+    }
+
+    public function testResolveRowAliasUpsertAppliesIncomingColumns(): void
+    {
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $shadowStore = new ShadowStore();
+        $shadowStore->set('users', [['id' => 1, 'name' => 'old', 'score' => 10]]);
+        $registry = new TableDefinitionRegistry();
+        $registry->register('users', new TableDefinition(
+            ['id', 'name', 'score'],
+            ['id' => 'INT', 'name' => 'VARCHAR(255)', 'score' => 'INT'],
+            ['id'],
+            ['id'],
+            [],
+        ));
+        $selectTransformer = new SelectTransformer();
+        $resolver = new MySqlMutationResolver(
+            $shadowStore,
+            $registry,
+            $schemaParser,
+            new UpdateTransformer($parser, $selectTransformer),
+            new DeleteTransformer($parser, $selectTransformer),
+        );
+        $sql = "INSERT INTO users VALUES (1, 'new', 20) AS incoming ON DUPLICATE KEY UPDATE name = incoming.name, score = incoming.score";
+        $statements = $parser->parse($sql);
+
+        $mutation = $resolver->resolve($sql, $statements[0], QueryKind::WRITE_SIMULATED);
+        self::assertInstanceOf(UpsertMutation::class, $mutation);
+        $mutation->apply($shadowStore, [['id' => 1, 'name' => 'new', 'score' => 20]]);
+
+        self::assertSame([['id' => 1, 'name' => 'new', 'score' => 20]], $shadowStore->get('users'));
     }
 
     public function testResolveInsertOnDuplicateKeyWithoutRegisteredSchema(): void

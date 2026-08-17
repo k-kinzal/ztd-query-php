@@ -197,6 +197,7 @@ final class RobustnessTarget
             fn (): string => "CREATE TABLE child (id INT, parent_id INT, {$this->provider->foreignKeyConstraint()})",
             fn (): string => $this->provider->updateJoinDerivedStatement(),
             fn (): string => $this->provider->insertSelectCompoundStatement(),
+            fn (): string => $this->provider->insertRowAliasUpsertStatement(),
         ];
 
         $index = ord($input[0] ?? "\0") % count($generators);
