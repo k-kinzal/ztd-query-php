@@ -75,7 +75,7 @@ final class SqliteParser
     /**
      * Split a SQL string into individual statements.
      *
-     * @return array<int, string>
+     * @return list<string>
      */
     public function splitStatements(string $sql): array
     {

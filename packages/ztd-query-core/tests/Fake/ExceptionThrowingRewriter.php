@@ -31,6 +31,11 @@ final class ExceptionThrowingRewriter implements SqlRewriter
         throw $this->exception;
     }
 
+    public function splitStatements(string $sql): array
+    {
+        return [$sql];
+    }
+
     public function rewriteMultiple(string $sql): MultiRewritePlan
     {
         throw $this->exception;

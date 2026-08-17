@@ -77,6 +77,35 @@ final class SqliteProviderTest extends TestCase
         self::assertContains('UPDATE', $tokens);
     }
 
+    #[DataProvider('providerMultiDmlSeed')]
+    public function testMultiDmlStatementGeneratesExecutableBatch(int $seed, string $expected): void
+    {
+        $faker = Factory::create();
+        $provider = new SqliteProvider($faker);
+        $faker->seed($seed);
+
+        self::assertSame($expected, $provider->multiDmlStatement());
+    }
+
+    /** @return iterable<string, array{int, string}> */
+    public static function providerMultiDmlSeed(): iterable
+    {
+        yield 'insert then insert' => [
+            0,
+            "INSERT INTO users (id, name, email) VALUES (144, 'batch-a', 'a@example.com'); "
+                . "INSERT INTO users (id, name, email) VALUES (145, 'batch-b', 'b@example.com')",
+        ];
+        yield 'insert then update' => [
+            7,
+            "INSERT INTO users (id, name, email) VALUES (415, 'before', 'before@example.com'); "
+                . "UPDATE users SET name = 'after' WHERE id = 415",
+        ];
+        yield 'delete then delete' => [
+            1,
+            'DELETE FROM users WHERE id = 545; DELETE FROM users WHERE id = 546',
+        ];
+    }
+
     #[DataProvider('providerTargetedGenerationSeed')]
     public function testTemporaryTableStatement(int $seed): void
     {

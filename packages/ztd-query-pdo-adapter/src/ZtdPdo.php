@@ -234,6 +234,11 @@ class ZtdPdo extends PDO
             return $this->pdo->exec($statement);
         }
 
+        $statements = $this->session->splitStatements($statement);
+        if (count($statements) > 1) {
+            return $this->execMultiple($statements);
+        }
+
         $this->guardRawPostgreSqlCopy($statement);
 
         $transactionStatement = $this->session->transactionStatement($statement);
@@ -251,6 +256,27 @@ class ZtdPdo extends PDO
         } catch (DatabaseException $e) {
             throw new ZtdPdoException($e->getMessage(), 0, $e);
         }
+    }
+
+    /**
+     * @param non-empty-list<string> $statements
+     */
+    private function execMultiple(array $statements): int|false
+    {
+        $affectedRows = $this->exec($statements[0]);
+        if ($affectedRows === false) {
+            return false;
+        }
+
+        foreach (array_slice($statements, 1) as $statement) {
+            $result = $this->exec($statement);
+            if ($result === false) {
+                return false;
+            }
+            $affectedRows = $result;
+        }
+
+        return $affectedRows;
     }
 
     /**

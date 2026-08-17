@@ -100,7 +100,7 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
      */
     public function rewriteMultiple(string $sql): MultiRewritePlan
     {
-        $statements = $this->parser->splitStatements($sql);
+        $statements = $this->splitStatements($sql);
 
         if ($statements === []) {
             throw new UnsupportedSqlException($sql, 'Empty or unparseable');
@@ -112,6 +112,12 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
         }
 
         return new MultiRewritePlan($plans);
+    }
+
+    /** {@inheritDoc} */
+    public function splitStatements(string $sql): array
+    {
+        return $this->parser->splitStatements($sql);
     }
 
     public function commitRewriteState(): void

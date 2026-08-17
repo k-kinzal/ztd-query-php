@@ -277,6 +277,12 @@ final class Session
         }
     }
 
+    /** @return list<string> */
+    public function splitStatements(string $sql): array
+    {
+        return $this->rewriter->splitStatements($sql);
+    }
+
     /**
      * Process an already-executed statement based on the rewrite plan.
      *

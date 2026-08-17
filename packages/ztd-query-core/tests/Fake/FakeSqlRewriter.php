@@ -75,10 +75,7 @@ final class FakeSqlRewriter implements SqlRewriter
 
     public function rewriteMultiple(string $sql): MultiRewritePlan
     {
-        $statements = array_filter(
-            array_map('trim', explode(';', $sql)),
-            static fn (string $s): bool => $s !== ''
-        );
+        $statements = $this->splitStatements($sql);
 
         $plans = [];
         foreach ($statements as $stmt) {
@@ -86,6 +83,14 @@ final class FakeSqlRewriter implements SqlRewriter
         }
 
         return new MultiRewritePlan($plans);
+    }
+
+    public function splitStatements(string $sql): array
+    {
+        return array_values(array_filter(
+            array_map('trim', explode(';', $sql)),
+            static fn (string $s): bool => $s !== ''
+        ));
     }
 
     private function classify(string $sql): ?QueryKind

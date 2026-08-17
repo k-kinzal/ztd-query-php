@@ -270,6 +270,12 @@ final class SqliteProvider extends Base
     }
 
     /** @return non-empty-string */
+    public function multiDmlStatement(int $maxDepth = 40): string
+    {
+        return $this->sql->generateMultiDmlStatement($maxDepth);
+    }
+
+    /** @return non-empty-string */
     public function temporaryTableStatement(int $maxDepth = 40): string
     {
         return $this->sql->generate(

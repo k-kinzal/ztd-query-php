@@ -131,6 +131,24 @@ final class SessionTest extends TestCase
         self::assertSame($escaper, $session->sqlPlaceholderEscaper());
     }
 
+    public function testSplitStatementsUsesPlatformRewriter(): void
+    {
+        $shadowStore = new ShadowStore();
+        $rewriter = new FakeSqlRewriter($shadowStore, new TableDefinitionRegistry());
+        $session = new Session(
+            $rewriter,
+            $shadowStore,
+            new ResultSelectRunner(),
+            ZtdConfig::default(),
+            new FakeConnection(),
+        );
+
+        self::assertSame(
+            ['SELECT 1', 'SELECT 2'],
+            $session->splitStatements(' SELECT 1; SELECT 2 '),
+        );
+    }
+
     public function testUsesProvidedTransactionManagerForSchemaRollback(): void
     {
         $shadowStore = new ShadowStore();

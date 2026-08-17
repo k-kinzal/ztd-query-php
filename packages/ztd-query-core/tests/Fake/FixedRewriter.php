@@ -33,6 +33,11 @@ final class FixedRewriter implements SqlRewriter
         return $this->plan;
     }
 
+    public function splitStatements(string $sql): array
+    {
+        return [$sql];
+    }
+
     public function rewriteMultiple(string $sql): MultiRewritePlan
     {
         return new MultiRewritePlan([$this->plan]);

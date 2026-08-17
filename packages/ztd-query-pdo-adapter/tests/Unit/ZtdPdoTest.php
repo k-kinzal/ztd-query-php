@@ -17,8 +17,11 @@ use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Platform\SessionFactory;
 use ZtdQuery\ResultSelectRunner;
+use ZtdQuery\Rewrite\QueryKind;
+use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Session;
+use ZtdQuery\Shadow\Mutation\InsertMutation;
 use ZtdQuery\Shadow\ShadowStore;
 
 #[CoversClass(ZtdPdo::class)]
@@ -257,6 +260,111 @@ final class ZtdPdoTest extends TestCase
         ZtdPdo::fromPdo($pdo, $expectedConfig, $mockFactory);
 
         self::assertSame($expectedConfig, $receivedConfig);
+    }
+
+    public function testExecRunsEachStatementSequentiallyAndReturnsLastAffectedRows(): void
+    {
+        $store = new ShadowStore();
+        $rewriter = static::createMock(SqlRewriter::class);
+        $rewriter->expects(self::exactly(3))
+            ->method('splitStatements')
+            ->willReturnCallback(static fn (string $sql): array => match ($sql) {
+                'first; second' => ['first', 'second'],
+                default => [$sql],
+            });
+        $rewriter->expects(self::exactly(2))
+            ->method('rewrite')
+            ->willReturnCallback(static fn (string $sql): RewritePlan => match ($sql) {
+                'first' => new RewritePlan(
+                    'SELECT 1 AS id UNION ALL SELECT 2 AS id',
+                    QueryKind::WRITE_SIMULATED,
+                    new InsertMutation('first_items'),
+                ),
+                'second' => new RewritePlan(
+                    'SELECT 3 AS id',
+                    QueryKind::WRITE_SIMULATED,
+                    new InsertMutation('second_items'),
+                ),
+                default => throw new RuntimeException("Unexpected SQL: $sql"),
+            });
+        $factory = static::createMock(SessionFactory::class);
+        $factory->expects(self::once())
+            ->method('create')
+            ->willReturnCallback(static fn (ConnectionInterface $connection, ZtdConfig $config): Session => new Session(
+                $rewriter,
+                $store,
+                new ResultSelectRunner(),
+                $config,
+                $connection,
+            ));
+        $ztdPdo = ZtdPdo::fromPdo(new PDO('sqlite::memory:'), null, $factory);
+
+        self::assertSame(1, $ztdPdo->exec('first; second'));
+        self::assertSame([['id' => 1], ['id' => 2]], $store->get('first_items'));
+        self::assertSame([['id' => 3]], $store->get('second_items'));
+    }
+
+    public function testExecStopsBatchWhenFirstStatementFails(): void
+    {
+        $rewriter = static::createMock(SqlRewriter::class);
+        $rewriter->expects(self::exactly(2))
+            ->method('splitStatements')
+            ->willReturnCallback(static fn (string $sql): array => match ($sql) {
+                'first; second' => ['first', 'second'],
+                default => [$sql],
+            });
+        $rewriter->expects(self::once())
+            ->method('rewrite')
+            ->with('first')
+            ->willReturn(new RewritePlan('SELECT * FROM missing_table', QueryKind::READ));
+        $factory = static::createMock(SessionFactory::class);
+        $factory->expects(self::once())
+            ->method('create')
+            ->willReturnCallback(static fn (ConnectionInterface $connection, ZtdConfig $config): Session => new Session(
+                $rewriter,
+                new ShadowStore(),
+                new ResultSelectRunner(),
+                $config,
+                $connection,
+            ));
+        $pdo = new PDO('sqlite::memory:');
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_SILENT);
+        $ztdPdo = ZtdPdo::fromPdo($pdo, null, $factory);
+
+        self::assertFalse($ztdPdo->exec('first; second'));
+    }
+
+    public function testExecStopsBatchWhenLaterStatementFails(): void
+    {
+        $rewriter = static::createMock(SqlRewriter::class);
+        $rewriter->expects(self::exactly(3))
+            ->method('splitStatements')
+            ->willReturnCallback(static fn (string $sql): array => match ($sql) {
+                'first; second; third' => ['first', 'second', 'third'],
+                default => [$sql],
+            });
+        $rewriter->expects(self::exactly(2))
+            ->method('rewrite')
+            ->willReturnCallback(static fn (string $sql): RewritePlan => match ($sql) {
+                'first' => new RewritePlan('SELECT 1', QueryKind::READ),
+                'second' => new RewritePlan('SELECT * FROM missing_table', QueryKind::READ),
+                default => throw new RuntimeException("Unexpected SQL: $sql"),
+            });
+        $factory = static::createMock(SessionFactory::class);
+        $factory->expects(self::once())
+            ->method('create')
+            ->willReturnCallback(static fn (ConnectionInterface $connection, ZtdConfig $config): Session => new Session(
+                $rewriter,
+                new ShadowStore(),
+                new ResultSelectRunner(),
+                $config,
+                $connection,
+            ));
+        $pdo = new PDO('sqlite::memory:');
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_SILENT);
+        $ztdPdo = ZtdPdo::fromPdo($pdo, null, $factory);
+
+        self::assertFalse($ztdPdo->exec('first; second; third'));
     }
 
     /**
