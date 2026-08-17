@@ -51,6 +51,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(SqliteMutationResolver::class)]
 #[UsesClass(SqliteTransformer::class)]
 #[UsesClass(SelectTransformer::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteIndexHintStripper::class)]
 #[UsesClass(InsertTransformer::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\Transformer\InsertRowRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\Transformer\InsertSelectRenderer::class)]

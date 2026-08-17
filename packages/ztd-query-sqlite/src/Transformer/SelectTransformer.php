@@ -6,6 +6,7 @@ namespace ZtdQuery\Platform\Sqlite\Transformer;
 
 use ZtdQuery\Platform\Sqlite\SqliteCastRenderer;
 use ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter;
+use ZtdQuery\Platform\Sqlite\SqliteIndexHintStripper;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\IdentifierQuoter;
 use ZtdQuery\Platform\ValueRenderer;
@@ -26,6 +27,7 @@ final class SelectTransformer implements SqlTransformer
     private IdentifierQuoter $quoter;
     private ValueRenderer $valueRenderer;
     private SqliteCteShadowComposer $cteComposer;
+    private SqliteIndexHintStripper $indexHintStripper;
 
     public function __construct(
         ?CastRenderer $castRenderer = null,
@@ -36,6 +38,7 @@ final class SelectTransformer implements SqlTransformer
         $this->quoter = $quoter ?? new SqliteIdentifierQuoter();
         $this->valueRenderer = $valueRenderer ?? new \ZtdQuery\Platform\Sqlite\SqliteValueRenderer($this->castRenderer);
         $this->cteComposer = new SqliteCteShadowComposer();
+        $this->indexHintStripper = new SqliteIndexHintStripper();
     }
 
     /**
@@ -66,6 +69,8 @@ final class SelectTransformer implements SqlTransformer
 
             $ctes[$tableName] = $this->generateCte($tableName, $rows, $columns, $columnTypes);
         }
+
+        $sql = $this->indexHintStripper->strip($sql, array_keys($ctes));
 
         return $this->cteComposer->compose($sql, $ctes);
     }
