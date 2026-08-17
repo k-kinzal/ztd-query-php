@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Shadow\Mutation;
 
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Schema\CandidateKeyConflict;
 use ZtdQuery\Schema\CandidateKeySet;
 use ZtdQuery\Schema\TableDefinition;
@@ -18,6 +19,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 
 #[UsesClass(ShadowStore::class)]
+#[UsesClass(UnsupportedSqlException::class)]
 #[UsesClass(CandidateKeyConflict::class)]
 #[UsesClass(CandidateKeySet::class)]
 #[UsesClass(TableDefinition::class)]
@@ -367,5 +369,110 @@ final class UpsertMutationTest extends TestCase
             $codec->predicateColumn() => null,
         ]]);
         self::assertSame(['id' => 2, 'value' => 'inserted'], $store->get('items')[1]);
+    }
+
+    public function testDatabaseEvaluatedBatchReevaluatesAgainstLatestConflictRow(): void
+    {
+        $store = new ShadowStore();
+        $store->set('items', [['id' => 1, 'quantity' => 100]]);
+        $codec = new UpsertMutationRow();
+        $mutation = new UpsertMutation(
+            'items',
+            ['id'],
+            ['quantity'],
+            ['quantity' => 'quantity + EXCLUDED.quantity'],
+            databaseEvaluated: true,
+        );
+
+        $mutation->apply($store, [
+            ['id' => 1, 'quantity' => 5, $codec->valueColumn(0) => 105],
+            ['id' => 1, 'quantity' => 7, $codec->valueColumn(0) => 107],
+        ]);
+
+        self::assertSame([['id' => 1, 'quantity' => 112]], $store->get('items'));
+    }
+
+    public function testDatabaseEvaluatedPredicateFallsBackWhenMetadataIsMissing(): void
+    {
+        $store = new ShadowStore();
+        $store->set('items', [['id' => 1, 'name' => 'original', 'score' => 50]]);
+        $codec = new UpsertMutationRow();
+        $mutation = new UpsertMutation(
+            'items',
+            ['id'],
+            ['name'],
+            ['name' => 'EXCLUDED.name'],
+            updatePredicate: 'score >= 80',
+            databaseEvaluated: true,
+        );
+
+        $mutation->apply($store, [
+            [
+                'id' => 1,
+                'name' => 'skipped',
+                'score' => 95,
+                $codec->valueColumn(0) => 'skipped',
+            ],
+            [
+                'id' => 2,
+                'name' => 'inserted',
+                'score' => 95,
+                $codec->valueColumn(0) => null,
+            ],
+        ]);
+        self::assertSame([
+            ['id' => 1, 'name' => 'original', 'score' => 50],
+            ['id' => 2, 'name' => 'inserted', 'score' => 95],
+        ], $store->get('items'));
+
+        $store->set('items', [['id' => 1, 'name' => 'original', 'score' => 85]]);
+        $mutation->apply($store, [[
+            'id' => 1,
+            'name' => 'updated',
+            'score' => 95,
+            $codec->valueColumn(0) => 'updated',
+        ]]);
+        self::assertSame([['id' => 1, 'name' => 'updated', 'score' => 85]], $store->get('items'));
+    }
+
+    public function testDatabaseEvaluatedBatchDetectsConflictsWithRowsInsertedEarlierInStatement(): void
+    {
+        $store = new ShadowStore();
+        $store->set('items', []);
+        $codec = new UpsertMutationRow();
+        $mutation = new UpsertMutation(
+            'items',
+            ['id'],
+            ['quantity'],
+            ['quantity' => 'quantity + EXCLUDED.quantity'],
+            databaseEvaluated: true,
+        );
+
+        $mutation->apply($store, [
+            ['id' => 1, 'quantity' => 5, $codec->valueColumn(0) => null],
+            ['id' => 1, 'quantity' => 7, $codec->valueColumn(0) => null],
+        ]);
+
+        self::assertSame([['id' => 1, 'quantity' => 12]], $store->get('items'));
+    }
+
+    public function testDatabaseEvaluatedBatchRejectsStaleUnsupportedExpression(): void
+    {
+        $store = new ShadowStore();
+        $store->set('items', [['id' => 1, 'quantity' => 100]]);
+        $codec = new UpsertMutationRow();
+        $mutation = new UpsertMutation(
+            'items',
+            ['id'],
+            ['quantity'],
+            ['quantity' => 'COALESCE(quantity, 0) + EXCLUDED.quantity'],
+            databaseEvaluated: true,
+        );
+
+        $this->expectException(UnsupportedSqlException::class);
+        $mutation->apply($store, [
+            ['id' => 1, 'quantity' => 5, $codec->valueColumn(0) => 105],
+            ['id' => 1, 'quantity' => 7, $codec->valueColumn(0) => 107],
+        ]);
     }
 }

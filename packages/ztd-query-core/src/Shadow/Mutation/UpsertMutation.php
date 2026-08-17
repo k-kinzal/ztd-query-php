@@ -91,7 +91,7 @@ final class UpsertMutation implements ShadowMutation
     public function apply(ShadowStore $store, array $rows): void
     {
         $existingRows = $store->get($this->tableName);
-        $insertRows = [];
+        $changedRows = [];
         $this->resultRows = [];
         $codec = new UpsertMutationRow();
         foreach ($rows as $row) {
@@ -102,8 +102,19 @@ final class UpsertMutation implements ShadowMutation
             if ($conflict !== null) {
                 $existingIndex = $conflict->rowIndex;
                 $updatedRow = $existingRows[$existingIndex];
+                $requiresLocalEvaluation = ($changedRows[$existingIndex] ?? false) === true;
                 if ($this->databaseEvaluated) {
-                    if (array_key_exists($codec->predicateColumn(), $row)) {
+                    if ($requiresLocalEvaluation && $this->updateSqlPredicate !== null) {
+                        if ($this->updatePredicate === null) {
+                            throw new UnsupportedSqlException(
+                                $this->updateSqlPredicate,
+                                'Sequential UPSERT predicate',
+                            );
+                        }
+                        if (!$this->updatePredicate->matches($updatedRow, $incomingRow, $this->tableName)) {
+                            continue;
+                        }
+                    } elseif (array_key_exists($codec->predicateColumn(), $row)) {
                         if (!$codec->predicateMatches($row[$codec->predicateColumn()])) {
                             continue;
                         }
@@ -126,7 +137,19 @@ final class UpsertMutation implements ShadowMutation
                 foreach ($this->updateColumns as $index => $col) {
                     if ($this->databaseEvaluated) {
                         $metadata = $codec->valueColumn($index);
-                        if (array_key_exists($metadata, $row)) {
+                        if ($requiresLocalEvaluation && isset($this->updateSqlValues[$col])) {
+                            if (!isset($this->updateValues[$col])) {
+                                throw new UnsupportedSqlException(
+                                    $this->updateSqlValues[$col],
+                                    'Sequential UPSERT expression',
+                                );
+                            }
+                            $updatedRow[$col] = $this->updateValues[$col]->evaluate(
+                                $updatedRow,
+                                $incomingRow,
+                                $this->tableName,
+                            );
+                        } elseif (array_key_exists($metadata, $row)) {
                             $updatedRow[$col] = $row[$metadata];
                         } elseif (isset($this->updateSqlValues[$col])) {
                             if (!isset($this->updateValues[$col])) {
@@ -155,17 +178,16 @@ final class UpsertMutation implements ShadowMutation
                     }
                 }
                 $existingRows[$existingIndex] = $updatedRow;
+                $changedRows[$existingIndex] = true;
                 $this->resultRows[] = $updatedRow;
             } else {
-                $insertRows[] = $incomingRow;
+                $existingRows[] = $incomingRow;
+                $changedRows[array_key_last($existingRows)] = true;
                 $this->resultRows[] = $incomingRow;
             }
         }
 
         $store->set($this->tableName, $existingRows);
-        if ($insertRows !== []) {
-            $store->insert($this->tableName, $insertRows);
-        }
     }
 
     /**
