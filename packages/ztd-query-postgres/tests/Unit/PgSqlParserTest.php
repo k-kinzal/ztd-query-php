@@ -286,6 +286,17 @@ SELECT * FROM users'));
         );
     }
 
+    public function testExtractTruncateTablesRejectsNonTruncateAndIncompleteTargets(): void
+    {
+        $parser = new PgSqlParser();
+
+        self::assertSame([], $parser->extractTruncateTables('SELECT users'));
+        self::assertSame([], $parser->extractTruncateTables('TRUNCATE TABLE'));
+        self::assertSame(['u'], $parser->extractTruncateTables('TRUNCATE u'));
+        self::assertSame([], $parser->extractTruncateTables('TRUNCATE TABLE U&'));
+        self::assertSame([], $parser->extractTruncateTables('TRUNCATE TABLE U&users'));
+    }
+
     public function testExtractCreateTableName(): void
     {
         $parser = new PgSqlParser();

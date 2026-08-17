@@ -323,12 +323,13 @@ final class PgSqlParser
     {
         $stream = SqlTokenStream::tokenize($sql);
         $tokens = $stream->significantTokens();
-        if (!(($tokens[0] ?? null)?->isKeyword('TRUNCATE') ?? false)) {
+        if ($stream->firstTopLevelKeyword() !== 'TRUNCATE') {
             return [];
         }
 
         $index = 1;
-        if (($tokens[$index] ?? null)?->isKeyword('TABLE') ?? false) {
+        $tableKeyword = $tokens[$index] ?? null;
+        if ($tableKeyword !== null && $tableKeyword->isKeyword('TABLE')) {
             $index++;
         }
 
@@ -372,14 +373,23 @@ final class PgSqlParser
     private function truncateIdentifierAt(SqlTokenStream $stream, int $index): ?array
     {
         $tokens = $stream->significantTokens();
-        if ((($tokens[$index] ?? null)?->isKeyword('U') ?? false)
-            && ($tokens[$index + 1] ?? null)?->text === '&'
-            && ($tokens[$index + 2] ?? null)?->kind === SqlTokenKind::QuotedIdentifier
-        ) {
-            return [
-                'name' => $this->unquoteIdentifier($tokens[$index + 2]->text),
-                'next' => $index + 3,
-            ];
+        $prefix = $tokens[$index] ?? null;
+        if ($prefix === null) {
+            return null;
+        }
+        if ($prefix->isKeyword('U')) {
+            $ampersand = $tokens[$index + 1] ?? null;
+            if ($ampersand !== null && $ampersand->text === '&') {
+                $quotedIdentifier = $tokens[$index + 2] ?? null;
+                if ($quotedIdentifier === null || $quotedIdentifier->kind !== SqlTokenKind::QuotedIdentifier) {
+                    return null;
+                }
+
+                return [
+                    'name' => $this->unquoteIdentifier($quotedIdentifier->text),
+                    'next' => $index + 3,
+                ];
+            }
         }
 
         return $stream->identifierAt($index);
