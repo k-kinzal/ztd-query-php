@@ -24,7 +24,7 @@ final class UpdateSourceExtractor
                 continue;
             }
 
-            return trim(substr($source, $token->offset));
+            return substr($source, $token->offset);
         }
 
         return null;
