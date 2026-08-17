@@ -40,6 +40,19 @@ final class PgSqlSessionFactory implements SessionFactory
                 $registry->register($tableName, $definition);
             }
         }
+        $partitionMetadata = (new PgSqlPartitionReflector($connection))->reflect();
+        foreach ($partitionMetadata['keys'] as $tableName => $partitionKey) {
+            $definition = $registry->get($tableName);
+            if ($definition !== null) {
+                $registry->register($tableName, $definition->withPartitionKey($partitionKey));
+            }
+        }
+        foreach ($partitionMetadata['relations'] as $tableName => $partitionRelation) {
+            $definition = $registry->get($tableName);
+            if ($definition !== null) {
+                $registry->register($tableName, $definition->withPartitionRelation($partitionRelation));
+            }
+        }
         $views = new ViewDefinitionSet();
         foreach ($reflector->reflectViews() as $viewName => $definition) {
             $views->register($viewName, $definition);

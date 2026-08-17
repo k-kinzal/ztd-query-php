@@ -56,6 +56,10 @@ final class SelectTransformer implements SqlTransformer
                 $ctes[$tableName] = $this->quoter->quote($tableName) . " AS MATERIALIZED ({$tableContext['viewSql']})";
                 continue;
             }
+            if (isset($tableContext['sourceSql'])) {
+                $ctes[$tableName] = $this->quoter->quote($tableName) . " AS MATERIALIZED ({$tableContext['sourceSql']})";
+                continue;
+            }
 
             $rows = $tableContext['rows'];
             $columns = $tableContext['columns'];

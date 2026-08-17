@@ -17,6 +17,7 @@ use ZtdQuery\Platform\Postgres\PgSqlQueryGuard;
 use ZtdQuery\Platform\Postgres\PgSqlReturningProjectionParser;
 use ZtdQuery\Platform\Postgres\PgSqlRewriter;
 use ZtdQuery\Platform\Postgres\PgSqlSchemaParser;
+use ZtdQuery\Platform\Postgres\PgSqlPartitionParser;
 use ZtdQuery\Platform\Postgres\PgSqlTransformer;
 use ZtdQuery\Platform\Postgres\PgSqlViewDefinitionParser;
 use ZtdQuery\Platform\Postgres\Transformer\DeleteTransformer;
@@ -28,6 +29,7 @@ use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
+use ZtdQuery\Schema\TablePartitionRelation;
 use ZtdQuery\Schema\ViewDefinition;
 use ZtdQuery\Schema\ViewDefinitionSet;
 use ZtdQuery\Shadow\Mutation\CreateTableMutation;
@@ -48,6 +50,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PostgreSqlLexicalMasker::class)]
 #[UsesClass(PgSqlSchemaParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser::class)]
+#[UsesClass(PgSqlPartitionParser::class)]
 #[UsesClass(PgSqlQueryGuard::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlReadOnlyDiagnosticStatement::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlTransactionStatementParser::class)]
@@ -70,6 +73,114 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlGeneratedColumnProjector::class)]
 final class PgSqlRewriterTest extends RewriterContractTest
 {
+    public function testChildPartitionSelectUsesFilteredParentShadowSource(): void
+    {
+        $store = new ShadowStore();
+        $store->set('logs', [
+            ['id' => 1, 'log_date' => '2024-05-01'],
+            ['id' => 2, 'log_date' => '2025-05-01'],
+        ]);
+        $registry = new TableDefinitionRegistry();
+        $parent = (new PgSqlSchemaParser())->parse(
+            'CREATE TABLE logs (id INTEGER, log_date DATE, PRIMARY KEY (id, log_date)) '
+            . 'PARTITION BY RANGE (log_date)',
+        );
+        self::assertNotNull($parent);
+        $registry->register('logs', $parent);
+        $registry->register('logs_2024', $parent->withPartitionRelation(new TablePartitionRelation(
+            'logs',
+            "(log_date >= '2024-01-01'::date) AND (log_date < '2025-01-01'::date)",
+        )));
+
+        $sql = $this->createRewriter($store, $registry)->rewrite('SELECT id FROM logs_2024')->sql();
+
+        self::assertStringContainsString('"logs" AS MATERIALIZED', $sql);
+        self::assertStringContainsString(
+            '"logs_2024" AS MATERIALIZED (SELECT * FROM "logs" WHERE '
+            . "(log_date >= '2024-01-01'::date) AND (log_date < '2025-01-01'::date))",
+            $sql,
+        );
+        self::assertStringEndsWith('SELECT id FROM logs_2024', $sql);
+    }
+
+    public function testChildPartitionWriteMutationTargetsRootParent(): void
+    {
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $parent = (new PgSqlSchemaParser())->parse(
+            'CREATE TABLE logs (id INTEGER, log_date DATE, PRIMARY KEY (id, log_date)) '
+            . 'PARTITION BY RANGE (log_date)',
+        );
+        self::assertNotNull($parent);
+        $registry->register('logs', $parent);
+        $registry->register('logs_2024', $parent->withPartitionRelation(new TablePartitionRelation(
+            'logs',
+            "log_date >= '2024-01-01'::date AND log_date < '2025-01-01'::date",
+        )));
+
+        $plan = $this->createRewriter($store, $registry)->rewrite(
+            "INSERT INTO logs_2024 VALUES (1, '2024-05-01')",
+        );
+
+        self::assertNotNull($plan->mutation());
+        self::assertSame('logs', $plan->mutation()->tableName());
+        self::assertStringContainsString("CAST('2024-05-01' AS DATE) AS \"log_date\"", $plan->sql());
+    }
+
+    public function testDefaultPartitionExcludesOnlySpecificSiblingsOfSameParent(): void
+    {
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $definition = new TableDefinition(['region'], ['region' => 'TEXT'], [], [], []);
+        $registry->register('accounts', $definition);
+        $registry->register('accounts_east', $definition->withPartitionRelation(
+            new TablePartitionRelation('accounts', "region = 'east'"),
+        ));
+        $registry->register('accounts_other', $definition->withPartitionRelation(
+            new TablePartitionRelation('accounts', null),
+        ));
+        $registry->register('unrelated', $definition->withPartitionRelation(
+            new TablePartitionRelation('another_parent', "region = 'west'"),
+        ));
+
+        $sql = $this->createRewriter($store, $registry)->rewrite('SELECT * FROM accounts_other')->sql();
+
+        self::assertStringContainsString(
+            "SELECT * FROM \"accounts\" WHERE COALESCE(NOT ((region = 'east')), TRUE)",
+            $sql,
+        );
+        self::assertStringNotContainsString("region = 'west'", $sql);
+    }
+
+    public function testNestedPartitionInsertAllocatesIdentityFromRootRows(): void
+    {
+        $store = new ShadowStore();
+        $store->set('root_table', [['id' => 5, 'region' => 'east']]);
+        $registry = new TableDefinitionRegistry();
+        $definition = new TableDefinition(
+            ['id', 'region'],
+            ['id' => 'INTEGER', 'region' => 'TEXT'],
+            ['id'],
+            ['id'],
+            [],
+            identityStrategies: ['id' => \ZtdQuery\Schema\IdentityGenerationStrategy::MaxValue],
+        );
+        $registry->register('root_table', $definition);
+        $registry->register('child_table', $definition->withPartitionRelation(
+            new TablePartitionRelation('root_table', "region = 'east'"),
+        ));
+        $registry->register('grandchild_table', $definition->withPartitionRelation(
+            new TablePartitionRelation('child_table', 'id < 10'),
+        ));
+
+        $sql = $this->createRewriter($store, $registry)->rewrite(
+            "INSERT INTO grandchild_table (region) VALUES ('east')",
+        )->sql();
+
+        self::assertStringContainsString('6 AS "id"', $sql);
+    }
+
+
     public function testGeneratedExpressionIsPresentBeforeTheFirstShadowWrite(): void
     {
         $store = new ShadowStore();

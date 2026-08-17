@@ -32,6 +32,7 @@ final class PgSqlMutationResolver
     private TableDefinitionRegistry $registry;
     private SchemaParser $schemaParser;
     private PgSqlParser $parser;
+    private PgSqlPartitionParser $partitionParser;
 
     public function __construct(
         ShadowStore $shadowStore,
@@ -43,6 +44,7 @@ final class PgSqlMutationResolver
         $this->registry = $registry;
         $this->schemaParser = $schemaParser;
         $this->parser = $parser;
+        $this->partitionParser = new PgSqlPartitionParser();
     }
 
     /**
@@ -74,6 +76,7 @@ final class PgSqlMutationResolver
 
         $definition = $this->registry->get($tableName);
         $primaryKeys = $definition !== null ? $definition->primaryKeys : [];
+        $storageTable = $this->storageTable($tableName);
 
         if ($this->parser->hasOnConflict($sql)) {
             $conflictInfo = $this->parser->extractOnConflictUpdateColumns($sql);
@@ -92,7 +95,7 @@ final class PgSqlMutationResolver
                 $predicate = $this->parser->extractOnConflictUpdateWhere($sql);
 
                 return new UpsertMutation(
-                    $tableName,
+                    $storageTable,
                     $primaryKeys,
                     $updateColumns,
                     $resolvedValues,
@@ -109,7 +112,7 @@ final class PgSqlMutationResolver
             }
 
             return new InsertMutation(
-                $tableName,
+                $storageTable,
                 $primaryKeys,
                 true,
                 candidateKeys: $definition?->candidateKeys(),
@@ -117,7 +120,7 @@ final class PgSqlMutationResolver
         }
 
         return new InsertMutation(
-            $tableName,
+            $storageTable,
             $primaryKeys,
             false,
             candidateKeys: $definition?->candidateKeys(),
@@ -136,10 +139,11 @@ final class PgSqlMutationResolver
             throw new UnknownSchemaException($sql, $targetTable, 'table');
         }
 
-        $this->shadowStore->ensure($targetTable);
+        $storageTable = $this->storageTable($targetTable);
+        $this->shadowStore->ensure($storageTable);
         $primaryKeys = $definition !== null ? $definition->primaryKeys : [];
 
-        return new UpdateMutation($targetTable, $primaryKeys);
+        return new UpdateMutation($storageTable, $primaryKeys);
     }
 
     private function resolveDelete(string $sql): ShadowMutation
@@ -154,10 +158,11 @@ final class PgSqlMutationResolver
             throw new UnknownSchemaException($sql, $targetTable, 'table');
         }
 
-        $this->shadowStore->ensure($targetTable);
+        $storageTable = $this->storageTable($targetTable);
+        $this->shadowStore->ensure($storageTable);
         $primaryKeys = $definition !== null ? $definition->primaryKeys : [];
 
-        return new DeleteMutation($targetTable, $primaryKeys);
+        return new DeleteMutation($storageTable, $primaryKeys);
     }
 
     private function resolveTruncate(string $sql): ShadowMutation
@@ -186,6 +191,29 @@ final class PgSqlMutationResolver
             throw new UnsupportedSqlException($sql, 'Table already exists');
         }
 
+        $parentTable = $this->partitionParser->parentTable($sql);
+        if ($parentTable !== null) {
+            $parentDefinition = $this->registry->get($parentTable);
+            if ($parentDefinition === null) {
+                throw new UnknownSchemaException($sql, $parentTable, 'table');
+            }
+            if ($parentDefinition->partitionKey === null) {
+                throw new UnsupportedSqlException($sql, 'Partition parent has no partition key metadata');
+            }
+            $relation = $this->partitionParser->parseRelation($sql, $parentDefinition->partitionKey);
+            if ($relation === null) {
+                throw new UnsupportedSqlException($sql, 'Unsupported partition bound');
+            }
+
+            $definition = $parentDefinition->withPartitionRelation($relation);
+            $childKey = $this->partitionParser->parseKey($sql);
+            if ($childKey !== null) {
+                $definition = $definition->withPartitionKey($childKey);
+            }
+
+            return new CreateTableMutation($tableName, $definition, $this->registry, $ifNotExists);
+        }
+
         if ($this->parser->hasCreateTableLike($sql)) {
             $sourceTable = $this->parser->extractCreateTableLikeSource($sql);
             if ($sourceTable === null || !$this->registry->has($sourceTable)) {
@@ -205,6 +233,21 @@ final class PgSqlMutationResolver
         $definition = $this->schemaParser->parse($sql);
 
         return new CreateTableMutation($tableName, $definition, $this->registry, $ifNotExists);
+    }
+
+    private function storageTable(string $tableName): string
+    {
+        $seen = [];
+        while (!isset($seen[$tableName])) {
+            $seen[$tableName] = true;
+            $parent = $this->registry->get($tableName)?->partitionRelation?->parentTable;
+            if ($parent === null) {
+                return $tableName;
+            }
+            $tableName = $parent;
+        }
+
+        return $tableName;
     }
 
     private function resolveDropTable(string $sql): ShadowMutation

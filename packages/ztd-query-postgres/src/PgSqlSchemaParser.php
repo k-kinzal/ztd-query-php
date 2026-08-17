@@ -9,13 +9,14 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
 use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\TableDefinition;
+use ZtdQuery\Sql\SqlToken;
+use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
 /**
  * PostgreSQL implementation of SchemaParser.
  *
- * Parses CREATE TABLE statements using regex-based approach
- * to extract column definitions, types, constraints, and keys.
+ * Parses CREATE TABLE statements into structured schema metadata.
  */
 final class PgSqlSchemaParser implements SchemaParser
 {
@@ -24,11 +25,10 @@ final class PgSqlSchemaParser implements SchemaParser
      */
     public function parse(string $createTableSql): ?TableDefinition
     {
-        if (preg_match('/^\s*CREATE\s+(?:TEMPORARY\s+|TEMP\s+|UNLOGGED\s+)?TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:"[^"]+"|[a-zA-Z_]\w*(?:\."[^"]+"|\.(?:[a-zA-Z_]\w*))?)\s*\((.+)\)/is', $createTableSql, $m) !== 1) {
+        $body = $this->tableBody($createTableSql);
+        if ($body === null) {
             return null;
         }
-
-        $body = $m[1];
 
         $columns = [];
         $columnTypes = [];
@@ -116,7 +116,71 @@ final class PgSqlSchemaParser implements SchemaParser
             $identityStrategies,
             $generatedExpressions,
             $foreignKeys,
+            partitionKey: (new PgSqlPartitionParser())->parseKey($createTableSql),
         );
+    }
+
+    private function tableBody(string $sql): ?string
+    {
+        $tokens = SqlTokenStream::tokenize($sql)->significantTokens();
+        $create = $tokens[0] ?? null;
+        if (!$create instanceof SqlToken || !$create->isKeyword('CREATE')) {
+            return null;
+        }
+
+        $tableIndex = null;
+        foreach ($tokens as $index => $token) {
+            if ($token->isTopLevel() && $token->isKeyword('TABLE')) {
+                $tableIndex = $index;
+                break;
+            }
+        }
+        if ($tableIndex === null) {
+            return null;
+        }
+
+        $index = $tableIndex + 1;
+        if (($tokens[$index] ?? null)?->isKeyword('IF') === true
+            && ($tokens[$index + 1] ?? null)?->isKeyword('NOT') === true
+            && ($tokens[$index + 2] ?? null)?->isKeyword('EXISTS') === true
+        ) {
+            $index += 3;
+        }
+        if (!$this->isIdentifier($tokens[$index] ?? null)) {
+            return null;
+        }
+        $index++;
+        while ($this->isSymbol($tokens[$index] ?? null, '.')) {
+            if (!$this->isIdentifier($tokens[$index + 1] ?? null)) {
+                return null;
+            }
+            $index += 2;
+        }
+
+        $open = $tokens[$index] ?? null;
+        if (!$open instanceof SqlToken || !$this->isSymbol($open, '(')) {
+            return null;
+        }
+        foreach (array_slice($tokens, $index + 1) as $token) {
+            if ($this->isSymbol($token, ')') && $token->depth === $open->depth) {
+                return substr($sql, $open->endOffset(), $token->offset - $open->endOffset());
+            }
+        }
+
+        return null;
+    }
+
+    private function isIdentifier(?SqlToken $token): bool
+    {
+        return $token instanceof SqlToken
+            && in_array($token->kind, [SqlTokenKind::Word, SqlTokenKind::QuotedIdentifier], true);
+    }
+
+    private function isSymbol(?SqlToken $token, string $symbol): bool
+    {
+        return $token instanceof SqlToken
+            && $token->kind === SqlTokenKind::Symbol
+            && $token->text === $symbol;
     }
 
     private static function isSequenceDefault(string $expression): bool

@@ -52,6 +52,17 @@ use SqlFaker\Grammar\TerminalInventory;
 #[Medium]
 final class PostgreSqlProviderTest extends TestCase
 {
+    public function testPartitionOfStatementGeneratesRangeChildDdl(): void
+    {
+        $faker = Factory::create();
+        $provider = new PostgreSqlProvider($faker);
+
+        self::assertMatchesRegularExpression(
+            "/^CREATE TABLE [a-zA-Z_][a-zA-Z0-9_]* PARTITION OF logs FOR VALUES FROM \('2024-01-01'\) TO \('2025-01-01'\)$/",
+            $provider->partitionOfStatement(),
+        );
+    }
+
     #[DataProvider('providerTargetedGenerationSeed')]
     public function testInsertFunctionUpsertStatementDerivesFunctionExpressionFromGrammar(int $seed): void
     {

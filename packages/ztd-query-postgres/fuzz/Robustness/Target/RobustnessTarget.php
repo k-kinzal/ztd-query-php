@@ -130,6 +130,7 @@ final class RobustnessTarget
             'orders' => 'CREATE TABLE orders (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, amount NUMERIC(10,2), created_at TIMESTAMP)',
             'order_items' => 'CREATE TABLE order_items (order_id INTEGER NOT NULL, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL DEFAULT 1, PRIMARY KEY (order_id, product_id))',
             'products' => 'CREATE TABLE products (id INTEGER PRIMARY KEY, name VARCHAR(255) NOT NULL, price NUMERIC(10,2), category VARCHAR(100))',
+            'logs' => 'CREATE TABLE logs (id INTEGER NOT NULL, log_date DATE NOT NULL, level TEXT NOT NULL, PRIMARY KEY (id, log_date)) PARTITION BY RANGE (log_date)',
         ];
 
         foreach ($schemas as $tableName => $createSql) {
@@ -164,6 +165,10 @@ final class RobustnessTarget
                 ['id' => '1', 'name' => 'Widget', 'price' => '19.99', 'category' => 'tools'],
                 ['id' => '2', 'name' => 'Gadget', 'price' => '49.99', 'category' => 'electronics'],
             ],
+            'logs' => [
+                ['id' => '1', 'log_date' => '2024-05-01', 'level' => 'INFO'],
+                ['id' => '2', 'log_date' => '2025-05-01', 'level' => 'WARN'],
+            ],
         ];
     }
 
@@ -183,6 +188,7 @@ final class RobustnessTarget
             fn (): string => $this->provider->dropTableStatement(maxDepth: 3),
             fn (): string => 'EXPLAIN (FORMAT JSON) SELECT * FROM users',
             fn (): string => 'SELECT * FROM public.users',
+            fn (): string => $this->provider->partitionOfStatement(),
         ];
 
         $index = ord($input[0] ?? "\0") % count($generators);

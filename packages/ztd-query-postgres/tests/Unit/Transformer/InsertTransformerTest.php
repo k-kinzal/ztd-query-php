@@ -401,6 +401,28 @@ final class InsertTransformerTest extends TestCase
         self::assertStringContainsString('3 AS "id"', $second);
     }
 
+    public function testParentAndPartitionShareSerialAllocationNamespace(): void
+    {
+        $transformer = new InsertTransformer(new PgSqlParser(), new SelectTransformer());
+        $table = [
+            'rows' => [],
+            'columns' => ['id', 'name'],
+            'columnTypes' => [],
+            'identityStrategies' => ['id' => IdentityGenerationStrategy::Sequence],
+        ];
+        $tables = [
+            'logs' => $table,
+            'logs_2024' => $table + ['storageTable' => 'logs'],
+        ];
+
+        $parent = $transformer->transform("INSERT INTO logs (name) VALUES ('parent')", $tables);
+        $transformer->commitRewriteState();
+        $child = $transformer->transform("INSERT INTO logs_2024 (name) VALUES ('child')", $tables);
+
+        self::assertStringContainsString('1 AS "id"', $parent);
+        self::assertStringContainsString('2 AS "id"', $child);
+    }
+
     public function testUncommittedTransformDoesNotConsumeSerialValue(): void
     {
         $transformer = new InsertTransformer(new PgSqlParser(), new SelectTransformer());

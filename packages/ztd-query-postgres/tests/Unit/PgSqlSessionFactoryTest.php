@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
+use Tests\Fake\FakeStatement;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Platform\Postgres\PgSqlSessionFactory;
+use ZtdQuery\Platform\Postgres\PgSqlPartitionParser;
+use ZtdQuery\Platform\Postgres\PgSqlPartitionReflector;
 use ZtdQuery\Session;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -31,6 +34,8 @@ use ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer;
 #[UsesClass(PgSqlParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PostgreSqlLexicalMasker::class)]
 #[UsesClass(PgSqlSchemaParser::class)]
+#[UsesClass(PgSqlPartitionParser::class)]
+#[UsesClass(PgSqlPartitionReflector::class)]
 #[UsesClass(PgSqlQueryGuard::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlReadOnlyDiagnosticStatement::class)]
 #[UsesClass(PgSqlRewriter::class)]
@@ -54,6 +59,84 @@ use ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlGeneratedColumnProjector::class)]
 final class PgSqlSessionFactoryTest extends TestCase
 {
+    public function testCreateRegistersReflectedPartitionMetadata(): void
+    {
+        $tables = new FakeStatement([
+            ['table_name' => 'logs'],
+            ['table_name' => 'logs_2024'],
+        ]);
+        $columns = new FakeStatement([
+            [
+                'column_name' => 'id',
+                'data_type' => 'integer',
+                'character_maximum_length' => null,
+                'numeric_precision' => 32,
+                'numeric_scale' => 0,
+                'is_nullable' => 'NO',
+                'column_default' => null,
+                'udt_name' => 'int4',
+            ],
+            [
+                'column_name' => 'log_date',
+                'data_type' => 'date',
+                'character_maximum_length' => null,
+                'numeric_precision' => null,
+                'numeric_scale' => null,
+                'is_nullable' => 'NO',
+                'column_default' => null,
+                'udt_name' => 'date',
+            ],
+        ]);
+        $primaryKey = new FakeStatement([
+            ['column_name' => 'id'],
+            ['column_name' => 'log_date'],
+        ]);
+        $empty = new FakeStatement([]);
+        $partitionKeys = new FakeStatement([
+            ['table_name' => 'logs', 'partition_key' => 'RANGE (log_date)'],
+        ]);
+        $relations = new FakeStatement([
+            [
+                'child_table' => 'logs_2024',
+                'parent_table' => 'logs',
+                'predicate' => "log_date >= '2024-01-01'::date AND log_date < '2025-01-01'::date",
+            ],
+        ]);
+        $connection = self::createStub(ConnectionInterface::class);
+        $connection->method('query')->willReturnCallback(
+            static function (string $sql) use (
+                $tables,
+                $columns,
+                $primaryKey,
+                $empty,
+                $partitionKeys,
+                $relations,
+            ) {
+                return match (true) {
+                    str_contains($sql, 'information_schema.tables') => $tables,
+                    str_contains($sql, 'information_schema.columns') => $columns,
+                    str_contains($sql, "constraint_type = 'PRIMARY KEY'") => $primaryKey,
+                    str_contains($sql, 'SELECT c.relname AS table_name') => $partitionKeys,
+                    str_contains($sql, 'SELECT child.relname AS child_table') => $relations,
+                    default => $empty,
+                };
+            },
+        );
+
+        $session = (new PgSqlSessionFactory())->create($connection, ZtdConfig::default());
+        $sql = $session->rewrite('SELECT * FROM logs_2024')->sql();
+
+        self::assertStringContainsString('"logs" AS MATERIALIZED', $sql);
+        self::assertStringContainsString(
+            '"logs_2024" AS MATERIALIZED (SELECT * FROM "logs" WHERE log_date >=',
+            $sql,
+        );
+        $create = $session->rewrite(
+            "CREATE TABLE logs_2025 PARTITION OF logs FOR VALUES FROM ('2025-01-01') TO ('2026-01-01')",
+        );
+        self::assertNotNull($create->mutation());
+    }
+
     public function testCreateRegistersReflectedViews(): void
     {
         $empty = self::createStub(StatementInterface::class);

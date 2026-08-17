@@ -60,6 +60,7 @@ final class ClassifyTarget
             fn (): string => $this->provider->createTableStatement(maxDepth: 5),
             fn (): string => $this->provider->alterTableStatement(maxDepth: 5),
             fn (): string => $this->provider->dropTableStatement(maxDepth: 3),
+            fn (): string => $this->provider->partitionOfStatement(),
         ];
 
         $index = ord($input[0] ?? "\0") % count($generators);

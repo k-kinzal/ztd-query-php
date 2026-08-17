@@ -441,6 +441,15 @@ final class PostgreSqlProvider extends Base
         return $this->sql->generate(GenerationPlans::foreignKeyCascadeStatement()->withMaxDepth($maxDepth));
     }
 
+    /** @return non-empty-string */
+    public function partitionOfStatement(): string
+    {
+        $child = $this->rsg->rawIdentifier();
+
+        return "CREATE TABLE $child PARTITION OF logs "
+            . "FOR VALUES FROM ('2024-01-01') TO ('2025-01-01')";
+    }
+
     /**
      * @template TRequiresNonEmpty of bool
      * @param GenerationPlan<TRequiresNonEmpty> $plan

@@ -28,6 +28,10 @@ final class TableDefinition
 
     public readonly ?TablePartitioning $partitioning;
 
+    public readonly ?TablePartitionKey $partitionKey;
+
+    public readonly ?TablePartitionRelation $partitionRelation;
+
     /**
      * @param array<int, string> $columns Column names in declaration order.
      * @param array<string, string> $columnTypes Column name => MySQL type string.
@@ -40,6 +44,8 @@ final class TableDefinition
      * @param array<string, string> $generatedExpressions Column name => database generated expression.
      * @param array<string, ForeignKeyDefinition> $foreignKeys Constraint name => foreign-key definition.
      * @param TablePartitioning|null $partitioning Named partition selection predicates.
+     * @param TablePartitionKey|null $partitionKey Declarative partition key metadata.
+     * @param TablePartitionRelation|null $partitionRelation Parent partition relationship.
      */
     public function __construct(
         public readonly array $columns,
@@ -53,6 +59,8 @@ final class TableDefinition
         array $generatedExpressions = [],
         array $foreignKeys = [],
         ?TablePartitioning $partitioning = null,
+        ?TablePartitionKey $partitionKey = null,
+        ?TablePartitionRelation $partitionRelation = null,
     ) {
         $this->typedColumns = $typedColumns;
         $this->columnDefaults = $columnDefaults;
@@ -60,6 +68,8 @@ final class TableDefinition
         $this->generatedExpressions = $generatedExpressions;
         $this->foreignKeys = $foreignKeys;
         $this->partitioning = $partitioning;
+        $this->partitionKey = $partitionKey;
+        $this->partitionRelation = $partitionRelation;
     }
 
     public function candidateKeys(): CandidateKeySet
@@ -81,6 +91,46 @@ final class TableDefinition
             $this->generatedExpressions,
             $this->foreignKeys,
             $partitioning,
+            $this->partitionKey,
+            $this->partitionRelation,
+        );
+    }
+
+    public function withPartitionKey(?TablePartitionKey $partitionKey): self
+    {
+        return new self(
+            $this->columns,
+            $this->columnTypes,
+            $this->primaryKeys,
+            $this->notNullColumns,
+            $this->uniqueConstraints,
+            $this->typedColumns,
+            $this->columnDefaults,
+            $this->identityStrategies,
+            $this->generatedExpressions,
+            $this->foreignKeys,
+            $this->partitioning,
+            $partitionKey,
+            $this->partitionRelation,
+        );
+    }
+
+    public function withPartitionRelation(?TablePartitionRelation $partitionRelation): self
+    {
+        return new self(
+            $this->columns,
+            $this->columnTypes,
+            $this->primaryKeys,
+            $this->notNullColumns,
+            $this->uniqueConstraints,
+            $this->typedColumns,
+            $this->columnDefaults,
+            $this->identityStrategies,
+            $this->generatedExpressions,
+            $this->foreignKeys,
+            $this->partitioning,
+            $this->partitionKey,
+            $partitionRelation,
         );
     }
 }

@@ -11,12 +11,17 @@ use ZtdQuery\Schema\IdentityGenerationStrategy;
 use ZtdQuery\Schema\ForeignKeyDefinition;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TablePartitioning;
+use ZtdQuery\Schema\TablePartitionKey;
+use ZtdQuery\Schema\TablePartitionRelation;
+use ZtdQuery\Schema\TablePartitionStrategy;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 
 #[UsesClass(ColumnType::class)]
 #[UsesClass(ForeignKeyDefinition::class)]
 #[UsesClass(TablePartitioning::class)]
+#[UsesClass(TablePartitionKey::class)]
+#[UsesClass(TablePartitionRelation::class)]
 #[CoversClass(TableDefinition::class)]
 final class TableDefinitionTest extends TestCase
 {
@@ -67,6 +72,8 @@ final class TableDefinitionTest extends TestCase
         self::assertSame([], $definition->generatedExpressions);
         self::assertSame([], $definition->foreignKeys);
         self::assertNull($definition->partitioning);
+        self::assertNull($definition->partitionKey);
+        self::assertNull($definition->partitionRelation);
     }
 
     public function testWithPartitioningPreservesSchemaAndReturnsNewDefinition(): void
@@ -80,5 +87,19 @@ final class TableDefinitionTest extends TestCase
         self::assertSame($definition->columns, $partitioned->columns);
         self::assertSame($definition->primaryKeys, $partitioned->primaryKeys);
         self::assertSame($partitioning, $partitioned->partitioning);
+    }
+
+    public function testPartitionMetadataCopiesPreserveOtherSchemaState(): void
+    {
+        $definition = new TableDefinition(['id'], ['id' => 'INT'], ['id'], ['id'], []);
+        $key = new TablePartitionKey(TablePartitionStrategy::Range, ['id']);
+        $relation = new TablePartitionRelation('events', 'id >= 10');
+
+        $partition = $definition->withPartitionKey($key)->withPartitionRelation($relation);
+
+        self::assertSame($key, $partition->partitionKey);
+        self::assertSame($relation, $partition->partitionRelation);
+        self::assertSame($definition->columns, $partition->columns);
+        self::assertSame($definition->candidateKeys()->keys(), $partition->candidateKeys()->keys());
     }
 }

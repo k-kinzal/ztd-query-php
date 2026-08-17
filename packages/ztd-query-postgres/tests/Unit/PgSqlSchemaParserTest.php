@@ -11,9 +11,12 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
+use ZtdQuery\Platform\Postgres\PgSqlPartitionParser;
+use ZtdQuery\Schema\TablePartitionStrategy;
 
 #[CoversClass(PgSqlSchemaParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlForeignKeyDefinitionParser::class)]
+#[UsesClass(PgSqlPartitionParser::class)]
 final class PgSqlSchemaParserTest extends SchemaParserContractTest
 {
     protected function createParser(): SchemaParser
@@ -55,6 +58,39 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame(['id'], $def->primaryKeys);
         self::assertContains('id', $def->notNullColumns);
         self::assertContains('name', $def->notNullColumns);
+    }
+
+    public function testPartitionClauseDoesNotBecomePartOfTableBody(): void
+    {
+        $definition = (new PgSqlSchemaParser())->parse(
+            'CREATE TABLE logs (id INTEGER, log_date DATE, PRIMARY KEY (id, log_date)) '
+            . 'PARTITION BY RANGE (log_date)',
+        );
+
+        self::assertNotNull($definition);
+        self::assertSame(['id', 'log_date'], $definition->columns);
+        self::assertSame(['id', 'log_date'], $definition->primaryKeys);
+        $partitionKey = $definition->partitionKey;
+        self::assertNotNull($partitionKey);
+        self::assertSame(TablePartitionStrategy::Range, $partitionKey->strategy);
+        self::assertSame(['log_date'], $partitionKey->expressions);
+    }
+
+    public function testCreateKeywordInsideAnotherStatementDoesNotParse(): void
+    {
+        self::assertNull((new PgSqlSchemaParser())->parse(
+            'SELECT 1 FROM source_table; CREATE TABLE hidden (id INTEGER)',
+        ));
+    }
+
+    public function testIncompleteIfNotExistsAndQualifiedNamesDoNotParse(): void
+    {
+        $parser = new PgSqlSchemaParser();
+
+        self::assertNull($parser->parse('CREATE TABLE IF users (id INTEGER)'));
+        self::assertNull($parser->parse('CREATE TABLE IF NOT users (id INTEGER)'));
+        self::assertNull($parser->parse('CREATE TABLE IF EXISTS users (id INTEGER)'));
+        self::assertNull($parser->parse('CREATE TABLE public. (id INTEGER)'));
     }
 
     public function testParseColumnTypes(): void

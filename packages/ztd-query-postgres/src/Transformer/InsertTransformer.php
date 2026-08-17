@@ -66,6 +66,7 @@ final class InsertTransformer implements SqlTransformer
         $columnDefaults = $tables[$tableName]['columnDefaults'] ?? [];
         $identityStrategies = $tables[$tableName]['identityStrategies'] ?? [];
         $existingRows = $tables[$tableName]['rows'] ?? [];
+        $identityTable = $tables[$tableName]['storageTable'] ?? $tableName;
 
         if ($this->parser->hasInsertSelect($sql)) {
             $selectSql = $this->parser->extractInsertSelectSql($sql);
@@ -75,7 +76,7 @@ final class InsertTransformer implements SqlTransformer
 
             $sourceColumns = $insertColumns !== [] ? $insertColumns : $tableColumns;
             $generatedIdentityStarts = $this->identityAllocator->allocateSelectStarts(
-                $tableName,
+                $identityTable,
                 $identityStrategies,
                 $sourceColumns,
                 $existingRows,
@@ -109,7 +110,7 @@ final class InsertTransformer implements SqlTransformer
                 throw new UnsupportedSqlException($sql, 'Insert values count does not match column count');
             }
             $generatedValues = $this->identityAllocator->allocateMissing(
-                $tableName,
+                $identityTable,
                 $identityStrategies,
                 array_keys($providedExpressions),
                 $existingRows,

@@ -193,7 +193,9 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
      *     columnTypes: array<string, \ZtdQuery\Schema\ColumnType>,
      *     columnDefaults: array<string, string>,
      *     identityStrategies: array<string, \ZtdQuery\Schema\IdentityGenerationStrategy>,
-     *     generatedExpressions: array<string, string>
+     *     generatedExpressions: array<string, string>,
+     *     sourceSql?: string,
+     *     storageTable?: string
      * }>
      */
     private function buildTableContext(): array
@@ -250,6 +252,37 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
             ];
         }
 
+        $quoter = new PgSqlIdentifierQuoter();
+        foreach ($allDefinitions as $tableName => $definition) {
+            $relation = $definition->partitionRelation;
+            if ($relation === null) {
+                continue;
+            }
+
+            $siblingPredicates = [];
+            foreach ($allDefinitions as $siblingDefinition) {
+                $sibling = $siblingDefinition->partitionRelation;
+                if ($sibling !== null
+                    && strcasecmp($sibling->parentTable, $relation->parentTable) === 0
+                    && $sibling->predicate !== null
+                ) {
+                    $siblingPredicates[] = $sibling->predicate;
+                }
+            }
+            $predicate = $relation->selectionPredicate($siblingPredicates);
+            $storageTable = $this->storageTable($tableName);
+            $partitionContext = $context[$tableName] ?? null;
+            if ($partitionContext === null) {
+                continue;
+            }
+            $partitionContext['rows'] = $this->shadowStore->get($storageTable);
+            $partitionContext['storageTable'] = $storageTable;
+            $partitionContext['sourceSql'] = 'SELECT * FROM '
+                . $quoter->quote($relation->parentTable)
+                . " WHERE $predicate";
+            $context[$tableName] = $partitionContext;
+        }
+
         foreach ((new PgSqlViewShadowRenderer())->render($this->views, array_keys($context)) as $viewName => $viewSql) {
             if (isset($context[$viewName])) {
                 continue;
@@ -258,6 +291,21 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
         }
 
         return $context;
+    }
+
+    private function storageTable(string $tableName): string
+    {
+        $seen = [];
+        while (!isset($seen[$tableName])) {
+            $seen[$tableName] = true;
+            $parent = $this->registry->get($tableName)?->partitionRelation?->parentTable;
+            if ($parent === null) {
+                return $tableName;
+            }
+            $tableName = $parent;
+        }
+
+        return $tableName;
     }
 
     private function tableExists(string $tableName): bool

@@ -27,7 +27,9 @@ interface SqlTransformer
      *     columnDefaults?: array<string, string>,
      *     identityStrategies?: array<string, \ZtdQuery\Schema\IdentityGenerationStrategy>,
      *     generatedExpressions?: array<string, string>,
-     *     partitioning?: \ZtdQuery\Schema\TablePartitioning|null
+     *     partitioning?: \ZtdQuery\Schema\TablePartitioning|null,
+     *     sourceSql?: string,
+     *     storageTable?: string
      * }> $tables Table name => shadow data and column information.
      * @return string The transformed SQL.
      */
