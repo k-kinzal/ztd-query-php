@@ -75,6 +75,33 @@ final class ShadowIdentityAllocator
         return $starts;
     }
 
+    /**
+     * Allocate expressions for identity columns omitted from, or set to DEFAULT in, a projected row.
+     *
+     * @param array<string, IdentityGenerationStrategy> $strategies
+     * @param list<string> $insertColumns
+     * @param list<string> $values
+     * @param array<int, array<string, mixed>> $existingRows
+     * @return array<string, string>
+     */
+    public function allocateSelectExpressionsForValues(
+        string $table,
+        array $strategies,
+        array $insertColumns,
+        array $values,
+        array $existingRows,
+    ): array {
+        $providedColumns = [];
+        foreach ($insertColumns as $index => $column) {
+            $value = $values[$index] ?? 'DEFAULT';
+            if (strcasecmp(trim($value), 'DEFAULT') !== 0) {
+                $providedColumns[] = $column;
+            }
+        }
+
+        return $this->allocateSelectExpressions($table, $strategies, $providedColumns, $existingRows);
+    }
+
     /** @param array<int, array<string, mixed>> $existingRows */
     private function nextValue(
         string $table,

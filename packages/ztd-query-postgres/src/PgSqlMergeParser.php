@@ -21,17 +21,23 @@ final class PgSqlMergeParser
 
     public function parse(string $sql): PgSqlMergeStatement
     {
-        $statementSql = trim($this->cteComposer->statementSql($sql));
+        $statementSql = $this->cteComposer->statementSql($sql);
         $tokens = SqlTokenStream::tokenize($statementSql)->significantTokens();
         $index = 0;
-        if (($tokens[$index] ?? null)?->isKeyword('MERGE') !== true) {
+        $first = $tokens[$index] ?? null;
+        if ($first === null) {
+            throw new UnsupportedSqlException($sql, 'Malformed MERGE statement');
+        }
+        if (!$first->isKeyword('MERGE')) {
             throw new UnsupportedSqlException($sql, 'Malformed MERGE statement');
         }
         $index++;
-        if (($tokens[$index] ?? null)?->isKeyword('INTO') === true) {
+        $next = $tokens[$index] ?? null;
+        if ($next !== null && $next->isKeyword('INTO')) {
             $index++;
+            $next = $tokens[$index] ?? null;
         }
-        if (($tokens[$index] ?? null)?->isKeyword('ONLY') === true) {
+        if ($next !== null && $next->isKeyword('ONLY')) {
             $index++;
         }
 
@@ -41,45 +47,50 @@ final class PgSqlMergeParser
         }
         $index = $target['next'];
         if ($this->isSymbol($tokens[$index] ?? null, '*')) {
+            $target['last'] = $tokens[$index];
             $index++;
         }
 
-        $usingIndex = $this->keywordIndex($tokens, 'USING', $index);
+        $usingIndex = $this->keywordIndexAfter($tokens, 'USING', $target['last']);
         if ($usingIndex === null) {
             throw new UnsupportedSqlException($sql, 'MERGE requires USING');
         }
         $targetAlias = $this->targetAlias($sql, $tokens, $index, $usingIndex, $target['name']);
 
-        $whenIndices = $this->mergeWhenIndices($tokens, $usingIndex + 1);
-        $firstWhen = $whenIndices[0] ?? null;
+        $usingToken = $tokens[$usingIndex];
+        $whenTokens = $this->mergeWhenTokens($tokens);
+        $firstWhen = $whenTokens[0] ?? null;
         if ($firstWhen === null) {
             throw new UnsupportedSqlException($sql, 'MERGE requires a WHEN clause');
         }
-        $onIndex = $this->lastKeywordIndex($tokens, 'ON', $usingIndex + 1, $firstWhen);
-        if ($onIndex === null) {
+        $onToken = $this->lastKeywordBetween($tokens, 'ON', $usingToken, $firstWhen);
+        if ($onToken === null) {
             throw new UnsupportedSqlException($sql, 'MERGE requires an ON condition');
         }
 
         $sourceSql = trim(substr(
             $statementSql,
-            $tokens[$usingIndex]->endOffset(),
-            $tokens[$onIndex]->offset - $tokens[$usingIndex]->endOffset(),
+            $usingToken->endOffset(),
+            $onToken->offset - $usingToken->endOffset(),
         ));
         $joinConditionSql = trim(substr(
             $statementSql,
-            $tokens[$onIndex]->endOffset(),
-            $tokens[$firstWhen]->offset - $tokens[$onIndex]->endOffset(),
+            $onToken->endOffset(),
+            $firstWhen->offset - $onToken->endOffset(),
         ));
-        if ($sourceSql === '' || $joinConditionSql === '') {
+        if ($sourceSql === '') {
+            throw new UnsupportedSqlException($sql, 'MERGE requires a source and join condition');
+        }
+        if ($joinConditionSql === '') {
             throw new UnsupportedSqlException($sql, 'MERGE requires a source and join condition');
         }
 
         $clauses = [];
-        foreach ($whenIndices as $clauseIndex => $whenIndex) {
-            $end = isset($whenIndices[$clauseIndex + 1])
-                ? $tokens[$whenIndices[$clauseIndex + 1]]->offset
+        foreach ($whenTokens as $clauseIndex => $whenToken) {
+            $end = isset($whenTokens[$clauseIndex + 1])
+                ? $whenTokens[$clauseIndex + 1]->offset
                 : strlen($statementSql);
-            $clauseSql = trim(substr($statementSql, $tokens[$whenIndex]->offset, $end - $tokens[$whenIndex]->offset));
+            $clauseSql = substr($statementSql, $whenToken->offset, $end - $whenToken->offset);
             $clauses[] = $this->parseClause($sql, $clauseSql);
         }
         if ($clauses === []) {
@@ -98,7 +109,7 @@ final class PgSqlMergeParser
 
     /**
      * @param list<SqlToken> $tokens
-     * @return array{name: string, sql: string, next: int}|null
+     * @return array{name: string, sql: string, next: int, last: SqlToken}|null
      */
     private function relationAt(string $sql, array $tokens, int $index): ?array
     {
@@ -110,15 +121,20 @@ final class PgSqlMergeParser
 
         $start = $first->offset;
         $end = $first->endOffset();
+        $last = $first;
         $index++;
         while ($this->isSymbol($tokens[$index] ?? null, '.')) {
             $component = $tokens[$index + 1] ?? null;
-            $componentName = $component !== null ? $this->identifierName($component) : null;
-            if ($component === null || $componentName === null) {
+            if ($component === null) {
+                return null;
+            }
+            $componentName = $this->identifierName($component);
+            if ($componentName === null) {
                 return null;
             }
             $name = $componentName;
             $end = $component->endOffset();
+            $last = $component;
             $index += 2;
         }
 
@@ -126,6 +142,7 @@ final class PgSqlMergeParser
             'name' => $name,
             'sql' => substr($sql, $start, $end - $start),
             'next' => $index,
+            'last' => $last,
         ];
     }
 
@@ -140,7 +157,7 @@ final class PgSqlMergeParser
         if ($start === $end) {
             return $default;
         }
-        if (($tokens[$start] ?? null)?->isKeyword('AS') === true) {
+        if ($tokens[$start]->isKeyword('AS')) {
             $start++;
         }
         if ($start + 1 !== $end) {
@@ -160,25 +177,28 @@ final class PgSqlMergeParser
         $tokens = SqlTokenStream::tokenize($clauseSql)->significantTokens();
         $index = 1;
         $matchKind = PgSqlMergeMatchKind::Matched;
-        if (($tokens[$index] ?? null)?->isKeyword('NOT') === true) {
+        $matchToken = $tokens[$index];
+        if ($matchToken->isKeyword('NOT')) {
             $matchKind = PgSqlMergeMatchKind::NotMatched;
             $index++;
+            $matchToken = $tokens[$index];
         }
-        if (($tokens[$index] ?? null)?->isKeyword('MATCHED') !== true) {
+        if (!$matchToken->isKeyword('MATCHED')) {
             throw new UnsupportedSqlException($originalSql, 'Malformed MERGE WHEN clause');
         }
         $index++;
-        if (($tokens[$index] ?? null)?->isKeyword('BY') === true) {
+        $modifier = $tokens[$index] ?? null;
+        if ($modifier !== null && $modifier->isKeyword('BY')) {
             throw new UnsupportedSqlException($originalSql, 'MERGE BY SOURCE and BY TARGET are not supported');
         }
 
-        $thenIndex = $this->keywordIndexOutsideCase($tokens, 'THEN', $index);
+        $thenIndex = $this->keywordIndexOutsideCase($tokens, 'THEN');
         if ($thenIndex === null) {
             throw new UnsupportedSqlException($originalSql, 'MERGE WHEN clause requires THEN');
         }
         $conditionSql = null;
         if ($index !== $thenIndex) {
-            if (($tokens[$index] ?? null)?->isKeyword('AND') !== true) {
+            if (!$tokens[$index]->isKeyword('AND')) {
                 throw new UnsupportedSqlException($originalSql, 'Malformed MERGE WHEN condition');
             }
             $conditionSql = trim(substr(
@@ -191,19 +211,24 @@ final class PgSqlMergeParser
             }
         }
 
-        $actionSql = trim(substr($clauseSql, $tokens[$thenIndex]->endOffset()));
+        $actionSql = substr($clauseSql, $tokens[$thenIndex]->endOffset());
         $actionTokens = SqlTokenStream::tokenize($actionSql)->significantTokens();
         $first = $actionTokens[0] ?? null;
-        if ($first?->isKeyword('DO') === true
-            && ($actionTokens[1] ?? null)?->isKeyword('NOTHING') === true
-            && count($actionTokens) === 2
-        ) {
-            return new PgSqlMergeClause($matchKind, $conditionSql, PgSqlMergeActionKind::DoNothing);
+        if ($first === null) {
+            throw new UnsupportedSqlException($originalSql, 'MERGE action is not supported');
         }
-        if ($matchKind === PgSqlMergeMatchKind::Matched && $first?->isKeyword('DELETE') === true && count($actionTokens) === 1) {
+        if ($first->isKeyword('DO')) {
+            $second = $actionTokens[1] ?? null;
+            if ($second !== null && $second->isKeyword('NOTHING')) {
+                if (count($actionTokens) === 2) {
+                    return new PgSqlMergeClause($matchKind, $conditionSql, PgSqlMergeActionKind::DoNothing);
+                }
+            }
+        }
+        if ($matchKind === PgSqlMergeMatchKind::Matched && $first->isKeyword('DELETE') && count($actionTokens) === 1) {
             return new PgSqlMergeClause($matchKind, $conditionSql, PgSqlMergeActionKind::Delete);
         }
-        if ($matchKind === PgSqlMergeMatchKind::Matched && $first?->isKeyword('UPDATE') === true) {
+        if ($matchKind === PgSqlMergeMatchKind::Matched && $first->isKeyword('UPDATE')) {
             return new PgSqlMergeClause(
                 $matchKind,
                 $conditionSql,
@@ -211,7 +236,7 @@ final class PgSqlMergeParser
                 $this->parseAssignments($originalSql, $actionSql, $actionTokens),
             );
         }
-        if ($matchKind === PgSqlMergeMatchKind::NotMatched && $first?->isKeyword('INSERT') === true) {
+        if ($matchKind === PgSqlMergeMatchKind::NotMatched && $first->isKeyword('INSERT')) {
             $insert = $this->parseInsert($originalSql, $actionSql, $actionTokens);
 
             return new PgSqlMergeClause(
@@ -233,10 +258,14 @@ final class PgSqlMergeParser
      */
     private function parseAssignments(string $originalSql, string $actionSql, array $tokens): array
     {
-        if (($tokens[1] ?? null)?->isKeyword('SET') !== true) {
+        $set = $tokens[1] ?? null;
+        if ($set === null) {
             throw new UnsupportedSqlException($originalSql, 'MERGE UPDATE requires SET');
         }
-        $setSql = trim(substr($actionSql, $tokens[1]->endOffset()));
+        if (!$set->isKeyword('SET')) {
+            throw new UnsupportedSqlException($originalSql, 'MERGE UPDATE requires SET');
+        }
+        $setSql = substr($actionSql, $set->endOffset());
         $assignments = [];
         foreach (SqlTokenStream::tokenize($setSql)->splitTopLevel() as $assignmentSql) {
             $assignmentTokens = SqlTokenStream::tokenize($assignmentSql)->significantTokens();
@@ -297,19 +326,25 @@ final class PgSqlMergeParser
             $index = $list['next'];
         }
 
-        if (($tokens[$index] ?? null)?->isKeyword('DEFAULT') === true
-            && ($tokens[$index + 1] ?? null)?->isKeyword('VALUES') === true
-            && $index + 2 === count($tokens)
-        ) {
+        $insertAction = $tokens[$index] ?? null;
+        $afterAction = $tokens[$index + 1] ?? null;
+        if ($insertAction !== null && $insertAction->isKeyword('DEFAULT')) {
+            if ($afterAction === null || !$afterAction->isKeyword('VALUES') || $index + 2 !== count($tokens)) {
+                throw new UnsupportedSqlException($originalSql, 'MERGE INSERT requires VALUES');
+            }
             if ($columns !== []) {
                 throw new UnsupportedSqlException($originalSql, 'MERGE INSERT DEFAULT VALUES cannot name columns');
             }
 
             return ['columns' => [], 'values' => []];
         }
-        if (($tokens[$index] ?? null)?->isKeyword('VALUES') !== true
-            || !$this->isSymbol($tokens[$index + 1] ?? null, '(')
-        ) {
+        if ($insertAction === null) {
+            throw new UnsupportedSqlException($originalSql, 'MERGE INSERT requires VALUES');
+        }
+        if (!$insertAction->isKeyword('VALUES')) {
+            throw new UnsupportedSqlException($originalSql, 'MERGE INSERT requires VALUES');
+        }
+        if (!$this->isSymbol($afterAction, '(')) {
             throw new UnsupportedSqlException($originalSql, 'MERGE INSERT requires VALUES');
         }
 
@@ -335,15 +370,23 @@ final class PgSqlMergeParser
         int $openIndex,
     ): array {
         $open = $tokens[$openIndex];
+        $afterOpen = false;
         foreach ($tokens as $closeIndex => $token) {
-            if ($closeIndex <= $openIndex
-                || !$this->isSymbol($token, ')')
-                || $token->depth !== $open->depth
-            ) {
+            if ($token === $open) {
+                $afterOpen = true;
                 continue;
             }
-            $listSql = trim(substr($sql, $open->endOffset(), $token->offset - $open->endOffset()));
-            $items = $listSql === '' ? [] : SqlTokenStream::tokenize($listSql)->splitTopLevel();
+            if (!$afterOpen) {
+                continue;
+            }
+            if (!$this->isSymbol($token, ')')) {
+                continue;
+            }
+            if ($token->depth !== $open->depth) {
+                continue;
+            }
+            $listSql = substr($sql, $open->endOffset(), $token->offset - $open->endOffset());
+            $items = SqlTokenStream::tokenize($listSql)->splitTopLevel();
 
             return ['items' => $items, 'next' => $closeIndex + 1];
         }
@@ -352,10 +395,15 @@ final class PgSqlMergeParser
     }
 
     /** @param list<SqlToken> $tokens */
-    private function keywordIndex(array $tokens, string $keyword, int $start): ?int
+    private function keywordIndexAfter(array $tokens, string $keyword, SqlToken $anchor): ?int
     {
+        $afterAnchor = false;
         foreach ($tokens as $index => $token) {
-            if ($index >= $start && $token->isTopLevel() && $token->isKeyword($keyword)) {
+            if ($token === $anchor) {
+                $afterAnchor = true;
+                continue;
+            }
+            if ($afterAnchor && $token->isTopLevel() && $token->isKeyword($keyword)) {
                 return $index;
             }
         }
@@ -364,15 +412,24 @@ final class PgSqlMergeParser
     }
 
     /** @param list<SqlToken> $tokens */
-    private function lastKeywordIndex(array $tokens, string $keyword, int $start, int $end): ?int
-    {
+    private function lastKeywordBetween(
+        array $tokens,
+        string $keyword,
+        SqlToken $start,
+        SqlToken $end,
+    ): ?SqlToken {
         $found = null;
-        foreach ($tokens as $index => $token) {
-            if ($index >= $end) {
+        $withinRange = false;
+        foreach ($tokens as $token) {
+            if ($token === $start) {
+                $withinRange = true;
+                continue;
+            }
+            if ($token === $end) {
                 break;
             }
-            if ($index >= $start && $token->isTopLevel() && $token->isKeyword($keyword)) {
-                $found = $index;
+            if ($withinRange && $token->isTopLevel() && $token->isKeyword($keyword)) {
+                $found = $token;
             }
         }
 
@@ -381,54 +438,69 @@ final class PgSqlMergeParser
 
     /**
      * @param list<SqlToken> $tokens
-     * @return list<int>
+     * @return list<SqlToken>
      */
-    private function mergeWhenIndices(array $tokens, int $start): array
+    private function mergeWhenTokens(array $tokens): array
     {
-        $indices = [];
+        $whenTokens = [];
         $caseDepth = 0;
         foreach ($tokens as $index => $token) {
-            if ($index < $start || !$token->isTopLevel()) {
+            if (!$token->isTopLevel()) {
                 continue;
             }
             if ($token->isKeyword('CASE')) {
                 $caseDepth++;
                 continue;
             }
-            if ($token->isKeyword('END') && $caseDepth > 0) {
-                $caseDepth--;
-                continue;
+            if ($token->isKeyword('END')) {
+                if ($caseDepth !== 0) {
+                    $caseDepth--;
+                    continue;
+                }
             }
             if ($caseDepth !== 0 || !$token->isKeyword('WHEN')) {
                 continue;
             }
             $next = $tokens[$index + 1] ?? null;
+            if ($next === null) {
+                continue;
+            }
+            if ($next->isKeyword('MATCHED')) {
+                $whenTokens[] = $token;
+                continue;
+            }
+            if (!$next->isKeyword('NOT')) {
+                continue;
+            }
             $afterNext = $tokens[$index + 2] ?? null;
-            if ($next?->isKeyword('MATCHED') === true
-                || ($next?->isKeyword('NOT') === true && $afterNext?->isKeyword('MATCHED') === true)
-            ) {
-                $indices[] = $index;
+            if ($afterNext === null) {
+                continue;
+            }
+            if ($afterNext->isKeyword('MATCHED')) {
+                $whenTokens[] = $token;
             }
         }
 
-        return $indices;
+        return $whenTokens;
     }
 
     /** @param list<SqlToken> $tokens */
-    private function keywordIndexOutsideCase(array $tokens, string $keyword, int $start): ?int
+    private function keywordIndexOutsideCase(array $tokens, string $keyword): ?int
     {
         $caseDepth = 0;
         foreach ($tokens as $index => $token) {
-            if ($index < $start || !$token->isTopLevel()) {
+            if (!$token->isTopLevel()) {
                 continue;
             }
             if ($token->isKeyword('CASE')) {
                 $caseDepth++;
                 continue;
             }
-            if ($token->isKeyword('END') && $caseDepth > 0) {
-                $caseDepth--;
-                continue;
+            if ($token->isKeyword('END')) {
+                if ($caseDepth !== 0) {
+                    $caseDepth--;
+                    continue;
+                }
             }
             if ($caseDepth === 0 && $token->isKeyword($keyword)) {
                 return $index;
@@ -452,8 +524,9 @@ final class PgSqlMergeParser
 
     private function isSymbol(?SqlToken $token, string $symbol): bool
     {
-        return $token instanceof SqlToken
-            && $token->kind === SqlTokenKind::Symbol
-            && $token->text === $symbol;
+        if ($token === null) {
+            return false;
+        }
+        return $token->text === $symbol;
     }
 }

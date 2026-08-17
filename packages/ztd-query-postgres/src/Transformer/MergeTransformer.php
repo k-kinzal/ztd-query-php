@@ -21,7 +21,6 @@ final class MergeTransformer implements SqlTransformer
 {
     private PgSqlIdentifierQuoter $quoter;
     private InsertRowProjector $rowProjector;
-    private ShadowIdentityAllocator $identityAllocator;
     private GeneratedColumnProjector $generatedColumnProjector;
     private CteShadowComposer $cteComposer;
 
@@ -31,7 +30,6 @@ final class MergeTransformer implements SqlTransformer
     ) {
         $this->quoter = new PgSqlIdentifierQuoter();
         $this->rowProjector = new InsertRowProjector();
-        $this->identityAllocator = new ShadowIdentityAllocator();
         $this->generatedColumnProjector = new GeneratedColumnProjector($this->quoter);
         $this->cteComposer = new CteShadowComposer();
     }
@@ -41,14 +39,19 @@ final class MergeTransformer implements SqlTransformer
      */
     public function transform(string $sql, array $tables): string
     {
-        $this->identityAllocator->beginProjection();
         $statement = $this->parser->parse($sql);
         $table = $tables[$statement->targetTable] ?? null;
-        if ($table === null || isset($table['viewSql'])) {
+        if ($table === null) {
+            throw new UnsupportedSqlException($sql, 'Cannot resolve MERGE target schema');
+        }
+        if (isset($table['viewSql'])) {
             throw new UnsupportedSqlException($sql, 'Cannot resolve MERGE target schema');
         }
 
-        $columns = self::orderedValues($table['columns']);
+        $columns = $table['columns'];
+        if (!array_is_list($columns)) {
+            throw new UnsupportedSqlException($sql, 'MERGE target columns must preserve declaration order');
+        }
         if ($columns === []) {
             throw new UnsupportedSqlException($sql, 'Cannot determine MERGE target columns');
         }
@@ -88,11 +91,6 @@ final class MergeTransformer implements SqlTransformer
         $resultSql = $this->cteComposer->carryPrefix($sql, $resultSql);
 
         return $this->selectTransformer->transform($resultSql, $tables);
-    }
-
-    public function commitRewriteState(): void
-    {
-        $this->identityAllocator->commitProjection();
     }
 
     /**
@@ -188,7 +186,7 @@ final class MergeTransformer implements SqlTransformer
             $expression = $clause->assignments[$column] ?? null;
             if ($expression === null) {
                 $expression = $qualifier . '.' . $quoted;
-            } elseif (strcasecmp(trim($expression), 'DEFAULT') === 0) {
+            } elseif (strcasecmp($expression, 'DEFAULT') === 0) {
                 $expression = $defaults[$column] ?? 'NULL';
             }
             $selects[] = $expression . ' AS ' . $quoted;
@@ -217,26 +215,24 @@ final class MergeTransformer implements SqlTransformer
         array $existingRows,
         string $effectiveCondition,
     ): string {
-        $sourceColumns = $clause->insertColumns !== [] || $clause->insertValues === []
-            ? $clause->insertColumns
-            : $columns;
+        if ($clause->insertColumns !== []) {
+            $sourceColumns = $clause->insertColumns;
+        } elseif ($clause->insertValues === []) {
+            $sourceColumns = [];
+        } else {
+            $sourceColumns = $columns;
+        }
         foreach ($sourceColumns as $column) {
             if (!in_array($column, $columns, true)) {
                 throw new UnsupportedSqlException($sql, 'MERGE INSERT references an unknown target column');
             }
         }
 
-        $providedIdentityColumns = [];
-        foreach ($sourceColumns as $index => $column) {
-            $value = $clause->insertValues[$index] ?? 'DEFAULT';
-            if (strcasecmp(trim($value), 'DEFAULT') !== 0) {
-                $providedIdentityColumns[] = $column;
-            }
-        }
-        $generatedValues = $this->identityAllocator->allocateSelectExpressions(
+        $generatedValues = (new ShadowIdentityAllocator())->allocateSelectExpressionsForValues(
             $statement->targetTable,
             $identityStrategies,
-            $providedIdentityColumns,
+            $sourceColumns,
+            $clause->insertValues,
             $existingRows,
         );
         try {
@@ -264,13 +260,4 @@ final class MergeTransformer implements SqlTransformer
             . ' AND (' . $effectiveCondition . ')';
     }
 
-    /**
-     * @template T
-     * @param array<array-key, T> $values
-     * @return list<T>
-     */
-    private static function orderedValues(array $values): array
-    {
-        return array_values($values);
-    }
 }

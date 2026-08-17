@@ -366,7 +366,7 @@ final class ReferentialIntegrityEnforcer
             return [];
         }
 
-        return array_values($referencedTable->primaryKeys);
+        return $referencedTable->primaryKeys;
     }
 
     /**
@@ -454,4 +454,5 @@ final class ReferentialIntegrityEnforcer
 
         return true;
     }
+
 }

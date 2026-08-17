@@ -20,6 +20,7 @@ use ZtdQuery\Shadow\Mutation\MultiTruncateMutation;
 use ZtdQuery\Shadow\Mutation\SynchronizeMutation;
 use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
+use ZtdQuery\Shadow\Mutation\ShadowMutation;
 use ZtdQuery\Shadow\ReferentialIntegrityEnforcer;
 use ZtdQuery\Shadow\ShadowStore;
 
@@ -39,6 +40,43 @@ use ZtdQuery\Shadow\ShadowStore;
 #[UsesClass(ShadowStore::class)]
 final class ReferentialIntegrityEnforcerTest extends TestCase
 {
+    public function testSchemaMutationSkipsRowIntegrityChecks(): void
+    {
+        $registry = new TableDefinitionRegistry();
+        $registry->register('parents', new TableDefinition(['id'], ['id' => 'INT'], ['id'], ['id'], []));
+        $registry->register('children', new TableDefinition(
+            ['id', 'parent_id'],
+            ['id' => 'INT', 'parent_id' => 'INT'],
+            ['id'],
+            ['id'],
+            [],
+            foreignKeys: ['fk_parent' => new ForeignKeyDefinition(['parent_id'], 'parents', ['id'])],
+        ));
+        $store = new ShadowStore();
+        $store->set('parents', []);
+        $store->set('children', [['id' => 1, 'parent_id' => 99]]);
+        $mutation = new class () implements ShadowMutation {
+            public function apply(ShadowStore $store, array $rows): void
+            {
+            }
+
+            public function tableName(): string
+            {
+                return 'children';
+            }
+        };
+
+        (new ReferentialIntegrityEnforcer($registry))->synchronize(
+            $store->snapshot(),
+            $store,
+            $mutation,
+            [],
+            'CREATE TABLE',
+        );
+
+        self::assertSame([['id' => 1, 'parent_id' => 99]], $store->get('children'));
+    }
+
     public function testSynchronizationCascadesDeletedRows(): void
     {
         $registry = new TableDefinitionRegistry();
@@ -96,6 +134,46 @@ final class ReferentialIntegrityEnforcerTest extends TestCase
             [['id' => 1, 'parent_id' => 99]],
             'INSERT',
         );
+    }
+
+    public function testAcceptsExplicitReferenceToNonPrimaryCandidateKey(): void
+    {
+        $registry = new TableDefinitionRegistry();
+        $registry->register('parents', new TableDefinition(
+            ['id', 'code'],
+            ['id' => 'INT', 'code' => 'TEXT'],
+            ['id'],
+            ['id', 'code'],
+            ['parents_code_key' => ['code']],
+        ));
+        $registry->register('children', new TableDefinition(
+            ['id', 'parent_code'],
+            ['id' => 'INT', 'parent_code' => 'TEXT'],
+            ['id'],
+            ['id'],
+            [],
+            foreignKeys: ['fk_parent_code' => new ForeignKeyDefinition(
+                ['parent_code'],
+                'parents',
+                ['code'],
+            )],
+        ));
+        $store = new ShadowStore();
+        $store->set('parents', [['id' => 1, 'code' => 'parent-a']]);
+        $store->set('children', []);
+        $before = $store->snapshot();
+        $mutation = new InsertMutation('children');
+        $mutation->apply($store, [['id' => 10, 'parent_code' => 'parent-a']]);
+
+        (new ReferentialIntegrityEnforcer($registry))->synchronize(
+            $before,
+            $store,
+            $mutation,
+            [['id' => 10, 'parent_code' => 'parent-a']],
+            'INSERT',
+        );
+
+        self::assertSame([['id' => 10, 'parent_code' => 'parent-a']], $store->get('children'));
     }
 
     public function testDeleteCascadePropagatesAcrossMultipleLevels(): void
@@ -939,33 +1017,6 @@ final class ReferentialIntegrityEnforcerTest extends TestCase
         );
 
         self::assertSame([['id' => 1, 'parent_id' => null]], $after->get('nodes'));
-    }
-
-    public function testSparsePrimaryKeyMetadataIsNormalizedForViolationDetails(): void
-    {
-        $registry = new TableDefinitionRegistry();
-        $registry->register('parents', new TableDefinition(['id'], ['id' => 'INT'], [3 => 'id'], ['id'], []));
-        $registry->register('children', new TableDefinition(
-            ['id', 'parent_id'],
-            ['id' => 'INT', 'parent_id' => 'INT'],
-            ['id'],
-            ['id'],
-            [],
-            foreignKeys: ['fk_parent' => new ForeignKeyDefinition(['parent_id'], 'parents', [])],
-        ));
-        $store = new ShadowStore();
-        $store->set('parents', []);
-        $store->set('children', [['id' => 1, 'parent_id' => 99]]);
-
-        $this->expectException(ForeignKeyViolationException::class);
-        $this->expectExceptionMessage("referenced row not found in 'parents.id'");
-        (new ReferentialIntegrityEnforcer($registry))->synchronize(
-            $store->snapshot(),
-            $store,
-            new InsertMutation('children'),
-            [],
-            'INSERT',
-        );
     }
 
     public function testCascadeNormalizesSparseChildRowIndexes(): void

@@ -107,6 +107,94 @@ final class PgSqlMergeParserTest extends TestCase
         self::assertSame(['name' => 'source.name'], $statement->clauses[0]->assignments);
     }
 
+    public function testPreservesEscapedQuotedIdentifiersAndNestedLists(): void
+    {
+        $statement = (new PgSqlMergeParser())->parse(
+            'MERGE INTO audit."A""B" AS target USING source ON target.id = source.id '
+            . 'WHEN NOT MATCHED THEN INSERT (id, payload) VALUES ((source.id), jsonb_build_array(1, 2))',
+        );
+
+        self::assertSame('A"B', $statement->targetTable);
+        self::assertSame('audit."A""B"', $statement->targetSql);
+        self::assertSame(['id', 'payload'], $statement->clauses[0]->insertColumns);
+        self::assertSame(['(source.id)', 'jsonb_build_array(1, 2)'], $statement->clauses[0]->insertValues);
+    }
+
+    public function testIgnoresOnAndWhenKeywordsOutsideMergeClauseBoundaries(): void
+    {
+        $statement = (new PgSqlMergeParser())->parse(
+            'MERGE INTO using.on.audit.users target '
+            . "USING (SELECT CASE WHEN matched THEN 'ON' ELSE 'off' END AS value) source "
+            . 'ON target.id = source.id '
+            . 'WHEN MATCHED AND on THEN DO NOTHING '
+            . 'WHEN NOT MATCHED THEN INSERT (id) VALUES (source.id)',
+        );
+
+        self::assertSame('using.on.audit.users', $statement->targetSql);
+        self::assertSame("(SELECT CASE WHEN matched THEN 'ON' ELSE 'off' END AS value) source", $statement->sourceSql);
+        self::assertSame('target.id = source.id', $statement->joinConditionSql);
+        self::assertSame('on', $statement->clauses[0]->conditionSql);
+        self::assertCount(2, $statement->clauses);
+    }
+
+    #[TestWith(['', 'Malformed MERGE statement'])]
+    #[TestWith(['SELECT 1', 'Malformed MERGE statement'])]
+    #[TestWith(['MERGE INTO public."" USING source ON TRUE WHEN MATCHED THEN DELETE', 'Cannot resolve MERGE target'])]
+    #[TestWith(['MERGE INTO users USING ON TRUE WHEN MATCHED THEN DELETE', 'MERGE requires a source and join condition'])]
+    #[TestWith(['MERGE INTO users USING source ON WHEN MATCHED THEN DELETE', 'MERGE requires a source and join condition'])]
+    #[TestWith(['MERGE INTO users USING source ON TRUE WHEN MATCHED BY SOURCE THEN DELETE', 'MERGE BY SOURCE and BY TARGET are not supported'])]
+    #[TestWith(['MERGE INTO users USING source ON TRUE WHEN MATCHED THEN DO UPDATE', 'MERGE action is not supported'])]
+    #[TestWith(['MERGE INTO users USING source ON TRUE WHEN MATCHED THEN DO NOTHING EXTRA', 'MERGE action is not supported'])]
+    #[TestWith(['MERGE INTO users USING source ON TRUE WHEN NOT MATCHED THEN UPDATE SET name = source.name', 'MERGE action is not supported'])]
+    #[TestWith(['MERGE INTO users USING source ON TRUE WHEN MATCHED THEN UPDATE', 'MERGE UPDATE requires SET'])]
+    #[TestWith(['MERGE INTO users USING source ON TRUE WHEN MATCHED THEN UPDATE USING name = source.name', 'MERGE UPDATE requires SET'])]
+    #[TestWith(['MERGE INTO users USING source ON TRUE WHEN MATCHED THEN UPDATE SET target.name = source.name', 'MERGE UPDATE requires simple column assignments'])]
+    #[TestWith(['MERGE INTO users USING source ON TRUE WHEN MATCHED THEN UPDATE SET name =', 'MERGE UPDATE requires simple column assignments'])]
+    #[TestWith(['MERGE INTO users USING source ON TRUE WHEN NOT MATCHED THEN INSERT', 'MERGE INSERT requires VALUES'])]
+    #[TestWith(['MERGE INTO users USING source ON TRUE WHEN NOT MATCHED THEN INSERT FOO VALUES', 'MERGE INSERT requires VALUES'])]
+    #[TestWith(['MERGE INTO users USING source ON TRUE WHEN NOT MATCHED THEN INSERT FOO (source.id)', 'MERGE INSERT requires VALUES'])]
+    #[TestWith(['MERGE INTO users USING source ON TRUE WHEN NOT MATCHED THEN INSERT DEFAULT FOO', 'MERGE INSERT requires VALUES'])]
+    #[TestWith(['MERGE INTO users USING source ON TRUE WHEN NOT MATCHED THEN INSERT DEFAULT VALUES EXTRA', 'MERGE INSERT requires VALUES'])]
+    #[TestWith(['MERGE INTO users USING source ON TRUE WHEN NOT MATCHED THEN INSERT (id) DEFAULT VALUES', 'MERGE INSERT DEFAULT VALUES cannot name columns'])]
+    #[TestWith(['MERGE INTO users USING source ON TRUE WHEN NOT MATCHED THEN INSERT VALUES', 'MERGE INSERT requires VALUES'])]
+    #[TestWith(['MERGE INTO users USING source ON TRUE WHEN NOT MATCHED THEN INSERT VALUES id', 'MERGE INSERT requires VALUES'])]
+    #[TestWith(['MERGE INTO on.users USING source WHEN MATCHED THEN DELETE', 'MERGE requires an ON condition'])]
+    #[TestWith(['MERGE INTO users USING source ON TRUE WHEN NOT FOO THEN DELETE', 'MERGE requires a WHEN clause'])]
+    public function testRejectsMalformedMergeWithSpecificReason(string $sql, string $reason): void
+    {
+        $this->expectException(UnsupportedSqlException::class);
+        $this->expectExceptionMessage($reason);
+
+        (new PgSqlMergeParser())->parse($sql);
+    }
+
+    public function testEndIdentifierDoesNotCloseANonexistentCaseExpression(): void
+    {
+        $statement = (new PgSqlMergeParser())->parse(
+            'MERGE INTO users USING end ON users.id = end.id '
+            . 'WHEN MATCHED AND end THEN DELETE',
+        );
+
+        self::assertSame('end', $statement->sourceSql);
+        self::assertSame('end', $statement->clauses[0]->conditionSql);
+        self::assertSame(PgSqlMergeActionKind::Delete, $statement->clauses[0]->actionKind);
+    }
+
+    public function testSimpleCaseWhenMatchedExpressionIsNotAMergeClause(): void
+    {
+        $statement = (new PgSqlMergeParser())->parse(
+            'MERGE INTO users USING source ON users.id = source.id '
+            . 'WHEN MATCHED AND CASE source.kind WHEN matched THEN TRUE ELSE FALSE END THEN DELETE',
+        );
+
+        self::assertCount(1, $statement->clauses);
+        self::assertSame(
+            'CASE source.kind WHEN matched THEN TRUE ELSE FALSE END',
+            $statement->clauses[0]->conditionSql,
+        );
+        self::assertSame(PgSqlMergeActionKind::Delete, $statement->clauses[0]->actionKind);
+    }
+
     #[TestWith(['SELECT 1'])]
     #[TestWith(['MERGE INTO users USING source WHEN MATCHED THEN DELETE'])]
     #[TestWith(['MERGE INTO users USING source ON users.id = source.id'])]

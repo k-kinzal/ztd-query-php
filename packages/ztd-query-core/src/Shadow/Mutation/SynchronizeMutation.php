@@ -64,7 +64,7 @@ final class SynchronizeMutation implements DataMutation
      */
     public function affectedRowCount(array $before, array $after): int
     {
-        $primaryKeys = array_values($this->definition->primaryKeys ?? []);
+        $primaryKeys = $this->definition->primaryKeys ?? [];
         if ($primaryKeys === []) {
             return max(
                 count($this->difference($before, $after)),
@@ -80,7 +80,7 @@ final class SynchronizeMutation implements DataMutation
                 $count++;
                 continue;
             }
-            $matchedAfter[$afterIndex] = true;
+            $matchedAfter[] = $afterIndex;
             if ($beforeRow !== $after[$afterIndex]) {
                 $count++;
             }
@@ -93,7 +93,7 @@ final class SynchronizeMutation implements DataMutation
      * @param array<int, array<string, mixed>> $rows
      * @param array<string, mixed> $identity
      * @param list<string> $primaryKeys
-     * @param array<int, bool> $excluded
+     * @param list<int> $excluded
      */
     private function matchingRowIndex(
         array $rows,
@@ -102,7 +102,7 @@ final class SynchronizeMutation implements DataMutation
         array $excluded,
     ): ?int {
         foreach ($rows as $index => $row) {
-            if (isset($excluded[$index])) {
+            if (in_array($index, $excluded, true)) {
                 continue;
             }
             $matches = true;

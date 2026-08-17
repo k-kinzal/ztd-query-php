@@ -61,7 +61,6 @@ final class PgSqlTransformer implements SqlTransformer
     public function commitRewriteState(): void
     {
         $this->insertTransformer->commitRewriteState();
-        $this->mergeTransformer?->commitRewriteState();
     }
 
     private function mergeTransformer(): MergeTransformer

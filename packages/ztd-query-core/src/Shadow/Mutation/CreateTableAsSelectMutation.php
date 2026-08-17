@@ -20,7 +20,7 @@ final class CreateTableAsSelectMutation implements ResultSetMutation
 {
     private string $tableName;
 
-    /** @var array<int, string> */
+    /** @var list<string> */
     private array $columnNames;
 
     private TableDefinitionRegistry $registry;
@@ -28,7 +28,7 @@ final class CreateTableAsSelectMutation implements ResultSetMutation
 
     /**
      * @param string $tableName The name of the new table to create.
-     * @param array<int, string> $columnNames Column names extracted from SELECT.
+     * @param list<string> $columnNames Column names extracted from SELECT.
      * @param TableDefinitionRegistry $registry The registry.
      * @param bool $ifNotExists Whether to skip if table exists.
      */

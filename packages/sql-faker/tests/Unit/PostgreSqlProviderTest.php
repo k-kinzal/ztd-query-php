@@ -932,17 +932,70 @@ final class PostgreSqlProviderTest extends TestCase
 
     public function testMergeStatementTargetsFuzzFixtureAndCoversEveryAction(): void
     {
-        $faker = Factory::create();
-        $faker->seed(12345);
-        $provider = new PostgreSqlProvider($faker);
+        $maximum = new class () extends Generator {
+            /**
+             * @param mixed $int1
+             * @param mixed $int2
+             */
+            #[\Override]
+            public function numberBetween($int1 = 0, $int2 = 2147483647): int
+            {
+                return is_int($int2) ? $int2 : 2147483647;
+            }
 
-        $sql = $provider->mergeStatement();
+            /**
+             * @param string $method
+             * @param array<mixed> $attributes
+             */
+            #[\Override]
+            public function __call($method, $attributes): bool
+            {
+                return true;
+            }
+        };
+        $minimum = new class () extends Generator {
+            /**
+             * @param mixed $int1
+             * @param mixed $int2
+             */
+            #[\Override]
+            public function numberBetween($int1 = 0, $int2 = 2147483647): int
+            {
+                return is_int($int1) ? $int1 : 1;
+            }
 
-        self::assertStringContainsString('MERGE INTO users AS target USING', $sql);
-        self::assertStringContainsString('WHEN MATCHED AND source.remove_row THEN DELETE', $sql);
-        self::assertStringContainsString('WHEN MATCHED AND source.name IS NULL THEN DO NOTHING', $sql);
-        self::assertStringContainsString('WHEN MATCHED THEN UPDATE SET name = source.name', $sql);
-        self::assertStringContainsString('WHEN NOT MATCHED THEN INSERT', $sql);
+            /**
+             * @param string $method
+             * @param array<mixed> $attributes
+             */
+            #[\Override]
+            public function __call($method, $attributes): bool
+            {
+                return false;
+            }
+        };
+
+        self::assertSame(
+            "WITH incoming(id, name, remove_row) AS (VALUES (2147483647, 'fuzz', TRUE)) "
+            . 'MERGE INTO users AS target USING incoming AS source'
+            . ' ON target.id = source.id'
+            . ' WHEN MATCHED AND source.remove_row THEN DELETE'
+            . ' WHEN MATCHED AND source.name IS NULL THEN DO NOTHING'
+            . ' WHEN MATCHED THEN UPDATE SET name = source.name'
+            . ' WHEN NOT MATCHED THEN INSERT (id, name, status)'
+            . " VALUES (source.id, source.name, 'active')",
+            (new PostgreSqlProvider($maximum))->mergeStatement(),
+        );
+        self::assertSame(
+            "MERGE INTO users AS target USING (VALUES (1, 'fuzz', FALSE)) AS source(id, name, remove_row)"
+            . ' ON target.id = source.id'
+            . ' WHEN MATCHED AND source.remove_row THEN DELETE'
+            . ' WHEN MATCHED AND source.name IS NULL THEN DO NOTHING'
+            . ' WHEN MATCHED THEN UPDATE SET name = source.name'
+            . ' WHEN NOT MATCHED THEN INSERT (id, name, status)'
+            . " VALUES (source.id, source.name, 'active')",
+            (new PostgreSqlProvider($minimum))->mergeStatement(),
+        );
     }
 
     #[DataProvider('providerNullableSimpleStatementSeed')]

@@ -22,6 +22,7 @@ use ZtdQuery\Platform\Postgres\Transformer\MergeTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
+use ZtdQuery\Schema\IdentityGenerationStrategy;
 
 #[CoversClass(MergeTransformer::class)]
 #[UsesClass(PgSqlCastRenderer::class)]
@@ -150,6 +151,111 @@ final class MergeTransformerTest extends TestCase
         );
     }
 
+    public function testRejectsUnknownTargetAndViewTarget(): void
+    {
+        $transformer = new MergeTransformer(new PgSqlMergeParser(), new SelectTransformer());
+        $sql = 'MERGE INTO target t USING source s ON t.id = s.id WHEN MATCHED THEN DELETE';
+
+        try {
+            $transformer->transform($sql, []);
+            self::fail('Unknown target must be rejected');
+        } catch (UnsupportedSqlException $exception) {
+            self::assertStringContainsString('Cannot resolve MERGE target schema', $exception->getMessage());
+        }
+
+        $this->expectException(UnsupportedSqlException::class);
+        $this->expectExceptionMessage('Cannot resolve MERGE target schema');
+        $transformer->transform($sql, ['target' => ['viewSql' => 'SELECT 1']]);
+    }
+
+    public function testRejectsNonListColumnMetadata(): void
+    {
+        $transformer = new MergeTransformer(new PgSqlMergeParser(), new SelectTransformer());
+
+        $this->expectException(UnsupportedSqlException::class);
+        $this->expectExceptionMessage('MERGE target columns must preserve declaration order');
+
+        $transformer->transform(
+            'MERGE INTO target USING source ON TRUE WHEN MATCHED THEN DELETE',
+            ['target' => ['rows' => [], 'columns' => [2 => 'id'], 'columnTypes' => []]],
+        );
+    }
+
+    public function testProjectsDefaultValuesAndIdentity(): void
+    {
+        $transformer = new MergeTransformer(new PgSqlMergeParser(), new SelectTransformer());
+        $result = $transformer->transform(
+            'MERGE INTO users target USING source ON FALSE '
+            . 'WHEN NOT MATCHED THEN INSERT DEFAULT VALUES',
+            [
+                'users' => [
+                    'rows' => [],
+                    'columns' => ['id', 'name'],
+                    'columnTypes' => [],
+                    'columnDefaults' => ['name' => "'anonymous'"],
+                    'identityStrategies' => ['id' => IdentityGenerationStrategy::Sequence],
+                ],
+            ],
+        );
+
+        self::assertStringContainsString('1 + ROW_NUMBER() OVER () - 1 AS "id"', $result);
+        self::assertStringContainsString("'anonymous' AS \"name\"", $result);
+    }
+
+    public function testRejectsUnknownInsertColumn(): void
+    {
+        $transformer = new MergeTransformer(new PgSqlMergeParser(), new SelectTransformer());
+
+        $this->expectException(UnsupportedSqlException::class);
+        $this->expectExceptionMessage('MERGE INSERT references an unknown target column');
+
+        $transformer->transform(
+            'MERGE INTO users target USING source ON FALSE '
+            . 'WHEN NOT MATCHED THEN INSERT (missing) VALUES (source.value)',
+            ['users' => ['rows' => [], 'columns' => ['id'], 'columnTypes' => []]],
+        );
+    }
+
+    public function testExplicitIdentityValueIsNotGenerated(): void
+    {
+        $transformer = new MergeTransformer(new PgSqlMergeParser(), new SelectTransformer());
+        $result = $transformer->transform(
+            'MERGE INTO users target USING source ON FALSE '
+            . 'WHEN NOT MATCHED THEN INSERT (id, name) VALUES (source.id, source.name)',
+            [
+                'users' => [
+                    'rows' => [],
+                    'columns' => ['id', 'name'],
+                    'columnTypes' => [],
+                    'identityStrategies' => ['id' => IdentityGenerationStrategy::Sequence],
+                ],
+            ],
+        );
+
+        self::assertStringContainsString('source.id AS "id"', $result);
+        self::assertStringNotContainsString('ROW_NUMBER()', $result);
+    }
+
+    public function testDefaultIdentityValueIsGenerated(): void
+    {
+        $transformer = new MergeTransformer(new PgSqlMergeParser(), new SelectTransformer());
+        $result = $transformer->transform(
+            'MERGE INTO users target USING source ON FALSE '
+            . 'WHEN NOT MATCHED THEN INSERT (id, name) VALUES (DEFAULT, source.name)',
+            [
+                'users' => [
+                    'rows' => [],
+                    'columns' => ['id', 'name'],
+                    'columnTypes' => [],
+                    'identityStrategies' => ['id' => IdentityGenerationStrategy::Sequence],
+                ],
+            ],
+        );
+
+        self::assertStringContainsString('1 + ROW_NUMBER() OVER () - 1 AS "id"', $result);
+        self::assertStringContainsString('source.name AS "name"', $result);
+    }
+
     public function testRejectsChildPartitionTargetBeforeStateCanBeTruncated(): void
     {
         $transformer = new MergeTransformer(new PgSqlMergeParser(), new SelectTransformer());
@@ -169,12 +275,4 @@ final class MergeTransformerTest extends TestCase
         );
     }
 
-    public function testCommitRewriteStateIsSafeWithoutIdentityAllocation(): void
-    {
-        $transformer = new MergeTransformer(new PgSqlMergeParser(), new SelectTransformer());
-
-        $transformer->commitRewriteState();
-
-        self::assertInstanceOf(MergeTransformer::class, $transformer);
-    }
 }

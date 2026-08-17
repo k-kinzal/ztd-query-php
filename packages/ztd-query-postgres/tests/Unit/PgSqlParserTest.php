@@ -88,6 +88,12 @@ final class PgSqlParserTest extends TestCase
             'WITH source AS (SELECT 1 AS id) '
             . 'MERGE INTO users USING source ON users.id = source.id WHEN MATCHED THEN DELETE',
         ));
+        self::assertSame('MERGE', $parser->classifyStatement(
+            'merge into users using source on users.id = source.id when matched then delete',
+        ));
+        self::assertSame('SELECT', $parser->classifyStatement('SELECT 1 AS merge_marker'));
+        self::assertNull($parser->classifyStatement('INVALID MERGE'));
+        self::assertNull($parser->classifyStatement('WITH source AS (SELECT 1) INVALID'));
     }
 
     public function testClassifyTruncate(): void

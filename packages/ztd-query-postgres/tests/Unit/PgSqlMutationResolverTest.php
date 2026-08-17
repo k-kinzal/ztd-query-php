@@ -2971,6 +2971,7 @@ final class PgSqlMutationResolverTest extends TestCase
     public function testResolveMergeReturnsAtomicTableSynchronization(): void
     {
         $shadowStore = new ShadowStore();
+        $shadowStore->ensure('users');
         $registry = new TableDefinitionRegistry();
         $registry->register('users', new TableDefinition(
             ['id', 'name'],
@@ -2994,5 +2995,44 @@ final class PgSqlMutationResolverTest extends TestCase
 
         self::assertInstanceOf(SynchronizeMutation::class, $mutation);
         self::assertSame('users', $mutation->tableName());
+    }
+
+    public function testResolveMergeAcceptsInitializedTableWithoutReflectedSchema(): void
+    {
+        $shadowStore = new ShadowStore();
+        $shadowStore->ensure('users');
+        $resolver = new PgSqlMutationResolver(
+            $shadowStore,
+            new TableDefinitionRegistry(),
+            new PgSqlSchemaParser(),
+            new PgSqlParser(),
+        );
+
+        $mutation = $resolver->resolve(
+            'MERGE INTO users u USING source s ON u.id = s.id WHEN MATCHED THEN DELETE',
+            'MERGE',
+            QueryKind::WRITE_SIMULATED,
+        );
+
+        self::assertInstanceOf(SynchronizeMutation::class, $mutation);
+        self::assertSame('users', $mutation->tableName());
+    }
+
+    public function testResolveMergeRejectsUnknownUninitializedTable(): void
+    {
+        $resolver = new PgSqlMutationResolver(
+            new ShadowStore(),
+            new TableDefinitionRegistry(),
+            new PgSqlSchemaParser(),
+            new PgSqlParser(),
+        );
+
+        $this->expectException(UnknownSchemaException::class);
+
+        $resolver->resolve(
+            'MERGE INTO users u USING source s ON u.id = s.id WHEN MATCHED THEN DELETE',
+            'MERGE',
+            QueryKind::WRITE_SIMULATED,
+        );
     }
 }
