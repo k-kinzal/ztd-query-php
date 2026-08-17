@@ -2939,4 +2939,34 @@ SELECT * FROM users'));
 
         self::assertSame(['events', 'archived_events'], $parser->extractSelectTables($sql));
     }
+
+    public function testExtractTargetTableUsesTheTopLevelDmlTailAfterCtesAndComments(): void
+    {
+        $parser = new SqliteParser();
+
+        self::assertSame(
+            'insert_target',
+            $parser->extractTargetTable(
+                "WITH source AS (SELECT 'INTO decoy') /* boundary */ INSERT/* keyword */INTO insert_target VALUES (1)",
+            ),
+        );
+        self::assertSame(
+            'replace_target',
+            $parser->extractTargetTable(
+                "WITH source AS (SELECT 'INTO decoy') /* boundary */ REPLACE/* keyword */INTO replace_target VALUES (1)",
+            ),
+        );
+        self::assertSame(
+            'update_target',
+            $parser->extractTargetTable(
+                'WITH source AS (SELECT 1 AS UPDATE) /* boundary */ UPDATE/* keyword */update_target SET value = 1',
+            ),
+        );
+        self::assertSame(
+            'delete_target',
+            $parser->extractTargetTable(
+                'WITH source AS (SELECT * FROM decoy) /* boundary */ DELETE/* keyword */FROM delete_target',
+            ),
+        );
+    }
 }

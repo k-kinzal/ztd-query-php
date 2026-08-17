@@ -26,11 +26,10 @@ final class UpdateTransformer implements SqlTransformer
     public function __construct(
         MySqlParser $parser,
         SelectTransformer $selectTransformer,
-        ?CteShadowComposer $cteComposer = null,
     ) {
         $this->parser = $parser;
         $this->selectTransformer = $selectTransformer;
-        $this->cteComposer = $cteComposer ?? new CteShadowComposer();
+        $this->cteComposer = new CteShadowComposer();
     }
 
     /**

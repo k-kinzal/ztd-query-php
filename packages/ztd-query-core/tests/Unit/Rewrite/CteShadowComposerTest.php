@@ -103,4 +103,119 @@ final class CteShadowComposerTest extends TestCase
             (new CteShadowComposer())->statementSql('WITH chosen AS (SELECT 1 AS id) DELETE FROM users WHERE id IN (SELECT id FROM chosen)'),
         );
     }
+
+    public function testComposesAReferencedShadowWithoutAnExistingWithClause(): void
+    {
+        self::assertSame(
+            "WITH users AS (SELECT 1 AS id)\nSELECT * FROM users",
+            (new CteShadowComposer())->compose(
+                'SELECT * FROM users',
+                ['users' => 'users AS (SELECT 1 AS id)'],
+            ),
+        );
+    }
+
+    public function testSkipsEntriesIndependentlyAndMatchesDeclaredNamesCaseInsensitively(): void
+    {
+        $composer = new CteShadowComposer();
+
+        self::assertSame(
+            "WITH orders AS (SELECT 2 AS id)\nSELECT * FROM orders",
+            $composer->compose(
+                'SELECT * FROM orders',
+                [
+                    'users' => 'users AS (SELECT 1 AS id)',
+                    'orders' => 'orders AS (SELECT 2 AS id)',
+                ],
+            ),
+        );
+        $declared = 'WITH users AS (SELECT 1 AS id) SELECT * FROM users';
+        self::assertSame(
+            $declared,
+            $composer->compose($declared, ['Users' => 'Users AS (SELECT 2 AS id)']),
+        );
+    }
+
+    public function testHandlesAWithTokenWithoutFollowingHeaderTokens(): void
+    {
+        self::assertSame(
+            "WITH shadow AS (SELECT 1),\n",
+            (new CteShadowComposer())->compose('WITH', ['WITH' => 'shadow AS (SELECT 1)']),
+        );
+    }
+
+    public function testCarriesAnEmptyRewriteWithoutDereferencingMissingTokens(): void
+    {
+        self::assertSame(
+            "WITH source AS (SELECT 1)\n",
+            (new CteShadowComposer())->carryPrefix(
+                'WITH source AS (SELECT 1) UPDATE users SET id = 2',
+                '',
+            ),
+        );
+    }
+
+    public function testMergesRecursiveHeadersAndPreservesLeadingComments(): void
+    {
+        self::assertSame(
+            "/* lead */ WITH RECURSIVE projected AS (SELECT 2),\noriginal AS (SELECT 1)\nSELECT * FROM projected",
+            (new CteShadowComposer())->carryPrefix(
+                '/* lead */ WITH RECURSIVE original AS (SELECT 1) UPDATE users SET id = 2',
+                'WITH projected AS (SELECT 2) SELECT * FROM projected',
+            ),
+        );
+    }
+
+    public function testRecognizesRecursiveRewrittenHeaderDependencies(): void
+    {
+        self::assertSame(
+            "WITH source AS (SELECT 1),\nprojected AS (SELECT * FROM source)\nSELECT * FROM projected",
+            (new CteShadowComposer())->carryPrefix(
+                'WITH source AS (SELECT 1) INSERT INTO target SELECT * FROM source',
+                'WITH RECURSIVE projected AS (SELECT * FROM source) SELECT * FROM projected',
+            ),
+        );
+    }
+
+    public function testParsesRecursiveMaterializationAndNestedCteBodies(): void
+    {
+        $sql = 'WITH RECURSIVE "FIRST"(id) AS MATERIALIZED (SELECT (1)), second AS NOT MATERIALIZED (SELECT id FROM "FIRST") DELETE FROM target';
+        $composer = new CteShadowComposer();
+
+        self::assertSame(['first', 'second'], $composer->declaredCteNames($sql));
+        self::assertSame('DELETE FROM target', $composer->statementSql($sql));
+    }
+
+    public function testHandlesNonHeadersIncompleteHeadersAndEmptyInput(): void
+    {
+        $composer = new CteShadowComposer();
+
+        self::assertSame([], $composer->declaredCteNames(''));
+        self::assertSame('SELECT 1', $composer->statementSql('SELECT 1'));
+        self::assertSame([], $composer->declaredCteNames('WITH only_name'));
+        self::assertSame(
+            'WITH x AS (SELECT 1)',
+            $composer->statementSql('WITH x AS (SELECT 1)'),
+        );
+        self::assertSame([], $composer->declaredCteNames('WITH x AS'));
+        self::assertSame([], $composer->declaredCteNames('WITH x AS NOT'));
+        self::assertSame([], $composer->declaredCteNames('WITH x AS (SELECT 1'));
+        self::assertSame(
+            ['first'],
+            $composer->declaredCteNames('WITH first AS (SELECT 1), broken'),
+        );
+    }
+
+    public function testUnquotesEmptyAndEscapedCteIdentifiers(): void
+    {
+        $composer = new CteShadowComposer();
+
+        self::assertSame([''], $composer->declaredCteNames('WITH "" AS (SELECT 1) SELECT 1'));
+        self::assertSame(
+            ['a"b', 'c`d'],
+            $composer->declaredCteNames(
+                'WITH "a""b" AS (SELECT 1), `c``d` AS (SELECT 2) SELECT 1',
+            ),
+        );
+    }
 }

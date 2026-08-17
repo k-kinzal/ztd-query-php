@@ -38,7 +38,6 @@ final class MySqlTransformer implements SqlTransformer
         UpdateTransformer $updateTransformer,
         DeleteTransformer $deleteTransformer,
         ReplaceTransformer $replaceTransformer,
-        ?CteShadowComposer $cteComposer = null,
     ) {
         $this->parser = $parser;
         $this->selectTransformer = $selectTransformer;
@@ -46,7 +45,7 @@ final class MySqlTransformer implements SqlTransformer
         $this->updateTransformer = $updateTransformer;
         $this->deleteTransformer = $deleteTransformer;
         $this->replaceTransformer = $replaceTransformer;
-        $this->cteComposer = $cteComposer ?? new CteShadowComposer();
+        $this->cteComposer = new CteShadowComposer();
     }
 
     /**

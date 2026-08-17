@@ -139,12 +139,6 @@ final class MySqlRewriter implements SqlRewriter
             throw new UnsupportedSqlException($sql, 'Statement type not supported');
         }
 
-        $mutationStatement = $statement;
-        if ($statement instanceof WithStatement && $kind !== QueryKind::READ) {
-            $mainStatements = $this->parser->parse($this->cteComposer->statementSql($sql));
-            $mutationStatement = $mainStatements[0] ?? $statement;
-        }
-
         $tableContext = $this->buildTableContext();
 
         if ($kind === QueryKind::READ) {
@@ -175,6 +169,12 @@ final class MySqlRewriter implements SqlRewriter
             }
 
             return new RewritePlan($this->emptyResultSelect(), QueryKind::DDL_SIMULATED, $mutation);
+        }
+
+        $mutationStatement = $statement;
+        if ($statement instanceof WithStatement) {
+            $mainStatements = $this->parser->parse($this->cteComposer->statementSql($sql));
+            $mutationStatement = $mainStatements[0] ?? $statement;
         }
 
         $mutation = $this->mutationResolver->resolve($sql, $mutationStatement, $kind);

@@ -25,11 +25,10 @@ final class DeleteTransformer implements SqlTransformer
     public function __construct(
         PgSqlParser $parser,
         SelectTransformer $selectTransformer,
-        ?CteShadowComposer $cteComposer = null,
     ) {
         $this->parser = $parser;
         $this->selectTransformer = $selectTransformer;
-        $this->cteComposer = $cteComposer ?? new CteShadowComposer();
+        $this->cteComposer = new CteShadowComposer();
     }
 
     /**

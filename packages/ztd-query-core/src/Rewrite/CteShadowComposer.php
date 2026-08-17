@@ -85,14 +85,7 @@ final class CteShadowComposer
                 $rewrittenStatementOffset - $contentToken->endOffset(),
             ));
             $rewrittenTail = substr($rewrittenStatement, $rewrittenStatementOffset);
-            $dependsOnOriginalCte = false;
-            foreach ($header['names'] as $name) {
-                if ($this->referencesIdentifier($rewrittenBody, $name)) {
-                    $dependsOnOriginalCte = true;
-                    break;
-                }
-            }
-            if ($dependsOnOriginalCte) {
+            if ($this->referencesAnyIdentifier($rewrittenBody, $header['names'])) {
                 return $prefix . ",\n" . $rewrittenBody . "\n" . $rewrittenTail;
             }
 
@@ -135,7 +128,12 @@ final class CteShadowComposer
     /** @return array{names: list<string>, statementOffset: int|null} */
     private function parseHeader(string $sql): array
     {
-        $tokens = SqlTokenStream::tokenize($sql)->significantTokens();
+        $tokens = [];
+        foreach (SqlTokenStream::tokenize($sql)->significantTokens() as $token) {
+            if ($token->isTopLevel()) {
+                $tokens[] = $token;
+            }
+        }
         if (($tokens[0] ?? null)?->isKeyword('WITH') !== true) {
             return ['names' => [], 'statementOffset' => null];
         }
@@ -146,48 +144,33 @@ final class CteShadowComposer
         }
 
         $names = [];
-        while (isset($tokens[$index]) && $tokens[$index]->isTopLevel()) {
+        while (isset($tokens[$index])) {
             $name = $this->identifierName($tokens[$index]);
             if ($name === null) {
                 break;
             }
             $index++;
 
-            while (isset($tokens[$index]) && !$tokens[$index]->isKeyword('AS')) {
-                if (!$tokens[$index]->isTopLevel()) {
-                    $index++;
-                    continue;
-                }
-                if ($tokens[$index]->kind === SqlTokenKind::Word) {
-                    break 2;
-                }
+            $asIndex = $this->findAsIndex($tokens, $index);
+            $index = ($asIndex ?? count($tokens)) + 1;
+
+            if (($tokens[$index] ?? null)?->isKeyword('NOT') === true) {
                 $index++;
             }
-            if (($tokens[$index] ?? null)?->isKeyword('AS') !== true) {
-                break;
+            if (($tokens[$index] ?? null)?->isKeyword('MATERIALIZED') === true) {
+                $index++;
+            }
+
+            if (!$this->isSymbol($tokens[$index] ?? null, '(')
+                || !$this->isSymbol($tokens[$index + 1] ?? null, ')')
+            ) {
+                return ['names' => $names, 'statementOffset' => null];
             }
             $names[] = strtolower($name);
-            $index++;
-
-            while (isset($tokens[$index]) && !($tokens[$index]->kind === SqlTokenKind::Symbol && $tokens[$index]->text === '(')) {
-                $index++;
-            }
-            if (!isset($tokens[$index])) {
-                break;
-            }
-            $index++;
-
-            while (isset($tokens[$index])) {
-                $token = $tokens[$index];
-                if ($token->kind === SqlTokenKind::Symbol && $token->text === ')' && $token->isTopLevel()) {
-                    $index++;
-                    break;
-                }
-                $index++;
-            }
+            $index += 2;
 
             $separator = $tokens[$index] ?? null;
-            if ($separator === null || $separator->kind !== SqlTokenKind::Symbol || $separator->text !== ',' || !$separator->isTopLevel()) {
+            if (!$this->isSymbol($separator, ',')) {
                 break;
             }
             $index++;
@@ -201,11 +184,48 @@ final class CteShadowComposer
         ];
     }
 
+    /**
+     * @param list<SqlToken> $tokens
+     */
+    private function findAsIndex(array $tokens, int $start): ?int
+    {
+        for ($index = $start; isset($tokens[$index]); $index++) {
+            $token = $tokens[$index];
+            if ($token->isKeyword('AS')) {
+                return $index;
+            }
+            if ($token->kind === SqlTokenKind::Word) {
+                return null;
+            }
+        }
+
+        return null;
+    }
+
+    private function isSymbol(?SqlToken $token, string $symbol): bool
+    {
+        return $token instanceof SqlToken
+            && $token->kind === SqlTokenKind::Symbol
+            && $token->text === $symbol;
+    }
+
     private function referencesIdentifier(string $sql, string $identifier): bool
     {
         foreach (SqlTokenStream::tokenize($sql)->significantTokens() as $token) {
             $candidate = $this->identifierName($token);
             if ($candidate !== null && strcasecmp($candidate, $identifier) === 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** @param list<string> $identifiers */
+    private function referencesAnyIdentifier(string $sql, array $identifiers): bool
+    {
+        foreach ($identifiers as $identifier) {
+            if ($this->referencesIdentifier($sql, $identifier)) {
                 return true;
             }
         }

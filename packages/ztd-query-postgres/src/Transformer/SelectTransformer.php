@@ -35,12 +35,11 @@ final class SelectTransformer implements SqlTransformer
         ?CastRenderer $castRenderer = null,
         ?IdentifierQuoter $quoter = null,
         ?ValueRenderer $valueRenderer = null,
-        ?CteShadowComposer $cteComposer = null,
     ) {
         $this->castRenderer = $castRenderer ?? new PgSqlCastRenderer();
         $this->quoter = $quoter ?? new PgSqlIdentifierQuoter();
         $this->valueRenderer = $valueRenderer ?? new \ZtdQuery\Platform\Postgres\PgSqlValueRenderer($this->castRenderer);
-        $this->cteComposer = $cteComposer ?? new CteShadowComposer();
+        $this->cteComposer = new CteShadowComposer();
     }
 
     /**

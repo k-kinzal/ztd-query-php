@@ -31,12 +31,11 @@ final class SelectTransformer implements SqlTransformer
         ?CastRenderer $castRenderer = null,
         ?IdentifierQuoter $quoter = null,
         ?ValueRenderer $valueRenderer = null,
-        ?CteShadowComposer $cteComposer = null,
     ) {
         $this->castRenderer = $castRenderer ?? new SqliteCastRenderer();
         $this->quoter = $quoter ?? new SqliteIdentifierQuoter();
         $this->valueRenderer = $valueRenderer ?? new \ZtdQuery\Platform\Sqlite\SqliteValueRenderer($this->castRenderer);
-        $this->cteComposer = $cteComposer ?? new CteShadowComposer();
+        $this->cteComposer = new CteShadowComposer();
     }
 
     /**
