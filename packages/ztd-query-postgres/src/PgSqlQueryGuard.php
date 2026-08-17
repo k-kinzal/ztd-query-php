@@ -37,7 +37,6 @@ final class PgSqlQueryGuard
             'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE' => QueryKind::WRITE_SIMULATED,
             'CREATE_TABLE', 'DROP_TABLE', 'ALTER_TABLE' => QueryKind::DDL_SIMULATED,
             'TCL' => QueryKind::SKIPPED,
-            default => null,
         };
     }
 }

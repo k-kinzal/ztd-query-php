@@ -21,8 +21,7 @@ final class PgSqlParser
     /**
      * Classify a SQL statement type.
      *
-     * @return string|null One of: 'SELECT', 'INSERT', 'UPDATE', 'DELETE',
-     *                     'TRUNCATE', 'CREATE_TABLE', 'DROP_TABLE', 'ALTER_TABLE', 'DO', or null.
+     * @return 'SELECT'|'INSERT'|'UPDATE'|'DELETE'|'TRUNCATE'|'CREATE_TABLE'|'DROP_TABLE'|'ALTER_TABLE'|'DO'|'TCL'|null
      */
     public function classifyStatement(string $sql): ?string
     {
@@ -536,6 +535,7 @@ final class PgSqlParser
         return (new PgSqlSelectRelationParser())->tableNames($sql);
     }
 
+    /** @return 'SELECT'|'INSERT'|'UPDATE'|'DELETE'|null */
     private function classifyWithStatement(string $sql): ?string
     {
         $stripped = $this->stripStringLiterals($sql);
@@ -606,6 +606,7 @@ final class PgSqlParser
         return null;
     }
 
+    /** @return 'SELECT'|'INSERT'|'UPDATE'|'DELETE'|'TRUNCATE'|'CREATE_TABLE'|'DROP_TABLE'|'ALTER_TABLE'|'DO'|'TCL'|null */
     private function classifySimpleStatement(string $sql): ?string
     {
         $trimmed = ltrim($sql);

@@ -24,6 +24,7 @@ final class PgSqlParserTest extends TestCase
         self::assertSame([$sql], $parser->splitStatements($sql));
         self::assertSame('DO', $parser->classifyStatement('do language plpgsql $$ begin null; end $$'));
         self::assertNull($parser->classifyStatement('DOUBLE PRECISION'));
+        self::assertNull($parser->classifyStatement('INVALID DO $$ BEGIN NULL; END $$'));
     }
 
     public function testExtractsOnConflictUpdateWhereAfterInsertSelectWhere(): void
