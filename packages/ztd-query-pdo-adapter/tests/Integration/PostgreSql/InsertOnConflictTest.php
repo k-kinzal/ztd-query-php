@@ -19,6 +19,30 @@ use ZtdQuery\Adapter\Pdo\ZtdPdo;
 #[Large]
 final class InsertOnConflictTest extends TestCase
 {
+    public function testPreparedOnConflictDoUpdateReplacesExistingRow(): void
+    {
+        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $table = 'prefix_' . bin2hex(random_bytes(8));
+
+        try {
+            $rawPdo->exec("CREATE TABLE {$table} (id INTEGER PRIMARY KEY, name TEXT NOT NULL)");
+            $ztdPdo = ZtdPdo::fromPdo($rawPdo);
+            $ztdPdo->exec("INSERT INTO {$table} VALUES (1, 'original')");
+            $statement = $ztdPdo->prepare(
+                "INSERT INTO {$table} VALUES (?, ?) ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name"
+            );
+            self::assertNotFalse($statement);
+
+            self::assertTrue($statement->execute(['1', 'updated']));
+
+            $rows = $ztdPdo->query("SELECT * FROM {$table} WHERE id = 1");
+            self::assertNotFalse($rows);
+            self::assertSame([['id' => 1, 'name' => 'updated']], $rows->fetchAll());
+        } finally {
+            $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
+        }
+    }
+
     public function testOnConflictDoNothing(): void
     {
         [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();

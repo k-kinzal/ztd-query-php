@@ -16,6 +16,25 @@ use ZtdQuery\Adapter\Pdo\ZtdPdo;
 #[Large]
 final class InsertOrReplaceTest extends TestCase
 {
+    public function testPreparedInsertOrReplaceRemovesExistingPrimaryKey(): void
+    {
+        $rawPdo = new \PDO('sqlite::memory:', null, null, [
+            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        ]);
+        $rawPdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, value INTEGER)');
+        $ztdPdo = ZtdPdo::fromPdo($rawPdo);
+        $ztdPdo->exec("INSERT INTO users VALUES (1, 'original', 100)");
+
+        $statement = $ztdPdo->prepare('INSERT OR REPLACE INTO users VALUES (?, ?, ?)');
+        self::assertNotFalse($statement);
+        self::assertTrue($statement->execute(['1', 'replaced', 999]));
+
+        $rows = $ztdPdo->query('SELECT * FROM users WHERE id = 1');
+        self::assertNotFalse($rows);
+        self::assertSame([['id' => 1, 'name' => 'replaced', 'value' => 999]], $rows->fetchAll());
+    }
+
     public function testInsertOrReplace(): void
     {
         $rawPdo = new \PDO('sqlite::memory:', null, null, [
