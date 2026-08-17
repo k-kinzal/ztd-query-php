@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Postgres;
 
+use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
 /**
@@ -314,12 +315,74 @@ final class PgSqlParser
      */
     public function extractTruncateTable(string $sql): ?string
     {
-        $sql = $this->maskComments($sql);
-        if (preg_match('/TRUNCATE\s+(?:TABLE\s+)?(?:ONLY\s+)?("[^"]+"|[a-zA-Z_]\w*(?:\."[^"]+"|\.(?:[a-zA-Z_]\w*))?)/i', $sql, $m) === 1) {
-            return $this->unquoteIdentifier($this->stripSchemaPrefix($m[1]));
+        return $this->extractTruncateTables($sql)[0] ?? null;
+    }
+
+    /** @return list<string> */
+    public function extractTruncateTables(string $sql): array
+    {
+        $stream = SqlTokenStream::tokenize($sql);
+        $tokens = $stream->significantTokens();
+        if (!(($tokens[0] ?? null)?->isKeyword('TRUNCATE') ?? false)) {
+            return [];
         }
 
-        return null;
+        $index = 1;
+        if (($tokens[$index] ?? null)?->isKeyword('TABLE') ?? false) {
+            $index++;
+        }
+
+        $tableNames = [];
+        while (isset($tokens[$index])) {
+            if ($tokens[$index]->isKeyword('ONLY')) {
+                $index++;
+            }
+
+            $identifier = $this->truncateIdentifierAt($stream, $index);
+            if ($identifier === null) {
+                break;
+            }
+            $tableName = $identifier['name'];
+            $index = $identifier['next'];
+
+            while (($tokens[$index] ?? null)?->text === '.') {
+                $identifier = $this->truncateIdentifierAt($stream, $index + 1);
+                if ($identifier === null) {
+                    break 2;
+                }
+                $tableName = $identifier['name'];
+                $index = $identifier['next'];
+            }
+
+            if (($tokens[$index] ?? null)?->text === '*') {
+                $index++;
+            }
+            $tableNames[] = $tableName;
+
+            if (($tokens[$index] ?? null)?->text !== ',') {
+                break;
+            }
+            $index++;
+        }
+
+        return $tableNames;
+    }
+
+    /** @return array{name: string, next: int}|null */
+    private function truncateIdentifierAt(SqlTokenStream $stream, int $index): ?array
+    {
+        $tokens = $stream->significantTokens();
+        if ((($tokens[$index] ?? null)?->isKeyword('U') ?? false)
+            && ($tokens[$index + 1] ?? null)?->text === '&'
+            && ($tokens[$index + 2] ?? null)?->kind === SqlTokenKind::QuotedIdentifier
+        ) {
+            return [
+                'name' => $this->unquoteIdentifier($tokens[$index + 2]->text),
+                'next' => $index + 3,
+            ];
+        }
+
+        return $stream->identifierAt($index);
     }
 
     /**

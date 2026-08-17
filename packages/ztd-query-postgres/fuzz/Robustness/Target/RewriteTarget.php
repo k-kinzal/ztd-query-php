@@ -11,6 +11,7 @@ use Fuzz\Robustness\Invariant\ClassifyRewriteAgreementChecker;
 use Fuzz\Robustness\Invariant\InvariantChecker;
 use Fuzz\Robustness\Invariant\RewriteExceptionTypeChecker;
 use Fuzz\Robustness\Invariant\RewritePlanConsistencyChecker;
+use Fuzz\Robustness\Invariant\TruncateTargetConsistencyChecker;
 use SqlFaker\PostgreSqlProvider;
 use ZtdQuery\Platform\Postgres\PgSqlMutationResolver;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
@@ -60,6 +61,7 @@ final class RewriteTarget
             new RewriteExceptionTypeChecker($rewriter),
             new RewritePlanConsistencyChecker($rewriter),
             new ClassifyRewriteAgreementChecker($guard, $rewriter),
+            new TruncateTargetConsistencyChecker($rewriter),
         ];
     }
 
@@ -131,6 +133,7 @@ final class RewriteTarget
             fn (): string => $this->provider->createTableStatement(maxDepth: 5),
             fn (): string => $this->provider->alterTableStatement(maxDepth: 5),
             fn (): string => $this->provider->dropTableStatement(maxDepth: 3),
+            fn (): string => $this->provider->truncateStatement(maxDepth: 8),
         ];
 
         $index = ord($input[0] ?? "\0") % count($generators);

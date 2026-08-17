@@ -15,6 +15,7 @@ use ZtdQuery\Shadow\Mutation\CreateTableMutation;
 use ZtdQuery\Shadow\Mutation\DeleteMutation;
 use ZtdQuery\Shadow\Mutation\DropTableMutation;
 use ZtdQuery\Shadow\Mutation\InsertMutation;
+use ZtdQuery\Shadow\Mutation\MultiTruncateMutation;
 use ZtdQuery\Shadow\Mutation\ShadowMutation;
 use ZtdQuery\Shadow\Mutation\TruncateMutation;
 use ZtdQuery\Shadow\Mutation\UpdateMutation;
@@ -152,12 +153,15 @@ final class PgSqlMutationResolver
 
     private function resolveTruncate(string $sql): ShadowMutation
     {
-        $tableName = $this->parser->extractTruncateTable($sql);
-        if ($tableName === null) {
+        $tableNames = $this->parser->extractTruncateTables($sql);
+        if ($tableNames === []) {
             throw new UnsupportedSqlException($sql, 'Cannot resolve TRUNCATE target');
         }
+        if (count($tableNames) > 1) {
+            return new MultiTruncateMutation($tableNames);
+        }
 
-        return new TruncateMutation($tableName);
+        return new TruncateMutation($tableNames[0]);
     }
 
     private function resolveCreateTable(string $sql): ShadowMutation

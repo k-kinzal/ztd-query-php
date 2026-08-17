@@ -19,6 +19,7 @@ use ZtdQuery\Shadow\Mutation\CreateTableMutation;
 use ZtdQuery\Shadow\Mutation\DeleteMutation;
 use ZtdQuery\Shadow\Mutation\DropTableMutation;
 use ZtdQuery\Shadow\Mutation\InsertMutation;
+use ZtdQuery\Shadow\Mutation\MultiTruncateMutation;
 use ZtdQuery\Shadow\Mutation\TruncateMutation;
 use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\Mutation\UpsertMutation;
@@ -317,6 +318,25 @@ final class PgSqlMutationResolverTest extends TestCase
         );
 
         self::assertInstanceOf(TruncateMutation::class, $mutation);
+    }
+
+    public function testResolveMultiTableTruncateReturnsMultiTruncateMutation(): void
+    {
+        $resolver = new PgSqlMutationResolver(
+            new ShadowStore(),
+            new TableDefinitionRegistry(),
+            new PgSqlSchemaParser(),
+            new PgSqlParser(),
+        );
+
+        $mutation = $resolver->resolve(
+            'TRUNCATE TABLE alpha, beta RESTART IDENTITY',
+            'TRUNCATE',
+            QueryKind::WRITE_SIMULATED,
+        );
+
+        self::assertInstanceOf(MultiTruncateMutation::class, $mutation);
+        self::assertSame(['alpha', 'beta'], $mutation->tableNames());
     }
 
     public function testResolveTruncateWithoutTableThrows(): void

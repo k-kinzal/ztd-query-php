@@ -264,6 +264,28 @@ SELECT * FROM users'));
         self::assertSame('users', $parser->extractTruncateTable('TRUNCATE TABLE users CASCADE'));
     }
 
+    public function testExtractTruncateTablesPreservesEveryTarget(): void
+    {
+        $parser = new PgSqlParser();
+
+        self::assertSame(
+            ['Alpha', 'beta', 'gamma'],
+            $parser->extractTruncateTables(
+                'TRUNCATE TABLE ONLY public."Alpha" *, /* next */ ONLY beta, gamma RESTART IDENTITY CASCADE',
+            ),
+        );
+    }
+
+    public function testExtractTruncateTablesSupportsUnicodeQuotedIdentifiers(): void
+    {
+        $parser = new PgSqlParser();
+
+        self::assertSame(
+            ['select', 'second', 'third'],
+            $parser->extractTruncateTables('TRUNCATE TABLE U&"select", public.U&"second", "third"'),
+        );
+    }
+
     public function testExtractCreateTableName(): void
     {
         $parser = new PgSqlParser();
