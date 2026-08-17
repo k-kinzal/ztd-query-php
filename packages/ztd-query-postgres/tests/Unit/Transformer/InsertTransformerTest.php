@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
+use ZtdQuery\Platform\Postgres\Transformer\InsertSelectRenderer;
 use ZtdQuery\Platform\Postgres\Transformer\InsertTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
 use ZtdQuery\Schema\ColumnType;
@@ -25,6 +26,7 @@ use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 #[UsesClass(PgSqlCastRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlValueRenderer::class)]
 #[UsesClass(PgSqlIdentifierQuoter::class)]
+#[UsesClass(InsertSelectRenderer::class)]
 final class InsertTransformerTest extends TestCase
 {
     public function testUsesInjectedCastRendererForTypedValue(): void
@@ -159,6 +161,23 @@ final class InsertTransformerTest extends TestCase
         self::assertStringContainsString('SELECT', $result);
         self::assertStringContainsString('"users"', $result);
         self::assertStringContainsString('AS MATERIALIZED', $result);
+    }
+
+    public function testInsertSelectUsesExplicitTargetColumnsForProjectionAndIdentity(): void
+    {
+        $transformer = new InsertTransformer(new PgSqlParser(), new SelectTransformer());
+        $tables = ['archive' => [
+            'rows' => [],
+            'columns' => ['id', 'name', 'status'],
+            'columnTypes' => [],
+            'identityStrategies' => ['id' => IdentityGenerationStrategy::Sequence],
+        ]];
+
+        $result = $transformer->transform('INSERT INTO archive (name) SELECT name FROM users', $tables);
+
+        self::assertStringContainsString('1 + ROW_NUMBER() OVER () - 1 AS "id"', $result);
+        self::assertStringContainsString('"__ztd_insert_0" AS "name"', $result);
+        self::assertStringContainsString('NULL AS "status"', $result);
     }
 
     public function testInsertWithoutTableThrowsException(): void

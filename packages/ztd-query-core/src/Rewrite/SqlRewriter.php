@@ -10,6 +10,11 @@ namespace ZtdQuery\Rewrite;
 interface SqlRewriter
 {
     /**
+     * Return a dialect-valid SELECT statement that yields no rows.
+     */
+    public function emptyResultSelect(): string;
+
+    /**
      * Rewrite a SQL string into a structured plan.
      * For multiple statements, only returns plan for the first statement.
      */

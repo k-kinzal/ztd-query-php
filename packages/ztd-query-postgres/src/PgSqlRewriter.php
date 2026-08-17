@@ -136,13 +136,13 @@ final class PgSqlRewriter implements SqlRewriter
                 }
             }
 
-            return new RewritePlan('SELECT 1 WHERE FALSE', QueryKind::DDL_SIMULATED, $mutation);
+            return new RewritePlan($this->emptyResultSelect(), QueryKind::DDL_SIMULATED, $mutation);
         }
 
         $mutation = $this->mutationResolver->resolve($sql, $statementType ?? '', $kind);
 
         if ($statementType === 'TRUNCATE') {
-            return new RewritePlan('SELECT 1 WHERE FALSE', QueryKind::WRITE_SIMULATED, $mutation);
+            return new RewritePlan($this->emptyResultSelect(), QueryKind::WRITE_SIMULATED, $mutation);
         }
 
         $transformedSql = $this->transformer->transform($sql, $tableContext);
@@ -235,5 +235,10 @@ final class PgSqlRewriter implements SqlRewriter
         }
 
         return false;
+    }
+
+    public function emptyResultSelect(): string
+    {
+        return 'SELECT 1 WHERE FALSE';
     }
 }

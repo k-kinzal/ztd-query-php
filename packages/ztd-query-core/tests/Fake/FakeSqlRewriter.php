@@ -313,4 +313,9 @@ final class FakeSqlRewriter implements SqlRewriter
 
         return $resultSql;
     }
+
+    public function emptyResultSelect(): string
+    {
+        return 'SELECT 1 WHERE FALSE';
+    }
 }

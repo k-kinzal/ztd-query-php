@@ -183,7 +183,7 @@ final class Session
                 );
             }
 
-            return new RewritePlan('SELECT 1 WHERE FALSE', QueryKind::READ);
+            return new RewritePlan($this->rewriter->emptyResultSelect(), QueryKind::READ);
         }
     }
 

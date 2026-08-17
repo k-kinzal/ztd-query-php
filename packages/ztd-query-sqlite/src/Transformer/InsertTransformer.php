@@ -7,10 +7,7 @@ namespace ZtdQuery\Platform\Sqlite\Transformer;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\Sqlite\SqliteCastRenderer;
-use ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
-use ZtdQuery\Rewrite\InsertRowProjector;
-use ZtdQuery\Rewrite\InsertSelectProjector;
 use ZtdQuery\Rewrite\ShadowIdentityAllocator;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
@@ -32,9 +29,9 @@ final class InsertTransformer implements SqlTransformer
     private SqliteParser $parser;
     private SelectTransformer $selectTransformer;
     private CastRenderer $castRenderer;
-    private InsertRowProjector $rowProjector;
+    private InsertRowRenderer $rowRenderer;
     private ShadowIdentityAllocator $identityAllocator;
-    private InsertSelectProjector $insertSelectProjector;
+    private InsertSelectRenderer $insertSelectRenderer;
 
     public function __construct(
         SqliteParser $parser,
@@ -44,9 +41,9 @@ final class InsertTransformer implements SqlTransformer
         $this->parser = $parser;
         $this->selectTransformer = $selectTransformer;
         $this->castRenderer = $castRenderer ?? new SqliteCastRenderer();
-        $this->rowProjector = new InsertRowProjector();
+        $this->rowRenderer = new InsertRowRenderer();
         $this->identityAllocator = new ShadowIdentityAllocator();
-        $this->insertSelectProjector = new InsertSelectProjector(new SqliteIdentifierQuoter());
+        $this->insertSelectRenderer = new InsertSelectRenderer();
     }
 
     /**
@@ -113,18 +110,19 @@ final class InsertTransformer implements SqlTransformer
             }
 
             $sourceColumns = $insertColumns !== [] ? $insertColumns : $tableColumns;
-            $generatedValues = $this->identityAllocator->allocateSelectExpressions(
+            $generatedIdentityStarts = $this->identityAllocator->allocateSelectStarts(
                 $tableName,
-                array_diff_key($identityStrategies, array_flip($sourceColumns)),
+                $identityStrategies,
+                $sourceColumns,
                 $existingRows,
             );
 
-            return $this->insertSelectProjector->project(
+            return $this->insertSelectRenderer->render(
                 $selectSql,
                 $tableColumns,
                 $sourceColumns,
                 $columnDefaults,
-                $generatedValues,
+                $generatedIdentityStarts,
             );
         }
 
@@ -173,18 +171,18 @@ final class InsertTransformer implements SqlTransformer
     ): string {
         $values = self::orderedValues($values);
         $sourceColumns = $insertColumns !== [] || $values === [] ? $insertColumns : $tableColumns;
-        $generatedValues = $this->identityAllocator->allocateMissing(
-            $tableName,
-            $identityStrategies,
-            $sourceColumns,
-            $values,
-            $existingRows,
-        );
         try {
-            $projected = $this->rowProjector->project($tableColumns, $sourceColumns, $values, $columnDefaults, $generatedValues);
+            $providedExpressions = $this->rowRenderer->providedExpressions($sourceColumns, $values);
         } catch (\InvalidArgumentException $exception) {
             throw new \RuntimeException($exception->getMessage(), 0, $exception);
         }
+        $generatedValues = $this->identityAllocator->allocateMissing(
+            $tableName,
+            $identityStrategies,
+            array_keys($providedExpressions),
+            $existingRows,
+        );
+        $projected = $this->rowRenderer->render($tableColumns, $providedExpressions, $columnDefaults, $generatedValues);
 
         $selects = [];
         foreach ($projected as $column => $expr) {

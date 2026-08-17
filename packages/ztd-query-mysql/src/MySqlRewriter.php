@@ -165,13 +165,13 @@ final class MySqlRewriter implements SqlRewriter
                 return new RewritePlan($transformedSelectSql, QueryKind::DDL_SIMULATED, $mutation);
             }
 
-            return new RewritePlan('SELECT 1 WHERE FALSE', QueryKind::DDL_SIMULATED, $mutation);
+            return new RewritePlan($this->emptyResultSelect(), QueryKind::DDL_SIMULATED, $mutation);
         }
 
         $mutation = $this->mutationResolver->resolve($sql, $statement, $kind);
 
         if ($statement instanceof TruncateStatement) {
-            return new RewritePlan('SELECT 1 WHERE FALSE', QueryKind::WRITE_SIMULATED, $mutation);
+            return new RewritePlan($this->emptyResultSelect(), QueryKind::WRITE_SIMULATED, $mutation);
         }
 
         if ($statement instanceof ReplaceStatement) {
@@ -470,5 +470,10 @@ final class MySqlRewriter implements SqlRewriter
         }
         $dest = $into->dest;
         return is_string($dest) ? $dest : ($dest->table ?? null);
+    }
+
+    public function emptyResultSelect(): string
+    {
+        return 'SELECT 1 WHERE FALSE';
     }
 }

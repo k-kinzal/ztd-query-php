@@ -32,6 +32,8 @@ use ZtdQuery\Session;
 #[UsesClass(MySqlSchemaReflector::class)]
 #[UsesClass(DeleteTransformer::class)]
 #[UsesClass(InsertTransformer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\InsertSelectRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\MySqlSelectListAliaser::class)]
 #[UsesClass(MySqlTransformer::class)]
 #[UsesClass(ReplaceTransformer::class)]
 #[UsesClass(SelectTransformer::class)]

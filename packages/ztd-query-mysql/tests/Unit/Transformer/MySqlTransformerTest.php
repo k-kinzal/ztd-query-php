@@ -21,6 +21,8 @@ use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
 #[UsesClass(MySqlParser::class)]
 #[UsesClass(SelectTransformer::class)]
 #[UsesClass(InsertTransformer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\InsertSelectRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\MySqlSelectListAliaser::class)]
 #[UsesClass(UpdateTransformer::class)]
 #[UsesClass(DeleteTransformer::class)]
 #[UsesClass(ReplaceTransformer::class)]

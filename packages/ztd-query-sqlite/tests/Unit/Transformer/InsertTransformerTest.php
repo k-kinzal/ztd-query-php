@@ -9,6 +9,7 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\Sqlite\SqliteLexicalMasker;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
+use ZtdQuery\Platform\Sqlite\Transformer\InsertSelectRenderer;
 use ZtdQuery\Platform\Sqlite\Transformer\InsertTransformer;
 use ZtdQuery\Platform\Sqlite\Transformer\SelectTransformer;
 use ZtdQuery\Platform\Sqlite\SqliteCastRenderer;
@@ -26,6 +27,7 @@ use ZtdQuery\Schema\IdentityGenerationStrategy;
 #[UsesClass(SqliteCastRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteValueRenderer::class)]
 #[UsesClass(SqliteIdentifierQuoter::class)]
+#[UsesClass(InsertSelectRenderer::class)]
 final class InsertTransformerTest extends TestCase
 {
     public function testUsesInjectedCastRendererAndColumnTypes(): void
@@ -141,6 +143,23 @@ final class InsertTransformerTest extends TestCase
         self::assertStringContainsString('SELECT', $result);
         self::assertStringContainsString('"id"', $result);
         self::assertStringContainsString('"name"', $result);
+    }
+
+    public function testTransformInsertSelectUsesExplicitTargetColumnsForProjectionAndIdentity(): void
+    {
+        $transformer = new InsertTransformer(new SqliteParser(), new SelectTransformer());
+        $tables = ['archive' => [
+            'rows' => [],
+            'columns' => ['id', 'name', 'status'],
+            'columnTypes' => [],
+            'identityStrategies' => ['id' => IdentityGenerationStrategy::MaxValue],
+        ]];
+
+        $result = $transformer->transform('INSERT INTO archive (name) SELECT name FROM users', $tables);
+
+        self::assertStringContainsString('1 + ROW_NUMBER() OVER () - 1 AS "id"', $result);
+        self::assertStringContainsString('"__ztd_insert_0" AS "name"', $result);
+        self::assertStringContainsString('NULL AS "status"', $result);
     }
 
     public function testTransformWithoutTableThrows(): void

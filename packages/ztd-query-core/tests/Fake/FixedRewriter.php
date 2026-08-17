@@ -31,4 +31,9 @@ final class FixedRewriter implements SqlRewriter
     {
         return new MultiRewritePlan([$this->plan]);
     }
+
+    public function emptyResultSelect(): string
+    {
+        return 'SELECT 1 WHERE FALSE';
+    }
 }

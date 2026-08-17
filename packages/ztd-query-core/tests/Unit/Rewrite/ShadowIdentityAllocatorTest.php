@@ -17,8 +17,8 @@ final class ShadowIdentityAllocatorTest extends TestCase
         $allocator = new ShadowIdentityAllocator();
         $strategies = ['id' => IdentityGenerationStrategy::MaxValue];
 
-        self::assertSame(['id' => '8'], $allocator->allocateMissing('users', $strategies, ['name'], ["'a'"], [['id' => 7]]));
-        self::assertSame(['id' => '9'], $allocator->allocateMissing('users', $strategies, ['name'], ["'b'"], []));
+        self::assertSame(['id' => 8], $allocator->allocateMissing('users', $strategies, ['name'], [['id' => 7]]));
+        self::assertSame(['id' => 9], $allocator->allocateMissing('users', $strategies, ['name'], []));
     }
 
     public function testSequenceIdentityDoesNotUseExplicitRowMaximum(): void
@@ -26,9 +26,9 @@ final class ShadowIdentityAllocatorTest extends TestCase
         $allocator = new ShadowIdentityAllocator();
         $strategies = ['id' => IdentityGenerationStrategy::Sequence];
 
-        self::assertSame(['id' => '1'], $allocator->allocateMissing('users', $strategies, [], [], [['id' => 99]]));
-        self::assertSame(['id' => '2'], $allocator->allocateMissing('users', $strategies, ['id'], ['DEFAULT'], []));
-        self::assertSame([], $allocator->allocateMissing('users', $strategies, ['id'], ['500'], []));
+        self::assertSame(['id' => 1], $allocator->allocateMissing('users', $strategies, [], [['id' => 99]]));
+        self::assertSame(['id' => 2], $allocator->allocateMissing('users', $strategies, [], []));
+        self::assertSame([], $allocator->allocateMissing('users', $strategies, ['id'], []));
     }
 
     public function testGeneratedStateIsSeparatedByTableAndColumn(): void
@@ -36,22 +36,22 @@ final class ShadowIdentityAllocatorTest extends TestCase
         $allocator = new ShadowIdentityAllocator();
 
         self::assertSame(
-            ['id' => '1', 'tenant_id' => '1'],
+            ['id' => 1, 'tenant_id' => 1],
             $allocator->allocateMissing('users', [
                 'id' => IdentityGenerationStrategy::Sequence,
                 'tenant_id' => IdentityGenerationStrategy::Sequence,
-            ], [], [], []),
+            ], [], []),
         );
         self::assertSame(
-            ['id' => '1'],
-            $allocator->allocateMissing('orders', ['id' => IdentityGenerationStrategy::Sequence], [], [], []),
+            ['id' => 1],
+            $allocator->allocateMissing('orders', ['id' => IdentityGenerationStrategy::Sequence], [], []),
         );
         self::assertSame(
-            ['id' => '2', 'tenant_id' => '2'],
+            ['id' => 2, 'tenant_id' => 2],
             $allocator->allocateMissing('users', [
                 'id' => IdentityGenerationStrategy::Sequence,
                 'tenant_id' => IdentityGenerationStrategy::Sequence,
-            ], [], [], []),
+            ], [], []),
         );
     }
 
@@ -64,12 +64,12 @@ final class ShadowIdentityAllocatorTest extends TestCase
         ];
 
         self::assertSame(
-            ['tenant_id' => '1'],
-            $allocator->allocateMissing('users', $strategies, ['id'], ['100'], []),
+            ['tenant_id' => 1],
+            $allocator->allocateMissing('users', $strategies, ['id'], []),
         );
         self::assertSame(
-            ['id' => '1', 'tenant_id' => '2'],
-            $allocator->allocateMissing('users', $strategies, ['id'], ['  default  '], []),
+            ['id' => 1, 'tenant_id' => 2],
+            $allocator->allocateMissing('users', $strategies, [], []),
         );
     }
 
@@ -88,35 +88,32 @@ final class ShadowIdentityAllocatorTest extends TestCase
         ];
 
         self::assertSame(
-            ['id' => '16'],
-            $allocator->allocateMissing('users', ['id' => IdentityGenerationStrategy::MaxValue], [], [], $rows),
+            ['id' => 16],
+            $allocator->allocateMissing('users', ['id' => IdentityGenerationStrategy::MaxValue], [], $rows),
         );
         self::assertSame(
-            ['id' => '1'],
+            ['id' => 1],
             (new ShadowIdentityAllocator())->allocateMissing(
                 'empty',
                 ['id' => IdentityGenerationStrategy::MaxValue],
-                [],
                 [],
                 [['id' => 'invalid'], ['id' => 0.9]],
             ),
         );
         self::assertSame(
-            ['id' => '13'],
+            ['id' => 13],
             (new ShadowIdentityAllocator())->allocateMissing(
                 'strings',
                 ['id' => IdentityGenerationStrategy::MaxValue],
-                [],
                 [],
                 [['id' => '12']],
             ),
         );
         self::assertSame(
-            ['id' => '1'],
+            ['id' => 1],
             (new ShadowIdentityAllocator())->allocateMissing(
                 'non-integers',
                 ['id' => IdentityGenerationStrategy::MaxValue],
-                [],
                 [],
                 [['id' => true], ['id' => 18.0]],
             ),
@@ -129,12 +126,58 @@ final class ShadowIdentityAllocatorTest extends TestCase
         $strategies = ['id' => IdentityGenerationStrategy::Sequence];
 
         self::assertSame(
-            ['id' => '1 + ROW_NUMBER() OVER () - 1'],
-            $allocator->allocateSelectExpressions('users', $strategies, []),
+            ['id' => 1],
+            $allocator->allocateSelectStarts('users', $strategies, [], []),
         );
         self::assertSame(
-            ['id' => '3'],
-            $allocator->allocateMissing('users', $strategies, ['name'], ["'c'"], [['id' => 1], ['id' => 2]]),
+            ['id' => 3],
+            $allocator->allocateMissing('users', $strategies, ['name'], [['id' => 1], ['id' => 2]]),
+        );
+    }
+
+    public function testSelectAllocationUsesStrategyStateAndAllColumns(): void
+    {
+        $allocator = new ShadowIdentityAllocator();
+
+        self::assertSame(
+            [
+                'max_id' => 8,
+                'sequence_id' => 1,
+            ],
+            $allocator->allocateSelectStarts(
+                'users',
+                [
+                    'max_id' => IdentityGenerationStrategy::MaxValue,
+                    'sequence_id' => IdentityGenerationStrategy::Sequence,
+                ],
+                [],
+                [['max_id' => 7, 'sequence_id' => 99]],
+            ),
+        );
+        self::assertSame(
+            ['sequence_id' => 100],
+            $allocator->allocateMissing(
+                'users',
+                ['sequence_id' => IdentityGenerationStrategy::Sequence],
+                [],
+                [['sequence_id' => 99]],
+            ),
+        );
+    }
+
+    public function testSelectAllocationSkipsProvidedIdentityColumns(): void
+    {
+        self::assertSame(
+            ['generated_id' => 1],
+            (new ShadowIdentityAllocator())->allocateSelectStarts(
+                'users',
+                [
+                    'provided_id' => IdentityGenerationStrategy::Sequence,
+                    'generated_id' => IdentityGenerationStrategy::Sequence,
+                ],
+                ['provided_id'],
+                [],
+            ),
         );
     }
 }

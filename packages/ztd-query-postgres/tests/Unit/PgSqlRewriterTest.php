@@ -46,6 +46,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(PgSqlTransformer::class)]
 #[UsesClass(SelectTransformer::class)]
 #[UsesClass(InsertTransformer::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\InsertSelectRenderer::class)]
 #[UsesClass(UpdateTransformer::class)]
 #[UsesClass(DeleteTransformer::class)]
 #[UsesClass(PgSqlCastRenderer::class)]

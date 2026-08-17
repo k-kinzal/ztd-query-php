@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Rewrite;
+namespace ZtdQuery\Platform\MySql\Transformer;
 
-use ZtdQuery\Platform\IdentifierQuoter;
+use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
-final class SelectListAliaser
+final class MySqlSelectListAliaser
 {
     private const MODIFIERS = [
         'ALL', 'DISTINCT', 'DISTINCTROW', 'HIGH_PRIORITY', 'STRAIGHT_JOIN',
@@ -17,7 +17,38 @@ final class SelectListAliaser
         'SQL_NO_CACHE', 'SQL_CALC_FOUND_ROWS',
     ];
 
-    public function alias(string $sql, IdentifierQuoter $quoter): string
+    private const SELECT_LIST_TERMINATORS = [
+        'FROM', 'WHERE', 'GROUP', 'HAVING', 'ORDER',
+        'LIMIT', 'UNION', 'INTERSECT', 'EXCEPT',
+    ];
+
+    private MySqlIdentifierQuoter $quoter;
+
+    public function __construct()
+    {
+        $this->quoter = new MySqlIdentifierQuoter();
+    }
+
+    public function projectionCount(string $sql): ?int
+    {
+        $endKeywords = [];
+        foreach (self::SELECT_LIST_TERMINATORS as $terminator) {
+            $endKeywords[] = [$terminator];
+        }
+        $selectList = SqlTokenStream::tokenize($sql)->topLevelClause(['SELECT'], $endKeywords);
+        if ($selectList === null) {
+            return null;
+        }
+
+        $expressions = SqlTokenStream::tokenize($selectList)->splitTopLevel();
+        if ($expressions === [] || $this->containsWildcard($expressions)) {
+            return null;
+        }
+
+        return count($expressions);
+    }
+
+    public function alias(string $sql): string
     {
         $tokens = SqlTokenStream::tokenize($sql)->significantTokens();
         $select = null;
@@ -26,11 +57,14 @@ final class SelectListAliaser
             if (!$token->isTopLevel()) {
                 continue;
             }
-            if ($select === null && $token->isKeyword('SELECT')) {
+            if ($select === null) {
+                if (!$token->isKeyword('SELECT')) {
+                    continue;
+                }
                 $select = $token;
                 continue;
             }
-            if ($select !== null && $this->endsSelectList($token)) {
+            if ($this->endsSelectList($token)) {
                 $end = $token->offset;
                 break;
             }
@@ -50,7 +84,7 @@ final class SelectListAliaser
         $expressions[0] = $prefix['expression'];
         foreach ($expressions as $index => $expression) {
             $expressions[$index] = $this->withoutExplicitAlias($expression)
-                . ' AS ' . $quoter->quote('__ztd_insert_' . $index);
+                . ' AS ' . $this->quoter->quote('__ztd_insert_' . $index);
         }
 
         $replacement = ' ' . $prefix['modifiers'] . implode(', ', $expressions) . ' ';
@@ -60,15 +94,13 @@ final class SelectListAliaser
 
     private function endsSelectList(SqlToken $token): bool
     {
-        return $token->isKeyword('FROM')
-            || $token->isKeyword('WHERE')
-            || $token->isKeyword('GROUP')
-            || $token->isKeyword('HAVING')
-            || $token->isKeyword('ORDER')
-            || $token->isKeyword('LIMIT')
-            || $token->isKeyword('UNION')
-            || $token->isKeyword('INTERSECT')
-            || $token->isKeyword('EXCEPT');
+        foreach (self::SELECT_LIST_TERMINATORS as $terminator) {
+            if ($token->isKeyword($terminator)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** @param list<string> $expressions */
@@ -76,8 +108,14 @@ final class SelectListAliaser
     {
         foreach ($expressions as $expression) {
             $tokens = SqlTokenStream::tokenize($expression)->significantTokens();
-            $last = $tokens[count($tokens) - 1] ?? null;
-            if ($last?->kind === SqlTokenKind::Symbol && $last->text === '*') {
+            if ($tokens === []) {
+                return true;
+            }
+            $last = $tokens[count($tokens) - 1];
+            if ($last->kind !== SqlTokenKind::Symbol) {
+                continue;
+            }
+            if ($last->text === '*') {
                 return true;
             }
         }
@@ -88,34 +126,45 @@ final class SelectListAliaser
     /** @return array{modifiers: string, expression: string} */
     private function removeModifiers(string $expression): array
     {
-        $end = 0;
+        $end = null;
         foreach (SqlTokenStream::tokenize($expression)->significantTokens() as $token) {
-            if ($token->kind !== SqlTokenKind::Word || !in_array(strtoupper($token->text), self::MODIFIERS, true)) {
+            if (!$this->isModifier($token)) {
                 break;
             }
             $end = $token->endOffset();
         }
 
-        if ($end === 0) {
-            return ['modifiers' => '', 'expression' => trim($expression)];
+        if ($end === null) {
+            return ['modifiers' => '', 'expression' => $expression];
         }
 
         return [
-            'modifiers' => trim(substr($expression, 0, $end)) . ' ',
+            'modifiers' => substr($expression, 0, $end) . ' ',
             'expression' => trim(substr($expression, $end)),
         ];
+    }
+
+    private function isModifier(SqlToken $token): bool
+    {
+        foreach (self::MODIFIERS as $modifier) {
+            if ($token->isKeyword($modifier)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function withoutExplicitAlias(string $expression): string
     {
         $tokens = SqlTokenStream::tokenize($expression)->significantTokens();
-        for ($index = count($tokens) - 2; $index >= 0; $index--) {
-            $token = $tokens[$index];
+        array_pop($tokens);
+        foreach (array_reverse($tokens) as $token) {
             if ($token->isTopLevel() && $token->isKeyword('AS')) {
                 return rtrim(substr($expression, 0, $token->offset));
             }
         }
 
-        return trim($expression);
+        return $expression;
     }
 }

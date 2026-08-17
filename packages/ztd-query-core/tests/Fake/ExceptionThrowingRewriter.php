@@ -29,4 +29,9 @@ final class ExceptionThrowingRewriter implements SqlRewriter
     {
         throw $this->exception;
     }
+
+    public function emptyResultSelect(): string
+    {
+        return 'SELECT 1 WHERE FALSE';
+    }
 }

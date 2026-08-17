@@ -12,7 +12,9 @@ use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlParser;
+use ZtdQuery\Platform\MySql\Transformer\InsertSelectRenderer;
 use ZtdQuery\Platform\MySql\Transformer\InsertTransformer;
+use ZtdQuery\Platform\MySql\Transformer\MySqlSelectListAliaser;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
 use ZtdQuery\Schema\ColumnType;
@@ -23,6 +25,8 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 #[UsesClass(SelectTransformer::class)]
 #[UsesClass(MySqlCastRenderer::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]
+#[UsesClass(InsertSelectRenderer::class)]
+#[UsesClass(MySqlSelectListAliaser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlTypeSemantics::class)]
 final class InsertTransformerTest extends TestCase
@@ -390,7 +394,7 @@ final class InsertTransformerTest extends TestCase
         $result = $transformer->transform('INSERT INTO archive SELECT id, name FROM users', $tables);
 
         self::assertSame(
-            'SELECT __ztd_subq.`col_0` AS `id`, __ztd_subq.`col_1` AS `name` FROM (SELECT id AS `col_0`, name AS `col_1` FROM users) AS __ztd_subq',
+            'WITH `__ztd_insert_source` (`__ztd_insert_0`, `__ztd_insert_1`) AS (SELECT id AS `__ztd_insert_0`, name AS `__ztd_insert_1` FROM users) SELECT `__ztd_insert_0` AS `id`, `__ztd_insert_1` AS `name` FROM `__ztd_insert_source`',
             $result,
         );
     }
@@ -864,5 +868,23 @@ final class InsertTransformerTest extends TestCase
         $result = $transformer->transform("INSERT INTO users (name) VALUES ('Alice')", $tables);
 
         self::assertStringContainsString('8 AS `id`', $result);
+    }
+
+    public function testTransformInsertSelectAllocatesOnlyOmittedIdentityColumns(): void
+    {
+        $transformer = new InsertTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = ['users' => [
+            'rows' => [['id' => 7, 'name' => 'Existing']],
+            'columns' => ['id', 'name'],
+            'columnTypes' => [],
+            'identityStrategies' => ['id' => IdentityGenerationStrategy::MaxValue],
+        ]];
+
+        $explicit = $transformer->transform('INSERT INTO users (id, name) SELECT id, name FROM source', $tables);
+        $generated = $transformer->transform('INSERT INTO users (name) SELECT name FROM source', $tables);
+
+        self::assertStringContainsString('8 + ROW_NUMBER() OVER () - 1 AS `id`', $generated);
+        self::assertStringContainsString('`__ztd_insert_0` AS `id`', $explicit);
+        self::assertStringNotContainsString('ROW_NUMBER()', $explicit);
     }
 }

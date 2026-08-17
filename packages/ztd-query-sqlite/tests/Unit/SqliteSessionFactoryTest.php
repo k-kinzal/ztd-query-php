@@ -40,6 +40,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(SqliteSchemaReflector::class)]
 #[UsesClass(DeleteTransformer::class)]
 #[UsesClass(InsertTransformer::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Transformer\InsertSelectRenderer::class)]
 #[UsesClass(SelectTransformer::class)]
 #[UsesClass(SqliteTransformer::class)]
 #[UsesClass(UpdateTransformer::class)]

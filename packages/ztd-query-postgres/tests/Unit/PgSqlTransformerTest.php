@@ -24,6 +24,7 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PostgreSqlLexicalMasker::class)]
 #[UsesClass(SelectTransformer::class)]
 #[UsesClass(InsertTransformer::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\InsertSelectRenderer::class)]
 #[UsesClass(UpdateTransformer::class)]
 #[UsesClass(DeleteTransformer::class)]
 #[UsesClass(PgSqlCastRenderer::class)]

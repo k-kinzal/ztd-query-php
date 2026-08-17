@@ -112,14 +112,14 @@ final class SqliteRewriter implements SqlRewriter
         if ($kind === QueryKind::DDL_SIMULATED) {
             $mutation = $this->mutationResolver->resolve($stmtSql, $kind);
 
-            return new RewritePlan('SELECT 1 WHERE 0', QueryKind::DDL_SIMULATED, $mutation);
+            return new RewritePlan($this->emptyResultSelect(), QueryKind::DDL_SIMULATED, $mutation);
         }
 
         $mutation = $this->mutationResolver->resolve($stmtSql, $kind);
 
         $stripped = trim($this->parser->stripComments($stmtSql));
         if (preg_match('/^DELETE\s+FROM\s+(?:"(?:[^"]|"")*"|`(?:[^`]|``)*`|\[(?:[^\]])*\]|[^\s;]+)\s*;?\s*$/i', $stripped) === 1) {
-            return new RewritePlan('SELECT 1 WHERE 0', QueryKind::WRITE_SIMULATED, $mutation);
+            return new RewritePlan($this->emptyResultSelect(), QueryKind::WRITE_SIMULATED, $mutation);
         }
 
         $transformedSql = $this->transformer->transform($stmtSql, $tableContext);
@@ -230,5 +230,10 @@ final class SqliteRewriter implements SqlRewriter
         }
 
         return false;
+    }
+
+    public function emptyResultSelect(): string
+    {
+        return 'SELECT 1 WHERE 0';
     }
 }
