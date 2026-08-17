@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\CastRenderer;
+use ZtdQuery\Platform\MySql\InsertSelectSourceExtractor;
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlParser;
@@ -23,6 +24,7 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 #[CoversClass(InsertTransformer::class)]
 #[UsesClass(MySqlParser::class)]
 #[UsesClass(SelectTransformer::class)]
+#[UsesClass(InsertSelectSourceExtractor::class)]
 #[UsesClass(MySqlCastRenderer::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Transformer\InsertRowRenderer::class)]
@@ -33,6 +35,30 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
 final class InsertTransformerTest extends TestCase
 {
+    public function testTransformInsertFromCompoundSelectPreservesEveryBranch(): void
+    {
+        $transformer = new InsertTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = [
+            'combined' => [
+                'rows' => [],
+                'columns' => ['name', 'amount'],
+                'columnTypes' => [],
+            ],
+        ];
+
+        $result = $transformer->transform(
+            'INSERT INTO combined (name, amount) SELECT name, amount FROM archive UNION ALL SELECT name, amount FROM current',
+            $tables,
+        );
+
+        self::assertStringContainsString(
+            'FROM archive UNION ALL SELECT name, amount FROM current',
+            $result,
+        );
+        self::assertStringContainsString('`__ztd_insert_0` AS `name`', $result);
+        self::assertStringContainsString('`__ztd_insert_1` AS `amount`', $result);
+    }
+
     public function testUsesInjectedCastRendererAndColumnTypes(): void
     {
         $castRenderer = self::createStub(CastRenderer::class);

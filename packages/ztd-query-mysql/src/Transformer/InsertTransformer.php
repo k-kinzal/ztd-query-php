@@ -10,6 +10,7 @@ use PhpMyAdmin\SqlParser\Statements\InsertStatement;
 use RuntimeException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\CastRenderer;
+use ZtdQuery\Platform\MySql\InsertSelectSourceExtractor;
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
@@ -17,6 +18,7 @@ use ZtdQuery\Rewrite\ShadowIdentityAllocator;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
+use ZtdQuery\Sql\SqlTokenDialect;
 
 /**
  * Transforms INSERT statements into SELECT queries that return the inserted rows.
@@ -79,6 +81,7 @@ final class InsertTransformer implements SqlTransformer
         $columnDefaults = $tables[$tableName]['columnDefaults'] ?? [];
         $identityStrategies = $tables[$tableName]['identityStrategies'] ?? [];
         $existingRows = $tables[$tableName]['rows'] ?? [];
+        $sourceSelectSql = (new InsertSelectSourceExtractor())->extract($sql);
         $selectSql = $this->buildInsertSelect(
             $statement,
             $tableName,
@@ -88,6 +91,7 @@ final class InsertTransformer implements SqlTransformer
             $columnDefaults,
             $identityStrategies,
             $existingRows,
+            $sourceSelectSql,
         );
 
         return $this->selectTransformer->transform(
@@ -118,6 +122,7 @@ final class InsertTransformer implements SqlTransformer
         array $columnDefaults,
         array $identityStrategies,
         array $existingRows,
+        ?string $sourceSelectSql,
     ): string {
         if ($statement->values !== null && $statement->values !== []) {
             $rows = [];
@@ -159,7 +164,7 @@ final class InsertTransformer implements SqlTransformer
             );
 
             return $this->insertSelectRenderer->render(
-                $statement->select->build(),
+                $sourceSelectSql ?? $statement->select->build(),
                 $tableColumns,
                 $sourceColumns,
                 $columnDefaults,

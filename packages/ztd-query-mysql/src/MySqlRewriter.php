@@ -14,7 +14,6 @@ use ZtdQuery\Rewrite\RewriteStateCommitter;
 use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Sql\TransactionStatement;
 use PhpMyAdmin\SqlParser\Statement;
-use PhpMyAdmin\SqlParser\Statements\SelectStatement;
 use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
@@ -80,16 +79,12 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
             return new RewritePlan($sql, QueryKind::READ);
         }
 
-        $statements = $this->parser->parse($sql);
-        if ($statements === []) {
+        $statement = $this->parser->parseSingleLogicalStatement($sql);
+        if ($statement === null) {
             throw new UnsupportedSqlException($sql, 'Empty or unparseable');
         }
 
-        if (count($statements) === 1) {
-            return $this->rewriteStatement($statements[0], $sql);
-        }
-
-        return $this->rewriteCompositeRead($statements, $sql);
+        return $this->rewriteStatement($statement, $sql);
     }
 
     /**
@@ -117,32 +112,6 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
     public function commitRewriteState(): void
     {
         $this->transformer->commitRewriteState();
-    }
-
-    /**
-     * phpmyadmin/sql-parser represents EXCEPT, INTERSECT, and some nested EXISTS
-     * expressions as several SELECT statements even though the SQL has one statement.
-     *
-     * @param list<Statement> $statements
-     */
-    private function rewriteCompositeRead(array $statements, string $sql): RewritePlan
-    {
-        foreach ($statements as $statement) {
-            if (!$statement instanceof SelectStatement || $statement->into !== null) {
-                throw new UnsupportedSqlException($sql, 'Statement type not supported');
-            }
-        }
-        if ($this->hasSchemaContext()) {
-            $unknownTable = $this->findUnknownTable($sql);
-            if ($unknownTable !== null) {
-                throw new UnknownSchemaException($sql, $unknownTable, 'table');
-            }
-        }
-
-        return new RewritePlan(
-            $this->transformer->transform($sql, $this->buildTableContext()),
-            QueryKind::READ,
-        );
     }
 
     private function rewriteStatement(Statement $statement, string $sql): RewritePlan

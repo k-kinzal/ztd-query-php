@@ -547,6 +547,21 @@ final class MySqlProviderTest extends TestCase
         self::assertContains('SET_SYM', $tokens);
     }
 
+    public function testInsertSelectCompoundStatement(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $tokens = (new LexicalGrammar($faker, 'mysql-8.4.7', true))->tokenize($provider->insertSelectCompoundStatement());
+
+        self::assertSame('INSERT_SYM', $tokens[0]);
+        self::assertContains('INTO', $tokens);
+        self::assertContains('UNION_SYM', $tokens);
+        self::assertContains('ALL', $tokens);
+        self::assertSame(2, count(array_filter($tokens, static fn (string $token): bool => $token === 'SELECT_SYM')));
+    }
+
     public function testBinaryLiteral(): void
     {
         $faker = Factory::create();

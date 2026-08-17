@@ -7,6 +7,7 @@ namespace Tests\Unit;
 use PhpMyAdmin\SqlParser\Components\Expression;
 use PhpMyAdmin\SqlParser\Parser;
 use PhpMyAdmin\SqlParser\Statements\InsertStatement;
+use PhpMyAdmin\SqlParser\Statements\SelectStatement;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\MySql\MySqlParser;
@@ -14,6 +15,31 @@ use ZtdQuery\Platform\MySql\MySqlParser;
 #[CoversClass(MySqlParser::class)]
 final class MySqlParserTest extends TestCase
 {
+    public function testResolvesCompoundSelectParserArtifactsAsOneLogicalStatement(): void
+    {
+        $parser = new MySqlParser();
+
+        self::assertInstanceOf(
+            SelectStatement::class,
+            $parser->parseSingleLogicalStatement('SELECT id FROM archive UNION ALL SELECT id FROM current'),
+        );
+        self::assertInstanceOf(
+            InsertStatement::class,
+            $parser->parseSingleLogicalStatement('INSERT INTO combined (id) SELECT id FROM archive UNION ALL SELECT id FROM current'),
+        );
+    }
+
+    public function testRejectsMultipleAndNonSelectParserContinuations(): void
+    {
+        $parser = new MySqlParser();
+
+        self::assertNull($parser->parseSingleLogicalStatement('SELECT 1; SELECT 2'));
+        self::assertNull($parser->parseSingleLogicalStatement('UPDATE users SET active = 1 UNION SELECT 1'));
+        self::assertNull($parser->parseSingleLogicalStatement('INSERT INTO users SELECT 1 UNION UPDATE users SET active = 1'));
+        self::assertNull($parser->parseSingleLogicalStatement("INSERT INTO users SELECT 1 UNION SELECT 2 INTO OUTFILE '/tmp/result'"));
+        self::assertNull($parser->parseSingleLogicalStatement(''));
+    }
+
     public function testParseAndBuildRoundTrip(): void
     {
         $parser = new MySqlParser();

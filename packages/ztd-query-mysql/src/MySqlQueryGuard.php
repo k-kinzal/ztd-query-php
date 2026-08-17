@@ -37,20 +37,10 @@ final class MySqlQueryGuard
         if (MySqlReadOnlyDiagnosticStatement::isSafe($sql)) {
             return QueryKind::READ;
         }
-        if (count($this->parser->splitStatements($sql)) !== 1) {
+        $statement = $this->parser->parseSingleLogicalStatement($sql);
+        if ($statement === null) {
             return null;
         }
-
-        $statements = $this->parser->parse($sql);
-        if ($statements === []) {
-            return null;
-        }
-
-        if (count($statements) > 1) {
-            return $this->classifyCompositeRead($statements);
-        }
-
-        $statement = $statements[0];
         if ($statement instanceof WithStatement) {
             $kind = $this->classifyWithFallback($sql);
             if ($kind !== null) {
@@ -59,22 +49,6 @@ final class MySqlQueryGuard
         }
 
         return $this->classifyStatement($statement);
-    }
-
-    /**
-     * phpmyadmin/sql-parser represents some single set expressions as several SELECT statements.
-     *
-     * @param list<Statement> $statements
-     */
-    private function classifyCompositeRead(array $statements): ?QueryKind
-    {
-        foreach ($statements as $statement) {
-            if (!$statement instanceof SelectStatement || $statement->into !== null) {
-                return null;
-            }
-        }
-
-        return QueryKind::READ;
     }
 
     /**

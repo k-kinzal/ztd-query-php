@@ -7,6 +7,8 @@ namespace ZtdQuery\Platform\MySql;
 use PhpMyAdmin\SqlParser\Lexer;
 use PhpMyAdmin\SqlParser\Parser;
 use PhpMyAdmin\SqlParser\Statement;
+use PhpMyAdmin\SqlParser\Statements\InsertStatement;
+use PhpMyAdmin\SqlParser\Statements\SelectStatement;
 use PhpMyAdmin\SqlParser\Token;
 use ZtdQuery\Sql\SqlTokenStream;
 use ZtdQuery\Sql\SqlTokenDialect;
@@ -45,6 +47,28 @@ final class MySqlParser
     public function splitStatements(string $sql): array
     {
         return SqlTokenStream::tokenize($sql, SqlTokenDialect::MySql)->splitStatements();
+    }
+
+    public function parseSingleLogicalStatement(string $sql): ?Statement
+    {
+        if (count($this->splitStatements($sql)) !== 1) {
+            return null;
+        }
+
+        $statements = $this->parse($sql);
+        $first = $statements[0] ?? null;
+        foreach (array_slice($statements, 1) as $continuation) {
+            if (!$first instanceof SelectStatement
+                && (!$first instanceof InsertStatement || $first->select === null)
+            ) {
+                return null;
+            }
+            if (!$continuation instanceof SelectStatement || $continuation->into !== null) {
+                return null;
+            }
+        }
+
+        return $first;
     }
 
     private function normalizeOptionalInsertInto(string $sql): string

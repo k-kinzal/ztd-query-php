@@ -69,6 +69,16 @@ class MySqlQueryGuardTest extends QueryClassifierContractTest
         self::assertNull($guard->classify('SELECT 1; SELECT 2'));
     }
 
+    public function testClassifiesInsertWithCompoundSelectAsOneWrite(): void
+    {
+        $guard = new MySqlQueryGuard(new MySqlParser());
+
+        self::assertSame(
+            QueryKind::WRITE_SIMULATED,
+            $guard->classify('INSERT INTO combined (id) SELECT id FROM archive UNION ALL SELECT id FROM current'),
+        );
+    }
+
     public function testClassifiesWriteStatements(): void
     {
         $guard = new MySqlQueryGuard(new MySqlParser());

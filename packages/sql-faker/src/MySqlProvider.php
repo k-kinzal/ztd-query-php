@@ -676,4 +676,19 @@ final class MySqlProvider extends Base
             GenerationPlans::updateJoinDerivedStatement()->withMaxDepth($maxDepth),
         );
     }
+
+    /**
+     * Generate an INSERT whose source is a compound SELECT.
+     *
+     * @return non-empty-string
+     */
+    public function insertSelectCompoundStatement(): string
+    {
+        $target = $this->rsg->rawIdentifier();
+        $left = $this->rsg->rawIdentifier();
+        $right = $this->rsg->rawIdentifier();
+        $column = $this->rsg->rawIdentifier();
+
+        return "INSERT INTO $target ($column) SELECT $column FROM $left UNION ALL SELECT $column FROM $right";
+    }
 }

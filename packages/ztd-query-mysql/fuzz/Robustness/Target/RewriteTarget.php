@@ -144,6 +144,7 @@ final class RewriteTarget
             fn (): string => 'DELETE FROM users WHERE CASE WHEN id > 1 THEN 1 ELSE 0 END = 1',
             fn (): string => "CREATE TABLE child (id INT, parent_id INT, {$this->provider->foreignKeyConstraint()})",
             fn (): string => $this->provider->updateJoinDerivedStatement(),
+            fn (): string => $this->provider->insertSelectCompoundStatement(),
         ];
 
         $index = ord($input[0] ?? "\0") % count($generators);

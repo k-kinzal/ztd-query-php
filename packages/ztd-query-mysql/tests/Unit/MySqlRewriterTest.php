@@ -10,6 +10,7 @@ use Tests\Contract\RewriterContractTest;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\DmlWhereClauseExtractor;
+use ZtdQuery\Platform\MySql\InsertSelectSourceExtractor;
 use ZtdQuery\Platform\MySql\Mutation\AlterTableMutation;
 use ZtdQuery\Platform\MySql\MySqlMutationResolver;
 use ZtdQuery\Platform\MySql\MySqlParser;
@@ -55,6 +56,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\MySql\Transformer\InsertRowRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Transformer\InsertSelectRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Transformer\MySqlSelectListAliaser::class)]
+#[UsesClass(InsertSelectSourceExtractor::class)]
 #[UsesClass(UpdateTransformer::class)]
 #[UsesClass(UpdateAssignmentExtractor::class)]
 #[UsesClass(UpdateSourceExtractor::class)]
