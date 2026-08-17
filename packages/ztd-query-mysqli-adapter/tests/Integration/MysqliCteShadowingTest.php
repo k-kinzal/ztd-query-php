@@ -20,6 +20,50 @@ use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
 #[Large]
 final class MysqliCteShadowingTest extends TestCase
 {
+    public function testExecuteQueryReplaceRemovesExistingPrimaryKey(): void
+    {
+        [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();
+        $table = 'prefix_' . bin2hex(random_bytes(8));
+        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, name VARCHAR(50))', $table));
+        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
+        try {
+            $ztdMysqli->query(sprintf("INSERT INTO `%s` VALUES (1, 'original')", $table));
+            self::assertNotFalse($ztdMysqli->execute_query(
+                sprintf('REPLACE INTO `%s` VALUES (?, ?)', $table),
+                ['1', 'replaced'],
+            ));
+
+            $rows = $ztdMysqli->query(sprintf('SELECT * FROM `%s` WHERE id = 1', $table));
+            self::assertInstanceOf(\mysqli_result::class, $rows);
+            self::assertSame([['id' => 1, 'name' => 'replaced']], $rows->fetch_all(MYSQLI_ASSOC));
+        } finally {
+            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+        }
+    }
+
+    public function testExecuteQueryOnDuplicateKeyUpdateReplacesExistingValues(): void
+    {
+        [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();
+        $table = 'prefix_' . bin2hex(random_bytes(8));
+        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, name VARCHAR(50))', $table));
+        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
+        try {
+            $ztdMysqli->query(sprintf("INSERT INTO `%s` VALUES (1, 'original')", $table));
+            self::assertNotFalse($ztdMysqli->execute_query(
+                sprintf('INSERT INTO `%s` VALUES (?, ?) ON DUPLICATE KEY UPDATE name = VALUES(name)', $table),
+                ['1', 'updated'],
+            ));
+
+            $rows = $ztdMysqli->query(sprintf('SELECT * FROM `%s` WHERE id = 1', $table));
+            self::assertInstanceOf(\mysqli_result::class, $rows);
+            self::assertSame([['id' => 1, 'name' => 'updated']], $rows->fetch_all(MYSQLI_ASSOC));
+        } finally {
+            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+        }
+    }
+
     public function testUpdateReplacesExistingTextWithEmptyString(): void
     {
         [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();

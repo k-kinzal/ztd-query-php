@@ -26,7 +26,7 @@ final class PreparedUpsertTest extends TestCase
             $statement = $ztdPdo->prepare("REPLACE INTO `{$table}` VALUES (?, ?, ?)");
             self::assertNotFalse($statement);
 
-            self::assertTrue($statement->execute([1, 'replaced', 999]));
+            self::assertTrue($statement->execute(['1', 'replaced', 999]));
 
             $rows = $ztdPdo->query("SELECT * FROM `{$table}` WHERE id = 1");
             self::assertNotFalse($rows);

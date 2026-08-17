@@ -11,10 +11,14 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlParser;
+use ZtdQuery\Platform\MySql\Transformer\InsertTransformer;
 use ZtdQuery\Platform\MySql\Transformer\ReplaceTransformer;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
+use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(ReplaceTransformer::class)]
+#[UsesClass(InsertTransformer::class)]
 #[UsesClass(MySqlParser::class)]
 #[UsesClass(SelectTransformer::class)]
 #[UsesClass(MySqlCastRenderer::class)]
@@ -24,6 +28,26 @@ use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
 final class ReplaceTransformerTest extends TestCase
 {
+    public function testTransformReplaceCastsParametersToTargetColumnTypes(): void
+    {
+        $parser = new MySqlParser();
+        $transformer = new ReplaceTransformer($parser, new SelectTransformer());
+        $tables = [
+            'users' => [
+                'rows' => [],
+                'columns' => ['id', 'name'],
+                'columnTypes' => [
+                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
+                    'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(50)'),
+                ],
+            ],
+        ];
+
+        $result = $transformer->transform('REPLACE INTO users VALUES (?, ?)', $tables);
+
+        self::assertSame('SELECT CAST(? AS SIGNED) AS `id`, CAST(? AS CHAR) AS `name`', $result);
+    }
+
     public function testTransformReplaceWithValues(): void
     {
         $parser = new MySqlParser();
@@ -52,6 +76,28 @@ final class ReplaceTransformerTest extends TestCase
         $this->expectException(UnsupportedSqlException::class);
         $this->expectExceptionMessage('Expected REPLACE statement');
         $transformer->transform('SELECT 1', []);
+    }
+
+    public function testTransformThrowsForEmptySql(): void
+    {
+        $transformer = new ReplaceTransformer(new MySqlParser(), new SelectTransformer());
+
+        $this->expectException(UnsupportedSqlException::class);
+        $this->expectExceptionMessage('Expected REPLACE statement');
+
+        $transformer->transform('', []);
+    }
+
+    public function testTransformRejectsEmptyReplaceValues(): void
+    {
+        $transformer = new ReplaceTransformer(new MySqlParser(), new SelectTransformer());
+
+        $this->expectException(UnsupportedSqlException::class);
+        $this->expectExceptionMessage('Invalid REPLACE statement');
+
+        $transformer->transform('REPLACE INTO users VALUE ()', [
+            'users' => ['rows' => [], 'columns' => ['id'], 'columnTypes' => []],
+        ]);
     }
 
     public function testTransformReplaceWithSetSyntax(): void
@@ -205,7 +251,7 @@ final class ReplaceTransformerTest extends TestCase
         $tables = [];
 
         $this->expectException(UnsupportedSqlException::class);
-        $this->expectExceptionMessage('Invalid REPLACE');
+        $this->expectExceptionMessage('Insert values count does not match column count.');
         $transformer->transform($sql, $tables);
     }
 
@@ -332,7 +378,7 @@ final class ReplaceTransformerTest extends TestCase
         $sql = 'REPLACE INTO t (id, name) VALUES (1)';
 
         $this->expectException(UnsupportedSqlException::class);
-        $this->expectExceptionMessage('Invalid REPLACE');
+        $this->expectExceptionMessage('Insert values count does not match column count.');
         $transformer->transform($sql, []);
     }
 
@@ -382,7 +428,7 @@ final class ReplaceTransformerTest extends TestCase
         $transformer = new ReplaceTransformer($parser, $selectTransformer);
 
         $this->expectException(UnsupportedSqlException::class);
-        $this->expectExceptionMessage('Cannot resolve REPLACE target');
+        $this->expectExceptionMessage('Cannot resolve INSERT target');
         $transformer->transform('REPLACE SELECT 1', []);
     }
 }

@@ -103,5 +103,6 @@ final class MySqlTransformer implements SqlTransformer
     public function commitRewriteState(): void
     {
         $this->insertTransformer->commitRewriteState();
+        $this->replaceTransformer->commitRewriteState();
     }
 }
