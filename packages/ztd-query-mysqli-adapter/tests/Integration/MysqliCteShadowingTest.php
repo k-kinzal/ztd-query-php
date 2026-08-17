@@ -20,6 +20,58 @@ use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
 #[Large]
 final class MysqliCteShadowingTest extends TestCase
 {
+    public function testUpdatesAndDeletesEveryListedTable(): void
+    {
+        [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();
+        $users = 'users_' . bin2hex(random_bytes(8));
+        $orders = 'orders_' . bin2hex(random_bytes(8));
+        $rawMysqli->query("CREATE TABLE `{$users}` (id INT PRIMARY KEY, name VARCHAR(50))");
+        $rawMysqli->query("CREATE TABLE `{$orders}` (order_id INT PRIMARY KEY, user_id INT, status VARCHAR(50))");
+        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
+        try {
+            self::assertNotFalse($ztdMysqli->query("INSERT INTO `{$users}` VALUES (1, 'Alice'), (2, 'Bob')"));
+            self::assertNotFalse($ztdMysqli->query("INSERT INTO `{$orders}` VALUES (10, 1, 'pending'), (20, 2, 'pending')"));
+            self::assertNotFalse($ztdMysqli->query(
+                "UPDATE `{$users}` u, `{$orders}` o SET u.name = 'Updated', o.status = 'done'"
+                . ' WHERE u.id = o.user_id AND u.id = 2',
+            ));
+
+            $updatedUsers = $ztdMysqli->query("SELECT id, name FROM `{$users}` ORDER BY id");
+            $updatedOrders = $ztdMysqli->query("SELECT order_id, status FROM `{$orders}` ORDER BY order_id");
+            self::assertInstanceOf(\mysqli_result::class, $updatedUsers);
+            self::assertInstanceOf(\mysqli_result::class, $updatedOrders);
+            self::assertSame(
+                [['id' => 1, 'name' => 'Alice'], ['id' => 2, 'name' => 'Updated']],
+                $updatedUsers->fetch_all(MYSQLI_ASSOC),
+            );
+            self::assertSame(
+                [['order_id' => 10, 'status' => 'pending'], ['order_id' => 20, 'status' => 'done']],
+                $updatedOrders->fetch_all(MYSQLI_ASSOC),
+            );
+
+            self::assertNotFalse($ztdMysqli->query(
+                "DELETE u, o FROM `{$users}` u JOIN `{$orders}` o ON u.id = o.user_id WHERE u.id = 2",
+            ));
+
+            $remainingUsers = $ztdMysqli->query("SELECT id FROM `{$users}` ORDER BY id");
+            $remainingOrders = $ztdMysqli->query("SELECT order_id FROM `{$orders}` ORDER BY order_id");
+            self::assertInstanceOf(\mysqli_result::class, $remainingUsers);
+            self::assertInstanceOf(\mysqli_result::class, $remainingOrders);
+            self::assertSame([['id' => 1]], $remainingUsers->fetch_all(MYSQLI_ASSOC));
+            self::assertSame([['order_id' => 10]], $remainingOrders->fetch_all(MYSQLI_ASSOC));
+
+            $physicalUsers = $rawMysqli->query("SELECT * FROM `{$users}`");
+            $physicalOrders = $rawMysqli->query("SELECT * FROM `{$orders}`");
+            self::assertInstanceOf(\mysqli_result::class, $physicalUsers);
+            self::assertInstanceOf(\mysqli_result::class, $physicalOrders);
+            self::assertSame([], $physicalUsers->fetch_all(MYSQLI_ASSOC));
+            self::assertSame([], $physicalOrders->fetch_all(MYSQLI_ASSOC));
+        } finally {
+            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+        }
+    }
+
     public function testExecuteQueryReplaceRemovesExistingPrimaryKey(): void
     {
         [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();

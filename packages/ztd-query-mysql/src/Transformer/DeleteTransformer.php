@@ -11,9 +11,12 @@ use PhpMyAdmin\SqlParser\Components\Limit;
 use PhpMyAdmin\SqlParser\Components\OrderKeyword;
 use PhpMyAdmin\SqlParser\Statements\DeleteStatement;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
 use ZtdQuery\Rewrite\SqlTransformer;
+use ZtdQuery\Shadow\Mutation\MultiTableMutationRow;
+use ZtdQuery\Shadow\Mutation\MultiTableMutationTarget;
 
 /**
  * Transforms DELETE statements into SELECT projections with CTE shadowing.
@@ -57,6 +60,11 @@ final class DeleteTransformer implements SqlTransformer
         }
 
         $projection = $this->buildProjection($statement, $sql, $columnNames);
+        $targetTableNames = array_keys($projection['tables']);
+        if (isset($targetTableNames[1])) {
+            $targets = $this->targetsFromContexts($projection['tables'], $tables);
+            $projection = $this->buildProjection($statement, $sql, $columnNames, $targets);
+        }
 
         return $this->selectTransformer->transform(
             $this->cteComposer->carryPrefix($sql, $projection['sql']),
@@ -70,9 +78,10 @@ final class DeleteTransformer implements SqlTransformer
      * @param DeleteStatement $stmt
      * @param string $originalSql
      * @param array<int, string> $columns
+     * @param list<MultiTableMutationTarget> $targets
      * @return array{sql: string, table: string, tables: array<string, array{alias: string}>}
      */
-    public function buildProjection(DeleteStatement $stmt, string $originalSql, array $columns): array
+    public function buildProjection(DeleteStatement $stmt, string $originalSql, array $columns, array $targets = []): array
     {
         $targetTableName = 'unknown';
         $targetTableAlias = null;
@@ -222,7 +231,60 @@ final class DeleteTransformer implements SqlTransformer
             $resolvedTables[$targetTableName] = ['alias' => $targetTableAlias];
         }
 
+        if ($targets !== []) {
+            $selectList = $this->multiTableSelectList($resolvedTables, $targets);
+            $sql = "SELECT $selectList$fromClause$joinClause$usingClause $whereClause$orderClause$limitClause";
+        }
+
         return ['sql' => $sql, 'table' => $targetTableName, 'tables' => $resolvedTables];
+    }
+
+    /**
+     * @param array<string, array{alias: string}> $resolvedTables
+     * @param array<string, array{rows: array<int, array<string, mixed>>, columns: array<int, string>, columnTypes: array<string, \ZtdQuery\Schema\ColumnType>, primaryKeys?: array<int, string>}> $contexts
+     * @return list<MultiTableMutationTarget>
+     */
+    private function targetsFromContexts(array $resolvedTables, array $contexts): array
+    {
+        $targets = [];
+        foreach ($resolvedTables as $tableName => $tableInfo) {
+            $context = $contexts[$tableName] ?? null;
+            if ($context === null) {
+                continue;
+            }
+            $targets[] = new MultiTableMutationTarget(
+                $tableName,
+                $context['columns'],
+                $context['primaryKeys'] ?? [],
+            );
+        }
+
+        return $targets;
+    }
+
+    /**
+     * @param array<string, array{alias: string}> $resolvedTables
+     * @param list<MultiTableMutationTarget> $targets
+     */
+    private function multiTableSelectList(array $resolvedTables, array $targets): string
+    {
+        $codec = new MultiTableMutationRow();
+        $quoter = new MySqlIdentifierQuoter();
+        $parts = [];
+        foreach ($targets as $targetIndex => $target) {
+            $tableInfo = $resolvedTables[$target->tableName()] ?? null;
+            if ($tableInfo === null) {
+                continue;
+            }
+            foreach ($target->matchColumns() as $columnIndex => $column) {
+                $alias = $quoter->quote($tableInfo['alias']);
+                $quotedColumn = $quoter->quote($column);
+                $metadata = $quoter->quote($codec->valueColumn($targetIndex, $columnIndex));
+                $parts[] = "$alias.$quotedColumn AS $metadata";
+            }
+        }
+
+        return implode(', ', $parts);
     }
 
     private function resolveAliasToTable(string $alias, DeleteStatement $stmt): ?string

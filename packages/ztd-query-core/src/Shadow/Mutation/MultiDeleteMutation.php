@@ -12,12 +12,8 @@ use ZtdQuery\Shadow\ShadowStore;
  */
 final class MultiDeleteMutation implements ShadowMutation
 {
-    /**
-     * Target tables with their primary keys.
-     *
-     * @var array<string, array<int, string>>
-     */
-    private array $tables;
+    /** @var list<MultiTableMutationTarget> */
+    private array $targets;
 
     /**
      * Primary table name (first target table).
@@ -26,14 +22,11 @@ final class MultiDeleteMutation implements ShadowMutation
      */
     private string $primaryTable;
 
-    /**
-     * @param array<string, array<int, string>> $tables Map of table names to their primary keys.
-     */
-    public function __construct(array $tables)
+    /** @param list<MultiTableMutationTarget> $targets */
+    public function __construct(array $targets)
     {
-        $this->tables = $tables;
-        $tableNames = array_keys($tables);
-        $this->primaryTable = $tableNames[0] ?? '';
+        $this->targets = $targets;
+        $this->primaryTable = ($targets[0] ?? null)?->tableName() ?? '';
     }
 
     /**
@@ -41,8 +34,17 @@ final class MultiDeleteMutation implements ShadowMutation
      */
     public function apply(ShadowStore $store, array $rows): void
     {
-        foreach ($this->tables as $tableName => $primaryKeys) {
-            $store->delete($tableName, $rows, $primaryKeys);
+        $codec = new MultiTableMutationRow();
+        foreach ($this->targets as $targetIndex => $target) {
+            $matchColumns = $target->matchColumns();
+            $deletedRows = [];
+            foreach ($rows as $row) {
+                $values = $codec->values($row, $targetIndex, $matchColumns);
+                if ($values !== null) {
+                    $deletedRows[] = $values;
+                }
+            }
+            $store->delete($target->tableName(), $deletedRows, $matchColumns);
         }
     }
 
@@ -61,6 +63,9 @@ final class MultiDeleteMutation implements ShadowMutation
      */
     public function tableNames(): array
     {
-        return array_keys($this->tables);
+        return array_map(
+            static fn (MultiTableMutationTarget $target): string => $target->tableName(),
+            $this->targets,
+        );
     }
 }

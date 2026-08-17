@@ -142,6 +142,37 @@ final class MySqlProvider extends Base
     }
 
     /**
+     * Generate a two-target UPDATE statement.
+     */
+    public function multiTableUpdateStatement(): string
+    {
+        $leftTable = $this->quotedIdentifier();
+        $rightTable = $this->quotedIdentifier();
+        $leftColumn = $this->quotedIdentifier();
+        $rightColumn = $this->quotedIdentifier();
+
+        return "UPDATE $leftTable AS `_ztd_left`, $rightTable AS `_ztd_right`"
+            . " SET `_ztd_left`.$leftColumn = 1, `_ztd_right`.$rightColumn = 2"
+            . " WHERE `_ztd_left`.$leftColumn = `_ztd_right`.$rightColumn";
+    }
+
+    /**
+     * Generate a two-target DELETE statement.
+     */
+    public function multiTableDeleteStatement(): string
+    {
+        $leftTable = $this->quotedIdentifier();
+        $rightTable = $this->quotedIdentifier();
+        $leftColumn = $this->quotedIdentifier();
+        $rightColumn = $this->quotedIdentifier();
+
+        return 'DELETE `_ztd_left`, `_ztd_right`'
+            . " FROM $leftTable AS `_ztd_left`"
+            . " JOIN $rightTable AS `_ztd_right`"
+            . " ON `_ztd_left`.$leftColumn = `_ztd_right`.$rightColumn";
+    }
+
+    /**
      * Generate a CREATE TABLE statement.
      *
      * @param int $maxDepth Maximum recursion depth (lower = simpler SQL)

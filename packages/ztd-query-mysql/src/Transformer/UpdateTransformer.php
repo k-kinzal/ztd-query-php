@@ -11,9 +11,14 @@ use PhpMyAdmin\SqlParser\Components\OrderKeyword;
 use PhpMyAdmin\SqlParser\Statements\UpdateStatement;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
+use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
+use ZtdQuery\Shadow\Mutation\MultiTableMutationRow;
+use ZtdQuery\Shadow\Mutation\MultiTableMutationTarget;
+use ZtdQuery\Sql\SqlTokenDialect;
+use ZtdQuery\Sql\SqlTokenStream;
 
 /**
  * Transforms UPDATE statements into SELECT projections with CTE shadowing.
@@ -61,11 +66,18 @@ final class UpdateTransformer implements SqlTransformer
 
         $columns = $tables[$targetTable]['columns'] ?? [];
 
-        $projection = $this->buildProjection(
-            $statement,
-            $columns,
-            $tables[$targetTable]['primaryKeys'] ?? [],
-        );
+        $primaryKeys = $tables[$targetTable]['primaryKeys'] ?? [];
+        $projection = $this->buildProjection($statement, $columns, $primaryKeys);
+        $targetTableNames = array_keys($projection['tables']);
+        if (isset($targetTableNames[1])) {
+            $targets = $this->targetsFromContexts($projection['tables'], $tables);
+            $projection = $this->buildProjection(
+                $statement,
+                $columns,
+                $primaryKeys,
+                $targets,
+            );
+        }
 
         return $this->selectTransformer->transform(
             $this->cteComposer->carryPrefix($sql, $projection['sql']),
@@ -79,9 +91,10 @@ final class UpdateTransformer implements SqlTransformer
      * @param UpdateStatement $stmt
      * @param array<int, string> $columns
      * @param array<int, string> $primaryKeys
+     * @param list<MultiTableMutationTarget> $targets
      * @return array{sql: string, table: string, tables: array<string, array{alias: string}>}
      */
-    public function buildProjection(UpdateStatement $stmt, array $columns, array $primaryKeys = []): array
+    public function buildProjection(UpdateStatement $stmt, array $columns, array $primaryKeys = [], array $targets = []): array
     {
         if ($stmt->tables === null || $stmt->tables === []) {
             throw new \RuntimeException("Update statement has no tables?");
@@ -132,6 +145,10 @@ final class UpdateTransformer implements SqlTransformer
             $selectCols[] = "`$qualifier`.`$primaryKey` AS `" . $identity->column($primaryKey) . '`';
         }
 
+        if ($targets !== []) {
+            $selectCols = $this->multiTableSelectColumns($stmt, $allTargetTables, $targets);
+        }
+
         if ($selectCols === []) {
             $selectCols[] = "*";
         }
@@ -173,6 +190,97 @@ final class UpdateTransformer implements SqlTransformer
         }
 
         return ['sql' => $sql, 'table' => $targetTableName, 'tables' => $allTargetTables];
+    }
+
+    /**
+     * @param array<string, array{alias: string}> $targetTables
+     * @param array<string, array{rows: array<int, array<string, mixed>>, columns: array<int, string>, columnTypes: array<string, \ZtdQuery\Schema\ColumnType>, primaryKeys?: array<int, string>}> $contexts
+     * @return list<MultiTableMutationTarget>
+     */
+    private function targetsFromContexts(array $targetTables, array $contexts): array
+    {
+        $targets = [];
+        foreach ($targetTables as $tableName => $tableInfo) {
+            $context = $contexts[$tableName] ?? null;
+            if ($context === null) {
+                continue;
+            }
+            $targets[] = new MultiTableMutationTarget(
+                $tableName,
+                $context['columns'],
+                $context['primaryKeys'] ?? [],
+            );
+        }
+
+        return $targets;
+    }
+
+    /**
+     * @param array<string, array{alias: string}> $targetTables
+     * @param list<MultiTableMutationTarget> $targets
+     * @return list<string>
+     */
+    private function multiTableSelectColumns(UpdateStatement $stmt, array $targetTables, array $targets): array
+    {
+        $assignments = $this->assignmentsByTable($stmt, $targetTables);
+        $codec = new MultiTableMutationRow();
+        $quoter = new MySqlIdentifierQuoter();
+        $selectColumns = [];
+        foreach ($targets as $targetIndex => $target) {
+            $tableInfo = $targetTables[$target->tableName()] ?? null;
+            if ($tableInfo === null) {
+                continue;
+            }
+            $alias = $quoter->quote($tableInfo['alias']);
+            foreach ($target->columns() as $columnIndex => $column) {
+                $value = $assignments[$target->tableName()][$column] ?? $alias . '.' . $quoter->quote($column);
+                $metadata = $quoter->quote($codec->valueColumn($targetIndex, $columnIndex));
+                $selectColumns[] = "$value AS $metadata";
+            }
+            foreach ($target->primaryKeys() as $primaryKeyIndex => $primaryKey) {
+                $metadata = $quoter->quote($codec->identityColumn($targetIndex, $primaryKeyIndex));
+                $selectColumns[] = $alias . '.' . $quoter->quote($primaryKey) . " AS $metadata";
+            }
+        }
+
+        return $selectColumns;
+    }
+
+    /**
+     * @param array<string, array{alias: string}> $targetTables
+     * @return array<string, array<string, string>>
+     */
+    private function assignmentsByTable(UpdateStatement $stmt, array $targetTables): array
+    {
+        $assignments = [];
+        $primaryTable = array_key_first($targetTables);
+        $qualifiedTables = [];
+        foreach ($targetTables as $tableName => $tableInfo) {
+            $qualifiedTables[$tableName] = $tableName;
+            $qualifiedTables[$tableInfo['alias']] = $tableName;
+        }
+        foreach ($stmt->set ?? [] as $setOperation) {
+            $parts = array_map(self::unquoteIdentifier(...), explode('.', $setOperation->column));
+            $column = array_pop($parts);
+            if ($column === '') {
+                continue;
+            }
+            $tableName = $primaryTable;
+            $qualifier = array_pop($parts);
+            if ($qualifier !== null) {
+                $tableName = $qualifiedTables[$qualifier] ?? $primaryTable;
+            }
+            if ($tableName !== null) {
+                $assignments[$tableName][$column] = $setOperation->value;
+            }
+        }
+
+        return $assignments;
+    }
+
+    private static function unquoteIdentifier(string $identifier): string
+    {
+        return SqlTokenStream::tokenize($identifier, SqlTokenDialect::MySql)->identifierAt()['name'] ?? $identifier;
     }
 
     private function buildAdditionalTables(UpdateStatement $stmt): string

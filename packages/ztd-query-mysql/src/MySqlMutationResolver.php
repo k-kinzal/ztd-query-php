@@ -29,6 +29,7 @@ use ZtdQuery\Shadow\Mutation\DeleteMutation;
 use ZtdQuery\Shadow\Mutation\DropTableMutation;
 use ZtdQuery\Shadow\Mutation\InsertMutation;
 use ZtdQuery\Shadow\Mutation\MultiDeleteMutation;
+use ZtdQuery\Shadow\Mutation\MultiTableMutationTarget;
 use ZtdQuery\Shadow\Mutation\MultiUpdateMutation;
 use ZtdQuery\Shadow\Mutation\ReplaceMutation;
 use ZtdQuery\Shadow\Mutation\ShadowMutation;
@@ -139,17 +140,7 @@ final class MySqlMutationResolver
 
         $tables = $projection['tables'];
         if (count($tables) > 1) {
-            /** @var array<string, array<int, string>> $tablesPrimaryKeys */
-            $tablesPrimaryKeys = [];
-            foreach ($tables as $tableName => $tableInfo) {
-                $definition = $this->registry->get($tableName);
-                if ($definition === null && $this->shadowStore->state($tableName) !== ShadowTableState::Initialized) {
-                    throw new UnknownSchemaException($sql, $tableName, 'table');
-                }
-                $this->shadowStore->ensure($tableName);
-                $tablesPrimaryKeys[$tableName] = $definition !== null ? $definition->primaryKeys : [];
-            }
-            return new MultiUpdateMutation($tablesPrimaryKeys);
+            return new MultiUpdateMutation($this->multiTableTargets(array_keys($tables), $sql));
         }
 
         $definition = $this->registry->get($targetTable);
@@ -187,23 +178,40 @@ final class MySqlMutationResolver
 
         $tables = $projection['tables'];
         if (count($tables) > 1) {
-            /** @var array<string, array<int, string>> $tablesPrimaryKeys */
-            $tablesPrimaryKeys = [];
-            foreach ($tables as $tableName => $tableInfo) {
-                $definition = $this->registry->get($tableName);
-                if ($definition === null && $this->shadowStore->state($tableName) !== ShadowTableState::Initialized) {
-                    throw new UnknownSchemaException($sql, $tableName, 'table');
-                }
-                $this->shadowStore->ensure($tableName);
-                $tablesPrimaryKeys[$tableName] = $definition !== null ? $definition->primaryKeys : [];
-            }
-            return new MultiDeleteMutation($tablesPrimaryKeys);
+            return new MultiDeleteMutation($this->multiTableTargets(array_keys($tables), $sql));
         }
 
         $definition = $this->registry->get($targetTable);
 
         $primaryKeys = $definition !== null ? $definition->primaryKeys : [];
         return new DeleteMutation($targetTable, $primaryKeys);
+    }
+
+    /**
+     * @param list<string> $tableNames
+     * @return list<MultiTableMutationTarget>
+     */
+    private function multiTableTargets(array $tableNames, string $sql): array
+    {
+        $targets = [];
+        foreach ($tableNames as $tableName) {
+            $definition = $this->registry->get($tableName);
+            if ($definition === null && $this->shadowStore->state($tableName) !== ShadowTableState::Initialized) {
+                throw new UnknownSchemaException($sql, $tableName, 'table');
+            }
+            if ($definition !== null) {
+                $columns = $definition->columns;
+                $primaryKeys = $definition->primaryKeys;
+            } else {
+                $rows = $this->shadowStore->get($tableName);
+                $columns = $rows !== [] ? array_keys($rows[0]) : [];
+                $primaryKeys = [];
+            }
+            $this->shadowStore->ensure($tableName);
+            $targets[] = new MultiTableMutationTarget($tableName, $columns, $primaryKeys);
+        }
+
+        return $targets;
     }
 
     private function resolveInsert(InsertStatement $statement, string $sql): ShadowMutation

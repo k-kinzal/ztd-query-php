@@ -178,8 +178,12 @@ final class RobustnessTarget
             fn () => $this->provider->sql(maxDepth: 8),
             fn () => $this->provider->selectStatement(maxDepth: 8),
             fn () => $this->provider->insertStatement(maxDepth: 8),
-            fn () => $this->provider->updateStatement(maxDepth: 8),
-            fn () => $this->provider->deleteStatement(maxDepth: 8),
+            fn (): string => (ord($input[1] ?? "\0") % 2) === 0
+                ? $this->provider->updateStatement(maxDepth: 8)
+                : "UPDATE users u, orders o SET u.status = 'done', o.amount = 0 WHERE u.id = o.user_id",
+            fn (): string => (ord($input[1] ?? "\0") % 2) === 0
+                ? $this->provider->deleteStatement(maxDepth: 8)
+                : 'DELETE u, o FROM users u JOIN orders o ON u.id = o.user_id WHERE u.id = 2',
             fn () => $this->provider->createTableStatement(maxDepth: 5),
             fn () => $this->provider->alterTableStatement(maxDepth: 5),
             fn () => $this->provider->replaceStatement(maxDepth: 5),

@@ -836,4 +836,34 @@ final class DeleteTransformerTest extends TestCase
         self::assertSame('t1', $result['table']);
         self::assertSame(['t1' => ['alias' => 'a']], $result['tables']);
     }
+
+    public function testTransformMultiDeleteProjectsEveryTargetIdentity(): void
+    {
+        $transformer = new DeleteTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = [
+            'users' => [
+                'rows' => [['id' => 2, 'name' => 'Bob']],
+                'columns' => ['id', 'name'],
+                'columnTypes' => [],
+                'primaryKeys' => ['id'],
+            ],
+            'orders' => [
+                'rows' => [['order_id' => 9, 'user_id' => 2]],
+                'columns' => ['order_id', 'user_id'],
+                'columnTypes' => [],
+                'primaryKeys' => ['order_id'],
+            ],
+        ];
+
+        $result = $transformer->transform(
+            'DELETE u, o FROM users u JOIN orders o ON u.id = o.user_id WHERE u.id = 2',
+            $tables,
+        );
+
+        self::assertStringContainsString(
+            'SELECT `u`.`id` AS `__ztd_multi_0_value_0`, `o`.`order_id` AS `__ztd_multi_1_value_0`',
+            $result,
+        );
+        self::assertStringNotContainsString('`o`.`user_id` AS `__ztd_multi_1_value_1`', $result);
+    }
 }

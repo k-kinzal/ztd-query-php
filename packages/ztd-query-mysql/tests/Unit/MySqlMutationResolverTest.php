@@ -292,6 +292,21 @@ final class MySqlMutationResolverTest extends TestCase
         $mutation = $resolver->resolve($sql, $statements[0], QueryKind::WRITE_SIMULATED);
 
         self::assertInstanceOf(\ZtdQuery\Shadow\Mutation\MultiUpdateMutation::class, $mutation);
+        $mutation->apply($shadowStore, [[
+            '__ztd_multi_0_value_0' => 1,
+            '__ztd_multi_0_value_1' => 'Updated',
+            '__ztd_multi_0_identity_0' => 1,
+            '__ztd_multi_1_value_0' => 1,
+            '__ztd_multi_1_value_1' => 1,
+            '__ztd_multi_1_value_2' => 'done',
+            '__ztd_multi_1_identity_0' => 1,
+        ]]);
+
+        self::assertSame([['id' => 1, 'name' => 'Updated']], $shadowStore->get('users'));
+        self::assertSame(
+            [['id' => 1, 'user_id' => 1, 'status' => 'done']],
+            $shadowStore->get('orders'),
+        );
     }
 
     public function testResolveDeleteMultiTableReturnsMultiDeleteMutation(): void
@@ -307,7 +322,7 @@ final class MySqlMutationResolverTest extends TestCase
         $registry->register('orders', $definition2);
 
         $shadowStore->set('users', [['id' => 1, 'name' => 'Alice']]);
-        $shadowStore->set('orders', [['id' => 1, 'user_id' => 1]]);
+        $shadowStore->set('orders', [['id' => 9, 'user_id' => 1]]);
 
         $selectTransformer = new SelectTransformer();
         $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
@@ -319,6 +334,13 @@ final class MySqlMutationResolverTest extends TestCase
         $mutation = $resolver->resolve($sql, $statements[0], QueryKind::WRITE_SIMULATED);
 
         self::assertInstanceOf(\ZtdQuery\Shadow\Mutation\MultiDeleteMutation::class, $mutation);
+        $mutation->apply($shadowStore, [[
+            '__ztd_multi_0_value_0' => 1,
+            '__ztd_multi_1_value_0' => 9,
+        ]]);
+
+        self::assertSame([], $shadowStore->get('users'));
+        self::assertSame([], $shadowStore->get('orders'));
     }
 
     public function testResolveInsertWithOnDuplicateKeyReturnsUpsertMutation(): void
@@ -667,6 +689,8 @@ final class MySqlMutationResolverTest extends TestCase
         self::assertInstanceOf(MultiDeleteMutation::class, $mutation);
         self::assertSame([], $shadowStore->get('users'));
         self::assertSame([], $shadowStore->get('orders'));
+        self::assertSame(ShadowTableState::Initialized, $shadowStore->state('users'));
+        self::assertSame(ShadowTableState::Initialized, $shadowStore->state('orders'));
     }
 
     public function testInsertOnDuplicateKeyUpdateReturnsUpsert(): void
@@ -1315,6 +1339,8 @@ final class MySqlMutationResolverTest extends TestCase
         $mutation = $resolver->resolve($sql, $statements[0], QueryKind::WRITE_SIMULATED);
 
         self::assertInstanceOf(MultiUpdateMutation::class, $mutation);
+        self::assertSame(ShadowTableState::Initialized, $shadowStore->state('users'));
+        self::assertSame(ShadowTableState::Initialized, $shadowStore->state('orders'));
     }
 
     public function testResolveMultiDeleteReturnsPrimaryKeysFromDefinition(): void

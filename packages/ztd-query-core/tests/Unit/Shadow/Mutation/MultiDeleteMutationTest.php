@@ -6,11 +6,15 @@ namespace Tests\Unit\Shadow\Mutation;
 
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Shadow\Mutation\MultiDeleteMutation;
+use ZtdQuery\Shadow\Mutation\MultiTableMutationRow;
+use ZtdQuery\Shadow\Mutation\MultiTableMutationTarget;
 use ZtdQuery\Shadow\ShadowStore;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 
 #[UsesClass(ShadowStore::class)]
+#[UsesClass(MultiTableMutationRow::class)]
+#[UsesClass(MultiTableMutationTarget::class)]
 #[CoversClass(MultiDeleteMutation::class)]
 final class MultiDeleteMutationTest extends TestCase
 {
@@ -27,12 +31,12 @@ final class MultiDeleteMutationTest extends TestCase
         ]);
 
         $mutation = new MultiDeleteMutation([
-            'users' => ['id'],
-            'profiles' => ['user_id'],
+            new MultiTableMutationTarget('users', ['id', 'name'], ['id']),
+            new MultiTableMutationTarget('profiles', ['user_id', 'bio'], ['user_id']),
         ]);
 
         $mutation->apply($store, [
-            ['id' => 1, 'user_id' => 1],
+            ['__ztd_multi_0_value_0' => 1, '__ztd_multi_1_value_0' => 1],
         ]);
 
         self::assertSame([['id' => 2, 'name' => 'Bob']], $store->get('users'));
@@ -42,8 +46,8 @@ final class MultiDeleteMutationTest extends TestCase
     public function testTableNameReturnsPrimaryTable(): void
     {
         $mutation = new MultiDeleteMutation([
-            'users' => ['id'],
-            'profiles' => ['user_id'],
+            new MultiTableMutationTarget('users', ['id'], ['id']),
+            new MultiTableMutationTarget('profiles', ['user_id'], ['user_id']),
         ]);
 
         self::assertSame('users', $mutation->tableName());
@@ -52,9 +56,9 @@ final class MultiDeleteMutationTest extends TestCase
     public function testTableNamesReturnsAllTableNames(): void
     {
         $mutation = new MultiDeleteMutation([
-            'users' => ['id'],
-            'profiles' => ['user_id'],
-            'settings' => ['user_id'],
+            new MultiTableMutationTarget('users', ['id'], ['id']),
+            new MultiTableMutationTarget('profiles', ['user_id'], ['user_id']),
+            new MultiTableMutationTarget('settings', ['user_id'], ['user_id']),
         ]);
 
         self::assertSame(['users', 'profiles', 'settings'], $mutation->tableNames());
@@ -82,13 +86,13 @@ final class MultiDeleteMutationTest extends TestCase
         ]);
 
         $mutation = new MultiDeleteMutation([
-            'users' => ['id'],
-            'orders' => ['user_id'],
+            new MultiTableMutationTarget('users', ['id', 'name'], ['id']),
+            new MultiTableMutationTarget('orders', ['order_id', 'user_id'], ['user_id']),
         ]);
 
         $mutation->apply($store, [
-            ['id' => 1, 'user_id' => 1],
-            ['id' => 3, 'user_id' => 3],
+            ['__ztd_multi_0_value_0' => 1, '__ztd_multi_1_value_0' => 1],
+            ['__ztd_multi_0_value_0' => 3, '__ztd_multi_1_value_0' => 3],
         ]);
 
         self::assertSame([['id' => 2, 'name' => 'Bob']], $store->get('users'));

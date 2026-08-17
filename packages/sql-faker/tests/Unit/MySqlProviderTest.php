@@ -152,6 +152,43 @@ final class MySqlProviderTest extends TestCase
         self::assertMatchesRegularExpression('/\bDELETE\b/i', $result);
     }
 
+    public function testMultiTableUpdateStatement(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->multiTableUpdateStatement();
+
+        self::assertSame(
+            'UPDATE `pqrahvfartp57fhd__zg105o2nmrpmxxeit` AS `_ztd_left`,'
+                . ' `f2_z3_g1c1951hjo8wsn69gz9r7rh8e0` AS `_ztd_right`'
+                . ' SET `_ztd_left`.`_d7149symgfi0didy` = 1,'
+                . ' `_ztd_right`.`uz0dblhnld8_csdd8metc4buaauzxltqbveffxujmyfeflh` = 2'
+                . ' WHERE `_ztd_left`.`_d7149symgfi0didy`'
+                . ' = `_ztd_right`.`uz0dblhnld8_csdd8metc4buaauzxltqbveffxujmyfeflh`',
+            $result,
+        );
+    }
+
+    public function testMultiTableDeleteStatement(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->multiTableDeleteStatement();
+
+        self::assertSame(
+            'DELETE `_ztd_left`, `_ztd_right`'
+                . ' FROM `pqrahvfartp57fhd__zg105o2nmrpmxxeit` AS `_ztd_left`'
+                . ' JOIN `f2_z3_g1c1951hjo8wsn69gz9r7rh8e0` AS `_ztd_right`'
+                . ' ON `_ztd_left`.`_d7149symgfi0didy`'
+                . ' = `_ztd_right`.`uz0dblhnld8_csdd8metc4buaauzxltqbveffxujmyfeflh`',
+            $result,
+        );
+    }
+
     public function testCreateTableStatement(): void
     {
         $faker = Factory::create();

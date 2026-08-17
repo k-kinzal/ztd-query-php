@@ -793,4 +793,37 @@ final class UpdateTransformerTest extends TestCase
         self::assertStringNotContainsString('`t`.`x`', $result['sql']);
         self::assertStringNotContainsString('`t`.`y`', $result['sql']);
     }
+
+    public function testTransformMultiUpdateProjectsValuesAndOriginalIdentityPerTarget(): void
+    {
+        $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = [
+            'users' => [
+                'rows' => [['id' => 2, 'name' => 'Bob']],
+                'columns' => ['id', 'name'],
+                'columnTypes' => [],
+                'primaryKeys' => ['id'],
+            ],
+            'orders' => [
+                'rows' => [['order_id' => 9, 'user_id' => 2]],
+                'columns' => ['order_id', 'user_id'],
+                'columnTypes' => [],
+                'primaryKeys' => ['order_id'],
+            ],
+        ];
+
+        $result = $transformer->transform(
+            "UPDATE users u, orders o SET `u`.`name` = 'Updated', `o`.`user_id` = 7 WHERE u.id = o.user_id",
+            $tables,
+        );
+
+        self::assertStringContainsString(
+            "SELECT `u`.`id` AS `__ztd_multi_0_value_0`, 'Updated' AS `__ztd_multi_0_value_1`, `u`.`id` AS `__ztd_multi_0_identity_0`",
+            $result,
+        );
+        self::assertStringContainsString(
+            '`o`.`order_id` AS `__ztd_multi_1_value_0`, 7 AS `__ztd_multi_1_value_1`, `o`.`order_id` AS `__ztd_multi_1_identity_0`',
+            $result,
+        );
+    }
 }
