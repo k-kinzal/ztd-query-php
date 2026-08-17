@@ -13,6 +13,7 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlParser;
+use ZtdQuery\Platform\MySql\UpdateAssignmentExtractor;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
 use ZtdQuery\Shadow\Mutation\MultiTableMutationRow;
@@ -67,7 +68,8 @@ final class UpdateTransformer implements SqlTransformer
         $columns = $tables[$targetTable]['columns'] ?? [];
 
         $primaryKeys = $tables[$targetTable]['primaryKeys'] ?? [];
-        $projection = $this->buildProjection($statement, $columns, $primaryKeys);
+        $assignmentValues = (new UpdateAssignmentExtractor())->values($sql);
+        $projection = $this->buildProjection($statement, $columns, $primaryKeys, [], $assignmentValues);
         $targetTableNames = array_keys($projection['tables']);
         if (isset($targetTableNames[1])) {
             $targets = $this->targetsFromContexts($projection['tables'], $tables);
@@ -76,6 +78,7 @@ final class UpdateTransformer implements SqlTransformer
                 $columns,
                 $primaryKeys,
                 $targets,
+                $assignmentValues,
             );
         }
 
@@ -92,10 +95,16 @@ final class UpdateTransformer implements SqlTransformer
      * @param array<int, string> $columns
      * @param array<int, string> $primaryKeys
      * @param list<MultiTableMutationTarget> $targets
+     * @param list<string> $assignmentValues
      * @return array{sql: string, table: string, tables: array<string, array{alias: string}>}
      */
-    public function buildProjection(UpdateStatement $stmt, array $columns, array $primaryKeys = [], array $targets = []): array
-    {
+    public function buildProjection(
+        UpdateStatement $stmt,
+        array $columns,
+        array $primaryKeys = [],
+        array $targets = [],
+        array $assignmentValues = [],
+    ): array {
         if ($stmt->tables === null || $stmt->tables === []) {
             throw new \RuntimeException("Update statement has no tables?");
         }
@@ -121,7 +130,7 @@ final class UpdateTransformer implements SqlTransformer
         $coveredCols = [];
 
         if ($stmt->set !== null && $stmt->set !== []) {
-            foreach ($stmt->set as $setOp) {
+            foreach ($stmt->set as $index => $setOp) {
                 $colName = $setOp->column;
                 $colName = trim($colName, '`"\'');
                 if (str_contains($colName, '.')) {
@@ -129,7 +138,7 @@ final class UpdateTransformer implements SqlTransformer
                     $colName = trim(end($parts), '`"\'');
                 }
 
-                $selectCols[] = $setOp->value . " AS `" . $colName . "`";
+                $selectCols[] = ($assignmentValues[$index] ?? $setOp->value) . " AS `" . $colName . "`";
                 $coveredCols[$colName] = true;
             }
         }
@@ -146,7 +155,7 @@ final class UpdateTransformer implements SqlTransformer
         }
 
         if ($targets !== []) {
-            $selectCols = $this->multiTableSelectColumns($stmt, $allTargetTables, $targets);
+            $selectCols = $this->multiTableSelectColumns($stmt, $allTargetTables, $targets, $assignmentValues);
         }
 
         if ($selectCols === []) {
@@ -218,11 +227,16 @@ final class UpdateTransformer implements SqlTransformer
     /**
      * @param array<string, array{alias: string}> $targetTables
      * @param list<MultiTableMutationTarget> $targets
+     * @param list<string> $assignmentValues
      * @return list<string>
      */
-    private function multiTableSelectColumns(UpdateStatement $stmt, array $targetTables, array $targets): array
-    {
-        $assignments = $this->assignmentsByTable($stmt, $targetTables);
+    private function multiTableSelectColumns(
+        UpdateStatement $stmt,
+        array $targetTables,
+        array $targets,
+        array $assignmentValues,
+    ): array {
+        $assignments = $this->assignmentsByTable($stmt, $targetTables, $assignmentValues);
         $codec = new MultiTableMutationRow();
         $quoter = new MySqlIdentifierQuoter();
         $selectColumns = [];
@@ -248,9 +262,10 @@ final class UpdateTransformer implements SqlTransformer
 
     /**
      * @param array<string, array{alias: string}> $targetTables
+     * @param list<string> $assignmentValues
      * @return array<string, array<string, string>>
      */
-    private function assignmentsByTable(UpdateStatement $stmt, array $targetTables): array
+    private function assignmentsByTable(UpdateStatement $stmt, array $targetTables, array $assignmentValues): array
     {
         $assignments = [];
         $primaryTable = array_key_first($targetTables);
@@ -259,7 +274,7 @@ final class UpdateTransformer implements SqlTransformer
             $qualifiedTables[$tableName] = $tableName;
             $qualifiedTables[$tableInfo['alias']] = $tableName;
         }
-        foreach ($stmt->set ?? [] as $setOperation) {
+        foreach ($stmt->set ?? [] as $index => $setOperation) {
             $parts = array_map(self::unquoteIdentifier(...), explode('.', $setOperation->column));
             $column = array_pop($parts);
             if ($column === '') {
@@ -271,7 +286,7 @@ final class UpdateTransformer implements SqlTransformer
                 $tableName = $qualifiedTables[$qualifier] ?? $primaryTable;
             }
             if ($tableName !== null) {
-                $assignments[$tableName][$column] = $setOperation->value;
+                $assignments[$tableName][$column] = $assignmentValues[$index] ?? $setOperation->value;
             }
         }
 

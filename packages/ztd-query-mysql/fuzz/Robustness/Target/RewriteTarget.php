@@ -138,6 +138,7 @@ final class RewriteTarget
             fn () => $this->provider->alterTableStatement(maxDepth: 5),
             fn () => $this->provider->replaceStatement(maxDepth: 5),
             fn () => $this->provider->truncateStatement(maxDepth: 3),
+            fn (): string => "UPDATE users SET status = {$this->provider->quotedHexLiteral()} WHERE id = 1",
         ];
 
         $index = ord($input[0] ?? "\0") % count($generators);

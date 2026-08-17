@@ -190,6 +190,7 @@ final class RobustnessTarget
             fn () => $this->provider->truncateStatement(maxDepth: 3),
             fn (): string => 'EXPLAIN SELECT * FROM users',
             fn (): string => 'SELECT * FROM app.users',
+            fn (): string => "UPDATE users SET status = {$this->provider->quotedHexLiteral()} WHERE id = 1",
         ];
 
         $index = ord($input[0] ?? "\0") % count($generators);

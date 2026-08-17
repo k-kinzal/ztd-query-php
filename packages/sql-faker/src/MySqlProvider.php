@@ -358,6 +358,18 @@ final class MySqlProvider extends Base
     }
 
     /**
+     * Generate a quoted MySQL hexadecimal literal.
+     *
+     * @return string Generated quoted hex literal (e.g., "X'deadbeef'")
+     *
+     * @example $faker->quotedHexLiteral() // "X'deadbeef'"
+     */
+    public function quotedHexLiteral(int $minBytes = 1, int $maxBytes = 8): string
+    {
+        return "X'" . $this->rsg->hexString($minBytes * 2, $maxBytes * 2) . "'";
+    }
+
+    /**
      * Generate a MySQL binary literal.
      *
      * @return string Generated binary literal (e.g., "0b1010")

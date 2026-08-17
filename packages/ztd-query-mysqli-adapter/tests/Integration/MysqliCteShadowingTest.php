@@ -135,6 +135,29 @@ final class MysqliCteShadowingTest extends TestCase
         }
     }
 
+    public function testUpdatePreservesIntroducedHexLiteral(): void
+    {
+        [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();
+        $table = 'prefix_' . bin2hex(random_bytes(8));
+        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, payload VARBINARY(255))', $table));
+        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
+        try {
+            self::assertNotFalse($ztdMysqli->query(sprintf("INSERT INTO `%s` VALUES (1, X'48656C6C6F')", $table)));
+            self::assertNotFalse($ztdMysqli->query(sprintf("UPDATE `%s` SET payload = X'576F726C64' WHERE id = 1", $table)));
+
+            $result = $ztdMysqli->query(sprintf('SELECT payload FROM `%s` WHERE id = 1', $table));
+            self::assertInstanceOf(\mysqli_result::class, $result);
+            self::assertSame([['payload' => 'World']], $result->fetch_all(MYSQLI_ASSOC));
+
+            $physical = $rawMysqli->query(sprintf('SELECT payload FROM `%s`', $table));
+            self::assertInstanceOf(\mysqli_result::class, $physical);
+            self::assertSame([], $physical->fetch_all(MYSQLI_ASSOC));
+        } finally {
+            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+        }
+    }
+
     public function testSelfReferencingUpsertMatchesNativeMySql(): void
     {
         [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();

@@ -482,6 +482,29 @@ final class MySqlProviderTest extends TestCase
         self::assertMatchesRegularExpression('/^0x[0-9a-f]{1,16}$/', $result);
     }
 
+    public function testQuotedHexLiteral(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->quotedHexLiteral(2, 4);
+
+        self::assertMatchesRegularExpression("/^X'[0-9a-f]{4,8}'$/", $result);
+    }
+
+    public function testQuotedHexLiteralDefaultsToOneThroughEightBytes(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new MySqlProvider($faker);
+
+        $result = $provider->quotedHexLiteral();
+
+        self::assertMatchesRegularExpression("/^X'[0-9a-f]{2,16}'$/", $result);
+        self::assertSame(0, (strlen($result) - 3) % 2);
+    }
+
     public function testBinaryLiteral(): void
     {
         $faker = Factory::create();

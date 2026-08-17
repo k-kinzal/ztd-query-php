@@ -9,6 +9,7 @@ use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
+use ZtdQuery\Platform\MySql\UpdateAssignmentExtractor;
 use PhpMyAdmin\SqlParser\Parser;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -20,11 +21,56 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(SelectTransformer::class)]
 #[UsesClass(MySqlCastRenderer::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]
+#[UsesClass(UpdateAssignmentExtractor::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlTypeSemantics::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
 final class UpdateTransformerTest extends TestCase
 {
+    public function testTransformPreservesIntroducedHexLiteral(): void
+    {
+        $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = [
+            'data' => [
+                'rows' => [['id' => 1, 'payload' => 'Hello']],
+                'columns' => ['id', 'payload'],
+                'columnTypes' => [],
+            ],
+        ];
+
+        $result = $transformer->transform("UPDATE data SET payload = X'576F726C64' WHERE id = 1", $tables);
+
+        self::assertStringContainsString("X'576F726C64' AS `payload`", $result);
+        self::assertStringNotContainsString('SELECT X AS `payload`', $result);
+    }
+
+    public function testTransformPreservesIntroducedLiteralsForEveryUpdateTarget(): void
+    {
+        $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = [
+            'data' => [
+                'rows' => [['id' => 1, 'payload' => 'old']],
+                'columns' => ['id', 'payload'],
+                'columnTypes' => [],
+                'primaryKeys' => ['id'],
+            ],
+            'audit' => [
+                'rows' => [['id' => 1, 'bits' => '0']],
+                'columns' => ['id', 'bits'],
+                'columnTypes' => [],
+                'primaryKeys' => ['id'],
+            ],
+        ];
+
+        $result = $transformer->transform(
+            "UPDATE data d, audit a SET d.payload = X'00', a.bits = B'01' WHERE d.id = a.id",
+            $tables,
+        );
+
+        self::assertStringContainsString("X'00' AS `__ztd_multi_0_value_1`", $result);
+        self::assertStringContainsString("B'01' AS `__ztd_multi_1_value_1`", $result);
+    }
+
     public function testBuildUpdateSelectUsesAliasAndColumns(): void
     {
         $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
