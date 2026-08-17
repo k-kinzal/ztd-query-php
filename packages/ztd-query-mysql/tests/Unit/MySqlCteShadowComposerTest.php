@@ -120,6 +120,17 @@ final class MySqlCteShadowComposerTest extends TestCase
         );
     }
 
+    public function testComposesShadowOverSchemaQualifiedSelectSource(): void
+    {
+        self::assertSame(
+            "WITH users AS (SELECT 1 AS id)\nSELECT * FROM \"users\"",
+            (new CteShadowComposer())->compose(
+                'SELECT * FROM public."users"',
+                ['users' => 'users AS (SELECT 1 AS id)'],
+            ),
+        );
+    }
+
     public function testSkipsEntriesIndependentlyAndMatchesDeclaredNamesCaseInsensitively(): void
     {
         $composer = new MySqlCteShadowComposer();

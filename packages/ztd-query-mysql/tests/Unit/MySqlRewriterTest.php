@@ -63,6 +63,21 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
 final class MySqlRewriterTest extends RewriterContractTest
 {
+    public function testDatabaseQualifiedSelectUsesShadowCte(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', [['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com']]);
+        $registry = new TableDefinitionRegistry();
+        $definition = $this->createSchemaParser()->parse($this->usersCreateTableSql());
+        self::assertNotNull($definition);
+        $registry->register('users', $definition);
+
+        $plan = $this->createRewriter($store, $registry)->rewrite('SELECT name FROM app.users');
+
+        self::assertStringStartsWith('WITH `users` AS', $plan->sql());
+        self::assertStringEndsWith('SELECT name FROM users', $plan->sql());
+    }
+
     public function testExplainPassesThroughUnchanged(): void
     {
         $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());

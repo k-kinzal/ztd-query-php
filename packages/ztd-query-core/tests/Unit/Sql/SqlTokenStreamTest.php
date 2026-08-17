@@ -441,3 +441,4 @@ final class SqlTokenStreamTest extends TestCase
     }
 
 }
+

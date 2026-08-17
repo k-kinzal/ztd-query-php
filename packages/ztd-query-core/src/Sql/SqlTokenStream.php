@@ -386,3 +386,4 @@ final class SqlTokenStream
         return new SqlToken($kind, substr($sql, $start, $end - $start), $start, $depth, $bracketDepth);
     }
 }
+

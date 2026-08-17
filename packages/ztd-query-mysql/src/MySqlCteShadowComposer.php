@@ -25,18 +25,21 @@ final class MySqlCteShadowComposer
     {
         $declared = array_fill_keys($this->declaredCteNames($sql), true);
         $ctes = [];
+        $shadowedTables = [];
         foreach ($tableCtes as $table => $cte) {
             $normalized = strtolower($table);
             if (isset($declared[$normalized]) || !$this->referencesIdentifier($sql, $table)) {
                 continue;
             }
             $ctes[] = $cte;
+            $shadowedTables[] = $table;
         }
 
         if ($ctes === []) {
             return $sql;
         }
 
+        $sql = (new MySqlSelectRelationParser())->unqualify($sql, $shadowedTables);
         $tokens = SqlTokenStream::tokenize($sql, $this->dialect)->significantTokens();
         $with = $tokens[0] ?? null;
         if ($with === null || !$with->isKeyword('WITH')) {
