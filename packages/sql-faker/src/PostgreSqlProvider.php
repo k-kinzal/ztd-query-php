@@ -129,6 +129,16 @@ final class PostgreSqlProvider extends Base
     }
 
     /**
+     * Generate a PostgreSQL CREATE DOMAIN statement.
+     *
+     * @return non-empty-string
+     */
+    public function createDomainStatement(int $maxDepth = PHP_INT_MAX): string
+    {
+        return $this->generateRequired(StatementType::CreateDomain->value, $maxDepth);
+    }
+
+    /**
      * Generate a PostgreSQL ALTER TABLE statement.
      *
      * @return non-empty-string
@@ -431,6 +441,12 @@ final class PostgreSqlProvider extends Base
         return $this->sql->generate(
             GenerationPlans::partialIndexUpsertStatement()->withMaxDepth($maxDepth),
         );
+    }
+
+    /** @return non-empty-string */
+    public function domainDmlStatement(int $maxDepth = 40): string
+    {
+        return $this->sql->generateDomainDmlStatement($maxDepth);
     }
 
     /** @return non-empty-string */

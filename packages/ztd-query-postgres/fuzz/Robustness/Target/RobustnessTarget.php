@@ -132,6 +132,7 @@ final class RobustnessTarget
             'order_items' => 'CREATE TABLE order_items (order_id INTEGER NOT NULL, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL DEFAULT 1, PRIMARY KEY (order_id, product_id))',
             'products' => 'CREATE TABLE products (id INTEGER PRIMARY KEY, name VARCHAR(255) NOT NULL, price NUMERIC(10,2), category VARCHAR(100))',
             'logs' => 'CREATE TABLE logs (id INTEGER NOT NULL, log_date DATE NOT NULL, level TEXT NOT NULL, PRIMARY KEY (id, log_date)) PARTITION BY RANGE (log_date)',
+            'contacts' => 'CREATE TABLE contacts (id INTEGER PRIMARY KEY, age "ztd_fuzz"."positive_int", satisfaction "ztd_fuzz"."percentage")',
         ];
 
         foreach ($schemas as $tableName => $createSql) {
@@ -175,6 +176,9 @@ final class RobustnessTarget
                 ['id' => '1', 'log_date' => '2024-05-01', 'level' => 'INFO'],
                 ['id' => '2', 'log_date' => '2025-05-01', 'level' => 'WARN'],
             ],
+            'contacts' => [
+                ['id' => '1', 'age' => '30', 'satisfaction' => '85.50'],
+            ],
         ];
     }
 
@@ -200,6 +204,8 @@ final class RobustnessTarget
             fn (): string => $this->provider->mergeStatement(),
             fn (): string => $this->provider->copyStatement(maxDepth: 8),
             fn (): string => $this->provider->partialIndexUpsertStatement(),
+            fn (): string => $this->provider->createDomainStatement(maxDepth: 8),
+            fn (): string => $this->provider->domainDmlStatement(),
         ];
 
         $index = ord($input[0] ?? "\0") % count($generators);

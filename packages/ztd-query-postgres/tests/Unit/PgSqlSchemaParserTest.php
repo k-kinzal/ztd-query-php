@@ -19,6 +19,36 @@ use ZtdQuery\Schema\TablePartitionStrategy;
 #[UsesClass(PgSqlPartitionParser::class)]
 final class PgSqlSchemaParserTest extends SchemaParserContractTest
 {
+    public function testParsesSchemaQualifiedQuotedDomainTypeWithoutChangingItsCase(): void
+    {
+        $definition = (new PgSqlSchemaParser())->parse(
+            'CREATE TABLE contacts (age "tenant"."PositiveValue" NOT NULL)',
+        );
+
+        self::assertNotNull($definition);
+        self::assertSame('"tenant"."PositiveValue"', $definition->columnTypes['age']);
+        self::assertSame(ColumnTypeFamily::UNKNOWN, $definition->typedColumns['age']->family);
+        self::assertSame('"tenant"."PositiveValue"', $definition->typedColumns['age']->nativeType);
+    }
+
+    public function testParsesQuotedDomainAndDomainArrayTypes(): void
+    {
+        $definition = (new PgSqlSchemaParser())->parse(
+            'CREATE TABLE contacts (age "PositiveValue", history "tenant"."PositiveValue"[])',
+        );
+
+        self::assertNotNull($definition);
+        self::assertSame('"PositiveValue"', $definition->columnTypes['age']);
+        self::assertSame('"tenant"."PositiveValue"[]', $definition->columnTypes['history']);
+    }
+
+    public function testRejectsIncompleteQualifiedDomainType(): void
+    {
+        self::assertNull((new PgSqlSchemaParser())->parse(
+            'CREATE TABLE contacts (age "tenant". NOT NULL)',
+        ));
+    }
+
     protected function createParser(): SchemaParser
     {
         return new PgSqlSchemaParser();

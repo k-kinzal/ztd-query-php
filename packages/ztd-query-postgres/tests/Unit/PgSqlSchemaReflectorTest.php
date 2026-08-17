@@ -11,11 +11,13 @@ use Tests\Fake\FakeSequentialConnection;
 use Tests\Fake\FakeStatement;
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 use ZtdQuery\Platform\Postgres\PgSqlSchemaReflector;
 
 #[CoversClass(PgSqlSchemaReflector::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlViewDefinitionParser::class)]
+#[UsesClass(PgSqlIdentifierQuoter::class)]
 final class PgSqlSchemaReflectorTest extends TestCase
 {
     public function testReflectViewsReturnsEmptyWhenQueryFails(): void
@@ -702,11 +704,39 @@ final class PgSqlSchemaReflectorTest extends TestCase
         self::assertSame(
             "SELECT column_name, data_type, character_maximum_length, "
             . "numeric_precision, numeric_scale, is_nullable, column_default, "
-            . "udt_name, is_identity, identity_generation, is_generated, generation_expression "
+            . "udt_name, domain_schema, domain_name, is_identity, identity_generation, "
+            . "is_generated, generation_expression "
             . "FROM information_schema.columns "
             . "WHERE table_schema = current_schema() AND table_name = 'users' "
             . "ORDER BY ordinal_position",
             $queries[0]
+        );
+    }
+
+    public function testReflectsSchemaQualifiedDomainTypeInsteadOfItsBaseType(): void
+    {
+        $reflector = new PgSqlSchemaReflector(new FakeSequentialConnection([
+            new FakeStatement([
+                [
+                    'column_name' => 'amount',
+                    'data_type' => 'numeric',
+                    'character_maximum_length' => null,
+                    'numeric_precision' => 5,
+                    'numeric_scale' => 2,
+                    'is_nullable' => 'NO',
+                    'column_default' => null,
+                    'udt_name' => 'numeric',
+                    'domain_schema' => 'tenant "one"',
+                    'domain_name' => 'Percentage',
+                ],
+            ]),
+            new FakeStatement([]),
+            new FakeStatement([]),
+        ]));
+
+        self::assertSame(
+            "CREATE TABLE \"payments\" (\n  \"amount\" \"tenant \"\"one\"\"\".\"Percentage\" NOT NULL\n)",
+            $reflector->getCreateStatement('payments'),
         );
     }
 

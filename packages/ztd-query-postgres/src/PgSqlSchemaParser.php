@@ -271,11 +271,12 @@ final class PgSqlSchemaParser implements SchemaParser
         }
 
         $family = $this->mapTypeToFamily($nativeType);
-        $columnType = new ColumnType($family, strtoupper($nativeType));
+        $normalizedType = str_contains($nativeType, '"') ? $nativeType : strtoupper($nativeType);
+        $columnType = new ColumnType($family, $normalizedType);
 
         return [
             'name' => $name,
-            'type' => strtoupper($nativeType),
+            'type' => $normalizedType,
             'columnType' => $columnType,
             'notNull' => $notNull,
             'primaryKey' => $primaryKey,
@@ -345,6 +346,11 @@ final class PgSqlSchemaParser implements SchemaParser
     {
         $str = ltrim($str);
 
+        $quotedType = $this->extractQuotedType($str);
+        if ($quotedType !== null) {
+            return $quotedType;
+        }
+
         if (preg_match('/^([a-zA-Z_]\w*)/i', $str, $m) !== 1) {
             return null;
         }
@@ -386,6 +392,42 @@ final class PgSqlSchemaParser implements SchemaParser
         $fullType = $baseType . $params . $arrayBrackets;
 
         return ['type' => $fullType, 'rest' => trim($trimmedRest)];
+    }
+
+    /** @return array{type: string, rest: string}|null */
+    private function extractQuotedType(string $str): ?array
+    {
+        $tokens = SqlTokenStream::tokenize($str)->significantTokens();
+        $first = $tokens[0] ?? null;
+        if ($first?->kind !== SqlTokenKind::QuotedIdentifier) {
+            return null;
+        }
+
+        $last = $first;
+        $index = 1;
+        if (($tokens[$index] ?? null)?->text === '.') {
+            $qualifiedName = $tokens[$index + 1] ?? null;
+            if (!$qualifiedName instanceof SqlToken || !$this->isIdentifier($qualifiedName)) {
+                return null;
+            }
+            if ($qualifiedName->kind === SqlTokenKind::Word
+                && in_array(strtoupper($qualifiedName->text), self::CONSTRAINT_KEYWORDS, true)
+            ) {
+                return null;
+            }
+            $last = $qualifiedName;
+            $index += 2;
+        }
+
+        while (($tokens[$index] ?? null)?->text === '[' && ($tokens[$index + 1] ?? null)?->text === ']') {
+            $last = $tokens[$index + 1];
+            $index += 2;
+        }
+
+        return [
+            'type' => substr($str, 0, $last->endOffset()),
+            'rest' => trim(substr($str, $last->endOffset())),
+        ];
     }
 
     private function mapTypeToFamily(string $nativeType): ColumnTypeFamily

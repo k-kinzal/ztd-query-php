@@ -327,6 +327,18 @@ final class PostgreSqlProviderTest extends TestCase
         self::assertMatchesRegularExpression('/\b(?:SELECT|VALUES|TABLE)\b/', $result);
     }
 
+    public function testCreateDomainStatement(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new PostgreSqlProvider($faker);
+
+        $result = $provider->createDomainStatement(maxDepth: 8);
+
+        self::assertStringContainsString('CREATE', $result);
+        self::assertStringContainsString('DOMAIN', $result);
+    }
+
     public function testAlterTableStatement(): void
     {
         $faker = Factory::create();
@@ -1040,7 +1052,26 @@ final class PostgreSqlProviderTest extends TestCase
         yield 'Delete' => [StatementType::Delete];
         yield 'CreateTable' => [StatementType::CreateTable];
         yield 'CreateTableAs' => [StatementType::CreateTableAs];
+        yield 'CreateDomain' => [StatementType::CreateDomain];
         yield 'AlterTable' => [StatementType::AlterTable];
         yield 'DropTable' => [StatementType::DropTable];
+    }
+
+    #[DataProvider('providerDomainDmlSeed')]
+    public function testDomainDmlStatementTargetsDomainFixture(int $seed, string $expected): void
+    {
+        $faker = Factory::create();
+        $provider = new PostgreSqlProvider($faker);
+        $faker->seed($seed);
+
+        self::assertSame($expected, $provider->domainDmlStatement());
+    }
+
+    /** @return iterable<string, array{int, string}> */
+    public static function providerDomainDmlSeed(): iterable
+    {
+        yield 'insert variant' => [2, 'INSERT INTO contacts (age, satisfaction) VALUES ($1, $2)'];
+        yield 'update variant' => [1, 'UPDATE contacts SET satisfaction = 99.99 WHERE age > 0'];
+        yield 'delete variant' => [0, 'DELETE FROM contacts WHERE satisfaction > 90'];
     }
 }

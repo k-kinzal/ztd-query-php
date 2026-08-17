@@ -103,7 +103,8 @@ final class PgSqlSchemaReflector implements SchemaReflector, ViewReflector
         $stmt = $this->connection->query(
             "SELECT column_name, data_type, character_maximum_length, "
             . "numeric_precision, numeric_scale, is_nullable, column_default, "
-            . "udt_name, is_identity, identity_generation, is_generated, generation_expression "
+            . "udt_name, domain_schema, domain_name, is_identity, identity_generation, "
+            . "is_generated, generation_expression "
             . "FROM information_schema.columns "
             . "WHERE table_schema = current_schema() AND table_name = '" . $escapedTableName . "' "
             . "ORDER BY ordinal_position"
@@ -299,7 +300,7 @@ final class PgSqlSchemaReflector implements SchemaReflector, ViewReflector
         $dataType = strtoupper(isset($col['data_type']) && is_string($col['data_type']) ? $col['data_type'] : 'TEXT');
         $udtName = strtoupper(isset($col['udt_name']) && is_string($col['udt_name']) ? $col['udt_name'] : '');
 
-        $typeSql = $this->buildTypeSql($dataType, $udtName, $col);
+        $typeSql = $this->domainTypeSql($col) ?? $this->buildTypeSql($dataType, $udtName, $col);
 
         $def = "$name $typeSql";
 
@@ -327,6 +328,25 @@ final class PgSqlSchemaReflector implements SchemaReflector, ViewReflector
         }
 
         return $def;
+    }
+
+    /**
+     * @param array<string, mixed> $col
+     */
+    private function domainTypeSql(array $col): ?string
+    {
+        $domainName = $col['domain_name'] ?? null;
+        if (!is_string($domainName) || $domainName === '') {
+            return null;
+        }
+
+        $quoter = new PgSqlIdentifierQuoter();
+        $domainSchema = $col['domain_schema'] ?? null;
+        if (is_string($domainSchema) && $domainSchema !== '') {
+            return $quoter->quote($domainSchema) . '.' . $quoter->quote($domainName);
+        }
+
+        return $quoter->quote($domainName);
     }
 
     /**
