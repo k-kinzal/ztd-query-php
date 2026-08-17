@@ -262,10 +262,8 @@ final class SqlTokenStream
      */
     private static function relationNameAt(string $sql, array $tokens, int $index): ?string
     {
-        $token = $tokens[$index] ?? null;
-        if ($token === null
-            || ($token->kind === SqlTokenKind::Symbol && $token->text === '(')
-            || $token->isKeyword('VALUES')
+        $token = $tokens[$index];
+        if ($token->isKeyword('VALUES')
             || $token->isKeyword('SELECT')
         ) {
             return null;
@@ -318,12 +316,14 @@ final class SqlTokenStream
             return null;
         }
 
-        foreach ($tokens as $endIndex => $endToken) {
-            if ($endIndex <= $index
-                || $endToken->kind !== SqlTokenKind::Symbol
-                || $endToken->text !== ']'
-                || !$endToken->isTopLevel()
-            ) {
+        for ($endIndex = $index; isset($tokens[$endIndex]); $endIndex++) {
+            $endToken = $tokens[$endIndex];
+            if ($endToken->text !== ']' || !$endToken->isTopLevel()) {
+                continue;
+            }
+            $following = $tokens[$endIndex + 1] ?? null;
+            if ($following?->text === ']' && $following->isTopLevel()) {
+                $endIndex++;
                 continue;
             }
             $name = substr($sql, $token->endOffset(), $endToken->offset - $token->endOffset());

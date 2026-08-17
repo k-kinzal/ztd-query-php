@@ -74,6 +74,21 @@ final class SqliteRewriterTest extends RewriterContractTest
         self::assertSame(QueryKind::READ, $plan->kind());
     }
 
+    public function testUnknownTableAfterDeclaredCteIsRejected(): void
+    {
+        $registry = new TableDefinitionRegistry();
+        $definition = $this->createSchemaParser()->parse('CREATE TABLE known_table (id INTEGER PRIMARY KEY)');
+        self::assertNotNull($definition);
+        $registry->register('known_table', $definition);
+
+        $this->expectException(UnknownSchemaException::class);
+        $this->expectExceptionMessage('missing_table');
+
+        $this->createRewriter(new ShadowStore(), $registry)->rewrite(
+            'WITH users AS (SELECT 1 AS id) SELECT * FROM Users JOIN missing_table ON TRUE',
+        );
+    }
+
     protected function createRewriter(ShadowStore $store, TableDefinitionRegistry $registry): SqlRewriter
     {
         $parser = new SqliteParser();

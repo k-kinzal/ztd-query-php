@@ -55,6 +55,40 @@ final class SqlTokenStreamTest extends TestCase
         );
     }
 
+    public function testRejectsKeywordLiteralAndIncompleteSelectSources(): void
+    {
+        self::assertSame([], SqlTokenStream::tokenize('SELECT * FROM VALUES (1)')->selectTableNames());
+        self::assertSame([], SqlTokenStream::tokenize('SELECT * FROM SELECT')->selectTableNames());
+        self::assertSame([], SqlTokenStream::tokenize("SELECT * FROM 'literal'")->selectTableNames());
+        self::assertSame([], SqlTokenStream::tokenize('SELECT * FROM "')->selectTableNames());
+    }
+
+    public function testExtractsEmptyEscapedAndQualifiedQuotedRelations(): void
+    {
+        $sql = 'SELECT * FROM "" JOIN "catalog"."a""b" ON TRUE';
+
+        self::assertSame(
+            ['', 'a"b'],
+            SqlTokenStream::tokenize($sql)->selectTableNames(),
+        );
+    }
+
+    public function testExtractsBracketQuotedRelationAndRejectsInvalidSymbolSource(): void
+    {
+        self::assertSame(
+            ['a]b'],
+            SqlTokenStream::tokenize('SELECT * FROM [catalog].[a]]b]')->selectTableNames(),
+        );
+        self::assertSame(
+            ['(bracketed)'],
+            SqlTokenStream::tokenize('SELECT * FROM [(bracketed)]')->selectTableNames(),
+        );
+        self::assertSame(
+            [],
+            SqlTokenStream::tokenize('SELECT * FROM +ignored]')->selectTableNames(),
+        );
+    }
+
     public function testSplitsOnlyTopLevelStatementTerminators(): void
     {
         $sql = 'SELECT \';\' AS value; SELECT $$a;b$$; /* ; */ SELECT (3; 4); SELECT [5; 6];;';
