@@ -11,12 +11,10 @@ final class PgSqlTableSampleRewriter
     private PgSqlTableSampleParser $parser;
     private PgSqlIdentifierQuoter $quoter;
 
-    public function __construct(
-        ?PgSqlTableSampleParser $parser = null,
-        ?PgSqlIdentifierQuoter $quoter = null,
-    ) {
-        $this->parser = $parser ?? new PgSqlTableSampleParser();
-        $this->quoter = $quoter ?? new PgSqlIdentifierQuoter();
+    public function __construct()
+    {
+        $this->parser = new PgSqlTableSampleParser();
+        $this->quoter = new PgSqlIdentifierQuoter();
     }
 
     /**
@@ -62,7 +60,14 @@ final class PgSqlTableSampleRewriter
                 return [];
             }
 
-            return array_values(array_filter($columns, 'is_string'));
+            $names = [];
+            foreach ($columns as $column) {
+                if (is_string($column)) {
+                    $names[] = $column;
+                }
+            }
+
+            return $names;
         }
 
         return [];

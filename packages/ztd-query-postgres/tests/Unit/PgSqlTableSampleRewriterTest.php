@@ -91,4 +91,15 @@ final class PgSqlTableSampleRewriterTest extends TestCase
             ['data' => ['columns' => []]],
         );
     }
+
+    public function testIgnoresNonStringColumnMetadataAndReindexesNames(): void
+    {
+        $result = (new PgSqlTableSampleRewriter())->rewrite(
+            'SELECT * FROM data TABLESAMPLE BERNOULLI (50)',
+            ['data' => ['columns' => ['id', 123, 'value']]],
+        );
+
+        self::assertStringContainsString('SELECT "id", "value"', $result);
+        self::assertStringNotContainsString('123', $result);
+    }
 }

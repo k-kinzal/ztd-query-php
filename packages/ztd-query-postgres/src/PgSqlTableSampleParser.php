@@ -23,7 +23,7 @@ final class PgSqlTableSampleParser
             if ($referenceToken === null) {
                 continue;
             }
-            $sampleIndex = $this->sampleIndexAfter($tokens, $reference['end'], $referenceToken);
+            $sampleIndex = $this->sampleIndexAfter($tokens, $referenceToken);
             if ($sampleIndex === null) {
                 continue;
             }
@@ -45,7 +45,7 @@ final class PgSqlTableSampleParser
         SqlToken $referenceToken,
     ): PgSqlTableSample {
         $methodToken = $tokens[$sampleIndex + 1] ?? null;
-        $method = $methodToken !== null && $methodToken->kind === SqlTokenKind::Word
+        $method = $methodToken instanceof SqlToken
             ? PgSqlTableSampleMethod::tryFrom(strtoupper($methodToken->text))
             : null;
         if ($method === null) {
@@ -55,11 +55,11 @@ final class PgSqlTableSampleParser
         $openIndex = $sampleIndex + 2;
         $open = $tokens[$openIndex] ?? null;
         if (!$open instanceof SqlToken || !$this->isOpeningParenthesis($open, $referenceToken)) {
-            throw new UnsupportedSqlException($sql, 'Malformed TABLESAMPLE clause');
+            throw new UnsupportedSqlException($sql, 'Malformed TABLESAMPLE opening parenthesis');
         }
         $closeIndex = $this->closingParenthesisIndex($tokens, $openIndex);
         if ($closeIndex === null) {
-            throw new UnsupportedSqlException($sql, 'Malformed TABLESAMPLE clause');
+            throw new UnsupportedSqlException($sql, 'Malformed TABLESAMPLE closing parenthesis');
         }
         $close = $tokens[$closeIndex];
         $percentageSql = trim(substr($sql, $open->endOffset(), $close->offset - $open->endOffset()));
@@ -76,11 +76,11 @@ final class PgSqlTableSampleParser
             $seedOpenIndex = $closeIndex + 2;
             $seedOpen = $tokens[$seedOpenIndex] ?? null;
             if (!$seedOpen instanceof SqlToken || !$this->isOpeningParenthesis($seedOpen, $referenceToken)) {
-                throw new UnsupportedSqlException($sql, 'Malformed TABLESAMPLE REPEATABLE clause');
+                throw new UnsupportedSqlException($sql, 'Malformed TABLESAMPLE REPEATABLE opening parenthesis');
             }
             $seedCloseIndex = $this->closingParenthesisIndex($tokens, $seedOpenIndex);
             if ($seedCloseIndex === null) {
-                throw new UnsupportedSqlException($sql, 'Malformed TABLESAMPLE REPEATABLE clause');
+                throw new UnsupportedSqlException($sql, 'Malformed TABLESAMPLE REPEATABLE closing parenthesis');
             }
             $seedClose = $tokens[$seedCloseIndex];
             $seedSql = trim(substr($sql, $seedOpen->endOffset(), $seedClose->offset - $seedOpen->endOffset()));
@@ -92,16 +92,8 @@ final class PgSqlTableSampleParser
 
         $sampleToken = $tokens[$sampleIndex];
         $aliasStart = $reference['end'];
-        $aliasTokens = array_values(array_filter(
-            array_slice($tokens, 0, $sampleIndex),
-            static fn (SqlToken $token): bool => $token->offset >= $reference['end'],
-        ));
-        $inheritanceMarker = $aliasTokens[0] ?? null;
-        if ($inheritanceMarker !== null
-            && $inheritanceMarker->kind === SqlTokenKind::Symbol
-            && $inheritanceMarker->text === '*'
-            && $this->sameLevel($inheritanceMarker, $referenceToken)
-        ) {
+        $inheritanceMarker = $this->tokenAfter($tokens, $referenceToken);
+        if ($inheritanceMarker->text === '*') {
             $aliasStart = $inheritanceMarker->endOffset();
         }
         $aliasSql = trim(substr($sql, $aliasStart, $sampleToken->offset - $aliasStart));
@@ -131,18 +123,21 @@ final class PgSqlTableSampleParser
     }
 
     /** @param list<SqlToken> $tokens */
-    private function sampleIndexAfter(array $tokens, int $offset, SqlToken $referenceToken): ?int
+    private function sampleIndexAfter(array $tokens, SqlToken $referenceToken): ?int
     {
+        $afterReference = false;
         foreach ($tokens as $index => $token) {
-            if ($token->offset < $offset || !$this->sameLevel($token, $referenceToken)) {
+            if ($token === $referenceToken) {
+                $afterReference = true;
+                continue;
+            }
+            if (!$afterReference || !$this->sameLevel($token, $referenceToken)) {
                 continue;
             }
             if ($token->isKeyword('TABLESAMPLE')) {
                 return $index;
             }
-            if (($token->kind === SqlTokenKind::Symbol && $token->text === ',')
-                || $this->isRelationBoundary($token)
-            ) {
+            if ($token->text === ',' || $this->isRelationBoundary($token)) {
                 return null;
             }
         }
@@ -163,9 +158,7 @@ final class PgSqlTableSampleParser
 
     private function isOpeningParenthesis(SqlToken $token, SqlToken $referenceToken): bool
     {
-        return $token->kind === SqlTokenKind::Symbol
-            && $token->text === '('
-            && $this->sameLevel($token, $referenceToken);
+        return $token->text === '(' && $this->sameLevel($token, $referenceToken);
     }
 
     /** @param list<SqlToken> $tokens */
@@ -175,17 +168,30 @@ final class PgSqlTableSampleParser
         if ($open === null) {
             return null;
         }
-        foreach (array_slice($tokens, $openIndex + 1, null, true) as $index => $token) {
-            if ($token->kind === SqlTokenKind::Symbol
-                && $token->text === ')'
-                && $token->depth === $open->depth
-                && $token->bracketDepth === $open->bracketDepth
-            ) {
+        $afterOpen = false;
+        foreach ($tokens as $index => $token) {
+            if ($token === $open) {
+                $afterOpen = true;
+            } elseif ($afterOpen && $token->text === ')' && $this->sameLevel($token, $open)) {
                 return $index;
             }
         }
 
         return null;
+    }
+
+    /** @param list<SqlToken> $tokens */
+    private function tokenAfter(array $tokens, SqlToken $referenceToken): SqlToken
+    {
+        $afterReference = false;
+        foreach ($tokens as $token) {
+            if ($afterReference) {
+                return $token;
+            }
+            $afterReference = $token === $referenceToken;
+        }
+
+        return $referenceToken;
     }
 
     private function sameLevel(SqlToken $token, SqlToken $referenceToken): bool

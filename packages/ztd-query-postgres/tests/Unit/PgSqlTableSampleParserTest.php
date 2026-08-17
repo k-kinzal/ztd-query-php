@@ -19,7 +19,7 @@ final class PgSqlTableSampleParserTest extends TestCase
 {
     public function testParsesSchemaAliasExpressionAndRepeatableSeed(): void
     {
-        $sql = 'SELECT d.id FROM public.data AS d TABLESAMPLE BERNOULLI(50 + $1) REPEATABLE(42.5)';
+        $sql = 'SELECT d.id FROM public.data AS d TABLESAMPLE BERNOULLI(50 + $1) REPEATABLE( 42.5 )';
         $samples = (new PgSqlTableSampleParser())->parse($sql);
 
         self::assertCount(1, $samples);
@@ -29,7 +29,7 @@ final class PgSqlTableSampleParserTest extends TestCase
         self::assertSame(PgSqlTableSampleMethod::Bernoulli, $samples[0]->method);
         self::assertSame('50 + $1', $samples[0]->percentageSql);
         self::assertSame('42.5', $samples[0]->seedSql);
-        self::assertSame('public.data AS d TABLESAMPLE BERNOULLI(50 + $1) REPEATABLE(42.5)', substr(
+        self::assertSame('public.data AS d TABLESAMPLE BERNOULLI(50 + $1) REPEATABLE( 42.5 )', substr(
             $sql,
             $samples[0]->startOffset,
             $samples[0]->endOffset - $samples[0]->startOffset,
@@ -74,6 +74,12 @@ final class PgSqlTableSampleParserTest extends TestCase
     public function testReturnsNoSamplesForOrdinaryRelations(): void
     {
         self::assertSame([], (new PgSqlTableSampleParser())->parse('SELECT * FROM data JOIN logs ON TRUE'));
+        self::assertSame(
+            [],
+            (new PgSqlTableSampleParser())->parse(
+                'SELECT * FROM (SELECT * FROM data) sampled TABLESAMPLE SYSTEM (10)',
+            ),
+        );
     }
 
     public function testRejectsCustomSamplingMethod(): void
@@ -91,9 +97,28 @@ final class PgSqlTableSampleParserTest extends TestCase
     #[TestWith(['SELECT * FROM data TABLESAMPLE BERNOULLI (10) REPEATABLE'])]
     #[TestWith(['SELECT * FROM data TABLESAMPLE BERNOULLI (10) REPEATABLE 42'])]
     #[TestWith(['SELECT * FROM data TABLESAMPLE BERNOULLI (10) REPEATABLE ()'])]
+    #[TestWith(['SELECT * FROM data TABLESAMPLE BERNOULLI (10) REPEATABLE (1, 2)'])]
     public function testRejectsMalformedPercentageAndRepeatableExpressions(string $sql): void
     {
         $this->expectException(UnsupportedSqlException::class);
+
+        (new PgSqlTableSampleParser())->parse($sql);
+    }
+
+    #[TestWith(['SELECT * FROM data TABLESAMPLE BERNOULLI 10', 'TABLESAMPLE opening parenthesis'])]
+    #[TestWith(['SELECT * FROM data TABLESAMPLE BERNOULLI (10', 'TABLESAMPLE closing parenthesis'])]
+    #[TestWith([
+        'SELECT * FROM data TABLESAMPLE BERNOULLI (10) REPEATABLE 42',
+        'REPEATABLE opening parenthesis',
+    ])]
+    #[TestWith([
+        'SELECT * FROM data TABLESAMPLE BERNOULLI (10) REPEATABLE (42',
+        'REPEATABLE closing parenthesis',
+    ])]
+    public function testDistinguishesMalformedOpeningAndClosingParentheses(string $sql, string $message): void
+    {
+        $this->expectException(UnsupportedSqlException::class);
+        $this->expectExceptionMessage($message);
 
         (new PgSqlTableSampleParser())->parse($sql);
     }

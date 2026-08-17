@@ -72,6 +72,13 @@ final class PgSqlTableSampleTest extends TestCase
         new PgSqlTableSample('data', 'data', '', PgSqlTableSampleMethod::System, '10', null, -1, 1);
     }
 
+    public function testRejectsEqualStartAndEndOffsets(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        new PgSqlTableSample('data', 'data', '', PgSqlTableSampleMethod::System, '10', null, 1, 1);
+    }
+
     public function testAcceptsZeroStartOffset(): void
     {
         $sample = new PgSqlTableSample('data', 'data', '', PgSqlTableSampleMethod::System, '10', null, 0, 1);
