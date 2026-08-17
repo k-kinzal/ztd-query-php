@@ -20,6 +20,7 @@ use ZtdQuery\Shadow\ReferentialIntegrityEnforcer;
 use ZtdQuery\Shadow\ShadowStore;
 
 #[CoversClass(ReferentialIntegrityEnforcer::class)]
+#[UsesClass(ForeignKeyViolationException::class)]
 #[UsesClass(ForeignKeyDefinition::class)]
 #[UsesClass(TableDefinition::class)]
 #[UsesClass(TableDefinitionRegistry::class)]
