@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use Tests\Contract\TransformerContractTest;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\IdentifierQuoter;
+use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
@@ -19,8 +20,25 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 #[CoversClass(SelectTransformer::class)]
 #[UsesClass(MySqlCastRenderer::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
 final class SelectTransformerTest extends TransformerContractTest
 {
+    public function testUsesInjectedValueRenderer(): void
+    {
+        $valueRenderer = self::createStub(ValueRenderer::class);
+        $valueRenderer->method('renderValue')->willReturn('CUSTOM_VALUE');
+        $transformer = new SelectTransformer(null, null, $valueRenderer);
+        $tables = [
+            'users' => [
+                'rows' => [['id' => 1]],
+                'columns' => ['id'],
+                'columnTypes' => [],
+            ],
+        ];
+
+        self::assertStringContainsString('CUSTOM_VALUE AS `id`', $transformer->transform('SELECT * FROM users', $tables));
+    }
+
     protected function createTransformer(): SqlTransformer
     {
         return new SelectTransformer();

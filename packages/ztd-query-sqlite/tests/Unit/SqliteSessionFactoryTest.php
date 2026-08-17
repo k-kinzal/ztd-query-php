@@ -29,6 +29,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 
 #[CoversClass(SqliteSessionFactory::class)]
 #[UsesClass(SqliteCastRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteValueRenderer::class)]
 #[UsesClass(SqliteIdentifierQuoter::class)]
 #[UsesClass(SqliteLexicalMasker::class)]
 #[UsesClass(SqliteMutationResolver::class)]

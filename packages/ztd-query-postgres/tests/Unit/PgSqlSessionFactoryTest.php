@@ -36,6 +36,7 @@ use ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer;
 #[UsesClass(PgSqlTransformer::class)]
 #[UsesClass(PgSqlSchemaReflector::class)]
 #[UsesClass(PgSqlCastRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlValueRenderer::class)]
 #[UsesClass(PgSqlIdentifierQuoter::class)]
 #[UsesClass(SelectTransformer::class)]
 #[UsesClass(InsertTransformer::class)]

@@ -8,19 +8,41 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\Transformer\InsertTransformer;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
+use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(InsertTransformer::class)]
 #[UsesClass(MySqlParser::class)]
 #[UsesClass(SelectTransformer::class)]
 #[UsesClass(MySqlCastRenderer::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
 final class InsertTransformerTest extends TestCase
 {
+    public function testUsesInjectedCastRendererAndColumnTypes(): void
+    {
+        $castRenderer = self::createStub(CastRenderer::class);
+        $castRenderer->method('renderCast')->willReturn('CUSTOM_CAST');
+        $transformer = new InsertTransformer(new MySqlParser(), new SelectTransformer(), $castRenderer);
+        $tables = [
+            'users' => [
+                'rows' => [],
+                'columns' => ['id'],
+                'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT')],
+            ],
+        ];
+
+        $result = $transformer->transform('INSERT INTO users (id) VALUES (1)', $tables);
+
+        self::assertStringContainsString('SELECT CUSTOM_CAST AS `id`', $result);
+    }
+
     public function testTransformInsertWithValues(): void
     {
         $parser = new MySqlParser();

@@ -27,6 +27,7 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 #[UsesClass(UpdateTransformer::class)]
 #[UsesClass(DeleteTransformer::class)]
 #[UsesClass(PgSqlCastRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlValueRenderer::class)]
 #[UsesClass(PgSqlIdentifierQuoter::class)]
 final class PgSqlTransformerTest extends TestCase
 {

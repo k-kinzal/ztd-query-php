@@ -6,6 +6,7 @@ namespace Tests\Unit\Transformer;
 
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\Sqlite\SqliteLexicalMasker;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
 use ZtdQuery\Platform\Sqlite\Transformer\InsertTransformer;
@@ -14,15 +15,37 @@ use ZtdQuery\Platform\Sqlite\SqliteCastRenderer;
 use ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
+use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(InsertTransformer::class)]
 #[UsesClass(SqliteLexicalMasker::class)]
 #[UsesClass(SqliteParser::class)]
 #[UsesClass(SelectTransformer::class)]
 #[UsesClass(SqliteCastRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteValueRenderer::class)]
 #[UsesClass(SqliteIdentifierQuoter::class)]
 final class InsertTransformerTest extends TestCase
 {
+    public function testUsesInjectedCastRendererAndColumnTypes(): void
+    {
+        $castRenderer = self::createStub(CastRenderer::class);
+        $castRenderer->method('renderCast')->willReturn('CUSTOM_CAST');
+        $transformer = new InsertTransformer(new SqliteParser(), new SelectTransformer(), $castRenderer);
+        $tables = [
+            'users' => [
+                'rows' => [],
+                'columns' => ['id'],
+                'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER')],
+            ],
+        ];
+
+        self::assertStringContainsString(
+            'SELECT CUSTOM_CAST AS "id"',
+            $transformer->transform('INSERT INTO users (id) VALUES (1)', $tables),
+        );
+    }
+
     public function testTransformInsertValues(): void
     {
         $parser = new SqliteParser();

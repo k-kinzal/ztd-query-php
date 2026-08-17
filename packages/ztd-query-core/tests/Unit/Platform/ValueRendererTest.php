@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Platform;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\ValueRenderer;
 
-#[CoversClass(ValueRenderer::class)]
+#[CoversNothing]
 final class ValueRendererTest extends TestCase
 {
     public function testDeclaresTypedValueRenderingContract(): void

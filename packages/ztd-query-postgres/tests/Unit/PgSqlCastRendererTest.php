@@ -67,6 +67,58 @@ final class PgSqlCastRendererTest extends CastRendererContractTest
         );
     }
 
+    public function testRenderCastTrimsArrayType(): void
+    {
+        $renderer = new PgSqlCastRenderer();
+
+        self::assertSame(
+            "CAST('{1,2}' AS INT4[])",
+            $renderer->renderCast("'{1,2}'", new ColumnType(ColumnTypeFamily::INTEGER, ' INT4[] ')),
+        );
+    }
+
+    public function testRenderCastPreservesInt2Alias(): void
+    {
+        $renderer = new PgSqlCastRenderer();
+
+        self::assertSame('CAST(1 AS SMALLINT)', $renderer->renderCast('1', new ColumnType(ColumnTypeFamily::INTEGER, 'int2')));
+    }
+
+    public function testRenderCastPreservesSmallIntAlias(): void
+    {
+        $renderer = new PgSqlCastRenderer();
+
+        self::assertSame('CAST(1 AS SMALLINT)', $renderer->renderCast('1', new ColumnType(ColumnTypeFamily::INTEGER, 'smallint')));
+    }
+
+    public function testRenderCastPreservesSmallSerialAlias(): void
+    {
+        $renderer = new PgSqlCastRenderer();
+
+        self::assertSame('CAST(1 AS SMALLINT)', $renderer->renderCast('1', new ColumnType(ColumnTypeFamily::INTEGER, 'smallserial')));
+    }
+
+    public function testRenderCastPreservesInt8Alias(): void
+    {
+        $renderer = new PgSqlCastRenderer();
+
+        self::assertSame('CAST(1 AS BIGINT)', $renderer->renderCast('1', new ColumnType(ColumnTypeFamily::INTEGER, 'int8')));
+    }
+
+    public function testRenderCastPreservesBigIntAlias(): void
+    {
+        $renderer = new PgSqlCastRenderer();
+
+        self::assertSame('CAST(1 AS BIGINT)', $renderer->renderCast('1', new ColumnType(ColumnTypeFamily::INTEGER, 'bigint')));
+    }
+
+    public function testRenderCastPreservesBigSerialAlias(): void
+    {
+        $renderer = new PgSqlCastRenderer();
+
+        self::assertSame('CAST(1 AS BIGINT)', $renderer->renderCast('1', new ColumnType(ColumnTypeFamily::INTEGER, 'bigserial')));
+    }
+
     public function testRenderNullCastInteger(): void
     {
         $renderer = new PgSqlCastRenderer();

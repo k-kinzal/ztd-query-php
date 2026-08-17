@@ -68,7 +68,7 @@ final class PgSqlCastRenderer implements CastRenderer
     {
         $baseType = strtoupper((string) preg_replace('/\(.*\)/', '', $nativeType));
 
-        return match (trim($baseType)) {
+        return match ($baseType) {
             'INT2', 'SMALLINT', 'SMALLSERIAL' => 'SMALLINT',
             'INT8', 'BIGINT', 'BIGSERIAL' => 'BIGINT',
             default => 'INTEGER',

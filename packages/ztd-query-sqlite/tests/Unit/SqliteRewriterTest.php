@@ -50,6 +50,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(DeleteTransformer::class)]
 #[UsesClass(SqliteCastRenderer::class)]
 #[UsesClass(SqliteIdentifierQuoter::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteValueRenderer::class)]
 final class SqliteRewriterTest extends RewriterContractTest
 {
     protected function createRewriter(ShadowStore $store, TableDefinitionRegistry $registry): SqlRewriter

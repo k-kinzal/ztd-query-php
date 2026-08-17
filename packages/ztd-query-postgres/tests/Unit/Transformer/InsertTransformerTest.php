@@ -6,6 +6,7 @@ namespace Tests\Unit\Transformer;
 
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
 use ZtdQuery\Platform\Postgres\Transformer\InsertTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
@@ -21,9 +22,61 @@ use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PostgreSqlLexicalMasker::class)]
 #[UsesClass(SelectTransformer::class)]
 #[UsesClass(PgSqlCastRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlValueRenderer::class)]
 #[UsesClass(PgSqlIdentifierQuoter::class)]
 final class InsertTransformerTest extends TestCase
 {
+    public function testUsesInjectedCastRendererForTypedValue(): void
+    {
+        $castRenderer = self::createStub(CastRenderer::class);
+        $castRenderer->method('renderCast')->willReturn('CUSTOM_CAST');
+        $transformer = new InsertTransformer(new PgSqlParser(), new SelectTransformer(), $castRenderer);
+        $tables = [
+            'users' => [
+                'rows' => [],
+                'columns' => ['id'],
+                'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER')],
+            ],
+        ];
+
+        self::assertStringContainsString(
+            'SELECT CUSTOM_CAST AS "id"',
+            $transformer->transform('INSERT INTO users (id) VALUES (1)', $tables),
+        );
+    }
+
+    public function testBooleanPlaceholderUsesNullSafeCastOnlyForBooleanPlaceholder(): void
+    {
+        $transformer = new InsertTransformer(new PgSqlParser(), new SelectTransformer());
+        $booleanTables = [
+            'flags' => [
+                'rows' => [],
+                'columns' => ['enabled'],
+                'columnTypes' => ['enabled' => new ColumnType(ColumnTypeFamily::BOOLEAN, 'BOOLEAN')],
+            ],
+        ];
+        $integerTables = [
+            'numbers' => [
+                'rows' => [],
+                'columns' => ['value'],
+                'columnTypes' => ['value' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER')],
+            ],
+        ];
+
+        self::assertStringContainsString(
+            "CAST(COALESCE(NULLIF(CAST(? AS TEXT), ''), 'false') AS BOOLEAN)",
+            $transformer->transform('INSERT INTO flags (enabled) VALUES (?)', $booleanTables),
+        );
+        self::assertStringContainsString(
+            'CAST(TRUE AS BOOLEAN)',
+            $transformer->transform('INSERT INTO flags (enabled) VALUES (TRUE)', $booleanTables),
+        );
+        self::assertStringContainsString(
+            'CAST(? AS INTEGER)',
+            $transformer->transform('INSERT INTO numbers (value) VALUES (?)', $integerTables),
+        );
+    }
+
     public function testInsertValuesWithExplicitColumns(): void
     {
         $transformer = new InsertTransformer(new PgSqlParser(), new SelectTransformer());

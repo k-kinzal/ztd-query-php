@@ -19,6 +19,7 @@ use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 #[UsesClass(SelectTransformer::class)]
 #[UsesClass(MySqlCastRenderer::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
 final class ReplaceTransformerTest extends TestCase
 {
     public function testTransformReplaceWithValues(): void

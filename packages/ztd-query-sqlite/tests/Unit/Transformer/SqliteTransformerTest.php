@@ -26,6 +26,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(SelectTransformer::class)]
 #[UsesClass(UpdateTransformer::class)]
 #[UsesClass(SqliteCastRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteValueRenderer::class)]
 #[UsesClass(SqliteIdentifierQuoter::class)]
 final class SqliteTransformerTest extends TestCase
 {

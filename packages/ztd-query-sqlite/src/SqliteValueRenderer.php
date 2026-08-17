@@ -76,19 +76,15 @@ final class SqliteValueRenderer implements ValueRenderer
 
     private function inferType(mixed $value): ColumnType
     {
-        return match (true) {
-            is_int($value) => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-            is_float($value) => new ColumnType(ColumnTypeFamily::DOUBLE, 'REAL'),
-            is_bool($value) => new ColumnType(ColumnTypeFamily::BOOLEAN, 'BOOLEAN'),
-            default => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
-        };
+        if (is_int($value)) {
+            return new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER');
+        }
+
+        return new ColumnType(ColumnTypeFamily::TEXT, 'TEXT');
     }
 
     private function stringValue(mixed $value): string
     {
-        if (is_string($value)) {
-            return $value;
-        }
         if ($value instanceof Stringable) {
             return (string) $value;
         }

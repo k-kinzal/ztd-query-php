@@ -3531,4 +3531,14 @@ SELECT * FROM users'));
         self::assertNull($parser->extractInsertSelectSql($sql));
         self::assertSame([['1']], $parser->extractInsertValues($sql));
     }
+
+    public function testInsertValuesDoesNotUnderflowArrayBracketDepth(): void
+    {
+        $parser = new PgSqlParser();
+
+        self::assertSame(
+            [['1]', '2']],
+            $parser->extractInsertValues('INSERT INTO target (a, b) VALUES (1], 2)'),
+        );
+    }
 }

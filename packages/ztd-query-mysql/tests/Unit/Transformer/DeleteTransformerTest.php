@@ -19,6 +19,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(SelectTransformer::class)]
 #[UsesClass(MySqlCastRenderer::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
 final class DeleteTransformerTest extends TestCase
 {
     public function testBuildDeleteWithJoinAlias(): void

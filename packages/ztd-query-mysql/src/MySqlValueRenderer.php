@@ -49,10 +49,6 @@ final class MySqlValueRenderer implements ValueRenderer
             return "X'" . bin2hex($this->stringValue($value)) . "'";
         }
 
-        if (is_bool($value)) {
-            return $this->quoteValue($value ? '1' : '0');
-        }
-
         if (is_int($value) && !$typed) {
             return (string) $value;
         }
@@ -68,19 +64,15 @@ final class MySqlValueRenderer implements ValueRenderer
 
     private function inferType(mixed $value): ColumnType
     {
-        return match (true) {
-            is_int($value) => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-            is_float($value) => new ColumnType(ColumnTypeFamily::DOUBLE, 'DOUBLE'),
-            is_bool($value) => new ColumnType(ColumnTypeFamily::BOOLEAN, 'BOOLEAN'),
-            default => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR'),
-        };
+        if (is_int($value)) {
+            return new ColumnType(ColumnTypeFamily::INTEGER, 'INT');
+        }
+
+        return new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR');
     }
 
     private function stringValue(mixed $value): string
     {
-        if (is_string($value)) {
-            return $value;
-        }
         if ($value instanceof Stringable) {
             return (string) $value;
         }
