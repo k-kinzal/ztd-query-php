@@ -159,14 +159,13 @@ final class MySqlProviderTest extends TestCase
         $provider = new MySqlProvider($faker);
 
         $result = $provider->multiTableUpdateStatement();
+        $identifier = '[a-z_][a-z0-9_]{0,63}';
 
-        self::assertSame(
-            'UPDATE `pqrahvfartp57fhd__zg105o2nmrpmxxeit` AS `_ztd_left`,'
-                . ' `f2_z3_g1c1951hjo8wsn69gz9r7rh8e0` AS `_ztd_right`'
-                . ' SET `_ztd_left`.`_d7149symgfi0didy` = 1,'
-                . ' `_ztd_right`.`uz0dblhnld8_csdd8metc4buaauzxltqbveffxujmyfeflh` = 2'
-                . ' WHERE `_ztd_left`.`_d7149symgfi0didy`'
-                . ' = `_ztd_right`.`uz0dblhnld8_csdd8metc4buaauzxltqbveffxujmyfeflh`',
+        self::assertMatchesRegularExpression(
+            '/^UPDATE `' . $identifier . '` AS `_ztd_left`, `' . $identifier . '` AS `_ztd_right`'
+                . ' SET `_ztd_left`.`(?<leftColumn>' . $identifier . ')` = 1,'
+                . ' `_ztd_right`.`(?<rightColumn>' . $identifier . ')` = 2'
+                . ' WHERE `_ztd_left`.`\k<leftColumn>` = `_ztd_right`.`\k<rightColumn>`$/D',
             $result,
         );
     }
@@ -178,13 +177,14 @@ final class MySqlProviderTest extends TestCase
         $provider = new MySqlProvider($faker);
 
         $result = $provider->multiTableDeleteStatement();
+        $identifier = '[a-z_][a-z0-9_]{0,63}';
 
-        self::assertSame(
-            'DELETE `_ztd_left`, `_ztd_right`'
-                . ' FROM `pqrahvfartp57fhd__zg105o2nmrpmxxeit` AS `_ztd_left`'
-                . ' JOIN `f2_z3_g1c1951hjo8wsn69gz9r7rh8e0` AS `_ztd_right`'
-                . ' ON `_ztd_left`.`_d7149symgfi0didy`'
-                . ' = `_ztd_right`.`uz0dblhnld8_csdd8metc4buaauzxltqbveffxujmyfeflh`',
+        self::assertMatchesRegularExpression(
+            '/^DELETE `_ztd_left`, `_ztd_right`'
+                . ' FROM `' . $identifier . '` AS `_ztd_left`'
+                . ' JOIN `' . $identifier . '` AS `_ztd_right`'
+                . ' ON `_ztd_left`.`(?<leftColumn>' . $identifier . ')`'
+                . ' = `_ztd_right`.`(?<rightColumn>' . $identifier . ')`$/D',
             $result,
         );
     }
