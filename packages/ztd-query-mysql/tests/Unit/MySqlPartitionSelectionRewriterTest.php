@@ -101,6 +101,24 @@ final class MySqlPartitionSelectionRewriterTest extends TestCase
         );
     }
 
+    public function testIgnoresClosingParenthesesBeforeThePartitionClause(): void
+    {
+        self::assertSame(
+            'SELECT COALESCE(NULL, 0) FROM (SELECT * FROM events WHERE (id < 10)) AS events',
+            (new MySqlPartitionSelectionRewriter())->rewrite(
+                'SELECT COALESCE(NULL, 0) FROM events PARTITION (p0)',
+                [
+                    'events' => [
+                        'rows' => [],
+                        'columns' => ['id'],
+                        'columnTypes' => [],
+                        'partitioning' => new TablePartitioning(['p0' => 'id < 10']),
+                    ],
+                ],
+            ),
+        );
+    }
+
     public function testRejectsUnknownPartitionName(): void
     {
         self::expectException(UnsupportedSqlException::class);
@@ -165,6 +183,7 @@ final class MySqlPartitionSelectionRewriterTest extends TestCase
     public function testRejectsPartitionClauseWithoutOpeningParenthesis(): void
     {
         self::expectException(UnsupportedSqlException::class);
+        self::expectExceptionMessage('PARTITION selection opening parenthesis');
 
         (new MySqlPartitionSelectionRewriter())->rewrite(
             'SELECT * FROM events PARTITION p0',
@@ -172,9 +191,28 @@ final class MySqlPartitionSelectionRewriterTest extends TestCase
         );
     }
 
+    public function testRejectsBracketsInPlaceOfPartitionParentheses(): void
+    {
+        self::expectException(UnsupportedSqlException::class);
+        self::expectExceptionMessage('PARTITION selection opening parenthesis');
+
+        (new MySqlPartitionSelectionRewriter())->rewrite(
+            'SELECT * FROM events PARTITION [p0]',
+            [
+                'events' => [
+                    'rows' => [],
+                    'columns' => ['id'],
+                    'columnTypes' => [],
+                    'partitioning' => new TablePartitioning(['p0' => 'id < 10']),
+                ],
+            ],
+        );
+    }
+
     public function testRejectsPartitionClauseWithoutClosingParenthesis(): void
     {
         self::expectException(UnsupportedSqlException::class);
+        self::expectExceptionMessage('PARTITION selection closing parenthesis');
 
         (new MySqlPartitionSelectionRewriter())->rewrite(
             'SELECT * FROM events PARTITION (p0',

@@ -43,12 +43,12 @@ final class MySqlPartitionSelectionRewriter
             }
 
             $open = $tokens[$partitionIndex + 1] ?? null;
-            if (!$open instanceof SqlToken) {
-                throw new UnsupportedSqlException($sql, 'PARTITION selection');
+            if (!$open instanceof SqlToken || !$this->isSymbol($open, '(')) {
+                throw new UnsupportedSqlException($sql, 'PARTITION selection opening parenthesis');
             }
-            $closeIndex = $this->closingParenthesisIndex($tokens, $partitionIndex + 1);
+            $closeIndex = $this->closingParenthesisIndex($tokens, $open);
             if ($closeIndex === null) {
-                throw new UnsupportedSqlException($sql, 'PARTITION selection');
+                throw new UnsupportedSqlException($sql, 'PARTITION selection closing parenthesis');
             }
 
             $names = $this->partitionNames($sql, $open, $tokens[$closeIndex]);
@@ -95,21 +95,25 @@ final class MySqlPartitionSelectionRewriter
     /** @param list<SqlToken> $tokens */
     private function tokenIndexAtOrAfter(array $tokens, int $offset): int
     {
+        $afterReference = false;
         foreach ($tokens as $index => $token) {
-            if ($token->offset > $offset) {
+            if ($afterReference) {
                 return $index;
             }
+            $afterReference = $token->endOffset() === $offset;
         }
 
         return count($tokens);
     }
 
     /** @param list<SqlToken> $tokens */
-    private function closingParenthesisIndex(array $tokens, int $openIndex): ?int
+    private function closingParenthesisIndex(array $tokens, SqlToken $open): ?int
     {
-        $open = $tokens[$openIndex];
-        foreach (array_slice($tokens, $openIndex + 1, null, true) as $index => $token) {
-            if ($this->isSymbol($token, ')') && $token->depth === $open->depth) {
+        $afterOpen = false;
+        foreach ($tokens as $index => $token) {
+            if ($token === $open) {
+                $afterOpen = true;
+            } elseif ($afterOpen && $this->isSymbol($token, ')') && $token->depth === $open->depth) {
                 return $index;
             }
         }
@@ -165,10 +169,6 @@ final class MySqlPartitionSelectionRewriter
 
     private function isSymbol(SqlToken $token, string $symbol): bool
     {
-        if ($token->kind !== SqlTokenKind::Symbol) {
-            return false;
-        }
-
-        return $token->text === $symbol;
+        return $token->kind === SqlTokenKind::Symbol && $token->text === $symbol;
     }
 }

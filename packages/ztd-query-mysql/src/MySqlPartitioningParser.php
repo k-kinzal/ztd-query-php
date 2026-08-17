@@ -53,7 +53,10 @@ final class MySqlPartitioningParser
 
         $open = $tokens[1] ?? null;
         $close = $tokens[count($tokens) - 1] ?? null;
-        if (!$open instanceof SqlToken || !$close instanceof SqlToken) {
+        if (!$open instanceof SqlToken) {
+            return null;
+        }
+        if (!$close instanceof SqlToken) {
             return null;
         }
         if (!$this->isSymbol($open, '(') || !$this->isSymbol($close, ')')) {
@@ -158,10 +161,6 @@ final class MySqlPartitioningParser
 
     private function isSymbol(SqlToken $token, string $symbol): bool
     {
-        if ($token->kind !== SqlTokenKind::Symbol) {
-            return false;
-        }
-
-        return $token->text === $symbol;
+        return $token->kind === SqlTokenKind::Symbol && $token->text === $symbol;
     }
 }

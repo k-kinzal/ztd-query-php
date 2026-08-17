@@ -97,6 +97,62 @@ final class MySqlPartitioningParserTest extends TestCase
         self::assertNull($partitioning->predicateFor(['p0']));
     }
 
+    public function testMarksHashPartitionExpressionWithValidDelimitersUnsupported(): void
+    {
+        $parser = new Parser('CREATE TABLE events (id INT) PARTITION BY RANGE (id) '
+            . '(PARTITION p0 VALUES LESS THAN (10))');
+        $statement = $parser->statements[0] ?? null;
+        self::assertInstanceOf(CreateStatement::class, $statement);
+        $statement->partitionBy = 'HASH (id)';
+
+        $partitioning = (new MySqlPartitioningParser())->parse($statement);
+
+        self::assertNotNull($partitioning);
+        self::assertNull($partitioning->predicateFor(['p0']));
+    }
+
+    public function testMarksBracketsInPlaceOfPartitionParenthesesUnsupported(): void
+    {
+        $parser = new Parser('CREATE TABLE events (id INT) PARTITION BY RANGE (id) '
+            . '(PARTITION p0 VALUES LESS THAN (10))');
+        $statement = $parser->statements[0] ?? null;
+        self::assertInstanceOf(CreateStatement::class, $statement);
+        $statement->partitionBy = 'RANGE [id]';
+
+        $partitioning = (new MySqlPartitioningParser())->parse($statement);
+
+        self::assertNotNull($partitioning);
+        self::assertNull($partitioning->predicateFor(['p0']));
+    }
+
+    public function testMarksPartitionExpressionWithoutParenthesesUnsupported(): void
+    {
+        $parser = new Parser('CREATE TABLE events (id INT) PARTITION BY RANGE (id) '
+            . '(PARTITION p0 VALUES LESS THAN (10))');
+        $statement = $parser->statements[0] ?? null;
+        self::assertInstanceOf(CreateStatement::class, $statement);
+        $statement->partitionBy = 'RANGE id';
+
+        $partitioning = (new MySqlPartitioningParser())->parse($statement);
+
+        self::assertNotNull($partitioning);
+        self::assertNull($partitioning->predicateFor(['p0']));
+    }
+
+    public function testMarksPartitionExpressionWithoutClosingParenthesisUnsupported(): void
+    {
+        $parser = new Parser('CREATE TABLE events (id INT) PARTITION BY RANGE (id) '
+            . '(PARTITION p0 VALUES LESS THAN (10))');
+        $statement = $parser->statements[0] ?? null;
+        self::assertInstanceOf(CreateStatement::class, $statement);
+        $statement->partitionBy = 'RANGE (id';
+
+        $partitioning = (new MySqlPartitioningParser())->parse($statement);
+
+        self::assertNotNull($partitioning);
+        self::assertNull($partitioning->predicateFor(['p0']));
+    }
+
     public function testReturnsNullForUnpartitionedTable(): void
     {
         $parser = new Parser('CREATE TABLE events (id INT)');
