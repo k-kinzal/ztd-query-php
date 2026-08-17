@@ -191,6 +191,7 @@ final class RobustnessTarget
             fn (): string => 'EXPLAIN SELECT * FROM users',
             fn (): string => 'SELECT * FROM app.users',
             fn (): string => "UPDATE users SET status = {$this->provider->quotedHexLiteral()} WHERE id = 1",
+            fn (): string => "UPDATE orders SET created_at = created_at + INTERVAL {$this->provider->integerLiteral(1, 30)} DAY WHERE id = 1",
         ];
 
         $index = ord($input[0] ?? "\0") % count($generators);

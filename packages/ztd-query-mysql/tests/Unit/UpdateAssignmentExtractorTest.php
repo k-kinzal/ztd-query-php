@@ -42,6 +42,10 @@ final class UpdateAssignmentExtractorTest extends TestCase
             "UPDATE data SET value = IF(flag = 1, CONCAT('a', 'b'), 'c'), rank = 2 ORDER BY id LIMIT 1",
             ["IF(flag = 1, CONCAT('a', 'b'), 'c')", '2'],
         ];
+        yield 'interval arithmetic' => [
+            'UPDATE tasks SET due_at = created_at + INTERVAL 30 DAY',
+            ['created_at + INTERVAL 30 DAY'],
+        ];
         yield 'comments' => [
             "UPDATE data SET payload /* equals */ = X'00' # value\n WHERE id = 1",
             ["X'00' # value"],

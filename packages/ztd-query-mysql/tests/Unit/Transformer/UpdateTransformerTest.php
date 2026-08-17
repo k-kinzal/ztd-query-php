@@ -71,6 +71,25 @@ final class UpdateTransformerTest extends TestCase
         self::assertStringContainsString("B'01' AS `__ztd_multi_1_value_1`", $result);
     }
 
+    public function testTransformPreservesIntervalUnitInAssignment(): void
+    {
+        $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = [
+            'tasks' => [
+                'rows' => [['id' => 1, 'created_at' => '2025-01-01 10:00:00', 'due_at' => null]],
+                'columns' => ['id', 'created_at', 'due_at'],
+                'columnTypes' => [],
+            ],
+        ];
+
+        $result = $transformer->transform(
+            'UPDATE tasks SET due_at = created_at + INTERVAL 30 DAY WHERE id = 1',
+            $tables,
+        );
+
+        self::assertStringContainsString('created_at + INTERVAL 30 DAY AS `due_at`', $result);
+    }
+
     public function testBuildUpdateSelectUsesAliasAndColumns(): void
     {
         $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());

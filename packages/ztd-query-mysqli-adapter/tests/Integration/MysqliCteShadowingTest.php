@@ -158,6 +158,29 @@ final class MysqliCteShadowingTest extends TestCase
         }
     }
 
+    public function testUpdatePreservesIntervalUnit(): void
+    {
+        [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();
+        $table = 'prefix_' . bin2hex(random_bytes(8));
+        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, created_at DATETIME NOT NULL, due_at DATETIME)', $table));
+        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
+        try {
+            self::assertNotFalse($ztdMysqli->query(sprintf("INSERT INTO `%s` VALUES (1, '2025-01-01 10:00:00', NULL)", $table)));
+            self::assertNotFalse($ztdMysqli->query(sprintf('UPDATE `%s` SET due_at = created_at + INTERVAL 30 DAY WHERE id = 1', $table)));
+
+            $result = $ztdMysqli->query(sprintf('SELECT due_at FROM `%s` WHERE id = 1', $table));
+            self::assertInstanceOf(\mysqli_result::class, $result);
+            self::assertSame([['due_at' => '2025-01-31 10:00:00']], $result->fetch_all(MYSQLI_ASSOC));
+
+            $physical = $rawMysqli->query(sprintf('SELECT due_at FROM `%s`', $table));
+            self::assertInstanceOf(\mysqli_result::class, $physical);
+            self::assertSame([], $physical->fetch_all(MYSQLI_ASSOC));
+        } finally {
+            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+        }
+    }
+
     public function testSelfReferencingUpsertMatchesNativeMySql(): void
     {
         [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();
