@@ -107,9 +107,12 @@ final class PgSqlPartitionParserTest extends TestCase
         $parser = new PgSqlPartitionParser();
 
         self::assertNull($parser->parseKey('CREATE TABLE logs (id INTEGER)'));
+        self::assertNull($parser->parseKey('CREATE TABLE RANGE (id)'));
         self::assertNull($parser->parseKey('CREATE TABLE logs (id INTEGER) PARTITION BY UNKNOWN (id)'));
         self::assertNull($parser->parseKey('CREATE TABLE logs (id INTEGER) PARTITION BY RANGE ()'));
+        self::assertNull($parser->parseKey('CREATE TABLE logs (id INTEGER) PARTITION BY RANGE [id])'));
         self::assertNull($parser->parentTable('CREATE TABLE logs (id INTEGER)'));
+        self::assertNull($parser->parentTable('CREATE TABLE child PARTITION OF [parent] DEFAULT'));
         self::assertNull($parser->parseRelation(
             'CREATE TABLE logs_2024 PARTITION OF logs FOR VALUES FROM () TO (10)',
             new TablePartitionKey(TablePartitionStrategy::Range, ['id']),
@@ -138,6 +141,10 @@ final class PgSqlPartitionParserTest extends TestCase
 
         self::assertNull($parser->parseRelation(
             'CREATE TABLE child PARTITION OF parent FOR VALUES IN (1)',
+            $range,
+        ));
+        self::assertNull($parser->parseRelation(
+            'CREATE TABLE child PARTITION OF parent FOR VALUES IN (1) TO (2)',
             $range,
         ));
         self::assertNull($parser->parseRelation(
@@ -194,11 +201,62 @@ final class PgSqlPartitionParserTest extends TestCase
             )?->predicate,
         );
         self::assertSame(
+            "((region) IN ('east') OR (region) IS NULL)",
+            $parser->parseRelation(
+                "CREATE TABLE unset_region PARTITION OF accounts FOR VALUES IN (NULL, 'east')",
+                $key,
+            )?->predicate,
+        );
+        self::assertSame(
             '(id) < 10',
             $parser->parseRelation(
                 'CREATE TABLE low_values PARTITION OF values_table FOR VALUES FROM ( minvalue ) TO (10)',
                 new TablePartitionKey(TablePartitionStrategy::Range, ['id']),
             )?->predicate,
+        );
+    }
+
+    public function testIgnoresNestedPartitionKeywordsWhenFindingTopLevelClauses(): void
+    {
+        $parser = new PgSqlPartitionParser();
+        $key = $parser->parseKey(
+            'CREATE TABLE logs (id INTEGER CHECK (PARTITION BY)) PARTITION BY RANGE (id)',
+        );
+
+        self::assertNotNull($key);
+        self::assertSame(TablePartitionStrategy::Range, $key->strategy);
+        self::assertSame(['id'], $key->expressions);
+        self::assertSame(
+            '(id) IN (1)',
+            $parser->parseRelation(
+                'CREATE TABLE child (id INTEGER DEFAULT 0) PARTITION OF parent FOR VALUES IN (1)',
+                new TablePartitionKey(TablePartitionStrategy::List, ['id']),
+            )?->predicate,
+        );
+    }
+
+    public function testSkipsIncompleteKeywordPairBeforeThePartitionClause(): void
+    {
+        $key = (new PgSqlPartitionParser())->parseKey(
+            'CREATE TABLE logs (id INTEGER) PARTITION WRONG RANGE (wrong) PARTITION BY RANGE (id)',
+        );
+
+        self::assertNotNull($key);
+        self::assertSame(TablePartitionStrategy::Range, $key->strategy);
+        self::assertSame(['id'], $key->expressions);
+    }
+
+    public function testNormalizesUnquotedParentNamesAndPreservesQuotedNames(): void
+    {
+        $parser = new PgSqlPartitionParser();
+
+        self::assertSame(
+            'logs',
+            $parser->parentTable('CREATE TABLE child PARTITION OF Public.Logs DEFAULT'),
+        );
+        self::assertSame(
+            'Logs',
+            $parser->parentTable('CREATE TABLE child PARTITION OF public."Logs" DEFAULT'),
         );
     }
 }

@@ -1204,6 +1204,19 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame(['id'], $def->columns);
     }
 
+    public function testRejectsMalformedCreateTablePreambleAndBodyDelimiters(): void
+    {
+        $parser = new PgSqlSchemaParser();
+
+        self::assertNull($parser->parse('CREATE TABLE IF EXISTS t (id INTEGER)'));
+        self::assertNull($parser->parse('CREATE TABLE IF WRONG EXISTS t (id INTEGER)'));
+        self::assertNull($parser->parse('CREATE TABLE IF NOT MISSING t (id INTEGER)'));
+        self::assertNull($parser->parse('CREATE TABLE t [id INTEGER])'));
+        self::assertNull($parser->parse('CREATE TABLE [t] (id INTEGER)'));
+        self::assertNull($parser->parse('CREATE TABLE public. (id INTEGER)'));
+        self::assertNull($parser->parse('CREATE TABLE t'));
+    }
+
     public function testParseLowercaseTimestamp(): void
     {
         $parser = new PgSqlSchemaParser();

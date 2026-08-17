@@ -122,7 +122,8 @@ final class PgSqlSchemaParser implements SchemaParser
 
     private function tableBody(string $sql): ?string
     {
-        $tokens = SqlTokenStream::tokenize($sql)->significantTokens();
+        $stream = SqlTokenStream::tokenize($sql);
+        $tokens = $stream->significantTokens();
         $create = $tokens[0] ?? null;
         if (!$create instanceof SqlToken || !$create->isKeyword('CREATE')) {
             return null;
@@ -132,7 +133,6 @@ final class PgSqlSchemaParser implements SchemaParser
         foreach ($tokens as $index => $token) {
             if ($token->isTopLevel() && $token->isKeyword('TABLE')) {
                 $tableIndex = $index;
-                break;
             }
         }
         if ($tableIndex === null) {
@@ -140,28 +140,35 @@ final class PgSqlSchemaParser implements SchemaParser
         }
 
         $index = $tableIndex + 1;
-        if (($tokens[$index] ?? null)?->isKeyword('IF') === true
-            && ($tokens[$index + 1] ?? null)?->isKeyword('NOT') === true
-            && ($tokens[$index + 2] ?? null)?->isKeyword('EXISTS') === true
-        ) {
-            $index += 3;
-        }
-        if (!$this->isIdentifier($tokens[$index] ?? null)) {
+        $candidate = $tokens[$index] ?? null;
+        if (!$candidate instanceof SqlToken) {
             return null;
         }
-        $index++;
-        while ($this->isSymbol($tokens[$index] ?? null, '.')) {
-            if (!$this->isIdentifier($tokens[$index + 1] ?? null)) {
+        if ($candidate->isKeyword('IF')) {
+            $not = $tokens[$index + 1] ?? null;
+            $exists = $tokens[$index + 2] ?? null;
+            if (!$not instanceof SqlToken || !$not->isKeyword('NOT')) {
                 return null;
             }
-            $index += 2;
+            if (!$exists instanceof SqlToken || !$exists->isKeyword('EXISTS')) {
+                return null;
+            }
+            $index += 3;
         }
-
-        $open = $tokens[$index] ?? null;
-        if (!$open instanceof SqlToken || !$this->isSymbol($open, '(')) {
+        $identifier = $this->qualifiedIdentifierAt($stream, $tokens, $index);
+        if ($identifier === null) {
             return null;
         }
-        foreach (array_slice($tokens, $index + 1) as $token) {
+
+        $open = $tokens[$identifier['next']] ?? null;
+        if (!$open instanceof SqlToken) {
+            return null;
+        }
+        if (!$this->isSymbol($open, '(')) {
+            return null;
+        }
+
+        foreach ($tokens as $token) {
             if ($this->isSymbol($token, ')') && $token->depth === $open->depth) {
                 return substr($sql, $open->endOffset(), $token->offset - $open->endOffset());
             }
@@ -170,17 +177,40 @@ final class PgSqlSchemaParser implements SchemaParser
         return null;
     }
 
-    private function isIdentifier(?SqlToken $token): bool
+    /**
+     * @param list<SqlToken> $tokens
+     * @return array{name: string, next: int}|null
+     */
+    private function qualifiedIdentifierAt(SqlTokenStream $stream, array $tokens, int $index): ?array
     {
-        return $token instanceof SqlToken
-            && in_array($token->kind, [SqlTokenKind::Word, SqlTokenKind::QuotedIdentifier], true);
+        $token = $tokens[$index] ?? null;
+        if (!$token instanceof SqlToken) {
+            return null;
+        }
+        if (!in_array($token->kind, [SqlTokenKind::Word, SqlTokenKind::QuotedIdentifier], true)) {
+            return null;
+        }
+        $identifier = $stream->identifierAt($index);
+        if ($identifier === null) {
+            return null;
+        }
+
+        $dot = $tokens[$identifier['next']] ?? null;
+        while ($dot instanceof SqlToken && $this->isSymbol($dot, '.')) {
+            $component = $this->qualifiedIdentifierAt($stream, $tokens, $identifier['next'] + 1);
+            if ($component === null) {
+                return null;
+            }
+            $identifier = $component;
+            $dot = $tokens[$identifier['next']] ?? null;
+        }
+
+        return $identifier;
     }
 
-    private function isSymbol(?SqlToken $token, string $symbol): bool
+    private function isSymbol(SqlToken $token, string $symbol): bool
     {
-        return $token instanceof SqlToken
-            && $token->kind === SqlTokenKind::Symbol
-            && $token->text === $symbol;
+        return $token->kind === SqlTokenKind::Symbol && $token->text === $symbol;
     }
 
     private static function isSequenceDefault(string $expression): bool

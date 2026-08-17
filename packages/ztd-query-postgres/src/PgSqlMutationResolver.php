@@ -238,8 +238,8 @@ final class PgSqlMutationResolver
     private function storageTable(string $tableName): string
     {
         $seen = [];
-        while (!isset($seen[$tableName])) {
-            $seen[$tableName] = true;
+        while (!in_array($tableName, $seen, true)) {
+            $seen[] = $tableName;
             $parent = $this->registry->get($tableName)?->partitionRelation?->parentTable;
             if ($parent === null) {
                 return $tableName;

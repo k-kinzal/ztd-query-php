@@ -15,7 +15,8 @@ final class PgSqlPartitionParser
 {
     public function parseKey(string $sql): ?TablePartitionKey
     {
-        $tokens = SqlTokenStream::tokenize($sql)->significantTokens();
+        $stream = SqlTokenStream::tokenize($sql);
+        $tokens = $stream->significantTokens();
         $partition = $this->keywordPairIndex($tokens, 'PARTITION', 'BY');
         if ($partition === null) {
             return null;
@@ -53,30 +54,32 @@ final class PgSqlPartitionParser
 
     public function parentTable(string $sql): ?string
     {
-        $tokens = SqlTokenStream::tokenize($sql)->significantTokens();
+        $stream = SqlTokenStream::tokenize($sql);
+        $tokens = $stream->significantTokens();
         $partition = $this->keywordPairIndex($tokens, 'PARTITION', 'OF');
         if ($partition === null) {
             return null;
         }
 
-        return $this->identifierAt($tokens, $partition + 2)['name'] ?? null;
+        return $this->qualifiedIdentifierAt($stream, $tokens, $partition + 2)['name'] ?? null;
     }
 
     public function parseRelation(string $sql, TablePartitionKey $parentKey): ?TablePartitionRelation
     {
-        $tokens = SqlTokenStream::tokenize($sql)->significantTokens();
+        $stream = SqlTokenStream::tokenize($sql);
+        $tokens = $stream->significantTokens();
         $partition = $this->keywordPairIndex($tokens, 'PARTITION', 'OF');
         if ($partition === null) {
             return null;
         }
-        $parent = $this->identifierAt($tokens, $partition + 2);
+        $parent = $this->qualifiedIdentifierAt($stream, $tokens, $partition + 2);
         if ($parent === null) {
             return null;
         }
 
-        $defaultIndex = $this->keywordIndex($tokens, 'DEFAULT', $parent['next']);
-        $valuesIndex = $this->keywordPairIndex($tokens, 'FOR', 'VALUES', $parent['next']);
-        if ($defaultIndex !== null && ($valuesIndex === null || $defaultIndex < $valuesIndex)) {
+        $defaultIndex = $this->keywordIndex($tokens, 'DEFAULT');
+        $valuesIndex = $this->keywordPairIndex($tokens, 'FOR', 'VALUES');
+        if ($defaultIndex !== null) {
             return new TablePartitionRelation($parent['name'], null);
         }
         if ($valuesIndex === null) {
@@ -119,10 +122,10 @@ final class PgSqlPartitionParser
             return null;
         }
 
-        $predicates = array_values(array_filter(
+        $predicates = array_filter(
             [$lowerPredicate, $upperPredicate],
             static fn (string|false|null $predicate): bool => is_string($predicate),
-        ));
+        );
 
         return $predicates === [] ? 'TRUE' : implode(' AND ', $predicates);
     }
@@ -152,10 +155,6 @@ final class PgSqlPartitionParser
             }
             $nonNull[] = $value;
         }
-        if ($nonNull === [] && !$hasNull) {
-            return null;
-        }
-
         $expression = '(' . $key->expressions[0] . ')';
         $predicate = $nonNull === [] ? null : $expression . ' IN (' . implode(', ', $nonNull) . ')';
         if ($hasNull) {
@@ -178,11 +177,11 @@ final class PgSqlPartitionParser
 
         $special = [];
         foreach ($values as $value) {
-            $special[] = in_array(strtoupper(trim($value)), ['MINVALUE', 'MAXVALUE'], true);
+            $special[] = in_array(strtoupper($value), ['MINVALUE', 'MAXVALUE'], true);
         }
         if (!in_array(false, $special, true)) {
             foreach ($values as $value) {
-                if (strcasecmp(trim($value), $unbounded) !== 0) {
+                if (strcasecmp($value, $unbounded) !== 0) {
                     return false;
                 }
             }
@@ -214,9 +213,6 @@ final class PgSqlPartitionParser
         $close = $tokens[$closeIndex];
         $body = substr($sql, $open->endOffset(), $close->offset - $open->endOffset());
         $values = SqlTokenStream::tokenize($body)->splitTopLevel();
-        if ($values === [] || in_array('', $values, true)) {
-            return null;
-        }
 
         return ['values' => $values, 'next' => $closeIndex + 1];
     }
@@ -225,11 +221,54 @@ final class PgSqlPartitionParser
     private function closingParenthesisIndex(array $tokens, int $openIndex): ?int
     {
         $open = $tokens[$openIndex] ?? null;
-        if (!$open instanceof SqlToken || !$this->isSymbol($open, '(')) {
+        if (!$open instanceof SqlToken) {
             return null;
         }
-        foreach (array_slice($tokens, $openIndex + 1, null, true) as $index => $token) {
-            if ($this->isSymbol($token, ')') && $token->depth === $open->depth) {
+        if (!$this->isSymbol($open, '(')) {
+            return null;
+        }
+
+        $afterOpen = false;
+        foreach ($tokens as $index => $token) {
+            if ($token === $open) {
+                $afterOpen = true;
+            } elseif ($afterOpen && $this->isSymbol($token, ')') && $token->depth === $open->depth) {
+                return $index;
+            }
+        }
+
+        return null;
+    }
+
+    /** @param list<SqlToken> $tokens */
+    private function keywordPairIndex(array $tokens, string $first, string $second): ?int
+    {
+        foreach ($tokens as $index => $token) {
+            if (!$token->isTopLevel()) {
+                continue;
+            }
+            if (!$token->isKeyword($first)) {
+                continue;
+            }
+            $next = $tokens[$index + 1] ?? null;
+            if (!$next instanceof SqlToken) {
+                continue;
+            }
+            if (!$next->isKeyword($second)) {
+                continue;
+            }
+
+            return $index;
+        }
+
+        return null;
+    }
+
+    /** @param list<SqlToken> $tokens */
+    private function keywordIndex(array $tokens, string $keyword): ?int
+    {
+        foreach ($tokens as $index => $token) {
+            if ($token->isTopLevel() && $token->isKeyword($keyword)) {
                 return $index;
             }
         }
@@ -241,71 +280,39 @@ final class PgSqlPartitionParser
      * @param list<SqlToken> $tokens
      * @return array{name: string, next: int}|null
      */
-    private function identifierAt(array $tokens, int $index): ?array
+    private function qualifiedIdentifierAt(SqlTokenStream $stream, array $tokens, int $index): ?array
     {
         $token = $tokens[$index] ?? null;
-        $name = $token instanceof SqlToken ? $this->identifierName($token) : null;
-        if ($name === null) {
+        if (!$token instanceof SqlToken) {
             return null;
         }
-        $index++;
+        if (!in_array($token->kind, [SqlTokenKind::Word, SqlTokenKind::QuotedIdentifier], true)) {
+            return null;
+        }
+        $identifier = $stream->identifierAt($index);
+        if ($identifier === null) {
+            return null;
+        }
+        if ($token->kind === SqlTokenKind::Word) {
+            $identifier['name'] = strtolower($identifier['name']);
+        }
 
-        while ($this->isSymbol($tokens[$index] ?? null, '.')) {
-            $component = $tokens[$index + 1] ?? null;
-            $componentName = $component instanceof SqlToken ? $this->identifierName($component) : null;
-            if ($componentName === null) {
+        $dot = $tokens[$identifier['next']] ?? null;
+        while ($dot instanceof SqlToken && $this->isSymbol($dot, '.')) {
+            $componentIndex = $identifier['next'] + 1;
+            $component = $this->qualifiedIdentifierAt($stream, $tokens, $componentIndex);
+            if ($component === null) {
                 return null;
             }
-            $name = $componentName;
-            $index += 2;
+            $identifier = $component;
+            $dot = $tokens[$identifier['next']] ?? null;
         }
 
-        return ['name' => $name, 'next' => $index];
+        return $identifier;
     }
 
-    /** @param list<SqlToken> $tokens */
-    private function keywordPairIndex(array $tokens, string $first, string $second, int $start = 0): ?int
+    private function isSymbol(SqlToken $token, string $symbol): bool
     {
-        foreach (array_slice($tokens, $start, null, true) as $index => $token) {
-            if ($token->isTopLevel()
-                && $token->isKeyword($first)
-                && ($tokens[$index + 1] ?? null)?->isKeyword($second) === true
-            ) {
-                return $index;
-            }
-        }
-
-        return null;
-    }
-
-    /** @param list<SqlToken> $tokens */
-    private function keywordIndex(array $tokens, string $keyword, int $start): ?int
-    {
-        foreach (array_slice($tokens, $start, null, true) as $index => $token) {
-            if ($token->isTopLevel() && $token->isKeyword($keyword)) {
-                return $index;
-            }
-        }
-
-        return null;
-    }
-
-    private function identifierName(SqlToken $token): ?string
-    {
-        if ($token->kind === SqlTokenKind::Word) {
-            return strtolower($token->text);
-        }
-        if ($token->kind !== SqlTokenKind::QuotedIdentifier || strlen($token->text) < 2) {
-            return null;
-        }
-
-        return str_replace('""', '"', substr($token->text, 1, -1));
-    }
-
-    private function isSymbol(?SqlToken $token, string $symbol): bool
-    {
-        return $token instanceof SqlToken
-            && $token->kind === SqlTokenKind::Symbol
-            && $token->text === $symbol;
+        return $token->kind === SqlTokenKind::Symbol && $token->text === $symbol;
     }
 }

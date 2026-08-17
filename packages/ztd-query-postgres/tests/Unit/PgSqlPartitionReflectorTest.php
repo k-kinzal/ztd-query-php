@@ -53,6 +53,8 @@ final class PgSqlPartitionReflectorTest extends TestCase
 
         $metadata = $reflector->reflect();
 
+        self::assertSame(['logs'], array_keys($metadata['keys']));
+        self::assertSame(['logs_2024'], array_keys($metadata['relations']));
         self::assertSame(TablePartitionStrategy::Range, $metadata['keys']['logs']->strategy);
         self::assertSame(['log_date'], $metadata['keys']['logs']->expressions);
         self::assertSame('logs', $metadata['relations']['logs_2024']->parentTable);
