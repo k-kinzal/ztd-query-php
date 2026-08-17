@@ -13,6 +13,7 @@ final class AffectedRowsModeTest extends TestCase
 {
     public function testDefinesNativeUpdateCountingConventions(): void
     {
+        self::assertSame('none', AffectedRowsMode::None->value);
         self::assertSame('changed', AffectedRowsMode::Changed->value);
         self::assertSame('matched', AffectedRowsMode::Matched->value);
     }

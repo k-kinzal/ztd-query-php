@@ -38,6 +38,8 @@ final class DropTableMutationTest extends TestCase
         $mutation->apply($store, []);
 
         self::assertNull($registry->get('users'));
+        self::assertTrue($registry->isRemoved('users'));
+        self::assertSame(['users' => $definition], $registry->getAllRemoved());
     }
 
     public function testApplyClearsDataFromShadowStore(): void

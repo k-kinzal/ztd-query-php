@@ -7,6 +7,7 @@ namespace ZtdQuery\Platform\Sqlite;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\Sqlite\Transformer\SqliteTransformer;
+use ZtdQuery\Platform\Sqlite\Mutation\AlterTableMutation;
 use ZtdQuery\Rewrite\MultiRewritePlan;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\AffectedRowsMode;
@@ -135,6 +136,14 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
 
         if ($kind === QueryKind::DDL_SIMULATED) {
             $mutation = $this->mutationResolver->resolve($stmtSql, $kind);
+            if ($mutation instanceof AlterTableMutation) {
+                return new RewritePlan(
+                    $this->transformer->transform($mutation->resultSelect(), $tableContext),
+                    QueryKind::DDL_SIMULATED,
+                    $mutation,
+                    affectedRowsMode: AffectedRowsMode::None,
+                );
+            }
 
             return new RewritePlan($this->emptyResultSelect(), QueryKind::DDL_SIMULATED, $mutation);
         }
@@ -205,6 +214,9 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
 
             $context[$tableName] = self::contextFromDefinition($definition, []);
         }
+        foreach ($this->registry->getAllRemoved() as $tableName => $definition) {
+            $context[$tableName] = self::contextFromDefinition($definition, []);
+        }
 
         return $context;
     }
@@ -261,6 +273,10 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
         }
 
         if ($this->registry->has($tableName)) {
+            return true;
+        }
+
+        if ($this->registry->isRemoved($tableName)) {
             return true;
         }
 

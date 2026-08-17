@@ -5,15 +5,24 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Exception\ColumnAlreadyExistsException;
+use ZtdQuery\Exception\ColumnNotFoundException;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\SchemaParser;
+use ZtdQuery\Platform\Sqlite\Mutation\AlterTableMutation;
+use ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter;
 use ZtdQuery\Platform\Sqlite\SqliteMutationResolver;
 use ZtdQuery\Platform\Sqlite\SqliteLexicalMasker;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
 use ZtdQuery\Platform\Sqlite\SqliteSchemaParser;
 use ZtdQuery\Rewrite\QueryKind;
+use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnTypeFamily;
+use ZtdQuery\Schema\IdentityGenerationStrategy;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\Mutation\CreateTableMutation;
@@ -27,7 +36,9 @@ use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTableState;
 
 #[CoversClass(SqliteMutationResolver::class)]
+#[UsesClass(SqliteIdentifierQuoter::class)]
 #[UsesClass(SqliteLexicalMasker::class)]
+#[UsesClass(AlterTableMutation::class)]
 #[UsesClass(SqliteParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteUpsertExpressionParser::class)]
 #[UsesClass(SqliteSchemaParser::class)]
@@ -220,7 +231,7 @@ final class SqliteMutationResolverTest extends TestCase
         $resolver = new SqliteMutationResolver(new ShadowStore(), $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('ALTER TABLE users ADD COLUMN phone TEXT', QueryKind::DDL_SIMULATED);
 
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
     }
 
     public function testResolveAlterTableDropColumn(): void
@@ -236,7 +247,7 @@ final class SqliteMutationResolverTest extends TestCase
         $resolver = new SqliteMutationResolver(new ShadowStore(), $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('ALTER TABLE users DROP COLUMN email', QueryKind::DDL_SIMULATED);
 
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
     }
 
     public function testResolveAlterTableRenameColumn(): void
@@ -252,7 +263,7 @@ final class SqliteMutationResolverTest extends TestCase
         $resolver = new SqliteMutationResolver(new ShadowStore(), $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('ALTER TABLE users RENAME COLUMN name TO full_name', QueryKind::DDL_SIMULATED);
 
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
     }
 
     public function testResolveAlterTableUnknownThrows(): void
@@ -331,7 +342,7 @@ final class SqliteMutationResolverTest extends TestCase
         ));
         $resolver = new SqliteMutationResolver(new ShadowStore(), $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('ALTER TABLE users RENAME TO people', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(DropTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
     }
 
     public function testResolveAlterTableUnsupportedOperationThrows(): void
@@ -361,7 +372,7 @@ final class SqliteMutationResolverTest extends TestCase
         ));
         $resolver = new SqliteMutationResolver(new ShadowStore(), $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('ALTER TABLE users ADD COLUMN age INTEGER', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
     }
 
     public function testResolveAlterTableAddColumnWithoutType(): void
@@ -376,7 +387,7 @@ final class SqliteMutationResolverTest extends TestCase
         ));
         $resolver = new SqliteMutationResolver(new ShadowStore(), $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('ALTER TABLE users ADD COLUMN notes', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
     }
 
     public function testResolveAlterTableDropColumnUpdatesSchema(): void
@@ -391,7 +402,7 @@ final class SqliteMutationResolverTest extends TestCase
         ));
         $resolver = new SqliteMutationResolver(new ShadowStore(), $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('ALTER TABLE users DROP COLUMN email', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
     }
 
     public function testResolveAlterTableRenameColumnUpdatesSchema(): void
@@ -406,7 +417,7 @@ final class SqliteMutationResolverTest extends TestCase
         ));
         $resolver = new SqliteMutationResolver(new ShadowStore(), $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('ALTER TABLE users RENAME COLUMN name TO full_name', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
     }
 
     public function testResolveAlterTableWithoutTargetThrows(): void
@@ -466,7 +477,7 @@ final class SqliteMutationResolverTest extends TestCase
         ));
         $resolver = new SqliteMutationResolver(new ShadowStore(), $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('ALTER TABLE users ADD phone TEXT', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
     }
 
     public function testResolveAlterTableRenameWithoutColumnKeyword(): void
@@ -481,7 +492,7 @@ final class SqliteMutationResolverTest extends TestCase
         ));
         $resolver = new SqliteMutationResolver(new ShadowStore(), $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('ALTER TABLE users RENAME name TO full_name', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
     }
 
     public function testResolveAlterTableAddColumnUnknownTableThrows(): void
@@ -496,7 +507,7 @@ final class SqliteMutationResolverTest extends TestCase
         ));
         $resolver = new SqliteMutationResolver(new ShadowStore(), $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('ALTER TABLE users ADD COLUMN x', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
     }
 
     public function testResolveAlterTableDropColumnUnknownThrows(): void
@@ -541,7 +552,7 @@ final class SqliteMutationResolverTest extends TestCase
         ));
         $resolver = new SqliteMutationResolver(new ShadowStore(), $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('alter table users add column email text', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
     }
 
     public function testResolveAlterTableDropColumnLowercase(): void
@@ -556,7 +567,7 @@ final class SqliteMutationResolverTest extends TestCase
         ));
         $resolver = new SqliteMutationResolver(new ShadowStore(), $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('alter table users drop column email', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
     }
 
     public function testResolveAlterTableRenameToLowercase(): void
@@ -571,7 +582,7 @@ final class SqliteMutationResolverTest extends TestCase
         ));
         $resolver = new SqliteMutationResolver(new ShadowStore(), $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('alter table users rename to people', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(DropTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
     }
 
     public function testResolveAlterTableRenameColumnLowercase(): void
@@ -586,7 +597,7 @@ final class SqliteMutationResolverTest extends TestCase
         ));
         $resolver = new SqliteMutationResolver(new ShadowStore(), $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('alter table users rename column name to full_name', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
     }
 
     public function testResolveDeleteFullTableWithoutWhere(): void
@@ -618,7 +629,7 @@ final class SqliteMutationResolverTest extends TestCase
         ));
         $resolver = new SqliteMutationResolver(new ShadowStore(), $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('ALTER TABLE t ADD email TEXT', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
     }
 
     public function testResolveAlterTableAddColumnWithParenthesizedType(): void
@@ -633,7 +644,7 @@ final class SqliteMutationResolverTest extends TestCase
         ));
         $resolver = new SqliteMutationResolver(new ShadowStore(), $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('ALTER TABLE t ADD COLUMN price DECIMAL(10,2)', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
     }
 
     public function testResolveAlterTableAddColumnWithPrimaryKeyword(): void
@@ -648,7 +659,7 @@ final class SqliteMutationResolverTest extends TestCase
         ));
         $resolver = new SqliteMutationResolver(new ShadowStore(), $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('ALTER TABLE t ADD COLUMN note PRIMARY KEY', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
     }
 
     public function testResolveAlterTableAddColumnVerifyNewColumns(): void
@@ -664,7 +675,7 @@ final class SqliteMutationResolverTest extends TestCase
         $store = new ShadowStore();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('ALTER TABLE users ADD COLUMN phone TEXT', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
         self::assertSame('users', $mutation->tableName());
         $registry->unregister('users');
         $mutation->apply($store, []);
@@ -689,7 +700,7 @@ final class SqliteMutationResolverTest extends TestCase
         $store = new ShadowStore();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('ALTER TABLE users DROP COLUMN email', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
         self::assertSame('users', $mutation->tableName());
         $registry->unregister('users');
         $mutation->apply($store, []);
@@ -715,7 +726,7 @@ final class SqliteMutationResolverTest extends TestCase
         $store = new ShadowStore();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('ALTER TABLE users RENAME COLUMN name TO full_name', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
         self::assertSame('users', $mutation->tableName());
         $registry->unregister('users');
         $mutation->apply($store, []);
@@ -743,7 +754,7 @@ final class SqliteMutationResolverTest extends TestCase
         $store = new ShadowStore();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('ALTER TABLE t RENAME COLUMN code TO code_new', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
         $registry->unregister('t');
         $mutation->apply($store, []);
         $def = $registry->get('t');
@@ -1038,7 +1049,7 @@ final class SqliteMutationResolverTest extends TestCase
         $store = new ShadowStore();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('ALTER TABLE old_t RENAME TO new_t', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(DropTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
         self::assertSame('old_t', $mutation->tableName());
     }
 
@@ -1550,7 +1561,7 @@ final class SqliteMutationResolverTest extends TestCase
         ));
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('ALTER TABLE old_t RENAME TO new_t', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(DropTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
     }
 
     public function testResolveDeleteWithStrippedCommentsMatchesRegex(): void
@@ -1894,7 +1905,7 @@ final class SqliteMutationResolverTest extends TestCase
         $registry->register('t', new TableDefinition(['id'], ['id' => 'INTEGER'], ['id'], [], []));
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('alter table t rename to t2', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(DropTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
     }
 
     public function testResolveAlterRenameWithoutColumnKeyword(): void
@@ -2185,7 +2196,7 @@ final class SqliteMutationResolverTest extends TestCase
         $registry->register('t', new TableDefinition(['id'], ['id' => 'INTEGER'], ['id'], [], []));
         $resolver = new SqliteMutationResolver(new ShadowStore(), $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('alter table t add email text', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
     }
 
     public function testResolveCreateTableIfNotExistsExistingTableLowercase(): void
@@ -2209,7 +2220,7 @@ final class SqliteMutationResolverTest extends TestCase
         ));
         $resolver = new SqliteMutationResolver(new ShadowStore(), $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('alter table t rename column name to fullname', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
         $registry->unregister('t');
         $store = new ShadowStore();
         $mutation->apply($store, []);
@@ -2231,7 +2242,7 @@ final class SqliteMutationResolverTest extends TestCase
         ));
         $resolver = new SqliteMutationResolver(new ShadowStore(), $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('alter table t rename name to fullname', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
     }
 
     public function testResolveAlterDropColumnLowercaseRegex(): void
@@ -2246,7 +2257,7 @@ final class SqliteMutationResolverTest extends TestCase
         ));
         $resolver = new SqliteMutationResolver(new ShadowStore(), $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('alter table t drop column name', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
         $registry->unregister('t');
         $store = new ShadowStore();
         $mutation->apply($store, []);
@@ -2283,7 +2294,7 @@ final class SqliteMutationResolverTest extends TestCase
         ));
         $resolver = new SqliteMutationResolver(new ShadowStore(), $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('alter table t rename to t2', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(DropTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
     }
 
     public function testResolveDropTableIfExistsLowercaseRegex(): void
@@ -2317,7 +2328,7 @@ final class SqliteMutationResolverTest extends TestCase
         $registry->register('t', new TableDefinition(['id'], ['id' => 'INTEGER'], ['id'], [], []));
         $resolver = new SqliteMutationResolver(new ShadowStore(), $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('alter table t add "email" text', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
     }
 
     public function testResolveCreateTableIfNotExistsWithoutExistingTable(): void
@@ -2360,7 +2371,7 @@ final class SqliteMutationResolverTest extends TestCase
         $store = new ShadowStore();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('ALTER TABLE t ADD COLUMN email TEXT', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
         $mutation->apply($store, []);
         self::assertTrue($registry->has('t'));
     }
@@ -2378,7 +2389,7 @@ final class SqliteMutationResolverTest extends TestCase
         $store = new ShadowStore();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('ALTER TABLE t DROP COLUMN name', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
         $mutation->apply($store, []);
         self::assertTrue($registry->has('t'));
     }
@@ -2396,7 +2407,7 @@ final class SqliteMutationResolverTest extends TestCase
         $store = new ShadowStore();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('ALTER TABLE t RENAME TO t2', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(DropTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
         $mutation->apply($store, []);
         self::assertFalse($registry->has('t'));
     }
@@ -2414,7 +2425,7 @@ final class SqliteMutationResolverTest extends TestCase
         $store = new ShadowStore();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('ALTER TABLE t RENAME COLUMN name TO fullname', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
         $mutation->apply($store, []);
         self::assertTrue($registry->has('t'));
     }
@@ -2426,7 +2437,7 @@ final class SqliteMutationResolverTest extends TestCase
         $store = new ShadowStore();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve("ALTER TABLE t ADD COLUMN email\nTEXT", QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
         $registry->unregister('t');
         $mutation->apply($store, []);
         $def = $registry->get('t');
@@ -2499,7 +2510,7 @@ final class SqliteMutationResolverTest extends TestCase
         $store = new ShadowStore();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('ALTER TABLE t ADD COLUMN val TEXT', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
         $mutation->apply($store, []);
         self::assertTrue($registry->has('t'));
     }
@@ -2511,7 +2522,7 @@ final class SqliteMutationResolverTest extends TestCase
         $store = new ShadowStore();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('ALTER TABLE t DROP COLUMN val', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
         $mutation->apply($store, []);
         self::assertTrue($registry->has('t'));
     }
@@ -2523,7 +2534,7 @@ final class SqliteMutationResolverTest extends TestCase
         $store = new ShadowStore();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('ALTER TABLE old_t RENAME TO new_t', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(DropTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
         $mutation->apply($store, []);
         self::assertFalse($registry->has('old_t'));
     }
@@ -2535,7 +2546,7 @@ final class SqliteMutationResolverTest extends TestCase
         $store = new ShadowStore();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('ALTER TABLE t RENAME COLUMN name TO full_name', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
         $mutation->apply($store, []);
         self::assertTrue($registry->has('t'));
     }
@@ -2547,7 +2558,7 @@ final class SqliteMutationResolverTest extends TestCase
         $store = new ShadowStore();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('ALTER TABLE t RENAME TO new_table_name', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(DropTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
         self::assertSame('t', $mutation->tableName());
     }
 
@@ -2558,7 +2569,7 @@ final class SqliteMutationResolverTest extends TestCase
         $store = new ShadowStore();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('ALTER TABLE t ADD COLUMN val INT()', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
         $registry->unregister('t');
         $mutation->apply($store, []);
         $def = $registry->get('t');
@@ -2579,7 +2590,7 @@ final class SqliteMutationResolverTest extends TestCase
         $store = new ShadowStore();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('ALTER TABLE t DROP COLUMN name', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
         $registry->unregister('t');
         $mutation->apply($store, []);
         $def = $registry->get('t');
@@ -2595,7 +2606,7 @@ final class SqliteMutationResolverTest extends TestCase
         $store = new ShadowStore();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('ALTER TABLE t RENAME TO new_t', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(DropTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
         $registry->unregister('t');
         $mutation->apply($store, []);
         self::assertFalse($registry->has('t'));
@@ -2614,7 +2625,7 @@ final class SqliteMutationResolverTest extends TestCase
         $store = new ShadowStore();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve('ALTER TABLE t DROP COLUMN b', QueryKind::DDL_SIMULATED);
-        self::assertInstanceOf(CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
         $registry->unregister('t');
         $mutation->apply($store, []);
         $def = $registry->get('t');
@@ -2636,5 +2647,346 @@ final class SqliteMutationResolverTest extends TestCase
 
         $this->expectException(UnknownSchemaException::class);
         $resolver->resolve("UPDATE late_table SET name = 'Bob' WHERE id = 1", QueryKind::WRITE_SIMULATED);
+    }
+
+    #[DataProvider('providerRemovedTableMutations')]
+    public function testRemovedTableRejectsEveryFurtherMutation(string $sql): void
+    {
+        $registry = new TableDefinitionRegistry();
+        $registry->register('records', new TableDefinition(['id'], ['id' => 'INTEGER'], ['id'], [], []));
+        $registry->markRemoved('records');
+        $resolver = new SqliteMutationResolver(
+            new ShadowStore(),
+            $registry,
+            new SqliteSchemaParser(),
+            new SqliteParser(),
+        );
+
+        $this->expectException(UnsupportedSqlException::class);
+        $this->expectExceptionMessage('Table was removed from the virtual schema');
+        $resolver->resolve($sql, QueryKind::WRITE_SIMULATED);
+    }
+
+    /** @return \Generator<string, array{string}> */
+    public static function providerRemovedTableMutations(): \Generator
+    {
+        yield 'update' => ['UPDATE records SET id = 2'];
+        yield 'delete' => ['DELETE FROM records'];
+        yield 'insert' => ['INSERT INTO records VALUES (2)'];
+        yield 'alter' => ['ALTER TABLE records ADD COLUMN name TEXT'];
+    }
+
+    public function testAlterAddPreservesCompleteDefinitionAndBuildsMigrationProjection(): void
+    {
+        $parser = new SqliteSchemaParser();
+        $existing = $parser->parse(
+            "CREATE TABLE records (id INTEGER PRIMARY KEY AUTOINCREMENT, legacy TEXT NOT NULL UNIQUE DEFAULT 'old')",
+        );
+        self::assertNotNull($existing);
+        $expected = $parser->parse(
+            "CREATE TABLE expected (id INTEGER PRIMARY KEY AUTOINCREMENT, legacy TEXT NOT NULL UNIQUE DEFAULT 'old', age INTEGER NOT NULL DEFAULT 7)",
+        );
+        self::assertNotNull($expected);
+        $registry = new TableDefinitionRegistry();
+        $registry->register('records', $existing);
+        $resolver = new SqliteMutationResolver(new ShadowStore(), $registry, $parser, new SqliteParser());
+
+        $mutation = $resolver->resolve(
+            'ALTER TABLE records ADD COLUMN age INTEGER NOT NULL DEFAULT 7;',
+            QueryKind::DDL_SIMULATED,
+        );
+
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
+        self::assertSame('SELECT "id", "legacy", 7 AS "age" FROM "records"', $mutation->resultSelect());
+        $mutation->apply(new ShadowStore(), [['id' => 1, 'legacy' => 'old', 'age' => 7]]);
+        $actual = $registry->get('records');
+        self::assertNotNull($actual);
+        self::assertSame($expected->columns, $actual->columns);
+        self::assertSame($expected->columnTypes, $actual->columnTypes);
+        self::assertSame($expected->primaryKeys, $actual->primaryKeys);
+        self::assertSame($expected->notNullColumns, $actual->notNullColumns);
+        self::assertSame($expected->uniqueConstraints, $actual->uniqueConstraints);
+        self::assertEquals($expected->typedColumns, $actual->typedColumns);
+        self::assertSame($expected->columnDefaults, $actual->columnDefaults);
+        self::assertSame($expected->identityStrategies, $actual->identityStrategies);
+    }
+
+    public function testAlterDropRemovesEveryColumnMetadataEntryAndBuildsMigrationProjection(): void
+    {
+        $integer = new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER');
+        $text = new ColumnType(ColumnTypeFamily::STRING, 'TEXT');
+        $definition = new TableDefinition(
+            ['id', 'legacy', 'kept', 'tail'],
+            ['id' => 'INTEGER', 'legacy' => 'TEXT', 'kept' => 'TEXT', 'tail' => 'TEXT'],
+            ['id', 'legacy'],
+            ['id', 'legacy', 'kept', 'tail'],
+            [
+                'id_legacy' => ['id', 'legacy'],
+                'kept_tail' => ['kept', 'tail'],
+                'legacy_only' => ['legacy'],
+            ],
+            ['id' => $integer, 'legacy' => $text, 'kept' => $text, 'tail' => $text],
+            ['id' => '1', 'legacy' => "'old'", 'kept' => "'kept'", 'tail' => "'tail'"],
+            [
+                'id' => IdentityGenerationStrategy::MaxValue,
+                'legacy' => IdentityGenerationStrategy::MaxValue,
+                'kept' => IdentityGenerationStrategy::MaxValue,
+                'tail' => IdentityGenerationStrategy::MaxValue,
+            ],
+        );
+        $registry = new TableDefinitionRegistry();
+        $registry->register('records', $definition);
+        $resolver = new SqliteMutationResolver(
+            new ShadowStore(),
+            $registry,
+            new SqliteSchemaParser(),
+            new SqliteParser(),
+        );
+
+        $mutation = $resolver->resolve('ALTER TABLE records DROP COLUMN legacy;', QueryKind::DDL_SIMULATED);
+
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
+        self::assertSame('SELECT "id", "kept", "tail" FROM "records"', $mutation->resultSelect());
+        $mutation->apply(new ShadowStore(), []);
+        $actual = $registry->get('records');
+        self::assertNotNull($actual);
+        self::assertSame(['id', 'kept', 'tail'], $actual->columns);
+        self::assertSame(['id' => 'INTEGER', 'kept' => 'TEXT', 'tail' => 'TEXT'], $actual->columnTypes);
+        self::assertSame(['id'], $actual->primaryKeys);
+        self::assertSame(['id', 'kept', 'tail'], $actual->notNullColumns);
+        self::assertSame(['id_legacy' => ['id'], 'kept_tail' => ['kept', 'tail']], $actual->uniqueConstraints);
+        self::assertSame(['id' => $integer, 'kept' => $text, 'tail' => $text], $actual->typedColumns);
+        self::assertSame(['id' => '1', 'kept' => "'kept'", 'tail' => "'tail'"], $actual->columnDefaults);
+        self::assertSame([
+            'id' => IdentityGenerationStrategy::MaxValue,
+            'kept' => IdentityGenerationStrategy::MaxValue,
+            'tail' => IdentityGenerationStrategy::MaxValue,
+        ], $actual->identityStrategies);
+    }
+
+    public function testAlterRenameColumnMovesEveryMetadataEntryAndBuildsMigrationProjection(): void
+    {
+        $text = new ColumnType(ColumnTypeFamily::STRING, 'TEXT');
+        $definition = new TableDefinition(
+            ['id', 'legacy'],
+            ['id' => 'INTEGER', 'legacy' => 'TEXT'],
+            ['legacy'],
+            ['legacy'],
+            ['legacy_unique' => ['legacy']],
+            ['legacy' => $text],
+            ['legacy' => "'old'"],
+            ['legacy' => IdentityGenerationStrategy::MaxValue],
+        );
+        $registry = new TableDefinitionRegistry();
+        $registry->register('records', $definition);
+        $resolver = new SqliteMutationResolver(
+            new ShadowStore(),
+            $registry,
+            new SqliteSchemaParser(),
+            new SqliteParser(),
+        );
+
+        $mutation = $resolver->resolve(
+            'ALTER TABLE records RENAME COLUMN legacy TO label;',
+            QueryKind::DDL_SIMULATED,
+        );
+
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
+        self::assertSame('SELECT "id", "legacy" AS "label" FROM "records"', $mutation->resultSelect());
+        $mutation->apply(new ShadowStore(), []);
+        $actual = $registry->get('records');
+        self::assertNotNull($actual);
+        self::assertSame(['id', 'label'], $actual->columns);
+        self::assertSame(['id' => 'INTEGER', 'label' => 'TEXT'], $actual->columnTypes);
+        self::assertSame(['label'], $actual->primaryKeys);
+        self::assertSame(['label'], $actual->notNullColumns);
+        self::assertSame(['legacy_unique' => ['label']], $actual->uniqueConstraints);
+        self::assertSame(['label' => $text], $actual->typedColumns);
+        self::assertSame(['label' => "'old'"], $actual->columnDefaults);
+        self::assertSame(['label' => IdentityGenerationStrategy::MaxValue], $actual->identityStrategies);
+    }
+
+    public function testAlterRenameColumnRejectsMissingSource(): void
+    {
+        $registry = new TableDefinitionRegistry();
+        $registry->register('records', new TableDefinition(
+            ['id', 'label'],
+            ['id' => 'INTEGER', 'label' => 'TEXT'],
+            ['id'],
+            [],
+            [],
+        ));
+        $resolver = new SqliteMutationResolver(
+            new ShadowStore(),
+            $registry,
+            new SqliteSchemaParser(),
+            new SqliteParser(),
+        );
+
+        $this->expectException(ColumnNotFoundException::class);
+        $resolver->resolve('ALTER TABLE records RENAME COLUMN missing TO title', QueryKind::DDL_SIMULATED);
+    }
+
+    public function testAlterRenameColumnRejectsExistingTarget(): void
+    {
+        $registry = new TableDefinitionRegistry();
+        $registry->register('records', new TableDefinition(
+            ['id', 'label'],
+            ['id' => 'INTEGER', 'label' => 'TEXT'],
+            ['id'],
+            [],
+            [],
+        ));
+        $resolver = new SqliteMutationResolver(
+            new ShadowStore(),
+            $registry,
+            new SqliteSchemaParser(),
+            new SqliteParser(),
+        );
+
+        $this->expectException(ColumnAlreadyExistsException::class);
+        $resolver->resolve('ALTER TABLE records RENAME COLUMN label TO id', QueryKind::DDL_SIMULATED);
+    }
+
+    public function testAlterRenameColumnSupportsCaseOnlyTarget(): void
+    {
+        $registry = new TableDefinitionRegistry();
+        $registry->register('records', new TableDefinition(
+            ['id', 'label'],
+            ['id' => 'INTEGER', 'label' => 'TEXT'],
+            ['id'],
+            [],
+            [],
+        ));
+        $resolver = new SqliteMutationResolver(
+            new ShadowStore(),
+            $registry,
+            new SqliteSchemaParser(),
+            new SqliteParser(),
+        );
+
+        $caseOnly = $resolver->resolve(
+            'ALTER TABLE records RENAME COLUMN label TO LABEL',
+            QueryKind::DDL_SIMULATED,
+        );
+        self::assertInstanceOf(AlterTableMutation::class, $caseOnly);
+        self::assertSame('SELECT "id", "label" AS "LABEL" FROM "records"', $caseOnly->resultSelect());
+    }
+
+    #[DataProvider('providerMalformedAlterIdentifierClauses')]
+    public function testAlterIdentifierClausesRejectExtraOrMissingTokens(string $sql): void
+    {
+        $registry = new TableDefinitionRegistry();
+        $registry->register('records', new TableDefinition(
+            ['id', 'label'],
+            ['id' => 'INTEGER', 'label' => 'TEXT'],
+            ['id'],
+            [],
+            [],
+        ));
+        $resolver = new SqliteMutationResolver(
+            new ShadowStore(),
+            $registry,
+            new SqliteSchemaParser(),
+            new SqliteParser(),
+        );
+
+        $this->expectException(UnsupportedSqlException::class);
+        $resolver->resolve($sql, QueryKind::DDL_SIMULATED);
+    }
+
+    /** @return \Generator<string, array{string}> */
+    public static function providerMalformedAlterIdentifierClauses(): \Generator
+    {
+        yield 'missing operation' => ['ALTER TABLE records'];
+        yield 'missing add clause' => ['ALTER TABLE records ADD'];
+        yield 'missing add column definition' => ['ALTER TABLE records ADD COLUMN'];
+        yield 'missing drop clause' => ['ALTER TABLE records DROP'];
+        yield 'drop missing column keyword' => ['ALTER TABLE records DROP label'];
+        yield 'drop missing keyword with extra token' => ['ALTER TABLE records DROP label extra'];
+        yield 'unknown operation' => ['ALTER TABLE records BROKEN label TO title'];
+        yield 'rename missing clause' => ['ALTER TABLE records RENAME'];
+        yield 'drop extra token' => ['ALTER TABLE records DROP COLUMN label extra'];
+        yield 'rename missing to' => ['ALTER TABLE records RENAME COLUMN label title'];
+        yield 'rename invalid separator' => ['ALTER TABLE records RENAME COLUMN label nope title'];
+        yield 'rename invalid source' => ['ALTER TABLE records RENAME (label) TO title'];
+        yield 'rename mismatched bracket source' => ['ALTER TABLE records RENAME ( label ] TO title'];
+        yield 'rename missing target' => ['ALTER TABLE records RENAME COLUMN label TO'];
+        yield 'rename extra token' => ['ALTER TABLE records RENAME COLUMN label TO title extra'];
+        yield 'rename table extra token' => ['ALTER TABLE records RENAME TO target extra'];
+    }
+
+    public function testAlterAcceptsBracketQuotedColumnIdentifiers(): void
+    {
+        $registry = new TableDefinitionRegistry();
+        $registry->register('records', new TableDefinition(
+            ['id', 'label'],
+            ['id' => 'INTEGER', 'label' => 'TEXT'],
+            ['id'],
+            [],
+            [],
+        ));
+        $resolver = new SqliteMutationResolver(
+            new ShadowStore(),
+            $registry,
+            new SqliteSchemaParser(),
+            new SqliteParser(),
+        );
+
+        $mutation = $resolver->resolve(
+            'ALTER TABLE records RENAME COLUMN [label] TO [title]',
+            QueryKind::DDL_SIMULATED,
+        );
+
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
+        self::assertSame('SELECT "id", "label" AS "title" FROM "records"', $mutation->resultSelect());
+    }
+
+    public function testAlterRenameTableBuildsMigrationProjectionAndMovesDefinition(): void
+    {
+        $definition = new TableDefinition(
+            ['id', 'label'],
+            ['id' => 'INTEGER', 'label' => 'TEXT'],
+            ['id'],
+            [],
+            [],
+        );
+        $registry = new TableDefinitionRegistry();
+        $registry->register('records', $definition);
+        $store = new ShadowStore();
+        $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
+
+        $mutation = $resolver->resolve('ALTER TABLE records RENAME TO archived;', QueryKind::DDL_SIMULATED);
+
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
+        self::assertSame('SELECT "id", "label" FROM "records"', $mutation->resultSelect());
+        $mutation->apply($store, [['id' => 1, 'label' => 'kept']]);
+        self::assertSame($definition, $registry->get('archived'));
+        self::assertTrue($registry->isRemoved('records'));
+        self::assertSame([['id' => 1, 'label' => 'kept']], $store->get('archived'));
+    }
+
+    public function testAlterAddRejectsMissingParsedColumn(): void
+    {
+        $registry = new TableDefinitionRegistry();
+        $registry->register('records', new TableDefinition(['id'], ['id' => 'INTEGER'], ['id'], [], []));
+        $nullParser = static::createStub(SchemaParser::class);
+        $nullParser->method('parse')->willReturn(null);
+        $resolver = new SqliteMutationResolver(new ShadowStore(), $registry, $nullParser, new SqliteParser());
+
+        $this->expectException(UnsupportedSqlException::class);
+        $resolver->resolve('ALTER TABLE records ADD COLUMN value TEXT', QueryKind::DDL_SIMULATED);
+    }
+
+    public function testAlterAddRejectsAmbiguousParsedColumn(): void
+    {
+        $registry = new TableDefinitionRegistry();
+        $registry->register('records', new TableDefinition(['id'], ['id' => 'INTEGER'], ['id'], [], []));
+        $emptyParser = static::createStub(SchemaParser::class);
+        $emptyParser->method('parse')->willReturn(new TableDefinition([], [], [], [], []));
+        $resolver = new SqliteMutationResolver(new ShadowStore(), $registry, $emptyParser, new SqliteParser());
+
+        $this->expectException(UnsupportedSqlException::class);
+        $resolver->resolve('ALTER TABLE records ADD COLUMN value TEXT', QueryKind::DDL_SIMULATED);
     }
 }

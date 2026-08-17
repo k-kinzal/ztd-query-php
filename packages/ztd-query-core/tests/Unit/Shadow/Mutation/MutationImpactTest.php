@@ -61,6 +61,18 @@ final class MutationImpactTest extends TestCase
         self::assertFalse($impact->isInsertLike());
     }
 
+    public function testNoneModeHidesInternalMigrationRows(): void
+    {
+        $impact = new MutationImpact(
+            new UpdateMutation('items', ['id']),
+            [['id' => 1]],
+            [['id' => 1, 'age' => 7]],
+            [['id' => 1, 'age' => 7]],
+        );
+
+        self::assertSame(0, $impact->affectedRowCount(AffectedRowsMode::None));
+    }
+
     public function testReturningUpdateRowsExcludeInternalIdentityMetadata(): void
     {
         $impact = new MutationImpact(

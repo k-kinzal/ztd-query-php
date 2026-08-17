@@ -41,7 +41,7 @@ final class RewritePlan
      * @param QueryKind $kind Classified kind of the statement.
      * @param ShadowMutation|null $mutation Optional mutation to apply after execution.
      * @param ReturningProjection|null $returningProjection Optional client-visible write projection.
-     * @param AffectedRowsMode $affectedRowsMode Native affected-row convention.
+     * @param AffectedRowsMode $affectedRowsMode Observable affected-row convention.
      */
     public function __construct(
         string $sql,

@@ -44,6 +44,17 @@ final class SqlTokenStream
         ));
     }
 
+    /** @return array{name: string, next: int}|null */
+    public function identifierAt(int $index = 0): ?array
+    {
+        $component = self::identifierComponentAt($this->sql, $this->significantTokens(), $index);
+        if ($component === null) {
+            return null;
+        }
+
+        return ['name' => $component[0], 'next' => $component[1]];
+    }
+
     /** @return list<string> */
     public function splitStatements(): array
     {
@@ -180,6 +191,47 @@ final class SqlTokenStream
             }
 
             return $index;
+        }
+
+        return null;
+    }
+
+    /**
+     * @param list<SqlToken> $tokens
+     * @return array{string, int}|null
+     */
+    private static function identifierComponentAt(string $sql, array $tokens, int $index): ?array
+    {
+        $token = $tokens[$index] ?? null;
+        if ($token === null) {
+            return null;
+        }
+        if ($token->kind === SqlTokenKind::Word) {
+            return [$token->text, $index + 1];
+        }
+        if ($token->kind === SqlTokenKind::QuotedIdentifier && strlen($token->text) >= 2) {
+            $quote = $token->text[0];
+            $name = substr($token->text, 1, -1);
+
+            return [str_replace($quote . $quote, $quote, $name), $index + 1];
+        }
+        if ($token->kind !== SqlTokenKind::Symbol || $token->text !== '[') {
+            return null;
+        }
+
+        for ($endIndex = $index; isset($tokens[$endIndex]); $endIndex++) {
+            $endToken = $tokens[$endIndex];
+            if ($endToken->text !== ']' || !$endToken->isTopLevel()) {
+                continue;
+            }
+            $following = $tokens[$endIndex + 1] ?? null;
+            if ($following?->text === ']' && $following->isTopLevel()) {
+                $endIndex++;
+                continue;
+            }
+            $name = substr($sql, $token->endOffset(), $endToken->offset - $token->endOffset());
+
+            return [str_replace(']]', ']', $name), $endIndex + 1];
         }
 
         return null;

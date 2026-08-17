@@ -26,6 +26,9 @@ final class MutationImpact
 
     public function affectedRowCount(AffectedRowsMode $mode): int
     {
+        if ($mode === AffectedRowsMode::None) {
+            return 0;
+        }
         if ($mode === AffectedRowsMode::Matched && $this->mutation instanceof UpsertMutation) {
             return count($this->mutation->resultRows());
         }

@@ -18,6 +18,7 @@ use ZtdQuery\Platform\Sqlite\SqliteQueryGuard;
 use ZtdQuery\Platform\Sqlite\SqliteReturningProjectionParser;
 use ZtdQuery\Platform\Sqlite\SqliteRewriter;
 use ZtdQuery\Platform\Sqlite\SqliteSchemaParser;
+use ZtdQuery\Platform\Sqlite\Mutation\AlterTableMutation;
 use ZtdQuery\Platform\Sqlite\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\Sqlite\Transformer\InsertTransformer;
 use ZtdQuery\Platform\Sqlite\Transformer\SelectTransformer;
@@ -50,6 +51,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(SqliteSchemaParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser::class)]
 #[UsesClass(SqliteMutationResolver::class)]
+#[UsesClass(AlterTableMutation::class)]
 #[UsesClass(SqliteTransformer::class)]
 #[UsesClass(SelectTransformer::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteIndexHintStripper::class)]
@@ -852,6 +854,47 @@ final class SqliteRewriterTest extends RewriterContractTest
         $plan = $rewriter->rewrite('CREATE TABLE t (id INTEGER PRIMARY KEY)');
         self::assertSame('SELECT 1 WHERE 0', $plan->sql());
         self::assertSame(QueryKind::DDL_SIMULATED, $plan->kind());
+    }
+
+    public function testAlterTableUsesShadowedMigrationSelect(): void
+    {
+        $registry = new TableDefinitionRegistry();
+        $registry->register('people', new TableDefinition(
+            ['id', 'name'],
+            ['id' => 'INTEGER', 'name' => 'TEXT'],
+            ['id'],
+            [],
+            [],
+        ));
+        $store = new ShadowStore();
+        $store->set('people', [['id' => 1, 'name' => 'Alice']]);
+        $rewriter = $this->createRewriter($store, $registry);
+
+        $plan = $rewriter->rewrite('ALTER TABLE people ADD COLUMN age INTEGER DEFAULT 7');
+
+        self::assertSame(QueryKind::DDL_SIMULATED, $plan->kind());
+        self::assertInstanceOf(AlterTableMutation::class, $plan->mutation());
+        self::assertStringContainsString('WITH "people" AS', $plan->sql());
+        self::assertStringContainsString('SELECT "id", "name", 7 AS "age" FROM "people"', $plan->sql());
+    }
+
+    public function testRemovedTableIsShadowedInsteadOfFallingThrough(): void
+    {
+        $registry = new TableDefinitionRegistry();
+        $registry->register('people', new TableDefinition(
+            ['id', 'name'],
+            ['id' => 'INTEGER', 'name' => 'TEXT'],
+            ['id'],
+            [],
+            [],
+        ));
+        $registry->markRemoved('people');
+        $rewriter = $this->createRewriter(new ShadowStore(), $registry);
+
+        $plan = $rewriter->rewrite('SELECT id, name FROM people');
+
+        self::assertStringContainsString('WITH "people" AS', $plan->sql());
+        self::assertStringContainsString('WHERE 0', $plan->sql());
     }
 
     public function testRewriteMultipleEmptyThrows(): void

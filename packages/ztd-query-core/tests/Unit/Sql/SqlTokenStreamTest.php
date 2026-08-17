@@ -18,6 +18,24 @@ use ZtdQuery\Sql\SqlTokenStream;
 #[UsesClass(SqlTokenKind::class)]
 final class SqlTokenStreamTest extends TestCase
 {
+    public function testReadsWordAndQuotedIdentifiersAtSignificantTokenOffsets(): void
+    {
+        $stream = SqlTokenStream::tokenize('plain "quo""ted" `tick``ed` [bracket name]');
+
+        self::assertSame(['name' => 'plain', 'next' => 1], $stream->identifierAt());
+        self::assertSame(['name' => 'quo"ted', 'next' => 2], $stream->identifierAt(1));
+        self::assertSame(['name' => 'tick`ed', 'next' => 3], $stream->identifierAt(2));
+        self::assertSame(['name' => 'bracket name', 'next' => 7], $stream->identifierAt(3));
+    }
+
+    public function testIdentifierAtRejectsMissingAndNonIdentifierTokens(): void
+    {
+        self::assertNull(SqlTokenStream::tokenize('')->identifierAt());
+        self::assertNull(SqlTokenStream::tokenize('42')->identifierAt());
+        self::assertNull(SqlTokenStream::tokenize("'value'")->identifierAt());
+        self::assertNull(SqlTokenStream::tokenize('[unfinished')->identifierAt());
+    }
+
     public function testSplitsOnlyTopLevelStatementTerminators(): void
     {
         $sql = 'SELECT \';\' AS value; SELECT $$a;b$$; /* ; */ SELECT (3; 4); SELECT [5; 6];;';
