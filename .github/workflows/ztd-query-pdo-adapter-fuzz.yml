@@ -190,6 +190,7 @@ jobs:
           - { name: insert, script: fuzz_correctness_pg_insert.php, corpus: correctness-pg-insert }
           - { name: update, script: fuzz_correctness_pg_update.php, corpus: correctness-pg-update }
           - { name: delete, script: fuzz_correctness_pg_delete.php, corpus: correctness-pg-delete }
+          - { name: ctas, script: fuzz_correctness_pg_ctas.php, corpus: correctness-pg-ctas }
     defaults:
       run:
         working-directory: packages/ztd-query-pdo-adapter

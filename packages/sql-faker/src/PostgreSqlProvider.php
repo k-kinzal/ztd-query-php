@@ -117,6 +117,16 @@ final class PostgreSqlProvider extends Base
     }
 
     /**
+     * Generate a PostgreSQL CREATE TABLE AS statement.
+     *
+     * @return non-empty-string
+     */
+    public function createTableAsStatement(int $maxDepth = PHP_INT_MAX): string
+    {
+        return $this->generateRequired(StatementType::CreateTableAs->value, $maxDepth);
+    }
+
+    /**
      * Generate a PostgreSQL ALTER TABLE statement.
      *
      * @return non-empty-string

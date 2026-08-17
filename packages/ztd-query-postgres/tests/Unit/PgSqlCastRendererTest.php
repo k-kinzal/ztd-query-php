@@ -413,6 +413,20 @@ final class PgSqlCastRendererTest extends CastRendererContractTest
     {
         $renderer = new PgSqlCastRenderer();
         $type = new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR');
+        self::assertSame("CAST('hi' AS VARCHAR)", $renderer->renderCast("'hi'", $type));
+    }
+
+    public function testRenderCastCharacterVaryingWithoutLength(): void
+    {
+        $renderer = new PgSqlCastRenderer();
+        $type = new ColumnType(ColumnTypeFamily::STRING, 'CHARACTER VARYING');
+        self::assertSame("CAST('hi' AS VARCHAR)", $renderer->renderCast("'hi'", $type));
+    }
+
+    public function testRenderCastUnknownStringNativeTypeFallsBackToText(): void
+    {
+        $renderer = new PgSqlCastRenderer();
+        $type = new ColumnType(ColumnTypeFamily::STRING, 'CUSTOM_STRING');
         self::assertSame("CAST('hi' AS TEXT)", $renderer->renderCast("'hi'", $type));
     }
 

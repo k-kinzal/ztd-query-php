@@ -95,6 +95,10 @@ final class PgSqlCastRenderer implements CastRenderer
             return "VARCHAR({$matches[1]})";
         }
 
+        if ($upper === 'VARCHAR' || $upper === 'CHARACTER VARYING') {
+            return 'VARCHAR';
+        }
+
         return 'TEXT';
     }
 }

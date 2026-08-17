@@ -5,12 +5,17 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use Tests\Fixtures\StubMysqliField;
 use Tests\Fixtures\StubMysqliResult;
 use ZtdQuery\Adapter\Mysqli\MysqliResultStatement;
+use ZtdQuery\Adapter\Mysqli\MysqliResultColumnExtractor;
 use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(MysqliResultStatement::class)]
+#[UsesClass(MysqliResultColumnExtractor::class)]
 final class MysqliResultStatementTest extends TestCase
 {
     public function testImplementsStatementInterface(): void
@@ -62,4 +67,27 @@ final class MysqliResultStatementTest extends TestCase
 
         self::assertSame(0, $stmt->rowCount());
     }
+
+    public function testResultColumnsReturnsEmptyArrayWithoutResult(): void
+    {
+        $stmt = new MysqliResultStatement(null, 0);
+
+        self::assertSame([], $stmt->resultColumns());
+    }
+
+    public function testResultColumnsMapMysqliFieldMetadata(): void
+    {
+        $integer = new StubMysqliField('id', MYSQLI_TYPE_LONG, '63');
+        $text = new StubMysqliField('description', MYSQLI_TYPE_BLOB, '255');
+        $binary = new StubMysqliField('payload', MYSQLI_TYPE_BLOB, '63');
+        $result = StubMysqliResult::create([], [$integer, $text, $binary]);
+
+        $columns = (new MysqliResultStatement($result, 0))->resultColumns();
+
+        self::assertSame(['id', 'description', 'payload'], array_map(static fn ($column) => $column->name, $columns));
+        self::assertSame(ColumnTypeFamily::INTEGER, $columns[0]->type->family);
+        self::assertSame(ColumnTypeFamily::TEXT, $columns[1]->type->family);
+        self::assertSame(ColumnTypeFamily::BINARY, $columns[2]->type->family);
+    }
+
 }

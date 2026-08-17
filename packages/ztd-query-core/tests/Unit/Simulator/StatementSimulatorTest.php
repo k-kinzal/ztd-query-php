@@ -9,6 +9,7 @@ use Tests\Fake\FixedRewriter;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Connection\Exception\DatabaseException;
+use ZtdQuery\Connection\ResultSet;
 use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\ResultSelectRunner;
@@ -30,6 +31,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(UnsupportedSqlException::class)]
 #[UsesClass(RewritePlan::class)]
 #[UsesClass(ResultSelectRunner::class)]
+#[UsesClass(ResultSet::class)]
 #[UsesClass(InsertMutation::class)]
 #[UsesClass(MutationImpact::class)]
 #[UsesClass(CandidateKeySet::class)]

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Fake;
 
+use ZtdQuery\Connection\ResultColumn;
 use ZtdQuery\Connection\StatementInterface;
 
 /**
@@ -18,12 +19,17 @@ final class FakeStatement implements StatementInterface
 
     private bool $executed = false;
 
+    /** @var list<ResultColumn> */
+    private array $columns;
+
     /**
      * @param array<int, array<string, mixed>> $rows
+     * @param list<ResultColumn> $columns
      */
-    public function __construct(array $rows = [])
+    public function __construct(array $rows = [], array $columns = [])
     {
         $this->rows = $rows;
+        $this->columns = $columns;
     }
 
     public function execute(?array $params = null): bool
@@ -36,6 +42,11 @@ final class FakeStatement implements StatementInterface
     public function fetchAll(): array
     {
         return $this->rows;
+    }
+
+    public function resultColumns(): array
+    {
+        return $this->columns;
     }
 
     public function rowCount(): int

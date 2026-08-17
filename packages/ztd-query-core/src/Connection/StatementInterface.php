@@ -29,6 +29,15 @@ interface StatementInterface
     public function fetchAll(): array;
 
     /**
+     * Return result-set columns in projection order.
+     *
+     * Metadata must remain available when the result contains no rows.
+     *
+     * @return list<ResultColumn>
+     */
+    public function resultColumns(): array;
+
+    /**
      * Return the number of affected rows.
      */
     public function rowCount(): int;

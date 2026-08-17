@@ -11,6 +11,7 @@ use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Connection\ResultSet;
 use ZtdQuery\Exception\SimulationException;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
@@ -21,6 +22,7 @@ use ZtdQuery\Rewrite\RewriteStateCommitter;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\Mutation\MutationImpact;
 use ZtdQuery\Shadow\Mutation\ShadowMutation;
+use ZtdQuery\Shadow\Mutation\ResultSetMutation;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTransactionManager;
 use ZtdQuery\Sql\TransactionStatement;
@@ -248,13 +250,14 @@ final class Session
             return GenericExecuteResult::fromStatement($statement, QueryKind::READ);
         }
 
-        $rows = $statement->fetchAll();
+        $resultSet = $this->resultSelectRunner->readResultSet($statement);
+        $rows = $resultSet->rows;
 
         $mutation = $plan->mutation();
         if ($mutation === null) {
             throw new RuntimeException('ZTD Write Protection: Missing shadow mutation for write simulation.');
         }
-        $impact = $this->applyMutation($mutation, $rows);
+        $impact = $this->applyMutation($mutation, $resultSet);
         $returningProjection = $plan->returningProjection();
         $resultRows = $returningProjection !== null
             ? $returningProjection->project($impact->returningRows())
@@ -286,10 +289,10 @@ final class Session
             throw new RuntimeException('ZTD Write Protection: Missing shadow mutation for write simulation.');
         }
 
-        $rows = $this->resultSelectRunner->run($plan->sql(), $executor);
-        $this->applyMutation($mutation, $rows);
+        $resultSet = $this->resultSelectRunner->runResultSet($plan->sql(), $executor);
+        $this->applyMutation($mutation, $resultSet);
 
-        return $rows;
+        return $resultSet->rows;
     }
 
     /**
@@ -320,8 +323,11 @@ final class Session
             throw new RuntimeException('ZTD Write Protection: Missing shadow mutation for write simulation.');
         }
 
-        $rows = $this->resultSelectRunner->run($plan->sql(), fn (string $s) => $this->connection->query($s));
-        $impact = $this->applyMutation($mutation, $rows);
+        $resultSet = $this->resultSelectRunner->runResultSet(
+            $plan->sql(),
+            fn (string $s) => $this->connection->query($s),
+        );
+        $impact = $this->applyMutation($mutation, $resultSet);
 
         return $impact->affectedRowCount($plan->affectedRowsMode());
     }
@@ -330,21 +336,24 @@ final class Session
      * Apply a mutation without leaking simulation-specific exception types
      * through the connection adapter boundary.
      *
-     * @param array<int, array<string, mixed>> $rows
      * @throws DatabaseException When shadow mutation application fails.
      */
-    private function applyMutation(ShadowMutation $mutation, array $rows): MutationImpact
+    private function applyMutation(ShadowMutation $mutation, ResultSet $resultSet): MutationImpact
     {
         $before = $this->shadowStore->get($mutation->tableName());
         try {
-            $mutation->apply($this->shadowStore, $rows);
+            if ($mutation instanceof ResultSetMutation) {
+                $mutation->applyResultSet($this->shadowStore, $resultSet);
+            } else {
+                $mutation->apply($this->shadowStore, $resultSet->rows);
+            }
         } catch (SimulationException $e) {
             throw new DatabaseException($e->getMessage(), null, 0, $e);
         }
         $impact = new MutationImpact(
             $mutation,
             $before,
-            $rows,
+            $resultSet->rows,
             $this->shadowStore->get($mutation->tableName()),
         );
         if ($impact->isInsertLike() && $this->rewriter instanceof RewriteStateCommitter) {

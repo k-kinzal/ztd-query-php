@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery;
 
+use ZtdQuery\Connection\ResultSet;
 use ZtdQuery\Connection\StatementInterface;
 
 /**
@@ -19,12 +20,20 @@ final class ResultSelectRunner
      */
     public function run(string $sql, callable $executor): array
     {
+        return $this->runResultSet($sql, $executor)->rows;
+    }
+
+    /**
+     * @param callable(string): (StatementInterface|false) $executor
+     */
+    public function runResultSet(string $sql, callable $executor): ResultSet
+    {
         $statement = $executor($sql);
         if ($statement === false) {
-            return [];
+            return new ResultSet([], []);
         }
 
-        return $statement->fetchAll();
+        return $this->readResultSet($statement);
     }
 
     /**
@@ -37,6 +46,14 @@ final class ResultSelectRunner
     {
         $statement->execute($params);
 
-        return $statement->fetchAll();
+        return $this->readResultSet($statement)->rows;
+    }
+
+    public function readResultSet(StatementInterface $statement): ResultSet
+    {
+        $columns = $statement->resultColumns();
+        $rows = $statement->fetchAll();
+
+        return new ResultSet($rows, $columns);
     }
 }

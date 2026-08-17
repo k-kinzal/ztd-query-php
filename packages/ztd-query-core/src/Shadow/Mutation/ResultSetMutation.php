@@ -1,0 +1,16 @@
+<?php
+
+declare(strict_types=1);
+
+namespace ZtdQuery\Shadow\Mutation;
+
+use ZtdQuery\Connection\ResultSet;
+use ZtdQuery\Shadow\ShadowStore;
+
+/**
+ * Mutation whose schema depends on the executed query's result metadata.
+ */
+interface ResultSetMutation extends ShadowMutation
+{
+    public function applyResultSet(ShadowStore $store, ResultSet $result): void;
+}

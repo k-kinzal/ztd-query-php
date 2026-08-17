@@ -53,6 +53,18 @@ final class MysqliResultStatement implements StatementInterface
     /**
      * {@inheritDoc}
      */
+    public function resultColumns(): array
+    {
+        if ($this->result === null) {
+            return [];
+        }
+
+        return MysqliResultColumnExtractor::extract($this->result);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function rowCount(): int
     {
         return $this->affectedRows;

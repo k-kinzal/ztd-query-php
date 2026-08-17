@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Adapter\Pdo\PdoStatement;
 use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(PdoStatement::class)]
 final class PdoStatementTest extends TestCase
@@ -70,5 +71,20 @@ final class PdoStatementTest extends TestCase
         $stmt = new PdoStatement($nativeStmt);
 
         self::assertTrue($stmt->execute());
+    }
+
+    public function testResultColumnsUseDeclaredTypesForEmptyResult(): void
+    {
+        $pdo = new PDO('sqlite::memory:');
+        $pdo->exec('CREATE TABLE t (id INTEGER, name TEXT, score REAL)');
+        $nativeStmt = $pdo->query('SELECT * FROM t WHERE 1 = 0');
+        self::assertNotFalse($nativeStmt);
+
+        $columns = (new PdoStatement($nativeStmt))->resultColumns();
+
+        self::assertSame(['id', 'name', 'score'], array_map(static fn ($column) => $column->name, $columns));
+        self::assertSame(ColumnTypeFamily::INTEGER, $columns[0]->type->family);
+        self::assertSame(ColumnTypeFamily::TEXT, $columns[1]->type->family);
+        self::assertSame(ColumnTypeFamily::FLOAT, $columns[2]->type->family);
     }
 }

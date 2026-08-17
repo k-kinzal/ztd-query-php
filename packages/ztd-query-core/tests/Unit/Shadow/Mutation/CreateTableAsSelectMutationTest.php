@@ -13,8 +13,13 @@ use ZtdQuery\Shadow\ShadowStore;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnTypeFamily;
+use ZtdQuery\Connection\ResultColumn;
+use ZtdQuery\Connection\ResultSet;
 
 #[UsesClass(ColumnType::class)]
+#[UsesClass(ResultColumn::class)]
+#[UsesClass(ResultSet::class)]
 #[UsesClass(TableDefinition::class)]
 #[UsesClass(TableDefinitionRegistry::class)]
 #[UsesClass(ShadowStore::class)]
@@ -141,7 +146,7 @@ final class CreateTableAsSelectMutationTest extends TestCase
         self::assertContains('email', $definition->columns);
     }
 
-    public function testApplyThrowsExceptionWhenNoColumnsCanBeDetermined(): void
+    public function testApplyResultSetCreatesEmptyTableFromMetadata(): void
     {
         $registry = new TableDefinitionRegistry();
         $store = new ShadowStore();
@@ -152,9 +157,67 @@ final class CreateTableAsSelectMutationTest extends TestCase
             $registry
         );
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Cannot determine columns for CREATE TABLE AS SELECT.');
+        $result = new ResultSet([], [
+            new ResultColumn('id', new ColumnType(ColumnTypeFamily::INTEGER, 'int4')),
+            new ResultColumn('name', new ColumnType(ColumnTypeFamily::TEXT, 'text')),
+        ]);
 
-        $mutation->apply($store, []);
+        $mutation->applyResultSet($store, $result);
+
+        $definition = $registry->get('users_copy');
+        self::assertNotNull($definition);
+        self::assertSame(['id', 'name'], $definition->columns);
+        self::assertSame(ColumnTypeFamily::INTEGER, $definition->typedColumns['id']->family);
+        self::assertSame(ColumnTypeFamily::TEXT, $definition->typedColumns['name']->family);
+        self::assertSame([], $store->get('users_copy'));
+    }
+
+    public function testApplyResultSetUsesMetadataTypesInsteadOfTextFallback(): void
+    {
+        $registry = new TableDefinitionRegistry();
+        $store = new ShadowStore();
+        $mutation = new CreateTableAsSelectMutation('users_copy', ['id'], $registry);
+        $result = new ResultSet(
+            [['id' => 1]],
+            [new ResultColumn('id', new ColumnType(ColumnTypeFamily::INTEGER, 'int4'))],
+        );
+
+        $mutation->applyResultSet($store, $result);
+
+        $definition = $registry->get('users_copy');
+        self::assertNotNull($definition);
+        self::assertSame('int4', $definition->columnTypes['id']);
+        self::assertSame(ColumnTypeFamily::INTEGER, $definition->typedColumns['id']->family);
+    }
+
+    public function testApplyResultSetKeepsExplicitColumnNamesWithMetadataTypes(): void
+    {
+        $registry = new TableDefinitionRegistry();
+        $store = new ShadowStore();
+        $mutation = new CreateTableAsSelectMutation('users_copy', ['display_id'], $registry);
+        $result = new ResultSet(
+            [['source_id' => 1]],
+            [new ResultColumn('source_id', new ColumnType(ColumnTypeFamily::INTEGER, 'int4'))],
+        );
+
+        $mutation->applyResultSet($store, $result);
+
+        $definition = $registry->get('users_copy');
+        self::assertNotNull($definition);
+        self::assertSame(['display_id'], $definition->columns);
+        self::assertSame(ColumnTypeFamily::INTEGER, $definition->typedColumns['display_id']->family);
+    }
+
+    public function testApplyKeepsParsedProjectionNamesWhenMetadataIsUnavailable(): void
+    {
+        $registry = new TableDefinitionRegistry();
+        $store = new ShadowStore();
+        $mutation = new CreateTableAsSelectMutation('users_copy', ['display_name'], $registry);
+
+        $mutation->apply($store, [['source_name' => 'Alice']]);
+
+        $definition = $registry->get('users_copy');
+        self::assertNotNull($definition);
+        self::assertSame(['display_name'], $definition->columns);
     }
 }

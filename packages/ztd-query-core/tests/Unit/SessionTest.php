@@ -12,6 +12,7 @@ use Tests\Fake\FakeSqlRewriter;
 use Tests\Fake\FakeStatement;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\Exception\DatabaseException;
+use ZtdQuery\Connection\ResultSet;
 use ZtdQuery\Exception\MissingPrimaryKeyException;
 use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Rewrite\QueryKind;
@@ -31,6 +32,7 @@ use ZtdQuery\Shadow\ShadowTransactionManager;
 #[UsesClass(TableDefinitionRegistry::class)]
 #[UsesClass(TableDefinition::class)]
 #[UsesClass(ResultSelectRunner::class)]
+#[UsesClass(ResultSet::class)]
 #[UsesClass(DatabaseException::class)]
 #[UsesClass(RewritePlan::class)]
 #[UsesClass(UpdateMutation::class)]

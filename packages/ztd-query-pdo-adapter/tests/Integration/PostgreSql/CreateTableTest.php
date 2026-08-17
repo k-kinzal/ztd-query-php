@@ -89,4 +89,62 @@ final class CreateTableTest extends TestCase
             $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
         }
     }
+
+    public function testCreateTableAsSelectPreservesColumnsForEmptyResult(): void
+    {
+        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $source = 'source_' . bin2hex(random_bytes(8));
+        $copy = 'copy_' . bin2hex(random_bytes(8));
+
+        try {
+            $rawPdo->exec("CREATE TABLE {$source} (id INTEGER, name TEXT)");
+            $ztdPdo = ZtdPdo::fromPdo($rawPdo, null);
+            $ztdPdo->exec("INSERT INTO {$source} VALUES (1, 'Alice')");
+
+            self::assertSame(0, $ztdPdo->exec("CREATE TABLE {$copy} AS SELECT * FROM {$source} WHERE FALSE"));
+            self::assertSame(1, $ztdPdo->exec("INSERT INTO {$copy} VALUES (2, 'Bob')"));
+
+            $statement = $ztdPdo->query("SELECT * FROM {$copy} WHERE id = 2");
+            self::assertNotFalse($statement);
+            self::assertSame([['id' => 2, 'name' => 'Bob']], $statement->fetchAll());
+        } finally {
+            $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
+        }
+    }
+
+    public function testCreateTableAsSelectPreservesProjectedPostgreSqlTypes(): void
+    {
+        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $source = 'source_' . bin2hex(random_bytes(8));
+        $copy = 'copy_' . bin2hex(random_bytes(8));
+
+        try {
+            $rawPdo->exec("CREATE TABLE {$source} (id INTEGER, name VARCHAR(40), score NUMERIC(8, 2))");
+            $ztdPdo = ZtdPdo::fromPdo($rawPdo, null);
+            $ztdPdo->exec("INSERT INTO {$source} VALUES (1, 'Alice', 95.25)");
+
+            $ztdPdo->exec(
+                "CREATE TABLE {$copy} AS SELECT id + 1 AS next_id, name, score FROM {$source}"
+            );
+
+            $statement = $ztdPdo->query("SELECT next_id, name, score FROM {$copy} WHERE next_id = 2");
+            self::assertNotFalse($statement);
+            self::assertSame(
+                [['next_id' => 2, 'name' => 'Alice', 'score' => '95.25']],
+                $statement->fetchAll(),
+            );
+
+            $typeStatement = $ztdPdo->query(
+                "SELECT pg_typeof(next_id)::text AS id_type, pg_typeof(name)::text AS name_type, "
+                . "pg_typeof(score)::text AS score_type FROM {$copy} LIMIT 1"
+            );
+            self::assertNotFalse($typeStatement);
+            self::assertSame(
+                [['id_type' => 'integer', 'name_type' => 'character varying', 'score_type' => 'numeric']],
+                $typeStatement->fetchAll(),
+            );
+        } finally {
+            $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
+        }
+    }
 }

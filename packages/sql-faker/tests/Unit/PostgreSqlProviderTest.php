@@ -171,6 +171,20 @@ final class PostgreSqlProviderTest extends TestCase
         self::assertStringContainsString('TABLE', $result);
     }
 
+    public function testCreateTableAsStatement(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new PostgreSqlProvider($faker);
+
+        $result = $provider->createTableAsStatement(maxDepth: 8);
+
+        self::assertStringContainsString('CREATE', $result);
+        self::assertStringContainsString('TABLE', $result);
+        self::assertStringContainsString('AS', $result);
+        self::assertMatchesRegularExpression('/\b(?:SELECT|VALUES|TABLE)\b/', $result);
+    }
+
     public function testAlterTableStatement(): void
     {
         $faker = Factory::create();
@@ -783,6 +797,7 @@ final class PostgreSqlProviderTest extends TestCase
         yield 'Update' => [StatementType::Update];
         yield 'Delete' => [StatementType::Delete];
         yield 'CreateTable' => [StatementType::CreateTable];
+        yield 'CreateTableAs' => [StatementType::CreateTableAs];
         yield 'AlterTable' => [StatementType::AlterTable];
         yield 'DropTable' => [StatementType::DropTable];
     }

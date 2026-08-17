@@ -74,20 +74,18 @@ final class MysqliStatement implements StatementInterface
      */
     public function fetchAll(): array
     {
-        if ($this->result === null) {
-            $this->result = $this->statement->get_result();
-        }
+        $result = $this->loadResult();
 
-        if ($this->result === false) {
+        if ($result === false) {
             $this->statement->close();
             return [];
         }
 
         /** @var array<int, array<string, mixed>> $rows */
-        $rows = $this->result->fetch_all(MYSQLI_ASSOC);
+        $rows = $result->fetch_all(MYSQLI_ASSOC);
 
         // Free the result to avoid "Commands out of sync" errors
-        $this->result->free();
+        $result->free();
         $this->result = null;
 
         $this->statement->close();
@@ -98,8 +96,30 @@ final class MysqliStatement implements StatementInterface
     /**
      * {@inheritDoc}
      */
+    public function resultColumns(): array
+    {
+        $result = $this->loadResult();
+        if ($result === false) {
+            return [];
+        }
+
+        return MysqliResultColumnExtractor::extract($result);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function rowCount(): int
     {
         return (int) $this->statement->affected_rows;
+    }
+
+    private function loadResult(): mysqli_result|false
+    {
+        if ($this->result === null) {
+            $this->result = $this->statement->get_result();
+        }
+
+        return $this->result;
     }
 }
