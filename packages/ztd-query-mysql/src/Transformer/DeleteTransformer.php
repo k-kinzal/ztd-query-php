@@ -11,9 +11,10 @@ use PhpMyAdmin\SqlParser\Components\Limit;
 use PhpMyAdmin\SqlParser\Components\OrderKeyword;
 use PhpMyAdmin\SqlParser\Statements\DeleteStatement;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\MySql\DmlWhereClauseExtractor;
+use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlParser;
-use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Shadow\Mutation\MultiTableMutationRow;
 use ZtdQuery\Shadow\Mutation\MultiTableMutationTarget;
@@ -180,8 +181,12 @@ final class DeleteTransformer implements SqlTransformer
         }
 
         $whereClause = "";
-        if ($stmt->where !== null && $stmt->where !== []) {
-            $whereClause = " WHERE " . Condition::build($stmt->where);
+        $whereExpression = (new DmlWhereClauseExtractor())->extract($originalSql);
+        if ($whereExpression === null && $stmt->where !== null && $stmt->where !== []) {
+            $whereExpression = Condition::build($stmt->where);
+        }
+        if ($whereExpression !== null && $whereExpression !== '') {
+            $whereClause = " WHERE " . $whereExpression;
         }
 
         $orderClause = "";

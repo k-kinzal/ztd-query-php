@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Transformer;
 
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
+use ZtdQuery\Platform\MySql\DmlWhereClauseExtractor;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
@@ -21,6 +22,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(SelectTransformer::class)]
 #[UsesClass(MySqlCastRenderer::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]
+#[UsesClass(DmlWhereClauseExtractor::class)]
 #[UsesClass(UpdateAssignmentExtractor::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlTypeSemantics::class)]
@@ -88,6 +90,25 @@ final class UpdateTransformerTest extends TestCase
         );
 
         self::assertStringContainsString('created_at + INTERVAL 30 DAY AS `due_at`', $result);
+    }
+
+    public function testTransformPreservesCaseWhereExpression(): void
+    {
+        $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = [
+            't' => [
+                'rows' => [['id' => 1, 'score' => 85], ['id' => 2, 'score' => 60]],
+                'columns' => ['id', 'score'],
+                'columnTypes' => [],
+            ],
+        ];
+
+        $result = $transformer->transform(
+            'UPDATE t SET score = 0 WHERE CASE WHEN score > 80 THEN 1 ELSE 0 END = 1',
+            $tables,
+        );
+
+        self::assertStringContainsString('WHERE CASE WHEN score > 80 THEN 1 ELSE 0 END = 1', $result);
     }
 
     public function testBuildUpdateSelectUsesAliasAndColumns(): void

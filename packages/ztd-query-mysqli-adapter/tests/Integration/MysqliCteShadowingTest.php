@@ -181,6 +181,50 @@ final class MysqliCteShadowingTest extends TestCase
         }
     }
 
+    public function testUpdateAndDeleteRestrictRowsWithCaseExpression(): void
+    {
+        [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();
+        $updates = 'prefix_' . bin2hex(random_bytes(8));
+        $deletes = 'prefix_' . bin2hex(random_bytes(8));
+        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, score INT)', $updates));
+        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, score INT)', $deletes));
+        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
+        try {
+            $rows = 'VALUES (1, 85), (2, 60), (3, 95), (4, 45)';
+            self::assertNotFalse($ztdMysqli->query(sprintf('INSERT INTO `%s` %s', $updates, $rows)));
+            self::assertNotFalse($ztdMysqli->query(sprintf('INSERT INTO `%s` %s', $deletes, $rows)));
+            self::assertNotFalse($ztdMysqli->query(sprintf('UPDATE `%s` SET score = 0 WHERE CASE WHEN score > 80 THEN 1 ELSE 0 END = 1', $updates)));
+            self::assertSame(2, $ztdMysqli->lastAffectedRows());
+            self::assertNotFalse($ztdMysqli->query(sprintf('DELETE FROM `%s` WHERE CASE WHEN score > 80 THEN 1 ELSE 0 END = 1', $deletes)));
+            self::assertSame(2, $ztdMysqli->lastAffectedRows());
+
+            $updated = $ztdMysqli->query(sprintf('SELECT id, score FROM `%s` ORDER BY id', $updates));
+            $remaining = $ztdMysqli->query(sprintf('SELECT id, score FROM `%s` ORDER BY id', $deletes));
+            self::assertInstanceOf(\mysqli_result::class, $updated);
+            self::assertInstanceOf(\mysqli_result::class, $remaining);
+            self::assertSame([
+                ['id' => 1, 'score' => 0],
+                ['id' => 2, 'score' => 60],
+                ['id' => 3, 'score' => 0],
+                ['id' => 4, 'score' => 45],
+            ], $updated->fetch_all(MYSQLI_ASSOC));
+            self::assertSame([
+                ['id' => 2, 'score' => 60],
+                ['id' => 4, 'score' => 45],
+            ], $remaining->fetch_all(MYSQLI_ASSOC));
+
+            $physicalUpdates = $rawMysqli->query(sprintf('SELECT * FROM `%s`', $updates));
+            $physicalDeletes = $rawMysqli->query(sprintf('SELECT * FROM `%s`', $deletes));
+            self::assertInstanceOf(\mysqli_result::class, $physicalUpdates);
+            self::assertInstanceOf(\mysqli_result::class, $physicalDeletes);
+            self::assertSame([], $physicalUpdates->fetch_all(MYSQLI_ASSOC));
+            self::assertSame([], $physicalDeletes->fetch_all(MYSQLI_ASSOC));
+        } finally {
+            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+        }
+    }
+
     public function testSelfReferencingUpsertMatchesNativeMySql(): void
     {
         [$databaseName, $rawMysqli] = MySqlContainer::createTestDatabase();

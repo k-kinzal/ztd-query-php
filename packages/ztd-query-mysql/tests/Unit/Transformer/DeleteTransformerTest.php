@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Transformer;
 
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
+use ZtdQuery\Platform\MySql\DmlWhereClauseExtractor;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\Transformer\DeleteTransformer;
@@ -20,11 +21,31 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(SelectTransformer::class)]
 #[UsesClass(MySqlCastRenderer::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]
+#[UsesClass(DmlWhereClauseExtractor::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlTypeSemantics::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
 final class DeleteTransformerTest extends TestCase
 {
+    public function testTransformPreservesCaseWhereExpression(): void
+    {
+        $transformer = new DeleteTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = [
+            't' => [
+                'rows' => [['id' => 1, 'score' => 85], ['id' => 2, 'score' => 60]],
+                'columns' => ['id', 'score'],
+                'columnTypes' => [],
+            ],
+        ];
+
+        $result = $transformer->transform(
+            'DELETE FROM t WHERE CASE WHEN score > 80 THEN 1 ELSE 0 END = 1',
+            $tables,
+        );
+
+        self::assertStringContainsString('WHERE CASE WHEN score > 80 THEN 1 ELSE 0 END = 1', $result);
+    }
+
     public function testBuildDeleteWithJoinAlias(): void
     {
         $transformer = new DeleteTransformer(new MySqlParser(), new SelectTransformer());

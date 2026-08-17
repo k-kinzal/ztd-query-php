@@ -13,6 +13,7 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlParser;
+use ZtdQuery\Platform\MySql\DmlWhereClauseExtractor;
 use ZtdQuery\Platform\MySql\UpdateAssignmentExtractor;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
@@ -69,7 +70,15 @@ final class UpdateTransformer implements SqlTransformer
 
         $primaryKeys = $tables[$targetTable]['primaryKeys'] ?? [];
         $assignmentValues = (new UpdateAssignmentExtractor())->values($sql);
-        $projection = $this->buildProjection($statement, $columns, $primaryKeys, [], $assignmentValues);
+        $whereExpression = (new DmlWhereClauseExtractor())->extract($sql);
+        $projection = $this->buildProjection(
+            $statement,
+            $columns,
+            $primaryKeys,
+            [],
+            $assignmentValues,
+            $whereExpression,
+        );
         $targetTableNames = array_keys($projection['tables']);
         if (isset($targetTableNames[1])) {
             $targets = $this->targetsFromContexts($projection['tables'], $tables);
@@ -79,6 +88,7 @@ final class UpdateTransformer implements SqlTransformer
                 $primaryKeys,
                 $targets,
                 $assignmentValues,
+                $whereExpression,
             );
         }
 
@@ -104,6 +114,7 @@ final class UpdateTransformer implements SqlTransformer
         array $primaryKeys = [],
         array $targets = [],
         array $assignmentValues = [],
+        ?string $whereExpression = null,
     ): array {
         if ($stmt->tables === null || $stmt->tables === []) {
             throw new \RuntimeException("Update statement has no tables?");
@@ -173,8 +184,11 @@ final class UpdateTransformer implements SqlTransformer
         $joinClause = $this->buildJoinClause($stmt);
 
         $whereClause = "";
-        if ($stmt->where !== null && $stmt->where !== []) {
-            $whereClause = " WHERE " . Condition::build($stmt->where);
+        if ($whereExpression === null && $stmt->where !== null && $stmt->where !== []) {
+            $whereExpression = Condition::build($stmt->where);
+        }
+        if ($whereExpression !== null && $whereExpression !== '') {
+            $whereClause = " WHERE " . $whereExpression;
         }
 
         $orderByClause = "";
