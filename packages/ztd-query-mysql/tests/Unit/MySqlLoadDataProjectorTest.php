@@ -355,6 +355,131 @@ final class MySqlLoadDataProjectorTest extends TestCase
         self::assertStringEndsWith(", CAST('import' AS CHAR))", $projected);
     }
 
+    public function testRejectsAMissingTargetBeforeReadingTheInput(): void
+    {
+        $parser = new MySqlParser();
+        $statement = $parser->parseSingleLogicalStatement(
+            "LOAD DATA INFILE '/path/that/does/not/exist' INTO TABLE items",
+        );
+        self::assertInstanceOf(LoadStatement::class, $statement);
+        $statement->table = null;
+
+        self::expectException(UnsupportedSqlException::class);
+        self::expectExceptionMessage('Cannot resolve LOAD DATA target');
+
+        (new MySqlLoadDataProjector(new TableDefinitionRegistry()))->project('LOAD DATA', $statement);
+    }
+
+    public function testRejectsAReadableDirectoryAsANonFileInput(): void
+    {
+        $parser = new MySqlParser();
+        $registry = new TableDefinitionRegistry();
+        $definition = (new MySqlSchemaParser($parser))->parse('CREATE TABLE items (id INT PRIMARY KEY)');
+        self::assertNotNull($definition);
+        $registry->register('items', $definition);
+        $path = sys_get_temp_dir();
+        $sql = "LOAD DATA INFILE '" . str_replace("'", "''", $path) . "' INTO TABLE items";
+        $statement = $parser->parseSingleLogicalStatement($sql);
+        self::assertInstanceOf(LoadStatement::class, $statement);
+
+        self::expectException(UnsupportedSqlException::class);
+        self::expectExceptionMessage('LOAD DATA input file is not readable');
+
+        (new MySqlLoadDataProjector($registry))->project($sql, $statement);
+    }
+
+    public function testEmptyExplicitColumnListHasNoTargetColumns(): void
+    {
+        $stream = tmpfile();
+        self::assertIsResource($stream);
+        self::assertSame(2, fwrite($stream, "1\n"));
+        $metadata = stream_get_meta_data($stream);
+        $path = $metadata['uri'] ?? null;
+        self::assertIsString($path);
+
+        $parser = new MySqlParser();
+        $registry = new TableDefinitionRegistry();
+        $definition = (new MySqlSchemaParser($parser))->parse('CREATE TABLE items (id INT PRIMARY KEY)');
+        self::assertNotNull($definition);
+        $registry->register('items', $definition);
+        $sql = "LOAD DATA INFILE '" . str_replace("'", "''", $path) . "' INTO TABLE items ()";
+        $statement = $parser->parseSingleLogicalStatement($sql);
+        self::assertInstanceOf(LoadStatement::class, $statement);
+
+        self::expectException(UnsupportedSqlException::class);
+        self::expectExceptionMessage('LOAD DATA has no target columns');
+
+        (new MySqlLoadDataProjector($registry))->project($sql, $statement);
+    }
+
+    public function testFieldStateHandlesFirstFieldEnclosuresAndFinalEscapeBoundaries(): void
+    {
+        $stream = tmpfile();
+        self::assertIsResource($stream);
+        $contents = "\"A\"\"\nB\",\"x\ny\"\n\"P\nQ\",r\nA\"B\nNULL,z\nA\\N,z\nE\\t\"F\nC\\t\nD\\";
+        self::assertSame(strlen($contents), fwrite($stream, $contents));
+        $metadata = stream_get_meta_data($stream);
+        $path = $metadata['uri'] ?? null;
+        self::assertIsString($path);
+
+        $parser = new MySqlParser();
+        $registry = new TableDefinitionRegistry();
+        $definition = (new MySqlSchemaParser($parser))->parse(
+            'CREATE TABLE items (first_value VARCHAR(50), second_value VARCHAR(50))',
+        );
+        self::assertNotNull($definition);
+        $registry->register('items', $definition);
+        $sql = "LOAD DATA INFILE '" . str_replace("'", "''", $path)
+            . "' INTO TABLE items FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' ESCAPED BY '\\\\'";
+        $statement = $parser->parseSingleLogicalStatement($sql);
+        self::assertInstanceOf(LoadStatement::class, $statement);
+
+        $projected = (new MySqlLoadDataProjector($registry))->project($sql, $statement);
+
+        self::assertStringContainsString("CAST('A\"\nB' AS CHAR), CAST('x\ny' AS CHAR)", $projected);
+        self::assertStringContainsString("CAST('P\nQ' AS CHAR), CAST('r' AS CHAR)", $projected);
+        self::assertStringContainsString("CAST('A\"B' AS CHAR), DEFAULT", $projected);
+        self::assertStringContainsString('VALUES ', $projected);
+        self::assertStringContainsString('(NULL, CAST(\'z\' AS CHAR))', $projected);
+        self::assertStringContainsString("CAST('AN' AS CHAR), CAST('z' AS CHAR)", $projected);
+        self::assertStringContainsString("CAST('E\t\"F' AS CHAR), DEFAULT", $projected);
+        self::assertStringContainsString("CAST('C\t' AS CHAR), DEFAULT", $projected);
+        self::assertStringContainsString("CONVERT(X'445c' USING utf8mb4) AS CHAR), DEFAULT", $projected);
+        self::assertSame(7, substr_count($projected, '), ('));
+    }
+
+    public function testSetVariableSubstitutionIsForwardOnlyAndPreservesSystemVariables(): void
+    {
+        $stream = tmpfile();
+        self::assertIsResource($stream);
+        $contents = "1\talice\tv1\n";
+        self::assertSame(strlen($contents), fwrite($stream, $contents));
+        $metadata = stream_get_meta_data($stream);
+        $path = $metadata['uri'] ?? null;
+        self::assertIsString($path);
+
+        $parser = new MySqlParser();
+        $registry = new TableDefinitionRegistry();
+        $definition = (new MySqlSchemaParser($parser))->parse(
+            'CREATE TABLE items (id INT, name VARCHAR(100))',
+        );
+        self::assertNotNull($definition);
+        $registry->register('items', $definition);
+        $sql = "LOAD DATA INFILE '" . str_replace("'", "''", $path)
+            . "' INTO TABLE items (id, @raw, @version)"
+            . ' SET name = CONCAT(@@version, @raw, @ + @raw, @missing, @raw)';
+        $statement = $parser->parseSingleLogicalStatement($sql);
+        self::assertInstanceOf(LoadStatement::class, $statement);
+
+        $projected = (new MySqlLoadDataProjector($registry))->project($sql, $statement);
+
+        self::assertStringContainsString(
+            "CONCAT(@@version, CAST('alice' AS CHAR), @+ CAST('alice' AS CHAR),"
+                . " @missing, CAST('alice' AS CHAR))",
+            $projected,
+        );
+    }
+
     #[TestWith(["FIELDS TERMINATED BY ''", 'fixed-row'], 'empty field delimiter')]
     #[TestWith(["LINES TERMINATED BY ''", 'fixed-row'], 'empty line delimiter')]
     #[TestWith(["FIELDS ENCLOSED BY 'xx'", 'single-byte'], 'multi-byte enclosure')]

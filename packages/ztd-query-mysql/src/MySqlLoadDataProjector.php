@@ -12,7 +12,6 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Sql\SqlTokenDialect;
-use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
 /**
@@ -32,7 +31,10 @@ final class MySqlLoadDataProjector
     public function project(string $sql, LoadStatement $statement): string
     {
         $tableName = $statement->table?->table;
-        if (!is_string($tableName) || $tableName === '') {
+        if (!is_string($tableName)) {
+            throw new UnsupportedSqlException($sql, 'Cannot resolve LOAD DATA target');
+        }
+        if ($tableName === '') {
             throw new UnsupportedSqlException($sql, 'Cannot resolve LOAD DATA target');
         }
         $definition = $this->registry->get($tableName);
@@ -46,9 +48,21 @@ final class MySqlLoadDataProjector
             throw new UnsupportedSqlException($sql, 'LOAD DATA CHARACTER SET conversion is not supported');
         }
 
-        $fileProperties = $statement->file_name !== null ? get_object_vars($statement->file_name) : [];
-        $path = $fileProperties['file'] ?? '';
-        if (!is_string($path) || $path === '' || !is_file($path) || !is_readable($path)) {
+        if ($statement->file_name === null) {
+            throw new UnsupportedSqlException($sql, 'LOAD DATA input file is not readable');
+        }
+        $fileProperties = get_object_vars($statement->file_name);
+        $path = $fileProperties['file'] ?? null;
+        if (!is_string($path)) {
+            throw new UnsupportedSqlException($sql, 'LOAD DATA input file is not readable');
+        }
+        if ($path === '') {
+            throw new UnsupportedSqlException($sql, 'LOAD DATA input file is not readable');
+        }
+        if (!is_file($path)) {
+            throw new UnsupportedSqlException($sql, 'LOAD DATA input file is not readable');
+        }
+        if (!is_readable($path)) {
             throw new UnsupportedSqlException($sql, 'LOAD DATA input file is not readable');
         }
         $contents = file_get_contents($path);
@@ -101,13 +115,21 @@ final class MySqlLoadDataProjector
             return $default;
         }
         foreach ($options->options as $option) {
-            if (!is_array($option) || ($option['name'] ?? null) !== $name) {
+            if (!is_array($option)) {
+                continue;
+            }
+            if (($option['name'] ?? null) !== $name) {
                 continue;
             }
             $expression = $option['expr'] ?? null;
-            if ($expression instanceof Expression && is_string($expression->column)) {
-                return $expression->column;
+            if (!$expression instanceof Expression) {
+                continue;
             }
+            if (!is_string($expression->column)) {
+                continue;
+            }
+
+            return $expression->column;
         }
 
         return $default;
@@ -146,11 +168,21 @@ final class MySqlLoadDataProjector
         if ($expression === null) {
             throw new UnsupportedSqlException($sql, 'Cannot resolve LOAD DATA column list');
         }
-        $list = trim($expression);
-        if (strlen($list) < 2 || $list[0] !== '(' || $list[strlen($list) - 1] !== ')') {
+        $stream = SqlTokenStream::tokenize($expression, SqlTokenDialect::MySql);
+        $tokens = $stream->significantTokens();
+        if (count($tokens) < 2) {
             throw new UnsupportedSqlException($sql, 'Invalid LOAD DATA column list');
         }
-        $parts = SqlTokenStream::tokenize(substr($list, 1, -1), SqlTokenDialect::MySql)->splitTopLevel();
+        $opening = $tokens[0];
+        if ($opening->text !== '(') {
+            throw new UnsupportedSqlException($sql, 'Invalid LOAD DATA column list');
+        }
+        $closing = $tokens[count($tokens) - 1];
+        if ($closing->text !== ')') {
+            throw new UnsupportedSqlException($sql, 'Invalid LOAD DATA column list');
+        }
+        $contents = substr($expression, $opening->endOffset(), $closing->offset - $opening->endOffset());
+        $parts = SqlTokenStream::tokenize($contents, SqlTokenDialect::MySql)->splitTopLevel();
         $targets = [];
         foreach ($parts as $part) {
             $target = $this->inputTarget($part, $sql);
@@ -174,18 +206,29 @@ final class MySqlLoadDataProjector
 
     private function inputTarget(string $sqlPart, string $sql): string
     {
-        $tokens = SqlTokenStream::tokenize($sqlPart, SqlTokenDialect::MySql)->significantTokens();
-        if (($tokens[0] ?? null)?->kind === SqlTokenKind::Symbol && $tokens[0]->text === '@') {
-            $identifier = SqlTokenStream::tokenize($sqlPart, SqlTokenDialect::MySql)->identifierAt(1);
-            if ($identifier === null || $identifier['next'] !== count($tokens)) {
+        $stream = SqlTokenStream::tokenize($sqlPart, SqlTokenDialect::MySql);
+        $tokens = $stream->significantTokens();
+        $first = $tokens[0] ?? null;
+        if ($first === null) {
+            throw new UnsupportedSqlException($sql, 'Invalid LOAD DATA target column');
+        }
+        if ($first->text === '@') {
+            $identifier = $stream->identifierAt(1);
+            if ($identifier === null) {
+                throw new UnsupportedSqlException($sql, 'Invalid LOAD DATA user variable');
+            }
+            if ($identifier['next'] !== count($tokens)) {
                 throw new UnsupportedSqlException($sql, 'Invalid LOAD DATA user variable');
             }
 
             return '@' . $identifier['name'];
         }
 
-        $identifier = SqlTokenStream::tokenize($sqlPart, SqlTokenDialect::MySql)->identifierAt();
-        if ($identifier === null || $identifier['next'] !== count($tokens)) {
+        $identifier = $stream->identifierAt();
+        if ($identifier === null) {
+            throw new UnsupportedSqlException($sql, 'Invalid LOAD DATA target column');
+        }
+        if ($identifier['next'] !== count($tokens)) {
             throw new UnsupportedSqlException($sql, 'Invalid LOAD DATA target column');
         }
 
@@ -222,8 +265,11 @@ final class MySqlLoadDataProjector
         if ($value === null) {
             return 0;
         }
-        $parsed = filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
+        $parsed = filter_var($value, FILTER_VALIDATE_INT);
         if (!is_int($parsed)) {
+            throw new UnsupportedSqlException($sql, 'Invalid LOAD DATA IGNORE row count');
+        }
+        if ($parsed < 0) {
             throw new UnsupportedSqlException($sql, 'Invalid LOAD DATA IGNORE row count');
         }
 
@@ -242,29 +288,33 @@ final class MySqlLoadDataProjector
     ): array {
         $records = [];
         $record = '';
-        $length = strlen($contents);
         $enclosed = false;
         $atFieldStart = true;
 
-        for ($index = 0; $index < $length;) {
-            if ($escape !== '' && $contents[$index] === $escape && $index + 1 < $length) {
-                $record .= $contents[$index] . $contents[$index + 1];
-                $index += 2;
-                $atFieldStart = false;
-                continue;
+        for ($index = 0; isset($contents[$index]);) {
+            $byte = $contents[$index];
+            $followingByte = $this->followingByte($contents, $index);
+            if ($escape !== '' && $byte === $escape) {
+                if ($followingByte !== null) {
+                    $record .= $byte . $followingByte;
+                    $index += 2;
+                    $atFieldStart = false;
+                    continue;
+                }
             }
-            if ($enclosure !== '' && $contents[$index] === $enclosure) {
-                if ($enclosed && ($contents[$index + 1] ?? '') === $enclosure) {
+            if ($enclosure !== '' && $byte === $enclosure) {
+                if ($enclosed && $followingByte === $enclosure) {
                     $record .= $enclosure . $enclosure;
                     $index += 2;
                     continue;
                 }
-                if ($enclosed || $atFieldStart) {
-                    $enclosed = !$enclosed;
+                if ($enclosed) {
+                    $enclosed = false;
+                } elseif ($atFieldStart) {
+                    $enclosed = true;
                 }
                 $record .= $enclosure;
                 $index++;
-                $atFieldStart = false;
                 continue;
             }
             if (!$enclosed && $this->startsWithAt($contents, $lineTerminator, $index)) {
@@ -280,11 +330,11 @@ final class MySqlLoadDataProjector
                 $atFieldStart = true;
                 continue;
             }
-            $record .= $contents[$index];
+            $record .= $byte;
             $index++;
             $atFieldStart = false;
         }
-        if ($record !== '' || ($length > 0 && !str_ends_with($contents, $lineTerminator))) {
+        if ($record !== '') {
             $records[] = $record;
         }
 
@@ -301,20 +351,20 @@ final class MySqlLoadDataProjector
         $decoded = '';
         $quoted = false;
         $enclosed = false;
-        $atFieldStart = true;
-        $length = strlen($record);
 
-        for ($index = 0; $index < $length;) {
-            if ($escape !== '' && $record[$index] === $escape && $index + 1 < $length) {
-                $raw .= $record[$index] . $record[$index + 1];
-                $decoded .= $this->decodeEscapeByte($record[$index + 1]);
-                $index += 2;
-                $atFieldStart = false;
-                continue;
+        for ($index = 0; isset($record[$index]);) {
+            $byte = $record[$index];
+            $followingByte = $this->followingByte($record, $index);
+            if ($escape !== '' && $byte === $escape) {
+                if ($followingByte !== null) {
+                    $raw .= $byte . $followingByte;
+                    $decoded .= $this->decodeEscapeByte($followingByte);
+                    $index += 2;
+                    continue;
+                }
             }
-            if ($enclosure !== '' && $record[$index] === $enclosure) {
-                if ($enclosed && ($record[$index + 1] ?? '') === $enclosure) {
-                    $raw .= $enclosure . $enclosure;
+            if ($enclosure !== '' && $byte === $enclosure) {
+                if ($enclosed && $followingByte === $enclosure) {
                     $decoded .= $enclosure;
                     $index += 2;
                     continue;
@@ -324,12 +374,15 @@ final class MySqlLoadDataProjector
                     $index++;
                     continue;
                 }
-                if ($atFieldStart) {
-                    $quoted = true;
-                    $enclosed = true;
-                    $index++;
-                    $atFieldStart = false;
-                    continue;
+                if (!$quoted) {
+                    if ($raw === '') {
+                        if ($decoded === '') {
+                            $quoted = true;
+                            $enclosed = true;
+                            $index++;
+                            continue;
+                        }
+                    }
                 }
             }
             if (!$enclosed && $this->startsWithAt($record, $terminator, $index)) {
@@ -337,14 +390,12 @@ final class MySqlLoadDataProjector
                 $raw = '';
                 $decoded = '';
                 $quoted = false;
-                $atFieldStart = true;
                 $index += strlen($terminator);
                 continue;
             }
-            $raw .= $record[$index];
-            $decoded .= $record[$index];
+            $raw .= $byte;
+            $decoded .= $byte;
             $index++;
-            $atFieldStart = false;
         }
         $fields[] = $this->fieldValue($raw, $decoded, $quoted, $enclosure, $escape);
 
@@ -358,10 +409,19 @@ final class MySqlLoadDataProjector
         string $enclosure,
         string $escape,
     ): ?string {
-        if (!$quoted && $escape !== '' && $raw === $escape . 'N') {
+        if ($quoted) {
+            return $decoded;
+        }
+        if ($escape !== '' && $raw === $escape . 'N') {
             return null;
         }
-        if (!$quoted && ($enclosure !== '' || $escape === '') && $raw === 'NULL') {
+        if ($raw !== 'NULL') {
+            return $decoded;
+        }
+        if ($enclosure !== '') {
+            return null;
+        }
+        if ($escape === '') {
             return null;
         }
 
@@ -404,38 +464,35 @@ final class MySqlLoadDataProjector
      */
     private function substituteVariables(string $expression, array $variables): string
     {
-        $tokens = SqlTokenStream::tokenize($expression, SqlTokenDialect::MySql)->significantTokens();
-        $replacements = [];
-        foreach ($tokens as $index => $token) {
-            if ($token->kind !== SqlTokenKind::Symbol || $token->text !== '@') {
+        $stream = SqlTokenStream::tokenize($expression, SqlTokenDialect::MySql);
+        $tokens = $stream->significantTokens();
+        $result = '';
+        $cursor = 0;
+        $tokenCount = count($tokens);
+        for ($index = 0; $index < $tokenCount; $index++) {
+            $token = $tokens[$index];
+            if ($token->text !== '@') {
                 continue;
             }
-            $next = $tokens[$index + 1] ?? null;
-            if ($next === null || !in_array($next->kind, [SqlTokenKind::Word, SqlTokenKind::QuotedIdentifier], true)) {
+            $previous = $tokens[$index - 1] ?? null;
+            if ($previous !== null && $previous->text === '@') {
                 continue;
             }
-            $identifier = SqlTokenStream::tokenize($next->text, SqlTokenDialect::MySql)->identifierAt();
-            $name = strtolower($identifier['name'] ?? $next->text);
+            $identifier = $stream->identifierAt($index + 1);
+            if ($identifier === null) {
+                continue;
+            }
+            $name = strtolower($identifier['name']);
             if (!array_key_exists($name, $variables)) {
                 continue;
             }
-            $replacements[] = [
-                'start' => $token->offset,
-                'end' => $next->endOffset(),
-                'sql' => $this->renderField($variables[$name]),
-            ];
-        }
-        usort($replacements, static fn (array $left, array $right): int => $right['start'] <=> $left['start']);
-        foreach ($replacements as $replacement) {
-            $expression = substr_replace(
-                $expression,
-                $replacement['sql'],
-                $replacement['start'],
-                $replacement['end'] - $replacement['start'],
-            );
+            $last = $tokens[$identifier['next'] - 1];
+            $result .= substr($expression, $cursor, $token->offset - $cursor);
+            $result .= $this->renderField($variables[$name]);
+            $cursor = $last->endOffset();
         }
 
-        return $expression;
+        return $result . substr($expression, $cursor);
     }
 
     /**
@@ -451,24 +508,27 @@ final class MySqlLoadDataProjector
         array $setOperations,
         array $rows,
     ): string {
+        /** @var array<string, null> $columns */
         $columns = [];
         foreach ($targets as $target) {
             if ($target[0] !== '@') {
-                $columns[$target] = true;
+                $columns[$target] = null;
             }
         }
         foreach (array_keys($setOperations) as $column) {
-            $columns[$column] = true;
+            $columns[$column] = null;
         }
-        $orderedColumns = array_values(array_filter(
-            $definition->columns,
-            static fn (string $column): bool => isset($columns[$column]),
-        ));
+        $orderedColumns = [];
+        foreach ($definition->columns as $column) {
+            if (array_key_exists($column, $columns)) {
+                $orderedColumns[] = $column;
+            }
+        }
         if ($orderedColumns === []) {
             throw new UnsupportedSqlException($statement->build(), 'LOAD DATA has no target columns');
         }
 
-        $mode = strtoupper((string) $statement->replace_ignore);
+        $mode = $statement->replace_ignore;
         if ($mode === 'REPLACE') {
             $prefix = 'REPLACE INTO ';
         } else {
@@ -501,6 +561,11 @@ final class MySqlLoadDataProjector
     private function startsWithAt(string $value, string $needle, int $offset): bool
     {
         return substr_compare($value, $needle, $offset, strlen($needle)) === 0;
+    }
+
+    private function followingByte(string $value, int $offset): ?string
+    {
+        return $value[$offset + 1] ?? null;
     }
 
 }

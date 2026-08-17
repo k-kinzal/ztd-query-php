@@ -263,9 +263,9 @@ final class MySqlProviderTest extends TestCase
 
         $result = $provider->loadDataStatement(maxDepth: 8);
 
-        self::assertStringStartsWith('LOAD', strtoupper($result));
-        self::assertStringContainsString('INFILE', strtoupper($result));
-        self::assertStringContainsString('INTO', strtoupper($result));
+        self::assertMatchesRegularExpression('/\bLOAD\b.*\bDATA\b/is', $result);
+        self::assertMatchesRegularExpression('/\bINFILE\b/i', $result);
+        self::assertMatchesRegularExpression('/\bINTO\b/i', $result);
     }
 
     public function testSelectStatement(): void
