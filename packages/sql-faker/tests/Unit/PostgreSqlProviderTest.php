@@ -118,31 +118,66 @@ final class PostgreSqlProviderTest extends TestCase
         self::assertGreaterThan($where, $update);
     }
 
-    #[DataProvider('providerFullTextSearchSeed')]
-    public function testFullTextSearchStatement(int $seed, string $expected): void
+    #[DataProvider('providerFullTextSearchVariant')]
+    public function testFullTextSearchStatement(Generator $generator, string $expected): void
     {
-        $faker = Factory::create();
-        $provider = new PostgreSqlProvider($faker);
-        $faker->seed($seed);
-
-        self::assertSame($expected, $provider->fullTextSearchStatement());
+        self::assertSame($expected, (new PostgreSqlProvider($generator))->fullTextSearchStatement());
     }
 
-    /** @return iterable<string, array{int, string}> */
-    public static function providerFullTextSearchSeed(): iterable
+    /** @return iterable<string, array{Generator, string}> */
+    public static function providerFullTextSearchVariant(): iterable
     {
         yield 'plain query' => [
-            2,
+            new class () extends Generator {
+                /**
+                 * @param mixed $int1
+                 * @param mixed $int2
+                 */
+                #[\Override]
+                public function numberBetween($int1 = 0, $int2 = 2147483647): int
+                {
+                    if ($int1 !== 0 || $int2 !== 2) {
+                        throw new \UnexpectedValueException();
+                    }
+                    return 0;
+                }
+            },
             "SELECT id FROM users WHERE to_tsvector('english', name) "
                 . "@@ plainto_tsquery('english', 'search terms')",
         ];
         yield 'structured query' => [
-            1,
+            new class () extends Generator {
+                /**
+                 * @param mixed $int1
+                 * @param mixed $int2
+                 */
+                #[\Override]
+                public function numberBetween($int1 = 0, $int2 = 2147483647): int
+                {
+                    if ($int1 !== 0 || $int2 !== 2) {
+                        throw new \UnexpectedValueException();
+                    }
+                    return 1;
+                }
+            },
             "SELECT id FROM users WHERE to_tsvector('english', coalesce(name, '') || ' ' || coalesce(email, '')) "
                 . "@@ to_tsquery('english', 'search & terms')",
         ];
         yield 'prepared query' => [
-            0,
+            new class () extends Generator {
+                /**
+                 * @param mixed $int1
+                 * @param mixed $int2
+                 */
+                #[\Override]
+                public function numberBetween($int1 = 0, $int2 = 2147483647): int
+                {
+                    if ($int1 !== 0 || $int2 !== 2) {
+                        throw new \UnexpectedValueException();
+                    }
+                    return 2;
+                }
+            },
             "SELECT id FROM users WHERE to_tsvector('english', name) @@ plainto_tsquery('english', $1)",
         ];
     }

@@ -18,6 +18,57 @@ use ZtdQuery\Sql\SqlTokenStream;
 #[UsesClass(SqlTokenKind::class)]
 final class SqlTokenStreamTest extends TestCase
 {
+    public function testNavigatesAdjacentSignificantTokensByIdentity(): void
+    {
+        $stream = SqlTokenStream::tokenize('MATCH /* ignored */ (title)');
+        $tokens = $stream->significantTokens();
+
+        self::assertNull($stream->significantTokenBefore($tokens[0]));
+        self::assertSame('MATCH', $stream->significantTokenBefore($tokens[1])?->text);
+        self::assertSame('(', $stream->significantTokenAfter($tokens[0])?->text);
+        self::assertNull($stream->significantTokenAfter($tokens[3]));
+    }
+
+    public function testRejectsAdjacentLookupForATokenFromAnotherStream(): void
+    {
+        $foreign = SqlTokenStream::tokenize('MATCH')->significantTokens()[0];
+        $stream = SqlTokenStream::tokenize('MATCH(title)');
+
+        self::assertNull($stream->significantTokenBefore($foreign));
+        self::assertNull($stream->significantTokenAfter($foreign));
+    }
+
+    public function testFindsMatchingParenthesisAcrossNestedGroups(): void
+    {
+        $stream = SqlTokenStream::tokenize('MATCH((title), body) AGAINST (?)');
+        $tokens = $stream->significantTokens();
+        $columnsClosing = $stream->matchingClosingParenthesis($tokens[1]);
+        $queryClosing = $stream->matchingClosingParenthesis($tokens[9]);
+
+        self::assertNotNull($columnsClosing);
+        self::assertNotNull($queryClosing);
+        self::assertSame(')', $columnsClosing->text);
+        self::assertSame(19, $columnsClosing->offset);
+        self::assertSame(31, $queryClosing->offset);
+    }
+
+    public function testRejectsInvalidForeignAndUnclosedOpeningParentheses(): void
+    {
+        $stream = SqlTokenStream::tokenize('MATCH(title');
+        $tokens = $stream->significantTokens();
+        $foreign = SqlTokenStream::tokenize('(?)')->significantTokens()[0];
+        $closed = SqlTokenStream::tokenize('MATCH(title)');
+        $closedTokens = $closed->significantTokens();
+        $closingSymbols = SqlTokenStream::tokenize(') )');
+        $closingTokens = $closingSymbols->significantTokens();
+
+        self::assertNull($stream->matchingClosingParenthesis($tokens[0]));
+        self::assertNull($stream->matchingClosingParenthesis($tokens[1]));
+        self::assertNull($stream->matchingClosingParenthesis($foreign));
+        self::assertNull($closed->matchingClosingParenthesis($closedTokens[0]));
+        self::assertNull($closingSymbols->matchingClosingParenthesis($closingTokens[0]));
+    }
+
     public function testReadsWordAndQuotedIdentifiersAtSignificantTokenOffsets(): void
     {
         $stream = SqlTokenStream::tokenize('plain "quo""ted" `tick``ed` [bracket name]');

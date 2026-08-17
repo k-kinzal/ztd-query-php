@@ -44,6 +44,63 @@ final class SqlTokenStream
         ));
     }
 
+    public function significantTokenBefore(SqlToken $anchor): ?SqlToken
+    {
+        $previous = null;
+        foreach ($this->significantTokens() as $token) {
+            if ($token === $anchor) {
+                return $previous;
+            }
+            $previous = $token;
+        }
+
+        return null;
+    }
+
+    public function significantTokenAfter(SqlToken $anchor): ?SqlToken
+    {
+        $previous = null;
+        foreach ($this->significantTokens() as $token) {
+            if ($previous === $anchor) {
+                return $token;
+            }
+            $previous = $token;
+        }
+
+        return null;
+    }
+
+    public function matchingClosingParenthesis(SqlToken $opening): ?SqlToken
+    {
+        if ($opening->kind !== SqlTokenKind::Symbol || $opening->text !== '(') {
+            return null;
+        }
+
+        $afterOpening = false;
+        foreach ($this->significantTokens() as $token) {
+            if (!$afterOpening) {
+                $afterOpening = $token === $opening;
+                continue;
+            }
+            if ($token->kind !== SqlTokenKind::Symbol) {
+                continue;
+            }
+            if ($token->text !== ')') {
+                continue;
+            }
+            if ($token->depth !== $opening->depth) {
+                continue;
+            }
+            if ($token->bracketDepth !== $opening->bracketDepth) {
+                continue;
+            }
+
+            return $token;
+        }
+
+        return null;
+    }
+
     /** @return array{name: string, next: int}|null */
     public function identifierAt(int $index = 0): ?array
     {

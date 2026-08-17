@@ -6,7 +6,6 @@ namespace ZtdQuery\Platform\MySql;
 
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenDialect;
-use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
 /**
@@ -16,15 +15,15 @@ final class MySqlFullTextSearchRewriter
 {
     public function rewrite(string $sql): string
     {
-        $tokens = SqlTokenStream::tokenize($sql, SqlTokenDialect::MySql)->significantTokens();
+        $stream = SqlTokenStream::tokenize($sql, SqlTokenDialect::MySql);
         /** @var list<array{start: int, end: int, replacement: string}> $edits */
         $edits = [];
 
-        foreach ($tokens as $index => $token) {
+        foreach ($stream->significantTokens() as $token) {
             if (!$token->isKeyword('MATCH')) {
                 continue;
             }
-            $edit = $this->expressionEdit($sql, $tokens, $index);
+            $edit = $this->expressionEdit($sql, $stream, $token);
             if ($edit !== null) {
                 $edits[] = $edit;
             }
@@ -39,44 +38,38 @@ final class MySqlFullTextSearchRewriter
     }
 
     /**
-     * @param list<SqlToken> $tokens
      * @return array{start: int, end: int, replacement: string}|null
      */
-    private function expressionEdit(string $sql, array $tokens, int $matchIndex): ?array
+    private function expressionEdit(string $sql, SqlTokenStream $stream, SqlToken $match): ?array
     {
-        $match = $tokens[$matchIndex];
-        $columnsOpen = $tokens[$matchIndex + 1] ?? null;
-        if ($columnsOpen === null || !self::isOpeningParenthesis($columnsOpen)) {
+        $columnsOpen = $stream->significantTokenAfter($match);
+        if ($columnsOpen === null) {
             return null;
         }
-        $columnsCloseIndex = self::closingParenthesisIndex($tokens, $matchIndex + 1);
-        if ($columnsCloseIndex === null) {
+        $columnsClose = $stream->matchingClosingParenthesis($columnsOpen);
+        if ($columnsClose === null) {
             return null;
         }
-        $columnsClose = $tokens[$columnsCloseIndex];
-        $against = $tokens[$columnsCloseIndex + 1] ?? null;
-        $queryOpen = $tokens[$columnsCloseIndex + 2] ?? null;
-        if ($against === null
-            || !$against->isKeyword('AGAINST')
-            || $queryOpen === null
-            || !self::isOpeningParenthesis($queryOpen)
-        ) {
+        $against = $stream->significantTokenAfter($columnsClose);
+        if ($against === null || !$against->isKeyword('AGAINST')) {
             return null;
         }
-        $queryOpenIndex = $columnsCloseIndex + 2;
-        $queryCloseIndex = self::closingParenthesisIndex($tokens, $queryOpenIndex);
-        if ($queryCloseIndex === null) {
+        $queryOpen = $stream->significantTokenAfter($against);
+        if ($queryOpen === null) {
             return null;
         }
-        $queryClose = $tokens[$queryCloseIndex];
+        $queryClose = $stream->matchingClosingParenthesis($queryOpen);
+        if ($queryClose === null) {
+            return null;
+        }
         $columnsSql = substr($sql, $columnsOpen->endOffset(), $columnsClose->offset - $columnsOpen->endOffset());
         $columns = SqlTokenStream::tokenize($columnsSql, SqlTokenDialect::MySql)->splitTopLevel();
         if ($columns === []) {
             return null;
         }
 
-        $queryEnd = $this->queryExpressionEnd($tokens, $queryOpenIndex, $queryCloseIndex);
-        $querySql = trim(substr($sql, $queryOpen->endOffset(), $queryEnd - $queryOpen->endOffset()));
+        $queryBody = substr($sql, $queryOpen->endOffset(), $queryClose->offset - $queryOpen->endOffset());
+        $querySql = $this->queryExpression($queryBody);
         if ($querySql === '') {
             return null;
         }
@@ -96,25 +89,23 @@ final class MySqlFullTextSearchRewriter
         ];
     }
 
-    /** @param list<SqlToken> $tokens */
-    private function queryExpressionEnd(array $tokens, int $openIndex, int $closeIndex): int
+    private function queryExpression(string $queryBody): string
     {
-        $queryOpen = $tokens[$openIndex];
-        for ($index = $openIndex + 1; $index < $closeIndex; $index++) {
-            $token = $tokens[$index];
-            if ($token->depth !== $queryOpen->depth + 1 || $token->bracketDepth !== $queryOpen->bracketDepth) {
+        $previous = null;
+        foreach (SqlTokenStream::tokenize($queryBody, SqlTokenDialect::MySql)->significantTokens() as $token) {
+            if (!$token->isTopLevel()) {
                 continue;
             }
-            $next = $tokens[$index + 1] ?? null;
-            if ($token->isKeyword('IN') && $next !== null && self::isSearchMode($next)) {
-                return $token->offset;
+            if ($previous !== null && $previous->isKeyword('IN') && self::isSearchMode($token)) {
+                return trim(substr($queryBody, 0, $previous->offset));
             }
-            if ($token->isKeyword('WITH') && $next !== null && $next->isKeyword('QUERY')) {
-                return $token->offset;
+            if ($previous !== null && $previous->isKeyword('WITH') && $token->isKeyword('QUERY')) {
+                return trim(substr($queryBody, 0, $previous->offset));
             }
+            $previous = $token;
         }
 
-        return $tokens[$closeIndex]->offset;
+        return trim($queryBody);
     }
 
     private static function isSearchMode(SqlToken $token): bool
@@ -122,28 +113,4 @@ final class MySqlFullTextSearchRewriter
         return $token->isKeyword('NATURAL') || $token->isKeyword('BOOLEAN');
     }
 
-    private static function isOpeningParenthesis(SqlToken $token): bool
-    {
-        return $token->kind === SqlTokenKind::Symbol && $token->text === '(';
-    }
-
-    /** @param list<SqlToken> $tokens */
-    private static function closingParenthesisIndex(array $tokens, int $openIndex): ?int
-    {
-        $open = $tokens[$openIndex];
-        for ($index = $openIndex + 1, $count = count($tokens); $index < $count; $index++) {
-            $token = $tokens[$index];
-            if ($token->kind !== SqlTokenKind::Symbol
-                || $token->text !== ')'
-                || $token->depth !== $open->depth
-                || $token->bracketDepth !== $open->bracketDepth
-            ) {
-                continue;
-            }
-
-            return $index;
-        }
-
-        return null;
-    }
 }

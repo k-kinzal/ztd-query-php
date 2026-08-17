@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker;
 
 use Faker\Factory;
+use Faker\Generator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\MySql\Grammar\Grammar;
@@ -95,29 +96,64 @@ final class MySqlProviderTest extends TestCase
         self::assertContains('DUPLICATE_SYM', $tokens);
     }
 
-    #[DataProvider('providerFullTextSearchSeed')]
-    public function testFullTextSearchStatement(int $seed, string $expected): void
+    #[DataProvider('providerFullTextSearchVariant')]
+    public function testFullTextSearchStatement(Generator $generator, string $expected): void
     {
-        $faker = Factory::create();
-        $provider = new MySqlProvider($faker);
-        $faker->seed($seed);
-
-        self::assertSame($expected, $provider->fullTextSearchStatement());
+        self::assertSame($expected, (new MySqlProvider($generator))->fullTextSearchStatement());
     }
 
-    /** @return iterable<string, array{int, string}> */
-    public static function providerFullTextSearchSeed(): iterable
+    /** @return iterable<string, array{Generator, string}> */
+    public static function providerFullTextSearchVariant(): iterable
     {
         yield 'natural language' => [
-            2,
+            new class () extends Generator {
+                /**
+                 * @param mixed $int1
+                 * @param mixed $int2
+                 */
+                #[\Override]
+                public function numberBetween($int1 = 0, $int2 = 2147483647): int
+                {
+                    if ($int1 !== 0 || $int2 !== 2) {
+                        throw new \UnexpectedValueException();
+                    }
+                    return 0;
+                }
+            },
             "SELECT id FROM users WHERE MATCH(name, email) AGAINST ('search terms')",
         ];
         yield 'boolean parameter' => [
-            1,
+            new class () extends Generator {
+                /**
+                 * @param mixed $int1
+                 * @param mixed $int2
+                 */
+                #[\Override]
+                public function numberBetween($int1 = 0, $int2 = 2147483647): int
+                {
+                    if ($int1 !== 0 || $int2 !== 2) {
+                        throw new \UnexpectedValueException();
+                    }
+                    return 1;
+                }
+            },
             'SELECT id FROM users WHERE MATCH(name, email) AGAINST (? IN BOOLEAN MODE)',
         ];
         yield 'relevance ordering' => [
-            0,
+            new class () extends Generator {
+                /**
+                 * @param mixed $int1
+                 * @param mixed $int2
+                 */
+                #[\Override]
+                public function numberBetween($int1 = 0, $int2 = 2147483647): int
+                {
+                    if ($int1 !== 0 || $int2 !== 2) {
+                        throw new \UnexpectedValueException();
+                    }
+                    return 2;
+                }
+            },
             "SELECT id, MATCH(name, email) AGAINST ('search') AS relevance "
                 . "FROM users ORDER BY MATCH(name, email) AGAINST ('search') DESC",
         ];

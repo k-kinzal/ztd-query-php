@@ -122,6 +122,16 @@ final class SqliteSchemaParserTest extends SchemaParserContractTest
         self::assertSame(['title', 'body'], $result->columns);
     }
 
+    public function testParseFts5WithWhitespaceBeforeTheTerminator(): void
+    {
+        $result = (new SqliteSchemaParser())->parse(
+            'CREATE VIRTUAL TABLE articles USING fts5(title) ;',
+        );
+
+        self::assertNotNull($result);
+        self::assertSame(['title'], $result->columns);
+    }
+
     #[DataProvider('providerInvalidFts5Declaration')]
     public function testRejectsInvalidFts5Declaration(string $sql): void
     {
@@ -131,6 +141,9 @@ final class SqliteSchemaParserTest extends SchemaParserContractTest
     /** @return iterable<string, array{string}> */
     public static function providerInvalidFts5Declaration(): iterable
     {
+        yield 'wrong create keyword' => ['WRONG VIRTUAL TABLE articles USING fts5(title)'];
+        yield 'create only' => ['CREATE'];
+        yield 'missing table keyword' => ['CREATE VIRTUAL'];
         yield 'missing virtual' => ['CREATE TABLE articles USING fts5(title)'];
         yield 'wrong virtual keyword' => ['CREATE WRONG TABLE articles USING fts5(title)'];
         yield 'missing table' => ['CREATE VIRTUAL INDEX articles USING fts5(title)'];

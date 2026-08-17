@@ -175,48 +175,41 @@ final class SqliteSchemaParser implements SchemaParser
 
     private function parseFts5VirtualTable(string $sql): ?TableDefinition
     {
-        $tokens = SqlTokenStream::tokenize($sql)->significantTokens();
-        if (count($tokens) < 4
-            || !$tokens[0]->isKeyword('CREATE')
-            || !$tokens[1]->isKeyword('VIRTUAL')
-            || !$tokens[2]->isKeyword('TABLE')
-        ) {
+        $stream = SqlTokenStream::tokenize($sql);
+        $tokens = $stream->significantTokens();
+        if (($tokens[0] ?? null)?->isKeyword('CREATE') !== true) {
+            return null;
+        }
+        if (($tokens[1] ?? null)?->isKeyword('VIRTUAL') !== true) {
+            return null;
+        }
+        if (($tokens[2] ?? null)?->isKeyword('TABLE') !== true) {
             return null;
         }
 
-        $usingIndex = null;
-        foreach ($tokens as $index => $token) {
-            if ($token->isTopLevel() && $token->isKeyword('USING')) {
-                $usingIndex = $index;
-                break;
+        $using = null;
+        foreach ($tokens as $token) {
+            if (!$token->isTopLevel() || !$token->isKeyword('USING')) {
+                continue;
             }
-        }
-        if ($usingIndex === null) {
-            return null;
-        }
-
-        $module = $tokens[$usingIndex + 1] ?? null;
-        $opening = $tokens[$usingIndex + 2] ?? null;
-        if ($module === null
-            || !$module->isKeyword('FTS5')
-            || $opening === null
-            || $opening->kind !== SqlTokenKind::Symbol
-            || $opening->text !== '('
-        ) {
-            return null;
-        }
-
-        $closing = null;
-        for ($index = $usingIndex + 3, $count = count($tokens); $index < $count; $index++) {
-            $token = $tokens[$index];
-            if ($token->isTopLevel()
-                && $token->kind === SqlTokenKind::Symbol
-                && $token->text === ')'
-            ) {
-                $closing = $token;
-                break;
+            if ($using !== null) {
+                return null;
             }
+            $using = $token;
         }
+        if ($using === null) {
+            return null;
+        }
+
+        $module = $stream->significantTokenAfter($using);
+        if ($module === null || !$module->isKeyword('FTS5')) {
+            return null;
+        }
+        $opening = $stream->significantTokenAfter($module);
+        if ($opening === null) {
+            return null;
+        }
+        $closing = $stream->matchingClosingParenthesis($opening);
         if ($closing === null) {
             return null;
         }

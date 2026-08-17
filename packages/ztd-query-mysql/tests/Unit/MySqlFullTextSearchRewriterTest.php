@@ -96,4 +96,33 @@ final class MySqlFullTextSearchRewriterTest extends TestCase
             (new MySqlFullTextSearchRewriter())->rewrite($sql),
         );
     }
+
+    public function testFindsAModeModifierAfterANestedQueryExpression(): void
+    {
+        $result = (new MySqlFullTextSearchRewriter())->rewrite(
+            "SELECT MATCH(title) AGAINST (COALESCE(?, 'fallback') IN BOOLEAN MODE)",
+        );
+
+        self::assertStringContainsString("CAST((COALESCE(?, 'fallback')) AS CHAR)", $result);
+        self::assertStringNotContainsString('BOOLEAN MODE', $result);
+    }
+
+    public function testKeepsQueryKeywordWhenItIsTheSearchExpression(): void
+    {
+        $result = (new MySqlFullTextSearchRewriter())->rewrite(
+            'SELECT MATCH(title) AGAINST (QUERY)',
+        );
+
+        self::assertStringContainsString('CAST((QUERY) AS CHAR)', $result);
+    }
+
+    public function testTrimsWhitespaceInsideTheQueryParentheses(): void
+    {
+        $result = (new MySqlFullTextSearchRewriter())->rewrite(
+            "SELECT MATCH(title) AGAINST (  'needle'  )",
+        );
+
+        self::assertStringContainsString("CAST(('needle') AS CHAR)", $result);
+        self::assertStringNotContainsString("CAST((  'needle'  ) AS CHAR)", $result);
+    }
 }

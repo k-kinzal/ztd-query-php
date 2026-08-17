@@ -10,9 +10,11 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Sqlite\SqliteFullTextSearchRewriter;
 use ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter;
+use ZtdQuery\Platform\Sqlite\SqliteParser;
 
 #[CoversClass(SqliteFullTextSearchRewriter::class)]
 #[UsesClass(SqliteIdentifierQuoter::class)]
+#[UsesClass(SqliteParser::class)]
 final class SqliteFullTextSearchRewriterTest extends TestCase
 {
     public function testRewritesTableMatchAcrossEveryFtsColumn(): void
@@ -117,6 +119,69 @@ final class SqliteFullTextSearchRewriterTest extends TestCase
             "SELECT title FROM target WHERE (INSTR(LOWER(COALESCE(CAST(\"title\" AS TEXT), '')), "
             . "LOWER(NULLIF(TRIM(CAST(('needle') AS TEXT)), ''))) > 0)",
             $result,
+        );
+    }
+
+    public function testLeavesANonFtsSymbolAfterATableNameUntouched(): void
+    {
+        $sql = "SELECT * FROM fts_articles WHERE fts_articles + 'suffix'";
+
+        self::assertSame(
+            $sql,
+            (new SqliteFullTextSearchRewriter())->rewrite(
+                $sql,
+                ['fts_articles' => ['columns' => ['title'], 'rows' => []]],
+            ),
+        );
+    }
+
+    public function testLeavesColumnEqualityUntouchedWithASingleTable(): void
+    {
+        $sql = 'SELECT * FROM fts_articles WHERE title = ?';
+
+        self::assertSame(
+            $sql,
+            (new SqliteFullTextSearchRewriter())->rewrite(
+                $sql,
+                ['fts_articles' => ['columns' => ['title'], 'rows' => []]],
+            ),
+        );
+    }
+
+    public function testSkipsAnOperatorWithoutALeftOperandBeforeAValidExpression(): void
+    {
+        $result = (new SqliteFullTextSearchRewriter())->rewrite(
+            "MATCH ? OR title MATCH 'needle'",
+            ['fts_articles' => ['columns' => ['title'], 'rows' => []]],
+        );
+
+        self::assertStringStartsWith('MATCH ? OR (INSTR(', $result);
+    }
+
+    public function testFindsATableMatchAfterAnEarlierContext(): void
+    {
+        $result = (new SqliteFullTextSearchRewriter())->rewrite(
+            "SELECT * FROM target WHERE target MATCH 'needle'",
+            [
+                'other' => ['columns' => ['other_title'], 'rows' => []],
+                'target' => ['columns' => ['title'], 'rows' => []],
+            ],
+        );
+
+        self::assertStringContainsString('COALESCE(CAST("title" AS TEXT)', $result);
+        self::assertStringNotContainsString("target MATCH 'needle'", $result);
+    }
+
+    public function testRejectsANonIdentifierEvenWhenItsTextMatchesATableName(): void
+    {
+        $sql = "SELECT * FROM fts_articles WHERE :target MATCH 'needle'";
+
+        self::assertSame(
+            $sql,
+            (new SqliteFullTextSearchRewriter())->rewrite(
+                $sql,
+                [':target' => ['columns' => ['title'], 'rows' => []]],
+            ),
         );
     }
 }
