@@ -38,6 +38,7 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
     private PgSqlParser $parser;
     private PgSqlReturningProjectionParser $returningProjectionParser;
     private PgSqlCteShadowComposer $cteComposer;
+    private PgSqlPartitionPredicateRenderer $partitionPredicateRenderer;
     private ViewDefinitionSet $views;
 
     public function __construct(
@@ -57,6 +58,7 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
         $this->parser = $parser;
         $this->returningProjectionParser = new PgSqlReturningProjectionParser();
         $this->cteComposer = new PgSqlCteShadowComposer();
+        $this->partitionPredicateRenderer = new PgSqlPartitionPredicateRenderer();
         $this->views = $views ?? new ViewDefinitionSet();
     }
 
@@ -269,7 +271,7 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
                     $siblingPredicates[] = $sibling->predicate;
                 }
             }
-            $predicate = $relation->selectionPredicate($siblingPredicates);
+            $predicate = $this->partitionPredicateRenderer->render($relation, $siblingPredicates);
             $storageTable = $this->storageTable($tableName);
             $partitionContext = $context[$tableName] ?? null;
             if ($partitionContext === null) {

@@ -88,6 +88,15 @@ final class GenerationPlans
     }
 
     /** @return GenerationPlan<true> */
+    public static function partitionOfStatement(): GenerationPlan
+    {
+        return GenerationPlan::constrained('CreateStmt', [
+            'CreateStmt' => [ProductionPattern::containing('PARTITION', 'OF', 'PartitionBoundSpec')],
+            'PartitionBoundSpec' => [ProductionPattern::containing('FROM', 'TO')],
+        ])->requiringNonEmpty();
+    }
+
+    /** @return GenerationPlan<true> */
     public static function foreignKeyConstraint(): GenerationPlan
     {
         return GenerationPlan::constrained('TableConstraint', [

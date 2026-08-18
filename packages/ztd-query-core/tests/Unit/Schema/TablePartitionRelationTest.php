@@ -16,18 +16,15 @@ final class TablePartitionRelationTest extends TestCase
         $relation = new TablePartitionRelation('events', 'created_at >= DATE \'2024-01-01\'');
 
         self::assertSame('events', $relation->parentTable);
-        self::assertSame('created_at >= DATE \'2024-01-01\'', $relation->selectionPredicate(['FALSE']));
+        self::assertSame('created_at >= DATE \'2024-01-01\'', $relation->predicate);
     }
 
     public function testDefaultPartitionExcludesSpecificSiblingsAndIncludesNull(): void
     {
         $relation = new TablePartitionRelation('events', null);
 
-        self::assertSame(
-            'COALESCE(NOT ((year = 2024) OR (year = 2025)), TRUE)',
-            $relation->selectionPredicate(['year = 2024', 'year = 2025']),
-        );
-        self::assertSame('TRUE', $relation->selectionPredicate([]));
+        self::assertSame('events', $relation->parentTable);
+        self::assertNull($relation->predicate);
     }
 
     public function testRejectsEmptyParentAndPredicate(): void

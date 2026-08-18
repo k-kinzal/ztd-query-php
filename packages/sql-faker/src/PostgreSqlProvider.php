@@ -442,12 +442,9 @@ final class PostgreSqlProvider extends Base
     }
 
     /** @return non-empty-string */
-    public function partitionOfStatement(): string
+    public function partitionOfStatement(int $maxDepth = 40): string
     {
-        $child = $this->rsg->rawIdentifier();
-
-        return "CREATE TABLE $child PARTITION OF logs "
-            . "FOR VALUES FROM ('2024-01-01') TO ('2025-01-01')";
+        return $this->sql->generate(GenerationPlans::partitionOfStatement()->withMaxDepth($maxDepth));
     }
 
     /**

@@ -22,22 +22,4 @@ final class TablePartitionRelation
         $this->parentTable = $parentTable;
         $this->predicate = $predicate;
     }
-
-    /** @param list<string> $siblingPredicates */
-    public function selectionPredicate(array $siblingPredicates): string
-    {
-        if ($this->predicate !== null) {
-            return $this->predicate;
-        }
-        if ($siblingPredicates === []) {
-            return 'TRUE';
-        }
-
-        $predicates = array_map(
-            static fn (string $predicate): string => "($predicate)",
-            $siblingPredicates,
-        );
-
-        return 'COALESCE(NOT (' . implode(' OR ', $predicates) . '), TRUE)';
-    }
 }

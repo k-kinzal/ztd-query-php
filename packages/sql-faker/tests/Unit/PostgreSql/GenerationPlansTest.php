@@ -100,4 +100,15 @@ final class GenerationPlansTest extends TestCase
         self::assertTrue($plan->patternAt('key_action', 0)?->matches(['CASCADE']) ?? false);
         self::assertTrue($plan->patternAt('key_action', 1)?->matches(['CASCADE']) ?? false);
     }
+
+    public function testChildPartitionPlanRequiresARangeBound(): void
+    {
+        $plan = GenerationPlans::partitionOfStatement();
+
+        self::assertSame('CreateStmt', $plan->startRule());
+        self::assertTrue(
+            $plan->patternAt('CreateStmt', 0)?->matches(['PARTITION', 'OF', 'PartitionBoundSpec']) ?? false,
+        );
+        self::assertTrue($plan->patternAt('PartitionBoundSpec', 0)?->matches(['FROM', 'TO']) ?? false);
+    }
 }

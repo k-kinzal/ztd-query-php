@@ -71,6 +71,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlViewDefinitionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlViewShadowRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlGeneratedColumnProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlPartitionPredicateRenderer::class)]
 final class PgSqlRewriterTest extends RewriterContractTest
 {
     public function testChildPartitionSelectUsesFilteredParentShadowSource(): void
