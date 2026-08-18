@@ -126,7 +126,13 @@ final class InsertTransformer implements SqlTransformer
         array $columnTypes,
         array $columnDefaults,
     ): string {
-        $values = self::orderedValues($valueSet->raw !== [] ? $valueSet->raw : $valueSet->values);
+        $rawValues = self::orderedValues($valueSet->raw !== [] ? $valueSet->raw : $valueSet->values);
+        $parsedValues = self::orderedValues($valueSet->values);
+        $values = [];
+        foreach ($rawValues as $index => $rawValue) {
+            $parsedValue = $parsedValues[$index] ?? $rawValue;
+            $values[] = strcasecmp($parsedValue, 'DEFAULT') === 0 ? $parsedValue : $rawValue;
+        }
         $sourceColumns = $insertColumns !== [] || $values === [] ? $insertColumns : $tableColumns;
         try {
             $projected = $this->rowProjector->project($tableColumns, $sourceColumns, $values, $columnDefaults);

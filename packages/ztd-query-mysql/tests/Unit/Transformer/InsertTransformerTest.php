@@ -800,6 +800,24 @@ final class InsertTransformerTest extends TestCase
         self::assertStringContainsString("'new' AS `label`", $result);
     }
 
+    public function testTransformProjectsDefaultWhenIntoIsOmitted(): void
+    {
+        $transformer = new InsertTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = ['settings' => [
+            'rows' => [],
+            'columns' => ['enabled'],
+            'columnTypes' => [],
+            'columnDefaults' => ['enabled' => '1'],
+        ]];
+
+        $result = $transformer->transform(
+            "INSERT # lead\n HIGH_PRIORITY -- priority\n IGNORE settings VALUE(/* value */ DEFAULT)",
+            $tables,
+        );
+
+        self::assertStringContainsString('1 AS `enabled`', $result);
+    }
+
     public function testTransformNormalizesSparseTableColumnKeys(): void
     {
         $transformer = new InsertTransformer(new MySqlParser(), new SelectTransformer());
