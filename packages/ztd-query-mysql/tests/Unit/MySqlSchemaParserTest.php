@@ -69,8 +69,8 @@ final class MySqlSchemaParserTest extends SchemaParserContractTest
 
         self::assertNotNull($definition);
         self::assertSame(
-            '((YEAR(event_date)) IS NULL OR (YEAR(event_date)) < 2025)',
-            $definition->partitioning?->predicateFor(['p2024']),
+            ['(YEAR(event_date)) IS NULL OR (YEAR(event_date)) < 2025'],
+            $definition->partitioning?->predicatesFor(['p2024']),
         );
     }
 

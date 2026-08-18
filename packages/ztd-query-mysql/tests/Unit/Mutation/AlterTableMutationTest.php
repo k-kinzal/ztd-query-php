@@ -94,8 +94,8 @@ final class AlterTableMutationTest extends TestCase
         self::assertNotNull($newDefinition);
         self::assertContains('label', $newDefinition->columns);
         self::assertSame(
-            '((YEAR(event_date)) >= 2025)',
-            $newDefinition->partitioning?->predicateFor(['pmax']),
+            ['(YEAR(event_date)) >= 2025'],
+            $newDefinition->partitioning?->predicatesFor(['pmax']),
         );
     }
 

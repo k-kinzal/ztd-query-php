@@ -19,14 +19,14 @@ final class TablePartitioningTest extends TestCase
         ]);
 
         self::assertSame(
-            '(created_at >= 2024) OR (created_at < 2024)',
-            $partitioning->predicateFor(['RECENT', 'archive', 'recent']),
+            ['created_at >= 2024', 'created_at < 2024'],
+            $partitioning->predicatesFor(['RECENT', 'archive', 'recent']),
         );
     }
 
     public function testReturnsNullForUnknownPartition(): void
     {
-        self::assertNull((new TablePartitioning(['p0' => 'id < 10']))->predicateFor(['missing']));
+        self::assertNull((new TablePartitioning(['p0' => 'id < 10']))->predicatesFor(['missing']));
     }
 
     public function testRejectsEmptyPartitionMetadata(): void

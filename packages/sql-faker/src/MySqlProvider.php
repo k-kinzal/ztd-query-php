@@ -730,8 +730,8 @@ final class MySqlProvider extends Base
         return $this->sql->generate(GenerationPlans::foreignKeyCascadeStatement()->withMaxDepth($maxDepth));
     }
     /** @return non-empty-string */
-    public function partitionSelectStatement(): string
+    public function partitionSelectStatement(int $maxDepth = 40): string
     {
-        return 'SELECT * FROM events PARTITION (p2024)';
+        return $this->sql->generate(GenerationPlans::partitionSelectStatement()->withMaxDepth($maxDepth));
     }
 }

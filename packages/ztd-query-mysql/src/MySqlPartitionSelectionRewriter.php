@@ -54,12 +54,16 @@ final class MySqlPartitionSelectionRewriter
             $names = $this->partitionNames($sql, $open, $tokens[$closeIndex]);
             $context = $contexts[strtolower($reference['name'])] ?? null;
             $partitioning = $context['partitioning'] ?? null;
-            $predicate = $partitioning instanceof TablePartitioning
-                ? $partitioning->predicateFor($names)
+            $predicates = $partitioning instanceof TablePartitioning
+                ? $partitioning->predicatesFor($names)
                 : null;
-            if ($predicate === null) {
+            if ($predicates === null) {
                 throw new UnsupportedSqlException($sql, 'PARTITION selection');
             }
+            $predicate = implode(' OR ', array_map(
+                static fn (string $partitionPredicate): string => "($partitionPredicate)",
+                $predicates,
+            ));
 
             $after = $tokens[$closeIndex + 1] ?? null;
             if ($after instanceof SqlToken

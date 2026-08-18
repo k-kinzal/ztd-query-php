@@ -48,7 +48,7 @@ final class TableDefinitionTest extends TestCase
         self::assertSame(['id' => IdentityGenerationStrategy::MaxValue], $definition->identityStrategies);
         self::assertSame(['name' => "CONCAT('user-', id)"], $definition->generatedExpressions);
         self::assertSame(['fk_parent'], array_keys($definition->foreignKeys));
-        self::assertSame('(id < 10)', $definition->partitioning?->predicateFor(['p0']));
+        self::assertSame(['id < 10'], $definition->partitioning?->predicatesFor(['p0']));
     }
 
     public function testTypedColumnsDefaultsToEmpty(): void

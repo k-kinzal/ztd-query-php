@@ -27,16 +27,16 @@ final class MySqlPartitioningParserTest extends TestCase
 
         self::assertNotNull($partitioning);
         self::assertSame(
-            '((YEAR(event_date)) IS NULL OR (YEAR(event_date)) < 2024)',
-            $partitioning->predicateFor(['p2023']),
+            ['(YEAR(event_date)) IS NULL OR (YEAR(event_date)) < 2024'],
+            $partitioning->predicatesFor(['p2023']),
         );
         self::assertSame(
-            '((YEAR(event_date)) >= 2024 AND (YEAR(event_date)) < 2025)',
-            $partitioning->predicateFor(['p2024']),
+            ['(YEAR(event_date)) >= 2024 AND (YEAR(event_date)) < 2025'],
+            $partitioning->predicatesFor(['p2024']),
         );
         self::assertSame(
-            '((YEAR(event_date)) >= 2025)',
-            $partitioning->predicateFor(['pmax']),
+            ['(YEAR(event_date)) >= 2025'],
+            $partitioning->predicatesFor(['pmax']),
         );
     }
 
@@ -53,10 +53,10 @@ final class MySqlPartitioningParserTest extends TestCase
 
         self::assertNotNull($partitioning);
         self::assertSame(
-            '(((region_id) IN (1, 2) OR (region_id) IS NULL))',
-            $partitioning->predicateFor(['pwest']),
+            ['((region_id) IN (1, 2) OR (region_id) IS NULL)'],
+            $partitioning->predicatesFor(['pwest']),
         );
-        self::assertSame('((region_id) IN (3, 4))', $partitioning->predicateFor(['peast']));
+        self::assertSame(['(region_id) IN (3, 4)'], $partitioning->predicatesFor(['peast']));
     }
 
     public function testParsesNullOnlyListPartition(): void
@@ -69,7 +69,7 @@ final class MySqlPartitioningParserTest extends TestCase
         $partitioning = (new MySqlPartitioningParser())->parse($statement);
 
         self::assertNotNull($partitioning);
-        self::assertSame('((region_id) IS NULL)', $partitioning->predicateFor(['pnull']));
+        self::assertSame(['(region_id) IS NULL'], $partitioning->predicatesFor(['pnull']));
     }
 
     public function testParsesSingleMaximumRangePartition(): void
@@ -82,7 +82,7 @@ final class MySqlPartitioningParserTest extends TestCase
         $partitioning = (new MySqlPartitioningParser())->parse($statement);
 
         self::assertNotNull($partitioning);
-        self::assertSame('(TRUE)', $partitioning->predicateFor(['pall']));
+        self::assertSame(['TRUE'], $partitioning->predicatesFor(['pall']));
     }
 
     public function testMarksHashPartitionSelectionUnsupported(): void
@@ -94,7 +94,7 @@ final class MySqlPartitioningParserTest extends TestCase
         $partitioning = (new MySqlPartitioningParser())->parse($statement);
 
         self::assertNotNull($partitioning);
-        self::assertNull($partitioning->predicateFor(['p0']));
+        self::assertNull($partitioning->predicatesFor(['p0']));
     }
 
     public function testMarksHashPartitionExpressionWithValidDelimitersUnsupported(): void
@@ -108,7 +108,7 @@ final class MySqlPartitioningParserTest extends TestCase
         $partitioning = (new MySqlPartitioningParser())->parse($statement);
 
         self::assertNotNull($partitioning);
-        self::assertNull($partitioning->predicateFor(['p0']));
+        self::assertNull($partitioning->predicatesFor(['p0']));
     }
 
     public function testMarksBracketsInPlaceOfPartitionParenthesesUnsupported(): void
@@ -122,7 +122,7 @@ final class MySqlPartitioningParserTest extends TestCase
         $partitioning = (new MySqlPartitioningParser())->parse($statement);
 
         self::assertNotNull($partitioning);
-        self::assertNull($partitioning->predicateFor(['p0']));
+        self::assertNull($partitioning->predicatesFor(['p0']));
     }
 
     public function testMarksPartitionExpressionWithoutParenthesesUnsupported(): void
@@ -136,7 +136,7 @@ final class MySqlPartitioningParserTest extends TestCase
         $partitioning = (new MySqlPartitioningParser())->parse($statement);
 
         self::assertNotNull($partitioning);
-        self::assertNull($partitioning->predicateFor(['p0']));
+        self::assertNull($partitioning->predicatesFor(['p0']));
     }
 
     public function testMarksPartitionExpressionWithoutClosingParenthesisUnsupported(): void
@@ -150,7 +150,7 @@ final class MySqlPartitioningParserTest extends TestCase
         $partitioning = (new MySqlPartitioningParser())->parse($statement);
 
         self::assertNotNull($partitioning);
-        self::assertNull($partitioning->predicateFor(['p0']));
+        self::assertNull($partitioning->predicatesFor(['p0']));
     }
 
     public function testReturnsNullForUnpartitionedTable(): void
@@ -173,7 +173,7 @@ final class MySqlPartitioningParserTest extends TestCase
         $partitioning = (new MySqlPartitioningParser())->parse($statement);
 
         self::assertNotNull($partitioning);
-        self::assertNull($partitioning->predicateFor(['p0']));
+        self::assertNull($partitioning->predicatesFor(['p0']));
     }
 
     public function testRejectsRangeDefinitionWithListValueType(): void
@@ -188,7 +188,7 @@ final class MySqlPartitioningParserTest extends TestCase
         $partitioning = (new MySqlPartitioningParser())->parse($statement);
 
         self::assertNotNull($partitioning);
-        self::assertNull($partitioning->predicateFor(['p0']));
+        self::assertNull($partitioning->predicatesFor(['p0']));
     }
 
     public function testRejectsListDefinitionWithRangeValueType(): void
@@ -203,7 +203,7 @@ final class MySqlPartitioningParserTest extends TestCase
         $partitioning = (new MySqlPartitioningParser())->parse($statement);
 
         self::assertNotNull($partitioning);
-        self::assertNull($partitioning->predicateFor(['p0']));
+        self::assertNull($partitioning->predicatesFor(['p0']));
     }
 
     public function testRejectsRangeColumnsWithoutGuessingTupleSemantics(): void
@@ -217,6 +217,6 @@ final class MySqlPartitioningParserTest extends TestCase
         $partitioning = (new MySqlPartitioningParser())->parse($statement);
 
         self::assertNotNull($partitioning);
-        self::assertNull($partitioning->predicateFor(['p0']));
+        self::assertNull($partitioning->predicatesFor(['p0']));
     }
 }

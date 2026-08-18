@@ -193,6 +193,22 @@ final class GenerationPlans
     }
 
     /** @return GenerationPlan<true> */
+    public static function partitionSelectStatement(): GenerationPlan
+    {
+        return GenerationPlan::constrained('select_stmt', [
+            'query_expression' => [
+                ProductionPattern::exactly('query_expression_body', 'opt_order_clause', 'opt_limit_clause'),
+            ],
+            'query_expression_body' => [ProductionPattern::exactly('query_primary')],
+            'query_primary' => [ProductionPattern::exactly('query_specification')],
+            'opt_from_clause' => [ProductionPattern::nonEmpty()],
+            'from_tables' => [ProductionPattern::exactly('table_reference_list')],
+            'table_factor' => [ProductionPattern::exactly('single_table')],
+            'opt_use_partition' => [ProductionPattern::nonEmpty()],
+        ])->requiringNonEmpty();
+    }
+
+    /** @return GenerationPlan<true> */
     public static function multiTableDeleteStatement(): GenerationPlan
     {
         return GenerationPlan::constrained('delete_stmt', [

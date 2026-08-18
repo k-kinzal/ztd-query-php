@@ -243,4 +243,13 @@ final class GenerationPlansTest extends TestCase
         self::assertTrue($plan->patternAt('delete_option', 0)?->matches(['CASCADE']) ?? false);
         self::assertTrue($plan->patternAt('delete_option', 1)?->matches(['CASCADE']) ?? false);
     }
+
+    public function testPartitionSelectPlanRequiresThePartitionClause(): void
+    {
+        $plan = GenerationPlans::partitionSelectStatement();
+
+        self::assertSame('select_stmt', $plan->startRule());
+        self::assertNotNull($plan->patternAt('opt_from_clause', 0));
+        self::assertNotNull($plan->patternAt('opt_use_partition', 0));
+    }
 }

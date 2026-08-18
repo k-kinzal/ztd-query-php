@@ -25,8 +25,11 @@ final class TablePartitioning
         $this->selectionPredicates = $normalized;
     }
 
-    /** @param non-empty-list<string> $names */
-    public function predicateFor(array $names): ?string
+    /**
+     * @param non-empty-list<string> $names
+     * @return list<string>|null
+     */
+    public function predicatesFor(array $names): ?array
     {
         $predicates = [];
         foreach ($names as $name) {
@@ -37,9 +40,6 @@ final class TablePartitioning
             $predicates[$normalized] = $this->selectionPredicates[$normalized];
         }
 
-        return implode(' OR ', array_map(
-            static fn (string $predicate): string => "($predicate)",
-            $predicates,
-        ));
+        return array_values($predicates);
     }
 }

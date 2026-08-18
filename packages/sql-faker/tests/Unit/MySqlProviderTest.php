@@ -165,11 +165,26 @@ final class MySqlProviderTest extends TestCase
         self::assertStringContainsString('ON_SYM DELETE_SYM CASCADE', implode(' ', $tokens));
     }
 
-    public function testPartitionSelectStatement(): void
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testPartitionSelectStatement(int $seed): void
     {
-        $sql = (new MySqlProvider(Factory::create()))->partitionSelectStatement();
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new MySqlProvider($faker);
+        $sql = $provider->partitionSelectStatement();
+        $faker->seed($seed);
+        $tokens = (new LexicalGrammar($faker, 'mysql-8.4.7', true))
+            ->tokenize($sql);
+        $select = array_search('SELECT_SYM', $tokens, true);
+        $from = array_search('FROM', $tokens, true);
+        $partition = array_search('PARTITION_SYM', $tokens, true);
 
-        self::assertSame('SELECT * FROM events PARTITION (p2024)', $sql);
+        self::assertSame($sql, $provider->partitionSelectStatement(40));
+        self::assertIsInt($select);
+        self::assertIsInt($from);
+        self::assertIsInt($partition);
+        self::assertGreaterThan($select, $from);
+        self::assertGreaterThan($from, $partition);
     }
 
     public function testSql(): void
