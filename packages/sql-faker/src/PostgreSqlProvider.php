@@ -436,13 +436,9 @@ final class PostgreSqlProvider extends Base
     }
 
     /** @return non-empty-string */
-    public function foreignKeyCascadeStatement(): string
+    public function foreignKeyCascadeStatement(int $maxDepth = 40): string
     {
-        $child = $this->rsg->rawIdentifier();
-        $parent = $this->rsg->rawIdentifier();
-
-        return "CREATE TABLE $child (id INTEGER PRIMARY KEY, parent_id INTEGER, CONSTRAINT fk_parent "
-            . "FOREIGN KEY (parent_id) REFERENCES $parent (id) ON DELETE CASCADE ON UPDATE CASCADE)";
+        return $this->sql->generate(GenerationPlans::foreignKeyCascadeStatement()->withMaxDepth($maxDepth));
     }
 
     /**

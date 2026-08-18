@@ -175,6 +175,24 @@ final class GenerationPlans
     }
 
     /** @return GenerationPlan<true> */
+    public static function foreignKeyCascadeStatement(): GenerationPlan
+    {
+        return GenerationPlan::constrained('create_table_stmt', [
+            'create_table_stmt' => [ProductionPattern::containing('table_element_list')],
+            'table_element' => [ProductionPattern::exactly('table_constraint_def')],
+            'table_constraint_def' => [ProductionPattern::containing('FOREIGN', 'KEY_SYM', 'references')],
+            'opt_ref_list' => [ProductionPattern::nonEmpty()],
+            'opt_on_update_delete' => [
+                ProductionPattern::containing('UPDATE_SYM', 'DELETE_SYM'),
+            ],
+            'delete_option' => [
+                ProductionPattern::exactly('CASCADE'),
+                ProductionPattern::exactly('CASCADE'),
+            ],
+        ])->requiringNonEmpty();
+    }
+
+    /** @return GenerationPlan<true> */
     public static function multiTableDeleteStatement(): GenerationPlan
     {
         return GenerationPlan::constrained('delete_stmt', [

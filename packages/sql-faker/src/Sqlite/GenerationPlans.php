@@ -64,6 +64,30 @@ final class GenerationPlans
     }
 
     /** @return GenerationPlan<true> */
+    public static function foreignKeyCascadeStatement(): GenerationPlan
+    {
+        return GenerationPlan::constrained('cmd', [
+            'cmd' => [ProductionPattern::containing('create_table', 'create_table_args')],
+            'create_table_args' => [ProductionPattern::containing('columnlist', 'conslist_opt')],
+            'conslist_opt' => [ProductionPattern::nonEmpty()],
+            'tcons' => [ProductionPattern::containing('FOREIGN', 'KEY', 'REFERENCES')],
+            'refargs' => [
+                ProductionPattern::exactly('refargs', 'refarg'),
+                ProductionPattern::exactly('refargs', 'refarg'),
+                ProductionPattern::exactly(),
+            ],
+            'refarg' => [
+                ProductionPattern::containing('ON', 'DELETE'),
+                ProductionPattern::containing('ON', 'UPDATE'),
+            ],
+            'refact' => [
+                ProductionPattern::exactly('CASCADE'),
+                ProductionPattern::exactly('CASCADE'),
+            ],
+        ])->requiringNonEmpty();
+    }
+
+    /** @return GenerationPlan<true> */
     public static function foreignKeyConstraint(): GenerationPlan
     {
         return GenerationPlan::constrained('conslist', [

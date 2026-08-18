@@ -129,13 +129,22 @@ final class SqliteProviderTest extends TestCase
         self::assertContains('AS', $tokens);
     }
 
-    public function testForeignKeyCascadeStatement(): void
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testForeignKeyCascadeStatement(int $seed): void
     {
-        $sql = (new SqliteProvider(Factory::create()))->foreignKeyCascadeStatement();
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new SqliteProvider($faker);
+        $sql = $provider->foreignKeyCascadeStatement();
+        $faker->seed($seed);
+        $tokens = (new LexicalGrammar($faker, 'sqlite-3.47.2', true))
+            ->tokenize($sql);
 
-        self::assertMatchesRegularExpression('/^CREATE TABLE \w+ \(id INTEGER PRIMARY KEY, parent_id INTEGER,/', $sql);
-        self::assertStringContainsString('CONSTRAINT fk_parent FOREIGN KEY (parent_id) REFERENCES ', $sql);
-        self::assertStringEndsWith('(id) ON DELETE CASCADE ON UPDATE CASCADE)', $sql);
+        self::assertSame($sql, $provider->foreignKeyCascadeStatement(40));
+        self::assertContains('FOREIGN', $tokens);
+        self::assertContains('REFERENCES', $tokens);
+        self::assertStringContainsString('ON UPDATE CASCADE', implode(' ', $tokens));
+        self::assertStringContainsString('ON DELETE CASCADE', implode(' ', $tokens));
     }
 
     #[\Override]

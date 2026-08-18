@@ -72,6 +72,22 @@ final class GenerationPlans
     }
 
     /** @return GenerationPlan<true> */
+    public static function foreignKeyCascadeStatement(): GenerationPlan
+    {
+        return GenerationPlan::constrained('CreateStmt', [
+            'CreateStmt' => [ProductionPattern::containing('OptTableElementList')],
+            'OptTableElementList' => [ProductionPattern::nonEmpty()],
+            'TableElement' => [ProductionPattern::exactly('TableConstraint')],
+            'ConstraintElem' => [ProductionPattern::containing('FOREIGN', 'KEY', 'REFERENCES')],
+            'key_actions' => [ProductionPattern::containing('key_update', 'key_delete')],
+            'key_action' => [
+                ProductionPattern::exactly('CASCADE'),
+                ProductionPattern::exactly('CASCADE'),
+            ],
+        ])->requiringNonEmpty();
+    }
+
+    /** @return GenerationPlan<true> */
     public static function foreignKeyConstraint(): GenerationPlan
     {
         return GenerationPlan::constrained('TableConstraint', [

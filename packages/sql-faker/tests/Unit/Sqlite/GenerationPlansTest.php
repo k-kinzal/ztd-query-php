@@ -91,4 +91,13 @@ final class GenerationPlansTest extends TestCase
         self::assertTrue($plan->patternAt('carglist', 1)?->matches([]) ?? false);
         self::assertTrue($plan->patternAt('ccons', 0)?->matches(['GENERATED', 'generated']) ?? false);
     }
+
+    public function testForeignKeyCascadePlanRequiresBothCascadeActions(): void
+    {
+        $plan = GenerationPlans::foreignKeyCascadeStatement();
+
+        self::assertSame('cmd', $plan->startRule());
+        self::assertNotNull($plan->patternAt('refarg', 1));
+        self::assertNotNull($plan->patternAt('refact', 1));
+    }
 }

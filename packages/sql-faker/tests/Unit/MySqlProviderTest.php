@@ -147,13 +147,22 @@ final class MySqlProviderTest extends TestCase
         self::assertContains('STORED_SYM', $tokens);
     }
 
-    public function testForeignKeyCascadeStatement(): void
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testForeignKeyCascadeStatement(int $seed): void
     {
-        $sql = (new MySqlProvider(Factory::create()))->foreignKeyCascadeStatement();
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new MySqlProvider($faker);
+        $sql = $provider->foreignKeyCascadeStatement();
+        $faker->seed($seed);
+        $tokens = (new LexicalGrammar($faker, 'mysql-8.4.7', true))
+            ->tokenize($sql);
 
-        self::assertMatchesRegularExpression('/^CREATE TABLE \w+ \(id INT PRIMARY KEY, parent_id INT,/', $sql);
-        self::assertStringContainsString('CONSTRAINT fk_parent FOREIGN KEY (parent_id) REFERENCES ', $sql);
-        self::assertStringEndsWith('(id) ON DELETE CASCADE ON UPDATE CASCADE)', $sql);
+        self::assertSame($sql, $provider->foreignKeyCascadeStatement(40));
+        self::assertContains('FOREIGN', $tokens);
+        self::assertContains('REFERENCES', $tokens);
+        self::assertStringContainsString('ON_SYM UPDATE_SYM CASCADE', implode(' ', $tokens));
+        self::assertStringContainsString('ON_SYM DELETE_SYM CASCADE', implode(' ', $tokens));
     }
 
     public function testSql(): void

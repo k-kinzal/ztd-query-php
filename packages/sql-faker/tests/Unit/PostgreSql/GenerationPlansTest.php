@@ -84,4 +84,13 @@ final class GenerationPlansTest extends TestCase
         self::assertTrue($plan->patternAt('ColConstraint', 0)?->matches(['ColConstraintElem']) ?? false);
         self::assertTrue($plan->patternAt('ColConstraintElem', 0)?->matches(['GENERATED', 'STORED']) ?? false);
     }
+
+    public function testForeignKeyCascadePlanRequiresBothCascadeActions(): void
+    {
+        $plan = GenerationPlans::foreignKeyCascadeStatement();
+
+        self::assertSame('CreateStmt', $plan->startRule());
+        self::assertNotNull($plan->patternAt('key_actions', 0));
+        self::assertNotNull($plan->patternAt('key_action', 1));
+    }
 }

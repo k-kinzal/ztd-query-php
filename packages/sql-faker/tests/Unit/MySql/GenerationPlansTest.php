@@ -225,4 +225,13 @@ final class GenerationPlansTest extends TestCase
         self::assertTrue($plan->patternAt('opt_generated_always', 0)?->matches(['GENERATED']) ?? false);
         self::assertTrue($plan->patternAt('opt_stored_attribute', 0)?->matches(['STORED_SYM']) ?? false);
     }
+
+    public function testForeignKeyCascadePlanRequiresBothCascadeActions(): void
+    {
+        $plan = GenerationPlans::foreignKeyCascadeStatement();
+
+        self::assertSame('create_table_stmt', $plan->startRule());
+        self::assertNotNull($plan->patternAt('opt_on_update_delete', 0));
+        self::assertNotNull($plan->patternAt('delete_option', 1));
+    }
 }
