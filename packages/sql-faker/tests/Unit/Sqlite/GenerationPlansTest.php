@@ -47,6 +47,15 @@ final class GenerationPlansTest extends TestCase
         GenerationPlans::multiDmlStatement(0, 3);
     }
 
+    public function testFullTextPlanRequiresMatchGrammar(): void
+    {
+        $plan = GenerationPlans::fullTextSearchStatement();
+
+        self::assertSame('select', $plan->startRule());
+        self::assertNotNull($plan->patternAt('where_opt', 0));
+        self::assertNotNull($plan->patternAt('likeop', 0));
+    }
+
     public function testForeignKeyPlanRestrictsTheTableConstraintGrammar(): void
     {
         $plan = GenerationPlans::foreignKeyConstraint();

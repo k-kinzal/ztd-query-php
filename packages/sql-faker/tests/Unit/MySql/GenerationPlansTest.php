@@ -270,4 +270,13 @@ final class GenerationPlansTest extends TestCase
 
         self::assertSame('load_stmt', $plan->startRule());
     }
+
+    public function testFullTextPlanRequiresMatchAgainstGrammar(): void
+    {
+        $plan = GenerationPlans::fullTextSearchStatement();
+
+        self::assertSame('select_stmt', $plan->startRule());
+        self::assertNotNull($plan->patternAt('opt_where_clause', 0));
+        self::assertNotNull($plan->patternAt('simple_expr', 0));
+    }
 }

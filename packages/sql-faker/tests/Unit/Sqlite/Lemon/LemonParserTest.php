@@ -11,6 +11,7 @@ use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
+use SqlFaker\Grammar\Symbol;
 use SqlFaker\Grammar\Terminal;
 use SqlFaker\Sqlite\Lemon\LemonParser;
 
@@ -93,6 +94,41 @@ final class LemonParserTest extends TestCase
         self::assertSame('PLUS', $alt->symbols[1]->value());
         self::assertInstanceOf(NonTerminal::class, $alt->symbols[2]);
         self::assertSame('expr', $alt->symbols[2]->value());
+    }
+
+    public function testParseExpandsInlineTokenAlternatives(): void
+    {
+        $input = <<<'LEMON'
+        likeop(A) ::= LIKE_KW|MATCH(A).
+        expr(A) ::= expr(A) STAR|SLASH|REM(OP) expr(Y).
+        LEMON;
+
+        $grammar = (new LemonParser())->parse($input);
+
+        self::assertSame(
+            [['LIKE_KW'], ['MATCH']],
+            array_map(
+                static fn (Production $production): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $production->symbols,
+                ),
+                $grammar->ruleMap['likeop']->alternatives,
+            ),
+        );
+        self::assertSame(
+            [
+                ['expr', 'STAR', 'expr'],
+                ['expr', 'SLASH', 'expr'],
+                ['expr', 'REM', 'expr'],
+            ],
+            array_map(
+                static fn (Production $production): array => array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $production->symbols,
+                ),
+                $grammar->ruleMap['expr']->alternatives,
+            ),
+        );
     }
 
     public function testParseWithDirectives(): void

@@ -12,12 +12,14 @@ final class GenerationPlan
     /**
      * @param array<string, non-empty-list<ProductionPattern>> $patterns
      * @param array<string, ProductionPattern> $patternsForEveryOccurrence
+     * @param array<string, non-empty-list<non-empty-string>> $lexemes
      * @param TRequiresNonEmpty $requiresNonEmpty
      */
     private function __construct(
         private readonly ?string $startRule,
         private readonly array $patterns,
         private readonly array $patternsForEveryOccurrence,
+        private readonly array $lexemes,
         private readonly bool $requiresNonEmpty,
         private readonly int $maxDepth,
     ) {
@@ -26,7 +28,7 @@ final class GenerationPlan
     /** @return self<false> */
     public static function all(): self
     {
-        return new self(null, [], [], false, PHP_INT_MAX);
+        return new self(null, [], [], [], false, PHP_INT_MAX);
     }
 
     /** @return self<false> */
@@ -34,7 +36,7 @@ final class GenerationPlan
     {
         self::assertStartRule($startRule);
 
-        return new self($startRule, [], [], false, PHP_INT_MAX);
+        return new self($startRule, [], [], [], false, PHP_INT_MAX);
     }
 
     /**
@@ -48,7 +50,7 @@ final class GenerationPlan
             throw new InvalidArgumentException('A constrained generation plan requires production patterns.');
         }
 
-        return new self($startRule, $patterns, [], false, PHP_INT_MAX);
+        return new self($startRule, $patterns, [], [], false, PHP_INT_MAX);
     }
 
     /** @return self<true> */
@@ -58,7 +60,28 @@ final class GenerationPlan
             $this->startRule,
             $this->patterns,
             $this->patternsForEveryOccurrence,
+            $this->lexemes,
             true,
+            $this->maxDepth,
+        );
+    }
+
+    /**
+     * @param array<string, non-empty-list<non-empty-string>> $lexemes
+     * @return self<TRequiresNonEmpty>
+     */
+    public function withLexemes(array $lexemes): self
+    {
+        if ($lexemes === []) {
+            throw new InvalidArgumentException('A lexical generation plan requires lexemes.');
+        }
+
+        return new self(
+            $this->startRule,
+            $this->patterns,
+            $this->patternsForEveryOccurrence,
+            $lexemes,
+            $this->requiresNonEmpty,
             $this->maxDepth,
         );
     }
@@ -70,6 +93,7 @@ final class GenerationPlan
             $this->startRule,
             $this->patterns,
             $this->patternsForEveryOccurrence,
+            $this->lexemes,
             $this->requiresNonEmpty,
             max(1, $maxDepth),
         );
@@ -96,9 +120,16 @@ final class GenerationPlan
             $this->startRule,
             $this->patterns,
             [...$this->patternsForEveryOccurrence, $rule => $pattern],
+            $this->lexemes,
             $this->requiresNonEmpty,
             $this->maxDepth,
         );
+    }
+
+    /** @return non-empty-string|null */
+    public function lexemeAt(string $terminal, int $occurrence): ?string
+    {
+        return $this->lexemes[$terminal][$occurrence] ?? null;
     }
 
     /** @return TRequiresNonEmpty */

@@ -9,6 +9,7 @@ use RuntimeException;
 use SqlFaker\Grammar\LexicalCatalog;
 use SqlFaker\Grammar\LexicalException;
 use SqlFaker\Grammar\LexicalGrammar as LexicalGrammarContract;
+use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\Grammar\SqlVersion;
 use SqlFaker\Grammar\TokenJoiner;
@@ -73,12 +74,20 @@ final class LexicalGrammar implements LexicalGrammarContract
         $this->catalog->assertTerminalsCovered($terminals);
     }
 
-    public function realize(array $terminals): string
+    /**
+     * @param list<string> $terminals
+     * @param GenerationPlan<bool>|null $plan
+     */
+    public function realize(array $terminals, ?GenerationPlan $plan = null): string
     {
         $lexemes = [];
         $expected = [];
+        /** @var array<string, int> $occurrences */
+        $occurrences = [];
         foreach ($terminals as $terminal) {
-            [$lexeme, $tokens] = $this->realizeTerminal($terminal);
+            $occurrence = $occurrences[$terminal] ?? 0;
+            $occurrences[$terminal] = $occurrence + 1;
+            [$lexeme, $tokens] = $this->realizeTerminal($terminal, $plan?->lexemeAt($terminal, $occurrence));
             if ($lexeme !== null) {
                 $lexemes[] = $lexeme;
             }
@@ -234,12 +243,17 @@ final class LexicalGrammar implements LexicalGrammarContract
     }
 
     /**
+     * @param non-empty-string|null $requestedLexeme
      * @return array{string|null, list<string>}
      */
-    private function realizeTerminal(string $terminal): array
+    private function realizeTerminal(string $terminal, ?string $requestedLexeme = null): array
     {
         if (!$this->supports($terminal)) {
             throw new LexicalException("Unsupported PostgreSQL terminal for {$this->profileVersion}: {$terminal}");
+        }
+
+        if ($requestedLexeme !== null) {
+            return $this->realizeRequestedLexeme($terminal, $requestedLexeme);
         }
 
         if (!$this->allowSyntheticTerminals) {
@@ -272,6 +286,30 @@ final class LexicalGrammar implements LexicalGrammarContract
             'GREATER_EQUALS' => ['>=', ['GREATER_EQUALS']],
             default => $this->fixedTerminal($terminal),
         };
+    }
+
+    /**
+     * @param non-empty-string $requestedLexeme
+     * @return array{non-empty-string, list<string>}
+     */
+    private function realizeRequestedLexeme(string $terminal, string $requestedLexeme): array
+    {
+        if ($this->allowSyntheticTerminals) {
+            $tokens = $this->tokenize($requestedLexeme);
+            if ($tokens !== [$terminal]) {
+                throw new LexicalException("Requested PostgreSQL lexeme does not realize {$terminal}: {$requestedLexeme}");
+            }
+
+            return [$requestedLexeme, $tokens];
+        }
+
+        foreach ($this->catalog->witnesses($terminal) as $witness) {
+            if ($witness['sql'] === $requestedLexeme) {
+                return [$requestedLexeme, $witness['tokens']];
+            }
+        }
+
+        throw new LexicalException("PostgreSQL lexical catalog has no {$terminal} witness for: {$requestedLexeme}");
     }
 
     /**

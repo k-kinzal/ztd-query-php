@@ -169,6 +169,51 @@ final class GenerationPlans
     }
 
     /** @return GenerationPlan<true> */
+    public static function fullTextSearchStatement(): GenerationPlan
+    {
+        return GenerationPlan::constrained('SelectStmt', [
+            'SelectStmt' => [ProductionPattern::exactly('select_no_parens')],
+            'select_no_parens' => [ProductionPattern::exactly('simple_select')],
+            'simple_select' => [
+                ProductionPattern::containing('SELECT', 'opt_target_list', 'from_clause', 'where_clause'),
+            ],
+            'opt_target_list' => [ProductionPattern::nonEmpty()],
+            'target_list' => [ProductionPattern::exactly('target_el')],
+            'target_el' => [ProductionPattern::exactly('*')],
+            'into_clause' => [ProductionPattern::exactly()],
+            'from_clause' => [ProductionPattern::nonEmpty()],
+            'from_list' => [ProductionPattern::exactly('table_ref')],
+            'table_ref' => [ProductionPattern::exactly('relation_expr', 'opt_alias_clause')],
+            'relation_expr' => [ProductionPattern::exactly('qualified_name')],
+            'qualified_name' => [ProductionPattern::exactly('ColId')],
+            'opt_alias_clause' => [ProductionPattern::exactly()],
+            'where_clause' => [ProductionPattern::nonEmpty()],
+            'group_clause' => [ProductionPattern::exactly()],
+            'having_clause' => [ProductionPattern::exactly()],
+            'window_clause' => [ProductionPattern::exactly()],
+            'a_expr' => [
+                ProductionPattern::exactly('a_expr', 'qual_Op', 'a_expr'),
+                ProductionPattern::exactly('c_expr'),
+                ProductionPattern::exactly('c_expr'),
+            ],
+            'qual_Op' => [ProductionPattern::exactly('Op')],
+            'c_expr' => [
+                ProductionPattern::exactly('columnref'),
+                ProductionPattern::exactly('columnref'),
+            ],
+            'columnref' => [
+                ProductionPattern::exactly('ColId'),
+                ProductionPattern::exactly('ColId'),
+            ],
+            'ColId' => [
+                ProductionPattern::exactly('IDENT'),
+                ProductionPattern::exactly('IDENT'),
+                ProductionPattern::exactly('IDENT'),
+            ],
+        ])->withLexemes(['Op' => ['@@']])->requiringNonEmpty();
+    }
+
+    /** @return GenerationPlan<true> */
     public static function foreignKeyConstraint(): GenerationPlan
     {
         return GenerationPlan::constrained('TableConstraint', [

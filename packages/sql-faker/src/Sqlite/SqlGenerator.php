@@ -82,7 +82,7 @@ final class SqlGenerator
                 $sql = $this->lexicalGrammar->realize(array_map(
                     static fn (Terminal $terminal): string => $terminal->value,
                     $terminals,
-                ));
+                ), $plan);
                 if ($sql !== '' || !$plan->requiresNonEmpty()) {
                     return $sql;
                 }

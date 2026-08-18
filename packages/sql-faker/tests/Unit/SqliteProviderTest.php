@@ -147,57 +147,25 @@ final class SqliteProviderTest extends TestCase
         self::assertSame($second, $tokens[$separator + 1]);
     }
 
-    #[DataProvider('providerFullTextSearchVariant')]
-    public function testFullTextSearchStatement(Generator $generator, string $expected): void
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testFullTextSearchStatementDerivesMatchExpressionFromGrammar(int $seed): void
     {
-        self::assertSame($expected, (new SqliteProvider($generator))->fullTextSearchStatement());
-    }
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new SqliteProvider($faker);
+        $sql = $provider->fullTextSearchStatement();
+        $faker->seed($seed);
+        $tokens = (new LexicalGrammar($faker, 'sqlite-3.47.2', true))
+            ->tokenize($sql);
+        $where = array_search('WHERE', $tokens, true);
+        $match = array_search('MATCH', $tokens, true);
 
-    /** @return iterable<string, array{Generator, string}> */
-    public static function providerFullTextSearchVariant(): iterable
-    {
-        yield 'table match' => [new class () extends Generator {
-            /**
-             * @param mixed $int1
-             * @param mixed $int2
-             */
-            #[\Override]
-            public function numberBetween($int1 = 0, $int2 = 2147483647): int
-            {
-                if ($int1 !== 0 || $int2 !== 2) {
-                    throw new \UnexpectedValueException();
-                }
-                return 0;
-            }
-        }, "SELECT id FROM users WHERE users MATCH 'search terms'"];
-        yield 'column parameter' => [new class () extends Generator {
-            /**
-             * @param mixed $int1
-             * @param mixed $int2
-             */
-            #[\Override]
-            public function numberBetween($int1 = 0, $int2 = 2147483647): int
-            {
-                if ($int1 !== 0 || $int2 !== 2) {
-                    throw new \UnexpectedValueException();
-                }
-                return 1;
-            }
-        }, 'SELECT id FROM users WHERE name MATCH ?'];
-        yield 'equals form' => [new class () extends Generator {
-            /**
-             * @param mixed $int1
-             * @param mixed $int2
-             */
-            #[\Override]
-            public function numberBetween($int1 = 0, $int2 = 2147483647): int
-            {
-                if ($int1 !== 0 || $int2 !== 2) {
-                    throw new \UnexpectedValueException();
-                }
-                return 2;
-            }
-        }, "SELECT id FROM users WHERE users = 'search'"];
+        self::assertSame($sql, $provider->fullTextSearchStatement(40));
+        self::assertSame('SELECT', $tokens[0]);
+        self::assertContains('FROM', $tokens);
+        self::assertIsInt($where);
+        self::assertIsInt($match);
+        self::assertGreaterThan($where, $match);
     }
 
     #[DataProvider('providerTargetedGenerationSeed')]

@@ -43,6 +43,28 @@ final class GenerationPlans
     }
 
     /** @return GenerationPlan<true> */
+    public static function fullTextSearchStatement(): GenerationPlan
+    {
+        return GenerationPlan::constrained('select', [
+            'select' => [ProductionPattern::exactly('selectnowith')],
+            'oneselect' => [ProductionPattern::containing('SELECT', 'selcollist', 'from', 'where_opt')],
+            'selcollist' => [ProductionPattern::exactly('sclp', 'scanpt', 'STAR')],
+            'sclp' => [ProductionPattern::exactly()],
+            'from' => [ProductionPattern::nonEmpty()],
+            'seltablist' => [ProductionPattern::exactly('stl_prefix', 'nm', 'dbnm', 'as', 'on_using')],
+            'stl_prefix' => [ProductionPattern::exactly()],
+            'on_using' => [ProductionPattern::exactly()],
+            'where_opt' => [ProductionPattern::nonEmpty()],
+            'expr' => [
+                ProductionPattern::exactly('expr', 'likeop', 'expr'),
+                ProductionPattern::exactly('term'),
+                ProductionPattern::exactly('term'),
+            ],
+            'likeop' => [ProductionPattern::exactly('MATCH')],
+        ])->requiringNonEmpty();
+    }
+
+    /** @return GenerationPlan<true> */
     public static function insertFunctionUpsertStatement(): GenerationPlan
     {
         return GenerationPlan::constrained('cmd', [

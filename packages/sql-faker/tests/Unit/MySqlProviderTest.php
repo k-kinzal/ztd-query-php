@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker;
 
 use Faker\Factory;
-use Faker\Generator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\MySql\Grammar\Grammar;
@@ -96,67 +95,30 @@ final class MySqlProviderTest extends TestCase
         self::assertContains('DUPLICATE_SYM', $tokens);
     }
 
-    #[DataProvider('providerFullTextSearchVariant')]
-    public function testFullTextSearchStatement(Generator $generator, string $expected): void
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testFullTextSearchStatementDerivesMatchExpressionFromGrammar(int $seed): void
     {
-        self::assertSame($expected, (new MySqlProvider($generator))->fullTextSearchStatement());
-    }
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new MySqlProvider($faker);
+        $sql = $provider->fullTextSearchStatement();
+        $faker->seed($seed);
+        $tokens = (new LexicalGrammar($faker, 'mysql-8.4.7', true))
+            ->tokenize($sql);
+        $select = array_search('SELECT_SYM', $tokens, true);
+        $from = array_search('FROM', $tokens, true);
+        $where = array_search('WHERE', $tokens, true);
+        $match = array_search('MATCH', $tokens, true);
 
-    /** @return iterable<string, array{Generator, string}> */
-    public static function providerFullTextSearchVariant(): iterable
-    {
-        yield 'natural language' => [
-            new class () extends Generator {
-                /**
-                 * @param mixed $int1
-                 * @param mixed $int2
-                 */
-                #[\Override]
-                public function numberBetween($int1 = 0, $int2 = 2147483647): int
-                {
-                    if ($int1 !== 0 || $int2 !== 2) {
-                        throw new \UnexpectedValueException();
-                    }
-                    return 0;
-                }
-            },
-            "SELECT id FROM users WHERE MATCH(name, email) AGAINST ('search terms')",
-        ];
-        yield 'boolean parameter' => [
-            new class () extends Generator {
-                /**
-                 * @param mixed $int1
-                 * @param mixed $int2
-                 */
-                #[\Override]
-                public function numberBetween($int1 = 0, $int2 = 2147483647): int
-                {
-                    if ($int1 !== 0 || $int2 !== 2) {
-                        throw new \UnexpectedValueException();
-                    }
-                    return 1;
-                }
-            },
-            'SELECT id FROM users WHERE MATCH(name, email) AGAINST (? IN BOOLEAN MODE)',
-        ];
-        yield 'relevance ordering' => [
-            new class () extends Generator {
-                /**
-                 * @param mixed $int1
-                 * @param mixed $int2
-                 */
-                #[\Override]
-                public function numberBetween($int1 = 0, $int2 = 2147483647): int
-                {
-                    if ($int1 !== 0 || $int2 !== 2) {
-                        throw new \UnexpectedValueException();
-                    }
-                    return 2;
-                }
-            },
-            "SELECT id, MATCH(name, email) AGAINST ('search') AS relevance "
-                . "FROM users ORDER BY MATCH(name, email) AGAINST ('search') DESC",
-        ];
+        self::assertSame($sql, $provider->fullTextSearchStatement(40));
+        self::assertIsInt($select);
+        self::assertIsInt($from);
+        self::assertNotContains('DUAL_SYM', $tokens);
+        self::assertIsInt($where);
+        self::assertIsInt($match);
+        self::assertGreaterThan($select, $from);
+        self::assertGreaterThan($from, $match);
+        self::assertContains('AGAINST', $tokens);
     }
 
     #[DataProvider('providerTargetedGenerationSeed')]
@@ -1329,4 +1291,5 @@ final class MySqlProviderTest extends TestCase
             yield "seed {$seed}" => [$seed];
         }
     }
+
 }

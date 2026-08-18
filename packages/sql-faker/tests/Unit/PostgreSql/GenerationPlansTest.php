@@ -200,4 +200,13 @@ final class GenerationPlansTest extends TestCase
         self::assertTrue($plans[1]->patternAt('opt_with_clause', 0)?->matches([]) ?? false);
         self::assertTrue($plans[2]->patternAt('opt_with_clause', 0)?->matches([]) ?? false);
     }
+
+    public function testFullTextPlanRequiresTheMatchOperator(): void
+    {
+        $plan = GenerationPlans::fullTextSearchStatement();
+
+        self::assertSame('SelectStmt', $plan->startRule());
+        self::assertNotNull($plan->patternAt('where_clause', 0));
+        self::assertSame('@@', $plan->lexemeAt('Op', 0));
+    }
 }

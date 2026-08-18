@@ -718,7 +718,7 @@ final class MySqlProvider extends Base
     /** @return non-empty-string */
     public function fullTextSearchStatement(int $maxDepth = 40): string
     {
-        return $this->sql->generateFullTextSearchStatement($maxDepth);
+        return $this->sql->generate(GenerationPlans::fullTextSearchStatement()->withMaxDepth($maxDepth));
     }
 
     /** @return non-empty-string */

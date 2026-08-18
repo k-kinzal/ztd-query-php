@@ -15,6 +15,7 @@ interface LexicalGrammar
 
     /**
      * @param list<string> $terminals
+     * @param GenerationPlan<bool>|null $plan
      */
-    public function realize(array $terminals): string;
+    public function realize(array $terminals, ?GenerationPlan $plan = null): string;
 }

@@ -9,6 +9,7 @@ use RuntimeException;
 use SqlFaker\Grammar\LexicalCatalog;
 use SqlFaker\Grammar\LexicalException;
 use SqlFaker\Grammar\LexicalGrammar as LexicalGrammarContract;
+use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\Grammar\SqlVersion;
 use SqlFaker\Grammar\TokenJoiner;
@@ -78,12 +79,20 @@ final class LexicalGrammar implements LexicalGrammarContract
         $this->catalog->assertTerminalsCovered($catalogTerminals);
     }
 
-    public function realize(array $terminals): string
+    /**
+     * @param list<string> $terminals
+     * @param GenerationPlan<bool>|null $plan
+     */
+    public function realize(array $terminals, ?GenerationPlan $plan = null): string
     {
         $lexemes = [];
         $expected = [];
+        /** @var array<string, int> $occurrences */
+        $occurrences = [];
         foreach ($terminals as $terminal) {
-            [$lexeme, $tokens] = $this->realizeTerminal($terminal);
+            $occurrence = $occurrences[$terminal] ?? 0;
+            $occurrences[$terminal] = $occurrence + 1;
+            [$lexeme, $tokens] = $this->realizeTerminal($terminal, $plan?->lexemeAt($terminal, $occurrence));
             $lexemes[] = $lexeme;
             array_push($expected, ...$tokens);
         }
@@ -180,9 +189,10 @@ final class LexicalGrammar implements LexicalGrammarContract
     }
 
     /**
+     * @param non-empty-string|null $requestedLexeme
      * @return array{string, list<string>}
      */
-    private function realizeTerminal(string $terminal): array
+    private function realizeTerminal(string $terminal, ?string $requestedLexeme = null): array
     {
         if (!$this->supports($terminal)) {
             throw new LexicalException("Unsupported SQLite terminal for {$this->profileVersion}: {$terminal}");
@@ -190,6 +200,10 @@ final class LexicalGrammar implements LexicalGrammarContract
 
         if ($terminal === self::STRICT_TABLE_OPTION) {
             return ['STRICT', ['ID']];
+        }
+
+        if ($requestedLexeme !== null) {
+            return $this->realizeRequestedLexeme($terminal, $requestedLexeme);
         }
 
         if (!$this->allowSyntheticTerminals) {
@@ -204,6 +218,7 @@ final class LexicalGrammar implements LexicalGrammarContract
             'ids', 'STRING' => [$this->stringLiteral(), ['STRING']],
             'BLOB' => [$this->blobLiteral(), ['BLOB']],
             'number', 'INTEGER' => [$this->strings->integerString(0, PHP_INT_MAX), ['INTEGER']],
+            'FLOAT' => [$this->strings->decimalString(), ['FLOAT']],
             'QNUMBER' => ['1_0', ['QNUMBER']],
             'VARIABLE' => [$this->parameter(), ['VARIABLE']],
             'ANY' => ['_any', ['ID']],
@@ -214,15 +229,48 @@ final class LexicalGrammar implements LexicalGrammarContract
             'DOT' => ['.', ['DOT']],
             'EQ' => ['=', ['EQ']],
             'LT' => ['<', ['LT']],
+            'LE' => ['<=', ['LE']],
+            'GT' => ['>', ['GT']],
+            'GE' => ['>=', ['GE']],
+            'NE' => ['<>', ['NE']],
             'PLUS' => ['+', ['PLUS']],
             'MINUS' => ['-', ['MINUS']],
             'STAR' => ['*', ['STAR']],
+            'SLASH' => ['/', ['SLASH']],
+            'REM' => ['%', ['REM']],
             'BITAND' => ['&', ['BITAND']],
+            'BITOR' => ['|', ['BITOR']],
             'BITNOT' => ['~', ['BITNOT']],
+            'LSHIFT' => ['<<', ['LSHIFT']],
+            'RSHIFT' => ['>>', ['RSHIFT']],
             'CONCAT' => ['||', ['CONCAT']],
             'PTR' => ['->', ['PTR']],
             default => $this->fixedTerminal($terminal),
         };
+    }
+
+    /**
+     * @param non-empty-string $requestedLexeme
+     * @return array{non-empty-string, list<string>}
+     */
+    private function realizeRequestedLexeme(string $terminal, string $requestedLexeme): array
+    {
+        if ($this->allowSyntheticTerminals) {
+            $tokens = $this->tokenize($requestedLexeme);
+            if ($tokens !== [$terminal]) {
+                throw new LexicalException("Requested SQLite lexeme does not realize {$terminal}: {$requestedLexeme}");
+            }
+
+            return [$requestedLexeme, $tokens];
+        }
+
+        foreach ($this->catalog->witnesses($terminal) as $witness) {
+            if ($witness['sql'] === $requestedLexeme) {
+                return [$requestedLexeme, $this->normalizeSourceTokens($witness['tokens'])];
+            }
+        }
+
+        throw new LexicalException("SQLite lexical catalog has no {$terminal} witness for: {$requestedLexeme}");
     }
 
     /**

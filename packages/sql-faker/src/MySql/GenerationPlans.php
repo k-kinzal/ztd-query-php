@@ -215,6 +215,19 @@ final class GenerationPlans
     }
 
     /** @return GenerationPlan<true> */
+    public static function fullTextSearchStatement(): GenerationPlan
+    {
+        return GenerationPlan::constrained('select_stmt', [
+            'query_primary' => [ProductionPattern::exactly('query_specification')],
+            'select_item_list' => [ProductionPattern::exactly('*')],
+            'opt_from_clause' => [ProductionPattern::nonEmpty()],
+            'from_tables' => [ProductionPattern::exactly('table_reference_list')],
+            'opt_where_clause' => [ProductionPattern::nonEmpty()],
+            'simple_expr' => [ProductionPattern::containing('MATCH', 'AGAINST')],
+        ])->requiringNonEmpty();
+    }
+
+    /** @return GenerationPlan<true> */
     public static function multiTableDeleteStatement(): GenerationPlan
     {
         return GenerationPlan::constrained('delete_stmt', [

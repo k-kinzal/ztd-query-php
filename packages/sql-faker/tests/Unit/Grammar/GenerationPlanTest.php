@@ -114,6 +114,26 @@ final class GenerationPlanTest extends TestCase
         self::assertSame(1, $minimum->maxDepth());
     }
 
+    public function testLexemesDirectEachTerminalOccurrenceWithoutMutableState(): void
+    {
+        $plan = GenerationPlan::fromRule('statement')->withLexemes([
+            'operator' => ['@@', '?|'],
+        ]);
+
+        self::assertSame('@@', $plan->lexemeAt('operator', 0));
+        self::assertSame('?|', $plan->lexemeAt('operator', 1));
+        self::assertNull($plan->lexemeAt('operator', 2));
+        self::assertNull($plan->lexemeAt('unknown', 0));
+    }
+
+    public function testRejectsAnEmptyLexemeConstraint(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('requires lexemes');
+
+        GenerationPlan::all()->withLexemes([]);
+    }
+
     public function testRejectsAnEmptyStartRule(): void
     {
         $this->expectException(InvalidArgumentException::class);

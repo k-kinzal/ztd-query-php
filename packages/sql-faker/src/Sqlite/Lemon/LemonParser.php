@@ -180,7 +180,11 @@ final class LemonParser
             if (!isset($rules[$lhs])) {
                 $rules[$lhs] = [];
             }
-            $rules[$lhs][] = $rhs !== '' ? $this->parseRhsSymbols($rhs) : [];
+            if ($rhs === '') {
+                $rules[$lhs][] = [];
+                continue;
+            }
+            array_push($rules[$lhs], ...$this->parseRhsAlternatives($rhs));
         }
 
         return $rules;
@@ -198,18 +202,18 @@ final class LemonParser
     }
 
     /**
-     * Parse RHS string into symbol names, stripping aliases.
+     * Parse RHS string into productions, expanding Lemon's inline token alternatives.
      *
-     * @return list<string>
+     * @return non-empty-list<list<string>>
      */
-    private function parseRhsSymbols(string $rhs): array
+    private function parseRhsAlternatives(string $rhs): array
     {
-        /** @var list<string> $symbols */
-        $symbols = [];
+        /** @var non-empty-list<list<string>> $alternatives */
+        $alternatives = [[]];
 
         $parts = preg_split('/\s+/', $rhs);
         if ($parts === false) {
-            return [];
+            return [[]];
         }
 
         foreach ($parts as $part) {
@@ -218,37 +222,32 @@ final class LemonParser
                 continue;
             }
 
-            if (str_contains($part, '|')) {
-                $options = explode('|', $part);
-                $first = $this->stripAlias($options[0]);
-                if ($first !== '' && !str_starts_with($first, '%')) {
-                    $symbols[] = $first;
-                    foreach ($options as $option) {
-                        $name = $this->stripAlias($option);
-                        if ($name !== '' && self::isAllCaps($name)) {
-                            $this->tokens[$name] = true;
-                        }
-                    }
+            $names = array_values(array_filter(array_map(
+                $this->stripAlias(...),
+                explode('|', $part),
+            ), static fn (string $name): bool => $name !== '' && !str_starts_with($name, '%')));
+            if ($names === []) {
+                continue;
+            }
+
+            foreach ($names as $name) {
+                if (self::isAllCaps($name)) {
+                    $this->tokens[$name] = true;
+                } else {
+                    $this->nonTerminals[$name] = true;
                 }
-                continue;
             }
 
-            $name = $this->stripAlias($part);
-
-            if ($name === '' || str_starts_with($name, '%')) {
-                continue;
+            $expanded = [];
+            foreach ($alternatives as $alternative) {
+                foreach ($names as $name) {
+                    $expanded[] = [...$alternative, $name];
+                }
             }
-
-            if (self::isAllCaps($name)) {
-                $this->tokens[$name] = true;
-            } else {
-                $this->nonTerminals[$name] = true;
-            }
-
-            $symbols[] = $name;
+            $alternatives = $expanded;
         }
 
-        return $symbols;
+        return $alternatives;
     }
 
     /**

@@ -70,7 +70,7 @@ final class SqlGenerator
                 $terminals,
             ));
             try {
-                $sql = $this->lexicalGrammar->realize($terminalNames);
+                $sql = $this->lexicalGrammar->realize($terminalNames, $plan);
                 if ($sql !== '' || !$plan->requiresNonEmpty()) {
                     return $sql;
                 }
