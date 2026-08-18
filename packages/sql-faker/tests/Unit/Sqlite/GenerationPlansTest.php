@@ -16,6 +16,37 @@ use SqlFaker\Sqlite\GenerationPlans;
 #[UsesClass(ProductionPattern::class)]
 final class GenerationPlansTest extends TestCase
 {
+    public function testMultiDmlPlanDirectsBothStatementOccurrences(): void
+    {
+        $plan = GenerationPlans::multiDmlStatement(0, 2);
+
+        self::assertSame('input', $plan->startRule());
+        self::assertTrue($plan->patternAt('cmdlist', 0)?->matches(['cmdlist', 'ecmd']) ?? false);
+        self::assertTrue($plan->patternAt('cmdlist', 1)?->matches(['ecmd']) ?? false);
+        self::assertTrue($plan->patternAt('ecmd', 0)?->matches(['cmdx', 'SEMI']) ?? false);
+        self::assertTrue($plan->patternAt('ecmd', 1)?->matches(['cmdx', 'SEMI']) ?? false);
+        self::assertTrue($plan->patternAt('cmd', 0)?->matches(['insert_cmd']) ?? false);
+        self::assertTrue($plan->patternAt('cmd', 1)?->matches(['DELETE']) ?? false);
+        self::assertTrue($plan->patternAt('insert_cmd', 0)?->matches(['INSERT']) ?? false);
+        self::assertTrue($plan->patternAt('insert_cmd', 1)?->matches(['INSERT']) ?? false);
+        self::assertTrue($plan->patternAt('with', 0)?->matches([]) ?? false);
+        self::assertTrue($plan->patternAt('with', 1)?->matches([]) ?? false);
+    }
+
+    public function testMultiDmlPlanRejectsAnUnknownFirstChoice(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        GenerationPlans::multiDmlStatement(3, 0);
+    }
+
+    public function testMultiDmlPlanRejectsAnUnknownSecondChoice(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        GenerationPlans::multiDmlStatement(0, 3);
+    }
+
     public function testForeignKeyPlanRestrictsTheTableConstraintGrammar(): void
     {
         $plan = GenerationPlans::foreignKeyConstraint();

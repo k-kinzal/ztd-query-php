@@ -4,11 +4,44 @@ declare(strict_types=1);
 
 namespace SqlFaker\Sqlite;
 
+use InvalidArgumentException;
 use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\ProductionPattern;
 
 final class GenerationPlans
 {
+    /** @return GenerationPlan<true> */
+    public static function multiDmlStatement(int $firstChoice, int $secondChoice): GenerationPlan
+    {
+        $dml = [
+            ProductionPattern::containing('insert_cmd'),
+            ProductionPattern::containing('UPDATE'),
+            ProductionPattern::containing('DELETE'),
+        ];
+        $first = $dml[$firstChoice] ?? throw new InvalidArgumentException('Unknown first DML choice.');
+        $second = $dml[$secondChoice] ?? throw new InvalidArgumentException('Unknown second DML choice.');
+
+        return GenerationPlan::constrained('input', [
+            'cmdlist' => [
+                ProductionPattern::exactly('cmdlist', 'ecmd'),
+                ProductionPattern::exactly('ecmd'),
+            ],
+            'ecmd' => [
+                ProductionPattern::exactly('cmdx', 'SEMI'),
+                ProductionPattern::exactly('cmdx', 'SEMI'),
+            ],
+            'cmd' => [$first, $second],
+            'insert_cmd' => [
+                ProductionPattern::containing('INSERT'),
+                ProductionPattern::containing('INSERT'),
+            ],
+            'with' => [
+                ProductionPattern::exactly(),
+                ProductionPattern::exactly(),
+            ],
+        ])->requiringNonEmpty();
+    }
+
     /** @return GenerationPlan<true> */
     public static function insertFunctionUpsertStatement(): GenerationPlan
     {

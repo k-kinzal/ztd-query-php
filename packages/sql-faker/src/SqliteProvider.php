@@ -272,7 +272,12 @@ final class SqliteProvider extends Base
     /** @return non-empty-string */
     public function multiDmlStatement(int $maxDepth = 40): string
     {
-        return $this->sql->generateMultiDmlStatement($maxDepth);
+        $plan = GenerationPlans::multiDmlStatement(
+            $this->generator->numberBetween(0, 2),
+            $this->generator->numberBetween(0, 2),
+        );
+
+        return $this->sql->generate($plan->withMaxDepth($maxDepth));
     }
 
     /** @return non-empty-string */

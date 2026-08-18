@@ -78,56 +78,73 @@ final class SqliteProviderTest extends TestCase
         self::assertContains('UPDATE', $tokens);
     }
 
-    public function testMultiDmlStatementGeneratesExecutableBatch(): void
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testMultiDmlStatementDerivesTwoStatementBatchFromGrammar(int $seed): void
     {
-        $minimum = new class () extends Generator {
-            /**
-             * @param mixed $int1
-             * @param mixed $int2
-             */
-            #[\Override]
-            public function numberBetween($int1 = 0, $int2 = 2147483647): int
-            {
-                return $int1 === 100 && $int2 === 999 ? 100 : 0;
-            }
-        };
-        $middle = new class () extends Generator {
-            /**
-             * @param mixed $int1
-             * @param mixed $int2
-             */
-            #[\Override]
-            public function numberBetween($int1 = 0, $int2 = 2147483647): int
-            {
-                return $int1 === 100 && $int2 === 999 ? 500 : 1;
-            }
-        };
-        $maximum = new class () extends Generator {
-            /**
-             * @param mixed $int1
-             * @param mixed $int2
-             */
-            #[\Override]
-            public function numberBetween($int1 = 0, $int2 = 2147483647): int
-            {
-                return $int1 === 100 && $int2 === 999 ? 999 : 2;
-            }
-        };
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new SqliteProvider($faker);
+        $sql = $provider->multiDmlStatement();
+        $faker->seed($seed);
+        $tokens = (new LexicalGrammar($faker, 'sqlite-3.47.2', true))->tokenize($sql);
+        $separator = array_search('SEMI', $tokens, true);
 
-        self::assertSame(
-            "INSERT INTO users (id, name, email) VALUES (100, 'batch-a', 'a@example.com'); "
-                . "INSERT INTO users (id, name, email) VALUES (101, 'batch-b', 'b@example.com')",
-            (new SqliteProvider($minimum))->multiDmlStatement(),
-        );
-        self::assertSame(
-            "INSERT INTO users (id, name, email) VALUES (500, 'before', 'before@example.com'); "
-                . "UPDATE users SET name = 'after' WHERE id = 500",
-            (new SqliteProvider($middle))->multiDmlStatement(),
-        );
-        self::assertSame(
-            'DELETE FROM users WHERE id = 999; DELETE FROM users WHERE id = 1000',
-            (new SqliteProvider($maximum))->multiDmlStatement(),
-        );
+        self::assertSame($sql, $provider->multiDmlStatement(40));
+        self::assertIsInt($separator);
+        self::assertContains($tokens[0], ['INSERT', 'UPDATE', 'DELETE']);
+        self::assertContains($tokens[$separator + 1], ['INSERT', 'UPDATE', 'DELETE']);
+        self::assertSame(2, count(array_filter($tokens, static fn (string $token): bool => $token === 'SEMI')));
+    }
+
+    #[DataProvider('providerMultiDmlSelection')]
+    public function testMultiDmlStatementCanSelectEveryDmlFamily(
+        int $firstChoice,
+        int $secondChoice,
+        string $first,
+        string $second,
+    ): void {
+        $generator = new class ([$firstChoice, $secondChoice]) extends Generator {
+            /** @var list<int> */
+            private readonly array $choices;
+            private int $call = 0;
+
+            /** @param list<int> $choices */
+            public function __construct(array $choices)
+            {
+                parent::__construct();
+                $this->choices = $choices;
+            }
+
+            /**
+             * @param mixed $min
+             * @param mixed $max
+             */
+            #[\Override]
+            public function numberBetween($min = 0, $max = 2147483647): int
+            {
+                if ($this->call < count($this->choices)) {
+                    $choice = $this->choices[$this->call];
+                    ++$this->call;
+                    if ($min !== 0 || $max !== 2 || $choice < $min || $choice > $max) {
+                        throw new \UnexpectedValueException();
+                    }
+
+                    return $choice;
+                }
+                if (!is_int($min)) {
+                    throw new \UnexpectedValueException();
+                }
+
+                return $min;
+            }
+        };
+        $sql = (new SqliteProvider($generator))->multiDmlStatement();
+        $tokens = (new LexicalGrammar(Factory::create(), 'sqlite-3.47.2', true))->tokenize($sql);
+        $separator = array_search('SEMI', $tokens, true);
+
+        self::assertIsInt($separator);
+        self::assertSame($first, $tokens[0]);
+        self::assertSame($second, $tokens[$separator + 1]);
     }
 
     #[DataProvider('providerTargetedGenerationSeed')]
@@ -793,6 +810,16 @@ final class SqliteProviderTest extends TestCase
         foreach (range(0, 31) as $seed) {
             yield "seed {$seed}" => [$seed];
         }
+    }
+
+    /**
+     * @return iterable<string, array{int, int, string, string}>
+     */
+    public static function providerMultiDmlSelection(): iterable
+    {
+        yield 'insert' => [0, 0, 'INSERT', 'INSERT'];
+        yield 'update' => [1, 1, 'UPDATE', 'UPDATE'];
+        yield 'delete' => [2, 2, 'DELETE', 'DELETE'];
     }
 
     /**
