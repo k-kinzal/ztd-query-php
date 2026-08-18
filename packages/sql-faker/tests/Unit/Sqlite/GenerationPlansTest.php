@@ -30,4 +30,13 @@ final class GenerationPlansTest extends TestCase
         self::assertTrue($plan->patternAt('tconscomma', 0)?->matches([]) ?? false);
         self::assertTrue($plan->patternAt('eidlist_opt', 0)?->matches(['column']) ?? false);
     }
+
+    public function testFunctionUpsertPlanRestrictsTheConflictFunctionGrammar(): void
+    {
+        $plan = GenerationPlans::insertFunctionUpsertStatement();
+
+        self::assertSame('cmd', $plan->startRule());
+        self::assertNotNull($plan->patternAt('upsert', 0));
+        self::assertNotNull($plan->patternAt('expr', 1));
+    }
 }

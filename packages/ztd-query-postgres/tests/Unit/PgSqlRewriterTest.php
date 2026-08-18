@@ -60,6 +60,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(PgSqlIdentifierQuoter::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlValueRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlNativeUpsertProjector::class)]
 final class PgSqlRewriterTest extends RewriterContractTest
 {
     public function testRegisteredTableUpsertProjectsConflictExpression(): void

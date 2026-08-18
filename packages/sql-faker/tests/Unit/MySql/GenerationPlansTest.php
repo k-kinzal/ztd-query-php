@@ -167,4 +167,14 @@ final class GenerationPlansTest extends TestCase
         self::assertTrue($plan->patternAt('opt_values_reference', 0)?->matches(['alias']) ?? false);
         self::assertTrue($plan->patternAt('opt_insert_update_list', 0)?->matches(['update']) ?? false);
     }
+
+    public function testFunctionUpsertPlanRestrictsTheConflictFunctionGrammar(): void
+    {
+        $plan = GenerationPlans::insertFunctionUpsertStatement();
+
+        self::assertSame('insert_stmt', $plan->startRule());
+        self::assertNotNull($plan->patternAt('values_list', 0));
+        self::assertNotNull($plan->patternAt('simple_expr', 0));
+        self::assertNotNull($plan->patternAt('function_call_conflict', 0));
+    }
 }

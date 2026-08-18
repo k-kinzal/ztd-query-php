@@ -123,6 +123,25 @@ final class GenerationPlans
     }
 
     /** @return GenerationPlan<true> */
+    public static function insertFunctionUpsertStatement(): GenerationPlan
+    {
+        return GenerationPlan::constrained('insert_stmt', [
+            'insert_stmt' => [ProductionPattern::containing('insert_from_constructor')],
+            'insert_from_constructor' => [ProductionPattern::containing('insert_values')],
+            'values_list' => [ProductionPattern::exactly('row_value')],
+            'opt_values' => [ProductionPattern::exactly('values')],
+            'values' => [ProductionPattern::exactly('expr_or_default')],
+            'expr_or_default' => [
+                ProductionPattern::exactly('DEFAULT_SYM'),
+                ProductionPattern::exactly('expr'),
+            ],
+            'opt_insert_update_list' => [ProductionPattern::nonEmpty()],
+            'simple_expr' => [ProductionPattern::exactly('function_call_conflict')],
+            'function_call_conflict' => [ProductionPattern::containing('IF')],
+        ])->requiringNonEmpty();
+    }
+
+    /** @return GenerationPlan<true> */
     public static function multiTableDeleteStatement(): GenerationPlan
     {
         return GenerationPlan::constrained('delete_stmt', [

@@ -51,6 +51,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(SqliteTransformer::class)]
 #[UsesClass(UpdateTransformer::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteNativeUpsertProjector::class)]
 final class SqliteSessionFactoryTest extends TestCase
 {
     public function testCreateReturnsSession(): void

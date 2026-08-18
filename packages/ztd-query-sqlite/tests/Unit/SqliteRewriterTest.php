@@ -64,6 +64,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(SqliteIdentifierQuoter::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteValueRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteNativeUpsertProjector::class)]
 final class SqliteRewriterTest extends RewriterContractTest
 {
     public function testCteReferencesAreMatchedCaseInsensitivelyDuringSchemaValidation(): void

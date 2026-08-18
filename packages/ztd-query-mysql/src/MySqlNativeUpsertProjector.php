@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Rewrite;
+namespace ZtdQuery\Platform\MySql;
 
 use ZtdQuery\Platform\IdentifierQuoter;
 use ZtdQuery\Shadow\Mutation\UpsertMutationRow;
@@ -11,18 +11,24 @@ use ZtdQuery\Sql\SqlTokenDialect;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
-final class NativeUpsertProjector
+final class MySqlNativeUpsertProjector
 {
     private const INCOMING_ALIAS = '__ztd_incoming';
 
     private const EXISTING_ALIAS = '__ztd_existing';
 
-    /** @param non-empty-list<string> $incomingNamespaces */
-    public function __construct(
-        private readonly IdentifierQuoter $quoter,
-        private readonly SqlTokenDialect $dialect,
-        private readonly array $incomingNamespaces,
-    ) {
+    private readonly IdentifierQuoter $quoter;
+
+    private readonly SqlTokenDialect $dialect;
+
+    /** @var non-empty-list<string> */
+    private readonly array $incomingNamespaces;
+
+    public function __construct()
+    {
+        $this->quoter = new MySqlIdentifierQuoter();
+        $this->dialect = SqlTokenDialect::MySql;
+        $this->incomingNamespaces = ['VALUES'];
     }
 
     /**

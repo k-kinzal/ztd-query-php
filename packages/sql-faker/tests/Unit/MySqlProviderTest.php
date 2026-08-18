@@ -70,15 +70,29 @@ final class MySqlProviderTest extends TestCase
         self::assertNotSame('', $identifier);
     }
 
-    public function testInsertFunctionUpsertStatementIncludesNativeConditionalAndJsonFunctions(): void
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testInsertFunctionUpsertStatementDerivesConditionalExpressionFromGrammar(int $seed): void
     {
-        $provider = new MySqlProvider(Factory::create());
-
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new MySqlProvider($faker);
         $sql = $provider->insertFunctionUpsertStatement();
+        $faker->seed($seed);
 
-        self::assertStringContainsString('ON DUPLICATE KEY UPDATE', $sql);
-        self::assertStringContainsString('IF(VALUES(', $sql);
-        self::assertStringContainsString('JSON_SET(', $sql);
+        $tokens = (new LexicalGrammar($faker, 'mysql-8.4.7', true))
+            ->tokenize($sql);
+        $valueTokens = array_intersect($tokens, ['VALUE_SYM', 'VALUES']);
+        $values = array_key_first($valueTokens);
+        $update = array_search('UPDATE_SYM', $tokens, true);
+        $conditional = array_search('IF', $tokens, true);
+
+        self::assertSame($sql, $provider->insertFunctionUpsertStatement(40));
+        self::assertIsInt($values);
+        self::assertIsInt($update);
+        self::assertIsInt($conditional);
+        self::assertLessThan($update, $values);
+        self::assertGreaterThan($update, $conditional);
+        self::assertContains('DUPLICATE_SYM', $tokens);
     }
 
     public function testSql(): void
@@ -1118,7 +1132,7 @@ final class MySqlProviderTest extends TestCase
      */
     public static function providerMultiTableGenerationSeed(): iterable
     {
-        foreach (range(0, 15) as $seed) {
+        foreach (range(0, 31) as $seed) {
             yield "seed {$seed}" => [$seed];
         }
     }

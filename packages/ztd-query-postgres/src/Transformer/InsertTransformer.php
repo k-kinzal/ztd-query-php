@@ -7,15 +7,14 @@ namespace ZtdQuery\Platform\Postgres\Transformer;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
+use ZtdQuery\Platform\Postgres\PgSqlNativeUpsertProjector;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
 use ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer;
 use ZtdQuery\Rewrite\ShadowIdentityAllocator;
-use ZtdQuery\Rewrite\NativeUpsertProjector;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Sql\SqlTokenStream;
-use ZtdQuery\Sql\SqlTokenDialect;
 
 /**
  * Transforms INSERT statements into SELECT queries that return the inserted rows.
@@ -30,7 +29,7 @@ final class InsertTransformer implements SqlTransformer
     private ShadowIdentityAllocator $identityAllocator;
     private InsertSelectRenderer $insertSelectRenderer;
     private PgSqlCteShadowComposer $cteComposer;
-    private NativeUpsertProjector $upsertProjector;
+    private PgSqlNativeUpsertProjector $upsertProjector;
 
     public function __construct(
         PgSqlParser $parser,
@@ -44,11 +43,7 @@ final class InsertTransformer implements SqlTransformer
         $this->identityAllocator = new ShadowIdentityAllocator();
         $this->insertSelectRenderer = new InsertSelectRenderer();
         $this->cteComposer = new PgSqlCteShadowComposer();
-        $this->upsertProjector = new NativeUpsertProjector(
-            new PgSqlIdentifierQuoter(),
-            SqlTokenDialect::Standard,
-            ['EXCLUDED'],
-        );
+        $this->upsertProjector = new PgSqlNativeUpsertProjector();
     }
 
     /**

@@ -25,4 +25,14 @@ final class GenerationPlansTest extends TestCase
         self::assertTrue($plan->patternAt('ConstraintElem', 0)?->matches(['FOREIGN', 'KEY']) ?? false);
         self::assertTrue($plan->patternAt('opt_column_list', 0)?->matches(['column']) ?? false);
     }
+
+    public function testFunctionUpsertPlanRestrictsTheConflictFunctionGrammar(): void
+    {
+        $plan = GenerationPlans::insertFunctionUpsertStatement();
+
+        self::assertSame('InsertStmt', $plan->startRule());
+        self::assertNotNull($plan->patternAt('opt_on_conflict', 0));
+        self::assertNotNull($plan->patternAt('c_expr', 1));
+        self::assertNotNull($plan->patternAt('func_expr', 0));
+    }
 }

@@ -701,13 +701,10 @@ final class MySqlProvider extends Base
         );
     }
     /** @return non-empty-string */
-    public function insertFunctionUpsertStatement(): string
+    public function insertFunctionUpsertStatement(int $maxDepth = 40): string
     {
-        $table = $this->rsg->rawIdentifier();
-        $keyColumn = $this->rsg->rawIdentifier();
-        $valueColumn = $this->rsg->rawIdentifier();
-        $versionColumn = $this->rsg->rawIdentifier();
-
-        return "INSERT INTO $table ($keyColumn, $valueColumn, $versionColumn) VALUES (1, '{}', 2) ON DUPLICATE KEY UPDATE $valueColumn = IF(VALUES($versionColumn) > $versionColumn, JSON_SET($valueColumn, '$.version', VALUES($versionColumn)), $valueColumn)";
+        return $this->sql->generate(
+            GenerationPlans::insertFunctionUpsertStatement()->withMaxDepth($maxDepth),
+        );
     }
 }

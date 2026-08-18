@@ -42,6 +42,7 @@ use ZtdQuery\Session;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlTypeSemantics::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlNativeUpsertProjector::class)]
 final class MySqlSessionFactoryTest extends TestCase
 {
     public function testCreateReturnsSession(): void

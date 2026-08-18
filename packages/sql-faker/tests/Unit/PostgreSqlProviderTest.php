@@ -52,14 +52,30 @@ use SqlFaker\Grammar\TerminalInventory;
 #[Medium]
 final class PostgreSqlProviderTest extends TestCase
 {
-    public function testInsertFunctionUpsertStatementIncludesNativeJsonFunction(): void
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testInsertFunctionUpsertStatementDerivesFunctionExpressionFromGrammar(int $seed): void
     {
-        $provider = new PostgreSqlProvider(Factory::create());
-
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new PostgreSqlProvider($faker);
         $sql = $provider->insertFunctionUpsertStatement();
+        $faker->seed($seed);
 
-        self::assertStringContainsString('ON CONFLICT', $sql);
-        self::assertStringContainsString('jsonb_set(', $sql);
+        $tokens = (new LexicalGrammar($faker, 'pg-17.2', true))
+            ->tokenize($sql);
+        $values = array_search('VALUES', $tokens, true);
+        $conflict = array_search('CONFLICT', $tokens, true);
+        $set = array_search('SET', $tokens, true);
+        $functionOpen = array_search('(', array_slice($tokens, (int) $set, null, true), true);
+
+        self::assertSame($sql, $provider->insertFunctionUpsertStatement(40));
+        self::assertIsInt($values);
+        self::assertIsInt($conflict);
+        self::assertIsInt($set);
+        self::assertIsInt($functionOpen);
+        self::assertLessThan($conflict, $values);
+        self::assertGreaterThan($set, $functionOpen);
+        self::assertContains('UPDATE', $tokens);
     }
 
     #[\Override]
@@ -815,6 +831,16 @@ final class PostgreSqlProviderTest extends TestCase
     {
         yield 'PHP 8.1 and 8.2 random mode' => [252];
         yield 'PHP 8.3 and later random mode' => [68];
+    }
+
+    /**
+     * @return iterable<string, array{int}>
+     */
+    public static function providerTargetedGenerationSeed(): iterable
+    {
+        foreach (range(0, 31) as $seed) {
+            yield "seed {$seed}" => [$seed];
+        }
     }
 
     /**

@@ -50,14 +50,31 @@ use SqlFaker\Grammar\TerminalInventory;
 #[UsesClass(GenerationPlans::class)]
 final class SqliteProviderTest extends TestCase
 {
-    public function testInsertFunctionUpsertStatementIncludesNativeJsonFunction(): void
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testInsertFunctionUpsertStatementDerivesFunctionExpressionFromGrammar(int $seed): void
     {
-        $provider = new SqliteProvider(Factory::create());
-
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new SqliteProvider($faker);
         $sql = $provider->insertFunctionUpsertStatement();
+        $faker->seed($seed);
 
-        self::assertStringContainsString('ON CONFLICT', $sql);
-        self::assertStringContainsString('json_set(', $sql);
+        $tokens = (new LexicalGrammar($faker, 'sqlite-3.47.2', true))
+            ->tokenize($sql);
+        $values = array_search('VALUES', $tokens, true);
+        $conflict = array_search('CONFLICT', $tokens, true);
+        $set = array_search('SET', $tokens, true);
+        $functionOpen = array_search('LP', array_slice($tokens, (int) $set, null, true), true);
+
+        self::assertSame($sql, $provider->insertFunctionUpsertStatement(40));
+        self::assertSame('INSERT', $tokens[0]);
+        self::assertIsInt($values);
+        self::assertIsInt($conflict);
+        self::assertIsInt($set);
+        self::assertIsInt($functionOpen);
+        self::assertLessThan($conflict, $values);
+        self::assertGreaterThan($set, $functionOpen);
+        self::assertContains('UPDATE', $tokens);
     }
 
     #[\Override]
@@ -643,6 +660,16 @@ final class SqliteProviderTest extends TestCase
         $sql = $provider->createTableStatement(maxDepth: 6);
 
         self::assertStringContainsString('TABLE', $sql, "CREATE TABLE must contain TABLE: {$sql}");
+    }
+
+    /**
+     * @return iterable<string, array{int}>
+     */
+    public static function providerTargetedGenerationSeed(): iterable
+    {
+        foreach (range(0, 31) as $seed) {
+            yield "seed {$seed}" => [$seed];
+        }
     }
 
     /**

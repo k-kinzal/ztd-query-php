@@ -257,13 +257,11 @@ final class SqliteProvider extends Base
     }
 
     /** @return non-empty-string */
-    public function insertFunctionUpsertStatement(): string
+    public function insertFunctionUpsertStatement(int $maxDepth = 40): string
     {
-        $table = $this->rsg->rawIdentifier();
-        $keyColumn = $this->rsg->rawIdentifier();
-        $valueColumn = $this->rsg->rawIdentifier();
-
-        return "INSERT INTO $table ($keyColumn, $valueColumn) VALUES (1, '{}') ON CONFLICT ($keyColumn) DO UPDATE SET $valueColumn = json_set($table.$valueColumn, '$.status', 'updated')";
+        return $this->sql->generate(
+            GenerationPlans::insertFunctionUpsertStatement()->withMaxDepth($maxDepth),
+        );
     }
 
     private function generate(string $startRule, int $maxDepth): string
