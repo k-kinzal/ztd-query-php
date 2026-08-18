@@ -428,7 +428,9 @@ final class PostgreSqlProvider extends Base
     /** @return non-empty-string */
     public function partialIndexUpsertStatement(int $maxDepth = 40): string
     {
-        return $this->sql->generatePartialIndexUpsertStatement($maxDepth);
+        return $this->sql->generate(
+            GenerationPlans::partialIndexUpsertStatement()->withMaxDepth($maxDepth),
+        );
     }
 
     /** @return non-empty-string */

@@ -172,4 +172,13 @@ final class GenerationPlansTest extends TestCase
 
         self::assertSame('CopyStmt', $plan->startRule());
     }
+
+    public function testPartialIndexUpsertPlanRequiresAConflictPredicate(): void
+    {
+        $plan = GenerationPlans::partialIndexUpsertStatement();
+
+        self::assertSame('InsertStmt', $plan->startRule());
+        self::assertNotNull($plan->patternAt('opt_conf_expr', 0));
+        self::assertNotNull($plan->patternAt('where_clause', 0));
+    }
 }

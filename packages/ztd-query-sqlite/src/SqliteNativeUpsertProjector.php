@@ -111,8 +111,12 @@ final class SqliteNativeUpsertProjector
     }
 
     /** @param list<string> $tableColumns */
-    private function bindExpression(string $expression, string $tableName, array $tableColumns): string
-    {
+    private function bindExpression(
+        string $expression,
+        string $tableName,
+        array $tableColumns,
+        string $unqualifiedAlias = self::EXISTING_ALIAS,
+    ): string {
         $tokens = SqlTokenStream::tokenize($expression, $this->dialect)->significantTokens();
         $subqueryTokens = $this->subqueryTokenIndexes($tokens);
         $replacements = [];
@@ -150,7 +154,7 @@ final class SqliteNativeUpsertProjector
             $replacements[] = [
                 'offset' => $token->offset,
                 'length' => strlen($token->text),
-                'value' => $this->qualified(self::EXISTING_ALIAS, $name),
+                'value' => $this->qualified($unqualifiedAlias, $name),
             ];
         }
 

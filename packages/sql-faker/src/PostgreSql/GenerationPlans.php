@@ -145,6 +145,19 @@ final class GenerationPlans
     }
 
     /** @return GenerationPlan<true> */
+    public static function partialIndexUpsertStatement(): GenerationPlan
+    {
+        return GenerationPlan::constrained('InsertStmt', [
+            'opt_with_clause' => [ProductionPattern::exactly()],
+            'qualified_name' => [ProductionPattern::exactly('ColId')],
+            'insert_rest' => [ProductionPattern::exactly('DEFAULT', 'VALUES')],
+            'opt_on_conflict' => [ProductionPattern::containing('DO', 'UPDATE')],
+            'opt_conf_expr' => [ProductionPattern::containing('index_params', 'where_clause')],
+            'where_clause' => [ProductionPattern::nonEmpty()],
+        ])->requiringNonEmpty();
+    }
+
+    /** @return GenerationPlan<true> */
     public static function foreignKeyConstraint(): GenerationPlan
     {
         return GenerationPlan::constrained('TableConstraint', [

@@ -96,13 +96,26 @@ final class PostgreSqlProviderTest extends TestCase
         self::assertContains('UPDATE', $tokens);
     }
 
-    public function testPartialIndexUpsertStatementIncludesArbiterPredicate(): void
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testPartialIndexUpsertStatementIncludesArbiterPredicate(int $seed): void
     {
-        $sql = (new PostgreSqlProvider(Factory::create()))->partialIndexUpsertStatement();
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new PostgreSqlProvider($faker);
+        $sql = $provider->partialIndexUpsertStatement();
+        $faker->seed($seed);
+        $tokens = (new LexicalGrammar($faker, 'pg-17.2', true))
+            ->tokenize($sql);
 
-        self::assertStringStartsWith('INSERT INTO users ', $sql);
-        self::assertStringContainsString("ON CONFLICT (email) WHERE status = 'active'", $sql);
-        self::assertStringEndsWith('DO UPDATE SET name = EXCLUDED.name', $sql);
+        self::assertSame($sql, $provider->partialIndexUpsertStatement(40));
+        $conflict = array_search('CONFLICT', $tokens, true);
+        $where = array_search('WHERE', $tokens, true);
+        $update = array_search('UPDATE', $tokens, true);
+        self::assertIsInt($conflict);
+        self::assertIsInt($where);
+        self::assertIsInt($update);
+        self::assertGreaterThan($conflict, $where);
+        self::assertGreaterThan($where, $update);
     }
 
     #[DataProvider('providerTargetedGenerationSeed')]
