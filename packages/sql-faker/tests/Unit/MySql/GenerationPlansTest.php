@@ -153,4 +153,14 @@ final class GenerationPlansTest extends TestCase
         self::assertTrue($plan->patternAt('query_primary', 0)?->matches(['query_specification']) ?? false);
         self::assertTrue($plan->patternAt('union_option', 0)?->matches(['ALL']) ?? false);
     }
+
+    public function testRowAliasUpsertPlanRestrictsTheValuesGrammar(): void
+    {
+        $plan = GenerationPlans::insertRowAliasUpsertStatement();
+
+        self::assertSame('insert_stmt', $plan->startRule());
+        self::assertNotNull($plan->patternAt('insert_from_constructor', 0));
+        self::assertNotNull($plan->patternAt('opt_values_reference', 0));
+        self::assertNotNull($plan->patternAt('opt_insert_update_list', 0));
+    }
 }

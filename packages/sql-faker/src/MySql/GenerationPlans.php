@@ -111,6 +111,18 @@ final class GenerationPlans
     }
 
     /** @return GenerationPlan<true> */
+    public static function insertRowAliasUpsertStatement(): GenerationPlan
+    {
+        return GenerationPlan::constrained('insert_stmt', [
+            'insert_stmt' => [ProductionPattern::containing('insert_from_constructor')],
+            'insert_from_constructor' => [ProductionPattern::containing('insert_values')],
+            'value_or_values' => [ProductionPattern::exactly('VALUES')],
+            'opt_values_reference' => [ProductionPattern::nonEmpty()],
+            'opt_insert_update_list' => [ProductionPattern::nonEmpty()],
+        ])->requiringNonEmpty();
+    }
+
+    /** @return GenerationPlan<true> */
     public static function multiTableDeleteStatement(): GenerationPlan
     {
         return GenerationPlan::constrained('delete_stmt', [

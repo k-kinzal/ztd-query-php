@@ -694,13 +694,10 @@ final class MySqlProvider extends Base
      *
      * @return non-empty-string
      */
-    public function insertRowAliasUpsertStatement(): string
+    public function insertRowAliasUpsertStatement(int $maxDepth = 40): string
     {
-        $table = $this->rsg->rawIdentifier();
-        $keyColumn = $this->rsg->rawIdentifier();
-        $valueColumn = $this->rsg->rawIdentifier();
-        $rowAlias = $this->rsg->rawIdentifier();
-
-        return "INSERT INTO $table ($keyColumn, $valueColumn) VALUES (1, 2) AS $rowAlias ON DUPLICATE KEY UPDATE $valueColumn = $rowAlias.$valueColumn";
+        return $this->sql->generate(
+            GenerationPlans::insertRowAliasUpsertStatement()->withMaxDepth($maxDepth),
+        );
     }
 }

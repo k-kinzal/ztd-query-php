@@ -568,14 +568,18 @@ final class MySqlProviderTest extends TestCase
         );
     }
 
-    public function testInsertRowAliasUpsertStatement(): void
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testInsertRowAliasUpsertStatement(int $seed): void
     {
         $faker = Factory::create();
-        $faker->seed(12345);
+        $faker->seed($seed);
         $provider = new MySqlProvider($faker);
+        $sql = $provider->insertRowAliasUpsertStatement();
+        $faker->seed($seed);
 
-        $tokens = (new LexicalGrammar($faker, 'mysql-8.4.7', true))->tokenize($provider->insertRowAliasUpsertStatement());
+        $tokens = (new LexicalGrammar($faker, 'mysql-8.4.7', true))->tokenize($sql);
 
+        self::assertSame($sql, $provider->insertRowAliasUpsertStatement(40));
         self::assertSame('INSERT_SYM', $tokens[0]);
         self::assertContains('VALUES', $tokens);
         self::assertContains('AS', $tokens);
