@@ -682,13 +682,10 @@ final class MySqlProvider extends Base
      *
      * @return non-empty-string
      */
-    public function insertSelectCompoundStatement(): string
+    public function insertSelectCompoundStatement(int $maxDepth = 40): string
     {
-        $target = $this->rsg->rawIdentifier();
-        $left = $this->rsg->rawIdentifier();
-        $right = $this->rsg->rawIdentifier();
-        $column = $this->rsg->rawIdentifier();
-
-        return "INSERT INTO $target ($column) SELECT $column FROM $left UNION ALL SELECT $column FROM $right";
+        return $this->sql->generate(
+            GenerationPlans::insertSelectCompoundStatement()->withMaxDepth($maxDepth),
+        );
     }
 }

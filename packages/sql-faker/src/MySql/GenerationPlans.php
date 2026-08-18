@@ -94,6 +94,23 @@ final class GenerationPlans
     }
 
     /** @return GenerationPlan<true> */
+    public static function insertSelectCompoundStatement(): GenerationPlan
+    {
+        return GenerationPlan::constrained('insert_stmt', [
+            'insert_stmt' => [ProductionPattern::containing('insert_query_expression')],
+            'query_expression_body' => [
+                ProductionPattern::containing('UNION_SYM'),
+                ProductionPattern::exactly('query_primary'),
+                ProductionPattern::exactly('query_primary'),
+            ],
+            'query_primary' => [
+                ProductionPattern::exactly('query_specification'),
+            ],
+            'union_option' => [ProductionPattern::exactly('ALL')],
+        ])->requiringNonEmpty();
+    }
+
+    /** @return GenerationPlan<true> */
     public static function multiTableDeleteStatement(): GenerationPlan
     {
         return GenerationPlan::constrained('delete_stmt', [

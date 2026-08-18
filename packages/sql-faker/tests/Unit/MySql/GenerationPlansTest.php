@@ -140,4 +140,17 @@ final class GenerationPlansTest extends TestCase
         self::assertTrue($plan->patternAt('opt_from_clause', 0)?->matches(['table_reference_list']) ?? false);
         self::assertTrue($plan->patternAt('opt_group_clause', 0)?->matches(['GROUP_SYM']) ?? false);
     }
+
+    public function testCompoundInsertPlanRestrictsTheUnionGrammar(): void
+    {
+        $plan = GenerationPlans::insertSelectCompoundStatement();
+
+        self::assertSame('insert_stmt', $plan->startRule());
+        self::assertTrue($plan->patternAt('insert_stmt', 0)?->matches(['insert_query_expression']) ?? false);
+        self::assertTrue($plan->patternAt('query_expression_body', 0)?->matches(['UNION_SYM']) ?? false);
+        self::assertTrue($plan->patternAt('query_expression_body', 1)?->matches(['query_primary']) ?? false);
+        self::assertTrue($plan->patternAt('query_expression_body', 2)?->matches(['query_primary']) ?? false);
+        self::assertTrue($plan->patternAt('query_primary', 0)?->matches(['query_specification']) ?? false);
+        self::assertTrue($plan->patternAt('union_option', 0)?->matches(['ALL']) ?? false);
+    }
 }
