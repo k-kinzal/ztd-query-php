@@ -28,7 +28,6 @@ use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\ProductionPattern;
 use SqlFaker\Grammar\SqlVersion;
 use SqlFaker\MySql\Grammar\TerminalInventory;
-use SqlFaker\MySql\GenerationPlans;
 
 #[CoversClass(MySqlProvider::class)]
 #[CoversClass(TokenJoiner::class)]
@@ -48,7 +47,6 @@ use SqlFaker\MySql\GenerationPlans;
 #[UsesClass(ProductionPattern::class)]
 #[UsesClass(SqlVersion::class)]
 #[UsesClass(TerminalInventory::class)]
-#[UsesClass(GenerationPlans::class)]
 #[Medium]
 final class MySqlProviderTest extends TestCase
 {

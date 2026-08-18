@@ -21,7 +21,8 @@ final class GenerationPlansTest extends TestCase
         $plan = GenerationPlans::foreignKeyConstraint();
 
         self::assertSame('TableConstraint', $plan->startRule());
-        self::assertNotNull($plan->patternAt('TableConstraint', 0));
-        self::assertNotNull($plan->patternAt('ConstraintElem', 0));
+        self::assertTrue($plan->patternAt('TableConstraint', 0)?->matches(['CONSTRAINT']) ?? false);
+        self::assertTrue($plan->patternAt('ConstraintElem', 0)?->matches(['FOREIGN', 'KEY']) ?? false);
+        self::assertTrue($plan->patternAt('opt_column_list', 0)?->matches(['column']) ?? false);
     }
 }

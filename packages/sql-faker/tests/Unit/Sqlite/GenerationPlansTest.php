@@ -21,7 +21,13 @@ final class GenerationPlansTest extends TestCase
         $plan = GenerationPlans::foreignKeyConstraint();
 
         self::assertSame('conslist', $plan->startRule());
-        self::assertNotNull($plan->patternAt('conslist', 0));
-        self::assertNotNull($plan->patternAt('tcons', 1));
+        self::assertTrue(
+            $plan->patternAt('conslist', 0)?->matches(['conslist', 'tconscomma', 'tcons']) ?? false,
+        );
+        self::assertTrue($plan->patternAt('conslist', 1)?->matches(['tcons']) ?? false);
+        self::assertTrue($plan->patternAt('tcons', 0)?->matches(['CONSTRAINT']) ?? false);
+        self::assertTrue($plan->patternAt('tcons', 1)?->matches(['FOREIGN', 'KEY']) ?? false);
+        self::assertTrue($plan->patternAt('tconscomma', 0)?->matches([]) ?? false);
+        self::assertTrue($plan->patternAt('eidlist_opt', 0)?->matches(['column']) ?? false);
     }
 }

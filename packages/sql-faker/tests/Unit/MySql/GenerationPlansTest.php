@@ -110,8 +110,16 @@ final class GenerationPlansTest extends TestCase
         $legacy = GenerationPlans::foreignKeyConstraint($legacyGrammar);
 
         self::assertSame('table_constraint_def', $modern->startRule());
-        self::assertNotNull($modern->patternAt('opt_constraint_name', 0));
+        self::assertTrue(
+            $modern->patternAt('table_constraint_def', 0)?->matches(['FOREIGN', 'KEY_SYM']) ?? false,
+        );
+        self::assertTrue($modern->patternAt('opt_constraint_name', 0)?->matches(['CONSTRAINT']) ?? false);
+        self::assertTrue($modern->patternAt('opt_ident', 0)?->matches(['ident']) ?? false);
+        self::assertTrue($modern->patternAt('opt_ref_list', 0)?->matches(['reference']) ?? false);
         self::assertSame('key_def', $legacy->startRule());
-        self::assertNotNull($legacy->patternAt('opt_constraint', 0));
+        self::assertTrue($legacy->patternAt('key_def', 0)?->matches(['FOREIGN', 'KEY_SYM']) ?? false);
+        self::assertTrue($legacy->patternAt('opt_constraint', 0)?->matches(['constraint']) ?? false);
+        self::assertTrue($legacy->patternAt('opt_ident', 0)?->matches(['ident']) ?? false);
+        self::assertTrue($legacy->patternAt('opt_ref_list', 0)?->matches(['reference']) ?? false);
     }
 }

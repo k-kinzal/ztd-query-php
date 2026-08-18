@@ -14,7 +14,6 @@ use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\Terminal;
 use SqlFaker\Grammar\TerminationAnalyzer;
-use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\ProductionPattern;
 use SqlFaker\Sqlite\LexicalGrammar;
 use SqlFaker\Sqlite\Grammar\SqliteGrammar;
@@ -45,7 +44,6 @@ use SqlFaker\Grammar\TerminalInventory;
 #[CoversClass(LexicalGrammar::class)]
 #[UsesClass(GenerationPlan::class)]
 #[UsesClass(LexicalCatalog::class)]
-#[UsesClass(GenerationPlan::class)]
 #[UsesClass(ProductionPattern::class)]
 #[UsesClass(SqlVersion::class)]
 #[UsesClass(TerminalInventory::class)]
@@ -319,17 +317,27 @@ final class SqliteProviderTest extends TestCase
 
         $result = $provider->foreignKeyConstraint(1);
 
-        self::assertSame(
-            ['CONSTRAINT', 'ID', 'FOREIGN', 'KEY', 'LP', 'ID', 'RP', 'REFERENCES', 'ID', 'LP', 'ID', 'RP'],
+        $tokens = array_map(
+            static fn (string $token): string => in_array($token, ['ID', 'STRING'], true) ? 'NAME' : $token,
             (new LexicalGrammar($faker, 'sqlite-3.47.2'))->tokenize($result),
+        );
+
+        self::assertSame(
+            ['CONSTRAINT', 'NAME', 'FOREIGN', 'KEY', 'LP', 'NAME', 'RP', 'REFERENCES', 'NAME', 'LP', 'NAME', 'RP'],
+            $tokens,
         );
 
         $faker->seed(2);
         $result = $provider->foreignKeyConstraint(20);
 
+        $tokens = array_map(
+            static fn (string $token): string => in_array($token, ['ID', 'STRING'], true) ? 'NAME' : $token,
+            (new LexicalGrammar($faker, 'sqlite-3.47.2'))->tokenize($result),
+        );
+
         self::assertSame(
-            ['CONSTRAINT', 'ID', 'FOREIGN', 'KEY'],
-            array_slice((new LexicalGrammar($faker, 'sqlite-3.47.2'))->tokenize($result), 0, 4),
+            ['CONSTRAINT', 'NAME', 'FOREIGN', 'KEY'],
+            array_slice($tokens, 0, 4),
         );
     }
 
