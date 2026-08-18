@@ -24,6 +24,7 @@ use SqlFaker\Grammar\TokenJoiner;
 use SqlFaker\MySql\LexicalGrammar;
 use SqlFaker\MySqlProvider;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 
 #[CoversClass(SqlGenerator::class)]
 #[CoversClass(TokenJoiner::class)]
@@ -35,6 +36,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(NonTerminal::class)]
 #[CoversClass(MySqlProvider::class)]
 #[CoversClass(TerminationAnalyzer::class)]
+#[UsesClass(GenerationPlan::class)]
 #[Medium]
 final class SqlGeneratorTest extends TestCase
 {

@@ -9,6 +9,7 @@ use Faker\Provider\Base;
 use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\Sqlite\Grammar\SqliteGrammar;
+use SqlFaker\Sqlite\GenerationPlans;
 use SqlFaker\Sqlite\SqlGenerator;
 use SqlFaker\Sqlite\StatementType;
 
@@ -201,6 +202,16 @@ final class SqliteProvider extends Base
     public function withClause(int $maxDepth = PHP_INT_MAX): string
     {
         return $this->generate('with', $maxDepth);
+    }
+
+    /**
+     * Generate a named SQLite foreign-key table constraint.
+     *
+     * @return non-empty-string
+     */
+    public function foreignKeyConstraint(int $maxDepth = PHP_INT_MAX): string
+    {
+        return $this->sql->generate(GenerationPlans::foreignKeyConstraint()->withMaxDepth($maxDepth));
     }
 
     /**

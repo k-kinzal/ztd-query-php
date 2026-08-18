@@ -9,6 +9,7 @@ use Faker\Provider\Base;
 use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\PostgreSql\Grammar\PgGrammar;
+use SqlFaker\PostgreSql\GenerationPlans;
 use SqlFaker\PostgreSql\SqlGenerator;
 use SqlFaker\PostgreSql\StatementType;
 
@@ -293,6 +294,16 @@ final class PostgreSqlProvider extends Base
     public function withClause(int $maxDepth = PHP_INT_MAX): string
     {
         return $this->generate(GenerationPlan::fromRule('with_clause')->requiringNonEmpty(), $maxDepth);
+    }
+
+    /**
+     * Generate a named PostgreSQL foreign-key table constraint.
+     *
+     * @return non-empty-string
+     */
+    public function foreignKeyConstraint(int $maxDepth = PHP_INT_MAX): string
+    {
+        return $this->sql->generate(GenerationPlans::foreignKeyConstraint()->withMaxDepth($maxDepth));
     }
 
     /**

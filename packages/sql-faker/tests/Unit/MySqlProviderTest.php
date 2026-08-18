@@ -28,6 +28,7 @@ use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\ProductionPattern;
 use SqlFaker\Grammar\SqlVersion;
 use SqlFaker\MySql\Grammar\TerminalInventory;
+use SqlFaker\MySql\GenerationPlans;
 
 #[CoversClass(MySqlProvider::class)]
 #[CoversClass(TokenJoiner::class)]
@@ -47,6 +48,7 @@ use SqlFaker\MySql\Grammar\TerminalInventory;
 #[UsesClass(ProductionPattern::class)]
 #[UsesClass(SqlVersion::class)]
 #[UsesClass(TerminalInventory::class)]
+#[UsesClass(GenerationPlans::class)]
 #[Medium]
 final class MySqlProviderTest extends TestCase
 {
@@ -507,26 +509,19 @@ final class MySqlProviderTest extends TestCase
         self::assertSame(0, (strlen($result) - 3) % 2);
     }
 
-    public function testForeignKeyConstraint(): void
+    #[DataProvider('providerMySqlVersion')]
+    public function testForeignKeyConstraint(string $version): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
-        $provider = new MySqlProvider($faker);
+        $provider = new MySqlProvider($faker, $version);
 
-        $result = $provider->foreignKeyConstraint();
+        $result = $provider->foreignKeyConstraint(1);
 
-        $tokens = (new LexicalGrammar($faker, 'mysql-8.4.7', true))->tokenize($result);
-        self::assertCount(12, $tokens);
-        self::assertSame('CONSTRAINT', $tokens[0]);
-        self::assertSame('FOREIGN', $tokens[2]);
-        self::assertSame('KEY_SYM', $tokens[3]);
-        self::assertSame(['(', ')', 'REFERENCES', '(', ')'], [
-            $tokens[4],
-            $tokens[6],
-            $tokens[7],
-            $tokens[9],
-            $tokens[11],
-        ]);
+        self::assertSame(
+            ['CONSTRAINT', 'IDENT', 'FOREIGN', 'KEY_SYM', '(', 'IDENT', ')', 'REFERENCES', 'IDENT', '(', 'IDENT', ')'],
+            (new LexicalGrammar($faker, $version, true))->tokenize($result),
+        );
     }
 
     public function testBinaryLiteral(): void
@@ -1023,6 +1018,16 @@ final class MySqlProviderTest extends TestCase
         yield 'AlterTable' => [StatementType::AlterTable];
         yield 'DropTable' => [StatementType::DropTable];
         yield 'SimpleStatement' => [StatementType::SimpleStatement];
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerMySqlVersion(): iterable
+    {
+        foreach (SqlVersion::names('mysql') as $version) {
+            yield $version => [$version];
+        }
     }
 
     /**

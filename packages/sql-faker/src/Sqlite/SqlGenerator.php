@@ -204,7 +204,8 @@ final class SqlGenerator
                     }
                 }
             } else {
-                $selectedIndex = $this->faker->numberBetween(0, count($alternatives) - 1);
+                $keys = array_keys($alternatives);
+                $selectedIndex = $keys[$this->faker->numberBetween(0, count($keys) - 1)];
             }
 
             $production = $alternatives[$selectedIndex];

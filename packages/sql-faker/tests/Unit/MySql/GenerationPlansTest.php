@@ -10,10 +10,14 @@ use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\ProductionPattern;
 use SqlFaker\MySql\GenerationPlans;
+use SqlFaker\MySql\Grammar\Grammar;
+use SqlFaker\MySql\Grammar\ProductionRule;
 
 #[CoversClass(GenerationPlans::class)]
 #[UsesClass(GenerationPlan::class)]
 #[UsesClass(ProductionPattern::class)]
+#[UsesClass(Grammar::class)]
+#[UsesClass(ProductionRule::class)]
 final class GenerationPlansTest extends TestCase
 {
     public function testWithoutEmptyRowsPlanConstrainsEveryOptionalValuesOccurrence(): void
@@ -92,5 +96,22 @@ final class GenerationPlansTest extends TestCase
         self::assertTrue($plan->patternAt('table_factor', 1)?->matches(['single_table']) ?? false);
         self::assertTrue($plan->patternAt('opt_use_partition', 0)?->matches([]) ?? false);
         self::assertTrue($plan->patternAt('opt_use_partition', 1)?->matches([]) ?? false);
+    }
+
+    public function testForeignKeyPlanAdaptsToTheGrammarVersion(): void
+    {
+        $modernGrammar = new Grammar('table_constraint_def', [
+            'table_constraint_def' => new ProductionRule('table_constraint_def', []),
+            'opt_constraint_name' => new ProductionRule('opt_constraint_name', []),
+        ]);
+        $legacyGrammar = new Grammar('key_def', []);
+
+        $modern = GenerationPlans::foreignKeyConstraint($modernGrammar);
+        $legacy = GenerationPlans::foreignKeyConstraint($legacyGrammar);
+
+        self::assertSame('table_constraint_def', $modern->startRule());
+        self::assertNotNull($modern->patternAt('opt_constraint_name', 0));
+        self::assertSame('key_def', $legacy->startRule());
+        self::assertNotNull($legacy->patternAt('opt_constraint', 0));
     }
 }

@@ -6,6 +6,7 @@ namespace SqlFaker\MySql;
 
 use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\ProductionPattern;
+use SqlFaker\MySql\Grammar\Grammar;
 
 final class GenerationPlans
 {
@@ -19,6 +20,27 @@ final class GenerationPlans
         return $plan
             ->withPatternForEveryOccurrence('opt_values', ProductionPattern::nonEmpty())
             ->requiringNonEmpty();
+    }
+
+    /** @return GenerationPlan<true> */
+    public static function foreignKeyConstraint(Grammar $grammar): GenerationPlan
+    {
+        $startRule = isset($grammar->ruleMap['table_constraint_def'])
+            ? 'table_constraint_def'
+            : 'key_def';
+        $constraintNameRule = isset($grammar->ruleMap['opt_constraint_name'])
+            ? 'opt_constraint_name'
+            : 'opt_constraint';
+        $constraintNameSymbol = $constraintNameRule === 'opt_constraint_name'
+            ? 'CONSTRAINT'
+            : 'constraint';
+
+        return GenerationPlan::constrained($startRule, [
+            $startRule => [ProductionPattern::containing('FOREIGN', 'KEY_SYM')],
+            $constraintNameRule => [ProductionPattern::containing($constraintNameSymbol)],
+            'opt_ident' => [ProductionPattern::nonEmpty()],
+            'opt_ref_list' => [ProductionPattern::nonEmpty()],
+        ])->requiringNonEmpty();
     }
 
     /** @return GenerationPlan<true> */

@@ -289,15 +289,17 @@ final class SqlGenerator
     }
 
     /**
-     * @param list<Production> $alternatives
+     * @param non-empty-array<int, Production> $alternatives
      */
     private function selectProduction(array $alternatives): Production
     {
         if ($this->derivationSteps < $this->targetDepth) {
-            return $alternatives[$this->faker->numberBetween(0, count($alternatives) - 1)];
+            $keys = array_keys($alternatives);
+
+            return $alternatives[$keys[$this->faker->numberBetween(0, count($keys) - 1)]];
         }
 
-        $selected = $alternatives[0];
+        $selected = $alternatives[array_key_first($alternatives)];
         $bestLength = $this->terminationAnalyzer->estimateProductionLength($selected);
         foreach (array_slice($alternatives, 1) as $alternative) {
             $length = $this->terminationAnalyzer->estimateProductionLength($alternative);

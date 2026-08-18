@@ -53,6 +53,7 @@ use SqlFaker\MySql\StatementType;
  */
 final class MySqlProvider extends Base
 {
+    private Grammar $grammar;
     private SqlGenerator $sql;
     private RandomStringGenerator $rsg;
 
@@ -67,8 +68,9 @@ final class MySqlProvider extends Base
         $generator->addProvider($this);
 
         $resolvedVersion = Grammar::resolveVersion($version);
+        $this->grammar = Grammar::load($resolvedVersion);
         $this->rsg = new RandomStringGenerator($generator);
-        $this->sql = new SqlGenerator(Grammar::load($resolvedVersion), $generator, $this, $resolvedVersion);
+        $this->sql = new SqlGenerator($this->grammar, $generator, $this, $resolvedVersion);
     }
 
     /**
@@ -656,13 +658,10 @@ final class MySqlProvider extends Base
      *
      * @return non-empty-string
      */
-    public function foreignKeyConstraint(): string
+    public function foreignKeyConstraint(int $maxDepth = PHP_INT_MAX): string
     {
-        $name = $this->identifier();
-        $column = $this->identifier();
-        $table = $this->identifier();
-        $referencedColumn = $this->identifier();
-
-        return "CONSTRAINT $name FOREIGN KEY ($column) REFERENCES $table ($referencedColumn)";
+        return $this->sql->generate(
+            GenerationPlans::foreignKeyConstraint($this->grammar)->withMaxDepth($maxDepth),
+        );
     }
 }

@@ -14,7 +14,10 @@ use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\Terminal;
 use SqlFaker\Grammar\TerminationAnalyzer;
+use SqlFaker\Grammar\GenerationPlan;
+use SqlFaker\Grammar\ProductionPattern;
 use SqlFaker\PostgreSql\Grammar\PgGrammar;
+use SqlFaker\PostgreSql\GenerationPlans;
 use SqlFaker\PostgreSql\LexicalGrammar;
 use SqlFaker\PostgreSql\SqlGenerator;
 use SqlFaker\PostgreSql\StatementType;
@@ -41,8 +44,11 @@ use SqlFaker\Grammar\TerminalInventory;
 #[CoversClass(StatementType::class)]
 #[CoversClass(LexicalGrammar::class)]
 #[UsesClass(LexicalCatalog::class)]
+#[UsesClass(GenerationPlan::class)]
+#[UsesClass(ProductionPattern::class)]
 #[UsesClass(SqlVersion::class)]
 #[UsesClass(TerminalInventory::class)]
+#[UsesClass(GenerationPlans::class)]
 #[Medium]
 final class PostgreSqlProviderTest extends TestCase
 {
@@ -366,6 +372,20 @@ final class PostgreSqlProviderTest extends TestCase
         $result = $provider->withClause(maxDepth: 3);
 
         self::assertStringContainsString('WITH', $result);
+    }
+
+    public function testForeignKeyConstraint(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new PostgreSqlProvider($faker, 'pg-17.2');
+
+        $result = $provider->foreignKeyConstraint(1);
+
+        self::assertSame(
+            ['CONSTRAINT', 'IDENT', 'FOREIGN', 'KEY', '(', 'IDENT', ')', 'REFERENCES', 'IDENT', '(', 'IDENT', ')'],
+            (new LexicalGrammar($faker, 'pg-17.2'))->tokenize($result),
+        );
     }
 
     public function testIdentifier(): void

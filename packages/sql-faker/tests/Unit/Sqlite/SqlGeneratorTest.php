@@ -26,6 +26,7 @@ use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\Grammar\TokenJoiner;
 use SqlFaker\SqliteProvider;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 
 #[CoversClass(SqlGenerator::class)]
 #[CoversClass(TokenJoiner::class)]
@@ -38,6 +39,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(SqliteProvider::class)]
 #[CoversClass(SqliteGrammar::class)]
 #[CoversClass(TerminationAnalyzer::class)]
+#[UsesClass(GenerationPlan::class)]
 #[Large]
 final class SqlGeneratorTest extends TestCase
 {

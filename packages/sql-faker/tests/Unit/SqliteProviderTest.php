@@ -14,8 +14,11 @@ use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\Terminal;
 use SqlFaker\Grammar\TerminationAnalyzer;
+use SqlFaker\Grammar\GenerationPlan;
+use SqlFaker\Grammar\ProductionPattern;
 use SqlFaker\Sqlite\LexicalGrammar;
 use SqlFaker\Sqlite\Grammar\SqliteGrammar;
+use SqlFaker\Sqlite\GenerationPlans;
 use SqlFaker\Sqlite\SqlGenerator;
 use SqlFaker\Sqlite\StatementType;
 use SqlFaker\Grammar\RandomStringGenerator;
@@ -42,8 +45,11 @@ use SqlFaker\Grammar\TerminalInventory;
 #[CoversClass(LexicalGrammar::class)]
 #[UsesClass(GenerationPlan::class)]
 #[UsesClass(LexicalCatalog::class)]
+#[UsesClass(GenerationPlan::class)]
+#[UsesClass(ProductionPattern::class)]
 #[UsesClass(SqlVersion::class)]
 #[UsesClass(TerminalInventory::class)]
+#[UsesClass(GenerationPlans::class)]
 final class SqliteProviderTest extends TestCase
 {
     #[\Override]
@@ -303,6 +309,28 @@ final class SqliteProviderTest extends TestCase
         $result = $provider->withClause(maxDepth: 6);
 
         self::assertMatchesRegularExpression('/^$|WITH/', $result);
+    }
+
+    public function testForeignKeyConstraint(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new SqliteProvider($faker, 'sqlite-3.47.2');
+
+        $result = $provider->foreignKeyConstraint(1);
+
+        self::assertSame(
+            ['CONSTRAINT', 'ID', 'FOREIGN', 'KEY', 'LP', 'ID', 'RP', 'REFERENCES', 'ID', 'LP', 'ID', 'RP'],
+            (new LexicalGrammar($faker, 'sqlite-3.47.2'))->tokenize($result),
+        );
+
+        $faker->seed(2);
+        $result = $provider->foreignKeyConstraint(20);
+
+        self::assertSame(
+            ['CONSTRAINT', 'ID', 'FOREIGN', 'KEY'],
+            array_slice((new LexicalGrammar($faker, 'sqlite-3.47.2'))->tokenize($result), 0, 4),
+        );
     }
 
     public function testIdentifier(): void
