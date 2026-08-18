@@ -34,6 +34,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(SqliteIdentifierQuoter::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteNativeUpsertProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteGeneratedColumnProjector::class)]
 final class SqliteTransformerTest extends TestCase
 {
     public function testTransformSelect(): void

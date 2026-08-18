@@ -720,10 +720,8 @@ final class MySqlProvider extends Base
         return $this->sql->generate(GenerationPlans::viewStatement()->withMaxDepth($maxDepth));
     }
     /** @return non-empty-string */
-    public function generatedColumnStatement(): string
+    public function generatedColumnStatement(int $maxDepth = 40): string
     {
-        $table = $this->rsg->rawIdentifier();
-
-        return "CREATE TABLE $table (base_value INT, generated_value INT GENERATED ALWAYS AS (base_value + 1) STORED)";
+        return $this->sql->generate(GenerationPlans::generatedColumnStatement()->withMaxDepth($maxDepth));
     }
 }

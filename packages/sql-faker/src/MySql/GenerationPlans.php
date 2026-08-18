@@ -163,6 +163,18 @@ final class GenerationPlans
     }
 
     /** @return GenerationPlan<true> */
+    public static function generatedColumnStatement(): GenerationPlan
+    {
+        return GenerationPlan::constrained('create_table_stmt', [
+            'create_table_stmt' => [ProductionPattern::containing('table_element_list')],
+            'table_element' => [ProductionPattern::exactly('column_def')],
+            'field_def' => [ProductionPattern::containing('opt_generated_always', 'expr')],
+            'opt_generated_always' => [ProductionPattern::nonEmpty()],
+            'opt_stored_attribute' => [ProductionPattern::containing('STORED_SYM')],
+        ])->requiringNonEmpty();
+    }
+
+    /** @return GenerationPlan<true> */
     public static function multiTableDeleteStatement(): GenerationPlan
     {
         return GenerationPlan::constrained('delete_stmt', [

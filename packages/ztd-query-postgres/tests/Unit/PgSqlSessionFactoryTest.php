@@ -50,6 +50,7 @@ use ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlNativeUpsertProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlViewDefinitionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlViewShadowRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlGeneratedColumnProjector::class)]
 final class PgSqlSessionFactoryTest extends TestCase
 {
     public function testCreateRegistersReflectedViews(): void

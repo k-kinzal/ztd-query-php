@@ -68,4 +68,20 @@ final class GenerationPlansTest extends TestCase
     {
         self::assertSame('ViewStmt', GenerationPlans::viewStatement()->startRule());
     }
+
+    public function testGeneratedColumnPlanRequiresTheGeneratedConstraint(): void
+    {
+        $plan = GenerationPlans::generatedColumnStatement();
+
+        self::assertSame('CreateStmt', $plan->startRule());
+        self::assertTrue($plan->patternAt('CreateStmt', 0)?->matches(['OptTableElementList']) ?? false);
+        self::assertTrue($plan->patternAt('OptTableElementList', 0)?->matches(['TableElement']) ?? false);
+        self::assertTrue($plan->patternAt('TableElement', 0)?->matches(['columnDef']) ?? false);
+        self::assertTrue(
+            $plan->patternAt('ColQualList', 0)?->matches(['ColQualList', 'ColConstraint']) ?? false,
+        );
+        self::assertTrue($plan->patternAt('ColQualList', 1)?->matches([]) ?? false);
+        self::assertTrue($plan->patternAt('ColConstraint', 0)?->matches(['ColConstraintElem']) ?? false);
+        self::assertTrue($plan->patternAt('ColConstraintElem', 0)?->matches(['GENERATED', 'STORED']) ?? false);
+    }
 }

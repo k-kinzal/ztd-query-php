@@ -66,6 +66,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlNativeUpsertProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlViewDefinitionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlViewShadowRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlGeneratedColumnProjector::class)]
 final class PgSqlRewriterTest extends RewriterContractTest
 {
     public function testGeneratedExpressionIsPresentBeforeTheFirstShadowWrite(): void

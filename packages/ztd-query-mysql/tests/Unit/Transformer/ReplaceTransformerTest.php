@@ -34,6 +34,7 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlTypeSemantics::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlNativeUpsertProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlGeneratedColumnProjector::class)]
 final class ReplaceTransformerTest extends TestCase
 {
     public function testTransformReplaceCastsParametersToTargetColumnTypes(): void

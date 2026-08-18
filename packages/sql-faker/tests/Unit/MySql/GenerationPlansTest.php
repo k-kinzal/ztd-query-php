@@ -213,4 +213,16 @@ final class GenerationPlansTest extends TestCase
         self::assertTrue($plan->patternAt('no_definer_tail', 0)?->matches(['view_tail']) ?? false);
         self::assertTrue($plan->patternAt('query_primary', 0)?->matches(['query_specification']) ?? false);
     }
+
+    public function testGeneratedColumnPlanRequiresTheGeneratedAttribute(): void
+    {
+        $plan = GenerationPlans::generatedColumnStatement();
+
+        self::assertSame('create_table_stmt', $plan->startRule());
+        self::assertTrue($plan->patternAt('create_table_stmt', 0)?->matches(['table_element_list']) ?? false);
+        self::assertTrue($plan->patternAt('table_element', 0)?->matches(['column_def']) ?? false);
+        self::assertTrue($plan->patternAt('field_def', 0)?->matches(['opt_generated_always', 'expr']) ?? false);
+        self::assertTrue($plan->patternAt('opt_generated_always', 0)?->matches(['GENERATED']) ?? false);
+        self::assertTrue($plan->patternAt('opt_stored_attribute', 0)?->matches(['STORED_SYM']) ?? false);
+    }
 }

@@ -112,13 +112,21 @@ final class SqliteProviderTest extends TestCase
         self::assertContains('SELECT', $tokens);
     }
 
-    public function testGeneratedColumnStatement(): void
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testGeneratedColumnStatement(int $seed): void
     {
-        $sql = (new SqliteProvider(Factory::create()))->generatedColumnStatement();
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new SqliteProvider($faker);
+        $sql = $provider->generatedColumnStatement();
+        $faker->seed($seed);
+        $tokens = (new LexicalGrammar($faker, 'sqlite-3.47.2', true))
+            ->tokenize($sql);
 
-        self::assertStringStartsWith('CREATE TABLE ', $sql);
-        self::assertStringContainsString(' GENERATED ALWAYS AS (', $sql);
-        self::assertStringEndsWith(' STORED)', $sql);
+        self::assertSame($sql, $provider->generatedColumnStatement(40));
+        self::assertContains('GENERATED', $tokens);
+        self::assertContains('ALWAYS', $tokens);
+        self::assertContains('AS', $tokens);
     }
 
     #[\Override]

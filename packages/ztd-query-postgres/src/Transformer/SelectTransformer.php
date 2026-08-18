@@ -10,7 +10,7 @@ use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\IdentifierQuoter;
 use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer;
-use ZtdQuery\Rewrite\GeneratedColumnProjector;
+use ZtdQuery\Platform\Postgres\PgSqlGeneratedColumnProjector;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
@@ -31,7 +31,7 @@ final class SelectTransformer implements SqlTransformer
     private IdentifierQuoter $quoter;
     private ValueRenderer $valueRenderer;
     private PgSqlCteShadowComposer $cteComposer;
-    private GeneratedColumnProjector $generatedColumnProjector;
+    private PgSqlGeneratedColumnProjector $generatedColumnProjector;
 
     public function __construct(
         ?CastRenderer $castRenderer = null,
@@ -42,7 +42,7 @@ final class SelectTransformer implements SqlTransformer
         $this->quoter = $quoter ?? new PgSqlIdentifierQuoter();
         $this->valueRenderer = $valueRenderer ?? new \ZtdQuery\Platform\Postgres\PgSqlValueRenderer($this->castRenderer);
         $this->cteComposer = new PgSqlCteShadowComposer();
-        $this->generatedColumnProjector = new GeneratedColumnProjector($this->quoter);
+        $this->generatedColumnProjector = new PgSqlGeneratedColumnProjector();
     }
 
     /**

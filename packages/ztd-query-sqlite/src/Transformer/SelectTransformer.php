@@ -11,7 +11,7 @@ use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\IdentifierQuoter;
 use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer;
-use ZtdQuery\Rewrite\GeneratedColumnProjector;
+use ZtdQuery\Platform\Sqlite\SqliteGeneratedColumnProjector;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
@@ -29,7 +29,7 @@ final class SelectTransformer implements SqlTransformer
     private ValueRenderer $valueRenderer;
     private SqliteCteShadowComposer $cteComposer;
     private SqliteIndexHintStripper $indexHintStripper;
-    private GeneratedColumnProjector $generatedColumnProjector;
+    private SqliteGeneratedColumnProjector $generatedColumnProjector;
 
     public function __construct(
         ?CastRenderer $castRenderer = null,
@@ -41,7 +41,7 @@ final class SelectTransformer implements SqlTransformer
         $this->valueRenderer = $valueRenderer ?? new \ZtdQuery\Platform\Sqlite\SqliteValueRenderer($this->castRenderer);
         $this->cteComposer = new SqliteCteShadowComposer();
         $this->indexHintStripper = new SqliteIndexHintStripper();
-        $this->generatedColumnProjector = new GeneratedColumnProjector($this->quoter);
+        $this->generatedColumnProjector = new SqliteGeneratedColumnProjector();
     }
 
     /**

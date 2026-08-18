@@ -56,6 +56,22 @@ final class GenerationPlans
     }
 
     /** @return GenerationPlan<true> */
+    public static function generatedColumnStatement(): GenerationPlan
+    {
+        return GenerationPlan::constrained('CreateStmt', [
+            'CreateStmt' => [ProductionPattern::containing('OptTableElementList')],
+            'OptTableElementList' => [ProductionPattern::nonEmpty()],
+            'TableElement' => [ProductionPattern::exactly('columnDef')],
+            'ColQualList' => [
+                ProductionPattern::exactly('ColQualList', 'ColConstraint'),
+                ProductionPattern::exactly(),
+            ],
+            'ColConstraint' => [ProductionPattern::containing('ColConstraintElem')],
+            'ColConstraintElem' => [ProductionPattern::containing('GENERATED', 'STORED')],
+        ])->requiringNonEmpty();
+    }
+
+    /** @return GenerationPlan<true> */
     public static function foreignKeyConstraint(): GenerationPlan
     {
         return GenerationPlan::constrained('TableConstraint', [

@@ -33,6 +33,7 @@ use ZtdQuery\Schema\IdentityGenerationStrategy;
 #[UsesClass(InsertSelectRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteNativeUpsertProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteGeneratedColumnProjector::class)]
 final class InsertTransformerTest extends TestCase
 {
     public function testProjectsConflictExpressionUsingCandidateKeys(): void

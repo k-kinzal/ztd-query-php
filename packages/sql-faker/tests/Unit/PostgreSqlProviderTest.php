@@ -113,13 +113,21 @@ final class PostgreSqlProviderTest extends TestCase
         self::assertNotSame([], array_intersect(['SELECT', 'VALUES', 'TABLE'], $tokens));
     }
 
-    public function testGeneratedColumnStatement(): void
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testGeneratedColumnStatement(int $seed): void
     {
-        $sql = (new PostgreSqlProvider(Factory::create()))->generatedColumnStatement();
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new PostgreSqlProvider($faker);
+        $sql = $provider->generatedColumnStatement();
+        $faker->seed($seed);
+        $tokens = (new LexicalGrammar($faker, 'pg-17.2', true))
+            ->tokenize($sql);
 
-        self::assertStringStartsWith('CREATE TABLE ', $sql);
-        self::assertStringContainsString(' GENERATED ALWAYS AS (', $sql);
-        self::assertStringEndsWith(' STORED)', $sql);
+        self::assertSame($sql, $provider->generatedColumnStatement(40));
+        self::assertContains('GENERATED', $tokens);
+        self::assertContains('STORED', $tokens);
+        self::assertContains('AS', $tokens);
     }
 
     #[\Override]

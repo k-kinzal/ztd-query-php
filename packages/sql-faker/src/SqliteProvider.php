@@ -284,10 +284,8 @@ final class SqliteProvider extends Base
     }
 
     /** @return non-empty-string */
-    public function generatedColumnStatement(): string
+    public function generatedColumnStatement(int $maxDepth = 40): string
     {
-        $table = $this->rsg->rawIdentifier();
-
-        return "CREATE TABLE $table (base_value INTEGER, generated_value INTEGER GENERATED ALWAYS AS (base_value + 1) STORED)";
+        return $this->sql->generate(GenerationPlans::generatedColumnStatement()->withMaxDepth($maxDepth));
     }
 }

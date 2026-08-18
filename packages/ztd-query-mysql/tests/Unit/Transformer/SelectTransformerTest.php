@@ -25,6 +25,7 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
 #[UsesClass(MySqlTypeSemantics::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlGeneratedColumnProjector::class)]
 final class SelectTransformerTest extends TransformerContractTest
 {
     public function testGeneratedColumnsAreRecomputedFromBaseRow(): void

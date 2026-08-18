@@ -2,19 +2,22 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Rewrite;
+namespace ZtdQuery\Platform\Sqlite;
 
 use ZtdQuery\Platform\IdentifierQuoter;
 
 /**
  * Recomputes database-generated columns from a complete base-row projection.
  */
-final class GeneratedColumnProjector
+final class SqliteGeneratedColumnProjector
 {
     private const SOURCE_ALIAS = '__ztd_generated_source';
 
-    public function __construct(private readonly IdentifierQuoter $quoter)
+    private readonly IdentifierQuoter $quoter;
+
+    public function __construct()
     {
+        $this->quoter = new SqliteIdentifierQuoter();
     }
 
     /**

@@ -50,6 +50,20 @@ final class GenerationPlans
     }
 
     /** @return GenerationPlan<true> */
+    public static function generatedColumnStatement(): GenerationPlan
+    {
+        return GenerationPlan::constrained('cmd', [
+            'cmd' => [ProductionPattern::containing('create_table', 'create_table_args')],
+            'create_table_args' => [ProductionPattern::containing('columnlist')],
+            'carglist' => [
+                ProductionPattern::exactly('carglist', 'ccons'),
+                ProductionPattern::exactly(),
+            ],
+            'ccons' => [ProductionPattern::containing('GENERATED', 'generated')],
+        ])->requiringNonEmpty();
+    }
+
+    /** @return GenerationPlan<true> */
     public static function foreignKeyConstraint(): GenerationPlan
     {
         return GenerationPlan::constrained('conslist', [

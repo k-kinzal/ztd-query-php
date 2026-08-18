@@ -130,13 +130,21 @@ final class MySqlProviderTest extends TestCase
         self::assertContains('SELECT_SYM', $tokens);
     }
 
-    public function testGeneratedColumnStatement(): void
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testGeneratedColumnStatement(int $seed): void
     {
-        $sql = (new MySqlProvider(Factory::create()))->generatedColumnStatement();
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new MySqlProvider($faker);
+        $sql = $provider->generatedColumnStatement();
+        $faker->seed($seed);
+        $tokens = (new LexicalGrammar($faker, 'mysql-8.4.7', true))
+            ->tokenize($sql);
 
-        self::assertStringStartsWith('CREATE TABLE ', $sql);
-        self::assertStringContainsString(' GENERATED ALWAYS AS (', $sql);
-        self::assertStringEndsWith(' STORED)', $sql);
+        self::assertSame($sql, $provider->generatedColumnStatement(40));
+        self::assertContains('GENERATED', $tokens);
+        self::assertContains('ALWAYS_SYM', $tokens);
+        self::assertContains('STORED_SYM', $tokens);
     }
 
     public function testSql(): void

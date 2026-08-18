@@ -77,6 +77,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlNativeUpsertProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlViewDefinitionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlViewShadowRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlGeneratedColumnProjector::class)]
 final class MySqlRewriterTest extends RewriterContractTest
 {
     public function testGeneratedExpressionIsPresentBeforeTheFirstShadowWrite(): void

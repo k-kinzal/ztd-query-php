@@ -53,6 +53,7 @@ use ZtdQuery\Session;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlSelectRelationParser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlViewDefinitionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlViewShadowRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlGeneratedColumnProjector::class)]
 final class MySqlSessionFactoryTest extends TestCase
 {
     public function testCreateRegistersReflectedViews(): void

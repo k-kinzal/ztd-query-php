@@ -79,4 +79,16 @@ final class GenerationPlansTest extends TestCase
         self::assertTrue($plan->patternAt('cmd', 0)?->matches(['createkw', 'VIEW', 'select']) ?? false);
         self::assertTrue($plan->patternAt('oneselect', 0)?->matches(['SELECT']) ?? false);
     }
+
+    public function testGeneratedColumnPlanRequiresTheGeneratedConstraint(): void
+    {
+        $plan = GenerationPlans::generatedColumnStatement();
+
+        self::assertSame('cmd', $plan->startRule());
+        self::assertTrue($plan->patternAt('cmd', 0)?->matches(['create_table', 'create_table_args']) ?? false);
+        self::assertTrue($plan->patternAt('create_table_args', 0)?->matches(['columnlist']) ?? false);
+        self::assertTrue($plan->patternAt('carglist', 0)?->matches(['carglist', 'ccons']) ?? false);
+        self::assertTrue($plan->patternAt('carglist', 1)?->matches([]) ?? false);
+        self::assertTrue($plan->patternAt('ccons', 0)?->matches(['GENERATED', 'generated']) ?? false);
+    }
 }
