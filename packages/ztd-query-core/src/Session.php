@@ -191,7 +191,7 @@ final class Session
 
     public function tableDefinition(string $tableName): ?TableDefinition
     {
-        return $this->registry?->get($tableName);
+        return $this->registry->get($tableName);
     }
 
     /**
