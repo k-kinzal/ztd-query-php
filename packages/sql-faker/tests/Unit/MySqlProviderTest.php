@@ -522,18 +522,28 @@ final class MySqlProviderTest extends TestCase
         );
     }
 
-    public function testUpdateJoinDerivedStatement(): void
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testUpdateJoinDerivedStatement(int $seed): void
     {
         $faker = Factory::create();
-        $faker->seed(12345);
+        $faker->seed($seed);
         $provider = new MySqlProvider($faker);
+        $sql = $provider->updateJoinDerivedStatement();
+        $faker->seed($seed);
 
-        $tokens = (new LexicalGrammar($faker, 'mysql-8.4.7', true))->tokenize($provider->updateJoinDerivedStatement());
+        $tokens = (new LexicalGrammar($faker, 'mysql-8.4.7', true))->tokenize($sql);
+        $joinTokens = array_intersect($tokens, ['JOIN_SYM', 'STRAIGHT_JOIN']);
+        $join = array_key_first($joinTokens);
+        $select = array_search('SELECT_SYM', $tokens, true);
 
+        self::assertSame($sql, $provider->updateJoinDerivedStatement(40));
         self::assertSame('UPDATE_SYM', $tokens[0]);
-        self::assertContains('JOIN_SYM', $tokens);
-        self::assertContains('SELECT_SYM', $tokens);
+        self::assertIsInt($join);
+        self::assertIsInt($select);
+        self::assertGreaterThan($join, $select);
+        self::assertContains('FROM', $tokens);
         self::assertContains('GROUP_SYM', $tokens);
+        self::assertContains('ON_SYM', $tokens);
         self::assertContains('SET_SYM', $tokens);
     }
 
@@ -1074,5 +1084,15 @@ final class MySqlProviderTest extends TestCase
         yield 'MySQL 8.4' => ['mysql-8.4.7'];
         yield 'MySQL 9.0' => ['mysql-9.0.1'];
         yield 'MySQL 9.1' => ['mysql-9.1.0'];
+    }
+
+    /**
+     * @return iterable<string, array{int}>
+     */
+    public static function providerTargetedGenerationSeed(): iterable
+    {
+        foreach (range(0, 15) as $seed) {
+            yield "seed {$seed}" => [$seed];
+        }
     }
 }

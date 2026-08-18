@@ -670,13 +670,10 @@ final class MySqlProvider extends Base
      *
      * @return non-empty-string
      */
-    public function updateJoinDerivedStatement(): string
+    public function updateJoinDerivedStatement(int $maxDepth = 40): string
     {
-        $target = $this->rsg->rawIdentifier();
-        $source = $this->rsg->rawIdentifier();
-        $groupColumn = $this->rsg->rawIdentifier();
-        $valueColumn = $this->rsg->rawIdentifier();
-
-        return "UPDATE $target AS t JOIN (SELECT $groupColumn, COUNT(*) AS aggregate_value FROM $source GROUP BY $groupColumn) AS s ON t.$groupColumn = s.$groupColumn SET t.$valueColumn = s.aggregate_value";
+        return $this->sql->generate(
+            GenerationPlans::updateJoinDerivedStatement()->withMaxDepth($maxDepth),
+        );
     }
 }

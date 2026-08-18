@@ -72,6 +72,28 @@ final class GenerationPlans
     }
 
     /** @return GenerationPlan<true> */
+    public static function updateJoinDerivedStatement(): GenerationPlan
+    {
+        return GenerationPlan::constrained('update_stmt', [
+            'opt_with_clause' => [ProductionPattern::exactly()],
+            'table_reference' => [
+                ProductionPattern::exactly('joined_table'),
+                ProductionPattern::exactly('table_factor'),
+                ProductionPattern::exactly('table_factor'),
+                ProductionPattern::exactly('table_factor'),
+            ],
+            'joined_table' => [ProductionPattern::containing('ON_SYM')],
+            'table_factor' => [
+                ProductionPattern::exactly('single_table'),
+                ProductionPattern::exactly('derived_table'),
+                ProductionPattern::exactly('single_table'),
+            ],
+            'opt_from_clause' => [ProductionPattern::nonEmpty()],
+            'opt_group_clause' => [ProductionPattern::nonEmpty()],
+        ])->requiringNonEmpty();
+    }
+
+    /** @return GenerationPlan<true> */
     public static function multiTableDeleteStatement(): GenerationPlan
     {
         return GenerationPlan::constrained('delete_stmt', [

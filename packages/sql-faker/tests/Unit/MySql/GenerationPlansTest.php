@@ -122,4 +122,22 @@ final class GenerationPlansTest extends TestCase
         self::assertTrue($legacy->patternAt('opt_ident', 0)?->matches(['ident']) ?? false);
         self::assertTrue($legacy->patternAt('opt_ref_list', 0)?->matches(['reference']) ?? false);
     }
+
+    public function testJoinedUpdatePlanRestrictsTheDerivedTableGrammar(): void
+    {
+        $plan = GenerationPlans::updateJoinDerivedStatement();
+
+        self::assertSame('update_stmt', $plan->startRule());
+        self::assertTrue($plan->patternAt('opt_with_clause', 0)?->matches([]) ?? false);
+        self::assertTrue($plan->patternAt('table_reference', 0)?->matches(['joined_table']) ?? false);
+        self::assertTrue($plan->patternAt('table_reference', 1)?->matches(['table_factor']) ?? false);
+        self::assertTrue($plan->patternAt('table_reference', 2)?->matches(['table_factor']) ?? false);
+        self::assertTrue($plan->patternAt('table_reference', 3)?->matches(['table_factor']) ?? false);
+        self::assertTrue($plan->patternAt('joined_table', 0)?->matches(['ON_SYM']) ?? false);
+        self::assertTrue($plan->patternAt('table_factor', 0)?->matches(['single_table']) ?? false);
+        self::assertTrue($plan->patternAt('table_factor', 1)?->matches(['derived_table']) ?? false);
+        self::assertTrue($plan->patternAt('table_factor', 2)?->matches(['single_table']) ?? false);
+        self::assertTrue($plan->patternAt('opt_from_clause', 0)?->matches(['table_reference_list']) ?? false);
+        self::assertTrue($plan->patternAt('opt_group_clause', 0)?->matches(['GROUP_SYM']) ?? false);
+    }
 }
