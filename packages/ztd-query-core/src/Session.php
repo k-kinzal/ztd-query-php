@@ -77,9 +77,9 @@ final class Session
 
     private ShadowTransactionManager $transactions;
 
-    private ?TableDefinitionRegistry $registry;
+    private TableDefinitionRegistry $registry;
 
-    private ?ReferentialIntegrityEnforcer $referentialIntegrity;
+    private ReferentialIntegrityEnforcer $referentialIntegrity;
 
     private ?string $lastInsertId = null;
 
@@ -105,8 +105,8 @@ final class Session
         $this->config = $config;
         $this->connection = $connection;
         $this->transactions = $transactions ?? new ShadowTransactionManager($shadowStore);
-        $this->registry = $registry;
-        $this->referentialIntegrity = $registry !== null ? new ReferentialIntegrityEnforcer($registry) : null;
+        $this->registry = $registry ?? new TableDefinitionRegistry();
+        $this->referentialIntegrity = new ReferentialIntegrityEnforcer($this->registry);
     }
 
     /**
@@ -355,7 +355,7 @@ final class Session
             } else {
                 $mutation->apply($this->shadowStore, $resultSet->rows);
             }
-            $this->referentialIntegrity?->synchronize(
+            $this->referentialIntegrity->synchronize(
                 $snapshot,
                 $this->shadowStore,
                 $mutation,
@@ -386,7 +386,7 @@ final class Session
             return;
         }
 
-        $definition = $this->registry?->get($mutation->tableName());
+        $definition = $this->registry->get($mutation->tableName());
         $identityColumns = $definition !== null ? array_keys($definition->identityStrategies) : [];
         if ($identityColumns === [] && $definition !== null && count($definition->primaryKeys) === 1) {
             $identityColumns = $definition->primaryKeys;

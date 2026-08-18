@@ -11,7 +11,7 @@ use ZtdQuery\Shadow\ShadowStore;
  * Applies REPLACE INTO operation to the shadow store.
  * REPLACE deletes the existing row and inserts the new one.
  */
-final class ReplaceMutation implements ShadowMutation
+final class ReplaceMutation implements DataMutation
 {
     /**
      * Target table to replace into.

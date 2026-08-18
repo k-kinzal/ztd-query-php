@@ -12,7 +12,7 @@ use ZtdQuery\Shadow\ShadowStore;
 /**
  * Applies UPDATE result rows to the shadow store.
  */
-final class UpdateMutation implements ShadowMutation
+final class UpdateMutation implements DataMutation
 {
     /**
      * Target table to update.

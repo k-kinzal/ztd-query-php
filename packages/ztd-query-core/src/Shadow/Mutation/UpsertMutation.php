@@ -11,7 +11,7 @@ use ZtdQuery\Shadow\ShadowStore;
 /**
  * Applies INSERT ... ON DUPLICATE KEY UPDATE (UPSERT) to the shadow store.
  */
-final class UpsertMutation implements ShadowMutation
+final class UpsertMutation implements DataMutation
 {
     /**
      * Target table to upsert into.

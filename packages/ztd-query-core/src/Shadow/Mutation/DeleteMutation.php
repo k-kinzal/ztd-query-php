@@ -9,7 +9,7 @@ use ZtdQuery\Shadow\ShadowStore;
 /**
  * Applies DELETE result rows to the shadow store.
  */
-final class DeleteMutation implements ShadowMutation
+final class DeleteMutation implements DataMutation
 {
     /**
      * Target table to delete from.

@@ -13,7 +13,7 @@ use ZtdQuery\Shadow\ShadowStore;
 /**
  * Applies INSERT result rows to the shadow store.
  */
-final class InsertMutation implements ShadowMutation
+final class InsertMutation implements DataMutation
 {
     /**
      * Target table to insert into.

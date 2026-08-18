@@ -8,17 +8,10 @@ use ZtdQuery\Exception\ForeignKeyViolationException;
 use ZtdQuery\Schema\ForeignKeyDefinition;
 use ZtdQuery\Schema\ReferentialAction;
 use ZtdQuery\Schema\TableDefinitionRegistry;
-use ZtdQuery\Shadow\Mutation\DeleteMutation;
-use ZtdQuery\Shadow\Mutation\InsertMutation;
-use ZtdQuery\Shadow\Mutation\MultiDeleteMutation;
-use ZtdQuery\Shadow\Mutation\MultiTruncateMutation;
-use ZtdQuery\Shadow\Mutation\MultiUpdateMutation;
+use ZtdQuery\Shadow\Mutation\DataMutation;
 use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
-use ZtdQuery\Shadow\Mutation\ReplaceMutation;
 use ZtdQuery\Shadow\Mutation\ShadowMutation;
-use ZtdQuery\Shadow\Mutation\TruncateMutation;
 use ZtdQuery\Shadow\Mutation\UpdateMutation;
-use ZtdQuery\Shadow\Mutation\UpsertMutation;
 
 final class ReferentialIntegrityEnforcer
 {
@@ -34,7 +27,7 @@ final class ReferentialIntegrityEnforcer
         array $resultRows,
         string $sql,
     ): void {
-        if (!$this->isDataMutation($mutation)) {
+        if (!$mutation instanceof DataMutation) {
             return;
         }
 
@@ -65,19 +58,6 @@ final class ReferentialIntegrityEnforcer
         $this->validate($after, $sql);
     }
 
-    private function isDataMutation(ShadowMutation $mutation): bool
-    {
-        return $mutation instanceof InsertMutation
-            || $mutation instanceof UpdateMutation
-            || $mutation instanceof DeleteMutation
-            || $mutation instanceof ReplaceMutation
-            || $mutation instanceof UpsertMutation
-            || $mutation instanceof TruncateMutation
-            || $mutation instanceof MultiUpdateMutation
-            || $mutation instanceof MultiDeleteMutation
-            || $mutation instanceof MultiTruncateMutation;
-    }
-
     /**
      * @param array<int, array<string, mixed>> $resultRows
      * @return list<array{
@@ -92,23 +72,20 @@ final class ReferentialIntegrityEnforcer
         ShadowMutation $mutation,
         array $resultRows,
     ): array {
-        $tables = array_unique(array_merge(
-            array_keys($before->getAll()),
-            array_keys($after->getAll()),
-        ));
         $events = [];
-        foreach ($tables as $table) {
+        $identityTable = $mutation instanceof UpdateMutation ? $mutation->tableName() : null;
+        foreach (array_keys($before->getAll()) as $table) {
             $definition = $this->registry->get($table);
-            $primaryKeys = array_values($definition->primaryKeys ?? []);
-            $identityRows = $mutation instanceof UpdateMutation && $mutation->tableName() === $table
+            $primaryKeys = $definition->primaryKeys ?? [];
+            $identityRows = $identityTable === $table
                 ? $resultRows
                 : [];
             $event = $this->transition(
                 $table,
-                array_values($before->get($table)),
-                array_values($after->get($table)),
+                $before->get($table),
+                $after->get($table),
                 $primaryKeys,
-                array_values($identityRows),
+                $identityRows,
             );
             if ($event['deleted'] !== [] || $event['updated'] !== []) {
                 $events[] = $event;
@@ -119,10 +96,10 @@ final class ReferentialIntegrityEnforcer
     }
 
     /**
-     * @param list<array<string, mixed>> $beforeRows
-     * @param list<array<string, mixed>> $afterRows
-     * @param list<string> $primaryKeys
-     * @param list<array<string, mixed>> $identityRows
+     * @param array<int, array<string, mixed>> $beforeRows
+     * @param array<int, array<string, mixed>> $afterRows
+     * @param array<int, string> $primaryKeys
+     * @param array<int, array<string, mixed>> $identityRows
      * @return array{
      *     table: string,
      *     deleted: list<array<string, mixed>>,
@@ -148,23 +125,23 @@ final class ReferentialIntegrityEnforcer
                 if ($beforeIndex === null || $afterIndex === null) {
                     continue;
                 }
-                $matchedBefore[$beforeIndex] = true;
-                $matchedAfter[$afterIndex] = true;
+                $matchedBefore[] = $beforeIndex;
+                $matchedAfter[] = $afterIndex;
                 if ($beforeRows[$beforeIndex] !== $afterRows[$afterIndex]) {
                     $updated[] = ['before' => $beforeRows[$beforeIndex], 'after' => $afterRows[$afterIndex]];
                 }
             }
 
             foreach ($beforeRows as $beforeIndex => $beforeRow) {
-                if (isset($matchedBefore[$beforeIndex])) {
+                if (in_array($beforeIndex, $matchedBefore, true)) {
                     continue;
                 }
                 $afterIndex = self::matchingRowIndex($afterRows, $beforeRow, $primaryKeys, $matchedAfter);
                 if ($afterIndex === null) {
                     continue;
                 }
-                $matchedBefore[$beforeIndex] = true;
-                $matchedAfter[$afterIndex] = true;
+                $matchedBefore[] = $beforeIndex;
+                $matchedAfter[] = $afterIndex;
                 if ($beforeRow !== $afterRows[$afterIndex]) {
                     $updated[] = ['before' => $beforeRow, 'after' => $afterRows[$afterIndex]];
                 }
@@ -173,15 +150,15 @@ final class ReferentialIntegrityEnforcer
             foreach ($beforeRows as $beforeIndex => $beforeRow) {
                 $afterIndex = self::matchingExactRowIndex($afterRows, $beforeRow, $matchedAfter);
                 if ($afterIndex !== null) {
-                    $matchedBefore[$beforeIndex] = true;
-                    $matchedAfter[$afterIndex] = true;
+                    $matchedBefore[] = $beforeIndex;
+                    $matchedAfter[] = $afterIndex;
                 }
             }
         }
 
         $deleted = [];
         foreach ($beforeRows as $index => $row) {
-            if (!isset($matchedBefore[$index])) {
+            if (!in_array($index, $matchedBefore, true)) {
                 $deleted[] = $row;
             }
         }
@@ -207,10 +184,7 @@ final class ReferentialIntegrityEnforcer
         array $updatedParents,
         string $sql,
     ): ?array {
-        $parentDefinition = $this->registry->get($foreignKey->referencedTable);
-        $referencedColumns = array_values($foreignKey->referencedColumns !== []
-            ? $foreignKey->referencedColumns
-            : ($parentDefinition->primaryKeys ?? []));
+        $referencedColumns = $this->referencedColumns($foreignKey);
         if (count($foreignKey->columns) !== count($referencedColumns)) {
             return null;
         }
@@ -220,7 +194,7 @@ final class ReferentialIntegrityEnforcer
         foreach ($updatedParents as $parentChange) {
             $oldValues = self::keyValues($parentChange['before'], $referencedColumns);
             $newValues = self::keyValues($parentChange['after'], $referencedColumns);
-            if ($oldValues === null || $newValues === null || $oldValues === $newValues) {
+            if ($oldValues === null || $newValues === null) {
                 continue;
             }
             if ($this->parentKeyExists($store, $foreignKey->referencedTable, $referencedColumns, $oldValues)) {
@@ -268,7 +242,7 @@ final class ReferentialIntegrityEnforcer
                 $updated = $this->applyAction(
                     $row,
                     $foreignKey->columns,
-                    array_fill(0, count($foreignKey->columns), null),
+                    [],
                     $foreignKey->onDelete,
                     $childTable,
                     $constraintName,
@@ -321,10 +295,7 @@ final class ReferentialIntegrityEnforcer
     {
         foreach ($this->registry->getAll() as $childTable => $definition) {
             foreach ($definition->foreignKeys as $constraintName => $foreignKey) {
-                $parentDefinition = $this->registry->get($foreignKey->referencedTable);
-                $referencedColumns = array_values($foreignKey->referencedColumns !== []
-                    ? $foreignKey->referencedColumns
-                    : ($parentDefinition->primaryKeys ?? []));
+                $referencedColumns = $this->referencedColumns($foreignKey);
                 if (count($foreignKey->columns) !== count($referencedColumns)) {
                     continue;
                 }
@@ -372,25 +343,42 @@ final class ReferentialIntegrityEnforcer
         string $constraintName,
         ForeignKeyDefinition $foreignKey,
     ): ForeignKeyViolationException {
+        $referencedColumns = $this->referencedColumns($foreignKey);
+
         return new ForeignKeyViolationException(
             $sql,
             $childTable,
             $constraintName,
             $foreignKey->referencedTable,
-            $foreignKey->referencedColumns[0] ?? '',
+            $referencedColumns[0] ?? '',
         );
     }
 
+    /** @return list<string> */
+    private function referencedColumns(ForeignKeyDefinition $foreignKey): array
+    {
+        if ($foreignKey->referencedColumns !== []) {
+            return $foreignKey->referencedColumns;
+        }
+
+        $referencedTable = $this->registry->get($foreignKey->referencedTable);
+        if ($referencedTable === null) {
+            return [];
+        }
+
+        return array_values($referencedTable->primaryKeys);
+    }
+
     /**
-     * @param list<array<string, mixed>> $rows
+     * @param array<int, array<string, mixed>> $rows
      * @param array<string, mixed> $candidate
-     * @param list<string> $keys
-     * @param array<int, bool> $excluded
+     * @param array<int, string> $keys
+     * @param list<int> $excluded
      */
     private static function matchingRowIndex(array $rows, array $candidate, array $keys, array $excluded): ?int
     {
         foreach ($rows as $index => $row) {
-            if (!isset($excluded[$index]) && self::rowsMatch($row, $candidate, $keys)) {
+            if (!in_array($index, $excluded, true) && self::rowsMatch($row, $candidate, $keys)) {
                 return $index;
             }
         }
@@ -399,14 +387,14 @@ final class ReferentialIntegrityEnforcer
     }
 
     /**
-     * @param list<array<string, mixed>> $rows
+     * @param array<int, array<string, mixed>> $rows
      * @param array<string, mixed> $candidate
-     * @param array<int, bool> $excluded
+     * @param list<int> $excluded
      */
     private static function matchingExactRowIndex(array $rows, array $candidate, array $excluded): ?int
     {
         foreach ($rows as $index => $row) {
-            if (!isset($excluded[$index]) && $row === $candidate) {
+            if (!in_array($index, $excluded, true) && $row === $candidate) {
                 return $index;
             }
         }
@@ -417,7 +405,7 @@ final class ReferentialIntegrityEnforcer
     /**
      * @param array<string, mixed> $left
      * @param array<string, mixed> $right
-     * @param list<string> $keys
+     * @param array<int, string> $keys
      */
     private static function rowsMatch(array $left, array $right, array $keys): bool
     {

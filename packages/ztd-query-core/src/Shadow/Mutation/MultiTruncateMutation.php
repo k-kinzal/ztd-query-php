@@ -9,7 +9,7 @@ use ZtdQuery\Shadow\ShadowStore;
 /**
  * Applies a single TRUNCATE statement to every target shadow table.
  */
-final class MultiTruncateMutation implements ShadowMutation
+final class MultiTruncateMutation implements DataMutation
 {
     /** @param list<string> $tableNames */
     public function __construct(

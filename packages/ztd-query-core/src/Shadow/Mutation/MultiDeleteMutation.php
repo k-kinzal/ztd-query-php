@@ -10,7 +10,7 @@ use ZtdQuery\Shadow\ShadowStore;
  * Applies multi-table DELETE operation to the shadow store.
  * This mutation handles DELETE statements that target multiple tables.
  */
-final class MultiDeleteMutation implements ShadowMutation
+final class MultiDeleteMutation implements DataMutation
 {
     /** @var list<MultiTableMutationTarget> */
     private array $targets;

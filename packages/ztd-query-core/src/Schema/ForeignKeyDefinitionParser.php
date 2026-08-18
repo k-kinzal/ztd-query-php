@@ -22,7 +22,6 @@ final class ForeignKeyDefinitionParser
         }
 
         $foreignKeys = [];
-        $index = 0;
         foreach (SqlTokenStream::tokenize($body, $dialect)->splitTopLevel() as $entry) {
             $stream = SqlTokenStream::tokenize($entry, $dialect);
             $first = $stream->identifierAt();
@@ -32,7 +31,7 @@ final class ForeignKeyDefinitionParser
                 ['CONSTRAINT', 'FOREIGN', 'PRIMARY', 'UNIQUE', 'CHECK', 'EXCLUDE'],
                 true,
             ) ? $first['name'] : null;
-            $name = 'foreign_' . $index++;
+            $name = sprintf('foreign_%d', count($foreignKeys));
             $definition = $this->parseEntry($stream, $name, $inlineColumn);
             if ($definition === null) {
                 continue;
@@ -47,31 +46,32 @@ final class ForeignKeyDefinitionParser
     private function tableBody(string $sql, SqlTokenDialect $dialect): ?string
     {
         $tokens = SqlTokenStream::tokenize($sql, $dialect)->significantTokens();
-        $afterTable = false;
-        $opening = null;
-        foreach ($tokens as $token) {
-            if ($token->isTopLevel() && $token->isKeyword('TABLE')) {
-                $afterTable = true;
-                continue;
-            }
-            if ($afterTable && self::isSymbol($token, '(') && $token->isTopLevel()) {
-                $opening = $token;
-                break;
-            }
-        }
-        if ($opening === null) {
+        $first = $tokens[0] ?? null;
+        if ($first === null || !$first->isKeyword('CREATE')) {
             return null;
         }
 
+        $tableFound = false;
+        $opening = null;
         foreach ($tokens as $token) {
-            if ($token->offset <= $opening->offset
-                || !$token->isTopLevel()
-                || !self::isSymbol($token, ')')
-            ) {
+            if (!$token->isTopLevel()) {
                 continue;
             }
-
-            return substr($sql, $opening->endOffset(), $token->offset - $opening->endOffset());
+            if (!$tableFound) {
+                if ($token->isKeyword('TABLE')) {
+                    $tableFound = true;
+                }
+                continue;
+            }
+            if ($opening === null) {
+                if (self::isSymbol($token, '(')) {
+                    $opening = $token;
+                }
+                continue;
+            }
+            if (self::isSymbol($token, ')')) {
+                return substr($sql, $opening->endOffset(), $token->offset - $opening->endOffset());
+            }
         }
 
         return null;
@@ -104,7 +104,7 @@ final class ForeignKeyDefinitionParser
         }
 
         $name = $defaultName;
-        if (($tokens[0] ?? null)?->isKeyword('CONSTRAINT') === true) {
+        if ($tokens[0]->isKeyword('CONSTRAINT')) {
             $constraint = $stream->identifierAt(1);
             if ($constraint !== null) {
                 $name = $constraint['name'];
@@ -132,16 +132,18 @@ final class ForeignKeyDefinitionParser
         array $tokens,
         int $references,
     ): array {
-        $foreign = self::keywordIndex($tokens, 'FOREIGN');
-        if ($foreign === null || ($tokens[$foreign + 1] ?? null)?->isKeyword('KEY') !== true) {
+        $foreign = self::keywordIndex(array_slice($tokens, 0, $references), 'FOREIGN');
+        if ($foreign === null) {
             return [];
         }
 
-        $opening = self::symbolIndex($tokens, '(', $foreign + 2);
+        $key = $tokens[$foreign + 1];
+        if (!$key->isKeyword('KEY')) {
+            return [];
+        }
 
-        return $opening !== null && $opening < $references
-            ? $this->identifierList($stream, $tokens, $opening)
-            : [];
+        $opening = $foreign + 2;
+        return $this->identifierList($stream, $tokens, $opening);
     }
 
     /**
@@ -163,7 +165,7 @@ final class ForeignKeyDefinitionParser
         while (self::isSymbol($tokens[$next] ?? null, '.')) {
             $component = $stream->identifierAt($next + 1);
             if ($component === null) {
-                break;
+                return null;
             }
             $table = $component['name'];
             $next = $component['next'];
@@ -181,65 +183,71 @@ final class ForeignKeyDefinitionParser
      */
     private function identifierList(SqlTokenStream $stream, array $tokens, int $opening): array
     {
-        $closing = null;
         $depth = $tokens[$opening]->depth;
-        foreach ($tokens as $index => $token) {
-            if ($index <= $opening
-                || $token->depth !== $depth
-                || !self::isSymbol($token, ')')
-            ) {
+        $candidates = array_slice($tokens, $opening);
+        array_shift($candidates);
+        $identifiers = [];
+        $index = $opening;
+        foreach ($candidates as $token) {
+            $index++;
+            if ($token->depth === $depth) {
+                if (self::isSymbol($token, ')')) {
+                    return $identifiers;
+                }
+
+                return [];
+            }
+            if ($token->depth !== $depth + 1) {
                 continue;
             }
-            $closing = $token;
-            break;
-        }
-        if ($closing === null) {
-            return [];
-        }
 
-        $openingToken = $tokens[$opening];
-        $sql = '';
-        foreach ($stream->tokens() as $token) {
-            $sql .= $token->text;
-        }
-        $list = substr($sql, $openingToken->endOffset(), $closing->offset - $openingToken->endOffset());
-        $identifiers = [];
-        foreach (SqlTokenStream::tokenize($list)->splitTopLevel() as $part) {
-            $identifier = SqlTokenStream::tokenize($part)->identifierAt();
+            $identifier = $stream->identifierAt($index);
             if ($identifier !== null) {
                 $identifiers[] = $identifier['name'];
             }
         }
 
-        return $identifiers;
+        return [];
     }
 
     /** @param list<SqlToken> $tokens */
     private function action(array $tokens, string $event): ReferentialAction
     {
         foreach ($tokens as $index => $token) {
-            if (!$token->isTopLevel()
-                || !$token->isKeyword('ON')
-                || ($tokens[$index + 1] ?? null)?->isKeyword($event) !== true
-            ) {
+            if (!$token->isTopLevel() || !$token->isKeyword('ON')) {
+                continue;
+            }
+            $eventToken = $tokens[$index + 1] ?? null;
+            if ($eventToken === null || !$eventToken->isKeyword($event)) {
                 continue;
             }
 
-            $first = strtoupper($tokens[$index + 2]->text ?? '');
-            $second = strtoupper($tokens[$index + 3]->text ?? '');
+            $action = $tokens[$index + 2] ?? null;
+            if ($action === null) {
+                return ReferentialAction::NoAction;
+            }
+            if ($action->isKeyword('CASCADE')) {
+                return ReferentialAction::Cascade;
+            }
+            if ($action->isKeyword('RESTRICT')) {
+                return ReferentialAction::Restrict;
+            }
+            if (!$action->isKeyword('SET')) {
+                return ReferentialAction::NoAction;
+            }
 
-            return match ([$first, $second]) {
-                ['CASCADE', ''], ['CASCADE', 'ON'], ['CASCADE', 'DEFERRABLE'] => ReferentialAction::Cascade,
-                ['RESTRICT', ''], ['RESTRICT', 'ON'], ['RESTRICT', 'DEFERRABLE'] => ReferentialAction::Restrict,
-                ['SET', 'NULL'] => ReferentialAction::SetNull,
-                ['SET', 'DEFAULT'] => ReferentialAction::SetDefault,
-                ['NO', 'ACTION'] => ReferentialAction::NoAction,
-                default => match ($first) {
-                    'CASCADE' => ReferentialAction::Cascade,
-                    'RESTRICT' => ReferentialAction::Restrict,
-                    default => ReferentialAction::NoAction,
-                },
-            };
+            $qualifier = $tokens[$index + 3] ?? null;
+            if ($qualifier === null) {
+                return ReferentialAction::NoAction;
+            }
+            if ($qualifier->isKeyword('NULL')) {
+                return ReferentialAction::SetNull;
+            }
+            if ($qualifier->isKeyword('DEFAULT')) {
+                return ReferentialAction::SetDefault;
+            }
+
+            return ReferentialAction::NoAction;
         }
 
         return ReferentialAction::NoAction;
@@ -271,6 +279,10 @@ final class ForeignKeyDefinitionParser
 
     private static function isSymbol(?SqlToken $token, string $symbol): bool
     {
-        return $token !== null && $token->kind === SqlTokenKind::Symbol && $token->text === $symbol;
+        if ($token === null) {
+            return false;
+        }
+
+        return $token->kind === SqlTokenKind::Symbol && $token->text === $symbol;
     }
 }

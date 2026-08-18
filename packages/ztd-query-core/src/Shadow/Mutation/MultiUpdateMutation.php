@@ -10,7 +10,7 @@ use ZtdQuery\Shadow\ShadowStore;
  * Applies multi-table UPDATE operation to the shadow store.
  * This mutation handles UPDATE statements that target multiple tables.
  */
-final class MultiUpdateMutation implements ShadowMutation
+final class MultiUpdateMutation implements DataMutation
 {
     /** @var list<MultiTableMutationTarget> */
     private array $targets;

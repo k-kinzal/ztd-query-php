@@ -16,8 +16,10 @@ use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Schema\CandidateKeySet;
+use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\Mutation\InsertMutation;
 use ZtdQuery\Shadow\Mutation\MutationImpact;
+use ZtdQuery\Shadow\ReferentialIntegrityEnforcer;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTransactionManager;
 use ZtdQuery\Simulator\StatementSimulator;
@@ -35,8 +37,10 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(InsertMutation::class)]
 #[UsesClass(MutationImpact::class)]
 #[UsesClass(CandidateKeySet::class)]
+#[UsesClass(TableDefinitionRegistry::class)]
 #[UsesClass(ShadowStore::class)]
 #[UsesClass(ShadowTransactionManager::class)]
+#[UsesClass(ReferentialIntegrityEnforcer::class)]
 #[UsesClass(Session::class)]
 #[CoversClass(StatementSimulator::class)]
 final class StatementSimulatorTest extends TestCase
