@@ -142,6 +142,14 @@ final class GenerationPlans
     }
 
     /** @return GenerationPlan<true> */
+    public static function temporaryTableStatement(): GenerationPlan
+    {
+        return GenerationPlan::constrained('create_table_stmt', [
+            'opt_temporary' => [ProductionPattern::nonEmpty()],
+        ])->requiringNonEmpty();
+    }
+
+    /** @return GenerationPlan<true> */
     public static function multiTableDeleteStatement(): GenerationPlan
     {
         return GenerationPlan::constrained('delete_stmt', [

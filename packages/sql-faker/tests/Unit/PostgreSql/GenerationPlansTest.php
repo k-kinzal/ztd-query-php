@@ -55,4 +55,12 @@ final class GenerationPlansTest extends TestCase
         self::assertTrue($plan->patternAt('AexprConst', 0)?->matches(['Iconst']) ?? false);
         self::assertTrue($plan->patternAt('func_expr', 0)?->matches(['func_application']) ?? false);
     }
+
+    public function testTemporaryTablePlanRequiresTheTemporaryProduction(): void
+    {
+        $plan = GenerationPlans::temporaryTableStatement();
+
+        self::assertSame('CreateStmt', $plan->startRule());
+        self::assertTrue($plan->patternAt('OptTemp', 0)?->matches(['TEMP']) ?? false);
+    }
 }

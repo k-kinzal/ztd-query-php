@@ -78,14 +78,22 @@ final class PostgreSqlProviderTest extends TestCase
         self::assertContains('UPDATE', $tokens);
     }
 
-    public function testTemporaryTableStatement(): void
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testTemporaryTableStatement(int $seed): void
     {
-        $provider = new PostgreSqlProvider(Factory::create());
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new PostgreSqlProvider($faker);
+        $sql = $provider->temporaryTableStatement();
+        $faker->seed($seed);
 
-        self::assertMatchesRegularExpression(
-            '/^CREATE TEMP(?:ORARY)? TABLE \w+ \(\w+ INTEGER PRIMARY KEY, \w+ TEXT\)$/',
-            $provider->temporaryTableStatement(),
-        );
+        $tokens = (new LexicalGrammar($faker, 'pg-17.2', true))
+            ->tokenize($sql);
+
+        self::assertSame($sql, $provider->temporaryTableStatement(40));
+        self::assertSame('CREATE', $tokens[0]);
+        self::assertContains('TEMP', $tokens);
+        self::assertContains('TABLE', $tokens);
     }
 
     #[\Override]

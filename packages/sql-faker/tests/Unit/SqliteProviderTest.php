@@ -77,14 +77,22 @@ final class SqliteProviderTest extends TestCase
         self::assertContains('UPDATE', $tokens);
     }
 
-    public function testTemporaryTableStatement(): void
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testTemporaryTableStatement(int $seed): void
     {
-        $provider = new SqliteProvider(Factory::create());
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new SqliteProvider($faker);
+        $sql = $provider->temporaryTableStatement();
+        $faker->seed($seed);
 
-        self::assertMatchesRegularExpression(
-            '/^CREATE TEMP(?:ORARY)? TABLE \w+ \(\w+ INTEGER PRIMARY KEY, \w+ TEXT\)$/',
-            $provider->temporaryTableStatement(),
-        );
+        $tokens = (new LexicalGrammar($faker, 'sqlite-3.47.2', true))
+            ->tokenize($sql);
+
+        self::assertSame($sql, $provider->temporaryTableStatement(40));
+        self::assertSame('CREATE', $tokens[0]);
+        self::assertContains('TEMP', $tokens);
+        self::assertContains('TABLE', $tokens);
     }
 
     #[\Override]

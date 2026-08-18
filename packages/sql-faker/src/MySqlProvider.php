@@ -708,12 +708,10 @@ final class MySqlProvider extends Base
         );
     }
     /** @return non-empty-string */
-    public function temporaryTableStatement(): string
+    public function temporaryTableStatement(int $maxDepth = 40): string
     {
-        $table = $this->rsg->rawIdentifier();
-        $keyColumn = $this->rsg->rawIdentifier();
-        $valueColumn = $this->rsg->rawIdentifier();
-
-        return "CREATE TEMPORARY TABLE $table ($keyColumn INT PRIMARY KEY, $valueColumn VARCHAR(255))";
+        return $this->sql->generate(
+            GenerationPlans::temporaryTableStatement()->withMaxDepth($maxDepth),
+        );
     }
 }

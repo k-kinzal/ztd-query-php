@@ -186,4 +186,12 @@ final class GenerationPlansTest extends TestCase
         self::assertTrue($plan->patternAt('simple_expr', 0)?->matches(['function_call_conflict']) ?? false);
         self::assertTrue($plan->patternAt('function_call_conflict', 0)?->matches(['IF']) ?? false);
     }
+
+    public function testTemporaryTablePlanRequiresTheTemporaryProduction(): void
+    {
+        $plan = GenerationPlans::temporaryTableStatement();
+
+        self::assertSame('create_table_stmt', $plan->startRule());
+        self::assertTrue($plan->patternAt('opt_temporary', 0)?->matches(['TEMPORARY']) ?? false);
+    }
 }

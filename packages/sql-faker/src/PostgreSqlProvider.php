@@ -416,13 +416,11 @@ final class PostgreSqlProvider extends Base
     }
 
     /** @return non-empty-string */
-    public function temporaryTableStatement(): string
+    public function temporaryTableStatement(int $maxDepth = 40): string
     {
-        $table = $this->rsg->rawIdentifier();
-        $keyColumn = $this->rsg->rawIdentifier();
-        $valueColumn = $this->rsg->rawIdentifier();
-
-        return "CREATE TEMP TABLE $table ($keyColumn INTEGER PRIMARY KEY, $valueColumn TEXT)";
+        return $this->sql->generate(
+            GenerationPlans::temporaryTableStatement()->withMaxDepth($maxDepth),
+        );
     }
 
     /**

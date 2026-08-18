@@ -42,6 +42,14 @@ final class GenerationPlans
     }
 
     /** @return GenerationPlan<true> */
+    public static function temporaryTableStatement(): GenerationPlan
+    {
+        return GenerationPlan::constrained('CreateStmt', [
+            'OptTemp' => [ProductionPattern::containing('TEMP')],
+        ])->requiringNonEmpty();
+    }
+
+    /** @return GenerationPlan<true> */
     public static function foreignKeyConstraint(): GenerationPlan
     {
         return GenerationPlan::constrained('TableConstraint', [

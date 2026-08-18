@@ -95,14 +95,22 @@ final class MySqlProviderTest extends TestCase
         self::assertContains('DUPLICATE_SYM', $tokens);
     }
 
-    public function testTemporaryTableStatement(): void
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testTemporaryTableStatement(int $seed): void
     {
-        $provider = new MySqlProvider(Factory::create());
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new MySqlProvider($faker);
+        $sql = $provider->temporaryTableStatement();
+        $faker->seed($seed);
 
-        self::assertMatchesRegularExpression(
-            '/^CREATE TEMPORARY TABLE \w+ \(\w+ INT PRIMARY KEY, \w+ VARCHAR\(255\)\)$/',
-            $provider->temporaryTableStatement(),
-        );
+        $tokens = (new LexicalGrammar($faker, 'mysql-8.4.7', true))
+            ->tokenize($sql);
+
+        self::assertSame($sql, $provider->temporaryTableStatement(40));
+        self::assertSame('CREATE', $tokens[0]);
+        self::assertContains('TEMPORARY', $tokens);
+        self::assertContains('TABLE_SYM', $tokens);
     }
 
     public function testSql(): void
