@@ -24,16 +24,29 @@ final class SqliteCteShadowComposer
     public function compose(string $sql, array $tableCtes): string
     {
         $declared = array_fill_keys($this->declaredCteNames($sql), true);
-        $ctes = [];
-        $shadowedTables = [];
-        foreach ($tableCtes as $table => $cte) {
+        $requiredSql = [$sql];
+        $requiredCtes = [];
+        foreach (array_reverse($tableCtes, true) as $table => $cte) {
             $normalized = strtolower($table);
-            if (isset($declared[$normalized]) || !$this->referencesIdentifier($sql, $table)) {
+            if (isset($declared[$normalized])) {
                 continue;
             }
-            $ctes[] = $cte;
-            $shadowedTables[] = $table;
+            $referenced = false;
+            foreach ($requiredSql as $requiredPart) {
+                if ($this->referencesIdentifier($requiredPart, $table)) {
+                    $referenced = true;
+                }
+            }
+            if (!$referenced) {
+                continue;
+            }
+            $requiredCtes[$table] = $cte;
+            $requiredSql[] = $cte;
         }
+
+        $requiredCtes = array_reverse($requiredCtes, true);
+        $ctes = $requiredCtes;
+        $shadowedTables = array_keys($requiredCtes);
 
         if ($ctes === []) {
             return $sql;

@@ -50,6 +50,12 @@ final class GenerationPlans
     }
 
     /** @return GenerationPlan<true> */
+    public static function viewStatement(): GenerationPlan
+    {
+        return GenerationPlan::fromRule('ViewStmt')->requiringNonEmpty();
+    }
+
+    /** @return GenerationPlan<true> */
     public static function foreignKeyConstraint(): GenerationPlan
     {
         return GenerationPlan::constrained('TableConstraint', [

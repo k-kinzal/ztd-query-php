@@ -17,7 +17,7 @@ final class MySqlCteShadowComposerTest extends TestCase
     {
         self::assertSame(
             "WITH \"items\" AS (SELECT 1 AS id),\n\"item_view\" AS (SELECT * FROM items)\nSELECT * FROM item_view",
-            (new CteShadowComposer())->compose(
+            (new MySqlCteShadowComposer())->compose(
                 'SELECT * FROM item_view',
                 [
                     'items' => '"items" AS (SELECT 1 AS id)',

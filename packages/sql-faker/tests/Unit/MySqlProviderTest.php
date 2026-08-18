@@ -113,14 +113,21 @@ final class MySqlProviderTest extends TestCase
         self::assertContains('TABLE_SYM', $tokens);
     }
 
-    public function testViewStatement(): void
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testViewStatement(int $seed): void
     {
-        $sql = (new MySqlProvider(Factory::create()))->viewStatement();
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new MySqlProvider($faker);
+        $sql = $provider->viewStatement();
+        $faker->seed($seed);
+        $tokens = (new LexicalGrammar($faker, 'mysql-8.4.7', true))
+            ->tokenize($sql);
 
-        self::assertStringStartsWith('CREATE VIEW ', $sql);
-        self::assertStringContainsString(' AS SELECT ', $sql);
-        self::assertStringContainsString(' FROM ', $sql);
-        self::assertStringEndsWith(' IS NOT NULL', $sql);
+        self::assertSame($sql, $provider->viewStatement(40));
+        self::assertSame('CREATE', $tokens[0]);
+        self::assertContains('VIEW_SYM', $tokens);
+        self::assertContains('SELECT_SYM', $tokens);
     }
 
     public function testSql(): void

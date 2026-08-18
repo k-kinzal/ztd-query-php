@@ -96,14 +96,21 @@ final class PostgreSqlProviderTest extends TestCase
         self::assertContains('TABLE', $tokens);
     }
 
-    public function testViewStatement(): void
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testViewStatement(int $seed): void
     {
-        $sql = (new PostgreSqlProvider(Factory::create()))->viewStatement();
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new PostgreSqlProvider($faker);
+        $sql = $provider->viewStatement();
+        $faker->seed($seed);
+        $tokens = (new LexicalGrammar($faker, 'pg-17.2', true))
+            ->tokenize($sql);
 
-        self::assertStringStartsWith('CREATE VIEW ', $sql);
-        self::assertStringContainsString(' AS SELECT ', $sql);
-        self::assertStringContainsString(' FROM ', $sql);
-        self::assertStringEndsWith(' IS NOT NULL', $sql);
+        self::assertSame($sql, $provider->viewStatement(40));
+        self::assertSame('CREATE', $tokens[0]);
+        self::assertContains('VIEW', $tokens);
+        self::assertNotSame([], array_intersect(['SELECT', 'VALUES', 'TABLE'], $tokens));
     }
 
     #[\Override]

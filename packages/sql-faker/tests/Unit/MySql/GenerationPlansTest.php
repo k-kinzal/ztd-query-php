@@ -194,4 +194,13 @@ final class GenerationPlansTest extends TestCase
         self::assertSame('create_table_stmt', $plan->startRule());
         self::assertTrue($plan->patternAt('opt_temporary', 0)?->matches(['TEMPORARY']) ?? false);
     }
+
+    public function testViewPlanRestrictsTheCreateGrammar(): void
+    {
+        $plan = GenerationPlans::viewStatement();
+
+        self::assertSame('create', $plan->startRule());
+        self::assertNotNull($plan->patternAt('view_or_trigger_or_sp_or_event', 0));
+        self::assertNotNull($plan->patternAt('no_definer_tail', 0));
+    }
 }

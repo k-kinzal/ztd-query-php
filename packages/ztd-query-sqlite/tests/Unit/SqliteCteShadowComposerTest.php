@@ -13,6 +13,21 @@ use ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer;
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser::class)]
 final class SqliteCteShadowComposerTest extends TestCase
 {
+    public function testIncludesTransitivelyReferencedShadowCtes(): void
+    {
+        self::assertSame(
+            "WITH \"items\" AS (SELECT 1 AS id),\n\"item_view\" AS (SELECT * FROM items)\nSELECT * FROM item_view",
+            (new SqliteCteShadowComposer())->compose(
+                'SELECT * FROM item_view',
+                [
+                    'items' => '"items" AS (SELECT 1 AS id)',
+                    'item_view' => '"item_view" AS (SELECT * FROM items)',
+                    'unrelated' => '"unrelated" AS (SELECT 2 AS id)',
+                ],
+            ),
+        );
+    }
+
     public function testAddsShadowsAfterRecursiveModifier(): void
     {
         $sql = 'WITH RECURSIVE tree AS (SELECT id FROM nodes UNION ALL SELECT n.id FROM nodes n JOIN tree t ON n.parent_id = t.id) SELECT * FROM tree';

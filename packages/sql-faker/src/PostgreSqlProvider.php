@@ -424,14 +424,9 @@ final class PostgreSqlProvider extends Base
     }
 
     /** @return non-empty-string */
-    public function viewStatement(): string
+    public function viewStatement(int $maxDepth = 40): string
     {
-        $view = $this->rsg->rawIdentifier();
-        $table = $this->rsg->rawIdentifier();
-        $keyColumn = $this->rsg->rawIdentifier();
-        $valueColumn = $this->rsg->rawIdentifier();
-
-        return "CREATE VIEW $view AS SELECT $keyColumn, $valueColumn FROM $table WHERE $keyColumn IS NOT NULL";
+        return $this->sql->generate(GenerationPlans::viewStatement()->withMaxDepth($maxDepth));
     }
 
     /**

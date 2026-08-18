@@ -41,6 +41,15 @@ final class GenerationPlans
     }
 
     /** @return GenerationPlan<true> */
+    public static function viewStatement(): GenerationPlan
+    {
+        return GenerationPlan::constrained('cmd', [
+            'cmd' => [ProductionPattern::containing('createkw', 'VIEW', 'select')],
+            'oneselect' => [ProductionPattern::containing('SELECT')],
+        ])->requiringNonEmpty();
+    }
+
+    /** @return GenerationPlan<true> */
     public static function foreignKeyConstraint(): GenerationPlan
     {
         return GenerationPlan::constrained('conslist', [

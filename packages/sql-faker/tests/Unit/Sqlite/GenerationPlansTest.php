@@ -70,4 +70,13 @@ final class GenerationPlansTest extends TestCase
         self::assertTrue($plan->patternAt('cmd', 0)?->matches(['create_table', 'create_table_args']) ?? false);
         self::assertTrue($plan->patternAt('temp', 0)?->matches(['TEMP']) ?? false);
     }
+
+    public function testViewPlanRestrictsTheCreateGrammar(): void
+    {
+        $plan = GenerationPlans::viewStatement();
+
+        self::assertSame('cmd', $plan->startRule());
+        self::assertNotNull($plan->patternAt('cmd', 0));
+        self::assertNotNull($plan->patternAt('oneselect', 0));
+    }
 }

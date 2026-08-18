@@ -63,4 +63,9 @@ final class GenerationPlansTest extends TestCase
         self::assertSame('CreateStmt', $plan->startRule());
         self::assertTrue($plan->patternAt('OptTemp', 0)?->matches(['TEMP']) ?? false);
     }
+
+    public function testViewPlanStartsFromTheViewGrammar(): void
+    {
+        self::assertSame('ViewStmt', GenerationPlans::viewStatement()->startRule());
+    }
 }

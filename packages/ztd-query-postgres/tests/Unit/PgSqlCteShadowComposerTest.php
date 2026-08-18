@@ -13,6 +13,21 @@ use ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser::class)]
 final class PgSqlCteShadowComposerTest extends TestCase
 {
+    public function testIncludesTransitivelyReferencedShadowCtes(): void
+    {
+        self::assertSame(
+            "WITH \"items\" AS (SELECT 1 AS id),\n\"item_view\" AS (SELECT * FROM items)\nSELECT * FROM item_view",
+            (new PgSqlCteShadowComposer())->compose(
+                'SELECT * FROM item_view',
+                [
+                    'items' => '"items" AS (SELECT 1 AS id)',
+                    'item_view' => '"item_view" AS (SELECT * FROM items)',
+                    'unrelated' => '"unrelated" AS (SELECT 2 AS id)',
+                ],
+            ),
+        );
+    }
+
     public function testAddsShadowsAfterRecursiveModifier(): void
     {
         $sql = 'WITH RECURSIVE tree AS (SELECT id FROM nodes UNION ALL SELECT n.id FROM nodes n JOIN tree t ON n.parent_id = t.id) SELECT * FROM tree';

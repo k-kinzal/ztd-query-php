@@ -150,6 +150,19 @@ final class GenerationPlans
     }
 
     /** @return GenerationPlan<true> */
+    public static function viewStatement(): GenerationPlan
+    {
+        return GenerationPlan::constrained('create', [
+            'create' => [ProductionPattern::exactly('CREATE', 'view_or_trigger_or_sp_or_event')],
+            'view_or_trigger_or_sp_or_event' => [
+                ProductionPattern::exactly('no_definer', 'init_lex_create_info', 'no_definer_tail'),
+            ],
+            'no_definer_tail' => [ProductionPattern::exactly('view_tail')],
+            'query_primary' => [ProductionPattern::exactly('query_specification')],
+        ])->requiringNonEmpty();
+    }
+
+    /** @return GenerationPlan<true> */
     public static function multiTableDeleteStatement(): GenerationPlan
     {
         return GenerationPlan::constrained('delete_stmt', [
