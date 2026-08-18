@@ -43,7 +43,7 @@ final class InsertSelectRenderer
             if ($sourceIndex !== null) {
                 $expression = $this->quoter->quote('__ztd_insert_' . $sourceIndex);
             } elseif ($generatedIdentityStart !== null) {
-                $expression = $generatedIdentityStart . ' + ROW_NUMBER() OVER () - 1';
+                $expression = $this->renderGeneratedIdentity($generatedIdentityStart);
             } else {
                 $expression = $projection->defaultExpressionValue() ?? 'NULL';
             }
@@ -54,5 +54,14 @@ final class InsertSelectRenderer
 
         return 'WITH ' . $sourceName . ' (' . implode(', ', $sourceColumns) . ') AS ('
             . $selectSql . ') SELECT ' . implode(', ', $selects) . ' FROM ' . $sourceName;
+    }
+
+    public function renderGeneratedIdentity(int $start): string
+    {
+        if ($start < 1) {
+            throw new \InvalidArgumentException('Generated identity start must be positive.');
+        }
+
+        return $start . ' + ROW_NUMBER() OVER () - 1';
     }
 }

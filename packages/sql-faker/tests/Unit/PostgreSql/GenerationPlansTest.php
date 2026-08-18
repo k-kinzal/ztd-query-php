@@ -136,4 +136,13 @@ final class GenerationPlansTest extends TestCase
         self::assertTrue($plan->patternAt('dostmt_opt_list', 0)?->matches(['dostmt_opt_item']) ?? false);
         self::assertTrue($plan->patternAt('dostmt_opt_item', 0)?->matches(['Sconst']) ?? false);
     }
+
+    public function testMergePlanRequiresAllMutationBranches(): void
+    {
+        $plan = GenerationPlans::mergeStatement();
+
+        self::assertSame('MergeStmt', $plan->startRule());
+        self::assertNotNull($plan->patternAt('merge_when_list', 3));
+        self::assertNotNull($plan->patternAt('merge_when_clause', 3));
+    }
 }

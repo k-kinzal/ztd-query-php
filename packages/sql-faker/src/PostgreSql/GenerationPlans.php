@@ -120,6 +120,25 @@ final class GenerationPlans
     }
 
     /** @return GenerationPlan<true> */
+    public static function mergeStatement(): GenerationPlan
+    {
+        return GenerationPlan::constrained('MergeStmt', [
+            'merge_when_list' => [
+                ProductionPattern::exactly('merge_when_list', 'merge_when_clause'),
+                ProductionPattern::exactly('merge_when_list', 'merge_when_clause'),
+                ProductionPattern::exactly('merge_when_list', 'merge_when_clause'),
+                ProductionPattern::exactly('merge_when_clause'),
+            ],
+            'merge_when_clause' => [
+                ProductionPattern::containing('merge_when_tgt_matched', 'merge_delete'),
+                ProductionPattern::containing('merge_when_tgt_matched', 'DO', 'NOTHING'),
+                ProductionPattern::containing('merge_when_tgt_matched', 'merge_update'),
+                ProductionPattern::containing('merge_when_tgt_not_matched', 'merge_insert'),
+            ],
+        ])->requiringNonEmpty();
+    }
+
+    /** @return GenerationPlan<true> */
     public static function foreignKeyConstraint(): GenerationPlan
     {
         return GenerationPlan::constrained('TableConstraint', [

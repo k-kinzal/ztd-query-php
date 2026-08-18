@@ -5,18 +5,17 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\Postgres;
 
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Rewrite\CteShadowComposer;
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
 final class PgSqlMergeParser
 {
-    private CteShadowComposer $cteComposer;
+    private PgSqlCteShadowComposer $cteComposer;
 
     public function __construct()
     {
-        $this->cteComposer = new CteShadowComposer();
+        $this->cteComposer = new PgSqlCteShadowComposer();
     }
 
     public function parse(string $sql): PgSqlMergeStatement

@@ -930,72 +930,34 @@ final class PostgreSqlProviderTest extends TestCase
         );
     }
 
-    public function testMergeStatementTargetsFuzzFixtureAndCoversEveryAction(): void
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testMergeStatementDerivesEveryActionFromGrammar(int $seed): void
     {
-        $maximum = new class () extends Generator {
-            /**
-             * @param mixed $int1
-             * @param mixed $int2
-             */
-            #[\Override]
-            public function numberBetween($int1 = 0, $int2 = 2147483647): int
-            {
-                return is_int($int2) ? $int2 : 2147483647;
-            }
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new PostgreSqlProvider($faker);
+        $sql = $provider->mergeStatement();
+        $faker->seed($seed);
+        $tokens = (new LexicalGrammar($faker, 'pg-17.2', true))->tokenize($sql);
+        $normalized = implode(' ', $tokens);
+        $delete = strpos($normalized, 'WHEN MATCHED THEN DELETE_P');
+        $nothing = strpos($normalized, 'WHEN MATCHED THEN DO NOTHING');
+        $update = strpos($normalized, 'WHEN MATCHED THEN UPDATE');
+        $insert = strpos($normalized, 'WHEN NOT MATCHED THEN INSERT');
 
-            /**
-             * @param string $method
-             * @param array<mixed> $attributes
-             */
-            #[\Override]
-            public function __call($method, $attributes): bool
-            {
-                return true;
-            }
-        };
-        $minimum = new class () extends Generator {
-            /**
-             * @param mixed $int1
-             * @param mixed $int2
-             */
-            #[\Override]
-            public function numberBetween($int1 = 0, $int2 = 2147483647): int
-            {
-                return is_int($int1) ? $int1 : 1;
-            }
-
-            /**
-             * @param string $method
-             * @param array<mixed> $attributes
-             */
-            #[\Override]
-            public function __call($method, $attributes): bool
-            {
-                return false;
-            }
-        };
-
-        self::assertSame(
-            "WITH incoming(id, name, remove_row) AS (VALUES (2147483647, 'fuzz', TRUE)) "
-            . 'MERGE INTO users AS target USING incoming AS source'
-            . ' ON target.id = source.id'
-            . ' WHEN MATCHED AND source.remove_row THEN DELETE'
-            . ' WHEN MATCHED AND source.name IS NULL THEN DO NOTHING'
-            . ' WHEN MATCHED THEN UPDATE SET name = source.name'
-            . ' WHEN NOT MATCHED THEN INSERT (id, name, status)'
-            . " VALUES (source.id, source.name, 'active')",
-            (new PostgreSqlProvider($maximum))->mergeStatement(),
+        self::assertSame($sql, $provider->mergeStatement(40));
+        self::assertContains('MERGE', $tokens);
+        self::assertGreaterThanOrEqual(
+            4,
+            count(array_filter($tokens, static fn (string $token): bool => $token === 'WHEN')),
         );
-        self::assertSame(
-            "MERGE INTO users AS target USING (VALUES (1, 'fuzz', FALSE)) AS source(id, name, remove_row)"
-            . ' ON target.id = source.id'
-            . ' WHEN MATCHED AND source.remove_row THEN DELETE'
-            . ' WHEN MATCHED AND source.name IS NULL THEN DO NOTHING'
-            . ' WHEN MATCHED THEN UPDATE SET name = source.name'
-            . ' WHEN NOT MATCHED THEN INSERT (id, name, status)'
-            . " VALUES (source.id, source.name, 'active')",
-            (new PostgreSqlProvider($minimum))->mergeStatement(),
-        );
+        self::assertIsInt($delete);
+        self::assertIsInt($nothing);
+        self::assertIsInt($update);
+        self::assertIsInt($insert);
+        self::assertLessThan($nothing, $delete);
+        self::assertLessThan($update, $nothing);
+        self::assertLessThan($insert, $update);
     }
 
     #[DataProvider('providerNullableSimpleStatementSeed')]

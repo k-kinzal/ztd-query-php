@@ -6,32 +6,33 @@ namespace ZtdQuery\Platform\Postgres\Transformer;
 
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
+use ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer;
+use ZtdQuery\Platform\Postgres\PgSqlGeneratedColumnProjector;
 use ZtdQuery\Platform\Postgres\PgSqlMergeActionKind;
 use ZtdQuery\Platform\Postgres\PgSqlMergeClause;
 use ZtdQuery\Platform\Postgres\PgSqlMergeMatchKind;
 use ZtdQuery\Platform\Postgres\PgSqlMergeParser;
 use ZtdQuery\Platform\Postgres\PgSqlMergeStatement;
-use ZtdQuery\Rewrite\CteShadowComposer;
-use ZtdQuery\Rewrite\GeneratedColumnProjector;
-use ZtdQuery\Rewrite\InsertRowProjector;
 use ZtdQuery\Rewrite\ShadowIdentityAllocator;
 use ZtdQuery\Rewrite\SqlTransformer;
 
 final class MergeTransformer implements SqlTransformer
 {
     private PgSqlIdentifierQuoter $quoter;
-    private InsertRowProjector $rowProjector;
-    private GeneratedColumnProjector $generatedColumnProjector;
-    private CteShadowComposer $cteComposer;
+    private InsertRowRenderer $rowRenderer;
+    private PgSqlGeneratedColumnProjector $generatedColumnProjector;
+    private PgSqlCteShadowComposer $cteComposer;
+    private InsertSelectRenderer $insertSelectRenderer;
 
     public function __construct(
         private readonly PgSqlMergeParser $parser,
         private readonly SelectTransformer $selectTransformer,
     ) {
         $this->quoter = new PgSqlIdentifierQuoter();
-        $this->rowProjector = new InsertRowProjector();
-        $this->generatedColumnProjector = new GeneratedColumnProjector($this->quoter);
-        $this->cteComposer = new CteShadowComposer();
+        $this->rowRenderer = new InsertRowRenderer();
+        $this->generatedColumnProjector = new PgSqlGeneratedColumnProjector();
+        $this->cteComposer = new PgSqlCteShadowComposer();
+        $this->insertSelectRenderer = new InsertSelectRenderer();
     }
 
     /**
@@ -228,24 +229,21 @@ final class MergeTransformer implements SqlTransformer
             }
         }
 
-        $generatedValues = (new ShadowIdentityAllocator())->allocateSelectExpressionsForValues(
-            $statement->targetTable,
-            $identityStrategies,
-            $sourceColumns,
-            $clause->insertValues,
-            $existingRows,
-        );
         try {
-            $projected = $this->rowProjector->project(
-                $columns,
-                $sourceColumns,
-                $clause->insertValues,
-                $defaults,
-                $generatedValues,
-            );
+            $providedExpressions = $this->rowRenderer->providedExpressions($sourceColumns, $clause->insertValues);
         } catch (\InvalidArgumentException) {
             throw new UnsupportedSqlException($sql, 'MERGE INSERT values count does not match column count');
         }
+        $generatedStarts = (new ShadowIdentityAllocator())->allocateSelectStarts(
+            $statement->targetTable,
+            $identityStrategies,
+            array_keys($providedExpressions),
+            $existingRows,
+        );
+        foreach ($generatedStarts as $column => $start) {
+            $providedExpressions[$column] = $this->insertSelectRenderer->renderGeneratedIdentity($start);
+        }
+        $projected = $this->rowRenderer->render($columns, $providedExpressions, $defaults);
 
         $selects = [];
         foreach ($projected as $column => $expression) {

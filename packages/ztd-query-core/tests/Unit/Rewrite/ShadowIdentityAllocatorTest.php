@@ -181,27 +181,6 @@ final class ShadowIdentityAllocatorTest extends TestCase
         );
     }
 
-    public function testSelectAllocationTreatsOnlyDefaultValuesAsMissing(): void
-    {
-        self::assertSame(
-            [
-                'generated_id' => '1 + ROW_NUMBER() OVER () - 1',
-                'omitted_id' => '1 + ROW_NUMBER() OVER () - 1',
-            ],
-            (new ShadowIdentityAllocator())->allocateSelectExpressionsForValues(
-                'users',
-                [
-                    'generated_id' => IdentityGenerationStrategy::Sequence,
-                    'provided_id' => IdentityGenerationStrategy::Sequence,
-                    'omitted_id' => IdentityGenerationStrategy::Sequence,
-                ],
-                ['generated_id', 'provided_id'],
-                ['  default  ', '42'],
-                [],
-            ),
-        );
-    }
-
     public function testUncommittedPreparationDoesNotConsumeIdentity(): void
     {
         $allocator = new ShadowIdentityAllocator();

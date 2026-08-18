@@ -460,24 +460,9 @@ final class PostgreSqlProvider extends Base
     }
 
     /** @return non-empty-string */
-    public function mergeStatement(): string
+    public function mergeStatement(int $maxDepth = 40): string
     {
-        $id = $this->rsg->integerString(1, 2147483647);
-        $remove = $this->generator->boolean() ? 'TRUE' : 'FALSE';
-        $source = "(VALUES ($id, 'fuzz', $remove)) AS source(id, name, remove_row)";
-        $prefix = '';
-        if ($this->generator->boolean()) {
-            $prefix = "WITH incoming(id, name, remove_row) AS (VALUES ($id, 'fuzz', $remove)) ";
-            $source = 'incoming AS source';
-        }
-
-        return $prefix . 'MERGE INTO users AS target USING ' . $source
-            . ' ON target.id = source.id'
-            . ' WHEN MATCHED AND source.remove_row THEN DELETE'
-            . ' WHEN MATCHED AND source.name IS NULL THEN DO NOTHING'
-            . ' WHEN MATCHED THEN UPDATE SET name = source.name'
-            . ' WHEN NOT MATCHED THEN INSERT (id, name, status)'
-            . " VALUES (source.id, source.name, 'active')";
+        return $this->sql->generate(GenerationPlans::mergeStatement()->withMaxDepth($maxDepth));
     }
 
     /**

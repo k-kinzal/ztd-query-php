@@ -32,4 +32,18 @@ final class InsertSelectRendererTest extends TestCase
             $sql,
         );
     }
+
+    public function testRendersGeneratedIdentityExpression(): void
+    {
+        $renderer = new InsertSelectRenderer();
+
+        self::assertSame('1 + ROW_NUMBER() OVER () - 1', $renderer->renderGeneratedIdentity(1));
+    }
+
+    public function testRejectsNonPositiveGeneratedIdentityStart(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        (new InsertSelectRenderer())->renderGeneratedIdentity(0);
+    }
 }
