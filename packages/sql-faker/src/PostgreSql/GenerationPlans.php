@@ -157,6 +157,17 @@ final class GenerationPlans
         ])->requiringNonEmpty();
     }
 
+    /** @return non-empty-list<GenerationPlan<true>> */
+    public static function domainDmlStatements(): array
+    {
+        return array_map(
+            static fn (string $startRule): GenerationPlan => GenerationPlan::constrained($startRule, [
+                'opt_with_clause' => [ProductionPattern::exactly()],
+            ])->requiringNonEmpty(),
+            ['InsertStmt', 'UpdateStmt', 'DeleteStmt'],
+        );
+    }
+
     /** @return GenerationPlan<true> */
     public static function foreignKeyConstraint(): GenerationPlan
     {

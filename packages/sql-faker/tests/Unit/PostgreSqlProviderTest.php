@@ -1057,55 +1057,19 @@ final class PostgreSqlProviderTest extends TestCase
         yield 'DropTable' => [StatementType::DropTable];
     }
 
-    public function testDomainDmlStatementTargetsDomainFixture(): void
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testDomainDmlStatementDerivesDmlFromGrammar(int $seed): void
     {
-        $minimum = new class () extends Generator {
-            /**
-             * @param mixed $int1
-             * @param mixed $int2
-             */
-            #[\Override]
-            public function numberBetween($int1 = 0, $int2 = 2147483647): int
-            {
-                return is_int($int1) ? $int1 : 0;
-            }
-        };
-        $middle = new class () extends Generator {
-            /**
-             * @param mixed $int1
-             * @param mixed $int2
-             */
-            #[\Override]
-            public function numberBetween($int1 = 0, $int2 = 2147483647): int
-            {
-                unset($int1, $int2);
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new PostgreSqlProvider($faker);
+        $sql = $provider->domainDmlStatement();
+        $faker->seed($seed);
+        $lexer = new LexicalGrammar($faker, 'pg-17.2', true);
 
-                return 1;
-            }
-        };
-        $maximum = new class () extends Generator {
-            /**
-             * @param mixed $int1
-             * @param mixed $int2
-             */
-            #[\Override]
-            public function numberBetween($int1 = 0, $int2 = 2147483647): int
-            {
-                return is_int($int2) ? $int2 : 2;
-            }
-        };
+        $tokens = $lexer->tokenize($sql);
 
-        self::assertSame(
-            'INSERT INTO contacts (age, satisfaction) VALUES ($1, $2)',
-            (new PostgreSqlProvider($minimum))->domainDmlStatement(),
-        );
-        self::assertSame(
-            'UPDATE contacts SET satisfaction = 99.99 WHERE age > 0',
-            (new PostgreSqlProvider($middle))->domainDmlStatement(),
-        );
-        self::assertSame(
-            'DELETE FROM contacts WHERE satisfaction > 90',
-            (new PostgreSqlProvider($maximum))->domainDmlStatement(),
-        );
+        self::assertSame($sql, $provider->domainDmlStatement(40));
+        self::assertContains($tokens[0], ['INSERT', 'UPDATE', 'DELETE_P']);
     }
 }

@@ -187,4 +187,17 @@ final class GenerationPlansTest extends TestCase
         );
         self::assertTrue($plan->patternAt('where_clause', 0)?->matches(['a_expr']) ?? false);
     }
+
+    public function testDomainDmlPlansCoverAllMutationGrammars(): void
+    {
+        $plans = GenerationPlans::domainDmlStatements();
+
+        self::assertSame(
+            ['InsertStmt', 'UpdateStmt', 'DeleteStmt'],
+            array_map(static fn (GenerationPlan $plan): ?string => $plan->startRule(), $plans),
+        );
+        self::assertTrue($plans[0]->patternAt('opt_with_clause', 0)?->matches([]) ?? false);
+        self::assertTrue($plans[1]->patternAt('opt_with_clause', 0)?->matches([]) ?? false);
+        self::assertTrue($plans[2]->patternAt('opt_with_clause', 0)?->matches([]) ?? false);
+    }
 }

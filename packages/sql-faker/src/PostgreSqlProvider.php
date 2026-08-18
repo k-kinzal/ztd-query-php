@@ -135,7 +135,10 @@ final class PostgreSqlProvider extends Base
      */
     public function createDomainStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->generateRequired(StatementType::CreateDomain->value, $maxDepth);
+        return $this->generate(
+            GenerationPlan::fromRule(StatementType::CreateDomain->value)->requiringNonEmpty(),
+            $maxDepth,
+        );
     }
 
     /**
@@ -446,7 +449,10 @@ final class PostgreSqlProvider extends Base
     /** @return non-empty-string */
     public function domainDmlStatement(int $maxDepth = 40): string
     {
-        return $this->sql->generateDomainDmlStatement($maxDepth);
+        /** @var GenerationPlan<true> $plan */
+        $plan = $this->generator->randomElement(GenerationPlans::domainDmlStatements());
+
+        return $this->sql->generate($plan->withMaxDepth($maxDepth));
     }
 
     /** @return non-empty-string */
