@@ -903,7 +903,11 @@ final class PostgreSqlProviderTest extends TestCase
             #[\Override]
             public function numberBetween($int1 = 0, $int2 = 2147483647): int
             {
-                return $int2 === 100 ? 100 : 2147483647;
+                return match ([$int1, $int2]) {
+                    [0, 100] => 100,
+                    [0, 2147483647] => 2147483647,
+                    default => throw new \UnexpectedValueException('Unexpected TABLESAMPLE range'),
+                };
             }
 
             /**
