@@ -893,63 +893,21 @@ final class PostgreSqlProviderTest extends TestCase
         self::assertNotSame('', $result);
     }
 
-    public function testTableSampleStatementCoversMethodsBoundsAndRepeatability(): void
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testTableSampleStatementDerivesSamplingClauseFromGrammar(int $seed): void
     {
-        $maximum = new class () extends Generator {
-            /**
-             * @param mixed $int1
-             * @param mixed $int2
-             */
-            #[\Override]
-            public function numberBetween($int1 = 0, $int2 = 2147483647): int
-            {
-                return match ([$int1, $int2]) {
-                    [0, 100] => 100,
-                    [0, 2147483647] => 2147483647,
-                    default => throw new \UnexpectedValueException('Unexpected TABLESAMPLE range'),
-                };
-            }
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new PostgreSqlProvider($faker);
+        $sql = $provider->tableSampleStatement();
+        $faker->seed($seed);
 
-            /**
-             * @param string $method
-             * @param array<mixed> $attributes
-             */
-            #[\Override]
-            public function __call($method, $attributes): bool
-            {
-                return true;
-            }
-        };
-        $minimum = new class () extends Generator {
-            /**
-             * @param mixed $int1
-             * @param mixed $int2
-             */
-            #[\Override]
-            public function numberBetween($int1 = 0, $int2 = 2147483647): int
-            {
-                return 0;
-            }
+        $tokens = (new LexicalGrammar($faker, 'pg-17.2', true))->tokenize($sql);
 
-            /**
-             * @param string $method
-             * @param array<mixed> $attributes
-             */
-            #[\Override]
-            public function __call($method, $attributes): bool
-            {
-                return false;
-            }
-        };
-
-        self::assertSame(
-            'SELECT * FROM users TABLESAMPLE BERNOULLI (100) REPEATABLE (2147483647)',
-            (new PostgreSqlProvider($maximum))->tableSampleStatement(),
-        );
-        self::assertSame(
-            'SELECT * FROM users TABLESAMPLE SYSTEM (0)',
-            (new PostgreSqlProvider($minimum))->tableSampleStatement(),
-        );
+        self::assertSame($sql, $provider->tableSampleStatement(40));
+        self::assertSame('SELECT', $tokens[0]);
+        self::assertContains('FROM', $tokens);
+        self::assertContains('TABLESAMPLE', $tokens);
     }
 
     #[DataProvider('providerNullableSimpleStatementSeed')]

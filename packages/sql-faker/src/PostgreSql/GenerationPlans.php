@@ -97,6 +97,20 @@ final class GenerationPlans
     }
 
     /** @return GenerationPlan<true> */
+    public static function tableSampleStatement(): GenerationPlan
+    {
+        return GenerationPlan::constrained('SelectStmt', [
+            'SelectStmt' => [ProductionPattern::exactly('select_no_parens')],
+            'select_no_parens' => [ProductionPattern::exactly('simple_select')],
+            'simple_select' => [
+                ProductionPattern::containing('SELECT', 'opt_target_list', 'from_clause'),
+            ],
+            'from_clause' => [ProductionPattern::nonEmpty()],
+            'table_ref' => [ProductionPattern::containing('relation_expr', 'tablesample_clause')],
+        ])->requiringNonEmpty();
+    }
+
+    /** @return GenerationPlan<true> */
     public static function foreignKeyConstraint(): GenerationPlan
     {
         return GenerationPlan::constrained('TableConstraint', [

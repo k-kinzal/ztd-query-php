@@ -448,15 +448,9 @@ final class PostgreSqlProvider extends Base
     }
 
     /** @return non-empty-string */
-    public function tableSampleStatement(): string
+    public function tableSampleStatement(int $maxDepth = 40): string
     {
-        $method = $this->generator->boolean() ? 'BERNOULLI' : 'SYSTEM';
-        $percentage = $this->rsg->integerString(0, 100);
-        $repeatable = $this->generator->boolean()
-            ? ' REPEATABLE (' . $this->rsg->integerString(0, 2147483647) . ')'
-            : '';
-
-        return "SELECT * FROM users TABLESAMPLE $method ($percentage)$repeatable";
+        return $this->sql->generate(GenerationPlans::tableSampleStatement()->withMaxDepth($maxDepth));
     }
 
     /**

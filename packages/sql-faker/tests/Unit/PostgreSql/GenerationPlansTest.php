@@ -111,4 +111,13 @@ final class GenerationPlansTest extends TestCase
         );
         self::assertTrue($plan->patternAt('PartitionBoundSpec', 0)?->matches(['FROM', 'TO']) ?? false);
     }
+
+    public function testTableSamplePlanRequiresASamplingClause(): void
+    {
+        $plan = GenerationPlans::tableSampleStatement();
+
+        self::assertSame('SelectStmt', $plan->startRule());
+        self::assertNotNull($plan->patternAt('from_clause', 0));
+        self::assertNotNull($plan->patternAt('table_ref', 0));
+    }
 }
