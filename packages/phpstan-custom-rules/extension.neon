@@ -38,6 +38,11 @@ services:
         tags:
             - phpstan.rules.rule
 
+    customRules.rule.noFixedSqlStatement:
+        class: ZtdQuery\PhpStanCustomRules\Rule\NoFixedSqlStatementRule
+        tags:
+            - phpstan.rules.rule
+
     customRules.rule.noNonOverrideMethodInTestClass:
         class: ZtdQuery\PhpStanCustomRules\Rule\NoNonOverrideMethodInTestClassRule
         tags:

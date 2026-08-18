@@ -23,6 +23,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\UsesClass;
 use SqlFaker\Grammar\LexicalCatalog;
+use SqlFaker\Grammar\DerivationPlan;
+use SqlFaker\Grammar\ProductionPattern;
 use SqlFaker\Grammar\SqlVersion;
 use SqlFaker\MySql\Grammar\TerminalInventory;
 
@@ -39,6 +41,8 @@ use SqlFaker\MySql\Grammar\TerminalInventory;
 #[CoversClass(StatementType::class)]
 #[CoversClass(LexicalGrammar::class)]
 #[UsesClass(LexicalCatalog::class)]
+#[UsesClass(DerivationPlan::class)]
+#[UsesClass(ProductionPattern::class)]
 #[UsesClass(SqlVersion::class)]
 #[UsesClass(TerminalInventory::class)]
 #[Medium]
@@ -152,41 +156,42 @@ final class MySqlProviderTest extends TestCase
         self::assertMatchesRegularExpression('/\bDELETE\b/i', $result);
     }
 
-    public function testMultiTableUpdateStatement(): void
+    #[DataProvider('providerMultiTableGenerationSeed')]
+    public function testMultiTableUpdateStatement(int $seed): void
     {
         $faker = Factory::create();
-        $faker->seed(12345);
+        $faker->seed($seed);
         $provider = new MySqlProvider($faker);
 
-        $result = $provider->multiTableUpdateStatement();
-        $identifier = '[a-z_][a-z0-9_]{0,63}';
+        $tokens = (new LexicalGrammar($faker, 'mysql-8.4.7', true))
+            ->tokenize($provider->multiTableUpdateStatement(maxDepth: 20));
 
-        self::assertMatchesRegularExpression(
-            '/^UPDATE `' . $identifier . '` AS `_ztd_left`, `' . $identifier . '` AS `_ztd_right`'
-                . ' SET `_ztd_left`.`(?<leftColumn>' . $identifier . ')` = 1,'
-                . ' `_ztd_right`.`(?<rightColumn>' . $identifier . ')` = 2'
-                . ' WHERE `_ztd_left`.`\k<leftColumn>` = `_ztd_right`.`\k<rightColumn>`$/D',
-            $result,
-        );
+        self::assertSame('UPDATE_SYM', $tokens[0]);
+        $set = array_search('SET_SYM', $tokens, true);
+        self::assertIsInt($set);
+        self::assertSame(1, count(array_filter(
+            array_slice($tokens, 0, $set),
+            static fn (string $token): bool => $token === ',',
+        )));
+        self::assertContains('SET_SYM', $tokens);
     }
 
-    public function testMultiTableDeleteStatement(): void
+    #[DataProvider('providerMultiTableGenerationSeed')]
+    public function testMultiTableDeleteStatement(int $seed): void
     {
         $faker = Factory::create();
-        $faker->seed(12345);
+        $faker->seed($seed);
         $provider = new MySqlProvider($faker);
 
-        $result = $provider->multiTableDeleteStatement();
-        $identifier = '[a-z_][a-z0-9_]{0,63}';
+        $tokens = (new LexicalGrammar($faker, 'mysql-8.4.7', true))
+            ->tokenize($provider->multiTableDeleteStatement(maxDepth: 20));
 
-        self::assertMatchesRegularExpression(
-            '/^DELETE `_ztd_left`, `_ztd_right`'
-                . ' FROM `' . $identifier . '` AS `_ztd_left`'
-                . ' JOIN `' . $identifier . '` AS `_ztd_right`'
-                . ' ON `_ztd_left`.`(?<leftColumn>' . $identifier . ')`'
-                . ' = `_ztd_right`.`(?<rightColumn>' . $identifier . ')`$/D',
-            $result,
-        );
+        self::assertSame('DELETE_SYM', $tokens[0]);
+        self::assertContains('FROM', $tokens);
+        self::assertGreaterThanOrEqual(2, count(array_filter(
+            $tokens,
+            static fn (string $token): bool => in_array($token, ['IDENT', 'IDENT_QUOTED'], true),
+        )));
     }
 
     public function testCreateTableStatement(): void
@@ -954,5 +959,15 @@ final class MySqlProviderTest extends TestCase
     {
         yield 'seeds 0 and 1' => [0, 1];
         yield 'seeds 5 and 10' => [5, 10];
+    }
+
+    /**
+     * @return iterable<string, array{int}>
+     */
+    public static function providerMultiTableGenerationSeed(): iterable
+    {
+        foreach (range(0, 15) as $seed) {
+            yield "seed {$seed}" => [$seed];
+        }
     }
 }

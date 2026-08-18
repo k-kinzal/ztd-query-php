@@ -6,7 +6,9 @@ namespace SqlFaker\MySql;
 
 use Faker\Generator as FakerGenerator;
 use LogicException;
+use SqlFaker\Grammar\DerivationPlan;
 use SqlFaker\Grammar\LexicalException;
+use SqlFaker\Grammar\ProductionPattern;
 use SqlFaker\MySql\Grammar\Grammar;
 use SqlFaker\MySql\Grammar\NonTerminal;
 use SqlFaker\MySql\Grammar\Production;
@@ -53,12 +55,20 @@ final class SqlGenerator
 
     public function generate(?string $startRule = null, int $targetDepth = PHP_INT_MAX): string
     {
+        return $this->generateWithPlan($startRule, $targetDepth, DerivationPlan::unrestricted());
+    }
+
+    private function generateWithPlan(
+        ?string $startRule,
+        int $targetDepth,
+        DerivationPlan $plan,
+    ): string {
         $this->targetDepth = max(1, $targetDepth);
         $startSymbol = $this->resolveStartSymbol($startRule);
         $lastException = null;
         for ($attempt = 0; $attempt < self::LEXICAL_ATTEMPT_LIMIT; $attempt++) {
             $this->derivationSteps = 0;
-            $terminals = $this->derive($startSymbol);
+            $terminals = $this->derive($startSymbol, $plan);
             $terminalNames = $this->normalizeParserSemantics(array_map(
                 static fn (Terminal $terminal): string => $terminal->value,
                 $terminals,
@@ -71,6 +81,77 @@ final class SqlGenerator
         }
 
         throw $lastException ?? new LogicException('MySQL lexical realization failed.');
+    }
+
+    /** @return non-empty-string */
+    private function generateRequiredWithPlan(
+        string $startRule,
+        int $targetDepth,
+        DerivationPlan $plan,
+    ): string {
+        $sql = $this->generateWithPlan($startRule, $targetDepth, $plan);
+        if ($sql === '') {
+            throw new LogicException('MySQL targeted statement generation produced an empty result.');
+        }
+
+        return $sql;
+    }
+
+    /** @return non-empty-string */
+    public function generateMultiTableUpdateStatement(int $targetDepth = PHP_INT_MAX): string
+    {
+        return $this->generateRequiredWithPlan('update_stmt', $targetDepth, new DerivationPlan([
+            'opt_with_clause' => [ProductionPattern::exactly()],
+            'table_reference_list' => [
+                ProductionPattern::exactly('table_reference_list', ',', 'table_reference'),
+                ProductionPattern::exactly('table_reference'),
+            ],
+            'table_reference' => [
+                ProductionPattern::exactly('table_factor'),
+                ProductionPattern::exactly('table_factor'),
+            ],
+            'table_factor' => [
+                ProductionPattern::exactly('single_table'),
+                ProductionPattern::exactly('single_table'),
+            ],
+            'opt_use_partition' => [
+                ProductionPattern::exactly(),
+                ProductionPattern::exactly(),
+            ],
+            'update_list' => [
+                ProductionPattern::exactly('update_list', ',', 'update_elem'),
+                ProductionPattern::exactly('update_elem'),
+            ],
+        ]));
+    }
+
+    /** @return non-empty-string */
+    public function generateMultiTableDeleteStatement(int $targetDepth = PHP_INT_MAX): string
+    {
+        return $this->generateRequiredWithPlan('delete_stmt', $targetDepth, new DerivationPlan([
+            'delete_stmt' => [ProductionPattern::containing('table_alias_ref_list', 'table_reference_list')],
+            'opt_with_clause' => [ProductionPattern::exactly()],
+            'table_alias_ref_list' => [
+                ProductionPattern::exactly('table_alias_ref_list', ',', 'table_ident_opt_wild'),
+                ProductionPattern::exactly('table_ident_opt_wild'),
+            ],
+            'table_reference_list' => [
+                ProductionPattern::exactly('table_reference_list', ',', 'table_reference'),
+                ProductionPattern::exactly('table_reference'),
+            ],
+            'table_reference' => [
+                ProductionPattern::exactly('table_factor'),
+                ProductionPattern::exactly('table_factor'),
+            ],
+            'table_factor' => [
+                ProductionPattern::exactly('single_table'),
+                ProductionPattern::exactly('single_table'),
+            ],
+            'opt_use_partition' => [
+                ProductionPattern::exactly(),
+                ProductionPattern::exactly(),
+            ],
+        ]));
     }
 
     private function resolveStartSymbol(?string $requested): string
@@ -174,10 +255,11 @@ final class SqlGenerator
     /**
      * @return list<Terminal>
      */
-    private function derive(string $startSymbol): array
+    private function derive(string $startSymbol, DerivationPlan $plan): array
     {
         /** @var list<Symbol> $form */
         $form = [new NonTerminal($startSymbol)];
+        $plan = $plan->restart();
 
         while (true) {
             $index = $this->firstNonTerminal($form);
@@ -203,6 +285,21 @@ final class SqlGenerator
             ));
             if ($alternatives === []) {
                 throw new LogicException("Grammar rule has no lexically realizable alternative: {$nonTerminal->value}");
+            }
+            $pattern = $plan->nextPattern($nonTerminal->value);
+            if ($pattern !== null) {
+                $alternatives = array_values(array_filter(
+                    $alternatives,
+                    static fn (Production $production): bool => $pattern->matches(array_map(
+                        static fn (Symbol $symbol): string => $symbol->value(),
+                        $production->symbols,
+                    )),
+                ));
+                if ($alternatives === []) {
+                    throw new LogicException(
+                        "Grammar rule has no alternative matching the derivation plan: {$nonTerminal->value}",
+                    );
+                }
             }
 
             $production = $this->selectProduction($alternatives);

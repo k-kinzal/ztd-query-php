@@ -144,32 +144,17 @@ final class MySqlProvider extends Base
     /**
      * Generate a two-target UPDATE statement.
      */
-    public function multiTableUpdateStatement(): string
+    public function multiTableUpdateStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        $leftTable = $this->quotedIdentifier();
-        $rightTable = $this->quotedIdentifier();
-        $leftColumn = $this->quotedIdentifier();
-        $rightColumn = $this->quotedIdentifier();
-
-        return "UPDATE $leftTable AS `_ztd_left`, $rightTable AS `_ztd_right`"
-            . " SET `_ztd_left`.$leftColumn = 1, `_ztd_right`.$rightColumn = 2"
-            . " WHERE `_ztd_left`.$leftColumn = `_ztd_right`.$rightColumn";
+        return $this->sql->generateMultiTableUpdateStatement($maxDepth);
     }
 
     /**
      * Generate a two-target DELETE statement.
      */
-    public function multiTableDeleteStatement(): string
+    public function multiTableDeleteStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        $leftTable = $this->quotedIdentifier();
-        $rightTable = $this->quotedIdentifier();
-        $leftColumn = $this->quotedIdentifier();
-        $rightColumn = $this->quotedIdentifier();
-
-        return 'DELETE `_ztd_left`, `_ztd_right`'
-            . " FROM $leftTable AS `_ztd_left`"
-            . " JOIN $rightTable AS `_ztd_right`"
-            . " ON `_ztd_left`.$leftColumn = `_ztd_right`.$rightColumn";
+        return $this->sql->generateMultiTableDeleteStatement($maxDepth);
     }
 
     /**
