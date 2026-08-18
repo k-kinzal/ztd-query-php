@@ -910,38 +910,23 @@ final class PostgreSqlProviderTest extends TestCase
         self::assertContains('TABLESAMPLE', $tokens);
     }
 
-    public function testDoStatementTargetsFuzzFixture(): void
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testDoStatementDerivesAnonymousBlockFromGrammar(int $seed): void
     {
-        $maximum = new class () extends Generator {
-            /**
-             * @param mixed $int1
-             * @param mixed $int2
-             */
-            #[\Override]
-            public function numberBetween($int1 = 0, $int2 = 2147483647): int
-            {
-                return is_int($int2) ? $int2 : 2147483647;
-            }
-        };
-        $minimum = new class () extends Generator {
-            /**
-             * @param mixed $int1
-             * @param mixed $int2
-             */
-            #[\Override]
-            public function numberBetween($int1 = 0, $int2 = 2147483647): int
-            {
-                return is_int($int1) ? $int1 : 1;
-            }
-        };
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new PostgreSqlProvider($faker);
+        $sql = $provider->doStatement();
+        $faker->seed($seed);
+        $defaultDepth = (new \ReflectionMethod(PostgreSqlProvider::class, 'doStatement'))
+            ->getParameters()[0]
+            ->getDefaultValue();
 
+        self::assertSame(40, $defaultDepth);
+        self::assertSame($sql, $provider->doStatement(40));
         self::assertSame(
-            "DO \$ztd\$ BEGIN INSERT INTO users (id, name) VALUES (2147483647, 'fuzz'); END \$ztd\$",
-            (new PostgreSqlProvider($maximum))->doStatement(),
-        );
-        self::assertSame(
-            "DO \$ztd\$ BEGIN INSERT INTO users (id, name) VALUES (1, 'fuzz'); END \$ztd\$",
-            (new PostgreSqlProvider($minimum))->doStatement(),
+            ['DO', 'SCONST'],
+            (new LexicalGrammar($faker, 'pg-17.2', true))->tokenize($sql),
         );
     }
 

@@ -127,4 +127,13 @@ final class GenerationPlansTest extends TestCase
             $plan->patternAt('table_ref', 0)?->matches(['relation_expr', 'tablesample_clause']) ?? false,
         );
     }
+
+    public function testDoPlanRequiresASingleStringBlock(): void
+    {
+        $plan = GenerationPlans::doStatement();
+
+        self::assertSame('DoStmt', $plan->startRule());
+        self::assertTrue($plan->patternAt('dostmt_opt_list', 0)?->matches(['dostmt_opt_item']) ?? false);
+        self::assertTrue($plan->patternAt('dostmt_opt_item', 0)?->matches(['Sconst']) ?? false);
+    }
 }

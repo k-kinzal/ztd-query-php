@@ -111,6 +111,15 @@ final class GenerationPlans
     }
 
     /** @return GenerationPlan<true> */
+    public static function doStatement(): GenerationPlan
+    {
+        return GenerationPlan::constrained('DoStmt', [
+            'dostmt_opt_list' => [ProductionPattern::exactly('dostmt_opt_item')],
+            'dostmt_opt_item' => [ProductionPattern::exactly('Sconst')],
+        ])->requiringNonEmpty();
+    }
+
+    /** @return GenerationPlan<true> */
     public static function foreignKeyConstraint(): GenerationPlan
     {
         return GenerationPlan::constrained('TableConstraint', [

@@ -454,11 +454,9 @@ final class PostgreSqlProvider extends Base
     }
 
     /** @return non-empty-string */
-    public function doStatement(): string
+    public function doStatement(int $maxDepth = 40): string
     {
-        $id = $this->rsg->integerString(1, 2147483647);
-
-        return "DO \$ztd\$ BEGIN INSERT INTO users (id, name) VALUES ($id, 'fuzz'); END \$ztd\$";
+        return $this->sql->generate(GenerationPlans::doStatement()->withMaxDepth($maxDepth));
     }
 
     /**
