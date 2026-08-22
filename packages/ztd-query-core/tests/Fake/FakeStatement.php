@@ -45,7 +45,7 @@ final class FakeStatement implements StatementInterface
         return $this->rows;
     }
 
-    public function resultColumns(?ResultColumnTypeResolver $typeResolver = null): array
+    public function resultColumns(ResultColumnTypeResolver $typeResolver): array
     {
         return $this->columns;
     }

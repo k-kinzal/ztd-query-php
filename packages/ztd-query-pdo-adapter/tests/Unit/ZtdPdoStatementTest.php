@@ -18,11 +18,14 @@ use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\Exception\MissingPrimaryKeyException;
+use ZtdQuery\Platform\ResultColumnTypeResolver;
 use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Session;
+use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\ShadowStore;
 
@@ -132,12 +135,15 @@ final class ZtdPdoStatementTest extends TestCase
 
         $shadowStore = new ShadowStore();
         $shadowStore->set('users', [['id' => 1, 'name' => 'Alice']]);
+        $typeResolver = static::createStub(ResultColumnTypeResolver::class);
+        $typeResolver->method('resolve')->willReturn(new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'));
         $session = new Session(
             static::createStub(SqlRewriter::class),
             $shadowStore,
             new ResultSelectRunner(),
             ZtdConfig::default(),
             static::createStub(ConnectionInterface::class),
+            resultColumnTypeResolver: $typeResolver,
         );
         $plan = new RewritePlan(
             "SELECT 1 AS id, 'Bob' AS name",

@@ -55,7 +55,7 @@ final class MysqliResultStatement implements StatementInterface
     /**
      * {@inheritDoc}
      */
-    public function resultColumns(?ResultColumnTypeResolver $typeResolver = null): array
+    public function resultColumns(ResultColumnTypeResolver $typeResolver): array
     {
         if ($this->result === null) {
             return [];

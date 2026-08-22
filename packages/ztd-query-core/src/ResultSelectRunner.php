@@ -19,9 +19,12 @@ final class ResultSelectRunner
      * @param callable(string): (StatementInterface|false) $executor
      * @return array<int, array<string, mixed>>
      */
-    public function run(string $sql, callable $executor): array
-    {
-        return $this->runResultSet($sql, $executor)->rows;
+    public function run(
+        string $sql,
+        callable $executor,
+        ResultColumnTypeResolver $typeResolver,
+    ): array {
+        return $this->runResultSet($sql, $executor, $typeResolver)->rows;
     }
 
     /**
@@ -30,7 +33,7 @@ final class ResultSelectRunner
     public function runResultSet(
         string $sql,
         callable $executor,
-        ?ResultColumnTypeResolver $typeResolver = null,
+        ResultColumnTypeResolver $typeResolver,
     ): ResultSet {
         $statement = $executor($sql);
         if ($statement === false) {
@@ -48,8 +51,8 @@ final class ResultSelectRunner
      */
     public function runStatement(
         StatementInterface $statement,
+        ResultColumnTypeResolver $typeResolver,
         ?array $params = null,
-        ?ResultColumnTypeResolver $typeResolver = null,
     ): array {
         $statement->execute($params);
 
@@ -58,7 +61,7 @@ final class ResultSelectRunner
 
     public function readResultSet(
         StatementInterface $statement,
-        ?ResultColumnTypeResolver $typeResolver = null,
+        ResultColumnTypeResolver $typeResolver,
     ): ResultSet {
         $columns = $statement->resultColumns($typeResolver);
         $rows = $statement->fetchAll();

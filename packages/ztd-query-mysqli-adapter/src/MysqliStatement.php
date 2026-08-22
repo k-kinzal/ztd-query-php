@@ -97,7 +97,7 @@ final class MysqliStatement implements StatementInterface
     /**
      * {@inheritDoc}
      */
-    public function resultColumns(?ResultColumnTypeResolver $typeResolver = null): array
+    public function resultColumns(ResultColumnTypeResolver $typeResolver): array
     {
         $result = $this->loadResult();
         if ($result === false) {

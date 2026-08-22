@@ -16,11 +16,14 @@ use ZtdQuery\Adapter\Pdo\ZtdPdo;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Platform\SessionFactory;
+use ZtdQuery\Platform\ResultColumnTypeResolver;
 use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Session;
+use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Shadow\Mutation\InsertMutation;
 use ZtdQuery\Shadow\ShadowStore;
 
@@ -288,6 +291,8 @@ final class ZtdPdoTest extends TestCase
                 default => throw new RuntimeException("Unexpected SQL: $sql"),
             });
         $factory = static::createMock(SessionFactory::class);
+        $typeResolver = static::createStub(ResultColumnTypeResolver::class);
+        $typeResolver->method('resolve')->willReturn(new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'));
         $factory->expects(self::once())
             ->method('create')
             ->willReturnCallback(static fn (ConnectionInterface $connection, ZtdConfig $config): Session => new Session(
@@ -296,6 +301,7 @@ final class ZtdPdoTest extends TestCase
                 new ResultSelectRunner(),
                 $config,
                 $connection,
+                resultColumnTypeResolver: $typeResolver,
             ));
         $ztdPdo = ZtdPdo::fromPdo(new PDO('sqlite::memory:'), null, $factory);
 

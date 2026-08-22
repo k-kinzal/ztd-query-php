@@ -18,6 +18,7 @@ use ZtdQuery\Exception\ForeignKeyViolationException;
 use ZtdQuery\Platform\CopySupport;
 use ZtdQuery\Platform\CopyTarget;
 use ZtdQuery\Platform\ParameterBindingCompiler;
+use ZtdQuery\Platform\MissingResultColumnTypeResolver;
 use ZtdQuery\Platform\ResultColumnTypeResolver;
 use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Rewrite\QueryKind;
@@ -53,6 +54,7 @@ use ZtdQuery\Shadow\ShadowTransactionManager;
 #[UsesClass(ReferentialIntegrityEnforcer::class)]
 #[UsesClass(MissingPrimaryKeyException::class)]
 #[UsesClass(CopyTarget::class)]
+#[UsesClass(MissingResultColumnTypeResolver::class)]
 final class SessionTest extends TestCase
 {
     public function testEnableAndDisable(): void
@@ -74,7 +76,7 @@ final class SessionTest extends TestCase
         self::assertNull($session->copySupport());
         self::assertNull($session->copyTarget('users', null));
         self::assertNull($session->parameterBindingCompiler());
-        self::assertNull($session->resultColumnTypeResolver());
+        self::assertInstanceOf(MissingResultColumnTypeResolver::class, $session->resultColumnTypeResolver());
 
         $session->disable();
         self::assertFalse($session->isEnabled());

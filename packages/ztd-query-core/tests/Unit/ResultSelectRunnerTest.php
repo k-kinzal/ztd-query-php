@@ -27,7 +27,8 @@ final class ResultSelectRunnerTest extends TestCase
         $runner = new ResultSelectRunner();
         $rows = [['id' => 1, 'name' => 'Alice']];
 
-        $result = $runner->run('SELECT * FROM users', fn () => new FakeStatement($rows));
+        $resolver = self::createStub(ResultColumnTypeResolver::class);
+        $result = $runner->run('SELECT * FROM users', fn () => new FakeStatement($rows), $resolver);
 
         self::assertSame($rows, $result);
     }
@@ -36,7 +37,8 @@ final class ResultSelectRunnerTest extends TestCase
     {
         $runner = new ResultSelectRunner();
 
-        $result = $runner->run('SELECT * FROM users', fn () => false);
+        $resolver = self::createStub(ResultColumnTypeResolver::class);
+        $result = $runner->run('SELECT * FROM users', fn () => false, $resolver);
 
         self::assertSame([], $result);
     }
@@ -47,7 +49,8 @@ final class ResultSelectRunnerTest extends TestCase
         $rows = [['id' => 1]];
         $statement = new FakeStatement($rows);
 
-        $result = $runner->runStatement($statement);
+        $resolver = self::createStub(ResultColumnTypeResolver::class);
+        $result = $runner->runStatement($statement, $resolver);
 
         self::assertSame($rows, $result);
         self::assertTrue($statement->isExecuted());
@@ -58,7 +61,12 @@ final class ResultSelectRunnerTest extends TestCase
         $runner = new ResultSelectRunner();
         $column = new ResultColumn('id', new ColumnType(ColumnTypeFamily::INTEGER, 'int4'));
 
-        $result = $runner->runResultSet('SELECT id FROM users WHERE FALSE', fn () => new FakeStatement([], [$column]));
+        $resolver = self::createStub(ResultColumnTypeResolver::class);
+        $result = $runner->runResultSet(
+            'SELECT id FROM users WHERE FALSE',
+            fn () => new FakeStatement([], [$column]),
+            $resolver,
+        );
 
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([], $result->rows);
@@ -71,7 +79,8 @@ final class ResultSelectRunnerTest extends TestCase
         $column = new ResultColumn('id', new ColumnType(ColumnTypeFamily::INTEGER, 'int4'));
         $statement = new FakeStatement([['id' => 1]], [$column]);
 
-        $result = $runner->readResultSet($statement);
+        $resolver = self::createStub(ResultColumnTypeResolver::class);
+        $result = $runner->readResultSet($statement, $resolver);
 
         self::assertSame([['id' => 1]], $result->rows);
         self::assertSame([$column], $result->columns);

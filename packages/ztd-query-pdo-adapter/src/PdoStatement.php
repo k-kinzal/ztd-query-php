@@ -11,8 +11,6 @@ use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\Connection\ResultColumn;
 use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Platform\ResultColumnTypeResolver;
-use ZtdQuery\Schema\ColumnType;
-use ZtdQuery\Schema\ColumnTypeFamily;
 
 /**
  * PDO statement implementing StatementInterface for ZTD layer.
@@ -62,7 +60,7 @@ final class PdoStatement implements StatementInterface
     /**
      * {@inheritDoc}
      */
-    public function resultColumns(?ResultColumnTypeResolver $typeResolver = null): array
+    public function resultColumns(ResultColumnTypeResolver $typeResolver): array
     {
         $columns = [];
         for ($index = 0; $index < $this->statement->columnCount(); $index++) {
@@ -73,25 +71,11 @@ final class PdoStatement implements StatementInterface
 
             $columns[] = new ResultColumn(
                 $metadata['name'],
-                $this->resolveType($metadata, $typeResolver),
+                $typeResolver->resolve($metadata),
             );
         }
 
         return $columns;
-    }
-
-    /**
-     * @param array<string, mixed> $metadata
-     */
-    private function resolveType(
-        array $metadata,
-        ?ResultColumnTypeResolver $typeResolver,
-    ): ColumnType {
-        if ($typeResolver !== null) {
-            return $typeResolver->resolve($metadata);
-        }
-
-        return new ColumnType(ColumnTypeFamily::UNKNOWN, '');
     }
 
     /**

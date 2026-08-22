@@ -37,7 +37,7 @@ interface StatementInterface
      *
      * @return list<ResultColumn>
      */
-    public function resultColumns(?ResultColumnTypeResolver $typeResolver = null): array;
+    public function resultColumns(ResultColumnTypeResolver $typeResolver): array;
 
     /**
      * Return the number of affected rows.

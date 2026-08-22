@@ -80,8 +80,9 @@ final class MysqliResultStatementTest extends TestCase
     public function testResultColumnsReturnsEmptyArrayWithoutResult(): void
     {
         $stmt = new MysqliResultStatement(null, 0);
+        $resolver = self::createStub(ResultColumnTypeResolver::class);
 
-        self::assertSame([], $stmt->resultColumns());
+        self::assertSame([], $stmt->resultColumns($resolver));
     }
 
     public function testResultColumnsMapMysqliFieldMetadata(): void

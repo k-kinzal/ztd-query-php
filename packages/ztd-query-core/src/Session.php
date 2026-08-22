@@ -19,6 +19,7 @@ use ZtdQuery\Platform\CopySupport;
 use ZtdQuery\Platform\CopyTarget;
 use ZtdQuery\Platform\ParameterBindingCompiler;
 use ZtdQuery\Platform\ResultColumnTypeResolver;
+use ZtdQuery\Platform\MissingResultColumnTypeResolver;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
@@ -90,7 +91,7 @@ final class Session
 
     private ?ParameterBindingCompiler $parameterBindingCompiler;
 
-    private ?ResultColumnTypeResolver $resultColumnTypeResolver;
+    private ResultColumnTypeResolver $resultColumnTypeResolver;
 
     private ?string $lastInsertId = null;
 
@@ -111,7 +112,7 @@ final class Session
         ?TableDefinitionRegistry $registry = null,
         ?CopySupport $copySupport = null,
         ?ParameterBindingCompiler $parameterBindingCompiler = null,
-        ?ResultColumnTypeResolver $resultColumnTypeResolver = null,
+        ResultColumnTypeResolver $resultColumnTypeResolver = new MissingResultColumnTypeResolver(),
     ) {
         $this->rewriter = $rewriter;
         $this->shadowStore = $shadowStore;
@@ -233,7 +234,7 @@ final class Session
         return $this->parameterBindingCompiler;
     }
 
-    public function resultColumnTypeResolver(): ?ResultColumnTypeResolver
+    public function resultColumnTypeResolver(): ResultColumnTypeResolver
     {
         return $this->resultColumnTypeResolver;
     }

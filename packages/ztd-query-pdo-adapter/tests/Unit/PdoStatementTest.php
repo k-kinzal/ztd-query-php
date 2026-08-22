@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use ZtdQuery\Adapter\Pdo\PdoStatement;
 use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Platform\ResultColumnTypeResolver;
+use ZtdQuery\Platform\MissingResultColumnTypeResolver;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
@@ -96,16 +97,15 @@ final class PdoStatementTest extends TestCase
         self::assertSame(ColumnTypeFamily::FLOAT, $columns[2]->type->family);
     }
 
-    public function testResultColumnsDoNotInterpretMetadataWithoutDialectResolver(): void
+    public function testResultColumnsFailWithoutDialectResolver(): void
     {
         $pdo = new PDO('sqlite::memory:');
         $nativeStmt = $pdo->query('SELECT 1 AS id');
         self::assertNotFalse($nativeStmt);
 
-        $columns = (new PdoStatement($nativeStmt))->resultColumns();
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('A database platform result column type resolver is required.');
 
-        self::assertCount(1, $columns);
-        self::assertSame(ColumnTypeFamily::UNKNOWN, $columns[0]->type->family);
-        self::assertSame('', $columns[0]->type->nativeType);
+        (new PdoStatement($nativeStmt))->resultColumns(new MissingResultColumnTypeResolver());
     }
 }

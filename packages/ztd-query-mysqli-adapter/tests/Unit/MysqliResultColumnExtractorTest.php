@@ -10,24 +10,24 @@ use Tests\Fixtures\StubMysqliField;
 use Tests\Fixtures\StubMysqliResult;
 use ZtdQuery\Adapter\Mysqli\MysqliResultColumnExtractor;
 use ZtdQuery\Platform\ResultColumnTypeResolver;
+use ZtdQuery\Platform\MissingResultColumnTypeResolver;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(MysqliResultColumnExtractor::class)]
 final class MysqliResultColumnExtractorTest extends TestCase
 {
-    public function testExtractPreservesEveryResultColumn(): void
+    public function testExtractFailsWithoutDialectResolver(): void
     {
         $result = StubMysqliResult::create([], [
             new StubMysqliField('id', MYSQLI_TYPE_LONG, 63),
             new StubMysqliField('name', MYSQLI_TYPE_VAR_STRING, 255),
         ]);
 
-        $columns = MysqliResultColumnExtractor::extract($result);
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('A database platform result column type resolver is required.');
 
-        self::assertSame(['id', 'name'], array_map(static fn ($column) => $column->name, $columns));
-        self::assertSame(ColumnTypeFamily::UNKNOWN, $columns[0]->type->family);
-        self::assertSame(ColumnTypeFamily::UNKNOWN, $columns[1]->type->family);
+        MysqliResultColumnExtractor::extract($result, new MissingResultColumnTypeResolver());
     }
 
     public function testExtractDelegatesRawFieldMetadataToResolver(): void
