@@ -45,4 +45,5 @@ final class ColumnTypeTest extends TestCase
 
         self::assertSame('numeric(10, 2)', $type->nativeType);
     }
+
 }

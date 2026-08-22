@@ -17,7 +17,7 @@ use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\CopySupport;
 use ZtdQuery\Platform\CopyTarget;
-use ZtdQuery\Platform\SqlPlaceholderEscaper;
+use ZtdQuery\Platform\ParameterBindingCompiler;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
@@ -87,7 +87,7 @@ final class Session
 
     private ?CopySupport $copySupport;
 
-    private ?SqlPlaceholderEscaper $sqlPlaceholderEscaper;
+    private ?ParameterBindingCompiler $parameterBindingCompiler;
 
     private ?string $lastInsertId = null;
 
@@ -107,7 +107,7 @@ final class Session
         ?ShadowTransactionManager $transactions = null,
         ?TableDefinitionRegistry $registry = null,
         ?CopySupport $copySupport = null,
-        ?SqlPlaceholderEscaper $sqlPlaceholderEscaper = null,
+        ?ParameterBindingCompiler $parameterBindingCompiler = null,
     ) {
         $this->rewriter = $rewriter;
         $this->shadowStore = $shadowStore;
@@ -118,7 +118,7 @@ final class Session
         $this->registry = $registry ?? new TableDefinitionRegistry();
         $this->referentialIntegrity = new ReferentialIntegrityEnforcer($this->registry);
         $this->copySupport = $copySupport;
-        $this->sqlPlaceholderEscaper = $sqlPlaceholderEscaper;
+        $this->parameterBindingCompiler = $parameterBindingCompiler;
     }
 
     /**
@@ -223,9 +223,9 @@ final class Session
         return $this->copySupport->target($relation, $fields, $definition);
     }
 
-    public function sqlPlaceholderEscaper(): ?SqlPlaceholderEscaper
+    public function parameterBindingCompiler(): ?ParameterBindingCompiler
     {
-        return $this->sqlPlaceholderEscaper;
+        return $this->parameterBindingCompiler;
     }
 
     /**

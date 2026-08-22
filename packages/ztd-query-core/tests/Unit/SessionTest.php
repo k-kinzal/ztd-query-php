@@ -17,7 +17,7 @@ use ZtdQuery\Exception\MissingPrimaryKeyException;
 use ZtdQuery\Exception\ForeignKeyViolationException;
 use ZtdQuery\Platform\CopySupport;
 use ZtdQuery\Platform\CopyTarget;
-use ZtdQuery\Platform\SqlPlaceholderEscaper;
+use ZtdQuery\Platform\ParameterBindingCompiler;
 use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
@@ -72,7 +72,7 @@ final class SessionTest extends TestCase
         self::assertNull($session->tableDefinition('users'));
         self::assertNull($session->copySupport());
         self::assertNull($session->copyTarget('users', null));
-        self::assertNull($session->sqlPlaceholderEscaper());
+        self::assertNull($session->parameterBindingCompiler());
 
         $session->disable();
         self::assertFalse($session->isEnabled());
@@ -113,7 +113,7 @@ final class SessionTest extends TestCase
             ['missing', 'missing'],
         ]);
         $copy->method('target')->willReturn($target);
-        $escaper = self::createStub(SqlPlaceholderEscaper::class);
+        $compiler = self::createStub(ParameterBindingCompiler::class);
         $session = new Session(
             new FakeSqlRewriter($shadowStore, $registry),
             $shadowStore,
@@ -122,13 +122,13 @@ final class SessionTest extends TestCase
             new FakeConnection(),
             registry: $registry,
             copySupport: $copy,
-            sqlPlaceholderEscaper: $escaper,
+            parameterBindingCompiler: $compiler,
         );
 
         self::assertSame($copy, $session->copySupport());
         self::assertSame($target, $session->copyTarget('public.users', 'id'));
         self::assertNull($session->copyTarget('missing', null));
-        self::assertSame($escaper, $session->sqlPlaceholderEscaper());
+        self::assertSame($compiler, $session->parameterBindingCompiler());
     }
 
     public function testSplitStatementsUsesPlatformRewriter(): void

@@ -86,7 +86,7 @@ final class PgSqlSessionFactory implements SessionFactory
             transactions: new ShadowTransactionManager($shadowStore, $registry),
             registry: $registry,
             copySupport: new PgSqlCopySupport(),
-            sqlPlaceholderEscaper: new PgSqlPdoPlaceholderEscaper(),
+            parameterBindingCompiler: new PgSqlPdoParameterBindingCompiler(),
         );
     }
 }

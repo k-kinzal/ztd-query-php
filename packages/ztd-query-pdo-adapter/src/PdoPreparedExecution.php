@@ -29,13 +29,8 @@ final class PdoPreparedExecution
     public function prepare(?array $params): array
     {
         $plan = $this->session->rewrite($this->sql);
-        $driver = $this->driver();
-        $compiled = $this->parameterBinder->compile(
-            $plan->sql(),
-            $driver,
-            $params,
-            $this->session->sqlPlaceholderEscaper(),
-        );
+        $compiled = $this->session->parameterBindingCompiler()?->compile($plan->sql(), $params)
+            ?? ['sql' => $plan->sql(), 'params' => $params];
         $statement = $this->pdo->prepare($compiled['sql'], $this->options);
         if ($statement === false) {
             throw new RuntimeException('PDO failed to prepare rewritten SQL.');
@@ -47,13 +42,5 @@ final class PdoPreparedExecution
     public function parameterBinder(): PdoParameterBinder
     {
         return $this->parameterBinder;
-    }
-
-    private function driver(): string
-    {
-        /** @var string $driver */
-        $driver = $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
-
-        return $driver;
     }
 }

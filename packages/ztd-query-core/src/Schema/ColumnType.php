@@ -55,4 +55,5 @@ final class ColumnType
 
         return new self($family, $nativeType);
     }
+
 }
