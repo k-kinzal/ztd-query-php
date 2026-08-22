@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Sql;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Sql\TransactionStatementParser;
 
-#[CoversClass(TransactionStatementParser::class)]
+#[CoversNothing]
 final class TransactionStatementParserTest extends TestCase
 {
     public function testDefinesDialectParserContract(): void
