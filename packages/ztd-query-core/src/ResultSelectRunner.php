@@ -6,6 +6,7 @@ namespace ZtdQuery;
 
 use ZtdQuery\Connection\ResultSet;
 use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Platform\ResultColumnTypeResolver;
 
 /**
  * Executes result-select queries and returns rows.
@@ -26,14 +27,17 @@ final class ResultSelectRunner
     /**
      * @param callable(string): (StatementInterface|false) $executor
      */
-    public function runResultSet(string $sql, callable $executor): ResultSet
-    {
+    public function runResultSet(
+        string $sql,
+        callable $executor,
+        ?ResultColumnTypeResolver $typeResolver = null,
+    ): ResultSet {
         $statement = $executor($sql);
         if ($statement === false) {
             return new ResultSet([], []);
         }
 
-        return $this->readResultSet($statement);
+        return $this->readResultSet($statement, $typeResolver);
     }
 
     /**
@@ -42,16 +46,21 @@ final class ResultSelectRunner
      * @param array<int|string, mixed>|null $params
      * @return array<int, array<string, mixed>>
      */
-    public function runStatement(StatementInterface $statement, ?array $params = null): array
-    {
+    public function runStatement(
+        StatementInterface $statement,
+        ?array $params = null,
+        ?ResultColumnTypeResolver $typeResolver = null,
+    ): array {
         $statement->execute($params);
 
-        return $this->readResultSet($statement)->rows;
+        return $this->readResultSet($statement, $typeResolver)->rows;
     }
 
-    public function readResultSet(StatementInterface $statement): ResultSet
-    {
-        $columns = $statement->resultColumns();
+    public function readResultSet(
+        StatementInterface $statement,
+        ?ResultColumnTypeResolver $typeResolver = null,
+    ): ResultSet {
+        $columns = $statement->resultColumns($typeResolver);
         $rows = $statement->fetchAll();
 
         return new ResultSet($rows, $columns);

@@ -9,6 +9,7 @@ use mysqli_result;
 use mysqli_stmt;
 use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Platform\ResultColumnTypeResolver;
 
 /**
  * mysqli prepared statement adapter implementing StatementInterface for ZTD layer.
@@ -96,14 +97,14 @@ final class MysqliStatement implements StatementInterface
     /**
      * {@inheritDoc}
      */
-    public function resultColumns(): array
+    public function resultColumns(?ResultColumnTypeResolver $typeResolver = null): array
     {
         $result = $this->loadResult();
         if ($result === false) {
             return [];
         }
 
-        return MysqliResultColumnExtractor::extract($result);
+        return MysqliResultColumnExtractor::extract($result, $typeResolver);
     }
 
     /**

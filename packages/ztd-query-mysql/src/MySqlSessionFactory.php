@@ -65,6 +65,7 @@ final class MySqlSessionFactory implements SessionFactory
             $connection,
             new ShadowTransactionManager($shadowStore, $registry),
             $registry,
+            resultColumnTypeResolver: new MySqlResultColumnTypeResolver(),
         );
     }
 }

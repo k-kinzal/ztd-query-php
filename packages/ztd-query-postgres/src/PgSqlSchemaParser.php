@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\Postgres;
 
 use ZtdQuery\Schema\ColumnType;
-use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
 use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\TableDefinition;
@@ -270,9 +269,8 @@ final class PgSqlSchemaParser implements SchemaParser
             }
         }
 
-        $family = $this->mapTypeToFamily($nativeType);
         $normalizedType = str_contains($nativeType, '"') ? $nativeType : strtoupper($nativeType);
-        $columnType = new ColumnType($family, $normalizedType);
+        $columnType = (new PgSqlColumnTypeMapper())->map($normalizedType);
 
         return [
             'name' => $name,
@@ -449,45 +447,6 @@ final class PgSqlSchemaParser implements SchemaParser
     private static function isTypeIdentifier(SqlToken $token): bool
     {
         return in_array($token->kind, [SqlTokenKind::Word, SqlTokenKind::QuotedIdentifier], true);
-    }
-
-    private function mapTypeToFamily(string $nativeType): ColumnTypeFamily
-    {
-        $upper = strtoupper(preg_replace('/\(.*\)/', '', $nativeType) ?? $nativeType);
-        $upper = trim($upper);
-
-        $upper = preg_replace('/\[\s*\]/', '', $upper) ?? $upper;
-        $upper = trim($upper);
-
-        return match ($upper) {
-            'INT', 'INT2', 'INT4', 'INT8',
-            'INTEGER', 'SMALLINT', 'BIGINT',
-            'SERIAL', 'SMALLSERIAL', 'BIGSERIAL' => ColumnTypeFamily::INTEGER,
-            'REAL', 'FLOAT4' => ColumnTypeFamily::FLOAT,
-            'DOUBLE PRECISION', 'FLOAT8' => ColumnTypeFamily::DOUBLE,
-            'DECIMAL', 'NUMERIC' => ColumnTypeFamily::DECIMAL,
-            'CHAR', 'CHARACTER', 'VARCHAR', 'CHARACTER VARYING',
-            'TEXT', 'CITEXT', 'NAME' => $this->mapStringType($upper),
-            'BOOLEAN', 'BOOL' => ColumnTypeFamily::BOOLEAN,
-            'DATE' => ColumnTypeFamily::DATE,
-            'TIME', 'TIMETZ', 'TIME WITH TIME ZONE',
-            'TIME WITHOUT TIME ZONE' => ColumnTypeFamily::TIME,
-            'TIMESTAMP', 'TIMESTAMPTZ',
-            'TIMESTAMP WITH TIME ZONE',
-            'TIMESTAMP WITHOUT TIME ZONE' => ColumnTypeFamily::TIMESTAMP,
-            'BYTEA' => ColumnTypeFamily::BINARY,
-            'JSON', 'JSONB' => ColumnTypeFamily::JSON,
-            default => ColumnTypeFamily::UNKNOWN,
-        };
-    }
-
-    private function mapStringType(string $upper): ColumnTypeFamily
-    {
-        if ($upper === 'TEXT' || $upper === 'CITEXT') {
-            return ColumnTypeFamily::TEXT;
-        }
-
-        return ColumnTypeFamily::STRING;
     }
 
     /**

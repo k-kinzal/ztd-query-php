@@ -87,6 +87,7 @@ final class PgSqlSessionFactory implements SessionFactory
             registry: $registry,
             copySupport: new PgSqlCopySupport(),
             parameterBindingCompiler: new PgSqlPdoParameterBindingCompiler(),
+            resultColumnTypeResolver: new PgSqlPdoResultColumnTypeResolver(),
         );
     }
 }

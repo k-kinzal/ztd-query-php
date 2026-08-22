@@ -6,6 +6,7 @@ namespace ZtdQuery\Adapter\Mysqli;
 
 use mysqli_result;
 use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Platform\ResultColumnTypeResolver;
 
 /**
  * mysqli result adapter implementing StatementInterface for ZTD layer.
@@ -53,13 +54,13 @@ final class MysqliResultStatement implements StatementInterface
     /**
      * {@inheritDoc}
      */
-    public function resultColumns(): array
+    public function resultColumns(?ResultColumnTypeResolver $typeResolver = null): array
     {
         if ($this->result === null) {
             return [];
         }
 
-        return MysqliResultColumnExtractor::extract($this->result);
+        return MysqliResultColumnExtractor::extract($this->result, $typeResolver);
     }
 
     /**

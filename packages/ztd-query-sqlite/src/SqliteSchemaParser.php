@@ -144,10 +144,7 @@ final class SqliteSchemaParser implements SchemaParser
         /** @var array<string, ColumnType> $typedColumns */
         $typedColumns = [];
         foreach ($columnTypes as $colName => $nativeType) {
-            $typedColumns[$colName] = new ColumnType(
-                $this->mapToColumnTypeFamily($nativeType),
-                $nativeType,
-            );
+            $typedColumns[$colName] = (new SqliteColumnTypeMapper())->map($nativeType);
         }
 
         $primaryKeys = array_values($primaryKeyMap);
@@ -512,31 +509,6 @@ final class SqliteSchemaParser implements SchemaParser
         }
 
         return null;
-    }
-
-    /**
-     * Map a SQLite native type string to ColumnTypeFamily.
-     */
-    private function mapToColumnTypeFamily(string $nativeType): ColumnTypeFamily
-    {
-        $upper = strtoupper(preg_replace('/\(.*\)/', '', $nativeType) ?? $nativeType);
-        $upper = trim($upper);
-
-        return match ($upper) {
-            'INT', 'INTEGER', 'TINYINT', 'SMALLINT', 'MEDIUMINT', 'BIGINT', 'INT2', 'INT8' => ColumnTypeFamily::INTEGER,
-            'REAL', 'DOUBLE', 'DOUBLE PRECISION', 'FLOAT' => ColumnTypeFamily::FLOAT,
-            'DECIMAL', 'NUMERIC' => ColumnTypeFamily::DECIMAL,
-            'BOOLEAN', 'BOOL' => ColumnTypeFamily::BOOLEAN,
-            'TEXT', 'CLOB' => ColumnTypeFamily::TEXT,
-            'CHAR', 'CHARACTER', 'VARCHAR', 'VARYING CHARACTER', 'NCHAR', 'NATIVE CHARACTER', 'NVARCHAR' => ColumnTypeFamily::STRING,
-            'BLOB' => ColumnTypeFamily::BINARY,
-            'DATE' => ColumnTypeFamily::DATE,
-            'TIME' => ColumnTypeFamily::TIME,
-            'DATETIME' => ColumnTypeFamily::DATETIME,
-            'TIMESTAMP' => ColumnTypeFamily::TIMESTAMP,
-            'JSON' => ColumnTypeFamily::JSON,
-            default => ColumnTypeFamily::UNKNOWN,
-        };
     }
 
     /**

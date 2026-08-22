@@ -10,6 +10,8 @@ use PHPUnit\Framework\TestCase;
 use Tests\Fake\FakeStatement;
 use ZtdQuery\Connection\ResultColumn;
 use ZtdQuery\Connection\ResultSet;
+use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Platform\ResultColumnTypeResolver;
 use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
@@ -73,5 +75,15 @@ final class ResultSelectRunnerTest extends TestCase
 
         self::assertSame([['id' => 1]], $result->rows);
         self::assertSame([$column], $result->columns);
+    }
+
+    public function testReadResultSetPassesPlatformTypeResolverToStatement(): void
+    {
+        $resolver = self::createStub(ResultColumnTypeResolver::class);
+        $statement = self::createMock(StatementInterface::class);
+        $statement->expects(self::once())->method('resultColumns')->with($resolver)->willReturn([]);
+        $statement->method('fetchAll')->willReturn([]);
+
+        (new ResultSelectRunner())->readResultSet($statement, $resolver);
     }
 }

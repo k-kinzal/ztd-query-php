@@ -18,6 +18,7 @@ use ZtdQuery\Exception\ForeignKeyViolationException;
 use ZtdQuery\Platform\CopySupport;
 use ZtdQuery\Platform\CopyTarget;
 use ZtdQuery\Platform\ParameterBindingCompiler;
+use ZtdQuery\Platform\ResultColumnTypeResolver;
 use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
@@ -73,6 +74,7 @@ final class SessionTest extends TestCase
         self::assertNull($session->copySupport());
         self::assertNull($session->copyTarget('users', null));
         self::assertNull($session->parameterBindingCompiler());
+        self::assertNull($session->resultColumnTypeResolver());
 
         $session->disable();
         self::assertFalse($session->isEnabled());
@@ -114,6 +116,7 @@ final class SessionTest extends TestCase
         ]);
         $copy->method('target')->willReturn($target);
         $compiler = self::createStub(ParameterBindingCompiler::class);
+        $typeResolver = self::createStub(ResultColumnTypeResolver::class);
         $session = new Session(
             new FakeSqlRewriter($shadowStore, $registry),
             $shadowStore,
@@ -123,12 +126,14 @@ final class SessionTest extends TestCase
             registry: $registry,
             copySupport: $copy,
             parameterBindingCompiler: $compiler,
+            resultColumnTypeResolver: $typeResolver,
         );
 
         self::assertSame($copy, $session->copySupport());
         self::assertSame($target, $session->copyTarget('public.users', 'id'));
         self::assertNull($session->copyTarget('missing', null));
         self::assertSame($compiler, $session->parameterBindingCompiler());
+        self::assertSame($typeResolver, $session->resultColumnTypeResolver());
     }
 
     public function testSplitStatementsUsesPlatformRewriter(): void

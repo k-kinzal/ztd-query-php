@@ -6,7 +6,6 @@ namespace ZtdQuery\Platform\MySql;
 
 use PhpMyAdmin\SqlParser\Statements\CreateStatement;
 use ZtdQuery\Schema\ColumnType;
-use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
 use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\TableDefinition;
@@ -75,10 +74,7 @@ final class MySqlSchemaParser implements SchemaParser
                         $typeName .= '(' . implode(',', $field->type->parameters) . ')';
                     }
                     $columnTypes[$columnName] = $typeName;
-                    $typedColumns[$columnName] = new ColumnType(
-                        $this->mapToColumnTypeFamily($typeName),
-                        $typeName,
-                    );
+                    $typedColumns[$columnName] = (new MySqlColumnTypeMapper())->map($typeName);
                 }
 
                 if ($field->options !== null && self::optionSet($field->options, 'NOT NULL')) {
@@ -163,31 +159,4 @@ final class MySqlSchemaParser implements SchemaParser
         return $options->has($name) !== false;
     }
 
-    /**
-     * Map a MySQL type string to a ColumnTypeFamily.
-     */
-    private function mapToColumnTypeFamily(string $mysqlType): ColumnTypeFamily
-    {
-        $replaced = preg_replace('/\(.*\)/', '', strtoupper($mysqlType));
-        $baseType = is_string($replaced) ? $replaced : strtoupper($mysqlType);
-
-        return match ($baseType) {
-            'INT', 'INTEGER', 'TINYINT', 'SMALLINT', 'MEDIUMINT', 'BIGINT' => ColumnTypeFamily::INTEGER,
-            'DECIMAL', 'NUMERIC' => ColumnTypeFamily::DECIMAL,
-            'FLOAT' => ColumnTypeFamily::FLOAT,
-            'DOUBLE', 'REAL' => ColumnTypeFamily::DOUBLE,
-            'BOOL', 'BOOLEAN' => ColumnTypeFamily::BOOLEAN,
-            'DATE' => ColumnTypeFamily::DATE,
-            'TIME' => ColumnTypeFamily::TIME,
-            'DATETIME' => ColumnTypeFamily::DATETIME,
-            'TIMESTAMP' => ColumnTypeFamily::TIMESTAMP,
-            'JSON' => ColumnTypeFamily::JSON,
-            'BINARY', 'VARBINARY', 'BLOB', 'TINYBLOB', 'MEDIUMBLOB', 'LONGBLOB' => ColumnTypeFamily::BINARY,
-            'CHAR', 'VARCHAR', 'ENUM', 'SET' => ColumnTypeFamily::STRING,
-            'TEXT', 'TINYTEXT', 'MEDIUMTEXT', 'LONGTEXT' => ColumnTypeFamily::TEXT,
-            'YEAR' => ColumnTypeFamily::INTEGER,
-            'BIT' => ColumnTypeFamily::INTEGER,
-            default => ColumnTypeFamily::UNKNOWN,
-        };
-    }
 }

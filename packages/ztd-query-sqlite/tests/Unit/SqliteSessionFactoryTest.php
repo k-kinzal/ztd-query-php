@@ -15,6 +15,7 @@ use ZtdQuery\Platform\Sqlite\SqliteMutationResolver;
 use ZtdQuery\Platform\Sqlite\SqliteLexicalMasker;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
 use ZtdQuery\Platform\Sqlite\SqlitePdoParameterBindingCompiler;
+use ZtdQuery\Platform\Sqlite\SqlitePdoResultColumnTypeResolver;
 use ZtdQuery\Platform\Sqlite\SqliteQueryGuard;
 use ZtdQuery\Platform\Sqlite\SqliteRewriter;
 use ZtdQuery\Platform\Sqlite\SqliteSchemaParser;
@@ -40,6 +41,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(SqliteParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser::class)]
 #[UsesClass(SqlitePdoParameterBindingCompiler::class)]
+#[UsesClass(SqlitePdoResultColumnTypeResolver::class)]
 #[UsesClass(SqliteQueryGuard::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteReadOnlyDiagnosticStatement::class)]
 #[UsesClass(SqliteRewriter::class)]
@@ -96,6 +98,7 @@ final class SqliteSessionFactoryTest extends TestCase
 
         self::assertInstanceOf(Session::class, $session);
         self::assertInstanceOf(SqlitePdoParameterBindingCompiler::class, $session->parameterBindingCompiler());
+        self::assertInstanceOf(SqlitePdoResultColumnTypeResolver::class, $session->resultColumnTypeResolver());
     }
 
     public function testCreateWithExistingTablesRegistersDefinitions(): void

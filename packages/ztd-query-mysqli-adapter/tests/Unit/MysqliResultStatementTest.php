@@ -12,6 +12,8 @@ use Tests\Fixtures\StubMysqliResult;
 use ZtdQuery\Adapter\Mysqli\MysqliResultStatement;
 use ZtdQuery\Adapter\Mysqli\MysqliResultColumnExtractor;
 use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Platform\ResultColumnTypeResolver;
+use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(MysqliResultStatement::class)]
@@ -82,7 +84,15 @@ final class MysqliResultStatementTest extends TestCase
         $binary = new StubMysqliField('payload', MYSQLI_TYPE_BLOB, '63');
         $result = StubMysqliResult::create([], [$integer, $text, $binary]);
 
-        $columns = (new MysqliResultStatement($result, 0))->resultColumns();
+        $resolver = self::createStub(ResultColumnTypeResolver::class);
+        $resolver->method('resolve')->willReturnCallback(
+            static fn (array $metadata): ColumnType => match ($metadata['name'] ?? '') {
+                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'description' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                default => new ColumnType(ColumnTypeFamily::BINARY, 'BLOB'),
+            },
+        );
+        $columns = (new MysqliResultStatement($result, 0))->resultColumns($resolver);
 
         self::assertSame(['id', 'description', 'payload'], array_map(static fn ($column) => $column->name, $columns));
         self::assertSame(ColumnTypeFamily::INTEGER, $columns[0]->type->family);

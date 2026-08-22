@@ -10,7 +10,9 @@ use PDOStatement as NativePdoStatement;
 use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\Connection\ResultColumn;
 use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Platform\ResultColumnTypeResolver;
 use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnTypeFamily;
 
 /**
  * PDO statement implementing StatementInterface for ZTD layer.
@@ -60,7 +62,7 @@ final class PdoStatement implements StatementInterface
     /**
      * {@inheritDoc}
      */
-    public function resultColumns(): array
+    public function resultColumns(?ResultColumnTypeResolver $typeResolver = null): array
     {
         $columns = [];
         for ($index = 0; $index < $this->statement->columnCount(); $index++) {
@@ -71,7 +73,7 @@ final class PdoStatement implements StatementInterface
 
             $columns[] = new ResultColumn(
                 $metadata['name'],
-                ColumnType::fromNativeType($this->nativeType($metadata)),
+                $this->resolveType($metadata, $typeResolver),
             );
         }
 
@@ -81,30 +83,15 @@ final class PdoStatement implements StatementInterface
     /**
      * @param array<string, mixed> $metadata
      */
-    private function nativeType(array $metadata): string
-    {
-        $declaredType = array_key_exists('sqlite:decl_type', $metadata)
-            ? $metadata['sqlite:decl_type']
-            : null;
-        if (is_string($declaredType)) {
-            return $declaredType;
+    private function resolveType(
+        array $metadata,
+        ?ResultColumnTypeResolver $typeResolver,
+    ): ColumnType {
+        if ($typeResolver !== null) {
+            return $typeResolver->resolve($metadata);
         }
 
-        $nativeType = array_key_exists('native_type', $metadata) ? $metadata['native_type'] : '';
-        if (!is_string($nativeType)) {
-            return '';
-        }
-
-        $length = array_key_exists('len', $metadata) ? $metadata['len'] : null;
-        if (is_int($length) && $length > 0 && !str_contains($nativeType, '(')) {
-            $nativeType = match (strtoupper($nativeType)) {
-                'VARCHAR' => "VARCHAR($length)",
-                'BPCHAR' => "CHAR($length)",
-                default => $nativeType,
-            };
-        }
-
-        return $nativeType;
+        return new ColumnType(ColumnTypeFamily::UNKNOWN, '');
     }
 
     /**

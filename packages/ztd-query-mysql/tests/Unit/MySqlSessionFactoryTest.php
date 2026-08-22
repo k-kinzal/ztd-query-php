@@ -14,6 +14,7 @@ use ZtdQuery\Platform\MySql\MySqlMutationResolver;
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlParser;
+use ZtdQuery\Platform\MySql\MySqlResultColumnTypeResolver;
 use ZtdQuery\Platform\MySql\MySqlQueryGuard;
 use ZtdQuery\Platform\MySql\MySqlRewriter;
 use ZtdQuery\Platform\MySql\MySqlSchemaParser;
@@ -32,6 +33,7 @@ use ZtdQuery\Session;
 #[UsesClass(MySqlCastRenderer::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]
 #[UsesClass(MySqlParser::class)]
+#[UsesClass(MySqlResultColumnTypeResolver::class)]
 #[UsesClass(MySqlQueryGuard::class)]
 #[UsesClass(MySqlRewriter::class)]
 #[UsesClass(MySqlSchemaParser::class)]
@@ -98,5 +100,6 @@ final class MySqlSessionFactoryTest extends TestCase
         $session = $factory->create($connection, $config);
 
         self::assertInstanceOf(Session::class, $session);
+        self::assertInstanceOf(MySqlResultColumnTypeResolver::class, $session->resultColumnTypeResolver());
     }
 }

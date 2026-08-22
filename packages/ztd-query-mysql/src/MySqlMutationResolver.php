@@ -21,6 +21,8 @@ use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\TableDefinition;
+use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\Mutation\CreateTableAsSelectMutation;
 use ZtdQuery\Shadow\Mutation\CreateTableLikeMutation;
@@ -310,7 +312,13 @@ final class MySqlMutationResolver
 
         if ($statement->select !== null) {
             $columnNames = $this->extractSelectColumnNames($statement->select);
-            return new CreateTableAsSelectMutation($tableName, $columnNames, $this->registry, $ifNotExists);
+            return new CreateTableAsSelectMutation(
+                $tableName,
+                $columnNames,
+                $this->registry,
+                new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR'),
+                $ifNotExists,
+            );
         }
 
         $definition = $this->schemaParser->parse($sql);

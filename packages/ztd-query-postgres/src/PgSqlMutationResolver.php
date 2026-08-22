@@ -8,6 +8,8 @@ use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Platform\SchemaParser;
+use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\Mutation\CreateTableAsSelectMutation;
 use ZtdQuery\Shadow\Mutation\CreateTableLikeMutation;
@@ -264,7 +266,13 @@ final class PgSqlMutationResolver
             $selectSql = $this->parser->extractCreateTableSelectSql($sql);
             $columnNames = $selectSql !== null ? $this->extractSelectColumnNames($selectSql) : [];
 
-            return new CreateTableAsSelectMutation($tableName, $columnNames, $this->registry, $ifNotExists);
+            return new CreateTableAsSelectMutation(
+                $tableName,
+                $columnNames,
+                $this->registry,
+                new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                $ifNotExists,
+            );
         }
 
         $definition = $this->schemaParser->parse($sql);

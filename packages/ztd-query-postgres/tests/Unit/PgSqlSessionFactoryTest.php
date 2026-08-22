@@ -22,6 +22,7 @@ use ZtdQuery\Platform\Postgres\PgSqlMutationResolver;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
 use ZtdQuery\Platform\Postgres\PgSqlPdoParameterBindingCompiler;
 use ZtdQuery\Platform\Postgres\PgSqlPdoPlaceholderEscaper;
+use ZtdQuery\Platform\Postgres\PgSqlPdoResultColumnTypeResolver;
 use ZtdQuery\Platform\Postgres\PgSqlQueryGuard;
 use ZtdQuery\Platform\Postgres\PgSqlRewriter;
 use ZtdQuery\Platform\Postgres\PgSqlSchemaParser;
@@ -51,6 +52,7 @@ use ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer;
 #[UsesClass(PgSqlCopySupport::class)]
 #[UsesClass(PgSqlPdoParameterBindingCompiler::class)]
 #[UsesClass(PgSqlPdoPlaceholderEscaper::class)]
+#[UsesClass(PgSqlPdoResultColumnTypeResolver::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlValueRenderer::class)]
 #[UsesClass(PgSqlIdentifierQuoter::class)]
 #[UsesClass(SelectTransformer::class)]
@@ -185,6 +187,7 @@ final class PgSqlSessionFactoryTest extends TestCase
         self::assertInstanceOf(Session::class, $session);
         self::assertInstanceOf(PgSqlCopySupport::class, $session->copySupport());
         self::assertInstanceOf(PgSqlPdoParameterBindingCompiler::class, $session->parameterBindingCompiler());
+        self::assertInstanceOf(PgSqlPdoResultColumnTypeResolver::class, $session->resultColumnTypeResolver());
     }
 
     public function testCreatedSessionIsEnabledByDefault(): void

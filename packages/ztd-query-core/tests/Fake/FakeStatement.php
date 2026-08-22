@@ -6,6 +6,7 @@ namespace Tests\Fake;
 
 use ZtdQuery\Connection\ResultColumn;
 use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Platform\ResultColumnTypeResolver;
 
 /**
  * Fake StatementInterface backed by in-memory row data.
@@ -44,7 +45,7 @@ final class FakeStatement implements StatementInterface
         return $this->rows;
     }
 
-    public function resultColumns(): array
+    public function resultColumns(?ResultColumnTypeResolver $typeResolver = null): array
     {
         return $this->columns;
     }

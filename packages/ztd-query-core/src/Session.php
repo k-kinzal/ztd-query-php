@@ -18,6 +18,7 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\CopySupport;
 use ZtdQuery\Platform\CopyTarget;
 use ZtdQuery\Platform\ParameterBindingCompiler;
+use ZtdQuery\Platform\ResultColumnTypeResolver;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
@@ -89,6 +90,8 @@ final class Session
 
     private ?ParameterBindingCompiler $parameterBindingCompiler;
 
+    private ?ResultColumnTypeResolver $resultColumnTypeResolver;
+
     private ?string $lastInsertId = null;
 
     /**
@@ -108,6 +111,7 @@ final class Session
         ?TableDefinitionRegistry $registry = null,
         ?CopySupport $copySupport = null,
         ?ParameterBindingCompiler $parameterBindingCompiler = null,
+        ?ResultColumnTypeResolver $resultColumnTypeResolver = null,
     ) {
         $this->rewriter = $rewriter;
         $this->shadowStore = $shadowStore;
@@ -119,6 +123,7 @@ final class Session
         $this->referentialIntegrity = new ReferentialIntegrityEnforcer($this->registry);
         $this->copySupport = $copySupport;
         $this->parameterBindingCompiler = $parameterBindingCompiler;
+        $this->resultColumnTypeResolver = $resultColumnTypeResolver;
     }
 
     /**
@@ -228,6 +233,11 @@ final class Session
         return $this->parameterBindingCompiler;
     }
 
+    public function resultColumnTypeResolver(): ?ResultColumnTypeResolver
+    {
+        return $this->resultColumnTypeResolver;
+    }
+
     /**
      * Rewrite SQL using the configured rewriter.
      *
@@ -299,7 +309,7 @@ final class Session
             return GenericExecuteResult::fromStatement($statement, QueryKind::READ);
         }
 
-        $resultSet = $this->resultSelectRunner->readResultSet($statement);
+        $resultSet = $this->resultSelectRunner->readResultSet($statement, $this->resultColumnTypeResolver);
         $rows = $resultSet->rows;
 
         $mutation = $plan->mutation();
@@ -338,7 +348,11 @@ final class Session
             throw new RuntimeException('ZTD Write Protection: Missing shadow mutation for write simulation.');
         }
 
-        $resultSet = $this->resultSelectRunner->runResultSet($plan->sql(), $executor);
+        $resultSet = $this->resultSelectRunner->runResultSet(
+            $plan->sql(),
+            $executor,
+            $this->resultColumnTypeResolver,
+        );
         $this->applyMutation($mutation, $resultSet, $plan->sql());
 
         return $resultSet->rows;
@@ -375,6 +389,7 @@ final class Session
         $resultSet = $this->resultSelectRunner->runResultSet(
             $plan->sql(),
             fn (string $s) => $this->connection->query($s),
+            $this->resultColumnTypeResolver,
         );
         $impact = $this->applyMutation($mutation, $resultSet, $sql);
 

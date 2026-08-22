@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Connection;
 
+use ZtdQuery\Platform\ResultColumnTypeResolver;
+
 /**
  * Minimal statement interface for ZTD layer.
  *
@@ -35,7 +37,7 @@ interface StatementInterface
      *
      * @return list<ResultColumn>
      */
-    public function resultColumns(): array;
+    public function resultColumns(?ResultColumnTypeResolver $typeResolver = null): array;
 
     /**
      * Return the number of affected rows.

@@ -64,6 +64,7 @@ final class SqliteSessionFactory implements SessionFactory
             transactions: new ShadowTransactionManager($shadowStore, $registry),
             registry: $registry,
             parameterBindingCompiler: new SqlitePdoParameterBindingCompiler(),
+            resultColumnTypeResolver: new SqlitePdoResultColumnTypeResolver(),
         );
     }
 }

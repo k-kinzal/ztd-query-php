@@ -6,6 +6,8 @@ namespace Tests\Unit\Shadow\Mutation;
 
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\Mutation\CreateTableAsSelectMutation;
 use ZtdQuery\Shadow\Mutation\ResultSetMutation;
@@ -15,7 +17,12 @@ final class ResultSetMutationTest extends TestCase
 {
     public function testCreateTableAsSelectImplementsResultSetContract(): void
     {
-        $mutation = new CreateTableAsSelectMutation('copy', [], new TableDefinitionRegistry());
+        $mutation = new CreateTableAsSelectMutation(
+            'copy',
+            [],
+            new TableDefinitionRegistry(),
+            new ColumnType(ColumnTypeFamily::TEXT, 'fixture_text'),
+        );
 
         self::assertInstanceOf(ResultSetMutation::class, $mutation);
     }
