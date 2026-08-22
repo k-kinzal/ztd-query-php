@@ -46,6 +46,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteTransactionStatementParser::class)]
 #[UsesClass(SqliteReturningProjectionParser::class)]
 #[UsesClass(SqliteSchemaParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser::class)]
 #[UsesClass(SqliteMutationResolver::class)]
 #[UsesClass(SqliteTransformer::class)]
 #[UsesClass(SelectTransformer::class)]

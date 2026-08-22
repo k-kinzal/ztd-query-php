@@ -43,6 +43,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlUpsertExpressionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PostgreSqlLexicalMasker::class)]
 #[UsesClass(PgSqlSchemaParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser::class)]
 #[UsesClass(PgSqlQueryGuard::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlTransactionStatementParser::class)]
 #[UsesClass(PgSqlReturningProjectionParser::class)]

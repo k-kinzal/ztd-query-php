@@ -12,6 +12,7 @@ use ZtdQuery\Platform\Sqlite\SqliteLexicalMasker;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
 
 #[CoversClass(SqliteParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser::class)]
 #[UsesClass(SqliteLexicalMasker::class)]
 final class SqliteParserTest extends TestCase
 {

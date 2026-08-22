@@ -32,6 +32,7 @@ use ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer;
 #[UsesClass(PgSqlSchemaParser::class)]
 #[UsesClass(PgSqlQueryGuard::class)]
 #[UsesClass(PgSqlRewriter::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser::class)]
 #[UsesClass(PgSqlMutationResolver::class)]
 #[UsesClass(PgSqlTransformer::class)]
 #[UsesClass(PgSqlSchemaReflector::class)]

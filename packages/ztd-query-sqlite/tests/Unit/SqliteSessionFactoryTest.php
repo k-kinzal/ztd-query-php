@@ -34,6 +34,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(SqliteLexicalMasker::class)]
 #[UsesClass(SqliteMutationResolver::class)]
 #[UsesClass(SqliteParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser::class)]
 #[UsesClass(SqliteQueryGuard::class)]
 #[UsesClass(SqliteRewriter::class)]
 #[UsesClass(SqliteSchemaParser::class)]
