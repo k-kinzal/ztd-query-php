@@ -2,20 +2,22 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Schema;
+namespace ZtdQuery\Platform\Postgres;
 
+use ZtdQuery\Schema\ForeignKeyDefinition;
+use ZtdQuery\Schema\ReferentialAction;
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenDialect;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
-final class ForeignKeyDefinitionParser
+final class PgSqlForeignKeyDefinitionParser
 {
     /** @return array<string, ForeignKeyDefinition> */
     public function parseCreateTable(
         string $sql,
-        SqlTokenDialect $dialect = SqlTokenDialect::Standard,
     ): array {
+        $dialect = SqlTokenDialect::Standard;
         $body = $this->tableBody($sql, $dialect);
         if ($body === null) {
             return [];

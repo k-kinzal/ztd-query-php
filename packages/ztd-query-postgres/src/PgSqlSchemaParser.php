@@ -6,7 +6,6 @@ namespace ZtdQuery\Platform\Postgres;
 
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
-use ZtdQuery\Schema\ForeignKeyDefinitionParser;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
 use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\TableDefinition;
@@ -43,7 +42,7 @@ final class PgSqlSchemaParser implements SchemaParser
         /** @var array<string, list<string>> $uniqueConstraints */
         $uniqueConstraints = [];
         $uniqueIndex = 0;
-        $foreignKeys = (new ForeignKeyDefinitionParser())->parseCreateTable($createTableSql);
+        $foreignKeys = (new PgSqlForeignKeyDefinitionParser())->parseCreateTable($createTableSql);
 
         $entries = $this->splitTableBody($body);
 

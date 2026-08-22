@@ -7,11 +7,9 @@ namespace ZtdQuery\Platform\MySql;
 use PhpMyAdmin\SqlParser\Statements\CreateStatement;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
-use ZtdQuery\Schema\ForeignKeyDefinitionParser;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
 use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\TableDefinition;
-use ZtdQuery\Sql\SqlTokenDialect;
 
 /**
  * MySQL implementation of SchemaParser using phpMyAdmin SQL parser.
@@ -55,10 +53,7 @@ final class MySqlSchemaParser implements SchemaParser
         $notNullColumns = [];
         $uniqueConstraints = [];
         $uniqueIndex = 0;
-        $foreignKeys = (new ForeignKeyDefinitionParser())->parseCreateTable(
-            $createTableSql,
-            SqlTokenDialect::MySql,
-        );
+        $foreignKeys = (new MySqlForeignKeyDefinitionParser())->parseCreateTable($createTableSql);
 
         foreach ($stmt->fields as $field) {
             $name = $field->name ?? null;

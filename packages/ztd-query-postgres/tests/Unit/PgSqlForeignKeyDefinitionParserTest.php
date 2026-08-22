@@ -2,27 +2,26 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Schema;
+namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use ZtdQuery\Schema\ForeignKeyDefinitionParser;
+use ZtdQuery\Platform\Postgres\PgSqlForeignKeyDefinitionParser;
 use ZtdQuery\Schema\ForeignKeyDefinition;
 use ZtdQuery\Schema\ReferentialAction;
-use ZtdQuery\Sql\SqlTokenDialect;
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenStream;
 
-#[CoversClass(ForeignKeyDefinitionParser::class)]
+#[CoversClass(PgSqlForeignKeyDefinitionParser::class)]
 #[UsesClass(ForeignKeyDefinition::class)]
 #[UsesClass(SqlToken::class)]
 #[UsesClass(SqlTokenStream::class)]
-final class ForeignKeyDefinitionParserTest extends TestCase
+final class PgSqlForeignKeyDefinitionParserTest extends TestCase
 {
     public function testParsesNamedCompositeConstraintWithoutRegexSubstitution(): void
     {
-        $foreignKeys = (new ForeignKeyDefinitionParser())->parseCreateTable(
+        $foreignKeys = (new PgSqlForeignKeyDefinitionParser())->parseCreateTable(
             'CREATE TABLE child (id INT, tenant_id INT, parent_id INT, '
             . 'CONSTRAINT "fk child parent" FOREIGN KEY (tenant_id, parent_id) '
             . 'REFERENCES app.parents (tenant_id, id) ON UPDATE CASCADE ON DELETE SET NULL)',
@@ -36,11 +35,10 @@ final class ForeignKeyDefinitionParserTest extends TestCase
         self::assertSame(ReferentialAction::Cascade, $foreignKeys['fk child parent']->onUpdate);
     }
 
-    public function testParsesInlineAndMySqlQuotedReferences(): void
+    public function testParsesInlineAndPostgreSqlQuotedReferences(): void
     {
-        $foreignKeys = (new ForeignKeyDefinitionParser())->parseCreateTable(
-            'CREATE TABLE `child` (`id` INT, `parent_id` INT REFERENCES `app`.`parents` (`id`) ON DELETE RESTRICT)',
-            SqlTokenDialect::MySql,
+        $foreignKeys = (new PgSqlForeignKeyDefinitionParser())->parseCreateTable(
+            'CREATE TABLE "child" ("id" INT, "parent_id" INT REFERENCES "app"."parents" ("id") ON DELETE RESTRICT)',
         );
 
         self::assertCount(1, $foreignKeys);
@@ -54,7 +52,7 @@ final class ForeignKeyDefinitionParserTest extends TestCase
 
     public function testUsesReferencedPrimaryKeyWhenColumnListIsOmitted(): void
     {
-        $foreignKeys = (new ForeignKeyDefinitionParser())->parseCreateTable(
+        $foreignKeys = (new PgSqlForeignKeyDefinitionParser())->parseCreateTable(
             'CREATE TABLE child (parent_id INTEGER REFERENCES parent ON DELETE CASCADE)',
         );
 
@@ -64,7 +62,7 @@ final class ForeignKeyDefinitionParserTest extends TestCase
 
     public function testRejectsStatementsAndMalformedReferencesWithoutTableBody(): void
     {
-        $parser = new ForeignKeyDefinitionParser();
+        $parser = new PgSqlForeignKeyDefinitionParser();
 
         self::assertSame([], $parser->parseCreateTable('CREATE TABLE child AS SELECT 1'));
         self::assertSame([], $parser->parseCreateTable('CREATE TABLE child (id INT, FOREIGN KEY REFERENCES parent(id))'));
@@ -72,7 +70,7 @@ final class ForeignKeyDefinitionParserTest extends TestCase
 
     public function testParsesEveryActionAndAssignsSequentialSyntheticNames(): void
     {
-        $foreignKeys = (new ForeignKeyDefinitionParser())->parseCreateTable(
+        $foreignKeys = (new PgSqlForeignKeyDefinitionParser())->parseCreateTable(
             'create table child ('
             . 'id int, '
             . 'cascade_id int references cascade_parent(id) on delete cascade on update restrict, '
@@ -97,10 +95,9 @@ final class ForeignKeyDefinitionParserTest extends TestCase
 
     public function testUsesOnlyCreateTableTopLevelParentheses(): void
     {
-        $foreignKeys = (new ForeignKeyDefinitionParser())->parseCreateTable(
+        $foreignKeys = (new PgSqlForeignKeyDefinitionParser())->parseCreateTable(
             "CREATE TABLE child (id INT, note TEXT DEFAULT '(not structure)', "
-            . 'parent_id INT, FOREIGN KEY (parent_id) REFERENCES parent(id)) ENGINE = fn()',
-            SqlTokenDialect::MySql,
+            . 'parent_id INT, FOREIGN KEY (parent_id) REFERENCES parent(id)) WITH (fillfactor = 80)',
         );
 
         self::assertSame(['foreign_0'], array_keys($foreignKeys));
@@ -111,7 +108,7 @@ final class ForeignKeyDefinitionParserTest extends TestCase
 
     public function testRejectsNonCreateAndMalformedForeignKeyStructures(): void
     {
-        $parser = new ForeignKeyDefinitionParser();
+        $parser = new PgSqlForeignKeyDefinitionParser();
 
         self::assertSame([], $parser->parseCreateTable(
             'WRAP (FOREIGN KEY (bad_id) REFERENCES wrong(id)) CREATE TABLE child '
@@ -130,7 +127,7 @@ final class ForeignKeyDefinitionParserTest extends TestCase
 
     public function testDoesNotTreatOtherCreateStatementParenthesesAsTableBodies(): void
     {
-        $parser = new ForeignKeyDefinitionParser();
+        $parser = new PgSqlForeignKeyDefinitionParser();
 
         self::assertSame([], $parser->parseCreateTable(
             'CREATE VIEW child AS fn(parent_id INT REFERENCES parent(id))',
@@ -145,7 +142,7 @@ final class ForeignKeyDefinitionParserTest extends TestCase
 
     public function testMalformedActionsRemainNoActionWithoutTokenLookaheadFailures(): void
     {
-        $foreignKeys = (new ForeignKeyDefinitionParser())->parseCreateTable(
+        $foreignKeys = (new PgSqlForeignKeyDefinitionParser())->parseCreateTable(
             'CREATE TABLE child ('
             . 'bare_id INT REFERENCES bare_parent, '
             . 'on_id INT REFERENCES on_parent(id) ON, '
@@ -169,7 +166,7 @@ final class ForeignKeyDefinitionParserTest extends TestCase
 
     public function testNestedActionTokensCannotOverrideTopLevelAction(): void
     {
-        $foreignKeys = (new ForeignKeyDefinitionParser())->parseCreateTable(
+        $foreignKeys = (new PgSqlForeignKeyDefinitionParser())->parseCreateTable(
             'CREATE TABLE child ('
             . 'parent_id INT REFERENCES parent(id) CHECK (ON DELETE CASCADE) ON DELETE RESTRICT'
             . ')',
@@ -180,7 +177,7 @@ final class ForeignKeyDefinitionParserTest extends TestCase
 
     public function testForeignKeyClauseRequiresImmediateKeyAndColumnListTokens(): void
     {
-        $parser = new ForeignKeyDefinitionParser();
+        $parser = new PgSqlForeignKeyDefinitionParser();
 
         self::assertSame([], $parser->parseCreateTable(
             'CREATE TABLE child (id INT, FOREIGN WRONG KEY (id) REFERENCES parent(id))',
