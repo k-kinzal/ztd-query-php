@@ -159,8 +159,12 @@ final class GenerationPlansTest extends TestCase
         $plan = GenerationPlans::insertRowAliasUpsertStatement();
 
         self::assertSame('insert_stmt', $plan->startRule());
-        self::assertNotNull($plan->patternAt('insert_from_constructor', 0));
-        self::assertNotNull($plan->patternAt('opt_values_reference', 0));
-        self::assertNotNull($plan->patternAt('opt_insert_update_list', 0));
+        self::assertTrue($plan->patternAt('insert_stmt', 0)?->matches(['insert_from_constructor']) ?? false);
+        self::assertTrue(
+            $plan->patternAt('insert_from_constructor', 0)?->matches(['insert_values']) ?? false,
+        );
+        self::assertTrue($plan->patternAt('value_or_values', 0)?->matches(['VALUES']) ?? false);
+        self::assertTrue($plan->patternAt('opt_values_reference', 0)?->matches(['alias']) ?? false);
+        self::assertTrue($plan->patternAt('opt_insert_update_list', 0)?->matches(['update']) ?? false);
     }
 }

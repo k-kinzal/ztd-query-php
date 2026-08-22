@@ -77,6 +77,13 @@ final class MySqlUpsertAssignmentExtractorTest extends TestCase
                 'INSERT INTO t VALUES (1) AS `incoming` ON DUPLICATE KEY UPDATE value = incoming.value',
             ),
         );
+        self::assertSame(
+            'incoming',
+            $extractor->incomingAlias(
+                'WITH payload AS (SELECT 1) INSERT INTO t VALUES (1) AS incoming '
+                . 'ON DUPLICATE KEY UPDATE value = incoming.value',
+            ),
+        );
         self::assertNull($extractor->incomingAlias('INSERT INTO t VALUES (1) ON DUPLICATE KEY UPDATE value = 1'));
     }
 }
