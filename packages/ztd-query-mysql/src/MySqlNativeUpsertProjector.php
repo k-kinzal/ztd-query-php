@@ -43,6 +43,7 @@ final class MySqlNativeUpsertProjector
         array $candidateKeys,
         array $assignments,
         ?string $predicate = null,
+        ?string $incomingNamespace = null,
     ): string {
         if ($assignments === [] || $candidateKeys === []) {
             return $incomingSql;
@@ -60,12 +61,12 @@ final class MySqlNativeUpsertProjector
 
         $codec = new UpsertMutationRow();
         foreach (array_values($assignments) as $index => $expression) {
-            $evaluated = $this->bindExpression($expression, $tableName, $tableColumns);
+            $evaluated = $this->bindExpression($expression, $tableName, $tableColumns, $incomingNamespace);
             $metadata = $this->quoter->quote($codec->valueColumn($index));
             $selects[] = "(SELECT $evaluated FROM $table AS $existingAlias WHERE $conflict LIMIT 1) AS $metadata";
         }
         if ($predicate !== null) {
-            $evaluated = $this->bindExpression($predicate, $tableName, $tableColumns);
+            $evaluated = $this->bindExpression($predicate, $tableName, $tableColumns, $incomingNamespace);
             $metadata = $this->quoter->quote($codec->predicateColumn());
             $selects[] = "(SELECT $evaluated FROM $table AS $existingAlias WHERE $conflict LIMIT 1) AS $metadata";
         }
@@ -95,14 +96,22 @@ final class MySqlNativeUpsertProjector
     }
 
     /** @param list<string> $tableColumns */
-    private function bindExpression(string $expression, string $tableName, array $tableColumns): string
-    {
+    private function bindExpression(
+        string $expression,
+        string $tableName,
+        array $tableColumns,
+        ?string $incomingNamespace,
+    ): string {
         $tokens = SqlTokenStream::tokenize($expression, $this->dialect)->significantTokens();
         $subqueryTokens = $this->subqueryTokenIndexes($tokens);
         $replacements = [];
         $incomingArgumentOffset = null;
         $columnNames = array_fill_keys(array_map('strtolower', $tableColumns), true);
-        $incomingNamespaces = array_fill_keys(array_map('strtolower', $this->incomingNamespaces), true);
+        $namespaces = $this->incomingNamespaces;
+        if ($incomingNamespace !== null) {
+            $namespaces[] = $incomingNamespace;
+        }
+        $incomingNamespaces = array_fill_keys(array_map('strtolower', $namespaces), true);
 
         foreach ($tokens as $index => $token) {
             if (($subqueryTokens[$index] ?? false)

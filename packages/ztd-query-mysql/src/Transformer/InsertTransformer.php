@@ -15,6 +15,7 @@ use ZtdQuery\Platform\MySql\MySqlCastRenderer;
 use ZtdQuery\Platform\MySql\MySqlNativeUpsertProjector;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
+use ZtdQuery\Platform\MySql\MySqlUpsertAssignmentExtractor;
 use ZtdQuery\Rewrite\ShadowIdentityAllocator;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
@@ -95,12 +96,14 @@ final class InsertTransformer implements SqlTransformer
             $existingRows,
             $sourceSelectSql,
         );
+        $upsertExtractor = new MySqlUpsertAssignmentExtractor();
         $selectSql = $this->upsertProjector->project(
             $selectSql,
             $tableName,
             $tableColumns,
             isset($tables[$tableName]['candidateKeys']) ? $tables[$tableName]['candidateKeys'] : [],
-            (new \ZtdQuery\Platform\MySql\MySqlUpsertAssignmentExtractor())->extract($sql),
+            $upsertExtractor->extract($sql),
+            incomingNamespace: $upsertExtractor->incomingAlias($sql),
         );
 
         return $this->selectTransformer->transform(

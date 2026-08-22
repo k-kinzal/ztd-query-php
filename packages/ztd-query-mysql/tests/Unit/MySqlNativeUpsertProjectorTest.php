@@ -147,4 +147,22 @@ final class MySqlNativeUpsertProjectorTest extends TestCase
             $result,
         );
     }
+
+    public function testBindsExplicitIncomingRowAlias(): void
+    {
+        $result = (new MySqlNativeUpsertProjector())->project(
+            'SELECT 1 AS `id`, \'new\' AS `odd``name`',
+            'users',
+            ['id', 'odd`name'],
+            ['PRIMARY' => ['id']],
+            ['odd`name' => '`InCoMiNg`.`odd``name`'],
+            incomingNamespace: 'incoming',
+        );
+
+        self::assertStringContainsString(
+            '(SELECT `__ztd_incoming`.`odd``name` FROM `users` AS `__ztd_existing`',
+            $result,
+        );
+        self::assertStringNotContainsString('`InCoMiNg`.', $result);
+    }
 }
