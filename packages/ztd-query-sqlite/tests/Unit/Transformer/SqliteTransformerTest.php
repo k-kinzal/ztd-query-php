@@ -23,6 +23,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(SqliteParser::class)]
 #[UsesClass(DeleteTransformer::class)]
 #[UsesClass(InsertTransformer::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Transformer\InsertRowRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\Transformer\InsertSelectRenderer::class)]
 #[UsesClass(SelectTransformer::class)]
 #[UsesClass(UpdateTransformer::class)]

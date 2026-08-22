@@ -25,6 +25,7 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 #[UsesClass(SelectTransformer::class)]
 #[UsesClass(MySqlCastRenderer::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\InsertRowRenderer::class)]
 #[UsesClass(InsertSelectRenderer::class)]
 #[UsesClass(MySqlSelectListAliaser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]

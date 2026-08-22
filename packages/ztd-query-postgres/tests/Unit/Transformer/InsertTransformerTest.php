@@ -26,6 +26,7 @@ use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 #[UsesClass(PgSqlCastRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlValueRenderer::class)]
 #[UsesClass(PgSqlIdentifierQuoter::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\InsertRowRenderer::class)]
 #[UsesClass(InsertSelectRenderer::class)]
 final class InsertTransformerTest extends TestCase
 {
