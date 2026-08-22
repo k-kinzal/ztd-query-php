@@ -118,11 +118,6 @@ final class SqliteRewriter implements SqlRewriter
 
         $mutation = $this->mutationResolver->resolve($stmtSql, $kind);
 
-        $stripped = trim($this->parser->stripComments($stmtSql));
-        if (preg_match('/^DELETE\s+FROM\s+(?:"(?:[^"]|"")*"|`(?:[^`]|``)*`|\[(?:[^\]])*\]|[^\s;]+)\s*;?\s*$/i', $stripped) === 1) {
-            return new RewritePlan($this->emptyResultSelect(), QueryKind::WRITE_SIMULATED, $mutation);
-        }
-
         $transformedSql = $this->transformer->transform($stmtSql, $tableContext);
 
         return new RewritePlan($transformedSql, QueryKind::WRITE_SIMULATED, $mutation);
