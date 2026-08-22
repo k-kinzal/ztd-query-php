@@ -13,6 +13,7 @@ use ZtdQuery\Platform\Sqlite\SqliteQueryGuard;
 use ZtdQuery\Rewrite\QueryKind;
 
 #[CoversClass(SqliteQueryGuard::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteReadOnlyDiagnosticStatement::class)]
 #[UsesClass(SqliteLexicalMasker::class)]
 #[UsesClass(SqliteParser::class)]
 final class SqliteQueryGuardTest extends QueryClassifierContractTest

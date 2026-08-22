@@ -13,6 +13,7 @@ use ZtdQuery\Platform\MySql\MySqlQueryGuard;
 use ZtdQuery\Rewrite\QueryKind;
 
 #[CoversClass(MySqlQueryGuard::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlReadOnlyDiagnosticStatement::class)]
 #[UsesClass(MySqlParser::class)]
 class MySqlQueryGuardTest extends QueryClassifierContractTest
 {

@@ -43,6 +43,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(SqliteParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteUpsertExpressionParser::class)]
 #[UsesClass(SqliteQueryGuard::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteReadOnlyDiagnosticStatement::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteTransactionStatementParser::class)]
 #[UsesClass(SqliteReturningProjectionParser::class)]
 #[UsesClass(SqliteSchemaParser::class)]

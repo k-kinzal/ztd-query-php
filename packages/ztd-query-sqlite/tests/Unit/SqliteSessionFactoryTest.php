@@ -36,6 +36,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(SqliteParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser::class)]
 #[UsesClass(SqliteQueryGuard::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteReadOnlyDiagnosticStatement::class)]
 #[UsesClass(SqliteRewriter::class)]
 #[UsesClass(SqliteSchemaParser::class)]
 #[UsesClass(SqliteSchemaReflector::class)]

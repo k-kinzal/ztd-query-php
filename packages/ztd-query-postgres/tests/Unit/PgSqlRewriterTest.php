@@ -45,6 +45,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(PgSqlSchemaParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser::class)]
 #[UsesClass(PgSqlQueryGuard::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlReadOnlyDiagnosticStatement::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlTransactionStatementParser::class)]
 #[UsesClass(PgSqlReturningProjectionParser::class)]
 #[UsesClass(PgSqlMutationResolver::class)]
