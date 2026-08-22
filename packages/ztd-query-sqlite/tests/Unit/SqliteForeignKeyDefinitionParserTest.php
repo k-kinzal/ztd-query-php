@@ -5,18 +5,11 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Sqlite\SqliteForeignKeyDefinitionParser;
-use ZtdQuery\Schema\ForeignKeyDefinition;
 use ZtdQuery\Schema\ReferentialAction;
-use ZtdQuery\Sql\SqlToken;
-use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(SqliteForeignKeyDefinitionParser::class)]
-#[UsesClass(ForeignKeyDefinition::class)]
-#[UsesClass(SqlToken::class)]
-#[UsesClass(SqlTokenStream::class)]
 final class SqliteForeignKeyDefinitionParserTest extends TestCase
 {
     public function testParsesNamedCompositeConstraintWithoutRegexSubstitution(): void
