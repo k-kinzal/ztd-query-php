@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\MySql;
 
+use PhpMyAdmin\SqlParser\Context;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Platform\MySql\Transformer\DeleteTransformer;
@@ -30,6 +31,8 @@ final class MySqlSessionFactory implements SessionFactory
      */
     public function create(ConnectionInterface $connection, ZtdConfig $config): Session
     {
+        Context::setMode((new MySqlSessionSqlModeReflector($connection))->reflect());
+
         $shadowStore = new ShadowStore();
         $parser = new MySqlParser();
         $schemaParser = new MySqlSchemaParser($parser);

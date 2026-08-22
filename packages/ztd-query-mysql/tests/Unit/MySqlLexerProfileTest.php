@@ -15,7 +15,7 @@ final class MySqlLexerProfileTest extends TestCase
 {
     public function testAddsMySqlHashLineComments(): void
     {
-        $profile = MySqlLexerProfile::create();
+        $profile = MySqlLexerProfile::create(false);
 
         self::assertTrue($profile->startsLineComment('# comment', 0));
         self::assertTrue($profile->startsLineComment('-- comment', 0));
@@ -40,7 +40,7 @@ final class MySqlLexerProfileTest extends TestCase
 
     public function testUsesDefaultAndAnsiQuotesModesExplicitly(): void
     {
-        $default = SqlTokenStream::tokenize('"value" `column`', MySqlLexerProfile::create())->significantTokens();
+        $default = SqlTokenStream::tokenize('"value" `column`', MySqlLexerProfile::create(false))->significantTokens();
         $ansi = SqlTokenStream::tokenize('"column" `other`', MySqlLexerProfile::create(true))->significantTokens();
 
         self::assertSame(SqlTokenKind::String, $default[0]->kind);
