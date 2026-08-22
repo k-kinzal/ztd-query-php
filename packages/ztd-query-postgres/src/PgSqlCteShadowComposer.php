@@ -5,19 +5,11 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\Postgres;
 
 use ZtdQuery\Sql\SqlToken;
-use ZtdQuery\Sql\SqlTokenDialect;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
 final class PgSqlCteShadowComposer
 {
-    private readonly SqlTokenDialect $dialect;
-
-    public function __construct()
-    {
-        $this->dialect = SqlTokenDialect::Standard;
-    }
-
     /**
      * @param array<string, string> $tableCtes
      */
@@ -53,7 +45,7 @@ final class PgSqlCteShadowComposer
         }
 
         $sql = (new PgSqlSelectRelationParser())->unqualify($sql, $shadowedTables);
-        $tokens = SqlTokenStream::tokenize($sql, $this->dialect)->significantTokens();
+        $tokens = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->significantTokens();
         $with = $tokens[0] ?? null;
         if ($with === null || !$with->isKeyword('WITH')) {
             return 'WITH ' . implode(",\n", $ctes) . "\n" . $sql;
@@ -88,7 +80,7 @@ final class PgSqlCteShadowComposer
 
         $prefix = rtrim(substr($originalSql, 0, $header['statementOffset']));
 
-        $rewrittenTokens = SqlTokenStream::tokenize($rewrittenStatement, $this->dialect)->significantTokens();
+        $rewrittenTokens = SqlTokenStream::tokenize($rewrittenStatement, PgSqlLexerProfile::create())->significantTokens();
         $rewrittenWith = $rewrittenTokens[0] ?? null;
         if ($rewrittenWith !== null && $rewrittenWith->isKeyword('WITH')) {
             $rewrittenHeader = $this->parseHeader($rewrittenStatement);
@@ -113,7 +105,7 @@ final class PgSqlCteShadowComposer
                 return $prefix . ",\n" . $rewrittenBody . "\n" . $rewrittenTail;
             }
 
-            $originalTokens = SqlTokenStream::tokenize($originalSql, $this->dialect)->significantTokens();
+            $originalTokens = SqlTokenStream::tokenize($originalSql, PgSqlLexerProfile::create())->significantTokens();
             $originalWith = $originalTokens[0];
             $originalContentToken = $originalWith;
             $recursive = false;
@@ -153,7 +145,7 @@ final class PgSqlCteShadowComposer
     private function parseHeader(string $sql): array
     {
         $tokens = [];
-        foreach (SqlTokenStream::tokenize($sql, $this->dialect)->significantTokens() as $token) {
+        foreach (SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->significantTokens() as $token) {
             if ($token->isTopLevel()) {
                 $tokens[] = $token;
             }
@@ -235,7 +227,7 @@ final class PgSqlCteShadowComposer
 
     private function referencesIdentifier(string $sql, string $identifier): bool
     {
-        foreach (SqlTokenStream::tokenize($sql, $this->dialect)->significantTokens() as $token) {
+        foreach (SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->significantTokens() as $token) {
             $candidate = $this->identifierName($token);
             if ($candidate !== null && strcasecmp($candidate, $identifier) === 0) {
                 return true;

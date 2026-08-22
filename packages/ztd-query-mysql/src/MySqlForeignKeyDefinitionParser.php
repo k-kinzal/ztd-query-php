@@ -7,7 +7,7 @@ namespace ZtdQuery\Platform\MySql;
 use ZtdQuery\Schema\ForeignKeyDefinition;
 use ZtdQuery\Schema\ReferentialAction;
 use ZtdQuery\Sql\SqlToken;
-use ZtdQuery\Sql\SqlTokenDialect;
+use ZtdQuery\Sql\SqlLexerProfile;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
@@ -17,15 +17,15 @@ final class MySqlForeignKeyDefinitionParser
     public function parseCreateTable(
         string $sql,
     ): array {
-        $dialect = SqlTokenDialect::MySql;
-        $body = $this->tableBody($sql, $dialect);
+        $lexerProfile = MySqlLexerProfile::create();
+        $body = $this->tableBody($sql, $lexerProfile);
         if ($body === null) {
             return [];
         }
 
         $foreignKeys = [];
-        foreach (SqlTokenStream::tokenize($body, $dialect)->splitTopLevel() as $entry) {
-            $stream = SqlTokenStream::tokenize($entry, $dialect);
+        foreach (SqlTokenStream::tokenize($body, $lexerProfile)->splitTopLevel() as $entry) {
+            $stream = SqlTokenStream::tokenize($entry, $lexerProfile);
             $first = $stream->identifierAt();
             $firstKeyword = $stream->firstTopLevelKeyword();
             $inlineColumn = $first !== null && !in_array(
@@ -45,9 +45,9 @@ final class MySqlForeignKeyDefinitionParser
         return $foreignKeys;
     }
 
-    private function tableBody(string $sql, SqlTokenDialect $dialect): ?string
+    private function tableBody(string $sql, SqlLexerProfile $lexerProfile): ?string
     {
-        $tokens = SqlTokenStream::tokenize($sql, $dialect)->significantTokens();
+        $tokens = SqlTokenStream::tokenize($sql, $lexerProfile)->significantTokens();
         $first = $tokens[0] ?? null;
         if ($first === null || !$first->isKeyword('CREATE')) {
             return null;

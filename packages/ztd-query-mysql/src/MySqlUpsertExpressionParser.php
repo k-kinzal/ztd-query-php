@@ -9,7 +9,6 @@ use ZtdQuery\Shadow\Mutation\UpsertColumnSource;
 use ZtdQuery\Shadow\Mutation\UpsertExpression;
 use ZtdQuery\Shadow\Mutation\UpsertExpressionKind;
 use ZtdQuery\Sql\SqlToken;
-use ZtdQuery\Sql\SqlTokenDialect;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
@@ -17,7 +16,7 @@ final class MySqlUpsertExpressionParser
 {
     public function parse(string $sql, string $tableName, ?string $incomingAlias = null): UpsertExpression
     {
-        $tokens = SqlTokenStream::tokenize($sql, SqlTokenDialect::MySql)->significantTokens();
+        $tokens = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->significantTokens();
         $index = 0;
         $expression = $this->parseOr($sql, $tableName, $incomingAlias, $tokens, $index);
         if ($index !== count($tokens)) {

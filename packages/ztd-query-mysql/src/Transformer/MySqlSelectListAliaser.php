@@ -6,7 +6,7 @@ namespace ZtdQuery\Platform\MySql\Transformer;
 
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Sql\SqlToken;
-use ZtdQuery\Sql\SqlTokenDialect;
+use ZtdQuery\Platform\MySql\MySqlLexerProfile;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
@@ -36,12 +36,12 @@ final class MySqlSelectListAliaser
         foreach (self::SELECT_LIST_TERMINATORS as $terminator) {
             $endKeywords[] = [$terminator];
         }
-        $selectList = SqlTokenStream::tokenize($sql, SqlTokenDialect::MySql)->topLevelClause(['SELECT'], $endKeywords);
+        $selectList = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->topLevelClause(['SELECT'], $endKeywords);
         if ($selectList === null) {
             return null;
         }
 
-        $expressions = SqlTokenStream::tokenize($selectList, SqlTokenDialect::MySql)->splitTopLevel();
+        $expressions = SqlTokenStream::tokenize($selectList, MySqlLexerProfile::create())->splitTopLevel();
         if ($expressions === [] || $this->containsWildcard($expressions)) {
             return null;
         }
@@ -51,7 +51,7 @@ final class MySqlSelectListAliaser
 
     public function alias(string $sql): string
     {
-        $tokens = SqlTokenStream::tokenize($sql, SqlTokenDialect::MySql)->significantTokens();
+        $tokens = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->significantTokens();
         $select = null;
         $end = null;
         foreach ($tokens as $token) {
@@ -76,7 +76,7 @@ final class MySqlSelectListAliaser
 
         $listEnd = $end ?? strlen($sql);
         $listSql = substr($sql, $select->endOffset(), $listEnd - $select->endOffset());
-        $expressions = SqlTokenStream::tokenize($listSql, SqlTokenDialect::MySql)->splitTopLevel();
+        $expressions = SqlTokenStream::tokenize($listSql, MySqlLexerProfile::create())->splitTopLevel();
         if ($expressions === [] || $this->containsWildcard($expressions)) {
             return $sql;
         }
@@ -108,7 +108,7 @@ final class MySqlSelectListAliaser
     private function containsWildcard(array $expressions): bool
     {
         foreach ($expressions as $expression) {
-            $tokens = SqlTokenStream::tokenize($expression, SqlTokenDialect::MySql)->significantTokens();
+            $tokens = SqlTokenStream::tokenize($expression, MySqlLexerProfile::create())->significantTokens();
             if ($tokens === []) {
                 return true;
             }
@@ -128,7 +128,7 @@ final class MySqlSelectListAliaser
     private function removeModifiers(string $expression): array
     {
         $end = null;
-        foreach (SqlTokenStream::tokenize($expression, SqlTokenDialect::MySql)->significantTokens() as $token) {
+        foreach (SqlTokenStream::tokenize($expression, MySqlLexerProfile::create())->significantTokens() as $token) {
             if (!$this->isModifier($token)) {
                 break;
             }
@@ -158,7 +158,7 @@ final class MySqlSelectListAliaser
 
     private function withoutExplicitAlias(string $expression): string
     {
-        $tokens = SqlTokenStream::tokenize($expression, SqlTokenDialect::MySql)->significantTokens();
+        $tokens = SqlTokenStream::tokenize($expression, MySqlLexerProfile::create())->significantTokens();
         array_pop($tokens);
         foreach (array_reverse($tokens) as $token) {
             if ($token->isTopLevel() && $token->isKeyword('AS')) {

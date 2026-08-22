@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\MySql;
 
 use ZtdQuery\Sql\SqlToken;
-use ZtdQuery\Sql\SqlTokenDialect;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
@@ -244,17 +243,13 @@ final class MySqlSelectRelationParser
         if ($token->kind === SqlTokenKind::Word) {
             return [$token->text, $index + 1, $token->offset, $token->offset, $token->endOffset()];
         }
-        $quote = $token->text[0] ?? '';
-        if ($token->kind !== SqlTokenKind::QuotedIdentifier
-            || strlen($token->text) <= 2
-            || !str_ends_with($token->text, $quote)
-        ) {
+        $name = MySqlLexerProfile::create()->quotedIdentifierValue($token->text);
+        if ($name === null) {
             return null;
         }
-        $name = substr($token->text, 1, -1);
 
         return [
-            str_replace($quote . $quote, $quote, $name),
+            $name,
             $index + 1,
             $token->offset,
             $token->offset,
@@ -311,6 +306,6 @@ final class MySqlSelectRelationParser
     /** @return list<SqlToken> */
     private function tokens(string $sql): array
     {
-        return SqlTokenStream::tokenize($sql, SqlTokenDialect::MySql)->significantTokens();
+        return SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->significantTokens();
     }
 }

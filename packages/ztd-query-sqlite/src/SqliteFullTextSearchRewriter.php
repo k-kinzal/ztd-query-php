@@ -29,7 +29,7 @@ final class SqliteFullTextSearchRewriter
      */
     public function rewrite(string $sql, array $tables): string
     {
-        $stream = SqlTokenStream::tokenize($sql);
+        $stream = SqlTokenStream::tokenize($sql, SqliteLexerProfile::create());
         /** @var list<array{start: int, end: int, replacement: string}> $edits */
         $edits = [];
 

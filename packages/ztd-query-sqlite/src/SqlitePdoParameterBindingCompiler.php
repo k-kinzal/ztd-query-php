@@ -25,7 +25,7 @@ final class SqlitePdoParameterBindingCompiler implements ParameterBindingCompile
 
         $replacements = [];
         $positionalIndex = 0;
-        foreach (SqlTokenStream::tokenize($sql)->tokens() as $token) {
+        foreach (SqlTokenStream::tokenize($sql, SqliteLexerProfile::create())->tokens() as $token) {
             if ($token->kind !== SqlTokenKind::Parameter) {
                 continue;
             }

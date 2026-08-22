@@ -11,7 +11,6 @@ use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
-use ZtdQuery\Sql\SqlTokenDialect;
 use ZtdQuery\Sql\SqlTokenStream;
 
 /**
@@ -168,7 +167,7 @@ final class MySqlLoadDataProjector
         if ($expression === null) {
             throw new UnsupportedSqlException($sql, 'Cannot resolve LOAD DATA column list');
         }
-        $stream = SqlTokenStream::tokenize($expression, SqlTokenDialect::MySql);
+        $stream = SqlTokenStream::tokenize($expression, MySqlLexerProfile::create());
         $tokens = $stream->significantTokens();
         if (count($tokens) < 2) {
             throw new UnsupportedSqlException($sql, 'Invalid LOAD DATA column list');
@@ -182,7 +181,7 @@ final class MySqlLoadDataProjector
             throw new UnsupportedSqlException($sql, 'Invalid LOAD DATA column list');
         }
         $contents = substr($expression, $opening->endOffset(), $closing->offset - $opening->endOffset());
-        $parts = SqlTokenStream::tokenize($contents, SqlTokenDialect::MySql)->splitTopLevel();
+        $parts = SqlTokenStream::tokenize($contents, MySqlLexerProfile::create())->splitTopLevel();
         $targets = [];
         foreach ($parts as $part) {
             $target = $this->inputTarget($part, $sql);
@@ -206,7 +205,7 @@ final class MySqlLoadDataProjector
 
     private function inputTarget(string $sqlPart, string $sql): string
     {
-        $stream = SqlTokenStream::tokenize($sqlPart, SqlTokenDialect::MySql);
+        $stream = SqlTokenStream::tokenize($sqlPart, MySqlLexerProfile::create());
         $tokens = $stream->significantTokens();
         $first = $tokens[0] ?? null;
         if ($first === null) {
@@ -464,7 +463,7 @@ final class MySqlLoadDataProjector
      */
     private function substituteVariables(string $expression, array $variables): string
     {
-        $stream = SqlTokenStream::tokenize($expression, SqlTokenDialect::MySql);
+        $stream = SqlTokenStream::tokenize($expression, MySqlLexerProfile::create());
         $tokens = $stream->significantTokens();
         $result = '';
         $cursor = 0;

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\MySql;
 
 use ZtdQuery\Sql\SqlToken;
-use ZtdQuery\Sql\SqlTokenDialect;
 use ZtdQuery\Sql\SqlTokenStream;
 
 /**
@@ -15,7 +14,7 @@ final class MySqlFullTextSearchRewriter
 {
     public function rewrite(string $sql): string
     {
-        $stream = SqlTokenStream::tokenize($sql, SqlTokenDialect::MySql);
+        $stream = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create());
         /** @var list<array{start: int, end: int, replacement: string}> $edits */
         $edits = [];
 
@@ -63,7 +62,7 @@ final class MySqlFullTextSearchRewriter
             return null;
         }
         $columnsSql = substr($sql, $columnsOpen->endOffset(), $columnsClose->offset - $columnsOpen->endOffset());
-        $columns = SqlTokenStream::tokenize($columnsSql, SqlTokenDialect::MySql)->splitTopLevel();
+        $columns = SqlTokenStream::tokenize($columnsSql, MySqlLexerProfile::create())->splitTopLevel();
         if ($columns === []) {
             return null;
         }
@@ -92,7 +91,7 @@ final class MySqlFullTextSearchRewriter
     private function queryExpression(string $queryBody): string
     {
         $previous = null;
-        foreach (SqlTokenStream::tokenize($queryBody, SqlTokenDialect::MySql)->significantTokens() as $token) {
+        foreach (SqlTokenStream::tokenize($queryBody, MySqlLexerProfile::create())->significantTokens() as $token) {
             if (!$token->isTopLevel()) {
                 continue;
             }

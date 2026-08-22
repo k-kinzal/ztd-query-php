@@ -121,7 +121,7 @@ final class PgSqlSchemaParser implements SchemaParser
 
     private function tableBody(string $sql): ?string
     {
-        $stream = SqlTokenStream::tokenize($sql);
+        $stream = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create());
         $tokens = $stream->significantTokens();
         $create = $tokens[0] ?? null;
         if (!$create instanceof SqlToken || !$create->isKeyword('CREATE')) {
@@ -214,7 +214,7 @@ final class PgSqlSchemaParser implements SchemaParser
 
     private static function isSequenceDefault(string $expression): bool
     {
-        foreach (SqlTokenStream::tokenize($expression)->significantTokens() as $token) {
+        foreach (SqlTokenStream::tokenize($expression, PgSqlLexerProfile::create())->significantTokens() as $token) {
             if ($token->text === '(') {
                 continue;
             }
@@ -248,7 +248,7 @@ final class PgSqlSchemaParser implements SchemaParser
         $notNull = preg_match('/\bNOT\s+NULL\b/i', $afterType) === 1;
         $primaryKey = preg_match('/\bPRIMARY\s+KEY\b/i', $afterType) === 1;
         $unique = preg_match('/\bUNIQUE\b/i', $afterType) === 1;
-        $default = SqlTokenStream::tokenize($afterType)->topLevelClause(
+        $default = SqlTokenStream::tokenize($afterType, PgSqlLexerProfile::create())->topLevelClause(
             ['DEFAULT'],
             [
                 ['NOT', 'NULL'], ['PRIMARY', 'KEY'], ['UNIQUE'], ['CHECK'],
@@ -260,7 +260,7 @@ final class PgSqlSchemaParser implements SchemaParser
             || self::hasGeneratedIdentity($afterType);
         $generatedExpression = null;
         if (!$identity) {
-            $generatedExpression = SqlTokenStream::tokenize($afterType)->topLevelClause(
+            $generatedExpression = SqlTokenStream::tokenize($afterType, PgSqlLexerProfile::create())->topLevelClause(
                 ['GENERATED', 'ALWAYS', 'AS'],
                 [['STORED']],
             );
@@ -298,7 +298,7 @@ final class PgSqlSchemaParser implements SchemaParser
 
     private static function hasGeneratedIdentity(string $constraints): bool
     {
-        $tokens = SqlTokenStream::tokenize($constraints)->significantTokens();
+        $tokens = SqlTokenStream::tokenize($constraints, PgSqlLexerProfile::create())->significantTokens();
         $sequences = [
             ['GENERATED', 'ALWAYS', 'AS', 'IDENTITY'],
             ['GENERATED', 'BY', 'DEFAULT', 'AS', 'IDENTITY'],
@@ -395,7 +395,7 @@ final class PgSqlSchemaParser implements SchemaParser
     /** @return array{type: string, rest: string}|null */
     private function extractQuotedType(string $str): ?array
     {
-        $tokens = SqlTokenStream::tokenize($str)->significantTokens();
+        $tokens = SqlTokenStream::tokenize($str, PgSqlLexerProfile::create())->significantTokens();
         $first = $tokens[0] ?? null;
         if ($first === null) {
             return null;

@@ -42,7 +42,7 @@ final class PgSqlParser
      */
     public function splitStatements(string $sql): array
     {
-        return SqlTokenStream::tokenize($sql)->splitStatements();
+        return SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->splitStatements();
     }
 
     /**
@@ -125,7 +125,7 @@ final class PgSqlParser
 
     public function extractOnConflictTarget(string $sql): ?PgSqlConflictTarget
     {
-        $tokens = SqlTokenStream::tokenize($sql)->significantTokens();
+        $tokens = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->significantTokens();
         $conflict = self::findOnConflictTargetStart($tokens);
         if ($conflict === null) {
             return null;
@@ -150,7 +150,7 @@ final class PgSqlParser
             if ($constraintToken === null) {
                 return null;
             }
-            $identifier = SqlTokenStream::tokenize($constraintToken->text)->identifierAt();
+            $identifier = SqlTokenStream::tokenize($constraintToken->text, PgSqlLexerProfile::create())->identifierAt();
             if ($identifier === null) {
                 return null;
             }
@@ -172,8 +172,8 @@ final class PgSqlParser
             $tokens[$closing]->offset - $next->endOffset(),
         );
         $columns = [];
-        foreach (SqlTokenStream::tokenize($columnSql)->splitTopLevel() as $part) {
-            $stream = SqlTokenStream::tokenize($part);
+        foreach (SqlTokenStream::tokenize($columnSql, PgSqlLexerProfile::create())->splitTopLevel() as $part) {
+            $stream = SqlTokenStream::tokenize($part, PgSqlLexerProfile::create());
             $identifier = $stream->identifierAt();
             if ($identifier === null) {
                 return null;
@@ -275,11 +275,11 @@ final class PgSqlParser
         /** @var array<string, string> $values */
         $values = [];
 
-        $action = SqlTokenStream::tokenize($sql)->topLevelClause(['DO'], [['RETURNING']]);
+        $action = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->topLevelClause(['DO'], [['RETURNING']]);
         if ($action === null) {
             return ['columns' => [], 'values' => []];
         }
-        $actionStream = SqlTokenStream::tokenize($action);
+        $actionStream = SqlTokenStream::tokenize($action, PgSqlLexerProfile::create());
         if ($actionStream->firstTopLevelKeyword() !== 'UPDATE') {
             return ['columns' => [], 'values' => []];
         }
@@ -289,7 +289,7 @@ final class PgSqlParser
         }
         $setClause = rtrim($setClause, '; ');
 
-        $assignments = SqlTokenStream::tokenize($setClause)->splitTopLevel();
+        $assignments = SqlTokenStream::tokenize($setClause, PgSqlLexerProfile::create())->splitTopLevel();
 
         foreach ($assignments as $assignment) {
             $assignment = trim($assignment);
@@ -305,7 +305,7 @@ final class PgSqlParser
 
     public function extractOnConflictUpdateWhere(string $sql): ?string
     {
-        return SqlTokenStream::tokenize($sql)->topLevelClauseAfter(
+        return SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->topLevelClauseAfter(
             ['DO', 'UPDATE', 'SET'],
             ['WHERE'],
             [['RETURNING']],
@@ -370,7 +370,7 @@ final class PgSqlParser
      */
     public function extractUpdateSets(string $sql): array
     {
-        $setClause = SqlTokenStream::tokenize($sql)->topLevelClause(
+        $setClause = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->topLevelClause(
             ['SET'],
             [['FROM'], ['WHERE'], ['RETURNING']],
         );
@@ -378,7 +378,7 @@ final class PgSqlParser
             return [];
         }
 
-        $assignments = SqlTokenStream::tokenize($setClause)->splitTopLevel();
+        $assignments = SqlTokenStream::tokenize($setClause, PgSqlLexerProfile::create())->splitTopLevel();
         $result = [];
 
         foreach ($assignments as $assignment) {
@@ -397,7 +397,7 @@ final class PgSqlParser
      */
     public function extractWhereClause(string $sql): ?string
     {
-        return SqlTokenStream::tokenize($sql)->topLevelClause(
+        return SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->topLevelClause(
             ['WHERE'],
             [['RETURNING'], ['ORDER', 'BY'], ['LIMIT']],
         );
@@ -408,7 +408,7 @@ final class PgSqlParser
      */
     public function extractUpdateFromClause(string $sql): ?string
     {
-        return SqlTokenStream::tokenize($sql)->topLevelClause(
+        return SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->topLevelClause(
             ['FROM'],
             [['WHERE'], ['RETURNING']],
         );
@@ -445,7 +445,7 @@ final class PgSqlParser
      */
     public function extractDeleteUsingClause(string $sql): ?string
     {
-        return SqlTokenStream::tokenize($sql)->topLevelClause(
+        return SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->topLevelClause(
             ['USING'],
             [['WHERE'], ['RETURNING']],
         );
@@ -462,7 +462,7 @@ final class PgSqlParser
     /** @return list<string> */
     public function extractTruncateTables(string $sql): array
     {
-        $stream = SqlTokenStream::tokenize($sql);
+        $stream = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create());
         $tokens = $stream->significantTokens();
         if ($stream->firstTopLevelKeyword() !== 'TRUNCATE') {
             return [];

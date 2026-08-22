@@ -14,13 +14,13 @@ final class SqliteReturningProjectionParser
 {
     public function parse(string $sql): ?ReturningProjection
     {
-        $clause = SqlTokenStream::tokenize($sql)->topLevelClause(['RETURNING']);
+        $clause = SqlTokenStream::tokenize($sql, SqliteLexerProfile::create())->topLevelClause(['RETURNING']);
         if ($clause === null) {
             return null;
         }
 
         $items = [];
-        foreach (SqlTokenStream::tokenize(rtrim($clause, "; \t\n\r\0\x0B"))->splitTopLevel() as $expression) {
+        foreach (SqlTokenStream::tokenize(rtrim($clause, "; \t\n\r\0\x0B"), SqliteLexerProfile::create())->splitTopLevel() as $expression) {
             $item = $this->parseItem($expression);
             if ($item === null) {
                 throw new UnsupportedSqlException(
@@ -41,7 +41,7 @@ final class SqliteReturningProjectionParser
     /** @return array{source: string|null, output: string|null}|null */
     private function parseItem(string $expression): ?array
     {
-        $tokens = SqlTokenStream::tokenize($expression)->significantTokens();
+        $tokens = SqlTokenStream::tokenize($expression, SqliteLexerProfile::create())->significantTokens();
         $alias = null;
         $asIndex = $this->asIndex($tokens);
         if ($asIndex !== null) {

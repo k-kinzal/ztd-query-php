@@ -333,7 +333,7 @@ final class MySqlTypeSemanticsTest extends TestCase
         );
     }
 
-    public function testDoubleQuotedIdentifiersResolveByTokenKind(): void
+    public function testBacktickQuotedIdentifiersResolveByTokenKind(): void
     {
         $semantics = new MySqlTypeSemantics();
         $tables = [
@@ -345,8 +345,8 @@ final class MySqlTypeSemanticsTest extends TestCase
         ];
 
         self::assertSame(
-            "SELECT * FROM Items ORDER BY FIELD(\"Items\".\"Size\", 'small', 'large')",
-            $semantics->rewrite('SELECT * FROM Items ORDER BY "Items"."Size"', $tables),
+            "SELECT * FROM Items ORDER BY FIELD(`Items`.`Size`, 'small', 'large')",
+            $semantics->rewrite('SELECT * FROM Items ORDER BY `Items`.`Size`', $tables),
         );
     }
 

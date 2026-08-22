@@ -513,7 +513,7 @@ final class SqliteMutationResolver
      */
     private function alterOperation(string $sql): ?array
     {
-        $stream = SqlTokenStream::tokenize($sql);
+        $stream = SqlTokenStream::tokenize($sql, SqliteLexerProfile::create());
         $tokens = $stream->significantTokens();
         $source = $stream->identifierAt(2);
         if ($source === null) {
@@ -584,7 +584,7 @@ final class SqliteMutationResolver
 
     private function singleIdentifier(string $sql): ?string
     {
-        $stream = SqlTokenStream::tokenize($sql);
+        $stream = SqlTokenStream::tokenize($sql, SqliteLexerProfile::create());
         $tokens = $stream->significantTokens();
         $identifier = $stream->identifierAt();
 
@@ -596,7 +596,7 @@ final class SqliteMutationResolver
     /** @return array{string, string}|null */
     private function renamedIdentifiers(string $sql): ?array
     {
-        $stream = SqlTokenStream::tokenize($sql);
+        $stream = SqlTokenStream::tokenize($sql, SqliteLexerProfile::create());
         $tokens = $stream->significantTokens();
         $old = $stream->identifierAt();
         if ($old === null) {

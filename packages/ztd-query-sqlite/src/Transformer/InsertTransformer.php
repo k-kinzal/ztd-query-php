@@ -8,6 +8,7 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\Sqlite\SqliteCastRenderer;
 use ZtdQuery\Platform\Sqlite\SqliteNativeUpsertProjector;
+use ZtdQuery\Platform\Sqlite\SqliteLexerProfile;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
 use ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer;
 use ZtdQuery\Rewrite\ShadowIdentityAllocator;
@@ -149,7 +150,7 @@ final class InsertTransformer implements SqlTransformer
             );
         }
 
-        $valueSets = SqlTokenStream::tokenize($sql)->topLevelClause(['DEFAULT', 'VALUES']) !== null
+        $valueSets = SqlTokenStream::tokenize($sql, SqliteLexerProfile::create())->topLevelClause(['DEFAULT', 'VALUES']) !== null
             ? [[]]
             : $this->parser->extractInsertValues($sql);
         if ($valueSets !== []) {

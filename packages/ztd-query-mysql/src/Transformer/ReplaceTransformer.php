@@ -8,7 +8,7 @@ use PhpMyAdmin\SqlParser\Statements\ReplaceStatement;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Rewrite\SqlTransformer;
-use ZtdQuery\Sql\SqlTokenDialect;
+use ZtdQuery\Platform\MySql\MySqlLexerProfile;
 use ZtdQuery\Sql\SqlTokenStream;
 
 /**
@@ -56,7 +56,7 @@ final class ReplaceTransformer implements SqlTransformer
 
     private function asInsert(string $sql): string
     {
-        $tokens = SqlTokenStream::tokenize($sql, SqlTokenDialect::MySql)->significantTokens();
+        $tokens = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->significantTokens();
         if ($tokens === []) {
             throw new UnsupportedSqlException($sql, 'Expected REPLACE statement');
         }

@@ -8,7 +8,6 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\TablePartitioning;
 use ZtdQuery\Sql\SqlToken;
-use ZtdQuery\Sql\SqlTokenDialect;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
@@ -27,7 +26,7 @@ final class MySqlPartitionSelectionRewriter
      */
     public function rewrite(string $sql, array $tables): string
     {
-        $stream = SqlTokenStream::tokenize($sql, SqlTokenDialect::MySql);
+        $stream = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create());
         $tokens = $stream->significantTokens();
         $contexts = [];
         foreach ($tables as $table => $context) {
@@ -130,8 +129,8 @@ final class MySqlPartitionSelectionRewriter
     {
         $list = substr($sql, $open->endOffset(), $close->offset - $open->endOffset());
         $names = [];
-        foreach (SqlTokenStream::tokenize($list, SqlTokenDialect::MySql)->splitTopLevel() as $part) {
-            $stream = SqlTokenStream::tokenize($part, SqlTokenDialect::MySql);
+        foreach (SqlTokenStream::tokenize($list, MySqlLexerProfile::create())->splitTopLevel() as $part) {
+            $stream = SqlTokenStream::tokenize($part, MySqlLexerProfile::create());
             $identifier = $stream->identifierAt();
             if ($identifier === null) {
                 throw new UnsupportedSqlException($sql, 'PARTITION selection');

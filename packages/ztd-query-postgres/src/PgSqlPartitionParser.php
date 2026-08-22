@@ -15,7 +15,7 @@ final class PgSqlPartitionParser
 {
     public function parseKey(string $sql): ?TablePartitionKey
     {
-        $stream = SqlTokenStream::tokenize($sql);
+        $stream = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create());
         $tokens = $stream->significantTokens();
         $partition = $this->keywordPairIndex($tokens, 'PARTITION', 'BY');
         if ($partition === null) {
@@ -44,7 +44,7 @@ final class PgSqlPartitionParser
         $open = $tokens[$openIndex];
         $close = $tokens[$closeIndex];
         $body = substr($sql, $open->endOffset(), $close->offset - $open->endOffset());
-        $expressions = SqlTokenStream::tokenize($body)->splitTopLevel();
+        $expressions = SqlTokenStream::tokenize($body, PgSqlLexerProfile::create())->splitTopLevel();
         if ($expressions === [] || in_array('', $expressions, true)) {
             return null;
         }
@@ -54,7 +54,7 @@ final class PgSqlPartitionParser
 
     public function parentTable(string $sql): ?string
     {
-        $stream = SqlTokenStream::tokenize($sql);
+        $stream = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create());
         $tokens = $stream->significantTokens();
         $partition = $this->keywordPairIndex($tokens, 'PARTITION', 'OF');
         if ($partition === null) {
@@ -66,7 +66,7 @@ final class PgSqlPartitionParser
 
     public function parseRelation(string $sql, TablePartitionKey $parentKey): ?TablePartitionRelation
     {
-        $stream = SqlTokenStream::tokenize($sql);
+        $stream = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create());
         $tokens = $stream->significantTokens();
         $partition = $this->keywordPairIndex($tokens, 'PARTITION', 'OF');
         if ($partition === null) {
@@ -148,7 +148,7 @@ final class PgSqlPartitionParser
         $nonNull = [];
         $hasNull = false;
         foreach ($values['values'] as $value) {
-            $valueTokens = SqlTokenStream::tokenize($value)->significantTokens();
+            $valueTokens = SqlTokenStream::tokenize($value, PgSqlLexerProfile::create())->significantTokens();
             if (count($valueTokens) === 1 && $valueTokens[0]->isKeyword('NULL')) {
                 $hasNull = true;
                 continue;
@@ -212,7 +212,7 @@ final class PgSqlPartitionParser
         $open = $tokens[$openIndex];
         $close = $tokens[$closeIndex];
         $body = substr($sql, $open->endOffset(), $close->offset - $open->endOffset());
-        $values = SqlTokenStream::tokenize($body)->splitTopLevel();
+        $values = SqlTokenStream::tokenize($body, PgSqlLexerProfile::create())->splitTopLevel();
 
         return ['values' => $values, 'next' => $closeIndex + 1];
     }

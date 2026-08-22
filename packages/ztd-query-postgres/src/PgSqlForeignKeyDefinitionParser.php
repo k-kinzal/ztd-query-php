@@ -7,7 +7,6 @@ namespace ZtdQuery\Platform\Postgres;
 use ZtdQuery\Schema\ForeignKeyDefinition;
 use ZtdQuery\Schema\ReferentialAction;
 use ZtdQuery\Sql\SqlToken;
-use ZtdQuery\Sql\SqlTokenDialect;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
@@ -17,15 +16,14 @@ final class PgSqlForeignKeyDefinitionParser
     public function parseCreateTable(
         string $sql,
     ): array {
-        $dialect = SqlTokenDialect::Standard;
-        $body = $this->tableBody($sql, $dialect);
+        $body = $this->tableBody($sql);
         if ($body === null) {
             return [];
         }
 
         $foreignKeys = [];
-        foreach (SqlTokenStream::tokenize($body, $dialect)->splitTopLevel() as $entry) {
-            $stream = SqlTokenStream::tokenize($entry, $dialect);
+        foreach (SqlTokenStream::tokenize($body, PgSqlLexerProfile::create())->splitTopLevel() as $entry) {
+            $stream = SqlTokenStream::tokenize($entry, PgSqlLexerProfile::create());
             $first = $stream->identifierAt();
             $firstKeyword = $stream->firstTopLevelKeyword();
             $inlineColumn = $first !== null && !in_array(
@@ -45,9 +43,9 @@ final class PgSqlForeignKeyDefinitionParser
         return $foreignKeys;
     }
 
-    private function tableBody(string $sql, SqlTokenDialect $dialect): ?string
+    private function tableBody(string $sql): ?string
     {
-        $tokens = SqlTokenStream::tokenize($sql, $dialect)->significantTokens();
+        $tokens = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->significantTokens();
         $first = $tokens[0] ?? null;
         if ($first === null || !$first->isKeyword('CREATE')) {
             return null;

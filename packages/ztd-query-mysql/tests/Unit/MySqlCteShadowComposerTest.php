@@ -72,7 +72,7 @@ final class MySqlCteShadowComposerTest extends TestCase
     {
         self::assertSame(
             ['first', 'second'],
-            (new MySqlCteShadowComposer())->declaredCteNames('WITH "first"(id) AS MATERIALIZED (SELECT 1), second AS (SELECT 2) SELECT * FROM second'),
+            (new MySqlCteShadowComposer())->declaredCteNames('WITH `first`(id) AS MATERIALIZED (SELECT 1), second AS (SELECT 2) SELECT * FROM second'),
         );
     }
 
@@ -140,9 +140,9 @@ final class MySqlCteShadowComposerTest extends TestCase
     public function testComposesShadowOverSchemaQualifiedSelectSource(): void
     {
         self::assertSame(
-            "WITH users AS (SELECT 1 AS id)\nSELECT * FROM \"users\"",
+            "WITH users AS (SELECT 1 AS id)\nSELECT * FROM `users`",
             (new MySqlCteShadowComposer())->compose(
-                'SELECT * FROM public."users"',
+                'SELECT * FROM public.`users`',
                 ['users' => 'users AS (SELECT 1 AS id)'],
             ),
         );
@@ -212,7 +212,7 @@ final class MySqlCteShadowComposerTest extends TestCase
 
     public function testParsesRecursiveMaterializationAndNestedCteBodies(): void
     {
-        $sql = 'WITH RECURSIVE "FIRST"(id) AS MATERIALIZED (SELECT (1)), second AS NOT MATERIALIZED (SELECT id FROM "FIRST") DELETE FROM target';
+        $sql = 'WITH RECURSIVE `FIRST`(id) AS MATERIALIZED (SELECT (1)), second AS NOT MATERIALIZED (SELECT id FROM `FIRST`) DELETE FROM target';
         $composer = new MySqlCteShadowComposer();
 
         self::assertSame(['first', 'second'], $composer->declaredCteNames($sql));
@@ -243,11 +243,11 @@ final class MySqlCteShadowComposerTest extends TestCase
     {
         $composer = new MySqlCteShadowComposer();
 
-        self::assertSame([''], $composer->declaredCteNames('WITH "" AS (SELECT 1) SELECT 1'));
+        self::assertSame([''], $composer->declaredCteNames('WITH `` AS (SELECT 1) SELECT 1'));
         self::assertSame(
-            ['a"b', 'c`d'],
+            ['a`b', 'c`d'],
             $composer->declaredCteNames(
-                'WITH "a""b" AS (SELECT 1), `c``d` AS (SELECT 2) SELECT 1',
+                'WITH `a``b` AS (SELECT 1), `c``d` AS (SELECT 2) SELECT 1',
             ),
         );
     }

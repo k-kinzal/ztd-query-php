@@ -18,6 +18,7 @@ final class SqliteInMemoryAttachStatementTest extends TestCase
         self::assertTrue(SqliteInMemoryAttachStatement::isSafe("ATTACH DATABASE ':memory:' AS \"db2\";"));
         self::assertTrue(SqliteInMemoryAttachStatement::isSafe("ATTACH /* safe */ ':memory:' AS [db2]"));
         self::assertTrue(SqliteInMemoryAttachStatement::isSafe("attach ':memory:' as `db2`"));
+        self::assertTrue(SqliteInMemoryAttachStatement::isSafe("ATTACH ':memory:' AS \"db alias\""));
     }
 
     public function testRejectsPersistentOrDynamicAttachments(): void

@@ -14,7 +14,7 @@ final class SqliteTransactionStatementParser implements TransactionStatementPars
 {
     public function parse(string $sql): ?TransactionStatement
     {
-        $tokens = SqlTokenStream::tokenize($sql)->significantTokens();
+        $tokens = SqlTokenStream::tokenize($sql, SqliteLexerProfile::create())->significantTokens();
         if (($tokens[count($tokens) - 1] ?? null)?->text === ';') {
             array_pop($tokens);
         }

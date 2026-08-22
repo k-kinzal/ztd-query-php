@@ -8,7 +8,6 @@ use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
-use ZtdQuery\Sql\SqlTokenDialect;
 
 /**
  * Restores native operators that cannot be represented by a CTE column cast.
@@ -25,7 +24,7 @@ final class MySqlTypeSemantics
     public function rewrite(string $sql, array $tables): string
     {
         [$qualified, $unqualified] = $this->enumColumns($tables);
-        $tokens = SqlTokenStream::tokenize($sql, SqlTokenDialect::MySql)->significantTokens();
+        $tokens = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->significantTokens();
         $edits = $this->comparisonEdits($sql, $tokens, $qualified, $unqualified);
         foreach ($this->orderByEdits($sql, $tokens, $qualified, $unqualified) as $key => $edit) {
             $edits[$key] = $edit;
@@ -249,7 +248,7 @@ final class MySqlTypeSemantics
         }
         $inner = substr(trim($nativeType), $open + 1, -1);
         $members = [];
-        foreach (SqlTokenStream::tokenize($inner, SqlTokenDialect::MySql)->splitTopLevel() as $literal) {
+        foreach (SqlTokenStream::tokenize($inner, MySqlLexerProfile::create())->splitTopLevel() as $literal) {
             if (strlen($literal) < 2) {
                 return [];
             }

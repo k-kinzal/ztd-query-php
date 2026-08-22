@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\MySql;
 
-use ZtdQuery\Sql\SqlTokenDialect;
 use ZtdQuery\Sql\SqlTokenStream;
 
 final class UpdateSourceExtractor
 {
     public function extract(string $sql): ?string
     {
-        $source = SqlTokenStream::tokenize($sql, SqlTokenDialect::MySql)->topLevelClause(
+        $source = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->topLevelClause(
             ['UPDATE'],
             [['SET']],
         );
@@ -19,7 +18,7 @@ final class UpdateSourceExtractor
             return null;
         }
 
-        foreach (SqlTokenStream::tokenize($source, SqlTokenDialect::MySql)->significantTokens() as $token) {
+        foreach (SqlTokenStream::tokenize($source, MySqlLexerProfile::create())->significantTokens() as $token) {
             if ($token->isKeyword('LOW_PRIORITY') || $token->isKeyword('IGNORE')) {
                 continue;
             }

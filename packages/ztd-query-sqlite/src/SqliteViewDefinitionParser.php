@@ -18,7 +18,7 @@ final class SqliteViewDefinitionParser
 
     public function fromCreateStatement(string $sql): ?ViewDefinition
     {
-        foreach (SqlTokenStream::tokenize($sql)->significantTokens() as $token) {
+        foreach (SqlTokenStream::tokenize($sql, SqliteLexerProfile::create())->significantTokens() as $token) {
             if (!$token->isTopLevel() || !$token->isKeyword('AS')) {
                 continue;
             }

@@ -66,13 +66,13 @@ final class PgSqlCopySupport implements CopySupport
 
     public function isCopyStatement(string $sql): bool
     {
-        return SqlTokenStream::tokenize($sql)->firstTopLevelKeyword() === 'COPY';
+        return SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->firstTopLevelKeyword() === 'COPY';
     }
 
     /** @return non-empty-list<string> */
     private function relationParts(string $tableName): array
     {
-        $parts = SqlTokenStream::tokenize($tableName)->splitTopLevel('.');
+        $parts = SqlTokenStream::tokenize($tableName, PgSqlLexerProfile::create())->splitTopLevel('.');
         if ($parts === []) {
             throw new \ValueError('PostgreSQL COPY table name must not be empty.');
         }
@@ -85,7 +85,7 @@ final class PgSqlCopySupport implements CopySupport
 
         $components = [];
         foreach ($parts as $part) {
-            $tokens = SqlTokenStream::tokenize($part)->significantTokens();
+            $tokens = SqlTokenStream::tokenize($part, PgSqlLexerProfile::create())->significantTokens();
             if (count($tokens) !== 1) {
                 throw new \ValueError('PostgreSQL COPY table name must be an identifier or schema-qualified identifier.');
             }
@@ -109,14 +109,14 @@ final class PgSqlCopySupport implements CopySupport
             return $columns;
         }
 
-        $parts = SqlTokenStream::tokenize($fields)->splitTopLevel();
+        $parts = SqlTokenStream::tokenize($fields, PgSqlLexerProfile::create())->splitTopLevel();
         if ($parts === [] || in_array('', $parts, true)) {
             throw new \ValueError('PostgreSQL COPY fields must contain at least one column identifier.');
         }
 
         $columns = [];
         foreach ($parts as $part) {
-            $tokens = SqlTokenStream::tokenize($part)->significantTokens();
+            $tokens = SqlTokenStream::tokenize($part, PgSqlLexerProfile::create())->significantTokens();
             if (count($tokens) !== 1) {
                 throw new \ValueError('Each PostgreSQL COPY field must be a single column identifier.');
             }
@@ -179,7 +179,7 @@ final class PgSqlCopySupport implements CopySupport
 
     private function identifier(SqlToken $token, string $subject): string
     {
-        $parsed = SqlTokenStream::tokenize($token->text)->identifierAt();
+        $parsed = SqlTokenStream::tokenize($token->text, PgSqlLexerProfile::create())->identifierAt();
         if ($parsed === null) {
             throw new \ValueError(sprintf('PostgreSQL COPY %s must be a valid identifier.', $subject));
         }

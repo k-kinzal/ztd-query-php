@@ -20,7 +20,7 @@ use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
 use ZtdQuery\Shadow\Mutation\MultiTableMutationRow;
 use ZtdQuery\Shadow\Mutation\MultiTableMutationTarget;
-use ZtdQuery\Sql\SqlTokenDialect;
+use ZtdQuery\Platform\MySql\MySqlLexerProfile;
 use ZtdQuery\Sql\SqlTokenStream;
 
 /**
@@ -315,7 +315,7 @@ final class UpdateTransformer implements SqlTransformer
 
     private static function unquoteIdentifier(string $identifier): string
     {
-        return SqlTokenStream::tokenize($identifier, SqlTokenDialect::MySql)->identifierAt()['name'] ?? $identifier;
+        return SqlTokenStream::tokenize($identifier, MySqlLexerProfile::create())->identifierAt()['name'] ?? $identifier;
     }
 
     private function buildAdditionalTables(UpdateStatement $stmt): string

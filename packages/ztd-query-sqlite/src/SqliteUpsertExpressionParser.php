@@ -26,7 +26,7 @@ final class SqliteUpsertExpressionParser
     {
         $this->sql = $sql;
         $this->tableName = $tableName;
-        $this->tokens = SqlTokenStream::tokenize($sql)->significantTokens();
+        $this->tokens = SqlTokenStream::tokenize($sql, SqliteLexerProfile::create())->significantTokens();
         $this->index = 0;
         $expression = $this->parseOr();
         if ($this->index !== count($this->tokens)) {

@@ -5,17 +5,17 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\MySql;
 
 use ZtdQuery\Sql\SqlToken;
-use ZtdQuery\Sql\SqlTokenDialect;
+use ZtdQuery\Sql\SqlLexerProfile;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
 final class MySqlCteShadowComposer
 {
-    private readonly SqlTokenDialect $dialect;
+    private readonly SqlLexerProfile $lexerProfile;
 
     public function __construct()
     {
-        $this->dialect = SqlTokenDialect::MySql;
+        $this->lexerProfile = MySqlLexerProfile::create();
     }
 
     /**
@@ -53,7 +53,7 @@ final class MySqlCteShadowComposer
         }
 
         $sql = (new MySqlSelectRelationParser())->unqualify($sql, $shadowedTables);
-        $tokens = SqlTokenStream::tokenize($sql, $this->dialect)->significantTokens();
+        $tokens = SqlTokenStream::tokenize($sql, $this->lexerProfile)->significantTokens();
         $with = $tokens[0] ?? null;
         if ($with === null || !$with->isKeyword('WITH')) {
             return 'WITH ' . implode(",\n", $ctes) . "\n" . $sql;
@@ -88,7 +88,7 @@ final class MySqlCteShadowComposer
 
         $prefix = rtrim(substr($originalSql, 0, $header['statementOffset']));
 
-        $rewrittenTokens = SqlTokenStream::tokenize($rewrittenStatement, $this->dialect)->significantTokens();
+        $rewrittenTokens = SqlTokenStream::tokenize($rewrittenStatement, $this->lexerProfile)->significantTokens();
         $rewrittenWith = $rewrittenTokens[0] ?? null;
         if ($rewrittenWith !== null && $rewrittenWith->isKeyword('WITH')) {
             $rewrittenHeader = $this->parseHeader($rewrittenStatement);
@@ -113,7 +113,7 @@ final class MySqlCteShadowComposer
                 return $prefix . ",\n" . $rewrittenBody . "\n" . $rewrittenTail;
             }
 
-            $originalTokens = SqlTokenStream::tokenize($originalSql, $this->dialect)->significantTokens();
+            $originalTokens = SqlTokenStream::tokenize($originalSql, $this->lexerProfile)->significantTokens();
             $originalWith = $originalTokens[0];
             $originalContentToken = $originalWith;
             $recursive = false;
@@ -153,7 +153,7 @@ final class MySqlCteShadowComposer
     private function parseHeader(string $sql): array
     {
         $tokens = [];
-        foreach (SqlTokenStream::tokenize($sql, $this->dialect)->significantTokens() as $token) {
+        foreach (SqlTokenStream::tokenize($sql, $this->lexerProfile)->significantTokens() as $token) {
             if ($token->isTopLevel()) {
                 $tokens[] = $token;
             }
@@ -235,7 +235,7 @@ final class MySqlCteShadowComposer
 
     private function referencesIdentifier(string $sql, string $identifier): bool
     {
-        foreach (SqlTokenStream::tokenize($sql, $this->dialect)->significantTokens() as $token) {
+        foreach (SqlTokenStream::tokenize($sql, $this->lexerProfile)->significantTokens() as $token) {
             $candidate = $this->identifierName($token);
             if ($candidate !== null && strcasecmp($candidate, $identifier) === 0) {
                 return true;

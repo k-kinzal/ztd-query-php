@@ -21,7 +21,7 @@ final class PgSqlMergeParser
     public function parse(string $sql): PgSqlMergeStatement
     {
         $statementSql = $this->cteComposer->statementSql($sql);
-        $tokens = SqlTokenStream::tokenize($statementSql)->significantTokens();
+        $tokens = SqlTokenStream::tokenize($statementSql, PgSqlLexerProfile::create())->significantTokens();
         $index = 0;
         $first = $tokens[$index] ?? null;
         if ($first === null) {
@@ -173,7 +173,7 @@ final class PgSqlMergeParser
     private function parseClause(string $originalSql, string $clauseSql): PgSqlMergeClause
     {
         $clauseSql = rtrim($clauseSql, "; \t\n\r\0\x0B");
-        $tokens = SqlTokenStream::tokenize($clauseSql)->significantTokens();
+        $tokens = SqlTokenStream::tokenize($clauseSql, PgSqlLexerProfile::create())->significantTokens();
         $index = 1;
         $matchKind = PgSqlMergeMatchKind::Matched;
         $matchToken = $tokens[$index];
@@ -211,7 +211,7 @@ final class PgSqlMergeParser
         }
 
         $actionSql = substr($clauseSql, $tokens[$thenIndex]->endOffset());
-        $actionTokens = SqlTokenStream::tokenize($actionSql)->significantTokens();
+        $actionTokens = SqlTokenStream::tokenize($actionSql, PgSqlLexerProfile::create())->significantTokens();
         $first = $actionTokens[0] ?? null;
         if ($first === null) {
             throw new UnsupportedSqlException($originalSql, 'MERGE action is not supported');
@@ -266,8 +266,8 @@ final class PgSqlMergeParser
         }
         $setSql = substr($actionSql, $set->endOffset());
         $assignments = [];
-        foreach (SqlTokenStream::tokenize($setSql)->splitTopLevel() as $assignmentSql) {
-            $assignmentTokens = SqlTokenStream::tokenize($assignmentSql)->significantTokens();
+        foreach (SqlTokenStream::tokenize($setSql, PgSqlLexerProfile::create())->splitTopLevel() as $assignmentSql) {
+            $assignmentTokens = SqlTokenStream::tokenize($assignmentSql, PgSqlLexerProfile::create())->significantTokens();
             $equals = [];
             foreach ($assignmentTokens as $assignmentIndex => $token) {
                 if ($this->isSymbol($token, '=') && $token->isTopLevel()) {
@@ -312,7 +312,7 @@ final class PgSqlMergeParser
         if ($this->isSymbol($tokens[$index] ?? null, '(')) {
             $list = $this->parenthesizedList($originalSql, $actionSql, $tokens, $index);
             foreach ($list['items'] as $columnSql) {
-                $columnTokens = SqlTokenStream::tokenize($columnSql)->significantTokens();
+                $columnTokens = SqlTokenStream::tokenize($columnSql, PgSqlLexerProfile::create())->significantTokens();
                 $column = count($columnTokens) === 1 ? $this->identifierName($columnTokens[0]) : null;
                 if ($column === null) {
                     throw new UnsupportedSqlException($originalSql, 'MERGE INSERT columns must be identifiers');
@@ -385,7 +385,7 @@ final class PgSqlMergeParser
                 continue;
             }
             $listSql = substr($sql, $open->endOffset(), $token->offset - $open->endOffset());
-            $items = SqlTokenStream::tokenize($listSql)->splitTopLevel();
+            $items = SqlTokenStream::tokenize($listSql, PgSqlLexerProfile::create())->splitTopLevel();
 
             return ['items' => $items, 'next' => $closeIndex + 1];
         }

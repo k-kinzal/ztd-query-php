@@ -14,7 +14,7 @@ final class PgSqlTableSampleParser
     /** @return list<PgSqlTableSample> */
     public function parse(string $sql): array
     {
-        $stream = SqlTokenStream::tokenize($sql);
+        $stream = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create());
         $tokens = $stream->significantTokens();
         $samples = [];
 
@@ -63,7 +63,7 @@ final class PgSqlTableSampleParser
         }
         $close = $tokens[$closeIndex];
         $percentageSql = trim(substr($sql, $open->endOffset(), $close->offset - $open->endOffset()));
-        if ($percentageSql === '' || count(SqlTokenStream::tokenize($percentageSql)->splitTopLevel()) !== 1) {
+        if ($percentageSql === '' || count(SqlTokenStream::tokenize($percentageSql, PgSqlLexerProfile::create())->splitTopLevel()) !== 1) {
             throw new UnsupportedSqlException($sql, 'TABLESAMPLE requires one percentage expression');
         }
 
@@ -84,7 +84,7 @@ final class PgSqlTableSampleParser
             }
             $seedClose = $tokens[$seedCloseIndex];
             $seedSql = trim(substr($sql, $seedOpen->endOffset(), $seedClose->offset - $seedOpen->endOffset()));
-            if ($seedSql === '' || count(SqlTokenStream::tokenize($seedSql)->splitTopLevel()) !== 1) {
+            if ($seedSql === '' || count(SqlTokenStream::tokenize($seedSql, PgSqlLexerProfile::create())->splitTopLevel()) !== 1) {
                 throw new UnsupportedSqlException($sql, 'TABLESAMPLE REPEATABLE requires one seed expression');
             }
             $endOffset = $seedClose->endOffset();

@@ -19,7 +19,7 @@ final class PgSqlReadOnlyDiagnosticStatement
 
     public static function isSafe(string $sql): bool
     {
-        $stream = SqlTokenStream::tokenize($sql);
+        $stream = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create());
         if (count($stream->splitStatements()) !== 1) {
             return false;
         }

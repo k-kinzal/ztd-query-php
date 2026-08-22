@@ -7,20 +7,21 @@ namespace Tests\Unit\Sql;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use Tests\Fake\FakeSqlLexerProfiles;
 use ZtdQuery\Sql\SqlToken;
-use ZtdQuery\Sql\SqlTokenDialect;
+use ZtdQuery\Sql\SqlLexerProfile;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(SqlTokenStream::class)]
 #[UsesClass(SqlToken::class)]
-#[UsesClass(SqlTokenDialect::class)]
+#[UsesClass(SqlLexerProfile::class)]
 #[UsesClass(SqlTokenKind::class)]
 final class SqlTokenStreamTest extends TestCase
 {
     public function testNavigatesAdjacentSignificantTokensByIdentity(): void
     {
-        $stream = SqlTokenStream::tokenize('MATCH /* ignored */ (title)');
+        $stream = SqlTokenStream::tokenize('MATCH /* ignored */ (title)', FakeSqlLexerProfiles::standard());
         $tokens = $stream->significantTokens();
 
         self::assertNull($stream->significantTokenBefore($tokens[0]));
@@ -31,8 +32,8 @@ final class SqlTokenStreamTest extends TestCase
 
     public function testRejectsAdjacentLookupForATokenFromAnotherStream(): void
     {
-        $foreign = SqlTokenStream::tokenize('MATCH')->significantTokens()[0];
-        $stream = SqlTokenStream::tokenize('MATCH(title)');
+        $foreign = SqlTokenStream::tokenize('MATCH', FakeSqlLexerProfiles::standard())->significantTokens()[0];
+        $stream = SqlTokenStream::tokenize('MATCH(title)', FakeSqlLexerProfiles::standard());
 
         self::assertNull($stream->significantTokenBefore($foreign));
         self::assertNull($stream->significantTokenAfter($foreign));
@@ -40,7 +41,7 @@ final class SqlTokenStreamTest extends TestCase
 
     public function testFindsMatchingParenthesisAcrossNestedGroups(): void
     {
-        $stream = SqlTokenStream::tokenize('MATCH((title), body) AGAINST (?)');
+        $stream = SqlTokenStream::tokenize('MATCH((title), body) AGAINST (?)', FakeSqlLexerProfiles::standard());
         $tokens = $stream->significantTokens();
         $columnsClosing = $stream->matchingClosingParenthesis($tokens[1]);
         $queryClosing = $stream->matchingClosingParenthesis($tokens[9]);
@@ -54,12 +55,12 @@ final class SqlTokenStreamTest extends TestCase
 
     public function testRejectsInvalidForeignAndUnclosedOpeningParentheses(): void
     {
-        $stream = SqlTokenStream::tokenize('MATCH(title');
+        $stream = SqlTokenStream::tokenize('MATCH(title', FakeSqlLexerProfiles::standard());
         $tokens = $stream->significantTokens();
-        $foreign = SqlTokenStream::tokenize('(?)')->significantTokens()[0];
-        $closed = SqlTokenStream::tokenize('MATCH(title)');
+        $foreign = SqlTokenStream::tokenize('(?)', FakeSqlLexerProfiles::standard())->significantTokens()[0];
+        $closed = SqlTokenStream::tokenize('MATCH(title)', FakeSqlLexerProfiles::standard());
         $closedTokens = $closed->significantTokens();
-        $closingSymbols = SqlTokenStream::tokenize(') )');
+        $closingSymbols = SqlTokenStream::tokenize(') )', FakeSqlLexerProfiles::standard());
         $closingTokens = $closingSymbols->significantTokens();
 
         self::assertNull($stream->matchingClosingParenthesis($tokens[0]));
@@ -71,53 +72,57 @@ final class SqlTokenStreamTest extends TestCase
 
     public function testReadsWordAndQuotedIdentifiersAtSignificantTokenOffsets(): void
     {
-        $stream = SqlTokenStream::tokenize('plain "quo""ted" `tick``ed` [bracket name]');
+        $profile = FakeSqlLexerProfiles::allCapabilities();
+        $stream = SqlTokenStream::tokenize('plain "quo""ted" `tick``ed` [bracket name]', $profile);
 
         self::assertSame(['name' => 'plain', 'next' => 1], $stream->identifierAt());
         self::assertSame(['name' => 'quo"ted', 'next' => 2], $stream->identifierAt(1));
         self::assertSame(['name' => 'tick`ed', 'next' => 3], $stream->identifierAt(2));
-        self::assertSame(['name' => 'bracket name', 'next' => 7], $stream->identifierAt(3));
+        self::assertSame(['name' => 'bracket name', 'next' => 4], $stream->identifierAt(3));
     }
 
     public function testIdentifierAtRejectsMissingAndNonIdentifierTokens(): void
     {
-        self::assertNull(SqlTokenStream::tokenize('')->identifierAt());
-        self::assertNull(SqlTokenStream::tokenize('42')->identifierAt());
-        self::assertNull(SqlTokenStream::tokenize("'value'")->identifierAt());
-        self::assertNull(SqlTokenStream::tokenize('[unfinished')->identifierAt());
-        self::assertNull(SqlTokenStream::tokenize('""')->identifierAt());
-        self::assertNull(SqlTokenStream::tokenize('``')->identifierAt());
-        self::assertNull(SqlTokenStream::tokenize('+ leaked ]')->identifierAt());
+        $standard = FakeSqlLexerProfiles::standard();
+        $allCapabilities = FakeSqlLexerProfiles::allCapabilities();
+
+        self::assertNull(SqlTokenStream::tokenize('', $standard)->identifierAt());
+        self::assertNull(SqlTokenStream::tokenize('42', $standard)->identifierAt());
+        self::assertNull(SqlTokenStream::tokenize("'value'", $standard)->identifierAt());
+        self::assertNull(SqlTokenStream::tokenize('[unfinished', $standard)->identifierAt());
+        self::assertNull(SqlTokenStream::tokenize('""', $allCapabilities)->identifierAt());
+        self::assertNull(SqlTokenStream::tokenize('``', $allCapabilities)->identifierAt());
     }
 
     public function testIdentifierAtUnescapesBracketAndAdvancesPastItsClosingToken(): void
     {
         self::assertSame(
-            ['name' => 'a]b', 'next' => 6],
-            SqlTokenStream::tokenize('[a]]b] tail')->identifierAt(),
+            ['name' => 'a]b', 'next' => 1],
+            SqlTokenStream::tokenize('[a]]b] tail', FakeSqlLexerProfiles::allCapabilities())->identifierAt(),
         );
     }
 
     public function testSplitsOnlyTopLevelStatementTerminators(): void
     {
         $sql = 'SELECT \';\' AS value; SELECT $$a;b$$; /* ; */ SELECT (3; 4); SELECT [5; 6];;';
+        $profile = FakeSqlLexerProfiles::allCapabilities();
 
         self::assertSame(
             ["SELECT ';' AS value", 'SELECT $$a;b$$', '/* ; */ SELECT (3; 4)', 'SELECT [5; 6]'],
-            SqlTokenStream::tokenize($sql)->splitStatements(),
+            SqlTokenStream::tokenize($sql, $profile)->splitStatements(),
         );
     }
 
     public function testReturnsNoStatementsForEmptyInputAndTerminators(): void
     {
-        self::assertSame([], SqlTokenStream::tokenize(' ; ; ')->splitStatements());
+        self::assertSame([], SqlTokenStream::tokenize(' ; ; ', FakeSqlLexerProfiles::standard())->splitStatements());
     }
 
     public function testClauseIgnoresNestedKeywords(): void
     {
         $sql = "UPDATE users SET label = TRIM(BOTH 'x' FROM label), amount = CAST(raw AS DECIMAL(10,2)) WHERE id IN (SELECT id FROM source WHERE active) ORDER BY id";
 
-        $stream = SqlTokenStream::tokenize($sql);
+        $stream = SqlTokenStream::tokenize($sql, FakeSqlLexerProfiles::standard());
 
         self::assertSame(
             "label = TRIM(BOTH 'x' FROM label), amount = CAST(raw AS DECIMAL(10,2))",
@@ -132,7 +137,7 @@ final class SqlTokenStreamTest extends TestCase
     public function testClauseSupportsMultiWordBoundariesAndUsesEarliestEnd(): void
     {
         $sql = 'SELECT id FROM users ORDER BY created_at LIMIT 10';
-        $stream = SqlTokenStream::tokenize($sql);
+        $stream = SqlTokenStream::tokenize($sql, FakeSqlLexerProfiles::standard());
 
         self::assertSame('created_at', $stream->topLevelClause(['ORDER', 'BY'], [['LIMIT'], ['RETURNING']]));
         self::assertSame('id', $stream->topLevelClause(['SELECT'], [['LIMIT'], ['FROM']]));
@@ -143,12 +148,12 @@ final class SqlTokenStreamTest extends TestCase
     {
         $sql = 'SELECT ORDER (BY hidden) BY visible FROM source';
 
-        self::assertNull(SqlTokenStream::tokenize($sql)->topLevelClause(['ORDER', 'BY'], [['FROM']]));
+        self::assertNull(SqlTokenStream::tokenize($sql, FakeSqlLexerProfiles::standard())->topLevelClause(['ORDER', 'BY'], [['FROM']]));
     }
 
     public function testClauseCanStartAtLastAvailableToken(): void
     {
-        self::assertSame('', SqlTokenStream::tokenize('SET')->topLevelClause(['SET']));
+        self::assertSame('', SqlTokenStream::tokenize('SET', FakeSqlLexerProfiles::standard())->topLevelClause(['SET']));
     }
 
     public function testClauseAfterAnchorSkipsEarlierMatchingKeyword(): void
@@ -157,7 +162,7 @@ final class SqlTokenStreamTest extends TestCase
 
         self::assertSame(
             'items.score >= 80',
-            SqlTokenStream::tokenize($sql)->topLevelClauseAfter(
+            SqlTokenStream::tokenize($sql, FakeSqlLexerProfiles::standard())->topLevelClauseAfter(
                 ['DO', 'UPDATE', 'SET'],
                 ['WHERE'],
                 [['RETURNING']],
@@ -169,7 +174,7 @@ final class SqlTokenStreamTest extends TestCase
     {
         self::assertSame(
             'earlier',
-            SqlTokenStream::tokenize('DO UPDATE SET WHERE earlier WHERE later')->topLevelClauseAfter(
+            SqlTokenStream::tokenize('DO UPDATE SET WHERE earlier WHERE later', FakeSqlLexerProfiles::standard())->topLevelClauseAfter(
                 ['DO', 'UPDATE', 'SET'],
                 ['WHERE'],
                 [['WHERE']],
@@ -179,7 +184,7 @@ final class SqlTokenStreamTest extends TestCase
 
     public function testSplitsCommasOutsideParenthesesArraysAndStrings(): void
     {
-        $stream = SqlTokenStream::tokenize("ARRAY[1,2], COALESCE(a, b), 'x,y', plain");
+        $stream = SqlTokenStream::tokenize("ARRAY[1,2], COALESCE(a, b), 'x,y', plain", FakeSqlLexerProfiles::standard());
 
         self::assertSame(
             ['ARRAY[1,2]', 'COALESCE(a, b)', "'x,y'", 'plain'],
@@ -189,7 +194,7 @@ final class SqlTokenStreamTest extends TestCase
 
     public function testSplitsWithCustomTopLevelDelimiterAndPreservesEmptyParts(): void
     {
-        $stream = SqlTokenStream::tokenize(' first ; (nested ; value) ; ; last ');
+        $stream = SqlTokenStream::tokenize(' first ; (nested ; value) ; ; last ', FakeSqlLexerProfiles::standard());
 
         self::assertSame(
             ['first', '(nested ; value)', '', 'last'],
@@ -199,15 +204,15 @@ final class SqlTokenStreamTest extends TestCase
 
     public function testSplitTopLevelHandlesEmptyAndTrailingDelimiterInput(): void
     {
-        self::assertSame([], SqlTokenStream::tokenize('')->splitTopLevel());
-        self::assertSame(['value', ''], SqlTokenStream::tokenize('value,')->splitTopLevel());
-        self::assertSame(['value'], SqlTokenStream::tokenize('value')->splitTopLevel());
+        self::assertSame([], SqlTokenStream::tokenize('', FakeSqlLexerProfiles::standard())->splitTopLevel());
+        self::assertSame(['value', ''], SqlTokenStream::tokenize('value,', FakeSqlLexerProfiles::standard())->splitTopLevel());
+        self::assertSame(['value'], SqlTokenStream::tokenize('value', FakeSqlLexerProfiles::standard())->splitTopLevel());
     }
 
     public function testTokenizesWhitespaceAndNestedCommentsLosslessly(): void
     {
         $sql = " \t-- note\n/* outer /* inner */ end */x";
-        $tokens = SqlTokenStream::tokenize($sql)->tokens();
+        $tokens = SqlTokenStream::tokenize($sql, FakeSqlLexerProfiles::standard())->tokens();
 
         self::assertSame(
             [
@@ -225,7 +230,7 @@ final class SqlTokenStreamTest extends TestCase
         self::assertSame($sql, implode('', array_map(static fn (SqlToken $token): string => $token->text, $tokens)));
         self::assertSame(
             ['x'],
-            array_map(static fn (SqlToken $token): string => $token->text, SqlTokenStream::tokenize($sql)->significantTokens()),
+            array_map(static fn (SqlToken $token): string => $token->text, SqlTokenStream::tokenize($sql, FakeSqlLexerProfiles::standard())->significantTokens()),
         );
     }
 
@@ -235,7 +240,7 @@ final class SqlTokenStreamTest extends TestCase
             [[SqlTokenKind::Comment, '/* outer /* inner */']],
             array_map(
                 static fn (SqlToken $token): array => [$token->kind, $token->text],
-                SqlTokenStream::tokenize('/* outer /* inner */')->tokens(),
+                SqlTokenStream::tokenize('/* outer /* inner */', FakeSqlLexerProfiles::standard())->tokens(),
             ),
         );
     }
@@ -250,7 +255,7 @@ final class SqlTokenStreamTest extends TestCase
             ],
             array_map(
                 static fn (SqlToken $token): array => [$token->kind, $token->text],
-                SqlTokenStream::tokenize('/**/next/*/unterminated')->tokens(),
+                SqlTokenStream::tokenize('/**/next/*/unterminated', FakeSqlLexerProfiles::standard())->tokens(),
             ),
         );
         self::assertSame(
@@ -263,27 +268,28 @@ final class SqlTokenStreamTest extends TestCase
             ],
             array_map(
                 static fn (SqlToken $token): array => [$token->kind, $token->text],
-                SqlTokenStream::tokenize("prefix --\nnext")->tokens(),
+                SqlTokenStream::tokenize("prefix --\nnext", FakeSqlLexerProfiles::standard())->tokens(),
             ),
         );
     }
 
-    public function testMySqlHashCommentsRemainDialectSpecific(): void
+    public function testAdditionalLineCommentsRemainProfileSpecific(): void
     {
         $sql = "# SELECT hidden\nDELETE FROM users WHERE payload #>> '$.name' = 'Alice'";
+        $profile = FakeSqlLexerProfiles::allCapabilities();
 
         self::assertSame(
             ['DELETE', 'FROM', 'users', 'WHERE', 'payload'],
             array_map(
                 static fn (SqlToken $token): string => $token->text,
-                SqlTokenStream::tokenize($sql, SqlTokenDialect::MySql)->significantTokens(),
+                SqlTokenStream::tokenize($sql, $profile)->significantTokens(),
             ),
         );
         self::assertSame(
             ['#', 'SELECT', 'hidden', 'DELETE', 'FROM', 'users', 'WHERE', 'payload', '#', '>', '>', "'$.name'", '=', "'Alice'"],
             array_map(
                 static fn (SqlToken $token): string => $token->text,
-                SqlTokenStream::tokenize($sql)->significantTokens(),
+                SqlTokenStream::tokenize($sql, FakeSqlLexerProfiles::standard())->significantTokens(),
             ),
         );
     }
@@ -298,7 +304,7 @@ final class SqlTokenStreamTest extends TestCase
             ],
             array_map(
                 static fn (SqlToken $token): array => [$token->kind, $token->text],
-                SqlTokenStream::tokenize('/*/**/*/tail/*/*/x*/tail')->tokens(),
+                SqlTokenStream::tokenize('/*/**/*/tail/*/*/x*/tail', FakeSqlLexerProfiles::standard())->tokens(),
             ),
         );
     }
@@ -314,7 +320,7 @@ final class SqlTokenStreamTest extends TestCase
             ],
             array_map(
                 static fn (SqlToken $token): array => [$token->kind, $token->text],
-                SqlTokenStream::tokenize('value**not_comment')->tokens(),
+                SqlTokenStream::tokenize('value**not_comment', FakeSqlLexerProfiles::standard())->tokens(),
             ),
         );
     }
@@ -322,6 +328,7 @@ final class SqlTokenStreamTest extends TestCase
     public function testTokenizesQuotedValuesAndIdentifiers(): void
     {
         $sql = "'it''s' 'a\\\\\'b' \"a\"\"b\" `a``b` 'open";
+        $profile = FakeSqlLexerProfiles::allCapabilities();
 
         self::assertSame(
             [
@@ -337,24 +344,43 @@ final class SqlTokenStreamTest extends TestCase
             ],
             array_map(
                 static fn (SqlToken $token): array => [$token->kind, $token->text],
-                SqlTokenStream::tokenize($sql)->tokens(),
+                SqlTokenStream::tokenize($sql, $profile)->tokens(),
+            ),
+        );
+    }
+
+    public function testIdentifierQuotesDoNotUseStringBackslashEscapes(): void
+    {
+        self::assertSame(
+            [
+                [SqlTokenKind::QuotedIdentifier, '"a\\"'],
+                [SqlTokenKind::Whitespace, ' '],
+                [SqlTokenKind::Word, 'tail'],
+            ],
+            array_map(
+                static fn (SqlToken $token): array => [$token->kind, $token->text],
+                SqlTokenStream::tokenize('"a\\" tail', FakeSqlLexerProfiles::allCapabilities())->tokens(),
             ),
         );
     }
 
     public function testQuotedEscapeAtEndRemainsInsideUnterminatedValue(): void
     {
+        $profile = FakeSqlLexerProfiles::allCapabilities();
+
         self::assertSame(
             [[SqlTokenKind::String, "'value\x5c"]],
             array_map(
                 static fn (SqlToken $token): array => [$token->kind, $token->text],
-                SqlTokenStream::tokenize("'value\x5c")->tokens(),
+                SqlTokenStream::tokenize("'value\x5c", $profile)->tokens(),
             ),
         );
     }
 
     public function testQuotedEscapeControlsWhereTheValueEnds(): void
     {
+        $profile = FakeSqlLexerProfiles::allCapabilities();
+
         self::assertSame(
             [
                 [SqlTokenKind::String, "'''\x5c'x'"],
@@ -365,7 +391,7 @@ final class SqlTokenStreamTest extends TestCase
             ],
             array_map(
                 static fn (SqlToken $token): array => [$token->kind, $token->text],
-                SqlTokenStream::tokenize("'''\x5c'x' '\x5cx' tail")->tokens(),
+                SqlTokenStream::tokenize("'''\x5c'x' '\x5cx' tail", $profile)->tokens(),
             ),
         );
     }
@@ -373,6 +399,7 @@ final class SqlTokenStreamTest extends TestCase
     public function testTokenizesDollarStringsAndParameters(): void
     {
         $sql = '$$body$$ $tag$body$tag$ $1 $123 ? :name :: : $word';
+        $profile = FakeSqlLexerProfiles::allCapabilities();
 
         self::assertSame(
             [
@@ -390,13 +417,15 @@ final class SqlTokenStreamTest extends TestCase
             ],
             array_map(
                 static fn (SqlToken $token): array => [$token->kind, $token->text],
-                SqlTokenStream::tokenize($sql)->significantTokens(),
+                SqlTokenStream::tokenize($sql, $profile)->significantTokens(),
             ),
         );
     }
 
     public function testParametersStopBeforeFollowingWordAndAtEndOfInput(): void
     {
+        $profile = FakeSqlLexerProfiles::allCapabilities();
+
         self::assertSame(
             [
                 [SqlTokenKind::Parameter, '$1'],
@@ -405,24 +434,61 @@ final class SqlTokenStreamTest extends TestCase
             ],
             array_map(
                 static fn (SqlToken $token): array => [$token->kind, $token->text],
-                SqlTokenStream::tokenize('$1x :end')->significantTokens(),
+                SqlTokenStream::tokenize('$1x :end', $profile)->significantTokens(),
+            ),
+        );
+    }
+
+    public function testTokenizesNumberedQuestionMarkAndStructuredNamedParameters(): void
+    {
+        self::assertSame(
+            [
+                [SqlTokenKind::Parameter, '?123'],
+                [SqlTokenKind::Parameter, ':x::part(payload)'],
+            ],
+            array_map(
+                static fn (SqlToken $token): array => [$token->kind, $token->text],
+                SqlTokenStream::tokenize('?123 :x::part(payload)', FakeSqlLexerProfiles::allCapabilities())->significantTokens(),
+            ),
+        );
+    }
+
+    public function testQuestionMarkProfileCanRejectNumericSuffixes(): void
+    {
+        $profile = FakeSqlLexerProfiles::custom(
+            questionMarkParameters: true,
+            numberedQuestionMarkParameters: false,
+        );
+
+        self::assertSame(
+            [
+                [SqlTokenKind::Parameter, '?'],
+                [SqlTokenKind::Number, '123'],
+            ],
+            array_map(
+                static fn (SqlToken $token): array => [$token->kind, $token->text],
+                SqlTokenStream::tokenize('?123', $profile)->significantTokens(),
             ),
         );
     }
 
     public function testTokenizesUnterminatedDollarString(): void
     {
+        $profile = FakeSqlLexerProfiles::allCapabilities();
+
         self::assertSame(
             [[SqlTokenKind::String, '$tag$body']],
             array_map(
                 static fn (SqlToken $token): array => [$token->kind, $token->text],
-                SqlTokenStream::tokenize('$tag$body')->tokens(),
+                SqlTokenStream::tokenize('$tag$body', $profile)->tokens(),
             ),
         );
     }
 
     public function testDollarTagMustStartAtCurrentOffset(): void
     {
+        $profile = FakeSqlLexerProfiles::allCapabilities();
+
         self::assertSame(
             [
                 [SqlTokenKind::Symbol, '$'],
@@ -432,14 +498,15 @@ final class SqlTokenStreamTest extends TestCase
             ],
             array_map(
                 static fn (SqlToken $token): array => [$token->kind, $token->text],
-                SqlTokenStream::tokenize('$bad-$tag$body$tag$')->tokens(),
+                SqlTokenStream::tokenize('$bad-$tag$body$tag$', $profile)->tokens(),
             ),
         );
     }
 
-    public function testTokenizesWordsAndEveryNumberForm(): void
+    public function testTokenizesWordsAndConfiguredNumberForms(): void
     {
         $sql = "_word2\$tail café9 \x80 0 9_000 0xCA_FE 0Xb 0y 1.25 2e3 3E+4 4e-5 5. 6eX";
+        $profile = FakeSqlLexerProfiles::allCapabilities();
 
         self::assertSame(
             [
@@ -457,12 +524,12 @@ final class SqlTokenStreamTest extends TestCase
                 [SqlTokenKind::Number, '3E+4'],
                 [SqlTokenKind::Number, '4e-5'],
                 [SqlTokenKind::Number, '5.'],
-                [SqlTokenKind::Number, '6e'],
-                [SqlTokenKind::Word, 'X'],
+                [SqlTokenKind::Number, '6'],
+                [SqlTokenKind::Word, 'eX'],
             ],
             array_map(
                 static fn (SqlToken $token): array => [$token->kind, $token->text],
-                SqlTokenStream::tokenize($sql)->significantTokens(),
+                SqlTokenStream::tokenize($sql, $profile)->significantTokens(),
             ),
         );
     }
@@ -491,7 +558,7 @@ final class SqlTokenStreamTest extends TestCase
             ],
             array_map(
                 static fn (SqlToken $token): array => [$token->text, $token->depth, $token->bracketDepth],
-                SqlTokenStream::tokenize('([x],(y))[[z]])](')->significantTokens(),
+                SqlTokenStream::tokenize('([x],(y))[[z]])](', FakeSqlLexerProfiles::standard())->significantTokens(),
             ),
         );
     }
@@ -500,19 +567,19 @@ final class SqlTokenStreamTest extends TestCase
     {
         self::assertSame(
             'WITH',
-            SqlTokenStream::tokenize('/* SELECT */ WITH data AS (SELECT 1) SELECT * FROM data')->firstTopLevelKeyword(),
+            SqlTokenStream::tokenize('/* SELECT */ WITH data AS (SELECT 1) SELECT * FROM data', FakeSqlLexerProfiles::standard())->firstTopLevelKeyword(),
         );
     }
 
     public function testFirstTopLevelKeywordIgnoresNestedWordsAndCanBeAbsent(): void
     {
-        self::assertSame('UPDATE', SqlTokenStream::tokenize('(SELECT hidden) [DELETE hidden] update users')->firstTopLevelKeyword());
-        self::assertNull(SqlTokenStream::tokenize("123 + 'SELECT'")->firstTopLevelKeyword());
+        self::assertSame('UPDATE', SqlTokenStream::tokenize('(SELECT hidden) [DELETE hidden] update users', FakeSqlLexerProfiles::standard())->firstTopLevelKeyword());
+        self::assertNull(SqlTokenStream::tokenize("123 + 'SELECT'", FakeSqlLexerProfiles::standard())->firstTopLevelKeyword());
     }
 
     public function testKeepsArithmeticOperatorsOutsideNumberTokens(): void
     {
-        $tokens = SqlTokenStream::tokenize('SELECT 1+2, 3.5e-2')->significantTokens();
+        $tokens = SqlTokenStream::tokenize('SELECT 1+2, 3.5e-2', FakeSqlLexerProfiles::standard())->significantTokens();
 
         self::assertSame(
             ['SELECT', '1', '+', '2', ',', '3.5e-2'],

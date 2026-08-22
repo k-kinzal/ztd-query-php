@@ -18,7 +18,7 @@ final class PgSqlPdoParameterBindingCompiler implements ParameterBindingCompiler
     {
         $replacements = [];
         $nativePositions = [];
-        foreach (SqlTokenStream::tokenize($sql)->tokens() as $token) {
+        foreach (SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->tokens() as $token) {
             if (!str_starts_with($token->text, '$')) {
                 continue;
             }

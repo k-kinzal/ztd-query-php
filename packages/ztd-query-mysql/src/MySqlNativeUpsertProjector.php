@@ -7,7 +7,7 @@ namespace ZtdQuery\Platform\MySql;
 use ZtdQuery\Platform\IdentifierQuoter;
 use ZtdQuery\Shadow\Mutation\UpsertMutationRow;
 use ZtdQuery\Sql\SqlToken;
-use ZtdQuery\Sql\SqlTokenDialect;
+use ZtdQuery\Sql\SqlLexerProfile;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
@@ -19,7 +19,7 @@ final class MySqlNativeUpsertProjector
 
     private readonly IdentifierQuoter $quoter;
 
-    private readonly SqlTokenDialect $dialect;
+    private readonly SqlLexerProfile $lexerProfile;
 
     /** @var non-empty-list<string> */
     private readonly array $incomingNamespaces;
@@ -27,7 +27,7 @@ final class MySqlNativeUpsertProjector
     public function __construct()
     {
         $this->quoter = new MySqlIdentifierQuoter();
-        $this->dialect = SqlTokenDialect::MySql;
+        $this->lexerProfile = MySqlLexerProfile::create();
         $this->incomingNamespaces = ['VALUES'];
     }
 
@@ -131,7 +131,7 @@ final class MySqlNativeUpsertProjector
         string $unqualifiedAlias = self::EXISTING_ALIAS,
         ?string $incomingNamespace = null,
     ): string {
-        $tokens = SqlTokenStream::tokenize($expression, $this->dialect)->significantTokens();
+        $tokens = SqlTokenStream::tokenize($expression, $this->lexerProfile)->significantTokens();
         $subqueryTokens = $this->subqueryTokenIndexes($tokens);
         $replacements = [];
         $incomingArgumentOffset = null;
@@ -235,7 +235,7 @@ final class MySqlNativeUpsertProjector
 
     private function identifier(SqlToken $token): string
     {
-        $identifier = SqlTokenStream::tokenize($token->text, $this->dialect)->identifierAt();
+        $identifier = SqlTokenStream::tokenize($token->text, $this->lexerProfile)->identifierAt();
 
         return $identifier === null ? $token->text : $identifier['name'];
     }

@@ -218,13 +218,13 @@ final class PgSqlCteShadowComposerTest extends TestCase
         );
     }
 
-    public function testUnquotesEmptyAndEscapedCteIdentifiers(): void
+    public function testUnquotesPostgreSqlCteIdentifiersAndRejectsForeignQuotes(): void
     {
         $composer = new PgSqlCteShadowComposer();
 
         self::assertSame([''], $composer->declaredCteNames('WITH "" AS (SELECT 1) SELECT 1'));
         self::assertSame(
-            ['a"b', 'c`d'],
+            ['a"b'],
             $composer->declaredCteNames(
                 'WITH "a""b" AS (SELECT 1), `c``d` AS (SELECT 2) SELECT 1',
             ),

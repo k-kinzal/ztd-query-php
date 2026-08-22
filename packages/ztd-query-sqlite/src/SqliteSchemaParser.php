@@ -172,7 +172,7 @@ final class SqliteSchemaParser implements SchemaParser
 
     private function parseFts5VirtualTable(string $sql): ?TableDefinition
     {
-        $stream = SqlTokenStream::tokenize($sql);
+        $stream = SqlTokenStream::tokenize($sql, SqliteLexerProfile::create());
         $tokens = $stream->significantTokens();
         if (($tokens[0] ?? null)?->isKeyword('CREATE') !== true) {
             return null;
@@ -218,8 +218,8 @@ final class SqliteSchemaParser implements SchemaParser
         $body = substr($sql, $opening->endOffset(), $closing->offset - $opening->endOffset());
         $columns = [];
         $parser = new SqliteParser();
-        foreach (SqlTokenStream::tokenize($body)->splitTopLevel() as $definition) {
-            $definitionTokens = SqlTokenStream::tokenize($definition)->significantTokens();
+        foreach (SqlTokenStream::tokenize($body, SqliteLexerProfile::create())->splitTopLevel() as $definition) {
+            $definitionTokens = SqlTokenStream::tokenize($definition, SqliteLexerProfile::create())->significantTokens();
             $name = $definitionTokens[0] ?? null;
             $assignment = $definitionTokens[1] ?? null;
             if ($assignment !== null
@@ -265,7 +265,7 @@ final class SqliteSchemaParser implements SchemaParser
 
         $openingOffset = strlen($matches[0]) - 1;
         $closing = null;
-        foreach (SqlTokenStream::tokenize($sql)->significantTokens() as $token) {
+        foreach (SqlTokenStream::tokenize($sql, SqliteLexerProfile::create())->significantTokens() as $token) {
             if ($token->isTopLevel()
                 && $token->kind === SqlTokenKind::Symbol
                 && $token->text === ')'
@@ -288,7 +288,7 @@ final class SqliteSchemaParser implements SchemaParser
 
     private static function hasValidTableOptions(string $suffix): bool
     {
-        $tokens = SqlTokenStream::tokenize($suffix)->significantTokens();
+        $tokens = SqlTokenStream::tokenize($suffix, SqliteLexerProfile::create())->significantTokens();
         $last = $tokens[count($tokens) - 1] ?? null;
         if ($last !== null
             && $last->kind === SqlTokenKind::Symbol
@@ -336,12 +336,12 @@ final class SqliteSchemaParser implements SchemaParser
 
     private static function hasWithoutRowid(string $sql): bool
     {
-        $withoutClause = SqlTokenStream::tokenize($sql)->topLevelClause(['WITHOUT']);
+        $withoutClause = SqlTokenStream::tokenize($sql, SqliteLexerProfile::create())->topLevelClause(['WITHOUT']);
         if ($withoutClause === null) {
             return false;
         }
 
-        return SqlTokenStream::tokenize($withoutClause)->firstTopLevelKeyword() === 'ROWID';
+        return SqlTokenStream::tokenize($withoutClause, SqliteLexerProfile::create())->firstTopLevelKeyword() === 'ROWID';
     }
 
     /**
@@ -451,14 +451,14 @@ final class SqliteSchemaParser implements SchemaParser
         $notNull = str_contains($upperDef, 'NOT NULL');
         $primaryKey = (bool) preg_match('/\bPRIMARY\s+KEY\b/i', $def);
         $unique = (bool) preg_match('/\bUNIQUE\b/i', $def) && !$primaryKey;
-        $default = SqlTokenStream::tokenize($rest)->topLevelClause(
+        $default = SqlTokenStream::tokenize($rest, SqliteLexerProfile::create())->topLevelClause(
             ['DEFAULT'],
             [
                 ['PRIMARY', 'KEY'], ['NOT', 'NULL'], ['UNIQUE'], ['CHECK'],
                 ['REFERENCES'], ['COLLATE'], ['CONSTRAINT'], ['GENERATED'], ['AS'],
             ],
         );
-        $stream = SqlTokenStream::tokenize($rest);
+        $stream = SqlTokenStream::tokenize($rest, SqliteLexerProfile::create());
         $generatedExpression = $stream->topLevelClause(
             ['AS'],
             [['STORED'], ['VIRTUAL']],

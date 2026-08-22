@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\MySql;
 
 use ZtdQuery\Sql\SqlToken;
-use ZtdQuery\Sql\SqlTokenDialect;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 use ZtdQuery\Sql\TransactionStatement;
@@ -15,7 +14,7 @@ final class MySqlTransactionStatementParser implements TransactionStatementParse
 {
     public function parse(string $sql): ?TransactionStatement
     {
-        $tokens = SqlTokenStream::tokenize($sql, SqlTokenDialect::MySql)->significantTokens();
+        $tokens = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->significantTokens();
         if (($tokens[count($tokens) - 1] ?? null)?->text === ';') {
             array_pop($tokens);
         }

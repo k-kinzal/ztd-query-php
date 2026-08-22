@@ -243,18 +243,13 @@ final class PgSqlSelectRelationParser
         if ($token->kind === SqlTokenKind::Word) {
             return [$token->text, $index + 1, $token->offset, $token->offset, $token->endOffset()];
         }
-        if ($token->kind !== SqlTokenKind::QuotedIdentifier
-            || strlen($token->text) <= 2
-            || !str_starts_with($token->text, '"')
-            || !str_ends_with($token->text, '"')
-        ) {
+        $name = PgSqlLexerProfile::create()->quotedIdentifierValue($token->text);
+        if ($name === null) {
             return null;
         }
-        $quote = $token->text[0];
-        $name = substr($token->text, 1, -1);
 
         return [
-            str_replace($quote . $quote, $quote, $name),
+            $name,
             $index + 1,
             $token->offset,
             $token->offset,
@@ -311,6 +306,6 @@ final class PgSqlSelectRelationParser
     /** @return list<SqlToken> */
     private function tokens(string $sql): array
     {
-        return SqlTokenStream::tokenize($sql)->significantTokens();
+        return SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->significantTokens();
     }
 }

@@ -7,7 +7,6 @@ namespace ZtdQuery\Platform\Postgres;
 use ZtdQuery\Platform\IdentifierQuoter;
 use ZtdQuery\Shadow\Mutation\UpsertMutationRow;
 use ZtdQuery\Sql\SqlToken;
-use ZtdQuery\Sql\SqlTokenDialect;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
@@ -19,15 +18,12 @@ final class PgSqlNativeUpsertProjector
 
     private readonly IdentifierQuoter $quoter;
 
-    private readonly SqlTokenDialect $dialect;
-
     /** @var non-empty-list<string> */
     private readonly array $incomingNamespaces;
 
     public function __construct()
     {
         $this->quoter = new PgSqlIdentifierQuoter();
-        $this->dialect = SqlTokenDialect::Standard;
         $this->incomingNamespaces = ['EXCLUDED'];
     }
 
@@ -117,7 +113,7 @@ final class PgSqlNativeUpsertProjector
         array $tableColumns,
         string $unqualifiedAlias = self::EXISTING_ALIAS,
     ): string {
-        $tokens = SqlTokenStream::tokenize($expression, $this->dialect)->significantTokens();
+        $tokens = SqlTokenStream::tokenize($expression, PgSqlLexerProfile::create())->significantTokens();
         $subqueryTokens = $this->subqueryTokenIndexes($tokens);
         $replacements = [];
         $columnNames = array_fill_keys(array_map('strtolower', $tableColumns), true);
@@ -200,7 +196,7 @@ final class PgSqlNativeUpsertProjector
 
     private function identifier(SqlToken $token): string
     {
-        $identifier = SqlTokenStream::tokenize($token->text, $this->dialect)->identifierAt();
+        $identifier = SqlTokenStream::tokenize($token->text, PgSqlLexerProfile::create())->identifierAt();
 
         return $identifier === null ? $token->text : $identifier['name'];
     }

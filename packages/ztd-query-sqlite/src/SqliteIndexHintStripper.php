@@ -20,7 +20,7 @@ final class SqliteIndexHintStripper
             $shadowTables,
         );
 
-        $stream = SqlTokenStream::tokenize($sql);
+        $stream = SqlTokenStream::tokenize($sql, SqliteLexerProfile::create());
         $tokens = $stream->significantTokens();
         /** @var list<array{start: int, end: int}> $removals */
         $removals = [];

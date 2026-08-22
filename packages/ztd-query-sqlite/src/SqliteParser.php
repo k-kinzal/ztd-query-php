@@ -79,7 +79,7 @@ final class SqliteParser
      */
     public function splitStatements(string $sql): array
     {
-        return SqlTokenStream::tokenize($sql)->splitStatements();
+        return SqlTokenStream::tokenize($sql, SqliteLexerProfile::create())->splitStatements();
     }
 
     /**
@@ -156,7 +156,7 @@ final class SqliteParser
      */
     public function extractUpdateAssignments(string $sql): array
     {
-        $setClause = SqlTokenStream::tokenize($sql)->topLevelClause(
+        $setClause = SqlTokenStream::tokenize($sql, SqliteLexerProfile::create())->topLevelClause(
             ['SET'],
             [['FROM'], ['WHERE'], ['ORDER', 'BY'], ['LIMIT'], ['RETURNING']],
         );
@@ -169,7 +169,7 @@ final class SqliteParser
 
     public function extractUpdateAlias(string $sql): ?string
     {
-        $tokens = SqlTokenStream::tokenize($sql)->significantTokens();
+        $tokens = SqlTokenStream::tokenize($sql, SqliteLexerProfile::create())->significantTokens();
         foreach ($tokens as $index => $token) {
             if (!$token->isTopLevel() || !$token->isKeyword('UPDATE')) {
                 continue;
@@ -207,7 +207,7 @@ final class SqliteParser
 
     public function extractUpdateFromClause(string $sql): ?string
     {
-        return SqlTokenStream::tokenize($sql)->topLevelClause(
+        return SqlTokenStream::tokenize($sql, SqliteLexerProfile::create())->topLevelClause(
             ['FROM'],
             [['WHERE'], ['ORDER', 'BY'], ['LIMIT'], ['RETURNING']],
         );
@@ -218,7 +218,7 @@ final class SqliteParser
      */
     public function extractWhereClause(string $sql): ?string
     {
-        return SqlTokenStream::tokenize($sql)->topLevelClause(
+        return SqlTokenStream::tokenize($sql, SqliteLexerProfile::create())->topLevelClause(
             ['WHERE'],
             [['ORDER', 'BY'], ['LIMIT'], ['GROUP', 'BY'], ['HAVING'], ['RETURNING']],
         );
@@ -229,7 +229,7 @@ final class SqliteParser
      */
     public function extractOrderByClause(string $sql): ?string
     {
-        return SqlTokenStream::tokenize($sql)->topLevelClause(
+        return SqlTokenStream::tokenize($sql, SqliteLexerProfile::create())->topLevelClause(
             ['ORDER', 'BY'],
             [['LIMIT'], ['RETURNING']],
         );
@@ -240,7 +240,7 @@ final class SqliteParser
      */
     public function extractLimitClause(string $sql): ?string
     {
-        return SqlTokenStream::tokenize($sql)->topLevelClause(['LIMIT'], [['RETURNING']]);
+        return SqlTokenStream::tokenize($sql, SqliteLexerProfile::create())->topLevelClause(['LIMIT'], [['RETURNING']]);
     }
 
     /**
@@ -281,11 +281,11 @@ final class SqliteParser
      */
     public function extractOnConflictUpdates(string $sql): array
     {
-        $action = SqlTokenStream::tokenize($sql)->topLevelClause(['DO'], [['RETURNING']]);
+        $action = SqlTokenStream::tokenize($sql, SqliteLexerProfile::create())->topLevelClause(['DO'], [['RETURNING']]);
         if ($action === null) {
             return [];
         }
-        $actionStream = SqlTokenStream::tokenize($action);
+        $actionStream = SqlTokenStream::tokenize($action, SqliteLexerProfile::create());
         if ($actionStream->firstTopLevelKeyword() !== 'UPDATE') {
             return [];
         }
@@ -299,7 +299,7 @@ final class SqliteParser
 
     public function extractOnConflictUpdateWhere(string $sql): ?string
     {
-        return SqlTokenStream::tokenize($sql)->topLevelClauseAfter(
+        return SqlTokenStream::tokenize($sql, SqliteLexerProfile::create())->topLevelClauseAfter(
             ['DO', 'UPDATE', 'SET'],
             ['WHERE'],
             [['RETURNING']],
@@ -574,7 +574,7 @@ final class SqliteParser
     /** @param non-empty-list<string> $keywords */
     private function statementTail(string $sql, array $keywords): string
     {
-        foreach (SqlTokenStream::tokenize($sql)->significantTokens() as $token) {
+        foreach (SqlTokenStream::tokenize($sql, SqliteLexerProfile::create())->significantTokens() as $token) {
             if (!$token->isTopLevel()) {
                 continue;
             }

@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\MySql;
 
-use ZtdQuery\Sql\SqlTokenDialect;
 use ZtdQuery\Sql\SqlTokenStream;
 
 final class InsertSelectSourceExtractor
 {
     public function extract(string $sql): ?string
     {
-        $selectBody = SqlTokenStream::tokenize($sql, SqlTokenDialect::MySql)->topLevelClause(
+        $selectBody = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->topLevelClause(
             ['SELECT'],
             [['ON', 'DUPLICATE', 'KEY', 'UPDATE'], ['RETURNING']],
         );

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\MySql;
 
 use ZtdQuery\Schema\ViewDefinition;
-use ZtdQuery\Sql\SqlTokenDialect;
 use ZtdQuery\Sql\SqlTokenStream;
 
 final class MySqlViewDefinitionParser
@@ -19,7 +18,7 @@ final class MySqlViewDefinitionParser
 
     public function fromCreateStatement(string $sql): ?ViewDefinition
     {
-        foreach (SqlTokenStream::tokenize($sql, SqlTokenDialect::MySql)->significantTokens() as $token) {
+        foreach (SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->significantTokens() as $token) {
             if (!$token->isTopLevel() || !$token->isKeyword('AS')) {
                 continue;
             }

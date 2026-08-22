@@ -197,7 +197,7 @@ final class SqliteSelectRelationParser
             return null;
         }
 
-        $component = $this->identifierComponentAt($sql, $tokens, $index);
+        $component = $this->identifierComponentAt($tokens, $index);
         if ($component === null) {
             return null;
         }
@@ -206,7 +206,7 @@ final class SqliteSelectRelationParser
         while (($tokens[$nextIndex] ?? null)?->kind === SqlTokenKind::Symbol
             && $tokens[$nextIndex]->text === '.'
         ) {
-            $component = $this->identifierComponentAt($sql, $tokens, $nextIndex + 1);
+            $component = $this->identifierComponentAt($tokens, $nextIndex + 1);
             if ($component === null) {
                 break;
             }
@@ -230,7 +230,7 @@ final class SqliteSelectRelationParser
      * @param list<SqlToken> $tokens
      * @return array{string, int, int, int, int}|null
      */
-    private function identifierComponentAt(string $sql, array $tokens, int $index): ?array
+    private function identifierComponentAt(array $tokens, int $index): ?array
     {
         $token = $tokens[$index] ?? null;
         if ($token === null) {
@@ -239,46 +239,15 @@ final class SqliteSelectRelationParser
         if ($token->kind === SqlTokenKind::Word) {
             return [$token->text, $index + 1, $token->offset, $token->offset, $token->endOffset()];
         }
-        $quote = $token->text[0] ?? '';
-        if ($token->kind === SqlTokenKind::QuotedIdentifier
-            && strlen($token->text) > 2
-            && str_ends_with($token->text, $quote)
-        ) {
-            $name = substr($token->text, 1, -1);
-
-            return [
-                str_replace($quote . $quote, $quote, $name),
-                $index + 1,
-                $token->offset,
-                $token->offset,
-                $token->endOffset(),
-            ];
-        }
-        if ($token->kind !== SqlTokenKind::Symbol || $token->text !== '[') {
+        if ($token->kind !== SqlTokenKind::QuotedIdentifier) {
             return null;
         }
-        for ($endIndex = $index; isset($tokens[$endIndex]); $endIndex++) {
-            $endToken = $tokens[$endIndex];
-            if ($endToken->text !== ']' || !$endToken->isTopLevel()) {
-                continue;
-            }
-            $following = $tokens[$endIndex + 1] ?? null;
-            if ($following?->text === ']' && $following->isTopLevel()) {
-                $endIndex++;
-                continue;
-            }
-            $name = substr($sql, $token->endOffset(), $endToken->offset - $token->endOffset());
-
-            return [
-                str_replace(']]', ']', $name),
-                $endIndex + 1,
-                $token->offset,
-                $token->offset,
-                $endToken->endOffset(),
-            ];
+        $name = SqliteLexerProfile::create()->quotedIdentifierValue($token->text);
+        if ($name === null) {
+            return null;
         }
 
-        return null;
+        return [$name, $index + 1, $token->offset, $token->offset, $token->endOffset()];
     }
 
     /** @param list<SqlToken> $tokens */
@@ -330,6 +299,6 @@ final class SqliteSelectRelationParser
     /** @return list<SqlToken> */
     private function tokens(string $sql): array
     {
-        return SqlTokenStream::tokenize($sql)->significantTokens();
+        return SqlTokenStream::tokenize($sql, SqliteLexerProfile::create())->significantTokens();
     }
 }

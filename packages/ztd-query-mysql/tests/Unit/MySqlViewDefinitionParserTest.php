@@ -7,10 +7,12 @@ namespace Tests\Unit;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Platform\MySql\MySqlLexerProfile;
 use ZtdQuery\Platform\MySql\MySqlSelectRelationParser;
 use ZtdQuery\Platform\MySql\MySqlViewDefinitionParser;
 
 #[CoversClass(MySqlViewDefinitionParser::class)]
+#[UsesClass(MySqlLexerProfile::class)]
 #[UsesClass(MySqlSelectRelationParser::class)]
 final class MySqlViewDefinitionParserTest extends TestCase
 {

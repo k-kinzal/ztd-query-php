@@ -8,7 +8,6 @@ use PhpMyAdmin\SqlParser\Components\PartitionDefinition;
 use PhpMyAdmin\SqlParser\Statements\CreateStatement;
 use ZtdQuery\Schema\TablePartitioning;
 use ZtdQuery\Sql\SqlToken;
-use ZtdQuery\Sql\SqlTokenDialect;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
@@ -39,7 +38,7 @@ final class MySqlPartitioningParser
     /** @return array{'RANGE'|'LIST', non-empty-string}|null */
     private function partitionExpression(string $partitionBy): ?array
     {
-        $tokens = SqlTokenStream::tokenize($partitionBy, SqlTokenDialect::MySql)->significantTokens();
+        $tokens = SqlTokenStream::tokenize($partitionBy, MySqlLexerProfile::create())->significantTokens();
         $kind = $tokens[0] ?? null;
         if (!$kind instanceof SqlToken) {
             return null;
@@ -119,11 +118,11 @@ final class MySqlPartitioningParser
                 return [];
             }
 
-            $parts = SqlTokenStream::tokenize($values, SqlTokenDialect::MySql)->splitTopLevel();
+            $parts = SqlTokenStream::tokenize($values, MySqlLexerProfile::create())->splitTopLevel();
             $nonNull = [];
             $hasNull = false;
             foreach ($parts as $part) {
-                $partTokens = SqlTokenStream::tokenize($part, SqlTokenDialect::MySql)->significantTokens();
+                $partTokens = SqlTokenStream::tokenize($part, MySqlLexerProfile::create())->significantTokens();
                 if (count($partTokens) === 1 && $partTokens[0]->isKeyword('NULL')) {
                     $hasNull = true;
                     continue;

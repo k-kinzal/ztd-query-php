@@ -8,6 +8,7 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
 use ZtdQuery\Platform\Postgres\PgSqlNativeUpsertProjector;
+use ZtdQuery\Platform\Postgres\PgSqlLexerProfile;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
 use ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer;
 use ZtdQuery\Rewrite\ShadowIdentityAllocator;
@@ -95,7 +96,7 @@ final class InsertTransformer implements SqlTransformer
             return $this->selectTransformer->transform($projectedSql, $tables);
         }
 
-        $valueRows = SqlTokenStream::tokenize($sql)->topLevelClause(['DEFAULT', 'VALUES']) !== null
+        $valueRows = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->topLevelClause(['DEFAULT', 'VALUES']) !== null
             ? [[]]
             : $this->parser->extractInsertValues($sql);
         if ($valueRows === []) {

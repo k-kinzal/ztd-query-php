@@ -7,12 +7,14 @@ namespace Tests\Unit;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Platform\MySql\MySqlLexerProfile;
 use ZtdQuery\Platform\MySql\MySqlSelectRelationParser;
 use ZtdQuery\Platform\MySql\MySqlViewShadowRenderer;
 use ZtdQuery\Schema\ViewDefinition;
 use ZtdQuery\Schema\ViewDefinitionSet;
 
 #[CoversClass(MySqlViewShadowRenderer::class)]
+#[UsesClass(MySqlLexerProfile::class)]
 #[UsesClass(MySqlSelectRelationParser::class)]
 final class MySqlViewShadowRendererTest extends TestCase
 {

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\MySql;
 
 use ZtdQuery\Sql\SqlToken;
-use ZtdQuery\Sql\SqlTokenDialect;
 use ZtdQuery\Sql\SqlTokenStream;
 
 final class MySqlReadOnlyDiagnosticStatement
@@ -20,7 +19,7 @@ final class MySqlReadOnlyDiagnosticStatement
 
     public static function isSafe(string $sql): bool
     {
-        $stream = SqlTokenStream::tokenize($sql, SqlTokenDialect::MySql);
+        $stream = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create());
         if (count($stream->splitStatements()) !== 1) {
             return false;
         }

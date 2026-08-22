@@ -11,7 +11,6 @@ use PhpMyAdmin\SqlParser\Statements\InsertStatement;
 use PhpMyAdmin\SqlParser\Statements\SelectStatement;
 use PhpMyAdmin\SqlParser\Token;
 use ZtdQuery\Sql\SqlTokenStream;
-use ZtdQuery\Sql\SqlTokenDialect;
 
 /**
  * MySQL parser implementation backed by phpMyAdmin SQL parser.
@@ -46,7 +45,7 @@ final class MySqlParser
     /** @return list<string> */
     public function splitStatements(string $sql): array
     {
-        return SqlTokenStream::tokenize($sql, SqlTokenDialect::MySql)->splitStatements();
+        return SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->splitStatements();
     }
 
     public function parseSingleLogicalStatement(string $sql): ?Statement

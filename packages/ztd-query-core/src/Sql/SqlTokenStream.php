@@ -15,14 +15,13 @@ final class SqlTokenStream
     private function __construct(
         private readonly string $sql,
         private readonly array $tokens,
+        private readonly SqlLexerProfile $profile,
     ) {
     }
 
-    public static function tokenize(
-        string $sql,
-        SqlTokenDialect $dialect = SqlTokenDialect::Standard,
-    ): self {
-        return new self($sql, self::scan($sql, $dialect));
+    public static function tokenize(string $sql, SqlLexerProfile $profile): self
+    {
+        return new self($sql, self::scan($sql, $profile), $profile);
     }
 
     /** @return list<SqlToken> */
@@ -104,7 +103,7 @@ final class SqlTokenStream
     /** @return array{name: string, next: int}|null */
     public function identifierAt(int $index = 0): ?array
     {
-        $component = self::identifierComponentAt($this->sql, $this->significantTokens(), $index);
+        $component = self::identifierComponentAt($this->significantTokens(), $index, $this->profile);
         if ($component === null) {
             return null;
         }
@@ -257,8 +256,11 @@ final class SqlTokenStream
      * @param list<SqlToken> $tokens
      * @return array{string, int}|null
      */
-    private static function identifierComponentAt(string $sql, array $tokens, int $index): ?array
-    {
+    private static function identifierComponentAt(
+        array $tokens,
+        int $index,
+        SqlLexerProfile $profile,
+    ): ?array {
         $token = $tokens[$index] ?? null;
         if ($token === null) {
             return null;
@@ -266,36 +268,18 @@ final class SqlTokenStream
         if ($token->kind === SqlTokenKind::Word) {
             return [$token->text, $index + 1];
         }
-        if ($token->kind === SqlTokenKind::QuotedIdentifier && strlen($token->text) > 2) {
-            $quote = $token->text[0];
-            $name = substr($token->text, 1, -1);
-
-            return [str_replace($quote . $quote, $quote, $name), $index + 1];
-        }
-        if ($token->kind !== SqlTokenKind::Symbol || $token->text !== '[') {
-            return null;
-        }
-
-        for ($endIndex = $index; isset($tokens[$endIndex]); $endIndex++) {
-            $endToken = $tokens[$endIndex];
-            if ($endToken->text !== ']' || !$endToken->isTopLevel()) {
-                continue;
+        if ($token->kind === SqlTokenKind::QuotedIdentifier) {
+            $name = $profile->quotedIdentifierValue($token->text);
+            if ($name !== null) {
+                return [$name, $index + 1];
             }
-            $following = $tokens[$endIndex + 1] ?? null;
-            if ($following?->text === ']' && $following->isTopLevel()) {
-                $endIndex++;
-                continue;
-            }
-            $name = substr($sql, $token->endOffset(), $endToken->offset - $token->endOffset());
-
-            return [str_replace(']]', ']', $name), $endIndex + 1];
         }
 
         return null;
     }
 
     /** @return list<SqlToken> */
-    private static function scan(string $sql, SqlTokenDialect $dialect): array
+    private static function scan(string $sql, SqlLexerProfile $profile): array
     {
         $tokens = [];
         $length = strlen($sql);
@@ -306,8 +290,6 @@ final class SqlTokenStream
         while ($offset < $length) {
             $start = $offset;
             $char = $sql[$offset];
-            $next = $sql[$offset + 1] ?? '';
-
             if (ctype_space($char)) {
                 while ($offset < $length && ctype_space($sql[$offset])) {
                     $offset++;
@@ -316,36 +298,32 @@ final class SqlTokenStream
                 continue;
             }
 
-            if ($char === '-' && $next === '-') {
+            if ($profile->startsLineComment($sql, $offset)) {
                 $lineEnd = strpos($sql, "\n", $offset);
                 $offset = $lineEnd === false ? $length : $lineEnd;
                 $tokens[] = self::token($sql, SqlTokenKind::Comment, $start, $offset, $depth, $bracketDepth);
                 continue;
             }
 
-            if ($dialect === SqlTokenDialect::MySql && $char === '#') {
-                $lineEnd = strpos($sql, "\n", $offset);
-                $offset = $lineEnd === false ? $length : $lineEnd;
-                $tokens[] = self::token($sql, SqlTokenKind::Comment, $start, $offset, $depth, $bracketDepth);
-                continue;
-            }
-
-            if ($char === '/' && $next === '*') {
-                $offset += 2;
+            $blockComment = $profile->blockCommentAt($sql, $offset);
+            if ($blockComment !== null) {
+                [$opening, $closing] = $blockComment;
+                $offset += strlen($opening);
                 $commentDepth = 1;
                 while ($commentDepth > 0) {
                     if (!isset($sql[$offset])) {
                         break;
                     }
-                    $pair = substr($sql, $offset, 2);
-                    if ($pair === '/*') {
+                    if ($profile->supportsNestedBlockComments()
+                        && substr_compare($sql, $opening, $offset, strlen($opening)) === 0
+                    ) {
                         $commentDepth++;
-                        $offset += 2;
+                        $offset += strlen($opening);
                         continue;
                     }
-                    if ($pair === '*/') {
+                    if (substr_compare($sql, $closing, $offset, strlen($closing)) === 0) {
                         $commentDepth--;
-                        $offset += 2;
+                        $offset += strlen($closing);
                         continue;
                     }
                     $offset++;
@@ -354,88 +332,101 @@ final class SqlTokenStream
                 continue;
             }
 
-            if ($char === "'") {
-                $offset = self::scanQuoted($sql, $offset, "'");
+            $stringQuoteClosing = $profile->stringQuoteClosing($char);
+            if ($stringQuoteClosing !== null) {
+                $offset = self::scanDelimited(
+                    $sql,
+                    $offset,
+                    $char,
+                    $stringQuoteClosing,
+                    $profile->stringUsesBackslashEscapes($sql, $offset),
+                );
                 $tokens[] = self::token($sql, SqlTokenKind::String, $start, $offset, $depth, $bracketDepth);
                 continue;
             }
 
-            if ($char === '"' || $char === '`') {
-                $offset = self::scanQuoted($sql, $offset, $char);
+            $identifierQuoteClosing = $profile->identifierQuoteClosing($char);
+            if ($identifierQuoteClosing !== null) {
+                $offset = self::scanDelimited($sql, $offset, $char, $identifierQuoteClosing, false);
                 $tokens[] = self::token($sql, SqlTokenKind::QuotedIdentifier, $start, $offset, $depth, $bracketDepth);
                 continue;
             }
 
-            if ($char === '$') {
-                $tagLength = self::dollarTagLength(substr($sql, $offset));
-                if ($tagLength !== null) {
-                    $tag = substr($sql, $offset, $tagLength);
-                    $end = strpos($sql, $tag, $offset + $tagLength);
-                    $offset = $end === false ? $length : $end + $tagLength;
-                    $tokens[] = self::token($sql, SqlTokenKind::String, $start, $offset, $depth, $bracketDepth);
-                    continue;
-                }
-                if (ctype_digit($next)) {
-                    $offset++;
-                    $offset += strspn($sql, '0123456789', $offset);
-                    $tokens[] = self::token($sql, SqlTokenKind::Parameter, $start, $offset, $depth, $bracketDepth);
-                    continue;
-                }
+            $dollarQuoteDelimiter = $profile->dollarQuoteDelimiterAt($sql, $offset);
+            if ($dollarQuoteDelimiter !== null) {
+                $delimiterLength = strlen($dollarQuoteDelimiter);
+                $end = strpos($sql, $dollarQuoteDelimiter, $offset + $delimiterLength);
+                $offset = $end === false ? $length : $end + $delimiterLength;
+                $tokens[] = self::token($sql, SqlTokenKind::String, $start, $offset, $depth, $bracketDepth);
+                continue;
             }
 
-            if ($char === '?' || ($char === ':' && $next !== ':' && self::isWordStart($next))) {
+            $next = $sql[$offset + 1] ?? '';
+            if ($char === '$' && $profile->supportsNumberedDollarParameters() && ctype_digit($next)) {
                 $offset++;
-                while ($offset < $length && self::isWordPart($sql[$offset])) {
-                    $offset++;
+                $offset += strspn($sql, '0123456789', $offset);
+                $tokens[] = self::token($sql, SqlTokenKind::Parameter, $start, $offset, $depth, $bracketDepth);
+                continue;
+            }
+
+            if ($char === '?' && $profile->supportsQuestionMarkParameters()) {
+                $offset++;
+                if ($profile->supportsNumberedQuestionMarkParameters()) {
+                    $offset += strspn($sql, '0123456789', $offset);
                 }
                 $tokens[] = self::token($sql, SqlTokenKind::Parameter, $start, $offset, $depth, $bracketDepth);
                 continue;
             }
 
-            if (self::isWordStart($char)) {
+            $parameterPrefix = $profile->namedParameterPrefixAt($sql, $offset);
+            if ($parameterPrefix !== null
+                && $profile->isIdentifierStart($sql[$offset + strlen($parameterPrefix)] ?? '')
+            ) {
+                $offset += strlen($parameterPrefix);
+                while ($offset < $length) {
+                    if ($profile->isIdentifierPart($sql[$offset])) {
+                        $offset++;
+                        continue;
+                    }
+                    $separator = $profile->parameterNameSeparatorAt($parameterPrefix, $sql, $offset);
+                    if ($separator === null
+                        || !$profile->isIdentifierStart($sql[$offset + strlen($separator)] ?? '')
+                    ) {
+                        break;
+                    }
+                    $offset += strlen($separator);
+                }
+                $offset += $profile->parameterSuffixLength($parameterPrefix, $sql, $offset);
+                $tokens[] = self::token($sql, SqlTokenKind::Parameter, $start, $offset, $depth, $bracketDepth);
+                continue;
+            }
+
+            if ($profile->isIdentifierStart($char)) {
                 $offset++;
-                while ($offset < $length && self::isWordPart($sql[$offset])) {
+                while ($offset < $length && $profile->isIdentifierPart($sql[$offset])) {
                     $offset++;
                 }
                 $tokens[] = self::token($sql, SqlTokenKind::Word, $start, $offset, $depth, $bracketDepth);
                 continue;
             }
 
-            if (ctype_digit($char)) {
-                $offset++;
-                if ($char === '0' && (($sql[$offset] ?? '') === 'x' || ($sql[$offset] ?? '') === 'X')) {
-                    $offset++;
-                    $offset += strspn($sql, '0123456789ABCDEFabcdef_', $offset);
-                } else {
-                    $offset += strspn($sql, '0123456789_', $offset);
-                    if (($sql[$offset] ?? '') === '.') {
-                        $offset++;
-                        $offset += strspn($sql, '0123456789_', $offset);
-                    }
-                    if (($sql[$offset] ?? '') === 'e' || ($sql[$offset] ?? '') === 'E') {
-                        $offset++;
-                        if (($sql[$offset] ?? '') === '+' || ($sql[$offset] ?? '') === '-') {
-                            $offset++;
-                        }
-                        while ($offset < $length && ctype_digit($sql[$offset])) {
-                            $offset++;
-                        }
-                    }
-                }
+            $numberLength = $profile->numberLengthAt($sql, $offset);
+            if ($numberLength > 0) {
+                $offset += $numberLength;
                 $tokens[] = self::token($sql, SqlTokenKind::Number, $start, $offset, $depth, $bracketDepth);
                 continue;
             }
 
             if ($char === ')') {
                 $depth = max(0, $depth - 1);
-            } elseif ($char === ']') {
+            } elseif ($profile->isBracketClosing($char)) {
                 $bracketDepth = max(0, $bracketDepth - 1);
             }
             $offset++;
             $tokens[] = self::token($sql, SqlTokenKind::Symbol, $start, $offset, $depth, $bracketDepth);
             if ($char === '(') {
                 $depth++;
-            } elseif ($char === '[') {
+            } elseif ($profile->isBracketOpening($char)) {
                 $bracketDepth++;
             }
         }
@@ -443,19 +434,24 @@ final class SqlTokenStream
         return $tokens;
     }
 
-    private static function scanQuoted(string $sql, int $offset, string $quote): int
-    {
-        $offset++;
+    private static function scanDelimited(
+        string $sql,
+        int $offset,
+        string $opening,
+        string $closing,
+        bool $backslashEscapes,
+    ): int {
+        $offset += strlen($opening);
         while (isset($sql[$offset])) {
-            if ($sql[$offset] === $quote) {
-                if (($sql[$offset + 1] ?? '') === $quote) {
-                    $offset += 2;
+            if (substr_compare($sql, $closing, $offset, strlen($closing)) === 0) {
+                if (substr_compare($sql, $closing . $closing, $offset, strlen($closing) * 2) === 0) {
+                    $offset += strlen($closing) * 2;
                     continue;
                 }
 
-                return $offset + 1;
+                return $offset + strlen($closing);
             }
-            if ($sql[$offset] === '\\') {
+            if ($backslashEscapes && $sql[$offset] === '\\') {
                 $offset += 2;
                 continue;
             }
@@ -463,25 +459,6 @@ final class SqlTokenStream
         }
 
         return strlen($sql);
-    }
-
-    private static function dollarTagLength(string $tail): ?int
-    {
-        if (preg_match('/^\$(?:[A-Za-z_][A-Za-z0-9_]*)?\$/', $tail, $matches) !== 1) {
-            return null;
-        }
-
-        return strlen($matches[0]);
-    }
-
-    private static function isWordStart(string $char): bool
-    {
-        return $char !== '' && ($char === '_' || ctype_alpha($char) || ord($char) >= 128);
-    }
-
-    private static function isWordPart(string $char): bool
-    {
-        return self::isWordStart($char) || ctype_digit($char) || $char === '$';
     }
 
     private static function token(

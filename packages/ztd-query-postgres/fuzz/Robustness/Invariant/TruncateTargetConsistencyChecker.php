@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Fuzz\Robustness\Invariant;
 
 use Throwable;
+use ZtdQuery\Platform\Postgres\PgSqlLexerProfile;
 use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Shadow\Mutation\MultiTruncateMutation;
 use ZtdQuery\Sql\SqlTokenStream;
@@ -53,7 +54,7 @@ final class TruncateTargetConsistencyChecker implements InvariantChecker
 
     private function targetCount(string $sql): ?int
     {
-        $stream = SqlTokenStream::tokenize($sql);
+        $stream = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create());
         if ($stream->firstTopLevelKeyword() !== 'TRUNCATE') {
             return null;
         }
@@ -66,6 +67,6 @@ final class TruncateTargetConsistencyChecker implements InvariantChecker
             return 0;
         }
 
-        return count(SqlTokenStream::tokenize($targetList)->splitTopLevel());
+        return count(SqlTokenStream::tokenize($targetList, PgSqlLexerProfile::create())->splitTopLevel());
     }
 }

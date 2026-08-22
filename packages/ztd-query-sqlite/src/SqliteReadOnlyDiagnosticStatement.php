@@ -10,7 +10,7 @@ final class SqliteReadOnlyDiagnosticStatement
 {
     public static function isSafe(string $sql): bool
     {
-        $stream = SqlTokenStream::tokenize($sql);
+        $stream = SqlTokenStream::tokenize($sql, SqliteLexerProfile::create());
         if (count($stream->splitStatements()) !== 1) {
             return false;
         }
