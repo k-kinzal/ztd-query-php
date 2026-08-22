@@ -33,6 +33,7 @@ final class NoDialectLogicInCoreOrAdapterRuleTest extends RuleTestCase
             __DIR__ . '/../../Fixture/PdoAdapterBoundaryFixture.php',
             __DIR__ . '/../../Fixture/MysqliAdapterBoundaryFixture.php',
             __DIR__ . '/../../Fixture/CompositionRootNameCollisionFixture.php',
+            __DIR__ . '/../../../../ztd-query-mysqli-adapter/src/MysqliStatementBindingBridge.php',
         ], [
             [$message, 11],
             [$message, 11],
