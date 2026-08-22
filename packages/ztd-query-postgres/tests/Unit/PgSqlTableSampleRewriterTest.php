@@ -17,6 +17,7 @@ use ZtdQuery\Platform\Postgres\PgSqlTableSampleRewriter;
 #[UsesClass(PgSqlTableSampleParser::class)]
 #[UsesClass(PgSqlTableSample::class)]
 #[UsesClass(PgSqlIdentifierQuoter::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser::class)]
 final class PgSqlTableSampleRewriterTest extends TestCase
 {
     public function testRewritesBernoulliSampleAsDerivedShadowRelation(): void

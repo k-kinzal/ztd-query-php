@@ -117,7 +117,14 @@ final class GenerationPlansTest extends TestCase
         $plan = GenerationPlans::tableSampleStatement();
 
         self::assertSame('SelectStmt', $plan->startRule());
-        self::assertNotNull($plan->patternAt('from_clause', 0));
-        self::assertNotNull($plan->patternAt('table_ref', 0));
+        self::assertTrue($plan->patternAt('SelectStmt', 0)?->matches(['select_no_parens']) ?? false);
+        self::assertTrue($plan->patternAt('select_no_parens', 0)?->matches(['simple_select']) ?? false);
+        self::assertTrue(
+            $plan->patternAt('simple_select', 0)?->matches(['SELECT', 'opt_target_list', 'from_clause']) ?? false,
+        );
+        self::assertTrue($plan->patternAt('from_clause', 0)?->matches(['table_ref']) ?? false);
+        self::assertTrue(
+            $plan->patternAt('table_ref', 0)?->matches(['relation_expr', 'tablesample_clause']) ?? false,
+        );
     }
 }
