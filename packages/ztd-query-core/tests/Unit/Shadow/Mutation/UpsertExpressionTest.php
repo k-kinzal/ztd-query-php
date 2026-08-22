@@ -7,6 +7,7 @@ namespace ZtdQuery\Tests\Unit\Shadow\Mutation;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Shadow\Mutation\UpsertColumnSource;
@@ -15,6 +16,7 @@ use ZtdQuery\Shadow\Mutation\UpsertExpressionKind;
 
 #[CoversClass(UpsertExpression::class)]
 #[CoversClass(UpsertColumnSource::class)]
+#[UsesClass(\ZtdQuery\Exception\UnsupportedSqlException::class)]
 final class UpsertExpressionTest extends TestCase
 {
     public function testEvaluatesTypedExpressionTree(): void

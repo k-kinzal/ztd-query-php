@@ -41,6 +41,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[CoversClass(SqliteRewriter::class)]
 #[UsesClass(SqliteLexicalMasker::class)]
 #[UsesClass(SqliteParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteUpsertExpressionParser::class)]
 #[UsesClass(SqliteQueryGuard::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteTransactionStatementParser::class)]
 #[UsesClass(SqliteReturningProjectionParser::class)]

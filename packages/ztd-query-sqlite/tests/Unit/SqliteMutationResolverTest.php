@@ -29,6 +29,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[CoversClass(SqliteMutationResolver::class)]
 #[UsesClass(SqliteLexicalMasker::class)]
 #[UsesClass(SqliteParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteUpsertExpressionParser::class)]
 #[UsesClass(SqliteSchemaParser::class)]
 final class SqliteMutationResolverTest extends TestCase
 {

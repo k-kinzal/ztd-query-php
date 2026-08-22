@@ -38,6 +38,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[CoversClass(MySqlMutationResolver::class)]
 #[UsesClass(MySqlParser::class)]
 #[UsesClass(MySqlSchemaParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlUpsertExpressionParser::class)]
 #[UsesClass(SelectTransformer::class)]
 #[UsesClass(UpdateTransformer::class)]
 #[UsesClass(DeleteTransformer::class)]
