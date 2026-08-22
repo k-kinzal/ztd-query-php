@@ -27,6 +27,8 @@ final class PgSqlLexerProfile
             identifierPartPattern: '/^[_A-Za-z0-9$\x80-\xFF]$/',
             bracketPair: ['[', ']'],
             nestingPair: ['(', ')'],
+            statementDelimiter: ';',
+            listDelimiter: ',',
             nestedBlockComments: true,
             backslashEscapedStrings: false,
         );

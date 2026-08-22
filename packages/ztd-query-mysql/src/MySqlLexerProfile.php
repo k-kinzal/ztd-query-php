@@ -30,6 +30,8 @@ final class MySqlLexerProfile
             identifierPartPattern: '/^[_A-Za-z0-9$\x80-\xFF]$/',
             bracketPair: ['[', ']'],
             nestingPair: ['(', ')'],
+            statementDelimiter: ';',
+            listDelimiter: ',',
             nestedBlockComments: false,
             backslashEscapedStrings: true,
         );

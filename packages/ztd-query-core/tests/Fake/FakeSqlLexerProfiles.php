@@ -39,6 +39,8 @@ final class FakeSqlLexerProfiles
         string $identifierPartPattern = '/^[_A-Za-z0-9]$/',
         ?array $bracketPair = null,
         array $nestingPair = ['(', ')'],
+        string $statementDelimiter = ';',
+        string $listDelimiter = ',',
         bool $nestedBlockComments = false,
         bool $backslashEscapedStrings = false,
     ): SqlLexerProfile {
@@ -59,6 +61,8 @@ final class FakeSqlLexerProfiles
             identifierPartPattern: $identifierPartPattern,
             bracketPair: $bracketPair,
             nestingPair: $nestingPair,
+            statementDelimiter: $statementDelimiter,
+            listDelimiter: $listDelimiter,
             nestedBlockComments: $nestedBlockComments,
             backslashEscapedStrings: $backslashEscapedStrings,
         );
@@ -83,6 +87,8 @@ final class FakeSqlLexerProfiles
             identifierPartPattern: '/^[_A-Za-z0-9\x80-\xFF]$/',
             bracketPair: ['[', ']'],
             nestingPair: ['(', ')'],
+            statementDelimiter: ';',
+            listDelimiter: ',',
             nestedBlockComments: true,
             backslashEscapedStrings: false,
         );
@@ -107,6 +113,8 @@ final class FakeSqlLexerProfiles
             identifierPartPattern: '/^[_A-Za-z0-9$\x80-\xFF]$/',
             bracketPair: ['[', ']'],
             nestingPair: ['(', ')'],
+            statementDelimiter: ';',
+            listDelimiter: ',',
             nestedBlockComments: true,
             backslashEscapedStrings: true,
         );

@@ -78,6 +78,8 @@ final class SqlLexerProfile
         private readonly string $identifierPartPattern,
         ?array $bracketPair,
         array $nestingPair,
+        private readonly string $statementDelimiter,
+        private readonly string $listDelimiter,
         private readonly bool $nestedBlockComments,
         private readonly bool $backslashEscapedStrings,
     ) {
@@ -109,6 +111,9 @@ final class SqlLexerProfile
         }
         /** @var array{non-empty-string, non-empty-string} $nestingPair */
         $this->nestingPair = $nestingPair;
+        if (strlen($this->statementDelimiter) !== 1 || strlen($this->listDelimiter) !== 1) {
+            throw new InvalidArgumentException('Statement and list delimiters must be single characters.');
+        }
     }
 
     public function startsLineComment(string $sql, int $offset): bool
@@ -304,6 +309,16 @@ final class SqlLexerProfile
     public function isNestingClosing(string $character): bool
     {
         return $character === $this->nestingPair[1];
+    }
+
+    public function isStatementDelimiter(string $symbol): bool
+    {
+        return $symbol === $this->statementDelimiter;
+    }
+
+    public function listDelimiter(): string
+    {
+        return $this->listDelimiter;
     }
 
     private function matchesCharacter(string $pattern, string $character): bool

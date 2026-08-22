@@ -43,8 +43,8 @@ final class SqlTokenStreamTest extends TestCase
     {
         $stream = SqlTokenStream::tokenize('MATCH((title), body) AGAINST (?)', FakeSqlLexerProfiles::standard());
         $tokens = $stream->significantTokens();
-        $columnsClosing = $stream->matchingClosingParenthesis($tokens[1]);
-        $queryClosing = $stream->matchingClosingParenthesis($tokens[9]);
+        $columnsClosing = $stream->matchingClosingNestingToken($tokens[1]);
+        $queryClosing = $stream->matchingClosingNestingToken($tokens[9]);
 
         self::assertNotNull($columnsClosing);
         self::assertNotNull($queryClosing);
@@ -63,11 +63,11 @@ final class SqlTokenStreamTest extends TestCase
         $closingSymbols = SqlTokenStream::tokenize(') )', FakeSqlLexerProfiles::standard());
         $closingTokens = $closingSymbols->significantTokens();
 
-        self::assertNull($stream->matchingClosingParenthesis($tokens[0]));
-        self::assertNull($stream->matchingClosingParenthesis($tokens[1]));
-        self::assertNull($stream->matchingClosingParenthesis($foreign));
-        self::assertNull($closed->matchingClosingParenthesis($closedTokens[0]));
-        self::assertNull($closingSymbols->matchingClosingParenthesis($closingTokens[0]));
+        self::assertNull($stream->matchingClosingNestingToken($tokens[0]));
+        self::assertNull($stream->matchingClosingNestingToken($tokens[1]));
+        self::assertNull($stream->matchingClosingNestingToken($foreign));
+        self::assertNull($closed->matchingClosingNestingToken($closedTokens[0]));
+        self::assertNull($closingSymbols->matchingClosingNestingToken($closingTokens[0]));
     }
 
     public function testReadsWordAndQuotedIdentifiersAtSignificantTokenOffsets(): void
@@ -116,6 +116,27 @@ final class SqlTokenStreamTest extends TestCase
     public function testReturnsNoStatementsForEmptyInputAndTerminators(): void
     {
         self::assertSame([], SqlTokenStream::tokenize(' ; ; ', FakeSqlLexerProfiles::standard())->splitStatements());
+    }
+
+    public function testUsesProfileSuppliedNestingAndPunctuation(): void
+    {
+        $profile = FakeSqlLexerProfiles::custom(
+            nestingPair: ['{', '}'],
+            statementDelimiter: '!',
+            listDelimiter: '|',
+        );
+        $nested = SqlTokenStream::tokenize('outer{inner{value}}', $profile);
+        $tokens = $nested->significantTokens();
+
+        self::assertSame('}', $nested->matchingClosingNestingToken($tokens[1])?->text);
+        self::assertSame(
+            ['alpha{nested!value}', 'beta'],
+            SqlTokenStream::tokenize('alpha{nested!value}!beta', $profile)->splitStatements(),
+        );
+        self::assertSame(
+            ['first', 'nested{second|third}', 'last'],
+            SqlTokenStream::tokenize('first|nested{second|third}|last', $profile)->splitTopLevel(),
+        );
     }
 
     public function testClauseIgnoresNestedKeywords(): void

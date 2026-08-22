@@ -32,6 +32,8 @@ final class SqlLexerProfileTest extends TestCase
             identifierPartPattern: '/^[_A-Za-z0-9$]$/',
             bracketPair: ['[', ']'],
             nestingPair: ['(', ')'],
+            statementDelimiter: ';',
+            listDelimiter: ',',
             nestedBlockComments: true,
             backslashEscapedStrings: false,
         );
@@ -83,6 +85,8 @@ final class SqlLexerProfileTest extends TestCase
         self::assertFalse($profile->isBracketClosing(')'));
         self::assertTrue($profile->isNestingOpening('('));
         self::assertTrue($profile->isNestingClosing(')'));
+        self::assertTrue($profile->isStatementDelimiter(';'));
+        self::assertSame(',', $profile->listDelimiter());
     }
 
     public function testRejectsEmptyLexicalDelimiter(): void
@@ -147,6 +151,20 @@ final class SqlLexerProfileTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
 
         FakeSqlLexerProfiles::custom(nestingPair: ['(', '']);
+    }
+
+    public function testRejectsInvalidStatementDelimiterLength(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        FakeSqlLexerProfiles::custom(statementDelimiter: ';;');
+    }
+
+    public function testRejectsInvalidListDelimiterLength(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        FakeSqlLexerProfiles::custom(listDelimiter: '::');
     }
 
     public function testRejectsEmptyParameterPrefix(): void

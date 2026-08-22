@@ -69,9 +69,9 @@ final class SqlTokenStream
         return null;
     }
 
-    public function matchingClosingParenthesis(SqlToken $opening): ?SqlToken
+    public function matchingClosingNestingToken(SqlToken $opening): ?SqlToken
     {
-        if ($opening->kind !== SqlTokenKind::Symbol || $opening->text !== '(') {
+        if ($opening->kind !== SqlTokenKind::Symbol || !$this->profile->isNestingOpening($opening->text)) {
             return null;
         }
 
@@ -84,7 +84,7 @@ final class SqlTokenStream
             if ($token->kind !== SqlTokenKind::Symbol) {
                 continue;
             }
-            if ($token->text !== ')') {
+            if (!$this->profile->isNestingClosing($token->text)) {
                 continue;
             }
             if ($token->depth !== $opening->depth) {
@@ -117,7 +117,10 @@ final class SqlTokenStream
         $statements = [];
         $start = 0;
         foreach ($this->significantTokens() as $token) {
-            if ($token->kind !== SqlTokenKind::Symbol || $token->text !== ';' || !$token->isTopLevel()) {
+            if ($token->kind !== SqlTokenKind::Symbol
+                || !$this->profile->isStatementDelimiter($token->text)
+                || !$token->isTopLevel()
+            ) {
                 continue;
             }
             $statement = trim(substr($this->sql, $start, $token->offset - $start));
@@ -194,8 +197,9 @@ final class SqlTokenStream
     /**
      * @return list<string>
      */
-    public function splitTopLevel(string $delimiter = ','): array
+    public function splitTopLevel(?string $delimiter = null): array
     {
+        $delimiter ??= $this->profile->listDelimiter();
         $parts = [];
         $start = 0;
         foreach ($this->significantTokens() as $token) {

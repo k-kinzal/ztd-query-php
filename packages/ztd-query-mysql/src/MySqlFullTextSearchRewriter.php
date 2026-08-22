@@ -45,7 +45,7 @@ final class MySqlFullTextSearchRewriter
         if ($columnsOpen === null) {
             return null;
         }
-        $columnsClose = $stream->matchingClosingParenthesis($columnsOpen);
+        $columnsClose = $stream->matchingClosingNestingToken($columnsOpen);
         if ($columnsClose === null) {
             return null;
         }
@@ -57,7 +57,7 @@ final class MySqlFullTextSearchRewriter
         if ($queryOpen === null) {
             return null;
         }
-        $queryClose = $stream->matchingClosingParenthesis($queryOpen);
+        $queryClose = $stream->matchingClosingNestingToken($queryOpen);
         if ($queryClose === null) {
             return null;
         }

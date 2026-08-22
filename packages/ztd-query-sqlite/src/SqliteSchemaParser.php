@@ -206,7 +206,7 @@ final class SqliteSchemaParser implements SchemaParser
         if ($opening === null) {
             return null;
         }
-        $closing = $stream->matchingClosingParenthesis($opening);
+        $closing = $stream->matchingClosingNestingToken($opening);
         if ($closing === null) {
             return null;
         }
