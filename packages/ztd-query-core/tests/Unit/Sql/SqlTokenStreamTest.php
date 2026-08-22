@@ -34,6 +34,17 @@ final class SqlTokenStreamTest extends TestCase
         self::assertNull(SqlTokenStream::tokenize('42')->identifierAt());
         self::assertNull(SqlTokenStream::tokenize("'value'")->identifierAt());
         self::assertNull(SqlTokenStream::tokenize('[unfinished')->identifierAt());
+        self::assertNull(SqlTokenStream::tokenize('""')->identifierAt());
+        self::assertNull(SqlTokenStream::tokenize('``')->identifierAt());
+        self::assertNull(SqlTokenStream::tokenize('+ leaked ]')->identifierAt());
+    }
+
+    public function testIdentifierAtUnescapesBracketAndAdvancesPastItsClosingToken(): void
+    {
+        self::assertSame(
+            ['name' => 'a]b', 'next' => 6],
+            SqlTokenStream::tokenize('[a]]b] tail')->identifierAt(),
+        );
     }
 
     public function testSplitsOnlyTopLevelStatementTerminators(): void

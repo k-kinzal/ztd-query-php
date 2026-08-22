@@ -209,7 +209,7 @@ final class SqlTokenStream
         if ($token->kind === SqlTokenKind::Word) {
             return [$token->text, $index + 1];
         }
-        if ($token->kind === SqlTokenKind::QuotedIdentifier && strlen($token->text) >= 2) {
+        if ($token->kind === SqlTokenKind::QuotedIdentifier && strlen($token->text) > 2) {
             $quote = $token->text[0];
             $name = substr($token->text, 1, -1);
 
