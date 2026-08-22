@@ -93,4 +93,20 @@ final class PgSqlNativeUpsertProjectorTest extends TestCase
             $projector->project('SELECT 1 AS "id"', 'items', ['id'], ['PRIMARY' => ['id']], []),
         );
     }
+
+    public function testBindsUnqualifiedQuotedIdentifier(): void
+    {
+        $result = (new PgSqlNativeUpsertProjector())->project(
+            'SELECT 1 AS "id", 2 AS "odd""name"',
+            'items',
+            ['id', 'odd"name'],
+            ['PRIMARY' => ['id']],
+            ['odd"name' => '"odd""name" + 1'],
+        );
+
+        self::assertStringContainsString(
+            '(SELECT "__ztd_existing"."odd""name" + 1 FROM "items" AS "__ztd_existing"',
+            $result,
+        );
+    }
 }

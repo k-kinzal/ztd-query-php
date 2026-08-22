@@ -173,8 +173,17 @@ final class GenerationPlansTest extends TestCase
         $plan = GenerationPlans::insertFunctionUpsertStatement();
 
         self::assertSame('insert_stmt', $plan->startRule());
-        self::assertNotNull($plan->patternAt('values_list', 0));
-        self::assertNotNull($plan->patternAt('simple_expr', 0));
-        self::assertNotNull($plan->patternAt('function_call_conflict', 0));
+        self::assertTrue($plan->patternAt('insert_stmt', 0)?->matches(['insert_from_constructor']) ?? false);
+        self::assertTrue(
+            $plan->patternAt('insert_from_constructor', 0)?->matches(['insert_values']) ?? false,
+        );
+        self::assertTrue($plan->patternAt('values_list', 0)?->matches(['row_value']) ?? false);
+        self::assertTrue($plan->patternAt('opt_values', 0)?->matches(['values']) ?? false);
+        self::assertTrue($plan->patternAt('values', 0)?->matches(['expr_or_default']) ?? false);
+        self::assertTrue($plan->patternAt('expr_or_default', 0)?->matches(['DEFAULT_SYM']) ?? false);
+        self::assertTrue($plan->patternAt('expr_or_default', 1)?->matches(['expr']) ?? false);
+        self::assertTrue($plan->patternAt('opt_insert_update_list', 0)?->matches(['update']) ?? false);
+        self::assertTrue($plan->patternAt('simple_expr', 0)?->matches(['function_call_conflict']) ?? false);
+        self::assertTrue($plan->patternAt('function_call_conflict', 0)?->matches(['IF']) ?? false);
     }
 }

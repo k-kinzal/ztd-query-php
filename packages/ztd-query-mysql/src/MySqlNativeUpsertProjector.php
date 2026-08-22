@@ -114,10 +114,13 @@ final class MySqlNativeUpsertProjector
         $incomingNamespaces = array_fill_keys(array_map('strtolower', $namespaces), true);
 
         foreach ($tokens as $index => $token) {
-            if (($subqueryTokens[$index] ?? false)
-                || ($incomingArgumentOffset !== null && $token->offset === $incomingArgumentOffset)
-                || !$this->isIdentifier($token)
-            ) {
+            if (!$this->isIdentifier($token)) {
+                continue;
+            }
+            if ($subqueryTokens[$index] ?? false) {
+                continue;
+            }
+            if ($token->offset === $incomingArgumentOffset) {
                 continue;
             }
             $name = $this->identifier($token);
@@ -203,13 +206,9 @@ final class MySqlNativeUpsertProjector
 
     private function identifier(SqlToken $token): string
     {
-        if ($token->kind !== SqlTokenKind::QuotedIdentifier) {
-            return $token->text;
-        }
-        $inner = substr($token->text, 1, -1);
-        $quote = $token->text[0];
+        $identifier = SqlTokenStream::tokenize($token->text, $this->dialect)->identifierAt();
 
-        return str_replace($quote . $quote, $quote, $inner);
+        return $identifier === null ? $token->text : $identifier['name'];
     }
 
     private function qualified(string $alias, string $column): string

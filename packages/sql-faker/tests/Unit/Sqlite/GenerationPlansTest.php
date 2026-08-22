@@ -36,7 +36,29 @@ final class GenerationPlansTest extends TestCase
         $plan = GenerationPlans::insertFunctionUpsertStatement();
 
         self::assertSame('cmd', $plan->startRule());
-        self::assertNotNull($plan->patternAt('upsert', 0));
-        self::assertNotNull($plan->patternAt('expr', 1));
+        self::assertTrue($plan->patternAt('cmd', 0)?->matches(['insert_cmd', 'select', 'upsert']) ?? false);
+        self::assertTrue($plan->patternAt('with', 0)?->matches([]) ?? false);
+        self::assertTrue($plan->patternAt('insert_cmd', 0)?->matches(['INSERT']) ?? false);
+        self::assertTrue($plan->patternAt('select', 0)?->matches(['selectnowith']) ?? false);
+        self::assertTrue($plan->patternAt('selectnowith', 0)?->matches(['oneselect']) ?? false);
+        self::assertTrue($plan->patternAt('oneselect', 0)?->matches(['values']) ?? false);
+        self::assertTrue(
+            $plan->patternAt('values', 0)?->matches(['VALUES', 'LP', 'nexprlist', 'RP']) ?? false,
+        );
+        self::assertTrue($plan->patternAt('nexprlist', 0)?->matches(['expr']) ?? false);
+        self::assertTrue(
+            $plan->patternAt('upsert', 0)?->matches([
+                'ON',
+                'CONFLICT',
+                'DO',
+                'UPDATE',
+                'SET',
+                'setlist',
+                'where_opt',
+                'returning',
+            ]) ?? false,
+        );
+        self::assertTrue($plan->patternAt('expr', 0)?->matches(['term']) ?? false);
+        self::assertTrue($plan->patternAt('expr', 1)?->matches(['idj', 'LP', 'RP']) ?? false);
     }
 }

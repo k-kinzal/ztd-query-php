@@ -100,33 +100,19 @@ final class SqliteNativeUpsertProjector
         $tokens = SqlTokenStream::tokenize($expression, $this->dialect)->significantTokens();
         $subqueryTokens = $this->subqueryTokenIndexes($tokens);
         $replacements = [];
-        $incomingArgumentOffset = null;
         $columnNames = array_fill_keys(array_map('strtolower', $tableColumns), true);
         $incomingNamespaces = array_fill_keys(array_map('strtolower', $this->incomingNamespaces), true);
 
         foreach ($tokens as $index => $token) {
-            if (($subqueryTokens[$index] ?? false)
-                || ($incomingArgumentOffset !== null && $token->offset === $incomingArgumentOffset)
-                || !$this->isIdentifier($token)
-            ) {
+            if (!$this->isIdentifier($token)) {
+                continue;
+            }
+            if ($subqueryTokens[$index] ?? false) {
                 continue;
             }
             $name = $this->identifier($token);
             $next = $tokens[$index + 1] ?? null;
             $afterNext = $tokens[$index + 2] ?? null;
-            if ($next?->text === '(' && isset($incomingNamespaces[strtolower($name)])) {
-                $column = $afterNext;
-                $close = $tokens[$index + 3] ?? null;
-                if ($column !== null && $this->isIdentifier($column) && $close?->text === ')') {
-                    $replacements[] = [
-                        'offset' => $token->offset,
-                        'length' => $close->endOffset() - $token->offset,
-                        'value' => $this->qualified(self::INCOMING_ALIAS, $this->identifier($column)),
-                    ];
-                    $incomingArgumentOffset = $column->offset;
-                }
-                continue;
-            }
             if ($next?->text === '.' && $afterNext !== null && $this->isIdentifier($afterNext)) {
                 $namespace = strtolower($name);
                 $alias = isset($incomingNamespaces[$namespace])
@@ -194,13 +180,9 @@ final class SqliteNativeUpsertProjector
 
     private function identifier(SqlToken $token): string
     {
-        if ($token->kind !== SqlTokenKind::QuotedIdentifier) {
-            return $token->text;
-        }
-        $inner = substr($token->text, 1, -1);
-        $quote = $token->text[0];
+        $identifier = SqlTokenStream::tokenize($token->text, $this->dialect)->identifierAt();
 
-        return str_replace($quote . $quote, $quote, $inner);
+        return $identifier === null ? $token->text : $identifier['name'];
     }
 
     private function qualified(string $alias, string $column): string
