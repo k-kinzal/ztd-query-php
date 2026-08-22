@@ -142,7 +142,27 @@ final class GenerationPlansTest extends TestCase
         $plan = GenerationPlans::mergeStatement();
 
         self::assertSame('MergeStmt', $plan->startRule());
-        self::assertNotNull($plan->patternAt('merge_when_list', 3));
-        self::assertNotNull($plan->patternAt('merge_when_clause', 3));
+        self::assertTrue(
+            $plan->patternAt('merge_when_list', 0)?->matches(['merge_when_list', 'merge_when_clause']) ?? false,
+        );
+        self::assertTrue(
+            $plan->patternAt('merge_when_list', 1)?->matches(['merge_when_list', 'merge_when_clause']) ?? false,
+        );
+        self::assertTrue(
+            $plan->patternAt('merge_when_list', 2)?->matches(['merge_when_list', 'merge_when_clause']) ?? false,
+        );
+        self::assertTrue($plan->patternAt('merge_when_list', 3)?->matches(['merge_when_clause']) ?? false);
+        self::assertTrue(
+            $plan->patternAt('merge_when_clause', 0)?->matches(['merge_when_tgt_matched', 'merge_delete']) ?? false,
+        );
+        self::assertTrue(
+            $plan->patternAt('merge_when_clause', 1)?->matches(['merge_when_tgt_matched', 'DO', 'NOTHING']) ?? false,
+        );
+        self::assertTrue(
+            $plan->patternAt('merge_when_clause', 2)?->matches(['merge_when_tgt_matched', 'merge_update']) ?? false,
+        );
+        self::assertTrue(
+            $plan->patternAt('merge_when_clause', 3)?->matches(['merge_when_tgt_not_matched', 'merge_insert']) ?? false,
+        );
     }
 }

@@ -40,6 +40,7 @@ use ZtdQuery\Schema\IdentityGenerationStrategy;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlGeneratedColumnProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\InsertSelectRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\InsertRowRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser::class)]
 final class MergeTransformerTest extends TestCase
 {
     public function testTransformsMixedUpdateAndInsertIntoCompleteTargetState(): void

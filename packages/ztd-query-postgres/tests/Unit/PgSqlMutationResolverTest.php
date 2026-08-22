@@ -43,6 +43,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlMergeClause::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlMergeMatchKind::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlMergeActionKind::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer::class)]
 final class PgSqlMutationResolverTest extends TestCase
 {
     public function testPartitionDdlInheritsParentSchemaAndChildDmlUsesParentStorage(): void
