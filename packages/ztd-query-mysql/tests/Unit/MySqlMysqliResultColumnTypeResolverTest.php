@@ -9,12 +9,10 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\MySql\MySqlColumnTypeMapper;
 use ZtdQuery\Platform\MySql\MySqlMysqliResultColumnTypeResolver;
-use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(MySqlMysqliResultColumnTypeResolver::class)]
 #[UsesClass(MySqlColumnTypeMapper::class)]
-#[UsesClass(ColumnType::class)]
 final class MySqlMysqliResultColumnTypeResolverTest extends TestCase
 {
     public function testResolvesMysqliProtocolTypes(): void

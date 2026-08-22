@@ -11,14 +11,12 @@ use ZtdQuery\Platform\MySql\MySqlColumnTypeMapper;
 use ZtdQuery\Platform\MySql\MySqlMysqliResultColumnTypeResolver;
 use ZtdQuery\Platform\MySql\MySqlPdoResultColumnTypeResolver;
 use ZtdQuery\Platform\MySql\MySqlResultColumnTypeResolver;
-use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(MySqlResultColumnTypeResolver::class)]
 #[UsesClass(MySqlMysqliResultColumnTypeResolver::class)]
 #[UsesClass(MySqlPdoResultColumnTypeResolver::class)]
 #[UsesClass(MySqlColumnTypeMapper::class)]
-#[UsesClass(ColumnType::class)]
 final class MySqlResultColumnTypeResolverTest extends TestCase
 {
     public function testSelectsResolverFromMetadataShape(): void

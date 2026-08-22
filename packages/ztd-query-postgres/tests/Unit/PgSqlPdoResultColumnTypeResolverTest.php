@@ -9,12 +9,10 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Postgres\PgSqlPdoResultColumnTypeResolver;
 use ZtdQuery\Platform\Postgres\PgSqlColumnTypeMapper;
-use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(PgSqlPdoResultColumnTypeResolver::class)]
 #[UsesClass(PgSqlColumnTypeMapper::class)]
-#[UsesClass(ColumnType::class)]
 final class PgSqlPdoResultColumnTypeResolverTest extends TestCase
 {
     public function testRestoresPostgreSqlCharacterTypeLength(): void

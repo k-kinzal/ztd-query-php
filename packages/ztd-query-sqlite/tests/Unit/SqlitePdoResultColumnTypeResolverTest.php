@@ -9,12 +9,10 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Sqlite\SqlitePdoResultColumnTypeResolver;
 use ZtdQuery\Platform\Sqlite\SqliteColumnTypeMapper;
-use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(SqlitePdoResultColumnTypeResolver::class)]
 #[UsesClass(SqliteColumnTypeMapper::class)]
-#[UsesClass(ColumnType::class)]
 final class SqlitePdoResultColumnTypeResolverTest extends TestCase
 {
     public function testPrefersSqliteDeclaredType(): void

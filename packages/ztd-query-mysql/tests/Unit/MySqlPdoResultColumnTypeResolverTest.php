@@ -9,12 +9,10 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\MySql\MySqlPdoResultColumnTypeResolver;
 use ZtdQuery\Platform\MySql\MySqlColumnTypeMapper;
-use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(MySqlPdoResultColumnTypeResolver::class)]
 #[UsesClass(MySqlColumnTypeMapper::class)]
-#[UsesClass(ColumnType::class)]
 final class MySqlPdoResultColumnTypeResolverTest extends TestCase
 {
     public function testResolvesPdoMySqlNativeType(): void
