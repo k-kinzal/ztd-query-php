@@ -266,6 +266,8 @@ final class GenerationPlansTest extends TestCase
 
     public function testLoadDataPlanStartsFromTheLoadGrammar(): void
     {
-        self::assertSame('load_stmt', GenerationPlans::loadDataStatement()->startRule());
+        $plan = GenerationPlans::loadDataStatement();
+
+        self::assertSame('load_stmt', $plan->startRule());
     }
 }
