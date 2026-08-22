@@ -19,6 +19,11 @@ final class PgSqlReturningProjectionParserTest extends TestCase
             'UPDATE users SET name = \'x\' RETURNING users.id AS original_id, *, "name" AS display_name',
         );
         self::assertNotNull($projection);
+        self::assertSame([
+            ['source' => 'id', 'output' => 'original_id'],
+            ['source' => null, 'output' => null],
+            ['source' => 'name', 'output' => 'display_name'],
+        ], $projection->items());
 
         self::assertSame([
             ['original_id' => 1, 'id' => 1, 'name' => 'Alice', 'display_name' => 'Alice'],

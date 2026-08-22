@@ -21,6 +21,13 @@ final class ReturningProjectionTest extends TestCase
         ]);
 
         self::assertSame([
+            ['source' => 'id', 'output' => 'original_id'],
+            ['source' => null, 'output' => null],
+            ['source' => 'name', 'output' => 'display_name'],
+            ['source' => 'missing', 'output' => null],
+        ], $projection->items());
+
+        self::assertSame([
             ['original_id' => 1, 'id' => 1, 'name' => 'Alice', 'display_name' => 'Alice', 'missing' => null],
             ['original_id' => 2, 'id' => 2, 'name' => 'Bob', 'display_name' => 'Bob', 'missing' => null],
         ], $projection->project([
