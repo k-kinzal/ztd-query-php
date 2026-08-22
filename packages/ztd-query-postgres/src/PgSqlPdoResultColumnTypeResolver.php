@@ -15,9 +15,13 @@ final class PgSqlPdoResultColumnTypeResolver implements ResultColumnTypeResolver
         if (!is_string($nativeType)) {
             return (new PgSqlColumnTypeMapper())->map('');
         }
+        if (str_starts_with($nativeType, '_')) {
+            $nativeType = substr($nativeType, 1) . '[]';
+        }
 
-        $length = $metadata['len'] ?? null;
-        if (is_int($length) && $length > 0 && !str_contains($nativeType, '(')) {
+        $typeModifier = $metadata['precision'] ?? null;
+        if (is_int($typeModifier) && $typeModifier > 4 && !str_contains($nativeType, '(')) {
+            $length = $typeModifier - 4;
             $nativeType = match (strtoupper($nativeType)) {
                 'VARCHAR' => "VARCHAR($length)",
                 'BPCHAR' => "CHAR($length)",

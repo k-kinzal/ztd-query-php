@@ -11,12 +11,11 @@ final class MySqlColumnTypeMapper
 {
     public function map(string $nativeType): ColumnType
     {
-        $upper = strtoupper($nativeType);
-        $withoutParameters = preg_replace('/\(.*\)/', '', $upper);
-        $baseType = trim(is_string($withoutParameters) ? $withoutParameters : $upper);
+        $normalized = strtoupper(trim($nativeType));
+        $baseType = substr($normalized, 0, strcspn($normalized, "( \t\r\n"));
 
         $family = match ($baseType) {
-            'INT', 'INTEGER', 'TINYINT', 'SMALLINT', 'MEDIUMINT', 'BIGINT',
+            'INT', 'INTEGER', 'TINY', 'TINYINT', 'SMALLINT', 'MEDIUMINT', 'BIGINT',
             'LONG', 'LONGLONG', 'SHORT', 'INT24', 'YEAR', 'BIT' => ColumnTypeFamily::INTEGER,
             'FLOAT' => ColumnTypeFamily::FLOAT,
             'DOUBLE', 'REAL' => ColumnTypeFamily::DOUBLE,
@@ -28,7 +27,8 @@ final class MySqlColumnTypeMapper
             'TIME', 'TIME2' => ColumnTypeFamily::TIME,
             'DATETIME', 'DATETIME2' => ColumnTypeFamily::DATETIME,
             'TIMESTAMP', 'TIMESTAMP2' => ColumnTypeFamily::TIMESTAMP,
-            'BINARY', 'VARBINARY', 'BLOB', 'TINYBLOB', 'MEDIUMBLOB', 'LONGBLOB'
+            'BINARY', 'VARBINARY', 'BLOB', 'TINYBLOB', 'MEDIUMBLOB', 'LONGBLOB',
+            'TINY_BLOB', 'MEDIUM_BLOB', 'LONG_BLOB', 'VECTOR'
                 => ColumnTypeFamily::BINARY,
             'JSON' => ColumnTypeFamily::JSON,
             default => ColumnTypeFamily::UNKNOWN,

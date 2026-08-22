@@ -11,11 +11,12 @@ final class PgSqlColumnTypeMapper
 {
     public function map(string $nativeType): ColumnType
     {
-        $upper = strtoupper($nativeType);
-        $withoutParameters = preg_replace('/\(.*\)/', '', $upper);
-        $baseType = trim(is_string($withoutParameters) ? $withoutParameters : $upper);
-        $withoutArrays = preg_replace('/(?:\[\s*\])+$/', '', $baseType);
-        $baseType = trim(is_string($withoutArrays) ? $withoutArrays : $baseType);
+        $normalized = strtoupper(trim($nativeType));
+        $parameterOffset = strpos($normalized, '(');
+        $withoutParameters = $parameterOffset === false
+            ? $normalized
+            : substr($normalized, 0, $parameterOffset);
+        $baseType = rtrim($withoutParameters, "[] \t\r\n");
 
         $family = match ($baseType) {
             'INT', 'INT2', 'INT4', 'INT8', 'INTEGER', 'SMALLINT', 'BIGINT',

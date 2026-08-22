@@ -49,6 +49,7 @@ use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTableState;
 
 #[CoversClass(MySqlRewriter::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlColumnTypeMapper::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlForeignKeyDefinitionParser::class)]
 #[UsesClass(MySqlParser::class)]
 #[UsesClass(MySqlMutationResolver::class)]

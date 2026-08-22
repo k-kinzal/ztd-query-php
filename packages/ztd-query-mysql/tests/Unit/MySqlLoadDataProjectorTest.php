@@ -16,6 +16,7 @@ use ZtdQuery\Platform\MySql\MySqlSchemaParser;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 
 #[CoversClass(MySqlLoadDataProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlColumnTypeMapper::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlCastRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlIdentifierQuoter::class)]
 #[UsesClass(MySqlParser::class)]

@@ -30,4 +30,14 @@ final class MySqlPdoResultColumnTypeResolverTest extends TestCase
         self::assertSame(ColumnTypeFamily::UNKNOWN, $type->family);
         self::assertSame('', $type->nativeType);
     }
+
+    public function testResolvesEveryPreviouslyMissingPdoMySqlNativeType(): void
+    {
+        $resolver = new MySqlPdoResultColumnTypeResolver();
+
+        self::assertSame(ColumnTypeFamily::INTEGER, $resolver->resolve(['native_type' => 'TINY'])->family);
+        self::assertSame(ColumnTypeFamily::BINARY, $resolver->resolve(['native_type' => 'TINY_BLOB'])->family);
+        self::assertSame(ColumnTypeFamily::BINARY, $resolver->resolve(['native_type' => 'MEDIUM_BLOB'])->family);
+        self::assertSame(ColumnTypeFamily::BINARY, $resolver->resolve(['native_type' => 'LONG_BLOB'])->family);
+    }
 }

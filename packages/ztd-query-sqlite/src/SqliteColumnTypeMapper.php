@@ -11,26 +11,22 @@ final class SqliteColumnTypeMapper
 {
     public function map(string $nativeType): ColumnType
     {
-        $upper = strtoupper($nativeType);
-        $withoutParameters = preg_replace('/\(.*\)/', '', $upper);
-        $baseType = trim(is_string($withoutParameters) ? $withoutParameters : $upper);
+        $normalized = strtoupper(trim($nativeType));
 
-        $family = match ($baseType) {
-            'INT', 'INTEGER', 'TINYINT', 'SMALLINT', 'MEDIUMINT', 'BIGINT', 'INT2', 'INT8'
-                => ColumnTypeFamily::INTEGER,
-            'REAL', 'DOUBLE', 'DOUBLE PRECISION', 'FLOAT' => ColumnTypeFamily::FLOAT,
-            'DECIMAL', 'NUMERIC' => ColumnTypeFamily::DECIMAL,
-            'BOOLEAN', 'BOOL' => ColumnTypeFamily::BOOLEAN,
-            'TEXT', 'CLOB' => ColumnTypeFamily::TEXT,
-            'CHAR', 'CHARACTER', 'VARCHAR', 'VARYING CHARACTER', 'NCHAR',
-            'NATIVE CHARACTER', 'NVARCHAR', 'STRING' => ColumnTypeFamily::STRING,
-            'BLOB' => ColumnTypeFamily::BINARY,
-            'DATE' => ColumnTypeFamily::DATE,
-            'TIME' => ColumnTypeFamily::TIME,
-            'DATETIME' => ColumnTypeFamily::DATETIME,
-            'TIMESTAMP' => ColumnTypeFamily::TIMESTAMP,
-            'JSON' => ColumnTypeFamily::JSON,
-            default => ColumnTypeFamily::UNKNOWN,
+        $family = match (true) {
+            in_array($normalized, ['BOOLEAN', 'BOOL'], true) => ColumnTypeFamily::BOOLEAN,
+            $normalized === 'DATE' => ColumnTypeFamily::DATE,
+            $normalized === 'TIME' => ColumnTypeFamily::TIME,
+            $normalized === 'DATETIME' => ColumnTypeFamily::DATETIME,
+            $normalized === 'TIMESTAMP' => ColumnTypeFamily::TIMESTAMP,
+            $normalized === 'JSON' => ColumnTypeFamily::JSON,
+            str_contains($normalized, 'INT') => ColumnTypeFamily::INTEGER,
+            str_contains($normalized, 'CLOB'), str_contains($normalized, 'TEXT') => ColumnTypeFamily::TEXT,
+            str_contains($normalized, 'CHAR') => ColumnTypeFamily::STRING,
+            $normalized === '', str_contains($normalized, 'BLOB') => ColumnTypeFamily::BINARY,
+            str_contains($normalized, 'REAL'), str_contains($normalized, 'FLOA'),
+            str_contains($normalized, 'DOUB') => ColumnTypeFamily::FLOAT,
+            default => ColumnTypeFamily::DECIMAL,
         };
 
         return new ColumnType($family, $nativeType);

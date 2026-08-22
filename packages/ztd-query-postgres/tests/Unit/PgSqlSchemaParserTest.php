@@ -15,6 +15,7 @@ use ZtdQuery\Platform\Postgres\PgSqlPartitionParser;
 use ZtdQuery\Schema\TablePartitionStrategy;
 
 #[CoversClass(PgSqlSchemaParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlColumnTypeMapper::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlForeignKeyDefinitionParser::class)]
 #[UsesClass(PgSqlPartitionParser::class)]
 final class PgSqlSchemaParserTest extends SchemaParserContractTest

@@ -33,4 +33,18 @@ final class SqlitePdoResultColumnTypeResolverTest extends TestCase
         self::assertSame(ColumnTypeFamily::INTEGER, $type->family);
         self::assertSame('integer', $type->nativeType);
     }
+
+    public function testResolvesDynamicStringAndInvalidMetadata(): void
+    {
+        $resolver = new SqlitePdoResultColumnTypeResolver();
+        $blank = $resolver->resolve(['native_type' => '   ']);
+
+        self::assertSame(ColumnTypeFamily::STRING, $resolver->resolve(['native_type' => 'string'])->family);
+        self::assertSame(ColumnTypeFamily::UNKNOWN, $resolver->resolve(['native_type' => 'null'])->family);
+        self::assertSame(ColumnTypeFamily::UNKNOWN, $resolver->resolve(['native_type' => null])->family);
+        self::assertSame(ColumnTypeFamily::UNKNOWN, $resolver->resolve(['sqlite:decl_type' => null])->family);
+        self::assertSame(ColumnTypeFamily::UNKNOWN, $blank->family);
+        self::assertSame('   ', $blank->nativeType);
+        self::assertSame('', $resolver->resolve(['native_type' => 1])->nativeType);
+    }
 }

@@ -16,6 +16,7 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
 
 #[CoversClass(SqliteSchemaParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteColumnTypeMapper::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteForeignKeyDefinitionParser::class)]
 #[UsesClass(SqliteLexicalMasker::class)]
 #[UsesClass(SqliteParser::class)]
@@ -596,13 +597,13 @@ final class SqliteSchemaParserTest extends SchemaParserContractTest
         self::assertSame(ColumnTypeFamily::JSON, $result->typedColumns['a']->family);
     }
 
-    public function testParseTypedColumnsUnknown(): void
+    public function testParseTypedColumnsWithNumericAffinity(): void
     {
         $parser = new SqliteSchemaParser();
         $sql = 'CREATE TABLE t (a CUSTOM_TYPE)';
         $result = $parser->parse($sql);
         self::assertNotNull($result);
-        self::assertSame(ColumnTypeFamily::UNKNOWN, $result->typedColumns['a']->family);
+        self::assertSame(ColumnTypeFamily::DECIMAL, $result->typedColumns['a']->family);
     }
 
     public function testParseTypedColumnsWithParenthesizedSize(): void
@@ -1097,13 +1098,13 @@ final class SqliteSchemaParserTest extends SchemaParserContractTest
         self::assertSame('INTEGER', $result->typedColumns['a']->nativeType);
     }
 
-    public function testParseColumnTypeFamilyUnknownWithParens(): void
+    public function testParseColumnTypeFamilyNumericAffinityWithParens(): void
     {
         $parser = new SqliteSchemaParser();
         $sql = 'CREATE TABLE t (a CUSTOM_TYPE(10))';
         $result = $parser->parse($sql);
         self::assertNotNull($result);
-        self::assertSame(ColumnTypeFamily::UNKNOWN, $result->typedColumns['a']->family);
+        self::assertSame(ColumnTypeFamily::DECIMAL, $result->typedColumns['a']->family);
         self::assertSame('CUSTOM_TYPE(10)', $result->typedColumns['a']->nativeType);
     }
 
@@ -1555,13 +1556,13 @@ final class SqliteSchemaParserTest extends SchemaParserContractTest
         self::assertSame(ColumnTypeFamily::STRING, $result->typedColumns['s']->family);
     }
 
-    public function testColumnTypeUnknownMapsToUnknownFamily(): void
+    public function testColumnTypeWithoutAffinityMarkerMapsToDecimalFamily(): void
     {
         $parser = new SqliteSchemaParser();
         $sql = 'CREATE TABLE t (x CUSTOM_TYPE)';
         $result = $parser->parse($sql);
         self::assertNotNull($result);
-        self::assertSame(ColumnTypeFamily::UNKNOWN, $result->typedColumns['x']->family);
+        self::assertSame(ColumnTypeFamily::DECIMAL, $result->typedColumns['x']->family);
     }
 
     public function testColumnUniqueNotPrimaryKey(): void
@@ -2050,13 +2051,13 @@ final class SqliteSchemaParserTest extends SchemaParserContractTest
         self::assertSame(ColumnTypeFamily::JSON, $result->typedColumns['a']->family);
     }
 
-    public function testMapToColumnTypeFamilyUnknownType(): void
+    public function testMapToColumnTypeFamilyDefaultsToNumericAffinity(): void
     {
         $parser = new SqliteSchemaParser();
         $sql = 'CREATE TABLE t (a FOOBAR)';
         $result = $parser->parse($sql);
         self::assertNotNull($result);
-        self::assertSame(ColumnTypeFamily::UNKNOWN, $result->typedColumns['a']->family);
+        self::assertSame(ColumnTypeFamily::DECIMAL, $result->typedColumns['a']->family);
     }
 
     public function testUniqueConstraintWithEmptyColumnsNotStored(): void

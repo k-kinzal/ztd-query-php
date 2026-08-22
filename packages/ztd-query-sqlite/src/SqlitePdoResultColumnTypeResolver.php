@@ -6,6 +6,7 @@ namespace ZtdQuery\Platform\Sqlite;
 
 use ZtdQuery\Platform\ResultColumnTypeResolver;
 use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnTypeFamily;
 
 final class SqlitePdoResultColumnTypeResolver implements ResultColumnTypeResolver
 {
@@ -17,7 +18,13 @@ final class SqlitePdoResultColumnTypeResolver implements ResultColumnTypeResolve
         }
 
         $nativeType = $metadata['native_type'] ?? '';
+        if (!is_string($nativeType) || trim($nativeType) === '' || strcasecmp($nativeType, 'null') === 0) {
+            return new ColumnType(ColumnTypeFamily::UNKNOWN, is_string($nativeType) ? $nativeType : '');
+        }
+        if (strcasecmp($nativeType, 'string') === 0) {
+            return new ColumnType(ColumnTypeFamily::STRING, $nativeType);
+        }
 
-        return (new SqliteColumnTypeMapper())->map(is_string($nativeType) ? $nativeType : '');
+        return (new SqliteColumnTypeMapper())->map($nativeType);
     }
 }
