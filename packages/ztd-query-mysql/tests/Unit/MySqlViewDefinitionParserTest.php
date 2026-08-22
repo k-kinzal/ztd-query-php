@@ -9,19 +9,9 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\MySql\MySqlSelectRelationParser;
 use ZtdQuery\Platform\MySql\MySqlViewDefinitionParser;
-use ZtdQuery\Schema\ViewDefinition;
-use ZtdQuery\Sql\SqlToken;
-use ZtdQuery\Sql\SqlTokenDialect;
-use ZtdQuery\Sql\SqlTokenKind;
-use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(MySqlViewDefinitionParser::class)]
 #[UsesClass(MySqlSelectRelationParser::class)]
-#[UsesClass(ViewDefinition::class)]
-#[UsesClass(SqlToken::class)]
-#[UsesClass(SqlTokenDialect::class)]
-#[UsesClass(SqlTokenKind::class)]
-#[UsesClass(SqlTokenStream::class)]
 final class MySqlViewDefinitionParserTest extends TestCase
 {
     public function testParsesAQueryUsingMySqlRelationRules(): void

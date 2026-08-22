@@ -11,17 +11,9 @@ use ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser;
 use ZtdQuery\Platform\Postgres\PgSqlViewShadowRenderer;
 use ZtdQuery\Schema\ViewDefinition;
 use ZtdQuery\Schema\ViewDefinitionSet;
-use ZtdQuery\Sql\SqlToken;
-use ZtdQuery\Sql\SqlTokenKind;
-use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(PgSqlViewShadowRenderer::class)]
 #[UsesClass(PgSqlSelectRelationParser::class)]
-#[UsesClass(ViewDefinition::class)]
-#[UsesClass(ViewDefinitionSet::class)]
-#[UsesClass(SqlToken::class)]
-#[UsesClass(SqlTokenKind::class)]
-#[UsesClass(SqlTokenStream::class)]
 final class PgSqlViewShadowRendererTest extends TestCase
 {
     public function testOrdersViewsAndUnqualifiesShadowedPostgreSqlRelations(): void
