@@ -16,6 +16,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser::class)]
 #[UsesClass(PostgreSqlLexicalMasker::class)]
 #[UsesClass(PgSqlConflictTarget::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
 final class PgSqlParserTest extends TestCase
 {
     public function testClassifiesAnonymousDoBlockWithoutSplittingItsBody(): void

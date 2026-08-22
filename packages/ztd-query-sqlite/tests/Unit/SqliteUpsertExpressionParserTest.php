@@ -6,11 +6,13 @@ namespace ZtdQuery\Platform\Sqlite\Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\Sqlite\SqliteUpsertExpressionParser;
 
 #[CoversClass(SqliteUpsertExpressionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
 final class SqliteUpsertExpressionParserTest extends TestCase
 {
     #[DataProvider('providerSqliteExpressionCases')]

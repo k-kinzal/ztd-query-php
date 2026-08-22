@@ -31,6 +31,7 @@ use ZtdQuery\Schema\TablePartitioning;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlGeneratedColumnProjector::class)]
 #[UsesClass(MySqlPartitionSelectionRewriter::class)]
 #[UsesClass(MySqlFullTextSearchRewriter::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 final class SelectTransformerTest extends TransformerContractTest
 {
     public function testTransformsPartitionSelectionBeforeComposingShadowCte(): void

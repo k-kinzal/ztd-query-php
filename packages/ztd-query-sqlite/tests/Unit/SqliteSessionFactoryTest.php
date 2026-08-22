@@ -62,6 +62,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteViewDefinitionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteViewShadowRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteGeneratedColumnProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
 final class SqliteSessionFactoryTest extends TestCase
 {
     public function testCreateRegistersReflectedViews(): void

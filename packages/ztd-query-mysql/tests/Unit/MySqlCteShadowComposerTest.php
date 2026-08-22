@@ -11,6 +11,7 @@ use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
 
 #[CoversClass(MySqlCteShadowComposer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlSelectRelationParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 final class MySqlCteShadowComposerTest extends TestCase
 {
     public function testIncludesTransitivelyReferencedShadowCtes(): void

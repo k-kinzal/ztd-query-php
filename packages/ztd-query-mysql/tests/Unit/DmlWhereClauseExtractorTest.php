@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\MySql\DmlWhereClauseExtractor;
 
 #[CoversClass(DmlWhereClauseExtractor::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 final class DmlWhereClauseExtractorTest extends TestCase
 {
     #[DataProvider('providerExtract')]

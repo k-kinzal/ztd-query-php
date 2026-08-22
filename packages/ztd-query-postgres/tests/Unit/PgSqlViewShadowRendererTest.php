@@ -14,6 +14,7 @@ use ZtdQuery\Schema\ViewDefinitionSet;
 
 #[CoversClass(PgSqlViewShadowRenderer::class)]
 #[UsesClass(PgSqlSelectRelationParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
 final class PgSqlViewShadowRendererTest extends TestCase
 {
     public function testOrdersViewsAndUnqualifiesShadowedPostgreSqlRelations(): void

@@ -40,6 +40,7 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlNativeUpsertProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlGeneratedColumnProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 final class InsertTransformerTest extends TestCase
 {
     public function testProjectsUpsertExpressionUsingCandidateKeys(): void

@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Postgres\PgSqlReadOnlyDiagnosticStatement;
 
 #[CoversClass(PgSqlReadOnlyDiagnosticStatement::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
 final class PgSqlReadOnlyDiagnosticStatementTest extends TestCase
 {
     #[DataProvider('providerStatement')]

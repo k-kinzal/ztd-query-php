@@ -20,6 +20,7 @@ use ZtdQuery\Schema\IdentityGenerationStrategy;
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteForeignKeyDefinitionParser::class)]
 #[UsesClass(SqliteLexicalMasker::class)]
 #[UsesClass(SqliteParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
 final class SqliteSchemaParserTest extends SchemaParserContractTest
 {
     protected function createParser(): SchemaParser

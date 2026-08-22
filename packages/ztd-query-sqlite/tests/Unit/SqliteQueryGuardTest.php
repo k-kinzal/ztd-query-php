@@ -18,6 +18,7 @@ use ZtdQuery\Rewrite\QueryKind;
 #[UsesClass(SqliteLexicalMasker::class)]
 #[UsesClass(SqliteParser::class)]
 #[UsesClass(SqliteInMemoryAttachStatement::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
 final class SqliteQueryGuardTest extends QueryClassifierContractTest
 {
     protected function classify(string $sql): ?QueryKind

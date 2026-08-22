@@ -15,6 +15,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlReadOnlyDiagnosticStatement::class)]
 #[UsesClass(PgSqlParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PostgreSqlLexicalMasker::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
 final class PgSqlQueryGuardTest extends QueryClassifierContractTest
 {
     protected function classify(string $sql): ?QueryKind

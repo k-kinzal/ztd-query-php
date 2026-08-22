@@ -15,6 +15,7 @@ use ZtdQuery\Platform\Sqlite\SqliteParser;
 #[CoversClass(SqliteFullTextSearchRewriter::class)]
 #[UsesClass(SqliteIdentifierQuoter::class)]
 #[UsesClass(SqliteParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
 final class SqliteFullTextSearchRewriterTest extends TestCase
 {
     public function testRewritesTableMatchAcrossEveryFtsColumn(): void

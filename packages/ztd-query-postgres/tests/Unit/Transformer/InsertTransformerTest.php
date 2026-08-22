@@ -36,6 +36,7 @@ use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlNativeUpsertProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlGeneratedColumnProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
 final class InsertTransformerTest extends TestCase
 {
     public function testProjectsConflictExpressionUsingCandidateKeys(): void

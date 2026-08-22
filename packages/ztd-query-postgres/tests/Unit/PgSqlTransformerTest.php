@@ -44,6 +44,7 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlNativeUpsertProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlGeneratedColumnProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
 final class PgSqlTransformerTest extends TestCase
 {
     public function testTransformSelectDelegatesToSelectTransformer(): void

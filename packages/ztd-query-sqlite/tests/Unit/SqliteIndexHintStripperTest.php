@@ -12,6 +12,7 @@ use ZtdQuery\Platform\Sqlite\SqliteIndexHintStripper;
 
 #[CoversClass(SqliteIndexHintStripper::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
 final class SqliteIndexHintStripperTest extends TestCase
 {
     public function testStripsIndexedByFromShadowSource(): void

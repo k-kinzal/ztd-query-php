@@ -11,6 +11,7 @@ use ZtdQuery\Platform\Sqlite\SqliteNativeUpsertProjector;
 
 #[CoversClass(SqliteNativeUpsertProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
 final class SqliteNativeUpsertProjectorTest extends TestCase
 {
     public function testKeepsIdentifiersInsideScalarSubqueryInTheirNativeScope(): void

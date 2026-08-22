@@ -11,6 +11,7 @@ use ZtdQuery\Platform\Postgres\PgSqlNativeUpsertProjector;
 
 #[CoversClass(PgSqlNativeUpsertProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
 final class PgSqlNativeUpsertProjectorTest extends TestCase
 {
     public function testKeepsIdentifiersInsideScalarSubqueryInTheirNativeScope(): void

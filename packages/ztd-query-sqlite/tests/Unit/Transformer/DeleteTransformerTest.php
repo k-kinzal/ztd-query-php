@@ -27,6 +27,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(SqliteIdentifierQuoter::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteGeneratedColumnProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
 final class DeleteTransformerTest extends TestCase
 {
     public function testTransformSimpleDelete(): void

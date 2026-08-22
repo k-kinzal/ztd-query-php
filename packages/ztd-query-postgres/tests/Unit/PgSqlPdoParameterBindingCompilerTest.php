@@ -12,6 +12,7 @@ use ZtdQuery\Platform\Postgres\PgSqlPdoPlaceholderEscaper;
 
 #[CoversClass(PgSqlPdoParameterBindingCompiler::class)]
 #[UsesClass(PgSqlPdoPlaceholderEscaper::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
 final class PgSqlPdoParameterBindingCompilerTest extends TestCase
 {
     public function testMapsNativePositionsAndEscapesPostgreSqlOperators(): void

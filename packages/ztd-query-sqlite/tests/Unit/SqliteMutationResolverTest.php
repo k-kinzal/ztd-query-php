@@ -45,6 +45,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(SqliteParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteUpsertExpressionParser::class)]
 #[UsesClass(SqliteSchemaParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
 final class SqliteMutationResolverTest extends TestCase
 {
     public function testResolveInsert(): void

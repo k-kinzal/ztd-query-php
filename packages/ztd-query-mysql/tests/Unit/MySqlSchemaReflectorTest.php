@@ -14,6 +14,7 @@ use ZtdQuery\Platform\MySql\MySqlSchemaReflector;
 #[CoversClass(MySqlSchemaReflector::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlSelectRelationParser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlViewDefinitionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 final class MySqlSchemaReflectorTest extends TestCase
 {
     public function testReflectViewsReturnsEmptyWhenQueryFails(): void

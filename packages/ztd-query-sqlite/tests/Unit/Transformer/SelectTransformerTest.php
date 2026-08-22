@@ -31,6 +31,7 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteGeneratedColumnProjector::class)]
 #[UsesClass(SqliteFullTextSearchRewriter::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
 final class SelectTransformerTest extends TransformerContractTest
 {
     public function testGeneratedColumnsAreRecomputedFromBaseRow(): void

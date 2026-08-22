@@ -14,6 +14,7 @@ use ZtdQuery\Schema\ViewDefinitionSet;
 
 #[CoversClass(SqliteViewShadowRenderer::class)]
 #[UsesClass(SqliteSelectRelationParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
 final class SqliteViewShadowRendererTest extends TestCase
 {
     public function testOrdersViewsAndUnqualifiesShadowedSqliteRelations(): void

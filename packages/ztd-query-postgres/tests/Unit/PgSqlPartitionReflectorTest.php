@@ -16,6 +16,7 @@ use ZtdQuery\Schema\TablePartitionStrategy;
 
 #[CoversClass(PgSqlPartitionReflector::class)]
 #[UsesClass(PgSqlPartitionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
 final class PgSqlPartitionReflectorTest extends TestCase
 {
     public function testReflectsKeysAndParentRelationsFromCatalog(): void

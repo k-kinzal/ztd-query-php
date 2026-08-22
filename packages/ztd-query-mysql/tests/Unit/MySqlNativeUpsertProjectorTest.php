@@ -11,6 +11,7 @@ use ZtdQuery\Platform\MySql\MySqlNativeUpsertProjector;
 
 #[CoversClass(MySqlNativeUpsertProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlIdentifierQuoter::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 final class MySqlNativeUpsertProjectorTest extends TestCase
 {
     public function testProjectsMySqlFunctionsThroughExistingAndIncomingRows(): void

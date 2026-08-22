@@ -87,6 +87,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlViewDefinitionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlViewShadowRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlGeneratedColumnProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 final class MySqlRewriterTest extends RewriterContractTest
 {
     public function testPartitionSelectionUsesRegisteredPartitionMetadata(): void

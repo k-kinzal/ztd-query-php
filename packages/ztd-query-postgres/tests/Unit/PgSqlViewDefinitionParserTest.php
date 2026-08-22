@@ -12,6 +12,7 @@ use ZtdQuery\Platform\Postgres\PgSqlViewDefinitionParser;
 
 #[CoversClass(PgSqlViewDefinitionParser::class)]
 #[UsesClass(PgSqlSelectRelationParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
 final class PgSqlViewDefinitionParserTest extends TestCase
 {
     public function testParsesAQueryUsingPostgreSqlRelationRules(): void

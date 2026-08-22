@@ -72,6 +72,7 @@ use ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlPartitionPredicateRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlReturningProjectionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlUpsertExpressionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
 final class PgSqlSessionFactoryTest extends TestCase
 {
     public function testCreateRegistersReflectedPartitionMetadata(): void

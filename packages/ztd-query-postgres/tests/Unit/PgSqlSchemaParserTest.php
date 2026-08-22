@@ -18,6 +18,7 @@ use ZtdQuery\Schema\TablePartitionStrategy;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlColumnTypeMapper::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlForeignKeyDefinitionParser::class)]
 #[UsesClass(PgSqlPartitionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
 final class PgSqlSchemaParserTest extends SchemaParserContractTest
 {
     public function testParsesSchemaQualifiedQuotedDomainTypeWithoutChangingItsCase(): void

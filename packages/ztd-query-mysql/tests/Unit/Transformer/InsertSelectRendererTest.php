@@ -14,6 +14,7 @@ use ZtdQuery\Platform\MySql\Transformer\MySqlSelectListAliaser;
 #[CoversClass(InsertSelectRenderer::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]
 #[UsesClass(MySqlSelectListAliaser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 final class InsertSelectRendererTest extends TestCase
 {
     public function testRendersMySqlProjectionFromDialectNeutralPlan(): void

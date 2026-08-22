@@ -17,6 +17,7 @@ use ZtdQuery\Platform\Postgres\PgSqlTableSampleParser;
 #[CoversClass(PgSqlTableSampleParser::class)]
 #[UsesClass(PgSqlSelectRelationParser::class)]
 #[UsesClass(PgSqlTableSample::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
 final class PgSqlTableSampleParserTest extends TestCase
 {
     public function testParsesSchemaAliasExpressionAndRepeatableSeed(): void

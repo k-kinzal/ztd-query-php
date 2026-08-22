@@ -28,6 +28,7 @@ use ZtdQuery\Platform\Postgres\PgSqlTableSampleRewriter;
 #[UsesClass(PgSqlTableSampleParser::class)]
 #[UsesClass(PgSqlTableSampleRewriter::class)]
 #[UsesClass(PgSqlTableSample::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
 final class SelectTransformerTest extends TransformerContractTest
 {
     public function testTableSampleReadsFromGeneratedShadowCte(): void

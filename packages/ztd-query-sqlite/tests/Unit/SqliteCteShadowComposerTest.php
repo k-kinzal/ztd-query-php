@@ -11,6 +11,7 @@ use ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer;
 
 #[CoversClass(SqliteCteShadowComposer::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
 final class SqliteCteShadowComposerTest extends TestCase
 {
     public function testIncludesTransitivelyReferencedShadowCtes(): void

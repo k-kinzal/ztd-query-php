@@ -23,6 +23,7 @@ use ZtdQuery\Schema\TableDefinitionRegistry;
 #[UsesClass(MySqlSchemaParser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlForeignKeyDefinitionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 final class MySqlLoadDataProjectorTest extends TestCase
 {
     public function testProjectsDefaultTabSeparatedInputAndNullMarker(): void

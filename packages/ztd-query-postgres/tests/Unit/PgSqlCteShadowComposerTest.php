@@ -11,6 +11,7 @@ use ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer;
 
 #[CoversClass(PgSqlCteShadowComposer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
 final class PgSqlCteShadowComposerTest extends TestCase
 {
     public function testIncludesTransitivelyReferencedShadowCtes(): void

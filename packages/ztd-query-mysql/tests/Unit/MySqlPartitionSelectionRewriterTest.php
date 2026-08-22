@@ -14,6 +14,7 @@ use ZtdQuery\Schema\TablePartitioning;
 
 #[CoversClass(MySqlPartitionSelectionRewriter::class)]
 #[UsesClass(MySqlSelectRelationParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 final class MySqlPartitionSelectionRewriterTest extends TestCase
 {
     public function testRewritesNamedPartitionAsFilteredDerivedTable(): void

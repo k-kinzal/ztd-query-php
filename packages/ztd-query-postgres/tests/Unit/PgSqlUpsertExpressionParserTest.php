@@ -6,11 +6,13 @@ namespace ZtdQuery\Platform\Postgres\Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\Postgres\PgSqlUpsertExpressionParser;
 
 #[CoversClass(PgSqlUpsertExpressionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
 final class PgSqlUpsertExpressionParserTest extends TestCase
 {
     #[DataProvider('providerPostgresExpressionCases')]

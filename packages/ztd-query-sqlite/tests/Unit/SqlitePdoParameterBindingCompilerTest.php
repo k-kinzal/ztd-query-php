@@ -13,6 +13,7 @@ use ZtdQuery\Schema\ColumnType;
 
 #[CoversClass(SqlitePdoParameterBindingCompiler::class)]
 #[UsesClass(SqliteCastRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
 final class SqlitePdoParameterBindingCompilerTest extends TestCase
 {
     public function testUsesSqliteRendererForStorageSensitiveParameterTypes(): void

@@ -14,6 +14,7 @@ use ZtdQuery\Platform\Sqlite\SqliteParser;
 #[CoversClass(SqliteParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser::class)]
 #[UsesClass(SqliteLexicalMasker::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
 final class SqliteParserTest extends TestCase
 {
     public function testExtractsOnConflictUpdateWhereAfterInsertSelectWhere(): void

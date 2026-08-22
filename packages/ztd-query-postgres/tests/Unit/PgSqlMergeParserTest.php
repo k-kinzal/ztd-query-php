@@ -21,6 +21,7 @@ use ZtdQuery\Platform\Postgres\PgSqlMergeStatement;
 #[UsesClass(PgSqlMergeMatchKind::class)]
 #[UsesClass(PgSqlMergeStatement::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
 final class PgSqlMergeParserTest extends TestCase
 {
     public function testParsesMatchedUpdateAndNotMatchedInsert(): void

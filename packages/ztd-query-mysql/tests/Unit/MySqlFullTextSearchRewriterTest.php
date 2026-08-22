@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\MySql\MySqlFullTextSearchRewriter;
 
 #[CoversClass(MySqlFullTextSearchRewriter::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 final class MySqlFullTextSearchRewriterTest extends TestCase
 {
     public function testRewritesNaturalLanguageExpressionIntoCteSafeRelevance(): void

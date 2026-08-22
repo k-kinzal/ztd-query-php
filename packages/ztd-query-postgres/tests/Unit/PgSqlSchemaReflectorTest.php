@@ -18,6 +18,7 @@ use ZtdQuery\Platform\Postgres\PgSqlSchemaReflector;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlViewDefinitionParser::class)]
 #[UsesClass(PgSqlIdentifierQuoter::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
 final class PgSqlSchemaReflectorTest extends TestCase
 {
     public function testReflectViewsReturnsEmptyWhenQueryFails(): void

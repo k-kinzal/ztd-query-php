@@ -12,6 +12,7 @@ use ZtdQuery\Platform\MySql\Transformer\MySqlSelectListAliaser;
 
 #[CoversClass(MySqlSelectListAliaser::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 final class MySqlSelectListAliaserTest extends TestCase
 {
     public function testAliasesOnlyTopLevelProjectionAndPreservesClauses(): void

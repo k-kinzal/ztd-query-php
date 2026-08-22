@@ -19,6 +19,7 @@ use ZtdQuery\Platform\MySql\MySqlPartitioningParser;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlForeignKeyDefinitionParser::class)]
 #[UsesClass(MySqlParser::class)]
 #[UsesClass(MySqlPartitioningParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 final class MySqlSchemaParserTest extends SchemaParserContractTest
 {
     protected function createParser(): SchemaParser

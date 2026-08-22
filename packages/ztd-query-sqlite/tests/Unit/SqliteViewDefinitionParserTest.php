@@ -12,6 +12,7 @@ use ZtdQuery\Platform\Sqlite\SqliteViewDefinitionParser;
 
 #[CoversClass(SqliteViewDefinitionParser::class)]
 #[UsesClass(SqliteSelectRelationParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
 final class SqliteViewDefinitionParserTest extends TestCase
 {
     public function testParsesAQueryUsingSqliteRelationRules(): void

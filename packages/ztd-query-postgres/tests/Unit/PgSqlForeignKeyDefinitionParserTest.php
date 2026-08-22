@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Postgres\PgSqlForeignKeyDefinitionParser;
 use ZtdQuery\Schema\ReferentialAction;
 
 #[CoversClass(PgSqlForeignKeyDefinitionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
 final class PgSqlForeignKeyDefinitionParserTest extends TestCase
 {
     public function testParsesNamedCompositeConstraintWithoutRegexSubstitution(): void

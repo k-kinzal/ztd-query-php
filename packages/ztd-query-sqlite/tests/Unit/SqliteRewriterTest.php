@@ -74,6 +74,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteViewDefinitionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteViewShadowRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteGeneratedColumnProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
 final class SqliteRewriterTest extends RewriterContractTest
 {
     public function testGeneratedExpressionIsPresentBeforeTheFirstShadowWrite(): void

@@ -6,12 +6,14 @@ namespace ZtdQuery\Platform\MySql\Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\MySqlUpsertExpressionParser;
 use ZtdQuery\Shadow\Mutation\UpsertExpression;
 
 #[CoversClass(MySqlUpsertExpressionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 final class MySqlUpsertExpressionParserTest extends TestCase
 {
     #[DataProvider('providerMySqlExpressionCases')]

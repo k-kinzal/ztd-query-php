@@ -7,10 +7,12 @@ namespace Tests\Unit;
 use PhpMyAdmin\SqlParser\Parser;
 use PhpMyAdmin\SqlParser\Statements\CreateStatement;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\MySql\MySqlPartitioningParser;
 
 #[CoversClass(MySqlPartitioningParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 final class MySqlPartitioningParserTest extends TestCase
 {
     public function testParsesRangePartitionBoundariesIncludingNullAndMaximum(): void

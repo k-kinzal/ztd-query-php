@@ -14,6 +14,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[CoversClass(SqliteSchemaReflector::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteViewDefinitionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
 final class SqliteSchemaReflectorTest extends TestCase
 {
     public function testReflectViewsReturnsEmptyWhenQueryFails(): void

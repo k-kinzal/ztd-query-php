@@ -31,6 +31,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlTypeSemantics::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlGeneratedColumnProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 final class UpdateTransformerTest extends TestCase
 {
     public function testBuildProjectionPreservesDerivedJoinSource(): void

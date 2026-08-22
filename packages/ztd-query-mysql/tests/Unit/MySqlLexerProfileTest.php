@@ -5,16 +5,12 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\MySql\MySqlLexerProfile;
-use ZtdQuery\Sql\SqlLexerProfile;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(MySqlLexerProfile::class)]
-#[UsesClass(SqlLexerProfile::class)]
-#[UsesClass(SqlTokenStream::class)]
 final class MySqlLexerProfileTest extends TestCase
 {
     public function testAddsMySqlHashLineComments(): void

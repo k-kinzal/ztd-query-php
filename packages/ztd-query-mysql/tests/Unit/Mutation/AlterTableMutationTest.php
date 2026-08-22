@@ -29,6 +29,7 @@ use ZtdQuery\Shadow\ShadowStore;
 #[UsesClass(MySqlParser::class)]
 #[UsesClass(MySqlSchemaParser::class)]
 #[UsesClass(MySqlPartitioningParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 final class AlterTableMutationTest extends TestCase
 {
     public function testApplyAddColumnAddsNewColumn(): void
