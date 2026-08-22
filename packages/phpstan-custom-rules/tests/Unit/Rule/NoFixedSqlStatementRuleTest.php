@@ -24,18 +24,25 @@ final class NoFixedSqlStatementRuleTest extends RuleTestCase
 
     public function testDetectsFixedSqlConstructionInProvidersAndGenerators(): void
     {
-        $message = 'SQLFaker Providers and SqlGenerators must not construct SQL statements from fixed templates; derive them from the dialect grammar.';
+        $message = 'SQLFaker must not construct SQL statements from fixed templates; derive them from the dialect grammar.';
 
         $this->analyse([
             __DIR__ . '/../../Fixture/MySqlProvider.php',
             __DIR__ . '/../../Fixture/PostgreSqlProvider.php',
             __DIR__ . '/../../Fixture/SqliteProvider.php',
             __DIR__ . '/../../Fixture/MySql/SqlGenerator.php',
+            __DIR__ . '/../../Fixture/SqlFaker/MySql/StatementTemplateHelper.php',
             __DIR__ . '/../../Fixture/Other/MySqlProvider.php',
         ], [
             [$message, 11],
             [$message, 11],
             [$message, 11],
+            [$message, 11],
+            [$message, 16],
+            [$message, 21],
+            [$message, 26],
+            [$message, 31],
+            [$message, 36],
         ]);
     }
 }

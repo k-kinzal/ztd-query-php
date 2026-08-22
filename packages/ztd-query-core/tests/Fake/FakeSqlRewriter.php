@@ -229,7 +229,8 @@ final class FakeSqlRewriter implements SqlRewriter
             $mutation = new CreateTableMutation(
                 $tableName,
                 $definition ?? new TableDefinition([], [], [], [], []),
-                $this->registry
+                $this->registry,
+                $sql,
             );
 
             return new RewritePlan('SELECT 1 WHERE FALSE', QueryKind::DDL_SIMULATED, $mutation);
@@ -237,7 +238,7 @@ final class FakeSqlRewriter implements SqlRewriter
 
         if (str_starts_with($upper, 'DROP TABLE')) {
             $tableName = $this->extractTableFromDrop($sql) ?? 'unknown';
-            $mutation = new DropTableMutation($tableName, $this->registry);
+            $mutation = new DropTableMutation($tableName, $this->registry, $sql);
 
             return new RewritePlan('SELECT 1 WHERE FALSE', QueryKind::DDL_SIMULATED, $mutation);
         }

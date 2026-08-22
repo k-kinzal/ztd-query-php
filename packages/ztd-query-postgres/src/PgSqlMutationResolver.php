@@ -250,7 +250,7 @@ final class PgSqlMutationResolver
                 $definition = $definition->withPartitionKey($childKey);
             }
 
-            return new CreateTableMutation($tableName, $definition, $this->registry, $ifNotExists);
+            return new CreateTableMutation($tableName, $definition, $this->registry, $sql, $ifNotExists);
         }
 
         if ($this->parser->hasCreateTableLike($sql)) {
@@ -277,7 +277,7 @@ final class PgSqlMutationResolver
 
         $definition = $this->schemaParser->parse($sql);
 
-        return new CreateTableMutation($tableName, $definition, $this->registry, $ifNotExists);
+        return new CreateTableMutation($tableName, $definition, $this->registry, $sql, $ifNotExists);
     }
 
     private function storageTable(string $tableName): string
@@ -308,7 +308,7 @@ final class PgSqlMutationResolver
             throw new UnknownSchemaException($sql, $tableName, 'table');
         }
 
-        return new DropTableMutation($tableName, $this->registry, $ifExists);
+        return new DropTableMutation($tableName, $this->registry, $sql, $ifExists);
     }
 
     private function resolveAlterTable(string $sql): ?ShadowMutation

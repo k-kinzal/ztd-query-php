@@ -73,7 +73,7 @@ final class CreateTableAsSelectMutation implements ResultSetMutation
             $columns = array_keys($result->rows[0]);
         }
         if ($columns === []) {
-            throw new \RuntimeException("Cannot determine columns for CREATE TABLE AS SELECT.");
+            throw new \RuntimeException("Cannot determine result columns for virtual table '{$this->tableName}'.");
         }
 
         $columnTypes = [];

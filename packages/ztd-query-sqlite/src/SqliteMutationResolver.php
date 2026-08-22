@@ -208,7 +208,7 @@ final class SqliteMutationResolver
 
         $definition = $this->schemaParser->parse($sql);
 
-        return new CreateTableMutation($tableName, $definition, $this->registry, $ifNotExists);
+        return new CreateTableMutation($tableName, $definition, $this->registry, $sql, $ifNotExists);
     }
 
     private function resolveDropTable(string $sql): ShadowMutation
@@ -222,7 +222,7 @@ final class SqliteMutationResolver
 
         if ($this->registry->isRemoved($tableName)) {
             if ($ifExists) {
-                return new DropTableMutation($tableName, $this->registry, true);
+                return new DropTableMutation($tableName, $this->registry, $sql, true);
             }
             throw new UnsupportedSqlException($sql, 'Table was removed from the virtual schema');
         }
@@ -231,7 +231,7 @@ final class SqliteMutationResolver
             throw new UnknownSchemaException($sql, $tableName, 'table');
         }
 
-        return new DropTableMutation($tableName, $this->registry, $ifExists);
+        return new DropTableMutation($tableName, $this->registry, $sql, $ifExists);
     }
 
     /**

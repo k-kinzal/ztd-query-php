@@ -70,6 +70,13 @@ final class MysqliResultStatementTest extends TestCase
         self::assertSame(0, $stmt->rowCount());
     }
 
+    public function testSaturatesAffectedRowsOutsideThePlatformIntegerRange(): void
+    {
+        $stmt = new MysqliResultStatement(null, '999999999999999999999999999999999999');
+
+        self::assertSame(PHP_INT_MAX, $stmt->rowCount());
+    }
+
     public function testResultColumnsReturnsEmptyArrayWithoutResult(): void
     {
         $stmt = new MysqliResultStatement(null, 0);

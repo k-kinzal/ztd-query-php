@@ -322,7 +322,7 @@ final class MySqlMutationResolver
         }
 
         $definition = $this->schemaParser->parse($sql);
-        return new CreateTableMutation($tableName, $definition, $this->registry, $ifNotExists);
+        return new CreateTableMutation($tableName, $definition, $this->registry, $sql, $ifNotExists);
     }
 
     /**
@@ -347,7 +347,7 @@ final class MySqlMutationResolver
             throw new UnknownSchemaException($sql, $tableName, 'table');
         }
 
-        return new DropTableMutation($tableName, $this->registry, $ifExists);
+        return new DropTableMutation($tableName, $this->registry, $sql, $ifExists);
     }
 
     private function resolveAlterTable(AlterStatement $statement, string $sql): ShadowMutation

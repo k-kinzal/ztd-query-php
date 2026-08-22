@@ -20,10 +20,11 @@ final class MysqliResultStatement implements StatementInterface
 
     private int $affectedRows;
 
-    public function __construct(?mysqli_result $result, int $affectedRows)
+    public function __construct(?mysqli_result $result, int|string $affectedRows)
     {
         $this->result = $result;
-        $this->affectedRows = $affectedRows;
+        $normalizedAffectedRows = filter_var($affectedRows, FILTER_VALIDATE_INT);
+        $this->affectedRows = $normalizedAffectedRows === false ? PHP_INT_MAX : $normalizedAffectedRows;
     }
 
     /**

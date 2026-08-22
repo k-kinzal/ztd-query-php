@@ -43,6 +43,16 @@ services:
         tags:
             - phpstan.rules.rule
 
+    customRules.rule.sqlFakerProviderDelegation:
+        class: ZtdQuery\PhpStanCustomRules\Rule\SqlFakerProviderDelegationRule
+        tags:
+            - phpstan.rules.rule
+
+    customRules.rule.noDialectLogicInCoreOrPdoAdapter:
+        class: ZtdQuery\PhpStanCustomRules\Rule\NoDialectLogicInCoreOrAdapterRule
+        tags:
+            - phpstan.rules.rule
+
     customRules.rule.noNonOverrideMethodInTestClass:
         class: ZtdQuery\PhpStanCustomRules\Rule\NoNonOverrideMethodInTestClassRule
         tags:

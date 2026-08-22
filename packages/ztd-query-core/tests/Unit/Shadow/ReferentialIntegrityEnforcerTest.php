@@ -352,7 +352,7 @@ final class ReferentialIntegrityEnforcerTest extends TestCase
         (new ReferentialIntegrityEnforcer($registry))->synchronize(
             $store->snapshot(),
             $store,
-            new CreateTableMutation('archive', null, $registry),
+            new CreateTableMutation('archive', null, $registry, 'fixture statement'),
             [],
             'CREATE TABLE archive',
         );

@@ -36,7 +36,7 @@ parameters:
         # Related issue: https://github.com/phpstan/phpstan/issues/2553
         #
         # TODO: Remove this excludePath once PHPStan fixes the functionMap for bind_param.
-        - src/ZtdMysqliStatement.php
+        - src/MysqliStatementBindingBridge.php
     ignoreErrors:
         -
             message: '#Line comments using // are prohibited#'

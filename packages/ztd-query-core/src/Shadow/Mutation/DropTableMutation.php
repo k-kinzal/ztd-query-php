@@ -16,15 +16,18 @@ final class DropTableMutation implements ShadowMutation
 {
     private string $tableName;
     private TableDefinitionRegistry $registry;
+    private string $sourceSql;
     private bool $ifExists;
 
     public function __construct(
         string $tableName,
         TableDefinitionRegistry $registry,
+        string $sourceSql,
         bool $ifExists = false
     ) {
         $this->tableName = $tableName;
         $this->registry = $registry;
+        $this->sourceSql = $sourceSql;
         $this->ifExists = $ifExists;
     }
 
@@ -37,7 +40,7 @@ final class DropTableMutation implements ShadowMutation
             if ($this->ifExists) {
                 return;
             }
-            throw new SchemaNotFoundException("DROP TABLE `{$this->tableName}`", $this->tableName);
+            throw new SchemaNotFoundException($this->sourceSql, $this->tableName);
         }
 
         $this->registry->markRemoved($this->tableName);

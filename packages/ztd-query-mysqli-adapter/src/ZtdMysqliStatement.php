@@ -23,7 +23,7 @@ use ZtdQuery\Session;
  *
  * Properties are delegated via __get/__isset to the delegate instance.
  */
-final class ZtdMysqliStatement extends mysqli_stmt
+final class ZtdMysqliStatement extends MysqliStatementBindingBridge
 {
     /**
      * Inner mysqli_stmt to delegate operations to.
@@ -53,13 +53,11 @@ final class ZtdMysqliStatement extends mysqli_stmt
 
     public function __construct(mysqli_stmt $delegate, Session $session, ?RewritePlan $plan)
     {
-        // Do not call parent constructor
+        parent::__construct($delegate);
         $this->delegate = $delegate;
         $this->session = $session;
         $this->plan = $plan;
     }
-
-    // === Property delegation via __get/__isset ===
 
     /**
      * Delegate property access to the delegate instance.
@@ -84,7 +82,19 @@ final class ZtdMysqliStatement extends mysqli_stmt
             }
         }
 
-        return $this->delegate->{$name};
+        return match ($name) {
+            'affected_rows' => $this->delegate->affected_rows,
+            'insert_id' => $this->delegate->insert_id,
+            'num_rows' => $this->delegate->num_rows,
+            'param_count' => $this->delegate->param_count,
+            'field_count' => $this->delegate->field_count,
+            'errno' => $this->delegate->errno,
+            'error' => $this->delegate->error,
+            'error_list' => $this->delegate->error_list,
+            'sqlstate' => $this->delegate->sqlstate,
+            'id' => $this->delegate->id,
+            default => null,
+        };
     }
 
     /**
@@ -92,7 +102,18 @@ final class ZtdMysqliStatement extends mysqli_stmt
      */
     public function __isset(string $name): bool
     {
-        return isset($this->delegate->{$name});
+        return in_array($name, [
+            'affected_rows',
+            'insert_id',
+            'num_rows',
+            'param_count',
+            'field_count',
+            'errno',
+            'error',
+            'error_list',
+            'sqlstate',
+            'id',
+        ], true);
     }
 
     /**
@@ -114,37 +135,15 @@ final class ZtdMysqliStatement extends mysqli_stmt
         return (int) $this->delegate->affected_rows;
     }
 
-    // === mysqli_stmt methods - all explicitly overridden for delegation ===
-
-    /**
-     * Bind parameters to the statement.
-     *
-     * @param string $types Type specification string (i=int, d=double, s=string, b=blob)
-     * @param mixed ...$vars Variables to bind (by reference)
-     */
-    public function bind_param(string $types, mixed &...$vars): bool
-    {
-        return $this->delegate->bind_param($types, ...$vars);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function bind_result(mixed &...$vars): bool
-    {
-        return $this->delegate->bind_result(...$vars);
-    }
-
     /**
      * Execute the statement, applying ZTD simulation as needed.
      *
-     * @param array<int, mixed>|null $params Optional parameters to bind (PHP 8.1+).
+     * @param array<mixed, mixed>|null $params Optional parameters to bind (PHP 8.1+).
      */
     public function execute(?array $params = null): bool
     {
         $this->result = null;
 
-        // No plan means ZTD was disabled at prepare time (shouldn't happen with new design)
         if ($this->plan === null) {
             if ($params !== null) {
                 return $this->delegate->execute($params);
@@ -152,12 +151,10 @@ final class ZtdMysqliStatement extends mysqli_stmt
             return $this->delegate->execute();
         }
 
-        // SKIPPED: do not execute, return false
         if (!$this->session->shouldExecute($this->plan)) {
             return false;
         }
 
-        // READ: execute directly (includes passthrough cases)
         if (!$this->session->needsPostProcessing($this->plan)) {
             if ($params !== null) {
                 return $this->delegate->execute($params);
@@ -165,7 +162,6 @@ final class ZtdMysqliStatement extends mysqli_stmt
             return $this->delegate->execute();
         }
 
-        // WRITE_SIMULATED/DDL_SIMULATED: execute and process result
         if ($params !== null) {
             if (!$this->delegate->execute($params)) {
                 return false;
@@ -176,7 +172,6 @@ final class ZtdMysqliStatement extends mysqli_stmt
             }
         }
 
-        // Get the result set and cache it for later get_result() calls
         $this->cachedMysqliResult = $this->delegate->get_result();
 
         if ($this->cachedMysqliResult !== false) {
@@ -189,7 +184,6 @@ final class ZtdMysqliStatement extends mysqli_stmt
                 throw new ZtdMysqliException($e->getMessage(), 0, $e);
             }
         } else {
-            // No result set (e.g., for WRITE operations that don't return rows)
             $this->result = $this->session->createEmptyWriteResult();
         }
 
@@ -201,16 +195,13 @@ final class ZtdMysqliStatement extends mysqli_stmt
      */
     public function get_result(): mysqli_result|false
     {
-        // If we have a cached result from ZTD execution, return it
         if ($this->cachedMysqliResult !== null) {
             $result = $this->cachedMysqliResult;
-            // Clear the cache so subsequent calls go to delegate
             $this->cachedMysqliResult = null;
 
             return $result;
         }
 
-        // For ZTD results without cached mysqli_result (WRITE/DDL operations)
         if ($this->result !== null && !$this->result->isPassthrough()) {
             if (!$this->result->hasResultSet()) {
                 return false;
@@ -226,13 +217,11 @@ final class ZtdMysqliStatement extends mysqli_stmt
     public function fetch(): ?bool
     {
         if ($this->result !== null && !$this->result->isPassthrough()) {
-            // WRITE/DDL operations don't return result sets in standard mysqli
             if (!$this->result->hasResultSet()) {
                 return null;
             }
         }
 
-        // For READ queries: delegate to statement (prepared with rewritten SQL)
         return $this->delegate->fetch();
     }
 
@@ -293,7 +282,12 @@ final class ZtdMysqliStatement extends mysqli_stmt
      */
     public function attr_get(int $attribute): int
     {
-        return $this->delegate->attr_get($attribute);
+        $value = $this->delegate->attr_get($attribute);
+        if ($value === false) {
+            throw new ZtdMysqliException('Unable to read the mysqli statement attribute.');
+        }
+
+        return $value;
     }
 
     /**
@@ -355,4 +349,5 @@ final class ZtdMysqliStatement extends mysqli_stmt
     {
         return $this->delegate->send_long_data($param_num, $data);
     }
+
 }
