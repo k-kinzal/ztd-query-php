@@ -6,19 +6,11 @@ namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\Sqlite\SqliteReturningProjectionParser;
-use ZtdQuery\Rewrite\ReturningProjection;
-use ZtdQuery\Sql\SqlToken;
-use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(SqliteReturningProjectionParser::class)]
-#[UsesClass(ReturningProjection::class)]
-#[UsesClass(SqlToken::class)]
-#[UsesClass(SqlTokenStream::class)]
-#[UsesClass(UnsupportedSqlException::class)]
 final class SqliteReturningProjectionParserTest extends TestCase
 {
     public function testParsesSqliteQualifiedQuotedAliasesAndWildcard(): void
