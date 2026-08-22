@@ -331,8 +331,10 @@ final class MySqlUpsertExpressionParser
 
     private function number(string $literal): int|float
     {
-        $literal = str_replace('_', '', $literal);
-        if (str_starts_with(strtolower($literal), '0x')) {
+        if (preg_match('/^(?:0x[0-9A-Fa-f]+|(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?)\z/', $literal) !== 1) {
+            throw $this->unsupported($literal);
+        }
+        if (str_starts_with($literal, '0x')) {
             return intval($literal, 16);
         }
 

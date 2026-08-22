@@ -45,9 +45,7 @@ final class MySqlUpsertExpressionParserTest extends TestCase
         yield 'parenthesized precedence' => ['(1 + 2) * 3', 9];
         yield 'null' => ['NULL', null];
         yield 'false' => ['FALSE', false];
-        yield 'underscored integer' => ['1_000', 1000];
         yield 'hex integer' => ['0x10', 16];
-        yield 'uppercase hex prefix' => ['0X10', 16];
         yield 'exponent' => ['1.5e1', 15.0];
         yield 'escaped string' => ["'it''s'", "it's"];
     }
@@ -124,6 +122,8 @@ final class MySqlUpsertExpressionParserTest extends TestCase
         yield 'invalid qualified column' => ['items.+'];
         yield 'invalid comparison pair' => ['1 ! 2'];
         yield 'double equals' => ['1 == 1'];
+        yield 'numeric underscore' => ['1_000'];
+        yield 'uppercase hex prefix' => ['0X10'];
         yield 'unknown qualifier' => ['other.value'];
         yield 'empty values' => ['VALUES()'];
         yield 'values without parenthesis' => ['VALUES + 1'];
