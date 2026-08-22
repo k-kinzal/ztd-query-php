@@ -168,6 +168,8 @@ final class GenerationPlansTest extends TestCase
 
     public function testCopyPlanStartsFromTheCopyGrammar(): void
     {
-        self::assertSame('CopyStmt', GenerationPlans::copyStatement()->startRule());
+        $plan = GenerationPlans::copyStatement();
+
+        self::assertSame('CopyStmt', $plan->startRule());
     }
 }

@@ -6,14 +6,12 @@ namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\CopyTarget;
 use ZtdQuery\Platform\Postgres\PgSqlCopySupport;
 use ZtdQuery\Schema\TableDefinition;
 
 #[CoversClass(PgSqlCopySupport::class)]
-#[UsesClass(CopyTarget::class)]
 final class PgSqlCopySupportTest extends TestCase
 {
     public function testTargetParsesRelationsAndRendersPostgreSqlStatements(): void
@@ -87,6 +85,30 @@ final class PgSqlCopySupportTest extends TestCase
         $target = $codec->target('items', 'ID, "Display Name"', $definition);
         self::assertSame(['id', 'Display Name'], $target->columns);
         self::assertSame('SELECT "id", "Display Name" FROM "items"', $codec->selectSql($target));
+    }
+
+    public function testColumnsRejectAnEmptyFieldList(): void
+    {
+        $this->expectException(\ValueError::class);
+        $this->expectExceptionMessage('PostgreSQL COPY fields must contain at least one column identifier.');
+
+        (new PgSqlCopySupport())->target(
+            'items',
+            '',
+            new TableDefinition(['id'], ['id' => 'INTEGER'], ['id'], ['id'], []),
+        );
+    }
+
+    public function testColumnsRejectATrailingFieldDelimiter(): void
+    {
+        $this->expectException(\ValueError::class);
+        $this->expectExceptionMessage('PostgreSQL COPY fields must contain at least one column identifier.');
+
+        (new PgSqlCopySupport())->target(
+            'items',
+            'id,',
+            new TableDefinition(['id'], ['id' => 'INTEGER'], ['id'], ['id'], []),
+        );
     }
 
     #[DataProvider('providerInvalidFields')]
