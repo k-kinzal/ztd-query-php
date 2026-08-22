@@ -13,6 +13,7 @@ use ZtdQuery\Platform\MySql\InsertSelectSourceExtractor;
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlParser;
+use ZtdQuery\Platform\MySql\MySqlSelectRelationParser;
 use ZtdQuery\Platform\MySql\MySqlUpsertAssignmentExtractor;
 use ZtdQuery\Platform\MySql\Transformer\InsertSelectRenderer;
 use ZtdQuery\Platform\MySql\Transformer\InsertTransformer;
@@ -24,6 +25,7 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(InsertTransformer::class)]
 #[UsesClass(MySqlParser::class)]
+#[UsesClass(MySqlSelectRelationParser::class)]
 #[UsesClass(MySqlUpsertAssignmentExtractor::class)]
 #[UsesClass(SelectTransformer::class)]
 #[UsesClass(InsertSelectSourceExtractor::class)]
