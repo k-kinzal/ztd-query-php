@@ -43,6 +43,7 @@ use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTableState;
 
 #[CoversClass(SqliteRewriter::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteForeignKeyDefinitionParser::class)]
 #[UsesClass(SqliteLexicalMasker::class)]
 #[UsesClass(SqliteParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteUpsertExpressionParser::class)]

@@ -10,8 +10,10 @@ use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 
 #[CoversClass(PgSqlSchemaParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlForeignKeyDefinitionParser::class)]
 final class PgSqlSchemaParserTest extends SchemaParserContractTest
 {
     protected function createParser(): SchemaParser

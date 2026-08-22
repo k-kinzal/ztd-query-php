@@ -97,7 +97,18 @@ final class GenerationPlansTest extends TestCase
         $plan = GenerationPlans::foreignKeyCascadeStatement();
 
         self::assertSame('cmd', $plan->startRule());
-        self::assertNotNull($plan->patternAt('refarg', 1));
-        self::assertNotNull($plan->patternAt('refact', 1));
+        self::assertTrue($plan->patternAt('cmd', 0)?->matches(['create_table', 'create_table_args']) ?? false);
+        self::assertTrue(
+            $plan->patternAt('create_table_args', 0)?->matches(['columnlist', 'conslist_opt']) ?? false,
+        );
+        self::assertTrue($plan->patternAt('conslist_opt', 0)?->matches(['tcons']) ?? false);
+        self::assertTrue($plan->patternAt('tcons', 0)?->matches(['FOREIGN', 'KEY', 'REFERENCES']) ?? false);
+        self::assertTrue($plan->patternAt('refargs', 0)?->matches(['refargs', 'refarg']) ?? false);
+        self::assertTrue($plan->patternAt('refargs', 1)?->matches(['refargs', 'refarg']) ?? false);
+        self::assertTrue($plan->patternAt('refargs', 2)?->matches([]) ?? false);
+        self::assertTrue($plan->patternAt('refarg', 0)?->matches(['ON', 'DELETE']) ?? false);
+        self::assertTrue($plan->patternAt('refarg', 1)?->matches(['ON', 'UPDATE']) ?? false);
+        self::assertTrue($plan->patternAt('refact', 0)?->matches(['CASCADE']) ?? false);
+        self::assertTrue($plan->patternAt('refact', 1)?->matches(['CASCADE']) ?? false);
     }
 }

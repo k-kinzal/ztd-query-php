@@ -16,6 +16,7 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
 
 #[CoversClass(SqliteSchemaParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteForeignKeyDefinitionParser::class)]
 #[UsesClass(SqliteLexicalMasker::class)]
 #[UsesClass(SqliteParser::class)]
 final class SqliteSchemaParserTest extends SchemaParserContractTest

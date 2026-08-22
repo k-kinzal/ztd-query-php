@@ -27,6 +27,7 @@ use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer;
 
 #[CoversClass(PgSqlSessionFactory::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlForeignKeyDefinitionParser::class)]
 #[UsesClass(PgSqlParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PostgreSqlLexicalMasker::class)]
 #[UsesClass(PgSqlSchemaParser::class)]

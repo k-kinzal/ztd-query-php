@@ -14,6 +14,7 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
 
 #[CoversClass(MySqlSchemaParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlForeignKeyDefinitionParser::class)]
 #[UsesClass(MySqlParser::class)]
 final class MySqlSchemaParserTest extends SchemaParserContractTest
 {

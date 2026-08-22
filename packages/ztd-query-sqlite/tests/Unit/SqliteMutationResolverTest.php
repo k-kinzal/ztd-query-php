@@ -37,6 +37,7 @@ use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTableState;
 
 #[CoversClass(SqliteMutationResolver::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteForeignKeyDefinitionParser::class)]
 #[UsesClass(SqliteIdentifierQuoter::class)]
 #[UsesClass(SqliteLexicalMasker::class)]
 #[UsesClass(AlterTableMutation::class)]

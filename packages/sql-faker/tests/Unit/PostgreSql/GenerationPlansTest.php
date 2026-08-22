@@ -90,7 +90,14 @@ final class GenerationPlansTest extends TestCase
         $plan = GenerationPlans::foreignKeyCascadeStatement();
 
         self::assertSame('CreateStmt', $plan->startRule());
-        self::assertNotNull($plan->patternAt('key_actions', 0));
-        self::assertNotNull($plan->patternAt('key_action', 1));
+        self::assertTrue($plan->patternAt('CreateStmt', 0)?->matches(['OptTableElementList']) ?? false);
+        self::assertTrue($plan->patternAt('OptTableElementList', 0)?->matches(['TableElement']) ?? false);
+        self::assertTrue($plan->patternAt('TableElement', 0)?->matches(['TableConstraint']) ?? false);
+        self::assertTrue(
+            $plan->patternAt('ConstraintElem', 0)?->matches(['FOREIGN', 'KEY', 'REFERENCES']) ?? false,
+        );
+        self::assertTrue($plan->patternAt('key_actions', 0)?->matches(['key_update', 'key_delete']) ?? false);
+        self::assertTrue($plan->patternAt('key_action', 0)?->matches(['CASCADE']) ?? false);
+        self::assertTrue($plan->patternAt('key_action', 1)?->matches(['CASCADE']) ?? false);
     }
 }

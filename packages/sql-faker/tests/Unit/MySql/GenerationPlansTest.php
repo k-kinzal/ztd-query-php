@@ -231,7 +231,16 @@ final class GenerationPlansTest extends TestCase
         $plan = GenerationPlans::foreignKeyCascadeStatement();
 
         self::assertSame('create_table_stmt', $plan->startRule());
-        self::assertNotNull($plan->patternAt('opt_on_update_delete', 0));
-        self::assertNotNull($plan->patternAt('delete_option', 1));
+        self::assertTrue($plan->patternAt('create_table_stmt', 0)?->matches(['table_element_list']) ?? false);
+        self::assertTrue($plan->patternAt('table_element', 0)?->matches(['table_constraint_def']) ?? false);
+        self::assertTrue(
+            $plan->patternAt('table_constraint_def', 0)?->matches(['FOREIGN', 'KEY_SYM', 'references']) ?? false,
+        );
+        self::assertTrue($plan->patternAt('opt_ref_list', 0)?->matches(['reference']) ?? false);
+        self::assertTrue(
+            $plan->patternAt('opt_on_update_delete', 0)?->matches(['UPDATE_SYM', 'DELETE_SYM']) ?? false,
+        );
+        self::assertTrue($plan->patternAt('delete_option', 0)?->matches(['CASCADE']) ?? false);
+        self::assertTrue($plan->patternAt('delete_option', 1)?->matches(['CASCADE']) ?? false);
     }
 }
