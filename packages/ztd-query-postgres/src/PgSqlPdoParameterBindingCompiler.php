@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\Postgres;
 
 use ZtdQuery\Platform\ParameterBindingCompiler;
-use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
 final class PgSqlPdoParameterBindingCompiler implements ParameterBindingCompiler
@@ -20,7 +19,7 @@ final class PgSqlPdoParameterBindingCompiler implements ParameterBindingCompiler
         $replacements = [];
         $nativePositions = [];
         foreach (SqlTokenStream::tokenize($sql)->tokens() as $token) {
-            if ($token->kind !== SqlTokenKind::Parameter || !str_starts_with($token->text, '$')) {
+            if (!str_starts_with($token->text, '$')) {
                 continue;
             }
             $position = filter_var(

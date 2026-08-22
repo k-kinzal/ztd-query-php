@@ -9,15 +9,9 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Postgres\PgSqlPdoParameterBindingCompiler;
 use ZtdQuery\Platform\Postgres\PgSqlPdoPlaceholderEscaper;
-use ZtdQuery\Sql\SqlToken;
-use ZtdQuery\Sql\SqlTokenKind;
-use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(PgSqlPdoParameterBindingCompiler::class)]
 #[UsesClass(PgSqlPdoPlaceholderEscaper::class)]
-#[UsesClass(SqlToken::class)]
-#[UsesClass(SqlTokenKind::class)]
-#[UsesClass(SqlTokenStream::class)]
 final class PgSqlPdoParameterBindingCompilerTest extends TestCase
 {
     public function testMapsNativePositionsAndEscapesPostgreSqlOperators(): void
@@ -56,6 +50,10 @@ final class PgSqlPdoParameterBindingCompilerTest extends TestCase
         self::assertSame(
             ['sql' => 'SELECT ?, :__ztd_pdo_1', 'params' => ['__ztd_pdo_1' => 1]],
             $compiler->compile('SELECT ?, $1', [1]),
+        );
+        self::assertSame(
+            ['sql' => 'SELECT $$ $1 $$, :__ztd_pdo_1', 'params' => ['__ztd_pdo_1' => 1]],
+            $compiler->compile('SELECT $$ $1 $$, $1', [1]),
         );
     }
 }

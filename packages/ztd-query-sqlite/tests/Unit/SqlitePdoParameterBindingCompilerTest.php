@@ -10,16 +10,9 @@ use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Sqlite\SqliteCastRenderer;
 use ZtdQuery\Platform\Sqlite\SqlitePdoParameterBindingCompiler;
 use ZtdQuery\Schema\ColumnType;
-use ZtdQuery\Sql\SqlToken;
-use ZtdQuery\Sql\SqlTokenKind;
-use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(SqlitePdoParameterBindingCompiler::class)]
 #[UsesClass(SqliteCastRenderer::class)]
-#[UsesClass(ColumnType::class)]
-#[UsesClass(SqlToken::class)]
-#[UsesClass(SqlTokenKind::class)]
-#[UsesClass(SqlTokenStream::class)]
 final class SqlitePdoParameterBindingCompilerTest extends TestCase
 {
     public function testUsesSqliteRendererForStorageSensitiveParameterTypes(): void
@@ -50,6 +43,16 @@ final class SqlitePdoParameterBindingCompilerTest extends TestCase
         self::assertSame(
             ['sql' => 'SELECT :missing, CAST(:value AS INTEGER)', 'params' => ['value' => 7]],
             $compiler->compile('SELECT :missing, :value', ['value' => 7]),
+        );
+    }
+
+    public function testLeavesBoundValuesWithoutStorageSensitiveTypesUnchanged(): void
+    {
+        $params = [null, 'text', []];
+
+        self::assertSame(
+            ['sql' => 'SELECT ?, ?, ?', 'params' => $params],
+            (new SqlitePdoParameterBindingCompiler())->compile('SELECT ?, ?, ?', $params),
         );
     }
 }
