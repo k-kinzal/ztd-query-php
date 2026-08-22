@@ -39,8 +39,7 @@ final class PlanParser
             throw PlanSyntaxException::emptyPlan();
         }
 
-        $tables = [];
-        $relations = [];
+        $parts = [];
 
         foreach ($statements as $statement) {
             $this->source = $statement;
@@ -48,17 +47,14 @@ final class PlanParser
 
             $parsed = $this->parseStatement();
             if (is_string($parsed)) {
-                $tables[] = $parsed;
+                $parts[] = $parsed;
                 continue;
             }
 
-            foreach ($parsed as $relation) {
-                $relations[] = $relation;
-                $tables = [...$tables, ...$relation->tables()];
-            }
+            $parts = [...$parts, ...$parsed];
         }
 
-        return new FixturePlan($relations, $this->dedupe($tables));
+        return new FixturePlan(...$parts);
     }
 
     /**
@@ -282,14 +278,5 @@ final class PlanParser
     private function peek(): ?string
     {
         return $this->source[$this->offset] ?? null;
-    }
-
-    /**
-     * @param list<string> $tables
-     * @return list<string>
-     */
-    private function dedupe(array $tables): array
-    {
-        return array_values(array_unique($tables));
     }
 }

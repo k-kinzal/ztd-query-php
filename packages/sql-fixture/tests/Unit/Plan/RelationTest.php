@@ -198,4 +198,76 @@ final class RelationTest extends TestCase
             ColumnRef::of('order_detail', 'order_no')
         );
     }
+
+    #[Test]
+    public function namedConstructorsBuildEachOperator(): void
+    {
+        self::assertSame(RelationKind::OneToMany, Relation::oneToMany('a.id', 'b.a_id')->kind);
+        self::assertSame(RelationKind::ManyToOne, Relation::manyToOne('b.a_id', 'a.id')->kind);
+        self::assertSame(RelationKind::OneToOne, Relation::oneToOne('a.id', 'b.a_id')->kind);
+    }
+
+    #[Test]
+    public function namedConstructorsReadEndpointsWrittenAsStrings(): void
+    {
+        $relation = Relation::oneToMany('order.(shop_id, no)', 'order_detail.(shop_id, order_no)');
+
+        self::assertSame(['shop_id', 'no'], $relation->left->columns);
+        self::assertSame(['shop_id', 'order_no'], $relation->right->columns);
+    }
+
+    #[Test]
+    public function namedConstructorsAlsoTakeColumnRefs(): void
+    {
+        $relation = Relation::oneToMany(ColumnRef::of('order', 'id'), ColumnRef::of('order_detail', 'order_id'));
+
+        self::assertSame('order.id', $relation->left->toString());
+    }
+
+    #[Test]
+    public function oneToManyCanMarkTheChildOptional(): void
+    {
+        self::assertTrue(Relation::oneToMany('a.id', 'b.a_id', true)->childIsOptional());
+        self::assertFalse(Relation::oneToMany('a.id', 'b.a_id')->childIsOptional());
+    }
+
+    #[Test]
+    public function manyToOneCanMarkTheParentOptional(): void
+    {
+        self::assertTrue(Relation::manyToOne('b.a_id', 'a.id', true)->parentIsOptional());
+        self::assertFalse(Relation::manyToOne('b.a_id', 'a.id')->parentIsOptional());
+    }
+
+    #[Test]
+    public function aRequiredChildIsGeneratedEvenWhenNoneAreGiven(): void
+    {
+        self::assertSame(1, Relation::oneToMany('order.id', 'order_detail.order_id')->minimumChildRows());
+    }
+
+    #[Test]
+    public function anOptionalChildMayEndUpWithNoRows(): void
+    {
+        self::assertSame(0, Relation::oneToMany('order.id', 'order_detail.order_id', true)->minimumChildRows());
+    }
+
+    #[Test]
+    public function aCollectionChildHasNoUpperBound(): void
+    {
+        self::assertNull(Relation::oneToMany('order.id', 'order_detail.order_id')->maximumChildRows());
+    }
+
+    #[Test]
+    public function aOneToOneChildIsCappedAtOneRow(): void
+    {
+        self::assertSame(1, Relation::oneToOne('order.id', 'order_shipping.order_id')->maximumChildRows());
+    }
+
+    #[Test]
+    public function anOptionalOneToOneChildRangesFromNoneToOne(): void
+    {
+        $relation = Relation::oneToOne('order.id', 'order_shipping.order_id', true);
+
+        self::assertSame(0, $relation->minimumChildRows());
+        self::assertSame(1, $relation->maximumChildRows());
+    }
 }

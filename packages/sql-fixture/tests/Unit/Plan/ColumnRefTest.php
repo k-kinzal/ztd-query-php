@@ -87,4 +87,36 @@ final class ColumnRefTest extends TestCase
 
         new ColumnRef('order', []);
     }
+
+    #[Test]
+    public function fromReadsASingleColumnEndpoint(): void
+    {
+        $ref = ColumnRef::from('order.id');
+
+        self::assertSame('order', $ref->table);
+        self::assertSame(['id'], $ref->columns);
+    }
+
+    #[Test]
+    public function fromReadsACompositeEndpoint(): void
+    {
+        $ref = ColumnRef::from('order.(shop_id, no)');
+
+        self::assertSame(['shop_id', 'no'], $ref->columns);
+    }
+
+    #[Test]
+    public function fromStripsQuoting(): void
+    {
+        self::assertSame('order.id', ColumnRef::from('`order`."id"')->toString());
+    }
+
+    #[Test]
+    public function fromRejectsAnEndpointWithoutAColumn(): void
+    {
+        $this->expectException(PlanSyntaxException::class);
+        $this->expectExceptionMessage("'.' after the table name");
+
+        ColumnRef::from('order');
+    }
 }

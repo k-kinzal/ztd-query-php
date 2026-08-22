@@ -33,6 +33,33 @@ final class ColumnRef
         return new self($table, array_values($columns));
     }
 
+    /**
+     * Read an endpoint written as `order.id` or `order.(shop_id, no)`.
+     *
+     * @throws PlanSyntaxException
+     */
+    public static function from(string $reference): self
+    {
+        $separator = strpos($reference, '.');
+        if ($separator === false) {
+            throw PlanSyntaxException::unexpected($reference, strlen($reference), "'.' after the table name");
+        }
+
+        $table = trim(substr($reference, 0, $separator), '`" ');
+        $columns = trim(substr($reference, $separator + 1));
+
+        if (str_starts_with($columns, '(') && str_ends_with($columns, ')')) {
+            $columns = substr($columns, 1, -1);
+        }
+
+        $names = array_values(array_filter(array_map(
+            static fn (string $column): string => trim($column, '`" '),
+            explode(',', $columns)
+        ), static fn (string $column): bool => $column !== ''));
+
+        return new self($table, $names);
+    }
+
     public function isComposite(): bool
     {
         return count($this->columns) > 1;

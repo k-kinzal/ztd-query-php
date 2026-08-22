@@ -30,6 +30,77 @@ final class Relation
     }
 
     /**
+     * `parent.column < child.column`: one parent row, several child rows.
+     */
+    public static function oneToMany(
+        string|ColumnRef $parent,
+        string|ColumnRef $child,
+        bool $childOptional = false,
+    ): self {
+        return new self(
+            self::ref($parent),
+            RelationKind::OneToMany,
+            self::ref($child),
+            false,
+            $childOptional
+        );
+    }
+
+    /**
+     * `child.column > parent.column`: the same shape written from the child.
+     */
+    public static function manyToOne(
+        string|ColumnRef $child,
+        string|ColumnRef $parent,
+        bool $parentOptional = false,
+    ): self {
+        return new self(
+            self::ref($child),
+            RelationKind::ManyToOne,
+            self::ref($parent),
+            false,
+            $parentOptional
+        );
+    }
+
+    /**
+     * `parent.column - child.column`: one row on each side.
+     */
+    public static function oneToOne(
+        string|ColumnRef $parent,
+        string|ColumnRef $child,
+        bool $childOptional = false,
+    ): self {
+        return new self(
+            self::ref($parent),
+            RelationKind::OneToOne,
+            self::ref($child),
+            false,
+            $childOptional
+        );
+    }
+
+    /**
+     * The fewest child rows to generate when none are given.
+     *
+     * A relation written without `?` says the child must be there, so an
+     * unspecified child is still generated. Marking it optional is what makes
+     * "none at all" a possible outcome.
+     */
+    public function minimumChildRows(): int
+    {
+        return $this->childIsOptional() ? 0 : 1;
+    }
+
+    /**
+     * The most child rows the relation allows, or null where it is unbounded.
+     */
+    public function maximumChildRows(): ?int
+    {
+        return $this->childIsCollection() ? null : 1;
+    }
+
+    /**
      * The end holding a single row, generated before the other.
      */
     public function parent(): ColumnRef
@@ -97,6 +168,11 @@ final class Relation
         }
 
         return [$this->left->table, $this->right->table];
+    }
+
+    private static function ref(string|ColumnRef $reference): ColumnRef
+    {
+        return $reference instanceof ColumnRef ? $reference : ColumnRef::from($reference);
     }
 
     private function side(RelationSide $side): ColumnRef

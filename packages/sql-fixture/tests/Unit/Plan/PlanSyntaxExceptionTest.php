@@ -80,4 +80,13 @@ final class PlanSyntaxExceptionTest extends TestCase
     {
         self::assertInstanceOf(\InvalidArgumentException::class, PlanSyntaxException::emptyPlan());
     }
+
+    #[Test]
+    public function notATableNamePointsAtFrom(): void
+    {
+        $message = PlanSyntaxException::notATableName('order.id < order_detail.order_id')->getMessage();
+
+        self::assertStringContainsString('must be a Relation or a plain table name', $message);
+        self::assertStringContainsString('FixturePlan::from()', $message);
+    }
 }

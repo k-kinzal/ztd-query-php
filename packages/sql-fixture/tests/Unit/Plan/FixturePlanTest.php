@@ -13,7 +13,6 @@ use SqlFixture\Plan\FixturePlan;
 use SqlFixture\Plan\PlanParser;
 use SqlFixture\Plan\PlanPrinter;
 use SqlFixture\Plan\PlanSyntaxException;
-use SqlFixture\Plan\PlanUndefinedException;
 use SqlFixture\Plan\Relation;
 use SqlFixture\Plan\RelationKind;
 use SqlFixture\Plan\RelationSide;
@@ -27,7 +26,6 @@ use Tests\Fixture\Plan\OrderWithDetailsPlan;
 #[UsesClass(RelationKind::class)]
 #[UsesClass(RelationSide::class)]
 #[UsesClass(PlanSyntaxException::class)]
-#[UsesClass(PlanUndefinedException::class)]
 final class FixturePlanTest extends TestCase
 {
     #[Test]
@@ -188,11 +186,42 @@ final class FixturePlanTest extends TestCase
     }
 
     #[Test]
-    public function aSubclassDefinesANamedPlan(): void
+    public function aPlanCanBeDeclaredAsAType(): void
     {
-        $plan = OrderWithDetailsPlan::define();
+        $plan = new OrderWithDetailsPlan();
 
-        self::assertInstanceOf(OrderWithDetailsPlan::class, $plan);
+        self::assertInstanceOf(FixturePlan::class, $plan);
+        self::assertSame(['order', 'order_detail', 'customer'], $plan->tables);
+    }
+
+    #[Test]
+    public function aDeclaredPlanWritesOutAsTheSameRelationString(): void
+    {
+        self::assertSame(
+            'order.id < order_detail.order_id, order.customer_id > customer.id',
+            (new OrderWithDetailsPlan())->toString()
+        );
+    }
+
+    #[Test]
+    public function aDeclaredPlanEqualsTheParsedString(): void
+    {
+        $declared = new OrderWithDetailsPlan();
+        $parsed = FixturePlan::from('order.id < order_detail.order_id, order.customer_id > customer.id');
+
+        self::assertSame($parsed->toString(), $declared->toString());
+        self::assertSame($parsed->tables, $declared->tables);
+        self::assertEquals($parsed->relations, $declared->relations);
+    }
+
+    #[Test]
+    public function constructingFromRelationsNeedsNoString(): void
+    {
+        $plan = new FixturePlan(
+            Relation::oneToMany('order.id', 'order_detail.order_id'),
+            Relation::manyToOne('order.customer_id', 'customer.id'),
+        );
+
         self::assertSame(
             'order.id < order_detail.order_id, order.customer_id > customer.id',
             $plan->toString()
@@ -200,20 +229,29 @@ final class FixturePlanTest extends TestCase
     }
 
     #[Test]
-    public function aSubclassWithoutADefinitionSaysSo(): void
+    public function aStringPartNamesAStandaloneTable(): void
     {
-        $this->expectException(PlanUndefinedException::class);
-        $this->expectExceptionMessage('Override definition()');
+        $plan = new FixturePlan(Relation::oneToMany('order.id', 'order_detail.order_id'), 'audit_log');
 
-        FixturePlan::define();
+        self::assertSame(['order', 'order_detail', 'audit_log'], $plan->tables);
     }
 
     #[Test]
-    public function aFluentCallOnASubclassKeepsItsType(): void
+    public function aStringPartHoldingRelationSyntaxIsRejected(): void
     {
-        $plan = OrderWithDetailsPlan::define()->withTable('audit_log');
+        $this->expectException(PlanSyntaxException::class);
+        $this->expectExceptionMessage('FixturePlan::from()');
 
-        self::assertInstanceOf(OrderWithDetailsPlan::class, $plan);
+        new FixturePlan('order.id < order_detail.order_id');
+    }
+
+    #[Test]
+    public function alteringADeclaredPlanGivesAPlainPlan(): void
+    {
+        $plan = (new OrderWithDetailsPlan())->withTable('audit_log');
+
+        self::assertNotInstanceOf(OrderWithDetailsPlan::class, $plan);
+        self::assertSame(['order', 'order_detail', 'customer', 'audit_log'], $plan->tables);
     }
 
     #[Test]

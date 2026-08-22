@@ -23,6 +23,15 @@ final class PlanSyntaxException extends InvalidArgumentException
         return new self(sprintf('The endpoint for table %s names no columns.', $table));
     }
 
+    public static function notATableName(string $part): self
+    {
+        return new self(sprintf(
+            'A FixturePlan part must be a Relation or a plain table name, but "%s" is '
+            . 'neither. To build a plan from relation syntax, use FixturePlan::from().',
+            $part
+        ));
+    }
+
     public static function unexpected(string $plan, int $offset, string $expected): self
     {
         return new self(sprintf(

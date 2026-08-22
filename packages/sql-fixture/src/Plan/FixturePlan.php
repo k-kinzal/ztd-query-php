@@ -7,134 +7,133 @@ namespace SqlFixture\Plan;
 use Stringable;
 
 /**
- * The shape of a set of related fixtures, independent of any syntax.
+ * The parsed form of a fixture plan: which tables take part, and how their
+ * columns line up.
  *
- * A plan can be written as a DBML relation string, built up through the
- * methods below, or subclassed to give a named plan a home. All three describe
- * the same value, and `from()` and `toString()` convert between the string and
- * the object without losing anything but formatting.
+ * This type is the plan. The DBML relation string is one way to write it down
+ * and `from()` reads it; `toString()` writes it back. Building it up method by
+ * method, or declaring one as a class, produce the same value by other routes:
  *
- * Every method returns a new instance.
+ *     FixturePlan::from('order.id < order_detail.order_id');
+ *
+ *     (new FixturePlan())->withOneToMany('order.id', 'order_detail.order_id');
+ *
+ *     final class OrderWithDetails extends FixturePlan
+ *     {
+ *         public function __construct()
+ *         {
+ *             parent::__construct(
+ *                 Relation::oneToMany('order.id', 'order_detail.order_id'),
+ *                 Relation::manyToOne('order.customer_id', 'customer.id'),
+ *             );
+ *         }
+ *     }
+ *
+ * A subclass names a plan without adding a kind of plan, so the builders below
+ * return a plain FixturePlan rather than the subclass: once a declared plan is
+ * altered it is no longer the plan that class stands for.
  */
 class FixturePlan implements Stringable
 {
+    /** @var list<Relation|string> */
+    private readonly array $parts;
+
+    /** @var list<Relation> */
+    public readonly array $relations;
+
+    /** @var list<string> Every table named, in first-mentioned order */
+    public readonly array $tables;
+
     /**
-     * @param list<Relation> $relations
-     * @param list<string> $tables Every table the plan names, in first-mentioned order
+     * @param Relation|string ...$parts Relations, and the names of tables that stand alone
+     * @throws PlanSyntaxException If a string names anything but a plain table
      */
-    final public function __construct(
-        public readonly array $relations = [],
-        public readonly array $tables = [],
-    ) {
+    public function __construct(Relation|string ...$parts)
+    {
+        $relations = [];
+        $tables = [];
+
+        foreach ($parts as $part) {
+            if ($part instanceof Relation) {
+                $relations[] = $part;
+                $tables = [...$tables, ...$part->tables()];
+                continue;
+            }
+
+            $tables[] = self::assertTableName($part);
+        }
+
+        $this->parts = array_values($parts);
+        $this->relations = $relations;
+        $this->tables = array_values(array_unique($tables));
     }
 
     /**
-     * Read a plan from the DBML relation syntax.
+     * Read a plan written in the DBML relation syntax.
      *
      * @throws PlanSyntaxException
      */
-    public static function from(string|self $plan): static
+    public static function from(string|self $plan): self
     {
         if ($plan instanceof self) {
-            return new static($plan->relations, $plan->tables);
+            return new self(...$plan->parts);
         }
 
-        $parsed = (new PlanParser())->parse($plan);
-
-        return new static($parsed->relations, $parsed->tables);
-    }
-
-    /**
-     * Build the plan this class stands for.
-     *
-     * A named plan lives in a subclass that overrides definition():
-     *
-     *     final class OrderWithDetails extends FixturePlan
-     *     {
-     *         protected static function definition(): string
-     *         {
-     *             return 'order.id < order_detail.order_id';
-     *         }
-     *     }
-     *
-     *     OrderWithDetails::define();
-     */
-    public static function define(): static
-    {
-        return static::from(static::definition());
-    }
-
-    /**
-     * The plan a subclass stands for, as a DBML relation string or a built plan.
-     */
-    protected static function definition(): string|self
-    {
-        throw PlanUndefinedException::forClass(static::class);
+        return (new PlanParser())->parse($plan);
     }
 
     /**
      * Start a plan from the table its fixtures are rooted at.
      */
-    public static function table(string $table): static
+    public static function table(string $table): self
     {
-        return new static([], [$table]);
+        return new self($table);
+    }
+
+    public function withRelation(Relation $relation): self
+    {
+        return new self(...[...$this->parts, $relation]);
     }
 
     /**
-     * Add a relation, naming both ends and the operator between them.
+     * Add `parent.column < child.column`.
      */
-    public function withRelation(Relation $relation): static
-    {
-        return new static(
-            [...$this->relations, $relation],
-            $this->mergeTables($relation->tables())
-        );
+    public function withOneToMany(
+        string|ColumnRef $parent,
+        string|ColumnRef $child,
+        bool $childOptional = false,
+    ): self {
+        return $this->withRelation(Relation::oneToMany($parent, $child, $childOptional));
     }
 
     /**
-     * Add a one-to-many relation, written `parent.column < child.column`.
+     * Add `child.column > parent.column`.
      */
-    public function withOneToMany(string|ColumnRef $parent, string|ColumnRef $child): static
-    {
-        return $this->withRelation(new Relation(
-            $this->toRef($parent),
-            RelationKind::OneToMany,
-            $this->toRef($child)
-        ));
+    public function withManyToOne(
+        string|ColumnRef $child,
+        string|ColumnRef $parent,
+        bool $parentOptional = false,
+    ): self {
+        return $this->withRelation(Relation::manyToOne($child, $parent, $parentOptional));
     }
 
     /**
-     * Add a many-to-one relation, written `child.column > parent.column`.
+     * Add `parent.column - child.column`.
      */
-    public function withManyToOne(string|ColumnRef $child, string|ColumnRef $parent, bool $optional = false): static
-    {
-        return $this->withRelation(new Relation(
-            $this->toRef($child),
-            RelationKind::ManyToOne,
-            $this->toRef($parent),
-            false,
-            $optional
-        ));
+    public function withOneToOne(
+        string|ColumnRef $parent,
+        string|ColumnRef $child,
+        bool $childOptional = false,
+    ): self {
+        return $this->withRelation(Relation::oneToOne($parent, $child, $childOptional));
     }
 
     /**
-     * Add a one-to-one relation, written `parent.column - child.column`.
+     * Name a table that takes part without being related to anything.
      */
-    public function withOneToOne(string|ColumnRef $parent, string|ColumnRef $child): static
+    public function withTable(string $table): self
     {
-        return $this->withRelation(new Relation(
-            $this->toRef($parent),
-            RelationKind::OneToOne,
-            $this->toRef($child)
-        ));
-    }
-
-    /**
-     * Name a table that takes part without being related to anything yet.
-     */
-    public function withTable(string $table): static
-    {
-        return new static($this->relations, $this->mergeTables([$table]));
+        return new self(...[...$this->parts, $table]);
     }
 
     /**
@@ -168,29 +167,14 @@ class FixturePlan implements Stringable
         return $this->toString();
     }
 
-    /**
-     * @param list<string> $tables
-     * @return list<string>
-     */
-    private function mergeTables(array $tables): array
+    private static function assertTableName(string $part): string
     {
-        return array_values(array_unique([...$this->tables, ...$tables]));
-    }
+        $table = trim($part);
 
-    private function toRef(string|ColumnRef $reference): ColumnRef
-    {
-        if ($reference instanceof ColumnRef) {
-            return $reference;
+        if (preg_match('/^(?:`[^`]+`|"[^"]+"|[A-Za-z_][A-Za-z0-9_$]*)$/', $table) !== 1) {
+            throw PlanSyntaxException::notATableName($part);
         }
 
-        $separator = strpos($reference, '.');
-        if ($separator === false) {
-            throw PlanSyntaxException::unexpected($reference, strlen($reference), "'.' after the table name");
-        }
-
-        return new ColumnRef(
-            substr($reference, 0, $separator),
-            [substr($reference, $separator + 1)]
-        );
+        return trim($table, '`"');
     }
 }
