@@ -39,7 +39,7 @@ final class SqliteCteShadowComposer
             return $sql;
         }
 
-        $sql = SqlTokenStream::tokenize($sql, $this->dialect)->unqualifySelectTableReferences($shadowedTables);
+        $sql = (new SqliteSelectRelationParser())->unqualify($sql, $shadowedTables);
         $tokens = SqlTokenStream::tokenize($sql, $this->dialect)->significantTokens();
         $with = $tokens[0] ?? null;
         if ($with === null || !$with->isKeyword('WITH')) {

@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer;
 
 #[CoversClass(PgSqlCteShadowComposer::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser::class)]
 final class PgSqlCteShadowComposerTest extends TestCase
 {
     public function testAddsShadowsAfterRecursiveModifier(): void
