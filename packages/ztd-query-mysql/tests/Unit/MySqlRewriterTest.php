@@ -17,6 +17,7 @@ use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlQueryGuard;
 use ZtdQuery\Platform\MySql\MySqlRewriter;
 use ZtdQuery\Platform\MySql\MySqlSchemaParser;
+use ZtdQuery\Platform\MySql\MySqlViewDefinitionParser;
 use ZtdQuery\Platform\MySql\MySqlUpsertAssignmentExtractor;
 use ZtdQuery\Platform\MySql\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\MySql\Transformer\InsertTransformer;
@@ -94,7 +95,7 @@ final class MySqlRewriterTest extends RewriterContractTest
         $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
         $resolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
         $views = new ViewDefinitionSet();
-        $views->register('active_users', ViewDefinition::fromQuery('SELECT id FROM app.users'));
+        $views->register('active_users', (new MySqlViewDefinitionParser())->fromQuery('SELECT id FROM app.users'));
         $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $resolver, $parser, $views);
 
         $sql = $rewriter->rewrite('SELECT * FROM active_users')->sql();
@@ -104,7 +105,7 @@ final class MySqlRewriterTest extends RewriterContractTest
         $viewOnlyStore = new ShadowStore();
         $viewOnlyRegistry = new TableDefinitionRegistry();
         $viewOnlyViews = new ViewDefinitionSet();
-        $viewOnlyViews->register('constant_view', ViewDefinition::fromQuery('SELECT 1 AS id'));
+        $viewOnlyViews->register('constant_view', (new MySqlViewDefinitionParser())->fromQuery('SELECT 1 AS id'));
         $viewOnlyResolver = new MySqlMutationResolver($viewOnlyStore, $viewOnlyRegistry, $schemaParser, $updateTransformer, $deleteTransformer);
         $viewOnlyRewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $viewOnlyStore, $viewOnlyRegistry, $transformer, $viewOnlyResolver, $parser, $viewOnlyViews);
 

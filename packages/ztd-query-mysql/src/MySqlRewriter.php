@@ -241,7 +241,7 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
             ];
         }
 
-        foreach ($this->views->shadowQueries(array_keys($context)) as $viewName => $viewSql) {
+        foreach ((new MySqlViewShadowRenderer())->render($this->views, array_keys($context)) as $viewName => $viewSql) {
             if (isset($context[$viewName])) {
                 continue;
             }

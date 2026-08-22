@@ -102,7 +102,7 @@ final class SqliteSchemaReflector implements SchemaReflector, ViewReflector
             if (!is_string($viewName) || $viewName === '' || isset($definitions[$viewName]) || !is_string($createSql)) {
                 continue;
             }
-            $definition = ViewDefinition::fromCreateStatement($createSql);
+            $definition = (new SqliteViewDefinitionParser())->fromCreateStatement($createSql);
             if ($definition !== null) {
                 $definitions[$viewName] = $definition;
             }

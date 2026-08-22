@@ -246,7 +246,7 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
             ];
         }
 
-        foreach ($this->views->shadowQueries(array_keys($context)) as $viewName => $viewSql) {
+        foreach ((new PgSqlViewShadowRenderer())->render($this->views, array_keys($context)) as $viewName => $viewSql) {
             if (isset($context[$viewName])) {
                 continue;
             }

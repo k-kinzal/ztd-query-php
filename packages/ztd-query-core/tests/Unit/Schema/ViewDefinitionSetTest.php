@@ -9,56 +9,54 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Schema\ViewDefinition;
 use ZtdQuery\Schema\ViewDefinitionSet;
-use ZtdQuery\Sql\SqlToken;
-use ZtdQuery\Sql\SqlTokenKind;
-use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(ViewDefinitionSet::class)]
 #[UsesClass(ViewDefinition::class)]
-#[UsesClass(SqlToken::class)]
-#[UsesClass(SqlTokenKind::class)]
-#[UsesClass(SqlTokenStream::class)]
 final class ViewDefinitionSetTest extends TestCase
 {
     public function testOrdersViewsAfterTheirDependencies(): void
     {
         $definitions = new ViewDefinitionSet();
-        $definitions->register('summary', ViewDefinition::fromQuery('SELECT count(*) FROM active_users'));
-        $definitions->register('active_users', ViewDefinition::fromQuery('SELECT * FROM users WHERE active = 1'));
+        $summary = new ViewDefinition('summary query', ['active_users']);
+        $activeUsers = new ViewDefinition('active users query', ['users']);
+        $definitions->register('summary', $summary);
+        $definitions->register('active_users', $activeUsers);
 
         self::assertSame(
-            ['active_users', 'summary'],
-            array_keys($definitions->shadowQueries(['users'])),
+            ['active_users' => $activeUsers, 'summary' => $summary],
+            $definitions->orderedDefinitions(),
         );
     }
 
-    public function testOrdersThreeDependencyLevelsAndUnqualifiesEveryRelationKind(): void
+    public function testOrdersThreeDependencyLevels(): void
     {
         $definitions = new ViewDefinitionSet();
-        $definitions->register('summary', ViewDefinition::fromQuery('SELECT count(*) FROM tenant.active_users'));
-        $definitions->register('active_users', ViewDefinition::fromQuery('SELECT * FROM tenant.eligible_users'));
-        $definitions->register('eligible_users', ViewDefinition::fromQuery('SELECT * FROM tenant.users'));
+        $summary = new ViewDefinition('summary query', ['active_users']);
+        $activeUsers = new ViewDefinition('active users query', ['eligible_users']);
+        $eligibleUsers = new ViewDefinition('eligible users query', ['users']);
+        $definitions->register('summary', $summary);
+        $definitions->register('active_users', $activeUsers);
+        $definitions->register('eligible_users', $eligibleUsers);
 
         self::assertSame(
             [
-                'eligible_users' => 'SELECT * FROM users',
-                'active_users' => 'SELECT * FROM eligible_users',
-                'summary' => 'SELECT count(*) FROM active_users',
+                'eligible_users' => $eligibleUsers,
+                'active_users' => $activeUsers,
+                'summary' => $summary,
             ],
-            $definitions->shadowQueries(['users']),
+            $definitions->orderedDefinitions(),
         );
     }
-
 
     public function testKeepsCyclicDefinitionsDeterministic(): void
     {
         $definitions = new ViewDefinitionSet();
-        $definitions->register('left_view', ViewDefinition::fromQuery('SELECT * FROM right_view'));
-        $definitions->register('right_view', ViewDefinition::fromQuery('SELECT * FROM left_view'));
+        $definitions->register('left_view', new ViewDefinition('left query', ['right_view']));
+        $definitions->register('right_view', new ViewDefinition('right query', ['left_view']));
 
         self::assertSame(
             ['left_view', 'right_view'],
-            array_keys($definitions->shadowQueries([])),
+            array_keys($definitions->orderedDefinitions()),
         );
     }
 }

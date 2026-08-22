@@ -224,7 +224,7 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
             $context[$tableName] = self::contextFromDefinition($definition, []);
         }
 
-        foreach ($this->views->shadowQueries(array_keys($context)) as $viewName => $viewSql) {
+        foreach ((new SqliteViewShadowRenderer())->render($this->views, array_keys($context)) as $viewName => $viewSql) {
             if (isset($context[$viewName])) {
                 continue;
             }

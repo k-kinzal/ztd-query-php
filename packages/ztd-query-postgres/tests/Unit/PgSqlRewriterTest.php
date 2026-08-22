@@ -18,6 +18,7 @@ use ZtdQuery\Platform\Postgres\PgSqlReturningProjectionParser;
 use ZtdQuery\Platform\Postgres\PgSqlRewriter;
 use ZtdQuery\Platform\Postgres\PgSqlSchemaParser;
 use ZtdQuery\Platform\Postgres\PgSqlTransformer;
+use ZtdQuery\Platform\Postgres\PgSqlViewDefinitionParser;
 use ZtdQuery\Platform\Postgres\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\InsertTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
@@ -82,7 +83,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
         $transformer = new PgSqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer);
         $resolver = new PgSqlMutationResolver($store, $registry, $schemaParser, $parser);
         $views = new ViewDefinitionSet();
-        $views->register('active_users', ViewDefinition::fromQuery('SELECT id FROM public.users'));
+        $views->register('active_users', (new PgSqlViewDefinitionParser())->fromQuery('SELECT id FROM public.users'));
         $rewriter = new PgSqlRewriter(new PgSqlQueryGuard($parser), $store, $registry, $transformer, $resolver, $parser, $views);
 
         $sql = $rewriter->rewrite('SELECT * FROM active_users')->sql();
@@ -92,7 +93,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
         $viewOnlyStore = new ShadowStore();
         $viewOnlyRegistry = new TableDefinitionRegistry();
         $viewOnlyViews = new ViewDefinitionSet();
-        $viewOnlyViews->register('constant_view', ViewDefinition::fromQuery('SELECT 1 AS id'));
+        $viewOnlyViews->register('constant_view', (new PgSqlViewDefinitionParser())->fromQuery('SELECT 1 AS id'));
         $viewOnlyResolver = new PgSqlMutationResolver($viewOnlyStore, $viewOnlyRegistry, $schemaParser, $parser);
         $viewOnlyRewriter = new PgSqlRewriter(new PgSqlQueryGuard($parser), $viewOnlyStore, $viewOnlyRegistry, $transformer, $viewOnlyResolver, $parser, $viewOnlyViews);
 

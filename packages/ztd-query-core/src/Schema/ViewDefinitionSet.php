@@ -25,10 +25,9 @@ final class ViewDefinitionSet
     }
 
     /**
-     * @param list<string> $tableNames
-     * @return array<string, string>
+     * @return array<string, ViewDefinition>
      */
-    public function shadowQueries(array $tableNames): array
+    public function orderedDefinitions(): array
     {
         $remaining = $this->definitions;
         $ordered = [];
@@ -54,12 +53,6 @@ final class ViewDefinitionSet
             }
         }
 
-        $relationNames = array_merge($tableNames, array_keys($ordered));
-        $queries = [];
-        foreach ($ordered as $viewName => $definition) {
-            $queries[$viewName] = $definition->shadowQuery($relationNames);
-        }
-
-        return $queries;
+        return $ordered;
     }
 }

@@ -81,7 +81,7 @@ final class PgSqlSchemaReflector implements SchemaReflector, ViewReflector
             if (!is_string($viewName) || $viewName === '' || !is_string($query) || trim($query) === '') {
                 continue;
             }
-            $definitions[$viewName] = ViewDefinition::fromQuery($query);
+            $definitions[$viewName] = (new PgSqlViewDefinitionParser())->fromQuery($query);
         }
 
         return $definitions;

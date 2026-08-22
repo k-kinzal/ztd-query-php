@@ -18,6 +18,7 @@ use ZtdQuery\Platform\Sqlite\SqliteQueryGuard;
 use ZtdQuery\Platform\Sqlite\SqliteReturningProjectionParser;
 use ZtdQuery\Platform\Sqlite\SqliteRewriter;
 use ZtdQuery\Platform\Sqlite\SqliteSchemaParser;
+use ZtdQuery\Platform\Sqlite\SqliteViewDefinitionParser;
 use ZtdQuery\Platform\Sqlite\Mutation\AlterTableMutation;
 use ZtdQuery\Platform\Sqlite\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\Sqlite\Transformer\InsertTransformer;
@@ -86,7 +87,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         $transformer = new SqliteTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer);
         $resolver = new SqliteMutationResolver($store, $registry, $schemaParser, $parser);
         $views = new ViewDefinitionSet();
-        $views->register('active_users', ViewDefinition::fromQuery('SELECT id FROM main.users'));
+        $views->register('active_users', (new SqliteViewDefinitionParser())->fromQuery('SELECT id FROM main.users'));
         $rewriter = new SqliteRewriter(new SqliteQueryGuard($parser), $store, $registry, $transformer, $resolver, $parser, $views);
 
         $sql = $rewriter->rewrite('SELECT * FROM active_users')->sql();
@@ -96,7 +97,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         $viewOnlyStore = new ShadowStore();
         $viewOnlyRegistry = new TableDefinitionRegistry();
         $viewOnlyViews = new ViewDefinitionSet();
-        $viewOnlyViews->register('constant_view', ViewDefinition::fromQuery('SELECT 1 AS id'));
+        $viewOnlyViews->register('constant_view', (new SqliteViewDefinitionParser())->fromQuery('SELECT 1 AS id'));
         $viewOnlyResolver = new SqliteMutationResolver($viewOnlyStore, $viewOnlyRegistry, $schemaParser, $parser);
         $viewOnlyRewriter = new SqliteRewriter(new SqliteQueryGuard($parser), $viewOnlyStore, $viewOnlyRegistry, $transformer, $viewOnlyResolver, $parser, $viewOnlyViews);
 

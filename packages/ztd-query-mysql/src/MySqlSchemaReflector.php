@@ -8,7 +8,6 @@ use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Platform\SchemaReflector;
 use ZtdQuery\Platform\ViewReflector;
 use ZtdQuery\Schema\ViewDefinition;
-use ZtdQuery\Sql\SqlTokenDialect;
 
 /**
  * Fetches MySQL schema information via SQL queries.
@@ -97,7 +96,7 @@ final class MySqlSchemaReflector implements SchemaReflector, ViewReflector
             if (!is_string($createSql)) {
                 continue;
             }
-            $definition = ViewDefinition::fromCreateStatement($createSql, SqlTokenDialect::MySql);
+            $definition = (new MySqlViewDefinitionParser())->fromCreateStatement($createSql);
             if ($definition !== null) {
                 $definitions[$viewName] = $definition;
             }
