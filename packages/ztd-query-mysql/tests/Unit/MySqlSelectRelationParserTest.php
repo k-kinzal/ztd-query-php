@@ -6,10 +6,13 @@ namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Platform\MySql\MySqlLexerProfile;
 use ZtdQuery\Platform\MySql\MySqlSelectRelationParser;
 
 #[CoversClass(MySqlSelectRelationParser::class)]
+#[UsesClass(MySqlLexerProfile::class)]
 final class MySqlSelectRelationParserTest extends TestCase
 {
     public function testFindsPhysicalRelationsAcrossMySqlSelectScopes(): void

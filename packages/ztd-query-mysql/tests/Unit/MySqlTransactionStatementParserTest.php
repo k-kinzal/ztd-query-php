@@ -6,12 +6,15 @@ namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Platform\MySql\MySqlLexerProfile;
 use ZtdQuery\Platform\MySql\MySqlTransactionStatementParser;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTransactionManager;
 
 #[CoversClass(MySqlTransactionStatementParser::class)]
+#[UsesClass(MySqlLexerProfile::class)]
 final class MySqlTransactionStatementParserTest extends TestCase
 {
     #[DataProvider('providerMySqlTransactionForms')]

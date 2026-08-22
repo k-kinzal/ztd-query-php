@@ -6,10 +6,13 @@ namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Platform\Sqlite\SqliteLexerProfile;
 use ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser;
 
 #[CoversClass(SqliteSelectRelationParser::class)]
+#[UsesClass(SqliteLexerProfile::class)]
 final class SqliteSelectRelationParserTest extends TestCase
 {
     public function testFindsSqliteQuotedAndNestedRelations(): void

@@ -6,12 +6,15 @@ namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Platform\Postgres\PgSqlLexerProfile;
 use ZtdQuery\Platform\Postgres\PgSqlTransactionStatementParser;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTransactionManager;
 
 #[CoversClass(PgSqlTransactionStatementParser::class)]
+#[UsesClass(PgSqlLexerProfile::class)]
 final class PgSqlTransactionStatementParserTest extends TestCase
 {
     #[DataProvider('providerPostgresTransactionForms')]

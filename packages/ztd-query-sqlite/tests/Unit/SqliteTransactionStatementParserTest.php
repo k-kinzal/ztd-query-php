@@ -6,12 +6,15 @@ namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Platform\Sqlite\SqliteLexerProfile;
 use ZtdQuery\Platform\Sqlite\SqliteTransactionStatementParser;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTransactionManager;
 
 #[CoversClass(SqliteTransactionStatementParser::class)]
+#[UsesClass(SqliteLexerProfile::class)]
 final class SqliteTransactionStatementParserTest extends TestCase
 {
     #[DataProvider('providerSqliteTransactionForms')]
