@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Tests\Fake\FakeSequentialConnection;
 use Tests\Fake\FakeStatement;
@@ -13,6 +14,8 @@ use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Platform\Postgres\PgSqlSchemaReflector;
 
 #[CoversClass(PgSqlSchemaReflector::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlViewDefinitionParser::class)]
 final class PgSqlSchemaReflectorTest extends TestCase
 {
     public function testReflectViewsReturnsEmptyWhenQueryFails(): void

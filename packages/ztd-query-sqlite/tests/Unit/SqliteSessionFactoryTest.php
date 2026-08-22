@@ -52,6 +52,8 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(UpdateTransformer::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteNativeUpsertProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteViewDefinitionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteViewShadowRenderer::class)]
 final class SqliteSessionFactoryTest extends TestCase
 {
     public function testCreateRegistersReflectedViews(): void

@@ -75,6 +75,8 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlTypeSemantics::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlNativeUpsertProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlViewDefinitionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlViewShadowRenderer::class)]
 final class MySqlRewriterTest extends RewriterContractTest
 {
     public function testRegisteredViewIsKnownAndMaterialized(): void

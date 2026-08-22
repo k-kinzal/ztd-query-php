@@ -76,7 +76,7 @@ final class GenerationPlansTest extends TestCase
         $plan = GenerationPlans::viewStatement();
 
         self::assertSame('cmd', $plan->startRule());
-        self::assertNotNull($plan->patternAt('cmd', 0));
-        self::assertNotNull($plan->patternAt('oneselect', 0));
+        self::assertTrue($plan->patternAt('cmd', 0)?->matches(['createkw', 'VIEW', 'select']) ?? false);
+        self::assertTrue($plan->patternAt('oneselect', 0)?->matches(['SELECT']) ?? false);
     }
 }

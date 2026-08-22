@@ -49,6 +49,10 @@ use ZtdQuery\Session;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlTypeSemantics::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlNativeUpsertProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlReadOnlyDiagnosticStatement::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlSelectRelationParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlViewDefinitionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlViewShadowRenderer::class)]
 final class MySqlSessionFactoryTest extends TestCase
 {
     public function testCreateRegistersReflectedViews(): void

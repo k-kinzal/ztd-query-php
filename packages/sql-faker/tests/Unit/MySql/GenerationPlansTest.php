@@ -200,7 +200,17 @@ final class GenerationPlansTest extends TestCase
         $plan = GenerationPlans::viewStatement();
 
         self::assertSame('create', $plan->startRule());
-        self::assertNotNull($plan->patternAt('view_or_trigger_or_sp_or_event', 0));
-        self::assertNotNull($plan->patternAt('no_definer_tail', 0));
+        self::assertTrue(
+            $plan->patternAt('create', 0)?->matches(['CREATE', 'view_or_trigger_or_sp_or_event']) ?? false,
+        );
+        self::assertTrue(
+            $plan->patternAt('view_or_trigger_or_sp_or_event', 0)?->matches([
+                'no_definer',
+                'init_lex_create_info',
+                'no_definer_tail',
+            ]) ?? false,
+        );
+        self::assertTrue($plan->patternAt('no_definer_tail', 0)?->matches(['view_tail']) ?? false);
+        self::assertTrue($plan->patternAt('query_primary', 0)?->matches(['query_specification']) ?? false);
     }
 }
