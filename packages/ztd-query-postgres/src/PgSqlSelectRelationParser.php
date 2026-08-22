@@ -140,15 +140,19 @@ final class PgSqlSelectRelationParser
             }
 
             if ($token->kind === SqlTokenKind::Symbol && $token->text === '(') {
-                $closingToken = $this->closingToken($tokens, $token);
+                $closingToken = $this->closingToken($tokens, $index);
                 if ($closingToken === null) {
                     continue;
                 }
                 $innerStart = $token->endOffset();
                 $inner = substr($clause, $innerStart, $closingToken->offset - $innerStart);
-                $firstInner = $this->tokens($inner)[0] ?? null;
-                if ($firstInner === null
-                    || in_array(strtoupper($firstInner->text), ['SELECT', 'WITH', 'VALUES'], true)
+                $innerTokens = $this->tokens($inner);
+                if ($innerTokens === []) {
+                    continue;
+                }
+                if ($innerTokens[0]->isKeyword('SELECT')
+                    || $innerTokens[0]->isKeyword('WITH')
+                    || $innerTokens[0]->isKeyword('VALUES')
                 ) {
                     continue;
                 }
@@ -174,15 +178,11 @@ final class PgSqlSelectRelationParser
     }
 
     /** @param list<SqlToken> $tokens */
-    private function closingToken(array $tokens, SqlToken $opening): ?SqlToken
+    private function closingToken(array $tokens, int $openingIndex): ?SqlToken
     {
-        $afterOpening = false;
-        foreach ($tokens as $candidate) {
-            if ($candidate === $opening) {
-                $afterOpening = true;
-                continue;
-            }
-            if ($afterOpening && $candidate->text === ')' && $candidate->isTopLevel()) {
+        for ($index = $openingIndex; isset($tokens[$index]); $index++) {
+            $candidate = $tokens[$index];
+            if ($candidate->text === ')' && $candidate->isTopLevel()) {
                 return $candidate;
             }
         }
@@ -244,7 +244,7 @@ final class PgSqlSelectRelationParser
             return [$token->text, $index + 1, $token->offset, $token->offset, $token->endOffset()];
         }
         if ($token->kind !== SqlTokenKind::QuotedIdentifier
-            || strlen($token->text) < 2
+            || strlen($token->text) <= 2
             || !str_starts_with($token->text, '"')
         ) {
             return null;
