@@ -134,6 +134,26 @@ final class GenerationPlanTest extends TestCase
         GenerationPlan::all()->withLexemes([]);
     }
 
+    public function testLexicalPlanSelectsOneTargetWithParameters(): void
+    {
+        $plan = GenerationPlan::lexical('quoted_identifier', [
+            'minLength' => 2,
+            'maxLength' => 8,
+        ]);
+
+        self::assertNull($plan->startRule());
+        self::assertSame('quoted_identifier', $plan->lexicalTarget());
+        self::assertSame(['minLength' => 2, 'maxLength' => 8], $plan->parameters());
+    }
+
+    public function testRejectsAnEmptyLexicalTarget(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('target must not be empty');
+
+        GenerationPlan::lexical('', []);
+    }
+
     public function testRejectsAnEmptyStartRule(): void
     {
         $this->expectException(InvalidArgumentException::class);

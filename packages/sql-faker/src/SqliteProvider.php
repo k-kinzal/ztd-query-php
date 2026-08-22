@@ -7,7 +7,6 @@ namespace SqlFaker;
 use Faker\Generator;
 use Faker\Provider\Base;
 use SqlFaker\Grammar\GenerationPlan;
-use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\Sqlite\Grammar\SqliteGrammar;
 use SqlFaker\Sqlite\GenerationPlans;
 use SqlFaker\Sqlite\SqlGenerator;
@@ -34,7 +33,6 @@ use SqlFaker\Sqlite\StatementType;
 final class SqliteProvider extends Base
 {
     private SqlGenerator $sql;
-    private RandomStringGenerator $rsg;
 
     /**
      * @param Generator $generator Faker generator
@@ -47,8 +45,7 @@ final class SqliteProvider extends Base
         $generator->addProvider($this);
 
         $resolvedVersion = SqliteGrammar::resolveVersion($version);
-        $this->rsg = new RandomStringGenerator($generator);
-        $this->sql = new SqlGenerator(SqliteGrammar::load($resolvedVersion), $generator, $this, $resolvedVersion);
+        $this->sql = new SqlGenerator(SqliteGrammar::load($resolvedVersion), $generator, $resolvedVersion);
     }
 
     /**
@@ -229,7 +226,7 @@ final class SqliteProvider extends Base
      */
     public function quotedIdentifier(int $minLength = 1, int $maxLength = 128): string
     {
-        return '"' . $this->rsg->rawIdentifier($minLength, $maxLength) . '"';
+        return $this->sql->generate(GenerationPlans::quotedIdentifier($minLength, $maxLength));
     }
 
     /**
@@ -237,7 +234,7 @@ final class SqliteProvider extends Base
      */
     public function stringLiteral(int $minLength = 1, int $maxLength = 255): string
     {
-        return "'" . $this->rsg->mixedAlnumString($minLength, $maxLength) . "'";
+        return $this->sql->generate(GenerationPlans::stringLiteral($minLength, $maxLength));
     }
 
     /**
@@ -245,7 +242,7 @@ final class SqliteProvider extends Base
      */
     public function integerLiteral(int $min = 1, int $max = PHP_INT_MAX): string
     {
-        return $this->rsg->integerString($min, $max);
+        return $this->sql->generate(GenerationPlans::integerLiteral($min, $max));
     }
 
     /**
@@ -253,7 +250,7 @@ final class SqliteProvider extends Base
      */
     public function decimalLiteral(int $precision = 15, int $scale = 2): string
     {
-        return $this->rsg->decimalString($precision, $scale);
+        return $this->sql->generate(GenerationPlans::decimalLiteral($precision, $scale));
     }
 
     /** @return non-empty-string */

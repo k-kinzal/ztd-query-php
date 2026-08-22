@@ -11,6 +11,30 @@ use SqlFaker\Grammar\ProductionPattern;
 final class GenerationPlans
 {
     /** @return GenerationPlan<true> */
+    public static function quotedIdentifier(int $minLength, int $maxLength): GenerationPlan
+    {
+        return GenerationPlan::lexical('quoted_identifier', compact('minLength', 'maxLength'));
+    }
+
+    /** @return GenerationPlan<true> */
+    public static function stringLiteral(int $minLength, int $maxLength): GenerationPlan
+    {
+        return GenerationPlan::lexical('string_literal', compact('minLength', 'maxLength'));
+    }
+
+    /** @return GenerationPlan<true> */
+    public static function integerLiteral(int $min, int $max): GenerationPlan
+    {
+        return GenerationPlan::lexical('integer_literal', compact('min', 'max'));
+    }
+
+    /** @return GenerationPlan<true> */
+    public static function decimalLiteral(int $precision, int $scale): GenerationPlan
+    {
+        return GenerationPlan::lexical('decimal_literal', compact('precision', 'scale'));
+    }
+
+    /** @return GenerationPlan<true> */
     public static function multiDmlStatement(int $firstChoice, int $secondChoice): GenerationPlan
     {
         $dml = [

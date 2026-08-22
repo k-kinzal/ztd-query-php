@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlFaker\PostgreSql;
 
 use Faker\Generator as FakerGenerator;
+use InvalidArgumentException;
 use RuntimeException;
 use SqlFaker\Grammar\LexicalCatalog;
 use SqlFaker\Grammar\LexicalException;
@@ -109,6 +110,68 @@ final class LexicalGrammar implements LexicalGrammarContract
         }
 
         return $sql;
+    }
+
+    /** @return non-empty-string */
+    public function generateQuotedIdentifier(int $minLength = 1, int $maxLength = 63): string
+    {
+        return '"' . $this->strings->rawIdentifier($minLength, $maxLength) . '"';
+    }
+
+    /** @return non-empty-string */
+    public function generateStringLiteral(int $minLength = 1, int $maxLength = 255): string
+    {
+        return "'" . $this->strings->mixedAlnumString($minLength, $maxLength) . "'";
+    }
+
+    /** @return non-empty-string */
+    public function generateIntegerLiteral(int $min = 1, int $max = 2147483647): string
+    {
+        return $this->strings->integerString($min, $max);
+    }
+
+    /** @return non-empty-string */
+    public function generateDecimalLiteral(int $precision = 10, int $scale = 2): string
+    {
+        return $this->strings->decimalString($precision, $scale);
+    }
+
+    /** @return non-empty-string */
+    public function generateFloatLiteral(
+        int $precision = 10,
+        int $scale = 2,
+        int $minExponent = -307,
+        int $maxExponent = 308,
+    ): string {
+        return $this->strings->floatString(
+            $this->generateDecimalLiteral($precision, $scale),
+            $minExponent,
+            $maxExponent,
+        );
+    }
+
+    /** @return non-empty-string */
+    public function generateHexLiteral(int $minLength = 1, int $maxLength = 16): string
+    {
+        return "X'" . $this->strings->hexString($minLength, $maxLength) . "'";
+    }
+
+    /** @return non-empty-string */
+    public function generateBinaryLiteral(int $minLength = 1, int $maxLength = 64): string
+    {
+        return "B'" . $this->strings->binaryString($minLength, $maxLength) . "'";
+    }
+
+    /** @return non-empty-string */
+    public function generateDollarQuotedString(int $minLength = 1, int $maxLength = 255): string
+    {
+        return '$$' . $this->strings->mixedAlnumString($minLength, $maxLength) . '$$';
+    }
+
+    /** @return non-empty-string */
+    public function generateParameterMarker(int $min = 1, int $max = 99): string
+    {
+        return '$' . $this->strings->parameterIndex($min, $max);
     }
 
     /**
@@ -364,8 +427,7 @@ final class LexicalGrammar implements LexicalGrammarContract
     private function standardStringLiteral(): string
     {
         $body = match ($this->faker->numberBetween(0, 4)) {
-            0 => 'SELECT FROM WHERE',
-            1 => '/* UPDATE */ -- DELETE',
+            0, 1 => $this->strings->lexicalSequence($this->keywords),
             2 => "a'b",
             default => $this->strings->mixedAlnumString(0, 24),
         };
@@ -377,7 +439,9 @@ final class LexicalGrammar implements LexicalGrammarContract
     {
         $tag = $this->faker->numberBetween(0, 1) === 0 ? '' : $this->strings->rawIdentifier(1, 8);
         $delimiter = '$' . $tag . '$';
-        $body = str_replace($delimiter, '$', 'SELECT ? FROM /* UPDATE */ ' . $this->strings->mixedAlnumString(0, 12));
+        $body = $this->strings->lexicalSequence($this->keywords)
+            . ' ? '
+            . $this->strings->mixedAlnumString(0, 12);
 
         return $delimiter . $body . $delimiter;
     }
@@ -577,5 +641,33 @@ final class LexicalGrammar implements LexicalGrammarContract
             json_encode($actual, JSON_THROW_ON_ERROR),
             $sql,
         );
+    }
+
+    /**
+     * @param GenerationPlan<bool> $plan
+     * @return non-empty-string
+     */
+    public function generate(GenerationPlan $plan): string
+    {
+        $target = $plan->lexicalTarget();
+        $parameters = $plan->parameters();
+
+        return match ($target) {
+            'quoted_identifier' => $this->generateQuotedIdentifier($parameters['minLength'], $parameters['maxLength']),
+            'string_literal' => $this->generateStringLiteral($parameters['minLength'], $parameters['maxLength']),
+            'integer_literal' => $this->generateIntegerLiteral($parameters['min'], $parameters['max']),
+            'decimal_literal' => $this->generateDecimalLiteral($parameters['precision'], $parameters['scale']),
+            'float_literal' => $this->generateFloatLiteral(
+                $parameters['precision'],
+                $parameters['scale'],
+                $parameters['minExponent'],
+                $parameters['maxExponent'],
+            ),
+            'hex_literal' => $this->generateHexLiteral($parameters['minLength'], $parameters['maxLength']),
+            'binary_literal' => $this->generateBinaryLiteral($parameters['minLength'], $parameters['maxLength']),
+            'dollar_quoted_string' => $this->generateDollarQuotedString($parameters['minLength'], $parameters['maxLength']),
+            'parameter_marker' => $this->generateParameterMarker($parameters['min'], $parameters['max']),
+            default => throw new InvalidArgumentException("Unknown PostgreSQL lexical generation target: {$target}"),
+        };
     }
 }

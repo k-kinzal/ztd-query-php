@@ -13,6 +13,7 @@ final class GenerationPlan
      * @param array<string, non-empty-list<ProductionPattern>> $patterns
      * @param array<string, ProductionPattern> $patternsForEveryOccurrence
      * @param array<string, non-empty-list<non-empty-string>> $lexemes
+     * @param array<string, int> $parameters
      * @param TRequiresNonEmpty $requiresNonEmpty
      */
     private function __construct(
@@ -20,6 +21,8 @@ final class GenerationPlan
         private readonly array $patterns,
         private readonly array $patternsForEveryOccurrence,
         private readonly array $lexemes,
+        private readonly ?string $lexicalTarget,
+        private readonly array $parameters,
         private readonly bool $requiresNonEmpty,
         private readonly int $maxDepth,
     ) {
@@ -28,7 +31,7 @@ final class GenerationPlan
     /** @return self<false> */
     public static function all(): self
     {
-        return new self(null, [], [], [], false, PHP_INT_MAX);
+        return new self(null, [], [], [], null, [], false, PHP_INT_MAX);
     }
 
     /** @return self<false> */
@@ -36,7 +39,7 @@ final class GenerationPlan
     {
         self::assertStartRule($startRule);
 
-        return new self($startRule, [], [], [], false, PHP_INT_MAX);
+        return new self($startRule, [], [], [], null, [], false, PHP_INT_MAX);
     }
 
     /**
@@ -50,7 +53,20 @@ final class GenerationPlan
             throw new InvalidArgumentException('A constrained generation plan requires production patterns.');
         }
 
-        return new self($startRule, $patterns, [], [], false, PHP_INT_MAX);
+        return new self($startRule, $patterns, [], [], null, [], false, PHP_INT_MAX);
+    }
+
+    /**
+     * @param array<string, int> $parameters
+     * @return self<true>
+     */
+    public static function lexical(string $target, array $parameters): self
+    {
+        if ($target === '') {
+            throw new InvalidArgumentException('A lexical generation target must not be empty.');
+        }
+
+        return new self(null, [], [], [], $target, $parameters, true, PHP_INT_MAX);
     }
 
     /** @return self<true> */
@@ -61,6 +77,8 @@ final class GenerationPlan
             $this->patterns,
             $this->patternsForEveryOccurrence,
             $this->lexemes,
+            $this->lexicalTarget,
+            $this->parameters,
             true,
             $this->maxDepth,
         );
@@ -81,6 +99,8 @@ final class GenerationPlan
             $this->patterns,
             $this->patternsForEveryOccurrence,
             $lexemes,
+            $this->lexicalTarget,
+            $this->parameters,
             $this->requiresNonEmpty,
             $this->maxDepth,
         );
@@ -94,6 +114,8 @@ final class GenerationPlan
             $this->patterns,
             $this->patternsForEveryOccurrence,
             $this->lexemes,
+            $this->lexicalTarget,
+            $this->parameters,
             $this->requiresNonEmpty,
             max(1, $maxDepth),
         );
@@ -121,6 +143,8 @@ final class GenerationPlan
             $this->patterns,
             [...$this->patternsForEveryOccurrence, $rule => $pattern],
             $this->lexemes,
+            $this->lexicalTarget,
+            $this->parameters,
             $this->requiresNonEmpty,
             $this->maxDepth,
         );
@@ -130,6 +154,17 @@ final class GenerationPlan
     public function lexemeAt(string $terminal, int $occurrence): ?string
     {
         return $this->lexemes[$terminal][$occurrence] ?? null;
+    }
+
+    public function lexicalTarget(): ?string
+    {
+        return $this->lexicalTarget;
+    }
+
+    /** @return array<string, int> */
+    public function parameters(): array
+    {
+        return $this->parameters;
     }
 
     /** @return TRequiresNonEmpty */

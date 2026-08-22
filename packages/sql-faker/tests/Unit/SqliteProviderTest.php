@@ -7,6 +7,7 @@ namespace Tests\Unit\SqlFaker;
 use Faker\Factory;
 use Faker\Generator;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\Grammar;
@@ -49,6 +50,7 @@ use SqlFaker\Grammar\TerminalInventory;
 #[UsesClass(SqlVersion::class)]
 #[UsesClass(TerminalInventory::class)]
 #[UsesClass(GenerationPlans::class)]
+#[Medium]
 final class SqliteProviderTest extends TestCase
 {
     #[DataProvider('providerTargetedGenerationSeed')]

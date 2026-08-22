@@ -72,7 +72,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -88,7 +88,7 @@ final class SqlGeneratorTest extends TestCase
             ]),
         ]);
         $faker = Factory::create();
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
         $plan = GenerationPlan::constrained('stmt', [
             'stmt' => [ProductionPattern::exactly('EXPECTED')],
         ]);
@@ -105,7 +105,7 @@ final class SqlGeneratorTest extends TestCase
             ]),
         ]);
         $faker = Factory::create();
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
         $plan = GenerationPlan::fromRule('stmt')->requiringNonEmpty();
 
         self::assertSame('EXPECTED', $generator->generate($plan->withMaxDepth(1)));
@@ -120,7 +120,6 @@ final class SqlGeneratorTest extends TestCase
         $generator = new SqlGenerator(
             $grammar,
             $faker,
-            new SqliteProvider($faker),
             'sqlite-3.47.2',
         );
 
@@ -139,7 +138,7 @@ final class SqlGeneratorTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('NOT_A_SQLITE_TERMINAL');
 
-        new SqlGenerator($grammar, $faker, new SqliteProvider($faker), 'sqlite-3.47.2');
+        new SqlGenerator($grammar, $faker, 'sqlite-3.47.2');
     }
 
     public function testGenerateDefaultStartRule(): void
@@ -154,7 +153,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::all());
 
@@ -170,7 +169,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result1 = $generator->generate(GenerationPlan::fromRule('stmt'));
         $result2 = $generator->generate(GenerationPlan::fromRule('stmt'));
@@ -200,7 +199,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt')->withMaxDepth(1));
 
@@ -222,7 +221,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $resultZero = $generator->generate(GenerationPlan::fromRule('stmt')->withMaxDepth(0));
         $resultNegative = $generator->generate(GenerationPlan::fromRule('stmt')->withMaxDepth(-10));
@@ -243,7 +242,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt')->withMaxDepth(1));
 
@@ -260,7 +259,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         self::assertSame('VALUE', $generator->generate(GenerationPlan::fromRule('value')->withMaxDepth(1)));
     }
@@ -275,7 +274,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         self::assertSame('VALUE', $generator->generate(GenerationPlan::fromRule('value')));
     }
@@ -300,7 +299,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $provider = new SqliteProvider($faker);
-        $generator = new SqlGenerator($grammar, $faker, $provider);
+        $generator = new SqlGenerator($grammar, $faker);
         $faker->seed(3);
 
         self::assertStringStartsWith('EXPECTED ', $generator->generate(GenerationPlan::fromRule('start')));
@@ -319,12 +318,12 @@ final class SqlGeneratorTest extends TestCase
 
         $faker1 = Factory::create();
         $faker1->seed($seed1);
-        $generator1 = new SqlGenerator($grammar, $faker1, new SqliteProvider($faker1));
+        $generator1 = new SqlGenerator($grammar, $faker1);
         $result1 = $generator1->generate(GenerationPlan::fromRule('stmt')->withMaxDepth(PHP_INT_MAX));
 
         $faker2 = Factory::create();
         $faker2->seed($seed2);
-        $generator2 = new SqlGenerator($grammar, $faker2, new SqliteProvider($faker2));
+        $generator2 = new SqlGenerator($grammar, $faker2);
         $result2 = $generator2->generate(GenerationPlan::fromRule('stmt')->withMaxDepth(PHP_INT_MAX));
 
         self::assertNotSame($result1, $result2);
@@ -346,7 +345,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt')->withMaxDepth(3));
 
@@ -371,7 +370,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -396,7 +395,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -419,7 +418,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -432,7 +431,7 @@ final class SqlGeneratorTest extends TestCase
         $faker = Factory::create();
         $faker->seed(12345);
         $provider = new SqliteProvider($faker);
-        $generator = new SqlGenerator($grammar, $faker, $provider);
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('insert')->withMaxDepth(6));
 
@@ -445,7 +444,7 @@ final class SqlGeneratorTest extends TestCase
         $faker = Factory::create();
         $faker->seed(12345);
         $provider = new SqliteProvider($faker);
-        $generator = new SqlGenerator($grammar, $faker, $provider);
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('delete')->withMaxDepth(6));
 
@@ -458,7 +457,7 @@ final class SqlGeneratorTest extends TestCase
         $faker = Factory::create();
         $faker->seed(12345);
         $provider = new SqliteProvider($faker);
-        $generator = new SqlGenerator($grammar, $faker, $provider);
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('update')->withMaxDepth(6));
 
@@ -471,7 +470,7 @@ final class SqlGeneratorTest extends TestCase
         $faker = Factory::create();
         $faker->seed(12345);
         $provider = new SqliteProvider($faker);
-        $generator = new SqlGenerator($grammar, $faker, $provider);
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('drop_table')->withMaxDepth(6));
 
@@ -484,7 +483,7 @@ final class SqlGeneratorTest extends TestCase
         $faker = Factory::create();
         $faker->seed(12345);
         $provider = new SqliteProvider($faker);
-        $generator = new SqlGenerator($grammar, $faker, $provider);
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('alter_table')->withMaxDepth(6));
 
@@ -503,7 +502,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('Grammar rule has no lexically realizable alternative: infinite');
@@ -518,7 +517,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage("Production rule 'empty' has no alternatives.");
@@ -538,7 +537,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -554,7 +553,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -571,7 +570,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -588,7 +587,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -605,7 +604,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $provider = new SqliteProvider($faker);
-        $generator = new SqlGenerator($grammar, $faker, $provider);
+        $generator = new SqlGenerator($grammar, $faker);
         $faker->seed(12345);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
@@ -623,7 +622,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -644,7 +643,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         self::assertSame('COUNT(*)', $generator->generate(GenerationPlan::fromRule('stmt')));
     }
@@ -662,7 +661,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         self::assertSame('a.b', $generator->generate(GenerationPlan::fromRule('stmt')));
     }
@@ -680,7 +679,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('Unterminated SQLite bracket identifier.');
@@ -701,7 +700,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         self::assertSame('a, b', $generator->generate(GenerationPlan::fromRule('stmt')));
     }
@@ -719,7 +718,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         self::assertSame('SELECT 1;', $generator->generate(GenerationPlan::fromRule('stmt')));
     }
@@ -736,7 +735,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         self::assertSame('x)', $generator->generate(GenerationPlan::fromRule('stmt')));
     }
@@ -753,7 +752,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         self::assertSame('(x', $generator->generate(GenerationPlan::fromRule('stmt')));
     }
@@ -771,7 +770,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         self::assertSame('a->b', $generator->generate(GenerationPlan::fromRule('stmt')));
     }
@@ -789,7 +788,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         self::assertSame('"func"()', $generator->generate(GenerationPlan::fromRule('stmt')));
     }
@@ -808,7 +807,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         self::assertSame('+ (x)', $generator->generate(GenerationPlan::fromRule('stmt')));
     }
@@ -826,7 +825,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         self::assertSame('A B C', $generator->generate(GenerationPlan::fromRule('stmt')));
     }
@@ -840,7 +839,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -853,7 +852,7 @@ final class SqlGeneratorTest extends TestCase
         $grammar = SqliteGrammar::load();
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $ref = new \ReflectionClass($generator);
         $prop = $ref->getProperty('grammar');
@@ -878,7 +877,7 @@ final class SqlGeneratorTest extends TestCase
         $grammar = SqliteGrammar::load();
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $ref = new \ReflectionClass($generator);
         $prop = $ref->getProperty('grammar');
@@ -903,7 +902,7 @@ final class SqlGeneratorTest extends TestCase
         $grammar = SqliteGrammar::load();
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new SqliteProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $ref = new \ReflectionClass($generator);
         $prop = $ref->getProperty('grammar');
@@ -946,7 +945,7 @@ final class SqlGeneratorTest extends TestCase
 
         $faker = Factory::create();
         $provider = new SqliteProvider($faker);
-        $generator = new SqlGenerator($grammar, $faker, $provider);
+        $generator = new SqlGenerator($grammar, $faker);
 
         $invalid = array_filter(array_map(static function (int $seed) use ($faker, $generator, $reservedWords): ?string {
             $faker->seed($seed);

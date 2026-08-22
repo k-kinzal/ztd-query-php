@@ -69,7 +69,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -85,7 +85,7 @@ final class SqlGeneratorTest extends TestCase
                 new Production([new Terminal('EXPECTED')]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
         $plan = GenerationPlan::constrained('stmt', [
             'stmt' => [ProductionPattern::exactly('EXPECTED')],
         ]);
@@ -102,7 +102,7 @@ final class SqlGeneratorTest extends TestCase
                 new Production([new Terminal('EXPECTED')]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
         $plan = GenerationPlan::fromRule('stmt')->requiringNonEmpty();
 
         self::assertSame('EXPECTED', $generator->generate($plan->withMaxDepth(1)));
@@ -133,7 +133,7 @@ final class SqlGeneratorTest extends TestCase
                 new Production([new Terminal('DEFAULT_SYM')]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('insert_stmt')->withMaxDepth(1));
 
@@ -170,7 +170,7 @@ final class SqlGeneratorTest extends TestCase
                 new Production([new Terminal('DEFAULT_SYM')]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlans::withoutEmptyRows('insert_stmt')->withMaxDepth(1));
 
@@ -195,7 +195,7 @@ final class SqlGeneratorTest extends TestCase
                 new Production([new Terminal('OTHER_RULE_USED')]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::all());
 
@@ -211,7 +211,7 @@ final class SqlGeneratorTest extends TestCase
                 new Production([new Terminal('a')]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result1 = $generator->generate(GenerationPlan::fromRule('stmt'));
         $result2 = $generator->generate(GenerationPlan::fromRule('stmt'));
@@ -227,7 +227,7 @@ final class SqlGeneratorTest extends TestCase
         $faker->seed(42);
         $provider = new MySqlProvider($faker);
 
-        $generator = new SqlGenerator($grammar, $faker, $provider);
+        $generator = new SqlGenerator($grammar, $faker);
         $result = $generator->generate(GenerationPlan::fromRule('literal')->withMaxDepth(1));
 
         self::assertNotSame('', $result);
@@ -248,7 +248,7 @@ final class SqlGeneratorTest extends TestCase
                 new Production([new Terminal('SHORT')]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $resultZero = $generator->generate(GenerationPlan::fromRule('stmt')->withMaxDepth(0));
         $resultNegative = $generator->generate(GenerationPlan::fromRule('stmt')->withMaxDepth(-10));
@@ -280,7 +280,7 @@ final class SqlGeneratorTest extends TestCase
                 new Production([new Terminal('t')]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt')->withMaxDepth(1));
 
@@ -297,7 +297,7 @@ final class SqlGeneratorTest extends TestCase
                 new Production([new Terminal('SECOND')]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt')->withMaxDepth(1));
 
@@ -318,13 +318,13 @@ final class SqlGeneratorTest extends TestCase
         $faker1 = Factory::create();
         $provider1 = new MySqlProvider($faker1);
         $faker1->seed($seed1);
-        $generator1 = new SqlGenerator($grammar, $faker1, $provider1);
+        $generator1 = new SqlGenerator($grammar, $faker1);
         $result1 = $generator1->generate(GenerationPlan::fromRule('stmt')->withMaxDepth(PHP_INT_MAX));
 
         $faker2 = Factory::create();
         $provider2 = new MySqlProvider($faker2);
         $faker2->seed($seed2);
-        $generator2 = new SqlGenerator($grammar, $faker2, $provider2);
+        $generator2 = new SqlGenerator($grammar, $faker2);
         $result2 = $generator2->generate(GenerationPlan::fromRule('stmt')->withMaxDepth(PHP_INT_MAX));
 
         self::assertNotSame($result1, $result2);
@@ -346,7 +346,7 @@ final class SqlGeneratorTest extends TestCase
                 new Production([new Terminal('SHORT')]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt')->withMaxDepth(3));
 
@@ -371,7 +371,7 @@ final class SqlGeneratorTest extends TestCase
                 new Production([new Terminal('2ND')]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -398,7 +398,7 @@ final class SqlGeneratorTest extends TestCase
                 new Production([new Terminal('42')]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -421,7 +421,7 @@ final class SqlGeneratorTest extends TestCase
                 new Production([]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -440,7 +440,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('Grammar rule has no lexically realizable alternative: infinite');
@@ -455,7 +455,7 @@ final class SqlGeneratorTest extends TestCase
         $grammar = new Grammar('empty', [
             'empty' => new ProductionRule('empty', []),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('Production rule has no alternatives.');
@@ -472,7 +472,7 @@ final class SqlGeneratorTest extends TestCase
                 new Production([new Terminal('a')]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $this->expectException(\LogicException::class);
 
@@ -489,7 +489,7 @@ final class SqlGeneratorTest extends TestCase
                 new Production([new Terminal($terminalName)]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -506,7 +506,7 @@ final class SqlGeneratorTest extends TestCase
                 new Production([new Terminal($terminalName)]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, $provider);
+        $generator = new SqlGenerator($grammar, $faker);
         $faker->seed(12345);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
@@ -526,7 +526,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -542,7 +542,7 @@ final class SqlGeneratorTest extends TestCase
                 new Production([new Terminal('WITH_ROLLUP_SYM')]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -558,7 +558,7 @@ final class SqlGeneratorTest extends TestCase
                 new Production([new Terminal('SELECT_SYM')]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -574,7 +574,7 @@ final class SqlGeneratorTest extends TestCase
                 new Production([new Terminal(',')]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -590,7 +590,7 @@ final class SqlGeneratorTest extends TestCase
                 new Production([new Terminal('END_OF_INPUT')]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -610,7 +610,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -626,7 +626,7 @@ final class SqlGeneratorTest extends TestCase
                 new Production([new Terminal('SINGLE')]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -644,7 +644,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -665,7 +665,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -686,7 +686,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -707,7 +707,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -728,7 +728,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -748,7 +748,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -768,7 +768,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('Unterminated MySQL quoted token');
@@ -790,7 +790,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -811,7 +811,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -830,7 +830,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -849,7 +849,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -868,7 +868,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -887,7 +887,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -906,7 +906,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -927,7 +927,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -949,7 +949,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -971,7 +971,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -990,7 +990,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -1009,7 +1009,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -1031,7 +1031,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -1052,7 +1052,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -1077,7 +1077,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -1098,7 +1098,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -1122,7 +1122,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -1144,7 +1144,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -1164,7 +1164,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -1186,7 +1186,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -1207,7 +1207,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -1227,7 +1227,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -1248,7 +1248,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
@@ -1267,7 +1267,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $generator = new SqlGenerator($grammar, $faker, new MySqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 

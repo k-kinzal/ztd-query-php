@@ -7,7 +7,6 @@ namespace SqlFaker;
 use Faker\Generator;
 use Faker\Provider\Base;
 use SqlFaker\Grammar\GenerationPlan;
-use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\PostgreSql\Grammar\PgGrammar;
 use SqlFaker\PostgreSql\GenerationPlans;
 use SqlFaker\PostgreSql\SqlGenerator;
@@ -34,7 +33,6 @@ use SqlFaker\PostgreSql\StatementType;
 final class PostgreSqlProvider extends Base
 {
     private SqlGenerator $sql;
-    private RandomStringGenerator $rsg;
 
     /**
      * @param Generator $generator Faker generator
@@ -47,8 +45,7 @@ final class PostgreSqlProvider extends Base
         $generator->addProvider($this);
 
         $resolvedVersion = PgGrammar::resolveVersion($version);
-        $this->rsg = new RandomStringGenerator($generator);
-        $this->sql = new SqlGenerator(PgGrammar::load($resolvedVersion), $generator, $this, $resolvedVersion);
+        $this->sql = new SqlGenerator(PgGrammar::load($resolvedVersion), $generator, $resolvedVersion);
     }
 
     /**
@@ -347,7 +344,7 @@ final class PostgreSqlProvider extends Base
      */
     public function quotedIdentifier(int $minLength = 1, int $maxLength = 63): string
     {
-        return '"' . $this->rsg->rawIdentifier($minLength, $maxLength) . '"';
+        return $this->sql->generate(GenerationPlans::quotedIdentifier($minLength, $maxLength));
     }
 
     /**
@@ -357,7 +354,7 @@ final class PostgreSqlProvider extends Base
      */
     public function stringLiteral(int $minLength = 1, int $maxLength = 255): string
     {
-        return "'" . $this->rsg->mixedAlnumString($minLength, $maxLength) . "'";
+        return $this->sql->generate(GenerationPlans::stringLiteral($minLength, $maxLength));
     }
 
     /**
@@ -367,7 +364,7 @@ final class PostgreSqlProvider extends Base
      */
     public function integerLiteral(int $min = 1, int $max = 2147483647): string
     {
-        return $this->rsg->integerString($min, $max);
+        return $this->sql->generate(GenerationPlans::integerLiteral($min, $max));
     }
 
     /**
@@ -377,7 +374,7 @@ final class PostgreSqlProvider extends Base
      */
     public function decimalLiteral(int $precision = 10, int $scale = 2): string
     {
-        return $this->rsg->decimalString($precision, $scale);
+        return $this->sql->generate(GenerationPlans::decimalLiteral($precision, $scale));
     }
 
     /**
@@ -387,7 +384,9 @@ final class PostgreSqlProvider extends Base
      */
     public function floatLiteral(int $precision = 10, int $scale = 2, int $minExponent = -307, int $maxExponent = 308): string
     {
-        return $this->rsg->floatString($this->decimalLiteral($precision, $scale), $minExponent, $maxExponent);
+        return $this->sql->generate(
+            GenerationPlans::floatLiteral($precision, $scale, $minExponent, $maxExponent),
+        );
     }
 
     /**
@@ -397,7 +396,7 @@ final class PostgreSqlProvider extends Base
      */
     public function hexLiteral(int $minLength = 1, int $maxLength = 16): string
     {
-        return "X'" . $this->rsg->hexString($minLength, $maxLength) . "'";
+        return $this->sql->generate(GenerationPlans::hexLiteral($minLength, $maxLength));
     }
 
     /**
@@ -407,7 +406,7 @@ final class PostgreSqlProvider extends Base
      */
     public function binaryLiteral(int $minLength = 1, int $maxLength = 64): string
     {
-        return "B'" . $this->rsg->binaryString($minLength, $maxLength) . "'";
+        return $this->sql->generate(GenerationPlans::binaryLiteral($minLength, $maxLength));
     }
 
     /**
@@ -417,7 +416,7 @@ final class PostgreSqlProvider extends Base
      */
     public function dollarQuotedString(int $minLength = 1, int $maxLength = 255): string
     {
-        return '$$' . $this->rsg->mixedAlnumString($minLength, $maxLength) . '$$';
+        return $this->sql->generate(GenerationPlans::dollarQuotedString($minLength, $maxLength));
     }
 
     /**
@@ -427,7 +426,7 @@ final class PostgreSqlProvider extends Base
      */
     public function parameterMarker(int $min = 1, int $max = 99): string
     {
-        return '$' . $this->rsg->parameterIndex($min, $max);
+        return $this->sql->generate(GenerationPlans::parameterMarker($min, $max));
     }
 
     /** @return non-empty-string */

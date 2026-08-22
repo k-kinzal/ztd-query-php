@@ -17,7 +17,6 @@ use SqlFaker\Grammar\Terminal;
 use SqlFaker\Grammar\TerminalInventory;
 use SqlFaker\Grammar\TerminationAnalyzer;
 use SqlFaker\Sqlite\Grammar\SqliteGrammar;
-use SqlFaker\SqliteProvider;
 
 /**
  * Grammar-driven SQL generator for SQLite.
@@ -37,16 +36,13 @@ final class SqlGenerator
     private LexicalGrammar $lexicalGrammar;
     private TerminationAnalyzer $terminationAnalyzer;
 
-    private int $targetDepth = PHP_INT_MAX;
     private int $derivationSteps = 0;
 
     public function __construct(
         Grammar $grammar,
         FakerGenerator $faker,
-        SqliteProvider $provider,
         ?string $version = null,
     ) {
-        unset($provider);
         $this->grammar = $this->augmentGrammar($grammar);
         $this->faker = $faker;
         $this->lexicalGrammar = new LexicalGrammar(
@@ -72,7 +68,9 @@ final class SqlGenerator
      */
     public function generate(GenerationPlan $plan): string
     {
-        $this->targetDepth = $plan->maxDepth();
+        if ($plan->lexicalTarget() !== null) {
+            return $this->lexicalGrammar->generate($plan);
+        }
         $start = $plan->startRule() ?? 'cmd';
         $lastException = null;
         for ($attempt = 0; $attempt < self::LEXICAL_ATTEMPT_LIMIT; $attempt++) {
@@ -190,7 +188,7 @@ final class SqlGenerator
                 throw new LogicException('Exceeded derivation limit while generating SQL.');
             }
 
-            if ($this->derivationSteps >= $this->targetDepth) {
+            if ($this->derivationSteps >= $plan->maxDepth()) {
                 $selectedIndex = 0;
                 $bestSteps = PHP_INT_MAX;
                 $bestLength = PHP_INT_MAX;

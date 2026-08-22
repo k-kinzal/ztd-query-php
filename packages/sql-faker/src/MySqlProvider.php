@@ -7,7 +7,6 @@ namespace SqlFaker;
 use Faker\Generator;
 use Faker\Provider\Base;
 use SqlFaker\Grammar\GenerationPlan;
-use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\MySql\GenerationPlans;
 use SqlFaker\MySql\Grammar\Grammar;
 use SqlFaker\MySql\SqlGenerator;
@@ -55,7 +54,6 @@ final class MySqlProvider extends Base
 {
     private Grammar $grammar;
     private SqlGenerator $sql;
-    private RandomStringGenerator $rsg;
 
     /**
      * @param Generator $generator Faker generator
@@ -69,8 +67,7 @@ final class MySqlProvider extends Base
 
         $resolvedVersion = Grammar::resolveVersion($version);
         $this->grammar = Grammar::load($resolvedVersion);
-        $this->rsg = new RandomStringGenerator($generator);
-        $this->sql = new SqlGenerator($this->grammar, $generator, $this, $resolvedVersion);
+        $this->sql = new SqlGenerator($this->grammar, $generator, $resolvedVersion);
     }
 
     /**
@@ -256,7 +253,7 @@ final class MySqlProvider extends Base
      */
     public function quotedIdentifier(int $minLength = 1, int $maxLength = 64): string
     {
-        return '`' . $this->rsg->rawIdentifier($minLength, $maxLength) . '`';
+        return $this->sql->generate(GenerationPlans::quotedIdentifier($minLength, $maxLength));
     }
 
     /**
@@ -268,7 +265,7 @@ final class MySqlProvider extends Base
      */
     public function stringLiteral(int $minLength = 1, int $maxLength = 255): string
     {
-        return "'" . $this->rsg->mixedAlnumString($minLength, $maxLength) . "'";
+        return $this->sql->generate(GenerationPlans::stringLiteral($minLength, $maxLength));
     }
 
     /**
@@ -280,7 +277,7 @@ final class MySqlProvider extends Base
      */
     public function nationalStringLiteral(int $minLength = 1, int $maxLength = 255): string
     {
-        return 'N' . $this->stringLiteral($minLength, $maxLength);
+        return $this->sql->generate(GenerationPlans::nationalStringLiteral($minLength, $maxLength));
     }
 
     /**
@@ -292,7 +289,7 @@ final class MySqlProvider extends Base
      */
     public function dollarQuotedString(int $minLength = 1, int $maxLength = 255): string
     {
-        return '$$' . $this->rsg->mixedAlnumString($minLength, $maxLength) . '$$';
+        return $this->sql->generate(GenerationPlans::dollarQuotedString($minLength, $maxLength));
     }
 
     /**
@@ -304,7 +301,7 @@ final class MySqlProvider extends Base
      */
     public function integerLiteral(int $min = 1, int $max = 2147483647): string
     {
-        return $this->rsg->integerString($min, $max);
+        return $this->sql->generate(GenerationPlans::integerLiteral($min, $max));
     }
 
     /**
@@ -316,7 +313,7 @@ final class MySqlProvider extends Base
      */
     public function longIntegerLiteral(int $min = 0, int $max = 2147483647): string
     {
-        return $this->rsg->longIntString($min, $max);
+        return $this->sql->generate(GenerationPlans::longIntegerLiteral($min, $max));
     }
 
     /**
@@ -328,7 +325,7 @@ final class MySqlProvider extends Base
      */
     public function unsignedBigIntLiteral(int $minLength = 1, int $maxLength = 20): string
     {
-        return $this->rsg->unsignedBigIntString($minLength, $maxLength);
+        return $this->sql->generate(GenerationPlans::unsignedBigIntLiteral($minLength, $maxLength));
     }
 
     /**
@@ -340,7 +337,7 @@ final class MySqlProvider extends Base
      */
     public function decimalLiteral(int $precision = 10, int $scale = 2): string
     {
-        return $this->rsg->decimalString($precision, $scale);
+        return $this->sql->generate(GenerationPlans::decimalLiteral($precision, $scale));
     }
 
     /**
@@ -352,7 +349,9 @@ final class MySqlProvider extends Base
      */
     public function floatLiteral(int $precision = 10, int $scale = 2, int $minExponent = -38, int $maxExponent = 38): string
     {
-        return $this->rsg->floatString($this->decimalLiteral($precision, $scale), $minExponent, $maxExponent);
+        return $this->sql->generate(
+            GenerationPlans::floatLiteral($precision, $scale, $minExponent, $maxExponent),
+        );
     }
 
     /**
@@ -364,7 +363,7 @@ final class MySqlProvider extends Base
      */
     public function hexLiteral(int $minLength = 1, int $maxLength = 16): string
     {
-        return '0x' . $this->rsg->hexString($minLength, $maxLength);
+        return $this->sql->generate(GenerationPlans::hexLiteral($minLength, $maxLength));
     }
 
     /**
@@ -376,9 +375,7 @@ final class MySqlProvider extends Base
      */
     public function quotedHexLiteral(int $minBytes = 1, int $maxBytes = 8): string
     {
-        $bytes = $this->generator->numberBetween($minBytes, $maxBytes);
-
-        return "X'" . $this->rsg->hexString($bytes * 2, $bytes * 2) . "'";
+        return $this->sql->generate(GenerationPlans::quotedHexLiteral($minBytes, $maxBytes));
     }
 
     /**
@@ -390,7 +387,7 @@ final class MySqlProvider extends Base
      */
     public function binaryLiteral(int $minLength = 1, int $maxLength = 64): string
     {
-        return '0b' . $this->rsg->binaryString($minLength, $maxLength);
+        return $this->sql->generate(GenerationPlans::binaryLiteral($minLength, $maxLength));
     }
 
     /**
@@ -402,7 +399,7 @@ final class MySqlProvider extends Base
      */
     public function hostname(int $minParts = 1, int $maxParts = 4, int $maxPartLength = 63): string
     {
-        return $this->rsg->hostnameString($minParts, $maxParts, 1, $maxPartLength);
+        return $this->sql->generate(GenerationPlans::hostname($minParts, $maxParts, $maxPartLength));
     }
 
     /**

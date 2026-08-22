@@ -16,7 +16,6 @@ use SqlFaker\Grammar\Terminal;
 use SqlFaker\Grammar\TerminalInventory;
 use SqlFaker\Grammar\TerminationAnalyzer;
 use SqlFaker\PostgreSql\Grammar\PgGrammar;
-use SqlFaker\PostgreSqlProvider;
 
 /**
  * Derives PostgreSQL parser terminals and realizes them through the versioned lexer model.
@@ -30,16 +29,13 @@ final class SqlGenerator
     private FakerGenerator $faker;
     private LexicalGrammar $lexicalGrammar;
     private TerminationAnalyzer $terminationAnalyzer;
-    private int $targetDepth = PHP_INT_MAX;
     private int $derivationSteps = 0;
 
     public function __construct(
         Grammar $grammar,
         FakerGenerator $faker,
-        PostgreSqlProvider $provider,
         ?string $version = null,
     ) {
-        unset($provider);
         $this->grammar = $grammar;
         $this->faker = $faker;
         $this->lexicalGrammar = new LexicalGrammar(
@@ -60,7 +56,9 @@ final class SqlGenerator
      */
     public function generate(GenerationPlan $plan): string
     {
-        $this->targetDepth = $plan->maxDepth();
+        if ($plan->lexicalTarget() !== null) {
+            return $this->lexicalGrammar->generate($plan);
+        }
         $lastException = null;
         for ($attempt = 0; $attempt < self::LEXICAL_ATTEMPT_LIMIT; $attempt++) {
             $this->derivationSteps = 0;
@@ -262,7 +260,7 @@ final class SqlGenerator
                 }
             }
 
-            $production = $this->selectProduction($alternatives);
+            $production = $this->selectProduction($alternatives, $plan);
             $form = [
                 ...array_slice($form, 0, $index),
                 ...$production->symbols,
@@ -290,10 +288,11 @@ final class SqlGenerator
 
     /**
      * @param non-empty-array<int, Production> $alternatives
+     * @param GenerationPlan<bool> $plan
      */
-    private function selectProduction(array $alternatives): Production
+    private function selectProduction(array $alternatives, GenerationPlan $plan): Production
     {
-        if ($this->derivationSteps < $this->targetDepth) {
+        if ($this->derivationSteps < $plan->maxDepth()) {
             $keys = array_keys($alternatives);
 
             return $alternatives[$keys[$this->faker->numberBetween(0, count($keys) - 1)]];

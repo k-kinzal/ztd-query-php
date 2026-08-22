@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlFaker\Sqlite;
 
 use Faker\Generator as FakerGenerator;
+use InvalidArgumentException;
 use RuntimeException;
 use SqlFaker\Grammar\LexicalCatalog;
 use SqlFaker\Grammar\LexicalException;
@@ -112,6 +113,30 @@ final class LexicalGrammar implements LexicalGrammarContract
         }
 
         return $sql;
+    }
+
+    /** @return non-empty-string */
+    public function generateQuotedIdentifier(int $minLength = 1, int $maxLength = 128): string
+    {
+        return '"' . $this->strings->rawIdentifier($minLength, $maxLength) . '"';
+    }
+
+    /** @return non-empty-string */
+    public function generateStringLiteral(int $minLength = 1, int $maxLength = 255): string
+    {
+        return "'" . $this->strings->mixedAlnumString($minLength, $maxLength) . "'";
+    }
+
+    /** @return non-empty-string */
+    public function generateIntegerLiteral(int $min = 1, int $max = PHP_INT_MAX): string
+    {
+        return $this->strings->integerString($min, $max);
+    }
+
+    /** @return non-empty-string */
+    public function generateDecimalLiteral(int $precision = 15, int $scale = 2): string
+    {
+        return $this->strings->decimalString($precision, $scale);
     }
 
     /**
@@ -293,7 +318,7 @@ final class LexicalGrammar implements LexicalGrammarContract
         return match ($this->faker->numberBetween(0, 7)) {
             0 => '"' . str_replace('"', '""', $body . '"quoted') . '"',
             1 => '`' . str_replace('`', '``', $body . '`quoted') . '`',
-            2 => '[' . str_replace(']', '', $body) . ']',
+            2 => '[' . str_replace(']', '', $body . ']quoted') . ']',
             default => $body,
         };
     }
@@ -301,8 +326,7 @@ final class LexicalGrammar implements LexicalGrammarContract
     private function stringLiteral(): string
     {
         $body = match ($this->faker->numberBetween(0, 5)) {
-            0 => 'SELECT FROM WHERE',
-            1 => '/* UPDATE */ -- DELETE',
+            0, 1 => $this->strings->lexicalSequence($this->keywords),
             2 => "a'b",
             3 => 'a\\b',
             default => $this->strings->mixedAlnumString(0, 24),
@@ -478,5 +502,23 @@ final class LexicalGrammar implements LexicalGrammarContract
         }
 
         return $normalized;
+    }
+
+    /**
+     * @param GenerationPlan<bool> $plan
+     * @return non-empty-string
+     */
+    public function generate(GenerationPlan $plan): string
+    {
+        $target = $plan->lexicalTarget();
+        $parameters = $plan->parameters();
+
+        return match ($target) {
+            'quoted_identifier' => $this->generateQuotedIdentifier($parameters['minLength'], $parameters['maxLength']),
+            'string_literal' => $this->generateStringLiteral($parameters['minLength'], $parameters['maxLength']),
+            'integer_literal' => $this->generateIntegerLiteral($parameters['min'], $parameters['max']),
+            'decimal_literal' => $this->generateDecimalLiteral($parameters['precision'], $parameters['scale']),
+            default => throw new InvalidArgumentException("Unknown SQLite lexical generation target: {$target}"),
+        };
     }
 }
