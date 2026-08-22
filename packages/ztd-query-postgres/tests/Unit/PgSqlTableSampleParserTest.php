@@ -9,11 +9,13 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser;
 use ZtdQuery\Platform\Postgres\PgSqlTableSample;
 use ZtdQuery\Platform\Postgres\PgSqlTableSampleMethod;
 use ZtdQuery\Platform\Postgres\PgSqlTableSampleParser;
 
 #[CoversClass(PgSqlTableSampleParser::class)]
+#[UsesClass(PgSqlSelectRelationParser::class)]
 #[UsesClass(PgSqlTableSample::class)]
 final class PgSqlTableSampleParserTest extends TestCase
 {

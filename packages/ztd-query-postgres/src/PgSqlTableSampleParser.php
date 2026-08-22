@@ -18,7 +18,7 @@ final class PgSqlTableSampleParser
         $tokens = $stream->significantTokens();
         $samples = [];
 
-        foreach ($stream->selectTableReferences() as $reference) {
+        foreach ((new PgSqlSelectRelationParser())->references($sql) as $reference) {
             $referenceToken = $this->tokenAtOffset($tokens, $reference['unqualifiedStart']);
             if ($referenceToken === null) {
                 continue;
