@@ -13,7 +13,7 @@ final class TransactionStatement
 {
     private function __construct(
         private readonly TransactionOperation $operation,
-        private readonly ?string $savepointName = null,
+        private readonly string $savepointName = '',
     ) {
     }
 
@@ -53,9 +53,9 @@ final class TransactionStatement
             TransactionOperation::Begin => $transactions->begin(),
             TransactionOperation::Commit => $transactions->commit(),
             TransactionOperation::Rollback => $transactions->rollBack(),
-            TransactionOperation::Savepoint => $transactions->savepoint($this->requiredSavepointName()),
-            TransactionOperation::RollbackTo => $transactions->rollBackTo($this->requiredSavepointName()),
-            TransactionOperation::Release => $transactions->release($this->requiredSavepointName()),
+            TransactionOperation::Savepoint => $transactions->savepoint($this->savepointName),
+            TransactionOperation::RollbackTo => $transactions->rollBackTo($this->savepointName),
+            TransactionOperation::Release => $transactions->release($this->savepointName),
         };
     }
 
@@ -66,10 +66,5 @@ final class TransactionStatement
         }
 
         return $name;
-    }
-
-    private function requiredSavepointName(): string
-    {
-        return $this->savepointName ?? '';
     }
 }
