@@ -12,6 +12,7 @@ use PhpParser\Node\Expr\BinaryOp;
 use PhpParser\Node\Expr\BinaryOp\Concat;
 use PhpParser\Node\Expr\Match_;
 use PhpParser\Node\Expr\PropertyFetch;
+use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Identifier;
@@ -68,6 +69,7 @@ final class NoDialectLogicInCoreOrAdapterRule implements Rule
         | ^\s*NULL\s*$
         | \bWITH\s+[^\s]+\s+AS\s*\(
         | \bSELECT\s+.+\s+FROM\b
+        | \bSELECT\s{2,}FROM\b
         | \bINSERT\s+INTO\b
         | \bUPDATE\s+[^\s]+\s+SET\b
         | \bDELETE\s+FROM\b
@@ -243,6 +245,29 @@ final class NoDialectLogicInCoreOrAdapterRule implements Rule
                     : '',
                 $node->parts,
             ));
+        }
+        if ($node instanceof FuncCall
+            && $node->name instanceof Name
+            && in_array(strtolower($node->name->toString()), ['implode', 'join'], true)
+        ) {
+            $arguments = $node->getArgs();
+            $separatorNode = count($arguments) === 1 ? null : ($arguments[0]->value ?? null);
+            $valuesNode = count($arguments) === 1
+                ? ($arguments[0]->value ?? null)
+                : ($arguments[1]->value ?? null);
+            if (!$valuesNode instanceof Array_) {
+                return null;
+            }
+            $separator = $separatorNode === null ? '' : $this->literalValue($separatorNode);
+            if ($separator === null) {
+                return null;
+            }
+            $values = [];
+            foreach ($valuesNode->items as $item) {
+                $values[] = $this->literalValue($item->value) ?? '';
+            }
+
+            return implode($separator, $values);
         }
         if (!$node instanceof Concat) {
             return null;

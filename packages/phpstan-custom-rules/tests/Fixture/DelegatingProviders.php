@@ -70,3 +70,38 @@ final class TemplateProvider
         return $this->sql->generateSelectStatement();
     }
 }
+
+final class AnonymousProviderFactory
+{
+    public function __construct()
+    {
+        new class () {
+            public function statement(): string
+            {
+                return 'SELECT id FROM users';
+            }
+        };
+    }
+}
+
+final class PromotedTemplateProvider
+{
+    public function __construct(private \SqlFaker\MySql\TemplateBank $sql)
+    {
+    }
+
+    public function statement(): string
+    {
+        return $this->sql->generateSelectStatement();
+    }
+}
+
+final class SuffixOnlyProvider
+{
+    private \SqlFaker\Fixed\SqlGenerator $sql;
+
+    public function statement(): string
+    {
+        return $this->sql->generateStatement();
+    }
+}

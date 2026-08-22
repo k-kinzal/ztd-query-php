@@ -57,12 +57,13 @@ final class NoDialectLogicInCoreOrAdapterRuleTest extends RuleTestCase
             [$message, 39],
             [$message, 41],
             [$message, 44],
-            [$message, 48],
+            [$message, 46],
             [$message, 49],
-            [$message, 49],
-            [$message, 50],
-            [$message, 51],
+            [$message, 53],
             [$message, 54],
+            [$message, 54],
+            [$message, 55],
+            [$message, 56],
         ]);
     }
 }

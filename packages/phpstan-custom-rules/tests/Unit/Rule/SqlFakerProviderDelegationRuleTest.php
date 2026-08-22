@@ -44,6 +44,11 @@ final class SqlFakerProviderDelegationRuleTest extends RuleTestCase
             [$message, 60],
             [$message, 66],
             [$message, 70],
+            [$message, 81],
+            [$message, 89],
+            [$message, 95],
+            [$message, 101],
+            [$message, 105],
             [$message, 11],
         ]);
     }

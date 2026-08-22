@@ -41,6 +41,11 @@ final class CoreDialectDependencyFixture
         return 'nat' . 'ive_type';
     }
 
+    public function joinedInsertSelect(string $columns, string $source): string
+    {
+        return implode(' ', ['SELECT', $columns, 'FROM', $source]);
+    }
+
     /** @param array<string, mixed> $metadata */
     public function metadata(array $metadata): array
     {

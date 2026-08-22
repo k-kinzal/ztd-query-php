@@ -12,6 +12,7 @@ use PhpParser\Node\Expr\PropertyFetch;
 use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Identifier;
+use PhpParser\Node\Param;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\Node\Stmt\Property;
 use PhpParser\Node\Stmt\Return_;
@@ -35,25 +36,21 @@ final class SqlFakerProviderDelegationRule implements Rule
      */
     public function processNode(Node $node, Scope $scope): array
     {
-        $class = $scope->getClassReflection();
-        if ($class === null) {
-            if ($scope->getNamespace() !== 'SqlFaker') {
-                return [];
-            }
-        } else {
-            $className = $class->getName();
-            if (!str_starts_with($className, 'SqlFaker\\')) {
-                return [];
-            }
-            if (str_contains(substr($className, strlen('SqlFaker\\')), '\\')) {
-                return [];
-            }
+        if ($scope->getNamespace() !== 'SqlFaker') {
+            return [];
+        }
+        if ($node instanceof Param
+            && $node->flags !== 0
+            && $node->var instanceof Variable
+            && $node->var->name === 'sql'
+            && !$this->isDialectSqlGeneratorType($node->type, $scope)
+        ) {
+            return [$this->error($node->getStartLine())];
         }
         if ($node instanceof Property) {
             foreach ($node->props as $property) {
                 if ($property->name->name === 'sql'
-                    && (!$node->type instanceof \PhpParser\Node\Name
-                        || !str_ends_with($scope->resolveName($node->type), '\\SqlGenerator'))
+                    && !$this->isDialectSqlGeneratorType($node->type, $scope)
                 ) {
                     return [$this->error($node->getStartLine())];
                 }
@@ -82,6 +79,16 @@ final class SqlFakerProviderDelegationRule implements Rule
         }
 
         return [$this->error($statement?->getStartLine() ?? $node->getStartLine())];
+    }
+
+    private function isDialectSqlGeneratorType(Node|null $type, Scope $scope): bool
+    {
+        return $type instanceof \PhpParser\Node\Name
+            && in_array($scope->resolveName($type), [
+                'SqlFaker\\MySql\\SqlGenerator',
+                'SqlFaker\\PostgreSql\\SqlGenerator',
+                'SqlFaker\\Sqlite\\SqlGenerator',
+            ], true);
     }
 
     private function error(int $line): IdentifierRuleError
