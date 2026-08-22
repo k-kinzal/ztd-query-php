@@ -28,6 +28,7 @@ final class PgSqlReadOnlyDiagnosticStatementTest extends TestCase
         yield 'executing update' => ['EXPLAIN ANALYZE UPDATE users SET active = FALSE', false];
         yield 'data-modifying cte' => ['EXPLAIN ANALYZE WITH d AS (DELETE FROM users RETURNING id) SELECT * FROM d', false];
         yield 'show setting' => ['SHOW server_version', true];
+        yield 'show without setting' => ['SHOW', false];
         yield 'mysql describe' => ['DESCRIBE users', false];
         yield 'multiple statements' => ['EXPLAIN SELECT 1; DELETE FROM users', false];
         yield 'empty explain' => ['EXPLAIN', false];

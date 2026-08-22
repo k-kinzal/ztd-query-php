@@ -23,9 +23,11 @@ final class SqliteReadOnlyDiagnosticStatementTest extends TestCase
     {
         yield 'explain select' => ['EXPLAIN SELECT * FROM users', true];
         yield 'query plan' => ['EXPLAIN QUERY PLAN SELECT * FROM users', true];
+        yield 'query plan minimum token boundary' => ['EXPLAIN QUERY PLAN SELECT', true];
         yield 'query without plan' => ['EXPLAIN QUERY SELECT * FROM users', false];
         yield 'plan without statement' => ['EXPLAIN QUERY PLAN', false];
         yield 'unsupported analyze form' => ['EXPLAIN ANALYZE DELETE FROM users', false];
+        yield 'unsupported analyse spelling' => ['EXPLAIN ANALYSE SELECT * FROM users', false];
         yield 'mysql show' => ['SHOW TABLES', false];
         yield 'mysql describe' => ['DESCRIBE users', false];
         yield 'multiple statements' => ['EXPLAIN SELECT 1; DELETE FROM users', false];

@@ -20,11 +20,12 @@ final class SqliteReadOnlyDiagnosticStatement
             return false;
         }
 
-        if ($tokens[1]->isKeyword('QUERY')) {
-            return isset($tokens[2]) && $tokens[2]->isKeyword('PLAN') && isset($tokens[3]);
+        $diagnosticKind = $tokens[1];
+        if ($diagnosticKind->isKeyword('QUERY')) {
+            return count($tokens) >= 4 && $tokens[2]->isKeyword('PLAN');
         }
 
-        if ($tokens[1]->isKeyword('ANALYZE') || $tokens[1]->isKeyword('ANALYSE')) {
+        if ($diagnosticKind->isKeyword('ANALYZE') || $diagnosticKind->isKeyword('ANALYSE')) {
             return false;
         }
 
