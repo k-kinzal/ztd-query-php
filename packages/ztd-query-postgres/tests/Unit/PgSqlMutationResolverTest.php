@@ -1829,6 +1829,7 @@ final class PgSqlMutationResolverTest extends TestCase
             [],
             []
         ));
+        $shadowStore->set('users', [['id' => 1, 'name' => 'Existing']]);
         $mutation = $resolver->resolve(
             "INSERT INTO users (id, name) VALUES (1, 'Alice') ON CONFLICT (id) DO UPDATE SET name = 'Bob', id = EXCLUDED.id",
             'INSERT',
@@ -1836,6 +1837,8 @@ final class PgSqlMutationResolverTest extends TestCase
         );
 
         self::assertInstanceOf(UpsertMutation::class, $mutation);
+        $mutation->apply($shadowStore, [['id' => 1, 'name' => 'Alice']]);
+        self::assertSame([['id' => 1, 'name' => 'Bob']], $shadowStore->get('users'));
     }
 
     public function testResolveDeleteWithShadowStoreOnlyNoRegistry(): void

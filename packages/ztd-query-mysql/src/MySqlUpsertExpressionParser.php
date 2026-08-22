@@ -20,7 +20,7 @@ final class MySqlUpsertExpressionParser
         $tokens = SqlTokenStream::tokenize($sql, SqlTokenDialect::MySql)->significantTokens();
         $index = 0;
         $expression = $this->parseOr($sql, $tableName, $incomingAlias, $tokens, $index);
-        if (isset($tokens[$index])) {
+        if ($index !== count($tokens)) {
             throw $this->unsupported($sql);
         }
 
@@ -224,10 +224,11 @@ final class MySqlUpsertExpressionParser
 
         $identifier = $this->identifier($token);
         $index++;
-        if (strcasecmp($identifier, 'VALUES') === 0
-            && isset($tokens[$index])
-            && $this->isSymbol($tokens[$index], ['('])
-        ) {
+        if (strcasecmp($identifier, 'VALUES') === 0) {
+            if (!isset($tokens[$index]) || !$this->isSymbol($tokens[$index], ['('])) {
+                throw $this->unsupported($sql);
+            }
+
             return $this->parseValuesReference($sql, $tokens, $index);
         }
         if (isset($tokens[$index]) && $this->isSymbol($tokens[$index], ['.'])) {

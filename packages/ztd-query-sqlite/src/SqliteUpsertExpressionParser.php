@@ -29,7 +29,7 @@ final class SqliteUpsertExpressionParser
         $this->tokens = SqlTokenStream::tokenize($sql)->significantTokens();
         $this->index = 0;
         $expression = $this->parseOr();
-        if (isset($this->tokens[$this->index])) {
+        if ($this->index !== count($this->tokens)) {
             throw $this->unsupported();
         }
 
@@ -247,9 +247,6 @@ final class SqliteUpsertExpressionParser
             return $token->text;
         }
 
-        if (str_starts_with($token->text, '[')) {
-            return str_replace(']]', ']', substr($token->text, 1, -1));
-        }
         $quote = $token->text[0] ?? '';
 
         return str_replace($quote . $quote, $quote, substr($token->text, 1, -1));

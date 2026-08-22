@@ -166,9 +166,6 @@ final class UpsertExpression
     /** @param array<string, mixed> $row */
     private static function rowValue(array $row, string $column): mixed
     {
-        if (array_key_exists($column, $row)) {
-            return $row[$column];
-        }
         foreach ($row as $name => $value) {
             if (strcasecmp($name, $column) === 0) {
                 return $value;

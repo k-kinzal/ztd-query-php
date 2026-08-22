@@ -29,7 +29,7 @@ final class PgSqlUpsertExpressionParser
         $this->tokens = SqlTokenStream::tokenize($sql)->significantTokens();
         $this->index = 0;
         $expression = $this->parseOr();
-        if (isset($this->tokens[$this->index])) {
+        if ($this->index !== count($this->tokens)) {
             throw $this->unsupported();
         }
 
