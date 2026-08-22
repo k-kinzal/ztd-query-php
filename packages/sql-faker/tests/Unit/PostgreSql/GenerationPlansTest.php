@@ -178,7 +178,13 @@ final class GenerationPlansTest extends TestCase
         $plan = GenerationPlans::partialIndexUpsertStatement();
 
         self::assertSame('InsertStmt', $plan->startRule());
-        self::assertNotNull($plan->patternAt('opt_conf_expr', 0));
-        self::assertNotNull($plan->patternAt('where_clause', 0));
+        self::assertTrue($plan->patternAt('opt_with_clause', 0)?->matches([]) ?? false);
+        self::assertTrue($plan->patternAt('qualified_name', 0)?->matches(['ColId']) ?? false);
+        self::assertTrue($plan->patternAt('insert_rest', 0)?->matches(['DEFAULT', 'VALUES']) ?? false);
+        self::assertTrue($plan->patternAt('opt_on_conflict', 0)?->matches(['DO', 'UPDATE']) ?? false);
+        self::assertTrue(
+            $plan->patternAt('opt_conf_expr', 0)?->matches(['index_params', 'where_clause']) ?? false,
+        );
+        self::assertTrue($plan->patternAt('where_clause', 0)?->matches(['a_expr']) ?? false);
     }
 }
