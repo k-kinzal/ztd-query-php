@@ -19,6 +19,9 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(ReplaceTransformer::class)]
 #[UsesClass(InsertTransformer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\InsertRowRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\InsertSelectRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\MySqlSelectListAliaser::class)]
 #[UsesClass(MySqlParser::class)]
 #[UsesClass(SelectTransformer::class)]
 #[UsesClass(MySqlCastRenderer::class)]
