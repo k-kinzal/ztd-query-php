@@ -5,19 +5,10 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\MySql\MySqlSelectRelationParser;
-use ZtdQuery\Sql\SqlToken;
-use ZtdQuery\Sql\SqlTokenDialect;
-use ZtdQuery\Sql\SqlTokenKind;
-use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(MySqlSelectRelationParser::class)]
-#[UsesClass(SqlToken::class)]
-#[UsesClass(SqlTokenDialect::class)]
-#[UsesClass(SqlTokenKind::class)]
-#[UsesClass(SqlTokenStream::class)]
 final class MySqlSelectRelationParserTest extends TestCase
 {
     public function testFindsPhysicalRelationsAcrossMySqlSelectScopes(): void

@@ -5,17 +5,10 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser;
-use ZtdQuery\Sql\SqlToken;
-use ZtdQuery\Sql\SqlTokenKind;
-use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(PgSqlSelectRelationParser::class)]
-#[UsesClass(SqlToken::class)]
-#[UsesClass(SqlTokenKind::class)]
-#[UsesClass(SqlTokenStream::class)]
 final class PgSqlSelectRelationParserTest extends TestCase
 {
     public function testFindsPostgreSqlRelationsWithoutTableFunctions(): void
