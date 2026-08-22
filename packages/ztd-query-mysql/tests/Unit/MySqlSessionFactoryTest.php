@@ -64,8 +64,6 @@ use ZtdQuery\Sql\SqlTokenStream;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlSelectRelationParser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlViewDefinitionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlViewShadowRenderer::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlGeneratedColumnProjector::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 final class MySqlSessionFactoryTest extends TestCase
 {
     public function testCreateRegistersReflectedViews(): void
