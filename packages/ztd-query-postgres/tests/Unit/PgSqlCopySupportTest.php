@@ -6,29 +6,52 @@ namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use ZtdQuery\Adapter\Pdo\PostgreSqlCopyCodec;
+use ZtdQuery\Platform\CopyTarget;
+use ZtdQuery\Platform\Postgres\PgSqlCopySupport;
 use ZtdQuery\Schema\TableDefinition;
 
-#[CoversClass(PostgreSqlCopyCodec::class)]
-final class PostgreSqlCopyCodecTest extends TestCase
+#[CoversClass(PgSqlCopySupport::class)]
+#[UsesClass(CopyTarget::class)]
+final class PgSqlCopySupportTest extends TestCase
 {
-    public function testRelationParsesAndQuotesOnlyPostgreSqlIdentifiers(): void
+    public function testTargetParsesRelationsAndRendersPostgreSqlStatements(): void
     {
-        $codec = new PostgreSqlCopyCodec();
+        $support = new PgSqlCopySupport();
+        $definition = new TableDefinition(['id'], ['id' => 'INTEGER'], ['id'], ['id'], []);
+        $target = $support->target('PUBLIC.Users', null, $definition);
 
-        self::assertSame(['name' => 'users', 'sql' => '"public"."users"'], $codec->relation('PUBLIC.Users'));
-        self::assertSame(['name' => 'Odd.Table', 'sql' => '"Odd Schema"."Odd.Table"'], $codec->relation('"Odd Schema"."Odd.Table"'));
+        self::assertSame(['public', 'users'], $target->relation);
+        self::assertSame('users', $target->tableName());
+        self::assertSame('SELECT "id" FROM "public"."users"', $support->selectSql($target));
+        self::assertSame(
+            'INSERT INTO "public"."users" ("id") VALUES ($1), ($2)',
+            $support->insertSql($target, 2, false),
+        );
+        self::assertSame(
+            'INSERT INTO "public"."users" ("id") OVERRIDING SYSTEM VALUE VALUES ($1)',
+            $support->insertSql($target, 1, true),
+        );
+        self::assertTrue($support->isCopyStatement('COPY users FROM STDIN'));
+        self::assertFalse($support->isCopyStatement('SELECT * FROM users'));
 
         $this->expectException(\ValueError::class);
-        $codec->relation('users; DELETE FROM users');
+        $support->tableName('users; DELETE FROM users');
     }
 
     public function testRelationRequotesEmbeddedIdentifierQuotes(): void
     {
+        $support = new PgSqlCopySupport();
+        $target = $support->target(
+            '"Odd Schema"."a""b"',
+            null,
+            new TableDefinition(['id'], ['id' => 'INTEGER'], ['id'], ['id'], []),
+        );
+
         self::assertSame(
-            ['name' => 'a"b', 'sql' => '"a""b"'],
-            (new PostgreSqlCopyCodec())->relation('"a""b"'),
+            'SELECT "id" FROM "Odd Schema"."a""b"',
+            $support->selectSql($target),
         );
     }
 
@@ -37,7 +60,7 @@ final class PostgreSqlCopyCodecTest extends TestCase
         $this->expectException(\ValueError::class);
         $this->expectExceptionMessage('must not contain an empty qualifier component');
 
-        (new PostgreSqlCopyCodec())->relation('users.');
+        (new PgSqlCopySupport())->tableName('users.');
     }
 
     #[DataProvider('providerInvalidRelation')]
@@ -45,12 +68,12 @@ final class PostgreSqlCopyCodecTest extends TestCase
     {
         $this->expectException(\ValueError::class);
 
-        (new PostgreSqlCopyCodec())->relation($relation);
+        (new PgSqlCopySupport())->tableName($relation);
     }
 
     public function testColumnsExcludeGeneratedColumnsAndParseExplicitFields(): void
     {
-        $codec = new PostgreSqlCopyCodec();
+        $codec = new PgSqlCopySupport();
         $definition = new TableDefinition(
             ['id', 'display_name', 'computed'],
             ['id' => 'INTEGER', 'display_name' => 'TEXT', 'computed' => 'TEXT'],
@@ -60,9 +83,10 @@ final class PostgreSqlCopyCodecTest extends TestCase
             generatedExpressions: ['computed' => 'display_name'],
         );
 
-        self::assertSame(['id', 'display_name'], $codec->columns(null, $definition));
-        self::assertSame(['id', 'Display Name'], $codec->columns('ID, "Display Name"', $definition));
-        self::assertSame('"id", "Display Name"', $codec->columnListSql(['id', 'Display Name']));
+        self::assertSame(['id', 'display_name'], $codec->target('items', null, $definition)->columns);
+        $target = $codec->target('items', 'ID, "Display Name"', $definition);
+        self::assertSame(['id', 'Display Name'], $target->columns);
+        self::assertSame('SELECT "id", "Display Name" FROM "items"', $codec->selectSql($target));
     }
 
     #[DataProvider('providerInvalidFields')]
@@ -70,7 +94,8 @@ final class PostgreSqlCopyCodecTest extends TestCase
     {
         $this->expectException(\ValueError::class);
 
-        (new PostgreSqlCopyCodec())->columns(
+        (new PgSqlCopySupport())->target(
+            'items',
             $fields,
             new TableDefinition(['id'], ['id' => 'INTEGER'], ['id'], ['id'], []),
         );
@@ -80,7 +105,26 @@ final class PostgreSqlCopyCodecTest extends TestCase
     {
         $this->expectException(\ValueError::class);
 
-        (new PostgreSqlCopyCodec())->columnListSql([]);
+        (new PgSqlCopySupport())->target(
+            'items',
+            null,
+            new TableDefinition(
+                ['computed'],
+                ['computed' => 'INTEGER'],
+                [],
+                [],
+                [],
+                generatedExpressions: ['computed' => '1'],
+            ),
+        );
+    }
+
+    public function testInsertSqlRejectsAnEmptyBatch(): void
+    {
+        $this->expectException(\ValueError::class);
+
+        $support = new PgSqlCopySupport();
+        $support->insertSql(new CopyTarget(['items'], ['id']), 0, false);
     }
 
     public function testEncodeRowUsesPostgreSqlTextEscapesAndNativeScalarOutput(): void
@@ -90,7 +134,7 @@ final class PostgreSqlCopyCodecTest extends TestCase
         self::assertSame(2, fwrite($stream, "\0\xff"));
         rewind($stream);
 
-        $row = (new PostgreSqlCopyCodec())->encodeRow(
+        $row = (new PgSqlCopySupport())->encodeRow(
             ["a\tb\nc\\d", null, true, false, $stream],
             '|',
             '\\N',
@@ -103,11 +147,11 @@ final class PostgreSqlCopyCodecTest extends TestCase
     {
         self::assertSame(
             "\\b\\f\\n\\r\\t\\v\\\\\\|\n",
-            (new PostgreSqlCopyCodec())->encodeRow(["\x08\x0C\n\r\t\x0B\\|"], '|', '\\N'),
+            (new PgSqlCopySupport())->encodeRow(["\x08\x0C\n\r\t\x0B\\|"], '|', '\\N'),
         );
         self::assertSame(
             "7|1.5\n",
-            (new PostgreSqlCopyCodec())->encodeRow([7, 1.5], '|', '\\N'),
+            (new PgSqlCopySupport())->encodeRow([7, 1.5], '|', '\\N'),
         );
     }
 
@@ -115,19 +159,19 @@ final class PostgreSqlCopyCodecTest extends TestCase
     {
         $this->expectException(\ValueError::class);
 
-        (new PostgreSqlCopyCodec())->encodeRow([new \stdClass()], '|', '\\N');
+        (new PgSqlCopySupport())->encodeRow([new \stdClass()], '|', '\\N');
     }
 
     public function testEncodeRowValidatesSeparator(): void
     {
         $this->expectException(\ValueError::class);
 
-        (new PostgreSqlCopyCodec())->encodeRow(['value'], '', '\\N');
+        (new PgSqlCopySupport())->encodeRow(['value'], '', '\\N');
     }
 
     public function testDecodeRowHonorsNullBeforeEscapesAndSupportsByteEscapes(): void
     {
-        $values = (new PostgreSqlCopyCodec())->decodeRow(
+        $values = (new PgSqlCopySupport())->decodeRow(
             "\\N|\\\\N|a\\|b|line\\nfeed|\\101\\x42\r\n",
             '|',
             '\\N',
@@ -138,7 +182,7 @@ final class PostgreSqlCopyCodecTest extends TestCase
 
     public function testDecodeRowSupportsEveryControlUnknownAndVariableLengthByteEscape(): void
     {
-        $codec = new PostgreSqlCopyCodec();
+        $codec = new PgSqlCopySupport();
 
         self::assertSame(
             ["\x08\x0C\n\r\t\x0B\\|q"],
@@ -166,7 +210,7 @@ final class PostgreSqlCopyCodecTest extends TestCase
     #[DataProvider('providerLineEnding')]
     public function testDecodeRowAcceptsEverySupportedLineEnding(string $lineEnding): void
     {
-        self::assertSame(['value'], (new PostgreSqlCopyCodec())->decodeRow('value' . $lineEnding, '|', '\\N'));
+        self::assertSame(['value'], (new PgSqlCopySupport())->decodeRow('value' . $lineEnding, '|', '\\N'));
     }
 
     #[DataProvider('providerInvalidRow')]
@@ -174,19 +218,19 @@ final class PostgreSqlCopyCodecTest extends TestCase
     {
         $this->expectException(\ValueError::class);
 
-        (new PostgreSqlCopyCodec())->decodeRow($row, '|', '\\N');
+        (new PgSqlCopySupport())->decodeRow($row, '|', '\\N');
     }
 
     public function testDecodeRowPreservesEmptyFields(): void
     {
-        self::assertSame(['', ''], (new PostgreSqlCopyCodec())->decodeRow('|', '|', '\\N'));
+        self::assertSame(['', ''], (new PgSqlCopySupport())->decodeRow('|', '|', '\\N'));
     }
 
     public function testSeparatorMustBeExactlyOneByte(): void
     {
         $this->expectException(\ValueError::class);
 
-        (new PostgreSqlCopyCodec())->decodeRow('value', '||', '\\N');
+        (new PgSqlCopySupport())->decodeRow('value', '||', '\\N');
     }
 
     /** @return iterable<string, array{string}> */

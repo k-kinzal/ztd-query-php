@@ -30,7 +30,12 @@ final class PdoPreparedExecution
     {
         $plan = $this->session->rewrite($this->sql);
         $driver = $this->driver();
-        $compiled = $this->parameterBinder->compile($plan->sql(), $driver, $params);
+        $compiled = $this->parameterBinder->compile(
+            $plan->sql(),
+            $driver,
+            $params,
+            $this->session->sqlPlaceholderEscaper(),
+        );
         $statement = $this->pdo->prepare($compiled['sql'], $this->options);
         if ($statement === false) {
             throw new RuntimeException('PDO failed to prepare rewritten SQL.');

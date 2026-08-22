@@ -16,9 +16,11 @@ use ZtdQuery\Session;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
+use ZtdQuery\Platform\Postgres\PgSqlCopySupport;
 use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 use ZtdQuery\Platform\Postgres\PgSqlMutationResolver;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
+use ZtdQuery\Platform\Postgres\PgSqlPdoPlaceholderEscaper;
 use ZtdQuery\Platform\Postgres\PgSqlQueryGuard;
 use ZtdQuery\Platform\Postgres\PgSqlRewriter;
 use ZtdQuery\Platform\Postgres\PgSqlSchemaParser;
@@ -44,6 +46,8 @@ use ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer;
 #[UsesClass(PgSqlTransformer::class)]
 #[UsesClass(PgSqlSchemaReflector::class)]
 #[UsesClass(PgSqlCastRenderer::class)]
+#[UsesClass(PgSqlCopySupport::class)]
+#[UsesClass(PgSqlPdoPlaceholderEscaper::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlValueRenderer::class)]
 #[UsesClass(PgSqlIdentifierQuoter::class)]
 #[UsesClass(SelectTransformer::class)]
@@ -174,6 +178,8 @@ final class PgSqlSessionFactoryTest extends TestCase
         $session = $factory->create($connection, ZtdConfig::default());
 
         self::assertInstanceOf(Session::class, $session);
+        self::assertInstanceOf(PgSqlCopySupport::class, $session->copySupport());
+        self::assertInstanceOf(PgSqlPdoPlaceholderEscaper::class, $session->sqlPlaceholderEscaper());
     }
 
     public function testCreatedSessionIsEnabledByDefault(): void

@@ -2,11 +2,13 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Adapter\Pdo;
+namespace ZtdQuery\Platform\Postgres;
 
-final class PostgreSqlPlaceholderEscaper
+use ZtdQuery\Platform\SqlPlaceholderEscaper;
+
+final class PgSqlPdoPlaceholderEscaper implements SqlPlaceholderEscaper
 {
-    public static function escape(string $sql): string
+    public function escape(string $sql): string
     {
         $result = '';
         $length = strlen($sql);

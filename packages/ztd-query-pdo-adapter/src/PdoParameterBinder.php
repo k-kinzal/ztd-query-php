@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ZtdQuery\Adapter\Pdo;
 
 use PDOStatement;
+use ZtdQuery\Platform\SqlPlaceholderEscaper;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
@@ -14,8 +15,12 @@ final class PdoParameterBinder
      * @param array<int|string, mixed>|null $params
      * @return array{sql: string, params: array<int|string, mixed>|null}
      */
-    public function compile(string $sql, string $driver, ?array $params): array
-    {
+    public function compile(
+        string $sql,
+        string $driver,
+        ?array $params,
+        ?SqlPlaceholderEscaper $placeholderEscaper = null,
+    ): array {
         if ($driver !== 'pgsql' && $driver !== 'sqlite') {
             return ['sql' => $sql, 'params' => $params];
         }
@@ -79,8 +84,8 @@ final class PdoParameterBinder
             }
         }
 
-        if ($driver === 'pgsql') {
-            $sql = PostgreSqlPlaceholderEscaper::escape($sql);
+        if ($driver === 'pgsql' && $placeholderEscaper !== null) {
+            $sql = $placeholderEscaper->escape($sql);
         }
 
         if ($nativePositions === [] || $params === null) {

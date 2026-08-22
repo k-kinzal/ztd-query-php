@@ -2,17 +2,75 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Adapter\Pdo;
+namespace ZtdQuery\Platform\Postgres;
 
+use ZtdQuery\Platform\CopySupport;
+use ZtdQuery\Platform\CopyTarget;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
-final class PostgreSqlCopyCodec
+final class PgSqlCopySupport implements CopySupport
 {
-    /** @return array{name: string, sql: string} */
-    public function relation(string $tableName): array
+    public function tableName(string $relation): string
+    {
+        $parts = $this->relationParts($relation);
+
+        return $parts[count($parts) - 1];
+    }
+
+    public function target(string $relation, ?string $fields, TableDefinition $definition): CopyTarget
+    {
+        $columns = $this->columns($fields, $definition);
+        if ($columns === []) {
+            throw new \ValueError('PostgreSQL COPY requires at least one non-generated column.');
+        }
+
+        return new CopyTarget($this->relationParts($relation), $columns);
+    }
+
+    public function selectSql(CopyTarget $target): string
+    {
+        return sprintf(
+            'SELECT %s FROM %s',
+            $this->columnListSql($target->columns),
+            $this->relationSql($target),
+        );
+    }
+
+    public function insertSql(CopyTarget $target, int $rowCount, bool $overrideSystemValue): string
+    {
+        if ($rowCount < 1) {
+            throw new \ValueError('PostgreSQL COPY INSERT requires at least one row.');
+        }
+
+        $parameter = 1;
+        $valueRows = [];
+        for ($row = 0; $row < $rowCount; $row++) {
+            $placeholders = [];
+            foreach ($target->columns as $_column) {
+                $placeholders[] = '$' . $parameter++;
+            }
+            $valueRows[] = '(' . implode(', ', $placeholders) . ')';
+        }
+
+        return sprintf(
+            'INSERT INTO %s (%s)%s VALUES %s',
+            $this->relationSql($target),
+            $this->columnListSql($target->columns),
+            $overrideSystemValue ? ' OVERRIDING SYSTEM VALUE' : '',
+            implode(', ', $valueRows),
+        );
+    }
+
+    public function isCopyStatement(string $sql): bool
+    {
+        return SqlTokenStream::tokenize($sql)->firstTopLevelKeyword() === 'COPY';
+    }
+
+    /** @return non-empty-list<string> */
+    private function relationParts(string $tableName): array
     {
         $parts = SqlTokenStream::tokenize($tableName)->splitTopLevel('.');
         if ($parts === []) {
@@ -34,14 +92,11 @@ final class PostgreSqlCopyCodec
             $components[] = $this->identifier($tokens[0], 'table name');
         }
 
-        return [
-            'name' => $components[count($components) - 1],
-            'sql' => implode('.', array_map($this->quoteIdentifier(...), $components)),
-        ];
+        return $components;
     }
 
     /** @return list<string> */
-    public function columns(?string $fields, TableDefinition $definition): array
+    private function columns(?string $fields, TableDefinition $definition): array
     {
         if ($fields === null) {
             $columns = [];
@@ -75,14 +130,15 @@ final class PostgreSqlCopyCodec
         return $columns;
     }
 
-    /** @param list<string> $columns */
-    public function columnListSql(array $columns): string
+    /** @param non-empty-list<string> $columns */
+    private function columnListSql(array $columns): string
     {
-        if ($columns === []) {
-            throw new \ValueError('PostgreSQL COPY requires at least one non-generated column.');
-        }
-
         return implode(', ', array_map($this->quoteIdentifier(...), $columns));
+    }
+
+    private function relationSql(CopyTarget $target): string
+    {
+        return implode('.', array_map($this->quoteIdentifier(...), $target->relation));
     }
 
     /** @param list<mixed> $values */

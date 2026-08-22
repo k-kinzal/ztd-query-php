@@ -15,6 +15,9 @@ use ZtdQuery\Connection\ResultSet;
 use ZtdQuery\Exception\SimulationException;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\CopySupport;
+use ZtdQuery\Platform\CopyTarget;
+use ZtdQuery\Platform\SqlPlaceholderEscaper;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
@@ -82,6 +85,10 @@ final class Session
 
     private ReferentialIntegrityEnforcer $referentialIntegrity;
 
+    private ?CopySupport $copySupport;
+
+    private ?SqlPlaceholderEscaper $sqlPlaceholderEscaper;
+
     private ?string $lastInsertId = null;
 
     /**
@@ -99,6 +106,8 @@ final class Session
         ConnectionInterface $connection,
         ?ShadowTransactionManager $transactions = null,
         ?TableDefinitionRegistry $registry = null,
+        ?CopySupport $copySupport = null,
+        ?SqlPlaceholderEscaper $sqlPlaceholderEscaper = null,
     ) {
         $this->rewriter = $rewriter;
         $this->shadowStore = $shadowStore;
@@ -108,6 +117,8 @@ final class Session
         $this->transactions = $transactions ?? new ShadowTransactionManager($shadowStore);
         $this->registry = $registry ?? new TableDefinitionRegistry();
         $this->referentialIntegrity = new ReferentialIntegrityEnforcer($this->registry);
+        $this->copySupport = $copySupport;
+        $this->sqlPlaceholderEscaper = $sqlPlaceholderEscaper;
     }
 
     /**
@@ -192,6 +203,29 @@ final class Session
     public function tableDefinition(string $tableName): ?TableDefinition
     {
         return $this->registry->get($tableName);
+    }
+
+    public function copySupport(): ?CopySupport
+    {
+        return $this->copySupport;
+    }
+
+    public function copyTarget(string $relation, ?string $fields): ?CopyTarget
+    {
+        if ($this->copySupport === null) {
+            return null;
+        }
+        $definition = $this->registry->get($this->copySupport->tableName($relation));
+        if ($definition === null) {
+            return null;
+        }
+
+        return $this->copySupport->target($relation, $fields, $definition);
+    }
+
+    public function sqlPlaceholderEscaper(): ?SqlPlaceholderEscaper
+    {
+        return $this->sqlPlaceholderEscaper;
     }
 
     /**

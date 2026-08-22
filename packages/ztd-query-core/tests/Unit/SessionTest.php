@@ -15,6 +15,9 @@ use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\Connection\ResultSet;
 use ZtdQuery\Exception\MissingPrimaryKeyException;
 use ZtdQuery\Exception\ForeignKeyViolationException;
+use ZtdQuery\Platform\CopySupport;
+use ZtdQuery\Platform\CopyTarget;
+use ZtdQuery\Platform\SqlPlaceholderEscaper;
 use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
@@ -48,6 +51,7 @@ use ZtdQuery\Shadow\ShadowTransactionManager;
 #[UsesClass(ForeignKeyViolationException::class)]
 #[UsesClass(ReferentialIntegrityEnforcer::class)]
 #[UsesClass(MissingPrimaryKeyException::class)]
+#[UsesClass(CopyTarget::class)]
 final class SessionTest extends TestCase
 {
     public function testEnableAndDisable(): void
@@ -66,6 +70,9 @@ final class SessionTest extends TestCase
 
         self::assertTrue($session->isEnabled());
         self::assertNull($session->tableDefinition('users'));
+        self::assertNull($session->copySupport());
+        self::assertNull($session->copyTarget('users', null));
+        self::assertNull($session->sqlPlaceholderEscaper());
 
         $session->disable();
         self::assertFalse($session->isEnabled());
@@ -91,6 +98,37 @@ final class SessionTest extends TestCase
 
         self::assertSame($definition, $session->tableDefinition('users'));
         self::assertNull($session->tableDefinition('missing'));
+    }
+
+    public function testDelegatesCopyTargetsToTheConfiguredPlatformSupport(): void
+    {
+        $shadowStore = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $definition = new TableDefinition(['id'], ['id' => 'INTEGER'], ['id'], ['id'], []);
+        $registry->register('users', $definition);
+        $target = new CopyTarget(['public', 'users'], ['id']);
+        $copy = self::createStub(CopySupport::class);
+        $copy->method('tableName')->willReturnMap([
+            ['public.users', 'users'],
+            ['missing', 'missing'],
+        ]);
+        $copy->method('target')->willReturn($target);
+        $escaper = self::createStub(SqlPlaceholderEscaper::class);
+        $session = new Session(
+            new FakeSqlRewriter($shadowStore, $registry),
+            $shadowStore,
+            new ResultSelectRunner(),
+            ZtdConfig::default(),
+            new FakeConnection(),
+            registry: $registry,
+            copySupport: $copy,
+            sqlPlaceholderEscaper: $escaper,
+        );
+
+        self::assertSame($copy, $session->copySupport());
+        self::assertSame($target, $session->copyTarget('public.users', 'id'));
+        self::assertNull($session->copyTarget('missing', null));
+        self::assertSame($escaper, $session->sqlPlaceholderEscaper());
     }
 
     public function testUsesProvidedTransactionManagerForSchemaRollback(): void

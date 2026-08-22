@@ -10,9 +10,10 @@ use ReflectionClass;
 use RuntimeException;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\Exception\DatabaseException;
+use ZtdQuery\Platform\CopySupport;
+use ZtdQuery\Platform\CopyTarget;
 use ZtdQuery\Session;
 use ZtdQuery\Platform\SessionFactory;
-use ZtdQuery\Sql\SqlTokenStream;
 
 /**
  * PDO proxy that enforces ZTD behavior for reads and writes.
@@ -483,12 +484,8 @@ class ZtdPdo extends PDO
         string $nullAs,
         ?string $fields,
     ): array|false {
-        [$codec, $relation, $columns] = $this->postgreSqlCopyTarget($tableName, $fields);
-        $statement = $this->query(sprintf(
-            'SELECT %s FROM %s',
-            $codec->columnListSql($columns),
-            $relation,
-        ));
+        [$copy, $target] = $this->postgreSqlCopyTarget($tableName, $fields);
+        $statement = $this->query($copy->selectSql($target));
         if ($statement === false) {
             return false;
         }
@@ -498,7 +495,7 @@ class ZtdPdo extends PDO
             if (!is_array($values)) {
                 throw new ZtdPdoException('PostgreSQL COPY query returned an invalid row.');
             }
-            $rows[] = $codec->encodeRow(array_values($values), $separator, $nullAs);
+            $rows[] = $copy->encodeRow(array_values($values), $separator, $nullAs);
         }
 
         return $rows;
@@ -512,18 +509,18 @@ class ZtdPdo extends PDO
         string $nullAs,
         ?string $fields,
     ): bool {
-        [$codec, $relation, $columns] = $this->postgreSqlCopyTarget($tableName, $fields);
+        [$copy, $target] = $this->postgreSqlCopyTarget($tableName, $fields);
         $decodedRows = [];
         foreach ($rows as $row) {
             if (!is_string($row)) {
                 throw new \TypeError(sprintf('PostgreSQL COPY rows must be strings, %s given.', get_debug_type($row)));
             }
-            $decodedRow = $codec->decodeRow($row, $separator, $nullAs);
-            if (count($decodedRow) !== count($columns)) {
+            $decodedRow = $copy->decodeRow($row, $separator, $nullAs);
+            if (count($decodedRow) !== count($target->columns)) {
                 throw new \ValueError(sprintf(
                     'PostgreSQL COPY row has %d fields, but %d fields are required.',
                     count($decodedRow),
-                    count($columns),
+                    count($target->columns),
                 ));
             }
             $decodedRows[] = $decodedRow;
@@ -532,24 +529,17 @@ class ZtdPdo extends PDO
             return true;
         }
 
-        $parameter = 1;
-        $valueRows = [];
         $parameters = [];
         foreach ($decodedRows as $parameterValues) {
-            $placeholders = [];
             foreach ($parameterValues as $value) {
-                $placeholders[] = '$' . $parameter++;
                 $parameters[] = $value;
             }
-            $valueRows[] = '(' . implode(', ', $placeholders) . ')';
         }
 
-        $statement = $this->prepare(sprintf(
-            'INSERT INTO %s (%s)%s VALUES %s',
-            $relation,
-            $codec->columnListSql($columns),
-            $this->session->isEnabled() ? '' : ' OVERRIDING SYSTEM VALUE',
-            implode(', ', $valueRows),
+        $statement = $this->prepare($copy->insertSql(
+            $target,
+            count($decodedRows),
+            !$this->session->isEnabled(),
         ));
 
         return $statement !== false && $statement->execute($parameters);
@@ -586,32 +576,29 @@ class ZtdPdo extends PDO
     }
 
     /**
-     * @return array{PostgreSqlCopyCodec, string, list<string>}
+     * @return array{CopySupport, CopyTarget}
      */
     private function postgreSqlCopyTarget(string $tableName, ?string $fields): array
     {
-        if ($this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME) !== 'pgsql') {
+        $copy = $this->session->copySupport();
+        if ($copy === null) {
             throw new ZtdPdoException('PostgreSQL COPY methods require the PDO PostgreSQL driver.');
         }
 
-        $codec = new PostgreSqlCopyCodec();
-        $target = $codec->relation($tableName);
-        $definition = $this->session->tableDefinition($target['name']);
-        if ($definition === null) {
+        $target = $this->session->copyTarget($tableName, $fields);
+        if ($target === null) {
             throw new ZtdPdoException(sprintf(
                 'PostgreSQL COPY cannot resolve the schema for table "%s".',
-                $target['name'],
+                $tableName,
             ));
         }
 
-        return [$codec, $target['sql'], $codec->columns($fields, $definition)];
+        return [$copy, $target];
     }
 
     private function guardRawPostgreSqlCopy(string $sql): void
     {
-        if ($this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'pgsql'
-            && SqlTokenStream::tokenize($sql)->firstTopLevelKeyword() === 'COPY'
-        ) {
+        if ($this->session->copySupport()?->isCopyStatement($sql) === true) {
             throw new ZtdPdoException(
                 'ZTD Write Protection: Raw PostgreSQL COPY cannot preserve shadow isolation; '
                 . 'use the pgsqlCopyToArray(), pgsqlCopyFromArray(), pgsqlCopyToFile(), or pgsqlCopyFromFile() methods.',

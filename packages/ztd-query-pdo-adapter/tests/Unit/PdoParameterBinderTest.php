@@ -10,11 +10,10 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Adapter\Pdo\PdoParameterBinder;
 use ZtdQuery\Adapter\Pdo\PdoParameterType;
-use ZtdQuery\Adapter\Pdo\PostgreSqlPlaceholderEscaper;
+use ZtdQuery\Platform\SqlPlaceholderEscaper;
 
 #[CoversClass(PdoParameterBinder::class)]
 #[UsesClass(PdoParameterType::class)]
-#[UsesClass(PostgreSqlPlaceholderEscaper::class)]
 final class PdoParameterBinderTest extends TestCase
 {
     public function testMapsNativePostgreSqlPositionsWithoutTouchingQuotedText(): void
@@ -23,6 +22,12 @@ final class PdoParameterBinderTest extends TestCase
             'SELECT $2, $1, $2, \'$3\' FROM docs WHERE meta ? $1 -- $4',
             'pgsql',
             ['first', 'second'],
+            new class () implements SqlPlaceholderEscaper {
+                public function escape(string $sql): string
+                {
+                    return str_replace('meta ? ', 'meta ?? ', $sql);
+                }
+            },
         );
 
         self::assertSame(
