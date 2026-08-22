@@ -12,6 +12,7 @@ use SqlFixture\Plan\ColumnRef;
 use SqlFixture\Plan\FixturePlan;
 use SqlFixture\Plan\PlanParser;
 use SqlFixture\Plan\PlanPrinter;
+use SqlFixture\Plan\PlanStructureException;
 use SqlFixture\Plan\PlanSyntaxException;
 use SqlFixture\Plan\Relation;
 use SqlFixture\Plan\RelationKind;
@@ -26,6 +27,7 @@ use Tests\Fixture\Plan\OrderWithDetailsPlan;
 #[UsesClass(RelationKind::class)]
 #[UsesClass(RelationSide::class)]
 #[UsesClass(PlanSyntaxException::class)]
+#[UsesClass(PlanStructureException::class)]
 final class FixturePlanTest extends TestCase
 {
     #[Test]
@@ -147,30 +149,139 @@ final class FixturePlanTest extends TestCase
     }
 
     #[Test]
-    public function theRootTableIsTheFirstOneNamed(): void
+    public function theSubjectIsTheFirstTableNamed(): void
     {
         $plan = FixturePlan::from('order.id < order_detail.order_id, order.customer_id > customer.id');
 
-        self::assertSame('order', $plan->rootTable());
+        self::assertSame('order', $plan->subjectTable());
     }
 
     #[Test]
-    public function anEmptyPlanHasNoRootTable(): void
+    public function anEmptyPlanHasNoSubject(): void
     {
-        self::assertNull((new FixturePlan())->rootTable());
+        self::assertNull((new FixturePlan())->subjectTable());
     }
 
     #[Test]
-    public function relationsFromSelectsByParentTable(): void
+    public function theSubjectIsNotNecessarilyGeneratedFirst(): void
+    {
+        $plan = FixturePlan::from('order_detail.order_id > order.id');
+
+        self::assertSame('order_detail', $plan->subjectTable());
+        self::assertSame(['order', 'order_detail'], $plan->generationOrder);
+    }
+
+    #[Test]
+    public function generationOrderPutsEveryParentBeforeItsChildren(): void
     {
         $plan = FixturePlan::from(
             'order.id < order_detail.order_id, order_detail.product_id > product.id'
         );
 
-        self::assertCount(1, $plan->relationsFrom('order'));
-        self::assertSame('order_detail', $plan->relationsFrom('order')[0]->child()->table);
-        self::assertCount(1, $plan->relationsFrom('product'));
-        self::assertSame([], $plan->relationsFrom('customer'));
+        self::assertSame(['order', 'product', 'order_detail'], $plan->generationOrder);
+    }
+
+    #[Test]
+    public function generationOrderCoversTablesThatStandAlone(): void
+    {
+        $plan = FixturePlan::from('order.id < order_detail.order_id, audit_log');
+
+        self::assertContains('audit_log', $plan->generationOrder);
+        self::assertCount(3, $plan->generationOrder);
+    }
+
+    #[Test]
+    public function generationOrderHandlesSeveralIndependentComponents(): void
+    {
+        $plan = FixturePlan::from('a.id < b.a_id, c.id < d.c_id');
+
+        self::assertSame(['a', 'c', 'b', 'd'], $plan->generationOrder);
+    }
+
+    #[Test]
+    public function rootsAreTheTablesNothingHasToPrecede(): void
+    {
+        $plan = FixturePlan::from('b.a_id > a.id, b.c_id > c.id');
+
+        self::assertSame(['a', 'c'], $plan->roots());
+    }
+
+    #[Test]
+    public function dependenciesOfSelectsRelationsWhereTheTableIsTheChild(): void
+    {
+        $plan = FixturePlan::from(
+            'order.id < order_detail.order_id, order_detail.product_id > product.id'
+        );
+
+        self::assertCount(2, $plan->dependenciesOf('order_detail'));
+        self::assertSame([], $plan->dependenciesOf('order'));
+        self::assertSame([], $plan->dependenciesOf('product'));
+    }
+
+    #[Test]
+    public function dependentsOfSelectsRelationsWhereTheTableIsTheParent(): void
+    {
+        $plan = FixturePlan::from(
+            'order.id < order_detail.order_id, order_detail.product_id > product.id'
+        );
+
+        self::assertCount(1, $plan->dependentsOf('order'));
+        self::assertSame('order_detail', $plan->dependentsOf('order')[0]->child()->table);
+        self::assertCount(1, $plan->dependentsOf('product'));
+        self::assertSame([], $plan->dependentsOf('order_detail'));
+    }
+
+    #[Test]
+    public function aCycleIsRejected(): void
+    {
+        $this->expectException(PlanStructureException::class);
+        $this->expectExceptionMessage('form a cycle: a -> b -> a');
+
+        FixturePlan::from('a.id < b.a_id, b.id < a.b_id');
+    }
+
+    #[Test]
+    public function aRequiredSelfReferenceIsRejected(): void
+    {
+        $this->expectException(PlanStructureException::class);
+        $this->expectExceptionMessage('without end');
+
+        FixturePlan::from('category.id < category.parent_id');
+    }
+
+    #[Test]
+    public function anOptionalSelfReferenceIsAllowed(): void
+    {
+        $plan = FixturePlan::from('category.id <? category.parent_id');
+
+        self::assertSame(['category'], $plan->generationOrder);
+    }
+
+    #[Test]
+    public function bindingTheSameColumnsTwiceIsRejected(): void
+    {
+        $this->expectException(PlanStructureException::class);
+        $this->expectExceptionMessage('b.a_id is bound to a.id and to a.id');
+
+        FixturePlan::from('a.id < b.a_id, a.id < b.a_id');
+    }
+
+    #[Test]
+    public function bindingAColumnToTwoParentsIsRejected(): void
+    {
+        $this->expectException(PlanStructureException::class);
+        $this->expectExceptionMessage('can reference one parent');
+
+        FixturePlan::from('a.id < b.x, c.id < b.x');
+    }
+
+    #[Test]
+    public function twoForeignKeysBetweenTheSameTablesAreAllowed(): void
+    {
+        $plan = FixturePlan::from('a.id < b.a_id, a.code < b.a_code');
+
+        self::assertCount(2, $plan->relations);
+        self::assertSame(['a', 'b'], $plan->generationOrder);
     }
 
     #[Test]

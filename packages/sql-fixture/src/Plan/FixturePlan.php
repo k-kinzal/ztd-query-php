@@ -44,6 +44,9 @@ class FixturePlan implements Stringable
     /** @var list<string> Every table named, in first-mentioned order */
     public readonly array $tables;
 
+    /** @var list<string> Every table, ordered so a parent always precedes its children */
+    public readonly array $generationOrder;
+
     /**
      * @param Relation|string ...$parts Relations, and the names of tables that stand alone
      * @throws PlanSyntaxException If a string names anything but a plain table
@@ -66,6 +69,10 @@ class FixturePlan implements Stringable
         $this->parts = array_values($parts);
         $this->relations = $relations;
         $this->tables = array_values(array_unique($tables));
+
+        $this->rejectColumnsBoundTwice($relations);
+        $this->rejectUnboundedSelfReferences($relations);
+        $this->generationOrder = $this->sortByDependency($this->tables, $relations);
     }
 
     /**
@@ -137,19 +144,50 @@ class FixturePlan implements Stringable
     }
 
     /**
-     * The table the fixtures are rooted at, which is the first one named.
+     * The table the fixtures are about, which is the first one named.
+     *
+     * This is where the plan reads from, not where generation starts: written
+     * `order_detail.order_id > order.id` the subject is order_detail, but
+     * order has to exist first. Use generationOrder for that.
      */
-    public function rootTable(): ?string
+    public function subjectTable(): ?string
     {
         return $this->tables[0] ?? null;
     }
 
     /**
-     * Relations whose parent end is the given table.
+     * Tables nothing else has to be generated before.
+     *
+     * @return list<string>
+     */
+    public function roots(): array
+    {
+        return array_values(array_filter(
+            $this->generationOrder,
+            fn (string $table): bool => $this->dependenciesOf($table) === []
+        ));
+    }
+
+    /**
+     * Relations that must be satisfied before this table can be generated,
+     * that is, those in which it is the child.
      *
      * @return list<Relation>
      */
-    public function relationsFrom(string $table): array
+    public function dependenciesOf(string $table): array
+    {
+        return array_values(array_filter(
+            $this->relations,
+            static fn (Relation $relation): bool => $relation->child()->table === $table
+        ));
+    }
+
+    /**
+     * Relations hanging off this table, that is, those in which it is the parent.
+     *
+     * @return list<Relation>
+     */
+    public function dependentsOf(string $table): array
     {
         return array_values(array_filter(
             $this->relations,
@@ -165,6 +203,111 @@ class FixturePlan implements Stringable
     public function __toString(): string
     {
         return $this->toString();
+    }
+
+    /**
+     * A column set references one parent, so binding it twice is a mistake
+     * whether the two relations agree or not.
+     *
+     * @param list<Relation> $relations
+     */
+    private function rejectColumnsBoundTwice(array $relations): void
+    {
+        $seen = [];
+
+        foreach ($relations as $relation) {
+            $child = $relation->child();
+            $key = $child->toString();
+
+            if (isset($seen[$key])) {
+                throw PlanStructureException::columnsBoundTwice($child, $seen[$key], $relation->parent());
+            }
+
+            $seen[$key] = $relation->parent();
+        }
+    }
+
+    /**
+     * A table that requires a row of itself can never finish.
+     *
+     * @param list<Relation> $relations
+     */
+    private function rejectUnboundedSelfReferences(array $relations): void
+    {
+        foreach ($relations as $relation) {
+            $isSelfReference = $relation->parent()->table === $relation->child()->table;
+
+            if ($isSelfReference && $relation->minimumChildRows() > 0) {
+                throw PlanStructureException::unboundedSelfReference(
+                    $relation->parent()->table,
+                    (new PlanPrinter())->printRelation($relation)
+                );
+            }
+        }
+    }
+
+    /**
+     * Order the tables so every parent comes before its children.
+     *
+     * Self references are left out of the ordering: a table cannot precede
+     * itself, and an optional one terminates on its own.
+     *
+     * @param list<string> $tables
+     * @param list<Relation> $relations
+     * @return list<string>
+     */
+    private function sortByDependency(array $tables, array $relations): array
+    {
+        $pending = [];
+        foreach ($tables as $table) {
+            $pending[$table] = true;
+        }
+
+        $ordered = [];
+
+        while ($pending !== []) {
+            $ready = [];
+
+            foreach (array_keys($pending) as $table) {
+                if ($this->waitsForAny($table, $relations, $pending)) {
+                    continue;
+                }
+
+                $ready[] = $table;
+            }
+
+            if ($ready === []) {
+                throw PlanStructureException::cycle(array_keys($pending));
+            }
+
+            foreach ($ready as $table) {
+                $ordered[] = $table;
+                unset($pending[$table]);
+            }
+        }
+
+        return $ordered;
+    }
+
+    /**
+     * @param list<Relation> $relations
+     * @param array<string, bool> $pending
+     */
+    private function waitsForAny(string $table, array $relations, array $pending): bool
+    {
+        foreach ($relations as $relation) {
+            $parent = $relation->parent()->table;
+
+            if ($relation->child()->table !== $table || $parent === $table) {
+                continue;
+            }
+
+            if (isset($pending[$parent])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static function assertTableName(string $part): string

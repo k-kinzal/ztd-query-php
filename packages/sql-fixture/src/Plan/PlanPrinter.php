@@ -28,6 +28,14 @@ final class PlanPrinter
     }
 
     /**
+     * Write a single relation, without needing a plan to hold it.
+     */
+    public function printRelation(Relation $relation): string
+    {
+        return $this->printGroup([$relation]);
+    }
+
+    /**
      * @param list<Relation> $relations
      * @return list<list<Relation>>
      */

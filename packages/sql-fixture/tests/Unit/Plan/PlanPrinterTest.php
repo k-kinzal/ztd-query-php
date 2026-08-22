@@ -126,4 +126,12 @@ final class PlanPrinterTest extends TestCase
             'quoting is dropped' => ['`order`.`id` < "order_detail"."order_id"', 'order.id < order_detail.order_id'],
         ];
     }
+
+    #[Test]
+    public function printsASingleRelationWithoutAPlan(): void
+    {
+        $relation = Relation::oneToMany('order.id', 'order_detail.order_id');
+
+        self::assertSame('order.id < order_detail.order_id', (new PlanPrinter())->printRelation($relation));
+    }
 }
