@@ -162,7 +162,6 @@ final class UpsertExpression
         return $this->operands[$index]->evaluate($existingRow, $incomingRow, $tableName);
     }
 
-
     /** @param array<string, mixed> $row */
     private static function rowValue(array $row, string $column): mixed
     {

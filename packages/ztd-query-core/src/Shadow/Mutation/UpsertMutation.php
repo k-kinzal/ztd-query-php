@@ -62,6 +62,7 @@ final class UpsertMutation implements ShadowMutation
      * @param array<string, UpsertExpression|null> $updateValues Values to use for update on duplicate.
      * @param CandidateKeySet|null $candidateKeys Candidate keys used for conflict detection.
      * @param UpsertExpression|null $updatePredicate Condition that controls the conflict update.
+     * @param array<string, string> $updateSqlValues Raw expressions used only for database-evaluation diagnostics.
      */
     public function __construct(
         string $tableName,
@@ -203,5 +204,4 @@ final class UpsertMutation implements ShadowMutation
     {
         return $this->resultRows;
     }
-
 }

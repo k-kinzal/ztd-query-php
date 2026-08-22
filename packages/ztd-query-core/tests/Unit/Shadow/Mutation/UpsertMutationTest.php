@@ -380,8 +380,13 @@ final class UpsertMutationTest extends TestCase
             'items',
             ['id'],
             ['quantity'],
-            ['quantity' => 'quantity + EXCLUDED.quantity'],
+            ['quantity' => UpsertExpression::binary(
+                UpsertExpressionKind::Add,
+                UpsertExpression::column(UpsertColumnSource::Existing, 'quantity'),
+                UpsertExpression::column(UpsertColumnSource::Incoming, 'quantity'),
+            )],
             databaseEvaluated: true,
+            updateSqlValues: ['quantity' => 'quantity + EXCLUDED.quantity'],
         );
 
         $mutation->apply($store, [
@@ -401,9 +406,15 @@ final class UpsertMutationTest extends TestCase
             'items',
             ['id'],
             ['name'],
-            ['name' => 'EXCLUDED.name'],
-            updatePredicate: 'score >= 80',
+            ['name' => UpsertExpression::column(UpsertColumnSource::Incoming, 'name')],
+            updatePredicate: UpsertExpression::binary(
+                UpsertExpressionKind::GreaterOrEqual,
+                UpsertExpression::column(UpsertColumnSource::Existing, 'score'),
+                UpsertExpression::literal(80),
+            ),
             databaseEvaluated: true,
+            updateSqlValues: ['name' => 'EXCLUDED.name'],
+            updateSqlPredicate: 'score >= 80',
         );
 
         $mutation->apply($store, [
@@ -444,8 +455,13 @@ final class UpsertMutationTest extends TestCase
             'items',
             ['id'],
             ['quantity'],
-            ['quantity' => 'quantity + EXCLUDED.quantity'],
+            ['quantity' => UpsertExpression::binary(
+                UpsertExpressionKind::Add,
+                UpsertExpression::column(UpsertColumnSource::Existing, 'quantity'),
+                UpsertExpression::column(UpsertColumnSource::Incoming, 'quantity'),
+            )],
             databaseEvaluated: true,
+            updateSqlValues: ['quantity' => 'quantity + EXCLUDED.quantity'],
         );
 
         $mutation->apply($store, [
@@ -465,8 +481,9 @@ final class UpsertMutationTest extends TestCase
             'items',
             ['id'],
             ['quantity'],
-            ['quantity' => 'COALESCE(quantity, 0) + EXCLUDED.quantity'],
+            ['quantity' => null],
             databaseEvaluated: true,
+            updateSqlValues: ['quantity' => 'COALESCE(quantity, 0) + EXCLUDED.quantity'],
         );
 
         $this->expectException(UnsupportedSqlException::class);
