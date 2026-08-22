@@ -37,4 +37,12 @@ final class InsertRowRendererTest extends TestCase
 
         (new InsertRowRenderer())->providedExpressions(['id'], []);
     }
+
+    public function testPreservesEveryProvidedMySqlExpression(): void
+    {
+        self::assertSame(
+            ['id' => '42', 'name' => "'Ada'"],
+            (new InsertRowRenderer())->providedExpressions(['id', 'name'], ['42', "'Ada'"]),
+        );
+    }
 }

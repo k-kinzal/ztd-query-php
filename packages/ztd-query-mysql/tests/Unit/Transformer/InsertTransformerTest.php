@@ -888,4 +888,36 @@ final class InsertTransformerTest extends TestCase
         self::assertStringContainsString('`__ztd_insert_0` AS `id`', $explicit);
         self::assertStringNotContainsString('ROW_NUMBER()', $explicit);
     }
+
+    public function testExplicitValuesIdentityDoesNotConsumeGeneratedIdentity(): void
+    {
+        $transformer = new InsertTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = ['users' => [
+            'rows' => [],
+            'columns' => ['id', 'name'],
+            'columnTypes' => [],
+            'identityStrategies' => ['id' => IdentityGenerationStrategy::MaxValue],
+        ]];
+
+        $transformer->transform("INSERT INTO users (id, name) VALUES (42, 'explicit')", $tables);
+        $generated = $transformer->transform("INSERT INTO users (name) VALUES ('generated')", $tables);
+
+        self::assertStringContainsString('1 AS `id`', $generated);
+    }
+
+    public function testExplicitSetIdentityDoesNotConsumeGeneratedIdentity(): void
+    {
+        $transformer = new InsertTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = ['users' => [
+            'rows' => [],
+            'columns' => ['id', 'name'],
+            'columnTypes' => [],
+            'identityStrategies' => ['id' => IdentityGenerationStrategy::MaxValue],
+        ]];
+
+        $transformer->transform("INSERT INTO users SET id = 42, name = 'explicit'", $tables);
+        $generated = $transformer->transform("INSERT INTO users SET name = 'generated'", $tables);
+
+        self::assertStringContainsString('1 AS `id`', $generated);
+    }
 }

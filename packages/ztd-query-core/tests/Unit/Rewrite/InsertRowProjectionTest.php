@@ -44,4 +44,9 @@ final class InsertRowProjectionTest extends TestCase
 
         InsertRowProjection::generatedIdentity('id', 0);
     }
+
+    public function testAcceptsMinimumGeneratedIdentityValue(): void
+    {
+        self::assertSame(1, InsertRowProjection::generatedIdentity('id', 1)->generatedIdentityValue());
+    }
 }

@@ -451,4 +451,20 @@ final class InsertTransformerTest extends TestCase
 
         self::assertStringContainsString('8 AS "id"', $result);
     }
+
+    public function testExplicitIdentityDoesNotConsumeGeneratedIdentity(): void
+    {
+        $transformer = new InsertTransformer(new SqliteParser(), new SelectTransformer());
+        $tables = ['users' => [
+            'rows' => [],
+            'columns' => ['id', 'name'],
+            'columnTypes' => [],
+            'identityStrategies' => ['id' => IdentityGenerationStrategy::MaxValue],
+        ]];
+
+        $transformer->transform("INSERT INTO users (id, name) VALUES (42, 'explicit')", $tables);
+        $generated = $transformer->transform("INSERT INTO users (name) VALUES ('generated')", $tables);
+
+        self::assertStringContainsString('1 AS "id"', $generated);
+    }
 }
