@@ -35,7 +35,7 @@ final class MySqlPartitionSelectionRewriter
         }
 
         $edits = [];
-        foreach ($stream->selectTableReferences() as $reference) {
+        foreach ((new MySqlSelectRelationParser())->references($sql) as $reference) {
             $partitionIndex = $this->tokenIndexAtOrAfter($tokens, $reference['end']);
             $partition = $tokens[$partitionIndex] ?? null;
             if (!$partition instanceof SqlToken || !$partition->isKeyword('PARTITION')) {

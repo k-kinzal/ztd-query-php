@@ -249,7 +249,18 @@ final class GenerationPlansTest extends TestCase
         $plan = GenerationPlans::partitionSelectStatement();
 
         self::assertSame('select_stmt', $plan->startRule());
-        self::assertNotNull($plan->patternAt('opt_from_clause', 0));
-        self::assertNotNull($plan->patternAt('opt_use_partition', 0));
+        self::assertTrue(
+            $plan->patternAt('query_expression', 0)?->matches([
+                'query_expression_body',
+                'opt_order_clause',
+                'opt_limit_clause',
+            ]) ?? false,
+        );
+        self::assertTrue($plan->patternAt('query_expression_body', 0)?->matches(['query_primary']) ?? false);
+        self::assertTrue($plan->patternAt('query_primary', 0)?->matches(['query_specification']) ?? false);
+        self::assertTrue($plan->patternAt('opt_from_clause', 0)?->matches(['from_tables']) ?? false);
+        self::assertTrue($plan->patternAt('from_tables', 0)?->matches(['table_reference_list']) ?? false);
+        self::assertTrue($plan->patternAt('table_factor', 0)?->matches(['single_table']) ?? false);
+        self::assertTrue($plan->patternAt('opt_use_partition', 0)?->matches(['PARTITION_SYM']) ?? false);
     }
 }

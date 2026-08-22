@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\MySqlPartitionSelectionRewriter;
+use ZtdQuery\Platform\MySql\MySqlSelectRelationParser;
 use ZtdQuery\Schema\TablePartitioning;
 
 #[CoversClass(MySqlPartitionSelectionRewriter::class)]
+#[UsesClass(MySqlSelectRelationParser::class)]
 final class MySqlPartitionSelectionRewriterTest extends TestCase
 {
     public function testRewritesNamedPartitionAsFilteredDerivedTable(): void
