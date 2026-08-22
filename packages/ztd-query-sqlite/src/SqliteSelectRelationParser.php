@@ -239,8 +239,11 @@ final class SqliteSelectRelationParser
         if ($token->kind === SqlTokenKind::Word) {
             return [$token->text, $index + 1, $token->offset, $token->offset, $token->endOffset()];
         }
-        if ($token->kind === SqlTokenKind::QuotedIdentifier && strlen($token->text) > 2) {
-            $quote = $token->text[0];
+        $quote = $token->text[0] ?? '';
+        if ($token->kind === SqlTokenKind::QuotedIdentifier
+            && strlen($token->text) > 2
+            && str_ends_with($token->text, $quote)
+        ) {
             $name = substr($token->text, 1, -1);
 
             return [

@@ -199,6 +199,7 @@ final class MySqlSelectRelationParserTest extends TestCase
         self::assertSame([], $parser->tableNames('SELECT * FROM VALUES (1)'));
         self::assertSame([], $parser->tableNames('SELECT * FROM +invalid'));
         self::assertSame([], $parser->tableNames('SELECT * FROM ``'));
+        self::assertSame([], $parser->tableNames('SELECT * FROM `unterminated'));
         self::assertSame([], $parser->tableNames('SELECT * FROM SELECT'));
         self::assertSame([], $parser->tableNames('SELECT * FROM WITH'));
     }

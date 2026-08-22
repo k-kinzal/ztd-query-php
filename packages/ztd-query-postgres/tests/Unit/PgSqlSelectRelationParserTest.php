@@ -200,6 +200,7 @@ final class PgSqlSelectRelationParserTest extends TestCase
         self::assertSame([], $parser->tableNames("SELECT * FROM 'literal'"));
         self::assertSame([], $parser->tableNames('SELECT * FROM VALUES (1)'));
         self::assertSame([], $parser->tableNames('SELECT * FROM ""'));
+        self::assertSame([], $parser->tableNames('SELECT * FROM "unterminated'));
         self::assertSame([], $parser->tableNames('SELECT * FROM SELECT'));
         self::assertSame([], $parser->tableNames('SELECT * FROM WITH'));
     }

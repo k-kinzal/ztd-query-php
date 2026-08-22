@@ -246,6 +246,7 @@ final class PgSqlSelectRelationParser
         if ($token->kind !== SqlTokenKind::QuotedIdentifier
             || strlen($token->text) <= 2
             || !str_starts_with($token->text, '"')
+            || !str_ends_with($token->text, '"')
         ) {
             return null;
         }

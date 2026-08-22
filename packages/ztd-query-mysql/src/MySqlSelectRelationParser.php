@@ -244,10 +244,13 @@ final class MySqlSelectRelationParser
         if ($token->kind === SqlTokenKind::Word) {
             return [$token->text, $index + 1, $token->offset, $token->offset, $token->endOffset()];
         }
-        if ($token->kind !== SqlTokenKind::QuotedIdentifier || strlen($token->text) <= 2) {
+        $quote = $token->text[0] ?? '';
+        if ($token->kind !== SqlTokenKind::QuotedIdentifier
+            || strlen($token->text) <= 2
+            || !str_ends_with($token->text, $quote)
+        ) {
             return null;
         }
-        $quote = $token->text[0];
         $name = substr($token->text, 1, -1);
 
         return [
