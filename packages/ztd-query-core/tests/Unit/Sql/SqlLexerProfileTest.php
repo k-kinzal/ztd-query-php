@@ -25,15 +25,14 @@ final class SqlLexerProfileTest extends TestCase
             namedParameterSuffixPatterns: [':' => '/^<[^ ]*>/', '$' => '/^\([^ ]*\)/'],
             namedParameterForbiddenPredecessors: [':' => [':'], '$' => []],
             backslashEscapedStringPrefixes: ['E'],
+            positionalParameterPatterns: ['/^\$[0-9]+/', '/^\?[0-9]*/'],
             dollarQuoteDelimiterPattern: '/^\$(?:[_A-Za-z][_A-Za-z0-9]*)?\$/',
             numericLiteralPattern: '/^(?:0[xX][0-9A-Fa-f](?:_?[0-9A-Fa-f])*|[0-9]+(?:_[0-9]+)*)/',
             identifierStartPattern: '/^[_A-Za-z]$/',
             identifierPartPattern: '/^[_A-Za-z0-9$]$/',
             bracketPair: ['[', ']'],
+            nestingPair: ['(', ')'],
             nestedBlockComments: true,
-            numberedDollarParameters: true,
-            questionMarkParameters: true,
-            numberedQuestionMarkParameters: true,
             backslashEscapedStrings: false,
         );
 
@@ -55,9 +54,9 @@ final class SqlLexerProfileTest extends TestCase
         self::assertNull($profile->quotedIdentifierValue('plain'));
         self::assertTrue($profile->supportsNestedBlockComments());
         self::assertSame('$tag$', $profile->dollarQuoteDelimiterAt('$tag$body$tag$', 0));
-        self::assertTrue($profile->supportsNumberedDollarParameters());
-        self::assertTrue($profile->supportsQuestionMarkParameters());
-        self::assertTrue($profile->supportsNumberedQuestionMarkParameters());
+        self::assertSame(3, $profile->positionalParameterLengthAt('$12 tail', 0));
+        self::assertSame(3, $profile->positionalParameterLengthAt('?34 tail', 0));
+        self::assertSame(0, $profile->positionalParameterLengthAt('value', 0));
         self::assertSame(':', $profile->namedParameterPrefixAt(':name', 0));
         self::assertSame(':', $profile->namedParameterPrefixAt('x:name', 1));
         self::assertSame('$', $profile->namedParameterPrefixAt('$name', 0));
@@ -82,6 +81,8 @@ final class SqlLexerProfileTest extends TestCase
         self::assertFalse($profile->isBracketOpening('('));
         self::assertTrue($profile->isBracketClosing(']'));
         self::assertFalse($profile->isBracketClosing(')'));
+        self::assertTrue($profile->isNestingOpening('('));
+        self::assertTrue($profile->isNestingClosing(')'));
     }
 
     public function testRejectsEmptyLexicalDelimiter(): void
@@ -134,6 +135,20 @@ final class SqlLexerProfileTest extends TestCase
         FakeSqlLexerProfiles::custom(bracketPair: ['[', '']);
     }
 
+    public function testRejectsEmptyOpeningNestingDelimiter(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        FakeSqlLexerProfiles::custom(nestingPair: ['', ')']);
+    }
+
+    public function testRejectsEmptyClosingNestingDelimiter(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        FakeSqlLexerProfiles::custom(nestingPair: ['(', '']);
+    }
+
     public function testRejectsEmptyParameterPrefix(): void
     {
         $this->expectException(InvalidArgumentException::class);
@@ -167,6 +182,13 @@ final class SqlLexerProfileTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
 
         FakeSqlLexerProfiles::custom(namedParameterSuffixPatterns: [':' => '/[/']);
+    }
+
+    public function testRejectsInvalidPositionalParameterPattern(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        FakeSqlLexerProfiles::custom(positionalParameterPatterns: ['/[/']);
     }
 
     public function testRestoresTheErrorHandlerAfterInvalidPattern(): void

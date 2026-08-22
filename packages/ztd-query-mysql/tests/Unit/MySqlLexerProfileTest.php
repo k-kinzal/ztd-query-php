@@ -27,10 +27,10 @@ final class MySqlLexerProfileTest extends TestCase
         self::assertNull($profile->namedParameterPrefixAt('value::type', 6));
         self::assertTrue($profile->isBracketOpening('['));
         self::assertTrue($profile->isBracketClosing(']'));
+        self::assertTrue($profile->isNestingOpening('('));
+        self::assertTrue($profile->isNestingClosing(')'));
         self::assertFalse($profile->supportsNestedBlockComments());
-        self::assertFalse($profile->supportsNumberedDollarParameters());
-        self::assertTrue($profile->supportsQuestionMarkParameters());
-        self::assertFalse($profile->supportsNumberedQuestionMarkParameters());
+        self::assertSame(1, $profile->positionalParameterLengthAt('?1', 0));
         self::assertSame(4, $profile->numberLengthAt('0xCA tail', 0));
         self::assertTrue($profile->isIdentifierStart('$'));
         self::assertTrue($profile->isIdentifierPart('$'));

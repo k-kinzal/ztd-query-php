@@ -38,8 +38,14 @@ final class SqlLexerProfile
     /** @var list<non-empty-string> */
     private readonly array $backslashEscapedStringPrefixes;
 
+    /** @var list<non-empty-string> */
+    private readonly array $positionalParameterPatterns;
+
     /** @var array{non-empty-string, non-empty-string}|null */
     private readonly ?array $bracketPair;
+
+    /** @var array{non-empty-string, non-empty-string} */
+    private readonly array $nestingPair;
 
     /**
      * @param list<string> $lineCommentPrefixes
@@ -51,7 +57,9 @@ final class SqlLexerProfile
      * @param array<string, string> $namedParameterSuffixPatterns
      * @param array<string, list<string>> $namedParameterForbiddenPredecessors
      * @param list<string> $backslashEscapedStringPrefixes
+     * @param list<string> $positionalParameterPatterns
      * @param array{string, string}|null $bracketPair
+     * @param array{string, string} $nestingPair
      */
     public function __construct(
         array $lineCommentPrefixes,
@@ -63,15 +71,14 @@ final class SqlLexerProfile
         array $namedParameterSuffixPatterns,
         array $namedParameterForbiddenPredecessors,
         array $backslashEscapedStringPrefixes,
+        array $positionalParameterPatterns,
         private readonly ?string $dollarQuoteDelimiterPattern,
         private readonly string $numericLiteralPattern,
         private readonly string $identifierStartPattern,
         private readonly string $identifierPartPattern,
         ?array $bracketPair,
+        array $nestingPair,
         private readonly bool $nestedBlockComments,
-        private readonly bool $numberedDollarParameters,
-        private readonly bool $questionMarkParameters,
-        private readonly bool $numberedQuestionMarkParameters,
         private readonly bool $backslashEscapedStrings,
     ) {
         $this->lineCommentPrefixes = self::nonEmptyStrings($lineCommentPrefixes);
@@ -87,6 +94,7 @@ final class SqlLexerProfile
             $namedParameterForbiddenPredecessors,
         );
         $this->backslashEscapedStringPrefixes = self::nonEmptyStrings($backslashEscapedStringPrefixes);
+        $this->positionalParameterPatterns = self::patterns($positionalParameterPatterns);
         self::assertPattern($this->dollarQuoteDelimiterPattern);
         self::assertPattern($this->numericLiteralPattern);
         self::assertPattern($this->identifierStartPattern);
@@ -96,6 +104,11 @@ final class SqlLexerProfile
         }
         /** @var array{non-empty-string, non-empty-string}|null $bracketPair */
         $this->bracketPair = $bracketPair;
+        if ($nestingPair[0] === '' || $nestingPair[1] === '') {
+            throw new InvalidArgumentException('Nesting delimiters must not be empty.');
+        }
+        /** @var array{non-empty-string, non-empty-string} $nestingPair */
+        $this->nestingPair = $nestingPair;
     }
 
     public function startsLineComment(string $sql, int $offset): bool
@@ -183,19 +196,16 @@ final class SqlLexerProfile
         return $this->matchAt($this->dollarQuoteDelimiterPattern, $sql, $offset);
     }
 
-    public function supportsNumberedDollarParameters(): bool
+    public function positionalParameterLengthAt(string $sql, int $offset): int
     {
-        return $this->numberedDollarParameters;
-    }
+        foreach ($this->positionalParameterPatterns as $pattern) {
+            $match = $this->matchAt($pattern, $sql, $offset);
+            if ($match !== null) {
+                return strlen($match);
+            }
+        }
 
-    public function supportsQuestionMarkParameters(): bool
-    {
-        return $this->questionMarkParameters;
-    }
-
-    public function supportsNumberedQuestionMarkParameters(): bool
-    {
-        return $this->numberedQuestionMarkParameters;
+        return 0;
     }
 
     public function namedParameterPrefixAt(string $sql, int $offset): ?string
@@ -286,6 +296,16 @@ final class SqlLexerProfile
         return $this->bracketPair !== null && $character === $this->bracketPair[1];
     }
 
+    public function isNestingOpening(string $character): bool
+    {
+        return $character === $this->nestingPair[0];
+    }
+
+    public function isNestingClosing(string $character): bool
+    {
+        return $character === $this->nestingPair[1];
+    }
+
     private function matchesCharacter(string $pattern, string $character): bool
     {
         return $character !== '' && preg_match($pattern, $character) === 1;
@@ -356,6 +376,20 @@ final class SqlLexerProfile
             if ($prefix === '' || $pattern === '') {
                 throw new InvalidArgumentException('Parameter suffix patterns and prefixes must not be empty.');
             }
+            self::assertPattern($pattern);
+        }
+
+        return $patterns;
+    }
+
+    /**
+     * @param list<string> $patterns
+     * @return list<non-empty-string>
+     */
+    private static function patterns(array $patterns): array
+    {
+        $patterns = self::nonEmptyStrings($patterns);
+        foreach ($patterns as $pattern) {
             self::assertPattern($pattern);
         }
 

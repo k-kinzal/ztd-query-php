@@ -361,19 +361,9 @@ final class SqlTokenStream
                 continue;
             }
 
-            $next = $sql[$offset + 1] ?? '';
-            if ($char === '$' && $profile->supportsNumberedDollarParameters() && ctype_digit($next)) {
-                $offset++;
-                $offset += strspn($sql, '0123456789', $offset);
-                $tokens[] = self::token($sql, SqlTokenKind::Parameter, $start, $offset, $depth, $bracketDepth);
-                continue;
-            }
-
-            if ($char === '?' && $profile->supportsQuestionMarkParameters()) {
-                $offset++;
-                if ($profile->supportsNumberedQuestionMarkParameters()) {
-                    $offset += strspn($sql, '0123456789', $offset);
-                }
+            $positionalParameterLength = $profile->positionalParameterLengthAt($sql, $offset);
+            if ($positionalParameterLength > 0) {
+                $offset += $positionalParameterLength;
                 $tokens[] = self::token($sql, SqlTokenKind::Parameter, $start, $offset, $depth, $bracketDepth);
                 continue;
             }
@@ -417,14 +407,14 @@ final class SqlTokenStream
                 continue;
             }
 
-            if ($char === ')') {
+            if ($profile->isNestingClosing($char)) {
                 $depth = max(0, $depth - 1);
             } elseif ($profile->isBracketClosing($char)) {
                 $bracketDepth = max(0, $bracketDepth - 1);
             }
             $offset++;
             $tokens[] = self::token($sql, SqlTokenKind::Symbol, $start, $offset, $depth, $bracketDepth);
-            if ($char === '(') {
+            if ($profile->isNestingOpening($char)) {
                 $depth++;
             } elseif ($profile->isBracketOpening($char)) {
                 $bracketDepth++;

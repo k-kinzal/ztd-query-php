@@ -456,8 +456,7 @@ final class SqlTokenStreamTest extends TestCase
     public function testQuestionMarkProfileCanRejectNumericSuffixes(): void
     {
         $profile = FakeSqlLexerProfiles::custom(
-            questionMarkParameters: true,
-            numberedQuestionMarkParameters: false,
+            positionalParameterPatterns: ['/^\?/'],
         );
 
         self::assertSame(

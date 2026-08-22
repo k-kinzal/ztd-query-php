@@ -18,7 +18,9 @@ final class FakeSqlLexerProfiles
      * @param array<string, string> $namedParameterSuffixPatterns
      * @param array<string, list<string>> $namedParameterForbiddenPredecessors
      * @param list<string> $backslashEscapedStringPrefixes
+     * @param list<string> $positionalParameterPatterns
      * @param array{string, string}|null $bracketPair
+     * @param array{string, string} $nestingPair
      */
     public static function custom(
         array $lineCommentPrefixes = ['--'],
@@ -30,15 +32,14 @@ final class FakeSqlLexerProfiles
         array $namedParameterSuffixPatterns = [],
         array $namedParameterForbiddenPredecessors = [],
         array $backslashEscapedStringPrefixes = [],
+        array $positionalParameterPatterns = [],
         ?string $dollarQuoteDelimiterPattern = null,
         string $numericLiteralPattern = '/^[0-9]+/',
         string $identifierStartPattern = '/^[_A-Za-z]$/',
         string $identifierPartPattern = '/^[_A-Za-z0-9]$/',
         ?array $bracketPair = null,
+        array $nestingPair = ['(', ')'],
         bool $nestedBlockComments = false,
-        bool $numberedDollarParameters = false,
-        bool $questionMarkParameters = false,
-        bool $numberedQuestionMarkParameters = false,
         bool $backslashEscapedStrings = false,
     ): SqlLexerProfile {
         return new SqlLexerProfile(
@@ -51,15 +52,14 @@ final class FakeSqlLexerProfiles
             namedParameterSuffixPatterns: $namedParameterSuffixPatterns,
             namedParameterForbiddenPredecessors: $namedParameterForbiddenPredecessors,
             backslashEscapedStringPrefixes: $backslashEscapedStringPrefixes,
+            positionalParameterPatterns: $positionalParameterPatterns,
             dollarQuoteDelimiterPattern: $dollarQuoteDelimiterPattern,
             numericLiteralPattern: $numericLiteralPattern,
             identifierStartPattern: $identifierStartPattern,
             identifierPartPattern: $identifierPartPattern,
             bracketPair: $bracketPair,
+            nestingPair: $nestingPair,
             nestedBlockComments: $nestedBlockComments,
-            numberedDollarParameters: $numberedDollarParameters,
-            questionMarkParameters: $questionMarkParameters,
-            numberedQuestionMarkParameters: $numberedQuestionMarkParameters,
             backslashEscapedStrings: $backslashEscapedStrings,
         );
     }
@@ -76,15 +76,14 @@ final class FakeSqlLexerProfiles
             namedParameterSuffixPatterns: [],
             namedParameterForbiddenPredecessors: [],
             backslashEscapedStringPrefixes: [],
+            positionalParameterPatterns: [],
             dollarQuoteDelimiterPattern: null,
             numericLiteralPattern: '/^(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?/',
             identifierStartPattern: '/^[_A-Za-z\x80-\xFF]$/',
             identifierPartPattern: '/^[_A-Za-z0-9\x80-\xFF]$/',
             bracketPair: ['[', ']'],
+            nestingPair: ['(', ')'],
             nestedBlockComments: true,
-            numberedDollarParameters: false,
-            questionMarkParameters: false,
-            numberedQuestionMarkParameters: false,
             backslashEscapedStrings: false,
         );
     }
@@ -101,15 +100,14 @@ final class FakeSqlLexerProfiles
             namedParameterSuffixPatterns: [':' => '/^\([^ \t\n\r\0\x0B)]*\)/'],
             namedParameterForbiddenPredecessors: [':' => [':']],
             backslashEscapedStringPrefixes: ['E', 'e'],
+            positionalParameterPatterns: ['/^\$[0-9]+/', '/^\?[0-9]*/'],
             dollarQuoteDelimiterPattern: '/^\$(?:[_A-Za-z][_A-Za-z0-9]*)?\$/',
             numericLiteralPattern: '/^(?:0[xX]_?[0-9A-Fa-f](?:_?[0-9A-Fa-f])*|(?:[0-9](?:_?[0-9])*)(?:\.(?:[0-9](?:_?[0-9])*)?)?(?:[eE][+-]?[0-9](?:_?[0-9])*)?)/',
             identifierStartPattern: '/^[_A-Za-z\x80-\xFF]$/',
             identifierPartPattern: '/^[_A-Za-z0-9$\x80-\xFF]$/',
             bracketPair: ['[', ']'],
+            nestingPair: ['(', ')'],
             nestedBlockComments: true,
-            numberedDollarParameters: true,
-            questionMarkParameters: true,
-            numberedQuestionMarkParameters: true,
             backslashEscapedStrings: true,
         );
     }

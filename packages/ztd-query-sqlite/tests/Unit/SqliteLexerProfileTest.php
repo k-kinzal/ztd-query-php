@@ -41,8 +41,10 @@ final class SqliteLexerProfileTest extends TestCase
         self::assertNull(SqliteLexerProfile::create()->namedParameterPrefixAt('value::type', 6));
         self::assertTrue(SqliteLexerProfile::create()->isBracketOpening('['));
         self::assertTrue(SqliteLexerProfile::create()->isBracketClosing(']'));
+        self::assertTrue(SqliteLexerProfile::create()->isNestingOpening('('));
+        self::assertTrue(SqliteLexerProfile::create()->isNestingClosing(')'));
         self::assertFalse(SqliteLexerProfile::create()->supportsNestedBlockComments());
-        self::assertFalse(SqliteLexerProfile::create()->supportsNumberedDollarParameters());
+        self::assertSame(0, SqliteLexerProfile::create()->positionalParameterLengthAt('$1', 0));
         self::assertFalse(SqliteLexerProfile::create()->stringUsesBackslashEscapes("'value'", 0));
     }
 }

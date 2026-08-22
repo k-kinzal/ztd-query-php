@@ -55,9 +55,11 @@ final class PgSqlLexerProfileTest extends TestCase
         self::assertSame(['/*', '*/'], $profile->blockCommentAt('/* comment */', 0));
         self::assertTrue($profile->isBracketOpening('['));
         self::assertTrue($profile->isBracketClosing(']'));
+        self::assertTrue($profile->isNestingOpening('('));
+        self::assertTrue($profile->isNestingClosing(')'));
         self::assertTrue($profile->supportsNestedBlockComments());
-        self::assertTrue($profile->supportsQuestionMarkParameters());
-        self::assertFalse($profile->supportsNumberedQuestionMarkParameters());
+        self::assertSame(2, $profile->positionalParameterLengthAt('$1', 0));
+        self::assertSame(1, $profile->positionalParameterLengthAt('?1', 0));
     }
 
     public function testRecognizesRadixNumbersAndDoesNotMisclassifyCastOperator(): void
