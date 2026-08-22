@@ -276,7 +276,11 @@ final class GenerationPlansTest extends TestCase
         $plan = GenerationPlans::fullTextSearchStatement();
 
         self::assertSame('select_stmt', $plan->startRule());
-        self::assertNotNull($plan->patternAt('opt_where_clause', 0));
-        self::assertNotNull($plan->patternAt('simple_expr', 0));
+        self::assertTrue($plan->patternAt('query_primary', 0)?->matches(['query_specification']) ?? false);
+        self::assertTrue($plan->patternAt('select_item_list', 0)?->matches(['*']) ?? false);
+        self::assertTrue($plan->patternAt('opt_from_clause', 0)?->matches(['from_tables']) ?? false);
+        self::assertTrue($plan->patternAt('from_tables', 0)?->matches(['table_reference_list']) ?? false);
+        self::assertTrue($plan->patternAt('opt_where_clause', 0)?->matches(['expr']) ?? false);
+        self::assertTrue($plan->patternAt('simple_expr', 0)?->matches(['MATCH', 'AGAINST']) ?? false);
     }
 }

@@ -206,7 +206,43 @@ final class GenerationPlansTest extends TestCase
         $plan = GenerationPlans::fullTextSearchStatement();
 
         self::assertSame('SelectStmt', $plan->startRule());
-        self::assertNotNull($plan->patternAt('where_clause', 0));
+        self::assertTrue($plan->patternAt('SelectStmt', 0)?->matches(['select_no_parens']) ?? false);
+        self::assertTrue($plan->patternAt('select_no_parens', 0)?->matches(['simple_select']) ?? false);
+        self::assertTrue(
+            $plan->patternAt('simple_select', 0)?->matches([
+                'SELECT',
+                'opt_target_list',
+                'from_clause',
+                'where_clause',
+            ]) ?? false,
+        );
+        self::assertTrue($plan->patternAt('opt_target_list', 0)?->matches(['target_list']) ?? false);
+        self::assertTrue($plan->patternAt('target_list', 0)?->matches(['target_el']) ?? false);
+        self::assertTrue($plan->patternAt('target_el', 0)?->matches(['*']) ?? false);
+        self::assertTrue($plan->patternAt('into_clause', 0)?->matches([]) ?? false);
+        self::assertTrue($plan->patternAt('from_clause', 0)?->matches(['from_list']) ?? false);
+        self::assertTrue($plan->patternAt('from_list', 0)?->matches(['table_ref']) ?? false);
+        self::assertTrue(
+            $plan->patternAt('table_ref', 0)?->matches(['relation_expr', 'opt_alias_clause']) ?? false,
+        );
+        self::assertTrue($plan->patternAt('relation_expr', 0)?->matches(['qualified_name']) ?? false);
+        self::assertTrue($plan->patternAt('qualified_name', 0)?->matches(['ColId']) ?? false);
+        self::assertTrue($plan->patternAt('opt_alias_clause', 0)?->matches([]) ?? false);
+        self::assertTrue($plan->patternAt('where_clause', 0)?->matches(['a_expr']) ?? false);
+        self::assertTrue($plan->patternAt('group_clause', 0)?->matches([]) ?? false);
+        self::assertTrue($plan->patternAt('having_clause', 0)?->matches([]) ?? false);
+        self::assertTrue($plan->patternAt('window_clause', 0)?->matches([]) ?? false);
+        self::assertTrue($plan->patternAt('a_expr', 0)?->matches(['a_expr', 'qual_Op', 'a_expr']) ?? false);
+        self::assertTrue($plan->patternAt('a_expr', 1)?->matches(['c_expr']) ?? false);
+        self::assertTrue($plan->patternAt('a_expr', 2)?->matches(['c_expr']) ?? false);
+        self::assertTrue($plan->patternAt('qual_Op', 0)?->matches(['Op']) ?? false);
+        self::assertTrue($plan->patternAt('c_expr', 0)?->matches(['columnref']) ?? false);
+        self::assertTrue($plan->patternAt('c_expr', 1)?->matches(['columnref']) ?? false);
+        self::assertTrue($plan->patternAt('columnref', 0)?->matches(['ColId']) ?? false);
+        self::assertTrue($plan->patternAt('columnref', 1)?->matches(['ColId']) ?? false);
+        self::assertTrue($plan->patternAt('ColId', 0)?->matches(['IDENT']) ?? false);
+        self::assertTrue($plan->patternAt('ColId', 1)?->matches(['IDENT']) ?? false);
+        self::assertTrue($plan->patternAt('ColId', 2)?->matches(['IDENT']) ?? false);
         self::assertSame('@@', $plan->lexemeAt('Op', 0));
     }
 }

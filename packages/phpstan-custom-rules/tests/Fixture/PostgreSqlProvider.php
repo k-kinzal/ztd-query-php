@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Fixture;
+namespace SqlFaker;
 
 final class PostgreSqlProvider
 {

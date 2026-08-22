@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace SqlFaker;
+namespace Other;
 
 final class MySqlProvider
 {
-    public function statement(): string
+    public function documentationExample(): string
     {
         return 'SELECT id FROM users';
     }

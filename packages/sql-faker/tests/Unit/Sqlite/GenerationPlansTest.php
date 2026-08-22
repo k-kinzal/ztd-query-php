@@ -52,8 +52,23 @@ final class GenerationPlansTest extends TestCase
         $plan = GenerationPlans::fullTextSearchStatement();
 
         self::assertSame('select', $plan->startRule());
-        self::assertNotNull($plan->patternAt('where_opt', 0));
-        self::assertNotNull($plan->patternAt('likeop', 0));
+        self::assertTrue($plan->patternAt('select', 0)?->matches(['selectnowith']) ?? false);
+        self::assertTrue(
+            $plan->patternAt('oneselect', 0)?->matches(['SELECT', 'selcollist', 'from', 'where_opt']) ?? false,
+        );
+        self::assertTrue($plan->patternAt('selcollist', 0)?->matches(['sclp', 'scanpt', 'STAR']) ?? false);
+        self::assertTrue($plan->patternAt('sclp', 0)?->matches([]) ?? false);
+        self::assertTrue($plan->patternAt('from', 0)?->matches(['seltablist']) ?? false);
+        self::assertTrue(
+            $plan->patternAt('seltablist', 0)?->matches(['stl_prefix', 'nm', 'dbnm', 'as', 'on_using']) ?? false,
+        );
+        self::assertTrue($plan->patternAt('stl_prefix', 0)?->matches([]) ?? false);
+        self::assertTrue($plan->patternAt('on_using', 0)?->matches([]) ?? false);
+        self::assertTrue($plan->patternAt('where_opt', 0)?->matches(['expr']) ?? false);
+        self::assertTrue($plan->patternAt('expr', 0)?->matches(['expr', 'likeop', 'expr']) ?? false);
+        self::assertTrue($plan->patternAt('expr', 1)?->matches(['term']) ?? false);
+        self::assertTrue($plan->patternAt('expr', 2)?->matches(['term']) ?? false);
+        self::assertTrue($plan->patternAt('likeop', 0)?->matches(['MATCH']) ?? false);
     }
 
     public function testForeignKeyPlanRestrictsTheTableConstraintGrammar(): void

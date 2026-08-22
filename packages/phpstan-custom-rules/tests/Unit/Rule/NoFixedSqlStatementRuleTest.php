@@ -31,6 +31,7 @@ final class NoFixedSqlStatementRuleTest extends RuleTestCase
             __DIR__ . '/../../Fixture/PostgreSqlProvider.php',
             __DIR__ . '/../../Fixture/SqliteProvider.php',
             __DIR__ . '/../../Fixture/MySql/SqlGenerator.php',
+            __DIR__ . '/../../Fixture/Other/MySqlProvider.php',
         ], [
             [$message, 11],
             [$message, 11],

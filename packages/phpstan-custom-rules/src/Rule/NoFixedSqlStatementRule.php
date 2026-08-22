@@ -19,12 +19,15 @@ use PHPStan\Rules\RuleErrorBuilder;
 final class NoFixedSqlStatementRule implements Rule
 {
     /** @var list<string> */
-    private const CLASSES = [
+    private const PROVIDERS = [
         'MySqlProvider',
         'PostgreSqlProvider',
         'SqliteProvider',
-        'SqlGenerator',
     ];
+
+    private const GENERATOR_PATTERN = '/^SqlFaker\\\\(?:MySql|PostgreSql|Sqlite)\\\\SqlGenerator$/';
+
+    private const STATEMENT_PATTERN = '/\b(?:WITH|SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|REPLACE|TRUNCATE|LOAD|MERGE|COPY|CALL|DO|EXPLAIN|VACUUM|PRAGMA|ATTACH|DETACH|GRANT|REVOKE)\b(?:\s+|(?=[(;]))/i';
 
     public function getNodeType(): string
     {
@@ -41,9 +44,15 @@ final class NoFixedSqlStatementRule implements Rule
             return [];
         }
 
-        $separator = strrpos($class->getName(), '\\');
-        $className = $separator === false ? $class->getName() : substr($class->getName(), $separator + 1);
-        if (!in_array($className, self::CLASSES, true)) {
+        $className = $class->getName();
+        if (!str_starts_with($className, 'SqlFaker\\')) {
+            return [];
+        }
+        $separator = strrpos($className, '\\');
+        $shortName = $separator === false ? $className : substr($className, $separator + 1);
+        if (!in_array($shortName, self::PROVIDERS, true)
+            && ($shortName !== 'SqlGenerator' || preg_match(self::GENERATOR_PATTERN, $className) !== 1)
+        ) {
             return [];
         }
 
@@ -57,7 +66,7 @@ final class NoFixedSqlStatementRule implements Rule
                 $node->parts,
             ))
             : $node->value;
-        if (preg_match('/\b(?:SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|REPLACE|TRUNCATE|LOAD|MERGE|DO)\s/i', $value) !== 1) {
+        if (preg_match(self::STATEMENT_PATTERN, $value) !== 1) {
             return [];
         }
 
