@@ -46,4 +46,18 @@ final class MysqliResultColumnExtractorTest extends TestCase
         self::assertSame('value', $columns[0]->name);
         self::assertSame(ColumnTypeFamily::INTEGER, $columns[0]->type->family);
     }
+
+    public function testExtractReturnsEveryResultColumn(): void
+    {
+        $result = StubMysqliResult::create([], [
+            new StubMysqliField('id', MYSQLI_TYPE_LONG, 63),
+            new StubMysqliField('name', MYSQLI_TYPE_VAR_STRING, 255),
+        ]);
+        $resolver = self::createStub(ResultColumnTypeResolver::class);
+        $resolver->method('resolve')->willReturn(new ColumnType(ColumnTypeFamily::STRING, 'TEXT'));
+
+        $columns = MysqliResultColumnExtractor::extract($result, $resolver);
+
+        self::assertSame(['id', 'name'], array_column($columns, 'name'));
+    }
 }

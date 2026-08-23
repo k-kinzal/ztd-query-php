@@ -147,6 +147,16 @@ final class SqliteCteShadowComposerTest extends TestCase
             $declared,
             $composer->compose($declared, ['Users' => 'Users AS (SELECT 2 AS id)']),
         );
+        self::assertStringContainsString(
+            'orders AS (SELECT 2 AS id)',
+            $composer->compose(
+                'WITH users AS (SELECT 1 AS id) SELECT * FROM users JOIN orders ON TRUE',
+                [
+                    'orders' => 'orders AS (SELECT 2 AS id)',
+                    'Users' => 'Users AS (SELECT 3 AS id)',
+                ],
+            ),
+        );
     }
 
     public function testHandlesAWithTokenWithoutFollowingHeaderTokens(): void

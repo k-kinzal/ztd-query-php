@@ -10,6 +10,9 @@ use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Postgres\PgSqlPartitionParser;
 use ZtdQuery\Schema\TablePartitionKey;
 use ZtdQuery\Schema\TablePartitionStrategy;
+use ZtdQuery\Sql\SqlToken;
+use ZtdQuery\Sql\SqlTokenKind;
+use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(PgSqlPartitionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
@@ -260,5 +263,14 @@ final class PgSqlPartitionParserTest extends TestCase
             'Logs',
             $parser->parentTable('CREATE TABLE child PARTITION OF public."Logs" DEFAULT'),
         );
+    }
+
+    public function testQualifiedIdentifierRejectsMismatchedTokenStream(): void
+    {
+        $method = new \ReflectionMethod(PgSqlPartitionParser::class, 'qualifiedIdentifierAt');
+        $stream = SqlTokenStream::tokenize('users', \ZtdQuery\Platform\Postgres\PgSqlLexerProfile::create());
+        $tokens = [new SqlToken(SqlTokenKind::String, 'users', 0, 0, 0)];
+
+        self::assertNull($method->invoke(new PgSqlPartitionParser(), $stream, $tokens, 0));
     }
 }

@@ -13,9 +13,11 @@ use RuntimeException;
 use ZtdQuery\Adapter\Pdo\PdoConnection;
 use ZtdQuery\Adapter\Pdo\PdoStatement;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
+use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Platform\SessionFactory;
+use ZtdQuery\Platform\CopySupport;
 use ZtdQuery\Platform\ResultColumnTypeResolver;
 use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Rewrite\QueryKind;
@@ -30,6 +32,7 @@ use ZtdQuery\Shadow\ShadowStore;
 #[CoversClass(ZtdPdo::class)]
 #[UsesClass(PdoConnection::class)]
 #[UsesClass(PdoStatement::class)]
+#[UsesClass(ZtdPdoException::class)]
 final class ZtdPdoTest extends TestCase
 {
     /**
@@ -308,6 +311,32 @@ final class ZtdPdoTest extends TestCase
         self::assertSame(1, $ztdPdo->exec('first; second'));
         self::assertSame([['id' => 1], ['id' => 2]], $store->get('first_items'));
         self::assertSame([['id' => 3]], $store->get('second_items'));
+    }
+
+    public function testExecRejectsRawPostgreSqlCopy(): void
+    {
+        $rewriter = static::createStub(SqlRewriter::class);
+        $copySupport = static::createStub(CopySupport::class);
+        $copySupport->method('isCopyStatement')->willReturn(true);
+        $factory = static::createStub(SessionFactory::class);
+        $factory->method('create')
+            ->willReturnCallback(static fn (ConnectionInterface $connection, ZtdConfig $config): Session => new Session(
+                $rewriter,
+                new ShadowStore(),
+                new ResultSelectRunner(),
+                $config,
+                $connection,
+                copySupport: $copySupport,
+            ));
+        $ztdPdo = ZtdPdo::fromPdo(new PDO('sqlite::memory:'), null, $factory);
+
+        $this->expectException(ZtdPdoException::class);
+        $this->expectExceptionMessage(
+            'ZTD Write Protection: Raw PostgreSQL COPY cannot preserve shadow isolation; '
+            . 'use the pgsqlCopyToArray(), pgsqlCopyFromArray(), pgsqlCopyToFile(), or pgsqlCopyFromFile() methods.',
+        );
+
+        $ztdPdo->exec('COPY users TO STDOUT');
     }
 
     public function testExecStopsBatchWhenFirstStatementFails(): void

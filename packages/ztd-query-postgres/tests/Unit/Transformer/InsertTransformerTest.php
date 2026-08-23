@@ -499,6 +499,7 @@ final class InsertTransformerTest extends TestCase
         ]];
 
         $transformer->transform("INSERT INTO users (id, name) VALUES (42, 'explicit')", $tables);
+        $transformer->commitRewriteState();
         $generated = $transformer->transform("INSERT INTO users (name) VALUES ('generated')", $tables);
 
         self::assertStringContainsString('1 AS "id"', $generated);

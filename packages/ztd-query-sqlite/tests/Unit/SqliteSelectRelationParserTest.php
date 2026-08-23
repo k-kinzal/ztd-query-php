@@ -10,6 +10,8 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Sqlite\SqliteLexerProfile;
 use ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser;
+use ZtdQuery\Sql\SqlToken;
+use ZtdQuery\Sql\SqlTokenKind;
 
 #[CoversClass(SqliteSelectRelationParser::class)]
 #[UsesClass(SqliteLexerProfile::class)]
@@ -218,5 +220,13 @@ final class SqliteSelectRelationParserTest extends TestCase
         self::assertSame([], $parser->tableNames('SELECT * FROM [unterminated'));
         self::assertSame([], $parser->tableNames('SELECT * FROM + leaked ]'));
         self::assertSame([], $parser->tableNames("SELECT * FROM 'literal' leaked ]"));
+    }
+
+    public function testIdentifierComponentRejectsMismatchedTokenKind(): void
+    {
+        $method = new \ReflectionMethod(SqliteSelectRelationParser::class, 'identifierComponentAt');
+        $token = new SqlToken(SqlTokenKind::String, '"users"', 0, 0, 0);
+
+        self::assertNull($method->invoke(new SqliteSelectRelationParser(), [$token], 0));
     }
 }

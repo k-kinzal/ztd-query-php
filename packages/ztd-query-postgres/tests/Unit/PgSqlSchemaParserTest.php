@@ -13,6 +13,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use ZtdQuery\Platform\Postgres\PgSqlPartitionParser;
 use ZtdQuery\Schema\TablePartitionStrategy;
+use ZtdQuery\Sql\SqlToken;
+use ZtdQuery\Sql\SqlTokenKind;
+use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(PgSqlSchemaParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlColumnTypeMapper::class)]
@@ -21,6 +24,15 @@ use ZtdQuery\Schema\TablePartitionStrategy;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
 final class PgSqlSchemaParserTest extends SchemaParserContractTest
 {
+    public function testQualifiedIdentifierRejectsMismatchedTokenStream(): void
+    {
+        $method = new \ReflectionMethod(PgSqlSchemaParser::class, 'qualifiedIdentifierAt');
+        $stream = SqlTokenStream::tokenize('users', \ZtdQuery\Platform\Postgres\PgSqlLexerProfile::create());
+        $tokens = [new SqlToken(SqlTokenKind::String, 'users', 0, 0, 0)];
+
+        self::assertNull($method->invoke(new PgSqlSchemaParser(), $stream, $tokens, 0));
+    }
+
     public function testParsesSchemaQualifiedQuotedDomainTypeWithoutChangingItsCase(): void
     {
         $definition = (new PgSqlSchemaParser())->parse(

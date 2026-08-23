@@ -47,6 +47,7 @@ final class SqliteInMemoryAttachStatementTest extends TestCase
         yield 'database missing alias' => ["ATTACH DATABASE ':memory:' AS"];
         yield 'missing as' => ["ATTACH ':memory:' db2"];
         yield 'extra token' => ["ATTACH ':memory:' AS db2 extra"];
+        yield 'trailing closing parenthesis' => ["ATTACH ':memory:' AS db2 )"];
         yield 'string alias' => ["ATTACH ':memory:' AS 'db2'"];
         yield 'empty bracket alias' => ["ATTACH ':memory:' AS []"];
         yield 'unterminated bracket alias' => ["ATTACH ':memory:' AS [db2"];

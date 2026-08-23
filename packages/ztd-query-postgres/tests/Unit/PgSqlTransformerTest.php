@@ -19,6 +19,7 @@ use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
+use ZtdQuery\Schema\IdentityGenerationStrategy;
 
 #[CoversClass(PgSqlTransformer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser::class)]
@@ -124,6 +125,32 @@ final class PgSqlTransformerTest extends TestCase
 
         self::assertStringContainsString('WHERE NOT (EXISTS', $result);
         $transformer->commitRewriteState();
+    }
+
+    public function testCommitRewriteStateCommitsGeneratedIdentityValues(): void
+    {
+        $parser = new PgSqlParser();
+        $selectTransformer = new SelectTransformer();
+        $transformer = new PgSqlTransformer(
+            $parser,
+            $selectTransformer,
+            new InsertTransformer($parser, $selectTransformer),
+            new UpdateTransformer($parser, $selectTransformer),
+            new DeleteTransformer($parser, $selectTransformer),
+        );
+        $tables = ['users' => [
+            'rows' => [],
+            'columns' => ['id', 'name'],
+            'columnTypes' => [],
+            'identityStrategies' => ['id' => IdentityGenerationStrategy::Sequence],
+        ]];
+
+        $first = $transformer->transform("INSERT INTO users (name) VALUES ('first')", $tables);
+        $transformer->commitRewriteState();
+        $second = $transformer->transform("INSERT INTO users (name) VALUES ('second')", $tables);
+
+        self::assertStringContainsString('1 AS "id"', $first);
+        self::assertStringContainsString('2 AS "id"', $second);
     }
 
     public function testTransformUnsupportedStatementThrows(): void

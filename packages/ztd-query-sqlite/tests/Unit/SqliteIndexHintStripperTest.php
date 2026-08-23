@@ -9,6 +9,8 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Sqlite\SqliteIndexHintStripper;
+use ZtdQuery\Sql\SqlToken;
+use ZtdQuery\Sql\SqlTokenKind;
 
 #[CoversClass(SqliteIndexHintStripper::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser::class)]
@@ -111,5 +113,16 @@ final class SqliteIndexHintStripperTest extends TestCase
                 ['products'],
             ),
         );
+    }
+
+    public function testIdentifierEndAcceptsBracketSymbolTokens(): void
+    {
+        $method = new \ReflectionMethod(SqliteIndexHintStripper::class, 'identifierEndIndex');
+        $tokens = [
+            new SqlToken(SqlTokenKind::Symbol, '[', 0, 0, 0),
+            new SqlToken(SqlTokenKind::Symbol, ']', 1, 0, 0),
+        ];
+
+        self::assertSame(2, $method->invoke(null, $tokens, 0));
     }
 }

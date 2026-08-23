@@ -10,6 +10,8 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\Postgres\PgSqlUpsertExpressionParser;
+use ZtdQuery\Sql\SqlToken;
+use ZtdQuery\Sql\SqlTokenKind;
 
 #[CoversClass(PgSqlUpsertExpressionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
@@ -98,6 +100,14 @@ final class PgSqlUpsertExpressionParserTest extends TestCase
         $this->expectException(UnsupportedSqlException::class);
 
         (new PgSqlUpsertExpressionParser())->parse('EXCLUDED.`quantity`', 'items');
+    }
+
+    public function testIdentifierRejectsNonPostgresQuotedToken(): void
+    {
+        $method = new \ReflectionMethod(PgSqlUpsertExpressionParser::class, 'isIdentifier');
+        $token = new SqlToken(SqlTokenKind::QuotedIdentifier, '`quantity`', 0, 0, 0);
+
+        self::assertFalse($method->invoke(new PgSqlUpsertExpressionParser(), $token));
     }
 
     #[DataProvider('providerInvalidPostgresExpression')]
