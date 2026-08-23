@@ -53,7 +53,7 @@ final class MySqlSyntaxTarget
         $seed = $this->inputToSeed($input);
         $this->faker->seed($seed);
 
-        $sql = $this->provider->sql(maxDepth: $this->maxDepth);
+        $sql = $this->provider->sqlWithoutEmptyRows(maxDepth: $this->maxDepth);
 
         $this->validateSyntax($sql, $seed);
     }
@@ -123,8 +123,8 @@ final class MySqlSyntaxTarget
                 3709 => true,
                 // SQLSTATE[HY000]: General error: 1525 Incorrect nth factor value
                 1525 => true,
-                // SQLSTATE[42000]: Syntax error or access violation: 3942 VALUES clause must have at least one column
-                3942 => true,
+                // SQLSTATE[42000]: Error 3942 identifies an empty table value constructor
+                3942 => false,
                 // SQLSTATE[42S02]: Base table or view not found: 1051
                 1051 => true,
                 // SQLSTATE[42000]: Syntax error or access violation: 3980 Invalid json attribute

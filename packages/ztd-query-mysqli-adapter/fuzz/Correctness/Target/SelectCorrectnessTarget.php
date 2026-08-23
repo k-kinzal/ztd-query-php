@@ -78,10 +78,11 @@ final class SelectCorrectnessTarget
                 /** @var array<int, array<string, mixed>> $ztdResult */
                 $ztdResult = $result->fetch_all(MYSQLI_ASSOC);
             }
-        } catch (UnsupportedSqlException | UnknownSchemaException) {
-            return;
-        } catch (DatabaseException) {
-            return;
+        } catch (UnsupportedSqlException | UnknownSchemaException | DatabaseException $e) {
+            if ($rawError !== null) {
+                return;
+            }
+            throw new Error("ZTD SELECT failed after native success\nSeed: $seed\nSQL: $sql", 0, $e);
         } catch (mysqli_sql_exception $e) {
             $ztdError = $e;
         }
@@ -90,8 +91,11 @@ final class SelectCorrectnessTarget
             return;
         }
 
-        if ($rawError !== null || $ztdError !== null) {
+        if ($rawError !== null) {
             return;
+        }
+        if ($ztdError !== null) {
+            throw new Error("ZTD SELECT failed after native success\nSeed: $seed\nSQL: $sql", 0, $ztdError);
         }
 
         if ($rawResult !== null && $ztdResult !== null) {

@@ -40,6 +40,8 @@ final class GenericExecuteResult implements ExecuteResult
      */
     private ?int $rowCountOverride;
 
+    private bool $resultSet;
+
     /**
      * @param array<int, array<string, mixed>>|null $bufferedRows
      */
@@ -49,7 +51,8 @@ final class GenericExecuteResult implements ExecuteResult
         QueryKind $kind,
         ?StatementInterface $rewrittenStatement = null,
         ?array $bufferedRows = null,
-        ?int $rowCountOverride = null
+        ?int $rowCountOverride = null,
+        bool $resultSet = false,
     ) {
         $this->passthrough = $passthrough;
         $this->success = $success;
@@ -57,6 +60,7 @@ final class GenericExecuteResult implements ExecuteResult
         $this->rewrittenStatement = $rewrittenStatement;
         $this->bufferedRows = $bufferedRows;
         $this->rowCountOverride = $rowCountOverride;
+        $this->resultSet = $resultSet;
     }
 
     /**
@@ -101,15 +105,20 @@ final class GenericExecuteResult implements ExecuteResult
      *
      * @param array<int, array<string, mixed>> $rows
      */
-    public static function fromBufferedRows(array $rows, QueryKind $kind = QueryKind::WRITE_SIMULATED): self
-    {
+    public static function fromBufferedRows(
+        array $rows,
+        QueryKind $kind = QueryKind::WRITE_SIMULATED,
+        ?int $affectedRowCount = null,
+        bool $hasResultSet = false,
+    ): self {
         return new self(
             passthrough: false,
             success: true,
             kind: $kind,
             rewrittenStatement: null,
             bufferedRows: $rows,
-            rowCountOverride: count($rows)
+            rowCountOverride: $affectedRowCount ?? count($rows),
+            resultSet: $hasResultSet,
         );
     }
 
@@ -226,7 +235,7 @@ final class GenericExecuteResult implements ExecuteResult
      */
     public function hasResultSet(): bool
     {
-        return $this->kind === QueryKind::READ;
+        return $this->kind === QueryKind::READ || $this->resultSet;
     }
 
     /**

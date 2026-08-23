@@ -8,7 +8,9 @@ use PDO;
 use PDOException;
 use PDOStatement as NativePdoStatement;
 use ZtdQuery\Connection\Exception\DatabaseException;
+use ZtdQuery\Connection\ResultColumn;
 use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Platform\ResultColumnTypeResolver;
 
 /**
  * PDO statement implementing StatementInterface for ZTD layer.
@@ -53,6 +55,27 @@ final class PdoStatement implements StatementInterface
         $rows = $this->statement->fetchAll(PDO::FETCH_ASSOC);
 
         return $rows;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function resultColumns(ResultColumnTypeResolver $typeResolver): array
+    {
+        $columns = [];
+        for ($index = 0; $index < $this->statement->columnCount(); $index++) {
+            $metadata = $this->statement->getColumnMeta($index);
+            if (!is_array($metadata)) {
+                continue;
+            }
+
+            $columns[] = new ResultColumn(
+                $metadata['name'],
+                $typeResolver->resolve($metadata),
+            );
+        }
+
+        return $columns;
     }
 
     /**

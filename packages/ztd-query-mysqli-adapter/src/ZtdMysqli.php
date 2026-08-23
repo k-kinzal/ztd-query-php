@@ -14,6 +14,7 @@ use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\Platform\MySql\MySqlSessionFactory;
 use ZtdQuery\Session;
 use ZtdQuery\Platform\SessionFactory;
+use ZtdQuery\Sql\TransactionStatement;
 
 /**
  * mysqli proxy that enforces ZTD behavior for reads and writes.
@@ -222,6 +223,16 @@ class ZtdMysqli extends mysqli
             return $this->innerMysqli->query($query, $resultMode);
         }
 
+        $transactionStatement = $this->session->transactionStatement($query);
+        if ($transactionStatement !== null) {
+            $result = $this->innerMysqli->query($query, $resultMode);
+            if ($result !== false) {
+                $this->session->applyTransactionStatement($transactionStatement);
+            }
+
+            return $result;
+        }
+
         $stmt = $this->prepare($query);
         if ($stmt === false) {
             return false;
@@ -258,6 +269,16 @@ class ZtdMysqli extends mysqli
             return $this->innerMysqli->real_query($query);
         }
 
+        $transactionStatement = $this->session->transactionStatement($query);
+        if ($transactionStatement !== null) {
+            $result = $this->innerMysqli->real_query($query);
+            if ($result) {
+                $this->session->applyTransactionStatement($transactionStatement);
+            }
+
+            return $result;
+        }
+
         $stmt = $this->prepare($query);
         if ($stmt === false) {
             return false;
@@ -279,7 +300,12 @@ class ZtdMysqli extends mysqli
      */
     public function begin_transaction(int $flags = 0, ?string $name = null): bool
     {
-        return $this->innerMysqli->begin_transaction($flags, $name);
+        $result = $this->innerMysqli->begin_transaction($flags, $name);
+        if ($result) {
+            $this->session->beginTransaction();
+        }
+
+        return $result;
     }
 
     /**
@@ -287,7 +313,12 @@ class ZtdMysqli extends mysqli
      */
     public function commit(int $flags = 0, ?string $name = null): bool
     {
-        return $this->innerMysqli->commit($flags, $name);
+        $result = $this->innerMysqli->commit($flags, $name);
+        if ($result) {
+            $this->session->commitTransaction();
+        }
+
+        return $result;
     }
 
     /**
@@ -295,7 +326,12 @@ class ZtdMysqli extends mysqli
      */
     public function rollback(int $flags = 0, ?string $name = null): bool
     {
-        return $this->innerMysqli->rollback($flags, $name);
+        $result = $this->innerMysqli->rollback($flags, $name);
+        if ($result) {
+            $this->session->rollBackTransaction();
+        }
+
+        return $result;
     }
 
     /**
@@ -303,7 +339,16 @@ class ZtdMysqli extends mysqli
      */
     public function autocommit(bool $enable): bool
     {
-        return $this->innerMysqli->autocommit($enable);
+        $result = $this->innerMysqli->autocommit($enable);
+        if ($result) {
+            if ($enable) {
+                $this->session->commitTransaction();
+            } else {
+                $this->session->beginTransaction();
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -530,7 +575,12 @@ class ZtdMysqli extends mysqli
      */
     public function release_savepoint(string $name): bool
     {
-        return $this->innerMysqli->release_savepoint($name);
+        $result = $this->innerMysqli->release_savepoint($name);
+        if ($result) {
+            $this->session->applyTransactionStatement(TransactionStatement::release($name));
+        }
+
+        return $result;
     }
 
     /**
@@ -538,7 +588,12 @@ class ZtdMysqli extends mysqli
      */
     public function savepoint(string $name): bool
     {
-        return $this->innerMysqli->savepoint($name);
+        $result = $this->innerMysqli->savepoint($name);
+        if ($result) {
+            $this->session->applyTransactionStatement(TransactionStatement::savepoint($name));
+        }
+
+        return $result;
     }
 
     /**

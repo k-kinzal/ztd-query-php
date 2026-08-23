@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Transformer;
 
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
+use ZtdQuery\Platform\MySql\DmlWhereClauseExtractor;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\Transformer\DeleteTransformer;
@@ -15,12 +16,39 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(DeleteTransformer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlSelectRelationParser::class)]
 #[UsesClass(MySqlParser::class)]
 #[UsesClass(SelectTransformer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlFullTextSearchRewriter::class)]
 #[UsesClass(MySqlCastRenderer::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]
+#[UsesClass(DmlWhereClauseExtractor::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlTypeSemantics::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlGeneratedColumnProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 final class DeleteTransformerTest extends TestCase
 {
+    public function testTransformPreservesCaseWhereExpression(): void
+    {
+        $transformer = new DeleteTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = [
+            't' => [
+                'rows' => [['id' => 1, 'score' => 85], ['id' => 2, 'score' => 60]],
+                'columns' => ['id', 'score'],
+                'columnTypes' => [],
+            ],
+        ];
+
+        $result = $transformer->transform(
+            'DELETE FROM t WHERE CASE WHEN score > 80 THEN 1 ELSE 0 END = 1',
+            $tables,
+        );
+
+        self::assertStringContainsString('WHERE CASE WHEN score > 80 THEN 1 ELSE 0 END = 1', $result);
+    }
+
     public function testBuildDeleteWithJoinAlias(): void
     {
         $transformer = new DeleteTransformer(new MySqlParser(), new SelectTransformer());
@@ -831,5 +859,35 @@ final class DeleteTransformerTest extends TestCase
         $result = $transformer->buildProjection($statement, $sql, []);
         self::assertSame('t1', $result['table']);
         self::assertSame(['t1' => ['alias' => 'a']], $result['tables']);
+    }
+
+    public function testTransformMultiDeleteProjectsEveryTargetIdentity(): void
+    {
+        $transformer = new DeleteTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = [
+            'users' => [
+                'rows' => [['id' => 2, 'name' => 'Bob']],
+                'columns' => ['id', 'name'],
+                'columnTypes' => [],
+                'primaryKeys' => ['id'],
+            ],
+            'orders' => [
+                'rows' => [['order_id' => 9, 'user_id' => 2]],
+                'columns' => ['order_id', 'user_id'],
+                'columnTypes' => [],
+                'primaryKeys' => ['order_id'],
+            ],
+        ];
+
+        $result = $transformer->transform(
+            'DELETE u, o FROM users u JOIN orders o ON u.id = o.user_id WHERE u.id = 2',
+            $tables,
+        );
+
+        self::assertStringContainsString(
+            'SELECT `u`.`id` AS `__ztd_multi_0_value_0`, `o`.`order_id` AS `__ztd_multi_1_value_0`',
+            $result,
+        );
+        self::assertStringNotContainsString('`o`.`user_id` AS `__ztd_multi_1_value_1`', $result);
     }
 }

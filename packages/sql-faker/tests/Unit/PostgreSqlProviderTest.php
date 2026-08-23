@@ -14,7 +14,10 @@ use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\Terminal;
 use SqlFaker\Grammar\TerminationAnalyzer;
+use SqlFaker\Grammar\GenerationPlan;
+use SqlFaker\Grammar\ProductionPattern;
 use SqlFaker\PostgreSql\Grammar\PgGrammar;
+use SqlFaker\PostgreSql\GenerationPlans;
 use SqlFaker\PostgreSql\LexicalGrammar;
 use SqlFaker\PostgreSql\SqlGenerator;
 use SqlFaker\PostgreSql\StatementType;
@@ -41,11 +44,168 @@ use SqlFaker\Grammar\TerminalInventory;
 #[CoversClass(StatementType::class)]
 #[CoversClass(LexicalGrammar::class)]
 #[UsesClass(LexicalCatalog::class)]
+#[UsesClass(GenerationPlan::class)]
+#[UsesClass(ProductionPattern::class)]
 #[UsesClass(SqlVersion::class)]
 #[UsesClass(TerminalInventory::class)]
+#[UsesClass(GenerationPlans::class)]
 #[Medium]
 final class PostgreSqlProviderTest extends TestCase
 {
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testPartitionOfStatementGeneratesRangeChildDdl(int $seed): void
+    {
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new PostgreSqlProvider($faker);
+        $sql = $provider->partitionOfStatement();
+        $faker->seed($seed);
+
+        $tokens = (new LexicalGrammar($faker, 'pg-17.2', true))->tokenize($sql);
+
+        self::assertSame($sql, $provider->partitionOfStatement(40));
+        self::assertContains('PARTITION', $tokens);
+        self::assertContains('FROM', $tokens);
+        self::assertContains('TO', $tokens);
+    }
+
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testInsertFunctionUpsertStatementDerivesFunctionExpressionFromGrammar(int $seed): void
+    {
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new PostgreSqlProvider($faker);
+        $sql = $provider->insertFunctionUpsertStatement();
+        $faker->seed($seed);
+
+        $tokens = (new LexicalGrammar($faker, 'pg-17.2', true))
+            ->tokenize($sql);
+        $values = array_search('VALUES', $tokens, true);
+        $conflict = array_search('CONFLICT', $tokens, true);
+        $set = array_search('SET', $tokens, true);
+        $functionOpen = array_search('(', array_slice($tokens, (int) $set, null, true), true);
+
+        self::assertSame($sql, $provider->insertFunctionUpsertStatement(40));
+        self::assertIsInt($values);
+        self::assertIsInt($conflict);
+        self::assertIsInt($set);
+        self::assertIsInt($functionOpen);
+        self::assertLessThan($conflict, $values);
+        self::assertGreaterThan($set, $functionOpen);
+        self::assertContains('UPDATE', $tokens);
+    }
+
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testPartialIndexUpsertStatementIncludesArbiterPredicate(int $seed): void
+    {
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new PostgreSqlProvider($faker);
+        $sql = $provider->partialIndexUpsertStatement();
+        $faker->seed($seed);
+        $tokens = (new LexicalGrammar($faker, 'pg-17.2', true))
+            ->tokenize($sql);
+
+        self::assertSame($sql, $provider->partialIndexUpsertStatement(40));
+        $conflict = array_search('CONFLICT', $tokens, true);
+        $where = array_search('WHERE', $tokens, true);
+        $update = array_search('UPDATE', $tokens, true);
+        self::assertIsInt($conflict);
+        self::assertIsInt($where);
+        self::assertIsInt($update);
+        self::assertGreaterThan($conflict, $where);
+        self::assertGreaterThan($where, $update);
+    }
+
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testFullTextSearchStatementDerivesMatchOperatorFromGrammarAndLexer(int $seed): void
+    {
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new PostgreSqlProvider($faker);
+        $sql = $provider->fullTextSearchStatement();
+        $faker->seed($seed);
+        $tokens = (new LexicalGrammar($faker, 'pg-17.2', true))->tokenize($sql);
+        $where = array_search('WHERE', $tokens, true);
+
+        self::assertSame($sql, $provider->fullTextSearchStatement(40));
+        self::assertSame('SELECT', $tokens[0]);
+        self::assertContains('FROM', $tokens);
+        self::assertIsInt($where);
+        self::assertSame(['IDENT', 'Op', 'IDENT'], array_slice($tokens, $where + 1, 3));
+        self::assertStringContainsString('@@', $sql);
+    }
+
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testTemporaryTableStatement(int $seed): void
+    {
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new PostgreSqlProvider($faker);
+        $sql = $provider->temporaryTableStatement();
+        $faker->seed($seed);
+
+        $tokens = (new LexicalGrammar($faker, 'pg-17.2', true))
+            ->tokenize($sql);
+
+        self::assertSame($sql, $provider->temporaryTableStatement(40));
+        self::assertSame('CREATE', $tokens[0]);
+        self::assertContains('TEMP', $tokens);
+        self::assertContains('TABLE', $tokens);
+    }
+
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testViewStatement(int $seed): void
+    {
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new PostgreSqlProvider($faker);
+        $sql = $provider->viewStatement();
+        $faker->seed($seed);
+        $tokens = (new LexicalGrammar($faker, 'pg-17.2', true))
+            ->tokenize($sql);
+
+        self::assertSame($sql, $provider->viewStatement(40));
+        self::assertSame('CREATE', $tokens[0]);
+        self::assertContains('VIEW', $tokens);
+        self::assertNotSame([], array_intersect(['SELECT', 'VALUES', 'TABLE'], $tokens));
+    }
+
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testGeneratedColumnStatement(int $seed): void
+    {
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new PostgreSqlProvider($faker);
+        $sql = $provider->generatedColumnStatement();
+        $faker->seed($seed);
+        $tokens = (new LexicalGrammar($faker, 'pg-17.2', true))
+            ->tokenize($sql);
+
+        self::assertSame($sql, $provider->generatedColumnStatement(40));
+        self::assertContains('GENERATED', $tokens);
+        self::assertContains('STORED', $tokens);
+        self::assertContains('AS', $tokens);
+    }
+
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testForeignKeyCascadeStatement(int $seed): void
+    {
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new PostgreSqlProvider($faker);
+        $sql = $provider->foreignKeyCascadeStatement();
+        $faker->seed($seed);
+        $tokens = (new LexicalGrammar($faker, 'pg-17.2', true))
+            ->tokenize($sql);
+
+        self::assertSame($sql, $provider->foreignKeyCascadeStatement(40));
+        self::assertContains('FOREIGN', $tokens);
+        self::assertContains('REFERENCES', $tokens);
+        self::assertStringContainsString('ON UPDATE CASCADE', implode(' ', $tokens));
+        self::assertStringContainsString('ON DELETE_P CASCADE', implode(' ', $tokens));
+    }
+
     #[\Override]
     protected function setUp(): void
     {
@@ -169,6 +329,32 @@ final class PostgreSqlProviderTest extends TestCase
         self::assertNotEmpty($result);
         self::assertStringContainsString('CREATE', $result);
         self::assertStringContainsString('TABLE', $result);
+    }
+
+    public function testCreateTableAsStatement(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new PostgreSqlProvider($faker);
+
+        $result = $provider->createTableAsStatement(maxDepth: 8);
+
+        self::assertStringContainsString('CREATE', $result);
+        self::assertStringContainsString('TABLE', $result);
+        self::assertStringContainsString('AS', $result);
+        self::assertMatchesRegularExpression('/\b(?:SELECT|VALUES|TABLE)\b/', $result);
+    }
+
+    public function testCreateDomainStatement(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new PostgreSqlProvider($faker);
+
+        $result = $provider->createDomainStatement(maxDepth: 8);
+
+        self::assertStringContainsString('CREATE', $result);
+        self::assertStringContainsString('DOMAIN', $result);
     }
 
     public function testAlterTableStatement(): void
@@ -352,6 +538,20 @@ final class PostgreSqlProviderTest extends TestCase
         $result = $provider->withClause(maxDepth: 3);
 
         self::assertStringContainsString('WITH', $result);
+    }
+
+    public function testForeignKeyConstraint(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new PostgreSqlProvider($faker, 'pg-17.2');
+
+        $result = $provider->foreignKeyConstraint(1);
+
+        self::assertSame(
+            ['CONSTRAINT', 'IDENT', 'FOREIGN', 'KEY', '(', 'IDENT', ')', 'REFERENCES', 'IDENT', '(', 'IDENT', ')'],
+            (new LexicalGrammar($faker, 'pg-17.2'))->tokenize($result),
+        );
     }
 
     public function testIdentifier(): void
@@ -745,6 +945,82 @@ final class PostgreSqlProviderTest extends TestCase
         self::assertNotSame('', $result);
     }
 
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testTableSampleStatementDerivesSamplingClauseFromGrammar(int $seed): void
+    {
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new PostgreSqlProvider($faker);
+        $sql = $provider->tableSampleStatement();
+        $faker->seed($seed);
+
+        $tokens = (new LexicalGrammar($faker, 'pg-17.2', true))->tokenize($sql);
+
+        self::assertSame($sql, $provider->tableSampleStatement(40));
+        self::assertSame('SELECT', $tokens[0]);
+        self::assertContains('FROM', $tokens);
+        self::assertContains('TABLESAMPLE', $tokens);
+    }
+
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testDoStatementDerivesAnonymousBlockFromGrammar(int $seed): void
+    {
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new PostgreSqlProvider($faker);
+        $sql = $provider->doStatement();
+        $faker->seed($seed);
+        $defaultDepth = (new \ReflectionMethod(PostgreSqlProvider::class, 'doStatement'))
+            ->getParameters()[0]
+            ->getDefaultValue();
+
+        self::assertSame(40, $defaultDepth);
+        self::assertSame($sql, $provider->doStatement(40));
+        self::assertSame(
+            ['DO', 'SCONST'],
+            (new LexicalGrammar($faker, 'pg-17.2', true))->tokenize($sql),
+        );
+    }
+
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testMergeStatementDerivesEveryActionFromGrammar(int $seed): void
+    {
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new PostgreSqlProvider($faker);
+        $sql = $provider->mergeStatement();
+        $faker->seed($seed);
+        $tokens = (new LexicalGrammar($faker, 'pg-17.2', true))->tokenize($sql);
+        $normalized = implode(' ', $tokens);
+        $delete = strpos($normalized, 'WHEN MATCHED THEN DELETE_P');
+        $nothing = strpos($normalized, 'WHEN MATCHED THEN DO NOTHING');
+        $update = strpos($normalized, 'WHEN MATCHED THEN UPDATE');
+        $insert = strpos($normalized, 'WHEN NOT MATCHED THEN INSERT');
+
+        self::assertSame($sql, $provider->mergeStatement(40));
+        self::assertContains('MERGE', $tokens);
+        self::assertGreaterThanOrEqual(
+            4,
+            count(array_filter($tokens, static fn (string $token): bool => $token === 'WHEN')),
+        );
+        self::assertIsInt($delete);
+        self::assertIsInt($nothing);
+        self::assertIsInt($update);
+        self::assertIsInt($insert);
+        self::assertLessThan($nothing, $delete);
+        self::assertLessThan($update, $nothing);
+        self::assertLessThan($insert, $update);
+    }
+
+    public function testCopyStatementUsesOfficialGrammarRule(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new PostgreSqlProvider($faker);
+
+        self::assertStringContainsString('COPY', $provider->copyStatement(maxDepth: 8));
+    }
+
     #[DataProvider('providerNullableSimpleStatementSeed')]
     public function testSimpleStatementReturnsNonEmpty(int $seed): void
     {
@@ -774,6 +1050,16 @@ final class PostgreSqlProviderTest extends TestCase
     }
 
     /**
+     * @return iterable<string, array{int}>
+     */
+    public static function providerTargetedGenerationSeed(): iterable
+    {
+        foreach (range(0, 31) as $seed) {
+            yield "seed {$seed}" => [$seed];
+        }
+    }
+
+    /**
      * @return iterable<string, array{StatementType}>
      */
     public static function providerStatementTypeValue(): iterable
@@ -783,7 +1069,25 @@ final class PostgreSqlProviderTest extends TestCase
         yield 'Update' => [StatementType::Update];
         yield 'Delete' => [StatementType::Delete];
         yield 'CreateTable' => [StatementType::CreateTable];
+        yield 'CreateTableAs' => [StatementType::CreateTableAs];
+        yield 'CreateDomain' => [StatementType::CreateDomain];
         yield 'AlterTable' => [StatementType::AlterTable];
         yield 'DropTable' => [StatementType::DropTable];
+    }
+
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testDomainDmlStatementDerivesDmlFromGrammar(int $seed): void
+    {
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new PostgreSqlProvider($faker);
+        $sql = $provider->domainDmlStatement();
+        $faker->seed($seed);
+        $lexer = new LexicalGrammar($faker, 'pg-17.2', true);
+
+        $tokens = $lexer->tokenize($sql);
+
+        self::assertSame($sql, $provider->domainDmlStatement(40));
+        self::assertContains($tokens[0], ['INSERT', 'UPDATE', 'DELETE_P']);
     }
 }

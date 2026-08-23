@@ -11,6 +11,7 @@ use PhpMyAdmin\SqlParser\Statements\CreateStatement;
 use PhpMyAdmin\SqlParser\Statements\DeleteStatement;
 use PhpMyAdmin\SqlParser\Statements\DropStatement;
 use PhpMyAdmin\SqlParser\Statements\InsertStatement;
+use PhpMyAdmin\SqlParser\Statements\LoadStatement;
 use PhpMyAdmin\SqlParser\Statements\ReplaceStatement;
 use PhpMyAdmin\SqlParser\Statements\SelectStatement;
 use PhpMyAdmin\SqlParser\Statements\TruncateStatement;
@@ -34,12 +35,13 @@ final class MySqlQueryGuard
      */
     public function classify(string $sql): ?QueryKind
     {
-        $statements = $this->parser->parse($sql);
-        if ($statements === [] || count($statements) !== 1) {
+        if (MySqlReadOnlyDiagnosticStatement::isSafe($sql)) {
+            return QueryKind::READ;
+        }
+        $statement = $this->parser->parseSingleLogicalStatement($sql);
+        if ($statement === null) {
             return null;
         }
-
-        $statement = $statements[0];
         if ($statement instanceof WithStatement) {
             $kind = $this->classifyWithFallback($sql);
             if ($kind !== null) {
@@ -75,7 +77,7 @@ final class MySqlQueryGuard
             return QueryKind::READ;
         }
 
-        if ($statement instanceof UpdateStatement || $statement instanceof DeleteStatement || $statement instanceof InsertStatement || $statement instanceof TruncateStatement || $statement instanceof ReplaceStatement) {
+        if ($statement instanceof UpdateStatement || $statement instanceof DeleteStatement || $statement instanceof InsertStatement || $statement instanceof TruncateStatement || $statement instanceof ReplaceStatement || $statement instanceof LoadStatement) {
             return QueryKind::WRITE_SIMULATED;
         }
 

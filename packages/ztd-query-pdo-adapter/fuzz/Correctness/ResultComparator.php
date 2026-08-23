@@ -99,6 +99,10 @@ final class ResultComparator
             return $this->compareSet($expectedStr, $actualStr);
         }
 
+        if (str_starts_with($type, 'CHAR')) {
+            return rtrim($expectedStr, ' ') === rtrim($actualStr, ' ');
+        }
+
         return $expectedStr === $actualStr;
     }
 

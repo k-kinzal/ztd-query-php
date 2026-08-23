@@ -8,19 +8,105 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\CastRenderer;
+use ZtdQuery\Platform\MySql\InsertSelectSourceExtractor;
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlParser;
+use ZtdQuery\Platform\MySql\MySqlSelectRelationParser;
+use ZtdQuery\Platform\MySql\MySqlUpsertAssignmentExtractor;
+use ZtdQuery\Platform\MySql\Transformer\InsertSelectRenderer;
 use ZtdQuery\Platform\MySql\Transformer\InsertTransformer;
+use ZtdQuery\Platform\MySql\Transformer\MySqlSelectListAliaser;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
+use ZtdQuery\Schema\IdentityGenerationStrategy;
+use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(InsertTransformer::class)]
 #[UsesClass(MySqlParser::class)]
+#[UsesClass(MySqlSelectRelationParser::class)]
+#[UsesClass(MySqlUpsertAssignmentExtractor::class)]
 #[UsesClass(SelectTransformer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlFullTextSearchRewriter::class)]
+#[UsesClass(InsertSelectSourceExtractor::class)]
 #[UsesClass(MySqlCastRenderer::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\InsertRowRenderer::class)]
+#[UsesClass(InsertSelectRenderer::class)]
+#[UsesClass(MySqlSelectListAliaser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlTypeSemantics::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlNativeUpsertProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlGeneratedColumnProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 final class InsertTransformerTest extends TestCase
 {
+    public function testProjectsUpsertExpressionUsingCandidateKeys(): void
+    {
+        $transformer = new InsertTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = [
+            'users' => [
+                'rows' => [],
+                'columns' => ['id', 'name'],
+                'columnTypes' => [],
+                'candidateKeys' => ['PRIMARY' => ['id']],
+            ],
+        ];
+
+        $result = $transformer->transform(
+            "INSERT INTO users (id, name) VALUES (1, 'Alice') ON DUPLICATE KEY UPDATE name = VALUES(name)",
+            $tables,
+        );
+
+        self::assertStringContainsString('`__ztd_incoming`.`name`', $result);
+        self::assertStringContainsString('__ztd_upsert_value_0', $result);
+        self::assertStringNotContainsString('VALUES(', $result);
+    }
+
+    public function testTransformInsertFromCompoundSelectPreservesEveryBranch(): void
+    {
+        $transformer = new InsertTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = [
+            'combined' => [
+                'rows' => [],
+                'columns' => ['name', 'amount'],
+                'columnTypes' => [],
+            ],
+        ];
+
+        $result = $transformer->transform(
+            'INSERT INTO combined (name, amount) SELECT name, amount FROM archive UNION ALL SELECT name, amount FROM current',
+            $tables,
+        );
+
+        self::assertStringContainsString(
+            'FROM archive UNION ALL SELECT name, amount FROM current',
+            $result,
+        );
+        self::assertStringContainsString('`__ztd_insert_0` AS `name`', $result);
+        self::assertStringContainsString('`__ztd_insert_1` AS `amount`', $result);
+    }
+
+    public function testUsesInjectedCastRendererAndColumnTypes(): void
+    {
+        $castRenderer = self::createStub(CastRenderer::class);
+        $castRenderer->method('renderCast')->willReturn('CUSTOM_CAST');
+        $transformer = new InsertTransformer(new MySqlParser(), new SelectTransformer(), $castRenderer);
+        $tables = [
+            'users' => [
+                'rows' => [],
+                'columns' => ['id'],
+                'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT')],
+            ],
+        ];
+
+        $result = $transformer->transform('INSERT INTO users (id) VALUES (1)', $tables);
+
+        self::assertStringContainsString('SELECT CUSTOM_CAST AS `id`', $result);
+    }
+
     public function testTransformInsertWithValues(): void
     {
         $parser = new MySqlParser();
@@ -349,10 +435,26 @@ final class InsertTransformerTest extends TestCase
         ];
 
         $result = $transformer->transform($sql, $tables);
-        self::assertStringContainsString('__ztd_subq', $result);
-        self::assertStringContainsString('FROM (', $result);
-        self::assertStringContainsString(') AS __ztd_subq', $result);
-        self::assertStringContainsString('SELECT __ztd_subq', $result);
+        self::assertStringContainsString('`__ztd_insert_source`', $result);
+        self::assertStringContainsString('AS (SELECT id AS `__ztd_insert_0`, name AS `__ztd_insert_1` FROM users WHERE active = 0)', $result);
+        self::assertStringContainsString('SELECT `__ztd_insert_0` AS `id`', $result);
+    }
+
+    public function testTransformInsertFromSelectUsesTableColumnsWhenColumnListIsOmitted(): void
+    {
+        $transformer = new InsertTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = ['archive' => [
+            'rows' => [],
+            'columns' => ['id', 'name'],
+            'columnTypes' => [],
+        ]];
+
+        $result = $transformer->transform('INSERT INTO archive SELECT id, name FROM users', $tables);
+
+        self::assertSame(
+            'WITH `__ztd_insert_source` (`__ztd_insert_0`, `__ztd_insert_1`) AS (SELECT id AS `__ztd_insert_0`, name AS `__ztd_insert_1` FROM users) SELECT `__ztd_insert_0` AS `id`, `__ztd_insert_1` AS `name` FROM `__ztd_insert_source`',
+            $result,
+        );
     }
 
     public function testTransformInsertFromSelectColumnCountMismatchThrows(): void
@@ -404,6 +506,7 @@ final class InsertTransformerTest extends TestCase
         $tables = [];
 
         $this->expectException(\RuntimeException::class);
+        $this->expectExceptionCode(0);
         $transformer->transform($sql, $tables);
     }
 
@@ -500,7 +603,7 @@ final class InsertTransformerTest extends TestCase
 
         $result = $transformer->transform($sql, $tables);
         self::assertStringContainsString('SELECT', $result);
-        self::assertStringContainsString('__ztd_subq', $result);
+        self::assertStringContainsString('__ztd_insert_source', $result);
     }
 
     public function testTransformInsertFromSelectGroupByValueIncluded(): void
@@ -533,7 +636,7 @@ final class InsertTransformerTest extends TestCase
         $tables = [];
 
         $result = $transformer->transform($sql, $tables);
-        self::assertSame('SELECT __ztd_subq.`col_0` AS `a`, __ztd_subq.`col_1` AS `b` FROM (SELECT x AS `col_0`, y AS `col_1` FROM src WHERE x > 0) AS __ztd_subq', $result);
+        self::assertSame('WITH `__ztd_insert_source` (`__ztd_insert_0`, `__ztd_insert_1`) AS (SELECT x AS `__ztd_insert_0`, y AS `__ztd_insert_1` FROM src WHERE x > 0) SELECT `__ztd_insert_0` AS `a`, `__ztd_insert_1` AS `b` FROM `__ztd_insert_source`', $result);
     }
 
     public function testTransformInsertFromSelectAliasedExpressionDropsAlias(): void
@@ -552,8 +655,8 @@ final class InsertTransformerTest extends TestCase
         ];
 
         $result = $transformer->transform($sql, $tables);
-        self::assertStringContainsString('`col_0`', $result);
-        self::assertStringContainsString('__ztd_subq', $result);
+        self::assertStringContainsString('`__ztd_insert_0`', $result);
+        self::assertStringContainsString('__ztd_insert_source', $result);
         self::assertStringNotContainsString('AS `alias`', $result);
     }
 
@@ -657,7 +760,7 @@ final class InsertTransformerTest extends TestCase
 
         $result = $transformer->transform($sql, $tables);
         self::assertSame(
-            'SELECT __ztd_subq.`col_0` AS `a` FROM (SELECT x AS `col_0` FROM src WHERE x > 0) AS __ztd_subq',
+            'WITH `__ztd_insert_source` (`__ztd_insert_0`) AS (SELECT x AS `__ztd_insert_0` FROM src WHERE x > 0) SELECT `__ztd_insert_0` AS `a` FROM `__ztd_insert_source`',
             $result
         );
     }
@@ -707,7 +810,7 @@ final class InsertTransformerTest extends TestCase
 
         $result = $transformer->transform($sql, $tables);
         self::assertSame(
-            'SELECT __ztd_subq.`col_0` AS `val` FROM (SELECT x AS `col_0` FROM src) AS __ztd_subq',
+            'WITH `__ztd_insert_source` (`__ztd_insert_0`) AS (SELECT x AS `__ztd_insert_0` FROM src) SELECT `__ztd_insert_0` AS `val` FROM `__ztd_insert_source`',
             $result
         );
     }
@@ -724,5 +827,174 @@ final class InsertTransformerTest extends TestCase
         $result = $transformer->transform($sql, $tables);
         self::assertStringContainsString("1 AS `a`", $result);
         self::assertStringContainsString("'hello' AS `b`", $result);
+    }
+
+    public function testTransformProjectsOmittedAndExplicitDefaults(): void
+    {
+        $transformer = new InsertTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = ['users' => [
+            'rows' => [],
+            'columns' => ['id', 'status', 'note'],
+            'columnTypes' => [],
+            'columnDefaults' => ['status' => "'active'"],
+        ]];
+
+        $result = $transformer->transform('INSERT INTO users (id, status) VALUES (1, DEFAULT)', $tables);
+
+        self::assertStringContainsString('1 AS `id`', $result);
+        self::assertStringContainsString("'active' AS `status`", $result);
+        self::assertStringContainsString('NULL AS `note`', $result);
+    }
+
+    public function testTransformDefaultOnlyInsertProjectsCompleteRow(): void
+    {
+        $transformer = new InsertTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = ['settings' => [
+            'rows' => [],
+            'columns' => ['enabled', 'label'],
+            'columnTypes' => [],
+            'columnDefaults' => ['enabled' => '1', 'label' => "'new'"],
+        ]];
+
+        $result = $transformer->transform('INSERT INTO settings () VALUES ()', $tables);
+
+        self::assertStringContainsString('1 AS `enabled`', $result);
+        self::assertStringContainsString("'new' AS `label`", $result);
+    }
+
+    public function testTransformProjectsDefaultWhenIntoIsOmitted(): void
+    {
+        $transformer = new InsertTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = ['settings' => [
+            'rows' => [],
+            'columns' => ['enabled'],
+            'columnTypes' => [],
+            'columnDefaults' => ['enabled' => '1'],
+        ]];
+
+        $result = $transformer->transform(
+            "INSERT # lead\n HIGH_PRIORITY -- priority\n IGNORE settings VALUE(/* value */ DEFAULT)",
+            $tables,
+        );
+
+        self::assertStringContainsString('1 AS `enabled`', $result);
+    }
+
+    public function testTransformNormalizesSparseTableColumnKeys(): void
+    {
+        $transformer = new InsertTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = ['users' => [
+            'rows' => [],
+            'columns' => [2 => 'id', 5 => 'name'],
+            'columnTypes' => [],
+        ]];
+
+        $result = $transformer->transform("INSERT INTO users (id, name) VALUES (1, 'Alice')", $tables);
+
+        self::assertStringContainsString('1 AS `id`', $result);
+        self::assertStringContainsString("'Alice' AS `name`", $result);
+    }
+
+    public function testTransformAllocatesMonotonicAutoIncrementValues(): void
+    {
+        $transformer = new InsertTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = ['users' => [
+            'rows' => [],
+            'columns' => ['id', 'name'],
+            'columnTypes' => [],
+            'identityStrategies' => ['id' => IdentityGenerationStrategy::MaxValue],
+        ]];
+
+        $first = $transformer->transform("INSERT INTO users (name) VALUES ('Alice'), ('Bob')", $tables);
+        $transformer->commitRewriteState();
+        $second = $transformer->transform("INSERT INTO users (name) VALUES ('Carol')", $tables);
+
+        self::assertStringContainsString('1 AS `id`', $first);
+        self::assertStringContainsString('2 AS `id`', $first);
+        self::assertStringContainsString('3 AS `id`', $second);
+    }
+
+    public function testUncommittedTransformDoesNotConsumeAutoIncrementValue(): void
+    {
+        $transformer = new InsertTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = ['users' => [
+            'rows' => [],
+            'columns' => ['id', 'name'],
+            'columnTypes' => [],
+            'identityStrategies' => ['id' => IdentityGenerationStrategy::MaxValue],
+        ]];
+
+        $preview = $transformer->transform("INSERT INTO users (name) VALUES ('preview')", $tables);
+        $executed = $transformer->transform("INSERT INTO users (name) VALUES ('executed')", $tables);
+
+        self::assertStringContainsString('1 AS `id`', $preview);
+        self::assertStringContainsString('1 AS `id`', $executed);
+    }
+
+    public function testTransformAllocatesAfterExistingAutoIncrementRows(): void
+    {
+        $transformer = new InsertTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = ['users' => [
+            'rows' => [['id' => 7, 'name' => 'Existing']],
+            'columns' => ['id', 'name'],
+            'columnTypes' => [],
+            'identityStrategies' => ['id' => IdentityGenerationStrategy::MaxValue],
+        ]];
+
+        $result = $transformer->transform("INSERT INTO users (name) VALUES ('Alice')", $tables);
+
+        self::assertStringContainsString('8 AS `id`', $result);
+    }
+
+    public function testTransformInsertSelectAllocatesOnlyOmittedIdentityColumns(): void
+    {
+        $transformer = new InsertTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = ['users' => [
+            'rows' => [['id' => 7, 'name' => 'Existing']],
+            'columns' => ['id', 'name'],
+            'columnTypes' => [],
+            'identityStrategies' => ['id' => IdentityGenerationStrategy::MaxValue],
+        ]];
+
+        $explicit = $transformer->transform('INSERT INTO users (id, name) SELECT id, name FROM source', $tables);
+        $generated = $transformer->transform('INSERT INTO users (name) SELECT name FROM source', $tables);
+
+        self::assertStringContainsString('8 + ROW_NUMBER() OVER () - 1 AS `id`', $generated);
+        self::assertStringContainsString('`__ztd_insert_0` AS `id`', $explicit);
+        self::assertStringNotContainsString('ROW_NUMBER()', $explicit);
+    }
+
+    public function testExplicitValuesIdentityDoesNotConsumeGeneratedIdentity(): void
+    {
+        $transformer = new InsertTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = ['users' => [
+            'rows' => [],
+            'columns' => ['id', 'name'],
+            'columnTypes' => [],
+            'identityStrategies' => ['id' => IdentityGenerationStrategy::MaxValue],
+        ]];
+
+        $transformer->transform("INSERT INTO users (id, name) VALUES (42, 'explicit')", $tables);
+        $transformer->commitRewriteState();
+        $generated = $transformer->transform("INSERT INTO users (name) VALUES ('generated')", $tables);
+
+        self::assertStringContainsString('1 AS `id`', $generated);
+    }
+
+    public function testExplicitSetIdentityDoesNotConsumeGeneratedIdentity(): void
+    {
+        $transformer = new InsertTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = ['users' => [
+            'rows' => [],
+            'columns' => ['id', 'name'],
+            'columnTypes' => [],
+            'identityStrategies' => ['id' => IdentityGenerationStrategy::MaxValue],
+        ]];
+
+        $transformer->transform("INSERT INTO users SET id = 42, name = 'explicit'", $tables);
+        $transformer->commitRewriteState();
+        $generated = $transformer->transform("INSERT INTO users SET name = 'generated'", $tables);
+
+        self::assertStringContainsString('1 AS `id`', $generated);
     }
 }

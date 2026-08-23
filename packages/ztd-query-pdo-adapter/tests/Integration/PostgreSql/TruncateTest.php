@@ -108,4 +108,37 @@ final class TruncateTest extends TestCase
             $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
         }
     }
+
+    public function testTruncateMultipleTables(): void
+    {
+        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $alpha = 'prefix_' . bin2hex(random_bytes(8));
+        $beta = 'prefix_' . bin2hex(random_bytes(8));
+
+        try {
+            $rawPdo->exec("CREATE TABLE {$alpha} (id INTEGER PRIMARY KEY, name TEXT)");
+            $rawPdo->exec("CREATE TABLE {$beta} (id INTEGER PRIMARY KEY, name TEXT)");
+            $rawPdo->exec("INSERT INTO {$alpha} VALUES (1, 'alpha')");
+            $rawPdo->exec("INSERT INTO {$beta} VALUES (2, 'beta')");
+            $ztdPdo = ZtdPdo::fromPdo($rawPdo);
+            $ztdPdo->exec("INSERT INTO {$alpha} VALUES (1, 'alpha')");
+            $ztdPdo->exec("INSERT INTO {$beta} VALUES (2, 'beta')");
+
+            $rawPdo->exec("TRUNCATE TABLE {$alpha}, {$beta}");
+            $ztdPdo->exec("TRUNCATE TABLE {$alpha}, {$beta}");
+
+            $rawAlpha = $rawPdo->query("SELECT * FROM {$alpha}");
+            $rawBeta = $rawPdo->query("SELECT * FROM {$beta}");
+            $shadowAlpha = $ztdPdo->query("SELECT * FROM {$alpha}");
+            $shadowBeta = $ztdPdo->query("SELECT * FROM {$beta}");
+            self::assertNotFalse($rawAlpha);
+            self::assertNotFalse($rawBeta);
+            self::assertNotFalse($shadowAlpha);
+            self::assertNotFalse($shadowBeta);
+            self::assertSame($rawAlpha->fetchAll(), $shadowAlpha->fetchAll());
+            self::assertSame($rawBeta->fetchAll(), $shadowBeta->fetchAll());
+        } finally {
+            $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
+        }
+    }
 }

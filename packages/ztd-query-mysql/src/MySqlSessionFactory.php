@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\MySql;
 
+use PhpMyAdmin\SqlParser\Context;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Platform\MySql\Transformer\DeleteTransformer;
@@ -14,9 +15,11 @@ use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
 use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Schema\TableDefinitionRegistry;
+use ZtdQuery\Schema\ViewDefinitionSet;
 use ZtdQuery\Session;
 use ZtdQuery\Platform\SessionFactory;
 use ZtdQuery\Shadow\ShadowStore;
+use ZtdQuery\Shadow\ShadowTransactionManager;
 
 /**
  * Factory for creating Session instances pre-configured for MySQL.
@@ -28,6 +31,8 @@ final class MySqlSessionFactory implements SessionFactory
      */
     public function create(ConnectionInterface $connection, ZtdConfig $config): Session
     {
+        Context::setMode((new MySqlSessionSqlModeReflector($connection))->reflect());
+
         $shadowStore = new ShadowStore();
         $parser = new MySqlParser();
         $schemaParser = new MySqlSchemaParser($parser);
@@ -40,6 +45,10 @@ final class MySqlSessionFactory implements SessionFactory
                 $registry->register($tableName, $definition);
             }
         }
+        $views = new ViewDefinitionSet();
+        foreach ($reflector->reflectViews() as $viewName => $definition) {
+            $views->register($viewName, $definition);
+        }
 
         $guard = new MySqlQueryGuard($parser);
         $selectTransformer = new SelectTransformer();
@@ -49,14 +58,17 @@ final class MySqlSessionFactory implements SessionFactory
         $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
         $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
         $mutationResolver = new MySqlMutationResolver($shadowStore, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
-        $rewriter = new MySqlRewriter($guard, $shadowStore, $registry, $transformer, $mutationResolver, $parser);
+        $rewriter = new MySqlRewriter($guard, $shadowStore, $registry, $transformer, $mutationResolver, $parser, $views);
 
         return new Session(
             $rewriter,
             $shadowStore,
             new ResultSelectRunner(),
             $config,
-            $connection
+            $connection,
+            new ShadowTransactionManager($shadowStore, $registry),
+            $registry,
+            resultColumnTypeResolver: new MySqlResultColumnTypeResolver(),
         );
     }
 }

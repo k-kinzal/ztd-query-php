@@ -47,11 +47,31 @@ final class ZtdPdoStatement extends NativePdoStatement
      */
     private ?ExecuteResult $result = null;
 
-    public function __construct(NativePdoStatement $statement, Session $session, ?RewritePlan $plan)
-    {
+    private ?PdoPreparedExecution $preparedExecution;
+
+    private int $defaultFetchMode;
+
+    /** @var array<int|string, array{value: mixed, type: int}> */
+    private array $boundValues = [];
+
+    /** @var array<int|string, array{value: mixed, type: int, maxLength: int, driverOptions: mixed}> */
+    private array $boundParams = [];
+
+    /** @var array{mode: int, args: array<mixed>}|null */
+    private ?array $fetchMode = null;
+
+    public function __construct(
+        NativePdoStatement $statement,
+        Session $session,
+        ?RewritePlan $plan,
+        ?PdoPreparedExecution $preparedExecution = null,
+        int $defaultFetchMode = PDO::FETCH_BOTH,
+    ) {
         $this->statement = $statement;
         $this->session = $session;
         $this->plan = $plan;
+        $this->preparedExecution = $preparedExecution;
+        $this->defaultFetchMode = $defaultFetchMode;
     }
 
     /**
@@ -59,6 +79,8 @@ final class ZtdPdoStatement extends NativePdoStatement
      */
     public function bindValue(int|string $param, mixed $value, int $type = PDO::PARAM_STR): bool
     {
+        $this->boundValues[$param] = ['value' => $value, 'type' => $type];
+
         return $this->statement->bindValue($param, $value, $type);
     }
 
@@ -72,6 +94,13 @@ final class ZtdPdoStatement extends NativePdoStatement
         int $maxLength = 0,
         mixed $driverOptions = null
     ): bool {
+        $this->boundParams[$param] = [
+            'value' => &$var,
+            'type' => $type,
+            'maxLength' => $maxLength,
+            'driverOptions' => $driverOptions,
+        ];
+
         return $this->statement->bindParam($param, $var, $type, $maxLength, $driverOptions);
     }
 
@@ -97,25 +126,42 @@ final class ZtdPdoStatement extends NativePdoStatement
     {
         $this->result = null;
 
+        if ($this->preparedExecution !== null) {
+            $prepared = $this->preparedExecution->prepare($params);
+            $this->statement = $prepared['statement'];
+            $this->plan = $prepared['plan'];
+            $params = $prepared['params'];
+            $this->rebindParameters();
+            if ($this->fetchMode !== null) {
+                $this->statement->setFetchMode($this->fetchMode['mode'], ...$this->fetchMode['args']);
+            }
+        }
+
         if ($this->plan === null) {
-            return $this->statement->execute($params);
+            return $this->executeStatement($params);
         }
 
         if (!$this->session->shouldExecute($this->plan)) {
             return false;
         }
 
-        if (!$this->session->needsPostProcessing($this->plan)) {
-            return $this->statement->execute($params);
+        if ($this->session->needsPostProcessing($this->plan)) {
+            return $this->executeAndPostProcess($this->plan, $params);
         }
 
-        if (!$this->statement->execute($params)) {
+        return $this->executeStatement($params);
+    }
+
+    /** @param array<int|string, mixed>|null $params */
+    private function executeAndPostProcess(RewritePlan $plan, ?array $params): bool
+    {
+        if (!$this->executeStatement($params)) {
             return false;
         }
 
         try {
             $this->result = $this->session->processExecutedStatement(
-                $this->plan,
+                $plan,
                 new PdoStatement($this->statement)
             );
         } catch (DatabaseException $e) {
@@ -123,6 +169,33 @@ final class ZtdPdoStatement extends NativePdoStatement
         }
 
         return $this->result->isSuccess();
+    }
+
+    /** @param array<int|string, mixed>|null $params */
+    private function executeStatement(?array $params): bool
+    {
+        if ($this->preparedExecution === null) {
+            return $this->statement->execute($params);
+        }
+
+        return $this->preparedExecution->parameterBinder()->execute($this->statement, $params);
+    }
+
+    private function rebindParameters(): void
+    {
+        foreach ($this->boundValues as $parameter => $binding) {
+            $this->statement->bindValue($parameter, $binding['value'], $binding['type']);
+        }
+        foreach (array_keys($this->boundParams) as $parameter) {
+            $binding = &$this->boundParams[$parameter];
+            $this->statement->bindParam(
+                $parameter,
+                $binding['value'],
+                $binding['type'],
+                $binding['maxLength'],
+                $binding['driverOptions'],
+            );
+        }
     }
 
     /**
@@ -134,6 +207,13 @@ final class ZtdPdoStatement extends NativePdoStatement
             if (!$this->result->hasResultSet()) {
                 return false;
             }
+
+            $row = $this->result->fetch();
+            if ($row === false) {
+                return false;
+            }
+
+            return $this->formatBufferedRow($row, $mode);
         }
 
         /** @see NativePdoStatement */
@@ -151,6 +231,18 @@ final class ZtdPdoStatement extends NativePdoStatement
             if (!$this->result->hasResultSet()) {
                 return [];
             }
+
+            $rows = $this->result->fetchAll();
+            if ($this->resolveFetchMode($mode) === PDO::FETCH_COLUMN) {
+                $column = is_int($args[0] ?? null) ? $args[0] : 0;
+
+                return array_map(
+                    static fn (array $row): mixed => array_values($row)[$column] ?? false,
+                    $rows,
+                );
+            }
+
+            return array_map(fn (array $row): mixed => $this->formatBufferedRow($row, $mode), $rows);
         }
 
         /** @see NativePdoStatement */
@@ -175,6 +267,10 @@ final class ZtdPdoStatement extends NativePdoStatement
             if (!$this->result->hasResultSet()) {
                 return false;
             }
+
+            $row = $this->result->fetch();
+
+            return $row === false ? false : (array_values($row)[$column] ?? false);
         }
 
         /** @see NativePdoStatement */
@@ -198,6 +294,27 @@ final class ZtdPdoStatement extends NativePdoStatement
             if (!$this->result->hasResultSet()) {
                 return false;
             }
+
+            $row = $this->result->fetch();
+            if ($row === false) {
+                return false;
+            }
+            $object = new $resolvedClass(...$constructorArgs);
+            if ($object instanceof \stdClass) {
+                foreach ($row as $property => $value) {
+                    $object->{$property} = $value;
+                }
+
+                return $object;
+            }
+            $reflection = new \ReflectionObject($object);
+            foreach ($row as $property => $value) {
+                if ($reflection->hasProperty($property)) {
+                    $reflection->getProperty($property)->setValue($object, $value);
+                }
+            }
+
+            return $object;
         }
 
         /** @see NativePdoStatement */
@@ -230,6 +347,8 @@ final class ZtdPdoStatement extends NativePdoStatement
     #[\ReturnTypeWillChange]
     public function setFetchMode(int $mode, mixed ...$args): bool
     {
+        $this->fetchMode = ['mode' => $mode, 'args' => $args];
+
         return $this->statement->setFetchMode($mode, ...$args);
     }
 
@@ -308,9 +427,56 @@ final class ZtdPdoStatement extends NativePdoStatement
      */
     public function getIterator(): Iterator
     {
+        if ($this->result !== null && !$this->result->isPassthrough() && $this->result->hasResultSet()) {
+            /** @var Iterator<mixed, array<int|string, mixed>> $iterator */
+            $iterator = new \ArrayIterator($this->fetchAll());
+
+            return $iterator;
+        }
+
         /** @var Iterator<mixed, array<int|string, mixed>> $iterator */
         $iterator = $this->statement->getIterator();
 
         return $iterator;
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     */
+    private function formatBufferedRow(array $row, int $mode): mixed
+    {
+        return match ($this->resolveFetchMode($mode)) {
+            PDO::FETCH_ASSOC, PDO::FETCH_NAMED => $row,
+            PDO::FETCH_NUM => array_values($row),
+            PDO::FETCH_OBJ => (object) $row,
+            PDO::FETCH_COLUMN => array_values($row)[0] ?? false,
+            default => $this->both($row),
+        };
+    }
+
+    private function resolveFetchMode(int $mode): int
+    {
+        if ($mode !== PDO::FETCH_DEFAULT) {
+            return $mode;
+        }
+
+        return $this->fetchMode['mode'] ?? $this->defaultFetchMode;
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     * @return array<int|string, mixed>
+     */
+    private function both(array $row): array
+    {
+        $both = [];
+        $index = 0;
+        foreach ($row as $column => $value) {
+            $both[$column] = $value;
+            $both[$index] = $value;
+            $index++;
+        }
+
+        return $both;
     }
 }

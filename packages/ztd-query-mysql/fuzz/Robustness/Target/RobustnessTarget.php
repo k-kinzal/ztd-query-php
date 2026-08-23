@@ -132,6 +132,7 @@ final class RobustnessTarget
             'orders' => 'CREATE TABLE orders (id INT PRIMARY KEY, user_id INT NOT NULL, amount DECIMAL(10,2), created_at DATETIME)',
             'order_items' => 'CREATE TABLE order_items (order_id INT NOT NULL, product_id INT NOT NULL, quantity INT NOT NULL DEFAULT 1, PRIMARY KEY (order_id, product_id))',
             'products' => 'CREATE TABLE products (id INT PRIMARY KEY, name VARCHAR(255) NOT NULL, price DECIMAL(10,2), category VARCHAR(100))',
+            'events' => 'CREATE TABLE events (id INT PRIMARY KEY, event_date DATE) PARTITION BY RANGE (YEAR(event_date)) (PARTITION p2023 VALUES LESS THAN (2024), PARTITION p2024 VALUES LESS THAN (2025), PARTITION pmax VALUES LESS THAN MAXVALUE)',
         ];
 
         foreach ($schemas as $tableName => $createSql) {
@@ -166,6 +167,10 @@ final class RobustnessTarget
                 ['id' => '1', 'name' => 'Widget', 'price' => '19.99', 'category' => 'tools'],
                 ['id' => '2', 'name' => 'Gadget', 'price' => '49.99', 'category' => 'electronics'],
             ],
+            'events' => [
+                ['id' => '1', 'event_date' => '2023-06-01'],
+                ['id' => '2', 'event_date' => '2024-06-01'],
+            ],
         ];
     }
 
@@ -178,12 +183,29 @@ final class RobustnessTarget
             fn () => $this->provider->sql(maxDepth: 8),
             fn () => $this->provider->selectStatement(maxDepth: 8),
             fn () => $this->provider->insertStatement(maxDepth: 8),
-            fn () => $this->provider->updateStatement(maxDepth: 8),
-            fn () => $this->provider->deleteStatement(maxDepth: 8),
+            fn (): string => (ord($input[1] ?? "\0") % 2) === 0
+                ? $this->provider->updateStatement(maxDepth: 8)
+                : $this->provider->multiTableUpdateStatement(maxDepth: 8),
+            fn (): string => (ord($input[1] ?? "\0") % 2) === 0
+                ? $this->provider->deleteStatement(maxDepth: 8)
+                : $this->provider->multiTableDeleteStatement(maxDepth: 8),
             fn () => $this->provider->createTableStatement(maxDepth: 5),
             fn () => $this->provider->alterTableStatement(maxDepth: 5),
             fn () => $this->provider->replaceStatement(maxDepth: 5),
             fn () => $this->provider->truncateStatement(maxDepth: 3),
+            fn (): string => 'EXPLAIN SELECT * FROM users',
+            fn (): string => 'SELECT * FROM app.users',
+            fn (): string => "UPDATE users SET status = {$this->provider->quotedHexLiteral()} WHERE id = 1",
+            fn (): string => "UPDATE orders SET created_at = created_at + INTERVAL {$this->provider->integerLiteral(1, 30)} DAY WHERE id = 1",
+            fn (): string => 'UPDATE users SET status = 0 WHERE CASE WHEN id > 1 THEN 1 ELSE 0 END = 1',
+            fn (): string => 'DELETE FROM users WHERE CASE WHEN id > 1 THEN 1 ELSE 0 END = 1',
+            fn (): string => "CREATE TABLE child (id INT, parent_id INT, {$this->provider->foreignKeyConstraint()})",
+            fn (): string => $this->provider->updateJoinDerivedStatement(),
+            fn (): string => $this->provider->insertSelectCompoundStatement(),
+            fn (): string => $this->provider->insertRowAliasUpsertStatement(),
+            fn (): string => $this->provider->partitionSelectStatement(),
+            fn (): string => $this->provider->loadDataStatement(maxDepth: 8),
+            fn (): string => $this->provider->fullTextSearchStatement(),
         ];
 
         $index = ord($input[0] ?? "\0") % count($generators);

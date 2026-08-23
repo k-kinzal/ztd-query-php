@@ -4,15 +4,19 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\MySql\Transformer;
 
-use PhpMyAdmin\SqlParser\Components\Condition;
 use PhpMyAdmin\SqlParser\Components\Expression;
 use PhpMyAdmin\SqlParser\Components\JoinKeyword;
 use PhpMyAdmin\SqlParser\Components\Limit;
 use PhpMyAdmin\SqlParser\Components\OrderKeyword;
 use PhpMyAdmin\SqlParser\Statements\DeleteStatement;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\MySql\DmlWhereClauseExtractor;
+use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
+use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Rewrite\SqlTransformer;
+use ZtdQuery\Shadow\Mutation\MultiTableMutationRow;
+use ZtdQuery\Shadow\Mutation\MultiTableMutationTarget;
 
 /**
  * Transforms DELETE statements into SELECT projections with CTE shadowing.
@@ -21,11 +25,15 @@ final class DeleteTransformer implements SqlTransformer
 {
     private MySqlParser $parser;
     private SelectTransformer $selectTransformer;
+    private MySqlCteShadowComposer $cteComposer;
 
-    public function __construct(MySqlParser $parser, SelectTransformer $selectTransformer)
-    {
+    public function __construct(
+        MySqlParser $parser,
+        SelectTransformer $selectTransformer,
+    ) {
         $this->parser = $parser;
         $this->selectTransformer = $selectTransformer;
+        $this->cteComposer = new MySqlCteShadowComposer();
     }
 
     /**
@@ -47,13 +55,21 @@ final class DeleteTransformer implements SqlTransformer
         }
 
         $columnNames = [];
-        if ($targetTable !== null && isset($tables[$targetTable])) {
+        if ($targetTable !== null && isset($tables[$targetTable]['columns'])) {
             $columnNames = $tables[$targetTable]['columns'];
         }
 
         $projection = $this->buildProjection($statement, $sql, $columnNames);
+        $targetTableNames = array_keys($projection['tables']);
+        if (isset($targetTableNames[1])) {
+            $targets = $this->targetsFromContexts($projection['tables'], $tables);
+            $projection = $this->buildProjection($statement, $sql, $columnNames, $targets);
+        }
 
-        return $this->selectTransformer->transform($projection['sql'], $tables);
+        return $this->selectTransformer->transform(
+            $this->cteComposer->carryPrefix($sql, $projection['sql']),
+            $tables,
+        );
     }
 
     /**
@@ -62,9 +78,10 @@ final class DeleteTransformer implements SqlTransformer
      * @param DeleteStatement $stmt
      * @param string $originalSql
      * @param array<int, string> $columns
+     * @param list<MultiTableMutationTarget> $targets
      * @return array{sql: string, table: string, tables: array<string, array{alias: string}>}
      */
-    public function buildProjection(DeleteStatement $stmt, string $originalSql, array $columns): array
+    public function buildProjection(DeleteStatement $stmt, string $originalSql, array $columns, array $targets = []): array
     {
         $targetTableName = 'unknown';
         $targetTableAlias = null;
@@ -163,8 +180,9 @@ final class DeleteTransformer implements SqlTransformer
         }
 
         $whereClause = "";
-        if ($stmt->where !== null && $stmt->where !== []) {
-            $whereClause = " WHERE " . Condition::build($stmt->where);
+        $whereExpression = (new DmlWhereClauseExtractor())->extract($originalSql);
+        if ($whereExpression !== null && $whereExpression !== '') {
+            $whereClause = " WHERE " . $whereExpression;
         }
 
         $orderClause = "";
@@ -214,7 +232,60 @@ final class DeleteTransformer implements SqlTransformer
             $resolvedTables[$targetTableName] = ['alias' => $targetTableAlias];
         }
 
+        if ($targets !== []) {
+            $selectList = $this->multiTableSelectList($resolvedTables, $targets);
+            $sql = "SELECT $selectList$fromClause$joinClause$usingClause $whereClause$orderClause$limitClause";
+        }
+
         return ['sql' => $sql, 'table' => $targetTableName, 'tables' => $resolvedTables];
+    }
+
+    /**
+     * @param array<string, array{alias: string}> $resolvedTables
+     * @param array<string, array{viewSql: string}|array{rows: array<int, array<string, mixed>>, columns: array<int, string>, columnTypes: array<string, \ZtdQuery\Schema\ColumnType>, primaryKeys?: array<int, string>}> $contexts
+     * @return list<MultiTableMutationTarget>
+     */
+    private function targetsFromContexts(array $resolvedTables, array $contexts): array
+    {
+        $targets = [];
+        foreach ($resolvedTables as $tableName => $tableInfo) {
+            $context = $contexts[$tableName] ?? null;
+            if (!isset($context['columns'])) {
+                continue;
+            }
+            $targets[] = new MultiTableMutationTarget(
+                $tableName,
+                $context['columns'],
+                $context['primaryKeys'] ?? [],
+            );
+        }
+
+        return $targets;
+    }
+
+    /**
+     * @param array<string, array{alias: string}> $resolvedTables
+     * @param list<MultiTableMutationTarget> $targets
+     */
+    private function multiTableSelectList(array $resolvedTables, array $targets): string
+    {
+        $codec = new MultiTableMutationRow();
+        $quoter = new MySqlIdentifierQuoter();
+        $parts = [];
+        foreach ($targets as $targetIndex => $target) {
+            $tableInfo = $resolvedTables[$target->tableName()] ?? null;
+            if ($tableInfo === null) {
+                continue;
+            }
+            foreach ($target->matchColumns() as $columnIndex => $column) {
+                $alias = $quoter->quote($tableInfo['alias']);
+                $quotedColumn = $quoter->quote($column);
+                $metadata = $quoter->quote($codec->valueColumn($targetIndex, $columnIndex));
+                $parts[] = "$alias.$quotedColumn AS $metadata";
+            }
+        }
+
+        return implode(', ', $parts);
     }
 
     private function resolveAliasToTable(string $alias, DeleteStatement $stmt): ?string

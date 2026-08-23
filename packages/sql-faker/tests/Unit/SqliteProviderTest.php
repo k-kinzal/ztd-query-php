@@ -5,16 +5,21 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker;
 
 use Faker\Factory;
+use Faker\Generator;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\Terminal;
 use SqlFaker\Grammar\TerminationAnalyzer;
+use SqlFaker\Grammar\ProductionPattern;
 use SqlFaker\Sqlite\LexicalGrammar;
 use SqlFaker\Sqlite\Grammar\SqliteGrammar;
+use SqlFaker\Sqlite\GenerationPlans;
 use SqlFaker\Sqlite\SqlGenerator;
 use SqlFaker\Sqlite\StatementType;
 use SqlFaker\Grammar\RandomStringGenerator;
@@ -39,11 +44,202 @@ use SqlFaker\Grammar\TerminalInventory;
 #[CoversClass(TerminationAnalyzer::class)]
 #[CoversClass(StatementType::class)]
 #[CoversClass(LexicalGrammar::class)]
+#[UsesClass(GenerationPlan::class)]
 #[UsesClass(LexicalCatalog::class)]
+#[UsesClass(ProductionPattern::class)]
 #[UsesClass(SqlVersion::class)]
 #[UsesClass(TerminalInventory::class)]
+#[UsesClass(GenerationPlans::class)]
+#[Medium]
 final class SqliteProviderTest extends TestCase
 {
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testInsertFunctionUpsertStatementDerivesFunctionExpressionFromGrammar(int $seed): void
+    {
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new SqliteProvider($faker);
+        $sql = $provider->insertFunctionUpsertStatement();
+        $faker->seed($seed);
+
+        $tokens = (new LexicalGrammar($faker, 'sqlite-3.47.2', true))
+            ->tokenize($sql);
+        $values = array_search('VALUES', $tokens, true);
+        $conflict = array_search('CONFLICT', $tokens, true);
+        $set = array_search('SET', $tokens, true);
+        $functionOpen = array_search('LP', array_slice($tokens, (int) $set, null, true), true);
+
+        self::assertSame($sql, $provider->insertFunctionUpsertStatement(40));
+        self::assertSame('INSERT', $tokens[0]);
+        self::assertIsInt($values);
+        self::assertIsInt($conflict);
+        self::assertIsInt($set);
+        self::assertIsInt($functionOpen);
+        self::assertLessThan($conflict, $values);
+        self::assertGreaterThan($set, $functionOpen);
+        self::assertContains('UPDATE', $tokens);
+    }
+
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testMultiDmlStatementDerivesTwoStatementBatchFromGrammar(int $seed): void
+    {
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new SqliteProvider($faker);
+        $sql = $provider->multiDmlStatement();
+        $faker->seed($seed);
+        $tokens = (new LexicalGrammar($faker, 'sqlite-3.47.2', true))->tokenize($sql);
+        $separator = array_search('SEMI', $tokens, true);
+
+        self::assertSame($sql, $provider->multiDmlStatement(40));
+        self::assertIsInt($separator);
+        self::assertContains($tokens[0], ['INSERT', 'UPDATE', 'DELETE']);
+        self::assertContains($tokens[$separator + 1], ['INSERT', 'UPDATE', 'DELETE']);
+        self::assertSame(2, count(array_filter($tokens, static fn (string $token): bool => $token === 'SEMI')));
+    }
+
+    #[DataProvider('providerMultiDmlSelection')]
+    public function testMultiDmlStatementCanSelectEveryDmlFamily(
+        int $firstChoice,
+        int $secondChoice,
+        string $first,
+        string $second,
+    ): void {
+        $generator = new class ([$firstChoice, $secondChoice]) extends Generator {
+            /** @var list<int> */
+            private readonly array $choices;
+            private int $call = 0;
+
+            /** @param list<int> $choices */
+            public function __construct(array $choices)
+            {
+                parent::__construct();
+                $this->choices = $choices;
+            }
+
+            /**
+             * @param mixed $min
+             * @param mixed $max
+             */
+            #[\Override]
+            public function numberBetween($min = 0, $max = 2147483647): int
+            {
+                if ($this->call < count($this->choices)) {
+                    $choice = $this->choices[$this->call];
+                    ++$this->call;
+                    if ($min !== 0 || $max !== 2 || $choice < $min || $choice > $max) {
+                        throw new \UnexpectedValueException();
+                    }
+
+                    return $choice;
+                }
+                if (!is_int($min)) {
+                    throw new \UnexpectedValueException();
+                }
+
+                return $min;
+            }
+        };
+        $sql = (new SqliteProvider($generator))->multiDmlStatement();
+        $tokens = (new LexicalGrammar(Factory::create(), 'sqlite-3.47.2', true))->tokenize($sql);
+        $separator = array_search('SEMI', $tokens, true);
+
+        self::assertIsInt($separator);
+        self::assertSame($first, $tokens[0]);
+        self::assertSame($second, $tokens[$separator + 1]);
+    }
+
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testFullTextSearchStatementDerivesMatchExpressionFromGrammar(int $seed): void
+    {
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new SqliteProvider($faker);
+        $sql = $provider->fullTextSearchStatement();
+        $faker->seed($seed);
+        $tokens = (new LexicalGrammar($faker, 'sqlite-3.47.2', true))
+            ->tokenize($sql);
+        $where = array_search('WHERE', $tokens, true);
+        $match = array_search('MATCH', $tokens, true);
+
+        self::assertSame($sql, $provider->fullTextSearchStatement(40));
+        self::assertSame('SELECT', $tokens[0]);
+        self::assertContains('FROM', $tokens);
+        self::assertIsInt($where);
+        self::assertIsInt($match);
+        self::assertGreaterThan($where, $match);
+    }
+
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testTemporaryTableStatement(int $seed): void
+    {
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new SqliteProvider($faker);
+        $sql = $provider->temporaryTableStatement();
+        $faker->seed($seed);
+
+        $tokens = (new LexicalGrammar($faker, 'sqlite-3.47.2', true))
+            ->tokenize($sql);
+
+        self::assertSame($sql, $provider->temporaryTableStatement(40));
+        self::assertSame('CREATE', $tokens[0]);
+        self::assertContains('TEMP', $tokens);
+        self::assertContains('TABLE', $tokens);
+    }
+
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testViewStatement(int $seed): void
+    {
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new SqliteProvider($faker);
+        $sql = $provider->viewStatement();
+        $faker->seed($seed);
+        $tokens = (new LexicalGrammar($faker, 'sqlite-3.47.2', true))
+            ->tokenize($sql);
+
+        self::assertSame($sql, $provider->viewStatement(40));
+        self::assertSame('CREATE', $tokens[0]);
+        self::assertContains('VIEW', $tokens);
+        self::assertContains('SELECT', $tokens);
+    }
+
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testGeneratedColumnStatement(int $seed): void
+    {
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new SqliteProvider($faker);
+        $sql = $provider->generatedColumnStatement();
+        $faker->seed($seed);
+        $tokens = (new LexicalGrammar($faker, 'sqlite-3.47.2', true))
+            ->tokenize($sql);
+
+        self::assertSame($sql, $provider->generatedColumnStatement(40));
+        self::assertContains('GENERATED', $tokens);
+        self::assertContains('ALWAYS', $tokens);
+        self::assertContains('AS', $tokens);
+    }
+
+    #[DataProvider('providerTargetedGenerationSeed')]
+    public function testForeignKeyCascadeStatement(int $seed): void
+    {
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new SqliteProvider($faker);
+        $sql = $provider->foreignKeyCascadeStatement();
+        $faker->seed($seed);
+        $tokens = (new LexicalGrammar($faker, 'sqlite-3.47.2', true))
+            ->tokenize($sql);
+
+        self::assertSame($sql, $provider->foreignKeyCascadeStatement(40));
+        self::assertContains('FOREIGN', $tokens);
+        self::assertContains('REFERENCES', $tokens);
+        self::assertStringContainsString('ON UPDATE CASCADE', implode(' ', $tokens));
+        self::assertStringContainsString('ON DELETE CASCADE', implode(' ', $tokens));
+    }
+
     #[\Override]
     protected function setUp(): void
     {
@@ -301,6 +497,38 @@ final class SqliteProviderTest extends TestCase
         $result = $provider->withClause(maxDepth: 6);
 
         self::assertMatchesRegularExpression('/^$|WITH/', $result);
+    }
+
+    public function testForeignKeyConstraint(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new SqliteProvider($faker, 'sqlite-3.47.2');
+
+        $result = $provider->foreignKeyConstraint(1);
+
+        $tokens = array_map(
+            static fn (string $token): string => in_array($token, ['ID', 'STRING'], true) ? 'NAME' : $token,
+            (new LexicalGrammar($faker, 'sqlite-3.47.2'))->tokenize($result),
+        );
+
+        self::assertSame(
+            ['CONSTRAINT', 'NAME', 'FOREIGN', 'KEY', 'LP', 'NAME', 'RP', 'REFERENCES', 'NAME', 'LP', 'NAME', 'RP'],
+            $tokens,
+        );
+
+        $faker->seed(2);
+        $result = $provider->foreignKeyConstraint(20);
+
+        $tokens = array_map(
+            static fn (string $token): string => in_array($token, ['ID', 'STRING'], true) ? 'NAME' : $token,
+            (new LexicalGrammar($faker, 'sqlite-3.47.2'))->tokenize($result),
+        );
+
+        self::assertSame(
+            ['CONSTRAINT', 'NAME', 'FOREIGN', 'KEY'],
+            array_slice($tokens, 0, 4),
+        );
     }
 
     public function testIdentifier(): void
@@ -598,6 +826,26 @@ final class SqliteProviderTest extends TestCase
     }
 
     /**
+     * @return iterable<string, array{int}>
+     */
+    public static function providerTargetedGenerationSeed(): iterable
+    {
+        foreach (range(0, 31) as $seed) {
+            yield "seed {$seed}" => [$seed];
+        }
+    }
+
+    /**
+     * @return iterable<string, array{int, int, string, string}>
+     */
+    public static function providerMultiDmlSelection(): iterable
+    {
+        yield 'insert' => [0, 0, 'INSERT', 'INSERT'];
+        yield 'update' => [1, 1, 'UPDATE', 'UPDATE'];
+        yield 'delete' => [2, 2, 'DELETE', 'DELETE'];
+    }
+
+    /**
      * @return iterable<string, array{StatementType}>
      */
     public static function providerStatementTypeValue(): iterable
@@ -610,4 +858,5 @@ final class SqliteProviderTest extends TestCase
         yield 'AlterTable' => [StatementType::AlterTable];
         yield 'DropTable' => [StatementType::DropTable];
     }
+
 }

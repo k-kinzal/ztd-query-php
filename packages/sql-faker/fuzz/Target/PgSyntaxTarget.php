@@ -53,7 +53,9 @@ final class PgSyntaxTarget
         $seed = $this->inputToSeed($input);
         $this->faker->seed($seed);
 
-        $sql = $this->provider->sql(maxDepth: $this->maxDepth);
+        $sql = $seed % 4 === 0
+            ? $this->provider->createTableAsStatement(maxDepth: $this->maxDepth)
+            : $this->provider->sql(maxDepth: $this->maxDepth);
 
         $this->validateSyntax($sql, $seed);
     }

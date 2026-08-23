@@ -16,6 +16,7 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\Mutation\AlterTableMutation;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlSchemaParser;
+use ZtdQuery\Platform\MySql\MySqlPartitioningParser;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\TableDefinition;
@@ -23,8 +24,12 @@ use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
 
 #[CoversClass(AlterTableMutation::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlColumnTypeMapper::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlForeignKeyDefinitionParser::class)]
 #[UsesClass(MySqlParser::class)]
 #[UsesClass(MySqlSchemaParser::class)]
+#[UsesClass(MySqlPartitioningParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 final class AlterTableMutationTest extends TestCase
 {
     public function testApplyAddColumnAddsNewColumn(): void
@@ -45,6 +50,79 @@ final class AlterTableMutationTest extends TestCase
         $newDef = $registry->get('users');
         self::assertNotNull($newDef);
         self::assertContains('email', $newDef->columns);
+    }
+
+    public function testApplyAddColumnPreservesForeignKeyMetadata(): void
+    {
+        $schemaParser = new MySqlSchemaParser(new MySqlParser());
+        $registry = new TableDefinitionRegistry();
+        $definition = $schemaParser->parse(
+            'CREATE TABLE children (id INT PRIMARY KEY, parent_id INT, CONSTRAINT fk_parent '
+            . 'FOREIGN KEY (parent_id) REFERENCES parents (id) ON DELETE CASCADE ON UPDATE CASCADE)'
+        );
+        self::assertNotNull($definition);
+        $registry->register('children', $definition);
+        $store = new ShadowStore();
+
+        $parser = new Parser('ALTER TABLE children ADD COLUMN label VARCHAR(255)');
+        $alterStmt = $parser->statements[0];
+        self::assertInstanceOf(AlterStatement::class, $alterStmt);
+        (new AlterTableMutation('children', $alterStmt, $registry, $schemaParser))->apply($store, []);
+
+        $foreignKey = $registry->get('children')?->foreignKeys['fk_parent'] ?? null;
+        self::assertNotNull($foreignKey);
+        self::assertSame(['parent_id'], $foreignKey->columns);
+        self::assertSame(['id'], $foreignKey->referencedColumns);
+        self::assertSame('CASCADE', $foreignKey->onDelete->value);
+        self::assertSame('CASCADE', $foreignKey->onUpdate->value);
+    }
+
+    public function testApplyAddColumnPreservesPartitionMetadata(): void
+    {
+        $schemaParser = new MySqlSchemaParser(new MySqlParser());
+        $registry = new TableDefinitionRegistry();
+        $definition = $schemaParser->parse('CREATE TABLE events (id INT, event_date DATE) '
+            . 'PARTITION BY RANGE (YEAR(event_date)) ('
+            . 'PARTITION p2024 VALUES LESS THAN (2025), PARTITION pmax VALUES LESS THAN MAXVALUE)');
+        self::assertNotNull($definition);
+        $registry->register('events', $definition);
+
+        $parser = new Parser('ALTER TABLE events ADD COLUMN label VARCHAR(255)');
+        $alterStmt = $parser->statements[0] ?? null;
+        self::assertInstanceOf(AlterStatement::class, $alterStmt);
+        (new AlterTableMutation('events', $alterStmt, $registry, $schemaParser))->apply(new ShadowStore(), []);
+
+        $newDefinition = $registry->get('events');
+        self::assertNotNull($newDefinition);
+        self::assertContains('label', $newDefinition->columns);
+        self::assertSame(
+            ['(YEAR(event_date)) >= 2025'],
+            $newDefinition->partitioning?->predicatesFor(['pmax']),
+        );
+    }
+
+    public function testApplyAddColumnPreservesQuotedForeignKeyIdentifiers(): void
+    {
+        $schemaParser = new MySqlSchemaParser(new MySqlParser());
+        $registry = new TableDefinitionRegistry();
+        $definition = $schemaParser->parse(
+            'CREATE TABLE children (`child id` INT PRIMARY KEY, `parent id` INT, CONSTRAINT `fk parent` '
+            . 'FOREIGN KEY (`parent id`) REFERENCES `parent table` (`parent key`) '
+            . 'ON DELETE CASCADE ON UPDATE CASCADE)'
+        );
+        self::assertNotNull($definition);
+        $registry->register('children', $definition);
+
+        $parser = new Parser('ALTER TABLE children ADD COLUMN label VARCHAR(255)');
+        $alterStmt = $parser->statements[0];
+        self::assertInstanceOf(AlterStatement::class, $alterStmt);
+        (new AlterTableMutation('children', $alterStmt, $registry, $schemaParser))->apply(new ShadowStore(), []);
+
+        $foreignKey = $registry->get('children')?->foreignKeys['fk parent'] ?? null;
+        self::assertNotNull($foreignKey);
+        self::assertSame(['parent id'], $foreignKey->columns);
+        self::assertSame('parent table', $foreignKey->referencedTable);
+        self::assertSame(['parent key'], $foreignKey->referencedColumns);
     }
 
     public function testApplyAddColumnWithoutColumnKeyword(): void

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\Grammar;
 
 use Faker\Factory;
+use InvalidArgumentException;
+use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\RandomStringGenerator;
@@ -429,5 +431,141 @@ final class RandomStringGeneratorTest extends TestCase
         $rsg = new RandomStringGenerator($faker);
         $result = $rsg->hostnameString(2, 2, 3, 3);
         self::assertMatchesRegularExpression('/^[a-z0-9]{3}\.[a-z0-9]{3}$/', $result);
+    }
+
+    public function testHostnameStringRejectsAnEmptyResult(): void
+    {
+        $this->expectException(LogicException::class);
+
+        (new RandomStringGenerator(Factory::create()))->hostnameString(0, 0);
+    }
+
+    public function testLexicalSequenceDerivesTermsFromCatalog(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(42);
+        $sequence = (new RandomStringGenerator($faker))->lexicalSequence(
+            ['SELECT_SYM' => ['SELECT'], 'FROM_SYM' => ['FROM'], 'WHERE_SYM' => ['WHERE']],
+            3,
+            3,
+        );
+
+        self::assertCount(3, explode(' ', $sequence));
+        self::assertMatchesRegularExpression('/^(?:SELECT|FROM|WHERE)(?: (?:SELECT|FROM|WHERE)){2}$/', $sequence);
+    }
+
+    public function testLexicalSequenceUsesDefaultTermBounds(): void
+    {
+        $faker = new class () extends \Faker\Generator {
+            /**
+             * @param mixed $min
+             * @param mixed $max
+             */
+            #[\Override]
+            public function numberBetween($min = 0, $max = 2147483647): int
+            {
+                if (!is_int($min)) {
+                    throw new \UnexpectedValueException();
+                }
+
+                return $min;
+            }
+        };
+
+        $sequence = (new RandomStringGenerator($faker))->lexicalSequence(['SELECT_SYM' => ['SELECT']]);
+
+        self::assertSame('SELECT SELECT', $sequence);
+        self::assertSame(
+            [2, 4],
+            array_map(
+                static fn (\ReflectionParameter $parameter): mixed => $parameter->getDefaultValue(),
+                array_slice((new \ReflectionMethod(RandomStringGenerator::class, 'lexicalSequence'))->getParameters(), 1),
+            ),
+        );
+    }
+
+    public function testLexicalSequenceAcceptsOneTerm(): void
+    {
+        self::assertSame(
+            'SELECT',
+            (new RandomStringGenerator(Factory::create()))->lexicalSequence(['SELECT_SYM' => ['SELECT']], 1, 1),
+        );
+    }
+
+    public function testLexicalSequenceIgnoresEmptyTerminalLexemeSets(): void
+    {
+        $faker = new class () extends \Faker\Generator {
+            /**
+             * @param mixed $min
+             * @param mixed $max
+             */
+            #[\Override]
+            public function numberBetween($min = 0, $max = 2147483647): int
+            {
+                if (!is_int($min)) {
+                    throw new \UnexpectedValueException();
+                }
+
+                return $min;
+            }
+        };
+
+        self::assertSame(
+            'SELECT',
+            (new RandomStringGenerator($faker))->lexicalSequence(
+                ['EMPTY' => [], 'SELECT_SYM' => ['SELECT']],
+                1,
+                1,
+            ),
+        );
+    }
+
+    public function testLexicalSequenceCanSelectTheLastTerminalLexemeSet(): void
+    {
+        $faker = new class () extends \Faker\Generator {
+            /**
+             * @param mixed $min
+             * @param mixed $max
+             */
+            #[\Override]
+            public function numberBetween($min = 0, $max = 2147483647): int
+            {
+                if (!is_int($max)) {
+                    throw new \UnexpectedValueException();
+                }
+
+                return $max;
+            }
+        };
+
+        self::assertSame(
+            'FROM',
+            (new RandomStringGenerator($faker))->lexicalSequence(
+                ['SELECT_SYM' => ['SELECT'], 'FROM_SYM' => ['FROM']],
+                1,
+                1,
+            ),
+        );
+    }
+
+    public function testLexicalSequenceRejectsInvalidBounds(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        (new RandomStringGenerator(Factory::create()))->lexicalSequence(['SELECT_SYM' => ['SELECT']], 0, 1);
+    }
+
+    public function testLexicalSequenceRejectsEmptyCatalog(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        (new RandomStringGenerator(Factory::create()))->lexicalSequence([]);
+    }
+
+    public function testLexicalSequenceRejectsEmptyLexemes(): void
+    {
+        $this->expectException(LogicException::class);
+
+        (new RandomStringGenerator(Factory::create()))->lexicalSequence(['EMPTY' => ['']], 1, 1);
     }
 }

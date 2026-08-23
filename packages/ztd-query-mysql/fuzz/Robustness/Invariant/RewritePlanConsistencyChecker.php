@@ -8,6 +8,8 @@ use Throwable;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
+use ZtdQuery\Shadow\Mutation\MultiDeleteMutation;
+use ZtdQuery\Shadow\Mutation\MultiUpdateMutation;
 
 final class RewritePlanConsistencyChecker implements InvariantChecker
 {
@@ -58,6 +60,36 @@ final class RewritePlanConsistencyChecker implements InvariantChecker
                 'Rewritten SQL is empty',
                 $sql,
                 ['kind' => $kind->value]
+            );
+        }
+
+        if ($mutation instanceof MultiDeleteMutation || $mutation instanceof MultiUpdateMutation) {
+            foreach (array_keys($mutation->tableNames()) as $targetIndex) {
+                $metadataColumn = '__ztd_multi_' . $targetIndex . '_value_0';
+                if (!str_contains($plan->sql(), $metadataColumn)) {
+                    return new InvariantViolation(
+                        'INV-L2-08',
+                        'multi-table mutation target is missing from the result projection',
+                        $sql,
+                        [
+                            'target_index' => $targetIndex,
+                            'rewrite_sql' => $plan->sql(),
+                        ],
+                    );
+                }
+            }
+        }
+
+        $shadowTables = ['users', 'orders', 'order_items', 'products'];
+        $relationParser = new \ZtdQuery\Platform\MySql\MySqlSelectRelationParser();
+        $normalizedInput = $relationParser->unqualify($sql, $shadowTables);
+        $normalizedPlan = $relationParser->unqualify($plan->sql(), $shadowTables);
+        if ($normalizedInput !== $sql && $normalizedPlan !== $plan->sql()) {
+            return new InvariantViolation(
+                'INV-L2-07',
+                'schema-qualified shadow source survived rewrite',
+                $sql,
+                ['rewrite_sql' => $plan->sql()]
             );
         }
 

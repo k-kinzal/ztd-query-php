@@ -22,6 +22,19 @@ final class SqlTransformerTest extends TransformerContractTest
         return 'SELECT * FROM users WHERE id = 1';
     }
 
+    public function testViewContextIsRenderedAsCte(): void
+    {
+        $result = $this->createTransformer()->transform(
+            'SELECT * FROM active_users',
+            ['active_users' => ['viewSql' => 'SELECT * FROM users WHERE active = 1']],
+        );
+
+        self::assertSame(
+            'WITH "active_users" AS (SELECT * FROM users WHERE active = 1) SELECT * FROM active_users',
+            $result,
+        );
+    }
+
     #[\Override]
     protected function nativeIntegerType(): string
     {

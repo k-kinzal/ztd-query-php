@@ -20,7 +20,7 @@ final class SqliteSchemaAwareSqlBuilder
     {
         $table = $this->quoteIdentifier($schema->name);
         $columns = $schema->columns;
-        $variant = $this->faker->numberBetween(0, 4);
+        $variant = $this->faker->numberBetween(0, 5);
 
         switch ($variant) {
             case 0:
@@ -45,6 +45,11 @@ final class SqliteSchemaAwareSqlBuilder
                 /** @var string $col */
                 $col = $this->faker->randomElement($columns);
                 return "SELECT DISTINCT " . $this->quoteIdentifier($col) . " FROM $table";
+            case 5:
+                /** @var string $derivedColumn */
+                $derivedColumn = $this->faker->randomElement($columns);
+                $quotedColumn = $this->quoteIdentifier($derivedColumn);
+                return "SELECT $quotedColumn FROM (SELECT $quotedColumn FROM $table) AS \"_ztd_derived\"";
             default:
                 return "SELECT * FROM $table";
         }
@@ -54,6 +59,16 @@ final class SqliteSchemaAwareSqlBuilder
     {
         $table = $this->quoteIdentifier($schema->name);
         $columns = $schema->columns;
+        $variant = $schema->defaultColumns === [] ? 0 : $this->faker->numberBetween(0, 2);
+        if ($variant === 2 && count($schema->defaultColumns) === count($columns)) {
+            return "INSERT INTO $table DEFAULT VALUES";
+        }
+        if ($variant !== 0) {
+            $columns = array_values(array_diff($columns, $schema->defaultColumns));
+            if ($columns === []) {
+                return "INSERT INTO $table DEFAULT VALUES";
+            }
+        }
         $values = [];
 
         foreach ($columns as $col) {
@@ -62,6 +77,10 @@ final class SqliteSchemaAwareSqlBuilder
 
         $colList = implode(', ', array_map(fn ($c) => $this->quoteIdentifier($c), $columns));
         $valList = implode(', ', $values);
+
+        if ($variant === 0 && $this->faker->boolean(25)) {
+            return "INSERT INTO $table ($colList) SELECT $valList";
+        }
 
         return "INSERT INTO $table ($colList) VALUES ($valList)";
     }
@@ -80,27 +99,46 @@ final class SqliteSchemaAwareSqlBuilder
         $updateCol = $this->faker->randomElement($nonPkCols);
         $newValue = $this->generateLiteral($updateCol);
 
-        $whereClause = $this->buildPkWhere($schema);
+        $groupedSubquery = $this->faker->boolean(25);
+        $alias = !$groupedSubquery && $this->faker->boolean(35) ? '_ztd_target' : null;
+        $whereClause = $groupedSubquery
+            ? $this->buildGroupedSubqueryWhere($schema)
+            : $this->buildPkWhere($schema, $alias);
+        $target = $alias === null ? $table : "$table AS " . $this->quoteIdentifier($alias);
 
-        return "UPDATE $table SET " . $this->quoteIdentifier($updateCol) . " = $newValue WHERE $whereClause";
+        return "UPDATE $target SET " . $this->quoteIdentifier($updateCol) . " = $newValue WHERE $whereClause";
     }
 
     public function buildDelete(SchemaDefinition $schema): string
     {
         $table = $this->quoteIdentifier($schema->name);
-        $whereClause = $this->buildPkWhere($schema);
+        $whereClause = $this->faker->boolean(25)
+            ? $this->buildGroupedSubqueryWhere($schema)
+            : $this->buildPkWhere($schema);
 
         return "DELETE FROM $table WHERE $whereClause";
     }
 
-    private function buildPkWhere(SchemaDefinition $schema): string
+    private function buildPkWhere(SchemaDefinition $schema, ?string $qualifier = null): string
     {
         $conditions = [];
         foreach ($schema->primaryKeys as $pk) {
             $literal = $this->generateLiteral($pk);
-            $conditions[] = $this->quoteIdentifier($pk) . " = $literal";
+            $column = $this->quoteIdentifier($pk);
+            if ($qualifier !== null) {
+                $column = $this->quoteIdentifier($qualifier) . '.' . $column;
+            }
+            $conditions[] = $column . " = $literal";
         }
         return implode(' AND ', $conditions);
+    }
+
+    private function buildGroupedSubqueryWhere(SchemaDefinition $schema): string
+    {
+        $table = $this->quoteIdentifier($schema->name);
+        $key = $this->quoteIdentifier($schema->primaryKeys[0] ?? $schema->columns[0]);
+
+        return "$key IN (SELECT $key FROM $table GROUP BY $key HAVING COUNT(*) > 1)";
     }
 
     /**

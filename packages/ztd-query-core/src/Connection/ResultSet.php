@@ -1,0 +1,21 @@
+<?php
+
+declare(strict_types=1);
+
+namespace ZtdQuery\Connection;
+
+/**
+ * Buffered rows together with metadata that remains available for an empty result.
+ */
+final class ResultSet
+{
+    /**
+     * @param array<int, array<string, mixed>> $rows
+     * @param list<ResultColumn> $columns
+     */
+    public function __construct(
+        public readonly array $rows,
+        public readonly array $columns,
+    ) {
+    }
+}

@@ -32,7 +32,7 @@ final class CreateTableMutationTest extends TestCase
             ['id'],
             [],
         );
-        $mutation = new CreateTableMutation('users', $definition, $registry);
+        $mutation = new CreateTableMutation('users', $definition, $registry, 'fixture statement');
         $mutation->apply($store, []);
 
         self::assertNotNull($registry->get('users'));
@@ -51,7 +51,7 @@ final class CreateTableMutationTest extends TestCase
             ['id'],
             [],
         );
-        $mutation = new CreateTableMutation('users', $definition, $registry);
+        $mutation = new CreateTableMutation('users', $definition, $registry, 'fixture statement');
         $mutation->apply($store, []);
 
         self::assertSame([], $store->get('users'));
@@ -67,7 +67,7 @@ final class CreateTableMutationTest extends TestCase
             ['id'],
             [],
         );
-        $mutation = new CreateTableMutation('users', $definition, $registry);
+        $mutation = new CreateTableMutation('users', $definition, $registry, 'fixture statement');
 
         self::assertSame('users', $mutation->tableName());
     }
@@ -92,12 +92,15 @@ final class CreateTableMutationTest extends TestCase
             ['id'],
             [],
         );
-        $mutation = new CreateTableMutation('users', $newDefinition, $registry);
+        $mutation = new CreateTableMutation('users', $newDefinition, $registry, 'fixture statement');
 
-        $this->expectException(TableAlreadyExistsException::class);
-        $this->expectExceptionMessage("Table 'users' already exists.");
-
-        $mutation->apply($store, []);
+        try {
+            $mutation->apply($store, []);
+            self::fail('Expected duplicate virtual table creation to fail.');
+        } catch (TableAlreadyExistsException $exception) {
+            self::assertSame("Table 'users' already exists.", $exception->getMessage());
+            self::assertSame('fixture statement', $exception->getSql());
+        }
     }
 
     public function testApplyWithIfNotExistsSkipsWhenTableExists(): void
@@ -120,7 +123,7 @@ final class CreateTableMutationTest extends TestCase
             ['id'],
             [],
         );
-        $mutation = new CreateTableMutation('users', $newDefinition, $registry, true);
+        $mutation = new CreateTableMutation('users', $newDefinition, $registry, 'fixture statement', true);
         $mutation->apply($store, []);
 
         $def = $registry->get('users');
@@ -140,7 +143,7 @@ final class CreateTableMutationTest extends TestCase
             ['id'],
             [],
         );
-        $mutation = new CreateTableMutation('users', $definition, $registry, true);
+        $mutation = new CreateTableMutation('users', $definition, $registry, 'fixture statement', true);
         $mutation->apply($store, []);
 
         self::assertNotNull($registry->get('users'));

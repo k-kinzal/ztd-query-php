@@ -16,8 +16,18 @@ final class StatementTypeTest extends TestCase
         self::assertSame('SelectStmt', StatementType::Select->value);
     }
 
+    public function testCreateTableAsHasExpectedValue(): void
+    {
+        self::assertSame('CreateAsStmt', StatementType::CreateTableAs->value);
+    }
+
+    public function testCreateDomainHasExpectedValue(): void
+    {
+        self::assertSame('CreateDomainStmt', StatementType::CreateDomain->value);
+    }
+
     public function testCasesCount(): void
     {
-        self::assertCount(8, StatementType::cases());
+        self::assertCount(10, StatementType::cases());
     }
 }

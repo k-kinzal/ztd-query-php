@@ -23,6 +23,94 @@ use SqlFaker\Sqlite\LexicalGrammar;
 #[UsesClass(SqlVersion::class)]
 final class LexicalGrammarTest extends TestCase
 {
+    public function testGeneratesPublicProviderLexemesThroughDialectGrammar(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $lexical = new LexicalGrammar($faker, 'sqlite-3.47.2');
+        $sql = implode(' ', [
+            $lexical->generateQuotedIdentifier(3, 3),
+            $lexical->generateStringLiteral(3, 3),
+            $lexical->generateIntegerLiteral(10, 10),
+            $lexical->generateDecimalLiteral(4, 2),
+        ]);
+
+        self::assertSame(['ID', 'STRING', 'INTEGER', 'FLOAT'], $lexical->tokenize($sql));
+    }
+
+    /**
+     * @param \Closure(LexicalGrammar): string $generate
+     * @param list<int> $expected
+     */
+    #[DataProvider('providerPublicLexemeDefaults')]
+    public function testPublicLexemeDefaultBounds(\Closure $generate, string $method, array $expected): void
+    {
+        self::assertNotSame('', $generate(new LexicalGrammar(Factory::create(), 'sqlite-3.47.2')));
+        self::assertSame(
+            $expected,
+            array_map(
+                static fn (\ReflectionParameter $parameter): mixed => $parameter->getDefaultValue(),
+                (new \ReflectionMethod(LexicalGrammar::class, $method))->getParameters(),
+            ),
+        );
+    }
+
+    /** @return iterable<string, array{\Closure(LexicalGrammar): string, string, list<int>}> */
+    public static function providerPublicLexemeDefaults(): iterable
+    {
+        yield 'quoted identifier' => [static fn (LexicalGrammar $grammar): string => $grammar->generateQuotedIdentifier(), 'generateQuotedIdentifier', [1, 128]];
+        yield 'string' => [static fn (LexicalGrammar $grammar): string => $grammar->generateStringLiteral(), 'generateStringLiteral', [1, 255]];
+        yield 'integer' => [static fn (LexicalGrammar $grammar): string => $grammar->generateIntegerLiteral(), 'generateIntegerLiteral', [1, PHP_INT_MAX]];
+        yield 'decimal' => [static fn (LexicalGrammar $grammar): string => $grammar->generateDecimalLiteral(), 'generateDecimalLiteral', [15, 2]];
+    }
+
+    #[DataProvider('providerGeneratedStringLiteral')]
+    public function testGeneratesEveryStringLiteralStrategy(int $choice, string $expected): void
+    {
+        $faker = new class ($choice) extends \Faker\Generator {
+            private bool $first = true;
+
+            public function __construct(private readonly int $choice)
+            {
+                parent::__construct();
+            }
+
+            /**
+             * @param mixed $min
+             * @param mixed $max
+             */
+            #[\Override]
+            public function numberBetween($min = 0, $max = 2147483647): int
+            {
+                if ($this->first) {
+                    $this->first = false;
+
+                    return $this->choice;
+                }
+                if (!is_int($min)) {
+                    throw new \UnexpectedValueException();
+                }
+
+                return $min;
+            }
+        };
+
+        self::assertSame(
+            $expected,
+            (new LexicalGrammar($faker, 'sqlite-3.47.2', true))->realize(['STRING']),
+        );
+    }
+
+    /** @return iterable<string, array{int, string}> */
+    public static function providerGeneratedStringLiteral(): iterable
+    {
+        yield 'combined arm value zero' => [0, "'ABORT ABORT'"];
+        yield 'combined arm value one' => [1, "'ABORT ABORT'"];
+        yield 'quote escaping' => [2, "'a''b'"];
+        yield 'backslash' => [3, "'a\\b'"];
+        yield 'random body' => [4, "''"];
+    }
+
     public function testTokenizesQuotedIdentifiersStringsVariablesAndComments(): void
     {
         $lexical = new LexicalGrammar(Factory::create(), 'sqlite-3.47.2');
@@ -83,6 +171,18 @@ SQL;
         $this->expectExceptionMessage('NOT_A_TERMINAL');
 
         $lexical->assertTerminalsCovered(['NOT_A_TERMINAL']);
+    }
+
+    public function testRealizesStrictTableOptionAsIdentifierToken(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'sqlite-3.47.2');
+
+        self::assertTrue($lexical->supports(LexicalGrammar::STRICT_TABLE_OPTION));
+        $lexical->assertTerminalsCovered(['ID', LexicalGrammar::STRICT_TABLE_OPTION]);
+        $sql = $lexical->realize([LexicalGrammar::STRICT_TABLE_OPTION]);
+        self::assertStringContainsString('STRICT', $sql);
+        self::assertSame(['ID'], $lexical->tokenize($sql));
+        self::assertSame(['ID'], $lexical->tokenize('STRICT'));
     }
 
     #[DataProvider('providerInvalidSql')]
@@ -153,6 +253,51 @@ SQL;
         $lexical = new LexicalGrammar($faker, 'sqlite-3.47.2', true);
 
         self::assertNotSame($terminal, $lexical->realize([$terminal]));
+    }
+
+    #[DataProvider('providerIdentifierQuoteStrategy')]
+    public function testIdentifierQuoteStrategy(int $choice, string $expected): void
+    {
+        $faker = new class ([0, $choice]) extends \Faker\Generator {
+            private int $call = 0;
+
+            /** @param list<int> $choices */
+            public function __construct(private readonly array $choices)
+            {
+                parent::__construct();
+            }
+
+            /**
+             * @param mixed $min
+             * @param mixed $max
+             */
+            #[\Override]
+            public function numberBetween($min = 0, $max = 2147483647): int
+            {
+                if (isset($this->choices[$this->call])) {
+                    return $this->choices[$this->call++];
+                }
+                if (!is_int($min)) {
+                    throw new \UnexpectedValueException();
+                }
+
+                return $min;
+            }
+        };
+
+        self::assertSame(
+            $expected,
+            (new LexicalGrammar($faker, 'sqlite-3.47.2', true))->realize(['ID']),
+        );
+    }
+
+    /** @return iterable<string, array{int, string}> */
+    public static function providerIdentifierQuoteStrategy(): iterable
+    {
+        yield 'double quote escaping' => [0, '"select""quoted"'];
+        yield 'backtick escaping' => [1, '`select``quoted`'];
+        yield 'closing bracket removal' => [2, '[selectquoted]'];
+        yield 'unquoted identifier' => [3, 'select'];
     }
 
     #[DataProvider('providerStringSyntheticTerminal')]

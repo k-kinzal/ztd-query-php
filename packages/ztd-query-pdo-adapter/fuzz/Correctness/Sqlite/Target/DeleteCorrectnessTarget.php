@@ -55,10 +55,11 @@ final class DeleteCorrectnessTarget
 
             try {
                 $this->harness->getZtdPdo()->exec($sql);
-            } catch (UnsupportedSqlException | UnknownSchemaException) {
-                return;
-            } catch (DatabaseException | PDOException) {
-                return;
+            } catch (UnsupportedSqlException | UnknownSchemaException | DatabaseException | PDOException $e) {
+                if ($rawError !== null) {
+                    return;
+                }
+                throw new Error("ZTD DELETE failed after native success\nSeed: $seed\nSQL: $sql", 0, $e);
             }
 
             if ($rawError !== null) {

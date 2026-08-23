@@ -7,11 +7,15 @@ namespace Tests\Unit;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Exception\UnknownSchemaException;
+use ZtdQuery\Platform\MySql\DmlWhereClauseExtractor;
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlMutationResolver;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlSchemaParser;
+use ZtdQuery\Platform\MySql\MySqlUpsertAssignmentExtractor;
+use ZtdQuery\Platform\MySql\UpdateSourceExtractor;
 use ZtdQuery\Platform\MySql\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
@@ -32,16 +36,30 @@ use ZtdQuery\Shadow\Mutation\MultiUpdateMutation;
 use ZtdQuery\Shadow\Mutation\UpsertMutation;
 use ZtdQuery\Platform\MySql\Mutation\AlterTableMutation;
 use ZtdQuery\Shadow\ShadowStore;
+use ZtdQuery\Shadow\ShadowTableState;
 
 #[CoversClass(MySqlMutationResolver::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlColumnTypeMapper::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlForeignKeyDefinitionParser::class)]
 #[UsesClass(MySqlParser::class)]
 #[UsesClass(MySqlSchemaParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlUpsertExpressionParser::class)]
+#[UsesClass(MySqlUpsertAssignmentExtractor::class)]
 #[UsesClass(SelectTransformer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlFullTextSearchRewriter::class)]
 #[UsesClass(UpdateTransformer::class)]
 #[UsesClass(DeleteTransformer::class)]
+#[UsesClass(DmlWhereClauseExtractor::class)]
+#[UsesClass(UpdateSourceExtractor::class)]
 #[UsesClass(MySqlCastRenderer::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlTypeSemantics::class)]
 #[UsesClass(AlterTableMutation::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlNativeUpsertProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlGeneratedColumnProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 final class MySqlMutationResolverTest extends TestCase
 {
     public function testResolveInsertReturnsInsertMutation(): void
@@ -146,12 +164,62 @@ final class MySqlMutationResolverTest extends TestCase
         $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
         $resolver = new MySqlMutationResolver($shadowStore, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
 
-        $sql = "INSERT INTO users (id, name) VALUES (1, 'Alice') ON DUPLICATE KEY UPDATE name = 'Alice'";
+        $sql = "INSERT INTO users (id, name) VALUES (1, 'Alice') ON DUPLICATE KEY UPDATE name = CONCAT(name, ' updated')";
         $statements = $parser->parse($sql);
         $mutation = $resolver->resolve($sql, $statements[0], QueryKind::WRITE_SIMULATED);
 
         self::assertInstanceOf(UpsertMutation::class, $mutation);
         self::assertSame('users', $mutation->tableName());
+    }
+
+    public function testResolveRowAliasUpsertAppliesIncomingColumns(): void
+    {
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $shadowStore = new ShadowStore();
+        $shadowStore->set('users', [['id' => 1, 'name' => 'old', 'score' => 10]]);
+        $registry = new TableDefinitionRegistry();
+        $registry->register('users', new TableDefinition(
+            ['id', 'name', 'score'],
+            ['id' => 'INT', 'name' => 'VARCHAR(255)', 'score' => 'INT'],
+            ['id'],
+            ['id'],
+            [],
+        ));
+        $selectTransformer = new SelectTransformer();
+        $resolver = new MySqlMutationResolver(
+            $shadowStore,
+            $registry,
+            $schemaParser,
+            new UpdateTransformer($parser, $selectTransformer),
+            new DeleteTransformer($parser, $selectTransformer),
+        );
+        $sql = "INSERT INTO users VALUES (1, 'new', 20) AS incoming ON DUPLICATE KEY UPDATE name = incoming.name, score = incoming.score";
+        $statements = $parser->parse($sql);
+
+        $mutation = $resolver->resolve($sql, $statements[0], QueryKind::WRITE_SIMULATED);
+        self::assertInstanceOf(UpsertMutation::class, $mutation);
+        $mutation->apply($shadowStore, [['id' => 1, 'name' => 'new', 'score' => 20]]);
+
+        self::assertSame([['id' => 1, 'name' => 'new', 'score' => 20]], $shadowStore->get('users'));
+    }
+
+    public function testResolveInsertOnDuplicateKeyWithoutRegisteredSchema(): void
+    {
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $shadowStore = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $selectTransformer = new SelectTransformer();
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $resolver = new MySqlMutationResolver($shadowStore, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $sql = "INSERT INTO users (id, name) VALUES (1, 'Alice') ON DUPLICATE KEY UPDATE name = VALUES(name)";
+        $statements = $parser->parse($sql);
+
+        $mutation = $resolver->resolve($sql, $statements[0], QueryKind::WRITE_SIMULATED);
+
+        self::assertInstanceOf(UpsertMutation::class, $mutation);
     }
 
     public function testResolveUpdateReturnsUpdateMutation(): void
@@ -225,6 +293,24 @@ final class MySqlMutationResolverTest extends TestCase
         self::assertSame('users', $mutation->tableName());
     }
 
+    public function testResolveReplaceWithoutRegisteredSchema(): void
+    {
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $shadowStore = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $selectTransformer = new SelectTransformer();
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $resolver = new MySqlMutationResolver($shadowStore, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $sql = "REPLACE INTO users (id, name) VALUES (1, 'Alice')";
+        $statements = $parser->parse($sql);
+
+        $mutation = $resolver->resolve($sql, $statements[0], QueryKind::WRITE_SIMULATED);
+
+        self::assertInstanceOf(ReplaceMutation::class, $mutation);
+    }
+
     public function testResolveUpdateMultiTableReturnsMultiUpdateMutation(): void
     {
         $parser = new MySqlParser();
@@ -250,6 +336,21 @@ final class MySqlMutationResolverTest extends TestCase
         $mutation = $resolver->resolve($sql, $statements[0], QueryKind::WRITE_SIMULATED);
 
         self::assertInstanceOf(\ZtdQuery\Shadow\Mutation\MultiUpdateMutation::class, $mutation);
+        $mutation->apply($shadowStore, [[
+            '__ztd_multi_0_value_0' => 1,
+            '__ztd_multi_0_value_1' => 'Updated',
+            '__ztd_multi_0_identity_0' => 1,
+            '__ztd_multi_1_value_0' => 1,
+            '__ztd_multi_1_value_1' => 1,
+            '__ztd_multi_1_value_2' => 'done',
+            '__ztd_multi_1_identity_0' => 1,
+        ]]);
+
+        self::assertSame([['id' => 1, 'name' => 'Updated']], $shadowStore->get('users'));
+        self::assertSame(
+            [['id' => 1, 'user_id' => 1, 'status' => 'done']],
+            $shadowStore->get('orders'),
+        );
     }
 
     public function testResolveDeleteMultiTableReturnsMultiDeleteMutation(): void
@@ -265,7 +366,7 @@ final class MySqlMutationResolverTest extends TestCase
         $registry->register('orders', $definition2);
 
         $shadowStore->set('users', [['id' => 1, 'name' => 'Alice']]);
-        $shadowStore->set('orders', [['id' => 1, 'user_id' => 1]]);
+        $shadowStore->set('orders', [['id' => 9, 'user_id' => 1]]);
 
         $selectTransformer = new SelectTransformer();
         $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
@@ -277,6 +378,13 @@ final class MySqlMutationResolverTest extends TestCase
         $mutation = $resolver->resolve($sql, $statements[0], QueryKind::WRITE_SIMULATED);
 
         self::assertInstanceOf(\ZtdQuery\Shadow\Mutation\MultiDeleteMutation::class, $mutation);
+        $mutation->apply($shadowStore, [[
+            '__ztd_multi_0_value_0' => 1,
+            '__ztd_multi_1_value_0' => 9,
+        ]]);
+
+        self::assertSame([], $shadowStore->get('users'));
+        self::assertSame([], $shadowStore->get('orders'));
     }
 
     public function testResolveInsertWithOnDuplicateKeyReturnsUpsertMutation(): void
@@ -625,6 +733,8 @@ final class MySqlMutationResolverTest extends TestCase
         self::assertInstanceOf(MultiDeleteMutation::class, $mutation);
         self::assertSame([], $shadowStore->get('users'));
         self::assertSame([], $shadowStore->get('orders'));
+        self::assertSame(ShadowTableState::Initialized, $shadowStore->state('users'));
+        self::assertSame(ShadowTableState::Initialized, $shadowStore->state('orders'));
     }
 
     public function testInsertOnDuplicateKeyUpdateReturnsUpsert(): void
@@ -833,6 +943,7 @@ final class MySqlMutationResolverTest extends TestCase
         self::assertInstanceOf(UpdateMutation::class, $mutation);
         self::assertSame('users', $mutation->tableName());
         self::assertSame([], $shadowStore->get('users'));
+        self::assertSame(ShadowTableState::Initialized, $shadowStore->state('users'));
     }
 
     public function testResolveUpdateThrowsWhenNoSchemaAvailable(): void
@@ -1272,6 +1383,8 @@ final class MySqlMutationResolverTest extends TestCase
         $mutation = $resolver->resolve($sql, $statements[0], QueryKind::WRITE_SIMULATED);
 
         self::assertInstanceOf(MultiUpdateMutation::class, $mutation);
+        self::assertSame(ShadowTableState::Initialized, $shadowStore->state('users'));
+        self::assertSame(ShadowTableState::Initialized, $shadowStore->state('orders'));
     }
 
     public function testResolveMultiDeleteReturnsPrimaryKeysFromDefinition(): void
@@ -1610,5 +1723,23 @@ final class MySqlMutationResolverTest extends TestCase
         $mutation = $resolver->resolve($sql, $statements[0], QueryKind::DDL_SIMULATED);
 
         self::assertInstanceOf(CreateTableLikeMutation::class, $mutation);
+    }
+
+    public function testUpdateDoesNotTreatRowsFromUnknownInsertAsSchema(): void
+    {
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $shadowStore = new ShadowStore();
+        $shadowStore->insert('late_table', [['id' => 1, 'name' => 'Alice']]);
+        $registry = new TableDefinitionRegistry();
+        $selectTransformer = new SelectTransformer();
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $resolver = new MySqlMutationResolver($shadowStore, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $sql = "UPDATE late_table SET name = 'Bob' WHERE id = 1";
+        $statements = $parser->parse($sql);
+
+        $this->expectException(UnknownSchemaException::class);
+        $resolver->resolve($sql, $statements[0], QueryKind::WRITE_SIMULATED);
     }
 }

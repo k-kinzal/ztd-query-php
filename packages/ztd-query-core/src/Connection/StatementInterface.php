@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Connection;
 
+use ZtdQuery\Platform\ResultColumnTypeResolver;
+
 /**
  * Minimal statement interface for ZTD layer.
  *
@@ -27,6 +29,15 @@ interface StatementInterface
      * @return array<int, array<string, mixed>> Array of associative arrays.
      */
     public function fetchAll(): array;
+
+    /**
+     * Return result-set columns in projection order.
+     *
+     * Metadata must remain available when the result contains no rows.
+     *
+     * @return list<ResultColumn>
+     */
+    public function resultColumns(ResultColumnTypeResolver $typeResolver): array;
 
     /**
      * Return the number of affected rows.

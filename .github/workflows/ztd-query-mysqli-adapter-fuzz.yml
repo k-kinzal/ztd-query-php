@@ -80,6 +80,7 @@ jobs:
         target:
           - { name: select, script: fuzz_correctness_select.php, corpus: correctness-select }
           - { name: insert, script: fuzz_correctness_insert.php, corpus: correctness-insert }
+          - { name: replace, script: fuzz_correctness_replace.php, corpus: correctness-replace }
           - { name: update, script: fuzz_correctness_update.php, corpus: correctness-update }
           - { name: delete, script: fuzz_correctness_delete.php, corpus: correctness-delete }
     defaults:

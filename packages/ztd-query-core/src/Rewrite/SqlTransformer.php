@@ -18,10 +18,18 @@ interface SqlTransformer
      * Transform a SQL statement using the provided table context.
      *
      * @param string $sql The original SQL statement.
-     * @param array<string, array{
+     * @param array<string, array{viewSql: string}|array{
      *     rows: array<int, array<string, mixed>>,
      *     columns: array<int, string>,
-     *     columnTypes: array<string, ColumnType>
+     *     columnTypes: array<string, ColumnType>,
+     *     primaryKeys?: array<int, string>,
+     *     candidateKeys?: array<string, array<int, string>>,
+     *     columnDefaults?: array<string, string>,
+     *     identityStrategies?: array<string, \ZtdQuery\Schema\IdentityGenerationStrategy>,
+     *     generatedExpressions?: array<string, string>,
+     *     partitioning?: \ZtdQuery\Schema\TablePartitioning|null,
+     *     sourceSql?: string,
+     *     storageTable?: string
      * }> $tables Table name => shadow data and column information.
      * @return string The transformed SQL.
      */

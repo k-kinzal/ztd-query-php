@@ -9,18 +9,102 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use Tests\Contract\TransformerContractTest;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\IdentifierQuoter;
+use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
+use ZtdQuery\Platform\MySql\MySqlTypeSemantics;
+use ZtdQuery\Platform\MySql\MySqlPartitionSelectionRewriter;
+use ZtdQuery\Platform\MySql\MySqlFullTextSearchRewriter;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
+use ZtdQuery\Schema\TablePartitioning;
 
 #[CoversClass(SelectTransformer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlSelectRelationParser::class)]
 #[UsesClass(MySqlCastRenderer::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
+#[UsesClass(MySqlTypeSemantics::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlGeneratedColumnProjector::class)]
+#[UsesClass(MySqlPartitionSelectionRewriter::class)]
+#[UsesClass(MySqlFullTextSearchRewriter::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 final class SelectTransformerTest extends TransformerContractTest
 {
+    public function testTransformsPartitionSelectionBeforeComposingShadowCte(): void
+    {
+        $result = (new SelectTransformer())->transform('SELECT id FROM events PARTITION (p0)', [
+            'events' => [
+                'rows' => [['id' => 1], ['id' => 11]],
+                'columns' => ['id'],
+                'columnTypes' => [],
+                'partitioning' => new TablePartitioning(['p0' => 'id < 10']),
+            ],
+        ]);
+
+        self::assertStringStartsWith('WITH `events` AS', $result);
+        self::assertStringContainsString(
+            'SELECT id FROM (SELECT * FROM events WHERE (id < 10)) AS events',
+            $result,
+        );
+    }
+
+    public function testGeneratedColumnsAreRecomputedFromBaseRow(): void
+    {
+        $result = (new SelectTransformer())->transform('SELECT total FROM orders', [
+            'orders' => [
+                'rows' => [['qty' => 5, 'unit_price' => 10, 'total' => null]],
+                'columns' => ['qty', 'unit_price', 'total'],
+                'columnTypes' => [],
+                'generatedExpressions' => ['total' => '(qty * unit_price)'],
+            ],
+        ]);
+
+        self::assertStringContainsString('(qty * unit_price) AS `total`', $result);
+        self::assertStringContainsString('AS `__ztd_generated_source`', $result);
+    }
+
+    public function testTransformMaterializesViewAfterItsShadowTable(): void
+    {
+        $tables = [
+            'users' => [
+                'rows' => [['id' => 1]],
+                'columns' => ['id'],
+                'columnTypes' => [],
+            ],
+            'active_users' => [
+                'viewSql' => 'SELECT * FROM users WHERE id > 0',
+            ],
+            'active_user_count' => [
+                'viewSql' => 'SELECT count(*) AS total FROM active_users',
+            ],
+        ];
+
+        self::assertSame(
+            "WITH `users` AS (SELECT CAST(1 AS SIGNED) AS `id`),\n`active_users` AS (SELECT * FROM users WHERE id > 0),\n`active_user_count` AS (SELECT count(*) AS total FROM active_users)\nSELECT * FROM active_user_count",
+            (new SelectTransformer())->transform('SELECT * FROM active_user_count', $tables),
+        );
+    }
+
+    public function testUsesInjectedValueRenderer(): void
+    {
+        $valueRenderer = self::createStub(ValueRenderer::class);
+        $valueRenderer->method('renderValue')->willReturn('CUSTOM_VALUE');
+        $transformer = new SelectTransformer(null, null, $valueRenderer);
+        $tables = [
+            'users' => [
+                'rows' => [['id' => 1]],
+                'columns' => ['id'],
+                'columnTypes' => [],
+            ],
+        ];
+
+        self::assertStringContainsString('CUSTOM_VALUE AS `id`', $transformer->transform('SELECT * FROM users', $tables));
+    }
+
     protected function createTransformer(): SqlTransformer
     {
         return new SelectTransformer();
@@ -1478,7 +1562,7 @@ final class SelectTransformerTest extends TransformerContractTest
         self::assertStringContainsString("'hello'", $result);
     }
 
-    public function testTransformSetOrderByNonSetTypeSkipsRewriting(): void
+    public function testTransformEnumOrderByUsesDeclarationRank(): void
     {
         $transformer = new SelectTransformer();
         $sql = 'SELECT * FROM items ORDER BY `status`';
@@ -1494,8 +1578,7 @@ final class SelectTransformerTest extends TransformerContractTest
         ];
 
         $result = $transformer->transform($sql, $tables);
-        self::assertStringNotContainsString('FIND_IN_SET', $result);
-        self::assertStringContainsString('ORDER BY `status`', $result);
+        self::assertStringContainsString("ORDER BY FIELD(`status`, 'active', 'inactive')", $result);
     }
 
     public function testTransformSetOrderByWithNonBacktickedColumnNotRewritten(): void

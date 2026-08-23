@@ -33,6 +33,11 @@ final class FakeSqlTransformer implements SqlTransformer
 
         $ctes = [];
         foreach ($tables as $tableName => $tableData) {
+            if (isset($tableData['viewSql'])) {
+                $ctes[] = $this->quoter->quote($tableName) . ' AS (' . $tableData['viewSql'] . ')';
+                continue;
+            }
+
             $ctes[] = $this->buildCte($tableName, $tableData);
         }
 

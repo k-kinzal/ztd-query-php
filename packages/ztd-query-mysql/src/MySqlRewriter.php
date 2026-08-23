@@ -7,21 +7,22 @@ namespace ZtdQuery\Platform\MySql;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Rewrite\MultiRewritePlan;
+use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
+use ZtdQuery\Rewrite\RewriteStateCommitter;
 use ZtdQuery\Rewrite\SqlRewriter;
+use ZtdQuery\Sql\TransactionStatement;
 use PhpMyAdmin\SqlParser\Statement;
-use PhpMyAdmin\SqlParser\Statements\SelectStatement;
 use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
 use ZtdQuery\Schema\TableDefinitionRegistry;
+use ZtdQuery\Schema\ViewDefinitionSet;
 use ZtdQuery\Shadow\ShadowStore;
 use PhpMyAdmin\SqlParser\Statements\AlterStatement;
 use PhpMyAdmin\SqlParser\Statements\CreateStatement;
-use PhpMyAdmin\SqlParser\Statements\DeleteStatement;
-use PhpMyAdmin\SqlParser\Statements\InsertStatement;
+use PhpMyAdmin\SqlParser\Statements\LoadStatement;
 use PhpMyAdmin\SqlParser\Statements\ReplaceStatement;
 use PhpMyAdmin\SqlParser\Statements\TruncateStatement;
-use PhpMyAdmin\SqlParser\Statements\UpdateStatement;
 use PhpMyAdmin\SqlParser\Statements\WithStatement;
 
 /**
@@ -29,14 +30,21 @@ use PhpMyAdmin\SqlParser\Statements\WithStatement;
  *
  * Orchestrates parsing, classification, transformation, and mutation resolution.
  */
-final class MySqlRewriter implements SqlRewriter
+final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
 {
+    public function transactionStatement(string $sql): ?TransactionStatement
+    {
+        return (new MySqlTransactionStatementParser())->parse($sql);
+    }
+
     private MySqlQueryGuard $guard;
     private ShadowStore $shadowStore;
     private TableDefinitionRegistry $registry;
     private MySqlTransformer $transformer;
     private MySqlMutationResolver $mutationResolver;
     private MySqlParser $parser;
+    private MySqlCteShadowComposer $cteComposer;
+    private ViewDefinitionSet $views;
 
     public function __construct(
         MySqlQueryGuard $guard,
@@ -44,7 +52,8 @@ final class MySqlRewriter implements SqlRewriter
         TableDefinitionRegistry $registry,
         MySqlTransformer $transformer,
         MySqlMutationResolver $mutationResolver,
-        MySqlParser $parser
+        MySqlParser $parser,
+        ?ViewDefinitionSet $views = null,
     ) {
         $this->guard = $guard;
         $this->shadowStore = $shadowStore;
@@ -52,6 +61,8 @@ final class MySqlRewriter implements SqlRewriter
         $this->transformer = $transformer;
         $this->mutationResolver = $mutationResolver;
         $this->parser = $parser;
+        $this->cteComposer = new MySqlCteShadowComposer();
+        $this->views = $views ?? new ViewDefinitionSet();
     }
 
     /**
@@ -62,16 +73,23 @@ final class MySqlRewriter implements SqlRewriter
      */
     public function rewrite(string $sql): RewritePlan
     {
-        $statements = $this->parser->parse($sql);
-        if ($statements === []) {
+        $logicalStatements = $this->parser->splitStatements($sql);
+        if ($logicalStatements === []) {
+            throw new UnsupportedSqlException($sql, 'Empty or unparseable');
+        }
+        if (count($logicalStatements) !== 1) {
+            throw new UnsupportedSqlException($sql, 'Multi-statement');
+        }
+        if (MySqlReadOnlyDiagnosticStatement::isSafe($sql)) {
+            return new RewritePlan($sql, QueryKind::READ);
+        }
+
+        $statement = $this->parser->parseSingleLogicalStatement($sql);
+        if ($statement === null) {
             throw new UnsupportedSqlException($sql, 'Empty or unparseable');
         }
 
-        if (count($statements) === 1) {
-            return $this->rewriteStatement($statements[0], $sql);
-        }
-
-        throw new UnsupportedSqlException($sql, 'Multi-statement');
+        return $this->rewriteStatement($statement, $sql);
     }
 
     /**
@@ -82,7 +100,7 @@ final class MySqlRewriter implements SqlRewriter
      */
     public function rewriteMultiple(string $sql): MultiRewritePlan
     {
-        $statements = $this->parser->parse($sql);
+        $statements = $this->splitStatements($sql);
 
         if ($statements === []) {
             throw new UnsupportedSqlException($sql, 'Empty or unparseable');
@@ -90,11 +108,21 @@ final class MySqlRewriter implements SqlRewriter
 
         $plans = [];
         foreach ($statements as $statement) {
-            $stmtSql = $statement->build();
-            $plans[] = $this->rewriteStatement($statement, $stmtSql);
+            $plans[] = $this->rewrite($statement);
         }
 
         return new MultiRewritePlan($plans);
+    }
+
+    /** {@inheritDoc} */
+    public function splitStatements(string $sql): array
+    {
+        return $this->parser->splitStatements($sql);
+    }
+
+    public function commitRewriteState(): void
+    {
+        $this->transformer->commitRewriteState();
     }
 
     private function rewriteStatement(Statement $statement, string $sql): RewritePlan
@@ -106,11 +134,15 @@ final class MySqlRewriter implements SqlRewriter
             throw new UnsupportedSqlException($sql, 'Statement type not supported');
         }
 
+        if ($statement instanceof LoadStatement) {
+            return $this->rewrite((new MySqlLoadDataProjector($this->registry))->project($sql, $statement));
+        }
+
         $tableContext = $this->buildTableContext();
 
         if ($kind === QueryKind::READ) {
-            if ($statement instanceof SelectStatement && $this->hasSchemaContext()) {
-                $unknownTable = $this->findUnknownTable($statement);
+            if ($this->hasSchemaContext()) {
+                $unknownTable = $this->findUnknownTable($sql);
                 if ($unknownTable !== null) {
                     throw new UnknownSchemaException($sql, $unknownTable, 'table');
                 }
@@ -135,17 +167,19 @@ final class MySqlRewriter implements SqlRewriter
                 return new RewritePlan($transformedSelectSql, QueryKind::DDL_SIMULATED, $mutation);
             }
 
-            return new RewritePlan('SELECT 1 WHERE FALSE', QueryKind::DDL_SIMULATED, $mutation);
+            return new RewritePlan($this->emptyResultSelect(), QueryKind::DDL_SIMULATED, $mutation);
         }
 
-        if ($statement instanceof UpdateStatement || $statement instanceof DeleteStatement || $statement instanceof InsertStatement) {
-            $this->ensureDmlTables($statement, $sql);
+        $mutationStatement = $statement;
+        if ($statement instanceof WithStatement) {
+            $mainStatements = $this->parser->parse($this->cteComposer->statementSql($sql));
+            $mutationStatement = $mainStatements[0] ?? $statement;
         }
 
-        $mutation = $this->mutationResolver->resolve($sql, $statement, $kind);
+        $mutation = $this->mutationResolver->resolve($sql, $mutationStatement, $kind);
 
         if ($statement instanceof TruncateStatement) {
-            return new RewritePlan('SELECT 1 WHERE FALSE', QueryKind::WRITE_SIMULATED, $mutation);
+            return new RewritePlan($this->emptyResultSelect(), QueryKind::WRITE_SIMULATED, $mutation);
         }
 
         if ($statement instanceof ReplaceStatement) {
@@ -159,10 +193,14 @@ final class MySqlRewriter implements SqlRewriter
     /**
      * Build the table context map for transformers.
      *
-     * @return array<string, array{
+     * @return array<string, array{viewSql: string}|array{
      *     rows: array<int, array<string, mixed>>,
      *     columns: array<int, string>,
-     *     columnTypes: array<string, \ZtdQuery\Schema\ColumnType>
+     *     columnTypes: array<string, \ZtdQuery\Schema\ColumnType>,
+     *     columnDefaults: array<string, string>,
+     *     identityStrategies: array<string, \ZtdQuery\Schema\IdentityGenerationStrategy>,
+     *     generatedExpressions: array<string, string>,
+     *     partitioning: \ZtdQuery\Schema\TablePartitioning|null
      * }>
      */
     private function buildTableContext(): array
@@ -185,11 +223,20 @@ final class MySqlRewriter implements SqlRewriter
             }
 
             $columnTypes = $definition !== null ? $definition->typedColumns : [];
+            $columnDefaults = $definition !== null ? $definition->columnDefaults : [];
+            $identityStrategies = $definition !== null ? $definition->identityStrategies : [];
+            $generatedExpressions = $definition !== null ? $definition->generatedExpressions : [];
 
             $context[$tableName] = [
                 'rows' => $rows,
                 'columns' => $columns ?? [],
                 'columnTypes' => $columnTypes,
+                'columnDefaults' => $columnDefaults,
+                'identityStrategies' => $identityStrategies,
+                'generatedExpressions' => $generatedExpressions,
+                'partitioning' => $definition?->partitioning,
+                'primaryKeys' => $definition !== null ? $definition->primaryKeys : [],
+                'candidateKeys' => $definition !== null ? $definition->candidateKeys()->keys() : [],
             ];
         }
 
@@ -203,37 +250,23 @@ final class MySqlRewriter implements SqlRewriter
                 'rows' => [],
                 'columns' => $definition->columns,
                 'columnTypes' => $definition->typedColumns,
+                'columnDefaults' => $definition->columnDefaults,
+                'identityStrategies' => $definition->identityStrategies,
+                'generatedExpressions' => $definition->generatedExpressions,
+                'partitioning' => $definition->partitioning,
+                'primaryKeys' => $definition->primaryKeys,
+                'candidateKeys' => $definition->candidateKeys()->keys(),
             ];
         }
 
+        foreach ((new MySqlViewShadowRenderer())->render($this->views, array_keys($context)) as $viewName => $viewSql) {
+            if (isset($context[$viewName])) {
+                continue;
+            }
+            $context[$viewName] = ['viewSql' => $viewSql];
+        }
+
         return $context;
-    }
-
-    /**
-     * Ensure DML target tables exist in shadow store.
-     */
-    private function ensureDmlTables(Statement $statement, string $sql): void
-    {
-        if ($statement instanceof UpdateStatement) {
-            if ($statement->tables === [] || !isset($statement->tables[0])) {
-                return;
-            }
-            $targetExpr = $statement->tables[0];
-            $targetTable = self::resolveExprTableName($targetExpr);
-            if ($targetTable !== null) {
-                $this->shadowStore->ensure($targetTable);
-            }
-        }
-
-        if ($statement instanceof DeleteStatement) {
-            if ($statement->from !== null && $statement->from !== []) {
-                $targetExpr = $statement->from[0];
-                $targetTable = self::resolveExprTableName($targetExpr);
-                if ($targetTable !== null) {
-                    $this->shadowStore->ensure($targetTable);
-                }
-            }
-        }
     }
 
     /**
@@ -265,11 +298,15 @@ final class MySqlRewriter implements SqlRewriter
         throw new UnsupportedSqlException($sql, 'Cannot determine columns');
     }
 
-    private function findUnknownTable(SelectStatement $statement): ?string
+    private function findUnknownTable(string $sql): ?string
     {
-        $tableNames = $this->extractTableNames($statement);
+        $tableNames = (new MySqlSelectRelationParser())->tableNames($sql);
+        $declaredCtes = array_fill_keys($this->cteComposer->declaredCteNames($sql), true);
 
         foreach ($tableNames as $tableName) {
+            if (isset($declaredCtes[strtolower($tableName)])) {
+                continue;
+            }
             if (!$this->tableExists($tableName)) {
                 return $tableName;
             }
@@ -278,43 +315,17 @@ final class MySqlRewriter implements SqlRewriter
         return null;
     }
 
-    /**
-     * @return array<int, string>
-     */
-    private function extractTableNames(SelectStatement $statement): array
-    {
-        $tableNames = [];
-
-        if ($statement->from !== []) {
-            foreach ($statement->from as $fromExpr) {
-                $tableName = self::resolveExprTableName($fromExpr);
-                if (is_string($tableName) && $tableName !== '') {
-                    $tableNames[] = $tableName;
-                }
-            }
-        }
-
-        if ($statement->join !== null && $statement->join !== []) {
-            foreach ($statement->join as $joinExpr) {
-                if ($joinExpr->expr !== null) {
-                    $tableName = self::resolveExprTableName($joinExpr->expr);
-                    if (is_string($tableName) && $tableName !== '') {
-                        $tableNames[] = $tableName;
-                    }
-                }
-            }
-        }
-
-        return $tableNames;
-    }
-
     private function tableExists(string $tableName): bool
     {
-        if ($this->shadowStore->get($tableName) !== []) {
+        if ($this->shadowStore->has($tableName)) {
             return true;
         }
 
         if ($this->registry->has($tableName)) {
+            return true;
+        }
+
+        if ($this->views->has($tableName)) {
             return true;
         }
 
@@ -328,6 +339,10 @@ final class MySqlRewriter implements SqlRewriter
         }
 
         if ($this->registry->hasAnyTables()) {
+            return true;
+        }
+
+        if ($this->views->hasAnyViews()) {
             return true;
         }
 
@@ -444,16 +459,6 @@ final class MySqlRewriter implements SqlRewriter
     }
 
     /**
-     * Resolve table name from an Expression, trying ->table first then ->expr.
-     *
-     * @param \PhpMyAdmin\SqlParser\Components\Expression $expr
-     */
-    private static function resolveExprTableName(\PhpMyAdmin\SqlParser\Components\Expression $expr): ?string
-    {
-        return $expr->table ?? $expr->expr ?? null;
-    }
-
-    /**
      * Resolve table name from an INTO clause.
      */
     private static function resolveIntoTableName(?\PhpMyAdmin\SqlParser\Components\IntoKeyword $into): ?string
@@ -463,5 +468,10 @@ final class MySqlRewriter implements SqlRewriter
         }
         $dest = $into->dest;
         return is_string($dest) ? $dest : ($dest->table ?? null);
+    }
+
+    public function emptyResultSelect(): string
+    {
+        return 'SELECT 1 WHERE FALSE';
     }
 }

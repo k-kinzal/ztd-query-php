@@ -134,4 +134,23 @@ final class SelectFromTest extends TestCase
             $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
         }
     }
+
+    public function testFromKeywordInsideExtractIsNotTreatedAsTableClause(): void
+    {
+        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $table = 'prefix_' . bin2hex(random_bytes(8));
+
+        try {
+            $rawPdo->exec("CREATE TABLE {$table} (id INTEGER PRIMARY KEY, event_date DATE NOT NULL)");
+            $ztdPdo = ZtdPdo::fromPdo($rawPdo);
+            $ztdPdo->exec("INSERT INTO {$table} (id, event_date) VALUES (1, '2024-01-10')");
+
+            $statement = $ztdPdo->query("SELECT EXTRACT(YEAR FROM event_date) AS year FROM {$table} WHERE id = 1");
+
+            self::assertNotFalse($statement);
+            self::assertSame('2024', $statement->fetchColumn());
+        } finally {
+            $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
+        }
+    }
 }

@@ -939,13 +939,23 @@ final class LexicalProfileBuilder
             'DOT' => [['.', ['TK_DOT'], ['CC_DOT']]],
             'EQ' => [['=', ['TK_EQ'], ['CC_EQ']], ['==', ['TK_EQ'], ['CC_EQ']]],
             'LT' => [['<', ['TK_LT'], ['CC_LT']]],
+            'LE' => [['<=', ['TK_LE'], ['CC_LT']]],
+            'GT' => [['>', ['TK_GT'], ['CC_GT']]],
+            'GE' => [['>=', ['TK_GE'], ['CC_GT']]],
+            'NE' => [['<>', ['TK_NE'], ['CC_LT']], ['!=', ['TK_NE'], ['CC_BANG']]],
             'PLUS' => [['+', ['TK_PLUS'], ['CC_PLUS']]],
             'MINUS' => [['-', ['TK_MINUS'], ['CC_MINUS']]],
             'STAR' => [['*', ['TK_STAR'], ['CC_STAR']]],
+            'SLASH' => [['/', ['TK_SLASH'], ['CC_SLASH']]],
+            'REM' => [['%', ['TK_REM'], ['CC_PERCENT']]],
             'BITAND' => [['&', ['TK_BITAND'], ['CC_AND']]],
+            'BITOR' => [['|', ['TK_BITOR'], ['CC_PIPE']]],
             'BITNOT' => [['~', ['TK_BITNOT'], ['CC_TILDA']]],
+            'LSHIFT' => [['<<', ['TK_LSHIFT'], ['CC_LT']]],
+            'RSHIFT' => [['>>', ['TK_RSHIFT'], ['CC_GT']]],
             'CONCAT' => [['||', ['TK_CONCAT'], ['CC_PIPE']]],
             'PTR' => [['->', ['TK_PTR'], ['CC_MINUS']], ['->>', ['TK_PTR'], ['CC_MINUS']]],
+            'FLOAT' => [['1.5', ['TK_FLOAT'], ['CC_DIGIT']], ['.5', ['TK_FLOAT'], ['CC_DOT']]],
         ];
         foreach ($samples as $terminal => $witnesses) {
             foreach ($witnesses as $index => [$sql, $tokens, $units]) {

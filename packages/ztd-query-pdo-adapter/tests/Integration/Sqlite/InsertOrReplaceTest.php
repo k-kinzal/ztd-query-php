@@ -16,6 +16,25 @@ use ZtdQuery\Adapter\Pdo\ZtdPdo;
 #[Large]
 final class InsertOrReplaceTest extends TestCase
 {
+    public function testPreparedInsertOrReplaceRemovesExistingPrimaryKey(): void
+    {
+        $rawPdo = new \PDO('sqlite::memory:', null, null, [
+            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        ]);
+        $rawPdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, value INTEGER)');
+        $ztdPdo = ZtdPdo::fromPdo($rawPdo);
+        $ztdPdo->exec("INSERT INTO users VALUES (1, 'original', 100)");
+
+        $statement = $ztdPdo->prepare('INSERT OR REPLACE INTO users VALUES (?, ?, ?)');
+        self::assertNotFalse($statement);
+        self::assertTrue($statement->execute(['1', 'replaced', 999]));
+
+        $rows = $ztdPdo->query('SELECT * FROM users WHERE id = 1');
+        self::assertNotFalse($rows);
+        self::assertSame([['id' => 1, 'name' => 'replaced', 'value' => 999]], $rows->fetchAll());
+    }
+
     public function testInsertOrReplace(): void
     {
         $rawPdo = new \PDO('sqlite::memory:', null, null, [
@@ -70,5 +89,31 @@ final class InsertOrReplaceTest extends TestCase
         $ztdRows = $stmt->fetchAll();
 
         self::assertSame($rawRows, $ztdRows);
+    }
+
+    public function testReplaceRemovesRowsConflictingWithPrimaryAndUniqueKeys(): void
+    {
+        $rawPdo = new \PDO('sqlite::memory:', null, null, [
+            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        ]);
+        $rawPdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, email TEXT UNIQUE, name TEXT)');
+        $ztdPdo = ZtdPdo::fromPdo($rawPdo);
+
+        $firstInsert = "INSERT INTO users VALUES (1, 'alice@example.com', 'Alice')";
+        $secondInsert = "INSERT INTO users VALUES (2, 'bob@example.com', 'Bob')";
+        $replace = "REPLACE INTO users VALUES (1, 'bob@example.com', 'Replacement')";
+        $rawPdo->exec($firstInsert);
+        $ztdPdo->exec($firstInsert);
+        $rawPdo->exec($secondInsert);
+        $ztdPdo->exec($secondInsert);
+        $rawPdo->exec($replace);
+        $ztdPdo->exec($replace);
+
+        $rawStatement = $rawPdo->query('SELECT * FROM users ORDER BY id');
+        $ztdStatement = $ztdPdo->query('SELECT * FROM users ORDER BY id');
+        self::assertNotFalse($rawStatement);
+        self::assertNotFalse($ztdStatement);
+        self::assertSame($rawStatement->fetchAll(), $ztdStatement->fetchAll());
     }
 }

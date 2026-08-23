@@ -5,22 +5,141 @@ declare(strict_types=1);
 namespace Tests\Unit\Transformer;
 
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
+use ZtdQuery\Platform\MySql\DmlWhereClauseExtractor;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
+use ZtdQuery\Platform\MySql\UpdateAssignmentExtractor;
+use ZtdQuery\Platform\MySql\UpdateSourceExtractor;
 use PhpMyAdmin\SqlParser\Parser;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(UpdateTransformer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlSelectRelationParser::class)]
 #[UsesClass(MySqlParser::class)]
 #[UsesClass(SelectTransformer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlFullTextSearchRewriter::class)]
 #[UsesClass(MySqlCastRenderer::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]
+#[UsesClass(DmlWhereClauseExtractor::class)]
+#[UsesClass(UpdateAssignmentExtractor::class)]
+#[UsesClass(UpdateSourceExtractor::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlTypeSemantics::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlGeneratedColumnProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 final class UpdateTransformerTest extends TestCase
 {
+    public function testBuildProjectionPreservesDerivedJoinSource(): void
+    {
+        $sql = 'UPDATE summary s JOIN (SELECT category, COUNT(*) AS cnt, MIN(price) AS mn FROM products GROUP BY category) p ON s.category = p.category SET s.min_price = p.mn, s.item_count = p.cnt';
+        $parser = new Parser($sql);
+        $statement = $parser->statements[0];
+        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
+
+        $result = $transformer->buildProjection(
+            $statement,
+            ['id', 'category', 'min_price', 'item_count'],
+            ['id'],
+            [],
+            ['p.mn', 'p.cnt'],
+            null,
+            (new UpdateSourceExtractor())->extract($sql),
+        );
+
+        self::assertSame(
+            'SELECT p.mn AS `min_price`, p.cnt AS `item_count`, `s`.`id`, `s`.`category`, `s`.`id` AS `__ztd_original_id` FROM summary s JOIN (SELECT category, COUNT(*) AS cnt, MIN(price) AS mn FROM products GROUP BY category) p ON s.category = p.category',
+            $result['sql'],
+        );
+    }
+
+    public function testTransformPreservesIntroducedHexLiteral(): void
+    {
+        $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = [
+            'data' => [
+                'rows' => [['id' => 1, 'payload' => 'Hello']],
+                'columns' => ['id', 'payload'],
+                'columnTypes' => [],
+            ],
+        ];
+
+        $result = $transformer->transform("UPDATE data SET payload = X'576F726C64' WHERE id = 1", $tables);
+
+        self::assertStringContainsString("X'576F726C64' AS `payload`", $result);
+        self::assertStringNotContainsString('SELECT X AS `payload`', $result);
+    }
+
+    public function testTransformPreservesIntroducedLiteralsForEveryUpdateTarget(): void
+    {
+        $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = [
+            'data' => [
+                'rows' => [['id' => 1, 'payload' => 'old']],
+                'columns' => ['id', 'payload'],
+                'columnTypes' => [],
+                'primaryKeys' => ['id'],
+            ],
+            'audit' => [
+                'rows' => [['id' => 1, 'bits' => '0']],
+                'columns' => ['id', 'bits'],
+                'columnTypes' => [],
+                'primaryKeys' => ['id'],
+            ],
+        ];
+
+        $result = $transformer->transform(
+            "UPDATE data d, audit a SET d.payload = X'00', a.bits = B'01' WHERE d.id = a.id",
+            $tables,
+        );
+
+        self::assertStringContainsString("X'00' AS `__ztd_multi_0_value_1`", $result);
+        self::assertStringContainsString("B'01' AS `__ztd_multi_1_value_1`", $result);
+    }
+
+    public function testTransformPreservesIntervalUnitInAssignment(): void
+    {
+        $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = [
+            'tasks' => [
+                'rows' => [['id' => 1, 'created_at' => '2025-01-01 10:00:00', 'due_at' => null]],
+                'columns' => ['id', 'created_at', 'due_at'],
+                'columnTypes' => [],
+            ],
+        ];
+
+        $result = $transformer->transform(
+            'UPDATE tasks SET due_at = created_at + INTERVAL 30 DAY WHERE id = 1',
+            $tables,
+        );
+
+        self::assertStringContainsString('created_at + INTERVAL 30 DAY AS `due_at`', $result);
+    }
+
+    public function testTransformPreservesCaseWhereExpression(): void
+    {
+        $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = [
+            't' => [
+                'rows' => [['id' => 1, 'score' => 85], ['id' => 2, 'score' => 60]],
+                'columns' => ['id', 'score'],
+                'columnTypes' => [],
+            ],
+        ];
+
+        $result = $transformer->transform(
+            'UPDATE t SET score = 0 WHERE CASE WHEN score > 80 THEN 1 ELSE 0 END = 1',
+            $tables,
+        );
+
+        self::assertStringContainsString('WHERE CASE WHEN score > 80 THEN 1 ELSE 0 END = 1', $result);
+    }
+
     public function testBuildUpdateSelectUsesAliasAndColumns(): void
     {
         $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
@@ -169,12 +288,14 @@ final class UpdateTransformerTest extends TestCase
                 'rows' => [],
                 'columns' => ['id', 'name'],
                 'columnTypes' => [],
+                'primaryKeys' => ['id'],
             ],
         ];
 
         $result = $transformer->transform($sql, $tables);
         self::assertStringContainsString('SELECT', $result);
         self::assertStringContainsString("'Bob' AS `name`", $result);
+        self::assertStringContainsString('`users`.`id` AS `__ztd_original_id`', $result);
     }
 
     public function testTransformUpdateWithPartitionThrows(): void
@@ -198,6 +319,51 @@ final class UpdateTransformerTest extends TestCase
 
         self::assertStringContainsString('ORDER BY', $result['sql']);
         self::assertStringContainsString('LIMIT', $result['sql']);
+    }
+
+    public function testBuildUpdateSelectWithOnlyOrderBySelectsRowsBeforeProjecting(): void
+    {
+        $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
+        $parser = new Parser("UPDATE users SET name = 'Bob' ORDER BY id");
+        $statement = $parser->statements[0];
+        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+
+        $result = $transformer->buildProjection($statement, ['id', 'name']);
+
+        self::assertSame(
+            "SELECT 'Bob' AS `name`, `users`.`id` FROM (SELECT * FROM `users` ORDER BY id ASC) AS `users`",
+            $result['sql'],
+        );
+    }
+
+    public function testBuildUpdateSelectWithOnlyLimitSelectsRowsBeforeProjecting(): void
+    {
+        $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
+        $parser = new Parser("UPDATE users SET name = 'Bob' LIMIT 2");
+        $statement = $parser->statements[0];
+        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+
+        $result = $transformer->buildProjection($statement, ['id', 'name']);
+
+        self::assertSame(
+            "SELECT 'Bob' AS `name`, `users`.`id` FROM (SELECT * FROM `users` LIMIT 0, 2) AS `users`",
+            $result['sql'],
+        );
+    }
+
+    public function testBuildUpdateSelectWithJoinAndLimitKeepsJoinInResultSelect(): void
+    {
+        $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
+        $parser = new Parser("UPDATE users JOIN orders ON users.id = orders.user_id SET users.name = 'Bob' LIMIT 2");
+        $statement = $parser->statements[0];
+        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+
+        $result = $transformer->buildProjection($statement, ['id', 'name']);
+
+        self::assertSame(
+            "SELECT 'Bob' AS `name`, `users`.`id` FROM `users` JOIN `orders` ON users.id = orders.user_id LIMIT 0, 2",
+            $result['sql'],
+        );
     }
 
     public function testBuildUpdateSelectWithEmptyColumnsUsesWildcard(): void
@@ -575,7 +741,7 @@ final class UpdateTransformerTest extends TestCase
         self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['id', 'name']);
-        self::assertSame("SELECT 'X' AS `name`, `users`.`id` FROM `users` ORDER BY id ASC LIMIT 0, 5", $result['sql']);
+        self::assertSame("SELECT 'X' AS `name`, `users`.`id` FROM (SELECT * FROM `users` ORDER BY id ASC LIMIT 0, 5) AS `users`", $result['sql']);
     }
 
     public function testBuildProjectionExactSqlForUpdateWithJoin(): void
@@ -607,7 +773,7 @@ final class UpdateTransformerTest extends TestCase
         $result = $transformer->transform($sql, $tables);
         self::assertSame(
             'WITH `users` AS (SELECT CAST(1 AS SIGNED) AS `id`, CAST(' . "'" . 'Alice' . "'" . ' AS CHAR) AS `name`)' . "\n"
-            . "SELECT 'Bob' AS `name`, `users`.`id` FROM `users` WHERE id = 1",
+            . "SELECT 'Bob' AS `name`, `users`.`id` FROM users WHERE id = 1",
             $result
         );
     }
@@ -627,7 +793,7 @@ final class UpdateTransformerTest extends TestCase
         $result = $transformer->transform($sql, $tables);
         self::assertSame(
             'WITH `users` AS (SELECT CAST(NULL AS CHAR) AS `id`, CAST(NULL AS CHAR) AS `name` FROM DUAL WHERE 0)' . "\n"
-            . "SELECT 'Bob' AS `name`, `users`.`id` FROM `users` WHERE id = 1",
+            . "SELECT 'Bob' AS `name`, `users`.`id` FROM users WHERE id = 1",
             $result
         );
     }
@@ -741,5 +907,38 @@ final class UpdateTransformerTest extends TestCase
         self::assertStringContainsString('`t`.`z`', $result['sql']);
         self::assertStringNotContainsString('`t`.`x`', $result['sql']);
         self::assertStringNotContainsString('`t`.`y`', $result['sql']);
+    }
+
+    public function testTransformMultiUpdateProjectsValuesAndOriginalIdentityPerTarget(): void
+    {
+        $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = [
+            'users' => [
+                'rows' => [['id' => 2, 'name' => 'Bob']],
+                'columns' => ['id', 'name'],
+                'columnTypes' => [],
+                'primaryKeys' => ['id'],
+            ],
+            'orders' => [
+                'rows' => [['order_id' => 9, 'user_id' => 2]],
+                'columns' => ['order_id', 'user_id'],
+                'columnTypes' => [],
+                'primaryKeys' => ['order_id'],
+            ],
+        ];
+
+        $result = $transformer->transform(
+            "UPDATE users u, orders o SET `u`.`name` = 'Updated', `o`.`user_id` = 7 WHERE u.id = o.user_id",
+            $tables,
+        );
+
+        self::assertStringContainsString(
+            "SELECT `u`.`id` AS `__ztd_multi_0_value_0`, 'Updated' AS `__ztd_multi_0_value_1`, `u`.`id` AS `__ztd_multi_0_identity_0`",
+            $result,
+        );
+        self::assertStringContainsString(
+            '`o`.`order_id` AS `__ztd_multi_1_value_0`, 7 AS `__ztd_multi_1_value_1`, `o`.`order_id` AS `__ztd_multi_1_identity_0`',
+            $result,
+        );
     }
 }

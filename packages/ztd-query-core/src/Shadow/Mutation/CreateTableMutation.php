@@ -18,23 +18,27 @@ final class CreateTableMutation implements ShadowMutation
     private string $tableName;
     private ?TableDefinition $definition;
     private TableDefinitionRegistry $registry;
+    private string $sourceSql;
     private bool $ifNotExists;
 
     /**
      * @param string $tableName The name of the table to create.
      * @param TableDefinition|null $definition The parsed table definition.
      * @param TableDefinitionRegistry $registry The registry to register the table.
+     * @param string $sourceSql The source statement supplied by the database package.
      * @param bool $ifNotExists Whether to skip if table exists.
      */
     public function __construct(
         string $tableName,
         ?TableDefinition $definition,
         TableDefinitionRegistry $registry,
+        string $sourceSql,
         bool $ifNotExists = false
     ) {
         $this->tableName = $tableName;
         $this->definition = $definition;
         $this->registry = $registry;
+        $this->sourceSql = $sourceSql;
         $this->ifNotExists = $ifNotExists;
     }
 
@@ -47,7 +51,7 @@ final class CreateTableMutation implements ShadowMutation
             if ($this->ifNotExists) {
                 return;
             }
-            throw new TableAlreadyExistsException("CREATE TABLE `{$this->tableName}`", $this->tableName);
+            throw new TableAlreadyExistsException($this->sourceSql, $this->tableName);
         }
 
         if ($this->definition !== null) {

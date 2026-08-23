@@ -7,10 +7,10 @@ namespace Tests\Unit;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use ZtdQuery\Adapter\Pdo\PostgreSqlPlaceholderEscaper;
+use ZtdQuery\Platform\Postgres\PgSqlPdoPlaceholderEscaper;
 
-#[CoversClass(PostgreSqlPlaceholderEscaper::class)]
-final class PostgreSqlPlaceholderEscaperTest extends TestCase
+#[CoversClass(PgSqlPdoPlaceholderEscaper::class)]
+final class PgSqlPdoPlaceholderEscaperTest extends TestCase
 {
     public function testEscapesPostgreSqlJsonExistenceOperators(): void
     {
@@ -18,7 +18,7 @@ final class PostgreSqlPlaceholderEscaperTest extends TestCase
 
         self::assertSame(
             "SELECT meta ?? 'reviewed', meta ??| array['author', 'reviewed'], meta ??& array['author', 'reviewed'] FROM docs",
-            PostgreSqlPlaceholderEscaper::escape($sql),
+            (new PgSqlPdoPlaceholderEscaper())->escape($sql),
         );
     }
 
@@ -26,7 +26,7 @@ final class PostgreSqlPlaceholderEscaperTest extends TestCase
     {
         $sql = 'SELECT ? FROM docs WHERE id = ? AND score BETWEEN ? AND ? ORDER BY ? LIMIT ? OFFSET ?';
 
-        self::assertSame($sql, PostgreSqlPlaceholderEscaper::escape($sql));
+        self::assertSame($sql, (new PgSqlPdoPlaceholderEscaper())->escape($sql));
     }
 
     public function testDistinguishesJsonOperatorFromItsPlaceholderOperand(): void
@@ -35,7 +35,7 @@ final class PostgreSqlPlaceholderEscaperTest extends TestCase
 
         self::assertSame(
             'SELECT * FROM docs WHERE meta ?? ? AND details ?? :key AND id = ?',
-            PostgreSqlPlaceholderEscaper::escape($sql),
+            (new PgSqlPdoPlaceholderEscaper())->escape($sql),
         );
     }
 
@@ -45,7 +45,7 @@ final class PostgreSqlPlaceholderEscaperTest extends TestCase
 
         self::assertSame(
             "SELECT '?' AS literal, \"?\" FROM docs -- ?\nWHERE body = \$tag\$?\$tag\$ AND meta ?? 'key' /* ? */",
-            PostgreSqlPlaceholderEscaper::escape($sql),
+            (new PgSqlPdoPlaceholderEscaper())->escape($sql),
         );
     }
 
@@ -53,49 +53,49 @@ final class PostgreSqlPlaceholderEscaperTest extends TestCase
     {
         $sql = "SELECT * FROM docs WHERE meta ?? ? AND id = \$1 AND note = E'question\\'? mark'";
 
-        self::assertSame($sql, PostgreSqlPlaceholderEscaper::escape($sql));
+        self::assertSame($sql, (new PgSqlPdoPlaceholderEscaper())->escape($sql));
     }
 
     #[DataProvider('providerQuestionMarkBoundaries')]
     public function testHandlesQuestionMarkBoundaries(string $sql, string $expected): void
     {
-        self::assertSame($expected, PostgreSqlPlaceholderEscaper::escape($sql));
+        self::assertSame($expected, (new PgSqlPdoPlaceholderEscaper())->escape($sql));
     }
 
     #[DataProvider('providerCommentForms')]
     public function testPreservesQuestionMarksInCommentForms(string $sql, string $expected): void
     {
-        self::assertSame($expected, PostgreSqlPlaceholderEscaper::escape($sql));
+        self::assertSame($expected, (new PgSqlPdoPlaceholderEscaper())->escape($sql));
     }
 
     #[DataProvider('providerQuotedForms')]
     public function testPreservesQuestionMarksInQuotedForms(string $sql, string $expected): void
     {
-        self::assertSame($expected, PostgreSqlPlaceholderEscaper::escape($sql));
+        self::assertSame($expected, (new PgSqlPdoPlaceholderEscaper())->escape($sql));
     }
 
     #[DataProvider('providerDollarQuotedStringsAndNativeParameters')]
     public function testPreservesDollarQuotedStringsAndNativeParameters(string $sql, string $expected): void
     {
-        self::assertSame($expected, PostgreSqlPlaceholderEscaper::escape($sql));
+        self::assertSame($expected, (new PgSqlPdoPlaceholderEscaper())->escape($sql));
     }
 
     #[DataProvider('providerOperands')]
     public function testTracksNamedParametersIdentifiersAndNumbersAsOperands(string $sql, string $expected): void
     {
-        self::assertSame($expected, PostgreSqlPlaceholderEscaper::escape($sql));
+        self::assertSame($expected, (new PgSqlPdoPlaceholderEscaper())->escape($sql));
     }
 
     #[DataProvider('providerKeywords')]
     public function testKeywordsRequireAFollowingOperand(string $sql): void
     {
-        self::assertSame($sql, PostgreSqlPlaceholderEscaper::escape($sql));
+        self::assertSame($sql, (new PgSqlPdoPlaceholderEscaper())->escape($sql));
     }
 
     #[DataProvider('providerPunctuation')]
     public function testPunctuationDeterminesWhetherAnOperandFollows(string $sql, string $expected): void
     {
-        self::assertSame($expected, PostgreSqlPlaceholderEscaper::escape($sql));
+        self::assertSame($expected, (new PgSqlPdoPlaceholderEscaper())->escape($sql));
     }
 
     /**

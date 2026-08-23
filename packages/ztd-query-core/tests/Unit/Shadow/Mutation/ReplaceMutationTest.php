@@ -5,12 +5,18 @@ declare(strict_types=1);
 namespace Tests\Unit\Shadow\Mutation;
 
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Schema\CandidateKeyConflict;
+use ZtdQuery\Schema\CandidateKeySet;
+use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Shadow\Mutation\ReplaceMutation;
 use ZtdQuery\Shadow\ShadowStore;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 
 #[UsesClass(ShadowStore::class)]
+#[UsesClass(CandidateKeyConflict::class)]
+#[UsesClass(CandidateKeySet::class)]
+#[UsesClass(TableDefinition::class)]
 #[CoversClass(ReplaceMutation::class)]
 final class ReplaceMutationTest extends TestCase
 {
@@ -54,7 +60,7 @@ final class ReplaceMutationTest extends TestCase
         self::assertSame('users', $mutation->tableName());
     }
 
-    public function testApplyWithoutPrimaryKeysComparesAllColumns(): void
+    public function testApplyWithoutCandidateKeysDoesNotReplaceEqualRows(): void
     {
         $store = new ShadowStore();
         $store->set('users', [
@@ -66,7 +72,30 @@ final class ReplaceMutationTest extends TestCase
         $mutation->apply($store, [['id' => 1, 'name' => 'Alice']]);
 
         $rows = $store->get('users');
-        self::assertCount(2, $rows);
+        self::assertCount(3, $rows);
+    }
+
+    public function testApplyRemovesEveryRowConflictingWithAnyCandidateKey(): void
+    {
+        $definition = new TableDefinition(
+            ['id', 'email', 'name'],
+            ['id' => 'INT', 'email' => 'TEXT', 'name' => 'TEXT'],
+            ['id'],
+            ['id'],
+            ['users_email' => ['email']],
+        );
+        $store = new ShadowStore();
+        $store->set('users', [
+            ['id' => 1, 'email' => 'alice@example.com', 'name' => 'Alice'],
+            ['id' => 2, 'email' => 'bob@example.com', 'name' => 'Bob'],
+        ]);
+
+        $mutation = new ReplaceMutation('users', ['id'], $definition->candidateKeys());
+        $mutation->apply($store, [['id' => 1, 'email' => 'bob@example.com', 'name' => 'Replacement']]);
+
+        self::assertSame([
+            ['id' => 1, 'email' => 'bob@example.com', 'name' => 'Replacement'],
+        ], $store->get('users'));
     }
 
     public function testApplyReplacesMultipleRows(): void

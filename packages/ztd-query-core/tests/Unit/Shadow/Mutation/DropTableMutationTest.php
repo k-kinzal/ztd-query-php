@@ -34,10 +34,12 @@ final class DropTableMutationTest extends TestCase
         $store = new ShadowStore();
         $store->set('users', [['id' => 1]]);
 
-        $mutation = new DropTableMutation('users', $registry);
+        $mutation = new DropTableMutation('users', $registry, 'fixture statement');
         $mutation->apply($store, []);
 
         self::assertNull($registry->get('users'));
+        self::assertTrue($registry->isRemoved('users'));
+        self::assertSame(['users' => $definition], $registry->getAllRemoved());
     }
 
     public function testApplyClearsDataFromShadowStore(): void
@@ -54,7 +56,7 @@ final class DropTableMutationTest extends TestCase
         $store = new ShadowStore();
         $store->set('users', [['id' => 1], ['id' => 2]]);
 
-        $mutation = new DropTableMutation('users', $registry);
+        $mutation = new DropTableMutation('users', $registry, 'fixture statement');
         $mutation->apply($store, []);
 
         self::assertSame([], $store->get('users'));
@@ -63,7 +65,7 @@ final class DropTableMutationTest extends TestCase
     public function testTableNameReturnsTableName(): void
     {
         $registry = new TableDefinitionRegistry();
-        $mutation = new DropTableMutation('users', $registry);
+        $mutation = new DropTableMutation('users', $registry, 'fixture statement');
 
         self::assertSame('users', $mutation->tableName());
     }
@@ -73,12 +75,15 @@ final class DropTableMutationTest extends TestCase
         $registry = new TableDefinitionRegistry();
         $store = new ShadowStore();
 
-        $mutation = new DropTableMutation('users', $registry);
+        $mutation = new DropTableMutation('users', $registry, 'fixture statement');
 
-        $this->expectException(SchemaNotFoundException::class);
-        $this->expectExceptionMessage("Table 'users' does not exist.");
-
-        $mutation->apply($store, []);
+        try {
+            $mutation->apply($store, []);
+            self::fail('Expected an unknown virtual table to fail.');
+        } catch (SchemaNotFoundException $exception) {
+            self::assertSame("Table 'users' does not exist.", $exception->getMessage());
+            self::assertSame('fixture statement', $exception->getSql());
+        }
     }
 
     public function testApplyWithIfExistsSkipsWhenTableDoesNotExist(): void
@@ -86,7 +91,7 @@ final class DropTableMutationTest extends TestCase
         $registry = new TableDefinitionRegistry();
         $store = new ShadowStore();
 
-        $mutation = new DropTableMutation('users', $registry, true);
+        $mutation = new DropTableMutation('users', $registry, 'fixture statement', true);
 
         $mutation->apply($store, []);
 
@@ -107,7 +112,7 @@ final class DropTableMutationTest extends TestCase
         $store = new ShadowStore();
         $store->set('users', [['id' => 1]]);
 
-        $mutation = new DropTableMutation('users', $registry, true);
+        $mutation = new DropTableMutation('users', $registry, 'fixture statement', true);
         $mutation->apply($store, []);
 
         self::assertNull($registry->get('users'));

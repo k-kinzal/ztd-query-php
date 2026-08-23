@@ -21,6 +21,8 @@ use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\TableDefinition;
+use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\Mutation\CreateTableAsSelectMutation;
 use ZtdQuery\Shadow\Mutation\CreateTableLikeMutation;
@@ -29,6 +31,7 @@ use ZtdQuery\Shadow\Mutation\DeleteMutation;
 use ZtdQuery\Shadow\Mutation\DropTableMutation;
 use ZtdQuery\Shadow\Mutation\InsertMutation;
 use ZtdQuery\Shadow\Mutation\MultiDeleteMutation;
+use ZtdQuery\Shadow\Mutation\MultiTableMutationTarget;
 use ZtdQuery\Shadow\Mutation\MultiUpdateMutation;
 use ZtdQuery\Shadow\Mutation\ReplaceMutation;
 use ZtdQuery\Shadow\Mutation\ShadowMutation;
@@ -36,6 +39,7 @@ use ZtdQuery\Shadow\Mutation\TruncateMutation;
 use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\Mutation\UpsertMutation;
 use ZtdQuery\Shadow\ShadowStore;
+use ZtdQuery\Shadow\ShadowTableState;
 
 /**
  * Resolves the appropriate ShadowMutation for a given SQL statement.
@@ -119,12 +123,15 @@ final class MySqlMutationResolver
         if ($targetTable === null) {
             throw new UnsupportedSqlException($sql, 'Cannot resolve table name');
         }
-        $this->shadowStore->ensure($targetTable);
+        $definition = $this->registry->get($targetTable);
+        if ($definition === null && $this->shadowStore->state($targetTable) !== ShadowTableState::Initialized) {
+            throw new UnknownSchemaException($sql, $targetTable, 'table');
+        }
 
+        $this->shadowStore->ensure($targetTable);
         $columns = $this->shadowStore->get($targetTable);
         $columnNames = $columns !== [] ? array_keys($columns[0]) : null;
         if ($columnNames === null) {
-            $definition = $this->registry->get($targetTable);
             $columnNames = $definition?->columns;
         }
         if ($columnNames === null) {
@@ -135,18 +142,7 @@ final class MySqlMutationResolver
 
         $tables = $projection['tables'];
         if (count($tables) > 1) {
-            /** @var array<string, array<int, string>> $tablesPrimaryKeys */
-            $tablesPrimaryKeys = [];
-            foreach ($tables as $tableName => $tableInfo) {
-                $definition = $this->registry->get($tableName);
-                $existingRows = $this->shadowStore->get($tableName);
-                if ($definition === null && $existingRows === []) {
-                    throw new UnknownSchemaException($sql, $tableName, 'table');
-                }
-                $this->shadowStore->ensure($tableName);
-                $tablesPrimaryKeys[$tableName] = $definition !== null ? $definition->primaryKeys : [];
-            }
-            return new MultiUpdateMutation($tablesPrimaryKeys);
+            return new MultiUpdateMutation($this->multiTableTargets(array_keys($tables), $sql));
         }
 
         $definition = $this->registry->get($targetTable);
@@ -176,32 +172,48 @@ final class MySqlMutationResolver
             throw new UnsupportedSqlException($sql, 'Cannot resolve DELETE target');
         }
 
+        if (!$this->registry->has($targetTable) && $this->shadowStore->state($targetTable) !== ShadowTableState::Initialized) {
+            throw new UnknownSchemaException($sql, $targetTable, 'table');
+        }
+
         $this->shadowStore->ensure($targetTable);
 
         $tables = $projection['tables'];
         if (count($tables) > 1) {
-            /** @var array<string, array<int, string>> $tablesPrimaryKeys */
-            $tablesPrimaryKeys = [];
-            foreach ($tables as $tableName => $tableInfo) {
-                $definition = $this->registry->get($tableName);
-                $existingRows = $this->shadowStore->get($tableName);
-                if ($definition === null && $existingRows === []) {
-                    throw new UnknownSchemaException($sql, $tableName, 'table');
-                }
-                $this->shadowStore->ensure($tableName);
-                $tablesPrimaryKeys[$tableName] = $definition !== null ? $definition->primaryKeys : [];
-            }
-            return new MultiDeleteMutation($tablesPrimaryKeys);
+            return new MultiDeleteMutation($this->multiTableTargets(array_keys($tables), $sql));
         }
 
         $definition = $this->registry->get($targetTable);
-        $existingRows = $this->shadowStore->get($targetTable);
-        if ($definition === null && $existingRows === []) {
-            throw new UnknownSchemaException($sql, $targetTable, 'table');
-        }
 
         $primaryKeys = $definition !== null ? $definition->primaryKeys : [];
         return new DeleteMutation($targetTable, $primaryKeys);
+    }
+
+    /**
+     * @param list<string> $tableNames
+     * @return list<MultiTableMutationTarget>
+     */
+    private function multiTableTargets(array $tableNames, string $sql): array
+    {
+        $targets = [];
+        foreach ($tableNames as $tableName) {
+            $definition = $this->registry->get($tableName);
+            if ($definition === null && $this->shadowStore->state($tableName) !== ShadowTableState::Initialized) {
+                throw new UnknownSchemaException($sql, $tableName, 'table');
+            }
+            if ($definition !== null) {
+                $columns = $definition->columns;
+                $primaryKeys = $definition->primaryKeys;
+            } else {
+                $rows = $this->shadowStore->get($tableName);
+                $columns = $rows !== [] ? array_keys($rows[0]) : [];
+                $primaryKeys = [];
+            }
+            $this->shadowStore->ensure($tableName);
+            $targets[] = new MultiTableMutationTarget($tableName, $columns, $primaryKeys);
+        }
+
+        return $targets;
     }
 
     private function resolveInsert(InsertStatement $statement, string $sql): ShadowMutation
@@ -211,33 +223,44 @@ final class MySqlMutationResolver
             throw new UnsupportedSqlException($sql, 'Cannot resolve INSERT target');
         }
 
-        $updateColumns = [];
-        /** @var array<string, string> $updateValues */
+        $extractor = new MySqlUpsertAssignmentExtractor();
+        $incomingAlias = $extractor->incomingAlias($sql);
+        $expressionParser = new MySqlUpsertExpressionParser();
+        $rawUpdateValues = $extractor->extract($sql);
+        $definition = $this->registry->get($tableName);
+        $databaseEvaluated = $definition !== null && $definition->candidateKeys()->keys() !== [];
         $updateValues = [];
-        if ($statement->onDuplicateSet !== null && $statement->onDuplicateSet !== []) {
-            foreach ($statement->onDuplicateSet as $set) {
-                $colName = trim($set->column, '`"\'');
-                if (str_contains($colName, '.')) {
-                    $parts = explode('.', $colName);
-                    $colName = trim(end($parts), '`"\'');
-                }
-                $updateColumns[] = $colName;
-                $updateValues[$colName] = $set->value;
-            }
+        foreach ($rawUpdateValues as $column => $expression) {
+            $updateValues[$column] = $databaseEvaluated
+                ? $expressionParser->parseIfSupported($expression, $tableName, $incomingAlias)
+                : $expressionParser->parse($expression, $tableName, $incomingAlias);
         }
+        $updateColumns = array_keys($updateValues);
         $isOnDuplicateKeyUpdate = $updateColumns !== [];
 
         $isIgnore = $statement->options !== null && self::optionSet($statement->options, 'IGNORE');
 
         if ($isOnDuplicateKeyUpdate) {
-            $definition = $this->registry->get($tableName);
             $primaryKeys = $definition !== null ? $definition->primaryKeys : [];
-            return new UpsertMutation($tableName, $primaryKeys, $updateColumns, $updateValues);
+            return new UpsertMutation(
+                $tableName,
+                $primaryKeys,
+                $updateColumns,
+                $updateValues,
+                $definition?->candidateKeys(),
+                databaseEvaluated: $databaseEvaluated,
+                updateSqlValues: $rawUpdateValues,
+            );
         }
 
         $definition = $this->registry->get($tableName);
         $primaryKeys = $isIgnore ? ($definition !== null ? $definition->primaryKeys : []) : [];
-        return new InsertMutation($tableName, $primaryKeys, $isIgnore);
+        return new InsertMutation(
+            $tableName,
+            $primaryKeys,
+            $isIgnore,
+            candidateKeys: $definition?->candidateKeys(),
+        );
     }
 
     private function resolveTruncate(TruncateStatement $statement, string $sql): ShadowMutation
@@ -259,7 +282,7 @@ final class MySqlMutationResolver
 
         $definition = $this->registry->get($tableName);
         $primaryKeys = $definition !== null ? $definition->primaryKeys : [];
-        return new ReplaceMutation($tableName, $primaryKeys);
+        return new ReplaceMutation($tableName, $primaryKeys, $definition?->candidateKeys());
     }
 
     /**
@@ -289,11 +312,17 @@ final class MySqlMutationResolver
 
         if ($statement->select !== null) {
             $columnNames = $this->extractSelectColumnNames($statement->select);
-            return new CreateTableAsSelectMutation($tableName, $columnNames, $this->registry, $ifNotExists);
+            return new CreateTableAsSelectMutation(
+                $tableName,
+                $columnNames,
+                $this->registry,
+                new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR'),
+                $ifNotExists,
+            );
         }
 
         $definition = $this->schemaParser->parse($sql);
-        return new CreateTableMutation($tableName, $definition, $this->registry, $ifNotExists);
+        return new CreateTableMutation($tableName, $definition, $this->registry, $sql, $ifNotExists);
     }
 
     /**
@@ -318,7 +347,7 @@ final class MySqlMutationResolver
             throw new UnknownSchemaException($sql, $tableName, 'table');
         }
 
-        return new DropTableMutation($tableName, $this->registry, $ifExists);
+        return new DropTableMutation($tableName, $this->registry, $sql, $ifExists);
     }
 
     private function resolveAlterTable(AlterStatement $statement, string $sql): ShadowMutation
@@ -339,7 +368,7 @@ final class MySqlMutationResolver
     /**
      * Extract column names from a SELECT statement for CREATE TABLE AS SELECT.
      *
-     * @return array<int, string>
+     * @return list<string>
      */
     private function extractSelectColumnNames(\PhpMyAdmin\SqlParser\Statements\SelectStatement $selectStatement): array
     {

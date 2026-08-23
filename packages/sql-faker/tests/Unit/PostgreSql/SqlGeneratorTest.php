@@ -10,9 +10,11 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
+use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
+use SqlFaker\Grammar\ProductionPattern;
 use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\Terminal;
 use SqlFaker\Grammar\TerminationAnalyzer;
@@ -21,6 +23,7 @@ use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\Grammar\TokenJoiner;
 use SqlFaker\PostgreSqlProvider;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 
 #[CoversClass(SqlGenerator::class)]
 #[CoversClass(TokenJoiner::class)]
@@ -32,6 +35,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(NonTerminal::class)]
 #[CoversClass(PostgreSqlProvider::class)]
 #[CoversClass(TerminationAnalyzer::class)]
+#[UsesClass(GenerationPlan::class)]
 #[Medium]
 final class SqlGeneratorTest extends TestCase
 {
@@ -40,6 +44,16 @@ final class SqlGeneratorTest extends TestCase
     {
         parent::setUp();
         gc_collect_cycles();
+    }
+
+    public function testGenerateIsTheOnlyPublicGenerationMethod(): void
+    {
+        $methods = array_values(array_filter(
+            get_class_methods(SqlGenerator::class),
+            static fn (string $method): bool => str_starts_with($method, 'generate'),
+        ));
+
+        self::assertSame(['generate'], $methods);
     }
 
     public function testGenerate(): void
@@ -54,11 +68,43 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new PostgreSqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
-        $result = $generator->generate('stmt');
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
         self::assertSame('SELECT foo', $result);
+    }
+
+    public function testGenerateUsesProductionConstraintsFromThePlan(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([new Terminal('OTHER')]),
+                new Production([new Terminal('EXPECTED')]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker);
+        $plan = GenerationPlan::constrained('stmt', [
+            'stmt' => [ProductionPattern::exactly('EXPECTED')],
+        ]);
+
+        self::assertSame('EXPECTED', $generator->generate($plan));
+    }
+
+    public function testGenerateEnforcesThePlansNonEmptyRequirement(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([]),
+                new Production([new Terminal('EXPECTED')]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $generator = new SqlGenerator($grammar, $faker);
+        $plan = GenerationPlan::fromRule('stmt')->requiringNonEmpty();
+
+        self::assertSame('EXPECTED', $generator->generate($plan->withMaxDepth(1)));
     }
 
     public function testGenerateDefaultStartRule(): void
@@ -73,9 +119,9 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new PostgreSqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
-        $result = $generator->generate();
+        $result = $generator->generate(GenerationPlan::all());
 
         self::assertSame('DEFAULT_RULE_USED', $result);
     }
@@ -94,10 +140,10 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $provider = new PostgreSqlProvider($faker, 'pg-17.2');
-        $generator = new SqlGenerator($grammar, $faker, $provider, 'pg-17.2');
+        $generator = new SqlGenerator($grammar, $faker, 'pg-17.2');
         $faker->seed(12345);
 
-        self::assertNotEmpty($generator->generate('stmt'));
+        self::assertNotEmpty($generator->generate(GenerationPlan::fromRule('stmt')));
     }
 
     public function testFixedSeedWithOperatorAdjacentToCommentGeneratesSql(): void
@@ -118,10 +164,10 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new PostgreSqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
-        $result1 = $generator->generate('stmt');
-        $result2 = $generator->generate('stmt');
+        $result1 = $generator->generate(GenerationPlan::fromRule('stmt'));
+        $result2 = $generator->generate(GenerationPlan::fromRule('stmt'));
 
         self::assertSame('a', $result1);
         self::assertSame('a', $result2);
@@ -148,9 +194,9 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new PostgreSqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
-        $result = $generator->generate('stmt', 1);
+        $result = $generator->generate(GenerationPlan::fromRule('stmt')->withMaxDepth(1));
 
         self::assertSame('SHORT', $result);
     }
@@ -164,9 +210,9 @@ final class SqlGeneratorTest extends TestCase
             ]),
         ]);
         $faker = Factory::create();
-        $generator = new SqlGenerator($grammar, $faker, new PostgreSqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
-        self::assertSame('', $generator->generate('stmt', 1));
+        self::assertSame('', $generator->generate(GenerationPlan::fromRule('stmt')->withMaxDepth(1)));
     }
 
     public function testGenerateThrowsOnDerivationLimit(): void
@@ -185,12 +231,12 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new PostgreSqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('Grammar rule has no lexically realizable alternative: infinite');
 
-        $generator->generate('infinite');
+        $generator->generate(GenerationPlan::fromRule('infinite'));
     }
 
     public function testGenerateThrowsOnEmptyAlternatives(): void
@@ -200,12 +246,12 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new PostgreSqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('Production rule has no alternatives.');
 
-        $generator->generate('empty');
+        $generator->generate(GenerationPlan::fromRule('empty'));
     }
 
     #[DataProvider('providerGenerateOperator')]
@@ -218,9 +264,9 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new PostgreSqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
-        $result = $generator->generate('stmt');
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
         self::assertMatchesRegularExpression($pattern, $result);
     }
@@ -235,10 +281,10 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $provider = new PostgreSqlProvider($faker);
-        $generator = new SqlGenerator($grammar, $faker, $provider);
+        $generator = new SqlGenerator($grammar, $faker);
         $faker->seed(12345);
 
-        $result = $generator->generate('stmt');
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
         self::assertMatchesRegularExpression($pattern, $result);
     }
@@ -253,9 +299,9 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new PostgreSqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
-        $result = $generator->generate('stmt');
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
         self::assertSame($expected, $result);
     }
@@ -270,9 +316,9 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new PostgreSqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
-        $result = $generator->generate('stmt');
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
         self::assertSame($expected, $result);
     }
@@ -296,9 +342,9 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new PostgreSqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
-        $result = $generator->generate('stmt');
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
         self::assertSame('a.b.c', $result);
     }
@@ -318,9 +364,9 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new PostgreSqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
-        $result = $generator->generate('stmt');
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
         self::assertSame('a.b.c', $result);
     }
@@ -336,9 +382,9 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new PostgreSqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
-        $result = $generator->generate('stmt');
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
         self::assertSame('a', $result);
     }
@@ -357,9 +403,9 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new PostgreSqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
-        $result = $generator->generate('stmt');
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
         self::assertSame('SET(foo = NONE)', $result);
     }
@@ -380,9 +426,9 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new PostgreSqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
-        $result = $generator->generate('stmt');
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
         self::assertSame('SET(foo = bar)', $result);
     }
@@ -400,9 +446,9 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new PostgreSqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
-        $result = $generator->generate('stmt');
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
         self::assertSame('a', $result);
     }
@@ -422,9 +468,9 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new PostgreSqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
-        $result = $generator->generate('stmt');
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
         self::assertSame('a.b', $result);
     }
@@ -445,9 +491,9 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new PostgreSqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
-        $result = $generator->generate('stmt');
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
         self::assertSame('DROP OPERATOR myop(NONE, int4)', $result);
     }
@@ -470,9 +516,9 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new PostgreSqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
-        $result = $generator->generate('stmt');
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
         self::assertSame('DROP OPERATOR myop(int4, int4)', $result);
     }
@@ -493,9 +539,9 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new PostgreSqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
-        $result = $generator->generate('stmt');
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
         self::assertStringNotContainsString('NONE', $result);
     }
@@ -513,9 +559,9 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new PostgreSqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
-        $result = $generator->generate('stmt');
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
         self::assertSame('SET(foo', $result);
     }
@@ -541,9 +587,9 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new PostgreSqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
-        $result = $generator->generate('stmt');
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
         self::assertSame('SET(foo = NONE, bar(x), baz = NONE)', $result);
     }
@@ -563,9 +609,9 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new PostgreSqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
-        $result = $generator->generate('stmt');
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
         self::assertSame('DROP OPERATOR myop(int4', $result);
     }
@@ -583,9 +629,9 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $faker = Factory::create();
         $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker, new PostgreSqlProvider($faker));
+        $generator = new SqlGenerator($grammar, $faker);
 
-        $result = $generator->generate('stmt');
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
 
         self::assertSame('DROP OPERATOR myop', $result);
     }
@@ -662,7 +708,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $result = (new SqlGenerator($grammarFuncParen, $faker, $provider))->generate('stmt');
+        $result = (new SqlGenerator($grammarFuncParen, $faker))->generate(GenerationPlan::fromRule('stmt'));
         self::assertSame('COUNT(*)', $result);
 
         $grammarDot = new Grammar('stmt', [
@@ -674,7 +720,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $result = (new SqlGenerator($grammarDot, $faker, $provider))->generate('stmt');
+        $result = (new SqlGenerator($grammarDot, $faker))->generate(GenerationPlan::fromRule('stmt'));
         self::assertSame('schema.table', $result);
 
         $grammarTypecast = new Grammar('stmt', [
@@ -686,7 +732,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $result = (new SqlGenerator($grammarTypecast, $faker, $provider))->generate('stmt');
+        $result = (new SqlGenerator($grammarTypecast, $faker))->generate(GenerationPlan::fromRule('stmt'));
         self::assertSame('col::INTEGER', $result);
 
         $grammarBracket = new Grammar('stmt', [
@@ -699,7 +745,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $result = (new SqlGenerator($grammarBracket, $faker, $provider))->generate('stmt');
+        $result = (new SqlGenerator($grammarBracket, $faker))->generate(GenerationPlan::fromRule('stmt'));
         self::assertSame('arr [1]', $result);
 
         $grammarComma = new Grammar('stmt', [
@@ -711,7 +757,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $result = (new SqlGenerator($grammarComma, $faker, $provider))->generate('stmt');
+        $result = (new SqlGenerator($grammarComma, $faker))->generate(GenerationPlan::fromRule('stmt'));
         self::assertSame('a, b', $result);
 
         $grammarSemicolon = new Grammar('stmt', [
@@ -723,7 +769,7 @@ final class SqlGeneratorTest extends TestCase
                 ]),
             ]),
         ]);
-        $result = (new SqlGenerator($grammarSemicolon, $faker, $provider))->generate('stmt');
+        $result = (new SqlGenerator($grammarSemicolon, $faker))->generate(GenerationPlan::fromRule('stmt'));
         self::assertSame('SELECT 1;', $result);
     }
 }

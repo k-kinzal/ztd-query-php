@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Tests\Fixtures\StubMysqliStmt;
+use ZtdQuery\Adapter\Mysqli\MysqliStatementBindingBridge;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqliStatement;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\ConnectionInterface;
@@ -19,8 +21,25 @@ use ZtdQuery\Shadow\Mutation\ShadowMutation;
 use ZtdQuery\Shadow\ShadowStore;
 
 #[CoversClass(ZtdMysqliStatement::class)]
+#[UsesClass(MysqliStatementBindingBridge::class)]
 final class ZtdMysqliStatementTest extends TestCase
 {
+    public function testBindingBridgeUsesTheStatementDelegateInitializedByTheConstructor(): void
+    {
+        $delegate = StubMysqliStmt::create();
+        $session = new Session(
+            static::createStub(SqlRewriter::class),
+            new ShadowStore(),
+            new ResultSelectRunner(),
+            ZtdConfig::default(),
+            static::createStub(ConnectionInterface::class)
+        );
+        $stmt = new ZtdMysqliStatement($delegate, $session, null);
+        $value = null;
+
+        self::assertTrue($stmt->bind_result($value));
+    }
+
     public function testExecuteWithNullPlanDelegatesToDelegate(): void
     {
         $delegate = StubMysqliStmt::create();

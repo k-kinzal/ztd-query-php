@@ -9,7 +9,7 @@ use ZtdQuery\Shadow\ShadowStore;
 /**
  * Applies TRUNCATE operation to the shadow store by clearing all rows.
  */
-final class TruncateMutation implements ShadowMutation
+final class TruncateMutation implements DataMutation
 {
     /**
      * Target table to truncate.

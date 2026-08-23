@@ -234,4 +234,34 @@ final class SelectJoinTest extends TestCase
             $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
         }
     }
+
+    public function testJoinWithTableWithoutPrimaryKey(): void
+    {
+        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $items = 'prefix_' . bin2hex(random_bytes(8));
+        $tags = 'prefix_' . bin2hex(random_bytes(8));
+
+        try {
+            $ztdPdo = ZtdPdo::fromPdo($rawPdo);
+            $ztdPdo->exec("CREATE TABLE {$items} (id INTEGER PRIMARY KEY, name TEXT NOT NULL)");
+            $ztdPdo->exec("CREATE TABLE {$tags} (item_id INTEGER NOT NULL, tag VARCHAR(50) NOT NULL)");
+            $ztdPdo->exec("INSERT INTO {$items} VALUES (1, 'book'), (2, 'pen')");
+            $ztdPdo->exec("INSERT INTO {$tags} VALUES (1, 'new'), (1, 'sale'), (2, 'blue')");
+
+            $sql = "SELECT i.name, t.tag FROM {$items} i JOIN {$tags} t ON i.id = t.item_id ORDER BY i.id, t.tag";
+
+            $stmt = $ztdPdo->query($sql);
+            self::assertNotFalse($stmt);
+            /** @var list<array<string, mixed>> */
+            $ztdRows = $stmt->fetchAll();
+
+            self::assertSame([
+                ['name' => 'book', 'tag' => 'new'],
+                ['name' => 'book', 'tag' => 'sale'],
+                ['name' => 'pen', 'tag' => 'blue'],
+            ], $ztdRows);
+        } finally {
+            $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
+        }
+    }
 }

@@ -14,11 +14,12 @@ final class ColumnType
 {
     /**
      * @param ColumnTypeFamily $family The abstract type family.
-     * @param string $nativeType Platform-specific type string (e.g. "SIGNED", "INTEGER", "int4").
+     * @param string $nativeType Platform-specific type string supplied by the active database package.
      */
     public function __construct(
         public readonly ColumnTypeFamily $family,
         public readonly string $nativeType,
     ) {
     }
+
 }

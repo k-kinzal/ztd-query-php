@@ -6,7 +6,7 @@ namespace ZtdQuery\Platform\MySql;
 
 use PhpMyAdmin\SqlParser\Statements\CreateStatement;
 use ZtdQuery\Schema\ColumnType;
-use ZtdQuery\Schema\ColumnTypeFamily;
+use ZtdQuery\Schema\IdentityGenerationStrategy;
 use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\TableDefinition;
 
@@ -45,28 +45,36 @@ final class MySqlSchemaParser implements SchemaParser
         $columnTypes = [];
         /** @var array<string, ColumnType> $typedColumns */
         $typedColumns = [];
+        $columnDefaults = [];
+        $identityStrategies = [];
+        $generatedExpressions = [];
         $primaryKeys = [];
         $notNullColumns = [];
         $uniqueConstraints = [];
         $uniqueIndex = 0;
+        $foreignKeys = (new MySqlForeignKeyDefinitionParser())->parseCreateTable($createTableSql);
+        $partitioning = is_string($stmt->partitionBy)
+            ? (new MySqlPartitioningParser())->parse($stmt)
+            : null;
 
         foreach ($stmt->fields as $field) {
             $name = $field->name ?? null;
 
-            if (is_string($name) && $name !== '') {
-                $columnName = str_replace('`', '', $name);
+            if ($field->type !== null) {
+                $columnName = $name ?? '';
+                if ($columnName === '') {
+                    continue;
+                }
+
                 $columns[] = $columnName;
 
-                if ($field->type !== null && $field->type->name !== null) {
+                if ($field->type->name !== null) {
                     $typeName = strtoupper($field->type->name);
                     if ($field->type->parameters !== [] && $field->type->parameters !== null) {
                         $typeName .= '(' . implode(',', $field->type->parameters) . ')';
                     }
                     $columnTypes[$columnName] = $typeName;
-                    $typedColumns[$columnName] = new ColumnType(
-                        $this->mapToColumnTypeFamily($typeName),
-                        $typeName,
-                    );
+                    $typedColumns[$columnName] = (new MySqlColumnTypeMapper())->map($typeName);
                 }
 
                 if ($field->options !== null && self::optionSet($field->options, 'NOT NULL')) {
@@ -83,6 +91,22 @@ final class MySqlSchemaParser implements SchemaParser
                 if ($field->options !== null && self::optionSet($field->options, 'UNIQUE')) {
                     $keyName = $columnName . '_UNIQUE';
                     $uniqueConstraints[$keyName] = [$columnName];
+                }
+
+                if ($field->options !== null) {
+                    $default = $field->options->has('DEFAULT');
+                    if (is_string($default)) {
+                        $columnDefaults[$columnName] = $default;
+                    }
+                }
+                if ($field->options !== null && self::optionSet($field->options, 'AUTO_INCREMENT')) {
+                    $identityStrategies[$columnName] = IdentityGenerationStrategy::MaxValue;
+                }
+                if ($field->options !== null) {
+                    $generatedExpression = $field->options->has('AS');
+                    if (is_string($generatedExpression) && $generatedExpression !== '') {
+                        $generatedExpressions[$columnName] = $generatedExpression;
+                    }
                 }
             }
 
@@ -117,6 +141,11 @@ final class MySqlSchemaParser implements SchemaParser
             $notNullColumns,
             $uniqueConstraints,
             $typedColumns,
+            $columnDefaults,
+            $identityStrategies,
+            $generatedExpressions,
+            $foreignKeys,
+            $partitioning,
         );
     }
 
@@ -130,31 +159,4 @@ final class MySqlSchemaParser implements SchemaParser
         return $options->has($name) !== false;
     }
 
-    /**
-     * Map a MySQL type string to a ColumnTypeFamily.
-     */
-    private function mapToColumnTypeFamily(string $mysqlType): ColumnTypeFamily
-    {
-        $replaced = preg_replace('/\(.*\)/', '', strtoupper($mysqlType));
-        $baseType = is_string($replaced) ? $replaced : strtoupper($mysqlType);
-
-        return match ($baseType) {
-            'INT', 'INTEGER', 'TINYINT', 'SMALLINT', 'MEDIUMINT', 'BIGINT' => ColumnTypeFamily::INTEGER,
-            'DECIMAL', 'NUMERIC' => ColumnTypeFamily::DECIMAL,
-            'FLOAT' => ColumnTypeFamily::FLOAT,
-            'DOUBLE', 'REAL' => ColumnTypeFamily::DOUBLE,
-            'BOOL', 'BOOLEAN' => ColumnTypeFamily::BOOLEAN,
-            'DATE' => ColumnTypeFamily::DATE,
-            'TIME' => ColumnTypeFamily::TIME,
-            'DATETIME' => ColumnTypeFamily::DATETIME,
-            'TIMESTAMP' => ColumnTypeFamily::TIMESTAMP,
-            'JSON' => ColumnTypeFamily::JSON,
-            'BINARY', 'VARBINARY', 'BLOB', 'TINYBLOB', 'MEDIUMBLOB', 'LONGBLOB' => ColumnTypeFamily::BINARY,
-            'CHAR', 'VARCHAR', 'ENUM', 'SET' => ColumnTypeFamily::STRING,
-            'TEXT', 'TINYTEXT', 'MEDIUMTEXT', 'LONGTEXT' => ColumnTypeFamily::TEXT,
-            'YEAR' => ColumnTypeFamily::INTEGER,
-            'BIT' => ColumnTypeFamily::INTEGER,
-            default => ColumnTypeFamily::UNKNOWN,
-        };
-    }
 }

@@ -99,4 +99,97 @@ final class InsertBasicTest extends TestCase
             $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
         }
     }
+
+    public function testOmittedExplicitAndDefaultValuesMatchPostgreSql(): void
+    {
+        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $table = 'prefix_' . bin2hex(random_bytes(8));
+
+        try {
+            $rawPdo->exec("CREATE TABLE {$table} (id INTEGER DEFAULT 7, status TEXT DEFAULT 'active', note TEXT)");
+            $ztdPdo = ZtdPdo::fromPdo($rawPdo);
+
+            $rawPdo->exec("INSERT INTO {$table} (id, status) VALUES (1, DEFAULT)");
+            $rawPdo->exec("INSERT INTO {$table} DEFAULT VALUES");
+            $ztdPdo->exec("INSERT INTO {$table} (id, status) VALUES (1, DEFAULT)");
+            $ztdPdo->exec("INSERT INTO {$table} DEFAULT VALUES");
+
+            $raw = $rawPdo->query("SELECT * FROM {$table} ORDER BY id");
+            $ztd = $ztdPdo->query("SELECT * FROM {$table} ORDER BY id");
+            self::assertNotFalse($raw);
+            self::assertNotFalse($ztd);
+            self::assertSame($raw->fetchAll(), $ztd->fetchAll());
+        } finally {
+            $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
+        }
+    }
+
+    public function testSerialUsesShadowSequenceWithoutAdvancingPhysicalSequence(): void
+    {
+        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $table = 'prefix_' . bin2hex(random_bytes(8));
+
+        try {
+            $rawPdo->exec("CREATE TABLE {$table} (id SERIAL PRIMARY KEY, name TEXT NOT NULL)");
+            $ztdPdo = ZtdPdo::fromPdo($rawPdo);
+
+            $ztdPdo->exec("INSERT INTO {$table} (name) VALUES ('Alice'), ('Bob')");
+
+            $rows = $ztdPdo->query("SELECT id, name FROM {$table} ORDER BY id");
+            $sequence = $rawPdo->query("SELECT last_value, is_called FROM {$table}_id_seq");
+            self::assertNotFalse($rows);
+            self::assertNotFalse($sequence);
+            self::assertSame([['id' => 1, 'name' => 'Alice'], ['id' => 2, 'name' => 'Bob']], $rows->fetchAll());
+            self::assertSame(['last_value' => 1, 'is_called' => false], $sequence->fetch());
+        } finally {
+            $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
+        }
+    }
+
+    public function testInsertSelectPreservesExpressionsDistinctAndWindows(): void
+    {
+        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $products = 'prefix_' . bin2hex(random_bytes(8));
+        $archive = 'prefix_' . bin2hex(random_bytes(8));
+        $departments = 'prefix_' . bin2hex(random_bytes(8));
+        $popular = 'prefix_' . bin2hex(random_bytes(8));
+        $conditional = 'prefix_' . bin2hex(random_bytes(8));
+
+        try {
+            $rawPdo->exec("CREATE TABLE {$products} (id INTEGER PRIMARY KEY, name TEXT, price REAL, dept TEXT)");
+            $rawPdo->exec("CREATE TABLE {$archive} (id INTEGER PRIMARY KEY, name TEXT, doubled REAL, rank_in_dept INTEGER)");
+            $rawPdo->exec("CREATE TABLE {$departments} (id SERIAL PRIMARY KEY, name TEXT)");
+            $rawPdo->exec("CREATE TABLE {$popular} (dept TEXT, total REAL, item_count INTEGER)");
+            $rawPdo->exec("CREATE TABLE {$conditional} (id INTEGER PRIMARY KEY, name TEXT)");
+            $ztdPdo = ZtdPdo::fromPdo($rawPdo);
+
+            $ztdPdo->exec("INSERT INTO {$products} VALUES (1, 'A', 10, 'x'), (2, 'B', 30, 'x'), (3, 'C', 20, 'y')");
+            $ztdPdo->exec("INSERT INTO {$archive} SELECT id, name, price * 2, CAST(ROW_NUMBER() OVER (PARTITION BY dept ORDER BY price DESC) AS INTEGER) FROM {$products}");
+            $ztdPdo->exec("INSERT INTO {$departments} (name) SELECT DISTINCT dept FROM {$products} ORDER BY dept");
+            $popularInsert = $ztdPdo->prepare("INSERT INTO {$popular} SELECT dept, SUM(price), COUNT(*) FROM {$products} GROUP BY dept HAVING SUM(price) > ?");
+            self::assertInstanceOf(\PDOStatement::class, $popularInsert);
+            $popularInsert->execute([15]);
+            $ztdPdo->exec("INSERT INTO {$conditional} SELECT 1, 'alice' WHERE NOT EXISTS (SELECT 1 FROM {$conditional} WHERE name = 'alice')");
+            $ztdPdo->exec("INSERT INTO {$conditional} SELECT 1, 'alice' WHERE NOT EXISTS (SELECT 1 FROM {$conditional} WHERE name = 'alice')");
+
+            $archiveRows = $ztdPdo->query("SELECT * FROM {$archive} ORDER BY id");
+            $departmentRows = $ztdPdo->query("SELECT * FROM {$departments} ORDER BY id");
+            $popularRows = $ztdPdo->query("SELECT * FROM {$popular} ORDER BY dept");
+            $conditionalRows = $ztdPdo->query("SELECT * FROM {$conditional}");
+            self::assertNotFalse($archiveRows);
+            self::assertNotFalse($departmentRows);
+            self::assertNotFalse($popularRows);
+            self::assertNotFalse($conditionalRows);
+            self::assertEquals([
+                ['id' => 1, 'name' => 'A', 'doubled' => 20, 'rank_in_dept' => 2],
+                ['id' => 2, 'name' => 'B', 'doubled' => 60, 'rank_in_dept' => 1],
+                ['id' => 3, 'name' => 'C', 'doubled' => 40, 'rank_in_dept' => 1],
+            ], $archiveRows->fetchAll());
+            self::assertSame([['id' => 1, 'name' => 'x'], ['id' => 2, 'name' => 'y']], $departmentRows->fetchAll());
+            self::assertEquals([['dept' => 'x', 'total' => 40, 'item_count' => 2], ['dept' => 'y', 'total' => 20, 'item_count' => 1]], $popularRows->fetchAll());
+            self::assertSame([['id' => 1, 'name' => 'alice']], $conditionalRows->fetchAll());
+        } finally {
+            $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
+        }
+    }
 }

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace ZtdQuery;
 
+use ZtdQuery\Connection\ResultSet;
 use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Platform\ResultColumnTypeResolver;
 
 /**
  * Executes result-select queries and returns rows.
@@ -17,14 +19,28 @@ final class ResultSelectRunner
      * @param callable(string): (StatementInterface|false) $executor
      * @return array<int, array<string, mixed>>
      */
-    public function run(string $sql, callable $executor): array
-    {
+    public function run(
+        string $sql,
+        callable $executor,
+        ResultColumnTypeResolver $typeResolver,
+    ): array {
+        return $this->runResultSet($sql, $executor, $typeResolver)->rows;
+    }
+
+    /**
+     * @param callable(string): (StatementInterface|false) $executor
+     */
+    public function runResultSet(
+        string $sql,
+        callable $executor,
+        ResultColumnTypeResolver $typeResolver,
+    ): ResultSet {
         $statement = $executor($sql);
         if ($statement === false) {
-            return [];
+            return new ResultSet([], []);
         }
 
-        return $statement->fetchAll();
+        return $this->readResultSet($statement, $typeResolver);
     }
 
     /**
@@ -33,10 +49,23 @@ final class ResultSelectRunner
      * @param array<int|string, mixed>|null $params
      * @return array<int, array<string, mixed>>
      */
-    public function runStatement(StatementInterface $statement, ?array $params = null): array
-    {
+    public function runStatement(
+        StatementInterface $statement,
+        ResultColumnTypeResolver $typeResolver,
+        ?array $params = null,
+    ): array {
         $statement->execute($params);
 
-        return $statement->fetchAll();
+        return $this->readResultSet($statement, $typeResolver)->rows;
+    }
+
+    public function readResultSet(
+        StatementInterface $statement,
+        ResultColumnTypeResolver $typeResolver,
+    ): ResultSet {
+        $columns = $statement->resultColumns($typeResolver);
+        $rows = $statement->fetchAll();
+
+        return new ResultSet($rows, $columns);
     }
 }

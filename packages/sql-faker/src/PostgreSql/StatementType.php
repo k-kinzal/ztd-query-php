@@ -16,6 +16,8 @@ enum StatementType: string
     case Update = 'UpdateStmt';
     case Delete = 'DeleteStmt';
     case CreateTable = 'CreateStmt';
+    case CreateTableAs = 'CreateAsStmt';
+    case CreateDomain = 'CreateDomainStmt';
     case AlterTable = 'AlterTableStmt';
     case DropTable = 'DropStmt';
     case SimpleStatement = 'stmt';

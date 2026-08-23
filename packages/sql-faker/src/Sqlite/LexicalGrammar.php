@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace SqlFaker\Sqlite;
 
 use Faker\Generator as FakerGenerator;
+use InvalidArgumentException;
 use RuntimeException;
 use SqlFaker\Grammar\LexicalCatalog;
 use SqlFaker\Grammar\LexicalException;
 use SqlFaker\Grammar\LexicalGrammar as LexicalGrammarContract;
+use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\Grammar\SqlVersion;
 use SqlFaker\Grammar\TokenJoiner;
@@ -18,6 +20,8 @@ use SqlFaker\Grammar\TokenJoiner;
  */
 final class LexicalGrammar implements LexicalGrammarContract
 {
+    public const STRICT_TABLE_OPTION = 'STRICT_TABLE_OPTION';
+
     /** @var array<string, list<string>> */
     private array $keywords;
 
@@ -56,7 +60,9 @@ final class LexicalGrammar implements LexicalGrammarContract
 
     public function supports(string $terminal): bool
     {
-        return $this->allowSyntheticTerminals || $this->catalog->supports($terminal);
+        return $terminal === self::STRICT_TABLE_OPTION
+            || $this->allowSyntheticTerminals
+            || $this->catalog->supports($terminal);
     }
 
     /**
@@ -64,15 +70,30 @@ final class LexicalGrammar implements LexicalGrammarContract
      */
     public function assertTerminalsCovered(array $terminals): void
     {
-        $this->catalog->assertTerminalsCovered($terminals);
+        $catalogTerminals = [];
+        foreach ($terminals as $terminal) {
+            if ($terminal !== self::STRICT_TABLE_OPTION) {
+                $catalogTerminals[] = $terminal;
+            }
+        }
+
+        $this->catalog->assertTerminalsCovered($catalogTerminals);
     }
 
-    public function realize(array $terminals): string
+    /**
+     * @param list<string> $terminals
+     * @param GenerationPlan<bool>|null $plan
+     */
+    public function realize(array $terminals, ?GenerationPlan $plan = null): string
     {
         $lexemes = [];
         $expected = [];
+        /** @var array<string, int> $occurrences */
+        $occurrences = [];
         foreach ($terminals as $terminal) {
-            [$lexeme, $tokens] = $this->realizeTerminal($terminal);
+            $occurrence = $occurrences[$terminal] ?? 0;
+            $occurrences[$terminal] = $occurrence + 1;
+            [$lexeme, $tokens] = $this->realizeTerminal($terminal, $plan?->lexemeAt($terminal, $occurrence));
             $lexemes[] = $lexeme;
             array_push($expected, ...$tokens);
         }
@@ -92,6 +113,30 @@ final class LexicalGrammar implements LexicalGrammarContract
         }
 
         return $sql;
+    }
+
+    /** @return non-empty-string */
+    public function generateQuotedIdentifier(int $minLength = 1, int $maxLength = 128): string
+    {
+        return '"' . $this->strings->rawIdentifier($minLength, $maxLength) . '"';
+    }
+
+    /** @return non-empty-string */
+    public function generateStringLiteral(int $minLength = 1, int $maxLength = 255): string
+    {
+        return "'" . $this->strings->mixedAlnumString($minLength, $maxLength) . "'";
+    }
+
+    /** @return non-empty-string */
+    public function generateIntegerLiteral(int $min = 1, int $max = PHP_INT_MAX): string
+    {
+        return $this->strings->integerString($min, $max);
+    }
+
+    /** @return non-empty-string */
+    public function generateDecimalLiteral(int $precision = 15, int $scale = 2): string
+    {
+        return $this->strings->decimalString($precision, $scale);
     }
 
     /**
@@ -169,12 +214,21 @@ final class LexicalGrammar implements LexicalGrammarContract
     }
 
     /**
+     * @param non-empty-string|null $requestedLexeme
      * @return array{string, list<string>}
      */
-    private function realizeTerminal(string $terminal): array
+    private function realizeTerminal(string $terminal, ?string $requestedLexeme = null): array
     {
         if (!$this->supports($terminal)) {
             throw new LexicalException("Unsupported SQLite terminal for {$this->profileVersion}: {$terminal}");
+        }
+
+        if ($terminal === self::STRICT_TABLE_OPTION) {
+            return ['STRICT', ['ID']];
+        }
+
+        if ($requestedLexeme !== null) {
+            return $this->realizeRequestedLexeme($terminal, $requestedLexeme);
         }
 
         if (!$this->allowSyntheticTerminals) {
@@ -189,6 +243,7 @@ final class LexicalGrammar implements LexicalGrammarContract
             'ids', 'STRING' => [$this->stringLiteral(), ['STRING']],
             'BLOB' => [$this->blobLiteral(), ['BLOB']],
             'number', 'INTEGER' => [$this->strings->integerString(0, PHP_INT_MAX), ['INTEGER']],
+            'FLOAT' => [$this->strings->decimalString(), ['FLOAT']],
             'QNUMBER' => ['1_0', ['QNUMBER']],
             'VARIABLE' => [$this->parameter(), ['VARIABLE']],
             'ANY' => ['_any', ['ID']],
@@ -199,15 +254,48 @@ final class LexicalGrammar implements LexicalGrammarContract
             'DOT' => ['.', ['DOT']],
             'EQ' => ['=', ['EQ']],
             'LT' => ['<', ['LT']],
+            'LE' => ['<=', ['LE']],
+            'GT' => ['>', ['GT']],
+            'GE' => ['>=', ['GE']],
+            'NE' => ['<>', ['NE']],
             'PLUS' => ['+', ['PLUS']],
             'MINUS' => ['-', ['MINUS']],
             'STAR' => ['*', ['STAR']],
+            'SLASH' => ['/', ['SLASH']],
+            'REM' => ['%', ['REM']],
             'BITAND' => ['&', ['BITAND']],
+            'BITOR' => ['|', ['BITOR']],
             'BITNOT' => ['~', ['BITNOT']],
+            'LSHIFT' => ['<<', ['LSHIFT']],
+            'RSHIFT' => ['>>', ['RSHIFT']],
             'CONCAT' => ['||', ['CONCAT']],
             'PTR' => ['->', ['PTR']],
             default => $this->fixedTerminal($terminal),
         };
+    }
+
+    /**
+     * @param non-empty-string $requestedLexeme
+     * @return array{non-empty-string, list<string>}
+     */
+    private function realizeRequestedLexeme(string $terminal, string $requestedLexeme): array
+    {
+        if ($this->allowSyntheticTerminals) {
+            $tokens = $this->tokenize($requestedLexeme);
+            if ($tokens !== [$terminal]) {
+                throw new LexicalException("Requested SQLite lexeme does not realize {$terminal}: {$requestedLexeme}");
+            }
+
+            return [$requestedLexeme, $tokens];
+        }
+
+        foreach ($this->catalog->witnesses($terminal) as $witness) {
+            if ($witness['sql'] === $requestedLexeme) {
+                return [$requestedLexeme, $this->normalizeSourceTokens($witness['tokens'])];
+            }
+        }
+
+        throw new LexicalException("SQLite lexical catalog has no {$terminal} witness for: {$requestedLexeme}");
     }
 
     /**
@@ -230,7 +318,7 @@ final class LexicalGrammar implements LexicalGrammarContract
         return match ($this->faker->numberBetween(0, 7)) {
             0 => '"' . str_replace('"', '""', $body . '"quoted') . '"',
             1 => '`' . str_replace('`', '``', $body . '`quoted') . '`',
-            2 => '[' . str_replace(']', '', $body) . ']',
+            2 => '[' . str_replace(']', '', $body . ']quoted') . ']',
             default => $body,
         };
     }
@@ -238,8 +326,7 @@ final class LexicalGrammar implements LexicalGrammarContract
     private function stringLiteral(): string
     {
         $body = match ($this->faker->numberBetween(0, 5)) {
-            0 => 'SELECT FROM WHERE',
-            1 => '/* UPDATE */ -- DELETE',
+            0, 1 => $this->strings->lexicalSequence($this->keywords),
             2 => "a'b",
             3 => 'a\\b',
             default => $this->strings->mixedAlnumString(0, 24),
@@ -415,5 +502,23 @@ final class LexicalGrammar implements LexicalGrammarContract
         }
 
         return $normalized;
+    }
+
+    /**
+     * @param GenerationPlan<bool> $plan
+     * @return non-empty-string
+     */
+    public function generate(GenerationPlan $plan): string
+    {
+        $target = $plan->lexicalTarget();
+        $parameters = $plan->parameters();
+
+        return match ($target) {
+            'quoted_identifier' => $this->generateQuotedIdentifier($parameters['minLength'], $parameters['maxLength']),
+            'string_literal' => $this->generateStringLiteral($parameters['minLength'], $parameters['maxLength']),
+            'integer_literal' => $this->generateIntegerLiteral($parameters['min'], $parameters['max']),
+            'decimal_literal' => $this->generateDecimalLiteral($parameters['precision'], $parameters['scale']),
+            default => throw new InvalidArgumentException("Unknown SQLite lexical generation target: {$target}"),
+        };
     }
 }

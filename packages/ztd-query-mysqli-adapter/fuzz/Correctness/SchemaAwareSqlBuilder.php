@@ -19,7 +19,7 @@ final class SchemaAwareSqlBuilder
     {
         $table = $schema->name;
         $columns = $schema->columns;
-        $variant = $this->faker->numberBetween(0, 4);
+        $variant = $this->faker->numberBetween(0, 6);
 
         switch ($variant) {
             case 0:
@@ -44,6 +44,21 @@ final class SchemaAwareSqlBuilder
                 /** @var string $col */
                 $col = $this->faker->randomElement($columns);
                 return "SELECT DISTINCT `$col` FROM `$table`";
+            case 5:
+                $enumColumns = array_values(array_filter(
+                    $columns,
+                    static fn (string $column): bool => str_contains(strtolower($column), 'enum'),
+                ));
+                if ($enumColumns === []) {
+                    return "SELECT * FROM `$table`";
+                }
+                /** @var string $enumColumn */
+                $enumColumn = $this->faker->randomElement($enumColumns);
+                return "SELECT `$enumColumn` FROM `$table` WHERE `$enumColumn` > 'a' ORDER BY `$enumColumn`";
+            case 6:
+                /** @var string $derivedColumn */
+                $derivedColumn = $this->faker->randomElement($columns);
+                return "SELECT `$derivedColumn` FROM (SELECT `$derivedColumn` FROM `$table`) AS `_ztd_derived`";
             default:
                 return "SELECT * FROM `$table`";
         }
@@ -53,14 +68,27 @@ final class SchemaAwareSqlBuilder
     {
         $table = $schema->name;
         $columns = $schema->columns;
+        $variant = $schema->defaultColumns === [] ? 0 : $this->faker->numberBetween(0, 2);
+        if ($variant === 2 && count($schema->defaultColumns) === count($columns)) {
+            return "INSERT INTO `$table` () VALUES ()";
+        }
+        if ($variant === 1) {
+            $columns = array_values(array_diff($columns, $schema->defaultColumns));
+        }
         $values = [];
 
         foreach ($columns as $col) {
-            $values[] = $this->generateLiteral($col, $schema);
+            $values[] = $variant === 2 && in_array($col, $schema->defaultColumns, true)
+                ? 'DEFAULT'
+                : $this->generateLiteral($col, $schema);
         }
 
         $colList = implode(', ', array_map(fn (string $c) => "`$c`", $columns));
         $valList = implode(', ', $values);
+
+        if ($variant === 0 && $this->faker->boolean(25)) {
+            return "INSERT INTO `$table` ($colList) SELECT $valList";
+        }
 
         return "INSERT INTO `$table` ($colList) VALUES ($valList)";
     }
@@ -77,7 +105,9 @@ final class SchemaAwareSqlBuilder
         }
         /** @var string $updateCol */
         $updateCol = $this->faker->randomElement($nonPkCols);
-        $newValue = $this->generateLiteral($updateCol, $schema);
+        $newValue = $this->isTextColumn($updateCol) && $this->faker->boolean(25)
+            ? "''"
+            : $this->generateLiteral($updateCol, $schema);
 
         $whereClause = $this->buildPkWhere($schema);
 
@@ -165,5 +195,17 @@ final class SchemaAwareSqlBuilder
 
         $str = $this->faker->lexify('????');
         return "'" . addslashes($str) . "'";
+    }
+
+    private function isTextColumn(string $column): bool
+    {
+        $column = strtolower($column);
+
+        return str_contains($column, 'name')
+            || str_contains($column, 'email')
+            || str_contains($column, 'status')
+            || str_contains($column, 'text')
+            || str_contains($column, 'varchar')
+            || str_contains($column, 'char');
     }
 }

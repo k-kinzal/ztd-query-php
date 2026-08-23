@@ -14,12 +14,16 @@ final class TableDefinitionRegistry
      */
     private array $definitions = [];
 
+    /** @var array<string, TableDefinition> */
+    private array $removedDefinitions = [];
+
     /**
      * Register or replace a table definition.
      */
     public function register(string $tableName, TableDefinition $definition): void
     {
         $this->definitions[$tableName] = $definition;
+        unset($this->removedDefinitions[$tableName]);
     }
 
     /**
@@ -48,6 +52,17 @@ final class TableDefinitionRegistry
         return $this->definitions;
     }
 
+    /** @return array<string, TableDefinition> */
+    public function getAllRemoved(): array
+    {
+        return $this->removedDefinitions;
+    }
+
+    public function isRemoved(string $tableName): bool
+    {
+        return isset($this->removedDefinitions[$tableName]);
+    }
+
     /**
      * Check whether at least one table is registered.
      */
@@ -62,6 +77,18 @@ final class TableDefinitionRegistry
     public function clear(): void
     {
         $this->definitions = [];
+        $this->removedDefinitions = [];
+    }
+
+    public function snapshot(): self
+    {
+        return clone $this;
+    }
+
+    public function restore(self $snapshot): void
+    {
+        $this->definitions = $snapshot->definitions;
+        $this->removedDefinitions = $snapshot->removedDefinitions;
     }
 
     /**
@@ -69,6 +96,18 @@ final class TableDefinitionRegistry
      */
     public function unregister(string $tableName): void
     {
+        unset($this->definitions[$tableName]);
+        unset($this->removedDefinitions[$tableName]);
+    }
+
+    public function markRemoved(string $tableName): void
+    {
+        $definition = $this->definitions[$tableName] ?? null;
+        if ($definition === null) {
+            return;
+        }
+
+        $this->removedDefinitions[$tableName] = $definition;
         unset($this->definitions[$tableName]);
     }
 }

@@ -21,14 +21,19 @@ class StubMysqliResult extends mysqli_result
     /** @var array<int, array<string, mixed>> */
     private array $rows = [];
 
+    /** @var list<StubMysqliField> */
+    private array $fields = [];
+
     /**
      * @param array<int, array<string, mixed>> $rows
+     * @param list<StubMysqliField> $fields
      */
-    public static function create(array $rows = []): self
+    public static function create(array $rows = [], array $fields = []): self
     {
         /** @var self $instance */
         $instance = (new ReflectionClass(self::class))->newInstanceWithoutConstructor();
         $instance->rows = $rows;
+        $instance->fields = $fields;
 
         return $instance;
     }
@@ -39,5 +44,11 @@ class StubMysqliResult extends mysqli_result
     public function fetch_all(int $mode = MYSQLI_NUM): array
     {
         return $this->rows;
+    }
+
+    /** @return list<StubMysqliField> */
+    public function fetch_fields(): array
+    {
+        return $this->fields;
     }
 }

@@ -9,6 +9,7 @@ use ZtdQuery\Rewrite\MultiRewritePlan;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
+use ZtdQuery\Sql\TransactionStatement;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\Mutation\CreateTableMutation;
@@ -27,6 +28,11 @@ use ZtdQuery\Shadow\ShadowStore;
  */
 final class FakeSqlRewriter implements SqlRewriter
 {
+    public function transactionStatement(string $sql): ?TransactionStatement
+    {
+        return null;
+    }
+
     private ShadowStore $shadowStore;
 
     private TableDefinitionRegistry $registry;
@@ -69,10 +75,7 @@ final class FakeSqlRewriter implements SqlRewriter
 
     public function rewriteMultiple(string $sql): MultiRewritePlan
     {
-        $statements = array_filter(
-            array_map('trim', explode(';', $sql)),
-            static fn (string $s): bool => $s !== ''
-        );
+        $statements = $this->splitStatements($sql);
 
         $plans = [];
         foreach ($statements as $stmt) {
@@ -80,6 +83,14 @@ final class FakeSqlRewriter implements SqlRewriter
         }
 
         return new MultiRewritePlan($plans);
+    }
+
+    public function splitStatements(string $sql): array
+    {
+        return array_values(array_filter(
+            array_map('trim', explode(';', $sql)),
+            static fn (string $s): bool => $s !== ''
+        ));
     }
 
     private function classify(string $sql): ?QueryKind
@@ -218,7 +229,8 @@ final class FakeSqlRewriter implements SqlRewriter
             $mutation = new CreateTableMutation(
                 $tableName,
                 $definition ?? new TableDefinition([], [], [], [], []),
-                $this->registry
+                $this->registry,
+                $sql,
             );
 
             return new RewritePlan('SELECT 1 WHERE FALSE', QueryKind::DDL_SIMULATED, $mutation);
@@ -226,7 +238,7 @@ final class FakeSqlRewriter implements SqlRewriter
 
         if (str_starts_with($upper, 'DROP TABLE')) {
             $tableName = $this->extractTableFromDrop($sql) ?? 'unknown';
-            $mutation = new DropTableMutation($tableName, $this->registry);
+            $mutation = new DropTableMutation($tableName, $this->registry, $sql);
 
             return new RewritePlan('SELECT 1 WHERE FALSE', QueryKind::DDL_SIMULATED, $mutation);
         }
@@ -312,5 +324,10 @@ final class FakeSqlRewriter implements SqlRewriter
         }
 
         return $resultSql;
+    }
+
+    public function emptyResultSelect(): string
+    {
+        return 'SELECT 1 WHERE FALSE';
     }
 }

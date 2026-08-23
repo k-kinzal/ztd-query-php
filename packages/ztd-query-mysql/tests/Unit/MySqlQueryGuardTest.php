@@ -13,7 +13,9 @@ use ZtdQuery\Platform\MySql\MySqlQueryGuard;
 use ZtdQuery\Rewrite\QueryKind;
 
 #[CoversClass(MySqlQueryGuard::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlReadOnlyDiagnosticStatement::class)]
 #[UsesClass(MySqlParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 class MySqlQueryGuardTest extends QueryClassifierContractTest
 {
     protected function classify(string $sql): ?QueryKind
@@ -58,6 +60,26 @@ class MySqlQueryGuardTest extends QueryClassifierContractTest
         self::assertSame(QueryKind::READ, $guard->classify('WITH cte AS (SELECT 1) SELECT * FROM users'));
     }
 
+    public function testClassifiesSingleSelectExpressionsSplitByThirdPartyParser(): void
+    {
+        $guard = new MySqlQueryGuard(new MySqlParser());
+
+        self::assertSame(QueryKind::READ, $guard->classify('SELECT 1 EXCEPT SELECT 2'));
+        self::assertSame(QueryKind::READ, $guard->classify('SELECT 1 INTERSECT SELECT 2'));
+        self::assertSame(QueryKind::READ, $guard->classify('SELECT 1 WHERE CASE WHEN EXISTS(SELECT 1) THEN TRUE ELSE FALSE END'));
+        self::assertNull($guard->classify('SELECT 1; SELECT 2'));
+    }
+
+    public function testClassifiesInsertWithCompoundSelectAsOneWrite(): void
+    {
+        $guard = new MySqlQueryGuard(new MySqlParser());
+
+        self::assertSame(
+            QueryKind::WRITE_SIMULATED,
+            $guard->classify('INSERT INTO combined (id) SELECT id FROM archive UNION ALL SELECT id FROM current'),
+        );
+    }
+
     public function testClassifiesWriteStatements(): void
     {
         $guard = new MySqlQueryGuard(new MySqlParser());
@@ -74,6 +96,17 @@ class MySqlQueryGuardTest extends QueryClassifierContractTest
         self::assertNull($guard->classify('DROP DATABASE test'));
         self::assertNull($guard->classify('CREATE DATABASE test'));
         self::assertNull($guard->classify('SELECT 1; SELECT 2'));
+    }
+
+    public function testClassifiesReadOnlyDiagnosticsAsRead(): void
+    {
+        $guard = new MySqlQueryGuard(new MySqlParser());
+
+        self::assertSame(QueryKind::READ, $guard->classify('EXPLAIN SELECT * FROM users'));
+        self::assertSame(QueryKind::READ, $guard->classify('EXPLAIN UPDATE users SET active = FALSE'));
+        self::assertSame(QueryKind::READ, $guard->classify('DESCRIBE users'));
+        self::assertSame(QueryKind::READ, $guard->classify('SHOW CREATE TABLE users'));
+        self::assertNull($guard->classify('EXPLAIN ANALYZE UPDATE users SET active = FALSE'));
     }
 
     public function testClassifiesDdlStatements(): void
@@ -125,6 +158,16 @@ class MySqlQueryGuardTest extends QueryClassifierContractTest
     {
         $guard = new MySqlQueryGuard(new MySqlParser());
         self::assertSame(QueryKind::WRITE_SIMULATED, $guard->classify("REPLACE INTO users (id, name) VALUES (1, 'Alice')"));
+    }
+
+    public function testClassifiesLoadDataAsWriteSimulated(): void
+    {
+        $guard = new MySqlQueryGuard(new MySqlParser());
+
+        self::assertSame(
+            QueryKind::WRITE_SIMULATED,
+            $guard->classify("LOAD DATA LOCAL INFILE '/tmp/users.tsv' INTO TABLE users"),
+        );
     }
 
     public function testClassifiesEmptySqlAsNull(): void

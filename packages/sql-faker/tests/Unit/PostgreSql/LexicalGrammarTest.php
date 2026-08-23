@@ -6,6 +6,7 @@ namespace Tests\Unit\SqlFaker\PostgreSql;
 
 use Faker\Factory;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\LexicalCatalog;
@@ -22,6 +23,137 @@ use SqlFaker\PostgreSql\LexicalGrammar;
 #[UsesClass(SqlVersion::class)]
 final class LexicalGrammarTest extends TestCase
 {
+    public function testGeneratesPublicProviderLexemesThroughDialectGrammar(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $lexical = new LexicalGrammar($faker, 'pg-17.2');
+        $sql = implode(' ', [
+            $lexical->generateQuotedIdentifier(3, 3),
+            $lexical->generateStringLiteral(3, 3),
+            $lexical->generateIntegerLiteral(10, 10),
+            $lexical->generateDecimalLiteral(4, 2),
+            $lexical->generateFloatLiteral(4, 2, 2, 2),
+            $lexical->generateHexLiteral(4, 4),
+            $lexical->generateBinaryLiteral(4, 4),
+            $lexical->generateDollarQuotedString(3, 3),
+            $lexical->generateParameterMarker(2, 2),
+        ]);
+
+        self::assertSame([
+            'IDENT', 'SCONST', 'ICONST', 'FCONST', 'FCONST', 'XCONST', 'BCONST', 'SCONST', 'PARAM',
+        ], $lexical->tokenize($sql));
+    }
+
+    /**
+     * @param \Closure(LexicalGrammar): string $generate
+     * @param list<int> $expected
+     */
+    #[DataProvider('providerPublicLexemeDefaults')]
+    public function testPublicLexemeDefaultBounds(\Closure $generate, string $method, array $expected): void
+    {
+        self::assertNotSame('', $generate(new LexicalGrammar(Factory::create(), 'pg-17.2')));
+        self::assertSame(
+            $expected,
+            array_map(
+                static fn (\ReflectionParameter $parameter): mixed => $parameter->getDefaultValue(),
+                (new \ReflectionMethod(LexicalGrammar::class, $method))->getParameters(),
+            ),
+        );
+    }
+
+    /** @return iterable<string, array{\Closure(LexicalGrammar): string, string, list<int>}> */
+    public static function providerPublicLexemeDefaults(): iterable
+    {
+        yield 'quoted identifier' => [static fn (LexicalGrammar $grammar): string => $grammar->generateQuotedIdentifier(), 'generateQuotedIdentifier', [1, 63]];
+        yield 'string' => [static fn (LexicalGrammar $grammar): string => $grammar->generateStringLiteral(), 'generateStringLiteral', [1, 255]];
+        yield 'integer' => [static fn (LexicalGrammar $grammar): string => $grammar->generateIntegerLiteral(), 'generateIntegerLiteral', [1, 2147483647]];
+        yield 'decimal' => [static fn (LexicalGrammar $grammar): string => $grammar->generateDecimalLiteral(), 'generateDecimalLiteral', [10, 2]];
+        yield 'float' => [static fn (LexicalGrammar $grammar): string => $grammar->generateFloatLiteral(), 'generateFloatLiteral', [10, 2, -307, 308]];
+        yield 'hex' => [static fn (LexicalGrammar $grammar): string => $grammar->generateHexLiteral(), 'generateHexLiteral', [1, 16]];
+        yield 'binary' => [static fn (LexicalGrammar $grammar): string => $grammar->generateBinaryLiteral(), 'generateBinaryLiteral', [1, 64]];
+        yield 'dollar quoted string' => [static fn (LexicalGrammar $grammar): string => $grammar->generateDollarQuotedString(), 'generateDollarQuotedString', [1, 255]];
+        yield 'parameter marker' => [static fn (LexicalGrammar $grammar): string => $grammar->generateParameterMarker(), 'generateParameterMarker', [1, 99]];
+    }
+
+    /** @param list<int> $choices */
+    #[DataProvider('providerGeneratedStringLiteral')]
+    public function testGeneratesEveryStringLiteralStrategy(array $choices, string $expected): void
+    {
+        $faker = new class ($choices) extends \Faker\Generator {
+            private int $call = 0;
+
+            /** @param list<int> $choices */
+            public function __construct(private readonly array $choices)
+            {
+                parent::__construct();
+            }
+
+            /**
+             * @param mixed $min
+             * @param mixed $max
+             */
+            #[\Override]
+            public function numberBetween($min = 0, $max = 2147483647): int
+            {
+                if (isset($this->choices[$this->call])) {
+                    return $this->choices[$this->call++];
+                }
+                if (!is_int($min)) {
+                    throw new \UnexpectedValueException();
+                }
+
+                return $min;
+            }
+        };
+
+        self::assertSame(
+            $expected,
+            (new LexicalGrammar($faker, 'pg-17.2', true))->realize(['SCONST']),
+        );
+    }
+
+    /** @return iterable<string, array{list<int>, string}> */
+    public static function providerGeneratedStringLiteral(): iterable
+    {
+        yield 'escape string' => [[0], "E'a\\\\b'"];
+        yield 'dollar quoted string' => [[1], '$$ABORT ABORT ? $$'];
+        yield 'combined arm value zero' => [[2, 0], "'ABORT ABORT'"];
+        yield 'combined arm value one' => [[2, 1], "'ABORT ABORT'"];
+        yield 'quote escaping' => [[2, 2], "'a''b'"];
+        yield 'random body' => [[2, 3], "''"];
+    }
+
+    public function testDollarQuotedStringIncludesTheGeneratedMaximumLengthSuffix(): void
+    {
+        $faker = new class () extends \Faker\Generator {
+            /**
+             * @param mixed $min
+             * @param mixed $max
+             */
+            #[\Override]
+            public function numberBetween($min = 0, $max = 2147483647): int
+            {
+                if ($min === 0 && $max === 3) {
+                    return 1;
+                }
+                if ($min === 0 && $max === 12) {
+                    return 12;
+                }
+                if (!is_int($min)) {
+                    throw new \UnexpectedValueException();
+                }
+
+                return $min;
+            }
+        };
+
+        self::assertSame(
+            '$$ABORT ABORT ? aaaaaaaaaaaa$$',
+            (new LexicalGrammar($faker, 'pg-17.2', true))->realize(['SCONST']),
+        );
+    }
+
     public function testTokenizesAllProblematicLiteralAndOperatorFamilies(): void
     {
         $lexical = new LexicalGrammar(Factory::create(), 'pg-17.2');

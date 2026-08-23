@@ -239,12 +239,14 @@ final class ZtdMysqliTest extends TestCase
     public function testBeginTransactionDelegatesToInner(): void
     {
         $innerMysqli = new StubMysqli();
+        $store = new ShadowStore();
+        $store->set('items', [['id' => 1]]);
         $rewriter = static::createStub(SqlRewriter::class);
         $factory = static::createMock(SessionFactory::class);
         $factory->expects(self::once())
             ->method('create')
-            ->willReturnCallback(static function (ConnectionInterface $connection, ZtdConfig $config) use ($rewriter): Session {
-                return new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $config, $connection);
+            ->willReturnCallback(static function (ConnectionInterface $connection, ZtdConfig $config) use ($rewriter, $store): Session {
+                return new Session($rewriter, $store, new ResultSelectRunner(), $config, $connection);
             });
         $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
 
@@ -252,42 +254,56 @@ final class ZtdMysqliTest extends TestCase
 
         self::assertTrue($ztd->begin_transaction());
         self::assertSame(0, $innerMysqli->beginTransactionCalledWithFlags);
+        $store->insert('items', [['id' => 2]]);
+        self::assertTrue($ztd->rollback());
+        self::assertSame([['id' => 1]], $store->get('items'));
     }
 
     public function testCommitDelegatesToInner(): void
     {
         $innerMysqli = new StubMysqli();
+        $store = new ShadowStore();
+        $store->set('items', [['id' => 1]]);
         $rewriter = static::createStub(SqlRewriter::class);
         $factory = static::createMock(SessionFactory::class);
         $factory->expects(self::once())
             ->method('create')
-            ->willReturnCallback(static function (ConnectionInterface $connection, ZtdConfig $config) use ($rewriter): Session {
-                return new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $config, $connection);
+            ->willReturnCallback(static function (ConnectionInterface $connection, ZtdConfig $config) use ($rewriter, $store): Session {
+                return new Session($rewriter, $store, new ResultSelectRunner(), $config, $connection);
             });
         $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
 
         $innerMysqli->commitReturn = true;
 
+        self::assertTrue($ztd->begin_transaction());
+        $store->insert('items', [['id' => 2]]);
         self::assertTrue($ztd->commit());
         self::assertSame(0, $innerMysqli->commitCalledWithFlags);
+        self::assertTrue($ztd->rollback());
+        self::assertSame([['id' => 1], ['id' => 2]], $store->get('items'));
     }
 
     public function testRollbackDelegatesToInner(): void
     {
         $innerMysqli = new StubMysqli();
+        $store = new ShadowStore();
+        $store->set('items', [['id' => 1]]);
         $rewriter = static::createStub(SqlRewriter::class);
         $factory = static::createMock(SessionFactory::class);
         $factory->expects(self::once())
             ->method('create')
-            ->willReturnCallback(static function (ConnectionInterface $connection, ZtdConfig $config) use ($rewriter): Session {
-                return new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $config, $connection);
+            ->willReturnCallback(static function (ConnectionInterface $connection, ZtdConfig $config) use ($rewriter, $store): Session {
+                return new Session($rewriter, $store, new ResultSelectRunner(), $config, $connection);
             });
         $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
 
         $innerMysqli->rollbackReturn = true;
 
+        self::assertTrue($ztd->begin_transaction());
+        $store->insert('items', [['id' => 2]]);
         self::assertTrue($ztd->rollback());
         self::assertSame(0, $innerMysqli->rollbackCalledWithFlags);
+        self::assertSame([['id' => 1]], $store->get('items'));
     }
 
     public function testCloseDelegatesToInner(): void

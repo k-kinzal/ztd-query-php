@@ -19,6 +19,26 @@ use ZtdQuery\Adapter\Pdo\ZtdPdo;
 #[Large]
 final class UpdateBasicTest extends TestCase
 {
+    public function testUpdateReplacesExistingTextWithEmptyString(): void
+    {
+        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $table = 'prefix_' . bin2hex(random_bytes(8));
+
+        try {
+            $rawPdo->exec("CREATE TABLE {$table} (id INTEGER PRIMARY KEY, name TEXT, notes TEXT)");
+            $ztdPdo = ZtdPdo::fromPdo($rawPdo);
+            $ztdPdo->exec("INSERT INTO {$table} VALUES (1, 'Alice', 'some notes')");
+
+            self::assertSame(1, $ztdPdo->exec("UPDATE {$table} SET notes = '' WHERE name = 'Alice'"));
+
+            $statement = $ztdPdo->query("SELECT notes FROM {$table} WHERE id = 1");
+            self::assertNotFalse($statement);
+            self::assertSame('', $statement->fetchColumn());
+        } finally {
+            $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
+        }
+    }
+
     public function testUpdateSingleRow(): void
     {
         [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
@@ -104,6 +124,60 @@ final class UpdateBasicTest extends TestCase
             $rawRows = $stmt->fetchAll();
 
             self::assertSame('Alice', $rawRows[0]['name']);
+        } finally {
+            $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
+        }
+    }
+
+    public function testUpdateSetPreservesFromKeywordsInsideFunctions(): void
+    {
+        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $table = 'prefix_' . bin2hex(random_bytes(8));
+
+        try {
+            $rawPdo->exec("CREATE TABLE {$table} (id INTEGER PRIMARY KEY, name TEXT NOT NULL, code TEXT NOT NULL)");
+            $rawPdo->exec("INSERT INTO {$table} (id, name, code) VALUES (1, '  Alice  ', 'abcdef')");
+
+            $ztdPdo = ZtdPdo::fromPdo($rawPdo);
+            $ztdPdo->exec("INSERT INTO {$table} (id, name, code) VALUES (1, '  Alice  ', 'abcdef')");
+
+            $sql = "UPDATE {$table} SET name = TRIM(BOTH ' ' FROM name), code = SUBSTRING(code FROM 2 FOR 3) WHERE id = 1";
+            $rawPdo->exec($sql);
+            $ztdPdo->exec($sql);
+
+            $rawStatement = $rawPdo->query("SELECT * FROM {$table}");
+            $ztdStatement = $ztdPdo->query("SELECT * FROM {$table}");
+            self::assertNotFalse($rawStatement);
+            self::assertNotFalse($ztdStatement);
+            self::assertSame($rawStatement->fetchAll(), $ztdStatement->fetchAll());
+        } finally {
+            $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
+        }
+    }
+
+    public function testUpdateWithGroupedInSubquery(): void
+    {
+        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $users = 'prefix_' . bin2hex(random_bytes(8));
+        $orders = 'prefix_' . bin2hex(random_bytes(8));
+
+        try {
+            $rawPdo->exec("CREATE TABLE {$users} (id INTEGER PRIMARY KEY, name TEXT, tier TEXT)");
+            $rawPdo->exec("CREATE TABLE {$orders} (id INTEGER PRIMARY KEY, user_id INTEGER, total NUMERIC, status TEXT)");
+            $rawPdo->exec("INSERT INTO {$users} VALUES (1, 'Alice', 'standard'), (2, 'Bob', 'standard')");
+            $rawPdo->exec("INSERT INTO {$orders} VALUES (1, 1, 500, 'completed'), (2, 1, 300, 'completed'), (3, 2, 100, 'completed')");
+            $ztdPdo = ZtdPdo::fromPdo($rawPdo);
+            $ztdPdo->exec("INSERT INTO {$users} VALUES (1, 'Alice', 'standard'), (2, 'Bob', 'standard')");
+            $ztdPdo->exec("INSERT INTO {$orders} VALUES (1, 1, 500, 'completed'), (2, 1, 300, 'completed'), (3, 2, 100, 'completed')");
+
+            $sql = "UPDATE {$users} SET tier = 'premium' WHERE id IN (SELECT user_id FROM {$orders} WHERE status = 'completed' GROUP BY user_id HAVING SUM(total) > 400)";
+            self::assertSame($rawPdo->exec($sql), $ztdPdo->exec($sql));
+
+            $raw = $rawPdo->query("SELECT * FROM {$users} ORDER BY id");
+            $shadow = $ztdPdo->query("SELECT * FROM {$users} ORDER BY id");
+            self::assertNotFalse($raw);
+            self::assertNotFalse($shadow);
+            self::assertSame($raw->fetchAll(), $shadow->fetchAll());
         } finally {
             $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
         }

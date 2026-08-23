@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace SqlFaker\Grammar;
 
 use Faker\Generator as FakerGenerator;
+use InvalidArgumentException;
+use LogicException;
 
 /**
  * Generates random strings for SQL token production.
  *
- * Shared by all SQL generators and providers to produce identifiers,
- * string literals, numeric literals, and other lexical tokens.
+ * Shared by dialect lexical grammars to produce identifiers, string literals,
+ * numeric literals, and other lexical tokens.
  */
 final class RandomStringGenerator
 {
@@ -93,6 +95,8 @@ final class RandomStringGenerator
 
     /**
      * Generate a random hostname string.
+     *
+     * @return non-empty-string
      */
     public function hostnameString(int $minParts = 1, int $maxParts = 3, int $minPartLength = 1, int $maxPartLength = 12): string
     {
@@ -102,11 +106,18 @@ final class RandomStringGenerator
             $segments[] = $this->randomString(self::HOSTNAME_CHARS, $this->faker->numberBetween($minPartLength, $maxPartLength));
         }
 
-        return implode('.', $segments);
+        $hostname = implode('.', $segments);
+        if ($hostname === '') {
+            throw new LogicException('Hostname generation produced an empty result.');
+        }
+
+        return $hostname;
     }
 
     /**
      * Generate a random unsigned big integer string.
+     *
+     * @return non-empty-string
      */
     public function unsignedBigIntString(int $minLength = 1, int $maxLength = 20): string
     {
@@ -118,6 +129,8 @@ final class RandomStringGenerator
 
     /**
      * Generate a random long integer string.
+     *
+     * @return non-empty-string
      */
     public function longIntString(int $min = 0, int $max = 2147483647): string
     {
@@ -146,6 +159,38 @@ final class RandomStringGenerator
         $val = $this->faker->numberBetween($min, $max);
 
         return "{$val}";
+    }
+
+    /**
+     * @param array<string, list<string>> $lexemesByTerminal
+     * @return non-empty-string
+     */
+    public function lexicalSequence(array $lexemesByTerminal, int $minTerms = 2, int $maxTerms = 4): string
+    {
+        if ($minTerms < 1 || $maxTerms < $minTerms) {
+            throw new InvalidArgumentException('Lexical sequence bounds must be positive and ordered.');
+        }
+        $lexemeSets = array_values(array_filter(
+            $lexemesByTerminal,
+            static fn (array $lexemes): bool => $lexemes !== [],
+        ));
+        if ($lexemeSets === []) {
+            throw new InvalidArgumentException('A lexical sequence requires at least one terminal lexeme.');
+        }
+
+        $terms = $this->faker->numberBetween($minTerms, $maxTerms);
+        $lexemes = [];
+        for ($index = 0; $index < $terms; $index++) {
+            $set = $lexemeSets[$this->faker->numberBetween(0, count($lexemeSets) - 1)];
+            $lexemes[] = $set[$this->faker->numberBetween(0, count($set) - 1)];
+        }
+
+        $sequence = implode(' ', $lexemes);
+        if ($sequence === '') {
+            throw new LogicException('The lexical catalog produced an empty sequence.');
+        }
+
+        return $sequence;
     }
 
     /**

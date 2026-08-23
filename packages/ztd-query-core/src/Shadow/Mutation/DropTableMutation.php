@@ -10,21 +10,24 @@ use ZtdQuery\Shadow\ShadowStore;
 
 /**
  * Applies DROP TABLE operation to the virtual schema.
- * This mutation removes a table from the TableDefinitionRegistry and ShadowStore.
+ * This mutation marks a table as removed from the virtual schema and clears its rows.
  */
 final class DropTableMutation implements ShadowMutation
 {
     private string $tableName;
     private TableDefinitionRegistry $registry;
+    private string $sourceSql;
     private bool $ifExists;
 
     public function __construct(
         string $tableName,
         TableDefinitionRegistry $registry,
+        string $sourceSql,
         bool $ifExists = false
     ) {
         $this->tableName = $tableName;
         $this->registry = $registry;
+        $this->sourceSql = $sourceSql;
         $this->ifExists = $ifExists;
     }
 
@@ -37,11 +40,11 @@ final class DropTableMutation implements ShadowMutation
             if ($this->ifExists) {
                 return;
             }
-            throw new SchemaNotFoundException("DROP TABLE `{$this->tableName}`", $this->tableName);
+            throw new SchemaNotFoundException($this->sourceSql, $this->tableName);
         }
 
-        $this->registry->unregister($this->tableName);
-        $store->set($this->tableName, []);
+        $this->registry->markRemoved($this->tableName);
+        $store->remove($this->tableName);
     }
 
     /**

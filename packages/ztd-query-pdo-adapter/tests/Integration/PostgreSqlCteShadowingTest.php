@@ -529,4 +529,54 @@ final class PostgreSqlCteShadowingTest extends TestCase
         }
     }
 
+    public function testPreparedBooleanAndBigIntValuesRetainTheirTypes(): void
+    {
+        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $table = 'typed_' . bin2hex(random_bytes(8));
+
+        try {
+            $rawPdo->exec(sprintf('CREATE TABLE %s (id INTEGER PRIMARY KEY, enabled BOOLEAN, quantity BIGINT)', $table));
+            $ztdPdo = ZtdPdo::fromPdo($rawPdo, null);
+
+            $insert = $ztdPdo->prepare(sprintf('INSERT INTO %s (id, enabled, quantity) VALUES (?, ?, ?)', $table));
+            self::assertNotFalse($insert);
+            self::assertTrue($insert->execute([1, false, 9223372036854775807]));
+
+            $result = $ztdPdo->query(sprintf('SELECT enabled::int, quantity::text FROM %s', $table));
+            self::assertNotFalse($result);
+            self::assertSame(['enabled' => 0, 'quantity' => '9223372036854775807'], $result->fetch());
+        } finally {
+            $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
+        }
+    }
+
+    public function testArrayAndBinaryValuesRetainNativeTypes(): void
+    {
+        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $table = 'typed_' . bin2hex(random_bytes(8));
+
+        try {
+            $rawPdo->exec(sprintf('CREATE TABLE %s (id INTEGER PRIMARY KEY, scores INTEGER[], payload BYTEA)', $table));
+            $ztdPdo = ZtdPdo::fromPdo($rawPdo, null);
+            $payload = "\x00\x01\xFF";
+
+            $insert = $ztdPdo->prepare(sprintf('INSERT INTO %s (id, scores, payload) VALUES (?, ?::integer[], ?)', $table));
+            self::assertNotFalse($insert);
+            self::assertTrue($insert->bindValue(1, 1, \PDO::PARAM_INT));
+            self::assertTrue($insert->bindValue(2, '{90,85,92}'));
+            self::assertTrue($insert->bindValue(3, $payload, \PDO::PARAM_LOB));
+            self::assertTrue($insert->execute());
+            self::assertSame(1, $ztdPdo->exec(sprintf('INSERT INTO %s (id, scores, payload) VALUES (2, ARRAY[1,2,3], NULL)', $table)));
+
+            $result = $ztdPdo->query(sprintf("SELECT scores::text, encode(payload, 'hex') AS payload FROM %s ORDER BY id", $table));
+            self::assertNotFalse($result);
+            self::assertSame([
+                ['scores' => '{90,85,92}', 'payload' => '0001ff'],
+                ['scores' => '{1,2,3}', 'payload' => null],
+            ], $result->fetchAll());
+        } finally {
+            $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
+        }
+    }
+
 }

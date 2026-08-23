@@ -9,13 +9,19 @@ use Tests\Fake\FixedRewriter;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Connection\Exception\DatabaseException;
+use ZtdQuery\Connection\ResultSet;
 use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
+use ZtdQuery\Schema\CandidateKeySet;
+use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\Mutation\InsertMutation;
+use ZtdQuery\Shadow\Mutation\MutationImpact;
+use ZtdQuery\Shadow\ReferentialIntegrityEnforcer;
 use ZtdQuery\Shadow\ShadowStore;
+use ZtdQuery\Shadow\ShadowTransactionManager;
 use ZtdQuery\Simulator\StatementSimulator;
 use ZtdQuery\Session;
 use PHPUnit\Framework\TestCase;
@@ -27,8 +33,14 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(UnsupportedSqlException::class)]
 #[UsesClass(RewritePlan::class)]
 #[UsesClass(ResultSelectRunner::class)]
+#[UsesClass(ResultSet::class)]
 #[UsesClass(InsertMutation::class)]
+#[UsesClass(MutationImpact::class)]
+#[UsesClass(CandidateKeySet::class)]
+#[UsesClass(TableDefinitionRegistry::class)]
 #[UsesClass(ShadowStore::class)]
+#[UsesClass(ShadowTransactionManager::class)]
+#[UsesClass(ReferentialIntegrityEnforcer::class)]
 #[UsesClass(Session::class)]
 #[CoversClass(StatementSimulator::class)]
 final class StatementSimulatorTest extends TestCase

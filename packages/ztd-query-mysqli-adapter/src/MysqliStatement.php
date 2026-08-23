@@ -9,6 +9,7 @@ use mysqli_result;
 use mysqli_stmt;
 use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Platform\ResultColumnTypeResolver;
 
 /**
  * mysqli prepared statement adapter implementing StatementInterface for ZTD layer.
@@ -74,20 +75,18 @@ final class MysqliStatement implements StatementInterface
      */
     public function fetchAll(): array
     {
-        if ($this->result === null) {
-            $this->result = $this->statement->get_result();
-        }
+        $result = $this->loadResult();
 
-        if ($this->result === false) {
+        if ($result === false) {
             $this->statement->close();
             return [];
         }
 
         /** @var array<int, array<string, mixed>> $rows */
-        $rows = $this->result->fetch_all(MYSQLI_ASSOC);
+        $rows = $result->fetch_all(MYSQLI_ASSOC);
 
         // Free the result to avoid "Commands out of sync" errors
-        $this->result->free();
+        $result->free();
         $this->result = null;
 
         $this->statement->close();
@@ -98,8 +97,30 @@ final class MysqliStatement implements StatementInterface
     /**
      * {@inheritDoc}
      */
+    public function resultColumns(ResultColumnTypeResolver $typeResolver): array
+    {
+        $result = $this->loadResult();
+        if ($result === false) {
+            return [];
+        }
+
+        return MysqliResultColumnExtractor::extract($result, $typeResolver);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function rowCount(): int
     {
         return (int) $this->statement->affected_rows;
+    }
+
+    private function loadResult(): mysqli_result|false
+    {
+        if ($this->result === null) {
+            $this->result = $this->statement->get_result();
+        }
+
+        return $this->result;
     }
 }

@@ -11,9 +11,15 @@ use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlSchemaParser;
 use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\ColumnTypeFamily;
+use ZtdQuery\Schema\IdentityGenerationStrategy;
+use ZtdQuery\Platform\MySql\MySqlPartitioningParser;
 
 #[CoversClass(MySqlSchemaParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlColumnTypeMapper::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlForeignKeyDefinitionParser::class)]
 #[UsesClass(MySqlParser::class)]
+#[UsesClass(MySqlPartitioningParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 final class MySqlSchemaParserTest extends SchemaParserContractTest
 {
     protected function createParser(): SchemaParser
@@ -37,6 +43,37 @@ final class MySqlSchemaParserTest extends SchemaParserContractTest
     protected function nonCreateTableSql(): string
     {
         return 'SELECT * FROM users WHERE id = 1';
+    }
+
+    public function testParsesStoredAndVirtualGeneratedExpressions(): void
+    {
+        $definition = (new MySqlSchemaParser(new MySqlParser()))->parse(
+            'CREATE TABLE orders (qty INT, unit_price DECIMAL(10,2), '
+            . 'total DECIMAL(10,2) GENERATED ALWAYS AS (qty * unit_price) STORED, '
+            . 'label VARCHAR(255) AS (CONCAT(qty, unit_price)) VIRTUAL)',
+        );
+
+        self::assertNotNull($definition);
+        self::assertSame([
+            'total' => '(qty * unit_price)',
+            'label' => '(CONCAT(qty, unit_price))',
+        ], $definition->generatedExpressions);
+    }
+
+    public function testParsesPartitionMetadataWithTableSchema(): void
+    {
+        $definition = (new MySqlSchemaParser(new MySqlParser()))->parse(
+            'CREATE TABLE events (id INT, event_date DATE) '
+            . 'PARTITION BY RANGE (YEAR(event_date)) ('
+            . 'PARTITION p2024 VALUES LESS THAN (2025), '
+            . 'PARTITION pmax VALUES LESS THAN MAXVALUE)',
+        );
+
+        self::assertNotNull($definition);
+        self::assertSame(
+            ['(YEAR(event_date)) IS NULL OR (YEAR(event_date)) < 2025'],
+            $definition->partitioning?->predicatesFor(['p2024']),
+        );
     }
 
     public function testParseSimpleCreateTable(): void
@@ -81,6 +118,48 @@ final class MySqlSchemaParserTest extends SchemaParserContractTest
 
         self::assertNotNull($definition);
         self::assertSame(['order_id', 'product_id'], $definition->primaryKeys);
+    }
+
+    public function testParseDoesNotTreatNamedForeignKeyAsColumn(): void
+    {
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $sql = <<<'SQL'
+            CREATE TABLE child (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                parent_id INT NOT NULL,
+                label VARCHAR(50) NOT NULL,
+                CONSTRAINT fk_parent FOREIGN KEY (parent_id) REFERENCES parent(id)
+            )
+            SQL;
+
+        $definition = $schemaParser->parse($sql);
+
+        self::assertNotNull($definition);
+        self::assertSame(['id', 'parent_id', 'label'], $definition->columns);
+        self::assertArrayNotHasKey('fk_parent', $definition->columnTypes);
+        self::assertArrayNotHasKey('fk_parent', $definition->typedColumns);
+    }
+
+    public function testParseDoesNotTreatNamedTableConstraintsAsColumns(): void
+    {
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $sql = <<<'SQL'
+            CREATE TABLE child (
+                id INT,
+                parent_id INT,
+                CONSTRAINT pk_child PRIMARY KEY (id),
+                CONSTRAINT uq_parent UNIQUE (parent_id),
+                CONSTRAINT fk_parent FOREIGN KEY (parent_id) REFERENCES parent(id),
+                CONSTRAINT ck_id CHECK (id > 0)
+            )
+            SQL;
+
+        $definition = $schemaParser->parse($sql);
+
+        self::assertNotNull($definition);
+        self::assertSame(['id', 'parent_id'], $definition->columns);
     }
 
     public function testParseUniqueConstraint(): void
@@ -541,5 +620,46 @@ final class MySqlSchemaParserTest extends SchemaParserContractTest
             ['id', 'check_in', 'checkout_date', 'unique_value', 'constraint_name', 'foreign_key_id'],
             $definition->columns,
         );
+    }
+
+    public function testParsePreservesColumnDefaultExpressions(): void
+    {
+        $schemaParser = new MySqlSchemaParser(new MySqlParser());
+        $definition = $schemaParser->parse(
+            "CREATE TABLE t (id INT DEFAULT 7, status ENUM('new','done') DEFAULT 'new', label VARCHAR(20) DEFAULT (concat('a','b')))"
+        );
+
+        self::assertNotNull($definition);
+        self::assertSame([
+            'id' => '7',
+            'status' => "'new'",
+            'label' => "(concat('a','b'))",
+        ], $definition->columnDefaults);
+    }
+
+    public function testParseAutoIncrementIdentityStrategy(): void
+    {
+        $definition = (new MySqlSchemaParser(new MySqlParser()))->parse(
+            'CREATE TABLE users (id BIGINT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(20))'
+        );
+
+        self::assertNotNull($definition);
+        self::assertSame(['id' => IdentityGenerationStrategy::MaxValue], $definition->identityStrategies);
+    }
+
+    public function testParsePreservesCompositeForeignKeyActions(): void
+    {
+        $definition = (new MySqlSchemaParser(new MySqlParser()))->parse(
+            'CREATE TABLE child (tenant_id INT, parent_id INT, CONSTRAINT `fk_parent` '
+            . 'FOREIGN KEY (tenant_id, parent_id) REFERENCES `parents` (tenant_id, id) '
+            . 'ON DELETE CASCADE ON UPDATE CASCADE)'
+        );
+
+        self::assertNotNull($definition);
+        self::assertSame(['fk_parent'], array_keys($definition->foreignKeys));
+        self::assertSame(['tenant_id', 'parent_id'], $definition->foreignKeys['fk_parent']->columns);
+        self::assertSame(['tenant_id', 'id'], $definition->foreignKeys['fk_parent']->referencedColumns);
+        self::assertSame('CASCADE', $definition->foreignKeys['fk_parent']->onDelete->value);
+        self::assertSame('CASCADE', $definition->foreignKeys['fk_parent']->onUpdate->value);
     }
 }

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Schema;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
-use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(ColumnType::class)]
 final class ColumnTypeTest extends TestCase
@@ -28,4 +28,5 @@ final class ColumnTypeTest extends TestCase
         self::assertSame(ColumnTypeFamily::TEXT, $text->family);
         self::assertSame(ColumnTypeFamily::BOOLEAN, $bool->family);
     }
+
 }

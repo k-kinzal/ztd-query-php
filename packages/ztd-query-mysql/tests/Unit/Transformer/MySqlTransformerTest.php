@@ -7,9 +7,13 @@ namespace Tests\Unit\Transformer;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Platform\MySql\DmlWhereClauseExtractor;
+use ZtdQuery\Platform\MySql\InsertSelectSourceExtractor;
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlParser;
+use ZtdQuery\Platform\MySql\MySqlUpsertAssignmentExtractor;
+use ZtdQuery\Platform\MySql\UpdateSourceExtractor;
 use ZtdQuery\Platform\MySql\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\MySql\Transformer\InsertTransformer;
 use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
@@ -18,14 +22,29 @@ use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
 
 #[CoversClass(MySqlTransformer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlSelectRelationParser::class)]
 #[UsesClass(MySqlParser::class)]
+#[UsesClass(MySqlUpsertAssignmentExtractor::class)]
 #[UsesClass(SelectTransformer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlFullTextSearchRewriter::class)]
 #[UsesClass(InsertTransformer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\InsertRowRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\InsertSelectRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\MySqlSelectListAliaser::class)]
+#[UsesClass(InsertSelectSourceExtractor::class)]
 #[UsesClass(UpdateTransformer::class)]
 #[UsesClass(DeleteTransformer::class)]
+#[UsesClass(DmlWhereClauseExtractor::class)]
+#[UsesClass(UpdateSourceExtractor::class)]
 #[UsesClass(ReplaceTransformer::class)]
 #[UsesClass(MySqlCastRenderer::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlTypeSemantics::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlNativeUpsertProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlGeneratedColumnProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 final class MySqlTransformerTest extends TestCase
 {
     public function testTransformSelectPassthrough(): void

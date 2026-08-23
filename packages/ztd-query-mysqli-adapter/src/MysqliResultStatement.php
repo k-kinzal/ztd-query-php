@@ -6,6 +6,7 @@ namespace ZtdQuery\Adapter\Mysqli;
 
 use mysqli_result;
 use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Platform\ResultColumnTypeResolver;
 
 /**
  * mysqli result adapter implementing StatementInterface for ZTD layer.
@@ -19,10 +20,11 @@ final class MysqliResultStatement implements StatementInterface
 
     private int $affectedRows;
 
-    public function __construct(?mysqli_result $result, int $affectedRows)
+    public function __construct(?mysqli_result $result, int|string $affectedRows)
     {
         $this->result = $result;
-        $this->affectedRows = $affectedRows;
+        $normalizedAffectedRows = filter_var($affectedRows, FILTER_VALIDATE_INT);
+        $this->affectedRows = $normalizedAffectedRows === false ? PHP_INT_MAX : $normalizedAffectedRows;
     }
 
     /**
@@ -48,6 +50,18 @@ final class MysqliResultStatement implements StatementInterface
         $rows = $this->result->fetch_all(MYSQLI_ASSOC);
 
         return $rows;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function resultColumns(ResultColumnTypeResolver $typeResolver): array
+    {
+        if ($this->result === null) {
+            return [];
+        }
+
+        return MysqliResultColumnExtractor::extract($this->result, $typeResolver);
     }
 
     /**

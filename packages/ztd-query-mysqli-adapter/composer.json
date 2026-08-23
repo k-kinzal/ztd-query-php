@@ -69,12 +69,14 @@
             "@fuzz:robustness",
             "@fuzz:correctness:select",
             "@fuzz:correctness:insert",
+            "@fuzz:correctness:replace",
             "@fuzz:correctness:update",
             "@fuzz:correctness:delete"
         ],
         "fuzz:robustness": "php-fuzzer fuzz fuzz/fuzz_robustness_execute.php --corpus=fuzz/corpus/robustness-execute",
         "fuzz:correctness:select": "php-fuzzer fuzz fuzz/fuzz_correctness_select.php --corpus=fuzz/corpus/correctness-select",
         "fuzz:correctness:insert": "php-fuzzer fuzz fuzz/fuzz_correctness_insert.php --corpus=fuzz/corpus/correctness-insert",
+        "fuzz:correctness:replace": "php-fuzzer fuzz fuzz/fuzz_correctness_replace.php fuzz/corpus/correctness-replace",
         "fuzz:correctness:update": "php-fuzzer fuzz fuzz/fuzz_correctness_update.php --corpus=fuzz/corpus/correctness-update",
         "fuzz:correctness:delete": "php-fuzzer fuzz fuzz/fuzz_correctness_delete.php --corpus=fuzz/corpus/correctness-delete",
         "infection": "infection --threads=max --show-mutations --no-progress"

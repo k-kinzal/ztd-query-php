@@ -9,12 +9,19 @@ namespace SqlFaker\Grammar;
  */
 interface LexicalGrammar
 {
+    /**
+     * @param GenerationPlan<bool> $plan
+     * @return non-empty-string
+     */
+    public function generate(GenerationPlan $plan): string;
+
     public function version(): string;
 
     public function supports(string $terminal): bool;
 
     /**
      * @param list<string> $terminals
+     * @param GenerationPlan<bool>|null $plan
      */
-    public function realize(array $terminals): string;
+    public function realize(array $terminals, ?GenerationPlan $plan = null): string;
 }

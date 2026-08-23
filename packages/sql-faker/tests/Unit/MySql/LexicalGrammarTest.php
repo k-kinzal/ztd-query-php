@@ -23,6 +23,118 @@ use SqlFaker\MySql\LexicalGrammar;
 #[UsesClass(SqlVersion::class)]
 final class LexicalGrammarTest extends TestCase
 {
+    public function testGeneratesPublicProviderLexemesThroughDialectGrammar(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $lexical = new LexicalGrammar($faker, 'mysql-8.4.7');
+        $sql = implode(' ', [
+            $lexical->generateQuotedIdentifier(3, 3),
+            $lexical->generateStringLiteral(3, 3),
+            $lexical->generateNationalStringLiteral(3, 3),
+            $lexical->generateDollarQuotedString(3, 3),
+            $lexical->generateIntegerLiteral(10, 10),
+            $lexical->generateDecimalLiteral(4, 2),
+            $lexical->generateFloatLiteral(4, 2, 2, 2),
+            $lexical->generateHexLiteral(4, 4),
+            $lexical->generateQuotedHexLiteral(2, 2),
+            $lexical->generateBinaryLiteral(4, 4),
+        ]);
+
+        self::assertSame([
+            'IDENT_QUOTED', 'TEXT_STRING', 'NCHAR_STRING', 'DOLLAR_QUOTED_STRING_SYM', 'NUM',
+            'DECIMAL_NUM', 'FLOAT_NUM', 'HEX_NUM', 'HEX_NUM', 'BIN_NUM',
+        ], $lexical->tokenize($sql));
+        self::assertSame('10', $lexical->generateLongIntegerLiteral(10, 10));
+        self::assertMatchesRegularExpression('/^[0-9]{1,20}$/', $lexical->generateUnsignedBigIntLiteral());
+        self::assertSame(
+            ['@', 'LEX_HOSTNAME'],
+            $lexical->tokenize('@' . $lexical->generateHostname(2, 2, 3)),
+        );
+    }
+
+    /**
+     * @param \Closure(LexicalGrammar): string $generate
+     * @param list<int> $expected
+     */
+    #[DataProvider('providerPublicLexemeDefaults')]
+    public function testPublicLexemeDefaultBounds(\Closure $generate, string $method, array $expected): void
+    {
+        self::assertNotSame('', $generate(new LexicalGrammar(Factory::create(), 'mysql-8.4.7')));
+        self::assertSame(
+            $expected,
+            array_map(
+                static fn (\ReflectionParameter $parameter): mixed => $parameter->getDefaultValue(),
+                (new \ReflectionMethod(LexicalGrammar::class, $method))->getParameters(),
+            ),
+        );
+    }
+
+    /** @return iterable<string, array{\Closure(LexicalGrammar): string, string, list<int>}> */
+    public static function providerPublicLexemeDefaults(): iterable
+    {
+        yield 'quoted identifier' => [static fn (LexicalGrammar $grammar): string => $grammar->generateQuotedIdentifier(), 'generateQuotedIdentifier', [1, 64]];
+        yield 'string' => [static fn (LexicalGrammar $grammar): string => $grammar->generateStringLiteral(), 'generateStringLiteral', [1, 255]];
+        yield 'national string' => [static fn (LexicalGrammar $grammar): string => $grammar->generateNationalStringLiteral(), 'generateNationalStringLiteral', [1, 255]];
+        yield 'dollar quoted string' => [static fn (LexicalGrammar $grammar): string => $grammar->generateDollarQuotedString(), 'generateDollarQuotedString', [1, 255]];
+        yield 'integer' => [static fn (LexicalGrammar $grammar): string => $grammar->generateIntegerLiteral(), 'generateIntegerLiteral', [1, 2147483647]];
+        yield 'long integer' => [static fn (LexicalGrammar $grammar): string => $grammar->generateLongIntegerLiteral(), 'generateLongIntegerLiteral', [0, 2147483647]];
+        yield 'unsigned big integer' => [static fn (LexicalGrammar $grammar): string => $grammar->generateUnsignedBigIntLiteral(), 'generateUnsignedBigIntLiteral', [1, 20]];
+        yield 'decimal' => [static fn (LexicalGrammar $grammar): string => $grammar->generateDecimalLiteral(), 'generateDecimalLiteral', [10, 2]];
+        yield 'float' => [static fn (LexicalGrammar $grammar): string => $grammar->generateFloatLiteral(), 'generateFloatLiteral', [10, 2, -38, 38]];
+        yield 'hex' => [static fn (LexicalGrammar $grammar): string => $grammar->generateHexLiteral(), 'generateHexLiteral', [1, 16]];
+        yield 'quoted hex' => [static fn (LexicalGrammar $grammar): string => $grammar->generateQuotedHexLiteral(), 'generateQuotedHexLiteral', [1, 8]];
+        yield 'binary' => [static fn (LexicalGrammar $grammar): string => $grammar->generateBinaryLiteral(), 'generateBinaryLiteral', [1, 64]];
+        yield 'hostname' => [static fn (LexicalGrammar $grammar): string => $grammar->generateHostname(), 'generateHostname', [1, 4, 63]];
+    }
+
+    #[DataProvider('providerGeneratedStringLiteral')]
+    public function testGeneratesEveryStringLiteralStrategy(int $choice, string $expected): void
+    {
+        $faker = new class ($choice) extends \Faker\Generator {
+            private bool $first = true;
+
+            public function __construct(private readonly int $choice)
+            {
+                parent::__construct();
+            }
+
+            /**
+             * @param mixed $min
+             * @param mixed $max
+             */
+            #[\Override]
+            public function numberBetween($min = 0, $max = 2147483647): int
+            {
+                if ($this->first) {
+                    $this->first = false;
+
+                    return $this->choice;
+                }
+                if (!is_int($min)) {
+                    throw new \UnexpectedValueException();
+                }
+
+                return $min;
+            }
+        };
+
+        self::assertSame(
+            $expected,
+            (new LexicalGrammar($faker, 'mysql-8.4.7', true))->realize(['TEXT_STRING']),
+        );
+    }
+
+    /** @return iterable<string, array{int, string}> */
+    public static function providerGeneratedStringLiteral(): iterable
+    {
+        yield 'combined arm value zero' => [0, "'ACCESSIBLE ACCESSIBLE'"];
+        yield 'combined arm value one' => [1, "'ACCESSIBLE ACCESSIBLE'"];
+        yield 'quote escaping' => [2, "'a''b'"];
+        yield 'backslash' => [3, "'a\\b'"];
+        yield 'random body' => [4, "''"];
+    }
+
     public function testTokenizesQuotedValuesHexValuesAndCommentsAsSingleTokens(): void
     {
         $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');

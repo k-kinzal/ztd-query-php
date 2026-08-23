@@ -5,19 +5,21 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\MySql\Transformer;
 
 use PhpMyAdmin\SqlParser\Components\ArrayObj;
-use PhpMyAdmin\SqlParser\Components\CaseExpression;
-use PhpMyAdmin\SqlParser\Components\Condition;
-use PhpMyAdmin\SqlParser\Components\Expression;
-use PhpMyAdmin\SqlParser\Components\GroupKeyword;
-use PhpMyAdmin\SqlParser\Components\Limit;
-use PhpMyAdmin\SqlParser\Components\OrderKeyword;
 use PhpMyAdmin\SqlParser\Components\SetOperation;
 use PhpMyAdmin\SqlParser\Statements\InsertStatement;
-use PhpMyAdmin\SqlParser\Statements\SelectStatement as PhpMyAdminSelectStatement;
 use RuntimeException;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\CastRenderer;
+use ZtdQuery\Platform\MySql\InsertSelectSourceExtractor;
+use ZtdQuery\Platform\MySql\MySqlCastRenderer;
+use ZtdQuery\Platform\MySql\MySqlNativeUpsertProjector;
 use ZtdQuery\Platform\MySql\MySqlParser;
+use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
+use ZtdQuery\Platform\MySql\MySqlUpsertAssignmentExtractor;
+use ZtdQuery\Rewrite\ShadowIdentityAllocator;
 use ZtdQuery\Rewrite\SqlTransformer;
+use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\IdentityGenerationStrategy;
 
 /**
  * Transforms INSERT statements into SELECT queries that return the inserted rows.
@@ -27,11 +29,26 @@ final class InsertTransformer implements SqlTransformer
 {
     private MySqlParser $parser;
     private SelectTransformer $selectTransformer;
+    private CastRenderer $castRenderer;
+    private InsertRowRenderer $rowRenderer;
+    private ShadowIdentityAllocator $identityAllocator;
+    private InsertSelectRenderer $insertSelectRenderer;
+    private MySqlCteShadowComposer $cteComposer;
+    private MySqlNativeUpsertProjector $upsertProjector;
 
-    public function __construct(MySqlParser $parser, SelectTransformer $selectTransformer)
-    {
+    public function __construct(
+        MySqlParser $parser,
+        SelectTransformer $selectTransformer,
+        ?CastRenderer $castRenderer = null,
+    ) {
         $this->parser = $parser;
         $this->selectTransformer = $selectTransformer;
+        $this->castRenderer = $castRenderer ?? new MySqlCastRenderer();
+        $this->rowRenderer = new InsertRowRenderer();
+        $this->identityAllocator = new ShadowIdentityAllocator();
+        $this->insertSelectRenderer = new InsertSelectRenderer();
+        $this->cteComposer = new MySqlCteShadowComposer();
+        $this->upsertProjector = new MySqlNativeUpsertProjector();
     }
 
     /**
@@ -39,6 +56,7 @@ final class InsertTransformer implements SqlTransformer
      */
     public function transform(string $sql, array $tables): string
     {
+        $this->identityAllocator->beginProjection();
         $statements = $this->parser->parse($sql);
         if (!isset($statements[0]) || !$statements[0] instanceof InsertStatement) {
             throw new UnsupportedSqlException($sql, 'Expected INSERT statement');
@@ -56,58 +74,164 @@ final class InsertTransformer implements SqlTransformer
             throw new UnsupportedSqlException($sql, 'Cannot resolve table name');
         }
 
-        $columns = $statement->into->columns ?? [];
-        $columns = array_values(array_filter($columns, 'is_string'));
-        if ($columns === [] && isset($tables[$tableName])) {
-            $columns = $tables[$tableName]['columns'];
-        }
-        if ($columns === []) {
+        $insertColumns = self::orderedValues($statement->into->columns ?? []);
+        $tableColumns = self::orderedValues($tables[$tableName]['columns'] ?? $insertColumns);
+        if ($tableColumns === []) {
             throw new UnsupportedSqlException($sql, 'Cannot determine columns');
         }
 
-        $selectSql = $this->buildInsertSelect($statement, $columns);
+        $columnTypes = $tables[$tableName]['columnTypes'] ?? [];
+        $columnDefaults = $tables[$tableName]['columnDefaults'] ?? [];
+        $identityStrategies = $tables[$tableName]['identityStrategies'] ?? [];
+        $existingRows = $tables[$tableName]['rows'] ?? [];
+        $sourceSelectSql = (new InsertSelectSourceExtractor())->extract($sql);
+        $selectSql = $this->buildInsertSelect(
+            $statement,
+            $tableName,
+            $tableColumns,
+            $insertColumns,
+            $columnTypes,
+            $columnDefaults,
+            $identityStrategies,
+            $existingRows,
+            $sourceSelectSql,
+        );
+        $upsertExtractor = new MySqlUpsertAssignmentExtractor();
+        $selectSql = $this->upsertProjector->project(
+            $selectSql,
+            $tableName,
+            $tableColumns,
+            isset($tables[$tableName]['candidateKeys']) ? $tables[$tableName]['candidateKeys'] : [],
+            $upsertExtractor->extract($sql),
+            incomingNamespace: $upsertExtractor->incomingAlias($sql),
+        );
 
-        return $this->selectTransformer->transform($selectSql, $tables);
+        return $this->selectTransformer->transform(
+            $this->cteComposer->carryPrefix($sql, $selectSql),
+            $tables,
+        );
+    }
+
+    public function commitRewriteState(): void
+    {
+        $this->identityAllocator->commitProjection();
     }
 
     /**
-     * @param array<int, string> $columns
+     * @param list<string> $tableColumns
+     * @param list<string> $insertColumns
+     * @param array<string, ColumnType> $columnTypes
+     * @param array<string, string> $columnDefaults
+     * @param array<string, IdentityGenerationStrategy> $identityStrategies
+     * @param array<int, array<string, mixed>> $existingRows
      */
-    private function buildInsertSelect(InsertStatement $statement, array $columns): string
-    {
+    private function buildInsertSelect(
+        InsertStatement $statement,
+        string $tableName,
+        array $tableColumns,
+        array $insertColumns,
+        array $columnTypes,
+        array $columnDefaults,
+        array $identityStrategies,
+        array $existingRows,
+        ?string $sourceSelectSql,
+    ): string {
         if ($statement->values !== null && $statement->values !== []) {
             $rows = [];
             foreach ($statement->values as $valueSet) {
-                $rows[] = $this->buildInsertRowSelect($valueSet, $columns);
+                $rows[] = $this->buildInsertRowSelect(
+                    $valueSet,
+                    $tableName,
+                    $tableColumns,
+                    $insertColumns,
+                    $columnTypes,
+                    $columnDefaults,
+                    $identityStrategies,
+                    $existingRows,
+                );
             }
 
             return implode(' UNION ALL ', $rows);
         }
 
         if ($statement->set !== null && $statement->set !== []) {
-            return $this->buildInsertSetSelect(array_values($statement->set));
+            return $this->buildInsertSetSelect(
+                self::orderedValues($statement->set),
+                $tableName,
+                $tableColumns,
+                $columnTypes,
+                $columnDefaults,
+                $identityStrategies,
+                $existingRows,
+            );
         }
 
         if ($statement->select !== null) {
-            return $this->buildInsertFromSelect($statement, $columns);
+            $sourceColumns = $insertColumns !== [] ? $insertColumns : $tableColumns;
+            $generatedIdentityStarts = $this->identityAllocator->allocateSelectStarts(
+                $tableName,
+                $identityStrategies,
+                $sourceColumns,
+                $existingRows,
+            );
+
+            return $this->insertSelectRenderer->render(
+                $sourceSelectSql ?? $statement->select->build(),
+                $tableColumns,
+                $sourceColumns,
+                $columnDefaults,
+                $generatedIdentityStarts,
+            );
         }
 
         throw new RuntimeException('Insert statement has no values to project.');
     }
 
     /**
-     * @param array<int, string> $columns
+     * @param list<string> $tableColumns
+     * @param list<string> $insertColumns
+     * @param array<string, ColumnType> $columnTypes
+     * @param array<string, string> $columnDefaults
+     * @param array<string, IdentityGenerationStrategy> $identityStrategies
+     * @param array<int, array<string, mixed>> $existingRows
      */
-    private function buildInsertRowSelect(ArrayObj $valueSet, array $columns): string
-    {
-        $values = $valueSet->raw !== [] ? $valueSet->raw : $valueSet->values;
-        if (count($values) !== count($columns)) {
-            throw new RuntimeException('Insert values count does not match column count.');
+    private function buildInsertRowSelect(
+        ArrayObj $valueSet,
+        string $tableName,
+        array $tableColumns,
+        array $insertColumns,
+        array $columnTypes,
+        array $columnDefaults,
+        array $identityStrategies,
+        array $existingRows,
+    ): string {
+        $rawValues = self::orderedValues($valueSet->raw !== [] ? $valueSet->raw : $valueSet->values);
+        $parsedValues = self::orderedValues($valueSet->values);
+        $values = [];
+        foreach ($rawValues as $index => $rawValue) {
+            $parsedValue = $parsedValues[$index] ?? $rawValue;
+            $values[] = strcasecmp($parsedValue, 'DEFAULT') === 0 ? $parsedValue : $rawValue;
         }
+        $sourceColumns = $insertColumns !== [] || $values === [] ? $insertColumns : $tableColumns;
+        try {
+            $providedExpressions = $this->rowRenderer->providedExpressions($sourceColumns, $values);
+        } catch (\InvalidArgumentException $exception) {
+            throw new RuntimeException($exception->getMessage(), 0, $exception);
+        }
+        $generatedValues = $this->identityAllocator->allocateMissing(
+            $tableName,
+            $identityStrategies,
+            array_keys($providedExpressions),
+            $existingRows,
+        );
+        $projected = $this->rowRenderer->render($tableColumns, $providedExpressions, $columnDefaults, $generatedValues);
 
         $selects = [];
-        foreach ($columns as $index => $column) {
-            $expr = trim($values[$index]);
+        foreach ($projected as $column => $expr) {
+            $type = $columnTypes[$column] ?? null;
+            if ($type instanceof ColumnType) {
+                $expr = $this->castRenderer->renderCast($expr, $type);
+            }
             $selects[] = $expr . ' AS `' . $column . '`';
         }
 
@@ -116,108 +240,60 @@ final class InsertTransformer implements SqlTransformer
 
     /**
      * @param array<int, SetOperation> $setOperations
+     * @param list<string> $tableColumns
+     * @param array<string, ColumnType> $columnTypes
+     * @param array<string, string> $columnDefaults
+     * @param array<string, IdentityGenerationStrategy> $identityStrategies
+     * @param array<int, array<string, mixed>> $existingRows
      */
-    private function buildInsertSetSelect(array $setOperations): string
-    {
-        $selects = [];
+    private function buildInsertSetSelect(
+        array $setOperations,
+        string $tableName,
+        array $tableColumns,
+        array $columnTypes,
+        array $columnDefaults,
+        array $identityStrategies,
+        array $existingRows,
+    ): string {
+        $columns = [];
+        $values = [];
         foreach ($setOperations as $set) {
-            $selects[] = $set->value . ' AS `' . $set->column . '`';
+            $columns[] = $set->column;
+            $values[] = $set->value;
+        }
+        $providedExpressions = $this->rowRenderer->providedExpressions($columns, $values);
+        $generatedValues = $this->identityAllocator->allocateMissing(
+            $tableName,
+            $identityStrategies,
+            array_keys($providedExpressions),
+            $existingRows,
+        );
+        $projected = $this->rowRenderer->render($tableColumns, $providedExpressions, $columnDefaults, $generatedValues);
+        $selects = [];
+        foreach ($projected as $column => $expression) {
+            $type = $columnTypes[$column] ?? null;
+            if ($type instanceof ColumnType) {
+                $expression = $this->castRenderer->renderCast($expression, $type);
+            }
+            $selects[] = $expression . ' AS `' . $column . '`';
         }
 
         return 'SELECT ' . implode(', ', $selects);
     }
 
     /**
-     * @param array<int, string> $columns
+     * @template T
+     * @param array<array-key, T> $values
+     * @return list<T>
      */
-    private function buildInsertFromSelect(InsertStatement $statement, array $columns): string
+    private static function orderedValues(array $values): array
     {
-        $select = $statement->select;
-        if ($select === null) {
-            throw new RuntimeException('INSERT ... SELECT requires a SELECT clause.');
+        $ordered = [];
+        foreach ($values as $value) {
+            $ordered[] = $value;
         }
 
-        $selectSql = $select->build();
-
-        if ($columns !== []) {
-            $aliasedColumns = [];
-            foreach ($columns as $index => $column) {
-                $aliasedColumns[] = sprintf('__ztd_subq.`col_%d` AS `%s`', $index, $column);
-            }
-
-            $wrappedSql = $this->wrapSelectWithNumberedAliases($selectSql, count($columns));
-
-            return 'SELECT ' . implode(', ', $aliasedColumns) . ' FROM (' . $wrappedSql . ') AS __ztd_subq';
-        }
-
-        return $selectSql;
+        return $ordered;
     }
 
-    private function wrapSelectWithNumberedAliases(string $selectSql, int $columnCount): string
-    {
-        $statements = $this->parser->parse($selectSql);
-        if (!isset($statements[0]) || !$statements[0] instanceof PhpMyAdminSelectStatement) {
-            throw new RuntimeException('Failed to parse INSERT ... SELECT subquery.');
-        }
-
-        $selectStmt = $statements[0];
-        $expressions = $selectStmt->expr;
-
-        if (count($expressions) !== $columnCount) {
-            throw new RuntimeException(sprintf(
-                'INSERT column count (%d) does not match SELECT column count (%d).',
-                $columnCount,
-                count($expressions)
-            ));
-        }
-
-        $aliasedExprs = [];
-        foreach ($expressions as $index => $expr) {
-            if ($expr instanceof CaseExpression) {
-                $exprStr = CaseExpression::build($expr);
-            } else {
-                $exprStr = Expression::build($expr);
-                if ($expr->alias !== null && $expr->alias !== '') {
-                    $exprStr = $expr->expr ?? $exprStr;
-                }
-            }
-            $aliasedExprs[] = sprintf('%s AS `col_%d`', $exprStr, $index);
-        }
-
-        $newSelectClause = 'SELECT ' . implode(', ', $aliasedExprs);
-
-        $restOfQuery = '';
-        if ($selectStmt->from !== []) {
-            $fromParts = [];
-            foreach ($selectStmt->from as $fromExpr) {
-                $fromParts[] = Expression::build($fromExpr);
-            }
-            $restOfQuery .= ' FROM ' . implode(', ', $fromParts);
-        }
-        if ($selectStmt->where !== null && $selectStmt->where !== []) {
-            $restOfQuery .= ' WHERE ' . Condition::build($selectStmt->where);
-        }
-        if ($selectStmt->group !== null && $selectStmt->group !== []) {
-            $groupParts = [];
-            foreach ($selectStmt->group as $group) {
-                $groupParts[] = GroupKeyword::build($group);
-            }
-            $restOfQuery .= ' GROUP BY ' . implode(', ', $groupParts);
-        }
-        if ($selectStmt->having !== null && $selectStmt->having !== []) {
-            $restOfQuery .= ' HAVING ' . Condition::build($selectStmt->having);
-        }
-        if ($selectStmt->order !== null && $selectStmt->order !== []) {
-            $orderParts = [];
-            foreach ($selectStmt->order as $order) {
-                $orderParts[] = OrderKeyword::build($order);
-            }
-            $restOfQuery .= ' ORDER BY ' . implode(', ', $orderParts);
-        }
-        if ($selectStmt->limit !== null) {
-            $restOfQuery .= ' LIMIT ' . Limit::build($selectStmt->limit);
-        }
-
-        return $newSelectClause . $restOfQuery;
-    }
 }

@@ -30,6 +30,7 @@ final class GenericExecuteResultTest extends TestCase
         self::assertFalse($result->isPassthrough());
         self::assertFalse($result->isSuccess());
         self::assertSame(QueryKind::WRITE_SIMULATED, $result->kind());
+        self::assertFalse($result->hasResultSet());
     }
 
     public function testFromBufferedRows(): void
@@ -161,6 +162,19 @@ final class GenericExecuteResultTest extends TestCase
         $result = GenericExecuteResult::fromBufferedRows([]);
 
         self::assertFalse($result->hasResultSet());
+    }
+
+    public function testBufferedReturningUsesIndependentAffectedCount(): void
+    {
+        $result = GenericExecuteResult::fromBufferedRows(
+            [['id' => 1]],
+            affectedRowCount: 3,
+            hasResultSet: true,
+        );
+
+        self::assertTrue($result->hasResultSet());
+        self::assertSame(3, $result->rowCount());
+        self::assertSame([['id' => 1]], $result->fetchAll());
     }
 
     public function testPassthroughFetchReturnsFalse(): void
