@@ -9,10 +9,16 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Tests\Fake\FakeConnection;
 use Tests\Fake\FakeSqlRewriter;
+use Tests\Fake\FakeStatement;
 use ZtdQuery\Config\ZtdConfig;
+use ZtdQuery\Connection\Exception\DatabaseException;
+use ZtdQuery\Exception\MissingPrimaryKeyException;
 use ZtdQuery\ResultSelectRunner;
+use ZtdQuery\Rewrite\QueryKind;
+use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Session;
+use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\ShadowStore;
 
 #[CoversClass(Session::class)]
@@ -20,6 +26,10 @@ use ZtdQuery\Shadow\ShadowStore;
 #[UsesClass(ShadowStore::class)]
 #[UsesClass(TableDefinitionRegistry::class)]
 #[UsesClass(ResultSelectRunner::class)]
+#[UsesClass(DatabaseException::class)]
+#[UsesClass(RewritePlan::class)]
+#[UsesClass(UpdateMutation::class)]
+#[UsesClass(MissingPrimaryKeyException::class)]
 final class SessionTest extends TestCase
 {
     public function testEnableAndDisable(): void
@@ -43,5 +53,32 @@ final class SessionTest extends TestCase
 
         $session->enable();
         self::assertTrue($session->isEnabled());
+    }
+
+    public function testMutationFailureIsConvertedToDatabaseException(): void
+    {
+        $shadowStore = new ShadowStore();
+        $shadowStore->set('users', [['id' => 1, 'name' => 'Alice']]);
+        $registry = new TableDefinitionRegistry();
+        $session = new Session(
+            new FakeSqlRewriter($shadowStore, $registry),
+            $shadowStore,
+            new ResultSelectRunner(),
+            ZtdConfig::default(),
+            new FakeConnection(),
+        );
+        $plan = new RewritePlan(
+            "SELECT 1 AS id, 'Bob' AS name",
+            QueryKind::WRITE_SIMULATED,
+            new UpdateMutation('users', []),
+        );
+
+        try {
+            $session->processExecutedStatement($plan, new FakeStatement([['id' => 1, 'name' => 'Bob']]));
+            self::fail('Expected a database exception.');
+        } catch (DatabaseException $exception) {
+            self::assertSame(0, $exception->getCode());
+            self::assertInstanceOf(MissingPrimaryKeyException::class, $exception->getPrevious());
+        }
     }
 }

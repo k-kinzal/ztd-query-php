@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Exception;
 
-use RuntimeException;
-
 /**
  * Exception thrown when an unsupported SQL statement is executed.
  */
-final class UnsupportedSqlException extends RuntimeException
+final class UnsupportedSqlException extends SimulationException
 {
     /**
      * The unsupported SQL statement.

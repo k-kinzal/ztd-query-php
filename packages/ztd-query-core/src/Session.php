@@ -11,11 +11,13 @@ use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Exception\SimulationException;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
+use ZtdQuery\Shadow\Mutation\ShadowMutation;
 use ZtdQuery\Shadow\ShadowStore;
 
 /**
@@ -207,7 +209,7 @@ final class Session
         if ($mutation === null) {
             throw new RuntimeException('ZTD Write Protection: Missing shadow mutation for write simulation.');
         }
-        $mutation->apply($this->shadowStore, $rows);
+        $this->applyMutation($mutation, $rows);
 
         return GenericExecuteResult::fromBufferedRows($rows, QueryKind::WRITE_SIMULATED);
     }
@@ -231,7 +233,7 @@ final class Session
         }
 
         $rows = $this->resultSelectRunner->run($plan->sql(), $executor);
-        $mutation->apply($this->shadowStore, $rows);
+        $this->applyMutation($mutation, $rows);
 
         return $rows;
     }
@@ -265,8 +267,24 @@ final class Session
         }
 
         $rows = $this->resultSelectRunner->run($plan->sql(), fn (string $s) => $this->connection->query($s));
-        $mutation->apply($this->shadowStore, $rows);
+        $this->applyMutation($mutation, $rows);
 
         return count($rows);
+    }
+
+    /**
+     * Apply a mutation without leaking simulation-specific exception types
+     * through the connection adapter boundary.
+     *
+     * @param array<int, array<string, mixed>> $rows
+     * @throws DatabaseException When shadow mutation application fails.
+     */
+    private function applyMutation(ShadowMutation $mutation, array $rows): void
+    {
+        try {
+            $mutation->apply($this->shadowStore, $rows);
+        } catch (SimulationException $e) {
+            throw new DatabaseException($e->getMessage(), null, 0, $e);
+        }
     }
 }

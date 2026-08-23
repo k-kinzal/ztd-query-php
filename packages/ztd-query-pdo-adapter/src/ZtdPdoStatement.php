@@ -7,6 +7,7 @@ namespace ZtdQuery\Adapter\Pdo;
 use Iterator;
 use PDO;
 use PDOStatement as NativePdoStatement;
+use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\ExecuteResult;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Session;
@@ -112,10 +113,14 @@ final class ZtdPdoStatement extends NativePdoStatement
             return false;
         }
 
-        $this->result = $this->session->processExecutedStatement(
-            $this->plan,
-            new PdoStatement($this->statement)
-        );
+        try {
+            $this->result = $this->session->processExecutedStatement(
+                $this->plan,
+                new PdoStatement($this->statement)
+            );
+        } catch (DatabaseException $e) {
+            throw new ZtdPdoException($e->getMessage(), 0, $e);
+        }
 
         return $this->result->isSuccess();
     }

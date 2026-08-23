@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Exception;
 
-use RuntimeException;
-
 /**
  * Exception thrown when attempting to create a table that already exists.
  */
-final class TableAlreadyExistsException extends RuntimeException
+final class TableAlreadyExistsException extends SimulationException
 {
     /**
      * The SQL statement that attempted to create the table.

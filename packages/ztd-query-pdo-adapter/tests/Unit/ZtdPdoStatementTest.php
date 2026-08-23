@@ -9,18 +9,23 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Adapter\Pdo\PdoStatement;
+use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 use ZtdQuery\Adapter\Pdo\ZtdPdoStatement;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\ConnectionInterface;
+use ZtdQuery\Connection\Exception\DatabaseException;
+use ZtdQuery\Exception\MissingPrimaryKeyException;
 use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Session;
+use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\ShadowStore;
 
 #[CoversClass(ZtdPdoStatement::class)]
 #[UsesClass(PdoStatement::class)]
+#[UsesClass(ZtdPdoException::class)]
 final class ZtdPdoStatementTest extends TestCase
 {
     public function testExecuteDelegatesWhenNoPlan(): void
@@ -62,6 +67,39 @@ final class ZtdPdoStatementTest extends TestCase
         $session = new Session(static::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), static::createStub(ConnectionInterface::class));
         $stmt = new ZtdPdoStatement($inner, $session, $plan);
         self::assertTrue($stmt->execute());
+    }
+
+    public function testExecuteWrapsSimulationFailureAsAdapterException(): void
+    {
+        $pdo = new PDO('sqlite::memory:');
+        $inner = $pdo->prepare("SELECT 1 AS id, 'Bob' AS name");
+        self::assertNotFalse($inner);
+
+        $shadowStore = new ShadowStore();
+        $shadowStore->set('users', [['id' => 1, 'name' => 'Alice']]);
+        $session = new Session(
+            static::createStub(SqlRewriter::class),
+            $shadowStore,
+            new ResultSelectRunner(),
+            ZtdConfig::default(),
+            static::createStub(ConnectionInterface::class),
+        );
+        $plan = new RewritePlan(
+            "SELECT 1 AS id, 'Bob' AS name",
+            QueryKind::WRITE_SIMULATED,
+            new UpdateMutation('users', []),
+        );
+        $stmt = new ZtdPdoStatement($inner, $session, $plan);
+
+        try {
+            $stmt->execute();
+            self::fail('Expected a ZTD PDO exception.');
+        } catch (ZtdPdoException $exception) {
+            self::assertSame(0, $exception->getCode());
+            $databaseException = $exception->getPrevious();
+            self::assertInstanceOf(DatabaseException::class, $databaseException);
+            self::assertInstanceOf(MissingPrimaryKeyException::class, $databaseException->getPrevious());
+        }
     }
 
     public function testBindValueDelegatesToInner(): void

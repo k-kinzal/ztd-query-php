@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Shadow;
 
-use ZtdQuery\Shadow\ShadowStore;
-use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
+use PHPUnit\Framework\TestCase;
+use ZtdQuery\Exception\MissingPrimaryKeyException;
+use ZtdQuery\Shadow\ShadowStore;
 
 #[CoversClass(ShadowStore::class)]
+#[UsesClass(MissingPrimaryKeyException::class)]
 class ShadowStoreTest extends TestCase
 {
     public function testInsertAppendsRows(): void
@@ -92,7 +95,7 @@ class ShadowStoreTest extends TestCase
         $store = new ShadowStore();
         $store->set('users', [['id' => 1, 'name' => 'Alice']]);
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(MissingPrimaryKeyException::class);
         $store->update('users', [['id' => 1, 'name' => 'Updated']], []);
     }
 
