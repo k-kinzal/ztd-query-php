@@ -39,9 +39,12 @@ final class PlanGenerator
 
     /**
      * @param array<string, int|array<mixed>|TableOverrides> $overrides Table name => what to override
+     * @throws PlanSchemaException If the plan names a column the schema does not have
      */
     public function generate(FixturePlan $plan, array $overrides = []): FixtureSet
     {
+        (new PlanSchemaValidator($this->schemas))->validate($plan);
+
         $run = new GenerationRun($this->specs($overrides));
 
         foreach ($plan->tables as $table) {

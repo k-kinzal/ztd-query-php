@@ -11,6 +11,8 @@ use PHPUnit\Framework\TestCase;
 use SqlFixture\Fixture\FixtureSet;
 use SqlFixture\Fixture\GenerationRun;
 use SqlFixture\Fixture\PlanGenerator;
+use SqlFixture\Fixture\PlanSchemaException;
+use SqlFixture\Fixture\PlanSchemaValidator;
 use SqlFixture\Fixture\RowSpec;
 use SqlFixture\Fixture\TableOverrides;
 use SqlFixture\FixtureGenerator;
@@ -31,6 +33,8 @@ use Tests\Fixture\Fixture\ShopSchemas;
 
 #[CoversClass(PlanGenerator::class)]
 #[UsesClass(GenerationRun::class)]
+#[UsesClass(PlanSchemaValidator::class)]
+#[UsesClass(PlanSchemaException::class)]
 #[UsesClass(RowSpec::class)]
 #[UsesClass(FixtureSet::class)]
 #[UsesClass(TableOverrides::class)]
@@ -246,5 +250,14 @@ final class PlanGeneratorTest extends TestCase
         $this->expectExceptionMessage('Schema not found for table: nope');
 
         ShopSchemas::generator()->generate(FixturePlan::from('nope'));
+    }
+
+    #[Test]
+    public function aPlanNamingAColumnTheTableLacksIsRejectedBeforeGenerating(): void
+    {
+        $this->expectException(PlanSchemaException::class);
+        $this->expectExceptionMessage('order_detail has no column oder_id');
+
+        ShopSchemas::generator()->generate(FixturePlan::from('order.id < order_detail.oder_id'));
     }
 }
