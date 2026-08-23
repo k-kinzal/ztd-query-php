@@ -7,6 +7,7 @@ namespace Tests\Unit\SqlFaker;
 use Faker\Factory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
@@ -39,6 +40,7 @@ use SqlFaker\Grammar\TerminalInventory;
 #[CoversClass(TerminationAnalyzer::class)]
 #[CoversClass(StatementType::class)]
 #[CoversClass(LexicalGrammar::class)]
+#[UsesClass(GenerationPlan::class)]
 #[UsesClass(LexicalCatalog::class)]
 #[UsesClass(SqlVersion::class)]
 #[UsesClass(TerminalInventory::class)]

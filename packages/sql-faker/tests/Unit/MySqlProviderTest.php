@@ -23,7 +23,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\UsesClass;
 use SqlFaker\Grammar\LexicalCatalog;
-use SqlFaker\Grammar\DerivationPlan;
+use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\ProductionPattern;
 use SqlFaker\Grammar\SqlVersion;
 use SqlFaker\MySql\Grammar\TerminalInventory;
@@ -41,7 +41,7 @@ use SqlFaker\MySql\Grammar\TerminalInventory;
 #[CoversClass(StatementType::class)]
 #[CoversClass(LexicalGrammar::class)]
 #[UsesClass(LexicalCatalog::class)]
-#[UsesClass(DerivationPlan::class)]
+#[UsesClass(GenerationPlan::class)]
 #[UsesClass(ProductionPattern::class)]
 #[UsesClass(SqlVersion::class)]
 #[UsesClass(TerminalInventory::class)]

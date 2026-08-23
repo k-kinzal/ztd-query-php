@@ -6,6 +6,7 @@ namespace SqlFaker\Sqlite;
 
 use Faker\Generator as FakerGenerator;
 use LogicException;
+use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\LexicalException;
 use SqlFaker\Grammar\NonTerminal;
@@ -65,22 +66,27 @@ final class SqlGenerator
     /**
      * Generate a syntactically valid SQL string.
      *
-     * @param string|null $startRule Grammar rule to start from (null for default)
-     * @param int $targetDepth Depth at which generator starts seeking termination
+     * @template TRequiresNonEmpty of bool
+     * @param GenerationPlan<TRequiresNonEmpty> $plan Grammar generation range and production constraints
+     * @return (TRequiresNonEmpty is true ? non-empty-string : string)
      */
-    public function generate(?string $startRule = null, int $targetDepth = PHP_INT_MAX): string
+    public function generate(GenerationPlan $plan): string
     {
-        $this->targetDepth = max(1, $targetDepth);
-        $start = $startRule ?? 'cmd';
+        $this->targetDepth = $plan->maxDepth();
+        $start = $plan->startRule() ?? 'cmd';
         $lastException = null;
         for ($attempt = 0; $attempt < self::LEXICAL_ATTEMPT_LIMIT; $attempt++) {
             $this->derivationSteps = 0;
-            $terminals = $this->derive($start);
+            $terminals = $this->derive($start, $plan);
             try {
-                return $this->lexicalGrammar->realize(array_map(
+                $sql = $this->lexicalGrammar->realize(array_map(
                     static fn (Terminal $terminal): string => $terminal->value,
                     $terminals,
                 ));
+                if ($sql !== '' || !$plan->requiresNonEmpty()) {
+                    return $sql;
+                }
+                $lastException = new LogicException('SQLite generation plan requires non-empty output.');
             } catch (LexicalException $exception) {
                 $lastException = $exception;
             }
@@ -90,12 +96,15 @@ final class SqlGenerator
     }
 
     /**
+     * @param GenerationPlan<bool> $plan
      * @return list<Terminal>
      */
-    private function derive(string $startSymbol): array
+    private function derive(string $startSymbol, GenerationPlan $plan): array
     {
         /** @var list<Symbol> $form */
         $form = [new NonTerminal($startSymbol)];
+        /** @var array<string, int> $occurrences */
+        $occurrences = [];
 
         while (true) {
             $index = null;
@@ -134,6 +143,35 @@ final class SqlGenerator
 
             if ($alternatives === []) {
                 throw new LogicException("Grammar rule has no lexically realizable alternative: {$nonTerminal->value}");
+            }
+            $occurrence = $occurrences[$nonTerminal->value] ?? 0;
+            $occurrences[$nonTerminal->value] = $occurrence + 1;
+            $pattern = $plan->patternAt($nonTerminal->value, $occurrence);
+            if ($pattern !== null) {
+                $alternatives = array_values(array_filter(
+                    $alternatives,
+                    static fn (Production $production): bool => $pattern->matches(array_map(
+                        static fn (Symbol $symbol): string => $symbol->value(),
+                        $production->symbols,
+                    )),
+                ));
+                if ($alternatives === []) {
+                    throw new LogicException(
+                        "Grammar rule has no alternative matching the generation plan: {$nonTerminal->value}",
+                    );
+                }
+            }
+            if ($this->derivationSteps === 1 && $plan->requiresNonEmpty()) {
+                $alternatives = array_values(array_filter(
+                    $alternatives,
+                    fn (Production $production): bool => $this->terminationAnalyzer
+                        ->estimateProductionLength($production) > 0,
+                ));
+                if ($alternatives === []) {
+                    throw new LogicException(
+                        "Generation plan requires non-empty output, but the start rule cannot produce it: {$nonTerminal->value}",
+                    );
+                }
             }
 
             $remainingForm = new Production(array_slice($form, $index + 1));
