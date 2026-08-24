@@ -12,13 +12,14 @@
         "friendsofphp/php-cs-fixer": "^3.92",
         "phpunit/phpunit": "^10.5 || ^11 || ^12 || ^13",
         "infection/infection": "^0.28 || ^0.29 || ^0.30 || ^0.31 || ^0.32 || ^0.34.1",
-        "k-kinzal/phpstan-custom-rules": "@dev",
-        "brianium/paratest": "^6.11 || ^7"
+        "brianium/paratest": "^6.11 || ^7",
+        "k-kinzal/php-ai-toolkit": "dev-main"
     },
     "repositories": [
         {
-            "type": "path",
-            "url": "../phpstan-custom-rules"
+            "name": "php-ai-toolkit",
+            "type": "vcs",
+            "url": "https://github.com/k-kinzal/php-ai-toolkit.git"
         }
     ],
     "autoload": {
@@ -33,7 +34,7 @@
     },
     "scripts": {
         "test": "paratest --processes=auto",
-        "test:unit": "phpunit tests/Unit/",
+        "test:unit": "@php -d memory_limit=512M vendor/bin/phpunit tests/Unit/",
         "lint": [
             "@format:check",
             "phpstan analyse --memory-limit=512M"
