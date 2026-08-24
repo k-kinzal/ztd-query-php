@@ -6,83 +6,112 @@ namespace SqlFaker\MySql;
 
 use Faker\Generator as FakerGenerator;
 use InvalidArgumentException;
+use Override;
 use RuntimeException;
 use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\LexicalCatalog;
 use SqlFaker\Grammar\LexicalException;
 use SqlFaker\Grammar\LexicalGrammar as LexicalGrammarContract;
+use SqlFaker\Grammar\LexicalKeywordIndex;
+use SqlFaker\Grammar\LexicalProfileSource;
 use SqlFaker\Grammar\RandomStringGenerator;
-use SqlFaker\Grammar\SqlVersion;
 use SqlFaker\Grammar\TokenJoiner;
 
 /**
  * MySQL lexical realization for one exact server version and the default sql_mode.
+ *
+ * Writing a terminal sequence as SQL is only half of what this does. The text
+ * is read straight back by the dialect's own tokenizer and the two token
+ * sequences are compared, so a generator that believed it was writing one
+ * statement and a server that would have read another is caught here rather
+ * than by the server. That round trip is the contract; realizing and tokenizing
+ * are the two collaborators it holds.
  */
 final class LexicalGrammar implements LexicalGrammarContract
 {
-    /**
-     * @var array<string, list<string>>
-     */
-    private array $symbols;
-
-    /**
-     * @var array<string, list<string>>
-     */
-    private array $functions;
-
-    /**
-     * @var array<string, string>
-     */
-    private array $symbolTokens;
-
-    /**
-     * @var array<string, string>
-     */
-    private array $functionTokens;
-
-    private bool $dollarQuotedStrings;
+    /** @readonly */
     private RandomStringGenerator $strings;
+
+    /** @readonly */
     private LexicalCatalog $catalog;
 
+    /** @readonly */
+    private MySqlTokenizer $tokenizer;
+
+    /** @readonly */
+    private MySqlTerminalRealizer $realizer;
+
+    /**
+     * @param FakerGenerator $faker Source of the choices realization makes
+     * @param string $profileVersion Exact server version to generate for, e.g. "mysql-8.4.7"
+     * @param bool $allowSyntheticTerminals Whether terminals may be written without a catalogued witness
+     * @param LexicalProfileSource|null $profiles Loads the checked-in profile for the version
+     * @param LexicalKeywordIndex|null $index Inverts the profile's terminal-to-spelling maps
+     *
+     * @throws RuntimeException When the profile is missing or describes another server
+     */
     public function __construct(
         private readonly FakerGenerator $faker,
         private readonly string $profileVersion,
         private readonly bool $allowSyntheticTerminals = false,
+        ?LexicalProfileSource $profiles = null,
+        ?LexicalKeywordIndex $index = null,
     ) {
-        $path = SqlVersion::resolve('mysql', $profileVersion)->lexicalPath;
-        if (!file_exists($path)) {
-            throw new RuntimeException("Lexical profile file not found: {$path}");
-        }
-
         /**
-         * @var array{dialect: string, version: string, symbols: array<string, list<string>>, functions: array<string, list<string>>, features: array{dollar_quoted_strings: bool}, catalog: array<string, mixed>} $profile
+         * @var array{symbols: array<string, list<string>>, functions: array<string, list<string>>, features: array{dollar_quoted_strings: bool}, catalog: array<string, mixed>} $profile
          */
-        $profile = require $path;
-        if ($profile['dialect'] !== 'mysql' || $profile['version'] !== $profileVersion) {
-            throw new RuntimeException("Invalid MySQL lexical profile: {$path}");
-        }
+        $profile = ($profiles ?? new LexicalProfileSource())->load('mysql', $profileVersion);
+        $index ??= new LexicalKeywordIndex();
 
-        $this->symbols = $profile['symbols'];
-        $this->functions = $profile['functions'];
-        $this->symbolTokens = $this->reverse($this->symbols);
-        $this->functionTokens = $this->reverse($this->functions);
-        $this->dollarQuotedStrings = $profile['features']['dollar_quoted_strings'];
         $this->strings = new RandomStringGenerator($faker);
         $this->catalog = new LexicalCatalog($profile['catalog']);
+        $this->tokenizer = new MySqlTokenizer(
+            $index->reversed($profile['symbols']),
+            $index->reversed($profile['functions']),
+            $profile['features']['dollar_quoted_strings'],
+        );
+        $this->realizer = new MySqlTerminalRealizer(
+            $faker,
+            $this->catalog,
+            $this->tokenizer,
+            $profile['symbols'],
+            $profile['functions'],
+            $profileVersion,
+            $allowSyntheticTerminals,
+            $this->strings,
+        );
     }
 
+    /**
+     * Names the server version this grammar generates for.
+     *
+     * @return string Profile version, e.g. "mysql-8.4.7"
+     */
+    #[Override]
     public function version(): string
     {
         return $this->profileVersion;
     }
 
+    /**
+     * Reports whether a parser terminal can be written as SQL.
+     *
+     * @param string $terminal Terminal to look for
+     *
+     * @return bool True when the terminal can be realized
+     */
+    #[Override]
     public function supports(string $terminal): bool
     {
-        return $this->allowSyntheticTerminals || $this->catalog->supports($terminal);
+        return $this->realizer->supports($terminal);
     }
 
     /**
-     * @param list<string> $terminals
+     * Checks that every terminal a grammar declares can be accounted for.
+     *
+     * @param list<string> $terminals Terminals the grammar declares
+     *
+     * @throws \SqlFaker\Grammar\LexicalCatalogException When a terminal is neither witnessed nor excluded
      */
     public function assertTerminalsCovered(array $terminals): void
     {
@@ -90,21 +119,28 @@ final class LexicalGrammar implements LexicalGrammarContract
     }
 
     /**
-     * @param list<string> $terminals
-     * @param GenerationPlan<bool>|null $plan
+     * Writes a terminal sequence as SQL and checks that it reads back as itself.
+     *
+     * @param list<string> $terminals Terminals to write, in order
+     * @param GenerationPlan<bool>|null $plan Plan that may pin exact lexemes for some terminals
+     *
+     * @return string SQL that tokenizes back to the terminals it was written from
+     *
+     * @throws LexicalException When a terminal cannot be written, or the text does not read back
      */
+    #[Override]
     public function realize(array $terminals, ?GenerationPlan $plan = null): string
     {
         $lexemes = [];
         $expected = [];
-        /**
-         * @var array<string, int> $occurrences
-         */
+        /** @var array<string, int> $occurrences */
         $occurrences = [];
+
         foreach ($terminals as $terminal) {
             $occurrence = $occurrences[$terminal] ?? 0;
             $occurrences[$terminal] = $occurrence + 1;
-            [$lexeme, $tokens] = $this->realizeTerminal($terminal, $plan?->lexemeAt($terminal, $occurrence));
+
+            [$lexeme, $tokens] = $this->realizer->realize($terminal, $plan?->lexemeAt($terminal, $occurrence));
             if ($lexeme !== null) {
                 $lexemes[] = $lexeme;
             }
@@ -114,22 +150,42 @@ final class LexicalGrammar implements LexicalGrammarContract
         $sql = TokenJoiner::join(
             $lexemes,
             [['@', '*'], ['*', '@']],
-            fn (): string => $this->trivia(),
-            fn (): string => $this->optionalTrivia(),
+            fn (): string => $this->realizer->trivia(),
+            fn (): string => $this->realizer->optionalTrivia(),
         );
+
         $actual = $this->tokenize($sql);
         if ($this->allowSyntheticTerminals) {
             $expected = $actual;
         }
         if ($actual !== $expected) {
-            throw new LexicalException($this->roundTripMessage($expected, $actual, $sql));
+            throw LexicalException::roundTripMismatch('MySQL', $this->profileVersion, $expected, $actual, $sql);
         }
 
         return $sql;
     }
 
     /**
-     * @return non-empty-string
+     * Reads SQL text into the tokens MySQL's own lexer would produce.
+     *
+     * @param string $sql Text to read
+     *
+     * @return list<string> Parser token names, in order
+     *
+     * @throws LexicalException When the text holds something the lexer cannot read
+     */
+    public function tokenize(string $sql): array
+    {
+        return $this->tokenizer->tokenize($sql);
+    }
+
+    /**
+     * Writes a backtick-quoted identifier of a bounded length.
+     *
+     * @param int $minLength Shortest identifier body to write
+     * @param int $maxLength Longest identifier body to write
+     *
+     * @return non-empty-string A quoted identifier
      */
     public function generateQuotedIdentifier(int $minLength = 1, int $maxLength = 64): string
     {
@@ -137,7 +193,12 @@ final class LexicalGrammar implements LexicalGrammarContract
     }
 
     /**
-     * @return non-empty-string
+     * Writes a single-quoted string literal of a bounded length.
+     *
+     * @param int $minLength Shortest body to write
+     * @param int $maxLength Longest body to write
+     *
+     * @return non-empty-string A string literal
      */
     public function generateStringLiteral(int $minLength = 1, int $maxLength = 255): string
     {
@@ -145,7 +206,12 @@ final class LexicalGrammar implements LexicalGrammarContract
     }
 
     /**
-     * @return non-empty-string
+     * Writes a national character string literal.
+     *
+     * @param int $minLength Shortest body to write
+     * @param int $maxLength Longest body to write
+     *
+     * @return non-empty-string An N-prefixed string literal
      */
     public function generateNationalStringLiteral(int $minLength = 1, int $maxLength = 255): string
     {
@@ -153,7 +219,12 @@ final class LexicalGrammar implements LexicalGrammarContract
     }
 
     /**
-     * @return non-empty-string
+     * Writes a dollar-quoted string literal.
+     *
+     * @param int $minLength Shortest body to write
+     * @param int $maxLength Longest body to write
+     *
+     * @return non-empty-string A dollar-quoted string
      */
     public function generateDollarQuotedString(int $minLength = 1, int $maxLength = 255): string
     {
@@ -161,7 +232,12 @@ final class LexicalGrammar implements LexicalGrammarContract
     }
 
     /**
-     * @return non-empty-string
+     * Writes an integer literal inside the range MySQL reads as NUM.
+     *
+     * @param int $min Smallest value to write
+     * @param int $max Largest value to write
+     *
+     * @return non-empty-string An integer literal
      */
     public function generateIntegerLiteral(int $min = 1, int $max = 2147483647): string
     {
@@ -169,7 +245,12 @@ final class LexicalGrammar implements LexicalGrammarContract
     }
 
     /**
-     * @return non-empty-string
+     * Writes an integer literal wide enough for MySQL to read as LONG_NUM.
+     *
+     * @param int $min Smallest value to write
+     * @param int $max Largest value to write
+     *
+     * @return non-empty-string An integer literal
      */
     public function generateLongIntegerLiteral(int $min = 0, int $max = 2147483647): string
     {
@@ -177,7 +258,12 @@ final class LexicalGrammar implements LexicalGrammarContract
     }
 
     /**
-     * @return non-empty-string
+     * Writes an integer literal wide enough for MySQL to read as ULONGLONG_NUM.
+     *
+     * @param int $minLength Fewest digits to write
+     * @param int $maxLength Most digits to write
+     *
+     * @return non-empty-string An integer literal
      */
     public function generateUnsignedBigIntLiteral(int $minLength = 1, int $maxLength = 20): string
     {
@@ -185,7 +271,12 @@ final class LexicalGrammar implements LexicalGrammarContract
     }
 
     /**
-     * @return non-empty-string
+     * Writes a fixed-point literal.
+     *
+     * @param int $precision Total digits to write
+     * @param int $scale Digits after the point
+     *
+     * @return non-empty-string A decimal literal
      */
     public function generateDecimalLiteral(int $precision = 10, int $scale = 2): string
     {
@@ -193,7 +284,14 @@ final class LexicalGrammar implements LexicalGrammarContract
     }
 
     /**
-     * @return non-empty-string
+     * Writes a floating-point literal in exponent form.
+     *
+     * @param int $precision Total digits of the mantissa
+     * @param int $scale Digits after the point in the mantissa
+     * @param int $minExponent Smallest exponent to write
+     * @param int $maxExponent Largest exponent to write
+     *
+     * @return non-empty-string A float literal
      */
     public function generateFloatLiteral(
         int $precision = 10,
@@ -209,7 +307,12 @@ final class LexicalGrammar implements LexicalGrammarContract
     }
 
     /**
-     * @return non-empty-string
+     * Writes a hexadecimal literal in `0x` form.
+     *
+     * @param int $minLength Fewest hex digits to write
+     * @param int $maxLength Most hex digits to write
+     *
+     * @return non-empty-string A hexadecimal literal
      */
     public function generateHexLiteral(int $minLength = 1, int $maxLength = 16): string
     {
@@ -217,7 +320,12 @@ final class LexicalGrammar implements LexicalGrammarContract
     }
 
     /**
-     * @return non-empty-string
+     * Writes a hexadecimal literal in `X'..'` form, which takes whole bytes.
+     *
+     * @param int $minBytes Fewest bytes to write
+     * @param int $maxBytes Most bytes to write
+     *
+     * @return non-empty-string A quoted hexadecimal literal
      */
     public function generateQuotedHexLiteral(int $minBytes = 1, int $maxBytes = 8): string
     {
@@ -227,7 +335,12 @@ final class LexicalGrammar implements LexicalGrammarContract
     }
 
     /**
-     * @return non-empty-string
+     * Writes a binary literal in `0b` form.
+     *
+     * @param int $minLength Fewest bits to write
+     * @param int $maxLength Most bits to write
+     *
+     * @return non-empty-string A binary literal
      */
     public function generateBinaryLiteral(int $minLength = 1, int $maxLength = 64): string
     {
@@ -235,7 +348,13 @@ final class LexicalGrammar implements LexicalGrammarContract
     }
 
     /**
-     * @return non-empty-string
+     * Writes a hostname, as it appears after the `@` of a user specification.
+     *
+     * @param int $minParts Fewest dot-separated parts to write
+     * @param int $maxParts Most dot-separated parts to write
+     * @param int $maxPartLength Longest single part to write
+     *
+     * @return non-empty-string A hostname
      */
     public function generateHostname(int $minParts = 1, int $maxParts = 4, int $maxPartLength = 63): string
     {
@@ -243,409 +362,15 @@ final class LexicalGrammar implements LexicalGrammarContract
     }
 
     /**
-     * @return list<string>
+     * Writes the one lexeme a lexical generation plan asks for.
+     *
+     * @param GenerationPlan<bool> $plan Plan naming the lexeme kind and its bounds
+     *
+     * @return non-empty-string The lexeme
+     *
+     * @throws InvalidArgumentException When the plan names a lexeme kind this dialect has none of
      */
-    public function tokenize(string $sql): array
-    {
-        $tokens = [];
-        $length = strlen($sql);
-        $offset = 0;
-
-        while ($offset < $length) {
-            if ($this->skipTrivia($sql, $offset)) {
-                continue;
-            }
-
-            $char = $sql[$offset];
-            if ($char === '`') {
-                $this->skipQuoted($sql, $offset, '`');
-                $tokens[] = 'IDENT_QUOTED';
-                continue;
-            }
-            if ($char === "'") {
-                $this->skipQuoted($sql, $offset, "'");
-                $tokens[] = 'TEXT_STRING';
-                continue;
-            }
-            if ($char === '$' && $this->dollarQuotedStrings && substr($sql, $offset, 2) === '$$') {
-                $end = strpos($sql, '$$', $offset + 2);
-                if ($end === false) {
-                    throw new LexicalException('Unterminated MySQL dollar-quoted string.');
-                }
-                $offset = $end + 2;
-                $tokens[] = 'DOLLAR_QUOTED_STRING_SYM';
-                continue;
-            }
-            if ($char === '?') {
-                $offset++;
-                $tokens[] = 'PARAM_MARKER';
-                continue;
-            }
-            if ($char === '@') {
-                $offset++;
-                $tokens[] = '@';
-                continue;
-            }
-            if (($tokens[count($tokens) - 1] ?? null) === '@'
-                && preg_match('/\G[A-Za-z0-9_.%-]+/A', $sql, $match, 0, $offset) === 1
-            ) {
-                $offset += strlen($match[0]);
-                $tokens[] = 'LEX_HOSTNAME';
-                continue;
-            }
-            if (preg_match('/\G(?:0[xX][0-9A-Fa-f]+|0[bB][01]+)/A', $sql, $match, 0, $offset) === 1) {
-                $offset += strlen($match[0]);
-                $tokens[] = strtolower(substr($match[0], 0, 2)) === '0x' ? 'HEX_NUM' : 'BIN_NUM';
-                continue;
-            }
-            if (preg_match('/\G(?:[nN]|[xX]|[bB])\'/A', $sql, $match, 0, $offset) === 1) {
-                $prefix = strtoupper($match[0][0]);
-                $offset++;
-                $this->skipQuoted($sql, $offset, "'");
-                $tokens[] = match ($prefix) {
-                    'N' => 'NCHAR_STRING',
-                    'X' => 'HEX_NUM',
-                    default => 'BIN_NUM',
-                };
-                continue;
-            }
-            if (preg_match('/\G(?:\d+\.\d*|\.\d+)(?:[eE][+-]?\d+)?|\G\d+[eE][+-]?\d+/A', $sql, $match, 0, $offset) === 1) {
-                $offset += strlen($match[0]);
-                $tokens[] = str_contains(strtolower($match[0]), 'e') ? 'FLOAT_NUM' : 'DECIMAL_NUM';
-                continue;
-            }
-            if (preg_match('/\G\d+/A', $sql, $match, 0, $offset) === 1) {
-                $offset += strlen($match[0]);
-                $tokens[] = $this->integerToken($match[0]);
-                continue;
-            }
-            if (preg_match('/\G_[A-Za-z0-9_]*/A', $sql, $match, 0, $offset) === 1) {
-                $offset += strlen($match[0]);
-                $tokens[] = strtolower($match[0]) === '_utf8mb4' ? 'UNDERSCORE_CHARSET' : 'IDENT';
-                continue;
-            }
-            if (preg_match('/\G[A-Za-z][A-Za-z0-9_$]*/A', $sql, $match, 0, $offset) === 1) {
-                $offset += strlen($match[0]);
-                $word = strtoupper($match[0]);
-                $token = ($sql[$offset] ?? null) === '(' ? ($this->functionTokens[$word] ?? null) : null;
-                $tokens[] = $token ?? $this->symbolTokens[$word] ?? 'IDENT';
-                continue;
-            }
-
-            $operator = $this->operatorAt($sql, $offset);
-            if ($operator !== null) {
-                $offset += strlen($operator);
-                $token = $this->symbolTokens[$operator] ?? $operator;
-                $tokens[] = $token === 'OR_OR_SYM' ? 'OR2_SYM' : $token;
-                continue;
-            }
-
-            throw new LexicalException("Unsupported MySQL lexical input at offset {$offset}: {$sql}");
-        }
-
-        for ($index = 0; $index + 1 < count($tokens); $index++) {
-            if ($tokens[$index] === 'WITH' && $tokens[$index + 1] === 'ROLLUP_SYM') {
-                array_splice($tokens, $index, 2, ['WITH_ROLLUP_SYM']);
-            }
-        }
-
-        return $tokens;
-    }
-
-    /**
-     * @param non-empty-string|null $requestedLexeme
-     * @return array{string|null, list<string>}
-     */
-    private function realizeTerminal(string $terminal, ?string $requestedLexeme = null): array
-    {
-        if (!$this->supports($terminal)) {
-            throw new LexicalException("Unsupported MySQL terminal for {$this->profileVersion}: {$terminal}");
-        }
-
-        if ($requestedLexeme !== null) {
-            return $this->realizeRequestedLexeme($terminal, $requestedLexeme);
-        }
-
-        if (!$this->allowSyntheticTerminals) {
-            $witnesses = $this->catalog->witnesses($terminal);
-            $witness = $witnesses[$this->faker->numberBetween(0, count($witnesses) - 1)];
-
-            return [$witness['sql'] === '' ? null : $witness['sql'], $witness['tokens']];
-        }
-        if (str_starts_with($terminal, 'GRAMMAR_SELECTOR_') || $terminal === 'END_OF_INPUT') {
-            return [null, []];
-        }
-
-        return match ($terminal) {
-            'IDENT' => [$this->identifier(), ['IDENT']],
-            'IDENT_QUOTED' => [$this->quotedIdentifier(), ['IDENT_QUOTED']],
-            'TEXT_STRING' => [$this->stringLiteral(), ['TEXT_STRING']],
-            'NCHAR_STRING' => ['N' . $this->stringLiteral(), ['NCHAR_STRING']],
-            'DOLLAR_QUOTED_STRING_SYM' => [$this->dollarQuotedString(), [$terminal]],
-            'NUM' => [$this->strings->integerString(0, 2147483647), ['NUM']],
-            'LONG_NUM' => [(string) $this->faker->numberBetween(2147483648, PHP_INT_MAX), ['LONG_NUM']],
-            'ULONGLONG_NUM' => ['18446744073709551615', ['ULONGLONG_NUM']],
-            'DECIMAL_NUM' => [$this->strings->decimalString(), ['DECIMAL_NUM']],
-            'FLOAT_NUM' => [$this->strings->floatString($this->strings->integerString()), ['FLOAT_NUM']],
-            'HEX_NUM' => [$this->hexadecimalLiteral(), ['HEX_NUM']],
-            'BIN_NUM' => [$this->binaryLiteral(), ['BIN_NUM']],
-            'LEX_HOSTNAME' => ['localhost', ['IDENT']],
-            'PARAM_MARKER' => ['?', ['PARAM_MARKER']],
-            'OR2_SYM' => ['||', ['OR2_SYM']],
-            'WITH_ROLLUP_SYM' => ['WITH ROLLUP', ['WITH_ROLLUP_SYM']],
-            'UNDERSCORE_CHARSET' => ['_utf8mb4', ['UNDERSCORE_CHARSET']],
-            default => $this->fixedTerminal($terminal),
-        };
-    }
-
-    /**
-     * @param non-empty-string $requestedLexeme
-     * @return array{non-empty-string, list<string>}
-     */
-    private function realizeRequestedLexeme(string $terminal, string $requestedLexeme): array
-    {
-        if ($this->allowSyntheticTerminals) {
-            $tokens = $this->tokenize($requestedLexeme);
-            if ($tokens !== [$terminal]) {
-                throw new LexicalException("Requested MySQL lexeme does not realize {$terminal}: {$requestedLexeme}");
-            }
-
-            return [$requestedLexeme, $tokens];
-        }
-
-        foreach ($this->catalog->witnesses($terminal) as $witness) {
-            if ($witness['sql'] === $requestedLexeme) {
-                return [$requestedLexeme, $witness['tokens']];
-            }
-        }
-
-        throw new LexicalException("MySQL lexical catalog has no {$terminal} witness for: {$requestedLexeme}");
-    }
-
-    /**
-     * @return array{string, list<string>}
-     */
-    private function fixedTerminal(string $terminal): array
-    {
-        if ($this->allowSyntheticTerminals) {
-            $lexeme = match ($terminal) {
-                'EQ' => '=',
-                'EQUAL_SYM' => '<=>',
-                'LT' => '<',
-                'GT_SYM' => '>',
-                'LE' => '<=',
-                'GE' => '>=',
-                'NE' => '<>',
-                'SHIFT_LEFT' => '<<',
-                'SHIFT_RIGHT' => '>>',
-                'AND_AND_SYM' => '&&',
-                'OR_OR_SYM', 'OR2_SYM' => '||',
-                'NOT2_SYM' => 'NOT',
-                'SET_VAR' => ':=',
-                'JSON_SEPARATOR_SYM' => '->',
-                'JSON_UNQUOTED_SEPARATOR_SYM' => '->>',
-                'NEG' => '-',
-                default => str_ends_with($terminal, '_SYM') ? substr($terminal, 0, -4) : $terminal,
-            };
-
-            return [$lexeme, $this->tokenize($lexeme)];
-        }
-
-        $lexemes = $this->symbols[$terminal] ?? $this->functions[$terminal] ?? null;
-        $lexeme = $lexemes !== null
-            ? $lexemes[$this->faker->numberBetween(0, count($lexemes) - 1)]
-            : $terminal;
-
-        return [$lexeme, isset($this->symbols[$terminal]) || isset($this->functions[$terminal])
-            ? [$terminal]
-            : $this->tokenize($lexeme)];
-    }
-
-    private function identifier(): string
-    {
-        return '_' . $this->strings->rawIdentifier();
-    }
-
-    private function quotedIdentifier(): string
-    {
-        $body = $this->faker->numberBetween(0, 3) === 0 ? 'select' : $this->identifier();
-        if ($this->faker->numberBetween(0, 7) === 0) {
-            $body .= '`' . $this->strings->rawIdentifier();
-        }
-
-        return '`' . str_replace('`', '``', $body) . '`';
-    }
-
-    private function stringLiteral(): string
-    {
-        $body = match ($this->faker->numberBetween(0, 6)) {
-            0, 1 => $this->strings->lexicalSequence($this->symbols + $this->functions),
-            2 => "a'b",
-            3 => 'a\\b',
-            default => $this->strings->mixedAlnumString(0, 24),
-        };
-
-        return "'" . str_replace("'", "''", $body) . "'";
-    }
-
-    private function dollarQuotedString(): string
-    {
-        return '$$' . $this->strings->mixedAlnumString(0, 24) . '$$';
-    }
-
-    private function hexadecimalLiteral(): string
-    {
-        if ($this->faker->numberBetween(0, 1) === 0) {
-            return '0x' . $this->strings->hexString();
-        }
-
-        $length = $this->faker->numberBetween(0, 8) * 2;
-
-        return "X'" . $this->strings->hexString($length, $length) . "'";
-    }
-
-    private function binaryLiteral(): string
-    {
-        if ($this->faker->numberBetween(0, 1) === 0) {
-            return '0b' . $this->strings->binaryString();
-        }
-
-        return "B'" . $this->strings->binaryString(0, 32) . "'";
-    }
-
-    private function trivia(): string
-    {
-        if ($this->allowSyntheticTerminals) {
-            return ' ';
-        }
-
-        $witnesses = $this->catalog->witnesses('@TRIVIA');
-
-        return $witnesses[$this->faker->numberBetween(0, count($witnesses) - 1)]['sql'];
-    }
-
-    private function optionalTrivia(): string
-    {
-        if ($this->allowSyntheticTerminals || $this->faker->numberBetween(0, 1) === 0) {
-            return '';
-        }
-
-        return $this->trivia();
-    }
-
-    private function skipTrivia(string $sql, int &$offset): bool
-    {
-        if (preg_match('/\G\s+/A', $sql, $match, 0, $offset) === 1) {
-            $offset += strlen($match[0]);
-
-            return true;
-        }
-        if (substr($sql, $offset, 2) === '/*') {
-            $end = strpos($sql, '*/', $offset + 2);
-            if ($end === false) {
-                throw new LexicalException('Unterminated MySQL block comment.');
-            }
-            $offset = $end + 2;
-
-            return true;
-        }
-        if ($sql[$offset] === '#' || (substr($sql, $offset, 2) === '--' && preg_match('/\s/', $sql[$offset + 2] ?? '') === 1)) {
-            $end = strpos($sql, "\n", $offset + 1);
-            $offset = $end === false ? strlen($sql) : $end + 1;
-
-            return true;
-        }
-
-        return false;
-    }
-
-    private function skipQuoted(string $sql, int &$offset, string $quote): void
-    {
-        $length = strlen($sql);
-        $offset++;
-        while ($offset < $length) {
-            if ($sql[$offset] !== $quote) {
-                $offset++;
-                continue;
-            }
-            if (($sql[$offset + 1] ?? null) === $quote) {
-                $offset += 2;
-                continue;
-            }
-            $offset++;
-
-            return;
-        }
-
-        throw new LexicalException("Unterminated MySQL quoted token: {$sql}");
-    }
-
-    private function integerToken(string $integer): string
-    {
-        $normalized = ltrim($integer, '0');
-        $normalized = $normalized === '' ? '0' : $normalized;
-        if (strlen($normalized) < 10 || (strlen($normalized) === 10 && strcmp($normalized, '2147483647') <= 0)) {
-            return 'NUM';
-        }
-        if (strlen($normalized) < 19 || (strlen($normalized) === 19 && strcmp($normalized, '9223372036854775807') <= 0)) {
-            return 'LONG_NUM';
-        }
-
-        return 'ULONGLONG_NUM';
-    }
-
-    private function operatorAt(string $sql, int $offset): ?string
-    {
-        foreach (['<=>', '->>', '&&', '<=', '<>', '!=', '>=', '<<', '>>', ':=', '->', '||'] as $operator) {
-            if (substr($sql, $offset, strlen($operator)) === $operator) {
-                return $operator;
-            }
-        }
-        $char = $sql[$offset];
-
-        return $this->isPunctuation($char) ? $char : null;
-    }
-
-    private function isPunctuation(string $terminal): bool
-    {
-        return strlen($terminal) === 1 && str_contains('!%&()*+,-./:;@^{}|~=<>', $terminal);
-    }
-
-    /**
-     * @param array<string, list<string>> $tokens
-     * @return array<string, string>
-     */
-    private function reverse(array $tokens): array
-    {
-        $result = [];
-        foreach ($tokens as $token => $lexemes) {
-            foreach ($lexemes as $lexeme) {
-                $result[strtoupper($lexeme)] = $token;
-            }
-        }
-
-        return $result;
-    }
-
-    /**
-     * @param list<string> $expected
-     * @param list<string> $actual
-     */
-    private function roundTripMessage(array $expected, array $actual, string $sql): string
-    {
-        return sprintf(
-            "MySQL lexical round-trip failed for %s.\nExpected: %s\nActual: %s\nSQL: %s",
-            $this->profileVersion,
-            json_encode($expected, JSON_THROW_ON_ERROR),
-            json_encode($actual, JSON_THROW_ON_ERROR),
-            $sql,
-        );
-    }
-
-    /**
-     * @param GenerationPlan<bool> $plan
-     * @return non-empty-string
-     */
+    #[Override]
     public function generate(GenerationPlan $plan): string
     {
         $target = $plan->lexicalTarget();
@@ -654,11 +379,20 @@ final class LexicalGrammar implements LexicalGrammarContract
         return match ($target) {
             'quoted_identifier' => $this->generateQuotedIdentifier($parameters['minLength'], $parameters['maxLength']),
             'string_literal' => $this->generateStringLiteral($parameters['minLength'], $parameters['maxLength']),
-            'national_string_literal' => $this->generateNationalStringLiteral($parameters['minLength'], $parameters['maxLength']),
-            'dollar_quoted_string' => $this->generateDollarQuotedString($parameters['minLength'], $parameters['maxLength']),
+            'national_string_literal' => $this->generateNationalStringLiteral(
+                $parameters['minLength'],
+                $parameters['maxLength'],
+            ),
+            'dollar_quoted_string' => $this->generateDollarQuotedString(
+                $parameters['minLength'],
+                $parameters['maxLength'],
+            ),
             'integer_literal' => $this->generateIntegerLiteral($parameters['min'], $parameters['max']),
             'long_integer_literal' => $this->generateLongIntegerLiteral($parameters['min'], $parameters['max']),
-            'unsigned_big_int_literal' => $this->generateUnsignedBigIntLiteral($parameters['minLength'], $parameters['maxLength']),
+            'unsigned_big_int_literal' => $this->generateUnsignedBigIntLiteral(
+                $parameters['minLength'],
+                $parameters['maxLength'],
+            ),
             'decimal_literal' => $this->generateDecimalLiteral($parameters['precision'], $parameters['scale']),
             'float_literal' => $this->generateFloatLiteral(
                 $parameters['precision'],

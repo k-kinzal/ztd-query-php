@@ -13,6 +13,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlFaker\Grammar\LexicalCatalog;
+use SqlFaker\Grammar\LexicalCatalogException;
 use SqlFaker\Grammar\LexicalException;
 use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\Grammar\SqlVersion;
@@ -404,5 +405,162 @@ SQL;
         yield 'WITH_ROLLUP_SYM' => ['WITH_ROLLUP_SYM', 'WITH ROLLUP'];
         yield 'UNDERSCORE_CHARSET' => ['UNDERSCORE_CHARSET', '_utf8mb4'];
         yield 'PARAM_MARKER' => ['PARAM_MARKER', '?'];
+    }
+
+    public function testGenerateQuotedIdentifierWrapsTheNameInBackticks(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+
+        self::assertMatchesRegularExpression(
+            '/^`.+`$/',
+            $lexical->generateQuotedIdentifier(),
+        );
+    }
+
+    public function testGenerateStringLiteralWrapsTheBodyInSingleQuotes(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+
+        self::assertMatchesRegularExpression(
+            '/^\'.*\'$/s',
+            $lexical->generateStringLiteral(),
+        );
+    }
+
+    public function testGenerateNationalStringLiteralPrefixesTheStringWithN(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+
+        self::assertMatchesRegularExpression(
+            '/^N\'.*\'$/s',
+            $lexical->generateNationalStringLiteral(),
+        );
+    }
+
+    public function testGenerateDollarQuotedStringWrapsTheBodyInDoubleDollars(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+
+        self::assertMatchesRegularExpression(
+            '/^\$\$.*\$\$$/s',
+            $lexical->generateDollarQuotedString(),
+        );
+    }
+
+    public function testGenerateIntegerLiteralWritesOnlyDigits(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+
+        self::assertMatchesRegularExpression(
+            '/^\d+$/',
+            $lexical->generateIntegerLiteral(),
+        );
+    }
+
+    public function testGenerateLongIntegerLiteralWritesOnlyDigits(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+
+        self::assertMatchesRegularExpression(
+            '/^\d+$/',
+            $lexical->generateLongIntegerLiteral(),
+        );
+    }
+
+    public function testGenerateUnsignedBigIntLiteralWritesOnlyDigits(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+
+        self::assertMatchesRegularExpression(
+            '/^\d+$/',
+            $lexical->generateUnsignedBigIntLiteral(),
+        );
+    }
+
+    public function testGenerateDecimalLiteralWritesDigitsAroundAPoint(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+
+        self::assertMatchesRegularExpression(
+            '/^-?\d+\.\d+$/',
+            $lexical->generateDecimalLiteral(),
+        );
+    }
+
+    public function testGenerateFloatLiteralWritesAnExponent(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+
+        self::assertMatchesRegularExpression(
+            '/[eE][+-]?\d+$/',
+            $lexical->generateFloatLiteral(),
+        );
+    }
+
+    public function testGenerateHexLiteralWritesHexDigitsAfterAPrefix(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+
+        self::assertMatchesRegularExpression(
+            '/^0x[0-9a-fA-F]+$/',
+            $lexical->generateHexLiteral(),
+        );
+    }
+
+    public function testGenerateQuotedHexLiteralWritesWholeBytesInQuotes(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+
+        self::assertMatchesRegularExpression(
+            '/^X\'(?:[0-9a-fA-F]{2})+\'$/',
+            $lexical->generateQuotedHexLiteral(),
+        );
+    }
+
+    public function testGenerateBinaryLiteralWritesBitsAfterAPrefix(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+
+        self::assertMatchesRegularExpression(
+            '/^0b[01]+$/',
+            $lexical->generateBinaryLiteral(),
+        );
+    }
+
+    public function testGenerateHostnameWritesDotSeparatedParts(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+
+        self::assertMatchesRegularExpression(
+            '/^[A-Za-z0-9.-]+$/',
+            $lexical->generateHostname(),
+        );
+    }
+
+    public function testSupportsAcceptsATerminalTheCatalogWitnesses(): void
+    {
+        self::assertTrue((new LexicalGrammar(Factory::create(), 'mysql-8.4.7'))->supports('SELECT_SYM'));
+    }
+
+    public function testSupportsRejectsATerminalNoCatalogWitnesses(): void
+    {
+        self::assertFalse((new LexicalGrammar(Factory::create(), 'mysql-8.4.7'))->supports('NOT_A_TERMINAL'));
+    }
+
+    public function testAssertTerminalsCoveredAcceptsTerminalsTheProfileClassifies(): void
+    {
+        (new LexicalGrammar(Factory::create(), 'mysql-8.4.7'))->assertTerminalsCovered(['SELECT_SYM', 'IDENT']);
+
+        $this->expectNotToPerformAssertions();
+    }
+
+    public function testAssertTerminalsCoveredReportsATerminalTheProfileDoesNotClassify(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+
+        $this->expectException(LexicalCatalogException::class);
+        $this->expectExceptionMessage('missing grammar terminals: NOT_A_TERMINAL');
+
+        $lexical->assertTerminalsCovered(['NOT_A_TERMINAL']);
     }
 }
