@@ -28,9 +28,98 @@ use SqlFaker\Sqlite\Grammar\SqliteGrammar;
 #[Medium]
 final class LexicalCatalogTest extends TestCase
 {
-    public function testAcceptsCompletelyClassifiedCatalog(): void
+    /**
+     * @param array<string, mixed> $catalog
+     */
+    #[DataProvider('providerClassifiedCatalog')]
+    public function testSourceEngineNamesTheUpstreamLexer(array $catalog): void
     {
-        $catalog = new LexicalCatalog([
+        self::assertSame('official', (new LexicalCatalog($catalog))->sourceEngine());
+    }
+
+    /**
+     * @param array<string, mixed> $catalog
+     */
+    #[DataProvider('providerClassifiedCatalog')]
+    public function testSourceEntrypointNamesTheUpstreamEntryPoint(array $catalog): void
+    {
+        self::assertSame('lexer', (new LexicalCatalog($catalog))->sourceEntrypoint());
+    }
+
+    /**
+     * @param array<string, mixed> $catalog
+     */
+    #[DataProvider('providerClassifiedCatalog')]
+    public function testSupportsAcceptsACataloguedTerminal(array $catalog): void
+    {
+        self::assertTrue((new LexicalCatalog($catalog))->supports('IDENT'));
+    }
+
+    /**
+     * @param array<string, mixed> $catalog
+     */
+    #[DataProvider('providerClassifiedCatalog')]
+    public function testSupportsRejectsATerminalTheCatalogDoesNotCarry(array $catalog): void
+    {
+        $subject = new LexicalCatalog($catalog);
+
+        self::assertFalse($subject->supports('UNKNOWN'));
+        self::assertFalse($subject->supports('MODE_ONLY'));
+    }
+
+    /**
+     * @param array<string, mixed> $catalog
+     */
+    #[DataProvider('providerClassifiedCatalog')]
+    public function testExcludesAcceptsATerminalLeftOutOnPurpose(array $catalog): void
+    {
+        self::assertTrue((new LexicalCatalog($catalog))->excludes('MODE_ONLY'));
+    }
+
+    /**
+     * @param array<string, mixed> $catalog
+     */
+    #[DataProvider('providerClassifiedCatalog')]
+    public function testExcludesRejectsATerminalThatIsSimplyAbsent(array $catalog): void
+    {
+        self::assertFalse((new LexicalCatalog($catalog))->excludes('UNKNOWN'));
+    }
+
+    /**
+     * @param array<string, mixed> $catalog
+     */
+    #[DataProvider('providerClassifiedCatalog')]
+    public function testWitnessesReportsTheExamplesCataloguedForATerminal(array $catalog): void
+    {
+        self::assertSame('ident.bare', (new LexicalCatalog($catalog))->witnesses('IDENT')[0]['id']);
+    }
+
+    /**
+     * @param array<string, mixed> $catalog
+     */
+    #[DataProvider('providerClassifiedCatalog')]
+    public function testWitnessesReportsNothingForAnUncataloguedTerminal(array $catalog): void
+    {
+        self::assertSame([], (new LexicalCatalog($catalog))->witnesses('UNKNOWN'));
+    }
+
+    /**
+     * @param array<string, mixed> $catalog
+     */
+    #[DataProvider('providerClassifiedCatalog')]
+    public function testAssertTerminalsCoveredAcceptsWitnessedAndExcludedAlike(array $catalog): void
+    {
+        (new LexicalCatalog($catalog))->assertTerminalsCovered(['IDENT', 'MODE_ONLY']);
+
+        $this->expectNotToPerformAssertions();
+    }
+
+    /**
+     * @return iterable<string, array{array<string, mixed>}>
+     */
+    public static function providerClassifiedCatalog(): iterable
+    {
+        yield 'one witnessed terminal and one excluded' => [[
             'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
             'terminals' => [
                 'IDENT' => [[
@@ -46,18 +135,7 @@ final class LexicalCatalogTest extends TestCase
                 'witnessed' => ['identifier' => 'ident.bare'],
                 'excluded' => ['illegal' => 'The generator emits valid SQL only.'],
             ],
-        ]);
-
-        $catalog->assertTerminalsCovered(['IDENT', 'MODE_ONLY']);
-
-        self::assertSame('official', $catalog->sourceEngine());
-        self::assertSame('lexer', $catalog->sourceEntrypoint());
-        self::assertTrue($catalog->supports('IDENT'));
-        self::assertTrue($catalog->excludes('MODE_ONLY'));
-        self::assertSame('ident.bare', $catalog->witnesses('IDENT')[0]['id']);
-        self::assertSame([], $catalog->witnesses('UNKNOWN'));
-        self::assertFalse($catalog->supports('UNKNOWN'));
-        self::assertFalse($catalog->excludes('UNKNOWN'));
+        ]];
     }
 
     public function testAcceptsCompactWitnessWithContext(): void
