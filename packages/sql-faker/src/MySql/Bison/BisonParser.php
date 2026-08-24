@@ -21,8 +21,8 @@ use SqlFaker\MySql\Bison\Ast\BisonTokenDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonTokenInfo;
 use SqlFaker\MySql\Bison\Ast\BisonTypeDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonUnknownDeclaration;
-use SqlFaker\MySql\Bison\Lexer\BisonLexer;
-use SqlFaker\MySql\Bison\Lexer\BisonTokenType;
+use SqlFaker\MySql\Bison\Lexer\BisonLexeme;
+use SqlFaker\MySql\Bison\Lexer\BisonTokenStream;
 
 /**
  * Parser for Bison/Yacc grammar files (e.g. MySQL's sql_yacc.yy).
@@ -31,8 +31,8 @@ final class BisonParser
 {
     public function parse(string $input): BisonAst
     {
-        $lexer = new BisonLexer($input);
-        return $this->process($lexer);
+        $stream = BisonTokenStream::over($input);
+        return $this->process($stream);
     }
 
     public function parseFile(string $path): BisonAst
@@ -47,11 +47,11 @@ final class BisonParser
         return $this->parse($contents);
     }
 
-    private function process(BisonLexer $lexer): BisonAst
+    private function process(BisonTokenStream $stream): BisonAst
     {
-        [$prologue, $declarations] = $this->processDeclarationsSection($lexer);
-        $rules = $this->processRulesSection($lexer);
-        $epilogue = $this->processEpilogueSection($lexer);
+        [$prologue, $declarations] = $this->processDeclarationsSection($stream);
+        $rules = $this->processRulesSection($stream);
+        $epilogue = $this->processEpilogueSection($stream);
 
         if ($rules === []) {
             throw GrammarParseException::noRulesParsed('Bison');
@@ -80,24 +80,24 @@ final class BisonParser
     /**
      * @return array{?string, list<BisonDeclaration>}
      */
-    private function processDeclarationsSection(BisonLexer $lexer): array
+    private function processDeclarationsSection(BisonTokenStream $stream): array
     {
         $prologue = null;
         /** @var list<BisonDeclaration> $declarations */
         $declarations = [];
 
-        while (($tok = $lexer->peek())->type !== BisonTokenType::Eof) {
-            if ($tok->type === BisonTokenType::PercentPercent) {
-                $lexer->next();
+        while (($tok = $stream->peek())->type !== BisonLexeme::Eof) {
+            if ($tok->type === BisonLexeme::PercentPercent) {
+                $stream->next();
                 break;
             }
 
             match ($tok->type) {
-                BisonTokenType::Prologue => $prologue = $lexer->nextString(),
-                BisonTokenType::Directive => ($decl = $this->processDirective($lexer)) !== null
+                BisonLexeme::Prologue => $prologue = $stream->nextString(),
+                BisonLexeme::Directive => ($decl = $this->processDirective($stream)) !== null
                     ? $declarations[] = $decl
                     : null,
-                default => $lexer->next(),
+                default => $stream->next(),
             };
         }
 
@@ -107,213 +107,213 @@ final class BisonParser
     /**
      * @return list<BisonRuleNode>
      */
-    private function processRulesSection(BisonLexer $lexer): array
+    private function processRulesSection(BisonTokenStream $stream): array
     {
         /** @var list<BisonRuleNode> $rules */
         $rules = [];
 
-        while (($tok = $lexer->peek())->type !== BisonTokenType::Eof) {
-            if ($tok->type === BisonTokenType::PercentPercent) {
-                $lexer->next();
+        while (($tok = $stream->peek())->type !== BisonLexeme::Eof) {
+            if ($tok->type === BisonLexeme::PercentPercent) {
+                $stream->next();
                 break;
             }
 
             match ($tok->type) {
-                BisonTokenType::Identifier => ($rule = $this->processRule($lexer)) !== null
+                BisonLexeme::Identifier => ($rule = $this->processRule($stream)) !== null
                     ? $rules[] = $rule
                     : null,
-                default => $lexer->next(),
+                default => $stream->next(),
             };
         }
 
         return $rules;
     }
 
-    private function processEpilogueSection(BisonLexer $lexer): ?string
+    private function processEpilogueSection(BisonTokenStream $stream): ?string
     {
-        $remaining = trim($lexer->consumeRemaining());
+        $remaining = trim($stream->consumeRemaining());
         return $remaining !== '' ? $remaining : null;
     }
 
-    private function processDirective(BisonLexer $lexer): ?BisonDeclaration
+    private function processDirective(BisonTokenStream $stream): ?BisonDeclaration
     {
-        $directive = $lexer->nextString();
+        $directive = $stream->nextString();
 
         return match ($directive) {
-            '%start' => $this->processStartDirective($lexer),
-            '%token' => $this->processTokenDirective($lexer),
-            '%type' => $this->processTypeDirective($lexer),
-            '%left', '%right', '%nonassoc', '%precedence' => $this->processPrecedenceDirective($lexer, $directive),
-            '%parse-param', '%lex-param' => $this->processParamDirective($lexer, $directive),
-            '%expect' => $this->processExpectDirective($lexer),
-            '%define' => $this->processDefineDirective($lexer),
-            default => $this->processUnknownDirective($lexer, $directive),
+            '%start' => $this->processStartDirective($stream),
+            '%token' => $this->processTokenDirective($stream),
+            '%type' => $this->processTypeDirective($stream),
+            '%left', '%right', '%nonassoc', '%precedence' => $this->processPrecedenceDirective($stream, $directive),
+            '%parse-param', '%lex-param' => $this->processParamDirective($stream, $directive),
+            '%expect' => $this->processExpectDirective($stream),
+            '%define' => $this->processDefineDirective($stream),
+            default => $this->processUnknownDirective($stream, $directive),
         };
     }
 
-    private function processStartDirective(BisonLexer $lexer): ?BisonStartDeclaration
+    private function processStartDirective(BisonTokenStream $stream): ?BisonStartDeclaration
     {
-        $next = $lexer->peek();
-        if ($next->type !== BisonTokenType::Identifier) {
+        $next = $stream->peek();
+        if ($next->type !== BisonLexeme::Identifier) {
             return null;
         }
-        return new BisonStartDeclaration($lexer->nextString());
+        return new BisonStartDeclaration($stream->nextString());
     }
 
-    private function processTokenDirective(BisonLexer $lexer): BisonTokenDeclaration
+    private function processTokenDirective(BisonTokenStream $stream): BisonTokenDeclaration
     {
         $typeTag = null;
-        if ($lexer->peek()->type === BisonTokenType::TypeTag) {
-            $typeTag = $lexer->nextString();
+        if ($stream->peek()->type === BisonLexeme::TypeTag) {
+            $typeTag = $stream->nextString();
         }
 
-        /** @var list<BisonTokenInfo> $tokens */
-        $tokens = [];
+        /** @var list<BisonTokenInfo> $declared */
+        $declared = [];
 
-        while ($this->isDeclarationContent($lexer->peek()->type)) {
-            if ($lexer->peek()->type !== BisonTokenType::Identifier) {
-                $lexer->next();
+        while ($this->isDeclarationContent($stream->peek()->type)) {
+            if ($stream->peek()->type !== BisonLexeme::Identifier) {
+                $stream->next();
                 continue;
             }
 
-            $name = $lexer->nextString();
+            $name = $stream->nextString();
             $number = null;
             $alias = null;
 
-            $peek = $lexer->peek();
-            if ($peek->type === BisonTokenType::Number) {
-                $number = $lexer->nextInt();
-                $peek = $lexer->peek();
+            $peek = $stream->peek();
+            if ($peek->type === BisonLexeme::Number) {
+                $number = $stream->nextInt();
+                $peek = $stream->peek();
             }
-            if ($peek->type === BisonTokenType::StringLiteral) {
-                $alias = $lexer->nextString();
+            if ($peek->type === BisonLexeme::StringLiteral) {
+                $alias = $stream->nextString();
             }
 
-            $tokens[] = new BisonTokenInfo($name, $number, $alias);
+            $declared[] = new BisonTokenInfo($name, $number, $alias);
         }
 
-        return new BisonTokenDeclaration($typeTag, $tokens);
+        return new BisonTokenDeclaration($typeTag, $declared);
     }
 
-    private function processTypeDirective(BisonLexer $lexer): ?BisonTypeDeclaration
+    private function processTypeDirective(BisonTokenStream $stream): ?BisonTypeDeclaration
     {
-        if ($lexer->peek()->type !== BisonTokenType::TypeTag) {
+        if ($stream->peek()->type !== BisonLexeme::TypeTag) {
             return null;
         }
-        $typeTag = $lexer->nextString();
+        $typeTag = $stream->nextString();
 
         /** @var list<string> $symbols */
         $symbols = [];
 
-        while ($this->isDeclarationContent($lexer->peek()->type)) {
-            $peek = $lexer->peek();
-            if ($peek->type === BisonTokenType::Identifier) {
-                $symbols[] = $lexer->nextString();
+        while ($this->isDeclarationContent($stream->peek()->type)) {
+            $peek = $stream->peek();
+            if ($peek->type === BisonLexeme::Identifier) {
+                $symbols[] = $stream->nextString();
             } else {
-                $lexer->next();
+                $stream->next();
             }
         }
 
         return new BisonTypeDeclaration($typeTag, $symbols);
     }
 
-    private function processPrecedenceDirective(BisonLexer $lexer, string $directive): BisonPrecedenceDeclaration
+    private function processPrecedenceDirective(BisonTokenStream $stream, string $directive): BisonPrecedenceDeclaration
     {
         /** @var 'left'|'right'|'nonassoc'|'precedence' $associativity */
         $associativity = substr($directive, 1);
 
         $typeTag = null;
-        if ($lexer->peek()->type === BisonTokenType::TypeTag) {
-            $typeTag = $lexer->nextString();
+        if ($stream->peek()->type === BisonLexeme::TypeTag) {
+            $typeTag = $stream->nextString();
         }
 
         /** @var list<string> $symbols */
         $symbols = [];
 
-        while ($this->isDeclarationContent($lexer->peek()->type)) {
-            $peek = $lexer->peek();
-            if ($peek->type === BisonTokenType::Identifier || $peek->type === BisonTokenType::CharLiteral) {
-                $symbols[] = $lexer->nextString();
+        while ($this->isDeclarationContent($stream->peek()->type)) {
+            $peek = $stream->peek();
+            if ($peek->type === BisonLexeme::Identifier || $peek->type === BisonLexeme::CharLiteral) {
+                $symbols[] = $stream->nextString();
             } else {
-                $lexer->next();
+                $stream->next();
             }
         }
 
         return new BisonPrecedenceDeclaration($associativity, $typeTag, $symbols);
     }
 
-    private function processParamDirective(BisonLexer $lexer, string $directive): ?BisonParamDeclaration
+    private function processParamDirective(BisonTokenStream $stream, string $directive): ?BisonParamDeclaration
     {
         /** @var 'parse-param'|'lex-param' $kind */
         $kind = substr($directive, 1);
 
-        if ($lexer->peek()->type !== BisonTokenType::Action) {
+        if ($stream->peek()->type !== BisonLexeme::Action) {
             return null;
         }
-        $code = $lexer->nextString();
+        $code = $stream->nextString();
 
         return new BisonParamDeclaration($kind, $code);
     }
 
-    private function processExpectDirective(BisonLexer $lexer): ?BisonExpectDeclaration
+    private function processExpectDirective(BisonTokenStream $stream): ?BisonExpectDeclaration
     {
-        if ($lexer->peek()->type !== BisonTokenType::Number) {
+        if ($stream->peek()->type !== BisonLexeme::Number) {
             return null;
         }
-        return new BisonExpectDeclaration($lexer->nextInt());
+        return new BisonExpectDeclaration($stream->nextInt());
     }
 
-    private function processDefineDirective(BisonLexer $lexer): ?BisonDefineDeclaration
+    private function processDefineDirective(BisonTokenStream $stream): ?BisonDefineDeclaration
     {
-        if ($lexer->peek()->type !== BisonTokenType::Identifier) {
+        if ($stream->peek()->type !== BisonLexeme::Identifier) {
             return null;
         }
-        $name = $lexer->nextString();
+        $name = $stream->nextString();
 
         $value = null;
-        $peek = $lexer->peek();
-        if ($peek->type === BisonTokenType::Identifier
-            || $peek->type === BisonTokenType::StringLiteral
-            || $peek->type === BisonTokenType::Number) {
-            $value = $lexer->nextString();
+        $peek = $stream->peek();
+        if ($peek->type === BisonLexeme::Identifier
+            || $peek->type === BisonLexeme::StringLiteral
+            || $peek->type === BisonLexeme::Number) {
+            $value = $stream->nextString();
         }
 
         return new BisonDefineDeclaration($name, $value);
     }
 
-    private function processUnknownDirective(BisonLexer $lexer, string $directive): BisonUnknownDeclaration
+    private function processUnknownDirective(BisonTokenStream $stream, string $directive): BisonUnknownDeclaration
     {
         $parts = [];
-        while ($this->isDeclarationContent($lexer->peek()->type)) {
-            $parts[] = $lexer->nextString();
+        while ($this->isDeclarationContent($stream->peek()->type)) {
+            $parts[] = $stream->nextString();
         }
         return new BisonUnknownDeclaration($directive, implode(' ', $parts));
     }
 
-    private function isDeclarationContent(BisonTokenType $type): bool
+    private function isDeclarationContent(BisonLexeme $type): bool
     {
-        return $type !== BisonTokenType::Directive
-            && $type !== BisonTokenType::Prologue
-            && $type !== BisonTokenType::PercentPercent
-            && $type !== BisonTokenType::Eof;
+        return $type !== BisonLexeme::Directive
+            && $type !== BisonLexeme::Prologue
+            && $type !== BisonLexeme::PercentPercent
+            && $type !== BisonLexeme::Eof;
     }
 
-    private function processRule(BisonLexer $lexer): ?BisonRuleNode
+    private function processRule(BisonTokenStream $stream): ?BisonRuleNode
     {
-        if ($lexer->peekN(2)->type !== BisonTokenType::Colon) {
-            $lexer->next();
+        if ($stream->peekN(2)->type !== BisonLexeme::Colon) {
+            $stream->next();
             return null;
         }
 
-        $lhs = $lexer->nextString();
-        $lexer->next();
-        return new BisonRuleNode($lhs, $this->processAlternatives($lexer));
+        $lhs = $stream->nextString();
+        $stream->next();
+        return new BisonRuleNode($lhs, $this->processAlternatives($stream));
     }
 
     /**
      * @return list<BisonAlternativeNode>
      */
-    private function processAlternatives(BisonLexer $lexer): array
+    private function processAlternatives(BisonTokenStream $stream): array
     {
         /** @var list<BisonAlternativeNode> $alternatives */
         $alternatives = [];
@@ -326,23 +326,23 @@ final class BisonParser
         $merge = null;
 
         while (true) {
-            $tok = $lexer->peek();
+            $tok = $stream->peek();
 
-            if ($tok->type === BisonTokenType::Eof
-                || $tok->type === BisonTokenType::PercentPercent
-                || ($tok->type === BisonTokenType::Identifier && $lexer->peekN(2)->type === BisonTokenType::Colon)) {
+            if ($tok->type === BisonLexeme::Eof
+                || $tok->type === BisonLexeme::PercentPercent
+                || ($tok->type === BisonLexeme::Identifier && $stream->peekN(2)->type === BisonLexeme::Colon)) {
                 $alternatives[] = new BisonAlternativeNode($symbols, $action, $prec, $dprec, $merge);
                 break;
             }
 
-            if ($tok->type === BisonTokenType::Semicolon) {
-                $lexer->next();
+            if ($tok->type === BisonLexeme::Semicolon) {
+                $stream->next();
                 $alternatives[] = new BisonAlternativeNode($symbols, $action, $prec, $dprec, $merge);
                 break;
             }
 
-            if ($tok->type === BisonTokenType::Pipe) {
-                $lexer->next();
+            if ($tok->type === BisonLexeme::Pipe) {
+                $stream->next();
                 $alternatives[] = new BisonAlternativeNode($symbols, $action, $prec, $dprec, $merge);
                 $symbols = [];
                 $action = null;
@@ -353,43 +353,43 @@ final class BisonParser
             }
 
             match ($tok->type) {
-                BisonTokenType::Action => $action = $lexer->nextString(),
-                BisonTokenType::Identifier => $symbols[] = new BisonSymbolNode(BisonSymbolType::Identifier, $lexer->nextString()),
-                BisonTokenType::CharLiteral => $symbols[] = new BisonSymbolNode(BisonSymbolType::CharLiteral, $lexer->nextString()),
-                BisonTokenType::Directive => match ($lexer->nextString()) {
-                    '%prec' => $prec = $this->processPrec($lexer),
-                    '%dprec' => $dprec = $this->processDprec($lexer),
-                    '%merge' => $merge = $this->processMerge($lexer),
+                BisonLexeme::Action => $action = $stream->nextString(),
+                BisonLexeme::Identifier => $symbols[] = new BisonSymbolNode(BisonSymbolType::Identifier, $stream->nextString()),
+                BisonLexeme::CharLiteral => $symbols[] = new BisonSymbolNode(BisonSymbolType::CharLiteral, $stream->nextString()),
+                BisonLexeme::Directive => match ($stream->nextString()) {
+                    '%prec' => $prec = $this->processPrec($stream),
+                    '%dprec' => $dprec = $this->processDprec($stream),
+                    '%merge' => $merge = $this->processMerge($stream),
                     default => null,
                 },
-                default => $lexer->next(),
+                default => $stream->next(),
             };
         }
 
         return $alternatives;
     }
 
-    private function processPrec(BisonLexer $lexer): ?string
+    private function processPrec(BisonTokenStream $stream): ?string
     {
-        $next = $lexer->peek();
-        if ($next->type === BisonTokenType::Identifier || $next->type === BisonTokenType::CharLiteral) {
-            return $lexer->nextString();
+        $next = $stream->peek();
+        if ($next->type === BisonLexeme::Identifier || $next->type === BisonLexeme::CharLiteral) {
+            return $stream->nextString();
         }
         return null;
     }
 
-    private function processDprec(BisonLexer $lexer): ?int
+    private function processDprec(BisonTokenStream $stream): ?int
     {
-        if ($lexer->peek()->type === BisonTokenType::Number) {
-            return $lexer->nextInt();
+        if ($stream->peek()->type === BisonLexeme::Number) {
+            return $stream->nextInt();
         }
         return null;
     }
 
-    private function processMerge(BisonLexer $lexer): ?string
+    private function processMerge(BisonTokenStream $stream): ?string
     {
-        if ($lexer->peek()->type === BisonTokenType::TypeTag) {
-            return $lexer->nextString();
+        if ($stream->peek()->type === BisonLexeme::TypeTag) {
+            return $stream->nextString();
         }
         return null;
     }

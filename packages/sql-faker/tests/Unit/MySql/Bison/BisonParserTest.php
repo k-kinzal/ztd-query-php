@@ -24,14 +24,14 @@ use SqlFaker\MySql\Bison\Ast\BisonTokenInfo;
 use SqlFaker\MySql\Bison\Ast\BisonTypeDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonUnknownDeclaration;
 use SqlFaker\MySql\Bison\BisonParser;
+use SqlFaker\MySql\Bison\Lexer\BisonLexeme;
 use SqlFaker\MySql\Bison\Lexer\BisonLexer;
 use SqlFaker\MySql\Bison\Lexer\BisonToken;
-use SqlFaker\MySql\Bison\Lexer\BisonTokenType;
 
 #[CoversClass(BisonParser::class)]
 #[CoversClass(BisonLexer::class)]
 #[CoversClass(BisonToken::class)]
-#[CoversClass(BisonTokenType::class)]
+#[CoversClass(BisonLexeme::class)]
 #[CoversClass(BisonAst::class)]
 #[CoversClass(BisonRuleNode::class)]
 #[CoversClass(BisonAlternativeNode::class)]

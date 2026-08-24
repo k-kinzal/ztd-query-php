@@ -6,13 +6,13 @@ namespace Tests\Unit\SqlFaker\MySql\Bison\Lexer;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\MySql\Bison\Lexer\BisonTokenType;
+use SqlFaker\MySql\Bison\Lexer\BisonLexeme;
 
-#[CoversClass(BisonTokenType::class)]
-final class BisonTokenTypeTest extends TestCase
+#[CoversClass(BisonLexeme::class)]
+final class BisonLexemeTest extends TestCase
 {
     public function testCasesCount(): void
     {
-        self::assertCount(13, BisonTokenType::cases());
+        self::assertCount(13, BisonLexeme::cases());
     }
 }
