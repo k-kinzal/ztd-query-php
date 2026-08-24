@@ -26,10 +26,15 @@
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^10.5 || ^11 || ^12 || ^13",
-        "k-kinzal/phpstan-custom-rules": "@dev",
-        "brianium/paratest": "^6.11 || ^7"
+        "brianium/paratest": "^6.11 || ^7",
+        "k-kinzal/php-ai-toolkit": "dev-main"
     },
     "repositories": [
+        {
+            "name": "php-ai-toolkit",
+            "type": "vcs",
+            "url": "https://github.com/k-kinzal/php-ai-toolkit.git"
+        },
         {
             "type": "path",
             "url": "../ztd-query-core"
@@ -53,10 +58,6 @@
         {
             "type": "path",
             "url": "../sql-fixture"
-        },
-        {
-            "type": "path",
-            "url": "../phpstan-custom-rules"
         }
     ],
     "autoload": {
@@ -72,7 +73,7 @@
     },
     "scripts": {
         "test": "paratest --processes=auto",
-        "test:unit": "phpunit tests/Unit/",
+        "test:unit": "@php -d memory_limit=512M vendor/bin/phpunit tests/Unit/",
         "test:integration": "phpunit tests/Integration/",
         "lint": [
             "@format:check",

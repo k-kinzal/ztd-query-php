@@ -12,7 +12,7 @@
         "brianium/paratest": "^6.11 || ^7",
         "friendsofphp/php-cs-fixer": "^3.92",
         "infection/infection": "^0.28 || ^0.29 || ^0.30 || ^0.31 || ^0.32 || ^0.34.1",
-        "k-kinzal/phpstan-custom-rules": "@dev",
+        "k-kinzal/php-ai-toolkit": "dev-main",
         "k-kinzal/sql-faker": "@dev",
         "k-kinzal/testcontainers-php": "^0.5.1",
         "nikic/php-fuzzer": "^0.0.11",
@@ -22,12 +22,13 @@
     },
     "repositories": [
         {
-            "type": "path",
-            "url": "../sql-faker"
+            "name": "php-ai-toolkit",
+            "type": "vcs",
+            "url": "https://github.com/k-kinzal/php-ai-toolkit.git"
         },
         {
             "type": "path",
-            "url": "../phpstan-custom-rules"
+            "url": "../sql-faker"
         }
     ],
     "autoload": {
@@ -43,7 +44,7 @@
     },
     "scripts": {
         "test": "paratest --processes=auto",
-        "test:unit": "phpunit tests/Unit/",
+        "test:unit": "@php -d memory_limit=512M vendor/bin/phpunit tests/Unit/",
         "test:integration": "phpunit tests/Integration/",
         "lint": [
             "@format:check",

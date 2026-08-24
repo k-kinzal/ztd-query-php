@@ -19,5 +19,7 @@
         "configDir": ".",
         "customPath": "vendor/bin/phpunit"
     },
-    "testFrameworkOptions": "--testsuite=unit"
+    "testFrameworkOptions": "--testsuite=unit",
+    // Keep the toolkit's AI test reporter out of mutation runs; it replaces the PHPUnit output Infection uses to distinguish killed from escaped mutants.
+    "testFrameworkExtraArgs": "--no-extensions"
 }
