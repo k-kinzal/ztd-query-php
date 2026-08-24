@@ -27,8 +27,10 @@ final class InvalidOverrideExceptionTest extends TestCase
 
         $message = InvalidOverrideException::unknownColumn('staus', $schema)->getMessage();
 
-        self::assertStringContainsString('Cannot override order.staus', $message);
-        self::assertStringContainsString('Its columns are: id, status.', $message);
+        self::assertSame(
+            'Cannot override order.staus: there is no such column. Its columns are: id, status.',
+            $message
+        );
     }
 
     #[Test]
@@ -38,8 +40,7 @@ final class InvalidOverrideExceptionTest extends TestCase
 
         $message = InvalidOverrideException::notNullable('status', $schema)->getMessage();
 
-        self::assertStringContainsString('Cannot override order.status with null', $message);
-        self::assertStringContainsString('NOT NULL', $message);
+        self::assertSame('Cannot override order.status with null: the column is NOT NULL.', $message);
     }
 
     #[Test]
@@ -49,8 +50,11 @@ final class InvalidOverrideExceptionTest extends TestCase
 
         $message = InvalidOverrideException::generatedColumn('code', $schema)->getMessage();
 
-        self::assertStringContainsString('Cannot override order.code', $message);
-        self::assertStringContainsString('rejected on insert', $message);
+        self::assertSame(
+            'Cannot override order.code: the database computes it, so a value written here '
+            . 'would be rejected on insert.',
+            $message
+        );
     }
 
     #[Test]

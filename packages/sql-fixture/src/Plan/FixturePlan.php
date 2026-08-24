@@ -162,10 +162,15 @@ class FixturePlan implements Stringable
      */
     public function roots(): array
     {
-        return array_values(array_filter(
-            $this->generationOrder,
-            fn (string $table): bool => $this->dependenciesOf($table) === []
-        ));
+        $roots = [];
+
+        foreach ($this->generationOrder as $table) {
+            if ($this->dependenciesOf($table) === []) {
+                $roots[] = $table;
+            }
+        }
+
+        return $roots;
     }
 
     /**
@@ -258,18 +263,16 @@ class FixturePlan implements Stringable
      */
     private function sortByDependency(array $tables, array $relations): array
     {
-        $pending = [];
-        foreach ($tables as $table) {
-            $pending[$table] = true;
-        }
-
+        $pending = $tables;
         $ordered = [];
 
         while ($pending !== []) {
             $ready = [];
+            $waiting = [];
 
-            foreach (array_keys($pending) as $table) {
+            foreach ($pending as $table) {
                 if ($this->waitsForAny($table, $relations, $pending)) {
+                    $waiting[] = $table;
                     continue;
                 }
 
@@ -277,13 +280,11 @@ class FixturePlan implements Stringable
             }
 
             if ($ready === []) {
-                throw PlanStructureException::cycle(array_keys($pending));
+                throw PlanStructureException::cycle($pending);
             }
 
-            foreach ($ready as $table) {
-                $ordered[] = $table;
-                unset($pending[$table]);
-            }
+            $ordered = [...$ordered, ...$ready];
+            $pending = $waiting;
         }
 
         return $ordered;
@@ -291,7 +292,7 @@ class FixturePlan implements Stringable
 
     /**
      * @param list<Relation> $relations
-     * @param array<string, bool> $pending
+     * @param list<string> $pending
      */
     private function waitsForAny(string $table, array $relations, array $pending): bool
     {
@@ -302,7 +303,7 @@ class FixturePlan implements Stringable
                 continue;
             }
 
-            if (isset($pending[$parent])) {
+            if (in_array($parent, $pending, true)) {
                 return true;
             }
         }

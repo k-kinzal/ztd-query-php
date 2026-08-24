@@ -119,4 +119,37 @@ final class ColumnRefTest extends TestCase
 
         ColumnRef::from('order');
     }
+
+    #[Test]
+    public function fromIgnoresSpaceAroundACompositeList(): void
+    {
+        self::assertSame(['shop_id', 'no'], ColumnRef::from('order. (shop_id, no) ')->columns);
+    }
+
+    #[Test]
+    public function fromDropsEmptyEntriesWithoutLeavingGapsInTheList(): void
+    {
+        self::assertSame(['a', 'b'], ColumnRef::from('order.(a, , b)')->columns);
+    }
+
+    #[Test]
+    public function fromRejectsACompositeListThatIsNeverClosed(): void
+    {
+        $this->expectException(PlanSyntaxException::class);
+        $this->expectExceptionMessage("expected ')'");
+
+        ColumnRef::from('order.(a, b');
+    }
+
+    #[Test]
+    public function ofKeepsColumnsInTheOrderGiven(): void
+    {
+        self::assertSame(['shop_id', 'no'], ColumnRef::of('order', 'shop_id', 'no')->columns);
+    }
+
+    #[Test]
+    public function ofReindexesColumnsSpreadFromAKeyedArray(): void
+    {
+        self::assertSame(['shop_id', 'no'], ColumnRef::of('order', ...['a' => 'shop_id', 'b' => 'no'])->columns);
+    }
 }

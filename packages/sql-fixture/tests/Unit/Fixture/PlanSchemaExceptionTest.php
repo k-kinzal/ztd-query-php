@@ -29,9 +29,10 @@ final class PlanSchemaExceptionTest extends TestCase
 
         $message = PlanSchemaException::unknownColumn(ColumnRef::of('order', 'idd'), 'idd', $schema)->getMessage();
 
-        self::assertStringContainsString('The plan links order.idd', $message);
-        self::assertStringContainsString('order has no column idd', $message);
-        self::assertStringContainsString('Its columns are: id, status.', $message);
+        self::assertSame(
+            'The plan links order.idd, but order has no column idd. Its columns are: id, status.',
+            $message
+        );
     }
 
     #[Test]
@@ -52,8 +53,12 @@ final class PlanSchemaExceptionTest extends TestCase
 
         $message = PlanSchemaException::generatedColumn(ColumnRef::of('order', 'code'), 'code', $schema)->getMessage();
 
-        self::assertStringContainsString('order.code is a generated column', $message);
-        self::assertStringContainsString('Link a stored column instead', $message);
+        self::assertSame(
+            'The plan links order.code, but order.code is a generated column: the database '
+            . 'computes it, so there is no value to carry across the relation and none to write '
+            . 'into it. Link a stored column instead.',
+            $message
+        );
     }
 
     #[Test]
@@ -61,7 +66,6 @@ final class PlanSchemaExceptionTest extends TestCase
     {
         $message = PlanSchemaException::missingValue('order_id', ColumnRef::of('order', 'id'), 'id')->getMessage();
 
-        self::assertStringContainsString('Cannot fill order_id', $message);
-        self::assertStringContainsString('order row has no id', $message);
+        self::assertSame('Cannot fill order_id: the generated order row has no id to copy from.', $message);
     }
 }

@@ -15,16 +15,42 @@ final class PlanPrinter
 {
     public function print(FixturePlan $plan): string
     {
-        if ($plan->relations === []) {
-            return implode(', ', $plan->tables);
-        }
-
         $statements = [];
+
         foreach ($this->group($plan->relations) as $group) {
             $statements[] = $this->printGroup($group);
         }
 
+        foreach ($this->standaloneTables($plan) as $table) {
+            $statements[] = $table;
+        }
+
         return implode(', ', $statements);
+    }
+
+    /**
+     * Tables the plan names without relating them to anything.
+     *
+     * They have to be written out too, or a plan that mentions one would not
+     * read back as itself.
+     *
+     * @return list<string>
+     */
+    private function standaloneTables(FixturePlan $plan): array
+    {
+        $related = [];
+        foreach ($plan->relations as $relation) {
+            $related = [...$related, ...$relation->tables()];
+        }
+
+        $standalone = [];
+        foreach ($plan->tables as $table) {
+            if (!in_array($table, $related, true)) {
+                $standalone[] = $table;
+            }
+        }
+
+        return $standalone;
     }
 
     /**
@@ -37,7 +63,7 @@ final class PlanPrinter
 
     /**
      * @param list<Relation> $relations
-     * @return list<list<Relation>>
+     * @return array<string, list<Relation>>
      */
     private function group(array $relations): array
     {
@@ -48,17 +74,23 @@ final class PlanPrinter
             $groups[$key][] = $relation;
         }
 
-        return array_values($groups);
+        return $groups;
     }
 
+    /**
+     * Relations group when they would print the same left end and operator,
+     * which is exactly when the shorthand can fold them together.
+     */
     private function groupKey(Relation $relation): string
     {
-        return implode('|', [
-            $relation->left->toString(),
-            $relation->kind->value,
-            $relation->leftOptional ? '?' : '',
-            $relation->rightOptional ? '?' : '',
-        ]);
+        return $relation->left->toString() . ' ' . $this->operator($relation);
+    }
+
+    private function operator(Relation $relation): string
+    {
+        return ($relation->leftOptional ? '?' : '')
+            . $relation->kind->value
+            . ($relation->rightOptional ? '?' : '');
     }
 
     /**
@@ -67,11 +99,6 @@ final class PlanPrinter
     private function printGroup(array $group): string
     {
         $first = $group[0];
-
-        $operator = ($first->leftOptional ? '?' : '')
-            . $first->kind->value
-            . ($first->rightOptional ? '?' : '');
-
         $targets = array_map(
             static fn (Relation $relation): string => $relation->right->toString(),
             $group
@@ -79,6 +106,6 @@ final class PlanPrinter
 
         $right = count($targets) === 1 ? $targets[0] : '[' . implode(', ', $targets) . ']';
 
-        return $first->left->toString() . ' ' . $operator . ' ' . $right;
+        return $this->groupKey($first) . ' ' . $right;
     }
 }

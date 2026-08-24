@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlFixture\Platform\MySql;
 
 use PhpMyAdmin\SqlParser\Components\CreateDefinition;
-use PhpMyAdmin\SqlParser\Exceptions\ParserException;
 use PhpMyAdmin\SqlParser\Components\DataType;
 use PhpMyAdmin\SqlParser\Components\OptionsArray;
 use PhpMyAdmin\SqlParser\Parser;
@@ -50,10 +49,7 @@ final class MySqlSchemaParser implements SchemaParserInterface
      *
      * Not every error loses something. DEC and FIXED are valid synonyms the
      * parser reports as unrecognised while still reading the column, so the
-     * test is what came out rather than whether anything was said. Counting
-     * the definitions the statement declares uses the parser's own tokens,
-     * which already know that a comma inside a string or an ENUM is not a
-     * separator.
+     * test is what came out rather than whether anything was said.
      */
     private function assertNothingWasLost(Parser $parser, CreateStatement $stmt, string $sql): void
     {
@@ -61,34 +57,22 @@ final class MySqlSchemaParser implements SchemaParserInterface
             return;
         }
 
+        $fields = $stmt->fields;
         $declared = $this->countDeclaredDefinitions($parser);
-        $parsed = is_iterable($stmt->fields) ? count(iterator_to_array($stmt->fields, false)) : 0;
 
-        if ($declared !== null && $parsed >= $declared) {
+        if ($declared !== null && is_array($fields) && count($fields) >= $declared) {
             return;
         }
 
-        throw SchemaParseException::invalidSql($sql, $this->describe($parser->errors[0]));
-    }
-
-    /**
-     * Say what went wrong, and where, since the offending token is usually
-     * the whole explanation.
-     */
-    private function describe(\Throwable $error): string
-    {
-        if (!$error instanceof ParserException) {
-            return $error->getMessage();
-        }
-
-        $near = $error->token?->value;
-
-        return $error->getMessage() . (is_scalar($near) ? sprintf(' (near "%s")', (string) $near) : '');
+        throw SchemaParseException::invalidSql($sql, $parser->errors[0]->getMessage());
     }
 
     /**
      * How many definitions the parenthesised body separates, or null when it
      * is never closed.
+     *
+     * Counting uses the parser's own tokens, which already know that a comma
+     * inside a string or an ENUM is not a separator.
      */
     private function countDeclaredDefinitions(Parser $parser): ?int
     {
@@ -98,41 +82,34 @@ final class MySqlSchemaParser implements SchemaParserInterface
         }
 
         $depth = 0;
-        $opened = false;
         $definitions = 1;
 
         foreach ($list->tokens as $token) {
-            if (!$this->isOperator($token)) {
+            if ($token->type !== Token::TYPE_OPERATOR) {
                 continue;
             }
 
             if ($token->value === '(') {
                 $depth++;
-                $opened = true;
                 continue;
             }
 
             if ($token->value === ')') {
                 $depth--;
 
-                if ($opened && $depth === 0) {
+                if ($depth === 0) {
                     return $definitions;
                 }
 
                 continue;
             }
 
-            if ($opened && $depth === 1 && $token->value === ',') {
+            if ($depth === 1 && $token->value === ',') {
                 $definitions++;
             }
         }
 
-        return $opened ? null : 0;
-    }
-
-    private function isOperator(Token $token): bool
-    {
-        return $token->type === Token::TYPE_OPERATOR;
+        return null;
     }
 
     private function extractTableName(CreateStatement $stmt, string $sql): string

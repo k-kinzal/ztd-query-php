@@ -104,12 +104,12 @@ final class FixtureSet implements ArrayAccess, IteratorAggregate, Countable
 
     public function offsetExists(mixed $offset): bool
     {
-        return in_array($this->resolve($this->asKey($offset)), $this->order, true);
+        return in_array($this->resolve($offset), $this->order, true);
     }
 
     public function offsetGet(mixed $offset): ?array
     {
-        return $this->get($this->asKey($offset));
+        return $this->get($offset);
     }
 
     public function offsetSet(mixed $offset, mixed $value): void
@@ -132,11 +132,6 @@ final class FixtureSet implements ArrayAccess, IteratorAggregate, Countable
     public function count(): int
     {
         return count($this->order);
-    }
-
-    private function asKey(mixed $offset): int|string
-    {
-        return is_int($offset) || is_string($offset) ? $offset : '';
     }
 
     /**

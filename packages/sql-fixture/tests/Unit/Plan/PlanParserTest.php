@@ -217,4 +217,82 @@ final class PlanParserTest extends TestCase
             'arity mismatch' => ['order.(a, b) < order_detail.(c)', 'names 2 columns on one side'],
         ];
     }
+
+    #[Test]
+    public function aGroupFollowedByAnotherRelationStillSplitsCorrectly(): void
+    {
+        $plan = (new PlanParser())->parse('a.id < [b.a_id, c.a_id], d.id < e.d_id');
+
+        self::assertCount(3, $plan->relations);
+        self::assertSame(['a', 'b', 'c', 'd', 'e'], $plan->tables);
+    }
+
+    #[Test]
+    public function anEmptyStatementBetweenTwoRelationsIsIgnored(): void
+    {
+        $plan = (new PlanParser())->parse('a.id < b.a_id,, c.id < d.c_id');
+
+        self::assertCount(2, $plan->relations);
+    }
+
+    #[Test]
+    public function aTableNameFollowedByRelationsKeepsThemAll(): void
+    {
+        $plan = (new PlanParser())->parse('audit_log, a.id < b.a_id');
+
+        self::assertCount(1, $plan->relations);
+        self::assertSame(['audit_log', 'a', 'b'], $plan->tables);
+    }
+
+    #[Test]
+    public function whitespaceInsideAGroupIsSkipped(): void
+    {
+        $plan = (new PlanParser())->parse('a.id < [ b.a_id , c.a_id ]');
+
+        self::assertCount(2, $plan->relations);
+        self::assertSame('c.a_id', $plan->relations[1]->right->toString());
+    }
+
+    #[Test]
+    public function aStrayClosingBracketDoesNotStopLaterRelationsSplitting(): void
+    {
+        $plan = (new PlanParser())->parse('a.id < [b.a_id], c.id < d.c_id');
+
+        self::assertCount(2, $plan->relations);
+    }
+
+    #[Test]
+    public function whitespaceBetweenAnEndpointAndTheOperatorIsSkipped(): void
+    {
+        $plan = (new PlanParser())->parse('a.(x , y)   <   b.(p , q)');
+
+        self::assertSame(['x', 'y'], $plan->relations[0]->left->columns);
+        self::assertSame(['p', 'q'], $plan->relations[0]->right->columns);
+    }
+
+    #[Test]
+    public function aStrayOpeningBracketDoesNotSwallowLaterRelations(): void
+    {
+        $plan = (new PlanParser())->parse('a.id < b.a_id; c.id < d.c_id');
+
+        self::assertCount(2, $plan->relations);
+    }
+
+    #[Test]
+    public function aBracketThatWasNeverOpenedIsRejected(): void
+    {
+        $this->expectException(PlanSyntaxException::class);
+        $this->expectExceptionMessage('closes a bracket it never opened');
+
+        (new PlanParser())->parse('a.id < b.a_id]');
+    }
+
+    #[Test]
+    public function aBareTableNameMustBeTheWholeStatement(): void
+    {
+        $this->expectException(PlanSyntaxException::class);
+        $this->expectExceptionMessage('the end of the relation');
+
+        (new PlanParser())->parse('audit_log extra');
+    }
 }

@@ -60,7 +60,7 @@ final class PlanParser
     /**
      * Split on commas and newlines that are not inside brackets.
      *
-     * @return list<string>
+     * @return array<int, string>
      */
     private function split(string $plan): array
     {
@@ -75,6 +75,10 @@ final class PlanParser
                 $depth--;
             }
 
+            if ($depth < 0) {
+                throw PlanSyntaxException::unbalancedBrackets($plan);
+            }
+
             if ($depth === 0 && ($character === ',' || $character === "\n" || $character === ';')) {
                 $statements[] = $current;
                 $current = '';
@@ -86,10 +90,10 @@ final class PlanParser
 
         $statements[] = $current;
 
-        return array_values(array_filter(
+        return array_filter(
             array_map('trim', $statements),
             static fn (string $statement): bool => $statement !== ''
-        ));
+        );
     }
 
     /**
@@ -100,11 +104,8 @@ final class PlanParser
      */
     private function parseStatement(): array|string
     {
-        $this->skipWhitespace();
-
         if (!str_contains($this->source, '.')) {
             $table = $this->readIdentifier('a table name');
-            $this->skipWhitespace();
             $this->expectEnd();
 
             return $table;
@@ -119,7 +120,6 @@ final class PlanParser
 
         $this->skipWhitespace();
         $targets = $this->readTargets();
-        $this->skipWhitespace();
         $this->expectEnd();
 
         return $this->buildRelations($left, $kind, $targets, $leftOptional, $rightOptional);

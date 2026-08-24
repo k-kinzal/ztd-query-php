@@ -25,6 +25,22 @@ final class ShopSchemas
     }
 
     /**
+     * How many rows of a table the plan produces across a spread of seeds.
+     *
+     * @return list<int>
+     */
+    public static function rowCountsOverSeeds(string $plan, string $table, int $seeds = 40): array
+    {
+        $counts = [];
+
+        foreach (range(1, $seeds) as $seed) {
+            $counts[] = count(self::generator($seed)->generate(FixturePlan::from($plan))->rows($table));
+        }
+
+        return $counts;
+    }
+
+    /**
      * How many order_detail rows the plan produces across a spread of seeds,
      * which is how a range is observed rather than asserted one draw at a time.
      *
@@ -95,7 +111,31 @@ final class ShopSchemas
             )',
             'CREATE TABLE audit_log (
                 id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                customer_id INT UNSIGNED NOT NULL,
                 message VARCHAR(255) NOT NULL
+            )',
+            'CREATE TABLE shop_order (
+                shop_id INT UNSIGNED NOT NULL,
+                no INT UNSIGNED NOT NULL,
+                PRIMARY KEY (shop_id, no)
+            )',
+            'CREATE TABLE shop_order_line (
+                id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                shop_id INT UNSIGNED NOT NULL,
+                order_no INT UNSIGNED NOT NULL
+            )',
+            'CREATE TABLE twin (
+                id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                other_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                PRIMARY KEY (id)
+            )',
+            'CREATE TABLE twin_child (
+                id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                twin_id INT UNSIGNED NOT NULL
+            )',
+            'CREATE TABLE twin_other (
+                id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                twin_other_id INT UNSIGNED NOT NULL
             )',
         ];
     }

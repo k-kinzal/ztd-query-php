@@ -32,6 +32,14 @@ final class PlanSyntaxException extends InvalidArgumentException
         ));
     }
 
+    public static function unbalancedBrackets(string $plan): self
+    {
+        return new self(sprintf(
+            'The fixture plan closes a bracket it never opened. Plan: %s',
+            $plan
+        ));
+    }
+
     public static function unexpected(string $plan, int $offset, string $expected): self
     {
         return new self(sprintf(

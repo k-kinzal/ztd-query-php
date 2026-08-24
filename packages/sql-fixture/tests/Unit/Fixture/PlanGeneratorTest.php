@@ -260,4 +260,132 @@ final class PlanGeneratorTest extends TestCase
 
         ShopSchemas::generator()->generate(FixturePlan::from('order.id < order_detail.oder_id'));
     }
+
+    #[Test]
+    public function theSubjectHonoursACountItWasGiven(): void
+    {
+        $set = ShopSchemas::generator()->generate(
+            FixturePlan::from('order.id < order_detail.order_id'),
+            ['order' => 2, 'order_detail' => 1]
+        );
+
+        self::assertCount(2, $set->rows('order'));
+    }
+
+    #[Test]
+    public function aRowCarriesBothItsInheritedKeyAndItsOwnParentKey(): void
+    {
+        $set = ShopSchemas::generator()->generate(
+            FixturePlan::from('order.id < order_detail.order_id, order_detail.product_id > product.id'),
+            ['order' => ['id' => 42], 'order_detail' => 1]
+        );
+
+        $detail = $set->rows('order_detail')[0];
+
+        self::assertSame(42, $detail['order_id']);
+        self::assertSame($set->rows('product')[0]['id'], $detail['product_id']);
+    }
+
+    #[Test]
+    public function everyOtherRelationOfAParentIsStillFollowed(): void
+    {
+        $set = ShopSchemas::generator()->generate(
+            FixturePlan::from('order.customer_id > customer.id, customer.id < audit_log.customer_id')
+        );
+
+        self::assertNotSame([], $set->rows('audit_log'));
+    }
+
+    #[Test]
+    public function anOptionalParentIsGeneratedWhenTheCallerAsksForIt(): void
+    {
+        $set = ShopSchemas::generator()->generate(
+            FixturePlan::from('order.customer_id >? customer.id'),
+            ['customer' => ['tier' => 'gold']]
+        );
+
+        self::assertSame('gold', $set->rows('customer')[0]['tier']);
+        self::assertSame($set->rows('customer')[0]['id'], $set->rows('order')[0]['customer_id']);
+    }
+
+    #[Test]
+    public function aCompositeRelationCarriesEveryColumn(): void
+    {
+        $set = ShopSchemas::generator()->generate(
+            FixturePlan::from('shop_order.(shop_id, no) < shop_order_line.(shop_id, order_no)'),
+            ['shop_order' => ['shop_id' => 7, 'no' => 9], 'shop_order_line' => 1]
+        );
+
+        $line = $set->rows('shop_order_line')[0];
+
+        self::assertSame(7, $line['shop_id']);
+        self::assertSame(9, $line['order_no']);
+    }
+
+    #[Test]
+    public function aOneToOneChildIsGeneratedExactlyOnce(): void
+    {
+        $set = ShopSchemas::generator()->generate(
+            FixturePlan::from('order.id - order_shipping.order_id')
+        );
+
+        self::assertCount(1, $set->rows('order_shipping'));
+    }
+
+    #[Test]
+    public function keysAreStoodInForEveryColumnARelationReads(): void
+    {
+        $set = ShopSchemas::generator()->generate(
+            FixturePlan::from('twin.id < twin_child.twin_id, twin.other_id < twin_other.twin_other_id')
+        );
+
+        self::assertSame(1, $set->rows('twin')[0]['id']);
+        self::assertSame(1, $set->rows('twin')[0]['other_id']);
+    }
+
+    #[Test]
+    public function aRequiredParentIsGeneratedWhetherOrNotItWasAskedFor(): void
+    {
+        $set = ShopSchemas::generator()->generate(FixturePlan::from('order.customer_id > customer.id'));
+
+        self::assertNotSame([], $set->rows('customer'));
+    }
+
+    #[Test]
+    public function anOptionalParentNobodyAskedForIsLeftOut(): void
+    {
+        $set = ShopSchemas::generator()->generate(FixturePlan::from('order.customer_id >? customer.id'));
+
+        self::assertSame([], $set->rows('customer'));
+    }
+
+    #[Test]
+    public function anUnboundedChildCountCanExceedItsMinimum(): void
+    {
+        self::assertNotSame(
+            [1],
+            array_values(array_unique(ShopSchemas::childCountsOverSeeds('order.id < order_detail.order_id')))
+        );
+    }
+
+    #[Test]
+    public function aOneToOneChildIsNeverGeneratedMoreThanOnce(): void
+    {
+        self::assertSame(
+            [1],
+            array_values(array_unique(
+                ShopSchemas::rowCountsOverSeeds('order.id - order_shipping.order_id', 'order_shipping')
+            ))
+        );
+    }
+
+    #[Test]
+    public function aTableReachableOnlyBackwardsAlongARelationIsStillPartOfTheWalk(): void
+    {
+        $set = ShopSchemas::generator()->generate(
+            FixturePlan::from('order.id < order_detail.order_id, product.id ?< order_detail.product_id')
+        );
+
+        self::assertSame([], $set->rows('product'));
+    }
 }

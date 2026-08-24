@@ -24,8 +24,11 @@ final class PlanStructureExceptionTest extends TestCase
             ColumnRef::of('c', 'id')
         )->getMessage();
 
-        self::assertStringContainsString('b.x is bound to a.id and to c.id', $message);
-        self::assertStringContainsString('can reference one parent', $message);
+        self::assertSame(
+            'b.x is bound to a.id and to c.id. A column can reference one parent, so one of '
+            . 'the two relations has to go.',
+            $message
+        );
     }
 
     #[Test]
@@ -33,7 +36,11 @@ final class PlanStructureExceptionTest extends TestCase
     {
         $message = PlanStructureException::cycle(['a', 'b', 'c'])->getMessage();
 
-        self::assertStringContainsString('a -> b -> c -> a', $message);
+        self::assertSame(
+            'The relations form a cycle: a -> b -> c -> a. Each table would have to be '
+            . 'generated before itself, so there is no order that satisfies them.',
+            $message
+        );
     }
 
     #[Test]
@@ -44,8 +51,11 @@ final class PlanStructureExceptionTest extends TestCase
             'category.id < category.parent_id'
         )->getMessage();
 
-        self::assertStringContainsString('category.id < category.parent_id', $message);
-        self::assertStringContainsString('Mark the child optional with ?', $message);
+        self::assertSame(
+            'The relation category.id < category.parent_id makes every category row need '
+            . 'another one, without end. Mark the child optional with ? so the chain can stop.',
+            $message
+        );
     }
 
     #[Test]

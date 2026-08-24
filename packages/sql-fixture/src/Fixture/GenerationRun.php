@@ -99,6 +99,19 @@ final class GenerationRun
     }
 
     /**
+     * The row most recently kept for a table, which is the one a relation
+     * walked into it will read its key from.
+     *
+     * @return array<string, mixed>
+     */
+    public function lastRow(string $table): array
+    {
+        $rows = $this->rows[$table] ?? [];
+
+        return $rows[count($rows) - 1] ?? [];
+    }
+
+    /**
      * The rows gathered, arranged the way the plan reads back.
      */
     public function toSet(FixturePlan $plan): FixtureSet

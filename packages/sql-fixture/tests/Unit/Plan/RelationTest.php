@@ -270,4 +270,66 @@ final class RelationTest extends TestCase
         self::assertSame(0, $relation->minimumChildRows());
         self::assertSame(1, $relation->maximumChildRows());
     }
+
+    #[Test]
+    public function namedConstructorsLeaveTheLeftSideRequired(): void
+    {
+        self::assertFalse(Relation::oneToMany('a.id', 'b.a_id', true)->leftOptional);
+        self::assertFalse(Relation::manyToOne('b.a_id', 'a.id', true)->leftOptional);
+        self::assertFalse(Relation::oneToOne('a.id', 'b.a_id', true)->leftOptional);
+    }
+
+    #[Test]
+    public function oneToManyMarksOnlyTheRightSideOptional(): void
+    {
+        $relation = Relation::oneToMany('a.id', 'b.a_id', true);
+
+        self::assertFalse($relation->leftOptional);
+        self::assertTrue($relation->rightOptional);
+    }
+
+    #[Test]
+    public function oneToOneMarksOnlyTheRightSideOptional(): void
+    {
+        $relation = Relation::oneToOne('a.id', 'b.a_id', true);
+
+        self::assertFalse($relation->leftOptional);
+        self::assertTrue($relation->rightOptional);
+    }
+
+    #[Test]
+    public function manyToOneMarksOnlyTheRightSideOptional(): void
+    {
+        $relation = Relation::manyToOne('b.a_id', 'a.id', true);
+
+        self::assertFalse($relation->leftOptional);
+        self::assertTrue($relation->rightOptional);
+    }
+
+    #[Test]
+    public function oneToManyLeavesBothSidesRequiredByDefault(): void
+    {
+        $relation = Relation::oneToMany('a.id', 'b.a_id');
+
+        self::assertFalse($relation->leftOptional);
+        self::assertFalse($relation->rightOptional);
+    }
+
+    #[Test]
+    public function manyToOneLeavesBothSidesRequiredByDefault(): void
+    {
+        $relation = Relation::manyToOne('b.a_id', 'a.id');
+
+        self::assertFalse($relation->leftOptional);
+        self::assertFalse($relation->rightOptional);
+    }
+
+    #[Test]
+    public function oneToOneLeavesBothSidesRequiredByDefault(): void
+    {
+        $relation = Relation::oneToOne('a.id', 'b.a_id');
+
+        self::assertFalse($relation->leftOptional);
+        self::assertFalse($relation->rightOptional);
+    }
 }

@@ -16,7 +16,7 @@ final class TableOverrides
 {
     /**
      * @param array<string, mixed> $values
-     * @param list<string> $nulls Columns to set to NULL rather than generate
+     * @param array<array-key, string> $nulls Columns to set to NULL rather than generate
      */
     private function __construct(
         private readonly array $values,
@@ -42,7 +42,7 @@ final class TableOverrides
      */
     public function withNull(string ...$columns): self
     {
-        return new self($this->values, [...$this->nulls, ...array_values($columns)]);
+        return new self($this->values, [...$this->nulls, ...$columns]);
     }
 
     /**

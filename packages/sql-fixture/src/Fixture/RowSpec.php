@@ -58,10 +58,6 @@ final class RowSpec
             return new self(null, null, $spec->toArray());
         }
 
-        if ($spec === []) {
-            return new self(0, [], []);
-        }
-
         $rows = self::asRows($spec);
         if ($rows !== null) {
             return new self(count($rows), $rows, []);

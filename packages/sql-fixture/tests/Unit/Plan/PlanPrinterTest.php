@@ -134,4 +134,20 @@ final class PlanPrinterTest extends TestCase
 
         self::assertSame('order.id < order_detail.order_id', (new PlanPrinter())->printRelation($relation));
     }
+
+    #[Test]
+    public function aStandaloneTableIsWrittenOutAlongsideTheRelations(): void
+    {
+        $plan = (new PlanParser())->parse('a.id < b.a_id, audit_log');
+
+        self::assertSame('a.id < b.a_id, audit_log', (new PlanPrinter())->print($plan));
+    }
+
+    #[Test]
+    public function severalStandaloneTablesKeepTheOrderTheyWereNamedIn(): void
+    {
+        $plan = (new PlanParser())->parse('audit_log, a.id < b.a_id, feature_flag');
+
+        self::assertSame('a.id < b.a_id, audit_log, feature_flag', (new PlanPrinter())->print($plan));
+    }
 }

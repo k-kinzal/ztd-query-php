@@ -117,4 +117,48 @@ final class GenerationRunTest extends TestCase
 
         self::assertNull($run->toSet(FixturePlan::table('order'))['order']);
     }
+
+    #[Test]
+    public function claimingDoesNotUndoWhatTheWalkAlreadyLearnt(): void
+    {
+        $run = new GenerationRun([]);
+        $run->reached('order', true);
+        $run->claim(['order']);
+        $run->record(OrderSchema::create(), ['status' => 'paid']);
+
+        self::assertSame(
+            [['status' => 'paid']],
+            $run->toSet(FixturePlan::table('order'))['order']
+        );
+    }
+
+    #[Test]
+    public function aClaimedTableThatWasNeverReachedIsNotAList(): void
+    {
+        $run = new GenerationRun([]);
+        $run->claim(['order']);
+
+        self::assertNull($run->toSet(FixturePlan::table('order'))['order']);
+    }
+
+    #[Test]
+    public function everyReferencedColumnIsConsideredNotJustTheFirst(): void
+    {
+        $run = new GenerationRun([]);
+
+        $row = $run->record(OrderSchema::create(), [], ['status', 'id']);
+
+        self::assertSame(1, $row['id']);
+    }
+
+    #[Test]
+    public function recordReturnsTheWholeRow(): void
+    {
+        $run = new GenerationRun([]);
+
+        self::assertSame(
+            ['status' => 'paid', 'id' => 1],
+            $run->record(OrderSchema::create(), ['status' => 'paid'], ['id'])
+        );
+    }
 }

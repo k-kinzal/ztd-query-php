@@ -18,8 +18,8 @@ final class PlanSyntaxExceptionTest extends TestCase
     #[Test]
     public function emptyPlanAsksForATable(): void
     {
-        self::assertStringContainsString(
-            'must name at least one table',
+        self::assertSame(
+            'A fixture plan must name at least one table.',
             PlanSyntaxException::emptyPlan()->getMessage()
         );
     }
@@ -27,8 +27,8 @@ final class PlanSyntaxExceptionTest extends TestCase
     #[Test]
     public function emptyTableNameAsksForATable(): void
     {
-        self::assertStringContainsString(
-            'must name a table',
+        self::assertSame(
+            'A relation endpoint must name a table.',
             PlanSyntaxException::emptyTableName()->getMessage()
         );
     }
@@ -36,8 +36,8 @@ final class PlanSyntaxExceptionTest extends TestCase
     #[Test]
     public function noColumnsNamesTheTable(): void
     {
-        self::assertStringContainsString(
-            'table order names no columns',
+        self::assertSame(
+            'The endpoint for table order names no columns.',
             PlanSyntaxException::noColumns('order')->getMessage()
         );
     }
@@ -47,9 +47,11 @@ final class PlanSyntaxExceptionTest extends TestCase
     {
         $message = PlanSyntaxException::unexpected('order.id ! x.y', 9, "one of '<', '>' or '-'")->getMessage();
 
-        self::assertStringContainsString('at offset 9', $message);
-        self::assertStringContainsString("one of '<', '>' or '-'", $message);
-        self::assertStringContainsString('order.id ! x.y', $message);
+        self::assertSame(
+            "Cannot parse the fixture plan at offset 9: expected one of '<', '>' or '-'. "
+            . 'Plan: order.id ! x.y',
+            $message
+        );
     }
 
     #[Test]
@@ -57,9 +59,11 @@ final class PlanSyntaxExceptionTest extends TestCase
     {
         $message = PlanSyntaxException::manyToManyUnsupported('order.id <> product.id')->getMessage();
 
-        self::assertStringContainsString('junction table', $message);
-        self::assertStringContainsString(
-            'order.id < order_detail.order_id, order_detail.product_id > product.id',
+        self::assertSame(
+            'The <> operator is not supported, because a fixture has to put rows in the '
+            . 'junction table and so must name it. Write the two halves instead, for example '
+            . '"order.id < order_detail.order_id, order_detail.product_id > product.id". '
+            . 'Plan: order.id <> product.id',
             $message
         );
     }
@@ -72,7 +76,11 @@ final class PlanSyntaxExceptionTest extends TestCase
             ColumnRef::of('order_detail', 'order_no')
         )->getMessage();
 
-        self::assertStringContainsString('names 2 columns on one side and 1 on the other', $message);
+        self::assertSame(
+            'The relation order.(shop_id, no) ... order_detail.order_no names 2 columns on '
+            . 'one side and 1 on the other.',
+            $message
+        );
     }
 
     #[Test]
@@ -86,7 +94,20 @@ final class PlanSyntaxExceptionTest extends TestCase
     {
         $message = PlanSyntaxException::notATableName('order.id < order_detail.order_id')->getMessage();
 
-        self::assertStringContainsString('must be a Relation or a plain table name', $message);
-        self::assertStringContainsString('FixturePlan::from()', $message);
+        self::assertSame(
+            'A FixturePlan part must be a Relation or a plain table name, but '
+            . '"order.id < order_detail.order_id" is neither. To build a plan from relation '
+            . 'syntax, use FixturePlan::from().',
+            $message
+        );
+    }
+
+    #[Test]
+    public function unbalancedBracketsNamesThePlan(): void
+    {
+        self::assertSame(
+            'The fixture plan closes a bracket it never opened. Plan: a.id < b.a_id]',
+            PlanSyntaxException::unbalancedBrackets('a.id < b.a_id]')->getMessage()
+        );
     }
 }

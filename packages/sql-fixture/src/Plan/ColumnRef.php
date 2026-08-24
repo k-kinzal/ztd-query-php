@@ -48,7 +48,11 @@ final class ColumnRef
         $table = trim(substr($reference, 0, $separator), '`" ');
         $columns = trim(substr($reference, $separator + 1));
 
-        if (str_starts_with($columns, '(') && str_ends_with($columns, ')')) {
+        if (str_starts_with($columns, '(')) {
+            if (!str_ends_with($columns, ')')) {
+                throw PlanSyntaxException::unexpected($reference, strlen($reference), "')'");
+            }
+
             $columns = substr($columns, 1, -1);
         }
 

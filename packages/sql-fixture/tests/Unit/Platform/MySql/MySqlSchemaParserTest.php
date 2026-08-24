@@ -600,7 +600,7 @@ final class MySqlSchemaParserTest extends TestCase
     public function ddlTheParserCannotFinishReadingIsRejected(): void
     {
         $this->expectException(SchemaParseException::class);
-        $this->expectExceptionMessage('near "AUTOINCREMENT"');
+        $this->expectExceptionMessage('A comma or a closing bracket was expected.');
 
         (new MySqlSchemaParser())->parse(
             'CREATE TABLE test (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)'
@@ -611,7 +611,7 @@ final class MySqlSchemaParserTest extends TestCase
     public function anUnknownKeywordDoesNotSilentlyDropLaterColumns(): void
     {
         $this->expectException(SchemaParseException::class);
-        $this->expectExceptionMessage('near "WOMBAT"');
+        $this->expectExceptionMessage('A comma or a closing bracket was expected.');
 
         (new MySqlSchemaParser())->parse('CREATE TABLE test (id INT WOMBAT, name TEXT NOT NULL)');
     }
@@ -651,5 +651,31 @@ final class MySqlSchemaParserTest extends TestCase
 
         self::assertSame(['a', 'b'], $schema->getColumnNames());
         self::assertSame(['a'], $schema->primaryKeys);
+    }
+
+    #[Test]
+    public function truncationIsFoundEvenAfterAColumnWithItsOwnBrackets(): void
+    {
+        $this->expectException(SchemaParseException::class);
+        $this->expectExceptionMessage('A comma or a closing bracket was expected.');
+
+        (new MySqlSchemaParser())->parse('CREATE TABLE test (a VARCHAR(9) WOMBAT, b INT)');
+    }
+
+    #[Test]
+    public function aCreateTableWithNoDefinitionListIsReportedAsHavingNoColumns(): void
+    {
+        $this->expectException(SchemaParseException::class);
+        $this->expectExceptionMessage('No columns found in table: a');
+
+        (new MySqlSchemaParser())->parse('CREATE TABLE a LIKE b');
+    }
+
+    #[Test]
+    public function aSingleColumnTableIsNotMistakenForATruncatedOne(): void
+    {
+        $schema = (new MySqlSchemaParser())->parse('CREATE TABLE test (a DEC(5,1))');
+
+        self::assertSame(['a'], $schema->getColumnNames());
     }
 }

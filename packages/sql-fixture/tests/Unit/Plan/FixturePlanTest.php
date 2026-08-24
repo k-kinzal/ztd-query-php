@@ -373,4 +373,69 @@ final class FixturePlanTest extends TestCase
 
         FixturePlan::table('order')->withOneToMany('order', 'order_detail.order_id');
     }
+
+    #[Test]
+    public function partsSpreadFromAKeyedArrayAreStillReadInOrder(): void
+    {
+        $plan = new FixturePlan(...[
+            'first' => Relation::oneToMany('a.id', 'b.a_id'),
+            'second' => 'audit_log',
+        ]);
+
+        self::assertSame(['a', 'b', 'audit_log'], $plan->tables);
+        self::assertSame('a.id < b.a_id, audit_log', $plan->toString());
+    }
+
+    #[Test]
+    public function aTableNameIsTakenWithoutSurroundingSpace(): void
+    {
+        self::assertSame(['order'], (new FixturePlan('  order  '))->tables);
+    }
+
+    #[Test]
+    public function aQuotedTableNameLosesItsQuotes(): void
+    {
+        self::assertSame(['order'], (new FixturePlan('`order`'))->tables);
+        self::assertSame(['order'], (new FixturePlan('"order"'))->tables);
+    }
+
+    #[Test]
+    public function dependenciesOfReturnsAListEvenWhenTheMatchIsNotFirst(): void
+    {
+        $plan = FixturePlan::from('a.id < b.a_id, c.id < d.c_id');
+
+        self::assertSame([$plan->relations[1]], $plan->dependenciesOf('d'));
+    }
+
+    #[Test]
+    public function dependentsOfReturnsAListEvenWhenTheMatchIsNotFirst(): void
+    {
+        $plan = FixturePlan::from('a.id < b.a_id, c.id < d.c_id');
+
+        self::assertSame([$plan->relations[1]], $plan->dependentsOf('c'));
+    }
+
+    #[Test]
+    public function rootsReturnsAListEvenWhenTheFirstTableIsNotOne(): void
+    {
+        $plan = FixturePlan::from('b.a_id > a.id');
+
+        self::assertSame(['a'], $plan->roots());
+    }
+
+    #[Test]
+    public function withRelationAddsARelationDirectly(): void
+    {
+        $plan = FixturePlan::table('order')->withRelation(Relation::oneToMany('order.id', 'order_detail.order_id'));
+
+        self::assertSame('order.id < order_detail.order_id', $plan->toString());
+    }
+
+    #[Test]
+    public function aPlanBuiltFromAKeyedSpreadCanStillBeExtended(): void
+    {
+        $plan = (new FixturePlan(...['first' => Relation::oneToMany('a.id', 'b.a_id')]))->withTable('audit_log');
+
+        self::assertSame(['a', 'b', 'audit_log'], $plan->tables);
+    }
 }

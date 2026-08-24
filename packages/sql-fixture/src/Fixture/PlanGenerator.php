@@ -61,7 +61,6 @@ final class PlanGenerator
 
     /**
      * @param array<string, mixed> $inherited Columns already fixed by the relation walked in on
-     * @return list<array<string, mixed>>
      */
     private function materialize(
         FixturePlan $plan,
@@ -71,23 +70,36 @@ final class PlanGenerator
         bool $isList,
         ?Relation $arrivedBy,
         GenerationRun $run,
-    ): array {
+    ): void {
         $run->reached($table, $isList);
 
         $schema = $this->schemas->resolve($table);
         $spec = $run->specFor($table);
 
-        $rows = [];
         for ($index = 0; $index < $count; $index++) {
-            $rows[] = $this->materializeRow($plan, $schema, $inherited, $spec, $index, $isList, $arrivedBy, $run);
+            $this->materializeRow($plan, $schema, $inherited, $spec, $index, $isList, $arrivedBy, $run);
         }
+    }
 
-        return $rows;
+    /**
+     * Generate the single row a relation points at.
+     *
+     * @return array<string, mixed>
+     */
+    private function materializeParent(
+        FixturePlan $plan,
+        string $table,
+        bool $isList,
+        Relation $arrivedBy,
+        GenerationRun $run,
+    ): array {
+        $this->materialize($plan, $table, [], 1, $isList, $arrivedBy, $run);
+
+        return $run->lastRow($table);
     }
 
     /**
      * @param array<string, mixed> $inherited
-     * @return array<string, mixed>
      */
     private function materializeRow(
         FixturePlan $plan,
@@ -98,7 +110,7 @@ final class PlanGenerator
         bool $isList,
         ?Relation $arrivedBy,
         GenerationRun $run,
-    ): array {
+    ): void {
         $overrides = $spec->overridesFor($index);
         $fixed = $inherited;
 
@@ -125,8 +137,6 @@ final class PlanGenerator
 
             $this->toChildren($plan, $relation, $row, $isList, $run);
         }
-
-        return $row;
     }
 
     /**
@@ -140,11 +150,13 @@ final class PlanGenerator
 
         foreach ($plan->dependentsOf($table) as $relation) {
             foreach ($relation->parent()->columns as $column) {
-                $columns[] = $column;
+                if (!in_array($column, $columns, true)) {
+                    $columns[] = $column;
+                }
             }
         }
 
-        return array_values(array_unique($columns));
+        return $columns;
     }
 
     /**
@@ -172,9 +184,9 @@ final class PlanGenerator
             return [];
         }
 
-        $rows = $this->materialize($plan, $relation->parent()->table, [], 1, $isList, $relation, $run);
+        $parent = $this->materializeParent($plan, $relation->parent()->table, $isList, $relation, $run);
 
-        return $rows === [] ? [] : $this->project($rows[0], $relation);
+        return $this->project($parent, $relation);
     }
 
     /**
@@ -242,7 +254,7 @@ final class PlanGenerator
         $minimum = $relation->minimumChildRows();
         $maximum = $relation->maximumChildRows() ?? $minimum + self::DEFAULT_SPREAD;
 
-        return $minimum === $maximum ? $minimum : $this->faker->numberBetween($minimum, $maximum);
+        return $this->faker->numberBetween($minimum, $maximum);
     }
 
     /**
@@ -252,25 +264,21 @@ final class PlanGenerator
      */
     private function connectedTo(FixturePlan $plan, string $table): array
     {
-        $found = [$table => true];
-        $growing = true;
+        $found = [$table];
 
-        while ($growing) {
-            $growing = false;
-
+        for ($index = 0; $index < count($found); $index++) {
             foreach ($plan->relations as $relation) {
-                [$left, $right] = [$relation->left->table, $relation->right->table];
+                $ends = [$relation->left->table, $relation->right->table];
 
-                foreach ([[$left, $right], [$right, $left]] as [$from, $to]) {
-                    if (isset($found[$from]) && !isset($found[$to])) {
-                        $found[$to] = true;
-                        $growing = true;
+                foreach ([$ends, array_reverse($ends)] as [$from, $to]) {
+                    if ($from === $found[$index] && !in_array($to, $found, true)) {
+                        $found[] = $to;
                     }
                 }
             }
         }
 
-        return array_keys($found);
+        return $found;
     }
 
     /**

@@ -71,4 +71,22 @@ final class TableOverridesTest extends TestCase
     {
         self::assertSame([], TableOverrides::of()->toArray());
     }
+
+    #[Test]
+    public function withNullKeepsEveryColumnAlreadyMarked(): void
+    {
+        self::assertSame(
+            ['a' => null, 'b' => null],
+            TableOverrides::of()->withNull('a')->withNull('b')->toArray()
+        );
+    }
+
+    #[Test]
+    public function withNullReindexesColumnsSpreadFromAKeyedArray(): void
+    {
+        self::assertSame(
+            ['a' => null, 'b' => null],
+            TableOverrides::of()->withNull(...['first' => 'a', 'second' => 'b'])->toArray()
+        );
+    }
 }

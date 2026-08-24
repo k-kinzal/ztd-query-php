@@ -98,4 +98,19 @@ final class RowSpecTest extends TestCase
         self::assertNull($spec->count);
         self::assertSame(['a', 'b'], $spec->overridesFor(0));
     }
+
+    #[Test]
+    public function zeroIsAValidCount(): void
+    {
+        self::assertSame(0, RowSpec::from('order_detail', 0)->count);
+    }
+
+    #[Test]
+    public function aKeyedArrayOfArraysIsStillOneSetOfValues(): void
+    {
+        $spec = RowSpec::from('order_detail', ['payload' => ['a' => 1]]);
+
+        self::assertNull($spec->count);
+        self::assertSame(['payload' => ['a' => 1]], $spec->overridesFor(0));
+    }
 }

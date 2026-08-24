@@ -155,4 +155,49 @@ final class FixtureSetTest extends TestCase
 
         unset($set['order']);
     }
+
+    #[Test]
+    public function getReadsTheEntryWhicheverShapeItHas(): void
+    {
+        $set = new FixtureSet(
+            ['order' => [['id' => 1]], 'order_detail' => [['id' => 2]]],
+            ['order' => false, 'order_detail' => true],
+            ['order', 'order_detail']
+        );
+
+        self::assertSame(['id' => 1], $set->get('order'));
+        self::assertSame([['id' => 2]], $set->get('order_detail'));
+    }
+
+    #[Test]
+    public function anUnknownTableIsNotTreatedAsAList(): void
+    {
+        $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
+
+        self::assertNull($set->row('nope'));
+    }
+
+    #[Test]
+    public function toArrayKeepsEveryTable(): void
+    {
+        $set = new FixtureSet(
+            ['order' => [['id' => 1]], 'order_detail' => [['id' => 2]]],
+            ['order' => false, 'order_detail' => true],
+            ['order', 'order_detail']
+        );
+
+        self::assertSame(
+            ['order' => ['id' => 1], 'order_detail' => [['id' => 2]]],
+            $set->toArray()
+        );
+    }
+
+    #[Test]
+    public function aPositionPastTheEndReadsAsNothing(): void
+    {
+        $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
+
+        self::assertNull($set[7]);
+        self::assertFalse(isset($set[7]));
+    }
 }
