@@ -17,10 +17,15 @@
         "brianium/paratest": "^6.11 || ^7",
         "infection/infection": "^0.28 || ^0.29 || ^0.30 || ^0.31 || ^0.32 || ^0.34.1",
         "giorgiosironi/eris": "^1.0",
-        "k-kinzal/phpstan-custom-rules": "@dev",
-        "phpbench/phpbench": "^1.4"
+        "phpbench/phpbench": "^1.4",
+        "k-kinzal/php-ai-toolkit": "dev-main"
     },
     "repositories": [
+        {
+            "name": "php-ai-toolkit",
+            "type": "vcs",
+            "url": "https://github.com/k-kinzal/php-ai-toolkit.git"
+        },
         {
             "type": "path",
             "url": "../ztd-query-core"
@@ -28,10 +33,6 @@
         {
             "type": "path",
             "url": "../sql-faker"
-        },
-        {
-            "type": "path",
-            "url": "../phpstan-custom-rules"
         }
     ],
     "autoload": {
@@ -53,7 +54,7 @@
         "bench:quick": "phpbench run bench --bootstrap=vendor/autoload.php --report=aggregate --php-config='{\"memory_limit\":\"512M\"}' --warmup=1 --iterations=3 --revs=25",
         "bench:full": "phpbench run bench --bootstrap=vendor/autoload.php --report=aggregate --php-config='{\"memory_limit\":\"512M\"}' --warmup=2 --iterations=8 --revs=100",
         "test": "paratest --processes=auto",
-        "test:unit": "phpunit tests/Unit/",
+        "test:unit": "@php -d memory_limit=512M vendor/bin/phpunit tests/Unit/",
         "test:fuzz": "phpunit fuzz/",
         "lint": [
             "@format:check",
