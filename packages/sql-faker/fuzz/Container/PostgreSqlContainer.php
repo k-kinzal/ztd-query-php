@@ -4,9 +4,17 @@ declare(strict_types=1);
 
 namespace Fuzz\Container;
 
+use Override;
 use Testcontainers\Containers\GenericContainer\GenericContainer;
 use Testcontainers\Containers\WaitStrategy\PDO\PDOConnectWaitStrategy;
 
+/**
+ * Testcontainers definition for the PostgreSQL server the fuzzer runs against.
+ *
+ * The image tag is pinned so that a finding always reproduces against the
+ * same server build, and the container is reused across runs to keep
+ * start-up cost off every fuzzing iteration.
+ */
 final class PostgreSqlContainer extends GenericContainer
 {
     /**
@@ -38,6 +46,7 @@ final class PostgreSqlContainer extends GenericContainer
      */
     protected static $STARTUP_TIMEOUT = 300;
 
+    #[Override]
     protected function waitStrategy($instance): PDOConnectWaitStrategy
     {
         unset($instance);

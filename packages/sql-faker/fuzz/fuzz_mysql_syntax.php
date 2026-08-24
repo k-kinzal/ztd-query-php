@@ -14,8 +14,12 @@
 
 declare(strict_types=1);
 
-/* Disable php-fuzzer's timeout handler before testcontainers shutdown */
-/* This must be registered BEFORE Testcontainers::run() so it executes FIRST in FIFO order */
+/**
+ * Disables php-fuzzer's alarm before testcontainers tears the container down.
+ *
+ * Shutdown functions run in FIFO order, so this has to be registered before
+ * Testcontainers::run() registers its own handler.
+ */
 register_shutdown_function(static function (): void {
     if (function_exists('pcntl_alarm')) {
         pcntl_alarm(0);
@@ -34,11 +38,9 @@ use Fuzz\Container\MySql91Container;
 use Fuzz\Target\MySqlSyntaxTarget;
 use Testcontainers\Testcontainers;
 
-/* Configuration from environment */
 $mysqlVersion = getenv('MYSQL_VERSION') !== false ? getenv('MYSQL_VERSION') : '8.0.44';
 $maxDepth = (int) (getenv('MAX_DEPTH') !== false ? getenv('MAX_DEPTH') : 8);
 
-/* Map version to container class and grammar version */
 $containerMap = [
     '5.6.51' => [MySql56Container::class, 'mysql-5.6.51'],
     '5.7.44' => [MySql57Container::class, 'mysql-5.7.44'],
@@ -53,13 +55,12 @@ $containerMap = [
 
 if (!isset($containerMap[$mysqlVersion])) {
     fwrite(STDERR, "Unknown MySQL version: $mysqlVersion\n");
-    fwrite(STDERR, "Supported versions: " . implode(', ', array_keys($containerMap)) . "\n");
+    fwrite(STDERR, 'Supported versions: ' . implode(', ', array_keys($containerMap)) . "\n");
     exit(1);
 }
 
 [$containerClass, $grammarVersion] = $containerMap[$mysqlVersion];
 
-/* Start MySQL container */
 fwrite(STDERR, "Starting MySQL $mysqlVersion container...\n");
 
 $instance = Testcontainers::run($containerClass);
@@ -73,7 +74,8 @@ $pdo = new PDO(
     'root',
     [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_EMULATE_PREPARES => false, /* Required to detect syntax errors at prepare() time */
+        // Required to detect syntax errors at prepare() time.
+        PDO::ATTR_EMULATE_PREPARES => false,
     ]
 );
 
@@ -82,9 +84,7 @@ fwrite(STDERR, "Grammar version: $grammarVersion\n");
 fwrite(STDERR, "Max depth: $maxDepth\n");
 fwrite(STDERR, "Starting fuzzer...\n\n");
 
-/* Create fuzz target */
 $target = new MySqlSyntaxTarget($pdo, $grammarVersion, $maxDepth);
 
-/* Configure fuzzer via $config (provided by php-fuzzer) */
-/** @var \PhpFuzzer\Config $config */
+/** @var PhpFuzzer\Config $config */
 $config->setTarget(Closure::fromCallable($target));
