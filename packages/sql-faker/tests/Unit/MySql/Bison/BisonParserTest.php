@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\MySql\Bison;
 
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use SqlFaker\Grammar\GrammarParseException;
 use SqlFaker\MySql\Bison\Ast\BisonAlternativeNode;
 use SqlFaker\MySql\Bison\Ast\BisonAst;
 use SqlFaker\MySql\Bison\Ast\BisonDefineDeclaration;
@@ -71,8 +71,8 @@ BISON;
 %%
 BISON;
 
-        $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('No grammar rules parsed.');
+        $this->expectException(GrammarParseException::class);
+        $this->expectExceptionMessage('No grammar rules parsed from the Bison grammar.');
 
         (new BisonParser())->parse($input);
     }
@@ -929,8 +929,8 @@ BISON;
     {
         $input = '%token TOKEN';
 
-        $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('No grammar rules parsed.');
+        $this->expectException(GrammarParseException::class);
+        $this->expectExceptionMessage('No grammar rules parsed from the Bison grammar.');
 
         (new BisonParser())->parse($input);
     }

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlFaker\MySql\Bison;
 
-use LogicException;
 use RuntimeException;
+use SqlFaker\Grammar\GrammarParseException;
 use SqlFaker\MySql\Bison\Ast\BisonAlternativeNode;
 use SqlFaker\MySql\Bison\Ast\BisonAst;
 use SqlFaker\MySql\Bison\Ast\BisonDeclaration;
@@ -54,7 +54,7 @@ final class BisonParser
         $epilogue = $this->processEpilogueSection($lexer);
 
         if ($rules === []) {
-            throw new LogicException('No grammar rules parsed.');
+            throw GrammarParseException::noRulesParsed('Bison');
         }
 
         $startSymbol = $this->determineStartSymbol($declarations, $rules);

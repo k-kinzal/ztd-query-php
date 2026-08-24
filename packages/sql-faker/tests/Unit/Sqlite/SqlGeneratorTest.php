@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\Sqlite;
 
 use Faker\Factory;
-use LogicException;
 use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -14,8 +13,10 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use RuntimeException;
+use SqlFaker\Grammar\GenerationException;
 use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\Grammar;
+use SqlFaker\Grammar\LexicalException;
 use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionPattern;
@@ -506,7 +507,7 @@ final class SqlGeneratorTest extends TestCase
         $faker->seed(12345);
         $generator = new SqlGenerator($grammar, $faker);
 
-        $this->expectException(LogicException::class);
+        $this->expectException(GenerationException::class);
         $this->expectExceptionMessage('Grammar rule has no lexically realizable alternative: infinite');
 
         $generator->generate(GenerationPlan::fromRule('infinite'));
@@ -521,7 +522,7 @@ final class SqlGeneratorTest extends TestCase
         $faker->seed(12345);
         $generator = new SqlGenerator($grammar, $faker);
 
-        $this->expectException(LogicException::class);
+        $this->expectException(GenerationException::class);
         $this->expectExceptionMessage("Production rule 'empty' has no alternatives.");
 
         $generator->generate(GenerationPlan::fromRule('empty'));
@@ -683,7 +684,7 @@ final class SqlGeneratorTest extends TestCase
         $faker->seed(12345);
         $generator = new SqlGenerator($grammar, $faker);
 
-        $this->expectException(LogicException::class);
+        $this->expectException(LexicalException::class);
         $this->expectExceptionMessage('Unterminated SQLite bracket identifier.');
 
         $generator->generate(GenerationPlan::fromRule('stmt'));

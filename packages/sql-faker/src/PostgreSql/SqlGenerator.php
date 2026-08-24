@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlFaker\PostgreSql;
 
 use Faker\Generator as FakerGenerator;
-use LogicException;
+use SqlFaker\Grammar\GenerationException;
 use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\LexicalException;
@@ -72,13 +72,13 @@ final class SqlGenerator
                 if ($sql !== '' || !$plan->requiresNonEmpty()) {
                     return $sql;
                 }
-                $lastException = new LogicException('PostgreSQL generation plan requires non-empty output.');
+                $lastException = GenerationException::planRequiresNonEmptyOutput('PostgreSQL');
             } catch (LexicalException $exception) {
                 $lastException = $exception;
             }
         }
 
-        throw $lastException ?? new LogicException('PostgreSQL lexical realization failed.');
+        throw $lastException ?? GenerationException::lexicalRealizationFailed('PostgreSQL');
     }
 
     /**
@@ -213,22 +213,22 @@ final class SqlGenerator
 
             $this->derivationSteps++;
             if ($this->derivationSteps > self::DERIVATION_LIMIT) {
-                throw new LogicException('Exceeded derivation limit while generating SQL.');
+                throw GenerationException::derivationLimitExceeded();
             }
 
             /** @var NonTerminal $nonTerminal */
             $nonTerminal = $form[$index];
             $rule = $this->grammar->ruleMap[$nonTerminal->value]
-                ?? throw new LogicException("Unknown grammar rule: {$nonTerminal->value}");
+                ?? throw GenerationException::unknownRule($nonTerminal->value);
             if ($rule->alternatives === []) {
-                throw new LogicException('Production rule has no alternatives.');
+                throw GenerationException::ruleHasNoAlternatives($nonTerminal->value);
             }
             $alternatives = array_values(array_filter(
                 $rule->alternatives,
                 $this->terminationAnalyzer->isProductionViable(...),
             ));
             if ($alternatives === []) {
-                throw new LogicException("Grammar rule has no lexically realizable alternative: {$nonTerminal->value}");
+                throw GenerationException::noRealizableAlternative($nonTerminal->value);
             }
             $occurrence = $occurrences[$nonTerminal->value] ?? 0;
             $occurrences[$nonTerminal->value] = $occurrence + 1;
@@ -242,9 +242,7 @@ final class SqlGenerator
                     )),
                 ));
                 if ($alternatives === []) {
-                    throw new LogicException(
-                        "Grammar rule has no alternative matching the generation plan: {$nonTerminal->value}",
-                    );
+                    throw GenerationException::noAlternativeMatchingPlan($nonTerminal->value);
                 }
             }
             if ($this->derivationSteps === 1 && $plan->requiresNonEmpty()) {
@@ -254,9 +252,7 @@ final class SqlGenerator
                         ->estimateProductionLength($production) > 0,
                 ));
                 if ($alternatives === []) {
-                    throw new LogicException(
-                        "Generation plan requires non-empty output, but the start rule cannot produce it: {$nonTerminal->value}",
-                    );
+                    throw GenerationException::startRuleCannotProduceOutput($nonTerminal->value);
                 }
             }
 

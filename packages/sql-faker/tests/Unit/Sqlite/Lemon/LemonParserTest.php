@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\Sqlite\Lemon;
 
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Grammar;
+use SqlFaker\Grammar\GrammarParseException;
 use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
@@ -163,8 +163,8 @@ final class LemonParserTest extends TestCase
 
     public function testParseThrowsOnNoRules(): void
     {
-        $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('No grammar rules parsed');
+        $this->expectException(GrammarParseException::class);
+        $this->expectExceptionMessage('No grammar rules parsed from the Lemon grammar.');
 
         (new LemonParser())->parse('%left AND.');
     }

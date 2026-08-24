@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlFaker\Sqlite\Lemon;
 
-use LogicException;
 use RuntimeException;
 use SqlFaker\Grammar\Grammar;
+use SqlFaker\Grammar\GrammarParseException;
 use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
@@ -46,7 +46,7 @@ final class LemonParser
         $rules = $this->extractRules($input);
 
         if ($rules === []) {
-            throw new LogicException('No grammar rules parsed from Lemon grammar.');
+            throw GrammarParseException::noRulesParsed('Lemon');
         }
 
         /** @var string $startSymbol */
