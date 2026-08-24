@@ -199,8 +199,13 @@ final class PlanGenerator
     private function project(array $parentRow, Relation $relation): array
     {
         $values = [];
+
         foreach ($relation->columnMap() as $childColumn => $parentColumn) {
-            $values[$childColumn] = $parentRow[$parentColumn] ?? null;
+            if (!array_key_exists($parentColumn, $parentRow)) {
+                throw PlanSchemaException::missingValue($childColumn, $relation->parent(), $parentColumn);
+            }
+
+            $values[$childColumn] = $parentRow[$parentColumn];
         }
 
         return $values;

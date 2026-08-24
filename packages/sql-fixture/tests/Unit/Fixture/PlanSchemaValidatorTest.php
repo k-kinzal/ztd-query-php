@@ -107,4 +107,39 @@ final class PlanSchemaValidatorTest extends TestCase
 
         $validator->validate(FixturePlan::from('order.id < order_detail.order_id, nope'));
     }
+
+    #[Test]
+    public function aGeneratedColumnCannotBeLinked(): void
+    {
+        $resolver = new StaticSchemaResolver([
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', autoIncrement: true),
+                'code' => new ColumnDefinition('code', 'VARCHAR', length: 10, generated: true),
+            ], ['id']),
+            new TableSchema('order_detail', [
+                'order_code' => new ColumnDefinition('order_code', 'VARCHAR', length: 10),
+            ]),
+        ]);
+
+        $this->expectException(PlanSchemaException::class);
+        $this->expectExceptionMessage('order.code is a generated column');
+
+        (new PlanSchemaValidator($resolver))->validate(FixturePlan::from('order.code < order_detail.order_code'));
+    }
+
+    #[Test]
+    public function aGeneratedColumnCannotBeWrittenIntoEither(): void
+    {
+        $resolver = new StaticSchemaResolver([
+            new TableSchema('order', ['id' => new ColumnDefinition('id', 'INT', autoIncrement: true)], ['id']),
+            new TableSchema('order_detail', [
+                'order_id' => new ColumnDefinition('order_id', 'INT', generated: true),
+            ]),
+        ]);
+
+        $this->expectException(PlanSchemaException::class);
+        $this->expectExceptionMessage('order_detail.order_id is a generated column');
+
+        (new PlanSchemaValidator($resolver))->validate(FixturePlan::from('order.id < order_detail.order_id'));
+    }
 }

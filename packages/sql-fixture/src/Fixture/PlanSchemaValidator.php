@@ -44,8 +44,14 @@ final class PlanSchemaValidator
         $schema = $this->schemas->resolve($reference->table);
 
         foreach ($reference->columns as $column) {
-            if (!$schema->hasColumn($column)) {
+            $definition = $schema->getColumn($column);
+
+            if ($definition === null) {
                 throw PlanSchemaException::unknownColumn($reference, $column, $schema);
+            }
+
+            if ($definition->generated) {
+                throw PlanSchemaException::generatedColumn($reference, $column, $schema);
             }
         }
     }

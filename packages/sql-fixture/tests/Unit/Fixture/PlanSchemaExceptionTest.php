@@ -44,4 +44,24 @@ final class PlanSchemaExceptionTest extends TestCase
             PlanSchemaException::unknownColumn(ColumnRef::of('order', 'x'), 'x', $schema)
         );
     }
+
+    #[Test]
+    public function generatedColumnExplainsWhyItCannotCarryAValue(): void
+    {
+        $schema = new TableSchema('order', ['code' => new ColumnDefinition('code', 'VARCHAR', generated: true)]);
+
+        $message = PlanSchemaException::generatedColumn(ColumnRef::of('order', 'code'), 'code', $schema)->getMessage();
+
+        self::assertStringContainsString('order.code is a generated column', $message);
+        self::assertStringContainsString('Link a stored column instead', $message);
+    }
+
+    #[Test]
+    public function missingValueNamesBothEnds(): void
+    {
+        $message = PlanSchemaException::missingValue('order_id', ColumnRef::of('order', 'id'), 'id')->getMessage();
+
+        self::assertStringContainsString('Cannot fill order_id', $message);
+        self::assertStringContainsString('order row has no id', $message);
+    }
 }
