@@ -595,4 +595,87 @@ final class MySqlSchemaParserTest extends TestCase
 
         self::assertNull($schema->columns['name']->enumValues);
     }
+
+    #[Test]
+    public function ddlTheParserCannotFinishReadingIsRejected(): void
+    {
+        $this->expectException(SchemaParseException::class);
+        $this->expectExceptionMessage('A comma or a closing bracket was expected.');
+
+        (new MySqlSchemaParser())->parse(
+            'CREATE TABLE test (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)'
+        );
+    }
+
+    #[Test]
+    public function anUnknownKeywordDoesNotSilentlyDropLaterColumns(): void
+    {
+        $this->expectException(SchemaParseException::class);
+        $this->expectExceptionMessage('A comma or a closing bracket was expected.');
+
+        (new MySqlSchemaParser())->parse('CREATE TABLE test (id INT WOMBAT, name TEXT NOT NULL)');
+    }
+
+    #[Test]
+    public function anUnclosedDefinitionListIsRejected(): void
+    {
+        $this->expectException(SchemaParseException::class);
+
+        (new MySqlSchemaParser())->parse('CREATE TABLE test (id INT,');
+    }
+
+    #[Test]
+    public function aTypeTheParserCallsUnrecognisedIsStillReadWhenNothingIsLost(): void
+    {
+        $schema = (new MySqlSchemaParser())->parse('CREATE TABLE test (a DEC(5,1), b INT)');
+
+        self::assertSame(['a', 'b'], $schema->getColumnNames());
+    }
+
+    #[Test]
+    public function commasInsideStringsAndEnumsAreNotCountedAsSeparators(): void
+    {
+        $schema = (new MySqlSchemaParser())->parse(
+            "CREATE TABLE test (a ENUM('x','y','z') NOT NULL, b VARCHAR(9) DEFAULT 'p,q', c INT)"
+        );
+
+        self::assertSame(['a', 'b', 'c'], $schema->getColumnNames());
+    }
+
+    #[Test]
+    public function tableConstraintsAndOptionsDoNotLookLikeLostColumns(): void
+    {
+        $schema = (new MySqlSchemaParser())->parse(
+            'CREATE TABLE test (a INT, b INT, PRIMARY KEY (a), KEY idx_b (b)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
+        );
+
+        self::assertSame(['a', 'b'], $schema->getColumnNames());
+        self::assertSame(['a'], $schema->primaryKeys);
+    }
+
+    #[Test]
+    public function truncationIsFoundEvenAfterAColumnWithItsOwnBrackets(): void
+    {
+        $this->expectException(SchemaParseException::class);
+        $this->expectExceptionMessage('A comma or a closing bracket was expected.');
+
+        (new MySqlSchemaParser())->parse('CREATE TABLE test (a VARCHAR(9) WOMBAT, b INT)');
+    }
+
+    #[Test]
+    public function aCreateTableWithNoDefinitionListIsReportedAsHavingNoColumns(): void
+    {
+        $this->expectException(SchemaParseException::class);
+        $this->expectExceptionMessage('No columns found in table: a');
+
+        (new MySqlSchemaParser())->parse('CREATE TABLE a LIKE b');
+    }
+
+    #[Test]
+    public function aSingleColumnTableIsNotMistakenForATruncatedOne(): void
+    {
+        $schema = (new MySqlSchemaParser())->parse('CREATE TABLE test (a DEC(5,1))');
+
+        self::assertSame(['a'], $schema->getColumnNames());
+    }
 }

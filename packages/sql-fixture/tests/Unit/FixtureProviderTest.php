@@ -15,6 +15,7 @@ use SqlFixture\Platform\PlatformFactory;
 use SqlFixture\Platform\MySql\MySqlSchemaParser;
 use SqlFixture\Platform\MySql\MySqlTypeMapper;
 use SqlFixture\Schema\ColumnDefinition;
+use SqlFixture\Schema\StaticSchemaResolver;
 use SqlFixture\Schema\TableSchema;
 use SqlFixture\Hydrator\ReflectionHydrator;
 use SqlFixture\Platform\PostgreSql\PostgreSqlTypeMapper;
@@ -30,6 +31,7 @@ use Tests\Fixture\UserDto;
 #[UsesClass(MySqlTypeMapper::class)]
 #[UsesClass(ColumnDefinition::class)]
 #[UsesClass(TableSchema::class)]
+#[UsesClass(StaticSchemaResolver::class)]
 #[UsesClass(ReflectionHydrator::class)]
 #[UsesClass(PostgreSqlTypeMapper::class)]
 #[UsesClass(SqliteSchemaParser::class)]
@@ -621,13 +623,13 @@ final class FixtureProviderTest extends TestCase
         $faker->seed(12345);
         $provider = new FixtureProvider($faker, dialect: 'sqlite');
 
-        $sql = 'CREATE TABLE test (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)';
+        $sql = 'CREATE TABLE test (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(50) NOT NULL)';
 
-        $dataSqlite = $provider->fixture($sql, ['name' => 'sqlite']);
-        self::assertArrayNotHasKey('id', $dataSqlite);
+        $dataSqlite = $provider->fixture($sql);
+        self::assertArrayHasKey('id', $dataSqlite);
 
-        $dataMysql = $provider->fixture($sql, ['name' => 'mysql'], null, 'mysql');
-        self::assertArrayHasKey('id', $dataMysql);
+        $dataMysql = $provider->fixture($sql, [], null, 'mysql');
+        self::assertArrayNotHasKey('id', $dataMysql);
     }
 
     #[Test]
@@ -667,5 +669,28 @@ final class FixtureProviderTest extends TestCase
 
         self::assertSame('test', $schema->tableName);
         self::assertCount(2, $schema->columns);
+    }
+
+    #[Test]
+    public function aRegisteredSchemaBecomesAvailableToFixtures(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new FixtureProvider($faker);
+        $provider->registerSchema('CREATE TABLE orders (id INT AUTO_INCREMENT PRIMARY KEY, status VARCHAR(20) NOT NULL)');
+
+        self::assertTrue($provider->getSchemaResolver()->has('orders'));
+        self::assertSame('orders', $provider->getSchemaResolver()->resolve('orders')->tableName);
+    }
+
+    #[Test]
+    public function generatingAFixtureAlsoMakesItAvailableToFixtures(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new FixtureProvider($faker);
+        $provider->fixture('CREATE TABLE orders (id INT AUTO_INCREMENT PRIMARY KEY, status VARCHAR(20) NOT NULL)');
+
+        self::assertTrue($provider->getSchemaResolver()->has('orders'));
     }
 }
