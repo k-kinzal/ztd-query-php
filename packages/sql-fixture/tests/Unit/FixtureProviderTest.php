@@ -623,10 +623,10 @@ final class FixtureProviderTest extends TestCase
 
         $sql = 'CREATE TABLE test (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)';
 
-        $dataSqlite = $provider->fixture($sql, ['name' => 'sqlite']);
+        $dataSqlite = $provider->fixture($sql);
         self::assertArrayNotHasKey('id', $dataSqlite);
 
-        $dataMysql = $provider->fixture($sql, ['name' => 'mysql'], null, 'mysql');
+        $dataMysql = $provider->fixture($sql, [], null, 'mysql');
         self::assertArrayHasKey('id', $dataMysql);
     }
 

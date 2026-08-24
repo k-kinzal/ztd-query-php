@@ -112,7 +112,11 @@ final class PlanGenerator
 
         $fixed = array_merge($fixed, $overrides);
 
-        $row = $run->record($schema, $this->generator->generate($schema, $fixed));
+        $row = $run->record(
+            $schema,
+            $this->generator->generate($schema, $fixed),
+            $this->referencedColumns($plan, $schema->tableName)
+        );
 
         foreach ($plan->dependentsOf($schema->tableName) as $relation) {
             if ($relation === $arrivedBy) {
@@ -123,6 +127,24 @@ final class PlanGenerator
         }
 
         return $row;
+    }
+
+    /**
+     * The columns of a table that some relation reads off it.
+     *
+     * @return list<string>
+     */
+    private function referencedColumns(FixturePlan $plan, string $table): array
+    {
+        $columns = [];
+
+        foreach ($plan->dependentsOf($table) as $relation) {
+            foreach ($relation->parent()->columns as $column) {
+                $columns[] = $column;
+            }
+        }
+
+        return array_values(array_unique($columns));
     }
 
     /**

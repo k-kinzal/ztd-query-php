@@ -8,6 +8,7 @@ use Faker\Factory;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\FixtureGenerator;
+use SqlFixture\InvalidOverrideException;
 use SqlFixture\Hydrator\HydratorInterface;
 use SqlFixture\Hydrator\ReflectionHydrator;
 use SqlFixture\Platform\MySql\MySqlSchemaParser;
@@ -21,6 +22,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use Tests\Fixture\GeneratorTestUser;
 
 #[CoversClass(FixtureGenerator::class)]
+#[UsesClass(InvalidOverrideException::class)]
 #[UsesClass(MySqlTypeMapper::class)]
 #[UsesClass(ColumnDefinition::class)]
 #[UsesClass(TableSchema::class)]
@@ -158,5 +160,66 @@ final class FixtureGeneratorTest extends TestCase
         self::assertSame($customMapper, $generator->getTypeMapper());
         self::assertSame($customHydrator, $generator->getHydrator());
         self::assertSame($customParser, $generator->getSchemaParser());
+    }
+
+    #[Test]
+    public function anOverrideForAColumnTheTableLacksIsRejected(): void
+    {
+        $schema = new TableSchema('users', ['name' => new ColumnDefinition('name', 'VARCHAR', length: 255)]);
+
+        $this->expectException(InvalidOverrideException::class);
+        $this->expectExceptionMessage('Cannot override users.nmae');
+
+        (new FixtureGenerator(Factory::create()))->generate($schema, ['nmae' => 'Ada']);
+    }
+
+    #[Test]
+    public function nullIsRejectedForAColumnThatCannotHoldIt(): void
+    {
+        $schema = new TableSchema('users', [
+            'name' => new ColumnDefinition('name', 'VARCHAR', length: 255, nullable: false),
+        ]);
+
+        $this->expectException(InvalidOverrideException::class);
+        $this->expectExceptionMessage('with null: the column is NOT NULL');
+
+        (new FixtureGenerator(Factory::create()))->generate($schema, ['name' => null]);
+    }
+
+    #[Test]
+    public function nullIsAcceptedForANullableColumn(): void
+    {
+        $schema = new TableSchema('users', [
+            'note' => new ColumnDefinition('note', 'VARCHAR', length: 255, nullable: true),
+        ]);
+
+        $data = (new FixtureGenerator(Factory::create()))->generate($schema, ['note' => null]);
+
+        self::assertNull($data['note']);
+    }
+
+    #[Test]
+    public function anOverrideForAGeneratedColumnIsRejected(): void
+    {
+        $schema = new TableSchema('users', [
+            'slug' => new ColumnDefinition('slug', 'VARCHAR', length: 255, generated: true),
+        ]);
+
+        $this->expectException(InvalidOverrideException::class);
+        $this->expectExceptionMessage('the database computes it');
+
+        (new FixtureGenerator(Factory::create()))->generate($schema, ['slug' => 'x']);
+    }
+
+    #[Test]
+    public function anOverrideForAnAutoIncrementColumnIsStillAllowed(): void
+    {
+        $schema = new TableSchema('users', [
+            'id' => new ColumnDefinition('id', 'INT', autoIncrement: true),
+        ], ['id']);
+
+        $data = (new FixtureGenerator(Factory::create()))->generate($schema, ['id' => 100]);
+
+        self::assertSame(100, $data['id']);
     }
 }

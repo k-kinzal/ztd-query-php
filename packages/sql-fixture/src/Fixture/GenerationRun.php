@@ -70,18 +70,27 @@ final class GenerationRun
     }
 
     /**
-     * Keep a row, filling in the keys a database would have assigned so that
-     * children have something to reference.
+     * Keep a row, standing in for the keys a database would have assigned
+     * where a relation needs to read them.
+     *
+     * Only the columns something references are filled. A row nothing points
+     * at reads back the way fixture() has always returned one, with the
+     * auto-increment column absent because the database supplies it.
      *
      * @param array<string, mixed> $row
+     * @param list<string> $referencedColumns Columns a relation reads off this table
      * @return array<string, mixed>
      */
-    public function record(TableSchema $schema, array $row): array
+    public function record(TableSchema $schema, array $row, array $referencedColumns = []): array
     {
-        foreach ($schema->columns as $column) {
-            if ($column->autoIncrement && !array_key_exists($column->name, $row)) {
-                $row[$column->name] = count($this->rows[$schema->tableName] ?? []) + 1;
+        foreach ($referencedColumns as $columnName) {
+            $column = $schema->getColumn($columnName);
+
+            if ($column === null || !$column->autoIncrement || array_key_exists($columnName, $row)) {
+                continue;
             }
+
+            $row[$columnName] = count($this->rows[$schema->tableName] ?? []) + 1;
         }
 
         $this->rows[$schema->tableName][] = $row;

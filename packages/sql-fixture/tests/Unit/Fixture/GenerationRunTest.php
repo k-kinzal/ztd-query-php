@@ -54,18 +54,26 @@ final class GenerationRunTest extends TestCase
         $run->record(OrderSchema::create(), ['status' => 'paid']);
 
         self::assertSame(
-            ['status' => 'paid', 'id' => 1],
+            ['status' => 'paid'],
             $run->toSet(FixturePlan::table('order'))['order']
         );
     }
 
     #[Test]
-    public function recordFillsInTheKeyADatabaseWouldAssign(): void
+    public function aKeyNothingReadsIsLeftToTheDatabase(): void
     {
         $run = new GenerationRun([]);
 
-        self::assertSame(1, $run->record(OrderSchema::create(), [])['id']);
-        self::assertSame(2, $run->record(OrderSchema::create(), [])['id']);
+        self::assertArrayNotHasKey('id', $run->record(OrderSchema::create(), ['status' => 'paid']));
+    }
+
+    #[Test]
+    public function aKeyARelationReadsIsStoodInFor(): void
+    {
+        $run = new GenerationRun([]);
+
+        self::assertSame(1, $run->record(OrderSchema::create(), [], ['id'])['id']);
+        self::assertSame(2, $run->record(OrderSchema::create(), [], ['id'])['id']);
     }
 
     #[Test]
@@ -73,7 +81,15 @@ final class GenerationRunTest extends TestCase
     {
         $run = new GenerationRun([]);
 
-        self::assertSame(100, $run->record(OrderSchema::create(), ['id' => 100])['id']);
+        self::assertSame(100, $run->record(OrderSchema::create(), ['id' => 100], ['id'])['id']);
+    }
+
+    #[Test]
+    public function onlyAutoIncrementColumnsAreStoodInFor(): void
+    {
+        $run = new GenerationRun([]);
+
+        self::assertArrayNotHasKey('status', $run->record(OrderSchema::create(), [], ['status']));
     }
 
     #[Test]
