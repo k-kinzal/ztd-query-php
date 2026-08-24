@@ -11,7 +11,6 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use ReflectionMethod;
 use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\LexicalCatalog;
@@ -215,7 +214,7 @@ final class PostgreSqlProviderTest extends TestCase
         gc_collect_cycles();
     }
 
-    public function testConstructorRegistersProviderWithFaker(): void
+    public function testRegistersItselfWithTheFakerGenerator(): void
     {
         $faker = Factory::create();
         $provider = new PostgreSqlProvider($faker);
@@ -972,11 +971,7 @@ final class PostgreSqlProviderTest extends TestCase
         $provider = new PostgreSqlProvider($faker);
         $sql = $provider->doStatement();
         $faker->seed($seed);
-        $defaultDepth = (new ReflectionMethod(PostgreSqlProvider::class, 'doStatement'))
-            ->getParameters()[0]
-            ->getDefaultValue();
 
-        self::assertSame(40, $defaultDepth);
         self::assertSame($sql, $provider->doStatement(40));
         self::assertSame(
             ['DO', 'SCONST'],

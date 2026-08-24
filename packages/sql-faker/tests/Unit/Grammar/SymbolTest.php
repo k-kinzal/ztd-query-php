@@ -6,16 +6,20 @@ namespace Tests\Unit\SqlFaker\Grammar;
 
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
+use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Symbol;
+use SqlFaker\Grammar\Terminal;
 
 #[CoversNothing]
 final class SymbolTest extends TestCase
 {
-    public function testDefinesValueMethod(): void
+    public function testEveryImplementationReportsItsOwnValue(): void
     {
-        $ref = new ReflectionClass(Symbol::class);
-        self::assertTrue($ref->isInterface());
-        self::assertTrue($ref->hasMethod('value'));
+        $symbols = [new Terminal('SELECT_SYM'), new NonTerminal('statement')];
+
+        self::assertSame(
+            ['SELECT_SYM', 'statement'],
+            array_map(static fn (Symbol $symbol): string => $symbol->value(), $symbols),
+        );
     }
 }

@@ -6,7 +6,6 @@ namespace Tests\Unit\SqlFaker\MySql\Bison\Ast;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\MySql\Bison\Ast\BisonDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonExpectDeclaration;
 
 #[CoversClass(BisonExpectDeclaration::class)]
@@ -17,10 +16,5 @@ final class BisonExpectDeclarationTest extends TestCase
         $decl = new BisonExpectDeclaration(37);
 
         self::assertSame(37, $decl->count);
-    }
-
-    public function testImplementsBisonDeclaration(): void
-    {
-        self::assertInstanceOf(BisonDeclaration::class, new BisonExpectDeclaration(0));
     }
 }

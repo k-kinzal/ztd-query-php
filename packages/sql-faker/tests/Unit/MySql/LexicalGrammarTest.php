@@ -11,8 +11,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use ReflectionMethod;
-use ReflectionParameter;
 use RuntimeException;
 use SqlFaker\Grammar\LexicalCatalog;
 use SqlFaker\Grammar\LexicalException;
@@ -60,40 +58,82 @@ final class LexicalGrammarTest extends TestCase
     }
 
     /**
-     * @param Closure(LexicalGrammar): string $generate
-     * @param list<int> $expected
+     * @param Closure(LexicalGrammar): string $withDefaults
+     * @param Closure(LexicalGrammar): string $withExplicitBounds
      */
     #[DataProvider('providerPublicLexemeDefaults')]
-    public function testPublicLexemeDefaultBounds(Closure $generate, string $method, array $expected): void
+    public function testPublicLexemeDefaultBounds(Closure $withDefaults, Closure $withExplicitBounds): void
     {
-        self::assertNotSame('', $generate(new LexicalGrammar(Factory::create(), 'mysql-8.4.7')));
-        self::assertSame(
-            $expected,
-            array_map(
-                static fn (ReflectionParameter $parameter): mixed => $parameter->getDefaultValue(),
-                (new ReflectionMethod(LexicalGrammar::class, $method))->getParameters(),
-            ),
-        );
+        $faker = Factory::create();
+        $grammar = new LexicalGrammar($faker, 'mysql-8.4.7');
+
+        $faker->seed(20_260_824);
+        $generated = $withDefaults($grammar);
+
+        $faker->seed(20_260_824);
+        $explicit = $withExplicitBounds($grammar);
+
+        self::assertNotSame('', $generated);
+        self::assertSame($generated, $explicit);
     }
 
     /**
-     * @return iterable<string, array{Closure(LexicalGrammar): string, string, list<int>}>
+     * @return iterable<string, array{Closure(LexicalGrammar): string, Closure(LexicalGrammar): string}>
      */
     public static function providerPublicLexemeDefaults(): iterable
     {
-        yield 'quoted identifier' => [static fn (LexicalGrammar $grammar): string => $grammar->generateQuotedIdentifier(), 'generateQuotedIdentifier', [1, 64]];
-        yield 'string' => [static fn (LexicalGrammar $grammar): string => $grammar->generateStringLiteral(), 'generateStringLiteral', [1, 255]];
-        yield 'national string' => [static fn (LexicalGrammar $grammar): string => $grammar->generateNationalStringLiteral(), 'generateNationalStringLiteral', [1, 255]];
-        yield 'dollar quoted string' => [static fn (LexicalGrammar $grammar): string => $grammar->generateDollarQuotedString(), 'generateDollarQuotedString', [1, 255]];
-        yield 'integer' => [static fn (LexicalGrammar $grammar): string => $grammar->generateIntegerLiteral(), 'generateIntegerLiteral', [1, 2147483647]];
-        yield 'long integer' => [static fn (LexicalGrammar $grammar): string => $grammar->generateLongIntegerLiteral(), 'generateLongIntegerLiteral', [0, 2147483647]];
-        yield 'unsigned big integer' => [static fn (LexicalGrammar $grammar): string => $grammar->generateUnsignedBigIntLiteral(), 'generateUnsignedBigIntLiteral', [1, 20]];
-        yield 'decimal' => [static fn (LexicalGrammar $grammar): string => $grammar->generateDecimalLiteral(), 'generateDecimalLiteral', [10, 2]];
-        yield 'float' => [static fn (LexicalGrammar $grammar): string => $grammar->generateFloatLiteral(), 'generateFloatLiteral', [10, 2, -38, 38]];
-        yield 'hex' => [static fn (LexicalGrammar $grammar): string => $grammar->generateHexLiteral(), 'generateHexLiteral', [1, 16]];
-        yield 'quoted hex' => [static fn (LexicalGrammar $grammar): string => $grammar->generateQuotedHexLiteral(), 'generateQuotedHexLiteral', [1, 8]];
-        yield 'binary' => [static fn (LexicalGrammar $grammar): string => $grammar->generateBinaryLiteral(), 'generateBinaryLiteral', [1, 64]];
-        yield 'hostname' => [static fn (LexicalGrammar $grammar): string => $grammar->generateHostname(), 'generateHostname', [1, 4, 63]];
+        yield 'quoted identifier' => [
+            static fn (LexicalGrammar $grammar): string => $grammar->generateQuotedIdentifier(),
+            static fn (LexicalGrammar $grammar): string => $grammar->generateQuotedIdentifier(1, 64),
+        ];
+        yield 'string' => [
+            static fn (LexicalGrammar $grammar): string => $grammar->generateStringLiteral(),
+            static fn (LexicalGrammar $grammar): string => $grammar->generateStringLiteral(1, 255),
+        ];
+        yield 'national string' => [
+            static fn (LexicalGrammar $grammar): string => $grammar->generateNationalStringLiteral(),
+            static fn (LexicalGrammar $grammar): string => $grammar->generateNationalStringLiteral(1, 255),
+        ];
+        yield 'dollar quoted string' => [
+            static fn (LexicalGrammar $grammar): string => $grammar->generateDollarQuotedString(),
+            static fn (LexicalGrammar $grammar): string => $grammar->generateDollarQuotedString(1, 255),
+        ];
+        yield 'integer' => [
+            static fn (LexicalGrammar $grammar): string => $grammar->generateIntegerLiteral(),
+            static fn (LexicalGrammar $grammar): string => $grammar->generateIntegerLiteral(1, 2147483647),
+        ];
+        yield 'long integer' => [
+            static fn (LexicalGrammar $grammar): string => $grammar->generateLongIntegerLiteral(),
+            static fn (LexicalGrammar $grammar): string => $grammar->generateLongIntegerLiteral(0, 2147483647),
+        ];
+        yield 'unsigned big integer' => [
+            static fn (LexicalGrammar $grammar): string => $grammar->generateUnsignedBigIntLiteral(),
+            static fn (LexicalGrammar $grammar): string => $grammar->generateUnsignedBigIntLiteral(1, 20),
+        ];
+        yield 'decimal' => [
+            static fn (LexicalGrammar $grammar): string => $grammar->generateDecimalLiteral(),
+            static fn (LexicalGrammar $grammar): string => $grammar->generateDecimalLiteral(10, 2),
+        ];
+        yield 'float' => [
+            static fn (LexicalGrammar $grammar): string => $grammar->generateFloatLiteral(),
+            static fn (LexicalGrammar $grammar): string => $grammar->generateFloatLiteral(10, 2, -38, 38),
+        ];
+        yield 'hex' => [
+            static fn (LexicalGrammar $grammar): string => $grammar->generateHexLiteral(),
+            static fn (LexicalGrammar $grammar): string => $grammar->generateHexLiteral(1, 16),
+        ];
+        yield 'quoted hex' => [
+            static fn (LexicalGrammar $grammar): string => $grammar->generateQuotedHexLiteral(),
+            static fn (LexicalGrammar $grammar): string => $grammar->generateQuotedHexLiteral(1, 8),
+        ];
+        yield 'binary' => [
+            static fn (LexicalGrammar $grammar): string => $grammar->generateBinaryLiteral(),
+            static fn (LexicalGrammar $grammar): string => $grammar->generateBinaryLiteral(1, 64),
+        ];
+        yield 'hostname' => [
+            static fn (LexicalGrammar $grammar): string => $grammar->generateHostname(),
+            static fn (LexicalGrammar $grammar): string => $grammar->generateHostname(1, 4, 63),
+        ];
     }
 
     #[DataProvider('providerGeneratedStringLiteral')]
@@ -110,6 +150,8 @@ final class LexicalGrammarTest extends TestCase
             /**
              * @param mixed $min
              * @param mixed $max
+             *
+             * @throws UnexpectedValueException When the bound is not an integer
              */
             #[Override]
             public function numberBetween($min = 0, $max = 2147483647): int

@@ -9,7 +9,6 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\LexicalGrammar;
 use SqlFaker\MySqlProvider;
 use SqlFaker\PostgreSql\StatementType as PostgreSqlStatementType;
 use SqlFaker\PostgreSqlProvider;
@@ -19,15 +18,6 @@ use SqlFaker\SqliteProvider;
 #[Medium]
 final class LexicalGrammarTest extends TestCase
 {
-    public function testDialectImplementationsShareOnlyTheRealizationContract(): void
-    {
-        $faker = Factory::create();
-
-        self::assertInstanceOf(LexicalGrammar::class, new \SqlFaker\MySql\LexicalGrammar($faker, 'mysql-8.4.7'));
-        self::assertInstanceOf(LexicalGrammar::class, new \SqlFaker\PostgreSql\LexicalGrammar($faker, 'pg-17.2'));
-        self::assertInstanceOf(LexicalGrammar::class, new \SqlFaker\Sqlite\LexicalGrammar($faker, 'sqlite-3.47.2'));
-    }
-
     #[DataProvider('providerSupportedMySqlVersion')]
     public function testSupportedMySqlVersionBindsGrammarAndLexerProfileTogether(string $version): void
     {

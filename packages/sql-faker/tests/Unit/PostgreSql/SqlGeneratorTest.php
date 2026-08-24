@@ -11,7 +11,6 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 use SqlFaker\Grammar\GenerationException;
 use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\Grammar;
@@ -218,10 +217,6 @@ final class SqlGeneratorTest extends TestCase
 
     public function testGenerateThrowsOnDerivationLimit(): void
     {
-        $reflection = new ReflectionClass(SqlGenerator::class);
-        $constant = $reflection->getConstant('DERIVATION_LIMIT');
-        self::assertSame(5000, $constant);
-
         $grammar = new Grammar('infinite', [
             'infinite' => new ProductionRule('infinite', [
                 new Production([

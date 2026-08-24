@@ -6,7 +6,6 @@ namespace Tests\Unit\SqlFaker\MySql\Bison\Ast;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\MySql\Bison\Ast\BisonDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonPrecedenceDeclaration;
 
 #[CoversClass(BisonPrecedenceDeclaration::class)]
@@ -38,10 +37,5 @@ final class BisonPrecedenceDeclarationTest extends TestCase
         $decl = new BisonPrecedenceDeclaration('left', null, ['OR_SYM', 'OR2_SYM']);
 
         self::assertSame(['OR_SYM', 'OR2_SYM'], $decl->symbols);
-    }
-
-    public function testImplementsBisonDeclaration(): void
-    {
-        self::assertInstanceOf(BisonDeclaration::class, new BisonPrecedenceDeclaration('left', null, []));
     }
 }

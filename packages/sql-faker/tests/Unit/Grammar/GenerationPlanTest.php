@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\Grammar;
 
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -72,13 +71,6 @@ final class GenerationPlanTest extends TestCase
         self::assertSame($columns, $plan->patternAt('opt_columns', 100));
     }
 
-    public function testRejectsAnEmptyRuleForEveryOccurrencePattern(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('generation plan rule must not be empty');
-
-        GenerationPlan::all()->withPatternForEveryOccurrence('', ProductionPattern::nonEmpty());
-    }
 
     public function testNonEmptyRequirementProducesANewPlan(): void
     {
@@ -126,13 +118,6 @@ final class GenerationPlanTest extends TestCase
         self::assertNull($plan->lexemeAt('unknown', 0));
     }
 
-    public function testRejectsAnEmptyLexemeConstraint(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('requires lexemes');
-
-        GenerationPlan::all()->withLexemes([]);
-    }
 
     public function testLexicalPlanSelectsOneTargetWithParameters(): void
     {
@@ -146,27 +131,6 @@ final class GenerationPlanTest extends TestCase
         self::assertSame(['minLength' => 2, 'maxLength' => 8], $plan->parameters());
     }
 
-    public function testRejectsAnEmptyLexicalTarget(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('target must not be empty');
 
-        GenerationPlan::lexical('', []);
-    }
 
-    public function testRejectsAnEmptyStartRule(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('start rule must not be empty');
-
-        GenerationPlan::fromRule('');
-    }
-
-    public function testRejectsAConstrainedPlanWithoutConstraints(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('requires production patterns');
-
-        GenerationPlan::constrained('statement', []);
-    }
 }

@@ -29,14 +29,14 @@ final class PgGrammarTest extends TestCase
     {
         $grammar = PgGrammar::load();
 
-        self::assertInstanceOf(Grammar::class, $grammar);
+        self::assertNotEmpty($grammar->ruleMap);
     }
 
     public function testLoadWithExplicitVersion(): void
     {
         $grammar = PgGrammar::load('pg-17.2');
 
-        self::assertInstanceOf(Grammar::class, $grammar);
+        self::assertNotEmpty($grammar->ruleMap);
     }
 
     public function testResolveVersionUsesExactConfiguredDefault(): void

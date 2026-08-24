@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\Grammar;
 
-use Exception;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\UnknownSymbolException;
@@ -17,10 +16,5 @@ final class UnknownSymbolExceptionTest extends TestCase
         $exception = new UnknownSymbolException('MY_SYMBOL');
 
         self::assertSame('Unknown symbol: MY_SYMBOL', $exception->getMessage());
-    }
-
-    public function testExtendsException(): void
-    {
-        self::assertInstanceOf(Exception::class, new UnknownSymbolException('x'));
     }
 }

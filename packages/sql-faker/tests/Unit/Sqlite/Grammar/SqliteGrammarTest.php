@@ -29,14 +29,14 @@ final class SqliteGrammarTest extends TestCase
     {
         $grammar = SqliteGrammar::load();
 
-        self::assertInstanceOf(Grammar::class, $grammar);
+        self::assertNotEmpty($grammar->ruleMap);
     }
 
     public function testLoadWithExplicitVersion(): void
     {
         $grammar = SqliteGrammar::load('sqlite-3.47.2');
 
-        self::assertInstanceOf(Grammar::class, $grammar);
+        self::assertNotEmpty($grammar->ruleMap);
     }
 
     public function testResolveVersionUsesExactConfiguredDefault(): void

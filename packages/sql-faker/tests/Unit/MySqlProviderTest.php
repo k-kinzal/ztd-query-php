@@ -58,7 +58,7 @@ final class MySqlProviderTest extends TestCase
         gc_collect_cycles();
     }
 
-    public function testConstructorRegistersProviderWithFaker(): void
+    public function testRegistersItselfWithTheFakerGenerator(): void
     {
         $faker = Factory::create();
         $provider = new MySqlProvider($faker);

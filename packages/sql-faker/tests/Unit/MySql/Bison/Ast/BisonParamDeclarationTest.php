@@ -6,7 +6,6 @@ namespace Tests\Unit\SqlFaker\MySql\Bison\Ast;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\MySql\Bison\Ast\BisonDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonParamDeclaration;
 
 #[CoversClass(BisonParamDeclaration::class)]
@@ -24,10 +23,5 @@ final class BisonParamDeclarationTest extends TestCase
         $decl = new BisonParamDeclaration('lex-param', '{ void *scanner }');
 
         self::assertSame('{ void *scanner }', $decl->code);
-    }
-
-    public function testImplementsBisonDeclaration(): void
-    {
-        self::assertInstanceOf(BisonDeclaration::class, new BisonParamDeclaration('parse-param', '{}'));
     }
 }
