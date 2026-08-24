@@ -12,7 +12,6 @@ on:
       - 'packages/ztd-query-core/**'
       - 'packages/sql-faker/**'
       - 'packages/sql-fixture/**'
-      - 'packages/phpstan-custom-rules/**'
       - '.github/workflows/ztd-query-pdo-adapter.yml'
 
 concurrency:

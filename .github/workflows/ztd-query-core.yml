@@ -6,7 +6,6 @@ on:
   pull_request:
     paths:
       - 'packages/ztd-query-core/**'
-      - 'packages/phpstan-custom-rules/**'
       - '.github/workflows/ztd-query-core.yml'
 
 concurrency:

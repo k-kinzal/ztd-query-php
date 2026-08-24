@@ -6,7 +6,6 @@ on:
   pull_request:
     paths:
       - 'packages/sql-faker/**'
-      - 'packages/phpstan-custom-rules/**'
       - '.github/workflows/sql-faker.yml'
 
 concurrency:

@@ -53,9 +53,9 @@ jobs:
 
           if [ -n "$CONSTRAINT" ]; then
             jq --arg v "$CONSTRAINT" '
-              (if .repositories then .repositories |= [.[] | select(.type == "path" | not)] else . end) |
+              (if .repositories then .repositories |= [.[] | select((.type != "path") and (((.url // "") | contains("php-ai-toolkit")) | not))] else . end) |
               (if .repositories == [] then del(.repositories) else . end) |
-              (if ."require-dev"."k-kinzal/phpstan-custom-rules" then del(."require-dev"."k-kinzal/phpstan-custom-rules") else . end) |
+              (if ."require-dev"."k-kinzal/php-ai-toolkit" then del(."require-dev"."k-kinzal/php-ai-toolkit") else . end) |
               (if ."autoload-dev"."psr-4" then
                 ."autoload-dev"."psr-4" |= with_entries(
                   if (.value | type) == "array" then
@@ -73,9 +73,9 @@ jobs:
             ' "$FILE" > "${FILE}.tmp" && mv "${FILE}.tmp" "$FILE"
           else
             jq '
-              (if .repositories then .repositories |= [.[] | select(.type == "path" | not)] else . end) |
+              (if .repositories then .repositories |= [.[] | select((.type != "path") and (((.url // "") | contains("php-ai-toolkit")) | not))] else . end) |
               (if .repositories == [] then del(.repositories) else . end) |
-              (if ."require-dev"."k-kinzal/phpstan-custom-rules" then del(."require-dev"."k-kinzal/phpstan-custom-rules") else . end) |
+              (if ."require-dev"."k-kinzal/php-ai-toolkit" then del(."require-dev"."k-kinzal/php-ai-toolkit") else . end) |
               (if ."autoload-dev"."psr-4" then
                 ."autoload-dev"."psr-4" |= with_entries(
                   if (.value | type) == "array" then

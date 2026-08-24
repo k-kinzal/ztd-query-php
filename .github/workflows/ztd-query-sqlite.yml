@@ -8,7 +8,6 @@ on:
       - 'packages/ztd-query-sqlite/**'
       - 'packages/ztd-query-core/**'
       - 'packages/sql-faker/**'
-      - 'packages/phpstan-custom-rules/**'
       - '.github/workflows/ztd-query-sqlite.yml'
 
 concurrency:
