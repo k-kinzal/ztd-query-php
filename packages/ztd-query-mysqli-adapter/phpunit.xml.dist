@@ -26,6 +26,9 @@
       <directory>tests/Integration</directory>
     </testsuite>
   </testsuites>
+    <extensions>
+        <bootstrap class="PhpAiToolkit\PhpUnit\TestReporter\AiTestReporterExtension"/>
+    </extensions>
   <source restrictNotices="true"
           restrictWarnings="true"
           ignoreSuppressionOfDeprecations="true"
