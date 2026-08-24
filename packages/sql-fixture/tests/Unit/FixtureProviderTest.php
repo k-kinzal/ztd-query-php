@@ -621,13 +621,13 @@ final class FixtureProviderTest extends TestCase
         $faker->seed(12345);
         $provider = new FixtureProvider($faker, dialect: 'sqlite');
 
-        $sql = 'CREATE TABLE test (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)';
+        $sql = 'CREATE TABLE test (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(50) NOT NULL)';
 
         $dataSqlite = $provider->fixture($sql);
-        self::assertArrayNotHasKey('id', $dataSqlite);
+        self::assertArrayHasKey('id', $dataSqlite);
 
         $dataMysql = $provider->fixture($sql, [], null, 'mysql');
-        self::assertArrayHasKey('id', $dataMysql);
+        self::assertArrayNotHasKey('id', $dataMysql);
     }
 
     #[Test]

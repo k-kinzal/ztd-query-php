@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace SqlFixture\Platform\MySql;
 
 use PhpMyAdmin\SqlParser\Components\CreateDefinition;
+use PhpMyAdmin\SqlParser\Exceptions\ParserException;
 use PhpMyAdmin\SqlParser\Components\DataType;
 use PhpMyAdmin\SqlParser\Components\OptionsArray;
 use PhpMyAdmin\SqlParser\Parser;
+use PhpMyAdmin\SqlParser\Token;
 use PhpMyAdmin\SqlParser\Statements\CreateStatement;
 use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\SchemaParseException;
@@ -29,11 +31,108 @@ final class MySqlSchemaParser implements SchemaParserInterface
             throw SchemaParseException::notCreateTable($createTableSql);
         }
 
+        $this->assertNothingWasLost($parser, $stmt, $createTableSql);
+
         $tableName = $this->extractTableName($stmt, $createTableSql);
         $columns = $this->extractColumns($stmt, $tableName);
         $primaryKeys = $this->extractPrimaryKeys($stmt);
 
         return new TableSchema($tableName, $columns, $primaryKeys);
+    }
+
+    /**
+     * Stop if the parser abandoned part of the definition list.
+     *
+     * On a syntax error the parser gives up on the rest of the definitions,
+     * so a stray keyword takes every column after it. The result is a schema
+     * that looks complete and is not, and the damage only shows up much later
+     * as a column that generates no value.
+     *
+     * Not every error loses something. DEC and FIXED are valid synonyms the
+     * parser reports as unrecognised while still reading the column, so the
+     * test is what came out rather than whether anything was said. Counting
+     * the definitions the statement declares uses the parser's own tokens,
+     * which already know that a comma inside a string or an ENUM is not a
+     * separator.
+     */
+    private function assertNothingWasLost(Parser $parser, CreateStatement $stmt, string $sql): void
+    {
+        if ($parser->errors === []) {
+            return;
+        }
+
+        $declared = $this->countDeclaredDefinitions($parser);
+        $parsed = is_iterable($stmt->fields) ? count(iterator_to_array($stmt->fields, false)) : 0;
+
+        if ($declared !== null && $parsed >= $declared) {
+            return;
+        }
+
+        throw SchemaParseException::invalidSql($sql, $this->describe($parser->errors[0]));
+    }
+
+    /**
+     * Say what went wrong, and where, since the offending token is usually
+     * the whole explanation.
+     */
+    private function describe(\Throwable $error): string
+    {
+        if (!$error instanceof ParserException) {
+            return $error->getMessage();
+        }
+
+        $near = $error->token?->value;
+
+        return $error->getMessage() . (is_scalar($near) ? sprintf(' (near "%s")', (string) $near) : '');
+    }
+
+    /**
+     * How many definitions the parenthesised body separates, or null when it
+     * is never closed.
+     */
+    private function countDeclaredDefinitions(Parser $parser): ?int
+    {
+        $list = $parser->list;
+        if ($list === null) {
+            return null;
+        }
+
+        $depth = 0;
+        $opened = false;
+        $definitions = 1;
+
+        foreach ($list->tokens as $token) {
+            if (!$this->isOperator($token)) {
+                continue;
+            }
+
+            if ($token->value === '(') {
+                $depth++;
+                $opened = true;
+                continue;
+            }
+
+            if ($token->value === ')') {
+                $depth--;
+
+                if ($opened && $depth === 0) {
+                    return $definitions;
+                }
+
+                continue;
+            }
+
+            if ($opened && $depth === 1 && $token->value === ',') {
+                $definitions++;
+            }
+        }
+
+        return $opened ? null : 0;
+    }
+
+    private function isOperator(Token $token): bool
+    {
+        return $token->type === Token::TYPE_OPERATOR;
     }
 
     private function extractTableName(CreateStatement $stmt, string $sql): string
