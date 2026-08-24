@@ -7,14 +7,18 @@ namespace Tests\Unit\SqlFaker\Grammar;
 use Faker\Factory;
 use InvalidArgumentException;
 use LogicException;
+use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
+use ReflectionParameter;
 use SqlFaker\Grammar\RandomStringGenerator;
+use UnexpectedValueException;
 
 #[CoversClass(RandomStringGenerator::class)]
 final class RandomStringGeneratorTest extends TestCase
 {
-    #[\Override]
+    #[Override]
     protected function setUp(): void
     {
         parent::setUp();
@@ -461,11 +465,11 @@ final class RandomStringGeneratorTest extends TestCase
              * @param mixed $min
              * @param mixed $max
              */
-            #[\Override]
+            #[Override]
             public function numberBetween($min = 0, $max = 2147483647): int
             {
                 if (!is_int($min)) {
-                    throw new \UnexpectedValueException();
+                    throw new UnexpectedValueException();
                 }
 
                 return $min;
@@ -478,8 +482,8 @@ final class RandomStringGeneratorTest extends TestCase
         self::assertSame(
             [2, 4],
             array_map(
-                static fn (\ReflectionParameter $parameter): mixed => $parameter->getDefaultValue(),
-                array_slice((new \ReflectionMethod(RandomStringGenerator::class, 'lexicalSequence'))->getParameters(), 1),
+                static fn (ReflectionParameter $parameter): mixed => $parameter->getDefaultValue(),
+                array_slice((new ReflectionMethod(RandomStringGenerator::class, 'lexicalSequence'))->getParameters(), 1),
             ),
         );
     }
@@ -499,11 +503,11 @@ final class RandomStringGeneratorTest extends TestCase
              * @param mixed $min
              * @param mixed $max
              */
-            #[\Override]
+            #[Override]
             public function numberBetween($min = 0, $max = 2147483647): int
             {
                 if (!is_int($min)) {
-                    throw new \UnexpectedValueException();
+                    throw new UnexpectedValueException();
                 }
 
                 return $min;
@@ -527,11 +531,11 @@ final class RandomStringGeneratorTest extends TestCase
              * @param mixed $min
              * @param mixed $max
              */
-            #[\Override]
+            #[Override]
             public function numberBetween($min = 0, $max = 2147483647): int
             {
                 if (!is_int($max)) {
-                    throw new \UnexpectedValueException();
+                    throw new UnexpectedValueException();
                 }
 
                 return $max;

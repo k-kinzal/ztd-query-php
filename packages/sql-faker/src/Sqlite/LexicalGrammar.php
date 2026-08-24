@@ -7,10 +7,10 @@ namespace SqlFaker\Sqlite;
 use Faker\Generator as FakerGenerator;
 use InvalidArgumentException;
 use RuntimeException;
+use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\LexicalCatalog;
 use SqlFaker\Grammar\LexicalException;
 use SqlFaker\Grammar\LexicalGrammar as LexicalGrammarContract;
-use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\Grammar\SqlVersion;
 use SqlFaker\Grammar\TokenJoiner;
@@ -22,10 +22,14 @@ final class LexicalGrammar implements LexicalGrammarContract
 {
     public const STRICT_TABLE_OPTION = 'STRICT_TABLE_OPTION';
 
-    /** @var array<string, list<string>> */
+    /**
+     * @var array<string, list<string>>
+     */
     private array $keywords;
 
-    /** @var array<string, string> */
+    /**
+     * @var array<string, string>
+     */
     private array $keywordTokens;
 
     private RandomStringGenerator $strings;
@@ -41,7 +45,9 @@ final class LexicalGrammar implements LexicalGrammarContract
             throw new RuntimeException("Lexical profile file not found: {$path}");
         }
 
-        /** @var array{dialect: string, version: string, keywords: array<string, list<string>>, catalog: array<string, mixed>} $profile */
+        /**
+         * @var array{dialect: string, version: string, keywords: array<string, list<string>>, catalog: array<string, mixed>} $profile
+         */
         $profile = require $path;
         if ($profile['dialect'] !== 'sqlite' || $profile['version'] !== $profileVersion) {
             throw new RuntimeException("Invalid SQLite lexical profile: {$path}");
@@ -88,7 +94,9 @@ final class LexicalGrammar implements LexicalGrammarContract
     {
         $lexemes = [];
         $expected = [];
-        /** @var array<string, int> $occurrences */
+        /**
+         * @var array<string, int> $occurrences
+         */
         $occurrences = [];
         foreach ($terminals as $terminal) {
             $occurrence = $occurrences[$terminal] ?? 0;
@@ -115,25 +123,33 @@ final class LexicalGrammar implements LexicalGrammarContract
         return $sql;
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function generateQuotedIdentifier(int $minLength = 1, int $maxLength = 128): string
     {
         return '"' . $this->strings->rawIdentifier($minLength, $maxLength) . '"';
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function generateStringLiteral(int $minLength = 1, int $maxLength = 255): string
     {
         return "'" . $this->strings->mixedAlnumString($minLength, $maxLength) . "'";
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function generateIntegerLiteral(int $min = 1, int $max = PHP_INT_MAX): string
     {
         return $this->strings->integerString($min, $max);
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function generateDecimalLiteral(int $precision = 15, int $scale = 2): string
     {
         return $this->strings->decimalString($precision, $scale);

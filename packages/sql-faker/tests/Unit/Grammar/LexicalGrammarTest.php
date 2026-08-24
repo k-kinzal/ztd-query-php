@@ -11,8 +11,8 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\LexicalGrammar;
 use SqlFaker\MySqlProvider;
-use SqlFaker\PostgreSqlProvider;
 use SqlFaker\PostgreSql\StatementType as PostgreSqlStatementType;
+use SqlFaker\PostgreSqlProvider;
 use SqlFaker\SqliteProvider;
 
 #[CoversNothing]

@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\MySql\Grammar;
 
 use Exception;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\MySql\Grammar\UnknownSymbolException;
-use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(UnknownSymbolException::class)]
 final class UnknownSymbolExceptionTest extends TestCase

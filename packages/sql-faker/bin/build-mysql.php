@@ -62,11 +62,11 @@ function fetchYaccFile(string $url): string
     ]);
 
     set_error_handler(static function (int $severity, string $message): never {
-        throw new \RuntimeException($message);
+        throw new RuntimeException($message);
     });
     try {
         $contents = file_get_contents($url, false, $context);
-    } catch (\RuntimeException $e) {
+    } catch (RuntimeException $e) {
         fwrite(STDERR, "Error: Failed to fetch {$url}: {$e->getMessage()}\n");
         exit(1);
     } finally {
@@ -112,7 +112,7 @@ function buildVersion(
         fwrite(STDOUT, "Building lexical profile...\n");
         $profile = $lexical->mysql($tag, $grammar);
         $lexical->assertCompatible($profile, 'mysql', $tag, TerminalInventory::fromGrammar($grammar));
-    } catch (\Throwable $e) {
+    } catch (Throwable $e) {
         fwrite(STDERR, "Error building {$tag}: {$e->getMessage()}\n");
         return false;
     }
@@ -163,7 +163,7 @@ function main(array $argv): int
     $args = parseArguments($argv);
     $tags = $args['tags'];
 
-    fwrite(STDOUT, "Building " . count($tags) . " version(s): " . implode(', ', $tags) . "\n");
+    fwrite(STDOUT, 'Building ' . count($tags) . ' version(s): ' . implode(', ', $tags) . "\n");
 
     $parser = new BisonParser();
     $compiler = new GrammarCompiler();
@@ -186,7 +186,7 @@ function main(array $argv): int
     fwrite(STDOUT, "Build complete: {$success} succeeded, {$failed} failed\n");
 
     if ($failed > 0) {
-        fwrite(STDERR, "Failed versions: " . implode(', ', $failedTags) . "\n");
+        fwrite(STDERR, 'Failed versions: ' . implode(', ', $failedTags) . "\n");
         return 1;
     }
 

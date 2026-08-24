@@ -10,31 +10,41 @@ use SqlFaker\Grammar\ProductionPattern;
 
 final class GenerationPlans
 {
-    /** @return GenerationPlan<true> */
+    /**
+     * @return GenerationPlan<true>
+     */
     public static function quotedIdentifier(int $minLength, int $maxLength): GenerationPlan
     {
         return GenerationPlan::lexical('quoted_identifier', compact('minLength', 'maxLength'));
     }
 
-    /** @return GenerationPlan<true> */
+    /**
+     * @return GenerationPlan<true>
+     */
     public static function stringLiteral(int $minLength, int $maxLength): GenerationPlan
     {
         return GenerationPlan::lexical('string_literal', compact('minLength', 'maxLength'));
     }
 
-    /** @return GenerationPlan<true> */
+    /**
+     * @return GenerationPlan<true>
+     */
     public static function integerLiteral(int $min, int $max): GenerationPlan
     {
         return GenerationPlan::lexical('integer_literal', compact('min', 'max'));
     }
 
-    /** @return GenerationPlan<true> */
+    /**
+     * @return GenerationPlan<true>
+     */
     public static function decimalLiteral(int $precision, int $scale): GenerationPlan
     {
         return GenerationPlan::lexical('decimal_literal', compact('precision', 'scale'));
     }
 
-    /** @return GenerationPlan<true> */
+    /**
+     * @return GenerationPlan<true>
+     */
     public static function multiDmlStatement(int $firstChoice, int $secondChoice): GenerationPlan
     {
         $dml = [
@@ -66,7 +76,9 @@ final class GenerationPlans
         ])->requiringNonEmpty();
     }
 
-    /** @return GenerationPlan<true> */
+    /**
+     * @return GenerationPlan<true>
+     */
     public static function fullTextSearchStatement(): GenerationPlan
     {
         return GenerationPlan::constrained('select', [
@@ -88,7 +100,9 @@ final class GenerationPlans
         ])->requiringNonEmpty();
     }
 
-    /** @return GenerationPlan<true> */
+    /**
+     * @return GenerationPlan<true>
+     */
     public static function insertFunctionUpsertStatement(): GenerationPlan
     {
         return GenerationPlan::constrained('cmd', [
@@ -110,7 +124,9 @@ final class GenerationPlans
         ])->requiringNonEmpty();
     }
 
-    /** @return GenerationPlan<true> */
+    /**
+     * @return GenerationPlan<true>
+     */
     public static function temporaryTableStatement(): GenerationPlan
     {
         return GenerationPlan::constrained('cmd', [
@@ -119,7 +135,9 @@ final class GenerationPlans
         ])->requiringNonEmpty();
     }
 
-    /** @return GenerationPlan<true> */
+    /**
+     * @return GenerationPlan<true>
+     */
     public static function viewStatement(): GenerationPlan
     {
         return GenerationPlan::constrained('cmd', [
@@ -128,7 +146,9 @@ final class GenerationPlans
         ])->requiringNonEmpty();
     }
 
-    /** @return GenerationPlan<true> */
+    /**
+     * @return GenerationPlan<true>
+     */
     public static function generatedColumnStatement(): GenerationPlan
     {
         return GenerationPlan::constrained('cmd', [
@@ -142,7 +162,9 @@ final class GenerationPlans
         ])->requiringNonEmpty();
     }
 
-    /** @return GenerationPlan<true> */
+    /**
+     * @return GenerationPlan<true>
+     */
     public static function foreignKeyCascadeStatement(): GenerationPlan
     {
         return GenerationPlan::constrained('cmd', [
@@ -166,7 +188,9 @@ final class GenerationPlans
         ])->requiringNonEmpty();
     }
 
-    /** @return GenerationPlan<true> */
+    /**
+     * @return GenerationPlan<true>
+     */
     public static function foreignKeyConstraint(): GenerationPlan
     {
         return GenerationPlan::constrained('conslist', [

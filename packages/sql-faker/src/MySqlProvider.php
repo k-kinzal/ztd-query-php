@@ -86,7 +86,9 @@ final class MySqlProvider extends Base
         return $this->generate($startRule?->value, $maxDepth);
     }
 
-    /** Generate SQL while requiring every MySQL row-value production to be non-empty. */
+    /**
+     * Generate SQL while requiring every MySQL row-value production to be non-empty.
+     */
     public function sqlWithoutEmptyRows(
         ?StatementType $startRule = null,
         int $maxDepth = PHP_INT_MAX,
@@ -705,42 +707,56 @@ final class MySqlProvider extends Base
             GenerationPlans::insertRowAliasUpsertStatement()->withMaxDepth($maxDepth),
         );
     }
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function insertFunctionUpsertStatement(int $maxDepth = 40): string
     {
         return $this->sql->generate(
             GenerationPlans::insertFunctionUpsertStatement()->withMaxDepth($maxDepth),
         );
     }
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function fullTextSearchStatement(int $maxDepth = 40): string
     {
         return $this->sql->generate(GenerationPlans::fullTextSearchStatement()->withMaxDepth($maxDepth));
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function temporaryTableStatement(int $maxDepth = 40): string
     {
         return $this->sql->generate(
             GenerationPlans::temporaryTableStatement()->withMaxDepth($maxDepth),
         );
     }
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function viewStatement(int $maxDepth = 40): string
     {
         return $this->sql->generate(GenerationPlans::viewStatement()->withMaxDepth($maxDepth));
     }
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function generatedColumnStatement(int $maxDepth = 40): string
     {
         return $this->sql->generate(GenerationPlans::generatedColumnStatement()->withMaxDepth($maxDepth));
     }
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function foreignKeyCascadeStatement(int $maxDepth = 40): string
     {
         return $this->sql->generate(GenerationPlans::foreignKeyCascadeStatement()->withMaxDepth($maxDepth));
     }
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function partitionSelectStatement(int $maxDepth = 40): string
     {
         return $this->sql->generate(GenerationPlans::partitionSelectStatement()->withMaxDepth($maxDepth));

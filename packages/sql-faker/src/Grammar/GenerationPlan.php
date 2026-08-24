@@ -6,7 +6,9 @@ namespace SqlFaker\Grammar;
 
 use InvalidArgumentException;
 
-/** @template-covariant TRequiresNonEmpty of bool */
+/**
+ * @template-covariant TRequiresNonEmpty of bool
+ */
 final class GenerationPlan
 {
     /**
@@ -28,13 +30,17 @@ final class GenerationPlan
     ) {
     }
 
-    /** @return self<false> */
+    /**
+     * @return self<false>
+     */
     public static function all(): self
     {
         return new self(null, [], [], [], null, [], false, PHP_INT_MAX);
     }
 
-    /** @return self<false> */
+    /**
+     * @return self<false>
+     */
     public static function fromRule(string $startRule): self
     {
         self::assertStartRule($startRule);
@@ -69,7 +75,9 @@ final class GenerationPlan
         return new self(null, [], [], [], $target, $parameters, true, PHP_INT_MAX);
     }
 
-    /** @return self<true> */
+    /**
+     * @return self<true>
+     */
     public function requiringNonEmpty(): self
     {
         return new self(
@@ -106,7 +114,9 @@ final class GenerationPlan
         );
     }
 
-    /** @return self<TRequiresNonEmpty> */
+    /**
+     * @return self<TRequiresNonEmpty>
+     */
     public function withMaxDepth(int $maxDepth): self
     {
         return new self(
@@ -131,7 +141,9 @@ final class GenerationPlan
         return $this->patterns[$rule][$occurrence] ?? $this->patternsForEveryOccurrence[$rule] ?? null;
     }
 
-    /** @return self<TRequiresNonEmpty> */
+    /**
+     * @return self<TRequiresNonEmpty>
+     */
     public function withPatternForEveryOccurrence(string $rule, ProductionPattern $pattern): self
     {
         if ($rule === '') {
@@ -150,7 +162,9 @@ final class GenerationPlan
         );
     }
 
-    /** @return non-empty-string|null */
+    /**
+     * @return non-empty-string|null
+     */
     public function lexemeAt(string $terminal, int $occurrence): ?string
     {
         return $this->lexemes[$terminal][$occurrence] ?? null;
@@ -161,13 +175,17 @@ final class GenerationPlan
         return $this->lexicalTarget;
     }
 
-    /** @return array<string, int> */
+    /**
+     * @return array<string, int>
+     */
     public function parameters(): array
     {
         return $this->parameters;
     }
 
-    /** @return TRequiresNonEmpty */
+    /**
+     * @return TRequiresNonEmpty
+     */
     public function requiresNonEmpty(): bool
     {
         return $this->requiresNonEmpty;

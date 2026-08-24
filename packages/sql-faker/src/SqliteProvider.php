@@ -7,8 +7,8 @@ namespace SqlFaker;
 use Faker\Generator;
 use Faker\Provider\Base;
 use SqlFaker\Grammar\GenerationPlan;
-use SqlFaker\Sqlite\Grammar\SqliteGrammar;
 use SqlFaker\Sqlite\GenerationPlans;
+use SqlFaker\Sqlite\Grammar\SqliteGrammar;
 use SqlFaker\Sqlite\SqlGenerator;
 use SqlFaker\Sqlite\StatementType;
 
@@ -58,7 +58,9 @@ final class SqliteProvider extends Base
     public function sql(?StatementType $type = null, int $maxDepth = PHP_INT_MAX): string
     {
         if ($type === null) {
-            /** @var StatementType $type */
+            /**
+             * @var StatementType $type
+             */
             $type = $this->generator->randomElement(StatementType::cases());
         }
 
@@ -253,7 +255,9 @@ final class SqliteProvider extends Base
         return $this->sql->generate(GenerationPlans::decimalLiteral($precision, $scale));
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function insertFunctionUpsertStatement(int $maxDepth = 40): string
     {
         return $this->sql->generate(
@@ -266,7 +270,9 @@ final class SqliteProvider extends Base
         return $this->sql->generate(GenerationPlan::fromRule($startRule)->withMaxDepth($maxDepth));
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function multiDmlStatement(int $maxDepth = 40): string
     {
         $plan = GenerationPlans::multiDmlStatement(
@@ -277,13 +283,17 @@ final class SqliteProvider extends Base
         return $this->sql->generate($plan->withMaxDepth($maxDepth));
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function fullTextSearchStatement(int $maxDepth = 40): string
     {
         return $this->sql->generate(GenerationPlans::fullTextSearchStatement()->withMaxDepth($maxDepth));
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function temporaryTableStatement(int $maxDepth = 40): string
     {
         return $this->sql->generate(
@@ -291,19 +301,25 @@ final class SqliteProvider extends Base
         );
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function viewStatement(int $maxDepth = 40): string
     {
         return $this->sql->generate(GenerationPlans::viewStatement()->withMaxDepth($maxDepth));
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function generatedColumnStatement(int $maxDepth = 40): string
     {
         return $this->sql->generate(GenerationPlans::generatedColumnStatement()->withMaxDepth($maxDepth));
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function foreignKeyCascadeStatement(int $maxDepth = 40): string
     {
         return $this->sql->generate(GenerationPlans::foreignKeyCascadeStatement()->withMaxDepth($maxDepth));

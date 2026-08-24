@@ -7,8 +7,8 @@ namespace SqlFaker;
 use Faker\Generator;
 use Faker\Provider\Base;
 use SqlFaker\Grammar\GenerationPlan;
-use SqlFaker\PostgreSql\Grammar\PgGrammar;
 use SqlFaker\PostgreSql\GenerationPlans;
+use SqlFaker\PostgreSql\Grammar\PgGrammar;
 use SqlFaker\PostgreSql\SqlGenerator;
 use SqlFaker\PostgreSql\StatementType;
 
@@ -58,7 +58,9 @@ final class PostgreSqlProvider extends Base
     public function sql(?StatementType $type = null, int $maxDepth = PHP_INT_MAX): string
     {
         if ($type === null) {
-            /** @var StatementType $type */
+            /**
+             * @var StatementType $type
+             */
             $type = $this->generator->randomElement(StatementType::cases());
         }
 
@@ -429,7 +431,9 @@ final class PostgreSqlProvider extends Base
         return $this->sql->generate(GenerationPlans::parameterMarker($min, $max));
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function insertFunctionUpsertStatement(int $maxDepth = 40): string
     {
         return $this->sql->generate(
@@ -437,7 +441,9 @@ final class PostgreSqlProvider extends Base
         );
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function partialIndexUpsertStatement(int $maxDepth = 40): string
     {
         return $this->sql->generate(
@@ -445,22 +451,30 @@ final class PostgreSqlProvider extends Base
         );
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function domainDmlStatement(int $maxDepth = 40): string
     {
-        /** @var GenerationPlan<true> $plan */
+        /**
+         * @var GenerationPlan<true> $plan
+         */
         $plan = $this->generator->randomElement(GenerationPlans::domainDmlStatements());
 
         return $this->sql->generate($plan->withMaxDepth($maxDepth));
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function fullTextSearchStatement(int $maxDepth = 40): string
     {
         return $this->sql->generate(GenerationPlans::fullTextSearchStatement()->withMaxDepth($maxDepth));
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function temporaryTableStatement(int $maxDepth = 40): string
     {
         return $this->sql->generate(
@@ -468,43 +482,57 @@ final class PostgreSqlProvider extends Base
         );
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function viewStatement(int $maxDepth = 40): string
     {
         return $this->sql->generate(GenerationPlans::viewStatement()->withMaxDepth($maxDepth));
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function generatedColumnStatement(int $maxDepth = 40): string
     {
         return $this->sql->generate(GenerationPlans::generatedColumnStatement()->withMaxDepth($maxDepth));
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function foreignKeyCascadeStatement(int $maxDepth = 40): string
     {
         return $this->sql->generate(GenerationPlans::foreignKeyCascadeStatement()->withMaxDepth($maxDepth));
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function partitionOfStatement(int $maxDepth = 40): string
     {
         return $this->sql->generate(GenerationPlans::partitionOfStatement()->withMaxDepth($maxDepth));
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function tableSampleStatement(int $maxDepth = 40): string
     {
         return $this->sql->generate(GenerationPlans::tableSampleStatement()->withMaxDepth($maxDepth));
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function doStatement(int $maxDepth = 40): string
     {
         return $this->sql->generate(GenerationPlans::doStatement()->withMaxDepth($maxDepth));
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function mergeStatement(int $maxDepth = 40): string
     {
         return $this->sql->generate(GenerationPlans::mergeStatement()->withMaxDepth($maxDepth));

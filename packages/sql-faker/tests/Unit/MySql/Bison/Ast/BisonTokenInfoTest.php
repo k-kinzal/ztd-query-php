@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\MySql\Bison\Ast;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\MySql\Bison\Ast\BisonTokenInfo;
-use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(BisonTokenInfo::class)]
 final class BisonTokenInfoTest extends TestCase

@@ -5,30 +5,32 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker;
 
 use Faker\Factory;
+use Override;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
+use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\Grammar;
+use SqlFaker\Grammar\LexicalCatalog;
 use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
-use SqlFaker\Grammar\ProductionRule;
-use SqlFaker\Grammar\Terminal;
-use SqlFaker\Grammar\TerminationAnalyzer;
-use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\ProductionPattern;
-use SqlFaker\PostgreSql\Grammar\PgGrammar;
+use SqlFaker\Grammar\ProductionRule;
+use SqlFaker\Grammar\RandomStringGenerator;
+use SqlFaker\Grammar\SqlVersion;
+use SqlFaker\Grammar\Terminal;
+use SqlFaker\Grammar\TerminalInventory;
+use SqlFaker\Grammar\TerminationAnalyzer;
+use SqlFaker\Grammar\TokenJoiner;
 use SqlFaker\PostgreSql\GenerationPlans;
+use SqlFaker\PostgreSql\Grammar\PgGrammar;
 use SqlFaker\PostgreSql\LexicalGrammar;
 use SqlFaker\PostgreSql\SqlGenerator;
 use SqlFaker\PostgreSql\StatementType;
-use SqlFaker\Grammar\RandomStringGenerator;
-use SqlFaker\Grammar\TokenJoiner;
 use SqlFaker\PostgreSqlProvider;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
-use SqlFaker\Grammar\LexicalCatalog;
-use SqlFaker\Grammar\SqlVersion;
-use SqlFaker\Grammar\TerminalInventory;
 
 #[CoversClass(PostgreSqlProvider::class)]
 #[CoversClass(TokenJoiner::class)]
@@ -206,7 +208,7 @@ final class PostgreSqlProviderTest extends TestCase
         self::assertStringContainsString('ON DELETE_P CASCADE', implode(' ', $tokens));
     }
 
-    #[\Override]
+    #[Override]
     protected function setUp(): void
     {
         parent::setUp();
@@ -970,7 +972,7 @@ final class PostgreSqlProviderTest extends TestCase
         $provider = new PostgreSqlProvider($faker);
         $sql = $provider->doStatement();
         $faker->seed($seed);
-        $defaultDepth = (new \ReflectionMethod(PostgreSqlProvider::class, 'doStatement'))
+        $defaultDepth = (new ReflectionMethod(PostgreSqlProvider::class, 'doStatement'))
             ->getParameters()[0]
             ->getDefaultValue();
 

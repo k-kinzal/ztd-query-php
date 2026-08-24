@@ -6,8 +6,11 @@ namespace Tests\Unit\SqlFaker\PostgreSql;
 
 use Faker\Factory;
 use LogicException;
+use Override;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use SqlFaker\Grammar\GenerationPlan;
@@ -16,14 +19,12 @@ use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionPattern;
 use SqlFaker\Grammar\ProductionRule;
+use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\Grammar\Terminal;
 use SqlFaker\Grammar\TerminationAnalyzer;
-use SqlFaker\PostgreSql\SqlGenerator;
-use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\Grammar\TokenJoiner;
+use SqlFaker\PostgreSql\SqlGenerator;
 use SqlFaker\PostgreSqlProvider;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 
 #[CoversClass(SqlGenerator::class)]
 #[CoversClass(TokenJoiner::class)]
@@ -39,7 +40,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[Medium]
 final class SqlGeneratorTest extends TestCase
 {
-    #[\Override]
+    #[Override]
     protected function setUp(): void
     {
         parent::setUp();

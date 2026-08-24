@@ -7,10 +7,10 @@ namespace SqlFaker\MySql;
 use Faker\Generator as FakerGenerator;
 use InvalidArgumentException;
 use RuntimeException;
+use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\LexicalCatalog;
 use SqlFaker\Grammar\LexicalException;
 use SqlFaker\Grammar\LexicalGrammar as LexicalGrammarContract;
-use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\Grammar\SqlVersion;
 use SqlFaker\Grammar\TokenJoiner;
@@ -20,16 +20,24 @@ use SqlFaker\Grammar\TokenJoiner;
  */
 final class LexicalGrammar implements LexicalGrammarContract
 {
-    /** @var array<string, list<string>> */
+    /**
+     * @var array<string, list<string>>
+     */
     private array $symbols;
 
-    /** @var array<string, list<string>> */
+    /**
+     * @var array<string, list<string>>
+     */
     private array $functions;
 
-    /** @var array<string, string> */
+    /**
+     * @var array<string, string>
+     */
     private array $symbolTokens;
 
-    /** @var array<string, string> */
+    /**
+     * @var array<string, string>
+     */
     private array $functionTokens;
 
     private bool $dollarQuotedStrings;
@@ -46,7 +54,9 @@ final class LexicalGrammar implements LexicalGrammarContract
             throw new RuntimeException("Lexical profile file not found: {$path}");
         }
 
-        /** @var array{dialect: string, version: string, symbols: array<string, list<string>>, functions: array<string, list<string>>, features: array{dollar_quoted_strings: bool}, catalog: array<string, mixed>} $profile */
+        /**
+         * @var array{dialect: string, version: string, symbols: array<string, list<string>>, functions: array<string, list<string>>, features: array{dollar_quoted_strings: bool}, catalog: array<string, mixed>} $profile
+         */
         $profile = require $path;
         if ($profile['dialect'] !== 'mysql' || $profile['version'] !== $profileVersion) {
             throw new RuntimeException("Invalid MySQL lexical profile: {$path}");
@@ -87,7 +97,9 @@ final class LexicalGrammar implements LexicalGrammarContract
     {
         $lexemes = [];
         $expected = [];
-        /** @var array<string, int> $occurrences */
+        /**
+         * @var array<string, int> $occurrences
+         */
         $occurrences = [];
         foreach ($terminals as $terminal) {
             $occurrence = $occurrences[$terminal] ?? 0;
@@ -116,55 +128,73 @@ final class LexicalGrammar implements LexicalGrammarContract
         return $sql;
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function generateQuotedIdentifier(int $minLength = 1, int $maxLength = 64): string
     {
         return '`' . $this->strings->rawIdentifier($minLength, $maxLength) . '`';
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function generateStringLiteral(int $minLength = 1, int $maxLength = 255): string
     {
         return "'" . $this->strings->mixedAlnumString($minLength, $maxLength) . "'";
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function generateNationalStringLiteral(int $minLength = 1, int $maxLength = 255): string
     {
         return 'N' . $this->generateStringLiteral($minLength, $maxLength);
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function generateDollarQuotedString(int $minLength = 1, int $maxLength = 255): string
     {
         return '$$' . $this->strings->mixedAlnumString($minLength, $maxLength) . '$$';
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function generateIntegerLiteral(int $min = 1, int $max = 2147483647): string
     {
         return $this->strings->integerString($min, $max);
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function generateLongIntegerLiteral(int $min = 0, int $max = 2147483647): string
     {
         return $this->strings->longIntString($min, $max);
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function generateUnsignedBigIntLiteral(int $minLength = 1, int $maxLength = 20): string
     {
         return $this->strings->unsignedBigIntString($minLength, $maxLength);
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function generateDecimalLiteral(int $precision = 10, int $scale = 2): string
     {
         return $this->strings->decimalString($precision, $scale);
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function generateFloatLiteral(
         int $precision = 10,
         int $scale = 2,
@@ -178,13 +208,17 @@ final class LexicalGrammar implements LexicalGrammarContract
         );
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function generateHexLiteral(int $minLength = 1, int $maxLength = 16): string
     {
         return '0x' . $this->strings->hexString($minLength, $maxLength);
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function generateQuotedHexLiteral(int $minBytes = 1, int $maxBytes = 8): string
     {
         $bytes = $this->faker->numberBetween($minBytes, $maxBytes);
@@ -192,13 +226,17 @@ final class LexicalGrammar implements LexicalGrammarContract
         return "X'" . $this->strings->hexString($bytes * 2, $bytes * 2) . "'";
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function generateBinaryLiteral(int $minLength = 1, int $maxLength = 64): string
     {
         return '0b' . $this->strings->binaryString($minLength, $maxLength);
     }
 
-    /** @return non-empty-string */
+    /**
+     * @return non-empty-string
+     */
     public function generateHostname(int $minParts = 1, int $maxParts = 4, int $maxPartLength = 63): string
     {
         return $this->strings->hostnameString($minParts, $maxParts, 1, $maxPartLength);
