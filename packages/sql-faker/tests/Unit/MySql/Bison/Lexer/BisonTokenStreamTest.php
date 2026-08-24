@@ -924,6 +924,36 @@ YY;
         self::assertSame('a', $first->value);
     }
 
+    public function testNextIfConsumesATokenOfAnAcceptedKind(): void
+    {
+        $stream = BisonTokenStream::over('foo bar');
+
+        self::assertSame('foo', $stream->nextIf(BisonLexeme::Identifier)?->value);
+        self::assertSame('bar', $stream->next()->value);
+    }
+
+    public function testNextIfAcceptsAnyOfSeveralKinds(): void
+    {
+        $stream = BisonTokenStream::over('42');
+
+        self::assertSame(42, $stream->nextIf(BisonLexeme::Identifier, BisonLexeme::Number)?->value);
+    }
+
+    public function testNextIfLeavesTheStreamUnmovedWhenTheKindDoesNotMatch(): void
+    {
+        $stream = BisonTokenStream::over('foo');
+
+        self::assertNull($stream->nextIf(BisonLexeme::Number));
+        self::assertSame('foo', $stream->next()->value);
+    }
+
+    public function testNextIfAcceptsNothingWhenNoKindIsGiven(): void
+    {
+        $stream = BisonTokenStream::over('foo');
+
+        self::assertNull($stream->nextIf());
+        self::assertSame('foo', $stream->next()->value);
+    }
     public function testOverReadsTheSourceItWasGiven(): void
     {
         self::assertSame('foo', BisonTokenStream::over('foo')->next()->value);

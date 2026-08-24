@@ -10,10 +10,10 @@ use SqlFaker\MySql\Bison\Ast\BisonAlternativeNode;
 use SqlFaker\MySql\Bison\Ast\BisonAst;
 use SqlFaker\MySql\Bison\Ast\BisonRuleNode;
 use SqlFaker\MySql\Bison\Ast\BisonStartDeclaration;
+use SqlFaker\MySql\Bison\Ast\BisonSymbolForm;
 use SqlFaker\MySql\Bison\Ast\BisonSymbolNode;
-use SqlFaker\MySql\Bison\Ast\BisonSymbolType;
 use SqlFaker\MySql\Bison\Ast\BisonTokenDeclaration;
-use SqlFaker\MySql\Bison\Ast\BisonTokenInfo;
+use SqlFaker\MySql\Bison\Ast\BisonTokenDefinition;
 use SqlFaker\MySql\Grammar\GrammarCompiler;
 use SqlFaker\MySql\Grammar\NonTerminal;
 use SqlFaker\MySql\Grammar\Terminal;
@@ -25,7 +25,7 @@ use SqlFaker\MySql\Grammar\UnknownSymbolException;
 #[CoversClass(BisonAlternativeNode::class)]
 #[CoversClass(BisonSymbolNode::class)]
 #[CoversClass(BisonTokenDeclaration::class)]
-#[CoversClass(BisonTokenInfo::class)]
+#[CoversClass(BisonTokenDefinition::class)]
 #[CoversClass(BisonStartDeclaration::class)]
 #[CoversClass(Terminal::class)]
 #[CoversClass(NonTerminal::class)]
@@ -44,7 +44,7 @@ final class GrammarCompilerTest extends TestCase
             rules: [
                 new BisonRuleNode('start', [
                     new BisonAlternativeNode(
-                        [new BisonSymbolNode(BisonSymbolType::Identifier, 'expr')],
+                        [new BisonSymbolNode(BisonSymbolForm::Identifier, 'expr')],
                         null,
                         null,
                         null,
@@ -74,13 +74,13 @@ final class GrammarCompilerTest extends TestCase
             prologue: null,
             declarations: [
                 new BisonTokenDeclaration(null, [
-                    new BisonTokenInfo('NUM', null, null),
+                    new BisonTokenDefinition('NUM', null, null),
                 ]),
             ],
             rules: [
                 new BisonRuleNode('expr', [
                     new BisonAlternativeNode(
-                        [new BisonSymbolNode(BisonSymbolType::Identifier, 'NUM')],
+                        [new BisonSymbolNode(BisonSymbolForm::Identifier, 'NUM')],
                         null,
                         null,
                         null,
@@ -88,9 +88,9 @@ final class GrammarCompilerTest extends TestCase
                     ),
                     new BisonAlternativeNode(
                         [
-                            new BisonSymbolNode(BisonSymbolType::Identifier, 'expr'),
-                            new BisonSymbolNode(BisonSymbolType::CharLiteral, '+'),
-                            new BisonSymbolNode(BisonSymbolType::Identifier, 'expr'),
+                            new BisonSymbolNode(BisonSymbolForm::Identifier, 'expr'),
+                            new BisonSymbolNode(BisonSymbolForm::CharLiteral, '+'),
+                            new BisonSymbolNode(BisonSymbolForm::Identifier, 'expr'),
                         ],
                         null,
                         null,
@@ -125,7 +125,7 @@ final class GrammarCompilerTest extends TestCase
             rules: [
                 new BisonRuleNode('stmt', [
                     new BisonAlternativeNode(
-                        [new BisonSymbolNode(BisonSymbolType::Identifier, 'select')],
+                        [new BisonSymbolNode(BisonSymbolForm::Identifier, 'select')],
                         null,
                         null,
                         null,
@@ -134,7 +134,7 @@ final class GrammarCompilerTest extends TestCase
                 ]),
                 new BisonRuleNode('stmt', [
                     new BisonAlternativeNode(
-                        [new BisonSymbolNode(BisonSymbolType::Identifier, 'insert')],
+                        [new BisonSymbolNode(BisonSymbolForm::Identifier, 'insert')],
                         null,
                         null,
                         null,
@@ -190,7 +190,7 @@ final class GrammarCompilerTest extends TestCase
             rules: [
                 new BisonRuleNode('start', [
                     new BisonAlternativeNode(
-                        [new BisonSymbolNode(BisonSymbolType::Identifier, 'expr')],
+                        [new BisonSymbolNode(BisonSymbolForm::Identifier, 'expr')],
                         null,
                         null,
                         null,
@@ -217,16 +217,16 @@ final class GrammarCompilerTest extends TestCase
             prologue: null,
             declarations: [
                 new BisonTokenDeclaration(null, [
-                    new BisonTokenInfo('TOKEN', null, null),
+                    new BisonTokenDefinition('TOKEN', null, null),
                 ]),
             ],
             rules: [
                 new BisonRuleNode('list', [
                     new BisonAlternativeNode(
                         [
-                            new BisonSymbolNode(BisonSymbolType::Identifier, 'item'),
-                            new BisonSymbolNode(BisonSymbolType::CharLiteral, ','),
-                            new BisonSymbolNode(BisonSymbolType::Identifier, 'item'),
+                            new BisonSymbolNode(BisonSymbolForm::Identifier, 'item'),
+                            new BisonSymbolNode(BisonSymbolForm::CharLiteral, ','),
+                            new BisonSymbolNode(BisonSymbolForm::Identifier, 'item'),
                         ],
                         null,
                         null,
@@ -236,7 +236,7 @@ final class GrammarCompilerTest extends TestCase
                 ]),
                 new BisonRuleNode('item', [
                     new BisonAlternativeNode(
-                        [new BisonSymbolNode(BisonSymbolType::Identifier, 'TOKEN')],
+                        [new BisonSymbolNode(BisonSymbolForm::Identifier, 'TOKEN')],
                         null,
                         null,
                         null,
@@ -292,13 +292,13 @@ final class GrammarCompilerTest extends TestCase
             prologue: null,
             declarations: [
                 new BisonTokenDeclaration(null, [
-                    new BisonTokenInfo('NUM', null, null),
+                    new BisonTokenDefinition('NUM', null, null),
                 ]),
             ],
             rules: [
                 new BisonRuleNode('expr', [
                     new BisonAlternativeNode(
-                        [new BisonSymbolNode(BisonSymbolType::Identifier, 'NUM')],
+                        [new BisonSymbolNode(BisonSymbolForm::Identifier, 'NUM')],
                         '{ $$ = $1; }',
                         'UMINUS',
                         1,
@@ -330,7 +330,7 @@ final class GrammarCompilerTest extends TestCase
             rules: [
                 new BisonRuleNode('program', [
                     new BisonAlternativeNode(
-                        [new BisonSymbolNode(BisonSymbolType::Identifier, 'stmt_list')],
+                        [new BisonSymbolNode(BisonSymbolForm::Identifier, 'stmt_list')],
                         null,
                         null,
                         null,
@@ -339,7 +339,7 @@ final class GrammarCompilerTest extends TestCase
                 ]),
                 new BisonRuleNode('stmt_list', [
                     new BisonAlternativeNode(
-                        [new BisonSymbolNode(BisonSymbolType::Identifier, 'stmt')],
+                        [new BisonSymbolNode(BisonSymbolForm::Identifier, 'stmt')],
                         null,
                         null,
                         null,
@@ -348,7 +348,7 @@ final class GrammarCompilerTest extends TestCase
                 ]),
                 new BisonRuleNode('stmt', [
                     new BisonAlternativeNode(
-                        [new BisonSymbolNode(BisonSymbolType::Identifier, 'expr')],
+                        [new BisonSymbolNode(BisonSymbolForm::Identifier, 'expr')],
                         null,
                         null,
                         null,
@@ -425,7 +425,7 @@ final class GrammarCompilerTest extends TestCase
             rules: [
                 new BisonRuleNode('start', [
                     new BisonAlternativeNode(
-                        [new BisonSymbolNode(BisonSymbolType::Identifier, 'UNKNOWN')],
+                        [new BisonSymbolNode(BisonSymbolForm::Identifier, 'UNKNOWN')],
                         null,
                         null,
                         null,

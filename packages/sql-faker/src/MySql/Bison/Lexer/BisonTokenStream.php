@@ -97,6 +97,28 @@ final class BisonTokenStream
     }
 
     /**
+     * Consumes the next token only when it is one of the given kinds.
+     *
+     * Reading a grammar is mostly "take this if it is there": a type tag, an
+     * explicit token code, an alias. Asking the stream keeps that one step, so
+     * a reader cannot look at one token and then consume another.
+     *
+     * @param BisonLexeme ...$accepted Kinds the caller is willing to take
+     *
+     * @return BisonToken|null The consumed token, or null with the stream unmoved
+     *
+     * @throws GrammarParseException When the source cannot be tokenized
+     */
+    public function nextIf(BisonLexeme ...$accepted): ?BisonToken
+    {
+        if (!in_array($this->peek()->type, $accepted, true)) {
+            return null;
+        }
+
+        return $this->next();
+    }
+
+    /**
      * Consumes the next token and reads its value as a string.
      *
      * @return string The token value, with a numeric value rendered as digits
@@ -105,9 +127,7 @@ final class BisonTokenStream
      */
     public function nextString(): string
     {
-        $value = $this->next()->value;
-
-        return is_string($value) ? $value : (string) $value;
+        return $this->next()->asString();
     }
 
     /**
@@ -119,9 +139,7 @@ final class BisonTokenStream
      */
     public function nextInt(): int
     {
-        $value = $this->next()->value;
-
-        return is_int($value) ? $value : (int) $value;
+        return $this->next()->asInt();
     }
 
     /**

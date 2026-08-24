@@ -29,6 +29,18 @@ final class GrammarParseException extends RuntimeException
     }
 
     /**
+     * Reports a grammar file that could not be read from disk.
+     *
+     * @param string $path Path that was asked for
+     *
+     * @return self Exception naming the path
+     */
+    public static function unreadableSource(string $path): self
+    {
+        return new self("Failed to read: {$path}");
+    }
+
+    /**
      * Reports a character that starts no lexeme of the grammar language.
      *
      * @param string $character The character that was reached

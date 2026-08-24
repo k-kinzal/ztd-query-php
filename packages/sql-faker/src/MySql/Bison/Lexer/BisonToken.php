@@ -24,4 +24,24 @@ final class BisonToken
         public readonly int $offset,
     ) {
     }
+
+    /**
+     * Reads the value as text.
+     *
+     * @return string The value, with a number rendered as its digits
+     */
+    public function asString(): string
+    {
+        return is_string($this->value) ? $this->value : (string) $this->value;
+    }
+
+    /**
+     * Reads the value as a number.
+     *
+     * @return int The value, with text that names no number read as zero
+     */
+    public function asInt(): int
+    {
+        return is_int($this->value) ? $this->value : (int) $this->value;
+    }
 }

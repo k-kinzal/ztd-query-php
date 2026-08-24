@@ -11,6 +11,10 @@ namespace SqlFaker\MySql\Bison\Ast;
  */
 final class BisonDefineDeclaration implements BisonDeclaration
 {
+    /**
+     * @param string $name Option being set, e.g. "api.pure"
+     * @param string|null $value Setting the option takes, or null when the option is a flag
+     */
     public function __construct(
         public readonly string $name,
         public readonly ?string $value,

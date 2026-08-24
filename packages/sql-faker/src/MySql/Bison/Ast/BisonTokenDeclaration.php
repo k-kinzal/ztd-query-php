@@ -9,12 +9,12 @@ namespace SqlFaker\MySql\Bison\Ast;
  *
  * Example: %token <lexer.keyword> SELECT 123 "SELECT"
  *
- * @phpstan-type TokenList list<BisonTokenInfo>
+ * @phpstan-type TokenList list<BisonTokenDefinition>
  */
 final class BisonTokenDeclaration implements BisonDeclaration
 {
     /**
-     * @param list<BisonTokenInfo> $tokens
+     * @param list<BisonTokenDefinition> $tokens
      */
     public function __construct(
         public readonly ?string $typeTag,
