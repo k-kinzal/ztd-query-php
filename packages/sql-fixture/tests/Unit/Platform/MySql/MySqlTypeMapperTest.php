@@ -5,18 +5,14 @@ declare(strict_types=1);
 namespace Tests\Unit\Platform\MySql;
 
 use Faker\Factory;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\Platform\MySql\MySqlTypeMapper;
 use SqlFixture\Schema\ColumnDefinition;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use Tests\Fixture\SpyGenerator;
 
-/**
- * Tests for the platform MySqlTypeMapper (non-deprecated).
- * Focuses on edge cases and boundary value validation.
- */
 #[CoversClass(MySqlTypeMapper::class)]
 #[UsesClass(ColumnDefinition::class)]
 final class MySqlTypeMapperTest extends TestCase

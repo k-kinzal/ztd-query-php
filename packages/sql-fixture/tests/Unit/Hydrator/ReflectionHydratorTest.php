@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Hydrator;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\Hydrator\HydrationException;
 use SqlFixture\Hydrator\ReflectionHydrator;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use Tests\Fixture\Hydrator\TestEntity;
 use Tests\Fixture\Hydrator\TestEntityNoParams;
 use Tests\Fixture\Hydrator\TestEntityViaProperties;
@@ -36,7 +36,6 @@ final class ReflectionHydratorTest extends TestCase
         $data = ['id' => 1, 'name' => 'Test'];
         $object = (new ReflectionHydrator())->hydrate($data, TestEntity::class);
 
-        self::assertInstanceOf(TestEntity::class, $object);
         self::assertSame(1, $object->id);
         self::assertSame('Test', $object->name);
     }
@@ -47,7 +46,6 @@ final class ReflectionHydratorTest extends TestCase
         $data = ['id' => 1, 'name' => 'Test'];
         $object = (new ReflectionHydrator())->hydrate($data, TestEntityWithoutConstructor::class);
 
-        self::assertInstanceOf(TestEntityWithoutConstructor::class, $object);
         self::assertSame(1, $object->id);
         self::assertSame('Test', $object->name);
     }
@@ -58,7 +56,6 @@ final class ReflectionHydratorTest extends TestCase
         $data = ['user_id' => 42, 'full_name' => 'John Doe'];
         $object = (new ReflectionHydrator())->hydrate($data, TestEntityWithCamelCase::class);
 
-        self::assertInstanceOf(TestEntityWithCamelCase::class, $object);
         self::assertSame(42, $object->userId);
         self::assertSame('John Doe', $object->fullName);
     }
@@ -69,7 +66,6 @@ final class ReflectionHydratorTest extends TestCase
         $data = ['id' => 1];
         $object = (new ReflectionHydrator())->hydrate($data, TestEntityWithDefaults::class);
 
-        self::assertInstanceOf(TestEntityWithDefaults::class, $object);
         self::assertSame(1, $object->id);
         self::assertSame('default', $object->name);
     }
@@ -80,7 +76,6 @@ final class ReflectionHydratorTest extends TestCase
         $data = ['id' => 1];
         $object = (new ReflectionHydrator())->hydrate($data, TestEntityWithNullable::class);
 
-        self::assertInstanceOf(TestEntityWithNullable::class, $object);
         self::assertSame(1, $object->id);
         self::assertNull($object->name);
     }

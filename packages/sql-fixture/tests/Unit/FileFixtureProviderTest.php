@@ -6,20 +6,20 @@ namespace Tests\Unit;
 
 use Faker\Factory;
 use Faker\Generator;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlFixture\FileFixtureProvider;
 use SqlFixture\FixtureGenerator;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
-use SqlFixture\Platform\PlatformFactory;
-use SqlFixture\Platform\MySql\MySqlSchemaParser;
-use SqlFixture\Schema\ColumnDefinition;
-use SqlFixture\Schema\TableSchema;
-use SqlFixture\Schema\SchemaParseException;
-use SqlFixture\Platform\MySql\MySqlTypeMapper;
 use SqlFixture\Hydrator\ReflectionHydrator;
+use SqlFixture\Platform\MySql\MySqlSchemaParser;
+use SqlFixture\Platform\MySql\MySqlTypeMapper;
+use SqlFixture\Platform\PlatformFactory;
+use SqlFixture\Schema\ColumnDefinition;
+use SqlFixture\Schema\SchemaParseException;
+use SqlFixture\Schema\TableSchema;
 use Tests\Fixture\FileTestUser;
 
 #[CoversClass(FileFixtureProvider::class)]
@@ -156,7 +156,6 @@ final class FileFixtureProviderTest extends TestCase
             })(), $tempDir);
             $user = $provider->fixture('users', ['id' => 1, 'name' => 'Test'], FileTestUser::class);
 
-            self::assertInstanceOf(FileTestUser::class, $user);
             self::assertSame(1, $user->id);
             self::assertSame('Test', $user->name);
         } finally {
@@ -298,33 +297,6 @@ final class FileFixtureProviderTest extends TestCase
             self::assertTrue($provider->hasTable('dynamic'));
             $data = $provider->fixture('dynamic');
             self::assertArrayHasKey('id', $data);
-        } finally {
-            (static function (string $dir): void {
-                if (is_dir($dir)) {
-                    $files = glob($dir . '/*');
-                    if ($files !== false) {
-                        array_map('unlink', $files);
-                    } rmdir($dir);
-                }
-            })($tempDir);
-        }
-    }
-
-    #[Test]
-    public function getFixtureGenerator(): void
-    {
-        $tempDir = (static function (): string {
-            $dir = sys_get_temp_dir() . '/sql-fixture-test-' . uniqid();
-            mkdir($dir, 0755, true);
-            return $dir;
-        })();
-        try {
-            $provider = new FileFixtureProvider((static function (): Generator {
-                $faker = Factory::create();
-                $faker->seed(12345);
-                return $faker;
-            })(), $tempDir);
-            self::assertInstanceOf(FixtureGenerator::class, $provider->getFixtureGenerator());
         } finally {
             (static function (string $dir): void {
                 if (is_dir($dir)) {

@@ -36,17 +36,6 @@ final class PlanSchemaExceptionTest extends TestCase
     }
 
     #[Test]
-    public function isRuntimeException(): void
-    {
-        $schema = new TableSchema('order', ['id' => new ColumnDefinition('id', 'INT')]);
-
-        self::assertInstanceOf(
-            \RuntimeException::class,
-            PlanSchemaException::unknownColumn(ColumnRef::of('order', 'x'), 'x', $schema)
-        );
-    }
-
-    #[Test]
     public function generatedColumnExplainsWhyItCannotCarryAValue(): void
     {
         $schema = new TableSchema('order', ['code' => new ColumnDefinition('code', 'VARCHAR', generated: true)]);

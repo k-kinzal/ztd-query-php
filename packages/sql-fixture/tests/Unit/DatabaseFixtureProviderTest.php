@@ -6,11 +6,11 @@ namespace Tests\Unit;
 
 use Faker\Factory;
 use PDO;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\DatabaseFixtureProvider;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use SqlFixture\FixtureGenerator;
 use SqlFixture\Platform\PlatformFactory;
 use SqlFixture\Platform\Sqlite\SqliteSchemaFetcher;
@@ -65,16 +65,6 @@ final class DatabaseFixtureProviderTest extends TestCase
         $provider = new DatabaseFixtureProvider($faker, $pdo);
 
         self::assertSame('sqlite', $provider->getDriver());
-    }
-
-    #[Test]
-    public function getFixtureGeneratorReturnsInstance(): void
-    {
-        $pdo = new PDO('sqlite::memory:');
-        $faker = Factory::create();
-        $provider = new DatabaseFixtureProvider($faker, $pdo);
-
-        self::assertInstanceOf(\SqlFixture\FixtureGenerator::class, $provider->getFixtureGenerator());
     }
 
     #[Test]

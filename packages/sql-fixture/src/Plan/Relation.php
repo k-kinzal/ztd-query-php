@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlFixture\Plan;
 
+use SqlFixture\Fixture\PlanSchemaException;
+
 /**
  * One relation as written, with the roles the operator implies.
  *
@@ -38,9 +40,9 @@ final class Relation
         bool $childOptional = false,
     ): self {
         return new self(
-            self::ref($parent),
+            ColumnRef::from($parent),
             RelationKind::OneToMany,
-            self::ref($child),
+            ColumnRef::from($child),
             false,
             $childOptional
         );
@@ -55,9 +57,9 @@ final class Relation
         bool $parentOptional = false,
     ): self {
         return new self(
-            self::ref($child),
+            ColumnRef::from($child),
             RelationKind::ManyToOne,
-            self::ref($parent),
+            ColumnRef::from($parent),
             false,
             $parentOptional
         );
@@ -72,9 +74,9 @@ final class Relation
         bool $childOptional = false,
     ): self {
         return new self(
-            self::ref($parent),
+            ColumnRef::from($parent),
             RelationKind::OneToOne,
-            self::ref($child),
+            ColumnRef::from($child),
             false,
             $childOptional
         );
@@ -105,7 +107,7 @@ final class Relation
      */
     public function parent(): ColumnRef
     {
-        return $this->side($this->kind->parentSide());
+        return $this->at($this->kind->parentSide());
     }
 
     /**
@@ -113,7 +115,7 @@ final class Relation
      */
     public function child(): ColumnRef
     {
-        return $this->side($this->kind->childSide());
+        return $this->at($this->kind->childSide());
     }
 
     /**
@@ -121,7 +123,7 @@ final class Relation
      */
     public function parentIsOptional(): bool
     {
-        return $this->optionalAt($this->kind->parentSide());
+        return $this->isOptionalAt($this->kind->parentSide());
     }
 
     /**
@@ -132,7 +134,7 @@ final class Relation
      */
     public function childIsOptional(): bool
     {
-        return $this->optionalAt($this->kind->childSide());
+        return $this->isOptionalAt($this->kind->childSide());
     }
 
     public function childIsCollection(): bool
@@ -170,18 +172,73 @@ final class Relation
         return [$this->left->table, $this->right->table];
     }
 
-    private static function ref(string|ColumnRef $reference): ColumnRef
-    {
-        return $reference instanceof ColumnRef ? $reference : ColumnRef::from($reference);
-    }
-
-    private function side(RelationSide $side): ColumnRef
+    /**
+     * Answers the end written on one side.
+     *
+     * Which side holds the parent depends on the operator, so the sides are
+     * asked for by name rather than by position.
+     *
+     * @param RelationSide $side Side to answer for
+     *
+     * @return ColumnRef The end written there
+     */
+    public function at(RelationSide $side): ColumnRef
     {
         return $side === RelationSide::Left ? $this->left : $this->right;
     }
 
-    private function optionalAt(RelationSide $side): bool
+    /**
+     * Reports whether one side was marked optional.
+     *
+     * @param RelationSide $side Side to answer for
+     *
+     * @return bool True when a `?` was written next to that end
+     */
+    public function isOptionalAt(RelationSide $side): bool
     {
         return $side === RelationSide::Left ? $this->leftOptional : $this->rightOptional;
+    }
+
+    /**
+     * Reads the linking columns off a parent row, as the child spells them.
+     *
+     * @param array<string, mixed> $parentRow Row on the parent end
+     *
+     * @return array<string, mixed> Child column => the value it must carry
+     *
+     * @throws PlanSchemaException When the parent row does not carry a column the relation reads
+     */
+    public function project(array $parentRow): array
+    {
+        $values = [];
+        foreach ($this->columnMap() as $childColumn => $parentColumn) {
+            if (!array_key_exists($parentColumn, $parentRow)) {
+                throw PlanSchemaException::missingValue($childColumn, $this->parent(), $parentColumn);
+            }
+            $values[$childColumn] = $parentRow[$parentColumn];
+        }
+
+        return $values;
+    }
+
+    /**
+     * Reports whether a caller has already said what the child row references.
+     *
+     * Where every linking column was given, generating a parent to fill them
+     * would contradict what the caller asked for.
+     *
+     * @param array<string, mixed> $overrides Values the caller fixed on the child row
+     *
+     * @return bool True when every linking column was given
+     */
+    public function isSatisfiedBy(array $overrides): bool
+    {
+        foreach (array_keys($this->columnMap()) as $childColumn) {
+            if (!array_key_exists($childColumn, $overrides)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
