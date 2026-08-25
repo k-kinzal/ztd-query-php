@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace SqlFaker\PostgreSql;
 
 use Faker\Generator as FakerGenerator;
+use RuntimeException;
 use SqlFaker\Grammar\Derivation;
 use SqlFaker\Grammar\GenerationException;
 use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\Grammar;
+use SqlFaker\Grammar\LexicalCatalogException;
 use SqlFaker\Grammar\LexicalException;
 use SqlFaker\Grammar\Terminal;
 use SqlFaker\Grammar\TerminalInventory;
@@ -27,6 +29,14 @@ final class SqlGenerator
     private LexicalGrammar $lexicalGrammar;
     private TerminationAnalyzer $terminationAnalyzer;
 
+    /**
+     * @param Grammar $grammar Compiled PostgreSQL grammar to derive from
+     * @param FakerGenerator $faker Source of every choice a derivation makes freely
+     * @param string|null $version Release whose lexer the SQL must read back through, or null to accept synthetic terminals
+     *
+     * @throws LexicalCatalogException When the release's lexer cannot write a terminal the grammar declares
+     * @throws RuntimeException When the release is not one this package ships
+     */
     public function __construct(
         Grammar $grammar,
         FakerGenerator $faker,

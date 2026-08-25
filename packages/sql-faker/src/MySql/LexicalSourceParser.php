@@ -13,6 +13,8 @@ final class LexicalSourceParser
 {
     /**
      * @return list<string>
+     *
+     * @throws RuntimeException When the upstream source declares no lexical state enum, or the scanner leaves a state unclassified
      */
     public function parseStates(string $stateHeader, string $scanner): array
     {

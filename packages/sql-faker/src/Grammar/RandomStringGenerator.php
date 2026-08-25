@@ -26,6 +26,9 @@ final class RandomStringGenerator
 
     private FakerGenerator $faker;
 
+    /**
+     * @param FakerGenerator $faker Source of every choice the generated strings make
+     */
     public function __construct(FakerGenerator $faker)
     {
         $this->faker = $faker;
@@ -97,6 +100,8 @@ final class RandomStringGenerator
      * Generate a random hostname string.
      *
      * @return non-empty-string
+     *
+     * @throws LogicException When the requested bounds leave every part of the hostname empty
      */
     public function hostnameString(int $minParts = 1, int $maxParts = 3, int $minPartLength = 1, int $maxPartLength = 12): string
     {
@@ -164,6 +169,9 @@ final class RandomStringGenerator
     /**
      * @param array<string, list<string>> $lexemesByTerminal
      * @return non-empty-string
+     *
+     * @throws InvalidArgumentException When the term bounds are not a positive ordered range, or no terminal carries a lexeme
+     * @throws LogicException When the chosen lexemes join to nothing
      */
     public function lexicalSequence(array $lexemesByTerminal, int $minTerms = 2, int $maxTerms = 4): string
     {

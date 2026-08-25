@@ -82,6 +82,8 @@ final class LemonParser
 
     /**
      * Parse a Lemon grammar file into a Grammar.
+     *
+     * @throws RuntimeException When the grammar file cannot be read
      */
     public function parseFile(string $path): Grammar
     {

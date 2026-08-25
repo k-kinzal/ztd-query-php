@@ -47,6 +47,17 @@ final class TerminationAnalyzer
         return $this->sumProductionLength($production->symbols, $this->lengths);
     }
 
+    /**
+     * Reports whether a production can be finished at all.
+     *
+     * A production whose shortest completion is unbounded contains a rule that
+     * can only expand into itself, so a walk that took it would never arrive at
+     * terminals.
+     *
+     * @param Production $production Production to judge
+     *
+     * @return bool True when some derivation of it ends in terminals
+     */
     public function isProductionViable(Production $production): bool
     {
         return $this->estimateProductionLength($production) !== PHP_INT_MAX;

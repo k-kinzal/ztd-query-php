@@ -11,6 +11,9 @@ use Exception;
  */
 final class UnknownSymbolException extends Exception
 {
+    /**
+     * @param string $symbolName Symbol the grammar never declares
+     */
     public function __construct(string $symbolName)
     {
         parent::__construct("Unknown symbol: {$symbolName}");

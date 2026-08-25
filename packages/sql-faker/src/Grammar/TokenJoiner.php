@@ -102,6 +102,16 @@ final class TokenJoiner
             || self::isQuotedIdentifier($token);
     }
 
+    /**
+     * Reports whether a token is an identifier written inside quotes.
+     *
+     * A quoted identifier carries its own boundaries, so it never needs a space
+     * between itself and what comes next.
+     *
+     * @param string $token Token to judge
+     *
+     * @return bool True when the token opens and closes with the same quote
+     */
     public static function isQuotedIdentifier(string $token): bool
     {
         $len = strlen($token);

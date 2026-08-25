@@ -13,6 +13,8 @@ final class LexicalProfileCompiler
 {
     /**
      * @return array{symbols: array<string, list<string>>, functions: array<string, list<string>>}
+     *
+     * @throws RuntimeException When the upstream source declares no keyword or function table
      */
     public function compile(string $source): array
     {

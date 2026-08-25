@@ -14,11 +14,19 @@ namespace SqlFaker\MySql\Grammar;
  */
 final class Terminal implements Symbol
 {
+    /**
+     * @param string $value Name of the symbol as the grammar spells it
+     */
     public function __construct(
         public readonly string $value,
     ) {
     }
 
+    /**
+     * Answers the symbol's name.
+     *
+     * @return string Name of the symbol as the grammar spells it
+     */
     public function value(): string
     {
         return $this->value;

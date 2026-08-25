@@ -22,6 +22,8 @@ final class Grammar
     /**
      * @param string $startSymbol The grammar's start symbol
      * @param array<string, ProductionRule> $ruleMap Non-terminal name => ProductionRule
+     *
+     * @throws InvalidArgumentException When a rule is filed under a name other than its own left-hand side
      */
     public function __construct(
         public readonly string $startSymbol,
@@ -40,6 +42,8 @@ final class Grammar
      * Load a pre-compiled grammar.
      *
      * @param string|null $version MySQL version tag (e.g., "mysql-8.4.0"). Null for default.
+     *
+     * @throws RuntimeException When the compiled grammar is missing, empty, or is not a grammar
      */
     public static function load(?string $version = null): self
     {
@@ -64,6 +68,15 @@ final class Grammar
         return $grammar;
     }
 
+    /**
+     * Answers the release a version string names, defaulting to the newest one shipped.
+     *
+     * @param string|null $version Release to resolve, or null for the default
+     *
+     * @return string Name of the release the artifacts were generated for
+     *
+     * @throws RuntimeException When the release is not one this package ships
+     */
     public static function resolveVersion(?string $version = null): string
     {
         return SqlVersion::resolve('mysql', $version)->name;
