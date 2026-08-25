@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\Grammar;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlFaker\Grammar\SqlVersion;
+use SqlFaker\Grammar\SqlVersionRegistry;
 
 #[CoversClass(SqlVersion::class)]
+#[UsesClass(SqlVersionRegistry::class)]
 final class SqlVersionTest extends TestCase
 {
     public function testResolvesTheDefaultVersionWithBothArtifacts(): void
@@ -76,9 +79,9 @@ final class SqlVersionTest extends TestCase
         SqlVersion::resolve('oracle');
     }
 
-    public function testAtNamesAVersionAtThePathsTheCallerChose(): void
+    public function testConstructBindsTheArtifactsToThePathsTheCallerChose(): void
     {
-        $version = SqlVersion::at('mysql', 'mysql-8.4.7', '/tmp/ast.php', '/tmp/lex.php');
+        $version = new SqlVersion('mysql', 'mysql-8.4.7', '/tmp/ast.php', '/tmp/lex.php');
 
         self::assertSame('mysql', $version->dialect);
         self::assertSame('mysql-8.4.7', $version->name);

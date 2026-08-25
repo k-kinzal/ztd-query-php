@@ -43,7 +43,7 @@ final class LexicalProfileBuilderTest extends TestCase
 {
     public function testMysqlDelegatesToTheDialectBuilderItWasGiven(): void
     {
-        $source = $this->createStub(LexerSource::class);
+        $source = self::createStub(LexerSource::class);
         $source->method('fetch')->willThrowException(new RuntimeException('mysql source unavailable'));
 
         $builder = new LexicalProfileBuilder(new MySqlProfileBuilder($source));
@@ -56,7 +56,7 @@ final class LexicalProfileBuilderTest extends TestCase
 
     public function testPostgreSqlDelegatesToTheDialectBuilderItWasGiven(): void
     {
-        $source = $this->createStub(LexerSource::class);
+        $source = self::createStub(LexerSource::class);
         $source->method('fetch')->willThrowException(new RuntimeException('postgres source unavailable'));
 
         $builder = new LexicalProfileBuilder(null, new PgProfileBuilder($source));
@@ -69,7 +69,7 @@ final class LexicalProfileBuilderTest extends TestCase
 
     public function testSqliteDelegatesToTheDialectBuilderItWasGiven(): void
     {
-        $source = $this->createStub(LexerSource::class);
+        $source = self::createStub(LexerSource::class);
         $source->method('fetch')->willThrowException(new RuntimeException('sqlite source unavailable'));
 
         $builder = new LexicalProfileBuilder(null, null, new SqliteProfileBuilder($source));
@@ -140,7 +140,7 @@ final class LexicalProfileBuilderTest extends TestCase
 
     public function testPublishVersionReportsWhenAnArtifactCannotBeWritten(): void
     {
-        $version = SqlVersion::at('mysql', 'mysql-8.4.7', '/dev/null/no-such/ast.php', '/dev/null/no-such/lex.php');
+        $version = new SqlVersion('mysql', 'mysql-8.4.7', '/dev/null/no-such/ast.php', '/dev/null/no-such/lex.php');
 
         $this->expectException(RuntimeException::class);
 

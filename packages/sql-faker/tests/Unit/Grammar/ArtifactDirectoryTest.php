@@ -23,15 +23,11 @@ final class ArtifactDirectoryTest extends TestCase
     {
         $directory = sys_get_temp_dir() . '/sql-faker-artifact-' . getmypid() . '/nested';
 
-        try {
-            self::assertSame($directory, (new ArtifactDirectory())->prepared($directory . '/lexical.php'));
-            self::assertDirectoryExists($directory);
-        } finally {
-            if (is_dir($directory)) {
-                rmdir($directory);
-                rmdir(dirname($directory));
-            }
-        }
+        self::assertSame($directory, (new ArtifactDirectory())->prepared($directory . '/lexical.php'));
+        self::assertDirectoryExists($directory);
+
+        rmdir($directory);
+        rmdir(dirname($directory));
     }
 
     public function testPreparedReportsTheAncestorThatCanNeverHoldADirectory(): void

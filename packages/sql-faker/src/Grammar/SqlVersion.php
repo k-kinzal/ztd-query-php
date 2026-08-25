@@ -8,10 +8,21 @@ use RuntimeException;
 
 /**
  * Binds the grammar and lexical profile generated for one SQL implementation version.
+ *
+ * The two artifacts describe the same release from either end — the AST says
+ * what may be written, the lexical profile says how it is spelled — so a
+ * generator that held one without the other would produce SQL its own lexer
+ * could not read back. They are named together and travel together.
  */
 final class SqlVersion
 {
-    private function __construct(
+    /**
+     * @param string $dialect Dialect the artifacts describe
+     * @param string $name Release the artifacts describe
+     * @param string $astPath Where the grammar AST is read from or written to
+     * @param string $lexicalPath Where the lexical profile is read from or written to
+     */
+    public function __construct(
         public readonly string $dialect,
         public readonly string $name,
         public readonly string $astPath,
@@ -20,95 +31,43 @@ final class SqlVersion
     }
 
     /**
-     * Names a version whose artifacts live at paths the caller chose.
+     * Answers the artifacts this package ships for one release.
      *
-     * The registry answers where a released version's artifacts are read from.
-     * A build writes them, and writes them to a staging location before it is
-     * willing to replace what is committed, so it needs to say where.
+     * @param string $dialect Dialect the caller generates SQL for
+     * @param string|null $version Release to resolve, or null for the dialect default
      *
-     * @param string $dialect Dialect the artifacts describe
-     * @param string $name Version the artifacts describe
-     * @param string $astPath Where the grammar AST is written
-     * @param string $lexicalPath Where the lexical profile is written
+     * @return self Artifacts committed for that release
      *
-     * @return self The version, bound to those paths
+     * @throws RuntimeException When the dialect or the release is not one this package ships
      */
-    public static function at(string $dialect, string $name, string $astPath, string $lexicalPath): self
-    {
-        return new self($dialect, $name, $astPath, $lexicalPath);
-    }
-
     public static function resolve(string $dialect, ?string $version = null): self
     {
-        $registry = self::registry();
-        $dialectDefinition = $registry[$dialect] ?? null;
-        if ($dialectDefinition === null) {
-            throw new RuntimeException("Unknown SQL dialect: {$dialect}");
-        }
-        $version ??= $dialectDefinition['default'];
-        $resources = $dialectDefinition['versions'][$version] ?? null;
-        if ($resources === null) {
-            throw new RuntimeException("Unsupported {$dialect} version: {$version}");
-        }
-
-        return new self(
-            $dialect,
-            $version,
-            self::resourcePath($resources['ast']),
-            self::resourcePath($resources['lexical']),
-        );
+        return (new SqlVersionRegistry())->resolve($dialect, $version);
     }
 
     /**
-     * @return list<string>
+     * Answers every release one dialect ships, oldest first.
+     *
+     * @param string $dialect Dialect to enumerate
+     *
+     * @return list<string> Release names in the order they were registered
+     *
+     * @throws RuntimeException When the dialect is not one this package ships
      */
     public static function names(string $dialect): array
     {
-        $registry = self::registry();
-        if (!isset($registry[$dialect])) {
-            throw new RuntimeException("Unknown SQL dialect: {$dialect}");
-        }
-
-        return array_keys($registry[$dialect]['versions']);
+        return (new SqlVersionRegistry())->names($dialect);
     }
 
     /**
-     * @return list<self>
+     * Answers every release of every dialect, so a caller can act on all of them.
+     *
+     * @return list<self> Artifacts committed for each registered release
+     *
+     * @throws RuntimeException When the record names a release it does not describe
      */
     public static function all(): array
     {
-        $versions = [];
-        foreach (array_keys(self::registry()) as $dialect) {
-            foreach (self::names($dialect) as $version) {
-                $versions[] = self::resolve($dialect, $version);
-            }
-        }
-
-        return $versions;
-    }
-
-    /**
-     * @return array<string, array{default: string, versions: array<string, array{ast: string, lexical: string}>}>
-     */
-    private static function registry(): array
-    {
-        /** @var array<string, array{default: string, versions: array<string, array{ast: string, lexical: string}>}> $registry */
-        $registry = require self::resourceDirectory() . '/version.php';
-
-        return $registry;
-    }
-
-    private static function resourcePath(string $relativePath): string
-    {
-        if ($relativePath === '' || str_starts_with($relativePath, '/') || str_contains($relativePath, '..')) {
-            throw new RuntimeException("Invalid SQL version resource path: {$relativePath}");
-        }
-
-        return self::resourceDirectory() . '/' . $relativePath;
-    }
-
-    private static function resourceDirectory(): string
-    {
-        return dirname(__DIR__, 2) . '/resources';
+        return (new SqlVersionRegistry())->all();
     }
 }

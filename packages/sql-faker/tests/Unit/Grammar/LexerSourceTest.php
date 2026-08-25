@@ -14,7 +14,7 @@ final class LexerSourceTest extends TestCase
 {
     public function testFetchReturnsWhatTheImplementationRead(): void
     {
-        $source = $this->createStub(LexerSource::class);
+        $source = self::createStub(LexerSource::class);
         $source->method('fetch')->willReturn('lexer source');
 
         self::assertSame('lexer source', $source->fetch('https://example.com/lex.h'));
@@ -22,7 +22,7 @@ final class LexerSourceTest extends TestCase
 
     public function testFetchReportsAFileThatCannotBeRead(): void
     {
-        $source = $this->createStub(LexerSource::class);
+        $source = self::createStub(LexerSource::class);
         $source->method('fetch')->willThrowException(new RuntimeException('Failed to fetch'));
 
         $this->expectException(RuntimeException::class);

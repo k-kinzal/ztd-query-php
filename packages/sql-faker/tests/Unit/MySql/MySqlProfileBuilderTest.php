@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\MySql;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlFaker\Grammar\LexerSource;
@@ -31,16 +32,26 @@ final class MySqlProfileBuilderTest extends TestCase
         self::assertStringEndsWith('/strings/sql_chars.h', $builder->sourceUrls('mysql-8.4.7')['state']);
     }
 
-    public function testSourceUrlsPointsEveryFileAtTheReleaseTag(): void
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function providerSourceFile(): array
     {
-        foreach ((new MySqlProfileBuilder())->sourceUrls('mysql-8.4.7') as $url) {
-            self::assertStringContainsString('/refs/tags/mysql-8.4.7', $url);
-        }
+        return ['table' => ['table'], 'scanner' => ['scanner'], 'state' => ['state']];
+    }
+
+    #[DataProvider('providerSourceFile')]
+    public function testSourceUrlsPointsEveryFileAtTheReleaseTag(string $file): void
+    {
+        self::assertStringContainsString(
+            '/refs/tags/mysql-8.4.7',
+            (new MySqlProfileBuilder())->sourceUrls('mysql-8.4.7')[$file],
+        );
     }
 
     public function testBuildReportsAnUpstreamFileItCannotRead(): void
     {
-        $source = $this->createStub(LexerSource::class);
+        $source = self::createStub(LexerSource::class);
         $source->method('fetch')->willThrowException(new RuntimeException('Failed to fetch'));
 
         $this->expectException(RuntimeException::class);

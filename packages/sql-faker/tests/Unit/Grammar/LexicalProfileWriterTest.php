@@ -47,44 +47,40 @@ final class LexicalProfileWriterTest extends TestCase
 
     public function testCompactedTurnsKeyedWitnessesIntoLists(): void
     {
-        $profile = (new LexicalProfileWriter())->compacted([
-            'catalog' => [
-                'terminals' => [
-                    'IDENT' => [[
-                        'id' => 'ident.bare',
-                        'sql' => 'users',
-                        'tokens' => ['IDENT'],
-                        'units' => ['identifier'],
-                    ]],
-                ],
-            ],
-        ]);
-
         self::assertSame(
-            [['ident.bare', 'users', ['IDENT'], ['identifier']]],
-            $profile['catalog']['terminals']['IDENT'],
+            ['catalog' => ['terminals' => ['IDENT' => [['ident.bare', 'users', ['IDENT'], ['identifier']]]]]],
+            (new LexicalProfileWriter())->compacted([
+                'catalog' => [
+                    'terminals' => [
+                        'IDENT' => [[
+                            'id' => 'ident.bare',
+                            'sql' => 'users',
+                            'tokens' => ['IDENT'],
+                            'units' => ['identifier'],
+                        ]],
+                    ],
+                ],
+            ]),
         );
     }
 
     public function testCompactedKeepsTheContextOfAWitnessThatCarriesOne(): void
     {
-        $profile = (new LexicalProfileWriter())->compacted([
-            'catalog' => [
-                'terminals' => [
-                    'IDENT' => [[
-                        'id' => 'ident.bare',
-                        'sql' => 'users',
-                        'tokens' => ['IDENT'],
-                        'units' => ['identifier'],
-                        'context_sql' => 'SELECT %s',
-                    ]],
-                ],
-            ],
-        ]);
-
         self::assertSame(
-            [['ident.bare', 'users', ['IDENT'], ['identifier'], 'SELECT %s']],
-            $profile['catalog']['terminals']['IDENT'],
+            ['catalog' => ['terminals' => ['IDENT' => [['ident.bare', 'users', ['IDENT'], ['identifier'], 'SELECT %s']]]]],
+            (new LexicalProfileWriter())->compacted([
+                'catalog' => [
+                    'terminals' => [
+                        'IDENT' => [[
+                            'id' => 'ident.bare',
+                            'sql' => 'users',
+                            'tokens' => ['IDENT'],
+                            'units' => ['identifier'],
+                            'context_sql' => 'SELECT %s',
+                        ]],
+                    ],
+                ],
+            ]),
         );
     }
 
