@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Platform\MySql;
 
+use Closure;
 use Faker\Factory;
+use Faker\Generator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -14,26 +16,47 @@ use SqlFixture\Platform\MySql\WellKnownTextGeometry;
 final class WellKnownTextGeometryTest extends TestCase
 {
     #[DataProvider('providerGeometry')]
-    public function testEachGeometryIsWrittenUnderItsOwnKeyword(string $method, string $keyword): void
+    public function testEachGeometryIsWrittenUnderItsOwnKeyword(Closure $write, string $keyword): void
     {
-        $written = (new WellKnownTextGeometry())->{$method}(Factory::create());
+        $written = $write(new WellKnownTextGeometry(), Factory::create());
 
         self::assertStringStartsWith($keyword . '(', $written);
         self::assertStringEndsWith(')', $written);
     }
 
     /**
-     * @return iterable<string, array{string, string}>
+     * @return iterable<string, array{Closure(WellKnownTextGeometry, Generator): string, string}>
      */
     public static function providerGeometry(): iterable
     {
-        yield 'point' => ['point', 'POINT'];
-        yield 'line' => ['lineString', 'LINESTRING'];
-        yield 'polygon' => ['polygon', 'POLYGON'];
-        yield 'multi point' => ['multiPoint', 'MULTIPOINT'];
-        yield 'multi line' => ['multiLineString', 'MULTILINESTRING'];
-        yield 'multi polygon' => ['multiPolygon', 'MULTIPOLYGON'];
-        yield 'collection' => ['collection', 'GEOMETRYCOLLECTION'];
+        yield 'point' => [
+            static fn (WellKnownTextGeometry $g, Generator $f): string => $g->point($f),
+            'POINT',
+        ];
+        yield 'line' => [
+            static fn (WellKnownTextGeometry $g, Generator $f): string => $g->lineString($f),
+            'LINESTRING',
+        ];
+        yield 'polygon' => [
+            static fn (WellKnownTextGeometry $g, Generator $f): string => $g->polygon($f),
+            'POLYGON',
+        ];
+        yield 'multi point' => [
+            static fn (WellKnownTextGeometry $g, Generator $f): string => $g->multiPoint($f),
+            'MULTIPOINT',
+        ];
+        yield 'multi line' => [
+            static fn (WellKnownTextGeometry $g, Generator $f): string => $g->multiLineString($f),
+            'MULTILINESTRING',
+        ];
+        yield 'multi polygon' => [
+            static fn (WellKnownTextGeometry $g, Generator $f): string => $g->multiPolygon($f),
+            'MULTIPOLYGON',
+        ];
+        yield 'collection' => [
+            static fn (WellKnownTextGeometry $g, Generator $f): string => $g->collection($f),
+            'GEOMETRYCOLLECTION',
+        ];
     }
 
     public function testAPolygonClosesBackOnThePointItStartedFrom(): void

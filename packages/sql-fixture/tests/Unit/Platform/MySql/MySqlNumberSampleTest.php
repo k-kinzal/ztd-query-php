@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Platform\MySql;
 
+use Closure;
 use Faker\Factory;
+use Faker\Generator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -18,51 +20,85 @@ final class MySqlNumberSampleTest extends TestCase
 {
     #[DataProvider('providerSignedIntegerRange')]
     public function testEachIntegerTypeStaysInTheRangeMysqlDeclaresForIt(
-        string $method,
+        Closure $draw,
         int $minimum,
         int $maximum,
     ): void {
-        $sample = new MySqlNumberSample();
-        $value = $sample->{$method}(Factory::create(), new ColumnDefinition('n', 'INT'));
+        $value = $draw(new MySqlNumberSample(), Factory::create(), new ColumnDefinition('n', 'INT'));
 
         self::assertGreaterThanOrEqual($minimum, $value);
         self::assertLessThanOrEqual($maximum, $value);
     }
 
     /**
-     * @return iterable<string, array{string, int, int}>
+     * @return iterable<string, array{Closure(MySqlNumberSample, Generator, ColumnDefinition): int, int, int}>
      */
     public static function providerSignedIntegerRange(): iterable
     {
-        yield 'tinyint' => ['tinyInt', -128, 127];
-        yield 'smallint' => ['smallInt', -32768, 32767];
-        yield 'mediumint' => ['mediumInt', -8388608, 8388607];
-        yield 'int' => ['int', -2147483648, 2147483647];
-        yield 'bigint' => ['bigInt', PHP_INT_MIN, PHP_INT_MAX];
+        yield 'tinyint' => [
+            static fn (MySqlNumberSample $s, Generator $f, ColumnDefinition $c): int|bool => $s->tinyInt($f, $c),
+            -128,
+            127,
+        ];
+        yield 'smallint' => [
+            static fn (MySqlNumberSample $s, Generator $f, ColumnDefinition $c): int => $s->smallInt($f, $c),
+            -32768,
+            32767,
+        ];
+        yield 'mediumint' => [
+            static fn (MySqlNumberSample $s, Generator $f, ColumnDefinition $c): int => $s->mediumInt($f, $c),
+            -8388608,
+            8388607,
+        ];
+        yield 'int' => [
+            static fn (MySqlNumberSample $s, Generator $f, ColumnDefinition $c): int => $s->int($f, $c),
+            -2147483648,
+            2147483647,
+        ];
+        yield 'bigint' => [
+            static fn (MySqlNumberSample $s, Generator $f, ColumnDefinition $c): int => $s->bigInt($f, $c),
+            PHP_INT_MIN,
+            PHP_INT_MAX,
+        ];
     }
 
     #[DataProvider('providerUnsignedIntegerRange')]
     public function testEachUnsignedIntegerTypeStartsAtZeroAndReachesFurther(
-        string $method,
+        Closure $draw,
         int $maximum,
     ): void {
-        $sample = new MySqlNumberSample();
-        $value = $sample->{$method}(Factory::create(), new ColumnDefinition('n', 'INT', unsigned: true));
+        $column = new ColumnDefinition('n', 'INT', unsigned: true);
+        $value = $draw(new MySqlNumberSample(), Factory::create(), $column);
 
         self::assertGreaterThanOrEqual(0, $value);
         self::assertLessThanOrEqual($maximum, $value);
     }
 
     /**
-     * @return iterable<string, array{string, int}>
+     * @return iterable<string, array{Closure(MySqlNumberSample, Generator, ColumnDefinition): int, int}>
      */
     public static function providerUnsignedIntegerRange(): iterable
     {
-        yield 'tinyint' => ['tinyInt', 255];
-        yield 'smallint' => ['smallInt', 65535];
-        yield 'mediumint' => ['mediumInt', 16777215];
-        yield 'int' => ['int', 4294967295];
-        yield 'bigint' => ['bigInt', PHP_INT_MAX];
+        yield 'tinyint' => [
+            static fn (MySqlNumberSample $s, Generator $f, ColumnDefinition $c): int|bool => $s->tinyInt($f, $c),
+            255,
+        ];
+        yield 'smallint' => [
+            static fn (MySqlNumberSample $s, Generator $f, ColumnDefinition $c): int => $s->smallInt($f, $c),
+            65535,
+        ];
+        yield 'mediumint' => [
+            static fn (MySqlNumberSample $s, Generator $f, ColumnDefinition $c): int => $s->mediumInt($f, $c),
+            16777215,
+        ];
+        yield 'int' => [
+            static fn (MySqlNumberSample $s, Generator $f, ColumnDefinition $c): int => $s->int($f, $c),
+            4294967295,
+        ];
+        yield 'bigint' => [
+            static fn (MySqlNumberSample $s, Generator $f, ColumnDefinition $c): int => $s->bigInt($f, $c),
+            PHP_INT_MAX,
+        ];
     }
 
     public function testTinyIntOfWidthOneIsABooleanBecauseMysqlHasNoOtherOne(): void

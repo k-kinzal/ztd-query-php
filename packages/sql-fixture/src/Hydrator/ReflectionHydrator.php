@@ -47,13 +47,12 @@ final class ReflectionHydrator implements HydratorInterface
             throw HydrationException::classNotFound($className);
         }
 
-        $reflection = new ReflectionClass($className);
-        $constructor = $reflection->getConstructor();
+        $constructor = (new ReflectionClass($className))->getConstructor();
 
         try {
             return $constructor !== null && $constructor->getNumberOfParameters() > 0
-                ? $this->throughConstructor->hydrate($reflection, $data)
-                : $this->throughProperties->hydrate($reflection, $data);
+                ? $this->throughConstructor->hydrate($className, $data)
+                : $this->throughProperties->hydrate($className, $data);
         } catch (ReflectionException $cause) {
             throw HydrationException::notInstantiable($className, $cause);
         }

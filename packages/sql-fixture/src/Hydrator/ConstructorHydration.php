@@ -31,7 +31,7 @@ final class ConstructorHydration
      * Builds the object from the row.
      *
      * @template T of object
-     * @param ReflectionClass<T> $reflection Class being built
+     * @param class-string<T> $className Class being built
      * @param array<string, mixed> $data Row to build it from
      *
      * @return T The object
@@ -39,8 +39,9 @@ final class ConstructorHydration
      * @throws HydrationException When a parameter has no value, no default, and is not nullable
      * @throws ReflectionException When the class cannot be instantiated
      */
-    public function hydrate(ReflectionClass $reflection, array $data): object
+    public function hydrate(string $className, array $data): object
     {
+        $reflection = new ReflectionClass($className);
         $constructor = $reflection->getConstructor();
         $arguments = [];
 

@@ -37,19 +37,20 @@ final class PropertyHydration
      * either way.
      *
      * @template T of object
-     * @param ReflectionClass<T> $reflection Class being built
+     * @param class-string<T> $className Class being built
      * @param array<string, mixed> $data Row to build it from
      *
      * @return T The object
      *
      * @throws ReflectionException When the class cannot be instantiated
      */
-    public function hydrate(ReflectionClass $reflection, array $data): object
+    public function hydrate(string $className, array $data): object
     {
+        $reflection = new ReflectionClass($className);
         $instance = $reflection->newInstanceWithoutConstructor();
 
         foreach ($data as $column => $value) {
-            $property = $this->propertyFor($reflection, (string) $column);
+            $property = $this->propertyFor($className, (string) $column);
             if ($property === null) {
                 continue;
             }
@@ -62,14 +63,14 @@ final class PropertyHydration
     /**
      * Answers the property a column is assigned to.
      *
-     * @template T of object
-     * @param ReflectionClass<T> $reflection Class being built
+     * @param class-string $className Class being built
      * @param string $column Column name as the row spells it
      *
      * @return ReflectionProperty|null The property, or null when the object models no such column
      */
-    public function propertyFor(ReflectionClass $reflection, string $column): ?ReflectionProperty
+    public function propertyFor(string $className, string $column): ?ReflectionProperty
     {
+        $reflection = new ReflectionClass($className);
         foreach ([PropertyName::toCamelCase($column), $column] as $name) {
             if ($reflection->hasProperty($name)) {
                 return $reflection->getProperty($name);

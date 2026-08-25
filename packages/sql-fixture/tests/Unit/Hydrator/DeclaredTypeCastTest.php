@@ -7,10 +7,10 @@ namespace Tests\Unit\Hydrator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use ReflectionNamedType;
 use ReflectionProperty;
 use SqlFixture\Hydrator\DeclaredTypeCast;
 use Tests\Fixture\Hydrator\TestEntityViaProperties;
+use Tests\Fixture\Hydrator\TestEntityWithUnionType;
 
 #[CoversClass(DeclaredTypeCast::class)]
 final class DeclaredTypeCastTest extends TestCase
@@ -58,6 +58,8 @@ final class DeclaredTypeCastTest extends TestCase
 
     public function testOfLeavesAValueWhoseDeclaredTypeNamesNoSingleType(): void
     {
-        self::assertSame('42', (new DeclaredTypeCast())->of('42', self::createStub(ReflectionNamedType::class)));
+        $type = (new ReflectionProperty(TestEntityWithUnionType::class, 'value'))->getType();
+
+        self::assertSame('42', (new DeclaredTypeCast())->of('42', $type));
     }
 }

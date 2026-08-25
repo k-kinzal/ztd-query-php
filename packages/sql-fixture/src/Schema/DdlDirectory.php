@@ -67,6 +67,9 @@ final class DdlDirectory
      */
     public function tableIn(string $path): ?TableSchema
     {
+        if (!is_file($path) || !is_readable($path)) {
+            throw new RuntimeException("Failed to read file: {$path}");
+        }
         $contents = file_get_contents($path);
         if ($contents === false) {
             throw new RuntimeException("Failed to read file: {$path}");
