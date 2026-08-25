@@ -9,9 +9,6 @@ use SqlFaker\Grammar\GenerationException;
 use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\LexicalException;
 use SqlFaker\MySql\Grammar\Grammar;
-use SqlFaker\MySql\Grammar\NonTerminal;
-use SqlFaker\MySql\Grammar\Production;
-use SqlFaker\MySql\Grammar\Symbol;
 use SqlFaker\MySql\Grammar\Terminal;
 use SqlFaker\MySql\Grammar\TerminalInventory;
 use SqlFaker\MySql\Grammar\TerminationAnalyzer;
@@ -21,14 +18,12 @@ use SqlFaker\MySql\Grammar\TerminationAnalyzer;
  */
 final class SqlGenerator
 {
-    private const DERIVATION_LIMIT = 5000;
     private const LEXICAL_ATTEMPT_LIMIT = 32;
 
     private Grammar $grammar;
     private FakerGenerator $faker;
     private LexicalGrammar $lexicalGrammar;
     private TerminationAnalyzer $terminationAnalyzer;
-    private int $derivationSteps = 0;
 
     public function __construct(
         Grammar $grammar,
@@ -61,8 +56,8 @@ final class SqlGenerator
         $startSymbol = $this->resolveStartSymbol($plan->startRule());
         $lastException = null;
         for ($attempt = 0; $attempt < self::LEXICAL_ATTEMPT_LIMIT; $attempt++) {
-            $this->derivationSteps = 0;
-            $terminals = $this->derive($startSymbol, $plan);
+            $terminals = (new Derivation($this->grammar, $this->faker, $this->terminationAnalyzer))
+                ->of($startSymbol, $plan);
             $terminalNames = $this->normalizeParserSemantics(array_map(
                 static fn (Terminal $terminal): string => $terminal->value,
                 $terminals,
@@ -179,116 +174,4 @@ final class SqlGenerator
         return $result;
     }
 
-    /**
-     * @param GenerationPlan<bool> $plan
-     * @return list<Terminal>
-     */
-    private function derive(string $startSymbol, GenerationPlan $plan): array
-    {
-        /** @var list<Symbol> $form */
-        $form = [new NonTerminal($startSymbol)];
-        /** @var array<string, int> $occurrences */
-        $occurrences = [];
-
-        while (true) {
-            $index = $this->firstNonTerminal($form);
-            if ($index === null) {
-                break;
-            }
-
-            $this->derivationSteps++;
-            if ($this->derivationSteps > self::DERIVATION_LIMIT) {
-                throw GenerationException::derivationLimitExceeded();
-            }
-
-            /** @var NonTerminal $nonTerminal */
-            $nonTerminal = $form[$index];
-            $rule = $this->grammar->ruleMap[$nonTerminal->value]
-                ?? throw GenerationException::unknownRule($nonTerminal->value);
-            if ($rule->alternatives === []) {
-                throw GenerationException::ruleHasNoAlternatives($nonTerminal->value);
-            }
-            $alternatives = array_values(array_filter(
-                $rule->alternatives,
-                $this->terminationAnalyzer->isProductionViable(...),
-            ));
-            if ($alternatives === []) {
-                throw GenerationException::noRealizableAlternative($nonTerminal->value);
-            }
-            $occurrence = $occurrences[$nonTerminal->value] ?? 0;
-            $occurrences[$nonTerminal->value] = $occurrence + 1;
-            $pattern = $plan->patternAt($nonTerminal->value, $occurrence);
-            if ($pattern !== null) {
-                $alternatives = array_values(array_filter(
-                    $alternatives,
-                    static fn (Production $production): bool => $pattern->matches(array_map(
-                        static fn (Symbol $symbol): string => $symbol->value(),
-                        $production->symbols,
-                    )),
-                ));
-                if ($alternatives === []) {
-                    throw GenerationException::noAlternativeMatchingPlan($nonTerminal->value);
-                }
-            }
-            if ($this->derivationSteps === 1 && $plan->requiresNonEmpty()) {
-                $alternatives = array_values(array_filter(
-                    $alternatives,
-                    fn (Production $production): bool => $this->terminationAnalyzer
-                        ->estimateProductionLength($production) > 0,
-                ));
-                if ($alternatives === []) {
-                    throw GenerationException::startRuleCannotProduceOutput($nonTerminal->value);
-                }
-            }
-
-            $production = $this->selectProduction($alternatives, $plan);
-            $form = [
-                ...array_slice($form, 0, $index),
-                ...$production->symbols,
-                ...array_slice($form, $index + 1),
-            ];
-        }
-
-        /** @var list<Terminal> $form */
-        return $form;
-    }
-
-    /**
-     * @param list<Symbol> $form
-     */
-    private function firstNonTerminal(array $form): ?int
-    {
-        foreach ($form as $index => $symbol) {
-            if ($symbol instanceof NonTerminal) {
-                return $index;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * @param non-empty-array<int, Production> $alternatives
-     * @param GenerationPlan<bool> $plan
-     */
-    private function selectProduction(array $alternatives, GenerationPlan $plan): Production
-    {
-        if ($this->derivationSteps < $plan->maxDepth()) {
-            $keys = array_keys($alternatives);
-
-            return $alternatives[$keys[$this->faker->numberBetween(0, count($keys) - 1)]];
-        }
-
-        $selected = $alternatives[array_key_first($alternatives)];
-        $bestLength = $this->terminationAnalyzer->estimateProductionLength($selected);
-        foreach (array_slice($alternatives, 1) as $alternative) {
-            $length = $this->terminationAnalyzer->estimateProductionLength($alternative);
-            if ($length < $bestLength) {
-                $selected = $alternative;
-                $bestLength = $length;
-            }
-        }
-
-        return $selected;
-    }
 }
