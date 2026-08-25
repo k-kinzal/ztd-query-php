@@ -63,12 +63,12 @@ final class SqlGenerator
         if ($plan->lexicalTarget() !== null) {
             return $this->lexicalGrammar->generate($plan);
         }
-        $startSymbol = $this->resolveStartSymbol($plan->startRule());
+        $startSymbol = $this->grammar->startSymbolFor($plan->startRule());
         $lastException = null;
         for ($attempt = 0; $attempt < self::LEXICAL_ATTEMPT_LIMIT; $attempt++) {
             $terminals = (new Derivation($this->grammar, $this->faker, $this->terminationAnalyzer))
                 ->of($startSymbol, $plan);
-            $terminalNames = $this->normalizeParserSemantics(array_map(
+            $terminalNames = (new ParserSemantics())->applied(array_map(
                 static fn (Terminal $terminal): string => $terminal->value,
                 $terminals,
             ));
@@ -84,104 +84,6 @@ final class SqlGenerator
         }
 
         throw $lastException ?? GenerationException::lexicalRealizationFailed('MySQL');
-    }
-
-    private function resolveStartSymbol(?string $requested): string
-    {
-        if ($requested === null) {
-            if (isset($this->grammar->ruleMap['simple_statement_or_begin'])) {
-                return 'simple_statement_or_begin';
-            }
-
-            return isset($this->grammar->ruleMap['statement']) ? 'statement' : $this->grammar->startSymbol;
-        }
-        if (isset($this->grammar->ruleMap[$requested])) {
-            return $requested;
-        }
-
-        $fallbacks = [
-            'select_stmt' => 'select',
-            'insert_stmt' => 'insert',
-            'update_stmt' => 'update',
-            'delete_stmt' => 'delete',
-            'create_table_stmt' => 'create',
-            'alter_table_stmt' => 'alter',
-            'drop_table_stmt' => 'drop',
-            'simple_statement' => 'statement',
-            'simple_statement_or_begin' => $this->grammar->startSymbol,
-        ];
-        $fallback = $fallbacks[$requested] ?? $requested;
-
-        return isset($this->grammar->ruleMap[$fallback]) ? $fallback : $requested;
-    }
-
-    /**
-     * Applies constraints enforced by parser semantic actions rather than the lexer or Bison grammar.
-     *
-     * @param list<string> $terminals
-     * @return list<string>
-     */
-    private function normalizeParserSemantics(array $terminals): array
-    {
-        $remove = [];
-        foreach ($terminals as $index => $terminal) {
-            if ($terminal !== '@') {
-                continue;
-            }
-            for ($dot = $index - 2; $dot >= 1 && $terminals[$dot] === '.'; $dot -= 2) {
-                $remove[$dot] = true;
-                $remove[$dot - 1] = true;
-            }
-        }
-        if ($remove !== []) {
-            $terminals = array_values(array_diff_key($terminals, $remove));
-        }
-
-        foreach ($terminals as $index => $terminal) {
-            if (in_array($terminal, ['CURRENT_USER', 'CURRENT_USER_SYM'], true)
-                && ($terminals[$index + 1] ?? null) === '('
-                && ($terminals[$index + 2] ?? null) === ')'
-                && ($terminals[$index + 3] ?? null) === ':'
-            ) {
-                array_splice($terminals, $index + 1, 2);
-            }
-        }
-
-        $event = array_search('EVENT_SYM', $terminals, true);
-        $alter = array_search('ALTER_SYM', $terminals, true);
-        if ($event !== false && $alter !== false) {
-            $afterName = $event + 2;
-            if (($terminals[$afterName] ?? null) === '.' && isset($terminals[$afterName + 1])) {
-                $afterName += 2;
-            }
-            if ($afterName >= count($terminals)) {
-                $terminals[] = 'ENABLE_SYM';
-            }
-        }
-
-        $result = [];
-        foreach ($terminals as $index => $terminal) {
-            $previous = $result[count($result) - 1] ?? null;
-            if ($terminal === 'EQUAL_SYM'
-                && in_array($terminals[$index + 1] ?? null, ['ALL', 'ALL_SYM', 'ANY', 'ANY_SYM', 'SOME', 'SOME_SYM'], true)
-            ) {
-                $terminal = 'EQ';
-            }
-            if (in_array($terminal, ['RELEASE', 'RELEASE_SYM'], true)
-                && in_array($previous, ['CHAIN', 'CHAIN_SYM'], true)
-                && !in_array($result[count($result) - 2] ?? null, ['NO', 'NO_SYM'], true)
-            ) {
-                continue;
-            }
-            if (in_array($terminal, ['DECIMAL_NUM', 'FLOAT_NUM'], true)
-                && ($previous === ':' || in_array($previous, ['SYSTEM', 'SYSTEM_SYM'], true))
-            ) {
-                $terminal = 'NUM';
-            }
-            $result[] = $terminal;
-        }
-
-        return $result;
     }
 
 }

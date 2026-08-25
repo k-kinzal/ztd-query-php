@@ -59,4 +59,39 @@ final class MySqlProfileBuilderTest extends TestCase
 
         (new MySqlProfileBuilder($source))->build('mysql-8.4.7', Grammar::load('mysql-8.4.7'));
     }
+
+    public function testCatalogNamesTheLexerTheWitnessesWereReadThrough(): void
+    {
+        $catalog = (new MySqlProfileBuilder())->catalog(
+            'mysql-8.4.7',
+            ['symbols' => [], 'functions' => [], 'features' => ['dollar_quoted_strings' => false]],
+            [],
+            Grammar::load('mysql-8.4.7'),
+        );
+
+        self::assertSame(['engine' => 'mysql', 'entrypoint' => 'my_sql_parser_lex'], $catalog['source']);
+        self::assertSame(['source', 'terminals', 'terminal_exclusions', 'coverage'], array_keys($catalog));
+    }
+
+    public function testWitnessNamesTheSqlThatProvesATerminalCanBeLexed(): void
+    {
+        self::assertSame(
+            ['id' => 'ident.bare', 'sql' => 'users', 'tokens' => ['IDENT'], 'units' => ['identifier']],
+            (new MySqlProfileBuilder())->witness('ident.bare', 'users', ['IDENT'], ['identifier']),
+        );
+    }
+
+    public function testWitnessKeepsTheContextATerminalNeedsAroundIt(): void
+    {
+        self::assertSame(
+            [
+                'id' => 'ident.bare',
+                'sql' => 'users',
+                'tokens' => ['IDENT'],
+                'units' => ['identifier'],
+                'context_sql' => 'SELECT %s',
+            ],
+            (new MySqlProfileBuilder())->witness('ident.bare', 'users', ['IDENT'], ['identifier'], 'SELECT %s'),
+        );
+    }
 }

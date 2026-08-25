@@ -186,4 +186,12 @@ final class GenerationPlansTest extends TestCase
         self::assertSame('decimal_literal', $plan->lexicalTarget());
         self::assertSame(['precision' => 1, 'scale' => 2], $plan->parameters());
     }
+
+    public function testStatementBoundsTheWalkAtTheRuleItIsGrownFrom(): void
+    {
+        $plan = GenerationPlans::statement('select_stmt', 12);
+
+        self::assertSame('select_stmt', $plan->startRule());
+        self::assertSame(12, $plan->maxDepth());
+    }
 }

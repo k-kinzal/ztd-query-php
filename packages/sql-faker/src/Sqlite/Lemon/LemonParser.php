@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlFaker\Sqlite\Lemon;
 
+use InvalidArgumentException;
 use RuntimeException;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\GrammarParseException;
@@ -14,37 +15,48 @@ use SqlFaker\Grammar\Symbol;
 use SqlFaker\Grammar\Terminal;
 
 /**
- * Parser for Lemon grammar files (e.g. SQLite's parse.y).
+ * Reads a Lemon grammar file, such as SQLite's parse.y, as a grammar.
  *
- * Lemon grammar format:
- *   - Rules: lhs(alias) ::= symbol1 symbol2 ... . { action }
- *   - Each alternative is a separate rule with the same LHS
- *   - Directives: %token_type, %type, %left, %right, %nonassoc, %fallback, %wildcard, etc.
- *   - Tokens are ALL_CAPS, non-terminals are lowercase
- *   - C code blocks between %include { ... }
+ * Lemon writes one alternative per line — `lhs(alias) ::= symbol ... .` — so
+ * the alternatives of a rule are gathered by name rather than grouped in the
+ * file. It declares its tokens in directives, spells them in capitals, and
+ * carries the C its parser is built from alongside the rules. Reading the
+ * declarations, reading the rules, and remembering what each name turned out
+ * to be are three subjects, and this brings their answers together.
  */
 final class LemonParser
 {
-    /** @var array<string, true> */
-    private array $tokens = [];
-
-    /** @var array<string, true> */
-    private array $nonTerminals = [];
+    /**
+     * @param LemonText $text Removes what is not grammar
+     * @param LemonDirectives $directives Reads the tokens the grammar declares
+     * @param LemonRules $rules Reads the rules the grammar writes
+     */
+    public function __construct(
+        private readonly LemonText $text = new LemonText(),
+        private readonly LemonDirectives $directives = new LemonDirectives(),
+        private readonly LemonRules $rules = new LemonRules(),
+    ) {
+    }
 
     /**
-     * Parse a Lemon grammar string into a Grammar.
+     * Reads a Lemon grammar as a grammar.
+     *
+     * The first rule written is the start symbol, which is what Lemon itself
+     * assumes when no other is named.
+     *
+     * @param string $input Contents of the grammar file
+     *
+     * @return Grammar Grammar the file describes
+     *
+     * @throws GrammarParseException When the file writes no rules
+     * @throws InvalidArgumentException When a rule is filed under a name other than its own left-hand side
      */
     public function parse(string $input): Grammar
     {
-        $this->tokens = [];
-        $this->nonTerminals = [];
-
-        $input = $this->stripComments($input);
-
-        $this->extractTokens($input);
-
-        $rules = $this->extractRules($input);
-
+        $symbols = new LemonSymbols();
+        $input = $this->text->withoutComments($input);
+        $this->directives->declareInto($input, $symbols);
+        $rules = $this->rules->readFrom($input, $symbols);
         if ($rules === []) {
             throw GrammarParseException::noRulesParsed('Lemon');
         }
@@ -54,26 +66,17 @@ final class LemonParser
 
         /** @var array<string, ProductionRule> $ruleMap */
         $ruleMap = [];
-
         foreach ($rules as $lhs => $alternatives) {
             /** @var list<Production> $productions */
             $productions = [];
-
             foreach ($alternatives as $symbolNames) {
-                /** @var list<Symbol> $symbols */
-                $symbols = [];
-
+                /** @var list<Symbol> $written */
+                $written = [];
                 foreach ($symbolNames as $name) {
-                    if ($this->isTerminal($name)) {
-                        $symbols[] = new Terminal($name);
-                    } else {
-                        $symbols[] = new NonTerminal($name);
-                    }
+                    $written[] = $symbols->isTerminal($name) ? new Terminal($name) : new NonTerminal($name);
                 }
-
-                $productions[] = new Production($symbols);
+                $productions[] = new Production($written);
             }
-
             $ruleMap[$lhs] = new ProductionRule($lhs, $productions);
         }
 
@@ -81,211 +84,26 @@ final class LemonParser
     }
 
     /**
-     * Parse a Lemon grammar file into a Grammar.
+     * Reads a Lemon grammar file as a grammar.
+     *
+     * @param string $path Path of the grammar file
+     *
+     * @return Grammar Grammar the file describes
      *
      * @throws RuntimeException When the grammar file cannot be read
+     * @throws GrammarParseException When the file writes no rules
+     * @throws InvalidArgumentException When a rule is filed under a name other than its own left-hand side
      */
     public function parseFile(string $path): Grammar
     {
+        if (!is_file($path) || !is_readable($path)) {
+            throw new RuntimeException("Failed to read: {$path}");
+        }
         $contents = file_get_contents($path);
         if ($contents === false) {
             throw new RuntimeException("Failed to read: {$path}");
         }
+
         return $this->parse($contents);
-    }
-
-    /**
-     * Strip C-style comments from input.
-     */
-    private function stripComments(string $input): string
-    {
-        return preg_replace(['/\/\*.*?\*\//s', '/\/\/.*$/m'], '', $input) ?? $input;
-    }
-
-    /**
-     * Extract token names from directives.
-     */
-    private function extractTokens(string $input): void
-    {
-        $patterns = [
-            '/%token\s+(.+?)\.?\s*$/m',
-            '/%(?:left|right|nonassoc)\s+(.+?)\.?\s*$/m',
-            '/%fallback\s+(.+?)\.?\s*$/m',
-        ];
-
-        foreach ($patterns as $pattern) {
-            if (preg_match_all($pattern, $input, $matches) > 0) {
-                foreach ($matches[1] as $line) {
-                    $this->registerTokenNames($line, '/\s+/');
-                }
-            }
-        }
-
-        if (preg_match_all('/%token_class\s+(\w+)\s+(.+?)\.?\s*$/m', $input, $matches) > 0) {
-            $count = count($matches[0]);
-            for ($i = 0; $i < $count; $i++) {
-                $this->tokens[$matches[1][$i]] = true;
-                $this->registerTokenNames($matches[2][$i], '/[\s|]+/');
-            }
-        }
-
-        if (preg_match('/%wildcard\s+(\w+)/', $input, $match) === 1) {
-            $this->tokens[$match[1]] = true;
-        }
-    }
-
-    /**
-     * Split a line by the given delimiter, trim/validate each token name, and register.
-     */
-    private function registerTokenNames(string $line, string $splitPattern): void
-    {
-        $names = preg_split($splitPattern, trim($line));
-        if ($names === false) {
-            return;
-        }
-        foreach ($names as $name) {
-            $name = trim($name, '.');
-            if ($name !== '' && self::isAllCaps($name)) {
-                $this->tokens[$name] = true;
-            }
-        }
-    }
-
-    /**
-     * Extract grammar rules from input.
-     *
-     * @return array<string, list<list<string>>>
-     */
-    private function extractRules(string $input): array
-    {
-        /** @var array<string, list<list<string>>> $rules */
-        $rules = [];
-
-        $input = $this->stripDirectiveBlocks($input);
-
-        $pattern = '/^(\w+)(?:\([^)]*\))?\s*::=\s*(.*?)\.\s*(?:\{[^}]*\})?/ms';
-
-        if (preg_match_all($pattern, $input, $matches, PREG_SET_ORDER) === false) {
-            return [];
-        }
-
-        foreach ($matches as $match) {
-            $lhs = $match[1];
-            $rhs = trim($match[2]);
-
-            if (str_starts_with($lhs, '%')) {
-                continue;
-            }
-
-            $this->nonTerminals[$lhs] = true;
-
-            if (!isset($rules[$lhs])) {
-                $rules[$lhs] = [];
-            }
-            if ($rhs === '') {
-                $rules[$lhs][] = [];
-                continue;
-            }
-            array_push($rules[$lhs], ...$this->parseRhsAlternatives($rhs));
-        }
-
-        return $rules;
-    }
-
-    /**
-     * Strip %include, %destructor, %type and other directive blocks.
-     */
-    private function stripDirectiveBlocks(string $input): string
-    {
-        return preg_replace([
-            '/%(?:include|destructor|syntax_error|parse_accept|parse_failure|stack_overflow|code)\s*\{[^}]*\}/s',
-            '/^%(?:token_type|default_type|extra_context|name|token_prefix|stack_size|ifdef|ifndef|endif)\b.*$/m',
-        ], '', $input) ?? $input;
-    }
-
-    /**
-     * Parse RHS string into productions, expanding Lemon's inline token alternatives.
-     *
-     * @return non-empty-list<list<string>>
-     */
-    private function parseRhsAlternatives(string $rhs): array
-    {
-        /** @var non-empty-list<list<string>> $alternatives */
-        $alternatives = [[]];
-
-        $parts = preg_split('/\s+/', $rhs);
-        if ($parts === false) {
-            return [[]];
-        }
-
-        foreach ($parts as $part) {
-            $part = trim($part);
-            if ($part === '') {
-                continue;
-            }
-
-            $names = array_values(array_filter(array_map(
-                $this->stripAlias(...),
-                explode('|', $part),
-            ), static fn (string $name): bool => $name !== '' && !str_starts_with($name, '%')));
-            if ($names === []) {
-                continue;
-            }
-
-            foreach ($names as $name) {
-                if (self::isAllCaps($name)) {
-                    $this->tokens[$name] = true;
-                } else {
-                    $this->nonTerminals[$name] = true;
-                }
-            }
-
-            $expanded = [];
-            foreach ($alternatives as $alternative) {
-                foreach ($names as $name) {
-                    $expanded[] = [...$alternative, $name];
-                }
-            }
-            $alternatives = $expanded;
-        }
-
-        return $alternatives;
-    }
-
-    /**
-     * Strip Lemon alias from a symbol: "expr(A)" -> "expr"
-     */
-    private function stripAlias(string $symbol): string
-    {
-        $pos = strpos($symbol, '(');
-        if ($pos !== false) {
-            return substr($symbol, 0, $pos);
-        }
-        return $symbol;
-    }
-
-    /**
-     * Determine if a symbol name is a terminal.
-     * In Lemon: ALL_CAPS = terminal, lowercase = non-terminal.
-     */
-    private function isTerminal(string $name): bool
-    {
-        if (isset($this->tokens[$name])) {
-            return true;
-        }
-
-        if (isset($this->nonTerminals[$name])) {
-            return false;
-        }
-
-        return self::isAllCaps($name);
-    }
-
-    /**
-     * Check if a name matches the Lemon ALL_CAPS token convention.
-     */
-    private static function isAllCaps(string $name): bool
-    {
-        return preg_match('/^[A-Z][A-Z0-9_]*$/', $name) === 1;
     }
 }

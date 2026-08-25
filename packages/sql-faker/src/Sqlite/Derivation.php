@@ -74,7 +74,11 @@ final class Derivation
             /** @var NonTerminal $nonTerminal */
             $nonTerminal = $form[$index];
             if (!isset($this->grammar->ruleMap[$nonTerminal->value])) {
-                $form[$index] = new Terminal($nonTerminal->value);
+                $form = [
+                    ...array_slice($form, 0, $index),
+                    new Terminal($nonTerminal->value),
+                    ...array_slice($form, $index + 1),
+                ];
                 continue;
             }
 

@@ -5,11 +5,16 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\Grammar;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use SqlFaker\Grammar\ArtifactDirectory;
 use SqlFaker\Grammar\LexicalProfileWriter;
+use SqlFaker\Grammar\SqlVersion;
 
 #[CoversClass(LexicalProfileWriter::class)]
+#[UsesClass(ArtifactDirectory::class)]
+#[UsesClass(SqlVersion::class)]
 final class LexicalProfileWriterTest extends TestCase
 {
     public function testExportedWritesAnArrayAsPhpSource(): void
@@ -113,5 +118,29 @@ final class LexicalProfileWriterTest extends TestCase
 
         self::assertStringStartsWith("<?php\n\ndeclare(strict_types=1);", $rendered);
         self::assertStringContainsString("return [\n    'dialect' => 'mysql',\n];", $rendered);
+    }
+
+    public function testPublishVersionWritesBothArtifactsWhereTheVersionNamesThem(): void
+    {
+        $directory = sys_get_temp_dir() . '/sql-faker-publish-' . getmypid();
+        $version = new SqlVersion('mysql', 'mysql-8.4.7', $directory . '/ast.php', $directory . '/lexical.php');
+
+        (new LexicalProfileWriter())->publishVersion($version, '<?php return [];', ['dialect' => 'mysql']);
+
+        self::assertStringEqualsFile($version->astPath, '<?php return [];');
+        self::assertStringContainsString("'dialect' => 'mysql'", (string) file_get_contents($version->lexicalPath));
+
+        unlink($version->astPath);
+        unlink($version->lexicalPath);
+        rmdir($directory);
+    }
+
+    public function testPublishVersionReportsAnArtifactItCannotWrite(): void
+    {
+        $version = new SqlVersion('mysql', 'mysql-8.4.7', '/dev/null/no/ast.php', '/dev/null/no/lexical.php');
+
+        $this->expectException(RuntimeException::class);
+
+        (new LexicalProfileWriter())->publishVersion($version, '<?php return [];', ['dialect' => 'mysql']);
     }
 }

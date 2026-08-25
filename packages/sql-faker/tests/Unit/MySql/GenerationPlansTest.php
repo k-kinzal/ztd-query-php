@@ -387,4 +387,17 @@ final class GenerationPlansTest extends TestCase
         self::assertSame('hostname', $plan->lexicalTarget());
         self::assertSame(['minParts' => 1, 'maxParts' => 2, 'maxPartLength' => 3], $plan->parameters());
     }
+
+    public function testStatementBoundsTheWalkAtTheRuleItIsGrownFrom(): void
+    {
+        $plan = GenerationPlans::statement('select_stmt', 12);
+
+        self::assertSame('select_stmt', $plan->startRule());
+        self::assertSame(12, $plan->maxDepth());
+    }
+
+    public function testStatementWalksTheWholeGrammarWhenNoRuleIsNamed(): void
+    {
+        self::assertNull(GenerationPlans::statement(null, 12)->startRule());
+    }
 }
