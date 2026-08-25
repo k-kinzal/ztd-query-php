@@ -19,10 +19,10 @@ final class ProductionPattern
     private const NON_EMPTY = 'non-empty';
 
     /**
-     * @param array<array-key, string> $symbols
-     * @param self::CONTAINING|self::EXACT|self::NON_EMPTY $mode
+     * @param array<array-key, string> $symbols Symbols the pattern is written in terms of
+     * @param self::CONTAINING|self::EXACT|self::NON_EMPTY $mode How those symbols are compared against an alternative
      */
-    private function __construct(
+    public function __construct(
         private readonly array $symbols,
         private readonly string $mode,
     ) {

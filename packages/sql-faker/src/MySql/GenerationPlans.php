@@ -19,7 +19,11 @@ use SqlFaker\MySql\Grammar\Grammar;
 final class GenerationPlans
 {
     /**
-     * @return GenerationPlan<true>
+     * Directs a walk that never leaves a VALUES list with nothing in it.
+     *
+     * @param non-empty-string|null $startRule Rule the walk begins at, or null for the grammar entry point
+     *
+     * @return GenerationPlan<true> Plan whose row lists always carry a row
      */
     public static function withoutEmptyRows(?string $startRule = null): GenerationPlan
     {
