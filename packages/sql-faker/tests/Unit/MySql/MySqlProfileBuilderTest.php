@@ -6,13 +6,21 @@ namespace Tests\Unit\SqlFaker\MySql;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlFaker\Grammar\LexerSource;
+use SqlFaker\Grammar\SqlVersion;
+use SqlFaker\Grammar\SqlVersionRegistry;
 use SqlFaker\MySql\Grammar\Grammar;
+use SqlFaker\MySql\Grammar\TerminalInventory;
 use SqlFaker\MySql\MySqlProfileBuilder;
 
 #[CoversClass(MySqlProfileBuilder::class)]
+#[UsesClass(SqlVersion::class)]
+#[UsesClass(SqlVersionRegistry::class)]
+#[UsesClass(Grammar::class)]
+#[UsesClass(TerminalInventory::class)]
 final class MySqlProfileBuilderTest extends TestCase
 {
     public function testSourceUrlsReadsTheKeywordTableAndTheScanner(): void
