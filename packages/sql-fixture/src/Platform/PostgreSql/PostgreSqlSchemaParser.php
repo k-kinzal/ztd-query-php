@@ -210,11 +210,11 @@ final class PostgreSqlSchemaParser implements SchemaParserInterface
             precision: $precision,
             scale: $scale,
             nullable: $nullable,
-            unsigned: false, // PostgreSQL doesn't have unsigned
+            unsigned: false,
             default: $default,
             autoIncrement: $autoIncrement,
             generated: $generated,
-            enumValues: null, // PostgreSQL doesn't have ENUM in the same way
+            enumValues: null,
         );
     }
 

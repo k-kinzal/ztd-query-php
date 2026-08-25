@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlFixture\Platform\PostgreSql;
 
 use PDO;
+use PDOException;
 use RuntimeException;
 use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\SchemaFetcherInterface;
@@ -75,7 +76,7 @@ final class PostgreSqlSchemaFetcher implements SchemaFetcherInterface
             $pkStmt->execute(['table_oid' => $qualifiedTable]);
             /** @var list<array{attname: string}> $pkRows */
             $pkRows = $pkStmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (\PDOException) {
+        } catch (PDOException) {
             $pkRows = [];
         }
 

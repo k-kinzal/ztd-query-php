@@ -195,11 +195,11 @@ final class SqliteSchemaParser implements SchemaParserInterface
             precision: $precision,
             scale: $scale,
             nullable: $nullable,
-            unsigned: false, // SQLite doesn't have unsigned
+            unsigned: false,
             default: $default,
             autoIncrement: $autoIncrement,
             generated: $generated,
-            enumValues: null, // SQLite doesn't have ENUM
+            enumValues: null,
         );
     }
 

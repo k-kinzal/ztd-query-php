@@ -35,16 +35,24 @@ use Stringable;
  */
 class FixturePlan implements Stringable
 {
-    /** @var list<Relation|string> */
+    /**
+     * @var list<Relation|string>
+     */
     private readonly array $parts;
 
-    /** @var list<Relation> */
+    /**
+     * @var list<Relation>
+     */
     public readonly array $relations;
 
-    /** @var list<string> Every table named, in first-mentioned order */
+    /**
+     * @var list<string> Every table named, in first-mentioned order
+     */
     public readonly array $tables;
 
-    /** @var list<string> Every table, ordered so a parent always precedes its children */
+    /**
+     * @var list<string> Every table, ordered so a parent always precedes its children
+     */
     public readonly array $generationOrder;
 
     /**
