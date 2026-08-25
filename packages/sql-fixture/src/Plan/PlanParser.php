@@ -38,7 +38,6 @@ final class PlanParser
      * @return FixturePlan The tables and relations it declares
      *
      * @throws PlanSyntaxException When the plan is empty, declares a many-to-many, or is not written as relations
-     * @throws PlanStructureException When the relations cannot be ordered, or bind a column twice
      */
     public function parse(string $plan): FixturePlan
     {

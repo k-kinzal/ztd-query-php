@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlFixture\Plan;
 
+use SqlFixture\Fixture\PlanSchemaException;
+
 /**
  * One relation as written, with the roles the operator implies.
  *

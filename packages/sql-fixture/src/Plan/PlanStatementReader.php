@@ -138,7 +138,7 @@ final class PlanStatementReader
         if ($kind === null) {
             throw $cursor->unexpected("one of '<', '>' or '-'");
         }
-        $cursor->accept($character ?? '');
+        $cursor->accept($character);
 
         return $kind;
     }
