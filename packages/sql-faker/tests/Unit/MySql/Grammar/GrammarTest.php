@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlFaker\Grammar\SqlVersion;
+use SqlFaker\Grammar\SqlVersionRegistry;
 use SqlFaker\MySql\Grammar\Grammar;
 use SqlFaker\MySql\Grammar\NonTerminal;
 use SqlFaker\MySql\Grammar\Production;
@@ -21,6 +22,7 @@ use SqlFaker\MySql\Grammar\Terminal;
 #[CoversClass(Terminal::class)]
 #[CoversClass(NonTerminal::class)]
 #[UsesClass(SqlVersion::class)]
+#[UsesClass(SqlVersionRegistry::class)]
 final class GrammarTest extends TestCase
 {
     public function testLoad(): void
