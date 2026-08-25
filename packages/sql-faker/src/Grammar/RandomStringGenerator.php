@@ -26,9 +26,15 @@ final class RandomStringGenerator
 
     private FakerGenerator $faker;
 
+    private RandomCharacters $characters;
+
+    /**
+     * @param FakerGenerator $faker Source of every choice the generated strings make
+     */
     public function __construct(FakerGenerator $faker)
     {
         $this->faker = $faker;
+        $this->characters = new RandomCharacters($faker);
     }
 
     /**
@@ -38,8 +44,8 @@ final class RandomStringGenerator
     {
         $length = $this->faker->numberBetween(max($minLength, 1), $maxLength);
 
-        return $this->randomChar(self::ALPHA_UNDERSCORE)
-            . $this->randomString(self::ALNUM_UNDERSCORE, $length - 1);
+        return $this->characters->character(self::ALPHA_UNDERSCORE)
+            . $this->characters->string(self::ALNUM_UNDERSCORE, $length - 1);
     }
 
     /**
@@ -47,7 +53,7 @@ final class RandomStringGenerator
      */
     public function mixedAlnumString(int $minLength = 1, int $maxLength = 24): string
     {
-        return $this->randomString(self::MIXED_ALNUM_UNDERSCORE, $this->faker->numberBetween($minLength, $maxLength));
+        return $this->characters->string(self::MIXED_ALNUM_UNDERSCORE, $this->faker->numberBetween($minLength, $maxLength));
     }
 
     /**
@@ -65,7 +71,7 @@ final class RandomStringGenerator
      */
     public function hexString(int $minLength = 1, int $maxLength = 16): string
     {
-        return $this->randomString(self::HEX_CHARS, $this->faker->numberBetween($minLength, $maxLength));
+        return $this->characters->string(self::HEX_CHARS, $this->faker->numberBetween($minLength, $maxLength));
     }
 
     /**
@@ -73,7 +79,7 @@ final class RandomStringGenerator
      */
     public function binaryString(int $minLength = 1, int $maxLength = 32): string
     {
-        return $this->randomString(self::BINARY_CHARS, $this->faker->numberBetween($minLength, $maxLength));
+        return $this->characters->string(self::BINARY_CHARS, $this->faker->numberBetween($minLength, $maxLength));
     }
 
     /**
@@ -97,13 +103,15 @@ final class RandomStringGenerator
      * Generate a random hostname string.
      *
      * @return non-empty-string
+     *
+     * @throws LogicException When the requested bounds leave every part of the hostname empty
      */
     public function hostnameString(int $minParts = 1, int $maxParts = 3, int $minPartLength = 1, int $maxPartLength = 12): string
     {
         $parts = $this->faker->numberBetween($minParts, $maxParts);
         $segments = [];
         for ($p = 0; $p < $parts; $p++) {
-            $segments[] = $this->randomString(self::HOSTNAME_CHARS, $this->faker->numberBetween($minPartLength, $maxPartLength));
+            $segments[] = $this->characters->string(self::HOSTNAME_CHARS, $this->faker->numberBetween($minPartLength, $maxPartLength));
         }
 
         $hostname = implode('.', $segments);
@@ -121,7 +129,7 @@ final class RandomStringGenerator
      */
     public function unsignedBigIntString(int $minLength = 1, int $maxLength = 20): string
     {
-        $buf = $this->randomString(self::DIGIT_CHARS, $this->faker->numberBetween($minLength, $maxLength));
+        $buf = $this->characters->string(self::DIGIT_CHARS, $this->faker->numberBetween($minLength, $maxLength));
         $trimmed = ltrim($buf, '0');
 
         return $trimmed === '' ? '0' : $trimmed;
@@ -164,6 +172,9 @@ final class RandomStringGenerator
     /**
      * @param array<string, list<string>> $lexemesByTerminal
      * @return non-empty-string
+     *
+     * @throws InvalidArgumentException When the term bounds are not a positive ordered range, or no terminal carries a lexeme
+     * @throws LogicException When the chosen lexemes join to nothing
      */
     public function lexicalSequence(array $lexemesByTerminal, int $minTerms = 2, int $maxTerms = 4): string
     {
@@ -193,23 +204,4 @@ final class RandomStringGenerator
         return $sequence;
     }
 
-    /**
-     * Generate a random string of given length from an alphabet.
-     */
-    private function randomString(string $alphabet, int $length): string
-    {
-        $buf = '';
-        for ($i = 0; $i < $length; $i++) {
-            $buf .= $this->randomChar($alphabet);
-        }
-        return $buf;
-    }
-
-    /**
-     * Pick a random character from an alphabet string.
-     */
-    private function randomChar(string $alphabet): string
-    {
-        return $alphabet[$this->faker->numberBetween(0, strlen($alphabet) - 1)];
-    }
 }

@@ -26,4 +26,38 @@ final class GrammarParseExceptionTest extends TestCase
             GrammarParseException::noRulesParsed('Lemon')->getMessage(),
         );
     }
+
+    public function testUnreadableSourceNamesThePathThatWasAskedFor(): void
+    {
+        self::assertSame(
+            'Failed to read: /no/such/parse.y',
+            GrammarParseException::unreadableSource('/no/such/parse.y')->getMessage(),
+        );
+    }
+
+    public function testUnexpectedCharacterNamesTheCharacterAndWhereItSits(): void
+    {
+        self::assertSame(
+            "Unexpected character '#' at offset 12",
+            GrammarParseException::unexpectedCharacter('#', 12)->getMessage(),
+        );
+    }
+
+    public function testDanglingSlashNamesWhereTheSlashSits(): void
+    {
+        self::assertSame("Unexpected '/' at offset 7", GrammarParseException::danglingSlash(7)->getMessage());
+    }
+
+    public function testNamelessDirectiveNamesWhereThePercentSignSits(): void
+    {
+        self::assertSame("Unexpected '%' at offset 3", GrammarParseException::namelessDirective(3)->getMessage());
+    }
+
+    public function testUnterminatedTypeTagNamesWhereTheTagOpened(): void
+    {
+        self::assertSame(
+            'Unterminated type tag starting at offset 42',
+            GrammarParseException::unterminatedTypeTag(42)->getMessage(),
+        );
+    }
 }

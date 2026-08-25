@@ -6,20 +6,20 @@ namespace Tests\Integration\Sqlite;
 
 use Faker\Factory;
 use PDO;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\DatabaseFixtureProvider;
-use SqlFixture\FixtureProvider;
-use SqlFixture\Platform\PlatformFactory;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use SqlFixture\FixtureGenerator;
+use SqlFixture\FixtureProvider;
+use SqlFixture\Hydrator\ReflectionHydrator;
+use SqlFixture\Platform\PlatformFactory;
 use SqlFixture\Platform\Sqlite\SqliteSchemaFetcher;
 use SqlFixture\Platform\Sqlite\SqliteSchemaParser;
 use SqlFixture\Platform\Sqlite\SqliteTypeMapper;
 use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\TableSchema;
-use SqlFixture\Hydrator\ReflectionHydrator;
 use Tests\Fixture\SqliteUserDto;
 
 #[CoversClass(DatabaseFixtureProvider::class)]
@@ -177,7 +177,6 @@ final class SqliteIntegrationTest extends TestCase
             SqliteUserDto::class
         );
 
-        self::assertInstanceOf(SqliteUserDto::class, $user);
         self::assertSame(1, $user->id);
         self::assertNotEmpty($user->name);
         self::assertNotEmpty($user->email);

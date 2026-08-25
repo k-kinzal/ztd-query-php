@@ -7,116 +7,65 @@ namespace SqlFaker\MySql\Grammar;
 use Closure;
 
 /**
- * Analyzes grammar to compute minimum termination lengths for non-terminals.
+ * Answers what it still costs to finish a rule or a production.
  *
- * Uses fixed-point iteration to find the shortest derivation path
- * (minimum number of tokens) required to terminate each rule.
+ * A derivation has to stop, and to stop it has to know which way out is
+ * shortest. For MySQL that is measured in tokens written, which is what
+ * decides how long the SQL gets.
  */
 final class TerminationAnalyzer
 {
-    /** @var array<string, int> Non-terminal name => minimum tokens to terminate */
-    private array $lengths;
-
-    /** @var Closure(string): bool */
-    private Closure $terminalSupported;
+    private TerminationCost $lengths;
 
     /**
-     * @param (callable(string): bool)|null $terminalSupported
+     * @param Grammar $grammar Grammar whose rules are being costed
+     * @param (callable(string): bool)|null $terminalSupported Answers whether a terminal can be written at all, or null when every terminal can
      */
     public function __construct(Grammar $grammar, ?callable $terminalSupported = null)
     {
-        $this->terminalSupported = $terminalSupported !== null
+        $supported = $terminalSupported !== null
             ? Closure::fromCallable($terminalSupported)
             : static fn (string $terminal): bool => true;
-        $this->lengths = $this->computeMinTerminationLengths($grammar);
+        $this->lengths = new TerminationCost($grammar, $supported, 1, 0);
     }
 
     /**
-     * Get the minimum number of tokens required to terminate a non-terminal.
+     * Answers the fewest tokens a non-terminal can be finished in.
+     *
+     * @param string $nonTerminal Rule to measure
+     *
+     * @return int Fewest tokens, or PHP_INT_MAX when it can never be finished
      */
     public function getMinLength(string $nonTerminal): int
     {
-        return $this->lengths[$nonTerminal] ?? (($this->terminalSupported)($nonTerminal) ? 1 : PHP_INT_MAX);
+        return $this->lengths->of($nonTerminal);
     }
 
     /**
-     * Estimate the minimum number of tokens required to terminate a production.
+     * Answers the fewest tokens a production can be finished in.
+     *
+     * @param Production $production Production to measure
+     *
+     * @return int Fewest tokens, or PHP_INT_MAX when it can never be finished
      */
     public function estimateProductionLength(Production $production): int
     {
-        return $this->sumProductionLength($production->symbols, $this->lengths);
+        return $this->lengths->ofProduction($production);
     }
 
+    /**
+     * Reports whether a production can be finished at all.
+     *
+     * A production whose shortest completion is unbounded contains a rule that
+     * can only expand into itself, so a walk that took it would never arrive at
+     * terminals.
+     *
+     * @param Production $production Production to judge
+     *
+     * @return bool True when some derivation of it ends in terminals
+     */
     public function isProductionViable(Production $production): bool
     {
         return $this->estimateProductionLength($production) !== PHP_INT_MAX;
-    }
-
-    /**
-     * @return array<string, int>
-     */
-    private function computeMinTerminationLengths(Grammar $grammar): array
-    {
-        $inf = PHP_INT_MAX;
-
-        /** @var array<string, int> $lengths */
-        $lengths = [];
-        foreach ($grammar->ruleMap as $name => $_rule) {
-            $lengths[$name] = $inf;
-        }
-
-        $changed = true;
-        while ($changed) {
-            $changed = false;
-
-            foreach ($grammar->ruleMap as $name => $rule) {
-                $best = $lengths[$name];
-
-                foreach ($rule->alternatives as $alt) {
-                    $altLength = $this->sumProductionLength($alt->symbols, $lengths);
-
-                    if ($altLength < $best) {
-                        $best = $altLength;
-                    }
-                }
-
-                if ($best !== $lengths[$name]) {
-                    $lengths[$name] = $best;
-                    $changed = true;
-                }
-            }
-        }
-
-        return $lengths;
-    }
-
-    /**
-     * @param list<Symbol> $symbols
-     * @param array<string, int> $lengths
-     */
-    private function sumProductionLength(array $symbols, array $lengths): int
-    {
-        $total = 0;
-        foreach ($symbols as $sym) {
-            if ($sym instanceof Terminal) {
-                if (!(($this->terminalSupported)($sym->value))) {
-                    return PHP_INT_MAX;
-                }
-                $total++;
-                continue;
-            }
-            if ($sym instanceof NonTerminal) {
-                $symLen = $lengths[$sym->value]
-                    ?? (($this->terminalSupported)($sym->value) ? 1 : PHP_INT_MAX);
-                if ($symLen === PHP_INT_MAX) {
-                    return PHP_INT_MAX;
-                }
-                if ($total > PHP_INT_MAX - $symLen) {
-                    return PHP_INT_MAX;
-                }
-                $total += $symLen;
-            }
-        }
-        return $total;
     }
 }

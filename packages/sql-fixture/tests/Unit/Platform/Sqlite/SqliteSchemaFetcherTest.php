@@ -5,12 +5,11 @@ declare(strict_types=1);
 namespace Tests\Unit\Platform\Sqlite;
 
 use PDO;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\Platform\Sqlite\SqliteSchemaFetcher;
-use SqlFixture\Schema\SchemaFetcherInterface;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use SqlFixture\Platform\Sqlite\SqliteSchemaParser;
 use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\TableSchema;
@@ -21,13 +20,6 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(TableSchema::class)]
 final class SqliteSchemaFetcherTest extends TestCase
 {
-    #[Test]
-    public function implementsSchemaFetcherInterface(): void
-    {
-        $fetcher = new SqliteSchemaFetcher();
-        self::assertInstanceOf(SchemaFetcherInterface::class, $fetcher);
-    }
-
     #[Test]
     public function fetchSchemaFromSqliteTable(): void
     {

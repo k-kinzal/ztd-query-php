@@ -7,6 +7,14 @@ namespace SqlFaker\PostgreSql;
 use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\ProductionPattern;
 
+/**
+ * Names the generation plans this dialect's provider is built from.
+ *
+ * A plan is how a caller says which SQL it wants, and the ones a provider
+ * offers are a fixed vocabulary rather than something each caller assembles.
+ * Naming them here keeps that vocabulary in one place and lets the provider
+ * read as a list of what it can generate.
+ */
 final class GenerationPlans
 {
     /**

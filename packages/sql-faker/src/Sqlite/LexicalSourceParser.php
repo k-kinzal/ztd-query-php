@@ -13,6 +13,8 @@ final class LexicalSourceParser
 {
     /**
      * @return list<string>
+     *
+     * @throws RuntimeException When the upstream tokenizer declares no character classes, or leaves one unclassified
      */
     public function parseCharacterClasses(string $source): array
     {

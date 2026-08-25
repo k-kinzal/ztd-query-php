@@ -20,13 +20,24 @@ namespace SqlFixture\Plan;
  */
 final class PlanParser
 {
-    private const IDENTIFIER = '/\G(?:`([^`]+)`|"([^"]+)"|([A-Za-z_][A-Za-z0-9_$]*))/';
-
-    private string $source = '';
-    private int $offset = 0;
+    /**
+     * @param PlanStatements $statements Separates a plan into the statements written in it
+     * @param PlanStatementReader $reader Reads one statement
+     */
+    public function __construct(
+        private readonly PlanStatements $statements = new PlanStatements(),
+        private readonly PlanStatementReader $reader = new PlanStatementReader(),
+    ) {
+    }
 
     /**
-     * @throws PlanSyntaxException
+     * Reads a plan.
+     *
+     * @param string $plan Plan as it was written
+     *
+     * @return FixturePlan The tables and relations it declares
+     *
+     * @throws PlanSyntaxException When the plan is empty, declares a many-to-many, or is not written as relations
      */
     public function parse(string $plan): FixturePlan
     {
@@ -34,249 +45,21 @@ final class PlanParser
             throw PlanSyntaxException::manyToManyUnsupported($plan);
         }
 
-        $statements = $this->split($plan);
+        $statements = $this->statements->of($plan);
         if ($statements === []) {
             throw PlanSyntaxException::emptyPlan();
         }
 
         $parts = [];
-
         foreach ($statements as $statement) {
-            $this->source = $statement;
-            $this->offset = 0;
-
-            $parsed = $this->parseStatement();
-            if (is_string($parsed)) {
-                $parts[] = $parsed;
+            $read = $this->reader->read(new PlanCursor($statement));
+            if (is_string($read)) {
+                $parts[] = $read;
                 continue;
             }
-
-            $parts = [...$parts, ...$parsed];
+            $parts = [...$parts, ...$read];
         }
 
         return new FixturePlan(...$parts);
-    }
-
-    /**
-     * Split on commas and newlines that are not inside brackets.
-     *
-     * @return array<int, string>
-     */
-    private function split(string $plan): array
-    {
-        $statements = [];
-        $current = '';
-        $depth = 0;
-
-        foreach (str_split($plan) as $character) {
-            if ($character === '[' || $character === '(') {
-                $depth++;
-            } elseif ($character === ']' || $character === ')') {
-                $depth--;
-            }
-
-            if ($depth < 0) {
-                throw PlanSyntaxException::unbalancedBrackets($plan);
-            }
-
-            if ($depth === 0 && ($character === ',' || $character === "\n" || $character === ';')) {
-                $statements[] = $current;
-                $current = '';
-                continue;
-            }
-
-            $current .= $character;
-        }
-
-        $statements[] = $current;
-
-        return array_filter(
-            array_map('trim', $statements),
-            static fn (string $statement): bool => $statement !== ''
-        );
-    }
-
-    /**
-     * A statement is either a bare table name or one relation, which expands
-     * to several when its target is a group.
-     *
-     * @return list<Relation>|string
-     */
-    private function parseStatement(): array|string
-    {
-        if (!str_contains($this->source, '.')) {
-            $table = $this->readIdentifier('a table name');
-            $this->expectEnd();
-
-            return $table;
-        }
-
-        $left = $this->readEndpoint();
-        $this->skipWhitespace();
-
-        $leftOptional = $this->readOptionalMarker();
-        $kind = $this->readOperator();
-        $rightOptional = $this->readOptionalMarker();
-
-        $this->skipWhitespace();
-        $targets = $this->readTargets();
-        $this->expectEnd();
-
-        return $this->buildRelations($left, $kind, $targets, $leftOptional, $rightOptional);
-    }
-
-    /**
-     * A grouped target expands to one relation per endpoint, so grouping is
-     * only ever a shorthand for repeating the left end.
-     *
-     * @param list<ColumnRef> $targets
-     * @return list<Relation>
-     */
-    private function buildRelations(
-        ColumnRef $left,
-        RelationKind $kind,
-        array $targets,
-        bool $leftOptional,
-        bool $rightOptional,
-    ): array {
-        return array_map(
-            static fn (ColumnRef $target): Relation => new Relation(
-                $left,
-                $kind,
-                $target,
-                $leftOptional,
-                $rightOptional
-            ),
-            $targets
-        );
-    }
-
-    /**
-     * @return list<ColumnRef>
-     */
-    private function readTargets(): array
-    {
-        if ($this->peek() !== '[') {
-            return [$this->readEndpoint()];
-        }
-
-        $this->offset++;
-        $targets = [];
-
-        while (true) {
-            $this->skipWhitespace();
-            $targets[] = $this->readEndpoint();
-            $this->skipWhitespace();
-
-            $character = $this->peek();
-            if ($character === ',') {
-                $this->offset++;
-                continue;
-            }
-
-            if ($character === ']') {
-                $this->offset++;
-                return $targets;
-            }
-
-            throw PlanSyntaxException::unexpected($this->source, $this->offset, "',' or ']'");
-        }
-    }
-
-    private function readEndpoint(): ColumnRef
-    {
-        $table = $this->readIdentifier('a table name');
-
-        if ($this->peek() !== '.') {
-            throw PlanSyntaxException::unexpected($this->source, $this->offset, "'.' after the table name");
-        }
-        $this->offset++;
-
-        if ($this->peek() !== '(') {
-            return new ColumnRef($table, [$this->readIdentifier('a column name')]);
-        }
-
-        $this->offset++;
-        $columns = [];
-
-        while (true) {
-            $this->skipWhitespace();
-            $columns[] = $this->readIdentifier('a column name');
-            $this->skipWhitespace();
-
-            $character = $this->peek();
-            if ($character === ',') {
-                $this->offset++;
-                continue;
-            }
-
-            if ($character === ')') {
-                $this->offset++;
-                return new ColumnRef($table, $columns);
-            }
-
-            throw PlanSyntaxException::unexpected($this->source, $this->offset, "',' or ')'");
-        }
-    }
-
-    private function readOperator(): RelationKind
-    {
-        $character = $this->peek();
-        $kind = $character === null ? null : RelationKind::tryFrom($character);
-
-        if ($kind === null) {
-            throw PlanSyntaxException::unexpected($this->source, $this->offset, "one of '<', '>' or '-'");
-        }
-
-        $this->offset++;
-
-        return $kind;
-    }
-
-    private function readOptionalMarker(): bool
-    {
-        if ($this->peek() !== '?') {
-            return false;
-        }
-
-        $this->offset++;
-
-        return true;
-    }
-
-    private function readIdentifier(string $expected): string
-    {
-        if (preg_match(self::IDENTIFIER, $this->source, $matches, 0, $this->offset) !== 1) {
-            throw PlanSyntaxException::unexpected($this->source, $this->offset, $expected);
-        }
-
-        $this->offset += strlen($matches[0]);
-
-        foreach ([1, 2, 3] as $group) {
-            if (isset($matches[$group]) && $matches[$group] !== '') {
-                return $matches[$group];
-            }
-        }
-
-        throw PlanSyntaxException::unexpected($this->source, $this->offset, $expected);
-    }
-
-    private function skipWhitespace(): void
-    {
-        while (($character = $this->peek()) !== null && trim($character) === '') {
-            $this->offset++;
-        }
-    }
-
-    private function expectEnd(): void
-    {
-        if ($this->offset < strlen($this->source)) {
-            throw PlanSyntaxException::unexpected($this->source, $this->offset, 'the end of the relation');
-        }
-    }
-
-    private function peek(): ?string
-    {
-        return $this->source[$this->offset] ?? null;
     }
 }

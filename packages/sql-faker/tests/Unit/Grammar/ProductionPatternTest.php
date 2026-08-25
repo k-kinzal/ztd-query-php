@@ -43,4 +43,26 @@ final class ProductionPatternTest extends TestCase
         self::assertTrue($pattern->matches(['name']));
         self::assertFalse($pattern->matches([]));
     }
+
+    public function testMatchesAcceptsAnAlternativeContainingEveryNamedSymbol(): void
+    {
+        self::assertTrue(ProductionPattern::containing('FOREIGN', 'KEY')->matches(['CONSTRAINT', 'FOREIGN', 'KEY']));
+    }
+
+    public function testMatchesRejectsAnAlternativeMissingANamedSymbol(): void
+    {
+        self::assertFalse(ProductionPattern::containing('FOREIGN', 'KEY')->matches(['FOREIGN']));
+    }
+
+    public function testMatchesAcceptsOnlyTheAlternativeWrittenExactly(): void
+    {
+        self::assertTrue(ProductionPattern::exactly('cmdlist', 'ecmd')->matches(['cmdlist', 'ecmd']));
+        self::assertFalse(ProductionPattern::exactly('cmdlist', 'ecmd')->matches(['ecmd', 'cmdlist']));
+    }
+
+    public function testMatchesRefusesOnlyTheEmptyAlternative(): void
+    {
+        self::assertTrue(ProductionPattern::nonEmpty()->matches(['ecmd']));
+        self::assertFalse(ProductionPattern::nonEmpty()->matches([]));
+    }
 }

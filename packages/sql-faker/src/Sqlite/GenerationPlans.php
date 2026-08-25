@@ -8,6 +8,14 @@ use InvalidArgumentException;
 use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\ProductionPattern;
 
+/**
+ * Names the generation plans this dialect's provider is built from.
+ *
+ * A plan is how a caller says which SQL it wants, and the ones a provider
+ * offers are a fixed vocabulary rather than something each caller assembles.
+ * Naming them here keeps that vocabulary in one place and lets the provider
+ * read as a list of what it can generate.
+ */
 final class GenerationPlans
 {
     /**
@@ -44,6 +52,8 @@ final class GenerationPlans
 
     /**
      * @return GenerationPlan<true>
+     *
+     * @throws InvalidArgumentException When a choice does not name one of the three DML statements
      */
     public static function multiDmlStatement(int $firstChoice, int $secondChoice): GenerationPlan
     {
@@ -205,5 +215,18 @@ final class GenerationPlans
             'tconscomma' => [ProductionPattern::exactly()],
             'eidlist_opt' => [ProductionPattern::nonEmpty()],
         ])->requiringNonEmpty();
+    }
+
+    /**
+     * Directs a bounded walk that grows one statement from its own rule.
+     *
+     * @param non-empty-string $startRule Rule the statement is grown from
+     * @param int $maxDepth How deep the walk may recurse
+     *
+     * @return GenerationPlan<false> Plan for one bounded statement
+     */
+    public static function statement(string $startRule, int $maxDepth): GenerationPlan
+    {
+        return GenerationPlan::fromRule($startRule)->withMaxDepth($maxDepth);
     }
 }

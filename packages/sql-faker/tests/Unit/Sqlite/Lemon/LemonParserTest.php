@@ -6,6 +6,7 @@ namespace Tests\Unit\SqlFaker\Sqlite\Lemon;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\GrammarParseException;
 use SqlFaker\Grammar\NonTerminal;
@@ -198,5 +199,24 @@ final class LemonParserTest extends TestCase
         self::assertArrayHasKey('select', $grammar->ruleMap);
         self::assertArrayHasKey('expr', $grammar->ruleMap);
         self::assertGreaterThan(100, count($grammar->ruleMap));
+    }
+
+    public function testParseFileReadsAGrammarFromDisk(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'lemon-');
+        self::assertIsString($path);
+        file_put_contents($path, "cmd ::= SELECT.\n");
+
+        self::assertSame('cmd', (new LemonParser())->parseFile($path)->startSymbol);
+
+        unlink($path);
+    }
+
+    public function testParseFileReportsAFileItCannotRead(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Failed to read: ');
+
+        (new LemonParser())->parseFile(sys_get_temp_dir() . '/no-such-lemon-grammar.y');
     }
 }
