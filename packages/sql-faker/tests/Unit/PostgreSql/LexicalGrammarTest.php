@@ -13,11 +13,22 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\LexicalCatalog;
 use SqlFaker\Grammar\LexicalCatalogException;
+use SqlFaker\Grammar\LexicalCatalogShape;
+use SqlFaker\Grammar\LexicalCoverageCheck;
 use SqlFaker\Grammar\LexicalException;
+use SqlFaker\Grammar\LexicalKeywordIndex;
+use SqlFaker\Grammar\LexicalProfileSource;
+use SqlFaker\Grammar\LexicalWitnessCheck;
+use SqlFaker\Grammar\LexicalWitnessShape;
+use SqlFaker\Grammar\RandomCharacters;
 use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\Grammar\SqlVersion;
+use SqlFaker\Grammar\SqlVersionRegistry;
 use SqlFaker\Grammar\TokenJoiner;
 use SqlFaker\PostgreSql\LexicalGrammar;
+use SqlFaker\PostgreSql\PgLookahead;
+use SqlFaker\PostgreSql\PgTerminalRealizer;
+use SqlFaker\PostgreSql\PgTokenizer;
 use UnexpectedValueException;
 
 #[CoversClass(LexicalGrammar::class)]
@@ -26,6 +37,18 @@ use UnexpectedValueException;
 #[UsesClass(LexicalCatalog::class)]
 #[UsesClass(LexicalCatalogException::class)]
 #[UsesClass(SqlVersion::class)]
+#[UsesClass(LexicalCatalogShape::class)]
+#[UsesClass(LexicalCoverageCheck::class)]
+#[UsesClass(LexicalException::class)]
+#[UsesClass(LexicalKeywordIndex::class)]
+#[UsesClass(LexicalProfileSource::class)]
+#[UsesClass(LexicalWitnessCheck::class)]
+#[UsesClass(LexicalWitnessShape::class)]
+#[UsesClass(RandomCharacters::class)]
+#[UsesClass(SqlVersionRegistry::class)]
+#[UsesClass(PgLookahead::class)]
+#[UsesClass(PgTerminalRealizer::class)]
+#[UsesClass(PgTokenizer::class)]
 final class LexicalGrammarTest extends TestCase
 {
     public function testGenerateQuotedIdentifierWritesWhatTheLexerReadsBackAsAnIdentifier(): void

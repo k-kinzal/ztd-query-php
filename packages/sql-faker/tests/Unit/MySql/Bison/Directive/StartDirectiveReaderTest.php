@@ -10,14 +10,18 @@ use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\SourceCursor;
 use SqlFaker\MySql\Bison\Ast\BisonStartDeclaration;
 use SqlFaker\MySql\Bison\Directive\StartDirectiveReader;
+use SqlFaker\MySql\Bison\Lexer\ActionScanner;
 use SqlFaker\MySql\Bison\Lexer\BisonLexeme;
 use SqlFaker\MySql\Bison\Lexer\BisonLexer;
 use SqlFaker\MySql\Bison\Lexer\BisonScannerChain;
 use SqlFaker\MySql\Bison\Lexer\BisonToken;
 use SqlFaker\MySql\Bison\Lexer\BisonTokenStream;
 use SqlFaker\MySql\Bison\Lexer\BisonTrivia;
+use SqlFaker\MySql\Bison\Lexer\DirectiveScanner;
 use SqlFaker\MySql\Bison\Lexer\IdentifierScanner;
 use SqlFaker\MySql\Bison\Lexer\NumberScanner;
+use SqlFaker\MySql\Bison\Lexer\QuotedLiteralScanner;
+use SqlFaker\MySql\Bison\Lexer\TypeTagScanner;
 
 #[CoversClass(StartDirectiveReader::class)]
 #[UsesClass(BisonLexeme::class)]
@@ -30,6 +34,10 @@ use SqlFaker\MySql\Bison\Lexer\NumberScanner;
 #[UsesClass(IdentifierScanner::class)]
 #[UsesClass(NumberScanner::class)]
 #[UsesClass(SourceCursor::class)]
+#[UsesClass(ActionScanner::class)]
+#[UsesClass(DirectiveScanner::class)]
+#[UsesClass(QuotedLiteralScanner::class)]
+#[UsesClass(TypeTagScanner::class)]
 final class StartDirectiveReaderTest extends TestCase
 {
     public function testHandlesClaimsOnlyTheStartDirective(): void

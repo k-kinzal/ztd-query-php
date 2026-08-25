@@ -13,6 +13,7 @@ use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\SqlVersion;
+use SqlFaker\Grammar\SqlVersionRegistry;
 use SqlFaker\Grammar\Terminal;
 use SqlFaker\Sqlite\Grammar\SqliteGrammar;
 
@@ -23,6 +24,7 @@ use SqlFaker\Sqlite\Grammar\SqliteGrammar;
 #[CoversClass(Terminal::class)]
 #[CoversClass(NonTerminal::class)]
 #[UsesClass(SqlVersion::class)]
+#[UsesClass(SqlVersionRegistry::class)]
 final class SqliteGrammarTest extends TestCase
 {
     public function testLoad(): void
