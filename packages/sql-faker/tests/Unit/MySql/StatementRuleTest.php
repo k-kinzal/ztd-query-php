@@ -6,18 +6,18 @@ namespace Tests\Unit\SqlFaker\MySql;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\MySql\StatementType;
+use SqlFaker\MySql\StatementRule;
 
-#[CoversClass(StatementType::class)]
-final class StatementTypeTest extends TestCase
+#[CoversClass(StatementRule::class)]
+final class StatementRuleTest extends TestCase
 {
     public function testSelectHasExpectedValue(): void
     {
-        self::assertSame('select_stmt', StatementType::Select->value);
+        self::assertSame('select_stmt', StatementRule::Select->value);
     }
 
     public function testCasesCount(): void
     {
-        self::assertCount(8, StatementType::cases());
+        self::assertCount(8, StatementRule::cases());
     }
 }

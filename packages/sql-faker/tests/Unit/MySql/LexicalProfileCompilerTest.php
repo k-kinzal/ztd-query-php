@@ -73,4 +73,28 @@ static SYMBOL sql_functions[] = {
 };
 SOURCE);
     }
+
+    public function testExtractModernReadsTheTableReleasesFromEightOnwardDeclare(): void
+    {
+        self::assertSame(
+            ['SELECT_SYM' => ['SELECT']],
+            (new LexicalProfileCompiler())->extractModern('{ SYM("SELECT", SELECT_SYM) }', 'SYM'),
+        );
+    }
+
+    public function testExtractLegacyReadsTheTableEarlierReleasesDeclare(): void
+    {
+        self::assertSame(
+            ['SELECT_SYM' => ['SELECT']],
+            (new LexicalProfileCompiler())->extractLegacy('{ "SELECT", SYM(SELECT_SYM) }'),
+        );
+    }
+
+    public function testGroupFilesEachLexemeUnderItsTokenWithoutRepeatingOne(): void
+    {
+        self::assertSame(
+            ['SELECT_SYM' => ['SELECT']],
+            (new LexicalProfileCompiler())->group([['', 'SELECT', 'SELECT_SYM'], ['', 'SELECT', 'SELECT_SYM']]),
+        );
+    }
 }
