@@ -11,17 +11,31 @@ use SqlFaker\Grammar\SourceCursor;
 use SqlFaker\MySql\Bison\Ast\BisonAlternativeNode;
 use SqlFaker\MySql\Bison\Ast\BisonRuleNode;
 use SqlFaker\MySql\Bison\Ast\BisonSymbolNode;
+use SqlFaker\MySql\Bison\Lexer\ActionScanner;
 use SqlFaker\MySql\Bison\Lexer\BisonLexeme;
 use SqlFaker\MySql\Bison\Lexer\BisonLexer;
 use SqlFaker\MySql\Bison\Lexer\BisonScannerChain;
 use SqlFaker\MySql\Bison\Lexer\BisonToken;
 use SqlFaker\MySql\Bison\Lexer\BisonTokenStream;
 use SqlFaker\MySql\Bison\Lexer\BisonTrivia;
+use SqlFaker\MySql\Bison\Lexer\DirectiveScanner;
+use SqlFaker\MySql\Bison\Lexer\IdentifierScanner;
+use SqlFaker\MySql\Bison\Lexer\NumberScanner;
+use SqlFaker\MySql\Bison\Lexer\PunctuationScanner;
+use SqlFaker\MySql\Bison\Lexer\QuotedLiteralScanner;
+use SqlFaker\MySql\Bison\Lexer\TypeTagScanner;
 use SqlFaker\MySql\Bison\Rule\BisonAlternativeDraft;
 use SqlFaker\MySql\Bison\Rule\BisonAlternativeReader;
 use SqlFaker\MySql\Bison\Rule\BisonRuleReader;
 
 #[CoversClass(BisonRuleReader::class)]
+#[UsesClass(ActionScanner::class)]
+#[UsesClass(DirectiveScanner::class)]
+#[UsesClass(IdentifierScanner::class)]
+#[UsesClass(NumberScanner::class)]
+#[UsesClass(QuotedLiteralScanner::class)]
+#[UsesClass(TypeTagScanner::class)]
+#[UsesClass(PunctuationScanner::class)]
 #[UsesClass(BisonAlternativeDraft::class)]
 #[UsesClass(BisonAlternativeNode::class)]
 #[UsesClass(BisonAlternativeReader::class)]

@@ -7,11 +7,14 @@ namespace Tests\Unit\SqlFaker\Grammar;
 use Faker\Factory;
 use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use SqlFaker\Grammar\RandomCharacters;
 use SqlFaker\Grammar\RandomStringGenerator;
 use UnexpectedValueException;
 
 #[CoversClass(RandomStringGenerator::class)]
+#[UsesClass(RandomCharacters::class)]
 final class RandomStringGeneratorTest extends TestCase
 {
     #[Override]
