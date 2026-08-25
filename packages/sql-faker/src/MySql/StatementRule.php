@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace SqlFaker\MySql;
 
 /**
- * Available statement types for MySQL SQL generation.
+ * Statement start rules available to MySQL SQL generation.
  */
-enum StatementType: string
+enum StatementRule: string
 {
     case Select = 'select_stmt';
     case Insert = 'insert_stmt';

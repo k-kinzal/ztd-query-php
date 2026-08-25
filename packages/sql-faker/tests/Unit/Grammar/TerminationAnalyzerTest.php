@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\Grammar;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\NonTerminal;
@@ -12,8 +13,10 @@ use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\Terminal;
 use SqlFaker\Grammar\TerminationAnalyzer;
+use SqlFaker\Grammar\TerminationCost;
 
 #[CoversClass(TerminationAnalyzer::class)]
+#[UsesClass(TerminationCost::class)]
 #[CoversClass(Grammar::class)]
 #[CoversClass(NonTerminal::class)]
 #[CoversClass(Production::class)]
@@ -221,5 +224,21 @@ final class TerminationAnalyzerTest extends TestCase
         $analyzer = new TerminationAnalyzer($grammar, static fn (string $terminal): bool => $terminal !== 'UNSUPPORTED');
 
         self::assertSame(PHP_INT_MAX, $analyzer->getMinLength('start'));
+    }
+
+    public function testIsProductionViableAcceptsAProductionSomeDerivationFinishes(): void
+    {
+        $grammar = new Grammar('nm', ['nm' => new ProductionRule('nm', [new Production([new Terminal('IDENT')])])]);
+        $analyzer = new TerminationAnalyzer($grammar);
+
+        self::assertTrue($analyzer->isProductionViable(new Production([new NonTerminal('nm')])));
+    }
+
+    public function testIsProductionViableRejectsAProductionThatCanNeverBeFinished(): void
+    {
+        $grammar = new Grammar('loop', ['loop' => new ProductionRule('loop', [new Production([new NonTerminal('loop')])])]);
+        $analyzer = new TerminationAnalyzer($grammar);
+
+        self::assertFalse($analyzer->isProductionViable(new Production([new NonTerminal('loop')])));
     }
 }

@@ -6,6 +6,7 @@ namespace Tests\Fixture;
 
 use Faker\Generator;
 use Faker\Provider\Miscellaneous;
+use Override;
 
 /**
  * Spy subclass of Faker\Generator that records arguments to number/float/boolean methods.
@@ -18,16 +19,24 @@ use Faker\Provider\Miscellaneous;
  */
 final class SpyGenerator extends Generator
 {
-    /** @var list<array{mixed, mixed}> */
+    /**
+     * @var list<array{mixed, mixed}>
+     */
     public array $numberBetweenCalls = [];
 
-    /** @var list<array{mixed, mixed, mixed}> */
+    /**
+     * @var list<array{mixed, mixed, mixed}>
+     */
     public array $randomFloatCalls = [];
 
-    /** @var list<array{int}> */
+    /**
+     * @var list<array{int}>
+     */
     public array $booleanCalls = [];
 
-    /** @var array<string, list<array<mixed>>> */
+    /**
+     * @var array<string, list<array<mixed>>>
+     */
     public array $methodCalls = [];
 
     public static function create(string $locale = 'en_US'): self
@@ -61,6 +70,7 @@ final class SpyGenerator extends Generator
      * @param array<mixed> $attributes
      * @return mixed
      */
+    #[Override]
     public function __call($method, $attributes)
     {
         $this->methodCalls[$method][] = $attributes;
@@ -72,6 +82,7 @@ final class SpyGenerator extends Generator
      * @param mixed $int1
      * @param mixed $int2
      */
+    #[Override]
     public function numberBetween($int1 = 0, $int2 = 2147483647): int
     {
         $this->numberBetweenCalls[] = [$int1, $int2];
@@ -84,6 +95,7 @@ final class SpyGenerator extends Generator
      * @param mixed $min
      * @param mixed $max
      */
+    #[Override]
     public function randomFloat($nbMaxDecimals = null, $min = 0, $max = null): float
     {
         $this->randomFloatCalls[] = [$nbMaxDecimals, $min, $max];

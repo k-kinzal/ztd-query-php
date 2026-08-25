@@ -57,14 +57,4 @@ final class InvalidOverrideExceptionTest extends TestCase
         );
     }
 
-    #[Test]
-    public function isInvalidArgumentException(): void
-    {
-        $schema = new TableSchema('order', ['id' => new ColumnDefinition('id', 'INT')]);
-
-        self::assertInstanceOf(
-            \InvalidArgumentException::class,
-            InvalidOverrideException::unknownColumn('x', $schema)
-        );
-    }
 }

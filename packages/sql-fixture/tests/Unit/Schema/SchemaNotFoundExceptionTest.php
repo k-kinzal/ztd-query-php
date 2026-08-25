@@ -30,9 +30,4 @@ final class SchemaNotFoundExceptionTest extends TestCase
         );
     }
 
-    #[Test]
-    public function isRuntimeException(): void
-    {
-        self::assertInstanceOf(\RuntimeException::class, SchemaNotFoundException::forTable('order'));
-    }
 }

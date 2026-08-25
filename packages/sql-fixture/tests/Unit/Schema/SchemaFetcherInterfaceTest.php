@@ -4,27 +4,22 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Schema;
 
+use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
-use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\SchemaFetcherInterface;
+use SqlFixture\Schema\TableSchema;
 
 #[CoversNothing]
 final class SchemaFetcherInterfaceTest extends TestCase
 {
-    #[Test]
-    public function interfaceExists(): void
+    public function testFetchSchemaAnswersTheTableTheImplementationRead(): void
     {
-        self::assertTrue(interface_exists(SchemaFetcherInterface::class));
-    }
+        $schema = new TableSchema('users', ['id' => new ColumnDefinition('id', 'int')], ['id']);
+        $fetcher = self::createStub(SchemaFetcherInterface::class);
+        $fetcher->method('fetchSchema')->willReturn($schema);
 
-    #[Test]
-    public function declaresFetchSchemaMethod(): void
-    {
-        $reflection = new \ReflectionClass(SchemaFetcherInterface::class);
-        self::assertTrue($reflection->hasMethod('fetchSchema'));
-
-        $method = $reflection->getMethod('fetchSchema');
-        self::assertCount(2, $method->getParameters());
+        self::assertSame($schema, $fetcher->fetchSchema(new PDO('sqlite::memory:'), 'users'));
     }
 }

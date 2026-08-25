@@ -8,6 +8,7 @@ use ReflectionClass;
 use ReflectionNamedType;
 use ReflectionParameter;
 use ReflectionProperty;
+use ReflectionType;
 
 final class ReflectionHydrator implements HydratorInterface
 {
@@ -104,7 +105,7 @@ final class ReflectionHydrator implements HydratorInterface
         $property->setValue($instance, $this->castValue($value, $property->getType()));
     }
 
-    private function castValue(mixed $value, ?\ReflectionType $type): mixed
+    private function castValue(mixed $value, ?ReflectionType $type): mixed
     {
         if ($value === null) {
             return null;

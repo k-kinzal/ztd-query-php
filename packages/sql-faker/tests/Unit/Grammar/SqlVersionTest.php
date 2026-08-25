@@ -5,14 +5,17 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\Grammar;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlFaker\Grammar\SqlVersion;
+use SqlFaker\Grammar\SqlVersionRegistry;
 
 #[CoversClass(SqlVersion::class)]
+#[UsesClass(SqlVersionRegistry::class)]
 final class SqlVersionTest extends TestCase
 {
-    public function testResolvesTheDefaultVersionWithBothArtifacts(): void
+    public function testResolveAnswersTheDefaultReleaseWithBothArtifacts(): void
     {
         $version = SqlVersion::resolve('mysql');
 
@@ -22,7 +25,7 @@ final class SqlVersionTest extends TestCase
         self::assertTrue(is_file($version->lexicalPath));
     }
 
-    public function testEnumeratesEveryRegisteredArtifactPair(): void
+    public function testAllEnumeratesEveryRegisteredArtifactPair(): void
     {
         $versions = SqlVersion::all();
 
@@ -37,7 +40,7 @@ final class SqlVersionTest extends TestCase
         });
     }
 
-    public function testEnumeratesNamesForOneDialect(): void
+    public function testNamesEnumeratesTheReleasesOfOneDialect(): void
     {
         self::assertSame([
             'mysql-5.6.51',
@@ -52,7 +55,7 @@ final class SqlVersionTest extends TestCase
         ], SqlVersion::names('mysql'));
     }
 
-    public function testRejectsNamesForAnUnknownDialect(): void
+    public function testNamesRejectsADialectThePackageDoesNotShip(): void
     {
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Unknown SQL dialect: unknown');
@@ -60,7 +63,7 @@ final class SqlVersionTest extends TestCase
         SqlVersion::names('unknown');
     }
 
-    public function testRejectsAnUnsupportedVersion(): void
+    public function testResolveRejectsAReleaseThePackageDoesNotShip(): void
     {
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Unsupported mysql version');
@@ -68,11 +71,12 @@ final class SqlVersionTest extends TestCase
         SqlVersion::resolve('mysql', 'mysql-999.0.0');
     }
 
-    public function testRejectsAnUnknownDialect(): void
+    public function testResolveRejectsADialectThePackageDoesNotShip(): void
     {
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Unknown SQL dialect');
 
         SqlVersion::resolve('oracle');
     }
+
 }
