@@ -135,18 +135,28 @@ final class FixtureSet implements ArrayAccess, IteratorAggregate, Countable
     }
 
     /**
-     * @return array<string, mixed>|null
+     * Answers the first row generated for a table.
+     *
+     * @param string $table Table to answer for
+     *
+     * @return array<string, mixed>|null The row, or null when the table has none
      */
-    private function firstRow(string $table): ?array
+    public function firstRow(string $table): ?array
     {
         return ($this->rows[$table] ?? [])[0] ?? null;
     }
 
     /**
-     * Positions read in the order the plan names its tables, which is what
-     * makes [$order, $details] = ... line up with the plan as written.
+     * Answers which table a subscript refers to.
+     *
+     * Positions read in the order the plan names its tables, which is what makes
+     * `[$order, $details] = ...` line up with the plan as written.
+     *
+     * @param int|string $table Table name, or its position in the plan
+     *
+     * @return string The table name, or the empty string when no table sits at that position
      */
-    private function resolve(int|string $table): string
+    public function resolve(int|string $table): string
     {
         return is_int($table) ? ($this->order[$table] ?? '') : $table;
     }

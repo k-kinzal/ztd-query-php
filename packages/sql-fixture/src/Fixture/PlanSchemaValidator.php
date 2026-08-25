@@ -39,7 +39,19 @@ final class PlanSchemaValidator
         }
     }
 
-    private function checkEndpoint(ColumnRef $reference): void
+    /**
+     * Refuses an endpoint the schema cannot honour.
+     *
+     * A column the table does not have would be generated into nothing, and a
+     * generated column is filled by the server, so a plan that binds one is asking
+     * for a value that will be thrown away.
+     *
+     * @param ColumnRef $reference Endpoint to check
+     *
+     * @throws PlanSchemaException When a column is missing, or is one the server fills in
+     * @throws SchemaNotFoundException When nothing can resolve the table
+     */
+    public function checkEndpoint(ColumnRef $reference): void
     {
         $schema = $this->schemas->resolve($reference->table);
 
