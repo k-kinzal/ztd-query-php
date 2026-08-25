@@ -20,6 +20,14 @@ use SqlFixture\Schema\ColumnDefinition;
 final class SqliteColumnSample
 {
     /**
+     * The shortest text Faker will produce.
+     *
+     * Asking for less raises rather than answering, so a column declared
+     * narrower than this is filled from a longer draw and cut down.
+     */
+    private const SHORTEST_FAKER_TEXT = 5;
+
+    /**
      * Picks a value of the kind the column's affinity calls for.
      *
      * @param Generator $faker Source of every choice
@@ -85,7 +93,7 @@ final class SqliteColumnSample
             return substr($faker->lexify(str_repeat('?', $length)), 0, $length);
         }
         if ($length !== null) {
-            return substr($faker->text(min($length, 200)), 0, $length);
+            return substr($faker->text(max(self::SHORTEST_FAKER_TEXT, min($length, 200))), 0, $length);
         }
 
         /** @var string $written */

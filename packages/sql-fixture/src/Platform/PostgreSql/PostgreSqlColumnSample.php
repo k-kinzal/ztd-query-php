@@ -21,6 +21,14 @@ use SqlFixture\Schema\ColumnDefinition;
 final class PostgreSqlColumnSample
 {
     /**
+     * The shortest text Faker will produce.
+     *
+     * Asking for less raises rather than answering, so a column declared
+     * narrower than this is filled from a longer draw and cut down.
+     */
+    private const SHORTEST_FAKER_TEXT = 5;
+
+    /**
      * Picks a value the column's declared type will accept.
      *
      * @param Generator $faker Source of every choice
@@ -123,7 +131,7 @@ final class PostgreSqlColumnSample
     {
         $maxLength = $column->length ?? 255;
 
-        return substr($faker->text(min($maxLength, 200)), 0, $maxLength);
+        return substr($faker->text(max(self::SHORTEST_FAKER_TEXT, min($maxLength, 200))), 0, $maxLength);
     }
 
     /**
