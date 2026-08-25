@@ -18,6 +18,7 @@ use SqlFaker\MySql\Grammar\Production;
 use SqlFaker\MySql\Grammar\ProductionRule;
 use SqlFaker\MySql\Grammar\Terminal;
 use SqlFaker\MySql\Grammar\TerminationAnalyzer;
+use SqlFaker\MySql\Grammar\TerminationCost;
 
 #[CoversClass(Derivation::class)]
 #[UsesClass(GenerationException::class)]
@@ -29,6 +30,7 @@ use SqlFaker\MySql\Grammar\TerminationAnalyzer;
 #[UsesClass(ProductionRule::class)]
 #[UsesClass(Terminal::class)]
 #[UsesClass(TerminationAnalyzer::class)]
+#[UsesClass(TerminationCost::class)]
 final class DerivationTest extends TestCase
 {
     public function testOfRewritesTheStartSymbolUntilOnlyTerminalsAreLeft(): void

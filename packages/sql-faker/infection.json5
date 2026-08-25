@@ -19,8 +19,8 @@
         "configDir": ".",
         "customPath": "vendor/bin/phpunit"
     },
-    "testFrameworkOptions": "--testsuite=unit",
     // Keep the toolkit's AI test reporter out of mutation runs: in AI mode it replaces
     // PHPUnit's result output, which Infection reads to distinguish killed from escaped mutants.
-    "testFrameworkExtraArgs": "--no-extensions"
+    // The unit test suite is also selected here because Infection no longer accepts the deprecated key.
+    "testFrameworkExtraArgs": "--testsuite=unit --no-extensions"
 }
