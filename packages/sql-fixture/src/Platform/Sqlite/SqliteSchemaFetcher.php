@@ -117,7 +117,7 @@ final class SqliteSchemaFetcher implements SchemaFetcherInterface
                 unsigned: false,
                 default: $default,
                 autoIncrement: $autoIncrement,
-                generated: false, // PRAGMA doesn't expose this
+                generated: false,
                 enumValues: null,
             );
         }

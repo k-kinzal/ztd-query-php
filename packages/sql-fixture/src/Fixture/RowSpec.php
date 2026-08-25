@@ -23,24 +23,36 @@ use InvalidArgumentException;
 final class RowSpec
 {
     /**
-     * @param list<array<string, mixed>>|null $rows Overrides per row, or null when the count is free
-     * @param array<string, mixed> $sharedOverrides
+     * @param int|null $count How many rows the caller asked for, or null when the count is free
+     * @param list<array<string, mixed>>|null $rows Overrides per row, or null when the caller described the rows together
+     * @param array<string, mixed> $sharedOverrides Overrides every row of the table carries
      */
-    private function __construct(
+    public function __construct(
         public readonly ?int $count,
         private readonly ?array $rows,
         private readonly array $sharedOverrides,
     ) {
     }
 
+    /**
+     * Answers the description of a table the caller said nothing about.
+     *
+     * @return self A description that fixes nothing
+     */
     public static function unspecified(): self
     {
         return new self(null, null, []);
     }
 
     /**
-     * @param int|array<mixed>|TableOverrides $spec
-     * @throws InvalidArgumentException If the shape is not one of the four
+     * Reads what the caller wrote for one table.
+     *
+     * @param string $table Table being described, for the error message
+     * @param int|array<mixed>|TableOverrides $spec What the caller wrote
+     *
+     * @return self The description it stands for
+     *
+     * @throws InvalidArgumentException When a row count is negative
      */
     public static function from(string $table, int|array|TableOverrides $spec): self
     {
@@ -68,9 +80,11 @@ final class RowSpec
     }
 
     /**
-     * Overrides for one row of the given index.
+     * Answers the overrides one row carries.
      *
-     * @return array<string, mixed>
+     * @param int $index Which row of the table
+     *
+     * @return array<string, mixed> Column name => the value that row must carry
      */
     public function overridesFor(int $index): array
     {
@@ -82,13 +96,17 @@ final class RowSpec
     }
 
     /**
-     * A list of arrays is one entry per row; anything else is one set of
-     * column values that every row shares.
+     * Reads what the caller wrote as one entry per row, where that is what it is.
      *
-     * @param array<mixed> $spec
-     * @return list<array<string, mixed>>|null
+     * A list of arrays describes the rows one at a time; anything else is one
+     * set of column values that every row shares. The two are told apart by
+     * shape alone, because both are written as arrays.
+     *
+     * @param array<mixed> $spec What the caller wrote
+     *
+     * @return list<array<string, mixed>>|null One entry per row, or null when the rows were described together
      */
-    private static function asRows(array $spec): ?array
+    public static function asRows(array $spec): ?array
     {
         if (!array_is_list($spec)) {
             return null;
@@ -110,5 +128,24 @@ final class RowSpec
         }
 
         return $rows;
+    }
+
+    /**
+     * Reads what the caller wrote for every table they described.
+     *
+     * @param array<string, int|array<mixed>|TableOverrides> $overrides Table name => what the caller wrote
+     *
+     * @return array<string, self> Table name => the description it stands for
+     *
+     * @throws InvalidArgumentException When a row count is negative
+     */
+    public static function forTables(array $overrides): array
+    {
+        $specs = [];
+        foreach ($overrides as $table => $spec) {
+            $specs[$table] = self::from($table, $spec);
+        }
+
+        return $specs;
     }
 }

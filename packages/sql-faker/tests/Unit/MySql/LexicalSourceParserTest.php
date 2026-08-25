@@ -48,4 +48,30 @@ final class LexicalSourceParserTest extends TestCase
 
         (new LexicalSourceParser())->parseStates('enum my_lex_states {};', '');
     }
+
+    public function testParseStatesNamesEveryStateTheScannerClassifies(): void
+    {
+        $states = (new LexicalSourceParser())->parseStates(
+            'enum my_lex_states { MY_LEX_START, MY_LEX_CHAR };',
+            'case MY_LEX_START: case MY_LEX_CHAR:',
+        );
+
+        self::assertSame(['MY_LEX_START', 'MY_LEX_CHAR'], $states);
+    }
+
+    public function testParseStatesReportsASourceThatDeclaresNoStateEnum(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('MySQL lexical state enum was not found.');
+
+        (new LexicalSourceParser())->parseStates('', '');
+    }
+
+    public function testParseStatesReportsAStateTheScannerLeavesUnclassified(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('MySQL scanner does not classify lexical state: MY_LEX_START');
+
+        (new LexicalSourceParser())->parseStates('enum my_lex_states { MY_LEX_START };', '');
+    }
 }

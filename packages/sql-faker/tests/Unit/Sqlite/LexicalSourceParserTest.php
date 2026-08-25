@@ -106,4 +106,53 @@ int sqlite3GetToken(const unsigned char *z, int *tokenType){
 }
 SOURCE, 'default illegal-token branch was not found'];
     }
+
+    public function testParseCharacterClassesNamesEveryClassTheTokenizerClassifies(): void
+    {
+        $source = <<<'C'
+            #define CC_X 1
+            #define CC_ILLEGAL 2
+            int sqlite3GetToken(const unsigned char *z, int *tokenType){
+              switch( aiClass[*z] ){
+                case CC_X: { break; }
+                default: { *tokenType = TK_ILLEGAL; }
+              }
+            }
+            C;
+
+        self::assertSame(['CC_X', 'CC_ILLEGAL'], (new LexicalSourceParser())->parseCharacterClasses($source));
+    }
+
+    public function testParseCharacterClassesReportsASourceThatDefinesNoClasses(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('SQLite lexer character-class definitions were not found.');
+
+        (new LexicalSourceParser())->parseCharacterClasses('');
+    }
+
+    public function testParseCharacterClassesReportsASourceWithoutTheTokenizer(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('SQLite sqlite3GetToken() was not found.');
+
+        (new LexicalSourceParser())->parseCharacterClasses('#define CC_X 1');
+    }
+
+    public function testParseCharacterClassesReportsAClassTheTokenizerLeavesUnclassified(): void
+    {
+        $source = <<<'C'
+            #define CC_X 1
+            int sqlite3GetToken(const unsigned char *z, int *tokenType){
+              switch( aiClass[*z] ){
+                default: { *tokenType = TK_ILLEGAL; }
+              }
+            }
+            C;
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('does not classify character classes: CC_X');
+
+        (new LexicalSourceParser())->parseCharacterClasses($source);
+    }
 }

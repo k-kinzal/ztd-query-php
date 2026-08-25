@@ -4,349 +4,81 @@ declare(strict_types=1);
 
 namespace SqlFixture\Platform\MySql;
 
-use PhpMyAdmin\SqlParser\Components\CreateDefinition;
+use Override;
 use PhpMyAdmin\SqlParser\Components\DataType;
-use PhpMyAdmin\SqlParser\Components\OptionsArray;
 use PhpMyAdmin\SqlParser\Parser;
-use PhpMyAdmin\SqlParser\Token;
 use PhpMyAdmin\SqlParser\Statements\CreateStatement;
 use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\SchemaParseException;
 use SqlFixture\Schema\SchemaParserInterface;
 use SqlFixture\Schema\TableSchema;
 
+/**
+ * Reads a MySQL CREATE TABLE statement as a table a fixture can be built for.
+ *
+ * MySQL's grammar is large enough that reading it by hand would be a mistake,
+ * so an upstream parser does that and what is left is turning what it produced
+ * into the schema a fixture is generated against.
+ */
 final class MySqlSchemaParser implements SchemaParserInterface
 {
+    /**
+     * @param MySqlCreateStatement $statement Reads the parts of the parsed statement
+     * @param MySqlColumnReader $columns Reads one column definition
+     */
+    public function __construct(
+        private readonly MySqlCreateStatement $statement = new MySqlCreateStatement(),
+        private readonly MySqlColumnReader $columns = new MySqlColumnReader(),
+    ) {
+    }
+
+    /**
+     * Reads the statement as a table.
+     *
+     * @param string $createTableSql CREATE TABLE statement as it was written
+     *
+     * @return TableSchema The table the statement declares
+     *
+     * @throws SchemaParseException When the text is not a CREATE TABLE, was only partly read, or declares no column
+     */
+    #[Override]
     public function parse(string $createTableSql): TableSchema
     {
         $parser = new Parser($createTableSql);
-
         if ($parser->statements === []) {
             throw SchemaParseException::invalidSql($createTableSql, 'No statements found');
         }
 
-        $stmt = $parser->statements[0];
-        if (!$stmt instanceof CreateStatement) {
+        $statement = $parser->statements[0];
+        if (!$statement instanceof CreateStatement) {
             throw SchemaParseException::notCreateTable($createTableSql);
         }
 
-        $this->assertNothingWasLost($parser, $stmt, $createTableSql);
+        $this->statement->assertNothingWasLost($parser, $statement, $createTableSql);
+        $tableName = $this->statement->tableName($statement, $createTableSql);
+        $primaryKeys = $this->statement->primaryKeys($statement);
 
-        $tableName = $this->extractTableName($stmt, $createTableSql);
-        $columns = $this->extractColumns($stmt, $tableName);
-        $primaryKeys = $this->extractPrimaryKeys($stmt);
-
-        return new TableSchema($tableName, $columns, $primaryKeys);
-    }
-
-    /**
-     * Stop if the parser abandoned part of the definition list.
-     *
-     * On a syntax error the parser gives up on the rest of the definitions,
-     * so a stray keyword takes every column after it. The result is a schema
-     * that looks complete and is not, and the damage only shows up much later
-     * as a column that generates no value.
-     *
-     * Not every error loses something. DEC and FIXED are valid synonyms the
-     * parser reports as unrecognised while still reading the column, so the
-     * test is what came out rather than whether anything was said.
-     */
-    private function assertNothingWasLost(Parser $parser, CreateStatement $stmt, string $sql): void
-    {
-        if ($parser->errors === []) {
-            return;
-        }
-
-        $fields = $stmt->fields;
-        $declared = $this->countDeclaredDefinitions($parser);
-
-        if ($declared !== null && is_array($fields) && count($fields) >= $declared) {
-            return;
-        }
-
-        throw SchemaParseException::invalidSql($sql, $parser->errors[0]->getMessage());
-    }
-
-    /**
-     * How many definitions the parenthesised body separates, or null when it
-     * is never closed.
-     *
-     * Counting uses the parser's own tokens, which already know that a comma
-     * inside a string or an ENUM is not a separator.
-     */
-    private function countDeclaredDefinitions(Parser $parser): ?int
-    {
-        $list = $parser->list;
-        if ($list === null) {
-            return null;
-        }
-
-        $depth = 0;
-        $definitions = 1;
-
-        foreach ($list->tokens as $token) {
-            if ($token->type !== Token::TYPE_OPERATOR) {
-                continue;
-            }
-
-            if ($token->value === '(') {
-                $depth++;
-                continue;
-            }
-
-            if ($token->value === ')') {
-                $depth--;
-
-                if ($depth === 0) {
-                    return $definitions;
-                }
-
-                continue;
-            }
-
-            if ($depth === 1 && $token->value === ',') {
-                $definitions++;
-            }
-        }
-
-        return null;
-    }
-
-    private function extractTableName(CreateStatement $stmt, string $sql): string
-    {
-        if ($stmt->name === null) {
-            throw SchemaParseException::invalidSql($sql, 'Table name not found');
-        }
-
-        $name = $stmt->name->table ?? '';
-        return str_replace('`', '', $name);
-    }
-
-    /**
-     * @return array<string, ColumnDefinition>
-     */
-    private function extractColumns(CreateStatement $stmt, string $tableName): array
-    {
-        if (!is_iterable($stmt->fields)) {
+        if (!is_iterable($statement->fields)) {
             throw SchemaParseException::noColumns($tableName);
         }
 
+        /** @var array<string, ColumnDefinition> $columns */
         $columns = [];
-        $primaryKeyColumns = $this->extractPrimaryKeys($stmt);
-
-        foreach ($stmt->fields as $field) {
+        foreach ($statement->fields as $field) {
             $name = $field->name;
-            if (!is_string($name) || $name === '') {
+            if (!is_string($name) || $name === '' || !$field->type instanceof DataType) {
                 continue;
             }
-
-            if (!$field->type instanceof DataType) {
-                continue;
-            }
-
             $columnName = str_replace('`', '', $name);
-            $column = $this->parseColumnDefinition($field, $columnName, $primaryKeyColumns);
-
+            $column = $this->columns->read($field, $columnName, $primaryKeys);
             if ($column !== null) {
                 $columns[$columnName] = $column;
             }
         }
-
         if ($columns === []) {
             throw SchemaParseException::noColumns($tableName);
         }
 
-        return $columns;
-    }
-
-    /**
-     * @param list<string> $primaryKeyColumns
-     */
-    private function parseColumnDefinition(
-        CreateDefinition $field,
-        string $columnName,
-        array $primaryKeyColumns,
-    ): ?ColumnDefinition {
-        $type = $field->type;
-        if (!$type instanceof DataType || $type->name === null) {
-            return null;
-        }
-
-        $typeName = strtoupper($type->name);
-        $options = $field->options;
-
-        $nullable = true;
-        if ($options instanceof OptionsArray && $options->has('NOT NULL') !== false) {
-            $nullable = false;
-        }
-        if (in_array($columnName, $primaryKeyColumns, true)) {
-            $nullable = false;
-        }
-        if ($options instanceof OptionsArray && $options->has('PRIMARY KEY') !== false) {
-            $nullable = false;
-        }
-
-        $unsigned = false;
-        if ($options instanceof OptionsArray && $options->has('UNSIGNED') !== false) {
-            $unsigned = true;
-        }
-        if ($type->options->has('UNSIGNED') !== false) {
-            $unsigned = true;
-        }
-
-        $autoIncrement = false;
-        if ($options instanceof OptionsArray && $options->has('AUTO_INCREMENT') !== false) {
-            $autoIncrement = true;
-        }
-
-        $generated = false;
-        if ($options instanceof OptionsArray && ($options->has('GENERATED') !== false || $options->has('AS') !== false)) {
-            $generated = true;
-        }
-
-        $length = null;
-        $precision = null;
-        $scale = null;
-
-        $parameters = $type->parameters;
-        if ($parameters !== []) {
-            if ($this->isDecimalType($typeName)) {
-                $precision = isset($parameters[0]) ? (int) $parameters[0] : 10;
-                $scale = isset($parameters[1]) ? (int) $parameters[1] : 0;
-            } elseif ($this->isBitType($typeName)) {
-                $length = isset($parameters[0]) ? (int) $parameters[0] : 1;
-            } else {
-                $length = isset($parameters[0]) ? (int) $parameters[0] : null;
-            }
-        }
-
-        $default = $this->extractDefault($options);
-
-        $enumValues = null;
-        if ($typeName === 'ENUM' || $typeName === 'SET') {
-            $enumValues = $this->extractEnumValues($parameters);
-        }
-
-        return new ColumnDefinition(
-            name: $columnName,
-            type: $typeName,
-            length: $length,
-            precision: $precision,
-            scale: $scale,
-            nullable: $nullable,
-            unsigned: $unsigned,
-            default: $default,
-            autoIncrement: $autoIncrement,
-            generated: $generated,
-            enumValues: $enumValues,
-        );
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function extractPrimaryKeys(CreateStatement $stmt): array
-    {
-        if (!is_iterable($stmt->fields)) {
-            return [];
-        }
-
-        $primaryKeys = [];
-        foreach ($stmt->fields as $field) {
-            if ($field->options instanceof OptionsArray && $field->options->has('PRIMARY KEY') !== false) {
-                $name = $field->name;
-                if (is_string($name) && $name !== '') {
-                    $primaryKeys[] = str_replace('`', '', $name);
-                }
-            }
-
-            if ($field->key !== null && $field->key->type === 'PRIMARY KEY') {
-                foreach ($field->key->columns as $col) {
-                    $colName = $col['name'] ?? null;
-                    if (is_string($colName) && $colName !== '') {
-                        $primaryKeys[] = str_replace('`', '', $colName);
-                    }
-                }
-            }
-        }
-
-        return $primaryKeys;
-    }
-
-    private function isDecimalType(string $type): bool
-    {
-        return in_array($type, ['DECIMAL', 'NUMERIC', 'DEC', 'FIXED'], true);
-    }
-
-    private function isBitType(string $type): bool
-    {
-        return $type === 'BIT';
-    }
-
-    private function extractDefault(?OptionsArray $options): mixed
-    {
-        if ($options === null) {
-            return null;
-        }
-
-        if ($options->has('DEFAULT') === false) {
-            return null;
-        }
-
-        $optionsArray = $options->options;
-
-        foreach ($optionsArray as $option) {
-            if (!is_array($option)) {
-                continue;
-            }
-
-            $name = $option['name'] ?? null;
-            if ($name === 'DEFAULT') {
-                $value = $option['value'] ?? null;
-                if ($value === null) {
-                    return null;
-                }
-                if (is_string($value)) {
-                    if (preg_match('/^[\'"](.*)[\'"]\s*$/s', $value, $matches) === 1) {
-                        return $matches[1];
-                    }
-                    if (strtoupper($value) === 'NULL') {
-                        return null;
-                    }
-                    if (strtoupper($value) === 'TRUE') {
-                        return true;
-                    }
-                    if (strtoupper($value) === 'FALSE') {
-                        return false;
-                    }
-                    if (is_numeric($value)) {
-                        if (str_contains($value, '.')) {
-                            return (float) $value;
-                        }
-                        return (int) $value;
-                    }
-                    return $value;
-                }
-                return $value;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * @param array<mixed> $parameters
-     * @return list<string>
-     */
-    private function extractEnumValues(array $parameters): array
-    {
-        $values = [];
-        foreach ($parameters as $param) {
-            if (is_string($param)) {
-                $value = trim($param, '\'"');
-                $values[] = $value;
-            }
-        }
-        return $values;
+        return new TableSchema($tableName, $columns, $primaryKeys);
     }
 }
