@@ -4,18 +4,19 @@ declare(strict_types=1);
 
 namespace SqlFixture;
 
-use InvalidArgumentException;
+use RuntimeException;
 use SqlFixture\Schema\TableSchema;
 
 /**
- * An override that the table cannot accept.
+ * Reports an override the table cannot hold.
  *
- * Overrides are the one route by which a generated row can stop matching the
- * schema it came from. The type mappers never produce null for a NOT NULL
- * column, or a value of the wrong shape; a caller can do both, and used to,
- * silently.
+ * Refusing these is the point of the check rather than an accident of it: an
+ * override naming a column that does not exist is silently dropped and the real
+ * column generated at random, and a null bound to a NOT NULL column fails much
+ * later at the insert. Saying so is declared behaviour, so it is reported at
+ * runtime and a caller can catch it.
  */
-final class InvalidOverrideException extends InvalidArgumentException
+final class InvalidOverrideException extends RuntimeException
 {
     public static function unknownColumn(string $column, TableSchema $schema): self
     {

@@ -15,10 +15,10 @@ namespace SqlFixture\Fixture;
 final class TableOverrides
 {
     /**
-     * @param array<string, mixed> $values
+     * @param array<string, mixed> $values Columns the caller fixed, and the values they take
      * @param array<array-key, string> $nulls Columns to set to NULL rather than generate
      */
-    private function __construct(
+    public function __construct(
         private readonly array $values,
         private readonly array $nulls,
     ) {

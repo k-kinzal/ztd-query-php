@@ -71,16 +71,18 @@ final class FixtureGenerator
     }
 
     /**
-     * Refuse an override the table could not hold.
+     * Refuses an override the table cannot hold.
      *
      * Without this a misspelt column is dropped and the real one generated at
      * random, and a null lands in a NOT NULL column to fail much later at the
      * insert. Both look like working fixtures right up until they do not.
      *
-     * @param array<string, mixed> $overrides
-     * @throws InvalidOverrideException
+     * @param TableSchema $schema Table the row is for
+     * @param array<string, mixed> $overrides Values the caller fixed
+     *
+     * @throws InvalidOverrideException When a column is unknown, is filled by the server, or cannot be null
      */
-    private function assertOverridesFitSchema(TableSchema $schema, array $overrides): void
+    public function assertOverridesFitSchema(TableSchema $schema, array $overrides): void
     {
         foreach ($overrides as $columnName => $value) {
             $column = $schema->getColumn($columnName);

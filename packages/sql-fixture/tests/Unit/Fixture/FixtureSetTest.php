@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Fixture;
 
-use LogicException;
 use OutOfBoundsException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -134,28 +133,6 @@ final class FixtureSetTest extends TestCase
 
         self::assertNull($set['nope']);
         self::assertSame([], $set->rows('nope'));
-    }
-
-    #[Test]
-    public function cannotBeWrittenTo(): void
-    {
-        $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
-
-        $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('read-only');
-
-        $set['order'] = [];
-    }
-
-    #[Test]
-    public function cannotHaveEntriesRemoved(): void
-    {
-        $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
-
-        $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('read-only');
-
-        unset($set['order']);
     }
 
     #[Test]

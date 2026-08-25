@@ -67,9 +67,19 @@ class DatabaseFixtureProvider extends Base
     }
 
     /**
-     * Get or fetch schema for a table.
+     * Answers the table a fixture is generated against, reading it once.
+     *
+     * A schema is read from the connection the first time it is asked for and kept,
+     * because a provider is typically asked for many rows of the same few tables
+     * and reading the declaration again would say the same thing each time.
+     *
+     * @param string $tableName Table to describe
+     *
+     * @return TableSchema The table
+     *
+     * @throws RuntimeException When the connection knows no such table
      */
-    private function getSchema(string $tableName): TableSchema
+    public function getSchema(string $tableName): TableSchema
     {
         $normalizedName = $this->normalizeTableName($tableName);
 
@@ -84,9 +94,16 @@ class DatabaseFixtureProvider extends Base
     }
 
     /**
-     * Normalize table name for caching.
+     * Answers the key a table's schema is remembered under.
+     *
+     * A caller may quote a name or not, and both name the same table, so the quotes
+     * come off before the name is used as a key.
+     *
+     * @param string $tableName Name as the caller wrote it
+     *
+     * @return string The key it is remembered under
      */
-    private function normalizeTableName(string $tableName): string
+    public function normalizeTableName(string $tableName): string
     {
         return str_replace(['`', '"'], '', $tableName);
     }

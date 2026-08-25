@@ -4,9 +4,17 @@ declare(strict_types=1);
 
 namespace SqlFixture\Plan;
 
-use InvalidArgumentException;
+use RuntimeException;
 
-final class PlanSyntaxException extends InvalidArgumentException
+/**
+ * Reports a plan that could not be read.
+ *
+ * A plan arrives as text a test author wrote, so failing to read one is a fact
+ * about that text rather than a mistake in the code reading it. It is reported
+ * at runtime, and a caller reading plans from a file or a fixture attribute can
+ * catch it.
+ */
+final class PlanSyntaxException extends RuntimeException
 {
     public static function emptyPlan(): self
     {

@@ -4,12 +4,17 @@ declare(strict_types=1);
 
 namespace SqlFixture\Plan;
 
-use LogicException;
+use RuntimeException;
 
 /**
- * A plan that parses but does not describe anything generatable.
+ * Reports a plan that reads correctly but could never be generated.
+ *
+ * The relations are each well-formed; it is what they say together that cannot
+ * be satisfied — a column bound twice, or a group of tables each waiting on the
+ * next. That is a property of the plan the caller wrote, so it is reported at
+ * runtime alongside the failures of reading one.
  */
-final class PlanStructureException extends LogicException
+final class PlanStructureException extends RuntimeException
 {
     public static function columnsBoundTwice(ColumnRef $child, ColumnRef $first, ColumnRef $second): self
     {

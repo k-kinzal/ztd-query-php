@@ -104,9 +104,23 @@ class FixtureProvider extends Base
     }
 
     /**
-     * Get or parse schema from SQL.
+     * Answers the table a declaration describes, reading it once.
+     *
+     * A declaration is read the first time it is seen and kept against the
+     * dialect it was read for, because a provider is typically handed the same
+     * declaration repeatedly and reading it again would say the same thing.
+     * Each table read is also registered with the resolver, which is what lets
+     * a later plan name it.
+     *
+     * @param string $createTableSql Declaration as it was written
+     * @param string|null $dialect Dialect to read it as, or null for the provider's own
+     *
+     * @return TableSchema The table
+     *
+     * @throws SchemaParseException When the declaration cannot be read
+     * @throws InvalidArgumentException When the dialect is not one this package supports
      */
-    protected function getSchema(string $createTableSql, ?string $dialect = null): TableSchema
+    public function getSchema(string $createTableSql, ?string $dialect = null): TableSchema
     {
         $effectiveDialect = $dialect ?? $this->dialect;
         $cacheKey = md5($createTableSql . ':' . $effectiveDialect);
