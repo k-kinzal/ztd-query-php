@@ -206,4 +206,17 @@ final class GenerationPlans
             'eidlist_opt' => [ProductionPattern::nonEmpty()],
         ])->requiringNonEmpty();
     }
+
+    /**
+     * Directs a bounded walk that grows one statement from its own rule.
+     *
+     * @param non-empty-string $startRule Rule the statement is grown from
+     * @param int $maxDepth How deep the walk may recurse
+     *
+     * @return GenerationPlan<false> Plan for one bounded statement
+     */
+    public static function statement(string $startRule, int $maxDepth): GenerationPlan
+    {
+        return GenerationPlan::fromRule($startRule)->withMaxDepth($maxDepth);
+    }
 }

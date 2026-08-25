@@ -396,4 +396,25 @@ final class GenerationPlans
             ],
         ])->requiringNonEmpty();
     }
+
+    /**
+     * Directs a bounded walk that must produce a statement.
+     *
+     * Every generator method on the provider makes the same promise: the SQL
+     * it answers is a statement, not the empty string a nullable rule may
+     * otherwise reduce to, and it stops before the caller's depth.
+     *
+     * @param non-empty-string|null $startRule Rule the statement is grown from, or null for the grammar entry point
+     * @param int $maxDepth How deep the walk may recurse
+     *
+     * @return GenerationPlan<true> Plan for one bounded, non-empty statement
+     */
+    public static function statement(?string $startRule, int $maxDepth): GenerationPlan
+    {
+        $plan = $startRule === null
+            ? GenerationPlan::all()
+            : GenerationPlan::fromRule($startRule);
+
+        return $plan->requiringNonEmpty()->withMaxDepth($maxDepth);
+    }
 }

@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace SqlFaker\Grammar;
 
-use InvalidArgumentException;
-
 /**
  * Directs one act of generation: where to start, which productions to take, and how deep to go.
  *
@@ -22,19 +20,17 @@ final class GenerationPlan
      * Binds every choice a generation is directed by.
      *
      * A start rule is either absent or names a rule, never the empty string,
-     * and the same holds for a lexical target. Both are rejected here rather
-     * than in the factories so no way of building a plan can evade them.
+     * and the same holds for a lexical target. Both say so in their type, so a
+     * plan that could not direct anything cannot be written in the first place.
      *
-     * @param string|null $startRule Rule the walk begins at, or null for the grammar entry point
+     * @param non-empty-string|null $startRule Rule the walk begins at, or null for the grammar entry point
      * @param array<string, non-empty-list<ProductionPattern>> $patterns Patterns directing each occurrence of a rule
      * @param array<string, ProductionPattern> $patternsForEveryOccurrence Pattern directing every further occurrence of a rule
      * @param array<string, non-empty-list<non-empty-string>> $lexemes Lexemes directing each occurrence of a terminal
-     * @param string|null $lexicalTarget Lexical rule to realize instead of walking the grammar
+     * @param non-empty-string|null $lexicalTarget Lexical rule to realize instead of walking the grammar
      * @param array<string, int> $parameters Parameters the lexical target is realized with
      * @param TRequiresNonEmpty $requiresNonEmpty Whether the walk must produce at least one symbol
      * @param int $maxDepth How deep the walk may recurse
-     *
-     * @throws InvalidArgumentException When the start rule or the lexical target is named as an empty string
      */
     public function __construct(
         private readonly ?string $startRule,
@@ -46,12 +42,6 @@ final class GenerationPlan
         private readonly bool $requiresNonEmpty,
         private readonly int $maxDepth,
     ) {
-        if ($startRule === '') {
-            throw new InvalidArgumentException('A generation plan start rule must not be empty.');
-        }
-        if ($lexicalTarget === '') {
-            throw new InvalidArgumentException('A lexical generation target must not be empty.');
-        }
     }
 
     /**
@@ -67,11 +57,9 @@ final class GenerationPlan
     /**
      * Directs a walk that begins at one rule instead of the grammar entry point.
      *
-     * @param string $startRule Rule the walk begins at
+     * @param non-empty-string $startRule Rule the walk begins at
      *
      * @return self<false> Plan restricted to that rule
-     *
-     * @throws InvalidArgumentException When the start rule is empty
      */
     public static function fromRule(string $startRule): self
     {
@@ -81,31 +69,23 @@ final class GenerationPlan
     /**
      * Directs a walk that begins at one rule and takes the productions the caller named.
      *
-     * @param string $startRule Rule the walk begins at
-     * @param array<string, non-empty-list<ProductionPattern>> $patterns Patterns directing each occurrence of a rule
+     * @param non-empty-string $startRule Rule the walk begins at
+     * @param non-empty-array<string, non-empty-list<ProductionPattern>> $patterns Patterns directing each occurrence of a rule
      *
      * @return self<false> Plan restricted to those productions
-     *
-     * @throws InvalidArgumentException When the start rule is empty or no pattern was given
      */
     public static function constrained(string $startRule, array $patterns): self
     {
-        if ($patterns === []) {
-            throw new InvalidArgumentException('A constrained generation plan requires production patterns.');
-        }
-
         return new self($startRule, $patterns, [], [], null, [], false, PHP_INT_MAX);
     }
 
     /**
      * Directs the realization of one lexical rule instead of a walk over the grammar.
      *
-     * @param string $target Lexical rule to realize
+     * @param non-empty-string $target Lexical rule to realize
      * @param array<string, int> $parameters Parameters the target is realized with
      *
      * @return self<true> Plan that realizes that target
-     *
-     * @throws InvalidArgumentException When the target is empty
      */
     public static function lexical(string $target, array $parameters): self
     {
@@ -134,18 +114,12 @@ final class GenerationPlan
     /**
      * Answers a plan that spells each occurrence of a terminal the way the caller asked.
      *
-     * @param array<string, non-empty-list<non-empty-string>> $lexemes Lexemes directing each occurrence of a terminal
+     * @param non-empty-array<string, non-empty-list<non-empty-string>> $lexemes Lexemes directing each occurrence of a terminal
      *
      * @return self<TRequiresNonEmpty> Plan carrying those lexemes
-     *
-     * @throws InvalidArgumentException When no lexeme was given
      */
     public function withLexemes(array $lexemes): self
     {
-        if ($lexemes === []) {
-            throw new InvalidArgumentException('A lexical generation plan requires lexemes.');
-        }
-
         return new self(
             $this->startRule,
             $this->patterns,
@@ -186,7 +160,7 @@ final class GenerationPlan
     /**
      * Answers the rule the walk begins at.
      *
-     * @return string|null Rule the walk begins at, or null for the grammar entry point
+     * @return non-empty-string|null Rule the walk begins at, or null for the grammar entry point
      */
     public function startRule(): ?string
     {
@@ -213,19 +187,13 @@ final class GenerationPlan
     /**
      * Answers a plan that directs every further occurrence of one rule the same way.
      *
-     * @param string $rule Rule to direct
+     * @param non-empty-string $rule Rule to direct
      * @param ProductionPattern $pattern Pattern every occurrence not named directly takes
      *
      * @return self<TRequiresNonEmpty> Plan carrying that fallback
-     *
-     * @throws InvalidArgumentException When the rule is empty
      */
     public function withPatternForEveryOccurrence(string $rule, ProductionPattern $pattern): self
     {
-        if ($rule === '') {
-            throw new InvalidArgumentException('A generation plan rule must not be empty.');
-        }
-
         return new self(
             $this->startRule,
             $this->patterns,
@@ -254,7 +222,7 @@ final class GenerationPlan
     /**
      * Answers the lexical rule to realize instead of walking the grammar.
      *
-     * @return string|null Lexical rule to realize, or null when the grammar is walked
+     * @return non-empty-string|null Lexical rule to realize, or null when the grammar is walked
      */
     public function lexicalTarget(): ?string
     {

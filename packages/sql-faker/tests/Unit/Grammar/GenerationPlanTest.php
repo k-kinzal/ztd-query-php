@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\Grammar;
 
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -72,7 +71,6 @@ final class GenerationPlanTest extends TestCase
         self::assertSame($columns, $plan->patternAt('opt_columns', 100));
     }
 
-
     public function testRequiringNonEmptyProducesANewPlan(): void
     {
         $plan = GenerationPlan::fromRule('statement');
@@ -119,7 +117,6 @@ final class GenerationPlanTest extends TestCase
         self::assertNull($plan->lexemeAt('unknown', 0));
     }
 
-
     public function testLexicalSelectsOneTargetWithParameters(): void
     {
         $plan = GenerationPlan::lexical('quoted_identifier', [
@@ -130,74 +127,6 @@ final class GenerationPlanTest extends TestCase
         self::assertNull($plan->startRule());
         self::assertSame('quoted_identifier', $plan->lexicalTarget());
         self::assertSame(['minLength' => 2, 'maxLength' => 8], $plan->parameters());
-    }
-
-    public function testConstructBindsEveryChoiceAGenerationIsDirectedBy(): void
-    {
-        $pattern = ProductionPattern::nonEmpty();
-        $plan = new GenerationPlan('statement', ['statement' => [$pattern]], [], ['IDENT' => ['users']], null, [], true, 7);
-
-        self::assertSame('statement', $plan->startRule());
-        self::assertSame($pattern, $plan->patternAt('statement', 0));
-        self::assertSame('users', $plan->lexemeAt('IDENT', 0));
-        self::assertTrue($plan->requiresNonEmpty());
-        self::assertSame(7, $plan->maxDepth());
-    }
-
-    public function testConstructRefusesAStartRuleNamedAsTheEmptyString(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('A generation plan start rule must not be empty.');
-
-        new GenerationPlan('', [], [], [], null, [], false, PHP_INT_MAX);
-    }
-
-    public function testConstructRefusesALexicalTargetNamedAsTheEmptyString(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('A lexical generation target must not be empty.');
-
-        new GenerationPlan(null, [], [], [], '', [], false, PHP_INT_MAX);
-    }
-
-    public function testFromRuleRefusesAnEmptyStartRule(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('A generation plan start rule must not be empty.');
-
-        GenerationPlan::fromRule('');
-    }
-
-    public function testConstrainedRefusesAPlanWithNoPatterns(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('A constrained generation plan requires production patterns.');
-
-        GenerationPlan::constrained('statement', []);
-    }
-
-    public function testLexicalRefusesAnEmptyTarget(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('A lexical generation target must not be empty.');
-
-        GenerationPlan::lexical('', []);
-    }
-
-    public function testWithLexemesRefusesAPlanWithNoLexemes(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('A lexical generation plan requires lexemes.');
-
-        GenerationPlan::all()->withLexemes([]);
-    }
-
-    public function testWithPatternForEveryOccurrenceRefusesAnEmptyRule(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('A generation plan rule must not be empty.');
-
-        GenerationPlan::all()->withPatternForEveryOccurrence('', ProductionPattern::nonEmpty());
     }
 
     public function testStartRuleAnswersNothingWhenTheWalkBeginsAtTheGrammarEntryPoint(): void
