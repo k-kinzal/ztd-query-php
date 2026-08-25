@@ -252,4 +252,99 @@ final class MySqlTerminalRealizerTest extends TestCase
             true,
         )];
     }
+
+    #[DataProvider('providerSyntheticTerminal')]
+    public function testRealizeSyntheticWritesEveryNamedTerminalAsItsOwnKindOfToken(
+        MySqlTerminalRealizer $realizer,
+        string $terminal,
+        string $token,
+    ): void {
+        self::assertSame([$token], $realizer->realizeSynthetic($terminal)[1]);
+    }
+
+    /**
+     * @return iterable<string, array{MySqlTerminalRealizer, string, string}>
+     */
+    public static function providerSyntheticTerminal(): iterable
+    {
+        $realizer = new MySqlTerminalRealizer(
+            Factory::create(),
+            new LexicalCatalog([
+                'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+                'terminals' => [],
+                'terminal_exclusions' => [],
+                'coverage' => ['units' => [], 'witnessed' => [], 'excluded' => []],
+            ]),
+            new MySqlTokenizer(['||' => 'OR_OR_SYM', 'SELECT' => 'SELECT_SYM'], [], true),
+            ['SELECT_SYM' => ['SELECT']],
+            [],
+            'mysql-8.4.7',
+            true,
+        );
+
+        $terminals = [
+            'IDENT' => 'IDENT',
+            'IDENT_QUOTED' => 'IDENT_QUOTED',
+            'TEXT_STRING' => 'TEXT_STRING',
+            'NCHAR_STRING' => 'NCHAR_STRING',
+            'DOLLAR_QUOTED_STRING_SYM' => 'DOLLAR_QUOTED_STRING_SYM',
+            'NUM' => 'NUM',
+            'LONG_NUM' => 'LONG_NUM',
+            'ULONGLONG_NUM' => 'ULONGLONG_NUM',
+            'DECIMAL_NUM' => 'DECIMAL_NUM',
+            'FLOAT_NUM' => 'FLOAT_NUM',
+            'HEX_NUM' => 'HEX_NUM',
+            'BIN_NUM' => 'BIN_NUM',
+            'LEX_HOSTNAME' => 'IDENT',
+            'PARAM_MARKER' => 'PARAM_MARKER',
+            'OR2_SYM' => 'OR2_SYM',
+            'WITH_ROLLUP_SYM' => 'WITH_ROLLUP_SYM',
+            'UNDERSCORE_CHARSET' => 'UNDERSCORE_CHARSET',
+        ];
+        foreach ($terminals as $terminal => $token) {
+            yield $terminal => [$realizer, $terminal, $token];
+        }
+    }
+
+    #[DataProvider('providerFixedSyntheticTerminal')]
+    public function testRealizeSyntheticWritesEveryFixedTerminalAsItsOneSpelling(
+        MySqlTerminalRealizer $realizer,
+        string $terminal,
+        string $lexeme,
+    ): void {
+        self::assertSame($lexeme, $realizer->realizeSynthetic($terminal)[0]);
+    }
+
+    /**
+     * @return iterable<string, array{MySqlTerminalRealizer, string, string}>
+     */
+    public static function providerFixedSyntheticTerminal(): iterable
+    {
+        $realizer = new MySqlTerminalRealizer(
+            Factory::create(),
+            new LexicalCatalog([
+                'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+                'terminals' => [],
+                'terminal_exclusions' => [],
+                'coverage' => ['units' => [], 'witnessed' => [], 'excluded' => []],
+            ]),
+            new MySqlTokenizer(['||' => 'OR_OR_SYM', 'SELECT' => 'SELECT_SYM'], [], true),
+            ['SELECT_SYM' => ['SELECT']],
+            [],
+            'mysql-8.4.7',
+            true,
+        );
+
+        $spellings = [
+            'ULONGLONG_NUM' => '18446744073709551615',
+            'LEX_HOSTNAME' => 'localhost',
+            'PARAM_MARKER' => '?',
+            'OR2_SYM' => '||',
+            'WITH_ROLLUP_SYM' => 'WITH ROLLUP',
+            'UNDERSCORE_CHARSET' => '_utf8mb4',
+        ];
+        foreach ($spellings as $terminal => $lexeme) {
+            yield $terminal => [$realizer, $terminal, $lexeme];
+        }
+    }
 }
