@@ -19,6 +19,25 @@ final class SqlVersion
     ) {
     }
 
+    /**
+     * Names a version whose artifacts live at paths the caller chose.
+     *
+     * The registry answers where a released version's artifacts are read from.
+     * A build writes them, and writes them to a staging location before it is
+     * willing to replace what is committed, so it needs to say where.
+     *
+     * @param string $dialect Dialect the artifacts describe
+     * @param string $name Version the artifacts describe
+     * @param string $astPath Where the grammar AST is written
+     * @param string $lexicalPath Where the lexical profile is written
+     *
+     * @return self The version, bound to those paths
+     */
+    public static function at(string $dialect, string $name, string $astPath, string $lexicalPath): self
+    {
+        return new self($dialect, $name, $astPath, $lexicalPath);
+    }
+
     public static function resolve(string $dialect, ?string $version = null): self
     {
         $registry = self::registry();

@@ -5,96 +5,145 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\Grammar;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use SqlFaker\Grammar\ArtifactDirectory;
+use SqlFaker\Grammar\LexerSource;
 use SqlFaker\Grammar\LexicalCatalog;
+use SqlFaker\Grammar\LexicalCatalogException;
+use SqlFaker\Grammar\LexicalCatalogShape;
+use SqlFaker\Grammar\LexicalCoverageCheck;
 use SqlFaker\Grammar\LexicalProfileBuilder;
+use SqlFaker\Grammar\LexicalProfileWriter;
+use SqlFaker\Grammar\LexicalWitnessCheck;
+use SqlFaker\Grammar\LexicalWitnessShape;
+use SqlFaker\Grammar\SqlVersion;
+use SqlFaker\MySql\Grammar\Grammar as MySqlGrammar;
+use SqlFaker\MySql\MySqlProfileBuilder;
+use SqlFaker\PostgreSql\PgProfileBuilder;
+use SqlFaker\Sqlite\SqliteProfileBuilder;
 
 #[CoversClass(LexicalProfileBuilder::class)]
+#[UsesClass(ArtifactDirectory::class)]
 #[UsesClass(LexicalCatalog::class)]
+#[UsesClass(LexicalCatalogException::class)]
+#[UsesClass(LexicalCatalogShape::class)]
+#[UsesClass(LexicalCoverageCheck::class)]
+#[UsesClass(LexicalProfileWriter::class)]
+#[UsesClass(LexicalWitnessCheck::class)]
+#[UsesClass(LexicalWitnessShape::class)]
+#[UsesClass(MySqlProfileBuilder::class)]
+#[UsesClass(PgProfileBuilder::class)]
+#[UsesClass(SqliteProfileBuilder::class)]
+#[UsesClass(SqlVersion::class)]
+#[Medium]
 final class LexicalProfileBuilderTest extends TestCase
 {
-    public function testAcceptsACompleteVersionBoundProfile(): void
+    public function testMysqlDelegatesToTheDialectBuilderItWasGiven(): void
     {
+        $source = $this->createStub(LexerSource::class);
+        $source->method('fetch')->willThrowException(new RuntimeException('mysql source unavailable'));
+
+        $builder = new LexicalProfileBuilder(new MySqlProfileBuilder($source));
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('mysql source unavailable');
+
+        $builder->mysql('mysql-8.4.7', MySqlGrammar::load('mysql-8.4.7'));
+    }
+
+    public function testPostgreSqlDelegatesToTheDialectBuilderItWasGiven(): void
+    {
+        $source = $this->createStub(LexerSource::class);
+        $source->method('fetch')->willThrowException(new RuntimeException('postgres source unavailable'));
+
+        $builder = new LexicalProfileBuilder(null, new PgProfileBuilder($source));
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('postgres source unavailable');
+
+        $builder->postgreSql('pg-17.2');
+    }
+
+    public function testSqliteDelegatesToTheDialectBuilderItWasGiven(): void
+    {
+        $source = $this->createStub(LexerSource::class);
+        $source->method('fetch')->willThrowException(new RuntimeException('sqlite source unavailable'));
+
+        $builder = new LexicalProfileBuilder(null, null, new SqliteProfileBuilder($source));
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('sqlite source unavailable');
+
+        $builder->sqlite('sqlite-3.47.2');
+    }
+
+    public function testAssertCompatibleAcceptsAProfileThatClassifiesEveryTerminal(): void
+    {
+        (new LexicalProfileBuilder())->assertCompatible(
+            [
+                'dialect' => 'mysql',
+                'version' => 'mysql-8.4.7',
+                'catalog' => [
+                    'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+                    'terminals' => [
+                        'IDENT' => [[
+                            'id' => 'ident.bare',
+                            'sql' => 'users',
+                            'tokens' => ['IDENT'],
+                            'units' => ['identifier'],
+                        ]],
+                    ],
+                    'terminal_exclusions' => [],
+                    'coverage' => [
+                        'units' => ['identifier'],
+                        'witnessed' => ['identifier' => 'ident.bare'],
+                        'excluded' => [],
+                    ],
+                ],
+            ],
+            'mysql',
+            'mysql-8.4.7',
+            ['IDENT'],
+        );
+
         $this->expectNotToPerformAssertions();
-
-        $profile = [
-            'dialect' => 'test',
-            'version' => 'test-1',
-            'catalog' => [
-                'source' => ['engine' => 'test', 'entrypoint' => 'lexer'],
-                'terminals' => [
-                    'TOKEN' => [[
-                        'id' => 'token',
-                        'sql' => 'token',
-                        'tokens' => ['TOKEN'],
-                        'units' => ['branch:1'],
-                    ]],
-                ],
-                'terminal_exclusions' => [],
-                'coverage' => [
-                    'units' => ['branch:1'],
-                    'witnessed' => ['branch:1' => 'token'],
-                    'excluded' => [],
-                ],
-            ],
-        ];
-
-        (new LexicalProfileBuilder())->assertCompatible($profile, 'test', 'test-1', ['TOKEN']);
     }
 
-    public function testRejectsAMismatchedProfileIdentity(): void
+    public function testAssertCompatibleRejectsAProfileThatNamesAnotherRelease(): void
     {
         $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Invalid lexical profile identity: mysql mysql-8.4.7');
 
-        (new LexicalProfileBuilder())->assertCompatible([], 'test', 'test-1', []);
+        (new LexicalProfileBuilder())->assertCompatible(
+            ['dialect' => 'mysql', 'version' => 'mysql-8.0.44'],
+            'mysql',
+            'mysql-8.4.7',
+            [],
+        );
     }
 
-    /**
-     * @param array<string, mixed> $profile
-     */
-    #[DataProvider('providerInvalidProfile')]
-    public function testRejectsInvalidProfile(array $profile, string $message): void
+    public function testAssertCompatibleRejectsAProfileWithNoCatalog(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage($message);
+        $this->expectExceptionMessage('Lexical profile catalog is missing: mysql mysql-8.4.7');
 
-        (new LexicalProfileBuilder())->assertCompatible($profile, 'test', 'test-1', ['TOKEN']);
+        (new LexicalProfileBuilder())->assertCompatible(
+            ['dialect' => 'mysql', 'version' => 'mysql-8.4.7'],
+            'mysql',
+            'mysql-8.4.7',
+            [],
+        );
     }
 
-    /**
-     * @return iterable<string, array{array<string, mixed>, string}>
-     */
-    public static function providerInvalidProfile(): iterable
+    public function testPublishVersionReportsWhenAnArtifactCannotBeWritten(): void
     {
-        yield 'dialect mismatch' => [[
-            'dialect' => 'other',
-            'version' => 'test-1',
-        ], 'Invalid lexical profile identity: test test-1'];
-        yield 'version mismatch' => [[
-            'dialect' => 'test',
-            'version' => 'test-2',
-        ], 'Invalid lexical profile identity: test test-1'];
-        yield 'missing catalog' => [[
-            'dialect' => 'test',
-            'version' => 'test-1',
-        ], 'Lexical profile catalog is missing: test test-1'];
-        yield 'catalog is not an array' => [[
-            'dialect' => 'test',
-            'version' => 'test-1',
-            'catalog' => 'invalid',
-        ], 'Lexical profile catalog is missing: test test-1'];
-        yield 'catalog misses a terminal' => [[
-            'dialect' => 'test',
-            'version' => 'test-1',
-            'catalog' => [
-                'source' => ['engine' => 'test', 'entrypoint' => 'lexer'],
-                'terminals' => [],
-                'terminal_exclusions' => [],
-                'coverage' => ['units' => [], 'witnessed' => [], 'excluded' => []],
-            ],
-        ], 'missing grammar terminals: TOKEN'];
+        $version = SqlVersion::at('mysql', 'mysql-8.4.7', '/dev/null/no-such/ast.php', '/dev/null/no-such/lex.php');
+
+        $this->expectException(RuntimeException::class);
+
+        (new LexicalProfileBuilder())->publishVersion($version, '<?php return [];', ['dialect' => 'mysql']);
     }
 }

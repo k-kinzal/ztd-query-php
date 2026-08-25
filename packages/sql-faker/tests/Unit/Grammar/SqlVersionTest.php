@@ -75,4 +75,14 @@ final class SqlVersionTest extends TestCase
 
         SqlVersion::resolve('oracle');
     }
+
+    public function testAtNamesAVersionAtThePathsTheCallerChose(): void
+    {
+        $version = SqlVersion::at('mysql', 'mysql-8.4.7', '/tmp/ast.php', '/tmp/lex.php');
+
+        self::assertSame('mysql', $version->dialect);
+        self::assertSame('mysql-8.4.7', $version->name);
+        self::assertSame('/tmp/ast.php', $version->astPath);
+        self::assertSame('/tmp/lex.php', $version->lexicalPath);
+    }
 }
