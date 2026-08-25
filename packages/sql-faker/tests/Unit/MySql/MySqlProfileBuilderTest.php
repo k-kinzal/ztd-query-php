@@ -193,4 +193,58 @@ final class MySqlProfileBuilderTest extends TestCase
             $ids,
         );
     }
+
+    public function testCatalogNamesEveryTerminalTheDefaultServerModeWillNotProduce(): void
+    {
+        $catalog = (new MySqlProfileBuilder())->catalog(
+            'mysql-8.4.7',
+            ['symbols' => [], 'functions' => [], 'features' => ['dollar_quoted_strings' => false]],
+            [],
+            Grammar::load('mysql-8.4.7'),
+        );
+
+        self::assertSame(
+            [
+                'NOT2_SYM' => 'Default sql_mode emits NOT_SYM; NOT2_SYM requires HIGH_NOT_PRECEDENCE.',
+                'OR_OR_SYM' => 'Default sql_mode normalizes double-pipe to OR2_SYM; '
+                    . 'OR_OR_SYM requires PIPES_AS_CONCAT.',
+                'UDF_RETURNS_SYM' => 'The token is declared by legacy grammars but has no mapping '
+                    . 'in the official lexer table.',
+            ],
+            $catalog['terminal_exclusions'],
+        );
+    }
+
+    public function testCatalogWitnessesEveryEntryPointTheParserDeclares(): void
+    {
+        $catalog = (new MySqlProfileBuilder())->catalog(
+            'mysql-8.4.7',
+            ['symbols' => [], 'functions' => [], 'features' => ['dollar_quoted_strings' => false]],
+            [],
+            Grammar::load('mysql-8.4.7'),
+        );
+
+        self::assertSame(
+            [
+                'units' => [
+                    'parser-entry:END_OF_INPUT',
+                    'parser-entry:GRAMMAR_SELECTOR_CTE',
+                    'parser-entry:GRAMMAR_SELECTOR_DERIVED_EXPR',
+                    'parser-entry:GRAMMAR_SELECTOR_EXPR',
+                    'parser-entry:GRAMMAR_SELECTOR_GCOL',
+                    'parser-entry:GRAMMAR_SELECTOR_PART',
+                ],
+                'witnessed' => [
+                    'parser-entry:END_OF_INPUT' => 'mysql.parser.END_OF_INPUT',
+                    'parser-entry:GRAMMAR_SELECTOR_CTE' => 'mysql.parser.GRAMMAR_SELECTOR_CTE',
+                    'parser-entry:GRAMMAR_SELECTOR_DERIVED_EXPR' => 'mysql.parser.GRAMMAR_SELECTOR_DERIVED_EXPR',
+                    'parser-entry:GRAMMAR_SELECTOR_EXPR' => 'mysql.parser.GRAMMAR_SELECTOR_EXPR',
+                    'parser-entry:GRAMMAR_SELECTOR_GCOL' => 'mysql.parser.GRAMMAR_SELECTOR_GCOL',
+                    'parser-entry:GRAMMAR_SELECTOR_PART' => 'mysql.parser.GRAMMAR_SELECTOR_PART',
+                ],
+                'excluded' => [],
+            ],
+            $catalog['coverage'],
+        );
+    }
 }
