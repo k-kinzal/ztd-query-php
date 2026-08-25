@@ -147,4 +147,36 @@ final class MySqlNumberSampleTest extends TestCase
 
         self::assertContains($value, [0, 1]);
     }
+
+    public function testSmallIntStaysWithinTwoBytes(): void
+    {
+        $value = (new MySqlNumberSample())->smallInt(Factory::create(), new ColumnDefinition('n', 'SMALLINT'));
+
+        self::assertGreaterThanOrEqual(-32768, $value);
+        self::assertLessThanOrEqual(32767, $value);
+    }
+
+    public function testMediumIntStaysWithinThreeBytes(): void
+    {
+        $value = (new MySqlNumberSample())->mediumInt(Factory::create(), new ColumnDefinition('n', 'MEDIUMINT'));
+
+        self::assertGreaterThanOrEqual(-8388608, $value);
+        self::assertLessThanOrEqual(8388607, $value);
+    }
+
+    public function testIntStaysWithinFourBytes(): void
+    {
+        $value = (new MySqlNumberSample())->int(Factory::create(), new ColumnDefinition('n', 'INT'));
+
+        self::assertGreaterThanOrEqual(-2147483648, $value);
+        self::assertLessThanOrEqual(2147483647, $value);
+    }
+
+    public function testBigIntReachesAsFarAsPhpCanHold(): void
+    {
+        $value = (new MySqlNumberSample())->bigInt(Factory::create(), new ColumnDefinition('n', 'BIGINT'));
+
+        self::assertGreaterThanOrEqual(PHP_INT_MIN, $value);
+        self::assertLessThanOrEqual(PHP_INT_MAX, $value);
+    }
 }

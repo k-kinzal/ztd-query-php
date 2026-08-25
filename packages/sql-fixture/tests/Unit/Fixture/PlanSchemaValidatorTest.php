@@ -40,7 +40,7 @@ use Tests\Fixture\Fixture\ShopSchemas;
 final class PlanSchemaValidatorTest extends TestCase
 {
     #[Test]
-    public function aPlanMatchingTheSchemaPasses(): void
+    public function testValidateAPlanMatchingTheSchemaPasses(): void
     {
         $validator = new PlanSchemaValidator(ShopSchemas::resolver());
 

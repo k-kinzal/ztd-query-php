@@ -18,7 +18,7 @@ use Tests\Fixture\SpyGenerator;
 final class SqliteTypeMapperTest extends TestCase
 {
     #[Test]
-    public function generateIntegerAffinity(): void
+    public function testGenerateIntegerAffinity(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);

@@ -39,7 +39,7 @@ use Tests\Fixture\UserDto;
 final class FixtureProviderTest extends TestCase
 {
     #[Test]
-    public function fixtureReturnsArray(): void
+    public function testFixtureReturnsArray(): void
     {
         $data = (static function (): FixtureProvider {
             $faker = Factory::create();
@@ -297,7 +297,7 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function getDialectDefaultsToMysql(): void
+    public function testGetDialectDefaultsToMysql(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -662,7 +662,7 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function aRegisteredSchemaBecomesAvailableToFixtures(): void
+    public function testRegisterSchemaARegisteredSchemaBecomesAvailableToFixtures(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -674,7 +674,7 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function generatingAFixtureAlsoMakesItAvailableToFixtures(): void
+    public function testGetSchemaResolverGeneratingAFixtureAlsoMakesItAvailableToFixtures(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);

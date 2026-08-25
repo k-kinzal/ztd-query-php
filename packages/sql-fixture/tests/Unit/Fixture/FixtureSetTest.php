@@ -58,7 +58,7 @@ final class FixtureSetTest extends TestCase
     }
 
     #[Test]
-    public function rowIsNullWhereNothingWasGenerated(): void
+    public function testRowIsNullWhereNothingWasGenerated(): void
     {
         $set = new FixtureSet(['order_shipping' => []], ['order_shipping' => false], ['order_shipping']);
 
@@ -78,7 +78,7 @@ final class FixtureSetTest extends TestCase
     }
 
     #[Test]
-    public function rowsAlwaysReturnsAList(): void
+    public function testRowsAlwaysReturnsAList(): void
     {
         $set = new FixtureSet(
             ['order' => [['id' => 1]], 'order_detail' => [['id' => 2]], 'shipping' => []],
@@ -116,7 +116,7 @@ final class FixtureSetTest extends TestCase
     }
 
     #[Test]
-    public function reportsWhichTablesItHolds(): void
+    public function testTablesReportsWhichTablesItHolds(): void
     {
         $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
 
@@ -136,7 +136,7 @@ final class FixtureSetTest extends TestCase
     }
 
     #[Test]
-    public function getReadsTheEntryWhicheverShapeItHas(): void
+    public function testGetReadsTheEntryWhicheverShapeItHas(): void
     {
         $set = new FixtureSet(
             ['order' => [['id' => 1]], 'order_detail' => [['id' => 2]]],
@@ -157,7 +157,7 @@ final class FixtureSetTest extends TestCase
     }
 
     #[Test]
-    public function toArrayKeepsEveryTable(): void
+    public function testToArrayKeepsEveryTable(): void
     {
         $set = new FixtureSet(
             ['order' => [['id' => 1]], 'order_detail' => [['id' => 2]]],

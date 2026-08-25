@@ -35,7 +35,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function oneToManyMakesTheLeftSideTheParent(): void
+    public function testParentOneToManyMakesTheLeftSideTheParent(): void
     {
         $relation = new Relation(
             ColumnRef::of('order', 'id'),
@@ -48,7 +48,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function manyToOneDescribesTheSameShapeWrittenBackwards(): void
+    public function testChildManyToOneDescribesTheSameShapeWrittenBackwards(): void
     {
         $relation = new Relation(
             ColumnRef::of('order_detail', 'order_id'),
@@ -61,7 +61,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function columnMapPointsChildColumnsAtParentColumns(): void
+    public function testColumnMapPointsChildColumnsAtParentColumns(): void
     {
         $relation = new Relation(
             ColumnRef::of('order', 'id'),
@@ -102,7 +102,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function aMarkerNextToTheParentMakesTheParentOptional(): void
+    public function testParentIsOptionalAMarkerNextToTheParentMakesTheParentOptional(): void
     {
         $relation = new Relation(
             ColumnRef::of('order_detail', 'order_id'),
@@ -117,7 +117,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function aMarkerNextToTheChildMakesTheChildOptional(): void
+    public function testChildIsOptionalAMarkerNextToTheChildMakesTheChildOptional(): void
     {
         $relation = new Relation(
             ColumnRef::of('order', 'id'),
@@ -145,7 +145,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function onlyOneToOneHoldsASingleChildRow(): void
+    public function testChildIsCollectionOnlyOneToOneHoldsASingleChildRow(): void
     {
         $many = new Relation(
             ColumnRef::of('order', 'id'),
@@ -163,7 +163,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function tablesListsBothEnds(): void
+    public function testTablesListsBothEnds(): void
     {
         $relation = new Relation(
             ColumnRef::of('order', 'id'),
@@ -225,21 +225,21 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function oneToManyCanMarkTheChildOptional(): void
+    public function testOneToManyCanMarkTheChildOptional(): void
     {
         self::assertTrue(Relation::oneToMany('a.id', 'b.a_id', true)->childIsOptional());
         self::assertFalse(Relation::oneToMany('a.id', 'b.a_id')->childIsOptional());
     }
 
     #[Test]
-    public function manyToOneCanMarkTheParentOptional(): void
+    public function testManyToOneCanMarkTheParentOptional(): void
     {
         self::assertTrue(Relation::manyToOne('b.a_id', 'a.id', true)->parentIsOptional());
         self::assertFalse(Relation::manyToOne('b.a_id', 'a.id')->parentIsOptional());
     }
 
     #[Test]
-    public function aRequiredChildIsGeneratedEvenWhenNoneAreGiven(): void
+    public function testMinimumChildRowsARequiredChildIsGeneratedEvenWhenNoneAreGiven(): void
     {
         self::assertSame(1, Relation::oneToMany('order.id', 'order_detail.order_id')->minimumChildRows());
     }
@@ -251,7 +251,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function aCollectionChildHasNoUpperBound(): void
+    public function testMaximumChildRowsACollectionChildHasNoUpperBound(): void
     {
         self::assertNull(Relation::oneToMany('order.id', 'order_detail.order_id')->maximumChildRows());
     }
@@ -289,7 +289,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function oneToOneMarksOnlyTheRightSideOptional(): void
+    public function testOneToOneMarksOnlyTheRightSideOptional(): void
     {
         $relation = Relation::oneToOne('a.id', 'b.a_id', true);
 

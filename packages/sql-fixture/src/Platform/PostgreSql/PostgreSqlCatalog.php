@@ -70,8 +70,9 @@ final class PostgreSqlCatalog
      *
      * The key is looked up by casting the table's name to a `regclass`, which
      * is the only way to reach `pg_index` from a name. A name that resolves to
-     * nothing raises rather than returning empty, and a table with no key is
-     * not an error, so both are answered as no key at all.
+     * nothing raises rather than returning empty, a connection that cannot run
+     * the statement at all refuses it, and a table with no key is not an error.
+     * All three are answered as no key at all.
      *
      * @param PDO $pdo Connection to read through
      * @param string $schema Schema the table lives in
@@ -81,14 +82,16 @@ final class PostgreSqlCatalog
      */
     public function primaryKeysOf(PDO $pdo, string $schema, string $table): array
     {
-        $statement = $pdo->prepare(
-            'SELECT a.attname '
-            . 'FROM pg_index i '
-            . 'JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey) '
-            . 'WHERE i.indrelid = :table_oid::regclass AND i.indisprimary',
-        );
-
         try {
+            $statement = $pdo->prepare(
+                'SELECT a.attname '
+                . 'FROM pg_index i '
+                . 'JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey) '
+                . 'WHERE i.indrelid = :table_oid::regclass AND i.indisprimary',
+            );
+            if ($statement === false) {
+                return [];
+            }
             $qualified = $schema === 'public' ? "\"{$table}\"" : "\"{$schema}\".\"{$table}\"";
             $statement->execute(['table_oid' => $qualified]);
             /** @var list<array{attname: string}> $rows */

@@ -16,7 +16,7 @@ use SqlFixture\Fixture\TableOverrides;
 final class RowSpecTest extends TestCase
 {
     #[Test]
-    public function anUnspecifiedTableLeavesTheCountFree(): void
+    public function testUnspecifiedAnUnspecifiedTableLeavesTheCountFree(): void
     {
         $spec = RowSpec::unspecified();
 
@@ -25,7 +25,7 @@ final class RowSpecTest extends TestCase
     }
 
     #[Test]
-    public function anIntegerIsACountWithNothingOverridden(): void
+    public function testFromAnIntegerIsACountWithNothingOverridden(): void
     {
         $spec = RowSpec::from('order_detail', 3);
 
@@ -40,7 +40,7 @@ final class RowSpecTest extends TestCase
     }
 
     #[Test]
-    public function oneSetOfValuesAppliesToEveryRow(): void
+    public function testOverridesForOneSetOfValuesAppliesToEveryRow(): void
     {
         $spec = RowSpec::from('order_detail', ['quantity' => 2]);
 

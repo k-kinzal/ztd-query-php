@@ -28,7 +28,7 @@ use SqlFixture\Platform\UnsupportedDriverException;
 final class PlatformFactoryTest extends TestCase
 {
     #[Test]
-    public function createSchemaParserForMysql(): void
+    public function testCreateSchemaParserForMysql(): void
     {
         $parser = PlatformFactory::createSchemaParser(PlatformFactory::DRIVER_MYSQL);
 
@@ -61,7 +61,7 @@ final class PlatformFactoryTest extends TestCase
     }
 
     #[Test]
-    public function createTypeMapperForMysql(): void
+    public function testCreateTypeMapperForMysql(): void
     {
         $mapper = PlatformFactory::createTypeMapper(PlatformFactory::DRIVER_MYSQL);
 
@@ -94,7 +94,7 @@ final class PlatformFactoryTest extends TestCase
     }
 
     #[Test]
-    public function createSchemaFetcherForMysql(): void
+    public function testCreateSchemaFetcherForMysql(): void
     {
         $fetcher = PlatformFactory::createSchemaFetcher(PlatformFactory::DRIVER_MYSQL);
 
@@ -127,7 +127,7 @@ final class PlatformFactoryTest extends TestCase
     }
 
     #[Test]
-    public function detectDriverForSqlite(): void
+    public function testDetectDriverForSqlite(): void
     {
         $pdo = new PDO('sqlite::memory:');
 
@@ -137,7 +137,7 @@ final class PlatformFactoryTest extends TestCase
     }
 
     #[Test]
-    public function getSupportedDrivers(): void
+    public function testGetSupportedDrivers(): void
     {
         $drivers = PlatformFactory::getSupportedDrivers();
 

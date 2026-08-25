@@ -67,7 +67,7 @@ final class FileFixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function fixtureGeneratesDataForLoadedTable(): void
+    public function testFixtureGeneratesDataForLoadedTable(): void
     {
         $tempDir = (static function (): string {
             $dir = sys_get_temp_dir() . '/sql-fixture-test-' . uniqid();
@@ -213,7 +213,7 @@ final class FileFixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function hasTableReturnsFalseForNonExistent(): void
+    public function testHasTableReturnsFalseForNonExistent(): void
     {
         $tempDir = (static function (): string {
             $dir = sys_get_temp_dir() . '/sql-fixture-test-' . uniqid();
@@ -240,7 +240,7 @@ final class FileFixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function getTableNames(): void
+    public function testGetTableNames(): void
     {
         $tempDir = (static function (): string {
             $dir = sys_get_temp_dir() . '/sql-fixture-test-' . uniqid();
@@ -279,7 +279,7 @@ final class FileFixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function registerSchema(): void
+    public function testRegisterSchema(): void
     {
         $tempDir = (static function (): string {
             $dir = sys_get_temp_dir() . '/sql-fixture-test-' . uniqid();

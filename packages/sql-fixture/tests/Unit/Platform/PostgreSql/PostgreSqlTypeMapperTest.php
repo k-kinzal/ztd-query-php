@@ -18,7 +18,7 @@ use Tests\Fixture\SpyGenerator;
 final class PostgreSqlTypeMapperTest extends TestCase
 {
     #[Test]
-    public function generateInteger(): void
+    public function testGenerateInteger(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);

@@ -27,7 +27,7 @@ use Tests\Fixture\GeneratorTestUser;
 final class FixtureGeneratorTest extends TestCase
 {
     #[Test]
-    public function generateWithSchema(): void
+    public function testGenerateWithSchema(): void
     {
         $schema = new TableSchema('users', [
             'id' => new ColumnDefinition('id', 'INT'),
@@ -109,7 +109,7 @@ final class FixtureGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function getSchemaParser(): void
+    public function testGetSchemaParser(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -118,7 +118,7 @@ final class FixtureGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function getTypeMapper(): void
+    public function testGetTypeMapper(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -127,7 +127,7 @@ final class FixtureGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function getHydrator(): void
+    public function testGetHydrator(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);

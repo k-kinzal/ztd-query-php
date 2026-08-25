@@ -18,7 +18,7 @@ use Tests\Fixture\SpyGenerator;
 final class MySqlTypeMapperTest extends TestCase
 {
     #[Test]
-    public function generateTinyIntBooleanMode(): void
+    public function testGenerateTinyIntBooleanMode(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);

@@ -30,7 +30,7 @@ use SqlFixture\Schema\TableSchema;
 final class DatabaseFixtureProviderTest extends TestCase
 {
     #[Test]
-    public function fixtureGeneratesArrayFromSqliteTable(): void
+    public function testFixtureGeneratesArrayFromSqliteTable(): void
     {
         $pdo = new PDO('sqlite::memory:');
         $pdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, email TEXT)');
@@ -43,7 +43,7 @@ final class DatabaseFixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function clearCacheAllowsRefetch(): void
+    public function testClearCacheAllowsRefetch(): void
     {
         $pdo = new PDO('sqlite::memory:');
         $pdo->exec('CREATE TABLE items (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT)');
@@ -58,7 +58,7 @@ final class DatabaseFixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function getDriverReturnsSqlite(): void
+    public function testGetDriverReturnsSqlite(): void
     {
         $pdo = new PDO('sqlite::memory:');
         $faker = Factory::create();

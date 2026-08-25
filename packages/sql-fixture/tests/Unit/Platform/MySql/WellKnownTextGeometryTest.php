@@ -75,4 +75,48 @@ final class WellKnownTextGeometryTest extends TestCase
         self::assertStringContainsString('POINT(', $written);
         self::assertStringContainsString('LINESTRING(', $written);
     }
+
+    public function testPointWritesOneCoordinatePair(): void
+    {
+        self::assertMatchesRegularExpression(
+            '/^POINT\(-?[\d.]+ -?[\d.]+\)$/',
+            (new WellKnownTextGeometry())->point(Factory::create()),
+        );
+    }
+
+    public function testLineStringWritesAtLeastTwoPoints(): void
+    {
+        $written = (new WellKnownTextGeometry())->lineString(Factory::create());
+
+        self::assertGreaterThanOrEqual(2, count(explode(',', $written)));
+    }
+
+    public function testPolygonWritesOneClosedRing(): void
+    {
+        self::assertStringStartsWith('POLYGON((', (new WellKnownTextGeometry())->polygon(Factory::create()));
+    }
+
+    public function testMultiPointBracketsEachPointOnItsOwn(): void
+    {
+        self::assertStringStartsWith('MULTIPOINT((', (new WellKnownTextGeometry())->multiPoint(Factory::create()));
+    }
+
+    public function testMultiLineStringBracketsEachLineOnItsOwn(): void
+    {
+        $written = (new WellKnownTextGeometry())->multiLineString(Factory::create());
+
+        self::assertStringStartsWith('MULTILINESTRING((', $written);
+    }
+
+    public function testMultiPolygonNestsOneLevelDeeperThanAPolygon(): void
+    {
+        self::assertStringStartsWith('MULTIPOLYGON(((', (new WellKnownTextGeometry())->multiPolygon(Factory::create()));
+    }
+
+    public function testCollectionCarriesGeometriesOfMoreThanOneKind(): void
+    {
+        $written = (new WellKnownTextGeometry())->collection(Factory::create());
+
+        self::assertStringStartsWith('GEOMETRYCOLLECTION(POINT(', $written);
+    }
 }

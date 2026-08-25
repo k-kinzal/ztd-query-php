@@ -29,7 +29,7 @@ use SqlFixture\Plan\RelationSide;
 final class PlanPrinterTest extends TestCase
 {
     #[Test]
-    public function printsATableOnlyPlanAsItsTableName(): void
+    public function testPrintsATableOnlyPlanAsItsTableName(): void
     {
         self::assertSame('order', (new PlanPrinter())->print(FixturePlan::table('order')));
     }
@@ -128,7 +128,7 @@ final class PlanPrinterTest extends TestCase
     }
 
     #[Test]
-    public function printsASingleRelationWithoutAPlan(): void
+    public function testPrintRelationPrintsASingleRelationWithoutAPlan(): void
     {
         $relation = Relation::oneToMany('order.id', 'order_detail.order_id');
 
