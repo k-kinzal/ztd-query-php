@@ -10,7 +10,7 @@ use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\PostgreSql\GenerationPlans;
 use SqlFaker\PostgreSql\Grammar\PgGrammar;
 use SqlFaker\PostgreSql\SqlGenerator;
-use SqlFaker\PostgreSql\StatementType;
+use SqlFaker\PostgreSql\StatementRule;
 
 /**
  * Faker Provider for generating syntactically valid PostgreSQL SQL statements.
@@ -51,20 +51,20 @@ final class PostgreSqlProvider extends Base
     /**
      * Generate a syntactically valid PostgreSQL SQL statement.
      *
-     * @param StatementType|null $type Statement type (null for random)
+     * @param StatementRule|null $type Statement type (null for random)
      * @param int $maxDepth Maximum recursion depth (PHP_INT_MAX = unlimited)
      * @return non-empty-string Generated SQL statement
      */
-    public function sql(?StatementType $type = null, int $maxDepth = PHP_INT_MAX): string
+    public function sql(?StatementRule $type = null, int $maxDepth = PHP_INT_MAX): string
     {
         if ($type === null) {
             /**
-             * @var StatementType $type
+             * @var StatementRule $type
              */
-            $type = $this->generator->randomElement(StatementType::cases());
+            $type = $this->generator->randomElement(StatementRule::cases());
         }
 
-        return $this->generate(GenerationPlan::fromRule($type->value)->requiringNonEmpty(), $maxDepth);
+        return $this->sql->generate(GenerationPlan::fromRule($type->value)->requiringNonEmpty()->withMaxDepth($maxDepth));
     }
 
     /**
@@ -74,7 +74,7 @@ final class PostgreSqlProvider extends Base
      */
     public function selectStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->generate(GenerationPlan::fromRule(StatementType::Select->value)->requiringNonEmpty(), $maxDepth);
+        return $this->sql->generate(GenerationPlan::fromRule(StatementRule::Select->value)->requiringNonEmpty()->withMaxDepth($maxDepth));
     }
 
     /**
@@ -84,7 +84,7 @@ final class PostgreSqlProvider extends Base
      */
     public function insertStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->generate(GenerationPlan::fromRule(StatementType::Insert->value)->requiringNonEmpty(), $maxDepth);
+        return $this->sql->generate(GenerationPlan::fromRule(StatementRule::Insert->value)->requiringNonEmpty()->withMaxDepth($maxDepth));
     }
 
     /**
@@ -94,7 +94,7 @@ final class PostgreSqlProvider extends Base
      */
     public function updateStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->generate(GenerationPlan::fromRule(StatementType::Update->value)->requiringNonEmpty(), $maxDepth);
+        return $this->sql->generate(GenerationPlan::fromRule(StatementRule::Update->value)->requiringNonEmpty()->withMaxDepth($maxDepth));
     }
 
     /**
@@ -104,7 +104,7 @@ final class PostgreSqlProvider extends Base
      */
     public function deleteStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->generate(GenerationPlan::fromRule(StatementType::Delete->value)->requiringNonEmpty(), $maxDepth);
+        return $this->sql->generate(GenerationPlan::fromRule(StatementRule::Delete->value)->requiringNonEmpty()->withMaxDepth($maxDepth));
     }
 
     /**
@@ -114,7 +114,7 @@ final class PostgreSqlProvider extends Base
      */
     public function createTableStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->generate(GenerationPlan::fromRule(StatementType::CreateTable->value)->requiringNonEmpty(), $maxDepth);
+        return $this->sql->generate(GenerationPlan::fromRule(StatementRule::CreateTable->value)->requiringNonEmpty()->withMaxDepth($maxDepth));
     }
 
     /**
@@ -124,7 +124,7 @@ final class PostgreSqlProvider extends Base
      */
     public function createTableAsStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->generate(GenerationPlan::fromRule(StatementType::CreateTableAs->value)->requiringNonEmpty(), $maxDepth);
+        return $this->sql->generate(GenerationPlan::fromRule(StatementRule::CreateTableAs->value)->requiringNonEmpty()->withMaxDepth($maxDepth));
     }
 
     /**
@@ -134,9 +134,8 @@ final class PostgreSqlProvider extends Base
      */
     public function createDomainStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->generate(
-            GenerationPlan::fromRule(StatementType::CreateDomain->value)->requiringNonEmpty(),
-            $maxDepth,
+        return $this->sql->generate(
+            GenerationPlan::fromRule(StatementRule::CreateDomain->value)->requiringNonEmpty()->withMaxDepth($maxDepth),
         );
     }
 
@@ -147,7 +146,7 @@ final class PostgreSqlProvider extends Base
      */
     public function alterTableStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->generate(GenerationPlan::fromRule(StatementType::AlterTable->value)->requiringNonEmpty(), $maxDepth);
+        return $this->sql->generate(GenerationPlan::fromRule(StatementRule::AlterTable->value)->requiringNonEmpty()->withMaxDepth($maxDepth));
     }
 
     /**
@@ -157,7 +156,7 @@ final class PostgreSqlProvider extends Base
      */
     public function dropTableStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->generate(GenerationPlan::fromRule(StatementType::DropTable->value)->requiringNonEmpty(), $maxDepth);
+        return $this->sql->generate(GenerationPlan::fromRule(StatementRule::DropTable->value)->requiringNonEmpty()->withMaxDepth($maxDepth));
     }
 
     /**
@@ -167,7 +166,7 @@ final class PostgreSqlProvider extends Base
      */
     public function simpleStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->generate(GenerationPlan::fromRule(StatementType::SimpleStatement->value)->requiringNonEmpty(), $maxDepth);
+        return $this->sql->generate(GenerationPlan::fromRule(StatementRule::SimpleStatement->value)->requiringNonEmpty()->withMaxDepth($maxDepth));
     }
 
     /**
@@ -177,7 +176,7 @@ final class PostgreSqlProvider extends Base
      */
     public function truncateStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->generate(GenerationPlan::fromRule('TruncateStmt')->requiringNonEmpty(), $maxDepth);
+        return $this->sql->generate(GenerationPlan::fromRule('TruncateStmt')->requiringNonEmpty()->withMaxDepth($maxDepth));
     }
 
     /**
@@ -197,7 +196,7 @@ final class PostgreSqlProvider extends Base
      */
     public function createIndexStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->generate(GenerationPlan::fromRule('IndexStmt')->requiringNonEmpty(), $maxDepth);
+        return $this->sql->generate(GenerationPlan::fromRule('IndexStmt')->requiringNonEmpty()->withMaxDepth($maxDepth));
     }
 
     /**
@@ -207,7 +206,7 @@ final class PostgreSqlProvider extends Base
      */
     public function transactionStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->generate(GenerationPlan::fromRule('TransactionStmt')->requiringNonEmpty(), $maxDepth);
+        return $this->sql->generate(GenerationPlan::fromRule('TransactionStmt')->requiringNonEmpty()->withMaxDepth($maxDepth));
     }
 
     /**
@@ -217,7 +216,7 @@ final class PostgreSqlProvider extends Base
      */
     public function expr(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->generate(GenerationPlan::fromRule('a_expr')->requiringNonEmpty(), $maxDepth);
+        return $this->sql->generate(GenerationPlan::fromRule('a_expr')->requiringNonEmpty()->withMaxDepth($maxDepth));
     }
 
     /**
@@ -227,7 +226,7 @@ final class PostgreSqlProvider extends Base
      */
     public function simpleExpr(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->generate(GenerationPlan::fromRule('c_expr')->requiringNonEmpty(), $maxDepth);
+        return $this->sql->generate(GenerationPlan::fromRule('c_expr')->requiringNonEmpty()->withMaxDepth($maxDepth));
     }
 
     /**
@@ -237,7 +236,7 @@ final class PostgreSqlProvider extends Base
      */
     public function literal(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->generate(GenerationPlan::fromRule('AexprConst')->requiringNonEmpty(), $maxDepth);
+        return $this->sql->generate(GenerationPlan::fromRule('AexprConst')->requiringNonEmpty()->withMaxDepth($maxDepth));
     }
 
     /**
@@ -245,7 +244,7 @@ final class PostgreSqlProvider extends Base
      */
     public function whereClause(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->generate(GenerationPlan::fromRule('where_clause'), $maxDepth);
+        return $this->sql->generate(GenerationPlan::fromRule('where_clause')->withMaxDepth($maxDepth));
     }
 
     /**
@@ -255,7 +254,7 @@ final class PostgreSqlProvider extends Base
      */
     public function sortClause(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->generate(GenerationPlan::fromRule('sort_clause')->requiringNonEmpty(), $maxDepth);
+        return $this->sql->generate(GenerationPlan::fromRule('sort_clause')->requiringNonEmpty()->withMaxDepth($maxDepth));
     }
 
     /**
@@ -265,7 +264,7 @@ final class PostgreSqlProvider extends Base
      */
     public function selectLimit(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->generate(GenerationPlan::fromRule('select_limit')->requiringNonEmpty(), $maxDepth);
+        return $this->sql->generate(GenerationPlan::fromRule('select_limit')->requiringNonEmpty()->withMaxDepth($maxDepth));
     }
 
     /**
@@ -275,7 +274,7 @@ final class PostgreSqlProvider extends Base
      */
     public function tableRef(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->generate(GenerationPlan::fromRule('table_ref')->requiringNonEmpty(), $maxDepth);
+        return $this->sql->generate(GenerationPlan::fromRule('table_ref')->requiringNonEmpty()->withMaxDepth($maxDepth));
     }
 
     /**
@@ -285,7 +284,7 @@ final class PostgreSqlProvider extends Base
      */
     public function joinedTable(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->generate(GenerationPlan::fromRule('joined_table')->requiringNonEmpty(), $maxDepth);
+        return $this->sql->generate(GenerationPlan::fromRule('joined_table')->requiringNonEmpty()->withMaxDepth($maxDepth));
     }
 
     /**
@@ -295,7 +294,7 @@ final class PostgreSqlProvider extends Base
      */
     public function qualifiedName(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->generate(GenerationPlan::fromRule('qualified_name')->requiringNonEmpty(), $maxDepth);
+        return $this->sql->generate(GenerationPlan::fromRule('qualified_name')->requiringNonEmpty()->withMaxDepth($maxDepth));
     }
 
     /**
@@ -305,7 +304,7 @@ final class PostgreSqlProvider extends Base
      */
     public function subquery(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->generate(GenerationPlan::fromRule('select_with_parens')->requiringNonEmpty(), $maxDepth);
+        return $this->sql->generate(GenerationPlan::fromRule('select_with_parens')->requiringNonEmpty()->withMaxDepth($maxDepth));
     }
 
     /**
@@ -315,7 +314,7 @@ final class PostgreSqlProvider extends Base
      */
     public function withClause(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->generate(GenerationPlan::fromRule('with_clause')->requiringNonEmpty(), $maxDepth);
+        return $this->sql->generate(GenerationPlan::fromRule('with_clause')->requiringNonEmpty()->withMaxDepth($maxDepth));
     }
 
     /**
@@ -336,7 +335,7 @@ final class PostgreSqlProvider extends Base
      */
     public function identifier(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->generate(GenerationPlan::fromRule('ColId')->requiringNonEmpty(), $maxDepth);
+        return $this->sql->generate(GenerationPlan::fromRule('ColId')->requiringNonEmpty()->withMaxDepth($maxDepth));
     }
 
     /**
@@ -543,8 +542,4 @@ final class PostgreSqlProvider extends Base
      * @param GenerationPlan<TRequiresNonEmpty> $plan
      * @return (TRequiresNonEmpty is true ? non-empty-string : string)
      */
-    private function generate(GenerationPlan $plan, int $maxDepth): string
-    {
-        return $this->sql->generate($plan->withMaxDepth($maxDepth));
-    }
 }

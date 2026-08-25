@@ -22,4 +22,10 @@ final class SymbolTest extends TestCase
             array_map(static fn (Symbol $symbol): string => $symbol->value(), $symbols),
         );
     }
+
+    public function testValueAnswersTheNameTheGrammarSpells(): void
+    {
+        self::assertSame('SELECT', (new Terminal('SELECT'))->value());
+        self::assertSame('expr', (new NonTerminal('expr'))->value());
+    }
 }

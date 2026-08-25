@@ -49,4 +49,14 @@ final class TerminalInventoryTest extends TestCase
 
         self::assertSame(['A_TOKEN', 'Z_TOKEN'], TerminalInventory::fromGrammar($grammar));
     }
+
+    public function testFromGrammarNamesEveryTerminalTheRulesReach(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [new Production([new Terminal('SELECT'), new NonTerminal('nm')])]),
+            'nm' => new ProductionRule('nm', [new Production([new Terminal('IDENT')])]),
+        ]);
+
+        self::assertSame(['IDENT', 'SELECT'], TerminalInventory::fromGrammar($grammar));
+    }
 }

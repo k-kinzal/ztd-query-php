@@ -13,6 +13,8 @@ final class LexicalProfileCompiler
 {
     /**
      * @return array{symbols: array<string, list<string>>, functions: array<string, list<string>>}
+     *
+     * @throws RuntimeException When the upstream source declares no keyword or function table
      */
     public function compile(string $source): array
     {
@@ -37,9 +39,17 @@ final class LexicalProfileCompiler
     }
 
     /**
-     * @return array<string, list<string>>
+     * Reads the keyword table as releases from 8.0 onward declare it.
+     *
+     * Those releases wrap each entry in a SYM macro, and the hash-key and
+     * hidden variants of that macro declare the same kind of entry.
+     *
+     * @param string $source Contents of the upstream lexer header
+     * @param string $macro Macro the wanted entries are wrapped in
+     *
+     * @return array<string, list<string>> Token name => the lexemes that produce it
      */
-    private function extractModern(string $source, string $macro): array
+    public function extractModern(string $source, string $macro): array
     {
         $macroPattern = $macro === 'SYM' ? 'SYM(?:_HK|_H)?' : $macro;
         preg_match_all(
@@ -53,9 +63,17 @@ final class LexicalProfileCompiler
     }
 
     /**
-     * @return array<string, list<string>>
+     * Reads the keyword table as releases before 8.0 declare it.
+     *
+     * Those releases write the lexeme first and wrap only the token in SYM,
+     * and they keep keywords and functions in two tables rather than
+     * distinguishing them by macro.
+     *
+     * @param string $source Contents of one table from the upstream lexer header
+     *
+     * @return array<string, list<string>> Token name => the lexemes that produce it
      */
-    private function extractLegacy(string $source): array
+    public function extractLegacy(string $source): array
     {
         preg_match_all(
             '/\{\s*"((?:\\\\.|[^"\\\\])*)"\s*,\s*SYM\(\s*([A-Z][A-Z0-9_]*)\s*\)\s*\}/',
@@ -68,10 +86,13 @@ final class LexicalProfileCompiler
     }
 
     /**
-     * @param list<array<string>> $matches
-     * @return array<string, list<string>>
+     * Files each lexeme under the token it produces, without repeating one.
+     *
+     * @param list<array<string>> $matches Lexeme and token pairs as they were read
+     *
+     * @return array<string, list<string>> Token name => the lexemes that produce it
      */
-    private function group(array $matches): array
+    public function group(array $matches): array
     {
         /** @var array<string, list<string>> $tokens */
         $tokens = [];

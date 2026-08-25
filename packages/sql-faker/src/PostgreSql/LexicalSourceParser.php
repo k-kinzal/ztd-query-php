@@ -13,6 +13,8 @@ final class LexicalSourceParser
 {
     /**
      * @return array{states: list<string>, rules: list<string>, lookahead_tokens: list<string>}
+     *
+     * @throws RuntimeException When the upstream Flex source is not shaped as a scanner, or declares no rules or lookahead tokens
      */
     public function parse(string $scanner, string $parser): array
     {
