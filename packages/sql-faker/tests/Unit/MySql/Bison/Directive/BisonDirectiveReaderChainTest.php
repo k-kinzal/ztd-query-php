@@ -36,6 +36,11 @@ use SqlFaker\MySql\Bison\Lexer\BisonScannerChain;
 use SqlFaker\MySql\Bison\Lexer\BisonToken;
 use SqlFaker\MySql\Bison\Lexer\BisonTokenStream;
 use SqlFaker\MySql\Bison\Lexer\BisonTrivia;
+use SqlFaker\MySql\Bison\Lexer\DirectiveScanner;
+use SqlFaker\MySql\Bison\Lexer\IdentifierScanner;
+use SqlFaker\MySql\Bison\Lexer\NumberScanner;
+use SqlFaker\MySql\Bison\Lexer\QuotedLiteralScanner;
+use SqlFaker\MySql\Bison\Lexer\TypeTagScanner;
 
 #[CoversClass(BisonDirectiveReaderChain::class)]
 #[UsesClass(ActionScanner::class)]
@@ -64,6 +69,11 @@ use SqlFaker\MySql\Bison\Lexer\BisonTrivia;
 #[UsesClass(TokenDirectiveReader::class)]
 #[UsesClass(TypeDirectiveReader::class)]
 #[UsesClass(UnknownDirectiveReader::class)]
+#[UsesClass(DirectiveScanner::class)]
+#[UsesClass(IdentifierScanner::class)]
+#[UsesClass(NumberScanner::class)]
+#[UsesClass(QuotedLiteralScanner::class)]
+#[UsesClass(TypeTagScanner::class)]
 final class BisonDirectiveReaderChainTest extends TestCase
 {
     /**

@@ -17,6 +17,7 @@ use SqlFaker\Grammar\ProductionPattern;
 use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\Terminal;
 use SqlFaker\Grammar\TerminationAnalyzer;
+use SqlFaker\Grammar\TerminationCost;
 use SqlFaker\Sqlite\Derivation;
 
 #[CoversClass(Derivation::class)]
@@ -29,6 +30,7 @@ use SqlFaker\Sqlite\Derivation;
 #[UsesClass(ProductionRule::class)]
 #[UsesClass(Terminal::class)]
 #[UsesClass(TerminationAnalyzer::class)]
+#[UsesClass(TerminationCost::class)]
 final class DerivationTest extends TestCase
 {
     public function testOfRewritesTheStartSymbolUntilOnlyTerminalsAreLeft(): void

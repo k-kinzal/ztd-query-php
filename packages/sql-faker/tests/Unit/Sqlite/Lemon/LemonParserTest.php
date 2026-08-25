@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\Sqlite\Lemon;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlFaker\Grammar\Grammar;
@@ -14,7 +15,11 @@ use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\Symbol;
 use SqlFaker\Grammar\Terminal;
+use SqlFaker\Sqlite\Lemon\LemonDirectives;
 use SqlFaker\Sqlite\Lemon\LemonParser;
+use SqlFaker\Sqlite\Lemon\LemonRules;
+use SqlFaker\Sqlite\Lemon\LemonSymbols;
+use SqlFaker\Sqlite\Lemon\LemonText;
 
 #[CoversClass(LemonParser::class)]
 #[CoversClass(Grammar::class)]
@@ -22,6 +27,11 @@ use SqlFaker\Sqlite\Lemon\LemonParser;
 #[CoversClass(Terminal::class)]
 #[CoversClass(Production::class)]
 #[CoversClass(ProductionRule::class)]
+#[UsesClass(GrammarParseException::class)]
+#[UsesClass(LemonDirectives::class)]
+#[UsesClass(LemonRules::class)]
+#[UsesClass(LemonSymbols::class)]
+#[UsesClass(LemonText::class)]
 final class LemonParserTest extends TestCase
 {
     public function testParseSimpleRule(): void

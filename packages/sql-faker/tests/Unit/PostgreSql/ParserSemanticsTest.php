@@ -9,14 +9,38 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\LexicalCatalog;
+use SqlFaker\Grammar\LexicalCatalogShape;
+use SqlFaker\Grammar\LexicalCoverageCheck;
+use SqlFaker\Grammar\LexicalKeywordIndex;
+use SqlFaker\Grammar\LexicalProfileSource;
+use SqlFaker\Grammar\LexicalWitnessCheck;
+use SqlFaker\Grammar\LexicalWitnessShape;
+use SqlFaker\Grammar\RandomCharacters;
+use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\Grammar\SqlVersion;
+use SqlFaker\Grammar\SqlVersionRegistry;
 use SqlFaker\PostgreSql\LexicalGrammar;
 use SqlFaker\PostgreSql\ParserSemantics;
+use SqlFaker\PostgreSql\PgLookahead;
+use SqlFaker\PostgreSql\PgTerminalRealizer;
+use SqlFaker\PostgreSql\PgTokenizer;
 
 #[CoversClass(ParserSemantics::class)]
 #[UsesClass(LexicalCatalog::class)]
 #[UsesClass(LexicalGrammar::class)]
 #[UsesClass(SqlVersion::class)]
+#[UsesClass(LexicalCatalogShape::class)]
+#[UsesClass(LexicalCoverageCheck::class)]
+#[UsesClass(LexicalKeywordIndex::class)]
+#[UsesClass(LexicalProfileSource::class)]
+#[UsesClass(LexicalWitnessCheck::class)]
+#[UsesClass(LexicalWitnessShape::class)]
+#[UsesClass(RandomCharacters::class)]
+#[UsesClass(RandomStringGenerator::class)]
+#[UsesClass(SqlVersionRegistry::class)]
+#[UsesClass(PgLookahead::class)]
+#[UsesClass(PgTerminalRealizer::class)]
+#[UsesClass(PgTokenizer::class)]
 final class ParserSemanticsTest extends TestCase
 {
     public function testAppliedGivesEveryOptionInASetListAValue(): void
