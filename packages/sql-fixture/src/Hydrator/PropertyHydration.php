@@ -42,15 +42,18 @@ final class PropertyHydration
      *
      * @return T The object
      *
-     * @throws ReflectionException When the class cannot be instantiated
+     * @throws HydrationException When the class cannot be built without calling its constructor
      */
     public function hydrate(string $className, array $data): object
     {
-        $reflection = new ReflectionClass($className);
-        $instance = $reflection->newInstanceWithoutConstructor();
+        try {
+            $instance = (new ReflectionClass($className))->newInstanceWithoutConstructor();
+        } catch (ReflectionException $cause) {
+            throw HydrationException::notInstantiable($className, $cause);
+        }
 
         foreach ($data as $column => $value) {
-            $property = $this->propertyFor($className, (string) $column);
+            $property = $this->propertyFor($className, $column);
             if ($property === null) {
                 continue;
             }
@@ -73,7 +76,7 @@ final class PropertyHydration
         $reflection = new ReflectionClass($className);
         foreach ([PropertyName::toCamelCase($column), $column] as $name) {
             if ($reflection->hasProperty($name)) {
-                return $reflection->getProperty($name);
+                return new ReflectionProperty($className, $name);
             }
         }
 

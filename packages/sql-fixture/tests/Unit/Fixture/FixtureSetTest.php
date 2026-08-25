@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Fixture;
 
+use LogicException;
 use OutOfBoundsException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -178,5 +179,85 @@ final class FixtureSetTest extends TestCase
 
         self::assertNull($set[7]);
         self::assertFalse(isset($set[7]));
+    }
+
+    public function testOffsetExistsReportsWhetherThePlanGeneratedRowsForATable(): void
+    {
+        $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
+
+        self::assertTrue(isset($set['order']));
+        self::assertFalse(isset($set['nothing']));
+    }
+
+    public function testOffsetGetReadsATableTheWayGetDoes(): void
+    {
+        $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
+
+        self::assertSame(['id' => 1], $set['order']);
+    }
+
+    public function testOffsetSetRefusesToChangeWhatWasGenerated(): void
+    {
+        $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
+
+        $this->expectException(LogicException::class);
+
+        $set['order'] = [];
+    }
+
+    public function testOffsetUnsetRefusesToRemoveWhatWasGenerated(): void
+    {
+        $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
+
+        $this->expectException(LogicException::class);
+
+        unset($set['order']);
+    }
+
+    public function testGetIteratorWalksTheTablesInTheOrderThePlanNamesThem(): void
+    {
+        $set = new FixtureSet(
+            ['order' => [['id' => 1]], 'detail' => [['id' => 2], ['id' => 3]]],
+            ['order' => false, 'detail' => true],
+            ['order', 'detail'],
+        );
+
+        self::assertSame([['id' => 1], [['id' => 2], ['id' => 3]]], iterator_to_array($set));
+    }
+
+    public function testCountAnswersHowManyTablesTheGenerationProducedRowsFor(): void
+    {
+        $set = new FixtureSet(['a' => [[]], 'b' => [[]]], ['a' => false, 'b' => false], ['a', 'b']);
+
+        self::assertCount(2, $set);
+    }
+
+    public function testFirstRowAnswersTheFirstRowGeneratedForATable(): void
+    {
+        $set = new FixtureSet(['order' => [['id' => 1], ['id' => 2]]], ['order' => true], ['order']);
+
+        self::assertSame(['id' => 1], $set->firstRow('order'));
+    }
+
+    public function testFirstRowAnswersNothingForATableWithNoRows(): void
+    {
+        $set = new FixtureSet([], ['order' => true], ['order']);
+
+        self::assertNull($set->firstRow('order'));
+    }
+
+    public function testResolveReadsAPositionAsTheTableThePlanNamesThere(): void
+    {
+        $set = new FixtureSet(['a' => [[]], 'b' => [[]]], ['a' => false, 'b' => false], ['a', 'b']);
+
+        self::assertSame('b', $set->resolve(1));
+        self::assertSame('a', $set->resolve('a'));
+    }
+
+    public function testResolveAnswersNothingForAPositionThePlanDoesNotReach(): void
+    {
+        $set = new FixtureSet(['a' => [[]]], ['a' => false], ['a']);
+
+        self::assertSame('', $set->resolve(9));
     }
 }

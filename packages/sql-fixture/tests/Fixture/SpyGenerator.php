@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Fixture;
 
 use Faker\Generator;
-use Faker\Provider\Miscellaneous;
 use Override;
 
 /**
@@ -74,6 +73,9 @@ final class SpyGenerator extends Generator
     public function __call($method, $attributes)
     {
         $this->methodCalls[$method][] = $attributes;
+        if ($method === 'boolean') {
+            $this->booleanCalls[] = $attributes === [] ? [50] : $attributes;
+        }
 
         return parent::__call($method, $attributes);
     }
@@ -103,13 +105,4 @@ final class SpyGenerator extends Generator
         return parent::randomFloat($nbMaxDecimals, $min, $max);
     }
 
-    /**
-     * @param int $chanceOfGettingTrue
-     */
-    public function boolean($chanceOfGettingTrue = 50): bool
-    {
-        $this->booleanCalls[] = [$chanceOfGettingTrue];
-
-        return Miscellaneous::boolean($chanceOfGettingTrue);
-    }
 }

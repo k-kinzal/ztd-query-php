@@ -6,7 +6,6 @@ namespace SqlFixture\Hydrator;
 
 use Override;
 use ReflectionClass;
-use ReflectionException;
 
 /**
  * Builds an object from a fixture row using whichever route the class allows.
@@ -49,12 +48,8 @@ final class ReflectionHydrator implements HydratorInterface
 
         $constructor = (new ReflectionClass($className))->getConstructor();
 
-        try {
-            return $constructor !== null && $constructor->getNumberOfParameters() > 0
-                ? $this->throughConstructor->hydrate($className, $data)
-                : $this->throughProperties->hydrate($className, $data);
-        } catch (ReflectionException $cause) {
-            throw HydrationException::notInstantiable($className, $cause);
-        }
+        return $constructor !== null && $constructor->getNumberOfParameters() > 0
+            ? $this->throughConstructor->hydrate($className, $data)
+            : $this->throughProperties->hydrate($className, $data);
     }
 }

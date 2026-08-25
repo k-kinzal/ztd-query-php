@@ -35,11 +35,24 @@ final class DeclaredTypeCast
      */
     public function of(mixed $value, ?ReflectionType $type): mixed
     {
-        if ($value === null || !$type instanceof ReflectionNamedType) {
-            return $value;
+        return $type instanceof ReflectionNamedType ? $this->asType($value, $type->getName()) : $value;
+    }
+
+    /**
+     * Reads a value as the type of that name.
+     *
+     * @param mixed $value Value as it arrived
+     * @param string $typeName Name of the type it is being read as
+     *
+     * @return mixed The value, read as that type where it can be
+     */
+    public function asType(mixed $value, string $typeName): mixed
+    {
+        if ($value === null) {
+            return null;
         }
 
-        return match ($type->getName()) {
+        return match ($typeName) {
             'int' => is_numeric($value) ? (int) $value : $value,
             'float' => is_numeric($value) ? (float) $value : $value,
             'string' => is_scalar($value) ? (string) $value : $value,

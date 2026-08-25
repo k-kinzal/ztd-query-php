@@ -36,8 +36,7 @@ final class ConstructorHydration
      *
      * @return T The object
      *
-     * @throws HydrationException When a parameter has no value, no default, and is not nullable
-     * @throws ReflectionException When the class cannot be instantiated
+     * @throws HydrationException When a parameter has no value, when the class cannot be built
      */
     public function hydrate(string $className, array $data): object
     {
@@ -64,6 +63,10 @@ final class ConstructorHydration
             $arguments[] = $this->cast->of($value, $parameter->getType());
         }
 
-        return $reflection->newInstanceArgs($arguments);
+        try {
+            return $reflection->newInstanceArgs($arguments);
+        } catch (ReflectionException $cause) {
+            throw HydrationException::notInstantiable($className, $cause);
+        }
     }
 }
