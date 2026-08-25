@@ -15,6 +15,7 @@ use SqlFaker\Grammar\LexicalCoverageCheck;
 use SqlFaker\Grammar\LexicalException;
 use SqlFaker\Grammar\LexicalWitnessCheck;
 use SqlFaker\Grammar\LexicalWitnessShape;
+use SqlFaker\Grammar\RandomCharacters;
 use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\PostgreSql\PgLookahead;
 use SqlFaker\PostgreSql\PgTerminalRealizer;
@@ -30,6 +31,7 @@ use SqlFaker\PostgreSql\PgTokenizer;
 #[UsesClass(PgLookahead::class)]
 #[UsesClass(PgTokenizer::class)]
 #[UsesClass(RandomStringGenerator::class)]
+#[UsesClass(RandomCharacters::class)]
 final class PgTerminalRealizerTest extends TestCase
 {
     #[DataProvider('providerWitnessedRealizer')]

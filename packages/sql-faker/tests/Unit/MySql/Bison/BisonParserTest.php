@@ -6,9 +6,11 @@ namespace Tests\Unit\SqlFaker\MySql\Bison;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlFaker\Grammar\GrammarParseException;
+use SqlFaker\Grammar\SourceCursor;
 use SqlFaker\MySql\Bison\Ast\BisonAlternativeNode;
 use SqlFaker\MySql\Bison\Ast\BisonAst;
 use SqlFaker\MySql\Bison\Ast\BisonDefineDeclaration;
@@ -24,9 +26,35 @@ use SqlFaker\MySql\Bison\Ast\BisonTokenDefinition;
 use SqlFaker\MySql\Bison\Ast\BisonTypeDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonUnknownDeclaration;
 use SqlFaker\MySql\Bison\BisonParser;
+use SqlFaker\MySql\Bison\BisonPreamble;
+use SqlFaker\MySql\Bison\BisonPreambleReader;
+use SqlFaker\MySql\Bison\BisonStartSymbol;
+use SqlFaker\MySql\Bison\Directive\BisonDeclarationBoundary;
+use SqlFaker\MySql\Bison\Directive\BisonDirectiveReaderChain;
+use SqlFaker\MySql\Bison\Directive\DefineDirectiveReader;
+use SqlFaker\MySql\Bison\Directive\ExpectDirectiveReader;
+use SqlFaker\MySql\Bison\Directive\ParamDirectiveReader;
+use SqlFaker\MySql\Bison\Directive\PrecedenceDirectiveReader;
+use SqlFaker\MySql\Bison\Directive\StartDirectiveReader;
+use SqlFaker\MySql\Bison\Directive\TokenDirectiveReader;
+use SqlFaker\MySql\Bison\Directive\TypeDirectiveReader;
+use SqlFaker\MySql\Bison\Directive\UnknownDirectiveReader;
+use SqlFaker\MySql\Bison\Lexer\ActionScanner;
 use SqlFaker\MySql\Bison\Lexer\BisonLexeme;
 use SqlFaker\MySql\Bison\Lexer\BisonLexer;
+use SqlFaker\MySql\Bison\Lexer\BisonScannerChain;
 use SqlFaker\MySql\Bison\Lexer\BisonToken;
+use SqlFaker\MySql\Bison\Lexer\BisonTokenStream;
+use SqlFaker\MySql\Bison\Lexer\BisonTrivia;
+use SqlFaker\MySql\Bison\Lexer\DirectiveScanner;
+use SqlFaker\MySql\Bison\Lexer\IdentifierScanner;
+use SqlFaker\MySql\Bison\Lexer\NumberScanner;
+use SqlFaker\MySql\Bison\Lexer\PunctuationScanner;
+use SqlFaker\MySql\Bison\Lexer\QuotedLiteralScanner;
+use SqlFaker\MySql\Bison\Lexer\TypeTagScanner;
+use SqlFaker\MySql\Bison\Rule\BisonAlternativeDraft;
+use SqlFaker\MySql\Bison\Rule\BisonAlternativeReader;
+use SqlFaker\MySql\Bison\Rule\BisonRuleReader;
 
 #[CoversClass(BisonParser::class)]
 #[CoversClass(BisonLexer::class)]
@@ -46,6 +74,34 @@ use SqlFaker\MySql\Bison\Lexer\BisonToken;
 #[CoversClass(BisonTokenDefinition::class)]
 #[CoversClass(BisonTypeDeclaration::class)]
 #[CoversClass(BisonUnknownDeclaration::class)]
+#[UsesClass(GrammarParseException::class)]
+#[UsesClass(SourceCursor::class)]
+#[UsesClass(BisonPreamble::class)]
+#[UsesClass(BisonPreambleReader::class)]
+#[UsesClass(BisonStartSymbol::class)]
+#[UsesClass(BisonDeclarationBoundary::class)]
+#[UsesClass(BisonDirectiveReaderChain::class)]
+#[UsesClass(DefineDirectiveReader::class)]
+#[UsesClass(ExpectDirectiveReader::class)]
+#[UsesClass(ParamDirectiveReader::class)]
+#[UsesClass(PrecedenceDirectiveReader::class)]
+#[UsesClass(StartDirectiveReader::class)]
+#[UsesClass(TokenDirectiveReader::class)]
+#[UsesClass(TypeDirectiveReader::class)]
+#[UsesClass(UnknownDirectiveReader::class)]
+#[UsesClass(ActionScanner::class)]
+#[UsesClass(BisonScannerChain::class)]
+#[UsesClass(BisonTokenStream::class)]
+#[UsesClass(BisonTrivia::class)]
+#[UsesClass(DirectiveScanner::class)]
+#[UsesClass(IdentifierScanner::class)]
+#[UsesClass(NumberScanner::class)]
+#[UsesClass(PunctuationScanner::class)]
+#[UsesClass(QuotedLiteralScanner::class)]
+#[UsesClass(TypeTagScanner::class)]
+#[UsesClass(BisonAlternativeDraft::class)]
+#[UsesClass(BisonAlternativeReader::class)]
+#[UsesClass(BisonRuleReader::class)]
 final class BisonParserTest extends TestCase
 {
     public function testParseMinimalGrammar(): void

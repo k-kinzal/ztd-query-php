@@ -24,12 +24,18 @@ use SqlFaker\MySql\Bison\Directive\StartDirectiveReader;
 use SqlFaker\MySql\Bison\Directive\TokenDirectiveReader;
 use SqlFaker\MySql\Bison\Directive\TypeDirectiveReader;
 use SqlFaker\MySql\Bison\Directive\UnknownDirectiveReader;
+use SqlFaker\MySql\Bison\Lexer\ActionScanner;
 use SqlFaker\MySql\Bison\Lexer\BisonLexeme;
 use SqlFaker\MySql\Bison\Lexer\BisonLexer;
 use SqlFaker\MySql\Bison\Lexer\BisonScannerChain;
 use SqlFaker\MySql\Bison\Lexer\BisonToken;
 use SqlFaker\MySql\Bison\Lexer\BisonTokenStream;
 use SqlFaker\MySql\Bison\Lexer\BisonTrivia;
+use SqlFaker\MySql\Bison\Lexer\DirectiveScanner;
+use SqlFaker\MySql\Bison\Lexer\IdentifierScanner;
+use SqlFaker\MySql\Bison\Lexer\NumberScanner;
+use SqlFaker\MySql\Bison\Lexer\QuotedLiteralScanner;
+use SqlFaker\MySql\Bison\Lexer\TypeTagScanner;
 
 #[CoversClass(BisonPreambleReader::class)]
 #[UsesClass(BisonDeclarationBoundary::class)]
@@ -54,6 +60,12 @@ use SqlFaker\MySql\Bison\Lexer\BisonTrivia;
 #[UsesClass(TokenDirectiveReader::class)]
 #[UsesClass(TypeDirectiveReader::class)]
 #[UsesClass(UnknownDirectiveReader::class)]
+#[UsesClass(ActionScanner::class)]
+#[UsesClass(DirectiveScanner::class)]
+#[UsesClass(IdentifierScanner::class)]
+#[UsesClass(NumberScanner::class)]
+#[UsesClass(QuotedLiteralScanner::class)]
+#[UsesClass(TypeTagScanner::class)]
 final class BisonPreambleReaderTest extends TestCase
 {
     public function testReadTakesThePrologueAndTheDeclarations(): void

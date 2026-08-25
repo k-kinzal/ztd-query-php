@@ -18,6 +18,11 @@ use SqlFaker\MySql\Bison\Lexer\BisonScannerChain;
 use SqlFaker\MySql\Bison\Lexer\BisonToken;
 use SqlFaker\MySql\Bison\Lexer\BisonTokenStream;
 use SqlFaker\MySql\Bison\Lexer\BisonTrivia;
+use SqlFaker\MySql\Bison\Lexer\DirectiveScanner;
+use SqlFaker\MySql\Bison\Lexer\IdentifierScanner;
+use SqlFaker\MySql\Bison\Lexer\NumberScanner;
+use SqlFaker\MySql\Bison\Lexer\QuotedLiteralScanner;
+use SqlFaker\MySql\Bison\Lexer\TypeTagScanner;
 
 #[CoversClass(ParamDirectiveReader::class)]
 #[UsesClass(BisonDeclarationBoundary::class)]
@@ -30,6 +35,11 @@ use SqlFaker\MySql\Bison\Lexer\BisonTrivia;
 #[UsesClass(SourceCursor::class)]
 #[UsesClass(ActionScanner::class)]
 #[UsesClass(BisonParamDeclaration::class)]
+#[UsesClass(DirectiveScanner::class)]
+#[UsesClass(IdentifierScanner::class)]
+#[UsesClass(NumberScanner::class)]
+#[UsesClass(QuotedLiteralScanner::class)]
+#[UsesClass(TypeTagScanner::class)]
 final class ParamDirectiveReaderTest extends TestCase
 {
     public function testHandlesClaimsBothParameterDirectives(): void
