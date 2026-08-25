@@ -11,12 +11,18 @@ use SqlFaker\Grammar\SourceCursor;
 use SqlFaker\MySql\Bison\Ast\BisonExpectDeclaration;
 use SqlFaker\MySql\Bison\Directive\BisonDeclarationBoundary;
 use SqlFaker\MySql\Bison\Directive\ExpectDirectiveReader;
+use SqlFaker\MySql\Bison\Lexer\ActionScanner;
 use SqlFaker\MySql\Bison\Lexer\BisonLexeme;
 use SqlFaker\MySql\Bison\Lexer\BisonLexer;
 use SqlFaker\MySql\Bison\Lexer\BisonScannerChain;
 use SqlFaker\MySql\Bison\Lexer\BisonToken;
 use SqlFaker\MySql\Bison\Lexer\BisonTokenStream;
 use SqlFaker\MySql\Bison\Lexer\BisonTrivia;
+use SqlFaker\MySql\Bison\Lexer\DirectiveScanner;
+use SqlFaker\MySql\Bison\Lexer\IdentifierScanner;
+use SqlFaker\MySql\Bison\Lexer\NumberScanner;
+use SqlFaker\MySql\Bison\Lexer\QuotedLiteralScanner;
+use SqlFaker\MySql\Bison\Lexer\TypeTagScanner;
 
 #[CoversClass(ExpectDirectiveReader::class)]
 #[UsesClass(BisonDeclarationBoundary::class)]
@@ -28,6 +34,12 @@ use SqlFaker\MySql\Bison\Lexer\BisonTrivia;
 #[UsesClass(BisonTrivia::class)]
 #[UsesClass(SourceCursor::class)]
 #[UsesClass(BisonExpectDeclaration::class)]
+#[UsesClass(ActionScanner::class)]
+#[UsesClass(DirectiveScanner::class)]
+#[UsesClass(IdentifierScanner::class)]
+#[UsesClass(NumberScanner::class)]
+#[UsesClass(QuotedLiteralScanner::class)]
+#[UsesClass(TypeTagScanner::class)]
 final class ExpectDirectiveReaderTest extends TestCase
 {
     public function testHandlesClaimsOnlyTheExpectDirective(): void

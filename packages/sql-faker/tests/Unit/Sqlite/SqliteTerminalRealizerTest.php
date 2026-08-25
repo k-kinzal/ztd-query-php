@@ -15,6 +15,7 @@ use SqlFaker\Grammar\LexicalCoverageCheck;
 use SqlFaker\Grammar\LexicalException;
 use SqlFaker\Grammar\LexicalWitnessCheck;
 use SqlFaker\Grammar\LexicalWitnessShape;
+use SqlFaker\Grammar\RandomCharacters;
 use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\Sqlite\SqliteTerminalRealizer;
 use SqlFaker\Sqlite\SqliteTokenizer;
@@ -28,6 +29,7 @@ use SqlFaker\Sqlite\SqliteTokenizer;
 #[UsesClass(LexicalWitnessShape::class)]
 #[UsesClass(RandomStringGenerator::class)]
 #[UsesClass(SqliteTokenizer::class)]
+#[UsesClass(RandomCharacters::class)]
 final class SqliteTerminalRealizerTest extends TestCase
 {
     #[DataProvider('providerWitnessedRealizer')]

@@ -15,6 +15,7 @@ use SqlFaker\Grammar\LexicalCoverageCheck;
 use SqlFaker\Grammar\LexicalException;
 use SqlFaker\Grammar\LexicalWitnessCheck;
 use SqlFaker\Grammar\LexicalWitnessShape;
+use SqlFaker\Grammar\RandomCharacters;
 use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\MySql\MySqlTerminalRealizer;
 use SqlFaker\MySql\MySqlTokenizer;
@@ -28,6 +29,7 @@ use SqlFaker\MySql\MySqlTokenizer;
 #[UsesClass(LexicalWitnessShape::class)]
 #[UsesClass(MySqlTokenizer::class)]
 #[UsesClass(RandomStringGenerator::class)]
+#[UsesClass(RandomCharacters::class)]
 final class MySqlTerminalRealizerTest extends TestCase
 {
     #[DataProvider('providerWitnessedRealizer')]
