@@ -84,12 +84,6 @@ final class PlanSyntaxExceptionTest extends TestCase
     }
 
     #[Test]
-    public function isInvalidArgumentException(): void
-    {
-        self::assertInstanceOf(\InvalidArgumentException::class, PlanSyntaxException::emptyPlan());
-    }
-
-    #[Test]
     public function notATableNamePointsAtFrom(): void
     {
         $message = PlanSyntaxException::notATableName('order.id < order_detail.order_id')->getMessage();

@@ -34,12 +34,23 @@ final class ColumnRef
     }
 
     /**
-     * Read an endpoint written as `order.id` or `order.(shop_id, no)`.
+     * Reads an endpoint written as `order.id` or `order.(shop_id, no)`.
      *
-     * @throws PlanSyntaxException
+     * A caller that already holds an endpoint may pass it through, so that
+     * every factory taking an endpoint can take either spelling of one.
+     *
+     * @param string|self $reference Endpoint, written or already read
+     *
+     * @return self The endpoint
+     *
+     * @throws PlanSyntaxException When the text does not name a table and at least one column
      */
-    public static function from(string $reference): self
+    public static function from(string|self $reference): self
     {
+        if ($reference instanceof self) {
+            return $reference;
+        }
+
         $separator = strpos($reference, '.');
         if ($separator === false) {
             throw PlanSyntaxException::unexpected($reference, strlen($reference), "'.' after the table name");

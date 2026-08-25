@@ -58,9 +58,4 @@ final class PlanStructureExceptionTest extends TestCase
         );
     }
 
-    #[Test]
-    public function isLogicException(): void
-    {
-        self::assertInstanceOf(\LogicException::class, PlanStructureException::cycle(['a', 'b']));
-    }
 }

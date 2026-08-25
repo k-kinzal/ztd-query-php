@@ -35,16 +35,24 @@ use Stringable;
  */
 class FixturePlan implements Stringable
 {
-    /** @var list<Relation|string> */
+    /**
+     * @var list<Relation|string>
+     */
     private readonly array $parts;
 
-    /** @var list<Relation> */
+    /**
+     * @var list<Relation>
+     */
     public readonly array $relations;
 
-    /** @var list<string> Every table named, in first-mentioned order */
+    /**
+     * @var list<string> Every table named, in first-mentioned order
+     */
     public readonly array $tables;
 
-    /** @var list<string> Every table, ordered so a parent always precedes its children */
+    /**
+     * @var list<string> Every table, ordered so a parent always precedes its children
+     */
     public readonly array $generationOrder;
 
     /**
@@ -63,16 +71,17 @@ class FixturePlan implements Stringable
                 continue;
             }
 
-            $tables[] = self::assertTableName($part);
+            $tables[] = TableName::of($part);
         }
 
         $this->parts = array_values($parts);
         $this->relations = $relations;
         $this->tables = array_values(array_unique($tables));
 
-        $this->rejectColumnsBoundTwice($relations);
-        $this->rejectUnboundedSelfReferences($relations);
-        $this->generationOrder = $this->sortByDependency($this->tables, $relations);
+        $integrity = new PlanIntegrity();
+        $integrity->assertColumnsBoundOnce($relations);
+        $integrity->assertNoUnboundedSelfReference($relations);
+        $this->generationOrder = (new GenerationOrder())->of($this->tables, $relations);
     }
 
     /**
@@ -211,114 +220,53 @@ class FixturePlan implements Stringable
     }
 
     /**
-     * A column set references one parent, so binding it twice is a mistake
-     * whether the two relations agree or not.
+     * Answers every table joined to this one by relations, however the arrows point.
      *
-     * @param list<Relation> $relations
+     * A plan may describe several groups of tables that have nothing to do
+     * with each other, and each group is generated on its own.
+     *
+     * @param string $table Table to start from
+     *
+     * @return list<string> That table and everything reachable from it
      */
-    private function rejectColumnsBoundTwice(array $relations): void
+    public function connectedTo(string $table): array
     {
-        $seen = [];
-
-        foreach ($relations as $relation) {
-            $child = $relation->child();
-            $key = $child->toString();
-
-            if (isset($seen[$key])) {
-                throw PlanStructureException::columnsBoundTwice($child, $seen[$key], $relation->parent());
-            }
-
-            $seen[$key] = $relation->parent();
-        }
-    }
-
-    /**
-     * A table that requires a row of itself can never finish.
-     *
-     * @param list<Relation> $relations
-     */
-    private function rejectUnboundedSelfReferences(array $relations): void
-    {
-        foreach ($relations as $relation) {
-            $isSelfReference = $relation->parent()->table === $relation->child()->table;
-
-            if ($isSelfReference && $relation->minimumChildRows() > 0) {
-                throw PlanStructureException::unboundedSelfReference(
-                    $relation->parent()->table,
-                    (new PlanPrinter())->printRelation($relation)
-                );
-            }
-        }
-    }
-
-    /**
-     * Order the tables so every parent comes before its children.
-     *
-     * Self references are left out of the ordering: a table cannot precede
-     * itself, and an optional one terminates on its own.
-     *
-     * @param list<string> $tables
-     * @param list<Relation> $relations
-     * @return list<string>
-     */
-    private function sortByDependency(array $tables, array $relations): array
-    {
-        $pending = $tables;
-        $ordered = [];
-
-        while ($pending !== []) {
-            $ready = [];
-            $waiting = [];
-
-            foreach ($pending as $table) {
-                if ($this->waitsForAny($table, $relations, $pending)) {
-                    $waiting[] = $table;
-                    continue;
+        $found = [$table];
+        for ($index = 0; $index < count($found); $index++) {
+            foreach ($this->relations as $relation) {
+                $ends = [$relation->left->table, $relation->right->table];
+                foreach ([$ends, array_reverse($ends)] as [$from, $to]) {
+                    if ($from === $found[$index] && !in_array($to, $found, true)) {
+                        $found[] = $to;
+                    }
                 }
-
-                $ready[] = $table;
             }
-
-            if ($ready === []) {
-                throw PlanStructureException::cycle($pending);
-            }
-
-            $ordered = [...$ordered, ...$ready];
-            $pending = $waiting;
         }
 
-        return $ordered;
+        return $found;
     }
 
     /**
-     * @param list<Relation> $relations
-     * @param list<string> $pending
+     * Answers the columns of a table that some relation reads off it.
+     *
+     * A row has to keep those columns even where the caller asked for nothing,
+     * because the rows on the other end of the relation are built from them.
+     *
+     * @param string $table Table to answer for
+     *
+     * @return list<string> Column names, each named once
      */
-    private function waitsForAny(string $table, array $relations, array $pending): bool
+    public function columnsReferencedOn(string $table): array
     {
-        foreach ($relations as $relation) {
-            $parent = $relation->parent()->table;
-
-            if ($relation->child()->table !== $table || $parent === $table) {
-                continue;
-            }
-
-            if (in_array($parent, $pending, true)) {
-                return true;
+        $columns = [];
+        foreach ($this->dependentsOf($table) as $relation) {
+            foreach ($relation->parent()->columns as $column) {
+                if (!in_array($column, $columns, true)) {
+                    $columns[] = $column;
+                }
             }
         }
 
-        return false;
-    }
-
-    private static function assertTableName(string $part): string
-    {
-        $table = trim($part);
-
-        if (preg_match('/^(?:`[^`]+`|"[^"]+"|[A-Za-z_][A-Za-z0-9_$]*)$/', $table) !== 1) {
-            throw PlanSyntaxException::notATableName($part);
-        }
-
-        return trim($table, '`"');
+        return $columns;
     }
 }

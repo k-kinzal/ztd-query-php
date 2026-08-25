@@ -79,9 +79,18 @@ final class TokenJoiner
     }
 
     /**
-     * @param list<list<string>> $noSpacePairs
+     * Reports whether two adjacent tokens are named by a pair that forbids a space.
+     *
+     * A pair may name a wildcard on either side, so a dialect can say "never
+     * after an opening parenthesis" without listing what may follow it.
+     *
+     * @param list<list<string>> $noSpacePairs Pairs of tokens that must be written together
+     * @param string|null $prev Token already written, or null at the start
+     * @param string $token Token about to be written
+     *
+     * @return bool True when nothing may be written between them
      */
-    private static function matchesNoSpacePair(array $noSpacePairs, ?string $prev, string $token): bool
+    public static function matchesNoSpacePair(array $noSpacePairs, ?string $prev, string $token): bool
     {
         foreach ($noSpacePairs as $pair) {
             if (($pair[0] === '*' || $pair[0] === $prev)
@@ -102,6 +111,16 @@ final class TokenJoiner
             || self::isQuotedIdentifier($token);
     }
 
+    /**
+     * Reports whether a token is an identifier written inside quotes.
+     *
+     * A quoted identifier carries its own boundaries, so it never needs a space
+     * between itself and what comes next.
+     *
+     * @param string $token Token to judge
+     *
+     * @return bool True when the token opens and closes with the same quote
+     */
     public static function isQuotedIdentifier(string $token): bool
     {
         $len = strlen($token);

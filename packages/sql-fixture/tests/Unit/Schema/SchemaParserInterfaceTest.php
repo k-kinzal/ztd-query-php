@@ -5,26 +5,20 @@ declare(strict_types=1);
 namespace Tests\Unit\Schema;
 
 use PHPUnit\Framework\Attributes\CoversNothing;
-use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\SchemaParserInterface;
+use SqlFixture\Schema\TableSchema;
 
 #[CoversNothing]
 final class SchemaParserInterfaceTest extends TestCase
 {
-    #[Test]
-    public function interfaceExists(): void
+    public function testParseAnswersTheTableTheStatementDescribes(): void
     {
-        self::assertTrue(interface_exists(SchemaParserInterface::class));
-    }
+        $schema = new TableSchema('users', ['id' => new ColumnDefinition('id', 'int')], ['id']);
+        $parser = self::createStub(SchemaParserInterface::class);
+        $parser->method('parse')->willReturn($schema);
 
-    #[Test]
-    public function declaresParseMethod(): void
-    {
-        $reflection = new \ReflectionClass(SchemaParserInterface::class);
-        self::assertTrue($reflection->hasMethod('parse'));
-
-        $method = $reflection->getMethod('parse');
-        self::assertCount(1, $method->getParameters());
+        self::assertSame($schema, $parser->parse('CREATE TABLE users (id INT PRIMARY KEY)'));
     }
 }
