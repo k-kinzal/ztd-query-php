@@ -7,6 +7,7 @@ namespace SqlFixture;
 use Faker\Generator;
 use Faker\Provider\Base;
 use PDO;
+use RuntimeException;
 use SqlFixture\Hydrator\HydratorInterface;
 use SqlFixture\Platform\PlatformFactory;
 use SqlFixture\Schema\SchemaFetcherInterface;

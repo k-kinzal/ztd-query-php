@@ -6,6 +6,7 @@ namespace SqlFixture\Fixture;
 
 use SqlFixture\Plan\ColumnRef;
 use SqlFixture\Plan\FixturePlan;
+use SqlFixture\Schema\SchemaNotFoundException;
 use SqlFixture\Schema\SchemaResolverInterface;
 
 /**
@@ -25,7 +26,7 @@ final class PlanSchemaValidator
 
     /**
      * @throws PlanSchemaException If a relation names a column that is not there
-     * @throws \SqlFixture\Schema\SchemaNotFoundException If a table is not there
+     * @throws SchemaNotFoundException If a table is not there
      */
     public function validate(FixturePlan $plan): void
     {

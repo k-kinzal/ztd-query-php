@@ -106,6 +106,7 @@ final class SpyGenerator extends Generator
     /**
      * @param int $chanceOfGettingTrue
      */
+    #[Override]
     public function boolean($chanceOfGettingTrue = 50): bool
     {
         $this->booleanCalls[] = [$chanceOfGettingTrue];

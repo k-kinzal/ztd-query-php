@@ -6,10 +6,18 @@ namespace SqlFixture\Schema;
 
 use RuntimeException;
 
+/**
+ * Reports a table nothing can describe.
+ */
 final class SchemaNotFoundException extends RuntimeException
 {
     /**
-     * @param list<string> $knownTables
+     * Reports a table nothing can resolve.
+     *
+     * @param string $tableName Table that was asked for
+     * @param list<string> $knownTables Tables that could have been asked for
+     *
+     * @return self Exception naming the table, and what was available
      */
     public static function forTable(string $tableName, array $knownTables = []): self
     {

@@ -18,6 +18,14 @@ use SqlFixture\Schema\TableSchema;
  */
 final class InvalidOverrideException extends RuntimeException
 {
+    /**
+     * Reports an override naming a column the table does not have.
+     *
+     * @param string $column Column the caller named
+     * @param TableSchema $schema Table it was looked for on
+     *
+     * @return self Exception naming the column and what the table does have
+     */
     public static function unknownColumn(string $column, TableSchema $schema): self
     {
         return new self(sprintf(
@@ -28,6 +36,14 @@ final class InvalidOverrideException extends RuntimeException
         ));
     }
 
+    /**
+     * Reports a null bound to a column that will not take one.
+     *
+     * @param string $column Column the caller set to null
+     * @param TableSchema $schema Table it belongs to
+     *
+     * @return self Exception naming the column
+     */
     public static function notNullable(string $column, TableSchema $schema): self
     {
         return new self(sprintf(
@@ -37,6 +53,14 @@ final class InvalidOverrideException extends RuntimeException
         ));
     }
 
+    /**
+     * Reports an override on a column the server fills in.
+     *
+     * @param string $column Column the caller set
+     * @param TableSchema $schema Table it belongs to
+     *
+     * @return self Exception naming the column
+     */
     public static function generatedColumn(string $column, TableSchema $schema): self
     {
         return new self(sprintf(

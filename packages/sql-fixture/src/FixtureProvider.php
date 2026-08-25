@@ -6,12 +6,14 @@ namespace SqlFixture;
 
 use Faker\Generator;
 use Faker\Provider\Base;
+use InvalidArgumentException;
 use SqlFixture\Fixture\FixtureSet;
 use SqlFixture\Fixture\PlanGenerator;
 use SqlFixture\Fixture\TableOverrides;
 use SqlFixture\Hydrator\HydratorInterface;
 use SqlFixture\Plan\FixturePlan;
 use SqlFixture\Platform\PlatformFactory;
+use SqlFixture\Schema\SchemaParseException;
 use SqlFixture\Schema\SchemaParserInterface;
 use SqlFixture\Schema\StaticSchemaResolver;
 use SqlFixture\Schema\TableSchema;

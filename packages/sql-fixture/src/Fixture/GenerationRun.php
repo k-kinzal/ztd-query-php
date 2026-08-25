@@ -51,6 +51,13 @@ final class GenerationRun
         $this->visited[$table] = ($this->visited[$table] ?? false) || $asList;
     }
 
+    /**
+     * Reports whether a table has already been reached by the walk.
+     *
+     * @param string $table Table to answer for
+     *
+     * @return bool True when rows of it have been generated
+     */
     public function hasVisited(string $table): bool
     {
         return isset($this->visited[$table]);
@@ -64,6 +71,13 @@ final class GenerationRun
         return isset($this->specs[$table]);
     }
 
+    /**
+     * Answers what the caller asked for on a table.
+     *
+     * @param string $table Table to answer for
+     *
+     * @return RowSpec What the caller wrote, or a description that fixes nothing
+     */
     public function specFor(string $table): RowSpec
     {
         return $this->specs[$table] ?? RowSpec::unspecified();

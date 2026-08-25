@@ -4,6 +4,13 @@ declare(strict_types=1);
 
 namespace SqlFixture\Schema;
 
+/**
+ * One column, as a fixture is generated against it.
+ *
+ * Everything a generator needs in order to invent a value the server will
+ * accept: what the column holds, how much of it, whether it may be absent, and
+ * whether the server fills it in itself.
+ */
 final class ColumnDefinition
 {
     /**

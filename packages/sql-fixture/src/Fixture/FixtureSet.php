@@ -102,26 +102,68 @@ final class FixtureSet implements ArrayAccess, IteratorAggregate, Countable
         return $entries;
     }
 
+    /**
+     * Reports whether the plan generated rows for a table.
+     *
+     * @param mixed $offset Table name, or its position in the plan
+     *
+     * @return bool True when that table has rows
+     */
     public function offsetExists(mixed $offset): bool
     {
         return in_array($this->resolve($offset), $this->order, true);
     }
 
+    /**
+     * Answers the rows of a table, or its single row where it has one.
+     *
+     * @param mixed $offset Table name, or its position in the plan
+     *
+     * @return array<string, mixed>|list<array<string, mixed>>|null The rows, or null when the table has none
+     */
     public function offsetGet(mixed $offset): ?array
     {
-        return $this->get($offset);
+        return is_int($offset) || is_string($offset) ? $this->get($offset) : null;
     }
 
+    /**
+     * Refuses a write.
+     *
+     * A set is what a generation produced; changing it afterwards would describe
+     * rows that were never generated.
+     *
+     * @param mixed $offset Ignored
+     * @param mixed $value Ignored
+     *
+     * @throws LogicException Always
+     */
     public function offsetSet(mixed $offset, mixed $value): void
     {
         throw new LogicException('A FixtureSet is read-only.');
     }
 
+    /**
+     * Refuses a removal.
+     *
+     * @param mixed $offset Ignored
+     *
+     * @throws LogicException Always
+     */
     public function offsetUnset(mixed $offset): void
     {
         throw new LogicException('A FixtureSet is read-only.');
     }
 
+    /**
+     * Walks the tables in the order the plan names them.
+     *
+     * The walk is positional rather than keyed by table, which is what makes
+     * `[$order, $details] = iterator_to_array($set)` line up with the plan as
+     * it was written. Each entry reads the way `get()` does: the row itself
+     * where the table has one, and the list where it has several.
+     *
+     * @return Traversable<int, array<string, mixed>|list<array<string, mixed>>|null> Each table's rows, in plan order
+     */
     public function getIterator(): Traversable
     {
         foreach ($this->order as $table) {
@@ -129,6 +171,11 @@ final class FixtureSet implements ArrayAccess, IteratorAggregate, Countable
         }
     }
 
+    /**
+     * Answers how many tables the generation produced rows for.
+     *
+     * @return int<0, max> Number of tables
+     */
     public function count(): int
     {
         return count($this->order);

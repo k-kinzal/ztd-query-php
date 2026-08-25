@@ -13,6 +13,17 @@ namespace SqlFixture\Plan;
  */
 final class PlanPrinter
 {
+    /**
+     * Writes a plan in the syntax it can be read back from.
+     *
+     * Relations sharing a left end and operator fold into one bracketed line, and
+     * tables no relation touches are written on their own, so a plan printed and
+     * read back is the plan that was printed.
+     *
+     * @param FixturePlan $plan Plan to write
+     *
+     * @return string The plan
+     */
     public function print(FixturePlan $plan): string
     {
         $statements = [];
