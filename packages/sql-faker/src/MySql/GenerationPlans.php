@@ -8,10 +8,22 @@ use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\ProductionPattern;
 use SqlFaker\MySql\Grammar\Grammar;
 
+/**
+ * Names the generation plans this dialect's provider is built from.
+ *
+ * A plan is how a caller says which SQL it wants, and the ones a provider
+ * offers are a fixed vocabulary rather than something each caller assembles.
+ * Naming them here keeps that vocabulary in one place and lets the provider
+ * read as a list of what it can generate.
+ */
 final class GenerationPlans
 {
     /**
-     * @return GenerationPlan<true>
+     * Directs a walk that never leaves a VALUES list with nothing in it.
+     *
+     * @param non-empty-string|null $startRule Rule the walk begins at, or null for the grammar entry point
+     *
+     * @return GenerationPlan<true> Plan whose row lists always carry a row
      */
     public static function withoutEmptyRows(?string $startRule = null): GenerationPlan
     {
@@ -395,5 +407,26 @@ final class GenerationPlans
                 ProductionPattern::exactly(),
             ],
         ])->requiringNonEmpty();
+    }
+
+    /**
+     * Directs a bounded walk that must produce a statement.
+     *
+     * Every generator method on the provider makes the same promise: the SQL
+     * it answers is a statement, not the empty string a nullable rule may
+     * otherwise reduce to, and it stops before the caller's depth.
+     *
+     * @param non-empty-string|null $startRule Rule the statement is grown from, or null for the grammar entry point
+     * @param int $maxDepth How deep the walk may recurse
+     *
+     * @return GenerationPlan<true> Plan for one bounded, non-empty statement
+     */
+    public static function statement(?string $startRule, int $maxDepth): GenerationPlan
+    {
+        $plan = $startRule === null
+            ? GenerationPlan::all()
+            : GenerationPlan::fromRule($startRule);
+
+        return $plan->requiringNonEmpty()->withMaxDepth($maxDepth);
     }
 }

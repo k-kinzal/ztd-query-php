@@ -13,6 +13,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlFaker\Grammar\LexicalCatalog;
+use SqlFaker\Grammar\LexicalCatalogException;
 use SqlFaker\Grammar\LexicalException;
 use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\Grammar\SqlVersion;
@@ -24,22 +25,73 @@ use UnexpectedValueException;
 #[CoversClass(RandomStringGenerator::class)]
 #[CoversClass(TokenJoiner::class)]
 #[UsesClass(LexicalCatalog::class)]
+#[UsesClass(LexicalCatalogException::class)]
 #[UsesClass(SqlVersion::class)]
 final class LexicalGrammarTest extends TestCase
 {
-    public function testGeneratesPublicProviderLexemesThroughDialectGrammar(): void
+    public function testGenerateQuotedIdentifierWritesWhatTheLexerReadsBackAsAnIdentifier(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
         $lexical = new LexicalGrammar($faker, 'sqlite-3.47.2');
-        $sql = implode(' ', [
-            $lexical->generateQuotedIdentifier(3, 3),
-            $lexical->generateStringLiteral(3, 3),
-            $lexical->generateIntegerLiteral(10, 10),
-            $lexical->generateDecimalLiteral(4, 2),
-        ]);
 
-        self::assertSame(['ID', 'STRING', 'INTEGER', 'FLOAT'], $lexical->tokenize($sql));
+        self::assertSame(['ID'], $lexical->tokenize($lexical->generateQuotedIdentifier(3, 3)));
+    }
+
+    public function testGenerateStringLiteralWritesWhatTheLexerReadsBackAsAString(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $lexical = new LexicalGrammar($faker, 'sqlite-3.47.2');
+
+        self::assertSame(['STRING'], $lexical->tokenize($lexical->generateStringLiteral(3, 3)));
+    }
+
+    public function testGenerateIntegerLiteralWritesWhatTheLexerReadsBackAsAnInteger(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $lexical = new LexicalGrammar($faker, 'sqlite-3.47.2');
+
+        self::assertSame(['INTEGER'], $lexical->tokenize($lexical->generateIntegerLiteral(10, 10)));
+    }
+
+    public function testGenerateDecimalLiteralWritesWhatTheLexerReadsBackAsAFloat(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $lexical = new LexicalGrammar($faker, 'sqlite-3.47.2');
+
+        self::assertSame(['FLOAT'], $lexical->tokenize($lexical->generateDecimalLiteral(4, 2)));
+    }
+
+    public function testVersionReportsTheReleaseTheProfileWasBuiltFor(): void
+    {
+        self::assertSame('sqlite-3.47.2', (new LexicalGrammar(Factory::create(), 'sqlite-3.47.2'))->version());
+    }
+
+    public function testSupportsAcceptsATerminalTheSqliteTokenizerCanWrite(): void
+    {
+        self::assertTrue((new LexicalGrammar(Factory::create(), 'sqlite-3.47.2'))->supports('ID'));
+    }
+
+    public function testSupportsRejectsATerminalNoSqliteTokenizerDeclares(): void
+    {
+        self::assertFalse((new LexicalGrammar(Factory::create(), 'sqlite-3.47.2'))->supports('NO_SUCH_TERMINAL'));
+    }
+
+    public function testAssertTerminalsCoveredAcceptsATerminalTheCatalogWitnesses(): void
+    {
+        (new LexicalGrammar(Factory::create(), 'sqlite-3.47.2'))->assertTerminalsCovered(['ID']);
+
+        $this->expectNotToPerformAssertions();
+    }
+
+    public function testAssertTerminalsCoveredReportsATerminalTheCatalogNeitherWitnessesNorExcludes(): void
+    {
+        $this->expectException(LexicalCatalogException::class);
+
+        (new LexicalGrammar(Factory::create(), 'sqlite-3.47.2'))->assertTerminalsCovered(['NO_SUCH_TERMINAL']);
     }
 
     /**

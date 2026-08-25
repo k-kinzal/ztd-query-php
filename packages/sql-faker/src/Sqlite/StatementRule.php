@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace SqlFaker\Sqlite;
 
 /**
- * Available statement types for SQLite SQL generation.
+ * Statement start rules available to SQLite SQL generation.
  *
  * Values correspond to grammar rule names in SQLite's parse.y.
  * The 'cmd' rule is the main statement entry point containing all SQL commands.
  */
-enum StatementType: string
+enum StatementRule: string
 {
     case Select = 'select';
     case Insert = 'insert';

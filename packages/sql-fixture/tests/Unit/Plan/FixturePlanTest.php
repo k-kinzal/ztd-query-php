@@ -301,7 +301,6 @@ final class FixturePlanTest extends TestCase
     {
         $plan = new OrderWithDetailsPlan();
 
-        self::assertInstanceOf(FixturePlan::class, $plan);
         self::assertSame(['order', 'order_detail', 'customer'], $plan->tables);
     }
 

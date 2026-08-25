@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace SqlFaker\PostgreSql;
 
 /**
- * Available statement types for PostgreSQL SQL generation.
+ * Statement start rules available to PostgreSQL SQL generation.
  *
  * Values correspond to grammar rule names in PostgreSQL's gram.y.
  */
-enum StatementType: string
+enum StatementRule: string
 {
     case Select = 'SelectStmt';
     case Insert = 'InsertStmt';

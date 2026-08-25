@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Platform\PostgreSql;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\Platform\PostgreSql\PostgreSqlSchemaParser;
-use SqlFixture\Schema\SchemaParseException;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use SqlFixture\Schema\ColumnDefinition;
+use SqlFixture\Schema\SchemaParseException;
 use SqlFixture\Schema\TableSchema;
 
 #[CoversClass(PostgreSqlSchemaParser::class)]
@@ -584,7 +584,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     #[Test]
     public function parseBlockComment(): void
     {
-        $sql = "/* comment */ CREATE TABLE test (id INTEGER)";
+        $sql = '/* comment */ CREATE TABLE test (id INTEGER)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
 
         self::assertSame('test', $schema->tableName);
@@ -647,7 +647,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     #[Test]
     public function parseMultilineWithWhitespace(): void
     {
-        $sql = "  CREATE   TABLE   test  (  id   INTEGER  NOT  NULL  ) ";
+        $sql = '  CREATE   TABLE   test  (  id   INTEGER  NOT  NULL  ) ';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
         self::assertSame('test', $schema->tableName);
         self::assertFalse($schema->columns['id']->nullable);
@@ -1094,7 +1094,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     #[Test]
     public function parseTrimsDefinitionsInSplitColumnDefinitions(): void
     {
-        $sql = "CREATE TABLE test (  id INTEGER  ,  name TEXT  )";
+        $sql = 'CREATE TABLE test (  id INTEGER  ,  name TEXT  )';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
 
         self::assertCount(2, $schema->columns);
@@ -1105,7 +1105,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     #[Test]
     public function parseColumnDefinitionTrimsRest(): void
     {
-        $sql = "CREATE TABLE test (id   INTEGER   NOT NULL)";
+        $sql = 'CREATE TABLE test (id   INTEGER   NOT NULL)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
 
         self::assertSame('INTEGER', $schema->columns['id']->type);
@@ -1154,7 +1154,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     #[Test]
     public function parseNormalizeSqlRemovesBlockComments(): void
     {
-        $sql = "CREATE TABLE /* block comment */ test (id /* another */ INTEGER)";
+        $sql = 'CREATE TABLE /* block comment */ test (id /* another */ INTEGER)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
 
         self::assertSame('test', $schema->tableName);
@@ -1182,7 +1182,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     #[Test]
     public function parseDefaultReferencesConstraint(): void
     {
-        $sql = "CREATE TABLE test (user_id INTEGER DEFAULT 1 REFERENCES users(id))";
+        $sql = 'CREATE TABLE test (user_id INTEGER DEFAULT 1 REFERENCES users(id))';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
 
         self::assertSame(1, $schema->columns['user_id']->default);
@@ -1191,7 +1191,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     #[Test]
     public function parseDefaultWithGeneratedKeyword(): void
     {
-        $sql = "CREATE TABLE test (val INTEGER DEFAULT 5, gen INTEGER GENERATED ALWAYS AS (val * 2) STORED)";
+        $sql = 'CREATE TABLE test (val INTEGER DEFAULT 5, gen INTEGER GENERATED ALWAYS AS (val * 2) STORED)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
 
         self::assertSame(5, $schema->columns['val']->default);

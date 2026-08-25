@@ -9,6 +9,7 @@ use Faker\Factory;
 use Faker\Generator;
 use SqlFaker\MySqlProvider;
 use SqlFixture\FixtureProvider;
+use Throwable;
 
 /**
  * Fuzz target for CREATE TABLE parsing and fixture generation.
@@ -46,7 +47,7 @@ final class CreateTableTarget
 
         try {
             $this->fixtureProvider->fixture($createTableSql);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             if ($e instanceof Error) {
                 throw $e;
             }
@@ -60,7 +61,7 @@ final class CreateTableTarget
                 "Seed: $seed\n" .
                 "SQL: $createTableSql\n" .
                 "Error: {$e->getMessage()}\n" .
-                "Exception: " . get_class($e)
+                'Exception: ' . get_class($e)
             );
         }
     }
@@ -76,7 +77,7 @@ final class CreateTableTarget
     /**
      * Check if the failure is an expected limitation of the parser.
      */
-    private function isExpectedParserLimitation(string $sql, \Throwable $e): bool
+    private function isExpectedParserLimitation(string $sql, Throwable $e): bool
     {
         $message = $e->getMessage();
 
