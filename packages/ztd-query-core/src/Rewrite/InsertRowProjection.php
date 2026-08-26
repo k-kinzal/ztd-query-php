@@ -37,6 +37,9 @@ final class InsertRowProjection
         return new self($targetColumn, null, $expression, null, false);
     }
 
+    /**
+     * @throws InvalidDefinitionException When the identity is not a positive number
+     */
     public static function generatedIdentity(string $targetColumn, int $value): self
     {
         if ($value < 1) {

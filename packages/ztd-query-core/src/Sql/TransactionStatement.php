@@ -60,6 +60,9 @@ final class TransactionStatement
         };
     }
 
+    /**
+     * @throws InvalidDefinitionException When the statement named no savepoint
+     */
     private static function requiredName(string $name): string
     {
         if ($name === '') {

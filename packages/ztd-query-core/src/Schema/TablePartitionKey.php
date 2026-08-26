@@ -10,6 +10,8 @@ final class TablePartitionKey
 {
     /**
      * @param non-empty-list<string> $expressions
+     *
+     * @throws InvalidDefinitionException When an expression the division is by is empty
      */
     public function __construct(
         public readonly TablePartitionStrategy $strategy,

@@ -44,6 +44,8 @@ final class CreateTableMutation implements ShadowMutation
 
     /**
      * {@inheritDoc}
+     *
+     * @throws TableAlreadyExistsException When the table is already there and the statement did not allow for that
      */
     public function apply(ShadowStore $store, array $rows): void
     {

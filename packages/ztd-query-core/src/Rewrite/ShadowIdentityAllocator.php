@@ -109,7 +109,9 @@ final class ShadowIdentityAllocator
         return $next;
     }
 
-    /** @param list<Row> $rows */
+    /**
+     * @param list<Row> $rows
+     */
     public function nextAfterExistingRows(string $column, array $rows, int $next): int
     {
         foreach ($rows as $row) {

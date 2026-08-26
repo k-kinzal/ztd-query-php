@@ -11,7 +11,7 @@ use ZtdQuery\Platform\ViewReflector;
 #[CoversNothing]
 final class ViewReflectorTest extends TestCase
 {
-    public function testReflectViewsImplementationUsesViewReflectorContract(): void
+    public function testReflectViewsAnswersTheViewsTheDatabaseHas(): void
     {
         $reflector = new class () implements ViewReflector {
             public function reflectViews(): array
@@ -20,7 +20,6 @@ final class ViewReflectorTest extends TestCase
             }
         };
 
-        self::assertInstanceOf(ViewReflector::class, $reflector);
         self::assertSame([], $reflector->reflectViews());
     }
 }

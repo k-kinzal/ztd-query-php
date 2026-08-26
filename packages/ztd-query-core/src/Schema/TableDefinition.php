@@ -34,10 +34,19 @@ final class TableDefinition
      */
     public readonly array $foreignKeys;
 
+    /**
+     * @var TablePartitioning|null How the table is divided, or null when it is not
+     */
     public readonly ?TablePartitioning $partitioning;
 
+    /**
+     * @var TablePartitionKey|null What the division is by, or null when there is none
+     */
     public readonly ?TablePartitionKey $partitionKey;
 
+    /**
+     * @var TablePartitionRelation|null The table this one is a partition of, or null when it is not one
+     */
     public readonly ?TablePartitionRelation $partitionRelation;
 
     /**
