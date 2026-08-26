@@ -28,6 +28,13 @@ final class UpdateCorrectnessTarget
     private PgSchemaAwareSqlBuilder $sqlBuilder;
     private Generator $faker;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param PgCorrectnessHarness $harness
+     * @param PgSchemaAwareSqlBuilder $sqlBuilder
+     * @param Generator $faker
+     */
     public function __construct(
         PgCorrectnessHarness $harness,
         PgSchemaAwareSqlBuilder $sqlBuilder,

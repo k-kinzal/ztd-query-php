@@ -27,6 +27,13 @@ final class UpdateCorrectnessTarget
     private SchemaAwareSqlBuilder $sqlBuilder;
     private Generator $faker;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param CorrectnessHarness $harness
+     * @param SchemaAwareSqlBuilder $sqlBuilder
+     * @param Generator $faker
+     */
     public function __construct(
         CorrectnessHarness $harness,
         SchemaAwareSqlBuilder $sqlBuilder,

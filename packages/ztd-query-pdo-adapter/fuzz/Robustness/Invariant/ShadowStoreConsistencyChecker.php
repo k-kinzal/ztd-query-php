@@ -10,6 +10,11 @@ final class ShadowStoreConsistencyChecker
 {
     private ShadowStore $store;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param ShadowStore $store
+     */
     public function __construct(ShadowStore $store)
     {
         $this->store = $store;

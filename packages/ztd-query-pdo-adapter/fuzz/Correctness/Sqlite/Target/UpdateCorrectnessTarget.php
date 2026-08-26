@@ -28,6 +28,13 @@ final class UpdateCorrectnessTarget
     private SqliteSchemaAwareSqlBuilder $sqlBuilder;
     private Generator $faker;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param SqliteCorrectnessHarness $harness
+     * @param SqliteSchemaAwareSqlBuilder $sqlBuilder
+     * @param Generator $faker
+     */
     public function __construct(
         SqliteCorrectnessHarness $harness,
         SqliteSchemaAwareSqlBuilder $sqlBuilder,

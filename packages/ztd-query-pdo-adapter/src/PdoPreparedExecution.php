@@ -43,6 +43,11 @@ final class PdoPreparedExecution
         return ['statement' => $statement, 'plan' => $plan, 'params' => $compiled['params']];
     }
 
+    /**
+     * Parameter binder.
+     *
+     * @return PdoParameterBinder
+     */
     public function parameterBinder(): PdoParameterBinder
     {
         return $this->parameterBinder;

@@ -28,6 +28,13 @@ final class SelectCorrectnessTarget
     private PgSchemaAwareSqlBuilder $sqlBuilder;
     private Generator $faker;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param PgCorrectnessHarness $harness
+     * @param PgSchemaAwareSqlBuilder $sqlBuilder
+     * @param Generator $faker
+     */
     public function __construct(
         PgCorrectnessHarness $harness,
         PgSchemaAwareSqlBuilder $sqlBuilder,
@@ -39,6 +46,11 @@ final class SelectCorrectnessTarget
         $this->faker = $faker;
     }
 
+    /**
+     * __invoke.
+     *
+     * @param string $input
+     */
     public function __invoke(string $input): void
     {
         $seed = crc32(str_pad($input, 4, "\0"));

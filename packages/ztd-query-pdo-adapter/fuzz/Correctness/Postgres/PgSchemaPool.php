@@ -84,6 +84,12 @@ final class PgSchemaPool
         self::$initialized = true;
     }
 
+    /**
+     * Random.
+     *
+     * @param Generator $faker
+     * @return SchemaDefinition
+     */
     public static function random(Generator $faker): SchemaDefinition
     {
         self::initialize();

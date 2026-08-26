@@ -68,6 +68,15 @@ final class ZtdPdoStatement extends NativePdoStatement
     /** @var array{mode: int, args: array<mixed>}|null */
     private ?array $fetchMode = null;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param NativePdoStatement $statement
+     * @param Session $session
+     * @param ?RewritePlan $plan
+     * @param ?PdoPreparedExecution $preparedExecution
+     * @param int $defaultFetchMode
+     */
     public function __construct(
         NativePdoStatement $statement,
         Session $session,

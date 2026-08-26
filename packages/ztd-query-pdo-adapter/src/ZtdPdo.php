@@ -470,6 +470,11 @@ class ZtdPdo extends PDO
         return $this->copyFromArrayThroughZtd($tableName, $rows, $separator, $nullAs, $fields);
     }
 
+    /**
+     * Pgsql copy to file.
+     *
+     * @return bool
+     */
     public function pgsqlCopyToFile(
         mixed $tableName,
         mixed $filename,
@@ -486,6 +491,16 @@ class ZtdPdo extends PDO
         );
     }
 
+    /**
+     * Copy to file.
+     *
+     * @param string $tableName
+     * @param string $filename
+     * @param string $separator
+     * @param string $nullAs
+     * @param ?string $fields
+     * @return bool
+     */
     public function copyToFile(
         string $tableName,
         string $filename,
@@ -496,6 +511,11 @@ class ZtdPdo extends PDO
         return $this->copyToFileThroughZtd($tableName, $filename, $separator, $nullAs, $fields);
     }
 
+    /**
+     * Pgsql copy from file.
+     *
+     * @return bool
+     */
     public function pgsqlCopyFromFile(
         mixed $tableName,
         mixed $filename,
@@ -512,6 +532,16 @@ class ZtdPdo extends PDO
         );
     }
 
+    /**
+     * Copy from file.
+     *
+     * @param string $tableName
+     * @param string $filename
+     * @param string $separator
+     * @param string $nullAs
+     * @param ?string $fields
+     * @return bool
+     */
     public function copyFromFile(
         string $tableName,
         string $filename,

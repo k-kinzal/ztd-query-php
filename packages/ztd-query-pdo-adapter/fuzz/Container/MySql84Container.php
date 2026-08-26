@@ -51,6 +51,11 @@ final class MySql84Container extends GenericContainer
             ->withRetryInterval(250000);
     }
 
+    /**
+     * Answers grammar version.
+     *
+     * @return string
+     */
     public static function getGrammarVersion(): string
     {
         return 'mysql-8.4.7';

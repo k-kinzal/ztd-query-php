@@ -27,6 +27,13 @@ final class InsertCorrectnessTarget
     private SchemaAwareSqlBuilder $sqlBuilder;
     private Generator $faker;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param CorrectnessHarness $harness
+     * @param SchemaAwareSqlBuilder $sqlBuilder
+     * @param Generator $faker
+     */
     public function __construct(
         CorrectnessHarness $harness,
         SchemaAwareSqlBuilder $sqlBuilder,
@@ -38,6 +45,11 @@ final class InsertCorrectnessTarget
         $this->faker = $faker;
     }
 
+    /**
+     * __invoke.
+     *
+     * @param string $input
+     */
     public function __invoke(string $input): void
     {
         $seed = crc32(str_pad($input, 4, "\0"));

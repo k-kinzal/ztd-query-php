@@ -28,6 +28,10 @@ final class SqliteCorrectnessHarness
     /** @var list<Row> */
     private array $fixtureRows = [];
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     */
     public function __construct()
     {
         $this->rawPdo = new PDO('sqlite::memory:', null, null, [
@@ -92,6 +96,10 @@ final class SqliteCorrectnessHarness
         return $this->fixtureRows;
     }
 
+    /**
+     * Teardown.
+     *
+     */
     public function teardown(): void
     {
         if ($this->currentSchema !== null) {
@@ -102,6 +110,11 @@ final class SqliteCorrectnessHarness
         $this->fixtureRows = [];
     }
 
+    /**
+     * Answers raw pdo.
+     *
+     * @return PDO
+     */
     public function getRawPdo(): PDO
     {
         return $this->rawPdo;
@@ -126,6 +139,11 @@ final class SqliteCorrectnessHarness
         return $this->fixtureRows;
     }
 
+    /**
+     * Answers current schema.
+     *
+     * @return ?SchemaDefinition
+     */
     public function getCurrentSchema(): ?SchemaDefinition
     {
         return $this->currentSchema;

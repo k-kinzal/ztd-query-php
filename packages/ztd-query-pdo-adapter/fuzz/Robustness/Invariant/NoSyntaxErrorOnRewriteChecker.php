@@ -17,6 +17,13 @@ final class NoSyntaxErrorOnRewriteChecker
     private SqlRewriter $rewriter;
     private PDO $rawPdo;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param MySqlQueryGuard $guard
+     * @param SqlRewriter $rewriter
+     * @param PDO $rawPdo
+     */
     public function __construct(MySqlQueryGuard $guard, SqlRewriter $rewriter, PDO $rawPdo)
     {
         $this->guard = $guard;
@@ -24,6 +31,12 @@ final class NoSyntaxErrorOnRewriteChecker
         $this->rawPdo = $rawPdo;
     }
 
+    /**
+     * Check.
+     *
+     * @param string $sql
+     * @return ?InvariantViolation
+     */
     public function check(string $sql): ?InvariantViolation
     {
         try {

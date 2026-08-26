@@ -11,11 +11,22 @@ final class PgSchemaAwareSqlBuilder
 {
     private Generator $faker;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param Generator $faker
+     */
     public function __construct(Generator $faker)
     {
         $this->faker = $faker;
     }
 
+    /**
+     * Builds select.
+     *
+     * @param SchemaDefinition $schema
+     * @return string
+     */
     public function buildSelect(SchemaDefinition $schema): string
     {
         $table = $this->quoteIdentifier($schema->name);
@@ -55,6 +66,13 @@ final class PgSchemaAwareSqlBuilder
         }
     }
 
+    /**
+     * Builds join select.
+     *
+     * @param SchemaDefinition $left
+     * @param SchemaDefinition $right
+     * @return string
+     */
     public function buildJoinSelect(SchemaDefinition $left, SchemaDefinition $right): string
     {
         $leftTable = $this->quoteIdentifier($left->name);
@@ -83,6 +101,12 @@ final class PgSchemaAwareSqlBuilder
             . '"left_value" NULLS LAST, "right_value" NULLS LAST';
     }
 
+    /**
+     * Builds insert.
+     *
+     * @param SchemaDefinition $schema
+     * @return string
+     */
     public function buildInsert(SchemaDefinition $schema): string
     {
         $table = $this->quoteIdentifier($schema->name);
@@ -119,6 +143,12 @@ final class PgSchemaAwareSqlBuilder
         return "INSERT INTO $table ($colList) VALUES ($valList)";
     }
 
+    /**
+     * Builds update.
+     *
+     * @param SchemaDefinition $schema
+     * @return string
+     */
     public function buildUpdate(SchemaDefinition $schema): string
     {
         $table = $this->quoteIdentifier($schema->name);
@@ -150,6 +180,12 @@ final class PgSchemaAwareSqlBuilder
         return "UPDATE $table SET " . $this->quoteIdentifier($updateCol) . " = $newValue WHERE $whereClause";
     }
 
+    /**
+     * Builds delete.
+     *
+     * @param SchemaDefinition $schema
+     * @return string
+     */
     public function buildDelete(SchemaDefinition $schema): string
     {
         $table = $this->quoteIdentifier($schema->name);

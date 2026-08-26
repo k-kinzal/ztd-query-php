@@ -24,6 +24,11 @@ final class PdoStatement implements StatementInterface
 {
     private NativePdoStatement $statement;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param NativePdoStatement $statement
+     */
     public function __construct(NativePdoStatement $statement)
     {
         $this->statement = $statement;

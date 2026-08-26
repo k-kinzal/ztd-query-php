@@ -28,6 +28,13 @@ final class SelectCorrectnessTarget
     private SqliteSchemaAwareSqlBuilder $sqlBuilder;
     private Generator $faker;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param SqliteCorrectnessHarness $harness
+     * @param SqliteSchemaAwareSqlBuilder $sqlBuilder
+     * @param Generator $faker
+     */
     public function __construct(
         SqliteCorrectnessHarness $harness,
         SqliteSchemaAwareSqlBuilder $sqlBuilder,
@@ -39,6 +46,11 @@ final class SelectCorrectnessTarget
         $this->faker = $faker;
     }
 
+    /**
+     * __invoke.
+     *
+     * @param string $input
+     */
     public function __invoke(string $input): void
     {
         $seed = crc32(str_pad($input, 4, "\0"));

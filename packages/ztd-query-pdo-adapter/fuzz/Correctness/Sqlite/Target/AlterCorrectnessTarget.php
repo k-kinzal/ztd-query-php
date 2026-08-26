@@ -22,6 +22,13 @@ use ZtdQuery\Exception\UnsupportedSqlException;
  */
 final class AlterCorrectnessTarget
 {
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param SqliteCorrectnessHarness $harness
+     * @param Generator $faker
+     * @param ResultComparator $comparator
+     */
     public function __construct(
         private readonly SqliteCorrectnessHarness $harness,
         private readonly Generator $faker,

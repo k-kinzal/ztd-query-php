@@ -17,6 +17,11 @@ final class PostgreSqlDSN implements DSN, Stringable
     private ?int $port = null;
     private ?string $dbname = null;
 
+    /**
+     * __to string.
+     *
+     * @return string
+     */
     public function __toString(): string
     {
         return $this->toString();
@@ -32,6 +37,11 @@ final class PostgreSqlDSN implements DSN, Stringable
         return $this;
     }
 
+    /**
+     * Answers host.
+     *
+     * @return ?string
+     */
     public function getHost(): ?string
     {
         return $this->host;
@@ -47,6 +57,11 @@ final class PostgreSqlDSN implements DSN, Stringable
         return $this;
     }
 
+    /**
+     * Answers port.
+     *
+     * @return ?int
+     */
     public function getPort(): ?int
     {
         return $this->port;
@@ -79,6 +94,11 @@ final class PostgreSqlDSN implements DSN, Stringable
         return $dsn;
     }
 
+    /**
+     * Requires host port.
+     *
+     * @return bool
+     */
     public function requiresHostPort(): bool
     {
         return true;

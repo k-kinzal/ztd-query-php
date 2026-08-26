@@ -67,6 +67,10 @@ final class PostgreSqlContainer extends GenericContainer
             ->withRetryInterval(250000);
     }
 
+    /**
+     * After start.
+     *
+     */
     public function afterStart($instance): void
     {
         $port = $instance->getMappedPort(5432);

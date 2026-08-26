@@ -20,6 +20,13 @@ use ZtdQuery\Connection\StatementInterface;
  */
 final class CreateTableAsCorrectnessTarget
 {
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param PgCorrectnessHarness $harness
+     * @param Generator $faker
+     * @param ResultComparator $comparator
+     */
     public function __construct(
         private readonly PgCorrectnessHarness $harness,
         private readonly Generator $faker,
