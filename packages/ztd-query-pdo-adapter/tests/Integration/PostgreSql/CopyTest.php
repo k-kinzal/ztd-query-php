@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Integration\PostgreSql;
 
+use ArrayIterator;
 use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use Tests\Fixtures\PostgreSqlContainer;
+use ValueError;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 
@@ -47,7 +49,7 @@ final class CopyTest extends TestCase
             ));
             self::assertTrue($ztdPdo->copyFromArray(
                 'copy_target',
-                new \ArrayIterator(["3|iterator|value|t\n"]),
+                new ArrayIterator(["3|iterator|value|t\n"]),
                 '|',
                 '\\N',
                 'id, value, optional, active',
@@ -139,7 +141,7 @@ final class CopyTest extends TestCase
             try {
                 $ztdPdo->pgsqlCopyFromArray('copy_target', ["1\tvalid\n", "2\n"]);
                 self::fail('Expected a malformed COPY row to be rejected.');
-            } catch (\ValueError $exception) {
+            } catch (ValueError $exception) {
                 self::assertStringContainsString('2 fields are required', $exception->getMessage());
             }
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration\MySql\Pdo\Drop;
 
+use RuntimeException;
 use Tests\Support\MySqlIntegrationTestCase;
 
 final class DropTableTest extends MySqlIntegrationTestCase
@@ -17,7 +18,7 @@ final class DropTableTest extends MySqlIntegrationTestCase
 
         $this->ztdPdo->exec("DROP TABLE `{$table}`");
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
         $this->ztdPdo->query("SELECT * FROM `{$table}`");
     }
 

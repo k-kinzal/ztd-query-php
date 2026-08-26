@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\MySql\Transformer;
 
 use PhpMyAdmin\SqlParser\Statements\ReplaceStatement;
+use RuntimeException;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\MySql\MySqlLexerProfile;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Rewrite\SqlTransformer;
-use ZtdQuery\Platform\MySql\MySqlLexerProfile;
 use ZtdQuery\Sql\SqlTokenStream;
 
 /**
@@ -44,7 +45,7 @@ final class ReplaceTransformer implements SqlTransformer
 
         try {
             return $this->insertTransformer->transform($insertSql, $tables);
-        } catch (\RuntimeException $exception) {
+        } catch (RuntimeException $exception) {
             throw new UnsupportedSqlException($sql, $exception->getMessage());
         }
     }

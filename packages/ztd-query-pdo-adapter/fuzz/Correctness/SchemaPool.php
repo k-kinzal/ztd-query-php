@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Fuzz\Correctness;
 
 use Faker\Generator;
+use InvalidArgumentException;
 
 final class SchemaPool
 {
@@ -102,7 +103,7 @@ final class SchemaPool
     {
         self::initialize();
         if (!isset(self::$schemas[$name])) {
-            throw new \InvalidArgumentException("Unknown schema: $name");
+            throw new InvalidArgumentException("Unknown schema: $name");
         }
         return self::$schemas[$name];
     }

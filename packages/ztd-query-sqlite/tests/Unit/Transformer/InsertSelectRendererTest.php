@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Transformer;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -51,7 +52,7 @@ final class InsertSelectRendererTest extends TestCase
 
     public function testRejectsNonPositiveGeneratedIdentityStart(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Generated identity start must be positive.');
 
         (new InsertSelectRenderer())->renderGeneratedIdentity(0);

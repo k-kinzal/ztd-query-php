@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Postgres\Transformer;
 
-use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
-use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
-use ZtdQuery\Platform\Postgres\PgSqlTableSampleRewriter;
+use RuntimeException;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\IdentifierQuoter;
-use ZtdQuery\Platform\ValueRenderer;
+use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
 use ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer;
 use ZtdQuery\Platform\Postgres\PgSqlGeneratedColumnProjector;
+use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
+use ZtdQuery\Platform\Postgres\PgSqlTableSampleRewriter;
+use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
@@ -155,7 +156,7 @@ final class SelectTransformer implements SqlTransformer
         }
 
         if ($rows === []) {
-            throw new \RuntimeException("Cannot shadow table '$tableName' with empty data (columns unknown).");
+            throw new RuntimeException("Cannot shadow table '$tableName' with empty data (columns unknown).");
         }
 
         $ctes = [];

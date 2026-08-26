@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration\MySql\Pdo\Drop;
 
+use RuntimeException;
 use Tests\Support\MySqlIntegrationTestCase;
 
 final class DropTableIfExistsTest extends MySqlIntegrationTestCase
@@ -26,7 +27,7 @@ final class DropTableIfExistsTest extends MySqlIntegrationTestCase
 
         $this->ztdPdo->exec("DROP TABLE IF EXISTS `{$table}`");
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
         $this->ztdPdo->query("SELECT * FROM `{$table}`");
     }
 }

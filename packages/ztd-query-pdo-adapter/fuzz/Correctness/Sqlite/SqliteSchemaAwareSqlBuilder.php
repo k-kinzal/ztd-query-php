@@ -40,11 +40,11 @@ final class SqliteSchemaAwareSqlBuilder
             case 3:
                 /** @var string $groupCol */
                 $groupCol = $this->faker->randomElement($columns);
-                return "SELECT COUNT(*) AS cnt, " . $this->quoteIdentifier($groupCol) . " FROM $table GROUP BY " . $this->quoteIdentifier($groupCol);
+                return 'SELECT COUNT(*) AS cnt, ' . $this->quoteIdentifier($groupCol) . " FROM $table GROUP BY " . $this->quoteIdentifier($groupCol);
             case 4:
                 /** @var string $col */
                 $col = $this->faker->randomElement($columns);
-                return "SELECT DISTINCT " . $this->quoteIdentifier($col) . " FROM $table";
+                return 'SELECT DISTINCT ' . $this->quoteIdentifier($col) . " FROM $table";
             case 5:
                 /** @var string $derivedColumn */
                 $derivedColumn = $this->faker->randomElement($columns);

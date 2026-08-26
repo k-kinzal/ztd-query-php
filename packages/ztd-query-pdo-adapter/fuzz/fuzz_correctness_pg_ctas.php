@@ -23,5 +23,5 @@ $faker = Factory::create();
 $harness = new PgCorrectnessHarness($host, $port, 'fuzz_test', 'test', 'test');
 $target = new CreateTableAsCorrectnessTarget($harness, $faker);
 
-/** @var \PhpFuzzer\Config $config */
-$config->setTarget(\Closure::fromCallable($target));
+/** @var PhpFuzzer\Config $config */
+$config->setTarget(Closure::fromCallable($target));

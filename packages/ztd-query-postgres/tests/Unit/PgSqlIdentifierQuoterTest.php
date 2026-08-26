@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use Tests\Contract\IdentifierQuoterContractTest;
 use ZtdQuery\Platform\IdentifierQuoter;
 use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
-use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(PgSqlIdentifierQuoter::class)]
 final class PgSqlIdentifierQuoterTest extends IdentifierQuoterContractTest

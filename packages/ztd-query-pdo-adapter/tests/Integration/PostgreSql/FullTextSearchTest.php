@@ -26,20 +26,20 @@ final class FullTextSearchTest extends TestCase
 
         try {
             $rawPdo->exec(
-                "CREATE TABLE articles (id INTEGER PRIMARY KEY, title TEXT, body TEXT, "
-                . "search_document TSVECTOR GENERATED ALWAYS AS "
+                'CREATE TABLE articles (id INTEGER PRIMARY KEY, title TEXT, body TEXT, '
+                . 'search_document TSVECTOR GENERATED ALWAYS AS '
                 . "(to_tsvector('english', coalesce(title, '') || ' ' || coalesce(body, ''))) STORED)",
             );
             $ztdPdo = ZtdPdo::fromPdo($rawPdo);
             self::assertSame(3, $ztdPdo->exec(
-                "INSERT INTO articles (id, title, body) VALUES "
+                'INSERT INTO articles (id, title, body) VALUES '
                 . "(1, 'Search guide', 'exact search terms'), "
                 . "(2, 'Body match', 'needle in body'), "
                 . "(3, 'Other', 'unrelated')",
             ));
 
             $typed = $ztdPdo->query(
-                "SELECT id, pg_typeof(search_document)::text AS type FROM articles "
+                'SELECT id, pg_typeof(search_document)::text AS type FROM articles '
                 . "WHERE search_document @@ plainto_tsquery('english', 'search terms')",
             );
             self::assertNotFalse($typed);

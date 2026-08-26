@@ -4,18 +4,20 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\Postgres\PgSqlMutationResolver;
 use ZtdQuery\Platform\Postgres\PgSqlMergeParser;
+use ZtdQuery\Platform\Postgres\PgSqlMutationResolver;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
-use ZtdQuery\Platform\Postgres\PgSqlSchemaParser;
 use ZtdQuery\Platform\Postgres\PgSqlPartitionParser;
+use ZtdQuery\Platform\Postgres\PgSqlSchemaParser;
 use ZtdQuery\Rewrite\QueryKind;
+use ZtdQuery\Schema\PartialUniqueIndex;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
-use ZtdQuery\Schema\PartialUniqueIndex;
 use ZtdQuery\Shadow\Mutation\CreateTableAsSelectMutation;
 use ZtdQuery\Shadow\Mutation\CreateTableLikeMutation;
 use ZtdQuery\Shadow\Mutation\CreateTableMutation;
@@ -29,8 +31,6 @@ use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\Mutation\UpsertMutation;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTableState;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 
 #[CoversClass(PgSqlMutationResolver::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlColumnTypeMapper::class)]
@@ -2166,7 +2166,7 @@ final class PgSqlMutationResolverTest extends TestCase
             new PgSqlSchemaParser(),
             new PgSqlParser()
         );
-        $this->expectException(\ZtdQuery\Exception\UnknownSchemaException::class);
+        $this->expectException(UnknownSchemaException::class);
         $resolver->resolve(
             'CREATE TABLE new_table (LIKE unknown_source)',
             'CREATE_TABLE',

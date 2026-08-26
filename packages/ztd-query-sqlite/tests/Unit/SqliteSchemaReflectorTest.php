@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Platform\Sqlite\SqliteSchemaReflector;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 
 #[CoversClass(SqliteSchemaReflector::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser::class)]
@@ -39,7 +39,7 @@ final class SqliteSchemaReflectorTest extends TestCase
         ]);
         $connection = self::createMock(ConnectionInterface::class);
         $connection->expects(self::once())->method('query')->with(
-            "SELECT name, sql FROM (SELECT name, sql, 0 AS precedence FROM sqlite_temp_master "
+            'SELECT name, sql FROM (SELECT name, sql, 0 AS precedence FROM sqlite_temp_master '
             . "WHERE type='view' UNION ALL SELECT name, sql, 1 AS precedence FROM sqlite_master "
             . "WHERE type='view') ORDER BY precedence, name",
         )->willReturn($statement);
@@ -134,9 +134,9 @@ final class SqliteSchemaReflectorTest extends TestCase
         ]);
         $connection = static::createMock(ConnectionInterface::class);
         $connection->expects(self::once())->method('query')->with(
-            "SELECT name, sql FROM (SELECT name, sql, 0 AS precedence FROM sqlite_temp_master "
+            'SELECT name, sql FROM (SELECT name, sql, 0 AS precedence FROM sqlite_temp_master '
             . "WHERE type='table' AND name NOT LIKE 'sqlite_%' UNION ALL "
-            . "SELECT name, sql, 1 AS precedence FROM sqlite_master "
+            . 'SELECT name, sql, 1 AS precedence FROM sqlite_master '
             . "WHERE type='table' AND name NOT LIKE 'sqlite_%') ORDER BY precedence, name",
         )->willReturn($statement);
 

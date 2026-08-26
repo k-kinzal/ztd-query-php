@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\PostgreSqlProvider;
+use Throwable;
 use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
 use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
@@ -50,7 +51,7 @@ final class TransformerFuzzTest extends TestCase
                 $result = $this->transformer->transform($sql, []);
                 self::assertNotEmpty($result, "transform() returned empty string on iteration $i");
                 self::assertSame($sql, $result);
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 self::fail("transform() crashed on iteration $i with SQL: $sql\nError: " . $e->getMessage());
             }
         }
@@ -85,7 +86,7 @@ final class TransformerFuzzTest extends TestCase
                     self::assertStringContainsString('WITH', $result, "transform() should inject CTE when SQL references shadowed table on iteration $i");
                     $withCount++;
                 }
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 self::fail("transform() crashed on iteration $i with SQL: $sql\nError: " . $e->getMessage());
             }
         }
@@ -115,7 +116,7 @@ final class TransformerFuzzTest extends TestCase
                 if (stripos($sql, 'users') !== false) {
                     self::assertStringContainsString('WITH', $result, "transform() should inject CTE when SQL references shadowed table on iteration $i");
                 }
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 self::fail("transform() crashed on iteration $i with SQL: $sql\nError: " . $e->getMessage());
             }
         }

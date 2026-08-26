@@ -18,5 +18,5 @@ $harness = new SqliteCorrectnessHarness();
 $sqlBuilder = new SqliteSchemaAwareSqlBuilder($faker);
 $target = new UpdateCorrectnessTarget($harness, $sqlBuilder, $faker);
 
-/** @var \PhpFuzzer\Config $config */
-$config->setTarget(\Closure::fromCallable($target));
+/** @var PhpFuzzer\Config $config */
+$config->setTarget(Closure::fromCallable($target));

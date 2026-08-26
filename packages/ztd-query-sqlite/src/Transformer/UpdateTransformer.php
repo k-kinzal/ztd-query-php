@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Sqlite\Transformer;
 
+use RuntimeException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
@@ -140,7 +141,7 @@ final class UpdateTransformer implements SqlTransformer
     {
         $targetTable = $this->parser->extractTargetTable($sql);
         if ($targetTable === null) {
-            throw new \RuntimeException('Cannot resolve UPDATE target');
+            throw new RuntimeException('Cannot resolve UPDATE target');
         }
 
         return [

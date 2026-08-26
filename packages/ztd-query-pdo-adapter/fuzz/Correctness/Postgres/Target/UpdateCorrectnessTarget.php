@@ -86,8 +86,8 @@ final class UpdateCorrectnessTarget
                 "UPDATE table state mismatch\n" .
                 "Seed: $seed\n" .
                 "Schema: {$schema->name}\n" .
-                "Raw row count: " . count($rawRows) . "\n" .
-                "ZTD row count: " . count($ztdRows)
+                'Raw row count: ' . count($rawRows) . "\n" .
+                'ZTD row count: ' . count($ztdRows)
             );
         }
     }

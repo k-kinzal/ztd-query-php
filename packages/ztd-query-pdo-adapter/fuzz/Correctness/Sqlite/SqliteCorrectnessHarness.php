@@ -8,6 +8,7 @@ use Faker\Factory;
 use Faker\Generator;
 use Fuzz\Correctness\SchemaDefinition;
 use PDO;
+use RuntimeException;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 use ZtdQuery\Config\UnknownSchemaBehavior;
 use ZtdQuery\Config\UnsupportedSqlBehavior;
@@ -105,7 +106,7 @@ final class SqliteCorrectnessHarness
     public function getZtdPdo(): ZtdPdo
     {
         if ($this->ztdPdo === null) {
-            throw new \RuntimeException('ZtdPdo not initialized. Call setup() first.');
+            throw new RuntimeException('ZtdPdo not initialized. Call setup() first.');
         }
         return $this->ztdPdo;
     }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Sqlite;
 
+use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
@@ -18,9 +19,9 @@ final class SelectTableScopeTest extends TestCase
 {
     public function testDerivedAggregateReadsShadowRows(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [
-            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        $rawPdo = new PDO('sqlite::memory:', null, null, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
         $rawPdo->exec('CREATE TABLE native_employees (id INTEGER PRIMARY KEY, department TEXT, salary INTEGER)');
         $rawPdo->exec('CREATE TABLE shadow_employees (id INTEGER PRIMARY KEY, department TEXT, salary INTEGER)');
@@ -38,9 +39,9 @@ final class SelectTableScopeTest extends TestCase
 
     public function testTableValuedFunctionIsNotTreatedAsUnknownTable(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [
-            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        $rawPdo = new PDO('sqlite::memory:', null, null, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
         $rawPdo->exec('CREATE TABLE native_items (id INTEGER PRIMARY KEY, tags TEXT)');
         $rawPdo->exec('CREATE TABLE shadow_items (id INTEGER PRIMARY KEY, tags TEXT)');
@@ -58,9 +59,9 @@ final class SelectTableScopeTest extends TestCase
 
     public function testDerivedJoinReadsEveryNestedShadowRelation(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [
-            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        $rawPdo = new PDO('sqlite::memory:', null, null, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
         $rawPdo->exec('CREATE TABLE native_users (id INTEGER PRIMARY KEY, name TEXT)');
         $rawPdo->exec('CREATE TABLE native_orders (id INTEGER PRIMARY KEY, user_id INTEGER, amount INTEGER)');
@@ -82,9 +83,9 @@ final class SelectTableScopeTest extends TestCase
 
     public function testNestedUnionBranchesReadShadowRows(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [
-            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        $rawPdo = new PDO('sqlite::memory:', null, null, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
         $rawPdo->exec('CREATE TABLE native_items (id INTEGER PRIMARY KEY, score INTEGER)');
         $rawPdo->exec('CREATE TABLE shadow_items (id INTEGER PRIMARY KEY, score INTEGER)');
@@ -102,9 +103,9 @@ final class SelectTableScopeTest extends TestCase
 
     public function testScalarSubqueryAndUserCteReadNestedShadowRelation(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [
-            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        $rawPdo = new PDO('sqlite::memory:', null, null, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
         $rawPdo->exec('CREATE TABLE native_users (id INTEGER PRIMARY KEY, name TEXT)');
         $rawPdo->exec('CREATE TABLE native_orders (id INTEGER PRIMARY KEY, user_id INTEGER, amount INTEGER)');
@@ -126,9 +127,9 @@ final class SelectTableScopeTest extends TestCase
 
     public function testExistsSubqueryInSelectListReadsShadowRows(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [
-            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        $rawPdo = new PDO('sqlite::memory:', null, null, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
         $rawPdo->exec('CREATE TABLE native_items (id INTEGER PRIMARY KEY)');
         $rawPdo->exec('CREATE TABLE native_tags (item_id INTEGER, name TEXT)');

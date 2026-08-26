@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration\MySql\Pdo\Error;
 
+use PDOException;
 use Tests\Support\MySqlIntegrationTestCase;
 use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 
@@ -61,10 +62,10 @@ final class SchemaNotFoundTest extends MySqlIntegrationTestCase
 
     public function testSelectFromNonExistentTableThrowsPdoException(): void
     {
-        $this->expectException(\PDOException::class);
+        $this->expectException(PDOException::class);
         $this->expectExceptionMessageMatches("/doesn't exist|Table.*doesn't exist/i");
 
-        $this->ztdQuery("SELECT * FROM nonexistent_table_xyz123");
+        $this->ztdQuery('SELECT * FROM nonexistent_table_xyz123');
     }
 
     public function testDropExistingPhysicalTableSucceeds(): void

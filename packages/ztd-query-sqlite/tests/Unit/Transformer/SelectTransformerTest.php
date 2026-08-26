@@ -4,18 +4,21 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Transformer;
 
+use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
+use RuntimeException;
+use stdClass;
 use Tests\Contract\TransformerContractTest;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\IdentifierQuoter;
-use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Platform\Sqlite\SqliteCastRenderer;
+use ZtdQuery\Platform\Sqlite\SqliteFullTextSearchRewriter;
 use ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter;
 use ZtdQuery\Platform\Sqlite\SqliteLexicalMasker;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
-use ZtdQuery\Platform\Sqlite\SqliteFullTextSearchRewriter;
 use ZtdQuery\Platform\Sqlite\Transformer\SelectTransformer;
+use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
@@ -97,7 +100,7 @@ final class SelectTransformerTest extends TransformerContractTest
         return 'SELECT * FROM users WHERE id = 1';
     }
 
-    #[\Override]
+    #[Override]
     protected function nativeStringType(): string
     {
         return 'TEXT';
@@ -525,7 +528,7 @@ final class SelectTransformerTest extends TransformerContractTest
             ],
         ];
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
         $transformer->transform('SELECT * FROM users', $tables);
     }
 
@@ -1052,7 +1055,7 @@ final class SelectTransformerTest extends TransformerContractTest
     public function testFormatValueWithTypeObjectUsesSerialized(): void
     {
         $transformer = new SelectTransformer();
-        $obj = new \stdClass();
+        $obj = new stdClass();
         $tables = [
             'users' => [
                 'rows' => [['val' => $obj]],
@@ -1338,7 +1341,7 @@ final class SelectTransformerTest extends TransformerContractTest
         $sql = 'WITH existing AS (SELECT 1) SELECT * FROM users, existing';
         $result = $transformer->transform($sql, $tables);
         self::assertStringContainsString('WITH "users" AS (', $result);
-        self::assertStringNotContainsString("WITH ,", $result);
+        self::assertStringNotContainsString('WITH ,', $result);
     }
 
     public function testEmptyCteSelectColumnOrderMatchesInput(): void

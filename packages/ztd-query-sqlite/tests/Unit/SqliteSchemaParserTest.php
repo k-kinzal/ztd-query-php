@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use Generator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -102,7 +103,7 @@ final class SqliteSchemaParserTest extends SchemaParserContractTest
     {
         $parser = new SqliteSchemaParser();
         $result = $parser->parse(
-            "CREATE VIRTUAL TABLE IF NOT EXISTS main.fts_articles USING fts5("
+            'CREATE VIRTUAL TABLE IF NOT EXISTS main.fts_articles USING fts5('
             . 'title, "article body" UNINDEXED, '
             . "tokenize='porter unicode61', prefix='2 3')",
         );
@@ -293,8 +294,8 @@ final class SqliteSchemaParserTest extends SchemaParserContractTest
         ));
     }
 
-    /** @return \Generator<string, array{string}> */
-    public static function providerInvalidTableOptionSuffixes(): \Generator
+    /** @return Generator<string, array{string}> */
+    public static function providerInvalidTableOptionSuffixes(): Generator
     {
         yield 'unknown option' => ['COMPRESS'];
         yield 'missing rowid' => ['WITHOUT'];
@@ -1380,7 +1381,7 @@ final class SqliteSchemaParserTest extends SchemaParserContractTest
     public function testColumnWithDefaultKeywordHasNullType(): void
     {
         $parser = new SqliteSchemaParser();
-        $sql = "CREATE TABLE t (id DEFAULT 0)";
+        $sql = 'CREATE TABLE t (id DEFAULT 0)';
         $result = $parser->parse($sql);
         self::assertNotNull($result);
         self::assertContains('id', $result->columns);

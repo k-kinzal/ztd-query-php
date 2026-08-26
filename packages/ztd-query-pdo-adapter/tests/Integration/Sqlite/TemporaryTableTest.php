@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Sqlite;
 
+use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
@@ -16,7 +17,7 @@ final class TemporaryTableTest extends TestCase
 {
     public function testDmlContinuesAcrossTemporaryTableLifecycle(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:');
+        $rawPdo = new PDO('sqlite::memory:');
         $ztdPdo = ZtdPdo::fromPdo($rawPdo);
         $ztdPdo->exec('CREATE TABLE source (id INTEGER PRIMARY KEY, value TEXT)');
         $ztdPdo->exec("INSERT INTO source VALUES (1, 'a')");
@@ -32,13 +33,13 @@ final class TemporaryTableTest extends TestCase
         self::assertNotFalse($statement);
         self::assertSame(
             [['id' => 1, 'value' => 'a'], ['id' => 2, 'value' => 'c']],
-            $statement->fetchAll(\PDO::FETCH_ASSOC),
+            $statement->fetchAll(PDO::FETCH_ASSOC),
         );
     }
 
     public function testTemporaryTableCreatedBeforeWrappingIsReflected(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:');
+        $rawPdo = new PDO('sqlite::memory:');
         $rawPdo->exec('CREATE TEMPORARY TABLE staging (id INTEGER PRIMARY KEY, value TEXT)');
         $ztdPdo = ZtdPdo::fromPdo($rawPdo);
 
@@ -47,6 +48,6 @@ final class TemporaryTableTest extends TestCase
         $statement = $ztdPdo->query('SELECT * FROM staging');
 
         self::assertNotFalse($statement);
-        self::assertSame([['id' => 1, 'value' => 'b']], $statement->fetchAll(\PDO::FETCH_ASSOC));
+        self::assertSame([['id' => 1, 'value' => 'b']], $statement->fetchAll(PDO::FETCH_ASSOC));
     }
 }

@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Adapter\Pdo;
 
+use ArrayIterator;
 use Iterator;
 use PDO;
 use PDOStatement as NativePdoStatement;
+use ReflectionObject;
+use ReturnTypeWillChange;
+use stdClass;
 use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\ExecuteResult;
 use ZtdQuery\Rewrite\RewritePlan;
@@ -300,14 +304,14 @@ final class ZtdPdoStatement extends NativePdoStatement
                 return false;
             }
             $object = new $resolvedClass(...$constructorArgs);
-            if ($object instanceof \stdClass) {
+            if ($object instanceof stdClass) {
                 foreach ($row as $property => $value) {
                     $object->{$property} = $value;
                 }
 
                 return $object;
             }
-            $reflection = new \ReflectionObject($object);
+            $reflection = new ReflectionObject($object);
             foreach ($row as $property => $value) {
                 if ($reflection->hasProperty($property)) {
                     $reflection->getProperty($property)->setValue($object, $value);
@@ -344,7 +348,7 @@ final class ZtdPdoStatement extends NativePdoStatement
     /**
      * {@inheritDoc}
      */
-    #[\ReturnTypeWillChange]
+    #[ReturnTypeWillChange]
     public function setFetchMode(int $mode, mixed ...$args): bool
     {
         $this->fetchMode = ['mode' => $mode, 'args' => $args];
@@ -414,7 +418,7 @@ final class ZtdPdoStatement extends NativePdoStatement
     /**
      * {@inheritDoc}
      */
-    #[\ReturnTypeWillChange]
+    #[ReturnTypeWillChange]
     public function debugDumpParams(): bool|null
     {
         $this->statement->debugDumpParams();
@@ -429,7 +433,7 @@ final class ZtdPdoStatement extends NativePdoStatement
     {
         if ($this->result !== null && !$this->result->isPassthrough() && $this->result->hasResultSet()) {
             /** @var Iterator<mixed, array<int|string, mixed>> $iterator */
-            $iterator = new \ArrayIterator($this->fetchAll());
+            $iterator = new ArrayIterator($this->fetchAll());
 
             return $iterator;
         }

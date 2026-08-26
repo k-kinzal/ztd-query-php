@@ -9,9 +9,9 @@ use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\Sqlite\SqliteInMemoryAttachStatement;
 use ZtdQuery\Platform\Sqlite\SqliteQueryGuard;
+use ZtdQuery\Platform\Sqlite\SqliteReadOnlyDiagnosticStatement;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\SqlRewriter;
-use ZtdQuery\Platform\Sqlite\SqliteReadOnlyDiagnosticStatement;
 
 final class ClassifyRewriteAgreementChecker implements InvariantChecker
 {
