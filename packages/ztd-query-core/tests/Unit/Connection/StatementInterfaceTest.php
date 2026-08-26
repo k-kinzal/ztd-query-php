@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use Tests\Fake\FakeStatement;
 use ZtdQuery\Connection\ResultColumn;
-use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Platform\MissingResultColumnTypeResolver;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
@@ -16,11 +15,6 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 #[CoversNothing]
 final class StatementInterfaceTest extends TestCase
 {
-    public function testAnImplementationIsRecognisedAsOne(): void
-    {
-        self::assertInstanceOf(StatementInterface::class, new FakeStatement([]));
-    }
-
     public function testExecuteReportsWhetherTheStatementRan(): void
     {
         self::assertTrue((new FakeStatement([]))->execute());

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace ZtdQuery\Sql;
 
 use ZtdQuery\Exception\InvalidDefinitionException;
-use ZtdQuery\Shadow\ShadowTransactionManager;
+use ZtdQuery\Shadow\ShadowTransactions;
 
 /**
  * A structure-aware transaction-control statement.
@@ -48,7 +48,7 @@ final class TransactionStatement
         return new self(TransactionOperation::Release, self::requiredName($name));
     }
 
-    public function apply(ShadowTransactionManager $transactions): void
+    public function apply(ShadowTransactions $transactions): void
     {
         match ($this->operation) {
             TransactionOperation::Begin => $transactions->begin(),

@@ -25,7 +25,7 @@ use ZtdQuery\Shadow\Mutation\InsertMutation;
 use ZtdQuery\Shadow\Mutation\MutationImpact;
 use ZtdQuery\Shadow\ReferentialIntegrityEnforcer;
 use ZtdQuery\Shadow\ShadowStore;
-use ZtdQuery\Shadow\ShadowTransactionManager;
+use ZtdQuery\Shadow\ShadowTransactions;
 use ZtdQuery\Simulator\StatementSimulator;
 
 #[UsesClass(ZtdConfig::class)]
@@ -39,7 +39,7 @@ use ZtdQuery\Simulator\StatementSimulator;
 #[UsesClass(CandidateKeySet::class)]
 #[UsesClass(TableDefinitionRegistry::class)]
 #[UsesClass(ShadowStore::class)]
-#[UsesClass(ShadowTransactionManager::class)]
+#[UsesClass(ShadowTransactions::class)]
 #[UsesClass(ReferentialIntegrityEnforcer::class)]
 #[UsesClass(Session::class)]
 #[CoversClass(StatementSimulator::class)]

@@ -28,7 +28,7 @@ use ZtdQuery\Shadow\Mutation\ShadowMutation;
 use ZtdQuery\Shadow\ReferentialIntegrityEnforcer;
 use ZtdQuery\Shadow\ShadowApplication;
 use ZtdQuery\Shadow\ShadowStore;
-use ZtdQuery\Shadow\ShadowTransactionManager;
+use ZtdQuery\Shadow\ShadowTransactions;
 use ZtdQuery\Sql\TransactionStatement;
 
 /**
@@ -73,7 +73,7 @@ final class Session
      */
     private bool $enabled = true;
 
-    private ShadowTransactionManager $transactions;
+    private ShadowTransactions $transactions;
 
     private TableDefinitionRegistry $registry;
 
@@ -102,7 +102,7 @@ final class Session
         ResultSelectRunner $resultSelectRunner,
         ZtdConfig $config,
         ConnectionInterface $connection,
-        ?ShadowTransactionManager $transactions = null,
+        ?ShadowTransactions $transactions = null,
         ?TableDefinitionRegistry $registry = null,
         ?CopySupport $copySupport = null,
         ?ParameterBindingCompiler $parameterBindingCompiler = null,
@@ -112,7 +112,7 @@ final class Session
         $this->resultSelectRunner = $resultSelectRunner;
         $this->config = $config;
         $this->connection = $connection;
-        $this->transactions = $transactions ?? new ShadowTransactionManager($shadowStore);
+        $this->transactions = $transactions ?? new ShadowTransactions($shadowStore);
         $this->registry = $registry ?? new TableDefinitionRegistry();
         $this->referentialIntegrity = new ReferentialIntegrityEnforcer($this->registry);
         $this->shadowApplication = new ShadowApplication(

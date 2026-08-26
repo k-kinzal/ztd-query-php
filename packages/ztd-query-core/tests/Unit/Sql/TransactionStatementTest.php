@@ -9,19 +9,19 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Shadow\ShadowStore;
-use ZtdQuery\Shadow\ShadowTransactionManager;
+use ZtdQuery\Shadow\ShadowTransactions;
 use ZtdQuery\Sql\TransactionStatement;
 
 #[CoversClass(TransactionStatement::class)]
 #[UsesClass(ShadowStore::class)]
-#[UsesClass(ShadowTransactionManager::class)]
+#[UsesClass(ShadowTransactions::class)]
 final class TransactionStatementTest extends TestCase
 {
     public function testCommitAppliesNamedTransactionLifecycleWithoutSql(): void
     {
         $store = new ShadowStore();
         $store->set('items', [['id' => 1]]);
-        $transactions = new ShadowTransactionManager($store);
+        $transactions = new ShadowTransactions($store);
 
         TransactionStatement::begin()->apply($transactions);
         $store->insert('items', [['id' => 2]]);
@@ -38,7 +38,7 @@ final class TransactionStatementTest extends TestCase
     {
         $store = new ShadowStore();
         $store->set('items', [['id' => 1]]);
-        $transactions = new ShadowTransactionManager($store);
+        $transactions = new ShadowTransactions($store);
 
         TransactionStatement::begin()->apply($transactions);
         $store->insert('items', [['id' => 2]]);

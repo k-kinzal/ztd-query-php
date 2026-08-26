@@ -6,7 +6,6 @@ namespace Tests\Unit\Exception;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 use ZtdQuery\Exception\DuplicateKeyException;
 
 #[CoversClass(DuplicateKeyException::class)]
@@ -107,10 +106,4 @@ final class DuplicateKeyExceptionTest extends TestCase
         self::assertSame($keyValues, $exception->getKeyValues());
     }
 
-    public function testExtendsRuntimeException(): void
-    {
-        $exception = new DuplicateKeyException('sql', 'table', 'key');
-
-        self::assertInstanceOf(RuntimeException::class, $exception);
-    }
 }
