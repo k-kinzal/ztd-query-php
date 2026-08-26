@@ -9,10 +9,19 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use SqlFixture\Fixture\RowSpec;
 use SqlFixture\FixtureGenerator;
+use SqlFixture\Hydrator\ConstructorHydration;
+use SqlFixture\Hydrator\DeclaredTypeCast;
+use SqlFixture\Hydrator\Instantiability;
+use SqlFixture\Hydrator\PropertyHydration;
+use SqlFixture\Hydrator\PropertyName;
 use SqlFixture\Hydrator\ReflectionHydrator;
 use SqlFixture\InvalidOverrideException;
+use SqlFixture\Platform\MySql\MySqlColumnSample;
+use SqlFixture\Platform\MySql\MySqlNumberSample;
 use SqlFixture\Platform\MySql\MySqlSchemaParser;
+use SqlFixture\Platform\MySql\MySqlTextSample;
 use SqlFixture\Platform\MySql\MySqlTypeMapper;
 use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\TableSchema;
@@ -24,6 +33,16 @@ use Tests\Fixture\GeneratorTestUser;
 #[UsesClass(ColumnDefinition::class)]
 #[UsesClass(TableSchema::class)]
 #[UsesClass(ReflectionHydrator::class)]
+#[UsesClass(RowSpec::class)]
+#[UsesClass(ConstructorHydration::class)]
+#[UsesClass(DeclaredTypeCast::class)]
+#[UsesClass(Instantiability::class)]
+#[UsesClass(PropertyHydration::class)]
+#[UsesClass(PropertyName::class)]
+#[UsesClass(MySqlColumnSample::class)]
+#[UsesClass(MySqlNumberSample::class)]
+#[UsesClass(MySqlSchemaParser::class)]
+#[UsesClass(MySqlTextSample::class)]
 final class FixtureGeneratorTest extends TestCase
 {
     #[Test]

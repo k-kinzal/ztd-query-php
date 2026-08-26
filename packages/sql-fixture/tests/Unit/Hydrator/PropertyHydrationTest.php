@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\Hydrator\DeclaredTypeCast;
+use SqlFixture\Hydrator\Instantiability;
 use SqlFixture\Hydrator\PropertyHydration;
 use SqlFixture\Hydrator\PropertyName;
 use Tests\Fixture\Hydrator\TestEntityViaProperties;
@@ -17,6 +18,7 @@ use Tests\Fixture\Hydrator\TestEntityWithoutConstructor;
 #[CoversClass(PropertyHydration::class)]
 #[UsesClass(DeclaredTypeCast::class)]
 #[UsesClass(PropertyName::class)]
+#[UsesClass(Instantiability::class)]
 final class PropertyHydrationTest extends TestCase
 {
     public function testHydrateAssignsEachColumnOntoThePropertyOfThatName(): void

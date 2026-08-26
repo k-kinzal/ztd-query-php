@@ -12,12 +12,24 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlFixture\FileFixtureProvider;
+use SqlFixture\Fixture\RowSpec;
 use SqlFixture\FixtureGenerator;
+use SqlFixture\Hydrator\ConstructorHydration;
+use SqlFixture\Hydrator\DeclaredTypeCast;
+use SqlFixture\Hydrator\Instantiability;
+use SqlFixture\Hydrator\PropertyHydration;
+use SqlFixture\Hydrator\PropertyName;
 use SqlFixture\Hydrator\ReflectionHydrator;
+use SqlFixture\Platform\MySql\MySqlColumnReader;
+use SqlFixture\Platform\MySql\MySqlColumnSample;
+use SqlFixture\Platform\MySql\MySqlCreateStatement;
+use SqlFixture\Platform\MySql\MySqlNumberSample;
 use SqlFixture\Platform\MySql\MySqlSchemaParser;
+use SqlFixture\Platform\MySql\MySqlTextSample;
 use SqlFixture\Platform\MySql\MySqlTypeMapper;
 use SqlFixture\Platform\PlatformFactory;
 use SqlFixture\Schema\ColumnDefinition;
+use SqlFixture\Schema\DdlDirectory;
 use SqlFixture\Schema\SchemaParseException;
 use SqlFixture\Schema\TableSchema;
 use Tests\Fixture\FileTestUser;
@@ -31,6 +43,18 @@ use Tests\Fixture\FileTestUser;
 #[UsesClass(SchemaParseException::class)]
 #[UsesClass(MySqlTypeMapper::class)]
 #[UsesClass(ReflectionHydrator::class)]
+#[UsesClass(RowSpec::class)]
+#[UsesClass(ConstructorHydration::class)]
+#[UsesClass(DeclaredTypeCast::class)]
+#[UsesClass(Instantiability::class)]
+#[UsesClass(PropertyHydration::class)]
+#[UsesClass(PropertyName::class)]
+#[UsesClass(MySqlColumnReader::class)]
+#[UsesClass(MySqlColumnSample::class)]
+#[UsesClass(MySqlCreateStatement::class)]
+#[UsesClass(MySqlNumberSample::class)]
+#[UsesClass(MySqlTextSample::class)]
+#[UsesClass(DdlDirectory::class)]
 final class FileFixtureProviderTest extends TestCase
 {
     #[Test]

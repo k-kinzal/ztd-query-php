@@ -6,12 +6,15 @@ namespace Tests\Unit\SqlFaker\Sqlite;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlFaker\Grammar\LexerSource;
+use SqlFaker\Sqlite\SqliteCoverageSamples;
 use SqlFaker\Sqlite\SqliteProfileBuilder;
 
 #[CoversClass(SqliteProfileBuilder::class)]
+#[UsesClass(SqliteCoverageSamples::class)]
 final class SqliteProfileBuilderTest extends TestCase
 {
     public function testSourceUrlsReadsTheKeywordHashAndTheTokenizer(): void

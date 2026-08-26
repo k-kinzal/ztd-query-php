@@ -8,6 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use SqlFixture\Platform\Sqlite\SqliteColumnReader;
+use SqlFixture\Platform\Sqlite\SqliteCreateTable;
 use SqlFixture\Platform\Sqlite\SqliteSchemaParser;
 use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\SchemaParseException;
@@ -17,6 +19,8 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(ColumnDefinition::class)]
 #[UsesClass(TableSchema::class)]
 #[UsesClass(SchemaParseException::class)]
+#[UsesClass(SqliteColumnReader::class)]
+#[UsesClass(SqliteCreateTable::class)]
 final class SqliteSchemaParserTest extends TestCase
 {
     #[Test]

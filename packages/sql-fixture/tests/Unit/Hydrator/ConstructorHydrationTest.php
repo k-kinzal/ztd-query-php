@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlFixture\Hydrator\ConstructorHydration;
 use SqlFixture\Hydrator\DeclaredTypeCast;
 use SqlFixture\Hydrator\HydrationException;
+use SqlFixture\Hydrator\Instantiability;
 use SqlFixture\Hydrator\PropertyName;
 use Tests\Fixture\Hydrator\TestEntity;
 use Tests\Fixture\Hydrator\TestEntityWithCamelCase;
@@ -20,6 +21,7 @@ use Tests\Fixture\Hydrator\TestEntityWithNullable;
 #[UsesClass(DeclaredTypeCast::class)]
 #[UsesClass(HydrationException::class)]
 #[UsesClass(PropertyName::class)]
+#[UsesClass(Instantiability::class)]
 final class ConstructorHydrationTest extends TestCase
 {
     public function testHydrateFillsEachParameterFromTheColumnOfThatName(): void
