@@ -71,15 +71,21 @@ final class SelectCorrectnessTarget
     }
 
     /**
+     * Runs the SELECT on both sides and fails if they disagree.
+     *
+     * @param string $sql Statement being read, as written
+     * @param SchemaDefinition $schema The schema
+     * @param int $seed The seed
+     *
      * @throws Error
      */
-    private function compareSelect(string $sql, SchemaDefinition $schema, int $seed): void
+    public function compareSelect(string $sql, SchemaDefinition $schema, int $seed): void
     {
         /** @var list<Row>|null $rawResult */
         $rawResult = null;
         $rawError = null;
         try {
-            $result = $this->harness->getRawMysqli()->query($sql);
+            $result = $this->harness->rawConnection()->query($sql);
             if ($result instanceof mysqli_result) {
                 /** @var list<Row> $rawResult */
                 $rawResult = $result->fetch_all(MYSQLI_ASSOC);

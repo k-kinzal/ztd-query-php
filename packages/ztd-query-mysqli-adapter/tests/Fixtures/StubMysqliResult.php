@@ -6,7 +6,6 @@ namespace Tests\Fixtures;
 
 use mysqli_result;
 use Override;
-use ReflectionClass;
 use ZtdQuery\Connection\StatementInterface;
 
 /**
@@ -22,6 +21,11 @@ use ZtdQuery\Connection\StatementInterface;
  */
 class StubMysqliResult extends mysqli_result
 {
+    /**
+     * @var bool Whether the result was let go
+     */
+    public bool $freed = false;
+
     /** @var list<Row> */
     private array $rows = [];
 
@@ -29,17 +33,32 @@ class StubMysqliResult extends mysqli_result
     private array $fields = [];
 
     /**
-     * @param list<Row> $rows
-     * @param list<StubMysqliField> $fields
+     * Builds a result with no connection behind it.
+     *
+     * mysqli_result's own constructor wants a connected mysqli, and a test
+     * double has none; nothing here reaches the parent, so nothing here needs
+     * one.
+     *
+     * @param list<Row> $rows The rows the result answers
+     * @param list<StubMysqliField> $fields The fields the result describes
+     */
+    public function __construct(array $rows = [], array $fields = [])
+    {
+        $this->rows = $rows;
+        $this->fields = $fields;
+    }
+
+    /**
+     * Builds a result with no connection behind it.
+     *
+     * @param list<Row> $rows The rows the result answers
+     * @param list<StubMysqliField> $fields The fields the result describes
+     *
+     * @return self The result
      */
     public static function create(array $rows = [], array $fields = []): self
     {
-        /** @var self $instance */
-        $instance = (new ReflectionClass(self::class))->newInstanceWithoutConstructor();
-        $instance->rows = $rows;
-        $instance->fields = $fields;
-
-        return $instance;
+        return new self($rows, $fields);
     }
 
     /**
@@ -51,10 +70,21 @@ class StubMysqliResult extends mysqli_result
         return $this->rows;
     }
 
-    /** @return list<StubMysqliField> */
+    /**
+     * @return list<StubMysqliField> The fields
+     */
     #[Override]
     public function fetch_fields(): array
     {
         return $this->fields;
+    }
+
+    /**
+     * Records that the result was let go, without a driver to let go of.
+     */
+    #[Override]
+    public function free(): void
+    {
+        $this->freed = true;
     }
 }

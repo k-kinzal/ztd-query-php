@@ -13,11 +13,6 @@ use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
 use ZtdQuery\Connection\StatementInterface;
 
 /**
- * Integration tests for ZtdMysqli: CTE shadowing and CRUD operations.
- *
- * Verifies that ZTD mode intercepts queries, applies CTE shadowing,
- * and does not modify the physical database.
- *
  * @phpstan-import-type Row from StatementInterface
  */
 #[CoversNothing]

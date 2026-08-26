@@ -13,11 +13,11 @@ use ZtdQuery\Adapter\Mysqli\ZtdMysqliException;
 #[CoversClass(ZtdMysqliException::class)]
 final class ZtdMysqliExceptionTest extends TestCase
 {
-    public function testExtendsRuntimeException(): void
+    public function testItIsCaughtByCodeThatCatchesRuntimeFailures(): void
     {
         $exception = new ZtdMysqliException('test');
 
-        self::assertInstanceOf(RuntimeException::class, $exception);
+        self::assertContains(RuntimeException::class, class_parents($exception));
     }
 
     public function testMessageAndCode(): void

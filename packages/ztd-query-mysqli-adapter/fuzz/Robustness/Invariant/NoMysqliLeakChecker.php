@@ -85,7 +85,14 @@ final class NoMysqliLeakChecker
                }
     }
 
-    private function isAllowedRawMysqliException(mysqli_sql_exception $e): bool
+    /**
+     * Answers whether a raw mysqli exception is one ZTD is allowed to let through.
+     *
+     * @param mysqli_sql_exception $e The e
+     *
+     * @return bool What it answers
+     */
+    public function isAllowedRawMysqliException(mysqli_sql_exception $e): bool
     {
         $driverCode = $e->getCode();
 

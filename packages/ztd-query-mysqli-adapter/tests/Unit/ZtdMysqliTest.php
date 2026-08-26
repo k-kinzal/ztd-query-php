@@ -7,8 +7,11 @@ namespace Tests\Unit;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use Tests\Fixtures\FakeConnectionProperties;
 use Tests\Fixtures\StubMysqli;
+use Tests\Fixtures\StubMysqliResult;
 use Tests\Fixtures\StubMysqliStmt;
+use ZtdQuery\Adapter\Mysqli\ConnectionState;
 use ZtdQuery\Adapter\Mysqli\MysqliConnection;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqliException;
@@ -25,9 +28,11 @@ use ZtdQuery\Session;
 use ZtdQuery\Shadow\ShadowStore;
 
 #[CoversClass(ZtdMysqli::class)]
+#[UsesClass(ConnectionState::class)]
 #[UsesClass(MysqliConnection::class)]
 #[UsesClass(ZtdMysqliStatement::class)]
 #[UsesClass(ZtdMysqliException::class)]
+#[UsesClass(\ZtdQuery\Adapter\Mysqli\MysqliProperties::class)]
 final class ZtdMysqliTest extends TestCase
 {
     public function testFromMysqliCreatesInstanceWithFactory(): void
@@ -42,7 +47,7 @@ final class ZtdMysqliTest extends TestCase
             });
         $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
 
-        self::assertInstanceOf(ZtdMysqli::class, $ztd);
+        self::assertTrue($ztd->isZtdEnabled());
     }
 
     public function testFromMysqliUsesExplicitConfig(): void
@@ -143,9 +148,6 @@ final class ZtdMysqliTest extends TestCase
             });
         $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
 
-        /* Default config uses Exception behavior for unsupported SQL. */
-        /* Session::rewrite catches UnsupportedSqlException and throws DatabaseException. */
-        /* ZtdMysqli::prepare catches DatabaseException and wraps as ZtdMysqliException. */
         $rewriter->method('rewrite')
             ->willThrowException(new UnsupportedSqlException('DROP DATABASE foo', 'Unsupported'));
 
@@ -236,7 +238,7 @@ final class ZtdMysqliTest extends TestCase
         self::assertTrue($ztd->multi_query('SELECT 1; SELECT 2'));
     }
 
-    public function testBeginTransactionDelegatesToInner(): void
+    public function testBegin_transactionOpensOneOnTheShadowAsWellAsTheConnection(): void
     {
         $innerMysqli = new StubMysqli();
         $store = new ShadowStore();
@@ -373,5 +375,309 @@ final class ZtdMysqliTest extends TestCase
         $innerMysqli->executeQueryReturn = true;
 
         self::assertTrue($ztd->execute_query('SELECT ?', [1]));
+    }
+    public function testDisableZtdLetsStatementsReachTheServer(): void
+    {
+        $ztd = $this->providerZtd(new StubMysqli());
+
+        $ztd->disableZtd();
+
+        self::assertFalse($ztd->isZtdEnabled());
+    }
+
+    public function testIsZtdEnabledSaysWritesAreShadowedFromTheStart(): void
+    {
+        self::assertTrue($this->providerZtd(new StubMysqli())->isZtdEnabled());
+    }
+
+    public function testLastAffectedRowsAnswersWhatTheConnectionSaysWhereZtdWroteNothing(): void
+    {
+        $properties = new FakeConnectionProperties(['affected_rows' => 4]);
+
+        self::assertSame(4, $this->providerZtd(new StubMysqli(), $properties)->lastAffectedRows());
+    }
+
+    public function testAutocommitOpensAShadowTransactionWhenItIsTurnedOff(): void
+    {
+        $inner = new StubMysqli();
+        $ztd = $this->providerZtd($inner);
+
+        self::assertSame([true, ['autocommit:0']], [$ztd->autocommit(false), $inner->calls]);
+    }
+
+    public function testAutocommitClosesTheShadowTransactionWhenItIsTurnedOn(): void
+    {
+        $inner = new StubMysqli();
+        $ztd = $this->providerZtd($inner);
+        $ztd->autocommit(false);
+
+        self::assertSame([true, ['autocommit:0', 'autocommit:1']], [$ztd->autocommit(true), $inner->calls]);
+    }
+
+    public function testSet_charsetPassesTheCharsetOnToTheConnection(): void
+    {
+        $inner = new StubMysqli();
+
+        self::assertSame([true, ['set_charset:utf8mb4']], [$this->providerZtd($inner)->set_charset('utf8mb4'), $inner->calls]);
+    }
+
+    public function testEscape_stringWritesTheValueTheWayTheConnectionWouldEscapeIt(): void
+    {
+        $inner = new StubMysqli();
+        $inner->realEscapeStringReturn = 'a\\"b';
+
+        self::assertSame('a\\"b', $this->providerZtd($inner)->escape_string('a"b'));
+    }
+
+    public function testPingAsksTheConnectionWhetherItIsStillThere(): void
+    {
+        $inner = new StubMysqli();
+
+        self::assertSame([true, ['ping']], [$this->providerZtd($inner)->ping(), $inner->calls]);
+    }
+
+    public function testCharacter_set_nameAnswersTheCharsetTheConnectionIsUsing(): void
+    {
+        $inner = new StubMysqli();
+        $inner->name = 'latin1';
+
+        self::assertSame('latin1', $this->providerZtd($inner)->character_set_name());
+    }
+
+    public function testChange_userPassesTheNewUserOnToTheConnection(): void
+    {
+        $inner = new StubMysqli();
+
+        self::assertSame(
+            [true, ['change_user:ada']],
+            [$this->providerZtd($inner)->change_user('ada', 'secret', 'ztd'), $inner->calls],
+        );
+    }
+
+    public function testConnectOpensTheConnectionItWasBuiltAround(): void
+    {
+        $inner = new StubMysqli();
+
+        self::assertSame([true, ['connect']], [$this->providerZtd($inner)->connect('localhost'), $inner->calls]);
+    }
+
+    public function testDebugPassesTheOptionsOnToTheConnection(): void
+    {
+        $inner = new StubMysqli();
+
+        self::assertSame([true, ['debug:d:t']], [$this->providerZtd($inner)->debug('d:t'), $inner->calls]);
+    }
+
+    public function testDump_debug_infoAsksTheConnectionToWriteWhatItKnows(): void
+    {
+        $inner = new StubMysqli();
+
+        self::assertSame([true, ['dump_debug_info']], [$this->providerZtd($inner)->dump_debug_info(), $inner->calls]);
+    }
+
+    public function testGet_charsetAnswersWhatTheConnectionSaysAboutItsCharset(): void
+    {
+        $inner = new StubMysqli();
+        $inner->name = 'latin1';
+
+        $charset = $this->providerZtd($inner)->get_charset();
+
+        self::assertSame(['charset' => 'latin1'], $charset === null ? [] : get_object_vars($charset));
+    }
+
+    public function testGet_client_infoAnswersWhatTheConnectionSaysAboutItsClient(): void
+    {
+        $inner = new StubMysqli();
+        $inner->name = 'mysqlnd 8.5';
+
+        self::assertSame('mysqlnd 8.5', $this->providerZtd($inner)->get_client_info());
+    }
+
+    public function testGet_connection_statsAnswersWhatTheConnectionCounted(): void
+    {
+        $inner = new StubMysqli();
+        $inner->connectionStats = ['bytes_sent' => 42];
+
+        self::assertSame(['bytes_sent' => 42], $this->providerZtd($inner)->get_connection_stats());
+    }
+
+    public function testGet_server_infoAnswersWhatTheConnectionSaysAboutTheServer(): void
+    {
+        $inner = new StubMysqli();
+        $inner->name = '8.0.36';
+
+        self::assertSame('8.0.36', $this->providerZtd($inner)->get_server_info());
+    }
+
+    public function testGet_warningsAnswersFalseWhereTheConnectionRaisedNone(): void
+    {
+        self::assertFalse($this->providerZtd(new StubMysqli())->get_warnings());
+    }
+
+    public function testInitAsksTheConnectionToReadyItself(): void
+    {
+        $inner = new StubMysqli();
+
+        self::assertSame([true, ['init']], [$this->providerZtd($inner)->init(), $inner->calls]);
+    }
+
+    public function testKillPassesTheProcessOnToTheConnection(): void
+    {
+        $inner = new StubMysqli();
+
+        self::assertSame([true, ['kill:17']], [$this->providerZtd($inner)->kill(17), $inner->calls]);
+    }
+
+    public function testMore_resultsAsksTheConnectionWhetherAnotherResultFollows(): void
+    {
+        self::assertTrue($this->providerZtd(new StubMysqli())->more_results());
+    }
+
+    public function testNext_resultMovesTheConnectionOnToItsNextResult(): void
+    {
+        $inner = new StubMysqli();
+
+        self::assertSame([true, ['next_result']], [$this->providerZtd($inner)->next_result(), $inner->calls]);
+    }
+
+    public function testOptionsPassesTheOptionOnToTheConnection(): void
+    {
+        $inner = new StubMysqli();
+
+        self::assertSame(
+            [true, ['options:' . MYSQLI_OPT_CONNECT_TIMEOUT]],
+            [$this->providerZtd($inner)->options(MYSQLI_OPT_CONNECT_TIMEOUT, 5), $inner->calls],
+        );
+    }
+
+    public function testReal_connectOpensTheConnectionItWasBuiltAround(): void
+    {
+        $inner = new StubMysqli();
+
+        self::assertSame([true, ['real_connect']], [$this->providerZtd($inner)->real_connect('localhost'), $inner->calls]);
+    }
+
+    public function testReap_async_queryAnswersWhatTheConnectionHasReadyForIt(): void
+    {
+        $result = StubMysqliResult::create([['id' => 1]]);
+        $inner = new StubMysqli();
+        $inner->storedResult = $result;
+
+        self::assertSame($result, $this->providerZtd($inner)->reap_async_query());
+    }
+
+    public function testRefreshPassesTheFlagsOnToTheConnection(): void
+    {
+        $inner = new StubMysqli();
+
+        self::assertSame([true, ['refresh:1']], [$this->providerZtd($inner)->refresh(1), $inner->calls]);
+    }
+
+    public function testSavepointNamesTheSameSavepointInTheShadow(): void
+    {
+        $inner = new StubMysqli();
+
+        self::assertSame([true, ['savepoint:sp1']], [$this->providerZtd($inner)->savepoint('sp1'), $inner->calls]);
+    }
+
+    public function testRelease_savepointLetsGoOfTheSameSavepointInTheShadow(): void
+    {
+        $inner = new StubMysqli();
+        $ztd = $this->providerZtd($inner);
+        $ztd->savepoint('sp1');
+
+        self::assertSame(
+            [true, ['savepoint:sp1', 'release_savepoint:sp1']],
+            [$ztd->release_savepoint('sp1'), $inner->calls],
+        );
+    }
+
+    public function testSsl_setPassesTheCertificatesOnToTheConnection(): void
+    {
+        $inner = new StubMysqli();
+
+        self::assertSame([true, ['ssl_set']], [$this->providerZtd($inner)->ssl_set(null, null, null, null, null), $inner->calls]);
+    }
+
+    public function testStatAnswersWhatTheServerSaysItIsDoing(): void
+    {
+        $inner = new StubMysqli();
+        $inner->statusLine = 'Uptime: 9';
+
+        self::assertSame('Uptime: 9', $this->providerZtd($inner)->stat());
+    }
+
+    public function testStmt_initAnswersAStatementFromTheConnection(): void
+    {
+        self::assertInstanceOf(StubMysqliStmt::class, $this->providerZtd(new StubMysqli())->stmt_init());
+    }
+
+    public function testStore_resultAnswersWhatTheConnectionHeldBack(): void
+    {
+        $result = StubMysqliResult::create([['id' => 1]]);
+        $inner = new StubMysqli();
+        $inner->storedResult = $result;
+
+        self::assertSame($result, $this->providerZtd($inner)->store_result());
+    }
+
+    public function testThread_safeAsksTheConnectionWhetherTheClientIsThreadSafe(): void
+    {
+        self::assertTrue($this->providerZtd(new StubMysqli())->thread_safe());
+    }
+
+    public function testUse_resultAnswersTheResultTheConnectionIsStillReading(): void
+    {
+        $result = StubMysqliResult::create([['id' => 1]]);
+        $inner = new StubMysqli();
+        $inner->storedResult = $result;
+
+        self::assertSame($result, $this->providerZtd($inner)->use_result());
+    }
+
+    public function testSet_optPassesTheOptionOnToTheConnection(): void
+    {
+        $inner = new StubMysqli();
+
+        self::assertSame(
+            [true, ['set_opt:' . MYSQLI_OPT_CONNECT_TIMEOUT]],
+            [$this->providerZtd($inner)->set_opt(MYSQLI_OPT_CONNECT_TIMEOUT, 5), $inner->calls],
+        );
+    }
+
+    public function testPollAnswersFalseWhereNoConnectionWasHandedToIt(): void
+    {
+        $read = [];
+        $error = [];
+        $reject = [];
+        set_error_handler(static fn (): bool => true);
+
+        $polled = ZtdMysqli::poll($read, $error, $reject, 0);
+
+        restore_error_handler();
+        self::assertFalse($polled);
+    }
+
+    /**
+     * @param StubMysqli $inner The connection ZTD is put in front of
+     * @param FakeConnectionProperties|null $properties What that connection answers about itself
+     *
+     * @return ZtdMysqli The connection, with ZTD in front of it
+     */
+    public function providerZtd(StubMysqli $inner, ?FakeConnectionProperties $properties = null): ZtdMysqli
+    {
+        $rewriter = static::createStub(SqlRewriter::class);
+        $factory = static::createStub(SessionFactory::class);
+        $factory->method('create')->willReturnCallback(
+            static fn (ConnectionInterface $connection, ZtdConfig $config): Session => new Session(
+                $rewriter,
+                new ShadowStore(),
+                new ResultSelectRunner(),
+                $config,
+                $connection,
+            ),
+        );
+
+        return ZtdMysqli::fromMysqli($inner, null, $factory, $properties ?? new FakeConnectionProperties());
     }
 }

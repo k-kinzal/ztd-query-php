@@ -6,6 +6,7 @@ namespace Fuzz\Correctness;
 
 use Faker\Factory;
 use Faker\Generator;
+use Fuzz\ReportingMysqli;
 use mysqli;
 use RuntimeException;
 use SqlFixture\FixtureProvider;
@@ -21,6 +22,7 @@ use ZtdQuery\Connection\StatementInterface;
 final class MysqliCorrectnessHarness
 {
     private mysqli $rawMysqli;
+    private ReportingMysqli $rawConnection;
     private ?ZtdMysqli $ztdMysqli = null;
     private ?SchemaDefinition $currentSchema = null;
     private string $host;
@@ -51,6 +53,7 @@ final class MysqliCorrectnessHarness
         $this->user = $user;
         $this->pass = $pass;
         $this->rawMysqli = new mysqli($host, $user, $pass, $dbName, $port);
+        $this->rawConnection = new ReportingMysqli($this->rawMysqli);
         $this->faker = Factory::create();
         $this->fixtureProvider = new FixtureProvider($this->faker);
     }
@@ -70,7 +73,7 @@ final class MysqliCorrectnessHarness
 
         $this->fixtureRows = [];
         for ($i = 0; $i < $rowCount; $i++) {
-            $row = $this->fixtureProvider->fixture($schema->sql);
+            $row = $this->fixtureRow($schema->sql);
             if (count($schema->primaryKeys) === 1 && $schema->primaryKeys[0] === 'id') {
                 $row['id'] = $i + 1;
             }
@@ -108,7 +111,6 @@ final class MysqliCorrectnessHarness
                 if (is_bool($v)) {
                     return $v ? '1' : '0';
                 }
-                assert(is_string($v));
                 return "'" . addslashes($v) . "'";
             }, array_values($row));
             $sql = sprintf(
@@ -148,6 +150,44 @@ final class MysqliCorrectnessHarness
     }
 
     /**
+     * Answers the connection ZTD is not in front of, as something that can fail.
+     *
+     * @return ReportingMysqli The raw connection, saying how it fails
+     */
+    public function rawConnection(): ReportingMysqli
+    {
+        return $this->rawConnection;
+    }
+
+    /**
+     * Answers a generated row the harness can write and compare.
+     *
+     * The generator answers whatever the column's type maps to; a row both
+     * sides can be asked about holds nothing but scalars and nulls.
+     *
+     * @param string $createTableSql Declaration of the table to build a row for
+     *
+     * @return Row The row, keyed by column
+     *
+     * @throws RuntimeException When the generator answers something no comparison can read
+     */
+    public function fixtureRow(string $createTableSql): array
+    {
+        $row = [];
+        foreach ($this->fixtureProvider->fixture($createTableSql) as $column => $value) {
+            if (!is_string($column)) {
+                throw new RuntimeException('The fixture generator answered a row with an unnamed column.');
+            }
+            if ($value !== null && !is_scalar($value)) {
+                throw new RuntimeException(sprintf('The fixture generator answered %s for column "%s", which no comparison can read.', get_debug_type($value), $column));
+            }
+            $row[$column] = $value;
+        }
+
+        return $row;
+    }
+
+    /**
      * @throws RuntimeException
      */
     public function getZtdMysqli(): ZtdMysqli
@@ -177,9 +217,13 @@ final class MysqliCorrectnessHarness
     }
 
     /**
-     * @param Row $row
+     * Writes one fixture row into the table both sides read.
+     *
+     * @param mysqli $mysqli The mysqli
+     * @param string $table Table it belongs to
+     * @param Row $row Row to read
      */
-    private function insertRow(mysqli $mysqli, string $table, array $row): void
+    public function insertRow(mysqli $mysqli, string $table, array $row): void
     {
         $columns = array_keys($row);
         $placeholders = array_fill(0, count($columns), '?');

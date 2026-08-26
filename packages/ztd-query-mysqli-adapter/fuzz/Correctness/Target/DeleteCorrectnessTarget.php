@@ -65,7 +65,7 @@ final class DeleteCorrectnessTarget
 
             $rawError = null;
             try {
-                $this->harness->getRawMysqli()->query($sql);
+                $this->harness->rawConnection()->query($sql);
             } catch (mysqli_sql_exception $e) {
                 $rawError = $e;
             }
@@ -89,9 +89,14 @@ final class DeleteCorrectnessTarget
     }
 
     /**
+     * Reads the table on both sides and fails if they disagree.
+     *
+     * @param SchemaDefinition $schema The schema
+     * @param int $seed The seed
+     *
      * @throws Error
      */
-    private function compareTableState(SchemaDefinition $schema, int $seed): void
+    public function compareTableState(SchemaDefinition $schema, int $seed): void
     {
         $rawRows = $this->fetchAll($this->harness->getRawMysqli(), $schema->name);
 
@@ -111,9 +116,14 @@ final class DeleteCorrectnessTarget
     }
 
     /**
-     * @return list<Row>
+     * Answers every row the connection reads.
+     *
+     * @param mysqli $mysqli The mysqli
+     * @param string $table Table it belongs to
+     *
+     * @return list<Row> What it answers
      */
-    private function fetchAll(mysqli $mysqli, string $table): array
+    public function fetchAll(mysqli $mysqli, string $table): array
     {
         $result = $mysqli->query("SELECT * FROM `$table`");
         if (!$result instanceof mysqli_result) {

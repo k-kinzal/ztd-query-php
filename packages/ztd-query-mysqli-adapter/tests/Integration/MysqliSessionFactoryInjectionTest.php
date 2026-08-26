@@ -14,11 +14,6 @@ use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Platform\MySql\MySqlSessionFactory;
 
 /**
- * Integration tests for SessionFactory injection in ZtdMysqli.
- *
- * Verifies that ZtdMysqli works correctly when a SessionFactory
- * is explicitly injected via fromMysqli().
- *
  * @phpstan-import-type Row from StatementInterface
  */
 #[CoversNothing]

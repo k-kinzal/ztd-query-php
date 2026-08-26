@@ -20,17 +20,28 @@ final class MysqliConnection implements ConnectionInterface
     private mysqli $mysqli;
 
     /**
+     * What the connection says after a statement has run.
+     */
+    private ConnectionState $state;
+
+    /**
      * Binds the instance to what it will work from.
      *
-     * @param mysqli $mysqli
+     * @param mysqli $mysqli Connection the statements run on
+     * @param ConnectionProperties|null $properties What the connection answers about itself, or null to read it off the connection
      */
-    public function __construct(mysqli $mysqli)
+    public function __construct(mysqli $mysqli, ?ConnectionProperties $properties = null)
     {
         $this->mysqli = $mysqli;
+        $this->state = new ConnectionState($properties ?? new MysqliProperties($mysqli));
     }
 
     /**
      * {@inheritDoc}
+     *
+     * @param string $sql Statement as it was written
+     *
+     * @return StatementInterface|false What the statement answered, or false where it did not run and the driver said nothing
      *
      * @throws DatabaseException On database error.
      */
@@ -39,21 +50,24 @@ final class MysqliConnection implements ConnectionInterface
         $result = $this->mysqli->query($sql);
 
         if ($result === false) {
-            if ($this->mysqli->errno !== 0) {
+            $errorNumber = $this->state->errorNumber();
+            if ($errorNumber !== 0) {
                 throw new DatabaseException(
-                    $this->mysqli->error,
-                    $this->mysqli->errno,
-                    $this->mysqli->errno
+                    $this->state->errorMessage(),
+                    $errorNumber,
+                    $errorNumber
                 );
             }
+
             return false;
         }
 
+        $affectedRows = $this->state->affectedRows();
         if ($result === true) {
-            return new MysqliResultStatement(null, (int) $this->mysqli->affected_rows);
+            return new MysqliResultStatement(null, $affectedRows);
         }
 
-        return new MysqliResultStatement($result, (int) $this->mysqli->affected_rows);
+        return new MysqliResultStatement($result, $affectedRows);
     }
 
 }
