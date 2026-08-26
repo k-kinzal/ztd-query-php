@@ -50,13 +50,22 @@ final class MySqlTokenizer
         $offset = 0;
 
         while ($offset < $length) {
+            $startedAt = $offset;
             if ($this->skipTrivia($sql, $offset)) {
+                if ($offset <= $startedAt) {
+                    throw LexicalException::noProgress('MySQL', $startedAt, $sql);
+                }
+
                 continue;
             }
 
             $token = $this->tokenAt($sql, $offset, $tokens);
             if ($token === null) {
                 throw LexicalException::unsupportedInput('MySQL', $offset, $sql);
+            }
+
+            if ($offset <= $startedAt) {
+                throw LexicalException::noProgress('MySQL', $startedAt, $sql);
             }
 
             $tokens[] = $token;

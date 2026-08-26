@@ -79,6 +79,14 @@ final class LexicalExceptionTest extends TestCase
         );
     }
 
+    public function testNoProgressNamesTheOffsetTheReadGotStuckAt(): void
+    {
+        self::assertSame(
+            'SQLite lexer made no progress at offset 3: abc',
+            LexicalException::noProgress('SQLite', 3, 'abc')->getMessage(),
+        );
+    }
+
     public function testUnterminatedQuotedTokenNamesTheText(): void
     {
         self::assertSame(
