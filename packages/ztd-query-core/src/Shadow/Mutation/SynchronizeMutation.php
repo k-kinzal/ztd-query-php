@@ -26,6 +26,9 @@ final class SynchronizeMutation implements DataMutation
 
     /**
      * {@inheritDoc}
+     *
+     * @throws NotNullViolationException When a row leaves null in a column that will not take one
+     * @throws DuplicateKeyException When two rows collide on a candidate key
      */
     public function apply(ShadowStore $store, array $rows): void
     {

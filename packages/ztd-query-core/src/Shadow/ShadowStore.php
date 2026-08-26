@@ -176,6 +176,8 @@ class ShadowStore
      *
      * @param list<Row> $updatedRows
      * @param array<int, string> $primaryKeys
+     *
+     * @throws MissingPrimaryKeyException When the table declares no key to identify a row by
      */
     public function update(string $tableName, array $updatedRows, array $primaryKeys): void
     {
@@ -202,6 +204,8 @@ class ShadowStore
     /**
      * @param list<array{row: Row, identity: Row}> $updates
      * @param array<int, string> $primaryKeys
+     *
+     * @throws MissingPrimaryKeyException When the table declares no key to identify a row by
      */
     public function updateIdentified(string $tableName, array $updates, array $primaryKeys): void
     {

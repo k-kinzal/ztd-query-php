@@ -16,6 +16,8 @@ final class TablePartitioning
 
     /**
      * @param array<string, string> $selectionPredicates
+     *
+     * @throws InvalidDefinitionException When a partition name or predicate is empty
      */
     public function __construct(array $selectionPredicates)
     {

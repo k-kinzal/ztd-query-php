@@ -34,7 +34,9 @@ final class UpsertExpressionTest extends TestCase
         self::assertSame(11, $expression->evaluate(['quantity' => 5], ['quantity' => 3], 'items'));
     }
 
-    /** @return iterable<string, array{UpsertExpressionKind, mixed, mixed, mixed}> */
+    /**
+     * @return iterable<string, array{UpsertExpressionKind, mixed, mixed, mixed}>
+     */
     public static function binaryProvider(): iterable
     {
         yield 'subtract' => [UpsertExpressionKind::Subtract, 8, 3, 5];

@@ -68,7 +68,6 @@ final class ResultSelectRunnerTest extends TestCase
             $resolver,
         );
 
-        self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([], $result->rows);
         self::assertSame([$column], $result->columns);
     }

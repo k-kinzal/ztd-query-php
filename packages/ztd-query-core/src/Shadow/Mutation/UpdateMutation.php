@@ -27,7 +27,7 @@ final class UpdateMutation implements DataMutation
     /**
      * Primary key columns used to match rows.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     private array $primaryKeys;
 
@@ -54,7 +54,7 @@ final class UpdateMutation implements DataMutation
 
     /**
      * @param string $tableName Target table.
-     * @param array<int, string> $primaryKeys Primary key columns.
+     * @param list<string> $primaryKeys Primary key columns.
      * @param TableDefinition|null $tableDefinition Table definition for constraint validation.
      * @param string $sql Original SQL statement for exception messages.
      * @param bool $validateConstraints Whether to validate constraints.
