@@ -36,7 +36,7 @@ final class PostgreSqlLexicalMaskerTest extends TestCase
     }
 
     #[DataProvider('providerStringLiterals')]
-    public function testMasksStringLiteralsWithoutChangingOffsets(string $sql, string $expected): void
+    public function testMaskStringLiteralsMasksStringLiteralsWithoutChangingOffsets(string $sql, string $expected): void
     {
         $masked = PostgreSqlLexicalMasker::maskStringLiterals($sql);
         self::assertSame($expected, $masked);

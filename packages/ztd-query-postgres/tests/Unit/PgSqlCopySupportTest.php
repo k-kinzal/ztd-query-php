@@ -18,7 +18,7 @@ use ZtdQuery\Schema\TableDefinition;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
 final class PgSqlCopySupportTest extends TestCase
 {
-    public function testTargetParsesRelationsAndRendersPostgreSqlStatements(): void
+    public function testIsCopyStatementTargetParsesRelationsAndRendersPostgreSqlStatements(): void
     {
         $support = new PgSqlCopySupport();
         $definition = new TableDefinition(['id'], ['id' => 'INTEGER'], ['id'], ['id'], []);

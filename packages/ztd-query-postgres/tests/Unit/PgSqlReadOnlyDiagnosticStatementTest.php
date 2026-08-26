@@ -15,7 +15,7 @@ use ZtdQuery\Platform\Postgres\PgSqlReadOnlyDiagnosticStatement;
 final class PgSqlReadOnlyDiagnosticStatementTest extends TestCase
 {
     #[DataProvider('providerStatement')]
-    public function testClassifiesOnlySafePostgreSqlDiagnostics(string $sql, bool $expected): void
+    public function testIsSafeClassifiesOnlySafePostgreSqlDiagnostics(string $sql, bool $expected): void
     {
         self::assertSame($expected, PgSqlReadOnlyDiagnosticStatement::isSafe($sql));
     }
