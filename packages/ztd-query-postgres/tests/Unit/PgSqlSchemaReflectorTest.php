@@ -1486,4 +1486,118 @@ final class PgSqlSchemaReflectorTest extends TestCase
             $r->getCreateStatement('children'),
         );
     }
+    public function testPartialUniqueIndexesIsEmptyBeforeAnythingHasBeenReflected(): void
+    {
+        $connection = self::createStub(ConnectionInterface::class);
+
+        self::assertSame([], (new PgSqlSchemaReflector($connection))->partialUniqueIndexes());
+    }
+
+    public function testBuildCreateTableSqlIsNothingWhereTheCatalogueKnowsNoColumn(): void
+    {
+        $statement = self::createStub(StatementInterface::class);
+        $statement->method('fetchAll')->willReturn([]);
+        $connection = self::createStub(ConnectionInterface::class);
+        $connection->method('query')->willReturn($statement);
+
+        self::assertNull((new PgSqlSchemaReflector($connection))->buildCreateTableSql('users'));
+    }
+
+    public function testBuildColumnDefinitionWritesWhatTheCatalogueSaysAboutAColumn(): void
+    {
+        $connection = self::createStub(ConnectionInterface::class);
+
+        self::assertSame(
+            '"id" INTEGER NOT NULL',
+            (new PgSqlSchemaReflector($connection))->buildColumnDefinition([
+                'column_name' => 'id',
+                'data_type' => 'integer',
+                'is_nullable' => 'NO',
+            ]),
+        );
+    }
+
+    public function testDomainTypeSqlIsNothingWhereTheColumnIsOfNoDomain(): void
+    {
+        $connection = self::createStub(ConnectionInterface::class);
+
+        self::assertNull((new PgSqlSchemaReflector($connection))->domainTypeSql(['column_name' => 'id']));
+    }
+
+    public function testBuildTypeSqlWritesTheTypeTheCatalogueDescribes(): void
+    {
+        $connection = self::createStub(ConnectionInterface::class);
+
+        self::assertSame(
+            'VARCHAR(100)',
+            (new PgSqlSchemaReflector($connection))->buildTypeSql('CHARACTER VARYING', 'VARCHAR', [
+                'character_maximum_length' => 100,
+            ]),
+        );
+    }
+
+    public function testBuildVarcharTypeKeepsTheWidthTheCatalogueGives(): void
+    {
+        $connection = self::createStub(ConnectionInterface::class);
+
+        self::assertSame(
+            'VARCHAR(100)',
+            (new PgSqlSchemaReflector($connection))->buildVarcharType(['character_maximum_length' => 100]),
+        );
+    }
+
+    public function testBuildCharTypeKeepsTheWidthTheCatalogueGives(): void
+    {
+        $connection = self::createStub(ConnectionInterface::class);
+
+        self::assertSame(
+            'CHAR(2)',
+            (new PgSqlSchemaReflector($connection))->buildCharType(['character_maximum_length' => 2]),
+        );
+    }
+
+    public function testBuildBitTypeKeepsTheWidthTheCatalogueGives(): void
+    {
+        $connection = self::createStub(ConnectionInterface::class);
+
+        self::assertSame(
+            'BIT(8)',
+            (new PgSqlSchemaReflector($connection))->buildBitType('BIT', ['character_maximum_length' => 8]),
+        );
+    }
+
+    public function testBuildNumericTypeKeepsTheDigitsTheCatalogueGives(): void
+    {
+        $connection = self::createStub(ConnectionInterface::class);
+
+        self::assertSame(
+            'NUMERIC(10,2)',
+            (new PgSqlSchemaReflector($connection))->buildNumericType([
+                'numeric_precision' => 10,
+                'numeric_scale' => 2,
+            ]),
+        );
+    }
+
+    public function testResolveUserDefinedTypeAnswersTheTypeTheCatalogueNames(): void
+    {
+        $connection = self::createStub(ConnectionInterface::class);
+
+        self::assertSame('CITEXT', (new PgSqlSchemaReflector($connection))->resolveUserDefinedType('CITEXT'));
+    }
+
+    public function testResolveUserDefinedTypeFallsBackToTextWhereTheCatalogueNamesNothing(): void
+    {
+        $connection = self::createStub(ConnectionInterface::class);
+
+        self::assertSame('TEXT', (new PgSqlSchemaReflector($connection))->resolveUserDefinedType(''));
+    }
+
+    public function testResolveArrayTypeAnswersTheTypeItsElementsAre(): void
+    {
+        $connection = self::createStub(ConnectionInterface::class);
+
+        self::assertSame('INT4[]', (new PgSqlSchemaReflector($connection))->resolveArrayType('_int4'));
+    }
+
 }

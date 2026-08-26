@@ -22,6 +22,9 @@ use ZtdQuery\Shadow\ShadowStore;
 #[UsesClass(ShadowStore::class)]
 #[UsesClass(MutationRowIdentity::class)]
 #[UsesClass(CandidateKeySet::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\ConflictSearch::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\RowConstraints::class)]
+#[UsesClass(\ZtdQuery\Shadow\Row\RowMatch::class)]
 final class ShadowMutationTest extends MutationContractTest
 {
     public function initialRows(): array

@@ -31,7 +31,6 @@ use ZtdQuery\Platform\Postgres\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\InsertTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer;
-use ZtdQuery\Session;
 
 #[CoversClass(PgSqlSessionFactory::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlColumnTypeMapper::class)]
@@ -73,6 +72,8 @@ use ZtdQuery\Session;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlReturningProjectionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlUpsertExpressionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlUpsertExpressionCursor::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlUpsertLiteral::class)]
 final class PgSqlSessionFactoryTest extends TestCase
 {
     public function testCreateRegistersReflectedPartitionMetadata(): void
@@ -186,7 +187,6 @@ final class PgSqlSessionFactoryTest extends TestCase
         $factory = new PgSqlSessionFactory();
         $session = $factory->create($connection, ZtdConfig::default());
 
-        self::assertInstanceOf(Session::class, $session);
         self::assertInstanceOf(PgSqlCopySupport::class, $session->copySupport());
         self::assertInstanceOf(PgSqlPdoParameterBindingCompiler::class, $session->parameterBindingCompiler());
         self::assertInstanceOf(PgSqlPdoResultColumnTypeResolver::class, $session->resultColumnTypeResolver());
@@ -270,7 +270,7 @@ final class PgSqlSessionFactoryTest extends TestCase
         $factory = new PgSqlSessionFactory();
         $session = $factory->create($connection, ZtdConfig::default());
 
-        self::assertInstanceOf(Session::class, $session);
+        self::assertTrue($session->isEnabled());
     }
 
     public function testCreateWithEmptyDatabaseReturnsSession(): void
@@ -282,7 +282,7 @@ final class PgSqlSessionFactoryTest extends TestCase
         $factory = new PgSqlSessionFactory();
         $session = $factory->create($connection, ZtdConfig::default());
 
-        self::assertInstanceOf(Session::class, $session);
+        self::assertTrue($session->isEnabled());
     }
 
     public function testSessionCanBeEnabledAfterCreation(): void
@@ -393,7 +393,8 @@ final class PgSqlSessionFactoryTest extends TestCase
 
         $factory = new PgSqlSessionFactory();
         $session = $factory->create($connection, ZtdConfig::default());
-        self::assertInstanceOf(Session::class, $session);
+
+        self::assertTrue($session->isEnabled());
     }
 
     public function testCreateRegistersReflectedPartialUniqueIndexes(): void

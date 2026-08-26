@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Transformer;
 
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 use ZtdQuery\Platform\Postgres\Transformer\InsertSelectRenderer;
 
@@ -43,8 +43,13 @@ final class InsertSelectRendererTest extends TestCase
 
     public function testRejectsNonPositiveGeneratedIdentityStart(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidDefinitionException::class);
 
         (new InsertSelectRenderer())->renderGeneratedIdentity(0);
     }
+    public function testRenderGeneratedIdentityCountsUpFromWhereItWasTold(): void
+    {
+        self::assertSame('5 + ROW_NUMBER() OVER () - 1', (new InsertSelectRenderer())->renderGeneratedIdentity(5));
+    }
+
 }

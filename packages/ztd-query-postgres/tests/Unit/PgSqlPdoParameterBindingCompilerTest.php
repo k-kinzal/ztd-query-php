@@ -57,4 +57,9 @@ final class PgSqlPdoParameterBindingCompilerTest extends TestCase
             $compiler->compile('SELECT $$ $1 $$, $1', [1]),
         );
     }
+    public function testCompileLeavesAStatementWithNoPlaceholderAlone(): void
+    {
+        self::assertSame('SELECT 1', (new PgSqlPdoParameterBindingCompiler())->compile('SELECT 1', null)['sql']);
+    }
+
 }

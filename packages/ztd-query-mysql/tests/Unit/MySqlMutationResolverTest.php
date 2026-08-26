@@ -63,6 +63,10 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlNativeUpsertProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlGeneratedColumnProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlComponentSql::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlStatementOptions::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlUpsertExpressionCursor::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlUpsertLiteral::class)]
 final class MySqlMutationResolverTest extends TestCase
 {
     public function testResolveInsertReturnsInsertMutation(): void

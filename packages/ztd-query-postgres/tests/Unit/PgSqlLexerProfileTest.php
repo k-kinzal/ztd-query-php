@@ -79,4 +79,11 @@ final class PgSqlLexerProfileTest extends TestCase
         );
         self::assertSame(':bound', $tokens[8]->text);
     }
+    public function testCreateAnswersAProfileThatReadsPostgresQuotedNames(): void
+    {
+        $tokens = SqlTokenStream::tokenize('"order"', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertSame(SqlTokenKind::QuotedIdentifier, $tokens[0]->kind);
+    }
+
 }

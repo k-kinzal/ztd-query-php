@@ -8,10 +8,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Postgres\PgSqlForeignKeyDefinitionParser;
+use ZtdQuery\Platform\Postgres\PgSqlLexerProfile;
 use ZtdQuery\Schema\ReferentialAction;
+use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(PgSqlForeignKeyDefinitionParser::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
+#[UsesClass(PgSqlLexerProfile::class)]
 final class PgSqlForeignKeyDefinitionParserTest extends TestCase
 {
     public function testParsesNamedCompositeConstraintWithoutRegexSubstitution(): void
@@ -195,5 +197,189 @@ final class PgSqlForeignKeyDefinitionParserTest extends TestCase
         self::assertSame([], $parser->parseCreateTable(
             'CREATE TABLE child (id INT, FOREIGN KEY (id) REFERENCES parent.)',
         ));
+    }
+    public function testTableBodyAnswersWhatIsDeclaredBetweenTheParentheses(): void
+    {
+        self::assertSame(
+            'id INT',
+            (new PgSqlForeignKeyDefinitionParser())->tableBody('CREATE TABLE t (id INT)'),
+        );
+    }
+
+    public function testTableBodyIsNothingWhereTheTextDeclaresNoTable(): void
+    {
+        self::assertNull(
+            (new PgSqlForeignKeyDefinitionParser())->tableBody('SELECT 1'),
+        );
+    }
+
+    public function testParseEntryReadsAKeyOutOfOneDeclaration(): void
+    {
+        $stream = SqlTokenStream::tokenize(
+            'FOREIGN KEY (user_id) REFERENCES users (id)',
+            PgSqlLexerProfile::create(),
+        );
+
+        $entry = (new PgSqlForeignKeyDefinitionParser())->parseEntry($stream, 'foreign_0', null);
+
+        self::assertSame(['user_id'], $entry['foreignKey']->columns ?? null);
+    }
+
+    public function testParseEntryIsNothingWhereTheDeclarationPointsAtNothing(): void
+    {
+        $stream = SqlTokenStream::tokenize('id INT', PgSqlLexerProfile::create());
+
+        self::assertNull((new PgSqlForeignKeyDefinitionParser())->parseEntry($stream, 'foreign_0', null));
+    }
+
+    public function testForeignKeyColumnsAnswersTheColumnsTheKeyIsOver(): void
+    {
+        $stream = SqlTokenStream::tokenize(
+            'FOREIGN KEY (a, b) REFERENCES t (x, y)',
+            PgSqlLexerProfile::create(),
+        );
+        $tokens = $stream->significantTokens();
+        $references = PgSqlForeignKeyDefinitionParser::keywordIndex($tokens, 'REFERENCES');
+
+        self::assertSame(
+            ['a', 'b'],
+            (new PgSqlForeignKeyDefinitionParser())->foreignKeyColumns($stream, $tokens, $references ?? 0),
+        );
+    }
+
+    public function testForeignKeyColumnsIsNothingWhereNoForeignKeyIsWritten(): void
+    {
+        $stream = SqlTokenStream::tokenize('a INT REFERENCES t (x)', PgSqlLexerProfile::create());
+        $tokens = $stream->significantTokens();
+
+        self::assertSame([], (new PgSqlForeignKeyDefinitionParser())->foreignKeyColumns($stream, $tokens, 2));
+    }
+
+    public function testReferencedRelationReadsTheTableAndItsColumns(): void
+    {
+        $stream = SqlTokenStream::tokenize('users (id)', PgSqlLexerProfile::create());
+
+        self::assertSame(
+            ['table' => 'users', 'columns' => ['id']],
+            (new PgSqlForeignKeyDefinitionParser())->referencedRelation($stream, $stream->significantTokens(), 0),
+        );
+    }
+
+    public function testReferencedRelationReadsAQualifiedNameDownToTheTable(): void
+    {
+        $stream = SqlTokenStream::tokenize('app.users (id)', PgSqlLexerProfile::create());
+
+        $referenced = (new PgSqlForeignKeyDefinitionParser())
+            ->referencedRelation($stream, $stream->significantTokens(), 0);
+
+        self::assertSame('users', $referenced['table'] ?? null);
+    }
+
+    public function testReferencedRelationIsNothingWhereNoNameIsWritten(): void
+    {
+        $stream = SqlTokenStream::tokenize('(id)', PgSqlLexerProfile::create());
+
+        self::assertNull(
+            (new PgSqlForeignKeyDefinitionParser())->referencedRelation($stream, $stream->significantTokens(), 0),
+        );
+    }
+
+    public function testIdentifierListReadsTheNamesInsideTheParentheses(): void
+    {
+        $stream = SqlTokenStream::tokenize('(a, b)', PgSqlLexerProfile::create());
+
+        self::assertSame(
+            ['a', 'b'],
+            (new PgSqlForeignKeyDefinitionParser())->identifierList($stream, $stream->significantTokens(), 0),
+        );
+    }
+
+    public function testIdentifierListIsNothingWhereTheParenthesesNeverClose(): void
+    {
+        $stream = SqlTokenStream::tokenize('(a, b', PgSqlLexerProfile::create());
+
+        self::assertSame(
+            [],
+            (new PgSqlForeignKeyDefinitionParser())->identifierList($stream, $stream->significantTokens(), 0),
+        );
+    }
+
+    public function testActionAnswersWhatTheKeySaysToDo(): void
+    {
+        $tokens = SqlTokenStream::tokenize('ON DELETE CASCADE', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertSame(
+            ReferentialAction::Cascade,
+            (new PgSqlForeignKeyDefinitionParser())->action($tokens, 'DELETE'),
+        );
+    }
+
+    public function testActionReadsSetNullAsWhatItSays(): void
+    {
+        $tokens = SqlTokenStream::tokenize('ON UPDATE SET NULL', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertSame(
+            ReferentialAction::SetNull,
+            (new PgSqlForeignKeyDefinitionParser())->action($tokens, 'UPDATE'),
+        );
+    }
+
+    public function testActionDoesNothingWhereTheKeySaysNothing(): void
+    {
+        $tokens = SqlTokenStream::tokenize('REFERENCES t (id)', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertSame(
+            ReferentialAction::NoAction,
+            (new PgSqlForeignKeyDefinitionParser())->action($tokens, 'DELETE'),
+        );
+    }
+
+    public function testKeywordIndexAnswersWhereTheKeywordIsWritten(): void
+    {
+        $tokens = SqlTokenStream::tokenize('FOREIGN KEY (a)', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertSame(1, PgSqlForeignKeyDefinitionParser::keywordIndex($tokens, 'KEY'));
+    }
+
+    public function testKeywordIndexIsNothingWhereItIsNotWritten(): void
+    {
+        $tokens = SqlTokenStream::tokenize('FOREIGN KEY (a)', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertNull(PgSqlForeignKeyDefinitionParser::keywordIndex($tokens, 'REFERENCES'));
+    }
+
+    public function testSymbolIndexAnswersWhereTheSymbolIsWritten(): void
+    {
+        $tokens = SqlTokenStream::tokenize('FOREIGN KEY (a)', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertSame(2, PgSqlForeignKeyDefinitionParser::symbolIndex($tokens, '(', 0));
+    }
+
+    public function testSymbolIndexLooksNoEarlierThanItWasToldTo(): void
+    {
+        $tokens = SqlTokenStream::tokenize('FOREIGN KEY (a)', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertNull(PgSqlForeignKeyDefinitionParser::symbolIndex($tokens, '(', 3));
+    }
+
+    public function testIsSymbolReportsATokenBeingThatSymbol(): void
+    {
+        $tokens = SqlTokenStream::tokenize('(a)', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertTrue(PgSqlForeignKeyDefinitionParser::isSymbol($tokens[0], '('));
+    }
+
+    public function testIsSymbolIsFalsePastTheEndOfWhatWasWritten(): void
+    {
+        self::assertFalse(PgSqlForeignKeyDefinitionParser::isSymbol(null, '('));
+    }
+
+    public function testParseCreateTableReadsEveryKeyTheDeclarationWrites(): void
+    {
+        $keys = (new PgSqlForeignKeyDefinitionParser())->parseCreateTable(
+            'CREATE TABLE t (id INT, FOREIGN KEY (id) REFERENCES users (id))',
+        );
+
+        self::assertSame(['users'], array_map(static fn ($key) => $key->referencedTable, array_values($keys)));
     }
 }

@@ -20,6 +20,10 @@ use ZtdQuery\Shadow\Mutation\UpsertExpressionKind;
 #[UsesClass(CandidateKeyMatch::class)]
 #[UsesClass(CandidateKeyConflict::class)]
 #[UsesClass(UpsertExpression::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertColumn::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertComparison::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertNumber::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertTruth::class)]
 final class ConflictSearchTest extends TestCase
 {
     public function testOfAnswersTheRowTheIncomingRowWouldCollideWith(): void

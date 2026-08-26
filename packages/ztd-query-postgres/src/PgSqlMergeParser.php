@@ -117,10 +117,15 @@ final class PgSqlMergeParser
     }
 
     /**
-     * @param list<SqlToken> $tokens
-     * @return array{name: string, sql: string, next: int, last: SqlToken}|null
+     * Reads the table named here, and where its name is written.
+     *
+     * @param string $sql Statement being read, as written
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param int $index Where to read
+     *
+     * @return array{name: string, sql: string, next: int, last: SqlToken}|null What it answers
      */
-    private function relationAt(string $sql, array $tokens, int $index): ?array
+    public function relationAt(string $sql, array $tokens, int $index): ?array
     {
         $first = $tokens[$index] ?? null;
         $name = $first !== null ? $this->identifierName($first) : null;
@@ -156,11 +161,19 @@ final class PgSqlMergeParser
     }
 
     /**
-     * @param list<SqlToken> $tokens
+     * Answers the name the statement gave a table, or the table's own.
+     *
+     * @param string $sql Statement being read, as written
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param int $start Where to start
+     * @param int $end The end
+     * @param string $default The default
+     *
+     * @return string What it answers
      *
      * @throws UnsupportedSqlException
      */
-    private function targetAlias(
+    public function targetAlias(
         string $sql,
         array $tokens,
         int $start,
@@ -185,9 +198,16 @@ final class PgSqlMergeParser
     }
 
     /**
+     * Reads one WHEN clause of a MERGE.
+     *
+     * @param string $originalSql Statement being rewritten, as written
+     * @param string $clauseSql The clause sql
+     *
+     * @return PgSqlMergeClause What it answers
+     *
      * @throws UnsupportedSqlException
      */
-    private function parseClause(string $originalSql, string $clauseSql): PgSqlMergeClause
+    public function parseClause(string $originalSql, string $clauseSql): PgSqlMergeClause
     {
         $clauseSql = rtrim($clauseSql, "; \t\n\r\0\x0B");
         $tokens = SqlTokenStream::tokenize($clauseSql, PgSqlLexerProfile::create())->significantTokens();
@@ -269,12 +289,17 @@ final class PgSqlMergeParser
     }
 
     /**
-     * @param list<SqlToken> $tokens
-     * @return array<string, string>
+     * Reads what a matched clause's UPDATE assigns.
+     *
+     * @param string $originalSql Statement being rewritten, as written
+     * @param string $actionSql The action sql
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     *
+     * @return array<string, string> What it answers
      *
      * @throws UnsupportedSqlException
      */
-    private function parseAssignments(string $originalSql, string $actionSql, array $tokens): array
+    public function parseAssignments(string $originalSql, string $actionSql, array $tokens): array
     {
         $set = $tokens[1] ?? null;
         if ($set === null) {
@@ -321,12 +346,17 @@ final class PgSqlMergeParser
     }
 
     /**
-     * @param list<SqlToken> $tokens
-     * @return array{columns: list<string>, values: list<string>}
+     * Reads what an unmatched clause's INSERT writes.
+     *
+     * @param string $originalSql Statement being rewritten, as written
+     * @param string $actionSql The action sql
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     *
+     * @return array{columns: list<string>, values: list<string>} What it answers
      *
      * @throws UnsupportedSqlException
      */
-    private function parseInsert(string $originalSql, string $actionSql, array $tokens): array
+    public function parseInsert(string $originalSql, string $actionSql, array $tokens): array
     {
         $index = 1;
         $columns = [];
@@ -380,12 +410,18 @@ final class PgSqlMergeParser
     }
 
     /**
-     * @param list<SqlToken> $tokens
-     * @return array{items: list<string>, next: int}
+     * Answers the entries written inside one pair of parentheses, and where they end.
+     *
+     * @param string $originalSql Statement being rewritten, as written
+     * @param string $sql Statement being read, as written
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param int $openIndex The open index
+     *
+     * @return array{items: list<string>, next: int} What it answers
      *
      * @throws UnsupportedSqlException
      */
-    private function parenthesizedList(
+    public function parenthesizedList(
         string $originalSql,
         string $sql,
         array $tokens,
@@ -416,8 +452,16 @@ final class PgSqlMergeParser
         throw new UnsupportedSqlException($originalSql, 'Malformed MERGE parenthesized list');
     }
 
-    /** @param list<SqlToken> $tokens */
-    private function keywordIndexAfter(array $tokens, string $keyword, SqlToken $anchor): ?int
+    /**
+     * Answers where a keyword is written after a token.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param string $keyword Keyword to look for
+     * @param SqlToken $anchor The anchor
+     *
+     * @return int|null What it answers
+     */
+    public function keywordIndexAfter(array $tokens, string $keyword, SqlToken $anchor): ?int
     {
         $afterAnchor = false;
         foreach ($tokens as $index => $token) {
@@ -433,8 +477,17 @@ final class PgSqlMergeParser
         return null;
     }
 
-    /** @param list<SqlToken> $tokens */
-    private function lastKeywordBetween(
+    /**
+     * Answers the last of a keyword written between two tokens.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param string $keyword Keyword to look for
+     * @param SqlToken $start Where to start
+     * @param SqlToken $end The end
+     *
+     * @return SqlToken|null What it answers
+     */
+    public function lastKeywordBetween(
         array $tokens,
         string $keyword,
         SqlToken $start,
@@ -459,10 +512,16 @@ final class PgSqlMergeParser
     }
 
     /**
-     * @param list<SqlToken> $tokens
-     * @return list<SqlToken>
+     * Answers where each WHEN of the statement itself is written.
+     *
+     * A CASE expression is written with its own WHEN, so a WHEN inside one
+     * opens a branch of that expression rather than a clause of the MERGE.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     *
+     * @return list<SqlToken> What it answers
      */
-    private function mergeWhenTokens(array $tokens): array
+    public function mergeWhenTokens(array $tokens): array
     {
         $whenTokens = [];
         $caseDepth = 0;
@@ -506,8 +565,15 @@ final class PgSqlMergeParser
         return $whenTokens;
     }
 
-    /** @param list<SqlToken> $tokens */
-    private function keywordIndexOutsideCase(array $tokens, string $keyword): ?int
+    /**
+     * Answers where a keyword is written outside any CASE expression.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param string $keyword Keyword to look for
+     *
+     * @return int|null What it answers
+     */
+    public function keywordIndexOutsideCase(array $tokens, string $keyword): ?int
     {
         $caseDepth = 0;
         foreach ($tokens as $index => $token) {
@@ -532,7 +598,14 @@ final class PgSqlMergeParser
         return null;
     }
 
-    private function identifierName(SqlToken $token): ?string
+    /**
+     * Answers the name a token stands for.
+     *
+     * @param SqlToken $token Token to read
+     *
+     * @return string|null What it answers
+     */
+    public function identifierName(SqlToken $token): ?string
     {
         if ($token->kind === SqlTokenKind::Word) {
             return strtolower($token->text);
@@ -544,7 +617,15 @@ final class PgSqlMergeParser
         return str_replace('""', '"', substr($token->text, 1, -1));
     }
 
-    private function isSymbol(?SqlToken $token, string $symbol): bool
+    /**
+     * Reports whether a token is this symbol.
+     *
+     * @param SqlToken|null $token Token to read
+     * @param string $symbol Symbol it must be
+     *
+     * @return bool What it answers
+     */
+    public function isSymbol(?SqlToken $token, string $symbol): bool
     {
         if ($token === null) {
             return false;

@@ -164,4 +164,19 @@ final class PgSqlTransformerTest extends TestCase
         $this->expectException(UnsupportedSqlException::class);
         $transformer->transform('CREATE TABLE test (id INTEGER)', []);
     }
+    public function testMergeTransformerAnswersTheSameTransformerEveryTime(): void
+    {
+        $parser = new PgSqlParser();
+        $selectTransformer = new SelectTransformer();
+        $transformer = new PgSqlTransformer(
+            $parser,
+            $selectTransformer,
+            new InsertTransformer($parser, $selectTransformer),
+            new UpdateTransformer($parser, $selectTransformer),
+            new DeleteTransformer($parser, $selectTransformer),
+        );
+
+        self::assertSame($transformer->mergeTransformer(), $transformer->mergeTransformer());
+    }
+
 }

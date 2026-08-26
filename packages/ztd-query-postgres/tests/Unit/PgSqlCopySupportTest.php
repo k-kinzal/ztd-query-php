@@ -9,13 +9,15 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use stdClass;
-use ValueError;
+use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Platform\CopyTarget;
 use ZtdQuery\Platform\Postgres\PgSqlCopySupport;
+use ZtdQuery\Platform\Postgres\PgSqlLexerProfile;
 use ZtdQuery\Schema\TableDefinition;
+use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(PgSqlCopySupport::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
+#[UsesClass(PgSqlLexerProfile::class)]
 final class PgSqlCopySupportTest extends TestCase
 {
     public function testIsCopyStatementTargetParsesRelationsAndRendersPostgreSqlStatements(): void
@@ -38,7 +40,7 @@ final class PgSqlCopySupportTest extends TestCase
         self::assertTrue($support->isCopyStatement('COPY users FROM STDIN'));
         self::assertFalse($support->isCopyStatement('SELECT * FROM users'));
 
-        $this->expectException(ValueError::class);
+        $this->expectException(InvalidDefinitionException::class);
         $support->tableName('users; DELETE FROM users');
     }
 
@@ -59,7 +61,7 @@ final class PgSqlCopySupportTest extends TestCase
 
     public function testRelationRejectsEmptyQualifierWithSpecificReason(): void
     {
-        $this->expectException(ValueError::class);
+        $this->expectException(InvalidDefinitionException::class);
         $this->expectExceptionMessage('must not contain an empty qualifier component');
 
         (new PgSqlCopySupport())->tableName('users.');
@@ -68,7 +70,7 @@ final class PgSqlCopySupportTest extends TestCase
     #[DataProvider('providerInvalidRelation')]
     public function testRelationRejectsInvalidStructure(string $relation): void
     {
-        $this->expectException(ValueError::class);
+        $this->expectException(InvalidDefinitionException::class);
 
         (new PgSqlCopySupport())->tableName($relation);
     }
@@ -93,7 +95,7 @@ final class PgSqlCopySupportTest extends TestCase
 
     public function testColumnsRejectAnEmptyFieldList(): void
     {
-        $this->expectException(ValueError::class);
+        $this->expectException(InvalidDefinitionException::class);
         $this->expectExceptionMessage('PostgreSQL COPY fields must contain at least one column identifier.');
 
         (new PgSqlCopySupport())->target(
@@ -105,7 +107,7 @@ final class PgSqlCopySupportTest extends TestCase
 
     public function testColumnsRejectATrailingFieldDelimiter(): void
     {
-        $this->expectException(ValueError::class);
+        $this->expectException(InvalidDefinitionException::class);
         $this->expectExceptionMessage('PostgreSQL COPY fields must contain at least one column identifier.');
 
         (new PgSqlCopySupport())->target(
@@ -118,7 +120,7 @@ final class PgSqlCopySupportTest extends TestCase
     #[DataProvider('providerInvalidFields')]
     public function testColumnsRejectInvalidFieldLists(string $fields): void
     {
-        $this->expectException(ValueError::class);
+        $this->expectException(InvalidDefinitionException::class);
 
         (new PgSqlCopySupport())->target(
             'items',
@@ -129,7 +131,7 @@ final class PgSqlCopySupportTest extends TestCase
 
     public function testColumnListRejectsTablesWithoutWritableColumns(): void
     {
-        $this->expectException(ValueError::class);
+        $this->expectException(InvalidDefinitionException::class);
 
         (new PgSqlCopySupport())->target(
             'items',
@@ -147,7 +149,7 @@ final class PgSqlCopySupportTest extends TestCase
 
     public function testInsertSqlRejectsAnEmptyBatch(): void
     {
-        $this->expectException(ValueError::class);
+        $this->expectException(InvalidDefinitionException::class);
 
         $support = new PgSqlCopySupport();
         $support->insertSql(new CopyTarget(['items'], ['id']), 0, false);
@@ -183,14 +185,14 @@ final class PgSqlCopySupportTest extends TestCase
 
     public function testEncodeRowRejectsUnsupportedValues(): void
     {
-        $this->expectException(ValueError::class);
+        $this->expectException(InvalidDefinitionException::class);
 
         (new PgSqlCopySupport())->encodeRow([new stdClass()], '|', '\\N');
     }
 
     public function testEncodeRowValidatesSeparator(): void
     {
-        $this->expectException(ValueError::class);
+        $this->expectException(InvalidDefinitionException::class);
 
         (new PgSqlCopySupport())->encodeRow(['value'], '', '\\N');
     }
@@ -242,7 +244,7 @@ final class PgSqlCopySupportTest extends TestCase
     #[DataProvider('providerInvalidRow')]
     public function testDecodeRowRejectsMalformedRecords(string $row): void
     {
-        $this->expectException(ValueError::class);
+        $this->expectException(InvalidDefinitionException::class);
 
         (new PgSqlCopySupport())->decodeRow($row, '|', '\\N');
     }
@@ -254,7 +256,7 @@ final class PgSqlCopySupportTest extends TestCase
 
     public function testSeparatorMustBeExactlyOneByte(): void
     {
-        $this->expectException(ValueError::class);
+        $this->expectException(InvalidDefinitionException::class);
 
         (new PgSqlCopySupport())->decodeRow('value', '||', '\\N');
     }
@@ -305,4 +307,100 @@ final class PgSqlCopySupportTest extends TestCase
         yield 'end marker' => ['\\.'];
         yield 'octal overflow' => ['\\400'];
     }
+    public function testTableNameAnswersTheTableAQualifiedNameNames(): void
+    {
+        self::assertSame('users', (new PgSqlCopySupport())->tableName('public.users'));
+    }
+
+    public function testTargetAnswersTheColumnsACopyWouldWrite(): void
+    {
+        $definition = new TableDefinition(['id', 'name'], [], ['id'], [], []);
+
+        self::assertSame(['id', 'name'], (new PgSqlCopySupport())->target('users', null, $definition)->columns);
+    }
+
+    public function testTargetRefusesATableWithNoColumnToCopy(): void
+    {
+        $this->expectException(InvalidDefinitionException::class);
+
+        (new PgSqlCopySupport())->target('users', null, new TableDefinition([], [], [], [], []));
+    }
+
+    public function testSelectSqlReadsTheColumnsTheTargetNames(): void
+    {
+        $target = new CopyTarget(['users'], ['id']);
+
+        self::assertSame('SELECT "id" FROM "users"', (new PgSqlCopySupport())->selectSql($target));
+    }
+
+    public function testRelationPartsReadsTheSchemaAndTheTable(): void
+    {
+        self::assertSame(['public', 'users'], (new PgSqlCopySupport())->relationParts('public.users'));
+    }
+
+    public function testRelationPartsRefusesANameWithAnEmptyPart(): void
+    {
+        $this->expectException(InvalidDefinitionException::class);
+
+        (new PgSqlCopySupport())->relationParts('public..users');
+    }
+
+    public function testColumnListSqlWritesEveryNameAsPostgresWouldWriteIt(): void
+    {
+        self::assertSame('"a", "b"', (new PgSqlCopySupport())->columnListSql(['a', 'b']));
+    }
+
+    public function testRelationSqlWritesTheTableAsPostgresWouldWriteIt(): void
+    {
+        self::assertSame('"public"."users"', (new PgSqlCopySupport())->relationSql(new CopyTarget(['public', 'users'], ['id'])));
+    }
+
+    public function testQuoteIdentifierDoublesEveryQuoteInTheName(): void
+    {
+        self::assertSame('"a""b"', (new PgSqlCopySupport())->quoteIdentifier('a"b'));
+    }
+
+    public function testValidateSeparatorRefusesASeparatorOfMoreThanOneByte(): void
+    {
+        $this->expectException(InvalidDefinitionException::class);
+
+        (new PgSqlCopySupport())->validateSeparator('ab');
+    }
+
+    public function testCopyOutputWritesATruthAsPostgresWritesIt(): void
+    {
+        self::assertSame('t', (new PgSqlCopySupport())->copyOutput(true));
+    }
+
+    public function testEscapeWritesASeparatorInsideAValueSoItIsNotOne(): void
+    {
+        self::assertSame('a\\tb', (new PgSqlCopySupport())->escape("a\tb", "\t"));
+    }
+
+    public function testDecodeFieldsReadsALineAsTheValuesItCarries(): void
+    {
+        self::assertSame(['a', 'b'], (new PgSqlCopySupport())->decodeFields("a\tb", "\t", '\\N'));
+    }
+
+    public function testDecodeFieldsReadsTheNullMarkerAsNoValue(): void
+    {
+        self::assertSame([null], (new PgSqlCopySupport())->decodeFields('\\N', "\t", '\\N'));
+    }
+
+    public function testIdentifierAnswersTheNameATokenStandsFor(): void
+    {
+        $tokens = SqlTokenStream::tokenize('users', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertSame('users', (new PgSqlCopySupport())->identifier($tokens[0], 'table name'));
+    }
+
+    public function testIdentifierRefusesATokenThatIsNoName(): void
+    {
+        $tokens = SqlTokenStream::tokenize('1', PgSqlLexerProfile::create())->significantTokens();
+
+        $this->expectException(InvalidDefinitionException::class);
+
+        (new PgSqlCopySupport())->identifier($tokens[0], 'table name');
+    }
+
 }

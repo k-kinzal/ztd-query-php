@@ -171,7 +171,18 @@ final class PgSqlPdoPlaceholderEscaper implements SqlPlaceholderEscaper
         return $result;
     }
 
-    private static function keywordExpectsOperand(string $keyword): bool
+    /**
+     * Reports whether a keyword is one something is written after.
+     *
+     * What follows an operator is a value; what follows a name is not. That is
+     * what says whether a colon here opens a placeholder or is PostgreSQL's
+     * own operator.
+     *
+     * @param string $keyword Keyword to look for
+     *
+     * @return bool What it answers
+     */
+    public static function keywordExpectsOperand(string $keyword): bool
     {
         return in_array($keyword, [
             'ALL',
@@ -218,21 +229,43 @@ final class PgSqlPdoPlaceholderEscaper implements SqlPlaceholderEscaper
         ], true);
     }
 
-    private static function isIdentifierStart(string $char): bool
+    /**
+     * Reports whether a name could open with this byte.
+     *
+     * @param string $char The char
+     *
+     * @return bool What it answers
+     */
+    public static function isIdentifierStart(string $char): bool
     {
         return $char >= 'A' && $char <= 'Z'
             || $char >= 'a' && $char <= 'z'
             || $char === '_';
     }
 
-    private static function isIdentifierContinuation(string $char): bool
+    /**
+     * Reports whether a name could carry on with this byte.
+     *
+     * @param string $char The char
+     *
+     * @return bool What it answers
+     */
+    public static function isIdentifierContinuation(string $char): bool
     {
         return self::isIdentifierStart($char)
             || ctype_digit($char)
             || $char === '$';
     }
 
-    private static function isEscapeStringStart(string $sql, int $quotePosition): bool
+    /**
+     * Reports whether one of PostgreSQL's escape strings opens here.
+     *
+     * @param string $sql Statement being read, as written
+     * @param int $quotePosition The quote position
+     *
+     * @return bool What it answers
+     */
+    public static function isEscapeStringStart(string $sql, int $quotePosition): bool
     {
         $prefix = substr($sql, 0, $quotePosition);
 
@@ -240,7 +273,15 @@ final class PgSqlPdoPlaceholderEscaper implements SqlPlaceholderEscaper
             && (strlen($prefix) === 1 || !self::isIdentifierContinuation(substr($prefix, -2, 1)));
     }
 
-    private static function dollarQuoteDelimiter(string $sql, int $position): ?string
+    /**
+     * Answers the delimiter a dollar-quoted run opens with.
+     *
+     * @param string $sql Statement being read, as written
+     * @param int $position The position
+     *
+     * @return string|null What it answers
+     */
+    public static function dollarQuoteDelimiter(string $sql, int $position): ?string
     {
         $length = strlen($sql);
         $i = $position + 1;

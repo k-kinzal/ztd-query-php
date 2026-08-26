@@ -119,7 +119,14 @@ final class PgSqlSchemaParser implements SchemaParser
         );
     }
 
-    private function tableBody(string $sql): ?string
+    /**
+     * Answers everything a CREATE TABLE declares between its parentheses.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return string|null What it answers
+     */
+    public function tableBody(string $sql): ?string
     {
         $stream = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create());
         $tokens = $stream->significantTokens();
@@ -177,10 +184,18 @@ final class PgSqlSchemaParser implements SchemaParser
     }
 
     /**
-     * @param list<SqlToken> $tokens
-     * @return array{name: string, next: int}|null
+     * Reads a name written here, however many parts it has.
+     *
+     * A schema-qualified name is read down to its last part, because the
+     * shadow knows a table by its name and not by the schema it sits in.
+     *
+     * @param SqlTokenStream $stream Stream to read
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param int $index Where to read
+     *
+     * @return array{name: string, next: int}|null What it answers
      */
-    private function qualifiedIdentifierAt(SqlTokenStream $stream, array $tokens, int $index): ?array
+    public function qualifiedIdentifierAt(SqlTokenStream $stream, array $tokens, int $index): ?array
     {
         $token = $tokens[$index] ?? null;
         if (!$token instanceof SqlToken) {
@@ -207,12 +222,30 @@ final class PgSqlSchemaParser implements SchemaParser
         return $identifier;
     }
 
-    private function isSymbol(SqlToken $token, string $symbol): bool
+    /**
+     * Reports whether a token is this symbol.
+     *
+     * @param SqlToken $token Token to read
+     * @param string $symbol Symbol it must be
+     *
+     * @return bool What it answers
+     */
+    public function isSymbol(SqlToken $token, string $symbol): bool
     {
         return $token->kind === SqlTokenKind::Symbol && $token->text === $symbol;
     }
 
-    private static function isSequenceDefault(string $expression): bool
+    /**
+     * Reports whether a default draws its value from a sequence.
+     *
+     * A column defaulting to the next value of a sequence is one the database
+     * numbers, which is what SERIAL is written as once it has been expanded.
+     *
+     * @param string $expression Expression to read, as written
+     *
+     * @return bool What it answers
+     */
+    public static function isSequenceDefault(string $expression): bool
     {
         foreach (SqlTokenStream::tokenize($expression, PgSqlLexerProfile::create())->significantTokens() as $token) {
             if ($token->text === '(') {
@@ -226,9 +259,13 @@ final class PgSqlSchemaParser implements SchemaParser
     }
 
     /**
-     * @return array{name: string, type: string, columnType: ColumnDeclaration, notNull: bool, primaryKey: bool, unique: bool, default: string|null, identity: bool, generatedExpression: string|null}|null
+     * Reads one entry of a declaration as a column, if that is what it declares.
+     *
+     * @param string $entry The entry
+     *
+     * @return array{name: string, type: string, columnType: ColumnDeclaration, notNull: bool, primaryKey: bool, unique: bool, default: string|null, identity: bool, generatedExpression: string|null}|null What it answers
      */
-    private function parseColumnDefinition(string $entry): ?array
+    public function parseColumnDefinition(string $entry): ?array
     {
         if (preg_match('/^("[^"]+"|[a-zA-Z_]\w*)\s+(.+)$/is', $entry, $m) !== 1) {
             return null;
@@ -285,7 +322,14 @@ final class PgSqlSchemaParser implements SchemaParser
         ];
     }
 
-    private static function isSerialType(string $nativeType): bool
+    /**
+     * Reports whether a type is one of PostgreSQL's shorthands for a numbered column.
+     *
+     * @param string $nativeType The native type
+     *
+     * @return bool What it answers
+     */
+    public static function isSerialType(string $nativeType): bool
     {
         foreach (['SMALLSERIAL', 'SERIAL', 'BIGSERIAL'] as $serialType) {
             if (strcasecmp($nativeType, $serialType) === 0) {
@@ -296,7 +340,14 @@ final class PgSqlSchemaParser implements SchemaParser
         return false;
     }
 
-    private static function hasGeneratedIdentity(string $constraints): bool
+    /**
+     * Reports whether a column says the database numbers it.
+     *
+     * @param string $constraints The constraints
+     *
+     * @return bool What it answers
+     */
+    public static function hasGeneratedIdentity(string $constraints): bool
     {
         $tokens = SqlTokenStream::tokenize($constraints, PgSqlLexerProfile::create())->significantTokens();
         $sequences = [
@@ -338,9 +389,13 @@ final class PgSqlSchemaParser implements SchemaParser
     ];
 
     /**
-     * @return array{type: string, rest: string}|null
+     * Reads the type an entry declares, and says where reading it left off.
+     *
+     * @param string $str The str
+     *
+     * @return array{type: string, rest: string}|null What it answers
      */
-    private function extractType(string $str): ?array
+    public function extractType(string $str): ?array
     {
         $str = ltrim($str);
 
@@ -392,8 +447,14 @@ final class PgSqlSchemaParser implements SchemaParser
         return ['type' => $fullType, 'rest' => trim($trimmedRest)];
     }
 
-    /** @return array{type: string, rest: string}|null */
-    private function extractQuotedType(string $str): ?array
+    /**
+     * Reads a type written as a quoted name, if that is how it is written.
+     *
+     * @param string $str The str
+     *
+     * @return array{type: string, rest: string}|null What it answers
+     */
+    public function extractQuotedType(string $str): ?array
     {
         $tokens = SqlTokenStream::tokenize($str, PgSqlLexerProfile::create())->significantTokens();
         $first = $tokens[0] ?? null;
@@ -444,16 +505,27 @@ final class PgSqlSchemaParser implements SchemaParser
         ];
     }
 
-    private static function isTypeIdentifier(SqlToken $token): bool
+    /**
+     * Reports whether a token could be part of a type's name.
+     *
+     * @param SqlToken $token Token to read
+     *
+     * @return bool What it answers
+     */
+    public static function isTypeIdentifier(SqlToken $token): bool
     {
         return in_array($token->kind, [SqlTokenKind::Word, SqlTokenKind::QuotedIdentifier], true);
     }
 
     /**
-     * @param list<string> $primaryKeys
-     * @param array<string, list<string>> $uniqueConstraints
+     * Reads one entry as a key, recording what it declares.
+     *
+     * @param string $entry The entry
+     * @param list<string> $primaryKeys The primary keys
+     * @param array<string, list<string>> $uniqueConstraints The unique constraints
+     * @param int $uniqueIndex The unique index
      */
-    private function parseConstraint(string $entry, array &$primaryKeys, array &$uniqueConstraints, int &$uniqueIndex): void
+    public function parseConstraint(string $entry, array &$primaryKeys, array &$uniqueConstraints, int &$uniqueIndex): void
     {
         if (preg_match('/PRIMARY\s+KEY\s*\(([^)]+)\)/i', $entry, $m) === 1) {
             $cols = $this->parseColumnRefList($m[1]);
@@ -478,7 +550,14 @@ final class PgSqlSchemaParser implements SchemaParser
         }
     }
 
-    private function isConstraintEntry(string $entry): bool
+    /**
+     * Reports whether an entry declares a constraint rather than a column.
+     *
+     * @param string $entry The entry
+     *
+     * @return bool What it answers
+     */
+    public function isConstraintEntry(string $entry): bool
     {
         $length = strspn($entry, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_$');
         $leadingKeyword = strtoupper(substr($entry, 0, $length));
@@ -494,9 +573,13 @@ final class PgSqlSchemaParser implements SchemaParser
     }
 
     /**
-     * @return list<string>
+     * Reads the column names written inside a key's parentheses.
+     *
+     * @param string $str The str
+     *
+     * @return list<string> What it answers
      */
-    private function parseColumnRefList(string $str): array
+    public function parseColumnRefList(string $str): array
     {
         $cols = [];
         foreach (explode(',', $str) as $part) {
@@ -511,11 +594,17 @@ final class PgSqlSchemaParser implements SchemaParser
     }
 
     /**
-     * Split table body by top-level commas (respecting parentheses).
+     * Splits a declaration into the entries it is written as.
      *
-     * @return list<string>
+     * A comma inside parentheses or inside quotes belongs to what it is
+     * written in, so only a comma at the level of the declaration itself
+     * separates one entry from the next.
+     *
+     * @param string $body The body
+     *
+     * @return list<string> What it answers
      */
-    private function splitTableBody(string $body): array
+    public function splitTableBody(string $body): array
     {
         $entries = [];
         $current = '';
@@ -590,7 +679,14 @@ final class PgSqlSchemaParser implements SchemaParser
         return $entries;
     }
 
-    private function unquoteIdentifier(string $identifier): string
+    /**
+     * Answers the name a written identifier stands for.
+     *
+     * @param string $identifier Name, as it was written
+     *
+     * @return string What it answers
+     */
+    public function unquoteIdentifier(string $identifier): string
     {
         $trimmed = trim($identifier);
         if (str_starts_with($trimmed, '"') && str_ends_with($trimmed, '"')) {

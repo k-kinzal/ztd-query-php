@@ -20,6 +20,7 @@ use ZtdQuery\Schema\IdentityGenerationStrategy;
 #[UsesClass(MySqlParser::class)]
 #[UsesClass(MySqlPartitioningParser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlStatementOptions::class)]
 final class MySqlSchemaParserTest extends SchemaParserContractTest
 {
     public function createParser(): SchemaParser

@@ -30,6 +30,12 @@ use ZtdQuery\Shadow\ShadowStore;
 #[UsesClass(MySqlSchemaParser::class)]
 #[UsesClass(MySqlPartitioningParser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Mutation\AlterTableColumn::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Mutation\AlterTableOperation::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Mutation\AlterTableRows::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Mutation\MySqlTableRedeclaration::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlComponentSql::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlStatementOptions::class)]
 final class AlterTableMutationTest extends TestCase
 {
     public function testApplyAddColumnAddsNewColumn(): void

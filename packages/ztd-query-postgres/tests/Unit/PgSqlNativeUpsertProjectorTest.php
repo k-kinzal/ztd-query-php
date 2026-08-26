@@ -7,11 +7,13 @@ namespace Tests\Unit;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Platform\Postgres\PgSqlLexerProfile;
 use ZtdQuery\Platform\Postgres\PgSqlNativeUpsertProjector;
+use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(PgSqlNativeUpsertProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
+#[UsesClass(PgSqlLexerProfile::class)]
 final class PgSqlNativeUpsertProjectorTest extends TestCase
 {
     public function testKeepsIdentifiersInsideScalarSubqueryInTheirNativeScope(): void
@@ -131,4 +133,95 @@ final class PgSqlNativeUpsertProjectorTest extends TestCase
             $result,
         );
     }
+    public function testConflictPredicateComparesEveryColumnOfEachKey(): void
+    {
+        self::assertSame(
+            '(("e"."id" = "i"."id"))',
+            (new PgSqlNativeUpsertProjector())->conflictPredicate(['PRIMARY' => ['id']], '"e"', '"i"'),
+        );
+    }
+
+    public function testConflictPredicateIsFalseWhereThereIsNoKeyToCollideOn(): void
+    {
+        self::assertSame('FALSE', (new PgSqlNativeUpsertProjector())->conflictPredicate([], '"e"', '"i"'));
+    }
+
+    public function testBindExpressionSaysABareNameMeansTheRowAlreadyThere(): void
+    {
+        self::assertSame(
+            '"__ztd_existing"."qty"',
+            (new PgSqlNativeUpsertProjector())->bindExpression('qty', 'items', ['qty']),
+        );
+    }
+
+    public function testBindExpressionSaysExcludedMeansTheIncomingRow(): void
+    {
+        self::assertSame(
+            '"__ztd_incoming"."qty"',
+            (new PgSqlNativeUpsertProjector())->bindExpression('excluded.qty', 'items', ['qty']),
+        );
+    }
+
+    public function testBindExpressionLeavesANameInsideASubqueryAlone(): void
+    {
+        self::assertStringContainsString(
+            'SELECT qty',
+            (new PgSqlNativeUpsertProjector())->bindExpression('(SELECT qty FROM other)', 'items', ['qty']),
+        );
+    }
+
+    public function testSubqueryTokenIndexesMarksEveryTokenInsideASubquery(): void
+    {
+        $tokens = SqlTokenStream::tokenize('a + (SELECT b)', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertSame([3, 4], array_keys((new PgSqlNativeUpsertProjector())->subqueryTokenIndexes($tokens)));
+    }
+
+    public function testSubqueryTokenIndexesMarksNothingWhereThereIsNoSubquery(): void
+    {
+        $tokens = SqlTokenStream::tokenize('a + 1', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertSame([], (new PgSqlNativeUpsertProjector())->subqueryTokenIndexes($tokens));
+    }
+
+    public function testIsIdentifierReportsABareWord(): void
+    {
+        $tokens = SqlTokenStream::tokenize('qty', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertTrue((new PgSqlNativeUpsertProjector())->isIdentifier($tokens[0]));
+    }
+
+    public function testIsIdentifierIsFalseForALiteral(): void
+    {
+        $tokens = SqlTokenStream::tokenize('1', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertFalse((new PgSqlNativeUpsertProjector())->isIdentifier($tokens[0]));
+    }
+
+    public function testIdentifierTakesTheQuotingOffAName(): void
+    {
+        $tokens = SqlTokenStream::tokenize('"order"', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertSame('order', (new PgSqlNativeUpsertProjector())->identifier($tokens[0]));
+    }
+
+    public function testIdentifierAnswersTheTokensOwnTextWhereItIsNotAName(): void
+    {
+        $tokens = SqlTokenStream::tokenize('1', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertSame('1', (new PgSqlNativeUpsertProjector())->identifier($tokens[0]));
+    }
+
+    public function testQualifiedWritesTheColumnAsBelongingToThatRow(): void
+    {
+        self::assertSame('"e"."qty"', (new PgSqlNativeUpsertProjector())->qualified('e', 'qty'));
+    }
+    public function testProjectLeavesAStatementWithNothingToUpdateAlone(): void
+    {
+        self::assertSame(
+            'SELECT 1',
+            (new PgSqlNativeUpsertProjector())->project('SELECT 1', 'items', ['qty'], [], []),
+        );
+    }
+
 }

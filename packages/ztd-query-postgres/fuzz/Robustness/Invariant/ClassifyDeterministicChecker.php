@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Fuzz\Robustness\Invariant;
 
-use Throwable;
 use ZtdQuery\Platform\Postgres\PgSqlQueryGuard;
 
 /**
@@ -25,19 +24,16 @@ final class ClassifyDeterministicChecker implements InvariantChecker
     }
 
     /**
-     * Check.
+     * Checks that reading the same statement twice says the same thing.
      *
-     * @param string $sql
-     * @return ?InvariantViolation
+     * @param string $sql Statement the fuzzer drew
+     *
+     * @return InvariantViolation|null What was violated, or null where nothing was
      */
     public function check(string $sql): ?InvariantViolation
     {
-        try {
-            $result1 = $this->guard->classify($sql);
-            $result2 = $this->guard->classify($sql);
-        } catch (Throwable $e) {
-            return null;
-        }
+        $result1 = $this->guard->classify($sql);
+        $result2 = $this->guard->classify($sql);
 
         if ($result1 !== $result2) {
             return new InvariantViolation(

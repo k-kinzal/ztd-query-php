@@ -7,7 +7,6 @@ namespace Tests\Unit;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use ReflectionMethod;
 use ZtdQuery\Platform\Postgres\PgSqlPartitionParser;
 use ZtdQuery\Schema\TablePartitionKey;
 use ZtdQuery\Schema\TablePartitionStrategy;
@@ -268,10 +267,185 @@ final class PgSqlPartitionParserTest extends TestCase
 
     public function testQualifiedIdentifierRejectsMismatchedTokenStream(): void
     {
-        $method = new ReflectionMethod(PgSqlPartitionParser::class, 'qualifiedIdentifierAt');
         $stream = SqlTokenStream::tokenize('users', \ZtdQuery\Platform\Postgres\PgSqlLexerProfile::create());
         $tokens = [new SqlToken(SqlTokenKind::String, 'users', 0, 0, 0)];
 
-        self::assertNull($method->invoke(new PgSqlPartitionParser(), $stream, $tokens, 0));
+        self::assertNull((new PgSqlPartitionParser())->qualifiedIdentifierAt($stream, $tokens, 0));
     }
+    public function testParseKeyReadsHowATableIsDivided(): void
+    {
+        self::assertSame(
+            TablePartitionStrategy::Range,
+            (new PgSqlPartitionParser())->parseKey('CREATE TABLE t (id INT) PARTITION BY RANGE (id)')?->strategy,
+        );
+    }
+
+    public function testParseKeyIsNothingWhereTheTableIsNotDivided(): void
+    {
+        self::assertNull((new PgSqlPartitionParser())->parseKey('CREATE TABLE t (id INT)'));
+    }
+
+    public function testParentTableAnswersTheTableAPartitionIsPartOf(): void
+    {
+        self::assertSame(
+            'events',
+            (new PgSqlPartitionParser())->parentTable('CREATE TABLE p PARTITION OF events DEFAULT'),
+        );
+    }
+
+    public function testParentTableIsNothingWhereTheTableIsPartOfNothing(): void
+    {
+        self::assertNull((new PgSqlPartitionParser())->parentTable('CREATE TABLE t (id INT)'));
+    }
+
+    public function testParseRelationReadsWhichRowsAPartitionHolds(): void
+    {
+        $key = new TablePartitionKey(TablePartitionStrategy::Range, ['id']);
+
+        self::assertSame(
+            'events',
+            (new PgSqlPartitionParser())
+                ->parseRelation('CREATE TABLE p PARTITION OF events FOR VALUES FROM (1) TO (10)', $key)?->parentTable,
+        );
+    }
+
+    public function testParseRelationIsNothingWhereTheTableIsPartOfNothing(): void
+    {
+        $key = new TablePartitionKey(TablePartitionStrategy::Range, ['id']);
+
+        self::assertNull((new PgSqlPartitionParser())->parseRelation('CREATE TABLE t (id INT)', $key));
+    }
+
+    public function testRangePredicateAnswersWhichRowsARangePartitionHolds(): void
+    {
+        $sql = 'FROM (1) TO (10)';
+        $tokens = SqlTokenStream::tokenize($sql, \ZtdQuery\Platform\Postgres\PgSqlLexerProfile::create())
+            ->significantTokens();
+        $key = new TablePartitionKey(TablePartitionStrategy::Range, ['id']);
+
+        self::assertSame(
+            '(id) >= 1 AND (id) < 10',
+            (new PgSqlPartitionParser())->rangePredicate($sql, $tokens, 0, $key),
+        );
+    }
+
+    public function testRangePredicateIsNothingWhereNoRangeIsWritten(): void
+    {
+        $sql = 'IN (1)';
+        $tokens = SqlTokenStream::tokenize($sql, \ZtdQuery\Platform\Postgres\PgSqlLexerProfile::create())
+            ->significantTokens();
+        $key = new TablePartitionKey(TablePartitionStrategy::Range, ['id']);
+
+        self::assertNull((new PgSqlPartitionParser())->rangePredicate($sql, $tokens, 0, $key));
+    }
+
+    public function testRangeBoundaryWritesOneEndOfTheRange(): void
+    {
+        self::assertSame(
+            '(id) >= 1',
+            (new PgSqlPartitionParser())->rangeBoundary(['id'], ['1'], '>=', 'MINVALUE'),
+        );
+    }
+
+    public function testRangeBoundaryIsNothingWhereTheEndIsUnbounded(): void
+    {
+        self::assertNull(
+            (new PgSqlPartitionParser())->rangeBoundary(['id'], ['MINVALUE'], '>=', 'MINVALUE'),
+        );
+    }
+
+    public function testRangeBoundaryRefusesValuesThatDoNotLineUpWithTheKey(): void
+    {
+        self::assertFalse(
+            (new PgSqlPartitionParser())->rangeBoundary(['id'], ['1', '2'], '>=', 'MINVALUE'),
+        );
+    }
+
+    public function testParenthesizedValuesReadsTheValuesAndWhereTheyEnd(): void
+    {
+        $sql = '(1, 2)';
+        $tokens = SqlTokenStream::tokenize($sql, \ZtdQuery\Platform\Postgres\PgSqlLexerProfile::create())
+            ->significantTokens();
+
+        self::assertSame(
+            ['1', '2'],
+            (new PgSqlPartitionParser())->parenthesizedValues($sql, $tokens, 0)['values'] ?? null,
+        );
+    }
+
+    public function testParenthesizedValuesIsNothingWhereTheParenthesesNeverClose(): void
+    {
+        $sql = '(1, 2';
+        $tokens = SqlTokenStream::tokenize($sql, \ZtdQuery\Platform\Postgres\PgSqlLexerProfile::create())
+            ->significantTokens();
+
+        self::assertNull((new PgSqlPartitionParser())->parenthesizedValues($sql, $tokens, 0));
+    }
+
+    public function testClosingParenthesisIndexAnswersWhereTheParenthesisCloses(): void
+    {
+        $tokens = SqlTokenStream::tokenize('(1)', \ZtdQuery\Platform\Postgres\PgSqlLexerProfile::create())
+            ->significantTokens();
+
+        self::assertSame(2, (new PgSqlPartitionParser())->closingParenthesisIndex($tokens, 0));
+    }
+
+    public function testClosingParenthesisIndexIsNothingWhereNoParenthesisOpensThere(): void
+    {
+        $tokens = SqlTokenStream::tokenize('1', \ZtdQuery\Platform\Postgres\PgSqlLexerProfile::create())
+            ->significantTokens();
+
+        self::assertNull((new PgSqlPartitionParser())->closingParenthesisIndex($tokens, 0));
+    }
+
+    public function testKeywordPairIndexAnswersWhereThePairIsWrittenTogether(): void
+    {
+        $tokens = SqlTokenStream::tokenize('PARTITION BY RANGE', \ZtdQuery\Platform\Postgres\PgSqlLexerProfile::create())
+            ->significantTokens();
+
+        self::assertSame(0, (new PgSqlPartitionParser())->keywordPairIndex($tokens, 'PARTITION', 'BY'));
+    }
+
+    public function testKeywordPairIndexIsNothingWhereOnlyOneOfThemIsWritten(): void
+    {
+        $tokens = SqlTokenStream::tokenize('PARTITION RANGE', \ZtdQuery\Platform\Postgres\PgSqlLexerProfile::create())
+            ->significantTokens();
+
+        self::assertNull((new PgSqlPartitionParser())->keywordPairIndex($tokens, 'PARTITION', 'BY'));
+    }
+
+    public function testKeywordIndexAnswersWhereTheKeywordIsWritten(): void
+    {
+        $tokens = SqlTokenStream::tokenize('FOR VALUES', \ZtdQuery\Platform\Postgres\PgSqlLexerProfile::create())
+            ->significantTokens();
+
+        self::assertSame(1, (new PgSqlPartitionParser())->keywordIndex($tokens, 'VALUES'));
+    }
+
+    public function testKeywordIndexIsNothingWhereItIsNotWritten(): void
+    {
+        $tokens = SqlTokenStream::tokenize('FOR', \ZtdQuery\Platform\Postgres\PgSqlLexerProfile::create())
+            ->significantTokens();
+
+        self::assertNull((new PgSqlPartitionParser())->keywordIndex($tokens, 'VALUES'));
+    }
+
+    public function testQualifiedIdentifierAtReadsAQualifiedNameDownToTheTable(): void
+    {
+        $stream = SqlTokenStream::tokenize('public.events', \ZtdQuery\Platform\Postgres\PgSqlLexerProfile::create());
+
+        self::assertSame(
+            'events',
+            (new PgSqlPartitionParser())->qualifiedIdentifierAt($stream, $stream->significantTokens(), 0)['name'] ?? null,
+        );
+    }
+
+    public function testIsSymbolReportsATokenBeingThatSymbol(): void
+    {
+        $tokens = SqlTokenStream::tokenize('(', \ZtdQuery\Platform\Postgres\PgSqlLexerProfile::create())
+            ->significantTokens();
+
+        self::assertTrue((new PgSqlPartitionParser())->isSymbol($tokens[0], '('));
+    }
+
 }

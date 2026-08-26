@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace Tests\Unit\Sql;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Tests\Fake\FakeSqlLexerProfiles;
 use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Sql\SqlLexerProfile;
 
 #[CoversClass(SqlLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Sql\LexicalDelimiters::class)]
+#[UsesClass(\ZtdQuery\Sql\LexicalPattern::class)]
 final class SqlLexerProfileTest extends TestCase
 {
     public function testStartsLineCommentSeesEveryPrefixTheDialectDeclares(): void

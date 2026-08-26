@@ -11,12 +11,9 @@ use Tests\Fixture\MySqlLoadStatements;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlLoadDataInsert;
-use ZtdQuery\Schema\TableDefinition;
 
 #[CoversClass(MySqlLoadDataInsert::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]
-#[UsesClass(TableDefinition::class)]
-#[UsesClass(UnsupportedSqlException::class)]
 final class MySqlLoadDataInsertTest extends TestCase
 {
     public function testSqlForWritesTheRowsAsAnInsert(): void

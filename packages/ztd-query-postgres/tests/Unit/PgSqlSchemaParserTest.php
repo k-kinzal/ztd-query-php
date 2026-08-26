@@ -7,8 +7,8 @@ namespace Tests\Unit;
 use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
-use ReflectionMethod;
 use Tests\Contract\SchemaParserContractTest;
+use ZtdQuery\Platform\Postgres\PgSqlLexerProfile;
 use ZtdQuery\Platform\Postgres\PgSqlPartitionParser;
 use ZtdQuery\Platform\Postgres\PgSqlSchemaParser;
 use ZtdQuery\Platform\SchemaParser;
@@ -23,16 +23,15 @@ use ZtdQuery\Sql\SqlTokenStream;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlColumnTypeMapper::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlForeignKeyDefinitionParser::class)]
 #[UsesClass(PgSqlPartitionParser::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
+#[UsesClass(PgSqlLexerProfile::class)]
 final class PgSqlSchemaParserTest extends SchemaParserContractTest
 {
     public function testQualifiedIdentifierRejectsMismatchedTokenStream(): void
     {
-        $method = new ReflectionMethod(PgSqlSchemaParser::class, 'qualifiedIdentifierAt');
-        $stream = SqlTokenStream::tokenize('users', \ZtdQuery\Platform\Postgres\PgSqlLexerProfile::create());
+        $stream = SqlTokenStream::tokenize('users', PgSqlLexerProfile::create());
         $tokens = [new SqlToken(SqlTokenKind::String, 'users', 0, 0, 0)];
 
-        self::assertNull($method->invoke(new PgSqlSchemaParser(), $stream, $tokens, 0));
+        self::assertNull((new PgSqlSchemaParser())->qualifiedIdentifierAt($stream, $tokens, 0));
     }
 
     public function testParsesSchemaQualifiedQuotedDomainTypeWithoutChangingItsCase(): void
@@ -1840,4 +1839,166 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         );
         self::assertSame(['id'], $def->primaryKeys);
     }
+    public function testTableBodyAnswersWhatIsDeclaredBetweenTheParentheses(): void
+    {
+        self::assertSame(
+            'id INT',
+            (new PgSqlSchemaParser())->tableBody('CREATE TABLE t (id INT)'),
+        );
+    }
+
+    public function testTableBodyIsNothingWhereTheTextDeclaresNoTable(): void
+    {
+        self::assertNull((new PgSqlSchemaParser())->tableBody('SELECT 1'));
+    }
+
+    public function testQualifiedIdentifierAtReadsAQualifiedNameDownToTheTable(): void
+    {
+        $stream = SqlTokenStream::tokenize('app.users', PgSqlLexerProfile::create());
+
+        self::assertSame(
+            'users',
+            (new PgSqlSchemaParser())->qualifiedIdentifierAt($stream, $stream->significantTokens(), 0)['name'] ?? null,
+        );
+    }
+
+    public function testQualifiedIdentifierAtIsNothingWhereNoNameIsWritten(): void
+    {
+        $stream = SqlTokenStream::tokenize('1', PgSqlLexerProfile::create());
+
+        self::assertNull(
+            (new PgSqlSchemaParser())->qualifiedIdentifierAt($stream, $stream->significantTokens(), 0),
+        );
+    }
+
+    public function testIsSymbolReportsATokenBeingThatSymbol(): void
+    {
+        $tokens = SqlTokenStream::tokenize('(', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertTrue((new PgSqlSchemaParser())->isSymbol($tokens[0], '('));
+    }
+
+    public function testIsSymbolIsFalseForAnotherSymbolEntirely(): void
+    {
+        $tokens = SqlTokenStream::tokenize('(', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertFalse((new PgSqlSchemaParser())->isSymbol($tokens[0], ')'));
+    }
+
+    public function testIsSequenceDefaultReportsADefaultDrawnFromASequence(): void
+    {
+        self::assertTrue(PgSqlSchemaParser::isSequenceDefault("nextval('t_id_seq')"));
+    }
+
+    public function testIsSequenceDefaultIsFalseForAPlainDefault(): void
+    {
+        self::assertFalse(PgSqlSchemaParser::isSequenceDefault('0'));
+    }
+
+    public function testIsSerialTypeReportsPostgresShorthandForANumberedColumn(): void
+    {
+        self::assertTrue(PgSqlSchemaParser::isSerialType('BIGSERIAL'));
+    }
+
+    public function testIsSerialTypeIsFalseForAnOrdinaryType(): void
+    {
+        self::assertFalse(PgSqlSchemaParser::isSerialType('INTEGER'));
+    }
+
+    public function testHasGeneratedIdentityReportsAColumnTheDatabaseNumbers(): void
+    {
+        self::assertTrue(PgSqlSchemaParser::hasGeneratedIdentity('GENERATED ALWAYS AS IDENTITY'));
+    }
+
+    public function testHasGeneratedIdentityIsFalseWhereNothingSaysSo(): void
+    {
+        self::assertFalse(PgSqlSchemaParser::hasGeneratedIdentity('NOT NULL'));
+    }
+
+    public function testExtractTypeReadsTheTypeAndWhatFollowsIt(): void
+    {
+        self::assertSame(
+            ['type' => 'INTEGER', 'rest' => 'NOT NULL'],
+            (new PgSqlSchemaParser())->extractType('INTEGER NOT NULL'),
+        );
+    }
+
+    public function testExtractTypeIsNothingWhereNoTypeIsWritten(): void
+    {
+        self::assertNull((new PgSqlSchemaParser())->extractType('1'));
+    }
+
+    public function testExtractQuotedTypeReadsATypeWrittenAsAQuotedName(): void
+    {
+        self::assertSame(
+            '"my type"',
+            (new PgSqlSchemaParser())->extractQuotedType('"my type" NOT NULL')['type'] ?? null,
+        );
+    }
+
+    public function testExtractQuotedTypeIsNothingWhereTheTypeIsNotQuoted(): void
+    {
+        self::assertNull((new PgSqlSchemaParser())->extractQuotedType('INTEGER'));
+    }
+
+    public function testIsTypeIdentifierReportsATokenThatCouldNameAType(): void
+    {
+        $tokens = SqlTokenStream::tokenize('integer', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertTrue(PgSqlSchemaParser::isTypeIdentifier($tokens[0]));
+    }
+
+    public function testIsTypeIdentifierIsFalseForALiteral(): void
+    {
+        $tokens = SqlTokenStream::tokenize('1', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertFalse(PgSqlSchemaParser::isTypeIdentifier($tokens[0]));
+    }
+
+    public function testIsConstraintEntryReportsAnEntryThatDeclaresAKey(): void
+    {
+        self::assertTrue((new PgSqlSchemaParser())->isConstraintEntry('PRIMARY KEY (id)'));
+    }
+
+    public function testIsConstraintEntryIsFalseForAColumn(): void
+    {
+        self::assertFalse((new PgSqlSchemaParser())->isConstraintEntry('id INTEGER'));
+    }
+
+    public function testParseColumnRefListReadsTheNamesWrittenInTheList(): void
+    {
+        self::assertSame(['a', 'b'], (new PgSqlSchemaParser())->parseColumnRefList('a, "b"'));
+    }
+
+    public function testParseColumnRefListIsNothingForAnEmptyList(): void
+    {
+        self::assertSame([], (new PgSqlSchemaParser())->parseColumnRefList(''));
+    }
+
+    public function testSplitTableBodySeparatesTheEntriesTheDeclarationWrites(): void
+    {
+        self::assertSame(
+            ['id INTEGER', 'name TEXT'],
+            array_map(trim(...), (new PgSqlSchemaParser())->splitTableBody('id INTEGER, name TEXT')),
+        );
+    }
+
+    public function testSplitTableBodyKeepsACommaInsideParenthesesWhereItWasWritten(): void
+    {
+        self::assertSame(
+            ['amount NUMERIC(10, 2)'],
+            array_map(trim(...), (new PgSqlSchemaParser())->splitTableBody('amount NUMERIC(10, 2)')),
+        );
+    }
+
+    public function testUnquoteIdentifierTakesTheQuotingOffTheName(): void
+    {
+        self::assertSame('order', (new PgSqlSchemaParser())->unquoteIdentifier('"order"'));
+    }
+
+    public function testUnquoteIdentifierLeavesAnUnquotedNameAlone(): void
+    {
+        self::assertSame('name', (new PgSqlSchemaParser())->unquoteIdentifier('name'));
+    }
+
 }

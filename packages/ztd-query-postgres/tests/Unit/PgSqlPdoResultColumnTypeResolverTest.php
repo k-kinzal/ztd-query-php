@@ -55,4 +55,12 @@ final class PgSqlPdoResultColumnTypeResolverTest extends TestCase
         self::assertSame(ColumnTypeFamily::STRING, $strings->family);
         self::assertSame('varchar[]', $strings->nativeType);
     }
+    public function testResolveReadsTheTypeTheDriverNamed(): void
+    {
+        self::assertSame(
+            'int4',
+            (new PgSqlPdoResultColumnTypeResolver())->resolve(['native_type' => 'int4'])->nativeType,
+        );
+    }
+
 }

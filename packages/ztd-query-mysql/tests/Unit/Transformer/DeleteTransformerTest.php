@@ -31,6 +31,7 @@ use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlGeneratedColumnProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlComponentSql::class)]
 final class DeleteTransformerTest extends TestCase
 {
     public function testTransformPreservesCaseWhereExpression(): void
