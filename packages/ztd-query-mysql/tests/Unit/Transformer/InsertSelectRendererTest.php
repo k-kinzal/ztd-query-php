@@ -81,4 +81,12 @@ final class InsertSelectRendererTest extends TestCase
 
         (new InsertSelectRenderer())->renderGeneratedIdentity(0);
     }
+    public function testRenderGeneratedIdentityCountsUpFromWhereItWasTold(): void
+    {
+        self::assertSame(
+            '5 + ROW_NUMBER() OVER () - 1',
+            (new InsertSelectRenderer())->renderGeneratedIdentity(5),
+        );
+    }
+
 }

@@ -161,4 +161,9 @@ final class MySqlParserTest extends TestCase
         self::assertSame('SELECT 1', (new MySqlParser())->normalizeOptionalInsertInto('SELECT 1'));
     }
 
+    public function testParseSingleLogicalStatementIsNothingForABatchOfSeveral(): void
+    {
+        self::assertNull((new MySqlParser())->parseSingleLogicalStatement('SELECT 1; SELECT 2'));
+    }
+
 }

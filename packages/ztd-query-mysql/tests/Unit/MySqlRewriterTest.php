@@ -3378,4 +3378,38 @@ final class MySqlRewriterTest extends RewriterContractTest
         self::assertNull(MySqlRewriter::resolveIntoTableName(null));
     }
 
+    public function testTransactionStatementReadsAStatementThatOpensATransaction(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        self::assertInstanceOf(MySqlRewriter::class, $rewriter);
+
+        self::assertNotNull($rewriter->transactionStatement('START TRANSACTION'));
+    }
+
+    public function testSplitStatementsReadsABatchAsTheStatementsItIsWrittenAs(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        self::assertInstanceOf(MySqlRewriter::class, $rewriter);
+
+        self::assertCount(2, $rewriter->splitStatements('SELECT 1; SELECT 2'));
+    }
+
+    public function testCommitRewriteStateKeepsWhatTheLastRewriteHandedOut(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        self::assertInstanceOf(MySqlRewriter::class, $rewriter);
+
+        $rewriter->commitRewriteState();
+
+        self::assertSame('SELECT 1 WHERE FALSE', $rewriter->emptyResultSelect());
+    }
+
+    public function testEmptyResultSelectAnswersAStatementThatReadsNoRow(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        self::assertInstanceOf(MySqlRewriter::class, $rewriter);
+
+        self::assertSame('SELECT 1 WHERE FALSE', $rewriter->emptyResultSelect());
+    }
+
 }

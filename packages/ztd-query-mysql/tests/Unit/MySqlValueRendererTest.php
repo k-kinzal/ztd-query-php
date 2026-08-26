@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use Stringable;
+use Tests\Fixture\DriverValues;
 use ZtdQuery\Platform\MySql\MySqlValueRenderer;
 use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
@@ -113,7 +114,7 @@ final class MySqlValueRendererTest extends TestCase
         $renderer = new MySqlValueRenderer();
 
         $this->expectException(RuntimeException::class);
-        $renderer->renderValue([]);
+        $renderer->renderValue(DriverValues::unsupported());
     }
     public function testRenderExpressionWritesAStringAsAQuotedLiteral(): void
     {
@@ -158,7 +159,7 @@ final class MySqlValueRendererTest extends TestCase
     {
         $this->expectException(RuntimeException::class);
 
-        (new MySqlValueRenderer())->stringValue([]);
+        (new MySqlValueRenderer())->stringValue(DriverValues::unsupported());
     }
 
     public function testReadStreamAnswersEverythingTheStreamHolds(): void
@@ -185,6 +186,11 @@ final class MySqlValueRendererTest extends TestCase
     public function testQuoteValueDoublesEveryQuoteInTheBytes(): void
     {
         self::assertSame("'it''s'", (new MySqlValueRenderer())->quoteValue("it's"));
+    }
+
+    public function testRenderValueWritesANullAsNull(): void
+    {
+        self::assertSame('NULL', (new MySqlValueRenderer())->renderValue(null));
     }
 
 }

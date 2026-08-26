@@ -374,4 +374,13 @@ final class MySqlForeignKeyDefinitionParserTest extends TestCase
         self::assertFalse(MySqlForeignKeyDefinitionParser::isSymbol(null, '('));
     }
 
+    public function testParseCreateTableReadsEveryKeyTheDeclarationWrites(): void
+    {
+        $keys = (new MySqlForeignKeyDefinitionParser())->parseCreateTable(
+            'CREATE TABLE t (id INT, FOREIGN KEY (id) REFERENCES users (id))',
+        );
+
+        self::assertSame(['users'], array_map(static fn ($key) => $key->referencedTable, array_values($keys)));
+    }
+
 }

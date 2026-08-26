@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use RuntimeException;
 use Tests\Contract\TransformerContractTest;
+use Tests\Fixture\DriverValues;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\IdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
@@ -485,7 +486,7 @@ final class SelectTransformerTest extends TransformerContractTest
         $sql = 'SELECT * FROM data';
         $tables = [
             'data' => [
-                'rows' => [['val' => [1, 2, 3]]],
+                'rows' => [['val' => DriverValues::unsupported()]],
                 'columns' => ['val'],
                 'columnTypes' => [],
             ],

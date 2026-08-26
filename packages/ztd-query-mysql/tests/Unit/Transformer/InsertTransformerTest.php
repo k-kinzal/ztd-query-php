@@ -1033,7 +1033,7 @@ final class InsertTransformerTest extends TestCase
         $statement = $statements[0];
         self::assertInstanceOf(InsertStatement::class, $statement);
 
-        $sql = $transformer->buildInsertSetSelect($statement->set ?? [], 't', ['id'], [], [], [], []);
+        $sql = $transformer->buildInsertSetSelect(array_values($statement->set ?? []), 't', ['id'], [], [], [], []);
 
         self::assertSame('SELECT 1 AS `id`', $sql);
     }
@@ -1045,6 +1045,15 @@ final class InsertTransformerTest extends TestCase
 
     public function testOrderedValuesIsNothingForNoValuesAtAll(): void
     {
+        self::assertSame([], InsertTransformer::orderedValues([]));
+    }
+
+    public function testCommitRewriteStateKeepsTheIdentityValuesTheRewriteHandedOut(): void
+    {
+        $transformer = new InsertTransformer(new MySqlParser(), new SelectTransformer());
+
+        $transformer->commitRewriteState();
+
         self::assertSame([], InsertTransformer::orderedValues([]));
     }
 

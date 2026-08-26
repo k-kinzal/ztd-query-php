@@ -475,4 +475,13 @@ final class ReplaceTransformerTest extends TestCase
         $transformer->asInsert('INSERT INTO t VALUES (1)');
     }
 
+    public function testCommitRewriteStateKeepsTheIdentityValuesTheRewriteHandedOut(): void
+    {
+        $transformer = new ReplaceTransformer(new MySqlParser(), new SelectTransformer());
+
+        $transformer->commitRewriteState();
+
+        self::assertSame('INSERT INTO t VALUES (1)', $transformer->asInsert('REPLACE INTO t VALUES (1)'));
+    }
+
 }

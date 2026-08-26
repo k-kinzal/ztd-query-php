@@ -318,4 +318,20 @@ final class MySqlSelectRelationParserTest extends TestCase
         );
     }
 
+    public function testTableNamesAnswersEveryTableTheStatementReads(): void
+    {
+        self::assertSame(
+            ['users'],
+            (new MySqlSelectRelationParser())->tableNames('SELECT * FROM users'),
+        );
+    }
+
+    public function testUnqualifyTakesTheSchemaOffTheTablesItWasNamed(): void
+    {
+        self::assertSame(
+            'SELECT * FROM users',
+            (new MySqlSelectRelationParser())->unqualify('SELECT * FROM app.users', ['users']),
+        );
+    }
+
 }

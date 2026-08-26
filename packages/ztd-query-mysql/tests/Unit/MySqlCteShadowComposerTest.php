@@ -349,4 +349,31 @@ final class MySqlCteShadowComposerTest extends TestCase
         self::assertNull((new MySqlCteShadowComposer())->identifierName($tokens[0]));
     }
 
+    public function testDeclaredCteNamesAnswersWhatTheStatementDeclaresForItself(): void
+    {
+        self::assertSame(
+            ['x'],
+            (new MySqlCteShadowComposer())->declaredCteNames('WITH x AS (SELECT 1) SELECT * FROM x'),
+        );
+    }
+
+    public function testCarryPrefixKeepsWhatTheStatementDeclaredForItself(): void
+    {
+        self::assertStringContainsString(
+            'x AS (SELECT 1)',
+            (new MySqlCteShadowComposer())->carryPrefix(
+                'WITH x AS (SELECT 1) SELECT * FROM x',
+                'SELECT * FROM x',
+            ),
+        );
+    }
+
+    public function testStatementSqlAnswersTheStatementWithoutItsHeader(): void
+    {
+        self::assertSame(
+            'SELECT * FROM x',
+            (new MySqlCteShadowComposer())->statementSql('WITH x AS (SELECT 1) SELECT * FROM x'),
+        );
+    }
+
 }
