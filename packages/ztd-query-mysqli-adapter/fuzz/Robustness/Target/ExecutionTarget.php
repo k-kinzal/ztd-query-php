@@ -28,6 +28,17 @@ final class ExecutionTarget
     private NoSyntaxErrorOnRewriteChecker $syntaxChecker;
     private ShadowStoreConsistencyChecker $storeChecker;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param Generator $faker
+     * @param MySqlProvider $provider
+     * @param mysqli $rawMysqli
+     * @param ZtdMysqli $ztdMysqli
+     * @param ShadowStore $shadowStore
+     * @param MySqlRewriter $rewriter
+     * @param MySqlQueryGuard $guard
+     */
     public function __construct(
         Generator $faker,
         MySqlProvider $provider,

@@ -28,16 +28,31 @@ final class InvariantViolation
         $this->context = $context;
     }
 
+    /**
+     * Id.
+     *
+     * @return string
+     */
     public function id(): string
     {
         return $this->id;
     }
 
+    /**
+     * Description.
+     *
+     * @return string
+     */
     public function description(): string
     {
         return $this->description;
     }
 
+    /**
+     * Sql.
+     *
+     * @return string
+     */
     public function sql(): string
     {
         return $this->sql;
@@ -51,6 +66,11 @@ final class InvariantViolation
         return $this->context;
     }
 
+    /**
+     * __to string.
+     *
+     * @return string
+     */
     public function __toString(): string
     {
         $msg = sprintf("[%s] %s\nSQL: %s", $this->id, $this->description, $this->sql);

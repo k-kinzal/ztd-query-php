@@ -34,6 +34,15 @@ final class MysqliCorrectnessHarness
     /** @var list<Row> */
     private array $fixtureRows = [];
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param string $host
+     * @param int $port
+     * @param string $dbName
+     * @param string $user
+     * @param string $pass
+     */
     public function __construct(string $host, int $port, string $dbName, string $user, string $pass)
     {
         $this->host = $host;
@@ -114,6 +123,10 @@ final class MysqliCorrectnessHarness
         return $this->fixtureRows;
     }
 
+    /**
+     * Teardown.
+     *
+     */
     public function teardown(): void
     {
         if ($this->currentSchema !== null) {
@@ -124,6 +137,11 @@ final class MysqliCorrectnessHarness
         $this->fixtureRows = [];
     }
 
+    /**
+     * Answers raw mysqli.
+     *
+     * @return mysqli
+     */
     public function getRawMysqli(): mysqli
     {
         return $this->rawMysqli;
@@ -148,6 +166,11 @@ final class MysqliCorrectnessHarness
         return $this->fixtureRows;
     }
 
+    /**
+     * Answers current schema.
+     *
+     * @return ?SchemaDefinition
+     */
     public function getCurrentSchema(): ?SchemaDefinition
     {
         return $this->currentSchema;

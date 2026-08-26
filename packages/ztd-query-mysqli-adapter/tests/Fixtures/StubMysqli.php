@@ -67,11 +67,21 @@ class StubMysqli extends mysqli
      */
     public int|string $affectedRowsValue = 0;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     */
     public function __construct()
     {
         parent::__construct();
     }
 
+    /**
+     * Prepare.
+     *
+     * @param string $query
+     * @return mysqli_stmt|false
+     */
     #[Override]
     public function prepare(string $query): mysqli_stmt|false
     {
@@ -79,6 +89,13 @@ class StubMysqli extends mysqli
         return $this->prepareReturn;
     }
 
+    /**
+     * Query.
+     *
+     * @param string $query
+     * @param int $resultMode
+     * @return mysqli_result|bool
+     */
     #[Override]
     public function query(string $query, int $resultMode = MYSQLI_STORE_RESULT): mysqli_result|bool
     {
@@ -86,18 +103,37 @@ class StubMysqli extends mysqli
         return $this->queryReturn;
     }
 
+    /**
+     * Real_query.
+     *
+     * @param string $query
+     * @return bool
+     */
     #[Override]
     public function real_query(string $query): bool
     {
         return $this->realQueryReturn;
     }
 
+    /**
+     * Multi_query.
+     *
+     * @param string $query
+     * @return bool
+     */
     #[Override]
     public function multi_query(string $query): bool
     {
         return $this->multiQueryReturn;
     }
 
+    /**
+     * Begin_transaction.
+     *
+     * @param int $flags
+     * @param ?string $name
+     * @return bool
+     */
     #[Override]
     public function begin_transaction(int $flags = 0, ?string $name = null): bool
     {
@@ -105,6 +141,13 @@ class StubMysqli extends mysqli
         return $this->beginTransactionReturn;
     }
 
+    /**
+     * Commit.
+     *
+     * @param int $flags
+     * @param ?string $name
+     * @return bool
+     */
     #[Override]
     public function commit(int $flags = 0, ?string $name = null): bool
     {
@@ -112,6 +155,13 @@ class StubMysqli extends mysqli
         return $this->commitReturn;
     }
 
+    /**
+     * Rollback.
+     *
+     * @param int $flags
+     * @param ?string $name
+     * @return bool
+     */
     #[Override]
     public function rollback(int $flags = 0, ?string $name = null): bool
     {
@@ -119,6 +169,10 @@ class StubMysqli extends mysqli
         return $this->rollbackReturn;
     }
 
+    /**
+     * Close.
+     *
+     */
     #[Override]
     #[ReturnTypeWillChange]
     public function close()
@@ -127,18 +181,36 @@ class StubMysqli extends mysqli
         return true;
     }
 
+    /**
+     * Select_db.
+     *
+     * @param string $database
+     * @return bool
+     */
     #[Override]
     public function select_db(string $database): bool
     {
         return $this->selectDbReturn;
     }
 
+    /**
+     * Real_escape_string.
+     *
+     * @param string $string
+     * @return string
+     */
     #[Override]
     public function real_escape_string(string $string): string
     {
         return $this->realEscapeStringReturn;
     }
 
+    /**
+     * Escape_string.
+     *
+     * @param string $string
+     * @return string
+     */
     #[Override]
     public function escape_string(string $string): string
     {
@@ -154,6 +226,11 @@ class StubMysqli extends mysqli
         return $this->executeQueryReturn;
     }
 
+    /**
+     * __get.
+     *
+     * @param string $name
+     */
     public function __get(string $name): mixed
     {
         if ($name === 'affected_rows') {
@@ -162,6 +239,12 @@ class StubMysqli extends mysqli
         return null;
     }
 
+    /**
+     * __isset.
+     *
+     * @param string $name
+     * @return bool
+     */
     public function __isset(string $name): bool
     {
         return $name === 'affected_rows';

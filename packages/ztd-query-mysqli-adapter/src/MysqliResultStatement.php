@@ -22,6 +22,12 @@ final class MysqliResultStatement implements StatementInterface
 
     private int $affectedRows;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param ?mysqli_result $result
+     * @param int|string $affectedRows
+     */
     public function __construct(?mysqli_result $result, int|string $affectedRows)
     {
         $this->result = $result;

@@ -39,6 +39,12 @@ final class NoMysqliLeakChecker
         $this->executor = $executor;
     }
 
+    /**
+     * Check.
+     *
+     * @param string $sql
+     * @return ?InvariantViolation
+     */
     public function check(string $sql): ?InvariantViolation
     {
         try {

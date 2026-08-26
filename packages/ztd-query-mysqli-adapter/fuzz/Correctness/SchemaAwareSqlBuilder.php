@@ -10,11 +10,22 @@ final class SchemaAwareSqlBuilder
 {
     private Generator $faker;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param Generator $faker
+     */
     public function __construct(Generator $faker)
     {
         $this->faker = $faker;
     }
 
+    /**
+     * Builds select.
+     *
+     * @param SchemaDefinition $schema
+     * @return string
+     */
     public function buildSelect(SchemaDefinition $schema): string
     {
         $table = $schema->name;
@@ -64,6 +75,12 @@ final class SchemaAwareSqlBuilder
         }
     }
 
+    /**
+     * Builds insert.
+     *
+     * @param SchemaDefinition $schema
+     * @return string
+     */
     public function buildInsert(SchemaDefinition $schema): string
     {
         $table = $schema->name;
@@ -93,6 +110,12 @@ final class SchemaAwareSqlBuilder
         return "INSERT INTO `$table` ($colList) VALUES ($valList)";
     }
 
+    /**
+     * Builds update.
+     *
+     * @param SchemaDefinition $schema
+     * @return string
+     */
     public function buildUpdate(SchemaDefinition $schema): string
     {
         $table = $schema->name;
@@ -114,6 +137,12 @@ final class SchemaAwareSqlBuilder
         return "UPDATE `$table` SET `$updateCol` = $newValue WHERE $whereClause";
     }
 
+    /**
+     * Builds delete.
+     *
+     * @param SchemaDefinition $schema
+     * @return string
+     */
     public function buildDelete(SchemaDefinition $schema): string
     {
         $table = $schema->name;

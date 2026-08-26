@@ -66,6 +66,10 @@ final class MySqlContainer extends GenericContainer
             ->withRetryInterval(250000);
     }
 
+    /**
+     * After start.
+     *
+     */
     public function afterStart($instance): void
     {
         $port = $instance->getMappedPort(3306);

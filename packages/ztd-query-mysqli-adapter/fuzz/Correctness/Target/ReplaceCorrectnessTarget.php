@@ -20,6 +20,13 @@ use ZtdQuery\Connection\StatementInterface;
  */
 final class ReplaceCorrectnessTarget
 {
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param MysqliCorrectnessHarness $harness
+     * @param Generator $faker
+     * @param ResultComparator $comparator
+     */
     public function __construct(
         private readonly MysqliCorrectnessHarness $harness,
         private readonly Generator $faker,

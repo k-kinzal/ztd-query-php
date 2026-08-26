@@ -17,6 +17,13 @@ final class NoSyntaxErrorOnRewriteChecker
     private SqlRewriter $rewriter;
     private mysqli $rawMysqli;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param MySqlQueryGuard $guard
+     * @param SqlRewriter $rewriter
+     * @param mysqli $rawMysqli
+     */
     public function __construct(MySqlQueryGuard $guard, SqlRewriter $rewriter, mysqli $rawMysqli)
     {
         $this->guard = $guard;
@@ -24,6 +31,12 @@ final class NoSyntaxErrorOnRewriteChecker
         $this->rawMysqli = $rawMysqli;
     }
 
+    /**
+     * Check.
+     *
+     * @param string $sql
+     * @return ?InvariantViolation
+     */
     public function check(string $sql): ?InvariantViolation
     {
         try {

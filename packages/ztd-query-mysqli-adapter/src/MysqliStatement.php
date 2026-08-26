@@ -30,6 +30,12 @@ final class MysqliStatement implements StatementInterface
      */
     private mysqli_result|false|null $result = null;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param mysqli_stmt $statement
+     * @param mysqli $mysqli
+     */
     public function __construct(mysqli_stmt $statement, mysqli $mysqli)
     {
         $this->statement = $statement;

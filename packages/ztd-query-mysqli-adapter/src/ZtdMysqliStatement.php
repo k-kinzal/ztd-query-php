@@ -53,6 +53,13 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
      */
     private mysqli_result|false|null $cachedMysqliResult = null;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param mysqli_stmt $delegate
+     * @param Session $session
+     * @param ?RewritePlan $plan
+     */
     public function __construct(mysqli_stmt $delegate, Session $session, ?RewritePlan $plan)
     {
         parent::__construct($delegate);
