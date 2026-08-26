@@ -23,9 +23,6 @@ final class MySqlIdentifierQuoterTest extends IdentifierQuoterContractTest
         return '`';
     }
 
-    /**
-     * P-IQ-1: Non-empty output.
-     */
     #[Override]
     public function testQuoteReturnsNonEmptyString(): void
     {
@@ -33,9 +30,6 @@ final class MySqlIdentifierQuoterTest extends IdentifierQuoterContractTest
         self::assertNotEmpty($result);
     }
 
-    /**
-     * P-IQ-2: Wrapping with backticks.
-     */
     public function testQuoteWrapsWithBackticks(): void
     {
         $result = (new MySqlIdentifierQuoter())->quote('users');
@@ -53,18 +47,12 @@ final class MySqlIdentifierQuoterTest extends IdentifierQuoterContractTest
         self::assertSame('`users`', $result);
     }
 
-    /**
-     * P-IQ-5: Escape safety - backtick in identifier name.
-     */
     public function testQuoteEscapesBacktickInIdentifier(): void
     {
         $result = (new MySqlIdentifierQuoter())->quote('col`name');
         self::assertSame('`col``name`', $result);
     }
 
-    /**
-     * P-IQ-4: Determinism.
-     */
     #[Override]
     public function testQuoteIsDeterministic(): void
     {
@@ -73,9 +61,6 @@ final class MySqlIdentifierQuoterTest extends IdentifierQuoterContractTest
         self::assertSame($result1, $result2);
     }
 
-    /**
-     * P-IQ-3: Containment - original name is recoverable.
-     */
     #[Override]
     public function testQuotedIdentifierContainsOriginalName(): void
     {

@@ -171,13 +171,13 @@ final class AlterTableMutation implements ShadowMutation
         } elseif (self::optionSet($options, 'DROP') && self::optionSet($options, 'PRIMARY KEY')) {
             $this->applyDropPrimaryKey($createStmt);
         } elseif (self::optionSet($options, 'ADD') && self::optionSet($options, 'FOREIGN')) {
-            // foreign key constraints are metadata-only in ZTD
+            /* foreign key constraints are metadata-only in ZTD */
         } elseif (self::optionSet($options, 'DROP') && self::optionSet($options, 'FOREIGN')) {
-            // foreign key constraints are metadata-only in ZTD
+            /* foreign key constraints are metadata-only in ZTD */
         } elseif (self::optionSet($options, 'RENAME') && self::optionSet($options, 'COLUMN')) {
             $this->applyRenameColumn($createStmt, $op, $store, $definition);
         } elseif (self::optionSet($options, 'ALTER') && (self::optionSet($options, 'SET DEFAULT') || self::optionSet($options, 'DROP DEFAULT'))) {
-            // SET DEFAULT / DROP DEFAULT not fully supported
+            /* SET DEFAULT / DROP DEFAULT not fully supported */
         } else {
             throw new UnsupportedSqlException(AlterOperation::build($op), 'ALTER TABLE');
         }
