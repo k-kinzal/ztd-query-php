@@ -4,6 +4,12 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform;
 
+/**
+ * What a COPY statement is written against.
+ *
+ * The relation as it was named, which may be qualified, and the columns the
+ * rows carry in the order they carry them.
+ */
 final class CopyTarget
 {
     /**

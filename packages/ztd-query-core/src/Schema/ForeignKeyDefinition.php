@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Schema;
 
+/**
+ * One foreign key: which columns point where, and what happens when the parent moves.
+ */
 final class ForeignKeyDefinition
 {
     /**

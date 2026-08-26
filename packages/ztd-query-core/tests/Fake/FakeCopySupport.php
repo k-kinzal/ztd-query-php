@@ -46,11 +46,10 @@ final class FakeCopySupport implements CopySupport
         $columns = $fields === null
             ? $definition->columns
             : array_map(trim(...), explode(',', $fields));
-        $relationParts = explode('.', trim($relation, '"'));
 
         return new CopyTarget(
-            $relationParts === [] ? [$relation] : $relationParts,
-            $columns === [] ? ['*'] : array_values($columns),
+            explode('.', trim($relation, '"')),
+            $columns === [] ? ['*'] : $columns,
         );
     }
 
@@ -116,7 +115,7 @@ final class FakeCopySupport implements CopySupport
     public function decodeRow(string $row, string $separator, string $nullAs): array
     {
         $values = [];
-        foreach (explode($separator, $row) as $written) {
+        foreach (explode($separator === '' ? "\t" : $separator, $row) as $written) {
             $values[] = $written === $nullAs ? null : $written;
         }
 
