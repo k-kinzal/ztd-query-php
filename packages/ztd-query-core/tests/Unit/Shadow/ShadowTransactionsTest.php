@@ -10,22 +10,22 @@ use PHPUnit\Framework\TestCase;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
-use ZtdQuery\Shadow\ShadowTransactionManager;
+use ZtdQuery\Shadow\ShadowTransactions;
 
-#[CoversClass(ShadowTransactionManager::class)]
+#[CoversClass(ShadowTransactions::class)]
 #[UsesClass(ShadowStore::class)]
 #[UsesClass(TableDefinition::class)]
 #[UsesClass(TableDefinitionRegistry::class)]
-final class ShadowTransactionManagerTest extends TestCase
+final class ShadowTransactionsTest extends TestCase
 {
-    public function testRollbackRestoresRowsTablePresenceAndSchemaRegistry(): void
+    public function testRollBackPutsBackTheRowsTheTablesAndWhatDescribesThem(): void
     {
         $store = new ShadowStore();
         $store->set('users', [['id' => 1]]);
         $registry = new TableDefinitionRegistry();
         $definition = new TableDefinition(['id'], ['id' => 'INT'], ['id'], ['id'], []);
         $registry->register('users', $definition);
-        $transactions = new ShadowTransactionManager($store, $registry);
+        $transactions = new ShadowTransactions($store, $registry);
 
         $transactions->begin();
         $store->insert('users', [['id' => 2]]);
@@ -38,11 +38,11 @@ final class ShadowTransactionManagerTest extends TestCase
         self::assertSame($definition, $registry->get('users'));
     }
 
-    public function testRollbackToKeepsSavepointAndDiscardsLaterSavepoints(): void
+    public function testRollBackToKeepsTheSavepointAndGivesUpEveryLaterOne(): void
     {
         $store = new ShadowStore();
         $store->set('items', [['id' => 1]]);
-        $transactions = new ShadowTransactionManager($store);
+        $transactions = new ShadowTransactions($store);
 
         $transactions->begin();
         $store->insert('items', [['id' => 2]]);
@@ -57,11 +57,11 @@ final class ShadowTransactionManagerTest extends TestCase
         self::assertSame([['id' => 1], ['id' => 2], ['id' => 5]], $store->get('items'));
     }
 
-    public function testReleaseDropsNamedAndNestedSnapshotsWithoutUndoingRows(): void
+    public function testReleaseGivesUpTheSavepointAndEveryNestedOneWithoutUndoingAnything(): void
     {
         $store = new ShadowStore();
         $store->set('items', [['id' => 1]]);
-        $transactions = new ShadowTransactionManager($store);
+        $transactions = new ShadowTransactions($store);
 
         $transactions->begin();
         $transactions->savepoint('outer');
@@ -74,11 +74,11 @@ final class ShadowTransactionManagerTest extends TestCase
         self::assertSame([['id' => 1], ['id' => 2]], $store->get('items'));
     }
 
-    public function testReplacingSavepointUsesMostRecentSnapshot(): void
+    public function testSavepointDeclaredTwiceUnderOneNameTakesThePlaceOfTheFirst(): void
     {
         $store = new ShadowStore();
         $store->set('items', [['id' => 1]]);
-        $transactions = new ShadowTransactionManager($store);
+        $transactions = new ShadowTransactions($store);
 
         $transactions->begin();
         $transactions->savepoint('point');
@@ -94,11 +94,11 @@ final class ShadowTransactionManagerTest extends TestCase
         self::assertSame([['id' => 1], ['id' => 2], ['id' => 4]], $store->get('items'));
     }
 
-    public function testRollbackToKeepsTargetForAnotherRollback(): void
+    public function testRollBackToLeavesItsTargetToBeRolledBackToAgain(): void
     {
         $store = new ShadowStore();
         $store->set('items', [['id' => 1]]);
-        $transactions = new ShadowTransactionManager($store);
+        $transactions = new ShadowTransactions($store);
 
         $transactions->begin();
         $store->insert('items', [['id' => 2]]);
@@ -117,11 +117,11 @@ final class ShadowTransactionManagerTest extends TestCase
         self::assertSame([['id' => 1]], $store->get('items'));
     }
 
-    public function testReleaseKeepsEarlierSavepointAndUnknownNameDoesNothing(): void
+    public function testPositionOfIsNothingForANameNothingWasDeclaredUnder(): void
     {
         $store = new ShadowStore();
         $store->set('items', [['id' => 1]]);
-        $transactions = new ShadowTransactionManager($store);
+        $transactions = new ShadowTransactions($store);
 
         $transactions->savepoint('outer');
         $store->insert('items', [['id' => 2]]);

@@ -20,6 +20,8 @@ use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\PostgreSql\PgLookahead;
 use SqlFaker\PostgreSql\PgTerminalRealizer;
 use SqlFaker\PostgreSql\PgTokenizer;
+use Tests\Fixture\SqlFaker\PgRealizers;
+use Tests\Fixture\SqlFaker\ScriptedNumbers;
 
 #[CoversClass(PgTerminalRealizer::class)]
 #[UsesClass(LexicalCatalog::class)]
@@ -32,6 +34,8 @@ use SqlFaker\PostgreSql\PgTokenizer;
 #[UsesClass(PgTokenizer::class)]
 #[UsesClass(RandomStringGenerator::class)]
 #[UsesClass(RandomCharacters::class)]
+#[UsesClass(PgRealizers::class)]
+#[UsesClass(ScriptedNumbers::class)]
 final class PgTerminalRealizerTest extends TestCase
 {
     #[DataProvider('providerWitnessedRealizer')]
@@ -360,5 +364,239 @@ final class PgTerminalRealizerTest extends TestCase
         PgTerminalRealizer $realizer,
     ): void {
         self::assertContains($realizer->realizeSynthetic('NOT_EQUALS')[0], ['<>', '!=']);
+    }
+
+    public function testRealizeWitnessedChoosesFromEveryWitnessAndNoFurther(): void
+    {
+        $faker = ScriptedNumbers::answering(1);
+
+        $realized = PgRealizers::witnessed($faker)->realizeWitnessed('TERMINAL');
+
+        self::assertSame(['orders', ['TOKENS']], $realized);
+        self::assertSame([[0, 1]], $faker->numberBetweenCalls);
+    }
+
+    public function testRealizeWitnessedReadsAnEmptyWitnessAsWritingNothing(): void
+    {
+        $realizer = PgRealizers::witnessed(ScriptedNumbers::answering(0));
+
+        self::assertSame([null, []], $realizer->realizeWitnessed('NOTHING'));
+    }
+
+    public function testRealizeFixedChoosesFromEverySpellingAndNoFurther(): void
+    {
+        $faker = ScriptedNumbers::answering(1);
+
+        $realized = PgRealizers::synthetic($faker)->realizeFixed('SELECT');
+
+        self::assertSame(['select', ['SELECT']], $realized);
+        self::assertSame([[0, 1]], $faker->numberBetweenCalls);
+    }
+
+    public function testRealizeFixedFallsBackToTheTerminalNameWithoutItsSuffix(): void
+    {
+        $faker = ScriptedNumbers::answering();
+
+        self::assertSame('VALUES', PgRealizers::synthetic($faker)->realizeFixed('VALUES_P')[0]);
+        self::assertSame([], $faker->numberBetweenCalls);
+    }
+
+    public function testIdentifierIsQuotedOnOneOfFourDraws(): void
+    {
+        $faker = ScriptedNumbers::answering(0, 1, 1);
+
+        $identifier = PgRealizers::synthetic($faker)->identifier();
+
+        self::assertStringStartsWith('"', $identifier);
+        self::assertSame([0, 3], $faker->numberBetweenCalls[0]);
+    }
+
+    public function testIdentifierIsBareOnEveryOtherDraw(): void
+    {
+        $faker = ScriptedNumbers::answering(1);
+
+        self::assertStringStartsWith('_', PgRealizers::synthetic($faker)->identifier());
+    }
+
+    public function testQuotedIdentifierWritesAKeywordOnOneOfFourDraws(): void
+    {
+        $faker = ScriptedNumbers::answering(0, 1);
+
+        $identifier = PgRealizers::synthetic($faker)->quotedIdentifier(false);
+
+        self::assertSame('"values"', $identifier);
+        self::assertSame([[0, 3], [0, 7]], $faker->numberBetweenCalls);
+    }
+
+    public function testQuotedIdentifierDoublesAQuoteWrittenIntoTheBody(): void
+    {
+        $faker = ScriptedNumbers::answering(0, 0);
+
+        $identifier = PgRealizers::synthetic($faker)->quotedIdentifier(false);
+
+        self::assertStringStartsWith('"values""', $identifier);
+        self::assertSame([[0, 3], [0, 7]], array_slice($faker->numberBetweenCalls, 0, 2));
+    }
+
+    public function testQuotedIdentifierWritesTheUnicodePrefixWhenItIsAskedTo(): void
+    {
+        $faker = ScriptedNumbers::answering(0, 1);
+
+        self::assertSame('U&"values"', PgRealizers::synthetic($faker)->quotedIdentifier(true));
+    }
+
+    public function testStringLiteralWritesTheEscapeSpellingOnTheFirstDraw(): void
+    {
+        $faker = ScriptedNumbers::answering(0);
+
+        self::assertSame("E'a\\\\b'", PgRealizers::synthetic($faker)->stringLiteral());
+        self::assertSame([[0, 3]], $faker->numberBetweenCalls);
+    }
+
+    public function testStringLiteralWritesTheDollarQuotedSpellingOnTheSecondDraw(): void
+    {
+        $faker = ScriptedNumbers::answering(1, 0);
+
+        self::assertStringStartsWith('$$', PgRealizers::synthetic($faker)->stringLiteral());
+    }
+
+    public function testStringLiteralWritesTheStandardSpellingOnEveryOtherDraw(): void
+    {
+        $faker = ScriptedNumbers::answering(2, 2);
+
+        self::assertSame("'a''b'", PgRealizers::synthetic($faker)->stringLiteral());
+    }
+
+    public function testStandardStringLiteralDoublesAQuoteInsideTheBody(): void
+    {
+        $faker = ScriptedNumbers::answering(2);
+
+        self::assertSame("'a''b'", PgRealizers::synthetic($faker)->standardStringLiteral());
+        self::assertSame([[0, 4]], $faker->numberBetweenCalls);
+    }
+
+    #[DataProvider('providerLexicalSequenceDraw')]
+    public function testStandardStringLiteralWritesALexicalSequenceOnItsFirstTwoDraws(int $draw): void
+    {
+        $literal = PgRealizers::synthetic(ScriptedNumbers::answering($draw))->standardStringLiteral();
+
+        self::assertStringStartsWith("'", $literal);
+        self::assertStringEndsWith("'", $literal);
+    }
+
+    /**
+     * @return iterable<string, array{int}>
+     */
+    public static function providerLexicalSequenceDraw(): iterable
+    {
+        yield 'first draw' => [0];
+        yield 'second draw' => [1];
+    }
+
+    public function testDollarQuotedStringIsUntaggedOnTheFirstDraw(): void
+    {
+        $faker = ScriptedNumbers::answering(0);
+
+        $literal = PgRealizers::synthetic($faker)->dollarQuotedString();
+
+        self::assertStringStartsWith('$$', $literal);
+        self::assertStringEndsWith('$$', $literal);
+        self::assertSame([0, 1], $faker->numberBetweenCalls[0]);
+    }
+
+    public function testDollarQuotedStringIsTaggedOnEveryOtherDraw(): void
+    {
+        $literal = PgRealizers::synthetic(ScriptedNumbers::answering(1))->dollarQuotedString();
+
+        self::assertStringStartsWith('$', $literal);
+        self::assertStringNotContainsString('$$', $literal);
+    }
+
+    public function testDecimalLiteralWritesADifferentShapeForEachOfItsFirstThreeDraws(): void
+    {
+        self::assertSame('.5', PgRealizers::synthetic(ScriptedNumbers::answering(0))->decimalLiteral());
+        self::assertSame('1.', PgRealizers::synthetic(ScriptedNumbers::answering(1))->decimalLiteral());
+        self::assertSame('1e-1', PgRealizers::synthetic(ScriptedNumbers::answering(2))->decimalLiteral());
+    }
+
+    public function testDecimalLiteralDrawsFromFourShapes(): void
+    {
+        $faker = ScriptedNumbers::answering(3);
+
+        PgRealizers::synthetic($faker)->decimalLiteral();
+
+        self::assertSame([0, 3], $faker->numberBetweenCalls[0]);
+    }
+
+    public function testOperatorWritesACommonSpellingOnOneOfEightDraws(): void
+    {
+        $faker = ScriptedNumbers::answering(0);
+
+        self::assertSame('?', PgRealizers::synthetic($faker)->operator());
+        self::assertSame([[0, 7]], $faker->numberBetweenCalls);
+    }
+
+    public function testOperatorWritesEachOfTheThreeCommonSpellings(): void
+    {
+        self::assertSame('?', PgRealizers::synthetic(ScriptedNumbers::answering(0))->operator());
+        self::assertSame('?|', PgRealizers::synthetic(ScriptedNumbers::answering(1))->operator());
+        self::assertSame('?&', PgRealizers::synthetic(ScriptedNumbers::answering(2))->operator());
+    }
+
+    public function testRandomOperatorIsBetweenTwoAndFourCharactersLong(): void
+    {
+        $faker = ScriptedNumbers::answering(2, 0, 0);
+
+        $operator = PgRealizers::synthetic($faker)->randomOperator();
+
+        self::assertSame('++', $operator);
+        self::assertSame([2, 4], $faker->numberBetweenCalls[0]);
+    }
+
+    public function testRandomOperatorDrawsEachCharacterFromTheWholeOperatorAlphabet(): void
+    {
+        $faker = ScriptedNumbers::answering(2, 0, 16);
+
+        self::assertSame('+?', PgRealizers::synthetic($faker)->randomOperator());
+        self::assertSame([0, 16], $faker->numberBetweenCalls[1]);
+    }
+
+    public function testTriviaIsASpaceWhereTerminalsMayBeWrittenWithoutAWitness(): void
+    {
+        $faker = ScriptedNumbers::answering();
+
+        self::assertSame(' ', PgRealizers::synthetic($faker)->trivia());
+        self::assertSame([], $faker->numberBetweenCalls);
+    }
+
+    public function testTriviaIsChosenFromEveryWitnessAndNoFurther(): void
+    {
+        $faker = ScriptedNumbers::answering(1);
+
+        self::assertSame('/* c */', PgRealizers::witnessed($faker)->trivia());
+        self::assertSame([[0, 1]], $faker->numberBetweenCalls);
+    }
+
+    public function testOptionalTriviaIsNothingWhereTerminalsMayBeWrittenWithoutAWitness(): void
+    {
+        $faker = ScriptedNumbers::answering();
+
+        self::assertSame('', PgRealizers::synthetic($faker)->optionalTrivia());
+        self::assertSame([], $faker->numberBetweenCalls);
+    }
+
+    public function testOptionalTriviaIsNothingOnOneOfTwoDraws(): void
+    {
+        $faker = ScriptedNumbers::answering(0);
+
+        self::assertSame('', PgRealizers::witnessed($faker)->optionalTrivia());
+        self::assertSame([[0, 1]], $faker->numberBetweenCalls);
+    }
+
+    public function testOptionalTriviaIsTriviaOnEveryOtherDraw(): void
+    {
+        $faker = ScriptedNumbers::answering(1, 0);
+
+        self::assertSame(' ', PgRealizers::witnessed($faker)->optionalTrivia());
     }
 }
