@@ -8,6 +8,9 @@ use Faker\Generator;
 use Fuzz\Correctness\SchemaDefinition;
 use InvalidArgumentException;
 
+/**
+ * The sqlite schema pool.
+ */
 final class SqliteSchemaPool
 {
     /** @var array<string, SchemaDefinition> */
@@ -68,6 +71,12 @@ final class SqliteSchemaPool
         self::$initialized = true;
     }
 
+    /**
+     * Random.
+     *
+     * @param Generator $faker
+     * @return SchemaDefinition
+     */
     public static function random(Generator $faker): SchemaDefinition
     {
         self::initialize();
@@ -86,6 +95,9 @@ final class SqliteSchemaPool
         return self::$schemas;
     }
 
+    /**
+     * @throws InvalidArgumentException
+     */
     public static function get(string $name): SchemaDefinition
     {
         self::initialize();

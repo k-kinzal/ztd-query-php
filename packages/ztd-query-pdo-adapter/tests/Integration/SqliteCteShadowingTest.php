@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
+use ZtdQuery\Connection\StatementInterface;
 
 /**
  * Integration tests for ZtdPdo with SQLite: CTE shadowing behavior.
@@ -20,6 +21,8 @@ use ZtdQuery\Adapter\Pdo\ZtdPdo;
  * UPDATE and DELETE operate on shadow rows only.
  *
  * @requires extension pdo_sqlite
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 #[CoversNothing]
 #[Large]
@@ -35,7 +38,7 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $ztdPdo->query('SELECT * FROM users ORDER BY id');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rows */
+        /** @var list<Row> $rows */
         $rows = $stmt->fetchAll();
         self::assertCount(0, $rows);
     }
@@ -52,7 +55,7 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $rawPdo->query('SELECT * FROM users');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         self::assertCount(2, $rawRows);
     }
@@ -69,7 +72,7 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $ztdPdo->query('SELECT name, age FROM users ORDER BY name');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt->fetchAll();
         self::assertCount(1, $ztdRows);
         self::assertSame('Charlie', $ztdRows[0]['name']);
@@ -89,7 +92,7 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $ztdPdo->query('SELECT name FROM users ORDER BY name');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt->fetchAll();
         self::assertCount(2, $ztdRows);
 
@@ -110,7 +113,7 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $ztdPdo->query('SELECT * FROM users WHERE age > 30');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rows */
+        /** @var list<Row> $rows */
         $rows = $stmt->fetchAll();
         self::assertCount(1, $rows);
         self::assertSame('Charlie', $rows[0]['name']);
@@ -129,7 +132,7 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $rawPdo->query('SELECT * FROM users ORDER BY id');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         self::assertCount(2, $rawRows);
         self::assertSame('Alice', $rawRows[0]['name']);
@@ -149,7 +152,7 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $rawPdo->query('SELECT * FROM users');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         self::assertCount(3, $rawRows);
 
@@ -185,7 +188,7 @@ final class SqliteCteShadowingTest extends TestCase
         self::assertNotFalse($stmt);
 
         $stmt->execute(['Charlie']);
-        /** @var list<array<string, mixed>> $rows */
+        /** @var list<Row> $rows */
         $rows = $stmt->fetchAll();
 
         self::assertCount(1, $rows);
@@ -206,7 +209,7 @@ final class SqliteCteShadowingTest extends TestCase
         self::assertNotFalse($stmt);
 
         $stmt->execute(['Alice']);
-        /** @var list<array<string, mixed>> $rows */
+        /** @var list<Row> $rows */
         $rows = $stmt->fetchAll();
 
         self::assertCount(0, $rows);
@@ -225,7 +228,7 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $ztdPdo->query('SELECT name, age FROM users ORDER BY name');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt->fetchAll();
         self::assertCount(2, $ztdRows);
         self::assertSame('Charlie', $ztdRows[0]['name']);
@@ -233,7 +236,7 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $rawPdo->query('SELECT name FROM users ORDER BY name');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         self::assertCount(2, $rawRows);
         self::assertSame('Alice', $rawRows[0]['name']);
@@ -254,7 +257,7 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $ztdPdo->query("SELECT name, age FROM users WHERE name = 'Charlie'");
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt->fetchAll();
         self::assertCount(1, $ztdRows);
         self::assertSame('Charlie', $ztdRows[0]['name']);
@@ -262,7 +265,7 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $ztdPdo->query("SELECT name, age FROM users WHERE name = 'Diana'");
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $dianaRows */
+        /** @var list<Row> $dianaRows */
         $dianaRows = $stmt->fetchAll();
         self::assertCount(1, $dianaRows);
         self::assertSame('Diana', $dianaRows[0]['name']);
@@ -270,7 +273,7 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $rawPdo->query('SELECT name, age FROM users ORDER BY id');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         self::assertCount(2, $rawRows);
         self::assertSame('Alice', $rawRows[0]['name']);
@@ -293,14 +296,14 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $ztdPdo->query('SELECT name FROM users ORDER BY name');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt->fetchAll();
         self::assertCount(1, $ztdRows);
         self::assertSame('Diana', $ztdRows[0]['name']);
 
         $stmt = $rawPdo->query('SELECT name FROM users ORDER BY id');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         self::assertCount(2, $rawRows);
         self::assertSame('Alice', $rawRows[0]['name']);
@@ -320,13 +323,13 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $ztdPdo->query('SELECT * FROM users');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt->fetchAll();
         self::assertCount(0, $ztdRows);
 
         $stmt = $rawPdo->query('SELECT * FROM users');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         self::assertCount(2, $rawRows);
     }
@@ -344,14 +347,14 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $ztdPdo->query('SELECT name FROM users');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt->fetchAll();
         self::assertCount(1, $ztdRows);
         self::assertSame('Charles', $ztdRows[0]['name']);
 
         $stmt = $rawPdo->query('SELECT * FROM users');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         self::assertCount(2, $rawRows);
     }
@@ -369,7 +372,7 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $ztdPdo->query("SELECT name, age FROM users WHERE name = 'Charlie'");
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt->fetchAll();
         self::assertCount(1, $ztdRows);
         self::assertSame('Charlie', $ztdRows[0]['name']);
@@ -389,7 +392,7 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $rawPdo->query('SELECT name, age FROM users ORDER BY id');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         self::assertCount(2, $rawRows);
         self::assertSame('Alice', $rawRows[0]['name']);
@@ -412,7 +415,7 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $ztdPdo->query('SELECT name FROM users ORDER BY name');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt->fetchAll();
         $names = array_column($ztdRows, 'name');
         self::assertSame(['Diana'], $names, 'After DELETE, only Diana must remain in ZTD view');
@@ -431,7 +434,7 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $rawPdo->query('SELECT name FROM users ORDER BY id');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         $names = array_column($rawRows, 'name');
         self::assertSame(['Alice', 'Bob'], $names, 'Physical database must be unchanged after ZTD DELETE');
@@ -449,7 +452,7 @@ final class SqliteCteShadowingTest extends TestCase
         $ztdRows = $ztdPdo->query('SELECT * FROM nullable_table');
         self::assertNotFalse($ztdRows);
 
-        /** @var list<array<string, mixed>> $rows */
+        /** @var list<Row> $rows */
         $rows = $ztdRows->fetchAll();
         self::assertCount(1, $rows);
         self::assertSame('Test', $rows[0]['name']);

@@ -6,6 +6,9 @@ namespace ZtdQuery\Platform\Sqlite;
 
 use ZtdQuery\Schema\ViewDefinitionSet;
 
+/**
+ * The sqlite view shadow renderer.
+ */
 final class SqliteViewShadowRenderer
 {
     /**

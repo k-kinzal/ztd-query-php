@@ -12,6 +12,12 @@ use ZtdQuery\Sql\SqlTokenStream;
  */
 final class MySqlFullTextSearchRewriter
 {
+    /**
+     * Rewrite.
+     *
+     * @param string $sql
+     * @return string
+     */
     public function rewrite(string $sql): string
     {
         $stream = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create());

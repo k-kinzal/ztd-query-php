@@ -6,9 +6,14 @@ namespace ZtdQuery\Adapter\Pdo;
 
 use PDOStatement;
 
+/**
+ * The pdo parameter binder.
+ */
 final class PdoParameterBinder
 {
-    /** @param array<int|string, mixed>|null $params */
+    /**
+     * @param array<int|string, mixed>|null $params
+     */
     public function execute(PDOStatement $statement, ?array $params): bool
     {
         if ($params === null) {

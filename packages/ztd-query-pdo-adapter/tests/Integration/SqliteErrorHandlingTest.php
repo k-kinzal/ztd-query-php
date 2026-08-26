@@ -13,11 +13,14 @@ use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 use ZtdQuery\Config\UnknownSchemaBehavior;
 use ZtdQuery\Config\UnsupportedSqlBehavior;
 use ZtdQuery\Config\ZtdConfig;
+use ZtdQuery\Connection\StatementInterface;
 
 /**
  * Integration tests for ZtdPdo error handling with SQLite.
  *
  * @requires extension pdo_sqlite
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 #[CoversNothing]
 #[Large]
@@ -135,7 +138,7 @@ final class SqliteErrorHandlingTest extends TestCase
         self::assertNotFalse($stmt);
 
         $stmt->execute(['test_value']);
-        /** @var list<array<string, mixed>> $rows */
+        /** @var list<Row> $rows */
         $rows = $stmt->fetchAll();
 
         self::assertCount(1, $rows);
@@ -156,7 +159,7 @@ final class SqliteErrorHandlingTest extends TestCase
 
         $stmt->bindValue(':val', 'bound_value');
         $stmt->execute();
-        /** @var list<array<string, mixed>> $rows */
+        /** @var list<Row> $rows */
         $rows = $stmt->fetchAll();
 
         self::assertCount(1, $rows);

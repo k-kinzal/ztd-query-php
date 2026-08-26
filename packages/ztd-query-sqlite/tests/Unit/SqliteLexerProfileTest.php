@@ -14,7 +14,7 @@ use ZtdQuery\Sql\SqlTokenStream;
 #[CoversClass(SqliteLexerProfile::class)]
 final class SqliteLexerProfileTest extends TestCase
 {
-    public function testSelectsSqliteLexicalCapabilities(): void
+    public function testCreateSelectsSqliteLexicalCapabilities(): void
     {
         $stream = SqlTokenStream::tokenize(
             'SELECT [bracket]]name], `grave`, "quoted", ?12, :name, @name, $namespace::value(suffix), 0xCA_FE',

@@ -60,6 +60,12 @@ final class TableDefinitionRegistry
         return $this->removedDefinitions;
     }
 
+    /**
+     * Reports whether removed.
+     *
+     * @param string $tableName
+     * @return bool
+     */
     public function isRemoved(string $tableName): bool
     {
         return isset($this->removedDefinitions[$tableName]);
@@ -82,11 +88,21 @@ final class TableDefinitionRegistry
         $this->removedDefinitions = [];
     }
 
+    /**
+     * Snapshot.
+     *
+     * @return self
+     */
     public function snapshot(): self
     {
         return clone $this;
     }
 
+    /**
+     * Restore.
+     *
+     * @param self $snapshot
+     */
     public function restore(self $snapshot): void
     {
         $this->definitions = $snapshot->definitions;
@@ -102,6 +118,11 @@ final class TableDefinitionRegistry
         unset($this->removedDefinitions[$tableName]);
     }
 
+    /**
+     * Mark removed.
+     *
+     * @param string $tableName
+     */
     public function markRemoved(string $tableName): void
     {
         $definition = $this->definitions[$tableName] ?? null;

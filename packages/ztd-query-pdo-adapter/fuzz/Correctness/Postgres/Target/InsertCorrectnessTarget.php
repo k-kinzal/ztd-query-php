@@ -14,9 +14,13 @@ use Fuzz\Correctness\SchemaDefinition;
 use PDO;
 use PDOException;
 use ZtdQuery\Connection\Exception\DatabaseException;
+use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 
+/**
+ * @phpstan-import-type Row from StatementInterface
+ */
 final class InsertCorrectnessTarget
 {
     private PgCorrectnessHarness $harness;
@@ -24,6 +28,13 @@ final class InsertCorrectnessTarget
     private PgSchemaAwareSqlBuilder $sqlBuilder;
     private Generator $faker;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param PgCorrectnessHarness $harness
+     * @param PgSchemaAwareSqlBuilder $sqlBuilder
+     * @param Generator $faker
+     */
     public function __construct(
         PgCorrectnessHarness $harness,
         PgSchemaAwareSqlBuilder $sqlBuilder,
@@ -35,6 +46,11 @@ final class InsertCorrectnessTarget
         $this->faker = $faker;
     }
 
+    /**
+     * __invoke.
+     *
+     * @param string $input
+     */
     public function __invoke(string $input): void
     {
         $seed = crc32(str_pad($input, 4, "\0"));
@@ -71,13 +87,16 @@ final class InsertCorrectnessTarget
         }
     }
 
+    /**
+     * @throws Error
+     */
     private function compareTableState(SchemaDefinition $schema, int $seed): void
     {
         $rawRows = $this->fetchAll($this->harness->getRawPdo(), $schema->name);
 
         $selectSql = sprintf('SELECT * FROM "%s"', str_replace('"', '""', $schema->name));
         $stmt = $this->harness->getZtdPdo()->query($selectSql);
-        /** @var array<int, array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt !== false ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
 
         if (!$this->comparator->compareRows($rawRows, $ztdRows, $schema->primaryKeys, $schema->columnTypes)) {
@@ -92,12 +111,12 @@ final class InsertCorrectnessTarget
     }
 
     /**
-     * @return array<int, array<string, mixed>>
+     * @return list<Row>
      */
     private function fetchAll(PDO $pdo, string $table): array
     {
         $stmt = $pdo->query(sprintf('SELECT * FROM "%s"', str_replace('"', '""', $table)));
-        /** @var array<int, array<string, mixed>> $rows */
+        /** @var list<Row> $rows */
         $rows = $stmt !== false ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
         return $rows;
     }

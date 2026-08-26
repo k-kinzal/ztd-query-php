@@ -4,8 +4,17 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Sqlite;
 
+/**
+ * The sqlite lexical masker.
+ */
 final class SqliteLexicalMasker
 {
+    /**
+     * Mask comments.
+     *
+     * @param string $sql
+     * @return string
+     */
     public static function maskComments(string $sql): string
     {
         $result = '';

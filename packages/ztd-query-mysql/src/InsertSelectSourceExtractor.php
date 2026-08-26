@@ -6,8 +6,17 @@ namespace ZtdQuery\Platform\MySql;
 
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The insert select source extractor.
+ */
 final class InsertSelectSourceExtractor
 {
+    /**
+     * Reads.
+     *
+     * @param string $sql
+     * @return ?string
+     */
     public function extract(string $sql): ?string
     {
         $selectBody = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->topLevelClause(

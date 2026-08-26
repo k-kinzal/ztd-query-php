@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Tests\Contract\IdentifierQuoterContractTest;
 use ZtdQuery\Platform\IdentifierQuoter;
@@ -52,6 +53,7 @@ final class SqliteIdentifierQuoterTest extends IdentifierQuoterContractTest
         self::assertSame('"col""name"', $quoter->quote('"col""name"'));
     }
 
+    #[Override]
     public function testQuoteReturnsNonEmptyString(): void
     {
         $quoter = new SqliteIdentifierQuoter();
@@ -67,9 +69,6 @@ final class SqliteIdentifierQuoterTest extends IdentifierQuoterContractTest
         self::assertStringEndsWith('"', $result);
     }
 
-    /**
-     * P-IQ-4: Determinism.
-     */
     public function testDeterminism(): void
     {
         $quoter = new SqliteIdentifierQuoter();
@@ -78,9 +77,6 @@ final class SqliteIdentifierQuoterTest extends IdentifierQuoterContractTest
         self::assertSame($result1, $result2);
     }
 
-    /**
-     * P-IQ-3: Containment (original name is recoverable).
-     */
     public function testContainment(): void
     {
         $quoter = new SqliteIdentifierQuoter();

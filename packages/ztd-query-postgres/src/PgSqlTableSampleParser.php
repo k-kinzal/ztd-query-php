@@ -8,9 +8,14 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The pg sql table sample parser.
+ */
 final class PgSqlTableSampleParser
 {
-    /** @return list<PgSqlTableSample> */
+    /**
+     * @return list<PgSqlTableSample>
+     */
     public function parse(string $sql): array
     {
         $stream = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create());
@@ -35,6 +40,8 @@ final class PgSqlTableSampleParser
     /**
      * @param list<SqlToken> $tokens
      * @param array{name: string, start: int, unqualifiedStart: int, end: int} $reference
+     *
+     * @throws UnsupportedSqlException
      */
     private function parseSample(
         string $sql,

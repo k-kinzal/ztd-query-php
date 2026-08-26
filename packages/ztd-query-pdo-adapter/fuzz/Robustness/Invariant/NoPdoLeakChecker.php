@@ -18,6 +18,9 @@ use ZtdQuery\Exception\TableAlreadyExistsException;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 
+/**
+ * The no pdo leak checker.
+ */
 final class NoPdoLeakChecker
 {
     private const ALLOWED_RAW_PDO_ERRORS = [
@@ -38,6 +41,12 @@ final class NoPdoLeakChecker
         $this->executor = $executor;
     }
 
+    /**
+     * Check.
+     *
+     * @param string $sql
+     * @return ?InvariantViolation
+     */
     public function check(string $sql): ?InvariantViolation
     {
         try {

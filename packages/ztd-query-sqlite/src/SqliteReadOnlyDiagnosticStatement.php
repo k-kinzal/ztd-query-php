@@ -6,8 +6,17 @@ namespace ZtdQuery\Platform\Sqlite;
 
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The sqlite read only diagnostic statement.
+ */
 final class SqliteReadOnlyDiagnosticStatement
 {
+    /**
+     * Reports whether safe.
+     *
+     * @param string $sql
+     * @return bool
+     */
     public static function isSafe(string $sql): bool
     {
         $stream = SqlTokenStream::tokenize($sql, SqliteLexerProfile::create());

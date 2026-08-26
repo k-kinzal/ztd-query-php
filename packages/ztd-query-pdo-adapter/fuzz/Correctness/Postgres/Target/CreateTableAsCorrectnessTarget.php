@@ -13,9 +13,20 @@ use Fuzz\Correctness\SchemaDefinition;
 use PDO;
 use PDOException;
 use Throwable;
+use ZtdQuery\Connection\StatementInterface;
 
+/**
+ * @phpstan-import-type Row from StatementInterface
+ */
 final class CreateTableAsCorrectnessTarget
 {
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param PgCorrectnessHarness $harness
+     * @param Generator $faker
+     * @param ResultComparator $comparator
+     */
     public function __construct(
         private readonly PgCorrectnessHarness $harness,
         private readonly Generator $faker,
@@ -23,6 +34,9 @@ final class CreateTableAsCorrectnessTarget
     ) {
     }
 
+    /**
+     * @throws Error
+     */
     public function __invoke(string $input): void
     {
         $seed = crc32(str_pad($input, 4, "\0"));
@@ -91,6 +105,9 @@ final class CreateTableAsCorrectnessTarget
         };
     }
 
+    /**
+     * @throws Error
+     */
     private function compareQuery(string $query, string $createSql, int $seed, SchemaDefinition $schema): void
     {
         $rawRows = $this->fetchAll($this->harness->getRawPdo(), $query);
@@ -116,7 +133,11 @@ final class CreateTableAsCorrectnessTarget
         }
     }
 
-    /** @return array<int, array<string, mixed>> */
+    /**
+     * @return list<Row>
+     *
+     * @throws Error
+     */
     private function fetchAll(PDO $pdo, string $query): array
     {
         $statement = $pdo->query($query);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use ReflectionMethod;
@@ -291,6 +292,7 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
     }
 
+    #[Override]
     public function testNonCreateTableReturnsNull(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -305,6 +307,7 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNull($parser->parse('GIBBERISH'));
     }
 
+    #[Override]
     public function testPrimaryKeysSubsetOfColumns(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -320,6 +323,7 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertContains('id', $def->columns);
     }
 
+    #[Override]
     public function testNotNullSubsetOfColumns(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -334,6 +338,7 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertContains('id', $def->columns);
     }
 
+    #[Override]
     public function testColumnTypesKeysSubsetOfColumns(): void
     {
         $parser = new PgSqlSchemaParser();

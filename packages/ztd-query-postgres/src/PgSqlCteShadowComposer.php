@@ -8,6 +8,9 @@ use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The pg sql cte shadow composer.
+ */
 final class PgSqlCteShadowComposer
 {
     /**
@@ -65,12 +68,21 @@ final class PgSqlCteShadowComposer
         );
     }
 
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     */
     public function declaredCteNames(string $sql): array
     {
         return $this->parseHeader($sql)['names'];
     }
 
+    /**
+     * Carry prefix.
+     *
+     * @param string $originalSql
+     * @param string $rewrittenStatement
+     * @return string
+     */
     public function carryPrefix(string $originalSql, string $rewrittenStatement): string
     {
         $header = $this->parseHeader($originalSql);
@@ -134,6 +146,12 @@ final class PgSqlCteShadowComposer
         return $prefix . "\n" . $rewrittenStatement;
     }
 
+    /**
+     * Statement sql.
+     *
+     * @param string $sql
+     * @return string
+     */
     public function statementSql(string $sql): string
     {
         $offset = $this->parseHeader($sql)['statementOffset'];

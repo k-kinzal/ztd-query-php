@@ -27,6 +27,15 @@ final class PgSqlTransformer implements SqlTransformer
     private DeleteTransformer $deleteTransformer;
     private ?MergeTransformer $mergeTransformer = null;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param PgSqlParser $parser
+     * @param SelectTransformer $selectTransformer
+     * @param InsertTransformer $insertTransformer
+     * @param UpdateTransformer $updateTransformer
+     * @param DeleteTransformer $deleteTransformer
+     */
     public function __construct(
         PgSqlParser $parser,
         SelectTransformer $selectTransformer,
@@ -43,6 +52,8 @@ final class PgSqlTransformer implements SqlTransformer
 
     /**
      * {@inheritDoc}
+     *
+     * @throws UnsupportedSqlException
      */
     public function transform(string $sql, array $tables): string
     {
@@ -58,6 +69,10 @@ final class PgSqlTransformer implements SqlTransformer
         };
     }
 
+    /**
+     * Commit rewrite state.
+     *
+     */
     public function commitRewriteState(): void
     {
         $this->insertTransformer->commitRewriteState();

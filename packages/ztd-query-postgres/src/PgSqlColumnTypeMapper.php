@@ -7,8 +7,17 @@ namespace ZtdQuery\Platform\Postgres;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
+/**
+ * The pg sql column type mapper.
+ */
 final class PgSqlColumnTypeMapper
 {
+    /**
+     * Map.
+     *
+     * @param string $nativeType
+     * @return ColumnType
+     */
     public function map(string $nativeType): ColumnType
     {
         $normalized = strtoupper(trim($nativeType));

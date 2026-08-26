@@ -9,9 +9,12 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
+use ZtdQuery\Connection\StatementInterface;
 
 /**
  * @requires extension pdo_sqlite
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 #[CoversNothing]
 #[Large]
@@ -37,11 +40,11 @@ final class SelectRecursiveCteTest extends TestCase
 
         $stmt = $rawPdo->query($sql);
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         $stmt = $ztdPdo->query($sql);
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt->fetchAll();
 
         self::assertSame($rawRows, $ztdRows);

@@ -32,6 +32,9 @@ use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
 
+/**
+ * The robustness target.
+ */
 final class RobustnessTarget
 {
     private Generator $faker;
@@ -44,6 +47,12 @@ final class RobustnessTarget
     /** @var array<string, array<int, array<string, mixed>>> */
     private array $fixtureData;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param Generator $faker
+     * @param MySqlProvider $provider
+     */
     public function __construct(Generator $faker, MySqlProvider $provider)
     {
         $this->faker = $faker;
@@ -78,6 +87,9 @@ final class RobustnessTarget
         ];
     }
 
+    /**
+     * @throws Error
+     */
     public function __invoke(string $input): void
     {
         $seed = crc32(str_pad($input, 4, "\0"));

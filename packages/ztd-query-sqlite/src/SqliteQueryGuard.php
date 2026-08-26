@@ -14,6 +14,11 @@ final class SqliteQueryGuard
 {
     private SqliteParser $parser;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param SqliteParser $parser
+     */
     public function __construct(SqliteParser $parser)
     {
         $this->parser = $parser;

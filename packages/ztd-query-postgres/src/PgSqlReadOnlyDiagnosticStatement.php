@@ -7,6 +7,9 @@ namespace ZtdQuery\Platform\Postgres;
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The pg sql read only diagnostic statement.
+ */
 final class PgSqlReadOnlyDiagnosticStatement
 {
     /** @var non-empty-list<string> */
@@ -17,6 +20,12 @@ final class PgSqlReadOnlyDiagnosticStatement
         'GRANT', 'REVOKE', 'VACUUM',
     ];
 
+    /**
+     * Reports whether safe.
+     *
+     * @param string $sql
+     * @return bool
+     */
     public static function isSafe(string $sql): bool
     {
         $stream = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create());

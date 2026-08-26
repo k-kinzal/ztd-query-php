@@ -8,6 +8,9 @@ use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The sqlite index hint stripper.
+ */
 final class SqliteIndexHintStripper
 {
     /**

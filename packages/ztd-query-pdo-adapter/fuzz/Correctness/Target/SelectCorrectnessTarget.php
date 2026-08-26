@@ -13,9 +13,13 @@ use Fuzz\Correctness\SchemaPool;
 use PDO;
 use PDOException;
 use ZtdQuery\Connection\Exception\DatabaseException;
+use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 
+/**
+ * @phpstan-import-type Row from StatementInterface
+ */
 final class SelectCorrectnessTarget
 {
     private CorrectnessHarness $harness;
@@ -23,6 +27,13 @@ final class SelectCorrectnessTarget
     private SchemaAwareSqlBuilder $sqlBuilder;
     private Generator $faker;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param CorrectnessHarness $harness
+     * @param SchemaAwareSqlBuilder $sqlBuilder
+     * @param Generator $faker
+     */
     public function __construct(
         CorrectnessHarness $harness,
         SchemaAwareSqlBuilder $sqlBuilder,
@@ -34,6 +45,11 @@ final class SelectCorrectnessTarget
         $this->faker = $faker;
     }
 
+    /**
+     * __invoke.
+     *
+     * @param string $input
+     */
     public function __invoke(string $input): void
     {
         $seed = crc32(str_pad($input, 4, "\0"));
@@ -53,25 +69,28 @@ final class SelectCorrectnessTarget
         }
     }
 
+    /**
+     * @throws Error
+     */
     private function compareSelect(string $sql, \Fuzz\Correctness\SchemaDefinition $schema, int $seed): void
     {
-        /** @var array<int, array<string, mixed>>|null $rawResult */
+        /** @var list<Row>|null $rawResult */
         $rawResult = null;
         $rawError = null;
         try {
             $stmt = $this->harness->getRawPdo()->query($sql);
-            /** @var array<int, array<string, mixed>>|null $rawResult */
+            /** @var list<Row>|null $rawResult */
             $rawResult = $stmt !== false ? $stmt->fetchAll(PDO::FETCH_ASSOC) : null;
         } catch (PDOException $e) {
             $rawError = $e;
         }
 
-        /** @var array<int, array<string, mixed>>|null $ztdResult */
+        /** @var list<Row>|null $ztdResult */
         $ztdResult = null;
         $ztdError = null;
         try {
             $stmt = $this->harness->getZtdPdo()->query($sql);
-            /** @var array<int, array<string, mixed>>|null $ztdResult */
+            /** @var list<Row>|null $ztdResult */
             $ztdResult = $stmt !== false ? $stmt->fetchAll(PDO::FETCH_ASSOC) : null;
         } catch (UnsupportedSqlException | UnknownSchemaException | DatabaseException $e) {
             if ($rawError !== null) {

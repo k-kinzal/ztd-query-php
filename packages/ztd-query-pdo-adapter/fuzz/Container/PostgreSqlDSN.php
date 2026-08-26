@@ -8,12 +8,20 @@ use LogicException;
 use Testcontainers\Containers\WaitStrategy\PDO\DSN;
 use Testcontainers\Utility\Stringable;
 
+/**
+ * The postgre sql d s n, as d s n and stringable.
+ */
 final class PostgreSqlDSN implements DSN, Stringable
 {
     private ?string $host = null;
     private ?int $port = null;
     private ?string $dbname = null;
 
+    /**
+     * __to string.
+     *
+     * @return string
+     */
     public function __toString(): string
     {
         return $this->toString();
@@ -29,6 +37,11 @@ final class PostgreSqlDSN implements DSN, Stringable
         return $this;
     }
 
+    /**
+     * Answers host.
+     *
+     * @return ?string
+     */
     public function getHost(): ?string
     {
         return $this->host;
@@ -44,6 +57,11 @@ final class PostgreSqlDSN implements DSN, Stringable
         return $this;
     }
 
+    /**
+     * Answers port.
+     *
+     * @return ?int
+     */
     public function getPort(): ?int
     {
         return $this->port;
@@ -58,6 +76,9 @@ final class PostgreSqlDSN implements DSN, Stringable
         return $this;
     }
 
+    /**
+     * @throws LogicException
+     */
     public function toString(): string
     {
         if ($this->host === null) {
@@ -73,6 +94,11 @@ final class PostgreSqlDSN implements DSN, Stringable
         return $dsn;
     }
 
+    /**
+     * Requires host port.
+     *
+     * @return bool
+     */
     public function requiresHostPort(): bool
     {
         return true;

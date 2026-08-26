@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use RuntimeException;
@@ -57,24 +58,28 @@ final class SqliteQueryGuardTest extends QueryClassifierContractTest
         return 'DROP TABLE test';
     }
 
+    #[Override]
     public function testSelectClassifiesAsRead(): void
     {
         $guard = new SqliteQueryGuard(new SqliteParser());
         self::assertSame(QueryKind::READ, $guard->classify('SELECT * FROM users'));
     }
 
+    #[Override]
     public function testInsertClassifiesAsWriteSimulated(): void
     {
         $guard = new SqliteQueryGuard(new SqliteParser());
         self::assertSame(QueryKind::WRITE_SIMULATED, $guard->classify("INSERT INTO users (name) VALUES ('Alice')"));
     }
 
+    #[Override]
     public function testUpdateClassifiesAsWriteSimulated(): void
     {
         $guard = new SqliteQueryGuard(new SqliteParser());
         self::assertSame(QueryKind::WRITE_SIMULATED, $guard->classify("UPDATE users SET name = 'Bob' WHERE id = 1"));
     }
 
+    #[Override]
     public function testDeleteClassifiesAsWriteSimulated(): void
     {
         $guard = new SqliteQueryGuard(new SqliteParser());
@@ -93,12 +98,14 @@ final class SqliteQueryGuardTest extends QueryClassifierContractTest
         self::assertSame(QueryKind::WRITE_SIMULATED, $guard->classify("INSERT OR REPLACE INTO users (id, name) VALUES (1, 'Alice')"));
     }
 
+    #[Override]
     public function testCreateTableClassifiesAsDdlSimulated(): void
     {
         $guard = new SqliteQueryGuard(new SqliteParser());
         self::assertSame(QueryKind::DDL_SIMULATED, $guard->classify('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)'));
     }
 
+    #[Override]
     public function testDropTableClassifiesAsDdlSimulated(): void
     {
         $guard = new SqliteQueryGuard(new SqliteParser());

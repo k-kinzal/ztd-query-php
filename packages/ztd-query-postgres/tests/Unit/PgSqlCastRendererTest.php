@@ -351,6 +351,7 @@ final class PgSqlCastRendererTest extends CastRendererContractTest
         self::assertStringContainsString('CAST(', $result);
     }
 
+    #[Override]
     public function testRenderCastIsDeterministic(): void
     {
         $renderer = new PgSqlCastRenderer();

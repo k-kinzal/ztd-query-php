@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use Tests\Fixtures\PostgreSqlContainer;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
+use ZtdQuery\Connection\StatementInterface;
 
 /**
  * Integration tests for ZtdPdo with PostgreSQL: CTE shadowing behavior.
@@ -21,6 +22,8 @@ use ZtdQuery\Adapter\Pdo\ZtdPdo;
  * @requires extension pdo_pgsql
  * @group integration
  * @group postgres
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 #[CoversNothing]
 #[Large]
@@ -45,7 +48,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
             $stmt = $ztdPdo->query(sprintf('SELECT * FROM %s ORDER BY id', $table));
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $rows = $stmt->fetchAll();
 
             self::assertCount(0, $rows);
@@ -78,7 +81,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
             $stmt = $rawPdo->query(sprintf('SELECT * FROM %s', $table));
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $rawRows = $stmt->fetchAll();
 
             self::assertCount(2, $rawRows);
@@ -111,7 +114,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
             $stmt = $ztdPdo->query(sprintf('SELECT name, age FROM %s ORDER BY name', $table));
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $ztdRows = $stmt->fetchAll();
 
             self::assertCount(1, $ztdRows);
@@ -149,7 +152,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
             $stmt = $ztdPdo->query(sprintf('SELECT name FROM %s ORDER BY name', $table));
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $ztdRows = $stmt->fetchAll();
 
             self::assertCount(2, $ztdRows);
@@ -189,7 +192,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
             $stmt = $rawPdo->query(sprintf('SELECT * FROM %s ORDER BY id', $table));
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $rawRows = $stmt->fetchAll();
 
             self::assertCount(2, $rawRows);
@@ -226,7 +229,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
             $stmt = $rawPdo->query(sprintf('SELECT * FROM %s', $table));
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $rawRows = $stmt->fetchAll();
 
             self::assertCount(3, $rawRows);
@@ -294,7 +297,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
             $stmt = $ztdPdo->query(sprintf('SELECT name FROM %s WHERE age > 30 ORDER BY name', $table));
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $rows = $stmt->fetchAll();
 
             $names = array_column($rows, 'name');
@@ -328,7 +331,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
             $stmt = $rawPdo->query(sprintf("SELECT name, age FROM %s WHERE name = 'Alice'", $table));
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $rawRows = $stmt->fetchAll();
 
             self::assertCount(1, $rawRows);
@@ -363,7 +366,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
             $stmt = $rawPdo->query(sprintf('SELECT name FROM %s ORDER BY name', $table));
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $rawRows = $stmt->fetchAll();
 
             $names = array_column($rawRows, 'name');

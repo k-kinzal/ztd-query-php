@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
-use LogicException;
 use PDO;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Adapter\Pdo\PdoStatement;
 use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Platform\MissingResultColumnTypeResolver;
 use ZtdQuery\Platform\ResultColumnTypeResolver;
 use ZtdQuery\Schema\ColumnType;
@@ -104,7 +104,7 @@ final class PdoStatementTest extends TestCase
         $nativeStmt = $pdo->query('SELECT 1 AS id');
         self::assertNotFalse($nativeStmt);
 
-        $this->expectException(LogicException::class);
+        $this->expectException(InvalidDefinitionException::class);
         $this->expectExceptionMessage('A database platform result column type resolver is required.');
 
         (new PdoStatement($nativeStmt))->resultColumns(new MissingResultColumnTypeResolver());

@@ -8,6 +8,9 @@ use Faker\Generator;
 use Fuzz\Correctness\SchemaDefinition;
 use InvalidArgumentException;
 
+/**
+ * The pg schema pool.
+ */
 final class PgSchemaPool
 {
     /** @var array<string, SchemaDefinition> */
@@ -84,6 +87,12 @@ final class PgSchemaPool
         self::$initialized = true;
     }
 
+    /**
+     * Random.
+     *
+     * @param Generator $faker
+     * @return SchemaDefinition
+     */
     public static function random(Generator $faker): SchemaDefinition
     {
         self::initialize();
@@ -102,6 +111,9 @@ final class PgSchemaPool
         return self::$schemas;
     }
 
+    /**
+     * @throws InvalidArgumentException
+     */
     public static function get(string $name): SchemaDefinition
     {
         self::initialize();

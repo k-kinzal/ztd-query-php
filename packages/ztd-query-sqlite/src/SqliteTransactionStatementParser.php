@@ -10,8 +10,17 @@ use ZtdQuery\Sql\SqlTokenStream;
 use ZtdQuery\Sql\TransactionStatement;
 use ZtdQuery\Sql\TransactionStatementParser;
 
+/**
+ * The sqlite transaction statement parser, as transaction statement parser.
+ */
 final class SqliteTransactionStatementParser implements TransactionStatementParser
 {
+    /**
+     * Reads.
+     *
+     * @param string $sql
+     * @return ?TransactionStatement
+     */
     public function parse(string $sql): ?TransactionStatement
     {
         $tokens = SqlTokenStream::tokenize($sql, SqliteLexerProfile::create())->significantTokens();

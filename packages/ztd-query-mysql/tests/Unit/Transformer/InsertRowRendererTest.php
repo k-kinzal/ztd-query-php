@@ -12,7 +12,7 @@ use ZtdQuery\Platform\MySql\Transformer\InsertRowRenderer;
 #[CoversClass(InsertRowRenderer::class)]
 final class InsertRowRendererTest extends TestCase
 {
-    public function testParsesMySqlDefaultAndRendersCompleteRow(): void
+    public function testRenderParsesMySqlDefaultAndRendersCompleteRow(): void
     {
         $renderer = new InsertRowRenderer();
         $provided = $renderer->providedExpressions(['id', 'name'], ['  default  ', "  'Ada'  "]);

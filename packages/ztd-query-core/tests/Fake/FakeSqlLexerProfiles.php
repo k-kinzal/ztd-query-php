@@ -77,6 +77,11 @@ final class FakeSqlLexerProfiles
         );
     }
 
+    /**
+     * Standard.
+     *
+     * @return SqlLexerProfile
+     */
     public static function standard(): SqlLexerProfile
     {
         return new SqlLexerProfile(
@@ -103,6 +108,11 @@ final class FakeSqlLexerProfiles
         );
     }
 
+    /**
+     * All capabilities.
+     *
+     * @return SqlLexerProfile
+     */
     public static function allCapabilities(): SqlLexerProfile
     {
         return new SqlLexerProfile(

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use Tests\Contract\RewriterContractTest;
@@ -479,6 +480,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
             SQL;
     }
 
+    #[Override]
     public function testSelectReturnsReadKind(): void
     {
         $shadowStore = new ShadowStore();
@@ -547,6 +549,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
         self::assertStringContainsString('"users"', $plan->sql());
     }
 
+    #[Override]
     public function testInsertReturnsWriteSimulatedWithMutation(): void
     {
         $shadowStore = new ShadowStore();
@@ -579,6 +582,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
         self::assertInstanceOf(InsertMutation::class, $plan->mutation());
     }
 
+    #[Override]
     public function testUpdateReturnsWriteSimulatedWithMutation(): void
     {
         $shadowStore = new ShadowStore();
@@ -612,6 +616,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
         self::assertStringContainsString('"users"."id" AS "__ztd_original_id"', $plan->sql());
     }
 
+    #[Override]
     public function testDeleteReturnsWriteSimulatedWithMutation(): void
     {
         $shadowStore = new ShadowStore();
@@ -676,6 +681,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
         self::assertInstanceOf(TruncateMutation::class, $plan->mutation());
     }
 
+    #[Override]
     public function testCreateTableReturnsDdlSimulated(): void
     {
         $shadowStore = new ShadowStore();
@@ -708,6 +714,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
         self::assertInstanceOf(CreateTableMutation::class, $plan->mutation());
     }
 
+    #[Override]
     public function testDropTableReturnsDdlSimulated(): void
     {
         $shadowStore = new ShadowStore();
@@ -740,6 +747,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
         self::assertInstanceOf(DropTableMutation::class, $plan->mutation());
     }
 
+    #[Override]
     public function testUnsupportedSqlThrowsException(): void
     {
         $shadowStore = new ShadowStore();
@@ -770,6 +778,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
         $rewriter->rewrite('CREATE DATABASE test');
     }
 
+    #[Override]
     public function testEmptyInputThrowsException(): void
     {
         $shadowStore = new ShadowStore();
@@ -830,6 +839,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
         $rewriter->rewrite('SELECT 1; SELECT 2');
     }
 
+    #[Override]
     public function testRewriteIsDeterministic(): void
     {
         $shadowStore = new ShadowStore();
@@ -864,6 +874,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
         self::assertSame($plan1->kind(), $plan2->kind());
     }
 
+    #[Override]
     public function testReadPlanHasNoMutation(): void
     {
         $shadowStore = new ShadowStore();
@@ -894,6 +905,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
         self::assertNull($plan->mutation());
     }
 
+    #[Override]
     public function testWritePlanHasNonNullMutation(): void
     {
         $shadowStore = new ShadowStore();

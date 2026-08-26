@@ -4,13 +4,18 @@ declare(strict_types=1);
 
 namespace Fuzz\Correctness;
 
+use ZtdQuery\Connection\StatementInterface;
+
+/**
+ * @phpstan-import-type Row from StatementInterface
+ */
 final class ResultComparator
 {
     /**
      * Compare two result sets.
      *
-     * @param array<int, array<string, mixed>> $expected
-     * @param array<int, array<string, mixed>> $actual
+     * @param list<Row> $expected
+     * @param list<Row> $actual
      * @param array<int, string> $primaryKeys
      * @param array<string, string> $columnTypes Column name => MySQL type
      * @param bool $ordered Whether the results are expected to be in the same order
@@ -46,8 +51,8 @@ final class ResultComparator
     /**
      * Compare two single rows.
      *
-     * @param array<string, mixed> $expected
-     * @param array<string, mixed> $actual
+     * @param Row $expected
+     * @param Row $actual
      * @param array<string, string> $columnTypes
      */
     public function compareRow(array $expected, array $actual, array $columnTypes = []): bool
@@ -140,9 +145,9 @@ final class ResultComparator
     /**
      * Sort rows by primary key columns.
      *
-     * @param array<int, array<string, mixed>> $rows
+     * @param list<Row> $rows
      * @param array<int, string> $keys
-     * @return array<int, array<string, mixed>>
+     * @return list<Row>
      */
     private function sortByKeys(array $rows, array $keys): array
     {

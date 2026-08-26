@@ -28,6 +28,12 @@ final class DeleteTransformer implements SqlTransformer
     private SelectTransformer $selectTransformer;
     private MySqlCteShadowComposer $cteComposer;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param MySqlParser $parser
+     * @param SelectTransformer $selectTransformer
+     */
     public function __construct(
         MySqlParser $parser,
         SelectTransformer $selectTransformer,
@@ -39,6 +45,8 @@ final class DeleteTransformer implements SqlTransformer
 
     /**
      * {@inheritDoc}
+     *
+     * @throws UnsupportedSqlException
      */
     public function transform(string $sql, array $tables): string
     {
@@ -81,6 +89,8 @@ final class DeleteTransformer implements SqlTransformer
      * @param array<int, string> $columns
      * @param list<MultiTableMutationTarget> $targets
      * @return array{sql: string, table: string, tables: array<string, array{alias: string}>}
+     *
+     * @throws RuntimeException
      */
     public function buildProjection(DeleteStatement $stmt, string $originalSql, array $columns, array $targets = []): array
     {

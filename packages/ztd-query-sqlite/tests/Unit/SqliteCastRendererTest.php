@@ -291,9 +291,7 @@ final class SqliteCastRendererTest extends CastRendererContractTest
         self::assertSame('CAST(1.0 AS NUMERIC)', $result);
     }
 
-    /**
-     * P-CR-5: All ColumnTypeFamily cases are handled.
-     */
+    #[Override]
     public function testAllColumnTypeFamiliesHandled(): void
     {
         $renderer = new SqliteCastRenderer();
@@ -355,9 +353,6 @@ final class SqliteCastRendererTest extends CastRendererContractTest
         self::assertStringContainsString('CAST(', $unknownResult);
     }
 
-    /**
-     * P-CR-4: Determinism.
-     */
     public function testDeterminism(): void
     {
         $renderer = new SqliteCastRenderer();

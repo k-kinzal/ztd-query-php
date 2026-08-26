@@ -6,8 +6,17 @@ namespace ZtdQuery\Platform\MySql;
 
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The update source extractor.
+ */
 final class UpdateSourceExtractor
 {
+    /**
+     * Reads.
+     *
+     * @param string $sql
+     * @return ?string
+     */
     public function extract(string $sql): ?string
     {
         $source = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->topLevelClause(

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use Tests\Contract\RewriterContractTest;
@@ -260,6 +261,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         return 'CREATE TABLE users (id INTEGER PRIMARY KEY NOT NULL, name TEXT NOT NULL, email TEXT NOT NULL)';
     }
 
+    #[Override]
     public function testSelectReturnsReadKind(): void
     {
         $registry = new TableDefinitionRegistry();
@@ -289,6 +291,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         self::assertStringContainsString('SELECT', strtoupper($plan->sql()));
     }
 
+    #[Override]
     public function testInsertReturnsWriteSimulatedWithMutation(): void
     {
         $registry = new TableDefinitionRegistry();
@@ -319,6 +322,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         self::assertMatchesRegularExpression('/^(?:WITH\b|SELECT\b)/i', $plan->sql());
     }
 
+    #[Override]
     public function testUpdateReturnsWriteSimulatedWithMutation(): void
     {
         $registry = new TableDefinitionRegistry();
@@ -351,6 +355,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         self::assertMatchesRegularExpression('/^(?:WITH\b|SELECT\b)/i', $plan->sql());
     }
 
+    #[Override]
     public function testDeleteReturnsWriteSimulatedWithMutation(): void
     {
         $registry = new TableDefinitionRegistry();
@@ -497,6 +502,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         self::assertStringNotContainsString('excluded.', $plan->sql());
     }
 
+    #[Override]
     public function testCreateTableReturnsDdlSimulated(): void
     {
         $store = new ShadowStore();
@@ -518,6 +524,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         self::assertInstanceOf(CreateTableMutation::class, $plan->mutation());
     }
 
+    #[Override]
     public function testDropTableReturnsDdlSimulated(): void
     {
         $registry = new TableDefinitionRegistry();
@@ -546,6 +553,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         self::assertInstanceOf(DropTableMutation::class, $plan->mutation());
     }
 
+    #[Override]
     public function testUnsupportedSqlThrowsException(): void
     {
         $store = new ShadowStore();
@@ -565,6 +573,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         $rewriter->rewrite('CREATE INDEX idx ON users (name)');
     }
 
+    #[Override]
     public function testEmptyInputThrowsException(): void
     {
         $store = new ShadowStore();
@@ -603,6 +612,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         $rewriter->rewrite('SELECT 1; SELECT 2');
     }
 
+    #[Override]
     public function testRewriteIsDeterministic(): void
     {
         $registry = new TableDefinitionRegistry();
@@ -632,6 +642,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         self::assertSame($plan1->kind(), $plan2->kind());
     }
 
+    #[Override]
     public function testReadPlanHasNoMutation(): void
     {
         $registry = new TableDefinitionRegistry();
@@ -660,6 +671,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         self::assertNull($plan->mutation());
     }
 
+    #[Override]
     public function testWritePlanHasNonNullMutation(): void
     {
         $registry = new TableDefinitionRegistry();

@@ -23,7 +23,9 @@ final class SqliteTransactionStatementParserTest extends TestCase
         self::assertNotNull((new SqliteTransactionStatementParser())->parse($sql));
     }
 
-    /** @return array<string, array{string}> */
+    /**
+     * @return array<string, array{string}>
+     */
     public static function providerSqliteTransactionForms(): array
     {
         return [

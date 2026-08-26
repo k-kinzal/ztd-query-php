@@ -12,8 +12,17 @@ use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The pg sql copy support, as copy support.
+ */
 final class PgSqlCopySupport implements CopySupport
 {
+    /**
+     * Table name.
+     *
+     * @param string $relation
+     * @return string
+     */
     public function tableName(string $relation): string
     {
         $parts = $this->relationParts($relation);
@@ -21,6 +30,9 @@ final class PgSqlCopySupport implements CopySupport
         return $parts[count($parts) - 1];
     }
 
+    /**
+     * @throws ValueError
+     */
     public function target(string $relation, ?string $fields, TableDefinition $definition): CopyTarget
     {
         $columns = $this->columns($fields, $definition);
@@ -31,6 +43,12 @@ final class PgSqlCopySupport implements CopySupport
         return new CopyTarget($this->relationParts($relation), $columns);
     }
 
+    /**
+     * Select sql.
+     *
+     * @param CopyTarget $target
+     * @return string
+     */
     public function selectSql(CopyTarget $target): string
     {
         return sprintf(
@@ -40,6 +58,9 @@ final class PgSqlCopySupport implements CopySupport
         );
     }
 
+    /**
+     * @throws ValueError
+     */
     public function insertSql(CopyTarget $target, int $rowCount, bool $overrideSystemValue): string
     {
         if ($rowCount < 1) {
@@ -65,12 +86,22 @@ final class PgSqlCopySupport implements CopySupport
         );
     }
 
+    /**
+     * Reports whether copy statement.
+     *
+     * @param string $sql
+     * @return bool
+     */
     public function isCopyStatement(string $sql): bool
     {
         return SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->firstTopLevelKeyword() === 'COPY';
     }
 
-    /** @return non-empty-list<string> */
+    /**
+     * @return non-empty-list<string>
+     *
+     * @throws ValueError
+     */
     private function relationParts(string $tableName): array
     {
         $parts = SqlTokenStream::tokenize($tableName, PgSqlLexerProfile::create())->splitTopLevel('.');
@@ -96,7 +127,11 @@ final class PgSqlCopySupport implements CopySupport
         return $components;
     }
 
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     *
+     * @throws ValueError
+     */
     private function columns(?string $fields, TableDefinition $definition): array
     {
         if ($fields === null) {
@@ -142,7 +177,9 @@ final class PgSqlCopySupport implements CopySupport
         return implode('.', array_map($this->quoteIdentifier(...), $target->relation));
     }
 
-    /** @param list<mixed> $values */
+    /**
+     * @param list<mixed> $values
+     */
     public function encodeRow(array $values, string $separator, string $nullAs): string
     {
         $this->validateSeparator($separator);
@@ -159,7 +196,11 @@ final class PgSqlCopySupport implements CopySupport
         return implode($separator, $encoded) . "\n";
     }
 
-    /** @return list<string|null> */
+    /**
+     * @return list<string|null>
+     *
+     * @throws ValueError
+     */
     public function decodeRow(string $row, string $separator, string $nullAs): array
     {
         $this->validateSeparator($separator);
@@ -178,6 +219,9 @@ final class PgSqlCopySupport implements CopySupport
         return $this->decodeFields($row, $separator, $nullAs);
     }
 
+    /**
+     * @throws ValueError
+     */
     private function identifier(SqlToken $token, string $subject): string
     {
         $parsed = SqlTokenStream::tokenize($token->text, PgSqlLexerProfile::create())->identifierAt();
@@ -193,6 +237,9 @@ final class PgSqlCopySupport implements CopySupport
         return '"' . str_replace('"', '""', $identifier) . '"';
     }
 
+    /**
+     * @throws ValueError
+     */
     private function validateSeparator(string $separator): void
     {
         if (strlen($separator) !== 1) {
@@ -200,6 +247,9 @@ final class PgSqlCopySupport implements CopySupport
         }
     }
 
+    /**
+     * @throws ValueError
+     */
     private function copyOutput(mixed $value): string
     {
         if (is_string($value) || is_int($value) || is_float($value)) {
@@ -242,7 +292,11 @@ final class PgSqlCopySupport implements CopySupport
         return $result;
     }
 
-    /** @return list<string|null> */
+    /**
+     * @return list<string|null>
+     *
+     * @throws ValueError
+     */
     private function decodeFields(string $row, string $separator, string $nullAs): array
     {
         $values = [];

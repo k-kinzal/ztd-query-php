@@ -9,9 +9,12 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
+use ZtdQuery\Connection\StatementInterface;
 
 /**
  * @requires extension pdo_sqlite
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 #[CoversNothing]
 #[Large]
@@ -30,11 +33,11 @@ final class UpdateBasicTest extends TestCase
 
         $stmt = $rawPdo->query('SELECT * FROM users ORDER BY id');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         $stmt = $ztdPdo->query('SELECT * FROM users ORDER BY id');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt->fetchAll();
         self::assertSame($rawRows, $ztdRows);
     }
@@ -52,11 +55,11 @@ final class UpdateBasicTest extends TestCase
 
         $stmt = $rawPdo->query('SELECT * FROM users ORDER BY id');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         $stmt = $ztdPdo->query('SELECT * FROM users ORDER BY id');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt->fetchAll();
         self::assertSame($rawRows, $ztdRows);
     }
@@ -73,7 +76,7 @@ final class UpdateBasicTest extends TestCase
 
         $stmt = $rawPdo->query('SELECT name FROM users WHERE id = 1');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         self::assertSame('Alice', $rawRows[0]['name']);
     }

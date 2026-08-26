@@ -11,7 +11,9 @@ use PHPUnit\Framework\TestCase;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 
-/** @requires extension pdo_sqlite */
+/**
+ * @requires extension pdo_sqlite
+ */
 #[CoversNothing]
 #[Large]
 final class ForeignKeyCascadeTest extends TestCase

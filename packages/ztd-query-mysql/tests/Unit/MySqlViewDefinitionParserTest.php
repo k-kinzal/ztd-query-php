@@ -16,7 +16,7 @@ use ZtdQuery\Platform\MySql\MySqlViewDefinitionParser;
 #[UsesClass(MySqlSelectRelationParser::class)]
 final class MySqlViewDefinitionParserTest extends TestCase
 {
-    public function testParsesAQueryUsingMySqlRelationRules(): void
+    public function testFromQueryParsesAQueryUsingMySqlRelationRules(): void
     {
         $definition = (new MySqlViewDefinitionParser())->fromQuery(
             " SELECT u.id FROM app.`users` u JOIN roles r ON r.id = u.role_id; \n",
@@ -26,7 +26,7 @@ final class MySqlViewDefinitionParserTest extends TestCase
         self::assertSame(['users', 'roles'], $definition->dependencies);
     }
 
-    public function testExtractsTheQueryFromAMySqlCreateViewStatement(): void
+    public function testFromCreateStatementExtractsTheQueryFromAMySqlCreateViewStatement(): void
     {
         $definition = (new MySqlViewDefinitionParser())->fromCreateStatement(
             'CREATE ALGORITHM=MERGE VIEW `active_users` AS SELECT * FROM `users` WHERE active = 1;',

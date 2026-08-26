@@ -64,7 +64,9 @@ final class SqliteFullTextSearchRewriterTest extends TestCase
         self::assertSame($sql, $rewriter->rewrite($sql, $tables));
     }
 
-    /** @return iterable<string, array{string}> */
+    /**
+     * @return iterable<string, array{string}>
+     */
     public static function providerUnchangedSql(): iterable
     {
         yield 'unknown column' => ['SELECT * FROM fts_articles WHERE missing MATCH ?'];

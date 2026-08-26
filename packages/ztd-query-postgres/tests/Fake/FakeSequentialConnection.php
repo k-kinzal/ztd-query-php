@@ -7,6 +7,9 @@ namespace Tests\Fake;
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Connection\StatementInterface;
 
+/**
+ * The fake sequential connection, as connection interface.
+ */
 final class FakeSequentialConnection implements ConnectionInterface
 {
     /** @var list<StatementInterface> */
@@ -14,12 +17,20 @@ final class FakeSequentialConnection implements ConnectionInterface
 
     private int $index = 0;
 
-    /** @param list<StatementInterface> $statements */
+    /**
+     * @param list<StatementInterface> $statements
+     */
     public function __construct(array $statements)
     {
         $this->statements = $statements;
     }
 
+    /**
+     * Query.
+     *
+     * @param string $sql
+     * @return StatementInterface|false
+     */
     public function query(string $sql): StatementInterface|false
     {
         return $this->statements[$this->index++] ?? false;

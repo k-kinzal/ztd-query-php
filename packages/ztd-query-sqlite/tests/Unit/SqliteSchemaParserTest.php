@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use Generator;
+use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -141,7 +142,9 @@ final class SqliteSchemaParserTest extends SchemaParserContractTest
         self::assertNull((new SqliteSchemaParser())->parse($sql));
     }
 
-    /** @return iterable<string, array{string}> */
+    /**
+     * @return iterable<string, array{string}>
+     */
     public static function providerInvalidFts5Declaration(): iterable
     {
         yield 'wrong create keyword' => ['WRONG VIRTUAL TABLE articles USING fts5(title)'];
@@ -294,7 +297,9 @@ final class SqliteSchemaParserTest extends SchemaParserContractTest
         ));
     }
 
-    /** @return Generator<string, array{string}> */
+    /**
+     * @return Generator<string, array{string}>
+     */
     public static function providerInvalidTableOptionSuffixes(): Generator
     {
         yield 'unknown option' => ['COMPRESS'];
@@ -424,9 +429,7 @@ final class SqliteSchemaParserTest extends SchemaParserContractTest
         self::assertSame(['id', 'age', 'name'], $result->columns);
     }
 
-    /**
-     * P-SP-1: primaryKeys is a subset of columns.
-     */
+    #[Override]
     public function testPrimaryKeysSubsetOfColumns(): void
     {
         $parser = new SqliteSchemaParser();
@@ -436,9 +439,6 @@ final class SqliteSchemaParserTest extends SchemaParserContractTest
         self::assertSame([], array_diff($result->primaryKeys, $result->columns));
     }
 
-    /**
-     * P-SP-2: Column types keys subset of columns.
-     */
     public function testColumnTypeKeysSubsetOfColumns(): void
     {
         $parser = new SqliteSchemaParser();
@@ -448,9 +448,7 @@ final class SqliteSchemaParserTest extends SchemaParserContractTest
         self::assertSame([], array_diff(array_keys($result->columnTypes), $result->columns));
     }
 
-    /**
-     * P-SP-3: notNullColumns is a subset of columns.
-     */
+    #[Override]
     public function testNotNullSubsetOfColumns(): void
     {
         $parser = new SqliteSchemaParser();
@@ -460,9 +458,7 @@ final class SqliteSchemaParserTest extends SchemaParserContractTest
         self::assertSame([], array_diff($result->notNullColumns, $result->columns));
     }
 
-    /**
-     * P-SP-4: Unique constraint columns subset of columns.
-     */
+    #[Override]
     public function testUniqueConstraintColumnsSubsetOfColumns(): void
     {
         $parser = new SqliteSchemaParser();

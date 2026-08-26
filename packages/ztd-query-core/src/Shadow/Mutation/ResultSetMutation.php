@@ -12,5 +12,11 @@ use ZtdQuery\Shadow\ShadowStore;
  */
 interface ResultSetMutation extends ShadowMutation
 {
+    /**
+     * Applies result set.
+     *
+     * @param ShadowStore $store
+     * @param ResultSet $result
+     */
     public function applyResultSet(ShadowStore $store, ResultSet $result): void;
 }

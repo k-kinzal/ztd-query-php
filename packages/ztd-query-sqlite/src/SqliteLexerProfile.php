@@ -6,8 +6,16 @@ namespace ZtdQuery\Platform\Sqlite;
 
 use ZtdQuery\Sql\SqlLexerProfile;
 
+/**
+ * The sqlite lexer profile.
+ */
 final class SqliteLexerProfile
 {
+    /**
+     * Builds.
+     *
+     * @return SqlLexerProfile
+     */
     public static function create(): SqlLexerProfile
     {
         return new SqlLexerProfile(

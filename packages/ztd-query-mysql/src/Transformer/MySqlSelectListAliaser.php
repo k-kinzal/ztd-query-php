@@ -10,6 +10,9 @@ use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The my sql select list aliaser.
+ */
 final class MySqlSelectListAliaser
 {
     private const MODIFIERS = [
@@ -25,11 +28,21 @@ final class MySqlSelectListAliaser
 
     private MySqlIdentifierQuoter $quoter;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     */
     public function __construct()
     {
         $this->quoter = new MySqlIdentifierQuoter();
     }
 
+    /**
+     * Projection count.
+     *
+     * @param string $sql
+     * @return ?int
+     */
     public function projectionCount(string $sql): ?int
     {
         $endKeywords = [];
@@ -49,6 +62,12 @@ final class MySqlSelectListAliaser
         return count($expressions);
     }
 
+    /**
+     * Alias.
+     *
+     * @param string $sql
+     * @return string
+     */
     public function alias(string $sql): string
     {
         $tokens = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->significantTokens();
