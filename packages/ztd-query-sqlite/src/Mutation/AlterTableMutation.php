@@ -22,7 +22,11 @@ final class AlterTableMutation implements ShadowMutation
     ) {
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     *
+     * @throws TableAlreadyExistsException
+     */
     public function apply(ShadowStore $store, array $rows): void
     {
         if ($this->sourceTable !== $this->targetTable && $this->registry->has($this->targetTable)) {

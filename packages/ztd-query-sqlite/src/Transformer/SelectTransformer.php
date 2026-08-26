@@ -103,6 +103,8 @@ final class SelectTransformer implements SqlTransformer
      * @param array<int, string> $columns
      * @param array<string, ColumnType> $columnTypes
      * @param array<string, string> $generatedExpressions
+     *
+     * @throws RuntimeException
      */
     private function generateCte(
         string $tableName,

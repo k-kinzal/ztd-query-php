@@ -83,7 +83,9 @@ final class SqliteIndexHintStripperTest extends TestCase
         self::assertSame($sql, (new SqliteIndexHintStripper())->strip($sql, ['products']));
     }
 
-    /** @return Generator<string, array{string}> */
+    /**
+     * @return Generator<string, array{string}>
+     */
     public static function providerIncompleteAndMalformedHints(): Generator
     {
         yield 'no hint' => ['SELECT * FROM products'];

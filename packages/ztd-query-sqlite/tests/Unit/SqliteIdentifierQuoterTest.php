@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Tests\Contract\IdentifierQuoterContractTest;
 use ZtdQuery\Platform\IdentifierQuoter;
@@ -52,6 +53,7 @@ final class SqliteIdentifierQuoterTest extends IdentifierQuoterContractTest
         self::assertSame('"col""name"', $quoter->quote('"col""name"'));
     }
 
+    #[Override]
     public function testQuoteReturnsNonEmptyString(): void
     {
         $quoter = new SqliteIdentifierQuoter();

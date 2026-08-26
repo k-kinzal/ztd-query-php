@@ -12,6 +12,9 @@ use ZtdQuery\Sql\SqlTokenStream;
 
 final class SqliteReturningProjectionParser
 {
+    /**
+     * @throws UnsupportedSqlException
+     */
     public function parse(string $sql): ?ReturningProjection
     {
         $clause = SqlTokenStream::tokenize($sql, SqliteLexerProfile::create())->topLevelClause(['RETURNING']);

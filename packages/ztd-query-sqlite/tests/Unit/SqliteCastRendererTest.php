@@ -294,6 +294,7 @@ final class SqliteCastRendererTest extends CastRendererContractTest
     /**
      * P-CR-5: All ColumnTypeFamily cases are handled.
      */
+    #[Override]
     public function testAllColumnTypeFamiliesHandled(): void
     {
         $renderer = new SqliteCastRenderer();

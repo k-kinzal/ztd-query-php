@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Fuzz;
 
 use Faker\Factory;
+use Override;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
@@ -52,6 +53,7 @@ final class RewriteFuzzTest extends TestCase
 
     private SqliteProvider $provider;
 
+    #[Override]
     protected function setUp(): void
     {
         $parser = new SqliteParser();

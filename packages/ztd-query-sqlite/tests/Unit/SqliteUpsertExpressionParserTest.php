@@ -24,7 +24,9 @@ final class SqliteUpsertExpressionParserTest extends TestCase
         );
     }
 
-    /** @return iterable<string, array{string, mixed}> */
+    /**
+     * @return iterable<string, array{string, mixed}>
+     */
     public static function providerSqliteExpressionCases(): iterable
     {
         yield 'chained or' => ['1 OR 0 OR 0', true];
@@ -103,7 +105,9 @@ final class SqliteUpsertExpressionParserTest extends TestCase
         self::assertNull((new SqliteUpsertExpressionParser())->parseIfSupported($sql, 'items'));
     }
 
-    /** @return iterable<string, array{string}> */
+    /**
+     * @return iterable<string, array{string}>
+     */
     public static function providerInvalidSqliteExpression(): iterable
     {
         yield 'empty' => [''];

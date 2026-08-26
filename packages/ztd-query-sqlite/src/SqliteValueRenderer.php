@@ -20,6 +20,9 @@ final class SqliteValueRenderer implements ValueRenderer
     {
     }
 
+    /**
+     * @throws RuntimeException
+     */
     public function renderValue(mixed $value, ?ColumnType $type = null): string
     {
         if ($value === null) {
@@ -84,6 +87,9 @@ final class SqliteValueRenderer implements ValueRenderer
         return new ColumnType(ColumnTypeFamily::TEXT, 'TEXT');
     }
 
+    /**
+     * @throws RuntimeException
+     */
     private function stringValue(mixed $value): string
     {
         if ($value instanceof Stringable) {

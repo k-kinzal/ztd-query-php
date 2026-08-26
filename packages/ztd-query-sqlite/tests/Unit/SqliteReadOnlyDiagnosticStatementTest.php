@@ -20,7 +20,9 @@ final class SqliteReadOnlyDiagnosticStatementTest extends TestCase
         self::assertSame($expected, SqliteReadOnlyDiagnosticStatement::isSafe($sql));
     }
 
-    /** @return iterable<string, array{string, bool}> */
+    /**
+     * @return iterable<string, array{string, bool}>
+     */
     public static function providerStatement(): iterable
     {
         yield 'explain select' => ['EXPLAIN SELECT * FROM users', true];

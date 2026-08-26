@@ -33,6 +33,8 @@ final class UpdateTransformer implements SqlTransformer
 
     /**
      * {@inheritDoc}
+     *
+     * @throws UnsupportedSqlException
      */
     public function transform(string $sql, array $tables): string
     {
@@ -136,6 +138,8 @@ final class UpdateTransformer implements SqlTransformer
      * @param string $sql
      * @param array<int, string> $columns
      * @return array{sql: string, table: string}
+     *
+     * @throws RuntimeException
      */
     public function buildProjectionMeta(string $sql, array $columns): array
     {

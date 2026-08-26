@@ -12,7 +12,9 @@ use ZtdQuery\Sql\SqlTokenStream;
 
 final class SqliteForeignKeyDefinitionParser
 {
-    /** @return array<string, ForeignKeyDefinition> */
+    /**
+     * @return array<string, ForeignKeyDefinition>
+     */
     public function parseCreateTable(
         string $sql,
     ): array {

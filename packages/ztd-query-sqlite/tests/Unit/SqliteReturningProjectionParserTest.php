@@ -55,7 +55,9 @@ final class SqliteReturningProjectionParserTest extends TestCase
         (new SqliteReturningProjectionParser())->parse('INSERT INTO users VALUES (1) RETURNING ' . $projection);
     }
 
-    /** @return array<string, array{string}> */
+    /**
+     * @return array<string, array{string}>
+     */
     public static function providerInvalidSqliteReturningProjection(): array
     {
         return [

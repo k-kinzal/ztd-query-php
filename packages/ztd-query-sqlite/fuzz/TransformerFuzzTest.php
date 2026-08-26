@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Fuzz;
 
 use Faker\Factory;
+use Override;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
@@ -35,6 +36,7 @@ final class TransformerFuzzTest extends TestCase
 
     private SqliteProvider $provider;
 
+    #[Override]
     protected function setUp(): void
     {
         $this->transformer = new SelectTransformer(new SqliteCastRenderer(), new SqliteIdentifierQuoter());

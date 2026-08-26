@@ -57,6 +57,9 @@ final class InsertSelectRenderer
             . $selectSql . ') SELECT ' . implode(', ', $selects) . ' FROM ' . $sourceName;
     }
 
+    /**
+     * @throws InvalidArgumentException
+     */
     public function renderGeneratedIdentity(int $start): string
     {
         if ($start < 1) {

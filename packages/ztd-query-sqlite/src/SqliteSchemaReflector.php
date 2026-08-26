@@ -82,7 +82,9 @@ final class SqliteSchemaReflector implements SchemaReflector, ViewReflector
         return $result;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function reflectViews(): array
     {
         $stmt = $this->connection->query(

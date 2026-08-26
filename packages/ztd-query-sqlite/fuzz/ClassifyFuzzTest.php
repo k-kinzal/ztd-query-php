@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Fuzz;
 
 use Faker\Factory;
+use Override;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
@@ -32,6 +33,7 @@ final class ClassifyFuzzTest extends TestCase
 
     private SqliteProvider $provider;
 
+    #[Override]
     protected function setUp(): void
     {
         $this->guard = new SqliteQueryGuard(new SqliteParser());

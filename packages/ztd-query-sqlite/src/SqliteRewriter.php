@@ -105,7 +105,9 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
         return new MultiRewritePlan($plans);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function splitStatements(string $sql): array
     {
         return $this->parser->splitStatements($sql);
@@ -116,6 +118,14 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
         $this->transformer->commitRewriteState();
     }
 
+    /**
+     * @throws UnknownSchemaException
+     */
+    /**
+     * @throws UnsupportedSqlException
+     *
+     * @throws UnknownSchemaException
+     */
     private function rewriteStatement(string $stmtSql, string $originalSql): RewritePlan
     {
         if (SqliteInMemoryAttachStatement::isSafe($stmtSql)) {
