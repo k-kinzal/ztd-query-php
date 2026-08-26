@@ -95,6 +95,8 @@ final class UpsertMutation implements DataMutation
 
     /**
      * {@inheritDoc}
+     *
+     * @throws UnsupportedSqlException When an assignment is written in a way ZTD cannot work out
      */
     public function apply(ShadowStore $store, array $rows): void
     {

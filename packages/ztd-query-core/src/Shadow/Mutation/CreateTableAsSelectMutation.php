@@ -56,6 +56,9 @@ final class CreateTableAsSelectMutation implements ResultSetMutation
         $this->applyResultSet($store, new ResultSet($rows, []));
     }
 
+    /**
+     * @throws RuntimeException When the result set does not describe a table that could be created
+     */
     public function applyResultSet(ShadowStore $store, ResultSet $result): void
     {
         if ($this->registry->has($this->tableName)) {

@@ -33,6 +33,8 @@ final class DropTableMutation implements ShadowMutation
 
     /**
      * {@inheritDoc}
+     *
+     * @throws SchemaNotFoundException When the table is not there and the statement did not allow for that
      */
     public function apply(ShadowStore $store, array $rows): void
     {

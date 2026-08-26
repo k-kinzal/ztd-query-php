@@ -29,7 +29,7 @@ use ZtdQuery\Schema\TablePartitionStrategy;
 #[CoversClass(TableDefinition::class)]
 final class TableDefinitionTest extends TestCase
 {
-    public function testConstructorSetsAllProperties(): void
+    public function testKeepsEverythingATableDeclaresAboutItself(): void
     {
         $typedColumns = ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT')];
 

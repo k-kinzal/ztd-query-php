@@ -46,8 +46,7 @@ final class ReplaceMutation implements DataMutation
             }
         }
 
-        $existingRows = array_values($existingRows);
-        $store->set($this->tableName, $existingRows);
+        $store->set($this->tableName, array_values($existingRows));
         $store->insert($this->tableName, $rows);
     }
 
