@@ -19,6 +19,7 @@ use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\RewriteStateCommitter;
 use ZtdQuery\Rewrite\SqlRewriter;
+use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Schema\ViewDefinitionSet;
 use ZtdQuery\Shadow\ShadowStore;
@@ -28,6 +29,8 @@ use ZtdQuery\Sql\TransactionStatement;
  * MySQL rewrite implementation for ZTD.
  *
  * Orchestrates parsing, classification, transformation, and mutation resolution.
+ *
+ * @phpstan-import-type ShadowTables from SqlTransformer
  */
 final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
 {
@@ -70,6 +73,7 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
         MySqlMutationResolver $mutationResolver,
         MySqlParser $parser,
         ?ViewDefinitionSet $views = null,
+        private readonly MySqlStatementOptions $options = new MySqlStatementOptions(),
     ) {
         $this->guard = $guard;
         $this->shadowStore = $shadowStore;
@@ -148,14 +152,21 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
     }
 
     /**
-     * @throws UnknownSchemaException
-     */
-    /**
-     * @throws UnsupportedSqlException
+     * Answers how one statement is to be run against the shadow.
      *
-     * @throws UnknownSchemaException
+     * A read is rewritten to read the shadow's rows; a write is rewritten to
+     * answer the rows it would have written, and paired with what applying it
+     * would do. Nothing here writes to the database.
+     *
+     * @param Statement $statement The statement, as the parser reads it
+     * @param string $sql The statement, as written
+     *
+     * @return RewritePlan The statement to run, and what to do with what it answers
+     *
+     * @throws UnsupportedSqlException When ZTD cannot simulate the statement
+     * @throws UnknownSchemaException When it reads or writes a table nothing has declared
      */
-    private function rewriteStatement(Statement $statement, string $sql): RewritePlan
+    public function rewriteStatement(Statement $statement, string $sql): RewritePlan
     {
         $kind = $statement instanceof WithStatement
             ? $this->guard->classify($sql)
@@ -221,19 +232,15 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
     }
 
     /**
-     * Build the table context map for transformers.
+     * Answers everything the shadow holds, in the form a transformer is handed.
      *
-     * @return array<string, array{viewSql: string}|array{
-     *     rows: array<int, array<string, mixed>>,
-     *     columns: array<int, string>,
-     *     columnTypes: array<string, \ZtdQuery\Schema\ColumnDeclaration>,
-     *     columnDefaults: array<string, string>,
-     *     identityStrategies: array<string, \ZtdQuery\Schema\IdentityGenerationStrategy>,
-     *     generatedExpressions: array<string, string>,
-     *     partitioning: \ZtdQuery\Schema\TablePartitioning|null
-     * }>
+     * A view is carried as the statement that defines it rather than as rows,
+     * because a view has none of its own -- and one whose name a table has
+     * taken is left out, because the table is what that name now means.
+     *
+     * @return ShadowTables Table name => what the shadow holds for it
      */
-    private function buildTableContext(): array
+    public function buildTableContext(): array
     {
         $context = [];
         $allData = $this->shadowStore->getAll();
@@ -300,11 +307,18 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
     }
 
     /**
-     * Ensure REPLACE has columns available.
+     * Refuses a REPLACE whose columns nothing can say.
      *
-     * @throws UnsupportedSqlException
+     * A REPLACE that names no columns writes to all of them, so ZTD has to
+     * know what they are -- from the rows the shadow holds, or from what
+     * declared the table. With neither, there is nothing to write.
+     *
+     * @param ReplaceStatement $statement The statement, as the parser reads it
+     * @param string $sql The statement, as written
+     *
+     * @throws UnsupportedSqlException When nothing can say what the table's columns are
      */
-    private function ensureReplaceColumns(ReplaceStatement $statement, string $sql): void
+    public function ensureReplaceColumns(ReplaceStatement $statement, string $sql): void
     {
         $tableName = self::resolveIntoTableName($statement->into);
         if ($tableName === null) {
@@ -330,7 +344,17 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
         throw new UnsupportedSqlException($sql, 'Cannot determine columns');
     }
 
-    private function findUnknownTable(string $sql): ?string
+    /**
+     * Answers the first table a statement reads that the shadow does not know.
+     *
+     * A name the statement declares for itself is not a table, so it is not
+     * one the shadow is missing.
+     *
+     * @param string $sql The statement, as written
+     *
+     * @return string|null The table, or null where the shadow knows every one of them
+     */
+    public function findUnknownTable(string $sql): ?string
     {
         $tableNames = (new MySqlSelectRelationParser())->tableNames($sql);
         $declaredCtes = array_fill_keys($this->cteComposer->declaredCteNames($sql), true);
@@ -347,7 +371,14 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
         return null;
     }
 
-    private function tableExists(string $tableName): bool
+    /**
+     * Reports whether the shadow knows a table at all.
+     *
+     * @param string $tableName Name to look for
+     *
+     * @return bool True when it has rows for it, a declaration of it, or a view by that name
+     */
+    public function tableExists(string $tableName): bool
     {
         if ($this->shadowStore->has($tableName)) {
             return true;
@@ -364,7 +395,15 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
         return false;
     }
 
-    private function hasSchemaContext(): bool
+    /**
+     * Reports whether the shadow has been told anything at all.
+     *
+     * A shadow that has been told nothing cannot say that a table is unknown,
+     * because every table is -- so nothing is refused for being missing.
+     *
+     * @return bool True when anything has been declared or filled in
+     */
+    public function hasSchemaContext(): bool
     {
         if ($this->shadowStore->getAll() !== []) {
             return true;
@@ -384,17 +423,20 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
     /**
      * Check for unsupported ALTER TABLE operations.
      */
-    /**
-     * Check whether the given OptionsArray has a specific option set.
-     *
-     * @param \PhpMyAdmin\SqlParser\Components\OptionsArray $options
-     */
-    private static function optionSet(\PhpMyAdmin\SqlParser\Components\OptionsArray $options, string $name): bool
-    {
-        return $options->has($name) !== false;
-    }
 
-    private function hasUnsupportedAlterOperation(AlterStatement $statement, string $sql): bool
+    /**
+     * Reports whether an ALTER asks for something ZTD does not model.
+     *
+     * Indexes, column defaults and row order are all things the shadow does
+     * not hold, so a statement that changes one of them would appear to have
+     * been simulated while having done nothing.
+     *
+     * @param AlterStatement $statement The statement, as the parser reads it
+     * @param string $sql The statement, as written
+     *
+     * @return bool True when ZTD cannot simulate what it asks for
+     */
+    public function hasUnsupportedAlterOperation(AlterStatement $statement, string $sql): bool
     {
         $upperSql = strtoupper($sql);
         if (str_contains($upperSql, 'SET DEFAULT') || str_contains($upperSql, 'DROP DEFAULT')) {
@@ -411,28 +453,28 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
                 continue;
             }
 
-            if (self::optionSet($options, 'ADD')) {
-                if (self::optionSet($options, 'INDEX') || self::optionSet($options, 'KEY') ||
-                    self::optionSet($options, 'FULLTEXT') || self::optionSet($options, 'SPATIAL') ||
-                    self::optionSet($options, 'UNIQUE') || self::optionSet($options, 'CONSTRAINT')) {
+            if ($this->options->isSet($options, 'ADD')) {
+                if ($this->options->isSet($options, 'INDEX') || $this->options->isSet($options, 'KEY') ||
+                    $this->options->isSet($options, 'FULLTEXT') || $this->options->isSet($options, 'SPATIAL') ||
+                    $this->options->isSet($options, 'UNIQUE') || $this->options->isSet($options, 'CONSTRAINT')) {
                     return true;
                 }
             }
 
-            if (self::optionSet($options, 'DROP')) {
-                if (self::optionSet($options, 'INDEX') || self::optionSet($options, 'KEY') || self::optionSet($options, 'CONSTRAINT')) {
+            if ($this->options->isSet($options, 'DROP')) {
+                if ($this->options->isSet($options, 'INDEX') || $this->options->isSet($options, 'KEY') || $this->options->isSet($options, 'CONSTRAINT')) {
                     return true;
                 }
             }
 
-            if (self::optionSet($options, 'RENAME')) {
-                if (self::optionSet($options, 'INDEX') || self::optionSet($options, 'KEY')) {
+            if ($this->options->isSet($options, 'RENAME')) {
+                if ($this->options->isSet($options, 'INDEX') || $this->options->isSet($options, 'KEY')) {
                     return true;
                 }
             }
 
-            if (self::optionSet($options, 'ALTER')) {
-                if (self::optionSet($options, 'SET DEFAULT') || self::optionSet($options, 'DROP DEFAULT')) {
+            if ($this->options->isSet($options, 'ALTER')) {
+                if ($this->options->isSet($options, 'SET DEFAULT') || $this->options->isSet($options, 'DROP DEFAULT')) {
                     return true;
                 }
                 $unknownTokens = is_array($op->unknown) ? $op->unknown : [];
@@ -445,7 +487,7 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
                 }
             }
 
-            if (self::optionSet($options, 'ORDER') || self::optionSet($options, 'ORDER BY')) {
+            if ($this->options->isSet($options, 'ORDER') || $this->options->isSet($options, 'ORDER BY')) {
                 return true;
             }
 
@@ -458,21 +500,21 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
                 }
             }
 
-            if (self::optionSet($options, 'CONVERT')) {
+            if ($this->options->isSet($options, 'CONVERT')) {
                 return true;
             }
 
-            if (self::optionSet($options, 'ENGINE')) {
+            if ($this->options->isSet($options, 'ENGINE')) {
                 return true;
             }
 
-            if (self::optionSet($options, 'PARTITION') || self::optionSet($options, 'ADD PARTITION') ||
-                self::optionSet($options, 'DROP PARTITION') || self::optionSet($options, 'TRUNCATE PARTITION') ||
-                self::optionSet($options, 'COALESCE PARTITION') || self::optionSet($options, 'REORGANIZE PARTITION') ||
-                self::optionSet($options, 'EXCHANGE PARTITION') || self::optionSet($options, 'ANALYZE PARTITION') ||
-                self::optionSet($options, 'CHECK PARTITION') || self::optionSet($options, 'OPTIMIZE PARTITION') ||
-                self::optionSet($options, 'REBUILD PARTITION') || self::optionSet($options, 'REPAIR PARTITION') ||
-                self::optionSet($options, 'REMOVE PARTITIONING')) {
+            if ($this->options->isSet($options, 'PARTITION') || $this->options->isSet($options, 'ADD PARTITION') ||
+                $this->options->isSet($options, 'DROP PARTITION') || $this->options->isSet($options, 'TRUNCATE PARTITION') ||
+                $this->options->isSet($options, 'COALESCE PARTITION') || $this->options->isSet($options, 'REORGANIZE PARTITION') ||
+                $this->options->isSet($options, 'EXCHANGE PARTITION') || $this->options->isSet($options, 'ANALYZE PARTITION') ||
+                $this->options->isSet($options, 'CHECK PARTITION') || $this->options->isSet($options, 'OPTIMIZE PARTITION') ||
+                $this->options->isSet($options, 'REBUILD PARTITION') || $this->options->isSet($options, 'REPAIR PARTITION') ||
+                $this->options->isSet($options, 'REMOVE PARTITIONING')) {
                 return true;
             }
 
@@ -491,9 +533,13 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
     }
 
     /**
-     * Resolve table name from an INTO clause.
+     * Answers the table an INTO clause names.
+     *
+     * @param \PhpMyAdmin\SqlParser\Components\IntoKeyword|null $into The clause, or null where the statement wrote none
+     *
+     * @return string|null The table, or null where the clause names none
      */
-    private static function resolveIntoTableName(?\PhpMyAdmin\SqlParser\Components\IntoKeyword $into): ?string
+    public static function resolveIntoTableName(?\PhpMyAdmin\SqlParser\Components\IntoKeyword $into): ?string
     {
         if ($into === null || $into->dest === null) {
             return null;

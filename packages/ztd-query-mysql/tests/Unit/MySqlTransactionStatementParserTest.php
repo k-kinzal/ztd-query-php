@@ -12,6 +12,7 @@ use ZtdQuery\Platform\MySql\MySqlLexerProfile;
 use ZtdQuery\Platform\MySql\MySqlTransactionStatementParser;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTransactions;
+use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(MySqlTransactionStatementParser::class)]
 #[UsesClass(MySqlLexerProfile::class)]
@@ -70,4 +71,61 @@ final class MySqlTransactionStatementParserTest extends TestCase
 
         self::assertSame([['id' => 1]], $store->get('items'));
     }
+    public function testMatchesAnyReportsTheTokensSpellingOneOfTheForms(): void
+    {
+        $tokens = SqlTokenStream::tokenize('BEGIN', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertTrue((new MySqlTransactionStatementParser())->matchesAny($tokens, [['START'], ['BEGIN']]));
+    }
+
+    public function testMatchesAnyIsFalseWhereTheTokensSpellNoneOfThem(): void
+    {
+        $tokens = SqlTokenStream::tokenize('COMMIT', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertFalse((new MySqlTransactionStatementParser())->matchesAny($tokens, [['START'], ['BEGIN']]));
+    }
+
+    public function testNameAfterAnswersTheNameWrittenAfterTheOpening(): void
+    {
+        $tokens = SqlTokenStream::tokenize('SAVEPOINT sp1', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertSame('sp1', (new MySqlTransactionStatementParser())->nameAfter($tokens, [['SAVEPOINT']]));
+    }
+
+    public function testNameAfterIsNothingWhereTheStatementOpensDifferently(): void
+    {
+        $tokens = SqlTokenStream::tokenize('COMMIT', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertNull((new MySqlTransactionStatementParser())->nameAfter($tokens, [['SAVEPOINT']]));
+    }
+
+    public function testMatchesReportsTheTokensBeingExactlyThoseKeywords(): void
+    {
+        $tokens = SqlTokenStream::tokenize('START TRANSACTION', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertTrue((new MySqlTransactionStatementParser())->matches($tokens, ['START', 'TRANSACTION']));
+    }
+
+    public function testMatchesIsFalseWhereMoreIsWrittenThanThoseKeywords(): void
+    {
+        $tokens = SqlTokenStream::tokenize('START TRANSACTION', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertFalse((new MySqlTransactionStatementParser())->matches($tokens, ['START']));
+    }
+
+    public function testUnquoteAnswersTheNameAQuotedIdentifierStandsFor(): void
+    {
+        self::assertSame('order', (new MySqlTransactionStatementParser())->unquote('`order`', ['`']));
+    }
+
+    public function testUnquoteLeavesAnUnquotedNameAlone(): void
+    {
+        self::assertSame('sp1', (new MySqlTransactionStatementParser())->unquote('sp1', ['`']));
+    }
+
+    public function testUnquoteIsNothingWhereTheQuotingNeverClosed(): void
+    {
+        self::assertNull((new MySqlTransactionStatementParser())->unquote('`order', ['`']));
+    }
+
 }

@@ -36,7 +36,18 @@ final class UpdateAssignmentExtractor
         return $values;
     }
 
-    private function value(string $assignment): ?string
+    /**
+     * Answers what an assignment assigns, as written.
+     *
+     * Only the equals sign the statement itself wrote separates the column
+     * from the value: one inside a subquery or a function call belongs to
+     * that, not to the assignment.
+     *
+     * @param string $assignment One assignment, as written
+     *
+     * @return string|null The value assigned, or null where the text assigns nothing
+     */
+    public function value(string $assignment): ?string
     {
         foreach (SqlTokenStream::tokenize($assignment, MySqlLexerProfile::create())->significantTokens() as $token) {
             if ($token->kind === SqlTokenKind::Symbol && $token->text === '=' && $token->isTopLevel()) {

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use PhpMyAdmin\SqlParser\Components\Expression;
+use PhpMyAdmin\SqlParser\Statements\InsertStatement;
+use PhpMyAdmin\SqlParser\Statements\SelectStatement;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -1742,4 +1745,87 @@ final class MySqlMutationResolverTest extends TestCase
         $this->expectException(UnknownSchemaException::class);
         $resolver->resolve($sql, $statements[0], QueryKind::WRITE_SIMULATED);
     }
+    public function testMultiTableTargetsNamesOneTargetPerTable(): void
+    {
+        $registry = new TableDefinitionRegistry();
+        $registry->register('users', new TableDefinition(['id'], ['id' => 'INT'], ['id'], [], []));
+        $registry->register('orders', new TableDefinition(['id'], ['id' => 'INT'], ['id'], [], []));
+        $parser = new MySqlParser();
+        $selectTransformer = new SelectTransformer();
+        $resolver = new MySqlMutationResolver(
+            new ShadowStore(),
+            $registry,
+            new MySqlSchemaParser($parser),
+            new UpdateTransformer($parser, $selectTransformer),
+            new DeleteTransformer($parser, $selectTransformer),
+        );
+
+        $targets = $resolver->multiTableTargets(['users', 'orders'], 'UPDATE users, orders SET users.id = 1');
+
+        self::assertSame(['users', 'orders'], array_map(static fn ($target) => $target->tableName(), $targets));
+    }
+
+    public function testMultiTableTargetsRefusesATableNothingHasDeclared(): void
+    {
+        $parser = new MySqlParser();
+        $selectTransformer = new SelectTransformer();
+        $resolver = new MySqlMutationResolver(
+            new ShadowStore(),
+            new TableDefinitionRegistry(),
+            new MySqlSchemaParser($parser),
+            new UpdateTransformer($parser, $selectTransformer),
+            new DeleteTransformer($parser, $selectTransformer),
+        );
+
+        $this->expectException(UnknownSchemaException::class);
+
+        $resolver->multiTableTargets(['missing'], 'UPDATE missing SET id = 1');
+    }
+
+    public function testExtractSelectColumnNamesAnswersWhatTheSelectWouldName(): void
+    {
+        $parser = new MySqlParser();
+        $selectTransformer = new SelectTransformer();
+        $resolver = new MySqlMutationResolver(
+            new ShadowStore(),
+            new TableDefinitionRegistry(),
+            new MySqlSchemaParser($parser),
+            new UpdateTransformer($parser, $selectTransformer),
+            new DeleteTransformer($parser, $selectTransformer),
+        );
+        $statement = $parser->parse('SELECT id AS a, name AS b FROM t')[0];
+        self::assertInstanceOf(SelectStatement::class, $statement);
+
+        self::assertSame(['a', 'b'], $resolver->extractSelectColumnNames($statement));
+    }
+
+    public function testResolveExprTableNameAnswersTheTableTheExpressionNames(): void
+    {
+        $expression = new Expression();
+        $expression->table = 'users';
+
+        self::assertSame('users', MySqlMutationResolver::resolveExprTableName($expression));
+    }
+
+    public function testResolveExprTableNameFallsBackToTheWholeExpression(): void
+    {
+        $expression = new Expression();
+        $expression->expr = 'users';
+
+        self::assertSame('users', MySqlMutationResolver::resolveExprTableName($expression));
+    }
+
+    public function testResolveIntoTableNameAnswersTheTableTheClauseNames(): void
+    {
+        $statement = (new MySqlParser())->parse('INSERT INTO users (id) VALUES (1)')[0];
+        self::assertInstanceOf(InsertStatement::class, $statement);
+
+        self::assertSame('users', MySqlMutationResolver::resolveIntoTableName($statement->into));
+    }
+
+    public function testResolveIntoTableNameIsNothingWhereTheStatementWroteNoClause(): void
+    {
+        self::assertNull(MySqlMutationResolver::resolveIntoTableName(null));
+    }
+
 }

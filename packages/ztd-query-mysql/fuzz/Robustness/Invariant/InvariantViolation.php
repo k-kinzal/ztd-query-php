@@ -12,11 +12,11 @@ final class InvariantViolation
     private string $id;
     private string $description;
     private string $sql;
-    /** @var array<string, mixed> */
+    /** @var array<string, string> The details the checker recorded, under names of its own */
     private array $context;
 
     /**
-     * @param array<string, mixed> $context
+     * @param array<string, string> $context The details to record, under names of their own
      */
     public function __construct(string $id, string $description, string $sql, array $context = [])
     {

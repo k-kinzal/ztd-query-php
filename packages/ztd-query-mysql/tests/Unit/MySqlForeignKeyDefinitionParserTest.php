@@ -8,10 +8,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\MySql\MySqlForeignKeyDefinitionParser;
+use ZtdQuery\Platform\MySql\MySqlLexerProfile;
 use ZtdQuery\Schema\ReferentialAction;
+use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(MySqlForeignKeyDefinitionParser::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
+#[UsesClass(MySqlLexerProfile::class)]
 final class MySqlForeignKeyDefinitionParserTest extends TestCase
 {
     public function testParsesNamedCompositeConstraintWithoutRegexSubstitution(): void
@@ -196,4 +198,189 @@ final class MySqlForeignKeyDefinitionParserTest extends TestCase
             'CREATE TABLE child (id INT, FOREIGN KEY (id) REFERENCES parent.)',
         ));
     }
+    public function testTableBodyAnswersWhatIsDeclaredBetweenTheParentheses(): void
+    {
+        self::assertSame(
+            'id INT',
+            (new MySqlForeignKeyDefinitionParser())->tableBody('CREATE TABLE t (id INT)', MySqlLexerProfile::create()),
+        );
+    }
+
+    public function testTableBodyIsNothingWhereTheTextDeclaresNoTable(): void
+    {
+        self::assertNull(
+            (new MySqlForeignKeyDefinitionParser())->tableBody('SELECT 1', MySqlLexerProfile::create()),
+        );
+    }
+
+    public function testParseEntryReadsAKeyOutOfOneDeclaration(): void
+    {
+        $stream = SqlTokenStream::tokenize(
+            'FOREIGN KEY (user_id) REFERENCES users (id)',
+            MySqlLexerProfile::create(),
+        );
+
+        $entry = (new MySqlForeignKeyDefinitionParser())->parseEntry($stream, 'foreign_0', null);
+
+        self::assertSame(['user_id'], $entry['foreignKey']->columns ?? null);
+    }
+
+    public function testParseEntryIsNothingWhereTheDeclarationPointsAtNothing(): void
+    {
+        $stream = SqlTokenStream::tokenize('id INT', MySqlLexerProfile::create());
+
+        self::assertNull((new MySqlForeignKeyDefinitionParser())->parseEntry($stream, 'foreign_0', null));
+    }
+
+    public function testForeignKeyColumnsAnswersTheColumnsTheKeyIsOver(): void
+    {
+        $stream = SqlTokenStream::tokenize(
+            'FOREIGN KEY (a, b) REFERENCES t (x, y)',
+            MySqlLexerProfile::create(),
+        );
+        $tokens = $stream->significantTokens();
+        $references = MySqlForeignKeyDefinitionParser::keywordIndex($tokens, 'REFERENCES');
+
+        self::assertSame(
+            ['a', 'b'],
+            (new MySqlForeignKeyDefinitionParser())->foreignKeyColumns($stream, $tokens, $references ?? 0),
+        );
+    }
+
+    public function testForeignKeyColumnsIsNothingWhereNoForeignKeyIsWritten(): void
+    {
+        $stream = SqlTokenStream::tokenize('a INT REFERENCES t (x)', MySqlLexerProfile::create());
+        $tokens = $stream->significantTokens();
+
+        self::assertSame([], (new MySqlForeignKeyDefinitionParser())->foreignKeyColumns($stream, $tokens, 2));
+    }
+
+    public function testReferencedRelationReadsTheTableAndItsColumns(): void
+    {
+        $stream = SqlTokenStream::tokenize('users (id)', MySqlLexerProfile::create());
+
+        self::assertSame(
+            ['table' => 'users', 'columns' => ['id']],
+            (new MySqlForeignKeyDefinitionParser())->referencedRelation($stream, $stream->significantTokens(), 0),
+        );
+    }
+
+    public function testReferencedRelationReadsAQualifiedNameDownToTheTable(): void
+    {
+        $stream = SqlTokenStream::tokenize('app.users (id)', MySqlLexerProfile::create());
+
+        $referenced = (new MySqlForeignKeyDefinitionParser())
+            ->referencedRelation($stream, $stream->significantTokens(), 0);
+
+        self::assertSame('users', $referenced['table'] ?? null);
+    }
+
+    public function testReferencedRelationIsNothingWhereNoNameIsWritten(): void
+    {
+        $stream = SqlTokenStream::tokenize('(id)', MySqlLexerProfile::create());
+
+        self::assertNull(
+            (new MySqlForeignKeyDefinitionParser())->referencedRelation($stream, $stream->significantTokens(), 0),
+        );
+    }
+
+    public function testIdentifierListReadsTheNamesInsideTheParentheses(): void
+    {
+        $stream = SqlTokenStream::tokenize('(a, b)', MySqlLexerProfile::create());
+
+        self::assertSame(
+            ['a', 'b'],
+            (new MySqlForeignKeyDefinitionParser())->identifierList($stream, $stream->significantTokens(), 0),
+        );
+    }
+
+    public function testIdentifierListIsNothingWhereTheParenthesesNeverClose(): void
+    {
+        $stream = SqlTokenStream::tokenize('(a, b', MySqlLexerProfile::create());
+
+        self::assertSame(
+            [],
+            (new MySqlForeignKeyDefinitionParser())->identifierList($stream, $stream->significantTokens(), 0),
+        );
+    }
+
+    public function testActionAnswersWhatTheKeySaysToDo(): void
+    {
+        $tokens = SqlTokenStream::tokenize('ON DELETE CASCADE', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertSame(
+            ReferentialAction::Cascade,
+            (new MySqlForeignKeyDefinitionParser())->action($tokens, 'DELETE'),
+        );
+    }
+
+    public function testActionReadsSetNullAsWhatItSays(): void
+    {
+        $tokens = SqlTokenStream::tokenize('ON UPDATE SET NULL', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertSame(
+            ReferentialAction::SetNull,
+            (new MySqlForeignKeyDefinitionParser())->action($tokens, 'UPDATE'),
+        );
+    }
+
+    public function testActionDoesNothingWhereTheKeySaysNothing(): void
+    {
+        $tokens = SqlTokenStream::tokenize('REFERENCES t (id)', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertSame(
+            ReferentialAction::NoAction,
+            (new MySqlForeignKeyDefinitionParser())->action($tokens, 'DELETE'),
+        );
+    }
+
+    public function testKeywordIndexAnswersWhereTheKeywordIsWritten(): void
+    {
+        $tokens = SqlTokenStream::tokenize('FOREIGN KEY (a)', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertSame(1, MySqlForeignKeyDefinitionParser::keywordIndex($tokens, 'KEY'));
+    }
+
+    public function testKeywordIndexIsNothingWhereItIsNotWritten(): void
+    {
+        $tokens = SqlTokenStream::tokenize('FOREIGN KEY (a)', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertNull(MySqlForeignKeyDefinitionParser::keywordIndex($tokens, 'REFERENCES'));
+    }
+
+    public function testSymbolIndexAnswersWhereTheSymbolIsWritten(): void
+    {
+        $tokens = SqlTokenStream::tokenize('FOREIGN KEY (a)', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertSame(2, MySqlForeignKeyDefinitionParser::symbolIndex($tokens, '(', 0));
+    }
+
+    public function testSymbolIndexLooksNoEarlierThanItWasToldTo(): void
+    {
+        $tokens = SqlTokenStream::tokenize('FOREIGN KEY (a)', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertNull(MySqlForeignKeyDefinitionParser::symbolIndex($tokens, '(', 3));
+    }
+
+    public function testIsSymbolReportsATokenBeingThatSymbol(): void
+    {
+        $tokens = SqlTokenStream::tokenize('(a)', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertTrue(MySqlForeignKeyDefinitionParser::isSymbol($tokens[0], '('));
+    }
+
+    public function testIsSymbolIsFalsePastTheEndOfWhatWasWritten(): void
+    {
+        self::assertFalse(MySqlForeignKeyDefinitionParser::isSymbol(null, '('));
+    }
+
+    public function testParseCreateTableReadsEveryKeyTheDeclarationWrites(): void
+    {
+        $keys = (new MySqlForeignKeyDefinitionParser())->parseCreateTable(
+            'CREATE TABLE t (id INT, FOREIGN KEY (id) REFERENCES users (id))',
+        );
+
+        self::assertSame(['users'], array_map(static fn ($key) => $key->referencedTable, array_values($keys)));
+    }
+
 }

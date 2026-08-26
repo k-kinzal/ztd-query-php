@@ -4,14 +4,12 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\MySql\Transformer;
 
-use PhpMyAdmin\SqlParser\Components\Condition;
 use PhpMyAdmin\SqlParser\Components\Expression;
-use PhpMyAdmin\SqlParser\Components\Limit;
-use PhpMyAdmin\SqlParser\Components\OrderKeyword;
 use PhpMyAdmin\SqlParser\Statements\UpdateStatement;
 use RuntimeException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\DmlWhereClauseExtractor;
+use ZtdQuery\Platform\MySql\MySqlComponentSql;
 use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlLexerProfile;
@@ -26,6 +24,8 @@ use ZtdQuery\Sql\SqlTokenStream;
 
 /**
  * Transforms UPDATE statements into SELECT projections with CTE shadowing.
+ *
+ * @phpstan-import-type ShadowTables from SqlTransformer
  */
 final class UpdateTransformer implements SqlTransformer
 {
@@ -42,6 +42,7 @@ final class UpdateTransformer implements SqlTransformer
     public function __construct(
         MySqlParser $parser,
         SelectTransformer $selectTransformer,
+        private readonly MySqlComponentSql $components = new MySqlComponentSql(),
     ) {
         $this->parser = $parser;
         $this->selectTransformer = $selectTransformer;
@@ -201,7 +202,7 @@ final class UpdateTransformer implements SqlTransformer
 
         $whereClause = '';
         if ($whereExpression === null) {
-            $whereExpression = Condition::build($stmt->where ?? []);
+            $whereExpression = $this->components->condition($stmt->where ?? [], $stmt->build());
         }
         if ($whereExpression !== '') {
             $whereClause = ' WHERE ' . $whereExpression;
@@ -211,14 +212,14 @@ final class UpdateTransformer implements SqlTransformer
         if ($stmt->order !== null && $stmt->order !== []) {
             $orderParts = [];
             foreach ($stmt->order as $orderExpr) {
-                $orderParts[] = OrderKeyword::build($orderExpr);
+                $orderParts[] = $this->components->order($orderExpr, $stmt->build());
             }
             $orderByClause = ' ORDER BY ' . implode(', ', $orderParts);
         }
 
         $limitClause = '';
         if ($stmt->limit !== null) {
-            $limitClause = ' LIMIT ' . Limit::build($stmt->limit);
+            $limitClause = ' LIMIT ' . $this->components->limit($stmt->limit, $stmt->build());
         }
 
         $sourceClause = $sourceExpression ?? "`$targetTableName`$aliasClause$additionalTables$joinClause";
@@ -234,10 +235,11 @@ final class UpdateTransformer implements SqlTransformer
 
     /**
      * @param array<string, array{alias: string}> $targetTables
-     * @param array<string, array{viewSql: string}|array{rows: array<int, array<string, mixed>>, columns: array<int, string>, columnTypes: array<string, \ZtdQuery\Schema\ColumnDeclaration>, primaryKeys?: array<int, string>}> $contexts
-     * @return list<MultiTableMutationTarget>
+     * @param ShadowTables $contexts Table name => what the shadow holds for it
+     *
+     * @return list<MultiTableMutationTarget> One target per table the statement writes to that the shadow knows
      */
-    private function targetsFromContexts(array $targetTables, array $contexts): array
+    public function targetsFromContexts(array $targetTables, array $contexts): array
     {
         $targets = [];
         foreach ($targetTables as $tableName => $tableInfo) {
@@ -256,12 +258,21 @@ final class UpdateTransformer implements SqlTransformer
     }
 
     /**
-     * @param array<string, array{alias: string}> $targetTables
-     * @param list<MultiTableMutationTarget> $targets
-     * @param list<string> $assignmentValues
-     * @return list<string>
+     * Writes the select list that carries every changed row back, and the key it had.
+     *
+     * A column the statement does not assign carries what it already held, so
+     * the row read back is the whole row as it would become. Its key is
+     * carried separately, because assigning to a key column changes it, and
+     * the row still has to be found by the key it had.
+     *
+     * @param UpdateStatement $stmt The statement, as the parser reads it
+     * @param array<string, array{alias: string}> $targetTables Table name => the name the statement gave it
+     * @param list<MultiTableMutationTarget> $targets The tables being written to
+     * @param list<string> $assignmentValues What each assignment assigns, in the order written
+     *
+     * @return list<string> The select list, one entry per column carried back
      */
-    private function multiTableSelectColumns(
+    public function multiTableSelectColumns(
         UpdateStatement $stmt,
         array $targetTables,
         array $targets,
@@ -292,11 +303,18 @@ final class UpdateTransformer implements SqlTransformer
     }
 
     /**
-     * @param array<string, array{alias: string}> $targetTables
-     * @param list<string> $assignmentValues
-     * @return array<string, array<string, string>>
+     * Answers what each assignment assigns, under the table it writes to.
+     *
+     * An assignment to a bare column name writes to the first table the
+     * statement names, which is what MySQL does with one.
+     *
+     * @param UpdateStatement $stmt The statement, as the parser reads it
+     * @param array<string, array{alias: string}> $targetTables Table name => the name the statement gave it
+     * @param list<string> $assignmentValues What each assignment assigns, in the order written
+     *
+     * @return array<string, array<string, string>> Table => column => what is assigned to it
      */
-    private function assignmentsByTable(UpdateStatement $stmt, array $targetTables, array $assignmentValues): array
+    public function assignmentsByTable(UpdateStatement $stmt, array $targetTables, array $assignmentValues): array
     {
         $assignments = [];
         $primaryTable = array_key_first($targetTables);
@@ -324,12 +342,26 @@ final class UpdateTransformer implements SqlTransformer
         return $assignments;
     }
 
-    private static function unquoteIdentifier(string $identifier): string
+    /**
+     * Answers the name a written identifier stands for.
+     *
+     * @param string $identifier The name, as it was written
+     *
+     * @return string The name, with the quoting taken off
+     */
+    public static function unquoteIdentifier(string $identifier): string
     {
         return SqlTokenStream::tokenize($identifier, MySqlLexerProfile::create())->identifierAt()['name'] ?? $identifier;
     }
 
-    private function buildAdditionalTables(UpdateStatement $stmt): string
+    /**
+     * Writes the tables a multi-table UPDATE names after the first.
+     *
+     * @param UpdateStatement $stmt The statement, as the parser reads it
+     *
+     * @return string The rest of the FROM clause, opening with a comma, or nothing where the statement names one table
+     */
+    public function buildAdditionalTables(UpdateStatement $stmt): string
     {
         if ($stmt->tables === null || count($stmt->tables) <= 1) {
             return '';
@@ -352,7 +384,17 @@ final class UpdateTransformer implements SqlTransformer
         return ', ' . implode(', ', $parts);
     }
 
-    private function buildJoinClause(UpdateStatement $stmt): string
+    /**
+     * Writes the joins an UPDATE was written with.
+     *
+     * The parser reads a join's kind as written, and a bare JOIN as nothing
+     * at all, so what it read is completed rather than taken as it stands.
+     *
+     * @param UpdateStatement $stmt The statement, as the parser reads it
+     *
+     * @return string The joins, as written, or nothing where the statement joins nothing
+     */
+    public function buildJoinClause(UpdateStatement $stmt): string
     {
         if ($stmt->join === null || $stmt->join === []) {
             return '';
@@ -375,7 +417,7 @@ final class UpdateTransformer implements SqlTransformer
             if ($join->on !== null && $join->on !== []) {
                 $onParts = [];
                 foreach ($join->on as $condition) {
-                    $onParts[] = $condition->expr !== '' ? $condition->expr : Condition::build([$condition]);
+                    $onParts[] = $condition->expr !== '' ? $condition->expr : $this->components->condition([$condition], $stmt->build());
                 }
                 $joinStr .= ' ON ' . implode(' ', $onParts);
             }
@@ -394,9 +436,17 @@ final class UpdateTransformer implements SqlTransformer
     }
 
     /**
-     * Resolve table name from an Expression, preferring ->table over ->expr.
+     * Answers the table an expression names.
+     *
+     * The parser fills in the table separately once it has read a qualified
+     * name, and leaves the whole expression where it has not, so both have to
+     * be read -- the more specific first.
+     *
+     * @param Expression $expr Expression to read
+     *
+     * @return string|null The table, or null where the expression names none
      */
-    private static function exprTable(Expression $expr): ?string
+    public static function exprTable(Expression $expr): ?string
     {
         return (($expr->table ?? '') !== '') ? $expr->table : ($expr->expr ?? null);
     }

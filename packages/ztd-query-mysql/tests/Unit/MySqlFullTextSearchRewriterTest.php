@@ -9,9 +9,11 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\MySql\MySqlFullTextSearchRewriter;
+use ZtdQuery\Platform\MySql\MySqlLexerProfile;
+use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(MySqlFullTextSearchRewriter::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
+#[UsesClass(MySqlLexerProfile::class)]
 final class MySqlFullTextSearchRewriterTest extends TestCase
 {
     public function testRewritesNaturalLanguageExpressionIntoCteSafeRelevance(): void
@@ -131,4 +133,51 @@ final class MySqlFullTextSearchRewriterTest extends TestCase
         self::assertStringContainsString("CAST(('needle') AS CHAR)", $result);
         self::assertStringNotContainsString("CAST((  'needle'  ) AS CHAR)", $result);
     }
+    public function testExpressionEditReplacesTheWholeMatchAgainst(): void
+    {
+        $sql = "SELECT MATCH(title) AGAINST ('a') FROM t";
+        $stream = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create());
+        $match = $stream->significantTokens()[1];
+
+        $edit = (new MySqlFullTextSearchRewriter())->expressionEdit($sql, $stream, $match);
+
+        self::assertSame([7, 33], [$edit['start'] ?? null, $edit['end'] ?? null]);
+    }
+
+    public function testExpressionEditIsNothingWhereThereIsNoAgainst(): void
+    {
+        $sql = 'SELECT MATCH(title) FROM t';
+        $stream = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create());
+        $match = $stream->significantTokens()[1];
+
+        self::assertNull((new MySqlFullTextSearchRewriter())->expressionEdit($sql, $stream, $match));
+    }
+
+    public function testQueryExpressionDropsTheSearchModeItWasToldToScoreWith(): void
+    {
+        self::assertSame(
+            "'a'",
+            (new MySqlFullTextSearchRewriter())->queryExpression("'a' IN BOOLEAN MODE"),
+        );
+    }
+
+    public function testQueryExpressionKeepsAWholeExpressionThatSaysNoMode(): void
+    {
+        self::assertSame("'a'", (new MySqlFullTextSearchRewriter())->queryExpression(" 'a' "));
+    }
+
+    public function testIsSearchModeReportsTheWordThatOpensOne(): void
+    {
+        $token = SqlTokenStream::tokenize('BOOLEAN', MySqlLexerProfile::create())->significantTokens()[0];
+
+        self::assertTrue(MySqlFullTextSearchRewriter::isSearchMode($token));
+    }
+
+    public function testIsSearchModeIsFalseForASearchTerm(): void
+    {
+        $token = SqlTokenStream::tokenize("'a'", MySqlLexerProfile::create())->significantTokens()[0];
+
+        self::assertFalse(MySqlFullTextSearchRewriter::isSearchMode($token));
+    }
+
 }

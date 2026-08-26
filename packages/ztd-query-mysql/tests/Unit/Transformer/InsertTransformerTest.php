@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Transformer;
 
+use PhpMyAdmin\SqlParser\Components\ArrayObj;
+use PhpMyAdmin\SqlParser\Statements\InsertStatement;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -998,4 +1000,61 @@ final class InsertTransformerTest extends TestCase
 
         self::assertStringContainsString('1 AS `id`', $generated);
     }
+    public function testBuildInsertSelectWritesTheRowsAValuesStatementWouldWrite(): void
+    {
+        $transformer = new InsertTransformer(new MySqlParser(), new SelectTransformer());
+        $statements = (new MySqlParser())->parse('INSERT INTO t (id) VALUES (1), (2)');
+        $statement = $statements[0];
+        self::assertInstanceOf(InsertStatement::class, $statement);
+
+        $sql = $transformer->buildInsertSelect($statement, 't', ['id'], ['id'], [], [], [], [], null);
+
+        self::assertStringContainsString('UNION ALL', $sql);
+    }
+
+    public function testBuildInsertRowSelectWritesOneRowAsASelect(): void
+    {
+        $transformer = new InsertTransformer(new MySqlParser(), new SelectTransformer());
+        $statements = (new MySqlParser())->parse('INSERT INTO t (id) VALUES (1)');
+        $statement = $statements[0];
+        self::assertInstanceOf(InsertStatement::class, $statement);
+        $valueSet = $statement->values[0] ?? null;
+        self::assertInstanceOf(ArrayObj::class, $valueSet);
+
+        $sql = $transformer->buildInsertRowSelect($valueSet, 't', ['id'], ['id'], [], [], [], []);
+
+        self::assertSame('SELECT 1 AS `id`', $sql);
+    }
+
+    public function testBuildInsertSetSelectWritesTheRowTheAssignmentsDescribe(): void
+    {
+        $transformer = new InsertTransformer(new MySqlParser(), new SelectTransformer());
+        $statements = (new MySqlParser())->parse('INSERT INTO t SET id = 1');
+        $statement = $statements[0];
+        self::assertInstanceOf(InsertStatement::class, $statement);
+
+        $sql = $transformer->buildInsertSetSelect(array_values($statement->set ?? []), 't', ['id'], [], [], [], []);
+
+        self::assertSame('SELECT 1 AS `id`', $sql);
+    }
+
+    public function testOrderedValuesAnswersTheValuesUnderNoKeysOfTheirOwn(): void
+    {
+        self::assertSame(['a', 'b'], InsertTransformer::orderedValues([3 => 'a', 7 => 'b']));
+    }
+
+    public function testOrderedValuesIsNothingForNoValuesAtAll(): void
+    {
+        self::assertSame([], InsertTransformer::orderedValues([]));
+    }
+
+    public function testCommitRewriteStateKeepsTheIdentityValuesTheRewriteHandedOut(): void
+    {
+        $transformer = new InsertTransformer(new MySqlParser(), new SelectTransformer());
+
+        $transformer->commitRewriteState();
+
+        self::assertSame([], InsertTransformer::orderedValues([]));
+    }
+
 }
