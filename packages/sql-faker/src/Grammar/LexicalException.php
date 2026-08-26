@@ -48,6 +48,24 @@ final class LexicalException extends RuntimeException
     }
 
     /**
+     * Reports a read that did not get past where it started.
+     *
+     * A scanner that stays where it is has not read anything, and the loop
+     * around it would run forever. Saying so at the point it happens turns a
+     * hang into a failure that names the offset it happened at.
+     *
+     * @param string $dialect Dialect name as it appears in messages
+     * @param int $offset Offset the read started and ended at
+     * @param string $sql The text being read
+     *
+     * @return self Exception naming the offset and the text
+     */
+    public static function noProgress(string $dialect, int $offset, string $sql): self
+    {
+        return new self("{$dialect} lexer made no progress at offset {$offset}: {$sql}");
+    }
+
+    /**
      * Reports a quoted run that never closes.
      *
      * @param string $dialect Dialect name as it appears in messages

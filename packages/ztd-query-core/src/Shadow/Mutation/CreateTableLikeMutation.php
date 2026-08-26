@@ -33,6 +33,8 @@ final class CreateTableLikeMutation implements ShadowMutation
 
     /**
      * {@inheritDoc}
+     *
+     * @throws RuntimeException When the table being copied from is not one anything has described
      */
     public function apply(ShadowStore $store, array $rows): void
     {

@@ -6,17 +6,33 @@ namespace Tests\Unit\Platform;
 
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
-use ZtdQuery\Platform\ValueRenderer;
+use Tests\Fake\FakeValueRenderer;
+use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversNothing]
 final class ValueRendererTest extends TestCase
 {
-    public function testDeclaresTypedValueRenderingContract(): void
+    public function testRenderValueWritesNullAsSqlSpellsIt(): void
     {
-        $reflection = new ReflectionClass(ValueRenderer::class);
+        self::assertSame('NULL', (new FakeValueRenderer())->renderValue(null));
+    }
 
-        self::assertTrue($reflection->isInterface());
-        self::assertTrue($reflection->hasMethod('renderValue'));
+    public function testRenderValueWritesTextQuotedAndItsQuotesDoubled(): void
+    {
+        self::assertSame("'a''b'", (new FakeValueRenderer())->renderValue("a'b"));
+    }
+
+    public function testRenderValueWritesANumberWithoutQuotes(): void
+    {
+        self::assertSame('7', (new FakeValueRenderer())->renderValue(7));
+    }
+
+    public function testRenderValueTakesTheColumnTypeIntoAccountWhereOneIsKnown(): void
+    {
+        self::assertSame(
+            "'7'",
+            (new FakeValueRenderer())->renderValue(7, new ColumnType(ColumnTypeFamily::TEXT, 'text')),
+        );
     }
 }
