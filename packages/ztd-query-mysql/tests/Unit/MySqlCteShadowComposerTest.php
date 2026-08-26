@@ -8,10 +8,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
+use ZtdQuery\Platform\MySql\MySqlLexerProfile;
+use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(MySqlCteShadowComposer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlSelectRelationParser::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
+#[UsesClass(MySqlLexerProfile::class)]
 final class MySqlCteShadowComposerTest extends TestCase
 {
     public function testIncludesTransitivelyReferencedShadowCtes(): void
@@ -262,4 +264,89 @@ final class MySqlCteShadowComposerTest extends TestCase
             ),
         );
     }
+    public function testParseHeaderReadsWhatTheWithNamesAndWhereTheStatementStarts(): void
+    {
+        self::assertSame(
+            ['names' => ['x'], 'statementOffset' => 21],
+            (new MySqlCteShadowComposer())->parseHeader('WITH x AS (SELECT 1) SELECT * FROM x'),
+        );
+    }
+
+    public function testParseHeaderIsEmptyForAStatementThatOpensWithNoWith(): void
+    {
+        self::assertSame(
+            ['names' => [], 'statementOffset' => null],
+            (new MySqlCteShadowComposer())->parseHeader('SELECT 1'),
+        );
+    }
+
+    public function testFindAsIndexAnswersWhereTheAsIsWritten(): void
+    {
+        $tokens = SqlTokenStream::tokenize('x AS (SELECT 1)', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertSame(1, (new MySqlCteShadowComposer())->findAsIndex($tokens, 1));
+    }
+
+    public function testFindAsIndexIsNothingWhereABareWordComesFirst(): void
+    {
+        $tokens = SqlTokenStream::tokenize('x y', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertNull((new MySqlCteShadowComposer())->findAsIndex($tokens, 1));
+    }
+
+    public function testIsSymbolReportsATokenBeingThatSymbol(): void
+    {
+        $tokens = SqlTokenStream::tokenize('(1)', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertTrue((new MySqlCteShadowComposer())->isSymbol($tokens[0], '('));
+    }
+
+    public function testIsSymbolIsFalsePastTheEndOfWhatWasWritten(): void
+    {
+        self::assertFalse((new MySqlCteShadowComposer())->isSymbol(null, '('));
+    }
+
+    public function testReferencesIdentifierReportsAStatementNamingIt(): void
+    {
+        self::assertTrue((new MySqlCteShadowComposer())->referencesIdentifier('SELECT * FROM users', 'users'));
+    }
+
+    public function testReferencesIdentifierReadsAQuotedNameAsTheSameName(): void
+    {
+        self::assertTrue((new MySqlCteShadowComposer())->referencesIdentifier('SELECT * FROM `users`', 'users'));
+    }
+
+    public function testReferencesIdentifierIsFalseWhereTheStatementNamesSomethingElse(): void
+    {
+        self::assertFalse((new MySqlCteShadowComposer())->referencesIdentifier('SELECT * FROM orders', 'users'));
+    }
+
+    public function testReferencesAnyIdentifierReportsAStatementNamingOneOfThem(): void
+    {
+        self::assertTrue(
+            (new MySqlCteShadowComposer())->referencesAnyIdentifier('SELECT * FROM users', ['orders', 'users']),
+        );
+    }
+
+    public function testReferencesAnyIdentifierIsFalseWhereItNamesNoneOfThem(): void
+    {
+        self::assertFalse(
+            (new MySqlCteShadowComposer())->referencesAnyIdentifier('SELECT 1', ['orders', 'users']),
+        );
+    }
+
+    public function testIdentifierNameTakesTheQuotingOffAName(): void
+    {
+        $tokens = SqlTokenStream::tokenize('`order`', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertSame('order', (new MySqlCteShadowComposer())->identifierName($tokens[0]));
+    }
+
+    public function testIdentifierNameIsNothingForATokenThatIsNotAName(): void
+    {
+        $tokens = SqlTokenStream::tokenize('1', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertNull((new MySqlCteShadowComposer())->identifierName($tokens[0]));
+    }
+
 }

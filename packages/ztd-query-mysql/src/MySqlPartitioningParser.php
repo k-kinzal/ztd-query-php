@@ -42,7 +42,14 @@ final class MySqlPartitioningParser
     }
 
     /** @return array{'RANGE'|'LIST', non-empty-string}|null */
-    private function partitionExpression(string $partitionBy): ?array
+    /**
+     * Answers what a PARTITION BY divides a table on, and how.
+     *
+     * @param string $partitionBy The clause, as written
+     *
+     * @return array{string, string}|null How it divides and what it divides on, or null where ZTD cannot simulate the division
+     */
+    public function partitionExpression(string $partitionBy): ?array
     {
         $tokens = SqlTokenStream::tokenize($partitionBy, MySqlLexerProfile::create())->significantTokens();
         $kind = $tokens[0] ?? null;
@@ -81,10 +88,18 @@ final class MySqlPartitioningParser
     }
 
     /**
-     * @param array<int|string, PartitionDefinition> $partitions
-     * @return array<string, string>
+     * Answers which rows land in each partition of a table divided by range.
+     *
+     * A range partition names only its upper bound; its lower one is the
+     * partition before it. The first partition has no lower bound, so a row
+     * whose expression is null lands there, which is where MySQL puts it.
+     *
+     * @param string $expression What the table is divided on
+     * @param array<int|string, PartitionDefinition> $partitions The partitions, in the order they were declared
+     *
+     * @return array<string, string> Partition name => the predicate its rows satisfy, or none where ZTD cannot say
      */
-    private function rangePredicates(string $expression, array $partitions): array
+    public function rangePredicates(string $expression, array $partitions): array
     {
         $predicates = [];
         $lowerBound = null;
@@ -112,10 +127,17 @@ final class MySqlPartitioningParser
     }
 
     /**
-     * @param array<int|string, PartitionDefinition> $partitions
-     * @return array<string, string>
+     * Answers which rows land in each partition of a table divided by value.
+     *
+     * Null is a value a list partition may name, and no comparison matches
+     * null, so a partition naming it needs a test written for it.
+     *
+     * @param string $expression What the table is divided on
+     * @param array<int|string, PartitionDefinition> $partitions The partitions, as they were declared
+     *
+     * @return array<string, string> Partition name => the predicate its rows satisfy, or none where ZTD cannot say
      */
-    private function listPredicates(string $expression, array $partitions): array
+    public function listPredicates(string $expression, array $partitions): array
     {
         $predicates = [];
         foreach ($partitions as $partition) {
@@ -151,7 +173,15 @@ final class MySqlPartitioningParser
         return $predicates;
     }
 
-    private function partitionValue(PartitionDefinition $partition, string $expectedType): ?string
+    /**
+     * Answers the values a partition was declared to hold.
+     *
+     * @param PartitionDefinition $partition Partition to read
+     * @param string $expectedType How the table divides, which the partition must be declared for
+     *
+     * @return string|null The values, as written, or null where the partition divides some other way
+     */
+    public function partitionValue(PartitionDefinition $partition, string $expectedType): ?string
     {
         if (strcasecmp($partition->type, $expectedType) !== 0) {
             return null;
@@ -164,7 +194,15 @@ final class MySqlPartitioningParser
         return is_string($raw) ? substr($raw, 1, -1) : null;
     }
 
-    private function isSymbol(SqlToken $token, string $symbol): bool
+    /**
+     * Reports whether a token is this symbol.
+     *
+     * @param SqlToken $token Token to test
+     * @param string $symbol Symbol it must be
+     *
+     * @return bool True when it is
+     */
+    public function isSymbol(SqlToken $token, string $symbol): bool
     {
         return $token->kind === SqlTokenKind::Symbol && $token->text === $symbol;
     }

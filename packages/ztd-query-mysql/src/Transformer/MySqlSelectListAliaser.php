@@ -112,7 +112,14 @@ final class MySqlSelectListAliaser
         return substr($sql, 0, $select->endOffset()) . $replacement . substr($sql, $listEnd);
     }
 
-    private function endsSelectList(SqlToken $token): bool
+    /**
+     * Reports whether a token ends what a SELECT is selecting.
+     *
+     * @param SqlToken $token Token to test
+     *
+     * @return bool True for a word that opens the clause after the select list
+     */
+    public function endsSelectList(SqlToken $token): bool
     {
         foreach (self::SELECT_LIST_TERMINATORS as $terminator) {
             if ($token->isKeyword($terminator)) {
@@ -123,8 +130,18 @@ final class MySqlSelectListAliaser
         return false;
     }
 
-    /** @param list<string> $expressions */
-    private function containsWildcard(array $expressions): bool
+    /**
+     * Reports whether anything selected is a wildcard rather than one value.
+     *
+     * A wildcard stands for however many columns the table has, so nothing
+     * downstream can know how many values a row will carry, and nothing can
+     * name them.
+     *
+     * @param list<string> $expressions What the statement selects, one by one
+     *
+     * @return bool True where one of them is a wildcard, or where nothing is selected at all
+     */
+    public function containsWildcard(array $expressions): bool
     {
         foreach ($expressions as $expression) {
             $tokens = SqlTokenStream::tokenize($expression, MySqlLexerProfile::create())->significantTokens();
@@ -143,8 +160,18 @@ final class MySqlSelectListAliaser
         return false;
     }
 
-    /** @return array{modifiers: string, expression: string} */
-    private function removeModifiers(string $expression): array
+    /**
+     * Splits the words that qualify a SELECT from the first thing it selects.
+     *
+     * DISTINCT and its like are written where the first selected value would
+     * be, and they are not values, so naming them would be naming the wrong
+     * thing.
+     *
+     * @param string $expression The first thing selected, as written
+     *
+     * @return array{modifiers: string, expression: string} The qualifying words and the value itself
+     */
+    public function removeModifiers(string $expression): array
     {
         $end = null;
         foreach (SqlTokenStream::tokenize($expression, MySqlLexerProfile::create())->significantTokens() as $token) {
@@ -164,7 +191,14 @@ final class MySqlSelectListAliaser
         ];
     }
 
-    private function isModifier(SqlToken $token): bool
+    /**
+     * Reports whether a token qualifies a SELECT rather than being selected.
+     *
+     * @param SqlToken $token Token to test
+     *
+     * @return bool True for one of MySQL's SELECT modifiers
+     */
+    public function isModifier(SqlToken $token): bool
     {
         foreach (self::MODIFIERS as $modifier) {
             if ($token->isKeyword($modifier)) {
@@ -175,7 +209,17 @@ final class MySqlSelectListAliaser
         return false;
     }
 
-    private function withoutExplicitAlias(string $expression): string
+    /**
+     * Answers a selected value without the name the statement gave it.
+     *
+     * ZTD gives every selected value a name of its own, so a name already
+     * written there would be written twice.
+     *
+     * @param string $expression One selected value, as written
+     *
+     * @return string The value, without its name
+     */
+    public function withoutExplicitAlias(string $expression): string
     {
         $tokens = SqlTokenStream::tokenize($expression, MySqlLexerProfile::create())->significantTokens();
         array_pop($tokens);

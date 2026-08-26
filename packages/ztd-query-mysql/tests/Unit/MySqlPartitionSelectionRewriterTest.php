@@ -8,13 +8,15 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\MySql\MySqlLexerProfile;
 use ZtdQuery\Platform\MySql\MySqlPartitionSelectionRewriter;
 use ZtdQuery\Platform\MySql\MySqlSelectRelationParser;
 use ZtdQuery\Schema\TablePartitioning;
+use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(MySqlPartitionSelectionRewriter::class)]
 #[UsesClass(MySqlSelectRelationParser::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
+#[UsesClass(MySqlLexerProfile::class)]
 final class MySqlPartitionSelectionRewriterTest extends TestCase
 {
     public function testRewritesNamedPartitionAsFilteredDerivedTable(): void
@@ -274,4 +276,95 @@ final class MySqlPartitionSelectionRewriterTest extends TestCase
             ],
         );
     }
+    public function testTokenIndexAtOrAfterAnswersTheTokenAfterTheOneEndingThere(): void
+    {
+        $tokens = SqlTokenStream::tokenize('SELECT a', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertSame(1, (new MySqlPartitionSelectionRewriter())->tokenIndexAtOrAfter($tokens, 6));
+    }
+
+    public function testTokenIndexAtOrAfterIsPastTheEndWhereNothingFollows(): void
+    {
+        $tokens = SqlTokenStream::tokenize('SELECT a', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertSame(2, (new MySqlPartitionSelectionRewriter())->tokenIndexAtOrAfter($tokens, 8));
+    }
+
+    public function testClosingParenthesisIndexAnswersWhereTheParenthesisCloses(): void
+    {
+        $tokens = SqlTokenStream::tokenize('(a, b)', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertSame(4, (new MySqlPartitionSelectionRewriter())->closingParenthesisIndex($tokens, $tokens[0]));
+    }
+
+    public function testClosingParenthesisIndexIsNothingWhereItNeverCloses(): void
+    {
+        $tokens = SqlTokenStream::tokenize('(a, b', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertNull((new MySqlPartitionSelectionRewriter())->closingParenthesisIndex($tokens, $tokens[0]));
+    }
+
+    public function testPartitionNamesAnswersThePartitionsTheClauseNames(): void
+    {
+        $sql = 'PARTITION (p0, p1)';
+        $tokens = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->significantTokens();
+
+        self::assertSame(
+            ['p0', 'p1'],
+            (new MySqlPartitionSelectionRewriter())->partitionNames($sql, $tokens[1], $tokens[5]),
+        );
+    }
+
+    public function testPartitionNamesRefusesAClauseNamingAnythingButPartitions(): void
+    {
+        $sql = 'PARTITION (p0 + 1)';
+        $tokens = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->significantTokens();
+
+        $this->expectException(UnsupportedSqlException::class);
+
+        (new MySqlPartitionSelectionRewriter())->partitionNames($sql, $tokens[1], $tokens[5]);
+    }
+
+    public function testHasAliasReportsANameTheStatementGaveTheTable(): void
+    {
+        $tokens = SqlTokenStream::tokenize('FROM t x', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertTrue((new MySqlPartitionSelectionRewriter())->hasAlias($tokens, 2));
+    }
+
+    public function testHasAliasIsFalseForAWordThatOpensTheNextClause(): void
+    {
+        $tokens = SqlTokenStream::tokenize('FROM t WHERE a = 1', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertFalse((new MySqlPartitionSelectionRewriter())->hasAlias($tokens, 2));
+    }
+
+    public function testIsIdentifierReportsABareWord(): void
+    {
+        $tokens = SqlTokenStream::tokenize('t', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertTrue((new MySqlPartitionSelectionRewriter())->isIdentifier($tokens[0]));
+    }
+
+    public function testIsIdentifierIsFalseForALiteral(): void
+    {
+        $tokens = SqlTokenStream::tokenize('1', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertFalse((new MySqlPartitionSelectionRewriter())->isIdentifier($tokens[0]));
+    }
+
+    public function testIsSymbolReportsATokenBeingThatSymbol(): void
+    {
+        $tokens = SqlTokenStream::tokenize('(', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertTrue((new MySqlPartitionSelectionRewriter())->isSymbol($tokens[0], '('));
+    }
+
+    public function testIsSymbolIsFalseForAnotherSymbolEntirely(): void
+    {
+        $tokens = SqlTokenStream::tokenize('(', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertFalse((new MySqlPartitionSelectionRewriter())->isSymbol($tokens[0], ')'));
+    }
+
 }

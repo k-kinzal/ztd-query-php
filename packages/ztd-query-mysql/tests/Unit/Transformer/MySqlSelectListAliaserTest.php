@@ -8,11 +8,13 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
+use ZtdQuery\Platform\MySql\MySqlLexerProfile;
 use ZtdQuery\Platform\MySql\Transformer\MySqlSelectListAliaser;
+use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(MySqlSelectListAliaser::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
+#[UsesClass(MySqlLexerProfile::class)]
 final class MySqlSelectListAliaserTest extends TestCase
 {
     public function testAliasesOnlyTopLevelProjectionAndPreservesClauses(): void
@@ -105,4 +107,68 @@ final class MySqlSelectListAliaserTest extends TestCase
             $aliaser->alias('SELECT value AS first AS second FROM source'),
         );
     }
+    public function testEndsSelectListReportsTheWordThatOpensTheNextClause(): void
+    {
+        $token = SqlTokenStream::tokenize('FROM', MySqlLexerProfile::create())->significantTokens()[0];
+
+        self::assertTrue((new MySqlSelectListAliaser())->endsSelectList($token));
+    }
+
+    public function testEndsSelectListIsFalseForSomethingBeingSelected(): void
+    {
+        $token = SqlTokenStream::tokenize('id', MySqlLexerProfile::create())->significantTokens()[0];
+
+        self::assertFalse((new MySqlSelectListAliaser())->endsSelectList($token));
+    }
+
+    public function testContainsWildcardReportsAWildcardAmongWhatIsSelected(): void
+    {
+        self::assertTrue((new MySqlSelectListAliaser())->containsWildcard(['id', 't.*']));
+    }
+
+    public function testContainsWildcardIsFalseWhereEveryOneIsAValue(): void
+    {
+        self::assertFalse((new MySqlSelectListAliaser())->containsWildcard(['id', 'name']));
+    }
+
+    public function testRemoveModifiersSplitsTheQualifyingWordsFromTheValue(): void
+    {
+        self::assertSame(
+            ['modifiers' => 'DISTINCT ', 'expression' => 'id'],
+            (new MySqlSelectListAliaser())->removeModifiers('DISTINCT id'),
+        );
+    }
+
+    public function testRemoveModifiersLeavesAValueWithNoQualifyingWordsAlone(): void
+    {
+        self::assertSame(
+            ['modifiers' => '', 'expression' => 'id'],
+            (new MySqlSelectListAliaser())->removeModifiers('id'),
+        );
+    }
+
+    public function testIsModifierReportsAWordThatQualifiesTheSelect(): void
+    {
+        $token = SqlTokenStream::tokenize('DISTINCT', MySqlLexerProfile::create())->significantTokens()[0];
+
+        self::assertTrue((new MySqlSelectListAliaser())->isModifier($token));
+    }
+
+    public function testIsModifierIsFalseForSomethingBeingSelected(): void
+    {
+        $token = SqlTokenStream::tokenize('id', MySqlLexerProfile::create())->significantTokens()[0];
+
+        self::assertFalse((new MySqlSelectListAliaser())->isModifier($token));
+    }
+
+    public function testWithoutExplicitAliasTakesOffTheNameTheStatementGaveIt(): void
+    {
+        self::assertSame('id', (new MySqlSelectListAliaser())->withoutExplicitAlias('id AS x'));
+    }
+
+    public function testWithoutExplicitAliasLeavesAValueWithNoNameAlone(): void
+    {
+        self::assertSame('id', (new MySqlSelectListAliaser())->withoutExplicitAlias('id'));
+    }
+
 }
