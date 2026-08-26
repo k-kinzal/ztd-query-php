@@ -13,7 +13,11 @@ use Fuzz\Correctness\SchemaDefinition;
 use PDO;
 use PDOException;
 use Throwable;
+use ZtdQuery\Connection\StatementInterface;
 
+/**
+ * @phpstan-import-type Row from StatementInterface
+ */
 final class CreateTableAsCorrectnessTarget
 {
     public function __construct(
@@ -123,7 +127,7 @@ final class CreateTableAsCorrectnessTarget
     }
 
     /**
-     * @return array<int, array<string, mixed>>
+     * @return list<Row>
      *
      * @throws Error
      */

@@ -14,9 +14,13 @@ use Fuzz\Correctness\SchemaDefinition;
 use PDO;
 use PDOException;
 use ZtdQuery\Connection\Exception\DatabaseException;
+use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 
+/**
+ * @phpstan-import-type Row from StatementInterface
+ */
 final class InsertCorrectnessTarget
 {
     private PgCorrectnessHarness $harness;
@@ -80,7 +84,7 @@ final class InsertCorrectnessTarget
 
         $selectSql = sprintf('SELECT * FROM "%s"', str_replace('"', '""', $schema->name));
         $stmt = $this->harness->getZtdPdo()->query($selectSql);
-        /** @var array<int, array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt !== false ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
 
         if (!$this->comparator->compareRows($rawRows, $ztdRows, $schema->primaryKeys, $schema->columnTypes)) {
@@ -95,12 +99,12 @@ final class InsertCorrectnessTarget
     }
 
     /**
-     * @return array<int, array<string, mixed>>
+     * @return list<Row>
      */
     private function fetchAll(PDO $pdo, string $table): array
     {
         $stmt = $pdo->query(sprintf('SELECT * FROM "%s"', str_replace('"', '""', $table)));
-        /** @var array<int, array<string, mixed>> $rows */
+        /** @var list<Row> $rows */
         $rows = $stmt !== false ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
         return $rows;
     }

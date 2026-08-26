@@ -9,11 +9,14 @@ use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use Tests\Fixtures\PostgreSqlContainer;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
+use ZtdQuery\Connection\StatementInterface;
 
 /**
  * @requires extension pdo_pgsql
  * @group integration
  * @group postgres
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 #[CoversNothing]
 #[Large]
@@ -33,7 +36,7 @@ final class CreateTableTest extends TestCase
 
             $stmt = $ztdPdo->query("SELECT * FROM {$table} ORDER BY id");
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $ztdRows = $stmt->fetchAll();
 
             self::assertCount(1, $ztdRows);
@@ -60,7 +63,7 @@ final class CreateTableTest extends TestCase
 
             $stmt = $ztdPdo->query("SELECT * FROM {$table}");
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $ztdRows = $stmt->fetchAll();
 
             self::assertCount(1, $ztdRows);

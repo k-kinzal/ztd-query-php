@@ -13,7 +13,11 @@ use ZtdQuery\Adapter\Pdo\ZtdPdo;
 use ZtdQuery\Config\UnknownSchemaBehavior;
 use ZtdQuery\Config\UnsupportedSqlBehavior;
 use ZtdQuery\Config\ZtdConfig;
+use ZtdQuery\Connection\StatementInterface;
 
+/**
+ * @phpstan-import-type Row from StatementInterface
+ */
 final class PgCorrectnessHarness
 {
     private PDO $rawPdo;
@@ -24,7 +28,7 @@ final class PgCorrectnessHarness
     private string $pass;
     private Generator $faker;
 
-    /** @var array<int, array<string, mixed>> */
+    /** @var list<Row> */
     private array $fixtureRows = [];
 
     public function __construct(string $host, int $port, string $dbName, string $user, string $pass)
@@ -42,7 +46,7 @@ final class PgCorrectnessHarness
     /**
      * Set up both connections with the same schema and data.
      *
-     * @return array<int, array<string, mixed>> The fixture rows inserted
+     * @return list<Row> The fixture rows inserted
      */
     public function setup(SchemaDefinition $schema, int $seed, int $rowCount = 3): array
     {
@@ -121,7 +125,7 @@ final class PgCorrectnessHarness
     }
 
     /**
-     * @return array<int, array<string, mixed>>
+     * @return list<Row>
      */
     public function getFixtureRows(): array
     {
@@ -134,7 +138,7 @@ final class PgCorrectnessHarness
     }
 
     /**
-     * @return array<string, mixed>
+     * @return Row
      */
     private function generateFixtureRow(SchemaDefinition $schema, int $index): array
     {
@@ -172,7 +176,7 @@ final class PgCorrectnessHarness
     }
 
     /**
-     * @param array<string, mixed> $row
+     * @param Row $row
      */
     private function insertRow(PDO $pdo, string $table, array $row): void
     {

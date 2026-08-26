@@ -13,6 +13,7 @@ use ReflectionObject;
 use ReturnTypeWillChange;
 use stdClass;
 use ZtdQuery\Connection\Exception\DatabaseException;
+use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\ExecuteResult;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Session;
@@ -28,6 +29,8 @@ use ZtdQuery\Session;
  * - $session: Session for ZTD logic
  * - $plan: RewritePlan from prepare time (null when ZTD disabled)
  * - $result: Last execution result (temporary)
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 final class ZtdPdoStatement extends NativePdoStatement
 {
@@ -470,7 +473,7 @@ final class ZtdPdoStatement extends NativePdoStatement
     }
 
     /**
-     * @param array<string, mixed> $row
+     * @param Row $row
      */
     private function formatBufferedRow(array $row, int $mode): mixed
     {
@@ -493,7 +496,7 @@ final class ZtdPdoStatement extends NativePdoStatement
     }
 
     /**
-     * @param array<string, mixed> $row
+     * @param Row $row
      * @return array<int|string, mixed>
      */
     private function both(array $row): array

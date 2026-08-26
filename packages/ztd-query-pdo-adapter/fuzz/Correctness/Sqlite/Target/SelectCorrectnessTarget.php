@@ -14,9 +14,13 @@ use Fuzz\Correctness\Sqlite\SqliteSchemaPool;
 use PDO;
 use PDOException;
 use ZtdQuery\Connection\Exception\DatabaseException;
+use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 
+/**
+ * @phpstan-import-type Row from StatementInterface
+ */
 final class SelectCorrectnessTarget
 {
     private SqliteCorrectnessHarness $harness;
@@ -59,7 +63,7 @@ final class SelectCorrectnessTarget
      */
     private function compareSelect(string $sql, SchemaDefinition $schema, int $seed): void
     {
-        /** @var array<int, array<string, mixed>>|null $rawResult */
+        /** @var list<Row>|null $rawResult */
         $rawResult = null;
         $rawError = null;
         try {
@@ -69,7 +73,7 @@ final class SelectCorrectnessTarget
             $rawError = $e;
         }
 
-        /** @var array<int, array<string, mixed>>|null $ztdResult */
+        /** @var list<Row>|null $ztdResult */
         $ztdResult = null;
         $ztdError = null;
         try {
@@ -96,8 +100,8 @@ final class SelectCorrectnessTarget
         }
 
         if ($rawResult !== null && $ztdResult !== null) {
-            /** @var array<int, array<string, mixed>> $rawResult */
-            /** @var array<int, array<string, mixed>> $ztdResult */
+            /** @var list<Row> $rawResult */
+            /** @var list<Row> $ztdResult */
             $hasOrderBy = stripos($sql, 'ORDER BY') !== false;
             if (!$this->comparator->compareRows($rawResult, $ztdResult, $schema->primaryKeys, [], !$hasOrderBy)) {
                 throw new Error(

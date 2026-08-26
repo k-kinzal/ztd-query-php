@@ -13,9 +13,13 @@ use Fuzz\Correctness\Sqlite\SqliteSchemaPool;
 use PDO;
 use PDOException;
 use ZtdQuery\Connection\Exception\DatabaseException;
+use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 
+/**
+ * @phpstan-import-type Row from StatementInterface
+ */
 final class AlterCorrectnessTarget
 {
     public function __construct(
@@ -188,7 +192,7 @@ final class AlterCorrectnessTarget
     }
 
     /**
-     * @return array<int, array<string, mixed>>
+     * @return list<Row>
      *
      * @throws Error
      */

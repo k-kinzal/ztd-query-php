@@ -9,9 +9,12 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
+use ZtdQuery\Connection\StatementInterface;
 
 /**
  * @requires extension pdo_sqlite
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 #[CoversNothing]
 #[Large]
@@ -27,11 +30,11 @@ final class SelectWhereTest extends TestCase
 
         $stmt = $rawPdo->query('SELECT * FROM users WHERE id = 1');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         $stmt = $ztdPdo->query('SELECT * FROM users WHERE id = 1');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt->fetchAll();
         self::assertSame($rawRows, $ztdRows);
     }
@@ -46,11 +49,11 @@ final class SelectWhereTest extends TestCase
 
         $stmt = $rawPdo->query('SELECT * FROM users WHERE age > 28 ORDER BY id');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         $stmt = $ztdPdo->query('SELECT * FROM users WHERE age > 28 ORDER BY id');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt->fetchAll();
         self::assertSame($rawRows, $ztdRows);
     }
@@ -65,11 +68,11 @@ final class SelectWhereTest extends TestCase
 
         $stmt = $rawPdo->query("SELECT * FROM users WHERE age > 20 AND name = 'Bob'");
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         $stmt = $ztdPdo->query("SELECT * FROM users WHERE age > 20 AND name = 'Bob'");
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt->fetchAll();
         self::assertSame($rawRows, $ztdRows);
     }
@@ -84,11 +87,11 @@ final class SelectWhereTest extends TestCase
 
         $stmt = $rawPdo->query("SELECT * FROM users WHERE name = 'Alice' OR name = 'Charlie' ORDER BY id");
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         $stmt = $ztdPdo->query("SELECT * FROM users WHERE name = 'Alice' OR name = 'Charlie' ORDER BY id");
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt->fetchAll();
         self::assertSame($rawRows, $ztdRows);
     }
@@ -103,11 +106,11 @@ final class SelectWhereTest extends TestCase
 
         $stmt = $rawPdo->query('SELECT * FROM users WHERE id IN (1, 3) ORDER BY id');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         $stmt = $ztdPdo->query('SELECT * FROM users WHERE id IN (1, 3) ORDER BY id');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt->fetchAll();
         self::assertSame($rawRows, $ztdRows);
     }
@@ -122,11 +125,11 @@ final class SelectWhereTest extends TestCase
 
         $stmt = $rawPdo->query('SELECT * FROM users WHERE age BETWEEN 25 AND 32 ORDER BY id');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         $stmt = $ztdPdo->query('SELECT * FROM users WHERE age BETWEEN 25 AND 32 ORDER BY id');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt->fetchAll();
         self::assertSame($rawRows, $ztdRows);
     }
@@ -141,11 +144,11 @@ final class SelectWhereTest extends TestCase
 
         $stmt = $rawPdo->query("SELECT * FROM users WHERE name LIKE 'A%'");
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         $stmt = $ztdPdo->query("SELECT * FROM users WHERE name LIKE 'A%'");
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt->fetchAll();
         self::assertSame($rawRows, $ztdRows);
     }
@@ -160,11 +163,11 @@ final class SelectWhereTest extends TestCase
 
         $stmt = $rawPdo->query('SELECT * FROM users WHERE name IS NOT NULL ORDER BY id');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         $stmt = $ztdPdo->query('SELECT * FROM users WHERE name IS NOT NULL ORDER BY id');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt->fetchAll();
         self::assertSame($rawRows, $ztdRows);
     }

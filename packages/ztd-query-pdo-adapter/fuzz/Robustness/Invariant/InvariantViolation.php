@@ -4,16 +4,21 @@ declare(strict_types=1);
 
 namespace Fuzz\Robustness\Invariant;
 
+use ZtdQuery\Connection\StatementInterface;
+
+/**
+ * @phpstan-import-type Row from StatementInterface
+ */
 final class InvariantViolation
 {
     private string $id;
     private string $description;
     private string $sql;
-    /** @var array<string, mixed> */
+    /** @var Row */
     private array $context;
 
     /**
-     * @param array<string, mixed> $context
+     * @param Row $context
      */
     public function __construct(string $id, string $description, string $sql, array $context = [])
     {
@@ -39,7 +44,7 @@ final class InvariantViolation
     }
 
     /**
-     * @return array<string, mixed>
+     * @return Row
      */
     public function context(): array
     {

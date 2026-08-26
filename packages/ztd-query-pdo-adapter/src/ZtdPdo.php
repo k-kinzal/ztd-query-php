@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Adapter\Pdo;
 
+use Override;
 use PDO;
 use PDOStatement;
 use ReflectionClass;
@@ -166,6 +167,7 @@ class ZtdPdo extends PDO
      * @param array<mixed> $options
      * @throws ZtdPdoException When ZTD-specific exception occurs (wraps DatabaseException).
      */
+    #[Override]
     public function prepare(string $query, array $options = []): PDOStatement|false
     {
         if (!$this->session->isEnabled()) {
@@ -197,6 +199,7 @@ class ZtdPdo extends PDO
      *
      * @throws ZtdPdoException When ZTD-specific exception occurs (wraps DatabaseException).
      */
+    #[Override]
     public function query(string $query, ?int $fetchMode = null, mixed ...$fetchModeArgs): PDOStatement|false
     {
         if ($this->session->isEnabled()) {
@@ -232,6 +235,7 @@ class ZtdPdo extends PDO
      *
      * @throws ZtdPdoException When ZTD-specific exception occurs (wraps DatabaseException).
      */
+    #[Override]
     public function exec(string $statement): int|false
     {
         if (!$this->session->isEnabled()) {
@@ -288,6 +292,7 @@ class ZtdPdo extends PDO
      *
      * @param array<mixed>|null $options
      */
+    #[Override]
     public static function connect(
         string $dsn,
         ?string $username = null,
@@ -300,6 +305,7 @@ class ZtdPdo extends PDO
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function beginTransaction(): bool
     {
         $result = $this->pdo->beginTransaction();
@@ -313,6 +319,7 @@ class ZtdPdo extends PDO
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function commit(): bool
     {
         $result = $this->pdo->commit();
@@ -326,6 +333,7 @@ class ZtdPdo extends PDO
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function rollBack(): bool
     {
         $result = $this->pdo->rollBack();
@@ -339,6 +347,7 @@ class ZtdPdo extends PDO
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function inTransaction(): bool
     {
         return $this->pdo->inTransaction();
@@ -347,6 +356,7 @@ class ZtdPdo extends PDO
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function lastInsertId(?string $name = null): string|false
     {
         if ($this->session->isEnabled() && $name === null) {
@@ -362,6 +372,7 @@ class ZtdPdo extends PDO
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function errorCode(): ?string
     {
         return $this->pdo->errorCode();
@@ -372,6 +383,7 @@ class ZtdPdo extends PDO
      *
      * @return array{0: string|null, 1: int|null, 2: string|null}
      */
+    #[Override]
     public function errorInfo(): array
     {
         /** @var array{0: string|null, 1: int|null, 2: string|null} */
@@ -381,6 +393,7 @@ class ZtdPdo extends PDO
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function getAttribute(int $attribute): mixed
     {
         return $this->pdo->getAttribute($attribute);
@@ -389,6 +402,7 @@ class ZtdPdo extends PDO
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function setAttribute(int $attribute, mixed $value): bool
     {
         return $this->pdo->setAttribute($attribute, $value);
@@ -397,6 +411,7 @@ class ZtdPdo extends PDO
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function quote(string $string, int $type = PDO::PARAM_STR): string|false
     {
         return $this->pdo->quote($string, $type);
@@ -659,6 +674,7 @@ class ZtdPdo extends PDO
      *
      * @return array<int, string>
      */
+    #[Override]
     public static function getAvailableDrivers(): array
     {
         /** @var array<int, string> */
