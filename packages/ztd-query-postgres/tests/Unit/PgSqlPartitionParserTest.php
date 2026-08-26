@@ -7,7 +7,6 @@ namespace Tests\Unit;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use ReflectionMethod;
 use ZtdQuery\Platform\Postgres\PgSqlPartitionParser;
 use ZtdQuery\Schema\TablePartitionKey;
 use ZtdQuery\Schema\TablePartitionStrategy;
@@ -268,10 +267,9 @@ final class PgSqlPartitionParserTest extends TestCase
 
     public function testQualifiedIdentifierRejectsMismatchedTokenStream(): void
     {
-        $method = new ReflectionMethod(PgSqlPartitionParser::class, 'qualifiedIdentifierAt');
         $stream = SqlTokenStream::tokenize('users', \ZtdQuery\Platform\Postgres\PgSqlLexerProfile::create());
         $tokens = [new SqlToken(SqlTokenKind::String, 'users', 0, 0, 0)];
 
-        self::assertNull($method->invoke(new PgSqlPartitionParser(), $stream, $tokens, 0));
+        self::assertNull((new PgSqlPartitionParser())->qualifiedIdentifierAt($stream, $tokens, 0));
     }
 }

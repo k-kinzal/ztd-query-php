@@ -952,10 +952,10 @@ final class PgSqlParser
     }
 
     /**
-     * Answers the statement with every comment blanked out.
+     * Answers the statement with every comment taken out.
      *
-     * Blanking rather than removing keeps every offset where it was, so
-     * anything already read off the statement still points at the same byte.
+     * A comment marker written inside a string is part of the string, so only
+     * a comment the statement itself wrote is taken out.
      *
      * @param string $sql Statement being read, as written
      *

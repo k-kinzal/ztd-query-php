@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use ReflectionMethod;
 use ZtdQuery\Platform\Postgres\PgSqlConflictTarget;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
 use ZtdQuery\Platform\Postgres\PostgreSqlLexicalMasker;
@@ -2990,19 +2989,15 @@ SELECT * FROM users'));
 
     public function testStripStringLiteralsHandlesEscapedString(): void
     {
-        $parser = new PgSqlParser();
-        $ref = new ReflectionMethod($parser, 'stripStringLiterals');
-        $stripped = $ref->invoke($parser, "SELECT E'hello\\'world'");
-        self::assertIsString($stripped);
+        $stripped = (new PgSqlParser())->stripStringLiterals("SELECT E'hello\\'world'");
+
         self::assertStringNotContainsString('hello', $stripped);
     }
 
     public function testStripStringLiteralsDollarQuoted(): void
     {
-        $parser = new PgSqlParser();
-        $ref = new ReflectionMethod($parser, 'stripStringLiterals');
-        $stripped = $ref->invoke($parser, 'SELECT $$hello world$$');
-        self::assertIsString($stripped);
+        $stripped = (new PgSqlParser())->stripStringLiterals('SELECT $$hello world$$');
+
         self::assertStringNotContainsString('hello', $stripped);
     }
 

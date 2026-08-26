@@ -299,4 +299,54 @@ final class PgSqlPdoPlaceholderEscaperTest extends TestCase
         yield 'closing parenthesis' => ["() ? 'key'", "() ?? 'key'"];
         yield 'closing bracket' => ["[] ? 'key'", "[] ?? 'key'"];
     }
+    public function testKeywordExpectsOperandReportsAWordSomethingIsWrittenAfter(): void
+    {
+        self::assertTrue(PgSqlPdoPlaceholderEscaper::keywordExpectsOperand('AND'));
+    }
+
+    public function testKeywordExpectsOperandIsFalseForAWordThatIsNotOne(): void
+    {
+        self::assertFalse(PgSqlPdoPlaceholderEscaper::keywordExpectsOperand('USERS'));
+    }
+
+    public function testIsIdentifierStartReportsAByteANameCouldOpenWith(): void
+    {
+        self::assertTrue(PgSqlPdoPlaceholderEscaper::isIdentifierStart('a'));
+    }
+
+    public function testIsIdentifierStartIsFalseForADigit(): void
+    {
+        self::assertFalse(PgSqlPdoPlaceholderEscaper::isIdentifierStart('1'));
+    }
+
+    public function testIsIdentifierContinuationReportsAByteANameCouldCarryOnWith(): void
+    {
+        self::assertTrue(PgSqlPdoPlaceholderEscaper::isIdentifierContinuation('1'));
+    }
+
+    public function testIsIdentifierContinuationIsFalseForASpace(): void
+    {
+        self::assertFalse(PgSqlPdoPlaceholderEscaper::isIdentifierContinuation(' '));
+    }
+
+    public function testIsEscapeStringStartReportsAnEscapeStringOpening(): void
+    {
+        self::assertTrue(PgSqlPdoPlaceholderEscaper::isEscapeStringStart("E'a'", 1));
+    }
+
+    public function testIsEscapeStringStartIsFalseWhereTheEIsPartOfAName(): void
+    {
+        self::assertFalse(PgSqlPdoPlaceholderEscaper::isEscapeStringStart("aE'a'", 2));
+    }
+
+    public function testDollarQuoteDelimiterAnswersTheDelimiterTheRunOpensWith(): void
+    {
+        self::assertSame('$tag$', PgSqlPdoPlaceholderEscaper::dollarQuoteDelimiter('$tag$abc$tag$', 0));
+    }
+
+    public function testDollarQuoteDelimiterIsNothingForAPositionalParameter(): void
+    {
+        self::assertNull(PgSqlPdoPlaceholderEscaper::dollarQuoteDelimiter('$1', 0));
+    }
+
 }
