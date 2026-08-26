@@ -37,11 +37,12 @@
         "test:unit": "@php -d memory_limit=512M vendor/bin/phpunit tests/Unit/",
         "lint": [
             "@format:check",
-            "phpstan analyse --memory-limit=512M"
+            "@phpstan"
         ],
         "format": "php-cs-fixer fix --allow-risky=yes",
         "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
-        "infection": "infection --threads=max --show-mutations --no-progress"
+        "infection": "infection --threads=max --show-mutations --no-progress",
+        "phpstan": "phpstan analyse src tests --memory-limit=512M"
     },
     "config": {
         "allow-plugins": {
