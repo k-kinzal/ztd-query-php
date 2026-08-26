@@ -8,6 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use SqlFixture\Platform\PostgreSql\PostgreSqlColumnReader;
+use SqlFixture\Platform\PostgreSql\PostgreSqlCreateTable;
 use SqlFixture\Platform\PostgreSql\PostgreSqlSchemaParser;
 use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\SchemaParseException;
@@ -17,6 +19,8 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(ColumnDefinition::class)]
 #[UsesClass(TableSchema::class)]
 #[UsesClass(SchemaParseException::class)]
+#[UsesClass(PostgreSqlColumnReader::class)]
+#[UsesClass(PostgreSqlCreateTable::class)]
 final class PostgreSqlSchemaParserTest extends TestCase
 {
     #[Test]
