@@ -17,7 +17,6 @@ use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\CandidateKeySet;
 use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
-use ZtdQuery\Schema\PartialUniqueIndex;
 use ZtdQuery\Sql\SqlTokenStream;
 
 /**
@@ -151,13 +150,17 @@ final class InsertTransformer implements SqlTransformer
     }
 
     /**
-     * @param list<string> $tableColumns
-     * @param array<string, array{
-     *     candidateKeys?: array<string, array<int, string>>,
-     *     partialUniqueIndexes?: array<string, PartialUniqueIndex>
-     * }> $tables
+     * Rewrites an ON CONFLICT so that the result says what it did to each row.
+     *
+     * @param string $sql Statement being read, as written
+     * @param string $selectSql The select sql
+     * @param string $tableName Table it belongs to
+     * @param list<string> $tableColumns The table columns
+     * @param array $tables The tables
+     *
+     * @return string What it answers
      */
-    private function projectUpsert(
+    public function projectUpsert(
         string $sql,
         string $selectSql,
         string $tableName,
@@ -203,11 +206,15 @@ final class InsertTransformer implements SqlTransformer
     }
 
     /**
+     * Answers values under no keys of their own, in the order they were given.
+     *
+     * @param array<array-key, T> $values The values
+     *
+     * @return list<T> What it answers
+     *
      * @template T
-     * @param array<array-key, T> $values
-     * @return list<T>
      */
-    private static function orderedValues(array $values): array
+    public static function orderedValues(array $values): array
     {
         $ordered = [];
         foreach ($values as $value) {
@@ -217,7 +224,15 @@ final class InsertTransformer implements SqlTransformer
         return $ordered;
     }
 
-    private function castInsertExpression(string $expression, ColumnDeclaration $type): string
+    /**
+     * Writes an inserted value so that the database reads it as the column's type.
+     *
+     * @param string $expression Expression to read, as written
+     * @param ColumnDeclaration $type How the column was declared
+     *
+     * @return string What it answers
+     */
+    public function castInsertExpression(string $expression, ColumnDeclaration $type): string
     {
         if ($type->family === ColumnTypeFamily::BOOLEAN && $expression === '?') {
             return "CAST(COALESCE(NULLIF(CAST(? AS TEXT), ''), 'false') AS BOOLEAN)";

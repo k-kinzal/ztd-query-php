@@ -78,7 +78,12 @@ final class PgSqlTransformer implements SqlTransformer
         $this->insertTransformer->commitRewriteState();
     }
 
-    private function mergeTransformer(): MergeTransformer
+    /**
+     * Answers the transformer that rewrites a MERGE.
+     *
+     * @return MergeTransformer What it answers
+     */
+    public function mergeTransformer(): MergeTransformer
     {
         if ($this->mergeTransformer === null) {
             $this->mergeTransformer = new MergeTransformer(new PgSqlMergeParser(), $this->selectTransformer);

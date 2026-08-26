@@ -98,11 +98,15 @@ final class PgSqlCopySupport implements CopySupport
     }
 
     /**
-     * @return non-empty-list<string>
+     * Reads the schema and table a COPY names.
+     *
+     * @param string $tableName Table it belongs to
+     *
+     * @return non-empty-list<string> What it answers
      *
      * @throws ValueError
      */
-    private function relationParts(string $tableName): array
+    public function relationParts(string $tableName): array
     {
         $parts = SqlTokenStream::tokenize($tableName, PgSqlLexerProfile::create())->splitTopLevel('.');
         if ($parts === []) {
@@ -128,11 +132,16 @@ final class PgSqlCopySupport implements CopySupport
     }
 
     /**
-     * @return list<string>
+     * Answers the columns a COPY names, or the table's own where it names none.
+     *
+     * @param string|null $fields The fields
+     * @param TableDefinition $definition What the table holds
+     *
+     * @return list<string> What it answers
      *
      * @throws ValueError
      */
-    private function columns(?string $fields, TableDefinition $definition): array
+    public function columns(?string $fields, TableDefinition $definition): array
     {
         if ($fields === null) {
             $columns = [];
@@ -166,13 +175,26 @@ final class PgSqlCopySupport implements CopySupport
         return $columns;
     }
 
-    /** @param non-empty-list<string> $columns */
-    private function columnListSql(array $columns): string
+    /**
+     * Writes a column list as PostgreSQL would write it.
+     *
+     * @param non-empty-list<string> $columns Columns to read
+     *
+     * @return string What it answers
+     */
+    public function columnListSql(array $columns): string
     {
         return implode(', ', array_map($this->quoteIdentifier(...), $columns));
     }
 
-    private function relationSql(CopyTarget $target): string
+    /**
+     * Writes a table's name as PostgreSQL would write it.
+     *
+     * @param CopyTarget $target The target
+     *
+     * @return string What it answers
+     */
+    public function relationSql(CopyTarget $target): string
     {
         return implode('.', array_map($this->quoteIdentifier(...), $target->relation));
     }
@@ -220,9 +242,16 @@ final class PgSqlCopySupport implements CopySupport
     }
 
     /**
+     * Answers the name a token stands for.
+     *
+     * @param SqlToken $token Token to read
+     * @param string $subject The subject
+     *
+     * @return string What it answers
+     *
      * @throws ValueError
      */
-    private function identifier(SqlToken $token, string $subject): string
+    public function identifier(SqlToken $token, string $subject): string
     {
         $parsed = SqlTokenStream::tokenize($token->text, PgSqlLexerProfile::create())->identifierAt();
         if ($parsed === null) {
@@ -232,15 +261,26 @@ final class PgSqlCopySupport implements CopySupport
         return $token->kind === SqlTokenKind::Word ? strtolower($parsed['name']) : $parsed['name'];
     }
 
-    private function quoteIdentifier(string $identifier): string
+    /**
+     * Writes a name as PostgreSQL would write it.
+     *
+     * @param string $identifier Name, as it was written
+     *
+     * @return string What it answers
+     */
+    public function quoteIdentifier(string $identifier): string
     {
         return '"' . str_replace('"', '""', $identifier) . '"';
     }
 
     /**
+     * Refuses a separator COPY could not use.
+     *
+     * @param string $separator The separator
+     *
      * @throws ValueError
      */
-    private function validateSeparator(string $separator): void
+    public function validateSeparator(string $separator): void
     {
         if (strlen($separator) !== 1) {
             throw new ValueError('PostgreSQL COPY separator must be exactly one byte.');
@@ -248,9 +288,15 @@ final class PgSqlCopySupport implements CopySupport
     }
 
     /**
+     * Answers what a COPY TO would have written.
+     *
+     * @param mixed $value Value to read
+     *
+     * @return string What it answers
+     *
      * @throws ValueError
      */
-    private function copyOutput(mixed $value): string
+    public function copyOutput(mixed $value): string
     {
         if (is_string($value) || is_int($value) || is_float($value)) {
             return (string) $value;
@@ -270,7 +316,15 @@ final class PgSqlCopySupport implements CopySupport
         throw new ValueError(sprintf('PostgreSQL COPY cannot encode a value of type %s.', get_debug_type($value)));
     }
 
-    private function escape(string $value, string $separator): string
+    /**
+     * Writes one value as COPY writes it, escaping what COPY reads specially.
+     *
+     * @param string $value Value to read
+     * @param string $separator The separator
+     *
+     * @return string What it answers
+     */
+    public function escape(string $value, string $separator): string
     {
         $result = '';
         $length = strlen($value);
@@ -293,11 +347,17 @@ final class PgSqlCopySupport implements CopySupport
     }
 
     /**
-     * @return list<string|null>
+     * Reads one line of COPY input as the values it carries.
+     *
+     * @param string $row Row to read
+     * @param string $separator The separator
+     * @param string $nullAs The null as
+     *
+     * @return list<string|null> What it answers
      *
      * @throws ValueError
      */
-    private function decodeFields(string $row, string $separator, string $nullAs): array
+    public function decodeFields(string $row, string $separator, string $nullAs): array
     {
         $values = [];
         $decoded = '';

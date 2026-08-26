@@ -10,7 +10,6 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\PostgreSqlProvider;
-use Throwable;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
@@ -100,8 +99,7 @@ final class RewriteFuzzTest extends TestCase
                 self::assertSame(QueryKind::READ, $plan->kind(), "SELECT rewrite should produce READ kind on iteration $i");
                 self::assertNull($plan->mutation(), "READ plan must have no mutation on iteration $i");
             } catch (UnsupportedSqlException|UnknownSchemaException) {
-            } catch (Throwable $e) {
-                self::fail("rewrite() crashed on SELECT iteration $i with SQL: $sql\nError: " . $e->getMessage());
+                continue;
             }
         }
         self::addToAssertionCount(self::ITERATIONS);
@@ -121,8 +119,7 @@ final class RewriteFuzzTest extends TestCase
                 self::assertSame(QueryKind::WRITE_SIMULATED, $plan->kind(), "INSERT rewrite should produce WRITE_SIMULATED kind on iteration $i");
                 self::assertNotNull($plan->mutation(), "WRITE_SIMULATED plan must have a mutation on iteration $i");
             } catch (UnsupportedSqlException|UnknownSchemaException) {
-            } catch (Throwable $e) {
-                self::fail("rewrite() crashed on INSERT iteration $i with SQL: $sql\nError: " . $e->getMessage());
+                continue;
             }
         }
         self::addToAssertionCount(self::ITERATIONS);
@@ -142,8 +139,7 @@ final class RewriteFuzzTest extends TestCase
                 self::assertSame(QueryKind::WRITE_SIMULATED, $plan->kind(), "UPDATE rewrite should produce WRITE_SIMULATED kind on iteration $i");
                 self::assertNotNull($plan->mutation(), "WRITE_SIMULATED plan must have a mutation on iteration $i");
             } catch (UnsupportedSqlException|UnknownSchemaException) {
-            } catch (Throwable $e) {
-                self::fail("rewrite() crashed on UPDATE iteration $i with SQL: $sql\nError: " . $e->getMessage());
+                continue;
             }
         }
         self::addToAssertionCount(self::ITERATIONS);
@@ -163,8 +159,7 @@ final class RewriteFuzzTest extends TestCase
                 self::assertSame(QueryKind::WRITE_SIMULATED, $plan->kind(), "DELETE rewrite should produce WRITE_SIMULATED kind on iteration $i");
                 self::assertNotNull($plan->mutation(), "WRITE_SIMULATED plan must have a mutation on iteration $i");
             } catch (UnsupportedSqlException|UnknownSchemaException) {
-            } catch (Throwable $e) {
-                self::fail("rewrite() crashed on DELETE iteration $i with SQL: $sql\nError: " . $e->getMessage());
+                continue;
             }
         }
         self::addToAssertionCount(self::ITERATIONS);
@@ -183,8 +178,7 @@ final class RewriteFuzzTest extends TestCase
                 self::assertNotEmpty($plan->sql());
                 self::assertSame(QueryKind::DDL_SIMULATED, $plan->kind(), "CREATE TABLE rewrite should produce DDL_SIMULATED kind on iteration $i");
             } catch (UnsupportedSqlException|UnknownSchemaException) {
-            } catch (Throwable $e) {
-                self::fail("rewrite() crashed on CREATE TABLE iteration $i with SQL: $sql\nError: " . $e->getMessage());
+                continue;
             }
         }
         self::addToAssertionCount(self::ITERATIONS);
@@ -203,8 +197,7 @@ final class RewriteFuzzTest extends TestCase
                 self::assertNotEmpty($plan->sql());
                 self::assertSame(QueryKind::DDL_SIMULATED, $plan->kind(), "DROP TABLE rewrite should produce DDL_SIMULATED kind on iteration $i");
             } catch (UnsupportedSqlException|UnknownSchemaException) {
-            } catch (Throwable $e) {
-                self::fail("rewrite() crashed on DROP TABLE iteration $i with SQL: $sql\nError: " . $e->getMessage());
+                continue;
             }
         }
         self::addToAssertionCount(self::ITERATIONS);
@@ -228,8 +221,7 @@ final class RewriteFuzzTest extends TestCase
                     self::assertNull($plan->mutation(), "READ plan must have no mutation on iteration $i");
                 }
             } catch (UnsupportedSqlException|UnknownSchemaException) {
-            } catch (Throwable $e) {
-                self::fail('rewrite() threw unexpected ' . get_class($e) . " on iteration $i with SQL: $sql\nError: " . $e->getMessage());
+                continue;
             }
         }
         self::addToAssertionCount(self::ITERATIONS);
@@ -242,11 +234,7 @@ final class RewriteFuzzTest extends TestCase
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
             $sql = $this->provider->sql(maxDepth: 50);
-            try {
-                $classifyResult = $this->guard->classify($sql);
-            } catch (Throwable) {
-                continue;
-            }
+            $classifyResult = $this->guard->classify($sql);
 
             if ($classifyResult === null) {
                 continue;
@@ -260,8 +248,7 @@ final class RewriteFuzzTest extends TestCase
                     "classify() returned {$classifyResult->value} but rewrite() returned {$plan->kind()->value} on iteration $i with SQL: $sql"
                 );
             } catch (UnsupportedSqlException|UnknownSchemaException) {
-            } catch (Throwable $e) {
-                self::fail("rewrite() crashed on iteration $i with SQL: $sql\nError: " . $e->getMessage());
+                continue;
             }
         }
         self::addToAssertionCount(self::ITERATIONS);

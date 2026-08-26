@@ -107,14 +107,19 @@ final class SelectTransformer implements SqlTransformer
     }
 
     /**
-     * @param array<int, array<string, mixed>> $rows
-     * @param array<int, string> $columns
-     * @param array<string, ColumnDeclaration> $columnTypes
-     * @param array<string, string> $generatedExpressions
+     * Writes the clause that stands a table's shadow rows up in a statement.
+     *
+     * @param string $tableName Table it belongs to
+     * @param array<int, array<string, mixed>> $rows Rows to read
+     * @param array<int, string> $columns Columns to read
+     * @param array<string, ColumnDeclaration> $columnTypes The column types
+     * @param array<string, string> $generatedExpressions The generated expressions
+     *
+     * @return string What it answers
      *
      * @throws RuntimeException
      */
-    private function generateCte(
+    public function generateCte(
         string $tableName,
         array $rows,
         array $columns,
@@ -186,11 +191,15 @@ final class SelectTransformer implements SqlTransformer
     }
 
     /**
-     * @param array<int, array<string, mixed>> $rows
-     * @param array<int, string> $columns
-     * @param array<string, ColumnDeclaration> $columnTypes
+     * Writes the rows of a table as one VALUES list.
+     *
+     * @param array<int, array<string, mixed>> $rows Rows to read
+     * @param array<int, string> $columns Columns to read
+     * @param array<string, ColumnDeclaration> $columnTypes The column types
+     *
+     * @return string What it answers
      */
-    private function generateMultiRowSource(
+    public function generateMultiRowSource(
         array $rows,
         array $columns,
         array $columnTypes
@@ -217,10 +226,16 @@ final class SelectTransformer implements SqlTransformer
     }
 
     /**
-     * @param array<int, string> $columns
-     * @param array<string, string> $generatedExpressions
+     * Writes a clause naming a table, around a query answering its rows.
+     *
+     * @param string $quotedTable The quoted table
+     * @param string $baseSql The base sql
+     * @param array<int, string> $columns Columns to read
+     * @param array<string, string> $generatedExpressions The generated expressions
+     *
+     * @return string What it answers
      */
-    private function wrapCte(
+    public function wrapCte(
         string $quotedTable,
         string $baseSql,
         array $columns,
@@ -231,12 +246,25 @@ final class SelectTransformer implements SqlTransformer
         return "$quotedTable AS MATERIALIZED ($sql)";
     }
 
-    private function formatValue(mixed $val, ?ColumnDeclaration $colType = null): string
+    /**
+     * Writes one shadow value as the SQL that reads it back.
+     *
+     * @param mixed $val The val
+     * @param ColumnDeclaration|null $colType The col type
+     *
+     * @return string What it answers
+     */
+    public function formatValue(mixed $val, ?ColumnDeclaration $colType = null): string
     {
         return $this->valueRenderer->renderValue($val, $colType);
     }
 
-    private function renderFallbackNullCast(): string
+    /**
+     * Writes a null for a column nothing declared a type for.
+     *
+     * @return string What it answers
+     */
+    public function renderFallbackNullCast(): string
     {
         return $this->castRenderer->renderNullCast(
             new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),

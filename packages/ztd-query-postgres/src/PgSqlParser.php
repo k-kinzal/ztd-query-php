@@ -214,9 +214,13 @@ final class PgSqlParser
     }
 
     /**
-     * @param list<SqlToken> $tokens
+     * Answers where an ON CONFLICT names what it conflicts on.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     *
+     * @return int|null What it answers
      */
-    private static function findOnConflictTargetStart(array $tokens): ?int
+    public static function findOnConflictTargetStart(array $tokens): ?int
     {
         foreach ($tokens as $index => $token) {
             if (!$token->isTopLevel()) {
@@ -235,9 +239,15 @@ final class PgSqlParser
     }
 
     /**
-     * @param list<SqlToken> $tokens
+     * Answers where a symbol is written, at the level of the statement itself.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param int $start Where to start
+     * @param string $symbol Symbol it must be
+     *
+     * @return int|null What it answers
      */
-    private static function findTopLevelSymbol(array $tokens, int $start, string $symbol): ?int
+    public static function findTopLevelSymbol(array $tokens, int $start, string $symbol): ?int
     {
         for ($index = $start, $count = count($tokens); $index < $count; $index++) {
             $token = $tokens[$index];
@@ -256,9 +266,15 @@ final class PgSqlParser
     }
 
     /**
-     * @param list<SqlToken> $tokens
+     * Answers where a keyword is written, at the level of the statement itself.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param int $start Where to start
+     * @param string $keyword Keyword to look for
+     *
+     * @return int|null What it answers
      */
-    private static function findTopLevelKeyword(array $tokens, int $start, string $keyword): ?int
+    public static function findTopLevelKeyword(array $tokens, int $start, string $keyword): ?int
     {
         for ($index = $start, $count = count($tokens); $index < $count; $index++) {
             $token = $tokens[$index];
@@ -524,8 +540,15 @@ final class PgSqlParser
         return $tableNames;
     }
 
-    /** @return array{name: string, next: int}|null */
-    private function truncateIdentifierAt(SqlTokenStream $stream, int $index): ?array
+    /**
+     * Reads a table name a TRUNCATE names, and says where reading it left off.
+     *
+     * @param SqlTokenStream $stream Stream to read
+     * @param int $index Where to read
+     *
+     * @return array{name: string, next: int}|null What it answers
+     */
+    public function truncateIdentifierAt(SqlTokenStream $stream, int $index): ?array
     {
         $tokens = $stream->significantTokens();
         $prefix = $tokens[$index] ?? null;
@@ -691,8 +714,14 @@ final class PgSqlParser
         return (new PgSqlSelectRelationParser())->tableNames($sql);
     }
 
-    /** @return 'SELECT'|'INSERT'|'UPDATE'|'DELETE'|'MERGE'|null */
-    private function classifyWithStatement(string $sql): ?string
+    /**
+     * Answers what a WITH statement does, by the word written after its body.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return 'SELECT'|'INSERT'|'UPDATE'|'DELETE'|'MERGE'|null What it answers
+     */
+    public function classifyWithStatement(string $sql): ?string
     {
         $stripped = $this->stripStringLiterals($sql);
         $len = strlen($stripped);
@@ -763,8 +792,14 @@ final class PgSqlParser
         return null;
     }
 
-    /** @return 'SELECT'|'INSERT'|'UPDATE'|'DELETE'|'MERGE'|'TRUNCATE'|'CREATE_TABLE'|'DROP_TABLE'|'ALTER_TABLE'|'DO'|'TCL'|null */
-    private function classifySimpleStatement(string $sql): ?string
+    /**
+     * Answers what a statement does, by the word it opens with.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return 'SELECT'|'INSERT'|'UPDATE'|'DELETE'|'MERGE'|'TRUNCATE'|'CREATE_TABLE'|'DROP_TABLE'|'ALTER_TABLE'|'DO'|'TCL'|null What it answers
+     */
+    public function classifySimpleStatement(string $sql): ?string
     {
         $trimmed = ltrim($sql);
 
@@ -807,9 +842,13 @@ final class PgSqlParser
     }
 
     /**
-     * @return list<string>
+     * Reads the column names written in a list.
+     *
+     * @param string $columnStr The column str
+     *
+     * @return list<string> What it answers
      */
-    private function parseColumnList(string $columnStr): array
+    public function parseColumnList(string $columnStr): array
     {
         $columns = [];
         $parts = explode(',', $columnStr);
@@ -825,9 +864,14 @@ final class PgSqlParser
     }
 
     /**
-     * @return array{items: list<string>, end: int}|null
+     * Answers the entries written inside one pair of parentheses, and where they end.
+     *
+     * @param string $str The str
+     * @param int $start Where to start
+     *
+     * @return array{items: list<string>, end: int}|null What it answers
      */
-    private function extractParenthesizedList(string $str, int $start): ?array
+    public function extractParenthesizedList(string $str, int $start): ?array
     {
         if (!isset($str[$start]) || $str[$start] !== '(') {
             return null;
@@ -907,20 +951,41 @@ final class PgSqlParser
         return null;
     }
 
-    private function maskComments(string $sql): string
+    /**
+     * Answers the statement with every comment blanked out.
+     *
+     * Blanking rather than removing keeps every offset where it was, so
+     * anything already read off the statement still points at the same byte.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return string What it answers
+     */
+    public function maskComments(string $sql): string
     {
         return PostgreSqlLexicalMasker::maskComments($sql);
     }
 
-    private function stripStringLiterals(string $sql): string
+    /**
+     * Answers the statement with every string literal blanked out.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return string What it answers
+     */
+    public function stripStringLiterals(string $sql): string
     {
         return PostgreSqlLexicalMasker::maskStringLiterals($sql);
     }
 
     /**
-     * @return array{keyword: string, offset: int}|null
+     * Answers where an INSERT says what it is inserting.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return array{keyword: string, offset: int}|null What it answers
      */
-    private function findInsertSourceClause(string $sql): ?array
+    public function findInsertSourceClause(string $sql): ?array
     {
         $searchable = $this->stripStringLiterals($sql);
         $length = strlen($searchable);
