@@ -7,6 +7,12 @@ namespace Tests\Fake;
 use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Sql\SqlLexerProfile;
 
+/**
+ * Lexer profiles for tests, built around whatever one test is about.
+ *
+ * A profile takes twenty arguments before it describes anything, and a test
+ * about one of them has no interest in the other nineteen.
+ */
 final class FakeSqlLexerProfiles
 {
     /**

@@ -7,6 +7,13 @@ namespace ZtdQuery\Platform;
 use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Schema\ColumnType;
 
+/**
+ * The resolver a session has when no platform gave it one.
+ *
+ * It answers nothing, on purpose. A session that can read rows but cannot say
+ * what any column is has been built without a platform, and refusing at the
+ * first question is what makes that visible.
+ */
 final class MissingResultColumnTypeResolver implements ResultColumnTypeResolver
 {
     /**
