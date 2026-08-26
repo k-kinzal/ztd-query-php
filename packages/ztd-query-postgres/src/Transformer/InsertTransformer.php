@@ -153,10 +153,10 @@ final class InsertTransformer implements SqlTransformer
      * Rewrites an ON CONFLICT so that the result says what it did to each row.
      *
      * @param string $sql Statement being read, as written
-     * @param string $selectSql The select sql
+     * @param string $selectSql The SELECT the rows are read from
      * @param string $tableName Table it belongs to
-     * @param list<string> $tableColumns The table columns
-     * @param array $tables The tables
+     * @param list<string> $tableColumns Columns the table has
+     * @param ShadowTables $tables Table name => what the shadow holds for it
      *
      * @return string What it answers
      */

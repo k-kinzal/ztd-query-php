@@ -3082,4 +3082,43 @@ final class PgSqlMutationResolverTest extends TestCase
             QueryKind::WRITE_SIMULATED,
         );
     }
+    public function testStorageTableAnswersTheTableAPartitionsRowsAreHeldIn(): void
+    {
+        $resolver = new PgSqlMutationResolver(
+            new ShadowStore(),
+            new TableDefinitionRegistry(),
+            new PgSqlSchemaParser(),
+            new PgSqlParser(),
+        );
+
+        self::assertSame('users', $resolver->storageTable('users'));
+    }
+
+    public function testExtractSelectColumnNamesAnswersWhatTheSelectWouldName(): void
+    {
+        $resolver = new PgSqlMutationResolver(
+            new ShadowStore(),
+            new TableDefinitionRegistry(),
+            new PgSqlSchemaParser(),
+            new PgSqlParser(),
+        );
+
+        self::assertSame(['a', 'b'], $resolver->extractSelectColumnNames('SELECT id AS a, name AS b FROM t'));
+    }
+
+    public function testSplitByTopLevelCommaSeparatesOnlyWhereTheStatementItselfDoes(): void
+    {
+        $resolver = new PgSqlMutationResolver(
+            new ShadowStore(),
+            new TableDefinitionRegistry(),
+            new PgSqlSchemaParser(),
+            new PgSqlParser(),
+        );
+
+        self::assertSame(
+            ['f(a, b)', 'c'],
+            array_map(trim(...), $resolver->splitByTopLevelComma('f(a, b), c')),
+        );
+    }
+
 }

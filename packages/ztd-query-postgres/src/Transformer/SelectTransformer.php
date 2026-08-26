@@ -109,11 +109,11 @@ final class SelectTransformer implements SqlTransformer
     /**
      * Writes the clause that stands a table's shadow rows up in a statement.
      *
-     * @param string $tableName Table it belongs to
-     * @param array<int, array<string, mixed>> $rows Rows to read
+     * @param string $tableName Table the rows belong to
+     * @param list<array<string, RenderableValue>> $rows Rows the shadow holds, as the driver answered them
      * @param array<int, string> $columns Columns to read
-     * @param array<string, ColumnDeclaration> $columnTypes The column types
-     * @param array<string, string> $generatedExpressions The generated expressions
+     * @param array<string, ColumnDeclaration> $columnTypes How each column was declared
+     * @param array<string, string> $generatedExpressions Column => the expression the table works it out with
      *
      * @return string What it answers
      *
@@ -193,9 +193,9 @@ final class SelectTransformer implements SqlTransformer
     /**
      * Writes the rows of a table as one VALUES list.
      *
-     * @param array<int, array<string, mixed>> $rows Rows to read
+     * @param list<array<string, RenderableValue>> $rows Rows the shadow holds, as the driver answered them
      * @param array<int, string> $columns Columns to read
-     * @param array<string, ColumnDeclaration> $columnTypes The column types
+     * @param array<string, ColumnDeclaration> $columnTypes How each column was declared
      *
      * @return string What it answers
      */
@@ -228,10 +228,10 @@ final class SelectTransformer implements SqlTransformer
     /**
      * Writes a clause naming a table, around a query answering its rows.
      *
-     * @param string $quotedTable The quoted table
-     * @param string $baseSql The base sql
+     * @param string $quotedTable The table's name, as PostgreSQL would write it
+     * @param string $baseSql Query answering the rows
      * @param array<int, string> $columns Columns to read
-     * @param array<string, string> $generatedExpressions The generated expressions
+     * @param array<string, string> $generatedExpressions Column => the expression the table works it out with
      *
      * @return string What it answers
      */
