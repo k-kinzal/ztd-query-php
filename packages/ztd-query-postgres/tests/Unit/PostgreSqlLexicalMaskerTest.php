@@ -141,4 +141,84 @@ final class PostgreSqlLexicalMaskerTest extends TestCase
         yield 'underscore-attached tag' => ['_$tag$WHERE$tag$ FROM name', '_$tag$WHERE$tag$ FROM name'];
         yield 'newlines preserve length' => ["'line1\nline2' FROM name", str_repeat(' ', 13) . ' FROM name'];
     }
+    public function testMaskCommentsTakesTheCommentOutAndLeavesTheRest(): void
+    {
+        self::assertSame("SELECT  \n1", PostgreSqlLexicalMasker::maskComments("SELECT -- x\n1"));
+    }
+
+    public function testMaskCommentsLeavesACommentMarkerInsideAStringAlone(): void
+    {
+        self::assertSame("SELECT '-- x'", PostgreSqlLexicalMasker::maskComments("SELECT '-- x'"));
+    }
+
+    public function testQuotedLengthAnswersHowLongTheQuotedRunIs(): void
+    {
+        self::assertSame(3, PostgreSqlLexicalMasker::quotedLength("'a'x", "'", false));
+    }
+
+    public function testQuotedLengthReadsPastAnEscapedQuoteWhereBackslashesEscape(): void
+    {
+        self::assertSame(5, PostgreSqlLexicalMasker::quotedLength("'a\\''", "'", true));
+    }
+
+    public function testDollarQuotedLengthAnswersHowLongTheRunIs(): void
+    {
+        self::assertSame(7, PostgreSqlLexicalMasker::dollarQuotedLength('$$abc$$'));
+    }
+
+    public function testDollarQuotedLengthIsNothingWhereNoRunOpens(): void
+    {
+        self::assertNull(PostgreSqlLexicalMasker::dollarQuotedLength('$1'));
+    }
+
+    public function testDollarQuoteDelimiterAnswersTheDelimiterTheRunOpensWith(): void
+    {
+        self::assertSame('$tag$', PostgreSqlLexicalMasker::dollarQuoteDelimiter('$tag$abc$tag$'));
+    }
+
+    public function testDollarQuoteDelimiterIsNothingForAPositionalParameter(): void
+    {
+        self::assertNull(PostgreSqlLexicalMasker::dollarQuoteDelimiter('$1'));
+    }
+
+    public function testIsDollarQuoteStartReportsARunOpeningAtTheStart(): void
+    {
+        self::assertTrue(PostgreSqlLexicalMasker::isDollarQuoteStart('$$a$$', 0));
+    }
+
+    public function testIsDollarQuoteStartIsFalseWhereADollarIsPartOfAName(): void
+    {
+        self::assertFalse(PostgreSqlLexicalMasker::isDollarQuoteStart('a$$b$$', 1));
+    }
+
+    public function testIsEscapeStringStartReportsAnEscapeStringOpening(): void
+    {
+        self::assertTrue(PostgreSqlLexicalMasker::isEscapeStringStart("E'a'", 1));
+    }
+
+    public function testIsEscapeStringStartIsFalseWhereTheEIsPartOfAName(): void
+    {
+        self::assertFalse(PostgreSqlLexicalMasker::isEscapeStringStart("aE'a'", 2));
+    }
+
+    public function testIsIdentifierStartReportsAByteANameCouldOpenWith(): void
+    {
+        self::assertTrue(PostgreSqlLexicalMasker::isIdentifierStart('_'));
+    }
+
+    public function testIsIdentifierStartIsFalseForADigit(): void
+    {
+        self::assertFalse(PostgreSqlLexicalMasker::isIdentifierStart('1'));
+    }
+
+    public function testIsIdentifierContinuationReportsAByteANameCouldCarryOnWith(): void
+    {
+        self::assertTrue(PostgreSqlLexicalMasker::isIdentifierContinuation('1'));
+    }
+
+    public function testIsIdentifierContinuationIsFalseForASpace(): void
+    {
+        self::assertFalse(PostgreSqlLexicalMasker::isIdentifierContinuation(' '));
+    }
+
 }

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\MySqlUpsertLiteral;
@@ -13,8 +12,6 @@ use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 
 #[CoversClass(MySqlUpsertLiteral::class)]
-#[UsesClass(SqlToken::class)]
-#[UsesClass(UnsupportedSqlException::class)]
 final class MySqlUpsertLiteralTest extends TestCase
 {
     public function testNumberOfReadsAWholeNumberAsAnInteger(): void

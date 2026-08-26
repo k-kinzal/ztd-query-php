@@ -38,12 +38,19 @@ final class PgSqlTableSampleParser
     }
 
     /**
-     * @param list<SqlToken> $tokens
-     * @param array{name: string, start: int, unqualifiedStart: int, end: int} $reference
+     * Reads the TABLESAMPLE written after a table, if one is.
+     *
+     * @param string $sql Statement being read, as written
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param array{name: string, start: int, unqualifiedStart: int, end: int} $reference The reference
+     * @param int $sampleIndex The sample index
+     * @param SqlToken $referenceToken The reference token
+     *
+     * @return PgSqlTableSample What it answers
      *
      * @throws UnsupportedSqlException
      */
-    private function parseSample(
+    public function parseSample(
         string $sql,
         array $tokens,
         array $reference,
@@ -116,8 +123,15 @@ final class PgSqlTableSampleParser
         );
     }
 
-    /** @param list<SqlToken> $tokens */
-    private function tokenAtOffset(array $tokens, int $offset): ?SqlToken
+    /**
+     * Answers which token is written at a position.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param int $offset Position to read from
+     *
+     * @return SqlToken|null What it answers
+     */
+    public function tokenAtOffset(array $tokens, int $offset): ?SqlToken
     {
         foreach ($tokens as $token) {
             if ($token->offset === $offset) {
@@ -128,8 +142,15 @@ final class PgSqlTableSampleParser
         return null;
     }
 
-    /** @param list<SqlToken> $tokens */
-    private function sampleIndexAfter(array $tokens, SqlToken $referenceToken): ?int
+    /**
+     * Answers where the TABLESAMPLE after a table is written.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param SqlToken $referenceToken The reference token
+     *
+     * @return int|null What it answers
+     */
+    public function sampleIndexAfter(array $tokens, SqlToken $referenceToken): ?int
     {
         $afterReference = false;
         foreach ($tokens as $index => $token) {
@@ -151,7 +172,14 @@ final class PgSqlTableSampleParser
         return null;
     }
 
-    private function isRelationBoundary(SqlToken $token): bool
+    /**
+     * Reports whether a token ends what the table's name and alias cover.
+     *
+     * @param SqlToken $token Token to read
+     *
+     * @return bool What it answers
+     */
+    public function isRelationBoundary(SqlToken $token): bool
     {
         foreach (['JOIN', 'ON', 'USING', 'WHERE', 'GROUP', 'HAVING', 'ORDER', 'LIMIT', 'OFFSET', 'UNION', 'INTERSECT', 'EXCEPT', 'FOR', 'RETURNING'] as $keyword) {
             if ($token->isKeyword($keyword)) {
@@ -162,13 +190,28 @@ final class PgSqlTableSampleParser
         return false;
     }
 
-    private function isOpeningParenthesis(SqlToken $token, SqlToken $referenceToken): bool
+    /**
+     * Reports whether a token opens a parenthesis.
+     *
+     * @param SqlToken $token Token to read
+     * @param SqlToken $referenceToken The reference token
+     *
+     * @return bool What it answers
+     */
+    public function isOpeningParenthesis(SqlToken $token, SqlToken $referenceToken): bool
     {
         return $token->text === '(' && $this->sameLevel($token, $referenceToken);
     }
 
-    /** @param list<SqlToken> $tokens */
-    private function closingParenthesisIndex(array $tokens, int $openIndex): ?int
+    /**
+     * Answers where the parenthesis that closes this one is written.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param int $openIndex The open index
+     *
+     * @return int|null What it answers
+     */
+    public function closingParenthesisIndex(array $tokens, int $openIndex): ?int
     {
         $open = $tokens[$openIndex] ?? null;
         if ($open === null) {
@@ -186,8 +229,15 @@ final class PgSqlTableSampleParser
         return null;
     }
 
-    /** @param list<SqlToken> $tokens */
-    private function tokenAfter(array $tokens, SqlToken $referenceToken): SqlToken
+    /**
+     * Answers the token written after this one, at the same level.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param SqlToken $referenceToken The reference token
+     *
+     * @return SqlToken What it answers
+     */
+    public function tokenAfter(array $tokens, SqlToken $referenceToken): SqlToken
     {
         $afterReference = false;
         foreach ($tokens as $token) {
@@ -200,7 +250,15 @@ final class PgSqlTableSampleParser
         return $referenceToken;
     }
 
-    private function sameLevel(SqlToken $token, SqlToken $referenceToken): bool
+    /**
+     * Reports whether two tokens are written at the same depth.
+     *
+     * @param SqlToken $token Token to read
+     * @param SqlToken $referenceToken The reference token
+     *
+     * @return bool What it answers
+     */
+    public function sameLevel(SqlToken $token, SqlToken $referenceToken): bool
     {
         return $token->depth === $referenceToken->depth
             && $token->bracketDepth === $referenceToken->bracketDepth;

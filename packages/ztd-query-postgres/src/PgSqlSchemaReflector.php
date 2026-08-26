@@ -105,7 +105,14 @@ final class PgSqlSchemaReflector implements SchemaReflector, ViewReflector
         return $definitions;
     }
 
-    private function buildCreateTableSql(string $tableName): ?string
+    /**
+     * Writes what the catalogue says about a table back out as a CREATE TABLE.
+     *
+     * @param string $tableName Table it belongs to
+     *
+     * @return string|null What it answers
+     */
+    public function buildCreateTableSql(string $tableName): ?string
     {
         $escapedTableName = str_replace("'", "''", $tableName);
         $stmt = $this->connection->query(
@@ -299,9 +306,13 @@ final class PgSqlSchemaReflector implements SchemaReflector, ViewReflector
     }
 
     /**
-     * @param array<string, mixed> $col
+     * Writes what the catalogue says about one column.
+     *
+     * @param array<string, mixed> $col The col
+     *
+     * @return string What it answers
      */
-    private function buildColumnDefinition(array $col): string
+    public function buildColumnDefinition(array $col): string
     {
         $columnName = isset($col['column_name']) && is_string($col['column_name']) ? $col['column_name'] : '';
         $name = '"' . $columnName . '"';
@@ -339,9 +350,13 @@ final class PgSqlSchemaReflector implements SchemaReflector, ViewReflector
     }
 
     /**
-     * @param array<string, mixed> $col
+     * Answers the type a domain stands for.
+     *
+     * @param array<string, mixed> $col The col
+     *
+     * @return string|null What it answers
      */
-    private function domainTypeSql(array $col): ?string
+    public function domainTypeSql(array $col): ?string
     {
         $domainName = $col['domain_name'] ?? null;
         if (!is_string($domainName)) {
@@ -364,9 +379,15 @@ final class PgSqlSchemaReflector implements SchemaReflector, ViewReflector
     }
 
     /**
-     * @param array<string, mixed> $col
+     * Writes a column's type as the catalogue describes it.
+     *
+     * @param string $dataType The data type
+     * @param string $udtName The udt name
+     * @param array<string, mixed> $col The col
+     *
+     * @return string What it answers
      */
-    private function buildTypeSql(string $dataType, string $udtName, array $col): string
+    public function buildTypeSql(string $dataType, string $udtName, array $col): string
     {
         return match ($dataType) {
             'CHARACTER VARYING' => $this->buildVarcharType($col),
@@ -384,9 +405,13 @@ final class PgSqlSchemaReflector implements SchemaReflector, ViewReflector
     }
 
     /**
-     * @param array<string, mixed> $col
+     * Writes a variable-width character type, with the width the catalogue gives.
+     *
+     * @param array<string, mixed> $col The col
+     *
+     * @return string What it answers
      */
-    private function buildVarcharType(array $col): string
+    public function buildVarcharType(array $col): string
     {
         $maxLen = $col['character_maximum_length'] ?? null;
         if (is_int($maxLen) || (is_string($maxLen) && ctype_digit($maxLen))) {
@@ -397,9 +422,13 @@ final class PgSqlSchemaReflector implements SchemaReflector, ViewReflector
     }
 
     /**
-     * @param array<string, mixed> $col
+     * Writes a fixed-width character type, with the width the catalogue gives.
+     *
+     * @param array<string, mixed> $col The col
+     *
+     * @return string What it answers
      */
-    private function buildCharType(array $col): string
+    public function buildCharType(array $col): string
     {
         $maxLen = $col['character_maximum_length'] ?? null;
         if (is_int($maxLen) || (is_string($maxLen) && ctype_digit($maxLen))) {
@@ -410,9 +439,14 @@ final class PgSqlSchemaReflector implements SchemaReflector, ViewReflector
     }
 
     /**
-     * @param array<string, mixed> $col
+     * Writes a bit type, with the width the catalogue gives.
+     *
+     * @param string $dataType The data type
+     * @param array<string, mixed> $col The col
+     *
+     * @return string What it answers
      */
-    private function buildBitType(string $dataType, array $col): string
+    public function buildBitType(string $dataType, array $col): string
     {
         $maxLen = $col['character_maximum_length'] ?? null;
         if (is_int($maxLen) || (is_string($maxLen) && ctype_digit($maxLen))) {
@@ -423,9 +457,13 @@ final class PgSqlSchemaReflector implements SchemaReflector, ViewReflector
     }
 
     /**
-     * @param array<string, mixed> $col
+     * Writes a numeric type, with the digits the catalogue gives.
+     *
+     * @param array<string, mixed> $col The col
+     *
+     * @return string What it answers
      */
-    private function buildNumericType(array $col): string
+    public function buildNumericType(array $col): string
     {
         $precision = $col['numeric_precision'] ?? null;
         $scale = $col['numeric_scale'] ?? null;
@@ -445,7 +483,14 @@ final class PgSqlSchemaReflector implements SchemaReflector, ViewReflector
         return 'NUMERIC';
     }
 
-    private function resolveUserDefinedType(string $udtName): string
+    /**
+     * Answers what a type the catalogue does not itself define stands for.
+     *
+     * @param string $udtName The udt name
+     *
+     * @return string What it answers
+     */
+    public function resolveUserDefinedType(string $udtName): string
     {
         return match ($udtName) {
             'CITEXT' => 'CITEXT',
@@ -455,7 +500,14 @@ final class PgSqlSchemaReflector implements SchemaReflector, ViewReflector
         };
     }
 
-    private function resolveArrayType(string $udtName): string
+    /**
+     * Answers the element type an array type is of.
+     *
+     * @param string $udtName The udt name
+     *
+     * @return string What it answers
+     */
+    public function resolveArrayType(string $udtName): string
     {
         if (str_starts_with($udtName, '_')) {
             $baseType = strtoupper(substr($udtName, 1));

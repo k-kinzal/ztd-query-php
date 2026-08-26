@@ -80,9 +80,15 @@ final class PgSqlMutationResolver
     }
 
     /**
+     * Answers what an INSERT would do to the shadow.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return ShadowMutation What it answers
+     *
      * @throws UnsupportedSqlException
      */
-    private function resolveInsert(string $sql): ShadowMutation
+    public function resolveInsert(string $sql): ShadowMutation
     {
         $tableName = $this->parser->extractInsertTable($sql);
         if ($tableName === null) {
@@ -164,11 +170,16 @@ final class PgSqlMutationResolver
      * @throws UnknownSchemaException
      */
     /**
-     * @throws UnsupportedSqlException
+     * Answers what an UPDATE would do to the shadow.
      *
+     * @param string $sql Statement being read, as written
+     *
+     * @return ShadowMutation What it answers
+     *
+     * @throws UnsupportedSqlException
      * @throws UnknownSchemaException
      */
-    private function resolveUpdate(string $sql): ShadowMutation
+    public function resolveUpdate(string $sql): ShadowMutation
     {
         $targetTable = $this->parser->extractUpdateTable($sql);
         if ($targetTable === null) {
@@ -191,11 +202,16 @@ final class PgSqlMutationResolver
      * @throws UnknownSchemaException
      */
     /**
-     * @throws UnsupportedSqlException
+     * Answers what a DELETE would do to the shadow.
      *
+     * @param string $sql Statement being read, as written
+     *
+     * @return ShadowMutation What it answers
+     *
+     * @throws UnsupportedSqlException
      * @throws UnknownSchemaException
      */
-    private function resolveDelete(string $sql): ShadowMutation
+    public function resolveDelete(string $sql): ShadowMutation
     {
         $targetTable = $this->parser->extractDeleteTable($sql);
         if ($targetTable === null) {
@@ -215,9 +231,15 @@ final class PgSqlMutationResolver
     }
 
     /**
+     * Answers what a MERGE would do to the shadow.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return ShadowMutation What it answers
+     *
      * @throws UnknownSchemaException
      */
-    private function resolveMerge(string $sql): ShadowMutation
+    public function resolveMerge(string $sql): ShadowMutation
     {
         $statement = (new PgSqlMergeParser())->parse($sql);
         $definition = $this->registry->get($statement->targetTable);
@@ -235,9 +257,15 @@ final class PgSqlMutationResolver
     }
 
     /**
+     * Answers what a TRUNCATE would do to the shadow.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return ShadowMutation What it answers
+     *
      * @throws UnsupportedSqlException
      */
-    private function resolveTruncate(string $sql): ShadowMutation
+    public function resolveTruncate(string $sql): ShadowMutation
     {
         $tableNames = $this->parser->extractTruncateTables($sql);
         if ($tableNames === []) {
@@ -254,11 +282,16 @@ final class PgSqlMutationResolver
      * @throws UnknownSchemaException
      */
     /**
-     * @throws UnsupportedSqlException
+     * Answers what a CREATE TABLE would do to the shadow.
      *
+     * @param string $sql Statement being read, as written
+     *
+     * @return ShadowMutation What it answers
+     *
+     * @throws UnsupportedSqlException
      * @throws UnknownSchemaException
      */
-    private function resolveCreateTable(string $sql): ShadowMutation
+    public function resolveCreateTable(string $sql): ShadowMutation
     {
         $tableName = $this->parser->extractCreateTableName($sql);
         if ($tableName === null) {
@@ -321,7 +354,14 @@ final class PgSqlMutationResolver
         return new CreateTableMutation($tableName, $definition, $this->registry, $sql, $ifNotExists);
     }
 
-    private function storageTable(string $tableName): string
+    /**
+     * Answers which table a partition's rows are actually held in.
+     *
+     * @param string $tableName Table it belongs to
+     *
+     * @return string What it answers
+     */
+    public function storageTable(string $tableName): string
     {
         $seen = [];
         while (!in_array($tableName, $seen, true)) {
@@ -340,11 +380,16 @@ final class PgSqlMutationResolver
      * @throws UnknownSchemaException
      */
     /**
-     * @throws UnsupportedSqlException
+     * Answers what a DROP would do to the shadow.
      *
+     * @param string $sql Statement being read, as written
+     *
+     * @return ShadowMutation What it answers
+     *
+     * @throws UnsupportedSqlException
      * @throws UnknownSchemaException
      */
-    private function resolveDropTable(string $sql): ShadowMutation
+    public function resolveDropTable(string $sql): ShadowMutation
     {
         $tableName = $this->parser->extractDropTableName($sql);
         if ($tableName === null) {
@@ -364,11 +409,16 @@ final class PgSqlMutationResolver
      * @throws UnknownSchemaException
      */
     /**
-     * @throws UnsupportedSqlException
+     * Answers what an ALTER TABLE would do to the shadow.
      *
+     * @param string $sql Statement being read, as written
+     *
+     * @return ShadowMutation|null What it answers
+     *
+     * @throws UnsupportedSqlException
      * @throws UnknownSchemaException
      */
-    private function resolveAlterTable(string $sql): ?ShadowMutation
+    public function resolveAlterTable(string $sql): ?ShadowMutation
     {
         $tableName = $this->parser->extractAlterTableName($sql);
         if ($tableName === null) {
@@ -383,11 +433,13 @@ final class PgSqlMutationResolver
     }
 
     /**
-     * Extract column names from a SELECT SQL string.
+     * Answers the names a SELECT would give the columns it answers.
      *
-     * @return list<string>
+     * @param string $selectSql The select sql
+     *
+     * @return list<string> What it answers
      */
-    private function extractSelectColumnNames(string $selectSql): array
+    public function extractSelectColumnNames(string $selectSql): array
     {
         $columns = [];
 
@@ -421,9 +473,13 @@ final class PgSqlMutationResolver
     }
 
     /**
-     * @return list<string>
+     * Splits text where the statement itself separates it, not where something inside it does.
+     *
+     * @param string $str The str
+     *
+     * @return list<string> What it answers
      */
-    private function splitByTopLevelComma(string $str): array
+    public function splitByTopLevelComma(string $str): array
     {
         $parts = [];
         $current = '';

@@ -17,6 +17,7 @@ use ZtdQuery\Rewrite\QueryKind;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlReadOnlyDiagnosticStatement::class)]
 #[UsesClass(MySqlParser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlStatementOptions::class)]
 class MySqlQueryGuardTest extends QueryClassifierContractTest
 {
     public function classify(string $sql): ?QueryKind

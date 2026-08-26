@@ -20,6 +20,8 @@ use ZtdQuery\Shadow\Mutation\InsertMutation;
 #[UsesClass(ReturningProjection::class)]
 #[CoversClass(RewritePlan::class)]
 #[UsesClass(UnsupportedSqlException::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\ConflictSearch::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\RowConstraints::class)]
 final class RewritePlanTest extends TestCase
 {
     public function testKindSqlKindPlanHoldsSqlKindAndMutation(): void

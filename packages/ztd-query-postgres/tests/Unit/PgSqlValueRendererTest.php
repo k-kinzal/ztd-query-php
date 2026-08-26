@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use Stringable;
+use Tests\Fixture\DriverAnswer;
 use ZtdQuery\Platform\Postgres\PgSqlValueRenderer;
 use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
@@ -138,5 +139,91 @@ final class PgSqlValueRendererTest extends TestCase
             ['value'],
             new ColumnDeclaration(ColumnTypeFamily::BINARY, 'BYTEA'),
         );
+    }
+    public function testRenderExpressionWritesAStringAsAQuotedLiteral(): void
+    {
+        self::assertSame(
+            "'a'",
+            (new PgSqlValueRenderer())->renderExpression('a', new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR'), false),
+        );
+    }
+
+    public function testRenderExpressionKeepsABackslashInTheLiteralItWrites(): void
+    {
+        self::assertSame(
+            "'a\\b'",
+            (new PgSqlValueRenderer())->renderExpression('a\\b', new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR'), false),
+        );
+    }
+
+    public function testRenderExpressionWritesBytesAsAHexLiteral(): void
+    {
+        self::assertSame(
+            "decode('6162', 'hex')",
+            (new PgSqlValueRenderer())->renderExpression('ab', new ColumnDeclaration(ColumnTypeFamily::BINARY, 'BYTEA'), true),
+        );
+    }
+
+    public function testInferTypeReadsAWholeNumberAsAnInteger(): void
+    {
+        self::assertSame(ColumnTypeFamily::INTEGER, (new PgSqlValueRenderer())->inferType(1)->family);
+    }
+
+    public function testInferTypeReadsAnythingElseAsAString(): void
+    {
+        self::assertSame(ColumnTypeFamily::TEXT, (new PgSqlValueRenderer())->inferType('a')->family);
+    }
+
+    public function testStringValueAnswersTheBytesAValueIs(): void
+    {
+        self::assertSame('1', (new PgSqlValueRenderer())->stringValue(1));
+    }
+
+    public function testStringValueRefusesAValueNoLiteralCanCarry(): void
+    {
+        $this->expectException(RuntimeException::class);
+
+        (new PgSqlValueRenderer())->renderValue(DriverAnswer::unsupported());
+    }
+
+    public function testReadStreamAnswersEverythingTheStreamHolds(): void
+    {
+        $stream = fopen('php://memory', 'r+');
+        self::assertIsResource($stream);
+        fwrite($stream, 'abc');
+
+        self::assertSame('abc', (new PgSqlValueRenderer())->readStream($stream));
+    }
+
+    public function testReadStreamLeavesTheStreamWhereTheCallerHadIt(): void
+    {
+        $stream = fopen('php://memory', 'r+');
+        self::assertIsResource($stream);
+        fwrite($stream, 'abc');
+        fseek($stream, 1);
+
+        (new PgSqlValueRenderer())->readStream($stream);
+
+        self::assertSame(1, ftell($stream));
+    }
+
+    public function testQuoteValueDoublesEveryQuoteInTheBytes(): void
+    {
+        self::assertSame("'it''s'", (new PgSqlValueRenderer())->quoteValue("it's"));
+    }
+
+    public function testRenderValueWritesANullAsNull(): void
+    {
+        self::assertSame('NULL', (new PgSqlValueRenderer())->renderValue(null));
+    }
+
+    public function testIsRenderableReportsAValueALiteralCanCarry(): void
+    {
+        self::assertTrue((new PgSqlValueRenderer())->isRenderable(DriverAnswer::renderable()));
+    }
+
+    public function testIsRenderableIsFalseForSomethingNoLiteralCouldCarry(): void
+    {
+        self::assertFalse((new PgSqlValueRenderer())->isRenderable(DriverAnswer::unsupported()));
     }
 }

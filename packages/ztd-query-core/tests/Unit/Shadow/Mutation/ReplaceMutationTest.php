@@ -18,6 +18,7 @@ use ZtdQuery\Shadow\ShadowStore;
 #[UsesClass(CandidateKeySet::class)]
 #[UsesClass(TableDefinition::class)]
 #[CoversClass(ReplaceMutation::class)]
+#[UsesClass(\ZtdQuery\Schema\CandidateKeyMatch::class)]
 final class ReplaceMutationTest extends TestCase
 {
     public function testApplyReplacesExistingRowByPrimaryKey(): void

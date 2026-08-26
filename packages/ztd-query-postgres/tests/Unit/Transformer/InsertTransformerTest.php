@@ -504,4 +504,50 @@ final class InsertTransformerTest extends TestCase
 
         self::assertStringContainsString('1 AS "id"', $generated);
     }
+    public function testTransformWritesTheRowsAnInsertWouldWrite(): void
+    {
+        $transformer = new InsertTransformer(new PgSqlParser(), new SelectTransformer());
+
+        self::assertStringContainsString(
+            'SELECT',
+            $transformer->transform('INSERT INTO t (id) VALUES (1)', [
+                't' => ['rows' => [], 'columns' => ['id'], 'columnTypes' => []],
+            ]),
+        );
+    }
+
+    public function testProjectUpsertLeavesAStatementWithNoConflictClauseAlone(): void
+    {
+        $transformer = new InsertTransformer(new PgSqlParser(), new SelectTransformer());
+
+        self::assertSame(
+            'SELECT 1',
+            $transformer->projectUpsert('INSERT INTO t (id) VALUES (1)', 'SELECT 1', 't', ['id'], []),
+        );
+    }
+
+    public function testCommitRewriteStateKeepsTheIdentityValuesTheRewriteHandedOut(): void
+    {
+        $transformer = new InsertTransformer(new PgSqlParser(), new SelectTransformer());
+
+        $transformer->commitRewriteState();
+
+        self::assertSame([], InsertTransformer::orderedValues([]));
+    }
+
+    public function testOrderedValuesAnswersTheValuesUnderNoKeysOfTheirOwn(): void
+    {
+        self::assertSame(['a', 'b'], InsertTransformer::orderedValues([3 => 'a', 7 => 'b']));
+    }
+
+    public function testCastInsertExpressionWritesTheValueAsTheColumnsType(): void
+    {
+        $transformer = new InsertTransformer(new PgSqlParser(), new SelectTransformer());
+
+        self::assertStringContainsString(
+            'CAST',
+            $transformer->castInsertExpression('1', new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER')),
+        );
+    }
+
 }

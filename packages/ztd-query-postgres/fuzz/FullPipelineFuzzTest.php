@@ -10,7 +10,6 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\PostgreSqlProvider;
-use Throwable;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
@@ -66,9 +65,14 @@ final class FullPipelineFuzzTest extends TestCase
     }
 
     /**
-     * Build a fresh rewriter with given registry and shadow store.
+     * Answers the rewriter a fuzzed statement is run through.
+     *
+     * @param ShadowStore $shadowStore The shadow store
+     * @param TableDefinitionRegistry $registry The registry
+     *
+     * @return PgSqlRewriter What it answers
      */
-    private function buildRewriter(ShadowStore $shadowStore, TableDefinitionRegistry $registry): PgSqlRewriter
+    public function buildRewriter(ShadowStore $shadowStore, TableDefinitionRegistry $registry): PgSqlRewriter
     {
         $parser = new PgSqlParser();
         $guard = new PgSqlQueryGuard($parser);
@@ -86,11 +90,14 @@ final class FullPipelineFuzzTest extends TestCase
     }
 
     /**
-     * Generate random fixture rows for a table definition.
+     * Answers the rows a fuzzed statement is run against.
      *
-     * @return array<int, array<string, mixed>>
+     * @param TableDefinition $definition What the table holds
+     * @param int $count The count
+     *
+     * @return list<array<string, bool|float|int|string|null>> The rows, as the shadow would hold them
      */
-    private function generateFixtureRows(TableDefinition $definition, int $count): array
+    public function generateFixtureRows(TableDefinition $definition, int $count): array
     {
         $rows = [];
         for ($i = 0; $i < $count; $i++) {
@@ -106,9 +113,14 @@ final class FullPipelineFuzzTest extends TestCase
     }
 
     /**
-     * Generate a random value appropriate for the given SQL type.
+     * Answers a value a column of this type could hold.
+     *
+     * @param string $type How the column was declared
+     * @param int $seed The seed
+     *
+     * @return int|float|string|bool What it answers
      */
-    private function generateValueForType(string $type, int $seed): int|float|string|bool
+    public function generateValueForType(string $type, int $seed): int|float|string|bool
     {
         $baseType = preg_replace('/\(.*\)/', '', $type);
         $baseType = trim($baseType ?? $type);
@@ -156,8 +168,7 @@ final class FullPipelineFuzzTest extends TestCase
                 self::assertSame(QueryKind::READ, $plan->kind());
                 self::assertNull($plan->mutation());
             } catch (UnsupportedSqlException|UnknownSchemaException) {
-            } catch (Throwable $e) {
-                self::fail("Full pipeline SELECT crashed on iteration $i\nCREATE: $createSql\nSELECT: $selectSql\nError: " . $e->getMessage());
+                continue;
             }
         }
         self::addToAssertionCount(self::ITERATIONS);
@@ -212,8 +223,7 @@ final class FullPipelineFuzzTest extends TestCase
                     );
                 }
             } catch (UnsupportedSqlException|UnknownSchemaException) {
-            } catch (Throwable $e) {
-                self::fail("Full pipeline INSERT crashed on iteration $i\nCREATE: $createSql\nINSERT: $insertSql\nError: " . $e->getMessage());
+                continue;
             }
         }
         self::addToAssertionCount(self::ITERATIONS);
@@ -266,8 +276,7 @@ final class FullPipelineFuzzTest extends TestCase
                     );
                 }
             } catch (UnsupportedSqlException|UnknownSchemaException) {
-            } catch (Throwable $e) {
-                self::fail("Full pipeline UPDATE crashed on iteration $i\nCREATE: $createSql\nUPDATE: $updateSql\nError: " . $e->getMessage());
+                continue;
             }
         }
         self::addToAssertionCount(self::ITERATIONS);
@@ -314,8 +323,7 @@ final class FullPipelineFuzzTest extends TestCase
                     self::assertNotEmpty($storedRows);
                 }
             } catch (UnsupportedSqlException|UnknownSchemaException) {
-            } catch (Throwable $e) {
-                self::fail("Full pipeline DELETE crashed on iteration $i\nCREATE: $createSql\nDELETE: $deleteSql\nError: " . $e->getMessage());
+                continue;
             }
         }
         self::addToAssertionCount(self::ITERATIONS);
@@ -358,8 +366,7 @@ final class FullPipelineFuzzTest extends TestCase
                 self::assertNotEmpty($selectPlan->sql());
                 self::assertSame(QueryKind::READ, $selectPlan->kind());
             } catch (UnsupportedSqlException|UnknownSchemaException) {
-            } catch (Throwable $e) {
-                self::fail("Full pipeline CREATE->SELECT crashed on iteration $i\nCREATE: $createSql\nError: " . $e->getMessage());
+                continue;
             }
         }
         self::addToAssertionCount(self::ITERATIONS);
@@ -431,8 +438,7 @@ final class FullPipelineFuzzTest extends TestCase
                         self::assertNotNull($plan->mutation(), 'DDL_SIMULATED plan must have a mutation');
                     }
                 } catch (UnsupportedSqlException|UnknownSchemaException) {
-                } catch (Throwable $e) {
-                    self::fail("ShadowStore integrity check failed on iteration $i with SQL: $sql\nCREATE: $createSql\nError: " . $e->getMessage());
+                    continue;
                 }
             }
         }
@@ -440,9 +446,13 @@ final class FullPipelineFuzzTest extends TestCase
     }
 
     /**
-     * Extract table name from a CREATE TABLE statement.
+     * Answers the table a declaration declares.
+     *
+     * @param string $createSql The create sql
+     *
+     * @return string|null What it answers
      */
-    private function extractTableName(string $createSql): ?string
+    public function extractTableName(string $createSql): ?string
     {
         if (preg_match('/CREATE\s+(?:TEMPORARY\s+|TEMP\s+|UNLOGGED\s+)?TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:(?:"([^"]+)"|([a-zA-Z_]\w*))\.)?(?:"([^"]+)"|([a-zA-Z_]\w*))/i', $createSql, $m) !== 1) {
             return null;
@@ -452,15 +462,26 @@ final class FullPipelineFuzzTest extends TestCase
         return $quotedTable !== '' ? $quotedTable : ($m[4] ?? null);
     }
 
-    private function quoteIdentifier(string $name): string
+    /**
+     * Writes a name as PostgreSQL would write it.
+     *
+     * @param string $name Name to read
+     *
+     * @return string What it answers
+     */
+    public function quoteIdentifier(string $name): string
     {
         return '"' . str_replace('"', '""', $name) . '"';
     }
 
     /**
-     * Build a VALUES clause with placeholder literals for all columns.
+     * Writes the values of one row as an INSERT would write them.
+     *
+     * @param TableDefinition $definition What the table holds
+     *
+     * @return string What it answers
      */
-    private function buildInsertValues(TableDefinition $definition): string
+    public function buildInsertValues(TableDefinition $definition): string
     {
         $values = [];
         foreach ($definition->columns as $col) {

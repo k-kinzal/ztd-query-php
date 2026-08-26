@@ -12,6 +12,7 @@ use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\RewriteStateCommitter;
 use ZtdQuery\Rewrite\SqlRewriter;
+use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Schema\ViewDefinitionSet;
 use ZtdQuery\Shadow\ShadowStore;
@@ -22,6 +23,8 @@ use ZtdQuery\Sql\TransactionStatement;
  *
  * Orchestrates parsing, classification, transformation, and mutation resolution.
  * Uses Result Select Query approach (not RETURNING) for consistency across platforms.
+ *
+ * @phpstan-import-type ShadowTables from SqlTransformer
  */
 final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
 {
@@ -151,11 +154,20 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
      * @throws UnknownSchemaException
      */
     /**
-     * @throws UnsupportedSqlException
+     * Answers how one statement is to be run against the shadow.
      *
+     * A read is rewritten to read the shadow's rows; a write is rewritten to
+     * answer the rows it would have written, and paired with what applying it
+     * would do. Nothing here writes to the database.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return RewritePlan What it answers
+     *
+     * @throws UnsupportedSqlException
      * @throws UnknownSchemaException
      */
-    private function rewriteStatement(string $sql): RewritePlan
+    public function rewriteStatement(string $sql): RewritePlan
     {
         if (PgSqlReadOnlyDiagnosticStatement::isSafe($sql)) {
             return new RewritePlan($sql, QueryKind::READ);
@@ -227,20 +239,11 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
     }
 
     /**
-     * Build the table context map for transformers.
+     * Answers everything the shadow holds, in the form a transformer is handed.
      *
-     * @return array<string, array{viewSql: string}|array{
-     *     rows: array<int, array<string, mixed>>,
-     *     columns: array<int, string>,
-     *     columnTypes: array<string, \ZtdQuery\Schema\ColumnDeclaration>,
-     *     columnDefaults: array<string, string>,
-     *     identityStrategies: array<string, \ZtdQuery\Schema\IdentityGenerationStrategy>,
-     *     generatedExpressions: array<string, string>,
-     *     sourceSql?: string,
-     *     storageTable?: string
-     * }>
+     * @return ShadowTables Table name => what the shadow holds for it
      */
-    private function buildTableContext(): array
+    public function buildTableContext(): array
     {
         $context = [];
         $allData = $this->shadowStore->getAll();
@@ -338,7 +341,14 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
         return $context;
     }
 
-    private function storageTable(string $tableName): string
+    /**
+     * Answers which table a partition's rows are actually held in.
+     *
+     * @param string $tableName Table it belongs to
+     *
+     * @return string What it answers
+     */
+    public function storageTable(string $tableName): string
     {
         $seen = [];
         while (!in_array($tableName, $seen, true)) {
@@ -353,7 +363,14 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
         return $tableName;
     }
 
-    private function tableExists(string $tableName): bool
+    /**
+     * Reports whether the shadow knows a table at all.
+     *
+     * @param string $tableName Table it belongs to
+     *
+     * @return bool What it answers
+     */
+    public function tableExists(string $tableName): bool
     {
         if ($this->shadowStore->has($tableName)) {
             return true;
@@ -370,7 +387,12 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
         return false;
     }
 
-    private function hasSchemaContext(): bool
+    /**
+     * Reports whether the shadow has been told anything at all.
+     *
+     * @return bool What it answers
+     */
+    public function hasSchemaContext(): bool
     {
         if ($this->shadowStore->getAll() !== []) {
             return true;

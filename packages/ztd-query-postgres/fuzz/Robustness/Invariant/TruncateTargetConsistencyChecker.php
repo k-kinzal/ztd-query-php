@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Fuzz\Robustness\Invariant;
 
-use Throwable;
+use ZtdQuery\Exception\SimulationException;
 use ZtdQuery\Platform\Postgres\PgSqlLexerProfile;
 use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Shadow\Mutation\MultiTruncateMutation;
@@ -40,7 +40,7 @@ final class TruncateTargetConsistencyChecker implements InvariantChecker
 
         try {
             $mutation = $this->rewriter->rewrite($sql)->mutation();
-        } catch (Throwable) {
+        } catch (SimulationException) {
             return null;
         }
 
@@ -49,7 +49,7 @@ final class TruncateTargetConsistencyChecker implements InvariantChecker
                 'PG-TRUNCATE-TARGETS',
                 'multi-table TRUNCATE did not produce a multi-target mutation',
                 $sql,
-                ['expected_targets' => $expectedCount],
+                ['expected_targets' => (string) $expectedCount],
             );
         }
 
@@ -59,14 +59,21 @@ final class TruncateTargetConsistencyChecker implements InvariantChecker
                 'PG-TRUNCATE-TARGETS',
                 'TRUNCATE mutation target count differs from the SQL target list',
                 $sql,
-                ['expected_targets' => $expectedCount, 'actual_targets' => $actualCount],
+                ['expected_targets' => (string) $expectedCount, 'actual_targets' => (string) $actualCount],
             );
         }
 
         return null;
     }
 
-    private function targetCount(string $sql): ?int
+    /**
+     * Answers how many tables a TRUNCATE names.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return int|null What it answers
+     */
+    public function targetCount(string $sql): ?int
     {
         $stream = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create());
         if ($stream->firstTopLevelKeyword() !== 'TRUNCATE') {
