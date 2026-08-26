@@ -12,7 +12,7 @@ use ZtdQuery\Connection\Exception\DatabaseException;
 #[CoversClass(DatabaseException::class)]
 final class DatabaseExceptionTest extends TestCase
 {
-    public function testConstructWithAllParameters(): void
+    public function testCarriesEverythingADriverSaidAboutTheFailure(): void
     {
         $previous = new RuntimeException('root cause');
         $exception = new DatabaseException('Query failed', 1045, 42, $previous);
@@ -23,7 +23,7 @@ final class DatabaseExceptionTest extends TestCase
         self::assertSame($previous, $exception->getPrevious());
     }
 
-    public function testConstructWithDefaults(): void
+    public function testCarriesNothingTheDriverDidNotSay(): void
     {
         $exception = new DatabaseException('Error');
 

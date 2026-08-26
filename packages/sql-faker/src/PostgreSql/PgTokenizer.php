@@ -54,13 +54,22 @@ final class PgTokenizer
         $offset = 0;
 
         while ($offset < $length) {
+            $startedAt = $offset;
             if ($this->skipTrivia($sql, $offset)) {
+                if ($offset <= $startedAt) {
+                    throw LexicalException::noProgress('PostgreSQL', $startedAt, $sql);
+                }
+
                 continue;
             }
 
             $token = $this->tokenAt($sql, $offset);
             if ($token === null) {
                 throw LexicalException::unsupportedInput('PostgreSQL', $offset, $sql);
+            }
+
+            if ($offset <= $startedAt) {
+                throw LexicalException::noProgress('PostgreSQL', $startedAt, $sql);
             }
 
             $tokens[] = $token;

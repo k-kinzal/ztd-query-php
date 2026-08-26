@@ -17,6 +17,9 @@ final class InsertSelectProjection
     ) {
     }
 
+    /**
+     * @throws InvalidDefinitionException When the position is before the start of the projection
+     */
     public static function source(string $targetColumn, int $sourceIndex): self
     {
         if ($sourceIndex < 0) {
@@ -31,6 +34,9 @@ final class InsertSelectProjection
         return new self($targetColumn, null, $expression, null, false);
     }
 
+    /**
+     * @throws InvalidDefinitionException When the first identity is not a positive number
+     */
     public static function generatedIdentity(string $targetColumn, int $start): self
     {
         if ($start < 1) {

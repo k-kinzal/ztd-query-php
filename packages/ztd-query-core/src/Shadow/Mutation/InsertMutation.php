@@ -88,6 +88,8 @@ final class InsertMutation implements DataMutation
 
     /**
      * {@inheritDoc}
+     *
+     * @throws DuplicateKeyException When a row would collide with one already there on a candidate key
      */
     public function apply(ShadowStore $store, array $rows): void
     {
