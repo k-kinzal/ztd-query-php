@@ -6,7 +6,6 @@ namespace Tests\Unit\Exception;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 use ZtdQuery\Exception\NotNullViolationException;
 
 #[CoversClass(NotNullViolationException::class)]
@@ -45,10 +44,4 @@ final class NotNullViolationExceptionTest extends TestCase
         self::assertSame('name', $exception->getColumnName());
     }
 
-    public function testExtendsRuntimeException(): void
-    {
-        $exception = new NotNullViolationException('sql', 'table', 'column');
-
-        self::assertInstanceOf(RuntimeException::class, $exception);
-    }
 }

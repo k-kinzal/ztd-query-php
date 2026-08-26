@@ -51,6 +51,7 @@ final class FakeSessionFactory implements SessionFactory
             new ResultSelectRunner(),
             $config,
             $connection,
+            registry: $registry,
         );
     }
 }
