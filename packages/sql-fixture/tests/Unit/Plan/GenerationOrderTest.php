@@ -12,12 +12,14 @@ use SqlFixture\Plan\GenerationOrder;
 use SqlFixture\Plan\PlanStructureException;
 use SqlFixture\Plan\Relation;
 use SqlFixture\Plan\RelationKind;
+use SqlFixture\Plan\RelationSide;
 
 #[CoversClass(GenerationOrder::class)]
 #[UsesClass(ColumnRef::class)]
 #[UsesClass(PlanStructureException::class)]
 #[UsesClass(Relation::class)]
 #[UsesClass(RelationKind::class)]
+#[UsesClass(RelationSide::class)]
 final class GenerationOrderTest extends TestCase
 {
     public function testOfPutsAParentBeforeItsChild(): void

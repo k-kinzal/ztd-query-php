@@ -10,13 +10,19 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\Plan\ColumnRef;
 use SqlFixture\Plan\FixturePlan;
+use SqlFixture\Plan\GenerationOrder;
+use SqlFixture\Plan\PlanCursor;
+use SqlFixture\Plan\PlanIntegrity;
 use SqlFixture\Plan\PlanParser;
 use SqlFixture\Plan\PlanPrinter;
+use SqlFixture\Plan\PlanStatementReader;
+use SqlFixture\Plan\PlanStatements;
 use SqlFixture\Plan\PlanStructureException;
 use SqlFixture\Plan\PlanSyntaxException;
 use SqlFixture\Plan\Relation;
 use SqlFixture\Plan\RelationKind;
 use SqlFixture\Plan\RelationSide;
+use SqlFixture\Plan\TableName;
 use Tests\Fixture\Plan\OrderWithDetailsPlan;
 
 #[CoversClass(FixturePlan::class)]
@@ -28,6 +34,12 @@ use Tests\Fixture\Plan\OrderWithDetailsPlan;
 #[UsesClass(RelationSide::class)]
 #[UsesClass(PlanSyntaxException::class)]
 #[UsesClass(PlanStructureException::class)]
+#[UsesClass(GenerationOrder::class)]
+#[UsesClass(PlanCursor::class)]
+#[UsesClass(PlanIntegrity::class)]
+#[UsesClass(PlanStatementReader::class)]
+#[UsesClass(PlanStatements::class)]
+#[UsesClass(TableName::class)]
 final class FixturePlanTest extends TestCase
 {
     #[Test]

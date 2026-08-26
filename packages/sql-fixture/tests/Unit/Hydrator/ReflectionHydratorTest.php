@@ -8,7 +8,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use SqlFixture\Hydrator\ConstructorHydration;
+use SqlFixture\Hydrator\DeclaredTypeCast;
 use SqlFixture\Hydrator\HydrationException;
+use SqlFixture\Hydrator\Instantiability;
+use SqlFixture\Hydrator\PropertyHydration;
+use SqlFixture\Hydrator\PropertyName;
 use SqlFixture\Hydrator\ReflectionHydrator;
 use Tests\Fixture\Hydrator\TestEntity;
 use Tests\Fixture\Hydrator\TestEntityNoParams;
@@ -28,6 +33,11 @@ use Tests\Fixture\Hydrator\TestEntityWithString;
 
 #[CoversClass(ReflectionHydrator::class)]
 #[UsesClass(HydrationException::class)]
+#[UsesClass(ConstructorHydration::class)]
+#[UsesClass(DeclaredTypeCast::class)]
+#[UsesClass(Instantiability::class)]
+#[UsesClass(PropertyHydration::class)]
+#[UsesClass(PropertyName::class)]
 final class ReflectionHydratorTest extends TestCase
 {
     #[Test]

@@ -9,12 +9,16 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use SqlFixture\Platform\Sqlite\SqliteAffinity;
+use SqlFixture\Platform\Sqlite\SqliteColumnSample;
 use SqlFixture\Platform\Sqlite\SqliteTypeMapper;
 use SqlFixture\Schema\ColumnDefinition;
 use Tests\Fixture\SpyGenerator;
 
 #[CoversClass(SqliteTypeMapper::class)]
 #[UsesClass(ColumnDefinition::class)]
+#[UsesClass(SqliteAffinity::class)]
+#[UsesClass(SqliteColumnSample::class)]
 final class SqliteTypeMapperTest extends TestCase
 {
     #[Test]

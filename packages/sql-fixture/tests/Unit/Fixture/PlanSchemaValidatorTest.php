@@ -13,10 +13,18 @@ use SqlFixture\Fixture\PlanSchemaException;
 use SqlFixture\Fixture\PlanSchemaValidator;
 use SqlFixture\Plan\ColumnRef;
 use SqlFixture\Plan\FixturePlan;
+use SqlFixture\Plan\GenerationOrder;
+use SqlFixture\Plan\PlanCursor;
+use SqlFixture\Plan\PlanIntegrity;
 use SqlFixture\Plan\PlanParser;
+use SqlFixture\Plan\PlanStatementReader;
+use SqlFixture\Plan\PlanStatements;
 use SqlFixture\Plan\Relation;
 use SqlFixture\Plan\RelationKind;
 use SqlFixture\Plan\RelationSide;
+use SqlFixture\Plan\TableName;
+use SqlFixture\Platform\MySql\MySqlColumnReader;
+use SqlFixture\Platform\MySql\MySqlCreateStatement;
 use SqlFixture\Platform\MySql\MySqlSchemaParser;
 use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\SchemaNotFoundException;
@@ -37,6 +45,14 @@ use Tests\Fixture\Fixture\ShopSchemas;
 #[UsesClass(SchemaNotFoundException::class)]
 #[UsesClass(TableSchema::class)]
 #[UsesClass(ColumnDefinition::class)]
+#[UsesClass(GenerationOrder::class)]
+#[UsesClass(PlanCursor::class)]
+#[UsesClass(PlanIntegrity::class)]
+#[UsesClass(PlanStatementReader::class)]
+#[UsesClass(PlanStatements::class)]
+#[UsesClass(TableName::class)]
+#[UsesClass(MySqlColumnReader::class)]
+#[UsesClass(MySqlCreateStatement::class)]
 final class PlanSchemaValidatorTest extends TestCase
 {
     #[Test]

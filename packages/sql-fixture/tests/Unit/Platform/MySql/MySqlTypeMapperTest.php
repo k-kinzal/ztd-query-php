@@ -9,12 +9,24 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use SqlFixture\Platform\MySql\MySqlBinarySample;
+use SqlFixture\Platform\MySql\MySqlColumnSample;
+use SqlFixture\Platform\MySql\MySqlEnumerationSample;
+use SqlFixture\Platform\MySql\MySqlNumberSample;
+use SqlFixture\Platform\MySql\MySqlTextSample;
 use SqlFixture\Platform\MySql\MySqlTypeMapper;
+use SqlFixture\Platform\MySql\WellKnownTextGeometry;
 use SqlFixture\Schema\ColumnDefinition;
 use Tests\Fixture\SpyGenerator;
 
 #[CoversClass(MySqlTypeMapper::class)]
 #[UsesClass(ColumnDefinition::class)]
+#[UsesClass(MySqlBinarySample::class)]
+#[UsesClass(MySqlColumnSample::class)]
+#[UsesClass(MySqlEnumerationSample::class)]
+#[UsesClass(MySqlNumberSample::class)]
+#[UsesClass(MySqlTextSample::class)]
+#[UsesClass(WellKnownTextGeometry::class)]
 final class MySqlTypeMapperTest extends TestCase
 {
     #[Test]
