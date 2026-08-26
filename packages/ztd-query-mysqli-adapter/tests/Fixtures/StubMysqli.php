@@ -7,6 +7,7 @@ namespace Tests\Fixtures;
 use mysqli;
 use mysqli_result;
 use mysqli_stmt;
+use ReturnTypeWillChange;
 
 /**
  * Test double for mysqli that allows configuring behavior without PHPUnit mocks.
@@ -100,7 +101,7 @@ class StubMysqli extends mysqli
         return $this->rollbackReturn;
     }
 
-    #[\ReturnTypeWillChange]
+    #[ReturnTypeWillChange]
     public function close()
     {
         $this->closeCalled = true;

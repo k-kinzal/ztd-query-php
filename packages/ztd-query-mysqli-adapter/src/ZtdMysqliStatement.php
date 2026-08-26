@@ -7,6 +7,7 @@ namespace ZtdQuery\Adapter\Mysqli;
 use mysqli_result;
 use mysqli_stmt;
 use mysqli_warning;
+use ReturnTypeWillChange;
 use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\ExecuteResult;
 use ZtdQuery\Rewrite\RewritePlan;
@@ -228,7 +229,7 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     /**
      * {@inheritDoc}
      */
-    #[\ReturnTypeWillChange]
+    #[ReturnTypeWillChange]
     public function close()
     {
         $this->delegate->close();

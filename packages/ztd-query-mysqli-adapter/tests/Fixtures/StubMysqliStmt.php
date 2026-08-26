@@ -7,6 +7,7 @@ namespace Tests\Fixtures;
 use mysqli_result;
 use mysqli_stmt;
 use ReflectionClass;
+use ReturnTypeWillChange;
 
 /**
  * Test double for mysqli_stmt that allows configuring behavior without PHPUnit mocks.
@@ -74,7 +75,7 @@ class StubMysqliStmt extends mysqli_stmt
         return $this->fetchReturn;
     }
 
-    #[\ReturnTypeWillChange]
+    #[ReturnTypeWillChange]
     public function close()
     {
         $this->closeCalled = true;

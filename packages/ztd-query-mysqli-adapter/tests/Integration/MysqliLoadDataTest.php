@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
+use mysqli_result;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
@@ -37,14 +38,14 @@ final class MysqliLoadDataTest extends TestCase
             self::assertSame(2, $ztdMysqli->lastAffectedRows());
 
             $rows = $ztdMysqli->query(sprintf('SELECT id, name FROM `%s` ORDER BY id', $table));
-            self::assertInstanceOf(\mysqli_result::class, $rows);
+            self::assertInstanceOf(mysqli_result::class, $rows);
             self::assertSame([
                 ['id' => 1, 'name' => 'Alice'],
                 ['id' => 2, 'name' => 'Bob'],
             ], $rows->fetch_all(MYSQLI_ASSOC));
 
             $physical = $rawMysqli->query(sprintf('SELECT COUNT(*) AS count FROM `%s`', $table));
-            self::assertInstanceOf(\mysqli_result::class, $physical);
+            self::assertInstanceOf(mysqli_result::class, $physical);
             self::assertSame([['count' => '0']], $physical->fetch_all(MYSQLI_ASSOC));
         } finally {
             $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
