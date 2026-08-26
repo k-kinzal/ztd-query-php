@@ -2333,4 +2333,86 @@ final class SelectTransformerTest extends TransformerContractTest
         $between = substr($result, $usersPos, $existingPos - $usersPos);
         self::assertStringContainsString(',', $between);
     }
+    public function testGenerateCteWritesOneSelectPerRow(): void
+    {
+        $sql = (new SelectTransformer())->generateCte('t', [['id' => 1], ['id' => 2]], ['id'], [], []);
+
+        self::assertStringContainsString('UNION ALL', $sql);
+    }
+
+    public function testGenerateCteStillNamesTheColumnsOfATableWithNoRows(): void
+    {
+        $sql = (new SelectTransformer())->generateCte('t', [], ['id'], [], []);
+
+        self::assertStringContainsString('WHERE 0', $sql);
+    }
+
+    public function testGenerateCteRefusesATableItKnowsNeitherRowsNorColumnsOf(): void
+    {
+        $this->expectException(RuntimeException::class);
+
+        (new SelectTransformer())->generateCte('t', [], [], [], []);
+    }
+
+    public function testWrapCteNamesTheTableTheQueryAnswersFor(): void
+    {
+        self::assertStringStartsWith('`t` AS (', (new SelectTransformer())->wrapCte('`t`', 'SELECT 1', ['id'], []));
+    }
+
+    public function testFormatValueWritesAValueAsTheSqlThatReadsItBack(): void
+    {
+        self::assertSame("CAST('a' AS CHAR)", (new SelectTransformer())->formatValue('a'));
+    }
+
+    public function testFormatValuePutsASetsMembersBackIntoDeclaredOrder(): void
+    {
+        self::assertStringContainsString(
+            'b,a',
+            (new SelectTransformer())->formatValue('a,b', new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('b','a')")),
+        );
+    }
+
+    public function testRenderFallbackNullCastWritesANullOfSomeType(): void
+    {
+        self::assertSame('CAST(NULL AS CHAR)', (new SelectTransformer())->renderFallbackNullCast());
+    }
+
+    public function testNormalizeSetValuePutsTheMembersIntoDeclaredOrder(): void
+    {
+        self::assertSame('b,a', (new SelectTransformer())->normalizeSetValue('a,b', "SET('b','a')"));
+    }
+
+    public function testNormalizeSetValueDropsAMemberTheTypeDoesNotDeclare(): void
+    {
+        self::assertSame('a', (new SelectTransformer())->normalizeSetValue('a,z', "SET('a')"));
+    }
+
+    public function testRewriteSetOrderByOrdersASetColumnTheWayMySqlWould(): void
+    {
+        $sql = (new SelectTransformer())->rewriteSetOrderBy('SELECT * FROM t ORDER BY `flags`', [
+            't' => [
+                'rows' => [],
+                'columns' => ['flags'],
+                'columnTypes' => ['flags' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('a','b')")],
+            ],
+        ]);
+
+        self::assertStringContainsString('FIND_IN_SET', $sql);
+    }
+
+    public function testRewriteSetOrderByLeavesAStatementThatOrdersByNothingAlone(): void
+    {
+        self::assertSame('SELECT 1', (new SelectTransformer())->rewriteSetOrderBy('SELECT 1', []));
+    }
+
+    public function testExtractSetMembersReadsWhatASetDeclarationAllows(): void
+    {
+        self::assertSame(['a', 'b'], (new SelectTransformer())->extractSetMembers("SET('a','b')"));
+    }
+
+    public function testExtractSetMembersIsNothingForADeclarationThatIsNoSet(): void
+    {
+        self::assertSame([], (new SelectTransformer())->extractSetMembers('VARCHAR(10)'));
+    }
+
 }
