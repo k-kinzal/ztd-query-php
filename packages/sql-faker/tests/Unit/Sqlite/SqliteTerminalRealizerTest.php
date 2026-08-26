@@ -19,6 +19,8 @@ use SqlFaker\Grammar\RandomCharacters;
 use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\Sqlite\SqliteTerminalRealizer;
 use SqlFaker\Sqlite\SqliteTokenizer;
+use Tests\Fixture\SqlFaker\ScriptedNumbers;
+use Tests\Fixture\SqlFaker\SqliteRealizers;
 
 #[CoversClass(SqliteTerminalRealizer::class)]
 #[UsesClass(LexicalCatalog::class)]
@@ -323,5 +325,193 @@ final class SqliteTerminalRealizerTest extends TestCase
         SqliteTerminalRealizer $realizer,
     ): void {
         self::assertSame(['_any', ['ID']], $realizer->realizeSynthetic('ANY'));
+    }
+
+    public function testRealizeWitnessedChoosesFromEveryWitnessAndNoFurther(): void
+    {
+        $faker = ScriptedNumbers::answering(1);
+
+        self::assertSame(['orders', ['ID']], SqliteRealizers::witnessed($faker)->realizeWitnessed('ID'));
+        self::assertSame([[0, 1]], $faker->numberBetweenCalls);
+    }
+
+    public function testRealizeFixedChoosesFromEverySpellingAndNoFurther(): void
+    {
+        $faker = ScriptedNumbers::answering(1);
+
+        self::assertSame(['select', ['SELECT']], SqliteRealizers::synthetic($faker)->realizeFixed('SELECT'));
+        self::assertSame([[0, 1]], $faker->numberBetweenCalls);
+    }
+
+    public function testRealizeFixedFallsBackToTheTerminalItselfWhereNothingSpellsIt(): void
+    {
+        $faker = ScriptedNumbers::answering();
+
+        self::assertSame('OTHER', SqliteRealizers::synthetic($faker)->realizeFixed('OTHER')[0]);
+        self::assertSame([], $faker->numberBetweenCalls);
+    }
+
+    public function testIdentifierWritesAKeywordBodyOnOneOfFourDraws(): void
+    {
+        $faker = ScriptedNumbers::answering(0, 3);
+
+        self::assertSame('select', SqliteRealizers::synthetic($faker)->identifier());
+        self::assertSame([[0, 3], [0, 7]], $faker->numberBetweenCalls);
+    }
+
+    public function testIdentifierIsDoubleQuotedOnTheFirstOfEightDraws(): void
+    {
+        $faker = ScriptedNumbers::answering(0, 0);
+
+        self::assertSame('"select""quoted"', SqliteRealizers::synthetic($faker)->identifier());
+    }
+
+    public function testIdentifierIsBacktickQuotedOnTheSecondOfEightDraws(): void
+    {
+        $faker = ScriptedNumbers::answering(0, 1);
+
+        self::assertSame('`select``quoted`', SqliteRealizers::synthetic($faker)->identifier());
+    }
+
+    public function testIdentifierIsBracketQuotedOnTheThirdOfEightDraws(): void
+    {
+        $faker = ScriptedNumbers::answering(0, 2);
+
+        self::assertSame('[selectquoted]', SqliteRealizers::synthetic($faker)->identifier());
+    }
+
+    public function testIdentifierWritesAGeneratedBodyOnEveryOtherDraw(): void
+    {
+        $faker = ScriptedNumbers::answering(1);
+
+        self::assertStringContainsString('_', SqliteRealizers::synthetic($faker)->identifier());
+        self::assertSame([0, 3], $faker->numberBetweenCalls[0]);
+    }
+
+    public function testIdentifierIsUnquotedOnEveryDrawPastTheThird(): void
+    {
+        $faker = ScriptedNumbers::answering(0, 3);
+
+        self::assertSame('select', SqliteRealizers::synthetic($faker)->identifier());
+        self::assertSame([[0, 3], [0, 7]], $faker->numberBetweenCalls);
+    }
+
+    public function testStringLiteralDoublesAQuoteInsideTheBody(): void
+    {
+        $faker = ScriptedNumbers::answering(2);
+
+        self::assertSame("'a''b'", SqliteRealizers::synthetic($faker)->stringLiteral());
+        self::assertSame([[0, 5]], $faker->numberBetweenCalls);
+    }
+
+    public function testStringLiteralWritesABackslashOnItsFourthDraw(): void
+    {
+        $faker = ScriptedNumbers::answering(3);
+
+        self::assertSame("'a\\b'", SqliteRealizers::synthetic($faker)->stringLiteral());
+    }
+
+    #[DataProvider('providerLexicalSequenceDraw')]
+    public function testStringLiteralWritesALexicalSequenceOnItsFirstTwoDraws(int $draw): void
+    {
+        $literal = SqliteRealizers::synthetic(ScriptedNumbers::answering($draw))->stringLiteral();
+
+        self::assertStringStartsWith("'", $literal);
+        self::assertStringEndsWith("'", $literal);
+    }
+
+    /**
+     * @return iterable<string, array{int}>
+     */
+    public static function providerLexicalSequenceDraw(): iterable
+    {
+        yield 'first draw' => [0];
+        yield 'second draw' => [1];
+    }
+
+    public function testBlobLiteralTakesAWholeNumberOfBytes(): void
+    {
+        $faker = ScriptedNumbers::answering(3);
+
+        $literal = SqliteRealizers::synthetic($faker)->blobLiteral();
+
+        self::assertSame(6, strlen($literal) - 3);
+        self::assertSame([0, 8], $faker->numberBetweenCalls[0]);
+    }
+
+    public function testParameterIsWrittenBareOnTheFirstOfFiveDraws(): void
+    {
+        $faker = ScriptedNumbers::answering(0);
+
+        self::assertSame('?', SqliteRealizers::synthetic($faker)->parameter());
+        self::assertSame([[0, 4]], $faker->numberBetweenCalls);
+    }
+
+    public function testParameterIsNumberedOnTheSecondOfFiveDraws(): void
+    {
+        $faker = ScriptedNumbers::answering(1, 7);
+
+        self::assertSame('?7', SqliteRealizers::synthetic($faker)->parameter());
+        self::assertSame([[0, 4], [1, 10]], $faker->numberBetweenCalls);
+    }
+
+    public function testParameterIsColonNamedOnTheThirdOfFiveDraws(): void
+    {
+        $faker = ScriptedNumbers::answering(2);
+
+        self::assertStringStartsWith(':', SqliteRealizers::synthetic($faker)->parameter());
+    }
+
+    public function testParameterIsAtNamedOnTheFourthOfFiveDraws(): void
+    {
+        $faker = ScriptedNumbers::answering(3);
+
+        self::assertStringStartsWith('@', SqliteRealizers::synthetic($faker)->parameter());
+    }
+
+    public function testParameterIsDollarNamedOnEveryOtherDraw(): void
+    {
+        $faker = ScriptedNumbers::answering(4);
+
+        self::assertStringStartsWith('$', SqliteRealizers::synthetic($faker)->parameter());
+    }
+
+    public function testTriviaIsASpaceWhereTerminalsMayBeWrittenWithoutAWitness(): void
+    {
+        $faker = ScriptedNumbers::answering();
+
+        self::assertSame(' ', SqliteRealizers::synthetic($faker)->trivia());
+        self::assertSame([], $faker->numberBetweenCalls);
+    }
+
+    public function testTriviaIsChosenFromEveryWitnessAndNoFurther(): void
+    {
+        $faker = ScriptedNumbers::answering(1);
+
+        self::assertSame('/* c */', SqliteRealizers::witnessed($faker)->trivia());
+        self::assertSame([[0, 1]], $faker->numberBetweenCalls);
+    }
+
+    public function testOptionalTriviaIsNothingWhereTerminalsMayBeWrittenWithoutAWitness(): void
+    {
+        $faker = ScriptedNumbers::answering();
+
+        self::assertSame('', SqliteRealizers::synthetic($faker)->optionalTrivia());
+        self::assertSame([], $faker->numberBetweenCalls);
+    }
+
+    public function testOptionalTriviaIsNothingOnOneOfTwoDraws(): void
+    {
+        $faker = ScriptedNumbers::answering(0);
+
+        self::assertSame('', SqliteRealizers::witnessed($faker)->optionalTrivia());
+        self::assertSame([[0, 1]], $faker->numberBetweenCalls);
+    }
+
+    public function testOptionalTriviaIsTriviaOnEveryOtherDraw(): void
+    {
+        $faker = ScriptedNumbers::answering(1, 0);
+
+        self::assertSame(' ', SqliteRealizers::witnessed($faker)->optionalTrivia());
     }
 }
