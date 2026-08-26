@@ -10,7 +10,9 @@ use ZtdQuery\Sql\SqlTokenStream;
 
 final class PgSqlTableSampleParser
 {
-    /** @return list<PgSqlTableSample> */
+    /**
+     * @return list<PgSqlTableSample>
+     */
     public function parse(string $sql): array
     {
         $stream = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create());
@@ -35,6 +37,8 @@ final class PgSqlTableSampleParser
     /**
      * @param list<SqlToken> $tokens
      * @param array{name: string, start: int, unqualifiedStart: int, end: int} $reference
+     *
+     * @throws UnsupportedSqlException
      */
     private function parseSample(
         string $sql,

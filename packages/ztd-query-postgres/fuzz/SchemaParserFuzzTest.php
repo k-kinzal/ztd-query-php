@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Fuzz;
 
 use Faker\Factory;
+use Override;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
@@ -36,6 +37,7 @@ final class SchemaParserFuzzTest extends TestCase
 
     private PostgreSqlProvider $provider;
 
+    #[Override]
     protected function setUp(): void
     {
         $this->parser = new PgSqlSchemaParser();

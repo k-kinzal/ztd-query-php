@@ -27,7 +27,9 @@ final class PgSqlUpsertExpressionParserTest extends TestCase
         );
     }
 
-    /** @return iterable<string, array{string, mixed}> */
+    /**
+     * @return iterable<string, array{string, mixed}>
+     */
     public static function providerPostgresExpressionCases(): iterable
     {
         yield 'chained or' => ['1 OR 0 OR 0', true];
@@ -117,7 +119,9 @@ final class PgSqlUpsertExpressionParserTest extends TestCase
         self::assertNull((new PgSqlUpsertExpressionParser())->parseIfSupported($sql, 'items'));
     }
 
-    /** @return iterable<string, array{string}> */
+    /**
+     * @return iterable<string, array{string}>
+     */
     public static function providerInvalidPostgresExpression(): iterable
     {
         yield 'empty' => [''];

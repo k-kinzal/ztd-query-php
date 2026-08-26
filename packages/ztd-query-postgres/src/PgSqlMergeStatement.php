@@ -6,7 +6,9 @@ namespace ZtdQuery\Platform\Postgres;
 
 final class PgSqlMergeStatement
 {
-    /** @param non-empty-list<PgSqlMergeClause> $clauses */
+    /**
+     * @param non-empty-list<PgSqlMergeClause> $clauses
+     */
     public function __construct(
         public readonly string $targetTable,
         public readonly string $targetSql,

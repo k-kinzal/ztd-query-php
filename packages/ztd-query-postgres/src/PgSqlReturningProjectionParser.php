@@ -12,6 +12,9 @@ use ZtdQuery\Sql\SqlTokenStream;
 
 final class PgSqlReturningProjectionParser
 {
+    /**
+     * @throws UnsupportedSqlException
+     */
     public function parse(string $sql): ?ReturningProjection
     {
         $clause = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->topLevelClause(['RETURNING']);

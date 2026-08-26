@@ -8,7 +8,9 @@ use ZtdQuery\Schema\TablePartitionRelation;
 
 final class PgSqlPartitionPredicateRenderer
 {
-    /** @param list<string> $siblingPredicates */
+    /**
+     * @param list<string> $siblingPredicates
+     */
     public function render(TablePartitionRelation $relation, array $siblingPredicates): string
     {
         if ($relation->predicate !== null) {

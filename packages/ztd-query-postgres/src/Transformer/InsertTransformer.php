@@ -52,6 +52,8 @@ final class InsertTransformer implements SqlTransformer
 
     /**
      * {@inheritDoc}
+     *
+     * @throws UnsupportedSqlException
      */
     public function transform(string $sql, array $tables): string
     {

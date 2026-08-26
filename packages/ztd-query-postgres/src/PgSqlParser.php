@@ -459,7 +459,9 @@ final class PgSqlParser
         return $this->extractTruncateTables($sql)[0] ?? null;
     }
 
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     */
     public function extractTruncateTables(string $sql): array
     {
         $stream = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create());

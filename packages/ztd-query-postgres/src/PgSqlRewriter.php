@@ -113,7 +113,9 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
         return new MultiRewritePlan($plans);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function splitStatements(string $sql): array
     {
         return $this->parser->splitStatements($sql);
@@ -124,6 +126,14 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
         $this->transformer->commitRewriteState();
     }
 
+    /**
+     * @throws UnknownSchemaException
+     */
+    /**
+     * @throws UnsupportedSqlException
+     *
+     * @throws UnknownSchemaException
+     */
     private function rewriteStatement(string $sql): RewritePlan
     {
         if (PgSqlReadOnlyDiagnosticStatement::isSafe($sql)) {

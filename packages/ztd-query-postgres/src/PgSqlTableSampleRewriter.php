@@ -19,6 +19,8 @@ final class PgSqlTableSampleRewriter
 
     /**
      * @param array<string, array<string, mixed>> $tables
+     *
+     * @throws UnsupportedSqlException
      */
     public function rewrite(string $sql, array $tables): string
     {

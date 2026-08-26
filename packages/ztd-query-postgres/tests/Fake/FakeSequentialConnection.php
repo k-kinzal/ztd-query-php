@@ -14,7 +14,9 @@ final class FakeSequentialConnection implements ConnectionInterface
 
     private int $index = 0;
 
-    /** @param list<StatementInterface> $statements */
+    /**
+     * @param list<StatementInterface> $statements
+     */
     public function __construct(array $statements)
     {
         $this->statements = $statements;

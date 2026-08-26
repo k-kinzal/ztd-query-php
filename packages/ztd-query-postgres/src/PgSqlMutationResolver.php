@@ -71,6 +71,9 @@ final class PgSqlMutationResolver
         };
     }
 
+    /**
+     * @throws UnsupportedSqlException
+     */
     private function resolveInsert(string $sql): ShadowMutation
     {
         $tableName = $this->parser->extractInsertTable($sql);
@@ -149,6 +152,14 @@ final class PgSqlMutationResolver
         );
     }
 
+    /**
+     * @throws UnknownSchemaException
+     */
+    /**
+     * @throws UnsupportedSqlException
+     *
+     * @throws UnknownSchemaException
+     */
     private function resolveUpdate(string $sql): ShadowMutation
     {
         $targetTable = $this->parser->extractUpdateTable($sql);
@@ -168,6 +179,14 @@ final class PgSqlMutationResolver
         return new UpdateMutation($storageTable, $primaryKeys);
     }
 
+    /**
+     * @throws UnknownSchemaException
+     */
+    /**
+     * @throws UnsupportedSqlException
+     *
+     * @throws UnknownSchemaException
+     */
     private function resolveDelete(string $sql): ShadowMutation
     {
         $targetTable = $this->parser->extractDeleteTable($sql);
@@ -187,6 +206,9 @@ final class PgSqlMutationResolver
         return new DeleteMutation($storageTable, $primaryKeys);
     }
 
+    /**
+     * @throws UnknownSchemaException
+     */
     private function resolveMerge(string $sql): ShadowMutation
     {
         $statement = (new PgSqlMergeParser())->parse($sql);
@@ -204,6 +226,9 @@ final class PgSqlMutationResolver
         );
     }
 
+    /**
+     * @throws UnsupportedSqlException
+     */
     private function resolveTruncate(string $sql): ShadowMutation
     {
         $tableNames = $this->parser->extractTruncateTables($sql);
@@ -217,6 +242,14 @@ final class PgSqlMutationResolver
         return new TruncateMutation($tableNames[0]);
     }
 
+    /**
+     * @throws UnknownSchemaException
+     */
+    /**
+     * @throws UnsupportedSqlException
+     *
+     * @throws UnknownSchemaException
+     */
     private function resolveCreateTable(string $sql): ShadowMutation
     {
         $tableName = $this->parser->extractCreateTableName($sql);
@@ -295,6 +328,14 @@ final class PgSqlMutationResolver
         return $tableName;
     }
 
+    /**
+     * @throws UnknownSchemaException
+     */
+    /**
+     * @throws UnsupportedSqlException
+     *
+     * @throws UnknownSchemaException
+     */
     private function resolveDropTable(string $sql): ShadowMutation
     {
         $tableName = $this->parser->extractDropTableName($sql);
@@ -311,6 +352,14 @@ final class PgSqlMutationResolver
         return new DropTableMutation($tableName, $this->registry, $sql, $ifExists);
     }
 
+    /**
+     * @throws UnknownSchemaException
+     */
+    /**
+     * @throws UnsupportedSqlException
+     *
+     * @throws UnknownSchemaException
+     */
     private function resolveAlterTable(string $sql): ?ShadowMutation
     {
         $tableName = $this->parser->extractAlterTableName($sql);

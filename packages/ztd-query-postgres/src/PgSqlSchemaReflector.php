@@ -67,13 +67,17 @@ final class PgSqlSchemaReflector implements SchemaReflector, ViewReflector
         return $result;
     }
 
-    /** @return array<string, array<string, PartialUniqueIndex>> */
+    /**
+     * @return array<string, array<string, PartialUniqueIndex>>
+     */
     public function partialUniqueIndexes(): array
     {
         return $this->partialUniqueIndexes;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function reflectViews(): array
     {
         $stmt = $this->connection->query(

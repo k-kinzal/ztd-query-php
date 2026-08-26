@@ -18,6 +18,9 @@ final class PgSqlMergeParser
         $this->cteComposer = new PgSqlCteShadowComposer();
     }
 
+    /**
+     * @throws UnsupportedSqlException
+     */
     public function parse(string $sql): PgSqlMergeStatement
     {
         $statementSql = $this->cteComposer->statementSql($sql);
@@ -145,7 +148,11 @@ final class PgSqlMergeParser
         ];
     }
 
-    /** @param list<SqlToken> $tokens */
+    /**
+     * @param list<SqlToken> $tokens
+     *
+     * @throws UnsupportedSqlException
+     */
     private function targetAlias(
         string $sql,
         array $tokens,
@@ -170,6 +177,9 @@ final class PgSqlMergeParser
         return $alias;
     }
 
+    /**
+     * @throws UnsupportedSqlException
+     */
     private function parseClause(string $originalSql, string $clauseSql): PgSqlMergeClause
     {
         $clauseSql = rtrim($clauseSql, "; \t\n\r\0\x0B");
@@ -254,6 +264,8 @@ final class PgSqlMergeParser
     /**
      * @param list<SqlToken> $tokens
      * @return array<string, string>
+     *
+     * @throws UnsupportedSqlException
      */
     private function parseAssignments(string $originalSql, string $actionSql, array $tokens): array
     {
@@ -304,6 +316,8 @@ final class PgSqlMergeParser
     /**
      * @param list<SqlToken> $tokens
      * @return array{columns: list<string>, values: list<string>}
+     *
+     * @throws UnsupportedSqlException
      */
     private function parseInsert(string $originalSql, string $actionSql, array $tokens): array
     {
@@ -361,6 +375,8 @@ final class PgSqlMergeParser
     /**
      * @param list<SqlToken> $tokens
      * @return array{items: list<string>, next: int}
+     *
+     * @throws UnsupportedSqlException
      */
     private function parenthesizedList(
         string $originalSql,

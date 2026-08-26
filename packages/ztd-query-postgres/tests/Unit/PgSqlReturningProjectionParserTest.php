@@ -55,7 +55,9 @@ final class PgSqlReturningProjectionParserTest extends TestCase
         (new PgSqlReturningProjectionParser())->parse('INSERT INTO users VALUES (1) RETURNING ' . $projection);
     }
 
-    /** @return array<string, array{string}> */
+    /**
+     * @return array<string, array{string}>
+     */
     public static function providerInvalidPostgresReturningProjection(): array
     {
         return [

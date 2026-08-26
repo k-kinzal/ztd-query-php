@@ -34,6 +34,8 @@ final class UpdateTransformer implements SqlTransformer
 
     /**
      * {@inheritDoc}
+     *
+     * @throws UnsupportedSqlException
      */
     public function transform(string $sql, array $tables): string
     {

@@ -8,6 +8,9 @@ use InvalidArgumentException;
 
 final class PgSqlTableSample
 {
+    /**
+     * @throws InvalidArgumentException
+     */
     public function __construct(
         public readonly string $tableName,
         public readonly string $sourceSql,
