@@ -22,12 +22,22 @@ final class FakeSqlTransformer implements SqlTransformer
 
     private FakeIdentifierQuoter $quoter;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     */
     public function __construct()
     {
         $this->castRenderer = new FakeCastRenderer();
         $this->quoter = new FakeIdentifierQuoter();
     }
 
+    /**
+     * Transform.
+     *
+     * @param string $sql
+     * @return string
+     */
     public function transform(string $sql, array $tables): string
     {
         if ($tables === []) {

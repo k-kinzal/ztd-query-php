@@ -19,6 +19,14 @@ final class CreateTableLikeMutation implements ShadowMutation
     private TableDefinitionRegistry $registry;
     private bool $ifNotExists;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param string $tableName
+     * @param string $sourceTableName
+     * @param TableDefinitionRegistry $registry
+     * @param bool $ifNotExists
+     */
     public function __construct(
         string $tableName,
         string $sourceTableName,

@@ -20,6 +20,13 @@ final class SqlTokenStream
     ) {
     }
 
+    /**
+     * Tokenize.
+     *
+     * @param string $sql
+     * @param SqlLexerProfile $profile
+     * @return self
+     */
     public static function tokenize(string $sql, SqlLexerProfile $profile): self
     {
         return new self($sql, self::scan($sql, $profile), $profile);
@@ -48,6 +55,12 @@ final class SqlTokenStream
         ));
     }
 
+    /**
+     * Significant token before.
+     *
+     * @param SqlToken $anchor
+     * @return ?SqlToken
+     */
     public function significantTokenBefore(SqlToken $anchor): ?SqlToken
     {
         $previous = null;
@@ -61,6 +74,12 @@ final class SqlTokenStream
         return null;
     }
 
+    /**
+     * Significant token after.
+     *
+     * @param SqlToken $anchor
+     * @return ?SqlToken
+     */
     public function significantTokenAfter(SqlToken $anchor): ?SqlToken
     {
         $previous = null;
@@ -74,6 +93,12 @@ final class SqlTokenStream
         return null;
     }
 
+    /**
+     * Matching closing nesting token.
+     *
+     * @param SqlToken $opening
+     * @return ?SqlToken
+     */
     public function matchingClosingNestingToken(SqlToken $opening): ?SqlToken
     {
         if ($opening->kind !== SqlTokenKind::Symbol || !$this->profile->isNestingOpening($opening->text)) {
@@ -229,6 +254,11 @@ final class SqlTokenStream
         return $parts;
     }
 
+    /**
+     * First top level keyword.
+     *
+     * @return ?string
+     */
     public function firstTopLevelKeyword(): ?string
     {
         foreach ($this->significantTokens() as $token) {

@@ -24,36 +24,74 @@ final class TransactionStatement
     ) {
     }
 
+    /**
+     * Begin.
+     *
+     * @return self
+     */
     public static function begin(): self
     {
         return new self(TransactionOperation::Begin);
     }
 
+    /**
+     * Commit.
+     *
+     * @return self
+     */
     public static function commit(): self
     {
         return new self(TransactionOperation::Commit);
     }
 
+    /**
+     * Rollback.
+     *
+     * @return self
+     */
     public static function rollback(): self
     {
         return new self(TransactionOperation::Rollback);
     }
 
+    /**
+     * Savepoint.
+     *
+     * @param string $name
+     * @return self
+     */
     public static function savepoint(string $name): self
     {
         return new self(TransactionOperation::Savepoint, self::requiredName($name));
     }
 
+    /**
+     * Rollback to.
+     *
+     * @param string $name
+     * @return self
+     */
     public static function rollbackTo(string $name): self
     {
         return new self(TransactionOperation::RollbackTo, self::requiredName($name));
     }
 
+    /**
+     * Release.
+     *
+     * @param string $name
+     * @return self
+     */
     public static function release(string $name): self
     {
         return new self(TransactionOperation::Release, self::requiredName($name));
     }
 
+    /**
+     * Applies.
+     *
+     * @param ShadowTransactions $transactions
+     */
     public function apply(ShadowTransactions $transactions): void
     {
         match ($this->operation) {

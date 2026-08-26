@@ -17,6 +17,12 @@ use ZtdQuery\Schema\TableDefinition;
  */
 final class FakeSchemaParser implements SchemaParser
 {
+    /**
+     * Reads.
+     *
+     * @param string $createTableSql
+     * @return ?TableDefinition
+     */
     public function parse(string $createTableSql): ?TableDefinition
     {
         $sql = trim($createTableSql);
@@ -104,6 +110,12 @@ final class FakeSchemaParser implements SchemaParser
         );
     }
 
+    /**
+     * Map type family.
+     *
+     * @param string $type
+     * @return ColumnTypeFamily
+     */
     public function mapTypeFamily(string $type): ColumnTypeFamily
     {
         $base = preg_replace('/\(.*\)/', '', $type) ?? $type;

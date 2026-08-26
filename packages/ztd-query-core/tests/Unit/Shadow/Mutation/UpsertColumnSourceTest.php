@@ -11,6 +11,10 @@ use ZtdQuery\Shadow\Mutation\UpsertColumnSource;
 #[CoversClass(UpsertColumnSource::class)]
 final class UpsertColumnSourceTest extends TestCase
 {
+    /**
+     * Test lists semantic column sources.
+     *
+     */
     public function testListsSemanticColumnSources(): void
     {
         self::assertSame(
