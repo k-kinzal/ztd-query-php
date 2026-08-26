@@ -26,7 +26,11 @@ interface ValueRenderer
      * literal, so where it is known the value is cast to it. Where it is not,
      * the value's own PHP type is all there is to go on.
      *
-     * @param RenderableValue $value Value to write
+     * What arrives here is whatever a driver answered or a fixture was
+     * written with, which is not something ZTD can promise anything about --
+     * so this is where anything no literal could carry is refused.
+     *
+     * @param mixed $value Value to write, as a driver or a fixture handed it over
      * @param ColumnDeclaration|null $type How the column holding it was declared, or null where nothing declared it
      *
      * @return string SQL reading that value back
