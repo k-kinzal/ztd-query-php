@@ -3268,7 +3268,7 @@ final class SqliteMutationResolverTest extends TestCase
             new SqliteParser(),
         );
 
-        self::assertSame(['a'], $resolver->withoutColumn(['a', 'b'], 'b'));
+        self::assertSame(['a'], SqliteMutationResolver::withoutColumn(['a', 'b'], 'b'));
     }
 
     public function testWithoutMapKeyTakesTheKeyOut(): void
@@ -3280,7 +3280,7 @@ final class SqliteMutationResolverTest extends TestCase
             new SqliteParser(),
         );
 
-        self::assertSame(['a' => 1], $resolver->withoutMapKey(['a' => 1, 'b' => 2], 'b'));
+        self::assertSame(['a' => 1], SqliteMutationResolver::withoutMapKey(['a' => 1, 'b' => 2], 'b'));
     }
 
     public function testRenamedColumnsWritesTheNewNameIntoTheList(): void
@@ -3292,7 +3292,7 @@ final class SqliteMutationResolverTest extends TestCase
             new SqliteParser(),
         );
 
-        self::assertSame(['a', 'c'], $resolver->renamedColumns(['a', 'b'], 'b', 'c'));
+        self::assertSame(['a', 'c'], SqliteMutationResolver::renamedColumns(['a', 'b'], 'b', 'c'));
     }
 
     public function testRenamedForeignKeyWritesTheNewNameIntoTheKey(): void
@@ -3305,7 +3305,7 @@ final class SqliteMutationResolverTest extends TestCase
         );
         $key = new ForeignKeyDefinition(['b'], 'other', ['id'], ReferentialAction::NoAction, ReferentialAction::NoAction);
 
-        self::assertSame(['c'], $resolver->renamedForeignKey($key, 'b', 'c')->columns);
+        self::assertSame(['c'], SqliteMutationResolver::renamedForeignKey($key, 'b', 'c')->columns);
     }
 
     public function testRenamedMapKeyWritesTheNewNameIntoTheMap(): void
@@ -3317,7 +3317,7 @@ final class SqliteMutationResolverTest extends TestCase
             new SqliteParser(),
         );
 
-        self::assertSame(['c' => 2], $resolver->renamedMapKey(['b' => 2], 'b', 'c'));
+        self::assertSame(['c' => 2], SqliteMutationResolver::renamedMapKey(['b' => 2], 'b', 'c'));
     }
 
 }

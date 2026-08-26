@@ -8,12 +8,16 @@ use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\Sqlite\Mutation\AlterTableMutation;
 use ZtdQuery\Platform\Sqlite\Transformer\SqliteTransformer;
+use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Rewrite\AffectedRowsMode;
 use ZtdQuery\Rewrite\MultiRewritePlan;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\RewriteStateCommitter;
 use ZtdQuery\Rewrite\SqlRewriter;
+use ZtdQuery\Rewrite\SqlTransformer;
+use ZtdQuery\Schema\ColumnDeclaration;
+use ZtdQuery\Schema\IdentityGenerationStrategy;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Schema\ViewDefinitionSet;
@@ -25,6 +29,10 @@ use ZtdQuery\Sql\TransactionStatement;
  *
  * Orchestrates parsing, classification, transformation, and mutation resolution.
  * Uses Result Select Query approach (not RETURNING) for consistency.
+ *
+ * @phpstan-import-type ShadowTables from SqlTransformer
+ * @phpstan-import-type RenderableValue from ValueRenderer
+ * @phpstan-import-type ShadowRows from SqlTransformer
  */
 final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
 {
@@ -211,7 +219,7 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
     /**
      * Answers everything the shadow holds, in the form a transformer is handed.
      *
-     * @return array<string, array{viewSql: string}|array{ What it answers
+     * @return ShadowTables Table name => what the shadow holds for it
      */
     public function buildTableContext(): array
     {
@@ -274,9 +282,9 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
      * Answers what a transformer is handed for a table nothing has filled in.
      *
      * @param TableDefinition $definition What the table holds
-     * @param array<int, array<string, mixed>> $rows Rows to read
+     * @param list<array<string, RenderableValue>> $rows Rows the shadow holds for it
      *
-     * @return array{ What it answers
+     * @return array{rows: list<array<string, RenderableValue>>, columns: array<int, string>, columnTypes: array<string, ColumnDeclaration>, primaryKeys: array<int, string>, candidateKeys: array<string, array<int, string>>, columnDefaults: array<string, string>, identityStrategies: array<string, IdentityGenerationStrategy>, generatedExpressions: array<string, string>} What the shadow holds for that table
      */
     public static function contextFromDefinition(TableDefinition $definition, array $rows): array
     {

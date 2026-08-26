@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use ReflectionMethod;
 use ZtdQuery\Platform\Sqlite\SqliteLexerProfile;
 use ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser;
 use ZtdQuery\Sql\SqlToken;
@@ -229,10 +228,9 @@ final class SqliteSelectRelationParserTest extends TestCase
 
     public function testIdentifierComponentRejectsMismatchedTokenKind(): void
     {
-        $method = new ReflectionMethod(SqliteSelectRelationParser::class, 'identifierComponentAt');
         $token = new SqlToken(SqlTokenKind::String, '"users"', 0, 0, 0);
 
-        self::assertNull($method->invoke(new SqliteSelectRelationParser(), [$token], 0));
+        self::assertNull((new SqliteSelectRelationParser())->identifierComponentAt([$token], 0));
     }
     public function testReferencesFromClauseNamesEveryTableTheClauseJoins(): void
     {

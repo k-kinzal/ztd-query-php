@@ -13,6 +13,8 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 
 /**
  * Encodes shadow values while preserving SQLite storage classes.
+ *
+ * @phpstan-import-type RenderableValue from ValueRenderer
  */
 final class SqliteValueRenderer implements ValueRenderer
 {

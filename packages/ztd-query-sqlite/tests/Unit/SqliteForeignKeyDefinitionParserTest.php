@@ -202,14 +202,14 @@ final class SqliteForeignKeyDefinitionParserTest extends TestCase
     {
         self::assertSame(
             'id INT',
-            (new SqliteForeignKeyDefinitionParser())->tableBody('CREATE TABLE t (id INT)', SqliteLexerProfile::create()),
+            (new SqliteForeignKeyDefinitionParser())->tableBody('CREATE TABLE t (id INT)'),
         );
     }
 
     public function testTableBodyIsNothingWhereTheTextDeclaresNoTable(): void
     {
         self::assertNull(
-            (new SqliteForeignKeyDefinitionParser())->tableBody('SELECT 1', SqliteLexerProfile::create()),
+            (new SqliteForeignKeyDefinitionParser())->tableBody('SELECT 1'),
         );
     }
 

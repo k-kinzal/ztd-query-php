@@ -169,10 +169,7 @@ final class SqliteFullTextSearchRewriter
      */
     public static function isIdentifier(SqlToken $token): bool
     {
-        return match ($token->kind) {
-            SqlTokenKind::Word, SqlTokenKind::QuotedIdentifier => true,
-            default => false,
-        };
+        return $token->kind === SqlTokenKind::Word || $token->kind === SqlTokenKind::QuotedIdentifier;
     }
 
     /**

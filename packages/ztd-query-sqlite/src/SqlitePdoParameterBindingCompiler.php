@@ -29,7 +29,7 @@ final class SqlitePdoParameterBindingCompiler implements ParameterBindingCompile
      * Compile.
      *
      * @param string $sql
-     * @param ?array $params
+     * @param array<array-key, mixed>|null $params Parameters the caller bound, or null where it bound none
      */
     public function compile(string $sql, ?array $params): array
     {

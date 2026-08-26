@@ -9,7 +9,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use ReflectionMethod;
 use ZtdQuery\Platform\Sqlite\SqliteIndexHintStripper;
 use ZtdQuery\Platform\Sqlite\SqliteLexerProfile;
 use ZtdQuery\Sql\SqlToken;
@@ -123,13 +122,12 @@ final class SqliteIndexHintStripperTest extends TestCase
 
     public function testIdentifierEndAcceptsBracketSymbolTokens(): void
     {
-        $method = new ReflectionMethod(SqliteIndexHintStripper::class, 'identifierEndIndex');
         $tokens = [
             new SqlToken(SqlTokenKind::Symbol, '[', 0, 0, 0),
             new SqlToken(SqlTokenKind::Symbol, ']', 1, 0, 0),
         ];
 
-        self::assertSame(2, $method->invoke(null, $tokens, 0));
+        self::assertSame(2, SqliteIndexHintStripper::identifierEndIndex($tokens, 0));
     }
     public function testHintRangeAnswersWhereAnIndexHintBeginsAndEnds(): void
     {

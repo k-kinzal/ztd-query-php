@@ -122,16 +122,16 @@ final class SqliteTransactionStatementParserTest extends TestCase
 
     public function testUnquoteAnswersTheNameAQuotedIdentifierStandsFor(): void
     {
-        self::assertSame('order', (new SqliteTransactionStatementParser())->unquote('"order"', ['"']));
+        self::assertSame('order', (new SqliteTransactionStatementParser())->unquote('"order"'));
     }
 
     public function testUnquoteLeavesAnUnquotedNameAlone(): void
     {
-        self::assertSame('sp1', (new SqliteTransactionStatementParser())->unquote('sp1', ['"']));
+        self::assertSame('sp1', (new SqliteTransactionStatementParser())->unquote('sp1'));
     }
 
     public function testUnquoteIsNothingWhereTheQuotingNeverClosed(): void
     {
-        self::assertNull((new SqliteTransactionStatementParser())->unquote('"order', ['"']));
+        self::assertNull((new SqliteTransactionStatementParser())->unquote('"order'));
     }
 }
