@@ -7,6 +7,9 @@ namespace ZtdQuery\Platform\MySql;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
+/**
+ * The my sql column type mapper.
+ */
 final class MySqlColumnTypeMapper
 {
     /**

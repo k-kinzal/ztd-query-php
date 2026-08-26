@@ -9,6 +9,9 @@ use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The my sql cte shadow composer.
+ */
 final class MySqlCteShadowComposer
 {
     private readonly SqlLexerProfile $lexerProfile;

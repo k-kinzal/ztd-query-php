@@ -6,6 +6,9 @@ namespace ZtdQuery\Platform\MySql;
 
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The dml where clause extractor.
+ */
 final class DmlWhereClauseExtractor
 {
     /**

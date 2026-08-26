@@ -7,6 +7,9 @@ namespace ZtdQuery\Platform\MySql;
 use ZtdQuery\Platform\ResultColumnTypeResolver;
 use ZtdQuery\Schema\ColumnType;
 
+/**
+ * The my sql result column type resolver, as result column type resolver.
+ */
 final class MySqlResultColumnTypeResolver implements ResultColumnTypeResolver
 {
     private MySqlMysqliResultColumnTypeResolver $mysqliResolver;

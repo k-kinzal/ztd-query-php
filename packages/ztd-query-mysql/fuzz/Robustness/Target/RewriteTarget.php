@@ -27,6 +27,9 @@ use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
 
+/**
+ * The rewrite target.
+ */
 final class RewriteTarget
 {
     private Generator $faker;

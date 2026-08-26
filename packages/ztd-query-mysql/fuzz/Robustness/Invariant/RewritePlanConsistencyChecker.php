@@ -11,6 +11,9 @@ use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Shadow\Mutation\MultiDeleteMutation;
 use ZtdQuery\Shadow\Mutation\MultiUpdateMutation;
 
+/**
+ * The rewrite plan consistency checker, as invariant checker.
+ */
 final class RewritePlanConsistencyChecker implements InvariantChecker
 {
     private SqlRewriter $rewriter;

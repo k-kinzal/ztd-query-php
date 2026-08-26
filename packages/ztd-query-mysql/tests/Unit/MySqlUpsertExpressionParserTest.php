@@ -11,6 +11,9 @@ use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\MySqlUpsertExpressionParser;
 
+/**
+ * The my sql upsert expression parser test.
+ */
 #[CoversClass(MySqlUpsertExpressionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 final class MySqlUpsertExpressionParserTest extends TestCase

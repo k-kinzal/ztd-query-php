@@ -13,6 +13,9 @@ use SqlFaker\MySqlProvider;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlQueryGuard;
 
+/**
+ * The classify target.
+ */
 final class ClassifyTarget
 {
     private Generator $faker;

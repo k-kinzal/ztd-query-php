@@ -10,6 +10,9 @@ use ZtdQuery\Sql\SqlTokenStream;
 use ZtdQuery\Sql\TransactionStatement;
 use ZtdQuery\Sql\TransactionStatementParser;
 
+/**
+ * The my sql transaction statement parser, as transaction statement parser.
+ */
 final class MySqlTransactionStatementParser implements TransactionStatementParser
 {
     /**

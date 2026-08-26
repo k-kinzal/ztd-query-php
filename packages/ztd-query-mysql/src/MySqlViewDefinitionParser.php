@@ -7,6 +7,9 @@ namespace ZtdQuery\Platform\MySql;
 use ZtdQuery\Schema\ViewDefinition;
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The my sql view definition parser.
+ */
 final class MySqlViewDefinitionParser
 {
     /**

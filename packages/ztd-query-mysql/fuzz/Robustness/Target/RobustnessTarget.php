@@ -32,6 +32,9 @@ use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
 
+/**
+ * The robustness target.
+ */
 final class RobustnessTarget
 {
     private Generator $faker;

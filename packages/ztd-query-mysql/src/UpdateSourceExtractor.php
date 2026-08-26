@@ -6,6 +6,9 @@ namespace ZtdQuery\Platform\MySql;
 
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The update source extractor.
+ */
 final class UpdateSourceExtractor
 {
     /**

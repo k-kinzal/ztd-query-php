@@ -7,6 +7,9 @@ namespace ZtdQuery\Platform\MySql;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The update assignment extractor.
+ */
 final class UpdateAssignmentExtractor
 {
     /**

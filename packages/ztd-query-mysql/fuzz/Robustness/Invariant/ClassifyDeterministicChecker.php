@@ -7,6 +7,9 @@ namespace Fuzz\Robustness\Invariant;
 use Throwable;
 use ZtdQuery\Platform\MySql\MySqlQueryGuard;
 
+/**
+ * The classify deterministic checker, as invariant checker.
+ */
 final class ClassifyDeterministicChecker implements InvariantChecker
 {
     private MySqlQueryGuard $guard;

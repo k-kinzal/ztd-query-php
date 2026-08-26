@@ -7,6 +7,9 @@ namespace ZtdQuery\Platform\MySql;
 use PhpMyAdmin\SqlParser\Context;
 use ZtdQuery\Sql\SqlLexerProfile;
 
+/**
+ * The my sql lexer profile.
+ */
 final class MySqlLexerProfile
 {
     /**

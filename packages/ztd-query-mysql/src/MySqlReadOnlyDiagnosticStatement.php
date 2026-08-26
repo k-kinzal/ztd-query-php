@@ -7,6 +7,9 @@ namespace ZtdQuery\Platform\MySql;
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The my sql read only diagnostic statement.
+ */
 final class MySqlReadOnlyDiagnosticStatement
 {
     /** @var non-empty-list<string> */

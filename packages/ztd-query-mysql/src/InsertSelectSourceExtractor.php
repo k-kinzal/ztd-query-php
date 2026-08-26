@@ -6,6 +6,9 @@ namespace ZtdQuery\Platform\MySql;
 
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The insert select source extractor.
+ */
 final class InsertSelectSourceExtractor
 {
     /**

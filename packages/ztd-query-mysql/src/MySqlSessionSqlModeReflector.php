@@ -6,6 +6,9 @@ namespace ZtdQuery\Platform\MySql;
 
 use ZtdQuery\Connection\ConnectionInterface;
 
+/**
+ * The my sql session sql mode reflector.
+ */
 final class MySqlSessionSqlModeReflector
 {
     /**

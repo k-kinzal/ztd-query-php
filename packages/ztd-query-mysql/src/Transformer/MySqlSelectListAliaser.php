@@ -10,6 +10,9 @@ use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The my sql select list aliaser.
+ */
 final class MySqlSelectListAliaser
 {
     private const MODIFIERS = [

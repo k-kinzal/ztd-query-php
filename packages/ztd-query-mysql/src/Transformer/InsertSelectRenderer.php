@@ -9,6 +9,9 @@ use RuntimeException;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Rewrite\InsertSelectProjectionPlanner;
 
+/**
+ * The insert select renderer.
+ */
 final class InsertSelectRenderer
 {
     private MySqlIdentifierQuoter $quoter;
