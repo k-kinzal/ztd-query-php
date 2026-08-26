@@ -38,7 +38,9 @@ final class UpsertMutationRowTest extends TestCase
         self::assertSame($expected, (new UpsertMutationRow())->predicateMatches($value));
     }
 
-    /** @return iterable<string, array{mixed, bool}> */
+    /**
+     * @return iterable<string, array{mixed, bool}>
+     */
     public static function providerPredicateValues(): iterable
     {
         yield 'boolean true' => [true, true];
