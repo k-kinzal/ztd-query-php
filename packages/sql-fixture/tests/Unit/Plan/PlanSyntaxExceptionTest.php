@@ -16,7 +16,7 @@ use SqlFixture\Plan\PlanSyntaxException;
 final class PlanSyntaxExceptionTest extends TestCase
 {
     #[Test]
-    public function emptyPlanAsksForATable(): void
+    public function testEmptyPlanAsksForATable(): void
     {
         self::assertSame(
             'A fixture plan must name at least one table.',
@@ -25,7 +25,7 @@ final class PlanSyntaxExceptionTest extends TestCase
     }
 
     #[Test]
-    public function emptyTableNameAsksForATable(): void
+    public function testEmptyTableNameAsksForATable(): void
     {
         self::assertSame(
             'A relation endpoint must name a table.',
@@ -34,7 +34,7 @@ final class PlanSyntaxExceptionTest extends TestCase
     }
 
     #[Test]
-    public function noColumnsNamesTheTable(): void
+    public function testNoColumnsNamesTheTable(): void
     {
         self::assertSame(
             'The endpoint for table order names no columns.',
@@ -43,7 +43,7 @@ final class PlanSyntaxExceptionTest extends TestCase
     }
 
     #[Test]
-    public function unexpectedReportsTheOffsetAndWhatWasWanted(): void
+    public function testUnexpectedReportsTheOffsetAndWhatWasWanted(): void
     {
         $message = PlanSyntaxException::unexpected('order.id ! x.y', 9, "one of '<', '>' or '-'")->getMessage();
 
@@ -55,7 +55,7 @@ final class PlanSyntaxExceptionTest extends TestCase
     }
 
     #[Test]
-    public function manyToManyPointsAtTheExplicitForm(): void
+    public function testManyToManyUnsupportedManyToManyPointsAtTheExplicitForm(): void
     {
         $message = PlanSyntaxException::manyToManyUnsupported('order.id <> product.id')->getMessage();
 
@@ -69,7 +69,7 @@ final class PlanSyntaxExceptionTest extends TestCase
     }
 
     #[Test]
-    public function compositeArityMismatchReportsBothCounts(): void
+    public function testCompositeArityMismatchReportsBothCounts(): void
     {
         $message = PlanSyntaxException::compositeArityMismatch(
             ColumnRef::of('order', 'shop_id', 'no'),
@@ -84,7 +84,7 @@ final class PlanSyntaxExceptionTest extends TestCase
     }
 
     #[Test]
-    public function notATableNamePointsAtFrom(): void
+    public function testNotATableNamePointsAtFrom(): void
     {
         $message = PlanSyntaxException::notATableName('order.id < order_detail.order_id')->getMessage();
 
@@ -97,7 +97,7 @@ final class PlanSyntaxExceptionTest extends TestCase
     }
 
     #[Test]
-    public function unbalancedBracketsNamesThePlan(): void
+    public function testUnbalancedBracketsNamesThePlan(): void
     {
         self::assertSame(
             'The fixture plan closes a bracket it never opened. Plan: a.id < b.a_id]',

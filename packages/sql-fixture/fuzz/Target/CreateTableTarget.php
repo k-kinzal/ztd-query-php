@@ -7,9 +7,10 @@ namespace Fuzz\Target;
 use Error;
 use Faker\Factory;
 use Faker\Generator;
+use Fuzz\FuzzerSeed;
 use SqlFaker\MySqlProvider;
 use SqlFixture\FixtureProvider;
-use Throwable;
+use SqlFixture\Schema\SchemaParseException;
 
 /**
  * Fuzz target for CREATE TABLE parsing and fixture generation.
@@ -23,9 +24,19 @@ final class CreateTableTarget
     private MySqlProvider $sqlFakerProvider;
     private FixtureProvider $fixtureProvider;
 
+    /**
+     * Builds a target that generates a table and then a fixture for it.
+     *
+     * @param string $grammarVersion Release whose grammar the SQL is generated from
+     * @param int $maxDepth How deep the grammar walk may recurse
+     * @param FuzzerSeed $seeds Turns fuzzer bytes into a seed
+     * @param ParserLimitations $limitations Recognises the reader's known limits
+     */
     public function __construct(
         string $grammarVersion,
         private readonly int $maxDepth = 5,
+        private readonly FuzzerSeed $seeds = new FuzzerSeed(),
+        private readonly ParserLimitations $limitations = new ParserLimitations(),
     ) {
         $this->faker = Factory::create();
         $this->sqlFakerProvider = new MySqlProvider($this->faker, $grammarVersion);
@@ -33,64 +44,33 @@ final class CreateTableTarget
     }
 
     /**
-     * Fuzz target callable.
+     * Generates one table declaration and builds a fixture for it.
      *
-     * @param string $input Raw fuzzer input (mutated bytes)
-     * @throws Error On parsing or fixture generation failure
+     * @param string $input Raw fuzzer input
+     *
+     * @throws Error When the fixture cannot be built for a reason that is not a known limit
      */
     public function __invoke(string $input): void
     {
-        $seed = $this->inputToSeed($input);
+        $seed = $this->seeds->of($input);
         $this->faker->seed($seed);
 
         $createTableSql = $this->sqlFakerProvider->createTableStatement(maxDepth: $this->maxDepth);
 
         try {
             $this->fixtureProvider->fixture($createTableSql);
-        } catch (Throwable $e) {
-            if ($e instanceof Error) {
-                throw $e;
-            }
-
-            if ($this->isExpectedParserLimitation($createTableSql, $e)) {
+        } catch (SchemaParseException $failure) {
+            if ($this->limitations->explains($failure)) {
                 return;
             }
 
-            throw new Error(
-                "Failed to generate fixture\n" .
-                "Seed: $seed\n" .
-                "SQL: $createTableSql\n" .
-                "Error: {$e->getMessage()}\n" .
-                'Exception: ' . get_class($e)
-            );
+            throw new Error(sprintf(
+                "Failed to generate fixture\nSeed: %d\nSQL: %s\nError: %s\nException: %s",
+                $seed,
+                $createTableSql,
+                $failure->getMessage(),
+                $failure::class,
+            ));
         }
-    }
-
-    private function inputToSeed(string $input): int
-    {
-        if (strlen($input) < 4) {
-            $input = str_pad($input, 4, "\0");
-        }
-        return crc32($input);
-    }
-
-    /**
-     * Check if the failure is an expected limitation of the parser.
-     */
-    private function isExpectedParserLimitation(string $sql, Throwable $e): bool
-    {
-        $message = $e->getMessage();
-
-        if (str_contains($message, 'No columns found')) {
-            return true;
-        }
-        if (str_contains($message, 'Table name not found')) {
-            return true;
-        }
-        if (str_contains($message, 'No statements found')) {
-            return true;
-        }
-
-        return false;
     }
 }

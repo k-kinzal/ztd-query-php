@@ -16,7 +16,7 @@ use SqlFixture\Schema\TableSchema;
 final class TableSchemaTest extends TestCase
 {
     #[Test]
-    public function getColumn(): void
+    public function testGetColumn(): void
     {
         $schema = new TableSchema('users', ['id' => new ColumnDefinition('id', 'INT'), 'name' => new ColumnDefinition('name', 'VARCHAR', length: 255), 'email' => new ColumnDefinition('email', 'VARCHAR', length: 255)], ['id']);
         $column = $schema->getColumn('id');
@@ -32,7 +32,7 @@ final class TableSchemaTest extends TestCase
     }
 
     #[Test]
-    public function hasColumn(): void
+    public function testHasColumn(): void
     {
         $schema = new TableSchema('users', ['id' => new ColumnDefinition('id', 'INT'), 'name' => new ColumnDefinition('name', 'VARCHAR', length: 255), 'email' => new ColumnDefinition('email', 'VARCHAR', length: 255)], ['id']);
         self::assertTrue($schema->hasColumn('id'));
@@ -41,7 +41,7 @@ final class TableSchemaTest extends TestCase
     }
 
     #[Test]
-    public function getColumnNames(): void
+    public function testGetColumnNames(): void
     {
         $names = (new TableSchema('users', ['id' => new ColumnDefinition('id', 'INT'), 'name' => new ColumnDefinition('name', 'VARCHAR', length: 255), 'email' => new ColumnDefinition('email', 'VARCHAR', length: 255)], ['id']))->getColumnNames();
         self::assertSame(['id', 'name', 'email'], $names);

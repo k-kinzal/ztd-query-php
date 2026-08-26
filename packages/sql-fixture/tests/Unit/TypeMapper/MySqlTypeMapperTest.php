@@ -19,7 +19,7 @@ use SqlFixture\TypeMapper\MySqlTypeMapper;
 final class MySqlTypeMapperTest extends TestCase
 {
     #[Test]
-    public function generateTinyInt(): void
+    public function testGenerateTinyInt(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);

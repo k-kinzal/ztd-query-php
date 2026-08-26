@@ -26,6 +26,7 @@ use SqlFaker\Grammar\TokenJoiner;
  * statement and a server that would have read another is caught here rather
  * than by the server. That round trip is the contract; realizing and tokenizing
  * are the two collaborators it holds.
+ * @phpstan-import-type Catalog from LexicalCatalog
  */
 final class LexicalGrammar implements LexicalGrammarContract
 {
@@ -58,7 +59,7 @@ final class LexicalGrammar implements LexicalGrammarContract
         ?LexicalKeywordIndex $index = null,
     ) {
         /**
-         * @var array{symbols: array<string, list<string>>, functions: array<string, list<string>>, features: array{dollar_quoted_strings: bool}, catalog: array<string, mixed>} $profile
+         * @var array{symbols: array<string, list<string>>, functions: array<string, list<string>>, features: array{dollar_quoted_strings: bool}, catalog: Catalog} $profile
          */
         $profile = ($profiles ?? new LexicalProfileSource())->load('mysql', $profileVersion);
         $index ??= new LexicalKeywordIndex();

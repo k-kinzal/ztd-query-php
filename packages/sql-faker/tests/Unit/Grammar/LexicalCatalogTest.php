@@ -18,6 +18,9 @@ use SqlFaker\MySql\Grammar\TerminalInventory as MySqlTerminalInventory;
 use SqlFaker\PostgreSql\Grammar\PgGrammar;
 use SqlFaker\Sqlite\Grammar\SqliteGrammar;
 
+/**
+ * @phpstan-import-type Catalog from LexicalCatalog
+ */
 #[CoversClass(LexicalCatalog::class)]
 #[UsesClass(SqlVersion::class)]
 #[UsesClass(TerminalInventory::class)]
@@ -250,7 +253,7 @@ final class LexicalCatalogTest extends TestCase
 
         $versions = SqlVersion::all();
         array_walk($versions, static function (SqlVersion $version) use ($loaders): void {
-            /** @var array{dialect: string, version: string, catalog: array<string, mixed>} $profile */
+            /** @var array{dialect: string, version: string, catalog: Catalog} $profile */
             $profile = require $version->lexicalPath;
             $terminals = $loaders[$version->dialect]($version->name);
             $catalog = new LexicalCatalog($profile['catalog']);

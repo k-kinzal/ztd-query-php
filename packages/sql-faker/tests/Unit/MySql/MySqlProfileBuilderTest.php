@@ -102,4 +102,149 @@ final class MySqlProfileBuilderTest extends TestCase
             (new MySqlProfileBuilder())->witness('ident.bare', 'users', ['IDENT'], ['identifier'], 'SELECT %s'),
         );
     }
+
+    public function testCatalogWitnessesEveryTerminalItsOwnTablesName(): void
+    {
+        $catalog = (new MySqlProfileBuilder())->catalog(
+            'mysql-8.4.7',
+            ['symbols' => [], 'functions' => [], 'features' => ['dollar_quoted_strings' => false]],
+            [],
+            Grammar::load('mysql-8.4.7'),
+        );
+
+        /** @var array<string, list<array{id: string}>> $terminals */
+        $terminals = $catalog['terminals'];
+        /** @var list<string> $ids */
+        $ids = array_merge(...array_map(
+            static fn (array $witnesses): array => array_column($witnesses, 'id'),
+            array_values($terminals),
+        ));
+        sort($ids);
+
+        self::assertSame(
+            [
+                'mysql.family.@COVERAGE.0',
+                'mysql.family.@COVERAGE.1',
+                'mysql.family.@COVERAGE.2',
+                'mysql.family.@COVERAGE.3',
+                'mysql.family.@COVERAGE.4',
+                'mysql.family.@COVERAGE.5',
+                'mysql.family.@COVERAGE.6',
+                'mysql.family.@COVERAGE.7',
+                'mysql.family.@COVERAGE.8',
+                'mysql.family.@TRIVIA.0',
+                'mysql.family.@TRIVIA.1',
+                'mysql.family.@TRIVIA.2',
+                'mysql.family.@TRIVIA.3',
+                'mysql.family.BIN_NUM.0',
+                'mysql.family.BIN_NUM.1',
+                'mysql.family.DECIMAL_NUM.0',
+                'mysql.family.FLOAT_NUM.0',
+                'mysql.family.HEX_NUM.0',
+                'mysql.family.HEX_NUM.1',
+                'mysql.family.IDENT.0',
+                'mysql.family.IDENT_QUOTED.0',
+                'mysql.family.JSON_SEPARATOR_SYM.0',
+                'mysql.family.JSON_UNQUOTED_SEPARATOR_SYM.0',
+                'mysql.family.LEX_HOSTNAME.0',
+                'mysql.family.LONG_NUM.0',
+                'mysql.family.NCHAR_STRING.0',
+                'mysql.family.NUM.0',
+                'mysql.family.OR2_SYM.0',
+                'mysql.family.PARAM_MARKER.0',
+                'mysql.family.SET_VAR.0',
+                'mysql.family.TEXT_STRING.0',
+                'mysql.family.TEXT_STRING.1',
+                'mysql.family.ULONGLONG_NUM.0',
+                'mysql.family.UNDERSCORE_CHARSET.0',
+                'mysql.family.WITH_ROLLUP_SYM.0',
+                'mysql.parser.END_OF_INPUT',
+                'mysql.parser.GRAMMAR_SELECTOR_CTE',
+                'mysql.parser.GRAMMAR_SELECTOR_DERIVED_EXPR',
+                'mysql.parser.GRAMMAR_SELECTOR_EXPR',
+                'mysql.parser.GRAMMAR_SELECTOR_GCOL',
+                'mysql.parser.GRAMMAR_SELECTOR_PART',
+                'mysql.punctuation.21',
+                'mysql.punctuation.25',
+                'mysql.punctuation.26',
+                'mysql.punctuation.28',
+                'mysql.punctuation.29',
+                'mysql.punctuation.2a',
+                'mysql.punctuation.2b',
+                'mysql.punctuation.2c',
+                'mysql.punctuation.2d',
+                'mysql.punctuation.2e',
+                'mysql.punctuation.2f',
+                'mysql.punctuation.3a',
+                'mysql.punctuation.3b',
+                'mysql.punctuation.3c',
+                'mysql.punctuation.3d',
+                'mysql.punctuation.3e',
+                'mysql.punctuation.3f',
+                'mysql.punctuation.40',
+                'mysql.punctuation.5b',
+                'mysql.punctuation.5d',
+                'mysql.punctuation.5e',
+                'mysql.punctuation.7b',
+                'mysql.punctuation.7c',
+                'mysql.punctuation.7d',
+                'mysql.punctuation.7e',
+            ],
+            $ids,
+        );
+    }
+
+    public function testCatalogNamesEveryTerminalTheDefaultServerModeWillNotProduce(): void
+    {
+        $catalog = (new MySqlProfileBuilder())->catalog(
+            'mysql-8.4.7',
+            ['symbols' => [], 'functions' => [], 'features' => ['dollar_quoted_strings' => false]],
+            [],
+            Grammar::load('mysql-8.4.7'),
+        );
+
+        self::assertSame(
+            [
+                'NOT2_SYM' => 'Default sql_mode emits NOT_SYM; NOT2_SYM requires HIGH_NOT_PRECEDENCE.',
+                'OR_OR_SYM' => 'Default sql_mode normalizes double-pipe to OR2_SYM; '
+                    . 'OR_OR_SYM requires PIPES_AS_CONCAT.',
+                'UDF_RETURNS_SYM' => 'The token is declared by legacy grammars but has no mapping '
+                    . 'in the official lexer table.',
+            ],
+            $catalog['terminal_exclusions'],
+        );
+    }
+
+    public function testCatalogWitnessesEveryEntryPointTheParserDeclares(): void
+    {
+        $catalog = (new MySqlProfileBuilder())->catalog(
+            'mysql-8.4.7',
+            ['symbols' => [], 'functions' => [], 'features' => ['dollar_quoted_strings' => false]],
+            [],
+            Grammar::load('mysql-8.4.7'),
+        );
+
+        self::assertSame(
+            [
+                'units' => [
+                    'parser-entry:END_OF_INPUT',
+                    'parser-entry:GRAMMAR_SELECTOR_CTE',
+                    'parser-entry:GRAMMAR_SELECTOR_DERIVED_EXPR',
+                    'parser-entry:GRAMMAR_SELECTOR_EXPR',
+                    'parser-entry:GRAMMAR_SELECTOR_GCOL',
+                    'parser-entry:GRAMMAR_SELECTOR_PART',
+                ],
+                'witnessed' => [
+                    'parser-entry:END_OF_INPUT' => 'mysql.parser.END_OF_INPUT',
+                    'parser-entry:GRAMMAR_SELECTOR_CTE' => 'mysql.parser.GRAMMAR_SELECTOR_CTE',
+                    'parser-entry:GRAMMAR_SELECTOR_DERIVED_EXPR' => 'mysql.parser.GRAMMAR_SELECTOR_DERIVED_EXPR',
+                    'parser-entry:GRAMMAR_SELECTOR_EXPR' => 'mysql.parser.GRAMMAR_SELECTOR_EXPR',
+                    'parser-entry:GRAMMAR_SELECTOR_GCOL' => 'mysql.parser.GRAMMAR_SELECTOR_GCOL',
+                    'parser-entry:GRAMMAR_SELECTOR_PART' => 'mysql.parser.GRAMMAR_SELECTOR_PART',
+                ],
+                'excluded' => [],
+            ],
+            $catalog['coverage'],
+        );
+    }
 }

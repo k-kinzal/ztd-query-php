@@ -81,9 +81,9 @@ final class MySqlColumnReader
      *
      * @param OptionsArray|null $options Options the parser recorded against the column
      *
-     * @return mixed The default, or null when none was declared
+     * @return int|float|string|bool|null The default, or null when none was declared
      */
-    public function defaultValue(?OptionsArray $options): mixed
+    public function defaultValue(?OptionsArray $options): int|float|string|bool|null
     {
         if ($options === null || $options->has('DEFAULT') === false) {
             return null;
@@ -95,8 +95,11 @@ final class MySqlColumnReader
             }
 
             $written = $option['value'] ?? null;
-            if (!is_string($written)) {
+            if ($written === null || is_bool($written) || is_int($written) || is_float($written)) {
                 return $written;
+            }
+            if (!is_string($written)) {
+                return null;
             }
             if (preg_match('/^[\'"](.*)[\'"]\s*$/s', $written, $matches) === 1) {
                 return $matches[1];

@@ -30,7 +30,7 @@ use SqlFixture\Schema\TableSchema;
 final class DatabaseFixtureProviderTest extends TestCase
 {
     #[Test]
-    public function fixtureGeneratesArrayFromSqliteTable(): void
+    public function testFixtureGeneratesArrayFromSqliteTable(): void
     {
         $pdo = new PDO('sqlite::memory:');
         $pdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, email TEXT)');
@@ -43,7 +43,7 @@ final class DatabaseFixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function clearCacheAllowsRefetch(): void
+    public function testClearCacheAllowsRefetch(): void
     {
         $pdo = new PDO('sqlite::memory:');
         $pdo->exec('CREATE TABLE items (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT)');
@@ -58,7 +58,7 @@ final class DatabaseFixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function getDriverReturnsSqlite(): void
+    public function testGetDriverReturnsSqlite(): void
     {
         $pdo = new PDO('sqlite::memory:');
         $faker = Factory::create();
@@ -137,4 +137,45 @@ final class DatabaseFixtureProviderTest extends TestCase
         self::assertSame('Override', $data['name']);
     }
 
+    #[Test]
+    public function testGetSchemaDescribesTheTableTheConnectionKnows(): void
+    {
+        $pdo = new PDO('sqlite::memory:');
+        $pdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+
+        $schema = (new DatabaseFixtureProvider(Factory::create(), $pdo))->getSchema('users');
+
+        self::assertSame('users', $schema->tableName);
+        self::assertSame(['id', 'name'], array_keys($schema->columns));
+    }
+
+    #[Test]
+    public function testGetSchemaReadsTheTableOnceAndAnswersTheSameOneAgain(): void
+    {
+        $pdo = new PDO('sqlite::memory:');
+        $pdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $provider = new DatabaseFixtureProvider(Factory::create(), $pdo);
+
+        $first = $provider->getSchema('users');
+        $pdo->exec('DROP TABLE users');
+
+        self::assertSame($first, $provider->getSchema('`users`'));
+    }
+
+    #[Test]
+    public function testNormalizeTableNameTakesTheQuotesOffSoBothSpellingsAreOneKey(): void
+    {
+        $provider = new DatabaseFixtureProvider(Factory::create(), new PDO('sqlite::memory:'));
+
+        self::assertSame('users', $provider->normalizeTableName('`users`'));
+        self::assertSame('users', $provider->normalizeTableName('"users"'));
+    }
+
+    #[Test]
+    public function testGetFixtureGeneratorAnswersTheGeneratorTheRowsAreBuiltWith(): void
+    {
+        $provider = new DatabaseFixtureProvider(Factory::create(), new PDO('sqlite::memory:'));
+
+        self::assertSame($provider->getFixtureGenerator(), $provider->getFixtureGenerator());
+    }
 }

@@ -103,10 +103,11 @@ final class LexicalCatalogShape
                 throw LexicalCatalogException::malformedTerminalCatalog();
             }
 
-            $read[$terminal] = array_values(array_map(
-                fn (mixed $witness): array => $this->witnesses->of($terminal, $witness),
-                $witnesses,
-            ));
+            $readWitnesses = [];
+            foreach ($witnesses as $witness) {
+                $readWitnesses[] = $this->witnesses->of($terminal, $witness);
+            }
+            $read[$terminal] = $readWitnesses;
         }
 
         return $read;
@@ -179,10 +180,13 @@ final class LexicalCatalogShape
         if (!is_array($units)) {
             throw LexicalCatalogException::malformedShape('coverage.units');
         }
-        if (!array_is_list($units)
-            || array_filter($units, static fn (mixed $unit): bool => !is_string($unit)) !== []
-        ) {
+        if (!array_is_list($units)) {
             throw LexicalCatalogException::malformedCoverageUnits();
+        }
+        foreach ($units as $unit) {
+            if (!is_string($unit)) {
+                throw LexicalCatalogException::malformedCoverageUnits();
+            }
         }
 
         /** @var list<string> $units */

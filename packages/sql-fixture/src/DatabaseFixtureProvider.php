@@ -7,8 +7,10 @@ namespace SqlFixture;
 use Faker\Generator;
 use Faker\Provider\Base;
 use PDO;
+use RuntimeException;
 use SqlFixture\Hydrator\HydratorInterface;
 use SqlFixture\Platform\PlatformFactory;
+use SqlFixture\Platform\UnsupportedDriverException;
 use SqlFixture\Schema\SchemaFetcherInterface;
 use SqlFixture\Schema\TableSchema;
 use SqlFixture\TypeMapper\TypeMapperInterface;
@@ -18,6 +20,7 @@ use SqlFixture\TypeMapper\TypeMapperInterface;
  *
  * Automatically detects the database driver (MySQL, SQLite) and uses
  * the appropriate schema fetcher and type mapper.
+ * @phpstan-import-type FixtureRow from TypeMapperInterface
  */
 class DatabaseFixtureProvider extends Base
 {
@@ -29,6 +32,17 @@ class DatabaseFixtureProvider extends Base
     /** @var array<string, TableSchema> Table name → parsed schema cache */
     private array $schemaCache = [];
 
+    /**
+     * Builds a provider that reads its tables from a live connection.
+     *
+     * @param Generator $faker Source of every choice a generated column makes
+     * @param PDO $connection Connection the tables are described from
+     * @param TypeMapperInterface|null $typeMapper Answers what a column is given, or null to pick the one the driver calls for
+     * @param HydratorInterface|null $hydrator Turns a row into an object
+     * @param SchemaFetcherInterface|null $schemaFetcher Reads a table out of the server, or null to pick the one the driver calls for
+     *
+     * @throws UnsupportedDriverException When the connection is to a database this package has no support for
+     */
     public function __construct(
         Generator $faker,
         PDO $connection,
@@ -53,9 +67,9 @@ class DatabaseFixtureProvider extends Base
      *
      * @template T of object
      * @param string $tableName Table name (e.g., "users" or "mydb.users")
-     * @param array<string, mixed> $overrides Override values
+     * @param array<array-key, mixed> $overrides Columns the caller fixes, instead of generating them
      * @param class-string<T>|null $className Deserialization target class
-     * @return ($className is null ? array<string, mixed> : T)
+     * @return ($className is null ? FixtureRow : T) The row, or the object it was hydrated into
      */
     public function fixture(
         string $tableName,
@@ -67,9 +81,19 @@ class DatabaseFixtureProvider extends Base
     }
 
     /**
-     * Get or fetch schema for a table.
+     * Answers the table a fixture is generated against, reading it once.
+     *
+     * A schema is read from the connection the first time it is asked for and kept,
+     * because a provider is typically asked for many rows of the same few tables
+     * and reading the declaration again would say the same thing each time.
+     *
+     * @param string $tableName Table to describe
+     *
+     * @return TableSchema The table
+     *
+     * @throws RuntimeException When the connection knows no such table
      */
-    private function getSchema(string $tableName): TableSchema
+    public function getSchema(string $tableName): TableSchema
     {
         $normalizedName = $this->normalizeTableName($tableName);
 
@@ -84,9 +108,16 @@ class DatabaseFixtureProvider extends Base
     }
 
     /**
-     * Normalize table name for caching.
+     * Answers the key a table's schema is remembered under.
+     *
+     * A caller may quote a name or not, and both name the same table, so the quotes
+     * come off before the name is used as a key.
+     *
+     * @param string $tableName Name as the caller wrote it
+     *
+     * @return string The key it is remembered under
      */
-    private function normalizeTableName(string $tableName): string
+    public function normalizeTableName(string $tableName): string
     {
         return str_replace(['`', '"'], '', $tableName);
     }

@@ -19,7 +19,7 @@ final class RelationSideTest extends TestCase
     }
 
     #[Test]
-    public function oppositeFlipsTheSide(): void
+    public function testOppositeFlipsTheSide(): void
     {
         self::assertSame(RelationSide::Right, RelationSide::Left->opposite());
         self::assertSame(RelationSide::Left, RelationSide::Right->opposite());

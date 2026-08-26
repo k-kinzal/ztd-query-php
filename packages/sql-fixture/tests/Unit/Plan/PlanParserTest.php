@@ -27,7 +27,7 @@ use SqlFixture\Plan\RelationSide;
 final class PlanParserTest extends TestCase
 {
     #[Test]
-    public function aBareTableNameIsAPlanWithNoRelations(): void
+    public function testParseABareTableNameIsAPlanWithNoRelations(): void
     {
         $plan = (new PlanParser())->parse('order');
 

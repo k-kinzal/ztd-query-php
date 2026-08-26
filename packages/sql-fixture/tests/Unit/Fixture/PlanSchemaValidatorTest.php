@@ -40,7 +40,7 @@ use Tests\Fixture\Fixture\ShopSchemas;
 final class PlanSchemaValidatorTest extends TestCase
 {
     #[Test]
-    public function aPlanMatchingTheSchemaPasses(): void
+    public function testValidateAPlanMatchingTheSchemaPasses(): void
     {
         $validator = new PlanSchemaValidator(ShopSchemas::resolver());
 
@@ -141,5 +141,49 @@ final class PlanSchemaValidatorTest extends TestCase
         $this->expectExceptionMessage('order_detail.order_id is a generated column');
 
         (new PlanSchemaValidator($resolver))->validate(FixturePlan::from('order.id < order_detail.order_id'));
+    }
+
+    #[Test]
+    public function testCheckEndpointPassesAnEndpointTheTableCanHonour(): void
+    {
+        $validator = new PlanSchemaValidator(ShopSchemas::resolver());
+
+        $validator->checkEndpoint(ColumnRef::of('order_detail', 'order_id', 'product_id'));
+
+        $this->expectNotToPerformAssertions();
+    }
+
+    #[Test]
+    public function testCheckEndpointRefusesAColumnTheTableDoesNotHave(): void
+    {
+        $validator = new PlanSchemaValidator(ShopSchemas::resolver());
+
+        $this->expectException(PlanSchemaException::class);
+
+        $validator->checkEndpoint(ColumnRef::of('order', 'nope'));
+    }
+
+    #[Test]
+    public function testCheckEndpointRefusesAColumnTheServerFillsIn(): void
+    {
+        $resolver = new StaticSchemaResolver([
+            new TableSchema('invoice', [
+                'total' => new ColumnDefinition('total', 'INT', generated: true),
+            ]),
+        ]);
+
+        $this->expectException(PlanSchemaException::class);
+
+        (new PlanSchemaValidator($resolver))->checkEndpoint(ColumnRef::of('invoice', 'total'));
+    }
+
+    #[Test]
+    public function testCheckEndpointRefusesATableNothingCanResolve(): void
+    {
+        $validator = new PlanSchemaValidator(new StaticSchemaResolver());
+
+        $this->expectException(SchemaNotFoundException::class);
+
+        $validator->checkEndpoint(ColumnRef::of('order', 'id'));
     }
 }
