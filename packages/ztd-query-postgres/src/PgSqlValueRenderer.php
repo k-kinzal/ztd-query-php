@@ -30,6 +30,9 @@ final class PgSqlValueRenderer implements ValueRenderer
      */
     public function renderValue(mixed $value, ?ColumnDeclaration $type = null): string
     {
+        if ($type === null && !$this->isRenderable($value)) {
+            throw new RuntimeException('Unsupported value type for CTE shadowing.');
+        }
         if ($value === null) {
             return 'NULL';
         }
@@ -46,17 +49,43 @@ final class PgSqlValueRenderer implements ValueRenderer
             return (string) $value;
         }
 
-        if ($type === null && !is_scalar($value)) {
-            throw new RuntimeException('Unsupported value type for CTE shadowing.');
-        }
-
         $resolvedType = $type ?? $this->inferType($value);
         $expression = $this->renderExpression($value, $resolvedType, $type !== null);
 
         return $this->castRenderer->renderCast($expression, $resolvedType);
     }
 
-    private function renderExpression(mixed $value, ColumnDeclaration $type, bool $typed): string
+    /**
+     * Reports whether a value is one an SQL literal could carry on its own.
+     *
+     * A column that declares its type says how to read whatever is written
+     * into it, so anything can be written there; a value with no column
+     * behind it has only itself to go on.
+     *
+     * @param mixed $value Value as it was handed over
+     *
+     * @return bool True when it can be written
+     *
+     * @phpstan-assert-if-true RenderableValue $value
+     */
+    public function isRenderable(mixed $value): bool
+    {
+        return $value === null
+            || is_scalar($value)
+            || $value instanceof Stringable
+            || (is_resource($value) && get_resource_type($value) === 'stream');
+    }
+
+    /**
+     * Writes the literal a value becomes, before anything says how to read it.
+     *
+     * @param mixed $value Value to read
+     * @param ColumnDeclaration $type How the column was declared
+     * @param bool $typed The typed
+     *
+     * @return string What it answers
+     */
+    public function renderExpression(mixed $value, ColumnDeclaration $type, bool $typed): string
     {
         if ($type->family === ColumnTypeFamily::BINARY) {
             $hex = bin2hex($this->stringValue($value));
@@ -83,7 +112,14 @@ final class PgSqlValueRenderer implements ValueRenderer
         return $this->quoteValue($this->stringValue($value));
     }
 
-    private function inferType(mixed $value): ColumnDeclaration
+    /**
+     * Answers how a value would be read where nothing declared its column.
+     *
+     * @param mixed $value Value to read
+     *
+     * @return ColumnDeclaration What it answers
+     */
+    public function inferType(mixed $value): ColumnDeclaration
     {
         if (is_int($value)) {
             return new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER');
@@ -93,9 +129,18 @@ final class PgSqlValueRenderer implements ValueRenderer
     }
 
     /**
+     * Answers the bytes a value is, whatever it was handed over as.
+     *
+     * A driver may hand a large column over as an open stream, and reading it
+     * here leaves it where it was so that the caller can read it again.
+     *
+     * @param mixed $value Value to read
+     *
+     * @return string What it answers
+     *
      * @throws RuntimeException
      */
-    private function stringValue(mixed $value): string
+    public function stringValue(mixed $value): string
     {
         if ($value instanceof Stringable) {
             return (string) $value;
@@ -110,8 +155,14 @@ final class PgSqlValueRenderer implements ValueRenderer
         throw new RuntimeException('Unsupported value type for CTE shadowing.');
     }
 
-    /** @param resource $stream */
-    private function readStream($stream): string
+    /**
+     * Reads an open stream without moving where the caller had it.
+     *
+     * @param resource $stream Stream to read
+     *
+     * @return string What it answers
+     */
+    public function readStream($stream): string
     {
         $position = ftell($stream);
         rewind($stream);
@@ -123,7 +174,14 @@ final class PgSqlValueRenderer implements ValueRenderer
         return $contents === false ? '' : $contents;
     }
 
-    private function quoteValue(string $value): string
+    /**
+     * Writes bytes as a quoted literal.
+     *
+     * @param string $value Value to read
+     *
+     * @return string What it answers
+     */
+    public function quoteValue(string $value): string
     {
         return "'" . str_replace("'", "''", $value) . "'";
     }

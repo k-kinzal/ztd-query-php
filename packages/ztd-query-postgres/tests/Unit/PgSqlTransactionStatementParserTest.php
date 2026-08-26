@@ -12,6 +12,7 @@ use ZtdQuery\Platform\Postgres\PgSqlLexerProfile;
 use ZtdQuery\Platform\Postgres\PgSqlTransactionStatementParser;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTransactions;
+use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(PgSqlTransactionStatementParser::class)]
 #[UsesClass(PgSqlLexerProfile::class)]
@@ -75,5 +76,61 @@ final class PgSqlTransactionStatementParserTest extends TestCase
         $transactions->rollBackTo('a"b');
 
         self::assertSame([['id' => 1]], $store->get('items'));
+    }
+    public function testMatchesAnyReportsTheTokensSpellingOneOfTheForms(): void
+    {
+        $tokens = SqlTokenStream::tokenize('BEGIN', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertTrue((new PgSqlTransactionStatementParser())->matchesAny($tokens, [['START'], ['BEGIN']]));
+    }
+
+    public function testMatchesAnyIsFalseWhereTheTokensSpellNoneOfThem(): void
+    {
+        $tokens = SqlTokenStream::tokenize('COMMIT', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertFalse((new PgSqlTransactionStatementParser())->matchesAny($tokens, [['START'], ['BEGIN']]));
+    }
+
+    public function testNameAfterAnswersTheNameWrittenAfterTheOpening(): void
+    {
+        $tokens = SqlTokenStream::tokenize('SAVEPOINT sp1', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertSame('sp1', (new PgSqlTransactionStatementParser())->nameAfter($tokens, [['SAVEPOINT']]));
+    }
+
+    public function testNameAfterIsNothingWhereTheStatementOpensDifferently(): void
+    {
+        $tokens = SqlTokenStream::tokenize('COMMIT', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertNull((new PgSqlTransactionStatementParser())->nameAfter($tokens, [['SAVEPOINT']]));
+    }
+
+    public function testMatchesReportsTheTokensBeingExactlyThoseKeywords(): void
+    {
+        $tokens = SqlTokenStream::tokenize('START TRANSACTION', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertTrue((new PgSqlTransactionStatementParser())->matches($tokens, ['START', 'TRANSACTION']));
+    }
+
+    public function testMatchesIsFalseWhereMoreIsWrittenThanThoseKeywords(): void
+    {
+        $tokens = SqlTokenStream::tokenize('START TRANSACTION', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertFalse((new PgSqlTransactionStatementParser())->matches($tokens, ['START']));
+    }
+
+    public function testUnquoteAnswersTheNameAQuotedIdentifierStandsFor(): void
+    {
+        self::assertSame('order', (new PgSqlTransactionStatementParser())->unquote('"order"', ['"']));
+    }
+
+    public function testUnquoteLeavesAnUnquotedNameAlone(): void
+    {
+        self::assertSame('sp1', (new PgSqlTransactionStatementParser())->unquote('sp1', ['"']));
+    }
+
+    public function testUnquoteIsNothingWhereTheQuotingNeverClosed(): void
+    {
+        self::assertNull((new PgSqlTransactionStatementParser())->unquote('"order', ['"']));
     }
 }
