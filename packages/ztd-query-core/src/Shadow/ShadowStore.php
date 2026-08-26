@@ -29,13 +29,18 @@ class ShadowStore
     private array $initializedTables = [];
 
     /**
-     * Replace all shadow rows for a table.
+     * Replaces every shadow row of a table.
      *
-     * @param list<Row> $rows
+     * Rows are kept in order and under no keys of their own. Where the caller
+     * has removed some and left the rest under the keys they had, the gaps go:
+     * a table's rows are the rows it has, and nothing downstream should be able
+     * to tell how they came to be that.
+     *
+     * @param array<int, Row> $rows Rows the table now has, in order
      */
     public function set(string $tableName, array $rows): void
     {
-        $this->fixtures[$tableName] = $rows;
+        $this->fixtures[$tableName] = array_values($rows);
         $this->initializedTables[$tableName] = $tableName;
     }
 

@@ -12,6 +12,7 @@ use ZtdQuery\Platform\ResultColumnTypeResolver;
  * Executes result-select queries and returns rows.
  *
  * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type RowValue from StatementInterface
  */
 final class ResultSelectRunner
 {
@@ -48,7 +49,7 @@ final class ResultSelectRunner
     /**
      * Execute a prepared statement and return result rows.
      *
-     * @param array<int|string, mixed>|null $params
+     * @param array<int|string, RowValue>|null $params
      * @return list<Row>
      */
     public function runStatement(

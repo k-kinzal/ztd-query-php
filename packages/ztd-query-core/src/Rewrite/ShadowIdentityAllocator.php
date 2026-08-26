@@ -20,6 +20,7 @@ use ZtdQuery\Schema\IdentityGenerationStrategy;
  * takes its numbers with it, and only a committed one moves the counter on.
  *
  * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type RowValue from StatementInterface
  */
 final class ShadowIdentityAllocator
 {
@@ -109,10 +110,10 @@ final class ShadowIdentityAllocator
     }
 
     /** @param list<Row> $rows */
-    private function nextAfterExistingRows(string $column, array $rows, int $next): int
+    public function nextAfterExistingRows(string $column, array $rows, int $next): int
     {
         foreach ($rows as $row) {
-            $value = self::integerValue($row[$column] ?? null);
+            $value = $this->integerValue($row[$column] ?? null);
             if ($value !== null) {
                 $next = max($next, $value + 1);
             }
@@ -121,7 +122,7 @@ final class ShadowIdentityAllocator
         return $next;
     }
 
-    private static function integerValue(mixed $value): ?int
+    public function integerValue(int|float|string|bool|null $value): ?int
     {
         if (is_int($value)) {
             return $value;

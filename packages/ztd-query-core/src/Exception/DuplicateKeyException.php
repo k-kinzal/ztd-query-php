@@ -44,7 +44,9 @@ final class DuplicateKeyException extends SimulationException
     public function __construct(string $sql, string $tableName, string $keyName, array $keyValues = [])
     {
         $keyValuesStr = implode(', ', array_map(
-            static fn (mixed $v): string => is_string($v) ? "'{$v}'" : (is_scalar($v) || $v === null ? (string) $v : '?'),
+            static fn (int|float|string|bool|null $value): string => is_string($value)
+                ? "'{$value}'"
+                : (string) $value,
             array_values($keyValues)
         ));
         parent::__construct(sprintf(

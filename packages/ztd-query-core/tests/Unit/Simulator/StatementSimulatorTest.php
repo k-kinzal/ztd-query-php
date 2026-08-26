@@ -7,7 +7,6 @@ namespace Tests\Unit\Simulator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 use Tests\Fake\ExceptionThrowingRewriter;
 use Tests\Fake\FixedRewriter;
 use ZtdQuery\Config\ZtdConfig;
@@ -141,7 +140,7 @@ final class StatementSimulatorTest extends TestCase
         self::assertSame(2, $rows[0]['id']);
     }
 
-    public function testWriteStatementWithoutMutationThrows(): void
+    public function testSimulateRefusesAWriteThePlanCarriesNoMutationFor(): void
     {
         $shadowStore = new ShadowStore();
         $connection = static::createStub(ConnectionInterface::class);
@@ -154,8 +153,8 @@ final class StatementSimulatorTest extends TestCase
         );
         $simulator = new StatementSimulator($session);
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Missing shadow mutation');
+        $this->expectException(UnsupportedSqlException::class);
+        $this->expectExceptionMessage('Unsimulatable write');
 
         $simulator->simulate('UPDATE users SET name = \'Bob\' WHERE id = 1', fn () => false);
     }

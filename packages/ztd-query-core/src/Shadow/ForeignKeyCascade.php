@@ -140,7 +140,7 @@ final class ForeignKeyCascade
             return null;
         }
 
-        $store->set($childTable, array_values($rows));
+        $store->set($childTable, $rows);
 
         return new TableTransition($childTable, $deletedChildren, $updatedChildren);
     }
