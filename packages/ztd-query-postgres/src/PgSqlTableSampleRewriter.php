@@ -11,6 +11,10 @@ final class PgSqlTableSampleRewriter
     private PgSqlTableSampleParser $parser;
     private PgSqlIdentifierQuoter $quoter;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     */
     public function __construct()
     {
         $this->parser = new PgSqlTableSampleParser();

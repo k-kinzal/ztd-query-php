@@ -25,6 +25,12 @@ use ZtdQuery\Sql\TransactionStatement;
  */
 final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
 {
+    /**
+     * Transaction statement.
+     *
+     * @param string $sql
+     * @return ?TransactionStatement
+     */
     public function transactionStatement(string $sql): ?TransactionStatement
     {
         return (new PgSqlTransactionStatementParser())->parse($sql);
@@ -41,6 +47,17 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
     private PgSqlPartitionPredicateRenderer $partitionPredicateRenderer;
     private ViewDefinitionSet $views;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param PgSqlQueryGuard $guard
+     * @param ShadowStore $shadowStore
+     * @param TableDefinitionRegistry $registry
+     * @param PgSqlTransformer $transformer
+     * @param PgSqlMutationResolver $mutationResolver
+     * @param PgSqlParser $parser
+     * @param ?ViewDefinitionSet $views
+     */
     public function __construct(
         PgSqlQueryGuard $guard,
         ShadowStore $shadowStore,
@@ -121,6 +138,10 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
         return $this->parser->splitStatements($sql);
     }
 
+    /**
+     * Commit rewrite state.
+     *
+     */
     public function commitRewriteState(): void
     {
         $this->transformer->commitRewriteState();
@@ -366,6 +387,11 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
         return false;
     }
 
+    /**
+     * Empty result select.
+     *
+     * @return string
+     */
     public function emptyResultSelect(): string
     {
         return 'SELECT 1 WHERE FALSE';

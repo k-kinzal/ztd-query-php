@@ -8,6 +8,12 @@ use ZtdQuery\Platform\SqlPlaceholderEscaper;
 
 final class PgSqlPdoPlaceholderEscaper implements SqlPlaceholderEscaper
 {
+    /**
+     * Escape.
+     *
+     * @param string $sql
+     * @return string
+     */
     public function escape(string $sql): string
     {
         $result = '';

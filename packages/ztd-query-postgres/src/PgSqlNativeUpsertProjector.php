@@ -21,6 +21,10 @@ final class PgSqlNativeUpsertProjector
     /** @var non-empty-list<string> */
     private readonly array $incomingNamespaces;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     */
     public function __construct()
     {
         $this->quoter = new PgSqlIdentifierQuoter();

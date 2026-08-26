@@ -86,6 +86,10 @@ final class RewriteFuzzTest extends TestCase
         $faker->seed(20260815);
     }
 
+    /**
+     * Test rewrite select returns read kind.
+     *
+     */
     public function testRewriteSelectReturnsReadKind(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
@@ -103,6 +107,10 @@ final class RewriteFuzzTest extends TestCase
         self::addToAssertionCount(self::ITERATIONS);
     }
 
+    /**
+     * Test rewrite insert returns write simulated kind.
+     *
+     */
     public function testRewriteInsertReturnsWriteSimulatedKind(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
@@ -120,6 +128,10 @@ final class RewriteFuzzTest extends TestCase
         self::addToAssertionCount(self::ITERATIONS);
     }
 
+    /**
+     * Test rewrite update returns write simulated kind.
+     *
+     */
     public function testRewriteUpdateReturnsWriteSimulatedKind(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
@@ -137,6 +149,10 @@ final class RewriteFuzzTest extends TestCase
         self::addToAssertionCount(self::ITERATIONS);
     }
 
+    /**
+     * Test rewrite delete returns write simulated kind.
+     *
+     */
     public function testRewriteDeleteReturnsWriteSimulatedKind(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
@@ -154,6 +170,10 @@ final class RewriteFuzzTest extends TestCase
         self::addToAssertionCount(self::ITERATIONS);
     }
 
+    /**
+     * Test rewrite create table returns ddl simulated kind.
+     *
+     */
     public function testRewriteCreateTableReturnsDdlSimulatedKind(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
@@ -170,6 +190,10 @@ final class RewriteFuzzTest extends TestCase
         self::addToAssertionCount(self::ITERATIONS);
     }
 
+    /**
+     * Test rewrite drop table returns ddl simulated kind.
+     *
+     */
     public function testRewriteDropTableReturnsDdlSimulatedKind(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {

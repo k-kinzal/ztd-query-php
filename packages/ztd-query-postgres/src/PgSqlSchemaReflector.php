@@ -22,6 +22,11 @@ final class PgSqlSchemaReflector implements SchemaReflector, ViewReflector
     /** @var array<string, array<string, PartialUniqueIndex>> */
     private array $partialUniqueIndexes = [];
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param ConnectionInterface $connection
+     */
     public function __construct(ConnectionInterface $connection)
     {
         $this->connection = $connection;

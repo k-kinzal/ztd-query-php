@@ -13,6 +13,10 @@ final class InsertSelectRenderer
     private PgSqlIdentifierQuoter $quoter;
     private InsertSelectProjectionPlanner $projectionPlanner;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     */
     public function __construct()
     {
         $this->quoter = new PgSqlIdentifierQuoter();

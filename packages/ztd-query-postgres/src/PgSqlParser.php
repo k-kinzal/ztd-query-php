@@ -123,6 +123,12 @@ final class PgSqlParser
         return preg_match('/\bON\s+CONFLICT\b/i', $sql) === 1;
     }
 
+    /**
+     * Reads on conflict target.
+     *
+     * @param string $sql
+     * @return ?PgSqlConflictTarget
+     */
     public function extractOnConflictTarget(string $sql): ?PgSqlConflictTarget
     {
         $tokens = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->significantTokens();
@@ -303,6 +309,12 @@ final class PgSqlParser
         return ['columns' => $columns, 'values' => $values];
     }
 
+    /**
+     * Reads on conflict update where.
+     *
+     * @param string $sql
+     * @return ?string
+     */
     public function extractOnConflictUpdateWhere(string $sql): ?string
     {
         return SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->topLevelClauseAfter(

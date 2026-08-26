@@ -45,6 +45,10 @@ final class TransformerFuzzTest extends TestCase
         $faker->seed(20260815);
     }
 
+    /**
+     * Test transform does not crash on random select with empty tables.
+     *
+     */
     public function testTransformDoesNotCrashOnRandomSelectWithEmptyTables(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
@@ -60,6 +64,10 @@ final class TransformerFuzzTest extends TestCase
         self::addToAssertionCount(self::ITERATIONS);
     }
 
+    /**
+     * Test transform with shadow data contains with clause.
+     *
+     */
     public function testTransformWithShadowDataContainsWithClause(): void
     {
         /** @var array<string, array{rows: array<int, array<string, mixed>>, columns: array<int, string>, columnTypes: array<string, ColumnType>}> $tables */
@@ -95,6 +103,10 @@ final class TransformerFuzzTest extends TestCase
         self::addToAssertionCount(self::ITERATIONS);
     }
 
+    /**
+     * Test transform with empty rows contains with clause.
+     *
+     */
     public function testTransformWithEmptyRowsContainsWithClause(): void
     {
         /** @var array<string, array{rows: array<int, array<string, mixed>>, columns: array<int, string>, columnTypes: array<string, ColumnType>}> $tables */

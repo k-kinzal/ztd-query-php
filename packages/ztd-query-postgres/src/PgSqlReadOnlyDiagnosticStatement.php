@@ -17,6 +17,12 @@ final class PgSqlReadOnlyDiagnosticStatement
         'GRANT', 'REVOKE', 'VACUUM',
     ];
 
+    /**
+     * Reports whether safe.
+     *
+     * @param string $sql
+     * @return bool
+     */
     public static function isSafe(string $sql): bool
     {
         $stream = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create());

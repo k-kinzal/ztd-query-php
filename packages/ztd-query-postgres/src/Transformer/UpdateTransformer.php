@@ -23,6 +23,12 @@ final class UpdateTransformer implements SqlTransformer
     private SelectTransformer $selectTransformer;
     private PgSqlCteShadowComposer $cteComposer;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param PgSqlParser $parser
+     * @param SelectTransformer $selectTransformer
+     */
     public function __construct(
         PgSqlParser $parser,
         SelectTransformer $selectTransformer,

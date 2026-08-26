@@ -73,6 +73,13 @@ final class PgSqlCteShadowComposer
         return $this->parseHeader($sql)['names'];
     }
 
+    /**
+     * Carry prefix.
+     *
+     * @param string $originalSql
+     * @param string $rewrittenStatement
+     * @return string
+     */
     public function carryPrefix(string $originalSql, string $rewrittenStatement): string
     {
         $header = $this->parseHeader($originalSql);
@@ -136,6 +143,12 @@ final class PgSqlCteShadowComposer
         return $prefix . "\n" . $rewrittenStatement;
     }
 
+    /**
+     * Statement sql.
+     *
+     * @param string $sql
+     * @return string
+     */
     public function statementSql(string $sql): string
     {
         $offset = $this->parseHeader($sql)['statementOffset'];

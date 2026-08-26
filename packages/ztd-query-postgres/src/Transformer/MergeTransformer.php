@@ -25,6 +25,12 @@ final class MergeTransformer implements SqlTransformer
     private PgSqlCteShadowComposer $cteComposer;
     private InsertSelectRenderer $insertSelectRenderer;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param PgSqlMergeParser $parser
+     * @param SelectTransformer $selectTransformer
+     */
     public function __construct(
         private readonly PgSqlMergeParser $parser,
         private readonly SelectTransformer $selectTransformer,

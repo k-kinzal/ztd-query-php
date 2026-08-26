@@ -37,6 +37,14 @@ final class PgSqlMutationResolver
     private PgSqlParser $parser;
     private PgSqlPartitionParser $partitionParser;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param ShadowStore $shadowStore
+     * @param TableDefinitionRegistry $registry
+     * @param SchemaParser $schemaParser
+     * @param PgSqlParser $parser
+     */
     public function __construct(
         ShadowStore $shadowStore,
         TableDefinitionRegistry $registry,

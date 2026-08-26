@@ -8,6 +8,11 @@ use ZtdQuery\Sql\SqlLexerProfile;
 
 final class PgSqlLexerProfile
 {
+    /**
+     * Builds.
+     *
+     * @return SqlLexerProfile
+     */
     public static function create(): SqlLexerProfile
     {
         return new SqlLexerProfile(

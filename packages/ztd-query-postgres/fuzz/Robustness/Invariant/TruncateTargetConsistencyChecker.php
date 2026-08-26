@@ -12,11 +12,22 @@ use ZtdQuery\Sql\SqlTokenStream;
 
 final class TruncateTargetConsistencyChecker implements InvariantChecker
 {
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param SqlRewriter $rewriter
+     */
     public function __construct(
         private readonly SqlRewriter $rewriter,
     ) {
     }
 
+    /**
+     * Check.
+     *
+     * @param string $sql
+     * @return ?InvariantViolation
+     */
     public function check(string $sql): ?InvariantViolation
     {
         $expectedCount = $this->targetCount($sql);

@@ -13,6 +13,10 @@ final class PgSqlMergeParser
 {
     private PgSqlCteShadowComposer $cteComposer;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     */
     public function __construct()
     {
         $this->cteComposer = new PgSqlCteShadowComposer();

@@ -22,6 +22,12 @@ final class FakeSequentialConnection implements ConnectionInterface
         $this->statements = $statements;
     }
 
+    /**
+     * Query.
+     *
+     * @param string $sql
+     * @return StatementInterface|false
+     */
     public function query(string $sql): StatementInterface|false
     {
         return $this->statements[$this->index++] ?? false;

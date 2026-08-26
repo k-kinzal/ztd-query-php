@@ -9,11 +9,22 @@ use ZtdQuery\Sql\SqlTokenStream;
 
 final class PgSqlPdoParameterBindingCompiler implements ParameterBindingCompiler
 {
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param PgSqlPdoPlaceholderEscaper $placeholderEscaper
+     */
     public function __construct(
         private readonly PgSqlPdoPlaceholderEscaper $placeholderEscaper = new PgSqlPdoPlaceholderEscaper(),
     ) {
     }
 
+    /**
+     * Compile.
+     *
+     * @param string $sql
+     * @param ?array $params
+     */
     public function compile(string $sql, ?array $params): array
     {
         $replacements = [];

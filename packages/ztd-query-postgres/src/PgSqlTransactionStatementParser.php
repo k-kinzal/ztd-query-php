@@ -12,6 +12,12 @@ use ZtdQuery\Sql\TransactionStatementParser;
 
 final class PgSqlTransactionStatementParser implements TransactionStatementParser
 {
+    /**
+     * Reads.
+     *
+     * @param string $sql
+     * @return ?TransactionStatement
+     */
     public function parse(string $sql): ?TransactionStatement
     {
         $tokens = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->significantTokens();

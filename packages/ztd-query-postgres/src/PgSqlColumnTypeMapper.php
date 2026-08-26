@@ -9,6 +9,12 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 
 final class PgSqlColumnTypeMapper
 {
+    /**
+     * Map.
+     *
+     * @param string $nativeType
+     * @return ColumnType
+     */
     public function map(string $nativeType): ColumnType
     {
         $normalized = strtoupper(trim($nativeType));

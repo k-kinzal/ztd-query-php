@@ -16,6 +16,11 @@ use ZtdQuery\Schema\ColumnTypeFamily;
  */
 final class PgSqlValueRenderer implements ValueRenderer
 {
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param CastRenderer $castRenderer
+     */
     public function __construct(private readonly CastRenderer $castRenderer = new PgSqlCastRenderer())
     {
     }

@@ -14,6 +14,12 @@ use ZtdQuery\Sql\SqlTokenStream;
 
 final class PgSqlCopySupport implements CopySupport
 {
+    /**
+     * Table name.
+     *
+     * @param string $relation
+     * @return string
+     */
     public function tableName(string $relation): string
     {
         $parts = $this->relationParts($relation);
@@ -34,6 +40,12 @@ final class PgSqlCopySupport implements CopySupport
         return new CopyTarget($this->relationParts($relation), $columns);
     }
 
+    /**
+     * Select sql.
+     *
+     * @param CopyTarget $target
+     * @return string
+     */
     public function selectSql(CopyTarget $target): string
     {
         return sprintf(
@@ -71,6 +83,12 @@ final class PgSqlCopySupport implements CopySupport
         );
     }
 
+    /**
+     * Reports whether copy statement.
+     *
+     * @param string $sql
+     * @return bool
+     */
     public function isCopyStatement(string $sql): bool
     {
         return SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->firstTopLevelKeyword() === 'COPY';

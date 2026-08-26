@@ -46,6 +46,10 @@ final class SchemaParserFuzzTest extends TestCase
         $faker->seed(20260815);
     }
 
+    /**
+     * Test parse does not crash on random create table.
+     *
+     */
     public function testParseDoesNotCrashOnRandomCreateTable(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
@@ -62,6 +66,10 @@ final class SchemaParserFuzzTest extends TestCase
         self::addToAssertionCount(self::ITERATIONS);
     }
 
+    /**
+     * Test parse structural invariants on random create table.
+     *
+     */
     public function testParseStructuralInvariantsOnRandomCreateTable(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
@@ -122,6 +130,10 @@ final class SchemaParserFuzzTest extends TestCase
         self::addToAssertionCount(self::ITERATIONS);
     }
 
+    /**
+     * Test parse returns null on non create table sql.
+     *
+     */
     public function testParseReturnsNullOnNonCreateTableSql(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {

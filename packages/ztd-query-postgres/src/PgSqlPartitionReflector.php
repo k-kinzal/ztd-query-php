@@ -10,6 +10,11 @@ use ZtdQuery\Schema\TablePartitionRelation;
 
 final class PgSqlPartitionReflector
 {
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param ConnectionInterface $connection
+     */
     public function __construct(private readonly ConnectionInterface $connection)
     {
     }

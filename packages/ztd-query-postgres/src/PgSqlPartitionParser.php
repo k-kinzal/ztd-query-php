@@ -13,6 +13,12 @@ use ZtdQuery\Sql\SqlTokenStream;
 
 final class PgSqlPartitionParser
 {
+    /**
+     * Reads key.
+     *
+     * @param string $sql
+     * @return ?TablePartitionKey
+     */
     public function parseKey(string $sql): ?TablePartitionKey
     {
         $stream = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create());
@@ -52,6 +58,12 @@ final class PgSqlPartitionParser
         return new TablePartitionKey($strategy, $expressions);
     }
 
+    /**
+     * Parent table.
+     *
+     * @param string $sql
+     * @return ?string
+     */
     public function parentTable(string $sql): ?string
     {
         $stream = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create());
@@ -64,6 +76,13 @@ final class PgSqlPartitionParser
         return $this->qualifiedIdentifierAt($stream, $tokens, $partition + 2)['name'] ?? null;
     }
 
+    /**
+     * Reads relation.
+     *
+     * @param string $sql
+     * @param TablePartitionKey $parentKey
+     * @return ?TablePartitionRelation
+     */
     public function parseRelation(string $sql, TablePartitionKey $parentKey): ?TablePartitionRelation
     {
         $stream = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create());
