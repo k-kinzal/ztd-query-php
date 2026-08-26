@@ -281,4 +281,54 @@ final class MergeTransformerTest extends TestCase
         );
     }
 
+    public function testEffectiveConditionsAccountsForTheClausesBeforeEachOne(): void
+    {
+        $statement = (new PgSqlMergeParser())->parse(
+            'MERGE INTO t USING s ON t.id = s.id '
+            . 'WHEN MATCHED AND t.x = 1 THEN DELETE '
+            . 'WHEN MATCHED THEN DO NOTHING',
+        );
+
+        self::assertCount(2, (new MergeTransformer(new PgSqlMergeParser(), new SelectTransformer()))
+            ->effectiveConditions($statement));
+    }
+
+    public function testUnchangedRowsReadsTheRowsTheStatementLeavesAlone(): void
+    {
+        $transformer = new MergeTransformer(new PgSqlMergeParser(), new SelectTransformer());
+        $statement = (new PgSqlMergeParser())->parse(
+            'MERGE INTO t USING s ON t.id = s.id WHEN MATCHED THEN DELETE',
+        );
+
+        $sql = $transformer->unchangedRows($statement, ['id'], $transformer->effectiveConditions($statement));
+
+        self::assertStringContainsString('SELECT', $sql);
+    }
+
+    public function testUpdatedRowsReadsTheRowsTheStatementChanges(): void
+    {
+        $transformer = new MergeTransformer(new PgSqlMergeParser(), new SelectTransformer());
+        $sql = 'MERGE INTO t USING s ON t.id = s.id WHEN MATCHED THEN UPDATE SET x = 1';
+        $statement = (new PgSqlMergeParser())->parse($sql);
+        $clause = $statement->clauses[0];
+
+        self::assertStringContainsString(
+            'SELECT',
+            $transformer->updatedRows($sql, $statement, $clause, ['id', 'x'], [], 'TRUE'),
+        );
+    }
+
+    public function testInsertedRowsReadsTheRowsTheStatementWritesThatWereNotThere(): void
+    {
+        $transformer = new MergeTransformer(new PgSqlMergeParser(), new SelectTransformer());
+        $sql = 'MERGE INTO t USING s ON t.id = s.id WHEN NOT MATCHED THEN INSERT (id) VALUES (1)';
+        $statement = (new PgSqlMergeParser())->parse($sql);
+        $clause = $statement->clauses[0];
+
+        self::assertStringContainsString(
+            'SELECT',
+            $transformer->insertedRows($sql, $statement, $clause, ['id'], [], [], [], 'TRUE'),
+        );
+    }
+
 }

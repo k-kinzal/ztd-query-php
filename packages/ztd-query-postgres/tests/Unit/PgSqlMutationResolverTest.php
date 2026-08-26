@@ -48,6 +48,8 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlMergeActionKind::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlUpsertExpressionCursor::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlUpsertLiteral::class)]
 final class PgSqlMutationResolverTest extends TestCase
 {
     public function testPartitionDdlInheritsParentSchemaAndChildDmlUsesParentStorage(): void

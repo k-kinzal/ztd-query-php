@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Postgres;
 
-use ValueError;
+use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Platform\CopySupport;
 use ZtdQuery\Platform\CopyTarget;
 use ZtdQuery\Schema\TableDefinition;
@@ -31,13 +31,13 @@ final class PgSqlCopySupport implements CopySupport
     }
 
     /**
-     * @throws ValueError
+     * @throws InvalidDefinitionException When the statement says something COPY could not do
      */
     public function target(string $relation, ?string $fields, TableDefinition $definition): CopyTarget
     {
         $columns = $this->columns($fields, $definition);
         if ($columns === []) {
-            throw new ValueError('PostgreSQL COPY requires at least one non-generated column.');
+            throw new InvalidDefinitionException('PostgreSQL COPY requires at least one non-generated column.');
         }
 
         return new CopyTarget($this->relationParts($relation), $columns);
@@ -59,12 +59,12 @@ final class PgSqlCopySupport implements CopySupport
     }
 
     /**
-     * @throws ValueError
+     * @throws InvalidDefinitionException When the statement says something COPY could not do
      */
     public function insertSql(CopyTarget $target, int $rowCount, bool $overrideSystemValue): string
     {
         if ($rowCount < 1) {
-            throw new ValueError('PostgreSQL COPY INSERT requires at least one row.');
+            throw new InvalidDefinitionException('PostgreSQL COPY INSERT requires at least one row.');
         }
 
         $parameter = 1;
@@ -104,26 +104,26 @@ final class PgSqlCopySupport implements CopySupport
      *
      * @return non-empty-list<string> What it answers
      *
-     * @throws ValueError
+     * @throws InvalidDefinitionException When the statement says something COPY could not do
      */
     public function relationParts(string $tableName): array
     {
         $parts = SqlTokenStream::tokenize($tableName, PgSqlLexerProfile::create())->splitTopLevel('.');
         if ($parts === []) {
-            throw new ValueError('PostgreSQL COPY table name must not be empty.');
+            throw new InvalidDefinitionException('PostgreSQL COPY table name must not be empty.');
         }
         if (in_array('', $parts, true)) {
-            throw new ValueError('PostgreSQL COPY table name must not contain an empty qualifier component.');
+            throw new InvalidDefinitionException('PostgreSQL COPY table name must not contain an empty qualifier component.');
         }
         if (count($parts) > 2) {
-            throw new ValueError('PostgreSQL COPY table name may contain at most a schema and table component.');
+            throw new InvalidDefinitionException('PostgreSQL COPY table name may contain at most a schema and table component.');
         }
 
         $components = [];
         foreach ($parts as $part) {
             $tokens = SqlTokenStream::tokenize($part, PgSqlLexerProfile::create())->significantTokens();
             if (count($tokens) !== 1) {
-                throw new ValueError('PostgreSQL COPY table name must be an identifier or schema-qualified identifier.');
+                throw new InvalidDefinitionException('PostgreSQL COPY table name must be an identifier or schema-qualified identifier.');
             }
             $components[] = $this->identifier($tokens[0], 'table name');
         }
@@ -139,7 +139,7 @@ final class PgSqlCopySupport implements CopySupport
      *
      * @return list<string> What it answers
      *
-     * @throws ValueError
+     * @throws InvalidDefinitionException When the statement says something COPY could not do
      */
     public function columns(?string $fields, TableDefinition $definition): array
     {
@@ -156,18 +156,18 @@ final class PgSqlCopySupport implements CopySupport
 
         $parts = SqlTokenStream::tokenize($fields, PgSqlLexerProfile::create())->splitTopLevel();
         if ($parts === [] || in_array('', $parts, true)) {
-            throw new ValueError('PostgreSQL COPY fields must contain at least one column identifier.');
+            throw new InvalidDefinitionException('PostgreSQL COPY fields must contain at least one column identifier.');
         }
 
         $columns = [];
         foreach ($parts as $part) {
             $tokens = SqlTokenStream::tokenize($part, PgSqlLexerProfile::create())->significantTokens();
             if (count($tokens) !== 1) {
-                throw new ValueError('Each PostgreSQL COPY field must be a single column identifier.');
+                throw new InvalidDefinitionException('Each PostgreSQL COPY field must be a single column identifier.');
             }
             $column = $this->identifier($tokens[0], 'field');
             if (in_array($column, $columns, true)) {
-                throw new ValueError(sprintf('PostgreSQL COPY field "%s" is specified more than once.', $column));
+                throw new InvalidDefinitionException(sprintf('PostgreSQL COPY field "%s" is specified more than once.', $column));
             }
             $columns[] = $column;
         }
@@ -221,7 +221,7 @@ final class PgSqlCopySupport implements CopySupport
     /**
      * @return list<string|null>
      *
-     * @throws ValueError
+     * @throws InvalidDefinitionException When the statement says something COPY could not do
      */
     public function decodeRow(string $row, string $separator, string $nullAs): array
     {
@@ -232,10 +232,10 @@ final class PgSqlCopySupport implements CopySupport
             $row = substr($row, 0, -1);
         }
         if (str_contains($row, "\n") || str_contains($row, "\r")) {
-            throw new ValueError('PostgreSQL COPY rows must escape embedded newlines and carriage returns.');
+            throw new InvalidDefinitionException('PostgreSQL COPY rows must escape embedded newlines and carriage returns.');
         }
         if ($row === '\\.') {
-            throw new ValueError('PostgreSQL COPY end-of-data markers are not row values.');
+            throw new InvalidDefinitionException('PostgreSQL COPY end-of-data markers are not row values.');
         }
 
         return $this->decodeFields($row, $separator, $nullAs);
@@ -249,13 +249,13 @@ final class PgSqlCopySupport implements CopySupport
      *
      * @return string What it answers
      *
-     * @throws ValueError
+     * @throws InvalidDefinitionException When the statement says something COPY could not do
      */
     public function identifier(SqlToken $token, string $subject): string
     {
         $parsed = SqlTokenStream::tokenize($token->text, PgSqlLexerProfile::create())->identifierAt();
         if ($parsed === null) {
-            throw new ValueError(sprintf('PostgreSQL COPY %s must be a valid identifier.', $subject));
+            throw new InvalidDefinitionException(sprintf('PostgreSQL COPY %s must be a valid identifier.', $subject));
         }
 
         return $token->kind === SqlTokenKind::Word ? strtolower($parsed['name']) : $parsed['name'];
@@ -278,12 +278,12 @@ final class PgSqlCopySupport implements CopySupport
      *
      * @param string $separator The separator
      *
-     * @throws ValueError
+     * @throws InvalidDefinitionException When the statement says something COPY could not do
      */
     public function validateSeparator(string $separator): void
     {
         if (strlen($separator) !== 1) {
-            throw new ValueError('PostgreSQL COPY separator must be exactly one byte.');
+            throw new InvalidDefinitionException('PostgreSQL COPY separator must be exactly one byte.');
         }
     }
 
@@ -294,7 +294,7 @@ final class PgSqlCopySupport implements CopySupport
      *
      * @return string What it answers
      *
-     * @throws ValueError
+     * @throws InvalidDefinitionException When the statement says something COPY could not do
      */
     public function copyOutput(mixed $value): string
     {
@@ -307,13 +307,13 @@ final class PgSqlCopySupport implements CopySupport
         if (is_resource($value)) {
             $bytes = stream_get_contents($value);
             if ($bytes === false) {
-                throw new ValueError('PostgreSQL COPY could not read a binary value.');
+                throw new InvalidDefinitionException('PostgreSQL COPY could not read a binary value.');
             }
 
             return '\\x' . bin2hex($bytes);
         }
 
-        throw new ValueError(sprintf('PostgreSQL COPY cannot encode a value of type %s.', get_debug_type($value)));
+        throw new InvalidDefinitionException(sprintf('PostgreSQL COPY cannot encode a value of type %s.', get_debug_type($value)));
     }
 
     /**
@@ -355,7 +355,7 @@ final class PgSqlCopySupport implements CopySupport
      *
      * @return list<string|null> What it answers
      *
-     * @throws ValueError
+     * @throws InvalidDefinitionException When the statement says something COPY could not do
      */
     public function decodeFields(string $row, string $separator, string $nullAs): array
     {
@@ -380,7 +380,7 @@ final class PgSqlCopySupport implements CopySupport
 
             $next = $row[$index + 1] ?? null;
             if ($next === null) {
-                throw new ValueError('PostgreSQL COPY field ends with an incomplete backslash escape.');
+                throw new InvalidDefinitionException('PostgreSQL COPY field ends with an incomplete backslash escape.');
             }
             $index++;
 
@@ -403,7 +403,7 @@ final class PgSqlCopySupport implements CopySupport
                 }
                 $byte = intval($digits, 8);
                 if ($byte < 0 || $byte > 255) {
-                    throw new ValueError('PostgreSQL COPY octal escape must fit in one byte.');
+                    throw new InvalidDefinitionException('PostgreSQL COPY octal escape must fit in one byte.');
                 }
                 $decoded .= chr($byte);
                 continue;
@@ -421,10 +421,10 @@ final class PgSqlCopySupport implements CopySupport
                 }
                 $byte = intval($digits, 16);
                 if ($byte < 0) {
-                    throw new ValueError('PostgreSQL COPY hexadecimal escape must not be negative.');
+                    throw new InvalidDefinitionException('PostgreSQL COPY hexadecimal escape must not be negative.');
                 }
                 if ($byte > 255) {
-                    throw new ValueError('PostgreSQL COPY hexadecimal escape must fit in one byte.');
+                    throw new InvalidDefinitionException('PostgreSQL COPY hexadecimal escape must fit in one byte.');
                 }
                 $decoded .= chr($byte);
                 continue;

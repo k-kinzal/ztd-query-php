@@ -104,4 +104,29 @@ final class PgSqlTableSampleRewriterTest extends TestCase
         self::assertStringContainsString('SELECT "id", "value"', $result);
         self::assertStringNotContainsString('123', $result);
     }
+    public function testColumnsAnswersTheColumnsTheSampledTableHas(): void
+    {
+        $rewriter = new PgSqlTableSampleRewriter();
+
+        self::assertSame(
+            ['id'],
+            $rewriter->columns('users', ['users' => ['rows' => [], 'columns' => ['id'], 'columnTypes' => []]]),
+        );
+    }
+
+    public function testColumnsIsNothingForATableTheShadowDoesNotKnow(): void
+    {
+        $rewriter = new PgSqlTableSampleRewriter();
+
+        self::assertSame([], $rewriter->columns('orders', []));
+    }
+
+    public function testReplacementReadsTheRowsTheShadowHoldsInsteadOfSampling(): void
+    {
+        $rewriter = new PgSqlTableSampleRewriter();
+        $samples = (new PgSqlTableSampleParser())->parse('SELECT * FROM users TABLESAMPLE SYSTEM (10)');
+
+        self::assertStringContainsString('SELECT', $rewriter->replacement($samples[0], ['id'], 0));
+    }
+
 }

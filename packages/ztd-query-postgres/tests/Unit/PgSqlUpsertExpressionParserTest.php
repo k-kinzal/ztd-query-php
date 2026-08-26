@@ -13,16 +13,13 @@ use ZtdQuery\Platform\Postgres\PgSqlUpsertExpressionCursor;
 use ZtdQuery\Platform\Postgres\PgSqlUpsertExpressionParser;
 use ZtdQuery\Shadow\Mutation\UpsertExpressionKind;
 
-/**
- * The pg sql upsert expression parser test.
- */
 #[CoversClass(PgSqlUpsertExpressionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
+#[UsesClass(PgSqlUpsertExpressionCursor::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlUpsertLiteral::class)]
 final class PgSqlUpsertExpressionParserTest extends TestCase
 {
     /**
-     * Test parses postgres expression cases.
-     *
      * @param string $sql
      */
     #[DataProvider('providerPostgresExpressionCases')]
@@ -63,10 +60,6 @@ final class PgSqlUpsertExpressionParserTest extends TestCase
         yield 'escaped string' => ["'it''s'", "it's"];
     }
 
-    /**
-     * Test parses excluded and quoted existing references.
-     *
-     */
     public function testParsesExcludedAndQuotedExistingReferences(): void
     {
         $expression = (new PgSqlUpsertExpressionParser())->parse(
@@ -77,10 +70,6 @@ final class PgSqlUpsertExpressionParserTest extends TestCase
         self::assertSame(11, $expression->evaluate(['Quantity' => 5], ['Quantity' => 3], 'items'));
     }
 
-    /**
-     * Test unescapes doubled quotes in identifiers.
-     *
-     */
     public function testUnescapesDoubledQuotesInIdentifiers(): void
     {
         $expression = (new PgSqlUpsertExpressionParser())->parse(
@@ -91,10 +80,6 @@ final class PgSqlUpsertExpressionParserTest extends TestCase
         self::assertSame(8, $expression->evaluate(['quan"tity' => 5], ['quan"tity' => 3], 'it"ems'));
     }
 
-    /**
-     * Test parses boolean predicate and sql string.
-     *
-     */
     public function testParsesBooleanPredicateAndSqlString(): void
     {
         $expression = (new PgSqlUpsertExpressionParser())->parse(
@@ -105,19 +90,11 @@ final class PgSqlUpsertExpressionParserTest extends TestCase
         self::assertTrue($expression->matches(['score' => 80], ['name' => 'ready'], 'items'));
     }
 
-    /**
-     * Test returns null for unsupported function.
-     *
-     */
     public function testReturnsNullForUnsupportedFunction(): void
     {
         self::assertNull((new PgSqlUpsertExpressionParser())->parseIfSupported('COALESCE(score, 0)', 'items'));
     }
 
-    /**
-     * Test rejects my sql values function.
-     *
-     */
     public function testRejectsMySqlValuesFunction(): void
     {
         $this->expectException(UnsupportedSqlException::class);
@@ -125,10 +102,6 @@ final class PgSqlUpsertExpressionParserTest extends TestCase
         (new PgSqlUpsertExpressionParser())->parse('VALUES(quantity)', 'items');
     }
 
-    /**
-     * Test rejects my sql quoted identifier.
-     *
-     */
     public function testRejectsMySqlQuotedIdentifier(): void
     {
         $this->expectException(UnsupportedSqlException::class);
@@ -136,10 +109,6 @@ final class PgSqlUpsertExpressionParserTest extends TestCase
         (new PgSqlUpsertExpressionParser())->parse('EXCLUDED.`quantity`', 'items');
     }
 
-    /**
-     * Test identifier rejects non postgres quoted token.
-     *
-     */
     public function testRefusesANameQuotedTheWayAnotherDialectQuotesOne(): void
     {
         $this->expectException(UnsupportedSqlException::class);
@@ -148,8 +117,6 @@ final class PgSqlUpsertExpressionParserTest extends TestCase
     }
 
     /**
-     * Test rejects invalid postgres expression.
-     *
      * @param string $sql
      */
     #[DataProvider('providerInvalidPostgresExpression')]

@@ -216,4 +216,12 @@ final class PgSqlNativeUpsertProjectorTest extends TestCase
     {
         self::assertSame('"e"."qty"', (new PgSqlNativeUpsertProjector())->qualified('e', 'qty'));
     }
+    public function testProjectLeavesAStatementWithNothingToUpdateAlone(): void
+    {
+        self::assertSame(
+            'SELECT 1',
+            (new PgSqlNativeUpsertProjector())->project('SELECT 1', 'items', ['qty'], [], []),
+        );
+    }
+
 }

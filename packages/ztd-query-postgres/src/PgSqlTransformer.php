@@ -65,9 +65,8 @@ final class PgSqlTransformer implements SqlTransformer
             'UPDATE' => $this->updateTransformer->transform($sql, $tables),
             'DELETE' => $this->deleteTransformer->transform($sql, $tables),
             'MERGE' => $this->mergeTransformer()->transform($sql, $tables),
-            'TRUNCATE', 'CREATE_TABLE', 'DROP_TABLE', 'ALTER_TABLE', 'DO', 'TCL'
+            'TRUNCATE', 'CREATE_TABLE', 'DROP_TABLE', 'ALTER_TABLE', 'DO', 'TCL', null
                 => throw new UnsupportedSqlException($sql, 'Statement type not supported by transformer'),
-            default => throw new UnsupportedSqlException($sql, 'Statement type not supported by transformer'),
         };
     }
 

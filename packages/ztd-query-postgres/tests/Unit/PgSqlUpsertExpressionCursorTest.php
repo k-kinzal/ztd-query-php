@@ -12,17 +12,10 @@ use ZtdQuery\Platform\Postgres\PgSqlLexerProfile;
 use ZtdQuery\Platform\Postgres\PgSqlUpsertExpressionCursor;
 use ZtdQuery\Platform\Postgres\PgSqlUpsertLiteral;
 use ZtdQuery\Shadow\Mutation\UpsertColumnSource;
-use ZtdQuery\Sql\SqlToken;
-use ZtdQuery\Sql\SqlTokenScanner;
-use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(PgSqlUpsertExpressionCursor::class)]
 #[UsesClass(PgSqlUpsertLiteral::class)]
 #[UsesClass(PgSqlLexerProfile::class)]
-#[UsesClass(SqlToken::class)]
-#[UsesClass(SqlTokenStream::class)]
-#[UsesClass(SqlTokenScanner::class)]
-#[UsesClass(UnsupportedSqlException::class)]
 final class PgSqlUpsertExpressionCursorTest extends TestCase
 {
     public function testOverStartsAtTheFirstThingTheExpressionSays(): void
