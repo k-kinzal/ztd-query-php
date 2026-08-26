@@ -4,22 +4,20 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\MySql;
 
-use ZtdQuery\Schema\ColumnDeclaration;
+use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
 /**
  * Restores native operators that cannot be represented by a CTE column cast.
+ *
+ * @phpstan-import-type ShadowTables from SqlTransformer
  */
 final class MySqlTypeSemantics
 {
     /**
-     * @param array<string, array{viewSql: string}|array{
-     *     rows: array<int, array<string, mixed>>,
-     *     columns: array<int, string>,
-     *     columnTypes: array<string, ColumnDeclaration>
-     * }> $tables
+     * @param ShadowTables $tables Table name => what the shadow holds for it
      */
     public function rewrite(string $sql, array $tables): string
     {
@@ -39,14 +37,17 @@ final class MySqlTypeSemantics
     }
 
     /**
-     * @param array<string, array{viewSql: string}|array{
-     *     rows: array<int, array<string, mixed>>,
-     *     columns: array<int, string>,
-     *     columnTypes: array<string, ColumnDeclaration>
-     * }> $tables
-     * @return array{array<string, list<string>>, array<string, list<string>|null>}
+     * Answers which columns are enumerations, and what each may hold.
+     *
+     * A column named without its table is only unambiguous while every table
+     * that has one declares it the same way, so a name two tables disagree
+     * about answers nothing rather than answering one of them.
+     *
+     * @param ShadowTables $tables Table name => what the shadow holds for it
+     *
+     * @return array{array<string, list<string>>, array<string, list<string>|null>} Members under the qualified name, and under the bare one where it is unambiguous
      */
-    private function enumColumns(array $tables): array
+    public function enumColumns(array $tables): array
     {
         $qualified = [];
         $unqualified = [];
@@ -73,12 +74,21 @@ final class MySqlTypeSemantics
     }
 
     /**
-     * @param list<SqlToken> $tokens
-     * @param array<string, list<string>> $qualified
-     * @param array<string, list<string>|null> $unqualified
-     * @return array<int, array{start: int, end: int, replacement: string}>
+     * Answers the edits that make a comparison against an enumeration order by its members.
+     *
+     * MySQL orders an enumeration by the order its members were declared in,
+     * not alphabetically, and the shadow holds the member's text. Both sides
+     * of the comparison are rewritten to that position, so the comparison
+     * means what it meant against the real column.
+     *
+     * @param string $sql The statement, as written
+     * @param list<SqlToken> $tokens The same statement, as tokens
+     * @param array<string, list<string>> $qualified Members under each table-qualified column name
+     * @param array<string, list<string>|null> $unqualified Members under each bare column name
+     *
+     * @return array<int, array{start: int, end: int, replacement: string}> The edits, under where each starts
      */
-    private function comparisonEdits(string $sql, array $tokens, array $qualified, array $unqualified): array
+    public function comparisonEdits(string $sql, array $tokens, array $qualified, array $unqualified): array
     {
         $edits = [];
         foreach ($tokens as $index => $token) {
@@ -104,12 +114,20 @@ final class MySqlTypeSemantics
     }
 
     /**
-     * @param list<SqlToken> $tokens
-     * @param array<string, list<string>> $qualified
-     * @param array<string, list<string>|null> $unqualified
-     * @return array<int, array{start: int, end: int, replacement: string}>
+     * Answers the edits that make an ORDER BY an enumeration order by its members.
+     *
+     * Only a column ordered by on its own is rewritten: one that is part of a
+     * larger expression is that expression's business, and the expression
+     * already has whatever meaning it has.
+     *
+     * @param string $sql The statement, as written
+     * @param list<SqlToken> $tokens The same statement, as tokens
+     * @param array<string, list<string>> $qualified Members under each table-qualified column name
+     * @param array<string, list<string>|null> $unqualified Members under each bare column name
+     *
+     * @return array<int, array{start: int, end: int, replacement: string}> The edits, under where each starts
      */
-    private function orderByEdits(string $sql, array $tokens, array $qualified, array $unqualified): array
+    public function orderByEdits(string $sql, array $tokens, array $qualified, array $unqualified): array
     {
         $edits = [];
         foreach ($tokens as $index => $order) {
@@ -159,12 +177,17 @@ final class MySqlTypeSemantics
     }
 
     /**
-     * @param list<SqlToken> $tokens
-     * @param array<string, list<string>> $qualified
-     * @param array<string, list<string>|null> $unqualified
-     * @return array{token: SqlToken, length: int, members: list<string>}|null
+     * Answers the enumeration column named here, if one is.
+     *
+     * @param string $sql The statement, as written
+     * @param list<SqlToken> $tokens The same statement, as tokens
+     * @param int $index Where to read
+     * @param array<string, list<string>> $qualified Members under each table-qualified column name
+     * @param array<string, list<string>|null> $unqualified Members under each bare column name
+     *
+     * @return array{token: SqlToken, length: int, members: list<string>}|null The name as written, how many tokens it took, and what it may hold
      */
-    private function columnAt(string $sql, array $tokens, int $index, array $qualified, array $unqualified): ?array
+    public function columnAt(string $sql, array $tokens, int $index, array $qualified, array $unqualified): ?array
     {
         $first = $tokens[$index];
         if (($tokens[$index - 1] ?? null)?->text === '.') {
@@ -205,10 +228,17 @@ final class MySqlTypeSemantics
     }
 
     /**
-     * @param list<SqlToken> $tokens
-     * @return array{length: int}|null
+     * Answers whether an ordering comparison is written here, and how long it is.
+     *
+     * Only the comparisons that put values in an order matter: equality means
+     * the same thing against text as against a position.
+     *
+     * @param list<SqlToken> $tokens The statement, as tokens
+     * @param int $index Where to look
+     *
+     * @return array{length: int}|null How many tokens the operator is, or null where it is not an ordering one
      */
-    private function orderedOperatorAt(array $tokens, int $index): ?array
+    public function orderedOperatorAt(array $tokens, int $index): ?array
     {
         $first = $tokens[$index] ?? null;
         if ($first === null || $first->kind !== SqlTokenKind::Symbol || ($first->text !== '<' && $first->text !== '>')) {
@@ -220,10 +250,13 @@ final class MySqlTypeSemantics
     }
 
     /**
-     * @param array<int, array{start: int, end: int, replacement: string}> $edits
-     * @param list<string> $members
+     * Records an edit rewriting something as its position among the members.
+     *
+     * @param array<int, array{start: int, end: int, replacement: string}> $edits Edits so far, added to in place
+     * @param SqlToken $token What to rewrite
+     * @param list<string> $members The members, in the order they were declared
      */
-    private function addRankEdit(array &$edits, SqlToken $token, array $members): void
+    public function addRankEdit(array &$edits, SqlToken $token, array $members): void
     {
         $memberSql = array_map(
             static fn (string $member): string => "'" . str_replace(['\\', "'"], ['\\\\', "''"], $member) . "'",
@@ -236,8 +269,14 @@ final class MySqlTypeSemantics
         ];
     }
 
-    /** @return list<string> */
-    private function enumMembers(string $nativeType): array
+    /**
+     * Answers what an ENUM declaration says a column may hold.
+     *
+     * @param string $nativeType The declaration, as the platform wrote it
+     *
+     * @return list<string> The members, in the order declared, or none where this declares no enumeration
+     */
+    public function enumMembers(string $nativeType): array
     {
         $open = strpos($nativeType, '(');
         if ($open === false) {
@@ -266,12 +305,26 @@ final class MySqlTypeSemantics
         return $members;
     }
 
-    private function isIdentifier(SqlToken $token): bool
+    /**
+     * Reports whether a token is a name at all.
+     *
+     * @param SqlToken $token Token to test
+     *
+     * @return bool True for a bare word or a quoted name
+     */
+    public function isIdentifier(SqlToken $token): bool
     {
         return in_array($token->kind, [SqlTokenKind::Word, SqlTokenKind::QuotedIdentifier], true);
     }
 
-    private function identifierName(SqlToken $token): string
+    /**
+     * Answers the name a token stands for.
+     *
+     * @param SqlToken $token Token to read
+     *
+     * @return string The name, with the quoting taken off
+     */
+    public function identifierName(SqlToken $token): string
     {
         return $token->kind === SqlTokenKind::QuotedIdentifier
             ? substr($token->text, 1, -1)

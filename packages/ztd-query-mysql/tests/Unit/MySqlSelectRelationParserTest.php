@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\MySql\MySqlLexerProfile;
 use ZtdQuery\Platform\MySql\MySqlSelectRelationParser;
+use ZtdQuery\Sql\SqlToken;
 
 #[CoversClass(MySqlSelectRelationParser::class)]
 #[UsesClass(MySqlLexerProfile::class)]
@@ -210,4 +211,127 @@ final class MySqlSelectRelationParserTest extends TestCase
         self::assertSame([], $parser->tableNames('SELECT * FROM SELECT'));
         self::assertSame([], $parser->tableNames('SELECT * FROM WITH'));
     }
+    public function testReferencesFromClauseNamesEveryTableTheClauseJoins(): void
+    {
+        $references = (new MySqlSelectRelationParser())->referencesFromClause('users u JOIN orders o ON o.id = u.id');
+
+        self::assertSame(['users', 'orders'], array_column($references, 'name'));
+    }
+
+    public function testReferencesFromClauseLooksInsideAParenthesisedJoin(): void
+    {
+        $references = (new MySqlSelectRelationParser())->referencesFromClause('(users JOIN orders ON 1 = 1)');
+
+        self::assertSame(['users', 'orders'], array_column($references, 'name'));
+    }
+
+    public function testReferencesFromClauseLeavesAParenthesisedQueryToItself(): void
+    {
+        self::assertSame([], (new MySqlSelectRelationParser())->referencesFromClause('(SELECT 1) x'));
+    }
+
+    public function testClosingTokenAnswersTheParenthesisThatCloses(): void
+    {
+        $parser = new MySqlSelectRelationParser();
+        $tokens = $parser->tokens('(a)');
+
+        self::assertSame(')', $parser->closingToken($tokens, 0)?->text);
+    }
+
+    public function testClosingTokenIsNothingWhereItNeverCloses(): void
+    {
+        $parser = new MySqlSelectRelationParser();
+
+        self::assertNull($parser->closingToken($parser->tokens('(a'), 0));
+    }
+
+    public function testReferenceAtReadsAQualifiedNameDownToTheTable(): void
+    {
+        $parser = new MySqlSelectRelationParser();
+        $sql = 'app.users';
+
+        self::assertSame('users', $parser->referenceAt($sql, $parser->tokens($sql), 0)['name'] ?? null);
+    }
+
+    public function testReferenceAtIsNothingForAFunctionCall(): void
+    {
+        $parser = new MySqlSelectRelationParser();
+        $sql = 'JSON_TABLE(x)';
+
+        self::assertNull($parser->referenceAt($sql, $parser->tokens($sql), 0));
+    }
+
+    public function testIdentifierComponentAtReadsAQuotedNameWithoutItsQuotes(): void
+    {
+        $parser = new MySqlSelectRelationParser();
+
+        self::assertSame('order', $parser->identifierComponentAt($parser->tokens('`order`'), 0)[0] ?? null);
+    }
+
+    public function testIdentifierComponentAtIsNothingPastTheEndOfWhatWasWritten(): void
+    {
+        $parser = new MySqlSelectRelationParser();
+
+        self::assertNull($parser->identifierComponentAt($parser->tokens('a'), 5));
+    }
+
+    public function testFindFromEndStopsWhereTheNextClauseOpens(): void
+    {
+        $parser = new MySqlSelectRelationParser();
+        $sql = 'SELECT * FROM t WHERE a = 1';
+        $tokens = $parser->tokens($sql);
+
+        self::assertSame(16, $parser->findFromEnd($sql, $tokens, $tokens[2]));
+    }
+
+    public function testFindFromEndRunsToTheEndOfAStatementWithNoFurtherClause(): void
+    {
+        $parser = new MySqlSelectRelationParser();
+        $sql = 'SELECT * FROM t';
+        $tokens = $parser->tokens($sql);
+
+        self::assertSame(15, $parser->findFromEnd($sql, $tokens, $tokens[2]));
+    }
+
+    public function testMatchesKeywordSequenceReportsTheRunWrittenThere(): void
+    {
+        $parser = new MySqlSelectRelationParser();
+
+        self::assertTrue($parser->matchesKeywordSequence($parser->tokens('GROUP BY a'), 0, ['GROUP', 'BY']));
+    }
+
+    public function testMatchesKeywordSequenceIsFalseWhereOnlyPartOfItIsWritten(): void
+    {
+        $parser = new MySqlSelectRelationParser();
+
+        self::assertFalse($parser->matchesKeywordSequence($parser->tokens('GROUP a'), 0, ['GROUP', 'BY']));
+    }
+
+    public function testTokensLeavesOutWhatCarriesNoMeaning(): void
+    {
+        self::assertSame(
+            ['SELECT', '1'],
+            array_map(
+                static fn (SqlToken $token): string => $token->text,
+                (new MySqlSelectRelationParser())->tokens('SELECT /* c */ 1'),
+            ),
+        );
+    }
+
+    public function testTableNamesAnswersEveryTableTheStatementReads(): void
+    {
+        self::assertSame(
+            ['users'],
+            (new MySqlSelectRelationParser())->tableNames('SELECT * FROM users'),
+        );
+    }
+
+    public function testUnqualifyTakesTheSchemaOffTheTablesItWasNamed(): void
+    {
+        self::assertSame(
+            'SELECT * FROM users',
+            (new MySqlSelectRelationParser())->unqualify('SELECT * FROM app.users', ['users']),
+        );
+    }
+
 }

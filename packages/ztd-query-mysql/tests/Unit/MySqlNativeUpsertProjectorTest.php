@@ -7,11 +7,13 @@ namespace Tests\Unit;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Platform\MySql\MySqlLexerProfile;
 use ZtdQuery\Platform\MySql\MySqlNativeUpsertProjector;
+use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(MySqlNativeUpsertProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlIdentifierQuoter::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
+#[UsesClass(MySqlLexerProfile::class)]
 final class MySqlNativeUpsertProjectorTest extends TestCase
 {
     public function testProjectsMySqlFunctionsThroughExistingAndIncomingRows(): void
@@ -203,4 +205,88 @@ final class MySqlNativeUpsertProjectorTest extends TestCase
             $result,
         );
     }
+    public function testConflictPredicateComparesEveryColumnOfEachKey(): void
+    {
+        self::assertSame(
+            '((`e`.`id` = `i`.`id`))',
+            (new MySqlNativeUpsertProjector())->conflictPredicate(['PRIMARY' => ['id']], '`e`', '`i`'),
+        );
+    }
+
+    public function testConflictPredicateIsFalseWhereThereIsNoKeyToCollideOn(): void
+    {
+        self::assertSame('FALSE', (new MySqlNativeUpsertProjector())->conflictPredicate([], '`e`', '`i`'));
+    }
+
+    public function testBindExpressionSaysABareNameMeansTheRowAlreadyThere(): void
+    {
+        self::assertSame(
+            '`__ztd_existing`.`qty`',
+            (new MySqlNativeUpsertProjector())->bindExpression('qty', 'items', ['qty']),
+        );
+    }
+
+    public function testBindExpressionSaysValuesMeansTheIncomingRow(): void
+    {
+        self::assertSame(
+            '`__ztd_incoming`.`qty`',
+            (new MySqlNativeUpsertProjector())->bindExpression('VALUES(qty)', 'items', ['qty']),
+        );
+    }
+
+    public function testBindExpressionLeavesANameInsideASubqueryAlone(): void
+    {
+        self::assertStringContainsString(
+            'SELECT qty',
+            (new MySqlNativeUpsertProjector())->bindExpression('(SELECT qty FROM other)', 'items', ['qty']),
+        );
+    }
+
+    public function testSubqueryTokenIndexesMarksEveryTokenInsideASubquery(): void
+    {
+        $tokens = SqlTokenStream::tokenize('a + (SELECT b)', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertSame([3, 4], array_keys((new MySqlNativeUpsertProjector())->subqueryTokenIndexes($tokens)));
+    }
+
+    public function testSubqueryTokenIndexesMarksNothingWhereThereIsNoSubquery(): void
+    {
+        $tokens = SqlTokenStream::tokenize('a + 1', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertSame([], (new MySqlNativeUpsertProjector())->subqueryTokenIndexes($tokens));
+    }
+
+    public function testIsIdentifierReportsABareWord(): void
+    {
+        $tokens = SqlTokenStream::tokenize('qty', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertTrue((new MySqlNativeUpsertProjector())->isIdentifier($tokens[0]));
+    }
+
+    public function testIsIdentifierIsFalseForALiteral(): void
+    {
+        $tokens = SqlTokenStream::tokenize('1', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertFalse((new MySqlNativeUpsertProjector())->isIdentifier($tokens[0]));
+    }
+
+    public function testIdentifierTakesTheQuotingOffAName(): void
+    {
+        $tokens = SqlTokenStream::tokenize('`order`', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertSame('order', (new MySqlNativeUpsertProjector())->identifier($tokens[0]));
+    }
+
+    public function testIdentifierAnswersTheTokensOwnTextWhereItIsNotAName(): void
+    {
+        $tokens = SqlTokenStream::tokenize('1', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertSame('1', (new MySqlNativeUpsertProjector())->identifier($tokens[0]));
+    }
+
+    public function testQualifiedWritesTheColumnAsBelongingToThatRow(): void
+    {
+        self::assertSame('`e`.`qty`', (new MySqlNativeUpsertProjector())->qualified('e', 'qty'));
+    }
+
 }

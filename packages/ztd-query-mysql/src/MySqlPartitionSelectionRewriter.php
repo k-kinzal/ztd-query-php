@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\MySql;
 
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Schema\ColumnDeclaration;
+use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\TablePartitioning;
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
@@ -13,16 +13,13 @@ use ZtdQuery\Sql\SqlTokenStream;
 
 /**
  * Rewrites explicit MySQL partition selection into filtered table sources.
+ *
+ * @phpstan-import-type ShadowTables from SqlTransformer
  */
 final class MySqlPartitionSelectionRewriter
 {
     /**
-     * @param array<string, array{viewSql: string}|array{
-     *     rows: array<int, array<string, mixed>>,
-     *     columns: array<int, string>,
-     *     columnTypes: array<string, ColumnDeclaration>,
-     *     partitioning?: TablePartitioning|null
-     * }> $tables
+     * @param ShadowTables $tables Table name => what the shadow holds for it
      *
      * @throws UnsupportedSqlException
      */
@@ -98,7 +95,15 @@ final class MySqlPartitionSelectionRewriter
     }
 
     /** @param list<SqlToken> $tokens */
-    private function tokenIndexAtOrAfter(array $tokens, int $offset): int
+    /**
+     * Answers which token comes after the one ending here.
+     *
+     * @param list<SqlToken> $tokens The statement, as tokens
+     * @param int $offset Where the token before it ends
+     *
+     * @return int Where the next token is, or one past the end when there is none
+     */
+    public function tokenIndexAtOrAfter(array $tokens, int $offset): int
     {
         $afterReference = false;
         foreach ($tokens as $index => $token) {
@@ -111,8 +116,15 @@ final class MySqlPartitionSelectionRewriter
         return count($tokens);
     }
 
-    /** @param list<SqlToken> $tokens */
-    private function closingParenthesisIndex(array $tokens, SqlToken $open): ?int
+    /**
+     * Answers where the parenthesis that closes this one is written.
+     *
+     * @param list<SqlToken> $tokens The statement, as tokens
+     * @param SqlToken $open The opening parenthesis
+     *
+     * @return int|null Where it closes, or null where it never does
+     */
+    public function closingParenthesisIndex(array $tokens, SqlToken $open): ?int
     {
         $afterOpen = false;
         foreach ($tokens as $index => $token) {
@@ -127,11 +139,17 @@ final class MySqlPartitionSelectionRewriter
     }
 
     /**
-     * @return non-empty-list<string>
+     * Answers the partitions a PARTITION clause names.
      *
-     * @throws UnsupportedSqlException
+     * @param string $sql Statement being rewritten
+     * @param SqlToken $open Where the clause's parentheses open
+     * @param SqlToken $close Where they close
+     *
+     * @return non-empty-list<string> The partitions named
+     *
+     * @throws UnsupportedSqlException When the clause names anything but plain partition names
      */
-    private function partitionNames(string $sql, SqlToken $open, SqlToken $close): array
+    public function partitionNames(string $sql, SqlToken $open, SqlToken $close): array
     {
         $list = substr($sql, $open->endOffset(), $close->offset - $open->endOffset());
         $names = [];
@@ -153,8 +171,18 @@ final class MySqlPartitionSelectionRewriter
         return $names;
     }
 
-    /** @param list<SqlToken> $tokens */
-    private function hasAlias(array $tokens, int $index): bool
+    /**
+     * Reports whether the statement gave the table a name of its own here.
+     *
+     * A word here may be an alias or may open the next clause, and only the
+     * words that cannot open one are aliases.
+     *
+     * @param list<SqlToken> $tokens The statement, as tokens
+     * @param int $index Where to look, just past the table name
+     *
+     * @return bool True when the word there is an alias
+     */
+    public function hasAlias(array $tokens, int $index): bool
     {
         $token = $tokens[$index] ?? null;
         if ($token === null) {
@@ -171,12 +199,27 @@ final class MySqlPartitionSelectionRewriter
         );
     }
 
-    private function isIdentifier(SqlToken $token): bool
+    /**
+     * Reports whether a token is a name at all.
+     *
+     * @param SqlToken $token Token to test
+     *
+     * @return bool True for a bare word or a quoted name
+     */
+    public function isIdentifier(SqlToken $token): bool
     {
         return in_array($token->kind, [SqlTokenKind::Word, SqlTokenKind::QuotedIdentifier], true);
     }
 
-    private function isSymbol(SqlToken $token, string $symbol): bool
+    /**
+     * Reports whether a token is this symbol.
+     *
+     * @param SqlToken $token Token to test
+     * @param string $symbol Symbol it must be
+     *
+     * @return bool True when it is
+     */
+    public function isSymbol(SqlToken $token, string $symbol): bool
     {
         return $token->kind === SqlTokenKind::Symbol && $token->text === $symbol;
     }

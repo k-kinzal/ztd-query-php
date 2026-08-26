@@ -29,7 +29,6 @@ use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
 use ZtdQuery\Platform\MySql\Transformer\ReplaceTransformer;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
-use ZtdQuery\Session;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
@@ -106,7 +105,6 @@ final class MySqlSessionFactoryTest extends TestCase
         $factory = new MySqlSessionFactory();
         $session = $factory->create($connection, $config);
 
-        self::assertInstanceOf(Session::class, $session);
         self::assertInstanceOf(MySqlResultColumnTypeResolver::class, $session->resultColumnTypeResolver());
     }
 

@@ -26,7 +26,19 @@ final class MySqlMysqliResultColumnTypeResolver implements ResultColumnTypeResol
         return (new MySqlColumnTypeMapper())->map($nativeType);
     }
 
-    private function nativeType(int $type, mixed $charset): string
+    /**
+     * Answers the type MySQL would have declared a column of this driver type.
+     *
+     * The driver numbers text and its binary counterpart the same, and tells
+     * them apart only by the charset it reports, so both have to be read
+     * together to know which of the two a column is.
+     *
+     * @param int $type Type as the driver numbers it
+     * @param mixed $charset Charset as the driver numbers it
+     *
+     * @return string The type MySQL would have written, or empty where the driver names one ZTD does not know
+     */
+    public function nativeType(int $type, mixed $charset): string
     {
         return match ($type) {
             1 => 'TINYINT',
@@ -60,7 +72,14 @@ final class MySqlMysqliResultColumnTypeResolver implements ResultColumnTypeResol
         };
     }
 
-    private function isBinaryCharset(mixed $charset): bool
+    /**
+     * Reports whether a charset is the one MySQL reports for bytes rather than text.
+     *
+     * @param mixed $charset Charset as the driver reports it
+     *
+     * @return bool True when the column holds bytes
+     */
+    public function isBinaryCharset(mixed $charset): bool
     {
         return $charset === 63 || $charset === '63';
     }
