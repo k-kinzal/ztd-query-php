@@ -12,7 +12,7 @@ use ZtdQuery\Shadow\Mutation\UpsertMutationRow;
 #[CoversClass(UpsertMutationRow::class)]
 final class UpsertMutationRowTest extends TestCase
 {
-    public function testPredicateColumnIncomingRowSeparatesIncomingColumnsFromEvaluationMetadata(): void
+    public function testIncomingRowPredicateColumnIncomingRowSeparatesIncomingColumnsFromEvaluationMetadata(): void
     {
         $codec = new UpsertMutationRow();
         $row = [

@@ -16,7 +16,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(ShadowTableState::class)]
 class ShadowStoreTest extends TestCase
 {
-    public function testSnapshotRestoreSnapshotRestoreIncludesRowsAndInitializedPresence(): void
+    public function testRestoreSnapshotRestoreSnapshotRestoreIncludesRowsAndInitializedPresence(): void
     {
         $store = new ShadowStore();
         $store->set('users', [['id' => 1]]);

@@ -11,7 +11,7 @@ use ZtdQuery\Shadow\Mutation\MultiTableMutationRow;
 #[CoversClass(MultiTableMutationRow::class)]
 final class MultiTableMutationRowTest extends TestCase
 {
-    public function testValueColumnIdentityColumnExtractsValuesAndIdentityByTargetOrdinal(): void
+    public function testIdentityColumnValueColumnIdentityColumnExtractsValuesAndIdentityByTargetOrdinal(): void
     {
         $codec = new MultiTableMutationRow();
         $row = [
