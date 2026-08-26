@@ -6,6 +6,7 @@ namespace Tests\Integration\PostgreSql;
 
 use PDO;
 use PDOException;
+use PDOStatement;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
@@ -43,7 +44,7 @@ final class DomainTypeTest extends TestCase
             $insert = $ztdPdo->prepare(
                 "INSERT INTO {$table} (age, satisfaction) VALUES (\$1, \$2) RETURNING id, age, satisfaction",
             );
-            self::assertInstanceOf(\PDOStatement::class, $insert);
+            self::assertInstanceOf(PDOStatement::class, $insert);
             self::assertTrue($insert->execute([30, '85.50']));
             self::assertSame(
                 ['id' => 1, 'age' => 30, 'satisfaction' => '85.50'],

@@ -7,6 +7,7 @@ namespace Fuzz\Correctness;
 use Faker\Factory;
 use Faker\Generator;
 use PDO;
+use RuntimeException;
 use SqlFixture\FixtureProvider;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 use ZtdQuery\Config\UnknownSchemaBehavior;
@@ -120,7 +121,7 @@ final class CorrectnessHarness
     public function getZtdPdo(): ZtdPdo
     {
         if ($this->ztdPdo === null) {
-            throw new \RuntimeException('ZtdPdo not initialized. Call setup() first.');
+            throw new RuntimeException('ZtdPdo not initialized. Call setup() first.');
         }
         return $this->ztdPdo;
     }

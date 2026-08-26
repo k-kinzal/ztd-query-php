@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Tests\Integration\MySql\Pdo\AlterOther;
 
 use Tests\Support\MySqlIntegrationTestCase;
+use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 use ZtdQuery\Config\UnsupportedSqlBehavior;
 use ZtdQuery\Config\ZtdConfig;
-use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 
 final class AlterTablespaceTest extends MySqlIntegrationTestCase
 {
@@ -19,7 +19,7 @@ final class AlterTablespaceTest extends MySqlIntegrationTestCase
 
         $this->expectException(ZtdPdoException::class);
 
-        $ztdPdo->exec("ALTER TABLESPACE test_ts RENAME TO new_ts");
+        $ztdPdo->exec('ALTER TABLESPACE test_ts RENAME TO new_ts');
     }
 
     public function testAlterTablespaceIsIgnoredInIgnoreMode(): void
@@ -28,7 +28,7 @@ final class AlterTablespaceTest extends MySqlIntegrationTestCase
             unsupportedBehavior: UnsupportedSqlBehavior::Ignore
         ));
 
-        $result = $ztdPdo->exec("ALTER TABLESPACE test_ts RENAME TO new_ts");
+        $result = $ztdPdo->exec('ALTER TABLESPACE test_ts RENAME TO new_ts');
 
         $this->assertSame(0, $result);
     }
@@ -49,7 +49,7 @@ final class AlterTablespaceTest extends MySqlIntegrationTestCase
         }, E_USER_NOTICE);
 
         try {
-            $result = $ztdPdo->exec("ALTER TABLESPACE test_ts RENAME TO new_ts");
+            $result = $ztdPdo->exec('ALTER TABLESPACE test_ts RENAME TO new_ts');
 
             $this->assertSame(0, $result);
             $this->assertCount(1, $capturedNotices);

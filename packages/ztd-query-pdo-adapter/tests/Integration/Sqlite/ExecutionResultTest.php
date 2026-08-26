@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Sqlite;
 
+use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
@@ -18,13 +19,13 @@ final class ExecutionResultTest extends TestCase
 {
     public function testReturningProjectsInsertUpdateAndDeleteRows(): void
     {
-        $reference = new \PDO('sqlite::memory:', null, null, [
-            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        $reference = new PDO('sqlite::memory:', null, null, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
-        $underlying = new \PDO('sqlite::memory:', null, null, [
-            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        $underlying = new PDO('sqlite::memory:', null, null, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
         $schema = 'CREATE TABLE items (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, score INTEGER)';
         $reference->exec($schema);
@@ -55,9 +56,9 @@ final class ExecutionResultTest extends TestCase
 
     public function testPreparedReturningAndLastInsertIdTrackShadowIdentity(): void
     {
-        $underlying = new \PDO('sqlite::memory:', null, null, [
-            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        $underlying = new PDO('sqlite::memory:', null, null, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
         $underlying->exec('CREATE TABLE items (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)');
         $pdo = ZtdPdo::fromPdo($underlying);
@@ -77,8 +78,8 @@ final class ExecutionResultTest extends TestCase
 
     public function testRowCountUsesNativeMatchedRowConvention(): void
     {
-        $reference = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]);
-        $underlying = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]);
+        $reference = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+        $underlying = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $schema = 'CREATE TABLE items (id INTEGER PRIMARY KEY, score INTEGER)';
         $reference->exec($schema);
         $underlying->exec($schema);

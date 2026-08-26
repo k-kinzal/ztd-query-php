@@ -6,6 +6,7 @@ namespace Fuzz\Correctness\Postgres;
 
 use Faker\Generator;
 use Fuzz\Correctness\SchemaDefinition;
+use InvalidArgumentException;
 
 final class PgSchemaPool
 {
@@ -105,7 +106,7 @@ final class PgSchemaPool
     {
         self::initialize();
         if (!isset(self::$schemas[$name])) {
-            throw new \InvalidArgumentException("Unknown schema: $name");
+            throw new InvalidArgumentException("Unknown schema: $name");
         }
         return self::$schemas[$name];
     }

@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Fuzz\Correctness\Target;
 
 use Error;
+use Faker\Generator;
 use Fuzz\Correctness\CorrectnessHarness;
 use Fuzz\Correctness\ResultComparator;
 use Fuzz\Correctness\SchemaAwareSqlBuilder;
 use Fuzz\Correctness\SchemaPool;
-use Faker\Generator;
 use PDO;
 use PDOException;
 use ZtdQuery\Connection\Exception\DatabaseException;
@@ -85,8 +85,8 @@ final class DeleteCorrectnessTarget
                 "DELETE table state mismatch\n" .
                 "Seed: $seed\n" .
                 "Schema: {$schema->name}\n" .
-                "Raw row count: " . count($rawRows) . "\n" .
-                "ZTD row count: " . count($ztdRows)
+                'Raw row count: ' . count($rawRows) . "\n" .
+                'ZTD row count: ' . count($ztdRows)
             );
         }
     }

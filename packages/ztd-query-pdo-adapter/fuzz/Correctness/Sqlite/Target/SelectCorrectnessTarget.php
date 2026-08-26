@@ -102,10 +102,10 @@ final class SelectCorrectnessTarget
                     "Seed: $seed\n" .
                     "SQL: $sql\n" .
                     "Schema: {$schema->name}\n" .
-                    "Raw result count: " . count($rawResult) . "\n" .
-                    "ZTD result count: " . count($ztdResult) . "\n" .
-                    "Raw first row: " . json_encode($rawResult[0] ?? null) . "\n" .
-                    "ZTD first row: " . json_encode($ztdResult[0] ?? null)
+                    'Raw result count: ' . count($rawResult) . "\n" .
+                    'ZTD result count: ' . count($ztdResult) . "\n" .
+                    'Raw first row: ' . json_encode($rawResult[0] ?? null) . "\n" .
+                    'ZTD first row: ' . json_encode($ztdResult[0] ?? null)
                 );
             }
         }

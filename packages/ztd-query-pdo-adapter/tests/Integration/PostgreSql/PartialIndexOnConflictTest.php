@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Integration\PostgreSql;
 
 use PDO;
+use PDOStatement;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
@@ -42,7 +43,7 @@ final class PartialIndexOnConflictTest extends TestCase
                 . "ON CONFLICT (email) WHERE status = 'active' "
                 . "DO UPDATE SET login_count = {$table}.login_count + EXCLUDED.login_count",
             );
-            self::assertInstanceOf(\PDOStatement::class, $prepared);
+            self::assertInstanceOf(PDOStatement::class, $prepared);
             self::assertTrue($prepared->execute(['alice@example.com', 'active', 1]));
             self::assertSame(1, $prepared->rowCount());
 

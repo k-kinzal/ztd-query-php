@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
+use LogicException;
 use Testcontainers\Containers\WaitStrategy\PDO\DSN;
 use Testcontainers\Utility\Stringable;
 
@@ -63,7 +64,7 @@ final class PostgreSqlDSN implements DSN, Stringable
     public function toString(): string
     {
         if ($this->host === null) {
-            throw new \LogicException('Host is required');
+            throw new LogicException('Host is required');
         }
         $dsn = sprintf('pgsql:host=%s;', $this->host);
         if ($this->port !== null) {

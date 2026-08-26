@@ -22,9 +22,9 @@ use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlQueryGuard;
 use ZtdQuery\Platform\MySql\MySqlRewriter;
 use ZtdQuery\Platform\MySql\MySqlSchemaParser;
-use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
 use ZtdQuery\Platform\MySql\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\MySql\Transformer\InsertTransformer;
+use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
 use ZtdQuery\Platform\MySql\Transformer\ReplaceTransformer;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
@@ -127,5 +127,5 @@ $faker = Factory::create();
 $provider = new MySqlProvider($faker, 'mysql-8.0.44');
 $target = new ExecutionTarget($faker, $provider, $rawPdo, $ztdPdo, $shadowStore, $rewriter, $guard);
 
-/** @var \PhpFuzzer\Config $config */
-$config->setTarget(\Closure::fromCallable($target));
+/** @var PhpFuzzer\Config $config */
+$config->setTarget(Closure::fromCallable($target));

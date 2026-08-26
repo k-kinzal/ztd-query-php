@@ -25,5 +25,5 @@ $harness = new PgCorrectnessHarness($host, $port, 'fuzz_test', 'test', 'test');
 $sqlBuilder = new PgSchemaAwareSqlBuilder($faker);
 $target = new InsertCorrectnessTarget($harness, $sqlBuilder, $faker);
 
-/** @var \PhpFuzzer\Config $config */
-$config->setTarget(\Closure::fromCallable($target));
+/** @var PhpFuzzer\Config $config */
+$config->setTarget(Closure::fromCallable($target));

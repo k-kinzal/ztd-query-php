@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Integration\Sqlite;
 
 use PDO;
+use PDOStatement;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
@@ -21,15 +22,15 @@ final class PreparedExecutionTest extends TestCase
         $ztdPdo = ZtdPdo::fromPdo($raw);
 
         $statement = $ztdPdo->prepare('INSERT INTO users VALUES (?, ?)');
-        self::assertInstanceOf(\PDOStatement::class, $statement);
+        self::assertInstanceOf(PDOStatement::class, $statement);
         self::assertTrue($statement->execute([1, 'Alice']));
 
         $statement = $ztdPdo->prepare('UPDATE users SET name = ? WHERE id = ?');
-        self::assertInstanceOf(\PDOStatement::class, $statement);
+        self::assertInstanceOf(PDOStatement::class, $statement);
         self::assertTrue($statement->execute(['Alicia', 1]));
 
         $statement = $ztdPdo->prepare('SELECT name FROM users WHERE id = 1');
-        self::assertInstanceOf(\PDOStatement::class, $statement);
+        self::assertInstanceOf(PDOStatement::class, $statement);
         self::assertTrue($statement->execute([]));
         self::assertSame('Alicia', $statement->fetchColumn());
     }
@@ -42,12 +43,12 @@ final class PreparedExecutionTest extends TestCase
         $ztdPdo->exec("INSERT INTO products VALUES (1, 'Widget', 10, 100), (2, 'Gadget', 20, 50), (3, 'Sprocket', NULL, 5)");
 
         $select = $ztdPdo->prepare('SELECT name FROM products WHERE COALESCE(price, ?) < ? ORDER BY id');
-        self::assertInstanceOf(\PDOStatement::class, $select);
+        self::assertInstanceOf(PDOStatement::class, $select);
         self::assertTrue($select->execute([0.0, 15.0]));
         self::assertSame(['Widget', 'Sprocket'], $select->fetchAll(PDO::FETCH_COLUMN));
 
         $delete = $ztdPdo->prepare('DELETE FROM products WHERE MIN(COALESCE(price, ?), stock) < ?');
-        self::assertInstanceOf(\PDOStatement::class, $delete);
+        self::assertInstanceOf(PDOStatement::class, $delete);
         self::assertTrue($delete->execute([0.0, 10]));
         self::assertSame(1, $delete->rowCount());
 
