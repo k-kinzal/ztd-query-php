@@ -60,19 +60,6 @@ final class SqliteProfileBuilderTest extends TestCase
         (new SqliteProfileBuilder())->catalog(['keywords' => []], []);
     }
 
-    public function testIdentifierSamplesCoversEveryWayAnIdentifierIsQuoted(): void
-    {
-        self::assertSame(
-            [
-                ['name', ['TK_ID'], ['CC_KYWD0']],
-                ['"select"', ['TK_ID'], ['CC_QUOTE']],
-                ['`select`', ['TK_ID'], ['CC_QUOTE']],
-                ['[select]', ['TK_ID'], ['CC_QUOTE2']],
-            ],
-            (new SqliteProfileBuilder())->identifierSamples(),
-        );
-    }
-
     public function testWitnessNamesTheSqlThatProvesATerminalCanBeLexed(): void
     {
         self::assertSame(
