@@ -86,9 +86,14 @@ final class DeleteCorrectnessTarget
     }
 
     /**
+     * Reads the table on both sides and fails if they disagree.
+     *
+     * @param \Fuzz\Correctness\SchemaDefinition $schema The schema
+     * @param int $seed The seed
+     *
      * @throws Error
      */
-    private function compareTableState(\Fuzz\Correctness\SchemaDefinition $schema, int $seed): void
+    public function compareTableState(\Fuzz\Correctness\SchemaDefinition $schema, int $seed): void
     {
         $rawRows = $this->fetchAll($this->harness->getRawPdo(), $schema->name);
 
@@ -109,9 +114,14 @@ final class DeleteCorrectnessTarget
     }
 
     /**
-     * @return list<Row>
+     * Answers every row the connection reads.
+     *
+     * @param PDO $pdo The pdo
+     * @param string $table Table it belongs to
+     *
+     * @return list<Row> What it answers
      */
-    private function fetchAll(PDO $pdo, string $table): array
+    public function fetchAll(PDO $pdo, string $table): array
     {
         $stmt = $pdo->query("SELECT * FROM `$table`");
         /** @var list<Row> $rows */

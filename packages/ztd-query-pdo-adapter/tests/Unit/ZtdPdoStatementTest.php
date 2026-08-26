@@ -8,10 +8,16 @@ use PDO;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ReflectionException;
+use Tests\Fixtures\AnsweringPdoStatement;
+use ZtdQuery\Adapter\Pdo\BufferedRow;
+use ZtdQuery\Adapter\Pdo\PdoBinding;
+use ZtdQuery\Adapter\Pdo\PdoFetchMode;
 use ZtdQuery\Adapter\Pdo\PdoParameterBinder;
-use ZtdQuery\Adapter\Pdo\PdoParameterType;
+use ZtdQuery\Adapter\Pdo\PdoParameterKind;
 use ZtdQuery\Adapter\Pdo\PdoPreparedExecution;
 use ZtdQuery\Adapter\Pdo\PdoStatement;
+use ZtdQuery\Adapter\Pdo\ZtdPdo;
 use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 use ZtdQuery\Adapter\Pdo\ZtdPdoStatement;
 use ZtdQuery\Config\ZtdConfig;
@@ -30,11 +36,18 @@ use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\ShadowStore;
 
 #[CoversClass(ZtdPdoStatement::class)]
+#[UsesClass(BufferedRow::class)]
+#[UsesClass(PdoBinding::class)]
+#[UsesClass(PdoFetchMode::class)]
 #[UsesClass(PdoStatement::class)]
 #[UsesClass(PdoParameterBinder::class)]
-#[UsesClass(PdoParameterType::class)]
+#[UsesClass(PdoParameterKind::class)]
 #[UsesClass(PdoPreparedExecution::class)]
 #[UsesClass(ZtdPdoException::class)]
+#[UsesClass(\ZtdQuery\Adapter\Pdo\DriverSessionFactory::class)]
+#[UsesClass(\ZtdQuery\Adapter\Pdo\PdoConnection::class)]
+#[UsesClass(\ZtdQuery\Adapter\Pdo\PostgreSqlCopy::class)]
+#[UsesClass(ZtdPdo::class)]
 final class ZtdPdoStatementTest extends TestCase
 {
     public function testExecuteDelegatesWhenNoPlan(): void
@@ -91,7 +104,7 @@ final class ZtdPdoStatementTest extends TestCase
 
         self::assertTrue($stmt->execute());
         $count = $pdo->query('SELECT COUNT(*) FROM t');
-        self::assertInstanceOf(\PDOStatement::class, $count);
+        self::assertNotFalse($count);
         self::assertSame(1, $count->fetchColumn());
     }
 
@@ -219,5 +232,262 @@ final class ZtdPdoStatementTest extends TestCase
 
         $stmt = new ZtdPdoStatement($inner, $session, null);
         self::assertSame(3, $stmt->columnCount());
+    }
+    public function testBindColumnFillsTheVariableTheColumnIsReadInto(): void
+    {
+        $statement = $this->providerPlainStatement('SELECT 7 AS id');
+        $id = null;
+
+        $statement->bindColumn('id', $id);
+        $statement->execute();
+        $statement->fetch(PDO::FETCH_BOUND);
+
+        self::assertSame('7', $id);
+    }
+
+    public function testExecuteStatementRunsWhatTheDriverPrepared(): void
+    {
+        $statement = $this->providerPlainStatement('SELECT 1 AS id');
+
+        self::assertTrue($statement->executeStatement(null));
+    }
+
+    public function testExecuteStatementBindsTheParametersItIsGiven(): void
+    {
+        $statement = $this->providerRewrittenStatement('SELECT ? AS value');
+
+        $statement->executeStatement([42]);
+
+        self::assertSame(42, $statement->fetchColumn());
+    }
+
+    public function testExecuteAndPostProcessLetsZtdReadWhatTheStatementAnswered(): void
+    {
+        $statement = $this->providerReturningInsert();
+
+        self::assertSame([['id' => 1, 'name' => 'linus']], $statement->fetchAll(PDO::FETCH_ASSOC));
+    }
+
+    public function testRebindParametersPutsEveryBindingBackOnTheStatement(): void
+    {
+        $statement = $this->providerRewrittenStatement('SELECT ? AS value');
+        $statement->bindValue(1, 42, PDO::PARAM_INT);
+
+        $statement->rebindParameters();
+        $statement->executeStatement(null);
+
+        self::assertSame(42, $statement->fetchColumn());
+    }
+
+    public function testFetchAnswersOneBufferedRowAtATime(): void
+    {
+        $statement = $this->providerReturningInsert();
+
+        self::assertSame(['id' => 1, 'name' => 'linus'], $statement->fetch(PDO::FETCH_ASSOC));
+    }
+
+    public function testFetchAnswersFalseOnceTheBufferedRowsRunOut(): void
+    {
+        $statement = $this->providerReturningInsert();
+        $statement->fetch(PDO::FETCH_ASSOC);
+
+        self::assertFalse($statement->fetch(PDO::FETCH_ASSOC));
+    }
+
+    public function testFetchAllAnswersEveryBufferedRowInTheModeItIsAsked(): void
+    {
+        $statement = $this->providerReturningInsert();
+
+        self::assertSame([[1, 'linus']], $statement->fetchAll(PDO::FETCH_NUM));
+    }
+
+    public function testFetchAllAnswersOneColumnWhereOnlyOneIsAsked(): void
+    {
+        $statement = $this->providerReturningInsert();
+
+        self::assertSame(['linus'], $statement->fetchAll(PDO::FETCH_COLUMN, 1));
+    }
+
+    public function testFetchColumnAnswersTheColumnAskedForInTheBufferedRow(): void
+    {
+        $statement = $this->providerReturningInsert();
+
+        self::assertSame('linus', $statement->fetchColumn(1));
+    }
+
+    /**
+     * @throws ReflectionException
+     */
+    public function testFetchObjectBuildsAnObjectOutOfTheBufferedRow(): void
+    {
+        $statement = $this->providerReturningInsert();
+
+        $object = $statement->fetchObject();
+
+        self::assertSame(['id' => 1, 'name' => 'linus'], $object === false ? [] : get_object_vars($object));
+    }
+
+    /**
+     * @throws ReflectionException
+     */
+    public function testFetchObjectAnswersFalseWhereThereIsNoBufferedRowLeft(): void
+    {
+        $statement = $this->providerReturningInsert();
+        $statement->fetchObject();
+
+        self::assertFalse($statement->fetchObject());
+    }
+
+    public function testSetFetchModeIsRememberedAcrossAReprepare(): void
+    {
+        $statement = $this->providerRewrittenStatement('SELECT ? AS value');
+        $statement->setFetchMode(PDO::FETCH_NUM);
+
+        $statement->execute([42]);
+
+        self::assertSame([[42]], $statement->fetchAll());
+    }
+
+    public function testResolveFetchModeAnswersTheModeItWasAsked(): void
+    {
+        $statement = $this->providerPlainStatement('SELECT 1 AS id');
+
+        self::assertSame(PDO::FETCH_ASSOC, $statement->resolveFetchMode(PDO::FETCH_ASSOC));
+    }
+
+    public function testResolveFetchModeAnswersTheModeLastSetWhereNoneIsAsked(): void
+    {
+        $statement = $this->providerPlainStatement('SELECT 1 AS id');
+        $statement->setFetchMode(PDO::FETCH_NUM);
+
+        self::assertSame(PDO::FETCH_NUM, $statement->resolveFetchMode(PDO::FETCH_DEFAULT));
+    }
+
+    public function testResolveFetchModeFallsBackToTheConnectionsOwnMode(): void
+    {
+        $statement = $this->providerPlainStatement('SELECT 1 AS id');
+
+        self::assertSame(PDO::FETCH_BOTH, $statement->resolveFetchMode(PDO::FETCH_DEFAULT));
+    }
+
+    public function testErrorCodeAnswersWhatTheDriverSaysWentWrongLast(): void
+    {
+        self::assertSame('00000', $this->providerStubbedStatement()->errorCode());
+    }
+
+    public function testErrorCodeAnswersNothingWhereTheDriverSaysNothing(): void
+    {
+        self::assertSame('', $this->providerPlainStatement('SELECT 1 AS id')->errorCode());
+    }
+
+    public function testErrorInfoAnswersWhatTheDriverSaysAboutTheLastFailure(): void
+    {
+        self::assertSame('00000', $this->providerStubbedStatement()->errorInfo()[0]);
+    }
+
+    public function testGetAttributeReadsTheAttributeOffTheStatementItWraps(): void
+    {
+        self::assertSame(PDO::CURSOR_FWDONLY, $this->providerStubbedStatement()->getAttribute(PDO::ATTR_CURSOR));
+    }
+
+    public function testSetAttributeSetsTheAttributeOnTheStatementItWraps(): void
+    {
+        self::assertTrue($this->providerStubbedStatement()->setAttribute(PDO::ATTR_CURSOR, PDO::CURSOR_FWDONLY));
+    }
+
+    public function testGetColumnMetaAnswersWhatTheDriverSaysAboutAColumn(): void
+    {
+        $meta = $this->providerStubbedStatement()->getColumnMeta(0);
+
+        self::assertSame('id', $meta === false ? null : $meta['name']);
+    }
+
+    public function testNextRowsetMovesTheStatementOnToTheDriversNextResult(): void
+    {
+        self::assertTrue($this->providerStubbedStatement()->nextRowset());
+    }
+
+    public function testDebugDumpParamsWritesTheDumpRatherThanAnsweringIt(): void
+    {
+        $statement = $this->providerPlainStatement('SELECT 1 AS id');
+
+        ob_start();
+        $dumped = $statement->debugDumpParams();
+        ob_end_clean();
+
+        self::assertTrue($dumped);
+    }
+
+    public function testGetIteratorWalksTheRowsZtdBuffered(): void
+    {
+        $statement = $this->providerReturningInsert();
+
+        self::assertSame([['id' => 1, 0 => 1, 'name' => 'linus', 1 => 'linus']], iterator_to_array($statement->getIterator()));
+    }
+
+    public function testGetIteratorWalksTheDriversOwnCursorWhereNothingWasBuffered(): void
+    {
+        $statement = $this->providerPlainStatement('SELECT 1 AS id');
+        $statement->execute();
+
+        self::assertCount(1, iterator_to_array($statement->getIterator()));
+    }
+
+    /**
+     * @return ZtdPdoStatement A statement over a driver that answers whatever is asked of it
+     */
+    public function providerStubbedStatement(): ZtdPdoStatement
+    {
+        $inner = new AnsweringPdoStatement();
+        $session = new Session(static::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), static::createStub(ConnectionInterface::class));
+
+        return new ZtdPdoStatement($inner, $session, null);
+    }
+
+    /**
+     * @param string $sql Statement to prepare
+     *
+     * @return ZtdPdoStatement A statement ZTD passes straight through to the driver
+     */
+    public function providerPlainStatement(string $sql): ZtdPdoStatement
+    {
+        $pdo = new PDO('sqlite::memory:');
+        $inner = $pdo->prepare($sql);
+        self::assertNotFalse($inner);
+        $session = new Session(static::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), static::createStub(ConnectionInterface::class));
+
+        return new ZtdPdoStatement($inner, $session, null);
+    }
+
+    /**
+     * @param string $sql Statement to prepare, which ZTD rewrites into itself
+     *
+     * @return ZtdPdoStatement A statement that is prepared again on each execution
+     */
+    public function providerRewrittenStatement(string $sql): ZtdPdoStatement
+    {
+        $pdo = new PDO('sqlite::memory:');
+        $rewriter = static::createStub(SqlRewriter::class);
+        $rewriter->method('rewrite')->willReturn(new RewritePlan($sql, QueryKind::READ));
+        $session = new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), static::createStub(ConnectionInterface::class));
+        $execution = new PdoPreparedExecution($pdo, $session, $sql, []);
+        $prepared = $execution->prepare(null);
+
+        return new ZtdPdoStatement($prepared['statement'], $session, $prepared['plan'], $execution);
+    }
+
+    /**
+     * @return ZtdPdoStatement An executed INSERT ... RETURNING, holding the row ZTD buffered for it
+     */
+    public function providerReturningInsert(): ZtdPdoStatement
+    {
+        $pdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+        $pdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $pdo->exec("INSERT INTO users (name) VALUES ('ada')");
+        $statement = ZtdPdo::fromPdo($pdo)->prepare('INSERT INTO users (name) VALUES (?) RETURNING id, name');
+        self::assertInstanceOf(ZtdPdoStatement::class, $statement);
+        $statement->execute(['linus']);
+
+        return $statement;
     }
 }

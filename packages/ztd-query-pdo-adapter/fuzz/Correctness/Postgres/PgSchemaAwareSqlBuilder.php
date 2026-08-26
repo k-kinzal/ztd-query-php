@@ -199,7 +199,14 @@ final class PgSchemaAwareSqlBuilder
         return "DELETE FROM $table WHERE $whereClause";
     }
 
-    private function buildPkWhere(SchemaDefinition $schema): string
+    /**
+     * Answers a WHERE that names one row by its primary key.
+     *
+     * @param SchemaDefinition $schema The schema
+     *
+     * @return string What it answers
+     */
+    public function buildPkWhere(SchemaDefinition $schema): string
     {
         $conditions = [];
         foreach ($schema->primaryKeys as $pk) {
@@ -209,7 +216,14 @@ final class PgSchemaAwareSqlBuilder
         return implode(' AND ', $conditions);
     }
 
-    private function buildGroupedSubqueryWhere(SchemaDefinition $schema): string
+    /**
+     * Answers a WHERE built from a grouped subquery.
+     *
+     * @param SchemaDefinition $schema The schema
+     *
+     * @return string What it answers
+     */
+    public function buildGroupedSubqueryWhere(SchemaDefinition $schema): string
     {
         $table = $this->quoteIdentifier($schema->name);
         $key = $this->quoteIdentifier($schema->primaryKeys[0] ?? $schema->columns[0]);
@@ -218,9 +232,13 @@ final class PgSchemaAwareSqlBuilder
     }
 
     /**
-     * @param array<int, string> $columns
+     * Answers a column list drawn from the ones the table has.
+     *
+     * @param array<int, string> $columns Columns to read
+     *
+     * @return string What it answers
      */
-    private function randomColumns(array $columns): string
+    public function randomColumns(array $columns): string
     {
         $count = $this->faker->numberBetween(1, count($columns));
         /** @var array<int, string> $selected */
@@ -228,7 +246,14 @@ final class PgSchemaAwareSqlBuilder
         return implode(', ', array_map(fn ($c) => $this->quoteIdentifier($c), $selected));
     }
 
-    private function generateLiteral(string $column): string
+    /**
+     * Answers a literal the column can hold.
+     *
+     * @param string $column Column to read
+     *
+     * @return string What it answers
+     */
+    public function generateLiteral(string $column): string
     {
         $col = strtolower($column);
 
@@ -256,7 +281,14 @@ final class PgSchemaAwareSqlBuilder
         return "'" . str_replace("'", "''", $str) . "'";
     }
 
-    private function isTextColumn(string $column): bool
+    /**
+     * Answers whether the column holds text.
+     *
+     * @param string $column Column to read
+     *
+     * @return bool What it answers
+     */
+    public function isTextColumn(string $column): bool
     {
         $column = strtolower($column);
 
@@ -268,7 +300,14 @@ final class PgSchemaAwareSqlBuilder
             || str_contains($column, 'char');
     }
 
-    private function quoteIdentifier(string $name): string
+    /**
+     * Answers the name as the dialect quotes it.
+     *
+     * @param string $name Name to read
+     *
+     * @return string What it answers
+     */
+    public function quoteIdentifier(string $name): string
     {
         return '"' . str_replace('"', '""', $name) . '"';
     }

@@ -10,6 +10,7 @@ use Fuzz\Correctness\ResultComparator;
 use Fuzz\Correctness\SchemaDefinition;
 use Fuzz\Correctness\Sqlite\SqliteCorrectnessHarness;
 use Fuzz\Correctness\Sqlite\SqliteSchemaPool;
+use JsonException;
 use PDO;
 use PDOException;
 use ZtdQuery\Connection\Exception\DatabaseException;
@@ -38,6 +39,7 @@ final class AlterCorrectnessTarget
 
     /**
      * @throws Error
+     * @throws JsonException
      */
     public function __invoke(string $input): void
     {
@@ -104,15 +106,13 @@ final class AlterCorrectnessTarget
     }
 
     /**
-     * @return array{
-     *     sql: string,
-     *     resultTable: string,
-     *     columns: list<string>,
-     *     primaryKeys: list<string>,
-     *     removedTable: string|null
-     * }
+     * Answers one case to run, as the statement and what it runs against.
+     *
+     * @param SchemaDefinition $schema The schema
+     *
+     * @return array{sql: string, resultTable: string, columns: list<string>, primaryKeys: list<string>, removedTable: string|null} The statement to run, the table it leaves behind, and what that table holds
      */
-    private function buildCase(SchemaDefinition $schema): array
+    public function buildCase(SchemaDefinition $schema): array
     {
         $columns = array_values($schema->columns);
         $primaryKeys = array_values($schema->primaryKeys);
@@ -170,11 +170,15 @@ final class AlterCorrectnessTarget
     }
 
     /**
-     * @param list<string> $columns
+     * Answers one column drawn from the ones the table has.
+     *
+     * @param list<string> $columns Columns to read
+     *
+     * @return string What it answers
      *
      * @throws Error
      */
-    private function randomColumn(array $columns): string
+    public function randomColumn(array $columns): string
     {
         $column = $this->faker->randomElement($columns);
         if (!is_string($column)) {
@@ -185,10 +189,15 @@ final class AlterCorrectnessTarget
     }
 
     /**
-     * @param list<string> $columns
-     * @return list<string>
+     * Answers the columns with the renamed one under its new name.
+     *
+     * @param list<string> $columns Columns to read
+     * @param string $old The old
+     * @param string $new The new
+     *
+     * @return list<string> What it answers
      */
-    private function renamedColumns(array $columns, string $old, string $new): array
+    public function renamedColumns(array $columns, string $old, string $new): array
     {
         $renamed = [];
         foreach ($columns as $column) {
@@ -199,11 +208,16 @@ final class AlterCorrectnessTarget
     }
 
     /**
-     * @return list<Row>
+     * Answers every row the connection reads.
+     *
+     * @param PDO $pdo The pdo
+     * @param string $table Table it belongs to
+     *
+     * @return list<Row> What it answers
      *
      * @throws Error
      */
-    private function fetchAll(PDO $pdo, string $table): array
+    public function fetchAll(PDO $pdo, string $table): array
     {
         $statement = $pdo->query('SELECT * FROM ' . $this->quote($table));
         if ($statement === false) {
@@ -220,6 +234,9 @@ final class AlterCorrectnessTarget
                 if (!is_string($column)) {
                     throw new Error('ALTER correctness query returned a non-string column');
                 }
+                if ($value !== null && !is_scalar($value)) {
+                    throw new Error('ALTER correctness query returned a value no comparison can read');
+                }
                 $normalized[$column] = $value;
             }
             $rows[] = $normalized;
@@ -228,7 +245,14 @@ final class AlterCorrectnessTarget
         return $rows;
     }
 
-    private function quote(string $identifier): string
+    /**
+     * Answers the identifier as the dialect quotes it.
+     *
+     * @param string $identifier Name, as it was written
+     *
+     * @return string What it answers
+     */
+    public function quote(string $identifier): string
     {
         return '"' . str_replace('"', '""', $identifier) . '"';
     }

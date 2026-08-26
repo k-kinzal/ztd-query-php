@@ -16,10 +16,7 @@ use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\StatementInterface;
 
 /**
- * Integration tests for ZtdPdo error handling with SQLite.
- *
  * @requires extension pdo_sqlite
- *
  * @phpstan-import-type Row from StatementInterface
  */
 #[CoversNothing]

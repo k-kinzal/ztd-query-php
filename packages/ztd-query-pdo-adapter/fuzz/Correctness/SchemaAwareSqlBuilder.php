@@ -158,7 +158,14 @@ final class SchemaAwareSqlBuilder
         return "DELETE FROM `$table` WHERE $whereClause";
     }
 
-    private function buildPkWhere(SchemaDefinition $schema): string
+    /**
+     * Answers a WHERE that names one row by its primary key.
+     *
+     * @param SchemaDefinition $schema The schema
+     *
+     * @return string What it answers
+     */
+    public function buildPkWhere(SchemaDefinition $schema): string
     {
         $conditions = [];
         foreach ($schema->primaryKeys as $pk) {
@@ -168,7 +175,14 @@ final class SchemaAwareSqlBuilder
         return implode(' AND ', $conditions);
     }
 
-    private function buildGroupedSubqueryWhere(SchemaDefinition $schema): string
+    /**
+     * Answers a WHERE built from a grouped subquery.
+     *
+     * @param SchemaDefinition $schema The schema
+     *
+     * @return string What it answers
+     */
+    public function buildGroupedSubqueryWhere(SchemaDefinition $schema): string
     {
         $table = $schema->name;
         $key = $schema->primaryKeys[0] ?? $schema->columns[0];
@@ -178,9 +192,13 @@ final class SchemaAwareSqlBuilder
     }
 
     /**
-     * @param array<int, string> $columns
+     * Answers a column list drawn from the ones the table has.
+     *
+     * @param array<int, string> $columns Columns to read
+     *
+     * @return string What it answers
      */
-    private function randomColumns(array $columns): string
+    public function randomColumns(array $columns): string
     {
         $count = $this->faker->numberBetween(1, count($columns));
         /** @var array<int, string> $selected */
@@ -188,7 +206,15 @@ final class SchemaAwareSqlBuilder
         return implode(', ', array_map(fn (string $c) => "`$c`", $selected));
     }
 
-    private function generateLiteral(string $column, SchemaDefinition $schema): string
+    /**
+     * Answers a literal the column can hold.
+     *
+     * @param string $column Column to read
+     * @param SchemaDefinition $schema The schema
+     *
+     * @return string What it answers
+     */
+    public function generateLiteral(string $column, SchemaDefinition $schema): string
     {
         $col = strtolower($column);
 
@@ -244,7 +270,14 @@ final class SchemaAwareSqlBuilder
         return "'" . addslashes($str) . "'";
     }
 
-    private function isTextColumn(string $column): bool
+    /**
+     * Answers whether the column holds text.
+     *
+     * @param string $column Column to read
+     *
+     * @return bool What it answers
+     */
+    public function isTextColumn(string $column): bool
     {
         $column = strtolower($column);
 

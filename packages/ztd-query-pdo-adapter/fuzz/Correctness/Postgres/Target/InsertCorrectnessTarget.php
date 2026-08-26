@@ -88,9 +88,14 @@ final class InsertCorrectnessTarget
     }
 
     /**
+     * Reads the table on both sides and fails if they disagree.
+     *
+     * @param SchemaDefinition $schema The schema
+     * @param int $seed The seed
+     *
      * @throws Error
      */
-    private function compareTableState(SchemaDefinition $schema, int $seed): void
+    public function compareTableState(SchemaDefinition $schema, int $seed): void
     {
         $rawRows = $this->fetchAll($this->harness->getRawPdo(), $schema->name);
 
@@ -111,9 +116,14 @@ final class InsertCorrectnessTarget
     }
 
     /**
-     * @return list<Row>
+     * Answers every row the connection reads.
+     *
+     * @param PDO $pdo The pdo
+     * @param string $table Table it belongs to
+     *
+     * @return list<Row> What it answers
      */
-    private function fetchAll(PDO $pdo, string $table): array
+    public function fetchAll(PDO $pdo, string $table): array
     {
         $stmt = $pdo->query(sprintf('SELECT * FROM "%s"', str_replace('"', '""', $table)));
         /** @var list<Row> $rows */
