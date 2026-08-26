@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Sqlite;
 
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 /**
@@ -16,9 +16,9 @@ final class SqliteColumnTypeMapper
      * Map.
      *
      * @param string $nativeType
-     * @return ColumnType
+     * @return ColumnDeclaration
      */
-    public function map(string $nativeType): ColumnType
+    public function map(string $nativeType): ColumnDeclaration
     {
         $normalized = strtoupper(trim($nativeType));
 
@@ -38,6 +38,6 @@ final class SqliteColumnTypeMapper
             default => ColumnTypeFamily::DECIMAL,
         };
 
-        return new ColumnType($family, $nativeType);
+        return new ColumnDeclaration($family, $nativeType);
     }
 }

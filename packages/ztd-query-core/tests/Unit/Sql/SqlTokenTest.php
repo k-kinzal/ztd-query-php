@@ -60,4 +60,21 @@ final class SqlTokenTest extends TestCase
 
         self::assertFalse($token->isKeyword('SELECT'));
     }
+    public function testSliceCarriesTheTextTheStatementWasWrittenWith(): void
+    {
+        self::assertSame('LECT', SqlToken::slice('SELECT 1', SqlTokenKind::Word, 2, 6, 0, 0)->text);
+    }
+
+    public function testSliceRemembersWhereInTheStatementItWasWritten(): void
+    {
+        self::assertSame(2, SqlToken::slice('SELECT 1', SqlTokenKind::Word, 2, 6, 1, 2)->offset);
+    }
+
+    public function testSliceCarriesHowDeeplyItWasNested(): void
+    {
+        $token = SqlToken::slice('(1)', SqlTokenKind::Number, 1, 2, 1, 3);
+
+        self::assertSame([1, 3], [$token->depth, $token->bracketDepth]);
+    }
+
 }

@@ -31,6 +31,29 @@ final class SqlToken
     }
 
     /**
+     * Answers the token a stretch of the statement was read as.
+     *
+     * @param string $sql The statement, as written
+     * @param SqlTokenKind $kind What kind of lexeme the stretch was read as
+     * @param int $start Where the lexeme starts
+     * @param int $end Where it ends, just past its last byte
+     * @param int $depth How many parentheses it is inside
+     * @param int $bracketDepth How many brackets it is inside
+     *
+     * @return self The lexeme, carrying the text it was written as
+     */
+    public static function slice(
+        string $sql,
+        SqlTokenKind $kind,
+        int $start,
+        int $end,
+        int $depth,
+        int $bracketDepth,
+    ): self {
+        return new self($kind, substr($sql, $start, $end - $start), $start, $depth, $bracketDepth);
+    }
+
+    /**
      * Answers where in the statement the lexeme ends.
      *
      * @return int The offset just past its last byte

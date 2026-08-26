@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use Stringable;
 use ZtdQuery\Platform\Sqlite\SqliteValueRenderer;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(SqliteValueRenderer::class)]
@@ -23,7 +23,7 @@ final class SqliteValueRendererTest extends TestCase
 
         self::assertSame(
             "CAST('42' AS INTEGER)",
-            $renderer->renderValue('42', new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER')),
+            $renderer->renderValue('42', new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER')),
         );
     }
 
@@ -33,7 +33,7 @@ final class SqliteValueRendererTest extends TestCase
 
         self::assertSame(
             "CAST('2.718281828459045' AS REAL)",
-            $renderer->renderValue(2.718281828459045, new ColumnType(ColumnTypeFamily::FLOAT, 'REAL')),
+            $renderer->renderValue(2.718281828459045, new ColumnDeclaration(ColumnTypeFamily::FLOAT, 'REAL')),
         );
     }
 
@@ -43,7 +43,7 @@ final class SqliteValueRendererTest extends TestCase
 
         self::assertSame(
             "CAST(X'0001ff' AS BLOB)",
-            $renderer->renderValue("\x00\x01\xFF", new ColumnType(ColumnTypeFamily::BINARY, 'BLOB')),
+            $renderer->renderValue("\x00\x01\xFF", new ColumnDeclaration(ColumnTypeFamily::BINARY, 'BLOB')),
         );
     }
 
@@ -51,7 +51,7 @@ final class SqliteValueRendererTest extends TestCase
     {
         $renderer = new SqliteValueRenderer();
 
-        self::assertSame('NULL', $renderer->renderValue(null, new ColumnType(ColumnTypeFamily::TEXT, 'TEXT')));
+        self::assertSame('NULL', $renderer->renderValue(null, new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT')));
     }
 
     public function testTextRemainsText(): void
@@ -76,15 +76,15 @@ final class SqliteValueRendererTest extends TestCase
 
         self::assertSame(
             "CAST('1' AS INTEGER)",
-            $renderer->renderValue(true, new ColumnType(ColumnTypeFamily::BOOLEAN, 'BOOLEAN')),
+            $renderer->renderValue(true, new ColumnDeclaration(ColumnTypeFamily::BOOLEAN, 'BOOLEAN')),
         );
         self::assertSame(
             "CAST('0' AS INTEGER)",
-            $renderer->renderValue(false, new ColumnType(ColumnTypeFamily::BOOLEAN, 'BOOLEAN')),
+            $renderer->renderValue(false, new ColumnDeclaration(ColumnTypeFamily::BOOLEAN, 'BOOLEAN')),
         );
         self::assertSame(
             "CAST('42' AS INTEGER)",
-            $renderer->renderValue(42, new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER')),
+            $renderer->renderValue(42, new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER')),
         );
     }
 
@@ -101,7 +101,7 @@ final class SqliteValueRendererTest extends TestCase
         self::assertSame('CURRENT_TIMESTAMP', $renderer->renderValue($value));
         self::assertSame(
             "CAST('CURRENT_TIMESTAMP' AS TEXT)",
-            $renderer->renderValue($value, new ColumnType(ColumnTypeFamily::TEXT, 'TEXT')),
+            $renderer->renderValue($value, new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT')),
         );
     }
 
@@ -116,7 +116,7 @@ final class SqliteValueRendererTest extends TestCase
     {
         self::assertSame(
             "CAST('a:1:{i:0;s:5:\"value\";}' AS TEXT)",
-            (new SqliteValueRenderer())->renderValue(['value'], new ColumnType(ColumnTypeFamily::JSON, 'JSON')),
+            (new SqliteValueRenderer())->renderValue(['value'], new ColumnDeclaration(ColumnTypeFamily::JSON, 'JSON')),
         );
     }
 
@@ -129,7 +129,7 @@ final class SqliteValueRendererTest extends TestCase
 
         self::assertSame(
             "CAST(X'0001ff' AS BLOB)",
-            (new SqliteValueRenderer())->renderValue($stream, new ColumnType(ColumnTypeFamily::BINARY, 'BLOB')),
+            (new SqliteValueRenderer())->renderValue($stream, new ColumnDeclaration(ColumnTypeFamily::BINARY, 'BLOB')),
         );
         self::assertSame(1, ftell($stream));
         fclose($stream);
@@ -141,7 +141,7 @@ final class SqliteValueRendererTest extends TestCase
 
         (new SqliteValueRenderer())->renderValue(
             ['value'],
-            new ColumnType(ColumnTypeFamily::BINARY, 'BLOB'),
+            new ColumnDeclaration(ColumnTypeFamily::BINARY, 'BLOB'),
         );
     }
 }

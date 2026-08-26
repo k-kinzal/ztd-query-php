@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform;
 
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 
 /**
  * Reads the type a driver reports for a result column.
@@ -18,5 +18,5 @@ interface ResultColumnTypeResolver
     /**
      * @param array<string, mixed> $metadata
      */
-    public function resolve(array $metadata): ColumnType;
+    public function resolve(array $metadata): ColumnDeclaration;
 }

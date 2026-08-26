@@ -10,14 +10,14 @@ use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use ZtdQuery\Connection\ResultColumn;
 use ZtdQuery\Connection\ResultSet;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\Mutation\CreateTableAsSelectMutation;
 use ZtdQuery\Shadow\ShadowStore;
 
-#[UsesClass(ColumnType::class)]
+#[UsesClass(ColumnDeclaration::class)]
 #[UsesClass(ResultColumn::class)]
 #[UsesClass(ResultSet::class)]
 #[UsesClass(TableDefinition::class)]
@@ -35,7 +35,7 @@ final class CreateTableAsSelectMutationTest extends TestCase
             'users_copy',
             ['id', 'name'],
             $registry,
-            new ColumnType(ColumnTypeFamily::TEXT, 'fixture_text'),
+            new ColumnDeclaration(ColumnTypeFamily::TEXT, 'fixture_text'),
         );
         $mutation->apply($store, [['id' => 1, 'name' => 'Alice']]);
 
@@ -54,7 +54,7 @@ final class CreateTableAsSelectMutationTest extends TestCase
             'users_copy',
             ['id', 'name'],
             $registry,
-            new ColumnType(ColumnTypeFamily::TEXT, 'fixture_text'),
+            new ColumnDeclaration(ColumnTypeFamily::TEXT, 'fixture_text'),
         );
         $rows = [
             ['id' => 1, 'name' => 'Alice'],
@@ -73,7 +73,7 @@ final class CreateTableAsSelectMutationTest extends TestCase
             'users_copy',
             ['id'],
             $registry,
-            new ColumnType(ColumnTypeFamily::TEXT, 'fixture_text'),
+            new ColumnDeclaration(ColumnTypeFamily::TEXT, 'fixture_text'),
         );
 
         self::assertSame('users_copy', $mutation->tableName());
@@ -96,7 +96,7 @@ final class CreateTableAsSelectMutationTest extends TestCase
             'users_copy',
             ['id'],
             $registry,
-            new ColumnType(ColumnTypeFamily::TEXT, 'fixture_text'),
+            new ColumnDeclaration(ColumnTypeFamily::TEXT, 'fixture_text'),
         );
 
         $this->expectException(RuntimeException::class);
@@ -122,7 +122,7 @@ final class CreateTableAsSelectMutationTest extends TestCase
             'users_copy',
             ['id', 'name'],
             $registry,
-            new ColumnType(ColumnTypeFamily::TEXT, 'fixture_text'),
+            new ColumnDeclaration(ColumnTypeFamily::TEXT, 'fixture_text'),
             true
         );
         $mutation->apply($store, [['id' => 1, 'name' => 'Alice']]);
@@ -141,7 +141,7 @@ final class CreateTableAsSelectMutationTest extends TestCase
             'users_copy',
             [],
             $registry,
-            new ColumnType(ColumnTypeFamily::TEXT, 'fixture_text'),
+            new ColumnDeclaration(ColumnTypeFamily::TEXT, 'fixture_text'),
         );
         $mutation->apply($store, [['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com']]);
 
@@ -161,12 +161,12 @@ final class CreateTableAsSelectMutationTest extends TestCase
             'users_copy',
             [],
             $registry,
-            new ColumnType(ColumnTypeFamily::TEXT, 'fixture_text'),
+            new ColumnDeclaration(ColumnTypeFamily::TEXT, 'fixture_text'),
         );
 
         $result = new ResultSet([], [
-            new ResultColumn('id', new ColumnType(ColumnTypeFamily::INTEGER, 'int4')),
-            new ResultColumn('name', new ColumnType(ColumnTypeFamily::TEXT, 'text')),
+            new ResultColumn('id', new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'int4')),
+            new ResultColumn('name', new ColumnDeclaration(ColumnTypeFamily::TEXT, 'text')),
         ]);
 
         $mutation->applyResultSet($store, $result);
@@ -187,11 +187,11 @@ final class CreateTableAsSelectMutationTest extends TestCase
             'users_copy',
             ['id'],
             $registry,
-            new ColumnType(ColumnTypeFamily::TEXT, 'fixture_text'),
+            new ColumnDeclaration(ColumnTypeFamily::TEXT, 'fixture_text'),
         );
         $result = new ResultSet(
             [['id' => 1]],
-            [new ResultColumn('id', new ColumnType(ColumnTypeFamily::INTEGER, 'int4'))],
+            [new ResultColumn('id', new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'int4'))],
         );
 
         $mutation->applyResultSet($store, $result);
@@ -210,11 +210,11 @@ final class CreateTableAsSelectMutationTest extends TestCase
             'users_copy',
             ['display_id'],
             $registry,
-            new ColumnType(ColumnTypeFamily::TEXT, 'fixture_text'),
+            new ColumnDeclaration(ColumnTypeFamily::TEXT, 'fixture_text'),
         );
         $result = new ResultSet(
             [['source_id' => 1]],
-            [new ResultColumn('source_id', new ColumnType(ColumnTypeFamily::INTEGER, 'int4'))],
+            [new ResultColumn('source_id', new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'int4'))],
         );
 
         $mutation->applyResultSet($store, $result);
@@ -233,7 +233,7 @@ final class CreateTableAsSelectMutationTest extends TestCase
             'users_copy',
             ['display_name'],
             $registry,
-            new ColumnType(ColumnTypeFamily::TEXT, 'fixture_text'),
+            new ColumnDeclaration(ColumnTypeFamily::TEXT, 'fixture_text'),
         );
 
         $mutation->apply($store, [['source_name' => 'Alice']]);

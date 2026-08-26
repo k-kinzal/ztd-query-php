@@ -8,7 +8,7 @@ use RuntimeException;
 use Stringable;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\ValueRenderer;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 /**
@@ -28,10 +28,10 @@ final class MySqlValueRenderer implements ValueRenderer
     /**
      * Writes value.
      *
-     * @param ?ColumnType $type
+     * @param ?ColumnDeclaration $type
      * @return string
      */
-    public function renderValue(mixed $value, ?ColumnType $type = null): string
+    public function renderValue(mixed $value, ?ColumnDeclaration $type = null): string
     {
         if ($value === null) {
             return 'NULL';
@@ -55,7 +55,7 @@ final class MySqlValueRenderer implements ValueRenderer
         return $this->castRenderer->renderCast($expression, $resolvedType);
     }
 
-    private function renderExpression(mixed $value, ColumnType $type, bool $typed): string
+    private function renderExpression(mixed $value, ColumnDeclaration $type, bool $typed): string
     {
         if ($type->family === ColumnTypeFamily::BINARY) {
             return "X'" . bin2hex($this->stringValue($value)) . "'";
@@ -74,13 +74,13 @@ final class MySqlValueRenderer implements ValueRenderer
         return "CONVERT(X'$hex' USING utf8mb4)";
     }
 
-    private function inferType(mixed $value): ColumnType
+    private function inferType(mixed $value): ColumnDeclaration
     {
         if (is_int($value)) {
-            return new ColumnType(ColumnTypeFamily::INTEGER, 'INT');
+            return new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT');
         }
 
-        return new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR');
+        return new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR');
     }
 
     /**

@@ -13,7 +13,7 @@ use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
 use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(UpdateTransformer::class)]
@@ -117,8 +117,8 @@ final class UpdateTransformerTest extends TestCase
                 'rows' => [['id' => 1, 'name' => 'Alice']],
                 'columns' => ['id', 'name'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                    'name' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                    'name' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
                 ],
                 'primaryKeys' => ['id'],
             ],
@@ -219,8 +219,8 @@ final class UpdateTransformerTest extends TestCase
                 'rows' => [],
                 'columns' => ['id', 'name'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                    'name' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                    'name' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
                 ],
             ],
         ];
@@ -251,9 +251,9 @@ final class UpdateTransformerTest extends TestCase
                 'rows' => [['id' => 1, 'name' => 'Alice', 'email' => 'a@b.com']],
                 'columns' => ['id', 'name', 'email'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                    'name' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
-                    'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                    'name' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
+                    'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
                 ],
             ],
         ];

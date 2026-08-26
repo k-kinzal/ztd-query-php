@@ -6,7 +6,7 @@ namespace ZtdQuery\Platform\MySql;
 
 use PhpMyAdmin\SqlParser\Statements\CreateStatement;
 use ZtdQuery\Platform\SchemaParser;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
 use ZtdQuery\Schema\TableDefinition;
 
@@ -48,7 +48,7 @@ final class MySqlSchemaParser implements SchemaParser
 
         $columns = [];
         $columnTypes = [];
-        /** @var array<string, ColumnType> $typedColumns */
+        /** @var array<string, ColumnDeclaration> $typedColumns */
         $typedColumns = [];
         $columnDefaults = [];
         $identityStrategies = [];

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform;
 
 use ZtdQuery\Exception\InvalidDefinitionException;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 
 /**
  * The resolver a session has when no platform gave it one.
@@ -24,11 +24,11 @@ final class MissingResultColumnTypeResolver implements ResultColumnTypeResolver
      *
      * @param array<string, mixed> $metadata Column metadata as the driver reported it
      *
-     * @return ColumnType Never; the call is always refused
+     * @return ColumnDeclaration Never; the call is always refused
      *
      * @throws InvalidDefinitionException Always
      */
-    public function resolve(array $metadata): ColumnType
+    public function resolve(array $metadata): ColumnDeclaration
     {
         throw new InvalidDefinitionException(
             'A database platform result column type resolver is required.',

@@ -55,4 +55,39 @@ final class InsertSelectProjectionTest extends TestCase
 
         InsertSelectProjection::generatedIdentity('id', 0);
     }
+
+    public function testSourceIndexIsWhereInTheQueryTheValueComesFrom(): void
+    {
+        self::assertSame(2, InsertSelectProjection::source('name', 2)->sourceIndex());
+    }
+
+    public function testSourceIndexIsNothingForAColumnTheQueryDoesNotSupply(): void
+    {
+        self::assertNull(InsertSelectProjection::nullValue('note')->sourceIndex());
+    }
+
+    public function testGeneratedIdentityStartIsTheFirstNumberTheDatabaseWouldAssign(): void
+    {
+        self::assertSame(5, InsertSelectProjection::generatedIdentity('id', 5)->generatedIdentityStart());
+    }
+
+    public function testNullValueReadsBackAsNullAndNothingElse(): void
+    {
+        $projection = InsertSelectProjection::nullValue('note');
+
+        self::assertTrue($projection->isNullValue());
+        self::assertNull($projection->sourceIndex());
+        self::assertNull($projection->generatedIdentityStart());
+    }
+
+    public function testIsNullValueIsFalseForEveryOtherKindOfColumn(): void
+    {
+        self::assertFalse(InsertSelectProjection::source('name', 0)->isNullValue());
+        self::assertFalse(InsertSelectProjection::generatedIdentity('id', 1)->isNullValue());
+    }
+
+    public function testTargetColumnNamesTheColumnOfTheTargetTable(): void
+    {
+        self::assertSame('name', InsertSelectProjection::source('name', 0)->targetColumn());
+    }
 }

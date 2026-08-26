@@ -13,12 +13,12 @@ use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 #[CoversClass(PgSqlIdentifierQuoter::class)]
 final class PgSqlIdentifierQuoterTest extends IdentifierQuoterContractTest
 {
-    protected function createQuoter(): IdentifierQuoter
+    public function createQuoter(): IdentifierQuoter
     {
         return new PgSqlIdentifierQuoter();
     }
 
-    protected function quoteCharacter(): string
+    public function quoteCharacter(): string
     {
         return '"';
     }

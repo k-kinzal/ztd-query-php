@@ -23,30 +23,83 @@ use ZtdQuery\Shadow\ShadowStore;
  */
 abstract class RewriterContractTest extends TestCase
 {
-    abstract protected function createRewriter(ShadowStore $store, TableDefinitionRegistry $registry): SqlRewriter;
+    /**
+     * Answers the rewriter this dialect shadows with.
+     *
+     * @param ShadowStore $store Rows the rewriter will shadow tables with
+     * @param TableDefinitionRegistry $registry What those tables will and will not hold
+     *
+     * @return SqlRewriter The rewriter under test
+     */
+    abstract public function createRewriter(ShadowStore $store, TableDefinitionRegistry $registry): SqlRewriter;
 
-    abstract protected function createSchemaParser(): SchemaParser;
+    /**
+     * Answers the parser this dialect reads a declaration with.
+     *
+     * @return SchemaParser The parser the rewriter is fed from
+     */
+    abstract public function createSchemaParser(): SchemaParser;
 
-    abstract protected function selectSql(): string;
+    /**
+     * Answers a SELECT this dialect accepts.
+     *
+     * @return string The statement
+     */
+    abstract public function selectSql(): string;
 
-    abstract protected function insertSql(): string;
+    /**
+     * Answers an INSERT this dialect accepts.
+     *
+     * @return string The statement
+     */
+    abstract public function insertSql(): string;
 
-    abstract protected function updateSql(): string;
+    /**
+     * Answers an UPDATE this dialect accepts.
+     *
+     * @return string The statement
+     */
+    abstract public function updateSql(): string;
 
-    abstract protected function deleteSql(): string;
+    /**
+     * Answers a DELETE this dialect accepts.
+     *
+     * @return string The statement
+     */
+    abstract public function deleteSql(): string;
 
-    abstract protected function createTableSql(): string;
+    /**
+     * Answers a CREATE TABLE this dialect accepts.
+     *
+     * @return string The statement
+     */
+    abstract public function createTableSql(): string;
 
-    abstract protected function dropTableSql(): string;
+    /**
+     * Answers a DROP TABLE this dialect accepts.
+     *
+     * @return string The statement
+     */
+    abstract public function dropTableSql(): string;
 
-    abstract protected function unsupportedSql(): string;
+    /**
+     * Answers a statement this dialect will not rewrite.
+     *
+     * @return string The statement
+     */
+    abstract public function unsupportedSql(): string;
 
-    abstract protected function usersCreateTableSql(): string;
+    /**
+     * Answers the CREATE TABLE the shared users fixture is declared by.
+     *
+     * @return string The statement
+     */
+    abstract public function usersCreateTableSql(): string;
 
     /**
      * Build a rewriter pre-loaded with the users table schema.
      */
-    protected function buildRewriter(?ShadowStore $store = null, ?TableDefinitionRegistry $registry = null): SqlRewriter
+    public function buildRewriter(?ShadowStore $store = null, ?TableDefinitionRegistry $registry = null): SqlRewriter
     {
         $store = $store ?? new ShadowStore();
         $registry = $registry ?? new TableDefinitionRegistry();
