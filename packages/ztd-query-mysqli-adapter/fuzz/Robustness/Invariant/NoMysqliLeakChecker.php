@@ -18,6 +18,9 @@ use ZtdQuery\Exception\TableAlreadyExistsException;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 
+/**
+ * The no mysqli leak checker.
+ */
 final class NoMysqliLeakChecker
 {
     /** @var array<int, int> */

@@ -6,6 +6,9 @@ namespace Fuzz\Correctness;
 
 use Faker\Generator;
 
+/**
+ * The schema aware sql builder.
+ */
 final class SchemaAwareSqlBuilder
 {
     private Generator $faker;

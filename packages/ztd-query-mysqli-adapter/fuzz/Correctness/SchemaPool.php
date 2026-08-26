@@ -7,6 +7,9 @@ namespace Fuzz\Correctness;
 use Faker\Generator;
 use InvalidArgumentException;
 
+/**
+ * The schema pool.
+ */
 final class SchemaPool
 {
     /** @var array<string, SchemaDefinition> */

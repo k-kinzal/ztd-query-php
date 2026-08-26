@@ -11,6 +11,9 @@ use ZtdQuery\Platform\MySql\MySqlQueryGuard;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\SqlRewriter;
 
+/**
+ * The no syntax error on rewrite checker.
+ */
 final class NoSyntaxErrorOnRewriteChecker
 {
     private MySqlQueryGuard $guard;

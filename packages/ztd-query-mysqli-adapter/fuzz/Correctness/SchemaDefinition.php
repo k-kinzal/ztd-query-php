@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Fuzz\Correctness;
 
+/**
+ * The schema definition.
+ */
 final class SchemaDefinition
 {
     /**

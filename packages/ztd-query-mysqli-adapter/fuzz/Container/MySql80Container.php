@@ -9,6 +9,9 @@ use Testcontainers\Containers\GenericContainer\GenericContainer;
 use Testcontainers\Containers\WaitStrategy\PDO\MySQLDSN;
 use Testcontainers\Containers\WaitStrategy\PDO\PDOConnectWaitStrategy;
 
+/**
+ * The my sql80 container.
+ */
 final class MySql80Container extends GenericContainer
 {
     /**

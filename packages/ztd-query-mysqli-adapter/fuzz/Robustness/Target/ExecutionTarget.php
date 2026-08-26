@@ -19,6 +19,9 @@ use ZtdQuery\Platform\MySql\MySqlRewriter;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Shadow\ShadowStore;
 
+/**
+ * The execution target.
+ */
 final class ExecutionTarget
 {
     private Generator $faker;
