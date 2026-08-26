@@ -8,7 +8,7 @@ use Tests\Contract\TransformerContractTest;
 use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
 use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Rewrite\SqlTransformer;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -111,7 +111,7 @@ final class SelectTransformerTest extends TransformerContractTest
     }
 
     #[\Override]
-    protected function nativeStringType(): string
+    public function nativeStringType(): string
     {
         return 'TEXT';
     }
@@ -130,7 +130,7 @@ final class SelectTransformerTest extends TransformerContractTest
             'users' => [
                 'rows' => [],
                 'columns' => ['id', 'name'],
-                'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'), 'name' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT')],
+                'columnTypes' => ['id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'), 'name' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT')],
             ],
         ];
 
@@ -149,7 +149,7 @@ final class SelectTransformerTest extends TransformerContractTest
             'users' => [
                 'rows' => [['id' => 1, 'name' => 'Alice']],
                 'columns' => ['id', 'name'],
-                'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'), 'name' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT')],
+                'columnTypes' => ['id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'), 'name' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT')],
             ],
         ];
 
@@ -170,7 +170,7 @@ final class SelectTransformerTest extends TransformerContractTest
                     ['id' => 2, 'name' => 'Bob'],
                 ],
                 'columns' => ['id', 'name'],
-                'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'), 'name' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT')],
+                'columnTypes' => ['id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'), 'name' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT')],
             ],
         ];
 
@@ -186,7 +186,7 @@ final class SelectTransformerTest extends TransformerContractTest
             'users' => [
                 'rows' => [['id' => 1]],
                 'columns' => ['id'],
-                'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER')],
+                'columnTypes' => ['id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER')],
             ],
         ];
 
@@ -203,12 +203,12 @@ final class SelectTransformerTest extends TransformerContractTest
             'users' => [
                 'rows' => [['id' => 1]],
                 'columns' => ['id'],
-                'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER')],
+                'columnTypes' => ['id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER')],
             ],
             'orders' => [
                 'rows' => [['id' => 1]],
                 'columns' => ['id'],
-                'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER')],
+                'columnTypes' => ['id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER')],
             ],
         ];
 
@@ -224,7 +224,7 @@ final class SelectTransformerTest extends TransformerContractTest
             'users' => [
                 'rows' => [['id' => 1, 'name' => 'Alice']],
                 'columns' => ['id', 'name'],
-                'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'), 'name' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT')],
+                'columnTypes' => ['id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'), 'name' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT')],
             ],
         ];
 
@@ -242,11 +242,11 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [],
                 'columns' => ['a', 'b', 'c', 'd', 'e'],
                 'columnTypes' => [
-                    'a' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                    'b' => new ColumnType(ColumnTypeFamily::BOOLEAN, 'BOOLEAN'),
-                    'c' => new ColumnType(ColumnTypeFamily::TIMESTAMP, 'TIMESTAMP'),
-                    'd' => new ColumnType(ColumnTypeFamily::JSON, 'JSONB'),
-                    'e' => new ColumnType(ColumnTypeFamily::BINARY, 'BYTEA'),
+                    'a' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                    'b' => new ColumnDeclaration(ColumnTypeFamily::BOOLEAN, 'BOOLEAN'),
+                    'c' => new ColumnDeclaration(ColumnTypeFamily::TIMESTAMP, 'TIMESTAMP'),
+                    'd' => new ColumnDeclaration(ColumnTypeFamily::JSON, 'JSONB'),
+                    'e' => new ColumnDeclaration(ColumnTypeFamily::BINARY, 'BYTEA'),
                 ],
             ],
         ];
@@ -266,7 +266,7 @@ final class SelectTransformerTest extends TransformerContractTest
             'users' => [
                 'rows' => [['id' => 1, 'name' => null]],
                 'columns' => ['id', 'name'],
-                'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'), 'name' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT')],
+                'columnTypes' => ['id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'), 'name' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT')],
             ],
         ];
 
@@ -282,7 +282,7 @@ final class SelectTransformerTest extends TransformerContractTest
             'users' => [
                 'rows' => [['id' => 1, 'name' => "O'Brien"]],
                 'columns' => ['id', 'name'],
-                'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'), 'name' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT')],
+                'columnTypes' => ['id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'), 'name' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT')],
             ],
         ];
 
@@ -297,7 +297,7 @@ final class SelectTransformerTest extends TransformerContractTest
             'users' => [
                 'rows' => [['id' => 1, 'name' => '']],
                 'columns' => ['id', 'name'],
-                'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'), 'name' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT')],
+                'columnTypes' => ['id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'), 'name' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT')],
             ],
         ];
 
@@ -312,7 +312,7 @@ final class SelectTransformerTest extends TransformerContractTest
             'flags' => [
                 'rows' => [['id' => 1, 'active' => true], ['id' => 2, 'active' => false]],
                 'columns' => ['id', 'active'],
-                'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'), 'active' => new ColumnType(ColumnTypeFamily::BOOLEAN, 'BOOLEAN')],
+                'columnTypes' => ['id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'), 'active' => new ColumnDeclaration(ColumnTypeFamily::BOOLEAN, 'BOOLEAN')],
             ],
         ];
 
@@ -328,7 +328,7 @@ final class SelectTransformerTest extends TransformerContractTest
             'users' => [
                 'rows' => [['id' => null, 'name' => null]],
                 'columns' => ['id', 'name'],
-                'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'), 'name' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT')],
+                'columnTypes' => ['id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'), 'name' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT')],
             ],
         ];
 
@@ -344,7 +344,7 @@ final class SelectTransformerTest extends TransformerContractTest
             'users' => [
                 'rows' => [],
                 'columns' => ['id'],
-                'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER')],
+                'columnTypes' => ['id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER')],
             ],
         ];
 
@@ -361,8 +361,8 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [],
                 'columns' => ['id', 'name'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                    'name' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                    'name' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
                 ],
             ],
         ];
@@ -382,8 +382,8 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'name' => 'Alice']],
                 'columns' => ['id', 'name'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                    'name' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                    'name' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
                 ],
             ],
         ];
@@ -406,8 +406,8 @@ final class SelectTransformerTest extends TransformerContractTest
                 ],
                 'columns' => ['id', 'name'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                    'name' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                    'name' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
                 ],
             ],
         ];
@@ -430,8 +430,8 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'name' => 'Alice']],
                 'columns' => ['id', 'name'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                    'name' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                    'name' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
                 ],
             ],
         ];
@@ -453,7 +453,7 @@ final class SelectTransformerTest extends TransformerContractTest
             'users' => [
                 'rows' => [['id' => 1]],
                 'columns' => ['id'],
-                'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER')],
+                'columnTypes' => ['id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER')],
             ],
         ];
 
@@ -471,7 +471,7 @@ final class SelectTransformerTest extends TransformerContractTest
             'users' => [
                 'rows' => [['id' => 1]],
                 'columns' => ['id'],
-                'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER')],
+                'columnTypes' => ['id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER')],
             ],
         ];
 
@@ -600,7 +600,7 @@ final class SelectTransformerTest extends TransformerContractTest
             'users' => [
                 'rows' => [['active' => true]],
                 'columns' => ['active'],
-                'columnTypes' => ['active' => new ColumnType(ColumnTypeFamily::BOOLEAN, 'BOOLEAN')],
+                'columnTypes' => ['active' => new ColumnDeclaration(ColumnTypeFamily::BOOLEAN, 'BOOLEAN')],
             ],
         ];
 
@@ -615,7 +615,7 @@ final class SelectTransformerTest extends TransformerContractTest
             'users' => [
                 'rows' => [['score' => 9.5]],
                 'columns' => ['score'],
-                'columnTypes' => ['score' => new ColumnType(ColumnTypeFamily::DECIMAL, 'NUMERIC')],
+                'columnTypes' => ['score' => new ColumnDeclaration(ColumnTypeFamily::DECIMAL, 'NUMERIC')],
             ],
         ];
 
@@ -645,12 +645,12 @@ final class SelectTransformerTest extends TransformerContractTest
             'users' => [
                 'rows' => [['id' => 1]],
                 'columns' => ['id'],
-                'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER')],
+                'columnTypes' => ['id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER')],
             ],
             'orders' => [
                 'rows' => [['id' => 10]],
                 'columns' => ['id'],
-                'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER')],
+                'columnTypes' => ['id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER')],
             ],
         ];
 
@@ -666,12 +666,12 @@ final class SelectTransformerTest extends TransformerContractTest
             'not_referenced' => [
                 'rows' => [['id' => 1]],
                 'columns' => ['id'],
-                'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER')],
+                'columnTypes' => ['id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER')],
             ],
             'users' => [
                 'rows' => [['id' => 2]],
                 'columns' => ['id'],
-                'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER')],
+                'columnTypes' => ['id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER')],
             ],
         ];
 
@@ -725,7 +725,7 @@ final class SelectTransformerTest extends TransformerContractTest
             'users' => [
                 'rows' => [['val' => $obj]],
                 'columns' => ['val'],
-                'columnTypes' => ['val' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT')],
+                'columnTypes' => ['val' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT')],
             ],
         ];
 
@@ -740,7 +740,7 @@ final class SelectTransformerTest extends TransformerContractTest
             'users' => [
                 'rows' => [['id' => 1]],
                 'columns' => ['id'],
-                'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER')],
+                'columnTypes' => ['id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER')],
             ],
         ];
 
@@ -782,7 +782,7 @@ final class SelectTransformerTest extends TransformerContractTest
             'users' => [
                 'rows' => [['id' => 1]],
                 'columns' => ['id'],
-                'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER')],
+                'columnTypes' => ['id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER')],
             ],
         ];
 
@@ -798,7 +798,7 @@ final class SelectTransformerTest extends TransformerContractTest
             'users' => [
                 'rows' => [['id' => 1]],
                 'columns' => ['id'],
-                'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER')],
+                'columnTypes' => ['id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER')],
             ],
         ];
 

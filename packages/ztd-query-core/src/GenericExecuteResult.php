@@ -51,7 +51,8 @@ final class GenericExecuteResult implements ExecuteResult
      * result is depends on which of them was used.
      *
      * @param list<Row>|null $bufferedRows
-     */public function __construct(
+     */
+    public function __construct(
         bool $passthrough,
         bool $success,
         QueryKind $kind,

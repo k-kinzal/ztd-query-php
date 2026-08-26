@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Tests\Unit\Shadow\Mutation;
+namespace Tests\Unit\Shadow\Mutation;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -14,19 +14,12 @@ use ZtdQuery\Shadow\Mutation\UpsertColumnSource;
 use ZtdQuery\Shadow\Mutation\UpsertExpression;
 use ZtdQuery\Shadow\Mutation\UpsertExpressionKind;
 
-/**
- * The upsert expression test.
- */
 #[CoversClass(UpsertExpression::class)]
 #[CoversClass(UpsertColumnSource::class)]
 #[UsesClass(UnsupportedSqlException::class)]
 final class UpsertExpressionTest extends TestCase
 {
-    /**
-     * Test evaluates typed expression tree.
-     *
-     */
-    public function testEvaluatesTypedExpressionTree(): void
+    public function testLiteralAnswersTheValueTheStatementWrote(): void
     {
         $expression = UpsertExpression::binary(
             UpsertExpressionKind::Add,
@@ -42,9 +35,9 @@ final class UpsertExpressionTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{UpsertExpressionKind, mixed, mixed, mixed}>
+     * @return iterable<string, array{UpsertExpressionKind, bool|float|int|string|null, bool|float|int|string|null, mixed}>
      */
-    public static function binaryProvider(): iterable
+    public static function providerBinary(): iterable
     {
         yield 'subtract' => [UpsertExpressionKind::Subtract, 8, 3, 5];
         yield 'multiply' => [UpsertExpressionKind::Multiply, 8, 3, 24];
@@ -69,15 +62,13 @@ final class UpsertExpressionTest extends TestCase
     }
 
     /**
-     * Test evaluates binary kinds.
-     *
      * @param UpsertExpressionKind $kind
      */
-    #[DataProvider('binaryProvider')]
-    public function testEvaluatesBinaryKinds(
+    #[DataProvider('providerBinary')]
+    public function testBinaryAnswersWhatTheOperatorMakesOfItsTwoOperands(
         UpsertExpressionKind $kind,
-        mixed $left,
-        mixed $right,
+        bool|float|int|string|null $left,
+        bool|float|int|string|null $right,
         mixed $expected,
     ): void {
         $expression = UpsertExpression::binary(
@@ -89,11 +80,7 @@ final class UpsertExpressionTest extends TestCase
         self::assertSame($expected, $expression->evaluate([], [], 'items'));
     }
 
-    /**
-     * Test evaluates unary kinds and matches sql truth.
-     *
-     */
-    public function testEvaluatesUnaryKindsAndMatchesSqlTruth(): void
+    public function testMatchesIsTrueOnlyWhereTheExpressionDefinitelyHolds(): void
     {
         self::assertSame(
             -5,
@@ -112,10 +99,6 @@ final class UpsertExpressionTest extends TestCase
         self::assertFalse(UpsertExpression::literal(null)->matches([], [], 'items'));
     }
 
-    /**
-     * Test evaluates null numeric text and case insensitive column boundaries.
-     *
-     */
     public function testEvaluatesNullNumericTextAndCaseInsensitiveColumnBoundaries(): void
     {
         self::assertSame(3.5, UpsertExpression::unary(
@@ -163,30 +146,39 @@ final class UpsertExpressionTest extends TestCase
     }
 
     /**
-     * Test arithmetic null and floating point boundaries.
-     *
+     * @return iterable<string, array{UpsertExpressionKind}>
      */
-    public function testArithmeticNullAndFloatingPointBoundaries(): void
+    public static function providerArithmeticKinds(): iterable
     {
-        foreach ([
-            UpsertExpressionKind::Add,
-            UpsertExpressionKind::Subtract,
-            UpsertExpressionKind::Multiply,
-            UpsertExpressionKind::Divide,
-            UpsertExpressionKind::Modulo,
-        ] as $kind) {
-            self::assertNull(UpsertExpression::binary(
-                $kind,
-                UpsertExpression::literal(null),
-                UpsertExpression::literal(2),
-            )->evaluate([], [], 'items'));
-            self::assertNull(UpsertExpression::binary(
-                $kind,
-                UpsertExpression::literal(2),
-                UpsertExpression::literal(null),
-            )->evaluate([], [], 'items'));
-        }
+        yield 'add' => [UpsertExpressionKind::Add];
+        yield 'subtract' => [UpsertExpressionKind::Subtract];
+        yield 'multiply' => [UpsertExpressionKind::Multiply];
+        yield 'divide' => [UpsertExpressionKind::Divide];
+        yield 'modulo' => [UpsertExpressionKind::Modulo];
+    }
 
+    #[DataProvider('providerArithmeticKinds')]
+    public function testArithmeticIsNullWhereTheLeftOperandIsNull(UpsertExpressionKind $kind): void
+    {
+        self::assertNull(UpsertExpression::binary(
+            $kind,
+            UpsertExpression::literal(null),
+            UpsertExpression::literal(2),
+        )->evaluate([], [], 'items'));
+    }
+
+    #[DataProvider('providerArithmeticKinds')]
+    public function testArithmeticIsNullWhereTheRightOperandIsNull(UpsertExpressionKind $kind): void
+    {
+        self::assertNull(UpsertExpression::binary(
+            $kind,
+            UpsertExpression::literal(2),
+            UpsertExpression::literal(null),
+        )->evaluate([], [], 'items'));
+    }
+
+    public function testArithmeticFloatingPointBoundaries(): void
+    {
         self::assertSame(3.5, UpsertExpression::binary(
             UpsertExpressionKind::Add,
             UpsertExpression::literal('1.5'),
@@ -199,10 +191,6 @@ final class UpsertExpressionTest extends TestCase
         )->evaluate([], [], 'items'));
     }
 
-    /**
-     * Test three valued boolean boundaries.
-     *
-     */
     public function testThreeValuedBooleanBoundaries(): void
     {
         self::assertNull(UpsertExpression::binary(
@@ -247,10 +235,6 @@ final class UpsertExpressionTest extends TestCase
         )->evaluate([], [], 'items'));
     }
 
-    /**
-     * Test comparison returns null when either operand is null.
-     *
-     */
     public function testComparisonReturnsNullWhenEitherOperandIsNull(): void
     {
         self::assertNull(UpsertExpression::binary(
@@ -265,33 +249,21 @@ final class UpsertExpressionTest extends TestCase
         )->evaluate([], [], 'items'));
     }
 
-    /**
-     * Test rejects invalid tree shapes.
-     *
-     */
-    public function testRejectsInvalidTreeShapes(): void
+    public function testUnaryRefusesAnOperatorNotWrittenOverASingleOperand(): void
     {
         $this->expectException(InvalidDefinitionException::class);
 
         UpsertExpression::unary(UpsertExpressionKind::Add, UpsertExpression::literal(1));
     }
 
-    /**
-     * Test rejects empty column.
-     *
-     */
-    public function testRejectsEmptyColumn(): void
+    public function testColumnRefusesAnEmptyName(): void
     {
         $this->expectException(InvalidDefinitionException::class);
 
         UpsertExpression::column(UpsertColumnSource::Existing, '');
     }
 
-    /**
-     * Test rejects unknown column.
-     *
-     */
-    public function testRejectsUnknownColumn(): void
+    public function testOperandRefusesAColumnTheRowDoesNotCarry(): void
     {
         try {
             UpsertExpression::column(UpsertColumnSource::Existing, 'missing')->evaluate([], [], 'items');
@@ -301,10 +273,6 @@ final class UpsertExpressionTest extends TestCase
         }
     }
 
-    /**
-     * Test rejects division by zero.
-     *
-     */
     public function testRejectsDivisionByZero(): void
     {
         $this->expectException(UnsupportedSqlException::class);
@@ -316,10 +284,6 @@ final class UpsertExpressionTest extends TestCase
         )->evaluate([], [], 'items');
     }
 
-    /**
-     * Test accepts floating point one as divisor.
-     *
-     */
     public function testAcceptsFloatingPointOneAsDivisor(): void
     {
         self::assertSame(8.0, UpsertExpression::binary(
@@ -329,10 +293,6 @@ final class UpsertExpressionTest extends TestCase
         )->evaluate([], [], 'items'));
     }
 
-    /**
-     * Test rejects modulo by zero.
-     *
-     */
     public function testRejectsModuloByZero(): void
     {
         $this->expectException(UnsupportedSqlException::class);
@@ -344,10 +304,6 @@ final class UpsertExpressionTest extends TestCase
         )->evaluate([], [], 'items');
     }
 
-    /**
-     * Test rejects non numeric arithmetic operand.
-     *
-     */
     public function testRejectsNonNumericArithmeticOperand(): void
     {
         $this->expectException(UnsupportedSqlException::class);
@@ -359,10 +315,6 @@ final class UpsertExpressionTest extends TestCase
         )->evaluate([], [], 'items');
     }
 
-    /**
-     * Test rejects numeric and text comparison.
-     *
-     */
     public function testRejectsNumericAndTextComparison(): void
     {
         try {

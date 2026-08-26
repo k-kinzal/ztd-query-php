@@ -19,7 +19,7 @@ use ZtdQuery\Platform\MySql\MySqlTypeSemantics;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Rewrite\SqlTransformer;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\TablePartitioning;
 
@@ -107,24 +107,24 @@ final class SelectTransformerTest extends TransformerContractTest
         self::assertStringContainsString('CUSTOM_VALUE AS `id`', $transformer->transform('SELECT * FROM users', $tables));
     }
 
-    protected function createTransformer(): SqlTransformer
+    public function createTransformer(): SqlTransformer
     {
         return new SelectTransformer();
     }
 
-    protected function selectSql(): string
+    public function selectSql(): string
     {
         return 'SELECT * FROM users WHERE id = 1';
     }
 
     #[Override]
-    protected function nativeIntegerType(): string
+    public function nativeIntegerType(): string
     {
         return 'INT';
     }
 
     #[Override]
-    protected function nativeStringType(): string
+    public function nativeStringType(): string
     {
         return 'VARCHAR(255)';
     }
@@ -282,7 +282,7 @@ final class SelectTransformerTest extends TransformerContractTest
             'typed' => [
                 'rows' => [['val' => '42']],
                 'columns' => ['val'],
-                'columnTypes' => ['val' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT')],
+                'columnTypes' => ['val' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT')],
             ],
         ];
 
@@ -299,7 +299,7 @@ final class SelectTransformerTest extends TransformerContractTest
             'typed' => [
                 'rows' => [],
                 'columns' => ['val'],
-                'columnTypes' => ['val' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT')],
+                'columnTypes' => ['val' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT')],
             ],
         ];
 
@@ -392,8 +392,8 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'colors' => 'red,blue']],
                 'columns' => ['id', 'colors'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('red','blue','green')"),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('red','blue','green')"),
                 ],
             ],
         ];
@@ -411,8 +411,8 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'name' => 'Alice']],
                 'columns' => ['id', 'name'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
                 ],
             ],
         ];
@@ -430,7 +430,7 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['colors' => 'blue,red']],
                 'columns' => ['colors'],
                 'columnTypes' => [
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('red','blue','green')"),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('red','blue','green')"),
                 ],
             ],
         ];
@@ -448,7 +448,7 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['colors' => '']],
                 'columns' => ['colors'],
                 'columnTypes' => [
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('red','blue')"),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('red','blue')"),
                 ],
             ],
         ];
@@ -538,8 +538,8 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'colors' => 'red']],
                 'columns' => ['id', 'colors'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('red','blue')"),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('red','blue')"),
                 ],
             ],
         ];
@@ -577,7 +577,7 @@ final class SelectTransformerTest extends TransformerContractTest
             't' => [
                 'rows' => [['a' => 'x']],
                 'columns' => ['a'],
-                'columnTypes' => ['a' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)')],
+                'columnTypes' => ['a' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)')],
             ],
         ];
 
@@ -593,7 +593,7 @@ final class SelectTransformerTest extends TransformerContractTest
             't' => [
                 'rows' => [],
                 'columns' => ['a'],
-                'columnTypes' => ['a' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT')],
+                'columnTypes' => ['a' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT')],
             ],
         ];
 
@@ -634,8 +634,8 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'colors' => 'red']],
                 'columns' => ['id', 'colors'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('red','blue')"),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('red','blue')"),
                 ],
             ],
         ];
@@ -654,8 +654,8 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'colors' => 'red']],
                 'columns' => ['id', 'colors'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('red','blue','green')"),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('red','blue','green')"),
                 ],
             ],
         ];
@@ -678,7 +678,7 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'colors' => 'red']],
                 'columns' => ['id', 'colors'],
                 'columnTypes' => [
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('red','blue')"),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('red','blue')"),
                 ],
             ],
         ];
@@ -696,7 +696,7 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['s' => 'blue,red']],
                 'columns' => ['s'],
                 'columnTypes' => [
-                    's' => new ColumnType(ColumnTypeFamily::STRING, "SET('red','blue','green')"),
+                    's' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('red','blue','green')"),
                 ],
             ],
         ];
@@ -715,7 +715,7 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['s' => 'red,invalid']],
                 'columns' => ['s'],
                 'columnTypes' => [
-                    's' => new ColumnType(ColumnTypeFamily::STRING, "SET('red','blue')"),
+                    's' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('red','blue')"),
                 ],
             ],
         ];
@@ -748,7 +748,7 @@ final class SelectTransformerTest extends TransformerContractTest
             't' => [
                 'rows' => [['name' => "it's"]],
                 'columns' => ['name'],
-                'columnTypes' => ['name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)')],
+                'columnTypes' => ['name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)')],
             ],
         ];
 
@@ -830,8 +830,8 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'colors' => 'red']],
                 'columns' => ['id', 'colors'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('red','blue')"),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('red','blue')"),
                 ],
             ],
         ];
@@ -850,7 +850,7 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['s' => 'invalid,also_invalid']],
                 'columns' => ['s'],
                 'columnTypes' => [
-                    's' => new ColumnType(ColumnTypeFamily::STRING, "SET('red','blue')"),
+                    's' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('red','blue')"),
                 ],
             ],
         ];
@@ -868,7 +868,7 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['s' => 'hello']],
                 'columns' => ['s'],
                 'columnTypes' => [
-                    's' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                    's' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
                 ],
             ],
         ];
@@ -886,7 +886,7 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['s' => 'b,a']],
                 'columns' => ['s'],
                 'columnTypes' => [
-                    's' => new ColumnType(ColumnTypeFamily::STRING, 'SET("a","b","c")'),
+                    's' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'SET("a","b","c")'),
                 ],
             ],
         ];
@@ -904,7 +904,7 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['s' => 'b,a']],
                 'columns' => ['s'],
                 'columnTypes' => [
-                    's' => new ColumnType(ColumnTypeFamily::STRING, 'SET(a,b,c)'),
+                    's' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'SET(a,b,c)'),
                 ],
             ],
         ];
@@ -922,15 +922,15 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1]],
                 'columns' => ['id'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
                 ],
             ],
             'items' => [
                 'rows' => [['id' => 1, 'colors' => 'red']],
                 'columns' => ['id', 'colors'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('red','blue')"),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('red','blue')"),
                 ],
             ],
         ];
@@ -948,16 +948,16 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'colors' => 'red']],
                 'columns' => ['id', 'colors'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('red','blue')"),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('red','blue')"),
                 ],
             ],
             'b' => [
                 'rows' => [['id' => 1, 'colors' => 'x']],
                 'columns' => ['id', 'colors'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('x','y')"),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('x','y')"),
                 ],
             ],
         ];
@@ -976,9 +976,9 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'colors' => 'red', 'name' => 'A']],
                 'columns' => ['id', 'colors', 'name'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('red','blue')"),
-                    'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('red','blue')"),
+                    'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
                 ],
             ],
         ];
@@ -996,7 +996,7 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['s' => 'val']],
                 'columns' => ['s'],
                 'columnTypes' => [
-                    's' => new ColumnType(ColumnTypeFamily::STRING, 'SET()'),
+                    's' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'SET()'),
                 ],
             ],
         ];
@@ -1031,8 +1031,8 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'colors' => 'a']],
                 'columns' => ['id', 'colors'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('a','b')"),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('a','b')"),
                 ],
             ],
         ];
@@ -1052,8 +1052,8 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'colors' => 'x']],
                 'columns' => ['id', 'colors'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('x','y')"),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('x','y')"),
                 ],
             ],
         ];
@@ -1252,7 +1252,7 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1]],
                 'columns' => ['id'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
                 ],
             ],
         ];
@@ -1272,7 +1272,7 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['s' => "it's"]],
                 'columns' => ['s'],
                 'columnTypes' => [
-                    's' => new ColumnType(ColumnTypeFamily::STRING, "SET('it''s','me')"),
+                    's' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('it''s','me')"),
                 ],
             ],
         ];
@@ -1290,7 +1290,7 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['s' => 'say "hi"']],
                 'columns' => ['s'],
                 'columnTypes' => [
-                    's' => new ColumnType(ColumnTypeFamily::STRING, 'SET("say ""hi""","other")'),
+                    's' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'SET("say ""hi""","other")'),
                 ],
             ],
         ];
@@ -1308,8 +1308,8 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'colors' => 'red']],
                 'columns' => ['id', 'colors'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "set('red','blue')"),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "set('red','blue')"),
                 ],
             ],
         ];
@@ -1327,8 +1327,8 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'colors' => 'red']],
                 'columns' => ['id', 'colors'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('red','blue')"),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('red','blue')"),
                 ],
             ],
         ];
@@ -1348,7 +1348,7 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['s' => 'b,a']],
                 'columns' => ['s'],
                 'columnTypes' => [
-                    's' => new ColumnType(ColumnTypeFamily::STRING, "set('a','b','c')"),
+                    's' => new ColumnDeclaration(ColumnTypeFamily::STRING, "set('a','b','c')"),
                 ],
             ],
         ];
@@ -1366,8 +1366,8 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'colors' => 'red']],
                 'columns' => ['id', 'colors'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('red','blue','green')"),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('red','blue','green')"),
                 ],
             ],
         ];
@@ -1387,8 +1387,8 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'colors' => 'alpha']],
                 'columns' => ['id', 'colors'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, 'SET("alpha","beta")'),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'SET("alpha","beta")'),
                 ],
             ],
         ];
@@ -1407,7 +1407,7 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['s' => 'a,b']],
                 'columns' => ['s'],
                 'columnTypes' => [
-                    's' => new ColumnType(ColumnTypeFamily::STRING, "SET('a','b','c')"),
+                    's' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('a','b','c')"),
                 ],
             ],
         ];
@@ -1424,7 +1424,7 @@ final class SelectTransformerTest extends TransformerContractTest
             't' => [
                 'rows' => [['id' => 1]],
                 'columns' => ['id'],
-                'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT')],
+                'columnTypes' => ['id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT')],
             ],
         ];
 
@@ -1442,7 +1442,7 @@ final class SelectTransformerTest extends TransformerContractTest
             't' => [
                 'rows' => [['id' => 1]],
                 'columns' => ['id'],
-                'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT')],
+                'columnTypes' => ['id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT')],
             ],
         ];
 
@@ -1480,8 +1480,8 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'colors' => 'red']],
                 'columns' => ['id', 'colors'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('red','blue')"),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('red','blue')"),
                 ],
             ],
         ];
@@ -1500,8 +1500,8 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'colors' => 'red']],
                 'columns' => ['id', 'colors'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('red','blue')"),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('red','blue')"),
                 ],
             ],
         ];
@@ -1519,7 +1519,7 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['s' => ' a , b ']],
                 'columns' => ['s'],
                 'columnTypes' => [
-                    's' => new ColumnType(ColumnTypeFamily::STRING, "SET('a','b','c')"),
+                    's' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('a','b','c')"),
                 ],
             ],
         ];
@@ -1537,7 +1537,7 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['s' => 'a,,b']],
                 'columns' => ['s'],
                 'columnTypes' => [
-                    's' => new ColumnType(ColumnTypeFamily::STRING, "SET('a','b','c')"),
+                    's' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('a','b','c')"),
                 ],
             ],
         ];
@@ -1555,7 +1555,7 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['s' => 'hello']],
                 'columns' => ['s'],
                 'columnTypes' => [
-                    's' => new ColumnType(ColumnTypeFamily::STRING, 'ENUM(\'a\',\'b\')'),
+                    's' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'ENUM(\'a\',\'b\')'),
                 ],
             ],
         ];
@@ -1573,8 +1573,8 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'status' => 'active']],
                 'columns' => ['id', 'status'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'status' => new ColumnType(ColumnTypeFamily::STRING, "ENUM('active','inactive')"),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'status' => new ColumnDeclaration(ColumnTypeFamily::STRING, "ENUM('active','inactive')"),
                 ],
             ],
         ];
@@ -1592,8 +1592,8 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'colors' => 'red']],
                 'columns' => ['id', 'colors'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('red','blue')"),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('red','blue')"),
                 ],
             ],
         ];
@@ -1611,7 +1611,7 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['s' => 'say "hi"']],
                 'columns' => ['s'],
                 'columnTypes' => [
-                    's' => new ColumnType(ColumnTypeFamily::STRING, 'SET("say ""hi""","other")'),
+                    's' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'SET("say ""hi""","other")'),
                 ],
             ],
         ];
@@ -1645,7 +1645,7 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['s' => 'a']],
                 'columns' => ['s'],
                 'columnTypes' => [
-                    's' => new ColumnType(ColumnTypeFamily::STRING, 'SET(a, ,b)'),
+                    's' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'SET(a, ,b)'),
                 ],
             ],
         ];
@@ -1679,9 +1679,9 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'colors' => 'red', 'name' => 'A']],
                 'columns' => ['id', 'colors', 'name'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('red','blue')"),
-                    'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('red','blue')"),
+                    'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
                 ],
             ],
         ];
@@ -1700,8 +1700,8 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'colors' => 'a']],
                 'columns' => ['id', 'colors'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('a','b','c')"),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('a','b','c')"),
                 ],
             ],
         ];
@@ -1721,7 +1721,7 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['s' => 'c,a']],
                 'columns' => ['s'],
                 'columnTypes' => [
-                    's' => new ColumnType(ColumnTypeFamily::STRING, "SET('a','b','c')"),
+                    's' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('a','b','c')"),
                 ],
             ],
         ];
@@ -1739,7 +1739,7 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['s' => 'a,unknown,b']],
                 'columns' => ['s'],
                 'columnTypes' => [
-                    's' => new ColumnType(ColumnTypeFamily::STRING, "SET('a','b','c')"),
+                    's' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('a','b','c')"),
                 ],
             ],
         ];
@@ -1757,7 +1757,7 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['s' => 'x,y']],
                 'columns' => ['s'],
                 'columnTypes' => [
-                    's' => new ColumnType(ColumnTypeFamily::STRING, "SET('a','b')"),
+                    's' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('a','b')"),
                 ],
             ],
         ];
@@ -1775,7 +1775,7 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['s' => '']],
                 'columns' => ['s'],
                 'columnTypes' => [
-                    's' => new ColumnType(ColumnTypeFamily::STRING, "SET('a','b')"),
+                    's' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('a','b')"),
                 ],
             ],
         ];
@@ -1793,8 +1793,8 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'colors' => 'red']],
                 'columns' => ['id', 'colors'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('red','blue')"),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('red','blue')"),
                 ],
             ],
         ];
@@ -1812,8 +1812,8 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'colors' => 'red']],
                 'columns' => ['id', 'colors'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('red','blue')"),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('red','blue')"),
                 ],
             ],
         ];
@@ -1832,8 +1832,8 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'colors' => 'red']],
                 'columns' => ['id', 'colors'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('red','blue')"),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('red','blue')"),
                 ],
             ],
         ];
@@ -1852,8 +1852,8 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'colors' => 'red']],
                 'columns' => ['id', 'colors'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('red','blue')"),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('red','blue')"),
                 ],
             ],
         ];
@@ -1872,8 +1872,8 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'colors' => 'red']],
                 'columns' => ['id', 'colors'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('red','blue')"),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('red','blue')"),
                 ],
             ],
         ];
@@ -1892,16 +1892,16 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'colors' => 'red']],
                 'columns' => ['id', 'colors'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('red','blue')"),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('red','blue')"),
                 ],
             ],
             'products' => [
                 'rows' => [['id' => 1, 'colors' => 'green']],
                 'columns' => ['id', 'colors'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('green','yellow')"),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('green','yellow')"),
                 ],
             ],
         ];
@@ -1919,7 +1919,7 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['s' => 'a,b']],
                 'columns' => ['s'],
                 'columnTypes' => [
-                    's' => new ColumnType(ColumnTypeFamily::STRING, 'SET()'),
+                    's' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'SET()'),
                 ],
             ],
         ];
@@ -1937,7 +1937,7 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['s' => "it's"]],
                 'columns' => ['s'],
                 'columnTypes' => [
-                    's' => new ColumnType(ColumnTypeFamily::STRING, "SET('it''s','other')"),
+                    's' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('it''s','other')"),
                 ],
             ],
         ];
@@ -1955,7 +1955,7 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['s' => 'abc']],
                 'columns' => ['s'],
                 'columnTypes' => [
-                    's' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(100)'),
+                    's' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(100)'),
                 ],
             ],
         ];
@@ -1973,15 +1973,15 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'colors' => 'red']],
                 'columns' => ['id', 'colors'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('red','blue')"),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('red','blue')"),
                 ],
             ],
             'other_table' => [
                 'rows' => [['colors' => 'x']],
                 'columns' => ['colors'],
                 'columnTypes' => [
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('x','y')"),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('x','y')"),
                 ],
             ],
         ];
@@ -2104,8 +2104,8 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'colors' => 'a']],
                 'columns' => ['id', 'colors'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('a','b')"),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('a','b')"),
                 ],
             ],
         ];
@@ -2124,8 +2124,8 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'colors' => 'a']],
                 'columns' => ['id', 'colors'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('a','b')"),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('a','b')"),
                 ],
             ],
         ];
@@ -2145,7 +2145,7 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['s' => "it's,me"]],
                 'columns' => ['s'],
                 'columnTypes' => [
-                    's' => new ColumnType(ColumnTypeFamily::STRING, "SET('me','it''s')"),
+                    's' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('me','it''s')"),
                 ],
             ],
         ];
@@ -2163,7 +2163,7 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['s' => 'say "hi",other']],
                 'columns' => ['s'],
                 'columnTypes' => [
-                    's' => new ColumnType(ColumnTypeFamily::STRING, 'SET("other","say ""hi""")'),
+                    's' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'SET("other","say ""hi""")'),
                 ],
             ],
         ];
@@ -2181,8 +2181,8 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'colors' => 'a']],
                 'columns' => ['id', 'colors'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('a','b')"),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('a','b')"),
                 ],
             ],
         ];
@@ -2203,8 +2203,8 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'status' => "it's"]],
                 'columns' => ['id', 'status'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'status' => new ColumnType(ColumnTypeFamily::STRING, "SET('it''s','ok')"),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'status' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('it''s','ok')"),
                 ],
             ],
         ];
@@ -2224,7 +2224,7 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['x' => 1]],
                 'columns' => ['x'],
                 'columnTypes' => [
-                    'x' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
+                    'x' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
                 ],
             ],
         ];
@@ -2261,8 +2261,8 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'colors' => 'a']],
                 'columns' => ['id', 'colors'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('a','b')"),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('a','b')"),
                 ],
             ],
         ];
@@ -2280,8 +2280,8 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'status' => 'say "hi"']],
                 'columns' => ['id', 'status'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'status' => new ColumnType(ColumnTypeFamily::STRING, 'SET("say ""hi""","ok")'),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'status' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'SET("say ""hi""","ok")'),
                 ],
             ],
         ];
@@ -2299,9 +2299,9 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['id' => 1, 'colors' => 'red', 'priority' => 'low']],
                 'columns' => ['id', 'colors', 'priority'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'colors' => new ColumnType(ColumnTypeFamily::STRING, "SET('red','blue')"),
-                    'priority' => new ColumnType(ColumnTypeFamily::STRING, "SET('low','medium','high')"),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'colors' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('red','blue')"),
+                    'priority' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('low','medium','high')"),
                 ],
             ],
         ];

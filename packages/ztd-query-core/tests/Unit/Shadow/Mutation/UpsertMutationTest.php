@@ -530,4 +530,29 @@ final class UpsertMutationTest extends TestCase
             ['email' => 'alice@example.com', 'status' => 'inactive', 'login_count' => 9],
         ], $store->get('users'));
     }
+    public function testResultRowsAnswersNothingUntilTheStatementHasBeenApplied(): void
+    {
+        self::assertSame([], (new UpsertMutation('users', ['id']))->resultRows());
+    }
+
+    public function testResultRowsAnswersEveryRowTheStatementWroteOrLeftAsItWas(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', [['id' => 1, 'name' => 'a']]);
+        $mutation = new UpsertMutation(
+            'users',
+            ['id'],
+            ['name'],
+            ['name' => UpsertExpression::literal('b')],
+            CandidateKeySet::fromSchema(['id']),
+        );
+
+        $mutation->apply($store, [['id' => 1, 'name' => 'incoming'], ['id' => 2, 'name' => 'c']]);
+
+        self::assertSame(
+            [['id' => 1, 'name' => 'b'], ['id' => 2, 'name' => 'c']],
+            $mutation->resultRows(),
+        );
+    }
+
 }

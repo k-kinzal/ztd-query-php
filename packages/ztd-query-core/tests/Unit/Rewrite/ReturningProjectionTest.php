@@ -12,7 +12,7 @@ use ZtdQuery\Rewrite\ReturningProjection;
 #[CoversClass(ReturningProjection::class)]
 final class ReturningProjectionTest extends TestCase
 {
-    public function testProjectItemsProjectsNamedWildcardAndAliasedItemsForEveryRow(): void
+    public function testItemsAndProjectReadEveryRowTheWayTheItemsWereWritten(): void
     {
         $projection = ReturningProjection::fromItems([
             ['source' => 'id', 'output' => 'original_id'],
@@ -67,5 +67,19 @@ final class ReturningProjectionTest extends TestCase
         $this->expectExceptionMessage('Returning projection names must not be empty.');
 
         ReturningProjection::fromItems([['source' => 'id', 'output' => '']]);
+    }
+
+    public function testFromItemsRefusesAProjectionWithNoItems(): void
+    {
+        $this->expectException(InvalidDefinitionException::class);
+
+        ReturningProjection::fromItems([]);
+    }
+
+    public function testProjectAnswersOneRowPerRowItWasGiven(): void
+    {
+        $projection = ReturningProjection::fromItems([['source' => 'id', 'output' => null]]);
+
+        self::assertCount(2, $projection->project([['id' => 1], ['id' => 2]]));
     }
 }

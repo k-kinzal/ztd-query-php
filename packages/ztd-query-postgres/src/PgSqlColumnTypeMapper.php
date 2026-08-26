@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Postgres;
 
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 final class PgSqlColumnTypeMapper
 {
-    public function map(string $nativeType): ColumnType
+    public function map(string $nativeType): ColumnDeclaration
     {
         $normalized = strtoupper(trim($nativeType));
         $parameterOffset = strpos($normalized, '(');
@@ -38,6 +38,6 @@ final class PgSqlColumnTypeMapper
             default => ColumnTypeFamily::UNKNOWN,
         };
 
-        return new ColumnType($family, $nativeType);
+        return new ColumnDeclaration($family, $nativeType);
     }
 }

@@ -95,4 +95,39 @@ final class RowMatchTest extends TestCase
     {
         self::assertNull((new RowMatch())->positionOfIdentical([['id' => 2]], ['id' => 1], []));
     }
+    public function testSameRowReportsTwoRowsCarryingTheSameColumnsAndValues(): void
+    {
+        self::assertTrue((new RowMatch())->sameRow(['a' => 1, 'b' => 2], ['b' => 2, 'a' => 1]));
+    }
+
+    public function testSameRowIsFalseWhereOneCarriesAColumnTheOtherLacks(): void
+    {
+        self::assertFalse((new RowMatch())->sameRow(['a' => 1], ['a' => 1, 'b' => 2]));
+    }
+
+    public function testSameRowIsFalseWhereTheyDifferInAValue(): void
+    {
+        self::assertFalse((new RowMatch())->sameRow(['a' => 1], ['a' => 2]));
+    }
+
+    public function testIdentifiesReportsTwoRowsAgreeingOnTheKeyHoweverElseTheyDiffer(): void
+    {
+        self::assertTrue((new RowMatch())->identifies(['id' => 1, 'n' => 'a'], ['id' => 1, 'n' => 'b'], ['id']));
+    }
+
+    public function testIdentifiesIsFalseWhereTheyDisagreeOnTheKey(): void
+    {
+        self::assertFalse((new RowMatch())->identifies(['id' => 1], ['id' => 2], ['id']));
+    }
+
+    public function testIdentifiesFallsBackToTheWholeRowWhereTheTableDeclaresNoKey(): void
+    {
+        self::assertTrue((new RowMatch())->identifies(['n' => 'a'], ['n' => 'a'], []));
+    }
+
+    public function testIdentifiesTellsTwoRowsApartByEverythingWhereThereIsNoKey(): void
+    {
+        self::assertFalse((new RowMatch())->identifies(['n' => 'a'], ['n' => 'b'], []));
+    }
+
 }

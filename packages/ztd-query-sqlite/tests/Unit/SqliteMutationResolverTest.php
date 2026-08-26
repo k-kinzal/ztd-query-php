@@ -20,7 +20,7 @@ use ZtdQuery\Platform\Sqlite\SqliteLexicalMasker;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
 use ZtdQuery\Platform\Sqlite\SqliteSchemaParser;
 use ZtdQuery\Rewrite\QueryKind;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
 use ZtdQuery\Schema\ForeignKeyDefinition;
@@ -896,7 +896,7 @@ final class SqliteMutationResolverTest extends TestCase
             ['id'],
             [],
             [],
-            ['id' => new \ZtdQuery\Schema\ColumnType(\ZtdQuery\Schema\ColumnTypeFamily::INTEGER, 'INTEGER'), 'val' => new \ZtdQuery\Schema\ColumnType(\ZtdQuery\Schema\ColumnTypeFamily::FLOAT, 'REAL')],
+            ['id' => new \ZtdQuery\Schema\ColumnDeclaration(\ZtdQuery\Schema\ColumnTypeFamily::INTEGER, 'INTEGER'), 'val' => new \ZtdQuery\Schema\ColumnDeclaration(\ZtdQuery\Schema\ColumnTypeFamily::FLOAT, 'REAL')],
         ));
         $store = new ShadowStore();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
@@ -1165,7 +1165,7 @@ final class SqliteMutationResolverTest extends TestCase
             ['id'],
             [],
             [],
-            ['id' => new \ZtdQuery\Schema\ColumnType(\ZtdQuery\Schema\ColumnTypeFamily::INTEGER, 'INTEGER'), 'val' => new \ZtdQuery\Schema\ColumnType(\ZtdQuery\Schema\ColumnTypeFamily::TEXT, 'TEXT')],
+            ['id' => new \ZtdQuery\Schema\ColumnDeclaration(\ZtdQuery\Schema\ColumnTypeFamily::INTEGER, 'INTEGER'), 'val' => new \ZtdQuery\Schema\ColumnDeclaration(\ZtdQuery\Schema\ColumnTypeFamily::TEXT, 'TEXT')],
         ));
         $store = new ShadowStore();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
@@ -1188,7 +1188,7 @@ final class SqliteMutationResolverTest extends TestCase
             ['id'],
             [],
             [],
-            ['id' => new \ZtdQuery\Schema\ColumnType(\ZtdQuery\Schema\ColumnTypeFamily::INTEGER, 'INTEGER')],
+            ['id' => new \ZtdQuery\Schema\ColumnDeclaration(\ZtdQuery\Schema\ColumnTypeFamily::INTEGER, 'INTEGER')],
         ));
         $store = new ShadowStore();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
@@ -2816,8 +2816,8 @@ final class SqliteMutationResolverTest extends TestCase
 
     public function testAlterDropRemovesEveryColumnMetadataEntryAndBuildsMigrationProjection(): void
     {
-        $integer = new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER');
-        $text = new ColumnType(ColumnTypeFamily::STRING, 'TEXT');
+        $integer = new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER');
+        $text = new ColumnDeclaration(ColumnTypeFamily::STRING, 'TEXT');
         $definition = new TableDefinition(
             ['id', 'legacy', 'kept', 'tail'],
             ['id' => 'INTEGER', 'legacy' => 'TEXT', 'kept' => 'TEXT', 'tail' => 'TEXT'],
@@ -2869,7 +2869,7 @@ final class SqliteMutationResolverTest extends TestCase
 
     public function testAlterRenameColumnMovesEveryMetadataEntryAndBuildsMigrationProjection(): void
     {
-        $text = new ColumnType(ColumnTypeFamily::STRING, 'TEXT');
+        $text = new ColumnDeclaration(ColumnTypeFamily::STRING, 'TEXT');
         $definition = new TableDefinition(
             ['id', 'legacy'],
             ['id' => 'INTEGER', 'legacy' => 'TEXT'],

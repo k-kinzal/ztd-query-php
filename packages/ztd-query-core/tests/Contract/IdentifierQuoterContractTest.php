@@ -14,7 +14,12 @@ use ZtdQuery\Platform\IdentifierQuoter;
  */
 abstract class IdentifierQuoterContractTest extends TestCase
 {
-    abstract protected function createQuoter(): IdentifierQuoter;
+    /**
+     * Answers the quoter this dialect names things with.
+     *
+     * @return IdentifierQuoter The quoter under test
+     */
+    abstract public function createQuoter(): IdentifierQuoter;
 
     /**
      * Return the expected quote character for this platform.
@@ -22,7 +27,7 @@ abstract class IdentifierQuoterContractTest extends TestCase
      *
      * @return non-empty-string
      */
-    abstract protected function quoteCharacter(): string;
+    abstract public function quoteCharacter(): string;
 
     /**
      * quote() must return a non-empty string (P-IQ-1).

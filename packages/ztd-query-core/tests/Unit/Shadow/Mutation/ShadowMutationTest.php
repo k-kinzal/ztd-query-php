@@ -24,7 +24,7 @@ use ZtdQuery\Shadow\ShadowStore;
 #[UsesClass(CandidateKeySet::class)]
 final class ShadowMutationTest extends MutationContractTest
 {
-    protected function initialRows(): array
+    public function initialRows(): array
     {
         return [
             ['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com'],
@@ -33,7 +33,7 @@ final class ShadowMutationTest extends MutationContractTest
         ];
     }
 
-    protected function insertRows(): array
+    public function insertRows(): array
     {
         return [
             ['id' => 4, 'name' => 'Diana', 'email' => 'diana@example.com'],
@@ -41,22 +41,37 @@ final class ShadowMutationTest extends MutationContractTest
         ];
     }
 
-    protected function deleteRows(): array
+    public function deleteRows(): array
     {
         return [
             ['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com'],
         ];
     }
 
-    protected function updateRows(): array
+    public function updateRows(): array
     {
         return [
             ['id' => 2, 'name' => 'Bobby', 'email' => 'bobby@example.com'],
         ];
     }
 
-    protected function primaryKeys(): array
+    public function primaryKeys(): array
     {
         return ['id'];
     }
+    public function testApplyWritesWhatTheStatementDidIntoTheShadow(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', $this->initialRows());
+
+        (new InsertMutation('users'))->apply($store, $this->insertRows());
+
+        self::assertCount(count($this->initialRows()) + count($this->insertRows()), $store->get('users'));
+    }
+
+    public function testTableNameAnswersTheTableTheStatementWrites(): void
+    {
+        self::assertSame('users', (new InsertMutation('users'))->tableName());
+    }
+
 }

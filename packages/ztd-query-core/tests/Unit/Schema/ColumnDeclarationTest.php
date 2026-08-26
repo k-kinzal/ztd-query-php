@@ -6,15 +6,15 @@ namespace Tests\Unit\Schema;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
-#[CoversClass(ColumnType::class)]
-final class ColumnTypeTest extends TestCase
+#[CoversClass(ColumnDeclaration::class)]
+final class ColumnDeclarationTest extends TestCase
 {
     public function testKeepsTheFamilyAndTheNameTheDatabaseGivesTheType(): void
     {
-        $type = new ColumnType(ColumnTypeFamily::INTEGER, 'INT');
+        $type = new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT');
 
         self::assertSame(ColumnTypeFamily::INTEGER, $type->family);
         self::assertSame('INT', $type->nativeType);
@@ -22,8 +22,8 @@ final class ColumnTypeTest extends TestCase
 
     public function testDifferentFamilies(): void
     {
-        $text = new ColumnType(ColumnTypeFamily::TEXT, 'TEXT');
-        $bool = new ColumnType(ColumnTypeFamily::BOOLEAN, 'BOOLEAN');
+        $text = new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT');
+        $bool = new ColumnDeclaration(ColumnTypeFamily::BOOLEAN, 'BOOLEAN');
 
         self::assertSame(ColumnTypeFamily::TEXT, $text->family);
         self::assertSame(ColumnTypeFamily::BOOLEAN, $bool->family);

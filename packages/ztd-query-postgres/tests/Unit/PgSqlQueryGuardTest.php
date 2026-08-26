@@ -18,7 +18,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
 final class PgSqlQueryGuardTest extends QueryClassifierContractTest
 {
-    protected function classify(string $sql): ?QueryKind
+    public function classify(string $sql): ?QueryKind
     {
         return (new PgSqlQueryGuard(new PgSqlParser()))->classify($sql);
     }
@@ -28,27 +28,27 @@ final class PgSqlQueryGuardTest extends QueryClassifierContractTest
         return 'SELECT * FROM users';
     }
 
-    protected function insertSql(): string
+    public function insertSql(): string
     {
         return "INSERT INTO users (name) VALUES ('Alice')";
     }
 
-    protected function updateSql(): string
+    public function updateSql(): string
     {
         return "UPDATE users SET name = 'Bob' WHERE id = 1";
     }
 
-    protected function deleteSql(): string
+    public function deleteSql(): string
     {
         return 'DELETE FROM users WHERE id = 1';
     }
 
-    protected function createTableSql(): string
+    public function createTableSql(): string
     {
         return 'CREATE TABLE test (id INTEGER PRIMARY KEY)';
     }
 
-    protected function dropTableSql(): string
+    public function dropTableSql(): string
     {
         return 'DROP TABLE test';
     }

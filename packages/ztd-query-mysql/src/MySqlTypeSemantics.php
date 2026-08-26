@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\MySql;
 
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
@@ -18,7 +18,7 @@ final class MySqlTypeSemantics
      * @param array<string, array{viewSql: string}|array{
      *     rows: array<int, array<string, mixed>>,
      *     columns: array<int, string>,
-     *     columnTypes: array<string, ColumnType>
+     *     columnTypes: array<string, ColumnDeclaration>
      * }> $tables
      */
     public function rewrite(string $sql, array $tables): string
@@ -42,7 +42,7 @@ final class MySqlTypeSemantics
      * @param array<string, array{viewSql: string}|array{
      *     rows: array<int, array<string, mixed>>,
      *     columns: array<int, string>,
-     *     columnTypes: array<string, ColumnType>
+     *     columnTypes: array<string, ColumnDeclaration>
      * }> $tables
      * @return array{array<string, list<string>>, array<string, list<string>|null>}
      */
