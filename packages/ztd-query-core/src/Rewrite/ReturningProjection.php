@@ -61,7 +61,9 @@ final class ReturningProjection
         return $projectedRows;
     }
 
-    /** @return list<array{source: string|null, output: string|null}> */
+    /**
+     * @return list<array{source: string|null, output: string|null}>
+     */
     public function items(): array
     {
         return $this->items;

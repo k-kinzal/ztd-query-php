@@ -94,7 +94,7 @@ final class TableDefinitionTest extends TestCase
         self::assertSame($partitioning, $partitioned->partitioning);
     }
 
-    public function testPartitionMetadataCopiesPreserveOtherSchemaState(): void
+    public function testCandidateKeysPartitionMetadataCopiesPreserveOtherSchemaState(): void
     {
         $definition = new TableDefinition(['id'], ['id' => 'INT'], ['id'], ['id'], []);
         $key = new TablePartitionKey(TablePartitionStrategy::Range, ['id']);

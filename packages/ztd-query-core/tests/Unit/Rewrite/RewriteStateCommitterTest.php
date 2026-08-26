@@ -11,7 +11,7 @@ use ZtdQuery\Rewrite\RewriteStateCommitter;
 #[CoversNothing]
 final class RewriteStateCommitterTest extends TestCase
 {
-    public function testDefinesSuccessfulExecutionCommitBoundary(): void
+    public function testCommitRewriteStateDefinesSuccessfulExecutionCommitBoundary(): void
     {
         $committer = new class () implements RewriteStateCommitter {
             public bool $committed = false;

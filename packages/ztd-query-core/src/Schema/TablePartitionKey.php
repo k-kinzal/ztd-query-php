@@ -8,7 +8,9 @@ use InvalidArgumentException;
 
 final class TablePartitionKey
 {
-    /** @param non-empty-list<string> $expressions */
+    /**
+     * @param non-empty-list<string> $expressions
+     */
     public function __construct(
         public readonly TablePartitionStrategy $strategy,
         public readonly array $expressions,

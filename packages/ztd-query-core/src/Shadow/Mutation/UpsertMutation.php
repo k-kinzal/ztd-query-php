@@ -206,7 +206,9 @@ final class UpsertMutation implements DataMutation
         return $this->tableName;
     }
 
-    /** @return list<Row> */
+    /**
+     * @return list<Row>
+     */
     public function resultRows(): array
     {
         return $this->resultRows;

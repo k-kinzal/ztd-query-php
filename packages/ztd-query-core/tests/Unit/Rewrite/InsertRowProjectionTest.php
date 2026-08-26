@@ -12,7 +12,7 @@ use ZtdQuery\Rewrite\InsertRowProjection;
 #[CoversClass(InsertRowProjection::class)]
 final class InsertRowProjectionTest extends TestCase
 {
-    public function testRepresentsProvidedDefaultGeneratedAndNullValuesWithoutSqlRendering(): void
+    public function testDefaultExpressionRepresentsProvidedDefaultGeneratedAndNullValuesWithoutSqlRendering(): void
     {
         $provided = InsertRowProjection::provided('name', "'Ada'");
         $default = InsertRowProjection::defaultExpression('status', "'active'");
@@ -46,7 +46,7 @@ final class InsertRowProjectionTest extends TestCase
         InsertRowProjection::generatedIdentity('id', 0);
     }
 
-    public function testAcceptsMinimumGeneratedIdentityValue(): void
+    public function testGeneratedIdentityValueAcceptsMinimumGeneratedIdentityValue(): void
     {
         self::assertSame(1, InsertRowProjection::generatedIdentity('id', 1)->generatedIdentityValue());
     }

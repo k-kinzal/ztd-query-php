@@ -11,10 +11,14 @@ use InvalidArgumentException;
  */
 final class PartialUniqueIndex
 {
-    /** @var non-empty-list<string> */
+    /**
+     * @var non-empty-list<string>
+     */
     public readonly array $columns;
 
-    /** @param list<string> $columns */
+    /**
+     * @param list<string> $columns
+     */
     public function __construct(
         public readonly string $name,
         array $columns,

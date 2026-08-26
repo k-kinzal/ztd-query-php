@@ -22,7 +22,7 @@ use ZtdQuery\Shadow\ShadowStore;
 #[CoversClass(UpdateMutation::class)]
 final class UpdateMutationTest extends TestCase
 {
-    public function testApplyReplacesRowsByPrimaryKey(): void
+    public function testTableNameApplyReplacesRowsByPrimaryKey(): void
     {
         $store = new ShadowStore();
         $store->set('users', [

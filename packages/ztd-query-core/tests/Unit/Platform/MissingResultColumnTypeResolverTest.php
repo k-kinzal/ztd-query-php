@@ -12,7 +12,7 @@ use ZtdQuery\Platform\MissingResultColumnTypeResolver;
 #[CoversClass(MissingResultColumnTypeResolver::class)]
 final class MissingResultColumnTypeResolverTest extends TestCase
 {
-    public function testFailsWhenAPlatformResolverWasNotConfigured(): void
+    public function testResolveFailsWhenAPlatformResolverWasNotConfigured(): void
     {
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('A database platform result column type resolver is required.');

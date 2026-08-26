@@ -75,7 +75,7 @@ final class TableDefinitionRegistryTest extends TestCase
         self::assertSame(['users' => $definition], $registry->getAllRemoved());
     }
 
-    public function testClearRemovesActiveAndRemovedDefinitions(): void
+    public function testGetAllClearRemovesActiveAndRemovedDefinitions(): void
     {
         $registry = new TableDefinitionRegistry();
         $definition = new TableDefinition(['id'], ['id' => 'INT'], [], [], []);

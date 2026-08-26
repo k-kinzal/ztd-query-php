@@ -136,7 +136,9 @@ final class SqlLexerProfile
         return false;
     }
 
-    /** @return array{non-empty-string, non-empty-string}|null */
+    /**
+     * @return array{non-empty-string, non-empty-string}|null
+     */
     public function blockCommentAt(string $sql, int $offset): ?array
     {
         foreach ($this->blockCommentPairs as $opening => $closing) {

@@ -20,7 +20,7 @@ use ZtdQuery\Shadow\Mutation\InsertMutation;
 #[CoversClass(RewritePlan::class)]
 final class RewritePlanTest extends TestCase
 {
-    public function testPlanHoldsSqlKindAndMutation(): void
+    public function testKindPlanHoldsSqlKindAndMutation(): void
     {
         $mutation = new InsertMutation('users');
         $plan = new RewritePlan('SELECT 1', QueryKind::READ, $mutation);
@@ -30,14 +30,14 @@ final class RewritePlanTest extends TestCase
         self::assertSame($mutation, $plan->mutation());
     }
 
-    public function testPlanWithoutMutation(): void
+    public function testMutationPlanWithoutMutation(): void
     {
         $plan = new RewritePlan('SELECT 1', QueryKind::READ);
 
         self::assertNull($plan->mutation());
     }
 
-    public function testPlanCarriesReturningAndAffectedRowsMetadata(): void
+    public function testAffectedRowsModePlanCarriesReturningAndAffectedRowsMetadata(): void
     {
         $projection = ReturningProjection::fromItems([['source' => 'id', 'output' => null]]);
         $plan = new RewritePlan(

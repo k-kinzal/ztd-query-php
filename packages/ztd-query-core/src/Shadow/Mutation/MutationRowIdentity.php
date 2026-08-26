@@ -4,18 +4,40 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow\Mutation;
 
+use ZtdQuery\Connection\StatementInterface;
+
+/**
+ * Carries the key a row had, alongside the key it has.
+ *
+ * An UPDATE may change the very columns that identify a row, and once it has,
+ * nothing in the result says which row each new one used to be. The rewritten
+ * statement therefore selects the old key as well, under a name no table would
+ * use, and this is what puts that name on and takes it off again.
+ *
+ * @phpstan-import-type Row from StatementInterface
+ */
 final class MutationRowIdentity
 {
     private const PREFIX = '__ztd_original_';
 
+    /**
+     * Answers the name the old value of a key column is carried under.
+     *
+     * @param string $primaryKey Key column
+     *
+     * @return string Name no table would use for it
+     */
     public function column(string $primaryKey): string
     {
         return self::PREFIX . $primaryKey;
     }
 
     /**
-     * @param array<string, mixed> $row
-     * @return array<string, mixed>
+     * Takes the carried names back off a row.
+     *
+     * @param Row $row Row as the rewritten statement read it back
+     *
+     * @return Row The row as the caller should see it
      */
     public function strip(array $row): array
     {
@@ -29,9 +51,15 @@ final class MutationRowIdentity
     }
 
     /**
-     * @param array<string, mixed> $row
-     * @param array<int, string> $primaryKeys
-     * @return array{row: array<string, mixed>, identity: array<string, mixed>}
+     * Splits a row into the row itself and the key it used to have.
+     *
+     * A key column the statement did not change carries no old value, so its
+     * current one is the old one too.
+     *
+     * @param Row $row Row as the rewritten statement read it back
+     * @param list<string> $primaryKeys Columns that identify one row
+     *
+     * @return array{row: Row, identity: Row} The row, and the key it used to have
      */
     public function extract(array $row, array $primaryKeys): array
     {

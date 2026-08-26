@@ -23,7 +23,7 @@ final class SqlTransformerTest extends TransformerContractTest
         return 'SELECT * FROM users WHERE id = 1';
     }
 
-    public function testViewContextIsRenderedAsCte(): void
+    public function testTransformViewContextIsRenderedAsCte(): void
     {
         $result = $this->createTransformer()->transform(
             'SELECT * FROM active_users',

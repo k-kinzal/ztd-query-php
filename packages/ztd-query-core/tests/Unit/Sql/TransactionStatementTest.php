@@ -17,7 +17,7 @@ use ZtdQuery\Sql\TransactionStatement;
 #[UsesClass(ShadowTransactionManager::class)]
 final class TransactionStatementTest extends TestCase
 {
-    public function testAppliesNamedTransactionLifecycleWithoutSql(): void
+    public function testCommitAppliesNamedTransactionLifecycleWithoutSql(): void
     {
         $store = new ShadowStore();
         $store->set('items', [['id' => 1]]);
@@ -34,7 +34,7 @@ final class TransactionStatementTest extends TestCase
         self::assertSame([['id' => 1], ['id' => 2]], $store->get('items'));
     }
 
-    public function testAppliesRollback(): void
+    public function testRollbackAppliesRollback(): void
     {
         $store = new ShadowStore();
         $store->set('items', [['id' => 1]]);
@@ -47,7 +47,7 @@ final class TransactionStatementTest extends TestCase
         self::assertSame([['id' => 1]], $store->get('items'));
     }
 
-    public function testRejectsEmptySavepointName(): void
+    public function testSavepointRejectsEmptySavepointName(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Savepoint name must not be empty.');

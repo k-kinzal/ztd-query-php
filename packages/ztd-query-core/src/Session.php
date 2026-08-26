@@ -288,7 +288,9 @@ final class Session
         }
     }
 
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     */
     public function splitStatements(string $sql): array
     {
         return $this->rewriter->splitStatements($sql);

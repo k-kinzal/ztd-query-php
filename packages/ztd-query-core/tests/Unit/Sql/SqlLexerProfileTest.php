@@ -13,7 +13,7 @@ use ZtdQuery\Sql\SqlLexerProfile;
 #[CoversClass(SqlLexerProfile::class)]
 final class SqlLexerProfileTest extends TestCase
 {
-    public function testExposesConfiguredLexicalData(): void
+    public function testBlockCommentAtExposesConfiguredLexicalData(): void
     {
         $profile = new SqlLexerProfile(
             lineCommentPrefixes: ['--', '#'],

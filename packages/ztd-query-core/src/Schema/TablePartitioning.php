@@ -14,7 +14,9 @@ final class TablePartitioning
     /** @var array<string, string> */
     private readonly array $selectionPredicates;
 
-    /** @param array<string, string> $selectionPredicates */
+    /**
+     * @param array<string, string> $selectionPredicates
+     */
     public function __construct(array $selectionPredicates)
     {
         $normalized = [];

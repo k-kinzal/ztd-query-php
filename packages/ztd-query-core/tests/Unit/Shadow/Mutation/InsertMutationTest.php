@@ -28,7 +28,7 @@ use ZtdQuery\Shadow\ShadowStore;
 #[CoversClass(InsertMutation::class)]
 final class InsertMutationTest extends TestCase
 {
-    public function testApplyAppendsRows(): void
+    public function testTableNameApplyAppendsRows(): void
     {
         $store = new ShadowStore();
         $store->set('users', [['id' => 1]]);

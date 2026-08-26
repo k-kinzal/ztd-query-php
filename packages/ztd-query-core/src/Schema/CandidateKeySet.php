@@ -34,7 +34,9 @@ final class CandidateKeySet
         return new self($keys);
     }
 
-    /** @return array<string, array<int, string>> */
+    /**
+     * @return array<string, array<int, string>>
+     */
     public function keys(): array
     {
         return $this->keys;
