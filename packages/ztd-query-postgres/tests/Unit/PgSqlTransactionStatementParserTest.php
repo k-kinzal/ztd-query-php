@@ -11,7 +11,7 @@ use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Postgres\PgSqlLexerProfile;
 use ZtdQuery\Platform\Postgres\PgSqlTransactionStatementParser;
 use ZtdQuery\Shadow\ShadowStore;
-use ZtdQuery\Shadow\ShadowTransactionManager;
+use ZtdQuery\Shadow\ShadowTransactions;
 
 #[CoversClass(PgSqlTransactionStatementParser::class)]
 #[UsesClass(PgSqlLexerProfile::class)]
@@ -63,7 +63,7 @@ final class PgSqlTransactionStatementParserTest extends TestCase
     {
         $store = new ShadowStore();
         $store->set('items', [['id' => 1]]);
-        $transactions = new ShadowTransactionManager($store);
+        $transactions = new ShadowTransactions($store);
         $transactions->begin();
         $statement = (new PgSqlTransactionStatementParser())->parse('SAVEPOINT "a""b"');
         self::assertNotNull($statement);

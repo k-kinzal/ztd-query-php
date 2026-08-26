@@ -11,7 +11,7 @@ use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\MySql\MySqlLexerProfile;
 use ZtdQuery\Platform\MySql\MySqlTransactionStatementParser;
 use ZtdQuery\Shadow\ShadowStore;
-use ZtdQuery\Shadow\ShadowTransactionManager;
+use ZtdQuery\Shadow\ShadowTransactions;
 
 #[CoversClass(MySqlTransactionStatementParser::class)]
 #[UsesClass(MySqlLexerProfile::class)]
@@ -57,7 +57,7 @@ final class MySqlTransactionStatementParserTest extends TestCase
     {
         $store = new ShadowStore();
         $store->set('items', [['id' => 1]]);
-        $transactions = new ShadowTransactionManager($store);
+        $transactions = new ShadowTransactions($store);
         $transactions->begin();
         $statement = (new MySqlTransactionStatementParser())->parse('SAVEPOINT `a``b`');
         self::assertNotNull($statement);
