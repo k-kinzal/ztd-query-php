@@ -4,26 +4,25 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\MySql;
 
-use ZtdQuery\Exception\UnknownSchemaException;
-use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Rewrite\MultiRewritePlan;
-use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
-use ZtdQuery\Rewrite\QueryKind;
-use ZtdQuery\Rewrite\RewritePlan;
-use ZtdQuery\Rewrite\RewriteStateCommitter;
-use ZtdQuery\Rewrite\SqlRewriter;
-use ZtdQuery\Sql\TransactionStatement;
 use PhpMyAdmin\SqlParser\Statement;
-use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
-use ZtdQuery\Schema\TableDefinitionRegistry;
-use ZtdQuery\Schema\ViewDefinitionSet;
-use ZtdQuery\Shadow\ShadowStore;
 use PhpMyAdmin\SqlParser\Statements\AlterStatement;
 use PhpMyAdmin\SqlParser\Statements\CreateStatement;
 use PhpMyAdmin\SqlParser\Statements\LoadStatement;
 use PhpMyAdmin\SqlParser\Statements\ReplaceStatement;
 use PhpMyAdmin\SqlParser\Statements\TruncateStatement;
 use PhpMyAdmin\SqlParser\Statements\WithStatement;
+use ZtdQuery\Exception\UnknownSchemaException;
+use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
+use ZtdQuery\Rewrite\MultiRewritePlan;
+use ZtdQuery\Rewrite\QueryKind;
+use ZtdQuery\Rewrite\RewritePlan;
+use ZtdQuery\Rewrite\RewriteStateCommitter;
+use ZtdQuery\Rewrite\SqlRewriter;
+use ZtdQuery\Schema\TableDefinitionRegistry;
+use ZtdQuery\Schema\ViewDefinitionSet;
+use ZtdQuery\Shadow\ShadowStore;
+use ZtdQuery\Sql\TransactionStatement;
 
 /**
  * MySQL rewrite implementation for ZTD.

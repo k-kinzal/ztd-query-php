@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\Platform\Postgres\PgSqlErrorClassifier;
-use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(PgSqlErrorClassifier::class)]
 final class PgSqlErrorClassifierTest extends TestCase

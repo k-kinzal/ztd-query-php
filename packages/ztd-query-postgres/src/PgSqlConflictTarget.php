@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Postgres;
 
+use InvalidArgumentException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Schema\CandidateKeySet;
 use ZtdQuery\Schema\PartialUniqueIndex;
@@ -23,7 +24,7 @@ final class PgSqlConflictTarget
         public readonly ?string $constraint = null,
     ) {
         if ($constraint !== null && $columns !== []) {
-            throw new \InvalidArgumentException('A conflict target cannot use columns and a constraint together.');
+            throw new InvalidArgumentException('A conflict target cannot use columns and a constraint together.');
         }
     }
 

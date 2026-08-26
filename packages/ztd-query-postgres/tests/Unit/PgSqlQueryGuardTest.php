@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use Tests\Contract\QueryClassifierContractTest;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
 use ZtdQuery\Platform\Postgres\PgSqlQueryGuard;
 use ZtdQuery\Rewrite\QueryKind;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 
 #[CoversClass(PgSqlQueryGuard::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlReadOnlyDiagnosticStatement::class)]
@@ -140,7 +140,7 @@ final class PgSqlQueryGuardTest extends QueryClassifierContractTest
 
         self::assertSame(
             QueryKind::READ,
-            $guard->classify("DO \$\$ BEGIN INSERT INTO users VALUES (1); END \$\$"),
+            $guard->classify('DO $$ BEGIN INSERT INTO users VALUES (1); END $$'),
         );
     }
 
@@ -153,7 +153,7 @@ final class PgSqlQueryGuardTest extends QueryClassifierContractTest
     public function testWithInsertClassifiesAsWriteSimulated(): void
     {
         $guard = new PgSqlQueryGuard(new PgSqlParser());
-        self::assertSame(QueryKind::WRITE_SIMULATED, $guard->classify("WITH vals AS (SELECT 1 AS id) INSERT INTO users SELECT * FROM vals"));
+        self::assertSame(QueryKind::WRITE_SIMULATED, $guard->classify('WITH vals AS (SELECT 1 AS id) INSERT INTO users SELECT * FROM vals'));
     }
 
     public function testGarbageReturnsNull(): void
