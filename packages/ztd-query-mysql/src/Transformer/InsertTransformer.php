@@ -8,6 +8,8 @@ use PhpMyAdmin\SqlParser\Components\ArrayObj;
 use PhpMyAdmin\SqlParser\Components\SetOperation;
 use PhpMyAdmin\SqlParser\Statements\InsertStatement;
 use RuntimeException;
+use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\MySql\InsertSelectSourceExtractor;
@@ -26,6 +28,7 @@ use ZtdQuery\Schema\IdentityGenerationStrategy;
  * Applies CTE shadowing via the SelectTransformer delegate.
  *
  * @phpstan-import-type ShadowTables from SqlTransformer
+ * @phpstan-import-type Row from StatementInterface
  */
 final class InsertTransformer implements SqlTransformer
 {
@@ -138,11 +141,15 @@ final class InsertTransformer implements SqlTransformer
      * @param array<string, ColumnDeclaration> $columnTypes
      * @param array<string, string> $columnDefaults
      * @param array<string, IdentityGenerationStrategy> $identityStrategies
-     * @param array<int, array<string, mixed>> $existingRows
+     * @param list<Row> $existingRows Rows the table already holds
+     * @param string|null $sourceSelectSql The SELECT the statement inserts from, or null where it writes values
      *
-     * @throws RuntimeException
+     * @return string The SELECT that answers the rows the statement would write
+     *
+     * @throws InvalidDefinitionException When the statement cannot describe a row the table would take
+     * @throws UnsupportedSqlException When the statement writes rows ZTD cannot work out
      */
-    private function buildInsertSelect(
+    public function buildInsertSelect(
         InsertStatement $statement,
         string $tableName,
         array $tableColumns,
@@ -210,11 +217,13 @@ final class InsertTransformer implements SqlTransformer
      * @param array<string, ColumnDeclaration> $columnTypes
      * @param array<string, string> $columnDefaults
      * @param array<string, IdentityGenerationStrategy> $identityStrategies
-     * @param array<int, array<string, mixed>> $existingRows
+     * @param list<Row> $existingRows Rows the table already holds
      *
-     * @throws RuntimeException
+     * @return string The SELECT that answers this one row
+     *
+     * @throws InvalidDefinitionException When the row's values do not line up with its columns
      */
-    private function buildInsertRowSelect(
+    public function buildInsertRowSelect(
         ArrayObj $valueSet,
         string $tableName,
         array $tableColumns,
@@ -259,9 +268,11 @@ final class InsertTransformer implements SqlTransformer
      * @param array<string, ColumnDeclaration> $columnTypes
      * @param array<string, string> $columnDefaults
      * @param array<string, IdentityGenerationStrategy> $identityStrategies
-     * @param array<int, array<string, mixed>> $existingRows
+     * @param list<Row> $existingRows Rows the table already holds
+     *
+     * @return string The SELECT that answers the row the assignments describe
      */
-    private function buildInsertSetSelect(
+    public function buildInsertSetSelect(
         array $setOperations,
         string $tableName,
         array $tableColumns,
@@ -297,11 +308,18 @@ final class InsertTransformer implements SqlTransformer
     }
 
     /**
+     * Answers values under no keys of their own, in the order they were given.
+     *
+     * The parser keys what it reads by where it read it, and a caller that
+     * has taken some of them out leaves gaps -- which downstream code would
+     * be able to see. In order, under nothing, they are just the values.
+     *
      * @template T
-     * @param array<array-key, T> $values
-     * @return list<T>
+     * @param array<array-key, T> $values Values as they were given
+     *
+     * @return list<T> The same values, in order
      */
-    private static function orderedValues(array $values): array
+    public static function orderedValues(array $values): array
     {
         $ordered = [];
         foreach ($values as $value) {

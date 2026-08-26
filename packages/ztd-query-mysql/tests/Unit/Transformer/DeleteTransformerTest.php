@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Transformer;
 
+use PhpMyAdmin\SqlParser\Components\Expression;
 use PhpMyAdmin\SqlParser\Parser;
+use PhpMyAdmin\SqlParser\Statements\DeleteStatement;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -56,7 +58,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = "DELETE u FROM users u JOIN orders o ON u.id = o.user_id WHERE o.status = 'canceled'";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, ['id', 'name']);
 
@@ -75,7 +77,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE FROM users PARTITION (p0) WHERE id = 1';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         self::expectException(RuntimeException::class);
         self::expectExceptionMessage('PARTITION clause');
@@ -89,7 +91,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = "DELETE u, o FROM users u JOIN orders o ON u.id = o.user_id WHERE o.status = 'canceled'";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, ['id']);
 
@@ -108,7 +110,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE FROM users WHERE id = 1';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, ['id', 'name']);
 
@@ -124,7 +126,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = "DELETE u FROM users u USING users u, orders o WHERE u.id = o.user_id AND o.status = 'canceled'";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, ['id', 'name']);
 
@@ -164,7 +166,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE FROM users WHERE id = 1';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, ['id', 'name']);
 
@@ -179,7 +181,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE FROM users ORDER BY id LIMIT 10';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, ['id']);
 
@@ -193,7 +195,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE FROM users WHERE id = 1';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, []);
 
@@ -223,7 +225,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE FROM users';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, ['id']);
         self::assertStringContainsString('FROM', $result['sql']);
@@ -237,7 +239,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE u FROM users u JOIN orders o ON u.id = o.user_id';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, []);
         self::assertStringContainsString('JOIN', $result['sql']);
@@ -250,7 +252,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE FROM users WHERE id = 1';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, ['id', 'name']);
         self::assertStringStartsWith('SELECT `users`.`id` AS `id`, `users`.`name` AS `name`', $result['sql']);
@@ -262,7 +264,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE o FROM users u JOIN orders o ON u.id = o.user_id WHERE u.active = 0';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, []);
         self::assertSame('orders', $result['table']);
@@ -274,7 +276,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE FROM users u WHERE u.id = 1';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, ['id']);
         self::assertSame('users', $result['table']);
@@ -287,7 +289,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE u FROM users u USING users u, orders o WHERE u.id = o.user_id';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, []);
         self::assertSame('users', $result['table']);
@@ -299,7 +301,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE u, o FROM users u JOIN orders o ON u.id = o.user_id WHERE u.active = 0';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, []);
         self::assertSame('users', $result['table']);
@@ -333,7 +335,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE FROM users WHERE id > 5 ORDER BY id LIMIT 10';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, ['id']);
         self::assertStringContainsString('ORDER BY', $result['sql']);
@@ -348,7 +350,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE FROM users partition (p0) WHERE id = 1';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         self::expectException(RuntimeException::class);
         self::expectExceptionMessage('PARTITION');
@@ -361,7 +363,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE FROM users ORDER BY id ASC LIMIT 5';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, ['id']);
         self::assertStringContainsString(' ORDER BY id ASC', $result['sql']);
@@ -374,7 +376,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE FROM users WHERE id > 0';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, ['id', 'name', 'email']);
         self::assertStringContainsString('`users`.`id` AS `id`', $result['sql']);
@@ -388,7 +390,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE o FROM users u JOIN orders o ON u.id = o.user_id WHERE o.amount < 10';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, ['id', 'amount']);
         self::assertSame('orders', $result['table']);
@@ -402,7 +404,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE FROM users';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, ['id']);
         self::assertStringNotContainsString('WHERE', $result['sql']);
@@ -414,7 +416,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE FROM users WHERE id = 1';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, ['id']);
         self::assertStringNotContainsString('ORDER BY', $result['sql']);
@@ -427,7 +429,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = "DELETE u, o FROM users u JOIN orders o ON u.id = o.user_id WHERE o.status = 'canceled'";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, ['id']);
         self::assertSame('u', $result['tables']['users']['alias']);
@@ -440,7 +442,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE FROM users WHERE id = 1';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, ['id']);
         self::assertSame('users', $result['tables']['users']['alias']);
@@ -479,7 +481,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE u FROM users u USING users u, orders o WHERE u.id = o.user_id AND o.amount < 5';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, ['id']);
         self::assertStringContainsString('FROM', $result['sql']);
@@ -492,7 +494,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE FROM users LIMIT 10';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, ['id']);
         self::assertMatchesRegularExpression('/LIMIT\s+\d/', $result['sql']);
@@ -504,7 +506,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE FROM users WHERE active = 0';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, ['id']);
         self::assertStringContainsString('FROM users', $result['sql']);
@@ -516,7 +518,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE u FROM users u JOIN orders o ON u.id = o.user_id';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, []);
         self::assertStringContainsString('JOIN', $result['sql']);
@@ -529,7 +531,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE u FROM users u USING users u, orders o WHERE u.id = o.user_id';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, ['id']);
         self::assertSame('users', $result['table']);
@@ -542,7 +544,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = "DELETE u, o FROM users u JOIN orders o ON u.id = o.user_id WHERE o.status = 'old'";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, []);
         self::assertSame('u', $result['tables']['users']['alias']);
@@ -556,7 +558,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE FROM users ORDER BY id DESC LIMIT 3';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, ['id']);
         self::assertStringContainsString('ORDER BY id DESC', $result['sql']);
@@ -569,7 +571,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE FROM users WHERE id = 1';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, ['id', 'name']);
         self::assertSame('SELECT `users`.`id` AS `id`, `users`.`name` AS `name` FROM users  WHERE id = 1', $result['sql']);
@@ -583,7 +585,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = "DELETE u FROM users u JOIN orders o ON u.id = o.user_id WHERE o.status = 'canceled'";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, ['id', 'name']);
         self::assertSame("SELECT `u`.`id` AS `id`, `u`.`name` AS `name` FROM users AS `u` JOIN orders AS `o` ON u.id = o.user_id  WHERE o.status = 'canceled'", $result['sql']);
@@ -597,7 +599,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE u, o FROM users u JOIN orders o ON u.id = o.user_id';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, []);
         self::assertSame('SELECT `u`.* FROM users AS `u` JOIN orders AS `o` ON u.id = o.user_id ', $result['sql']);
@@ -611,7 +613,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE FROM users u WHERE u.id = 1';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, ['id']);
         self::assertSame('SELECT `u`.`id` AS `id` FROM users AS `u`  WHERE u.id = 1', $result['sql']);
@@ -625,7 +627,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE u FROM users u USING users u, orders o WHERE u.id = o.user_id';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, ['id']);
         self::assertSame('SELECT `u`.`id` AS `id` FROM users AS `u`, orders AS `o`  WHERE u.id = o.user_id', $result['sql']);
@@ -639,7 +641,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE FROM users ORDER BY id DESC LIMIT 3';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, ['id']);
         self::assertSame('SELECT `users`.`id` AS `id` FROM users  ORDER BY id DESC LIMIT 0, 3', $result['sql']);
@@ -651,7 +653,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE FROM users WHERE id = 1';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, []);
         self::assertSame('SELECT `users`.* FROM users  WHERE id = 1', $result['sql']);
@@ -712,7 +714,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE o FROM users u JOIN orders o ON u.id = o.user_id WHERE u.active = 0';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, ['id', 'amount']);
         self::assertSame('orders', $result['table']);
@@ -726,7 +728,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE u, o FROM users u USING users u, orders o WHERE u.id = o.user_id';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, []);
         self::assertSame('users', $result['table']);
@@ -742,7 +744,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE FROM users WHERE id = 1';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, ['id', 'name']);
         self::assertSame('users', $result['table']);
@@ -756,7 +758,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE FROM users AS u WHERE u.id = 1';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, ['id']);
         self::assertSame('users', $result['table']);
@@ -769,7 +771,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE FROM users PARTITION (p0) WHERE id = 1';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         self::expectException(RuntimeException::class);
         self::expectExceptionMessage('PARTITION');
@@ -782,7 +784,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE FROM users WHERE active = 0 ORDER BY id LIMIT 10';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, []);
         self::assertStringContainsString('ORDER BY', $result['sql']);
@@ -795,7 +797,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE users FROM users JOIN orders ON users.id = orders.user_id WHERE orders.total = 0';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, []);
         self::assertStringContainsString('JOIN', $result['sql']);
@@ -808,7 +810,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE FROM users WHERE id = 1';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, []);
         self::assertStringContainsString('`users`.*', $result['sql']);
@@ -855,7 +857,7 @@ final class DeleteTransformerTest extends TestCase
         $sql = 'DELETE a FROM t1 a USING t1 a, t2 b WHERE a.id = b.ref_id';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\DeleteStatement::class, $statement);
+        self::assertInstanceOf(DeleteStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, $sql, []);
         self::assertSame('t1', $result['table']);
@@ -891,4 +893,82 @@ final class DeleteTransformerTest extends TestCase
         );
         self::assertStringNotContainsString('`o`.`user_id` AS `__ztd_multi_1_value_1`', $result);
     }
+    public function testTargetsFromContextsNamesOneTargetPerTableTheShadowKnows(): void
+    {
+        $transformer = new DeleteTransformer(new MySqlParser(), new SelectTransformer());
+
+        $targets = $transformer->targetsFromContexts(
+            ['users' => ['alias' => 'u'], 'unknown' => ['alias' => 'x']],
+            ['users' => ['rows' => [], 'columns' => ['id'], 'columnTypes' => [], 'primaryKeys' => ['id']]],
+        );
+
+        self::assertSame(['users'], array_map(static fn ($target) => $target->tableName(), $targets));
+    }
+
+    public function testMultiTableSelectListCarriesEachKeyUnderANameNoTableWouldUse(): void
+    {
+        $transformer = new DeleteTransformer(new MySqlParser(), new SelectTransformer());
+        $targets = $transformer->targetsFromContexts(
+            ['users' => ['alias' => 'u']],
+            ['users' => ['rows' => [], 'columns' => ['id'], 'columnTypes' => [], 'primaryKeys' => ['id']]],
+        );
+
+        self::assertSame(
+            '`u`.`id` AS `__ztd_multi_0_value_0`',
+            $transformer->multiTableSelectList(['users' => ['alias' => 'u']], $targets),
+        );
+    }
+
+    public function testResolveAliasToTableAnswersTheTableTheNameStandsFor(): void
+    {
+        $transformer = new DeleteTransformer(new MySqlParser(), new SelectTransformer());
+        $statement = (new Parser('DELETE u FROM users AS u'))->statements[0];
+        self::assertInstanceOf(DeleteStatement::class, $statement);
+
+        self::assertSame('users', $transformer->resolveAliasToTable('u', $statement));
+    }
+
+    public function testResolveAliasToTableTakesAnUnknownNameToBeATablesOwn(): void
+    {
+        $transformer = new DeleteTransformer(new MySqlParser(), new SelectTransformer());
+        $statement = (new Parser('DELETE FROM users'))->statements[0];
+        self::assertInstanceOf(DeleteStatement::class, $statement);
+
+        self::assertSame('orders', $transformer->resolveAliasToTable('orders', $statement));
+    }
+
+    public function testExprTablePrefersTheTableTheParserReadOutOfAQualifiedName(): void
+    {
+        $expression = new Expression();
+        $expression->table = 'users';
+        $expression->expr = 'app.users';
+
+        self::assertSame('users', DeleteTransformer::exprTable($expression));
+    }
+
+    public function testExprTableFallsBackToTheWholeExpression(): void
+    {
+        $expression = new Expression();
+        $expression->expr = 'users';
+
+        self::assertSame('users', DeleteTransformer::exprTable($expression));
+    }
+
+    public function testExprAliasAnswersTheNameTheStatementGaveIt(): void
+    {
+        $expression = new Expression();
+        $expression->table = 'users';
+        $expression->alias = 'u';
+
+        self::assertSame('u', DeleteTransformer::exprAlias($expression));
+    }
+
+    public function testExprAliasFallsBackToTheTablesOwnName(): void
+    {
+        $expression = new Expression();
+        $expression->table = 'users';
+
+        self::assertSame('users', DeleteTransformer::exprAlias($expression));
+    }
+
 }
