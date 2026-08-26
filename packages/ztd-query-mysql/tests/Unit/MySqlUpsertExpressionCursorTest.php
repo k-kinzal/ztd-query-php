@@ -12,17 +12,10 @@ use ZtdQuery\Platform\MySql\MySqlLexerProfile;
 use ZtdQuery\Platform\MySql\MySqlUpsertExpressionCursor;
 use ZtdQuery\Platform\MySql\MySqlUpsertLiteral;
 use ZtdQuery\Shadow\Mutation\UpsertColumnSource;
-use ZtdQuery\Sql\SqlToken;
-use ZtdQuery\Sql\SqlTokenScanner;
-use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(MySqlUpsertExpressionCursor::class)]
 #[UsesClass(MySqlUpsertLiteral::class)]
 #[UsesClass(MySqlLexerProfile::class)]
-#[UsesClass(SqlToken::class)]
-#[UsesClass(SqlTokenStream::class)]
-#[UsesClass(SqlTokenScanner::class)]
-#[UsesClass(UnsupportedSqlException::class)]
 final class MySqlUpsertExpressionCursorTest extends TestCase
 {
     public function testOverStartsAtTheFirstThingTheExpressionSays(): void

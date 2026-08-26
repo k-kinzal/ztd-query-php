@@ -5,13 +5,11 @@ declare(strict_types=1);
 namespace Tests\Unit\Mutation;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\MySql\Mutation\AlterTableRows;
 use ZtdQuery\Shadow\ShadowStore;
 
 #[CoversClass(AlterTableRows::class)]
-#[UsesClass(ShadowStore::class)]
 final class AlterTableRowsTest extends TestCase
 {
     public function testRemoveColumnTakesItOffEveryRow(): void

@@ -25,6 +25,10 @@ use ZtdQuery\Schema\TableDefinitionRegistry;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlForeignKeyDefinitionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLoadDataDelimiters::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLoadDataInsert::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLoadDataTargets::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlStatementOptions::class)]
 final class MySqlLoadDataProjectorTest extends TestCase
 {
     public function testProjectsDefaultTabSeparatedInputAndNullMarker(): void

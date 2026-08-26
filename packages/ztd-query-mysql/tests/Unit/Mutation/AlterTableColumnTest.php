@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Tests\Unit\Mutation;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Tests\Fixture\MySqlAlterStatements;
 use ZtdQuery\Platform\MySql\Mutation\AlterTableColumn;
 
 #[CoversClass(AlterTableColumn::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlStatementOptions::class)]
 final class AlterTableColumnTest extends TestCase
 {
     public function testNameInAnswersTheColumnTheOperationIsAbout(): void

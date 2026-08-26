@@ -90,6 +90,14 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlViewShadowRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlGeneratedColumnProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Mutation\AlterTableColumn::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Mutation\AlterTableOperation::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Mutation\AlterTableRows::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Mutation\MySqlTableRedeclaration::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlComponentSql::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlStatementOptions::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlUpsertExpressionCursor::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlUpsertLiteral::class)]
 final class MySqlRewriterTest extends RewriterContractTest
 {
     public function testPartitionSelectionUsesRegisteredPartitionMetadata(): void

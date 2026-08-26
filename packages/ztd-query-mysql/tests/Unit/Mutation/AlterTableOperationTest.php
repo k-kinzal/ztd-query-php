@@ -14,19 +14,13 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\Mutation\AlterTableColumn;
 use ZtdQuery\Platform\MySql\Mutation\AlterTableOperation;
 use ZtdQuery\Platform\MySql\Mutation\AlterTableRows;
-use ZtdQuery\Schema\TableDefinition;
-use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
 
 #[CoversClass(AlterTableOperation::class)]
 #[UsesClass(AlterTableColumn::class)]
 #[UsesClass(AlterTableRows::class)]
-#[UsesClass(TableDefinition::class)]
-#[UsesClass(TableDefinitionRegistry::class)]
-#[UsesClass(ShadowStore::class)]
-#[UsesClass(ColumnAlreadyExistsException::class)]
-#[UsesClass(ColumnNotFoundException::class)]
-#[UsesClass(UnsupportedSqlException::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlComponentSql::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlStatementOptions::class)]
 final class AlterTableOperationTest extends TestCase
 {
     public function testApplyToAddsTheColumnAnAddDeclares(): void
