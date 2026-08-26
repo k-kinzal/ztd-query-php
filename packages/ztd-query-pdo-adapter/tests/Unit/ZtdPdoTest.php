@@ -36,9 +36,6 @@ use ZtdQuery\Shadow\ShadowStore;
 #[UsesClass(ZtdPdoException::class)]
 final class ZtdPdoTest extends TestCase
 {
-    /**
-     * Test that an explicitly provided SessionFactory overrides auto-detection in constructor.
-     */
     public function testConstructorUsesExplicitSessionFactory(): void
     {
         $rewriter = static::createStub(SqlRewriter::class);
@@ -52,9 +49,6 @@ final class ZtdPdoTest extends TestCase
         self::assertTrue($ztdPdo->isZtdEnabled());
     }
 
-    /**
-     * Test that an explicitly provided SessionFactory overrides auto-detection in fromPdo().
-     */
     public function testFromPdoUsesExplicitSessionFactory(): void
     {
         $rewriter = static::createStub(SqlRewriter::class);
@@ -69,9 +63,6 @@ final class ZtdPdoTest extends TestCase
         self::assertTrue($ztdPdo->isZtdEnabled());
     }
 
-    /**
-     * Test that auto-detection works for SQLite driver when the package is installed.
-     */
     public function testAutoDetectionForSqliteDriver(): void
     {
         (fn () => class_exists('ZtdQuery\\Platform\\Sqlite\\SqliteSessionFactory') || self::markTestSkipped('ztd-query-sqlite package is not installed.'))();
@@ -82,9 +73,6 @@ final class ZtdPdoTest extends TestCase
         self::assertTrue($ztdPdo->isZtdEnabled());
     }
 
-    /**
-     * Test that the DRIVER_MAP constant contains expected drivers.
-     */
     public function testDriverMapContainsExpectedDrivers(): void
     {
         $reflection = new ReflectionClass(ZtdPdo::class);
@@ -108,9 +96,6 @@ final class ZtdPdoTest extends TestCase
         self::assertSame('k-kinzal/ztd-query-sqlite', $driverMap['sqlite']['package']);
     }
 
-    /**
-     * Test that unsupported driver throws RuntimeException with descriptive message.
-     */
     public function testUnsupportedDriverThrowsException(): void
     {
         $reflection = new ReflectionClass(ZtdPdo::class);
@@ -137,9 +122,6 @@ final class ZtdPdoTest extends TestCase
         $method->invoke(null, $fakePdo);
     }
 
-    /**
-     * Test that the error message for unsupported driver lists all supported drivers.
-     */
     public function testUnsupportedDriverErrorListsSupportedDrivers(): void
     {
         $reflection = new ReflectionClass(ZtdPdo::class);
@@ -170,9 +152,6 @@ final class ZtdPdoTest extends TestCase
         }
     }
 
-    /**
-     * Test that a known driver with available class succeeds in auto-detection.
-     */
     public function testDetectFactorySucceedsForInstalledDriver(): void
     {
         $reflection = new ReflectionClass(ZtdPdo::class);
@@ -199,9 +178,6 @@ final class ZtdPdoTest extends TestCase
         self::assertInstanceOf(SessionFactory::class, $result);
     }
 
-    /**
-     * Test that enableZtd/disableZtd/isZtdEnabled work with explicit factory.
-     */
     public function testZtdToggleWithExplicitFactory(): void
     {
         $rewriter = static::createStub(SqlRewriter::class);
@@ -222,9 +198,6 @@ final class ZtdPdoTest extends TestCase
         self::assertTrue($ztdPdo->isZtdEnabled());
     }
 
-    /**
-     * Test that SessionFactory is called exactly once per ZtdPdo instance.
-     */
     public function testSessionFactoryCalledOncePerInstance(): void
     {
         $callCount = 0;
@@ -248,9 +221,6 @@ final class ZtdPdoTest extends TestCase
         self::assertSame(1, $callCount);
     }
 
-    /**
-     * Test that explicit config is passed to the factory via fromPdo.
-     */
     public function testExplicitConfigPassedToFactory(): void
     {
         $expectedConfig = ZtdConfig::default();
@@ -406,9 +376,6 @@ final class ZtdPdoTest extends TestCase
         self::assertFalse($ztdPdo->exec('first; second; third'));
     }
 
-    /**
-     * Test that explicit config is passed to the factory via constructor.
-     */
     public function testConstructorPassesExplicitConfigToFactory(): void
     {
         $expectedConfig = ZtdConfig::default();
