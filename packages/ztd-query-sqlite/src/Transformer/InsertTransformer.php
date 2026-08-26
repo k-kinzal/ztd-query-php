@@ -40,6 +40,13 @@ final class InsertTransformer implements SqlTransformer
     private SqliteCteShadowComposer $cteComposer;
     private SqliteNativeUpsertProjector $upsertProjector;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param SqliteParser $parser
+     * @param SelectTransformer $selectTransformer
+     * @param ?CastRenderer $castRenderer
+     */
     public function __construct(
         SqliteParser $parser,
         SelectTransformer $selectTransformer,
@@ -108,6 +115,10 @@ final class InsertTransformer implements SqlTransformer
         );
     }
 
+    /**
+     * Commit rewrite state.
+     *
+     */
     public function commitRewriteState(): void
     {
         $this->identityAllocator->commitProjection();

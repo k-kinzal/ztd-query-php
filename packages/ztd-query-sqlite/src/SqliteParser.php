@@ -167,6 +167,12 @@ final class SqliteParser
         return $this->parseAssignments($setClause);
     }
 
+    /**
+     * Reads update alias.
+     *
+     * @param string $sql
+     * @return ?string
+     */
     public function extractUpdateAlias(string $sql): ?string
     {
         $tokens = SqlTokenStream::tokenize($sql, SqliteLexerProfile::create())->significantTokens();
@@ -205,6 +211,12 @@ final class SqliteParser
         return null;
     }
 
+    /**
+     * Reads update from clause.
+     *
+     * @param string $sql
+     * @return ?string
+     */
     public function extractUpdateFromClause(string $sql): ?string
     {
         return SqlTokenStream::tokenize($sql, SqliteLexerProfile::create())->topLevelClause(
@@ -297,6 +309,12 @@ final class SqliteParser
         return $this->parseAssignments($setClause);
     }
 
+    /**
+     * Reads on conflict update where.
+     *
+     * @param string $sql
+     * @return ?string
+     */
     public function extractOnConflictUpdateWhere(string $sql): ?string
     {
         return SqlTokenStream::tokenize($sql, SqliteLexerProfile::create())->topLevelClauseAfter(
@@ -339,6 +357,12 @@ final class SqliteParser
         return trim(SqliteLexicalMasker::maskComments($sql));
     }
 
+    /**
+     * Mask string literals.
+     *
+     * @param string $sql
+     * @return string
+     */
     public function maskStringLiterals(string $sql): string
     {
         $result = '';

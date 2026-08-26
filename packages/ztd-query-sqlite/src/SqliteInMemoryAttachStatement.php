@@ -10,6 +10,12 @@ use ZtdQuery\Sql\SqlTokenStream;
 
 final class SqliteInMemoryAttachStatement
 {
+    /**
+     * Reports whether safe.
+     *
+     * @param string $sql
+     * @return bool
+     */
     public static function isSafe(string $sql): bool
     {
         $tokens = SqlTokenStream::tokenize($sql, SqliteLexerProfile::create())->significantTokens();

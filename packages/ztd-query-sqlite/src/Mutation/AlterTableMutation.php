@@ -12,6 +12,16 @@ use ZtdQuery\Shadow\ShadowStore;
 
 final class AlterTableMutation implements ShadowMutation
 {
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param string $sql
+     * @param string $sourceTable
+     * @param string $targetTable
+     * @param TableDefinition $definition
+     * @param TableDefinitionRegistry $registry
+     * @param string $resultSelect
+     */
     public function __construct(
         private readonly string $sql,
         private readonly string $sourceTable,
@@ -41,11 +51,21 @@ final class AlterTableMutation implements ShadowMutation
         $store->set($this->targetTable, $rows);
     }
 
+    /**
+     * Result select.
+     *
+     * @return string
+     */
     public function resultSelect(): string
     {
         return $this->resultSelect;
     }
 
+    /**
+     * Table name.
+     *
+     * @return string
+     */
     public function tableName(): string
     {
         return $this->sourceTable;

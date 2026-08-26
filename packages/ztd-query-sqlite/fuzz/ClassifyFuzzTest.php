@@ -61,6 +61,10 @@ final class ClassifyFuzzTest extends TestCase
         self::addToAssertionCount(self::ITERATIONS);
     }
 
+    /**
+     * Test classify select returns read or null.
+     *
+     */
     public function testClassifySelectReturnsReadOrNull(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
@@ -81,6 +85,10 @@ final class ClassifyFuzzTest extends TestCase
         self::addToAssertionCount(self::ITERATIONS);
     }
 
+    /**
+     * Test classify insert returns write simulated or null.
+     *
+     */
     public function testClassifyInsertReturnsWriteSimulatedOrNull(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
@@ -101,6 +109,10 @@ final class ClassifyFuzzTest extends TestCase
         self::addToAssertionCount(self::ITERATIONS);
     }
 
+    /**
+     * Test classify update returns write simulated or null.
+     *
+     */
     public function testClassifyUpdateReturnsWriteSimulatedOrNull(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
@@ -121,6 +133,10 @@ final class ClassifyFuzzTest extends TestCase
         self::addToAssertionCount(self::ITERATIONS);
     }
 
+    /**
+     * Test classify delete returns write simulated or null.
+     *
+     */
     public function testClassifyDeleteReturnsWriteSimulatedOrNull(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
@@ -141,6 +157,10 @@ final class ClassifyFuzzTest extends TestCase
         self::addToAssertionCount(self::ITERATIONS);
     }
 
+    /**
+     * Test classify create table returns ddl simulated or null.
+     *
+     */
     public function testClassifyCreateTableReturnsDdlSimulatedOrNull(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
@@ -161,6 +181,10 @@ final class ClassifyFuzzTest extends TestCase
         self::addToAssertionCount(self::ITERATIONS);
     }
 
+    /**
+     * Test classify drop table returns ddl simulated or null.
+     *
+     */
     public function testClassifyDropTableReturnsDdlSimulatedOrNull(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
@@ -181,6 +205,10 @@ final class ClassifyFuzzTest extends TestCase
         self::addToAssertionCount(self::ITERATIONS);
     }
 
+    /**
+     * Test classify alter table returns ddl simulated or null.
+     *
+     */
     public function testClassifyAlterTableReturnsDdlSimulatedOrNull(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {

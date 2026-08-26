@@ -6,6 +6,12 @@ namespace ZtdQuery\Platform\Sqlite;
 
 final class SqliteLexicalMasker
 {
+    /**
+     * Mask comments.
+     *
+     * @param string $sql
+     * @return string
+     */
     public static function maskComments(string $sql): string
     {
         $result = '';

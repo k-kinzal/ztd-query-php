@@ -15,6 +15,10 @@ final class SqliteGeneratedColumnProjector
 
     private readonly IdentifierQuoter $quoter;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     */
     public function __construct()
     {
         $this->quoter = new SqliteIdentifierQuoter();

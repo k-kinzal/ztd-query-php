@@ -43,6 +43,12 @@ final class RobustnessTarget
     /** @var array<string, array<int, array<string, mixed>>> */
     private array $fixtureData;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param Generator $faker
+     * @param SqliteProvider $provider
+     */
     public function __construct(Generator $faker, SqliteProvider $provider)
     {
         $this->faker = $faker;

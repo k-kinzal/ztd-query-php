@@ -15,6 +15,11 @@ final class SqliteSchemaReflector implements SchemaReflector, ViewReflector
 {
     private ConnectionInterface $connection;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param ConnectionInterface $connection
+     */
     public function __construct(ConnectionInterface $connection)
     {
         $this->connection = $connection;

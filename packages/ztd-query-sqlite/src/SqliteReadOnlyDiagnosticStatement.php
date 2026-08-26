@@ -8,6 +8,12 @@ use ZtdQuery\Sql\SqlTokenStream;
 
 final class SqliteReadOnlyDiagnosticStatement
 {
+    /**
+     * Reports whether safe.
+     *
+     * @param string $sql
+     * @return bool
+     */
     public static function isSafe(string $sql): bool
     {
         $stream = SqlTokenStream::tokenize($sql, SqliteLexerProfile::create());

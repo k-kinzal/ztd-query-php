@@ -10,6 +10,11 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 
 final class SqlitePdoResultColumnTypeResolver implements ResultColumnTypeResolver
 {
+    /**
+     * Answers.
+     *
+     * @return ColumnType
+     */
     public function resolve(array $metadata): ColumnType
     {
         $declaredType = $metadata['sqlite:decl_type'] ?? null;

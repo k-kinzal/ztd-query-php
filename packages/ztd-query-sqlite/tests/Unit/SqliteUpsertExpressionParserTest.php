@@ -15,6 +15,11 @@ use ZtdQuery\Platform\Sqlite\SqliteUpsertExpressionParser;
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
 final class SqliteUpsertExpressionParserTest extends TestCase
 {
+    /**
+     * Test parses sqlite expression cases.
+     *
+     * @param string $sql
+     */
     #[DataProvider('providerSqliteExpressionCases')]
     public function testParsesSqliteExpressionCases(string $sql, mixed $expected): void
     {
@@ -53,6 +58,10 @@ final class SqliteUpsertExpressionParserTest extends TestCase
         yield 'escaped string' => ["'it''s'", "it's"];
     }
 
+    /**
+     * Test parses excluded and existing references.
+     *
+     */
     public function testParsesExcludedAndExistingReferences(): void
     {
         $expression = (new SqliteUpsertExpressionParser())->parse(
@@ -63,6 +72,10 @@ final class SqliteUpsertExpressionParserTest extends TestCase
         self::assertSame(11, $expression->evaluate(['quantity' => 5], ['quantity' => 3], 'items'));
     }
 
+    /**
+     * Test unescapes quoted sqlite identifiers.
+     *
+     */
     public function testUnescapesQuotedSqliteIdentifiers(): void
     {
         $parser = new SqliteUpsertExpressionParser();
@@ -77,6 +90,10 @@ final class SqliteUpsertExpressionParserTest extends TestCase
         );
     }
 
+    /**
+     * Test parses predicate.
+     *
+     */
     public function testParsesPredicate(): void
     {
         $expression = (new SqliteUpsertExpressionParser())->parse(
@@ -87,11 +104,19 @@ final class SqliteUpsertExpressionParserTest extends TestCase
         self::assertTrue($expression->matches(['score' => 80], ['name' => 'ready'], 'items'));
     }
 
+    /**
+     * Test returns null for unsupported function.
+     *
+     */
     public function testReturnsNullForUnsupportedFunction(): void
     {
         self::assertNull((new SqliteUpsertExpressionParser())->parseIfSupported('COALESCE(score, 0)', 'items'));
     }
 
+    /**
+     * Test rejects my sql values function.
+     *
+     */
     public function testRejectsMySqlValuesFunction(): void
     {
         $this->expectException(UnsupportedSqlException::class);
@@ -99,6 +124,11 @@ final class SqliteUpsertExpressionParserTest extends TestCase
         (new SqliteUpsertExpressionParser())->parse('VALUES(quantity)', 'items');
     }
 
+    /**
+     * Test rejects invalid sqlite expression.
+     *
+     * @param string $sql
+     */
     #[DataProvider('providerInvalidSqliteExpression')]
     public function testRejectsInvalidSqliteExpression(string $sql): void
     {

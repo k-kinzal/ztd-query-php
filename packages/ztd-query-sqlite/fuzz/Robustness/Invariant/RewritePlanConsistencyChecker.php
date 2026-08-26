@@ -14,11 +14,22 @@ final class RewritePlanConsistencyChecker implements InvariantChecker
 {
     private SqlRewriter $rewriter;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param SqlRewriter $rewriter
+     */
     public function __construct(SqlRewriter $rewriter)
     {
         $this->rewriter = $rewriter;
     }
 
+    /**
+     * Check.
+     *
+     * @param string $sql
+     * @return ?InvariantViolation
+     */
     public function check(string $sql): ?InvariantViolation
     {
         try {
@@ -30,6 +41,13 @@ final class RewritePlanConsistencyChecker implements InvariantChecker
         return $this->checkPlan($plan, $sql);
     }
 
+    /**
+     * Check plan.
+     *
+     * @param RewritePlan $plan
+     * @param string $sql
+     * @return ?InvariantViolation
+     */
     public function checkPlan(RewritePlan $plan, string $sql): ?InvariantViolation
     {
         $kind = $plan->kind();

@@ -11,6 +11,10 @@ final class InsertRowRenderer
 {
     private InsertRowProjectionPlanner $projectionPlanner;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     */
     public function __construct()
     {
         $this->projectionPlanner = new InsertRowProjectionPlanner();

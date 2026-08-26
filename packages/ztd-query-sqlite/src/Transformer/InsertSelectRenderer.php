@@ -13,6 +13,10 @@ final class InsertSelectRenderer
     private SqliteIdentifierQuoter $quoter;
     private InsertSelectProjectionPlanner $projectionPlanner;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     */
     public function __construct()
     {
         $this->quoter = new SqliteIdentifierQuoter();

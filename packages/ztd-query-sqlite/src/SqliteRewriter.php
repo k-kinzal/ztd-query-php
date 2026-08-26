@@ -28,6 +28,12 @@ use ZtdQuery\Sql\TransactionStatement;
  */
 final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
 {
+    /**
+     * Transaction statement.
+     *
+     * @param string $sql
+     * @return ?TransactionStatement
+     */
     public function transactionStatement(string $sql): ?TransactionStatement
     {
         return (new SqliteTransactionStatementParser())->parse($sql);
@@ -43,6 +49,17 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
     private SqliteCteShadowComposer $cteComposer;
     private ViewDefinitionSet $views;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param SqliteQueryGuard $guard
+     * @param ShadowStore $shadowStore
+     * @param TableDefinitionRegistry $registry
+     * @param SqliteTransformer $transformer
+     * @param SqliteMutationResolver $mutationResolver
+     * @param SqliteParser $parser
+     * @param ?ViewDefinitionSet $views
+     */
     public function __construct(
         SqliteQueryGuard $guard,
         ShadowStore $shadowStore,
@@ -113,6 +130,10 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
         return $this->parser->splitStatements($sql);
     }
 
+    /**
+     * Commit rewrite state.
+     *
+     */
     public function commitRewriteState(): void
     {
         $this->transformer->commitRewriteState();
@@ -339,6 +360,11 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
         return false;
     }
 
+    /**
+     * Empty result select.
+     *
+     * @return string
+     */
     public function emptyResultSelect(): string
     {
         return 'SELECT 1 WHERE 0';

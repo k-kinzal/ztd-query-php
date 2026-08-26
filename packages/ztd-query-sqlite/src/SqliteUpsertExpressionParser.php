@@ -22,6 +22,13 @@ final class SqliteUpsertExpressionParser
 
     private int $index = 0;
 
+    /**
+     * Reads.
+     *
+     * @param string $sql
+     * @param string $tableName
+     * @return UpsertExpression
+     */
     public function parse(string $sql, string $tableName): UpsertExpression
     {
         $this->sql = $sql;
@@ -36,6 +43,13 @@ final class SqliteUpsertExpressionParser
         return $expression;
     }
 
+    /**
+     * Reads if supported.
+     *
+     * @param string $sql
+     * @param string $tableName
+     * @return ?UpsertExpression
+     */
     public function parseIfSupported(string $sql, string $tableName): ?UpsertExpression
     {
         try {

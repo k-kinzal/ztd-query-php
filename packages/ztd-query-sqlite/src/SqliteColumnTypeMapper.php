@@ -9,6 +9,12 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 
 final class SqliteColumnTypeMapper
 {
+    /**
+     * Map.
+     *
+     * @param string $nativeType
+     * @return ColumnType
+     */
     public function map(string $nativeType): ColumnType
     {
         $normalized = strtoupper(trim($nativeType));

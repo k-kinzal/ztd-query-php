@@ -11,11 +11,22 @@ final class ClassifyNeverThrowsChecker implements InvariantChecker
 {
     private SqliteQueryGuard $guard;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param SqliteQueryGuard $guard
+     */
     public function __construct(SqliteQueryGuard $guard)
     {
         $this->guard = $guard;
     }
 
+    /**
+     * Check.
+     *
+     * @param string $sql
+     * @return ?InvariantViolation
+     */
     public function check(string $sql): ?InvariantViolation
     {
         try {

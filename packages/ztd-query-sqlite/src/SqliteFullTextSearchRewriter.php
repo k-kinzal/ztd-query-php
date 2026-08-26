@@ -18,6 +18,10 @@ final class SqliteFullTextSearchRewriter
     private SqliteIdentifierQuoter $quoter;
     private SqliteParser $parser;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     */
     public function __construct()
     {
         $this->quoter = new SqliteIdentifierQuoter();

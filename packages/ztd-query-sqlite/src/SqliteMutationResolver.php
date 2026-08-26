@@ -38,6 +38,14 @@ final class SqliteMutationResolver
     private SchemaParser $schemaParser;
     private SqliteParser $parser;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param ShadowStore $shadowStore
+     * @param TableDefinitionRegistry $registry
+     * @param SchemaParser $schemaParser
+     * @param SqliteParser $parser
+     */
     public function __construct(
         ShadowStore $shadowStore,
         TableDefinitionRegistry $registry,
