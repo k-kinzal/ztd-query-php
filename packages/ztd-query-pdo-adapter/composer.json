@@ -77,7 +77,7 @@
         "test:integration": "phpunit tests/Integration/",
         "lint": [
             "@format:check",
-            "phpstan analyse --memory-limit=512M"
+            "@phpstan"
         ],
         "format": "php-cs-fixer fix --allow-risky=yes",
         "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
@@ -113,7 +113,8 @@
         "fuzz:correctness:pg:update": "php-fuzzer fuzz fuzz/fuzz_correctness_pg_update.php fuzz/corpus/correctness-update/",
         "fuzz:correctness:pg:delete": "php-fuzzer fuzz fuzz/fuzz_correctness_pg_delete.php fuzz/corpus/correctness-delete/",
         "fuzz:correctness:pg:ctas": "php-fuzzer fuzz fuzz/fuzz_correctness_pg_ctas.php fuzz/corpus/correctness-pg-ctas/",
-        "infection": "infection --threads=max --show-mutations --no-progress"
+        "infection": "infection --threads=max --show-mutations --no-progress",
+        "phpstan": "phpstan analyse src fuzz tests --memory-limit=512M"
     },
     "config": {
         "allow-plugins": {

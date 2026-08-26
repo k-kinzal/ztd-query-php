@@ -55,7 +55,7 @@ use Tests\Fixture\Fixture\ShopSchemas;
 final class PlanGeneratorTest extends TestCase
 {
     #[Test]
-    public function theTableThePlanIsAboutGetsOneRow(): void
+    public function testGenerateTheTableThePlanIsAboutGetsOneRow(): void
     {
         $set = ShopSchemas::generator()->generate(
             FixturePlan::from('order.id < order_detail.order_id')

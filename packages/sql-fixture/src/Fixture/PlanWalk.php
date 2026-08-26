@@ -10,6 +10,7 @@ use SqlFixture\Plan\Relation;
 use SqlFixture\Schema\SchemaNotFoundException;
 use SqlFixture\Schema\SchemaResolverInterface;
 use SqlFixture\Schema\TableSchema;
+use SqlFixture\TypeMapper\TypeMapperInterface;
 
 /**
  * Generates the rows of one plan, following its relations outwards.
@@ -23,6 +24,8 @@ use SqlFixture\Schema\TableSchema;
  * collection-ness of where they came from, so a table reached through a list
  * is a list however many rows it happens to have. The relation walked in on is
  * skipped on the way back out, which is what keeps the walk from going round.
+ *
+ * @phpstan-import-type FixtureRow from TypeMapperInterface
  */
 final class PlanWalk
 {
@@ -46,7 +49,7 @@ final class PlanWalk
      * Generates rows of one table and everything they reach.
      *
      * @param string $table Table to generate
-     * @param array<string, mixed> $inherited Columns already fixed by the relation walked in on
+     * @param FixtureRow $inherited Columns already fixed by the relation walked in on
      * @param int $rows How many rows to generate
      * @param bool $isList Whether this table was reached through a collection
      * @param Relation|null $arrivedBy Relation walked in on, not followed back out
@@ -74,7 +77,7 @@ final class PlanWalk
      * Generates one row, its parents before it and its children after.
      *
      * @param TableSchema $schema Table being generated
-     * @param array<string, mixed> $inherited Columns already fixed by the relation walked in on
+     * @param FixtureRow $inherited Columns already fixed by the relation walked in on
      * @param RowSpec $spec What the caller asked for on this table
      * @param int $index Which row of this table is being generated
      * @param bool $isList Whether this table was reached through a collection
@@ -122,10 +125,10 @@ final class PlanWalk
      * makes the reference null.
      *
      * @param Relation $relation Relation to the parent
-     * @param array<string, mixed> $overrides Values the caller fixed on this row
+     * @param FixtureRow $overrides Values the caller fixed on this row
      * @param bool $isList Whether this table was reached through a collection
      *
-     * @return array<string, mixed> Linking columns and the values they must carry
+     * @return FixtureRow Linking columns and the values they must carry
      *
      * @throws PlanSchemaException When the parent row does not carry a column the relation reads
      * @throws SchemaNotFoundException When the plan names a table nothing can resolve
@@ -149,7 +152,7 @@ final class PlanWalk
      * Generates the rows that reference this one.
      *
      * @param Relation $relation Relation to the children
-     * @param array<string, mixed> $row Row they reference
+     * @param FixtureRow $row Row they reference
      * @param bool $isList Whether this table was reached through a collection
      *
      * @throws PlanSchemaException When this row does not carry a column the relation reads

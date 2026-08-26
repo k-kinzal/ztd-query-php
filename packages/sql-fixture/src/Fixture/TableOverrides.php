@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlFixture\Fixture;
 
+use SqlFixture\TypeMapper\TypeMapperInterface;
+
 /**
  * Column values to use instead of generated ones, for one table.
  *
@@ -11,30 +13,35 @@ namespace SqlFixture\Fixture;
  * names and their types are checked where they are written rather than when
  * the fixture runs. A null argument means "leave this column to the
  * generator"; withNull() is how a column is deliberately set to NULL.
+ *
+ * @phpstan-import-type FixtureRow from TypeMapperInterface
  */
 final class TableOverrides
 {
     /**
-     * @param array<string, mixed> $values
+     * @param FixtureRow $values Columns the caller fixed, and the values they take
      * @param array<array-key, string> $nulls Columns to set to NULL rather than generate
      */
-    private function __construct(
+    public function __construct(
         private readonly array $values,
         private readonly array $nulls,
     ) {
     }
 
     /**
-     * Keep only the arguments that were actually given.
+     * Keeps only the arguments that were actually given.
      *
-     * @param array<string, mixed> $values
+     * A named argument left at null means the caller said nothing about that
+     * column, so it is dropped and the column is generated. Setting one to
+     * NULL deliberately is what withNull() is for.
+     *
+     * @param FixtureRow $values Columns the caller named, and the values they take
+     *
+     * @return self The overrides, without the columns nobody named
      */
     public static function of(array $values = []): self
     {
-        return new self(
-            array_filter($values, static fn (mixed $value): bool => $value !== null),
-            []
-        );
+        return new self(array_filter($values, static fn (int|float|string|bool|array|null $value): bool => $value !== null), []);
     }
 
     /**
@@ -46,7 +53,7 @@ final class TableOverrides
     }
 
     /**
-     * @return array<string, mixed>
+     * @return FixtureRow
      */
     public function toArray(): array
     {

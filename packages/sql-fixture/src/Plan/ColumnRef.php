@@ -28,6 +28,16 @@ final class ColumnRef
         }
     }
 
+    /**
+     * Names an endpoint by its table and the columns it binds.
+     *
+     * @param string $table Table the endpoint is on
+     * @param string ...$columns Columns it binds, in order
+     *
+     * @return self The endpoint
+     *
+     * @throws PlanSyntaxException When the table is unnamed, or no column is given
+     */
     public static function of(string $table, string ...$columns): self
     {
         return new self($table, array_values($columns));
@@ -75,6 +85,11 @@ final class ColumnRef
         return new self($table, $names);
     }
 
+    /**
+     * Reports whether the endpoint binds more than one column.
+     *
+     * @return bool True when it binds several
+     */
     public function isComposite(): bool
     {
         return count($this->columns) > 1;
@@ -88,6 +103,11 @@ final class ColumnRef
         return $this->table === $other->table && $this->columns === $other->columns;
     }
 
+    /**
+     * Writes the endpoint as a plan spells it.
+     *
+     * @return string The endpoint, with a composite one bracketed
+     */
     public function toString(): string
     {
         if (!$this->isComposite()) {
@@ -97,6 +117,11 @@ final class ColumnRef
         return $this->table . '.(' . implode(', ', $this->columns) . ')';
     }
 
+    /**
+     * Writes the endpoint as a plan spells it.
+     *
+     * @return string The endpoint, with a composite one bracketed
+     */
     public function __toString(): string
     {
         return $this->toString();

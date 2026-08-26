@@ -36,19 +36,19 @@ final class PostgreSqlTypeMapper implements TypeMapperInterface
      * @param Generator $faker Source of every choice
      * @param ColumnDefinition $column Column the value is for
      *
-     * @return mixed The value, or null when the server fills the column in itself
+     * @return int|float|string|bool|null The value, or null when the server fills the column in itself
      *
      * @throws RandomException When a bytea column is asked for and the system has no source of randomness
      */
     #[Override]
-    public function generate(Generator $faker, ColumnDefinition $column): mixed
+    public function generate(Generator $faker, ColumnDefinition $column): int|float|string|bool|null
     {
         if ($column->autoIncrement || $column->generated) {
             return null;
         }
 
         $value = $this->sample->of($faker, $column);
-        if ($column->nullable && $value !== null && $faker->boolean(10)) {
+        if ($column->nullable && $faker->boolean(10)) {
             return $column->default;
         }
 

@@ -9,9 +9,12 @@ use Faker\Provider\Base;
 use SqlFixture\Fixture\FixtureSet;
 use SqlFixture\Fixture\PlanGenerator;
 use SqlFixture\Fixture\TableOverrides;
+use SqlFixture\Hydrator\HydrationException;
 use SqlFixture\Hydrator\HydratorInterface;
 use SqlFixture\Plan\FixturePlan;
 use SqlFixture\Platform\PlatformFactory;
+use SqlFixture\Platform\UnsupportedDriverException;
+use SqlFixture\Schema\SchemaParseException;
 use SqlFixture\Schema\SchemaParserInterface;
 use SqlFixture\Schema\StaticSchemaResolver;
 use SqlFixture\Schema\TableSchema;
@@ -19,6 +22,7 @@ use SqlFixture\TypeMapper\TypeMapperInterface;
 
 /**
  * Faker provider that generates fixtures from CREATE TABLE SQL statements.
+ * @phpstan-import-type FixtureRow from TypeMapperInterface
  */
 class FixtureProvider extends Base
 {
@@ -52,14 +56,20 @@ class FixtureProvider extends Base
     }
 
     /**
-     * Generate a fixture from a CREATE TABLE SQL statement.
+     * Builds one row for the table a declaration describes.
      *
      * @template T of object
-     * @param string $createTableSql CREATE TABLE SQL statement
-     * @param array<string, mixed> $overrides Override values
-     * @param class-string<T>|null $className Deserialization target class
-     * @param string|null $dialect SQL dialect for this specific call (overrides constructor default)
-     * @return ($className is null ? array<string, mixed> : T)
+     * @param string $createTableSql Declaration of the table to build a row for
+     * @param array<array-key, mixed> $overrides Columns the caller fixes, instead of generating them
+     * @param class-string<T>|null $className Class to hydrate the row into, or null for the row itself
+     * @param string|null $dialect Dialect to read the declaration as, or null for the provider's own
+     *
+     * @return ($className is null ? FixtureRow : T) The row, or the object it was hydrated into
+     *
+     * @throws SchemaParseException When the declaration cannot be read
+     * @throws InvalidOverrideException When an override names a column the table cannot hold
+     * @throws UnsupportedDriverException When the dialect is not one this package supports
+     * @throws HydrationException When the row cannot be turned into the class named
      */
     public function fixture(
         string $createTableSql,
@@ -104,9 +114,23 @@ class FixtureProvider extends Base
     }
 
     /**
-     * Get or parse schema from SQL.
+     * Answers the table a declaration describes, reading it once.
+     *
+     * A declaration is read the first time it is seen and kept against the
+     * dialect it was read for, because a provider is typically handed the same
+     * declaration repeatedly and reading it again would say the same thing.
+     * Each table read is also registered with the resolver, which is what lets
+     * a later plan name it.
+     *
+     * @param string $createTableSql Declaration as it was written
+     * @param string|null $dialect Dialect to read it as, or null for the provider's own
+     *
+     * @return TableSchema The table
+     *
+     * @throws SchemaParseException When the declaration cannot be read
+     * @throws UnsupportedDriverException When the dialect is not one this package supports
      */
-    protected function getSchema(string $createTableSql, ?string $dialect = null): TableSchema
+    public function getSchema(string $createTableSql, ?string $dialect = null): TableSchema
     {
         $effectiveDialect = $dialect ?? $this->dialect;
         $cacheKey = md5($createTableSql . ':' . $effectiveDialect);

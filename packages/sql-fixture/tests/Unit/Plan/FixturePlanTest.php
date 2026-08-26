@@ -31,7 +31,7 @@ use Tests\Fixture\Plan\OrderWithDetailsPlan;
 final class FixturePlanTest extends TestCase
 {
     #[Test]
-    public function fromReadsTheRelationString(): void
+    public function testFromReadsTheRelationString(): void
     {
         $plan = FixturePlan::from('order.id < order_detail.order_id');
 
@@ -50,7 +50,7 @@ final class FixturePlanTest extends TestCase
     }
 
     #[Test]
-    public function toStringWritesThePlanBack(): void
+    public function testToStringWritesThePlanBack(): void
     {
         $plan = FixturePlan::from('order.id<order_detail.order_id');
 
@@ -67,7 +67,7 @@ final class FixturePlanTest extends TestCase
     }
 
     #[Test]
-    public function tableStartsAPlanWithNoRelations(): void
+    public function testTableStartsAPlanWithNoRelations(): void
     {
         $plan = FixturePlan::table('order');
 
@@ -77,7 +77,7 @@ final class FixturePlanTest extends TestCase
     }
 
     #[Test]
-    public function withOneToManyAddsARelation(): void
+    public function testWithOneToManyAddsARelation(): void
     {
         $plan = FixturePlan::table('order')->withOneToMany('order.id', 'order_detail.order_id');
 
@@ -85,7 +85,7 @@ final class FixturePlanTest extends TestCase
     }
 
     #[Test]
-    public function withManyToOneAddsARelation(): void
+    public function testWithManyToOneAddsARelation(): void
     {
         $plan = FixturePlan::table('order')->withManyToOne('order.customer_id', 'customer.id');
 
@@ -102,7 +102,7 @@ final class FixturePlanTest extends TestCase
     }
 
     #[Test]
-    public function withOneToOneAddsARelation(): void
+    public function testWithOneToOneAddsARelation(): void
     {
         $plan = FixturePlan::table('order')->withOneToOne('order.id', 'order_shipping.order_id');
 
@@ -121,7 +121,7 @@ final class FixturePlanTest extends TestCase
     }
 
     #[Test]
-    public function withTableNamesATableThatHasNoRelationYet(): void
+    public function testWithTableNamesATableThatHasNoRelationYet(): void
     {
         $plan = FixturePlan::table('order')->withTable('audit_log');
 
@@ -149,7 +149,7 @@ final class FixturePlanTest extends TestCase
     }
 
     #[Test]
-    public function theSubjectIsTheFirstTableNamed(): void
+    public function testSubjectTableTheSubjectIsTheFirstTableNamed(): void
     {
         $plan = FixturePlan::from('order.id < order_detail.order_id, order.customer_id > customer.id');
 
@@ -199,7 +199,7 @@ final class FixturePlanTest extends TestCase
     }
 
     #[Test]
-    public function rootsAreTheTablesNothingHasToPrecede(): void
+    public function testRootsAreTheTablesNothingHasToPrecede(): void
     {
         $plan = FixturePlan::from('b.a_id > a.id, b.c_id > c.id');
 
@@ -207,7 +207,7 @@ final class FixturePlanTest extends TestCase
     }
 
     #[Test]
-    public function dependenciesOfSelectsRelationsWhereTheTableIsTheChild(): void
+    public function testDependenciesOfSelectsRelationsWhereTheTableIsTheChild(): void
     {
         $plan = FixturePlan::from(
             'order.id < order_detail.order_id, order_detail.product_id > product.id'
@@ -219,7 +219,7 @@ final class FixturePlanTest extends TestCase
     }
 
     #[Test]
-    public function dependentsOfSelectsRelationsWhereTheTableIsTheParent(): void
+    public function testDependentsOfSelectsRelationsWhereTheTableIsTheParent(): void
     {
         $plan = FixturePlan::from(
             'order.id < order_detail.order_id, order_detail.product_id > product.id'
@@ -423,7 +423,7 @@ final class FixturePlanTest extends TestCase
     }
 
     #[Test]
-    public function withRelationAddsARelationDirectly(): void
+    public function testWithRelationAddsARelationDirectly(): void
     {
         $plan = FixturePlan::table('order')->withRelation(Relation::oneToMany('order.id', 'order_detail.order_id'));
 
@@ -436,5 +436,37 @@ final class FixturePlanTest extends TestCase
         $plan = (new FixturePlan(...['first' => Relation::oneToMany('a.id', 'b.a_id')]))->withTable('audit_log');
 
         self::assertSame(['a', 'b', 'audit_log'], $plan->tables);
+    }
+
+    #[Test]
+    public function testConnectedToGathersEverythingReachableHoweverTheArrowsPoint(): void
+    {
+        $plan = FixturePlan::from('order.id < order_detail.order_id, customer.id < order.customer_id');
+
+        self::assertSame(['order', 'order_detail', 'customer'], $plan->connectedTo('order'));
+    }
+
+    #[Test]
+    public function testConnectedToLeavesOutTablesInAnotherGroup(): void
+    {
+        $plan = FixturePlan::from('order.id < order_detail.order_id, product.id < stock.product_id');
+
+        self::assertSame(['product', 'stock'], $plan->connectedTo('product'));
+    }
+
+    #[Test]
+    public function testColumnsReferencedOnNamesTheParentColumnsRelationsReadOffIt(): void
+    {
+        $plan = FixturePlan::from('order.id < order_detail.order_id, order.id < shipment.order_id');
+
+        self::assertSame(['id'], $plan->columnsReferencedOn('order'));
+    }
+
+    #[Test]
+    public function testColumnsReferencedOnIsEmptyForATableNothingPointsAt(): void
+    {
+        $plan = FixturePlan::from('order.id < order_detail.order_id');
+
+        self::assertSame([], $plan->columnsReferencedOn('order_detail'));
     }
 }

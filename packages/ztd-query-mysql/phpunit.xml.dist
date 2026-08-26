@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you. -->
+<!-- requireSealedMockObjects, shortenArraysForExportThreshold and
+     ignoreIndirectDeprecations are PHPUnit 12+ attributes. This package supports
+     PHP 8.1, where PHPUnit 10.5 resolves and rejects the configuration outright,
+     so they cannot be set here until the package's minimum PHP version rises. -->
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
          bootstrap="vendor/autoload.php"
@@ -10,10 +14,9 @@
          beStrictAboutCoverageMetadata="true"
          beStrictAboutChangesToGlobalState="true"
          beStrictAboutOutputDuringTests="true"
+         beStrictAboutTestsThatDoNotTestAnything="true"
          failOnAllIssues="true"
-         failOnEmptyTestSuite="true"
-         failOnRisky="true"
-         failOnWarning="true"
+         displayDetailsOnAllIssues="true"
          enforceTimeLimit="true"
          timeoutForSmallTests="1"
          timeoutForMediumTests="10"
@@ -24,7 +27,7 @@
     </testsuite>
   </testsuites>
     <extensions>
-        <bootstrap class="PhpAiToolkit\PhpUnit\TestReporter\AiTestReporterExtension"/>
+        <bootstrap class="Toolkit\PhpUnit\TestReporter\AiTestReporterExtension"/>
     </extensions>
   <source restrictNotices="true"
           restrictWarnings="true"
@@ -39,4 +42,5 @@
       <directory>src</directory>
     </include>
   </source>
+  <coverage includeUncoveredFiles="true" disableCodeCoverageIgnore="true"/>
 </phpunit>

@@ -29,7 +29,7 @@ use SqlFixture\Plan\RelationSide;
 final class PlanPrinterTest extends TestCase
 {
     #[Test]
-    public function printsATableOnlyPlanAsItsTableName(): void
+    public function testPrintsATableOnlyPlanAsItsTableName(): void
     {
         self::assertSame('order', (new PlanPrinter())->print(FixturePlan::table('order')));
     }
@@ -128,7 +128,7 @@ final class PlanPrinterTest extends TestCase
     }
 
     #[Test]
-    public function printsASingleRelationWithoutAPlan(): void
+    public function testPrintRelationPrintsASingleRelationWithoutAPlan(): void
     {
         $relation = Relation::oneToMany('order.id', 'order_detail.order_id');
 
@@ -149,5 +149,62 @@ final class PlanPrinterTest extends TestCase
         $plan = (new PlanParser())->parse('audit_log, a.id < b.a_id, feature_flag');
 
         self::assertSame('a.id < b.a_id, audit_log, feature_flag', (new PlanPrinter())->print($plan));
+    }
+
+    #[Test]
+    public function testStandaloneTablesNamesOnlyTheTablesNoRelationTouches(): void
+    {
+        $plan = (new PlanParser())->parse('order.id<order_detail.order_id, coupon');
+
+        self::assertSame(['coupon'], (new PlanPrinter())->standaloneTables($plan));
+    }
+
+    #[Test]
+    public function testGroupGathersTheRelationsSharingALeftEndAndOperator(): void
+    {
+        $plan = (new PlanParser())->parse('order.id<[order_detail.order_id, shipment.order_id], order.id>customer.id');
+
+        $groups = (new PlanPrinter())->group($plan->relations);
+
+        self::assertSame([2, 1], array_map('count', array_values($groups)));
+    }
+
+    #[Test]
+    public function testGroupKeyIsTheLeftEndAndOperatorTheRelationWouldPrintAs(): void
+    {
+        $plan = (new PlanParser())->parse('order.id<?order_detail.order_id');
+
+        self::assertSame('order.id <?', (new PlanPrinter())->groupKey($plan->relations[0]));
+    }
+
+    #[Test]
+    public function testOperatorCarriesTheOptionalMarkersOnTheSideTheyWereWrittenOn(): void
+    {
+        $printer = new PlanPrinter();
+        $plan = (new PlanParser())->parse('order.id?<?order_detail.order_id');
+
+        self::assertSame('?<?', $printer->operator($plan->relations[0]));
+    }
+
+    #[Test]
+    public function testPrintGroupFoldsSeveralTargetsIntoOneBracketedLine(): void
+    {
+        $plan = (new PlanParser())->parse('order.id<[order_detail.order_id, shipment.order_id]');
+
+        self::assertSame(
+            'order.id < [order_detail.order_id, shipment.order_id]',
+            (new PlanPrinter())->printGroup([$plan->relations[0], $plan->relations[1]])
+        );
+    }
+
+    #[Test]
+    public function testPrintGroupWritesASingleTargetWithoutBrackets(): void
+    {
+        $plan = (new PlanParser())->parse('order.id<order_detail.order_id');
+
+        self::assertSame(
+            'order.id < order_detail.order_id',
+            (new PlanPrinter())->printGroup([$plan->relations[0]])
+        );
     }
 }
