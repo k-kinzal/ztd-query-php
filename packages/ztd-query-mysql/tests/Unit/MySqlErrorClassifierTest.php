@@ -46,4 +46,18 @@ final class MySqlErrorClassifierTest extends TestCase
         $exception = new DatabaseException('Unknown error', null);
         self::assertFalse($classifier->isUnknownSchemaError($exception));
     }
+    public function testIsUnknownSchemaErrorReportsAnErrorAboutSomethingThatIsNotThere(): void
+    {
+        self::assertTrue((new MySqlErrorClassifier())->isUnknownSchemaError(
+            new DatabaseException('Table does not exist', 1146),
+        ));
+    }
+
+    public function testIsUnknownSchemaErrorIsFalseForAnErrorAboutSomethingElse(): void
+    {
+        self::assertFalse((new MySqlErrorClassifier())->isUnknownSchemaError(
+            new DatabaseException('Deadlock', 1213),
+        ));
+    }
+
 }

@@ -15,6 +15,7 @@ use ZtdQuery\Schema\ColumnDeclaration;
  * and generic CAST expressions.
  *
  * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type ShadowRows from SqlTransformer
  */
 final class FakeSqlTransformer implements SqlTransformer
 {
@@ -58,7 +59,7 @@ final class FakeSqlTransformer implements SqlTransformer
     }
 
     /**
-     * @param array{rows: list<Row>, columns: array<int, string>, columnTypes: array<string, ColumnDeclaration>} $tableData
+     * @param ShadowRows $tableData
      */
     public function buildCte(string $tableName, array $tableData): string
     {

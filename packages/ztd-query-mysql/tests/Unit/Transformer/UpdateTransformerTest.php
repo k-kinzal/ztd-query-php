@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Transformer;
 
+use PhpMyAdmin\SqlParser\Components\Expression;
 use PhpMyAdmin\SqlParser\Parser;
+use PhpMyAdmin\SqlParser\Statements\UpdateStatement;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -39,7 +41,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = 'UPDATE summary s JOIN (SELECT category, COUNT(*) AS cnt, MIN(price) AS mn FROM products GROUP BY category) p ON s.category = p.category SET s.min_price = p.mn, s.item_count = p.cnt';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
         $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
 
         $result = $transformer->buildProjection(
@@ -146,7 +148,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = "UPDATE users u SET name = 'Bob' WHERE id = 1";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['id', 'name']);
 
@@ -164,7 +166,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = "UPDATE products SET `products`.`name` = 'Widget' WHERE id = 1";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['id', 'name', 'price']);
 
@@ -180,7 +182,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = "UPDATE products SET name = 'Widget' WHERE id = 1";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['id', 'name', 'price']);
 
@@ -196,7 +198,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = "UPDATE products SET `name` = 'Widget' WHERE id = 1";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['id', 'name']);
 
@@ -210,7 +212,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = "UPDATE users u JOIN orders o ON u.id = o.user_id SET u.name = 'Updated' WHERE o.amount > 100";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['id', 'name']);
 
@@ -228,7 +230,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = "UPDATE users u LEFT JOIN orders o ON u.id = o.user_id SET u.status = 'inactive' WHERE o.id IS NULL";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['id', 'status']);
 
@@ -243,7 +245,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = "UPDATE users u JOIN orders o ON u.id = o.user_id JOIN products p ON o.product_id = p.id SET u.name = 'VIP' WHERE p.price > 1000";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['id', 'name']);
 
@@ -259,7 +261,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = "UPDATE users u, orders o SET u.name = 'Updated', o.status = 'processed' WHERE u.id = o.user_id";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['id', 'name']);
 
@@ -313,7 +315,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = "UPDATE users SET name = 'Bob' WHERE id > 5 ORDER BY id LIMIT 10";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['id', 'name']);
 
@@ -326,7 +328,7 @@ final class UpdateTransformerTest extends TestCase
         $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
         $parser = new Parser("UPDATE users SET name = 'Bob' ORDER BY id");
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['id', 'name']);
 
@@ -341,7 +343,7 @@ final class UpdateTransformerTest extends TestCase
         $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
         $parser = new Parser("UPDATE users SET name = 'Bob' LIMIT 2");
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['id', 'name']);
 
@@ -356,7 +358,7 @@ final class UpdateTransformerTest extends TestCase
         $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
         $parser = new Parser("UPDATE users JOIN orders ON users.id = orders.user_id SET users.name = 'Bob' LIMIT 2");
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['id', 'name']);
 
@@ -372,7 +374,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = "UPDATE users SET name = 'Bob' WHERE id = 1";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, []);
 
@@ -401,7 +403,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = 'UPDATE t SET a = 1 WHERE b = 2';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['a', 'b']);
         self::assertStringStartsWith('SELECT 1 AS `a`, `t`.`b` FROM `t`', $result['sql']);
@@ -414,7 +416,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = 'UPDATE t SET a = 1';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, []);
         self::assertStringStartsWith('SELECT 1 AS `a` FROM `t`', $result['sql']);
@@ -426,7 +428,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = "UPDATE users u SET u.name = 'X' WHERE u.id = 1";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['id', 'name']);
         self::assertStringContainsString('FROM `users` AS u', $result['sql']);
@@ -439,7 +441,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = "UPDATE users u, orders o SET u.name = 'X' WHERE u.id = o.user_id";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['id', 'name']);
         self::assertStringContainsString(', `orders` AS o', $result['sql']);
@@ -452,7 +454,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = 'UPDATE t SET a = 1, b = 2 WHERE c = 3';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['a', 'b', 'c']);
         self::assertSame(1, substr_count($result['sql'], 'AS `a`'));
@@ -466,7 +468,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = "UPDATE users JOIN orders USING (id) SET users.name = 'X' WHERE orders.amount > 100";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['id', 'name']);
         self::assertStringContainsString('JOIN', $result['sql']);
@@ -478,7 +480,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = 'UPDATE t SET a = 1 ORDER BY b DESC LIMIT 5';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['a', 'b']);
         self::assertStringContainsString('ORDER BY', $result['sql']);
@@ -501,7 +503,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = 'UPDATE t SET a = 1 ORDER BY b ASC LIMIT 3';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['a', 'b']);
         self::assertStringContainsString(' ORDER BY b ASC', $result['sql']);
@@ -515,7 +517,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = 'UPDATE t SET a = 1 WHERE id = 1';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $tables = ['t' => ['columns' => ['a', 'b'], 'rows' => [], 'columnTypes' => []]];
         $result = $transformer->transform($sql, $tables);
@@ -529,7 +531,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = 'UPDATE t SET a = 99 WHERE id = 1';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['a', 'b']);
         self::assertSame(1, substr_count($result['sql'], '`a`'));
@@ -541,7 +543,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = "UPDATE users u, orders o SET u.name = 'X' WHERE u.id = o.user_id";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['id', 'name']);
         self::assertSame('u', $result['tables']['users']['alias']);
@@ -554,7 +556,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = "UPDATE users u JOIN orders o ON u.id = o.user_id SET u.name = 'X'";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['id', 'name']);
         self::assertStringContainsString('ON u.id = o.user_id', $result['sql']);
@@ -567,7 +569,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = "UPDATE users u LEFT JOIN orders o ON u.id = o.user_id SET u.name = 'X'";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['id', 'name']);
         self::assertStringContainsString('LEFT JOIN', $result['sql']);
@@ -579,7 +581,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = 'UPDATE t SET a = 1';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['a']);
         self::assertStringNotContainsString('WHERE', $result['sql']);
@@ -591,7 +593,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = 'UPDATE t SET a = 1 WHERE id = 1';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['a']);
         self::assertStringNotContainsString('ORDER BY', $result['sql']);
@@ -604,7 +606,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = 'UPDATE t SET a = 99 WHERE id = 1';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['a', 'b']);
         self::assertStringNotContainsString('`t`.`a`', $result['sql']);
@@ -618,7 +620,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = 'UPDATE t SET a = 1 ORDER BY b LIMIT 5';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['a', 'b']);
         self::assertMatchesRegularExpression('/LIMIT\s+\d/', $result['sql']);
@@ -630,7 +632,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = 'UPDATE t SET a = 1 WHERE id = 1';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['a']);
         $fromPos = strpos($result['sql'], 'FROM `t`');
@@ -645,7 +647,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = "UPDATE users, orders SET users.name = 'X' WHERE users.id = orders.user_id";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['id', 'name']);
         self::assertStringContainsString('`orders`', $result['sql']);
@@ -657,7 +659,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = "UPDATE users JOIN orders USING (id) SET users.name = 'X'";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['id', 'name']);
         self::assertStringContainsString('USING', $result['sql']);
@@ -671,7 +673,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = "UPDATE users u JOIN orders o ON u.id = o.user_id SET u.name = 'X' WHERE o.amount > 50";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['id', 'name']);
         self::assertStringContainsString(' ON ', $result['sql']);
@@ -684,7 +686,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = "UPDATE users u JOIN orders o ON u.id = o.user_id SET u.name = 'X'";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['id', 'name']);
         self::assertStringContainsString('AS o', $result['sql']);
@@ -696,7 +698,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = "UPDATE users SET name = 'Bob' WHERE id = 1";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['id', 'name']);
         self::assertSame("SELECT 'Bob' AS `name`, `users`.`id` FROM `users` WHERE id = 1", $result['sql']);
@@ -710,7 +712,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = "UPDATE users u SET u.name = 'Bob' WHERE u.id = 1";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['id', 'name']);
         self::assertSame("SELECT 'Bob' AS `name`, `u`.`id` FROM `users` AS u WHERE u.id = 1", $result['sql']);
@@ -724,7 +726,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = "UPDATE users u, orders o SET u.name = 'X', o.status = 'done' WHERE u.id = o.user_id";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['id', 'name']);
         self::assertSame("SELECT 'X' AS `name`, 'done' AS `status`, `u`.`id` FROM `users` AS u, `orders` AS o WHERE u.id = o.user_id", $result['sql']);
@@ -738,7 +740,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = "UPDATE users SET name = 'X' ORDER BY id LIMIT 5";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['id', 'name']);
         self::assertSame("SELECT 'X' AS `name`, `users`.`id` FROM (SELECT * FROM `users` ORDER BY id ASC LIMIT 0, 5) AS `users`", $result['sql']);
@@ -750,7 +752,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = "UPDATE users u JOIN orders o ON u.id = o.user_id SET u.name = 'X' WHERE o.status = 'pending'";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['id', 'name']);
         self::assertSame("SELECT 'X' AS `name`, `u`.`id` FROM `users` AS u JOIN `orders` AS o ON u.id = o.user_id WHERE o.status = 'pending'", $result['sql']);
@@ -804,7 +806,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = "UPDATE users SET name = 'Bob' WHERE id = 1";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, []);
         self::assertSame("SELECT 'Bob' AS `name` FROM `users` WHERE id = 1", $result['sql']);
@@ -816,7 +818,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = "UPDATE users JOIN orders USING (user_id) SET users.name = 'X'";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['user_id', 'name']);
         self::assertStringContainsString('USING (user_id)', $result['sql']);
@@ -828,7 +830,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = "UPDATE users, orders SET users.name = 'X' WHERE users.id = orders.user_id";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['id', 'name']);
         self::assertStringNotContainsString('AS orders', $result['sql']);
@@ -841,7 +843,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = "UPDATE users u, orders o SET u.name = 'Y' WHERE u.id = o.user_id";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['id', 'name']);
         self::assertStringContainsString('`orders` AS o', $result['sql']);
@@ -853,7 +855,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = "UPDATE users JOIN orders USING (id) SET users.name = 'Z' WHERE orders.amount > 10";
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['id', 'name']);
         self::assertStringContainsString('JOIN `orders`', $result['sql']);
@@ -868,7 +870,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = 'UPDATE t1 LEFT JOIN t2 ON t1.id = t2.t1_id SET t1.a = 99';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['id', 'a']);
         self::assertStringContainsString('LEFT JOIN `t2`', $result['sql']);
@@ -899,7 +901,7 @@ final class UpdateTransformerTest extends TestCase
         $sql = 'UPDATE t SET x = 10, y = 20 WHERE id = 1';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
-        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
+        self::assertInstanceOf(UpdateStatement::class, $statement);
 
         $result = $transformer->buildProjection($statement, ['x', 'y', 'z']);
         self::assertStringContainsString('10 AS `x`', $result['sql']);
@@ -941,4 +943,121 @@ final class UpdateTransformerTest extends TestCase
             $result,
         );
     }
+    public function testTargetsFromContextsNamesOneTargetPerTableTheShadowKnows(): void
+    {
+        $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
+
+        $targets = $transformer->targetsFromContexts(
+            ['users' => ['alias' => 'u'], 'unknown' => ['alias' => 'x']],
+            ['users' => ['rows' => [], 'columns' => ['id'], 'columnTypes' => [], 'primaryKeys' => ['id']]],
+        );
+
+        self::assertSame(['users'], array_map(static fn ($target) => $target->tableName(), $targets));
+    }
+
+    public function testMultiTableSelectColumnsCarriesTheKeyTheRowHadSeparately(): void
+    {
+        $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
+        $statement = (new Parser('UPDATE users AS u SET u.id = 2'))->statements[0];
+        self::assertInstanceOf(UpdateStatement::class, $statement);
+        $targets = $transformer->targetsFromContexts(
+            ['users' => ['alias' => 'u']],
+            ['users' => ['rows' => [], 'columns' => ['id'], 'columnTypes' => [], 'primaryKeys' => ['id']]],
+        );
+
+        $columns = $transformer->multiTableSelectColumns($statement, ['users' => ['alias' => 'u']], $targets, ['2']);
+
+        self::assertSame(
+            ['2 AS `__ztd_multi_0_value_0`', '`u`.`id` AS `__ztd_multi_0_identity_0`'],
+            $columns,
+        );
+    }
+
+    public function testAssignmentsByTableReadsAQualifiedAssignmentAsBelongingToThatTable(): void
+    {
+        $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
+        $statement = (new Parser('UPDATE users AS u SET u.name = 1'))->statements[0];
+        self::assertInstanceOf(UpdateStatement::class, $statement);
+
+        self::assertSame(
+            ['users' => ['name' => '1']],
+            $transformer->assignmentsByTable($statement, ['users' => ['alias' => 'u']], ['1']),
+        );
+    }
+
+    public function testAssignmentsByTableReadsABareAssignmentAsBelongingToTheFirstTable(): void
+    {
+        $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
+        $statement = (new Parser('UPDATE users AS u SET name = 1'))->statements[0];
+        self::assertInstanceOf(UpdateStatement::class, $statement);
+
+        self::assertSame(
+            ['users' => ['name' => '1']],
+            $transformer->assignmentsByTable($statement, ['users' => ['alias' => 'u']], ['1']),
+        );
+    }
+
+    public function testUnquoteIdentifierTakesTheQuotingOffTheName(): void
+    {
+        self::assertSame('order', UpdateTransformer::unquoteIdentifier('`order`'));
+    }
+
+    public function testUnquoteIdentifierLeavesAnUnquotedNameAlone(): void
+    {
+        self::assertSame('name', UpdateTransformer::unquoteIdentifier('name'));
+    }
+
+    public function testBuildAdditionalTablesWritesTheTablesNamedAfterTheFirst(): void
+    {
+        $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
+        $statement = (new Parser('UPDATE users u, orders o SET u.id = 1'))->statements[0];
+        self::assertInstanceOf(UpdateStatement::class, $statement);
+
+        self::assertSame(', `orders` AS o', $transformer->buildAdditionalTables($statement));
+    }
+
+    public function testBuildAdditionalTablesIsNothingWhereTheStatementNamesOneTable(): void
+    {
+        $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
+        $statement = (new Parser('UPDATE users SET id = 1'))->statements[0];
+        self::assertInstanceOf(UpdateStatement::class, $statement);
+
+        self::assertSame('', $transformer->buildAdditionalTables($statement));
+    }
+
+    public function testBuildJoinClauseWritesTheJoinTheStatementWasWrittenWith(): void
+    {
+        $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
+        $statement = (new Parser('UPDATE users u JOIN orders o ON o.id = u.id SET u.id = 1'))->statements[0];
+        self::assertInstanceOf(UpdateStatement::class, $statement);
+
+        self::assertStringContainsString('JOIN `orders` AS o ON', $transformer->buildJoinClause($statement));
+    }
+
+    public function testBuildJoinClauseIsNothingWhereTheStatementJoinsNothing(): void
+    {
+        $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
+        $statement = (new Parser('UPDATE users SET id = 1'))->statements[0];
+        self::assertInstanceOf(UpdateStatement::class, $statement);
+
+        self::assertSame('', $transformer->buildJoinClause($statement));
+    }
+
+    public function testExprTablePrefersTheTableTheParserReadOutOfAQualifiedName(): void
+    {
+        $expression = new Expression();
+        $expression->table = 'users';
+        $expression->expr = 'app.users';
+
+        self::assertSame('users', UpdateTransformer::exprTable($expression));
+    }
+
+    public function testExprTableFallsBackToTheWholeExpression(): void
+    {
+        $expression = new Expression();
+        $expression->expr = 'users';
+
+        self::assertSame('users', UpdateTransformer::exprTable($expression));
+    }
+
 }

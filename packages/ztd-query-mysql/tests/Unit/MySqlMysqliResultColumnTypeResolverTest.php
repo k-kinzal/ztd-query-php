@@ -155,4 +155,31 @@ final class MySqlMysqliResultColumnTypeResolverTest extends TestCase
         self::assertSame(ColumnTypeFamily::UNKNOWN, $resolver->resolve(['type' => '3'])->family);
         self::assertSame(ColumnTypeFamily::UNKNOWN, $resolver->resolve(['type' => 256])->family);
     }
+    public function testNativeTypeAnswersTheTypeMySqlWouldHaveDeclared(): void
+    {
+        self::assertSame('BIGINT', (new MySqlMysqliResultColumnTypeResolver())->nativeType(8, 33));
+    }
+
+    public function testNativeTypeTellsBytesFromTextByTheCharsetTheDriverReports(): void
+    {
+        $resolver = new MySqlMysqliResultColumnTypeResolver();
+
+        self::assertSame(['VARCHAR', 'VARBINARY'], [$resolver->nativeType(253, 33), $resolver->nativeType(253, 63)]);
+    }
+
+    public function testNativeTypeIsEmptyForATypeZtdDoesNotKnow(): void
+    {
+        self::assertSame('', (new MySqlMysqliResultColumnTypeResolver())->nativeType(9999, 33));
+    }
+
+    public function testIsBinaryCharsetReportsTheCharsetMySqlUsesForBytes(): void
+    {
+        self::assertTrue((new MySqlMysqliResultColumnTypeResolver())->isBinaryCharset(63));
+    }
+
+    public function testIsBinaryCharsetIsFalseForACharsetThatHoldsText(): void
+    {
+        self::assertFalse((new MySqlMysqliResultColumnTypeResolver())->isBinaryCharset(33));
+    }
+
 }

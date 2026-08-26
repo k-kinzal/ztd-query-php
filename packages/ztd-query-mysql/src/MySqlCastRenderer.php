@@ -24,7 +24,7 @@ final class MySqlCastRenderer implements CastRenderer
      */
     public function renderCast(string $expression, ColumnDeclaration $type): string
     {
-        $castType = $this->mapToCastType($type);
+        $castType = $this->castTypeOf($type);
 
         return "CAST($expression AS $castType)";
     }
@@ -37,16 +37,27 @@ final class MySqlCastRenderer implements CastRenderer
      */
     public function renderNullCast(ColumnDeclaration $type): string
     {
-        $castType = $this->mapToCastType($type);
+        $castType = $this->castTypeOf($type);
 
         return "CAST(NULL AS $castType)";
     }
 
-    private function mapToCastType(ColumnDeclaration $type): string
+    /**
+     * Answers what MySQL's CAST calls a column of this type.
+     *
+     * CAST does not take the types a column is declared with -- there is no
+     * CAST to VARCHAR -- so every declaration has to be answered by one of the
+     * handful of names CAST does take.
+     *
+     * @param ColumnDeclaration $type How the column was declared
+     *
+     * @return string The name CAST would take
+     */
+    public function castTypeOf(ColumnDeclaration $type): string
     {
         return match ($type->family) {
             ColumnTypeFamily::INTEGER => 'SIGNED',
-            ColumnTypeFamily::DECIMAL => $this->extractDecimalCast($type->nativeType),
+            ColumnTypeFamily::DECIMAL => $this->decimalCastOf($type->nativeType),
             ColumnTypeFamily::FLOAT => 'FLOAT',
             ColumnTypeFamily::DOUBLE => 'DOUBLE',
             ColumnTypeFamily::BOOLEAN => 'UNSIGNED',
@@ -56,11 +67,21 @@ final class MySqlCastRenderer implements CastRenderer
             ColumnTypeFamily::JSON => 'JSON',
             ColumnTypeFamily::BINARY => 'BINARY',
             ColumnTypeFamily::STRING, ColumnTypeFamily::TEXT => 'CHAR',
-            ColumnTypeFamily::UNKNOWN => $this->mapNativeTypeToCastType($type->nativeType),
+            ColumnTypeFamily::UNKNOWN => $this->castTypeOfNative($type->nativeType),
         };
     }
 
-    private function extractDecimalCast(string $nativeType): string
+    /**
+     * Answers the DECIMAL a CAST would keep the same digits with.
+     *
+     * A declaration that says nothing about its digits is cast to the widest
+     * DECIMAL MySQL has, so that nothing is rounded away by the cast itself.
+     *
+     * @param string $nativeType The declaration, as the platform wrote it
+     *
+     * @return string DECIMAL with the digits it keeps
+     */
+    public function decimalCastOf(string $nativeType): string
     {
         $upper = strtoupper($nativeType);
         if (preg_match('/DECIMAL\((\d+),(\d+)\)/', $upper, $matches) === 1) {
@@ -74,16 +95,23 @@ final class MySqlCastRenderer implements CastRenderer
     }
 
     /**
-     * Fallback mapping for UNKNOWN family using native type string.
+     * Answers what CAST calls a type ZTD could not place in a family.
+     *
+     * The declaration's own words are all there is to go on, so the width or
+     * precision written after them is dropped and the word itself is read.
+     *
+     * @param string $nativeType The declaration, as the platform wrote it
+     *
+     * @return string The name CAST would take, and CHAR for anything unrecognised
      */
-    private function mapNativeTypeToCastType(string $nativeType): string
+    public function castTypeOfNative(string $nativeType): string
     {
         $upperType = strtoupper($nativeType);
         $baseType = (string) preg_replace('/\(.*\)/', '', $upperType);
 
         return match ($baseType) {
             'INT', 'INTEGER', 'TINYINT', 'SMALLINT', 'MEDIUMINT', 'BIGINT' => 'SIGNED',
-            'DECIMAL', 'NUMERIC' => $this->extractDecimalCast($nativeType),
+            'DECIMAL', 'NUMERIC' => $this->decimalCastOf($nativeType),
             'FLOAT' => 'FLOAT',
             'DOUBLE', 'REAL' => 'DOUBLE',
             'DATE' => 'DATE',

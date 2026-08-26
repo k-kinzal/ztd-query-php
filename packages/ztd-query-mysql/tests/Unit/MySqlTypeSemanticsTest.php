@@ -7,12 +7,14 @@ namespace Tests\Unit;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Platform\MySql\MySqlLexerProfile;
 use ZtdQuery\Platform\MySql\MySqlTypeSemantics;
 use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
+use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(MySqlTypeSemantics::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
+#[UsesClass(MySqlLexerProfile::class)]
 final class MySqlTypeSemanticsTest extends TestCase
 {
     public function testLeavesSqlUntouchedWithoutEnumColumns(): void
@@ -378,4 +380,148 @@ final class MySqlTypeSemanticsTest extends TestCase
             $semantics->rewrite("SELECT * FROM items WHERE plain > 'a' AND wrong > 'a' AND open > 'a' AND empty > 'a' AND short > 'a' AND unquoted > 'a' AND same_edges > 'a' AND mismatched > 'a' AND valid > 'a'", $tables),
         );
     }
+    public function testEnumColumnsAnswersWhatAnEnumerationMayHold(): void
+    {
+        [$qualified, ] = (new MySqlTypeSemantics())->enumColumns([
+            'items' => [
+                'rows' => [],
+                'columns' => ['size'],
+                'columnTypes' => ['size' => new ColumnDeclaration(ColumnTypeFamily::STRING, "ENUM('s','m')")],
+            ],
+        ]);
+
+        self::assertSame(['s', 'm'], $qualified['items.size'] ?? null);
+    }
+
+    public function testEnumColumnsAnswersNothingForABareNameTwoTablesDisagreeAbout(): void
+    {
+        [, $unqualified] = (new MySqlTypeSemantics())->enumColumns([
+            'a' => [
+                'rows' => [],
+                'columns' => ['size'],
+                'columnTypes' => ['size' => new ColumnDeclaration(ColumnTypeFamily::STRING, "ENUM('s')")],
+            ],
+            'b' => [
+                'rows' => [],
+                'columns' => ['size'],
+                'columnTypes' => ['size' => new ColumnDeclaration(ColumnTypeFamily::STRING, "ENUM('m')")],
+            ],
+        ]);
+
+        self::assertSame(['size' => null], $unqualified);
+    }
+
+    public function testComparisonEditsRewritesBothSidesOfAnOrderingComparison(): void
+    {
+        $semantics = new MySqlTypeSemantics();
+        $sql = "SELECT * FROM t WHERE size < 'm'";
+        $tokens = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->significantTokens();
+
+        $edits = $semantics->comparisonEdits($sql, $tokens, [], ['size' => ['s', 'm']]);
+
+        self::assertCount(2, $edits);
+    }
+
+    public function testComparisonEditsLeavesAComparisonAgainstNoEnumerationAlone(): void
+    {
+        $semantics = new MySqlTypeSemantics();
+        $sql = "SELECT * FROM t WHERE name < 'm'";
+        $tokens = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->significantTokens();
+
+        self::assertSame([], $semantics->comparisonEdits($sql, $tokens, [], ['size' => ['s', 'm']]));
+    }
+
+    public function testOrderByEditsRewritesAColumnOrderedByOnItsOwn(): void
+    {
+        $semantics = new MySqlTypeSemantics();
+        $sql = 'SELECT * FROM t ORDER BY size';
+        $tokens = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->significantTokens();
+
+        self::assertCount(1, $semantics->orderByEdits($sql, $tokens, [], ['size' => ['s', 'm']]));
+    }
+
+    public function testOrderByEditsLeavesAStatementThatOrdersByNothingAlone(): void
+    {
+        $semantics = new MySqlTypeSemantics();
+        $sql = 'SELECT * FROM t';
+        $tokens = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->significantTokens();
+
+        self::assertSame([], $semantics->orderByEdits($sql, $tokens, [], ['size' => ['s', 'm']]));
+    }
+
+    public function testColumnAtAnswersTheEnumerationNamedThere(): void
+    {
+        $semantics = new MySqlTypeSemantics();
+        $sql = 'size';
+        $tokens = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->significantTokens();
+
+        $column = $semantics->columnAt($sql, $tokens, 0, [], ['size' => ['s', 'm']]);
+
+        self::assertSame(['s', 'm'], $column['members'] ?? null);
+    }
+
+    public function testColumnAtIsNothingWhereNoEnumerationIsNamed(): void
+    {
+        $semantics = new MySqlTypeSemantics();
+        $sql = 'name';
+        $tokens = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->significantTokens();
+
+        self::assertNull($semantics->columnAt($sql, $tokens, 0, [], ['size' => ['s', 'm']]));
+    }
+
+    public function testOrderedOperatorAtReadsAnOperatorWrittenAsTwoSymbols(): void
+    {
+        $tokens = SqlTokenStream::tokenize('<= 1', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertSame(['length' => 2], (new MySqlTypeSemantics())->orderedOperatorAt($tokens, 0));
+    }
+
+    public function testOrderedOperatorAtIsNothingForEquality(): void
+    {
+        $tokens = SqlTokenStream::tokenize('= 1', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertNull((new MySqlTypeSemantics())->orderedOperatorAt($tokens, 0));
+    }
+
+    public function testAddRankEditRewritesTheTokenAsItsPositionAmongTheMembers(): void
+    {
+        $edits = [];
+        $token = SqlTokenStream::tokenize('size', MySqlLexerProfile::create())->significantTokens()[0];
+
+        (new MySqlTypeSemantics())->addRankEdit($edits, $token, ['s', 'm']);
+
+        self::assertSame("FIELD(size, 's', 'm')", $edits[0]['replacement'] ?? null);
+    }
+
+    public function testEnumMembersReadsWhatAnEnumDeclarationAllows(): void
+    {
+        self::assertSame(['s', 'm'], (new MySqlTypeSemantics())->enumMembers("ENUM('s','m')"));
+    }
+
+    public function testEnumMembersIsNothingForADeclarationThatIsNoEnumeration(): void
+    {
+        self::assertSame([], (new MySqlTypeSemantics())->enumMembers('VARCHAR(10)'));
+    }
+
+    public function testIsIdentifierReportsABareWord(): void
+    {
+        $tokens = SqlTokenStream::tokenize('size', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertTrue((new MySqlTypeSemantics())->isIdentifier($tokens[0]));
+    }
+
+    public function testIsIdentifierIsFalseForALiteral(): void
+    {
+        $tokens = SqlTokenStream::tokenize('1', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertFalse((new MySqlTypeSemantics())->isIdentifier($tokens[0]));
+    }
+
+    public function testIdentifierNameTakesTheQuotingOffAName(): void
+    {
+        $tokens = SqlTokenStream::tokenize('`size`', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertSame('size', (new MySqlTypeSemantics())->identifierName($tokens[0]));
+    }
+
 }

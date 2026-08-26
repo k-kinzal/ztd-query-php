@@ -78,7 +78,18 @@ final class MySqlParser
         return $first;
     }
 
-    private function normalizeOptionalInsertInto(string $sql): string
+    /**
+     * Writes the INTO that MySQL lets an INSERT leave out.
+     *
+     * MySQL accepts INSERT without INTO, and the parser does not, so the word
+     * is written in before parsing. A statement that already has it, or that
+     * is not an INSERT at all, is left exactly as it was.
+     *
+     * @param string $sql Statement to read
+     *
+     * @return string The same statement, with INTO written in where it was left out
+     */
+    public function normalizeOptionalInsertInto(string $sql): string
     {
         $tokens = [];
         foreach (Lexer::getTokens($sql)->tokens as $token) {

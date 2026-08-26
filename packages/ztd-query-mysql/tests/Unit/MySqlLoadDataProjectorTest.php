@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use Tests\Fixture\MySqlLoadStatements;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\MySqlLoadDataProjector;
 use ZtdQuery\Platform\MySql\MySqlParser;
@@ -514,4 +515,26 @@ final class MySqlLoadDataProjectorTest extends TestCase
 
         (new MySqlLoadDataProjector($registry))->project($sql, $statement);
     }
+    public function testContentsOfReadsTheFileTheStatementLoadsFrom(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'ztd');
+        self::assertIsString($path);
+        file_put_contents($path, "1\ta\n");
+        $statement = MySqlLoadStatements::statement("LOAD DATA INFILE '{$path}' INTO TABLE t");
+
+        $contents = (new MySqlLoadDataProjector(new TableDefinitionRegistry()))->contentsOf('sql', $statement);
+        unlink($path);
+
+        self::assertSame("1\ta\n", $contents);
+    }
+
+    public function testContentsOfRefusesAStatementWithNoFileToRead(): void
+    {
+        $statement = MySqlLoadStatements::statement("LOAD DATA INFILE '/nonexistent/ztd' INTO TABLE t");
+
+        $this->expectException(UnsupportedSqlException::class);
+
+        (new MySqlLoadDataProjector(new TableDefinitionRegistry()))->contentsOf('sql', $statement);
+    }
+
 }

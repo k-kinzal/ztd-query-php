@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Transformer;
 
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Platform\MySql\Transformer\InsertRowRenderer;
 
 #[CoversClass(InsertRowRenderer::class)]
@@ -33,7 +33,7 @@ final class InsertRowRendererTest extends TestCase
 
     public function testRejectsMismatchedMySqlValues(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidDefinitionException::class);
         $this->expectExceptionMessage('Insert values count does not match column count.');
 
         (new InsertRowRenderer())->providedExpressions(['id'], []);
@@ -46,4 +46,17 @@ final class InsertRowRendererTest extends TestCase
             (new InsertRowRenderer())->providedExpressions(['id', 'name'], ['42', "'Ada'"]),
         );
     }
+    public function testProvidedExpressionsPairsEachColumnWithWhatIsWrittenForIt(): void
+    {
+        self::assertSame(
+            ['id' => '1'],
+            (new InsertRowRenderer())->providedExpressions(['id'], ['1']),
+        );
+    }
+
+    public function testProvidedExpressionsLeavesAColumnWrittenAsDefaultToTheTable(): void
+    {
+        self::assertSame([], (new InsertRowRenderer())->providedExpressions(['id'], ['DEFAULT']));
+    }
+
 }

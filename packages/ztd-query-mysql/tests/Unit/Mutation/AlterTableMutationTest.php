@@ -2572,4 +2572,38 @@ final class AlterTableMutationTest extends TestCase
         self::assertContains('new_name', $def->columns);
         self::assertNotContains('old_name', $def->columns);
     }
+    public function testDeclarationOfReadsBackTheDeclarationZtdWroteItself(): void
+    {
+        $parser = new Parser('ALTER TABLE users DROP COLUMN name');
+        $alterStmt = $parser->statements[0];
+        self::assertInstanceOf(AlterStatement::class, $alterStmt);
+        $mutation = new AlterTableMutation(
+            'users',
+            $alterStmt,
+            new TableDefinitionRegistry(),
+            new MySqlSchemaParser(new MySqlParser()),
+        );
+
+        $declaration = $mutation->declarationOf('CREATE TABLE `users` (`id` INT)');
+
+        self::assertStringContainsString('`id`', $declaration->build());
+    }
+
+    public function testDeclarationOfRefusesTextThatDeclaresNoTable(): void
+    {
+        $parser = new Parser('ALTER TABLE users DROP COLUMN name');
+        $alterStmt = $parser->statements[0];
+        self::assertInstanceOf(AlterStatement::class, $alterStmt);
+        $mutation = new AlterTableMutation(
+            'users',
+            $alterStmt,
+            new TableDefinitionRegistry(),
+            new MySqlSchemaParser(new MySqlParser()),
+        );
+
+        $this->expectException(UnsupportedSqlException::class);
+
+        $mutation->declarationOf('SELECT 1');
+    }
+
 }

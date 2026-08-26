@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use PhpMyAdmin\SqlParser\Statements\AlterStatement;
+use PhpMyAdmin\SqlParser\Statements\InsertStatement;
+use PhpMyAdmin\SqlParser\Statements\ReplaceStatement;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use Tests\Contract\RewriterContractTest;
@@ -3238,4 +3241,175 @@ final class MySqlRewriterTest extends RewriterContractTest
             self::assertSame(ShadowTableState::Materialized, $store->state('late_table'));
         }
     }
+    public function testRewriteStatementReadsTheShadowForARead(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', [['id' => 1]]);
+        $rewriter = $this->createRewriter($store, new TableDefinitionRegistry());
+        self::assertInstanceOf(MySqlRewriter::class, $rewriter);
+        $statement = (new MySqlParser())->parse('SELECT * FROM users')[0];
+
+        $plan = $rewriter->rewriteStatement($statement, 'SELECT * FROM users');
+
+        self::assertSame(QueryKind::READ, $plan->kind());
+    }
+
+    public function testRewriteStatementRefusesAStatementZtdCannotSimulate(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        self::assertInstanceOf(MySqlRewriter::class, $rewriter);
+        $statement = (new MySqlParser())->parse('SET autocommit = 1')[0];
+
+        $this->expectException(UnsupportedSqlException::class);
+
+        $rewriter->rewriteStatement($statement, 'SET autocommit = 1');
+    }
+
+    public function testBuildTableContextCarriesEveryTableTheShadowHolds(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', [['id' => 1]]);
+        $rewriter = $this->createRewriter($store, new TableDefinitionRegistry());
+        self::assertInstanceOf(MySqlRewriter::class, $rewriter);
+
+        self::assertSame(['users'], array_keys($rewriter->buildTableContext()));
+    }
+
+    public function testEnsureReplaceColumnsRefusesAReplaceNothingCanNameTheColumnsOf(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        self::assertInstanceOf(MySqlRewriter::class, $rewriter);
+        $statement = (new MySqlParser())->parse('REPLACE INTO users VALUES (1)')[0];
+        self::assertInstanceOf(ReplaceStatement::class, $statement);
+
+        $this->expectException(UnsupportedSqlException::class);
+
+        $rewriter->ensureReplaceColumns($statement, 'REPLACE INTO users VALUES (1)');
+    }
+
+    public function testFindUnknownTableNamesTheTableTheShadowDoesNotKnow(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', [['id' => 1]]);
+        $rewriter = $this->createRewriter($store, new TableDefinitionRegistry());
+        self::assertInstanceOf(MySqlRewriter::class, $rewriter);
+
+        self::assertSame('orders', $rewriter->findUnknownTable('SELECT * FROM users JOIN orders ON 1 = 1'));
+    }
+
+    public function testFindUnknownTableIsNothingWhereEveryTableIsKnown(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', [['id' => 1]]);
+        $rewriter = $this->createRewriter($store, new TableDefinitionRegistry());
+        self::assertInstanceOf(MySqlRewriter::class, $rewriter);
+
+        self::assertNull($rewriter->findUnknownTable('SELECT * FROM users'));
+    }
+
+    public function testTableExistsReportsATableTheShadowHoldsRowsFor(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', [['id' => 1]]);
+        $rewriter = $this->createRewriter($store, new TableDefinitionRegistry());
+        self::assertInstanceOf(MySqlRewriter::class, $rewriter);
+
+        self::assertTrue($rewriter->tableExists('users'));
+    }
+
+    public function testTableExistsIsFalseForANameNothingKnows(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        self::assertInstanceOf(MySqlRewriter::class, $rewriter);
+
+        self::assertFalse($rewriter->tableExists('users'));
+    }
+
+    public function testHasSchemaContextIsFalseWhereTheShadowHasBeenToldNothing(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        self::assertInstanceOf(MySqlRewriter::class, $rewriter);
+
+        self::assertFalse($rewriter->hasSchemaContext());
+    }
+
+    public function testHasSchemaContextReportsAShadowThatHasBeenFilledIn(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', [['id' => 1]]);
+        $rewriter = $this->createRewriter($store, new TableDefinitionRegistry());
+        self::assertInstanceOf(MySqlRewriter::class, $rewriter);
+
+        self::assertTrue($rewriter->hasSchemaContext());
+    }
+
+    public function testHasUnsupportedAlterOperationReportsAnIndexZtdDoesNotHold(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        self::assertInstanceOf(MySqlRewriter::class, $rewriter);
+        $sql = 'ALTER TABLE users ADD INDEX idx (id)';
+        $statement = (new MySqlParser())->parse($sql)[0];
+        self::assertInstanceOf(AlterStatement::class, $statement);
+
+        self::assertTrue($rewriter->hasUnsupportedAlterOperation($statement, $sql));
+    }
+
+    public function testHasUnsupportedAlterOperationIsFalseForAColumnChange(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        self::assertInstanceOf(MySqlRewriter::class, $rewriter);
+        $sql = 'ALTER TABLE users ADD COLUMN email VARCHAR(255)';
+        $statement = (new MySqlParser())->parse($sql)[0];
+        self::assertInstanceOf(AlterStatement::class, $statement);
+
+        self::assertFalse($rewriter->hasUnsupportedAlterOperation($statement, $sql));
+    }
+
+    public function testResolveIntoTableNameAnswersTheTableTheClauseNames(): void
+    {
+        $statement = (new MySqlParser())->parse('INSERT INTO users (id) VALUES (1)')[0];
+        self::assertInstanceOf(InsertStatement::class, $statement);
+
+        self::assertSame('users', MySqlRewriter::resolveIntoTableName($statement->into));
+    }
+
+    public function testResolveIntoTableNameIsNothingWhereTheStatementWroteNoClause(): void
+    {
+        self::assertNull(MySqlRewriter::resolveIntoTableName(null));
+    }
+
+    public function testTransactionStatementReadsAStatementThatOpensATransaction(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        self::assertInstanceOf(MySqlRewriter::class, $rewriter);
+
+        self::assertNotNull($rewriter->transactionStatement('START TRANSACTION'));
+    }
+
+    public function testSplitStatementsReadsABatchAsTheStatementsItIsWrittenAs(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        self::assertInstanceOf(MySqlRewriter::class, $rewriter);
+
+        self::assertCount(2, $rewriter->splitStatements('SELECT 1; SELECT 2'));
+    }
+
+    public function testCommitRewriteStateKeepsWhatTheLastRewriteHandedOut(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        self::assertInstanceOf(MySqlRewriter::class, $rewriter);
+
+        $rewriter->commitRewriteState();
+
+        self::assertSame('SELECT 1 WHERE FALSE', $rewriter->emptyResultSelect());
+    }
+
+    public function testEmptyResultSelectAnswersAStatementThatReadsNoRow(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        self::assertInstanceOf(MySqlRewriter::class, $rewriter);
+
+        self::assertSame('SELECT 1 WHERE FALSE', $rewriter->emptyResultSelect());
+    }
+
 }
