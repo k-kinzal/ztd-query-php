@@ -77,7 +77,7 @@ final class ReferentialIntegrityEnforcerTest extends TestCase
         self::assertSame([['id' => 1, 'parent_id' => 99]], $store->get('children'));
     }
 
-    public function testSynchronizationCascadesDeletedRows(): void
+    public function testSynchronizeCascadesDeletedRows(): void
     {
         $registry = new TableDefinitionRegistry();
         $parent = new TableDefinition(['id'], ['id' => 'INT'], ['id'], ['id'], []);

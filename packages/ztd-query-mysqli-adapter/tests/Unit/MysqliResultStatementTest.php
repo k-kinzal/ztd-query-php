@@ -13,7 +13,7 @@ use ZtdQuery\Adapter\Mysqli\MysqliResultColumnExtractor;
 use ZtdQuery\Adapter\Mysqli\MysqliResultStatement;
 use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Platform\ResultColumnTypeResolver;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(MysqliResultStatement::class)]
@@ -94,10 +94,10 @@ final class MysqliResultStatementTest extends TestCase
 
         $resolver = self::createStub(ResultColumnTypeResolver::class);
         $resolver->method('resolve')->willReturnCallback(
-            static fn (array $metadata): ColumnType => match ($metadata['name'] ?? '') {
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'description' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
-                default => new ColumnType(ColumnTypeFamily::BINARY, 'BLOB'),
+            static fn (array $metadata): ColumnDeclaration => match ($metadata['name'] ?? '') {
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'description' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
+                default => new ColumnDeclaration(ColumnTypeFamily::BINARY, 'BLOB'),
             },
         );
         $columns = (new MysqliResultStatement($result, 0))->resultColumns($resolver);

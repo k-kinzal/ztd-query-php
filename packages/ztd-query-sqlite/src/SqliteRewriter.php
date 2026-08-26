@@ -208,7 +208,7 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
      * @return array<string, array{viewSql: string}|array{
      *     rows: array<int, array<string, mixed>>,
      *     columns: array<int, string>,
-     *     columnTypes: array<string, \ZtdQuery\Schema\ColumnType>,
+     *     columnTypes: array<string, \ZtdQuery\Schema\ColumnDeclaration>,
      *     columnDefaults: array<string, string>,
      *     identityStrategies: array<string, \ZtdQuery\Schema\IdentityGenerationStrategy>,
      *     generatedExpressions: array<string, string>,
@@ -278,7 +278,7 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
      * @return array{
      *     rows: array<int, array<string, mixed>>,
      *     columns: array<int, string>,
-     *     columnTypes: array<string, \ZtdQuery\Schema\ColumnType>,
+     *     columnTypes: array<string, \ZtdQuery\Schema\ColumnDeclaration>,
      *     columnDefaults: array<string, string>,
      *     identityStrategies: array<string, \ZtdQuery\Schema\IdentityGenerationStrategy>,
      *     generatedExpressions: array<string, string>,

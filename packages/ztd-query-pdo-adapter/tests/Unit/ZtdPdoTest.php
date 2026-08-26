@@ -24,7 +24,7 @@ use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Session;
 use ZtdQuery\Shadow\Mutation\InsertMutation;
@@ -269,7 +269,7 @@ final class ZtdPdoTest extends TestCase
             });
         $factory = static::createMock(SessionFactory::class);
         $typeResolver = static::createStub(ResultColumnTypeResolver::class);
-        $typeResolver->method('resolve')->willReturn(new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'));
+        $typeResolver->method('resolve')->willReturn(new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'));
         $factory->expects(self::once())
             ->method('create')
             ->willReturnCallback(static fn (ConnectionInterface $connection, ZtdConfig $config): Session => new Session(

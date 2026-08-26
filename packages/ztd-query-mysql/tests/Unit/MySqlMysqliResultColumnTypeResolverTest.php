@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\MySql\MySqlColumnTypeMapper;
 use ZtdQuery\Platform\MySql\MySqlMysqliResultColumnTypeResolver;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(MySqlMysqliResultColumnTypeResolver::class)]
@@ -75,17 +75,17 @@ final class MySqlMysqliResultColumnTypeResolverTest extends TestCase
         $resolver = new MySqlMysqliResultColumnTypeResolver();
         $types = array_keys($nativeTypes);
         $resolved = array_map(
-            static fn (int $type): ColumnType => $resolver->resolve(['type' => $type]),
+            static fn (int $type): ColumnDeclaration => $resolver->resolve(['type' => $type]),
             $types,
         );
 
         self::assertSame(
             array_map(static fn (int $type): ColumnTypeFamily => $families[$type], $types),
-            array_map(static fn (ColumnType $type): ColumnTypeFamily => $type->family, $resolved),
+            array_map(static fn (ColumnDeclaration $type): ColumnTypeFamily => $type->family, $resolved),
         );
         self::assertSame(
             array_values($nativeTypes),
-            array_map(static fn (ColumnType $type): string => $type->nativeType, $resolved),
+            array_map(static fn (ColumnDeclaration $type): string => $type->nativeType, $resolved),
         );
     }
 
@@ -94,14 +94,14 @@ final class MySqlMysqliResultColumnTypeResolverTest extends TestCase
         $types = [249, 250, 251, 252, 253, 254];
         $resolver = new MySqlMysqliResultColumnTypeResolver();
         $binary = array_map(
-            static fn (int $type): ColumnType => $resolver->resolve([
+            static fn (int $type): ColumnDeclaration => $resolver->resolve([
                 'type' => $type,
                 'charsetnr' => '63',
             ]),
             $types,
         );
         $text = array_map(
-            static fn (int $type): ColumnType => $resolver->resolve([
+            static fn (int $type): ColumnDeclaration => $resolver->resolve([
                 'type' => $type,
                 'charsetnr' => 255,
             ]),
@@ -110,11 +110,11 @@ final class MySqlMysqliResultColumnTypeResolverTest extends TestCase
 
         self::assertSame(
             array_fill(0, count($types), ColumnTypeFamily::BINARY),
-            array_map(static fn (ColumnType $type): ColumnTypeFamily => $type->family, $binary),
+            array_map(static fn (ColumnDeclaration $type): ColumnTypeFamily => $type->family, $binary),
         );
         self::assertSame(
             ['TINYBLOB', 'MEDIUMBLOB', 'LONGBLOB', 'BLOB', 'VARBINARY', 'BINARY'],
-            array_map(static fn (ColumnType $type): string => $type->nativeType, $binary),
+            array_map(static fn (ColumnDeclaration $type): string => $type->nativeType, $binary),
         );
         self::assertSame(
             [
@@ -125,11 +125,11 @@ final class MySqlMysqliResultColumnTypeResolverTest extends TestCase
                 ColumnTypeFamily::STRING,
                 ColumnTypeFamily::STRING,
             ],
-            array_map(static fn (ColumnType $type): ColumnTypeFamily => $type->family, $text),
+            array_map(static fn (ColumnDeclaration $type): ColumnTypeFamily => $type->family, $text),
         );
         self::assertSame(
             ['TINYTEXT', 'MEDIUMTEXT', 'LONGTEXT', 'TEXT', 'VARCHAR', 'CHAR'],
-            array_map(static fn (ColumnType $type): string => $type->nativeType, $text),
+            array_map(static fn (ColumnDeclaration $type): string => $type->nativeType, $text),
         );
     }
 

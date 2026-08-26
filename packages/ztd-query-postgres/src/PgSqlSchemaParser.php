@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\Postgres;
 
 use ZtdQuery\Platform\SchemaParser;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Sql\SqlToken;
@@ -31,7 +31,7 @@ final class PgSqlSchemaParser implements SchemaParser
 
         $columns = [];
         $columnTypes = [];
-        /** @var array<string, ColumnType> $typedColumns */
+        /** @var array<string, ColumnDeclaration> $typedColumns */
         $typedColumns = [];
         $columnDefaults = [];
         $identityStrategies = [];
@@ -226,7 +226,7 @@ final class PgSqlSchemaParser implements SchemaParser
     }
 
     /**
-     * @return array{name: string, type: string, columnType: ColumnType, notNull: bool, primaryKey: bool, unique: bool, default: string|null, identity: bool, generatedExpression: string|null}|null
+     * @return array{name: string, type: string, columnType: ColumnDeclaration, notNull: bool, primaryKey: bool, unique: bool, default: string|null, identity: bool, generatedExpression: string|null}|null
      */
     private function parseColumnDefinition(string $entry): ?array
     {

@@ -12,7 +12,7 @@ use ZtdQuery\Adapter\Mysqli\MysqliResultColumnExtractor;
 use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Platform\MissingResultColumnTypeResolver;
 use ZtdQuery\Platform\ResultColumnTypeResolver;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(MysqliResultColumnExtractor::class)]
@@ -40,7 +40,7 @@ final class MysqliResultColumnExtractorTest extends TestCase
             'name' => 'value',
             'type' => MYSQLI_TYPE_LONG,
             'charsetnr' => '63',
-        ])->willReturn(new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'));
+        ])->willReturn(new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'));
 
         $columns = MysqliResultColumnExtractor::extract($result, $resolver);
 
@@ -55,7 +55,7 @@ final class MysqliResultColumnExtractorTest extends TestCase
             new StubMysqliField('name', MYSQLI_TYPE_VAR_STRING, 255),
         ]);
         $resolver = self::createStub(ResultColumnTypeResolver::class);
-        $resolver->method('resolve')->willReturn(new ColumnType(ColumnTypeFamily::STRING, 'TEXT'));
+        $resolver->method('resolve')->willReturn(new ColumnDeclaration(ColumnTypeFamily::STRING, 'TEXT'));
 
         $columns = MysqliResultColumnExtractor::extract($result, $resolver);
 

@@ -99,8 +99,22 @@ final class ShadowIdentityAllocator
         return $starts;
     }
 
-    /** @param list<Row> $existingRows */
-    private function nextValue(
+    /**
+     * Answers the value a generated column would take next.
+     *
+     * A column the database derives from the greatest value present has to be
+     * read off the rows every time. One that simply counts up is read off the
+     * rows only once it has been handed out here before, because until then
+     * the rows are all there is to go on.
+     *
+     * @param string $table Table the column belongs to
+     * @param string $column Column the value is generated for
+     * @param IdentityGenerationStrategy $strategy How the database decides the value
+     * @param list<Row> $existingRows Rows the table already holds
+     *
+     * @return int The value the column would take next
+     */
+    public function nextValue(
         string $table,
         string $column,
         IdentityGenerationStrategy $strategy,

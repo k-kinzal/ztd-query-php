@@ -47,4 +47,45 @@ final class SchemaRegistryTest extends TestCase
         self::assertNull($registry->get('users'));
         self::assertSame($postsDef, $registry->get('posts'));
     }
+
+    public function testHasAnswersForATableTheRegistryKnows(): void
+    {
+        $registry = new SchemaRegistry();
+        $registry->register('order', 'CREATE TABLE `order` (id INT)');
+
+        self::assertTrue($registry->has('order'));
+        self::assertFalse($registry->has('other'));
+    }
+
+    public function testHasAnyTablesIsFalseUntilOneIsRegistered(): void
+    {
+        $registry = new SchemaRegistry();
+
+        self::assertFalse($registry->hasAnyTables());
+
+        $registry->register('order', 'CREATE TABLE `order` (id INT)');
+
+        self::assertTrue($registry->hasAnyTables());
+    }
+
+    public function testUnregisterLeavesTheRegistryWithoutThatTable(): void
+    {
+        $registry = new SchemaRegistry();
+        $registry->register('order', 'CREATE TABLE `order` (id INT)');
+
+        $registry->unregister('order');
+
+        self::assertNull($registry->get('order'));
+    }
+
+    public function testClearLeavesTheRegistryWithNoTablesAtAll(): void
+    {
+        $registry = new SchemaRegistry();
+        $registry->register('order', 'CREATE TABLE `order` (id INT)');
+
+        $registry->clear();
+
+        self::assertFalse($registry->hasAnyTables());
+        self::assertSame([], $registry->getAll());
+    }
 }

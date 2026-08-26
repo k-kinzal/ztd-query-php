@@ -6,7 +6,7 @@ namespace Tests\Fake;
 
 use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Rewrite\SqlTransformer;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 
 /**
  * Fake SqlTransformer that injects CTEs for shadow tables.
@@ -58,7 +58,7 @@ final class FakeSqlTransformer implements SqlTransformer
     }
 
     /**
-     * @param array{rows: list<Row>, columns: array<int, string>, columnTypes: array<string, ColumnType>} $tableData
+     * @param array{rows: list<Row>, columns: array<int, string>, columnTypes: array<string, ColumnDeclaration>} $tableData
      */
     public function buildCte(string $tableName, array $tableData): string
     {
@@ -70,7 +70,7 @@ final class FakeSqlTransformer implements SqlTransformer
         if ($rows === []) {
             $nullSelects = [];
             foreach ($columns as $col) {
-                $type = $columnTypes[$col] ?? new ColumnType(\ZtdQuery\Schema\ColumnTypeFamily::TEXT, 'TEXT');
+                $type = $columnTypes[$col] ?? new ColumnDeclaration(\ZtdQuery\Schema\ColumnTypeFamily::TEXT, 'TEXT');
                 $nullSelects[] = $this->castRenderer->renderNullCast($type) . ' AS ' . $this->quoter->quote($col);
             }
 
@@ -82,7 +82,7 @@ final class FakeSqlTransformer implements SqlTransformer
             $colSelects = [];
             foreach ($columns as $col) {
                 $value = $row[$col] ?? null;
-                $type = $columnTypes[$col] ?? new ColumnType(\ZtdQuery\Schema\ColumnTypeFamily::TEXT, 'TEXT');
+                $type = $columnTypes[$col] ?? new ColumnDeclaration(\ZtdQuery\Schema\ColumnTypeFamily::TEXT, 'TEXT');
 
                 if ($value === null) {
                     $expr = $this->castRenderer->renderNullCast($type);

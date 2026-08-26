@@ -10,7 +10,7 @@ namespace ZtdQuery\Schema;
 final class TableDefinition
 {
     /**
-     * @var array<string, ColumnType>
+     * @var array<string, ColumnDeclaration>
      */
     public readonly array $typedColumns;
 
@@ -60,7 +60,7 @@ final class TableDefinition
      * @param list<string> $primaryKeys Primary key column names.
      * @param list<string> $notNullColumns Columns with NOT NULL constraint.
      * @param array<string, list<string>> $uniqueConstraints Key name => column list.
-     * @param array<string, ColumnType> $typedColumns Column name => structured ColumnType.
+     * @param array<string, ColumnDeclaration> $typedColumns Column name => structured ColumnDeclaration.
      * @param array<string, string> $columnDefaults Column name => SQL default expression.
      * @param array<string, IdentityGenerationStrategy> $identityStrategies Column name => shadow generation strategy.
      * @param array<string, string> $generatedExpressions Column name => database generated expression.

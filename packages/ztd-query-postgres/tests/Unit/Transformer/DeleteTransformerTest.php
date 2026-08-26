@@ -13,7 +13,7 @@ use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
 use ZtdQuery\Platform\Postgres\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(DeleteTransformer::class)]
@@ -117,8 +117,8 @@ final class DeleteTransformerTest extends TestCase
                 'rows' => [['id' => 1, 'name' => 'Alice']],
                 'columns' => ['id', 'name'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                    'name' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                    'name' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
                 ],
             ],
         ];
@@ -217,8 +217,8 @@ final class DeleteTransformerTest extends TestCase
                 'rows' => [],
                 'columns' => ['id', 'name'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                    'name' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                    'name' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
                 ],
             ],
         ];
@@ -237,8 +237,8 @@ final class DeleteTransformerTest extends TestCase
                 'rows' => [['id' => 1, 'name' => 'Alice']],
                 'columns' => ['id', 'name'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                    'name' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                    'name' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
                 ],
             ],
         ];

@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\Postgres;
 
 use ZtdQuery\Platform\CastRenderer;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 /**
  * PostgreSQL CAST expression renderer.
  *
- * Maps ColumnType to PostgreSQL-specific CAST syntax.
+ * Maps ColumnDeclaration to PostgreSQL-specific CAST syntax.
  * Uses standard CAST() syntax (not :: shorthand) for maximum compatibility.
  */
 final class PgSqlCastRenderer implements CastRenderer
@@ -19,7 +19,7 @@ final class PgSqlCastRenderer implements CastRenderer
     /**
      * {@inheritDoc}
      */
-    public function renderCast(string $expression, ColumnType $type): string
+    public function renderCast(string $expression, ColumnDeclaration $type): string
     {
         $castType = $this->mapToCastType($type);
 
@@ -29,14 +29,14 @@ final class PgSqlCastRenderer implements CastRenderer
     /**
      * {@inheritDoc}
      */
-    public function renderNullCast(ColumnType $type): string
+    public function renderNullCast(ColumnDeclaration $type): string
     {
         $castType = $this->mapToCastType($type);
 
         return "CAST(NULL AS $castType)";
     }
 
-    private function mapToCastType(ColumnType $type): string
+    private function mapToCastType(ColumnDeclaration $type): string
     {
         $nativeType = trim($type->nativeType);
         if (str_ends_with($nativeType, '[]')) {
