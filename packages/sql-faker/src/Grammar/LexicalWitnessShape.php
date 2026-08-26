@@ -92,6 +92,12 @@ final class LexicalWitnessShape
             return false;
         }
 
-        return array_filter($value, static fn (mixed $item): bool => !is_string($item)) === [];
+        foreach ($value as $item) {
+            if (!is_string($item)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

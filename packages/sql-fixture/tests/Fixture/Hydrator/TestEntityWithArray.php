@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Fixture\Hydrator;
 
+/**
+ * An entity holding a column read as an array.
+ */
 class TestEntityWithArray
 {
     /**

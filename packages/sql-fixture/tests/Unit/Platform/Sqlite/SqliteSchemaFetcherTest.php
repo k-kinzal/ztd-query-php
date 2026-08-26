@@ -21,7 +21,7 @@ use SqlFixture\Schema\TableSchema;
 final class SqliteSchemaFetcherTest extends TestCase
 {
     #[Test]
-    public function fetchSchemaFromSqliteTable(): void
+    public function testFetchSchemaFromSqliteTable(): void
     {
         $pdo = new PDO('sqlite::memory:');
         $pdo->exec('CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price REAL)');

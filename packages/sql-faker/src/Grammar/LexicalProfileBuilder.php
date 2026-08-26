@@ -108,8 +108,11 @@ final class LexicalProfileBuilder
             throw new RuntimeException("Lexical profile catalog is missing: {$dialect} {$version}");
         }
 
-        /** @var array<string, mixed> $catalog */
-        $catalog = $profile['catalog'];
+        $catalog = array_filter(
+            $profile['catalog'],
+            static fn (int|string $key): bool => is_string($key),
+            ARRAY_FILTER_USE_KEY,
+        );
         (new LexicalCatalog($catalog))->assertTerminalsCovered($terminals);
     }
 

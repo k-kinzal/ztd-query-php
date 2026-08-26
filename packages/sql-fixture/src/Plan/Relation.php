@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlFixture\Plan;
 
 use SqlFixture\Fixture\PlanSchemaException;
+use SqlFixture\TypeMapper\TypeMapperInterface;
 
 /**
  * One relation as written, with the roles the operator implies.
@@ -16,9 +17,22 @@ use SqlFixture\Fixture\PlanSchemaException;
  *
  * A `?` next to an end marks that end optional, as it does in DBML: the
  * referencing column may be null, so the row on the other end need not exist.
+ *
+ * @phpstan-import-type FixtureRow from TypeMapperInterface
  */
 final class Relation
 {
+    /**
+     * Binds one relation as it was written.
+     *
+     * @param ColumnRef $left End written on the left
+     * @param RelationKind $kind Operator between them, which decides which end is the parent
+     * @param ColumnRef $right End written on the right
+     * @param bool $leftOptional Whether a `?` was written next to the left end
+     * @param bool $rightOptional Whether a `?` was written next to the right end
+     *
+     * @throws PlanSyntaxException When the two ends name different numbers of columns
+     */
     public function __construct(
         public readonly ColumnRef $left,
         public readonly RelationKind $kind,
@@ -137,6 +151,11 @@ final class Relation
         return $this->isOptionalAt($this->kind->childSide());
     }
 
+    /**
+     * Reports whether the child end may hold more than one row.
+     *
+     * @return bool True when the operator makes the child a collection
+     */
     public function childIsCollection(): bool
     {
         return $this->kind->childIsCollection();
@@ -202,9 +221,9 @@ final class Relation
     /**
      * Reads the linking columns off a parent row, as the child spells them.
      *
-     * @param array<string, mixed> $parentRow Row on the parent end
+     * @param FixtureRow $parentRow Row on the parent end
      *
-     * @return array<string, mixed> Child column => the value it must carry
+     * @return FixtureRow Child column => the value it must carry
      *
      * @throws PlanSchemaException When the parent row does not carry a column the relation reads
      */
@@ -227,7 +246,7 @@ final class Relation
      * Where every linking column was given, generating a parent to fill them
      * would contradict what the caller asked for.
      *
-     * @param array<string, mixed> $overrides Values the caller fixed on the child row
+     * @param FixtureRow $overrides Values the caller fixed on the child row
      *
      * @return bool True when every linking column was given
      */

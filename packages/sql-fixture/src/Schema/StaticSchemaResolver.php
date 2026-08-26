@@ -22,11 +22,25 @@ final class StaticSchemaResolver implements SchemaResolverInterface
         }
     }
 
+    /**
+     * Remembers a table so a plan can name it.
+     *
+     * @param TableSchema $schema Table to remember
+     */
     public function register(TableSchema $schema): void
     {
         $this->schemas[$this->normalize($schema->tableName)] = $schema;
     }
 
+    /**
+     * Answers a table that was registered.
+     *
+     * @param string $tableName Table to answer for
+     *
+     * @return TableSchema The table
+     *
+     * @throws SchemaNotFoundException When no such table was registered
+     */
     public function resolve(string $tableName): TableSchema
     {
         $schema = $this->schemas[$this->normalize($tableName)] ?? null;
@@ -37,6 +51,13 @@ final class StaticSchemaResolver implements SchemaResolverInterface
         return $schema;
     }
 
+    /**
+     * Reports whether a table was registered.
+     *
+     * @param string $tableName Table to answer for
+     *
+     * @return bool True when it can be resolved
+     */
     public function has(string $tableName): bool
     {
         return isset($this->schemas[$this->normalize($tableName)]);
@@ -50,7 +71,18 @@ final class StaticSchemaResolver implements SchemaResolverInterface
         return array_keys($this->schemas);
     }
 
-    private function normalize(string $tableName): string
+    /**
+     * Answers the key a table is filed under.
+     *
+     * A caller may write a table quoted, schema-qualified, or in any case, and all
+     * of those name the same table, so the quotes and the schema come off and what
+     * is left is lowercased.
+     *
+     * @param string $tableName Name as the caller wrote it
+     *
+     * @return string The key it is filed under
+     */
+    public function normalize(string $tableName): string
     {
         $name = str_replace(['`', '"', '[', ']'], '', $tableName);
 

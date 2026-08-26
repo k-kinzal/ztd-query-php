@@ -4,60 +4,46 @@ declare(strict_types=1);
 
 namespace SqlFixture\Platform\MySql;
 
+use Override;
 use PDO;
 use RuntimeException;
 use SqlFixture\Schema\SchemaFetcherInterface;
+use SqlFixture\Schema\SchemaParseException;
 use SqlFixture\Schema\TableSchema;
 
 /**
- * Fetches table schemas from MySQL databases using SHOW CREATE TABLE.
+ * Describes a live MySQL table.
+ *
+ * MySQL hands back the statement the table was created with, so a live table
+ * and a table read from a `.sql` file arrive at the same reader and are
+ * understood the same way.
  */
 final class MySqlSchemaFetcher implements SchemaFetcherInterface
 {
-    private MySqlSchemaParser $parser;
-
-    public function __construct(?MySqlSchemaParser $parser = null)
-    {
-        $this->parser = $parser ?? new MySqlSchemaParser();
+    /**
+     * @param MySqlSchemaParser $parser Reads a declaration as a table
+     * @param MySqlCatalog $catalog Reads a table out of MySQL's catalog
+     */
+    public function __construct(
+        private readonly MySqlSchemaParser $parser = new MySqlSchemaParser(),
+        private readonly MySqlCatalog $catalog = new MySqlCatalog(),
+    ) {
     }
 
+    /**
+     * Describes the table as the server currently holds it.
+     *
+     * @param PDO $pdo Connection to read through
+     * @param string $tableName Table to describe, optionally database-qualified
+     *
+     * @return TableSchema The table
+     *
+     * @throws RuntimeException When the connection knows no such table
+     * @throws SchemaParseException When the recorded statement cannot be read back
+     */
+    #[Override]
     public function fetchSchema(PDO $pdo, string $tableName): TableSchema
     {
-        $createTableSql = $this->fetchCreateTableSql($pdo, $tableName);
-        return $this->parser->parse($createTableSql);
-    }
-
-    /**
-     * Fetch the CREATE TABLE SQL from the database.
-     */
-    private function fetchCreateTableSql(PDO $pdo, string $tableName): string
-    {
-        $quotedName = $this->quoteTableName($tableName);
-
-        $stmt = $pdo->query("SHOW CREATE TABLE {$quotedName}");
-        if ($stmt === false) {
-            throw new RuntimeException("Failed to get CREATE TABLE for: {$tableName}");
-        }
-
-        /** @var array{0: string, 1: string}|false $row */
-        $row = $stmt->fetch(PDO::FETCH_NUM);
-        if ($row === false) {
-            throw new RuntimeException("Table not found: {$tableName}");
-        }
-
-        return $row[1];
-    }
-
-    /**
-     * Quote a table name for use in SQL.
-     */
-    private function quoteTableName(string $tableName): string
-    {
-        if (str_contains($tableName, '.')) {
-            $parts = explode('.', $tableName, 2);
-            return '`' . $parts[0] . '`.`' . $parts[1] . '`';
-        }
-
-        return '`' . $tableName . '`';
+        return $this->parser->parse($this->catalog->createTableSqlOf($pdo, $tableName));
     }
 }

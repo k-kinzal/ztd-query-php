@@ -31,7 +31,7 @@ use Tests\Fixture\Hydrator\TestEntityWithString;
 final class ReflectionHydratorTest extends TestCase
 {
     #[Test]
-    public function hydrateViaConstructor(): void
+    public function testHydrateViaConstructor(): void
     {
         $data = ['id' => 1, 'name' => 'Test'];
         $object = (new ReflectionHydrator())->hydrate($data, TestEntity::class);

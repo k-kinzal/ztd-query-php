@@ -18,7 +18,7 @@ use SqlFixture\Schema\TableSchema;
 final class InvalidOverrideExceptionTest extends TestCase
 {
     #[Test]
-    public function unknownColumnListsWhatTheTableHas(): void
+    public function testUnknownColumnListsWhatTheTableHas(): void
     {
         $schema = new TableSchema('order', [
             'id' => new ColumnDefinition('id', 'INT'),
@@ -34,7 +34,7 @@ final class InvalidOverrideExceptionTest extends TestCase
     }
 
     #[Test]
-    public function notNullableSaysWhyNullIsRefused(): void
+    public function testNotNullableSaysWhyNullIsRefused(): void
     {
         $schema = new TableSchema('order', ['status' => new ColumnDefinition('status', 'VARCHAR', nullable: false)]);
 
@@ -44,7 +44,7 @@ final class InvalidOverrideExceptionTest extends TestCase
     }
 
     #[Test]
-    public function generatedColumnSaysTheDatabaseComputesIt(): void
+    public function testGeneratedColumnSaysTheDatabaseComputesIt(): void
     {
         $schema = new TableSchema('order', ['code' => new ColumnDefinition('code', 'VARCHAR', generated: true)]);
 
@@ -57,4 +57,30 @@ final class InvalidOverrideExceptionTest extends TestCase
         );
     }
 
+    #[Test]
+    public function testNegativeRowCountNamesTheTableAndTheCountThatWasWritten(): void
+    {
+        self::assertSame(
+            'The row count for order cannot be negative, got -2.',
+            InvalidOverrideException::negativeRowCount('order', -2)->getMessage()
+        );
+    }
+
+    #[Test]
+    public function testUnsupportedValueSaysWhatAColumnCouldHaveHeldInstead(): void
+    {
+        self::assertSame(
+            'The override for "payload" must be a scalar, null, or an array of those, got stdClass.',
+            InvalidOverrideException::unsupportedValue('payload', 'stdClass')->getMessage()
+        );
+    }
+
+    #[Test]
+    public function testNestedValueNamesTheColumnAndWhatItWasFoundHolding(): void
+    {
+        self::assertSame(
+            'The override for "payload" holds a array, which no column can carry.',
+            InvalidOverrideException::nestedValue('payload', 'array')->getMessage()
+        );
+    }
 }
