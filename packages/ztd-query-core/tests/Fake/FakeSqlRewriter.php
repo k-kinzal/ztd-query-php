@@ -138,6 +138,9 @@ final class FakeSqlRewriter implements SqlRewriter
         return new RewritePlan($sql, QueryKind::READ);
     }
 
+    /**
+     * @throws UnsupportedSqlException When the statement is not one this fake simulates
+     */
     private function rewriteWrite(string $sql): RewritePlan
     {
         $upper = strtoupper(ltrim($sql));
@@ -222,6 +225,9 @@ final class FakeSqlRewriter implements SqlRewriter
         return new RewritePlan('SELECT 1 WHERE FALSE', QueryKind::WRITE_SIMULATED, $mutation);
     }
 
+    /**
+     * @throws UnsupportedSqlException When the statement is not one this fake simulates
+     */
     private function rewriteDdl(string $sql): RewritePlan
     {
         $upper = strtoupper(ltrim($sql));

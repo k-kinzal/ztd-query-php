@@ -6,6 +6,12 @@ namespace ZtdQuery\Schema;
 
 use ZtdQuery\Exception\InvalidDefinitionException;
 
+/**
+ * What a table's division into partitions is by.
+ *
+ * A key may be columns or expressions over them, and which partition a row
+ * belongs in is decided by evaluating it.
+ */
 final class TablePartitionKey
 {
     /**
