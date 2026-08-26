@@ -2,20 +2,24 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Platform\MySql\Tests\Unit;
+namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\MySql\MySqlUpsertExpressionCursor;
 use ZtdQuery\Platform\MySql\MySqlUpsertExpressionParser;
+use ZtdQuery\Shadow\Mutation\UpsertExpressionKind;
 
 /**
  * The my sql upsert expression parser test.
  */
 #[CoversClass(MySqlUpsertExpressionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
+#[UsesClass(MySqlUpsertExpressionCursor::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlUpsertLiteral::class)]
 final class MySqlUpsertExpressionParserTest extends TestCase
 {
     /**
@@ -174,4 +178,126 @@ final class MySqlUpsertExpressionParserTest extends TestCase
         yield 'values with wrong closing token' => ['VALUES(value extra'];
         yield 'non-identifier values' => ['VALUES(1)'];
     }
+    public function testParseIfSupportedAnswersWhatItCanRead(): void
+    {
+        self::assertSame(
+            5,
+            (new MySqlUpsertExpressionParser())->parseIfSupported('2 + 3', 'items')
+                ?->evaluate([], [], 'items'),
+        );
+    }
+
+    public function testDisjunctionBindsLooserThanConjunction(): void
+    {
+        $cursor = MySqlUpsertExpressionCursor::over('TRUE OR FALSE AND FALSE', 'items');
+
+        self::assertTrue((new MySqlUpsertExpressionParser())->disjunction($cursor)->evaluate([], [], 'items'));
+    }
+
+    public function testConjunctionReadsARunOfAnd(): void
+    {
+        $cursor = MySqlUpsertExpressionCursor::over('TRUE AND FALSE', 'items');
+
+        self::assertFalse((new MySqlUpsertExpressionParser())->conjunction($cursor)->evaluate([], [], 'items'));
+    }
+
+    public function testComparisonAnswersWhatTheOperatorMakesOfBothSides(): void
+    {
+        $cursor = MySqlUpsertExpressionCursor::over('2 < 3', 'items');
+
+        self::assertTrue((new MySqlUpsertExpressionParser())->comparison($cursor)->evaluate([], [], 'items'));
+    }
+
+    public function testComparisonLeavesASingleOperandAsItIs(): void
+    {
+        $cursor = MySqlUpsertExpressionCursor::over('7', 'items');
+
+        self::assertSame(7, (new MySqlUpsertExpressionParser())->comparison($cursor)->evaluate([], [], 'items'));
+    }
+
+    public function testAdditiveReadsARunOfPlusAndMinusLeftToRight(): void
+    {
+        $cursor = MySqlUpsertExpressionCursor::over('10 - 3 - 2', 'items');
+
+        self::assertSame(5, (new MySqlUpsertExpressionParser())->additive($cursor)->evaluate([], [], 'items'));
+    }
+
+    public function testMultiplicativeBindsTighterThanAddition(): void
+    {
+        $cursor = MySqlUpsertExpressionCursor::over('2 * 3', 'items');
+
+        self::assertSame(6, (new MySqlUpsertExpressionParser())->multiplicative($cursor)->evaluate([], [], 'items'));
+    }
+
+    public function testUnaryReadsAnOperatorWrittenOverItsOwnOperand(): void
+    {
+        $cursor = MySqlUpsertExpressionCursor::over('- - 5', 'items');
+
+        self::assertSame(5, (new MySqlUpsertExpressionParser())->unary($cursor)->evaluate([], [], 'items'));
+    }
+
+    public function testPrimaryReadsAWholeExpressionInParentheses(): void
+    {
+        $cursor = MySqlUpsertExpressionCursor::over('(2 + 3)', 'items');
+
+        self::assertSame(5, (new MySqlUpsertExpressionParser())->primary($cursor)->evaluate([], [], 'items'));
+    }
+
+    public function testPrimaryRefusesAnExpressionThatEndsBeforeItBegins(): void
+    {
+        $cursor = MySqlUpsertExpressionCursor::over('', 'items');
+
+        $this->expectException(UnsupportedSqlException::class);
+
+        (new MySqlUpsertExpressionParser())->primary($cursor);
+    }
+
+    public function testNamedReadsABareNameAsTheRowThatIsAlreadyThere(): void
+    {
+        $cursor = MySqlUpsertExpressionCursor::over('qty', 'items');
+
+        self::assertSame(
+            4,
+            (new MySqlUpsertExpressionParser())->named($cursor)->evaluate(['qty' => 4], ['qty' => 9], 'items'),
+        );
+    }
+
+    public function testNamedRefusesAQualifierThatNamesNeitherRow(): void
+    {
+        $cursor = MySqlUpsertExpressionCursor::over('other.qty', 'items');
+
+        $this->expectException(UnsupportedSqlException::class);
+
+        (new MySqlUpsertExpressionParser())->named($cursor);
+    }
+
+    public function testValuesReferenceReadsTheColumnOfTheIncomingRow(): void
+    {
+        $cursor = MySqlUpsertExpressionCursor::over('VALUES(qty)', 'items');
+        $cursor->advance();
+
+        self::assertSame(
+            9,
+            (new MySqlUpsertExpressionParser())->valuesReference($cursor)
+                ->evaluate(['qty' => 4], ['qty' => 9], 'items'),
+        );
+    }
+
+    public function testComparisonOperatorReadsAnOperatorWrittenAsTwoSymbols(): void
+    {
+        $cursor = MySqlUpsertExpressionCursor::over('<= 1', 'items');
+
+        self::assertSame(
+            UpsertExpressionKind::LessOrEqual,
+            (new MySqlUpsertExpressionParser())->comparisonOperator($cursor),
+        );
+    }
+
+    public function testComparisonOperatorIsNothingWhereNothingIsCompared(): void
+    {
+        $cursor = MySqlUpsertExpressionCursor::over('1', 'items');
+
+        self::assertNull((new MySqlUpsertExpressionParser())->comparisonOperator($cursor));
+    }
+
 }
