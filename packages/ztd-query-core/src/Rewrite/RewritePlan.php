@@ -102,11 +102,21 @@ final class RewritePlan
         return $this->mutation;
     }
 
+    /**
+     * Returning projection.
+     *
+     * @return ?ReturningProjection
+     */
     public function returningProjection(): ?ReturningProjection
     {
         return $this->returningProjection;
     }
 
+    /**
+     * Affected rows mode.
+     *
+     * @return AffectedRowsMode
+     */
     public function affectedRowsMode(): AffectedRowsMode
     {
         return $this->affectedRowsMode;

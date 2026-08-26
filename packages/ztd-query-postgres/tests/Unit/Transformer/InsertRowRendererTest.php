@@ -12,7 +12,7 @@ use ZtdQuery\Platform\Postgres\Transformer\InsertRowRenderer;
 #[CoversClass(InsertRowRenderer::class)]
 final class InsertRowRendererTest extends TestCase
 {
-    public function testParsesPostgresDefaultAndRendersCompleteRow(): void
+    public function testRenderParsesPostgresDefaultAndRendersCompleteRow(): void
     {
         $renderer = new InsertRowRenderer();
         $provided = $renderer->providedExpressions(['id', 'name'], ['  default  ', "  'Ada'  "]);

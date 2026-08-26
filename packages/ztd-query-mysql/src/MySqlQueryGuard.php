@@ -26,6 +26,11 @@ final class MySqlQueryGuard
 {
     private MySqlParser $parser;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param MySqlParser $parser
+     */
     public function __construct(MySqlParser $parser)
     {
         $this->parser = $parser;
@@ -57,6 +62,8 @@ final class MySqlQueryGuard
      * Throw when the SQL or statement is not allowed by the guard.
      *
      * @param Statement|string $input Parsed statement or raw SQL.
+     *
+     * @throws RuntimeException
      */
     public function assertAllowed(Statement|string $input): void
     {

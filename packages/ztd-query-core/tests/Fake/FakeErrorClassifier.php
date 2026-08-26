@@ -14,6 +14,12 @@ use ZtdQuery\Platform\ErrorClassifier;
  */
 final class FakeErrorClassifier implements ErrorClassifier
 {
+    /**
+     * Reports whether unknown schema error.
+     *
+     * @param DatabaseException $e
+     * @return bool
+     */
     public function isUnknownSchemaError(DatabaseException $e): bool
     {
         $code = $e->getDriverErrorCode();

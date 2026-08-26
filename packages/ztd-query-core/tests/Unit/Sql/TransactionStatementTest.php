@@ -17,7 +17,7 @@ use ZtdQuery\Sql\TransactionStatement;
 #[UsesClass(ShadowTransactions::class)]
 final class TransactionStatementTest extends TestCase
 {
-    public function testCommitAppliesNamedTransactionLifecycleWithoutSql(): void
+    public function testReleaseCommitAppliesNamedTransactionLifecycleWithoutSql(): void
     {
         $store = new ShadowStore();
         $store->set('items', [['id' => 1]]);

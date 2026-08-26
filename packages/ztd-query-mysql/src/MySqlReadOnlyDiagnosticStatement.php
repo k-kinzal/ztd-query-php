@@ -7,6 +7,9 @@ namespace ZtdQuery\Platform\MySql;
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The my sql read only diagnostic statement.
+ */
 final class MySqlReadOnlyDiagnosticStatement
 {
     /** @var non-empty-list<string> */
@@ -17,6 +20,12 @@ final class MySqlReadOnlyDiagnosticStatement
         'GRANT', 'REVOKE',
     ];
 
+    /**
+     * Reports whether safe.
+     *
+     * @param string $sql
+     * @return bool
+     */
     public static function isSafe(string $sql): bool
     {
         $stream = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create());

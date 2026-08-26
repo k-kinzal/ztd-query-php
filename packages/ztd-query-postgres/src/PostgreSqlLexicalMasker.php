@@ -4,8 +4,17 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Postgres;
 
+/**
+ * The postgre sql lexical masker.
+ */
 final class PostgreSqlLexicalMasker
 {
+    /**
+     * Mask string literals.
+     *
+     * @param string $sql
+     * @return string
+     */
     public static function maskStringLiterals(string $sql): string
     {
         $result = '';
@@ -39,6 +48,12 @@ final class PostgreSqlLexicalMasker
         return $result;
     }
 
+    /**
+     * Mask comments.
+     *
+     * @param string $sql
+     * @return string
+     */
     public static function maskComments(string $sql): string
     {
         $result = '';

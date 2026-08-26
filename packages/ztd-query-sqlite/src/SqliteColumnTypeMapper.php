@@ -7,8 +7,17 @@ namespace ZtdQuery\Platform\Sqlite;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
+/**
+ * The sqlite column type mapper.
+ */
 final class SqliteColumnTypeMapper
 {
+    /**
+     * Map.
+     *
+     * @param string $nativeType
+     * @return ColumnType
+     */
     public function map(string $nativeType): ColumnType
     {
         $normalized = strtoupper(trim($nativeType));

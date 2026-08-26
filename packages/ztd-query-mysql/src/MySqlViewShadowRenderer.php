@@ -6,6 +6,9 @@ namespace ZtdQuery\Platform\MySql;
 
 use ZtdQuery\Schema\ViewDefinitionSet;
 
+/**
+ * The my sql view shadow renderer.
+ */
 final class MySqlViewShadowRenderer
 {
     /**

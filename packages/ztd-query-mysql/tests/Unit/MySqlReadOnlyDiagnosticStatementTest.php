@@ -15,12 +15,14 @@ use ZtdQuery\Platform\MySql\MySqlReadOnlyDiagnosticStatement;
 final class MySqlReadOnlyDiagnosticStatementTest extends TestCase
 {
     #[DataProvider('providerStatement')]
-    public function testClassifiesOnlySafeMySqlDiagnostics(string $sql, bool $expected): void
+    public function testIsSafeClassifiesOnlySafeMySqlDiagnostics(string $sql, bool $expected): void
     {
         self::assertSame($expected, MySqlReadOnlyDiagnosticStatement::isSafe($sql));
     }
 
-    /** @return iterable<string, array{string, bool}> */
+    /**
+     * @return iterable<string, array{string, bool}>
+     */
     public static function providerStatement(): iterable
     {
         yield 'explain select' => ['EXPLAIN SELECT * FROM users', true];

@@ -56,6 +56,12 @@ final class FakeConnection implements ConnectionInterface
         $this->defaultRows = $defaultRows;
     }
 
+    /**
+     * Query.
+     *
+     * @param string $sql
+     * @return StatementInterface|false
+     */
     public function query(string $sql): StatementInterface|false
     {
         $this->queries[] = $sql;

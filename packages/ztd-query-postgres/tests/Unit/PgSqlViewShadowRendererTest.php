@@ -17,7 +17,7 @@ use ZtdQuery\Schema\ViewDefinitionSet;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
 final class PgSqlViewShadowRendererTest extends TestCase
 {
-    public function testOrdersViewsAndUnqualifiesShadowedPostgreSqlRelations(): void
+    public function testRenderOrdersViewsAndUnqualifiesShadowedPostgreSqlRelations(): void
     {
         $views = new ViewDefinitionSet();
         $views->register('summary', new ViewDefinition('SELECT count(*) FROM public."active_users"', ['active_users']));

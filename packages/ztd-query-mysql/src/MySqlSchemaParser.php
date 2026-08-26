@@ -17,6 +17,11 @@ final class MySqlSchemaParser implements SchemaParser
 {
     private MySqlParser $parser;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param MySqlParser $parser
+     */
     public function __construct(MySqlParser $parser)
     {
         $this->parser = $parser;

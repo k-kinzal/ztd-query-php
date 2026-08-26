@@ -10,13 +10,27 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The sqlite pdo parameter binding compiler, as parameter binding compiler.
+ */
 final class SqlitePdoParameterBindingCompiler implements ParameterBindingCompiler
 {
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param SqliteCastRenderer $castRenderer
+     */
     public function __construct(
         private readonly SqliteCastRenderer $castRenderer = new SqliteCastRenderer(),
     ) {
     }
 
+    /**
+     * Compile.
+     *
+     * @param string $sql
+     * @param ?array $params
+     */
     public function compile(string $sql, ?array $params): array
     {
         if ($params === null) {

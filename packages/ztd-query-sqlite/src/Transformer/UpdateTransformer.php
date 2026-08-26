@@ -22,6 +22,12 @@ final class UpdateTransformer implements SqlTransformer
     private SelectTransformer $selectTransformer;
     private SqliteCteShadowComposer $cteComposer;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param SqliteParser $parser
+     * @param SelectTransformer $selectTransformer
+     */
     public function __construct(
         SqliteParser $parser,
         SelectTransformer $selectTransformer,
@@ -33,6 +39,8 @@ final class UpdateTransformer implements SqlTransformer
 
     /**
      * {@inheritDoc}
+     *
+     * @throws UnsupportedSqlException
      */
     public function transform(string $sql, array $tables): string
     {
@@ -136,6 +144,8 @@ final class UpdateTransformer implements SqlTransformer
      * @param string $sql
      * @param array<int, string> $columns
      * @return array{sql: string, table: string}
+     *
+     * @throws RuntimeException
      */
     public function buildProjectionMeta(string $sql, array $columns): array
     {

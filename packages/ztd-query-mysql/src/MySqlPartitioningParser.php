@@ -16,6 +16,12 @@ use ZtdQuery\Sql\SqlTokenStream;
  */
 final class MySqlPartitioningParser
 {
+    /**
+     * Reads.
+     *
+     * @param CreateStatement $statement
+     * @return ?TablePartitioning
+     */
     public function parse(CreateStatement $statement): ?TablePartitioning
     {
         if ($statement->partitionBy === null) {

@@ -12,7 +12,7 @@ use ZtdQuery\Platform\Sqlite\Transformer\InsertRowRenderer;
 #[CoversClass(InsertRowRenderer::class)]
 final class InsertRowRendererTest extends TestCase
 {
-    public function testParsesSqliteDefaultAndRendersCompleteRow(): void
+    public function testRenderParsesSqliteDefaultAndRendersCompleteRow(): void
     {
         $renderer = new InsertRowRenderer();
         $provided = $renderer->providedExpressions(['id', 'name'], ['  default  ', "  'Ada'  "]);

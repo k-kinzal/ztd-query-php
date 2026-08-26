@@ -22,6 +22,15 @@ final class SqliteTransformer implements SqlTransformer
     private UpdateTransformer $updateTransformer;
     private DeleteTransformer $deleteTransformer;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param SqliteParser $parser
+     * @param SelectTransformer $selectTransformer
+     * @param InsertTransformer $insertTransformer
+     * @param UpdateTransformer $updateTransformer
+     * @param DeleteTransformer $deleteTransformer
+     */
     public function __construct(
         SqliteParser $parser,
         SelectTransformer $selectTransformer,
@@ -38,6 +47,8 @@ final class SqliteTransformer implements SqlTransformer
 
     /**
      * {@inheritDoc}
+     *
+     * @throws UnsupportedSqlException
      */
     public function transform(string $sql, array $tables): string
     {
@@ -55,6 +66,10 @@ final class SqliteTransformer implements SqlTransformer
         };
     }
 
+    /**
+     * Commit rewrite state.
+     *
+     */
     public function commitRewriteState(): void
     {
         $this->insertTransformer->commitRewriteState();

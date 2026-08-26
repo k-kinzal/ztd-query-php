@@ -8,8 +8,16 @@ use ZtdQuery\Platform\ResultColumnTypeResolver;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
+/**
+ * The sqlite pdo result column type resolver, as result column type resolver.
+ */
 final class SqlitePdoResultColumnTypeResolver implements ResultColumnTypeResolver
 {
+    /**
+     * Answers.
+     *
+     * @return ColumnType
+     */
     public function resolve(array $metadata): ColumnType
     {
         $declaredType = $metadata['sqlite:decl_type'] ?? null;

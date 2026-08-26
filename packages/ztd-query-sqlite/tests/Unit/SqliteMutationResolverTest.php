@@ -2771,7 +2771,9 @@ final class SqliteMutationResolverTest extends TestCase
         $resolver->resolve($sql, QueryKind::WRITE_SIMULATED);
     }
 
-    /** @return Generator<string, array{string}> */
+    /**
+     * @return Generator<string, array{string}>
+     */
     public static function providerRemovedTableMutations(): Generator
     {
         yield 'update' => ['UPDATE records SET id = 2'];
@@ -2999,7 +3001,9 @@ final class SqliteMutationResolverTest extends TestCase
         $resolver->resolve($sql, QueryKind::DDL_SIMULATED);
     }
 
-    /** @return Generator<string, array{string}> */
+    /**
+     * @return Generator<string, array{string}>
+     */
     public static function providerMalformedAlterIdentifierClauses(): Generator
     {
         yield 'missing operation' => ['ALTER TABLE records'];

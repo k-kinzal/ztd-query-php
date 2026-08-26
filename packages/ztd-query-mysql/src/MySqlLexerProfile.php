@@ -7,8 +7,17 @@ namespace ZtdQuery\Platform\MySql;
 use PhpMyAdmin\SqlParser\Context;
 use ZtdQuery\Sql\SqlLexerProfile;
 
+/**
+ * The my sql lexer profile.
+ */
 final class MySqlLexerProfile
 {
+    /**
+     * Builds.
+     *
+     * @param ?bool $ansiQuotes
+     * @return SqlLexerProfile
+     */
     public static function create(?bool $ansiQuotes = null): SqlLexerProfile
     {
         $ansiQuotes ??= Context::hasMode(Context::SQL_MODE_ANSI_QUOTES);

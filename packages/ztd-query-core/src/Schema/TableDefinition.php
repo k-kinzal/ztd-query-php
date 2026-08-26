@@ -97,11 +97,22 @@ final class TableDefinition
         $this->partialUniqueIndexes = $partialUniqueIndexes;
     }
 
+    /**
+     * Candidate keys.
+     *
+     * @return CandidateKeySet
+     */
     public function candidateKeys(): CandidateKeySet
     {
         return CandidateKeySet::fromSchema($this->primaryKeys, $this->uniqueConstraints);
     }
 
+    /**
+     * With partitioning.
+     *
+     * @param ?TablePartitioning $partitioning
+     * @return self
+     */
     public function withPartitioning(?TablePartitioning $partitioning): self
     {
         return new self(
@@ -122,6 +133,12 @@ final class TableDefinition
         );
     }
 
+    /**
+     * With partition key.
+     *
+     * @param ?TablePartitionKey $partitionKey
+     * @return self
+     */
     public function withPartitionKey(?TablePartitionKey $partitionKey): self
     {
         return new self(
@@ -142,6 +159,12 @@ final class TableDefinition
         );
     }
 
+    /**
+     * With partition relation.
+     *
+     * @param ?TablePartitionRelation $partitionRelation
+     * @return self
+     */
     public function withPartitionRelation(?TablePartitionRelation $partitionRelation): self
     {
         return new self(
@@ -162,6 +185,12 @@ final class TableDefinition
         );
     }
 
+    /**
+     * With partial unique index.
+     *
+     * @param PartialUniqueIndex $index
+     * @return self
+     */
     public function withPartialUniqueIndex(PartialUniqueIndex $index): self
     {
         $indexes = $this->partialUniqueIndexes;

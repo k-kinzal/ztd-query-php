@@ -38,6 +38,14 @@ final class SqliteMutationResolver
     private SchemaParser $schemaParser;
     private SqliteParser $parser;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param ShadowStore $shadowStore
+     * @param TableDefinitionRegistry $registry
+     * @param SchemaParser $schemaParser
+     * @param SqliteParser $parser
+     */
     public function __construct(
         ShadowStore $shadowStore,
         TableDefinitionRegistry $registry,
@@ -74,6 +82,10 @@ final class SqliteMutationResolver
         };
     }
 
+    /**
+     * @throws UnsupportedSqlException
+     * @throws UnknownSchemaException
+     */
     private function resolveUpdate(string $sql): ShadowMutation
     {
         $targetTable = $this->parser->extractTargetTable($sql);
@@ -93,6 +105,10 @@ final class SqliteMutationResolver
         return new UpdateMutation($targetTable, $primaryKeys);
     }
 
+    /**
+     * @throws UnsupportedSqlException
+     * @throws UnknownSchemaException
+     */
     private function resolveDelete(string $sql): ShadowMutation
     {
         $targetTable = $this->parser->extractTargetTable($sql);
@@ -118,6 +134,9 @@ final class SqliteMutationResolver
         return new DeleteMutation($targetTable, $primaryKeys);
     }
 
+    /**
+     * @throws UnsupportedSqlException
+     */
     private function resolveInsert(string $sql): ShadowMutation
     {
         $tableName = $this->parser->extractTargetTable($sql);
@@ -193,6 +212,9 @@ final class SqliteMutationResolver
         );
     }
 
+    /**
+     * @throws UnsupportedSqlException
+     */
     private function resolveCreateTable(string $sql): ShadowMutation
     {
         $tableName = $this->parser->extractTargetTable($sql);
@@ -211,6 +233,10 @@ final class SqliteMutationResolver
         return new CreateTableMutation($tableName, $definition, $this->registry, $sql, $ifNotExists);
     }
 
+    /**
+     * @throws UnsupportedSqlException
+     * @throws UnknownSchemaException
+     */
     private function resolveDropTable(string $sql): ShadowMutation
     {
         $tableName = $this->parser->extractTargetTable($sql);
@@ -264,6 +290,10 @@ final class SqliteMutationResolver
         };
     }
 
+    /**
+     * @throws UnsupportedSqlException
+     * @throws ColumnAlreadyExistsException
+     */
     private function resolveAlterAddColumn(string $sql, string $tableName, string $columnSql): ShadowMutation
     {
         $existing = $this->definition($sql, $tableName);
@@ -307,6 +337,10 @@ final class SqliteMutationResolver
         return $this->alterMutation($sql, $tableName, $tableName, $definition, $projection);
     }
 
+    /**
+     * @throws UnsupportedSqlException
+     * @throws ColumnNotFoundException
+     */
     private function resolveAlterDropColumn(string $sql, string $tableName, string $columnClause): ShadowMutation
     {
         $requestedName = $this->singleIdentifier($columnClause);
@@ -366,6 +400,9 @@ final class SqliteMutationResolver
         );
     }
 
+    /**
+     * @throws UnsupportedSqlException
+     */
     private function resolveAlterRenameTable(string $sql, string $tableName, string $tableClause): ShadowMutation
     {
         $newName = $this->singleIdentifier($tableClause);
@@ -384,6 +421,11 @@ final class SqliteMutationResolver
         );
     }
 
+    /**
+     * @throws UnsupportedSqlException
+     * @throws ColumnNotFoundException
+     * @throws ColumnAlreadyExistsException
+     */
     private function resolveAlterRenameColumn(string $sql, string $tableName, string $columnClause): ShadowMutation
     {
         $renamed = $this->renamedIdentifiers($columnClause);
@@ -439,6 +481,9 @@ final class SqliteMutationResolver
         return $this->alterMutation($sql, $tableName, $tableName, $definition, $projection);
     }
 
+    /**
+     * @throws UnknownSchemaException
+     */
     private function definition(string $sql, string $tableName): TableDefinition
     {
         $definition = $this->registry->get($tableName);
@@ -449,6 +494,9 @@ final class SqliteMutationResolver
         return $definition;
     }
 
+    /**
+     * @throws UnsupportedSqlException
+     */
     private function assertTableWasNotRemoved(string $sql, string $tableName): void
     {
         if ($this->registry->isRemoved($tableName)) {
@@ -456,7 +504,11 @@ final class SqliteMutationResolver
         }
     }
 
-    /** @param list<string> $projection */
+    /**
+     * @param list<string> $projection
+     *
+     * @throws UnsupportedSqlException
+     */
     private function alterMutation(
         string $sql,
         string $sourceTable,

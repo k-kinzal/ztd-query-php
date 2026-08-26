@@ -8,8 +8,17 @@ use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The sqlite in memory attach statement.
+ */
 final class SqliteInMemoryAttachStatement
 {
+    /**
+     * Reports whether safe.
+     *
+     * @param string $sql
+     * @return bool
+     */
     public static function isSafe(string $sql): bool
     {
         $tokens = SqlTokenStream::tokenize($sql, SqliteLexerProfile::create())->significantTokens();

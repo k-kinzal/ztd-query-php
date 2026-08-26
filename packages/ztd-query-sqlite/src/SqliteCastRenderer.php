@@ -16,6 +16,13 @@ use ZtdQuery\Schema\ColumnTypeFamily;
  */
 final class SqliteCastRenderer implements CastRenderer
 {
+    /**
+     * Writes cast.
+     *
+     * @param string $expression
+     * @param ColumnType $type
+     * @return string
+     */
     public function renderCast(string $expression, ColumnType $type): string
     {
         $castType = $this->mapToCastType($type);
@@ -23,6 +30,12 @@ final class SqliteCastRenderer implements CastRenderer
         return "CAST($expression AS $castType)";
     }
 
+    /**
+     * Writes null cast.
+     *
+     * @param ColumnType $type
+     * @return string
+     */
     public function renderNullCast(ColumnType $type): string
     {
         $castType = $this->mapToCastType($type);

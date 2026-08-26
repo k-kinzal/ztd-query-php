@@ -13,17 +13,32 @@ use ZtdQuery\Platform\Sqlite\SqliteReadOnlyDiagnosticStatement;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\SqlRewriter;
 
+/**
+ * The classify rewrite agreement checker, as invariant checker.
+ */
 final class ClassifyRewriteAgreementChecker implements InvariantChecker
 {
     private SqliteQueryGuard $guard;
     private SqlRewriter $rewriter;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param SqliteQueryGuard $guard
+     * @param SqlRewriter $rewriter
+     */
     public function __construct(SqliteQueryGuard $guard, SqlRewriter $rewriter)
     {
         $this->guard = $guard;
         $this->rewriter = $rewriter;
     }
 
+    /**
+     * Check.
+     *
+     * @param string $sql
+     * @return ?InvariantViolation
+     */
     public function check(string $sql): ?InvariantViolation
     {
         $diagnostic = SqliteReadOnlyDiagnosticStatement::isSafe($sql);

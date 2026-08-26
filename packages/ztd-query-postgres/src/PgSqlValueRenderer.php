@@ -16,10 +16,18 @@ use ZtdQuery\Schema\ColumnTypeFamily;
  */
 final class PgSqlValueRenderer implements ValueRenderer
 {
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param CastRenderer $castRenderer
+     */
     public function __construct(private readonly CastRenderer $castRenderer = new PgSqlCastRenderer())
     {
     }
 
+    /**
+     * @throws RuntimeException
+     */
     public function renderValue(mixed $value, ?ColumnType $type = null): string
     {
         if ($value === null) {
@@ -84,6 +92,9 @@ final class PgSqlValueRenderer implements ValueRenderer
         return new ColumnType(ColumnTypeFamily::TEXT, 'TEXT');
     }
 
+    /**
+     * @throws RuntimeException
+     */
     private function stringValue(mixed $value): string
     {
         if ($value instanceof Stringable) {

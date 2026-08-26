@@ -6,6 +6,9 @@ namespace ZtdQuery\Platform\Postgres;
 
 use ZtdQuery\Schema\ViewDefinitionSet;
 
+/**
+ * The pg sql view shadow renderer.
+ */
 final class PgSqlViewShadowRenderer
 {
     /**

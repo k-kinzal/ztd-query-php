@@ -8,8 +8,16 @@ use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Schema\TablePartitionKey;
 use ZtdQuery\Schema\TablePartitionRelation;
 
+/**
+ * The pg sql partition reflector.
+ */
 final class PgSqlPartitionReflector
 {
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param ConnectionInterface $connection
+     */
     public function __construct(private readonly ConnectionInterface $connection)
     {
     }

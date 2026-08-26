@@ -8,9 +8,16 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Shadow\ShadowStore;
 
+/**
+ * The shadow store consistency checker test.
+ */
 #[CoversNothing]
 final class ShadowStoreConsistencyCheckerTest extends TestCase
 {
+    /**
+     * Test allows empty initialized table.
+     *
+     */
     public function testAllowsEmptyInitializedTable(): void
     {
         $store = new ShadowStore();
@@ -19,6 +26,10 @@ final class ShadowStoreConsistencyCheckerTest extends TestCase
         self::assertNull((new ShadowStoreConsistencyChecker($store))->check('CREATE TABLE events (id INT)'));
     }
 
+    /**
+     * Test rejects empty table name.
+     *
+     */
     public function testRejectsEmptyTableName(): void
     {
         $store = new ShadowStore();

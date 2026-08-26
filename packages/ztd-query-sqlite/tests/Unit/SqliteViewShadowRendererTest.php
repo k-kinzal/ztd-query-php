@@ -17,7 +17,7 @@ use ZtdQuery\Schema\ViewDefinitionSet;
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
 final class SqliteViewShadowRendererTest extends TestCase
 {
-    public function testOrdersViewsAndUnqualifiesShadowedSqliteRelations(): void
+    public function testRenderOrdersViewsAndUnqualifiesShadowedSqliteRelations(): void
     {
         $views = new ViewDefinitionSet();
         $views->register('summary', new ViewDefinition('SELECT count(*) FROM main.[active_users]', ['active_users']));
