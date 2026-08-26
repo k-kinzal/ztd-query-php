@@ -6,8 +6,14 @@ namespace ZtdQuery\Platform\Postgres;
 
 use InvalidArgumentException;
 
+/**
+ * The pg sql table sample.
+ */
 final class PgSqlTableSample
 {
+    /**
+     * @throws InvalidArgumentException
+     */
     public function __construct(
         public readonly string $tableName,
         public readonly string $sourceSql,

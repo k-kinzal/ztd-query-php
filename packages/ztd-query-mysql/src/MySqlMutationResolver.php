@@ -54,6 +54,15 @@ final class MySqlMutationResolver
     private UpdateTransformer $updateTransformer;
     private DeleteTransformer $deleteTransformer;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param ShadowStore $shadowStore
+     * @param TableDefinitionRegistry $registry
+     * @param SchemaParser $schemaParser
+     * @param UpdateTransformer $updateTransformer
+     * @param DeleteTransformer $deleteTransformer
+     */
     public function __construct(
         ShadowStore $shadowStore,
         TableDefinitionRegistry $registry,
@@ -111,6 +120,14 @@ final class MySqlMutationResolver
         return null;
     }
 
+    /**
+     * @throws UnknownSchemaException
+     */
+    /**
+     * @throws UnsupportedSqlException
+     *
+     * @throws UnknownSchemaException
+     */
     private function resolveUpdate(UpdateStatement $statement, string $sql): ShadowMutation
     {
         if ($statement->tables === [] || !isset($statement->tables[0])) {
@@ -149,6 +166,14 @@ final class MySqlMutationResolver
         return new UpdateMutation($targetTable, $primaryKeys);
     }
 
+    /**
+     * @throws UnknownSchemaException
+     */
+    /**
+     * @throws UnsupportedSqlException
+     *
+     * @throws UnknownSchemaException
+     */
     private function resolveDelete(DeleteStatement $statement, string $sql): ShadowMutation
     {
         $targetTable = null;
@@ -191,6 +216,8 @@ final class MySqlMutationResolver
     /**
      * @param list<string> $tableNames
      * @return list<MultiTableMutationTarget>
+     *
+     * @throws UnknownSchemaException
      */
     private function multiTableTargets(array $tableNames, string $sql): array
     {
@@ -215,6 +242,9 @@ final class MySqlMutationResolver
         return $targets;
     }
 
+    /**
+     * @throws UnsupportedSqlException
+     */
     private function resolveInsert(InsertStatement $statement, string $sql): ShadowMutation
     {
         $tableName = self::resolveIntoTableName($statement->into);
@@ -262,6 +292,9 @@ final class MySqlMutationResolver
         );
     }
 
+    /**
+     * @throws UnsupportedSqlException
+     */
     private function resolveTruncate(TruncateStatement $statement, string $sql): ShadowMutation
     {
         $tableName = $statement->table->table ?? null;
@@ -272,6 +305,9 @@ final class MySqlMutationResolver
         return new TruncateMutation($tableName);
     }
 
+    /**
+     * @throws UnsupportedSqlException
+     */
     private function resolveReplace(ReplaceStatement $statement, string $sql): ShadowMutation
     {
         $tableName = self::resolveIntoTableName($statement->into);
@@ -349,6 +385,14 @@ final class MySqlMutationResolver
         return new DropTableMutation($tableName, $this->registry, $sql, $ifExists);
     }
 
+    /**
+     * @throws UnknownSchemaException
+     */
+    /**
+     * @throws UnsupportedSqlException
+     *
+     * @throws UnknownSchemaException
+     */
     private function resolveAlterTable(AlterStatement $statement, string $sql): ShadowMutation
     {
         if ($statement->table === null || $statement->table->table === null) {

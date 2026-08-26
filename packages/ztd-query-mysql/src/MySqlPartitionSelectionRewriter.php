@@ -23,6 +23,8 @@ final class MySqlPartitionSelectionRewriter
      *     columnTypes: array<string, ColumnType>,
      *     partitioning?: TablePartitioning|null
      * }> $tables
+     *
+     * @throws UnsupportedSqlException
      */
     public function rewrite(string $sql, array $tables): string
     {
@@ -124,7 +126,11 @@ final class MySqlPartitionSelectionRewriter
         return null;
     }
 
-    /** @return non-empty-list<string> */
+    /**
+     * @return non-empty-list<string>
+     *
+     * @throws UnsupportedSqlException
+     */
     private function partitionNames(string $sql, SqlToken $open, SqlToken $close): array
     {
         $list = substr($sql, $open->endOffset(), $close->offset - $open->endOffset());

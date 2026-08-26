@@ -6,9 +6,14 @@ namespace ZtdQuery\Platform\Postgres;
 
 use ZtdQuery\Schema\TablePartitionRelation;
 
+/**
+ * The pg sql partition predicate renderer.
+ */
 final class PgSqlPartitionPredicateRenderer
 {
-    /** @param list<string> $siblingPredicates */
+    /**
+     * @param list<string> $siblingPredicates
+     */
     public function render(TablePartitionRelation $relation, array $siblingPredicates): string
     {
         if ($relation->predicate !== null) {

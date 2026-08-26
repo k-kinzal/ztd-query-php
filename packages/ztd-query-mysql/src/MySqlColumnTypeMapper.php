@@ -7,8 +7,17 @@ namespace ZtdQuery\Platform\MySql;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
+/**
+ * The my sql column type mapper.
+ */
 final class MySqlColumnTypeMapper
 {
+    /**
+     * Map.
+     *
+     * @param string $nativeType
+     * @return ColumnType
+     */
     public function map(string $nativeType): ColumnType
     {
         $normalized = strtoupper(trim($nativeType));

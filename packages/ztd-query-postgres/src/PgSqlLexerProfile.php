@@ -6,8 +6,16 @@ namespace ZtdQuery\Platform\Postgres;
 
 use ZtdQuery\Sql\SqlLexerProfile;
 
+/**
+ * The pg sql lexer profile.
+ */
 final class PgSqlLexerProfile
 {
+    /**
+     * Builds.
+     *
+     * @return SqlLexerProfile
+     */
     public static function create(): SqlLexerProfile
     {
         return new SqlLexerProfile(

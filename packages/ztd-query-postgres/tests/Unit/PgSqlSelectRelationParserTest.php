@@ -167,7 +167,9 @@ final class PgSqlSelectRelationParserTest extends TestCase
         );
     }
 
-    /** @param list<string> $expected */
+    /**
+     * @param list<string> $expected
+     */
     #[DataProvider('providerPostgresFromTerminators')]
     public function testStopsFromClauseAtEveryPostgresBoundary(string $suffix, array $expected): void
     {
@@ -177,7 +179,9 @@ final class PgSqlSelectRelationParserTest extends TestCase
         );
     }
 
-    /** @return iterable<string, array{string, list<string>}> */
+    /**
+     * @return iterable<string, array{string, list<string>}>
+     */
     public static function providerPostgresFromTerminators(): iterable
     {
         yield 'where' => ['WHERE active = TRUE', ['users']];

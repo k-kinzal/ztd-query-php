@@ -7,9 +7,14 @@ namespace ZtdQuery\Platform\MySql;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The update assignment extractor.
+ */
 final class UpdateAssignmentExtractor
 {
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     */
     public function values(string $sql): array
     {
         $setClause = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->topLevelClause(

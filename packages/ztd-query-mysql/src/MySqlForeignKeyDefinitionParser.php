@@ -11,9 +11,14 @@ use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The my sql foreign key definition parser.
+ */
 final class MySqlForeignKeyDefinitionParser
 {
-    /** @return array<string, ForeignKeyDefinition> */
+    /**
+     * @return array<string, ForeignKeyDefinition>
+     */
     public function parseCreateTable(
         string $sql,
     ): array {

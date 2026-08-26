@@ -27,6 +27,12 @@ final class MutationImpact
     ) {
     }
 
+    /**
+     * Affected row count.
+     *
+     * @param AffectedRowsMode $mode
+     * @return int
+     */
     public function affectedRowCount(AffectedRowsMode $mode): int
     {
         if ($mode === AffectedRowsMode::None) {
@@ -68,6 +74,11 @@ final class MutationImpact
         return [];
     }
 
+    /**
+     * Reports whether insert like.
+     *
+     * @return bool
+     */
     public function isInsertLike(): bool
     {
         return $this->mutation instanceof InsertMutation

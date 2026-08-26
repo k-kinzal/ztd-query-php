@@ -18,7 +18,7 @@ use ZtdQuery\Schema\TableDefinition;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
 final class PgSqlCopySupportTest extends TestCase
 {
-    public function testTargetParsesRelationsAndRendersPostgreSqlStatements(): void
+    public function testIsCopyStatementTargetParsesRelationsAndRendersPostgreSqlStatements(): void
     {
         $support = new PgSqlCopySupport();
         $definition = new TableDefinition(['id'], ['id' => 'INTEGER'], ['id'], ['id'], []);
@@ -259,7 +259,9 @@ final class PgSqlCopySupportTest extends TestCase
         (new PgSqlCopySupport())->decodeRow('value', '||', '\\N');
     }
 
-    /** @return iterable<string, array{string}> */
+    /**
+     * @return iterable<string, array{string}>
+     */
     public static function providerInvalidRelation(): iterable
     {
         yield 'empty' => [''];
@@ -269,7 +271,9 @@ final class PgSqlCopySupportTest extends TestCase
         yield 'non-identifier' => ['*'];
     }
 
-    /** @return iterable<string, array{string}> */
+    /**
+     * @return iterable<string, array{string}>
+     */
     public static function providerInvalidFields(): iterable
     {
         yield 'empty' => [''];
@@ -279,7 +283,9 @@ final class PgSqlCopySupportTest extends TestCase
         yield 'non-identifier' => ['*'];
     }
 
-    /** @return iterable<string, array{string}> */
+    /**
+     * @return iterable<string, array{string}>
+     */
     public static function providerLineEnding(): iterable
     {
         yield 'none' => [''];
@@ -288,7 +294,9 @@ final class PgSqlCopySupportTest extends TestCase
         yield 'carriage return and line feed' => ["\r\n"];
     }
 
-    /** @return iterable<string, array{string}> */
+    /**
+     * @return iterable<string, array{string}>
+     */
     public static function providerInvalidRow(): iterable
     {
         yield 'unescaped line feed' => ["first\nsecond"];

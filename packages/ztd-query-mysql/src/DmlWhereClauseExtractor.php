@@ -6,8 +6,17 @@ namespace ZtdQuery\Platform\MySql;
 
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The dml where clause extractor.
+ */
 final class DmlWhereClauseExtractor
 {
+    /**
+     * Reads.
+     *
+     * @param string $sql
+     * @return ?string
+     */
     public function extract(string $sql): ?string
     {
         return SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->topLevelClause(

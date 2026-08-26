@@ -60,6 +60,8 @@ final class UpsertMutation implements DataMutation
     /** @var list<Row> */
     private array $resultRows = [];
 
+    private ConflictSearch $conflicts;
+
     /**
      * @param string $tableName Target table.
      * @param array<int, string> $primaryKeys Primary key columns.
@@ -91,6 +93,7 @@ final class UpsertMutation implements DataMutation
         $this->updatePredicate = $updatePredicate;
         $this->databaseEvaluated = $databaseEvaluated;
         $this->conflictPredicate = $conflictPredicate;
+        $this->conflicts = new ConflictSearch($this->candidateKeys, $this->conflictPredicate, $this->tableName);
     }
 
     /**
@@ -108,7 +111,7 @@ final class UpsertMutation implements DataMutation
             $incomingRow = $this->databaseEvaluated
                 ? $codec->incomingRow($row, count($this->updateColumns))
                 : $row;
-            $conflict = $this->findConflict($incomingRow, $existingRows);
+            $conflict = $this->conflicts->of($incomingRow, $existingRows);
             if ($conflict !== null) {
                 $existingIndex = $conflict->rowIndex;
                 $updatedRow = $existingRows[$existingIndex];
@@ -214,27 +217,5 @@ final class UpsertMutation implements DataMutation
     public function resultRows(): array
     {
         return $this->resultRows;
-    }
-    /**
-     * @param Row $incomingRow
-     * @param list<Row> $existingRows
-     */
-    private function findConflict(array $incomingRow, array $existingRows): ?\ZtdQuery\Schema\CandidateKeyConflict
-    {
-        if ($this->conflictPredicate === null) {
-            return $this->candidateKeys->findConflict($incomingRow, $existingRows);
-        }
-        if (!$this->conflictPredicate->matches($incomingRow, $incomingRow, $this->tableName)) {
-            return null;
-        }
-
-        $eligibleRows = [];
-        foreach ($existingRows as $index => $existingRow) {
-            if ($this->conflictPredicate->matches($existingRow, $existingRow, $this->tableName)) {
-                $eligibleRows[$index] = $existingRow;
-            }
-        }
-
-        return $this->candidateKeys->findConflict($incomingRow, $eligibleRows);
     }
 }

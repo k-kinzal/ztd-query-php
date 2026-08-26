@@ -15,16 +15,33 @@ final class ViewDefinitionSet
     /** @var array<string, ViewDefinition> */
     private array $definitions = [];
 
+    /**
+     * Register.
+     *
+     * @param string $viewName
+     * @param ViewDefinition $definition
+     */
     public function register(string $viewName, ViewDefinition $definition): void
     {
         $this->definitions[$viewName] = $definition;
     }
 
+    /**
+     * Reports whether.
+     *
+     * @param string $viewName
+     * @return bool
+     */
     public function has(string $viewName): bool
     {
         return isset($this->definitions[$viewName]);
     }
 
+    /**
+     * Reports whether any views.
+     *
+     * @return bool
+     */
     public function hasAnyViews(): bool
     {
         return $this->definitions !== [];

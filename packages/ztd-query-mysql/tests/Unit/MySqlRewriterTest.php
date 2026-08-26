@@ -1433,12 +1433,6 @@ final class MySqlRewriterTest extends RewriterContractTest
         self::assertContains('name', $definition->columns);
     }
 
-    /**
-     * Test that REPLACE with empty values throws UnsupportedSqlException.
-     *
-     * Bug: REPLACE DELAYED INTO table VALUE( ) caused RuntimeException
-     * Expected: Should throw UnsupportedSqlException for invalid SQL
-     */
     public function testReplaceWithEmptyValuesThrowsException(): void
     {
         $shadowStore = new ShadowStore();
@@ -1464,9 +1458,6 @@ final class MySqlRewriterTest extends RewriterContractTest
         $rewriter->rewrite('REPLACE INTO users VALUE( )');
     }
 
-    /**
-     * Test that REPLACE with mismatched column count throws UnsupportedSqlException.
-     */
     public function testReplaceWithMismatchedColumnCountThrowsException(): void
     {
         $shadowStore = new ShadowStore();

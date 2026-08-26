@@ -37,6 +37,13 @@ final class InsertTransformer implements SqlTransformer
     private MySqlCteShadowComposer $cteComposer;
     private MySqlNativeUpsertProjector $upsertProjector;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param MySqlParser $parser
+     * @param SelectTransformer $selectTransformer
+     * @param ?CastRenderer $castRenderer
+     */
     public function __construct(
         MySqlParser $parser,
         SelectTransformer $selectTransformer,
@@ -54,6 +61,8 @@ final class InsertTransformer implements SqlTransformer
 
     /**
      * {@inheritDoc}
+     *
+     * @throws UnsupportedSqlException
      */
     public function transform(string $sql, array $tables): string
     {
@@ -113,6 +122,10 @@ final class InsertTransformer implements SqlTransformer
         );
     }
 
+    /**
+     * Commit rewrite state.
+     *
+     */
     public function commitRewriteState(): void
     {
         $this->identityAllocator->commitProjection();
@@ -125,6 +138,8 @@ final class InsertTransformer implements SqlTransformer
      * @param array<string, string> $columnDefaults
      * @param array<string, IdentityGenerationStrategy> $identityStrategies
      * @param array<int, array<string, mixed>> $existingRows
+     *
+     * @throws RuntimeException
      */
     private function buildInsertSelect(
         InsertStatement $statement,
@@ -195,6 +210,8 @@ final class InsertTransformer implements SqlTransformer
      * @param array<string, string> $columnDefaults
      * @param array<string, IdentityGenerationStrategy> $identityStrategies
      * @param array<int, array<string, mixed>> $existingRows
+     *
+     * @throws RuntimeException
      */
     private function buildInsertRowSelect(
         ArrayObj $valueSet,

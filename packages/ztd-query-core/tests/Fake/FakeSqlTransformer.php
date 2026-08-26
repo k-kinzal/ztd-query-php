@@ -22,12 +22,22 @@ final class FakeSqlTransformer implements SqlTransformer
 
     private FakeIdentifierQuoter $quoter;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     */
     public function __construct()
     {
         $this->castRenderer = new FakeCastRenderer();
         $this->quoter = new FakeIdentifierQuoter();
     }
 
+    /**
+     * Transform.
+     *
+     * @param string $sql
+     * @return string
+     */
     public function transform(string $sql, array $tables): string
     {
         if ($tables === []) {
@@ -50,7 +60,7 @@ final class FakeSqlTransformer implements SqlTransformer
     /**
      * @param array{rows: list<Row>, columns: array<int, string>, columnTypes: array<string, ColumnType>} $tableData
      */
-    private function buildCte(string $tableName, array $tableData): string
+    public function buildCte(string $tableName, array $tableData): string
     {
         $quotedName = $this->quoter->quote($tableName);
         $columns = $tableData['columns'];

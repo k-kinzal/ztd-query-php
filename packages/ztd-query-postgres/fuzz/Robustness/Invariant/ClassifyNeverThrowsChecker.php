@@ -7,15 +7,29 @@ namespace Fuzz\Robustness\Invariant;
 use Throwable;
 use ZtdQuery\Platform\Postgres\PgSqlQueryGuard;
 
+/**
+ * The classify never throws checker, as invariant checker.
+ */
 final class ClassifyNeverThrowsChecker implements InvariantChecker
 {
     private PgSqlQueryGuard $guard;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param PgSqlQueryGuard $guard
+     */
     public function __construct(PgSqlQueryGuard $guard)
     {
         $this->guard = $guard;
     }
 
+    /**
+     * Check.
+     *
+     * @param string $sql
+     * @return ?InvariantViolation
+     */
     public function check(string $sql): ?InvariantViolation
     {
         try {

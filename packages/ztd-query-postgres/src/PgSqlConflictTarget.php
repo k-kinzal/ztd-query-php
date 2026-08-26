@@ -16,6 +16,8 @@ final class PgSqlConflictTarget
 {
     /**
      * @param array<int, string> $columns
+     *
+     * @throws InvalidArgumentException
      */
     public function __construct(
         public readonly bool $specified,
@@ -31,6 +33,8 @@ final class PgSqlConflictTarget
     /**
      * @param array<string, PartialUniqueIndex> $partialIndexes
      * @return array{keys: CandidateKeySet, predicate: string|null}
+     *
+     * @throws UnsupportedSqlException
      */
     public function resolve(CandidateKeySet $candidateKeys, array $partialIndexes, string $sql): array
     {

@@ -7,8 +7,16 @@ namespace ZtdQuery\Platform\MySql;
 use ZtdQuery\Platform\ResultColumnTypeResolver;
 use ZtdQuery\Schema\ColumnType;
 
+/**
+ * The my sql mysqli result column type resolver, as result column type resolver.
+ */
 final class MySqlMysqliResultColumnTypeResolver implements ResultColumnTypeResolver
 {
+    /**
+     * Answers.
+     *
+     * @return ColumnType
+     */
     public function resolve(array $metadata): ColumnType
     {
         $type = $metadata['type'] ?? null;

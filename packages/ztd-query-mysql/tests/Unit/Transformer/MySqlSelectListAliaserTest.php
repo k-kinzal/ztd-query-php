@@ -45,7 +45,7 @@ final class MySqlSelectListAliaserTest extends TestCase
         );
     }
 
-    public function testCountsStructuredProjectionWithoutTreatingFunctionArgumentAsWildcard(): void
+    public function testProjectionCountCountsStructuredProjectionWithoutTreatingFunctionArgumentAsWildcard(): void
     {
         $aliaser = new MySqlSelectListAliaser();
 

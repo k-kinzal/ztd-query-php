@@ -13,6 +13,9 @@ use SqlFaker\MySqlProvider;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlQueryGuard;
 
+/**
+ * The classify target.
+ */
 final class ClassifyTarget
 {
     private Generator $faker;
@@ -20,6 +23,12 @@ final class ClassifyTarget
     /** @var array<int, InvariantChecker> */
     private array $checkers;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param Generator $faker
+     * @param MySqlProvider $provider
+     */
     public function __construct(Generator $faker, MySqlProvider $provider)
     {
         $this->faker = $faker;
@@ -32,6 +41,9 @@ final class ClassifyTarget
         ];
     }
 
+    /**
+     * @throws Error
+     */
     public function __invoke(string $input): void
     {
         $seed = crc32(str_pad($input, 4, "\0"));

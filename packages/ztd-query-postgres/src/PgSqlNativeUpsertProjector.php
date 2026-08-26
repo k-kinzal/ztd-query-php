@@ -10,6 +10,9 @@ use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The pg sql native upsert projector.
+ */
 final class PgSqlNativeUpsertProjector
 {
     private const INCOMING_ALIAS = '__ztd_incoming';
@@ -21,6 +24,10 @@ final class PgSqlNativeUpsertProjector
     /** @var non-empty-list<string> */
     private readonly array $incomingNamespaces;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     */
     public function __construct()
     {
         $this->quoter = new PgSqlIdentifierQuoter();

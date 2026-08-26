@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Tests\Contract\IdentifierQuoterContractTest;
 use ZtdQuery\Platform\IdentifierQuoter;
@@ -54,6 +55,7 @@ final class PgSqlIdentifierQuoterTest extends IdentifierQuoterContractTest
         self::assertStringEndsWith('"', $result);
     }
 
+    #[Override]
     public function testQuoteIsDeterministic(): void
     {
         $quoter = new PgSqlIdentifierQuoter();

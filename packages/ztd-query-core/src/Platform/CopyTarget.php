@@ -22,6 +22,11 @@ final class CopyTarget
     ) {
     }
 
+    /**
+     * Table name.
+     *
+     * @return string
+     */
     public function tableName(): string
     {
         return $this->relation[count($this->relation) - 1];

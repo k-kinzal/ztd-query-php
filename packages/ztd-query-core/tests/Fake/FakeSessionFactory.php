@@ -30,6 +30,13 @@ final class FakeSessionFactory implements SessionFactory
         $this->reflector = $reflector ?? new FakeSchemaReflector();
     }
 
+    /**
+     * Builds.
+     *
+     * @param ConnectionInterface $connection
+     * @param ZtdConfig $config
+     * @return Session
+     */
     public function create(ConnectionInterface $connection, ZtdConfig $config): Session
     {
         $shadowStore = new ShadowStore();

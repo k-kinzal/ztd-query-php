@@ -23,7 +23,9 @@ final class PgSqlTransactionStatementParserTest extends TestCase
         self::assertNotNull((new PgSqlTransactionStatementParser())->parse($sql));
     }
 
-    /** @return array<string, array{string}> */
+    /**
+     * @return array<string, array{string}>
+     */
     public static function providerPostgresTransactionForms(): array
     {
         return [

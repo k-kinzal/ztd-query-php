@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Fuzz;
 
 use Faker\Factory;
+use Override;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
@@ -55,6 +56,7 @@ final class FullPipelineFuzzTest extends TestCase
 
     private \Faker\Generator $faker;
 
+    #[Override]
     protected function setUp(): void
     {
         $this->schemaParser = new PgSqlSchemaParser();
@@ -119,6 +121,10 @@ final class FullPipelineFuzzTest extends TestCase
         };
     }
 
+    /**
+     * Test create table then select does not crash.
+     *
+     */
     public function testCreateTableThenSelectDoesNotCrash(): void
     {
         $this->faker->seed(20260815);
@@ -157,6 +163,10 @@ final class FullPipelineFuzzTest extends TestCase
         self::addToAssertionCount(self::ITERATIONS);
     }
 
+    /**
+     * Test create table then insert does not crash.
+     *
+     */
     public function testCreateTableThenInsertDoesNotCrash(): void
     {
         $this->faker->seed(20260815);
@@ -209,6 +219,10 @@ final class FullPipelineFuzzTest extends TestCase
         self::addToAssertionCount(self::ITERATIONS);
     }
 
+    /**
+     * Test create table then update does not crash.
+     *
+     */
     public function testCreateTableThenUpdateDoesNotCrash(): void
     {
         $this->faker->seed(20260815);
@@ -259,6 +273,10 @@ final class FullPipelineFuzzTest extends TestCase
         self::addToAssertionCount(self::ITERATIONS);
     }
 
+    /**
+     * Test create table then delete does not crash.
+     *
+     */
     public function testCreateTableThenDeleteDoesNotCrash(): void
     {
         $this->faker->seed(20260815);
@@ -303,6 +321,10 @@ final class FullPipelineFuzzTest extends TestCase
         self::addToAssertionCount(self::ITERATIONS);
     }
 
+    /**
+     * Test create table rewrite registers then dml succeeds.
+     *
+     */
     public function testCreateTableRewriteRegistersThenDmlSucceeds(): void
     {
         $this->faker->seed(20260815);
@@ -343,6 +365,10 @@ final class FullPipelineFuzzTest extends TestCase
         self::addToAssertionCount(self::ITERATIONS);
     }
 
+    /**
+     * Test shadow store integrity after multiple operations.
+     *
+     */
     public function testShadowStoreIntegrityAfterMultipleOperations(): void
     {
         $this->faker->seed(20260815);
