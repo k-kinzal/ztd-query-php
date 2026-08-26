@@ -140,4 +140,25 @@ final class MySqlParserTest extends TestCase
         self::assertSame(['SELECT 1 INTERSECT SELECT 2'], $parser->splitStatements('SELECT 1 INTERSECT SELECT 2'));
         self::assertSame(['SELECT 1', 'SELECT 2'], $parser->splitStatements('SELECT 1; SELECT 2'));
     }
+    public function testNormalizeOptionalInsertIntoWritesTheWordMySqlLetsYouLeaveOut(): void
+    {
+        self::assertSame(
+            'INSERT INTO t VALUES (1)',
+            (new MySqlParser())->normalizeOptionalInsertInto('INSERT t VALUES (1)'),
+        );
+    }
+
+    public function testNormalizeOptionalInsertIntoLeavesAStatementThatHasItAlone(): void
+    {
+        self::assertSame(
+            'INSERT INTO t VALUES (1)',
+            (new MySqlParser())->normalizeOptionalInsertInto('INSERT INTO t VALUES (1)'),
+        );
+    }
+
+    public function testNormalizeOptionalInsertIntoLeavesAnythingThatIsNotAnInsertAlone(): void
+    {
+        self::assertSame('SELECT 1', (new MySqlParser())->normalizeOptionalInsertInto('SELECT 1'));
+    }
+
 }

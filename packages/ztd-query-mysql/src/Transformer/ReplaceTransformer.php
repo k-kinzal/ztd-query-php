@@ -70,7 +70,16 @@ final class ReplaceTransformer implements SqlTransformer
     /**
      * @throws UnsupportedSqlException
      */
-    private function asInsert(string $sql): string
+    /**
+     * Answers a REPLACE written as the INSERT it behaves like.
+     *
+     * @param string $sql Statement to rewrite
+     *
+     * @return string The same statement, opening with INSERT
+     *
+     * @throws UnsupportedSqlException When the statement is not a REPLACE at all
+     */
+    public function asInsert(string $sql): string
     {
         $tokens = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->significantTokens();
         if ($tokens === []) {

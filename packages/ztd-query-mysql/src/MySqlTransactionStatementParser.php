@@ -53,7 +53,15 @@ final class MySqlTransactionStatementParser implements TransactionStatementParse
      * @param list<SqlToken> $tokens
      * @param list<list<string>> $forms
      */
-    private function matchesAny(array $tokens, array $forms): bool
+    /**
+     * Reports whether the tokens spell any one of these statements.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param list<list<string>> $forms Each way the statement may be written
+     *
+     * @return bool True when the tokens spell one of them
+     */
+    public function matchesAny(array $tokens, array $forms): bool
     {
         foreach ($forms as $form) {
             if ($this->matches($tokens, $form)) {
@@ -65,10 +73,14 @@ final class MySqlTransactionStatementParser implements TransactionStatementParse
     }
 
     /**
-     * @param list<SqlToken> $tokens
-     * @param list<list<string>> $prefixes
+     * Answers the name written after one of these openings.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param list<list<string>> $prefixes Each way the statement may open
+     *
+     * @return string|null The name, or null where the statement opens differently or names nothing
      */
-    private function nameAfter(array $tokens, array $prefixes): ?string
+    public function nameAfter(array $tokens, array $prefixes): ?string
     {
         foreach ($prefixes as $prefix) {
             if (count($tokens) !== count($prefix) + 1 || !$this->matches(array_slice($tokens, 0, -1), $prefix)) {
@@ -86,10 +98,14 @@ final class MySqlTransactionStatementParser implements TransactionStatementParse
     }
 
     /**
-     * @param list<SqlToken> $tokens
-     * @param list<string> $keywords
+     * Reports whether the tokens are exactly these keywords.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param list<string> $keywords Keywords the statement must be
+     *
+     * @return bool True when the tokens are those keywords and nothing else
      */
-    private function matches(array $tokens, array $keywords): bool
+    public function matches(array $tokens, array $keywords): bool
     {
         if (count($tokens) !== count($keywords)) {
             return false;
@@ -103,8 +119,18 @@ final class MySqlTransactionStatementParser implements TransactionStatementParse
         return true;
     }
 
-    /** @param non-empty-list<string> $quotes */
-    private function unquote(string $identifier, array $quotes): ?string
+    /**
+     * Answers the name a quoted identifier stands for.
+     *
+     * A name that opens with a quote and never closes is not a name at all,
+     * and answering it unquoted would invent one that was never written.
+     *
+     * @param string $identifier The name, as it was written
+     * @param non-empty-list<string> $quotes What this dialect quotes names with
+     *
+     * @return string|null The name, or null where the quoting never closed
+     */
+    public function unquote(string $identifier, array $quotes): ?string
     {
         $first = $identifier[0] ?? '';
         if (!in_array($first, $quotes, true)) {

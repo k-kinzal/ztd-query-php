@@ -9,6 +9,7 @@ use PhpMyAdmin\SqlParser\Components\CreateDefinition;
 use PhpMyAdmin\SqlParser\Components\OptionsArray;
 use PhpMyAdmin\SqlParser\Parser;
 use PhpMyAdmin\SqlParser\Statements\CreateStatement;
+use ZtdQuery\Platform\MySql\MySqlStatementOptions;
 
 /**
  * Reads the column an ALTER TABLE operation is about.
@@ -21,6 +22,13 @@ use PhpMyAdmin\SqlParser\Statements\CreateStatement;
  */
 final class AlterTableColumn
 {
+    /**
+     * @param MySqlStatementOptions $options Reports which of a statement's optional words were written
+     */
+    public function __construct(private readonly MySqlStatementOptions $options = new MySqlStatementOptions())
+    {
+    }
+
     /**
      * Answers the name the operation gives its column.
      *
@@ -143,7 +151,7 @@ final class AlterTableColumn
      */
     public function optionIsSet(OptionsArray $options, string $name): bool
     {
-        return $options->has($name) !== false;
+        return $this->options->isSet($options, $name);
     }
 
     /**

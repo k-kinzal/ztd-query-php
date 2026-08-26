@@ -31,8 +31,10 @@ final class MySqlQueryGuard
      *
      * @param MySqlParser $parser
      */
-    public function __construct(MySqlParser $parser)
-    {
+    public function __construct(
+        MySqlParser $parser,
+        private readonly MySqlStatementOptions $options = new MySqlStatementOptions(),
+    ) {
         $this->parser = $parser;
     }
 
@@ -90,21 +92,21 @@ final class MySqlQueryGuard
         }
 
         if ($statement instanceof CreateStatement) {
-            if ($statement->options !== null && self::optionSet($statement->options, 'TABLE')) {
+            if ($statement->options !== null && $this->options->isSet($statement->options, 'TABLE')) {
                 return QueryKind::DDL_SIMULATED;
             }
             return null;
         }
 
         if ($statement instanceof DropStatement) {
-            if ($statement->options !== null && self::optionSet($statement->options, 'TABLE')) {
+            if ($statement->options !== null && $this->options->isSet($statement->options, 'TABLE')) {
                 return QueryKind::DDL_SIMULATED;
             }
             return null;
         }
 
         if ($statement instanceof AlterStatement) {
-            if ($statement->options !== null && self::optionSet($statement->options, 'TABLE')) {
+            if ($statement->options !== null && $this->options->isSet($statement->options, 'TABLE')) {
                 return QueryKind::DDL_SIMULATED;
             }
             return null;
@@ -130,7 +132,18 @@ final class MySqlQueryGuard
         return null;
     }
 
-    private function classifyWithFallback(string $sql): ?QueryKind
+    /**
+     * Answers what a statement the parser could not read is, by reading its words.
+     *
+     * A WITH whose body the parser refuses still says what it does after the
+     * body, and that word is what decides whether the statement writes. Only
+     * the word written outside every quote and parenthesis counts.
+     *
+     * @param string $sql Statement to classify
+     *
+     * @return QueryKind|null What the statement does, or null where its words say nothing ZTD knows
+     */
+    public function classifyWithFallback(string $sql): ?QueryKind
     {
         $upper = strtoupper($sql);
         $len = strlen($upper);
@@ -201,13 +214,4 @@ final class MySqlQueryGuard
         return null;
     }
 
-    /**
-     * Check whether the given OptionsArray has a specific option set.
-     *
-     * @param \PhpMyAdmin\SqlParser\Components\OptionsArray $options
-     */
-    private static function optionSet(\PhpMyAdmin\SqlParser\Components\OptionsArray $options, string $name): bool
-    {
-        return $options->has($name) !== false;
-    }
 }

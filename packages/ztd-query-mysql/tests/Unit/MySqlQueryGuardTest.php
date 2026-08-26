@@ -588,4 +588,27 @@ class MySqlQueryGuardTest extends QueryClassifierContractTest
             $guard->classify('WITH `t` AS( SELECT 1 ) GRANT ALL ON t TO admin')
         );
     }
+    public function testClassifyWithFallbackReadsWhatAWithDoesAfterItsBody(): void
+    {
+        self::assertSame(
+            QueryKind::WRITE_SIMULATED,
+            (new MySqlQueryGuard(new MySqlParser()))
+                ->classifyWithFallback('WITH x AS (SELECT 1) INSERT INTO t SELECT * FROM x'),
+        );
+    }
+
+    public function testClassifyWithFallbackIgnoresAWordWrittenInsideQuotes(): void
+    {
+        self::assertSame(
+            QueryKind::READ,
+            (new MySqlQueryGuard(new MySqlParser()))
+                ->classifyWithFallback("WITH x AS (SELECT 1) SELECT 'INSERT' FROM x"),
+        );
+    }
+
+    public function testClassifyWithFallbackIsNothingWhereTheWordsSayNothingZtdKnows(): void
+    {
+        self::assertNull((new MySqlQueryGuard(new MySqlParser()))->classifyWithFallback('GIBBERISH'));
+    }
+
 }
