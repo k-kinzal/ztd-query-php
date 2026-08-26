@@ -12,7 +12,7 @@ use ZtdQuery\Shadow\Mutation\UpsertMutationRow;
 #[CoversClass(UpsertMutationRow::class)]
 final class UpsertMutationRowTest extends TestCase
 {
-    public function testSeparatesIncomingColumnsFromEvaluationMetadata(): void
+    public function testIncomingRowSeparatesIncomingColumnsFromEvaluationMetadata(): void
     {
         $codec = new UpsertMutationRow();
         $row = [
@@ -33,7 +33,7 @@ final class UpsertMutationRowTest extends TestCase
     }
 
     #[DataProvider('providerPredicateValues')]
-    public function testNormalizesDatabasePredicateValues(mixed $value, bool $expected): void
+    public function testPredicateMatchesNormalizesDatabasePredicateValues(mixed $value, bool $expected): void
     {
         self::assertSame($expected, (new UpsertMutationRow())->predicateMatches($value));
     }

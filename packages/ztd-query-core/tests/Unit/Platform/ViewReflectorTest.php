@@ -11,7 +11,7 @@ use ZtdQuery\Platform\ViewReflector;
 #[CoversNothing]
 final class ViewReflectorTest extends TestCase
 {
-    public function testImplementationUsesViewReflectorContract(): void
+    public function testReflectViewsImplementationUsesViewReflectorContract(): void
     {
         $reflector = new class () implements ViewReflector {
             public function reflectViews(): array

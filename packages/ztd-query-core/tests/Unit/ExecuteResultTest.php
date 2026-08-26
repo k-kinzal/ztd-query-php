@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\ExecuteResult;
 use ZtdQuery\GenericExecuteResult;
-use PHPUnit\Framework\Attributes\CoversNothing;
 
 #[CoversNothing]
 final class ExecuteResultTest extends TestCase

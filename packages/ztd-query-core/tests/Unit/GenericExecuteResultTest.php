@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Tests\Fake\FakeStatement;
 use ZtdQuery\GenericExecuteResult;
 use ZtdQuery\Rewrite\QueryKind;
-use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(GenericExecuteResult::class)]
 final class GenericExecuteResultTest extends TestCase

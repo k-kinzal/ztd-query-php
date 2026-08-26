@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow\Mutation;
 
+use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\DuplicateKeyException;
 use ZtdQuery\Exception\NotNullViolationException;
 use ZtdQuery\Schema\TableDefinition;
@@ -11,6 +12,8 @@ use ZtdQuery\Shadow\ShadowStore;
 
 /**
  * Replaces a table with a database-evaluated complete result set.
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 final class SynchronizeMutation implements DataMutation
 {
@@ -59,8 +62,8 @@ final class SynchronizeMutation implements DataMutation
     /**
      * Count inserted, updated, and deleted rows once each.
      *
-     * @param array<int, array<string, mixed>> $before
-     * @param array<int, array<string, mixed>> $after
+     * @param list<Row> $before
+     * @param list<Row> $after
      */
     public function affectedRowCount(array $before, array $after): int
     {
@@ -90,8 +93,8 @@ final class SynchronizeMutation implements DataMutation
     }
 
     /**
-     * @param array<int, array<string, mixed>> $rows
-     * @param array<string, mixed> $identity
+     * @param list<Row> $rows
+     * @param Row $identity
      * @param list<string> $primaryKeys
      * @param list<int> $excluded
      */
@@ -123,9 +126,9 @@ final class SynchronizeMutation implements DataMutation
     }
 
     /**
-     * @param array<int, array<string, mixed>> $left
-     * @param array<int, array<string, mixed>> $right
-     * @return array<int, array<string, mixed>>
+     * @param list<Row> $left
+     * @param list<Row> $right
+     * @return list<Row>
      */
     private function difference(array $left, array $right): array
     {

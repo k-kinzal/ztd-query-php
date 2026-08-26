@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow\Mutation;
 
+use RuntimeException;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
 
@@ -39,12 +40,12 @@ final class CreateTableLikeMutation implements ShadowMutation
             if ($this->ifNotExists) {
                 return;
             }
-            throw new \RuntimeException("Table '{$this->tableName}' already exists.");
+            throw new RuntimeException("Table '{$this->tableName}' already exists.");
         }
 
         $sourceDefinition = $this->registry->get($this->sourceTableName);
         if ($sourceDefinition === null) {
-            throw new \RuntimeException("Source table '{$this->sourceTableName}' does not exist.");
+            throw new RuntimeException("Source table '{$this->sourceTableName}' does not exist.");
         }
 
         $this->registry->register($this->tableName, $sourceDefinition);

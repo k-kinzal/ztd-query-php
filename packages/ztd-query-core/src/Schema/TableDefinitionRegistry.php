@@ -52,7 +52,9 @@ final class TableDefinitionRegistry
         return $this->definitions;
     }
 
-    /** @return array<string, TableDefinition> */
+    /**
+     * @return array<string, TableDefinition>
+     */
     public function getAllRemoved(): array
     {
         return $this->removedDefinitions;

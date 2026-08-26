@@ -24,13 +24,17 @@ final class SqlTokenStream
         return new self($sql, self::scan($sql, $profile), $profile);
     }
 
-    /** @return list<SqlToken> */
+    /**
+     * @return list<SqlToken>
+     */
     public function tokens(): array
     {
         return $this->tokens;
     }
 
-    /** @return list<SqlToken> */
+    /**
+     * @return list<SqlToken>
+     */
     public function significantTokens(): array
     {
         return array_values(array_filter(
@@ -100,7 +104,9 @@ final class SqlTokenStream
         return null;
     }
 
-    /** @return array{name: string, next: int}|null */
+    /**
+     * @return array{name: string, next: int}|null
+     */
     public function identifierAt(int $index = 0): ?array
     {
         $component = self::identifierComponentAt($this->significantTokens(), $index, $this->profile);
@@ -111,7 +117,9 @@ final class SqlTokenStream
         return ['name' => $component[0], 'next' => $component[1]];
     }
 
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     */
     public function splitStatements(): array
     {
         $statements = [];

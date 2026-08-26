@@ -6,12 +6,13 @@ namespace Tests\Unit\Rewrite;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Rewrite\InsertRowProjection;
 
 #[CoversClass(InsertRowProjection::class)]
 final class InsertRowProjectionTest extends TestCase
 {
-    public function testRepresentsProvidedDefaultGeneratedAndNullValuesWithoutSqlRendering(): void
+    public function testDefaultExpressionRepresentsProvidedDefaultGeneratedAndNullValuesWithoutSqlRendering(): void
     {
         $provided = InsertRowProjection::provided('name', "'Ada'");
         $default = InsertRowProjection::defaultExpression('status', "'active'");
@@ -39,13 +40,13 @@ final class InsertRowProjectionTest extends TestCase
 
     public function testRejectsNonPositiveGeneratedIdentityValue(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidDefinitionException::class);
         $this->expectExceptionMessage('Generated identity value must be positive.');
 
         InsertRowProjection::generatedIdentity('id', 0);
     }
 
-    public function testAcceptsMinimumGeneratedIdentityValue(): void
+    public function testGeneratedIdentityValueAcceptsMinimumGeneratedIdentityValue(): void
     {
         self::assertSame(1, InsertRowProjection::generatedIdentity('id', 1)->generatedIdentityValue());
     }

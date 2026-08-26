@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Platform;
 
+use Override;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use Tests\Contract\SchemaParserContractTest;
 use Tests\Fake\FakeSchemaParser;
@@ -36,7 +37,7 @@ final class SchemaParserTest extends SchemaParserContractTest
     /**
      * @return array<int, string>
      */
-    #[\Override]
+    #[Override]
     protected function expectedColumns(): array
     {
         return ['id', 'name', 'email', 'age'];
@@ -45,7 +46,7 @@ final class SchemaParserTest extends SchemaParserContractTest
     /**
      * @return array<int, string>
      */
-    #[\Override]
+    #[Override]
     protected function expectedNotNullColumns(): array
     {
         return ['id', 'name', 'email'];
