@@ -10,6 +10,9 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The sqlite pdo parameter binding compiler, as parameter binding compiler.
+ */
 final class SqlitePdoParameterBindingCompiler implements ParameterBindingCompiler
 {
     /**

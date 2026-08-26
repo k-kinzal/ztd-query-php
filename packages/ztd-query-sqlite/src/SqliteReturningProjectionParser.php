@@ -10,6 +10,9 @@ use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The sqlite returning projection parser.
+ */
 final class SqliteReturningProjectionParser
 {
     /**

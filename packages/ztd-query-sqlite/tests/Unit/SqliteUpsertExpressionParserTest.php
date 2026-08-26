@@ -11,6 +11,9 @@ use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\Sqlite\SqliteUpsertExpressionParser;
 
+/**
+ * The sqlite upsert expression parser test.
+ */
 #[CoversClass(SqliteUpsertExpressionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
 final class SqliteUpsertExpressionParserTest extends TestCase

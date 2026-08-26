@@ -7,6 +7,9 @@ namespace ZtdQuery\Platform\Sqlite;
 use ZtdQuery\Schema\ViewDefinition;
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The sqlite view definition parser.
+ */
 final class SqliteViewDefinitionParser
 {
     /**

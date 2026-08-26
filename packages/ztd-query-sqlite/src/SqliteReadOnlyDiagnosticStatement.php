@@ -6,6 +6,9 @@ namespace ZtdQuery\Platform\Sqlite;
 
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The sqlite read only diagnostic statement.
+ */
 final class SqliteReadOnlyDiagnosticStatement
 {
     /**

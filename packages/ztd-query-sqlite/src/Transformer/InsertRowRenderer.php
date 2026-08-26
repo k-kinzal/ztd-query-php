@@ -7,6 +7,9 @@ namespace ZtdQuery\Platform\Sqlite\Transformer;
 use InvalidArgumentException;
 use ZtdQuery\Rewrite\InsertRowProjectionPlanner;
 
+/**
+ * The insert row renderer.
+ */
 final class InsertRowRenderer
 {
     private InsertRowProjectionPlanner $projectionPlanner;

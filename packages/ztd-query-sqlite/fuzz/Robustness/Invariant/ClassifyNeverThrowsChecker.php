@@ -7,6 +7,9 @@ namespace Fuzz\Robustness\Invariant;
 use Throwable;
 use ZtdQuery\Platform\Sqlite\SqliteQueryGuard;
 
+/**
+ * The classify never throws checker, as invariant checker.
+ */
 final class ClassifyNeverThrowsChecker implements InvariantChecker
 {
     private SqliteQueryGuard $guard;

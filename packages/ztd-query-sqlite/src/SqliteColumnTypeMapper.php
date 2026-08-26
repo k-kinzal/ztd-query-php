@@ -7,6 +7,9 @@ namespace ZtdQuery\Platform\Sqlite;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
+/**
+ * The sqlite column type mapper.
+ */
 final class SqliteColumnTypeMapper
 {
     /**

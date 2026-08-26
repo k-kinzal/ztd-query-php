@@ -13,6 +13,9 @@ use ZtdQuery\Platform\Sqlite\SqliteReadOnlyDiagnosticStatement;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\SqlRewriter;
 
+/**
+ * The classify rewrite agreement checker, as invariant checker.
+ */
 final class ClassifyRewriteAgreementChecker implements InvariantChecker
 {
     private SqliteQueryGuard $guard;

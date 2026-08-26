@@ -13,6 +13,9 @@ use SqlFaker\SqliteProvider;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
 use ZtdQuery\Platform\Sqlite\SqliteQueryGuard;
 
+/**
+ * The classify target.
+ */
 final class ClassifyTarget
 {
     private Generator $faker;

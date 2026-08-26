@@ -10,6 +10,9 @@ use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\Mutation\ShadowMutation;
 use ZtdQuery\Shadow\ShadowStore;
 
+/**
+ * The alter table mutation, as shadow mutation.
+ */
 final class AlterTableMutation implements ShadowMutation
 {
     /**

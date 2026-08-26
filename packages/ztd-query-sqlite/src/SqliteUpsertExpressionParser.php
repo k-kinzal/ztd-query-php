@@ -12,6 +12,9 @@ use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The sqlite upsert expression parser.
+ */
 final class SqliteUpsertExpressionParser
 {
     private string $sql = '';

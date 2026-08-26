@@ -8,6 +8,9 @@ use ZtdQuery\Platform\ResultColumnTypeResolver;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
+/**
+ * The sqlite pdo result column type resolver, as result column type resolver.
+ */
 final class SqlitePdoResultColumnTypeResolver implements ResultColumnTypeResolver
 {
     /**
