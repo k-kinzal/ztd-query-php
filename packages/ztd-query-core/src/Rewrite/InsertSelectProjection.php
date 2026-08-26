@@ -6,6 +6,9 @@ namespace ZtdQuery\Rewrite;
 
 use ZtdQuery\Exception\InvalidDefinitionException;
 
+/**
+ * The insert select projection.
+ */
 final class InsertSelectProjection
 {
     /**

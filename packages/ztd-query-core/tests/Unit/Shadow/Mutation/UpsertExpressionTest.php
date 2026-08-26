@@ -14,6 +14,9 @@ use ZtdQuery\Shadow\Mutation\UpsertColumnSource;
 use ZtdQuery\Shadow\Mutation\UpsertExpression;
 use ZtdQuery\Shadow\Mutation\UpsertExpressionKind;
 
+/**
+ * The upsert expression test.
+ */
 #[CoversClass(UpsertExpression::class)]
 #[CoversClass(UpsertColumnSource::class)]
 #[UsesClass(UnsupportedSqlException::class)]

@@ -8,6 +8,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Shadow\Mutation\UpsertColumnSource;
 
+/**
+ * The upsert column source test.
+ */
 #[CoversClass(UpsertColumnSource::class)]
 final class UpsertColumnSourceTest extends TestCase
 {
