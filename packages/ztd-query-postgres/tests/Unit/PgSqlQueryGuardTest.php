@@ -23,7 +23,7 @@ final class PgSqlQueryGuardTest extends QueryClassifierContractTest
         return (new PgSqlQueryGuard(new PgSqlParser()))->classify($sql);
     }
 
-    protected function selectSql(): string
+    public function selectSql(): string
     {
         return 'SELECT * FROM users';
     }

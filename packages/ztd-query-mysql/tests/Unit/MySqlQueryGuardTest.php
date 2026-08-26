@@ -24,7 +24,7 @@ class MySqlQueryGuardTest extends QueryClassifierContractTest
         return (new MySqlQueryGuard(new MySqlParser()))->classify($sql);
     }
 
-    protected function selectSql(): string
+    public function selectSql(): string
     {
         return 'SELECT id, name FROM users WHERE id = 1';
     }

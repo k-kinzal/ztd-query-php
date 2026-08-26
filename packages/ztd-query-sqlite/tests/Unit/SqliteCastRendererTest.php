@@ -14,7 +14,7 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 #[CoversClass(SqliteCastRenderer::class)]
 final class SqliteCastRendererTest extends CastRendererContractTest
 {
-    protected function createRenderer(): CastRenderer
+    public function createRenderer(): CastRenderer
     {
         return new SqliteCastRenderer();
     }

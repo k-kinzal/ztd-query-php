@@ -433,7 +433,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
         return new PgSqlSchemaParser();
     }
 
-    protected function selectSql(): string
+    public function selectSql(): string
     {
         return 'SELECT id, name, email FROM users WHERE id = 1';
     }
