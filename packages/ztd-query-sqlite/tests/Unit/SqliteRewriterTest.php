@@ -75,6 +75,8 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteViewShadowRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteGeneratedColumnProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteUpsertExpressionCursor::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteUpsertLiteral::class)]
 final class SqliteRewriterTest extends RewriterContractTest
 {
     public function testGeneratedExpressionIsPresentBeforeTheFirstShadowWrite(): void
@@ -1913,4 +1915,78 @@ final class SqliteRewriterTest extends RewriterContractTest
             self::assertSame(ShadowTableState::Materialized, $store->state('late_table'));
         }
     }
+    public function testTransactionStatementReadsAStatementThatOpensATransaction(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        self::assertInstanceOf(SqliteRewriter::class, $rewriter);
+
+        self::assertNotNull($rewriter->transactionStatement('BEGIN'));
+    }
+
+    public function testSplitStatementsReadsABatchAsTheStatementsItIsWrittenAs(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        self::assertInstanceOf(SqliteRewriter::class, $rewriter);
+
+        self::assertCount(2, $rewriter->splitStatements('SELECT 1; SELECT 2'));
+    }
+
+    public function testCommitRewriteStateKeepsWhatTheLastRewriteHandedOut(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        self::assertInstanceOf(SqliteRewriter::class, $rewriter);
+
+        $rewriter->commitRewriteState();
+
+        self::assertSame('SELECT 1 WHERE 0', $rewriter->emptyResultSelect());
+    }
+
+    public function testRewriteStatementReadsTheShadowForARead(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', [['id' => 1]]);
+        $rewriter = $this->createRewriter($store, new TableDefinitionRegistry());
+        self::assertInstanceOf(SqliteRewriter::class, $rewriter);
+
+        self::assertSame(
+            QueryKind::READ,
+            $rewriter->rewriteStatement('SELECT * FROM users', 'SELECT * FROM users')->kind(),
+        );
+    }
+
+    public function testContextFromDefinitionCarriesTheColumnsTheTableDeclares(): void
+    {
+        $definition = new TableDefinition(['id'], ['id' => 'INTEGER'], ['id'], [], []);
+
+        self::assertSame(['id'], SqliteRewriter::contextFromDefinition($definition, [])['columns']);
+    }
+
+    public function testFindUnknownTableNamesTheTableTheShadowDoesNotKnow(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', [['id' => 1]]);
+        $rewriter = $this->createRewriter($store, new TableDefinitionRegistry());
+        self::assertInstanceOf(SqliteRewriter::class, $rewriter);
+
+        self::assertSame('orders', $rewriter->findUnknownTable('SELECT * FROM users JOIN orders ON 1 = 1'));
+    }
+
+    public function testTableExistsReportsATableTheShadowHoldsRowsFor(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', [['id' => 1]]);
+        $rewriter = $this->createRewriter($store, new TableDefinitionRegistry());
+        self::assertInstanceOf(SqliteRewriter::class, $rewriter);
+
+        self::assertTrue($rewriter->tableExists('users'));
+    }
+
+    public function testEmptyResultSelectAnswersAStatementThatReadsNoRow(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        self::assertInstanceOf(SqliteRewriter::class, $rewriter);
+
+        self::assertSame('SELECT 1 WHERE 0', $rewriter->emptyResultSelect());
+    }
+
 }

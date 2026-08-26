@@ -88,4 +88,18 @@ final class AlterTableMutationTest extends TestCase
         $this->expectException(TableAlreadyExistsException::class);
         $mutation->apply(new ShadowStore(), []);
     }
+    public function testTableNameAnswersTheTableTheStatementAlters(): void
+    {
+        $mutation = new AlterTableMutation(
+            'ALTER TABLE users RENAME TO people',
+            'users',
+            'people',
+            new TableDefinition(['id'], ['id' => 'INTEGER'], ['id'], [], []),
+            new TableDefinitionRegistry(),
+            'SELECT "id" FROM "users"',
+        );
+
+        self::assertSame('users', $mutation->tableName());
+    }
+
 }

@@ -57,4 +57,9 @@ final class InsertSelectRendererTest extends TestCase
 
         (new InsertSelectRenderer())->renderGeneratedIdentity(0);
     }
+    public function testRenderGeneratedIdentityCountsUpFromWhereItWasTold(): void
+    {
+        self::assertStringContainsString('5', (new InsertSelectRenderer())->renderGeneratedIdentity(5));
+    }
+
 }

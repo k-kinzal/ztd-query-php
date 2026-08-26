@@ -15,6 +15,8 @@ use ZtdQuery\Shadow\Mutation\UpsertExpressionKind;
 
 #[CoversClass(SqliteUpsertExpressionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
+#[UsesClass(SqliteUpsertExpressionCursor::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteUpsertLiteral::class)]
 final class SqliteUpsertExpressionParserTest extends TestCase
 {
     /**

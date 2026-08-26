@@ -1353,4 +1353,25 @@ final class SelectTransformerTest extends TransformerContractTest
         self::assertLessThan($emailPos, $namePos);
         self::assertStringContainsString('WHERE 0)', $result);
     }
+    public function testGenerateCteWritesTheRowsTheShadowHolds(): void
+    {
+        self::assertStringContainsString(
+            'SELECT',
+            (new SelectTransformer())->generateCte('t', [['id' => 1]], ['id'], [], []),
+        );
+    }
+
+    public function testWrapCteNamesTheTableTheQueryAnswersFor(): void
+    {
+        self::assertSame(
+            '"t" AS (SELECT 1)',
+            (new SelectTransformer())->wrapCte('"t"', 'SELECT 1', ['id'], []),
+        );
+    }
+
+    public function testRenderFallbackNullCastWritesANullOfSomeType(): void
+    {
+        self::assertStringContainsString('CAST(NULL', (new SelectTransformer())->renderFallbackNullCast());
+    }
+
 }

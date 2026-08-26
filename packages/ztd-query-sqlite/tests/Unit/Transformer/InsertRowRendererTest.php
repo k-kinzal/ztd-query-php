@@ -46,4 +46,9 @@ final class InsertRowRendererTest extends TestCase
             (new InsertRowRenderer())->providedExpressions(['id', 'name'], ['42', "'Ada'"]),
         );
     }
+    public function testProvidedExpressionsPairsEachColumnWithWhatIsWrittenForIt(): void
+    {
+        self::assertSame(['id' => '1'], (new InsertRowRenderer())->providedExpressions(['id'], ['1']));
+    }
+
 }
