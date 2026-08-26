@@ -33,12 +33,12 @@ use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
 use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\ReferentialIntegrityEnforcer;
 use ZtdQuery\Shadow\ShadowStore;
-use ZtdQuery\Shadow\ShadowTransactionManager;
+use ZtdQuery\Shadow\ShadowTransactions;
 
 #[CoversClass(Session::class)]
 #[UsesClass(ZtdConfig::class)]
 #[UsesClass(ShadowStore::class)]
-#[UsesClass(ShadowTransactionManager::class)]
+#[UsesClass(ShadowTransactions::class)]
 #[UsesClass(TableDefinitionRegistry::class)]
 #[UsesClass(TableDefinition::class)]
 #[UsesClass(CandidateKeySet::class)]
@@ -168,7 +168,7 @@ final class SessionTest extends TestCase
             new ResultSelectRunner(),
             ZtdConfig::default(),
             new FakeConnection(),
-            new ShadowTransactionManager($shadowStore, $registry),
+            new ShadowTransactions($shadowStore, $registry),
         );
 
         $session->beginTransaction();

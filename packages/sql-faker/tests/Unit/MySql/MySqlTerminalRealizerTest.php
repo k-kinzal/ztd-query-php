@@ -19,6 +19,8 @@ use SqlFaker\Grammar\RandomCharacters;
 use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\MySql\MySqlTerminalRealizer;
 use SqlFaker\MySql\MySqlTokenizer;
+use Tests\Fixture\SqlFaker\MySqlRealizers;
+use Tests\Fixture\SqlFaker\ScriptedNumbers;
 
 #[CoversClass(MySqlTerminalRealizer::class)]
 #[UsesClass(LexicalCatalog::class)]
@@ -346,5 +348,227 @@ final class MySqlTerminalRealizerTest extends TestCase
         foreach ($spellings as $terminal => $lexeme) {
             yield $terminal => [$realizer, $terminal, $lexeme];
         }
+    }
+
+    #[DataProvider('providerSyntheticSpelling')]
+    public function testSyntheticSpellingWritesTheOperatorATerminalStandsFor(
+        string $terminal,
+        string $expected,
+    ): void {
+        self::assertSame(
+            $expected,
+            MySqlRealizers::synthetic(ScriptedNumbers::answering())->syntheticSpelling($terminal),
+        );
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerSyntheticSpelling(): iterable
+    {
+        yield 'EQ' => ['EQ', '='];
+        yield 'EQUAL_SYM' => ['EQUAL_SYM', '<=>'];
+        yield 'LT' => ['LT', '<'];
+        yield 'GT_SYM' => ['GT_SYM', '>'];
+        yield 'LE' => ['LE', '<='];
+        yield 'GE' => ['GE', '>='];
+        yield 'NE' => ['NE', '<>'];
+        yield 'SHIFT_LEFT' => ['SHIFT_LEFT', '<<'];
+        yield 'SHIFT_RIGHT' => ['SHIFT_RIGHT', '>>'];
+        yield 'AND_AND_SYM' => ['AND_AND_SYM', '&&'];
+        yield 'OR_OR_SYM' => ['OR_OR_SYM', '||'];
+        yield 'OR2_SYM' => ['OR2_SYM', '||'];
+        yield 'NOT2_SYM' => ['NOT2_SYM', 'NOT'];
+        yield 'SET_VAR' => ['SET_VAR', ':='];
+        yield 'JSON_SEPARATOR_SYM' => ['JSON_SEPARATOR_SYM', '->'];
+        yield 'JSON_UNQUOTED_SEPARATOR_SYM' => ['JSON_UNQUOTED_SEPARATOR_SYM', '->>'];
+        yield 'NEG' => ['NEG', '-'];
+        yield 'a keyword terminal drops its suffix' => ['SELECT_SYM', 'SELECT'];
+        yield 'a terminal without the suffix stands for itself' => ['IDENT', 'IDENT'];
+    }
+
+    public function testRealizeFixedFallsBackToTheTerminalItselfWhereNothingSpellsIt(): void
+    {
+        $faker = ScriptedNumbers::answering();
+
+        self::assertSame('OTHER', MySqlRealizers::witnessed($faker)->realizeFixed('OTHER')[0]);
+        self::assertSame([], $faker->numberBetweenCalls);
+    }
+
+    public function testRealizeFixedWritesTheSpellingATerminalNameStandsForWhereSyntheticIsAllowed(): void
+    {
+        $faker = ScriptedNumbers::answering();
+
+        self::assertSame(['||', ['OR2_SYM']], MySqlRealizers::synthetic($faker)->realizeFixed('OR_OR_SYM'));
+        self::assertSame([], $faker->numberBetweenCalls);
+    }
+
+    public function testRealizeFixedChoosesFromEverySpellingAndNoFurther(): void
+    {
+        $faker = ScriptedNumbers::answering(1);
+
+        $realized = MySqlRealizers::witnessed($faker)->realizeFixed('SELECT_SYM');
+
+        self::assertSame(['select', ['SELECT_SYM']], $realized);
+        self::assertSame([[0, 1]], $faker->numberBetweenCalls);
+    }
+
+    public function testRealizeFixedReadsAFunctionSpellingTheSameWayAsASymbolOne(): void
+    {
+        $faker = ScriptedNumbers::answering(0);
+
+        self::assertSame(['COUNT', ['COUNT_SYM']], MySqlRealizers::witnessed($faker)->realizeFixed('COUNT_SYM'));
+    }
+
+    public function testIdentifierIsKeptFromCollidingWithAKeyword(): void
+    {
+        self::assertStringStartsWith('_', MySqlRealizers::synthetic(ScriptedNumbers::answering())->identifier());
+    }
+
+    public function testQuotedIdentifierWritesAKeywordOnOneOfFourDraws(): void
+    {
+        $faker = ScriptedNumbers::answering(0, 1);
+
+        self::assertSame('`select`', MySqlRealizers::synthetic($faker)->quotedIdentifier());
+        self::assertSame([[0, 3], [0, 7]], $faker->numberBetweenCalls);
+    }
+
+    public function testQuotedIdentifierDoublesABacktickWrittenIntoTheBody(): void
+    {
+        $faker = ScriptedNumbers::answering(0, 0);
+
+        $identifier = MySqlRealizers::synthetic($faker)->quotedIdentifier();
+
+        self::assertStringStartsWith('`select``', $identifier);
+        self::assertSame([[0, 3], [0, 7]], array_slice($faker->numberBetweenCalls, 0, 2));
+    }
+
+    public function testQuotedIdentifierIsAnOrdinaryIdentifierOnEveryOtherDraw(): void
+    {
+        $faker = ScriptedNumbers::answering(1, 1);
+
+        self::assertStringStartsWith('`_', MySqlRealizers::synthetic($faker)->quotedIdentifier());
+    }
+
+    public function testStringLiteralDoublesAQuoteInsideTheBody(): void
+    {
+        $faker = ScriptedNumbers::answering(2);
+
+        self::assertSame("'a''b'", MySqlRealizers::synthetic($faker)->stringLiteral());
+        self::assertSame([[0, 6]], $faker->numberBetweenCalls);
+    }
+
+    public function testStringLiteralWritesABackslashOnItsFourthDraw(): void
+    {
+        $faker = ScriptedNumbers::answering(3);
+
+        self::assertSame("'a\\b'", MySqlRealizers::synthetic($faker)->stringLiteral());
+    }
+
+    #[DataProvider('providerLexicalSequenceDraw')]
+    public function testStringLiteralWritesALexicalSequenceOnItsFirstTwoDraws(int $draw): void
+    {
+        $literal = MySqlRealizers::synthetic(ScriptedNumbers::answering($draw))->stringLiteral();
+
+        self::assertStringStartsWith("'", $literal);
+        self::assertStringEndsWith("'", $literal);
+    }
+
+    /**
+     * @return iterable<string, array{int}>
+     */
+    public static function providerLexicalSequenceDraw(): iterable
+    {
+        yield 'first draw' => [0];
+        yield 'second draw' => [1];
+    }
+
+    public function testDollarQuotedStringIsWrittenBetweenBareDollarPairs(): void
+    {
+        $literal = MySqlRealizers::synthetic(ScriptedNumbers::answering())->dollarQuotedString();
+
+        self::assertStringStartsWith('$$', $literal);
+        self::assertStringEndsWith('$$', $literal);
+    }
+
+    public function testHexadecimalLiteralIsWrittenWithThePrefixOnOneOfTwoDraws(): void
+    {
+        $faker = ScriptedNumbers::answering(0);
+
+        self::assertStringStartsWith('0x', MySqlRealizers::synthetic($faker)->hexadecimalLiteral());
+        self::assertSame([0, 1], $faker->numberBetweenCalls[0]);
+    }
+
+    public function testHexadecimalLiteralIsWrittenQuotedOnEveryOtherDraw(): void
+    {
+        $faker = ScriptedNumbers::answering(1, 2);
+
+        $literal = MySqlRealizers::synthetic($faker)->hexadecimalLiteral();
+
+        self::assertSame(4, strlen($literal) - 3);
+        self::assertStringStartsWith("X'", $literal);
+        self::assertSame([0, 8], $faker->numberBetweenCalls[1]);
+    }
+
+    public function testBinaryLiteralIsWrittenWithThePrefixOnOneOfTwoDraws(): void
+    {
+        $faker = ScriptedNumbers::answering(0);
+
+        self::assertStringStartsWith('0b', MySqlRealizers::synthetic($faker)->binaryLiteral());
+        self::assertSame([0, 1], $faker->numberBetweenCalls[0]);
+    }
+
+    public function testBinaryLiteralIsWrittenQuotedOnEveryOtherDraw(): void
+    {
+        $faker = ScriptedNumbers::answering(1);
+
+        self::assertStringStartsWith("B'", MySqlRealizers::synthetic($faker)->binaryLiteral());
+    }
+
+    public function testRealizeWitnessedChoosesFromEveryWitnessAndNoFurther(): void
+    {
+        $faker = ScriptedNumbers::answering(1);
+
+        self::assertSame(['orders', ['IDENT']], MySqlRealizers::witnessed($faker)->realizeWitnessed('IDENT'));
+        self::assertSame([[0, 1]], $faker->numberBetweenCalls);
+    }
+
+    public function testTriviaIsASpaceWhereTerminalsMayBeWrittenWithoutAWitness(): void
+    {
+        $faker = ScriptedNumbers::answering();
+
+        self::assertSame(' ', MySqlRealizers::synthetic($faker)->trivia());
+        self::assertSame([], $faker->numberBetweenCalls);
+    }
+
+    public function testTriviaIsChosenFromEveryWitnessAndNoFurther(): void
+    {
+        $faker = ScriptedNumbers::answering(1);
+
+        self::assertSame('/* c */', MySqlRealizers::witnessed($faker)->trivia());
+        self::assertSame([[0, 1]], $faker->numberBetweenCalls);
+    }
+
+    public function testOptionalTriviaIsNothingWhereTerminalsMayBeWrittenWithoutAWitness(): void
+    {
+        $faker = ScriptedNumbers::answering();
+
+        self::assertSame('', MySqlRealizers::synthetic($faker)->optionalTrivia());
+        self::assertSame([], $faker->numberBetweenCalls);
+    }
+
+    public function testOptionalTriviaIsNothingOnOneOfTwoDraws(): void
+    {
+        $faker = ScriptedNumbers::answering(0);
+
+        self::assertSame('', MySqlRealizers::witnessed($faker)->optionalTrivia());
+        self::assertSame([[0, 1]], $faker->numberBetweenCalls);
+    }
+
+    public function testOptionalTriviaIsTriviaOnEveryOtherDraw(): void
+    {
+        $faker = ScriptedNumbers::answering(1, 0);
+
+        self::assertSame(' ', MySqlRealizers::witnessed($faker)->optionalTrivia());
     }
 }

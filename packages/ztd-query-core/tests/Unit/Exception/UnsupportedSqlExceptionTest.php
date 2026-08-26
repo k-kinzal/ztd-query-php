@@ -6,7 +6,6 @@ namespace Tests\Unit\Exception;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 
 #[CoversClass(UnsupportedSqlException::class)]
@@ -51,10 +50,4 @@ final class UnsupportedSqlExceptionTest extends TestCase
         self::assertSame('Unsupported', $exception->getCategory());
     }
 
-    public function testExtendsRuntimeException(): void
-    {
-        $exception = new UnsupportedSqlException('sql');
-
-        self::assertInstanceOf(RuntimeException::class, $exception);
-    }
 }

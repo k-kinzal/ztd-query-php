@@ -6,6 +6,16 @@ namespace ZtdQuery\Rewrite;
 
 use ZtdQuery\Exception\InvalidDefinitionException;
 
+/**
+ * What one column of a rewritten INSERT ... VALUES will read back as.
+ *
+ * A rewritten INSERT does not insert: it selects the row it would have
+ * written. Every column of the target therefore has to be accounted for,
+ * including the ones the statement left out, because a row read back without
+ * them is not the row a database would have stored. A column is written into
+ * the projection as exactly one of four things, and which one it is decides
+ * what the SELECT says in its place.
+ */
 final class InsertRowProjection
 {
     private function __construct(
