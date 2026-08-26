@@ -16,6 +16,14 @@ use SqlFixture\Schema\ColumnDefinition;
 final class MySqlTextSample
 {
     /**
+     * The shortest text Faker will produce.
+     *
+     * Asking for less raises rather than answering, so a column declared
+     * narrower than this is filled from a longer draw and cut down.
+     */
+    private const SHORTEST_FAKER_TEXT = 5;
+
+    /**
      * Picks text exactly as long as a CHAR column is declared.
      *
      * CHAR is padded to its length on the way in, so generating it at that
@@ -45,6 +53,6 @@ final class MySqlTextSample
     {
         $maxLength = $column->length ?? 255;
 
-        return substr($faker->text(min($maxLength, 200)), 0, $maxLength);
+        return substr($faker->text(max(self::SHORTEST_FAKER_TEXT, min($maxLength, 200))), 0, $maxLength);
     }
 }

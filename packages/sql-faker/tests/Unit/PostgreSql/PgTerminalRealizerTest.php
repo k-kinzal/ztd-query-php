@@ -272,4 +272,93 @@ final class PgTerminalRealizerTest extends TestCase
             true,
         )];
     }
+
+    #[DataProvider('providerSyntheticTerminal')]
+    public function testRealizeSyntheticWritesEveryNamedTerminalAsItsOwnKindOfToken(
+        PgTerminalRealizer $realizer,
+        string $terminal,
+    ): void {
+        self::assertSame([$terminal], $realizer->realizeSynthetic($terminal)[1]);
+    }
+
+    /**
+     * @return iterable<string, array{PgTerminalRealizer, string}>
+     */
+    public static function providerSyntheticTerminal(): iterable
+    {
+        $lookahead = new PgLookahead([]);
+        $realizer = new PgTerminalRealizer(
+            Factory::create(),
+            new LexicalCatalog([
+                'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+                'terminals' => [],
+                'terminal_exclusions' => [],
+                'coverage' => ['units' => [], 'witnessed' => [], 'excluded' => []],
+            ]),
+            new PgTokenizer(['SELECT' => 'SELECT'], $lookahead),
+            $lookahead,
+            ['SELECT' => ['SELECT']],
+            'pg-17.2',
+            true,
+        );
+
+        $terminals = [
+            'IDENT', 'UIDENT', 'SCONST', 'USCONST', 'ICONST', 'FCONST', 'BCONST', 'XCONST',
+            'Op', 'PARAM', 'TYPECAST', 'DOT_DOT', 'COLON_EQUALS', 'EQUALS_GREATER',
+            'NOT_EQUALS', 'LESS_EQUALS', 'GREATER_EQUALS',
+        ];
+        foreach ($terminals as $terminal) {
+            yield $terminal => [$realizer, $terminal];
+        }
+    }
+
+    #[DataProvider('providerFixedSyntheticTerminal')]
+    public function testRealizeSyntheticWritesEveryFixedOperatorAsItsOneSpelling(
+        PgTerminalRealizer $realizer,
+        string $terminal,
+        string $lexeme,
+    ): void {
+        self::assertSame($lexeme, $realizer->realizeSynthetic($terminal)[0]);
+    }
+
+    /**
+     * @return iterable<string, array{PgTerminalRealizer, string, string}>
+     */
+    public static function providerFixedSyntheticTerminal(): iterable
+    {
+        $lookahead = new PgLookahead([]);
+        $realizer = new PgTerminalRealizer(
+            Factory::create(),
+            new LexicalCatalog([
+                'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+                'terminals' => [],
+                'terminal_exclusions' => [],
+                'coverage' => ['units' => [], 'witnessed' => [], 'excluded' => []],
+            ]),
+            new PgTokenizer(['SELECT' => 'SELECT'], $lookahead),
+            $lookahead,
+            ['SELECT' => ['SELECT']],
+            'pg-17.2',
+            true,
+        );
+
+        $spellings = [
+            'TYPECAST' => '::',
+            'DOT_DOT' => '..',
+            'COLON_EQUALS' => ':=',
+            'EQUALS_GREATER' => '=>',
+            'LESS_EQUALS' => '<=',
+            'GREATER_EQUALS' => '>=',
+        ];
+        foreach ($spellings as $terminal => $lexeme) {
+            yield $terminal => [$realizer, $terminal, $lexeme];
+        }
+    }
+
+    #[DataProvider('providerSyntheticRealizer')]
+    public function testRealizeSyntheticWritesInequalityEitherWayRoundPostgresAcceptsIt(
+        PgTerminalRealizer $realizer,
+    ): void {
+        self::assertContains($realizer->realizeSynthetic('NOT_EQUALS')[0], ['<>', '!=']);
+    }
 }

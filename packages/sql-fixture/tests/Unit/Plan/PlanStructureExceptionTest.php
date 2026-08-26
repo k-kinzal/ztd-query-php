@@ -16,7 +16,7 @@ use SqlFixture\Plan\PlanStructureException;
 final class PlanStructureExceptionTest extends TestCase
 {
     #[Test]
-    public function columnsBoundTwiceNamesTheColumnAndBothParents(): void
+    public function testColumnsBoundTwiceNamesTheColumnAndBothParents(): void
     {
         $message = PlanStructureException::columnsBoundTwice(
             ColumnRef::of('b', 'x'),
@@ -32,7 +32,7 @@ final class PlanStructureExceptionTest extends TestCase
     }
 
     #[Test]
-    public function cycleShowsTheLoopClosingBackOnItself(): void
+    public function testCycleShowsTheLoopClosingBackOnItself(): void
     {
         $message = PlanStructureException::cycle(['a', 'b', 'c'])->getMessage();
 
@@ -44,7 +44,7 @@ final class PlanStructureExceptionTest extends TestCase
     }
 
     #[Test]
-    public function unboundedSelfReferenceSuggestsTheOptionalMarker(): void
+    public function testUnboundedSelfReferenceSuggestsTheOptionalMarker(): void
     {
         $message = PlanStructureException::unboundedSelfReference(
             'category',

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Fixture\Hydrator;
 
+/**
+ * An entity mixing property names that match a column and names that must be converted.
+ */
 class TestEntityViaPropertiesMixed
 {
     /**

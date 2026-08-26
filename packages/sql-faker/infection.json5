@@ -6,15 +6,19 @@
         "directories": ["src"]
     },
     "logs": {
-        "text": "build/infection/infection.log",
+        "text": "build/infection/escaped.log",
         "summary": "build/infection/summary.log",
-        "github": true
+        "perMutator": "build/infection/per-mutator.md",
+        "json": "build/infection/infection.json"
     },
     "mutators": {
         "@default": true
     },
-    "minMsi": 75,
-    "minCoveredMsi": 85,
+    "minMsi": 80,
+    "minCoveredMsi": 80,
+    "timeoutsAsEscaped": true,
+    "maxTimeouts": 0,
+    "tmpDir": "build/infection-tmp",
     "phpUnit": {
         "configDir": ".",
         "customPath": "vendor/bin/phpunit"

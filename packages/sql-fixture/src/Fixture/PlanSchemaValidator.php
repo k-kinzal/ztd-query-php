@@ -6,6 +6,7 @@ namespace SqlFixture\Fixture;
 
 use SqlFixture\Plan\ColumnRef;
 use SqlFixture\Plan\FixturePlan;
+use SqlFixture\Schema\SchemaNotFoundException;
 use SqlFixture\Schema\SchemaResolverInterface;
 
 /**
@@ -19,13 +20,18 @@ use SqlFixture\Schema\SchemaResolverInterface;
  */
 final class PlanSchemaValidator
 {
+    /**
+     * Builds a validator that checks a plan against the tables it names.
+     *
+     * @param SchemaResolverInterface $schemas Answers what a table looks like
+     */
     public function __construct(private readonly SchemaResolverInterface $schemas)
     {
     }
 
     /**
      * @throws PlanSchemaException If a relation names a column that is not there
-     * @throws \SqlFixture\Schema\SchemaNotFoundException If a table is not there
+     * @throws SchemaNotFoundException If a table is not there
      */
     public function validate(FixturePlan $plan): void
     {
@@ -39,7 +45,19 @@ final class PlanSchemaValidator
         }
     }
 
-    private function checkEndpoint(ColumnRef $reference): void
+    /**
+     * Refuses an endpoint the schema cannot honour.
+     *
+     * A column the table does not have would be generated into nothing, and a
+     * generated column is filled by the server, so a plan that binds one is asking
+     * for a value that will be thrown away.
+     *
+     * @param ColumnRef $reference Endpoint to check
+     *
+     * @throws PlanSchemaException When a column is missing, or is one the server fills in
+     * @throws SchemaNotFoundException When nothing can resolve the table
+     */
+    public function checkEndpoint(ColumnRef $reference): void
     {
         $schema = $this->schemas->resolve($reference->table);
 

@@ -106,6 +106,15 @@ class FixturePlan implements Stringable
         return new self($table);
     }
 
+    /**
+     * Answers a plan carrying one more relation.
+     *
+     * @param Relation $relation Relation to add
+     *
+     * @return self A new plan; this one is unchanged
+     *
+     * @throws PlanStructureException When the relation binds a column already bound, or cannot be ordered
+     */
     public function withRelation(Relation $relation): self
     {
         return new self(...[...$this->parts, $relation]);
@@ -209,11 +218,21 @@ class FixturePlan implements Stringable
         ));
     }
 
+    /**
+     * Writes the plan in the syntax it can be read back from.
+     *
+     * @return string The plan
+     */
     public function toString(): string
     {
         return (new PlanPrinter())->print($this);
     }
 
+    /**
+     * Writes the plan in the syntax it can be read back from.
+     *
+     * @return string The plan
+     */
     public function __toString(): string
     {
         return $this->toString();

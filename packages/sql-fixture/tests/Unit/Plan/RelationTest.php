@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use SqlFixture\Fixture\PlanSchemaException;
 use SqlFixture\Plan\ColumnRef;
 use SqlFixture\Plan\PlanSyntaxException;
 use SqlFixture\Plan\Relation;
@@ -19,6 +20,7 @@ use SqlFixture\Plan\RelationSide;
 #[UsesClass(RelationKind::class)]
 #[UsesClass(RelationSide::class)]
 #[UsesClass(PlanSyntaxException::class)]
+#[UsesClass(PlanSchemaException::class)]
 final class RelationTest extends TestCase
 {
     #[Test]
@@ -35,7 +37,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function oneToManyMakesTheLeftSideTheParent(): void
+    public function testParentOneToManyMakesTheLeftSideTheParent(): void
     {
         $relation = new Relation(
             ColumnRef::of('order', 'id'),
@@ -48,7 +50,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function manyToOneDescribesTheSameShapeWrittenBackwards(): void
+    public function testChildManyToOneDescribesTheSameShapeWrittenBackwards(): void
     {
         $relation = new Relation(
             ColumnRef::of('order_detail', 'order_id'),
@@ -61,7 +63,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function columnMapPointsChildColumnsAtParentColumns(): void
+    public function testColumnMapPointsChildColumnsAtParentColumns(): void
     {
         $relation = new Relation(
             ColumnRef::of('order', 'id'),
@@ -102,7 +104,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function aMarkerNextToTheParentMakesTheParentOptional(): void
+    public function testParentIsOptionalAMarkerNextToTheParentMakesTheParentOptional(): void
     {
         $relation = new Relation(
             ColumnRef::of('order_detail', 'order_id'),
@@ -117,7 +119,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function aMarkerNextToTheChildMakesTheChildOptional(): void
+    public function testChildIsOptionalAMarkerNextToTheChildMakesTheChildOptional(): void
     {
         $relation = new Relation(
             ColumnRef::of('order', 'id'),
@@ -145,7 +147,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function onlyOneToOneHoldsASingleChildRow(): void
+    public function testChildIsCollectionOnlyOneToOneHoldsASingleChildRow(): void
     {
         $many = new Relation(
             ColumnRef::of('order', 'id'),
@@ -163,7 +165,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function tablesListsBothEnds(): void
+    public function testTablesListsBothEnds(): void
     {
         $relation = new Relation(
             ColumnRef::of('order', 'id'),
@@ -225,21 +227,21 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function oneToManyCanMarkTheChildOptional(): void
+    public function testOneToManyCanMarkTheChildOptional(): void
     {
         self::assertTrue(Relation::oneToMany('a.id', 'b.a_id', true)->childIsOptional());
         self::assertFalse(Relation::oneToMany('a.id', 'b.a_id')->childIsOptional());
     }
 
     #[Test]
-    public function manyToOneCanMarkTheParentOptional(): void
+    public function testManyToOneCanMarkTheParentOptional(): void
     {
         self::assertTrue(Relation::manyToOne('b.a_id', 'a.id', true)->parentIsOptional());
         self::assertFalse(Relation::manyToOne('b.a_id', 'a.id')->parentIsOptional());
     }
 
     #[Test]
-    public function aRequiredChildIsGeneratedEvenWhenNoneAreGiven(): void
+    public function testMinimumChildRowsARequiredChildIsGeneratedEvenWhenNoneAreGiven(): void
     {
         self::assertSame(1, Relation::oneToMany('order.id', 'order_detail.order_id')->minimumChildRows());
     }
@@ -251,7 +253,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function aCollectionChildHasNoUpperBound(): void
+    public function testMaximumChildRowsACollectionChildHasNoUpperBound(): void
     {
         self::assertNull(Relation::oneToMany('order.id', 'order_detail.order_id')->maximumChildRows());
     }
@@ -289,7 +291,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function oneToOneMarksOnlyTheRightSideOptional(): void
+    public function testOneToOneMarksOnlyTheRightSideOptional(): void
     {
         $relation = Relation::oneToOne('a.id', 'b.a_id', true);
 
@@ -331,5 +333,83 @@ final class RelationTest extends TestCase
 
         self::assertFalse($relation->leftOptional);
         self::assertFalse($relation->rightOptional);
+    }
+
+    #[Test]
+    public function testAtAnswersTheEndWrittenOnThatSide(): void
+    {
+        $relation = new Relation(
+            ColumnRef::of('order', 'id'),
+            RelationKind::OneToMany,
+            ColumnRef::of('order_detail', 'order_id')
+        );
+
+        self::assertSame('order', $relation->at(RelationSide::Left)->table);
+        self::assertSame('order_detail', $relation->at(RelationSide::Right)->table);
+    }
+
+    #[Test]
+    public function testIsOptionalAtReportsWhichEndCarriedTheQuestionMark(): void
+    {
+        $relation = new Relation(
+            ColumnRef::of('order', 'id'),
+            RelationKind::OneToMany,
+            ColumnRef::of('order_detail', 'order_id'),
+            rightOptional: true
+        );
+
+        self::assertFalse($relation->isOptionalAt(RelationSide::Left));
+        self::assertTrue($relation->isOptionalAt(RelationSide::Right));
+    }
+
+    #[Test]
+    public function testProjectReadsTheParentValuesUnderTheNamesTheChildSpellsThem(): void
+    {
+        $relation = new Relation(
+            ColumnRef::of('order', 'id'),
+            RelationKind::OneToMany,
+            ColumnRef::of('order_detail', 'order_id')
+        );
+
+        self::assertSame(['order_id' => 7], $relation->project(['id' => 7, 'total' => 300]));
+    }
+
+    #[Test]
+    public function testProjectRefusesAParentRowThatDoesNotCarryALinkingColumn(): void
+    {
+        $relation = new Relation(
+            ColumnRef::of('order', 'id'),
+            RelationKind::OneToMany,
+            ColumnRef::of('order_detail', 'order_id')
+        );
+
+        $this->expectException(PlanSchemaException::class);
+
+        $relation->project(['total' => 300]);
+    }
+
+    #[Test]
+    public function testIsSatisfiedByIsTrueOnlyWhenEveryLinkingColumnWasGiven(): void
+    {
+        $relation = new Relation(
+            ColumnRef::of('order', 'shop_id', 'no'),
+            RelationKind::OneToMany,
+            ColumnRef::of('order_detail', 'shop_id', 'order_no')
+        );
+
+        self::assertTrue($relation->isSatisfiedBy(['shop_id' => 1, 'order_no' => 2]));
+        self::assertFalse($relation->isSatisfiedBy(['shop_id' => 1]));
+    }
+
+    #[Test]
+    public function testIsSatisfiedByReadsTheColumnsAsTheChildSpellsThemNotTheParent(): void
+    {
+        $relation = new Relation(
+            ColumnRef::of('order', 'id'),
+            RelationKind::OneToMany,
+            ColumnRef::of('order_detail', 'order_id')
+        );
+
+        self::assertFalse($relation->isSatisfiedBy(['id' => 7]));
     }
 }

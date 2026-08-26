@@ -48,13 +48,14 @@
         "test:integration": "phpunit tests/Integration/",
         "lint": [
             "@format:check",
-            "phpstan analyse --memory-limit=512M"
+            "@phpstan"
         ],
         "format": "php-cs-fixer fix --allow-risky=yes",
         "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
         "fuzz:create-table": "php-fuzzer fuzz fuzz/fuzz_create_table.php fuzz/corpus/create-table/",
         "fuzz:insert-select": "php-fuzzer fuzz fuzz/fuzz_insert_select.php fuzz/corpus/insert-select/",
-        "infection": "infection --threads=max --show-mutations --no-progress"
+        "infection": "infection --threads=max --show-mutations --no-progress",
+        "phpstan": "phpstan analyse src fuzz tests --memory-limit=512M"
     },
     "config": {
         "allow-plugins": {

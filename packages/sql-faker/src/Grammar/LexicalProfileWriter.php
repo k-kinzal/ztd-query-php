@@ -146,10 +146,12 @@ final class LexicalProfileWriter
             return '[]';
         }
         if (array_is_list($value)) {
-            return '[' . implode(', ', array_map(
-                fn (mixed $item): string => $this->exported($item, $indent),
-                $value,
-            )) . ']';
+            $items = [];
+            foreach ($value as $item) {
+                $items[] = $this->exported($item, $indent);
+            }
+
+            return '[' . implode(', ', $items) . ']';
         }
 
         $padding = str_repeat(' ', $indent);
