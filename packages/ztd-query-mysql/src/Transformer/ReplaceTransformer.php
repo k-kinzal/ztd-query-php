@@ -15,6 +15,8 @@ use ZtdQuery\Sql\SqlTokenStream;
 /**
  * Transforms REPLACE statements into SELECT queries that return the replaced rows.
  * Applies CTE shadowing via the SelectTransformer delegate.
+ *
+ * @phpstan-import-type ShadowTables from SqlTransformer
  */
 final class ReplaceTransformer implements SqlTransformer
 {

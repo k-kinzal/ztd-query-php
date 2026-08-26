@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\MySql;
 
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Schema\ColumnDeclaration;
+use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\TablePartitioning;
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
@@ -13,16 +13,13 @@ use ZtdQuery\Sql\SqlTokenStream;
 
 /**
  * Rewrites explicit MySQL partition selection into filtered table sources.
+ *
+ * @phpstan-import-type ShadowTables from SqlTransformer
  */
 final class MySqlPartitionSelectionRewriter
 {
     /**
-     * @param array<string, array{viewSql: string}|array{
-     *     rows: array<int, array<string, mixed>>,
-     *     columns: array<int, string>,
-     *     columnTypes: array<string, ColumnDeclaration>,
-     *     partitioning?: TablePartitioning|null
-     * }> $tables
+     * @param ShadowTables $tables Table name => what the shadow holds for it
      *
      * @throws UnsupportedSqlException
      */

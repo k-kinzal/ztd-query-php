@@ -20,6 +20,8 @@ use ZtdQuery\Rewrite\SqlTransformer;
  *
  * Parses the SQL, determines its type, and delegates to the appropriate
  * sub-transformer. DDL and unsupported statements throw UnsupportedSqlException.
+ *
+ * @phpstan-import-type ShadowTables from SqlTransformer
  */
 final class MySqlTransformer implements SqlTransformer
 {

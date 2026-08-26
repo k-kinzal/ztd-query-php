@@ -24,6 +24,8 @@ use ZtdQuery\Schema\ColumnTypeFamily;
  *
  * Generates WITH clauses that shadow referenced tables using in-memory data,
  * rewrites SET column ORDER BY for correct bit-order ranking.
+ *
+ * @phpstan-import-type ShadowTables from SqlTransformer
  */
 final class SelectTransformer implements SqlTransformer
 {
@@ -285,11 +287,7 @@ final class SelectTransformer implements SqlTransformer
     /**
      * Rewrite ORDER BY on SET columns to MySQL-compatible bit-order ranking.
      *
-     * @param array<string, array{viewSql: string}|array{
-     *     rows: array<int, array<string, mixed>>,
-     *     columns: array<int, string>,
-     *     columnTypes: array<string, ColumnDeclaration>
-     * }> $tables
+     * @param ShadowTables $tables Table name => what the shadow holds for it
      */
     private function rewriteSetOrderBy(string $sql, array $tables): string
     {

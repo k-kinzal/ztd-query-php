@@ -19,6 +19,7 @@ use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\RewriteStateCommitter;
 use ZtdQuery\Rewrite\SqlRewriter;
+use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Schema\ViewDefinitionSet;
 use ZtdQuery\Shadow\ShadowStore;
@@ -28,6 +29,8 @@ use ZtdQuery\Sql\TransactionStatement;
  * MySQL rewrite implementation for ZTD.
  *
  * Orchestrates parsing, classification, transformation, and mutation resolution.
+ *
+ * @phpstan-import-type ShadowTables from SqlTransformer
  */
 final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
 {

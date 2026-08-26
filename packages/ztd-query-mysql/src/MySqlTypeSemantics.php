@@ -4,22 +4,20 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\MySql;
 
-use ZtdQuery\Schema\ColumnDeclaration;
+use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
 /**
  * Restores native operators that cannot be represented by a CTE column cast.
+ *
+ * @phpstan-import-type ShadowTables from SqlTransformer
  */
 final class MySqlTypeSemantics
 {
     /**
-     * @param array<string, array{viewSql: string}|array{
-     *     rows: array<int, array<string, mixed>>,
-     *     columns: array<int, string>,
-     *     columnTypes: array<string, ColumnDeclaration>
-     * }> $tables
+     * @param ShadowTables $tables Table name => what the shadow holds for it
      */
     public function rewrite(string $sql, array $tables): string
     {
@@ -39,11 +37,7 @@ final class MySqlTypeSemantics
     }
 
     /**
-     * @param array<string, array{viewSql: string}|array{
-     *     rows: array<int, array<string, mixed>>,
-     *     columns: array<int, string>,
-     *     columnTypes: array<string, ColumnDeclaration>
-     * }> $tables
+     * @param ShadowTables $tables Table name => what the shadow holds for it
      * @return array{array<string, list<string>>, array<string, list<string>|null>}
      */
     private function enumColumns(array $tables): array

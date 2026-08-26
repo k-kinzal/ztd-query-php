@@ -24,6 +24,8 @@ use ZtdQuery\Schema\IdentityGenerationStrategy;
 /**
  * Transforms INSERT statements into SELECT queries that return the inserted rows.
  * Applies CTE shadowing via the SelectTransformer delegate.
+ *
+ * @phpstan-import-type ShadowTables from SqlTransformer
  */
 final class InsertTransformer implements SqlTransformer
 {

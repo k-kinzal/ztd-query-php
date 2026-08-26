@@ -21,6 +21,8 @@ use ZtdQuery\Shadow\Mutation\MultiTableMutationTarget;
 
 /**
  * Transforms DELETE statements into SELECT projections with CTE shadowing.
+ *
+ * @phpstan-import-type ShadowTables from SqlTransformer
  */
 final class DeleteTransformer implements SqlTransformer
 {

@@ -26,6 +26,8 @@ use ZtdQuery\Sql\SqlTokenStream;
 
 /**
  * Transforms UPDATE statements into SELECT projections with CTE shadowing.
+ *
+ * @phpstan-import-type ShadowTables from SqlTransformer
  */
 final class UpdateTransformer implements SqlTransformer
 {
