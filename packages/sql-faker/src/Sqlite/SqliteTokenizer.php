@@ -73,13 +73,22 @@ final class SqliteTokenizer
         $offset = 0;
 
         while ($offset < $length) {
+            $startedAt = $offset;
             if ($this->skipTrivia($sql, $offset)) {
+                if ($offset <= $startedAt) {
+                    throw LexicalException::noProgress('SQLite', $startedAt, $sql);
+                }
+
                 continue;
             }
 
             $token = $this->tokenAt($sql, $offset);
             if ($token === null) {
                 throw LexicalException::unsupportedInput('SQLite', $offset, $sql);
+            }
+
+            if ($offset <= $startedAt) {
+                throw LexicalException::noProgress('SQLite', $startedAt, $sql);
             }
 
             $tokens[] = $token;
