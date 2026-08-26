@@ -23,6 +23,8 @@ final class ReturningProjection
 
     /**
      * @param list<array{source: string|null, output: string|null}> $items
+     *
+     * @throws InvalidDefinitionException When the items do not describe a projection anything could read back
      */
     public static function fromItems(array $items): self
     {

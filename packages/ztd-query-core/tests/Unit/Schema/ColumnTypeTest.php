@@ -12,7 +12,7 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 #[CoversClass(ColumnType::class)]
 final class ColumnTypeTest extends TestCase
 {
-    public function testConstructorSetsProperties(): void
+    public function testKeepsTheFamilyAndTheNameTheDatabaseGivesTheType(): void
     {
         $type = new ColumnType(ColumnTypeFamily::INTEGER, 'INT');
 

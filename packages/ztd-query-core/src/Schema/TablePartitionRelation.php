@@ -26,6 +26,9 @@ final class TablePartitionRelation
      */
     public readonly ?string $predicate;
 
+    /**
+     * @throws InvalidDefinitionException When the parent table or the predicate is empty
+     */
     public function __construct(string $parentTable, ?string $predicate)
     {
         $parentTable = trim($parentTable);

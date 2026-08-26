@@ -213,7 +213,7 @@ abstract class SchemaParserContractTest extends TestCase
     /**
      * Return expected column names in order for the validCreateTableSql fixture.
      *
-     * @return array<int, string>
+     * @return list<string>
      */
     protected function expectedColumns(): array
     {
@@ -223,7 +223,7 @@ abstract class SchemaParserContractTest extends TestCase
     /**
      * Return expected primary key column names.
      *
-     * @return array<int, string>
+     * @return list<string>
      */
     protected function expectedPrimaryKeys(): array
     {
@@ -233,7 +233,7 @@ abstract class SchemaParserContractTest extends TestCase
     /**
      * Return columns that must be NOT NULL.
      *
-     * @return array<int, string>
+     * @return list<string>
      */
     protected function expectedNotNullColumns(): array
     {

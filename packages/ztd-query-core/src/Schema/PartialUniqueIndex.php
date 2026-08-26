@@ -18,6 +18,8 @@ final class PartialUniqueIndex
 
     /**
      * @param list<string> $columns
+     *
+     * @throws InvalidDefinitionException When the index is missing a name, its columns, or its predicate
      */
     public function __construct(
         public readonly string $name,

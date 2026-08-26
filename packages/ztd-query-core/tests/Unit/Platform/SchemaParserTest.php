@@ -35,7 +35,7 @@ final class SchemaParserTest extends SchemaParserContractTest
     }
 
     /**
-     * @return array<int, string>
+     * @return list<string>
      */
     #[Override]
     protected function expectedColumns(): array
@@ -44,7 +44,7 @@ final class SchemaParserTest extends SchemaParserContractTest
     }
 
     /**
-     * @return array<int, string>
+     * @return list<string>
      */
     #[Override]
     protected function expectedNotNullColumns(): array
