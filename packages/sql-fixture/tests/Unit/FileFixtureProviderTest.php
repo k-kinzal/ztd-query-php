@@ -547,4 +547,16 @@ final class FileFixtureProviderTest extends TestCase
             })($tempDir);
         }
     }
+
+    #[Test]
+    public function testGetFixtureGeneratorAnswersTheGeneratorTheRowsAreBuiltWith(): void
+    {
+        $directory = sys_get_temp_dir() . '/sql-fixture-generator-' . uniqid();
+        mkdir($directory);
+        file_put_contents($directory . '/users.sql', 'CREATE TABLE users (id INT PRIMARY KEY)');
+
+        $provider = new FileFixtureProvider(Factory::create(), $directory);
+
+        self::assertSame($provider->getFixtureGenerator(), $provider->getFixtureGenerator());
+    }
 }

@@ -10,6 +10,7 @@ use PDO;
 use RuntimeException;
 use SqlFixture\Hydrator\HydratorInterface;
 use SqlFixture\Platform\PlatformFactory;
+use SqlFixture\Platform\UnsupportedDriverException;
 use SqlFixture\Schema\SchemaFetcherInterface;
 use SqlFixture\Schema\TableSchema;
 use SqlFixture\TypeMapper\TypeMapperInterface;
@@ -31,6 +32,17 @@ class DatabaseFixtureProvider extends Base
     /** @var array<string, TableSchema> Table name → parsed schema cache */
     private array $schemaCache = [];
 
+    /**
+     * Builds a provider that reads its tables from a live connection.
+     *
+     * @param Generator $faker Source of every choice a generated column makes
+     * @param PDO $connection Connection the tables are described from
+     * @param TypeMapperInterface|null $typeMapper Answers what a column is given, or null to pick the one the driver calls for
+     * @param HydratorInterface|null $hydrator Turns a row into an object
+     * @param SchemaFetcherInterface|null $schemaFetcher Reads a table out of the server, or null to pick the one the driver calls for
+     *
+     * @throws UnsupportedDriverException When the connection is to a database this package has no support for
+     */
     public function __construct(
         Generator $faker,
         PDO $connection,

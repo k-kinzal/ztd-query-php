@@ -437,4 +437,36 @@ final class FixturePlanTest extends TestCase
 
         self::assertSame(['a', 'b', 'audit_log'], $plan->tables);
     }
+
+    #[Test]
+    public function testConnectedToGathersEverythingReachableHoweverTheArrowsPoint(): void
+    {
+        $plan = FixturePlan::from('order.id < order_detail.order_id, customer.id < order.customer_id');
+
+        self::assertSame(['order', 'order_detail', 'customer'], $plan->connectedTo('order'));
+    }
+
+    #[Test]
+    public function testConnectedToLeavesOutTablesInAnotherGroup(): void
+    {
+        $plan = FixturePlan::from('order.id < order_detail.order_id, product.id < stock.product_id');
+
+        self::assertSame(['product', 'stock'], $plan->connectedTo('product'));
+    }
+
+    #[Test]
+    public function testColumnsReferencedOnNamesTheParentColumnsRelationsReadOffIt(): void
+    {
+        $plan = FixturePlan::from('order.id < order_detail.order_id, order.id < shipment.order_id');
+
+        self::assertSame(['id'], $plan->columnsReferencedOn('order'));
+    }
+
+    #[Test]
+    public function testColumnsReferencedOnIsEmptyForATableNothingPointsAt(): void
+    {
+        $plan = FixturePlan::from('order.id < order_detail.order_id');
+
+        self::assertSame([], $plan->columnsReferencedOn('order_detail'));
+    }
 }

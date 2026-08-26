@@ -87,4 +87,18 @@ final class StaticSchemaResolverTest extends TestCase
 
         $resolver->resolve('order');
     }
+
+    #[Test]
+    public function testNormalizeStripsTheQuotesAnIdentifierMayBeWrittenWith(): void
+    {
+        self::assertSame('order', (new StaticSchemaResolver())->normalize('`order`'));
+        self::assertSame('order', (new StaticSchemaResolver())->normalize('"order"'));
+        self::assertSame('order', (new StaticSchemaResolver())->normalize('[order]'));
+    }
+
+    #[Test]
+    public function testNormalizeDropsTheSchemaAndLowercasesWhatIsLeft(): void
+    {
+        self::assertSame('order', (new StaticSchemaResolver())->normalize('MyDb.Order'));
+    }
 }

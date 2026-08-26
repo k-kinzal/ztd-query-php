@@ -150,4 +150,19 @@ final class SqliteColumnSampleTest extends TestCase
         self::assertGreaterThanOrEqual(-999.0, $value);
         self::assertLessThanOrEqual(999.0, $value);
     }
+
+    public function testParagraphsSeparatesEachParagraphWithABlankLine(): void
+    {
+        $text = (new SqliteColumnSample())->paragraphs(Factory::create(), 3);
+
+        self::assertCount(3, explode("\n\n", $text));
+    }
+
+    public function testParagraphsDrawsAsManyAsItWasAskedFor(): void
+    {
+        $text = (new SqliteColumnSample())->paragraphs(Factory::create(), 1);
+
+        self::assertStringNotContainsString("\n\n", $text);
+        self::assertNotSame('', $text);
+    }
 }

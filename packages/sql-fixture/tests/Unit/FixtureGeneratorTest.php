@@ -215,4 +215,51 @@ final class FixtureGeneratorTest extends TestCase
 
         self::assertSame(100, $data['id']);
     }
+
+    #[Test]
+    public function testAssertOverridesFitSchemaPassesColumnsTheTableCanHold(): void
+    {
+        $schema = new TableSchema('users', [
+            'id' => new ColumnDefinition('id', 'INT'),
+            'name' => new ColumnDefinition('name', 'VARCHAR', length: 255, nullable: true),
+        ], ['id']);
+
+        (new FixtureGenerator(Factory::create()))->assertOverridesFitSchema($schema, ['name' => null]);
+
+        $this->expectNotToPerformAssertions();
+    }
+
+    #[Test]
+    public function testAssertOverridesFitSchemaRefusesAColumnTheTableDoesNotHave(): void
+    {
+        $schema = new TableSchema('users', ['id' => new ColumnDefinition('id', 'INT')], ['id']);
+
+        $this->expectException(InvalidOverrideException::class);
+
+        (new FixtureGenerator(Factory::create()))->assertOverridesFitSchema($schema, ['nmae' => 1]);
+    }
+
+    #[Test]
+    public function testAssertOverridesFitSchemaRefusesAColumnTheServerFillsIn(): void
+    {
+        $schema = new TableSchema('users', [
+            'full_name' => new ColumnDefinition('full_name', 'VARCHAR', length: 255, generated: true),
+        ]);
+
+        $this->expectException(InvalidOverrideException::class);
+
+        (new FixtureGenerator(Factory::create()))->assertOverridesFitSchema($schema, ['full_name' => 'Ada']);
+    }
+
+    #[Test]
+    public function testAssertOverridesFitSchemaRefusesANullInAColumnThatCannotBeNull(): void
+    {
+        $schema = new TableSchema('users', [
+            'name' => new ColumnDefinition('name', 'VARCHAR', length: 255, nullable: false),
+        ]);
+
+        $this->expectException(InvalidOverrideException::class);
+
+        (new FixtureGenerator(Factory::create()))->assertOverridesFitSchema($schema, ['name' => null]);
+    }
 }

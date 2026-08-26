@@ -66,6 +66,11 @@ final class MySql84Container extends GenericContainer
             ->withRetryInterval(250000);
     }
 
+    /**
+     * Answers the grammar release the generated SQL should be read against.
+     *
+     * @return string Release tag sql-faker names this server by
+     */
     public static function getGrammarVersion(): string
     {
         return 'mysql-8.4.7';

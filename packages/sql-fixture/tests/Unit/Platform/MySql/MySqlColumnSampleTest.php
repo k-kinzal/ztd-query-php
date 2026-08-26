@@ -119,4 +119,30 @@ final class MySqlColumnSampleTest extends TestCase
 
         self::assertSame('a', (new MySqlColumnSample())->of(Factory::create(), $column));
     }
+
+    public function testParagraphsSeparatesEachParagraphWithABlankLine(): void
+    {
+        $text = (new MySqlColumnSample())->paragraphs(Factory::create(), 3);
+
+        self::assertCount(3, explode("\n\n", $text));
+    }
+
+    public function testParagraphsDrawsAsManyAsItWasAskedFor(): void
+    {
+        $text = (new MySqlColumnSample())->paragraphs(Factory::create(), 1);
+
+        self::assertStringNotContainsString("\n\n", $text);
+        self::assertNotSame('', $text);
+    }
+
+    public function testJsonWritesAnObjectTheServerWillParse(): void
+    {
+        $written = (new MySqlColumnSample())->json(Factory::create());
+
+        $decoded = json_decode($written, true);
+
+        self::assertIsArray($decoded);
+        self::assertArrayHasKey('key', $decoded);
+        self::assertArrayHasKey('value', $decoded);
+    }
 }

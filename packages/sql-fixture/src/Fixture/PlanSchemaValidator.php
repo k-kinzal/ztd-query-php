@@ -20,6 +20,11 @@ use SqlFixture\Schema\SchemaResolverInterface;
  */
 final class PlanSchemaValidator
 {
+    /**
+     * Builds a validator that checks a plan against the tables it names.
+     *
+     * @param SchemaResolverInterface $schemas Answers what a table looks like
+     */
     public function __construct(private readonly SchemaResolverInterface $schemas)
     {
     }

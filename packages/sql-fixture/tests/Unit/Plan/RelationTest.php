@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use SqlFixture\Fixture\PlanSchemaException;
 use SqlFixture\Plan\ColumnRef;
 use SqlFixture\Plan\PlanSyntaxException;
 use SqlFixture\Plan\Relation;
@@ -19,6 +20,7 @@ use SqlFixture\Plan\RelationSide;
 #[UsesClass(RelationKind::class)]
 #[UsesClass(RelationSide::class)]
 #[UsesClass(PlanSyntaxException::class)]
+#[UsesClass(PlanSchemaException::class)]
 final class RelationTest extends TestCase
 {
     #[Test]
@@ -331,5 +333,83 @@ final class RelationTest extends TestCase
 
         self::assertFalse($relation->leftOptional);
         self::assertFalse($relation->rightOptional);
+    }
+
+    #[Test]
+    public function testAtAnswersTheEndWrittenOnThatSide(): void
+    {
+        $relation = new Relation(
+            ColumnRef::of('order', 'id'),
+            RelationKind::OneToMany,
+            ColumnRef::of('order_detail', 'order_id')
+        );
+
+        self::assertSame('order', $relation->at(RelationSide::Left)->table);
+        self::assertSame('order_detail', $relation->at(RelationSide::Right)->table);
+    }
+
+    #[Test]
+    public function testIsOptionalAtReportsWhichEndCarriedTheQuestionMark(): void
+    {
+        $relation = new Relation(
+            ColumnRef::of('order', 'id'),
+            RelationKind::OneToMany,
+            ColumnRef::of('order_detail', 'order_id'),
+            rightOptional: true
+        );
+
+        self::assertFalse($relation->isOptionalAt(RelationSide::Left));
+        self::assertTrue($relation->isOptionalAt(RelationSide::Right));
+    }
+
+    #[Test]
+    public function testProjectReadsTheParentValuesUnderTheNamesTheChildSpellsThem(): void
+    {
+        $relation = new Relation(
+            ColumnRef::of('order', 'id'),
+            RelationKind::OneToMany,
+            ColumnRef::of('order_detail', 'order_id')
+        );
+
+        self::assertSame(['order_id' => 7], $relation->project(['id' => 7, 'total' => 300]));
+    }
+
+    #[Test]
+    public function testProjectRefusesAParentRowThatDoesNotCarryALinkingColumn(): void
+    {
+        $relation = new Relation(
+            ColumnRef::of('order', 'id'),
+            RelationKind::OneToMany,
+            ColumnRef::of('order_detail', 'order_id')
+        );
+
+        $this->expectException(PlanSchemaException::class);
+
+        $relation->project(['total' => 300]);
+    }
+
+    #[Test]
+    public function testIsSatisfiedByIsTrueOnlyWhenEveryLinkingColumnWasGiven(): void
+    {
+        $relation = new Relation(
+            ColumnRef::of('order', 'shop_id', 'no'),
+            RelationKind::OneToMany,
+            ColumnRef::of('order_detail', 'shop_id', 'order_no')
+        );
+
+        self::assertTrue($relation->isSatisfiedBy(['shop_id' => 1, 'order_no' => 2]));
+        self::assertFalse($relation->isSatisfiedBy(['shop_id' => 1]));
+    }
+
+    #[Test]
+    public function testIsSatisfiedByReadsTheColumnsAsTheChildSpellsThemNotTheParent(): void
+    {
+        $relation = new Relation(
+            ColumnRef::of('order', 'id'),
+            RelationKind::OneToMany,
+            ColumnRef::of('order_detail', 'order_id')
+        );
+
+        self::assertFalse($relation->isSatisfiedBy(['id' => 7]));
     }
 }

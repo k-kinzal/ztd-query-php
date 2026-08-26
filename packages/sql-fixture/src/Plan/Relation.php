@@ -22,6 +22,17 @@ use SqlFixture\TypeMapper\TypeMapperInterface;
  */
 final class Relation
 {
+    /**
+     * Binds one relation as it was written.
+     *
+     * @param ColumnRef $left End written on the left
+     * @param RelationKind $kind Operator between them, which decides which end is the parent
+     * @param ColumnRef $right End written on the right
+     * @param bool $leftOptional Whether a `?` was written next to the left end
+     * @param bool $rightOptional Whether a `?` was written next to the right end
+     *
+     * @throws PlanSyntaxException When the two ends name different numbers of columns
+     */
     public function __construct(
         public readonly ColumnRef $left,
         public readonly RelationKind $kind,
@@ -140,6 +151,11 @@ final class Relation
         return $this->isOptionalAt($this->kind->childSide());
     }
 
+    /**
+     * Reports whether the child end may hold more than one row.
+     *
+     * @return bool True when the operator makes the child a collection
+     */
     public function childIsCollection(): bool
     {
         return $this->kind->childIsCollection();

@@ -161,4 +161,33 @@ final class GenerationRunTest extends TestCase
             $run->record(OrderSchema::create(), ['status' => 'paid'], ['id'])
         );
     }
+
+    #[Test]
+    public function testHasVisitedIsFalseUntilTheWalkReachesTheTable(): void
+    {
+        $run = new GenerationRun([]);
+
+        self::assertFalse($run->hasVisited('order'));
+
+        $run->reached('order', false);
+
+        self::assertTrue($run->hasVisited('order'));
+    }
+
+    #[Test]
+    public function testLastRowAnswersTheRowKeptMostRecently(): void
+    {
+        $run = new GenerationRun([]);
+        $schema = OrderSchema::create();
+        $run->record($schema, ['id' => 1, 'total' => 100]);
+        $run->record($schema, ['id' => 2, 'total' => 200]);
+
+        self::assertSame(['id' => 2, 'total' => 200], $run->lastRow('order'));
+    }
+
+    #[Test]
+    public function testLastRowIsEmptyForATableNothingWasKeptFor(): void
+    {
+        self::assertSame([], (new GenerationRun([]))->lastRow('order'));
+    }
 }

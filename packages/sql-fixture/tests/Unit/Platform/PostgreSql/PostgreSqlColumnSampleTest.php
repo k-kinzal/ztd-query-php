@@ -136,4 +136,19 @@ final class PostgreSqlColumnSampleTest extends TestCase
             (new PostgreSqlColumnSample())->textArray(Factory::create()),
         );
     }
+
+    public function testParagraphsSeparatesEachParagraphWithABlankLine(): void
+    {
+        $text = (new PostgreSqlColumnSample())->paragraphs(Factory::create(), 3);
+
+        self::assertCount(3, explode("\n\n", $text));
+    }
+
+    public function testParagraphsDrawsAsManyAsItWasAskedFor(): void
+    {
+        $text = (new PostgreSqlColumnSample())->paragraphs(Factory::create(), 1);
+
+        self::assertStringNotContainsString("\n\n", $text);
+        self::assertNotSame('', $text);
+    }
 }
