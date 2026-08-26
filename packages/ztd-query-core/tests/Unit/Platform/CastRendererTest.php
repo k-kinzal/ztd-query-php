@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use Tests\Contract\CastRendererContractTest;
 use Tests\Fake\FakeCastRenderer;
 use ZtdQuery\Platform\CastRenderer;
+use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversNothing]
@@ -38,5 +39,21 @@ final class CastRendererTest extends CastRendererContractTest
             ColumnTypeFamily::JSON => 'TEXT',
             ColumnTypeFamily::UNKNOWN => 'CUSTOM_TYPE',
         };
+    }
+
+    public function testRenderCastWritesTheExpressionAsTheTypeItIsBeingReadFor(): void
+    {
+        $renderer = $this->createRenderer();
+        $type = new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER');
+
+        self::assertStringContainsString('1', $renderer->renderCast('1', $type));
+    }
+
+    public function testRenderNullCastWritesANullTheServerWillReadAsThatType(): void
+    {
+        $renderer = $this->createRenderer();
+        $type = new ColumnType(ColumnTypeFamily::TEXT, 'TEXT');
+
+        self::assertStringContainsStringIgnoringCase('null', $renderer->renderNullCast($type));
     }
 }

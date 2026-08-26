@@ -68,4 +68,18 @@ final class ReturningProjectionTest extends TestCase
 
         ReturningProjection::fromItems([['source' => 'id', 'output' => '']]);
     }
+
+    public function testFromItemsRefusesAProjectionWithNoItems(): void
+    {
+        $this->expectException(InvalidDefinitionException::class);
+
+        ReturningProjection::fromItems([]);
+    }
+
+    public function testProjectAnswersOneRowPerRowItWasGiven(): void
+    {
+        $projection = ReturningProjection::fromItems([['source' => 'id', 'output' => null]]);
+
+        self::assertCount(2, $projection->project([['id' => 1], ['id' => 2]]));
+    }
 }

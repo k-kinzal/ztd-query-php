@@ -21,4 +21,12 @@ final class IdentifierQuoterTest extends IdentifierQuoterContractTest
     {
         return '"';
     }
+
+    public function testQuoteWrapsTheIdentifierInWhateverTheDialectQuotesWith(): void
+    {
+        $quoted = $this->createQuoter()->quote('order');
+
+        self::assertStringStartsWith($this->quoteCharacter(), $quoted);
+        self::assertStringEndsWith($this->quoteCharacter(), $quoted);
+    }
 }

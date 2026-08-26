@@ -51,4 +51,9 @@ final class SchemaParserTest extends SchemaParserContractTest
     {
         return ['id', 'name', 'email'];
     }
+
+    public function testParseAnswersNothingForAStatementThatCreatesNoTable(): void
+    {
+        self::assertNull($this->createParser()->parse('SELECT 1'));
+    }
 }

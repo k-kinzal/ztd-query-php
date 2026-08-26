@@ -120,4 +120,26 @@ final class TableDefinitionTest extends TestCase
         self::assertSame($index, $indexed->partialUniqueIndexes['users_active_email']);
         self::assertSame($definition->columns, $indexed->columns);
     }
+
+    public function testWithPartitionKeyAnswersATableDividedByThatKey(): void
+    {
+        $definition = new TableDefinition(['id'], [], ['id'], [], []);
+        $key = new TablePartitionKey(TablePartitionStrategy::Range, ['id']);
+
+        $divided = $definition->withPartitionKey($key);
+
+        self::assertSame($key, $divided->partitionKey);
+        self::assertNull($definition->partitionKey);
+    }
+
+    public function testWithPartitionRelationAnswersATableThatIsPartOfAnother(): void
+    {
+        $definition = new TableDefinition(['id'], [], ['id'], [], []);
+        $relation = new TablePartitionRelation('parent', 'id < 10');
+
+        $part = $definition->withPartitionRelation($relation);
+
+        self::assertSame($relation, $part->partitionRelation);
+        self::assertNull($definition->partitionRelation);
+    }
 }
