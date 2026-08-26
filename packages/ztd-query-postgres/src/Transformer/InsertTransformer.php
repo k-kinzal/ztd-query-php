@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Postgres\Transformer;
 
-use InvalidArgumentException;
+use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
@@ -118,8 +118,8 @@ final class InsertTransformer implements SqlTransformer
             $sourceColumns = $insertColumns !== [] || $values === [] ? $insertColumns : $tableColumns;
             try {
                 $providedExpressions = $this->rowRenderer->providedExpressions($sourceColumns, $values);
-            } catch (InvalidArgumentException) {
-                throw new UnsupportedSqlException($sql, 'Insert values count does not match column count');
+            } catch (InvalidDefinitionException $exception) {
+                throw new UnsupportedSqlException($sql, 'Insert values count does not match column count', $exception);
             }
             $generatedValues = $this->identityAllocator->allocateMissing(
                 $identityTable,
