@@ -11,12 +11,8 @@ use ReflectionClass;
 use RuntimeException;
 use SensitiveParameter;
 use Traversable;
-use TypeError;
-use ValueError;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\Exception\DatabaseException;
-use ZtdQuery\Platform\CopySupport;
-use ZtdQuery\Platform\CopyTarget;
 use ZtdQuery\Platform\SessionFactory;
 use ZtdQuery\Session;
 
@@ -34,26 +30,6 @@ use ZtdQuery\Session;
 class ZtdPdo extends PDO
 {
     /**
-     * Driver name to SessionFactory class mapping for auto-detection.
-     *
-     * @var array<string, array{class: string, package: string}>
-     */
-    private const DRIVER_MAP = [
-        'mysql' => [
-            'class' => 'ZtdQuery\\Platform\\MySql\\MySqlSessionFactory',
-            'package' => 'k-kinzal/ztd-query-mysql',
-        ],
-        'pgsql' => [
-            'class' => 'ZtdQuery\\Platform\\Postgres\\PgSqlSessionFactory',
-            'package' => 'k-kinzal/ztd-query-postgres',
-        ],
-        'sqlite' => [
-            'class' => 'ZtdQuery\\Platform\\Sqlite\\SqliteSessionFactory',
-            'package' => 'k-kinzal/ztd-query-sqlite',
-        ],
-    ];
-
-    /**
      * ZTD session context for this connection.
      */
     private Session $session;
@@ -64,21 +40,31 @@ class ZtdPdo extends PDO
     private PDO $pdo;
 
     /**
+     * PostgreSQL COPY, carried out through ZTD rather than by the server.
+     */
+    private PostgreSqlCopy $copy;
+
+    /**
      * Configure a new ZTD-enabled PDO wrapper.
      *
      * If $factory is provided, it is used directly to create the session.
      * If $factory is null, the factory is auto-detected from the PDO driver name.
      *
-     * @param array<int, mixed>|null $options
+     * @param array<int, mixed>|null $options Driver options, as PDO::__construct() takes them
+     * @param ZtdConfig|null $config How ZTD is to behave, or null for the default
+     * @param SessionFactory|null $factory Platform to rewrite with, or null to read it off the driver
+     *
+     * @throws RuntimeException When the driver has no platform package installed
      */
     public function __construct(string $dsn, ?string $username = null, ?string $password = null, ?array $options = null, ?ZtdConfig $config = null, ?SessionFactory $factory = null)
     {
         parent::__construct($dsn, $username, $password, $options);
         $this->pdo = new PDO($dsn, $username, $password, $options);
 
-        $resolvedFactory = $factory ?? self::detectFactory($this->pdo);
+        $resolvedFactory = $factory ?? (new DriverSessionFactory())->forConnection($this->pdo);
         $connection = new PdoConnection($this->pdo);
         $this->session = $resolvedFactory->create($connection, $config ?? ZtdConfig::default());
+        $this->copy = new PostgreSqlCopy($this, $this->session);
     }
 
     /**
@@ -89,6 +75,14 @@ class ZtdPdo extends PDO
      *
      * If $factory is provided, it is used directly to create the session.
      * If $factory is null, the factory is auto-detected from the PDO driver name.
+     *
+     * @param PDO $pdo Connection to wrap
+     * @param ZtdConfig|null $config How ZTD is to behave, or null for the default
+     * @param SessionFactory|null $factory Platform to rewrite with, or null to read it off the driver
+     *
+     * @return static The connection, with ZTD in front of it
+     *
+     * @throws RuntimeException When the driver has no platform package installed
      */
     public static function fromPdo(PDO $pdo, ?ZtdConfig $config = null, ?SessionFactory $factory = null): static
     {
@@ -96,49 +90,19 @@ class ZtdPdo extends PDO
         $instance = (new ReflectionClass(static::class))->newInstanceWithoutConstructor();
         $instance->pdo = $pdo;
 
-        $resolvedFactory = $factory ?? self::detectFactory($instance->pdo);
+        $resolvedFactory = $factory ?? (new DriverSessionFactory())->forConnection($instance->pdo);
         $connection = new PdoConnection($instance->pdo);
         $instance->session = $resolvedFactory->create($connection, $config ?? ZtdConfig::default());
+        $instance->copy = new PostgreSqlCopy($instance, $instance->session);
 
         return $instance;
     }
 
     /**
-     * Detect the appropriate SessionFactory based on the PDO driver name.
-     *
-     * @throws RuntimeException If the driver is unsupported or the required platform package is not installed.
-     */
-    private static function detectFactory(PDO $pdo): SessionFactory
-    {
-        /** @var string $driver */
-        $driver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
-
-        if (!isset(self::DRIVER_MAP[$driver])) {
-            throw new RuntimeException(sprintf(
-                'Unsupported PDO driver: "%s". Supported drivers: %s.',
-                $driver,
-                implode(', ', array_keys(self::DRIVER_MAP))
-            ));
-        }
-
-        $mapping = self::DRIVER_MAP[$driver];
-        /** @var class-string<SessionFactory> $className */
-        $className = $mapping['class'];
-        $packageName = $mapping['package'];
-
-        if (!class_exists($className)) {
-            throw new RuntimeException(sprintf(
-                'Platform package for PDO driver "%s" is not installed. Install it with: composer require %s',
-                $driver,
-                $packageName
-            ));
-        }
-
-        return new $className();
-    }
-
-    /**
      * Enable ZTD mode for this connection.
+     *
+     * While it is enabled, nothing this connection is asked to write reaches
+     * the database; reads are answered from the shadow instead.
      */
     public function enableZtd(): void
     {
@@ -147,6 +111,9 @@ class ZtdPdo extends PDO
 
     /**
      * Disable ZTD mode for this connection.
+     *
+     * Once it is disabled, statements run against the database as they were
+     * written, and the shadow is not consulted.
      */
     public function disableZtd(): void
     {
@@ -155,6 +122,8 @@ class ZtdPdo extends PDO
 
     /**
      * Check whether ZTD mode is enabled.
+     *
+     * @return bool Whether writes are being shadowed rather than carried out
      */
     public function isZtdEnabled(): bool
     {
@@ -164,8 +133,11 @@ class ZtdPdo extends PDO
     /**
      * {@inheritDoc}
      *
-     * @param array<mixed> $options
-     * @throws ZtdPdoException When ZTD-specific exception occurs (wraps DatabaseException).
+     * @param array<mixed> $options Driver options, as PDO::prepare() takes them
+     *
+     * @return PDOStatement|false The prepared statement, or false where the driver would not prepare one
+     *
+     * @throws ZtdPdoException When ZTD cannot carry the statement out, or an option is one PDO cannot be given
      */
     #[Override]
     public function prepare(string $query, array $options = []): PDOStatement|false
@@ -174,14 +146,10 @@ class ZtdPdo extends PDO
             return $this->pdo->prepare($query, $options);
         }
 
-        $this->guardRawPostgreSqlCopy($query);
+        $this->copy->guardRaw($query);
 
-        try {
-            $execution = new PdoPreparedExecution($this->pdo, $this->session, $query, $options);
-            $prepared = $execution->prepare(null);
-        } catch (DatabaseException $e) {
-            throw new ZtdPdoException($e->getMessage(), 0, $e);
-        }
+        $execution = new PdoPreparedExecution($this->pdo, $this->session, $query, $options);
+        $prepared = $execution->prepare(null);
 
         $defaultFetchMode = $this->pdo->getAttribute(PDO::ATTR_DEFAULT_FETCH_MODE);
 
@@ -197,7 +165,11 @@ class ZtdPdo extends PDO
     /**
      * {@inheritDoc}
      *
-     * @throws ZtdPdoException When ZTD-specific exception occurs (wraps DatabaseException).
+     * @param mixed ...$fetchModeArgs The rest of what the fetch mode reads
+     *
+     * @return PDOStatement|false The executed statement, or false where it did not run
+     *
+     * @throws ZtdPdoException When ZTD cannot carry the statement out
      */
     #[Override]
     public function query(string $query, ?int $fetchMode = null, mixed ...$fetchModeArgs): PDOStatement|false
@@ -233,7 +205,13 @@ class ZtdPdo extends PDO
     /**
      * {@inheritDoc}
      *
-     * @throws ZtdPdoException When ZTD-specific exception occurs (wraps DatabaseException).
+     * A batch is carried out one statement at a time, and stops at the first
+     * one that does not run; what it answers is what the last one that ran
+     * affected, which is what PDO answers for a batch.
+     *
+     * @return int|false Rows the statement affected, or false where it did not run
+     *
+     * @throws ZtdPdoException When ZTD cannot carry the statement out
      */
     #[Override]
     public function exec(string $statement): int|false
@@ -244,10 +222,19 @@ class ZtdPdo extends PDO
 
         $statements = $this->session->splitStatements($statement);
         if (count($statements) > 1) {
-            return $this->execMultiple($statements);
+            $affectedRows = 0;
+            foreach ($statements as $one) {
+                $result = $this->exec($one);
+                if ($result === false) {
+                    return false;
+                }
+                $affectedRows = $result;
+            }
+
+            return $affectedRows;
         }
 
-        $this->guardRawPostgreSqlCopy($statement);
+        $this->copy->guardRaw($statement);
 
         $transactionStatement = $this->session->transactionStatement($statement);
         if ($transactionStatement !== null) {
@@ -267,30 +254,13 @@ class ZtdPdo extends PDO
     }
 
     /**
-     * @param non-empty-list<string> $statements
-     */
-    private function execMultiple(array $statements): int|false
-    {
-        $affectedRows = $this->exec($statements[0]);
-        if ($affectedRows === false) {
-            return false;
-        }
-
-        foreach (array_slice($statements, 1) as $statement) {
-            $result = $this->exec($statement);
-            if ($result === false) {
-                return false;
-            }
-            $affectedRows = $result;
-        }
-
-        return $affectedRows;
-    }
-
-    /**
      * {@inheritDoc}
      *
-     * @param array<mixed>|null $options
+     * @param array<mixed>|null $options Driver options, as PDO::connect() takes them
+     *
+     * @return static The new connection, with ZTD in front of it
+     *
+     * @throws RuntimeException When the driver has no platform package installed
      */
     #[Override]
     public static function connect(
@@ -417,32 +387,64 @@ class ZtdPdo extends PDO
         return $this->pdo->quote($string, $type);
     }
 
-    /** @return array<int, string>|false */
+    /**
+     * Answers the table's rows as PostgreSQL's COPY would have written them out.
+     *
+     * The arguments are read as pdo_pgsql's own method read them, which is to
+     * say as anything at all, and refused here where they are not strings.
+     *
+     * @param mixed $tableName Relation to read, as the caller named it
+     * @param mixed $separator Field separator COPY writes between values
+     * @param mixed $nullAs Text COPY writes where a value is null
+     * @param mixed $fields Column list as the caller wrote it, or null for every column
+     *
+     * @return list<string>|false One encoded line per row, or false where the read did not run
+     *
+     * @throws ZtdPdoException When an argument is not a string, the dialect has no COPY, or the table is undescribed
+     */
     public function pgsqlCopyToArray(
         mixed $tableName,
         mixed $separator = "\t",
         mixed $nullAs = '\\N',
         mixed $fields = null,
     ): array|false {
-        return $this->copyToArrayThroughZtd(
-            $this->copyStringArgument($tableName, 'tableName'),
-            $this->copyStringArgument($separator, 'separator'),
-            $this->copyStringArgument($nullAs, 'nullAs'),
-            $this->copyOptionalStringArgument($fields, 'fields'),
-        );
+        return $this->copy->toArray($tableName, $separator, $nullAs, $fields);
     }
 
-    /** @return array<int, string>|false */
+    /**
+     * Answers the table's rows as PostgreSQL's COPY would have written them out.
+     *
+     * @param string $tableName Relation to read
+     * @param string $separator Field separator COPY writes between values
+     * @param string $nullAs Text COPY writes where a value is null
+     * @param string|null $fields Column list as the caller wrote it, or null for every column
+     *
+     * @return list<string>|false One encoded line per row, or false where the read did not run
+     *
+     * @throws ZtdPdoException When the dialect has no COPY, or nothing has described the table
+     */
     public function copyToArray(
         string $tableName,
         string $separator = "\t",
         string $nullAs = '\\N',
         ?string $fields = null,
     ): array|false {
-        return $this->copyToArrayThroughZtd($tableName, $separator, $nullAs, $fields);
+        return $this->copy->toArray($tableName, $separator, $nullAs, $fields);
     }
 
-    /** @param array<mixed>|Traversable<mixed> $rows */
+    /**
+     * Writes encoded lines into the table as PostgreSQL's COPY would have read them in.
+     *
+     * @param mixed $tableName Relation to write, as the caller named it
+     * @param array<mixed>|Traversable<mixed, mixed> $rows One encoded line per row
+     * @param mixed $separator Field separator COPY reads between values
+     * @param mixed $nullAs Text COPY reads as a null value
+     * @param mixed $fields Column list as the caller wrote it, or null for every column
+     *
+     * @return bool Whether every row was written
+     *
+     * @throws ZtdPdoException When an argument is not a string, the table is undescribed, or a line does not fit it
+     */
     public function pgsqlCopyFromArray(
         mixed $tableName,
         array|Traversable $rows,
@@ -450,16 +452,22 @@ class ZtdPdo extends PDO
         mixed $nullAs = '\\N',
         mixed $fields = null,
     ): bool {
-        return $this->copyFromArrayThroughZtd(
-            $this->copyStringArgument($tableName, 'tableName'),
-            $rows,
-            $this->copyStringArgument($separator, 'separator'),
-            $this->copyStringArgument($nullAs, 'nullAs'),
-            $this->copyOptionalStringArgument($fields, 'fields'),
-        );
+        return $this->copy->fromArray($tableName, $rows, $separator, $nullAs, $fields);
     }
 
-    /** @param array<mixed>|Traversable<mixed> $rows */
+    /**
+     * Writes encoded lines into the table as PostgreSQL's COPY would have read them in.
+     *
+     * @param string $tableName Relation to write
+     * @param array<mixed>|Traversable<mixed, mixed> $rows One encoded line per row
+     * @param string $separator Field separator COPY reads between values
+     * @param string $nullAs Text COPY reads as a null value
+     * @param string|null $fields Column list as the caller wrote it, or null for every column
+     *
+     * @return bool Whether every row was written
+     *
+     * @throws ZtdPdoException When the table is undescribed, or a line does not fit it
+     */
     public function copyFromArray(
         string $tableName,
         array|Traversable $rows,
@@ -467,13 +475,21 @@ class ZtdPdo extends PDO
         string $nullAs = '\\N',
         ?string $fields = null,
     ): bool {
-        return $this->copyFromArrayThroughZtd($tableName, $rows, $separator, $nullAs, $fields);
+        return $this->copy->fromArray($tableName, $rows, $separator, $nullAs, $fields);
     }
 
     /**
-     * Pgsql copy to file.
+     * Writes the table's rows into a file as PostgreSQL's COPY would have written them out.
      *
-     * @return bool
+     * @param mixed $tableName Relation to read, as the caller named it
+     * @param mixed $filename File to write the encoded lines to
+     * @param mixed $separator Field separator COPY writes between values
+     * @param mixed $nullAs Text COPY writes where a value is null
+     * @param mixed $fields Column list as the caller wrote it, or null for every column
+     *
+     * @return bool Whether the file was written
+     *
+     * @throws ZtdPdoException When an argument is not a string, the dialect has no COPY, or the table is undescribed
      */
     public function pgsqlCopyToFile(
         mixed $tableName,
@@ -482,24 +498,21 @@ class ZtdPdo extends PDO
         mixed $nullAs = '\\N',
         mixed $fields = null,
     ): bool {
-        return $this->copyToFileThroughZtd(
-            $this->copyStringArgument($tableName, 'tableName'),
-            $this->copyStringArgument($filename, 'filename'),
-            $this->copyStringArgument($separator, 'separator'),
-            $this->copyStringArgument($nullAs, 'nullAs'),
-            $this->copyOptionalStringArgument($fields, 'fields'),
-        );
+        return $this->copy->toFile($tableName, $filename, $separator, $nullAs, $fields);
     }
 
     /**
-     * Copy to file.
+     * Writes the table's rows into a file as PostgreSQL's COPY would have written them out.
      *
-     * @param string $tableName
-     * @param string $filename
-     * @param string $separator
-     * @param string $nullAs
-     * @param ?string $fields
-     * @return bool
+     * @param string $tableName Relation to read
+     * @param string $filename File to write the encoded lines to
+     * @param string $separator Field separator COPY writes between values
+     * @param string $nullAs Text COPY writes where a value is null
+     * @param string|null $fields Column list as the caller wrote it, or null for every column
+     *
+     * @return bool Whether the file was written
+     *
+     * @throws ZtdPdoException When the dialect has no COPY, or nothing has described the table
      */
     public function copyToFile(
         string $tableName,
@@ -508,13 +521,21 @@ class ZtdPdo extends PDO
         string $nullAs = '\\N',
         ?string $fields = null,
     ): bool {
-        return $this->copyToFileThroughZtd($tableName, $filename, $separator, $nullAs, $fields);
+        return $this->copy->toFile($tableName, $filename, $separator, $nullAs, $fields);
     }
 
     /**
-     * Pgsql copy from file.
+     * Reads encoded lines out of a file and writes them into the table.
      *
-     * @return bool
+     * @param mixed $tableName Relation to write, as the caller named it
+     * @param mixed $filename File to read the encoded lines from
+     * @param mixed $separator Field separator COPY reads between values
+     * @param mixed $nullAs Text COPY reads as a null value
+     * @param mixed $fields Column list as the caller wrote it, or null for every column
+     *
+     * @return bool Whether every row in the file was written
+     *
+     * @throws ZtdPdoException When an argument is not a string, the table is undescribed, or a line does not fit it
      */
     public function pgsqlCopyFromFile(
         mixed $tableName,
@@ -523,24 +544,21 @@ class ZtdPdo extends PDO
         mixed $nullAs = '\\N',
         mixed $fields = null,
     ): bool {
-        return $this->copyFromFileThroughZtd(
-            $this->copyStringArgument($tableName, 'tableName'),
-            $this->copyStringArgument($filename, 'filename'),
-            $this->copyStringArgument($separator, 'separator'),
-            $this->copyStringArgument($nullAs, 'nullAs'),
-            $this->copyOptionalStringArgument($fields, 'fields'),
-        );
+        return $this->copy->fromFile($tableName, $filename, $separator, $nullAs, $fields);
     }
 
     /**
-     * Copy from file.
+     * Reads encoded lines out of a file and writes them into the table.
      *
-     * @param string $tableName
-     * @param string $filename
-     * @param string $separator
-     * @param string $nullAs
-     * @param ?string $fields
-     * @return bool
+     * @param string $tableName Relation to write
+     * @param string $filename File to read the encoded lines from
+     * @param string $separator Field separator COPY reads between values
+     * @param string $nullAs Text COPY reads as a null value
+     * @param string|null $fields Column list as the caller wrote it, or null for every column
+     *
+     * @return bool Whether every row in the file was written
+     *
+     * @throws ZtdPdoException When the table is undescribed, or a line does not fit it
      */
     public function copyFromFile(
         string $tableName,
@@ -549,160 +567,13 @@ class ZtdPdo extends PDO
         string $nullAs = '\\N',
         ?string $fields = null,
     ): bool {
-        return $this->copyFromFileThroughZtd($tableName, $filename, $separator, $nullAs, $fields);
-    }
-
-    /** @return array<int, string>|false */
-    private function copyToArrayThroughZtd(
-        string $tableName,
-        string $separator,
-        string $nullAs,
-        ?string $fields,
-    ): array|false {
-        [$copy, $target] = $this->postgreSqlCopyTarget($tableName, $fields);
-        $statement = $this->query($copy->selectSql($target));
-        if ($statement === false) {
-            return false;
-        }
-
-        $rows = [];
-        while (($values = $statement->fetch(PDO::FETCH_NUM)) !== false) {
-            if (!is_array($values)) {
-                throw new ZtdPdoException('PostgreSQL COPY query returned an invalid row.');
-            }
-            $rows[] = $copy->encodeRow(array_values($values), $separator, $nullAs);
-        }
-
-        return $rows;
-    }
-
-    /** @param array<mixed>|Traversable<mixed> $rows */
-    private function copyFromArrayThroughZtd(
-        string $tableName,
-        array|Traversable $rows,
-        string $separator,
-        string $nullAs,
-        ?string $fields,
-    ): bool {
-        [$copy, $target] = $this->postgreSqlCopyTarget($tableName, $fields);
-        $decodedRows = [];
-        foreach ($rows as $row) {
-            if (!is_string($row)) {
-                throw new TypeError(sprintf('PostgreSQL COPY rows must be strings, %s given.', get_debug_type($row)));
-            }
-            $decodedRow = $copy->decodeRow($row, $separator, $nullAs);
-            if (count($decodedRow) !== count($target->columns)) {
-                throw new ValueError(sprintf(
-                    'PostgreSQL COPY row has %d fields, but %d fields are required.',
-                    count($decodedRow),
-                    count($target->columns),
-                ));
-            }
-            $decodedRows[] = $decodedRow;
-        }
-        if ($decodedRows === []) {
-            return true;
-        }
-
-        $parameters = [];
-        foreach ($decodedRows as $parameterValues) {
-            foreach ($parameterValues as $value) {
-                $parameters[] = $value;
-            }
-        }
-
-        $statement = $this->prepare($copy->insertSql(
-            $target,
-            count($decodedRows),
-            !$this->session->isEnabled(),
-        ));
-
-        return $statement !== false && $statement->execute($parameters);
-    }
-
-    private function copyToFileThroughZtd(
-        string $tableName,
-        string $filename,
-        string $separator,
-        string $nullAs,
-        ?string $fields,
-    ): bool {
-        $rows = $this->copyToArrayThroughZtd($tableName, $separator, $nullAs, $fields);
-        if ($rows === false) {
-            return false;
-        }
-
-        return file_put_contents($filename, implode('', $rows)) !== false;
-    }
-
-    private function copyFromFileThroughZtd(
-        string $tableName,
-        string $filename,
-        string $separator,
-        string $nullAs,
-        ?string $fields,
-    ): bool {
-        $rows = file($filename);
-        if ($rows === false) {
-            return false;
-        }
-
-        return $this->copyFromArrayThroughZtd($tableName, $rows, $separator, $nullAs, $fields);
-    }
-
-    /**
-     * @return array{CopySupport, CopyTarget}
-     */
-    private function postgreSqlCopyTarget(string $tableName, ?string $fields): array
-    {
-        $copy = $this->session->copySupport();
-        if ($copy === null) {
-            throw new ZtdPdoException('PostgreSQL COPY methods require the PDO PostgreSQL driver.');
-        }
-
-        $target = $this->session->copyTarget($tableName, $fields);
-        if ($target === null) {
-            throw new ZtdPdoException(sprintf(
-                'PostgreSQL COPY cannot resolve the schema for table "%s".',
-                $tableName,
-            ));
-        }
-
-        return [$copy, $target];
-    }
-
-    private function guardRawPostgreSqlCopy(string $sql): void
-    {
-        if ($this->session->copySupport()?->isCopyStatement($sql) === true) {
-            throw new ZtdPdoException(
-                'ZTD Write Protection: Raw PostgreSQL COPY cannot preserve shadow isolation; '
-                . 'use the pgsqlCopyToArray(), pgsqlCopyFromArray(), pgsqlCopyToFile(), or pgsqlCopyFromFile() methods.',
-            );
-        }
-    }
-
-    private function copyStringArgument(mixed $value, string $name): string
-    {
-        if (!is_string($value)) {
-            throw new TypeError(sprintf('PostgreSQL COPY argument $%s must be a string, %s given.', $name, get_debug_type($value)));
-        }
-
-        return $value;
-    }
-
-    private function copyOptionalStringArgument(mixed $value, string $name): ?string
-    {
-        if ($value === null) {
-            return null;
-        }
-
-        return $this->copyStringArgument($value, $name);
+        return $this->copy->fromFile($tableName, $filename, $separator, $nullAs, $fields);
     }
 
     /**
      * {@inheritDoc}
      *
-     * @return array<int, string>
+     * @return array<int, string> Every driver name PDO itself was built with
      */
     #[Override]
     public static function getAvailableDrivers(): array

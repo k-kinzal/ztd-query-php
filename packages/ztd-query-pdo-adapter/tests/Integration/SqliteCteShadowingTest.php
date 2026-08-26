@@ -12,16 +12,7 @@ use ZtdQuery\Adapter\Pdo\ZtdPdo;
 use ZtdQuery\Connection\StatementInterface;
 
 /**
- * Integration tests for ZtdPdo with SQLite: CTE shadowing behavior.
- *
- * ZTD CTE shadowing replaces real table references with CTE definitions
- * that contain only the shadow data (mutations made through ZTD).
- * When no mutations exist for a table, the CTE returns zero rows.
- * Mutations accumulate in the shadow store: INSERT adds rows,
- * UPDATE and DELETE operate on shadow rows only.
- *
  * @requires extension pdo_sqlite
- *
  * @phpstan-import-type Row from StatementInterface
  */
 #[CoversNothing]

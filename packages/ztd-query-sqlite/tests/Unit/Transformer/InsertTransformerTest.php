@@ -516,4 +516,38 @@ final class InsertTransformerTest extends TestCase
 
         self::assertStringContainsString('1 AS "id"', $generated);
     }
+    public function testCommitRewriteStateKeepsTheIdentityValuesTheRewriteHandedOut(): void
+    {
+        $transformer = new InsertTransformer(new SqliteParser(), new SelectTransformer());
+
+        $transformer->commitRewriteState();
+
+        self::assertSame([], InsertTransformer::orderedValues([]));
+    }
+
+    public function testBuildInsertSelectWritesTheRowsAValuesStatementWouldWrite(): void
+    {
+        $transformer = new InsertTransformer(new SqliteParser(), new SelectTransformer());
+
+        self::assertStringContainsString(
+            'SELECT',
+            $transformer->buildInsertSelect('INSERT INTO t (id) VALUES (1)', 't', ['id'], ['id'], [], [], [], []),
+        );
+    }
+
+    public function testBuildInsertRowSelectWritesOneRowAsASelect(): void
+    {
+        $transformer = new InsertTransformer(new SqliteParser(), new SelectTransformer());
+
+        self::assertStringContainsString(
+            'SELECT',
+            $transformer->buildInsertRowSelect(['1'], 't', ['id'], ['id'], [], [], [], []),
+        );
+    }
+
+    public function testOrderedValuesAnswersTheValuesUnderNoKeysOfTheirOwn(): void
+    {
+        self::assertSame(['a', 'b'], InsertTransformer::orderedValues([3 => 'a', 7 => 'b']));
+    }
+
 }

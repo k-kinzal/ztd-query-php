@@ -7,3 +7,15 @@ includes:
 
 parameters:
     level: max
+    ignoreErrors:
+        # PHP 8.4 moved pdo_pgsql's COPY methods off PDO onto Pdo\Pgsql, so PDO
+        # declares none of them on any PHP this package runs on, while PHPStan's
+        # bundled pdo_pgsql stub still puts them there. That makes it read
+        # ZtdPdo's own COPY methods as overrides. Writing #[\Override] on them,
+        # as the rule asks, is a fatal error at class-declaration time. The
+        # methods have to stay: on PHP 8.1-8.3 they are what keeps a
+        # driver-level COPY from reading and writing past the shadow.
+        -
+            identifier: customRules.overrideMustHaveAttribute
+            message: '#^Add \#\[\\Override\] to override method pgsqlCopy(ToArray|FromArray|ToFile|FromFile)\(\)\.$#'
+            path: src/ZtdPdo.php

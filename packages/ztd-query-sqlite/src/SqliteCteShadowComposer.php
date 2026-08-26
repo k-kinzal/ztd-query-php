@@ -159,8 +159,14 @@ final class SqliteCteShadowComposer
         return $offset === null ? $sql : substr($sql, $offset);
     }
 
-    /** @return array{names: list<string>, statementOffset: int|null} */
-    private function parseHeader(string $sql): array
+    /**
+     * Reads the WITH a statement opens with: what it names, and where the statement itself starts.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return array{names: list<string>, statementOffset: int|null} What it answers
+     */
+    public function parseHeader(string $sql): array
     {
         $tokens = [];
         foreach (SqlTokenStream::tokenize($sql, SqliteLexerProfile::create())->significantTokens() as $token) {
@@ -219,9 +225,14 @@ final class SqliteCteShadowComposer
     }
 
     /**
-     * @param list<SqlToken> $tokens
+     * Answers where the AS of one WITH entry is written.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param int $start Where to start
+     *
+     * @return int|null What it answers
      */
-    private function findAsIndex(array $tokens, int $start): ?int
+    public function findAsIndex(array $tokens, int $start): ?int
     {
         for ($index = $start; isset($tokens[$index]); $index++) {
             $token = $tokens[$index];
@@ -236,14 +247,30 @@ final class SqliteCteShadowComposer
         return null;
     }
 
-    private function isSymbol(?SqlToken $token, string $symbol): bool
+    /**
+     * Reports whether a token is this symbol.
+     *
+     * @param SqlToken|null $token Token to read
+     * @param string $symbol Symbol it must be
+     *
+     * @return bool What it answers
+     */
+    public function isSymbol(?SqlToken $token, string $symbol): bool
     {
         return $token instanceof SqlToken
             && $token->kind === SqlTokenKind::Symbol
             && $token->text === $symbol;
     }
 
-    private function referencesIdentifier(string $sql, string $identifier): bool
+    /**
+     * Reports whether a statement names something, however it was written.
+     *
+     * @param string $sql Statement being read, as written
+     * @param string $identifier Name, as it was written
+     *
+     * @return bool What it answers
+     */
+    public function referencesIdentifier(string $sql, string $identifier): bool
     {
         foreach (SqlTokenStream::tokenize($sql, SqliteLexerProfile::create())->significantTokens() as $token) {
             $candidate = $this->identifierName($token);
@@ -255,8 +282,15 @@ final class SqliteCteShadowComposer
         return false;
     }
 
-    /** @param list<string> $identifiers */
-    private function referencesAnyIdentifier(string $sql, array $identifiers): bool
+    /**
+     * Reports whether a statement names any of these.
+     *
+     * @param string $sql Statement being read, as written
+     * @param list<string> $identifiers Names to look for
+     *
+     * @return bool What it answers
+     */
+    public function referencesAnyIdentifier(string $sql, array $identifiers): bool
     {
         foreach ($identifiers as $identifier) {
             if ($this->referencesIdentifier($sql, $identifier)) {
@@ -267,7 +301,14 @@ final class SqliteCteShadowComposer
         return false;
     }
 
-    private function identifierName(SqlToken $token): ?string
+    /**
+     * Answers the name a token stands for.
+     *
+     * @param SqlToken $token Token to read
+     *
+     * @return string|null What it answers
+     */
+    public function identifierName(SqlToken $token): ?string
     {
         if ($token->kind === SqlTokenKind::Word) {
             return $token->text;

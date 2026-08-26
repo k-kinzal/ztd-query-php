@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Sqlite\SqliteCastRenderer;
 use ZtdQuery\Platform\Sqlite\SqlitePdoParameterBindingCompiler;
+use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(SqlitePdoParameterBindingCompiler::class)]
 #[UsesClass(SqliteCastRenderer::class)]
@@ -55,4 +56,22 @@ final class SqlitePdoParameterBindingCompilerTest extends TestCase
             (new SqlitePdoParameterBindingCompiler())->compile('SELECT ?, ?, ?', $params),
         );
     }
+    public function testCompileLeavesAStatementWithNoPlaceholderAlone(): void
+    {
+        self::assertSame('SELECT 1', (new SqlitePdoParameterBindingCompiler())->compile('SELECT 1', null)['sql']);
+    }
+
+    public function testParameterTypeAnswersHowAWholeNumberIsBound(): void
+    {
+        self::assertSame(
+            ColumnTypeFamily::INTEGER,
+            (new SqlitePdoParameterBindingCompiler())->parameterType(1)?->family,
+        );
+    }
+
+    public function testParameterTypeIsNothingForAValueSqliteBindsAsItIs(): void
+    {
+        self::assertNull((new SqlitePdoParameterBindingCompiler())->parameterType('a'));
+    }
+
 }

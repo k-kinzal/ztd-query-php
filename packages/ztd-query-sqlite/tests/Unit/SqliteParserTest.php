@@ -9,13 +9,15 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Platform\Sqlite\SqliteLexerProfile;
 use ZtdQuery\Platform\Sqlite\SqliteLexicalMasker;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
+use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(SqliteParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser::class)]
 #[UsesClass(SqliteLexicalMasker::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
+#[UsesClass(SqliteLexerProfile::class)]
 final class SqliteParserTest extends TestCase
 {
     public function testExtractsOnConflictUpdateWhereAfterInsertSelectWhere(): void
@@ -3081,4 +3083,49 @@ SELECT * FROM users'));
             ),
         );
     }
+    public function testExtractOnConflictUpdateWhereReadsWhatNarrowsTheUpdate(): void
+    {
+        self::assertSame(
+            'x > 0',
+            (new SqliteParser())->extractOnConflictUpdateWhere(
+                'INSERT INTO t VALUES (1) ON CONFLICT (id) DO UPDATE SET x = 1 WHERE x > 0',
+            ),
+        );
+    }
+
+    public function testScanTopLevelKeywordsAnswersWhereEachOfTheStatementsWordsIsWritten(): void
+    {
+        self::assertNotSame([], (new SqliteParser())->scanTopLevelKeywords('SELECT a FROM t'));
+    }
+
+    public function testFindInsertSourceClauseAnswersWhereTheStatementSaysWhatItInserts(): void
+    {
+        self::assertSame(
+            'VALUES',
+            (new SqliteParser())->findInsertSourceClause('INSERT INTO t (id) VALUES (1)')['keyword'] ?? null,
+        );
+    }
+
+    public function testFindInsertSourceClauseIsNothingWhereTheStatementInsertsNothing(): void
+    {
+        self::assertNull((new SqliteParser())->findInsertSourceClause('SELECT 1'));
+    }
+
+    public function testIdentifierEndIndexAnswersWhereTheNameEnds(): void
+    {
+        $tokens = SqlTokenStream::tokenize('a.b c', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertSame(1, (new SqliteParser())->identifierEndIndex($tokens, 0));
+    }
+
+    public function testStatementTailAnswersWhatIsWrittenAfterTheKeyword(): void
+    {
+        self::assertSame('FROM t', (new SqliteParser())->statementTail('DELETE FROM t', ['FROM']));
+    }
+
+    public function testParseColumnListReadsTheNamesWrittenInTheList(): void
+    {
+        self::assertSame(['a', 'b'], (new SqliteParser())->parseColumnList('a, "b"'));
+    }
+
 }

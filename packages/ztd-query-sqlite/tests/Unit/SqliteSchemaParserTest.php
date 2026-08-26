@@ -2172,4 +2172,34 @@ final class SqliteSchemaParserTest extends SchemaParserContractTest
             $result->columns,
         );
     }
+    public function testTableBodyAnswersWhatIsDeclaredBetweenTheParentheses(): void
+    {
+        self::assertSame('id INTEGER', (new SqliteSchemaParser())->tableBody('CREATE TABLE t (id INTEGER)'));
+    }
+
+    public function testTableBodyIsNothingWhereTheTextDeclaresNoTable(): void
+    {
+        self::assertNull((new SqliteSchemaParser())->tableBody('SELECT 1'));
+    }
+
+    public function testHasValidTableOptionsAcceptsWhatSqliteAllowsAfterADeclaration(): void
+    {
+        self::assertTrue(SqliteSchemaParser::hasValidTableOptions(' WITHOUT ROWID'));
+    }
+
+    public function testHasValidTableOptionsRefusesAnythingElseWrittenThere(): void
+    {
+        self::assertFalse(SqliteSchemaParser::hasValidTableOptions(' GARBAGE'));
+    }
+
+    public function testHasWithoutRowidReportsATableDeclaredToHaveNoRowidOfItsOwn(): void
+    {
+        self::assertTrue(SqliteSchemaParser::hasWithoutRowid('CREATE TABLE t (id INTEGER PRIMARY KEY) WITHOUT ROWID'));
+    }
+
+    public function testLeadingKeywordAnswersTheWordAnEntryOpensWith(): void
+    {
+        self::assertSame('PRIMARY', (new SqliteSchemaParser())->leadingKeyword('PRIMARY KEY (id)'));
+    }
+
 }

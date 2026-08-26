@@ -27,7 +27,7 @@ final class PdoStatementTest extends TestCase
 
         $stmt = new PdoStatement($nativeStmt);
 
-        self::assertInstanceOf(StatementInterface::class, $stmt);
+        self::assertContains(StatementInterface::class, class_implements($stmt));
     }
 
     public function testFetchAllReturnsAssociativeArrays(): void

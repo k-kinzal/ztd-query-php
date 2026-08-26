@@ -70,9 +70,15 @@ final class SelectCorrectnessTarget
     }
 
     /**
+     * Runs the SELECT on both sides and fails if they disagree.
+     *
+     * @param string $sql Statement being read, as written
+     * @param \Fuzz\Correctness\SchemaDefinition $schema The schema
+     * @param int $seed The seed
+     *
      * @throws Error
      */
-    private function compareSelect(string $sql, \Fuzz\Correctness\SchemaDefinition $schema, int $seed): void
+    public function compareSelect(string $sql, \Fuzz\Correctness\SchemaDefinition $schema, int $seed): void
     {
         /** @var list<Row>|null $rawResult */
         $rawResult = null;

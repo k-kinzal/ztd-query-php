@@ -17,12 +17,11 @@ use ZtdQuery\Connection\StatementInterface;
 #[UsesClass(PdoStatement::class)]
 final class PdoConnectionTest extends TestCase
 {
-    public function testImplementsConnectionInterface(): void
+    public function testItIsTheConnectionZtdReadsAndWritesThrough(): void
     {
         $pdo = new PDO('sqlite::memory:');
-        $connection = new PdoConnection($pdo);
 
-        self::assertInstanceOf(ConnectionInterface::class, $connection);
+        self::assertContains(ConnectionInterface::class, class_implements(new PdoConnection($pdo)));
     }
 
     public function testQueryReturnsStatementOnSuccess(): void

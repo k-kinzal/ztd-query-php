@@ -93,7 +93,7 @@ final class PgCorrectnessHarness
                 if (is_bool($v)) {
                     return $v ? 'TRUE' : 'FALSE';
                 }
-                return "'" . str_replace("'", "''", is_scalar($v) ? $v : '') . "'";
+                return "'" . str_replace("'", "''", $v) . "'";
             }, array_values($row));
             $sql = sprintf(
                 'INSERT INTO "%s" (%s) VALUES (%s)',
@@ -161,9 +161,14 @@ final class PgCorrectnessHarness
     }
 
     /**
-     * @return Row
+     * Answers one fixture row for the schema, made from the index so a run repeats.
+     *
+     * @param SchemaDefinition $schema The schema
+     * @param int $index Where to read
+     *
+     * @return Row What it answers
      */
-    private function generateFixtureRow(SchemaDefinition $schema, int $index): array
+    public function generateFixtureRow(SchemaDefinition $schema, int $index): array
     {
         $row = [];
         foreach ($schema->columns as $col) {
@@ -199,9 +204,13 @@ final class PgCorrectnessHarness
     }
 
     /**
-     * @param Row $row
+     * Writes one fixture row into the table both sides read.
+     *
+     * @param PDO $pdo The pdo
+     * @param string $table Table it belongs to
+     * @param Row $row Row to read
      */
-    private function insertRow(PDO $pdo, string $table, array $row): void
+    public function insertRow(PDO $pdo, string $table, array $row): void
     {
         $columns = array_keys($row);
         $placeholders = array_fill(0, count($columns), '?');

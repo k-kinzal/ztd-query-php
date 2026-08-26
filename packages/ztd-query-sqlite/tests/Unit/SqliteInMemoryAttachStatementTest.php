@@ -10,9 +10,11 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Sqlite\SqliteInMemoryAttachStatement;
+use ZtdQuery\Platform\Sqlite\SqliteLexerProfile;
+use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(SqliteInMemoryAttachStatement::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
+#[UsesClass(SqliteLexerProfile::class)]
 final class SqliteInMemoryAttachStatementTest extends TestCase
 {
     public function testAcceptsOnlyLiteralInMemoryAttachments(): void
@@ -57,4 +59,30 @@ final class SqliteInMemoryAttachStatementTest extends TestCase
         yield 'numeric bracket alias' => ["ATTACH ':memory:' AS [42]"];
         yield 'second statement' => ["ATTACH ':memory:' AS db2; ATTACH ':memory:' AS db3"];
     }
+    public function testIsSafeReportsAnAttachOfAMemoryDatabase(): void
+    {
+        self::assertTrue(SqliteInMemoryAttachStatement::isSafe("ATTACH DATABASE ':memory:' AS aux"));
+    }
+
+    public function testIsIdentifierSuffixReportsTheLastWordOfAName(): void
+    {
+        $tokens = SqlTokenStream::tokenize('a.b', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertTrue(SqliteInMemoryAttachStatement::isIdentifierSuffix($tokens, 2));
+    }
+
+    public function testIsIdentifierSuffixIsFalseWhereMoreIsWrittenAfterIt(): void
+    {
+        $tokens = SqlTokenStream::tokenize('a.b c', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertFalse(SqliteInMemoryAttachStatement::isIdentifierSuffix($tokens, 2));
+    }
+
+    public function testIsSymbolReportsATokenBeingThatSymbol(): void
+    {
+        $tokens = SqlTokenStream::tokenize('.', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertTrue(SqliteInMemoryAttachStatement::isSymbol($tokens[0], '.'));
+    }
+
 }

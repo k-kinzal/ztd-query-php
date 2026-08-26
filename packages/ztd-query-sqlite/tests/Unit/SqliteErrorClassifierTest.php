@@ -89,4 +89,18 @@ final class SqliteErrorClassifierTest extends TestCase
         $result = $classifier->isUnknownSchemaError($e);
         self::assertFalse($result);
     }
+    public function testIsUnknownSchemaErrorReportsAnErrorAboutSomethingThatIsNotThere(): void
+    {
+        self::assertTrue((new SqliteErrorClassifier())->isUnknownSchemaError(
+            new DatabaseException('no such table: users', 1),
+        ));
+    }
+
+    public function testIsUnknownSchemaErrorIsFalseForAnErrorAboutSomethingElse(): void
+    {
+        self::assertFalse((new SqliteErrorClassifier())->isUnknownSchemaError(
+            new DatabaseException('database is locked', 5),
+        ));
+    }
+
 }

@@ -103,17 +103,19 @@ final class SelectTransformer implements SqlTransformer
     }
 
     /**
-     * Generate a CTE fragment for a single table.
+     * Writes the clause that stands a table's shadow rows up in a statement.
      *
-     * @param string $tableName
-     * @param array<int, array<string, mixed>> $rows
-     * @param array<int, string> $columns
-     * @param array<string, ColumnDeclaration> $columnTypes
-     * @param array<string, string> $generatedExpressions
+     * @param string $tableName Table it belongs to
+     * @param array<int, array<string, mixed>> $rows Rows to read
+     * @param array<int, string> $columns Columns to read
+     * @param array<string, ColumnDeclaration> $columnTypes The column types
+     * @param array<string, string> $generatedExpressions The generated expressions
+     *
+     * @return string What it answers
      *
      * @throws RuntimeException
      */
-    private function generateCte(
+    public function generateCte(
         string $tableName,
         array $rows,
         array $columns,
@@ -179,10 +181,16 @@ final class SelectTransformer implements SqlTransformer
     }
 
     /**
-     * @param array<int, string> $columns
-     * @param array<string, string> $generatedExpressions
+     * Writes a clause naming a table, around a query answering its rows.
+     *
+     * @param string $quotedTable The quoted table
+     * @param string $baseSql The base sql
+     * @param array<int, string> $columns Columns to read
+     * @param array<string, string> $generatedExpressions The generated expressions
+     *
+     * @return string What it answers
      */
-    private function wrapCte(
+    public function wrapCte(
         string $quotedTable,
         string $baseSql,
         array $columns,
@@ -193,12 +201,25 @@ final class SelectTransformer implements SqlTransformer
         return "$quotedTable AS ($sql)";
     }
 
-    private function formatValue(mixed $val, ?ColumnDeclaration $type = null): string
+    /**
+     * Writes one shadow value as the SQL that reads it back.
+     *
+     * @param mixed $val The val
+     * @param ColumnDeclaration|null $type How the column was declared
+     *
+     * @return string What it answers
+     */
+    public function formatValue(mixed $val, ?ColumnDeclaration $type = null): string
     {
         return $this->valueRenderer->renderValue($val, $type);
     }
 
-    private function renderFallbackNullCast(): string
+    /**
+     * Writes a null for a column nothing declared a type for.
+     *
+     * @return string What it answers
+     */
+    public function renderFallbackNullCast(): string
     {
         return $this->castRenderer->renderNullCast(
             new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),

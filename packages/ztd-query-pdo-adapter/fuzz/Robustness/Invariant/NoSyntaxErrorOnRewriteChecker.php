@@ -6,7 +6,8 @@ namespace Fuzz\Robustness\Invariant;
 
 use PDO;
 use PDOException;
-use Throwable;
+use ZtdQuery\Exception\UnknownSchemaException;
+use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\MySqlQueryGuard;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\SqlRewriter;
@@ -35,18 +36,17 @@ final class NoSyntaxErrorOnRewriteChecker
     }
 
     /**
-     * Check.
+     * Answers what the rewritten statement breaks, where it breaks nothing.
      *
-     * @param string $sql
-     * @return ?InvariantViolation
+     * A statement ZTD refuses is not rewritten, so there is nothing to check.
+     *
+     * @param string $sql Statement as it was written
+     *
+     * @return InvariantViolation|null What the rewrite broke, or null where it broke nothing
      */
     public function check(string $sql): ?InvariantViolation
     {
-        try {
-            $kind = $this->guard->classify($sql);
-        } catch (Throwable) {
-            return null;
-        }
+        $kind = $this->guard->classify($sql);
 
         if ($kind === null || $kind === QueryKind::SKIPPED) {
             return null;
@@ -54,7 +54,7 @@ final class NoSyntaxErrorOnRewriteChecker
 
         try {
             $plan = $this->rewriter->rewrite($sql);
-        } catch (Throwable) {
+        } catch (UnsupportedSqlException | UnknownSchemaException) {
             return null;
         }
 

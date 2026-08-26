@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Transformer;
 
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter;
 use ZtdQuery\Platform\Sqlite\Transformer\InsertSelectRenderer;
 
@@ -52,9 +52,14 @@ final class InsertSelectRendererTest extends TestCase
 
     public function testRejectsNonPositiveGeneratedIdentityStart(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidDefinitionException::class);
         $this->expectExceptionMessage('Generated identity start must be positive.');
 
         (new InsertSelectRenderer())->renderGeneratedIdentity(0);
     }
+    public function testRenderGeneratedIdentityCountsUpFromWhereItWasTold(): void
+    {
+        self::assertStringContainsString('5', (new InsertSelectRenderer())->renderGeneratedIdentity(5));
+    }
+
 }
