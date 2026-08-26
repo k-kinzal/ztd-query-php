@@ -6,13 +6,19 @@ namespace Fuzz\Correctness;
 
 final class SchemaDefinition
 {
-    /** @var array<int, string> */
+    /**
+     * @var array<int, string>
+     */
     public readonly array $columns;
 
-    /** @var array<int, string> */
+    /**
+     * @var array<int, string>
+     */
     public readonly array $primaryKeys;
 
-    /** @var array<int, string> */
+    /**
+     * @var array<int, string>
+     */
     public readonly array $defaultColumns;
 
     /**

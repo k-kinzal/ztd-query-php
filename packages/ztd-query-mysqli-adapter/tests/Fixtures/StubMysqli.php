@@ -7,6 +7,7 @@ namespace Tests\Fixtures;
 use mysqli;
 use mysqli_result;
 use mysqli_stmt;
+use Override;
 use ReturnTypeWillChange;
 
 /**
@@ -61,46 +62,54 @@ class StubMysqli extends mysqli
         parent::__construct();
     }
 
+    #[Override]
     public function prepare(string $query): mysqli_stmt|false
     {
         $this->prepareCalledWith = $query;
         return $this->prepareReturn;
     }
 
+    #[Override]
     public function query(string $query, int $resultMode = MYSQLI_STORE_RESULT): mysqli_result|bool
     {
         $this->queryCalledWith = $query;
         return $this->queryReturn;
     }
 
+    #[Override]
     public function real_query(string $query): bool
     {
         return $this->realQueryReturn;
     }
 
+    #[Override]
     public function multi_query(string $query): bool
     {
         return $this->multiQueryReturn;
     }
 
+    #[Override]
     public function begin_transaction(int $flags = 0, ?string $name = null): bool
     {
         $this->beginTransactionCalledWithFlags = $flags;
         return $this->beginTransactionReturn;
     }
 
+    #[Override]
     public function commit(int $flags = 0, ?string $name = null): bool
     {
         $this->commitCalledWithFlags = $flags;
         return $this->commitReturn;
     }
 
+    #[Override]
     public function rollback(int $flags = 0, ?string $name = null): bool
     {
         $this->rollbackCalledWithFlags = $flags;
         return $this->rollbackReturn;
     }
 
+    #[Override]
     #[ReturnTypeWillChange]
     public function close()
     {
@@ -108,22 +117,26 @@ class StubMysqli extends mysqli
         return true;
     }
 
+    #[Override]
     public function select_db(string $database): bool
     {
         return $this->selectDbReturn;
     }
 
+    #[Override]
     public function real_escape_string(string $string): string
     {
         return $this->realEscapeStringReturn;
     }
 
+    #[Override]
     public function escape_string(string $string): string
     {
         return $this->realEscapeStringReturn;
     }
 
     /** @param array<mixed, mixed>|null $params */
+    #[Override]
     public function execute_query(string $query, ?array $params = null): mysqli_result|bool
     {
         return $this->executeQueryReturn;

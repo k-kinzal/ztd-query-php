@@ -10,7 +10,9 @@ use ZtdQuery\Platform\ResultColumnTypeResolver;
 
 final class MysqliResultColumnExtractor
 {
-    /** @return list<ResultColumn> */
+    /**
+     * @return list<ResultColumn>
+     */
     public static function extract(mysqli_result $result, ResultColumnTypeResolver $typeResolver): array
     {
         $columns = [];

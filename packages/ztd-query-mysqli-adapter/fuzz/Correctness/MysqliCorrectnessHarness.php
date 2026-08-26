@@ -125,6 +125,9 @@ final class MysqliCorrectnessHarness
         return $this->rawMysqli;
     }
 
+    /**
+     * @throws RuntimeException
+     */
     public function getZtdMysqli(): ZtdMysqli
     {
         if ($this->ztdMysqli === null) {

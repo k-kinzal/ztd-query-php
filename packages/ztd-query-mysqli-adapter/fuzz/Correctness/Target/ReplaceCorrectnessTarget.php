@@ -23,6 +23,9 @@ final class ReplaceCorrectnessTarget
     ) {
     }
 
+    /**
+     * @throws Error
+     */
     public function __invoke(string $input): void
     {
         $seed = crc32(str_pad($input, 4, "\0"));
@@ -57,6 +60,9 @@ final class ReplaceCorrectnessTarget
         }
     }
 
+    /**
+     * @throws Error
+     */
     private function compareTableState(SchemaDefinition $schema, int $seed, string $sql): void
     {
         $rawRows = $this->fetchAll($this->harness->getRawMysqli(), $schema->name);

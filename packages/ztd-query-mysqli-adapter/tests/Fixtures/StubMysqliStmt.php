@@ -6,6 +6,7 @@ namespace Tests\Fixtures;
 
 use mysqli_result;
 use mysqli_stmt;
+use Override;
 use ReflectionClass;
 use ReturnTypeWillChange;
 
@@ -53,6 +54,7 @@ class StubMysqliStmt extends mysqli_stmt
     }
 
     /** @param array<mixed, mixed>|null $params */
+    #[Override]
     public function execute(?array $params = null): bool
     {
         $this->executeCallCount++;
@@ -60,21 +62,25 @@ class StubMysqliStmt extends mysqli_stmt
         return $this->executeReturn;
     }
 
+    #[Override]
     public function get_result(): mysqli_result|false
     {
         return $this->getResultReturn;
     }
 
+    #[Override]
     public function num_rows(): int|string
     {
         return $this->numRowsReturn;
     }
 
+    #[Override]
     public function fetch(): ?bool
     {
         return $this->fetchReturn;
     }
 
+    #[Override]
     #[ReturnTypeWillChange]
     public function close()
     {
@@ -82,49 +88,59 @@ class StubMysqliStmt extends mysqli_stmt
         return true;
     }
 
+    #[Override]
     public function reset(): bool
     {
         return $this->resetReturn;
     }
 
+    #[Override]
     public function bind_result(mixed &...$vars): bool
     {
         return true;
     }
 
+    #[Override]
     public function store_result(): bool
     {
         return $this->storeResultReturn;
     }
 
+    #[Override]
     public function free_result(): void
     {
     }
 
+    #[Override]
     public function data_seek(int $offset): void
     {
     }
 
+    #[Override]
     public function result_metadata(): mysqli_result|false
     {
         return false;
     }
 
+    #[Override]
     public function attr_get(int $attribute): int
     {
         return 0;
     }
 
+    #[Override]
     public function attr_set(int $attribute, int $value): bool
     {
         return true;
     }
 
+    #[Override]
     public function prepare(string $query): bool
     {
         return true;
     }
 
+    #[Override]
     public function send_long_data(int $param_num, string $data): bool
     {
         return true;

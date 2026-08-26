@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Fixtures;
 
 use mysqli_result;
+use Override;
 use ReflectionClass;
 
 /**
@@ -41,12 +42,14 @@ class StubMysqliResult extends mysqli_result
     /**
      * @return array<int, array<string, mixed>>
      */
+    #[Override]
     public function fetch_all(int $mode = MYSQLI_NUM): array
     {
         return $this->rows;
     }
 
     /** @return list<StubMysqliField> */
+    #[Override]
     public function fetch_fields(): array
     {
         return $this->fields;
