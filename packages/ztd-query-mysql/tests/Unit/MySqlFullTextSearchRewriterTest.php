@@ -43,7 +43,9 @@ final class MySqlFullTextSearchRewriterTest extends TestCase
         );
     }
 
-    /** @return iterable<string, array{string}> */
+    /**
+     * @return iterable<string, array{string}>
+     */
     public static function providerSearchModifier(): iterable
     {
         yield 'natural language' => [' IN NATURAL LANGUAGE MODE'];
@@ -58,7 +60,9 @@ final class MySqlFullTextSearchRewriterTest extends TestCase
         self::assertSame($sql, (new MySqlFullTextSearchRewriter())->rewrite($sql));
     }
 
-    /** @return iterable<string, array{string}> */
+    /**
+     * @return iterable<string, array{string}>
+     */
     public static function providerUnchangedSql(): iterable
     {
         yield 'literal' => ["SELECT 'MATCH(title) AGAINST (search)'"];

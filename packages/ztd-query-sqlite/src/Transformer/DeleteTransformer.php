@@ -20,6 +20,12 @@ final class DeleteTransformer implements SqlTransformer
     private SelectTransformer $selectTransformer;
     private SqliteCteShadowComposer $cteComposer;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param SqliteParser $parser
+     * @param SelectTransformer $selectTransformer
+     */
     public function __construct(
         SqliteParser $parser,
         SelectTransformer $selectTransformer,
@@ -31,6 +37,8 @@ final class DeleteTransformer implements SqlTransformer
 
     /**
      * {@inheritDoc}
+     *
+     * @throws UnsupportedSqlException
      */
     public function transform(string $sql, array $tables): string
     {

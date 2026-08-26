@@ -36,6 +36,13 @@ final class SelectTransformer implements SqlTransformer
     private PgSqlGeneratedColumnProjector $generatedColumnProjector;
     private PgSqlTableSampleRewriter $tableSampleRewriter;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param ?CastRenderer $castRenderer
+     * @param ?IdentifierQuoter $quoter
+     * @param ?ValueRenderer $valueRenderer
+     */
     public function __construct(
         ?CastRenderer $castRenderer = null,
         ?IdentifierQuoter $quoter = null,
@@ -104,6 +111,8 @@ final class SelectTransformer implements SqlTransformer
      * @param array<int, string> $columns
      * @param array<string, ColumnType> $columnTypes
      * @param array<string, string> $generatedExpressions
+     *
+     * @throws RuntimeException
      */
     private function generateCte(
         string $tableName,

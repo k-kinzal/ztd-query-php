@@ -10,7 +10,9 @@ use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 
-/** @requires extension pdo_sqlite */
+/**
+ * @requires extension pdo_sqlite
+ */
 #[CoversNothing]
 #[Large]
 final class ViewTest extends TestCase

@@ -13,7 +13,11 @@ use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
 use ZtdQuery\Config\UnknownSchemaBehavior;
 use ZtdQuery\Config\UnsupportedSqlBehavior;
 use ZtdQuery\Config\ZtdConfig;
+use ZtdQuery\Connection\StatementInterface;
 
+/**
+ * @phpstan-import-type Row from StatementInterface
+ */
 final class MysqliCorrectnessHarness
 {
     private mysqli $rawMysqli;
@@ -27,9 +31,18 @@ final class MysqliCorrectnessHarness
     private Generator $faker;
     private FixtureProvider $fixtureProvider;
 
-    /** @var array<int, array<string, mixed>> */
+    /** @var list<Row> */
     private array $fixtureRows = [];
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param string $host
+     * @param int $port
+     * @param string $dbName
+     * @param string $user
+     * @param string $pass
+     */
     public function __construct(string $host, int $port, string $dbName, string $user, string $pass)
     {
         $this->host = $host;
@@ -45,7 +58,7 @@ final class MysqliCorrectnessHarness
     /**
      * Set up both connections with the same schema and data.
      *
-     * @return array<int, array<string, mixed>> The fixture rows inserted
+     * @return list<Row> The fixture rows inserted
      */
     public function setup(SchemaDefinition $schema, int $seed, int $rowCount = 3): array
     {
@@ -110,6 +123,10 @@ final class MysqliCorrectnessHarness
         return $this->fixtureRows;
     }
 
+    /**
+     * Teardown.
+     *
+     */
     public function teardown(): void
     {
         if ($this->currentSchema !== null) {
@@ -120,11 +137,19 @@ final class MysqliCorrectnessHarness
         $this->fixtureRows = [];
     }
 
+    /**
+     * Answers raw mysqli.
+     *
+     * @return mysqli
+     */
     public function getRawMysqli(): mysqli
     {
         return $this->rawMysqli;
     }
 
+    /**
+     * @throws RuntimeException
+     */
     public function getZtdMysqli(): ZtdMysqli
     {
         if ($this->ztdMysqli === null) {
@@ -134,20 +159,25 @@ final class MysqliCorrectnessHarness
     }
 
     /**
-     * @return array<int, array<string, mixed>>
+     * @return list<Row>
      */
     public function getFixtureRows(): array
     {
         return $this->fixtureRows;
     }
 
+    /**
+     * Answers current schema.
+     *
+     * @return ?SchemaDefinition
+     */
     public function getCurrentSchema(): ?SchemaDefinition
     {
         return $this->currentSchema;
     }
 
     /**
-     * @param array<string, mixed> $row
+     * @param Row $row
      */
     private function insertRow(mysqli $mysqli, string $table, array $row): void
     {

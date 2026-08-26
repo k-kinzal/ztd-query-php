@@ -33,6 +33,12 @@ final class UpdateTransformer implements SqlTransformer
     private SelectTransformer $selectTransformer;
     private MySqlCteShadowComposer $cteComposer;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param MySqlParser $parser
+     * @param SelectTransformer $selectTransformer
+     */
     public function __construct(
         MySqlParser $parser,
         SelectTransformer $selectTransformer,
@@ -44,6 +50,8 @@ final class UpdateTransformer implements SqlTransformer
 
     /**
      * {@inheritDoc}
+     *
+     * @throws UnsupportedSqlException
      */
     public function transform(string $sql, array $tables): string
     {
@@ -112,6 +120,8 @@ final class UpdateTransformer implements SqlTransformer
      * @param list<MultiTableMutationTarget> $targets
      * @param list<string> $assignmentValues
      * @return array{sql: string, table: string, tables: array<string, array{alias: string}>}
+     *
+     * @throws RuntimeException
      */
     public function buildProjection(
         UpdateStatement $stmt,

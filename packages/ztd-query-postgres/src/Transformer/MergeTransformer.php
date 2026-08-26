@@ -17,6 +17,9 @@ use ZtdQuery\Platform\Postgres\PgSqlMergeStatement;
 use ZtdQuery\Rewrite\ShadowIdentityAllocator;
 use ZtdQuery\Rewrite\SqlTransformer;
 
+/**
+ * The merge transformer, as sql transformer.
+ */
 final class MergeTransformer implements SqlTransformer
 {
     private PgSqlIdentifierQuoter $quoter;
@@ -25,6 +28,12 @@ final class MergeTransformer implements SqlTransformer
     private PgSqlCteShadowComposer $cteComposer;
     private InsertSelectRenderer $insertSelectRenderer;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param PgSqlMergeParser $parser
+     * @param SelectTransformer $selectTransformer
+     */
     public function __construct(
         private readonly PgSqlMergeParser $parser,
         private readonly SelectTransformer $selectTransformer,
@@ -38,6 +47,8 @@ final class MergeTransformer implements SqlTransformer
 
     /**
      * {@inheritDoc}
+     *
+     * @throws UnsupportedSqlException
      */
     public function transform(string $sql, array $tables): string
     {
@@ -166,6 +177,8 @@ final class MergeTransformer implements SqlTransformer
     /**
      * @param list<string> $columns
      * @param array<string, string> $defaults
+     *
+     * @throws UnsupportedSqlException
      */
     private function updatedRows(
         string $sql,
@@ -206,6 +219,8 @@ final class MergeTransformer implements SqlTransformer
      * @param array<string, string> $defaults
      * @param array<string, \ZtdQuery\Schema\IdentityGenerationStrategy> $identityStrategies
      * @param array<int, array<string, mixed>> $existingRows
+     *
+     * @throws UnsupportedSqlException
      */
     private function insertedRows(
         string $sql,

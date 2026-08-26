@@ -15,12 +15,14 @@ use ZtdQuery\Platform\Postgres\PgSqlReadOnlyDiagnosticStatement;
 final class PgSqlReadOnlyDiagnosticStatementTest extends TestCase
 {
     #[DataProvider('providerStatement')]
-    public function testClassifiesOnlySafePostgreSqlDiagnostics(string $sql, bool $expected): void
+    public function testIsSafeClassifiesOnlySafePostgreSqlDiagnostics(string $sql, bool $expected): void
     {
         self::assertSame($expected, PgSqlReadOnlyDiagnosticStatement::isSafe($sql));
     }
 
-    /** @return iterable<string, array{string, bool}> */
+    /**
+     * @return iterable<string, array{string, bool}>
+     */
     public static function providerStatement(): iterable
     {
         yield 'explain select' => ['EXPLAIN SELECT * FROM users', true];

@@ -12,17 +12,32 @@ use ZtdQuery\Platform\Postgres\PgSqlReadOnlyDiagnosticStatement;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\SqlRewriter;
 
+/**
+ * The classify rewrite agreement checker, as invariant checker.
+ */
 final class ClassifyRewriteAgreementChecker implements InvariantChecker
 {
     private PgSqlQueryGuard $guard;
     private SqlRewriter $rewriter;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param PgSqlQueryGuard $guard
+     * @param SqlRewriter $rewriter
+     */
     public function __construct(PgSqlQueryGuard $guard, SqlRewriter $rewriter)
     {
         $this->guard = $guard;
         $this->rewriter = $rewriter;
     }
 
+    /**
+     * Check.
+     *
+     * @param string $sql
+     * @return ?InvariantViolation
+     */
     public function check(string $sql): ?InvariantViolation
     {
         $diagnostic = PgSqlReadOnlyDiagnosticStatement::isSafe($sql);

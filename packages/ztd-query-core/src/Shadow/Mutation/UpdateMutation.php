@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace ZtdQuery\Shadow\Mutation;
 
 use ZtdQuery\Connection\StatementInterface;
-use ZtdQuery\Exception\DuplicateKeyException;
-use ZtdQuery\Exception\NotNullViolationException;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Shadow\ShadowStore;
 
@@ -52,6 +50,8 @@ final class UpdateMutation implements DataMutation
      */
     private bool $validateConstraints;
 
+    private RowConstraints $constraints;
+
     /**
      * @param string $tableName Target table.
      * @param list<string> $primaryKeys Primary key columns.
@@ -71,6 +71,7 @@ final class UpdateMutation implements DataMutation
         $this->tableDefinition = $tableDefinition;
         $this->sql = $sql;
         $this->validateConstraints = $validateConstraints;
+        $this->constraints = new RowConstraints($this->tableDefinition, $this->tableName, $this->sql);
     }
 
     /**
@@ -89,8 +90,8 @@ final class UpdateMutation implements DataMutation
             $existingRows = $store->get($this->tableName);
 
             foreach ($rows as $row) {
-                $this->validateNotNullConstraints($row);
-                $this->validateUniqueConstraints($row, $existingRows);
+                $this->constraints->assertNoNullWhereNoneIsAllowed($row);
+                $this->constraints->assertNoDuplicateUniqueKey($row, $existingRows, $this->primaryKeys);
             }
         }
 
@@ -105,112 +106,7 @@ final class UpdateMutation implements DataMutation
         return $this->tableName;
     }
 
-    /**
-     * Validate NOT NULL constraints for a row.
-     *
-     * @param Row $row Row to validate.
-     * @throws NotNullViolationException If a NOT NULL constraint is violated.
-     */
-    private function validateNotNullConstraints(array $row): void
-    {
-        if ($this->tableDefinition === null) {
-            return;
-        }
 
-        $notNullColumns = $this->tableDefinition->notNullColumns;
 
-        foreach ($notNullColumns as $columnName) {
-            if (array_key_exists($columnName, $row) && $row[$columnName] === null) {
-                throw new NotNullViolationException($this->sql, $this->tableName, $columnName);
-            }
-        }
-    }
 
-    /**
-     * Validate UNIQUE constraints for a row.
-     *
-     * @param Row $row Row to validate.
-     * @param list<Row> $existingRows Existing rows in the store.
-     * @throws DuplicateKeyException If a UNIQUE constraint is violated.
-     */
-    private function validateUniqueConstraints(array $row, array $existingRows): void
-    {
-        if ($this->tableDefinition === null) {
-            return;
-        }
-
-        $uniqueConstraints = $this->tableDefinition->uniqueConstraints;
-
-        foreach ($uniqueConstraints as $keyName => $columns) {
-            $hasNull = false;
-            foreach ($columns as $col) {
-                if (!array_key_exists($col, $row) || $row[$col] === null) {
-                    $hasNull = true;
-                    break;
-                }
-            }
-            if ($hasNull) {
-                continue;
-            }
-
-            foreach ($existingRows as $existing) {
-                if ($this->isSameRowByPrimaryKey($row, $existing)) {
-                    continue;
-                }
-
-                $match = true;
-                foreach ($columns as $col) {
-                    if (!isset($existing[$col]) || $row[$col] !== $existing[$col]) {
-                        $match = false;
-                        break;
-                    }
-                }
-                if ($match) {
-                    $keyValues = $this->extractKeyValues($row, $columns);
-                    throw new DuplicateKeyException($this->sql, $this->tableName, $keyName, $keyValues);
-                }
-            }
-        }
-    }
-
-    /**
-     * Check if two rows are the same based on primary key.
-     *
-     * @param Row $row1 First row.
-     * @param Row $row2 Second row.
-     * @return bool True if same row.
-     */
-    private function isSameRowByPrimaryKey(array $row1, array $row2): bool
-    {
-        if ($this->primaryKeys === []) {
-            return false;
-        }
-
-        foreach ($this->primaryKeys as $key) {
-            if (!isset($row1[$key]) || !isset($row2[$key])) {
-                return false;
-            }
-            if ($row1[$key] !== $row2[$key]) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * Extract key values from a row.
-     *
-     * @param Row $row Row to extract from.
-     * @param array<int, string> $columns Column names.
-     * @return Row Key values.
-     */
-    private function extractKeyValues(array $row, array $columns): array
-    {
-        $values = [];
-        foreach ($columns as $col) {
-            $values[$col] = $row[$col] ?? null;
-        }
-        return $values;
-    }
 }

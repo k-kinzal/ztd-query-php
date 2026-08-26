@@ -9,5 +9,9 @@ namespace ZtdQuery\Rewrite;
  */
 interface RewriteStateCommitter
 {
+    /**
+     * Commit rewrite state.
+     *
+     */
     public function commitRewriteState(): void;
 }

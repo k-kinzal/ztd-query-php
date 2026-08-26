@@ -13,6 +13,8 @@ use ZtdQuery\Platform\ResultColumnTypeResolver;
  *
  * This class wraps a mysqli_result from query() and provides the minimal interface
  * required by the ZTD session for fetching results.
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 final class MysqliResultStatement implements StatementInterface
 {
@@ -20,6 +22,12 @@ final class MysqliResultStatement implements StatementInterface
 
     private int $affectedRows;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param ?mysqli_result $result
+     * @param int|string $affectedRows
+     */
     public function __construct(?mysqli_result $result, int|string $affectedRows)
     {
         $this->result = $result;
@@ -46,7 +54,7 @@ final class MysqliResultStatement implements StatementInterface
             return [];
         }
 
-        /** @var array<int, array<string, mixed>> $rows */
+        /** @var list<Row> $rows */
         $rows = $this->result->fetch_all(MYSQLI_ASSOC);
 
         return $rows;

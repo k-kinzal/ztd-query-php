@@ -12,8 +12,19 @@ use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The my sql upsert expression parser.
+ */
 final class MySqlUpsertExpressionParser
 {
+    /**
+     * Reads.
+     *
+     * @param string $sql
+     * @param string $tableName
+     * @param ?string $incomingAlias
+     * @return UpsertExpression
+     */
     public function parse(string $sql, string $tableName, ?string $incomingAlias = null): UpsertExpression
     {
         $tokens = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->significantTokens();
@@ -26,6 +37,14 @@ final class MySqlUpsertExpressionParser
         return $expression;
     }
 
+    /**
+     * Reads if supported.
+     *
+     * @param string $sql
+     * @param string $tableName
+     * @param ?string $incomingAlias
+     * @return ?UpsertExpression
+     */
     public function parseIfSupported(string $sql, string $tableName, ?string $incomingAlias = null): ?UpsertExpression
     {
         try {

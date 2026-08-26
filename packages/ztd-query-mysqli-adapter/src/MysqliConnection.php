@@ -19,6 +19,11 @@ final class MysqliConnection implements ConnectionInterface
 {
     private mysqli $mysqli;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param mysqli $mysqli
+     */
     public function __construct(mysqli $mysqli)
     {
         $this->mysqli = $mysqli;

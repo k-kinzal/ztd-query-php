@@ -9,9 +9,12 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
+use ZtdQuery\Connection\StatementInterface;
 
 /**
  * @requires extension pdo_sqlite
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 #[CoversNothing]
 #[Large]
@@ -28,11 +31,11 @@ final class SelectWindowTest extends TestCase
         $sql = 'SELECT id, category, amount, ROW_NUMBER() OVER (ORDER BY id) AS rn FROM sales ORDER BY id';
         $stmt = $rawPdo->query($sql);
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         $stmt = $ztdPdo->query($sql);
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt->fetchAll();
         self::assertSame($rawRows, $ztdRows);
     }
@@ -48,11 +51,11 @@ final class SelectWindowTest extends TestCase
         $sql = 'SELECT id, category, amount, RANK() OVER (PARTITION BY category ORDER BY amount DESC) AS rnk FROM sales ORDER BY id';
         $stmt = $rawPdo->query($sql);
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         $stmt = $ztdPdo->query($sql);
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt->fetchAll();
         self::assertSame($rawRows, $ztdRows);
     }
@@ -68,11 +71,11 @@ final class SelectWindowTest extends TestCase
         $sql = 'SELECT id, category, amount, SUM(amount) OVER (PARTITION BY category) AS cat_total FROM sales ORDER BY id';
         $stmt = $rawPdo->query($sql);
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         $stmt = $ztdPdo->query($sql);
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt->fetchAll();
         self::assertSame($rawRows, $ztdRows);
     }

@@ -6,8 +6,16 @@ namespace ZtdQuery\Adapter\Pdo;
 
 use PDO;
 
+/**
+ * The pdo parameter type.
+ */
 final class PdoParameterType
 {
+    /**
+     * Builds value.
+     *
+     * @return int
+     */
     public static function fromValue(mixed $value): int
     {
         return match (true) {

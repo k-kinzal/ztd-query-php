@@ -35,6 +35,13 @@ final class InsertTransformer implements SqlTransformer
     private PgSqlCteShadowComposer $cteComposer;
     private PgSqlNativeUpsertProjector $upsertProjector;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param PgSqlParser $parser
+     * @param SelectTransformer $selectTransformer
+     * @param ?CastRenderer $castRenderer
+     */
     public function __construct(
         PgSqlParser $parser,
         SelectTransformer $selectTransformer,
@@ -52,6 +59,8 @@ final class InsertTransformer implements SqlTransformer
 
     /**
      * {@inheritDoc}
+     *
+     * @throws UnsupportedSqlException
      */
     public function transform(string $sql, array $tables): string
     {
@@ -184,6 +193,10 @@ final class InsertTransformer implements SqlTransformer
         );
     }
 
+    /**
+     * Commit rewrite state.
+     *
+     */
     public function commitRewriteState(): void
     {
         $this->identityAllocator->commitProjection();

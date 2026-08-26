@@ -13,11 +13,22 @@ use Fuzz\Correctness\Sqlite\SqliteSchemaPool;
 use PDO;
 use PDOException;
 use ZtdQuery\Connection\Exception\DatabaseException;
+use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 
+/**
+ * @phpstan-import-type Row from StatementInterface
+ */
 final class AlterCorrectnessTarget
 {
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param SqliteCorrectnessHarness $harness
+     * @param Generator $faker
+     * @param ResultComparator $comparator
+     */
     public function __construct(
         private readonly SqliteCorrectnessHarness $harness,
         private readonly Generator $faker,
@@ -25,6 +36,9 @@ final class AlterCorrectnessTarget
     ) {
     }
 
+    /**
+     * @throws Error
+     */
     public function __invoke(string $input): void
     {
         $seed = crc32(str_pad($input, 4, "\0"));
@@ -155,7 +169,11 @@ final class AlterCorrectnessTarget
         ];
     }
 
-    /** @param list<string> $columns */
+    /**
+     * @param list<string> $columns
+     *
+     * @throws Error
+     */
     private function randomColumn(array $columns): string
     {
         $column = $this->faker->randomElement($columns);
@@ -180,7 +198,11 @@ final class AlterCorrectnessTarget
         return $renamed;
     }
 
-    /** @return array<int, array<string, mixed>> */
+    /**
+     * @return list<Row>
+     *
+     * @throws Error
+     */
     private function fetchAll(PDO $pdo, string $table): array
     {
         $statement = $pdo->query('SELECT * FROM ' . $this->quote($table));

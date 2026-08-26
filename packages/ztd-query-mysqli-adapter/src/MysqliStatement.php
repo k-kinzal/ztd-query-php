@@ -16,6 +16,8 @@ use ZtdQuery\Platform\ResultColumnTypeResolver;
  *
  * This class wraps a mysqli_stmt and provides the minimal interface
  * required by the ZTD session for executing statements and fetching results.
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 final class MysqliStatement implements StatementInterface
 {
@@ -28,6 +30,12 @@ final class MysqliStatement implements StatementInterface
      */
     private mysqli_result|false|null $result = null;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param mysqli_stmt $statement
+     * @param mysqli $mysqli
+     */
     public function __construct(mysqli_stmt $statement, mysqli $mysqli)
     {
         $this->statement = $statement;
@@ -65,7 +73,7 @@ final class MysqliStatement implements StatementInterface
             }
         }
 
-        // get_result() is deferred so ZtdMysqliStatement::get_result() can call it on the underlying stmt
+        /* get_result() is deferred so ZtdMysqliStatement::get_result() can call it on the underlying stmt */
 
         return true;
     }
@@ -82,10 +90,10 @@ final class MysqliStatement implements StatementInterface
             return [];
         }
 
-        /** @var array<int, array<string, mixed>> $rows */
+        /** @var list<Row> $rows */
         $rows = $result->fetch_all(MYSQLI_ASSOC);
 
-        // Free the result to avoid "Commands out of sync" errors
+        /* Free the result to avoid "Commands out of sync" errors */
         $result->free();
         $this->result = null;
 

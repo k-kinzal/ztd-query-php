@@ -38,7 +38,9 @@ final class SqliteInMemoryAttachStatementTest extends TestCase
         self::assertFalse(SqliteInMemoryAttachStatement::isSafe($sql));
     }
 
-    /** @return Generator<string, array{string}> */
+    /**
+     * @return Generator<string, array{string}>
+     */
     public static function providerIncompleteOrExtendedAttachmentShapes(): Generator
     {
         yield 'empty' => [''];

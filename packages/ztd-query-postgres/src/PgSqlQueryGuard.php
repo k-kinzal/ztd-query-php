@@ -13,6 +13,11 @@ final class PgSqlQueryGuard
 {
     private PgSqlParser $parser;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param PgSqlParser $parser
+     */
     public function __construct(PgSqlParser $parser)
     {
         $this->parser = $parser;

@@ -10,9 +10,14 @@ use RuntimeException;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Session;
 
+/**
+ * The pdo prepared execution.
+ */
 final class PdoPreparedExecution
 {
-    /** @param array<mixed> $options */
+    /**
+     * @param array<mixed> $options
+     */
     public function __construct(
         private readonly PDO $pdo,
         private readonly Session $session,
@@ -25,6 +30,8 @@ final class PdoPreparedExecution
     /**
      * @param array<int|string, mixed>|null $params
      * @return array{statement: PDOStatement, plan: RewritePlan, params: array<int|string, mixed>|null}
+     *
+     * @throws RuntimeException
      */
     public function prepare(?array $params): array
     {
@@ -39,6 +46,11 @@ final class PdoPreparedExecution
         return ['statement' => $statement, 'plan' => $plan, 'params' => $compiled['params']];
     }
 
+    /**
+     * Parameter binder.
+     *
+     * @return PdoParameterBinder
+     */
     public function parameterBinder(): PdoParameterBinder
     {
         return $this->parameterBinder;

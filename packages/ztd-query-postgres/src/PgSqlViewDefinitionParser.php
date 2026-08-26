@@ -7,8 +7,17 @@ namespace ZtdQuery\Platform\Postgres;
 use ZtdQuery\Schema\ViewDefinition;
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The pg sql view definition parser.
+ */
 final class PgSqlViewDefinitionParser
 {
+    /**
+     * Builds query.
+     *
+     * @param string $query
+     * @return ViewDefinition
+     */
     public function fromQuery(string $query): ViewDefinition
     {
         $query = rtrim(trim($query), ';');
@@ -16,6 +25,12 @@ final class PgSqlViewDefinitionParser
         return new ViewDefinition($query, (new PgSqlSelectRelationParser())->tableNames($query));
     }
 
+    /**
+     * Builds create statement.
+     *
+     * @param string $sql
+     * @return ?ViewDefinition
+     */
     public function fromCreateStatement(string $sql): ?ViewDefinition
     {
         foreach (SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->significantTokens() as $token) {

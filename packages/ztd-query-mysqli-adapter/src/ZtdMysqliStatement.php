@@ -7,6 +7,7 @@ namespace ZtdQuery\Adapter\Mysqli;
 use mysqli_result;
 use mysqli_stmt;
 use mysqli_warning;
+use Override;
 use ReturnTypeWillChange;
 use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\ExecuteResult;
@@ -52,6 +53,13 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
      */
     private mysqli_result|false|null $cachedMysqliResult = null;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param mysqli_stmt $delegate
+     * @param Session $session
+     * @param ?RewritePlan $plan
+     */
     public function __construct(mysqli_stmt $delegate, Session $session, ?RewritePlan $plan)
     {
         parent::__construct($delegate);
@@ -140,7 +148,10 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
      * Execute the statement, applying ZTD simulation as needed.
      *
      * @param array<mixed, mixed>|null $params Optional parameters to bind (PHP 8.1+).
+     *
+     * @throws ZtdMysqliException
      */
+    #[Override]
     public function execute(?array $params = null): bool
     {
         $this->result = null;
@@ -194,6 +205,7 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function get_result(): mysqli_result|false
     {
         if ($this->cachedMysqliResult !== null) {
@@ -215,6 +227,7 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function fetch(): ?bool
     {
         if ($this->result !== null && !$this->result->isPassthrough()) {
@@ -229,6 +242,7 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     /**
      * {@inheritDoc}
      */
+    #[Override]
     #[ReturnTypeWillChange]
     public function close()
     {
@@ -239,6 +253,7 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function free_result(): void
     {
         $this->delegate->free_result();
@@ -247,6 +262,7 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function reset(): bool
     {
         $this->result = null;
@@ -257,6 +273,7 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function store_result(): bool
     {
         return $this->delegate->store_result();
@@ -265,6 +282,7 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function data_seek(int $offset): void
     {
         $this->delegate->data_seek($offset);
@@ -273,6 +291,7 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function result_metadata(): mysqli_result|false
     {
         return $this->delegate->result_metadata();
@@ -280,7 +299,10 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
 
     /**
      * {@inheritDoc}
+     *
+     * @throws ZtdMysqliException
      */
+    #[Override]
     public function attr_get(int $attribute): int
     {
         $value = $this->delegate->attr_get($attribute);
@@ -294,6 +316,7 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function attr_set(int $attribute, int $value): bool
     {
         return $this->delegate->attr_set($attribute, $value);
@@ -302,6 +325,7 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function get_warnings(): mysqli_warning|false
     {
         return $this->delegate->get_warnings();
@@ -310,6 +334,7 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function more_results(): bool
     {
         return $this->delegate->more_results();
@@ -318,6 +343,7 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function next_result(): bool
     {
         return $this->delegate->next_result();
@@ -326,6 +352,7 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function num_rows(): int|string
     {
         if ($this->result !== null && !$this->result->isPassthrough()) {
@@ -338,6 +365,7 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function prepare(string $query): bool
     {
         return $this->delegate->prepare($query);
@@ -346,6 +374,7 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function send_long_data(int $param_num, string $data): bool
     {
         return $this->delegate->send_long_data($param_num, $data);

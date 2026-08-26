@@ -12,5 +12,11 @@ namespace ZtdQuery\Sql;
  */
 interface TransactionStatementParser
 {
+    /**
+     * Reads.
+     *
+     * @param string $sql
+     * @return ?TransactionStatement
+     */
     public function parse(string $sql): ?TransactionStatement;
 }

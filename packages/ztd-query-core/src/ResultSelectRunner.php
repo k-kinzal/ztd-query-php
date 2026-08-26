@@ -62,6 +62,13 @@ final class ResultSelectRunner
         return $this->readResultSet($statement, $typeResolver)->rows;
     }
 
+    /**
+     * Reads result set.
+     *
+     * @param StatementInterface $statement
+     * @param ResultColumnTypeResolver $typeResolver
+     * @return ResultSet
+     */
     public function readResultSet(
         StatementInterface $statement,
         ResultColumnTypeResolver $typeResolver,

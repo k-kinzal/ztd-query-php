@@ -184,9 +184,6 @@ final class MySqlCastRendererTest extends CastRendererContractTest
         self::assertSame("CAST('value' AS CHAR)", $result);
     }
 
-    /**
-     * P-CR-1: Non-empty output for all families.
-     */
     #[DataProvider('providerAllFamilies')]
     public function testAllColumnTypeFamiliesProduceNonEmptyOutput(ColumnTypeFamily $family): void
     {
@@ -195,9 +192,6 @@ final class MySqlCastRendererTest extends CastRendererContractTest
         self::assertNotEmpty($result, "renderNullCast() returned empty for family {$family->value}");
     }
 
-    /**
-     * P-CR-2: CAST keyword presence.
-     */
     #[DataProvider('providerAllFamilies')]
     public function testOutputContainsCastKeyword(ColumnTypeFamily $family): void
     {
@@ -206,9 +200,7 @@ final class MySqlCastRendererTest extends CastRendererContractTest
         self::assertStringContainsString('CAST(', $result, "renderNullCast() missing CAST keyword for family {$family->value}");
     }
 
-    /**
-     * P-CR-4: Determinism.
-     */
+    #[Override]
     public function testRenderCastIsDeterministic(): void
     {
         $type = new ColumnType(ColumnTypeFamily::INTEGER, 'INT');
@@ -217,9 +209,6 @@ final class MySqlCastRendererTest extends CastRendererContractTest
         self::assertSame($result1, $result2);
     }
 
-    /**
-     * P-CR-3: NULL preservation.
-     */
     #[DataProvider('providerAllFamilies')]
     public function testRenderNullCastContainsNull(ColumnTypeFamily $family): void
     {

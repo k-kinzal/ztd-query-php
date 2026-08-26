@@ -31,7 +31,7 @@ use ZtdQuery\Shadow\ShadowStore;
 #[UsesClass(PdoStatement::class)]
 final class PdoPreparedExecutionTest extends TestCase
 {
-    public function testRewritesAgainstCurrentShadowStateForEveryPreparation(): void
+    public function testParameterBinderRewritesAgainstCurrentShadowStateForEveryPreparation(): void
     {
         $pdo = new PDO('sqlite::memory:');
         $pdo->exec('CREATE TABLE items (id INTEGER PRIMARY KEY, value TEXT)');

@@ -8,11 +8,18 @@ use InvalidArgumentException;
 use ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter;
 use ZtdQuery\Rewrite\InsertSelectProjectionPlanner;
 
+/**
+ * The insert select renderer.
+ */
 final class InsertSelectRenderer
 {
     private SqliteIdentifierQuoter $quoter;
     private InsertSelectProjectionPlanner $projectionPlanner;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     */
     public function __construct()
     {
         $this->quoter = new SqliteIdentifierQuoter();
@@ -57,6 +64,9 @@ final class InsertSelectRenderer
             . $selectSql . ') SELECT ' . implode(', ', $selects) . ' FROM ' . $sourceName;
     }
 
+    /**
+     * @throws InvalidArgumentException
+     */
     public function renderGeneratedIdentity(int $start): string
     {
         if ($start < 1) {

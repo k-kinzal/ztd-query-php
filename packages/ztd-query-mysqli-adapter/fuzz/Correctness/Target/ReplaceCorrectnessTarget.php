@@ -13,9 +13,20 @@ use Fuzz\Correctness\SchemaPool;
 use mysqli;
 use mysqli_result;
 use Throwable;
+use ZtdQuery\Connection\StatementInterface;
 
+/**
+ * @phpstan-import-type Row from StatementInterface
+ */
 final class ReplaceCorrectnessTarget
 {
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param MysqliCorrectnessHarness $harness
+     * @param Generator $faker
+     * @param ResultComparator $comparator
+     */
     public function __construct(
         private readonly MysqliCorrectnessHarness $harness,
         private readonly Generator $faker,
@@ -23,6 +34,9 @@ final class ReplaceCorrectnessTarget
     ) {
     }
 
+    /**
+     * @throws Error
+     */
     public function __invoke(string $input): void
     {
         $seed = crc32(str_pad($input, 4, "\0"));
@@ -57,6 +71,9 @@ final class ReplaceCorrectnessTarget
         }
     }
 
+    /**
+     * @throws Error
+     */
     private function compareTableState(SchemaDefinition $schema, int $seed, string $sql): void
     {
         $rawRows = $this->fetchAll($this->harness->getRawMysqli(), $schema->name);
@@ -73,7 +90,7 @@ final class ReplaceCorrectnessTarget
         }
     }
 
-    /** @return array<int, array<string, mixed>> */
+    /** @return list<Row> */
     private function fetchAll(mysqli $mysqli, string $table): array
     {
         $result = $mysqli->query("SELECT * FROM `$table`");
@@ -81,7 +98,7 @@ final class ReplaceCorrectnessTarget
             return [];
         }
 
-        /** @var array<int, array<string, mixed>> $rows */
+        /** @var list<Row> $rows */
         $rows = $result->fetch_all(MYSQLI_ASSOC);
 
         return $rows;

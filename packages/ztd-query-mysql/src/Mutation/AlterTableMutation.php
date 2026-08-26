@@ -31,6 +31,14 @@ final class AlterTableMutation implements ShadowMutation
     private TableDefinitionRegistry $registry;
     private SchemaParser $schemaParser;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param string $tableName
+     * @param AlterStatement $alterStatement
+     * @param TableDefinitionRegistry $registry
+     * @param SchemaParser $schemaParser
+     */
     public function __construct(
         string $tableName,
         AlterStatement $alterStatement,
@@ -45,6 +53,9 @@ final class AlterTableMutation implements ShadowMutation
 
     /**
      * {@inheritDoc}
+     *
+     * @throws SchemaNotFoundException
+     * @throws RuntimeException
      */
     public function apply(ShadowStore $store, array $rows): void
     {
@@ -131,6 +142,8 @@ final class AlterTableMutation implements ShadowMutation
 
     /**
      * Apply a single ALTER operation to the CREATE statement.
+     *
+     * @throws UnsupportedSqlException
      */
     private function applyOperation(CreateStatement $createStmt, AlterOperation $op, ShadowStore $store, TableDefinition $definition): void
     {
@@ -158,18 +171,21 @@ final class AlterTableMutation implements ShadowMutation
         } elseif (self::optionSet($options, 'DROP') && self::optionSet($options, 'PRIMARY KEY')) {
             $this->applyDropPrimaryKey($createStmt);
         } elseif (self::optionSet($options, 'ADD') && self::optionSet($options, 'FOREIGN')) {
-            // foreign key constraints are metadata-only in ZTD
+            /* foreign key constraints are metadata-only in ZTD */
         } elseif (self::optionSet($options, 'DROP') && self::optionSet($options, 'FOREIGN')) {
-            // foreign key constraints are metadata-only in ZTD
+            /* foreign key constraints are metadata-only in ZTD */
         } elseif (self::optionSet($options, 'RENAME') && self::optionSet($options, 'COLUMN')) {
             $this->applyRenameColumn($createStmt, $op, $store, $definition);
         } elseif (self::optionSet($options, 'ALTER') && (self::optionSet($options, 'SET DEFAULT') || self::optionSet($options, 'DROP DEFAULT'))) {
-            // SET DEFAULT / DROP DEFAULT not fully supported
+            /* SET DEFAULT / DROP DEFAULT not fully supported */
         } else {
             throw new UnsupportedSqlException(AlterOperation::build($op), 'ALTER TABLE');
         }
     }
 
+    /**
+     * @throws ColumnAlreadyExistsException
+     */
     private function applyAddColumn(CreateStatement $createStmt, AlterOperation $op, TableDefinition $definition): void
     {
         if (!is_array($createStmt->fields)) {
@@ -192,6 +208,9 @@ final class AlterTableMutation implements ShadowMutation
         }
     }
 
+    /**
+     * @throws ColumnNotFoundException
+     */
     private function applyDropColumn(CreateStatement $createStmt, AlterOperation $op, ShadowStore $store, TableDefinition $definition): void
     {
         $columnName = $this->getColumnName($op);
@@ -219,6 +238,9 @@ final class AlterTableMutation implements ShadowMutation
         $this->removeColumnFromStore($store, $columnName);
     }
 
+    /**
+     * @throws ColumnNotFoundException
+     */
     private function applyModifyColumn(CreateStatement $createStmt, AlterOperation $op, TableDefinition $definition): void
     {
         $columnDef = $this->buildColumnDefinition($op);
@@ -247,6 +269,9 @@ final class AlterTableMutation implements ShadowMutation
         }
     }
 
+    /**
+     * @throws ColumnNotFoundException
+     */
     private function applyChangeColumn(CreateStatement $createStmt, AlterOperation $op, ShadowStore $store, TableDefinition $definition): void
     {
         $oldColumnName = $this->getColumnName($op);
@@ -285,6 +310,9 @@ final class AlterTableMutation implements ShadowMutation
         }
     }
 
+    /**
+     * @throws ColumnNotFoundException
+     */
     private function applyRenameColumn(CreateStatement $createStmt, AlterOperation $op, ShadowStore $store, TableDefinition $definition): void
     {
         $oldColumnName = $this->getColumnName($op);

@@ -15,12 +15,14 @@ use ZtdQuery\Platform\Sqlite\SqliteReadOnlyDiagnosticStatement;
 final class SqliteReadOnlyDiagnosticStatementTest extends TestCase
 {
     #[DataProvider('providerStatement')]
-    public function testClassifiesOnlySafeSqliteDiagnostics(string $sql, bool $expected): void
+    public function testIsSafeClassifiesOnlySafeSqliteDiagnostics(string $sql, bool $expected): void
     {
         self::assertSame($expected, SqliteReadOnlyDiagnosticStatement::isSafe($sql));
     }
 
-    /** @return iterable<string, array{string, bool}> */
+    /**
+     * @return iterable<string, array{string, bool}>
+     */
     public static function providerStatement(): iterable
     {
         yield 'explain select' => ['EXPLAIN SELECT * FROM users', true];

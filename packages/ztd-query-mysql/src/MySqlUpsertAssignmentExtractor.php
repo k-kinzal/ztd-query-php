@@ -8,9 +8,14 @@ use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The my sql upsert assignment extractor.
+ */
 final class MySqlUpsertAssignmentExtractor
 {
-    /** @return array<string, string> */
+    /**
+     * @return array<string, string>
+     */
     public function extract(string $sql): array
     {
         $stream = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create());
@@ -30,6 +35,12 @@ final class MySqlUpsertAssignmentExtractor
         return $assignments;
     }
 
+    /**
+     * Incoming alias.
+     *
+     * @param string $sql
+     * @return ?string
+     */
     public function incomingAlias(string $sql): ?string
     {
         $stream = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create());

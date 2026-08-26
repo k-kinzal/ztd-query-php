@@ -18,6 +18,9 @@ use ZtdQuery\Platform\MySql\MySqlRewriter;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Shadow\ShadowStore;
 
+/**
+ * The execution target.
+ */
 final class ExecutionTarget
 {
     private Generator $faker;
@@ -27,6 +30,17 @@ final class ExecutionTarget
     private NoSyntaxErrorOnRewriteChecker $syntaxChecker;
     private ShadowStoreConsistencyChecker $storeChecker;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param Generator $faker
+     * @param MySqlProvider $provider
+     * @param PDO $rawPdo
+     * @param ZtdPdo $ztdPdo
+     * @param ShadowStore $shadowStore
+     * @param MySqlRewriter $rewriter
+     * @param MySqlQueryGuard $guard
+     */
     public function __construct(
         Generator $faker,
         MySqlProvider $provider,
@@ -56,6 +70,9 @@ final class ExecutionTarget
         $this->storeChecker = new ShadowStoreConsistencyChecker($shadowStore);
     }
 
+    /**
+     * @throws Error
+     */
     public function __invoke(string $input): void
     {
         $seed = crc32(str_pad($input, 4, "\0"));

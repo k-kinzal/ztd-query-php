@@ -12,6 +12,9 @@ use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The pg sql upsert expression parser.
+ */
 final class PgSqlUpsertExpressionParser
 {
     private string $sql = '';
@@ -22,6 +25,13 @@ final class PgSqlUpsertExpressionParser
 
     private int $index = 0;
 
+    /**
+     * Reads.
+     *
+     * @param string $sql
+     * @param string $tableName
+     * @return UpsertExpression
+     */
     public function parse(string $sql, string $tableName): UpsertExpression
     {
         $this->sql = $sql;
@@ -36,6 +46,13 @@ final class PgSqlUpsertExpressionParser
         return $expression;
     }
 
+    /**
+     * Reads if supported.
+     *
+     * @param string $sql
+     * @param string $tableName
+     * @return ?UpsertExpression
+     */
     public function parseIfSupported(string $sql, string $tableName): ?UpsertExpression
     {
         try {

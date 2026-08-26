@@ -15,7 +15,7 @@ use ZtdQuery\Platform\Postgres\PgSqlViewDefinitionParser;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
 final class PgSqlViewDefinitionParserTest extends TestCase
 {
-    public function testParsesAQueryUsingPostgreSqlRelationRules(): void
+    public function testFromQueryParsesAQueryUsingPostgreSqlRelationRules(): void
     {
         $definition = (new PgSqlViewDefinitionParser())->fromQuery(
             " SELECT u.id FROM public.\"users\" u JOIN roles r ON r.id = u.role_id; \n",
@@ -25,7 +25,7 @@ final class PgSqlViewDefinitionParserTest extends TestCase
         self::assertSame(['users', 'roles'], $definition->dependencies);
     }
 
-    public function testExtractsTheQueryFromAPostgreSqlCreateViewStatement(): void
+    public function testFromCreateStatementExtractsTheQueryFromAPostgreSqlCreateViewStatement(): void
     {
         $definition = (new PgSqlViewDefinitionParser())->fromCreateStatement(
             'CREATE OR REPLACE VIEW "active_users" AS SELECT * FROM "users" WHERE active = TRUE;',

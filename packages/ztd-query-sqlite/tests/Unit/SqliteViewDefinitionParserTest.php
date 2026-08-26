@@ -15,7 +15,7 @@ use ZtdQuery\Platform\Sqlite\SqliteViewDefinitionParser;
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
 final class SqliteViewDefinitionParserTest extends TestCase
 {
-    public function testParsesAQueryUsingSqliteRelationRules(): void
+    public function testFromQueryParsesAQueryUsingSqliteRelationRules(): void
     {
         $definition = (new SqliteViewDefinitionParser())->fromQuery(
             " SELECT u.id FROM main.[users] u JOIN roles r ON r.id = u.role_id; \n",
@@ -25,7 +25,7 @@ final class SqliteViewDefinitionParserTest extends TestCase
         self::assertSame(['users', 'roles'], $definition->dependencies);
     }
 
-    public function testExtractsTheQueryFromASqliteCreateViewStatement(): void
+    public function testFromCreateStatementExtractsTheQueryFromASqliteCreateViewStatement(): void
     {
         $definition = (new SqliteViewDefinitionParser())->fromCreateStatement(
             'CREATE TEMP VIEW [active_users] AS SELECT * FROM [users] WHERE active = 1;',

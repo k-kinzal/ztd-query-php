@@ -13,5 +13,11 @@ namespace ZtdQuery\Platform;
  */
 interface SqlPlaceholderEscaper
 {
+    /**
+     * Escape.
+     *
+     * @param string $sql
+     * @return string
+     */
     public function escape(string $sql): string;
 }

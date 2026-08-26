@@ -15,6 +15,12 @@ use ZtdQuery\Platform\IdentifierQuoter;
  */
 final class SqliteIdentifierQuoter implements IdentifierQuoter
 {
+    /**
+     * Quote.
+     *
+     * @param string $identifier
+     * @return string
+     */
     public function quote(string $identifier): string
     {
         $unquoted = $identifier;

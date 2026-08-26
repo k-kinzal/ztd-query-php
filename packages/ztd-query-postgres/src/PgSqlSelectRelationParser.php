@@ -8,9 +8,14 @@ use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The pg sql select relation parser.
+ */
 final class PgSqlSelectRelationParser
 {
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     */
     public function fromClauses(string $sql): array
     {
         $tokens = $this->tokens($sql);
@@ -42,7 +47,9 @@ final class PgSqlSelectRelationParser
         return $clauses;
     }
 
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     */
     public function tableNames(string $sql): array
     {
         $names = [];
@@ -56,7 +63,9 @@ final class PgSqlSelectRelationParser
         return array_values($names);
     }
 
-    /** @return list<array{name: string, start: int, unqualifiedStart: int, end: int}> */
+    /**
+     * @return list<array{name: string, start: int, unqualifiedStart: int, end: int}>
+     */
     public function references(string $sql): array
     {
         $tokens = $this->tokens($sql);
@@ -90,7 +99,9 @@ final class PgSqlSelectRelationParser
         return $references;
     }
 
-    /** @param list<string> $relationNames */
+    /**
+     * @param list<string> $relationNames
+     */
     public function unqualify(string $sql, array $relationNames): string
     {
         $targets = array_map(strtolower(...), $relationNames);

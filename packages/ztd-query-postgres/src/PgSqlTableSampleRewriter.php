@@ -6,11 +6,18 @@ namespace ZtdQuery\Platform\Postgres;
 
 use ZtdQuery\Exception\UnsupportedSqlException;
 
+/**
+ * The pg sql table sample rewriter.
+ */
 final class PgSqlTableSampleRewriter
 {
     private PgSqlTableSampleParser $parser;
     private PgSqlIdentifierQuoter $quoter;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     */
     public function __construct()
     {
         $this->parser = new PgSqlTableSampleParser();
@@ -19,6 +26,8 @@ final class PgSqlTableSampleRewriter
 
     /**
      * @param array<string, array<string, mixed>> $tables
+     *
+     * @throws UnsupportedSqlException
      */
     public function rewrite(string $sql, array $tables): string
     {

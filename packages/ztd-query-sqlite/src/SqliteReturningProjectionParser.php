@@ -10,8 +10,14 @@ use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The sqlite returning projection parser.
+ */
 final class SqliteReturningProjectionParser
 {
+    /**
+     * @throws UnsupportedSqlException
+     */
     public function parse(string $sql): ?ReturningProjection
     {
         $clause = SqlTokenStream::tokenize($sql, SqliteLexerProfile::create())->topLevelClause(['RETURNING']);

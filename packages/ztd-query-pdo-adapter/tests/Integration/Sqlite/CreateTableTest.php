@@ -9,9 +9,12 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
+use ZtdQuery\Connection\StatementInterface;
 
 /**
  * @requires extension pdo_sqlite
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 #[CoversNothing]
 #[Large]
@@ -31,7 +34,7 @@ final class CreateTableTest extends TestCase
 
         $stmt = $ztdPdo->query('SELECT * FROM users ORDER BY id');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt->fetchAll();
         self::assertCount(1, $ztdRows);
         self::assertEquals(1, $ztdRows[0]['id']);
@@ -53,7 +56,7 @@ final class CreateTableTest extends TestCase
 
         $stmt = $ztdPdo->query('SELECT * FROM users');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt->fetchAll();
         self::assertCount(1, $ztdRows);
     }

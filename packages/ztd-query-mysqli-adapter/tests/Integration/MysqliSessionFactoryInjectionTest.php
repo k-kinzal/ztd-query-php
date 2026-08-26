@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use Tests\Fixtures\MySqlContainer;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
+use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Platform\MySql\MySqlSessionFactory;
 
 /**
@@ -17,6 +18,8 @@ use ZtdQuery\Platform\MySql\MySqlSessionFactory;
  *
  * Verifies that ZtdMysqli works correctly when a SessionFactory
  * is explicitly injected via fromMysqli().
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 #[CoversNothing]
 #[Large]
@@ -36,7 +39,7 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
             self::assertNotFalse($result);
             self::assertInstanceOf(mysqli_result::class, $result);
 
-            /** @var list<array<string, mixed>> $rows */
+            /** @var list<Row> $rows */
             $rows = $result->fetch_all(MYSQLI_ASSOC);
             self::assertCount(0, $rows);
         } finally {
@@ -63,7 +66,7 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
             self::assertNotFalse($result);
             self::assertInstanceOf(mysqli_result::class, $result);
 
-            /** @var list<array<string, mixed>> $rows */
+            /** @var list<Row> $rows */
             $rows = $result->fetch_all(MYSQLI_ASSOC);
             self::assertCount(1, $rows);
             self::assertSame('Charlie', $rows[0]['name']);
@@ -91,7 +94,7 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
             self::assertNotFalse($result);
             self::assertInstanceOf(mysqli_result::class, $result);
 
-            /** @var list<array<string, mixed>> $rows */
+            /** @var list<Row> $rows */
             $rows = $result->fetch_all(MYSQLI_ASSOC);
             self::assertCount(2, $rows);
             self::assertSame('Alice', $rows[0]['name']);
@@ -125,7 +128,7 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
             $result = $stmt->get_result();
             self::assertNotFalse($result);
 
-            /** @var list<array<string, mixed>> $rows */
+            /** @var list<Row> $rows */
             $rows = $result->fetch_all(MYSQLI_ASSOC);
             self::assertCount(1, $rows);
             self::assertSame('Charlie', $rows[0]['name']);
@@ -168,7 +171,7 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
             self::assertNotFalse($resultDefault);
             self::assertInstanceOf(mysqli_result::class, $resultDefault);
 
-            /** @var list<array<string, mixed>> $rowsDefault */
+            /** @var list<Row> $rowsDefault */
             $rowsDefault = $resultDefault->fetch_all(MYSQLI_ASSOC);
             self::assertCount(0, $rowsDefault);
         } finally {

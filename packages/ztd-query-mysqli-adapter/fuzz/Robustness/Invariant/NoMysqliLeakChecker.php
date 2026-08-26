@@ -18,6 +18,9 @@ use ZtdQuery\Exception\TableAlreadyExistsException;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 
+/**
+ * The no mysqli leak checker.
+ */
 final class NoMysqliLeakChecker
 {
     /** @var array<int, int> */
@@ -39,6 +42,12 @@ final class NoMysqliLeakChecker
         $this->executor = $executor;
     }
 
+    /**
+     * Check.
+     *
+     * @param string $sql
+     * @return ?InvariantViolation
+     */
     public function check(string $sql): ?InvariantViolation
     {
         try {

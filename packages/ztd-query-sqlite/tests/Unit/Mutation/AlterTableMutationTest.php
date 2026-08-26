@@ -15,7 +15,7 @@ use ZtdQuery\Shadow\ShadowStore;
 #[CoversClass(AlterTableMutation::class)]
 final class AlterTableMutationTest extends TestCase
 {
-    public function testApplyReplacesDefinitionAndRowsAtSameName(): void
+    public function testResultSelectApplyReplacesDefinitionAndRowsAtSameName(): void
     {
         $registry = new TableDefinitionRegistry();
         $registry->register('people', new TableDefinition(['id'], ['id' => 'INTEGER'], ['id'], [], []));

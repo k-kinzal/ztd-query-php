@@ -180,7 +180,9 @@ final class SqliteSelectRelationParserTest extends TestCase
         );
     }
 
-    /** @param list<string> $expected */
+    /**
+     * @param list<string> $expected
+     */
     #[DataProvider('providerSqliteFromTerminators')]
     public function testStopsFromClauseAtEverySqliteBoundary(string $suffix, array $expected): void
     {
@@ -190,7 +192,9 @@ final class SqliteSelectRelationParserTest extends TestCase
         );
     }
 
-    /** @return iterable<string, array{string, list<string>}> */
+    /**
+     * @return iterable<string, array{string, list<string>}>
+     */
     public static function providerSqliteFromTerminators(): iterable
     {
         yield 'where' => ['WHERE active = 1', ['users']];

@@ -15,9 +15,13 @@ use mysqli;
 use mysqli_result;
 use mysqli_sql_exception;
 use ZtdQuery\Connection\Exception\DatabaseException;
+use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 
+/**
+ * @phpstan-import-type Row from StatementInterface
+ */
 final class InsertCorrectnessTarget
 {
     private MysqliCorrectnessHarness $harness;
@@ -25,6 +29,13 @@ final class InsertCorrectnessTarget
     private SchemaAwareSqlBuilder $sqlBuilder;
     private Generator $faker;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param MysqliCorrectnessHarness $harness
+     * @param SchemaAwareSqlBuilder $sqlBuilder
+     * @param Generator $faker
+     */
     public function __construct(
         MysqliCorrectnessHarness $harness,
         SchemaAwareSqlBuilder $sqlBuilder,
@@ -36,6 +47,11 @@ final class InsertCorrectnessTarget
         $this->faker = $faker;
     }
 
+    /**
+     * __invoke.
+     *
+     * @param string $input
+     */
     public function __invoke(string $input): void
     {
         $seed = crc32(str_pad($input, 4, "\0"));
@@ -72,12 +88,15 @@ final class InsertCorrectnessTarget
         }
     }
 
+    /**
+     * @throws Error
+     */
     private function compareTableState(SchemaDefinition $schema, int $seed): void
     {
         $rawRows = $this->fetchAll($this->harness->getRawMysqli(), $schema->name);
 
         $result = $this->harness->getZtdMysqli()->query("SELECT * FROM `{$schema->name}`");
-        /** @var array<int, array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $result instanceof mysqli_result ? $result->fetch_all(MYSQLI_ASSOC) : [];
 
         if (!$this->comparator->compareRows($rawRows, $ztdRows, $schema->primaryKeys)) {
@@ -92,7 +111,7 @@ final class InsertCorrectnessTarget
     }
 
     /**
-     * @return array<int, array<string, mixed>>
+     * @return list<Row>
      */
     private function fetchAll(mysqli $mysqli, string $table): array
     {
@@ -100,7 +119,7 @@ final class InsertCorrectnessTarget
         if (!$result instanceof mysqli_result) {
             return [];
         }
-        /** @var array<int, array<string, mixed>> $rows */
+        /** @var list<Row> $rows */
         $rows = $result->fetch_all(MYSQLI_ASSOC);
         return $rows;
     }

@@ -6,12 +6,14 @@ namespace ZtdQuery\Adapter\Pdo;
 
 use ArrayIterator;
 use Iterator;
+use Override;
 use PDO;
 use PDOStatement as NativePdoStatement;
 use ReflectionObject;
 use ReturnTypeWillChange;
 use stdClass;
 use ZtdQuery\Connection\Exception\DatabaseException;
+use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\ExecuteResult;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Session;
@@ -27,6 +29,8 @@ use ZtdQuery\Session;
  * - $session: Session for ZTD logic
  * - $plan: RewritePlan from prepare time (null when ZTD disabled)
  * - $result: Last execution result (temporary)
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 final class ZtdPdoStatement extends NativePdoStatement
 {
@@ -64,6 +68,15 @@ final class ZtdPdoStatement extends NativePdoStatement
     /** @var array{mode: int, args: array<mixed>}|null */
     private ?array $fetchMode = null;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param NativePdoStatement $statement
+     * @param Session $session
+     * @param ?RewritePlan $plan
+     * @param ?PdoPreparedExecution $preparedExecution
+     * @param int $defaultFetchMode
+     */
     public function __construct(
         NativePdoStatement $statement,
         Session $session,
@@ -81,6 +94,7 @@ final class ZtdPdoStatement extends NativePdoStatement
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function bindValue(int|string $param, mixed $value, int $type = PDO::PARAM_STR): bool
     {
         $this->boundValues[$param] = ['value' => $value, 'type' => $type];
@@ -91,6 +105,7 @@ final class ZtdPdoStatement extends NativePdoStatement
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function bindParam(
         int|string $param,
         mixed &$var,
@@ -111,6 +126,7 @@ final class ZtdPdoStatement extends NativePdoStatement
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function bindColumn(
         int|string $column,
         mixed &$var,
@@ -126,6 +142,7 @@ final class ZtdPdoStatement extends NativePdoStatement
      *
      * @param array<int|string, mixed>|null $params
      */
+    #[Override]
     public function execute(?array $params = null): bool
     {
         $this->result = null;
@@ -156,7 +173,11 @@ final class ZtdPdoStatement extends NativePdoStatement
         return $this->executeStatement($params);
     }
 
-    /** @param array<int|string, mixed>|null $params */
+    /**
+     * @param array<int|string, mixed>|null $params
+     *
+     * @throws ZtdPdoException
+     */
     private function executeAndPostProcess(RewritePlan $plan, ?array $params): bool
     {
         if (!$this->executeStatement($params)) {
@@ -205,6 +226,7 @@ final class ZtdPdoStatement extends NativePdoStatement
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function fetch(int $mode = PDO::FETCH_DEFAULT, int $cursorOrientation = PDO::FETCH_ORI_NEXT, int $cursorOffset = 0): mixed
     {
         if ($this->result !== null && !$this->result->isPassthrough()) {
@@ -229,6 +251,7 @@ final class ZtdPdoStatement extends NativePdoStatement
      *
      * @return array<int, mixed>
      */
+    #[Override]
     public function fetchAll(int $mode = PDO::FETCH_DEFAULT, mixed ...$args): array
     {
         if ($this->result !== null && !$this->result->isPassthrough()) {
@@ -265,6 +288,7 @@ final class ZtdPdoStatement extends NativePdoStatement
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function fetchColumn(int $column = 0): mixed
     {
         if ($this->result !== null && !$this->result->isPassthrough()) {
@@ -289,6 +313,7 @@ final class ZtdPdoStatement extends NativePdoStatement
      * @param array<mixed> $constructorArgs
      * @return T|false
      */
+    #[Override]
     public function fetchObject(?string $class = 'stdClass', array $constructorArgs = []): object|false
     {
         /** @var class-string<T> $resolvedClass */
@@ -328,6 +353,7 @@ final class ZtdPdoStatement extends NativePdoStatement
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function rowCount(): int
     {
         if ($this->result !== null && !$this->result->isPassthrough()) {
@@ -340,6 +366,7 @@ final class ZtdPdoStatement extends NativePdoStatement
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function closeCursor(): bool
     {
         return $this->statement->closeCursor();
@@ -349,6 +376,7 @@ final class ZtdPdoStatement extends NativePdoStatement
      * {@inheritDoc}
      */
     #[ReturnTypeWillChange]
+    #[Override]
     public function setFetchMode(int $mode, mixed ...$args): bool
     {
         $this->fetchMode = ['mode' => $mode, 'args' => $args];
@@ -359,6 +387,7 @@ final class ZtdPdoStatement extends NativePdoStatement
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function errorCode(): string
     {
         return $this->statement->errorCode() ?? '';
@@ -369,6 +398,7 @@ final class ZtdPdoStatement extends NativePdoStatement
      *
      * @return array{0: string|null, 1: int|null, 2: string|null}
      */
+    #[Override]
     public function errorInfo(): array
     {
         /** @var array{0: string|null, 1: int|null, 2: string|null} */
@@ -378,6 +408,7 @@ final class ZtdPdoStatement extends NativePdoStatement
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function getAttribute(int $name): mixed
     {
         return $this->statement->getAttribute($name);
@@ -386,6 +417,7 @@ final class ZtdPdoStatement extends NativePdoStatement
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function setAttribute(int $attribute, mixed $value): bool
     {
         return $this->statement->setAttribute($attribute, $value);
@@ -394,6 +426,7 @@ final class ZtdPdoStatement extends NativePdoStatement
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function columnCount(): int
     {
         return $this->statement->columnCount();
@@ -402,6 +435,7 @@ final class ZtdPdoStatement extends NativePdoStatement
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function getColumnMeta(int $column): array|false
     {
         return $this->statement->getColumnMeta($column);
@@ -410,6 +444,7 @@ final class ZtdPdoStatement extends NativePdoStatement
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function nextRowset(): bool
     {
         return $this->statement->nextRowset();
@@ -419,6 +454,7 @@ final class ZtdPdoStatement extends NativePdoStatement
      * {@inheritDoc}
      */
     #[ReturnTypeWillChange]
+    #[Override]
     public function debugDumpParams(): bool|null
     {
         $this->statement->debugDumpParams();
@@ -429,6 +465,7 @@ final class ZtdPdoStatement extends NativePdoStatement
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function getIterator(): Iterator
     {
         if ($this->result !== null && !$this->result->isPassthrough() && $this->result->hasResultSet()) {
@@ -445,7 +482,7 @@ final class ZtdPdoStatement extends NativePdoStatement
     }
 
     /**
-     * @param array<string, mixed> $row
+     * @param Row $row
      */
     private function formatBufferedRow(array $row, int $mode): mixed
     {
@@ -468,7 +505,7 @@ final class ZtdPdoStatement extends NativePdoStatement
     }
 
     /**
-     * @param array<string, mixed> $row
+     * @param Row $row
      * @return array<int|string, mixed>
      */
     private function both(array $row): array
