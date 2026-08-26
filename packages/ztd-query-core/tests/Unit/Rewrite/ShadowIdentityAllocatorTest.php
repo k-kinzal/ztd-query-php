@@ -194,4 +194,87 @@ final class ShadowIdentityAllocatorTest extends TestCase
         $allocator->beginProjection();
         self::assertSame(['id' => 2], $allocator->allocateMissing('users', $strategies, ['name'], [['id' => 1]]));
     }
+
+    public function testBeginProjectionStartsFromWhatWasCommitted(): void
+    {
+        $allocator = new ShadowIdentityAllocator();
+        $strategies = ['id' => IdentityGenerationStrategy::Sequence];
+        $allocator->beginProjection();
+        $allocator->allocateMissing('order', $strategies, [], []);
+        $allocator->commitProjection();
+
+        $allocator->beginProjection();
+
+        self::assertSame(['id' => 2], $allocator->allocateMissing('order', $strategies, [], []));
+    }
+
+    public function testBeginProjectionDiscardsWhatAProjectionNeverCommitted(): void
+    {
+        $allocator = new ShadowIdentityAllocator();
+        $strategies = ['id' => IdentityGenerationStrategy::Sequence];
+        $allocator->beginProjection();
+        $allocator->allocateMissing('order', $strategies, [], []);
+
+        $allocator->beginProjection();
+
+        self::assertSame(['id' => 1], $allocator->allocateMissing('order', $strategies, [], []));
+    }
+
+    public function testAllocateMissingLeavesAColumnTheStatementWroteAlone(): void
+    {
+        $allocator = new ShadowIdentityAllocator();
+        $strategies = ['id' => IdentityGenerationStrategy::Sequence];
+
+        self::assertSame([], $allocator->allocateMissing('order', $strategies, ['id'], []));
+    }
+
+    public function testAllocateSelectStartsAnswersTheFirstNumberTheQueryWouldTake(): void
+    {
+        $allocator = new ShadowIdentityAllocator();
+        $strategies = ['id' => IdentityGenerationStrategy::MaxValue];
+
+        self::assertSame(
+            ['id' => 4],
+            $allocator->allocateSelectStarts('order', $strategies, [], [['id' => 3]]),
+        );
+    }
+
+    public function testAllocateSelectStartsLeavesAColumnTheStatementWroteAlone(): void
+    {
+        $allocator = new ShadowIdentityAllocator();
+        $strategies = ['id' => IdentityGenerationStrategy::Sequence];
+
+        self::assertSame([], $allocator->allocateSelectStarts('order', $strategies, ['id'], []));
+    }
+
+    public function testNextAfterExistingRowsGoesPastTheLargestNumberAlreadyThere(): void
+    {
+        self::assertSame(8, (new ShadowIdentityAllocator())->nextAfterExistingRows(
+            'id',
+            [['id' => 3], ['id' => 7], ['id' => 5]],
+            1,
+        ));
+    }
+
+    public function testNextAfterExistingRowsKeepsTheNumberItWasGivenWhereNothingIsLarger(): void
+    {
+        self::assertSame(9, (new ShadowIdentityAllocator())->nextAfterExistingRows('id', [['id' => 3]], 9));
+    }
+
+    public function testIntegerValueReadsANumberHoweverTheDriverSpelledIt(): void
+    {
+        $allocator = new ShadowIdentityAllocator();
+
+        self::assertSame(7, $allocator->integerValue(7));
+        self::assertSame(7, $allocator->integerValue('7'));
+    }
+
+    public function testIntegerValueIsNothingForAValueThatIsNotAWholeNumber(): void
+    {
+        $allocator = new ShadowIdentityAllocator();
+
+        self::assertNull($allocator->integerValue('seven'));
+        self::assertNull($allocator->integerValue(null));
+        self::assertNull($allocator->integerValue(1.5));
+    }
 }

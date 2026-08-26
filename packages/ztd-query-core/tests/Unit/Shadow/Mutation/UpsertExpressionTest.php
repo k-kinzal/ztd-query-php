@@ -14,9 +14,6 @@ use ZtdQuery\Shadow\Mutation\UpsertColumnSource;
 use ZtdQuery\Shadow\Mutation\UpsertExpression;
 use ZtdQuery\Shadow\Mutation\UpsertExpressionKind;
 
-/**
- * The upsert expression test.
- */
 #[CoversClass(UpsertExpression::class)]
 #[CoversClass(UpsertColumnSource::class)]
 #[UsesClass(UnsupportedSqlException::class)]
@@ -26,7 +23,7 @@ final class UpsertExpressionTest extends TestCase
      * Test evaluates typed expression tree.
      *
      */
-    public function testEvaluatesTypedExpressionTree(): void
+    public function testLiteralAnswersTheValueTheStatementWrote(): void
     {
         $expression = UpsertExpression::binary(
             UpsertExpressionKind::Add,
@@ -74,7 +71,7 @@ final class UpsertExpressionTest extends TestCase
      * @param UpsertExpressionKind $kind
      */
     #[DataProvider('binaryProvider')]
-    public function testEvaluatesBinaryKinds(
+    public function testBinaryAnswersWhatTheOperatorMakesOfItsTwoOperands(
         UpsertExpressionKind $kind,
         mixed $left,
         mixed $right,
@@ -93,7 +90,7 @@ final class UpsertExpressionTest extends TestCase
      * Test evaluates unary kinds and matches sql truth.
      *
      */
-    public function testEvaluatesUnaryKindsAndMatchesSqlTruth(): void
+    public function testMatchesIsTrueOnlyWhereTheExpressionDefinitelyHolds(): void
     {
         self::assertSame(
             -5,
@@ -269,7 +266,7 @@ final class UpsertExpressionTest extends TestCase
      * Test rejects invalid tree shapes.
      *
      */
-    public function testRejectsInvalidTreeShapes(): void
+    public function testUnaryRefusesAnOperatorNotWrittenOverASingleOperand(): void
     {
         $this->expectException(InvalidDefinitionException::class);
 
@@ -280,7 +277,7 @@ final class UpsertExpressionTest extends TestCase
      * Test rejects empty column.
      *
      */
-    public function testRejectsEmptyColumn(): void
+    public function testColumnRefusesAnEmptyName(): void
     {
         $this->expectException(InvalidDefinitionException::class);
 
@@ -291,7 +288,7 @@ final class UpsertExpressionTest extends TestCase
      * Test rejects unknown column.
      *
      */
-    public function testRejectsUnknownColumn(): void
+    public function testOperandRefusesAColumnTheRowDoesNotCarry(): void
     {
         try {
             UpsertExpression::column(UpsertColumnSource::Existing, 'missing')->evaluate([], [], 'items');
