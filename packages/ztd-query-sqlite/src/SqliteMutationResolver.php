@@ -817,7 +817,10 @@ final class SqliteMutationResolver
     }
 
     /**
-     * Answers a map with one key taken out, however it was spelled.
+     * Answers a map with one key taken out.
+     *
+     * The key is the one the table declared, which is what the caller has
+     * already resolved the statement's spelling to.
      *
      * @param array<string, T> $map The map
      * @param string $removed The removed
@@ -881,7 +884,10 @@ final class SqliteMutationResolver
     }
 
     /**
-     * Answers a map with one key renamed, however it was spelled.
+     * Answers a map with one key renamed.
+     *
+     * The key is the one the table declared, which is what the caller has
+     * already resolved the statement's spelling to.
      *
      * @param array<string, T> $map The map
      * @param string $old The old

@@ -216,4 +216,12 @@ final class SqliteNativeUpsertProjectorTest extends TestCase
     {
         self::assertSame('"e"."qty"', (new SqliteNativeUpsertProjector())->qualified('e', 'qty'));
     }
+    public function testProjectLeavesAStatementWithNothingToUpdateAlone(): void
+    {
+        self::assertSame(
+            'SELECT 1',
+            (new SqliteNativeUpsertProjector())->project('SELECT 1', 'items', ['qty'], [], []),
+        );
+    }
+
 }

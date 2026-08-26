@@ -11,12 +11,14 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 use ZtdQuery\Platform\Sqlite\SqliteIndexHintStripper;
+use ZtdQuery\Platform\Sqlite\SqliteLexerProfile;
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
+use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(SqliteIndexHintStripper::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
+#[UsesClass(SqliteLexerProfile::class)]
 final class SqliteIndexHintStripperTest extends TestCase
 {
     public function testStripsIndexedByFromShadowSource(): void
@@ -129,4 +131,68 @@ final class SqliteIndexHintStripperTest extends TestCase
 
         self::assertSame(2, $method->invoke(null, $tokens, 0));
     }
+    public function testHintRangeAnswersWhereAnIndexHintBeginsAndEnds(): void
+    {
+        $tokens = SqlTokenStream::tokenize('FROM t INDEXED BY i', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertNotNull(SqliteIndexHintStripper::hintRange($tokens, 2));
+    }
+
+    public function testHintRangeIsNothingWhereNoHintIsWritten(): void
+    {
+        $tokens = SqlTokenStream::tokenize('FROM t WHERE a = 1', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertNull(SqliteIndexHintStripper::hintRange($tokens, 2));
+    }
+
+    public function testTokenIndexAtOrAfterAnswersTheTokenAfterTheOneEndingThere(): void
+    {
+        $tokens = SqlTokenStream::tokenize('SELECT a', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertSame(1, SqliteIndexHintStripper::tokenIndexAtOrAfter($tokens, 6));
+    }
+
+    public function testSkipAliasCarriesOnPastTheNameATableWasGiven(): void
+    {
+        $tokens = SqlTokenStream::tokenize('FROM t AS x WHERE a = 1', SqliteLexerProfile::create())
+            ->significantTokens();
+
+        self::assertSame(4, SqliteIndexHintStripper::skipAlias($tokens, 2));
+    }
+
+    public function testIsSourceBoundaryReportsAWordThatEndsTheTableAndItsAlias(): void
+    {
+        $tokens = SqlTokenStream::tokenize('WHERE', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertTrue(SqliteIndexHintStripper::isSourceBoundary($tokens[0]));
+    }
+
+    public function testIsSourceBoundaryIsFalseForAName(): void
+    {
+        $tokens = SqlTokenStream::tokenize('t', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertFalse(SqliteIndexHintStripper::isSourceBoundary($tokens[0]));
+    }
+
+    public function testIdentifierEndIndexAnswersWhereTheNameEnds(): void
+    {
+        $tokens = SqlTokenStream::tokenize('a.b', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertSame(1, SqliteIndexHintStripper::identifierEndIndex($tokens, 0));
+    }
+
+    public function testIdentifierEndIndexReadsABracketedNameToItsClosingBracket(): void
+    {
+        $tokens = SqlTokenStream::tokenize('[a b] c', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertNotNull(SqliteIndexHintStripper::identifierEndIndex($tokens, 0));
+    }
+
+    public function testIdentifierEndIndexIsNothingWhereNoNameIsWritten(): void
+    {
+        $tokens = SqlTokenStream::tokenize('1', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertNull(SqliteIndexHintStripper::identifierEndIndex($tokens, 0));
+    }
+
 }
