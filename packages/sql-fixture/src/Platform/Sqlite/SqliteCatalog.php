@@ -118,9 +118,9 @@ final class SqliteCatalog
      *
      * @param string|null $written Default as the pragma reported it
      *
-     * @return mixed The default, or null when none was declared
+     * @return int|float|string|null The default, or null when none was declared
      */
-    public function defaultValueOf(?string $written): mixed
+    public function defaultValueOf(?string $written): int|float|string|null
     {
         if ($written === null || strtoupper($written) === 'NULL') {
             return null;

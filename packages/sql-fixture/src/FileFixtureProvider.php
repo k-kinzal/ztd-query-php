@@ -15,6 +15,7 @@ use SqlFixture\TypeMapper\TypeMapperInterface;
 
 /**
  * Faker provider that generates fixtures from local DDL files.
+ * @phpstan-import-type FixtureRow from TypeMapperInterface
  */
 class FileFixtureProvider extends Base
 {
@@ -47,9 +48,11 @@ class FileFixtureProvider extends Base
      *
      * @template T of object
      * @param string $tableName Table name (e.g., "users")
-     * @param array<string, mixed> $overrides Override values
+     * @param array<array-key, mixed> $overrides Columns the caller fixes, instead of generating them
      * @param class-string<T>|null $className Deserialization target class
-     * @return ($className is null ? array<string, mixed> : T)
+     * @return ($className is null ? FixtureRow : T) The row, or the object it was hydrated into
+     *
+     * @throws RuntimeException When the directory names no such table
      */
     public function fixture(
         string $tableName,

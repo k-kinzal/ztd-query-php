@@ -9,6 +9,14 @@ use Testcontainers\Containers\GenericContainer\GenericContainer;
 use Testcontainers\Containers\WaitStrategy\PDO\MySQLDSN;
 use Testcontainers\Containers\WaitStrategy\PDO\PDOConnectWaitStrategy;
 
+/**
+ * Starts the MySQL release the fuzz run is exercised against.
+ *
+ * A fuzz target that generates SQL from one release's grammar has to run it
+ * against that release: a statement MySQL 8.4 accepts is not necessarily one
+ * an older server parses, and a mismatch would report the server's age as a
+ * bug in this package.
+ */
 final class MySql84Container extends GenericContainer
 {
     /**

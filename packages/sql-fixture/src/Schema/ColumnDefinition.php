@@ -24,7 +24,7 @@ final class ColumnDefinition
         public readonly ?int $scale = null,
         public readonly bool $nullable = true,
         public readonly bool $unsigned = false,
-        public readonly mixed $default = null,
+        public readonly int|float|string|bool|null $default = null,
         public readonly bool $autoIncrement = false,
         public readonly bool $generated = false,
         public readonly ?array $enumValues = null,

@@ -2235,7 +2235,7 @@ final class MySqlTypeMapperTest extends TestCase
         $spy = SpyGenerator::create();
         $mapper = new MySqlTypeMapper();
         $mapper->generate($spy, new ColumnDefinition('col', 'TEXT', nullable: false));
-        self::assertSame([2, true], $spy->methodCalls['paragraphs'][0]);
+        self::assertSame([2], $spy->methodCalls['paragraphs'][0]);
     }
 
     #[Test]
@@ -2244,7 +2244,7 @@ final class MySqlTypeMapperTest extends TestCase
         $spy = SpyGenerator::create();
         $mapper = new MySqlTypeMapper();
         $mapper->generate($spy, new ColumnDefinition('col', 'MEDIUMTEXT', nullable: false));
-        self::assertSame([3, true], $spy->methodCalls['paragraphs'][0]);
+        self::assertSame([3], $spy->methodCalls['paragraphs'][0]);
     }
 
     #[Test]
@@ -2253,7 +2253,7 @@ final class MySqlTypeMapperTest extends TestCase
         $spy = SpyGenerator::create();
         $mapper = new MySqlTypeMapper();
         $mapper->generate($spy, new ColumnDefinition('col', 'LONGTEXT', nullable: false));
-        self::assertSame([5, true], $spy->methodCalls['paragraphs'][0]);
+        self::assertSame([5], $spy->methodCalls['paragraphs'][0]);
     }
 
     #[Test]

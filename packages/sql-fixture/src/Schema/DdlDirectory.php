@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlFixture\Schema;
 
 use RuntimeException;
-use Throwable;
 
 /**
  * Reads every table declared by the `.sql` files in a directory.
@@ -82,7 +81,7 @@ final class DdlDirectory
 
         try {
             return $this->parser->parse($withoutComments);
-        } catch (Throwable) {
+        } catch (SchemaParseException) {
             return null;
         }
     }

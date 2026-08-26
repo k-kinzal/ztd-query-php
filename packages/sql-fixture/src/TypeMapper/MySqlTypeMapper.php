@@ -20,7 +20,7 @@ final class MySqlTypeMapper implements TypeMapperInterface
         $this->mapper = new PlatformMySqlTypeMapper();
     }
 
-    public function generate(Generator $faker, ColumnDefinition $column): mixed
+    public function generate(Generator $faker, ColumnDefinition $column): int|float|string|bool|null
     {
         return $this->mapper->generate($faker, $column);
     }

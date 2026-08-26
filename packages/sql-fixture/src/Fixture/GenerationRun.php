@@ -6,6 +6,7 @@ namespace SqlFixture\Fixture;
 
 use SqlFixture\Plan\FixturePlan;
 use SqlFixture\Schema\TableSchema;
+use SqlFixture\TypeMapper\TypeMapperInterface;
 
 /**
  * The rows produced while one plan is being walked, and what was learnt about
@@ -14,10 +15,13 @@ use SqlFixture\Schema\TableSchema;
  * Whether a table reads back as a list is decided by how the walk reached it,
  * not by the relation on its own: the table a plan is about is one row even
  * when something else references it.
+ *
+ * @phpstan-import-type FixtureRow from TypeMapperInterface
+ * @phpstan-import-type FixtureValue from TypeMapperInterface
  */
 final class GenerationRun
 {
-    /** @var array<string, list<array<string, mixed>>> */
+    /** @var array<string, list<FixtureRow>> */
     private array $rows = [];
 
     /** @var array<string, bool> Table => reads back as a list */
@@ -91,9 +95,9 @@ final class GenerationRun
      * at reads back the way fixture() has always returned one, with the
      * auto-increment column absent because the database supplies it.
      *
-     * @param array<string, mixed> $row
+     * @param FixtureRow $row
      * @param list<string> $referencedColumns Columns a relation reads off this table
-     * @return array<string, mixed>
+     * @return FixtureRow
      */
     public function record(TableSchema $schema, array $row, array $referencedColumns = []): array
     {
@@ -116,7 +120,7 @@ final class GenerationRun
      * The row most recently kept for a table, which is the one a relation
      * walked into it will read its key from.
      *
-     * @return array<string, mixed>
+     * @return FixtureRow
      */
     public function lastRow(string $table): array
     {

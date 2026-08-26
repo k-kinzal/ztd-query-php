@@ -33,11 +33,11 @@ final class SqliteColumnSample
      * @param Generator $faker Source of every choice
      * @param ColumnDefinition $column Column the value is for
      *
-     * @return mixed A value of that kind
+     * @return int|float|string A value of that kind
      *
      * @throws RandomException When a blob column is asked for and the system has no source of randomness
      */
-    public function of(Generator $faker, ColumnDefinition $column): mixed
+    public function of(Generator $faker, ColumnDefinition $column): int|float|string
     {
         return match (SqliteAffinity::of($column->type)) {
             SqliteAffinity::Integer => $this->integer($faker, $column),
@@ -99,9 +99,9 @@ final class SqliteColumnSample
         /** @var string $written */
         $written = match (true) {
             str_contains($type, 'TINYTEXT') => substr($faker->text(255), 0, 255),
-            str_contains($type, 'MEDIUMTEXT') => $faker->paragraphs(3, true),
-            str_contains($type, 'LONGTEXT'), str_contains($type, 'CLOB') => $faker->paragraphs(5, true),
-            default => $faker->paragraphs(2, true),
+            str_contains($type, 'MEDIUMTEXT') => $this->paragraphs($faker, 3),
+            str_contains($type, 'LONGTEXT'), str_contains($type, 'CLOB') => $this->paragraphs($faker, 5),
+            default => $this->paragraphs($faker, 2),
         };
 
         return $written;
@@ -154,9 +154,9 @@ final class SqliteColumnSample
      * @param Generator $faker Source of the choice
      * @param ColumnDefinition $column Column the value is for
      *
-     * @return mixed A value the schema author would expect
+     * @return int|float|string A value the schema author would expect
      */
-    public function numeric(Generator $faker, ColumnDefinition $column): mixed
+    public function numeric(Generator $faker, ColumnDefinition $column): int|float|string
     {
         $type = strtoupper($column->type);
 
@@ -186,5 +186,26 @@ final class SqliteColumnSample
         $max = (float) pow(10, $precision - $scale) - 1;
 
         return $faker->randomFloat($scale, -$max, $max);
+    }
+
+    /**
+     * Draws several paragraphs as one block of text.
+     *
+     * Faker answers either the list of paragraphs or the joined text depending
+     * on a flag, so the joining is done here, where the result is known to be
+     * text rather than a list of it.
+     *
+     * @param Generator $faker Source of the text
+     * @param int $count How many paragraphs to draw
+     *
+     * @return string The paragraphs, separated by blank lines
+     */
+    public function paragraphs(Generator $faker, int $count): string
+    {
+        $paragraphs = $faker->paragraphs($count);
+
+        return is_array($paragraphs)
+            ? implode("\n\n", array_filter($paragraphs, 'is_string'))
+            : $paragraphs;
     }
 }

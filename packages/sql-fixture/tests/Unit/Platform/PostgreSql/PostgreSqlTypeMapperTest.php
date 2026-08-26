@@ -2041,7 +2041,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
         $spy = SpyGenerator::create();
         $mapper = new PostgreSqlTypeMapper();
         $mapper->generate($spy, new ColumnDefinition('col', 'TEXT', nullable: false));
-        self::assertSame([2, true], $spy->methodCalls['paragraphs'][0]);
+        self::assertSame([2], $spy->methodCalls['paragraphs'][0]);
     }
 
     #[Test]

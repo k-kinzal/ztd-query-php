@@ -19,6 +19,7 @@ use SqlFixture\TypeMapper\TypeMapperInterface;
  *
  * Automatically detects the database driver (MySQL, SQLite) and uses
  * the appropriate schema fetcher and type mapper.
+ * @phpstan-import-type FixtureRow from TypeMapperInterface
  */
 class DatabaseFixtureProvider extends Base
 {
@@ -54,9 +55,9 @@ class DatabaseFixtureProvider extends Base
      *
      * @template T of object
      * @param string $tableName Table name (e.g., "users" or "mydb.users")
-     * @param array<string, mixed> $overrides Override values
+     * @param array<array-key, mixed> $overrides Columns the caller fixes, instead of generating them
      * @param class-string<T>|null $className Deserialization target class
-     * @return ($className is null ? array<string, mixed> : T)
+     * @return ($className is null ? FixtureRow : T) The row, or the object it was hydrated into
      */
     public function fixture(
         string $tableName,

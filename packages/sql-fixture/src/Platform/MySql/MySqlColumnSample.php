@@ -44,12 +44,12 @@ final class MySqlColumnSample
      * @param Generator $faker Source of every choice
      * @param ColumnDefinition $column Column the value is for
      *
-     * @return mixed A value of the kind the type calls for
+     * @return int|float|string|bool|null A value of the kind the type calls for
      *
      * @throws LogicException When a chosen SET member is not a string
      * @throws RandomException When a binary column is asked for and the system has no source of randomness
      */
-    public function of(Generator $faker, ColumnDefinition $column): mixed
+    public function of(Generator $faker, ColumnDefinition $column): int|float|string|bool|null
     {
         return match (strtoupper($column->type)) {
             'TINYINT' => $this->numbers->tinyInt($faker, $column),
@@ -65,9 +65,9 @@ final class MySqlColumnSample
             'CHAR' => $this->text->char($faker, $column),
             'VARCHAR' => $this->text->varchar($faker, $column),
             'TINYTEXT' => substr($faker->text(255), 0, 255),
-            'TEXT' => $faker->paragraphs(2, true),
-            'MEDIUMTEXT' => $faker->paragraphs(3, true),
-            'LONGTEXT' => $faker->paragraphs(5, true),
+            'TEXT' => $this->paragraphs($faker, 2),
+            'MEDIUMTEXT' => $this->paragraphs($faker, 3),
+            'LONGTEXT' => $this->paragraphs($faker, 5),
 
             'BINARY' => $this->bytes->binary($column),
             'VARBINARY' => $this->bytes->varbinary($faker, $column),
@@ -83,10 +83,7 @@ final class MySqlColumnSample
             'TIMESTAMP' => $faker->dateTimeBetween('1970-01-01', '2038-01-19')->format('Y-m-d H:i:s'),
             'YEAR' => $faker->numberBetween(1901, 2155),
 
-            'JSON' => json_encode([
-                'key' => $faker->text(20),
-                'value' => $faker->numberBetween(1, 100),
-            ]),
+            'JSON' => $this->json($faker),
 
             'POINT', 'GEOMETRY' => $this->geometry->point($faker),
             'LINESTRING' => $this->geometry->lineString($faker),
@@ -100,5 +97,40 @@ final class MySqlColumnSample
 
             default => $faker->text(50),
         };
+    }
+
+    /**
+     * Draws several paragraphs as one block of text.
+     *
+     * Faker answers either the list of paragraphs or the joined text depending
+     * on a flag, so the joining is done here, where the result is known to be
+     * text rather than a list of it.
+     *
+     * @param Generator $faker Source of the text
+     * @param int $count How many paragraphs to draw
+     *
+     * @return string The paragraphs, separated by blank lines
+     */
+    public function paragraphs(Generator $faker, int $count): string
+    {
+        $paragraphs = $faker->paragraphs($count);
+
+        return is_array($paragraphs)
+            ? implode("\n\n", array_filter($paragraphs, 'is_string'))
+            : $paragraphs;
+    }
+
+    /**
+     * Writes an object the server will parse as JSON.
+     *
+     * @param Generator $faker Source of the choice
+     *
+     * @return string A JSON object, or an empty one when the text could not be encoded
+     */
+    public function json(Generator $faker): string
+    {
+        $encoded = json_encode(['key' => $faker->text(20), 'value' => $faker->numberBetween(1, 100)]);
+
+        return $encoded !== false ? $encoded : '{}';
     }
 }

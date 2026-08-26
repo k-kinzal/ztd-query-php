@@ -29,7 +29,9 @@ final class PlanPrinter
         $statements = [];
 
         foreach ($this->group($plan->relations) as $group) {
-            $statements[] = $this->printGroup($group);
+            if ($group !== []) {
+                $statements[] = $this->printGroup($group);
+            }
         }
 
         foreach ($this->standaloneTables($plan) as $table) {

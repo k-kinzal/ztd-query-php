@@ -48,16 +48,16 @@ final class PropertyHydration
     {
         try {
             $instance = (new ReflectionClass($className))->newInstanceWithoutConstructor();
+
+            foreach ($data as $column => $value) {
+                $property = $this->propertyFor($className, $column);
+                if ($property === null) {
+                    continue;
+                }
+                $property->setValue($instance, $this->cast->of($value, $property->getType()));
+            }
         } catch (ReflectionException $cause) {
             throw HydrationException::notInstantiable($className, $cause);
-        }
-
-        foreach ($data as $column => $value) {
-            $property = $this->propertyFor($className, $column);
-            if ($property === null) {
-                continue;
-            }
-            $property->setValue($instance, $this->cast->of($value, $property->getType()));
         }
 
         return $instance;
@@ -70,6 +70,8 @@ final class PropertyHydration
      * @param string $column Column name as the row spells it
      *
      * @return ReflectionProperty|null The property, or null when the object models no such column
+     *
+     * @throws ReflectionException When the class cannot be read
      */
     public function propertyFor(string $className, string $column): ?ReflectionProperty
     {

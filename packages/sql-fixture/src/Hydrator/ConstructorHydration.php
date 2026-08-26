@@ -36,34 +36,33 @@ final class ConstructorHydration
      *
      * @return T The object
      *
-     * @throws HydrationException When a parameter has no value, when the class cannot be built
+     * @throws HydrationException When a parameter has no value, or the class cannot be built
      */
     public function hydrate(string $className, array $data): object
     {
         $reflection = new ReflectionClass($className);
-        $constructor = $reflection->getConstructor();
-        $arguments = [];
-
-        foreach ($constructor?->getParameters() ?? [] as $parameter) {
-            $name = $parameter->getName();
-            $columnName = PropertyName::toSnakeCase($name);
-
-            if (array_key_exists($name, $data)) {
-                $value = $data[$name];
-            } elseif (array_key_exists($columnName, $data)) {
-                $value = $data[$columnName];
-            } elseif ($parameter->isDefaultValueAvailable()) {
-                $value = $parameter->getDefaultValue();
-            } elseif ($parameter->allowsNull()) {
-                $value = null;
-            } else {
-                throw HydrationException::constructorParameterMissing($reflection->getName(), $name);
-            }
-
-            $arguments[] = $this->cast->of($value, $parameter->getType());
-        }
 
         try {
+            $arguments = [];
+            foreach ($reflection->getConstructor()?->getParameters() ?? [] as $parameter) {
+                $name = $parameter->getName();
+                $columnName = PropertyName::toSnakeCase($name);
+
+                if (array_key_exists($name, $data)) {
+                    $value = $data[$name];
+                } elseif (array_key_exists($columnName, $data)) {
+                    $value = $data[$columnName];
+                } elseif ($parameter->isDefaultValueAvailable()) {
+                    $value = $parameter->getDefaultValue();
+                } elseif ($parameter->allowsNull()) {
+                    $value = null;
+                } else {
+                    throw HydrationException::constructorParameterMissing($reflection->getName(), $name);
+                }
+
+                $arguments[] = $this->cast->of($value, $parameter->getType());
+            }
+
             return $reflection->newInstanceArgs($arguments);
         } catch (ReflectionException $cause) {
             throw HydrationException::notInstantiable($className, $cause);

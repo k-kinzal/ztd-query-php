@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlFixture\Fixture;
 
 use InvalidArgumentException;
+use SqlFixture\TypeMapper\TypeMapperInterface;
 
 /**
  * What the caller asked for, for one table.
@@ -19,13 +20,17 @@ use InvalidArgumentException;
  *
  * An absent table is not described at all, and everything about it, count
  * included, is generated.
+ *
+ * @phpstan-import-type FixtureOverride from TypeMapperInterface
+ * @phpstan-import-type FixtureRow from TypeMapperInterface
+ * @phpstan-import-type FixtureValue from TypeMapperInterface
  */
 final class RowSpec
 {
     /**
      * @param int|null $count How many rows the caller asked for, or null when the count is free
-     * @param list<array<string, mixed>>|null $rows Overrides per row, or null when the caller described the rows together
-     * @param array<string, mixed> $sharedOverrides Overrides every row of the table carries
+     * @param list<FixtureRow>|null $rows Overrides per row, or null when the caller described the rows together
+     * @param FixtureRow $sharedOverrides Overrides every row of the table carries
      */
     public function __construct(
         public readonly ?int $count,
@@ -75,8 +80,7 @@ final class RowSpec
             return new self(count($rows), $rows, []);
         }
 
-        /** @var array<string, mixed> $spec */
-        return new self(null, null, $spec);
+        return new self(null, null, self::asRow($spec));
     }
 
     /**
@@ -84,7 +88,7 @@ final class RowSpec
      *
      * @param int $index Which row of the table
      *
-     * @return array<string, mixed> Column name => the value that row must carry
+     * @return FixtureRow Column name => the value that row must carry
      */
     public function overridesFor(int $index): array
     {
@@ -104,7 +108,7 @@ final class RowSpec
      *
      * @param array<mixed> $spec What the caller wrote
      *
-     * @return list<array<string, mixed>>|null One entry per row, or null when the rows were described together
+     * @return list<FixtureRow>|null One entry per row, or null when the rows were described together
      */
     public static function asRows(array $spec): ?array
     {
@@ -123,8 +127,7 @@ final class RowSpec
                 return null;
             }
 
-            /** @var array<string, mixed> $entry */
-            $rows[] = $entry;
+            $rows[] = self::asRow($entry);
         }
 
         return $rows;
@@ -147,5 +150,73 @@ final class RowSpec
         }
 
         return $specs;
+    }
+
+    /**
+     * Reads what a caller wrote for one row as values a driver can bind.
+     *
+     * This is the boundary between arbitrary caller input and a fixture row.
+     * A column name is a string and a column value is a scalar or null, so
+     * anything else was never going to reach the database and is refused here
+     * rather than surfacing much later as a bind failure.
+     *
+     * @param array<mixed> $values Columns the caller named, as they wrote them
+     *
+     * @return FixtureRow The same columns, as a row
+     *
+     * @throws InvalidArgumentException When a value is something no column could hold
+     */
+    public static function asRow(array $values): array
+    {
+        $row = [];
+        foreach ($values as $column => $value) {
+            $row[$column] = self::asOverride($column, $value);
+        }
+
+        return $row;
+    }
+
+    /**
+     * Reads one value a caller wrote as something a column could hold.
+     *
+     * A column holds a scalar or null. A JSON column may also be written as an
+     * array of those, which is how a caller describes its contents without
+     * encoding them by hand. Anything else — an object, a resource, an array
+     * of arrays — is not something a column could ever hold, so it is refused
+     * here rather than surfacing much later as a bind failure.
+     *
+     * @param array-key $column Column the value is for
+     * @param mixed $value Value as the caller wrote it
+     *
+     * @return FixtureOverride The value, as a column would hold it
+     *
+     * @throws InvalidArgumentException When the value is something no column could hold
+     */
+    public static function asOverride(int|string $column, mixed $value): int|float|string|bool|null|array
+    {
+        if ($value === null || is_scalar($value)) {
+            return $value;
+        }
+        if (is_array($value)) {
+            $members = [];
+            foreach ($value as $key => $member) {
+                if ($member !== null && !is_scalar($member)) {
+                    throw new InvalidArgumentException(sprintf(
+                        'The override for "%s" holds a %s, which no column can carry.',
+                        (string) $column,
+                        get_debug_type($member),
+                    ));
+                }
+                $members[$key] = $member;
+            }
+
+            return $members;
+        }
+
+        throw new InvalidArgumentException(sprintf(
+            'The override for "%s" must be a scalar, null, or an array of those, got %s.',
+            (string) $column,
+            get_debug_type($value),
+        ));
     }
 }
