@@ -8,10 +8,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Platform\Postgres\PgSqlLexerProfile;
 use ZtdQuery\Platform\Postgres\PgSqlReadOnlyDiagnosticStatement;
+use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(PgSqlReadOnlyDiagnosticStatement::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
+#[UsesClass(PgSqlLexerProfile::class)]
 final class PgSqlReadOnlyDiagnosticStatementTest extends TestCase
 {
     #[DataProvider('providerStatement')]
@@ -36,5 +38,18 @@ final class PgSqlReadOnlyDiagnosticStatementTest extends TestCase
         yield 'mysql describe' => ['DESCRIBE users', false];
         yield 'multiple statements' => ['EXPLAIN SELECT 1; DELETE FROM users', false];
         yield 'empty explain' => ['EXPLAIN', false];
+    }
+    public function testContainsKeywordReportsAKeywordWrittenAmongTheTokens(): void
+    {
+        $tokens = SqlTokenStream::tokenize('SHOW TABLES', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertTrue(PgSqlReadOnlyDiagnosticStatement::containsKeyword($tokens, ['TABLES']));
+    }
+
+    public function testContainsKeywordIsFalseWhereNoneOfThemIsWritten(): void
+    {
+        $tokens = SqlTokenStream::tokenize('SHOW TABLES', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertFalse(PgSqlReadOnlyDiagnosticStatement::containsKeyword($tokens, ['UPDATE', 'DELETE']));
     }
 }

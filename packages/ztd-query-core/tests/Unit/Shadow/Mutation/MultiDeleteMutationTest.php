@@ -16,6 +16,7 @@ use ZtdQuery\Shadow\ShadowStore;
 #[UsesClass(MultiTableMutationRow::class)]
 #[UsesClass(MultiTableMutationTarget::class)]
 #[CoversClass(MultiDeleteMutation::class)]
+#[UsesClass(\ZtdQuery\Shadow\Row\RowMatch::class)]
 final class MultiDeleteMutationTest extends TestCase
 {
     public function testApplyDeletesFromMultipleTables(): void

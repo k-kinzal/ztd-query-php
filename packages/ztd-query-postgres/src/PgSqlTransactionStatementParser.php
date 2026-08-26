@@ -50,10 +50,14 @@ final class PgSqlTransactionStatementParser implements TransactionStatementParse
     }
 
     /**
-     * @param list<SqlToken> $tokens
-     * @param list<list<string>> $forms
+     * Reports whether the tokens spell any one of these statements.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param list<list<string>> $forms The forms
+     *
+     * @return bool What it answers
      */
-    private function matchesAny(array $tokens, array $forms): bool
+    public function matchesAny(array $tokens, array $forms): bool
     {
         foreach ($forms as $form) {
             if ($this->matches($tokens, $form)) {
@@ -65,10 +69,14 @@ final class PgSqlTransactionStatementParser implements TransactionStatementParse
     }
 
     /**
-     * @param list<SqlToken> $tokens
-     * @param list<list<string>> $prefixes
+     * Answers the name written after one of these openings.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param list<list<string>> $prefixes The prefixes
+     *
+     * @return string|null What it answers
      */
-    private function nameAfter(array $tokens, array $prefixes): ?string
+    public function nameAfter(array $tokens, array $prefixes): ?string
     {
         foreach ($prefixes as $prefix) {
             if (count($tokens) !== count($prefix) + 1 || !$this->matches(array_slice($tokens, 0, -1), $prefix)) {
@@ -86,10 +94,14 @@ final class PgSqlTransactionStatementParser implements TransactionStatementParse
     }
 
     /**
-     * @param list<SqlToken> $tokens
-     * @param list<string> $keywords
+     * Reports whether the tokens are exactly these keywords.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param list<string> $keywords Keywords to look for, in order
+     *
+     * @return bool What it answers
      */
-    private function matches(array $tokens, array $keywords): bool
+    public function matches(array $tokens, array $keywords): bool
     {
         if (count($tokens) !== count($keywords)) {
             return false;
@@ -103,7 +115,17 @@ final class PgSqlTransactionStatementParser implements TransactionStatementParse
         return true;
     }
 
-    private function unquote(string $identifier): ?string
+    /**
+     * Answers the name a quoted identifier stands for.
+     *
+     * A name that opens with a quote and never closes is not a name at all,
+     * and answering it unquoted would invent one that was never written.
+     *
+     * @param string $identifier Name, as it was written
+     *
+     * @return string|null What it answers
+     */
+    public function unquote(string $identifier): ?string
     {
         $first = $identifier[0] ?? '';
         if ($first === '`') {

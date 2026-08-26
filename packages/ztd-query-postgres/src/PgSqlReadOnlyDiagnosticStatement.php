@@ -51,10 +51,14 @@ final class PgSqlReadOnlyDiagnosticStatement
     }
 
     /**
-     * @param list<SqlToken> $tokens
-     * @param non-empty-list<string> $keywords
+     * Reports whether any of these keywords is written among these tokens.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param non-empty-list<string> $keywords Keywords to look for, in order
+     *
+     * @return bool What it answers
      */
-    private static function containsKeyword(array $tokens, array $keywords): bool
+    public static function containsKeyword(array $tokens, array $keywords): bool
     {
         foreach ($tokens as $token) {
             foreach ($keywords as $keyword) {

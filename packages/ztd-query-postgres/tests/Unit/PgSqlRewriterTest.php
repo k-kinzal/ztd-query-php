@@ -86,6 +86,8 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlGeneratedColumnProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlPartitionPredicateRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlUpsertExpressionCursor::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlUpsertLiteral::class)]
 final class PgSqlRewriterTest extends RewriterContractTest
 {
     public function testMergeBuildsAtomicSynchronizationPlan(): void
@@ -3424,4 +3426,82 @@ final class PgSqlRewriterTest extends RewriterContractTest
             self::assertSame(ShadowTableState::Materialized, $store->state('late_table'));
         }
     }
+    public function testTransactionStatementReadsAStatementThatOpensATransaction(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        self::assertInstanceOf(PgSqlRewriter::class, $rewriter);
+
+        self::assertNotNull($rewriter->transactionStatement('BEGIN'));
+    }
+
+    public function testSplitStatementsReadsABatchAsTheStatementsItIsWrittenAs(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        self::assertInstanceOf(PgSqlRewriter::class, $rewriter);
+
+        self::assertCount(2, $rewriter->splitStatements('SELECT 1; SELECT 2'));
+    }
+
+    public function testCommitRewriteStateKeepsWhatTheLastRewriteHandedOut(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        self::assertInstanceOf(PgSqlRewriter::class, $rewriter);
+
+        $rewriter->commitRewriteState();
+
+        self::assertSame('SELECT 1 WHERE FALSE', $rewriter->emptyResultSelect());
+    }
+
+    public function testRewriteStatementReadsTheShadowForARead(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', [['id' => 1]]);
+        $rewriter = $this->createRewriter($store, new TableDefinitionRegistry());
+        self::assertInstanceOf(PgSqlRewriter::class, $rewriter);
+
+        self::assertSame(QueryKind::READ, $rewriter->rewriteStatement('SELECT * FROM users')->kind());
+    }
+
+    public function testStorageTableAnswersTheTableAPartitionsRowsAreHeldIn(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        self::assertInstanceOf(PgSqlRewriter::class, $rewriter);
+
+        self::assertSame('users', $rewriter->storageTable('users'));
+    }
+
+    public function testTableExistsReportsATableTheShadowHoldsRowsFor(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', [['id' => 1]]);
+        $rewriter = $this->createRewriter($store, new TableDefinitionRegistry());
+        self::assertInstanceOf(PgSqlRewriter::class, $rewriter);
+
+        self::assertTrue($rewriter->tableExists('users'));
+    }
+
+    public function testTableExistsIsFalseForANameNothingKnows(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        self::assertInstanceOf(PgSqlRewriter::class, $rewriter);
+
+        self::assertFalse($rewriter->tableExists('users'));
+    }
+
+    public function testHasSchemaContextIsFalseWhereTheShadowHasBeenToldNothing(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        self::assertInstanceOf(PgSqlRewriter::class, $rewriter);
+
+        self::assertFalse($rewriter->hasSchemaContext());
+    }
+
+    public function testEmptyResultSelectAnswersAStatementThatReadsNoRow(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        self::assertInstanceOf(PgSqlRewriter::class, $rewriter);
+
+        self::assertSame('SELECT 1 WHERE FALSE', $rewriter->emptyResultSelect());
+    }
+
 }

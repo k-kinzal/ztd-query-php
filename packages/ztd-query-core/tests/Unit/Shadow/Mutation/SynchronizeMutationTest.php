@@ -22,6 +22,9 @@ use ZtdQuery\Shadow\ShadowStore;
 #[UsesClass(NotNullViolationException::class)]
 #[UsesClass(ShadowStore::class)]
 #[UsesClass(TableDefinition::class)]
+#[UsesClass(\ZtdQuery\Schema\CandidateKeyMatch::class)]
+#[UsesClass(\ZtdQuery\Shadow\Row\RowMatch::class)]
+#[UsesClass(\ZtdQuery\Shadow\Row\RowMultiset::class)]
 final class SynchronizeMutationTest extends TestCase
 {
     public function testTableNameApplyReplacesTheCompleteTableState(): void

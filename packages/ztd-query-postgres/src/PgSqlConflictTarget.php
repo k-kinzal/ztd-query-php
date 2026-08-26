@@ -77,10 +77,13 @@ final class PgSqlConflictTarget
     }
 
     /**
-     * @param array<int, string> $columns
-     * @return list<string>
+     * Answers the target's columns as the table knows them.
+     *
+     * @param array<int, string> $columns Columns to read
+     *
+     * @return list<string> What it answers
      */
-    private static function normalizedColumns(array $columns): array
+    public static function normalizedColumns(array $columns): array
     {
         $normalized = [];
         foreach ($columns as $column) {

@@ -151,4 +151,18 @@ final class PgSqlErrorClassifierTest extends TestCase
         $e = new DatabaseException('General failure', 0);
         self::assertFalse($classifier->isUnknownSchemaError($e));
     }
+    public function testIsUnknownSchemaErrorReportsAnErrorAboutSomethingThatIsNotThere(): void
+    {
+        self::assertTrue((new PgSqlErrorClassifier())->isUnknownSchemaError(
+            new DatabaseException('SQLSTATE[42P01]: Undefined table', 7),
+        ));
+    }
+
+    public function testIsUnknownSchemaErrorIsFalseForAnErrorAboutSomethingElse(): void
+    {
+        self::assertFalse((new PgSqlErrorClassifier())->isUnknownSchemaError(
+            new DatabaseException('deadlock detected', null),
+        ));
+    }
+
 }

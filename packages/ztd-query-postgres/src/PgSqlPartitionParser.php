@@ -117,8 +117,17 @@ final class PgSqlPartitionParser
         return $predicate === null ? null : new TablePartitionRelation($parent['name'], $predicate);
     }
 
-    /** @param list<SqlToken> $tokens */
-    private function rangePredicate(string $sql, array $tokens, int $index, TablePartitionKey $key): ?string
+    /**
+     * Answers which rows land in a partition declared by range.
+     *
+     * @param string $sql Statement being read, as written
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param int $index Where to read
+     * @param TablePartitionKey $key The key
+     *
+     * @return string|null What it answers
+     */
+    public function rangePredicate(string $sql, array $tokens, int $index, TablePartitionKey $key): ?string
     {
         $from = $tokens[$index] ?? null;
         if (!$from instanceof SqlToken || !$from->isKeyword('FROM')) {
@@ -152,8 +161,17 @@ final class PgSqlPartitionParser
         return $predicates === [] ? 'TRUE' : implode(' AND ', $predicates);
     }
 
-    /** @param list<SqlToken> $tokens */
-    private function listPredicate(string $sql, array $tokens, int $index, TablePartitionKey $key): ?string
+    /**
+     * Answers which rows land in a partition declared by value.
+     *
+     * @param string $sql Statement being read, as written
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param int $index Where to read
+     * @param TablePartitionKey $key The key
+     *
+     * @return string|null What it answers
+     */
+    public function listPredicate(string $sql, array $tokens, int $index, TablePartitionKey $key): ?string
     {
         if (count($key->expressions) !== 1) {
             return null;
@@ -188,10 +206,16 @@ final class PgSqlPartitionParser
     }
 
     /**
-     * @param non-empty-list<string> $expressions
-     * @param list<string> $values
+     * Answers one end of a range, as written.
+     *
+     * @param non-empty-list<string> $expressions The expressions
+     * @param list<string> $values The values
+     * @param string $operator The operator
+     * @param string $unbounded The unbounded
+     *
+     * @return string|false|null What it answers
      */
-    private function rangeBoundary(array $expressions, array $values, string $operator, string $unbounded): string|false|null
+    public function rangeBoundary(array $expressions, array $values, string $operator, string $unbounded): string|false|null
     {
         if (count($expressions) !== count($values)) {
             return false;
@@ -222,10 +246,15 @@ final class PgSqlPartitionParser
     }
 
     /**
-     * @param list<SqlToken> $tokens
-     * @return array{values: list<string>, next: int}|null
+     * Answers the values written inside one pair of parentheses.
+     *
+     * @param string $sql Statement being read, as written
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param int $openIndex The open index
+     *
+     * @return array{values: list<string>, next: int}|null What it answers
      */
-    private function parenthesizedValues(string $sql, array $tokens, int $openIndex): ?array
+    public function parenthesizedValues(string $sql, array $tokens, int $openIndex): ?array
     {
         $closeIndex = $this->closingParenthesisIndex($tokens, $openIndex);
         if ($closeIndex === null) {
@@ -239,8 +268,15 @@ final class PgSqlPartitionParser
         return ['values' => $values, 'next' => $closeIndex + 1];
     }
 
-    /** @param list<SqlToken> $tokens */
-    private function closingParenthesisIndex(array $tokens, int $openIndex): ?int
+    /**
+     * Answers where the parenthesis that closes this one is written.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param int $openIndex The open index
+     *
+     * @return int|null What it answers
+     */
+    public function closingParenthesisIndex(array $tokens, int $openIndex): ?int
     {
         $open = $tokens[$openIndex] ?? null;
         if (!$open instanceof SqlToken) {
@@ -262,8 +298,16 @@ final class PgSqlPartitionParser
         return null;
     }
 
-    /** @param list<SqlToken> $tokens */
-    private function keywordPairIndex(array $tokens, string $first, string $second): ?int
+    /**
+     * Answers where a pair of keywords is written together.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param string $first The first
+     * @param string $second The second
+     *
+     * @return int|null What it answers
+     */
+    public function keywordPairIndex(array $tokens, string $first, string $second): ?int
     {
         foreach ($tokens as $index => $token) {
             if (!$token->isTopLevel()) {
@@ -286,8 +330,15 @@ final class PgSqlPartitionParser
         return null;
     }
 
-    /** @param list<SqlToken> $tokens */
-    private function keywordIndex(array $tokens, string $keyword): ?int
+    /**
+     * Answers where a keyword is written.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param string $keyword Keyword to look for
+     *
+     * @return int|null What it answers
+     */
+    public function keywordIndex(array $tokens, string $keyword): ?int
     {
         foreach ($tokens as $index => $token) {
             if ($token->isTopLevel() && $token->isKeyword($keyword)) {
@@ -299,10 +350,15 @@ final class PgSqlPartitionParser
     }
 
     /**
-     * @param list<SqlToken> $tokens
-     * @return array{name: string, next: int}|null
+     * Reads a name written here, however many parts it has.
+     *
+     * @param SqlTokenStream $stream Stream to read
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param int $index Where to read
+     *
+     * @return array{name: string, next: int}|null What it answers
      */
-    private function qualifiedIdentifierAt(SqlTokenStream $stream, array $tokens, int $index): ?array
+    public function qualifiedIdentifierAt(SqlTokenStream $stream, array $tokens, int $index): ?array
     {
         $token = $tokens[$index] ?? null;
         if (!$token instanceof SqlToken) {
@@ -333,7 +389,15 @@ final class PgSqlPartitionParser
         return $identifier;
     }
 
-    private function isSymbol(SqlToken $token, string $symbol): bool
+    /**
+     * Reports whether a token is this symbol.
+     *
+     * @param SqlToken $token Token to read
+     * @param string $symbol Symbol it must be
+     *
+     * @return bool What it answers
+     */
+    public function isSymbol(SqlToken $token, string $symbol): bool
     {
         return $token->kind === SqlTokenKind::Symbol && $token->text === $symbol;
     }

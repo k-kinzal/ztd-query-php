@@ -9,10 +9,12 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\Postgres\PgSqlLexerProfile;
 use ZtdQuery\Platform\Postgres\PgSqlReturningProjectionParser;
+use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(PgSqlReturningProjectionParser::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
+#[UsesClass(PgSqlLexerProfile::class)]
 final class PgSqlReturningProjectionParserTest extends TestCase
 {
     public function testParsesPostgresQualifiedQuotedAliasesAndWildcard(): void
@@ -81,4 +83,62 @@ final class PgSqlReturningProjectionParserTest extends TestCase
             'unterminated double quote' => ['"id'],
         ];
     }
+    public function testParseItemReadsTheColumnAnEntryNames(): void
+    {
+        self::assertSame(
+            ['source' => 'id', 'output' => null],
+            (new PgSqlReturningProjectionParser())->parseItem('id'),
+        );
+    }
+
+    public function testParseItemReadsTheNameAnEntryIsGiven(): void
+    {
+        self::assertSame(
+            ['source' => 'id', 'output' => 'x'],
+            (new PgSqlReturningProjectionParser())->parseItem('id AS x'),
+        );
+    }
+
+    public function testAsIndexAnswersWhereTheAsIsWritten(): void
+    {
+        $tokens = SqlTokenStream::tokenize('id AS x', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertSame(1, (new PgSqlReturningProjectionParser())->asIndex($tokens));
+    }
+
+    public function testAsIndexIsNothingWhereNoNameIsGiven(): void
+    {
+        $tokens = SqlTokenStream::tokenize('id', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertNull((new PgSqlReturningProjectionParser())->asIndex($tokens));
+    }
+
+    public function testIsIdentifierPathReportsTokensSpellingAName(): void
+    {
+        $tokens = SqlTokenStream::tokenize('t.id', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertTrue((new PgSqlReturningProjectionParser())->isIdentifierPath($tokens));
+    }
+
+    public function testIsIdentifierPathIsFalseForAnExpression(): void
+    {
+        $tokens = SqlTokenStream::tokenize('id + 1', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertFalse((new PgSqlReturningProjectionParser())->isIdentifierPath($tokens));
+    }
+
+    public function testIdentifierNameTakesTheQuotingOffAName(): void
+    {
+        $tokens = SqlTokenStream::tokenize('"order"', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertSame('order', (new PgSqlReturningProjectionParser())->identifierName($tokens[0]));
+    }
+
+    public function testIdentifierNameIsNothingForATokenThatIsNotAName(): void
+    {
+        $tokens = SqlTokenStream::tokenize('1', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertNull((new PgSqlReturningProjectionParser())->identifierName($tokens[0]));
+    }
+
 }

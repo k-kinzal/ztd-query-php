@@ -9,11 +9,13 @@ use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\Postgres\PgSqlLexerProfile;
 use ZtdQuery\Platform\Postgres\PgSqlMergeActionKind;
 use ZtdQuery\Platform\Postgres\PgSqlMergeClause;
 use ZtdQuery\Platform\Postgres\PgSqlMergeMatchKind;
 use ZtdQuery\Platform\Postgres\PgSqlMergeParser;
 use ZtdQuery\Platform\Postgres\PgSqlMergeStatement;
+use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(PgSqlMergeParser::class)]
 #[UsesClass(PgSqlMergeActionKind::class)]
@@ -21,7 +23,7 @@ use ZtdQuery\Platform\Postgres\PgSqlMergeStatement;
 #[UsesClass(PgSqlMergeMatchKind::class)]
 #[UsesClass(PgSqlMergeStatement::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
+#[UsesClass(PgSqlLexerProfile::class)]
 final class PgSqlMergeParserTest extends TestCase
 {
     public function testParsesMatchedUpdateAndNotMatchedInsert(): void
@@ -215,4 +217,170 @@ final class PgSqlMergeParserTest extends TestCase
 
         (new PgSqlMergeParser())->parse($sql);
     }
+    public function testRelationAtReadsTheTableNamedThere(): void
+    {
+        $sql = 'users u';
+        $tokens = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertSame('users', (new PgSqlMergeParser())->relationAt($sql, $tokens, 0)['name'] ?? null);
+    }
+
+    public function testRelationAtIsNothingWhereNoTableIsNamed(): void
+    {
+        $sql = '1';
+        $tokens = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertNull((new PgSqlMergeParser())->relationAt($sql, $tokens, 0));
+    }
+
+    public function testTargetAliasAnswersTheNameTheStatementGaveTheTable(): void
+    {
+        $sql = 'users AS u';
+        $tokens = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertSame('u', (new PgSqlMergeParser())->targetAlias($sql, $tokens, 1, 3, 'users'));
+    }
+
+    public function testTargetAliasFallsBackToTheTablesOwnName(): void
+    {
+        $sql = 'users';
+        $tokens = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertSame('users', (new PgSqlMergeParser())->targetAlias($sql, $tokens, 1, 1, 'users'));
+    }
+
+    public function testParseClauseReadsWhatOneWhenSaysToDo(): void
+    {
+        $clause = (new PgSqlMergeParser())->parseClause(
+            'MERGE INTO t USING s ON TRUE WHEN MATCHED THEN DELETE',
+            'WHEN MATCHED THEN DELETE',
+        );
+
+        self::assertSame(PgSqlMergeActionKind::Delete, $clause->actionKind);
+    }
+
+    public function testParseAssignmentsReadsWhatAMatchedUpdateAssigns(): void
+    {
+        $actionSql = 'UPDATE SET x = 1';
+        $tokens = SqlTokenStream::tokenize($actionSql, PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertSame(
+            ['x' => '1'],
+            (new PgSqlMergeParser())->parseAssignments('MERGE', $actionSql, $tokens),
+        );
+    }
+
+    public function testParseInsertReadsWhatAnUnmatchedInsertWrites(): void
+    {
+        $actionSql = 'INSERT (id) VALUES (1)';
+        $tokens = SqlTokenStream::tokenize($actionSql, PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertSame(
+            ['id'],
+            (new PgSqlMergeParser())->parseInsert('MERGE', $actionSql, $tokens)['columns'],
+        );
+    }
+
+    public function testParenthesizedListReadsTheEntriesAndWhereTheyEnd(): void
+    {
+        $sql = '(a, b)';
+        $tokens = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertSame(['a', 'b'], (new PgSqlMergeParser())->parenthesizedList('MERGE', $sql, $tokens, 0)['items']);
+    }
+
+    public function testKeywordIndexAfterAnswersWhereTheKeywordIsWrittenAfterAToken(): void
+    {
+        $tokens = SqlTokenStream::tokenize('WHEN MATCHED THEN DELETE', PgSqlLexerProfile::create())
+            ->significantTokens();
+
+        self::assertSame(2, (new PgSqlMergeParser())->keywordIndexAfter($tokens, 'THEN', $tokens[0]));
+    }
+
+    public function testKeywordIndexAfterIsNothingWhereItIsNotWrittenAfterIt(): void
+    {
+        $tokens = SqlTokenStream::tokenize('WHEN MATCHED THEN DELETE', PgSqlLexerProfile::create())
+            ->significantTokens();
+
+        self::assertNull((new PgSqlMergeParser())->keywordIndexAfter($tokens, 'WHEN', $tokens[0]));
+    }
+
+    public function testLastKeywordBetweenAnswersTheLastOneWrittenBetweenTwoTokens(): void
+    {
+        $tokens = SqlTokenStream::tokenize('a AND b AND c', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertSame(
+            $tokens[3],
+            (new PgSqlMergeParser())->lastKeywordBetween($tokens, 'AND', $tokens[0], $tokens[4]),
+        );
+    }
+
+    public function testLastKeywordBetweenIsNothingWhereNoneIsWrittenBetweenThem(): void
+    {
+        $tokens = SqlTokenStream::tokenize('a b c', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertNull((new PgSqlMergeParser())->lastKeywordBetween($tokens, 'AND', $tokens[0], $tokens[2]));
+    }
+
+    public function testMergeWhenTokensAnswersWhereEachWhenOfTheStatementIsWritten(): void
+    {
+        $tokens = SqlTokenStream::tokenize(
+            'MERGE INTO t USING s ON TRUE WHEN MATCHED THEN DELETE WHEN NOT MATCHED THEN DO NOTHING',
+            PgSqlLexerProfile::create(),
+        )->significantTokens();
+
+        self::assertCount(2, (new PgSqlMergeParser())->mergeWhenTokens($tokens));
+    }
+
+    public function testMergeWhenTokensLeavesAWhenInsideACaseAlone(): void
+    {
+        $tokens = SqlTokenStream::tokenize(
+            'MERGE INTO t USING s ON CASE WHEN a THEN 1 ELSE 0 END = 1 WHEN MATCHED THEN DELETE',
+            PgSqlLexerProfile::create(),
+        )->significantTokens();
+
+        self::assertCount(1, (new PgSqlMergeParser())->mergeWhenTokens($tokens));
+    }
+
+    public function testKeywordIndexOutsideCaseAnswersWhereTheKeywordIsWritten(): void
+    {
+        $tokens = SqlTokenStream::tokenize('a THEN b', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertSame(1, (new PgSqlMergeParser())->keywordIndexOutsideCase($tokens, 'THEN'));
+    }
+
+    public function testKeywordIndexOutsideCaseIgnoresOneWrittenInsideACase(): void
+    {
+        $tokens = SqlTokenStream::tokenize('CASE WHEN a THEN 1 END', PgSqlLexerProfile::create())
+            ->significantTokens();
+
+        self::assertNull((new PgSqlMergeParser())->keywordIndexOutsideCase($tokens, 'THEN'));
+    }
+
+    public function testIdentifierNameAnswersTheNameATokenStandsFor(): void
+    {
+        $tokens = SqlTokenStream::tokenize('"Order"', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertSame('Order', (new PgSqlMergeParser())->identifierName($tokens[0]));
+    }
+
+    public function testIdentifierNameIsNothingForATokenThatIsNotAName(): void
+    {
+        $tokens = SqlTokenStream::tokenize('1', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertNull((new PgSqlMergeParser())->identifierName($tokens[0]));
+    }
+
+    public function testIsSymbolReportsATokenBeingThatSymbol(): void
+    {
+        $tokens = SqlTokenStream::tokenize('(', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertTrue((new PgSqlMergeParser())->isSymbol($tokens[0], '('));
+    }
+
+    public function testIsSymbolIsFalsePastTheEndOfWhatWasWritten(): void
+    {
+        self::assertFalse((new PgSqlMergeParser())->isSymbol(null, '('));
+    }
+
 }

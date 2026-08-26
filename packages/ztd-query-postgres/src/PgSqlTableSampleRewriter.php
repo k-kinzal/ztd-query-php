@@ -55,10 +55,14 @@ final class PgSqlTableSampleRewriter
     }
 
     /**
-     * @param array<string, array<string, mixed>> $tables
-     * @return list<string>
+     * Answers the columns the sampled table has.
+     *
+     * @param string $tableName Table it belongs to
+     * @param array<string, array<string, mixed>> $tables The tables
+     *
+     * @return list<string> What it answers
      */
-    private function columns(string $tableName, array $tables): array
+    public function columns(string $tableName, array $tables): array
     {
         foreach ($tables as $candidate => $context) {
             if (strcasecmp($candidate, $tableName) !== 0) {
@@ -82,8 +86,19 @@ final class PgSqlTableSampleRewriter
         return [];
     }
 
-    /** @param non-empty-list<string> $columns */
-    private function replacement(PgSqlTableSample $sample, array $columns, int $index): string
+    /**
+     * Answers what a TABLESAMPLE is rewritten to.
+     *
+     * There is no sampling in the shadow, so a sample becomes a plain read of
+     * the rows the shadow holds.
+     *
+     * @param PgSqlTableSample $sample The sample
+     * @param non-empty-list<string> $columns Columns to read
+     * @param int $index Where to read
+     *
+     * @return string What it answers
+     */
+    public function replacement(PgSqlTableSample $sample, array $columns, int $index): string
     {
         $sourceAlias = $this->quoter->quote("__ztd_sample_source_$index");
         $parametersAlias = $this->quoter->quote("__ztd_sample_parameters_$index");

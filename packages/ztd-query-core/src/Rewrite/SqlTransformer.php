@@ -8,6 +8,7 @@ use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
+use ZtdQuery\Schema\PartialUniqueIndex;
 use ZtdQuery\Schema\TablePartitioning;
 
 /**
@@ -31,6 +32,7 @@ use ZtdQuery\Schema\TablePartitioning;
  *     columnTypes: array<string, ColumnDeclaration>,
  *     primaryKeys?: array<int, string>,
  *     candidateKeys?: array<string, array<int, string>>,
+ *     partialUniqueIndexes?: array<string, PartialUniqueIndex>,
  *     columnDefaults?: array<string, string>,
  *     identityStrategies?: array<string, IdentityGenerationStrategy>,
  *     generatedExpressions?: array<string, string>,

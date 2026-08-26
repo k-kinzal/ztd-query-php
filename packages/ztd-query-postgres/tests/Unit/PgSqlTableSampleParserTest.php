@@ -9,15 +9,17 @@ use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\Postgres\PgSqlLexerProfile;
 use ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser;
 use ZtdQuery\Platform\Postgres\PgSqlTableSample;
 use ZtdQuery\Platform\Postgres\PgSqlTableSampleMethod;
 use ZtdQuery\Platform\Postgres\PgSqlTableSampleParser;
+use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(PgSqlTableSampleParser::class)]
 #[UsesClass(PgSqlSelectRelationParser::class)]
 #[UsesClass(PgSqlTableSample::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
+#[UsesClass(PgSqlLexerProfile::class)]
 final class PgSqlTableSampleParserTest extends TestCase
 {
     public function testParsesSchemaAliasExpressionAndRepeatableSeed(): void
@@ -125,4 +127,101 @@ final class PgSqlTableSampleParserTest extends TestCase
 
         (new PgSqlTableSampleParser())->parse($sql);
     }
+    public function testParseSampleReadsTheSampleWrittenAfterATable(): void
+    {
+        self::assertCount(1, (new PgSqlTableSampleParser())->parse('SELECT * FROM t TABLESAMPLE SYSTEM (10)'));
+    }
+
+    public function testTokenAtOffsetAnswersTheTokenWrittenThere(): void
+    {
+        $tokens = SqlTokenStream::tokenize('SELECT 1', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertSame('1', (new PgSqlTableSampleParser())->tokenAtOffset($tokens, 7)?->text);
+    }
+
+    public function testTokenAtOffsetIsNothingWhereNoTokenStartsThere(): void
+    {
+        $tokens = SqlTokenStream::tokenize('SELECT 1', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertNull((new PgSqlTableSampleParser())->tokenAtOffset($tokens, 3));
+    }
+
+    public function testSampleIndexAfterAnswersWhereTheSampleIsWritten(): void
+    {
+        $tokens = SqlTokenStream::tokenize('FROM t TABLESAMPLE SYSTEM (10)', PgSqlLexerProfile::create())
+            ->significantTokens();
+
+        self::assertSame(2, (new PgSqlTableSampleParser())->sampleIndexAfter($tokens, $tokens[1]));
+    }
+
+    public function testSampleIndexAfterIsNothingWhereNoSampleFollows(): void
+    {
+        $tokens = SqlTokenStream::tokenize('FROM t WHERE a = 1', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertNull((new PgSqlTableSampleParser())->sampleIndexAfter($tokens, $tokens[1]));
+    }
+
+    public function testIsRelationBoundaryReportsAWordThatEndsTheTableAndItsAlias(): void
+    {
+        $tokens = SqlTokenStream::tokenize('WHERE', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertTrue((new PgSqlTableSampleParser())->isRelationBoundary($tokens[0]));
+    }
+
+    public function testIsRelationBoundaryIsFalseForAName(): void
+    {
+        $tokens = SqlTokenStream::tokenize('t', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertFalse((new PgSqlTableSampleParser())->isRelationBoundary($tokens[0]));
+    }
+
+    public function testIsOpeningParenthesisReportsAParenthesisAtTheSameLevel(): void
+    {
+        $tokens = SqlTokenStream::tokenize('t (1)', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertTrue((new PgSqlTableSampleParser())->isOpeningParenthesis($tokens[1], $tokens[0]));
+    }
+
+    public function testIsOpeningParenthesisIsFalseForAnythingElse(): void
+    {
+        $tokens = SqlTokenStream::tokenize('t x', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertFalse((new PgSqlTableSampleParser())->isOpeningParenthesis($tokens[1], $tokens[0]));
+    }
+
+    public function testClosingParenthesisIndexAnswersWhereTheParenthesisCloses(): void
+    {
+        $tokens = SqlTokenStream::tokenize('(1)', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertSame(2, (new PgSqlTableSampleParser())->closingParenthesisIndex($tokens, 0));
+    }
+
+    public function testClosingParenthesisIndexIsNothingWhereItNeverCloses(): void
+    {
+        $tokens = SqlTokenStream::tokenize('(1', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertNull((new PgSqlTableSampleParser())->closingParenthesisIndex($tokens, 0));
+    }
+
+    public function testTokenAfterAnswersTheTokenWrittenNext(): void
+    {
+        $tokens = SqlTokenStream::tokenize('SELECT 1', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertSame('1', (new PgSqlTableSampleParser())->tokenAfter($tokens, $tokens[0])->text);
+    }
+
+    public function testSameLevelReportsTwoTokensWrittenAtTheSameDepth(): void
+    {
+        $tokens = SqlTokenStream::tokenize('a b', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertTrue((new PgSqlTableSampleParser())->sameLevel($tokens[0], $tokens[1]));
+    }
+
+    public function testSameLevelIsFalseForATokenInsideParentheses(): void
+    {
+        $tokens = SqlTokenStream::tokenize('a (b)', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertFalse((new PgSqlTableSampleParser())->sameLevel($tokens[0], $tokens[2]));
+    }
+
 }

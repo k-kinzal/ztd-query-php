@@ -80,4 +80,14 @@ final class PgSqlConflictTargetTest extends TestCase
 
         $target->resolve(new CandidateKeySet([]), [$active->name => $active, $pending->name => $pending], 'INSERT');
     }
+    public function testNormalizedColumnsAnswersTheColumnsAsTheTableKnowsThem(): void
+    {
+        self::assertSame(['a', 'b'], PgSqlConflictTarget::normalizedColumns(['B', 'A']));
+    }
+
+    public function testNormalizedColumnsIsNothingForNoColumnsAtAll(): void
+    {
+        self::assertSame([], PgSqlConflictTarget::normalizedColumns([]));
+    }
+
 }

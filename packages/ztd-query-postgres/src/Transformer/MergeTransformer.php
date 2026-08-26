@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Postgres\Transformer;
 
-use InvalidArgumentException;
+use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer;
 use ZtdQuery\Platform\Postgres\PgSqlGeneratedColumnProjector;
@@ -14,11 +14,14 @@ use ZtdQuery\Platform\Postgres\PgSqlMergeClause;
 use ZtdQuery\Platform\Postgres\PgSqlMergeMatchKind;
 use ZtdQuery\Platform\Postgres\PgSqlMergeParser;
 use ZtdQuery\Platform\Postgres\PgSqlMergeStatement;
+use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Rewrite\ShadowIdentityAllocator;
 use ZtdQuery\Rewrite\SqlTransformer;
 
 /**
  * The merge transformer, as sql transformer.
+ *
+ * @phpstan-import-type RenderableValue from ValueRenderer
  */
 final class MergeTransformer implements SqlTransformer
 {
@@ -107,9 +110,13 @@ final class MergeTransformer implements SqlTransformer
     }
 
     /**
-     * @return list<string>
+     * Answers what each clause of a MERGE tests, once the match itself is accounted for.
+     *
+     * @param PgSqlMergeStatement $statement Statement, as the parser reads it
+     *
+     * @return list<string> What it answers
      */
-    private function effectiveConditions(PgSqlMergeStatement $statement): array
+    public function effectiveConditions(PgSqlMergeStatement $statement): array
     {
         $priorMatched = [];
         $priorNotMatched = [];
@@ -139,10 +146,15 @@ final class MergeTransformer implements SqlTransformer
     }
 
     /**
-     * @param list<string> $columns
-     * @param list<string> $effectiveConditions
+     * Answers the rows a MERGE leaves as they were.
+     *
+     * @param PgSqlMergeStatement $statement Statement, as the parser reads it
+     * @param list<string> $columns Columns to read
+     * @param list<string> $effectiveConditions The effective conditions
+     *
+     * @return string What it answers
      */
-    private function unchangedRows(
+    public function unchangedRows(
         PgSqlMergeStatement $statement,
         array $columns,
         array $effectiveConditions,
@@ -175,12 +187,20 @@ final class MergeTransformer implements SqlTransformer
     }
 
     /**
-     * @param list<string> $columns
-     * @param array<string, string> $defaults
+     * Answers the rows a MERGE changes, as they become.
+     *
+     * @param string $sql Statement being read, as written
+     * @param PgSqlMergeStatement $statement Statement, as the parser reads it
+     * @param PgSqlMergeClause $clause The clause
+     * @param list<string> $columns Columns to read
+     * @param array<string, string> $defaults The defaults
+     * @param string $effectiveCondition The effective condition
+     *
+     * @return string What it answers
      *
      * @throws UnsupportedSqlException
      */
-    private function updatedRows(
+    public function updatedRows(
         string $sql,
         PgSqlMergeStatement $statement,
         PgSqlMergeClause $clause,
@@ -215,14 +235,22 @@ final class MergeTransformer implements SqlTransformer
     }
 
     /**
-     * @param list<string> $columns
-     * @param array<string, string> $defaults
-     * @param array<string, \ZtdQuery\Schema\IdentityGenerationStrategy> $identityStrategies
-     * @param array<int, array<string, mixed>> $existingRows
+     * Answers the rows a MERGE writes that were not there.
+     *
+     * @param string $sql Statement being read, as written
+     * @param PgSqlMergeStatement $statement Statement, as the parser reads it
+     * @param PgSqlMergeClause $clause The clause
+     * @param list<string> $columns Columns to read
+     * @param array<string, string> $defaults The defaults
+     * @param array<string, \ZtdQuery\Schema\IdentityGenerationStrategy> $identityStrategies The identity strategies
+     * @param list<array<string, RenderableValue>> $existingRows The existing rows
+     * @param string $effectiveCondition The effective condition
+     *
+     * @return string What it answers
      *
      * @throws UnsupportedSqlException
      */
-    private function insertedRows(
+    public function insertedRows(
         string $sql,
         PgSqlMergeStatement $statement,
         PgSqlMergeClause $clause,
@@ -247,8 +275,8 @@ final class MergeTransformer implements SqlTransformer
 
         try {
             $providedExpressions = $this->rowRenderer->providedExpressions($sourceColumns, $clause->insertValues);
-        } catch (InvalidArgumentException) {
-            throw new UnsupportedSqlException($sql, 'MERGE INSERT values count does not match column count');
+        } catch (InvalidDefinitionException $exception) {
+            throw new UnsupportedSqlException($sql, 'MERGE INSERT values count does not match column count', $exception);
         }
         $generatedStarts = (new ShadowIdentityAllocator())->allocateSelectStarts(
             $statement->targetTable,

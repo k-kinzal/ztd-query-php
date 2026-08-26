@@ -124,7 +124,16 @@ final class PostgreSqlLexicalMasker
         return $result;
     }
 
-    private static function quotedLength(string $sql, string $quote, bool $escapeBackslash): int
+    /**
+     * Answers how long a quoted run is, from where it opens.
+     *
+     * @param string $sql Statement being read, as written
+     * @param string $quote The quote
+     * @param bool $escapeBackslash The escape backslash
+     *
+     * @return int What it answers
+     */
+    public static function quotedLength(string $sql, string $quote, bool $escapeBackslash): int
     {
         $length = strlen($sql);
         $i = 1;
@@ -149,7 +158,14 @@ final class PostgreSqlLexicalMasker
         return $i;
     }
 
-    private static function dollarQuotedLength(string $sql): ?int
+    /**
+     * Answers how long a dollar-quoted run is, from where it opens.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return int|null What it answers
+     */
+    public static function dollarQuotedLength(string $sql): ?int
     {
         $delimiter = self::dollarQuoteDelimiter($sql);
         if ($delimiter === null) {
@@ -164,7 +180,14 @@ final class PostgreSqlLexicalMasker
         return $end + strlen($delimiter);
     }
 
-    private static function dollarQuoteDelimiter(string $sql): ?string
+    /**
+     * Answers the delimiter a dollar-quoted run opens with.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return string|null What it answers
+     */
+    public static function dollarQuoteDelimiter(string $sql): ?string
     {
         $length = strlen($sql);
         $i = 1;
@@ -185,12 +208,28 @@ final class PostgreSqlLexicalMasker
         return substr($sql, 0, $i) . '$';
     }
 
-    private static function isDollarQuoteStart(string $sql, int $position): bool
+    /**
+     * Reports whether a dollar-quoted run opens here.
+     *
+     * @param string $sql Statement being read, as written
+     * @param int $position The position
+     *
+     * @return bool What it answers
+     */
+    public static function isDollarQuoteStart(string $sql, int $position): bool
     {
         return $position === 0 || !self::isIdentifierContinuation($sql[$position - 1]);
     }
 
-    private static function isEscapeStringStart(string $sql, int $quotePosition): bool
+    /**
+     * Reports whether one of PostgreSQL's escape strings opens here.
+     *
+     * @param string $sql Statement being read, as written
+     * @param int $quotePosition The quote position
+     *
+     * @return bool What it answers
+     */
+    public static function isEscapeStringStart(string $sql, int $quotePosition): bool
     {
         $prefix = substr($sql, 0, $quotePosition);
 
@@ -201,12 +240,26 @@ final class PostgreSqlLexicalMasker
             && ($preceding === '' || !self::isIdentifierContinuation($preceding));
     }
 
-    private static function isIdentifierStart(string $char): bool
+    /**
+     * Reports whether a name could open with this byte.
+     *
+     * @param string $char The char
+     *
+     * @return bool What it answers
+     */
+    public static function isIdentifierStart(string $char): bool
     {
         return ctype_alpha($char) || $char === '_';
     }
 
-    private static function isIdentifierContinuation(string $char): bool
+    /**
+     * Reports whether a name could carry on with this byte.
+     *
+     * @param string $char The char
+     *
+     * @return bool What it answers
+     */
+    public static function isIdentifierContinuation(string $char): bool
     {
         return ctype_alnum($char) || $char === '_' || $char === '$';
     }

@@ -26,6 +26,7 @@ use ZtdQuery\Shadow\TableTransitions;
 #[UsesClass(UpdateMutation::class)]
 #[UsesClass(\ZtdQuery\Shadow\Row\TableTransition::class)]
 #[UsesClass(\ZtdQuery\Shadow\Row\RowChange::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\RowConstraints::class)]
 final class TableTransitionsTest extends TestCase
 {
     public function testBetweenReadsARowThatIsNoLongerThereAsDeleted(): void
