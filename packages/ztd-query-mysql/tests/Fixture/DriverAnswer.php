@@ -11,7 +11,7 @@ namespace Tests\Fixture;
  * happens when one does not is worth testing -- and saying so here is what
  * lets a test hand one over without claiming it is a value at all.
  */
-final class DriverValues
+final class DriverAnswer
 {
     /**
      * Answers something no SQL literal can carry.
@@ -22,4 +22,15 @@ final class DriverValues
     {
         return [];
     }
+
+    /**
+     * Answers something an SQL literal can carry.
+     *
+     * @return mixed A value inside everything a renderer can write
+     */
+    public static function renderable(): mixed
+    {
+        return 'a';
+    }
+
 }

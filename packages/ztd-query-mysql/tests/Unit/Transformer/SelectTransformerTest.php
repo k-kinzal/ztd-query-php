@@ -9,7 +9,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use RuntimeException;
 use Tests\Contract\TransformerContractTest;
-use Tests\Fixture\DriverValues;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\IdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
@@ -478,23 +477,6 @@ final class SelectTransformerTest extends TransformerContractTest
         $result = $transformer->transform($sql, $tables);
         self::assertStringContainsString('`users` AS', $result);
         self::assertStringContainsString('`orders` AS', $result);
-    }
-
-    public function testTransformUnsupportedValueTypeThrows(): void
-    {
-        $transformer = new SelectTransformer();
-        $sql = 'SELECT * FROM data';
-        $tables = [
-            'data' => [
-                'rows' => [['val' => DriverValues::unsupported()]],
-                'columns' => ['val'],
-                'columnTypes' => [],
-            ],
-        ];
-
-        self::expectException(RuntimeException::class);
-        self::expectExceptionMessage('Unsupported value type');
-        $transformer->transform($sql, $tables);
     }
 
     public function testTransformWithFallbackNullCastWhenNoColumnType(): void

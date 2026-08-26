@@ -13,9 +13,6 @@ use ZtdQuery\Platform\MySql\MySqlUpsertExpressionCursor;
 use ZtdQuery\Platform\MySql\MySqlUpsertExpressionParser;
 use ZtdQuery\Shadow\Mutation\UpsertExpressionKind;
 
-/**
- * The my sql upsert expression parser test.
- */
 #[CoversClass(MySqlUpsertExpressionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 #[UsesClass(MySqlUpsertExpressionCursor::class)]

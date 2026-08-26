@@ -4,14 +4,12 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\MySql\Transformer;
 
-use PhpMyAdmin\SqlParser\Components\Condition;
 use PhpMyAdmin\SqlParser\Components\Expression;
-use PhpMyAdmin\SqlParser\Components\Limit;
-use PhpMyAdmin\SqlParser\Components\OrderKeyword;
 use PhpMyAdmin\SqlParser\Statements\UpdateStatement;
 use RuntimeException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\DmlWhereClauseExtractor;
+use ZtdQuery\Platform\MySql\MySqlComponentSql;
 use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlLexerProfile;
@@ -44,6 +42,7 @@ final class UpdateTransformer implements SqlTransformer
     public function __construct(
         MySqlParser $parser,
         SelectTransformer $selectTransformer,
+        private readonly MySqlComponentSql $components = new MySqlComponentSql(),
     ) {
         $this->parser = $parser;
         $this->selectTransformer = $selectTransformer;
@@ -203,7 +202,7 @@ final class UpdateTransformer implements SqlTransformer
 
         $whereClause = '';
         if ($whereExpression === null) {
-            $whereExpression = Condition::build($stmt->where ?? []);
+            $whereExpression = $this->components->condition($stmt->where ?? [], $stmt->build());
         }
         if ($whereExpression !== '') {
             $whereClause = ' WHERE ' . $whereExpression;
@@ -213,14 +212,14 @@ final class UpdateTransformer implements SqlTransformer
         if ($stmt->order !== null && $stmt->order !== []) {
             $orderParts = [];
             foreach ($stmt->order as $orderExpr) {
-                $orderParts[] = OrderKeyword::build($orderExpr);
+                $orderParts[] = $this->components->order($orderExpr, $stmt->build());
             }
             $orderByClause = ' ORDER BY ' . implode(', ', $orderParts);
         }
 
         $limitClause = '';
         if ($stmt->limit !== null) {
-            $limitClause = ' LIMIT ' . Limit::build($stmt->limit);
+            $limitClause = ' LIMIT ' . $this->components->limit($stmt->limit, $stmt->build());
         }
 
         $sourceClause = $sourceExpression ?? "`$targetTableName`$aliasClause$additionalTables$joinClause";
@@ -418,7 +417,7 @@ final class UpdateTransformer implements SqlTransformer
             if ($join->on !== null && $join->on !== []) {
                 $onParts = [];
                 foreach ($join->on as $condition) {
-                    $onParts[] = $condition->expr !== '' ? $condition->expr : Condition::build([$condition]);
+                    $onParts[] = $condition->expr !== '' ? $condition->expr : $this->components->condition([$condition], $stmt->build());
                 }
                 $joinStr .= ' ON ' . implode(' ', $onParts);
             }

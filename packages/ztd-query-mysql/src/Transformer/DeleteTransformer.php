@@ -5,13 +5,11 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\MySql\Transformer;
 
 use PhpMyAdmin\SqlParser\Components\Expression;
-use PhpMyAdmin\SqlParser\Components\JoinKeyword;
-use PhpMyAdmin\SqlParser\Components\Limit;
-use PhpMyAdmin\SqlParser\Components\OrderKeyword;
 use PhpMyAdmin\SqlParser\Statements\DeleteStatement;
 use RuntimeException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\DmlWhereClauseExtractor;
+use ZtdQuery\Platform\MySql\MySqlComponentSql;
 use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlParser;
@@ -39,6 +37,7 @@ final class DeleteTransformer implements SqlTransformer
     public function __construct(
         MySqlParser $parser,
         SelectTransformer $selectTransformer,
+        private readonly MySqlComponentSql $components = new MySqlComponentSql(),
     ) {
         $this->parser = $parser;
         $this->selectTransformer = $selectTransformer;
@@ -173,21 +172,21 @@ final class DeleteTransformer implements SqlTransformer
         if ($stmt->from !== null && $stmt->from !== []) {
             $fromParts = [];
             foreach ($stmt->from as $expr) {
-                $fromParts[] = Expression::build($expr);
+                $fromParts[] = $this->components->expression($expr, $originalSql);
             }
             $fromClause = ' FROM ' . implode(', ', $fromParts);
         }
 
         $joinClause = '';
         if ($stmt->join !== null && $stmt->join !== []) {
-            $joinClause = ' ' . JoinKeyword::build($stmt->join);
+            $joinClause = ' ' . $this->components->joins($stmt->join, $originalSql);
         }
 
         $usingClause = '';
         if ($stmt->using !== null && $stmt->using !== []) {
             $usingParts = [];
             foreach ($stmt->using as $expr) {
-                $usingParts[] = Expression::build($expr);
+                $usingParts[] = $this->components->expression($expr, $originalSql);
             }
             $fromClause = ' FROM ' . implode(', ', $usingParts);
         }
@@ -202,14 +201,14 @@ final class DeleteTransformer implements SqlTransformer
         if ($stmt->order !== null && $stmt->order !== []) {
             $orderParts = [];
             foreach ($stmt->order as $order) {
-                $orderParts[] = OrderKeyword::build($order);
+                $orderParts[] = $this->components->order($order, $originalSql);
             }
             $orderClause = ' ORDER BY ' . implode(', ', $orderParts);
         }
 
         $limitClause = '';
         if ($stmt->limit !== null) {
-            $limitClause = ' LIMIT ' . Limit::build($stmt->limit);
+            $limitClause = ' LIMIT ' . $this->components->limit($stmt->limit, $originalSql);
         }
 
         $targetTableAlias = $targetTableAlias ?? $targetTableName;

@@ -18,6 +18,7 @@ use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
 use ZtdQuery\Platform\MySql\MySqlNativeUpsertProjector;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlUpsertAssignmentExtractor;
+use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Rewrite\ShadowIdentityAllocator;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnDeclaration;
@@ -29,6 +30,7 @@ use ZtdQuery\Schema\IdentityGenerationStrategy;
  *
  * @phpstan-import-type ShadowTables from SqlTransformer
  * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type RenderableValue from ValueRenderer
  */
 final class InsertTransformer implements SqlTransformer
 {
@@ -141,7 +143,7 @@ final class InsertTransformer implements SqlTransformer
      * @param array<string, ColumnDeclaration> $columnTypes
      * @param array<string, string> $columnDefaults
      * @param array<string, IdentityGenerationStrategy> $identityStrategies
-     * @param list<Row> $existingRows Rows the table already holds
+     * @param list<array<string, RenderableValue>> $existingRows Rows the table already holds, as the driver answered them
      * @param string|null $sourceSelectSql The SELECT the statement inserts from, or null where it writes values
      *
      * @return string The SELECT that answers the rows the statement would write
@@ -218,7 +220,7 @@ final class InsertTransformer implements SqlTransformer
      * @param array<string, ColumnDeclaration> $columnTypes
      * @param array<string, string> $columnDefaults
      * @param array<string, IdentityGenerationStrategy> $identityStrategies
-     * @param list<Row> $existingRows Rows the table already holds
+     * @param list<array<string, RenderableValue>> $existingRows Rows the table already holds, as the driver answered them
      *
      * @return string The SELECT that answers this one row
      *
@@ -269,7 +271,7 @@ final class InsertTransformer implements SqlTransformer
      * @param array<string, ColumnDeclaration> $columnTypes
      * @param array<string, string> $columnDefaults
      * @param array<string, IdentityGenerationStrategy> $identityStrategies
-     * @param list<Row> $existingRows Rows the table already holds
+     * @param list<array<string, RenderableValue>> $existingRows Rows the table already holds, as the driver answered them
      *
      * @return string The SELECT that answers the row the assignments describe
      */

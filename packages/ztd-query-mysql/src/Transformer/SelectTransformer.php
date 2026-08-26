@@ -118,7 +118,7 @@ final class SelectTransformer implements SqlTransformer
      * Generate a CTE fragment for a single table.
      *
      * @param string $tableName
-     * @param list<Row> $rows Rows the shadow holds for it
+     * @param list<array<string, RenderableValue>> $rows Rows the shadow holds for it, as the driver answered them
      * @param array<int, string> $columns Columns it has, in order
      * @param array<string, ColumnDeclaration> $columnTypes How each column was declared
      * @param array<string, string> $generatedExpressions Column => the expression the table works it out with

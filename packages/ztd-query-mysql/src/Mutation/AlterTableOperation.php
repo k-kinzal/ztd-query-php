@@ -13,6 +13,7 @@ use PhpMyAdmin\SqlParser\Token;
 use ZtdQuery\Exception\ColumnAlreadyExistsException;
 use ZtdQuery\Exception\ColumnNotFoundException;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\MySql\MySqlComponentSql;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
@@ -32,12 +33,14 @@ final class AlterTableOperation
      * @param TableDefinitionRegistry $registry What each table declares
      * @param AlterTableColumn $columns Reads the column an operation is about
      * @param AlterTableRows $rows Carries a column change through to the rows
+     * @param MySqlComponentSql $components Asks the parser to write a piece of a statement back out
      */
     public function __construct(
         private readonly AlterStatement $statement,
         private readonly TableDefinitionRegistry $registry,
         private readonly AlterTableColumn $columns = new AlterTableColumn(),
         private readonly AlterTableRows $rows = new AlterTableRows(),
+        private readonly MySqlComponentSql $components = new MySqlComponentSql(),
     ) {
     }
 
@@ -102,7 +105,7 @@ final class AlterTableOperation
         } elseif ($set('ALTER') && ($set('SET DEFAULT') || $set('DROP DEFAULT'))) {
             return $tableName;
         } else {
-            throw new UnsupportedSqlException(AlterOperation::build($op), 'ALTER TABLE');
+            throw new UnsupportedSqlException($this->components->alterOperation($op, $this->statementSql()), 'ALTER TABLE');
         }
 
         return $tableName;

@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use Stringable;
-use Tests\Fixture\DriverValues;
+use Tests\Fixture\DriverAnswer;
 use ZtdQuery\Platform\MySql\MySqlValueRenderer;
 use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
@@ -114,7 +114,7 @@ final class MySqlValueRendererTest extends TestCase
         $renderer = new MySqlValueRenderer();
 
         $this->expectException(RuntimeException::class);
-        $renderer->renderValue(DriverValues::unsupported());
+        $renderer->renderValue(DriverAnswer::unsupported());
     }
     public function testRenderExpressionWritesAStringAsAQuotedLiteral(): void
     {
@@ -159,7 +159,7 @@ final class MySqlValueRendererTest extends TestCase
     {
         $this->expectException(RuntimeException::class);
 
-        (new MySqlValueRenderer())->stringValue(DriverValues::unsupported());
+        (new MySqlValueRenderer())->renderValue(DriverAnswer::unsupported());
     }
 
     public function testReadStreamAnswersEverythingTheStreamHolds(): void
@@ -191,6 +191,16 @@ final class MySqlValueRendererTest extends TestCase
     public function testRenderValueWritesANullAsNull(): void
     {
         self::assertSame('NULL', (new MySqlValueRenderer())->renderValue(null));
+    }
+
+    public function testIsRenderableReportsAValueALiteralCanCarry(): void
+    {
+        self::assertTrue((new MySqlValueRenderer())->isRenderable(DriverAnswer::renderable()));
+    }
+
+    public function testIsRenderableIsFalseForSomethingNoLiteralCouldCarry(): void
+    {
+        self::assertFalse((new MySqlValueRenderer())->isRenderable(DriverAnswer::unsupported()));
     }
 
 }

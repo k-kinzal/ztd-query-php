@@ -30,6 +30,7 @@ use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Schema\TableDefinitionRegistry;
+use ZtdQuery\Shadow\Mutation\ShadowMutation;
 use ZtdQuery\Shadow\ShadowStore;
 
 /**
@@ -44,7 +45,7 @@ final class RobustnessTarget
     private ShadowStoreConsistencyChecker $storeChecker;
     /** @var array<int, InvariantChecker> */
     private array $checkers;
-    /** @var array<string, array<int, array<string, mixed>>> */
+    /** @var array<string, list<array<string, bool|float|int|string|null>>> The rows every run starts from */
     private array $fixtureData;
 
     /**
@@ -114,10 +115,7 @@ final class RobustnessTarget
             if ($plan->kind() === QueryKind::WRITE_SIMULATED || $plan->kind() === QueryKind::DDL_SIMULATED) {
                 $mutation = $plan->mutation();
                 if ($mutation !== null) {
-                    try {
-                        $mutation->apply($this->shadowStore, []);
-                    } catch (SimulationException) {
-                    }
+                    $this->applyIfPossible($mutation);
 
                     $violation = $this->storeChecker->check($sql);
                     if ($violation !== null) {
@@ -232,5 +230,23 @@ final class RobustnessTarget
 
         $index = ord($input[0] ?? "\0") % count($generators);
         return $generators[$index];
+    }
+
+    /**
+     * Applies a mutation, letting a refusal stand.
+     *
+     * A fuzzed statement is often one ZTD refuses, and a refusal is the
+     * shadow working -- what is being checked is that the shadow is still
+     * consistent afterwards, which is checked either way.
+     *
+     * @param ShadowMutation $mutation What the statement would do
+     */
+    public function applyIfPossible(ShadowMutation $mutation): void
+    {
+        try {
+            $mutation->apply($this->shadowStore, []);
+        } catch (SimulationException) {
+            return;
+        }
     }
 }

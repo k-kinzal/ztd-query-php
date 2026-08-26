@@ -36,6 +36,9 @@ final class MySqlValueRenderer implements ValueRenderer
      */
     public function renderValue(mixed $value, ?ColumnDeclaration $type = null): string
     {
+        if (!$this->isRenderable($value)) {
+            throw new RuntimeException('Unsupported value type for CTE shadowing.');
+        }
         if ($value === null) {
             return 'NULL';
         }
@@ -56,6 +59,23 @@ final class MySqlValueRenderer implements ValueRenderer
         $expression = $this->renderExpression($value, $resolvedType, $type !== null);
 
         return $this->castRenderer->renderCast($expression, $resolvedType);
+    }
+
+    /**
+     * Reports whether a value is one an SQL literal could carry at all.
+     *
+     * @param mixed $value Value as it was handed over
+     *
+     * @return bool True when it can be written
+     *
+     * @phpstan-assert-if-true RenderableValue $value
+     */
+    public function isRenderable(mixed $value): bool
+    {
+        return $value === null
+            || is_scalar($value)
+            || $value instanceof Stringable
+            || (is_resource($value) && get_resource_type($value) === 'stream');
     }
 
     /**
