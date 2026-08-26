@@ -69,9 +69,6 @@ final class SqliteIdentifierQuoterTest extends IdentifierQuoterContractTest
         self::assertStringEndsWith('"', $result);
     }
 
-    /**
-     * P-IQ-4: Determinism.
-     */
     public function testDeterminism(): void
     {
         $quoter = new SqliteIdentifierQuoter();
@@ -80,9 +77,6 @@ final class SqliteIdentifierQuoterTest extends IdentifierQuoterContractTest
         self::assertSame($result1, $result2);
     }
 
-    /**
-     * P-IQ-3: Containment (original name is recoverable).
-     */
     public function testContainment(): void
     {
         $quoter = new SqliteIdentifierQuoter();

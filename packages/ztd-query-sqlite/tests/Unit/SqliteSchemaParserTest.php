@@ -429,9 +429,6 @@ final class SqliteSchemaParserTest extends SchemaParserContractTest
         self::assertSame(['id', 'age', 'name'], $result->columns);
     }
 
-    /**
-     * P-SP-1: primaryKeys is a subset of columns.
-     */
     #[Override]
     public function testPrimaryKeysSubsetOfColumns(): void
     {
@@ -442,9 +439,6 @@ final class SqliteSchemaParserTest extends SchemaParserContractTest
         self::assertSame([], array_diff($result->primaryKeys, $result->columns));
     }
 
-    /**
-     * P-SP-2: Column types keys subset of columns.
-     */
     public function testColumnTypeKeysSubsetOfColumns(): void
     {
         $parser = new SqliteSchemaParser();
@@ -454,9 +448,6 @@ final class SqliteSchemaParserTest extends SchemaParserContractTest
         self::assertSame([], array_diff(array_keys($result->columnTypes), $result->columns));
     }
 
-    /**
-     * P-SP-3: notNullColumns is a subset of columns.
-     */
     #[Override]
     public function testNotNullSubsetOfColumns(): void
     {
@@ -467,9 +458,6 @@ final class SqliteSchemaParserTest extends SchemaParserContractTest
         self::assertSame([], array_diff($result->notNullColumns, $result->columns));
     }
 
-    /**
-     * P-SP-4: Unique constraint columns subset of columns.
-     */
     #[Override]
     public function testUniqueConstraintColumnsSubsetOfColumns(): void
     {
