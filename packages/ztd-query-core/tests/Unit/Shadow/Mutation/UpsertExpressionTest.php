@@ -16,7 +16,7 @@ use ZtdQuery\Shadow\Mutation\UpsertExpressionKind;
 
 #[CoversClass(UpsertExpression::class)]
 #[CoversClass(UpsertColumnSource::class)]
-#[UsesClass(\ZtdQuery\Exception\UnsupportedSqlException::class)]
+#[UsesClass(UnsupportedSqlException::class)]
 final class UpsertExpressionTest extends TestCase
 {
     public function testEvaluatesTypedExpressionTree(): void

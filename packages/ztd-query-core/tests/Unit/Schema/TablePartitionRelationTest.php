@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Schema;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Schema\TablePartitionRelation;
@@ -29,21 +30,21 @@ final class TablePartitionRelationTest extends TestCase
 
     public function testRejectsEmptyParentAndPredicate(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
 
         new TablePartitionRelation('', 'id = 1');
     }
 
     public function testRejectsWhitespaceOnlyParent(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
 
         new TablePartitionRelation('  ', 'id = 1');
     }
 
     public function testRejectsBlankPredicate(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
 
         new TablePartitionRelation('events', ' ');
     }

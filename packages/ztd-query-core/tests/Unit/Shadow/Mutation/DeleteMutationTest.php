@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Shadow\Mutation;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Shadow\Mutation\DeleteMutation;
 use ZtdQuery\Shadow\ShadowStore;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 
 #[UsesClass(ShadowStore::class)]
 #[CoversClass(DeleteMutation::class)]

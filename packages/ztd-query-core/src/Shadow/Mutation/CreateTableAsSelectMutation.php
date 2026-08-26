@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow\Mutation;
 
+use RuntimeException;
 use ZtdQuery\Connection\ResultColumn;
 use ZtdQuery\Connection\ResultSet;
 use ZtdQuery\Schema\ColumnType;
@@ -61,7 +62,7 @@ final class CreateTableAsSelectMutation implements ResultSetMutation
             if ($this->ifNotExists) {
                 return;
             }
-            throw new \RuntimeException("Table '{$this->tableName}' already exists.");
+            throw new RuntimeException("Table '{$this->tableName}' already exists.");
         }
 
         $resultColumns = $result->columns;
@@ -73,7 +74,7 @@ final class CreateTableAsSelectMutation implements ResultSetMutation
             $columns = array_keys($result->rows[0]);
         }
         if ($columns === []) {
-            throw new \RuntimeException("Cannot determine result columns for virtual table '{$this->tableName}'.");
+            throw new RuntimeException("Cannot determine result columns for virtual table '{$this->tableName}'.");
         }
 
         $columnTypes = [];

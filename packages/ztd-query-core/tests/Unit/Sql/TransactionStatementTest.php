@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Sql;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -48,7 +49,7 @@ final class TransactionStatementTest extends TestCase
 
     public function testRejectsEmptySavepointName(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Savepoint name must not be empty.');
 
         TransactionStatement::savepoint('');

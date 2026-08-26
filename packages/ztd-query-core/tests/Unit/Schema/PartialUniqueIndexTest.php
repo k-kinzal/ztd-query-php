@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Schema;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -28,7 +29,7 @@ final class PartialUniqueIndexTest extends TestCase
     #[TestWith(['users_active_email', ['email'], ' '], 'missing predicate')]
     public function testRejectsIncompleteIndexMetadata(string $name, array $columns, string $predicate): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
 
         new PartialUniqueIndex($name, $columns, $predicate);
     }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow\Mutation;
 
+use InvalidArgumentException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 
 /**
@@ -29,7 +30,7 @@ final class UpsertExpression
     public static function column(UpsertColumnSource $source, string $column): self
     {
         if ($column === '') {
-            throw new \InvalidArgumentException('UPSERT column must not be empty');
+            throw new InvalidArgumentException('UPSERT column must not be empty');
         }
 
         return new self(UpsertExpressionKind::Column, columnSource: $source, column: $column);
@@ -42,7 +43,7 @@ final class UpsertExpression
             UpsertExpressionKind::UnaryMinus,
             UpsertExpressionKind::Not,
         ], true)) {
-            throw new \InvalidArgumentException('Expected a unary UPSERT expression kind');
+            throw new InvalidArgumentException('Expected a unary UPSERT expression kind');
         }
 
         return new self($kind, operands: [$operand]);
@@ -57,7 +58,7 @@ final class UpsertExpression
             UpsertExpressionKind::UnaryMinus,
             UpsertExpressionKind::Not,
         ], true)) {
-            throw new \InvalidArgumentException('Expected a binary UPSERT expression kind');
+            throw new InvalidArgumentException('Expected a binary UPSERT expression kind');
         }
 
         return new self($kind, operands: [$left, $right]);

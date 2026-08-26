@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Rewrite;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Rewrite\InsertRowProjection;
@@ -39,7 +40,7 @@ final class InsertRowProjectionTest extends TestCase
 
     public function testRejectsNonPositiveGeneratedIdentityValue(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Generated identity value must be positive.');
 
         InsertRowProjection::generatedIdentity('id', 0);

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Schema;
 
+use InvalidArgumentException;
+
 /**
  * Predicates that select rows belonging to named table partitions.
  */
@@ -18,7 +20,7 @@ final class TablePartitioning
         $normalized = [];
         foreach ($selectionPredicates as $name => $predicate) {
             if (trim($name) === '' || trim($predicate) === '') {
-                throw new \InvalidArgumentException('Partition names and predicates must not be empty.');
+                throw new InvalidArgumentException('Partition names and predicates must not be empty.');
             }
             $normalized[strtolower($name)] = $predicate;
         }

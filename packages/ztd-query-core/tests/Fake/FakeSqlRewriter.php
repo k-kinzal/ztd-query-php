@@ -9,7 +9,6 @@ use ZtdQuery\Rewrite\MultiRewritePlan;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
-use ZtdQuery\Sql\TransactionStatement;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\Mutation\CreateTableMutation;
@@ -19,6 +18,7 @@ use ZtdQuery\Shadow\Mutation\InsertMutation;
 use ZtdQuery\Shadow\Mutation\TruncateMutation;
 use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\ShadowStore;
+use ZtdQuery\Sql\TransactionStatement;
 
 /**
  * Fake SqlRewriter that classifies SQL via regex and builds result-select queries.

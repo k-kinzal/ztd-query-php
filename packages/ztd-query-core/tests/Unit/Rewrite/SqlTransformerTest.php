@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Rewrite;
 
+use Override;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use Tests\Contract\TransformerContractTest;
 use Tests\Fake\FakeSqlTransformer;
@@ -35,13 +36,13 @@ final class SqlTransformerTest extends TransformerContractTest
         );
     }
 
-    #[\Override]
+    #[Override]
     protected function nativeIntegerType(): string
     {
         return 'INTEGER';
     }
 
-    #[\Override]
+    #[Override]
     protected function nativeStringType(): string
     {
         return 'TEXT';

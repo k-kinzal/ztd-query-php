@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Rewrite;
 
+use InvalidArgumentException;
+
 final class InsertSelectProjection
 {
     private function __construct(
@@ -18,7 +20,7 @@ final class InsertSelectProjection
     public static function source(string $targetColumn, int $sourceIndex): self
     {
         if ($sourceIndex < 0) {
-            throw new \InvalidArgumentException('Source index must not be negative.');
+            throw new InvalidArgumentException('Source index must not be negative.');
         }
 
         return new self($targetColumn, $sourceIndex, null, null, false);
@@ -32,7 +34,7 @@ final class InsertSelectProjection
     public static function generatedIdentity(string $targetColumn, int $start): self
     {
         if ($start < 1) {
-            throw new \InvalidArgumentException('Generated identity start must be positive.');
+            throw new InvalidArgumentException('Generated identity start must be positive.');
         }
 
         return new self($targetColumn, null, null, $start, false);

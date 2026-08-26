@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Schema;
 
+use InvalidArgumentException;
+
 /**
  * A unique index whose candidate rows are restricted by a SQL predicate.
  */
@@ -19,7 +21,7 @@ final class PartialUniqueIndex
         public readonly string $predicate,
     ) {
         if (trim($name) === '' || $columns === [] || trim($predicate) === '') {
-            throw new \InvalidArgumentException('Partial unique indexes require a name, columns, and predicate.');
+            throw new InvalidArgumentException('Partial unique indexes require a name, columns, and predicate.');
         }
         $this->columns = $columns;
     }

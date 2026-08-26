@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Rewrite;
 
-use ZtdQuery\Rewrite\QueryKind;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
+use PHPUnit\Framework\TestCase;
 use ZtdQuery\Rewrite\AffectedRowsMode;
+use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\ReturningProjection;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Schema\CandidateKeySet;
 use ZtdQuery\Shadow\Mutation\InsertMutation;
-use PHPUnit\Framework\TestCase;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 
 #[UsesClass(InsertMutation::class)]
 #[UsesClass(CandidateKeySet::class)]

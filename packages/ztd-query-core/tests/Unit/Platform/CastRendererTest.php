@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Platform;
 
+use Override;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use Tests\Contract\CastRendererContractTest;
 use Tests\Fake\FakeCastRenderer;
@@ -18,7 +19,7 @@ final class CastRendererTest extends CastRendererContractTest
         return new FakeCastRenderer();
     }
 
-    #[\Override]
+    #[Override]
     protected function nativeTypeFor(ColumnTypeFamily $family): string
     {
         return match ($family) {

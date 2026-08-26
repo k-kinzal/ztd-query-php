@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Schema;
 
+use InvalidArgumentException;
+
 final class TablePartitionKey
 {
     /** @param non-empty-list<string> $expressions */
@@ -13,7 +15,7 @@ final class TablePartitionKey
     ) {
         foreach ($expressions as $expression) {
             if (trim($expression) === '') {
-                throw new \InvalidArgumentException('Partition key expressions must not be empty.');
+                throw new InvalidArgumentException('Partition key expressions must not be empty.');
             }
         }
     }

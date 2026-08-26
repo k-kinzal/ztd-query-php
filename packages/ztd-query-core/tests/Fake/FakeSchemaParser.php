@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Fake;
 
+use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
-use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\TableDefinition;
 
 /**

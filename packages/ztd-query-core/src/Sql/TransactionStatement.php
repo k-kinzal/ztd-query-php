@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Sql;
 
+use InvalidArgumentException;
 use ZtdQuery\Shadow\ShadowTransactionManager;
 
 /**
@@ -62,7 +63,7 @@ final class TransactionStatement
     private static function requiredName(string $name): string
     {
         if ($name === '') {
-            throw new \InvalidArgumentException('Savepoint name must not be empty.');
+            throw new InvalidArgumentException('Savepoint name must not be empty.');
         }
 
         return $name;
