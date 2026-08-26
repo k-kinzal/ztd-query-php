@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ZtdQuery\Rewrite;
 
 use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
 use ZtdQuery\Schema\TablePartitioning;
@@ -16,11 +17,16 @@ use ZtdQuery\Schema\TablePartitioning;
  * it, so the same transformer can rewrite one statement against one shadow and
  * the next against another.
  *
+ * A shadow row's values are whatever the driver handed back, which is wider
+ * than what a row holds once it has been read: a driver may answer a large
+ * column as an open stream, or an object that says how it spells itself.
+ *
  * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type RenderableValue from ValueRenderer
  *
  * @phpstan-type ShadowView array{viewSql: string}
  * @phpstan-type ShadowRows array{
- *     rows: list<Row>,
+ *     rows: list<array<string, RenderableValue>>,
  *     columns: array<int, string>,
  *     columnTypes: array<string, ColumnDeclaration>,
  *     primaryKeys?: array<int, string>,
