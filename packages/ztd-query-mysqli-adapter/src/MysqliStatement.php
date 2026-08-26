@@ -73,7 +73,7 @@ final class MysqliStatement implements StatementInterface
             }
         }
 
-        // get_result() is deferred so ZtdMysqliStatement::get_result() can call it on the underlying stmt
+        /* get_result() is deferred so ZtdMysqliStatement::get_result() can call it on the underlying stmt */
 
         return true;
     }
@@ -93,7 +93,7 @@ final class MysqliStatement implements StatementInterface
         /** @var list<Row> $rows */
         $rows = $result->fetch_all(MYSQLI_ASSOC);
 
-        // Free the result to avoid "Commands out of sync" errors
+        /* Free the result to avoid "Commands out of sync" errors */
         $result->free();
         $this->result = null;
 

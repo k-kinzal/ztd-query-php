@@ -143,9 +143,9 @@ final class ZtdMysqliTest extends TestCase
             });
         $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
 
-        // Default config uses Exception behavior for unsupported SQL.
-        // Session::rewrite catches UnsupportedSqlException and throws DatabaseException.
-        // ZtdMysqli::prepare catches DatabaseException and wraps as ZtdMysqliException.
+        /* Default config uses Exception behavior for unsupported SQL. */
+        /* Session::rewrite catches UnsupportedSqlException and throws DatabaseException. */
+        /* ZtdMysqli::prepare catches DatabaseException and wraps as ZtdMysqliException. */
         $rewriter->method('rewrite')
             ->willThrowException(new UnsupportedSqlException('DROP DATABASE foo', 'Unsupported'));
 

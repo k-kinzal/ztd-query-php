@@ -69,7 +69,7 @@ class ZtdMysqli extends mysqli
         ?ZtdConfig $config = null,
         ?SessionFactory $factory = null
     ) {
-        // Parent is initialized without connection; innerMysqli handles the real connection
+        /* Parent is initialized without connection; innerMysqli handles the real connection */
         parent::__construct();
         $this->innerMysqli = new mysqli($hostname, $username, $password, $database, $port ?? 3306, $socket);
 
@@ -250,8 +250,8 @@ class ZtdMysqli extends mysqli
             return false;
         }
 
-        // Cannot use $stmt->affected_rows because mysqli_stmt's C extension
-        // property handler takes precedence over __get when parent constructor was not called.
+        /* Cannot use $stmt->affected_rows because mysqli_stmt's C extension */
+        /* property handler takes precedence over __get when parent constructor was not called. */
         if ($stmt instanceof ZtdMysqliStatement) {
             $this->ztdAffectedRowCount = $stmt->ztdAffectedRows();
         } else {

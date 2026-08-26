@@ -21,6 +21,9 @@ use ReturnTypeWillChange;
  */
 class StubMysqliStmt extends mysqli_stmt
 {
+    /**
+     * @var bool The execute return
+     */
     public bool $executeReturn = true;
 
     /**
@@ -28,20 +31,44 @@ class StubMysqliStmt extends mysqli_stmt
      */
     public ?array $executeCalledWithParams = null;
 
+    /**
+     * @var int The execute call count
+     */
     public int $executeCallCount = 0;
 
+    /**
+     * @var bool The execute never expected
+     */
     public bool $executeNeverExpected = false;
 
+    /**
+     * @var mysqli_result|false The get result return
+     */
     public mysqli_result|false $getResultReturn = false;
 
+    /**
+     * @var int The num rows return
+     */
     public int $numRowsReturn = 0;
 
+    /**
+     * @var ?bool The fetch return
+     */
     public ?bool $fetchReturn = null;
 
+    /**
+     * @var bool The close called
+     */
     public bool $closeCalled = false;
 
+    /**
+     * @var bool The reset return
+     */
     public bool $resetReturn = true;
 
+    /**
+     * @var bool The store result return
+     */
     public bool $storeResultReturn = true;
 
     /**

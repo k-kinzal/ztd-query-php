@@ -18,6 +18,9 @@ use ReturnTypeWillChange;
  */
 class StubMysqli extends mysqli
 {
+    /**
+     * @var mysqli_stmt|false The prepare return
+     */
     public mysqli_stmt|false $prepareReturn = false;
 
     /**
@@ -35,24 +38,54 @@ class StubMysqli extends mysqli
      */
     public ?string $queryCalledWith = null;
 
+    /**
+     * @var bool The real query return
+     */
     public bool $realQueryReturn = true;
 
+    /**
+     * @var bool The multi query return
+     */
     public bool $multiQueryReturn = true;
 
+    /**
+     * @var bool The begin transaction return
+     */
     public bool $beginTransactionReturn = true;
 
+    /**
+     * @var ?int The begin transaction called with flags
+     */
     public ?int $beginTransactionCalledWithFlags = null;
 
+    /**
+     * @var bool The commit return
+     */
     public bool $commitReturn = true;
 
+    /**
+     * @var ?int The commit called with flags
+     */
     public ?int $commitCalledWithFlags = null;
 
+    /**
+     * @var bool The rollback return
+     */
     public bool $rollbackReturn = true;
 
+    /**
+     * @var ?int The rollback called with flags
+     */
     public ?int $rollbackCalledWithFlags = null;
 
+    /**
+     * @var bool The select db return
+     */
     public bool $selectDbReturn = true;
 
+    /**
+     * @var string The real escape string return
+     */
     public string $realEscapeStringReturn = '';
 
     /**
@@ -60,6 +93,9 @@ class StubMysqli extends mysqli
      */
     public mysqli_result|bool $executeQueryReturn = true;
 
+    /**
+     * @var bool The close called
+     */
     public bool $closeCalled = false;
 
     /**
