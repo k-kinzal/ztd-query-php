@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use Generator;
+use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Contract\CastRendererContractTest;
@@ -20,7 +22,7 @@ final class MySqlCastRendererTest extends CastRendererContractTest
         return new MySqlCastRenderer();
     }
 
-    #[\Override]
+    #[Override]
     protected function nativeTypeFor(ColumnTypeFamily $family): string
     {
         return match ($family) {
@@ -471,9 +473,9 @@ final class MySqlCastRendererTest extends CastRendererContractTest
     }
 
     /**
-     * @return \Generator<string, array{ColumnTypeFamily}>
+     * @return Generator<string, array{ColumnTypeFamily}>
      */
-    public static function providerAllFamilies(): \Generator
+    public static function providerAllFamilies(): Generator
     {
         foreach (ColumnTypeFamily::cases() as $family) {
             yield $family->value => [$family];
@@ -481,9 +483,9 @@ final class MySqlCastRendererTest extends CastRendererContractTest
     }
 
     /**
-     * @return \Generator<string, array{ColumnTypeFamily, string}>
+     * @return Generator<string, array{ColumnTypeFamily, string}>
      */
-    public static function providerFamilyWithExpectedCastType(): \Generator
+    public static function providerFamilyWithExpectedCastType(): Generator
     {
         yield 'INTEGER' => [ColumnTypeFamily::INTEGER, 'SIGNED'];
         yield 'FLOAT' => [ColumnTypeFamily::FLOAT, 'FLOAT'];

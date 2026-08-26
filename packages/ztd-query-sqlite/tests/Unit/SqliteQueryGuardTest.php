@@ -6,9 +6,10 @@ namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
+use RuntimeException;
 use Tests\Contract\QueryClassifierContractTest;
-use ZtdQuery\Platform\Sqlite\SqliteLexicalMasker;
 use ZtdQuery\Platform\Sqlite\SqliteInMemoryAttachStatement;
+use ZtdQuery\Platform\Sqlite\SqliteLexicalMasker;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
 use ZtdQuery\Platform\Sqlite\SqliteQueryGuard;
 use ZtdQuery\Rewrite\QueryKind;
@@ -156,7 +157,7 @@ final class SqliteQueryGuardTest extends QueryClassifierContractTest
     public function testAssertAllowedThrowsForUnsupported(): void
     {
         $guard = new SqliteQueryGuard(new SqliteParser());
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
         $guard->assertAllowed('GRANT ALL ON users TO admin');
     }
 
@@ -201,7 +202,7 @@ final class SqliteQueryGuardTest extends QueryClassifierContractTest
     public function testAssertAllowedForInsert(): void
     {
         $guard = new SqliteQueryGuard(new SqliteParser());
-        $guard->assertAllowed("INSERT INTO t (id) VALUES (1)");
+        $guard->assertAllowed('INSERT INTO t (id) VALUES (1)');
         self::addToAssertionCount(1);
     }
 

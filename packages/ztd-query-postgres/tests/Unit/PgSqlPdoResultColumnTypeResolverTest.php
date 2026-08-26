@@ -7,8 +7,8 @@ namespace Tests\Unit;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use ZtdQuery\Platform\Postgres\PgSqlPdoResultColumnTypeResolver;
 use ZtdQuery\Platform\Postgres\PgSqlColumnTypeMapper;
+use ZtdQuery\Platform\Postgres\PgSqlPdoResultColumnTypeResolver;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(PgSqlPdoResultColumnTypeResolver::class)]

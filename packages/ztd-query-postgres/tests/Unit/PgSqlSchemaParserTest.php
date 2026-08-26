@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
+use ReflectionMethod;
 use Tests\Contract\SchemaParserContractTest;
+use ZtdQuery\Platform\Postgres\PgSqlPartitionParser;
 use ZtdQuery\Platform\Postgres\PgSqlSchemaParser;
 use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
-use ZtdQuery\Platform\Postgres\PgSqlPartitionParser;
 use ZtdQuery\Schema\TablePartitionStrategy;
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
@@ -26,7 +27,7 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
 {
     public function testQualifiedIdentifierRejectsMismatchedTokenStream(): void
     {
-        $method = new \ReflectionMethod(PgSqlSchemaParser::class, 'qualifiedIdentifierAt');
+        $method = new ReflectionMethod(PgSqlSchemaParser::class, 'qualifiedIdentifierAt');
         $stream = SqlTokenStream::tokenize('users', \ZtdQuery\Platform\Postgres\PgSqlLexerProfile::create());
         $tokens = [new SqlToken(SqlTokenKind::String, 'users', 0, 0, 0)];
 
@@ -1044,7 +1045,7 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
     public function testParseColumnWithLeadingWhitespace(): void
     {
         $parser = new PgSqlSchemaParser();
-        $def = $parser->parse("CREATE TABLE t (  id INTEGER,  name TEXT  )");
+        $def = $parser->parse('CREATE TABLE t (  id INTEGER,  name TEXT  )');
         self::assertNotNull($def);
         self::assertSame(['id', 'name'], $def->columns);
     }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use Generator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -28,9 +29,9 @@ final class SqliteLexicalMaskerTest extends TestCase
     }
 
     /**
-     * @return \Generator<string, array{string, string}>
+     * @return Generator<string, array{string, string}>
      */
-    public static function providerComments(): \Generator
+    public static function providerComments(): Generator
     {
         yield 'empty query' => ['', ''];
         yield 'line comment' => ['SELECT-- comment', 'SELECT '];
@@ -51,9 +52,9 @@ final class SqliteLexicalMaskerTest extends TestCase
     }
 
     /**
-     * @return \Generator<string, array{string, bool}>
+     * @return Generator<string, array{string, bool}>
      */
-    public static function providerQuotedForms(): \Generator
+    public static function providerQuotedForms(): Generator
     {
         yield 'single quoted line marker' => ["'-- comment'", true];
         yield 'single quoted block marker' => ["'/* comment */'", true];

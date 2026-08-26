@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Tests\Contract\CastRendererContractTest;
 use ZtdQuery\Platform\CastRenderer;
@@ -19,7 +20,7 @@ final class SqliteCastRendererTest extends CastRendererContractTest
         return new SqliteCastRenderer();
     }
 
-    #[\Override]
+    #[Override]
     protected function nativeTypeFor(ColumnTypeFamily $family): string
     {
         return match ($family) {

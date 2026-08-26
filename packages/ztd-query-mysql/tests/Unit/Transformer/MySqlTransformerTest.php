@@ -13,13 +13,13 @@ use ZtdQuery\Platform\MySql\MySqlCastRenderer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlUpsertAssignmentExtractor;
-use ZtdQuery\Platform\MySql\UpdateSourceExtractor;
 use ZtdQuery\Platform\MySql\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\MySql\Transformer\InsertTransformer;
 use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
 use ZtdQuery\Platform\MySql\Transformer\ReplaceTransformer;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
+use ZtdQuery\Platform\MySql\UpdateSourceExtractor;
 
 #[CoversClass(MySqlTransformer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlSelectRelationParser::class)]
@@ -102,8 +102,8 @@ final class MySqlTransformerTest extends TestCase
         $tables = [];
 
         $result = $transformer->transform($sql, $tables);
-        self::assertStringContainsString("SELECT 1 AS `id`", $result);
-        self::assertStringContainsString("AS `name`", $result);
+        self::assertStringContainsString('SELECT 1 AS `id`', $result);
+        self::assertStringContainsString('AS `name`', $result);
     }
 
     public function testTransformDeleteDelegatesToDeleteTransformer(): void
@@ -147,6 +147,6 @@ final class MySqlTransformerTest extends TestCase
         $tables = [];
 
         $result = $transformer->transform($sql, $tables);
-        self::assertStringContainsString("SELECT 1 AS `id`", $result);
+        self::assertStringContainsString('SELECT 1 AS `id`', $result);
     }
 }

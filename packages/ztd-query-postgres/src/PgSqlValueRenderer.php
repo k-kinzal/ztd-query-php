@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Postgres;
 
+use RuntimeException;
 use Stringable;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\ValueRenderer;
@@ -38,7 +39,7 @@ final class PgSqlValueRenderer implements ValueRenderer
         }
 
         if ($type === null && !is_scalar($value)) {
-            throw new \RuntimeException('Unsupported value type for CTE shadowing.');
+            throw new RuntimeException('Unsupported value type for CTE shadowing.');
         }
 
         $resolvedType = $type ?? $this->inferType($value);
@@ -95,7 +96,7 @@ final class PgSqlValueRenderer implements ValueRenderer
             return $this->readStream($value);
         }
 
-        throw new \RuntimeException('Unsupported value type for CTE shadowing.');
+        throw new RuntimeException('Unsupported value type for CTE shadowing.');
     }
 
     /** @param resource $stream */

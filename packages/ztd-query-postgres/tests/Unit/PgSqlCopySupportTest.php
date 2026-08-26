@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use stdClass;
+use ValueError;
 use ZtdQuery\Platform\CopyTarget;
 use ZtdQuery\Platform\Postgres\PgSqlCopySupport;
 use ZtdQuery\Schema\TableDefinition;
@@ -36,7 +38,7 @@ final class PgSqlCopySupportTest extends TestCase
         self::assertTrue($support->isCopyStatement('COPY users FROM STDIN'));
         self::assertFalse($support->isCopyStatement('SELECT * FROM users'));
 
-        $this->expectException(\ValueError::class);
+        $this->expectException(ValueError::class);
         $support->tableName('users; DELETE FROM users');
     }
 
@@ -57,7 +59,7 @@ final class PgSqlCopySupportTest extends TestCase
 
     public function testRelationRejectsEmptyQualifierWithSpecificReason(): void
     {
-        $this->expectException(\ValueError::class);
+        $this->expectException(ValueError::class);
         $this->expectExceptionMessage('must not contain an empty qualifier component');
 
         (new PgSqlCopySupport())->tableName('users.');
@@ -66,7 +68,7 @@ final class PgSqlCopySupportTest extends TestCase
     #[DataProvider('providerInvalidRelation')]
     public function testRelationRejectsInvalidStructure(string $relation): void
     {
-        $this->expectException(\ValueError::class);
+        $this->expectException(ValueError::class);
 
         (new PgSqlCopySupport())->tableName($relation);
     }
@@ -91,7 +93,7 @@ final class PgSqlCopySupportTest extends TestCase
 
     public function testColumnsRejectAnEmptyFieldList(): void
     {
-        $this->expectException(\ValueError::class);
+        $this->expectException(ValueError::class);
         $this->expectExceptionMessage('PostgreSQL COPY fields must contain at least one column identifier.');
 
         (new PgSqlCopySupport())->target(
@@ -103,7 +105,7 @@ final class PgSqlCopySupportTest extends TestCase
 
     public function testColumnsRejectATrailingFieldDelimiter(): void
     {
-        $this->expectException(\ValueError::class);
+        $this->expectException(ValueError::class);
         $this->expectExceptionMessage('PostgreSQL COPY fields must contain at least one column identifier.');
 
         (new PgSqlCopySupport())->target(
@@ -116,7 +118,7 @@ final class PgSqlCopySupportTest extends TestCase
     #[DataProvider('providerInvalidFields')]
     public function testColumnsRejectInvalidFieldLists(string $fields): void
     {
-        $this->expectException(\ValueError::class);
+        $this->expectException(ValueError::class);
 
         (new PgSqlCopySupport())->target(
             'items',
@@ -127,7 +129,7 @@ final class PgSqlCopySupportTest extends TestCase
 
     public function testColumnListRejectsTablesWithoutWritableColumns(): void
     {
-        $this->expectException(\ValueError::class);
+        $this->expectException(ValueError::class);
 
         (new PgSqlCopySupport())->target(
             'items',
@@ -145,7 +147,7 @@ final class PgSqlCopySupportTest extends TestCase
 
     public function testInsertSqlRejectsAnEmptyBatch(): void
     {
-        $this->expectException(\ValueError::class);
+        $this->expectException(ValueError::class);
 
         $support = new PgSqlCopySupport();
         $support->insertSql(new CopyTarget(['items'], ['id']), 0, false);
@@ -181,14 +183,14 @@ final class PgSqlCopySupportTest extends TestCase
 
     public function testEncodeRowRejectsUnsupportedValues(): void
     {
-        $this->expectException(\ValueError::class);
+        $this->expectException(ValueError::class);
 
-        (new PgSqlCopySupport())->encodeRow([new \stdClass()], '|', '\\N');
+        (new PgSqlCopySupport())->encodeRow([new stdClass()], '|', '\\N');
     }
 
     public function testEncodeRowValidatesSeparator(): void
     {
-        $this->expectException(\ValueError::class);
+        $this->expectException(ValueError::class);
 
         (new PgSqlCopySupport())->encodeRow(['value'], '', '\\N');
     }
@@ -240,7 +242,7 @@ final class PgSqlCopySupportTest extends TestCase
     #[DataProvider('providerInvalidRow')]
     public function testDecodeRowRejectsMalformedRecords(string $row): void
     {
-        $this->expectException(\ValueError::class);
+        $this->expectException(ValueError::class);
 
         (new PgSqlCopySupport())->decodeRow($row, '|', '\\N');
     }
@@ -252,7 +254,7 @@ final class PgSqlCopySupportTest extends TestCase
 
     public function testSeparatorMustBeExactlyOneByte(): void
     {
-        $this->expectException(\ValueError::class);
+        $this->expectException(ValueError::class);
 
         (new PgSqlCopySupport())->decodeRow('value', '||', '\\N');
     }
