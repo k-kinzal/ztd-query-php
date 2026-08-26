@@ -11,7 +11,7 @@ use ZtdQuery\Platform\CopyTarget;
 #[CoversClass(CopyTarget::class)]
 final class CopyTargetTest extends TestCase
 {
-    public function testCarriesSemanticRelationAndColumnNames(): void
+    public function testTableNameCarriesSemanticRelationAndColumnNames(): void
     {
         $target = new CopyTarget(['public', 'users'], ['id', 'name']);
 

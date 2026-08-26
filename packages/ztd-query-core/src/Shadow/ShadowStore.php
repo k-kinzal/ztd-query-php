@@ -4,17 +4,20 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow;
 
+use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\MissingPrimaryKeyException;
 
 /**
  * Holds in-memory shadow rows for tables.
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 class ShadowStore
 {
     /**
      * Shadow rows keyed by table name.
      *
-     * @var array<string, array<int, array<string, mixed>>>
+     * @var array<string, list<Row>>
      */
     private array $fixtures = [];
 
@@ -26,20 +29,25 @@ class ShadowStore
     private array $initializedTables = [];
 
     /**
-     * Replace all shadow rows for a table.
+     * Replaces every shadow row of a table.
      *
-     * @param array<int, array<string, mixed>> $rows
+     * Rows are kept in order and under no keys of their own. Where the caller
+     * has removed some and left the rest under the keys they had, the gaps go:
+     * a table's rows are the rows it has, and nothing downstream should be able
+     * to tell how they came to be that.
+     *
+     * @param array<int, Row> $rows Rows the table now has, in order
      */
     public function set(string $tableName, array $rows): void
     {
-        $this->fixtures[$tableName] = $rows;
+        $this->fixtures[$tableName] = array_values($rows);
         $this->initializedTables[$tableName] = $tableName;
     }
 
     /**
      * Get all shadow rows for a table.
      *
-     * @return array<int, array<string, mixed>>
+     * @return list<Row>
      */
     public function get(string $tableName): array
     {
@@ -74,7 +82,7 @@ class ShadowStore
     /**
      * Get all stored shadow tables.
      *
-     * @return array<string, array<int, array<string, mixed>>>
+     * @return array<string, list<Row>>
      */
     public function getAll(): array
     {
@@ -123,7 +131,7 @@ class ShadowStore
     /**
      * Append rows to a table shadow set.
      *
-     * @param array<int, array<string, mixed>> $rows
+     * @param list<Row> $rows
      */
     public function insert(string $tableName, array $rows): void
     {
@@ -134,7 +142,7 @@ class ShadowStore
     /**
      * Delete rows from the shadow set.
      *
-     * @param array<int, array<string, mixed>> $deletedRows
+     * @param list<Row> $deletedRows
      * @param array<int, string> $primaryKeys
      */
     public function delete(string $tableName, array $deletedRows, array $primaryKeys = []): void
@@ -166,7 +174,7 @@ class ShadowStore
     /**
      * Update rows matched by primary keys.
      *
-     * @param array<int, array<string, mixed>> $updatedRows
+     * @param list<Row> $updatedRows
      * @param array<int, string> $primaryKeys
      */
     public function update(string $tableName, array $updatedRows, array $primaryKeys): void
@@ -192,7 +200,7 @@ class ShadowStore
     }
 
     /**
-     * @param list<array{row: array<string, mixed>, identity: array<string, mixed>}> $updates
+     * @param list<array{row: Row, identity: Row}> $updates
      * @param array<int, string> $primaryKeys
      */
     public function updateIdentified(string $tableName, array $updates, array $primaryKeys): void
@@ -216,8 +224,8 @@ class ShadowStore
     }
 
     /**
-     * @param array<string, mixed> $left
-     * @param array<string, mixed> $right
+     * @param Row $left
+     * @param Row $right
      * @param array<int, string> $primaryKeys
      */
     private function rowsMatch(array $left, array $right, array $primaryKeys): bool

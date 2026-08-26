@@ -181,7 +181,7 @@ final class ShadowIdentityAllocatorTest extends TestCase
         );
     }
 
-    public function testUncommittedPreparationDoesNotConsumeIdentity(): void
+    public function testBeginProjectionUncommittedPreparationDoesNotConsumeIdentity(): void
     {
         $allocator = new ShadowIdentityAllocator();
         $strategies = ['id' => IdentityGenerationStrategy::Sequence];

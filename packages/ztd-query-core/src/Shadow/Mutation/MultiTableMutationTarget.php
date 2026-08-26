@@ -28,19 +28,25 @@ final class MultiTableMutationTarget
         return $this->tableName;
     }
 
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     */
     public function columns(): array
     {
         return $this->columns;
     }
 
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     */
     public function primaryKeys(): array
     {
         return $this->primaryKeys;
     }
 
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     */
     public function matchColumns(): array
     {
         return $this->primaryKeys !== [] ? $this->primaryKeys : $this->columns;

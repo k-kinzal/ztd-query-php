@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Schema;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Schema\CandidateKeySet;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
-use ZtdQuery\Schema\IdentityGenerationStrategy;
 use ZtdQuery\Schema\ForeignKeyDefinition;
+use ZtdQuery\Schema\IdentityGenerationStrategy;
 use ZtdQuery\Schema\PartialUniqueIndex;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TablePartitioning;
 use ZtdQuery\Schema\TablePartitionKey;
 use ZtdQuery\Schema\TablePartitionRelation;
 use ZtdQuery\Schema\TablePartitionStrategy;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 
 #[UsesClass(ColumnType::class)]
 #[UsesClass(CandidateKeySet::class)]
@@ -94,7 +94,7 @@ final class TableDefinitionTest extends TestCase
         self::assertSame($partitioning, $partitioned->partitioning);
     }
 
-    public function testPartitionMetadataCopiesPreserveOtherSchemaState(): void
+    public function testCandidateKeysPartitionMetadataCopiesPreserveOtherSchemaState(): void
     {
         $definition = new TableDefinition(['id'], ['id' => 'INT'], ['id'], ['id'], []);
         $key = new TablePartitionKey(TablePartitionStrategy::Range, ['id']);

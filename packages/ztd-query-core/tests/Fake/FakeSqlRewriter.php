@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Fake;
 
+use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Rewrite\MultiRewritePlan;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
-use ZtdQuery\Sql\TransactionStatement;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\Mutation\CreateTableMutation;
@@ -19,12 +19,15 @@ use ZtdQuery\Shadow\Mutation\InsertMutation;
 use ZtdQuery\Shadow\Mutation\TruncateMutation;
 use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\ShadowStore;
+use ZtdQuery\Sql\TransactionStatement;
 
 /**
  * Fake SqlRewriter that classifies SQL via regex and builds result-select queries.
  *
  * Supports SELECT, INSERT, UPDATE, DELETE, CREATE TABLE, DROP TABLE, TRUNCATE.
  * Uses FakeSqlTransformer for CTE injection on SELECT queries.
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 final class FakeSqlRewriter implements SqlRewriter
 {
@@ -247,7 +250,7 @@ final class FakeSqlRewriter implements SqlRewriter
     }
 
     /**
-     * @return array<string, array{rows: array<int, array<string, mixed>>, columns: array<int, string>, columnTypes: array<string, \ZtdQuery\Schema\ColumnType>}>
+     * @return array<string, array{rows: list<Row>, columns: array<int, string>, columnTypes: array<string, \ZtdQuery\Schema\ColumnType>}>
      */
     private function buildShadowContext(): array
     {

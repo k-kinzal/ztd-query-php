@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Schema;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Schema\ColumnTypeFamily;
-use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(ColumnTypeFamily::class)]
 final class ColumnTypeFamilyTest extends TestCase

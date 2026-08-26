@@ -15,6 +15,8 @@ use ZtdQuery\Rewrite\QueryKind;
  * - Rewritten SELECT: wraps a StatementInterface for fetching
  * - Simulated WRITE: buffers rows and provides iteration
  * - Failure: represents execution failure
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 final class GenericExecuteResult implements ExecuteResult
 {
@@ -26,7 +28,7 @@ final class GenericExecuteResult implements ExecuteResult
     /**
      * Buffered rows for simulated writes.
      *
-     * @var array<int, array<string, mixed>>|null
+     * @var list<Row>|null
      */
     private ?array $bufferedRows;
 
@@ -43,7 +45,7 @@ final class GenericExecuteResult implements ExecuteResult
     private bool $resultSet;
 
     /**
-     * @param array<int, array<string, mixed>>|null $bufferedRows
+     * @param list<Row>|null $bufferedRows
      */
     private function __construct(
         bool $passthrough,
@@ -103,7 +105,7 @@ final class GenericExecuteResult implements ExecuteResult
     /**
      * Create a result with buffered rows (for simulated WRITE queries).
      *
-     * @param array<int, array<string, mixed>> $rows
+     * @param list<Row> $rows
      */
     public static function fromBufferedRows(
         array $rows,
@@ -125,7 +127,7 @@ final class GenericExecuteResult implements ExecuteResult
     /**
      * Create a result with both a statement and buffered rows.
      *
-     * @param array<int, array<string, mixed>> $rows
+     * @param list<Row> $rows
      */
     public static function fromStatementAndRows(
         StatementInterface $statement,

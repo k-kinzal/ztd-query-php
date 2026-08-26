@@ -4,8 +4,13 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Rewrite;
 
+use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Exception\InvalidDefinitionException;
+
 /**
  * A dialect-neutral projection of mutation rows returned to the client.
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 final class ReturningProjection
 {
@@ -22,14 +27,14 @@ final class ReturningProjection
     public static function fromItems(array $items): self
     {
         if ($items === []) {
-            throw new \InvalidArgumentException('Returning projection requires at least one item.');
+            throw new InvalidDefinitionException('Returning projection requires at least one item.');
         }
         foreach ($items as $item) {
             if ($item['source'] === null && $item['output'] !== null) {
-                throw new \InvalidArgumentException('Wildcard returning projections cannot have an output name.');
+                throw new InvalidDefinitionException('Wildcard returning projections cannot have an output name.');
             }
             if ($item['source'] === '' || $item['output'] === '') {
-                throw new \InvalidArgumentException('Returning projection names must not be empty.');
+                throw new InvalidDefinitionException('Returning projection names must not be empty.');
             }
         }
 
@@ -37,8 +42,8 @@ final class ReturningProjection
     }
 
     /**
-     * @param array<int, array<string, mixed>> $rows
-     * @return array<int, array<string, mixed>>
+     * @param list<Row> $rows
+     * @return list<Row>
      */
     public function project(array $rows): array
     {
@@ -59,7 +64,9 @@ final class ReturningProjection
         return $projectedRows;
     }
 
-    /** @return list<array{source: string|null, output: string|null}> */
+    /**
+     * @return list<array{source: string|null, output: string|null}>
+     */
     public function items(): array
     {
         return $this->items;

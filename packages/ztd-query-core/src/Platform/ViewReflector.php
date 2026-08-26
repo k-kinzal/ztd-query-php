@@ -8,6 +8,8 @@ use ZtdQuery\Schema\ViewDefinition;
 
 interface ViewReflector
 {
-    /** @return array<string, ViewDefinition> */
+    /**
+     * @return array<string, ViewDefinition>
+     */
     public function reflectViews(): array;
 }

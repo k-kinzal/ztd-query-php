@@ -6,10 +6,10 @@ namespace Tests\Fake;
 
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\ConnectionInterface;
+use ZtdQuery\Platform\SessionFactory;
 use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Session;
-use ZtdQuery\Platform\SessionFactory;
 use ZtdQuery\Shadow\ShadowStore;
 
 /**

@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Rewrite;
 
-use ZtdQuery\Rewrite\QueryKind;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
+use PHPUnit\Framework\TestCase;
 use ZtdQuery\Rewrite\AffectedRowsMode;
+use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\ReturningProjection;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Schema\CandidateKeySet;
 use ZtdQuery\Shadow\Mutation\InsertMutation;
-use PHPUnit\Framework\TestCase;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 
 #[UsesClass(InsertMutation::class)]
 #[UsesClass(CandidateKeySet::class)]
@@ -20,7 +20,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[CoversClass(RewritePlan::class)]
 final class RewritePlanTest extends TestCase
 {
-    public function testPlanHoldsSqlKindAndMutation(): void
+    public function testKindPlanHoldsSqlKindAndMutation(): void
     {
         $mutation = new InsertMutation('users');
         $plan = new RewritePlan('SELECT 1', QueryKind::READ, $mutation);
@@ -30,14 +30,14 @@ final class RewritePlanTest extends TestCase
         self::assertSame($mutation, $plan->mutation());
     }
 
-    public function testPlanWithoutMutation(): void
+    public function testMutationPlanWithoutMutation(): void
     {
         $plan = new RewritePlan('SELECT 1', QueryKind::READ);
 
         self::assertNull($plan->mutation());
     }
 
-    public function testPlanCarriesReturningAndAffectedRowsMetadata(): void
+    public function testAffectedRowsModePlanCarriesReturningAndAffectedRowsMetadata(): void
     {
         $projection = ReturningProjection::fromItems([['source' => 'id', 'output' => null]]);
         $plan = new RewritePlan(

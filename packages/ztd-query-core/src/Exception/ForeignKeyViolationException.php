@@ -35,6 +35,36 @@ final class ForeignKeyViolationException extends SimulationException
     private string $referencedColumn;
 
     /**
+     * Reports a constraint a statement left broken, or was forbidden by.
+     *
+     * A key may point at several columns; the message names the first, which
+     * is what a database says too.
+     *
+     * @param string $sql Statement being simulated
+     * @param string $tableName Table holding the key
+     * @param string $constraintName Constraint that was not honoured
+     * @param string $referencedTable Table the key points at
+     * @param list<string> $referencedColumns Columns it points at
+     *
+     * @return self Exception naming the constraint and what it points at
+     */
+    public static function of(
+        string $sql,
+        string $tableName,
+        string $constraintName,
+        string $referencedTable,
+        array $referencedColumns,
+    ): self {
+        return new self(
+            $sql,
+            $tableName,
+            $constraintName,
+            $referencedTable,
+            $referencedColumns[0] ?? '',
+        );
+    }
+
+    /**
      * @param string $sql The SQL statement.
      * @param string $tableName The name of the table.
      * @param string $constraintName The name of the foreign key constraint.

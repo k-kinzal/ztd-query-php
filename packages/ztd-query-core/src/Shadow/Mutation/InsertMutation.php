@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow\Mutation;
 
+use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\DuplicateKeyException;
 use ZtdQuery\Exception\NotNullViolationException;
 use ZtdQuery\Schema\CandidateKeySet;
@@ -12,6 +13,8 @@ use ZtdQuery\Shadow\ShadowStore;
 
 /**
  * Applies INSERT result rows to the shadow store.
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 final class InsertMutation implements DataMutation
 {
@@ -134,7 +137,7 @@ final class InsertMutation implements DataMutation
     /**
      * Validate NOT NULL constraints for a row.
      *
-     * @param array<string, mixed> $row Row to validate.
+     * @param Row $row Row to validate.
      * @throws NotNullViolationException If a NOT NULL constraint is violated.
      */
     private function validateNotNullConstraints(array $row): void
@@ -155,8 +158,8 @@ final class InsertMutation implements DataMutation
     /**
      * Validate UNIQUE constraints for a row.
      *
-     * @param array<string, mixed> $row Row to validate.
-     * @param array<int, array<string, mixed>> $existingRows Existing rows in the store.
+     * @param Row $row Row to validate.
+     * @param list<Row> $existingRows Existing rows in the store.
      * @throws DuplicateKeyException If a UNIQUE constraint is violated.
      */
     private function validateUniqueConstraints(array $row, array $existingRows): void
@@ -198,9 +201,9 @@ final class InsertMutation implements DataMutation
     /**
      * Extract key values from a row.
      *
-     * @param array<string, mixed> $row Row to extract from.
+     * @param Row $row Row to extract from.
      * @param array<int, string> $columns Column names.
-     * @return array<string, mixed> Key values.
+     * @return Row Key values.
      */
     private function extractKeyValues(array $row, array $columns): array
     {
@@ -212,8 +215,8 @@ final class InsertMutation implements DataMutation
     }
 
     /**
-     * @param array<string, mixed> $row
-     * @param array<int, array<string, mixed>> $existingRows
+     * @param Row $row
+     * @param list<Row> $existingRows
      */
     private function findConflict(array $row, array $existingRows): ?\ZtdQuery\Schema\CandidateKeyConflict
     {

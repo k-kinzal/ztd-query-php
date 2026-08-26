@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Schema;
 
+use ZtdQuery\Exception\InvalidDefinitionException;
+
 /**
  * Predicates that select rows belonging to named table partitions.
  */
@@ -12,13 +14,15 @@ final class TablePartitioning
     /** @var array<string, string> */
     private readonly array $selectionPredicates;
 
-    /** @param array<string, string> $selectionPredicates */
+    /**
+     * @param array<string, string> $selectionPredicates
+     */
     public function __construct(array $selectionPredicates)
     {
         $normalized = [];
         foreach ($selectionPredicates as $name => $predicate) {
             if (trim($name) === '' || trim($predicate) === '') {
-                throw new \InvalidArgumentException('Partition names and predicates must not be empty.');
+                throw new InvalidDefinitionException('Partition names and predicates must not be empty.');
             }
             $normalized[strtolower($name)] = $predicate;
         }
