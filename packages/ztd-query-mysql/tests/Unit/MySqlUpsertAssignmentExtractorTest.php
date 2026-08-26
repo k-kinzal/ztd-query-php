@@ -71,7 +71,7 @@ final class MySqlUpsertAssignmentExtractorTest extends TestCase
         ];
     }
 
-    public function testExtractsIncomingRowAliasWithoutRewritingExpressions(): void
+    public function testIncomingAliasExtractsIncomingRowAliasWithoutRewritingExpressions(): void
     {
         $extractor = new MySqlUpsertAssignmentExtractor();
 

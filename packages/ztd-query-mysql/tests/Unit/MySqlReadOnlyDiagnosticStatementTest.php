@@ -15,7 +15,7 @@ use ZtdQuery\Platform\MySql\MySqlReadOnlyDiagnosticStatement;
 final class MySqlReadOnlyDiagnosticStatementTest extends TestCase
 {
     #[DataProvider('providerStatement')]
-    public function testClassifiesOnlySafeMySqlDiagnostics(string $sql, bool $expected): void
+    public function testIsSafeClassifiesOnlySafeMySqlDiagnostics(string $sql, bool $expected): void
     {
         self::assertSame($expected, MySqlReadOnlyDiagnosticStatement::isSafe($sql));
     }
