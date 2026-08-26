@@ -5,13 +5,11 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\MySql\Transformer;
 
 use PhpMyAdmin\SqlParser\Components\Expression;
-use PhpMyAdmin\SqlParser\Components\JoinKeyword;
-use PhpMyAdmin\SqlParser\Components\Limit;
-use PhpMyAdmin\SqlParser\Components\OrderKeyword;
 use PhpMyAdmin\SqlParser\Statements\DeleteStatement;
 use RuntimeException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\DmlWhereClauseExtractor;
+use ZtdQuery\Platform\MySql\MySqlComponentSql;
 use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlParser;
@@ -21,6 +19,8 @@ use ZtdQuery\Shadow\Mutation\MultiTableMutationTarget;
 
 /**
  * Transforms DELETE statements into SELECT projections with CTE shadowing.
+ *
+ * @phpstan-import-type ShadowTables from SqlTransformer
  */
 final class DeleteTransformer implements SqlTransformer
 {
@@ -37,6 +37,7 @@ final class DeleteTransformer implements SqlTransformer
     public function __construct(
         MySqlParser $parser,
         SelectTransformer $selectTransformer,
+        private readonly MySqlComponentSql $components = new MySqlComponentSql(),
     ) {
         $this->parser = $parser;
         $this->selectTransformer = $selectTransformer;
@@ -171,21 +172,21 @@ final class DeleteTransformer implements SqlTransformer
         if ($stmt->from !== null && $stmt->from !== []) {
             $fromParts = [];
             foreach ($stmt->from as $expr) {
-                $fromParts[] = Expression::build($expr);
+                $fromParts[] = $this->components->expression($expr, $originalSql);
             }
             $fromClause = ' FROM ' . implode(', ', $fromParts);
         }
 
         $joinClause = '';
         if ($stmt->join !== null && $stmt->join !== []) {
-            $joinClause = ' ' . JoinKeyword::build($stmt->join);
+            $joinClause = ' ' . $this->components->joins($stmt->join, $originalSql);
         }
 
         $usingClause = '';
         if ($stmt->using !== null && $stmt->using !== []) {
             $usingParts = [];
             foreach ($stmt->using as $expr) {
-                $usingParts[] = Expression::build($expr);
+                $usingParts[] = $this->components->expression($expr, $originalSql);
             }
             $fromClause = ' FROM ' . implode(', ', $usingParts);
         }
@@ -200,14 +201,14 @@ final class DeleteTransformer implements SqlTransformer
         if ($stmt->order !== null && $stmt->order !== []) {
             $orderParts = [];
             foreach ($stmt->order as $order) {
-                $orderParts[] = OrderKeyword::build($order);
+                $orderParts[] = $this->components->order($order, $originalSql);
             }
             $orderClause = ' ORDER BY ' . implode(', ', $orderParts);
         }
 
         $limitClause = '';
         if ($stmt->limit !== null) {
-            $limitClause = ' LIMIT ' . Limit::build($stmt->limit);
+            $limitClause = ' LIMIT ' . $this->components->limit($stmt->limit, $originalSql);
         }
 
         $targetTableAlias = $targetTableAlias ?? $targetTableName;
@@ -253,10 +254,11 @@ final class DeleteTransformer implements SqlTransformer
 
     /**
      * @param array<string, array{alias: string}> $resolvedTables
-     * @param array<string, array{viewSql: string}|array{rows: array<int, array<string, mixed>>, columns: array<int, string>, columnTypes: array<string, \ZtdQuery\Schema\ColumnDeclaration>, primaryKeys?: array<int, string>}> $contexts
-     * @return list<MultiTableMutationTarget>
+     * @param ShadowTables $contexts Table name => what the shadow holds for it
+     *
+     * @return list<MultiTableMutationTarget> One target per table the statement deletes from that the shadow knows
      */
-    private function targetsFromContexts(array $resolvedTables, array $contexts): array
+    public function targetsFromContexts(array $resolvedTables, array $contexts): array
     {
         $targets = [];
         foreach ($resolvedTables as $tableName => $tableInfo) {
@@ -275,10 +277,18 @@ final class DeleteTransformer implements SqlTransformer
     }
 
     /**
-     * @param array<string, array{alias: string}> $resolvedTables
-     * @param list<MultiTableMutationTarget> $targets
+     * Writes the select list that carries each deleted row's key back.
+     *
+     * A statement deleting from several tables answers one result set, so
+     * each table's key columns are carried under names of their own that no
+     * table would use.
+     *
+     * @param array<string, array{alias: string}> $resolvedTables Table name => the name the statement gave it
+     * @param list<MultiTableMutationTarget> $targets The tables being deleted from
+     *
+     * @return string The select list
      */
-    private function multiTableSelectList(array $resolvedTables, array $targets): string
+    public function multiTableSelectList(array $resolvedTables, array $targets): string
     {
         $codec = new MultiTableMutationRow();
         $quoter = new MySqlIdentifierQuoter();
@@ -299,7 +309,18 @@ final class DeleteTransformer implements SqlTransformer
         return implode(', ', $parts);
     }
 
-    private function resolveAliasToTable(string $alias, DeleteStatement $stmt): ?string
+    /**
+     * Answers which table a name in the statement stands for.
+     *
+     * A name the statement never gave to anything is taken to be a table's
+     * own name, because that is what MySQL takes it to be.
+     *
+     * @param string $alias Name written in the statement
+     * @param DeleteStatement $stmt The statement, as the parser reads it
+     *
+     * @return string|null The table it stands for, or null where the statement names it as nothing
+     */
+    public function resolveAliasToTable(string $alias, DeleteStatement $stmt): ?string
     {
         if ($stmt->from !== null && $stmt->from !== []) {
             foreach ($stmt->from as $from) {
@@ -335,17 +356,31 @@ final class DeleteTransformer implements SqlTransformer
     }
 
     /**
-     * Resolve table name from an Expression, preferring ->table over ->expr.
+     * Answers the table an expression names.
+     *
+     * The parser fills in the table separately once it has read a qualified
+     * name, and leaves the whole expression where it has not, so both have to
+     * be read -- the more specific first.
+     *
+     * @param Expression $expr Expression to read
+     *
+     * @return string|null The table, or null where the expression names none
      */
-    private static function exprTable(Expression $expr): ?string
+    public static function exprTable(Expression $expr): ?string
     {
         return (($expr->table ?? '') !== '') ? $expr->table : $expr->expr;
     }
 
     /**
-     * Resolve alias from an Expression, falling back to table name.
+     * Answers the name an expression is known by in the statement.
+     *
+     * A table the statement gave no name to is known by its own.
+     *
+     * @param Expression $expr Expression to read
+     *
+     * @return string|null The name, or null where the expression names nothing
      */
-    private static function exprAlias(Expression $expr): ?string
+    public static function exprAlias(Expression $expr): ?string
     {
         return (($expr->alias ?? '') !== '') ? $expr->alias : self::exprTable($expr);
     }

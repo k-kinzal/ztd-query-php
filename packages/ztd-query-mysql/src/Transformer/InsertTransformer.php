@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\MySql\Transformer;
 
-use InvalidArgumentException;
 use PhpMyAdmin\SqlParser\Components\ArrayObj;
 use PhpMyAdmin\SqlParser\Components\SetOperation;
 use PhpMyAdmin\SqlParser\Statements\InsertStatement;
 use RuntimeException;
+use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\MySql\InsertSelectSourceExtractor;
@@ -17,6 +18,7 @@ use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
 use ZtdQuery\Platform\MySql\MySqlNativeUpsertProjector;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlUpsertAssignmentExtractor;
+use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Rewrite\ShadowIdentityAllocator;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnDeclaration;
@@ -25,6 +27,10 @@ use ZtdQuery\Schema\IdentityGenerationStrategy;
 /**
  * Transforms INSERT statements into SELECT queries that return the inserted rows.
  * Applies CTE shadowing via the SelectTransformer delegate.
+ *
+ * @phpstan-import-type ShadowTables from SqlTransformer
+ * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type RenderableValue from ValueRenderer
  */
 final class InsertTransformer implements SqlTransformer
 {
@@ -137,11 +143,16 @@ final class InsertTransformer implements SqlTransformer
      * @param array<string, ColumnDeclaration> $columnTypes
      * @param array<string, string> $columnDefaults
      * @param array<string, IdentityGenerationStrategy> $identityStrategies
-     * @param array<int, array<string, mixed>> $existingRows
+     * @param list<array<string, RenderableValue>> $existingRows Rows the table already holds, as the driver answered them
+     * @param string|null $sourceSelectSql The SELECT the statement inserts from, or null where it writes values
      *
-     * @throws RuntimeException
+     * @return string The SELECT that answers the rows the statement would write
+     *
+     * @throws InvalidDefinitionException When the statement cannot describe a row the table would take
+     * @throws UnsupportedSqlException When the statement writes rows ZTD cannot work out
+     * @throws RuntimeException When the statement writes no rows at all
      */
-    private function buildInsertSelect(
+    public function buildInsertSelect(
         InsertStatement $statement,
         string $tableName,
         array $tableColumns,
@@ -209,11 +220,13 @@ final class InsertTransformer implements SqlTransformer
      * @param array<string, ColumnDeclaration> $columnTypes
      * @param array<string, string> $columnDefaults
      * @param array<string, IdentityGenerationStrategy> $identityStrategies
-     * @param array<int, array<string, mixed>> $existingRows
+     * @param list<array<string, RenderableValue>> $existingRows Rows the table already holds, as the driver answered them
      *
-     * @throws RuntimeException
+     * @return string The SELECT that answers this one row
+     *
+     * @throws InvalidDefinitionException When the row's values do not line up with its columns
      */
-    private function buildInsertRowSelect(
+    public function buildInsertRowSelect(
         ArrayObj $valueSet,
         string $tableName,
         array $tableColumns,
@@ -231,11 +244,7 @@ final class InsertTransformer implements SqlTransformer
             $values[] = strcasecmp($parsedValue, 'DEFAULT') === 0 ? $parsedValue : $rawValue;
         }
         $sourceColumns = $insertColumns !== [] || $values === [] ? $insertColumns : $tableColumns;
-        try {
-            $providedExpressions = $this->rowRenderer->providedExpressions($sourceColumns, $values);
-        } catch (InvalidArgumentException $exception) {
-            throw new RuntimeException($exception->getMessage(), 0, $exception);
-        }
+        $providedExpressions = $this->rowRenderer->providedExpressions($sourceColumns, $values);
         $generatedValues = $this->identityAllocator->allocateMissing(
             $tableName,
             $identityStrategies,
@@ -262,9 +271,11 @@ final class InsertTransformer implements SqlTransformer
      * @param array<string, ColumnDeclaration> $columnTypes
      * @param array<string, string> $columnDefaults
      * @param array<string, IdentityGenerationStrategy> $identityStrategies
-     * @param array<int, array<string, mixed>> $existingRows
+     * @param list<array<string, RenderableValue>> $existingRows Rows the table already holds, as the driver answered them
+     *
+     * @return string The SELECT that answers the row the assignments describe
      */
-    private function buildInsertSetSelect(
+    public function buildInsertSetSelect(
         array $setOperations,
         string $tableName,
         array $tableColumns,
@@ -300,11 +311,18 @@ final class InsertTransformer implements SqlTransformer
     }
 
     /**
+     * Answers values under no keys of their own, in the order they were given.
+     *
+     * The parser keys what it reads by where it read it, and a caller that
+     * has taken some of them out leaves gaps -- which downstream code would
+     * be able to see. In order, under nothing, they are just the values.
+     *
      * @template T
-     * @param array<array-key, T> $values
-     * @return list<T>
+     * @param array<array-key, T> $values Values as they were given
+     *
+     * @return list<T> The same values, in order
      */
-    private static function orderedValues(array $values): array
+    public static function orderedValues(array $values): array
     {
         $ordered = [];
         foreach ($values as $value) {

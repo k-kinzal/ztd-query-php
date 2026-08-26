@@ -487,4 +487,45 @@ final class MySqlCastRendererTest extends CastRendererContractTest
         yield 'BINARY' => [ColumnTypeFamily::BINARY, 'BINARY'];
         yield 'STRING' => [ColumnTypeFamily::STRING, 'CHAR'];
     }
+    public function testCastTypeOfAnswersWhatCastCallsThatKindOfColumn(): void
+    {
+        self::assertSame(
+            'SIGNED',
+            (new MySqlCastRenderer())->castTypeOf(new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'BIGINT')),
+        );
+    }
+
+    public function testCastTypeOfReadsTheDeclarationItselfWhereTheFamilyIsUnknown(): void
+    {
+        self::assertSame(
+            'YEAR',
+            (new MySqlCastRenderer())->castTypeOf(new ColumnDeclaration(ColumnTypeFamily::UNKNOWN, 'YEAR')),
+        );
+    }
+
+    public function testDecimalCastOfKeepsTheDigitsTheDeclarationAskedFor(): void
+    {
+        self::assertSame('DECIMAL(10,2)', (new MySqlCastRenderer())->decimalCastOf('DECIMAL(10,2)'));
+    }
+
+    public function testDecimalCastOfReadsADeclarationWithNoScaleAsHavingNone(): void
+    {
+        self::assertSame('DECIMAL(10,0)', (new MySqlCastRenderer())->decimalCastOf('DECIMAL(10)'));
+    }
+
+    public function testDecimalCastOfRoundsNothingAwayWhereTheDeclarationSaysNothing(): void
+    {
+        self::assertSame('DECIMAL(65,30)', (new MySqlCastRenderer())->decimalCastOf('DECIMAL'));
+    }
+
+    public function testCastTypeOfNativeDropsTheWidthWrittenAfterTheType(): void
+    {
+        self::assertSame('CHAR', (new MySqlCastRenderer())->castTypeOfNative('VARCHAR(100)'));
+    }
+
+    public function testCastTypeOfNativeAnswersCharForAnythingItDoesNotRecognise(): void
+    {
+        self::assertSame('CHAR', (new MySqlCastRenderer())->castTypeOfNative('SOMETHING_ELSE'));
+    }
+
 }

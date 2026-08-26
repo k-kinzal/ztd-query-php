@@ -22,8 +22,10 @@ final class MySqlSchemaParser implements SchemaParser
      *
      * @param MySqlParser $parser
      */
-    public function __construct(MySqlParser $parser)
-    {
+    public function __construct(
+        MySqlParser $parser,
+        private readonly MySqlStatementOptions $options = new MySqlStatementOptions(),
+    ) {
         $this->parser = $parser;
     }
 
@@ -82,18 +84,18 @@ final class MySqlSchemaParser implements SchemaParser
                     $typedColumns[$columnName] = (new MySqlColumnTypeMapper())->map($typeName);
                 }
 
-                if ($field->options !== null && self::optionSet($field->options, 'NOT NULL')) {
+                if ($field->options !== null && $this->options->isSet($field->options, 'NOT NULL')) {
                     $notNullColumns[] = $columnName;
                 }
 
-                if ($field->options !== null && self::optionSet($field->options, 'PRIMARY KEY')) {
+                if ($field->options !== null && $this->options->isSet($field->options, 'PRIMARY KEY')) {
                     $primaryKeys[] = $columnName;
                     if (!in_array($columnName, $notNullColumns, true)) {
                         $notNullColumns[] = $columnName;
                     }
                 }
 
-                if ($field->options !== null && self::optionSet($field->options, 'UNIQUE')) {
+                if ($field->options !== null && $this->options->isSet($field->options, 'UNIQUE')) {
                     $keyName = $columnName . '_UNIQUE';
                     $uniqueConstraints[$keyName] = [$columnName];
                 }
@@ -104,7 +106,7 @@ final class MySqlSchemaParser implements SchemaParser
                         $columnDefaults[$columnName] = $default;
                     }
                 }
-                if ($field->options !== null && self::optionSet($field->options, 'AUTO_INCREMENT')) {
+                if ($field->options !== null && $this->options->isSet($field->options, 'AUTO_INCREMENT')) {
                     $identityStrategies[$columnName] = IdentityGenerationStrategy::MaxValue;
                 }
                 if ($field->options !== null) {
@@ -154,14 +156,5 @@ final class MySqlSchemaParser implements SchemaParser
         );
     }
 
-    /**
-     * Check whether the given OptionsArray has a specific option set.
-     *
-     * @param \PhpMyAdmin\SqlParser\Components\OptionsArray $options
-     */
-    private static function optionSet(\PhpMyAdmin\SqlParser\Components\OptionsArray $options, string $name): bool
-    {
-        return $options->has($name) !== false;
-    }
 
 }

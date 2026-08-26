@@ -93,7 +93,13 @@ final class RewriteTarget
         }
     }
 
-    private function registerFixtureSchemas(TableDefinitionRegistry $registry, MySqlSchemaParser $schemaParser): void
+    /**
+     * Declares the tables a fuzzed statement is run against.
+     *
+     * @param TableDefinitionRegistry $registry Registry to declare them in
+     * @param MySqlSchemaParser $schemaParser Reads each declaration
+     */
+    public function registerFixtureSchemas(TableDefinitionRegistry $registry, MySqlSchemaParser $schemaParser): void
     {
         $schemas = [
             'users' => 'CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255) NOT NULL, email VARCHAR(255), status VARCHAR(50))',
@@ -111,7 +117,12 @@ final class RewriteTarget
         }
     }
 
-    private function populateFixtureData(ShadowStore $store): void
+    /**
+     * Fills the shadow with the rows a fuzzed statement is run against.
+     *
+     * @param ShadowStore $store Shadow to fill
+     */
+    public function populateFixtureData(ShadowStore $store): void
     {
         $store->set('users', [
             ['id' => '1', 'name' => 'Alice', 'email' => 'alice@example.com', 'status' => 'active'],
@@ -140,7 +151,7 @@ final class RewriteTarget
     /**
      * @return callable(): string
      */
-    private function selectGenerator(string $input): callable
+    public function selectGenerator(string $input): callable
     {
         $generators = [
             fn () => $this->provider->sql(maxDepth: 8),

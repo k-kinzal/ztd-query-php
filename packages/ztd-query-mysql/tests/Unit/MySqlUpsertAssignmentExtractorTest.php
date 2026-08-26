@@ -8,10 +8,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Platform\MySql\MySqlLexerProfile;
 use ZtdQuery\Platform\MySql\MySqlUpsertAssignmentExtractor;
+use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(MySqlUpsertAssignmentExtractor::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
+#[UsesClass(MySqlLexerProfile::class)]
 final class MySqlUpsertAssignmentExtractorTest extends TestCase
 {
     /**
@@ -90,4 +92,31 @@ final class MySqlUpsertAssignmentExtractorTest extends TestCase
         );
         self::assertNull($extractor->incomingAlias('INSERT INTO t VALUES (1) ON DUPLICATE KEY UPDATE value = 1'));
     }
+    public function testAssignmentReadsTheColumnAndWhatIsAssignedToIt(): void
+    {
+        self::assertSame(
+            ['column' => 'qty', 'value' => '1'],
+            (new MySqlUpsertAssignmentExtractor())->assignment('qty = 1'),
+        );
+    }
+
+    public function testAssignmentIsNothingWhereTheTextAssignsNothing(): void
+    {
+        self::assertNull((new MySqlUpsertAssignmentExtractor())->assignment('qty'));
+    }
+
+    public function testLastIdentifierAnswersTheNameWrittenLast(): void
+    {
+        $tokens = SqlTokenStream::tokenize('t.qty', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertSame('qty', (new MySqlUpsertAssignmentExtractor())->lastIdentifier($tokens));
+    }
+
+    public function testLastIdentifierIsNothingWhereTheLastTokenIsNotAName(): void
+    {
+        $tokens = SqlTokenStream::tokenize('qty =', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertNull((new MySqlUpsertAssignmentExtractor())->lastIdentifier($tokens));
+    }
+
 }

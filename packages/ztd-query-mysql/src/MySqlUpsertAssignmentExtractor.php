@@ -55,8 +55,17 @@ final class MySqlUpsertAssignmentExtractor
         return SqlTokenStream::tokenize($clause, MySqlLexerProfile::create())->identifierAt()['name'] ?? null;
     }
 
-    /** @return array{column: string, value: string}|null */
-    private function assignment(string $assignment): ?array
+    /**
+     * Reads what one assignment of a conflict clause writes, and where.
+     *
+     * Only the equals sign the clause itself wrote separates the two; one
+     * inside a function call or a subquery belongs to that.
+     *
+     * @param string $assignment One assignment, as written
+     *
+     * @return array{column: string, value: string}|null The column and what is assigned to it, or null where the text assigns nothing
+     */
+    public function assignment(string $assignment): ?array
     {
         $tokens = SqlTokenStream::tokenize($assignment, MySqlLexerProfile::create())->significantTokens();
         foreach ($tokens as $index => $token) {
@@ -75,8 +84,14 @@ final class MySqlUpsertAssignmentExtractor
         return null;
     }
 
-    /** @param list<SqlToken> $tokens */
-    private function lastIdentifier(array $tokens): ?string
+    /**
+     * Answers the name written last among these tokens.
+     *
+     * @param list<SqlToken> $tokens Tokens to read
+     *
+     * @return string|null The name, or null where the last of them is not one
+     */
+    public function lastIdentifier(array $tokens): ?string
     {
         $token = array_pop($tokens);
         return $token !== null

@@ -110,9 +110,18 @@ final class MySqlNativeUpsertProjector
     }
 
     /**
-     * @param array<string, array<int, string>> $candidateKeys
+     * Answers the test that says an incoming row collides with one already there.
+     *
+     * A row collides when it agrees with an existing one on any whole
+     * candidate key, so the test is written as one alternative per key.
+     *
+     * @param array<string, array<int, string>> $candidateKeys Columns of each key, under the key's name
+     * @param string $existingAlias Name the rows already there are selected under
+     * @param string $incomingAlias Name the incoming rows are selected under
+     *
+     * @return string The test, and FALSE where there is no key to collide on
      */
-    private function conflictPredicate(array $candidateKeys, string $existingAlias, string $incomingAlias): string
+    public function conflictPredicate(array $candidateKeys, string $existingAlias, string $incomingAlias): string
     {
         $keys = [];
         foreach ($candidateKeys as $columns) {
@@ -130,8 +139,22 @@ final class MySqlNativeUpsertProjector
         return $keys === [] ? 'FALSE' : '(' . implode(' OR ', $keys) . ')';
     }
 
-    /** @param list<string> $tableColumns */
-    private function bindExpression(
+    /**
+     * Writes an expression so that each name in it says which row it means.
+     *
+     * A bare column name in a conflict clause means the row already there,
+     * and VALUES(x) or the alias the statement gave means the incoming one.
+     * A name inside a subquery belongs to that subquery and is left alone.
+     *
+     * @param string $expression Expression to rewrite, as written
+     * @param string $tableName Table the statement writes to
+     * @param list<string> $tableColumns Columns that table has
+     * @param string $unqualifiedAlias Which row a bare name means
+     * @param string|null $incomingNamespace Name the statement gave the incoming row, or null where it gave none
+     *
+     * @return string The expression, with every name saying which row it is from
+     */
+    public function bindExpression(
         string $expression,
         string $tableName,
         array $tableColumns,
@@ -213,10 +236,13 @@ final class MySqlNativeUpsertProjector
     }
 
     /**
-     * @param list<SqlToken> $tokens
-     * @return array<int, true>
+     * Answers which tokens belong to a subquery rather than to the expression itself.
+     *
+     * @param list<SqlToken> $tokens The expression, as tokens
+     *
+     * @return array<int, true> Position => true, for every token inside a subquery
      */
-    private function subqueryTokenIndexes(array $tokens): array
+    public function subqueryTokenIndexes(array $tokens): array
     {
         $indexes = [];
         foreach ($tokens as $start => $token) {
@@ -235,19 +261,41 @@ final class MySqlNativeUpsertProjector
         return $indexes;
     }
 
-    private function isIdentifier(SqlToken $token): bool
+    /**
+     * Reports whether a token is a name at all.
+     *
+     * @param SqlToken $token Token to test
+     *
+     * @return bool True for a bare word or a quoted name
+     */
+    public function isIdentifier(SqlToken $token): bool
     {
         return in_array($token->kind, [SqlTokenKind::Word, SqlTokenKind::QuotedIdentifier], true);
     }
 
-    private function identifier(SqlToken $token): string
+    /**
+     * Answers the name a token stands for.
+     *
+     * @param SqlToken $token Token to read
+     *
+     * @return string The name, with the quoting taken off, or the token's own text where it is not a name
+     */
+    public function identifier(SqlToken $token): string
     {
         $identifier = SqlTokenStream::tokenize($token->text, $this->lexerProfile)->identifierAt();
 
         return $identifier === null ? $token->text : $identifier['name'];
     }
 
-    private function qualified(string $alias, string $column): string
+    /**
+     * Writes a column as belonging to one of the rows being compared.
+     *
+     * @param string $alias Name that row is selected under
+     * @param string $column Column of it
+     *
+     * @return string The column, written as MySQL would name it
+     */
+    public function qualified(string $alias, string $column): string
     {
         return $this->quoter->quote($alias) . '.' . $this->quoter->quote($column);
     }

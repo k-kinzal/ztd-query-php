@@ -171,8 +171,18 @@ final class MySqlCteShadowComposer
         return $offset === null ? $sql : substr($sql, $offset);
     }
 
-    /** @return array{names: list<string>, statementOffset: int|null} */
-    private function parseHeader(string $sql): array
+    /**
+     * Reads the WITH a statement opens with: what it names, and where the statement itself starts.
+     *
+     * A header ZTD cannot read all the way through answers the names it did
+     * read but no offset, because the statement's own start is then unknown
+     * and guessing at it would cut the statement in the wrong place.
+     *
+     * @param string $sql Statement to read
+     *
+     * @return array{names: list<string>, statementOffset: int|null} The names the header declares, and where the statement starts
+     */
+    public function parseHeader(string $sql): array
     {
         $tokens = [];
         foreach (SqlTokenStream::tokenize($sql, $this->lexerProfile)->significantTokens() as $token) {
@@ -231,9 +241,17 @@ final class MySqlCteShadowComposer
     }
 
     /**
-     * @param list<SqlToken> $tokens
+     * Answers where the AS of one WITH entry is written.
+     *
+     * Anything between the name and its AS is the column list, so a bare word
+     * there means this is not a WITH entry after all.
+     *
+     * @param list<SqlToken> $tokens The header, as tokens
+     * @param int $start Where to start looking, just past the entry's name
+     *
+     * @return int|null Where AS is written, or null where this is not an entry
      */
-    private function findAsIndex(array $tokens, int $start): ?int
+    public function findAsIndex(array $tokens, int $start): ?int
     {
         for ($index = $start; isset($tokens[$index]); $index++) {
             $token = $tokens[$index];
@@ -248,14 +266,30 @@ final class MySqlCteShadowComposer
         return null;
     }
 
-    private function isSymbol(?SqlToken $token, string $symbol): bool
+    /**
+     * Reports whether a token is this symbol.
+     *
+     * @param SqlToken|null $token Token to test, or null past the end of what was written
+     * @param string $symbol Symbol it must be
+     *
+     * @return bool True when it is
+     */
+    public function isSymbol(?SqlToken $token, string $symbol): bool
     {
         return $token instanceof SqlToken
             && $token->kind === SqlTokenKind::Symbol
             && $token->text === $symbol;
     }
 
-    private function referencesIdentifier(string $sql, string $identifier): bool
+    /**
+     * Reports whether a statement names something, however it was written.
+     *
+     * @param string $sql Statement to read
+     * @param string $identifier Name to look for
+     *
+     * @return bool True when the statement names it, quoted or not
+     */
+    public function referencesIdentifier(string $sql, string $identifier): bool
     {
         foreach (SqlTokenStream::tokenize($sql, $this->lexerProfile)->significantTokens() as $token) {
             $candidate = $this->identifierName($token);
@@ -267,8 +301,15 @@ final class MySqlCteShadowComposer
         return false;
     }
 
-    /** @param list<string> $identifiers */
-    private function referencesAnyIdentifier(string $sql, array $identifiers): bool
+    /**
+     * Reports whether a statement names any of these.
+     *
+     * @param string $sql Statement to read
+     * @param list<string> $identifiers Names to look for
+     *
+     * @return bool True when the statement names one of them
+     */
+    public function referencesAnyIdentifier(string $sql, array $identifiers): bool
     {
         foreach ($identifiers as $identifier) {
             if ($this->referencesIdentifier($sql, $identifier)) {
@@ -279,7 +320,14 @@ final class MySqlCteShadowComposer
         return false;
     }
 
-    private function identifierName(SqlToken $token): ?string
+    /**
+     * Answers the name a token stands for.
+     *
+     * @param SqlToken $token Token to read
+     *
+     * @return string|null The name, with the quoting taken off, or null where the token is not a name
+     */
+    public function identifierName(SqlToken $token): ?string
     {
         if ($token->kind === SqlTokenKind::Word) {
             return $token->text;

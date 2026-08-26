@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use Stringable;
+use Tests\Fixture\DriverAnswer;
 use ZtdQuery\Platform\MySql\MySqlValueRenderer;
 use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
@@ -113,6 +114,93 @@ final class MySqlValueRendererTest extends TestCase
         $renderer = new MySqlValueRenderer();
 
         $this->expectException(RuntimeException::class);
-        $renderer->renderValue([]);
+        $renderer->renderValue(DriverAnswer::unsupported());
     }
+    public function testRenderExpressionWritesAStringAsAQuotedLiteral(): void
+    {
+        self::assertSame(
+            "'a'",
+            (new MySqlValueRenderer())->renderExpression('a', new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR'), false),
+        );
+    }
+
+    public function testRenderExpressionWritesABackslashAsBytesSoTheServerSettingCannotChangeIt(): void
+    {
+        self::assertStringStartsWith(
+            "CONVERT(X'",
+            (new MySqlValueRenderer())->renderExpression('a\\b', new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR'), false),
+        );
+    }
+
+    public function testRenderExpressionWritesBytesAsAHexLiteral(): void
+    {
+        self::assertSame(
+            "X'6162'",
+            (new MySqlValueRenderer())->renderExpression('ab', new ColumnDeclaration(ColumnTypeFamily::BINARY, 'BLOB'), true),
+        );
+    }
+
+    public function testInferTypeReadsAWholeNumberAsAnInteger(): void
+    {
+        self::assertSame(ColumnTypeFamily::INTEGER, (new MySqlValueRenderer())->inferType(1)->family);
+    }
+
+    public function testInferTypeReadsAnythingElseAsAString(): void
+    {
+        self::assertSame(ColumnTypeFamily::STRING, (new MySqlValueRenderer())->inferType('a')->family);
+    }
+
+    public function testStringValueAnswersTheBytesAValueIs(): void
+    {
+        self::assertSame('1', (new MySqlValueRenderer())->stringValue(1));
+    }
+
+    public function testStringValueRefusesAValueNoLiteralCanCarry(): void
+    {
+        $this->expectException(RuntimeException::class);
+
+        (new MySqlValueRenderer())->renderValue(DriverAnswer::unsupported());
+    }
+
+    public function testReadStreamAnswersEverythingTheStreamHolds(): void
+    {
+        $stream = fopen('php://memory', 'r+');
+        self::assertIsResource($stream);
+        fwrite($stream, 'abc');
+
+        self::assertSame('abc', (new MySqlValueRenderer())->readStream($stream));
+    }
+
+    public function testReadStreamLeavesTheStreamWhereTheCallerHadIt(): void
+    {
+        $stream = fopen('php://memory', 'r+');
+        self::assertIsResource($stream);
+        fwrite($stream, 'abc');
+        fseek($stream, 1);
+
+        (new MySqlValueRenderer())->readStream($stream);
+
+        self::assertSame(1, ftell($stream));
+    }
+
+    public function testQuoteValueDoublesEveryQuoteInTheBytes(): void
+    {
+        self::assertSame("'it''s'", (new MySqlValueRenderer())->quoteValue("it's"));
+    }
+
+    public function testRenderValueWritesANullAsNull(): void
+    {
+        self::assertSame('NULL', (new MySqlValueRenderer())->renderValue(null));
+    }
+
+    public function testIsRenderableReportsAValueALiteralCanCarry(): void
+    {
+        self::assertTrue((new MySqlValueRenderer())->isRenderable(DriverAnswer::renderable()));
+    }
+
+    public function testIsRenderableIsFalseForSomethingNoLiteralCouldCarry(): void
+    {
+        self::assertFalse((new MySqlValueRenderer())->isRenderable(DriverAnswer::unsupported()));
+    }
+
 }

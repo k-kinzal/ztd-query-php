@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Fuzz\Robustness\Invariant;
 
-use Throwable;
+use ZtdQuery\Exception\SimulationException;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
@@ -38,7 +38,7 @@ final class RewritePlanConsistencyChecker implements InvariantChecker
     {
         try {
             $plan = $this->rewriter->rewrite($sql);
-        } catch (Throwable) {
+        } catch (SimulationException) {
             return null;
         }
 
@@ -93,7 +93,7 @@ final class RewritePlanConsistencyChecker implements InvariantChecker
                         'multi-table mutation target is missing from the result projection',
                         $sql,
                         [
-                            'target_index' => $targetIndex,
+                            'target_index' => (string) $targetIndex,
                             'rewrite_sql' => $plan->sql(),
                         ],
                     );

@@ -57,4 +57,19 @@ final class UpdateAssignmentExtractorTest extends TestCase
             [],
         ];
     }
+    public function testValueAnswersWhatTheAssignmentAssigns(): void
+    {
+        self::assertSame('1', (new UpdateAssignmentExtractor())->value('qty = 1'));
+    }
+
+    public function testValueIgnoresAnEqualsSignInsideSomethingElse(): void
+    {
+        self::assertSame('(SELECT a = 1)', (new UpdateAssignmentExtractor())->value('qty = (SELECT a = 1)'));
+    }
+
+    public function testValueIsNothingWhereTheTextAssignsNothing(): void
+    {
+        self::assertNull((new UpdateAssignmentExtractor())->value('qty'));
+    }
+
 }

@@ -56,4 +56,11 @@ final class MySqlLexerProfileTest extends TestCase
             SqlTokenStream::tokenize("'value'", MySqlLexerProfile::create(true))->significantTokens()[0]->kind,
         );
     }
+    public function testCreateAnswersAProfileThatReadsMySqlBackticks(): void
+    {
+        $tokens = SqlTokenStream::tokenize('`order`', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertSame(SqlTokenKind::QuotedIdentifier, $tokens[0]->kind);
+    }
+
 }

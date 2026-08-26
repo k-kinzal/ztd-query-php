@@ -9,10 +9,13 @@ use PhpMyAdmin\SqlParser\Statements\CreateStatement;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use Tests\Fixture\MySqlPartitions;
+use ZtdQuery\Platform\MySql\MySqlLexerProfile;
 use ZtdQuery\Platform\MySql\MySqlPartitioningParser;
+use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(MySqlPartitioningParser::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
+#[UsesClass(MySqlLexerProfile::class)]
 final class MySqlPartitioningParserTest extends TestCase
 {
     public function testParsesRangePartitionBoundariesIncludingNullAndMaximum(): void
@@ -221,4 +224,99 @@ final class MySqlPartitioningParserTest extends TestCase
         self::assertNotNull($partitioning);
         self::assertNull($partitioning->predicatesFor(['p0']));
     }
+    public function testPartitionExpressionAnswersHowATableIsDividedAndOnWhat(): void
+    {
+        self::assertSame(
+            ['RANGE', 'id'],
+            (new MySqlPartitioningParser())->partitionExpression('RANGE (id)'),
+        );
+    }
+
+    public function testPartitionExpressionIsNothingForADivisionZtdCannotSimulate(): void
+    {
+        self::assertNull((new MySqlPartitioningParser())->partitionExpression('HASH (id)'));
+    }
+
+    public function testRangePredicatesGivesTheFirstPartitionTheRowsWithNothingThere(): void
+    {
+        $partitions = (new MySqlPartitioningParser())->rangePredicates('id', [
+            MySqlPartitions::declared('p0', 'LESS THAN', '(10)'),
+        ]);
+
+        self::assertSame('(id) IS NULL OR (id) < 10', $partitions['p0'] ?? null);
+    }
+
+    public function testRangePredicatesBoundsEachPartitionByTheOneBeforeIt(): void
+    {
+        $partitions = (new MySqlPartitioningParser())->rangePredicates('id', [
+            MySqlPartitions::declared('p0', 'LESS THAN', '(10)'),
+            MySqlPartitions::declared('p1', 'LESS THAN', '(20)'),
+        ]);
+
+        self::assertSame('(id) >= 10 AND (id) < 20', $partitions['p1'] ?? null);
+    }
+
+    public function testRangePredicatesIsNothingWhereAPartitionDividesSomeOtherWay(): void
+    {
+        self::assertSame(
+            [],
+            (new MySqlPartitioningParser())->rangePredicates('id', [MySqlPartitions::declared('p0', 'IN', '(1)')]),
+        );
+    }
+
+    public function testListPredicatesTestsForEachValueThePartitionNames(): void
+    {
+        $partitions = (new MySqlPartitioningParser())->listPredicates('id', [
+            MySqlPartitions::declared('p0', 'IN', '(1, 2)'),
+        ]);
+
+        self::assertSame('(id) IN (1, 2)', $partitions['p0'] ?? null);
+    }
+
+    public function testListPredicatesWritesATestOfItsOwnForNull(): void
+    {
+        $partitions = (new MySqlPartitioningParser())->listPredicates('id', [
+            MySqlPartitions::declared('p0', 'IN', '(NULL)'),
+        ]);
+
+        self::assertSame('(id) IS NULL', $partitions['p0'] ?? null);
+    }
+
+    public function testListPredicatesIsNothingWhereAPartitionDividesSomeOtherWay(): void
+    {
+        self::assertSame(
+            [],
+            (new MySqlPartitioningParser())->listPredicates('id', [MySqlPartitions::declared('p0', 'LESS THAN', '(1)')]),
+        );
+    }
+
+    public function testPartitionValueAnswersTheValuesThePartitionHolds(): void
+    {
+        self::assertSame(
+            '1, 2',
+            (new MySqlPartitioningParser())->partitionValue(MySqlPartitions::declared('p0', 'IN', '(1, 2)'), 'IN'),
+        );
+    }
+
+    public function testPartitionValueIsNothingWhereThePartitionDividesSomeOtherWay(): void
+    {
+        self::assertNull(
+            (new MySqlPartitioningParser())->partitionValue(MySqlPartitions::declared('p0', 'IN', '(1)'), 'LESS THAN'),
+        );
+    }
+
+    public function testIsSymbolReportsATokenBeingThatSymbol(): void
+    {
+        $token = SqlTokenStream::tokenize('(', MySqlLexerProfile::create())->significantTokens()[0];
+
+        self::assertTrue((new MySqlPartitioningParser())->isSymbol($token, '('));
+    }
+
+    public function testIsSymbolIsFalseForAnotherSymbolEntirely(): void
+    {
+        $token = SqlTokenStream::tokenize('(', MySqlLexerProfile::create())->significantTokens()[0];
+
+        self::assertFalse((new MySqlPartitioningParser())->isSymbol($token, ')'));
+    }
+
 }
