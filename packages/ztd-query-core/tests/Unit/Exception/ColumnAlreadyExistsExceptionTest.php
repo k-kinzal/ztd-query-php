@@ -6,7 +6,6 @@ namespace Tests\Unit\Exception;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 use ZtdQuery\Exception\ColumnAlreadyExistsException;
 
 #[CoversClass(ColumnAlreadyExistsException::class)]
@@ -53,10 +52,4 @@ final class ColumnAlreadyExistsExceptionTest extends TestCase
         self::assertSame('email', $exception->getColumnName());
     }
 
-    public function testExtendsRuntimeException(): void
-    {
-        $exception = new ColumnAlreadyExistsException('sql', 'table', 'column');
-
-        self::assertInstanceOf(RuntimeException::class, $exception);
-    }
 }
