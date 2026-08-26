@@ -143,11 +143,17 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
      * @throws UnknownSchemaException
      */
     /**
-     * @throws UnsupportedSqlException
+     * Answers how one statement is to be run against the shadow.
      *
+     * @param string $stmtSql The stmt sql
+     * @param string $originalSql Statement being rewritten, as written
+     *
+     * @return RewritePlan What it answers
+     *
+     * @throws UnsupportedSqlException
      * @throws UnknownSchemaException
      */
-    private function rewriteStatement(string $stmtSql, string $originalSql): RewritePlan
+    public function rewriteStatement(string $stmtSql, string $originalSql): RewritePlan
     {
         if (SqliteInMemoryAttachStatement::isSafe($stmtSql)) {
             return new RewritePlan($stmtSql, QueryKind::READ);
@@ -203,20 +209,11 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
     }
 
     /**
-     * Build the table context map for transformers.
+     * Answers everything the shadow holds, in the form a transformer is handed.
      *
-     * @return array<string, array{viewSql: string}|array{
-     *     rows: array<int, array<string, mixed>>,
-     *     columns: array<int, string>,
-     *     columnTypes: array<string, \ZtdQuery\Schema\ColumnDeclaration>,
-     *     columnDefaults: array<string, string>,
-     *     identityStrategies: array<string, \ZtdQuery\Schema\IdentityGenerationStrategy>,
-     *     generatedExpressions: array<string, string>,
-     *     primaryKeys: array<int, string>,
-     *     candidateKeys: array<string, array<int, string>>
-     * }>
+     * @return array<string, array{viewSql: string}|array{ What it answers
      */
-    private function buildTableContext(): array
+    public function buildTableContext(): array
     {
         $context = [];
         $allData = $this->shadowStore->getAll();
@@ -274,19 +271,14 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
     }
 
     /**
-     * @param array<int, array<string, mixed>> $rows
-     * @return array{
-     *     rows: array<int, array<string, mixed>>,
-     *     columns: array<int, string>,
-     *     columnTypes: array<string, \ZtdQuery\Schema\ColumnDeclaration>,
-     *     columnDefaults: array<string, string>,
-     *     identityStrategies: array<string, \ZtdQuery\Schema\IdentityGenerationStrategy>,
-     *     generatedExpressions: array<string, string>,
-     *     primaryKeys: array<int, string>,
-     *     candidateKeys: array<string, array<int, string>>
-     * }
+     * Answers what a transformer is handed for a table nothing has filled in.
+     *
+     * @param TableDefinition $definition What the table holds
+     * @param array<int, array<string, mixed>> $rows Rows to read
+     *
+     * @return array{ What it answers
      */
-    private static function contextFromDefinition(TableDefinition $definition, array $rows): array
+    public static function contextFromDefinition(TableDefinition $definition, array $rows): array
     {
         return [
             'rows' => $rows,
@@ -300,7 +292,14 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
         ];
     }
 
-    private function findUnknownTable(string $sql): ?string
+    /**
+     * Answers the first table a statement reads that the shadow does not know.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return string|null What it answers
+     */
+    public function findUnknownTable(string $sql): ?string
     {
         $type = $this->parser->classifyStatement($sql);
         if ($type !== 'SELECT') {
@@ -322,7 +321,14 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
         return null;
     }
 
-    private function tableExists(string $tableName): bool
+    /**
+     * Reports whether the shadow knows a table at all.
+     *
+     * @param string $tableName Table it belongs to
+     *
+     * @return bool What it answers
+     */
+    public function tableExists(string $tableName): bool
     {
         if ($this->shadowStore->has($tableName)) {
             return true;
@@ -343,7 +349,12 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
         return false;
     }
 
-    private function hasSchemaContext(): bool
+    /**
+     * Reports whether the shadow has been told anything at all.
+     *
+     * @return bool What it answers
+     */
+    public function hasSchemaContext(): bool
     {
         if ($this->shadowStore->getAll() !== []) {
             return true;

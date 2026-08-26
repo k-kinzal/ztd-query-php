@@ -125,16 +125,22 @@ final class InsertTransformer implements SqlTransformer
     }
 
     /**
-     * @param list<string> $tableColumns
-     * @param list<string> $insertColumns
-     * @param array<string, ColumnDeclaration> $columnTypes
-     * @param array<string, string> $columnDefaults
-     * @param array<string, \ZtdQuery\Schema\IdentityGenerationStrategy> $identityStrategies
-     * @param array<int, array<string, mixed>> $existingRows
+     * Writes the SELECT that answers the rows an INSERT would write.
+     *
+     * @param string $sql Statement being read, as written
+     * @param string $tableName Table it belongs to
+     * @param list<string> $tableColumns The table columns
+     * @param list<string> $insertColumns The insert columns
+     * @param array<string, ColumnDeclaration> $columnTypes The column types
+     * @param array<string, string> $columnDefaults The column defaults
+     * @param array<string, \ZtdQuery\Schema\IdentityGenerationStrategy> $identityStrategies The identity strategies
+     * @param array<int, array<string, mixed>> $existingRows The existing rows
+     *
+     * @return string What it answers
      *
      * @throws RuntimeException
      */
-    private function buildInsertSelect(
+    public function buildInsertSelect(
         string $sql,
         string $tableName,
         array $tableColumns,
@@ -192,17 +198,22 @@ final class InsertTransformer implements SqlTransformer
     }
 
     /**
-     * @param array<int, string> $values
-     * @param list<string> $tableColumns
-     * @param list<string> $insertColumns
-     * @param array<string, ColumnDeclaration> $columnTypes
-     * @param array<string, string> $columnDefaults
-     * @param array<string, \ZtdQuery\Schema\IdentityGenerationStrategy> $identityStrategies
-     * @param array<int, array<string, mixed>> $existingRows
+     * Writes the SELECT that answers one row.
+     *
+     * @param array<int, string> $values The values
+     * @param string $tableName Table it belongs to
+     * @param list<string> $tableColumns The table columns
+     * @param list<string> $insertColumns The insert columns
+     * @param array<string, ColumnDeclaration> $columnTypes The column types
+     * @param array<string, string> $columnDefaults The column defaults
+     * @param array<string, \ZtdQuery\Schema\IdentityGenerationStrategy> $identityStrategies The identity strategies
+     * @param array<int, array<string, mixed>> $existingRows The existing rows
+     *
+     * @return string What it answers
      *
      * @throws RuntimeException
      */
-    private function buildInsertRowSelect(
+    public function buildInsertRowSelect(
         array $values,
         string $tableName,
         array $tableColumns,
@@ -240,11 +251,15 @@ final class InsertTransformer implements SqlTransformer
     }
 
     /**
+     * Answers values under no keys of their own, in the order they were given.
+     *
+     * @param array<array-key, T> $values The values
+     *
+     * @return list<T> What it answers
+     *
      * @template T
-     * @param array<array-key, T> $values
-     * @return list<T>
      */
-    private static function orderedValues(array $values): array
+    public static function orderedValues(array $values): array
     {
         $ordered = [];
         foreach ($values as $value) {

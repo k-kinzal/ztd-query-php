@@ -423,9 +423,13 @@ final class SqliteParser
     }
 
     /**
-     * @return array<int, array{keyword: string, afterGroup: bool, offset: int}>
+     * Answers where each of a statement's own keywords is written.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return array<int, array{keyword: string, afterGroup: bool, offset: int}> What it answers
      */
-    private function scanTopLevelKeywords(string $sql): array
+    public function scanTopLevelKeywords(string $sql): array
     {
         $keywords = [];
         $len = strlen($sql);
@@ -511,9 +515,13 @@ final class SqliteParser
     }
 
     /**
-     * @return array{keyword: string, offset: int}|null
+     * Answers where an INSERT says what it is inserting.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return array{keyword: string, offset: int}|null What it answers
      */
-    private function findInsertSourceClause(string $sql): ?array
+    public function findInsertSourceClause(string $sql): ?array
     {
         $foundInsert = false;
         foreach ($this->scanTopLevelKeywords($sql) as $token) {
@@ -533,7 +541,14 @@ final class SqliteParser
         return null;
     }
 
-    private function extractInsertTable(string $sql): ?string
+    /**
+     * Answers the table an INSERT writes to.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return string|null What it answers
+     */
+    public function extractInsertTable(string $sql): ?string
     {
         $sql = $this->statementTail($sql, ['INSERT', 'REPLACE']);
         if (preg_match('/\bINTO\s+("(?:[^"]|"")*"|`(?:[^`]|``)*`|\[(?:[^\]])*\]|[^\s(]+)/i', $sql, $matches) === 1) {
@@ -547,8 +562,15 @@ final class SqliteParser
         return null;
     }
 
-    /** @param list<\ZtdQuery\Sql\SqlToken> $tokens */
-    private function identifierEndIndex(array $tokens, int $index): int
+    /**
+     * Answers where the name written here ends.
+     *
+     * @param list<\ZtdQuery\Sql\SqlToken> $tokens Tokens the statement was read as
+     * @param int $index Where to read
+     *
+     * @return int What it answers
+     */
+    public function identifierEndIndex(array $tokens, int $index): int
     {
         $token = $tokens[$index] ?? null;
         if ($token?->text !== '[') {
@@ -575,7 +597,14 @@ final class SqliteParser
         return $index;
     }
 
-    private function extractUpdateTable(string $sql): ?string
+    /**
+     * Answers the table an UPDATE writes to.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return string|null What it answers
+     */
+    public function extractUpdateTable(string $sql): ?string
     {
         $sql = $this->statementTail($sql, ['UPDATE']);
         if (preg_match('/^UPDATE\s+(?:OR\s+(?:ROLLBACK|ABORT|REPLACE|FAIL|IGNORE)\s+)?("(?:[^"]|"")*"|`(?:[^`]|``)*`|\[(?:[^\]])*\]|[^\s,]+)/i', trim($sql), $matches) === 1) {
@@ -585,7 +614,14 @@ final class SqliteParser
         return null;
     }
 
-    private function extractDeleteTable(string $sql): ?string
+    /**
+     * Answers the table a DELETE deletes from.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return string|null What it answers
+     */
+    public function extractDeleteTable(string $sql): ?string
     {
         $sql = $this->statementTail($sql, ['DELETE']);
         if (preg_match('/\bFROM\s+("(?:[^"]|"")*"|`(?:[^`]|``)*`|\[(?:[^\]])*\]|[^\s,]+)/i', $sql, $matches) === 1) {
@@ -595,8 +631,15 @@ final class SqliteParser
         return null;
     }
 
-    /** @param non-empty-list<string> $keywords */
-    private function statementTail(string $sql, array $keywords): string
+    /**
+     * Answers what a statement says after one of these keywords.
+     *
+     * @param string $sql Statement being read, as written
+     * @param non-empty-list<string> $keywords Keywords to look for, in order
+     *
+     * @return string What it answers
+     */
+    public function statementTail(string $sql, array $keywords): string
     {
         foreach (SqlTokenStream::tokenize($sql, SqliteLexerProfile::create())->significantTokens() as $token) {
             if (!$token->isTopLevel()) {
@@ -612,7 +655,14 @@ final class SqliteParser
         return $this->stripComments($sql);
     }
 
-    private function extractCreateTableName(string $sql): ?string
+    /**
+     * Answers the table a CREATE TABLE declares.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return string|null What it answers
+     */
+    public function extractCreateTableName(string $sql): ?string
     {
         $sql = $this->stripComments($sql);
         if (preg_match('/^CREATE\s+(?:(?:TEMP|TEMPORARY)\s+)?TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?("(?:[^"]|"")*"|`(?:[^`]|``)*`|\[(?:[^\]])*\]|[^\s(]+)/i', $sql, $matches) === 1) {
@@ -622,7 +672,14 @@ final class SqliteParser
         return null;
     }
 
-    private function extractDropTableName(string $sql): ?string
+    /**
+     * Answers the table a DROP drops.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return string|null What it answers
+     */
+    public function extractDropTableName(string $sql): ?string
     {
         $sql = $this->stripComments($sql);
         if (preg_match('/^DROP\s+TABLE\s+(?:IF\s+EXISTS\s+)?("(?:[^"]|"")*"|`(?:[^`]|``)*`|\[(?:[^\]])*\]|[^\s;]+)/i', trim($sql), $matches) === 1) {
@@ -632,7 +689,14 @@ final class SqliteParser
         return null;
     }
 
-    private function extractAlterTableName(string $sql): ?string
+    /**
+     * Answers the table an ALTER alters.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return string|null What it answers
+     */
+    public function extractAlterTableName(string $sql): ?string
     {
         $sql = $this->stripComments($sql);
         if (preg_match('/^ALTER\s+TABLE\s+("(?:[^"]|"")*"|`(?:[^`]|``)*`|\[(?:[^\]])*\]|[^\s]+)/i', trim($sql), $matches) === 1) {
@@ -643,11 +707,13 @@ final class SqliteParser
     }
 
     /**
-     * Parse a comma-separated column list.
+     * Reads the column names written in a list.
      *
-     * @return array<int, string>
+     * @param string $columnList The column list
+     *
+     * @return array<int, string> What it answers
      */
-    private function parseColumnList(string $columnList): array
+    public function parseColumnList(string $columnList): array
     {
         $columns = [];
         $parts = explode(',', $columnList);
@@ -662,11 +728,13 @@ final class SqliteParser
     }
 
     /**
-     * Parse VALUE sets: (val1, val2), (val3, val4).
+     * Reads the rows a VALUES clause writes.
      *
-     * @return array<int, array<int, string>>
+     * @param string $rest The rest
+     *
+     * @return array<int, array<int, string>> What it answers
      */
-    private function parseValueSets(string $rest): array
+    public function parseValueSets(string $rest): array
     {
         $sets = [];
         $len = strlen($rest);
@@ -754,11 +822,13 @@ final class SqliteParser
     }
 
     /**
-     * Parse SET assignments: col1 = val1, col2 = val2.
+     * Reads what a SET clause assigns.
      *
-     * @return array<string, string>
+     * @param string $setClause The set clause
+     *
+     * @return array<string, string> What it answers
      */
-    private function parseAssignments(string $setClause): array
+    public function parseAssignments(string $setClause): array
     {
         $assignments = [];
         $len = strlen($setClause);
