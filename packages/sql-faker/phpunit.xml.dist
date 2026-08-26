@@ -7,13 +7,14 @@
          cacheDirectory=".phpunit.cache"
          executionOrder="depends,random"
          requireCoverageMetadata="true"
+         requireSealedMockObjects="true"
          beStrictAboutCoverageMetadata="true"
          beStrictAboutChangesToGlobalState="true"
          beStrictAboutOutputDuringTests="true"
+         beStrictAboutTestsThatDoNotTestAnything="true"
          failOnAllIssues="true"
-         failOnEmptyTestSuite="true"
-         failOnRisky="true"
-         failOnWarning="true"
+         displayDetailsOnAllIssues="true"
+         shortenArraysForExportThreshold="0"
          enforceTimeLimit="true"
          timeoutForSmallTests="1"
          timeoutForMediumTests="10"
@@ -24,10 +25,11 @@
         </testsuite>
     </testsuites>
     <extensions>
-        <bootstrap class="PhpAiToolkit\PhpUnit\TestReporter\AiTestReporterExtension"/>
+        <bootstrap class="Toolkit\PhpUnit\TestReporter\AiTestReporterExtension"/>
     </extensions>
     <source restrictNotices="true"
             restrictWarnings="true"
+            ignoreIndirectDeprecations="true"
             ignoreSuppressionOfDeprecations="true"
             ignoreSuppressionOfPhpDeprecations="true"
             ignoreSuppressionOfErrors="true"
@@ -39,4 +41,5 @@
             <directory>src</directory>
         </include>
     </source>
+    <coverage includeUncoveredFiles="true" disableCodeCoverageIgnore="true"/>
 </phpunit>
