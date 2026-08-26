@@ -11,6 +11,12 @@ use ZtdQuery\Platform\IdentifierQuoter;
  */
 final class FakeIdentifierQuoter implements IdentifierQuoter
 {
+    /**
+     * Quote.
+     *
+     * @param string $identifier
+     * @return string
+     */
     public function quote(string $identifier): string
     {
         $escaped = str_replace('"', '""', $identifier);

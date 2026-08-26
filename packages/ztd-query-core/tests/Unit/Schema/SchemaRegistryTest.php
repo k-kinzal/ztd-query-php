@@ -16,7 +16,7 @@ use ZtdQuery\Schema\TableDefinitionRegistry;
 #[CoversClass(SchemaRegistry::class)]
 final class SchemaRegistryTest extends TestCase
 {
-    public function testClearRegisterAndClear(): void
+    public function testGetAllClearRegisterAndClear(): void
     {
         $registry = new TableDefinitionRegistry();
         $definition = new TableDefinition(['id'], ['id' => 'INT'], [], [], []);
@@ -34,7 +34,7 @@ final class SchemaRegistryTest extends TestCase
         self::assertFalse($registry->hasAnyTables());
     }
 
-    public function testGetUnregister(): void
+    public function testRegisterGetUnregister(): void
     {
         $registry = new TableDefinitionRegistry();
         $usersDef = new TableDefinition(['id'], ['id' => 'INT'], [], [], []);

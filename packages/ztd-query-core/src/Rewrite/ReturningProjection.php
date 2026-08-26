@@ -15,9 +15,10 @@ use ZtdQuery\Exception\InvalidDefinitionException;
 final class ReturningProjection
 {
     /**
+     * Binds a projection to the items it was written as.
+     *
      * @param list<array{source: string|null, output: string|null}> $items
-     */
-    private function __construct(private readonly array $items)
+     */public function __construct(private readonly array $items)
     {
     }
 

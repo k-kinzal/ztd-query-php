@@ -17,6 +17,13 @@ use ZtdQuery\Shadow\ShadowStore;
  */
 final class SynchronizeMutation implements DataMutation
 {
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param string $tableName
+     * @param ?TableDefinition $definition
+     * @param string $sql
+     */
     public function __construct(
         private readonly string $tableName,
         private readonly ?TableDefinition $definition = null,
@@ -57,6 +64,11 @@ final class SynchronizeMutation implements DataMutation
         $store->set($this->tableName, $rows);
     }
 
+    /**
+     * Table name.
+     *
+     * @return string
+     */
     public function tableName(): string
     {
         return $this->tableName;

@@ -37,7 +37,7 @@ final class UpsertExpression
      * @param UpsertTruth $truth Answers what counts as true
      * @param UpsertColumn $columns Reads a column off a row
      */
-    private function __construct(
+    public function __construct(
         private readonly UpsertExpressionKind $kind,
         private readonly int|float|string|bool|null $literal = null,
         private readonly ?UpsertColumnSource $columnSource = null,

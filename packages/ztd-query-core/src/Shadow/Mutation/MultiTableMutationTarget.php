@@ -26,6 +26,11 @@ final class MultiTableMutationTarget
         $this->primaryKeys = array_values($primaryKeys);
     }
 
+    /**
+     * Table name.
+     *
+     * @return string
+     */
     public function tableName(): string
     {
         return $this->tableName;

@@ -30,11 +30,19 @@ final class ShadowIdentityAllocator
     /** @var array<string, array<string, int>> */
     private array $projectionNextValues = [];
 
+    /**
+     * Begin projection.
+     *
+     */
     public function beginProjection(): void
     {
         $this->projectionNextValues = $this->committedNextValues;
     }
 
+    /**
+     * Commit projection.
+     *
+     */
     public function commitProjection(): void
     {
         $this->committedNextValues = $this->projectionNextValues;
@@ -124,6 +132,12 @@ final class ShadowIdentityAllocator
         return $next;
     }
 
+    /**
+     * Integer value.
+     *
+     * @param int|float|string|bool|null $value
+     * @return ?int
+     */
     public function integerValue(int|float|string|bool|null $value): ?int
     {
         if (is_int($value)) {
