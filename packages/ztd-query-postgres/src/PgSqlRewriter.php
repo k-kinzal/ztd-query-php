@@ -12,6 +12,7 @@ use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\RewriteStateCommitter;
 use ZtdQuery\Rewrite\SqlRewriter;
+use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Schema\ViewDefinitionSet;
 use ZtdQuery\Shadow\ShadowStore;
@@ -22,6 +23,8 @@ use ZtdQuery\Sql\TransactionStatement;
  *
  * Orchestrates parsing, classification, transformation, and mutation resolution.
  * Uses Result Select Query approach (not RETURNING) for consistency across platforms.
+ *
+ * @phpstan-import-type ShadowTables from SqlTransformer
  */
 final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
 {
@@ -238,7 +241,7 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
     /**
      * Answers everything the shadow holds, in the form a transformer is handed.
      *
-     * @return array<string, array{viewSql: string}|array{ What it answers
+     * @return ShadowTables Table name => what the shadow holds for it
      */
     public function buildTableContext(): array
     {

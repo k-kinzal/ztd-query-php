@@ -121,16 +121,16 @@ final class PgSqlTransactionStatementParserTest extends TestCase
 
     public function testUnquoteAnswersTheNameAQuotedIdentifierStandsFor(): void
     {
-        self::assertSame('order', (new PgSqlTransactionStatementParser())->unquote('"order"', ['"']));
+        self::assertSame('order', (new PgSqlTransactionStatementParser())->unquote('"order"'));
     }
 
     public function testUnquoteLeavesAnUnquotedNameAlone(): void
     {
-        self::assertSame('sp1', (new PgSqlTransactionStatementParser())->unquote('sp1', ['"']));
+        self::assertSame('sp1', (new PgSqlTransactionStatementParser())->unquote('sp1'));
     }
 
     public function testUnquoteIsNothingWhereTheQuotingNeverClosed(): void
     {
-        self::assertNull((new PgSqlTransactionStatementParser())->unquote('"order', ['"']));
+        self::assertNull((new PgSqlTransactionStatementParser())->unquote('"order'));
     }
 }

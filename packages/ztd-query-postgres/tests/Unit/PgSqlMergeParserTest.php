@@ -277,7 +277,7 @@ final class PgSqlMergeParserTest extends TestCase
 
         self::assertSame(
             ['id'],
-            (new PgSqlMergeParser())->parseInsert('MERGE', $actionSql, $tokens)['columns'] ?? null,
+            (new PgSqlMergeParser())->parseInsert('MERGE', $actionSql, $tokens)['columns'],
         );
     }
 

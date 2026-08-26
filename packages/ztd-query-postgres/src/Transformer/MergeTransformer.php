@@ -14,11 +14,14 @@ use ZtdQuery\Platform\Postgres\PgSqlMergeClause;
 use ZtdQuery\Platform\Postgres\PgSqlMergeMatchKind;
 use ZtdQuery\Platform\Postgres\PgSqlMergeParser;
 use ZtdQuery\Platform\Postgres\PgSqlMergeStatement;
+use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Rewrite\ShadowIdentityAllocator;
 use ZtdQuery\Rewrite\SqlTransformer;
 
 /**
  * The merge transformer, as sql transformer.
+ *
+ * @phpstan-import-type RenderableValue from ValueRenderer
  */
 final class MergeTransformer implements SqlTransformer
 {
@@ -240,7 +243,7 @@ final class MergeTransformer implements SqlTransformer
      * @param list<string> $columns Columns to read
      * @param array<string, string> $defaults The defaults
      * @param array<string, \ZtdQuery\Schema\IdentityGenerationStrategy> $identityStrategies The identity strategies
-     * @param array<int, array<string, mixed>> $existingRows The existing rows
+     * @param list<array<string, RenderableValue>> $existingRows The existing rows
      * @param string $effectiveCondition The effective condition
      *
      * @return string What it answers

@@ -13,6 +13,8 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 
 /**
  * Encodes shadow values using PostgreSQL's typed literal semantics.
+ *
+ * @phpstan-import-type RenderableValue from ValueRenderer
  */
 final class PgSqlValueRenderer implements ValueRenderer
 {

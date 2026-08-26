@@ -8,8 +8,8 @@ use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use RuntimeException;
-use stdClass;
 use Tests\Contract\TransformerContractTest;
+use Tests\Fixture\DriverAnswer;
 use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
 use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 use ZtdQuery\Platform\Postgres\PgSqlTableSample;
@@ -688,7 +688,7 @@ final class SelectTransformerTest extends TransformerContractTest
         $transformer = new SelectTransformer();
         $tables = [
             'users' => [
-                'rows' => [['data' => [1, 2, 3]]],
+                'rows' => [['data' => DriverAnswer::unsupported()]],
                 'columns' => ['data'],
                 'columnTypes' => [],
             ],
@@ -723,7 +723,7 @@ final class SelectTransformerTest extends TransformerContractTest
     public function testTransformSerializesObjectWithColumnType(): void
     {
         $transformer = new SelectTransformer();
-        $obj = new stdClass();
+        $obj = DriverAnswer::stringable();
         $tables = [
             'users' => [
                 'rows' => [['val' => $obj]],

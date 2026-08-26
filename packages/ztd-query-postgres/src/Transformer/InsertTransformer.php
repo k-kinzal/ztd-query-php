@@ -12,6 +12,7 @@ use ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer;
 use ZtdQuery\Platform\Postgres\PgSqlLexerProfile;
 use ZtdQuery\Platform\Postgres\PgSqlNativeUpsertProjector;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
+use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Rewrite\ShadowIdentityAllocator;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\CandidateKeySet;
@@ -22,6 +23,9 @@ use ZtdQuery\Sql\SqlTokenStream;
 /**
  * Transforms INSERT statements into SELECT queries that return the inserted rows.
  * Applies CTE shadowing via the SelectTransformer delegate.
+ *
+ * @phpstan-import-type RenderableValue from ValueRenderer
+ * @phpstan-import-type ShadowTables from SqlTransformer
  */
 final class InsertTransformer implements SqlTransformer
 {

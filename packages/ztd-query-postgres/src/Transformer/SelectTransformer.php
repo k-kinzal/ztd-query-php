@@ -26,6 +26,8 @@ use ZtdQuery\Schema\ColumnTypeFamily;
  * - Uses VALUES clause for multi-row CTEs instead of UNION ALL chains
  * - Uses WHERE FALSE for empty CTEs instead of FROM DUAL WHERE 0
  * - Uses PostgreSQL CAST types (INTEGER, TEXT, BOOLEAN, etc.)
+ *
+ * @phpstan-import-type RenderableValue from ValueRenderer
  */
 final class SelectTransformer implements SqlTransformer
 {

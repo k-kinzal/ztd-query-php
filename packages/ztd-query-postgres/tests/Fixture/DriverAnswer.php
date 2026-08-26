@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Fixture;
 
+use Stringable;
+
 /**
  * Values a driver could hand back that no SQL literal can carry.
  *
@@ -33,4 +35,27 @@ final class DriverAnswer
         return 'a';
     }
 
+
+    /**
+     * Answers something that says how it spells itself.
+     *
+     * A driver may hand a column over as an object rather than as its text,
+     * and what a renderer does with one is worth saying.
+     *
+     * @return Stringable A value that spells itself
+     */
+    public static function stringable(): Stringable
+    {
+        return new class () implements Stringable {
+            /**
+             * Answers how this spells itself.
+             *
+             * @return string The text it stands for
+             */
+            public function __toString(): string
+            {
+                return 'stringified';
+            }
+        };
+    }
 }
