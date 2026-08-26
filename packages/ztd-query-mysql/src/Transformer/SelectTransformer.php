@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\MySql\Transformer;
 
 use RuntimeException;
+use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\IdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
@@ -24,6 +25,10 @@ use ZtdQuery\Schema\ColumnTypeFamily;
  *
  * Generates WITH clauses that shadow referenced tables using in-memory data,
  * rewrites SET column ORDER BY for correct bit-order ranking.
+ *
+ * @phpstan-import-type ShadowTables from SqlTransformer
+ * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type RenderableValue from ValueRenderer
  */
 final class SelectTransformer implements SqlTransformer
 {
@@ -113,15 +118,16 @@ final class SelectTransformer implements SqlTransformer
      * Generate a CTE fragment for a single table.
      *
      * @param string $tableName
-     * @param array<int, array<string, mixed>> $rows
-     * @param array<int, string> $columns
-     * @param array<string, ColumnDeclaration> $columnTypes
-     * @param array<string, string> $generatedExpressions
-     * @return string
+     * @param list<array<string, RenderableValue>> $rows Rows the shadow holds for it, as the driver answered them
+     * @param array<int, string> $columns Columns it has, in order
+     * @param array<string, ColumnDeclaration> $columnTypes How each column was declared
+     * @param array<string, string> $generatedExpressions Column => the expression the table works it out with
      *
-     * @throws RuntimeException
+     * @return string The clause, naming the table and answering its rows
+     *
+     * @throws RuntimeException When the shadow holds neither rows nor columns, so the table cannot be described at all
      */
-    private function generateCte(
+    public function generateCte(
         string $tableName,
         array $rows,
         array $columns,
@@ -184,10 +190,16 @@ final class SelectTransformer implements SqlTransformer
     }
 
     /**
-     * @param array<int, string> $columns
-     * @param array<string, string> $generatedExpressions
+     * Writes a clause naming a table, around a query answering its rows.
+     *
+     * @param string $quotedTable The table's name, as MySQL would write it
+     * @param string $baseSql Query answering the rows
+     * @param array<int, string> $columns Columns the rows carry
+     * @param array<string, string> $generatedExpressions Column => the expression the table works it out with
+     *
+     * @return string The clause
      */
-    private function wrapCte(
+    public function wrapCte(
         string $quotedTable,
         string $baseSql,
         array $columns,
@@ -198,7 +210,19 @@ final class SelectTransformer implements SqlTransformer
         return "$quotedTable AS ($sql)";
     }
 
-    private function formatValue(mixed $val, ?ColumnDeclaration $type = null): string
+    /**
+     * Writes one shadow value as the SQL that reads it back.
+     *
+     * A SET is held as its members' names, and MySQL orders one by the
+     * positions those names were declared at, so the members are put back in
+     * declared order before the value is written.
+     *
+     * @param RenderableValue $val Value to write
+     * @param ColumnDeclaration|null $type How the column holding it was declared, or null where nothing declared it
+     *
+     * @return string SQL reading that value back
+     */
+    public function formatValue(mixed $val, ?ColumnDeclaration $type = null): string
     {
         if ($type !== null
             && $val !== null
@@ -212,14 +236,34 @@ final class SelectTransformer implements SqlTransformer
         return $this->valueRenderer->renderValue($val, $type);
     }
 
-    private function renderFallbackNullCast(): string
+    /**
+     * Writes a null for a column nothing declared a type for.
+     *
+     * A CTE column takes its type from what the first row puts in it, so a
+     * null with no type at all would make the column typeless.
+     *
+     * @return string SQL writing a null of some type
+     */
+    public function renderFallbackNullCast(): string
     {
         return $this->castRenderer->renderNullCast(
             new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR'),
         );
     }
 
-    private function normalizeSetValue(string $value, string $mysqlType): string
+    /**
+     * Puts a SET value's members back into the order the type declares them in.
+     *
+     * MySQL holds a SET as bits, so it answers the members in declared order
+     * however they were written, and drops anything the type does not
+     * declare. The shadow holds the text, so the same has to be done here.
+     *
+     * @param string $value The value, as the shadow holds it
+     * @param string $mysqlType The SET declaration, as MySQL wrote it
+     *
+     * @return string The members, in declared order
+     */
+    public function normalizeSetValue(string $value, string $mysqlType): string
     {
         if ($value === '') {
             return $value;
@@ -283,15 +327,17 @@ final class SelectTransformer implements SqlTransformer
     }
 
     /**
-     * Rewrite ORDER BY on SET columns to MySQL-compatible bit-order ranking.
+     * Rewrites an ORDER BY on a SET column so that it orders as MySQL would.
      *
-     * @param array<string, array{viewSql: string}|array{
-     *     rows: array<int, array<string, mixed>>,
-     *     columns: array<int, string>,
-     *     columnTypes: array<string, ColumnDeclaration>
-     * }> $tables
+     * MySQL orders a SET by the bits it holds, not by its text, so a column
+     * ordered by on its own is rewritten to the number those bits make.
+     *
+     * @param string $sql The statement, as written
+     * @param ShadowTables $tables Table name => what the shadow holds for it
+     *
+     * @return string The statement, ordering the way MySQL would
      */
-    private function rewriteSetOrderBy(string $sql, array $tables): string
+    public function rewriteSetOrderBy(string $sql, array $tables): string
     {
         if (stripos($sql, 'ORDER BY') === false) {
             return $sql;
@@ -393,9 +439,13 @@ final class SelectTransformer implements SqlTransformer
     }
 
     /**
-     * @return list<string>
+     * Answers what a SET declaration says a column may hold.
+     *
+     * @param string $type The declaration, as MySQL wrote it
+     *
+     * @return list<string> The members, in the order declared, or none where this declares no set
      */
-    private function extractSetMembers(string $type): array
+    public function extractSetMembers(string $type): array
     {
         if (preg_match('/^SET\((.*)\)$/i', trim($type), $matches) !== 1) {
             return [];

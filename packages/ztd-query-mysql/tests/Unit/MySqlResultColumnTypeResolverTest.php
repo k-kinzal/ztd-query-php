@@ -36,4 +36,12 @@ final class MySqlResultColumnTypeResolverTest extends TestCase
 
         self::assertSame(ColumnTypeFamily::UNKNOWN, $type->family);
     }
+    public function testResolveReadsTheDriverThatDescribedTheColumn(): void
+    {
+        self::assertSame(
+            ColumnTypeFamily::INTEGER,
+            (new MySqlResultColumnTypeResolver())->resolve(['type' => 8, 'charsetnr' => 33])->family,
+        );
+    }
+
 }

@@ -8,10 +8,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Platform\MySql\MySqlLexerProfile;
 use ZtdQuery\Platform\MySql\MySqlReadOnlyDiagnosticStatement;
+use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(MySqlReadOnlyDiagnosticStatement::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
+#[UsesClass(MySqlLexerProfile::class)]
 final class MySqlReadOnlyDiagnosticStatementTest extends TestCase
 {
     #[DataProvider('providerStatement')]
@@ -36,4 +38,18 @@ final class MySqlReadOnlyDiagnosticStatementTest extends TestCase
         yield 'ordinary query' => ['SELECT * FROM users', false];
         yield 'empty explain' => ['EXPLAIN', false];
     }
+    public function testContainsKeywordReportsAKeywordWrittenAmongTheTokens(): void
+    {
+        $tokens = SqlTokenStream::tokenize('SHOW TABLES', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertTrue(MySqlReadOnlyDiagnosticStatement::containsKeyword($tokens, ['TABLES']));
+    }
+
+    public function testContainsKeywordIsFalseWhereNoneOfThemIsWritten(): void
+    {
+        $tokens = SqlTokenStream::tokenize('SHOW TABLES', MySqlLexerProfile::create())->significantTokens();
+
+        self::assertFalse(MySqlReadOnlyDiagnosticStatement::containsKeyword($tokens, ['UPDATE', 'DELETE']));
+    }
+
 }

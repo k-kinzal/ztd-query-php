@@ -459,4 +459,29 @@ final class ReplaceTransformerTest extends TestCase
         $this->expectExceptionMessage('Cannot resolve INSERT target');
         $transformer->transform('REPLACE SELECT 1', []);
     }
+    public function testAsInsertWritesAReplaceAsTheInsertItBehavesLike(): void
+    {
+        $transformer = new ReplaceTransformer(new MySqlParser(), new SelectTransformer());
+
+        self::assertSame('INSERT INTO t VALUES (1)', $transformer->asInsert('REPLACE INTO t VALUES (1)'));
+    }
+
+    public function testAsInsertRefusesAStatementThatIsNotAReplace(): void
+    {
+        $transformer = new ReplaceTransformer(new MySqlParser(), new SelectTransformer());
+
+        $this->expectException(UnsupportedSqlException::class);
+
+        $transformer->asInsert('INSERT INTO t VALUES (1)');
+    }
+
+    public function testCommitRewriteStateKeepsTheIdentityValuesTheRewriteHandedOut(): void
+    {
+        $transformer = new ReplaceTransformer(new MySqlParser(), new SelectTransformer());
+
+        $transformer->commitRewriteState();
+
+        self::assertSame('INSERT INTO t VALUES (1)', $transformer->asInsert('REPLACE INTO t VALUES (1)'));
+    }
+
 }

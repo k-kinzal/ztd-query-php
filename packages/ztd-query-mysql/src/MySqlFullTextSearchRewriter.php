@@ -43,9 +43,20 @@ final class MySqlFullTextSearchRewriter
     }
 
     /**
-     * @return array{start: int, end: int, replacement: string}|null
+     * Answers the edit that replaces one MATCH ... AGAINST with what it scores.
+     *
+     * There is no full-text index in the shadow, so the score is worked out
+     * from the columns themselves: the words searched for are looked for in
+     * everything the MATCH names, run together. A search mode changes how
+     * MySQL scores, not what it searches, so it is dropped.
+     *
+     * @param string $sql Statement being rewritten
+     * @param SqlTokenStream $stream The statement, as tokens
+     * @param SqlToken $match The MATCH the edit is for
+     *
+     * @return array{start: int, end: int, replacement: string}|null The edit, or null where this is not a whole MATCH ... AGAINST
      */
-    private function expressionEdit(string $sql, SqlTokenStream $stream, SqlToken $match): ?array
+    public function expressionEdit(string $sql, SqlTokenStream $stream, SqlToken $match): ?array
     {
         $columnsOpen = $stream->significantTokenAfter($match);
         if ($columnsOpen === null) {
@@ -94,7 +105,14 @@ final class MySqlFullTextSearchRewriter
         ];
     }
 
-    private function queryExpression(string $queryBody): string
+    /**
+     * Answers the words a MATCH searches for, without how it was told to score them.
+     *
+     * @param string $queryBody Everything AGAINST was given, as written
+     *
+     * @return string The expression that answers what is searched for
+     */
+    public function queryExpression(string $queryBody): string
     {
         $previous = null;
         foreach (SqlTokenStream::tokenize($queryBody, MySqlLexerProfile::create())->significantTokens() as $token) {
@@ -113,7 +131,14 @@ final class MySqlFullTextSearchRewriter
         return trim($queryBody);
     }
 
-    private static function isSearchMode(SqlToken $token): bool
+    /**
+     * Reports whether a token opens a search mode rather than a search term.
+     *
+     * @param SqlToken $token Token to test
+     *
+     * @return bool True for the word that opens one of MySQL's search modes
+     */
+    public static function isSearchMode(SqlToken $token): bool
     {
         return $token->isKeyword('NATURAL') || $token->isKeyword('BOOLEAN');
     }

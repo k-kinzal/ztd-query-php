@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Fuzz\Robustness\Invariant;
 
-use Throwable;
 use ZtdQuery\Platform\MySql\MySqlQueryGuard;
 
 /**
@@ -25,26 +24,20 @@ final class ClassifyNeverThrowsChecker implements InvariantChecker
     }
 
     /**
-     * Check.
+     * Checks that reading a statement never fails, however it was written.
      *
-     * @param string $sql
-     * @return ?InvariantViolation
+     * Nothing is caught here on purpose: classifying is meant to answer what
+     * a statement is or answer nothing, never to fail. Anything that escapes
+     * is recorded by the fuzzer as the crash it is.
+     *
+     * @param string $sql Statement the fuzzer drew
+     *
+     * @return InvariantViolation|null Always nothing, because failing is not returning
      */
     public function check(string $sql): ?InvariantViolation
     {
-        try {
-            $this->guard->classify($sql);
-            return null;
-        } catch (Throwable $e) {
-            return new InvariantViolation(
-                'INV-L1-01',
-                'classify() threw an exception',
-                $sql,
-                [
-                    'exception_class' => get_class($e),
-                    'exception_message' => $e->getMessage(),
-                ]
-            );
-        }
+        $this->guard->classify($sql);
+
+        return null;
     }
 }

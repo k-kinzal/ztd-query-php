@@ -149,4 +149,23 @@ final class MySqlTransformerTest extends TestCase
         $result = $transformer->transform($sql, $tables);
         self::assertStringContainsString('SELECT 1 AS `id`', $result);
     }
+    public function testCommitRewriteStateKeepsWhatEveryTransformerHandedOut(): void
+    {
+        $parser = new MySqlParser();
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer(
+            $parser,
+            $selectTransformer,
+            $insertTransformer,
+            new UpdateTransformer($parser, $selectTransformer),
+            new DeleteTransformer($parser, $selectTransformer),
+            new ReplaceTransformer($parser, $selectTransformer),
+        );
+
+        $transformer->commitRewriteState();
+
+        self::assertSame('SELECT 1', $transformer->transform('SELECT 1', []));
+    }
+
 }
