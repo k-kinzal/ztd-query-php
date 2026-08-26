@@ -8,6 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use SqlFixture\Platform\MySql\MySqlColumnReader;
+use SqlFixture\Platform\MySql\MySqlCreateStatement;
 use SqlFixture\Platform\MySql\MySqlSchemaParser;
 use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\SchemaParseException;
@@ -17,6 +19,8 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(ColumnDefinition::class)]
 #[UsesClass(TableSchema::class)]
 #[UsesClass(SchemaParseException::class)]
+#[UsesClass(MySqlColumnReader::class)]
+#[UsesClass(MySqlCreateStatement::class)]
 final class MySqlSchemaParserTest extends TestCase
 {
     #[Test]

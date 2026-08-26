@@ -13,6 +13,7 @@ use SqlFixture\Plan\PlanPrinter;
 use SqlFixture\Plan\PlanStructureException;
 use SqlFixture\Plan\Relation;
 use SqlFixture\Plan\RelationKind;
+use SqlFixture\Plan\RelationSide;
 
 #[CoversClass(PlanIntegrity::class)]
 #[UsesClass(ColumnRef::class)]
@@ -20,6 +21,7 @@ use SqlFixture\Plan\RelationKind;
 #[UsesClass(PlanStructureException::class)]
 #[UsesClass(Relation::class)]
 #[UsesClass(RelationKind::class)]
+#[UsesClass(RelationSide::class)]
 final class PlanIntegrityTest extends TestCase
 {
     public function testAssertColumnsBoundOnceAcceptsRelationsThatBindDifferentColumns(): void

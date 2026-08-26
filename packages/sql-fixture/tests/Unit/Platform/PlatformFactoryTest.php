@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use SqlFixture\Platform\MySql\MySqlColumnSample;
 use SqlFixture\Platform\MySql\MySqlSchemaFetcher;
 use SqlFixture\Platform\MySql\MySqlSchemaParser;
 use SqlFixture\Platform\MySql\MySqlTypeMapper;
@@ -25,6 +26,14 @@ use SqlFixture\Platform\UnsupportedDriverException;
 #[UsesClass(SqliteSchemaFetcher::class)]
 #[UsesClass(PostgreSqlSchemaFetcher::class)]
 #[UsesClass(MySqlSchemaFetcher::class)]
+#[UsesClass(MySqlColumnSample::class)]
+#[UsesClass(MySqlSchemaParser::class)]
+#[UsesClass(MySqlTypeMapper::class)]
+#[UsesClass(PostgreSqlSchemaParser::class)]
+#[UsesClass(PostgreSqlTypeMapper::class)]
+#[UsesClass(SqliteSchemaParser::class)]
+#[UsesClass(SqliteTypeMapper::class)]
+#[UsesClass(UnsupportedDriverException::class)]
 final class PlatformFactoryTest extends TestCase
 {
     #[Test]
