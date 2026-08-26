@@ -2213,7 +2213,7 @@ final class SelectTransformerTest extends TransformerContractTest
         self::assertStringContainsString("FIND_IN_SET('it''s', `status`)", $result);
     }
 
-    public function testConstructorUsesCustomCastRenderer(): void
+    public function testTransformCastsThroughTheRendererItWasGiven(): void
     {
         $castRenderer = self::createStub(CastRenderer::class);
         $castRenderer->method('renderCast')->willReturn('CUSTOM_CAST');
@@ -2233,7 +2233,7 @@ final class SelectTransformerTest extends TransformerContractTest
         self::assertStringContainsString('CUSTOM_CAST', $result);
     }
 
-    public function testConstructorUsesCustomIdentifierQuoter(): void
+    public function testTransformQuotesThroughTheQuoterItWasGiven(): void
     {
         $quoter = self::createStub(IdentifierQuoter::class);
         $quoter->method('quote')->willReturnCallback(static fn (string $id): string => "[$id]");

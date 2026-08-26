@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\MySql\Transformer;
 
-use InvalidArgumentException;
 use PhpMyAdmin\SqlParser\Components\ArrayObj;
 use PhpMyAdmin\SqlParser\Components\SetOperation;
 use PhpMyAdmin\SqlParser\Statements\InsertStatement;
@@ -231,11 +230,7 @@ final class InsertTransformer implements SqlTransformer
             $values[] = strcasecmp($parsedValue, 'DEFAULT') === 0 ? $parsedValue : $rawValue;
         }
         $sourceColumns = $insertColumns !== [] || $values === [] ? $insertColumns : $tableColumns;
-        try {
-            $providedExpressions = $this->rowRenderer->providedExpressions($sourceColumns, $values);
-        } catch (InvalidArgumentException $exception) {
-            throw new RuntimeException($exception->getMessage(), 0, $exception);
-        }
+        $providedExpressions = $this->rowRenderer->providedExpressions($sourceColumns, $values);
         $generatedValues = $this->identityAllocator->allocateMissing(
             $tableName,
             $identityStrategies,

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Transformer;
 
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\Transformer\InsertSelectRenderer;
 use ZtdQuery\Platform\MySql\Transformer\MySqlSelectListAliaser;
@@ -76,7 +76,7 @@ final class InsertSelectRendererTest extends TestCase
 
     public function testRejectsNonPositiveGeneratedIdentityStart(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidDefinitionException::class);
         $this->expectExceptionMessage('Generated identity start must be positive.');
 
         (new InsertSelectRenderer())->renderGeneratedIdentity(0);
