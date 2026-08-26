@@ -13,12 +13,14 @@ use SqlFixture\Fixture\RowSpec;
 use SqlFixture\Plan\ColumnRef;
 use SqlFixture\Plan\Relation;
 use SqlFixture\Plan\RelationKind;
+use SqlFixture\Plan\RelationSide;
 
 #[CoversClass(ChildRowCount::class)]
 #[UsesClass(ColumnRef::class)]
 #[UsesClass(Relation::class)]
 #[UsesClass(RelationKind::class)]
 #[UsesClass(RowSpec::class)]
+#[UsesClass(RelationSide::class)]
 final class ChildRowCountTest extends TestCase
 {
     public function testOfAnswersExactlyWhatTheCallerAskedFor(): void

@@ -11,12 +11,35 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\FixtureGenerator;
 use SqlFixture\FixtureProvider;
+use SqlFixture\Hydrator\ConstructorHydration;
+use SqlFixture\Hydrator\DeclaredTypeCast;
+use SqlFixture\Hydrator\Instantiability;
+use SqlFixture\Hydrator\PropertyHydration;
+use SqlFixture\Hydrator\PropertyName;
 use SqlFixture\Hydrator\ReflectionHydrator;
 use SqlFixture\Plan\FixturePlan;
+use SqlFixture\Plan\PlanCursor;
+use SqlFixture\Plan\PlanIntegrity;
+use SqlFixture\Plan\PlanStatementReader;
+use SqlFixture\Plan\PlanStatements;
+use SqlFixture\Plan\TableName;
+use SqlFixture\Platform\MySql\MySqlBinarySample;
+use SqlFixture\Platform\MySql\MySqlColumnReader;
+use SqlFixture\Platform\MySql\MySqlColumnSample;
+use SqlFixture\Platform\MySql\MySqlCreateStatement;
+use SqlFixture\Platform\MySql\MySqlEnumerationSample;
+use SqlFixture\Platform\MySql\MySqlNumberSample;
 use SqlFixture\Platform\MySql\MySqlSchemaParser;
+use SqlFixture\Platform\MySql\MySqlTextSample;
 use SqlFixture\Platform\MySql\MySqlTypeMapper;
+use SqlFixture\Platform\MySql\WellKnownTextGeometry;
 use SqlFixture\Platform\PlatformFactory;
+use SqlFixture\Platform\PostgreSql\PostgreSqlColumnSample;
 use SqlFixture\Platform\PostgreSql\PostgreSqlTypeMapper;
+use SqlFixture\Platform\Sqlite\SqliteAffinity;
+use SqlFixture\Platform\Sqlite\SqliteColumnReader;
+use SqlFixture\Platform\Sqlite\SqliteColumnSample;
+use SqlFixture\Platform\Sqlite\SqliteCreateTable;
 use SqlFixture\Platform\Sqlite\SqliteSchemaParser;
 use SqlFixture\Platform\Sqlite\SqliteTypeMapper;
 use SqlFixture\Schema\ColumnDefinition;
@@ -51,6 +74,29 @@ use Tests\Fixture\UserDto;
 #[UsesClass(\SqlFixture\Plan\RelationKind::class)]
 #[UsesClass(\SqlFixture\Plan\RelationSide::class)]
 #[UsesClass(\SqlFixture\Plan\GenerationOrder::class)]
+#[UsesClass(ConstructorHydration::class)]
+#[UsesClass(DeclaredTypeCast::class)]
+#[UsesClass(Instantiability::class)]
+#[UsesClass(PropertyHydration::class)]
+#[UsesClass(PropertyName::class)]
+#[UsesClass(PlanCursor::class)]
+#[UsesClass(PlanIntegrity::class)]
+#[UsesClass(PlanStatementReader::class)]
+#[UsesClass(PlanStatements::class)]
+#[UsesClass(TableName::class)]
+#[UsesClass(MySqlBinarySample::class)]
+#[UsesClass(MySqlColumnReader::class)]
+#[UsesClass(MySqlColumnSample::class)]
+#[UsesClass(MySqlCreateStatement::class)]
+#[UsesClass(MySqlEnumerationSample::class)]
+#[UsesClass(MySqlNumberSample::class)]
+#[UsesClass(MySqlTextSample::class)]
+#[UsesClass(WellKnownTextGeometry::class)]
+#[UsesClass(PostgreSqlColumnSample::class)]
+#[UsesClass(SqliteAffinity::class)]
+#[UsesClass(SqliteColumnReader::class)]
+#[UsesClass(SqliteColumnSample::class)]
+#[UsesClass(SqliteCreateTable::class)]
 final class FixtureProviderTest extends TestCase
 {
     #[Test]

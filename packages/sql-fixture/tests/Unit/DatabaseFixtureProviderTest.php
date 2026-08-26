@@ -11,8 +11,17 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\DatabaseFixtureProvider;
+use SqlFixture\Fixture\RowSpec;
 use SqlFixture\FixtureGenerator;
+use SqlFixture\Hydrator\ConstructorHydration;
+use SqlFixture\Hydrator\PropertyHydration;
+use SqlFixture\Hydrator\ReflectionHydrator;
 use SqlFixture\Platform\PlatformFactory;
+use SqlFixture\Platform\Sqlite\SqliteAffinity;
+use SqlFixture\Platform\Sqlite\SqliteCatalog;
+use SqlFixture\Platform\Sqlite\SqliteColumnReader;
+use SqlFixture\Platform\Sqlite\SqliteColumnSample;
+use SqlFixture\Platform\Sqlite\SqliteCreateTable;
 use SqlFixture\Platform\Sqlite\SqliteSchemaFetcher;
 use SqlFixture\Platform\Sqlite\SqliteSchemaParser;
 use SqlFixture\Platform\Sqlite\SqliteTypeMapper;
@@ -27,6 +36,15 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(SqliteTypeMapper::class)]
 #[UsesClass(ColumnDefinition::class)]
 #[UsesClass(TableSchema::class)]
+#[UsesClass(RowSpec::class)]
+#[UsesClass(ConstructorHydration::class)]
+#[UsesClass(PropertyHydration::class)]
+#[UsesClass(ReflectionHydrator::class)]
+#[UsesClass(SqliteAffinity::class)]
+#[UsesClass(SqliteCatalog::class)]
+#[UsesClass(SqliteColumnReader::class)]
+#[UsesClass(SqliteColumnSample::class)]
+#[UsesClass(SqliteCreateTable::class)]
 final class DatabaseFixtureProviderTest extends TestCase
 {
     #[Test]
