@@ -87,6 +87,50 @@ final class RowMatch
     }
 
     /**
+     * Reports whether two rows carry the same columns with the same values.
+     *
+     * Column order is not part of a row's identity: the same columns carrying
+     * the same values are the same row however the reader happened to order
+     * them.
+     *
+     * @param Row $left One row
+     * @param Row $right The other
+     *
+     * @return bool True when neither carries a column the other lacks, and both agree everywhere
+     */
+    public function sameRow(array $left, array $right): bool
+    {
+        if (count($left) !== count($right)) {
+            return false;
+        }
+
+        return $this->agreeOn($left, $right, array_keys($left));
+    }
+
+    /**
+     * Reports whether two rows are the same row of a table keyed like this.
+     *
+     * A table with a key is identified by it, and two rows agreeing on it are
+     * the same row however else they differ. A table with no key has nothing
+     * to be identified by, so being the same row means carrying everything the
+     * same.
+     *
+     * @param Row $left One row
+     * @param Row $right The other
+     * @param array<int, string> $keys Columns that identify a row, or none where the table declares none
+     *
+     * @return bool True when the table cannot tell the two apart
+     */
+    public function identifies(array $left, array $right, array $keys): bool
+    {
+        if ($keys === []) {
+            return $this->sameRow($left, $right);
+        }
+
+        return $this->agreeOn($left, $right, array_values($keys));
+    }
+
+    /**
      * Answers where a row with the same key is, among rows not already taken.
      *
      * Rows already paired off are excluded so that two rows sharing a key are

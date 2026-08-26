@@ -63,4 +63,18 @@ final class ForeignKeyViolationExceptionTest extends TestCase
         self::assertSame('id', $exception->getReferencedColumn());
     }
 
+    public function testOfNamesTheFirstColumnTheKeyPointsAt(): void
+    {
+        $exception = ForeignKeyViolationException::of('DELETE', 'children', 'fk', 'parents', ['id', 'other']);
+
+        self::assertSame('id', $exception->getReferencedColumn());
+        self::assertSame('children', $exception->getTableName());
+    }
+
+    public function testOfNamesNoColumnWhereTheKeyPointsAtNone(): void
+    {
+        $exception = ForeignKeyViolationException::of('DELETE', 'children', 'fk', 'parents', []);
+
+        self::assertSame('', $exception->getReferencedColumn());
+    }
 }

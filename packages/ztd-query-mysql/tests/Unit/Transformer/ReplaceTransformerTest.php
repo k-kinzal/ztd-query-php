@@ -16,7 +16,7 @@ use ZtdQuery\Platform\MySql\MySqlUpsertAssignmentExtractor;
 use ZtdQuery\Platform\MySql\Transformer\InsertTransformer;
 use ZtdQuery\Platform\MySql\Transformer\ReplaceTransformer;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(ReplaceTransformer::class)]
@@ -48,8 +48,8 @@ final class ReplaceTransformerTest extends TestCase
                 'rows' => [],
                 'columns' => ['id', 'name'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                    'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(50)'),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                    'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(50)'),
                 ],
             ],
         ];

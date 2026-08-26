@@ -136,4 +136,32 @@ final class ShadowTransactionsTest extends TestCase
 
         self::assertSame([['id' => 1]], $store->get('items'));
     }
+
+    public function testBeginIsIgnoredWhereATransactionHasAlreadyBegun(): void
+    {
+        $store = new ShadowStore();
+        $store->set('order', [['id' => 1]]);
+        $transactions = new ShadowTransactions($store);
+
+        $transactions->begin();
+        $store->set('order', []);
+        $transactions->begin();
+        $transactions->rollBack();
+
+        self::assertSame([['id' => 1]], $store->get('order'));
+    }
+
+    public function testCommitLeavesNothingToRollBackTo(): void
+    {
+        $store = new ShadowStore();
+        $store->set('order', [['id' => 1]]);
+        $transactions = new ShadowTransactions($store);
+
+        $transactions->begin();
+        $store->set('order', []);
+        $transactions->commit();
+        $transactions->rollBack();
+
+        self::assertSame([], $store->get('order'));
+    }
 }

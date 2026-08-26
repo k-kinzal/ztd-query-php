@@ -80,12 +80,12 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame([], $definition->notNullColumns);
     }
 
-    protected function createParser(): SchemaParser
+    public function createParser(): SchemaParser
     {
         return new PgSqlSchemaParser();
     }
 
-    protected function validCreateTableSql(): string
+    public function validCreateTableSql(): string
     {
         return <<<'SQL'
             CREATE TABLE users (
@@ -98,7 +98,7 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
             SQL;
     }
 
-    protected function nonCreateTableSql(): string
+    public function nonCreateTableSql(): string
     {
         return 'SELECT 1';
     }

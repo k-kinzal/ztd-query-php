@@ -145,4 +145,24 @@ final class UpdateMutationTest extends TestCase
 
         self::assertSame('alice@example.com', $store->get('users')[0]['email']);
     }
+    public function testApplyWritesTheNewRowOverTheRowTheOldKeyPointsAt(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', [['id' => 1, 'name' => 'a'], ['id' => 2, 'name' => 'b']]);
+
+        (new UpdateMutation('users', ['id']))->apply($store, [['id' => 3, '__ztd_original_id' => 1]]);
+
+        self::assertSame([['id' => 3], ['id' => 2, 'name' => 'b']], $store->get('users'));
+    }
+
+    public function testApplyLeavesATableTheOldKeyPointsAtNothingInAlone(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', [['id' => 1]]);
+
+        (new UpdateMutation('users', ['id']))->apply($store, [['id' => 9, '__ztd_original_id' => 8]]);
+
+        self::assertSame([['id' => 1]], $store->get('users'));
+    }
+
 }

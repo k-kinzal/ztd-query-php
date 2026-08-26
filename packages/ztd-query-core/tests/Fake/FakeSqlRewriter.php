@@ -321,7 +321,7 @@ final class FakeSqlRewriter implements SqlRewriter
     }
 
     /**
-     * @return array<string, array{rows: list<Row>, columns: array<int, string>, columnTypes: array<string, \ZtdQuery\Schema\ColumnType>}>
+     * @return array<string, array{rows: list<Row>, columns: array<int, string>, columnTypes: array<string, \ZtdQuery\Schema\ColumnDeclaration>}>
      */
     public function buildShadowContext(): array
     {

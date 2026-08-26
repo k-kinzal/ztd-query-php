@@ -20,7 +20,7 @@ use ZtdQuery\Platform\MySql\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
 use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Rewrite\QueryKind;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\Mutation\CreateTableAsSelectMutation;
@@ -351,7 +351,7 @@ final class MySqlMutationResolver
                 $tableName,
                 $columnNames,
                 $this->registry,
-                new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR'),
+                new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR'),
                 $ifNotExists,
             );
         }

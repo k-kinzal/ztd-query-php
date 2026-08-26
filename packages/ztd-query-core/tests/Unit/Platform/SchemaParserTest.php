@@ -13,12 +13,12 @@ use ZtdQuery\Platform\SchemaParser;
 #[CoversNothing]
 final class SchemaParserTest extends SchemaParserContractTest
 {
-    protected function createParser(): SchemaParser
+    public function createParser(): SchemaParser
     {
         return new FakeSchemaParser();
     }
 
-    protected function validCreateTableSql(): string
+    public function validCreateTableSql(): string
     {
         return 'CREATE TABLE users ('
             . 'id INTEGER NOT NULL PRIMARY KEY, '
@@ -29,7 +29,7 @@ final class SchemaParserTest extends SchemaParserContractTest
             . ')';
     }
 
-    protected function nonCreateTableSql(): string
+    public function nonCreateTableSql(): string
     {
         return 'SELECT * FROM users';
     }
@@ -38,7 +38,7 @@ final class SchemaParserTest extends SchemaParserContractTest
      * @return list<string>
      */
     #[Override]
-    protected function expectedColumns(): array
+    public function expectedColumns(): array
     {
         return ['id', 'name', 'email', 'age'];
     }
@@ -47,8 +47,13 @@ final class SchemaParserTest extends SchemaParserContractTest
      * @return list<string>
      */
     #[Override]
-    protected function expectedNotNullColumns(): array
+    public function expectedNotNullColumns(): array
     {
         return ['id', 'name', 'email'];
+    }
+
+    public function testParseAnswersNothingForAStatementThatCreatesNoTable(): void
+    {
+        self::assertNull($this->createParser()->parse('SELECT 1'));
     }
 }

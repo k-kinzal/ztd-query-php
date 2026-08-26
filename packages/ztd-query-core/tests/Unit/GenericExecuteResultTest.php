@@ -202,4 +202,24 @@ final class GenericExecuteResultTest extends TestCase
         self::assertTrue($result->isSuccess());
         self::assertSame(1, $result->rowCount());
     }
+
+    public function testIsPassthroughIsTrueOnlyWhereTheOriginalStatementStillHasToRun(): void
+    {
+        self::assertTrue(GenericExecuteResult::passthrough()->isPassthrough());
+        self::assertFalse(GenericExecuteResult::fromBufferedRows([], QueryKind::READ)->isPassthrough());
+    }
+
+    public function testIsSuccessIsFalseOnlyForAResultThatFailed(): void
+    {
+        self::assertTrue(GenericExecuteResult::fromBufferedRows([], QueryKind::READ)->isSuccess());
+        self::assertFalse(GenericExecuteResult::failure(QueryKind::READ)->isSuccess());
+    }
+
+    public function testKindAnswersWhatWasRun(): void
+    {
+        self::assertSame(
+            QueryKind::DDL_SIMULATED,
+            GenericExecuteResult::fromBufferedRows([], QueryKind::DDL_SIMULATED)->kind(),
+        );
+    }
 }

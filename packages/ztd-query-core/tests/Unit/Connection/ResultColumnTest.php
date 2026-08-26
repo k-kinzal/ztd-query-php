@@ -8,16 +8,16 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Connection\ResultColumn;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(ResultColumn::class)]
-#[UsesClass(ColumnType::class)]
+#[UsesClass(ColumnDeclaration::class)]
 final class ResultColumnTest extends TestCase
 {
     public function testCarriesNameAndType(): void
     {
-        $type = new ColumnType(ColumnTypeFamily::INTEGER, 'int4');
+        $type = new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'int4');
         $column = new ResultColumn('id', $type);
 
         self::assertSame('id', $column->name);

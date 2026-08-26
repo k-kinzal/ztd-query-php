@@ -23,7 +23,7 @@ use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Session;
 use ZtdQuery\Shadow\Mutation\UpdateMutation;
@@ -136,7 +136,7 @@ final class ZtdPdoStatementTest extends TestCase
         $shadowStore = new ShadowStore();
         $shadowStore->set('users', [['id' => 1, 'name' => 'Alice']]);
         $typeResolver = static::createStub(ResultColumnTypeResolver::class);
-        $typeResolver->method('resolve')->willReturn(new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'));
+        $typeResolver->method('resolve')->willReturn(new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'));
         $session = new Session(
             static::createStub(SqlRewriter::class),
             $shadowStore,

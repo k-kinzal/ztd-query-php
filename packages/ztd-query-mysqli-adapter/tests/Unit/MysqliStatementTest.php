@@ -15,7 +15,7 @@ use ZtdQuery\Adapter\Mysqli\MysqliResultColumnExtractor;
 use ZtdQuery\Adapter\Mysqli\MysqliStatement;
 use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Platform\ResultColumnTypeResolver;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(MysqliStatement::class)]
@@ -39,7 +39,7 @@ final class MysqliStatementTest extends TestCase
         $stmt->getResultReturn = StubMysqliResult::create([], [$field]);
 
         $resolver = self::createStub(ResultColumnTypeResolver::class);
-        $resolver->method('resolve')->willReturn(new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'));
+        $resolver->method('resolve')->willReturn(new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'));
         $columns = (new MysqliStatement($stmt, new StubMysqli()))->resultColumns($resolver);
 
         self::assertSame('id', $columns[0]->name);

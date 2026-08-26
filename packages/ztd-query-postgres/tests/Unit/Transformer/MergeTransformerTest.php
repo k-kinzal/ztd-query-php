@@ -20,7 +20,7 @@ use ZtdQuery\Platform\Postgres\PgSqlTableSampleRewriter;
 use ZtdQuery\Platform\Postgres\PgSqlValueRenderer;
 use ZtdQuery\Platform\Postgres\Transformer\MergeTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
 
@@ -56,16 +56,16 @@ final class MergeTransformerTest extends TestCase
                     'rows' => [['id' => 1, 'name' => 'old']],
                     'columns' => ['id', 'name'],
                     'columnTypes' => [
-                        'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                        'name' => new ColumnType(ColumnTypeFamily::STRING, 'TEXT'),
+                        'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                        'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'TEXT'),
                     ],
                 ],
                 'source' => [
                     'rows' => [['id' => 1, 'name' => 'updated'], ['id' => 2, 'name' => 'inserted']],
                     'columns' => ['id', 'name'],
                     'columnTypes' => [
-                        'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                        'name' => new ColumnType(ColumnTypeFamily::STRING, 'TEXT'),
+                        'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                        'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'TEXT'),
                     ],
                 ],
             ],
@@ -96,7 +96,7 @@ final class MergeTransformerTest extends TestCase
                 'target' => [
                     'rows' => [['id' => 1]],
                     'columns' => ['id'],
-                    'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER')],
+                    'columnTypes' => ['id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER')],
                 ],
             ],
         );
@@ -123,9 +123,9 @@ final class MergeTransformerTest extends TestCase
                     'rows' => [],
                     'columns' => ['id', 'amount', 'doubled'],
                     'columnTypes' => [
-                        'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                        'amount' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                        'doubled' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                        'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                        'amount' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                        'doubled' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
                     ],
                     'columnDefaults' => ['amount' => '7'],
                     'generatedExpressions' => ['doubled' => '"amount" * 2'],

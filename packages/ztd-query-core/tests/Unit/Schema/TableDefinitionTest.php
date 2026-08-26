@@ -8,7 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Schema\CandidateKeySet;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\ForeignKeyDefinition;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
@@ -19,7 +19,7 @@ use ZtdQuery\Schema\TablePartitionKey;
 use ZtdQuery\Schema\TablePartitionRelation;
 use ZtdQuery\Schema\TablePartitionStrategy;
 
-#[UsesClass(ColumnType::class)]
+#[UsesClass(ColumnDeclaration::class)]
 #[UsesClass(CandidateKeySet::class)]
 #[UsesClass(ForeignKeyDefinition::class)]
 #[UsesClass(PartialUniqueIndex::class)]
@@ -31,7 +31,7 @@ final class TableDefinitionTest extends TestCase
 {
     public function testKeepsEverythingATableDeclaresAboutItself(): void
     {
-        $typedColumns = ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT')];
+        $typedColumns = ['id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT')];
 
         $definition = new TableDefinition(
             ['id', 'name'],
@@ -94,7 +94,7 @@ final class TableDefinitionTest extends TestCase
         self::assertSame($partitioning, $partitioned->partitioning);
     }
 
-    public function testWithPartitionKeyCandidateKeysPartitionMetadataCopiesPreserveOtherSchemaState(): void
+    public function testCandidateKeysWithPartitionKeyCandidateKeysPartitionMetadataCopiesPreserveOtherSchemaState(): void
     {
         $definition = new TableDefinition(['id'], ['id' => 'INT'], ['id'], ['id'], []);
         $key = new TablePartitionKey(TablePartitionStrategy::Range, ['id']);
@@ -119,5 +119,27 @@ final class TableDefinitionTest extends TestCase
         self::assertSame([], $definition->partialUniqueIndexes);
         self::assertSame($index, $indexed->partialUniqueIndexes['users_active_email']);
         self::assertSame($definition->columns, $indexed->columns);
+    }
+
+    public function testWithPartitionKeyAnswersATableDividedByThatKey(): void
+    {
+        $definition = new TableDefinition(['id'], [], ['id'], [], []);
+        $key = new TablePartitionKey(TablePartitionStrategy::Range, ['id']);
+
+        $divided = $definition->withPartitionKey($key);
+
+        self::assertSame($key, $divided->partitionKey);
+        self::assertNull($definition->partitionKey);
+    }
+
+    public function testWithPartitionRelationAnswersATableThatIsPartOfAnother(): void
+    {
+        $definition = new TableDefinition(['id'], [], ['id'], [], []);
+        $relation = new TablePartitionRelation('parent', 'id < 10');
+
+        $part = $definition->withPartitionRelation($relation);
+
+        self::assertSame($relation, $part->partitionRelation);
+        self::assertNull($definition->partitionRelation);
     }
 }

@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\Sqlite;
 
 use ZtdQuery\Platform\CastRenderer;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 /**
  * SQLite implementation of CastRenderer.
  *
- * Maps ColumnType to SQLite CAST syntax using SQLite's type affinity system.
+ * Maps ColumnDeclaration to SQLite CAST syntax using SQLite's type affinity system.
  * SQLite supports: INTEGER, REAL, TEXT, BLOB, NUMERIC.
  */
 final class SqliteCastRenderer implements CastRenderer
@@ -20,10 +20,10 @@ final class SqliteCastRenderer implements CastRenderer
      * Writes cast.
      *
      * @param string $expression
-     * @param ColumnType $type
+     * @param ColumnDeclaration $type
      * @return string
      */
-    public function renderCast(string $expression, ColumnType $type): string
+    public function renderCast(string $expression, ColumnDeclaration $type): string
     {
         $castType = $this->mapToCastType($type);
 
@@ -33,17 +33,17 @@ final class SqliteCastRenderer implements CastRenderer
     /**
      * Writes null cast.
      *
-     * @param ColumnType $type
+     * @param ColumnDeclaration $type
      * @return string
      */
-    public function renderNullCast(ColumnType $type): string
+    public function renderNullCast(ColumnDeclaration $type): string
     {
         $castType = $this->mapToCastType($type);
 
         return "CAST(NULL AS $castType)";
     }
 
-    private function mapToCastType(ColumnType $type): string
+    private function mapToCastType(ColumnDeclaration $type): string
     {
         return match ($type->family) {
             ColumnTypeFamily::INTEGER => 'INTEGER',

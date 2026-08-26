@@ -14,7 +14,7 @@ use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 use ZtdQuery\Platform\Postgres\PgSqlTableSampleRewriter;
 use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Rewrite\SqlTransformer;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 /**
@@ -75,7 +75,7 @@ final class SelectTransformer implements SqlTransformer
 
             $rows = $tableContext['rows'];
             $columns = $tableContext['columns'];
-            /** @var array<string, ColumnType> $columnTypes */
+            /** @var array<string, ColumnDeclaration> $columnTypes */
             $columnTypes = $tableContext['columnTypes'];
             $generatedExpressions = $tableContext['generatedExpressions'] ?? [];
 
@@ -109,7 +109,7 @@ final class SelectTransformer implements SqlTransformer
     /**
      * @param array<int, array<string, mixed>> $rows
      * @param array<int, string> $columns
-     * @param array<string, ColumnType> $columnTypes
+     * @param array<string, ColumnDeclaration> $columnTypes
      * @param array<string, string> $generatedExpressions
      *
      * @throws RuntimeException
@@ -188,7 +188,7 @@ final class SelectTransformer implements SqlTransformer
     /**
      * @param array<int, array<string, mixed>> $rows
      * @param array<int, string> $columns
-     * @param array<string, ColumnType> $columnTypes
+     * @param array<string, ColumnDeclaration> $columnTypes
      */
     private function generateMultiRowSource(
         array $rows,
@@ -231,7 +231,7 @@ final class SelectTransformer implements SqlTransformer
         return "$quotedTable AS MATERIALIZED ($sql)";
     }
 
-    private function formatValue(mixed $val, ?ColumnType $colType = null): string
+    private function formatValue(mixed $val, ?ColumnDeclaration $colType = null): string
     {
         return $this->valueRenderer->renderValue($val, $colType);
     }
@@ -239,7 +239,7 @@ final class SelectTransformer implements SqlTransformer
     private function renderFallbackNullCast(): string
     {
         return $this->castRenderer->renderNullCast(
-            new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+            new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
         );
     }
 
