@@ -9,10 +9,12 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\Sqlite\SqliteLexerProfile;
 use ZtdQuery\Platform\Sqlite\SqliteReturningProjectionParser;
+use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(SqliteReturningProjectionParser::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
+#[UsesClass(SqliteLexerProfile::class)]
 final class SqliteReturningProjectionParserTest extends TestCase
 {
     public function testParsesSqliteQualifiedQuotedAliasesAndWildcard(): void
@@ -80,5 +82,62 @@ final class SqliteReturningProjectionParserTest extends TestCase
             'unterminated double quote' => ['"id'],
             'unterminated backtick' => ['`id'],
         ];
+    }
+    public function testParseItemReadsTheColumnAnEntryNames(): void
+    {
+        self::assertSame(
+            ['source' => 'id', 'output' => null],
+            (new SqliteReturningProjectionParser())->parseItem('id'),
+        );
+    }
+
+    public function testParseItemReadsTheNameAnEntryIsGiven(): void
+    {
+        self::assertSame(
+            ['source' => 'id', 'output' => 'x'],
+            (new SqliteReturningProjectionParser())->parseItem('id AS x'),
+        );
+    }
+
+    public function testAsIndexAnswersWhereTheAsIsWritten(): void
+    {
+        $tokens = SqlTokenStream::tokenize('id AS x', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertSame(1, (new SqliteReturningProjectionParser())->asIndex($tokens));
+    }
+
+    public function testAsIndexIsNothingWhereNoNameIsGiven(): void
+    {
+        $tokens = SqlTokenStream::tokenize('id', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertNull((new SqliteReturningProjectionParser())->asIndex($tokens));
+    }
+
+    public function testIsIdentifierPathReportsTokensSpellingAName(): void
+    {
+        $tokens = SqlTokenStream::tokenize('t.id', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertTrue((new SqliteReturningProjectionParser())->isIdentifierPath($tokens));
+    }
+
+    public function testIsIdentifierPathIsFalseForAnExpression(): void
+    {
+        $tokens = SqlTokenStream::tokenize('id + 1', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertFalse((new SqliteReturningProjectionParser())->isIdentifierPath($tokens));
+    }
+
+    public function testIdentifierNameTakesTheQuotingOffAName(): void
+    {
+        $tokens = SqlTokenStream::tokenize('"order"', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertSame('order', (new SqliteReturningProjectionParser())->identifierName($tokens[0]));
+    }
+
+    public function testIdentifierNameIsNothingForATokenThatIsNotAName(): void
+    {
+        $tokens = SqlTokenStream::tokenize('1', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertNull((new SqliteReturningProjectionParser())->identifierName($tokens[0]));
     }
 }

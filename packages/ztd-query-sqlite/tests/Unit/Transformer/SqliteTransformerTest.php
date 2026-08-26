@@ -161,4 +161,21 @@ final class SqliteTransformerTest extends TestCase
         $result = $transformer->transform('SELECT * FROM users', []);
         self::assertSame('SELECT * FROM users', $result);
     }
+    public function testCommitRewriteStateKeepsWhatEveryTransformerHandedOut(): void
+    {
+        $parser = new SqliteParser();
+        $selectTransformer = new SelectTransformer();
+        $transformer = new SqliteTransformer(
+            $parser,
+            $selectTransformer,
+            new InsertTransformer($parser, $selectTransformer),
+            new UpdateTransformer($parser, $selectTransformer),
+            new DeleteTransformer($parser, $selectTransformer),
+        );
+
+        $transformer->commitRewriteState();
+
+        self::assertSame('SELECT 1', $transformer->transform('SELECT 1', []));
+    }
+
 }

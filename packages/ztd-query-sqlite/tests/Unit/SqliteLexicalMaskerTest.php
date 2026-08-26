@@ -76,4 +76,24 @@ final class SqliteLexicalMaskerTest extends TestCase
         yield 'empty bracket quote' => ['[]', true];
         yield 'unterminated bracket' => ['[/* comment', false];
     }
+    public function testMaskCommentsTakesTheCommentOut(): void
+    {
+        self::assertStringNotContainsString('secret', SqliteLexicalMasker::maskComments('SELECT 1 -- secret'));
+    }
+
+    public function testQuotedLengthAnswersHowLongTheQuotedRunIs(): void
+    {
+        self::assertSame(3, SqliteLexicalMasker::quotedLength("'a'x", "'"));
+    }
+
+    public function testBracketQuotedLengthAnswersWhereTheBracketedNameCloses(): void
+    {
+        self::assertSame(2, SqliteLexicalMasker::bracketQuotedLength('[a]x'));
+    }
+
+    public function testBracketQuotedLengthRunsToTheEndWhereTheBracketNeverCloses(): void
+    {
+        self::assertSame(2, SqliteLexicalMasker::bracketQuotedLength('[a'));
+    }
+
 }

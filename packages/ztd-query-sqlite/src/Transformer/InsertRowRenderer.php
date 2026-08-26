@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Sqlite\Transformer;
 
-use InvalidArgumentException;
+use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Rewrite\InsertRowProjectionPlanner;
 
 /**
@@ -28,12 +28,12 @@ final class InsertRowRenderer
      * @param list<string> $values
      * @return array<string, string>
      *
-     * @throws InvalidArgumentException
+     * @throws InvalidDefinitionException When the statement cannot describe a row the table would take
      */
     public function providedExpressions(array $insertColumns, array $values): array
     {
         if (count($insertColumns) !== count($values)) {
-            throw new InvalidArgumentException('Insert values count does not match column count.');
+            throw new InvalidDefinitionException('Insert values count does not match column count.');
         }
 
         $provided = [];

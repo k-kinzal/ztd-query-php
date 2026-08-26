@@ -170,7 +170,14 @@ final class SqliteSchemaParser implements SchemaParser
         );
     }
 
-    private function parseFts5VirtualTable(string $sql): ?TableDefinition
+    /**
+     * Reads a full-text table as the columns it searches.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return TableDefinition|null What it answers
+     */
+    public function parseFts5VirtualTable(string $sql): ?TableDefinition
     {
         $stream = SqlTokenStream::tokenize($sql, SqliteLexerProfile::create());
         $tokens = $stream->significantTokens();
@@ -256,7 +263,14 @@ final class SqliteSchemaParser implements SchemaParser
         return new TableDefinition($columns, $columnTypes, [], [], [], $typedColumns);
     }
 
-    private function tableBody(string $sql): ?string
+    /**
+     * Answers everything a CREATE TABLE declares between its parentheses.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return string|null What it answers
+     */
+    public function tableBody(string $sql): ?string
     {
         $tablePrefix = '/^CREATE\s+(?:(?:TEMP|TEMPORARY)\s+)?TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:"(?:[^"]|"")*"|`(?:[^`]|``)*`|\[(?:[^\]])*\]|[^\s(]+)\s*\(/is';
         if (preg_match($tablePrefix, $sql, $matches) !== 1) {
@@ -286,7 +300,14 @@ final class SqliteSchemaParser implements SchemaParser
         return substr($sql, $openingOffset + 1, $closing->offset - $openingOffset - 1);
     }
 
-    private static function hasValidTableOptions(string $suffix): bool
+    /**
+     * Reports whether what follows the declaration is something SQLite allows there.
+     *
+     * @param string $suffix The suffix
+     *
+     * @return bool What it answers
+     */
+    public static function hasValidTableOptions(string $suffix): bool
     {
         $tokens = SqlTokenStream::tokenize($suffix, SqliteLexerProfile::create())->significantTokens();
         $last = $tokens[count($tokens) - 1] ?? null;
@@ -334,7 +355,14 @@ final class SqliteSchemaParser implements SchemaParser
         return false;
     }
 
-    private static function hasWithoutRowid(string $sql): bool
+    /**
+     * Reports whether a table was declared to have no rowid of its own.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return bool What it answers
+     */
+    public static function hasWithoutRowid(string $sql): bool
     {
         $withoutClause = SqlTokenStream::tokenize($sql, SqliteLexerProfile::create())->topLevelClause(['WITHOUT']);
         if ($withoutClause === null) {
@@ -345,11 +373,13 @@ final class SqliteSchemaParser implements SchemaParser
     }
 
     /**
-     * Split column/constraint definitions by commas, respecting parentheses.
+     * Splits a declaration into the entries it is written as.
      *
-     * @return array<int, string>
+     * @param string $body The body
+     *
+     * @return array<int, string> What it answers
      */
-    private function splitColumnDefinitions(string $body): array
+    public function splitColumnDefinitions(string $body): array
     {
         $definitions = [];
         $current = '';
@@ -411,11 +441,13 @@ final class SqliteSchemaParser implements SchemaParser
     }
 
     /**
-     * Parse a single column definition.
+     * Reads one entry of a declaration as a column, if that is what it declares.
      *
-     * @return array{name: string, type: string|null, notNull: bool, primaryKey: bool, unique: bool, default: string|null, generatedExpression: string|null}|null
+     * @param string $def The def
+     *
+     * @return array{name: string, type: string|null, notNull: bool, primaryKey: bool, unique: bool, default: string|null, generatedExpression: string|null}|null What it answers
      */
-    private function parseColumnDefinition(string $def): ?array
+    public function parseColumnDefinition(string $def): ?array
     {
         $pattern = '/^("(?:[^"]|"")*"|`(?:[^`]|``)*`|\[(?:[^\]])*\]|[^\s(,]+)/';
         if (preg_match($pattern, $def, $matches) !== 1) {
@@ -478,16 +510,27 @@ final class SqliteSchemaParser implements SchemaParser
         ];
     }
 
-    private function leadingKeyword(string $sql): string
+    /**
+     * Answers the word a statement or an entry opens with.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return string What it answers
+     */
+    public function leadingKeyword(string $sql): string
     {
         $length = strspn($sql, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_$');
         return strtoupper(substr($sql, 0, $length));
     }
 
     /**
-     * Extract the column type from the rest of a column definition.
+     * Reads the type an entry declares.
+     *
+     * @param string $rest The rest
+     *
+     * @return string|null What it answers
      */
-    private function extractColumnType(string $rest): ?string
+    public function extractColumnType(string $rest): ?string
     {
         if (preg_match('/^([A-Za-z_]\w*(?:\s+\w+)*?)(?:\s*\(([^)]*)\))?\s*(?:PRIMARY|NOT|UNIQUE|CHECK|DEFAULT|REFERENCES|CONSTRAINT|COLLATE|GENERATED|AS|$)/i', $rest, $matches) === 1) {
             $typeName = strtoupper(trim($matches[1]));
@@ -512,11 +555,13 @@ final class SqliteSchemaParser implements SchemaParser
     }
 
     /**
-     * Parse a comma-separated column name list.
+     * Reads the column names written inside a key's parentheses.
      *
-     * @return list<string>
+     * @param string $list The list
+     *
+     * @return list<string> What it answers
      */
-    private function parseColumnNameList(string $list): array
+    public function parseColumnNameList(string $list): array
     {
         $columns = [];
         $parser = new SqliteParser();

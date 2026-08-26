@@ -28,7 +28,6 @@ use ZtdQuery\Platform\Sqlite\Transformer\InsertTransformer;
 use ZtdQuery\Platform\Sqlite\Transformer\SelectTransformer;
 use ZtdQuery\Platform\Sqlite\Transformer\SqliteTransformer;
 use ZtdQuery\Platform\Sqlite\Transformer\UpdateTransformer;
-use ZtdQuery\Session;
 
 #[CoversClass(SqliteSessionFactory::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteColumnTypeMapper::class)]
@@ -98,7 +97,6 @@ final class SqliteSessionFactoryTest extends TestCase
         $factory = new SqliteSessionFactory();
         $session = $factory->create($connection, $config);
 
-        self::assertInstanceOf(Session::class, $session);
         self::assertInstanceOf(SqlitePdoParameterBindingCompiler::class, $session->parameterBindingCompiler());
         self::assertInstanceOf(SqlitePdoResultColumnTypeResolver::class, $session->resultColumnTypeResolver());
     }
@@ -117,7 +115,6 @@ final class SqliteSessionFactoryTest extends TestCase
         $factory = new SqliteSessionFactory();
         $session = $factory->create($connection, $config);
 
-        self::assertInstanceOf(Session::class, $session);
 
         $plan = $session->rewrite('SELECT * FROM users');
         self::assertStringContainsString('WITH', $plan->sql());
@@ -138,6 +135,6 @@ final class SqliteSessionFactoryTest extends TestCase
         $factory = new SqliteSessionFactory();
         $session = $factory->create($connection, $config);
 
-        self::assertInstanceOf(Session::class, $session);
+        self::assertTrue($session->isEnabled());
     }
 }

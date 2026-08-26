@@ -48,7 +48,14 @@ final class SqliteForeignKeyDefinitionParser
         return $foreignKeys;
     }
 
-    private function tableBody(string $sql): ?string
+    /**
+     * Answers everything a CREATE TABLE declares between its parentheses.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return string|null What it answers
+     */
+    public function tableBody(string $sql): ?string
     {
         $tokens = SqlTokenStream::tokenize($sql, SqliteLexerProfile::create())->significantTokens();
         $first = $tokens[0] ?? null;
@@ -83,9 +90,18 @@ final class SqliteForeignKeyDefinitionParser
     }
 
     /**
-     * @return array{name: string, foreignKey: ForeignKeyDefinition}|null
+     * Reads one declaration as a foreign key, if that is what it declares.
+     *
+     * A key written on the column itself names no columns of its own, so the
+     * column it was written on is passed in.
+     *
+     * @param SqlTokenStream $stream Stream to read
+     * @param string $defaultName The default name
+     * @param string|null $inlineColumn The inline column
+     *
+     * @return array{name: string, foreignKey: ForeignKeyDefinition}|null What it answers
      */
-    private function parseEntry(
+    public function parseEntry(
         SqlTokenStream $stream,
         string $defaultName,
         ?string $inlineColumn,
@@ -129,10 +145,15 @@ final class SqliteForeignKeyDefinitionParser
     }
 
     /**
-     * @param list<SqlToken> $tokens
-     * @return list<string>
+     * Answers the columns a FOREIGN KEY declaration is over.
+     *
+     * @param SqlTokenStream $stream Stream to read
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param int $references The references
+     *
+     * @return list<string> What it answers
      */
-    private function foreignKeyColumns(
+    public function foreignKeyColumns(
         SqlTokenStream $stream,
         array $tokens,
         int $references,
@@ -152,10 +173,15 @@ final class SqliteForeignKeyDefinitionParser
     }
 
     /**
-     * @param list<SqlToken> $tokens
-     * @return array{table: string, columns: list<string>}|null
+     * Answers the table a key points at, and the columns of it.
+     *
+     * @param SqlTokenStream $stream Stream to read
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param int $start Where to start
+     *
+     * @return array{table: string, columns: list<string>}|null What it answers
      */
-    private function referencedRelation(
+    public function referencedRelation(
         SqlTokenStream $stream,
         array $tokens,
         int $start,
@@ -183,10 +209,15 @@ final class SqliteForeignKeyDefinitionParser
     }
 
     /**
-     * @param list<SqlToken> $tokens
-     * @return list<string>
+     * Answers the names written inside one pair of parentheses.
+     *
+     * @param SqlTokenStream $stream Stream to read
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param int $opening The opening
+     *
+     * @return list<string> What it answers
      */
-    private function identifierList(SqlTokenStream $stream, array $tokens, int $opening): array
+    public function identifierList(SqlTokenStream $stream, array $tokens, int $opening): array
     {
         $depth = $tokens[$opening]->depth;
         $candidates = array_slice($tokens, $opening);
@@ -215,8 +246,19 @@ final class SqliteForeignKeyDefinitionParser
         return [];
     }
 
-    /** @param list<SqlToken> $tokens */
-    private function action(array $tokens, string $event): ReferentialAction
+    /**
+     * Answers what a key says to do when the row it points at changes.
+     *
+     * A key that says nothing does nothing, which is what SQL means by NO
+     * ACTION -- so a declaration with no ON clause answers the same as one
+     * that spells it out.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param string $event The event
+     *
+     * @return ReferentialAction What it answers
+     */
+    public function action(array $tokens, string $event): ReferentialAction
     {
         foreach ($tokens as $index => $token) {
             if (!$token->isTopLevel() || !$token->isKeyword('ON')) {
@@ -258,8 +300,15 @@ final class SqliteForeignKeyDefinitionParser
         return ReferentialAction::NoAction;
     }
 
-    /** @param list<SqlToken> $tokens */
-    private static function keywordIndex(array $tokens, string $keyword): ?int
+    /**
+     * Answers where a keyword is written, at the level of the declaration itself.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param string $keyword Keyword to look for
+     *
+     * @return int|null What it answers
+     */
+    public static function keywordIndex(array $tokens, string $keyword): ?int
     {
         foreach ($tokens as $index => $token) {
             if ($token->isTopLevel() && $token->isKeyword($keyword)) {
@@ -270,8 +319,16 @@ final class SqliteForeignKeyDefinitionParser
         return null;
     }
 
-    /** @param list<SqlToken> $tokens */
-    private static function symbolIndex(array $tokens, string $symbol, int $start): ?int
+    /**
+     * Answers where a symbol is written, at the level of the declaration itself.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param string $symbol Symbol it must be
+     * @param int $start Where to start
+     *
+     * @return int|null What it answers
+     */
+    public static function symbolIndex(array $tokens, string $symbol, int $start): ?int
     {
         foreach ($tokens as $index => $token) {
             if ($index >= $start && $token->isTopLevel() && self::isSymbol($token, $symbol)) {
@@ -282,7 +339,15 @@ final class SqliteForeignKeyDefinitionParser
         return null;
     }
 
-    private static function isSymbol(?SqlToken $token, string $symbol): bool
+    /**
+     * Reports whether a token is this symbol.
+     *
+     * @param SqlToken|null $token Token to read
+     * @param string $symbol Symbol it must be
+     *
+     * @return bool What it answers
+     */
+    public static function isSymbol(?SqlToken $token, string $symbol): bool
     {
         if ($token === null) {
             return false;

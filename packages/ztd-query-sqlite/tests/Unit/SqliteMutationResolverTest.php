@@ -16,6 +16,7 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Platform\Sqlite\Mutation\AlterTableMutation;
 use ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter;
+use ZtdQuery\Platform\Sqlite\SqliteLexerProfile;
 use ZtdQuery\Platform\Sqlite\SqliteLexicalMasker;
 use ZtdQuery\Platform\Sqlite\SqliteMutationResolver;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
@@ -25,6 +26,7 @@ use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\ForeignKeyDefinition;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
+use ZtdQuery\Schema\ReferentialAction;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\Mutation\CreateTableMutation;
@@ -36,6 +38,7 @@ use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\Mutation\UpsertMutation;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTableState;
+use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(SqliteMutationResolver::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteColumnTypeMapper::class)]
@@ -46,7 +49,9 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(SqliteParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteUpsertExpressionParser::class)]
 #[UsesClass(SqliteSchemaParser::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
+#[UsesClass(SqliteLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteUpsertExpressionCursor::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteUpsertLiteral::class)]
 final class SqliteMutationResolverTest extends TestCase
 {
     public function testResolveInsert(): void
@@ -3097,4 +3102,287 @@ final class SqliteMutationResolverTest extends TestCase
         $this->expectException(UnsupportedSqlException::class);
         $resolver->resolve('ALTER TABLE records ADD COLUMN value TEXT', QueryKind::DDL_SIMULATED);
     }
+    public function testDefinitionAnswersWhatATableHolds(): void
+    {
+        $registry = new TableDefinitionRegistry();
+        $registry->register('users', new TableDefinition(['id'], ['id' => 'INTEGER'], ['id'], [], []));
+        $resolver = new SqliteMutationResolver(new ShadowStore(), $registry, new SqliteSchemaParser(), new SqliteParser());
+
+        self::assertSame(['id'], $resolver->definition('SELECT 1', 'users')->columns);
+    }
+
+    public function testDefinitionRefusesATableNothingHasDeclared(): void
+    {
+        $resolver = new SqliteMutationResolver(
+            new ShadowStore(),
+            new TableDefinitionRegistry(),
+            new SqliteSchemaParser(),
+            new SqliteParser(),
+        );
+
+        $this->expectException(UnknownSchemaException::class);
+
+        $resolver->definition('SELECT 1', 'users');
+    }
+
+    public function testAssertTableWasNotRemovedAcceptsATableStillThere(): void
+    {
+        $resolver = new SqliteMutationResolver(
+            new ShadowStore(),
+            new TableDefinitionRegistry(),
+            new SqliteSchemaParser(),
+            new SqliteParser(),
+        );
+
+        $this->expectNotToPerformAssertions();
+
+        $resolver->assertTableWasNotRemoved('SELECT 1', 'users');
+    }
+
+    public function testExistingColumnAnswersTheColumnAsTheTableSpellsIt(): void
+    {
+        $resolver = new SqliteMutationResolver(
+            new ShadowStore(),
+            new TableDefinitionRegistry(),
+            new SqliteSchemaParser(),
+            new SqliteParser(),
+        );
+        $definition = new TableDefinition(['Id'], ['Id' => 'INTEGER'], [], [], []);
+
+        self::assertSame('Id', $resolver->existingColumn($definition, 'id'));
+    }
+
+    public function testExistingColumnIsNothingForAColumnTheTableDoesNotHave(): void
+    {
+        $resolver = new SqliteMutationResolver(
+            new ShadowStore(),
+            new TableDefinitionRegistry(),
+            new SqliteSchemaParser(),
+            new SqliteParser(),
+        );
+
+        self::assertNull($resolver->existingColumn(new TableDefinition([], [], [], [], []), 'id'));
+    }
+
+    public function testQuotedColumnsWritesEveryNameAsSqliteWouldWriteIt(): void
+    {
+        $resolver = new SqliteMutationResolver(
+            new ShadowStore(),
+            new TableDefinitionRegistry(),
+            new SqliteSchemaParser(),
+            new SqliteParser(),
+        );
+
+        self::assertSame(['"a"', '"b"'], $resolver->quotedColumns(['a', 'b']));
+    }
+
+    public function testQuoteWritesANameAsSqliteWouldWriteIt(): void
+    {
+        $resolver = new SqliteMutationResolver(
+            new ShadowStore(),
+            new TableDefinitionRegistry(),
+            new SqliteSchemaParser(),
+            new SqliteParser(),
+        );
+
+        self::assertSame('"order"', $resolver->quote('order'));
+    }
+
+    public function testAlterOperationReadsWhatAnAlterDoesAndToWhat(): void
+    {
+        $resolver = new SqliteMutationResolver(
+            new ShadowStore(),
+            new TableDefinitionRegistry(),
+            new SqliteSchemaParser(),
+            new SqliteParser(),
+        );
+
+        self::assertSame(
+            'add',
+            $resolver->alterOperation('ALTER TABLE users ADD COLUMN email TEXT')['kind'] ?? null,
+        );
+    }
+
+    public function testAlterOperationIsNothingForAStatementThatAltersNothing(): void
+    {
+        $resolver = new SqliteMutationResolver(
+            new ShadowStore(),
+            new TableDefinitionRegistry(),
+            new SqliteSchemaParser(),
+            new SqliteParser(),
+        );
+
+        self::assertNull($resolver->alterOperation('SELECT 1'));
+    }
+
+    public function testSingleIdentifierAnswersTheOneNameAClauseNames(): void
+    {
+        $resolver = new SqliteMutationResolver(
+            new ShadowStore(),
+            new TableDefinitionRegistry(),
+            new SqliteSchemaParser(),
+            new SqliteParser(),
+        );
+
+        self::assertSame('email', $resolver->singleIdentifier('email'));
+    }
+
+    public function testSingleIdentifierIsNothingWhereMoreThanOneIsNamed(): void
+    {
+        $resolver = new SqliteMutationResolver(
+            new ShadowStore(),
+            new TableDefinitionRegistry(),
+            new SqliteSchemaParser(),
+            new SqliteParser(),
+        );
+
+        self::assertNull($resolver->singleIdentifier('a, b'));
+    }
+
+    public function testRenamedIdentifiersAnswersTheTwoNamesARenameIsBetween(): void
+    {
+        $resolver = new SqliteMutationResolver(
+            new ShadowStore(),
+            new TableDefinitionRegistry(),
+            new SqliteSchemaParser(),
+            new SqliteParser(),
+        );
+
+        self::assertSame(['a', 'b'], $resolver->renamedIdentifiers('a TO b'));
+    }
+
+    public function testRenamedIdentifiersIsNothingWhereNoRenameIsWritten(): void
+    {
+        $resolver = new SqliteMutationResolver(
+            new ShadowStore(),
+            new TableDefinitionRegistry(),
+            new SqliteSchemaParser(),
+            new SqliteParser(),
+        );
+
+        self::assertNull($resolver->renamedIdentifiers('a'));
+    }
+
+    public function testWithoutColumnTakesTheColumnOutOfTheList(): void
+    {
+        $resolver = new SqliteMutationResolver(
+            new ShadowStore(),
+            new TableDefinitionRegistry(),
+            new SqliteSchemaParser(),
+            new SqliteParser(),
+        );
+
+        self::assertSame(['a'], SqliteMutationResolver::withoutColumn(['a', 'b'], 'b'));
+    }
+
+    public function testWithoutMapKeyTakesTheKeyOut(): void
+    {
+        $resolver = new SqliteMutationResolver(
+            new ShadowStore(),
+            new TableDefinitionRegistry(),
+            new SqliteSchemaParser(),
+            new SqliteParser(),
+        );
+
+        self::assertSame(['a' => 1], SqliteMutationResolver::withoutMapKey(['a' => 1, 'b' => 2], 'b'));
+    }
+
+    public function testRenamedColumnsWritesTheNewNameIntoTheList(): void
+    {
+        $resolver = new SqliteMutationResolver(
+            new ShadowStore(),
+            new TableDefinitionRegistry(),
+            new SqliteSchemaParser(),
+            new SqliteParser(),
+        );
+
+        self::assertSame(['a', 'c'], SqliteMutationResolver::renamedColumns(['a', 'b'], 'b', 'c'));
+    }
+
+    public function testRenamedForeignKeyWritesTheNewNameIntoTheKey(): void
+    {
+        $resolver = new SqliteMutationResolver(
+            new ShadowStore(),
+            new TableDefinitionRegistry(),
+            new SqliteSchemaParser(),
+            new SqliteParser(),
+        );
+        $key = new ForeignKeyDefinition(['b'], 'other', ['id'], ReferentialAction::NoAction, ReferentialAction::NoAction);
+
+        self::assertSame(['c'], SqliteMutationResolver::renamedForeignKey($key, 'b', 'c')->columns);
+    }
+
+    public function testRenamedMapKeyWritesTheNewNameIntoTheMap(): void
+    {
+        $resolver = new SqliteMutationResolver(
+            new ShadowStore(),
+            new TableDefinitionRegistry(),
+            new SqliteSchemaParser(),
+            new SqliteParser(),
+        );
+
+        self::assertSame(['c' => 2], SqliteMutationResolver::renamedMapKey(['b' => 2], 'b', 'c'));
+    }
+
+    public function testAlterMutationAnswersTheMutationThatReplacesTheTable(): void
+    {
+        $resolver = new SqliteMutationResolver(
+            new ShadowStore(),
+            new TableDefinitionRegistry(),
+            new SqliteSchemaParser(),
+            new SqliteParser(),
+        );
+        $definition = new TableDefinition(['id'], ['id' => 'INTEGER'], ['id'], [], []);
+
+        $mutation = $resolver->alterMutation('ALTER TABLE users ADD COLUMN x TEXT', 'users', 'users', $definition, ['id']);
+
+        self::assertSame('users', $mutation->tableName());
+    }
+
+    public function testAlterMutationRefusesAnAlterThatWouldRemoveEveryColumn(): void
+    {
+        $resolver = new SqliteMutationResolver(
+            new ShadowStore(),
+            new TableDefinitionRegistry(),
+            new SqliteSchemaParser(),
+            new SqliteParser(),
+        );
+        $definition = new TableDefinition(['id'], ['id' => 'INTEGER'], ['id'], [], []);
+
+        $this->expectException(UnsupportedSqlException::class);
+
+        $resolver->alterMutation('ALTER TABLE users DROP COLUMN id', 'users', 'users', $definition, []);
+    }
+
+    public function testAlterClauseAnswersWhatTheStatementSaysToDo(): void
+    {
+        $resolver = new SqliteMutationResolver(
+            new ShadowStore(),
+            new TableDefinitionRegistry(),
+            new SqliteSchemaParser(),
+            new SqliteParser(),
+        );
+        $sql = 'ALTER TABLE users ADD COLUMN email TEXT';
+        $tokens = SqlTokenStream::tokenize($sql, SqliteLexerProfile::create())->significantTokens();
+
+        self::assertSame(
+            ['kind' => 'add', 'clause' => 'email TEXT'],
+            $resolver->alterClause($sql, $tokens, 'add', 5),
+        );
+    }
+
+    public function testAlterClauseIsNothingPastWhatWasWritten(): void
+    {
+        $resolver = new SqliteMutationResolver(
+            new ShadowStore(),
+            new TableDefinitionRegistry(),
+            new SqliteSchemaParser(),
+            new SqliteParser(),
+        );
+        $sql = 'ALTER TABLE users ADD COLUMN email TEXT';
+        $tokens = SqlTokenStream::tokenize($sql, SqliteLexerProfile::create())->significantTokens();
+
+        self::assertNull($resolver->alterClause($sql, $tokens, 'add', 99));
+    }
+
 }

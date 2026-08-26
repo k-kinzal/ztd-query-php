@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Sqlite\Transformer;
 
-use InvalidArgumentException;
 use RuntimeException;
+use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\Sqlite\SqliteCastRenderer;
@@ -13,6 +13,7 @@ use ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer;
 use ZtdQuery\Platform\Sqlite\SqliteLexerProfile;
 use ZtdQuery\Platform\Sqlite\SqliteNativeUpsertProjector;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
+use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Rewrite\ShadowIdentityAllocator;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnDeclaration;
@@ -28,6 +29,8 @@ use ZtdQuery\Sql\SqlTokenStream;
  * - REPLACE INTO ... VALUES (...)
  * - INSERT INTO ... SELECT ...
  * - INSERT INTO ... ON CONFLICT ... DO UPDATE SET ...
+ *
+ * @phpstan-import-type RenderableValue from ValueRenderer
  */
 final class InsertTransformer implements SqlTransformer
 {
@@ -125,16 +128,22 @@ final class InsertTransformer implements SqlTransformer
     }
 
     /**
-     * @param list<string> $tableColumns
-     * @param list<string> $insertColumns
-     * @param array<string, ColumnDeclaration> $columnTypes
-     * @param array<string, string> $columnDefaults
-     * @param array<string, \ZtdQuery\Schema\IdentityGenerationStrategy> $identityStrategies
-     * @param array<int, array<string, mixed>> $existingRows
+     * Writes the SELECT that answers the rows an INSERT would write.
+     *
+     * @param string $sql Statement being read, as written
+     * @param string $tableName Table it belongs to
+     * @param list<string> $tableColumns The table columns
+     * @param list<string> $insertColumns The insert columns
+     * @param array<string, ColumnDeclaration> $columnTypes The column types
+     * @param array<string, string> $columnDefaults The column defaults
+     * @param array<string, \ZtdQuery\Schema\IdentityGenerationStrategy> $identityStrategies The identity strategies
+     * @param list<array<string, RenderableValue>> $existingRows The existing rows
+     *
+     * @return string What it answers
      *
      * @throws RuntimeException
      */
-    private function buildInsertSelect(
+    public function buildInsertSelect(
         string $sql,
         string $tableName,
         array $tableColumns,
@@ -192,17 +201,22 @@ final class InsertTransformer implements SqlTransformer
     }
 
     /**
-     * @param array<int, string> $values
-     * @param list<string> $tableColumns
-     * @param list<string> $insertColumns
-     * @param array<string, ColumnDeclaration> $columnTypes
-     * @param array<string, string> $columnDefaults
-     * @param array<string, \ZtdQuery\Schema\IdentityGenerationStrategy> $identityStrategies
-     * @param array<int, array<string, mixed>> $existingRows
+     * Writes the SELECT that answers one row.
+     *
+     * @param array<int, string> $values The values
+     * @param string $tableName Table it belongs to
+     * @param list<string> $tableColumns The table columns
+     * @param list<string> $insertColumns The insert columns
+     * @param array<string, ColumnDeclaration> $columnTypes The column types
+     * @param array<string, string> $columnDefaults The column defaults
+     * @param array<string, \ZtdQuery\Schema\IdentityGenerationStrategy> $identityStrategies The identity strategies
+     * @param list<array<string, RenderableValue>> $existingRows The existing rows
+     *
+     * @return string What it answers
      *
      * @throws RuntimeException
      */
-    private function buildInsertRowSelect(
+    public function buildInsertRowSelect(
         array $values,
         string $tableName,
         array $tableColumns,
@@ -216,7 +230,7 @@ final class InsertTransformer implements SqlTransformer
         $sourceColumns = $insertColumns !== [] || $values === [] ? $insertColumns : $tableColumns;
         try {
             $providedExpressions = $this->rowRenderer->providedExpressions($sourceColumns, $values);
-        } catch (InvalidArgumentException $exception) {
+        } catch (InvalidDefinitionException $exception) {
             throw new RuntimeException($exception->getMessage(), 0, $exception);
         }
         $generatedValues = $this->identityAllocator->allocateMissing(
@@ -240,11 +254,15 @@ final class InsertTransformer implements SqlTransformer
     }
 
     /**
+     * Answers values under no keys of their own, in the order they were given.
+     *
+     * @param array<array-key, T> $values The values
+     *
+     * @return list<T> What it answers
+     *
      * @template T
-     * @param array<array-key, T> $values
-     * @return list<T>
      */
-    private static function orderedValues(array $values): array
+    public static function orderedValues(array $values): array
     {
         $ordered = [];
         foreach ($values as $value) {

@@ -50,10 +50,14 @@ final class SqliteIndexHintStripper
     }
 
     /**
-     * @param list<SqlToken> $tokens
-     * @return array{start: int, end: int}|null
+     * Answers where an index hint begins and ends.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param int $index Where to read
+     *
+     * @return array{start: int, end: int}|null What it answers
      */
-    private static function hintRange(array $tokens, int $index): ?array
+    public static function hintRange(array $tokens, int $index): ?array
     {
         $keyword = $tokens[$index] ?? null;
         if ($keyword === null) {
@@ -94,9 +98,14 @@ final class SqliteIndexHintStripper
     }
 
     /**
-     * @param list<SqlToken> $tokens
+     * Answers which token comes after the one ending here.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param int $offset Position to read from
+     *
+     * @return int What it answers
      */
-    private static function tokenIndexAtOrAfter(array $tokens, int $offset): int
+    public static function tokenIndexAtOrAfter(array $tokens, int $offset): int
     {
         foreach ($tokens as $index => $token) {
             if ($token->offset >= $offset) {
@@ -108,9 +117,14 @@ final class SqliteIndexHintStripper
     }
 
     /**
-     * @param list<SqlToken> $tokens
+     * Answers where reading carries on past the name a table was given.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param int $index Where to read
+     *
+     * @return int What it answers
      */
-    private static function skipAlias(array $tokens, int $index): int
+    public static function skipAlias(array $tokens, int $index): int
     {
         $candidate = $tokens[$index] ?? null;
         if ($candidate === null) {
@@ -127,7 +141,14 @@ final class SqliteIndexHintStripper
         return self::identifierEndIndex($tokens, $index) ?? $index;
     }
 
-    private static function isSourceBoundary(SqlToken $token): bool
+    /**
+     * Reports whether a token ends what a table's name and alias cover.
+     *
+     * @param SqlToken $token Token to read
+     *
+     * @return bool What it answers
+     */
+    public static function isSourceBoundary(SqlToken $token): bool
     {
         foreach ([
             'INDEXED', 'NOT', 'WHERE', 'GROUP', 'HAVING', 'ORDER', 'LIMIT', 'OFFSET',
@@ -143,9 +164,14 @@ final class SqliteIndexHintStripper
     }
 
     /**
-     * @param list<SqlToken> $tokens
+     * Answers where the name written here ends.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param int $index Where to read
+     *
+     * @return int|null What it answers
      */
-    private static function identifierEndIndex(array $tokens, int $index): ?int
+    public static function identifierEndIndex(array $tokens, int $index): ?int
     {
         $token = $tokens[$index] ?? null;
         if ($token === null) {

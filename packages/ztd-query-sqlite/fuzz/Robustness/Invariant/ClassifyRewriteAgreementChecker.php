@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Fuzz\Robustness\Invariant;
 
-use Throwable;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\Sqlite\SqliteInMemoryAttachStatement;
@@ -46,15 +45,7 @@ final class ClassifyRewriteAgreementChecker implements InvariantChecker
         $protectedPassthrough = $diagnostic || $inMemoryAttach;
         $passthroughInvariant = $inMemoryAttach ? 'INV-L2-09' : 'INV-L2-06';
 
-        try {
-            $classifyResult = $this->guard->classify($sql);
-        } catch (Throwable $exception) {
-            if ($protectedPassthrough) {
-                return new InvariantViolation($passthroughInvariant, 'safe passthrough classification threw', $sql, ['exception' => $exception::class]);
-            }
-
-            return null;
-        }
+        $classifyResult = $this->guard->classify($sql);
 
         if ($protectedPassthrough && $classifyResult !== QueryKind::READ) {
             return new InvariantViolation($passthroughInvariant, 'safe passthrough was not classified as READ', $sql);
@@ -65,8 +56,6 @@ final class ClassifyRewriteAgreementChecker implements InvariantChecker
                 $this->rewriter->rewrite($sql);
                 return null;
             } catch (UnsupportedSqlException) {
-                return null;
-            } catch (Throwable) {
                 return null;
             }
         }
@@ -82,12 +71,6 @@ final class ClassifyRewriteAgreementChecker implements InvariantChecker
         } catch (UnsupportedSqlException $exception) {
             if ($protectedPassthrough) {
                 return new InvariantViolation($passthroughInvariant, 'safe passthrough was rejected', $sql, ['exception' => $exception::class]);
-            }
-
-            return null;
-        } catch (Throwable $exception) {
-            if ($protectedPassthrough) {
-                return new InvariantViolation($passthroughInvariant, 'safe passthrough rewrite threw', $sql, ['exception' => $exception::class]);
             }
 
             return null;

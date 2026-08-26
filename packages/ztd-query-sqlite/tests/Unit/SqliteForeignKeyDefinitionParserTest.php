@@ -8,10 +8,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Sqlite\SqliteForeignKeyDefinitionParser;
+use ZtdQuery\Platform\Sqlite\SqliteLexerProfile;
 use ZtdQuery\Schema\ReferentialAction;
+use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(SqliteForeignKeyDefinitionParser::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
+#[UsesClass(SqliteLexerProfile::class)]
 final class SqliteForeignKeyDefinitionParserTest extends TestCase
 {
     public function testParsesNamedCompositeConstraintWithoutRegexSubstitution(): void
@@ -195,5 +197,189 @@ final class SqliteForeignKeyDefinitionParserTest extends TestCase
         self::assertSame([], $parser->parseCreateTable(
             'CREATE TABLE child (id INT, FOREIGN KEY (id) REFERENCES parent.)',
         ));
+    }
+    public function testTableBodyAnswersWhatIsDeclaredBetweenTheParentheses(): void
+    {
+        self::assertSame(
+            'id INT',
+            (new SqliteForeignKeyDefinitionParser())->tableBody('CREATE TABLE t (id INT)'),
+        );
+    }
+
+    public function testTableBodyIsNothingWhereTheTextDeclaresNoTable(): void
+    {
+        self::assertNull(
+            (new SqliteForeignKeyDefinitionParser())->tableBody('SELECT 1'),
+        );
+    }
+
+    public function testParseEntryReadsAKeyOutOfOneDeclaration(): void
+    {
+        $stream = SqlTokenStream::tokenize(
+            'FOREIGN KEY (user_id) REFERENCES users (id)',
+            SqliteLexerProfile::create(),
+        );
+
+        $entry = (new SqliteForeignKeyDefinitionParser())->parseEntry($stream, 'foreign_0', null);
+
+        self::assertSame(['user_id'], $entry['foreignKey']->columns ?? null);
+    }
+
+    public function testParseEntryIsNothingWhereTheDeclarationPointsAtNothing(): void
+    {
+        $stream = SqlTokenStream::tokenize('id INT', SqliteLexerProfile::create());
+
+        self::assertNull((new SqliteForeignKeyDefinitionParser())->parseEntry($stream, 'foreign_0', null));
+    }
+
+    public function testForeignKeyColumnsAnswersTheColumnsTheKeyIsOver(): void
+    {
+        $stream = SqlTokenStream::tokenize(
+            'FOREIGN KEY (a, b) REFERENCES t (x, y)',
+            SqliteLexerProfile::create(),
+        );
+        $tokens = $stream->significantTokens();
+        $references = SqliteForeignKeyDefinitionParser::keywordIndex($tokens, 'REFERENCES');
+
+        self::assertSame(
+            ['a', 'b'],
+            (new SqliteForeignKeyDefinitionParser())->foreignKeyColumns($stream, $tokens, $references ?? 0),
+        );
+    }
+
+    public function testForeignKeyColumnsIsNothingWhereNoForeignKeyIsWritten(): void
+    {
+        $stream = SqlTokenStream::tokenize('a INT REFERENCES t (x)', SqliteLexerProfile::create());
+        $tokens = $stream->significantTokens();
+
+        self::assertSame([], (new SqliteForeignKeyDefinitionParser())->foreignKeyColumns($stream, $tokens, 2));
+    }
+
+    public function testReferencedRelationReadsTheTableAndItsColumns(): void
+    {
+        $stream = SqlTokenStream::tokenize('users (id)', SqliteLexerProfile::create());
+
+        self::assertSame(
+            ['table' => 'users', 'columns' => ['id']],
+            (new SqliteForeignKeyDefinitionParser())->referencedRelation($stream, $stream->significantTokens(), 0),
+        );
+    }
+
+    public function testReferencedRelationReadsAQualifiedNameDownToTheTable(): void
+    {
+        $stream = SqlTokenStream::tokenize('app.users (id)', SqliteLexerProfile::create());
+
+        $referenced = (new SqliteForeignKeyDefinitionParser())
+            ->referencedRelation($stream, $stream->significantTokens(), 0);
+
+        self::assertSame('users', $referenced['table'] ?? null);
+    }
+
+    public function testReferencedRelationIsNothingWhereNoNameIsWritten(): void
+    {
+        $stream = SqlTokenStream::tokenize('(id)', SqliteLexerProfile::create());
+
+        self::assertNull(
+            (new SqliteForeignKeyDefinitionParser())->referencedRelation($stream, $stream->significantTokens(), 0),
+        );
+    }
+
+    public function testIdentifierListReadsTheNamesInsideTheParentheses(): void
+    {
+        $stream = SqlTokenStream::tokenize('(a, b)', SqliteLexerProfile::create());
+
+        self::assertSame(
+            ['a', 'b'],
+            (new SqliteForeignKeyDefinitionParser())->identifierList($stream, $stream->significantTokens(), 0),
+        );
+    }
+
+    public function testIdentifierListIsNothingWhereTheParenthesesNeverClose(): void
+    {
+        $stream = SqlTokenStream::tokenize('(a, b', SqliteLexerProfile::create());
+
+        self::assertSame(
+            [],
+            (new SqliteForeignKeyDefinitionParser())->identifierList($stream, $stream->significantTokens(), 0),
+        );
+    }
+
+    public function testActionAnswersWhatTheKeySaysToDo(): void
+    {
+        $tokens = SqlTokenStream::tokenize('ON DELETE CASCADE', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertSame(
+            ReferentialAction::Cascade,
+            (new SqliteForeignKeyDefinitionParser())->action($tokens, 'DELETE'),
+        );
+    }
+
+    public function testActionReadsSetNullAsWhatItSays(): void
+    {
+        $tokens = SqlTokenStream::tokenize('ON UPDATE SET NULL', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertSame(
+            ReferentialAction::SetNull,
+            (new SqliteForeignKeyDefinitionParser())->action($tokens, 'UPDATE'),
+        );
+    }
+
+    public function testActionDoesNothingWhereTheKeySaysNothing(): void
+    {
+        $tokens = SqlTokenStream::tokenize('REFERENCES t (id)', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertSame(
+            ReferentialAction::NoAction,
+            (new SqliteForeignKeyDefinitionParser())->action($tokens, 'DELETE'),
+        );
+    }
+
+    public function testKeywordIndexAnswersWhereTheKeywordIsWritten(): void
+    {
+        $tokens = SqlTokenStream::tokenize('FOREIGN KEY (a)', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertSame(1, SqliteForeignKeyDefinitionParser::keywordIndex($tokens, 'KEY'));
+    }
+
+    public function testKeywordIndexIsNothingWhereItIsNotWritten(): void
+    {
+        $tokens = SqlTokenStream::tokenize('FOREIGN KEY (a)', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertNull(SqliteForeignKeyDefinitionParser::keywordIndex($tokens, 'REFERENCES'));
+    }
+
+    public function testSymbolIndexAnswersWhereTheSymbolIsWritten(): void
+    {
+        $tokens = SqlTokenStream::tokenize('FOREIGN KEY (a)', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertSame(2, SqliteForeignKeyDefinitionParser::symbolIndex($tokens, '(', 0));
+    }
+
+    public function testSymbolIndexLooksNoEarlierThanItWasToldTo(): void
+    {
+        $tokens = SqlTokenStream::tokenize('FOREIGN KEY (a)', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertNull(SqliteForeignKeyDefinitionParser::symbolIndex($tokens, '(', 3));
+    }
+
+    public function testIsSymbolReportsATokenBeingThatSymbol(): void
+    {
+        $tokens = SqlTokenStream::tokenize('(a)', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertTrue(SqliteForeignKeyDefinitionParser::isSymbol($tokens[0], '('));
+    }
+
+    public function testIsSymbolIsFalsePastTheEndOfWhatWasWritten(): void
+    {
+        self::assertFalse(SqliteForeignKeyDefinitionParser::isSymbol(null, '('));
+    }
+
+    public function testParseCreateTableReadsEveryKeyTheDeclarationWrites(): void
+    {
+        $keys = (new SqliteForeignKeyDefinitionParser())->parseCreateTable(
+            'CREATE TABLE t (id INT, FOREIGN KEY (id) REFERENCES users (id))',
+        );
+
+        self::assertSame(['users'], array_map(static fn ($key) => $key->referencedTable, array_values($keys)));
     }
 }

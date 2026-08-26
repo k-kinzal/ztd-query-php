@@ -83,10 +83,16 @@ final class SqliteMutationResolver
     }
 
     /**
+     * Answers what an UPDATE would do to the shadow.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return ShadowMutation What it answers
+     *
      * @throws UnsupportedSqlException
      * @throws UnknownSchemaException
      */
-    private function resolveUpdate(string $sql): ShadowMutation
+    public function resolveUpdate(string $sql): ShadowMutation
     {
         $targetTable = $this->parser->extractTargetTable($sql);
         if ($targetTable === null) {
@@ -106,10 +112,16 @@ final class SqliteMutationResolver
     }
 
     /**
+     * Answers what a DELETE would do to the shadow.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return ShadowMutation What it answers
+     *
      * @throws UnsupportedSqlException
      * @throws UnknownSchemaException
      */
-    private function resolveDelete(string $sql): ShadowMutation
+    public function resolveDelete(string $sql): ShadowMutation
     {
         $targetTable = $this->parser->extractTargetTable($sql);
         if ($targetTable === null) {
@@ -135,9 +147,15 @@ final class SqliteMutationResolver
     }
 
     /**
+     * Answers what an INSERT would do to the shadow.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return ShadowMutation What it answers
+     *
      * @throws UnsupportedSqlException
      */
-    private function resolveInsert(string $sql): ShadowMutation
+    public function resolveInsert(string $sql): ShadowMutation
     {
         $tableName = $this->parser->extractTargetTable($sql);
         if ($tableName === null) {
@@ -213,9 +231,15 @@ final class SqliteMutationResolver
     }
 
     /**
+     * Answers what a CREATE TABLE would do to the shadow.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return ShadowMutation What it answers
+     *
      * @throws UnsupportedSqlException
      */
-    private function resolveCreateTable(string $sql): ShadowMutation
+    public function resolveCreateTable(string $sql): ShadowMutation
     {
         $tableName = $this->parser->extractTargetTable($sql);
         if ($tableName === null) {
@@ -234,10 +258,16 @@ final class SqliteMutationResolver
     }
 
     /**
+     * Answers what a DROP would do to the shadow.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return ShadowMutation What it answers
+     *
      * @throws UnsupportedSqlException
      * @throws UnknownSchemaException
      */
-    private function resolveDropTable(string $sql): ShadowMutation
+    public function resolveDropTable(string $sql): ShadowMutation
     {
         $tableName = $this->parser->extractTargetTable($sql);
         if ($tableName === null) {
@@ -261,10 +291,16 @@ final class SqliteMutationResolver
     }
 
     /**
+     * Answers what an ALTER TABLE would do to the shadow.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return ShadowMutation What it answers
+     *
      * @throws UnsupportedSqlException
      * @throws UnknownSchemaException
      */
-    private function resolveAlterTable(string $sql): ShadowMutation
+    public function resolveAlterTable(string $sql): ShadowMutation
     {
         $tableName = $this->parser->extractTargetTable($sql);
         if ($tableName === null) {
@@ -291,10 +327,21 @@ final class SqliteMutationResolver
     }
 
     /**
+     * Answers what adding a column would do to the shadow.
+     *
+     * SQLite alters a table by building the new one and copying into it, so a
+     * column added is a table declared afresh with that column on the end.
+     *
+     * @param string $sql Statement being read, as written
+     * @param string $tableName Table it belongs to
+     * @param string $columnSql The column sql
+     *
+     * @return ShadowMutation What it answers
+     *
      * @throws UnsupportedSqlException
      * @throws ColumnAlreadyExistsException
      */
-    private function resolveAlterAddColumn(string $sql, string $tableName, string $columnSql): ShadowMutation
+    public function resolveAlterAddColumn(string $sql, string $tableName, string $columnSql): ShadowMutation
     {
         $existing = $this->definition($sql, $tableName);
         $added = $this->schemaParser->parse('CREATE TABLE "__ztd_alter" (' . $columnSql . ')');
@@ -338,10 +385,18 @@ final class SqliteMutationResolver
     }
 
     /**
+     * Answers what dropping a column would do to the shadow.
+     *
+     * @param string $sql Statement being read, as written
+     * @param string $tableName Table it belongs to
+     * @param string $columnClause The column clause
+     *
+     * @return ShadowMutation What it answers
+     *
      * @throws UnsupportedSqlException
      * @throws ColumnNotFoundException
      */
-    private function resolveAlterDropColumn(string $sql, string $tableName, string $columnClause): ShadowMutation
+    public function resolveAlterDropColumn(string $sql, string $tableName, string $columnClause): ShadowMutation
     {
         $requestedName = $this->singleIdentifier($columnClause);
         if ($requestedName === null) {
@@ -401,9 +456,17 @@ final class SqliteMutationResolver
     }
 
     /**
+     * Answers what renaming a table would do to the shadow.
+     *
+     * @param string $sql Statement being read, as written
+     * @param string $tableName Table it belongs to
+     * @param string $tableClause The table clause
+     *
+     * @return ShadowMutation What it answers
+     *
      * @throws UnsupportedSqlException
      */
-    private function resolveAlterRenameTable(string $sql, string $tableName, string $tableClause): ShadowMutation
+    public function resolveAlterRenameTable(string $sql, string $tableName, string $tableClause): ShadowMutation
     {
         $newName = $this->singleIdentifier($tableClause);
         if ($newName === null) {
@@ -422,11 +485,19 @@ final class SqliteMutationResolver
     }
 
     /**
+     * Answers what renaming a column would do to the shadow.
+     *
+     * @param string $sql Statement being read, as written
+     * @param string $tableName Table it belongs to
+     * @param string $columnClause The column clause
+     *
+     * @return ShadowMutation What it answers
+     *
      * @throws UnsupportedSqlException
      * @throws ColumnNotFoundException
      * @throws ColumnAlreadyExistsException
      */
-    private function resolveAlterRenameColumn(string $sql, string $tableName, string $columnClause): ShadowMutation
+    public function resolveAlterRenameColumn(string $sql, string $tableName, string $columnClause): ShadowMutation
     {
         $renamed = $this->renamedIdentifiers($columnClause);
         if ($renamed === null) {
@@ -482,9 +553,16 @@ final class SqliteMutationResolver
     }
 
     /**
+     * Answers what a table holds, refusing one nothing has declared.
+     *
+     * @param string $sql Statement being read, as written
+     * @param string $tableName Table it belongs to
+     *
+     * @return TableDefinition What it answers
+     *
      * @throws UnknownSchemaException
      */
-    private function definition(string $sql, string $tableName): TableDefinition
+    public function definition(string $sql, string $tableName): TableDefinition
     {
         $definition = $this->registry->get($tableName);
         if ($definition === null) {
@@ -495,9 +573,14 @@ final class SqliteMutationResolver
     }
 
     /**
+     * Refuses a statement against a table an earlier one dropped.
+     *
+     * @param string $sql Statement being read, as written
+     * @param string $tableName Table it belongs to
+     *
      * @throws UnsupportedSqlException
      */
-    private function assertTableWasNotRemoved(string $sql, string $tableName): void
+    public function assertTableWasNotRemoved(string $sql, string $tableName): void
     {
         if ($this->registry->isRemoved($tableName)) {
             throw new UnsupportedSqlException($sql, 'Table was removed from the virtual schema');
@@ -505,11 +588,19 @@ final class SqliteMutationResolver
     }
 
     /**
-     * @param list<string> $projection
+     * Answers the mutation that replaces a table with an altered one.
+     *
+     * @param string $sql Statement being read, as written
+     * @param string $sourceTable The source table
+     * @param string $targetTable The target table
+     * @param TableDefinition $definition What the table holds
+     * @param list<string> $projection The projection
+     *
+     * @return AlterTableMutation What it answers
      *
      * @throws UnsupportedSqlException
      */
-    private function alterMutation(
+    public function alterMutation(
         string $sql,
         string $sourceTable,
         string $targetTable,
@@ -530,7 +621,18 @@ final class SqliteMutationResolver
         );
     }
 
-    private function existingColumn(TableDefinition $definition, string $requested): ?string
+    /**
+     * Answers the column a name means, as the table spells it.
+     *
+     * SQLite matches a column name without regard to case, so the name the
+     * statement wrote may not be the name the table declared.
+     *
+     * @param TableDefinition $definition What the table holds
+     * @param string $requested The requested
+     *
+     * @return string|null What it answers
+     */
+    public function existingColumn(TableDefinition $definition, string $requested): ?string
     {
         foreach ($definition->columns as $column) {
             if (strcasecmp($column, $requested) === 0) {
@@ -542,10 +644,13 @@ final class SqliteMutationResolver
     }
 
     /**
-     * @param array<int, string> $columns
-     * @return list<string>
+     * Writes every name as SQLite would write it.
+     *
+     * @param array<int, string> $columns Columns to read
+     *
+     * @return list<string> What it answers
      */
-    private function quotedColumns(array $columns): array
+    public function quotedColumns(array $columns): array
     {
         $quoted = [];
         foreach ($columns as $column) {
@@ -555,15 +660,26 @@ final class SqliteMutationResolver
         return $quoted;
     }
 
-    private function quote(string $identifier): string
+    /**
+     * Writes a name as SQLite would write it.
+     *
+     * @param string $identifier Name, as it was written
+     *
+     * @return string What it answers
+     */
+    public function quote(string $identifier): string
     {
         return (new SqliteIdentifierQuoter())->quote($identifier);
     }
 
     /**
-     * @return array{kind: 'add'|'drop'|'rename_table'|'rename_column', clause: string}|null
+     * Reads what an ALTER TABLE does, and to what.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return array{kind: 'add'|'drop'|'rename_table'|'rename_column', clause: string}|null What it answers
      */
-    private function alterOperation(string $sql): ?array
+    public function alterOperation(string $sql): ?array
     {
         $stream = SqlTokenStream::tokenize($sql, SqliteLexerProfile::create());
         $tokens = $stream->significantTokens();
@@ -613,11 +729,16 @@ final class SqliteMutationResolver
     }
 
     /**
-     * @param list<SqlToken> $tokens
-     * @param 'add'|'drop'|'rename_table'|'rename_column' $kind
-     * @return array{kind: 'add'|'drop'|'rename_table'|'rename_column', clause: string}|null
+     * Reads the clause of an ALTER that says what it does.
+     *
+     * @param string $sql Statement being read, as written
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param 'add'|'drop'|'rename_table'|'rename_column' $kind The kind
+     * @param int $startIndex The start index
+     *
+     * @return array{kind: 'add'|'drop'|'rename_table'|'rename_column', clause: string}|null What it answers
      */
-    private function alterClause(string $sql, array $tokens, string $kind, int $startIndex): ?array
+    public function alterClause(string $sql, array $tokens, string $kind, int $startIndex): ?array
     {
         $first = $tokens[$startIndex] ?? null;
         if ($first === null) {
@@ -634,7 +755,14 @@ final class SqliteMutationResolver
         ];
     }
 
-    private function singleIdentifier(string $sql): ?string
+    /**
+     * Answers the one name a clause names, if it names exactly one.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return string|null What it answers
+     */
+    public function singleIdentifier(string $sql): ?string
     {
         $stream = SqlTokenStream::tokenize($sql, SqliteLexerProfile::create());
         $tokens = $stream->significantTokens();
@@ -645,8 +773,14 @@ final class SqliteMutationResolver
             : null;
     }
 
-    /** @return array{string, string}|null */
-    private function renamedIdentifiers(string $sql): ?array
+    /**
+     * Answers the two names a rename is between.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return array{string, string}|null What it answers
+     */
+    public function renamedIdentifiers(string $sql): ?array
     {
         $stream = SqlTokenStream::tokenize($sql, SqliteLexerProfile::create());
         $tokens = $stream->significantTokens();
@@ -667,10 +801,14 @@ final class SqliteMutationResolver
     }
 
     /**
-     * @param array<int, string> $columns
-     * @return list<string>
+     * Answers a list of columns with one taken out.
+     *
+     * @param array<int, string> $columns Columns to read
+     * @param string $removed The removed
+     *
+     * @return list<string> What it answers
      */
-    private static function withoutColumn(array $columns, string $removed): array
+    public static function withoutColumn(array $columns, string $removed): array
     {
         return array_values(array_filter(
             $columns,
@@ -679,11 +817,19 @@ final class SqliteMutationResolver
     }
 
     /**
+     * Answers a map with one key taken out.
+     *
+     * The key is the one the table declared, which is what the caller has
+     * already resolved the statement's spelling to.
+     *
+     * @param array<string, T> $map The map
+     * @param string $removed The removed
+     *
+     * @return array<string, T> What it answers
+     *
      * @template T
-     * @param array<string, T> $map
-     * @return array<string, T>
      */
-    private static function withoutMapKey(array $map, string $removed): array
+    public static function withoutMapKey(array $map, string $removed): array
     {
         unset($map[$removed]);
 
@@ -691,10 +837,15 @@ final class SqliteMutationResolver
     }
 
     /**
-     * @param array<int, string> $columns
-     * @return list<string>
+     * Answers a list of columns with one renamed.
+     *
+     * @param array<int, string> $columns Columns to read
+     * @param string $old The old
+     * @param string $new The new
+     *
+     * @return list<string> What it answers
      */
-    private static function renamedColumns(array $columns, string $old, string $new): array
+    public static function renamedColumns(array $columns, string $old, string $new): array
     {
         $renamed = [];
         foreach ($columns as $column) {
@@ -704,7 +855,16 @@ final class SqliteMutationResolver
         return $renamed;
     }
 
-    private static function renamedForeignKey(
+    /**
+     * Answers a foreign key with a renamed column written into it.
+     *
+     * @param ForeignKeyDefinition $foreignKey The foreign key
+     * @param string $old The old
+     * @param string $new The new
+     *
+     * @return ForeignKeyDefinition What it answers
+     */
+    public static function renamedForeignKey(
         ForeignKeyDefinition $foreignKey,
         string $old,
         string $new,
@@ -724,11 +884,20 @@ final class SqliteMutationResolver
     }
 
     /**
+     * Answers a map with one key renamed.
+     *
+     * The key is the one the table declared, which is what the caller has
+     * already resolved the statement's spelling to.
+     *
+     * @param array<string, T> $map The map
+     * @param string $old The old
+     * @param string $new The new
+     *
+     * @return array<string, T> What it answers
+     *
      * @template T
-     * @param array<string, T> $map
-     * @return array<string, T>
      */
-    private static function renamedMapKey(array $map, string $old, string $new): array
+    public static function renamedMapKey(array $map, string $old, string $new): array
     {
         $renamed = [];
         foreach ($map as $column => $value) {

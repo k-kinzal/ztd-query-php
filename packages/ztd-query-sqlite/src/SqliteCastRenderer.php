@@ -43,7 +43,14 @@ final class SqliteCastRenderer implements CastRenderer
         return "CAST(NULL AS $castType)";
     }
 
-    private function mapToCastType(ColumnDeclaration $type): string
+    /**
+     * Answers what a cast calls a column of this type.
+     *
+     * @param ColumnDeclaration $type How the column was declared
+     *
+     * @return string What it answers
+     */
+    public function mapToCastType(ColumnDeclaration $type): string
     {
         return match ($type->family) {
             ColumnTypeFamily::INTEGER => 'INTEGER',
@@ -59,9 +66,13 @@ final class SqliteCastRenderer implements CastRenderer
     }
 
     /**
-     * Fallback mapping for UNKNOWN family using native type string.
+     * Answers what a cast calls a type ZTD could not place in a family.
+     *
+     * @param string $nativeType The native type
+     *
+     * @return string What it answers
      */
-    private function mapNativeTypeToCastType(string $nativeType): string
+    public function mapNativeTypeToCastType(string $nativeType): string
     {
         $upperType = strtoupper($nativeType);
         $baseType = (string) preg_replace('/\(.*\)/', '', $upperType);

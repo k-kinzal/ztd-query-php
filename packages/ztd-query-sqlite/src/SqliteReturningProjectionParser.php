@@ -44,8 +44,14 @@ final class SqliteReturningProjectionParser
         return ReturningProjection::fromItems($items);
     }
 
-    /** @return array{source: string|null, output: string|null}|null */
-    private function parseItem(string $expression): ?array
+    /**
+     * Reads one entry of a RETURNING clause.
+     *
+     * @param string $expression Expression to read, as written
+     *
+     * @return array{source: string|null, output: string|null}|null What it answers
+     */
+    public function parseItem(string $expression): ?array
     {
         $tokens = SqlTokenStream::tokenize($expression, SqliteLexerProfile::create())->significantTokens();
         $alias = null;
@@ -81,8 +87,14 @@ final class SqliteReturningProjectionParser
         return ['source' => $source, 'output' => $alias];
     }
 
-    /** @param list<SqlToken> $tokens */
-    private function asIndex(array $tokens): ?int
+    /**
+     * Answers where the AS of an entry is written.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     *
+     * @return int|null What it answers
+     */
+    public function asIndex(array $tokens): ?int
     {
         foreach ($tokens as $index => $token) {
             if ($token->isKeyword('AS')) {
@@ -93,8 +105,14 @@ final class SqliteReturningProjectionParser
         return null;
     }
 
-    /** @param list<SqlToken> $tokens */
-    private function isIdentifierPath(array $tokens): bool
+    /**
+     * Reports whether the tokens spell a name and nothing else.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     *
+     * @return bool What it answers
+     */
+    public function isIdentifierPath(array $tokens): bool
     {
         $lastIndex = count($tokens) - 1;
         foreach ($tokens as $index => $token) {
@@ -115,7 +133,14 @@ final class SqliteReturningProjectionParser
         return true;
     }
 
-    private function identifierName(SqlToken $token): ?string
+    /**
+     * Answers the name a token stands for.
+     *
+     * @param SqlToken $token Token to read
+     *
+     * @return string|null What it answers
+     */
+    public function identifierName(SqlToken $token): ?string
     {
         if ($token->kind === SqlTokenKind::Word) {
             return $token->text;
