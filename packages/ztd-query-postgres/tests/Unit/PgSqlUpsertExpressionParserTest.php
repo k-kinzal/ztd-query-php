@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\Postgres\PgSqlUpsertExpressionParser;
 use ZtdQuery\Sql\SqlToken;
@@ -104,7 +105,7 @@ final class PgSqlUpsertExpressionParserTest extends TestCase
 
     public function testIdentifierRejectsNonPostgresQuotedToken(): void
     {
-        $method = new \ReflectionMethod(PgSqlUpsertExpressionParser::class, 'isIdentifier');
+        $method = new ReflectionMethod(PgSqlUpsertExpressionParser::class, 'isIdentifier');
         $token = new SqlToken(SqlTokenKind::QuotedIdentifier, '`quantity`', 0, 0, 0);
 
         self::assertFalse($method->invoke(new PgSqlUpsertExpressionParser(), $token));

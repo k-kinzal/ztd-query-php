@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\PostgreSqlProvider;
+use Throwable;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
 use ZtdQuery\Platform\Postgres\PgSqlQueryGuard;
 use ZtdQuery\Rewrite\QueryKind;
@@ -51,7 +52,7 @@ final class ClassifyFuzzTest extends TestCase
                 $result1 = $this->guard->classify($sql);
                 $result2 = $this->guard->classify($sql);
                 self::assertSame($result1, $result2, "classify() returned different results for the same SQL on iteration $i: $sql");
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 self::fail("classify() crashed on iteration $i with SQL: $sql\nError: " . $e->getMessage());
             }
         }
@@ -71,7 +72,7 @@ final class ClassifyFuzzTest extends TestCase
                         "SELECT should classify as READ on iteration $i with SQL: $sql"
                     );
                 }
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 self::fail("classify() crashed on SELECT iteration $i with SQL: $sql\nError: " . $e->getMessage());
             }
         }
@@ -91,7 +92,7 @@ final class ClassifyFuzzTest extends TestCase
                         "INSERT should classify as WRITE_SIMULATED on iteration $i with SQL: $sql"
                     );
                 }
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 self::fail("classify() crashed on INSERT iteration $i with SQL: $sql\nError: " . $e->getMessage());
             }
         }
@@ -111,7 +112,7 @@ final class ClassifyFuzzTest extends TestCase
                         "UPDATE should classify as WRITE_SIMULATED on iteration $i with SQL: $sql"
                     );
                 }
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 self::fail("classify() crashed on UPDATE iteration $i with SQL: $sql\nError: " . $e->getMessage());
             }
         }
@@ -131,7 +132,7 @@ final class ClassifyFuzzTest extends TestCase
                         "DELETE should classify as WRITE_SIMULATED on iteration $i with SQL: $sql"
                     );
                 }
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 self::fail("classify() crashed on DELETE iteration $i with SQL: $sql\nError: " . $e->getMessage());
             }
         }
@@ -151,7 +152,7 @@ final class ClassifyFuzzTest extends TestCase
                         "CREATE TABLE should classify as DDL_SIMULATED on iteration $i with SQL: $sql"
                     );
                 }
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 self::fail("classify() crashed on CREATE TABLE iteration $i with SQL: $sql\nError: " . $e->getMessage());
             }
         }
@@ -171,7 +172,7 @@ final class ClassifyFuzzTest extends TestCase
                         "DROP TABLE should classify as DDL_SIMULATED on iteration $i with SQL: $sql"
                     );
                 }
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 self::fail("classify() crashed on DROP TABLE iteration $i with SQL: $sql\nError: " . $e->getMessage());
             }
         }
@@ -191,7 +192,7 @@ final class ClassifyFuzzTest extends TestCase
                         "ALTER TABLE should classify as DDL_SIMULATED on iteration $i with SQL: $sql"
                     );
                 }
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 self::fail("classify() crashed on ALTER TABLE iteration $i with SQL: $sql\nError: " . $e->getMessage());
             }
         }

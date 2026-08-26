@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Postgres;
 
+use ValueError;
 use ZtdQuery\Platform\CopySupport;
 use ZtdQuery\Platform\CopyTarget;
 use ZtdQuery\Schema\TableDefinition;
@@ -24,7 +25,7 @@ final class PgSqlCopySupport implements CopySupport
     {
         $columns = $this->columns($fields, $definition);
         if ($columns === []) {
-            throw new \ValueError('PostgreSQL COPY requires at least one non-generated column.');
+            throw new ValueError('PostgreSQL COPY requires at least one non-generated column.');
         }
 
         return new CopyTarget($this->relationParts($relation), $columns);
@@ -42,7 +43,7 @@ final class PgSqlCopySupport implements CopySupport
     public function insertSql(CopyTarget $target, int $rowCount, bool $overrideSystemValue): string
     {
         if ($rowCount < 1) {
-            throw new \ValueError('PostgreSQL COPY INSERT requires at least one row.');
+            throw new ValueError('PostgreSQL COPY INSERT requires at least one row.');
         }
 
         $parameter = 1;
@@ -74,20 +75,20 @@ final class PgSqlCopySupport implements CopySupport
     {
         $parts = SqlTokenStream::tokenize($tableName, PgSqlLexerProfile::create())->splitTopLevel('.');
         if ($parts === []) {
-            throw new \ValueError('PostgreSQL COPY table name must not be empty.');
+            throw new ValueError('PostgreSQL COPY table name must not be empty.');
         }
         if (in_array('', $parts, true)) {
-            throw new \ValueError('PostgreSQL COPY table name must not contain an empty qualifier component.');
+            throw new ValueError('PostgreSQL COPY table name must not contain an empty qualifier component.');
         }
         if (count($parts) > 2) {
-            throw new \ValueError('PostgreSQL COPY table name may contain at most a schema and table component.');
+            throw new ValueError('PostgreSQL COPY table name may contain at most a schema and table component.');
         }
 
         $components = [];
         foreach ($parts as $part) {
             $tokens = SqlTokenStream::tokenize($part, PgSqlLexerProfile::create())->significantTokens();
             if (count($tokens) !== 1) {
-                throw new \ValueError('PostgreSQL COPY table name must be an identifier or schema-qualified identifier.');
+                throw new ValueError('PostgreSQL COPY table name must be an identifier or schema-qualified identifier.');
             }
             $components[] = $this->identifier($tokens[0], 'table name');
         }
@@ -111,18 +112,18 @@ final class PgSqlCopySupport implements CopySupport
 
         $parts = SqlTokenStream::tokenize($fields, PgSqlLexerProfile::create())->splitTopLevel();
         if ($parts === [] || in_array('', $parts, true)) {
-            throw new \ValueError('PostgreSQL COPY fields must contain at least one column identifier.');
+            throw new ValueError('PostgreSQL COPY fields must contain at least one column identifier.');
         }
 
         $columns = [];
         foreach ($parts as $part) {
             $tokens = SqlTokenStream::tokenize($part, PgSqlLexerProfile::create())->significantTokens();
             if (count($tokens) !== 1) {
-                throw new \ValueError('Each PostgreSQL COPY field must be a single column identifier.');
+                throw new ValueError('Each PostgreSQL COPY field must be a single column identifier.');
             }
             $column = $this->identifier($tokens[0], 'field');
             if (in_array($column, $columns, true)) {
-                throw new \ValueError(sprintf('PostgreSQL COPY field "%s" is specified more than once.', $column));
+                throw new ValueError(sprintf('PostgreSQL COPY field "%s" is specified more than once.', $column));
             }
             $columns[] = $column;
         }
@@ -168,10 +169,10 @@ final class PgSqlCopySupport implements CopySupport
             $row = substr($row, 0, -1);
         }
         if (str_contains($row, "\n") || str_contains($row, "\r")) {
-            throw new \ValueError('PostgreSQL COPY rows must escape embedded newlines and carriage returns.');
+            throw new ValueError('PostgreSQL COPY rows must escape embedded newlines and carriage returns.');
         }
         if ($row === '\\.') {
-            throw new \ValueError('PostgreSQL COPY end-of-data markers are not row values.');
+            throw new ValueError('PostgreSQL COPY end-of-data markers are not row values.');
         }
 
         return $this->decodeFields($row, $separator, $nullAs);
@@ -181,7 +182,7 @@ final class PgSqlCopySupport implements CopySupport
     {
         $parsed = SqlTokenStream::tokenize($token->text, PgSqlLexerProfile::create())->identifierAt();
         if ($parsed === null) {
-            throw new \ValueError(sprintf('PostgreSQL COPY %s must be a valid identifier.', $subject));
+            throw new ValueError(sprintf('PostgreSQL COPY %s must be a valid identifier.', $subject));
         }
 
         return $token->kind === SqlTokenKind::Word ? strtolower($parsed['name']) : $parsed['name'];
@@ -195,7 +196,7 @@ final class PgSqlCopySupport implements CopySupport
     private function validateSeparator(string $separator): void
     {
         if (strlen($separator) !== 1) {
-            throw new \ValueError('PostgreSQL COPY separator must be exactly one byte.');
+            throw new ValueError('PostgreSQL COPY separator must be exactly one byte.');
         }
     }
 
@@ -210,13 +211,13 @@ final class PgSqlCopySupport implements CopySupport
         if (is_resource($value)) {
             $bytes = stream_get_contents($value);
             if ($bytes === false) {
-                throw new \ValueError('PostgreSQL COPY could not read a binary value.');
+                throw new ValueError('PostgreSQL COPY could not read a binary value.');
             }
 
             return '\\x' . bin2hex($bytes);
         }
 
-        throw new \ValueError(sprintf('PostgreSQL COPY cannot encode a value of type %s.', get_debug_type($value)));
+        throw new ValueError(sprintf('PostgreSQL COPY cannot encode a value of type %s.', get_debug_type($value)));
     }
 
     private function escape(string $value, string $separator): string
@@ -265,7 +266,7 @@ final class PgSqlCopySupport implements CopySupport
 
             $next = $row[$index + 1] ?? null;
             if ($next === null) {
-                throw new \ValueError('PostgreSQL COPY field ends with an incomplete backslash escape.');
+                throw new ValueError('PostgreSQL COPY field ends with an incomplete backslash escape.');
             }
             $index++;
 
@@ -288,7 +289,7 @@ final class PgSqlCopySupport implements CopySupport
                 }
                 $byte = intval($digits, 8);
                 if ($byte < 0 || $byte > 255) {
-                    throw new \ValueError('PostgreSQL COPY octal escape must fit in one byte.');
+                    throw new ValueError('PostgreSQL COPY octal escape must fit in one byte.');
                 }
                 $decoded .= chr($byte);
                 continue;
@@ -306,10 +307,10 @@ final class PgSqlCopySupport implements CopySupport
                 }
                 $byte = intval($digits, 16);
                 if ($byte < 0) {
-                    throw new \ValueError('PostgreSQL COPY hexadecimal escape must not be negative.');
+                    throw new ValueError('PostgreSQL COPY hexadecimal escape must not be negative.');
                 }
                 if ($byte > 255) {
-                    throw new \ValueError('PostgreSQL COPY hexadecimal escape must fit in one byte.');
+                    throw new ValueError('PostgreSQL COPY hexadecimal escape must fit in one byte.');
                 }
                 $decoded .= chr($byte);
                 continue;

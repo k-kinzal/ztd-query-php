@@ -6,12 +6,12 @@ namespace ZtdQuery\Platform\Postgres;
 
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Rewrite\AffectedRowsMode;
 use ZtdQuery\Rewrite\MultiRewritePlan;
 use ZtdQuery\Rewrite\QueryKind;
-use ZtdQuery\Rewrite\AffectedRowsMode;
 use ZtdQuery\Rewrite\RewritePlan;
-use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Rewrite\RewriteStateCommitter;
+use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Schema\ViewDefinitionSet;
 use ZtdQuery\Shadow\ShadowStore;

@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use Override;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Tests\Contract\CastRendererContractTest;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
-use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(PgSqlCastRenderer::class)]
 final class PgSqlCastRendererTest extends CastRendererContractTest
@@ -19,7 +20,7 @@ final class PgSqlCastRendererTest extends CastRendererContractTest
         return new PgSqlCastRenderer();
     }
 
-    #[\Override]
+    #[Override]
     protected function nativeTypeFor(ColumnTypeFamily $family): string
     {
         return match ($family) {

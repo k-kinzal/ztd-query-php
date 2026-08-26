@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Transformer;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
+use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
 use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
-use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
-use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 
 #[CoversClass(UpdateTransformer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser::class)]
@@ -69,7 +69,7 @@ final class UpdateTransformerTest extends TestCase
     public function testBuildProjectionWithFromClause(): void
     {
         $transformer = new UpdateTransformer(new PgSqlParser(), new SelectTransformer());
-        $sql = "UPDATE users SET name = orders.name FROM orders WHERE users.id = orders.user_id";
+        $sql = 'UPDATE users SET name = orders.name FROM orders WHERE users.id = orders.user_id';
         $result = $transformer->buildProjection($sql, 'users', ['id', 'name']);
 
         self::assertStringContainsString('orders', $result['sql']);
@@ -79,7 +79,7 @@ final class UpdateTransformerTest extends TestCase
     public function testBuildProjectionWithNoWhereClause(): void
     {
         $transformer = new UpdateTransformer(new PgSqlParser(), new SelectTransformer());
-        $sql = "UPDATE users SET active = true";
+        $sql = 'UPDATE users SET active = true';
         $result = $transformer->buildProjection($sql, 'users', ['id', 'active']);
 
         self::assertStringContainsString('SELECT', $result['sql']);
@@ -201,7 +201,7 @@ final class UpdateTransformerTest extends TestCase
     public function testBuildProjectionWithFromClauseExact(): void
     {
         $transformer = new UpdateTransformer(new PgSqlParser(), new SelectTransformer());
-        $sql = "UPDATE users SET name = orders.name FROM orders WHERE users.id = orders.user_id";
+        $sql = 'UPDATE users SET name = orders.name FROM orders WHERE users.id = orders.user_id';
         $result = $transformer->buildProjection($sql, 'users', ['id', 'name']);
 
         self::assertSame(

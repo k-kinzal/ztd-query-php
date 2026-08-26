@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Postgres\PgSqlTableSample;
@@ -37,7 +38,7 @@ final class PgSqlTableSampleTest extends TestCase
 
     public function testRejectsEmptyFieldsAndInvalidOffsets(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
 
         new PgSqlTableSample(
             '',
@@ -53,28 +54,28 @@ final class PgSqlTableSampleTest extends TestCase
 
     public function testRejectsEmptySourceSql(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
 
         new PgSqlTableSample('data', '', '', PgSqlTableSampleMethod::System, '10', null, 0, 1);
     }
 
     public function testRejectsEmptyPercentageSql(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
 
         new PgSqlTableSample('data', 'data', '', PgSqlTableSampleMethod::System, '', null, 0, 1);
     }
 
     public function testRejectsNegativeStartOffset(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
 
         new PgSqlTableSample('data', 'data', '', PgSqlTableSampleMethod::System, '10', null, -1, 1);
     }
 
     public function testRejectsEqualStartAndEndOffsets(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
 
         new PgSqlTableSample('data', 'data', '', PgSqlTableSampleMethod::System, '10', null, 1, 1);
     }

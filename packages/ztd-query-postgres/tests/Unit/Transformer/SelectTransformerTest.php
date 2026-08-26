@@ -4,19 +4,22 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Transformer;
 
-use Tests\Contract\TransformerContractTest;
-use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
-use ZtdQuery\Platform\ValueRenderer;
-use ZtdQuery\Rewrite\SqlTransformer;
-use ZtdQuery\Schema\ColumnType;
-use ZtdQuery\Schema\ColumnTypeFamily;
+use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
+use RuntimeException;
+use stdClass;
+use Tests\Contract\TransformerContractTest;
 use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
 use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 use ZtdQuery\Platform\Postgres\PgSqlTableSample;
 use ZtdQuery\Platform\Postgres\PgSqlTableSampleParser;
 use ZtdQuery\Platform\Postgres\PgSqlTableSampleRewriter;
+use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
+use ZtdQuery\Platform\ValueRenderer;
+use ZtdQuery\Rewrite\SqlTransformer;
+use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(SelectTransformer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser::class)]
@@ -110,7 +113,7 @@ final class SelectTransformerTest extends TransformerContractTest
         return 'SELECT * FROM users WHERE id = 1';
     }
 
-    #[\Override]
+    #[Override]
     protected function nativeStringType(): string
     {
         return 'TEXT';
@@ -691,7 +694,7 @@ final class SelectTransformerTest extends TransformerContractTest
             ],
         ];
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Unsupported value type for CTE shadowing');
         $transformer->transform('SELECT * FROM users', $tables);
     }
@@ -720,7 +723,7 @@ final class SelectTransformerTest extends TransformerContractTest
     public function testTransformSerializesObjectWithColumnType(): void
     {
         $transformer = new SelectTransformer();
-        $obj = new \stdClass();
+        $obj = new stdClass();
         $tables = [
             'users' => [
                 'rows' => [['val' => $obj]],
@@ -744,7 +747,7 @@ final class SelectTransformerTest extends TransformerContractTest
             ],
         ];
 
-        $sql = "/* comment */WITH cte AS (SELECT 1) SELECT * FROM users, cte";
+        $sql = '/* comment */WITH cte AS (SELECT 1) SELECT * FROM users, cte';
         $result = $transformer->transform($sql, $tables);
         self::assertStringStartsWith('/* comment */WITH "users"', $result);
     }
