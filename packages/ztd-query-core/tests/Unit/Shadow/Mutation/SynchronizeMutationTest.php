@@ -24,7 +24,7 @@ use ZtdQuery\Shadow\ShadowStore;
 #[UsesClass(TableDefinition::class)]
 final class SynchronizeMutationTest extends TestCase
 {
-    public function testApplyReplacesTheCompleteTableState(): void
+    public function testTableNameApplyReplacesTheCompleteTableState(): void
     {
         $store = new ShadowStore();
         $store->set('users', [['id' => 1, 'name' => 'old']]);

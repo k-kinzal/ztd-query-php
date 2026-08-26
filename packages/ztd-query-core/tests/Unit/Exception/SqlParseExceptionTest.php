@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Exception;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use ZtdQuery\Exception\SqlParseException;
-use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(SqlParseException::class)]
 final class SqlParseExceptionTest extends TestCase

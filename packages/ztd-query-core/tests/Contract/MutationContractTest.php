@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Contract;
 
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Shadow\Mutation\DeleteMutation;
 use ZtdQuery\Shadow\Mutation\InsertMutation;
 use ZtdQuery\Shadow\Mutation\TruncateMutation;
@@ -16,34 +17,36 @@ use ZtdQuery\Shadow\ShadowStore;
  *
  * Tests universal mutation properties that must hold for any platform.
  * Enforces contracts defined in quality-standards.md Section 1.2 and properties P-SM-1 through P-SM-6.
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 abstract class MutationContractTest extends TestCase
 {
     /**
      * Create initial rows to seed the shadow store for testing.
      *
-     * @return array<int, array<string, mixed>>
+     * @return list<Row>
      */
     abstract protected function initialRows(): array;
 
     /**
      * Create rows to insert for testing.
      *
-     * @return array<int, array<string, mixed>>
+     * @return list<Row>
      */
     abstract protected function insertRows(): array;
 
     /**
      * Create rows representing a delete result set (rows that were deleted).
      *
-     * @return array<int, array<string, mixed>>
+     * @return list<Row>
      */
     abstract protected function deleteRows(): array;
 
     /**
      * Create rows representing an update result set (rows after update).
      *
-     * @return array<int, array<string, mixed>>
+     * @return list<Row>
      */
     abstract protected function updateRows(): array;
 

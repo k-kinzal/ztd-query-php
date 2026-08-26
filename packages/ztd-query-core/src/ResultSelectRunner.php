@@ -10,6 +10,9 @@ use ZtdQuery\Platform\ResultColumnTypeResolver;
 
 /**
  * Executes result-select queries and returns rows.
+ *
+ * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type RowValue from StatementInterface
  */
 final class ResultSelectRunner
 {
@@ -17,7 +20,7 @@ final class ResultSelectRunner
      * Execute SQL using the provided executor and return result rows.
      *
      * @param callable(string): (StatementInterface|false) $executor
-     * @return array<int, array<string, mixed>>
+     * @return list<Row>
      */
     public function run(
         string $sql,
@@ -46,8 +49,8 @@ final class ResultSelectRunner
     /**
      * Execute a prepared statement and return result rows.
      *
-     * @param array<int|string, mixed>|null $params
-     * @return array<int, array<string, mixed>>
+     * @param array<int|string, RowValue>|null $params
+     * @return list<Row>
      */
     public function runStatement(
         StatementInterface $statement,

@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Shadow\Mutation;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Schema\CandidateKeyConflict;
 use ZtdQuery\Schema\CandidateKeySet;
 use ZtdQuery\Schema\TableDefinition;
-use ZtdQuery\Shadow\Mutation\UpsertMutation;
 use ZtdQuery\Shadow\Mutation\UpsertColumnSource;
 use ZtdQuery\Shadow\Mutation\UpsertExpression;
 use ZtdQuery\Shadow\Mutation\UpsertExpressionKind;
+use ZtdQuery\Shadow\Mutation\UpsertMutation;
 use ZtdQuery\Shadow\Mutation\UpsertMutationRow;
 use ZtdQuery\Shadow\ShadowStore;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 
 #[UsesClass(ShadowStore::class)]
 #[UsesClass(UnsupportedSqlException::class)]

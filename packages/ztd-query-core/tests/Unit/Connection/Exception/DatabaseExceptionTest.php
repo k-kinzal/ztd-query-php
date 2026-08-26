@@ -4,16 +4,17 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Connection\Exception;
 
-use PHPUnit\Framework\TestCase;
-use ZtdQuery\Connection\Exception\DatabaseException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\TestCase;
+use RuntimeException;
+use ZtdQuery\Connection\Exception\DatabaseException;
 
 #[CoversClass(DatabaseException::class)]
 final class DatabaseExceptionTest extends TestCase
 {
     public function testConstructWithAllParameters(): void
     {
-        $previous = new \RuntimeException('root cause');
+        $previous = new RuntimeException('root cause');
         $exception = new DatabaseException('Query failed', 1045, 42, $previous);
 
         self::assertSame('Query failed', $exception->getMessage());
