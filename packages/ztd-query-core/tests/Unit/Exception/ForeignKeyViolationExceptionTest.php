@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Exception;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use ZtdQuery\Exception\ForeignKeyViolationException;
-use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(ForeignKeyViolationException::class)]
 final class ForeignKeyViolationExceptionTest extends TestCase

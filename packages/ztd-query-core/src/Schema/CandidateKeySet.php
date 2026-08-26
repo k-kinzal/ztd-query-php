@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Schema;
 
+use ZtdQuery\Connection\StatementInterface;
+
 /**
  * Relational candidate keys used to detect INSERT conflicts.
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 final class CandidateKeySet
 {
@@ -30,15 +34,17 @@ final class CandidateKeySet
         return new self($keys);
     }
 
-    /** @return array<string, array<int, string>> */
+    /**
+     * @return array<string, array<int, string>>
+     */
     public function keys(): array
     {
         return $this->keys;
     }
 
     /**
-     * @param array<string, mixed> $row
-     * @param array<int, array<string, mixed>> $existingRows
+     * @param Row $row
+     * @param list<Row> $existingRows
      */
     public function findConflict(array $row, array $existingRows): ?CandidateKeyConflict
     {
@@ -59,9 +65,9 @@ final class CandidateKeySet
     }
 
     /**
-     * @param array<string, mixed> $row
+     * @param Row $row
      * @param array<int, string> $columns
-     * @return array<string, mixed>|null
+     * @return Row|null
      */
     private function values(array $row, array $columns): ?array
     {
@@ -81,8 +87,8 @@ final class CandidateKeySet
     }
 
     /**
-     * @param array<string, mixed> $values
-     * @param array<string, mixed> $row
+     * @param Row $values
+     * @param Row $row
      */
     private function matches(array $values, array $row): bool
     {

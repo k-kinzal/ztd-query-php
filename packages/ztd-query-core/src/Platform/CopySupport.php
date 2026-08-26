@@ -16,10 +16,14 @@ interface CopySupport
 
     public function insertSql(CopyTarget $target, int $rowCount, bool $overrideSystemValue): string;
 
-    /** @param list<mixed> $values */
+    /**
+     * @param list<mixed> $values
+     */
     public function encodeRow(array $values, string $separator, string $nullAs): string;
 
-    /** @return list<string|null> */
+    /**
+     * @return list<string|null>
+     */
     public function decodeRow(string $row, string $separator, string $nullAs): array;
 
     public function isCopyStatement(string $sql): bool;

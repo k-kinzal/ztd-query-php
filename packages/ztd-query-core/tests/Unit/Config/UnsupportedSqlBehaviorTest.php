@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Config;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Config\UnsupportedSqlBehavior;
-use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(UnsupportedSqlBehavior::class)]
 final class UnsupportedSqlBehaviorTest extends TestCase

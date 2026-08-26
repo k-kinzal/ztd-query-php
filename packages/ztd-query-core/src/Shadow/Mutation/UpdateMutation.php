@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow\Mutation;
 
+use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\DuplicateKeyException;
 use ZtdQuery\Exception\NotNullViolationException;
 use ZtdQuery\Schema\TableDefinition;
@@ -11,6 +12,8 @@ use ZtdQuery\Shadow\ShadowStore;
 
 /**
  * Applies UPDATE result rows to the shadow store.
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 final class UpdateMutation implements DataMutation
 {
@@ -105,7 +108,7 @@ final class UpdateMutation implements DataMutation
     /**
      * Validate NOT NULL constraints for a row.
      *
-     * @param array<string, mixed> $row Row to validate.
+     * @param Row $row Row to validate.
      * @throws NotNullViolationException If a NOT NULL constraint is violated.
      */
     private function validateNotNullConstraints(array $row): void
@@ -126,8 +129,8 @@ final class UpdateMutation implements DataMutation
     /**
      * Validate UNIQUE constraints for a row.
      *
-     * @param array<string, mixed> $row Row to validate.
-     * @param array<int, array<string, mixed>> $existingRows Existing rows in the store.
+     * @param Row $row Row to validate.
+     * @param list<Row> $existingRows Existing rows in the store.
      * @throws DuplicateKeyException If a UNIQUE constraint is violated.
      */
     private function validateUniqueConstraints(array $row, array $existingRows): void
@@ -173,8 +176,8 @@ final class UpdateMutation implements DataMutation
     /**
      * Check if two rows are the same based on primary key.
      *
-     * @param array<string, mixed> $row1 First row.
-     * @param array<string, mixed> $row2 Second row.
+     * @param Row $row1 First row.
+     * @param Row $row2 Second row.
      * @return bool True if same row.
      */
     private function isSameRowByPrimaryKey(array $row1, array $row2): bool
@@ -198,9 +201,9 @@ final class UpdateMutation implements DataMutation
     /**
      * Extract key values from a row.
      *
-     * @param array<string, mixed> $row Row to extract from.
+     * @param Row $row Row to extract from.
      * @param array<int, string> $columns Column names.
-     * @return array<string, mixed> Key values.
+     * @return Row Key values.
      */
     private function extractKeyValues(array $row, array $columns): array
     {

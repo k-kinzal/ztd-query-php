@@ -6,6 +6,7 @@ namespace Tests\Unit\Platform;
 
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 use ZtdQuery\Platform\SqlPlaceholderEscaper;
 
 #[CoversNothing]
@@ -13,7 +14,7 @@ final class SqlPlaceholderEscaperTest extends TestCase
 {
     public function testDeclaresPlatformPlaceholderEscapingContract(): void
     {
-        $reflection = new \ReflectionClass(SqlPlaceholderEscaper::class);
+        $reflection = new ReflectionClass(SqlPlaceholderEscaper::class);
 
         self::assertTrue($reflection->isInterface());
         self::assertTrue($reflection->hasMethod('escape'));

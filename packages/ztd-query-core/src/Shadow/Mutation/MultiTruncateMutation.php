@@ -11,7 +11,9 @@ use ZtdQuery\Shadow\ShadowStore;
  */
 final class MultiTruncateMutation implements DataMutation
 {
-    /** @param list<string> $tableNames */
+    /**
+     * @param list<string> $tableNames
+     */
     public function __construct(
         private readonly array $tableNames,
     ) {
@@ -35,7 +37,9 @@ final class MultiTruncateMutation implements DataMutation
         return $this->tableNames[0] ?? '';
     }
 
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     */
     public function tableNames(): array
     {
         return $this->tableNames;

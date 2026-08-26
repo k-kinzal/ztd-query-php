@@ -13,24 +13,24 @@ use Tests\Fake\FakeStatement;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\Connection\ResultSet;
-use ZtdQuery\Exception\MissingPrimaryKeyException;
 use ZtdQuery\Exception\ForeignKeyViolationException;
+use ZtdQuery\Exception\MissingPrimaryKeyException;
 use ZtdQuery\Platform\CopySupport;
 use ZtdQuery\Platform\CopyTarget;
-use ZtdQuery\Platform\ParameterBindingCompiler;
 use ZtdQuery\Platform\MissingResultColumnTypeResolver;
+use ZtdQuery\Platform\ParameterBindingCompiler;
 use ZtdQuery\Platform\ResultColumnTypeResolver;
 use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
-use ZtdQuery\Schema\TableDefinition;
-use ZtdQuery\Schema\ForeignKeyDefinition;
 use ZtdQuery\Schema\CandidateKeySet;
+use ZtdQuery\Schema\ForeignKeyDefinition;
+use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Session;
-use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\Mutation\InsertMutation;
 use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
+use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\ReferentialIntegrityEnforcer;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTransactionManager;
@@ -57,7 +57,7 @@ use ZtdQuery\Shadow\ShadowTransactionManager;
 #[UsesClass(MissingResultColumnTypeResolver::class)]
 final class SessionTest extends TestCase
 {
-    public function testEnableAndDisable(): void
+    public function testDisableEnableAndDisable(): void
     {
         $shadowStore = new ShadowStore();
         $registry = new TableDefinitionRegistry();
@@ -104,7 +104,7 @@ final class SessionTest extends TestCase
         self::assertNull($session->tableDefinition('missing'));
     }
 
-    public function testDelegatesCopyTargetsToTheConfiguredPlatformSupport(): void
+    public function testParameterBindingCompilerDelegatesCopyTargetsToTheConfiguredPlatformSupport(): void
     {
         $shadowStore = new ShadowStore();
         $registry = new TableDefinitionRegistry();
@@ -156,7 +156,7 @@ final class SessionTest extends TestCase
         );
     }
 
-    public function testUsesProvidedTransactionManagerForSchemaRollback(): void
+    public function testBeginTransactionUsesProvidedTransactionManagerForSchemaRollback(): void
     {
         $shadowStore = new ShadowStore();
         $registry = new TableDefinitionRegistry();

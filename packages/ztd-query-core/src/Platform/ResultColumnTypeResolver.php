@@ -8,6 +8,8 @@ use ZtdQuery\Schema\ColumnType;
 
 interface ResultColumnTypeResolver
 {
-    /** @param array<string, mixed> $metadata */
+    /**
+     * @param array<string, mixed> $metadata
+     */
     public function resolve(array $metadata): ColumnType;
 }

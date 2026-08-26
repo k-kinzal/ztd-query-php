@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Shadow\Mutation;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
+use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\DuplicateKeyException;
 use ZtdQuery\Exception\NotNullViolationException;
 use ZtdQuery\Schema\CandidateKeyConflict;
@@ -14,9 +17,6 @@ use ZtdQuery\Shadow\Mutation\UpsertColumnSource;
 use ZtdQuery\Shadow\Mutation\UpsertExpression;
 use ZtdQuery\Shadow\Mutation\UpsertExpressionKind;
 use ZtdQuery\Shadow\ShadowStore;
-use PHPUnit\Framework\TestCase;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 
 #[UsesClass(DuplicateKeyException::class)]
 #[UsesClass(NotNullViolationException::class)]
@@ -28,7 +28,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[CoversClass(InsertMutation::class)]
 final class InsertMutationTest extends TestCase
 {
-    public function testApplyAppendsRows(): void
+    public function testTableNameApplyAppendsRows(): void
     {
         $store = new ShadowStore();
         $store->set('users', [['id' => 1]]);

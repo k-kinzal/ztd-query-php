@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Shadow\Mutation;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\TableAlreadyExistsException;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\Mutation\CreateTableMutation;
 use ZtdQuery\Shadow\ShadowStore;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 
 #[UsesClass(TableAlreadyExistsException::class)]
 #[UsesClass(TableDefinition::class)]

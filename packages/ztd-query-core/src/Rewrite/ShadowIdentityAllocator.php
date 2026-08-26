@@ -4,8 +4,24 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Rewrite;
 
+use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
 
+/**
+ * Hands out the identity values a database would have assigned.
+ *
+ * Nothing is inserted, so nothing counts rows for us. A statement that omits an
+ * AUTO_INCREMENT column still has to read back with one, and two statements in
+ * the same session must not be given the same number, so the next value per
+ * table and column is kept here.
+ *
+ * A projection is where a rewritten statement works out what it would have
+ * written. It is allocated against a copy so that a projection thrown away
+ * takes its numbers with it, and only a committed one moves the counter on.
+ *
+ * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type RowValue from StatementInterface
+ */
 final class ShadowIdentityAllocator
 {
     /** @var array<string, array<string, int>> */
@@ -27,7 +43,7 @@ final class ShadowIdentityAllocator
     /**
      * @param array<string, IdentityGenerationStrategy> $strategies
      * @param list<string> $providedColumns
-     * @param array<int, array<string, mixed>> $existingRows
+     * @param list<Row> $existingRows
      * @return array<string, int>
      */
     public function allocateMissing(
@@ -53,7 +69,7 @@ final class ShadowIdentityAllocator
     /**
      * @param array<string, IdentityGenerationStrategy> $strategies
      * @param list<string> $providedColumns
-     * @param array<int, array<string, mixed>> $existingRows
+     * @param list<Row> $existingRows
      * @return array<string, int>
      */
     public function allocateSelectStarts(
@@ -75,7 +91,7 @@ final class ShadowIdentityAllocator
         return $starts;
     }
 
-    /** @param array<int, array<string, mixed>> $existingRows */
+    /** @param list<Row> $existingRows */
     private function nextValue(
         string $table,
         string $column,
@@ -93,11 +109,11 @@ final class ShadowIdentityAllocator
         return $next;
     }
 
-    /** @param array<int, array<string, mixed>> $rows */
-    private function nextAfterExistingRows(string $column, array $rows, int $next): int
+    /** @param list<Row> $rows */
+    public function nextAfterExistingRows(string $column, array $rows, int $next): int
     {
         foreach ($rows as $row) {
-            $value = self::integerValue($row[$column] ?? null);
+            $value = $this->integerValue($row[$column] ?? null);
             if ($value !== null) {
                 $next = max($next, $value + 1);
             }
@@ -106,7 +122,7 @@ final class ShadowIdentityAllocator
         return $next;
     }
 
-    private static function integerValue(mixed $value): ?int
+    public function integerValue(int|float|string|bool|null $value): ?int
     {
         if (is_int($value)) {
             return $value;

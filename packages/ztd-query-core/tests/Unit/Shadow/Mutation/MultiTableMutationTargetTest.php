@@ -11,7 +11,7 @@ use ZtdQuery\Shadow\Mutation\MultiTableMutationTarget;
 #[CoversClass(MultiTableMutationTarget::class)]
 final class MultiTableMutationTargetTest extends TestCase
 {
-    public function testExposesSchemaAndUsesPrimaryKeysForMatching(): void
+    public function testPrimaryKeysExposesSchemaAndUsesPrimaryKeysForMatching(): void
     {
         $target = new MultiTableMutationTarget('users', ['id', 'name'], [3 => 'id']);
 

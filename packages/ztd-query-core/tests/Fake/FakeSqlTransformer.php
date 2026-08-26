@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Fake;
 
+use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
 
@@ -12,6 +13,8 @@ use ZtdQuery\Schema\ColumnType;
  *
  * Generates simplified CTE syntax using double-quoted identifiers
  * and generic CAST expressions.
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 final class FakeSqlTransformer implements SqlTransformer
 {
@@ -45,7 +48,7 @@ final class FakeSqlTransformer implements SqlTransformer
     }
 
     /**
-     * @param array{rows: array<int, array<string, mixed>>, columns: array<int, string>, columnTypes: array<string, ColumnType>} $tableData
+     * @param array{rows: list<Row>, columns: array<int, string>, columnTypes: array<string, ColumnType>} $tableData
      */
     private function buildCte(string $tableName, array $tableData): string
     {

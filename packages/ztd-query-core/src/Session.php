@@ -4,38 +4,37 @@ declare(strict_types=1);
 
 namespace ZtdQuery;
 
-use RuntimeException;
 use ZtdQuery\Config\UnknownSchemaBehavior;
 use ZtdQuery\Config\UnsupportedSqlBehavior;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Connection\Exception\DatabaseException;
-use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Connection\ResultSet;
-use ZtdQuery\Exception\SimulationException;
+use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\CopySupport;
 use ZtdQuery\Platform\CopyTarget;
+use ZtdQuery\Platform\MissingResultColumnTypeResolver;
 use ZtdQuery\Platform\ParameterBindingCompiler;
 use ZtdQuery\Platform\ResultColumnTypeResolver;
-use ZtdQuery\Platform\MissingResultColumnTypeResolver;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
-use ZtdQuery\Rewrite\RewriteStateCommitter;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\Mutation\MutationImpact;
 use ZtdQuery\Shadow\Mutation\ShadowMutation;
-use ZtdQuery\Shadow\Mutation\ResultSetMutation;
+use ZtdQuery\Shadow\ReferentialIntegrityEnforcer;
+use ZtdQuery\Shadow\ShadowApplication;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTransactionManager;
-use ZtdQuery\Shadow\ReferentialIntegrityEnforcer;
 use ZtdQuery\Sql\TransactionStatement;
 
 /**
  * Aggregates ZTD session state and core collaborators.
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 final class Session
 {
@@ -45,13 +44,6 @@ final class Session
      * @var SqlRewriter
      */
     private SqlRewriter $rewriter;
-
-    /**
-     * In-memory shadow store used by applied mutations.
-     *
-     * @var ShadowStore
-     */
-    private ShadowStore $shadowStore;
 
     /**
      * Executes result-select SQL on the database.
@@ -93,6 +85,8 @@ final class Session
 
     private ResultColumnTypeResolver $resultColumnTypeResolver;
 
+    private ShadowApplication $shadowApplication;
+
     private ?string $lastInsertId = null;
 
     /**
@@ -115,16 +109,40 @@ final class Session
         ResultColumnTypeResolver $resultColumnTypeResolver = new MissingResultColumnTypeResolver(),
     ) {
         $this->rewriter = $rewriter;
-        $this->shadowStore = $shadowStore;
         $this->resultSelectRunner = $resultSelectRunner;
         $this->config = $config;
         $this->connection = $connection;
         $this->transactions = $transactions ?? new ShadowTransactionManager($shadowStore);
         $this->registry = $registry ?? new TableDefinitionRegistry();
         $this->referentialIntegrity = new ReferentialIntegrityEnforcer($this->registry);
+        $this->shadowApplication = new ShadowApplication(
+            $shadowStore,
+            $this->referentialIntegrity,
+            $this->registry,
+            $rewriter,
+        );
         $this->copySupport = $copySupport;
         $this->parameterBindingCompiler = $parameterBindingCompiler;
         $this->resultColumnTypeResolver = $resultColumnTypeResolver;
+    }
+
+    /**
+     * Writes a mutation into the shadow, and remembers the identity it produced.
+     *
+     * @param ShadowMutation $mutation Mutation to write
+     * @param ResultSet $resultSet What the rewritten statement read back
+     * @param string $sql Statement being simulated, for the refusal
+     *
+     * @return MutationImpact What the statement came to
+     *
+     * @throws DatabaseException When the shadow refuses the statement
+     */
+    public function applyShadow(ShadowMutation $mutation, ResultSet $resultSet, string $sql): MutationImpact
+    {
+        $impact = $this->shadowApplication->apply($mutation, $resultSet, $sql);
+        $this->lastInsertId = $this->shadowApplication->lastInsertIdOf($mutation, $impact) ?? $this->lastInsertId;
+
+        return $impact;
     }
 
     /**
@@ -176,46 +194,95 @@ final class Session
         return $this->enabled;
     }
 
+    /**
+     * Starts a transaction over the shadow.
+     *
+     * Nothing is sent to the database: the shadow is what a transaction here can
+     * roll back to.
+     */
     public function beginTransaction(): void
     {
         $this->transactions->begin();
     }
 
+    /**
+     * Keeps what the shadow was changed to since the transaction began.
+     */
     public function commitTransaction(): void
     {
         $this->transactions->commit();
     }
 
+    /**
+     * Puts the shadow back to what it was when the transaction began.
+     */
     public function rollBackTransaction(): void
     {
         $this->transactions->rollBack();
     }
 
+    /**
+     * Applies to the shadow what a transaction statement says.
+     *
+     * @param TransactionStatement $statement Statement to apply
+     */
     public function applyTransactionStatement(TransactionStatement $statement): void
     {
         $statement->apply($this->transactions);
     }
 
+    /**
+     * Answers the transaction statement a statement is, if it is one.
+     *
+     * @param string $sql Statement as it was written
+     *
+     * @return TransactionStatement|null What it does to the transaction, or null when it is not one
+     */
     public function transactionStatement(string $sql): ?TransactionStatement
     {
         return $this->rewriter->transactionStatement($sql);
     }
 
+    /**
+     * Answers the identity the last simulated insert would have been given.
+     *
+     * @return string|false The identity, or false when nothing has been inserted
+     */
     public function lastInsertId(): string|false
     {
         return $this->lastInsertId ?? false;
     }
 
+    /**
+     * Answers what a table was described as, where something described it.
+     *
+     * @param string $tableName Table to answer for
+     *
+     * @return TableDefinition|null Its description, or null when nothing has described it
+     */
     public function tableDefinition(string $tableName): ?TableDefinition
     {
         return $this->registry->get($tableName);
     }
 
+    /**
+     * Answers how this dialect writes COPY, where it writes it at all.
+     *
+     * @return CopySupport|null What the dialect supports, or null where it has no COPY
+     */
     public function copySupport(): ?CopySupport
     {
         return $this->copySupport;
     }
 
+    /**
+     * Answers what a COPY statement is written against, where everything it needs is known.
+     *
+     * @param string $relation Relation as the statement named it
+     * @param string|null $fields Column list as the statement wrote it, or null for every column
+     *
+     * @return CopyTarget|null The target, or null when the dialect has no COPY or the table is undescribed
+     */
     public function copyTarget(string $relation, ?string $fields): ?CopyTarget
     {
         if ($this->copySupport === null) {
@@ -229,11 +296,21 @@ final class Session
         return $this->copySupport->target($relation, $fields, $definition);
     }
 
+    /**
+     * Answers how this dialect writes bound parameters, where it needs to be told.
+     *
+     * @return ParameterBindingCompiler|null The compiler, or null where the driver binds them itself
+     */
     public function parameterBindingCompiler(): ?ParameterBindingCompiler
     {
         return $this->parameterBindingCompiler;
     }
 
+    /**
+     * Answers how this dialect reads the column types a driver reports.
+     *
+     * @return ResultColumnTypeResolver The resolver
+     */
     public function resultColumnTypeResolver(): ResultColumnTypeResolver
     {
         return $this->resultColumnTypeResolver;
@@ -288,7 +365,9 @@ final class Session
         }
     }
 
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     */
     public function splitStatements(string $sql): array
     {
         return $this->rewriter->splitStatements($sql);
@@ -313,11 +392,8 @@ final class Session
         $resultSet = $this->resultSelectRunner->readResultSet($statement, $this->resultColumnTypeResolver);
         $rows = $resultSet->rows;
 
-        $mutation = $plan->mutation();
-        if ($mutation === null) {
-            throw new RuntimeException('ZTD Write Protection: Missing shadow mutation for write simulation.');
-        }
-        $impact = $this->applyMutation($mutation, $resultSet, $plan->sql());
+        $mutation = $plan->requireMutation();
+        $impact = $this->applyShadow($mutation, $resultSet, $plan->sql());
         $returningProjection = $plan->returningProjection();
         $resultRows = $returningProjection !== null
             ? $returningProjection->project($impact->returningRows())
@@ -339,22 +415,19 @@ final class Session
      *
      * @param RewritePlan $plan The rewrite plan containing the SQL and mutation.
      * @param callable(string): (StatementInterface|false) $executor Function to execute SQL.
-     * @return array<int, array<string, mixed>> The affected rows.
-     * @throws RuntimeException If the plan has no mutation.
+     * @return list<Row> The affected rows.
+     * @throws UnsupportedSqlException When the plan carries no mutation to write.
      */
     public function runResultSelectAndApplyShadow(RewritePlan $plan, callable $executor): array
     {
-        $mutation = $plan->mutation();
-        if ($mutation === null) {
-            throw new RuntimeException('ZTD Write Protection: Missing shadow mutation for write simulation.');
-        }
+        $mutation = $plan->requireMutation();
 
         $resultSet = $this->resultSelectRunner->runResultSet(
             $plan->sql(),
             $executor,
             $this->resultColumnTypeResolver,
         );
-        $this->applyMutation($mutation, $resultSet, $plan->sql());
+        $this->applyShadow($mutation, $resultSet, $plan->sql());
 
         return $resultSet->rows;
     }
@@ -382,84 +455,15 @@ final class Session
             return $stmt->rowCount();
         }
 
-        $mutation = $plan->mutation();
-        if ($mutation === null) {
-            throw new RuntimeException('ZTD Write Protection: Missing shadow mutation for write simulation.');
-        }
+        $mutation = $plan->requireMutation();
 
         $resultSet = $this->resultSelectRunner->runResultSet(
             $plan->sql(),
             fn (string $s) => $this->connection->query($s),
             $this->resultColumnTypeResolver,
         );
-        $impact = $this->applyMutation($mutation, $resultSet, $sql);
+        $impact = $this->applyShadow($mutation, $resultSet, $sql);
 
         return $impact->affectedRowCount($plan->affectedRowsMode());
-    }
-
-    /**
-     * Apply a mutation without leaking simulation-specific exception types
-     * through the connection adapter boundary.
-     *
-     * @throws DatabaseException When shadow mutation application fails.
-     */
-    private function applyMutation(
-        ShadowMutation $mutation,
-        ResultSet $resultSet,
-        string $sql,
-    ): MutationImpact {
-        $before = $this->shadowStore->get($mutation->tableName());
-        $snapshot = $this->shadowStore->snapshot();
-        try {
-            if ($mutation instanceof ResultSetMutation) {
-                $mutation->applyResultSet($this->shadowStore, $resultSet);
-            } else {
-                $mutation->apply($this->shadowStore, $resultSet->rows);
-            }
-            $this->referentialIntegrity->synchronize(
-                $snapshot,
-                $this->shadowStore,
-                $mutation,
-                $resultSet->rows,
-                $sql,
-            );
-        } catch (SimulationException $e) {
-            $this->shadowStore->restore($snapshot);
-            throw new DatabaseException($e->getMessage(), null, 0, $e);
-        }
-        $impact = new MutationImpact(
-            $mutation,
-            $before,
-            $resultSet->rows,
-            $this->shadowStore->get($mutation->tableName()),
-        );
-        if ($impact->isInsertLike() && $this->rewriter instanceof RewriteStateCommitter) {
-            $this->rewriter->commitRewriteState();
-        }
-        $this->captureLastInsertId($mutation, $impact);
-
-        return $impact;
-    }
-
-    private function captureLastInsertId(ShadowMutation $mutation, MutationImpact $impact): void
-    {
-        if (!$impact->isInsertLike()) {
-            return;
-        }
-
-        $definition = $this->registry->get($mutation->tableName());
-        $identityColumns = $definition !== null ? array_keys($definition->identityStrategies) : [];
-        if ($identityColumns === [] && $definition !== null && count($definition->primaryKeys) === 1) {
-            $identityColumns = $definition->primaryKeys;
-        }
-        $identityColumn = $identityColumns[0] ?? null;
-        $returningRows = $impact->returningRows();
-        $lastRow = $returningRows[count($returningRows) - 1] ?? null;
-        $identityValue = $identityColumn !== null && $lastRow !== null
-            ? ($lastRow[$identityColumn] ?? null)
-            : null;
-        if (is_int($identityValue) || is_string($identityValue)) {
-            $this->lastInsertId = (string) $identityValue;
-        }
     }
 }
