@@ -6,6 +6,9 @@ namespace ZtdQuery\Platform\Postgres;
 
 use ZtdQuery\Schema\TablePartitionRelation;
 
+/**
+ * The pg sql partition predicate renderer.
+ */
 final class PgSqlPartitionPredicateRenderer
 {
     /**

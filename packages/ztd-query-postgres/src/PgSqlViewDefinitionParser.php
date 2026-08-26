@@ -7,6 +7,9 @@ namespace ZtdQuery\Platform\Postgres;
 use ZtdQuery\Schema\ViewDefinition;
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The pg sql view definition parser.
+ */
 final class PgSqlViewDefinitionParser
 {
     /**

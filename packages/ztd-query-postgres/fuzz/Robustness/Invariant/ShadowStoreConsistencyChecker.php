@@ -6,6 +6,9 @@ namespace Fuzz\Robustness\Invariant;
 
 use ZtdQuery\Shadow\ShadowStore;
 
+/**
+ * The shadow store consistency checker.
+ */
 final class ShadowStoreConsistencyChecker
 {
     private ShadowStore $store;

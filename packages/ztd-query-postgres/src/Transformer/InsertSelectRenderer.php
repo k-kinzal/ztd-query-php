@@ -8,6 +8,9 @@ use InvalidArgumentException;
 use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 use ZtdQuery\Rewrite\InsertSelectProjectionPlanner;
 
+/**
+ * The insert select renderer.
+ */
 final class InsertSelectRenderer
 {
     private PgSqlIdentifierQuoter $quoter;

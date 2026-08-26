@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Postgres;
 
+/**
+ * The postgre sql lexical masker.
+ */
 final class PostgreSqlLexicalMasker
 {
     /**

@@ -6,6 +6,9 @@ namespace ZtdQuery\Platform\Postgres;
 
 use ZtdQuery\Platform\SqlPlaceholderEscaper;
 
+/**
+ * The pg sql pdo placeholder escaper, as sql placeholder escaper.
+ */
 final class PgSqlPdoPlaceholderEscaper implements SqlPlaceholderEscaper
 {
     /**

@@ -28,6 +28,9 @@ use ZtdQuery\Schema\PartialUniqueIndex;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
 
+/**
+ * The rewrite target.
+ */
 final class RewriteTarget
 {
     private Generator $faker;

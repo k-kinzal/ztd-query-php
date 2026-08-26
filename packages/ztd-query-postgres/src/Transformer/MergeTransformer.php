@@ -17,6 +17,9 @@ use ZtdQuery\Platform\Postgres\PgSqlMergeStatement;
 use ZtdQuery\Rewrite\ShadowIdentityAllocator;
 use ZtdQuery\Rewrite\SqlTransformer;
 
+/**
+ * The merge transformer, as sql transformer.
+ */
 final class MergeTransformer implements SqlTransformer
 {
     private PgSqlIdentifierQuoter $quoter;

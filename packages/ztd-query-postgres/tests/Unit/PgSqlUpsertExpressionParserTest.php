@@ -14,6 +14,9 @@ use ZtdQuery\Platform\Postgres\PgSqlUpsertExpressionParser;
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 
+/**
+ * The pg sql upsert expression parser test.
+ */
 #[CoversClass(PgSqlUpsertExpressionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
 final class PgSqlUpsertExpressionParserTest extends TestCase

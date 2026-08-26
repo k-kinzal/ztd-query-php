@@ -10,6 +10,9 @@ use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Shadow\Mutation\MultiTruncateMutation;
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The truncate target consistency checker, as invariant checker.
+ */
 final class TruncateTargetConsistencyChecker implements InvariantChecker
 {
     /**

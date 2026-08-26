@@ -9,6 +9,9 @@ use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
 
+/**
+ * The rewrite plan consistency checker, as invariant checker.
+ */
 final class RewritePlanConsistencyChecker implements InvariantChecker
 {
     private SqlRewriter $rewriter;

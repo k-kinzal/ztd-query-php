@@ -7,6 +7,9 @@ namespace ZtdQuery\Platform\Postgres;
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The pg sql read only diagnostic statement.
+ */
 final class PgSqlReadOnlyDiagnosticStatement
 {
     /** @var non-empty-list<string> */

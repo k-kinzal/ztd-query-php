@@ -7,6 +7,9 @@ namespace ZtdQuery\Platform\Postgres;
 use ZtdQuery\Platform\ResultColumnTypeResolver;
 use ZtdQuery\Schema\ColumnType;
 
+/**
+ * The pg sql pdo result column type resolver, as result column type resolver.
+ */
 final class PgSqlPdoResultColumnTypeResolver implements ResultColumnTypeResolver
 {
     /**

@@ -6,6 +6,9 @@ namespace ZtdQuery\Platform\Postgres;
 
 use InvalidArgumentException;
 
+/**
+ * The pg sql table sample.
+ */
 final class PgSqlTableSample
 {
     /**

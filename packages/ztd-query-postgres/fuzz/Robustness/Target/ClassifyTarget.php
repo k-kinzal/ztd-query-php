@@ -13,6 +13,9 @@ use SqlFaker\PostgreSqlProvider;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
 use ZtdQuery\Platform\Postgres\PgSqlQueryGuard;
 
+/**
+ * The classify target.
+ */
 final class ClassifyTarget
 {
     private Generator $faker;

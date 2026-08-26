@@ -8,6 +8,9 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Shadow\ShadowStore;
 
+/**
+ * The shadow store consistency checker test.
+ */
 #[CoversNothing]
 final class ShadowStoreConsistencyCheckerTest extends TestCase
 {

@@ -9,6 +9,9 @@ use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Rewrite\SqlRewriter;
 
+/**
+ * The rewrite exception type checker, as invariant checker.
+ */
 final class RewriteExceptionTypeChecker implements InvariantChecker
 {
     private SqlRewriter $rewriter;

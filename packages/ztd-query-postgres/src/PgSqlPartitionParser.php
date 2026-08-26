@@ -11,6 +11,9 @@ use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The pg sql partition parser.
+ */
 final class PgSqlPartitionParser
 {
     /**

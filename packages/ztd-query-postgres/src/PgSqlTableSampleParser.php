@@ -8,6 +8,9 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The pg sql table sample parser.
+ */
 final class PgSqlTableSampleParser
 {
     /**

@@ -6,6 +6,9 @@ namespace ZtdQuery\Platform\Postgres;
 
 use ZtdQuery\Exception\UnsupportedSqlException;
 
+/**
+ * The pg sql table sample rewriter.
+ */
 final class PgSqlTableSampleRewriter
 {
     private PgSqlTableSampleParser $parser;

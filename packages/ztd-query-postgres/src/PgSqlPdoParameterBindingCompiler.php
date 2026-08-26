@@ -7,6 +7,9 @@ namespace ZtdQuery\Platform\Postgres;
 use ZtdQuery\Platform\ParameterBindingCompiler;
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The pg sql pdo parameter binding compiler, as parameter binding compiler.
+ */
 final class PgSqlPdoParameterBindingCompiler implements ParameterBindingCompiler
 {
     /**

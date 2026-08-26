@@ -7,6 +7,9 @@ namespace Tests\Fake;
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Connection\StatementInterface;
 
+/**
+ * The fake sequential connection, as connection interface.
+ */
 final class FakeSequentialConnection implements ConnectionInterface
 {
     /** @var list<StatementInterface> */
