@@ -43,8 +43,16 @@ final class CandidateKeySet
     }
 
     /**
-     * @param Row $row
-     * @param list<Row> $existingRows
+     * Answers the first candidate key an incoming row would collide on.
+     *
+     * The rows searched may be keyed, and the conflict reports the key it was
+     * found at: a caller that has narrowed the rows it is willing to collide
+     * with still has to say which of its own rows that was.
+     *
+     * @param Row $row Row that would be written
+     * @param array<int, Row> $existingRows Rows it could collide with, under the keys the caller knows them by
+     *
+     * @return CandidateKeyConflict|null Where and on which key it collides, or null when it does not
      */
     public function findConflict(array $row, array $existingRows): ?CandidateKeyConflict
     {
