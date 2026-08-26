@@ -9,12 +9,13 @@ use Faker\Provider\Base;
 use RuntimeException;
 use SqlFixture\Hydrator\HydratorInterface;
 use SqlFixture\Platform\PlatformFactory;
+use SqlFixture\Schema\DdlDirectory;
 use SqlFixture\Schema\TableSchema;
 use SqlFixture\TypeMapper\TypeMapperInterface;
-use Throwable;
 
 /**
  * Faker provider that generates fixtures from local DDL files.
+ * @phpstan-import-type FixtureRow from TypeMapperInterface
  */
 class FileFixtureProvider extends Base
 {
@@ -39,7 +40,7 @@ class FileFixtureProvider extends Base
         $schemaParser = PlatformFactory::createSchemaParser($dialect);
 
         $this->fixtureGenerator = new FixtureGenerator($faker, $typeMapper, $hydrator, $schemaParser);
-        $this->loadSchemas($ddlPath);
+        $this->schemas = (new DdlDirectory($this->fixtureGenerator->getSchemaParser()))->tables($ddlPath);
     }
 
     /**
@@ -47,9 +48,11 @@ class FileFixtureProvider extends Base
      *
      * @template T of object
      * @param string $tableName Table name (e.g., "users")
-     * @param array<string, mixed> $overrides Override values
+     * @param array<array-key, mixed> $overrides Columns the caller fixes, instead of generating them
      * @param class-string<T>|null $className Deserialization target class
-     * @return ($className is null ? array<string, mixed> : T)
+     * @return ($className is null ? FixtureRow : T) The row, or the object it was hydrated into
+     *
+     * @throws RuntimeException When the directory names no such table
      */
     public function fixture(
         string $tableName,
@@ -81,51 +84,6 @@ class FileFixtureProvider extends Base
     public function getTableNames(): array
     {
         return array_keys($this->schemas);
-    }
-
-    /**
-     * Load all SQL files from the DDL directory.
-     */
-    private function loadSchemas(string $ddlPath): void
-    {
-        if (!is_dir($ddlPath)) {
-            throw new RuntimeException("DDL path is not a directory: {$ddlPath}");
-        }
-
-        $files = glob($ddlPath . '/*.sql');
-        if ($files === false) {
-            throw new RuntimeException("Failed to read DDL directory: {$ddlPath}");
-        }
-
-        foreach ($files as $file) {
-            $this->loadSchemaFile($file);
-        }
-    }
-
-    /**
-     * Load a single SQL file.
-     */
-    private function loadSchemaFile(string $filePath): void
-    {
-        $content = file_get_contents($filePath);
-        if ($content === false) {
-            throw new RuntimeException("Failed to read file: {$filePath}");
-        }
-
-        $content = preg_replace('/--.*$/m', '', $content);
-        $content = preg_replace('/\/\*.*?\*\//s', '', $content ?? '');
-
-        if ($content === null || trim($content) === '') {
-            return;
-        }
-
-        try {
-            $schema = $this->fixtureGenerator->getSchemaParser()->parse($content);
-            $this->schemas[strtolower($schema->tableName)] = $schema;
-        } catch (Throwable $e) {
-            // Skip files that don't contain valid CREATE TABLE statements
-            // This allows the directory to contain other SQL files
-        }
     }
 
     /**

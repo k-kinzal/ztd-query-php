@@ -24,7 +24,7 @@ use Tests\Fixture\Fixture\OrderSchema;
 final class GenerationRunTest extends TestCase
 {
     #[Test]
-    public function claimingATableStopsASecondWalkStarting(): void
+    public function testClaimingATableStopsASecondWalkStarting(): void
     {
         $run = new GenerationRun([]);
         $run->claim(['order', 'customer']);
@@ -35,7 +35,7 @@ final class GenerationRunTest extends TestCase
     }
 
     #[Test]
-    public function reachingATableAsAListSticks(): void
+    public function testReachedReachingATableAsAListSticks(): void
     {
         $run = new GenerationRun([]);
         $run->claim(['order_detail']);
@@ -47,7 +47,7 @@ final class GenerationRunTest extends TestCase
     }
 
     #[Test]
-    public function aTableReachedOnlyAsASingleRowReadsBackAsOne(): void
+    public function testToSetATableReachedOnlyAsASingleRowReadsBackAsOne(): void
     {
         $run = new GenerationRun([]);
         $run->reached('order', false);
@@ -77,7 +77,7 @@ final class GenerationRunTest extends TestCase
     }
 
     #[Test]
-    public function recordKeepsAKeyTheCallerSupplied(): void
+    public function testRecordKeepsAKeyTheCallerSupplied(): void
     {
         $run = new GenerationRun([]);
 
@@ -93,7 +93,7 @@ final class GenerationRunTest extends TestCase
     }
 
     #[Test]
-    public function wasAskedForReportsWhatTheCallerMentioned(): void
+    public function testWasAskedForReportsWhatTheCallerMentioned(): void
     {
         $run = new GenerationRun(['order' => RowSpec::from('order', 2)]);
 
@@ -102,7 +102,7 @@ final class GenerationRunTest extends TestCase
     }
 
     #[Test]
-    public function specForFallsBackToUnspecified(): void
+    public function testSpecForFallsBackToUnspecified(): void
     {
         $run = new GenerationRun(['order' => RowSpec::from('order', 2)]);
 
@@ -160,5 +160,34 @@ final class GenerationRunTest extends TestCase
             ['status' => 'paid', 'id' => 1],
             $run->record(OrderSchema::create(), ['status' => 'paid'], ['id'])
         );
+    }
+
+    #[Test]
+    public function testHasVisitedIsFalseUntilTheWalkReachesTheTable(): void
+    {
+        $run = new GenerationRun([]);
+
+        self::assertFalse($run->hasVisited('order'));
+
+        $run->reached('order', false);
+
+        self::assertTrue($run->hasVisited('order'));
+    }
+
+    #[Test]
+    public function testLastRowAnswersTheRowKeptMostRecently(): void
+    {
+        $run = new GenerationRun([]);
+        $schema = OrderSchema::create();
+        $run->record($schema, ['id' => 1, 'total' => 100]);
+        $run->record($schema, ['id' => 2, 'total' => 200]);
+
+        self::assertSame(['id' => 2, 'total' => 200], $run->lastRow('order'));
+    }
+
+    #[Test]
+    public function testLastRowIsEmptyForATableNothingWasKeptFor(): void
+    {
+        self::assertSame([], (new GenerationRun([]))->lastRow('order'));
     }
 }

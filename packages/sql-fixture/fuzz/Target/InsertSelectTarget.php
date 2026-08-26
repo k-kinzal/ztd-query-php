@@ -7,6 +7,7 @@ namespace Fuzz\Target;
 use Error;
 use Faker\Factory;
 use Faker\Generator;
+use Fuzz\FuzzerSeed;
 use PDO;
 use SqlFixture\FixtureProvider;
 
@@ -49,8 +50,18 @@ final class InsertSelectTarget
     private Generator $faker;
     private FixtureProvider $fixtureProvider;
 
+    /**
+     * Builds a target that writes a generated row and reads it back.
+     *
+     * The table is dropped and recreated so a run always starts from a table
+     * whose columns are the ones this target believes it is exercising.
+     *
+     * @param PDO $pdo Connection to write through
+     * @param FuzzerSeed $seeds Turns fuzzer bytes into a seed
+     */
     public function __construct(
         private readonly PDO $pdo,
+        private readonly FuzzerSeed $seeds = new FuzzerSeed(),
     ) {
         $this->faker = Factory::create();
         $this->fixtureProvider = new FixtureProvider($this->faker);
@@ -67,7 +78,7 @@ final class InsertSelectTarget
      */
     public function __invoke(string $input): void
     {
-        $seed = $this->inputToSeed($input);
+        $seed = $this->seeds->of($input);
         $this->faker->seed($seed);
 
         $fixture = $this->fixtureProvider->fixture(self::ALL_TYPES_TABLE);
@@ -106,7 +117,6 @@ final class InsertSelectTarget
         }
 
         foreach ($fixture as $column => $expected) {
-            /** @var mixed $actual */
             $actual = $result[$column] ?? null;
 
             if (!$this->compare($expected, $actual, $column)) {
@@ -123,18 +133,21 @@ final class InsertSelectTarget
         $this->pdo->exec("DELETE FROM all_types WHERE id = $id");
     }
 
-    private function inputToSeed(string $input): int
-    {
-        if (strlen($input) < 4) {
-            $input = str_pad($input, 4, "\0");
-        }
-        return crc32($input);
-    }
-
     /**
-     * Compare expected and actual values with type-appropriate logic.
+     * Reports whether a value read back is the value that was written.
+     *
+     * A driver reports what it stored, not what it was given: a boolean comes
+     * back as 0 or 1, a decimal as a string, a float rounded to the precision
+     * the column declares. Comparing them strictly would report every row as a
+     * mismatch, so each kind is compared the way the column stores it.
+     *
+     * @param int|float|string|bool|array<array-key, int|float|string|bool|null>|null $expected Value the fixture wrote
+     * @param mixed $actual Value the server reported back
+     * @param string $column Column the values are for
+     *
+     * @return bool True when the server round-tripped the value
      */
-    private function compare(mixed $expected, mixed $actual, string $column): bool
+    public function compare(int|float|string|bool|array|null $expected, mixed $actual, string $column): bool
     {
         if ($expected === null && $actual === null) {
             return true;

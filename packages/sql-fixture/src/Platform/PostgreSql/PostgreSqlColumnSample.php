@@ -21,16 +21,24 @@ use SqlFixture\Schema\ColumnDefinition;
 final class PostgreSqlColumnSample
 {
     /**
+     * The shortest text Faker will produce.
+     *
+     * Asking for less raises rather than answering, so a column declared
+     * narrower than this is filled from a longer draw and cut down.
+     */
+    private const SHORTEST_FAKER_TEXT = 5;
+
+    /**
      * Picks a value the column's declared type will accept.
      *
      * @param Generator $faker Source of every choice
      * @param ColumnDefinition $column Column the value is for
      *
-     * @return mixed A value of the kind the type calls for
+     * @return int|float|string|bool A value of the kind the type calls for
      *
      * @throws RandomException When a bytea column is asked for and the system has no source of randomness
      */
-    public function of(Generator $faker, ColumnDefinition $column): mixed
+    public function of(Generator $faker, ColumnDefinition $column): int|float|string|bool
     {
         return match (strtoupper($column->type)) {
             'SMALLINT', 'INT2' => $faker->numberBetween(-32768, 32767),
@@ -47,7 +55,7 @@ final class PostgreSqlColumnSample
 
             'CHAR', 'CHARACTER' => $this->char($faker, $column),
             'VARCHAR', 'CHARACTER VARYING' => $this->varchar($faker, $column),
-            'TEXT' => $faker->paragraphs(2, true),
+            'TEXT' => $this->paragraphs($faker, 2),
 
             'BYTEA' => $this->bytea($faker),
 
@@ -123,7 +131,7 @@ final class PostgreSqlColumnSample
     {
         $maxLength = $column->length ?? 255;
 
-        return substr($faker->text(min($maxLength, 200)), 0, $maxLength);
+        return substr($faker->text(max(self::SHORTEST_FAKER_TEXT, min($maxLength, 200))), 0, $maxLength);
     }
 
     /**
@@ -204,5 +212,26 @@ final class PostgreSqlColumnSample
         }
 
         return '{' . implode(',', $members) . '}';
+    }
+
+    /**
+     * Draws several paragraphs as one block of text.
+     *
+     * Faker answers either the list of paragraphs or the joined text depending
+     * on a flag, so the joining is done here, where the result is known to be
+     * text rather than a list of it.
+     *
+     * @param Generator $faker Source of the text
+     * @param int $count How many paragraphs to draw
+     *
+     * @return string The paragraphs, separated by blank lines
+     */
+    public function paragraphs(Generator $faker, int $count): string
+    {
+        $paragraphs = $faker->paragraphs($count);
+
+        return is_array($paragraphs)
+            ? implode("\n\n", array_filter($paragraphs, 'is_string'))
+            : $paragraphs;
     }
 }

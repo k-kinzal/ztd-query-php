@@ -20,7 +20,7 @@ use SqlFixture\Schema\TableSchema;
 final class SqliteSchemaParserTest extends TestCase
 {
     #[Test]
-    public function parseSimpleTable(): void
+    public function testParseSimpleTable(): void
     {
         $sql = 'CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)';
         $schema = (new SqliteSchemaParser())->parse($sql);

@@ -12,6 +12,9 @@ use SqlFixture\Plan\Relation;
  */
 final class OrderWithDetailsPlan extends FixturePlan
 {
+    /**
+     * Declares the relations an order and its details are generated through.
+     */
     public function __construct()
     {
         parent::__construct(

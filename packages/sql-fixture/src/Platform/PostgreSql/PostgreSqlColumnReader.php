@@ -149,9 +149,9 @@ final class PostgreSqlColumnReader
      *
      * @param string $rest Everything after the column name
      *
-     * @return mixed The default, or null when none was declared
+     * @return int|float|string|bool|null The default, or null when none was declared
      */
-    public function defaultValue(string $rest): mixed
+    public function defaultValue(string $rest): int|float|string|bool|null
     {
         $pattern = '/\bDEFAULT\s+(.+?)'
             . '(?:\s+(?:NOT\s+NULL|NULL|PRIMARY|UNIQUE|CHECK|REFERENCES|CONSTRAINT|GENERATED)|$)/is';
