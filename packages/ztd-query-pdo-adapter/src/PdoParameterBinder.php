@@ -6,6 +6,9 @@ namespace ZtdQuery\Adapter\Pdo;
 
 use PDOStatement;
 
+/**
+ * The pdo parameter binder.
+ */
 final class PdoParameterBinder
 {
     /**

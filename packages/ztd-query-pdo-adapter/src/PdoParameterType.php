@@ -6,6 +6,9 @@ namespace ZtdQuery\Adapter\Pdo;
 
 use PDO;
 
+/**
+ * The pdo parameter type.
+ */
 final class PdoParameterType
 {
     /**

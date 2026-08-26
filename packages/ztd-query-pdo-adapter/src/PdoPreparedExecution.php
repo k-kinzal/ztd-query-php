@@ -10,6 +10,9 @@ use RuntimeException;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Session;
 
+/**
+ * The pdo prepared execution.
+ */
 final class PdoPreparedExecution
 {
     /**

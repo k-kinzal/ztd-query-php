@@ -8,6 +8,9 @@ use Faker\Generator;
 use Fuzz\Correctness\SchemaDefinition;
 use InvalidArgumentException;
 
+/**
+ * The sqlite schema pool.
+ */
 final class SqliteSchemaPool
 {
     /** @var array<string, SchemaDefinition> */

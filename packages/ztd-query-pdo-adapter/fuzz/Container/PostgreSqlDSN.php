@@ -8,6 +8,9 @@ use LogicException;
 use Testcontainers\Containers\WaitStrategy\PDO\DSN;
 use Testcontainers\Utility\Stringable;
 
+/**
+ * The postgre sql d s n, as d s n and stringable.
+ */
 final class PostgreSqlDSN implements DSN, Stringable
 {
     private ?string $host = null;

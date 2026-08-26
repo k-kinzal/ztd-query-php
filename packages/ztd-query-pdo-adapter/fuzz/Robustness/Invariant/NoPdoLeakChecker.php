@@ -18,6 +18,9 @@ use ZtdQuery\Exception\TableAlreadyExistsException;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 
+/**
+ * The no pdo leak checker.
+ */
 final class NoPdoLeakChecker
 {
     private const ALLOWED_RAW_PDO_ERRORS = [

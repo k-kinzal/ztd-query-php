@@ -8,6 +8,9 @@ use Override;
 use Testcontainers\Containers\GenericContainer\GenericContainer;
 use Testcontainers\Containers\WaitStrategy\PDO\PDOConnectWaitStrategy;
 
+/**
+ * The postgre sql container.
+ */
 final class PostgreSqlContainer extends GenericContainer
 {
     /**

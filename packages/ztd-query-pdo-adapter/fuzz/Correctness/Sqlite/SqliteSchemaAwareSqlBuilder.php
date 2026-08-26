@@ -7,6 +7,9 @@ namespace Fuzz\Correctness\Sqlite;
 use Faker\Generator;
 use Fuzz\Correctness\SchemaDefinition;
 
+/**
+ * The sqlite schema aware sql builder.
+ */
 final class SqliteSchemaAwareSqlBuilder
 {
     private Generator $faker;

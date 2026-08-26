@@ -8,6 +8,9 @@ use Faker\Generator;
 use Fuzz\Correctness\SchemaDefinition;
 use InvalidArgumentException;
 
+/**
+ * The pg schema pool.
+ */
 final class PgSchemaPool
 {
     /** @var array<string, SchemaDefinition> */

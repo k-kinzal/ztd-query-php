@@ -7,6 +7,9 @@ namespace Fuzz\Correctness\Postgres;
 use Faker\Generator;
 use Fuzz\Correctness\SchemaDefinition;
 
+/**
+ * The pg schema aware sql builder.
+ */
 final class PgSchemaAwareSqlBuilder
 {
     private Generator $faker;
