@@ -12,19 +12,11 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\MySqlLexerProfile;
 use ZtdQuery\Platform\MySql\MySqlLoadDataTargets;
 use ZtdQuery\Platform\MySql\MySqlValueRenderer;
-use ZtdQuery\Schema\TableDefinition;
-use ZtdQuery\Sql\SqlToken;
-use ZtdQuery\Sql\SqlTokenScanner;
-use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(MySqlLoadDataTargets::class)]
 #[UsesClass(MySqlValueRenderer::class)]
 #[UsesClass(MySqlLexerProfile::class)]
-#[UsesClass(TableDefinition::class)]
-#[UsesClass(SqlToken::class)]
-#[UsesClass(SqlTokenStream::class)]
-#[UsesClass(SqlTokenScanner::class)]
-#[UsesClass(UnsupportedSqlException::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlCastRenderer::class)]
 final class MySqlLoadDataTargetsTest extends TestCase
 {
     public function testOfLoadsIntoEveryColumnTheTableDoesNotWriteItself(): void

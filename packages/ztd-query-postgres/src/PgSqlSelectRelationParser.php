@@ -124,8 +124,18 @@ final class PgSqlSelectRelationParser
         return $sql;
     }
 
-    /** @return list<array{name: string, start: int, unqualifiedStart: int, end: int}> */
-    private function referencesFromClause(string $clause): array
+    /**
+     * Answers every table a FROM clause names, and where each is written.
+     *
+     * A parenthesised join is a join like any other, so what it names is
+     * named by the clause around it; a parenthesised query is not, so what it
+     * names belongs to itself.
+     *
+     * @param string $clause The clause
+     *
+     * @return list<array{name: string, start: int, unqualifiedStart: int, end: int}> What it answers
+     */
+    public function referencesFromClause(string $clause): array
     {
         $tokens = $this->tokens($clause);
         $references = [];
@@ -188,8 +198,15 @@ final class PgSqlSelectRelationParser
         return $references;
     }
 
-    /** @param list<SqlToken> $tokens */
-    private function closingToken(array $tokens, int $openingIndex): ?SqlToken
+    /**
+     * Answers the parenthesis that closes the one written here.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param int $openingIndex The opening index
+     *
+     * @return SqlToken|null What it answers
+     */
+    public function closingToken(array $tokens, int $openingIndex): ?SqlToken
     {
         for ($index = $openingIndex; isset($tokens[$index]); $index++) {
             $candidate = $tokens[$index];
@@ -202,10 +219,19 @@ final class PgSqlSelectRelationParser
     }
 
     /**
-     * @param list<SqlToken> $tokens
-     * @return array{name: string, start: int, unqualifiedStart: int, end: int}|null
+     * Answers the table named here, and where its name is written.
+     *
+     * A name followed by a parenthesis is a function call, not a table, and a
+     * qualified name is read down to its last part -- but where the qualifier
+     * starts is answered too, so a caller can take the qualifier off.
+     *
+     * @param string $sql Statement being read, as written
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param int $index Where to read
+     *
+     * @return array{name: string, start: int, unqualifiedStart: int, end: int}|null What it answers
      */
-    private function referenceAt(string $sql, array $tokens, int $index): ?array
+    public function referenceAt(string $sql, array $tokens, int $index): ?array
     {
         $token = $tokens[$index];
         if ($token->isKeyword('VALUES') || $token->isKeyword('SELECT') || $token->isKeyword('WITH')) {
@@ -242,10 +268,14 @@ final class PgSqlSelectRelationParser
     }
 
     /**
-     * @param list<SqlToken> $tokens
-     * @return array{string, int, int, int, int}|null
+     * Answers one part of a name, and where it is written.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param int $index Where to read
+     *
+     * @return array{string, int, int, int, int}|null What it answers
      */
-    private function identifierComponentAt(array $tokens, int $index): ?array
+    public function identifierComponentAt(array $tokens, int $index): ?array
     {
         $token = $tokens[$index] ?? null;
         if ($token === null) {
@@ -268,8 +298,19 @@ final class PgSqlSelectRelationParser
         ];
     }
 
-    /** @param list<SqlToken> $tokens */
-    private function findFromEnd(string $sql, array $tokens, SqlToken $fromToken): int
+    /**
+     * Answers where a FROM clause ends.
+     *
+     * It ends at whichever clause opens next at the same depth, or wherever
+     * the statement the FROM belongs to ends.
+     *
+     * @param string $sql Statement being read, as written
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param SqlToken $fromToken The from token
+     *
+     * @return int What it answers
+     */
+    public function findFromEnd(string $sql, array $tokens, SqlToken $fromToken): int
     {
         $terminators = [
             ['WHERE'], ['GROUP', 'BY'], ['HAVING'], ['WINDOW'], ['ORDER', 'BY'],
@@ -299,10 +340,15 @@ final class PgSqlSelectRelationParser
     }
 
     /**
-     * @param list<SqlToken> $tokens
-     * @param non-empty-list<string> $keywords
+     * Reports whether a run of keywords is written starting here.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param int $index Where to read
+     * @param non-empty-list<string> $keywords Keywords to look for, in order
+     *
+     * @return bool What it answers
      */
-    private function matchesKeywordSequence(array $tokens, int $index, array $keywords): bool
+    public function matchesKeywordSequence(array $tokens, int $index, array $keywords): bool
     {
         foreach ($keywords as $relative => $keyword) {
             $candidate = $tokens[$index + $relative] ?? null;
@@ -314,8 +360,14 @@ final class PgSqlSelectRelationParser
         return true;
     }
 
-    /** @return list<SqlToken> */
-    private function tokens(string $sql): array
+    /**
+     * Reads a statement into the lexemes that carry meaning.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return list<SqlToken> What it answers
+     */
+    public function tokens(string $sql): array
     {
         return SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->significantTokens();
     }

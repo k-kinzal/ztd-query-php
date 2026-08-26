@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Postgres;
 
-use InvalidArgumentException;
+use ZtdQuery\Exception\InvalidDefinitionException;
 
 /**
  * The pg sql table sample.
@@ -12,7 +12,7 @@ use InvalidArgumentException;
 final class PgSqlTableSample
 {
     /**
-     * @throws InvalidArgumentException
+     * @throws InvalidDefinitionException When the sample could not describe anything
      */
     public function __construct(
         public readonly string $tableName,
@@ -25,10 +25,10 @@ final class PgSqlTableSample
         public readonly int $endOffset,
     ) {
         if ($tableName === '' || $sourceSql === '' || $percentageSql === '') {
-            throw new InvalidArgumentException('TABLESAMPLE fields must not be empty');
+            throw new InvalidDefinitionException('TABLESAMPLE fields must not be empty');
         }
         if ($startOffset < 0 || $endOffset <= $startOffset) {
-            throw new InvalidArgumentException('TABLESAMPLE offsets are invalid');
+            throw new InvalidDefinitionException('TABLESAMPLE offsets are invalid');
         }
     }
 }

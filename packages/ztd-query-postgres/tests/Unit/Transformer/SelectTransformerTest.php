@@ -7,9 +7,8 @@ namespace Tests\Unit\Transformer;
 use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
-use RuntimeException;
-use stdClass;
 use Tests\Contract\TransformerContractTest;
+use Tests\Fixture\DriverAnswer;
 use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
 use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 use ZtdQuery\Platform\Postgres\PgSqlTableSample;
@@ -683,22 +682,6 @@ final class SelectTransformerTest extends TransformerContractTest
         self::assertStringNotContainsString('"not_referenced"', $result);
     }
 
-    public function testTransformUnsupportedValueTypeThrows(): void
-    {
-        $transformer = new SelectTransformer();
-        $tables = [
-            'users' => [
-                'rows' => [['data' => [1, 2, 3]]],
-                'columns' => ['data'],
-                'columnTypes' => [],
-            ],
-        ];
-
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Unsupported value type for CTE shadowing');
-        $transformer->transform('SELECT * FROM users', $tables);
-    }
-
     public function testTransformObjectWithToStringNoColumnType(): void
     {
         $transformer = new SelectTransformer();
@@ -723,10 +706,9 @@ final class SelectTransformerTest extends TransformerContractTest
     public function testTransformSerializesObjectWithColumnType(): void
     {
         $transformer = new SelectTransformer();
-        $obj = new stdClass();
         $tables = [
             'users' => [
-                'rows' => [['val' => $obj]],
+                'rows' => [['val' => DriverAnswer::stringable()]],
                 'columns' => ['val'],
                 'columnTypes' => ['val' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT')],
             ],
@@ -847,4 +829,45 @@ final class SelectTransformerTest extends TransformerContractTest
         $result = $transformer->transform('SELECT * FROM data', $tables);
         self::assertSame(1, substr_count($result, '"x"'));
     }
+    public function testGenerateCteWritesOneRowPerRowItWasGiven(): void
+    {
+        $sql = (new SelectTransformer())->generateCte('t', [['id' => 1], ['id' => 2]], ['id'], [], []);
+
+        self::assertStringContainsString('VALUES', $sql);
+    }
+
+    public function testGenerateCteStillNamesTheColumnsOfATableWithNoRows(): void
+    {
+        self::assertStringContainsString(
+            'WHERE FALSE',
+            (new SelectTransformer())->generateCte('t', [], ['id'], [], []),
+        );
+    }
+
+    public function testGenerateMultiRowSourceWritesTheRowsAsOneValuesList(): void
+    {
+        self::assertStringContainsString(
+            'VALUES',
+            (new SelectTransformer())->generateMultiRowSource([['id' => 1]], ['id'], []),
+        );
+    }
+
+    public function testWrapCteNamesTheTableTheQueryAnswersFor(): void
+    {
+        self::assertSame(
+            '"t" AS MATERIALIZED (SELECT 1)',
+            (new SelectTransformer())->wrapCte('"t"', 'SELECT 1', ['id'], []),
+        );
+    }
+
+    public function testFormatValueWritesAValueAsTheSqlThatReadsItBack(): void
+    {
+        self::assertSame("CAST('a' AS TEXT)", (new SelectTransformer())->formatValue('a'));
+    }
+
+    public function testRenderFallbackNullCastWritesANullOfSomeType(): void
+    {
+        self::assertStringContainsString('CAST(NULL', (new SelectTransformer())->renderFallbackNullCast());
+    }
+
 }

@@ -20,6 +20,8 @@ use ZtdQuery\Shadow\ShadowStore;
 #[UsesClass(ShadowStore::class)]
 #[UsesClass(MutationRowIdentity::class)]
 #[CoversClass(UpdateMutation::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\RowConstraints::class)]
+#[UsesClass(\ZtdQuery\Shadow\Row\RowMatch::class)]
 final class UpdateMutationTest extends TestCase
 {
     public function testTableNameApplyReplacesRowsByPrimaryKey(): void

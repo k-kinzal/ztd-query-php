@@ -65,7 +65,8 @@ final class PgSqlTransformer implements SqlTransformer
             'UPDATE' => $this->updateTransformer->transform($sql, $tables),
             'DELETE' => $this->deleteTransformer->transform($sql, $tables),
             'MERGE' => $this->mergeTransformer()->transform($sql, $tables),
-            default => throw new UnsupportedSqlException($sql, 'Statement type not supported by transformer'),
+            'TRUNCATE', 'CREATE_TABLE', 'DROP_TABLE', 'ALTER_TABLE', 'DO', 'TCL', null
+                => throw new UnsupportedSqlException($sql, 'Statement type not supported by transformer'),
         };
     }
 
@@ -78,7 +79,12 @@ final class PgSqlTransformer implements SqlTransformer
         $this->insertTransformer->commitRewriteState();
     }
 
-    private function mergeTransformer(): MergeTransformer
+    /**
+     * Answers the transformer that rewrites a MERGE.
+     *
+     * @return MergeTransformer What it answers
+     */
+    public function mergeTransformer(): MergeTransformer
     {
         if ($this->mergeTransformer === null) {
             $this->mergeTransformer = new MergeTransformer(new PgSqlMergeParser(), $this->selectTransformer);

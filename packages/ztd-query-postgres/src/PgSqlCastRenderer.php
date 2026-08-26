@@ -36,7 +36,14 @@ final class PgSqlCastRenderer implements CastRenderer
         return "CAST(NULL AS $castType)";
     }
 
-    private function mapToCastType(ColumnDeclaration $type): string
+    /**
+     * Answers what a cast calls a column of this type.
+     *
+     * @param ColumnDeclaration $type How the column was declared
+     *
+     * @return string What it answers
+     */
+    public function mapToCastType(ColumnDeclaration $type): string
     {
         $nativeType = trim($type->nativeType);
         if (str_ends_with($nativeType, '[]')) {
@@ -64,7 +71,14 @@ final class PgSqlCastRenderer implements CastRenderer
         };
     }
 
-    private function mapIntegerType(string $nativeType): string
+    /**
+     * Answers which of PostgreSQL's integer types a declaration means.
+     *
+     * @param string $nativeType The native type
+     *
+     * @return string What it answers
+     */
+    public function mapIntegerType(string $nativeType): string
     {
         $baseType = strtoupper((string) preg_replace('/\(.*\)/', '', $nativeType));
 
@@ -75,7 +89,14 @@ final class PgSqlCastRenderer implements CastRenderer
         };
     }
 
-    private function extractDecimalType(string $nativeType): string
+    /**
+     * Answers the NUMERIC a cast would keep the same digits with.
+     *
+     * @param string $nativeType The native type
+     *
+     * @return string What it answers
+     */
+    public function extractDecimalType(string $nativeType): string
     {
         $upper = strtoupper($nativeType);
         if (preg_match('/(?:DECIMAL|NUMERIC)\((\d+),(\d+)\)/', $upper, $matches) === 1) {
@@ -88,7 +109,14 @@ final class PgSqlCastRenderer implements CastRenderer
         return 'NUMERIC';
     }
 
-    private function extractStringType(string $nativeType): string
+    /**
+     * Answers the character type a cast would keep the same width with.
+     *
+     * @param string $nativeType The native type
+     *
+     * @return string What it answers
+     */
+    public function extractStringType(string $nativeType): string
     {
         $upper = strtoupper($nativeType);
         if (preg_match('/VARCHAR\((\d+)\)/', $upper, $matches) === 1) {

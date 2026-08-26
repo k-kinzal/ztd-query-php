@@ -17,6 +17,10 @@ use ZtdQuery\Shadow\Mutation\UpsertExpressionKind;
 #[CoversClass(UpsertExpression::class)]
 #[CoversClass(UpsertColumnSource::class)]
 #[UsesClass(UnsupportedSqlException::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertColumn::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertComparison::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertNumber::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertTruth::class)]
 final class UpsertExpressionTest extends TestCase
 {
     public function testLiteralAnswersTheValueTheStatementWrote(): void
