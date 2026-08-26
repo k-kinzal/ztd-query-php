@@ -20,6 +20,11 @@ use SqlFixture\Schema\StaticSchemaResolver;
 final class ShopSchemas
 {
     /**
+     * @var StaticSchemaResolver|null The shop tables, read once
+     */
+    private static ?StaticSchemaResolver $resolver = null;
+
+    /**
      * Answers a plan generator drawing from a fixed seed.
      *
      * @param int $seed Seed both the plan generator and its rows draw from
@@ -88,6 +93,10 @@ final class ShopSchemas
      */
     public static function resolver(): StaticSchemaResolver
     {
+        if (self::$resolver !== null) {
+            return self::$resolver;
+        }
+
         $parser = new MySqlSchemaParser();
         $resolver = new StaticSchemaResolver();
 
@@ -95,7 +104,7 @@ final class ShopSchemas
             $resolver->register($parser->parse($ddl));
         }
 
-        return $resolver;
+        return self::$resolver = $resolver;
     }
 
     /**
