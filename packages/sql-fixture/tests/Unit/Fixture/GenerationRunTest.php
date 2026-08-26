@@ -11,6 +11,9 @@ use PHPUnit\Framework\TestCase;
 use SqlFixture\Fixture\GenerationRun;
 use SqlFixture\Fixture\RowSpec;
 use SqlFixture\Plan\FixturePlan;
+use SqlFixture\Plan\GenerationOrder;
+use SqlFixture\Plan\PlanIntegrity;
+use SqlFixture\Plan\TableName;
 use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\TableSchema;
 use Tests\Fixture\Fixture\OrderSchema;
@@ -21,6 +24,9 @@ use Tests\Fixture\Fixture\OrderSchema;
 #[UsesClass(\SqlFixture\Fixture\FixtureSet::class)]
 #[UsesClass(TableSchema::class)]
 #[UsesClass(ColumnDefinition::class)]
+#[UsesClass(GenerationOrder::class)]
+#[UsesClass(PlanIntegrity::class)]
+#[UsesClass(TableName::class)]
 final class GenerationRunTest extends TestCase
 {
     #[Test]

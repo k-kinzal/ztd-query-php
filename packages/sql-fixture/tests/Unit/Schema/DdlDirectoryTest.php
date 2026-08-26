@@ -13,6 +13,7 @@ use SqlFixture\Platform\Sqlite\SqliteCreateTable;
 use SqlFixture\Platform\Sqlite\SqliteSchemaParser;
 use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\DdlDirectory;
+use SqlFixture\Schema\SchemaParseException;
 use SqlFixture\Schema\TableSchema;
 
 #[CoversClass(DdlDirectory::class)]
@@ -21,6 +22,7 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(SqliteCreateTable::class)]
 #[UsesClass(SqliteSchemaParser::class)]
 #[UsesClass(TableSchema::class)]
+#[UsesClass(SchemaParseException::class)]
 final class DdlDirectoryTest extends TestCase
 {
     public function testTablesReadsEveryTableTheDirectoryDeclares(): void

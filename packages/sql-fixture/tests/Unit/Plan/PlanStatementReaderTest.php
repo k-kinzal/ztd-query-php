@@ -14,6 +14,7 @@ use SqlFixture\Plan\PlanStatementReader;
 use SqlFixture\Plan\PlanSyntaxException;
 use SqlFixture\Plan\Relation;
 use SqlFixture\Plan\RelationKind;
+use SqlFixture\Plan\RelationSide;
 
 #[CoversClass(PlanStatementReader::class)]
 #[UsesClass(ColumnRef::class)]
@@ -21,6 +22,7 @@ use SqlFixture\Plan\RelationKind;
 #[UsesClass(PlanSyntaxException::class)]
 #[UsesClass(Relation::class)]
 #[UsesClass(RelationKind::class)]
+#[UsesClass(RelationSide::class)]
 final class PlanStatementReaderTest extends TestCase
 {
     public function testReadAnswersTheTableWhenTheStatementNamesOneOnItsOwn(): void
