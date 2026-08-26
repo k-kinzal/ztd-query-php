@@ -15,7 +15,7 @@ use ZtdQuery\Platform\Sqlite\SqliteReadOnlyDiagnosticStatement;
 final class SqliteReadOnlyDiagnosticStatementTest extends TestCase
 {
     #[DataProvider('providerStatement')]
-    public function testClassifiesOnlySafeSqliteDiagnostics(string $sql, bool $expected): void
+    public function testIsSafeClassifiesOnlySafeSqliteDiagnostics(string $sql, bool $expected): void
     {
         self::assertSame($expected, SqliteReadOnlyDiagnosticStatement::isSafe($sql));
     }
