@@ -33,7 +33,7 @@ final class AlterTableOperationTest extends TestCase
     {
         $createStmt = MySqlAlterStatements::usersDeclaration();
 
-        self::operationsFor('ALTER TABLE users ADD COLUMN email VARCHAR(255)')
+        MySqlAlterStatements::operationsFor('ALTER TABLE users ADD COLUMN email VARCHAR(255)')
             ->applyTo($createStmt, MySqlAlterStatements::operation('ALTER TABLE users ADD COLUMN email VARCHAR(255)'), new ShadowStore(), MySqlAlterStatements::usersDefinition(), 'users');
 
         self::assertStringContainsString('email', $createStmt->build());
@@ -43,7 +43,7 @@ final class AlterTableOperationTest extends TestCase
     {
         self::assertSame(
             'people',
-            self::operationsFor('ALTER TABLE users RENAME TO people')->applyTo(
+            MySqlAlterStatements::operationsFor('ALTER TABLE users RENAME TO people')->applyTo(
                 MySqlAlterStatements::usersDeclaration(),
                 MySqlAlterStatements::operation('ALTER TABLE users RENAME TO people'),
                 new ShadowStore(),
@@ -57,7 +57,7 @@ final class AlterTableOperationTest extends TestCase
     {
         self::assertSame(
             'users',
-            self::operationsFor('ALTER TABLE users DROP COLUMN name')->applyTo(
+            MySqlAlterStatements::operationsFor('ALTER TABLE users DROP COLUMN name')->applyTo(
                 MySqlAlterStatements::usersDeclaration(),
                 MySqlAlterStatements::operation('ALTER TABLE users DROP COLUMN name'),
                 new ShadowStore(),
@@ -72,7 +72,7 @@ final class AlterTableOperationTest extends TestCase
         $createStmt = MySqlAlterStatements::usersDeclaration();
         $before = $createStmt->build();
 
-        self::operationsFor('ALTER TABLE users DROP FOREIGN KEY fk')->applyTo(
+        MySqlAlterStatements::operationsFor('ALTER TABLE users DROP FOREIGN KEY fk')->applyTo(
             $createStmt,
             MySqlAlterStatements::operation('ALTER TABLE users DROP FOREIGN KEY fk'),
             new ShadowStore(),
@@ -87,7 +87,7 @@ final class AlterTableOperationTest extends TestCase
     {
         $this->expectException(UnsupportedSqlException::class);
 
-        self::operationsFor('ALTER TABLE users ADD SPATIAL INDEX idx (g)')->applyTo(
+        MySqlAlterStatements::operationsFor('ALTER TABLE users ADD SPATIAL INDEX idx (g)')->applyTo(
             MySqlAlterStatements::usersDeclaration(),
             MySqlAlterStatements::operation('ALTER TABLE users ADD SPATIAL INDEX idx (g)'),
             new ShadowStore(),
@@ -100,7 +100,7 @@ final class AlterTableOperationTest extends TestCase
     {
         $this->expectException(ColumnAlreadyExistsException::class);
 
-        self::operationsFor('ALTER TABLE users ADD COLUMN name VARCHAR(10)')->addColumn(
+        MySqlAlterStatements::operationsFor('ALTER TABLE users ADD COLUMN name VARCHAR(10)')->addColumn(
             MySqlAlterStatements::usersDeclaration(),
             MySqlAlterStatements::operation('ALTER TABLE users ADD COLUMN name VARCHAR(10)'),
             MySqlAlterStatements::usersDefinition(),
@@ -114,7 +114,7 @@ final class AlterTableOperationTest extends TestCase
         $store->set('users', [['id' => 1, 'name' => 'a']]);
         $createStmt = MySqlAlterStatements::usersDeclaration();
 
-        self::operationsFor('ALTER TABLE users DROP COLUMN name')->dropColumn(
+        MySqlAlterStatements::operationsFor('ALTER TABLE users DROP COLUMN name')->dropColumn(
             $createStmt,
             MySqlAlterStatements::operation('ALTER TABLE users DROP COLUMN name'),
             $store,
@@ -129,7 +129,7 @@ final class AlterTableOperationTest extends TestCase
     {
         $this->expectException(ColumnNotFoundException::class);
 
-        self::operationsFor('ALTER TABLE users DROP COLUMN missing')->dropColumn(
+        MySqlAlterStatements::operationsFor('ALTER TABLE users DROP COLUMN missing')->dropColumn(
             MySqlAlterStatements::usersDeclaration(),
             MySqlAlterStatements::operation('ALTER TABLE users DROP COLUMN missing'),
             new ShadowStore(),
@@ -142,7 +142,7 @@ final class AlterTableOperationTest extends TestCase
     {
         $createStmt = MySqlAlterStatements::usersDeclaration();
 
-        self::operationsFor('ALTER TABLE users MODIFY COLUMN name TEXT')->modifyColumn(
+        MySqlAlterStatements::operationsFor('ALTER TABLE users MODIFY COLUMN name TEXT')->modifyColumn(
             $createStmt,
             MySqlAlterStatements::operation('ALTER TABLE users MODIFY COLUMN name TEXT'),
             MySqlAlterStatements::usersDefinition(),
@@ -156,7 +156,7 @@ final class AlterTableOperationTest extends TestCase
     {
         $this->expectException(ColumnNotFoundException::class);
 
-        self::operationsFor('ALTER TABLE users MODIFY COLUMN missing TEXT')->modifyColumn(
+        MySqlAlterStatements::operationsFor('ALTER TABLE users MODIFY COLUMN missing TEXT')->modifyColumn(
             MySqlAlterStatements::usersDeclaration(),
             MySqlAlterStatements::operation('ALTER TABLE users MODIFY COLUMN missing TEXT'),
             MySqlAlterStatements::usersDefinition(),
@@ -169,7 +169,7 @@ final class AlterTableOperationTest extends TestCase
         $store = new ShadowStore();
         $store->set('users', [['id' => 1, 'name' => 'a']]);
 
-        self::operationsFor('ALTER TABLE users CHANGE name full_name VARCHAR(200)')->changeColumn(
+        MySqlAlterStatements::operationsFor('ALTER TABLE users CHANGE name full_name VARCHAR(200)')->changeColumn(
             MySqlAlterStatements::usersDeclaration(),
             MySqlAlterStatements::operation('ALTER TABLE users CHANGE name full_name VARCHAR(200)'),
             $store,
@@ -184,7 +184,7 @@ final class AlterTableOperationTest extends TestCase
     {
         $this->expectException(ColumnNotFoundException::class);
 
-        self::operationsFor('ALTER TABLE users CHANGE missing other VARCHAR(1)')->changeColumn(
+        MySqlAlterStatements::operationsFor('ALTER TABLE users CHANGE missing other VARCHAR(1)')->changeColumn(
             MySqlAlterStatements::usersDeclaration(),
             MySqlAlterStatements::operation('ALTER TABLE users CHANGE missing other VARCHAR(1)'),
             new ShadowStore(),
@@ -197,7 +197,7 @@ final class AlterTableOperationTest extends TestCase
     {
         $createStmt = MySqlAlterStatements::usersDeclaration();
 
-        self::operationsFor('ALTER TABLE users RENAME COLUMN name TO full_name')->renameColumn(
+        MySqlAlterStatements::operationsFor('ALTER TABLE users RENAME COLUMN name TO full_name')->renameColumn(
             $createStmt,
             MySqlAlterStatements::operation('ALTER TABLE users RENAME COLUMN name TO full_name'),
             new ShadowStore(),
@@ -212,7 +212,7 @@ final class AlterTableOperationTest extends TestCase
     {
         $this->expectException(ColumnNotFoundException::class);
 
-        self::operationsFor('ALTER TABLE users RENAME COLUMN missing TO other')->renameColumn(
+        MySqlAlterStatements::operationsFor('ALTER TABLE users RENAME COLUMN missing TO other')->renameColumn(
             MySqlAlterStatements::usersDeclaration(),
             MySqlAlterStatements::operation('ALTER TABLE users RENAME COLUMN missing TO other'),
             new ShadowStore(),
@@ -226,7 +226,7 @@ final class AlterTableOperationTest extends TestCase
         $store = new ShadowStore();
         $store->set('users', [['id' => 1]]);
 
-        self::operationsFor('ALTER TABLE users RENAME TO people')->renameTable(
+        MySqlAlterStatements::operationsFor('ALTER TABLE users RENAME TO people')->renameTable(
             MySqlAlterStatements::operation('ALTER TABLE users RENAME TO people'),
             $store,
             'users',
@@ -240,7 +240,7 @@ final class AlterTableOperationTest extends TestCase
         $store = new ShadowStore();
         $store->set('users', [['id' => 1]]);
 
-        self::operationsFor('ALTER TABLE users RENAME TO people')->renameTable(
+        MySqlAlterStatements::operationsFor('ALTER TABLE users RENAME TO people')->renameTable(
             MySqlAlterStatements::operation('ALTER TABLE users RENAME TO people'),
             $store,
             'users',
@@ -253,7 +253,7 @@ final class AlterTableOperationTest extends TestCase
     {
         self::assertSame(
             'users',
-            self::operationsFor('ALTER TABLE users DROP COLUMN name')->renameTable(
+            MySqlAlterStatements::operationsFor('ALTER TABLE users DROP COLUMN name')->renameTable(
                 MySqlAlterStatements::operation('ALTER TABLE users DROP COLUMN name'),
                 new ShadowStore(),
                 'users',
@@ -265,7 +265,7 @@ final class AlterTableOperationTest extends TestCase
     {
         $createStmt = MySqlAlterStatements::usersDeclaration();
 
-        self::operationsFor('ALTER TABLE users ADD PRIMARY KEY (`id`)')->addPrimaryKey(
+        MySqlAlterStatements::operationsFor('ALTER TABLE users ADD PRIMARY KEY (`id`)')->addPrimaryKey(
             $createStmt,
             MySqlAlterStatements::operation('ALTER TABLE users ADD PRIMARY KEY (`id`)'),
         );
@@ -277,7 +277,7 @@ final class AlterTableOperationTest extends TestCase
     {
         $createStmt = MySqlAlterStatements::declaration('CREATE TABLE `users` (`id` INT PRIMARY KEY, `name` VARCHAR(100))');
 
-        self::operationsFor('ALTER TABLE users DROP PRIMARY KEY')->dropPrimaryKey($createStmt);
+        MySqlAlterStatements::operationsFor('ALTER TABLE users DROP PRIMARY KEY')->dropPrimaryKey($createStmt);
 
         self::assertStringNotContainsString('PRIMARY KEY', $createStmt->build());
     }
@@ -286,7 +286,7 @@ final class AlterTableOperationTest extends TestCase
     {
         $createStmt = MySqlAlterStatements::declaration('CREATE TABLE `t` (`a` INT, `b` INT, PRIMARY KEY (`a`, `b`))');
 
-        self::operationsFor('ALTER TABLE t DROP PRIMARY KEY')->dropPrimaryKey($createStmt);
+        MySqlAlterStatements::operationsFor('ALTER TABLE t DROP PRIMARY KEY')->dropPrimaryKey($createStmt);
 
         self::assertStringNotContainsString('PRIMARY KEY', $createStmt->build());
     }
@@ -295,7 +295,7 @@ final class AlterTableOperationTest extends TestCase
     {
         self::assertSame(
             'people',
-            self::operationsFor('ALTER TABLE users RENAME TO people')
+            MySqlAlterStatements::operationsFor('ALTER TABLE users RENAME TO people')
                 ->renamedTo(MySqlAlterStatements::operation('ALTER TABLE users RENAME TO people')),
         );
     }
@@ -303,7 +303,7 @@ final class AlterTableOperationTest extends TestCase
     public function testRenamedToIsNothingWhereTheOperationRenamesNothing(): void
     {
         self::assertNull(
-            self::operationsFor('ALTER TABLE users DROP COLUMN name')
+            MySqlAlterStatements::operationsFor('ALTER TABLE users DROP COLUMN name')
                 ->renamedTo(MySqlAlterStatements::operation('ALTER TABLE users DROP COLUMN name')),
         );
     }
@@ -312,13 +312,13 @@ final class AlterTableOperationTest extends TestCase
     {
         $this->expectException(ColumnNotFoundException::class);
 
-        self::operationsFor('ALTER TABLE users DROP COLUMN missing')
+        MySqlAlterStatements::operationsFor('ALTER TABLE users DROP COLUMN missing')
             ->assertDeclared('missing', MySqlAlterStatements::usersDefinition(), 'users');
     }
 
     public function testAssertDeclaredAcceptsAColumnTheTableHas(): void
     {
-        $operations = self::operationsFor('ALTER TABLE users DROP COLUMN name');
+        $operations = MySqlAlterStatements::operationsFor('ALTER TABLE users DROP COLUMN name');
         $definition = MySqlAlterStatements::usersDefinition();
 
         $operations->assertDeclared('name', $definition, 'users');
@@ -333,7 +333,7 @@ final class AlterTableOperationTest extends TestCase
         $replacement = $columns->firstFieldOf('CREATE TABLE t (`name` TEXT)');
         self::assertNotNull($replacement);
 
-        self::operationsFor('ALTER TABLE users MODIFY COLUMN name TEXT')
+        MySqlAlterStatements::operationsFor('ALTER TABLE users MODIFY COLUMN name TEXT')
             ->replaceField($createStmt, 'name', $replacement);
 
         self::assertStringContainsString('text', strtolower($createStmt->build()));
@@ -347,7 +347,7 @@ final class AlterTableOperationTest extends TestCase
         $replacement = $columns->firstFieldOf('CREATE TABLE t (`other` TEXT)');
         self::assertNotNull($replacement);
 
-        self::operationsFor('ALTER TABLE users MODIFY COLUMN other TEXT')
+        MySqlAlterStatements::operationsFor('ALTER TABLE users MODIFY COLUMN other TEXT')
             ->replaceField($createStmt, 'missing', $replacement);
 
         self::assertSame($before, $createStmt->build());
@@ -357,12 +357,7 @@ final class AlterTableOperationTest extends TestCase
     {
         self::assertStringContainsString(
             'ALTER TABLE',
-            self::operationsFor('ALTER TABLE users DROP COLUMN name')->statementSql(),
+            MySqlAlterStatements::operationsFor('ALTER TABLE users DROP COLUMN name')->statementSql(),
         );
-    }
-
-    public static function operationsFor(string $sql): AlterTableOperation
-    {
-        return new AlterTableOperation(MySqlAlterStatements::statement($sql), new TableDefinitionRegistry());
     }
 }

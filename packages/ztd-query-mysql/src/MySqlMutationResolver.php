@@ -68,7 +68,8 @@ final class MySqlMutationResolver
         TableDefinitionRegistry $registry,
         SchemaParser $schemaParser,
         UpdateTransformer $updateTransformer,
-        DeleteTransformer $deleteTransformer
+        DeleteTransformer $deleteTransformer,
+        private readonly MySqlStatementOptions $options = new MySqlStatementOptions(),
     ) {
         $this->shadowStore = $shadowStore;
         $this->registry = $registry;
@@ -121,14 +122,20 @@ final class MySqlMutationResolver
     }
 
     /**
-     * @throws UnknownSchemaException
-     */
-    /**
-     * @throws UnsupportedSqlException
+     * Answers what an UPDATE would do to the shadow.
      *
-     * @throws UnknownSchemaException
+     * A statement writing to several tables is one mutation per table, because
+     * the shadow holds each table on its own.
+     *
+     * @param UpdateStatement $statement The statement, as the parser reads it
+     * @param string $sql The statement, as written
+     *
+     * @return ShadowMutation What the statement would do
+     *
+     * @throws UnsupportedSqlException When the statement names no table ZTD can resolve
+     * @throws UnknownSchemaException When nothing has declared a table it writes to
      */
-    private function resolveUpdate(UpdateStatement $statement, string $sql): ShadowMutation
+    public function resolveUpdate(UpdateStatement $statement, string $sql): ShadowMutation
     {
         if ($statement->tables === [] || !isset($statement->tables[0])) {
             throw new UnsupportedSqlException($sql, 'Cannot resolve UPDATE target');
@@ -167,14 +174,17 @@ final class MySqlMutationResolver
     }
 
     /**
-     * @throws UnknownSchemaException
-     */
-    /**
-     * @throws UnsupportedSqlException
+     * Answers what a DELETE would do to the shadow.
      *
-     * @throws UnknownSchemaException
+     * @param DeleteStatement $statement The statement, as the parser reads it
+     * @param string $sql The statement, as written
+     *
+     * @return ShadowMutation What the statement would do
+     *
+     * @throws UnsupportedSqlException When the statement names no table ZTD can resolve
+     * @throws UnknownSchemaException When nothing has declared a table it deletes from
      */
-    private function resolveDelete(DeleteStatement $statement, string $sql): ShadowMutation
+    public function resolveDelete(DeleteStatement $statement, string $sql): ShadowMutation
     {
         $targetTable = null;
         if ($statement->from !== null && $statement->from !== []) {
@@ -214,12 +224,16 @@ final class MySqlMutationResolver
     }
 
     /**
-     * @param list<string> $tableNames
-     * @return list<MultiTableMutationTarget>
+     * Answers one target per table a multi-table statement writes to.
      *
-     * @throws UnknownSchemaException
+     * @param list<string> $tableNames Tables the statement writes to
+     * @param string $sql The statement, as written
+     *
+     * @return list<MultiTableMutationTarget> The targets, in the order the tables were given
+     *
+     * @throws UnknownSchemaException When nothing has declared one of them
      */
-    private function multiTableTargets(array $tableNames, string $sql): array
+    public function multiTableTargets(array $tableNames, string $sql): array
     {
         $targets = [];
         foreach ($tableNames as $tableName) {
@@ -243,9 +257,16 @@ final class MySqlMutationResolver
     }
 
     /**
-     * @throws UnsupportedSqlException
+     * Answers what an INSERT would do to the shadow.
+     *
+     * @param InsertStatement $statement The statement, as the parser reads it
+     * @param string $sql The statement, as written
+     *
+     * @return ShadowMutation What the statement would do
+     *
+     * @throws UnsupportedSqlException When the statement names no table ZTD can resolve
      */
-    private function resolveInsert(InsertStatement $statement, string $sql): ShadowMutation
+    public function resolveInsert(InsertStatement $statement, string $sql): ShadowMutation
     {
         $tableName = self::resolveIntoTableName($statement->into);
         if ($tableName === null) {
@@ -267,7 +288,7 @@ final class MySqlMutationResolver
         $updateColumns = array_keys($updateValues);
         $isOnDuplicateKeyUpdate = $updateColumns !== [];
 
-        $isIgnore = $statement->options !== null && self::optionSet($statement->options, 'IGNORE');
+        $isIgnore = $statement->options !== null && $this->options->isSet($statement->options, 'IGNORE');
 
         if ($isOnDuplicateKeyUpdate) {
             $primaryKeys = $definition !== null ? $definition->primaryKeys : [];
@@ -293,9 +314,16 @@ final class MySqlMutationResolver
     }
 
     /**
-     * @throws UnsupportedSqlException
+     * Answers what a TRUNCATE would do to the shadow.
+     *
+     * @param TruncateStatement $statement The statement, as the parser reads it
+     * @param string $sql The statement, as written
+     *
+     * @return ShadowMutation What the statement would do
+     *
+     * @throws UnsupportedSqlException When the statement names no table ZTD can resolve
      */
-    private function resolveTruncate(TruncateStatement $statement, string $sql): ShadowMutation
+    public function resolveTruncate(TruncateStatement $statement, string $sql): ShadowMutation
     {
         $tableName = $statement->table->table ?? null;
         if ($tableName === null) {
@@ -306,9 +334,16 @@ final class MySqlMutationResolver
     }
 
     /**
-     * @throws UnsupportedSqlException
+     * Answers what a REPLACE would do to the shadow.
+     *
+     * @param ReplaceStatement $statement The statement, as the parser reads it
+     * @param string $sql The statement, as written
+     *
+     * @return ShadowMutation What the statement would do
+     *
+     * @throws UnsupportedSqlException When the statement names no table ZTD can resolve
      */
-    private function resolveReplace(ReplaceStatement $statement, string $sql): ShadowMutation
+    public function resolveReplace(ReplaceStatement $statement, string $sql): ShadowMutation
     {
         $tableName = self::resolveIntoTableName($statement->into);
         if ($tableName === null) {
@@ -321,17 +356,24 @@ final class MySqlMutationResolver
     }
 
     /**
-     * @throws UnsupportedSqlException
-     * @throws UnknownSchemaException
+     * Answers what a CREATE TABLE would do to the shadow.
+     *
+     * @param CreateStatement $statement The statement, as the parser reads it
+     * @param string $sql The statement, as written
+     *
+     * @return ShadowMutation What the statement would do
+     *
+     * @throws UnsupportedSqlException When the statement declares something ZTD cannot simulate
+     * @throws UnknownSchemaException When it is declared from a table nothing has declared
      */
-    private function resolveCreateTable(CreateStatement $statement, string $sql): ShadowMutation
+    public function resolveCreateTable(CreateStatement $statement, string $sql): ShadowMutation
     {
         if ($statement->name === null || $statement->name->table === null) {
             throw new UnsupportedSqlException($sql, 'Cannot resolve table name');
         }
 
         $tableName = $statement->name->table;
-        $ifNotExists = $statement->options !== null && self::optionSet($statement->options, 'IF NOT EXISTS');
+        $ifNotExists = $statement->options !== null && $this->options->isSet($statement->options, 'IF NOT EXISTS');
 
         if (!$ifNotExists && $this->registry->has($tableName)) {
             throw new UnsupportedSqlException($sql, 'Table already exists');
@@ -361,10 +403,17 @@ final class MySqlMutationResolver
     }
 
     /**
-     * @throws UnsupportedSqlException
-     * @throws UnknownSchemaException
+     * Answers what a DROP would do to the shadow.
+     *
+     * @param DropStatement $statement The statement, as the parser reads it
+     * @param string $sql The statement, as written
+     *
+     * @return ShadowMutation What the statement would do
+     *
+     * @throws UnsupportedSqlException When the statement drops something ZTD does not model
+     * @throws UnknownSchemaException When nothing has declared what it drops
      */
-    private function resolveDropTable(DropStatement $statement, string $sql): ShadowMutation
+    public function resolveDropTable(DropStatement $statement, string $sql): ShadowMutation
     {
         if ($statement->fields === null || $statement->fields === []) {
             throw new UnsupportedSqlException($sql, 'No tables specified');
@@ -376,7 +425,7 @@ final class MySqlMutationResolver
             throw new UnsupportedSqlException($sql, 'Cannot resolve table name');
         }
 
-        $ifExists = $statement->options !== null && self::optionSet($statement->options, 'IF EXISTS');
+        $ifExists = $statement->options !== null && $this->options->isSet($statement->options, 'IF EXISTS');
 
         if (!$ifExists && !$this->registry->has($tableName)) {
             throw new UnknownSchemaException($sql, $tableName, 'table');
@@ -386,14 +435,17 @@ final class MySqlMutationResolver
     }
 
     /**
-     * @throws UnknownSchemaException
-     */
-    /**
-     * @throws UnsupportedSqlException
+     * Answers what an ALTER TABLE would do to the shadow.
      *
-     * @throws UnknownSchemaException
+     * @param AlterStatement $statement The statement, as the parser reads it
+     * @param string $sql The statement, as written
+     *
+     * @return ShadowMutation What the statement would do
+     *
+     * @throws UnsupportedSqlException When the statement asks for something ZTD cannot simulate
+     * @throws UnknownSchemaException When nothing has declared the table it alters
      */
-    private function resolveAlterTable(AlterStatement $statement, string $sql): ShadowMutation
+    public function resolveAlterTable(AlterStatement $statement, string $sql): ShadowMutation
     {
         if ($statement->table === null || $statement->table->table === null) {
             throw new UnsupportedSqlException($sql, 'Cannot resolve table name');
@@ -411,9 +463,9 @@ final class MySqlMutationResolver
     /**
      * Extract column names from a SELECT statement for CREATE TABLE AS SELECT.
      *
-     * @return list<string>
+     * @return list<string> The names, or none where any of them cannot be named
      */
-    private function extractSelectColumnNames(\PhpMyAdmin\SqlParser\Statements\SelectStatement $selectStatement): array
+    public function extractSelectColumnNames(\PhpMyAdmin\SqlParser\Statements\SelectStatement $selectStatement): array
     {
         /** @var list<string> $columns */
         $columns = [];
@@ -437,19 +489,28 @@ final class MySqlMutationResolver
     }
 
     /**
-     * Resolve table name from an Expression, trying ->table first then ->expr.
+     * Answers the table an expression names.
      *
-     * @param \PhpMyAdmin\SqlParser\Components\Expression $expr
+     * The parser fills in the table separately once it has read a qualified
+     * name, and leaves the whole expression where it has not.
+     *
+     * @param \PhpMyAdmin\SqlParser\Components\Expression $expr Expression to read
+     *
+     * @return string|null The table, or null where the expression names none
      */
-    private static function resolveExprTableName(\PhpMyAdmin\SqlParser\Components\Expression $expr): ?string
+    public static function resolveExprTableName(\PhpMyAdmin\SqlParser\Components\Expression $expr): ?string
     {
         return $expr->table ?? $expr->expr ?? null;
     }
 
     /**
-     * Resolve table name from an INTO clause (InsertStatement or ReplaceStatement).
+     * Answers the table an INTO clause names.
+     *
+     * @param \PhpMyAdmin\SqlParser\Components\IntoKeyword|null $into The clause, or null where the statement wrote none
+     *
+     * @return string|null The table, or null where the clause names none
      */
-    private static function resolveIntoTableName(?\PhpMyAdmin\SqlParser\Components\IntoKeyword $into): ?string
+    public static function resolveIntoTableName(?\PhpMyAdmin\SqlParser\Components\IntoKeyword $into): ?string
     {
         if ($into === null || $into->dest === null) {
             return null;
@@ -458,13 +519,4 @@ final class MySqlMutationResolver
         return is_string($dest) ? $dest : ($dest->table ?? null);
     }
 
-    /**
-     * Check whether the given OptionsArray has a specific option set.
-     *
-     * @param \PhpMyAdmin\SqlParser\Components\OptionsArray $options
-     */
-    private static function optionSet(\PhpMyAdmin\SqlParser\Components\OptionsArray $options, string $name): bool
-    {
-        return $options->has($name) !== false;
-    }
 }

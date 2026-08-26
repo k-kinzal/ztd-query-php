@@ -148,6 +148,7 @@ final class InsertTransformer implements SqlTransformer
      *
      * @throws InvalidDefinitionException When the statement cannot describe a row the table would take
      * @throws UnsupportedSqlException When the statement writes rows ZTD cannot work out
+     * @throws RuntimeException When the statement writes no rows at all
      */
     public function buildInsertSelect(
         InsertStatement $statement,

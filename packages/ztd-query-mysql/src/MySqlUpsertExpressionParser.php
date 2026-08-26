@@ -325,7 +325,7 @@ final class MySqlUpsertExpressionParser
         }
         $operator = $cursor->token()?->text ?? '';
         if ($operator !== '=' && $cursor->isSymbolAt(1, ['=', '>'])) {
-            $operator .= $cursor->tokenAt(1)?->text ?? '';
+            $operator .= $cursor->tokenAt(1)->text;
             $cursor->advance();
         }
         $cursor->advance();

@@ -41,13 +41,12 @@ final class MySqlPartitioningParser
         });
     }
 
-    /** @return array{'RANGE'|'LIST', non-empty-string}|null */
     /**
      * Answers what a PARTITION BY divides a table on, and how.
      *
      * @param string $partitionBy The clause, as written
      *
-     * @return array{string, string}|null How it divides and what it divides on, or null where ZTD cannot simulate the division
+     * @return array{'RANGE'|'LIST', non-empty-string}|null How it divides and what it divides on, or null where ZTD cannot simulate the division
      */
     public function partitionExpression(string $partitionBy): ?array
     {

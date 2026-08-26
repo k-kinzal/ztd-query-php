@@ -9,7 +9,9 @@ use PhpMyAdmin\SqlParser\Parser;
 use PhpMyAdmin\SqlParser\Statements\AlterStatement;
 use PhpMyAdmin\SqlParser\Statements\CreateStatement;
 use RuntimeException;
+use ZtdQuery\Platform\MySql\Mutation\AlterTableOperation;
 use ZtdQuery\Schema\TableDefinition;
+use ZtdQuery\Schema\TableDefinitionRegistry;
 
 /**
  * The statements an ALTER TABLE test works from.
@@ -111,5 +113,19 @@ final class MySqlAlterStatements
     public static function usersDefinition(): TableDefinition
     {
         return new TableDefinition(['id', 'name'], ['id' => 'INT', 'name' => 'VARCHAR(100)'], ['id'], [], []);
+    }
+
+    /**
+     * Answers something that applies one operation of this statement.
+     *
+     * @param string $sql Statement the operation was written in
+     *
+     * @return AlterTableOperation Something that applies one of its operations
+     *
+     * @throws RuntimeException When the text is not an ALTER TABLE
+     */
+    public static function operationsFor(string $sql): AlterTableOperation
+    {
+        return new AlterTableOperation(self::statement($sql), new TableDefinitionRegistry());
     }
 }
