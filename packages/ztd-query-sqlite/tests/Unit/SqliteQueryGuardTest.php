@@ -26,7 +26,7 @@ final class SqliteQueryGuardTest extends QueryClassifierContractTest
         return (new SqliteQueryGuard(new SqliteParser()))->classify($sql);
     }
 
-    protected function selectSql(): string
+    public function selectSql(): string
     {
         return 'SELECT * FROM users';
     }

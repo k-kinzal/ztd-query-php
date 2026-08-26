@@ -221,7 +221,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         return new SqliteSchemaParser();
     }
 
-    protected function selectSql(): string
+    public function selectSql(): string
     {
         return 'SELECT id, name, email FROM users WHERE id = 1';
     }

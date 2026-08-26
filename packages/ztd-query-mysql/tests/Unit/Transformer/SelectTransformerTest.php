@@ -105,12 +105,12 @@ final class SelectTransformerTest extends TransformerContractTest
         self::assertStringContainsString('CUSTOM_VALUE AS `id`', $transformer->transform('SELECT * FROM users', $tables));
     }
 
-    protected function createTransformer(): SqlTransformer
+    public function createTransformer(): SqlTransformer
     {
         return new SelectTransformer();
     }
 
-    protected function selectSql(): string
+    public function selectSql(): string
     {
         return 'SELECT * FROM users WHERE id = 1';
     }

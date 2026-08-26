@@ -12,12 +12,12 @@ use ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter;
 #[CoversClass(SqliteIdentifierQuoter::class)]
 final class SqliteIdentifierQuoterTest extends IdentifierQuoterContractTest
 {
-    protected function createQuoter(): IdentifierQuoter
+    public function createQuoter(): IdentifierQuoter
     {
         return new SqliteIdentifierQuoter();
     }
 
-    protected function quoteCharacter(): string
+    public function quoteCharacter(): string
     {
         return '"';
     }

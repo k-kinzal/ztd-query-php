@@ -314,7 +314,7 @@ final class MySqlRewriterTest extends RewriterContractTest
         return new MySqlSchemaParser(new MySqlParser());
     }
 
-    protected function selectSql(): string
+    public function selectSql(): string
     {
         return 'SELECT id, name, email FROM users WHERE id = 1';
     }

@@ -15,7 +15,7 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 #[CoversClass(MySqlCastRenderer::class)]
 final class MySqlCastRendererTest extends CastRendererContractTest
 {
-    protected function createRenderer(): CastRenderer
+    public function createRenderer(): CastRenderer
     {
         return new MySqlCastRenderer();
     }

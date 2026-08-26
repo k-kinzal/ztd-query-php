@@ -14,7 +14,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(PgSqlCastRenderer::class)]
 final class PgSqlCastRendererTest extends CastRendererContractTest
 {
-    protected function createRenderer(): CastRenderer
+    public function createRenderer(): CastRenderer
     {
         return new PgSqlCastRenderer();
     }

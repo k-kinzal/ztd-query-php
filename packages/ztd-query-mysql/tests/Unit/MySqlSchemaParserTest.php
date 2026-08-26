@@ -22,12 +22,12 @@ use ZtdQuery\Platform\MySql\MySqlPartitioningParser;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 final class MySqlSchemaParserTest extends SchemaParserContractTest
 {
-    protected function createParser(): SchemaParser
+    public function createParser(): SchemaParser
     {
         return new MySqlSchemaParser(new MySqlParser());
     }
 
-    protected function validCreateTableSql(): string
+    public function validCreateTableSql(): string
     {
         return <<<'SQL'
             CREATE TABLE users (
@@ -40,7 +40,7 @@ final class MySqlSchemaParserTest extends SchemaParserContractTest
             SQL;
     }
 
-    protected function nonCreateTableSql(): string
+    public function nonCreateTableSql(): string
     {
         return 'SELECT * FROM users WHERE id = 1';
     }
