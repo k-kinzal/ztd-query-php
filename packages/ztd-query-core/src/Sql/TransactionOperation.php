@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Sql;
 
+/**
+ * What a transaction statement does to the shadow.
+ */
 enum TransactionOperation: string
 {
     case Begin = 'begin';

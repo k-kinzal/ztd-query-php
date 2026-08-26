@@ -79,12 +79,10 @@ final class FakeSqlTransformer implements SqlTransformer
                 } else {
                     if (is_string($value)) {
                         $literal = "'" . str_replace("'", "''", $value) . "'";
-                    } elseif (is_int($value) || is_float($value)) {
-                        $literal = (string) $value;
                     } elseif (is_bool($value)) {
                         $literal = $value ? '1' : '0';
                     } else {
-                        $literal = "'" . str_replace("'", "''", (string) json_encode($value)) . "'";
+                        $literal = (string) $value;
                     }
                     $expr = $this->castRenderer->renderCast($literal, $type);
                 }
