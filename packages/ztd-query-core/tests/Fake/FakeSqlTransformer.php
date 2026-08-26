@@ -50,7 +50,7 @@ final class FakeSqlTransformer implements SqlTransformer
     /**
      * @param array{rows: list<Row>, columns: array<int, string>, columnTypes: array<string, ColumnType>} $tableData
      */
-    private function buildCte(string $tableName, array $tableData): string
+    public function buildCte(string $tableName, array $tableData): string
     {
         $quotedName = $this->quoter->quote($tableName);
         $columns = $tableData['columns'];

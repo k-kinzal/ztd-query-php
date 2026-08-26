@@ -104,7 +104,7 @@ final class FakeSchemaParser implements SchemaParser
         );
     }
 
-    private function mapTypeFamily(string $type): ColumnTypeFamily
+    public function mapTypeFamily(string $type): ColumnTypeFamily
     {
         $base = preg_replace('/\(.*\)/', '', $type) ?? $type;
         $base = strtoupper(trim($base));
@@ -132,7 +132,7 @@ final class FakeSchemaParser implements SchemaParser
      *
      * @return array<int, string>
      */
-    private function splitColumns(string $body): array
+    public function splitColumns(string $body): array
     {
         $parts = [];
         $depth = 0;

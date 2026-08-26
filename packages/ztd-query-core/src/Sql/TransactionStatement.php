@@ -12,7 +12,13 @@ use ZtdQuery\Shadow\ShadowTransactions;
  */
 final class TransactionStatement
 {
-    private function __construct(
+    /**
+     * Binds a statement to what it does, and to the savepoint it names.
+     *
+     * Every way of building one goes through a named constructor, because which
+     * operation it is decides whether a name means anything.
+     */
+    public function __construct(
         private readonly TransactionOperation $operation,
         private readonly string $savepointName = '',
     ) {

@@ -10,9 +10,10 @@ namespace ZtdQuery\Sql;
 final class SqlTokenStream
 {
     /**
+     * Binds a stream to the tokens it was read as, and the profile it was read with.
+     *
      * @param list<SqlToken> $tokens
-     */
-    private function __construct(
+     */public function __construct(
         private readonly string $sql,
         private readonly array $tokens,
         private readonly SqlLexerProfile $profile,

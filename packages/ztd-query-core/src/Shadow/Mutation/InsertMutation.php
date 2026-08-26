@@ -6,7 +6,6 @@ namespace ZtdQuery\Shadow\Mutation;
 
 use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\DuplicateKeyException;
-use ZtdQuery\Exception\NotNullViolationException;
 use ZtdQuery\Schema\CandidateKeySet;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Shadow\ShadowStore;
@@ -57,6 +56,10 @@ final class InsertMutation implements DataMutation
 
     private ?UpsertExpression $conflictPredicate;
 
+    private RowConstraints $constraints;
+
+    private ConflictSearch $conflicts;
+
     /**
      * @param string $tableName Target table.
      * @param array<int, string> $primaryKeys Primary key columns.
@@ -84,6 +87,8 @@ final class InsertMutation implements DataMutation
         $this->validateConstraints = $validateConstraints;
         $this->candidateKeys = $candidateKeys ?? CandidateKeySet::fromSchema($primaryKeys);
         $this->conflictPredicate = $conflictPredicate;
+        $this->constraints = new RowConstraints($this->tableDefinition, $this->tableName, $this->sql);
+        $this->conflicts = new ConflictSearch($this->candidateKeys, $this->conflictPredicate, $this->tableName);
     }
 
     /**
@@ -98,10 +103,10 @@ final class InsertMutation implements DataMutation
 
         foreach ($rows as $row) {
             if ($this->validateConstraints && $this->tableDefinition !== null) {
-                $this->validateNotNullConstraints($row);
+                $this->constraints->assertNoNullWhereNoneIsAllowed($row);
             }
 
-            $conflict = $this->findConflict($row, $existingRows);
+            $conflict = $this->conflicts->of($row, $existingRows);
             if ($conflict !== null) {
                 if ($this->ignore) {
                     continue;
@@ -118,7 +123,7 @@ final class InsertMutation implements DataMutation
             }
 
             if ($this->validateConstraints && $this->tableDefinition !== null) {
-                $this->validateUniqueConstraints($row, $existingRows);
+                $this->constraints->assertNoDuplicateUniqueKey($row, $existingRows);
             }
 
             $filteredRows[] = $row;
@@ -136,106 +141,7 @@ final class InsertMutation implements DataMutation
         return $this->tableName;
     }
 
-    /**
-     * Validate NOT NULL constraints for a row.
-     *
-     * @param Row $row Row to validate.
-     * @throws NotNullViolationException If a NOT NULL constraint is violated.
-     */
-    private function validateNotNullConstraints(array $row): void
-    {
-        if ($this->tableDefinition === null) {
-            return;
-        }
 
-        $notNullColumns = $this->tableDefinition->notNullColumns;
 
-        foreach ($notNullColumns as $columnName) {
-            if (array_key_exists($columnName, $row) && $row[$columnName] === null) {
-                throw new NotNullViolationException($this->sql, $this->tableName, $columnName);
-            }
-        }
-    }
 
-    /**
-     * Validate UNIQUE constraints for a row.
-     *
-     * @param Row $row Row to validate.
-     * @param list<Row> $existingRows Existing rows in the store.
-     * @throws DuplicateKeyException If a UNIQUE constraint is violated.
-     */
-    private function validateUniqueConstraints(array $row, array $existingRows): void
-    {
-        if ($this->tableDefinition === null) {
-            return;
-        }
-
-        $uniqueConstraints = $this->tableDefinition->uniqueConstraints;
-
-        foreach ($uniqueConstraints as $keyName => $columns) {
-            $hasNull = false;
-            foreach ($columns as $col) {
-                if (!array_key_exists($col, $row) || $row[$col] === null) {
-                    $hasNull = true;
-                    break;
-                }
-            }
-            if ($hasNull) {
-                continue;
-            }
-
-            foreach ($existingRows as $existing) {
-                $match = true;
-                foreach ($columns as $col) {
-                    if (!isset($existing[$col]) || $row[$col] !== $existing[$col]) {
-                        $match = false;
-                        break;
-                    }
-                }
-                if ($match) {
-                    $keyValues = $this->extractKeyValues($row, $columns);
-                    throw new DuplicateKeyException($this->sql, $this->tableName, $keyName, $keyValues);
-                }
-            }
-        }
-    }
-
-    /**
-     * Extract key values from a row.
-     *
-     * @param Row $row Row to extract from.
-     * @param array<int, string> $columns Column names.
-     * @return Row Key values.
-     */
-    private function extractKeyValues(array $row, array $columns): array
-    {
-        $values = [];
-        foreach ($columns as $col) {
-            $values[$col] = $row[$col] ?? null;
-        }
-        return $values;
-    }
-
-    /**
-     * @param Row $row
-     * @param list<Row> $existingRows
-     */
-    private function findConflict(array $row, array $existingRows): ?\ZtdQuery\Schema\CandidateKeyConflict
-    {
-        if ($this->conflictPredicate === null) {
-            return $this->candidateKeys->findConflict($row, $existingRows);
-        }
-        if (!$this->conflictPredicate->matches($row, $row, $this->tableName)) {
-            return null;
-        }
-
-        $eligibleRows = [];
-        foreach ($existingRows as $index => $existingRow) {
-            if ($this->conflictPredicate->matches($existingRow, $existingRow, $this->tableName)) {
-                $eligibleRows[$index] = $existingRow;
-            }
-        }
-
-        return $this->candidateKeys->findConflict($row, $eligibleRows);
-    }
 }

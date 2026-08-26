@@ -96,7 +96,7 @@ final class FakeSqlRewriter implements SqlRewriter
         ));
     }
 
-    private function classify(string $sql): ?QueryKind
+    public function classify(string $sql): ?QueryKind
     {
         $upper = strtoupper(ltrim($sql));
 
@@ -127,7 +127,7 @@ final class FakeSqlRewriter implements SqlRewriter
         return null;
     }
 
-    private function rewriteSelect(string $sql): RewritePlan
+    public function rewriteSelect(string $sql): RewritePlan
     {
         $tables = $this->buildShadowContext();
 
@@ -141,7 +141,7 @@ final class FakeSqlRewriter implements SqlRewriter
     /**
      * @throws UnsupportedSqlException When the statement is not one this fake simulates
      */
-    private function rewriteWrite(string $sql): RewritePlan
+    public function rewriteWrite(string $sql): RewritePlan
     {
         $upper = strtoupper(ltrim($sql));
 
@@ -161,7 +161,7 @@ final class FakeSqlRewriter implements SqlRewriter
         throw new UnsupportedSqlException($sql, 'Unsupported write');
     }
 
-    private function rewriteInsert(string $sql): RewritePlan
+    public function rewriteInsert(string $sql): RewritePlan
     {
         $tableName = $this->extractTableFromInsert($sql);
         $definition = $tableName !== null ? $this->registry->get($tableName) : null;
@@ -174,7 +174,7 @@ final class FakeSqlRewriter implements SqlRewriter
         return new RewritePlan($resultSql, QueryKind::WRITE_SIMULATED, $mutation);
     }
 
-    private function rewriteUpdate(string $sql): RewritePlan
+    public function rewriteUpdate(string $sql): RewritePlan
     {
         $tableName = $this->extractTableFromUpdate($sql);
         $definition = $tableName !== null ? $this->registry->get($tableName) : null;
@@ -193,7 +193,7 @@ final class FakeSqlRewriter implements SqlRewriter
         return new RewritePlan($resultSql, QueryKind::WRITE_SIMULATED, $mutation);
     }
 
-    private function rewriteDelete(string $sql): RewritePlan
+    public function rewriteDelete(string $sql): RewritePlan
     {
         $tableName = $this->extractTableFromDelete($sql);
         $definition = $tableName !== null ? $this->registry->get($tableName) : null;
@@ -212,7 +212,7 @@ final class FakeSqlRewriter implements SqlRewriter
         return new RewritePlan($resultSql, QueryKind::WRITE_SIMULATED, $mutation);
     }
 
-    private function rewriteTruncate(string $sql): RewritePlan
+    public function rewriteTruncate(string $sql): RewritePlan
     {
         if (preg_match('/TRUNCATE\s+(?:TABLE\s+)?[`"\']?(\w+)[`"\']?/i', $sql, $m) === 1) {
             $tableName = $m[1];
@@ -228,7 +228,7 @@ final class FakeSqlRewriter implements SqlRewriter
     /**
      * @throws UnsupportedSqlException When the statement is not one this fake simulates
      */
-    private function rewriteDdl(string $sql): RewritePlan
+    public function rewriteDdl(string $sql): RewritePlan
     {
         $upper = strtoupper(ltrim($sql));
 
@@ -258,7 +258,7 @@ final class FakeSqlRewriter implements SqlRewriter
     /**
      * @return array<string, array{rows: list<Row>, columns: array<int, string>, columnTypes: array<string, \ZtdQuery\Schema\ColumnType>}>
      */
-    private function buildShadowContext(): array
+    public function buildShadowContext(): array
     {
         $tables = [];
         foreach ($this->shadowStore->getAll() as $tableName => $rows) {
@@ -277,7 +277,7 @@ final class FakeSqlRewriter implements SqlRewriter
         return $tables;
     }
 
-    private function extractTableFromInsert(string $sql): ?string
+    public function extractTableFromInsert(string $sql): ?string
     {
         if (preg_match('/INSERT\s+(?:IGNORE\s+)?INTO\s+[`"\']?(\w+)[`"\']?/i', $sql, $m) === 1) {
             return $m[1];
@@ -286,7 +286,7 @@ final class FakeSqlRewriter implements SqlRewriter
         return null;
     }
 
-    private function extractTableFromUpdate(string $sql): ?string
+    public function extractTableFromUpdate(string $sql): ?string
     {
         if (preg_match('/UPDATE\s+[`"\']?(\w+)[`"\']?/i', $sql, $m) === 1) {
             return $m[1];
@@ -295,7 +295,7 @@ final class FakeSqlRewriter implements SqlRewriter
         return null;
     }
 
-    private function extractTableFromDelete(string $sql): ?string
+    public function extractTableFromDelete(string $sql): ?string
     {
         if (preg_match('/DELETE\s+FROM\s+[`"\']?(\w+)[`"\']?/i', $sql, $m) === 1) {
             return $m[1];
@@ -304,7 +304,7 @@ final class FakeSqlRewriter implements SqlRewriter
         return null;
     }
 
-    private function extractTableFromCreate(string $sql): ?string
+    public function extractTableFromCreate(string $sql): ?string
     {
         if (preg_match('/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?[`"\']?(\w+)[`"\']?/i', $sql, $m) === 1) {
             return $m[1];
@@ -313,7 +313,7 @@ final class FakeSqlRewriter implements SqlRewriter
         return null;
     }
 
-    private function extractTableFromDrop(string $sql): ?string
+    public function extractTableFromDrop(string $sql): ?string
     {
         if (preg_match('/DROP\s+TABLE\s+(?:IF\s+EXISTS\s+)?[`"\']?(\w+)[`"\']?/i', $sql, $m) === 1) {
             return $m[1];
@@ -322,7 +322,7 @@ final class FakeSqlRewriter implements SqlRewriter
         return null;
     }
 
-    private function buildInsertResultSelect(string $sql, ?string $tableName, ?TableDefinition $definition): string
+    public function buildInsertResultSelect(string $sql, ?string $tableName, ?TableDefinition $definition): string
     {
         $columns = $definition !== null ? $definition->columns : [];
         $resultSql = 'SELECT ' . ($columns !== [] ? implode(', ', $columns) : '*') . ' FROM ' . ($tableName ?? 'unknown');

@@ -18,7 +18,13 @@ use ZtdQuery\Exception\InvalidDefinitionException;
  */
 final class InsertRowProjection
 {
-    private function __construct(
+    /**
+     * Binds one column of the projection to exactly one of the four things it can be.
+     *
+     * Every way of building one goes through a named constructor, because which of
+     * the four it is decides what the SELECT says in its place.
+     */
+    public function __construct(
         private readonly string $targetColumn,
         private readonly ?string $providedExpression,
         private readonly ?string $defaultExpression,

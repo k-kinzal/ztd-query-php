@@ -23,7 +23,7 @@ final class FakeCastRenderer implements CastRenderer
         return sprintf('CAST(NULL AS %s)', $this->mapType($type));
     }
 
-    private function mapType(ColumnType $type): string
+    public function mapType(ColumnType $type): string
     {
         return match ($type->family) {
             ColumnTypeFamily::INTEGER => 'INTEGER',
