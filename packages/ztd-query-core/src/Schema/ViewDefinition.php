@@ -6,7 +6,9 @@ namespace ZtdQuery\Schema;
 
 final class ViewDefinition
 {
-    /** @param list<string> $dependencies */
+    /**
+     * @param list<string> $dependencies
+     */
     public function __construct(
         public readonly string $query,
         public readonly array $dependencies,

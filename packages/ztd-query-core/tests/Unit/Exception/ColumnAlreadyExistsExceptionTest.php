@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Exception;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use ZtdQuery\Exception\ColumnAlreadyExistsException;
-use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(ColumnAlreadyExistsException::class)]
 final class ColumnAlreadyExistsExceptionTest extends TestCase

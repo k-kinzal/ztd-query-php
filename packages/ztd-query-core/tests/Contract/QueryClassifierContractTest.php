@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Contract;
 
 use PHPUnit\Framework\TestCase;
+use Throwable;
 use ZtdQuery\Rewrite\QueryKind;
 
 /**
@@ -102,7 +103,7 @@ abstract class QueryClassifierContractTest extends TestCase
 
         try {
             $kind = $this->classify('NOT VALID SQL %%% @@@');
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $exceptionThrown = true;
             $kind = null;
         }

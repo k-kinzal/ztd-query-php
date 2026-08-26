@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery;
 
+use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Rewrite\QueryKind;
 
 /**
@@ -12,6 +13,8 @@ use ZtdQuery\Rewrite\QueryKind;
  * This interface encapsulates the result of executing a statement through Session,
  * providing a unified API for fetching results whether from rewritten statements,
  * buffered rows (for simulated writes), or passthrough scenarios.
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 interface ExecuteResult
 {
@@ -33,14 +36,14 @@ interface ExecuteResult
     /**
      * Fetch the next row.
      *
-     * @return array<string, mixed>|false
+     * @return Row|false
      */
     public function fetch(): array|false;
 
     /**
      * Fetch all remaining rows.
      *
-     * @return array<int, array<string, mixed>>
+     * @return list<Row>
      */
     public function fetchAll(): array;
 

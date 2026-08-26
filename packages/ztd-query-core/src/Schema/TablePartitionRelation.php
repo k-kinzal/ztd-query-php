@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Schema;
 
+use ZtdQuery\Exception\InvalidDefinitionException;
+
 final class TablePartitionRelation
 {
     public readonly string $parentTable;
@@ -13,10 +15,10 @@ final class TablePartitionRelation
     {
         $parentTable = trim($parentTable);
         if ($parentTable === '') {
-            throw new \InvalidArgumentException('Partition parent table must not be empty.');
+            throw new InvalidDefinitionException('Partition parent table must not be empty.');
         }
         if ($predicate !== null && trim($predicate) === '') {
-            throw new \InvalidArgumentException('Partition predicate must not be empty.');
+            throw new InvalidDefinitionException('Partition predicate must not be empty.');
         }
 
         $this->parentTable = $parentTable;

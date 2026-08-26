@@ -13,6 +13,8 @@ use ZtdQuery\Connection\StatementInterface;
  * Queries are recorded for inspection. Results can be pre-loaded per SQL string
  * or a default result set can be provided. Specific queries can be configured to
  * fail by returning false, enabling tests for error-handling branches.
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 final class FakeConnection implements ConnectionInterface
 {
@@ -26,14 +28,14 @@ final class FakeConnection implements ConnectionInterface
     /**
      * Pre-configured results keyed by SQL.
      *
-     * @var array<string, array<int, array<string, mixed>>>
+     * @var array<string, list<Row>>
      */
     private array $results;
 
     /**
      * Default rows returned when no specific result is configured.
      *
-     * @var array<int, array<string, mixed>>
+     * @var list<Row>
      */
     private array $defaultRows;
 
@@ -45,8 +47,8 @@ final class FakeConnection implements ConnectionInterface
     private array $failPatterns = [];
 
     /**
-     * @param array<string, array<int, array<string, mixed>>> $results SQL => rows mapping.
-     * @param array<int, array<string, mixed>> $defaultRows Default rows for unconfigured queries.
+     * @param array<string, list<Row>> $results SQL => rows mapping.
+     * @param list<Row> $defaultRows Default rows for unconfigured queries.
      */
     public function __construct(array $results = [], array $defaultRows = [])
     {
@@ -72,7 +74,7 @@ final class FakeConnection implements ConnectionInterface
     /**
      * Pre-load a result for a specific SQL query.
      *
-     * @param array<int, array<string, mixed>> $rows
+     * @param list<Row> $rows
      */
     public function addResult(string $sql, array $rows): void
     {

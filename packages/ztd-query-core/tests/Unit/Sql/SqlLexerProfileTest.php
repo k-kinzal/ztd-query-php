@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Sql;
 
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Tests\Fake\FakeSqlLexerProfiles;
+use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Sql\SqlLexerProfile;
 
 #[CoversClass(SqlLexerProfile::class)]
 final class SqlLexerProfileTest extends TestCase
 {
-    public function testExposesConfiguredLexicalData(): void
+    public function testBlockCommentAtExposesConfiguredLexicalData(): void
     {
         $profile = new SqlLexerProfile(
             lineCommentPrefixes: ['--', '#'],
@@ -91,14 +91,14 @@ final class SqlLexerProfileTest extends TestCase
 
     public function testRejectsEmptyLexicalDelimiter(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidDefinitionException::class);
 
         FakeSqlLexerProfiles::custom(lineCommentPrefixes: ['']);
     }
 
     public function testRejectsEmptyIdentifierQuoteDelimiter(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidDefinitionException::class);
         $this->expectExceptionMessage('Identifier quote delimiters must not be empty.');
 
         FakeSqlLexerProfiles::custom(identifierQuotePairs: ['' => '"']);
@@ -106,105 +106,105 @@ final class SqlLexerProfileTest extends TestCase
 
     public function testRejectsInvalidDollarQuotePattern(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidDefinitionException::class);
 
         FakeSqlLexerProfiles::custom(dollarQuoteDelimiterPattern: '/[/');
     }
 
     public function testRejectsInvalidIdentifierStartPattern(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidDefinitionException::class);
 
         FakeSqlLexerProfiles::custom(identifierStartPattern: '/[/');
     }
 
     public function testRejectsInvalidIdentifierPartPattern(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidDefinitionException::class);
 
         FakeSqlLexerProfiles::custom(identifierPartPattern: '/[/');
     }
 
     public function testRejectsEmptyOpeningBracketDelimiter(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidDefinitionException::class);
 
         FakeSqlLexerProfiles::custom(bracketPair: ['', ']']);
     }
 
     public function testRejectsEmptyClosingBracketDelimiter(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidDefinitionException::class);
 
         FakeSqlLexerProfiles::custom(bracketPair: ['[', '']);
     }
 
     public function testRejectsEmptyOpeningNestingDelimiter(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidDefinitionException::class);
 
         FakeSqlLexerProfiles::custom(nestingPair: ['', ')']);
     }
 
     public function testRejectsEmptyClosingNestingDelimiter(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidDefinitionException::class);
 
         FakeSqlLexerProfiles::custom(nestingPair: ['(', '']);
     }
 
     public function testRejectsInvalidStatementDelimiterLength(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidDefinitionException::class);
 
         FakeSqlLexerProfiles::custom(statementDelimiter: ';;');
     }
 
     public function testRejectsInvalidListDelimiterLength(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidDefinitionException::class);
 
         FakeSqlLexerProfiles::custom(listDelimiter: '::');
     }
 
     public function testRejectsEmptyParameterPrefix(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidDefinitionException::class);
 
         FakeSqlLexerProfiles::custom(namedParameterSeparators: ['' => []]);
     }
 
     public function testRejectsEmptyParameterSeparator(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidDefinitionException::class);
 
         FakeSqlLexerProfiles::custom(namedParameterSeparators: [':' => ['']]);
     }
 
     public function testRejectsEmptyParameterPatternPrefix(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidDefinitionException::class);
 
         FakeSqlLexerProfiles::custom(namedParameterSuffixPatterns: ['' => '/^x/']);
     }
 
     public function testRejectsEmptyParameterPattern(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidDefinitionException::class);
 
         FakeSqlLexerProfiles::custom(namedParameterSuffixPatterns: [':' => '']);
     }
 
     public function testRejectsInvalidParameterPattern(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidDefinitionException::class);
 
         FakeSqlLexerProfiles::custom(namedParameterSuffixPatterns: [':' => '/[/']);
     }
 
     public function testRejectsInvalidPositionalParameterPattern(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidDefinitionException::class);
 
         FakeSqlLexerProfiles::custom(positionalParameterPatterns: ['/[/']);
     }
@@ -221,7 +221,7 @@ final class SqlLexerProfileTest extends TestCase
             try {
                 FakeSqlLexerProfiles::custom(numericLiteralPattern: '/[/');
                 self::fail('The invalid pattern was accepted.');
-            } catch (InvalidArgumentException) {
+            } catch (InvalidDefinitionException) {
             }
             trigger_error('error handler probe', E_USER_WARNING);
         } finally {
@@ -233,7 +233,7 @@ final class SqlLexerProfileTest extends TestCase
 
     public function testRejectsInvalidLexicalPattern(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidDefinitionException::class);
 
         FakeSqlLexerProfiles::custom(numericLiteralPattern: '/[/');
     }

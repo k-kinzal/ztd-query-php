@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Simulator;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
+use PHPUnit\Framework\TestCase;
 use Tests\Fake\ExceptionThrowingRewriter;
 use Tests\Fake\FixedRewriter;
 use ZtdQuery\Config\ZtdConfig;
@@ -17,16 +20,13 @@ use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Schema\CandidateKeySet;
 use ZtdQuery\Schema\TableDefinitionRegistry;
+use ZtdQuery\Session;
 use ZtdQuery\Shadow\Mutation\InsertMutation;
 use ZtdQuery\Shadow\Mutation\MutationImpact;
 use ZtdQuery\Shadow\ReferentialIntegrityEnforcer;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTransactionManager;
 use ZtdQuery\Simulator\StatementSimulator;
-use ZtdQuery\Session;
-use PHPUnit\Framework\TestCase;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 
 #[UsesClass(ZtdConfig::class)]
 #[UsesClass(DatabaseException::class)]
@@ -140,7 +140,7 @@ final class StatementSimulatorTest extends TestCase
         self::assertSame(2, $rows[0]['id']);
     }
 
-    public function testWriteStatementWithoutMutationThrows(): void
+    public function testSimulateRefusesAWriteThePlanCarriesNoMutationFor(): void
     {
         $shadowStore = new ShadowStore();
         $connection = static::createStub(ConnectionInterface::class);
@@ -153,8 +153,8 @@ final class StatementSimulatorTest extends TestCase
         );
         $simulator = new StatementSimulator($session);
 
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('Missing shadow mutation');
+        $this->expectException(UnsupportedSqlException::class);
+        $this->expectExceptionMessage('Unsimulatable write');
 
         $simulator->simulate('UPDATE users SET name = \'Bob\' WHERE id = 1', fn () => false);
     }

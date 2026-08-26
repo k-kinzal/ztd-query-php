@@ -12,7 +12,7 @@ use ZtdQuery\Sql\SqlTokenKind;
 #[CoversClass(SqlToken::class)]
 final class SqlTokenTest extends TestCase
 {
-    public function testExposesSpanNestingAndKeywordComparison(): void
+    public function testEndOffsetExposesSpanNestingAndKeywordComparison(): void
     {
         $token = new SqlToken(SqlTokenKind::Word, 'select', 3, 0, 0);
 
