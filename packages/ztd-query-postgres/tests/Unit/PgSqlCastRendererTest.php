@@ -445,4 +445,50 @@ final class PgSqlCastRendererTest extends CastRendererContractTest
         $type = new ColumnDeclaration(ColumnTypeFamily::DECIMAL, 'decimal(6)');
         self::assertSame("CAST('1' AS NUMERIC(6,0))", $renderer->renderCast("'1'", $type));
     }
+    public function testMapToCastTypeAnswersWhatACastCallsThatKindOfColumn(): void
+    {
+        self::assertSame(
+            'BIGINT',
+            (new PgSqlCastRenderer())->mapToCastType(new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'BIGINT')),
+        );
+    }
+
+    public function testMapToCastTypeKeepsAnArrayTypeAsItWasDeclared(): void
+    {
+        self::assertSame(
+            'INTEGER[]',
+            (new PgSqlCastRenderer())->mapToCastType(new ColumnDeclaration(ColumnTypeFamily::UNKNOWN, 'INTEGER[]')),
+        );
+    }
+
+    public function testMapIntegerTypeAnswersWhichIntegerTypeADeclarationMeans(): void
+    {
+        self::assertSame('SMALLINT', (new PgSqlCastRenderer())->mapIntegerType('INT2'));
+    }
+
+    public function testMapIntegerTypeFallsBackToTheOrdinaryInteger(): void
+    {
+        self::assertSame('INTEGER', (new PgSqlCastRenderer())->mapIntegerType('SERIAL'));
+    }
+
+    public function testExtractDecimalTypeKeepsTheDigitsTheDeclarationAskedFor(): void
+    {
+        self::assertSame('NUMERIC(10,2)', (new PgSqlCastRenderer())->extractDecimalType('DECIMAL(10,2)'));
+    }
+
+    public function testExtractDecimalTypeReadsADeclarationWithNoScaleAsHavingNone(): void
+    {
+        self::assertSame('NUMERIC(10,0)', (new PgSqlCastRenderer())->extractDecimalType('NUMERIC(10)'));
+    }
+
+    public function testExtractStringTypeKeepsTheWidthTheDeclarationAskedFor(): void
+    {
+        self::assertSame('VARCHAR(100)', (new PgSqlCastRenderer())->extractStringType('VARCHAR(100)'));
+    }
+
+    public function testExtractStringTypeAnswersATypeWithNoWidthWhereNoneWasWritten(): void
+    {
+        self::assertSame('VARCHAR', (new PgSqlCastRenderer())->extractStringType('CHARACTER VARYING'));
+    }
+
 }

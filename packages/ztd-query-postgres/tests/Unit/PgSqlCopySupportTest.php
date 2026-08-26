@@ -305,4 +305,84 @@ final class PgSqlCopySupportTest extends TestCase
         yield 'end marker' => ['\\.'];
         yield 'octal overflow' => ['\\400'];
     }
+    public function testTableNameAnswersTheTableAQualifiedNameNames(): void
+    {
+        self::assertSame('users', (new PgSqlCopySupport())->tableName('public.users'));
+    }
+
+    public function testTargetAnswersTheColumnsACopyWouldWrite(): void
+    {
+        $definition = new TableDefinition(['id', 'name'], [], ['id'], [], []);
+
+        self::assertSame(['id', 'name'], (new PgSqlCopySupport())->target('users', null, $definition)->columns);
+    }
+
+    public function testTargetRefusesATableWithNoColumnToCopy(): void
+    {
+        $this->expectException(ValueError::class);
+
+        (new PgSqlCopySupport())->target('users', null, new TableDefinition([], [], [], [], []));
+    }
+
+    public function testSelectSqlReadsTheColumnsTheTargetNames(): void
+    {
+        $target = new CopyTarget(['users'], ['id']);
+
+        self::assertSame('SELECT "id" FROM "users"', (new PgSqlCopySupport())->selectSql($target));
+    }
+
+    public function testRelationPartsReadsTheSchemaAndTheTable(): void
+    {
+        self::assertSame(['public', 'users'], (new PgSqlCopySupport())->relationParts('public.users'));
+    }
+
+    public function testRelationPartsRefusesANameWithAnEmptyPart(): void
+    {
+        $this->expectException(ValueError::class);
+
+        (new PgSqlCopySupport())->relationParts('public..users');
+    }
+
+    public function testColumnListSqlWritesEveryNameAsPostgresWouldWriteIt(): void
+    {
+        self::assertSame('"a", "b"', (new PgSqlCopySupport())->columnListSql(['a', 'b']));
+    }
+
+    public function testRelationSqlWritesTheTableAsPostgresWouldWriteIt(): void
+    {
+        self::assertSame('"public"."users"', (new PgSqlCopySupport())->relationSql(new CopyTarget(['public', 'users'], ['id'])));
+    }
+
+    public function testQuoteIdentifierDoublesEveryQuoteInTheName(): void
+    {
+        self::assertSame('"a""b"', (new PgSqlCopySupport())->quoteIdentifier('a"b'));
+    }
+
+    public function testValidateSeparatorRefusesASeparatorOfMoreThanOneByte(): void
+    {
+        $this->expectException(ValueError::class);
+
+        (new PgSqlCopySupport())->validateSeparator('ab');
+    }
+
+    public function testCopyOutputWritesATruthAsPostgresWritesIt(): void
+    {
+        self::assertSame('t', (new PgSqlCopySupport())->copyOutput(true));
+    }
+
+    public function testEscapeWritesASeparatorInsideAValueSoItIsNotOne(): void
+    {
+        self::assertSame('a\\tb', (new PgSqlCopySupport())->escape("a\tb", "\t"));
+    }
+
+    public function testDecodeFieldsReadsALineAsTheValuesItCarries(): void
+    {
+        self::assertSame(['a', 'b'], (new PgSqlCopySupport())->decodeFields("a\tb", "\t", '\\N'));
+    }
+
+    public function testDecodeFieldsReadsTheNullMarkerAsNoValue(): void
+    {
+        self::assertSame([null], (new PgSqlCopySupport())->decodeFields('\\N', "\t", '\\N'));
+    }
+
 }
