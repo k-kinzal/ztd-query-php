@@ -41,6 +41,15 @@ use ZtdQuery\Sql\SqlTokenStream;
 #[UsesClass(ShadowStore::class)]
 #[UsesClass(SqlToken::class)]
 #[UsesClass(SqlTokenStream::class)]
+#[UsesClass(\ZtdQuery\Schema\CandidateKeyMatch::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\ConflictSearch::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\RowConstraints::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertColumn::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertComparison::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertNumber::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertTruth::class)]
+#[UsesClass(\ZtdQuery\Shadow\Row\RowMatch::class)]
+#[UsesClass(\ZtdQuery\Shadow\Row\RowMultiset::class)]
 final class MutationImpactTest extends TestCase
 {
     public function testInsertImpactContainsOnlyRowsActuallyAdded(): void

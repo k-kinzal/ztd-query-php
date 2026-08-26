@@ -29,7 +29,21 @@ use ZtdQuery\Shadow\ShadowStore;
 #[UsesClass(DeleteMutation::class)]
 #[UsesClass(MutationImpact::class)]
 #[UsesClass(ResultSet::class)]
-#[UsesClass(FakeSqlRewriter::class)]
+#[UsesClass(DatabaseException::class)]
+#[UsesClass(\ZtdQuery\Exception\DuplicateKeyException::class)]
+#[UsesClass(\ZtdQuery\Schema\CandidateKeyConflict::class)]
+#[UsesClass(\ZtdQuery\Schema\CandidateKeyMatch::class)]
+#[UsesClass(\ZtdQuery\Schema\CandidateKeySet::class)]
+#[UsesClass(\ZtdQuery\Shadow\ForeignKeyCascade::class)]
+#[UsesClass(\ZtdQuery\Shadow\ForeignKeyEnds::class)]
+#[UsesClass(\ZtdQuery\Shadow\ForeignKeyIntegrity::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\ConflictSearch::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\RowConstraints::class)]
+#[UsesClass(\ZtdQuery\Shadow\ParentKeyLookup::class)]
+#[UsesClass(\ZtdQuery\Shadow\Row\RowMatch::class)]
+#[UsesClass(\ZtdQuery\Shadow\Row\RowMultiset::class)]
+#[UsesClass(\ZtdQuery\Shadow\Row\TableTransition::class)]
+#[UsesClass(\ZtdQuery\Shadow\TableTransitions::class)]
 final class ShadowApplicationTest extends TestCase
 {
     public function testApplyWritesTheRowsAMutationDescribesIntoTheShadow(): void

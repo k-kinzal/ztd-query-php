@@ -12,6 +12,7 @@ use ZtdQuery\Schema\CandidateKeySet;
 
 #[CoversClass(CandidateKeySet::class)]
 #[UsesClass(CandidateKeyConflict::class)]
+#[UsesClass(\ZtdQuery\Schema\CandidateKeyMatch::class)]
 final class CandidateKeySetTest extends TestCase
 {
     public function testFindsConflictAcrossPrimaryAndUniqueCandidateKeys(): void

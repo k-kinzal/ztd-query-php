@@ -16,6 +16,8 @@ use ZtdQuery\Sql\SqlTokenScanner;
 #[CoversClass(SqlTokenScanner::class)]
 #[UsesClass(SqlToken::class)]
 #[UsesClass(SqlLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Sql\LexicalDelimiters::class)]
+#[UsesClass(\ZtdQuery\Sql\LexicalPattern::class)]
 final class SqlTokenScannerTest extends TestCase
 {
     public function testScanLosesNothingOfTheStatementItRead(): void
