@@ -98,4 +98,12 @@ final class SqlBehaviorRuleTest extends TestCase
             self::assertSame($expected, $rule->matches($sql), $label);
         });
     }
+
+    public function testMatchesAnswersForTheStatementsTheRuleIsWrittenFor(): void
+    {
+        $rule = new SqlBehaviorRule('SELECT', UnsupportedSqlBehavior::Ignore);
+
+        self::assertTrue($rule->matches('select 1'));
+        self::assertFalse($rule->matches('INSERT INTO t VALUES (1)'));
+    }
 }

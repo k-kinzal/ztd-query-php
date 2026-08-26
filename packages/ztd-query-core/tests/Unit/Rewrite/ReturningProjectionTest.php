@@ -12,7 +12,7 @@ use ZtdQuery\Rewrite\ReturningProjection;
 #[CoversClass(ReturningProjection::class)]
 final class ReturningProjectionTest extends TestCase
 {
-    public function testItemsProjectItemsProjectsNamedWildcardAndAliasedItemsForEveryRow(): void
+    public function testItemsAndProjectReadEveryRowTheWayTheItemsWereWritten(): void
     {
         $projection = ReturningProjection::fromItems([
             ['source' => 'id', 'output' => 'original_id'],

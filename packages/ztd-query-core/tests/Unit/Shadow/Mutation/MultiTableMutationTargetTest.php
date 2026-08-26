@@ -11,7 +11,7 @@ use ZtdQuery\Shadow\Mutation\MultiTableMutationTarget;
 #[CoversClass(MultiTableMutationTarget::class)]
 final class MultiTableMutationTargetTest extends TestCase
 {
-    public function testPrimaryKeysTableNamePrimaryKeysExposesSchemaAndUsesPrimaryKeysForMatching(): void
+    public function testTableNameColumnsAndPrimaryKeysAreWhatTheTargetWasWrittenAs(): void
     {
         $target = new MultiTableMutationTarget('users', ['id', 'name'], [3 => 'id']);
 
@@ -27,5 +27,26 @@ final class MultiTableMutationTargetTest extends TestCase
 
         self::assertSame(['message', 'created_at'], $target->columns());
         self::assertSame(['message', 'created_at'], $target->matchColumns());
+    }
+
+    public function testMatchColumnsAreTheKeyColumnsWhereTheTableDeclaresOne(): void
+    {
+        $target = new MultiTableMutationTarget('users', ['id', 'name'], ['id']);
+
+        self::assertSame(['id'], $target->matchColumns());
+    }
+
+    public function testMatchColumnsFallBackToEveryColumnWhereTheTableDeclaresNoKey(): void
+    {
+        $target = new MultiTableMutationTarget('users', ['id', 'name'], []);
+
+        self::assertSame(['id', 'name'], $target->matchColumns());
+    }
+
+    public function testColumnsAreTheColumnsTheStatementWrites(): void
+    {
+        $target = new MultiTableMutationTarget('users', ['id', 'name'], ['id']);
+
+        self::assertSame(['id', 'name'], $target->columns());
     }
 }

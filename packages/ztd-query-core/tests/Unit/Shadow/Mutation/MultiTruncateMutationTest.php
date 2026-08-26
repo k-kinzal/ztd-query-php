@@ -44,4 +44,18 @@ final class MultiTruncateMutationTest extends TestCase
         self::assertSame('', $mutation->tableName());
         self::assertSame([], $mutation->tableNames());
     }
+
+    public function testTableNamesAreEveryTableTheStatementEmpties(): void
+    {
+        $mutation = new MultiTruncateMutation(['order', 'order_detail']);
+
+        self::assertSame(['order', 'order_detail'], $mutation->tableNames());
+    }
+
+    public function testTableNameIsTheFirstOfThemWhereOnlyOneCanBeNamed(): void
+    {
+        $mutation = new MultiTruncateMutation(['order', 'order_detail']);
+
+        self::assertSame('order', $mutation->tableName());
+    }
 }
