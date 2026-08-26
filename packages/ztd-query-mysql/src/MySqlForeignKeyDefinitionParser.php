@@ -6,8 +6,8 @@ namespace ZtdQuery\Platform\MySql;
 
 use ZtdQuery\Schema\ForeignKeyDefinition;
 use ZtdQuery\Schema\ReferentialAction;
-use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlLexerProfile;
+use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 

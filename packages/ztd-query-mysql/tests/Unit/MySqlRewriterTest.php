@@ -12,16 +12,16 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\DmlWhereClauseExtractor;
 use ZtdQuery\Platform\MySql\InsertSelectSourceExtractor;
 use ZtdQuery\Platform\MySql\Mutation\AlterTableMutation;
-use ZtdQuery\Platform\MySql\MySqlMutationResolver;
 use ZtdQuery\Platform\MySql\MySqlLoadDataProjector;
+use ZtdQuery\Platform\MySql\MySqlMutationResolver;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlPartitioningParser;
 use ZtdQuery\Platform\MySql\MySqlPartitionSelectionRewriter;
 use ZtdQuery\Platform\MySql\MySqlQueryGuard;
 use ZtdQuery\Platform\MySql\MySqlRewriter;
 use ZtdQuery\Platform\MySql\MySqlSchemaParser;
-use ZtdQuery\Platform\MySql\MySqlViewDefinitionParser;
 use ZtdQuery\Platform\MySql\MySqlUpsertAssignmentExtractor;
+use ZtdQuery\Platform\MySql\MySqlViewDefinitionParser;
 use ZtdQuery\Platform\MySql\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\MySql\Transformer\InsertTransformer;
 use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
@@ -34,7 +34,6 @@ use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Schema\TableDefinitionRegistry;
-use ZtdQuery\Schema\ViewDefinition;
 use ZtdQuery\Schema\ViewDefinitionSet;
 use ZtdQuery\Shadow\Mutation\CreateTableAsSelectMutation;
 use ZtdQuery\Shadow\Mutation\CreateTableLikeMutation;
@@ -84,7 +83,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlTypeSemantics::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlNativeUpsertProjector::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlViewDefinitionParser::class)]
+#[UsesClass(MySqlViewDefinitionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlViewShadowRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlGeneratedColumnProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
@@ -1605,7 +1604,7 @@ final class MySqlRewriterTest extends RewriterContractTest
         $mutationResolver = new MySqlMutationResolver($shadowStore, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
         $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $shadowStore, $registry, $transformer, $mutationResolver, $parser);
 
-        $plan = $rewriter->rewrite("DELETE FROM users WHERE id = 1");
+        $plan = $rewriter->rewrite('DELETE FROM users WHERE id = 1');
         self::assertSame(QueryKind::WRITE_SIMULATED, $plan->kind());
         self::assertSame([], $shadowStore->get('users'));
     }
@@ -1653,7 +1652,7 @@ final class MySqlRewriterTest extends RewriterContractTest
         $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $shadowStore, $registry, $transformer, $mutationResolver, $parser);
 
         self::expectException(UnsupportedSqlException::class);
-        $rewriter->rewrite("ALTER TABLE users ALTER COLUMN name DROP DEFAULT");
+        $rewriter->rewrite('ALTER TABLE users ALTER COLUMN name DROP DEFAULT');
     }
 
     public function testRewriteAlterTableWithOrderByThrows(): void
@@ -1676,7 +1675,7 @@ final class MySqlRewriterTest extends RewriterContractTest
         $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $shadowStore, $registry, $transformer, $mutationResolver, $parser);
 
         self::expectException(UnsupportedSqlException::class);
-        $rewriter->rewrite("ALTER TABLE users ORDER BY name");
+        $rewriter->rewrite('ALTER TABLE users ORDER BY name');
     }
 
     public function testRewriteAlterTableAddIndexThrows(): void
@@ -1699,7 +1698,7 @@ final class MySqlRewriterTest extends RewriterContractTest
         $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $shadowStore, $registry, $transformer, $mutationResolver, $parser);
 
         self::expectException(UnsupportedSqlException::class);
-        $rewriter->rewrite("ALTER TABLE users ADD INDEX idx_name (name)");
+        $rewriter->rewrite('ALTER TABLE users ADD INDEX idx_name (name)');
     }
 
     public function testRewriteAlterTableDropIndexThrows(): void
@@ -1722,7 +1721,7 @@ final class MySqlRewriterTest extends RewriterContractTest
         $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $shadowStore, $registry, $transformer, $mutationResolver, $parser);
 
         self::expectException(UnsupportedSqlException::class);
-        $rewriter->rewrite("ALTER TABLE users DROP INDEX idx_name");
+        $rewriter->rewrite('ALTER TABLE users DROP INDEX idx_name');
     }
 
     public function testRewriteReadWithRegistryButNoShadowStoreDataAddsCtesForKnownTables(): void
@@ -1998,7 +1997,7 @@ final class MySqlRewriterTest extends RewriterContractTest
         $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $shadowStore, $registry, $transformer, $mutationResolver, $parser);
 
         self::expectException(UnsupportedSqlException::class);
-        $rewriter->rewrite("ALTER TABLE users CONVERT TO CHARACTER SET utf8mb4");
+        $rewriter->rewrite('ALTER TABLE users CONVERT TO CHARACTER SET utf8mb4');
     }
 
     public function testRewriteEmptySqlThrows(): void
@@ -2115,7 +2114,7 @@ final class MySqlRewriterTest extends RewriterContractTest
         $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $shadowStore, $registry, $transformer, $mutationResolver, $parser);
 
         self::expectException(UnsupportedSqlException::class);
-        $rewriter->rewrite("ALTER TABLE users ADD FULLTEXT INDEX ft_name (name)");
+        $rewriter->rewrite('ALTER TABLE users ADD FULLTEXT INDEX ft_name (name)');
     }
 
     public function testRewriteCreateTableThatAlreadyExistsThrows(): void
@@ -2275,7 +2274,7 @@ final class MySqlRewriterTest extends RewriterContractTest
         $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $shadowStore, $registry, $transformer, $mutationResolver, $parser);
 
         self::expectException(UnsupportedSqlException::class);
-        $rewriter->rewrite("ALTER TABLE users ORDER BY name");
+        $rewriter->rewrite('ALTER TABLE users ORDER BY name');
     }
 
     public function testRewriteAlterTableConvertToThrows(): void
@@ -2298,7 +2297,7 @@ final class MySqlRewriterTest extends RewriterContractTest
         $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $shadowStore, $registry, $transformer, $mutationResolver, $parser);
 
         self::expectException(UnsupportedSqlException::class);
-        $rewriter->rewrite("ALTER TABLE users CONVERT TO CHARACTER SET utf8mb4");
+        $rewriter->rewrite('ALTER TABLE users CONVERT TO CHARACTER SET utf8mb4');
     }
 
     public function testRewriteBuildTableContextWithRowsButNoDefinition(): void
@@ -2414,7 +2413,7 @@ final class MySqlRewriterTest extends RewriterContractTest
         $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $shadowStore, $registry, $transformer, $mutationResolver, $parser);
 
         self::expectException(UnsupportedSqlException::class);
-        $rewriter->rewrite("ALTER TABLE t RENAME INDEX idx_old TO idx_new");
+        $rewriter->rewrite('ALTER TABLE t RENAME INDEX idx_old TO idx_new');
     }
 
     public function testRewriteReplaceWithoutColumnsButWithShadowDataSucceeds(): void

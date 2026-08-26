@@ -8,11 +8,11 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use Tests\Contract\SchemaParserContractTest;
 use ZtdQuery\Platform\MySql\MySqlParser;
+use ZtdQuery\Platform\MySql\MySqlPartitioningParser;
 use ZtdQuery\Platform\MySql\MySqlSchemaParser;
 use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
-use ZtdQuery\Platform\MySql\MySqlPartitioningParser;
 
 #[CoversClass(MySqlSchemaParser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlColumnTypeMapper::class)]
