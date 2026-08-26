@@ -13,7 +13,11 @@ use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
 use ZtdQuery\Config\UnknownSchemaBehavior;
 use ZtdQuery\Config\UnsupportedSqlBehavior;
 use ZtdQuery\Config\ZtdConfig;
+use ZtdQuery\Connection\StatementInterface;
 
+/**
+ * @phpstan-import-type Row from StatementInterface
+ */
 final class MysqliCorrectnessHarness
 {
     private mysqli $rawMysqli;
@@ -27,7 +31,7 @@ final class MysqliCorrectnessHarness
     private Generator $faker;
     private FixtureProvider $fixtureProvider;
 
-    /** @var array<int, array<string, mixed>> */
+    /** @var list<Row> */
     private array $fixtureRows = [];
 
     public function __construct(string $host, int $port, string $dbName, string $user, string $pass)
@@ -45,7 +49,7 @@ final class MysqliCorrectnessHarness
     /**
      * Set up both connections with the same schema and data.
      *
-     * @return array<int, array<string, mixed>> The fixture rows inserted
+     * @return list<Row> The fixture rows inserted
      */
     public function setup(SchemaDefinition $schema, int $seed, int $rowCount = 3): array
     {
@@ -137,7 +141,7 @@ final class MysqliCorrectnessHarness
     }
 
     /**
-     * @return array<int, array<string, mixed>>
+     * @return list<Row>
      */
     public function getFixtureRows(): array
     {
@@ -150,7 +154,7 @@ final class MysqliCorrectnessHarness
     }
 
     /**
-     * @param array<string, mixed> $row
+     * @param Row $row
      */
     private function insertRow(mysqli $mysqli, string $table, array $row): void
     {

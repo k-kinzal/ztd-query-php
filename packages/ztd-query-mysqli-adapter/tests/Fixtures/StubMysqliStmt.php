@@ -23,7 +23,9 @@ class StubMysqliStmt extends mysqli_stmt
 {
     public bool $executeReturn = true;
 
-    /** @var array<mixed, mixed>|null */
+    /**
+     * @var array<mixed, mixed>|null
+     */
     public ?array $executeCalledWithParams = null;
 
     public int $executeCallCount = 0;
@@ -42,7 +44,9 @@ class StubMysqliStmt extends mysqli_stmt
 
     public bool $storeResultReturn = true;
 
-    /** @var int|string */
+    /**
+     * @var int|string
+     */
     public int|string $affectedRowsValue = 0;
 
     public static function create(): self
@@ -53,7 +57,9 @@ class StubMysqliStmt extends mysqli_stmt
         return $instance;
     }
 
-    /** @param array<mixed, mixed>|null $params */
+    /**
+     * @param array<mixed, mixed>|null $params
+     */
     #[Override]
     public function execute(?array $params = null): bool
     {

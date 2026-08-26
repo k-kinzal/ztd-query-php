@@ -15,9 +15,13 @@ use mysqli;
 use mysqli_result;
 use mysqli_sql_exception;
 use ZtdQuery\Connection\Exception\DatabaseException;
+use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 
+/**
+ * @phpstan-import-type Row from StatementInterface
+ */
 final class InsertCorrectnessTarget
 {
     private MysqliCorrectnessHarness $harness;
@@ -80,7 +84,7 @@ final class InsertCorrectnessTarget
         $rawRows = $this->fetchAll($this->harness->getRawMysqli(), $schema->name);
 
         $result = $this->harness->getZtdMysqli()->query("SELECT * FROM `{$schema->name}`");
-        /** @var array<int, array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $result instanceof mysqli_result ? $result->fetch_all(MYSQLI_ASSOC) : [];
 
         if (!$this->comparator->compareRows($rawRows, $ztdRows, $schema->primaryKeys)) {
@@ -95,7 +99,7 @@ final class InsertCorrectnessTarget
     }
 
     /**
-     * @return array<int, array<string, mixed>>
+     * @return list<Row>
      */
     private function fetchAll(mysqli $mysqli, string $table): array
     {
@@ -103,7 +107,7 @@ final class InsertCorrectnessTarget
         if (!$result instanceof mysqli_result) {
             return [];
         }
-        /** @var array<int, array<string, mixed>> $rows */
+        /** @var list<Row> $rows */
         $rows = $result->fetch_all(MYSQLI_ASSOC);
         return $rows;
     }

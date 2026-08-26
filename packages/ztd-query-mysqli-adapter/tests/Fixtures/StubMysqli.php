@@ -20,13 +20,19 @@ class StubMysqli extends mysqli
 {
     public mysqli_stmt|false $prepareReturn = false;
 
-    /** @var string|null */
+    /**
+     * @var string|null
+     */
     public ?string $prepareCalledWith = null;
 
-    /** @var mysqli_result|bool */
+    /**
+     * @var mysqli_result|bool
+     */
     public mysqli_result|bool $queryReturn = true;
 
-    /** @var string|null */
+    /**
+     * @var string|null
+     */
     public ?string $queryCalledWith = null;
 
     public bool $realQueryReturn = true;
@@ -49,12 +55,16 @@ class StubMysqli extends mysqli
 
     public string $realEscapeStringReturn = '';
 
-    /** @var mysqli_result|bool */
+    /**
+     * @var mysqli_result|bool
+     */
     public mysqli_result|bool $executeQueryReturn = true;
 
     public bool $closeCalled = false;
 
-    /** @var int|string */
+    /**
+     * @var int|string
+     */
     public int|string $affectedRowsValue = 0;
 
     public function __construct()
@@ -135,7 +145,9 @@ class StubMysqli extends mysqli
         return $this->realEscapeStringReturn;
     }
 
-    /** @param array<mixed, mixed>|null $params */
+    /**
+     * @param array<mixed, mixed>|null $params
+     */
     #[Override]
     public function execute_query(string $query, ?array $params = null): mysqli_result|bool
     {

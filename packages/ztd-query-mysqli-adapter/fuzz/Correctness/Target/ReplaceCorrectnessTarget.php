@@ -13,7 +13,11 @@ use Fuzz\Correctness\SchemaPool;
 use mysqli;
 use mysqli_result;
 use Throwable;
+use ZtdQuery\Connection\StatementInterface;
 
+/**
+ * @phpstan-import-type Row from StatementInterface
+ */
 final class ReplaceCorrectnessTarget
 {
     public function __construct(
@@ -79,7 +83,7 @@ final class ReplaceCorrectnessTarget
         }
     }
 
-    /** @return array<int, array<string, mixed>> */
+    /** @return list<Row> */
     private function fetchAll(mysqli $mysqli, string $table): array
     {
         $result = $mysqli->query("SELECT * FROM `$table`");
@@ -87,7 +91,7 @@ final class ReplaceCorrectnessTarget
             return [];
         }
 
-        /** @var array<int, array<string, mixed>> $rows */
+        /** @var list<Row> $rows */
         $rows = $result->fetch_all(MYSQLI_ASSOC);
 
         return $rows;

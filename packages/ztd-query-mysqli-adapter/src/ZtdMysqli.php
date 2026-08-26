@@ -14,6 +14,7 @@ use ReturnTypeWillChange;
 use SensitiveParameter;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\Exception\DatabaseException;
+use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Platform\MySql\MySqlSessionFactory;
 use ZtdQuery\Platform\SessionFactory;
 use ZtdQuery\Session;
@@ -32,6 +33,8 @@ use ZtdQuery\Sql\TransactionStatement;
  *
  * Supports optional SessionFactory injection. If no factory is provided,
  * MySqlSessionFactory is used by default (mysqli is MySQL-only).
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 class ZtdMysqli extends mysqli
 {
@@ -495,12 +498,12 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      *
-     * @return array<string, mixed>
+     * @return Row
      */
     #[Override]
     public function get_connection_stats(): array
     {
-        /** @var array<string, mixed> */
+        /** @var Row */
         return $this->innerMysqli->get_connection_stats();
     }
 

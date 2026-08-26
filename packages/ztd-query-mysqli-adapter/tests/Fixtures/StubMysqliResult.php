@@ -7,6 +7,7 @@ namespace Tests\Fixtures;
 use mysqli_result;
 use Override;
 use ReflectionClass;
+use ZtdQuery\Connection\StatementInterface;
 
 /**
  * Test double for mysqli_result that allows configuring behavior without PHPUnit mocks.
@@ -16,17 +17,19 @@ use ReflectionClass;
  *
  * Uses a static factory to avoid calling the parent constructor (which requires
  * a connected mysqli instance).
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 class StubMysqliResult extends mysqli_result
 {
-    /** @var array<int, array<string, mixed>> */
+    /** @var list<Row> */
     private array $rows = [];
 
     /** @var list<StubMysqliField> */
     private array $fields = [];
 
     /**
-     * @param array<int, array<string, mixed>> $rows
+     * @param list<Row> $rows
      * @param list<StubMysqliField> $fields
      */
     public static function create(array $rows = [], array $fields = []): self
@@ -40,7 +43,7 @@ class StubMysqliResult extends mysqli_result
     }
 
     /**
-     * @return array<int, array<string, mixed>>
+     * @return list<Row>
      */
     #[Override]
     public function fetch_all(int $mode = MYSQLI_NUM): array

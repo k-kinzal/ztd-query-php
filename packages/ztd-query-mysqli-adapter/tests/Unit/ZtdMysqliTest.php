@@ -62,7 +62,7 @@ final class ZtdMysqliTest extends TestCase
         ZtdMysqli::fromMysqli($innerMysqli, $config, $factory);
     }
 
-    public function testEnableAndDisableZtd(): void
+    public function testEnableZtdEnableAndDisableZtd(): void
     {
         $innerMysqli = new StubMysqli();
         $rewriter = static::createStub(SqlRewriter::class);
@@ -201,7 +201,7 @@ final class ZtdMysqliTest extends TestCase
         self::assertTrue($result);
     }
 
-    public function testRealQueryWhenZtdDisabledDelegatesToInner(): void
+    public function testReal_queryRealQueryWhenZtdDisabledDelegatesToInner(): void
     {
         $innerMysqli = new StubMysqli();
         $rewriter = static::createStub(SqlRewriter::class);
@@ -219,7 +219,7 @@ final class ZtdMysqliTest extends TestCase
         self::assertTrue($ztd->real_query('SELECT 1'));
     }
 
-    public function testMultiQueryDelegatesToInner(): void
+    public function testMulti_queryMultiQueryDelegatesToInner(): void
     {
         $innerMysqli = new StubMysqli();
         $rewriter = static::createStub(SqlRewriter::class);
@@ -323,7 +323,7 @@ final class ZtdMysqliTest extends TestCase
         self::assertTrue($innerMysqli->closeCalled);
     }
 
-    public function testSelectDbDelegatesToInner(): void
+    public function testSelect_dbSelectDbDelegatesToInner(): void
     {
         $innerMysqli = new StubMysqli();
         $rewriter = static::createStub(SqlRewriter::class);
@@ -340,7 +340,7 @@ final class ZtdMysqliTest extends TestCase
         self::assertTrue($ztd->select_db('test_db'));
     }
 
-    public function testRealEscapeStringDelegatesToInner(): void
+    public function testReal_escape_stringRealEscapeStringDelegatesToInner(): void
     {
         $innerMysqli = new StubMysqli();
         $rewriter = static::createStub(SqlRewriter::class);
@@ -357,7 +357,7 @@ final class ZtdMysqliTest extends TestCase
         self::assertSame("O\\'Reilly", $ztd->real_escape_string("O'Reilly"));
     }
 
-    public function testExecuteQueryWhenZtdDisabledDelegatesToInner(): void
+    public function testExecute_queryExecuteQueryWhenZtdDisabledDelegatesToInner(): void
     {
         $innerMysqli = new StubMysqli();
         $rewriter = static::createStub(SqlRewriter::class);
