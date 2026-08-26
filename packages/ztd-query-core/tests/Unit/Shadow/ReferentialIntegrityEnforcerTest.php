@@ -38,6 +38,17 @@ use ZtdQuery\Shadow\ShadowStore;
 #[UsesClass(UpdateMutation::class)]
 #[UsesClass(MutationRowIdentity::class)]
 #[UsesClass(ShadowStore::class)]
+#[UsesClass(\ZtdQuery\Shadow\ForeignKeyCascade::class)]
+#[UsesClass(\ZtdQuery\Shadow\ForeignKeyEnds::class)]
+#[UsesClass(\ZtdQuery\Shadow\ForeignKeyIntegrity::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\ConflictSearch::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\RowConstraints::class)]
+#[UsesClass(\ZtdQuery\Shadow\ParentKeyLookup::class)]
+#[UsesClass(\ZtdQuery\Shadow\Row\RowChange::class)]
+#[UsesClass(\ZtdQuery\Shadow\Row\RowMatch::class)]
+#[UsesClass(\ZtdQuery\Shadow\Row\RowMultiset::class)]
+#[UsesClass(\ZtdQuery\Shadow\Row\TableTransition::class)]
+#[UsesClass(\ZtdQuery\Shadow\TableTransitions::class)]
 final class ReferentialIntegrityEnforcerTest extends TestCase
 {
     public function testSchemaMutationSkipsRowIntegrityChecks(): void

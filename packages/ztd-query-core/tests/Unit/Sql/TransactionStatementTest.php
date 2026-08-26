@@ -15,6 +15,7 @@ use ZtdQuery\Sql\TransactionStatement;
 #[CoversClass(TransactionStatement::class)]
 #[UsesClass(ShadowStore::class)]
 #[UsesClass(ShadowTransactions::class)]
+#[UsesClass(\ZtdQuery\Shadow\ShadowSavepoint::class)]
 final class TransactionStatementTest extends TestCase
 {
     public function testReleaseCommitAppliesNamedTransactionLifecycleWithoutSql(): void

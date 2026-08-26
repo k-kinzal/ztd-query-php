@@ -17,6 +17,11 @@ use ZtdQuery\Sql\SqlTokenStream;
 #[UsesClass(SqlToken::class)]
 #[UsesClass(SqlLexerProfile::class)]
 #[UsesClass(SqlTokenKind::class)]
+#[UsesClass(\ZtdQuery\Sql\LexicalDelimiters::class)]
+#[UsesClass(\ZtdQuery\Sql\LexicalPattern::class)]
+#[UsesClass(\ZtdQuery\Sql\SqlIdentifierComponent::class)]
+#[UsesClass(\ZtdQuery\Sql\SqlKeywordSequence::class)]
+#[UsesClass(\ZtdQuery\Sql\SqlTokenScanner::class)]
 final class SqlTokenStreamTest extends TestCase
 {
     public function testNavigatesAdjacentSignificantTokensByIdentity(): void

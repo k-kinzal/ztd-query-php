@@ -26,6 +26,13 @@ use ZtdQuery\Shadow\ShadowStore;
 #[UsesClass(CandidateKeySet::class)]
 #[UsesClass(UpsertExpression::class)]
 #[CoversClass(InsertMutation::class)]
+#[UsesClass(\ZtdQuery\Schema\CandidateKeyMatch::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\ConflictSearch::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\RowConstraints::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertColumn::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertComparison::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertNumber::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertTruth::class)]
 final class InsertMutationTest extends TestCase
 {
     public function testTableNameApplyAppendsRows(): void

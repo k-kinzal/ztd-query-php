@@ -43,6 +43,15 @@ use ZtdQuery\Simulator\StatementSimulator;
 #[UsesClass(ReferentialIntegrityEnforcer::class)]
 #[UsesClass(Session::class)]
 #[CoversClass(StatementSimulator::class)]
+#[UsesClass(\ZtdQuery\Shadow\ForeignKeyCascade::class)]
+#[UsesClass(\ZtdQuery\Shadow\ForeignKeyEnds::class)]
+#[UsesClass(\ZtdQuery\Shadow\ForeignKeyIntegrity::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\ConflictSearch::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\RowConstraints::class)]
+#[UsesClass(\ZtdQuery\Shadow\ParentKeyLookup::class)]
+#[UsesClass(\ZtdQuery\Shadow\Row\RowMultiset::class)]
+#[UsesClass(\ZtdQuery\Shadow\ShadowApplication::class)]
+#[UsesClass(\ZtdQuery\Shadow\TableTransitions::class)]
 final class StatementSimulatorTest extends TestCase
 {
     public function testUnsupportedSqlThrows(): void
