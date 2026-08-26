@@ -7,11 +7,13 @@ namespace Tests\Unit;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Platform\Sqlite\SqliteLexerProfile;
 use ZtdQuery\Platform\Sqlite\SqliteNativeUpsertProjector;
+use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(SqliteNativeUpsertProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
+#[UsesClass(SqliteLexerProfile::class)]
 final class SqliteNativeUpsertProjectorTest extends TestCase
 {
     public function testKeepsIdentifiersInsideScalarSubqueryInTheirNativeScope(): void
@@ -130,5 +132,88 @@ final class SqliteNativeUpsertProjectorTest extends TestCase
             '("__ztd_existing"."status" = \'active\') AND ("__ztd_incoming"."status" = \'active\')',
             $result,
         );
+    }
+    public function testConflictPredicateComparesEveryColumnOfEachKey(): void
+    {
+        self::assertSame(
+            '(("e"."id" = "i"."id"))',
+            (new SqliteNativeUpsertProjector())->conflictPredicate(['PRIMARY' => ['id']], '"e"', '"i"'),
+        );
+    }
+
+    public function testConflictPredicateIsFalseWhereThereIsNoKeyToCollideOn(): void
+    {
+        self::assertSame('FALSE', (new SqliteNativeUpsertProjector())->conflictPredicate([], '"e"', '"i"'));
+    }
+
+    public function testBindExpressionSaysABareNameMeansTheRowAlreadyThere(): void
+    {
+        self::assertSame(
+            '"__ztd_existing"."qty"',
+            (new SqliteNativeUpsertProjector())->bindExpression('qty', 'items', ['qty']),
+        );
+    }
+
+    public function testBindExpressionSaysExcludedMeansTheIncomingRow(): void
+    {
+        self::assertSame(
+            '"__ztd_incoming"."qty"',
+            (new SqliteNativeUpsertProjector())->bindExpression('excluded.qty', 'items', ['qty']),
+        );
+    }
+
+    public function testBindExpressionLeavesANameInsideASubqueryAlone(): void
+    {
+        self::assertStringContainsString(
+            'SELECT qty',
+            (new SqliteNativeUpsertProjector())->bindExpression('(SELECT qty FROM other)', 'items', ['qty']),
+        );
+    }
+
+    public function testSubqueryTokenIndexesMarksEveryTokenInsideASubquery(): void
+    {
+        $tokens = SqlTokenStream::tokenize('a + (SELECT b)', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertSame([3, 4], array_keys((new SqliteNativeUpsertProjector())->subqueryTokenIndexes($tokens)));
+    }
+
+    public function testSubqueryTokenIndexesMarksNothingWhereThereIsNoSubquery(): void
+    {
+        $tokens = SqlTokenStream::tokenize('a + 1', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertSame([], (new SqliteNativeUpsertProjector())->subqueryTokenIndexes($tokens));
+    }
+
+    public function testIsIdentifierReportsABareWord(): void
+    {
+        $tokens = SqlTokenStream::tokenize('qty', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertTrue((new SqliteNativeUpsertProjector())->isIdentifier($tokens[0]));
+    }
+
+    public function testIsIdentifierIsFalseForALiteral(): void
+    {
+        $tokens = SqlTokenStream::tokenize('1', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertFalse((new SqliteNativeUpsertProjector())->isIdentifier($tokens[0]));
+    }
+
+    public function testIdentifierTakesTheQuotingOffAName(): void
+    {
+        $tokens = SqlTokenStream::tokenize('"order"', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertSame('order', (new SqliteNativeUpsertProjector())->identifier($tokens[0]));
+    }
+
+    public function testIdentifierAnswersTheTokensOwnTextWhereItIsNotAName(): void
+    {
+        $tokens = SqlTokenStream::tokenize('1', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertSame('1', (new SqliteNativeUpsertProjector())->identifier($tokens[0]));
+    }
+
+    public function testQualifiedWritesTheColumnAsBelongingToThatRow(): void
+    {
+        self::assertSame('"e"."qty"', (new SqliteNativeUpsertProjector())->qualified('e', 'qty'));
     }
 }

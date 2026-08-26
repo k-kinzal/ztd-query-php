@@ -93,9 +93,15 @@ final class SqliteNativeUpsertProjector
     }
 
     /**
-     * @param array<string, array<int, string>> $candidateKeys
+     * Answers the test that says an incoming row collides with one already there.
+     *
+     * @param array<string, array<int, string>> $candidateKeys The candidate keys
+     * @param string $existingAlias The existing alias
+     * @param string $incomingAlias The incoming alias
+     *
+     * @return string What it answers
      */
-    private function conflictPredicate(array $candidateKeys, string $existingAlias, string $incomingAlias): string
+    public function conflictPredicate(array $candidateKeys, string $existingAlias, string $incomingAlias): string
     {
         $keys = [];
         foreach ($candidateKeys as $columns) {
@@ -113,8 +119,17 @@ final class SqliteNativeUpsertProjector
         return $keys === [] ? 'FALSE' : '(' . implode(' OR ', $keys) . ')';
     }
 
-    /** @param list<string> $tableColumns */
-    private function bindExpression(
+    /**
+     * Writes an expression so that each name in it says which row it means.
+     *
+     * @param string $expression Expression to read, as written
+     * @param string $tableName Table it belongs to
+     * @param list<string> $tableColumns The table columns
+     * @param string $unqualifiedAlias The unqualified alias
+     *
+     * @return string What it answers
+     */
+    public function bindExpression(
         string $expression,
         string $tableName,
         array $tableColumns,
@@ -174,10 +189,13 @@ final class SqliteNativeUpsertProjector
     }
 
     /**
-     * @param list<SqlToken> $tokens
-     * @return array<int, true>
+     * Answers which tokens belong to a subquery rather than to the expression itself.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     *
+     * @return array<int, true> What it answers
      */
-    private function subqueryTokenIndexes(array $tokens): array
+    public function subqueryTokenIndexes(array $tokens): array
     {
         $indexes = [];
         foreach ($tokens as $start => $token) {
@@ -196,19 +214,41 @@ final class SqliteNativeUpsertProjector
         return $indexes;
     }
 
-    private function isIdentifier(SqlToken $token): bool
+    /**
+     * Reports whether a token is a name at all.
+     *
+     * @param SqlToken $token Token to read
+     *
+     * @return bool What it answers
+     */
+    public function isIdentifier(SqlToken $token): bool
     {
         return in_array($token->kind, [SqlTokenKind::Word, SqlTokenKind::QuotedIdentifier], true);
     }
 
-    private function identifier(SqlToken $token): string
+    /**
+     * Answers the name a token stands for.
+     *
+     * @param SqlToken $token Token to read
+     *
+     * @return string What it answers
+     */
+    public function identifier(SqlToken $token): string
     {
         $identifier = SqlTokenStream::tokenize($token->text, SqliteLexerProfile::create())->identifierAt();
 
         return $identifier === null ? $token->text : $identifier['name'];
     }
 
-    private function qualified(string $alias, string $column): string
+    /**
+     * Writes a column as belonging to one of the rows being compared.
+     *
+     * @param string $alias Name the statement gave it
+     * @param string $column Column to read
+     *
+     * @return string What it answers
+     */
+    public function qualified(string $alias, string $column): string
     {
         return $this->quoter->quote($alias) . '.' . $this->quoter->quote($column);
     }

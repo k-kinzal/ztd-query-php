@@ -12,6 +12,7 @@ use ZtdQuery\Platform\Sqlite\SqliteLexerProfile;
 use ZtdQuery\Platform\Sqlite\SqliteTransactionStatementParser;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTransactions;
+use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(SqliteTransactionStatementParser::class)]
 #[UsesClass(SqliteLexerProfile::class)]
@@ -76,5 +77,61 @@ final class SqliteTransactionStatementParserTest extends TestCase
         $transactions->rollBackTo('a`b');
 
         self::assertSame([['id' => 1]], $store->get('items'));
+    }
+    public function testMatchesAnyReportsTheTokensSpellingOneOfTheForms(): void
+    {
+        $tokens = SqlTokenStream::tokenize('BEGIN', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertTrue((new SqliteTransactionStatementParser())->matchesAny($tokens, [['START'], ['BEGIN']]));
+    }
+
+    public function testMatchesAnyIsFalseWhereTheTokensSpellNoneOfThem(): void
+    {
+        $tokens = SqlTokenStream::tokenize('COMMIT', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertFalse((new SqliteTransactionStatementParser())->matchesAny($tokens, [['START'], ['BEGIN']]));
+    }
+
+    public function testNameAfterAnswersTheNameWrittenAfterTheOpening(): void
+    {
+        $tokens = SqlTokenStream::tokenize('SAVEPOINT sp1', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertSame('sp1', (new SqliteTransactionStatementParser())->nameAfter($tokens, [['SAVEPOINT']]));
+    }
+
+    public function testNameAfterIsNothingWhereTheStatementOpensDifferently(): void
+    {
+        $tokens = SqlTokenStream::tokenize('COMMIT', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertNull((new SqliteTransactionStatementParser())->nameAfter($tokens, [['SAVEPOINT']]));
+    }
+
+    public function testMatchesReportsTheTokensBeingExactlyThoseKeywords(): void
+    {
+        $tokens = SqlTokenStream::tokenize('START TRANSACTION', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertTrue((new SqliteTransactionStatementParser())->matches($tokens, ['START', 'TRANSACTION']));
+    }
+
+    public function testMatchesIsFalseWhereMoreIsWrittenThanThoseKeywords(): void
+    {
+        $tokens = SqlTokenStream::tokenize('START TRANSACTION', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertFalse((new SqliteTransactionStatementParser())->matches($tokens, ['START']));
+    }
+
+    public function testUnquoteAnswersTheNameAQuotedIdentifierStandsFor(): void
+    {
+        self::assertSame('order', (new SqliteTransactionStatementParser())->unquote('"order"', ['"']));
+    }
+
+    public function testUnquoteLeavesAnUnquotedNameAlone(): void
+    {
+        self::assertSame('sp1', (new SqliteTransactionStatementParser())->unquote('sp1', ['"']));
+    }
+
+    public function testUnquoteIsNothingWhereTheQuotingNeverClosed(): void
+    {
+        self::assertNull((new SqliteTransactionStatementParser())->unquote('"order', ['"']));
     }
 }
