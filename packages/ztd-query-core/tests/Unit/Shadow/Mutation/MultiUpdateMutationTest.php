@@ -16,6 +16,7 @@ use ZtdQuery\Shadow\ShadowStore;
 #[UsesClass(MultiTableMutationRow::class)]
 #[UsesClass(MultiTableMutationTarget::class)]
 #[CoversClass(MultiUpdateMutation::class)]
+#[UsesClass(\ZtdQuery\Shadow\Row\RowMatch::class)]
 final class MultiUpdateMutationTest extends TestCase
 {
     public function testApplyUpdatesMultipleTables(): void

@@ -19,6 +19,8 @@ use ZtdQuery\Sql\SqlTokenStream;
 #[UsesClass(SqlTokenStream::class)]
 #[UsesClass(SqlTokenScanner::class)]
 #[UsesClass(SqlLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Sql\LexicalDelimiters::class)]
+#[UsesClass(\ZtdQuery\Sql\LexicalPattern::class)]
 final class SqlKeywordSequenceTest extends TestCase
 {
     public function testPositionInAnswersWhereTheRunOfKeywordsBegins(): void

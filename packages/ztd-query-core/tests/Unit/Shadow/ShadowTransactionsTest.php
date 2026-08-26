@@ -16,6 +16,7 @@ use ZtdQuery\Shadow\ShadowTransactions;
 #[UsesClass(ShadowStore::class)]
 #[UsesClass(TableDefinition::class)]
 #[UsesClass(TableDefinitionRegistry::class)]
+#[UsesClass(\ZtdQuery\Shadow\ShadowSavepoint::class)]
 final class ShadowTransactionsTest extends TestCase
 {
     public function testRollBackPutsBackTheRowsTheTablesAndWhatDescribesThem(): void

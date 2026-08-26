@@ -12,6 +12,7 @@ use ZtdQuery\Shadow\ShadowStore;
 
 #[UsesClass(ShadowStore::class)]
 #[CoversClass(DeleteMutation::class)]
+#[UsesClass(\ZtdQuery\Shadow\Row\RowMatch::class)]
 final class DeleteMutationTest extends TestCase
 {
     public function testApplyRemovesRowsByPrimaryKey(): void

@@ -14,6 +14,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[CoversClass(ShadowStore::class)]
 #[UsesClass(MissingPrimaryKeyException::class)]
 #[UsesClass(ShadowTableState::class)]
+#[UsesClass(\ZtdQuery\Shadow\Row\RowMatch::class)]
 class ShadowStoreTest extends TestCase
 {
     public function testRestoreSnapshotRestoreSnapshotRestoreIncludesRowsAndInitializedPresence(): void
