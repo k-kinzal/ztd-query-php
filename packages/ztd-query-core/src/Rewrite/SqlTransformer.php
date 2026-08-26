@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace ZtdQuery\Rewrite;
 
 use ZtdQuery\Connection\StatementInterface;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 
 /**
  * Transforms SQL statements using shadow table data.
@@ -24,7 +24,7 @@ interface SqlTransformer
      * @param array<string, array{viewSql: string}|array{
      *     rows: list<Row>,
      *     columns: array<int, string>,
-     *     columnTypes: array<string, ColumnType>,
+     *     columnTypes: array<string, ColumnDeclaration>,
      *     primaryKeys?: array<int, string>,
      *     candidateKeys?: array<string, array<int, string>>,
      *     columnDefaults?: array<string, string>,

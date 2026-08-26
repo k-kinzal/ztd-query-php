@@ -75,7 +75,7 @@ final class SynchronizeMutationTest extends TestCase
         $mutation->apply(new ShadowStore(), [['id' => null]]);
     }
 
-    public function testAffectedRowsCountsMixedInsertUpdateAndDelete(): void
+    public function testAffectedRowCountCountsMixedInsertUpdateAndDelete(): void
     {
         $definition = new TableDefinition(
             ['id', 'name'],
@@ -100,7 +100,7 @@ final class SynchronizeMutationTest extends TestCase
         ));
     }
 
-    public function testAffectedRowsUsesMultisetDifferenceWithoutPrimaryKey(): void
+    public function testAffectedRowCountUsesMultisetDifferenceWithoutPrimaryKey(): void
     {
         $mutation = new SynchronizeMutation('logs');
 
@@ -110,7 +110,7 @@ final class SynchronizeMutationTest extends TestCase
         ));
     }
 
-    public function testAffectedRowsWithoutPrimaryKeyIgnoresRowOrdering(): void
+    public function testAffectedRowCountWithoutPrimaryKeyIgnoresRowOrdering(): void
     {
         $mutation = new SynchronizeMutation('logs');
 
@@ -120,7 +120,7 @@ final class SynchronizeMutationTest extends TestCase
         ));
     }
 
-    public function testAffectedRowsMatchesEveryPrimaryKeyAfterAnEarlierMatch(): void
+    public function testAffectedRowCountMatchesEveryPrimaryKeyAfterAnEarlierMatch(): void
     {
         $definition = new TableDefinition(
             ['id'],

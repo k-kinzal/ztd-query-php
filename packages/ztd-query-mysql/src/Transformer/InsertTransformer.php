@@ -19,7 +19,7 @@ use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlUpsertAssignmentExtractor;
 use ZtdQuery\Rewrite\ShadowIdentityAllocator;
 use ZtdQuery\Rewrite\SqlTransformer;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
 
 /**
@@ -134,7 +134,7 @@ final class InsertTransformer implements SqlTransformer
     /**
      * @param list<string> $tableColumns
      * @param list<string> $insertColumns
-     * @param array<string, ColumnType> $columnTypes
+     * @param array<string, ColumnDeclaration> $columnTypes
      * @param array<string, string> $columnDefaults
      * @param array<string, IdentityGenerationStrategy> $identityStrategies
      * @param array<int, array<string, mixed>> $existingRows
@@ -206,7 +206,7 @@ final class InsertTransformer implements SqlTransformer
     /**
      * @param list<string> $tableColumns
      * @param list<string> $insertColumns
-     * @param array<string, ColumnType> $columnTypes
+     * @param array<string, ColumnDeclaration> $columnTypes
      * @param array<string, string> $columnDefaults
      * @param array<string, IdentityGenerationStrategy> $identityStrategies
      * @param array<int, array<string, mixed>> $existingRows
@@ -247,7 +247,7 @@ final class InsertTransformer implements SqlTransformer
         $selects = [];
         foreach ($projected as $column => $expr) {
             $type = $columnTypes[$column] ?? null;
-            if ($type instanceof ColumnType) {
+            if ($type instanceof ColumnDeclaration) {
                 $expr = $this->castRenderer->renderCast($expr, $type);
             }
             $selects[] = $expr . ' AS `' . $column . '`';
@@ -259,7 +259,7 @@ final class InsertTransformer implements SqlTransformer
     /**
      * @param array<int, SetOperation> $setOperations
      * @param list<string> $tableColumns
-     * @param array<string, ColumnType> $columnTypes
+     * @param array<string, ColumnDeclaration> $columnTypes
      * @param array<string, string> $columnDefaults
      * @param array<string, IdentityGenerationStrategy> $identityStrategies
      * @param array<int, array<string, mixed>> $existingRows
@@ -290,7 +290,7 @@ final class InsertTransformer implements SqlTransformer
         $selects = [];
         foreach ($projected as $column => $expression) {
             $type = $columnTypes[$column] ?? null;
-            if ($type instanceof ColumnType) {
+            if ($type instanceof ColumnDeclaration) {
                 $expression = $this->castRenderer->renderCast($expression, $type);
             }
             $selects[] = $expression . ' AS `' . $column . '`';

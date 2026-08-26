@@ -50,4 +50,37 @@ final class InsertRowProjectionTest extends TestCase
     {
         self::assertSame(1, InsertRowProjection::generatedIdentity('id', 1)->generatedIdentityValue());
     }
+
+    public function testProvidedCarriesTheExpressionTheStatementWrote(): void
+    {
+        $projection = InsertRowProjection::provided('name', "'Ada'");
+
+        self::assertSame("'Ada'", $projection->providedExpression());
+        self::assertNull($projection->defaultExpressionValue());
+    }
+
+    public function testProvidedExpressionIsNothingForAColumnTheStatementLeftOut(): void
+    {
+        self::assertNull(InsertRowProjection::nullValue('note')->providedExpression());
+    }
+
+    public function testNullValueReadsBackAsNullAndNothingElse(): void
+    {
+        $projection = InsertRowProjection::nullValue('note');
+
+        self::assertTrue($projection->isNullValue());
+        self::assertNull($projection->providedExpression());
+        self::assertNull($projection->generatedIdentityValue());
+    }
+
+    public function testIsNullValueIsFalseForEveryOtherKindOfColumn(): void
+    {
+        self::assertFalse(InsertRowProjection::provided('name', "'Ada'")->isNullValue());
+        self::assertFalse(InsertRowProjection::generatedIdentity('id', 1)->isNullValue());
+    }
+
+    public function testTargetColumnNamesTheColumnOfTheTargetTable(): void
+    {
+        self::assertSame('name', InsertRowProjection::provided('name', "'Ada'")->targetColumn());
+    }
 }

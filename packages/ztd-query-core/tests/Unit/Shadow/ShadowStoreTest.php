@@ -16,7 +16,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(ShadowTableState::class)]
 class ShadowStoreTest extends TestCase
 {
-    public function testSnapshotRestoreSnapshotRestoreIncludesRowsAndInitializedPresence(): void
+    public function testRestoreSnapshotRestoreSnapshotRestoreIncludesRowsAndInitializedPresence(): void
     {
         $store = new ShadowStore();
         $store->set('users', [['id' => 1]]);
@@ -186,5 +186,39 @@ class ShadowStoreTest extends TestCase
         $store->update('users', [['id' => 2, 'name' => 'Bob']], ['id']);
 
         self::assertSame([['id' => 1, 'name' => 'Alice']], $store->get('users'));
+    }
+
+    public function testSetKeepsTheRowsInOrderAndUnderNoKeysOfTheirOwn(): void
+    {
+        $store = new ShadowStore();
+
+        $store->set('order', [4 => ['id' => 1], 9 => ['id' => 2]]);
+
+        self::assertSame([['id' => 1], ['id' => 2]], $store->get('order'));
+    }
+
+    public function testSnapshotIsARecordOfTheRowsRatherThanAViewOfThem(): void
+    {
+        $store = new ShadowStore();
+        $store->set('order', [['id' => 1]]);
+
+        $snapshot = $store->snapshot();
+        $store->set('order', []);
+
+        self::assertSame([['id' => 1]], $snapshot->get('order'));
+    }
+
+    public function testUpdateIdentifiedWritesTheRowTheOldKeyPointsAt(): void
+    {
+        $store = new ShadowStore();
+        $store->set('order', [['id' => 1, 'total' => 100]]);
+
+        $store->updateIdentified(
+            'order',
+            [['identity' => ['id' => 1], 'row' => ['id' => 2, 'total' => 200]]],
+            ['id'],
+        );
+
+        self::assertSame([['id' => 2, 'total' => 200]], $store->get('order'));
     }
 }

@@ -210,4 +210,25 @@ final class MutationImpactTest extends TestCase
         self::assertSame(0, $impact->affectedRowCount(AffectedRowsMode::Matched));
         self::assertSame([], $impact->returningRows());
     }
+
+    public function testAffectedRowCountIsNothingWhereTheStatementReportsNone(): void
+    {
+        $impact = new MutationImpact(new InsertMutation('users'), [], [['id' => 1]], [['id' => 1]]);
+
+        self::assertSame(0, $impact->affectedRowCount(AffectedRowsMode::None));
+    }
+
+    public function testReturningRowsAnswersTheRowsAStatementWouldReadBack(): void
+    {
+        $impact = new MutationImpact(new InsertMutation('users'), [], [['id' => 1]], [['id' => 1]]);
+
+        self::assertSame([['id' => 1]], $impact->returningRows());
+    }
+
+    public function testIsInsertLikeIsFalseForAStatementThatOnlyRemovesRows(): void
+    {
+        $impact = new MutationImpact(new DeleteMutation('users', ['id']), [['id' => 1]], [['id' => 1]], []);
+
+        self::assertFalse($impact->isInsertLike());
+    }
 }

@@ -293,7 +293,7 @@ final class MySqlRewriterTest extends RewriterContractTest
         );
     }
 
-    protected function createRewriter(ShadowStore $store, TableDefinitionRegistry $registry): SqlRewriter
+    public function createRewriter(ShadowStore $store, TableDefinitionRegistry $registry): SqlRewriter
     {
         $parser = new MySqlParser();
         $schemaParser = new MySqlSchemaParser($parser);
@@ -308,47 +308,47 @@ final class MySqlRewriterTest extends RewriterContractTest
         return new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
     }
 
-    protected function createSchemaParser(): SchemaParser
+    public function createSchemaParser(): SchemaParser
     {
         return new MySqlSchemaParser(new MySqlParser());
     }
 
-    protected function selectSql(): string
+    public function selectSql(): string
     {
         return 'SELECT id, name, email FROM users WHERE id = 1';
     }
 
-    protected function insertSql(): string
+    public function insertSql(): string
     {
         return "INSERT INTO users (id, name, email) VALUES (1, 'Alice', 'alice@example.com')";
     }
 
-    protected function updateSql(): string
+    public function updateSql(): string
     {
         return "UPDATE users SET name = 'Bob' WHERE id = 1";
     }
 
-    protected function deleteSql(): string
+    public function deleteSql(): string
     {
         return 'DELETE FROM users WHERE id = 1';
     }
 
-    protected function createTableSql(): string
+    public function createTableSql(): string
     {
         return 'CREATE TABLE orders (id INT PRIMARY KEY, amount DECIMAL(10,2))';
     }
 
-    protected function dropTableSql(): string
+    public function dropTableSql(): string
     {
         return 'DROP TABLE IF EXISTS orders';
     }
 
-    protected function unsupportedSql(): string
+    public function unsupportedSql(): string
     {
         return 'CREATE DATABASE test_db';
     }
 
-    protected function usersCreateTableSql(): string
+    public function usersCreateTableSql(): string
     {
         return <<<'SQL'
             CREATE TABLE users (

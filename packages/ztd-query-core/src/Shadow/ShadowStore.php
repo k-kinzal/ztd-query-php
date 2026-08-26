@@ -6,6 +6,7 @@ namespace ZtdQuery\Shadow;
 
 use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\MissingPrimaryKeyException;
+use ZtdQuery\Shadow\Row\RowMatch;
 
 /**
  * Holds in-memory shadow rows for tables.
@@ -14,6 +15,13 @@ use ZtdQuery\Exception\MissingPrimaryKeyException;
  */
 class ShadowStore
 {
+    /**
+     * @param RowMatch $match Decides when a stored row is the row a caller means
+     */
+    public function __construct(private readonly RowMatch $match = new RowMatch())
+    {
+    }
+
     /**
      * Shadow rows keyed by table name.
      *
@@ -167,7 +175,7 @@ class ShadowStore
         foreach ($currentRows as $currentRow) {
             $isDeleted = false;
             foreach ($deletedRows as $deletedRow) {
-                if ($this->rowsMatch($currentRow, $deletedRow, $primaryKeys)) {
+                if ($this->match->identifies($currentRow, $deletedRow, $primaryKeys)) {
                     $isDeleted = true;
                     break;
                 }
@@ -203,7 +211,7 @@ class ShadowStore
 
         foreach ($updatedRows as $updatedRow) {
             foreach ($currentRows as &$currentRow) {
-                if ($this->rowsMatch($currentRow, $updatedRow, $primaryKeys)) {
+                if ($this->match->identifies($currentRow, $updatedRow, $primaryKeys)) {
                     $currentRow = $updatedRow;
                     break;
                 }
@@ -229,34 +237,11 @@ class ShadowStore
         $currentRows = &$this->fixtures[$tableName];
         foreach ($updates as $update) {
             foreach ($currentRows as &$currentRow) {
-                if ($this->rowsMatch($currentRow, $update['identity'], $primaryKeys)) {
+                if ($this->match->identifies($currentRow, $update['identity'], $primaryKeys)) {
                     $currentRow = $update['row'];
                     break;
                 }
             }
         }
-    }
-
-    /**
-     * @param Row $left
-     * @param Row $right
-     * @param array<int, string> $primaryKeys
-     */
-    private function rowsMatch(array $left, array $right, array $primaryKeys): bool
-    {
-        if ($primaryKeys === []) {
-            return $left === $right;
-        }
-
-        foreach ($primaryKeys as $key) {
-            if (!array_key_exists($key, $left) || !array_key_exists($key, $right)) {
-                return false;
-            }
-            if ($left[$key] !== $right[$key]) {
-                return false;
-            }
-        }
-
-        return true;
     }
 }

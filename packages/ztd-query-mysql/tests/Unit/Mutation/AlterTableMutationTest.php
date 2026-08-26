@@ -17,7 +17,7 @@ use ZtdQuery\Platform\MySql\Mutation\AlterTableMutation;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlPartitioningParser;
 use ZtdQuery\Platform\MySql\MySqlSchemaParser;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
@@ -583,8 +583,8 @@ final class AlterTableMutationTest extends TestCase
             ['id'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                'price' => new ColumnType(ColumnTypeFamily::DECIMAL, 'DECIMAL(10,2)'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                'price' => new ColumnDeclaration(ColumnTypeFamily::DECIMAL, 'DECIMAL(10,2)'),
             ],
         ));
         $store = new ShadowStore();
@@ -765,8 +765,8 @@ final class AlterTableMutationTest extends TestCase
             ['id'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
-                'val' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT'),
+                'val' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $store = new ShadowStore();
@@ -794,7 +794,7 @@ final class AlterTableMutationTest extends TestCase
             ['id'],
             ['id'],
             [],
-            ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT')],
+            ['id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT')],
         ));
         $store = new ShadowStore();
 

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Fake;
 
 use ZtdQuery\Platform\ResultColumnTypeResolver;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 /**
@@ -22,16 +22,16 @@ final class FakeResultColumnTypeResolver implements ResultColumnTypeResolver
      *
      * @param array<string, mixed> $metadata Column metadata as the driver reported it
      *
-     * @return ColumnType The type, read as text where the driver said nothing
+     * @return ColumnDeclaration The type, read as text where the driver said nothing
      */
-    public function resolve(array $metadata): ColumnType
+    public function resolve(array $metadata): ColumnDeclaration
     {
         $native = $metadata['native_type'] ?? null;
 
         return match (is_string($native) ? strtolower($native) : '') {
-            'int', 'integer' => new ColumnType(ColumnTypeFamily::INTEGER, 'int'),
-            'float', 'double' => new ColumnType(ColumnTypeFamily::FLOAT, 'float'),
-            default => new ColumnType(ColumnTypeFamily::TEXT, 'text'),
+            'int', 'integer' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'int'),
+            'float', 'double' => new ColumnDeclaration(ColumnTypeFamily::FLOAT, 'float'),
+            default => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'text'),
         };
     }
 }
