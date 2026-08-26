@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Fake;
 
+use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Rewrite\MultiRewritePlan;
 use ZtdQuery\Rewrite\QueryKind;
@@ -25,6 +26,8 @@ use ZtdQuery\Sql\TransactionStatement;
  *
  * Supports SELECT, INSERT, UPDATE, DELETE, CREATE TABLE, DROP TABLE, TRUNCATE.
  * Uses FakeSqlTransformer for CTE injection on SELECT queries.
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 final class FakeSqlRewriter implements SqlRewriter
 {
@@ -247,7 +250,7 @@ final class FakeSqlRewriter implements SqlRewriter
     }
 
     /**
-     * @return array<string, array{rows: array<int, array<string, mixed>>, columns: array<int, string>, columnTypes: array<string, \ZtdQuery\Schema\ColumnType>}>
+     * @return array<string, array{rows: list<Row>, columns: array<int, string>, columnTypes: array<string, \ZtdQuery\Schema\ColumnType>}>
      */
     private function buildShadowContext(): array
     {

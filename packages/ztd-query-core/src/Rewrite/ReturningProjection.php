@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Rewrite;
 
+use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\InvalidDefinitionException;
 
 /**
  * A dialect-neutral projection of mutation rows returned to the client.
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 final class ReturningProjection
 {
@@ -39,8 +42,8 @@ final class ReturningProjection
     }
 
     /**
-     * @param array<int, array<string, mixed>> $rows
-     * @return array<int, array<string, mixed>>
+     * @param list<Row> $rows
+     * @return list<Row>
      */
     public function project(array $rows): array
     {

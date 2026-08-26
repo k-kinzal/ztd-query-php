@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Contract;
 
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
@@ -18,6 +19,8 @@ use ZtdQuery\Schema\ColumnTypeFamily;
  * - P-TF-3: Table names appear as CTE names in transformed output.
  * - P-TF-4: Transform is deterministic.
  * - P-TF-5: Output is always non-empty.
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 abstract class TransformerContractTest extends TestCase
 {
@@ -165,7 +168,7 @@ abstract class TransformerContractTest extends TestCase
     /**
      * Build a single-row table context for the "users" table.
      *
-     * @return array<string, array{rows: array<int, array<string, mixed>>, columns: array<int, string>, columnTypes: array<string, ColumnType>}>
+     * @return array<string, array{rows: list<Row>, columns: array<int, string>, columnTypes: array<string, ColumnType>}>
      */
     protected function singleRowTableContext(): array
     {
@@ -187,7 +190,7 @@ abstract class TransformerContractTest extends TestCase
     /**
      * Build an empty-rows table context for the "users" table (columns known, no data).
      *
-     * @return array<string, array{rows: array<int, array<string, mixed>>, columns: array<int, string>, columnTypes: array<string, ColumnType>}>
+     * @return array<string, array{rows: list<Row>, columns: array<int, string>, columnTypes: array<string, ColumnType>}>
      */
     protected function emptyRowsTableContext(): array
     {

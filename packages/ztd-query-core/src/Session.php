@@ -36,6 +36,8 @@ use ZtdQuery\Sql\TransactionStatement;
 
 /**
  * Aggregates ZTD session state and core collaborators.
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 final class Session
 {
@@ -341,7 +343,7 @@ final class Session
      *
      * @param RewritePlan $plan The rewrite plan containing the SQL and mutation.
      * @param callable(string): (StatementInterface|false) $executor Function to execute SQL.
-     * @return array<int, array<string, mixed>> The affected rows.
+     * @return list<Row> The affected rows.
      * @throws RuntimeException If the plan has no mutation.
      */
     public function runResultSelectAndApplyShadow(RewritePlan $plan, callable $executor): array
