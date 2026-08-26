@@ -8,7 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Postgres\PgSqlValueRenderer;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(PgSqlValueRenderer::class)]
@@ -21,7 +21,7 @@ final class PgSqlValueRendererTest extends TestCase
 
         self::assertSame(
             "CAST('0' AS BOOLEAN)",
-            $renderer->renderValue(false, new ColumnType(ColumnTypeFamily::BOOLEAN, 'BOOLEAN')),
+            $renderer->renderValue(false, new ColumnDeclaration(ColumnTypeFamily::BOOLEAN, 'BOOLEAN')),
         );
     }
 
@@ -31,7 +31,7 @@ final class PgSqlValueRendererTest extends TestCase
 
         self::assertSame(
             "CAST('9223372036854775807' AS BIGINT)",
-            $renderer->renderValue(9223372036854775807, new ColumnType(ColumnTypeFamily::INTEGER, 'BIGINT')),
+            $renderer->renderValue(9223372036854775807, new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'BIGINT')),
         );
     }
 
@@ -41,7 +41,7 @@ final class PgSqlValueRendererTest extends TestCase
 
         self::assertSame(
             "CAST('{1,2,3}' AS INT4[])",
-            $renderer->renderValue('{1,2,3}', new ColumnType(ColumnTypeFamily::INTEGER, 'INT4[]')),
+            $renderer->renderValue('{1,2,3}', new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT4[]')),
         );
     }
 
@@ -51,7 +51,7 @@ final class PgSqlValueRendererTest extends TestCase
 
         self::assertSame(
             "CAST(decode('0001ff', 'hex') AS BYTEA)",
-            $renderer->renderValue("\x00\x01\xFF", new ColumnType(ColumnTypeFamily::BINARY, 'BYTEA')),
+            $renderer->renderValue("\x00\x01\xFF", new ColumnDeclaration(ColumnTypeFamily::BINARY, 'BYTEA')),
         );
     }
 
@@ -77,7 +77,7 @@ final class PgSqlValueRendererTest extends TestCase
 
         self::assertSame(
             "CAST('2.718281828459045' AS DOUBLE PRECISION)",
-            $renderer->renderValue(2.718281828459045, new ColumnType(ColumnTypeFamily::DOUBLE, 'DOUBLE PRECISION')),
+            $renderer->renderValue(2.718281828459045, new ColumnDeclaration(ColumnTypeFamily::DOUBLE, 'DOUBLE PRECISION')),
         );
     }
 
@@ -94,7 +94,7 @@ final class PgSqlValueRendererTest extends TestCase
         self::assertSame('CURRENT_TIMESTAMP', $renderer->renderValue($value));
         self::assertSame(
             "CAST('CURRENT_TIMESTAMP' AS TEXT)",
-            $renderer->renderValue($value, new ColumnType(ColumnTypeFamily::TEXT, 'TEXT')),
+            $renderer->renderValue($value, new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT')),
         );
     }
 
@@ -109,7 +109,7 @@ final class PgSqlValueRendererTest extends TestCase
     {
         self::assertSame(
             "CAST('a:1:{i:0;s:5:\"value\";}' AS JSONB)",
-            (new PgSqlValueRenderer())->renderValue(['value'], new ColumnType(ColumnTypeFamily::JSON, 'JSONB')),
+            (new PgSqlValueRenderer())->renderValue(['value'], new ColumnDeclaration(ColumnTypeFamily::JSON, 'JSONB')),
         );
     }
 
@@ -122,7 +122,7 @@ final class PgSqlValueRendererTest extends TestCase
 
         self::assertSame(
             "CAST(decode('0001ff', 'hex') AS BYTEA)",
-            (new PgSqlValueRenderer())->renderValue($stream, new ColumnType(ColumnTypeFamily::BINARY, 'BYTEA')),
+            (new PgSqlValueRenderer())->renderValue($stream, new ColumnDeclaration(ColumnTypeFamily::BINARY, 'BYTEA')),
         );
         self::assertSame(1, ftell($stream));
         fclose($stream);
@@ -134,7 +134,7 @@ final class PgSqlValueRendererTest extends TestCase
 
         (new PgSqlValueRenderer())->renderValue(
             ['value'],
-            new ColumnType(ColumnTypeFamily::BINARY, 'BYTEA'),
+            new ColumnDeclaration(ColumnTypeFamily::BINARY, 'BYTEA'),
         );
     }
 }

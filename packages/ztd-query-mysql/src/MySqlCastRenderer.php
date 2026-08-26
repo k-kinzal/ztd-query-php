@@ -5,31 +5,31 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\MySql;
 
 use ZtdQuery\Platform\CastRenderer;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 /**
  * MySQL implementation of CastRenderer.
  *
- * Maps ColumnType to MySQL CAST syntax (e.g. CAST(expr AS SIGNED), CAST(expr AS CHAR)).
+ * Maps ColumnDeclaration to MySQL CAST syntax (e.g. CAST(expr AS SIGNED), CAST(expr AS CHAR)).
  */
 final class MySqlCastRenderer implements CastRenderer
 {
-    public function renderCast(string $expression, ColumnType $type): string
+    public function renderCast(string $expression, ColumnDeclaration $type): string
     {
         $castType = $this->mapToCastType($type);
 
         return "CAST($expression AS $castType)";
     }
 
-    public function renderNullCast(ColumnType $type): string
+    public function renderNullCast(ColumnDeclaration $type): string
     {
         $castType = $this->mapToCastType($type);
 
         return "CAST(NULL AS $castType)";
     }
 
-    private function mapToCastType(ColumnType $type): string
+    private function mapToCastType(ColumnDeclaration $type): string
     {
         return match ($type->family) {
             ColumnTypeFamily::INTEGER => 'SIGNED',

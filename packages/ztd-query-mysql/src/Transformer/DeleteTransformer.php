@@ -242,7 +242,7 @@ final class DeleteTransformer implements SqlTransformer
 
     /**
      * @param array<string, array{alias: string}> $resolvedTables
-     * @param array<string, array{viewSql: string}|array{rows: array<int, array<string, mixed>>, columns: array<int, string>, columnTypes: array<string, \ZtdQuery\Schema\ColumnType>, primaryKeys?: array<int, string>}> $contexts
+     * @param array<string, array{viewSql: string}|array{rows: array<int, array<string, mixed>>, columns: array<int, string>, columnTypes: array<string, \ZtdQuery\Schema\ColumnDeclaration>, primaryKeys?: array<int, string>}> $contexts
      * @return list<MultiTableMutationTarget>
      */
     private function targetsFromContexts(array $resolvedTables, array $contexts): array

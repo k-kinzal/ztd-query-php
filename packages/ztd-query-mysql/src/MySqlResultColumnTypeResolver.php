@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\MySql;
 
 use ZtdQuery\Platform\ResultColumnTypeResolver;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 
 final class MySqlResultColumnTypeResolver implements ResultColumnTypeResolver
 {
@@ -18,7 +18,7 @@ final class MySqlResultColumnTypeResolver implements ResultColumnTypeResolver
         $this->pdoResolver = new MySqlPdoResultColumnTypeResolver();
     }
 
-    public function resolve(array $metadata): ColumnType
+    public function resolve(array $metadata): ColumnDeclaration
     {
         if (array_key_exists('type', $metadata)) {
             return $this->mysqliResolver->resolve($metadata);

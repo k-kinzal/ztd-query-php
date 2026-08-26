@@ -27,7 +27,7 @@ use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\AffectedRowsMode;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
@@ -414,7 +414,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
         );
     }
 
-    protected function createRewriter(ShadowStore $store, TableDefinitionRegistry $registry): SqlRewriter
+    public function createRewriter(ShadowStore $store, TableDefinitionRegistry $registry): SqlRewriter
     {
         $parser = new PgSqlParser();
         $schemaParser = new PgSqlSchemaParser();
@@ -428,7 +428,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
         return new PgSqlRewriter(new PgSqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
     }
 
-    protected function createSchemaParser(): SchemaParser
+    public function createSchemaParser(): SchemaParser
     {
         return new PgSqlSchemaParser();
     }
@@ -438,37 +438,37 @@ final class PgSqlRewriterTest extends RewriterContractTest
         return 'SELECT id, name, email FROM users WHERE id = 1';
     }
 
-    protected function insertSql(): string
+    public function insertSql(): string
     {
         return "INSERT INTO users (id, name, email) VALUES (1, 'Alice', 'alice@example.com')";
     }
 
-    protected function updateSql(): string
+    public function updateSql(): string
     {
         return "UPDATE users SET name = 'Bob' WHERE id = 1";
     }
 
-    protected function deleteSql(): string
+    public function deleteSql(): string
     {
         return 'DELETE FROM users WHERE id = 1';
     }
 
-    protected function createTableSql(): string
+    public function createTableSql(): string
     {
         return 'CREATE TABLE orders (id INTEGER PRIMARY KEY, amount NUMERIC(10,2))';
     }
 
-    protected function dropTableSql(): string
+    public function dropTableSql(): string
     {
         return 'DROP TABLE IF EXISTS orders';
     }
 
-    protected function unsupportedSql(): string
+    public function unsupportedSql(): string
     {
         return 'CREATE DATABASE test_db';
     }
 
-    protected function usersCreateTableSql(): string
+    public function usersCreateTableSql(): string
     {
         return <<<'SQL'
             CREATE TABLE users (
@@ -491,9 +491,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -522,9 +522,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -559,9 +559,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -591,9 +591,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -624,9 +624,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -656,9 +656,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -688,9 +688,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -720,9 +720,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -752,9 +752,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -782,9 +782,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -812,9 +812,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -842,9 +842,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -876,9 +876,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -906,9 +906,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -936,9 +936,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -968,9 +968,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -998,9 +998,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -1032,9 +1032,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -1067,9 +1067,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -1105,9 +1105,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -1135,9 +1135,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -1165,9 +1165,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -1195,9 +1195,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -1225,9 +1225,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -1275,9 +1275,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -1307,9 +1307,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -1338,9 +1338,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -1369,9 +1369,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -1400,9 +1400,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -1434,9 +1434,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -1464,9 +1464,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -1494,9 +1494,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -1528,9 +1528,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -1560,9 +1560,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -1592,9 +1592,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -1624,9 +1624,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -1658,9 +1658,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -1690,9 +1690,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -1722,9 +1722,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -1754,9 +1754,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -1789,8 +1789,8 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -1819,8 +1819,8 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -1849,9 +1849,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -1880,9 +1880,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -1910,9 +1910,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -1943,9 +1943,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -1973,9 +1973,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -2005,9 +2005,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -2036,9 +2036,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -2067,9 +2067,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -2097,9 +2097,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -2128,9 +2128,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -2160,9 +2160,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -2192,9 +2192,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -2224,9 +2224,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -2256,9 +2256,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -2286,9 +2286,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -2316,9 +2316,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -2346,9 +2346,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -2377,9 +2377,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -2409,8 +2409,8 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -2439,8 +2439,8 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'qty' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'qty' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -2469,8 +2469,8 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'qty' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'qty' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -2499,9 +2499,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -2538,7 +2538,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id'],
             ['id'],
             [],
-            ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER')],
+            ['id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER')],
         ));
         $registry->register('table_b', new TableDefinition(
             ['val'],
@@ -2546,7 +2546,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
             [],
             [],
             [],
-            ['val' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT')],
+            ['val' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT')],
         ));
         $shadowStore->set('table_a', [['id' => 1]]);
 
@@ -2621,9 +2621,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -2651,9 +2651,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -2682,9 +2682,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -2712,9 +2712,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -2742,9 +2742,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -2772,8 +2772,8 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -2827,9 +2827,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -2859,9 +2859,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -2890,9 +2890,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -2922,9 +2922,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -2980,9 +2980,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -3011,9 +3011,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -3042,9 +3042,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -3074,8 +3074,8 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -3105,8 +3105,8 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -3136,8 +3136,8 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -3166,9 +3166,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -3196,9 +3196,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -3226,9 +3226,9 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id', 'name'],
             [],
             [
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             ],
         ));
         $parser = new PgSqlParser();
@@ -3256,7 +3256,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id'],
             ['id'],
             [],
-            ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER')],
+            ['id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER')],
         ));
         $parser = new PgSqlParser();
         $guard = new PgSqlQueryGuard($parser);

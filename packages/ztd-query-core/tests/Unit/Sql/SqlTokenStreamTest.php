@@ -659,19 +659,10 @@ final class SqlTokenStreamTest extends TestCase
     {
         $stream = SqlTokenStream::tokenize('SELECT (1 + (2))', FakeSqlLexerProfiles::standard());
         $tokens = $stream->significantTokens();
-        $opening = null;
-        foreach ($tokens as $token) {
-            if ($token->text === '(') {
-                $opening = $token;
-                break;
-            }
-        }
 
-        self::assertNotNull($opening);
-        $closing = $stream->matchingClosingNestingToken($opening);
-        self::assertNotNull($closing);
-        self::assertSame(')', $closing->text);
-        self::assertSame(15, $closing->offset);
+        $closing = $stream->matchingClosingNestingToken($tokens[1]);
+
+        self::assertSame([')', 15], [$closing?->text, $closing?->offset]);
     }
 
     public function testMatchingClosingNestingTokenIsNothingForALexemeThatOpensNothing(): void

@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\MySql;
 
 use ZtdQuery\Platform\ResultColumnTypeResolver;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 
 final class MySqlMysqliResultColumnTypeResolver implements ResultColumnTypeResolver
 {
-    public function resolve(array $metadata): ColumnType
+    public function resolve(array $metadata): ColumnDeclaration
     {
         $type = $metadata['type'] ?? null;
         $charset = $metadata['charsetnr'] ?? null;

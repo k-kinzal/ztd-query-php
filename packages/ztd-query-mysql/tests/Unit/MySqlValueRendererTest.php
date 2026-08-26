@@ -8,7 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\MySql\MySqlValueRenderer;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(MySqlValueRenderer::class)]
@@ -21,7 +21,7 @@ final class MySqlValueRendererTest extends TestCase
 
         self::assertSame(
             "CAST(CONVERT(X'706174685c746f5c66696c65' USING utf8mb4) AS CHAR)",
-            $renderer->renderValue('path\\to\\file', new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)')),
+            $renderer->renderValue('path\\to\\file', new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)')),
         );
     }
 
@@ -31,7 +31,7 @@ final class MySqlValueRendererTest extends TestCase
 
         self::assertSame(
             "CAST(X'0001ff' AS BINARY)",
-            $renderer->renderValue("\x00\x01\xFF", new ColumnType(ColumnTypeFamily::BINARY, 'BLOB')),
+            $renderer->renderValue("\x00\x01\xFF", new ColumnDeclaration(ColumnTypeFamily::BINARY, 'BLOB')),
         );
     }
 
@@ -39,7 +39,7 @@ final class MySqlValueRendererTest extends TestCase
     {
         $renderer = new MySqlValueRenderer();
 
-        self::assertSame('NULL', $renderer->renderValue(null, new ColumnType(ColumnTypeFamily::INTEGER, 'INT')));
+        self::assertSame('NULL', $renderer->renderValue(null, new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT')));
     }
 
     public function testInferredFloatUsesRoundTripRepresentation(): void
@@ -56,7 +56,7 @@ final class MySqlValueRendererTest extends TestCase
         self::assertSame('TRUE', $renderer->renderValue(true));
         self::assertSame(
             "CAST('1' AS UNSIGNED)",
-            $renderer->renderValue(true, new ColumnType(ColumnTypeFamily::BOOLEAN, 'BOOLEAN')),
+            $renderer->renderValue(true, new ColumnDeclaration(ColumnTypeFamily::BOOLEAN, 'BOOLEAN')),
         );
     }
 
@@ -67,7 +67,7 @@ final class MySqlValueRendererTest extends TestCase
         self::assertSame('CAST(42 AS SIGNED)', $renderer->renderValue(42));
         self::assertSame(
             "CAST('42' AS SIGNED)",
-            $renderer->renderValue(42, new ColumnType(ColumnTypeFamily::INTEGER, 'INT')),
+            $renderer->renderValue(42, new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT')),
         );
     }
 

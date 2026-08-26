@@ -12,12 +12,12 @@ use ZtdQuery\Platform\IdentifierQuoter;
 #[CoversNothing]
 final class IdentifierQuoterTest extends IdentifierQuoterContractTest
 {
-    protected function createQuoter(): IdentifierQuoter
+    public function createQuoter(): IdentifierQuoter
     {
         return new FakeIdentifierQuoter();
     }
 
-    protected function quoteCharacter(): string
+    public function quoteCharacter(): string
     {
         return '"';
     }

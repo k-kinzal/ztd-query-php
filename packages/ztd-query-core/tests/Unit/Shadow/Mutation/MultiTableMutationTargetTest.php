@@ -49,4 +49,18 @@ final class MultiTableMutationTargetTest extends TestCase
 
         self::assertSame(['id', 'name'], $target->columns());
     }
+    public function testPrimaryKeysAnswersTheColumnsThatIdentifyOneOfItsRows(): void
+    {
+        $target = new MultiTableMutationTarget('users', ['id', 'name'], ['id']);
+
+        self::assertSame(['id'], $target->primaryKeys());
+    }
+
+    public function testPrimaryKeysIsNothingWhereTheTableDeclaresNoKey(): void
+    {
+        $target = new MultiTableMutationTarget('logs', ['message'], []);
+
+        self::assertSame([], $target->primaryKeys());
+    }
+
 }

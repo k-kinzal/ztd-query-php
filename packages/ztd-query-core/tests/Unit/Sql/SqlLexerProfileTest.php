@@ -784,17 +784,19 @@ final class SqlLexerProfileTest extends TestCase
 
             return true;
         });
+        $refused = null;
         try {
             try {
                 FakeSqlLexerProfiles::custom(numericLiteralPattern: '/[/');
-                self::fail('The invalid pattern was accepted.');
-            } catch (InvalidDefinitionException) {
+            } catch (InvalidDefinitionException $exception) {
+                $refused = $exception;
             }
             trigger_error('error handler probe', E_USER_WARNING);
         } finally {
             restore_error_handler();
         }
 
+        self::assertInstanceOf(InvalidDefinitionException::class, $refused);
         self::assertTrue($handled);
     }
 

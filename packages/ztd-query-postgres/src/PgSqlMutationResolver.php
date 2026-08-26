@@ -8,7 +8,7 @@ use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Platform\SchemaParser;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\Mutation\CreateTableAsSelectMutation;
@@ -270,7 +270,7 @@ final class PgSqlMutationResolver
                 $tableName,
                 $columnNames,
                 $this->registry,
-                new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+                new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
                 $ifNotExists,
             );
         }

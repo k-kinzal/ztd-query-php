@@ -15,7 +15,7 @@ use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
 use ZtdQuery\Platform\MySql\MySqlGeneratedColumnProjector;
 use ZtdQuery\Rewrite\SqlTransformer;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 /**
@@ -107,7 +107,7 @@ final class SelectTransformer implements SqlTransformer
      * @param string $tableName
      * @param array<int, array<string, mixed>> $rows
      * @param array<int, string> $columns
-     * @param array<string, ColumnType> $columnTypes
+     * @param array<string, ColumnDeclaration> $columnTypes
      * @param array<string, string> $generatedExpressions
      * @return string
      */
@@ -188,7 +188,7 @@ final class SelectTransformer implements SqlTransformer
         return "$quotedTable AS ($sql)";
     }
 
-    private function formatValue(mixed $val, ?ColumnType $type = null): string
+    private function formatValue(mixed $val, ?ColumnDeclaration $type = null): string
     {
         if ($type !== null
             && $val !== null
@@ -205,7 +205,7 @@ final class SelectTransformer implements SqlTransformer
     private function renderFallbackNullCast(): string
     {
         return $this->castRenderer->renderNullCast(
-            new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR'),
+            new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR'),
         );
     }
 
@@ -278,7 +278,7 @@ final class SelectTransformer implements SqlTransformer
      * @param array<string, array{viewSql: string}|array{
      *     rows: array<int, array<string, mixed>>,
      *     columns: array<int, string>,
-     *     columnTypes: array<string, ColumnType>
+     *     columnTypes: array<string, ColumnDeclaration>
      * }> $tables
      */
     private function rewriteSetOrderBy(string $sql, array $tables): string

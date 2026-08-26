@@ -108,4 +108,16 @@ final class TransactionStatementTest extends TestCase
 
         self::assertNull($transactions->positionOf('sp1'));
     }
+    public function testRequiredNameAnswersTheNameTheStatementCarried(): void
+    {
+        self::assertSame('sp1', TransactionStatement::requiredName('sp1'));
+    }
+
+    public function testRequiredNameRefusesAStatementThatNamedNoSavepoint(): void
+    {
+        $this->expectException(InvalidDefinitionException::class);
+
+        TransactionStatement::requiredName('');
+    }
+
 }

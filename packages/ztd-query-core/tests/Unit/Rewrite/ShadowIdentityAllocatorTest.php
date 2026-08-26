@@ -277,4 +277,24 @@ final class ShadowIdentityAllocatorTest extends TestCase
         self::assertNull($allocator->integerValue(null));
         self::assertNull($allocator->integerValue(1.5));
     }
+    public function testNextValueReadsAMaxValueColumnOffTheRowsEveryTime(): void
+    {
+        $allocator = new ShadowIdentityAllocator();
+
+        self::assertSame(
+            8,
+            $allocator->nextValue('users', 'id', IdentityGenerationStrategy::MaxValue, [['id' => 7]]),
+        );
+    }
+
+    public function testNextValueStartsASequenceAtOneHoweverManyRowsAreThere(): void
+    {
+        $allocator = new ShadowIdentityAllocator();
+
+        self::assertSame(
+            1,
+            $allocator->nextValue('users', 'id', IdentityGenerationStrategy::Sequence, [['id' => 7]]),
+        );
+    }
+
 }

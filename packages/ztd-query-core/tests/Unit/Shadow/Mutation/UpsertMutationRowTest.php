@@ -33,13 +33,15 @@ final class UpsertMutationRowTest extends TestCase
     }
 
     #[DataProvider('providerPredicateValues')]
-    public function testPredicateMatchesNormalizesDatabasePredicateValues(mixed $value, bool $expected): void
-    {
+    public function testPredicateMatchesNormalizesDatabasePredicateValues(
+        bool|float|int|string|null $value,
+        bool $expected,
+    ): void {
         self::assertSame($expected, (new UpsertMutationRow())->predicateMatches($value));
     }
 
     /**
-     * @return iterable<string, array{mixed, bool}>
+     * @return iterable<string, array{bool|float|int|string|null, bool}>
      */
     public static function providerPredicateValues(): iterable
     {
@@ -51,4 +53,27 @@ final class UpsertMutationRowTest extends TestCase
         yield 'integer false' => [0, false];
         yield 'null' => [null, false];
     }
+    public function testValueColumnNamesOneAssignmentSoNoTableCouldUseTheName(): void
+    {
+        self::assertSame('__ztd_upsert_value_0', (new UpsertMutationRow())->valueColumn(0));
+    }
+
+    public function testIncomingRowLeavesOnlyWhatTheStatementActuallyWrote(): void
+    {
+        $row = [
+            'id' => 1,
+            '__ztd_upsert_value_0' => 'a',
+            '__ztd_upsert_predicate' => 1,
+        ];
+
+        self::assertSame(['id' => 1], (new UpsertMutationRow())->incomingRow($row, 1));
+    }
+
+    public function testIncomingRowLeavesACarriedValueTheClauseNeverDeclared(): void
+    {
+        $row = ['id' => 1, '__ztd_upsert_value_1' => 'a'];
+
+        self::assertSame($row, (new UpsertMutationRow())->incomingRow($row, 1));
+    }
+
 }

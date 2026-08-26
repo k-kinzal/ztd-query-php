@@ -33,4 +33,16 @@ final class MultiTableMutationRowTest extends TestCase
         self::assertNull($codec->values([], 0, ['id']));
         self::assertNull($codec->identity([], 0, ['id']));
     }
+    public function testValueColumnNamesOneTableValueSoNoTableCouldUseTheName(): void
+    {
+        self::assertSame('__ztd_multi_1_value_2', (new MultiTableMutationRow())->valueColumn(1, 2));
+    }
+
+    public function testValueColumnNamesEachTableAndColumnApart(): void
+    {
+        $row = new MultiTableMutationRow();
+
+        self::assertNotSame($row->valueColumn(0, 1), $row->valueColumn(1, 0));
+    }
+
 }

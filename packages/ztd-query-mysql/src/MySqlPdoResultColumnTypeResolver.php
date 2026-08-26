@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\MySql;
 
 use ZtdQuery\Platform\ResultColumnTypeResolver;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 
 final class MySqlPdoResultColumnTypeResolver implements ResultColumnTypeResolver
 {
-    public function resolve(array $metadata): ColumnType
+    public function resolve(array $metadata): ColumnDeclaration
     {
         $nativeType = $metadata['native_type'] ?? '';
 

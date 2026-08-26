@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\MySql;
 
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 final class MySqlColumnTypeMapper
 {
-    public function map(string $nativeType): ColumnType
+    public function map(string $nativeType): ColumnDeclaration
     {
         $normalized = strtoupper(trim($nativeType));
         $baseType = substr($normalized, 0, strcspn($normalized, "( \t\r\n"));
@@ -34,6 +34,6 @@ final class MySqlColumnTypeMapper
             default => ColumnTypeFamily::UNKNOWN,
         };
 
-        return new ColumnType($family, $nativeType);
+        return new ColumnDeclaration($family, $nativeType);
     }
 }

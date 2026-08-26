@@ -8,7 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\MySql\MySqlTypeSemantics;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(MySqlTypeSemantics::class)]
@@ -22,7 +22,7 @@ final class MySqlTypeSemanticsTest extends TestCase
             'items' => [
                 'rows' => [],
                 'columns' => ['name'],
-                'columnTypes' => ['name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)')],
+                'columnTypes' => ['name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)')],
             ],
         ];
         $sql = "SELECT * FROM items WHERE name > 'a' ORDER BY name";
@@ -38,7 +38,7 @@ final class MySqlTypeSemanticsTest extends TestCase
             'items' => [
                 'rows' => [],
                 'columns' => ['size'],
-                'columnTypes' => ['size' => new ColumnType(ColumnTypeFamily::STRING, "ENUM('small','medium','large')")],
+                'columnTypes' => ['size' => new ColumnDeclaration(ColumnTypeFamily::STRING, "ENUM('small','medium','large')")],
             ],
         ];
 
@@ -55,7 +55,7 @@ final class MySqlTypeSemanticsTest extends TestCase
             'items' => [
                 'rows' => [],
                 'columns' => ['size'],
-                'columnTypes' => ['size' => new ColumnType(ColumnTypeFamily::STRING, "ENUM('small','large')")],
+                'columnTypes' => ['size' => new ColumnDeclaration(ColumnTypeFamily::STRING, "ENUM('small','large')")],
             ],
         ];
 
@@ -73,8 +73,8 @@ final class MySqlTypeSemanticsTest extends TestCase
                 'rows' => [],
                 'columns' => ['name', 'size'],
                 'columnTypes' => [
-                    'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                    'size' => new ColumnType(ColumnTypeFamily::STRING, "ENUM('small','large')"),
+                    'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                    'size' => new ColumnDeclaration(ColumnTypeFamily::STRING, "ENUM('small','large')"),
                 ],
             ],
         ];
@@ -91,8 +91,8 @@ final class MySqlTypeSemanticsTest extends TestCase
                 'rows' => [],
                 'columns' => ['Name', 'Size'],
                 'columnTypes' => [
-                    'Name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
-                    'Size' => new ColumnType(ColumnTypeFamily::STRING, "ENUM('small','large')"),
+                    'Name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                    'Size' => new ColumnDeclaration(ColumnTypeFamily::STRING, "ENUM('small','large')"),
                 ],
             ],
         ];
@@ -110,7 +110,7 @@ final class MySqlTypeSemanticsTest extends TestCase
             'items' => [
                 'rows' => [],
                 'columns' => ['size'],
-                'columnTypes' => ['size' => new ColumnType(ColumnTypeFamily::STRING, "ENUM('small','large')")],
+                'columnTypes' => ['size' => new ColumnDeclaration(ColumnTypeFamily::STRING, "ENUM('small','large')")],
             ],
         ];
 
@@ -127,7 +127,7 @@ final class MySqlTypeSemanticsTest extends TestCase
             'items' => [
                 'rows' => [],
                 'columns' => ['size'],
-                'columnTypes' => ['size' => new ColumnType(ColumnTypeFamily::STRING, "ENUM('small','large')")],
+                'columnTypes' => ['size' => new ColumnDeclaration(ColumnTypeFamily::STRING, "ENUM('small','large')")],
             ],
         ];
 
@@ -144,12 +144,12 @@ final class MySqlTypeSemanticsTest extends TestCase
             'Items' => [
                 'rows' => [],
                 'columns' => ['Size'],
-                'columnTypes' => ['Size' => new ColumnType(ColumnTypeFamily::STRING, "ENUM('small','large')")],
+                'columnTypes' => ['Size' => new ColumnDeclaration(ColumnTypeFamily::STRING, "ENUM('small','large')")],
             ],
             'Other' => [
                 'rows' => [],
                 'columns' => ['Size'],
-                'columnTypes' => ['Size' => new ColumnType(ColumnTypeFamily::STRING, "ENUM('low','high')")],
+                'columnTypes' => ['Size' => new ColumnDeclaration(ColumnTypeFamily::STRING, "ENUM('low','high')")],
             ],
         ];
 
@@ -162,7 +162,7 @@ final class MySqlTypeSemanticsTest extends TestCase
     public function testMatchingEnumsAcrossTablesAllowUnqualifiedColumn(): void
     {
         $semantics = new MySqlTypeSemantics();
-        $type = new ColumnType(ColumnTypeFamily::STRING, "ENUM('small','large')");
+        $type = new ColumnDeclaration(ColumnTypeFamily::STRING, "ENUM('small','large')");
         $tables = [
             'first' => ['rows' => [], 'columns' => ['size'], 'columnTypes' => ['size' => $type]],
             'second' => ['rows' => [], 'columns' => ['size'], 'columnTypes' => ['size' => $type]],
@@ -182,8 +182,8 @@ final class MySqlTypeSemanticsTest extends TestCase
                 'rows' => [],
                 'columns' => ['size', 'name'],
                 'columnTypes' => [
-                    'size' => new ColumnType(ColumnTypeFamily::STRING, "ENUM('small','large')"),
-                    'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                    'size' => new ColumnDeclaration(ColumnTypeFamily::STRING, "ENUM('small','large')"),
+                    'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
                 ],
             ],
         ];
@@ -205,7 +205,7 @@ final class MySqlTypeSemanticsTest extends TestCase
             'items' => [
                 'rows' => [],
                 'columns' => ['size'],
-                'columnTypes' => ['size' => new ColumnType(ColumnTypeFamily::STRING, "ENUM('small','large')")],
+                'columnTypes' => ['size' => new ColumnDeclaration(ColumnTypeFamily::STRING, "ENUM('small','large')")],
             ],
         ];
 
@@ -230,7 +230,7 @@ final class MySqlTypeSemanticsTest extends TestCase
             'items' => [
                 'rows' => [],
                 'columns' => ['size'],
-                'columnTypes' => ['size' => new ColumnType(ColumnTypeFamily::STRING, "ENUM('small','large')")],
+                'columnTypes' => ['size' => new ColumnDeclaration(ColumnTypeFamily::STRING, "ENUM('small','large')")],
             ],
         ];
 
@@ -252,8 +252,8 @@ final class MySqlTypeSemanticsTest extends TestCase
                 'rows' => [],
                 'columns' => ['size', 'name'],
                 'columnTypes' => [
-                    'size' => new ColumnType(ColumnTypeFamily::STRING, "ENUM('small','large')"),
-                    'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
+                    'size' => new ColumnDeclaration(ColumnTypeFamily::STRING, "ENUM('small','large')"),
+                    'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR(255)'),
                 ],
             ],
         ];
@@ -275,7 +275,7 @@ final class MySqlTypeSemanticsTest extends TestCase
             'items' => [
                 'rows' => [],
                 'columns' => ['size'],
-                'columnTypes' => ['size' => new ColumnType(ColumnTypeFamily::STRING, "ENUM('small','large')")],
+                'columnTypes' => ['size' => new ColumnDeclaration(ColumnTypeFamily::STRING, "ENUM('small','large')")],
             ],
         ];
 
@@ -291,7 +291,7 @@ final class MySqlTypeSemanticsTest extends TestCase
             'items' => [
                 'rows' => [],
                 'columns' => ['size'],
-                'columnTypes' => ['size' => new ColumnType(ColumnTypeFamily::STRING, ' enum ( \'small\' , "large" ) ')],
+                'columnTypes' => ['size' => new ColumnDeclaration(ColumnTypeFamily::STRING, ' enum ( \'small\' , "large" ) ')],
             ],
         ];
 
@@ -308,7 +308,7 @@ final class MySqlTypeSemanticsTest extends TestCase
             'items' => [
                 'rows' => [],
                 'columns' => ['size'],
-                'columnTypes' => ['size' => new ColumnType(ColumnTypeFamily::STRING, "ENUM('it''s','back\\\\slash')")],
+                'columnTypes' => ['size' => new ColumnDeclaration(ColumnTypeFamily::STRING, "ENUM('it''s','back\\\\slash')")],
             ],
         ];
 
@@ -325,7 +325,7 @@ final class MySqlTypeSemanticsTest extends TestCase
             'items' => [
                 'rows' => [],
                 'columns' => ['size'],
-                'columnTypes' => ['size' => new ColumnType(ColumnTypeFamily::STRING, "ENUM('','it\x5c's')")],
+                'columnTypes' => ['size' => new ColumnDeclaration(ColumnTypeFamily::STRING, "ENUM('','it\x5c's')")],
             ],
         ];
 
@@ -342,7 +342,7 @@ final class MySqlTypeSemanticsTest extends TestCase
             'Items' => [
                 'rows' => [],
                 'columns' => ['Size'],
-                'columnTypes' => ['Size' => new ColumnType(ColumnTypeFamily::STRING, "ENUM('small','large')")],
+                'columnTypes' => ['Size' => new ColumnDeclaration(ColumnTypeFamily::STRING, "ENUM('small','large')")],
             ],
         ];
 
@@ -360,15 +360,15 @@ final class MySqlTypeSemanticsTest extends TestCase
                 'rows' => [],
                 'columns' => ['plain', 'wrong', 'open', 'empty', 'short', 'unquoted', 'same_edges', 'mismatched', 'valid'],
                 'columnTypes' => [
-                    'plain' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR'),
-                    'wrong' => new ColumnType(ColumnTypeFamily::STRING, "SET('a')"),
-                    'open' => new ColumnType(ColumnTypeFamily::STRING, "ENUM('a'"),
-                    'empty' => new ColumnType(ColumnTypeFamily::STRING, 'ENUM()'),
-                    'short' => new ColumnType(ColumnTypeFamily::STRING, "ENUM(')"),
-                    'unquoted' => new ColumnType(ColumnTypeFamily::STRING, 'ENUM(a)'),
-                    'same_edges' => new ColumnType(ColumnTypeFamily::STRING, 'ENUM(aba)'),
-                    'mismatched' => new ColumnType(ColumnTypeFamily::STRING, "ENUM('a\")"),
-                    'valid' => new ColumnType(ColumnTypeFamily::STRING, "ENUM('a','b')"),
+                    'plain' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'VARCHAR'),
+                    'wrong' => new ColumnDeclaration(ColumnTypeFamily::STRING, "SET('a')"),
+                    'open' => new ColumnDeclaration(ColumnTypeFamily::STRING, "ENUM('a'"),
+                    'empty' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'ENUM()'),
+                    'short' => new ColumnDeclaration(ColumnTypeFamily::STRING, "ENUM(')"),
+                    'unquoted' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'ENUM(a)'),
+                    'same_edges' => new ColumnDeclaration(ColumnTypeFamily::STRING, 'ENUM(aba)'),
+                    'mismatched' => new ColumnDeclaration(ColumnTypeFamily::STRING, "ENUM('a\")"),
+                    'valid' => new ColumnDeclaration(ColumnTypeFamily::STRING, "ENUM('a','b')"),
                 ],
             ],
         ];

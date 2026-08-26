@@ -18,7 +18,7 @@ use ZtdQuery\Rewrite\QueryKind;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 class MySqlQueryGuardTest extends QueryClassifierContractTest
 {
-    protected function classify(string $sql): ?QueryKind
+    public function classify(string $sql): ?QueryKind
     {
         return (new MySqlQueryGuard(new MySqlParser()))->classify($sql);
     }
@@ -28,27 +28,27 @@ class MySqlQueryGuardTest extends QueryClassifierContractTest
         return 'SELECT id, name FROM users WHERE id = 1';
     }
 
-    protected function insertSql(): string
+    public function insertSql(): string
     {
         return "INSERT INTO users (id, name) VALUES (1, 'Alice')";
     }
 
-    protected function updateSql(): string
+    public function updateSql(): string
     {
         return "UPDATE users SET name = 'Bob' WHERE id = 1";
     }
 
-    protected function deleteSql(): string
+    public function deleteSql(): string
     {
         return 'DELETE FROM users WHERE id = 1';
     }
 
-    protected function createTableSql(): string
+    public function createTableSql(): string
     {
         return 'CREATE TABLE orders (id INT PRIMARY KEY, amount DECIMAL(10,2))';
     }
 
-    protected function dropTableSql(): string
+    public function dropTableSql(): string
     {
         return 'DROP TABLE orders';
     }

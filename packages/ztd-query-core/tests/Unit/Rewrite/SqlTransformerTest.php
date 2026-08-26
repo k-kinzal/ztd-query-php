@@ -13,12 +13,12 @@ use ZtdQuery\Rewrite\SqlTransformer;
 #[CoversNothing]
 final class SqlTransformerTest extends TransformerContractTest
 {
-    protected function createTransformer(): SqlTransformer
+    public function createTransformer(): SqlTransformer
     {
         return new FakeSqlTransformer();
     }
 
-    protected function selectSql(): string
+    public function selectSql(): string
     {
         return 'SELECT * FROM users WHERE id = 1';
     }
@@ -37,13 +37,13 @@ final class SqlTransformerTest extends TransformerContractTest
     }
 
     #[Override]
-    protected function nativeIntegerType(): string
+    public function nativeIntegerType(): string
     {
         return 'INTEGER';
     }
 
     #[Override]
-    protected function nativeStringType(): string
+    public function nativeStringType(): string
     {
         return 'TEXT';
     }
