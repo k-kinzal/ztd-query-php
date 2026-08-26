@@ -11,7 +11,7 @@ use ZtdQuery\Adapter\Pdo\PdoStatement;
 use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Platform\ResultColumnTypeResolver;
 use ZtdQuery\Platform\MissingResultColumnTypeResolver;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(PdoStatement::class)]
@@ -85,9 +85,9 @@ final class PdoStatementTest extends TestCase
 
         $resolver = self::createMock(ResultColumnTypeResolver::class);
         $resolver->expects(self::exactly(3))->method('resolve')->willReturnOnConsecutiveCalls(
-            new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-            new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
-            new ColumnType(ColumnTypeFamily::FLOAT, 'REAL'),
+            new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+            new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
+            new ColumnDeclaration(ColumnTypeFamily::FLOAT, 'REAL'),
         );
         $columns = (new PdoStatement($nativeStmt))->resultColumns($resolver);
 

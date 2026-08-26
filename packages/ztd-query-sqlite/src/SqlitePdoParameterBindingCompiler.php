@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\Sqlite;
 
 use ZtdQuery\Platform\ParameterBindingCompiler;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
@@ -57,12 +57,12 @@ final class SqlitePdoParameterBindingCompiler implements ParameterBindingCompile
         return ['sql' => $sql, 'params' => $params];
     }
 
-    private function parameterType(mixed $value): ?ColumnType
+    private function parameterType(mixed $value): ?ColumnDeclaration
     {
         return match (true) {
-            is_bool($value) => new ColumnType(ColumnTypeFamily::BOOLEAN, 'INTEGER'),
-            is_int($value) => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-            is_float($value) => new ColumnType(ColumnTypeFamily::DOUBLE, 'REAL'),
+            is_bool($value) => new ColumnDeclaration(ColumnTypeFamily::BOOLEAN, 'INTEGER'),
+            is_int($value) => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+            is_float($value) => new ColumnDeclaration(ColumnTypeFamily::DOUBLE, 'REAL'),
             default => null,
         };
     }

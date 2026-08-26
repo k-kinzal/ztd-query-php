@@ -13,12 +13,12 @@ use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 #[CoversClass(MySqlIdentifierQuoter::class)]
 final class MySqlIdentifierQuoterTest extends IdentifierQuoterContractTest
 {
-    protected function createQuoter(): IdentifierQuoter
+    public function createQuoter(): IdentifierQuoter
     {
         return new MySqlIdentifierQuoter();
     }
 
-    protected function quoteCharacter(): string
+    public function quoteCharacter(): string
     {
         return '`';
     }

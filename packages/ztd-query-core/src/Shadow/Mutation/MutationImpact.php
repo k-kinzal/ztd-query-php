@@ -6,6 +6,7 @@ namespace ZtdQuery\Shadow\Mutation;
 
 use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Rewrite\AffectedRowsMode;
+use ZtdQuery\Shadow\Row\RowMultiset;
 
 /**
  * Derives observable execution metadata from a shadow-state transition.
@@ -15,15 +16,20 @@ use ZtdQuery\Rewrite\AffectedRowsMode;
 final class MutationImpact
 {
     /**
-     * @param list<Row> $before
-     * @param list<Row> $input
-     * @param list<Row> $after
+     * @param ShadowMutation $mutation The statement whose effect this reports
+     * @param list<Row> $before The table as it stood
+     * @param list<Row> $input The rows the statement was given
+     * @param list<Row> $after The table as it stands now
+     * @param RowMultiset $rows Accounts for rows that repeat
+     * @param MutationRowIdentity $identity Takes the carried names back off a row
      */
     public function __construct(
         private readonly ShadowMutation $mutation,
         private readonly array $before,
         private readonly array $input,
         private readonly array $after,
+        private readonly RowMultiset $rows = new RowMultiset(),
+        private readonly MutationRowIdentity $identity = new MutationRowIdentity(),
     ) {
     }
 
@@ -49,8 +55,8 @@ final class MutationImpact
         }
 
         return max(
-            count($this->difference($this->before, $this->after)),
-            count($this->difference($this->after, $this->before)),
+            count($this->rows->difference($this->before, $this->after)),
+            count($this->rows->difference($this->after, $this->before)),
         );
     }
 
@@ -60,13 +66,13 @@ final class MutationImpact
     public function returningRows(): array
     {
         if ($this->mutation instanceof UpsertMutation) {
-            return $this->clean($this->mutation->resultRows());
+            return $this->identity->stripAll($this->mutation->resultRows());
         }
         if ($this->mutation instanceof UpdateMutation || $this->mutation instanceof DeleteMutation) {
-            return $this->clean($this->input);
+            return $this->identity->stripAll($this->input);
         }
 
-        $added = $this->difference($this->after, $this->before);
+        $added = $this->rows->difference($this->after, $this->before);
         if ($added !== []) {
             return $added;
         }
@@ -85,60 +91,5 @@ final class MutationImpact
             || $this->mutation instanceof ReplaceMutation
             || $this->mutation instanceof SynchronizeMutation
             || $this->mutation instanceof UpsertMutation;
-    }
-
-    /**
-     * @param list<Row> $left
-     * @param list<Row> $right
-     * @return list<Row>
-     */
-    private function difference(array $left, array $right): array
-    {
-        $remaining = $right;
-        $difference = [];
-        foreach ($left as $row) {
-            $match = null;
-            foreach ($remaining as $index => $candidate) {
-                if ($this->rowsEqual($row, $candidate)) {
-                    $match = $index;
-                }
-            }
-            if ($match === null) {
-                $difference[] = $row;
-                continue;
-            }
-            unset($remaining[$match]);
-        }
-
-        return $difference;
-    }
-
-    /**
-     * @param Row $left
-     * @param Row $right
-     */
-    private function rowsEqual(array $left, array $right): bool
-    {
-        if (count($left) !== count($right)) {
-            return false;
-        }
-        foreach ($left as $column => $value) {
-            if (!array_key_exists($column, $right) || $right[$column] !== $value) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * @param list<Row> $rows
-     * @return list<Row>
-     */
-    private function clean(array $rows): array
-    {
-        $identity = new MutationRowIdentity();
-
-        return array_map($identity->strip(...), $rows);
     }
 }

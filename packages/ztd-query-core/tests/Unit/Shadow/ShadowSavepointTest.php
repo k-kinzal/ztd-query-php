@@ -7,7 +7,7 @@ namespace Tests\Unit\Shadow;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowSavepoint;
@@ -17,7 +17,7 @@ use ZtdQuery\Shadow\ShadowStore;
 #[UsesClass(ShadowStore::class)]
 #[UsesClass(TableDefinition::class)]
 #[UsesClass(TableDefinitionRegistry::class)]
-#[UsesClass(ColumnType::class)]
+#[UsesClass(ColumnDeclaration::class)]
 final class ShadowSavepointTest extends TestCase
 {
     public function testOfRemembersTheRowsAsTheyWereRatherThanAsTheyBecome(): void

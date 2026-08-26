@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Fake;
 
 use ZtdQuery\Platform\SchemaParser;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\TableDefinition;
 
@@ -74,7 +74,7 @@ final class FakeSchemaParser implements SchemaParser
 
                 $columns[] = $colName;
                 $columnTypes[$colName] = $colType;
-                $typedColumns[$colName] = new ColumnType(
+                $typedColumns[$colName] = new ColumnDeclaration(
                     $this->mapTypeFamily($colType),
                     $colType
                 );

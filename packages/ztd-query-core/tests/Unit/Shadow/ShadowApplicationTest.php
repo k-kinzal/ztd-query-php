@@ -71,7 +71,7 @@ final class ShadowApplicationTest extends TestCase
         $store = new ShadowStore();
         $store->set('users', [['id' => 1]]);
         $registry = new TableDefinitionRegistry();
-        $registry->register('users', new TableDefinition(['id'], [], ['id'], ['id'], [['id']]));
+        $registry->register('users', new TableDefinition(['id'], [], ['id'], ['id'], ['PRIMARY' => ['id']]));
         $application = new ShadowApplication(
             $store,
             new ReferentialIntegrityEnforcer($registry),

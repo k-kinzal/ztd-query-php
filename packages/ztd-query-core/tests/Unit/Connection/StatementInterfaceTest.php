@@ -9,7 +9,7 @@ use PHPUnit\Framework\TestCase;
 use Tests\Fake\FakeStatement;
 use ZtdQuery\Connection\ResultColumn;
 use ZtdQuery\Platform\MissingResultColumnTypeResolver;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversNothing]
@@ -42,7 +42,7 @@ final class StatementInterfaceTest extends TestCase
 
     public function testResultColumnsRemainAvailableForAResultWithNoRows(): void
     {
-        $columns = [new ResultColumn('id', new ColumnType(ColumnTypeFamily::INTEGER, 'int4'))];
+        $columns = [new ResultColumn('id', new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'int4'))];
         $statement = new FakeStatement([], $columns);
 
         self::assertSame($columns, $statement->resultColumns(new MissingResultColumnTypeResolver()));

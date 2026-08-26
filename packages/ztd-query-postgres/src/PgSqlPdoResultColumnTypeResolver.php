@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\Postgres;
 
 use ZtdQuery\Platform\ResultColumnTypeResolver;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 
 /**
  * The pg sql pdo result column type resolver, as result column type resolver.
@@ -15,9 +15,9 @@ final class PgSqlPdoResultColumnTypeResolver implements ResultColumnTypeResolver
     /**
      * Answers.
      *
-     * @return ColumnType
+     * @return ColumnDeclaration
      */
-    public function resolve(array $metadata): ColumnType
+    public function resolve(array $metadata): ColumnDeclaration
     {
         $nativeType = $metadata['native_type'] ?? '';
         if (!is_string($nativeType)) {

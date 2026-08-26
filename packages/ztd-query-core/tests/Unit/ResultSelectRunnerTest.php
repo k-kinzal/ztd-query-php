@@ -13,11 +13,11 @@ use ZtdQuery\Connection\ResultSet;
 use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Platform\ResultColumnTypeResolver;
 use ZtdQuery\ResultSelectRunner;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(ResultSelectRunner::class)]
-#[UsesClass(ColumnType::class)]
+#[UsesClass(ColumnDeclaration::class)]
 #[UsesClass(ResultColumn::class)]
 #[UsesClass(ResultSet::class)]
 final class ResultSelectRunnerTest extends TestCase
@@ -59,7 +59,7 @@ final class ResultSelectRunnerTest extends TestCase
     public function testRunResultSetRetainsColumnsWhenRowsAreEmpty(): void
     {
         $runner = new ResultSelectRunner();
-        $column = new ResultColumn('id', new ColumnType(ColumnTypeFamily::INTEGER, 'int4'));
+        $column = new ResultColumn('id', new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'int4'));
 
         $resolver = self::createStub(ResultColumnTypeResolver::class);
         $result = $runner->runResultSet(
@@ -75,7 +75,7 @@ final class ResultSelectRunnerTest extends TestCase
     public function testReadResultSetReadsMetadataBeforeRows(): void
     {
         $runner = new ResultSelectRunner();
-        $column = new ResultColumn('id', new ColumnType(ColumnTypeFamily::INTEGER, 'int4'));
+        $column = new ResultColumn('id', new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'int4'));
         $statement = new FakeStatement([['id' => 1]], [$column]);
 
         $resolver = self::createStub(ResultColumnTypeResolver::class);

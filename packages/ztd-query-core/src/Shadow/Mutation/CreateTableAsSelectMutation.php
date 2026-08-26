@@ -7,7 +7,7 @@ namespace ZtdQuery\Shadow\Mutation;
 use RuntimeException;
 use ZtdQuery\Connection\ResultColumn;
 use ZtdQuery\Connection\ResultSet;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
@@ -24,21 +24,21 @@ final class CreateTableAsSelectMutation implements ResultSetMutation
     private array $columnNames;
 
     private TableDefinitionRegistry $registry;
-    private ColumnType $fallbackColumnType;
+    private ColumnDeclaration $fallbackColumnType;
     private bool $ifNotExists;
 
     /**
      * @param string $tableName The name of the new table to create.
      * @param list<string> $columnNames Column names extracted from SELECT.
      * @param TableDefinitionRegistry $registry The registry.
-     * @param ColumnType $fallbackColumnType The dialect-provided type used when result metadata is unavailable.
+     * @param ColumnDeclaration $fallbackColumnType The dialect-provided type used when result metadata is unavailable.
      * @param bool $ifNotExists Whether to skip if table exists.
      */
     public function __construct(
         string $tableName,
         array $columnNames,
         TableDefinitionRegistry $registry,
-        ColumnType $fallbackColumnType,
+        ColumnDeclaration $fallbackColumnType,
         bool $ifNotExists = false
     ) {
         $this->tableName = $tableName;
@@ -81,7 +81,7 @@ final class CreateTableAsSelectMutation implements ResultSetMutation
         }
 
         $columnTypes = [];
-        /** @var array<string, ColumnType> $typedColumns */
+        /** @var array<string, ColumnDeclaration> $typedColumns */
         $typedColumns = [];
         foreach ($columns as $index => $column) {
             $type = $resultColumns[$index]->type ?? $this->fallbackColumnType;

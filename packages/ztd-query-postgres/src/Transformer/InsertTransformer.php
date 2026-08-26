@@ -15,7 +15,7 @@ use ZtdQuery\Platform\Postgres\PgSqlParser;
 use ZtdQuery\Rewrite\ShadowIdentityAllocator;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\CandidateKeySet;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\PartialUniqueIndex;
 use ZtdQuery\Sql\SqlTokenStream;
@@ -133,7 +133,7 @@ final class InsertTransformer implements SqlTransformer
             $selects = [];
             foreach ($projected as $column => $expr) {
                 $type = $columnTypes[$column] ?? null;
-                if ($type instanceof ColumnType) {
+                if ($type instanceof ColumnDeclaration) {
                     $expr = $this->castInsertExpression($expr, $type);
                 }
                 $selects[] = $expr . ' AS "' . $column . '"';
@@ -217,7 +217,7 @@ final class InsertTransformer implements SqlTransformer
         return $ordered;
     }
 
-    private function castInsertExpression(string $expression, ColumnType $type): string
+    private function castInsertExpression(string $expression, ColumnDeclaration $type): string
     {
         if ($type->family === ColumnTypeFamily::BOOLEAN && $expression === '?') {
             return "CAST(COALESCE(NULLIF(CAST(? AS TEXT), ''), 'false') AS BOOLEAN)";

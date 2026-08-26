@@ -202,7 +202,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         self::assertSame($sql, $plan->sql());
     }
 
-    protected function createRewriter(ShadowStore $store, TableDefinitionRegistry $registry): SqlRewriter
+    public function createRewriter(ShadowStore $store, TableDefinitionRegistry $registry): SqlRewriter
     {
         $parser = new SqliteParser();
         $schemaParser = new SqliteSchemaParser();
@@ -216,47 +216,47 @@ final class SqliteRewriterTest extends RewriterContractTest
         return new SqliteRewriter(new SqliteQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
     }
 
-    protected function createSchemaParser(): SchemaParser
+    public function createSchemaParser(): SchemaParser
     {
         return new SqliteSchemaParser();
     }
 
-    protected function selectSql(): string
+    public function selectSql(): string
     {
         return 'SELECT id, name, email FROM users WHERE id = 1';
     }
 
-    protected function insertSql(): string
+    public function insertSql(): string
     {
         return "INSERT INTO users (id, name, email) VALUES (1, 'Alice', 'alice@example.com')";
     }
 
-    protected function updateSql(): string
+    public function updateSql(): string
     {
         return "UPDATE users SET name = 'Bob' WHERE id = 1";
     }
 
-    protected function deleteSql(): string
+    public function deleteSql(): string
     {
         return 'DELETE FROM users WHERE id = 1';
     }
 
-    protected function createTableSql(): string
+    public function createTableSql(): string
     {
         return 'CREATE TABLE orders (id INTEGER PRIMARY KEY, amount REAL)';
     }
 
-    protected function dropTableSql(): string
+    public function dropTableSql(): string
     {
         return 'DROP TABLE IF EXISTS orders';
     }
 
-    protected function unsupportedSql(): string
+    public function unsupportedSql(): string
     {
         return 'CREATE INDEX idx ON users (name)';
     }
 
-    protected function usersCreateTableSql(): string
+    public function usersCreateTableSql(): string
     {
         return 'CREATE TABLE users (id INTEGER PRIMARY KEY NOT NULL, name TEXT NOT NULL, email TEXT NOT NULL)';
     }

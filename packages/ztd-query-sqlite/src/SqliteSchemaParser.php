@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Sqlite;
 
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
 use ZtdQuery\Platform\SchemaParser;
@@ -141,7 +141,7 @@ final class SqliteSchemaParser implements SchemaParser
             }
         }
 
-        /** @var array<string, ColumnType> $typedColumns */
+        /** @var array<string, ColumnDeclaration> $typedColumns */
         $typedColumns = [];
         foreach ($columnTypes as $colName => $nativeType) {
             $typedColumns[$colName] = (new SqliteColumnTypeMapper())->map($nativeType);
@@ -250,7 +250,7 @@ final class SqliteSchemaParser implements SchemaParser
         $columnTypes = array_fill_keys($columns, 'TEXT');
         $typedColumns = array_fill_keys(
             $columns,
-            new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+            new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
         );
 
         return new TableDefinition($columns, $columnTypes, [], [], [], $typedColumns);

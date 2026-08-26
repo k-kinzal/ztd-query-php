@@ -105,9 +105,15 @@ final class TransactionStatement
     }
 
     /**
+     * Answers a savepoint name, refusing one the statement never gave.
+     *
+     * @param string $name Name the statement carried
+     *
+     * @return string The same name, once it is one
+     *
      * @throws InvalidDefinitionException When the statement named no savepoint
      */
-    private static function requiredName(string $name): string
+    public static function requiredName(string $name): string
     {
         if ($name === '') {
             throw new InvalidDefinitionException('Savepoint name must not be empty.');

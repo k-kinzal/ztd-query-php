@@ -53,4 +53,46 @@ final class MutationRowIdentityTest extends TestCase
             ]),
         );
     }
+    public function testStripAllTakesTheCarriedNamesOffEveryRow(): void
+    {
+        $rows = [
+            ['id' => 1, '__ztd_original_id' => 0],
+            ['id' => 2, '__ztd_original_id' => 1],
+        ];
+
+        self::assertSame(
+            [['id' => 1], ['id' => 2]],
+            (new MutationRowIdentity())->stripAll($rows),
+        );
+    }
+
+    public function testStripAllAnswersNothingForNoRows(): void
+    {
+        self::assertSame([], (new MutationRowIdentity())->stripAll([]));
+    }
+
+    public function testExtractSplitsTheRowFromTheKeyItUsedToHave(): void
+    {
+        self::assertSame(
+            ['row' => ['id' => 2], 'identity' => ['id' => 1]],
+            (new MutationRowIdentity())->extract(['id' => 2, '__ztd_original_id' => 1], ['id']),
+        );
+    }
+
+    public function testExtractReadsAnUnchangedKeyAsItsOwnOldValue(): void
+    {
+        self::assertSame(
+            ['row' => ['id' => 1], 'identity' => ['id' => 1]],
+            (new MutationRowIdentity())->extract(['id' => 1], ['id']),
+        );
+    }
+
+    public function testExtractCarriesNoKeyWhereTheRowHasNoneOfIt(): void
+    {
+        self::assertSame(
+            ['row' => ['name' => 'a'], 'identity' => []],
+            (new MutationRowIdentity())->extract(['name' => 'a'], ['id']),
+        );
+    }
+
 }

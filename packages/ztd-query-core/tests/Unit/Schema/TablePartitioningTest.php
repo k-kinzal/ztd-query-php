@@ -50,4 +50,18 @@ final class TablePartitioningTest extends TestCase
 
         new TablePartitioning(['  ' => 'id < 10']);
     }
+
+    public function testPredicatesForAnswersThePredicateOfEveryPartitionNamed(): void
+    {
+        $partitioning = new TablePartitioning(['p0' => 'id < 10', 'p1' => 'id >= 10']);
+
+        self::assertSame(['id < 10'], $partitioning->predicatesFor(['p0']));
+    }
+
+    public function testPredicatesForIsNothingWhereAPartitionIsNotOneOfThem(): void
+    {
+        $partitioning = new TablePartitioning(['p0' => 'id < 10']);
+
+        self::assertNull($partitioning->predicatesFor(['p9']));
+    }
 }

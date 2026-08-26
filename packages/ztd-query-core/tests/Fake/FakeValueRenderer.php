@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Fake;
 
 use ZtdQuery\Platform\ValueRenderer;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 /**
@@ -21,11 +21,11 @@ final class FakeValueRenderer implements ValueRenderer
      * Writes a value as the SQL expression standing for it.
      *
      * @param mixed $value Value to write
-     * @param ColumnType|null $type Column type it is being written for, where one is known
+     * @param ColumnDeclaration|null $type Column type it is being written for, where one is known
      *
      * @return string The expression
      */
-    public function renderValue(mixed $value, ?ColumnType $type = null): string
+    public function renderValue(mixed $value, ?ColumnDeclaration $type = null): string
     {
         if ($value === null) {
             return 'NULL';

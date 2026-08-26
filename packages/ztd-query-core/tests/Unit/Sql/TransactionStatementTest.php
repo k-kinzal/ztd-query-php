@@ -54,4 +54,70 @@ final class TransactionStatementTest extends TestCase
 
         TransactionStatement::savepoint('');
     }
+
+    public function testBeginStartsATransactionARollbackCanGoBackTo(): void
+    {
+        $store = new ShadowStore();
+        $store->set('order', [['id' => 1]]);
+        $transactions = new ShadowTransactions($store);
+
+        TransactionStatement::begin()->apply($transactions);
+        $store->set('order', []);
+        TransactionStatement::rollback()->apply($transactions);
+
+        self::assertSame([['id' => 1]], $store->get('order'));
+    }
+
+    public function testCommitKeepsEverythingTheTransactionDid(): void
+    {
+        $store = new ShadowStore();
+        $store->set('order', [['id' => 1]]);
+        $transactions = new ShadowTransactions($store);
+
+        TransactionStatement::begin()->apply($transactions);
+        $store->set('order', []);
+        TransactionStatement::commit()->apply($transactions);
+        TransactionStatement::rollback()->apply($transactions);
+
+        self::assertSame([], $store->get('order'));
+    }
+
+    public function testRollbackToGoesBackToTheSavepointAndLeavesItDeclared(): void
+    {
+        $store = new ShadowStore();
+        $transactions = new ShadowTransactions($store);
+        TransactionStatement::begin()->apply($transactions);
+        $store->set('order', [['id' => 1]]);
+        TransactionStatement::savepoint('sp1')->apply($transactions);
+        $store->set('order', []);
+
+        TransactionStatement::rollbackTo('sp1')->apply($transactions);
+
+        self::assertSame([['id' => 1]], $store->get('order'));
+        self::assertNotNull($transactions->positionOf('sp1'));
+    }
+
+    public function testApplyDoesWhatEachOperationSays(): void
+    {
+        $store = new ShadowStore();
+        $transactions = new ShadowTransactions($store);
+        TransactionStatement::begin()->apply($transactions);
+        TransactionStatement::savepoint('sp1')->apply($transactions);
+
+        TransactionStatement::release('sp1')->apply($transactions);
+
+        self::assertNull($transactions->positionOf('sp1'));
+    }
+    public function testRequiredNameAnswersTheNameTheStatementCarried(): void
+    {
+        self::assertSame('sp1', TransactionStatement::requiredName('sp1'));
+    }
+
+    public function testRequiredNameRefusesAStatementThatNamedNoSavepoint(): void
+    {
+        $this->expectException(InvalidDefinitionException::class);
+
+        TransactionStatement::requiredName('');
+    }
+
 }

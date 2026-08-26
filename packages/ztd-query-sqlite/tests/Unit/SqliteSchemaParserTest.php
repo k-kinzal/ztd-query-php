@@ -23,17 +23,17 @@ use ZtdQuery\Schema\IdentityGenerationStrategy;
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
 final class SqliteSchemaParserTest extends SchemaParserContractTest
 {
-    protected function createParser(): SchemaParser
+    public function createParser(): SchemaParser
     {
         return new SqliteSchemaParser();
     }
 
-    protected function validCreateTableSql(): string
+    public function validCreateTableSql(): string
     {
         return 'CREATE TABLE users (id INTEGER PRIMARY KEY NOT NULL, name TEXT NOT NULL, email TEXT, UNIQUE (email))';
     }
 
-    protected function nonCreateTableSql(): string
+    public function nonCreateTableSql(): string
     {
         return 'SELECT 1';
     }

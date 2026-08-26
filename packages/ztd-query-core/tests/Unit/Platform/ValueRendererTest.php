@@ -7,7 +7,7 @@ namespace Tests\Unit\Platform;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use Tests\Fake\FakeValueRenderer;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversNothing]
@@ -32,7 +32,7 @@ final class ValueRendererTest extends TestCase
     {
         self::assertSame(
             "'7'",
-            (new FakeValueRenderer())->renderValue(7, new ColumnType(ColumnTypeFamily::TEXT, 'text')),
+            (new FakeValueRenderer())->renderValue(7, new ColumnDeclaration(ColumnTypeFamily::TEXT, 'text')),
         );
     }
 }
