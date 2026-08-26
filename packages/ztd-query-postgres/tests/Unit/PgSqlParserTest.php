@@ -9,14 +9,16 @@ use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Postgres\PgSqlConflictTarget;
+use ZtdQuery\Platform\Postgres\PgSqlLexerProfile;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
 use ZtdQuery\Platform\Postgres\PostgreSqlLexicalMasker;
+use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(PgSqlParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser::class)]
 #[UsesClass(PostgreSqlLexicalMasker::class)]
 #[UsesClass(PgSqlConflictTarget::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
+#[UsesClass(PgSqlLexerProfile::class)]
 final class PgSqlParserTest extends TestCase
 {
     public function testClassifiesAnonymousDoBlockWithoutSplittingItsBody(): void
@@ -3755,4 +3757,135 @@ SELECT * FROM users'));
     {
         self::assertNull((new PgSqlParser())->extractOnConflictTarget($sql));
     }
+    public function testExtractOnConflictTargetReadsTheColumnsItConflictsOn(): void
+    {
+        $target = (new PgSqlParser())->extractOnConflictTarget(
+            'INSERT INTO t (id) VALUES (1) ON CONFLICT (id) DO NOTHING',
+        );
+
+        self::assertSame(['id'], $target?->columns);
+    }
+
+    public function testExtractOnConflictTargetIsNothingWhereTheStatementNamesNone(): void
+    {
+        self::assertNull((new PgSqlParser())->extractOnConflictTarget('INSERT INTO t (id) VALUES (1)'));
+    }
+
+    public function testFindOnConflictTargetStartAnswersWhereTheTargetIsWritten(): void
+    {
+        $tokens = SqlTokenStream::tokenize(
+            'INSERT INTO t VALUES (1) ON CONFLICT (id) DO NOTHING',
+            PgSqlLexerProfile::create(),
+        )->significantTokens();
+
+        self::assertNotNull(PgSqlParser::findOnConflictTargetStart($tokens));
+    }
+
+    public function testFindOnConflictTargetStartIsNothingWhereNoConflictIsWritten(): void
+    {
+        $tokens = SqlTokenStream::tokenize('SELECT 1', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertNull(PgSqlParser::findOnConflictTargetStart($tokens));
+    }
+
+    public function testFindTopLevelSymbolAnswersWhereTheSymbolIsWritten(): void
+    {
+        $tokens = SqlTokenStream::tokenize('a, b', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertSame(1, PgSqlParser::findTopLevelSymbol($tokens, 0, ','));
+    }
+
+    public function testFindTopLevelSymbolIgnoresOneWrittenInsideParentheses(): void
+    {
+        $tokens = SqlTokenStream::tokenize('f(a, b)', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertNull(PgSqlParser::findTopLevelSymbol($tokens, 2, ','));
+    }
+
+    public function testFindTopLevelKeywordAnswersWhereTheKeywordIsWritten(): void
+    {
+        $tokens = SqlTokenStream::tokenize('SELECT a FROM t', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertSame(2, PgSqlParser::findTopLevelKeyword($tokens, 0, 'FROM'));
+    }
+
+    public function testFindTopLevelKeywordIsNothingWhereItIsNotWritten(): void
+    {
+        $tokens = SqlTokenStream::tokenize('SELECT 1', PgSqlLexerProfile::create())->significantTokens();
+
+        self::assertNull(PgSqlParser::findTopLevelKeyword($tokens, 0, 'FROM'));
+    }
+
+    public function testExtractOnConflictUpdateWhereReadsWhatNarrowsTheUpdate(): void
+    {
+        self::assertSame(
+            'x > 0',
+            (new PgSqlParser())->extractOnConflictUpdateWhere(
+                'INSERT INTO t VALUES (1) ON CONFLICT (id) DO UPDATE SET x = 1 WHERE x > 0',
+            ),
+        );
+    }
+
+    public function testExtractOnConflictUpdateWhereIsNothingWhereNothingNarrowsIt(): void
+    {
+        self::assertNull(
+            (new PgSqlParser())->extractOnConflictUpdateWhere('INSERT INTO t VALUES (1)'),
+        );
+    }
+
+    public function testTruncateIdentifierAtReadsTheTableATruncateNames(): void
+    {
+        $stream = SqlTokenStream::tokenize('TRUNCATE users', PgSqlLexerProfile::create());
+
+        self::assertSame('users', (new PgSqlParser())->truncateIdentifierAt($stream, 1)['name'] ?? null);
+    }
+
+    public function testTruncateIdentifierAtIsNothingPastWhatWasWritten(): void
+    {
+        $stream = SqlTokenStream::tokenize('TRUNCATE users', PgSqlLexerProfile::create());
+
+        self::assertNull((new PgSqlParser())->truncateIdentifierAt($stream, 9));
+    }
+
+    public function testParseColumnListReadsTheNamesWrittenInTheList(): void
+    {
+        self::assertSame(['a', 'b'], (new PgSqlParser())->parseColumnList('a, "b"'));
+    }
+
+    public function testParseColumnListIsNothingForAnEmptyList(): void
+    {
+        self::assertSame([], (new PgSqlParser())->parseColumnList(''));
+    }
+
+    public function testExtractParenthesizedListReadsTheEntriesAndWhereTheyEnd(): void
+    {
+        self::assertSame(
+            ['items' => ['1', '2'], 'end' => 6],
+            (new PgSqlParser())->extractParenthesizedList('(1, 2)', 0),
+        );
+    }
+
+    public function testExtractParenthesizedListIsNothingWhereNoParenthesisOpens(): void
+    {
+        self::assertNull((new PgSqlParser())->extractParenthesizedList('1, 2', 0));
+    }
+
+    public function testMaskCommentsTakesTheCommentOutAndLeavesTheRest(): void
+    {
+        self::assertStringNotContainsString('secret', (new PgSqlParser())->maskComments('SELECT 1 -- secret'));
+    }
+
+    public function testFindInsertSourceClauseAnswersWhereTheStatementSaysWhatItInserts(): void
+    {
+        self::assertSame(
+            'VALUES',
+            (new PgSqlParser())->findInsertSourceClause('INSERT INTO t (id) VALUES (1)')['keyword'] ?? null,
+        );
+    }
+
+    public function testFindInsertSourceClauseIsNothingWhereTheStatementInsertsNothing(): void
+    {
+        self::assertNull((new PgSqlParser())->findInsertSourceClause('SELECT 1'));
+    }
+
 }
