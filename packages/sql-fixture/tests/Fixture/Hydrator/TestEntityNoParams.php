@@ -18,6 +18,9 @@ class TestEntityNoParams
      */
     public string $name = '';
 
+    /**
+     * Builds one, taking nothing, which is what the hydrator has to notice.
+     */
     public function __construct()
     {
     }

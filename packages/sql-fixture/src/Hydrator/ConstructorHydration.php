@@ -22,9 +22,13 @@ final class ConstructorHydration
 {
     /**
      * @param DeclaredTypeCast $cast Reads a value as the type its parameter declares
+     * @param Instantiability $instantiability Answers why a class cannot be built
+     * @param Instantiability $instantiability Answers why a class cannot be built
      */
-    public function __construct(private readonly DeclaredTypeCast $cast = new DeclaredTypeCast())
-    {
+    public function __construct(
+        private readonly DeclaredTypeCast $cast = new DeclaredTypeCast(),
+        private readonly Instantiability $instantiability = new Instantiability(),
+    ) {
     }
 
     /**
@@ -42,6 +46,11 @@ final class ConstructorHydration
     {
         $reflection = new ReflectionClass($className);
 
+        $refusal = $this->instantiability->callingConstructor($className);
+        if ($refusal !== null) {
+            throw HydrationException::notInstantiable($className, $refusal);
+        }
+
         try {
             $arguments = [];
             foreach ($reflection->getConstructor()?->getParameters() ?? [] as $parameter) {
@@ -57,7 +66,7 @@ final class ConstructorHydration
                 } elseif ($parameter->allowsNull()) {
                     $value = null;
                 } else {
-                    throw HydrationException::constructorParameterMissing($reflection->getName(), $name);
+                    throw HydrationException::parameterNotSupplied($reflection->getName(), $name);
                 }
 
                 $arguments[] = $this->cast->of($value, $parameter->getType());
@@ -65,7 +74,7 @@ final class ConstructorHydration
 
             return $reflection->newInstanceArgs($arguments);
         } catch (ReflectionException $cause) {
-            throw HydrationException::notInstantiable($className, $cause);
+            throw HydrationException::notInstantiable($className, $cause->getMessage(), $cause);
         }
     }
 }

@@ -15,6 +15,9 @@ use SqlFixture\Platform\MySql\WellKnownTextGeometry;
 #[CoversClass(WellKnownTextGeometry::class)]
 final class WellKnownTextGeometryTest extends TestCase
 {
+    /**
+     * @param Closure(WellKnownTextGeometry, Generator): string $write
+     */
     #[DataProvider('providerGeometry')]
     public function testEachGeometryIsWrittenUnderItsOwnKeyword(Closure $write, string $keyword): void
     {

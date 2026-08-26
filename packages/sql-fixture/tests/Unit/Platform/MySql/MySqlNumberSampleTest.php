@@ -18,6 +18,9 @@ use SqlFixture\Schema\ColumnDefinition;
 #[UsesClass(ColumnDefinition::class)]
 final class MySqlNumberSampleTest extends TestCase
 {
+    /**
+     * @param Closure(MySqlNumberSample, Generator, ColumnDefinition): (int|bool) $draw
+     */
     #[DataProvider('providerSignedIntegerRange')]
     public function testEachIntegerTypeStaysInTheRangeMysqlDeclaresForIt(
         Closure $draw,
@@ -31,7 +34,7 @@ final class MySqlNumberSampleTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{Closure(MySqlNumberSample, Generator, ColumnDefinition): int, int, int}>
+     * @return iterable<string, array{Closure(MySqlNumberSample, Generator, ColumnDefinition): (int|bool), int, int}>
      */
     public static function providerSignedIntegerRange(): iterable
     {
@@ -62,6 +65,9 @@ final class MySqlNumberSampleTest extends TestCase
         ];
     }
 
+    /**
+     * @param Closure(MySqlNumberSample, Generator, ColumnDefinition): (int|bool) $draw
+     */
     #[DataProvider('providerUnsignedIntegerRange')]
     public function testEachUnsignedIntegerTypeStartsAtZeroAndReachesFurther(
         Closure $draw,
@@ -75,7 +81,7 @@ final class MySqlNumberSampleTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{Closure(MySqlNumberSample, Generator, ColumnDefinition): int, int}>
+     * @return iterable<string, array{Closure(MySqlNumberSample, Generator, ColumnDefinition): (int|bool), int}>
      */
     public static function providerUnsignedIntegerRange(): iterable
     {

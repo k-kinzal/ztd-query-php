@@ -7,7 +7,7 @@ namespace Tests\Unit\Hydrator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionException;
+use RuntimeException;
 use SqlFixture\Hydrator\HydrationException;
 
 #[CoversClass(HydrationException::class)]
@@ -21,9 +21,9 @@ final class HydrationExceptionTest extends TestCase
     }
 
     #[Test]
-    public function testConstructorParameterMissing(): void
+    public function testParameterNotSupplied(): void
     {
-        $exception = HydrationException::constructorParameterMissing('User', 'name');
+        $exception = HydrationException::parameterNotSupplied('User', 'name');
         self::assertSame('Missing required constructor parameter "name" for class "User"', $exception->getMessage());
     }
 
@@ -35,13 +35,27 @@ final class HydrationExceptionTest extends TestCase
     }
 
     #[Test]
-    public function testNotInstantiableNamesTheClassAndCarriesWhatReflectionRefused(): void
+    public function testNotInstantiableNamesTheClassAndWhyItCouldNotBeBuilt(): void
     {
-        $cause = new ReflectionException('Class is abstract');
+        self::assertSame(
+            'Cannot instantiate class "Order": it is abstract',
+            HydrationException::notInstantiable('Order', 'it is abstract')->getMessage()
+        );
+    }
 
-        $exception = HydrationException::notInstantiable('Order', $cause);
+    #[Test]
+    public function testNotInstantiableCarriesTheRefusalWhereSomethingElseRefused(): void
+    {
+        $cause = new RuntimeException('Class Generator is an internal class');
 
-        self::assertSame('Cannot instantiate class "Order": Class is abstract', $exception->getMessage());
-        self::assertSame($cause, $exception->getPrevious());
+        $refusal = HydrationException::notInstantiable('Generator', $cause->getMessage(), $cause);
+
+        self::assertSame($cause, $refusal->getPrevious());
+    }
+
+    #[Test]
+    public function testNotInstantiableCarriesNothingWhereTheReasonWasAskedForRatherThanRaised(): void
+    {
+        self::assertNull(HydrationException::notInstantiable('Order', 'it is abstract')->getPrevious());
     }
 }

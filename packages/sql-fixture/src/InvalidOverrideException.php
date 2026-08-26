@@ -70,4 +70,59 @@ final class InvalidOverrideException extends RuntimeException
             $column
         ));
     }
+
+    /**
+     * Reports a row count no table could produce.
+     *
+     * @param string $table Table the count was written for
+     * @param int $count Count as the caller wrote it
+     *
+     * @return self Exception naming the table and the count
+     */
+    public static function negativeRowCount(string $table, int $count): self
+    {
+        return new self(sprintf(
+            'The row count for %s cannot be negative, got %d.',
+            $table,
+            $count
+        ));
+    }
+
+    /**
+     * Reports an override written as something no column could hold.
+     *
+     * @param array-key $column Column the value was written for
+     * @param string $type Type of the value, as PHP names it
+     *
+     * @return self Exception naming the column and what was written there
+     */
+    public static function unsupportedValue(int|string $column, string $type): self
+    {
+        return new self(sprintf(
+            'The override for "%s" must be a scalar, null, or an array of those, got %s.',
+            (string) $column,
+            $type
+        ));
+    }
+
+    /**
+     * Reports an override holding something a column cannot carry.
+     *
+     * A JSON column may be written as an array of scalars, so an array is read
+     * one level deep. What is nested below that could never be bound, whatever
+     * the column.
+     *
+     * @param array-key $column Column the value was written for
+     * @param string $type Type of the nested value, as PHP names it
+     *
+     * @return self Exception naming the column and what it was found holding
+     */
+    public static function nestedValue(int|string $column, string $type): self
+    {
+        return new self(sprintf(
+            'The override for "%s" holds a %s, which no column can carry.',
+            (string) $column,
+            $type
+        ));
+    }
 }

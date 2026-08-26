@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlFixture\Fixture;
 
-use InvalidArgumentException;
+use SqlFixture\InvalidOverrideException;
 use SqlFixture\TypeMapper\TypeMapperInterface;
 
 /**
@@ -57,15 +57,13 @@ final class RowSpec
      *
      * @return self The description it stands for
      *
-     * @throws InvalidArgumentException When a row count is negative
+     * @throws InvalidOverrideException When a row count is negative
      */
     public static function from(string $table, int|array|TableOverrides $spec): self
     {
         if (is_int($spec)) {
             if ($spec < 0) {
-                throw new InvalidArgumentException(
-                    sprintf('The row count for %s cannot be negative, got %d.', $table, $spec)
-                );
+                throw InvalidOverrideException::negativeRowCount($table, $spec);
             }
 
             return new self($spec, null, []);
@@ -140,7 +138,7 @@ final class RowSpec
      *
      * @return array<string, self> Table name => the description it stands for
      *
-     * @throws InvalidArgumentException When a row count is negative
+     * @throws InvalidOverrideException When a row count is negative
      */
     public static function forTables(array $overrides): array
     {
@@ -164,7 +162,7 @@ final class RowSpec
      *
      * @return FixtureRow The same columns, as a row
      *
-     * @throws InvalidArgumentException When a value is something no column could hold
+     * @throws InvalidOverrideException When a value is something no column could hold
      */
     public static function asRow(array $values): array
     {
@@ -190,7 +188,7 @@ final class RowSpec
      *
      * @return FixtureOverride The value, as a column would hold it
      *
-     * @throws InvalidArgumentException When the value is something no column could hold
+     * @throws InvalidOverrideException When the value is something no column could hold
      */
     public static function asOverride(int|string $column, mixed $value): int|float|string|bool|null|array
     {
@@ -201,11 +199,7 @@ final class RowSpec
             $members = [];
             foreach ($value as $key => $member) {
                 if ($member !== null && !is_scalar($member)) {
-                    throw new InvalidArgumentException(sprintf(
-                        'The override for "%s" holds a %s, which no column can carry.',
-                        (string) $column,
-                        get_debug_type($member),
-                    ));
+                    throw InvalidOverrideException::nestedValue($column, get_debug_type($member));
                 }
                 $members[$key] = $member;
             }
@@ -213,10 +207,6 @@ final class RowSpec
             return $members;
         }
 
-        throw new InvalidArgumentException(sprintf(
-            'The override for "%s" must be a scalar, null, or an array of those, got %s.',
-            (string) $column,
-            get_debug_type($value),
-        ));
+        throw InvalidOverrideException::unsupportedValue($column, get_debug_type($value));
     }
 }

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlFixture\Hydrator;
 
-use ReflectionException;
 use RuntimeException;
+use Throwable;
 
 /**
  * Reports that a fixture row could not be turned into the object asked for.
@@ -31,19 +31,21 @@ final class HydrationException extends RuntimeException
     /**
      * Reports a class that exists but cannot be built.
      *
-     * A class is not instantiable when it is abstract, when it is an internal
-     * class that refuses to be built without its constructor, or when its
-     * constructor is not public. Reflection says so by raising, and this says
-     * which class it was about.
+     * A class is not instantiable when it is abstract, when it is an enum,
+     * when it is an internal class that refuses to be built without its
+     * constructor, or when its constructor is not public. PHP raises an Error
+     * for some of those, which is an engine failure rather than something to
+     * catch, so those are asked about first and the reason is passed in.
      *
      * @param string $className Class the caller named
-     * @param ReflectionException $cause What reflection refused
+     * @param string $reason Why it cannot be built
+     * @param Throwable|null $cause How PHP refused, where PHP is what refused
      *
-     * @return self Exception naming the class, carrying the refusal
+     * @return self Exception naming the class and the reason, carrying the refusal
      */
-    public static function notInstantiable(string $className, ReflectionException $cause): self
+    public static function notInstantiable(string $className, string $reason, ?Throwable $cause = null): self
     {
-        return new self(sprintf('Cannot instantiate class "%s": %s', $className, $cause->getMessage()), 0, $cause);
+        return new self(sprintf('Cannot instantiate class "%s": %s', $className, $reason), 0, $cause);
     }
 
     /**
@@ -54,7 +56,7 @@ final class HydrationException extends RuntimeException
      *
      * @return self Exception naming both
      */
-    public static function constructorParameterMissing(string $className, string $parameterName): self
+    public static function parameterNotSupplied(string $className, string $parameterName): self
     {
         return new self(sprintf(
             'Missing required constructor parameter "%s" for class "%s"',

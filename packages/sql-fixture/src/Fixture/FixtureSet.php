@@ -7,7 +7,6 @@ namespace SqlFixture\Fixture;
 use ArrayAccess;
 use Countable;
 use IteratorAggregate;
-use LogicException;
 use OutOfBoundsException;
 use SqlFixture\TypeMapper\TypeMapperInterface;
 use Traversable;
@@ -139,26 +138,26 @@ final class FixtureSet implements ArrayAccess, IteratorAggregate, Countable
      * A set is what a generation produced; changing it afterwards would describe
      * rows that were never generated.
      *
-     * @param mixed $offset Ignored
+     * @param mixed $offset Table the caller wrote to, or its position
      * @param mixed $value Ignored
      *
-     * @throws LogicException Always
+     * @throws ReadOnlySetException Always
      */
     public function offsetSet(mixed $offset, mixed $value): void
     {
-        throw new LogicException('A FixtureSet is read-only.');
+        throw ReadOnlySetException::cannotWrite(is_int($offset) || is_string($offset) ? $offset : '');
     }
 
     /**
      * Refuses a removal.
      *
-     * @param mixed $offset Ignored
+     * @param mixed $offset Table the caller removed, or its position
      *
-     * @throws LogicException Always
+     * @throws ReadOnlySetException Always
      */
     public function offsetUnset(mixed $offset): void
     {
-        throw new LogicException('A FixtureSet is read-only.');
+        throw ReadOnlySetException::cannotRemove(is_int($offset) || is_string($offset) ? $offset : '');
     }
 
     /**

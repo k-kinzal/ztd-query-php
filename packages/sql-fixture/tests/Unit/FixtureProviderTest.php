@@ -720,11 +720,12 @@ final class FixtureProviderTest extends TestCase
         $provider->registerSchema('CREATE TABLE order_detail (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, order_id INT UNSIGNED NOT NULL)');
 
         $set = $provider->fixtures('order.id < order_detail.order_id', ['order_detail' => 2]);
-        $orderId = $set->row('order')['id'];
 
-        foreach ($set->rows('order_detail') as $detail) {
-            self::assertSame($orderId, $detail['order_id']);
-        }
+        $orderIds = array_column($set->rows('order'), 'id');
+        $referenced = array_column($set->rows('order_detail'), 'order_id');
+
+        self::assertCount(1, $orderIds);
+        self::assertSame([...$orderIds, ...$orderIds], $referenced);
     }
 
     #[Test]
@@ -735,7 +736,7 @@ final class FixtureProviderTest extends TestCase
 
         $set = $provider->fixtures(FixturePlan::table('order'));
 
-        self::assertArrayHasKey('status', $set->row('order'));
+        self::assertCount(1, array_column($set->rows('order'), 'status'));
     }
 
     #[Test]

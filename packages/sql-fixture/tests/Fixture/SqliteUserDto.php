@@ -9,6 +9,13 @@ namespace Tests\Fixture;
  */
 final class SqliteUserDto
 {
+    /**
+     * Builds one from the row generated against the table.
+     *
+     * @param int $id Identifier the row carries
+     * @param string $name Name the row carries
+     * @param string $email Address the row carries
+     */
     public function __construct(
         public int $id,
         public string $name,

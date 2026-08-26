@@ -4,17 +4,18 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Fixture;
 
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\Fixture\RowSpec;
 use SqlFixture\Fixture\TableOverrides;
+use SqlFixture\InvalidOverrideException;
 use stdClass;
 
 #[CoversClass(RowSpec::class)]
 #[UsesClass(TableOverrides::class)]
+#[UsesClass(InvalidOverrideException::class)]
 final class RowSpecTest extends TestCase
 {
     #[Test]
@@ -145,7 +146,7 @@ final class RowSpecTest extends TestCase
     #[Test]
     public function testForTablesRefusesANegativeRowCount(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidOverrideException::class);
 
         RowSpec::forTables(['order' => -1]);
     }
@@ -162,7 +163,7 @@ final class RowSpecTest extends TestCase
     #[Test]
     public function testAsRowRefusesAValueNoColumnCouldHold(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidOverrideException::class);
 
         RowSpec::asRow(['payload' => new stdClass()]);
     }
@@ -184,7 +185,7 @@ final class RowSpecTest extends TestCase
     #[Test]
     public function testAsOverrideRefusesAnArrayOfArrays(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidOverrideException::class);
 
         RowSpec::asOverride('payload', [['a' => 1]]);
     }

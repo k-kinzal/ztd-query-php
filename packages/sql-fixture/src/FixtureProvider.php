@@ -6,7 +6,6 @@ namespace SqlFixture;
 
 use Faker\Generator;
 use Faker\Provider\Base;
-use InvalidArgumentException;
 use SqlFixture\Fixture\FixtureSet;
 use SqlFixture\Fixture\PlanGenerator;
 use SqlFixture\Fixture\TableOverrides;
@@ -14,6 +13,7 @@ use SqlFixture\Hydrator\HydrationException;
 use SqlFixture\Hydrator\HydratorInterface;
 use SqlFixture\Plan\FixturePlan;
 use SqlFixture\Platform\PlatformFactory;
+use SqlFixture\Platform\UnsupportedDriverException;
 use SqlFixture\Schema\SchemaParseException;
 use SqlFixture\Schema\SchemaParserInterface;
 use SqlFixture\Schema\StaticSchemaResolver;
@@ -68,7 +68,7 @@ class FixtureProvider extends Base
      *
      * @throws SchemaParseException When the declaration cannot be read
      * @throws InvalidOverrideException When an override names a column the table cannot hold
-     * @throws InvalidArgumentException When the dialect is not one this package supports
+     * @throws UnsupportedDriverException When the dialect is not one this package supports
      * @throws HydrationException When the row cannot be turned into the class named
      */
     public function fixture(
@@ -128,7 +128,7 @@ class FixtureProvider extends Base
      * @return TableSchema The table
      *
      * @throws SchemaParseException When the declaration cannot be read
-     * @throws InvalidArgumentException When the dialect is not one this package supports
+     * @throws UnsupportedDriverException When the dialect is not one this package supports
      */
     public function getSchema(string $createTableSql, ?string $dialect = null): TableSchema
     {

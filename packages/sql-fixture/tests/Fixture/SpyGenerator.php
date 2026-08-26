@@ -29,7 +29,7 @@ final class SpyGenerator extends Generator
     public array $randomFloatCalls = [];
 
     /**
-     * @var list<array{int}>
+     * @var list<array{mixed}> The chance of true, as each call passed it
      */
     public array $booleanCalls = [];
 
@@ -38,6 +38,16 @@ final class SpyGenerator extends Generator
      */
     public array $methodCalls = [];
 
+    /**
+     * Builds a spy carrying the providers a real Faker would carry.
+     *
+     * A Faker only answers what one of its providers knows, so a spy with none
+     * would record nothing worth reading.
+     *
+     * @param string $locale Locale to take providers from, falling back to the base ones
+     *
+     * @return self The spy
+     */
     public static function create(string $locale = 'en_US'): self
     {
         $spy = new self();
@@ -57,6 +67,9 @@ final class SpyGenerator extends Generator
         return $spy;
     }
 
+    /**
+     * Forgets everything recorded so far, so one test does not read another's calls.
+     */
     public function reset(): void
     {
         $this->numberBetweenCalls = [];
@@ -74,7 +87,7 @@ final class SpyGenerator extends Generator
     {
         $this->methodCalls[$method][] = $attributes;
         if ($method === 'boolean') {
-            $this->booleanCalls[] = $attributes === [] ? [50] : $attributes;
+            $this->booleanCalls[] = [$attributes[0] ?? 50];
         }
 
         return parent::__call($method, $attributes);

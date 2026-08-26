@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlFixture\Hydrator;
 
 use ReflectionClass;
-use ReflectionException;
 use ReflectionProperty;
 
 /**
@@ -24,9 +23,12 @@ final class PropertyHydration
 {
     /**
      * @param DeclaredTypeCast $cast Reads a value as the type its property declares
+     * @param Instantiability $instantiability Answers why a class cannot be built
      */
-    public function __construct(private readonly DeclaredTypeCast $cast = new DeclaredTypeCast())
-    {
+    public function __construct(
+        private readonly DeclaredTypeCast $cast = new DeclaredTypeCast(),
+        private readonly Instantiability $instantiability = new Instantiability(),
+    ) {
     }
 
     /**
@@ -46,18 +48,21 @@ final class PropertyHydration
      */
     public function hydrate(string $className, array $data): object
     {
-        try {
-            $instance = (new ReflectionClass($className))->newInstanceWithoutConstructor();
+        $reflection = new ReflectionClass($className);
 
-            foreach ($data as $column => $value) {
-                $property = $this->propertyFor($className, $column);
-                if ($property === null) {
-                    continue;
-                }
-                $property->setValue($instance, $this->cast->of($value, $property->getType()));
+        $refusal = $this->instantiability->bypassingConstructor($className);
+        if ($refusal !== null) {
+            throw HydrationException::notInstantiable($className, $refusal);
+        }
+
+        $instance = $reflection->newInstanceWithoutConstructor();
+
+        foreach ($data as $column => $value) {
+            $property = $this->propertyFor($className, $column);
+            if ($property === null) {
+                continue;
             }
-        } catch (ReflectionException $cause) {
-            throw HydrationException::notInstantiable($className, $cause);
+            $property->setValue($instance, $this->cast->of($value, $property->getType()));
         }
 
         return $instance;
@@ -70,15 +75,16 @@ final class PropertyHydration
      * @param string $column Column name as the row spells it
      *
      * @return ReflectionProperty|null The property, or null when the object models no such column
-     *
-     * @throws ReflectionException When the class cannot be read
      */
     public function propertyFor(string $className, string $column): ?ReflectionProperty
     {
-        $reflection = new ReflectionClass($className);
+        $declared = (new ReflectionClass($className))->getProperties();
+
         foreach ([PropertyName::toCamelCase($column), $column] as $name) {
-            if ($reflection->hasProperty($name)) {
-                return new ReflectionProperty($className, $name);
+            foreach ($declared as $property) {
+                if ($property->getName() === $name) {
+                    return $property;
+                }
             }
         }
 

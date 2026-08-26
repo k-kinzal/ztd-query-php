@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Fixture;
 
-use LogicException;
 use OutOfBoundsException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\Fixture\FixtureSet;
+use SqlFixture\Fixture\ReadOnlySetException;
 
 #[CoversClass(FixtureSet::class)]
+#[UsesClass(ReadOnlySetException::class)]
 final class FixtureSetTest extends TestCase
 {
     #[Test]
@@ -189,29 +191,31 @@ final class FixtureSetTest extends TestCase
         self::assertFalse(isset($set['nothing']));
     }
 
+    #[Test]
+    public function testOffsetSetRefusesToChangeWhatWasGenerated(): void
+    {
+        $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
+
+        $this->expectException(ReadOnlySetException::class);
+
+        $set['order'] = [];
+    }
+
+    #[Test]
+    public function testOffsetUnsetRefusesToRemoveWhatWasGenerated(): void
+    {
+        $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
+
+        $this->expectException(ReadOnlySetException::class);
+
+        unset($set['order']);
+    }
+
     public function testOffsetGetReadsATableTheWayGetDoes(): void
     {
         $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
 
         self::assertSame(['id' => 1], $set['order']);
-    }
-
-    public function testOffsetSetRefusesToChangeWhatWasGenerated(): void
-    {
-        $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
-
-        $this->expectException(LogicException::class);
-
-        $set['order'] = [];
-    }
-
-    public function testOffsetUnsetRefusesToRemoveWhatWasGenerated(): void
-    {
-        $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
-
-        $this->expectException(LogicException::class);
-
-        unset($set['order']);
     }
 
     public function testGetIteratorWalksTheTablesInTheOrderThePlanNamesThem(): void
