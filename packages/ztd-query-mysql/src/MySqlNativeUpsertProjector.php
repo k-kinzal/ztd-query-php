@@ -11,6 +11,9 @@ use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
+/**
+ * The my sql native upsert projector.
+ */
 final class MySqlNativeUpsertProjector
 {
     private const INCOMING_ALIAS = '__ztd_incoming';
@@ -24,6 +27,10 @@ final class MySqlNativeUpsertProjector
     /** @var non-empty-list<string> */
     private readonly array $incomingNamespaces;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     */
     public function __construct()
     {
         $this->quoter = new MySqlIdentifierQuoter();

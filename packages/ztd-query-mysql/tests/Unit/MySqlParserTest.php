@@ -132,7 +132,7 @@ final class MySqlParserTest extends TestCase
         self::assertSame('users', $statement->into->dest->table);
     }
 
-    public function testSplitsActualStatementsWithoutSplittingSetExpressions(): void
+    public function testSplitStatementsSplitsActualStatementsWithoutSplittingSetExpressions(): void
     {
         $parser = new MySqlParser();
 

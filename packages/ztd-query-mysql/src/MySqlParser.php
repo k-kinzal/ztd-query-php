@@ -42,12 +42,20 @@ final class MySqlParser
         }
     }
 
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     */
     public function splitStatements(string $sql): array
     {
         return SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->splitStatements();
     }
 
+    /**
+     * Reads single logical statement.
+     *
+     * @param string $sql
+     * @return ?Statement
+     */
     public function parseSingleLogicalStatement(string $sql): ?Statement
     {
         if (count($this->splitStatements($sql)) !== 1) {

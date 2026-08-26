@@ -12,7 +12,7 @@ use ZtdQuery\Rewrite\InsertSelectProjection;
 #[CoversClass(InsertSelectProjection::class)]
 final class InsertSelectProjectionTest extends TestCase
 {
-    public function testDefaultExpressionRepresentsSourceExpressionGeneratedIdentityAndNullWithoutSqlRendering(): void
+    public function testDefaultExpressionValueDefaultExpressionRepresentsSourceExpressionGeneratedIdentityAndNullWithoutSqlRendering(): void
     {
         $source = InsertSelectProjection::source('name', 2);
         $firstSource = InsertSelectProjection::source('id', 0);

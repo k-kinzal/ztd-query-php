@@ -12,7 +12,7 @@ use ZtdQuery\Rewrite\InsertRowProjection;
 #[CoversClass(InsertRowProjection::class)]
 final class InsertRowProjectionTest extends TestCase
 {
-    public function testDefaultExpressionRepresentsProvidedDefaultGeneratedAndNullValuesWithoutSqlRendering(): void
+    public function testDefaultExpressionValueDefaultExpressionRepresentsProvidedDefaultGeneratedAndNullValuesWithoutSqlRendering(): void
     {
         $provided = InsertRowProjection::provided('name', "'Ada'");
         $default = InsertRowProjection::defaultExpression('status', "'active'");

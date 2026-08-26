@@ -21,6 +21,12 @@ final class ReplaceTransformer implements SqlTransformer
     private MySqlParser $parser;
     private InsertTransformer $insertTransformer;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param MySqlParser $parser
+     * @param SelectTransformer $selectTransformer
+     */
     public function __construct(MySqlParser $parser, SelectTransformer $selectTransformer)
     {
         $this->parser = $parser;
@@ -29,6 +35,8 @@ final class ReplaceTransformer implements SqlTransformer
 
     /**
      * {@inheritDoc}
+     *
+     * @throws UnsupportedSqlException
      */
     public function transform(string $sql, array $tables): string
     {
@@ -50,11 +58,18 @@ final class ReplaceTransformer implements SqlTransformer
         }
     }
 
+    /**
+     * Commit rewrite state.
+     *
+     */
     public function commitRewriteState(): void
     {
         $this->insertTransformer->commitRewriteState();
     }
 
+    /**
+     * @throws UnsupportedSqlException
+     */
     private function asInsert(string $sql): string
     {
         $tokens = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->significantTokens();

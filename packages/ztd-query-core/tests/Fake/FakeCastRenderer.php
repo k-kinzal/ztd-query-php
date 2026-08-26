@@ -13,17 +13,36 @@ use ZtdQuery\Schema\ColumnTypeFamily;
  */
 final class FakeCastRenderer implements CastRenderer
 {
+    /**
+     * Writes cast.
+     *
+     * @param string $expression
+     * @param ColumnType $type
+     * @return string
+     */
     public function renderCast(string $expression, ColumnType $type): string
     {
         return sprintf('CAST(%s AS %s)', $expression, $this->mapType($type));
     }
 
+    /**
+     * Writes null cast.
+     *
+     * @param ColumnType $type
+     * @return string
+     */
     public function renderNullCast(ColumnType $type): string
     {
         return sprintf('CAST(NULL AS %s)', $this->mapType($type));
     }
 
-    private function mapType(ColumnType $type): string
+    /**
+     * Map type.
+     *
+     * @param ColumnType $type
+     * @return string
+     */
+    public function mapType(ColumnType $type): string
     {
         return match ($type->family) {
             ColumnTypeFamily::INTEGER => 'INTEGER',

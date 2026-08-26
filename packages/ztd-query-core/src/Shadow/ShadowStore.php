@@ -98,11 +98,21 @@ class ShadowStore
         $this->initializedTables = [];
     }
 
+    /**
+     * Snapshot.
+     *
+     * @return self
+     */
     public function snapshot(): self
     {
         return clone $this;
     }
 
+    /**
+     * Restore.
+     *
+     * @param self $snapshot
+     */
     public function restore(self $snapshot): void
     {
         $this->fixtures = $snapshot->fixtures;

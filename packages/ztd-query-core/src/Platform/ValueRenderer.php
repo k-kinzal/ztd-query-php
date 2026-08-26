@@ -11,5 +11,11 @@ use ZtdQuery\Schema\ColumnType;
  */
 interface ValueRenderer
 {
+    /**
+     * Writes value.
+     *
+     * @param ?ColumnType $type
+     * @return string
+     */
     public function renderValue(mixed $value, ?ColumnType $type = null): string;
 }

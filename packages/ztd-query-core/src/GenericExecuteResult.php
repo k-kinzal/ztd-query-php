@@ -45,9 +45,13 @@ final class GenericExecuteResult implements ExecuteResult
     private bool $resultSet;
 
     /**
+     * Binds a result to everything it will answer from.
+     *
+     * Every way of building one goes through a named constructor, because what a
+     * result is depends on which of them was used.
+     *
      * @param list<Row>|null $bufferedRows
-     */
-    private function __construct(
+     */public function __construct(
         bool $passthrough,
         bool $success,
         QueryKind $kind,

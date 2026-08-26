@@ -19,6 +19,14 @@ final class DropTableMutation implements ShadowMutation
     private string $sourceSql;
     private bool $ifExists;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param string $tableName
+     * @param TableDefinitionRegistry $registry
+     * @param string $sourceSql
+     * @param bool $ifExists
+     */
     public function __construct(
         string $tableName,
         TableDefinitionRegistry $registry,

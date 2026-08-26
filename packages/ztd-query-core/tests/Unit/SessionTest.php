@@ -57,7 +57,7 @@ use ZtdQuery\Shadow\ShadowTransactions;
 #[UsesClass(MissingResultColumnTypeResolver::class)]
 final class SessionTest extends TestCase
 {
-    public function testDisableEnableAndDisable(): void
+    public function testEnableDisableEnableAndDisable(): void
     {
         $shadowStore = new ShadowStore();
         $registry = new TableDefinitionRegistry();
@@ -104,7 +104,7 @@ final class SessionTest extends TestCase
         self::assertNull($session->tableDefinition('missing'));
     }
 
-    public function testParameterBindingCompilerDelegatesCopyTargetsToTheConfiguredPlatformSupport(): void
+    public function testResultColumnTypeResolverParameterBindingCompilerDelegatesCopyTargetsToTheConfiguredPlatformSupport(): void
     {
         $shadowStore = new ShadowStore();
         $registry = new TableDefinitionRegistry();
@@ -156,7 +156,7 @@ final class SessionTest extends TestCase
         );
     }
 
-    public function testBeginTransactionUsesProvidedTransactionManagerForSchemaRollback(): void
+    public function testRollBackTransactionBeginTransactionUsesProvidedTransactionManagerForSchemaRollback(): void
     {
         $shadowStore = new ShadowStore();
         $registry = new TableDefinitionRegistry();

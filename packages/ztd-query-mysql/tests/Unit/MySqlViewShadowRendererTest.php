@@ -18,7 +18,7 @@ use ZtdQuery\Schema\ViewDefinitionSet;
 #[UsesClass(MySqlSelectRelationParser::class)]
 final class MySqlViewShadowRendererTest extends TestCase
 {
-    public function testOrdersViewsAndUnqualifiesShadowedMySqlRelations(): void
+    public function testRenderOrdersViewsAndUnqualifiesShadowedMySqlRelations(): void
     {
         $views = new ViewDefinitionSet();
         $views->register('summary', new ViewDefinition('SELECT count(*) FROM app.`active_users`', ['active_users']));
