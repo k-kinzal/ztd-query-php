@@ -73,7 +73,9 @@ final class MySqlCteShadowComposer
         );
     }
 
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     */
     public function declaredCteNames(string $sql): array
     {
         return $this->parseHeader($sql)['names'];

@@ -209,6 +209,7 @@ final class MySqlCastRendererTest extends CastRendererContractTest
     /**
      * P-CR-4: Determinism.
      */
+    #[Override]
     public function testRenderCastIsDeterministic(): void
     {
         $type = new ColumnType(ColumnTypeFamily::INTEGER, 'INT');

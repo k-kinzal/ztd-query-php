@@ -23,7 +23,9 @@ final class MySqlTransactionStatementParserTest extends TestCase
         self::assertNotNull((new MySqlTransactionStatementParser())->parse($sql));
     }
 
-    /** @return array<string, array{string}> */
+    /**
+     * @return array<string, array{string}>
+     */
     public static function providerMySqlTransactionForms(): array
     {
         return [

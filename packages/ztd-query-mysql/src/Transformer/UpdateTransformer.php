@@ -44,6 +44,8 @@ final class UpdateTransformer implements SqlTransformer
 
     /**
      * {@inheritDoc}
+     *
+     * @throws UnsupportedSqlException
      */
     public function transform(string $sql, array $tables): string
     {
@@ -112,6 +114,8 @@ final class UpdateTransformer implements SqlTransformer
      * @param list<MultiTableMutationTarget> $targets
      * @param list<string> $assignmentValues
      * @return array{sql: string, table: string, tables: array<string, array{alias: string}>}
+     *
+     * @throws RuntimeException
      */
     public function buildProjection(
         UpdateStatement $stmt,

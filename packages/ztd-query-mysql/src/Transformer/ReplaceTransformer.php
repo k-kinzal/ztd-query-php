@@ -29,6 +29,8 @@ final class ReplaceTransformer implements SqlTransformer
 
     /**
      * {@inheritDoc}
+     *
+     * @throws UnsupportedSqlException
      */
     public function transform(string $sql, array $tables): string
     {
@@ -55,6 +57,9 @@ final class ReplaceTransformer implements SqlTransformer
         $this->insertTransformer->commitRewriteState();
     }
 
+    /**
+     * @throws UnsupportedSqlException
+     */
     private function asInsert(string $sql): string
     {
         $tokens = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->significantTokens();

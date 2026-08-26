@@ -57,6 +57,8 @@ final class MySqlQueryGuard
      * Throw when the SQL or statement is not allowed by the guard.
      *
      * @param Statement|string $input Parsed statement or raw SQL.
+     *
+     * @throws RuntimeException
      */
     public function assertAllowed(Statement|string $input): void
     {

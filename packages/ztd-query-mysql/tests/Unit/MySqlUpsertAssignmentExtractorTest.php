@@ -14,7 +14,9 @@ use ZtdQuery\Platform\MySql\MySqlUpsertAssignmentExtractor;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 final class MySqlUpsertAssignmentExtractorTest extends TestCase
 {
-    /** @param array<string, string> $expected */
+    /**
+     * @param array<string, string> $expected
+     */
     #[DataProvider('providerAssignments')]
     public function testExtract(string $sql, array $expected): void
     {

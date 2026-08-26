@@ -9,7 +9,9 @@ use ZtdQuery\Sql\SqlTokenStream;
 
 final class UpdateAssignmentExtractor
 {
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     */
     public function values(string $sql): array
     {
         $setClause = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->topLevelClause(

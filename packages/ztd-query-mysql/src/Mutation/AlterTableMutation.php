@@ -45,6 +45,9 @@ final class AlterTableMutation implements ShadowMutation
 
     /**
      * {@inheritDoc}
+     *
+     * @throws SchemaNotFoundException
+     * @throws RuntimeException
      */
     public function apply(ShadowStore $store, array $rows): void
     {
@@ -131,6 +134,8 @@ final class AlterTableMutation implements ShadowMutation
 
     /**
      * Apply a single ALTER operation to the CREATE statement.
+     *
+     * @throws UnsupportedSqlException
      */
     private function applyOperation(CreateStatement $createStmt, AlterOperation $op, ShadowStore $store, TableDefinition $definition): void
     {
@@ -170,6 +175,9 @@ final class AlterTableMutation implements ShadowMutation
         }
     }
 
+    /**
+     * @throws ColumnAlreadyExistsException
+     */
     private function applyAddColumn(CreateStatement $createStmt, AlterOperation $op, TableDefinition $definition): void
     {
         if (!is_array($createStmt->fields)) {
@@ -192,6 +200,9 @@ final class AlterTableMutation implements ShadowMutation
         }
     }
 
+    /**
+     * @throws ColumnNotFoundException
+     */
     private function applyDropColumn(CreateStatement $createStmt, AlterOperation $op, ShadowStore $store, TableDefinition $definition): void
     {
         $columnName = $this->getColumnName($op);
@@ -219,6 +230,9 @@ final class AlterTableMutation implements ShadowMutation
         $this->removeColumnFromStore($store, $columnName);
     }
 
+    /**
+     * @throws ColumnNotFoundException
+     */
     private function applyModifyColumn(CreateStatement $createStmt, AlterOperation $op, TableDefinition $definition): void
     {
         $columnDef = $this->buildColumnDefinition($op);
@@ -247,6 +261,9 @@ final class AlterTableMutation implements ShadowMutation
         }
     }
 
+    /**
+     * @throws ColumnNotFoundException
+     */
     private function applyChangeColumn(CreateStatement $createStmt, AlterOperation $op, ShadowStore $store, TableDefinition $definition): void
     {
         $oldColumnName = $this->getColumnName($op);
@@ -285,6 +302,9 @@ final class AlterTableMutation implements ShadowMutation
         }
     }
 
+    /**
+     * @throws ColumnNotFoundException
+     */
     private function applyRenameColumn(CreateStatement $createStmt, AlterOperation $op, ShadowStore $store, TableDefinition $definition): void
     {
         $oldColumnName = $this->getColumnName($op);

@@ -27,6 +27,14 @@ final class MySqlLoadDataProjector
         $this->valueRenderer = new MySqlValueRenderer();
     }
 
+    /**
+     * @throws UnknownSchemaException
+     */
+    /**
+     * @throws UnsupportedSqlException
+     *
+     * @throws UnknownSchemaException
+     */
     public function project(string $sql, LoadStatement $statement): string
     {
         $tableName = $statement->table?->table;
@@ -149,6 +157,8 @@ final class MySqlLoadDataProjector
 
     /**
      * @return list<string>
+     *
+     * @throws UnsupportedSqlException
      */
     private function inputTargets(LoadStatement $statement, TableDefinition $definition, string $sql): array
     {
@@ -203,6 +213,9 @@ final class MySqlLoadDataProjector
         return array_values($targets);
     }
 
+    /**
+     * @throws UnsupportedSqlException
+     */
     private function inputTarget(string $sqlPart, string $sql): string
     {
         $stream = SqlTokenStream::tokenize($sqlPart, MySqlLexerProfile::create());
@@ -236,6 +249,8 @@ final class MySqlLoadDataProjector
 
     /**
      * @return array<string, string>
+     *
+     * @throws UnsupportedSqlException
      */
     private function setOperations(LoadStatement $statement, TableDefinition $definition, string $sql): array
     {
@@ -258,6 +273,9 @@ final class MySqlLoadDataProjector
         return $operations;
     }
 
+    /**
+     * @throws UnsupportedSqlException
+     */
     private function ignoreRows(LoadStatement $statement, string $sql): int
     {
         $value = $statement->ignore_number?->expr;
@@ -498,6 +516,8 @@ final class MySqlLoadDataProjector
      * @param list<string> $targets
      * @param array<string, string> $setOperations
      * @param list<array<string, string>> $rows
+     *
+     * @throws UnsupportedSqlException
      */
     private function buildInsertSql(
         LoadStatement $statement,

@@ -24,7 +24,9 @@ final class MySqlUpsertExpressionParserTest extends TestCase
         );
     }
 
-    /** @return iterable<string, array{string, mixed}> */
+    /**
+     * @return iterable<string, array{string, mixed}>
+     */
     public static function providerMySqlExpressionCases(): iterable
     {
         yield 'chained or' => ['1 OR 0 OR 0', true];
@@ -110,7 +112,9 @@ final class MySqlUpsertExpressionParserTest extends TestCase
         self::assertNull((new MySqlUpsertExpressionParser())->parseIfSupported($sql, 'items'));
     }
 
-    /** @return iterable<string, array{string}> */
+    /**
+     * @return iterable<string, array{string}>
+     */
     public static function providerInvalidMySqlExpression(): iterable
     {
         yield 'empty' => [''];

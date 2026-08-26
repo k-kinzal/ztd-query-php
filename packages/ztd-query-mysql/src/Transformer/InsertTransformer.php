@@ -54,6 +54,8 @@ final class InsertTransformer implements SqlTransformer
 
     /**
      * {@inheritDoc}
+     *
+     * @throws UnsupportedSqlException
      */
     public function transform(string $sql, array $tables): string
     {
@@ -125,6 +127,8 @@ final class InsertTransformer implements SqlTransformer
      * @param array<string, string> $columnDefaults
      * @param array<string, IdentityGenerationStrategy> $identityStrategies
      * @param array<int, array<string, mixed>> $existingRows
+     *
+     * @throws RuntimeException
      */
     private function buildInsertSelect(
         InsertStatement $statement,
@@ -195,6 +199,8 @@ final class InsertTransformer implements SqlTransformer
      * @param array<string, string> $columnDefaults
      * @param array<string, IdentityGenerationStrategy> $identityStrategies
      * @param array<int, array<string, mixed>> $existingRows
+     *
+     * @throws RuntimeException
      */
     private function buildInsertRowSelect(
         ArrayObj $valueSet,

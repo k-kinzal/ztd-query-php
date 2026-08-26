@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Tests\Contract\IdentifierQuoterContractTest;
 use ZtdQuery\Platform\IdentifierQuoter;
@@ -25,6 +26,7 @@ final class MySqlIdentifierQuoterTest extends IdentifierQuoterContractTest
     /**
      * P-IQ-1: Non-empty output.
      */
+    #[Override]
     public function testQuoteReturnsNonEmptyString(): void
     {
         $result = (new MySqlIdentifierQuoter())->quote('users');
@@ -63,6 +65,7 @@ final class MySqlIdentifierQuoterTest extends IdentifierQuoterContractTest
     /**
      * P-IQ-4: Determinism.
      */
+    #[Override]
     public function testQuoteIsDeterministic(): void
     {
         $result1 = (new MySqlIdentifierQuoter())->quote('users');
@@ -73,6 +76,7 @@ final class MySqlIdentifierQuoterTest extends IdentifierQuoterContractTest
     /**
      * P-IQ-3: Containment - original name is recoverable.
      */
+    #[Override]
     public function testQuotedIdentifierContainsOriginalName(): void
     {
         $identifier = 'my_table';

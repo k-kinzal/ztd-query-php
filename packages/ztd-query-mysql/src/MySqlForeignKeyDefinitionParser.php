@@ -13,7 +13,9 @@ use ZtdQuery\Sql\SqlTokenStream;
 
 final class MySqlForeignKeyDefinitionParser
 {
-    /** @return array<string, ForeignKeyDefinition> */
+    /**
+     * @return array<string, ForeignKeyDefinition>
+     */
     public function parseCreateTable(
         string $sql,
     ): array {

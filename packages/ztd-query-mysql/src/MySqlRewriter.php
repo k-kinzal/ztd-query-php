@@ -113,7 +113,9 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
         return new MultiRewritePlan($plans);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function splitStatements(string $sql): array
     {
         return $this->parser->splitStatements($sql);
@@ -124,6 +126,14 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
         $this->transformer->commitRewriteState();
     }
 
+    /**
+     * @throws UnknownSchemaException
+     */
+    /**
+     * @throws UnsupportedSqlException
+     *
+     * @throws UnknownSchemaException
+     */
     private function rewriteStatement(Statement $statement, string $sql): RewritePlan
     {
         $kind = $statement instanceof WithStatement
@@ -270,6 +280,8 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
 
     /**
      * Ensure REPLACE has columns available.
+     *
+     * @throws UnsupportedSqlException
      */
     private function ensureReplaceColumns(ReplaceStatement $statement, string $sql): void
     {

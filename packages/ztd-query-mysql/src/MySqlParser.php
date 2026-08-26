@@ -42,7 +42,9 @@ final class MySqlParser
         }
     }
 
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     */
     public function splitStatements(string $sql): array
     {
         return SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->splitStatements();

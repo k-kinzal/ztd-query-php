@@ -72,6 +72,9 @@ final class MySqlValueRenderer implements ValueRenderer
         return new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR');
     }
 
+    /**
+     * @throws RuntimeException
+     */
     private function stringValue(mixed $value): string
     {
         if ($value instanceof Stringable) {

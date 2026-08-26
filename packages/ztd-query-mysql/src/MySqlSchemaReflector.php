@@ -70,7 +70,9 @@ final class MySqlSchemaReflector implements SchemaReflector, ViewReflector
         return $result;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function reflectViews(): array
     {
         $stmt = $this->connection->query("SHOW FULL TABLES WHERE Table_type = 'VIEW'");

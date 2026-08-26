@@ -20,7 +20,9 @@ final class DmlWhereClauseExtractorTest extends TestCase
         self::assertSame($expected, (new DmlWhereClauseExtractor())->extract($sql));
     }
 
-    /** @return iterable<string, array{string, string|null}> */
+    /**
+     * @return iterable<string, array{string, string|null}>
+     */
     public static function providerExtract(): iterable
     {
         yield 'searched case' => [
