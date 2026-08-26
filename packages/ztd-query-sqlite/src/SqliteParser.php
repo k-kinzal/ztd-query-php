@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Sqlite;
 
-use ZtdQuery\Sql\SqlTokenStream;
 use ZtdQuery\Sql\SqlTokenKind;
+use ZtdQuery\Sql\SqlTokenStream;
 
 /**
  * Lightweight SQL parser for SQLite.

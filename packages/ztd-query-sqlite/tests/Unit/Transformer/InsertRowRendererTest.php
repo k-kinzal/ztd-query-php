@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Transformer;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Sqlite\Transformer\InsertRowRenderer;
@@ -32,7 +33,7 @@ final class InsertRowRendererTest extends TestCase
 
     public function testRejectsMismatchedSqliteValues(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Insert values count does not match column count.');
 
         (new InsertRowRenderer())->providedExpressions(['id'], []);

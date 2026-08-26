@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Fuzz\Robustness\Target;
 
+use Error;
 use Faker\Generator;
 use Fuzz\Robustness\Invariant\ClassifyDeterministicChecker;
 use Fuzz\Robustness\Invariant\ClassifyNeverThrowsChecker;
@@ -85,7 +86,7 @@ final class RobustnessTarget
         foreach ($this->checkers as $checker) {
             $violation = $checker->check($sql);
             if ($violation !== null) {
-                throw new \Error("Invariant violation: seed=$seed\n$violation");
+                throw new Error("Invariant violation: seed=$seed\n$violation");
             }
         }
 
@@ -106,7 +107,7 @@ final class RobustnessTarget
 
                     $violation = $this->storeChecker->check($sql);
                     if ($violation !== null) {
-                        throw new \Error("Invariant violation: seed=$seed\n$violation");
+                        throw new Error("Invariant violation: seed=$seed\n$violation");
                     }
                 }
             }

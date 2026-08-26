@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Fuzz\Robustness\Target;
 
+use Error;
 use Faker\Generator;
 use Fuzz\Robustness\Invariant\ClassifyDeterministicChecker;
 use Fuzz\Robustness\Invariant\ClassifyNeverThrowsChecker;
@@ -74,7 +75,7 @@ final class RewriteTarget
         foreach ($this->checkers as $checker) {
             $violation = $checker->check($sql);
             if ($violation !== null) {
-                throw new \Error("Invariant violation: seed=$seed\n$violation");
+                throw new Error("Invariant violation: seed=$seed\n$violation");
             }
         }
 
@@ -82,7 +83,7 @@ final class RewriteTarget
         $statements = $this->rewriter->splitStatements($batch);
         $plans = $this->rewriter->rewriteMultiple($batch);
         if (count($statements) !== 2 || $plans->count() !== 2) {
-            throw new \Error("Invariant violation: seed=$seed\nMulti-statement DML batch was not split into two plans: $batch");
+            throw new Error("Invariant violation: seed=$seed\nMulti-statement DML batch was not split into two plans: $batch");
         }
     }
 

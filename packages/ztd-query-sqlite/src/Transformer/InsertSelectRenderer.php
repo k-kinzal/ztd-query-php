@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Sqlite\Transformer;
 
+use InvalidArgumentException;
 use ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter;
 use ZtdQuery\Rewrite\InsertSelectProjectionPlanner;
 
@@ -59,7 +60,7 @@ final class InsertSelectRenderer
     public function renderGeneratedIdentity(int $start): string
     {
         if ($start < 1) {
-            throw new \InvalidArgumentException('Generated identity start must be positive.');
+            throw new InvalidArgumentException('Generated identity start must be positive.');
         }
 
         return $start . ' + ROW_NUMBER() OVER () - 1';
