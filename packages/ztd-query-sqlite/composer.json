@@ -55,7 +55,7 @@
         "test": "paratest --processes=auto",
         "lint": [
             "@format:check",
-            "phpstan analyse --memory-limit=512M"
+            "@phpstan"
         ],
         "format": "php-cs-fixer fix --allow-risky=yes",
         "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
@@ -69,7 +69,8 @@
         "fuzz:robustness:rewrite": "php-fuzzer fuzz fuzz/fuzz_robustness_rewrite.php fuzz/corpus/robustness-rewrite/",
         "infection": "infection --threads=max --show-mutations --no-progress",
         "test:unit": "@php -d memory_limit=512M vendor/bin/phpunit tests/Unit/",
-        "test:fuzz": "phpunit fuzz/"
+        "test:fuzz": "phpunit fuzz/",
+        "phpstan": "phpstan analyse src fuzz tests --memory-limit=512M"
     },
     "config": {
         "allow-plugins": {
