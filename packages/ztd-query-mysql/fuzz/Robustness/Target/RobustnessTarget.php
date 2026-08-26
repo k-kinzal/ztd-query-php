@@ -164,7 +164,9 @@ final class RobustnessTarget
     }
 
     /**
-     * @return array<string, array<int, array<string, mixed>>>
+     * Answers the rows every run starts from.
+     *
+     * @return array<string, list<array<string, bool|float|int|string|null>>> Table name => the rows it starts with
      */
     public function buildFixtureData(): array
     {

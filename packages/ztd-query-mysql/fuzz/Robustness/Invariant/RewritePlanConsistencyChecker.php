@@ -93,7 +93,7 @@ final class RewritePlanConsistencyChecker implements InvariantChecker
                         'multi-table mutation target is missing from the result projection',
                         $sql,
                         [
-                            'target_index' => $targetIndex,
+                            'target_index' => (string) $targetIndex,
                             'rewrite_sql' => $plan->sql(),
                         ],
                     );
