@@ -34,6 +34,12 @@ final class RewriteTarget
     /** @var array<int, InvariantChecker> */
     private array $checkers;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param Generator $faker
+     * @param MySqlProvider $provider
+     */
     public function __construct(Generator $faker, MySqlProvider $provider)
     {
         $this->faker = $faker;

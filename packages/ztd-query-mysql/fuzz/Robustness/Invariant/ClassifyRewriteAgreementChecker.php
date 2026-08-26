@@ -17,12 +17,24 @@ final class ClassifyRewriteAgreementChecker implements InvariantChecker
     private MySqlQueryGuard $guard;
     private SqlRewriter $rewriter;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param MySqlQueryGuard $guard
+     * @param SqlRewriter $rewriter
+     */
     public function __construct(MySqlQueryGuard $guard, SqlRewriter $rewriter)
     {
         $this->guard = $guard;
         $this->rewriter = $rewriter;
     }
 
+    /**
+     * Check.
+     *
+     * @param string $sql
+     * @return ?InvariantViolation
+     */
     public function check(string $sql): ?InvariantViolation
     {
         $diagnostic = MySqlReadOnlyDiagnosticStatement::isSafe($sql);

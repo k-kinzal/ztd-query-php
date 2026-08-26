@@ -9,6 +9,11 @@ use ZtdQuery\Schema\ColumnType;
 
 final class MySqlPdoResultColumnTypeResolver implements ResultColumnTypeResolver
 {
+    /**
+     * Answers.
+     *
+     * @return ColumnType
+     */
     public function resolve(array $metadata): ColumnType
     {
         $nativeType = $metadata['native_type'] ?? '';

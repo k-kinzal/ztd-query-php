@@ -9,6 +9,12 @@ use ZtdQuery\Sql\SqlTokenStream;
 
 final class MySqlViewDefinitionParser
 {
+    /**
+     * Builds query.
+     *
+     * @param string $query
+     * @return ViewDefinition
+     */
     public function fromQuery(string $query): ViewDefinition
     {
         $query = rtrim(trim($query), ';');
@@ -16,6 +22,12 @@ final class MySqlViewDefinitionParser
         return new ViewDefinition($query, (new MySqlSelectRelationParser())->tableNames($query));
     }
 
+    /**
+     * Builds create statement.
+     *
+     * @param string $sql
+     * @return ?ViewDefinition
+     */
     public function fromCreateStatement(string $sql): ?ViewDefinition
     {
         foreach (SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->significantTokens() as $token) {

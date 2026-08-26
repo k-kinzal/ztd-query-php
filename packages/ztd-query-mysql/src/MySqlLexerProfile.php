@@ -9,6 +9,12 @@ use ZtdQuery\Sql\SqlLexerProfile;
 
 final class MySqlLexerProfile
 {
+    /**
+     * Builds.
+     *
+     * @param ?bool $ansiQuotes
+     * @return SqlLexerProfile
+     */
     public static function create(?bool $ansiQuotes = null): SqlLexerProfile
     {
         $ansiQuotes ??= Context::hasMode(Context::SQL_MODE_ANSI_QUOTES);

@@ -50,6 +50,12 @@ final class MySqlParser
         return SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->splitStatements();
     }
 
+    /**
+     * Reads single logical statement.
+     *
+     * @param string $sql
+     * @return ?Statement
+     */
     public function parseSingleLogicalStatement(string $sql): ?Statement
     {
         if (count($this->splitStatements($sql)) !== 1) {

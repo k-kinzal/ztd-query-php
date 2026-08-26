@@ -33,6 +33,12 @@ final class UpdateTransformer implements SqlTransformer
     private SelectTransformer $selectTransformer;
     private MySqlCteShadowComposer $cteComposer;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param MySqlParser $parser
+     * @param SelectTransformer $selectTransformer
+     */
     public function __construct(
         MySqlParser $parser,
         SelectTransformer $selectTransformer,

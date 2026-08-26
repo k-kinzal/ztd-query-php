@@ -9,6 +9,11 @@ use ZtdQuery\Schema\ColumnType;
 
 final class MySqlMysqliResultColumnTypeResolver implements ResultColumnTypeResolver
 {
+    /**
+     * Answers.
+     *
+     * @return ColumnType
+     */
     public function resolve(array $metadata): ColumnType
     {
         $type = $metadata['type'] ?? null;

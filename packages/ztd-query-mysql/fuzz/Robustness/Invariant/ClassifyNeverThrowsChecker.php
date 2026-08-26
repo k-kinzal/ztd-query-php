@@ -11,11 +11,22 @@ final class ClassifyNeverThrowsChecker implements InvariantChecker
 {
     private MySqlQueryGuard $guard;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param MySqlQueryGuard $guard
+     */
     public function __construct(MySqlQueryGuard $guard)
     {
         $this->guard = $guard;
     }
 
+    /**
+     * Check.
+     *
+     * @param string $sql
+     * @return ?InvariantViolation
+     */
     public function check(string $sql): ?InvariantViolation
     {
         try {

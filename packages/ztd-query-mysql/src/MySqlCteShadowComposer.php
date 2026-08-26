@@ -13,6 +13,10 @@ final class MySqlCteShadowComposer
 {
     private readonly SqlLexerProfile $lexerProfile;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     */
     public function __construct()
     {
         $this->lexerProfile = MySqlLexerProfile::create();
@@ -81,6 +85,13 @@ final class MySqlCteShadowComposer
         return $this->parseHeader($sql)['names'];
     }
 
+    /**
+     * Carry prefix.
+     *
+     * @param string $originalSql
+     * @param string $rewrittenStatement
+     * @return string
+     */
     public function carryPrefix(string $originalSql, string $rewrittenStatement): string
     {
         $header = $this->parseHeader($originalSql);
@@ -144,6 +155,12 @@ final class MySqlCteShadowComposer
         return $prefix . "\n" . $rewrittenStatement;
     }
 
+    /**
+     * Statement sql.
+     *
+     * @param string $sql
+     * @return string
+     */
     public function statementSql(string $sql): string
     {
         $offset = $this->parseHeader($sql)['statementOffset'];

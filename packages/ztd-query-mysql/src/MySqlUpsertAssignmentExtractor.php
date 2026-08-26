@@ -32,6 +32,12 @@ final class MySqlUpsertAssignmentExtractor
         return $assignments;
     }
 
+    /**
+     * Incoming alias.
+     *
+     * @param string $sql
+     * @return ?string
+     */
     public function incomingAlias(string $sql): ?string
     {
         $stream = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create());

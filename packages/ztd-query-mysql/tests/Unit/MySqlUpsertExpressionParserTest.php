@@ -15,6 +15,11 @@ use ZtdQuery\Platform\MySql\MySqlUpsertExpressionParser;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 final class MySqlUpsertExpressionParserTest extends TestCase
 {
+    /**
+     * Test parses my sql expression cases.
+     *
+     * @param string $sql
+     */
     #[DataProvider('providerMySqlExpressionCases')]
     public function testParsesMySqlExpressionCases(string $sql, mixed $expected): void
     {
@@ -53,6 +58,10 @@ final class MySqlUpsertExpressionParserTest extends TestCase
         yield 'escaped string' => ["'it''s'", "it's"];
     }
 
+    /**
+     * Test parses values and existing table references.
+     *
+     */
     public function testParsesValuesAndExistingTableReferences(): void
     {
         $expression = (new MySqlUpsertExpressionParser())->parse(
@@ -63,6 +72,10 @@ final class MySqlUpsertExpressionParserTest extends TestCase
         self::assertSame(11, $expression->evaluate(['quantity' => 5], ['quantity' => 3], 'items'));
     }
 
+    /**
+     * Test parses my sql incoming row alias.
+     *
+     */
     public function testParsesMySqlIncomingRowAlias(): void
     {
         $expression = (new MySqlUpsertExpressionParser())->parse('new_row.quantity + 1', 'items', 'new_row');
@@ -70,6 +83,10 @@ final class MySqlUpsertExpressionParserTest extends TestCase
         self::assertSame(4, $expression->evaluate(['quantity' => 5], ['quantity' => 3], 'items'));
     }
 
+    /**
+     * Test unescapes quoted identifiers and my sql strings.
+     *
+     */
     public function testUnescapesQuotedIdentifiersAndMySqlStrings(): void
     {
         $expression = (new MySqlUpsertExpressionParser())->parse(
@@ -84,6 +101,10 @@ final class MySqlUpsertExpressionParserTest extends TestCase
         );
     }
 
+    /**
+     * Test parses literals predicates and unary operators.
+     *
+     */
     public function testParsesLiteralsPredicatesAndUnaryOperators(): void
     {
         $expression = (new MySqlUpsertExpressionParser())->parse(
@@ -94,11 +115,19 @@ final class MySqlUpsertExpressionParserTest extends TestCase
         self::assertTrue($expression->matches(['score' => 70], ['name' => 'ready'], 'items'));
     }
 
+    /**
+     * Test returns null for unsupported function.
+     *
+     */
     public function testReturnsNullForUnsupportedFunction(): void
     {
         self::assertNull((new MySqlUpsertExpressionParser())->parseIfSupported('COALESCE(score, 0)', 'items'));
     }
 
+    /**
+     * Test rejects postgre sql incoming qualifier.
+     *
+     */
     public function testRejectsPostgreSqlIncomingQualifier(): void
     {
         $this->expectException(UnsupportedSqlException::class);
@@ -106,6 +135,11 @@ final class MySqlUpsertExpressionParserTest extends TestCase
         (new MySqlUpsertExpressionParser())->parse('EXCLUDED.quantity', 'items');
     }
 
+    /**
+     * Test rejects invalid my sql expression.
+     *
+     * @param string $sql
+     */
     #[DataProvider('providerInvalidMySqlExpression')]
     public function testRejectsInvalidMySqlExpression(string $sql): void
     {

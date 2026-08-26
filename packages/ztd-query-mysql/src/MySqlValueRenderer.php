@@ -16,10 +16,21 @@ use ZtdQuery\Schema\ColumnTypeFamily;
  */
 final class MySqlValueRenderer implements ValueRenderer
 {
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param CastRenderer $castRenderer
+     */
     public function __construct(private readonly CastRenderer $castRenderer = new MySqlCastRenderer())
     {
     }
 
+    /**
+     * Writes value.
+     *
+     * @param ?ColumnType $type
+     * @return string
+     */
     public function renderValue(mixed $value, ?ColumnType $type = null): string
     {
         if ($value === null) {

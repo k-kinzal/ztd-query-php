@@ -54,6 +54,15 @@ final class MySqlMutationResolver
     private UpdateTransformer $updateTransformer;
     private DeleteTransformer $deleteTransformer;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param ShadowStore $shadowStore
+     * @param TableDefinitionRegistry $registry
+     * @param SchemaParser $schemaParser
+     * @param UpdateTransformer $updateTransformer
+     * @param DeleteTransformer $deleteTransformer
+     */
     public function __construct(
         ShadowStore $shadowStore,
         TableDefinitionRegistry $registry,

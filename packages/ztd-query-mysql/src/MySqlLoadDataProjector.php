@@ -21,6 +21,11 @@ final class MySqlLoadDataProjector
     private MySqlIdentifierQuoter $quoter;
     private MySqlValueRenderer $valueRenderer;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param TableDefinitionRegistry $registry
+     */
     public function __construct(private readonly TableDefinitionRegistry $registry)
     {
         $this->quoter = new MySqlIdentifierQuoter();

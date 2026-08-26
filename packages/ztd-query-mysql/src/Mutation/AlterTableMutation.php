@@ -31,6 +31,14 @@ final class AlterTableMutation implements ShadowMutation
     private TableDefinitionRegistry $registry;
     private SchemaParser $schemaParser;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param string $tableName
+     * @param AlterStatement $alterStatement
+     * @param TableDefinitionRegistry $registry
+     * @param SchemaParser $schemaParser
+     */
     public function __construct(
         string $tableName,
         AlterStatement $alterStatement,

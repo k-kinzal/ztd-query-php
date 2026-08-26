@@ -13,11 +13,22 @@ final class RewriteExceptionTypeChecker implements InvariantChecker
 {
     private SqlRewriter $rewriter;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param SqlRewriter $rewriter
+     */
     public function __construct(SqlRewriter $rewriter)
     {
         $this->rewriter = $rewriter;
     }
 
+    /**
+     * Check.
+     *
+     * @param string $sql
+     * @return ?InvariantViolation
+     */
     public function check(string $sql): ?InvariantViolation
     {
         try {

@@ -8,6 +8,12 @@ use ZtdQuery\Sql\SqlTokenStream;
 
 final class DmlWhereClauseExtractor
 {
+    /**
+     * Reads.
+     *
+     * @param string $sql
+     * @return ?string
+     */
     public function extract(string $sql): ?string
     {
         return SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->topLevelClause(

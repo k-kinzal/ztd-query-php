@@ -37,6 +37,13 @@ final class InsertTransformer implements SqlTransformer
     private MySqlCteShadowComposer $cteComposer;
     private MySqlNativeUpsertProjector $upsertProjector;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param MySqlParser $parser
+     * @param SelectTransformer $selectTransformer
+     * @param ?CastRenderer $castRenderer
+     */
     public function __construct(
         MySqlParser $parser,
         SelectTransformer $selectTransformer,
@@ -115,6 +122,10 @@ final class InsertTransformer implements SqlTransformer
         );
     }
 
+    /**
+     * Commit rewrite state.
+     *
+     */
     public function commitRewriteState(): void
     {
         $this->identityAllocator->commitProjection();

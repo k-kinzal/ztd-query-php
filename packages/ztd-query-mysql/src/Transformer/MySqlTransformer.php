@@ -31,6 +31,16 @@ final class MySqlTransformer implements SqlTransformer
     private ReplaceTransformer $replaceTransformer;
     private MySqlCteShadowComposer $cteComposer;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param MySqlParser $parser
+     * @param SelectTransformer $selectTransformer
+     * @param InsertTransformer $insertTransformer
+     * @param UpdateTransformer $updateTransformer
+     * @param DeleteTransformer $deleteTransformer
+     * @param ReplaceTransformer $replaceTransformer
+     */
     public function __construct(
         MySqlParser $parser,
         SelectTransformer $selectTransformer,
@@ -102,6 +112,10 @@ final class MySqlTransformer implements SqlTransformer
         throw new UnsupportedSqlException($sql, 'Statement type not supported by transformer');
     }
 
+    /**
+     * Commit rewrite state.
+     *
+     */
     public function commitRewriteState(): void
     {
         $this->insertTransformer->commitRewriteState();

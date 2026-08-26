@@ -31,6 +31,12 @@ use ZtdQuery\Sql\TransactionStatement;
  */
 final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
 {
+    /**
+     * Transaction statement.
+     *
+     * @param string $sql
+     * @return ?TransactionStatement
+     */
     public function transactionStatement(string $sql): ?TransactionStatement
     {
         return (new MySqlTransactionStatementParser())->parse($sql);
@@ -45,6 +51,17 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
     private MySqlCteShadowComposer $cteComposer;
     private ViewDefinitionSet $views;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param MySqlQueryGuard $guard
+     * @param ShadowStore $shadowStore
+     * @param TableDefinitionRegistry $registry
+     * @param MySqlTransformer $transformer
+     * @param MySqlMutationResolver $mutationResolver
+     * @param MySqlParser $parser
+     * @param ?ViewDefinitionSet $views
+     */
     public function __construct(
         MySqlQueryGuard $guard,
         ShadowStore $shadowStore,
@@ -121,6 +138,10 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
         return $this->parser->splitStatements($sql);
     }
 
+    /**
+     * Commit rewrite state.
+     *
+     */
     public function commitRewriteState(): void
     {
         $this->transformer->commitRewriteState();
@@ -481,6 +502,11 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
         return is_string($dest) ? $dest : ($dest->table ?? null);
     }
 
+    /**
+     * Empty result select.
+     *
+     * @return string
+     */
     public function emptyResultSelect(): string
     {
         return 'SELECT 1 WHERE FALSE';

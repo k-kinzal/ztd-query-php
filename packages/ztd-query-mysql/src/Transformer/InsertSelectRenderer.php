@@ -15,6 +15,10 @@ final class InsertSelectRenderer
     private InsertSelectProjectionPlanner $projectionPlanner;
     private MySqlSelectListAliaser $selectListAliaser;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     */
     public function __construct()
     {
         $this->quoter = new MySqlIdentifierQuoter();

@@ -8,10 +8,20 @@ use ZtdQuery\Connection\ConnectionInterface;
 
 final class MySqlSessionSqlModeReflector
 {
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param ConnectionInterface $connection
+     */
     public function __construct(private readonly ConnectionInterface $connection)
     {
     }
 
+    /**
+     * Reflect.
+     *
+     * @return string
+     */
     public function reflect(): string
     {
         $statement = $this->connection->query('SELECT @@SESSION.sql_mode AS ztd_sql_mode');
