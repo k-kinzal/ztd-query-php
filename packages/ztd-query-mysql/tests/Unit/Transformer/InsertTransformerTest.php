@@ -7,6 +7,7 @@ namespace Tests\Unit\Transformer;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\MySql\InsertSelectSourceExtractor;
@@ -19,9 +20,9 @@ use ZtdQuery\Platform\MySql\Transformer\InsertSelectRenderer;
 use ZtdQuery\Platform\MySql\Transformer\InsertTransformer;
 use ZtdQuery\Platform\MySql\Transformer\MySqlSelectListAliaser;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
-use ZtdQuery\Schema\IdentityGenerationStrategy;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
+use ZtdQuery\Schema\IdentityGenerationStrategy;
 
 #[CoversClass(InsertTransformer::class)]
 #[UsesClass(MySqlParser::class)]
@@ -216,7 +217,7 @@ final class InsertTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new InsertTransformer($parser, $selectTransformer);
 
-        $sql = "INSERT INTO archive (id, name) SELECT id, name FROM users WHERE active = 0";
+        $sql = 'INSERT INTO archive (id, name) SELECT id, name FROM users WHERE active = 0';
         $tables = [
             'archive' => [
                 'rows' => [],
@@ -247,7 +248,7 @@ final class InsertTransformerTest extends TestCase
         ];
 
         $result = $transformer->transform($sql, $tables);
-        self::assertStringContainsString("1 AS `id`", $result);
+        self::assertStringContainsString('1 AS `id`', $result);
         self::assertStringContainsString("'Alice' AS `name`", $result);
     }
 
@@ -261,7 +262,7 @@ final class InsertTransformerTest extends TestCase
         $tables = [];
 
         $result = $transformer->transform($sql, $tables);
-        self::assertStringContainsString("1 AS `id`", $result);
+        self::assertStringContainsString('1 AS `id`', $result);
         self::assertStringContainsString("'Alice' AS `name`", $result);
     }
 
@@ -271,7 +272,7 @@ final class InsertTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new InsertTransformer($parser, $selectTransformer);
 
-        $sql = "INSERT INTO t (a, b) VALUES (1, 2)";
+        $sql = 'INSERT INTO t (a, b) VALUES (1, 2)';
         $tables = [];
 
         $result = $transformer->transform($sql, $tables);
@@ -284,7 +285,7 @@ final class InsertTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new InsertTransformer($parser, $selectTransformer);
 
-        $sql = "INSERT INTO t (a) VALUES (1), (2)";
+        $sql = 'INSERT INTO t (a) VALUES (1), (2)';
         $tables = [];
 
         $result = $transformer->transform($sql, $tables);
@@ -297,7 +298,7 @@ final class InsertTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new InsertTransformer($parser, $selectTransformer);
 
-        $sql = "INSERT INTO archive (cnt) SELECT COUNT(*) FROM users WHERE active = 1 GROUP BY dept";
+        $sql = 'INSERT INTO archive (cnt) SELECT COUNT(*) FROM users WHERE active = 1 GROUP BY dept';
         $tables = [
             'archive' => [
                 'rows' => [],
@@ -319,7 +320,7 @@ final class InsertTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new InsertTransformer($parser, $selectTransformer);
 
-        $sql = "INSERT INTO archive (id) SELECT id FROM users ORDER BY id LIMIT 10";
+        $sql = 'INSERT INTO archive (id) SELECT id FROM users ORDER BY id LIMIT 10';
         $tables = [
             'archive' => [
                 'rows' => [],
@@ -342,7 +343,7 @@ final class InsertTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new InsertTransformer($parser, $selectTransformer);
 
-        $sql = "INSERT INTO archive (cnt) SELECT COUNT(*) FROM users GROUP BY dept HAVING COUNT(*) > 1";
+        $sql = 'INSERT INTO archive (cnt) SELECT COUNT(*) FROM users GROUP BY dept HAVING COUNT(*) > 1';
         $tables = [
             'archive' => [
                 'rows' => [],
@@ -364,7 +365,7 @@ final class InsertTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new InsertTransformer($parser, $selectTransformer);
 
-        $sql = "INSERT INTO archive (total) SELECT SUM(amount) AS total FROM orders";
+        $sql = 'INSERT INTO archive (total) SELECT SUM(amount) AS total FROM orders';
         $tables = [
             'archive' => [
                 'rows' => [],
@@ -403,7 +404,7 @@ final class InsertTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new InsertTransformer($parser, $selectTransformer);
 
-        $sql = "INSERT INTO archive (id) SELECT id FROM users ORDER BY id DESC LIMIT 5";
+        $sql = 'INSERT INTO archive (id) SELECT id FROM users ORDER BY id DESC LIMIT 5';
         $tables = [
             'archive' => [
                 'rows' => [],
@@ -425,7 +426,7 @@ final class InsertTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new InsertTransformer($parser, $selectTransformer);
 
-        $sql = "INSERT INTO archive (id, name) SELECT id, name FROM users WHERE active = 0";
+        $sql = 'INSERT INTO archive (id, name) SELECT id, name FROM users WHERE active = 0';
         $tables = [
             'archive' => [
                 'rows' => [],
@@ -463,7 +464,7 @@ final class InsertTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new InsertTransformer($parser, $selectTransformer);
 
-        $sql = "INSERT INTO archive (id, name, email) SELECT id, name FROM users";
+        $sql = 'INSERT INTO archive (id, name, email) SELECT id, name FROM users';
         $tables = [
             'archive' => [
                 'rows' => [],
@@ -472,7 +473,7 @@ final class InsertTransformerTest extends TestCase
             ],
         ];
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
         $transformer->transform($sql, $tables);
     }
 
@@ -502,10 +503,10 @@ final class InsertTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new InsertTransformer($parser, $selectTransformer);
 
-        $sql = "INSERT INTO users (id, name) VALUES (1)";
+        $sql = 'INSERT INTO users (id, name) VALUES (1)';
         $tables = [];
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
         $this->expectExceptionCode(0);
         $transformer->transform($sql, $tables);
     }
@@ -516,7 +517,7 @@ final class InsertTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new InsertTransformer($parser, $selectTransformer);
 
-        $sql = "INSERT INTO archive (id) SELECT id FROM users WHERE id > 10";
+        $sql = 'INSERT INTO archive (id) SELECT id FROM users WHERE id > 10';
         $tables = [
             'archive' => [
                 'rows' => [],
@@ -535,7 +536,7 @@ final class InsertTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new InsertTransformer($parser, $selectTransformer);
 
-        $sql = "INSERT INTO archive (cnt) SELECT COUNT(*) FROM users GROUP BY status";
+        $sql = 'INSERT INTO archive (cnt) SELECT COUNT(*) FROM users GROUP BY status';
         $tables = [
             'archive' => [
                 'rows' => [],
@@ -554,7 +555,7 @@ final class InsertTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new InsertTransformer($parser, $selectTransformer);
 
-        $sql = "INSERT INTO archive (cnt) SELECT COUNT(*) FROM users GROUP BY dept HAVING COUNT(*) > 5";
+        $sql = 'INSERT INTO archive (cnt) SELECT COUNT(*) FROM users GROUP BY dept HAVING COUNT(*) > 5';
         $tables = [
             'archive' => [
                 'rows' => [],
@@ -573,7 +574,7 @@ final class InsertTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new InsertTransformer($parser, $selectTransformer);
 
-        $sql = "INSERT INTO archive (id) SELECT id FROM users LIMIT 7";
+        $sql = 'INSERT INTO archive (id) SELECT id FROM users LIMIT 7';
         $tables = [
             'archive' => [
                 'rows' => [],
@@ -592,7 +593,7 @@ final class InsertTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new InsertTransformer($parser, $selectTransformer);
 
-        $sql = "INSERT INTO archive (id) SELECT id FROM users WHERE id > 0";
+        $sql = 'INSERT INTO archive (id) SELECT id FROM users WHERE id > 0';
         $tables = [
             'archive' => [
                 'rows' => [],
@@ -612,7 +613,7 @@ final class InsertTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new InsertTransformer($parser, $selectTransformer);
 
-        $sql = "INSERT INTO archive (cnt) SELECT COUNT(*) FROM users GROUP BY department";
+        $sql = 'INSERT INTO archive (cnt) SELECT COUNT(*) FROM users GROUP BY department';
         $tables = [
             'archive' => [
                 'rows' => [],
@@ -732,7 +733,7 @@ final class InsertTransformerTest extends TestCase
         ];
 
         $result = $transformer->transform($sql, $tables);
-        self::assertStringContainsString("1 AS `id`", $result);
+        self::assertStringContainsString('1 AS `id`', $result);
         self::assertStringContainsString("'x' AS `name`", $result);
     }
 
@@ -825,7 +826,7 @@ final class InsertTransformerTest extends TestCase
         $tables = [];
 
         $result = $transformer->transform($sql, $tables);
-        self::assertStringContainsString("1 AS `a`", $result);
+        self::assertStringContainsString('1 AS `a`', $result);
         self::assertStringContainsString("'hello' AS `b`", $result);
     }
 

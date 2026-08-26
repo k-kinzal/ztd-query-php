@@ -703,13 +703,13 @@ final class PgSqlSchemaReflectorTest extends TestCase
         $reflector->getCreateStatement('users');
 
         self::assertSame(
-            "SELECT column_name, data_type, character_maximum_length, "
-            . "numeric_precision, numeric_scale, is_nullable, column_default, "
-            . "udt_name, domain_schema, domain_name, is_identity, identity_generation, "
-            . "is_generated, generation_expression "
-            . "FROM information_schema.columns "
+            'SELECT column_name, data_type, character_maximum_length, '
+            . 'numeric_precision, numeric_scale, is_nullable, column_default, '
+            . 'udt_name, domain_schema, domain_name, is_identity, identity_generation, '
+            . 'is_generated, generation_expression '
+            . 'FROM information_schema.columns '
             . "WHERE table_schema = current_schema() AND table_name = 'users' "
-            . "ORDER BY ordinal_position",
+            . 'ORDER BY ordinal_position',
             $queries[0]
         );
     }
@@ -870,15 +870,15 @@ final class PgSqlSchemaReflectorTest extends TestCase
         $reflector->getCreateStatement('my_table');
 
         self::assertSame(
-            "SELECT kcu.column_name "
-            . "FROM information_schema.table_constraints tc "
-            . "JOIN information_schema.key_column_usage kcu "
-            . "  ON tc.constraint_name = kcu.constraint_name "
-            . "  AND tc.table_schema = kcu.table_schema "
-            . "WHERE tc.table_schema = current_schema() "
+            'SELECT kcu.column_name '
+            . 'FROM information_schema.table_constraints tc '
+            . 'JOIN information_schema.key_column_usage kcu '
+            . '  ON tc.constraint_name = kcu.constraint_name '
+            . '  AND tc.table_schema = kcu.table_schema '
+            . 'WHERE tc.table_schema = current_schema() '
             . "  AND tc.table_name = 'my_table' "
             . "  AND tc.constraint_type = 'PRIMARY KEY' "
-            . "ORDER BY kcu.ordinal_position",
+            . 'ORDER BY kcu.ordinal_position',
             $queries[1]
         );
 
@@ -923,9 +923,9 @@ final class PgSqlSchemaReflectorTest extends TestCase
         $reflector->reflectAll();
 
         self::assertSame(
-            "SELECT table_name FROM information_schema.tables "
+            'SELECT table_name FROM information_schema.tables '
             . "WHERE table_schema = current_schema() AND table_type = 'BASE TABLE' "
-            . "ORDER BY table_name",
+            . 'ORDER BY table_name',
             $queries[0]
         );
     }
@@ -1400,7 +1400,7 @@ final class PgSqlSchemaReflectorTest extends TestCase
             "CREATE TABLE \"children\" (\n"
             . "  \"tenant_id\" INTEGER NOT NULL,\n"
             . "  \"parent_id\" INTEGER NOT NULL,\n"
-            . "  CONSTRAINT \"fk_parent\" FOREIGN KEY (\"tenant_id\", \"parent_id\") "
+            . '  CONSTRAINT "fk_parent" FOREIGN KEY ("tenant_id", "parent_id") '
             . "REFERENCES \"parents\" (\"tenant_id\", \"id\") ON UPDATE CASCADE ON DELETE CASCADE\n)",
             $r->getCreateStatement('children'),
         );
@@ -1429,22 +1429,22 @@ final class PgSqlSchemaReflectorTest extends TestCase
         (new PgSqlSchemaReflector($connection))->getCreateStatement("child'ren");
 
         self::assertSame(
-            "SELECT fk.constraint_name, fk.column_name, "
-            . "pk.table_name AS foreign_table_name, pk.column_name AS foreign_column_name, "
-            . "rc.update_rule, rc.delete_rule "
-            . "FROM information_schema.referential_constraints rc "
-            . "JOIN information_schema.key_column_usage fk "
-            . "  ON fk.constraint_catalog = rc.constraint_catalog "
-            . "  AND fk.constraint_schema = rc.constraint_schema "
-            . "  AND fk.constraint_name = rc.constraint_name "
-            . "JOIN information_schema.key_column_usage pk "
-            . "  ON pk.constraint_catalog = rc.unique_constraint_catalog "
-            . "  AND pk.constraint_schema = rc.unique_constraint_schema "
-            . "  AND pk.constraint_name = rc.unique_constraint_name "
-            . "  AND pk.ordinal_position = fk.position_in_unique_constraint "
-            . "WHERE fk.table_schema = current_schema() "
+            'SELECT fk.constraint_name, fk.column_name, '
+            . 'pk.table_name AS foreign_table_name, pk.column_name AS foreign_column_name, '
+            . 'rc.update_rule, rc.delete_rule '
+            . 'FROM information_schema.referential_constraints rc '
+            . 'JOIN information_schema.key_column_usage fk '
+            . '  ON fk.constraint_catalog = rc.constraint_catalog '
+            . '  AND fk.constraint_schema = rc.constraint_schema '
+            . '  AND fk.constraint_name = rc.constraint_name '
+            . 'JOIN information_schema.key_column_usage pk '
+            . '  ON pk.constraint_catalog = rc.unique_constraint_catalog '
+            . '  AND pk.constraint_schema = rc.unique_constraint_schema '
+            . '  AND pk.constraint_name = rc.unique_constraint_name '
+            . '  AND pk.ordinal_position = fk.position_in_unique_constraint '
+            . 'WHERE fk.table_schema = current_schema() '
             . "  AND fk.table_name = 'child''ren' "
-            . "ORDER BY fk.constraint_name, fk.ordinal_position",
+            . 'ORDER BY fk.constraint_name, fk.ordinal_position',
             $queries[3],
         );
     }
@@ -1481,7 +1481,7 @@ final class PgSqlSchemaReflectorTest extends TestCase
         self::assertSame(
             "CREATE TABLE \"children\" (\n"
             . "  \"parent_id\" INTEGER NOT NULL,\n"
-            . "  CONSTRAINT \"fk_parent\" FOREIGN KEY (\"parent_id\") "
+            . '  CONSTRAINT "fk_parent" FOREIGN KEY ("parent_id") '
             . "REFERENCES \"parents\" (\"id\") ON UPDATE CASCADE ON DELETE CASCADE\n)",
             $r->getCreateStatement('children'),
         );

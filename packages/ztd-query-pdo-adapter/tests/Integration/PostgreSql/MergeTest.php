@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Integration\PostgreSql;
 
 use PDO;
+use PDOStatement;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
@@ -50,7 +51,7 @@ final class MergeTest extends TestCase
             ], $afterMixedActions->fetchAll());
 
             self::assertSame(0, $ztdPdo->exec(
-                "MERGE INTO merge_target AS target USING (VALUES (2, TRUE)) AS source(id, skip_row) "
+                'MERGE INTO merge_target AS target USING (VALUES (2, TRUE)) AS source(id, skip_row) '
                 . 'ON target.id = source.id '
                 . 'WHEN MATCHED AND source.skip_row THEN DO NOTHING '
                 . 'WHEN MATCHED THEN DELETE',
@@ -64,7 +65,7 @@ final class MergeTest extends TestCase
                 . 'WHEN MATCHED THEN UPDATE SET name = source.name '
                 . 'WHEN NOT MATCHED THEN INSERT (id, name) VALUES (source.id, source.name)',
             );
-            self::assertInstanceOf(\PDOStatement::class, $prepared);
+            self::assertInstanceOf(PDOStatement::class, $prepared);
             self::assertTrue($prepared->execute([1, 'ignored', true]));
             self::assertSame(1, $prepared->rowCount());
             self::assertTrue($prepared->execute([4, 'prepared', false]));

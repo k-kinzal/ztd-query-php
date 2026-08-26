@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Sqlite;
 
+use PDO;
+use PDOStatement;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
@@ -18,22 +20,22 @@ final class InsertBasicTest extends TestCase
 {
     public function testSingleRowInsert(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [
-            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        $rawPdo = new PDO('sqlite::memory:', null, null, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
-        $rawPdo->exec("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL)");
+        $rawPdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL)');
 
         $ztdPdo = ZtdPdo::fromPdo($rawPdo);
 
         $rawPdo->exec("INSERT INTO users (id, name, age) VALUES (1, 'Alice', 30)");
         $ztdPdo->exec("INSERT INTO users (id, name, age) VALUES (1, 'Alice', 30)");
 
-        $stmt = $rawPdo->query("SELECT * FROM users ORDER BY id");
+        $stmt = $rawPdo->query('SELECT * FROM users ORDER BY id');
         self::assertNotFalse($stmt);
         /** @var list<array<string, mixed>> $rawRows */
         $rawRows = $stmt->fetchAll();
-        $stmt = $ztdPdo->query("SELECT * FROM users ORDER BY id");
+        $stmt = $ztdPdo->query('SELECT * FROM users ORDER BY id');
         self::assertNotFalse($stmt);
         /** @var list<array<string, mixed>> $ztdRows */
         $ztdRows = $stmt->fetchAll();
@@ -43,22 +45,22 @@ final class InsertBasicTest extends TestCase
 
     public function testMultiRowInsert(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [
-            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        $rawPdo = new PDO('sqlite::memory:', null, null, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
-        $rawPdo->exec("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL)");
+        $rawPdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL)');
 
         $ztdPdo = ZtdPdo::fromPdo($rawPdo);
 
         $rawPdo->exec("INSERT INTO users (id, name, age) VALUES (1, 'Alice', 30), (2, 'Bob', 25)");
         $ztdPdo->exec("INSERT INTO users (id, name, age) VALUES (1, 'Alice', 30), (2, 'Bob', 25)");
 
-        $stmt = $rawPdo->query("SELECT * FROM users ORDER BY id");
+        $stmt = $rawPdo->query('SELECT * FROM users ORDER BY id');
         self::assertNotFalse($stmt);
         /** @var list<array<string, mixed>> $rawRows */
         $rawRows = $stmt->fetchAll();
-        $stmt = $ztdPdo->query("SELECT * FROM users ORDER BY id");
+        $stmt = $ztdPdo->query('SELECT * FROM users ORDER BY id');
         self::assertNotFalse($stmt);
         /** @var list<array<string, mixed>> $ztdRows */
         $ztdRows = $stmt->fetchAll();
@@ -68,17 +70,17 @@ final class InsertBasicTest extends TestCase
 
     public function testInsertDoesNotModifyPhysicalDatabase(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [
-            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        $rawPdo = new PDO('sqlite::memory:', null, null, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
-        $rawPdo->exec("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL)");
+        $rawPdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER NOT NULL)');
 
         $ztdPdo = ZtdPdo::fromPdo($rawPdo);
 
         $ztdPdo->exec("INSERT INTO users (id, name, age) VALUES (1, 'Alice', 30)");
 
-        $stmt = $rawPdo->query("SELECT * FROM users");
+        $stmt = $rawPdo->query('SELECT * FROM users');
         self::assertNotFalse($stmt);
         /** @var list<array<string, mixed>> $rawRows */
         $rawRows = $stmt->fetchAll();
@@ -87,9 +89,9 @@ final class InsertBasicTest extends TestCase
 
     public function testOmittedColumnsAndDefaultValuesMatchSqlite(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [
-            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        $rawPdo = new PDO('sqlite::memory:', null, null, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
         $rawPdo->exec("CREATE TABLE settings (id INTEGER DEFAULT 7, status TEXT DEFAULT 'active', note TEXT)");
         $ztdPdo = ZtdPdo::fromPdo($rawPdo);
@@ -108,9 +110,9 @@ final class InsertBasicTest extends TestCase
 
     public function testOmittedIntegerPrimaryKeyUsesShadowIdentity(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [
-            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        $rawPdo = new PDO('sqlite::memory:', null, null, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
         $rawPdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
         $ztdPdo = ZtdPdo::fromPdo($rawPdo);
@@ -127,9 +129,9 @@ final class InsertBasicTest extends TestCase
 
     public function testInsertSelectPreservesExpressionsDistinctAndWindows(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [
-            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        $rawPdo = new PDO('sqlite::memory:', null, null, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
         $rawPdo->exec('CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT, price REAL, dept TEXT)');
         $rawPdo->exec('CREATE TABLE archive (id INTEGER PRIMARY KEY, name TEXT, doubled REAL, rank_in_dept INTEGER)');
@@ -142,8 +144,8 @@ final class InsertBasicTest extends TestCase
         $ztdPdo->exec('INSERT INTO archive SELECT id, name, price * 2, CAST(ROW_NUMBER() OVER (PARTITION BY dept ORDER BY price DESC) AS INTEGER) FROM products');
         $ztdPdo->exec('INSERT INTO departments (name) SELECT DISTINCT dept FROM products ORDER BY dept');
         $popularInsert = $ztdPdo->prepare('INSERT INTO popular SELECT dept, SUM(price), COUNT(*) FROM products GROUP BY dept HAVING SUM(price) > ?');
-        self::assertInstanceOf(\PDOStatement::class, $popularInsert);
-        $popularInsert->bindValue(1, 15, \PDO::PARAM_INT);
+        self::assertInstanceOf(PDOStatement::class, $popularInsert);
+        $popularInsert->bindValue(1, 15, PDO::PARAM_INT);
         $popularInsert->execute();
         $ztdPdo->exec("INSERT INTO conditional_users SELECT 1, 'alice' WHERE NOT EXISTS (SELECT 1 FROM conditional_users WHERE name = 'alice')");
         $ztdPdo->exec("INSERT INTO conditional_users SELECT 1, 'alice' WHERE NOT EXISTS (SELECT 1 FROM conditional_users WHERE name = 'alice')");

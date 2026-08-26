@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\MySql\Transformer;
 
+use InvalidArgumentException;
+use RuntimeException;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Rewrite\InsertSelectProjectionPlanner;
 
@@ -35,7 +37,7 @@ final class InsertSelectRenderer
     ): string {
         $projectionCount = $this->selectListAliaser->projectionCount($selectSql);
         if ($projectionCount !== null && $projectionCount !== count($insertColumns)) {
-            throw new \RuntimeException('INSERT column count does not match SELECT column count.');
+            throw new RuntimeException('INSERT column count does not match SELECT column count.');
         }
         $selectSql = $this->selectListAliaser->alias($selectSql);
 
@@ -67,7 +69,7 @@ final class InsertSelectRenderer
     public function renderGeneratedIdentity(int $start): string
     {
         if ($start < 1) {
-            throw new \InvalidArgumentException('Generated identity start must be positive.');
+            throw new InvalidArgumentException('Generated identity start must be positive.');
         }
 
         return $start . ' + ROW_NUMBER() OVER () - 1';

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Integration\MySql\Pdo\Insert;
 
 use Tests\Support\MySqlIntegrationTestCase;
+use Throwable;
 
 final class InsertPartitionTest extends MySqlIntegrationTestCase
 {
@@ -14,7 +15,7 @@ final class InsertPartitionTest extends MySqlIntegrationTestCase
 
         $this->rawPdo->exec("CREATE TABLE `{$table}` (id INT PRIMARY KEY, name VARCHAR(255)) PARTITION BY HASH(id) PARTITIONS 4");
 
-        $this->expectException(\Throwable::class);
+        $this->expectException(Throwable::class);
         $this->ztdPdo->exec("INSERT INTO `{$table}` PARTITION (p0) (id, name) VALUES (1, 'Alice')");
     }
 }

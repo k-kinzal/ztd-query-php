@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use PDO;
+use PDOStatement;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -19,7 +20,7 @@ final class PdoParameterBinderTest extends TestCase
     {
         $pdo = new PDO('sqlite::memory:');
         $statement = $pdo->prepare('SELECT typeof(?), typeof(?), typeof(?)');
-        self::assertInstanceOf(\PDOStatement::class, $statement);
+        self::assertInstanceOf(PDOStatement::class, $statement);
 
         self::assertTrue((new PdoParameterBinder())->execute($statement, [1, null, '1']));
         self::assertSame(['integer', 'null', 'text'], $statement->fetch(PDO::FETCH_NUM));
@@ -31,7 +32,7 @@ final class PdoParameterBinderTest extends TestCase
         $statement = $pdo->prepare(
             'SELECT typeof(?), typeof(?), typeof(?), typeof(?), typeof(:name), typeof(:ratio)',
         );
-        self::assertInstanceOf(\PDOStatement::class, $statement);
+        self::assertInstanceOf(PDOStatement::class, $statement);
         $resource = fopen('php://memory', 'r');
         self::assertIsResource($resource);
 

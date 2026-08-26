@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Fuzz\Robustness\Target;
 
+use Error;
 use Faker\Generator;
 use Fuzz\Robustness\Invariant\NoMysqliLeakChecker;
 use Fuzz\Robustness\Invariant\NoSyntaxErrorOnRewriteChecker;
 use Fuzz\Robustness\Invariant\ShadowStoreConsistencyChecker;
 use mysqli;
+use mysqli_result;
 use mysqli_sql_exception;
 use SqlFaker\MySqlProvider;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
@@ -43,7 +45,7 @@ final class ExecutionTarget
             $kind = $guard->classify($sql);
             if ($kind === QueryKind::READ) {
                 $result = $ztdMysqli->query($sql);
-                if ($result instanceof \mysqli_result) {
+                if ($result instanceof mysqli_result) {
                     $result->fetch_all(MYSQLI_ASSOC);
                     $result->free();
                 }
@@ -76,17 +78,17 @@ final class ExecutionTarget
 
         $violation = $this->mysqliLeakChecker->check($sql);
         if ($violation !== null) {
-            throw new \Error("Invariant violation: seed=$seed\n$violation");
+            throw new Error("Invariant violation: seed=$seed\n$violation");
         }
 
         $violation = $this->syntaxChecker->check($sql);
         if ($violation !== null) {
-            throw new \Error("Invariant violation: seed=$seed\n$violation");
+            throw new Error("Invariant violation: seed=$seed\n$violation");
         }
 
         $violation = $this->storeChecker->check($sql);
         if ($violation !== null) {
-            throw new \Error("Invariant violation: seed=$seed\n$violation");
+            throw new Error("Invariant violation: seed=$seed\n$violation");
         }
     }
 

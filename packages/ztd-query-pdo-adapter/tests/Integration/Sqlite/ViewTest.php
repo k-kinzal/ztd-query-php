@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Sqlite;
 
+use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
@@ -16,9 +17,9 @@ final class ViewTest extends TestCase
 {
     public function testViewsReadShadowWritesAcrossFiltersJoinsAggregatesAndPreparation(): void
     {
-        $pdo = new \PDO('sqlite::memory:', null, null, [
-            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        $pdo = new PDO('sqlite::memory:', null, null, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
         $pdo->exec('CREATE TABLE accounts (id INTEGER PRIMARY KEY, region TEXT, amount INTEGER, active INTEGER)');
         $pdo->exec('CREATE TABLE regions (code TEXT PRIMARY KEY, label TEXT)');
@@ -32,12 +33,12 @@ final class ViewTest extends TestCase
 
         $simple = $ztdPdo->query('SELECT id FROM active_accounts ORDER BY id');
         self::assertNotFalse($simple);
-        self::assertSame([1, 3], $simple->fetchAll(\PDO::FETCH_COLUMN));
+        self::assertSame([1, 3], $simple->fetchAll(PDO::FETCH_COLUMN));
 
         $prepared = $ztdPdo->prepare('SELECT id FROM active_accounts WHERE amount >= ? ORDER BY id');
         self::assertNotFalse($prepared);
         self::assertTrue($prepared->execute([150]));
-        self::assertSame([3], $prepared->fetchAll(\PDO::FETCH_COLUMN));
+        self::assertSame([3], $prepared->fetchAll(PDO::FETCH_COLUMN));
 
         $joined = $ztdPdo->query('SELECT id, label FROM account_labels ORDER BY id');
         self::assertNotFalse($joined);

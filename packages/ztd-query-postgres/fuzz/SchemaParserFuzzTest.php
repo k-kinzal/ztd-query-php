@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\PostgreSqlProvider;
+use Throwable;
 use ZtdQuery\Platform\Postgres\PgSqlSchemaParser;
 use ZtdQuery\Schema\TableDefinition;
 
@@ -52,7 +53,7 @@ final class SchemaParserFuzzTest extends TestCase
                 if ($result !== null) {
                     self::assertInstanceOf(TableDefinition::class, $result);
                 }
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 self::fail("parse() crashed on iteration $i with SQL: $sql\nError: " . $e->getMessage());
             }
         }
@@ -112,7 +113,7 @@ final class SchemaParserFuzzTest extends TestCase
                         "typedColumns key '$typedCol' is not in columns on iteration $i with SQL: $sql",
                     );
                 }
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 self::fail("parse() crashed on iteration $i with SQL: $sql\nError: " . $e->getMessage());
             }
         }
@@ -126,7 +127,7 @@ final class SchemaParserFuzzTest extends TestCase
             try {
                 $result = $this->parser->parse($sql);
                 self::assertNull($result, "parse() should return null for SELECT on iteration $i with SQL: $sql");
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 self::fail("parse() crashed on SELECT iteration $i with SQL: $sql\nError: " . $e->getMessage());
             }
         }

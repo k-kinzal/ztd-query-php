@@ -27,5 +27,5 @@ $faker = Factory::create();
 $harness = new MysqliCorrectnessHarness($host, (int) $port, $database, 'root', 'root');
 $target = new ReplaceCorrectnessTarget($harness, $faker);
 
-/** @var \PhpFuzzer\Config $config */
-$config->setTarget(\Closure::fromCallable($target));
+/** @var PhpFuzzer\Config $config */
+$config->setTarget(Closure::fromCallable($target));

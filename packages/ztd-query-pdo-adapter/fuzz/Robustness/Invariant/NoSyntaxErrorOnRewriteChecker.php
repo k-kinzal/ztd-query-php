@@ -6,6 +6,7 @@ namespace Fuzz\Robustness\Invariant;
 
 use PDO;
 use PDOException;
+use Throwable;
 use ZtdQuery\Platform\MySql\MySqlQueryGuard;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\SqlRewriter;
@@ -27,7 +28,7 @@ final class NoSyntaxErrorOnRewriteChecker
     {
         try {
             $kind = $this->guard->classify($sql);
-        } catch (\Throwable) {
+        } catch (Throwable) {
             return null;
         }
 
@@ -37,7 +38,7 @@ final class NoSyntaxErrorOnRewriteChecker
 
         try {
             $plan = $this->rewriter->rewrite($sql);
-        } catch (\Throwable) {
+        } catch (Throwable) {
             return null;
         }
 

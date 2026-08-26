@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Fuzz\Correctness\Target;
 
 use Error;
+use Faker\Generator;
 use Fuzz\Correctness\CorrectnessHarness;
 use Fuzz\Correctness\ResultComparator;
 use Fuzz\Correctness\SchemaAwareSqlBuilder;
 use Fuzz\Correctness\SchemaPool;
-use Faker\Generator;
 use PDO;
 use PDOException;
 use ZtdQuery\Connection\Exception\DatabaseException;
@@ -101,10 +101,10 @@ final class SelectCorrectnessTarget
                     "Seed: $seed\n" .
                     "SQL: $sql\n" .
                     "Schema: {$schema->name}\n" .
-                    "Raw result count: " . count($rawResult) . "\n" .
-                    "ZTD result count: " . count($ztdResult) . "\n" .
-                    "Raw first row: " . json_encode($rawResult[0] ?? null) . "\n" .
-                    "ZTD first row: " . json_encode($ztdResult[0] ?? null)
+                    'Raw result count: ' . count($rawResult) . "\n" .
+                    'ZTD result count: ' . count($ztdResult) . "\n" .
+                    'Raw first row: ' . json_encode($rawResult[0] ?? null) . "\n" .
+                    'ZTD first row: ' . json_encode($ztdResult[0] ?? null)
                 );
             }
         }

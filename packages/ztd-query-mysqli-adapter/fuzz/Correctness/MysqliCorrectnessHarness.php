@@ -7,7 +7,7 @@ namespace Fuzz\Correctness;
 use Faker\Factory;
 use Faker\Generator;
 use mysqli;
-use mysqli_result;
+use RuntimeException;
 use SqlFixture\FixtureProvider;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
 use ZtdQuery\Config\UnknownSchemaBehavior;
@@ -128,7 +128,7 @@ final class MysqliCorrectnessHarness
     public function getZtdMysqli(): ZtdMysqli
     {
         if ($this->ztdMysqli === null) {
-            throw new \RuntimeException('ZtdMysqli not initialized. Call setup() first.');
+            throw new RuntimeException('ZtdMysqli not initialized. Call setup() first.');
         }
         return $this->ztdMysqli;
     }

@@ -6,6 +6,7 @@ namespace Fuzz\Correctness\Sqlite;
 
 use Faker\Generator;
 use Fuzz\Correctness\SchemaDefinition;
+use InvalidArgumentException;
 
 final class SqliteSchemaPool
 {
@@ -89,7 +90,7 @@ final class SqliteSchemaPool
     {
         self::initialize();
         if (!isset(self::$schemas[$name])) {
-            throw new \InvalidArgumentException("Unknown schema: $name");
+            throw new InvalidArgumentException("Unknown schema: $name");
         }
         return self::$schemas[$name];
     }

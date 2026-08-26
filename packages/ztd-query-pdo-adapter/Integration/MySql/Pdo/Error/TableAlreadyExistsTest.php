@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Integration\MySql\Pdo\Error;
 
+use Exception;
 use Tests\Support\MySqlIntegrationTestCase;
-use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 
 /**
  * Tests for CREATE TABLE on existing tables.
@@ -21,7 +21,7 @@ final class TableAlreadyExistsTest extends MySqlIntegrationTestCase
         $table = $this->uniqueTableName('users');
         $this->rawPdo->exec("CREATE TABLE `{$table}` (id INT PRIMARY KEY)");
 
-        $this->expectException(\Exception::class);
+        $this->expectException(Exception::class);
 
         $this->ztdPdo->exec("CREATE TABLE `{$table}` (id INT PRIMARY KEY, name VARCHAR(255))");
     }
@@ -63,7 +63,7 @@ final class TableAlreadyExistsTest extends MySqlIntegrationTestCase
 
         $this->ztdPdo->exec("CREATE TABLE `{$table}` (id INT PRIMARY KEY)");
 
-        $this->expectException(\Exception::class);
+        $this->expectException(Exception::class);
 
         $this->ztdPdo->exec("CREATE TABLE `{$table}` (id INT PRIMARY KEY, name VARCHAR(255))");
     }

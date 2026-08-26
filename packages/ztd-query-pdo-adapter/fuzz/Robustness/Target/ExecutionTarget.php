@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Fuzz\Robustness\Target;
 
+use Error;
 use Faker\Generator;
 use Fuzz\Robustness\Invariant\NoPdoLeakChecker;
 use Fuzz\Robustness\Invariant\NoSyntaxErrorOnRewriteChecker;
@@ -72,17 +73,17 @@ final class ExecutionTarget
 
         $violation = $this->pdoLeakChecker->check($sql);
         if ($violation !== null) {
-            throw new \Error("Invariant violation: seed=$seed\n$violation");
+            throw new Error("Invariant violation: seed=$seed\n$violation");
         }
 
         $violation = $this->syntaxChecker->check($sql);
         if ($violation !== null) {
-            throw new \Error("Invariant violation: seed=$seed\n$violation");
+            throw new Error("Invariant violation: seed=$seed\n$violation");
         }
 
         $violation = $this->storeChecker->check($sql);
         if ($violation !== null) {
-            throw new \Error("Invariant violation: seed=$seed\n$violation");
+            throw new Error("Invariant violation: seed=$seed\n$violation");
         }
     }
 

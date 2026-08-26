@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
+use mysqli_result;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
@@ -32,11 +33,11 @@ final class MysqliFullTextSearchTest extends TestCase
             $result = $ztdMysqli->query(
                 "SELECT id FROM articles WHERE MATCH(title, body) AGAINST ('search terms')",
             );
-            self::assertInstanceOf(\mysqli_result::class, $result);
+            self::assertInstanceOf(mysqli_result::class, $result);
             self::assertSame([['id' => 1]], $result->fetch_all(MYSQLI_ASSOC));
 
             $physical = $rawMysqli->query('SELECT COUNT(*) AS aggregate FROM articles');
-            self::assertInstanceOf(\mysqli_result::class, $physical);
+            self::assertInstanceOf(mysqli_result::class, $physical);
             self::assertSame([['aggregate' => '0']], $physical->fetch_all(MYSQLI_ASSOC));
         } finally {
             $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));

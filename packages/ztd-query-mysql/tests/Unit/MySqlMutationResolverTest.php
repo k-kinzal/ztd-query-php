@@ -9,32 +9,32 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Platform\MySql\DmlWhereClauseExtractor;
+use ZtdQuery\Platform\MySql\Mutation\AlterTableMutation;
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlMutationResolver;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlSchemaParser;
 use ZtdQuery\Platform\MySql\MySqlUpsertAssignmentExtractor;
-use ZtdQuery\Platform\MySql\UpdateSourceExtractor;
 use ZtdQuery\Platform\MySql\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
+use ZtdQuery\Platform\MySql\UpdateSourceExtractor;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
-use ZtdQuery\Shadow\Mutation\DeleteMutation;
-use ZtdQuery\Shadow\Mutation\InsertMutation;
-use ZtdQuery\Shadow\Mutation\ReplaceMutation;
-use ZtdQuery\Shadow\Mutation\TruncateMutation;
-use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\Mutation\CreateTableAsSelectMutation;
 use ZtdQuery\Shadow\Mutation\CreateTableLikeMutation;
 use ZtdQuery\Shadow\Mutation\CreateTableMutation;
+use ZtdQuery\Shadow\Mutation\DeleteMutation;
 use ZtdQuery\Shadow\Mutation\DropTableMutation;
+use ZtdQuery\Shadow\Mutation\InsertMutation;
 use ZtdQuery\Shadow\Mutation\MultiDeleteMutation;
 use ZtdQuery\Shadow\Mutation\MultiUpdateMutation;
+use ZtdQuery\Shadow\Mutation\ReplaceMutation;
+use ZtdQuery\Shadow\Mutation\TruncateMutation;
+use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\Mutation\UpsertMutation;
-use ZtdQuery\Platform\MySql\Mutation\AlterTableMutation;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTableState;
 
@@ -335,7 +335,7 @@ final class MySqlMutationResolverTest extends TestCase
         $statements = $parser->parse($sql);
         $mutation = $resolver->resolve($sql, $statements[0], QueryKind::WRITE_SIMULATED);
 
-        self::assertInstanceOf(\ZtdQuery\Shadow\Mutation\MultiUpdateMutation::class, $mutation);
+        self::assertInstanceOf(MultiUpdateMutation::class, $mutation);
         $mutation->apply($shadowStore, [[
             '__ztd_multi_0_value_0' => 1,
             '__ztd_multi_0_value_1' => 'Updated',
@@ -373,11 +373,11 @@ final class MySqlMutationResolverTest extends TestCase
         $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
         $resolver = new MySqlMutationResolver($shadowStore, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
 
-        $sql = "DELETE u, o FROM users u JOIN orders o ON u.id = o.user_id WHERE u.id = 1";
+        $sql = 'DELETE u, o FROM users u JOIN orders o ON u.id = o.user_id WHERE u.id = 1';
         $statements = $parser->parse($sql);
         $mutation = $resolver->resolve($sql, $statements[0], QueryKind::WRITE_SIMULATED);
 
-        self::assertInstanceOf(\ZtdQuery\Shadow\Mutation\MultiDeleteMutation::class, $mutation);
+        self::assertInstanceOf(MultiDeleteMutation::class, $mutation);
         $mutation->apply($shadowStore, [[
             '__ztd_multi_0_value_0' => 1,
             '__ztd_multi_1_value_0' => 9,
@@ -463,7 +463,7 @@ final class MySqlMutationResolverTest extends TestCase
         $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
         $resolver = new MySqlMutationResolver($shadowStore, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
 
-        $sql = "DELETE FROM users WHERE id = 1";
+        $sql = 'DELETE FROM users WHERE id = 1';
         $statements = $parser->parse($sql);
         $mutation = $resolver->resolve($sql, $statements[0], QueryKind::WRITE_SIMULATED);
 
@@ -509,7 +509,7 @@ final class MySqlMutationResolverTest extends TestCase
         $statements = $parser->parse($sql);
         $mutation = $resolver->resolve($sql, $statements[0], QueryKind::DDL_SIMULATED);
 
-        self::assertInstanceOf(\ZtdQuery\Shadow\Mutation\CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(CreateTableMutation::class, $mutation);
         self::assertSame('t', $mutation->tableName());
     }
 
@@ -532,7 +532,7 @@ final class MySqlMutationResolverTest extends TestCase
         $statements = $parser->parse($sql);
         $mutation = $resolver->resolve($sql, $statements[0], QueryKind::DDL_SIMULATED);
 
-        self::assertInstanceOf(\ZtdQuery\Shadow\Mutation\DropTableMutation::class, $mutation);
+        self::assertInstanceOf(DropTableMutation::class, $mutation);
         self::assertSame('users', $mutation->tableName());
     }
 
@@ -555,7 +555,7 @@ final class MySqlMutationResolverTest extends TestCase
         $statements = $parser->parse($sql);
         $mutation = $resolver->resolve($sql, $statements[0], QueryKind::DDL_SIMULATED);
 
-        self::assertInstanceOf(\ZtdQuery\Platform\MySql\Mutation\AlterTableMutation::class, $mutation);
+        self::assertInstanceOf(AlterTableMutation::class, $mutation);
         self::assertSame('t', $mutation->tableName());
     }
 
@@ -578,7 +578,7 @@ final class MySqlMutationResolverTest extends TestCase
         $statements = $parser->parse($sql);
         $mutation = $resolver->resolve($sql, $statements[0], QueryKind::DDL_SIMULATED);
 
-        self::assertInstanceOf(\ZtdQuery\Shadow\Mutation\CreateTableLikeMutation::class, $mutation);
+        self::assertInstanceOf(CreateTableLikeMutation::class, $mutation);
         self::assertSame('dest', $mutation->tableName());
     }
 
@@ -598,7 +598,7 @@ final class MySqlMutationResolverTest extends TestCase
         $statements = $parser->parse($sql);
         $mutation = $resolver->resolve($sql, $statements[0], QueryKind::DDL_SIMULATED);
 
-        self::assertInstanceOf(\ZtdQuery\Shadow\Mutation\CreateTableAsSelectMutation::class, $mutation);
+        self::assertInstanceOf(CreateTableAsSelectMutation::class, $mutation);
         self::assertSame('dest', $mutation->tableName());
     }
 
@@ -877,7 +877,7 @@ final class MySqlMutationResolverTest extends TestCase
         $sql = 'DROP TABLE users';
         $statements = $parser->parse($sql);
 
-        $this->expectException(\ZtdQuery\Exception\UnknownSchemaException::class);
+        $this->expectException(UnknownSchemaException::class);
         $resolver->resolve($sql, $statements[0], QueryKind::DDL_SIMULATED);
     }
 
@@ -896,7 +896,7 @@ final class MySqlMutationResolverTest extends TestCase
         $sql = 'CREATE TABLE t LIKE unknown_table';
         $statements = $parser->parse($sql);
 
-        $this->expectException(\ZtdQuery\Exception\UnknownSchemaException::class);
+        $this->expectException(UnknownSchemaException::class);
         $resolver->resolve($sql, $statements[0], QueryKind::DDL_SIMULATED);
     }
 
@@ -961,7 +961,7 @@ final class MySqlMutationResolverTest extends TestCase
         $sql = "UPDATE users SET name = 'Bob' WHERE id = 1";
         $statements = $parser->parse($sql);
 
-        $this->expectException(\ZtdQuery\Exception\UnknownSchemaException::class);
+        $this->expectException(UnknownSchemaException::class);
         $resolver->resolve($sql, $statements[0], QueryKind::WRITE_SIMULATED);
     }
 
@@ -1153,7 +1153,7 @@ final class MySqlMutationResolverTest extends TestCase
         $sql = 'ALTER TABLE unknown_table ADD COLUMN x INT';
         $statements = $parser->parse($sql);
 
-        $this->expectException(\ZtdQuery\Exception\UnknownSchemaException::class);
+        $this->expectException(UnknownSchemaException::class);
         $resolver->resolve($sql, $statements[0], QueryKind::DDL_SIMULATED);
     }
 
@@ -1175,7 +1175,7 @@ final class MySqlMutationResolverTest extends TestCase
         $sql = "UPDATE users, orders SET users.name = 'x' WHERE users.id = orders.user_id";
         $statements = $parser->parse($sql);
 
-        $this->expectException(\ZtdQuery\Exception\UnknownSchemaException::class);
+        $this->expectException(UnknownSchemaException::class);
         $resolver->resolve($sql, $statements[0], QueryKind::WRITE_SIMULATED);
     }
 
@@ -1217,7 +1217,7 @@ final class MySqlMutationResolverTest extends TestCase
         $sql = 'DELETE FROM users WHERE id = 1';
         $statements = $parser->parse($sql);
 
-        $this->expectException(\ZtdQuery\Exception\UnknownSchemaException::class);
+        $this->expectException(UnknownSchemaException::class);
         $resolver->resolve($sql, $statements[0], QueryKind::WRITE_SIMULATED);
     }
 
@@ -1289,7 +1289,7 @@ final class MySqlMutationResolverTest extends TestCase
         $sql = 'DELETE users, unknown_tbl FROM users INNER JOIN unknown_tbl ON users.id = unknown_tbl.user_id';
         $statements = $parser->parse($sql);
 
-        $this->expectException(\ZtdQuery\Exception\UnknownSchemaException::class);
+        $this->expectException(UnknownSchemaException::class);
         $resolver->resolve($sql, $statements[0], QueryKind::WRITE_SIMULATED);
     }
 
@@ -1677,7 +1677,7 @@ final class MySqlMutationResolverTest extends TestCase
         $sql = 'DROP TABLE nonexistent';
         $statements = $parser->parse($sql);
 
-        $this->expectException(\ZtdQuery\Exception\UnknownSchemaException::class);
+        $this->expectException(UnknownSchemaException::class);
         $resolver->resolve($sql, $statements[0], QueryKind::DDL_SIMULATED);
     }
 

@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Sqlite;
 
-use ZtdQuery\Exception\UnknownSchemaException;
-use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Exception\ColumnAlreadyExistsException;
 use ZtdQuery\Exception\ColumnNotFoundException;
-use ZtdQuery\Rewrite\QueryKind;
+use ZtdQuery\Exception\UnknownSchemaException;
+use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Platform\Sqlite\Mutation\AlterTableMutation;
+use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Schema\ForeignKeyDefinition;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
@@ -328,7 +328,7 @@ final class SqliteMutationResolver
         $newGeneratedExpressions = self::withoutMapKey($existing->generatedExpressions, $columnName);
         $newForeignKeys = array_filter(
             $existing->foreignKeys,
-            static fn (\ZtdQuery\Schema\ForeignKeyDefinition $foreignKey): bool => !in_array(
+            static fn (ForeignKeyDefinition $foreignKey): bool => !in_array(
                 $columnName,
                 $foreignKey->columns,
                 true,

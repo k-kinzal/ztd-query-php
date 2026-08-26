@@ -9,26 +9,27 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use Tests\Contract\RewriterContractTest;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\SchemaParser;
+use ZtdQuery\Platform\Sqlite\Mutation\AlterTableMutation;
 use ZtdQuery\Platform\Sqlite\SqliteCastRenderer;
 use ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter;
-use ZtdQuery\Platform\Sqlite\SqliteMutationResolver;
 use ZtdQuery\Platform\Sqlite\SqliteLexicalMasker;
+use ZtdQuery\Platform\Sqlite\SqliteMutationResolver;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
 use ZtdQuery\Platform\Sqlite\SqliteQueryGuard;
 use ZtdQuery\Platform\Sqlite\SqliteReturningProjectionParser;
 use ZtdQuery\Platform\Sqlite\SqliteRewriter;
 use ZtdQuery\Platform\Sqlite\SqliteSchemaParser;
 use ZtdQuery\Platform\Sqlite\SqliteViewDefinitionParser;
-use ZtdQuery\Platform\Sqlite\Mutation\AlterTableMutation;
 use ZtdQuery\Platform\Sqlite\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\Sqlite\Transformer\InsertTransformer;
 use ZtdQuery\Platform\Sqlite\Transformer\SelectTransformer;
 use ZtdQuery\Platform\Sqlite\Transformer\SqliteTransformer;
 use ZtdQuery\Platform\Sqlite\Transformer\UpdateTransformer;
 use ZtdQuery\Rewrite\QueryKind;
+use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
-use ZtdQuery\Schema\ViewDefinition;
 use ZtdQuery\Schema\ViewDefinitionSet;
 use ZtdQuery\Shadow\Mutation\CreateTableMutation;
 use ZtdQuery\Shadow\Mutation\DeleteMutation;
@@ -37,8 +38,6 @@ use ZtdQuery\Shadow\Mutation\InsertMutation;
 use ZtdQuery\Shadow\Mutation\ReplaceMutation;
 use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\Mutation\UpsertMutation;
-use ZtdQuery\Platform\SchemaParser;
-use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTableState;
 
@@ -71,7 +70,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteValueRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteNativeUpsertProjector::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteViewDefinitionParser::class)]
+#[UsesClass(SqliteViewDefinitionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteViewShadowRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteGeneratedColumnProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
@@ -799,7 +798,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         $mutationResolver = new SqliteMutationResolver($store, $registry, $schemaParser, $parser);
         $rewriter = new SqliteRewriter($guard, $store, $registry, $transformer, $mutationResolver, $parser);
 
-        $this->expectException(\ZtdQuery\Exception\UnknownSchemaException::class);
+        $this->expectException(UnknownSchemaException::class);
         $rewriter->rewrite('SELECT * FROM nonexistent');
     }
 
@@ -1244,7 +1243,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         $mutationResolver = new SqliteMutationResolver($store, $registry, $schemaParser, $parser);
         $rewriter = new SqliteRewriter($guard, $store, $registry, $transformer, $mutationResolver, $parser);
 
-        $this->expectException(\ZtdQuery\Exception\UnknownSchemaException::class);
+        $this->expectException(UnknownSchemaException::class);
         $rewriter->rewrite('SELECT * FROM nonexistent');
     }
 
@@ -1398,7 +1397,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         $mutationResolver = new SqliteMutationResolver($store, $registry, $schemaParser, $parser);
         $rewriter = new SqliteRewriter($guard, $store, $registry, $transformer, $mutationResolver, $parser);
 
-        $this->expectException(\ZtdQuery\Exception\UnknownSchemaException::class);
+        $this->expectException(UnknownSchemaException::class);
         $rewriter->rewrite('SELECT * FROM nonexistent');
     }
 
@@ -1419,7 +1418,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         $mutationResolver = new SqliteMutationResolver($store, $registry, $schemaParser, $parser);
         $rewriter = new SqliteRewriter($guard, $store, $registry, $transformer, $mutationResolver, $parser);
 
-        $this->expectException(\ZtdQuery\Exception\UnknownSchemaException::class);
+        $this->expectException(UnknownSchemaException::class);
         $rewriter->rewrite('SELECT * FROM nonexistent');
     }
 

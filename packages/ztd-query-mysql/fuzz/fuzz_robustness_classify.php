@@ -10,5 +10,5 @@ $faker = Factory::create();
 $provider = new MySqlProvider($faker, 'mysql-8.0.44');
 $target = new ClassifyTarget($faker, $provider);
 
-/** @var \PhpFuzzer\Config $config */
-$config->setTarget(\Closure::fromCallable($target));
+/** @var PhpFuzzer\Config $config */
+$config->setTarget(Closure::fromCallable($target));

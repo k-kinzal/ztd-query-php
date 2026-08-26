@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\Postgres\Transformer;
 
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\Postgres\PgSqlParser;
 use ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer;
+use ZtdQuery\Platform\Postgres\PgSqlParser;
 use ZtdQuery\Rewrite\SqlTransformer;
 
 /**

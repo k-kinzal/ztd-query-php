@@ -8,12 +8,16 @@ use PDO;
 use PDOStatement;
 use ReflectionClass;
 use RuntimeException;
+use SensitiveParameter;
+use Traversable;
+use TypeError;
+use ValueError;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\Platform\CopySupport;
 use ZtdQuery\Platform\CopyTarget;
-use ZtdQuery\Session;
 use ZtdQuery\Platform\SessionFactory;
+use ZtdQuery\Session;
 
 /**
  * PDO proxy that enforces ZTD behavior for reads and writes.
@@ -287,7 +291,7 @@ class ZtdPdo extends PDO
     public static function connect(
         string $dsn,
         ?string $username = null,
-        #[\SensitiveParameter] ?string $password = null,
+        #[SensitiveParameter] ?string $password = null,
         ?array $options = null
     ): static {
         return static::fromPdo(PDO::connect($dsn, $username, $password, $options));
@@ -423,10 +427,10 @@ class ZtdPdo extends PDO
         return $this->copyToArrayThroughZtd($tableName, $separator, $nullAs, $fields);
     }
 
-    /** @param array<mixed>|\Traversable<mixed> $rows */
+    /** @param array<mixed>|Traversable<mixed> $rows */
     public function pgsqlCopyFromArray(
         mixed $tableName,
-        array|\Traversable $rows,
+        array|Traversable $rows,
         mixed $separator = "\t",
         mixed $nullAs = '\\N',
         mixed $fields = null,
@@ -440,10 +444,10 @@ class ZtdPdo extends PDO
         );
     }
 
-    /** @param array<mixed>|\Traversable<mixed> $rows */
+    /** @param array<mixed>|Traversable<mixed> $rows */
     public function copyFromArray(
         string $tableName,
-        array|\Traversable $rows,
+        array|Traversable $rows,
         string $separator = "\t",
         string $nullAs = '\\N',
         ?string $fields = null,
@@ -527,10 +531,10 @@ class ZtdPdo extends PDO
         return $rows;
     }
 
-    /** @param array<mixed>|\Traversable<mixed> $rows */
+    /** @param array<mixed>|Traversable<mixed> $rows */
     private function copyFromArrayThroughZtd(
         string $tableName,
-        array|\Traversable $rows,
+        array|Traversable $rows,
         string $separator,
         string $nullAs,
         ?string $fields,
@@ -539,11 +543,11 @@ class ZtdPdo extends PDO
         $decodedRows = [];
         foreach ($rows as $row) {
             if (!is_string($row)) {
-                throw new \TypeError(sprintf('PostgreSQL COPY rows must be strings, %s given.', get_debug_type($row)));
+                throw new TypeError(sprintf('PostgreSQL COPY rows must be strings, %s given.', get_debug_type($row)));
             }
             $decodedRow = $copy->decodeRow($row, $separator, $nullAs);
             if (count($decodedRow) !== count($target->columns)) {
-                throw new \ValueError(sprintf(
+                throw new ValueError(sprintf(
                     'PostgreSQL COPY row has %d fields, but %d fields are required.',
                     count($decodedRow),
                     count($target->columns),
@@ -635,7 +639,7 @@ class ZtdPdo extends PDO
     private function copyStringArgument(mixed $value, string $name): string
     {
         if (!is_string($value)) {
-            throw new \TypeError(sprintf('PostgreSQL COPY argument $%s must be a string, %s given.', $name, get_debug_type($value)));
+            throw new TypeError(sprintf('PostgreSQL COPY argument $%s must be a string, %s given.', $name, get_debug_type($value)));
         }
 
         return $value;

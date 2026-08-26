@@ -32,11 +32,11 @@ final class SelectRecursiveCteTest extends TestCase
 
             $ztdPdo->exec("INSERT INTO {$table} (id, parent_id, name) VALUES (1, NULL, 'Root'), (2, 1, 'Child1'), (3, 1, 'Child2'), (4, 2, 'Grandchild1')");
 
-            $sql = "WITH RECURSIVE tree AS ("
+            $sql = 'WITH RECURSIVE tree AS ('
                 . "SELECT id, parent_id, name, 0 AS depth FROM {$table} WHERE parent_id IS NULL "
-                . "UNION ALL "
+                . 'UNION ALL '
                 . "SELECT c.id, c.parent_id, c.name, t.depth + 1 FROM {$table} c INNER JOIN tree t ON c.parent_id = t.id"
-                . ") SELECT * FROM tree ORDER BY id";
+                . ') SELECT * FROM tree ORDER BY id';
 
             $stmt = $rawPdo->query($sql);
             self::assertNotFalse($stmt);

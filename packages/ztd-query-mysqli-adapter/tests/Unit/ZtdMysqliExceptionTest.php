@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use Exception;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -29,7 +30,7 @@ final class ZtdMysqliExceptionTest extends TestCase
 
     public function testPreviousException(): void
     {
-        $previous = new \Exception('original');
+        $previous = new Exception('original');
         $exception = new ZtdMysqliException('wrapped', 0, $previous);
 
         self::assertSame($previous, $exception->getPrevious());
