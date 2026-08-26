@@ -20,7 +20,7 @@ use SqlFixture\Schema\TableSchema;
 final class StaticSchemaResolverTest extends TestCase
 {
     #[Test]
-    public function resolvesARegisteredSchema(): void
+    public function testResolvesARegisteredSchema(): void
     {
         $schema = new TableSchema('order', ['id' => new ColumnDefinition('id', 'INT')]);
 
@@ -38,7 +38,7 @@ final class StaticSchemaResolverTest extends TestCase
     }
 
     #[Test]
-    public function registerAddsAfterConstruction(): void
+    public function testRegisterAddsAfterConstruction(): void
     {
         $resolver = new StaticSchemaResolver();
         $resolver->register(new TableSchema('order', ['id' => new ColumnDefinition('id', 'INT')]));
@@ -60,13 +60,13 @@ final class StaticSchemaResolverTest extends TestCase
     }
 
     #[Test]
-    public function hasReportsAnUnknownTable(): void
+    public function testHasReportsAnUnknownTable(): void
     {
         self::assertFalse((new StaticSchemaResolver())->has('order'));
     }
 
     #[Test]
-    public function tableNamesAreLowerCased(): void
+    public function testTableNamesAreLowerCased(): void
     {
         $resolver = new StaticSchemaResolver([
             new TableSchema('Order', ['id' => new ColumnDefinition('id', 'INT')]),
@@ -86,5 +86,19 @@ final class StaticSchemaResolverTest extends TestCase
         $this->expectExceptionMessage('Known tables: customer');
 
         $resolver->resolve('order');
+    }
+
+    #[Test]
+    public function testNormalizeStripsTheQuotesAnIdentifierMayBeWrittenWith(): void
+    {
+        self::assertSame('order', (new StaticSchemaResolver())->normalize('`order`'));
+        self::assertSame('order', (new StaticSchemaResolver())->normalize('"order"'));
+        self::assertSame('order', (new StaticSchemaResolver())->normalize('[order]'));
+    }
+
+    #[Test]
+    public function testNormalizeDropsTheSchemaAndLowercasesWhatIsLeft(): void
+    {
+        self::assertSame('order', (new StaticSchemaResolver())->normalize('MyDb.Order'));
     }
 }

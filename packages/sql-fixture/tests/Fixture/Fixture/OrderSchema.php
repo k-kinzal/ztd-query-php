@@ -12,6 +12,11 @@ use SqlFixture\Schema\TableSchema;
  */
 final class OrderSchema
 {
+    /**
+     * Answers the order table the run-level tests generate against.
+     *
+     * @return TableSchema The table
+     */
     public static function create(): TableSchema
     {
         return new TableSchema('order', [

@@ -20,7 +20,7 @@ use SqlFixture\Schema\TableSchema;
 final class PlanSchemaExceptionTest extends TestCase
 {
     #[Test]
-    public function namesTheLinkTheTableAndWhatItDoesHave(): void
+    public function testUnknownColumnNamesTheLinkTheTableAndWhatItDoesHave(): void
     {
         $schema = new TableSchema('order', [
             'id' => new ColumnDefinition('id', 'INT'),
@@ -36,7 +36,7 @@ final class PlanSchemaExceptionTest extends TestCase
     }
 
     #[Test]
-    public function generatedColumnExplainsWhyItCannotCarryAValue(): void
+    public function testGeneratedColumnExplainsWhyItCannotCarryAValue(): void
     {
         $schema = new TableSchema('order', ['code' => new ColumnDefinition('code', 'VARCHAR', generated: true)]);
 
@@ -51,7 +51,7 @@ final class PlanSchemaExceptionTest extends TestCase
     }
 
     #[Test]
-    public function missingValueNamesBothEnds(): void
+    public function testMissingValueNamesBothEnds(): void
     {
         $message = PlanSchemaException::missingValue('order_id', ColumnRef::of('order', 'id'), 'id')->getMessage();
 

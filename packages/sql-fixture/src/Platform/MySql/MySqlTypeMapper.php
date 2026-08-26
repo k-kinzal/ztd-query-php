@@ -41,13 +41,13 @@ final class MySqlTypeMapper implements TypeMapperInterface
      * @param Generator $faker Source of every choice
      * @param ColumnDefinition $column Column the value is for
      *
-     * @return mixed The value, or null when the server fills the column in itself
+     * @return int|float|string|bool|null The value, or null when the server fills the column in itself
      *
      * @throws LogicException When a chosen SET member is not a string
      * @throws RandomException When a binary column is asked for and the system has no source of randomness
      */
     #[Override]
-    public function generate(Generator $faker, ColumnDefinition $column): mixed
+    public function generate(Generator $faker, ColumnDefinition $column): int|float|string|bool|null
     {
         if ($column->autoIncrement || $column->generated) {
             return null;

@@ -13,7 +13,7 @@ use SqlFixture\Schema\SchemaNotFoundException;
 final class SchemaNotFoundExceptionTest extends TestCase
 {
     #[Test]
-    public function namesTheMissingTable(): void
+    public function testForTableNamesTheMissingTable(): void
     {
         self::assertSame(
             'Schema not found for table: order',

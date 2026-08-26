@@ -33,8 +33,11 @@ final class LexicalProfileSource
             throw new RuntimeException("Lexical profile file not found: {$path}");
         }
 
-        /** @var array<string, mixed> $profile */
-        $profile = require $path;
+        $loaded = require $path;
+        if (!is_array($loaded)) {
+            throw new RuntimeException("Invalid lexical profile file: {$path}");
+        }
+        $profile = array_filter($loaded, static fn (int|string $key): bool => is_string($key), ARRAY_FILTER_USE_KEY);
 
         if (($profile['dialect'] ?? null) !== $dialect || ($profile['version'] ?? null) !== $version) {
             throw new RuntimeException(sprintf(

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Fixture\Hydrator;
 
+/**
+ * An entity whose property is spelled in camelCase where its column is not.
+ */
 class TestEntityViaPropertiesCamel
 {
     /**
