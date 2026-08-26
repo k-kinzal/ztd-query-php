@@ -6,6 +6,13 @@ namespace ZtdQuery\Platform;
 
 use ZtdQuery\Schema\ColumnType;
 
+/**
+ * Reads the type a driver reports for a result column.
+ *
+ * Every driver reports column metadata differently, and what ZTD needs from
+ * it is the same everywhere: which family the column belongs to, so a value
+ * read back can be rendered the way that column would hold it.
+ */
 interface ResultColumnTypeResolver
 {
     /**

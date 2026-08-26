@@ -9,6 +9,12 @@ use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Sql\TransactionStatement;
 
+/**
+ * A rewriter that answers the same plan whatever it is given.
+ *
+ * A test about what the session does with a plan has no interest in how the
+ * plan was arrived at.
+ */
 final class FixedRewriter implements SqlRewriter
 {
     public function transactionStatement(string $sql): ?TransactionStatement

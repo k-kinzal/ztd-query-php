@@ -4,6 +4,12 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Schema;
 
+/**
+ * The views a database has, in an order they can be created in.
+ *
+ * A view may select from another, so recreating them in the shadow means
+ * having the ones a view depends on before it.
+ */
 final class ViewDefinitionSet
 {
     /** @var array<string, ViewDefinition> */
