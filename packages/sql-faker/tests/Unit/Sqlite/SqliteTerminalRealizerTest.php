@@ -227,4 +227,101 @@ final class SqliteTerminalRealizerTest extends TestCase
             true,
         )];
     }
+
+    #[DataProvider('providerOperatorTerminal')]
+    public function testRealizeSyntheticWritesEveryOperatorAsItsOwnPunctuation(
+        SqliteTerminalRealizer $realizer,
+        string $terminal,
+        string $punctuation,
+    ): void {
+        self::assertSame([$punctuation, [$terminal]], $realizer->realizeSynthetic($terminal));
+    }
+
+    /**
+     * @return iterable<string, array{SqliteTerminalRealizer, string, string}>
+     */
+    public static function providerOperatorTerminal(): iterable
+    {
+        $realizer = new SqliteTerminalRealizer(
+            Factory::create(),
+            new LexicalCatalog([
+                'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+                'terminals' => [],
+                'terminal_exclusions' => [],
+                'coverage' => ['units' => [], 'witnessed' => [], 'excluded' => []],
+            ]),
+            new SqliteTokenizer(['SELECT' => 'SELECT']),
+            ['SELECT' => ['SELECT']],
+            'sqlite-3.47.2',
+            true,
+        );
+
+        $operators = [
+            'LP' => '(', 'RP' => ')', 'SEMI' => ';', 'COMMA' => ',', 'DOT' => '.',
+            'EQ' => '=', 'LT' => '<', 'LE' => '<=', 'GT' => '>', 'GE' => '>=', 'NE' => '<>',
+            'PLUS' => '+', 'MINUS' => '-', 'STAR' => '*', 'SLASH' => '/', 'REM' => '%',
+            'BITAND' => '&', 'BITOR' => '|', 'BITNOT' => '~', 'LSHIFT' => '<<', 'RSHIFT' => '>>',
+            'CONCAT' => '||', 'PTR' => '->',
+        ];
+        foreach ($operators as $terminal => $punctuation) {
+            yield $terminal => [$realizer, $terminal, $punctuation];
+        }
+    }
+
+    #[DataProvider('providerSyntheticTerminal')]
+    public function testRealizeSyntheticWritesEveryNamedTerminalAsItsOwnKindOfToken(
+        SqliteTerminalRealizer $realizer,
+        string $terminal,
+        string $token,
+    ): void {
+        self::assertSame([$token], $realizer->realizeSynthetic($terminal)[1]);
+    }
+
+    /**
+     * @return iterable<string, array{SqliteTerminalRealizer, string, string}>
+     */
+    public static function providerSyntheticTerminal(): iterable
+    {
+        $realizer = new SqliteTerminalRealizer(
+            Factory::create(),
+            new LexicalCatalog([
+                'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+                'terminals' => [],
+                'terminal_exclusions' => [],
+                'coverage' => ['units' => [], 'witnessed' => [], 'excluded' => []],
+            ]),
+            new SqliteTokenizer(['SELECT' => 'SELECT']),
+            ['SELECT' => ['SELECT']],
+            'sqlite-3.47.2',
+            true,
+        );
+
+        $terminals = [
+            'ID' => 'ID', 'id' => 'ID', 'idj' => 'ID',
+            'ids' => 'STRING', 'STRING' => 'STRING',
+            'BLOB' => 'BLOB',
+            'number' => 'INTEGER', 'INTEGER' => 'INTEGER',
+            'FLOAT' => 'FLOAT',
+            'QNUMBER' => 'QNUMBER',
+            'VARIABLE' => 'VARIABLE',
+            'ANY' => 'ID',
+        ];
+        foreach ($terminals as $terminal => $token) {
+            yield $terminal => [$realizer, $terminal, $token];
+        }
+    }
+
+    #[DataProvider('providerSyntheticRealizer')]
+    public function testRealizeSyntheticWritesTheOneNumberSqliteWillNotLexBackAsItself(
+        SqliteTerminalRealizer $realizer,
+    ): void {
+        self::assertSame(['1_0', ['QNUMBER']], $realizer->realizeSynthetic('QNUMBER'));
+    }
+
+    #[DataProvider('providerSyntheticRealizer')]
+    public function testRealizeSyntheticWritesTheWildcardAsAnIdentifierNoKeywordCollidesWith(
+        SqliteTerminalRealizer $realizer,
+    ): void {
+        self::assertSame(['_any', ['ID']], $realizer->realizeSynthetic('ANY'));
+    }
 }

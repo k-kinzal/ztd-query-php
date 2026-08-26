@@ -18,7 +18,7 @@ use Tests\Fixture\SpyGenerator;
 final class MySqlTypeMapperTest extends TestCase
 {
     #[Test]
-    public function generateTinyIntBooleanMode(): void
+    public function testGenerateTinyIntBooleanMode(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -2235,7 +2235,7 @@ final class MySqlTypeMapperTest extends TestCase
         $spy = SpyGenerator::create();
         $mapper = new MySqlTypeMapper();
         $mapper->generate($spy, new ColumnDefinition('col', 'TEXT', nullable: false));
-        self::assertSame([2, true], $spy->methodCalls['paragraphs'][0]);
+        self::assertSame([2], $spy->methodCalls['paragraphs'][0]);
     }
 
     #[Test]
@@ -2244,7 +2244,7 @@ final class MySqlTypeMapperTest extends TestCase
         $spy = SpyGenerator::create();
         $mapper = new MySqlTypeMapper();
         $mapper->generate($spy, new ColumnDefinition('col', 'MEDIUMTEXT', nullable: false));
-        self::assertSame([3, true], $spy->methodCalls['paragraphs'][0]);
+        self::assertSame([3], $spy->methodCalls['paragraphs'][0]);
     }
 
     #[Test]
@@ -2253,7 +2253,7 @@ final class MySqlTypeMapperTest extends TestCase
         $spy = SpyGenerator::create();
         $mapper = new MySqlTypeMapper();
         $mapper->generate($spy, new ColumnDefinition('col', 'LONGTEXT', nullable: false));
-        self::assertSame([5, true], $spy->methodCalls['paragraphs'][0]);
+        self::assertSame([5], $spy->methodCalls['paragraphs'][0]);
     }
 
     #[Test]
@@ -2651,11 +2651,11 @@ final class MySqlTypeMapperTest extends TestCase
         $column = new ColumnDefinition('col', 'INT', nullable: true, default: 'MARKER');
 
         $total = 500;
-        $defaultCount = count(array_filter(array_map(function (int $i) use ($faker, $mapper, $column): mixed {
+        $defaultCount = count(array_filter(array_map(function (int $i) use ($faker, $mapper, $column): int|float|string|bool|null {
             $faker->seed($i);
 
             return $mapper->generate($faker, $column);
-        }, range(0, $total - 1)), fn (mixed $value): bool => $value === 'MARKER'));
+        }, range(0, $total - 1)), fn (int|float|string|bool|null $value): bool => $value === 'MARKER'));
         self::assertLessThan((int) ($total * 0.5), $defaultCount, 'Default should be returned rarely (10% chance), not often (90%)');
     }
 

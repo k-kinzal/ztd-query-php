@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Fixture\Hydrator;
 
+/**
+ * An entity with no constructor at all, holding one property per column.
+ */
 class TestEntityViaProperties
 {
     /**

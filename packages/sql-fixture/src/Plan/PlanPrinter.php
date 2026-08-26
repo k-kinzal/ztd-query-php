@@ -13,12 +13,25 @@ namespace SqlFixture\Plan;
  */
 final class PlanPrinter
 {
+    /**
+     * Writes a plan in the syntax it can be read back from.
+     *
+     * Relations sharing a left end and operator fold into one bracketed line, and
+     * tables no relation touches are written on their own, so a plan printed and
+     * read back is the plan that was printed.
+     *
+     * @param FixturePlan $plan Plan to write
+     *
+     * @return string The plan
+     */
     public function print(FixturePlan $plan): string
     {
         $statements = [];
 
         foreach ($this->group($plan->relations) as $group) {
-            $statements[] = $this->printGroup($group);
+            if ($group !== []) {
+                $statements[] = $this->printGroup($group);
+            }
         }
 
         foreach ($this->standaloneTables($plan) as $table) {
@@ -29,14 +42,16 @@ final class PlanPrinter
     }
 
     /**
-     * Tables the plan names without relating them to anything.
+     * Answers the tables a plan names without relating them to anything.
      *
-     * They have to be written out too, or a plan that mentions one would not
-     * read back as itself.
+     * They have to be written out too, or a plan that mentions one would not read
+     * back as itself.
      *
-     * @return list<string>
+     * @param FixturePlan $plan Plan being written
+     *
+     * @return list<string> Tables no relation touches
      */
-    private function standaloneTables(FixturePlan $plan): array
+    public function standaloneTables(FixturePlan $plan): array
     {
         $related = [];
         foreach ($plan->relations as $relation) {
@@ -62,10 +77,13 @@ final class PlanPrinter
     }
 
     /**
-     * @param list<Relation> $relations
-     * @return array<string, list<Relation>>
+     * Gathers the relations that can be written as one line.
+     *
+     * @param list<Relation> $relations Relations to gather
+     *
+     * @return array<string, list<Relation>> Left end and operator => the relations sharing them
      */
-    private function group(array $relations): array
+    public function group(array $relations): array
     {
         $groups = [];
 
@@ -78,15 +96,28 @@ final class PlanPrinter
     }
 
     /**
-     * Relations group when they would print the same left end and operator,
-     * which is exactly when the shorthand can fold them together.
+     * Answers what two relations must share to be written together.
+     *
+     * Relations group when they would print the same left end and operator, which
+     * is exactly when the shorthand can fold them into one line.
+     *
+     * @param Relation $relation Relation to key
+     *
+     * @return string Its left end and operator
      */
-    private function groupKey(Relation $relation): string
+    public function groupKey(Relation $relation): string
     {
         return $relation->left->toString() . ' ' . $this->operator($relation);
     }
 
-    private function operator(Relation $relation): string
+    /**
+     * Writes the operator of a relation, with the optional markers it carries.
+     *
+     * @param Relation $relation Relation to write
+     *
+     * @return string The operator as the plan syntax spells it
+     */
+    public function operator(Relation $relation): string
     {
         return ($relation->leftOptional ? '?' : '')
             . $relation->kind->value
@@ -94,9 +125,13 @@ final class PlanPrinter
     }
 
     /**
-     * @param list<Relation> $group
+     * Writes one line, folding several targets into a bracketed group.
+     *
+     * @param non-empty-list<Relation> $group Relations sharing a left end and operator
+     *
+     * @return string The line they are written as
      */
-    private function printGroup(array $group): string
+    public function printGroup(array $group): string
     {
         $first = $group[0];
         $targets = array_map(

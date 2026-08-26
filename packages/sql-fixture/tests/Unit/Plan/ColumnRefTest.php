@@ -25,7 +25,7 @@ final class ColumnRefTest extends TestCase
     }
 
     #[Test]
-    public function ofBuildsFromVariadicColumns(): void
+    public function testOfBuildsFromVariadicColumns(): void
     {
         $ref = ColumnRef::of('order', 'shop_id', 'no');
 
@@ -33,7 +33,7 @@ final class ColumnRefTest extends TestCase
     }
 
     #[Test]
-    public function aSingleColumnIsNotComposite(): void
+    public function testIsCompositeASingleColumnIsNotComposite(): void
     {
         self::assertFalse(ColumnRef::of('order', 'id')->isComposite());
     }
@@ -45,7 +45,7 @@ final class ColumnRefTest extends TestCase
     }
 
     #[Test]
-    public function printsASingleColumnWithADot(): void
+    public function testToStringPrintsASingleColumnWithADot(): void
     {
         self::assertSame('order.id', ColumnRef::of('order', 'id')->toString());
     }
@@ -63,7 +63,7 @@ final class ColumnRefTest extends TestCase
     }
 
     #[Test]
-    public function equalsComparesTableAndColumns(): void
+    public function testEqualsComparesTableAndColumns(): void
     {
         self::assertTrue(ColumnRef::of('order', 'id')->equals(ColumnRef::of('order', 'id')));
         self::assertFalse(ColumnRef::of('order', 'id')->equals(ColumnRef::of('order', 'no')));
@@ -89,7 +89,7 @@ final class ColumnRefTest extends TestCase
     }
 
     #[Test]
-    public function fromReadsASingleColumnEndpoint(): void
+    public function testFromReadsASingleColumnEndpoint(): void
     {
         $ref = ColumnRef::from('order.id');
 

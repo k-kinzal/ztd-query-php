@@ -12,6 +12,7 @@ use PHPUnit\Framework\TestCase;
 use SqlFixture\FixtureGenerator;
 use SqlFixture\FixtureProvider;
 use SqlFixture\Hydrator\ReflectionHydrator;
+use SqlFixture\Plan\FixturePlan;
 use SqlFixture\Platform\MySql\MySqlSchemaParser;
 use SqlFixture\Platform\MySql\MySqlTypeMapper;
 use SqlFixture\Platform\PlatformFactory;
@@ -36,10 +37,24 @@ use Tests\Fixture\UserDto;
 #[UsesClass(PostgreSqlTypeMapper::class)]
 #[UsesClass(SqliteSchemaParser::class)]
 #[UsesClass(SqliteTypeMapper::class)]
+#[UsesClass(FixturePlan::class)]
+#[UsesClass(\SqlFixture\Fixture\PlanGenerator::class)]
+#[UsesClass(\SqlFixture\Fixture\FixtureSet::class)]
+#[UsesClass(\SqlFixture\Fixture\GenerationRun::class)]
+#[UsesClass(\SqlFixture\Fixture\RowSpec::class)]
+#[UsesClass(\SqlFixture\Fixture\PlanWalk::class)]
+#[UsesClass(\SqlFixture\Fixture\ChildRowCount::class)]
+#[UsesClass(\SqlFixture\Fixture\PlanSchemaValidator::class)]
+#[UsesClass(\SqlFixture\Plan\PlanParser::class)]
+#[UsesClass(\SqlFixture\Plan\Relation::class)]
+#[UsesClass(\SqlFixture\Plan\ColumnRef::class)]
+#[UsesClass(\SqlFixture\Plan\RelationKind::class)]
+#[UsesClass(\SqlFixture\Plan\RelationSide::class)]
+#[UsesClass(\SqlFixture\Plan\GenerationOrder::class)]
 final class FixtureProviderTest extends TestCase
 {
     #[Test]
-    public function fixtureReturnsArray(): void
+    public function testFixtureReturnsArray(): void
     {
         $data = (static function (): FixtureProvider {
             $faker = Factory::create();
@@ -297,7 +312,7 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function getDialectDefaultsToMysql(): void
+    public function testGetDialectDefaultsToMysql(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -662,7 +677,7 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function aRegisteredSchemaBecomesAvailableToFixtures(): void
+    public function testRegisterSchemaARegisteredSchemaBecomesAvailableToFixtures(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -674,7 +689,7 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function generatingAFixtureAlsoMakesItAvailableToFixtures(): void
+    public function testGetSchemaResolverGeneratingAFixtureAlsoMakesItAvailableToFixtures(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -682,5 +697,53 @@ final class FixtureProviderTest extends TestCase
         $provider->fixture('CREATE TABLE orders (id INT AUTO_INCREMENT PRIMARY KEY, status VARCHAR(20) NOT NULL)');
 
         self::assertTrue($provider->getSchemaResolver()->has('orders'));
+    }
+
+    #[Test]
+    public function testFixturesGeneratesTheRowsAPlanDescribes(): void
+    {
+        $provider = new FixtureProvider(Factory::create());
+        $provider->registerSchema('CREATE TABLE `order` (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, status VARCHAR(20) NOT NULL)');
+        $provider->registerSchema('CREATE TABLE order_detail (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, order_id INT UNSIGNED NOT NULL)');
+
+        $set = $provider->fixtures('order.id < order_detail.order_id', ['order_detail' => 2]);
+
+        self::assertCount(1, $set->rows('order'));
+        self::assertCount(2, $set->rows('order_detail'));
+    }
+
+    #[Test]
+    public function testFixturesLinksTheChildRowsToTheParentTheyReference(): void
+    {
+        $provider = new FixtureProvider(Factory::create());
+        $provider->registerSchema('CREATE TABLE `order` (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, status VARCHAR(20) NOT NULL)');
+        $provider->registerSchema('CREATE TABLE order_detail (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, order_id INT UNSIGNED NOT NULL)');
+
+        $set = $provider->fixtures('order.id < order_detail.order_id', ['order_detail' => 2]);
+
+        $orderIds = array_column($set->rows('order'), 'id');
+        $referenced = array_column($set->rows('order_detail'), 'order_id');
+
+        self::assertCount(1, $orderIds);
+        self::assertSame([...$orderIds, ...$orderIds], $referenced);
+    }
+
+    #[Test]
+    public function testFixturesReadsAPlanObjectTheSameWayAsTheSyntaxForOne(): void
+    {
+        $provider = new FixtureProvider(Factory::create());
+        $provider->registerSchema('CREATE TABLE `order` (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, status VARCHAR(20) NOT NULL)');
+
+        $set = $provider->fixtures(FixturePlan::table('order'));
+
+        self::assertCount(1, array_column($set->rows('order'), 'status'));
+    }
+
+    #[Test]
+    public function testGetFixtureGeneratorAnswersTheGeneratorTheRowsAreBuiltWith(): void
+    {
+        $provider = new FixtureProvider(Factory::create());
+
+        self::assertSame($provider->getFixtureGenerator(), $provider->getFixtureGenerator());
     }
 }

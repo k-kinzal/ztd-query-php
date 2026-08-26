@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Platform;
 
-use InvalidArgumentException;
 use PDO;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -20,6 +19,7 @@ use SqlFixture\Platform\PostgreSql\PostgreSqlTypeMapper;
 use SqlFixture\Platform\Sqlite\SqliteSchemaFetcher;
 use SqlFixture\Platform\Sqlite\SqliteSchemaParser;
 use SqlFixture\Platform\Sqlite\SqliteTypeMapper;
+use SqlFixture\Platform\UnsupportedDriverException;
 
 #[CoversClass(PlatformFactory::class)]
 #[UsesClass(SqliteSchemaFetcher::class)]
@@ -28,7 +28,7 @@ use SqlFixture\Platform\Sqlite\SqliteTypeMapper;
 final class PlatformFactoryTest extends TestCase
 {
     #[Test]
-    public function createSchemaParserForMysql(): void
+    public function testCreateSchemaParserForMysql(): void
     {
         $parser = PlatformFactory::createSchemaParser(PlatformFactory::DRIVER_MYSQL);
 
@@ -54,14 +54,14 @@ final class PlatformFactoryTest extends TestCase
     #[Test]
     public function createSchemaParserThrowsForUnsupportedDriver(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(UnsupportedDriverException::class);
         $this->expectExceptionMessage('Unsupported driver: oracle');
 
         PlatformFactory::createSchemaParser('oracle');
     }
 
     #[Test]
-    public function createTypeMapperForMysql(): void
+    public function testCreateTypeMapperForMysql(): void
     {
         $mapper = PlatformFactory::createTypeMapper(PlatformFactory::DRIVER_MYSQL);
 
@@ -87,14 +87,14 @@ final class PlatformFactoryTest extends TestCase
     #[Test]
     public function createTypeMapperThrowsForUnsupportedDriver(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(UnsupportedDriverException::class);
         $this->expectExceptionMessage('Unsupported driver: oracle');
 
         PlatformFactory::createTypeMapper('oracle');
     }
 
     #[Test]
-    public function createSchemaFetcherForMysql(): void
+    public function testCreateSchemaFetcherForMysql(): void
     {
         $fetcher = PlatformFactory::createSchemaFetcher(PlatformFactory::DRIVER_MYSQL);
 
@@ -120,14 +120,14 @@ final class PlatformFactoryTest extends TestCase
     #[Test]
     public function createSchemaFetcherThrowsForUnsupportedDriver(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(UnsupportedDriverException::class);
         $this->expectExceptionMessage('Unsupported driver: oracle');
 
         PlatformFactory::createSchemaFetcher('oracle');
     }
 
     #[Test]
-    public function detectDriverForSqlite(): void
+    public function testDetectDriverForSqlite(): void
     {
         $pdo = new PDO('sqlite::memory:');
 
@@ -137,7 +137,7 @@ final class PlatformFactoryTest extends TestCase
     }
 
     #[Test]
-    public function getSupportedDrivers(): void
+    public function testGetSupportedDrivers(): void
     {
         $drivers = PlatformFactory::getSupportedDrivers();
 

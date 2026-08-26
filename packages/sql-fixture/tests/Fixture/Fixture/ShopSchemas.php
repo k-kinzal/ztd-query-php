@@ -10,6 +10,7 @@ use SqlFixture\Fixture\PlanGenerator;
 use SqlFixture\FixtureGenerator;
 use SqlFixture\Plan\FixturePlan;
 use SqlFixture\Platform\MySql\MySqlSchemaParser;
+use SqlFixture\Schema\SchemaParseException;
 use SqlFixture\Schema\StaticSchemaResolver;
 
 /**
@@ -18,6 +19,13 @@ use SqlFixture\Schema\StaticSchemaResolver;
  */
 final class ShopSchemas
 {
+    /**
+     * Answers a plan generator drawing from a fixed seed.
+     *
+     * @param int $seed Seed both the plan generator and its rows draw from
+     *
+     * @return PlanGenerator A generator that produces the same rows for the same seed
+     */
     public static function generator(int $seed = 20260101): PlanGenerator
     {
         return new PlanGenerator(self::resolver(), new FixtureGenerator(self::faker($seed)), self::faker($seed));
@@ -56,6 +64,13 @@ final class ShopSchemas
         return $counts;
     }
 
+    /**
+     * Answers a Faker drawing from a fixed seed.
+     *
+     * @param int $seed Seed to draw from
+     *
+     * @return Generator A Faker that answers the same way for the same seed
+     */
     public static function faker(int $seed = 20260101): Generator
     {
         $faker = Factory::create();
@@ -64,6 +79,13 @@ final class ShopSchemas
         return $faker;
     }
 
+    /**
+     * Answers a resolver holding every table of the shop.
+     *
+     * @return StaticSchemaResolver A resolver that knows the shop tables
+     *
+     * @throws SchemaParseException When one of the declarations cannot be read
+     */
     public static function resolver(): StaticSchemaResolver
     {
         $parser = new MySqlSchemaParser();

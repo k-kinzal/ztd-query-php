@@ -17,5 +17,12 @@ interface SchemaResolverInterface
      */
     public function resolve(string $tableName): TableSchema;
 
+    /**
+     * Reports whether a table can be resolved.
+     *
+     * @param string $tableName Table to answer for
+     *
+     * @return bool True when this resolver knows it
+     */
     public function has(string $tableName): bool;
 }

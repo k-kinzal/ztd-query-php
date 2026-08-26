@@ -22,7 +22,7 @@ use SqlFixture\Schema\TableSchema;
 final class MySqlSchemaParserTest extends TestCase
 {
     #[Test]
-    public function parseSimpleTable(): void
+    public function testParseSimpleTable(): void
     {
         $sql = 'CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255))';
         $schema = (new MySqlSchemaParser())->parse($sql);
