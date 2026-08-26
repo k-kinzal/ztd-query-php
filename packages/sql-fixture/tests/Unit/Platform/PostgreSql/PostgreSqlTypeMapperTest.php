@@ -9,12 +9,14 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use SqlFixture\Platform\PostgreSql\PostgreSqlColumnSample;
 use SqlFixture\Platform\PostgreSql\PostgreSqlTypeMapper;
 use SqlFixture\Schema\ColumnDefinition;
 use Tests\Fixture\SpyGenerator;
 
 #[CoversClass(PostgreSqlTypeMapper::class)]
 #[UsesClass(ColumnDefinition::class)]
+#[UsesClass(PostgreSqlColumnSample::class)]
 final class PostgreSqlTypeMapperTest extends TestCase
 {
     #[Test]
