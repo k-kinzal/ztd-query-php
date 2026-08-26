@@ -107,7 +107,15 @@ final class ResultComparator
         return (string) $expected === (string) $actual;
     }
 
-    private function compareFloat(float $expected, float $actual): bool
+    /**
+     * Answers whether two floats agree within what a driver rounds to.
+     *
+     * @param float $expected The expected
+     * @param float $actual The actual
+     *
+     * @return bool What it answers
+     */
+    public function compareFloat(float $expected, float $actual): bool
     {
         if ($expected === 0.0) {
             return abs($actual) < 0.0001;
@@ -115,21 +123,45 @@ final class ResultComparator
         return abs($expected - $actual) / abs($expected) < 0.001;
     }
 
-    private function compareDecimal(string $expected, string $actual): bool
+    /**
+     * Answers whether two decimals agree once trailing zeros are dropped.
+     *
+     * @param string $expected The expected
+     * @param string $actual The actual
+     *
+     * @return bool What it answers
+     */
+    public function compareDecimal(string $expected, string $actual): bool
     {
         $expected = rtrim(rtrim($expected, '0'), '.');
         $actual = rtrim(rtrim($actual, '0'), '.');
         return $expected === $actual;
     }
 
-    private function compareJson(string $expected, string $actual): bool
+    /**
+     * Answers whether two JSON texts say the same thing.
+     *
+     * @param string $expected The expected
+     * @param string $actual The actual
+     *
+     * @return bool What it answers
+     */
+    public function compareJson(string $expected, string $actual): bool
     {
         $expectedDecoded = json_decode($expected, true);
         $actualDecoded = json_decode($actual, true);
         return $expectedDecoded === $actualDecoded;
     }
 
-    private function compareSet(string $expected, string $actual): bool
+    /**
+     * Answers whether two SET values name the same members.
+     *
+     * @param string $expected The expected
+     * @param string $actual The actual
+     *
+     * @return bool What it answers
+     */
+    public function compareSet(string $expected, string $actual): bool
     {
         $expectedParts = explode(',', $expected);
         $actualParts = explode(',', $actual);
@@ -139,13 +171,14 @@ final class ResultComparator
     }
 
     /**
-     * Sort rows by primary key columns.
+     * Answers the rows in the order the keys put them in.
      *
-     * @param list<Row> $rows
-     * @param array<int, string> $keys
-     * @return list<Row>
+     * @param list<Row> $rows Rows to read
+     * @param array<int, string> $keys The keys
+     *
+     * @return list<Row> What it answers
      */
-    private function sortByKeys(array $rows, array $keys): array
+    public function sortByKeys(array $rows, array $keys): array
     {
         usort($rows, function (array $a, array $b) use ($keys): int {
             foreach ($keys as $key) {

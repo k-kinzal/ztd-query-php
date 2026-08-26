@@ -10,10 +10,14 @@ use Fuzz\Correctness\MysqliCorrectnessHarness;
 use Fuzz\Correctness\ResultComparator;
 use Fuzz\Correctness\SchemaDefinition;
 use Fuzz\Correctness\SchemaPool;
+use JsonException;
 use mysqli;
 use mysqli_result;
-use Throwable;
+use mysqli_sql_exception;
+use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Exception\UnknownSchemaException;
+use ZtdQuery\Exception\UnsupportedSqlException;
 
 /**
  * @phpstan-import-type Row from StatementInterface
@@ -36,6 +40,7 @@ final class ReplaceCorrectnessTarget
 
     /**
      * @throws Error
+     * @throws JsonException
      */
     public function __invoke(string $input): void
     {
@@ -58,10 +63,10 @@ final class ReplaceCorrectnessTarget
         $params = array_values($row);
 
         try {
-            $this->harness->getRawMysqli()->execute_query($sql, $params);
+            $this->harness->rawConnection()->executeQuery($sql, $params);
             try {
                 $this->harness->getZtdMysqli()->execute_query($sql, $params);
-            } catch (Throwable $exception) {
+            } catch (UnsupportedSqlException | UnknownSchemaException | DatabaseException | mysqli_sql_exception $exception) {
                 throw new Error("ZTD prepared REPLACE failed after native success\nSeed: $seed\nSQL: $sql", 0, $exception);
             }
 
@@ -72,9 +77,16 @@ final class ReplaceCorrectnessTarget
     }
 
     /**
+     * Reads the table on both sides and fails if they disagree.
+     *
+     * @param SchemaDefinition $schema The schema
+     * @param int $seed The seed
+     * @param string $sql Statement being read, as written
+     *
      * @throws Error
+     * @throws JsonException
      */
-    private function compareTableState(SchemaDefinition $schema, int $seed, string $sql): void
+    public function compareTableState(SchemaDefinition $schema, int $seed, string $sql): void
     {
         $rawRows = $this->fetchAll($this->harness->getRawMysqli(), $schema->name);
         $ztdRows = $this->fetchAll($this->harness->getZtdMysqli(), $schema->name);
@@ -90,8 +102,15 @@ final class ReplaceCorrectnessTarget
         }
     }
 
-    /** @return list<Row> */
-    private function fetchAll(mysqli $mysqli, string $table): array
+    /**
+     * Answers every row the connection reads.
+     *
+     * @param mysqli $mysqli The mysqli
+     * @param string $table Table it belongs to
+     *
+     * @return list<Row> What it answers
+     */
+    public function fetchAll(mysqli $mysqli, string $table): array
     {
         $result = $mysqli->query("SELECT * FROM `$table`");
         if (!$result instanceof mysqli_result) {

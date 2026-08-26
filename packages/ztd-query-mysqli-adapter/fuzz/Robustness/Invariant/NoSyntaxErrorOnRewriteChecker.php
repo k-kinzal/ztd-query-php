@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Fuzz\Robustness\Invariant;
 
+use Fuzz\ReportingMysqli;
 use mysqli;
 use mysqli_sql_exception;
-use Throwable;
+use ZtdQuery\Exception\UnknownSchemaException;
+use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\MySqlQueryGuard;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\SqlRewriter;
@@ -18,7 +20,7 @@ final class NoSyntaxErrorOnRewriteChecker
 {
     private MySqlQueryGuard $guard;
     private SqlRewriter $rewriter;
-    private mysqli $rawMysqli;
+    private ReportingMysqli $rawConnection;
 
     /**
      * Binds the instance to what it will work from.
@@ -31,22 +33,21 @@ final class NoSyntaxErrorOnRewriteChecker
     {
         $this->guard = $guard;
         $this->rewriter = $rewriter;
-        $this->rawMysqli = $rawMysqli;
+        $this->rawConnection = new ReportingMysqli($rawMysqli);
     }
 
     /**
-     * Check.
+     * Answers what the rewritten statement breaks, where it breaks nothing.
      *
-     * @param string $sql
-     * @return ?InvariantViolation
+     * A statement ZTD refuses is not rewritten, so there is nothing to check.
+     *
+     * @param string $sql Statement as it was written
+     *
+     * @return InvariantViolation|null What the rewrite broke, or null where it broke nothing
      */
     public function check(string $sql): ?InvariantViolation
     {
-        try {
-            $kind = $this->guard->classify($sql);
-        } catch (Throwable) {
-            return null;
-        }
+        $kind = $this->guard->classify($sql);
 
         if ($kind === null || $kind === QueryKind::SKIPPED) {
             return null;
@@ -54,17 +55,14 @@ final class NoSyntaxErrorOnRewriteChecker
 
         try {
             $plan = $this->rewriter->rewrite($sql);
-        } catch (Throwable) {
+        } catch (UnsupportedSqlException | UnknownSchemaException) {
             return null;
         }
 
         $rewrittenSql = $plan->sql();
 
         try {
-            $stmt = $this->rawMysqli->prepare($rewrittenSql);
-            if ($stmt !== false) {
-                $stmt->close();
-            }
+            $this->rawConnection()->prepareAndClose($rewrittenSql);
         } catch (mysqli_sql_exception $e) {
             if ($e->getCode() === 1064) {
                 return new InvariantViolation(
@@ -83,5 +81,14 @@ final class NoSyntaxErrorOnRewriteChecker
         }
 
         return null;
+    }
+    /**
+     * Answers the connection ZTD is not in front of, as something that can fail.
+     *
+     * @return ReportingMysqli The raw connection, saying how it fails
+     */
+    public function rawConnection(): ReportingMysqli
+    {
+        return $this->rawConnection;
     }
 }

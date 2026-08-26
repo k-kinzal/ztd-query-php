@@ -6,6 +6,7 @@ namespace Fuzz\Robustness\Target;
 
 use Error;
 use Faker\Generator;
+use Fuzz\ReportingMysqli;
 use Fuzz\Robustness\Invariant\NoMysqliLeakChecker;
 use Fuzz\Robustness\Invariant\NoSyntaxErrorOnRewriteChecker;
 use Fuzz\Robustness\Invariant\ShadowStoreConsistencyChecker;
@@ -26,7 +27,7 @@ final class ExecutionTarget
 {
     private Generator $faker;
     private MySqlProvider $provider;
-    private mysqli $rawMysqli;
+    private ReportingMysqli $rawConnection;
     private NoMysqliLeakChecker $mysqliLeakChecker;
     private NoSyntaxErrorOnRewriteChecker $syntaxChecker;
     private ShadowStoreConsistencyChecker $storeChecker;
@@ -53,7 +54,7 @@ final class ExecutionTarget
     ) {
         $this->faker = $faker;
         $this->provider = $provider;
-        $this->rawMysqli = $rawMysqli;
+        $this->rawConnection = new ReportingMysqli($rawMysqli);
 
         $this->mysqliLeakChecker = new NoMysqliLeakChecker(function (string $sql) use ($ztdMysqli, $guard): void {
             $kind = $guard->classify($sql);
@@ -83,10 +84,7 @@ final class ExecutionTarget
         $sql = $this->selectGenerator($input)();
 
         try {
-            $stmt = $this->rawMysqli->prepare($sql);
-            if ($stmt !== false) {
-                $stmt->close();
-            }
+            $this->rawConnection()->prepareAndClose($sql);
         } catch (mysqli_sql_exception $e) {
             if ($e->getCode() === 1064) {
                 return;
@@ -110,9 +108,13 @@ final class ExecutionTarget
     }
 
     /**
+     * Answers the generator the input asks for.
+     *
+     * @param string $input The input
+     *
      * @return callable(): string
      */
-    private function selectGenerator(string $input): callable
+    public function selectGenerator(string $input): callable
     {
         $generators = [
             fn () => $this->provider->sql(maxDepth: 8),
@@ -128,5 +130,14 @@ final class ExecutionTarget
 
         $index = ord($input[0] ?? "\0") % count($generators);
         return $generators[$index];
+    }
+    /**
+     * Answers the connection ZTD is not in front of, as something that can fail.
+     *
+     * @return ReportingMysqli The raw connection, saying how it fails
+     */
+    public function rawConnection(): ReportingMysqli
+    {
+        return $this->rawConnection;
     }
 }

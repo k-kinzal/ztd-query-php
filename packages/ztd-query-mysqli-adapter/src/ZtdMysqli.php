@@ -54,10 +54,33 @@ class ZtdMysqli extends mysqli
     private ?int $ztdAffectedRowCount = null;
 
     /**
+     * What the inner connection answers about itself.
+     */
+    private ConnectionProperties $properties;
+
+    /**
+     * What the inner connection says after a statement has run.
+     */
+    private ConnectionState $state;
+
+    /**
      * Configure a new ZTD-enabled mysqli wrapper.
      *
      * If $factory is provided, it is used directly to create the session.
      * If $factory is null, MySqlSessionFactory is used by default.
+     *
+     * The parent is built without a connection of its own; every statement goes
+     * to the inner mysqli, which is the one that is really connected.
+     *
+     * @param string|null $hostname Host to connect to
+     * @param string|null $username User to connect as
+     * @param string|null $password Password to connect with
+     * @param string|null $database Database to connect to
+     * @param int|null $port Port to connect on
+     * @param string|null $socket Socket to connect over
+     * @param ZtdConfig|null $config How ZTD is to behave, or null for the default
+     * @param SessionFactory|null $factory Platform to rewrite with, or null for MySQL
+     * @param ConnectionProperties|null $properties What the connection answers about itself, or null to read it off the connection
      */
     public function __construct(
         ?string $hostname = null,
@@ -67,14 +90,16 @@ class ZtdMysqli extends mysqli
         ?int $port = null,
         ?string $socket = null,
         ?ZtdConfig $config = null,
-        ?SessionFactory $factory = null
+        ?SessionFactory $factory = null,
+        ?ConnectionProperties $properties = null
     ) {
-        /* Parent is initialized without connection; innerMysqli handles the real connection */
         parent::__construct();
         $this->innerMysqli = new mysqli($hostname, $username, $password, $database, $port ?? 3306, $socket);
 
+        $this->properties = $properties ?? new MysqliProperties($this->innerMysqli);
+        $this->state = new ConnectionState($this->properties);
         $resolvedFactory = $factory ?? new MySqlSessionFactory();
-        $connection = new MysqliConnection($this->innerMysqli);
+        $connection = new MysqliConnection($this->innerMysqli, $this->properties);
         $this->session = $resolvedFactory->create($connection, $config ?? ZtdConfig::default());
     }
 
@@ -86,15 +111,24 @@ class ZtdMysqli extends mysqli
      *
      * If $factory is provided, it is used directly to create the session.
      * If $factory is null, MySqlSessionFactory is used by default.
+     *
+     * @param mysqli $mysqli Connection to wrap
+     * @param ZtdConfig|null $config How ZTD is to behave, or null for the default
+     * @param SessionFactory|null $factory Platform to rewrite with, or null for MySQL
+     * @param ConnectionProperties|null $properties What the connection answers about itself, or null to read it off the connection
+     *
+     * @return self The connection, with ZTD in front of it
      */
-    public static function fromMysqli(mysqli $mysqli, ?ZtdConfig $config = null, ?SessionFactory $factory = null): self
+    public static function fromMysqli(mysqli $mysqli, ?ZtdConfig $config = null, ?SessionFactory $factory = null, ?ConnectionProperties $properties = null): self
     {
         /** @var self $instance */
         $instance = (new ReflectionClass(self::class))->newInstanceWithoutConstructor();
         $instance->innerMysqli = $mysqli;
 
+        $instance->properties = $properties ?? new MysqliProperties($mysqli);
+        $instance->state = new ConnectionState($instance->properties);
         $resolvedFactory = $factory ?? new MySqlSessionFactory();
-        $connection = new MysqliConnection($instance->innerMysqli);
+        $connection = new MysqliConnection($instance->innerMysqli, $instance->properties);
         $instance->session = $resolvedFactory->create($connection, $config ?? ZtdConfig::default());
 
         return $instance;
@@ -127,9 +161,11 @@ class ZtdMysqli extends mysqli
     /**
      * Get the affected row count from the last ZTD or regular operation.
      *
-     * Note: Direct property access ($this->affected_rows) is not supported
-     * because PHP's C extension property handler for mysqli takes precedence
-     * over __get when the parent constructor was not called. Use this method instead.
+     * Direct property access ($this->affected_rows) is not supported, because
+     * mysqli's property handler answers before __get does when the parent
+     * constructor was never called. Use this method instead.
+     *
+     * @return int The number of rows
      */
     public function lastAffectedRows(): int
     {
@@ -137,7 +173,7 @@ class ZtdMysqli extends mysqli
             return $this->ztdAffectedRowCount;
         }
 
-        return (int) $this->innerMysqli->affected_rows;
+        return $this->state->affectedRows();
     }
 
     /**
@@ -145,7 +181,9 @@ class ZtdMysqli extends mysqli
      *
      * Handles affected_rows specially when ZTD has tracked affected rows.
      *
-     * @return mixed
+     * @param string $name Property as it was written
+     *
+     * @return mixed What the inner connection has under that name, or null where it has nothing
      */
     public function __get(string $name): mixed
     {
@@ -153,43 +191,19 @@ class ZtdMysqli extends mysqli
             return $this->ztdAffectedRowCount;
         }
 
-        return $this->readMysqliProperty($name);
+        return $this->properties->named($name);
     }
 
     /**
      * Delegate property isset check to the inner mysqli instance.
+     *
+     * @param string $name Property as it was written
+     *
+     * @return bool Whether the inner connection has anything under that name
      */
     public function __isset(string $name): bool
     {
-        return $this->readMysqliProperty($name) !== null;
-    }
-
-    /**
-     * Read a known mysqli property from the inner instance.
-     */
-    private function readMysqliProperty(string $name): mixed
-    {
-        return match ($name) {
-            'affected_rows' => $this->innerMysqli->affected_rows,
-            'client_info' => $this->innerMysqli->client_info,
-            'client_version' => $this->innerMysqli->client_version,
-            'connect_errno' => $this->innerMysqli->connect_errno,
-            'connect_error' => $this->innerMysqli->connect_error,
-            'errno' => $this->innerMysqli->errno,
-            'error' => $this->innerMysqli->error,
-            'error_list' => $this->innerMysqli->error_list,
-            'field_count' => $this->innerMysqli->field_count,
-            'host_info' => $this->innerMysqli->host_info,
-            'info' => $this->innerMysqli->info,
-            'insert_id' => $this->innerMysqli->insert_id,
-            'server_info' => $this->innerMysqli->server_info,
-            'server_version' => $this->innerMysqli->server_version,
-            'sqlstate' => $this->innerMysqli->sqlstate,
-            'protocol_version' => $this->innerMysqli->protocol_version,
-            'thread_id' => $this->innerMysqli->thread_id,
-            'warning_count' => $this->innerMysqli->warning_count,
-            default => null,
-        };
+        return $this->properties->named($name) !== null;
     }
 
     /**
@@ -221,6 +235,10 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      *
+     * How many rows the statement affected is read off ZTD's own statement
+     * rather than off $stmt->affected_rows: mysqli_stmt's property handler
+     * answers before __get does when the parent constructor was never called.
+     *
      * @throws ZtdMysqliException When ZTD-specific exception occurs (wraps DatabaseException).
      */
     #[Override]
@@ -250,8 +268,6 @@ class ZtdMysqli extends mysqli
             return false;
         }
 
-        /* Cannot use $stmt->affected_rows because mysqli_stmt's C extension */
-        /* property handler takes precedence over __get when parent constructor was not called. */
         if ($stmt instanceof ZtdMysqliStatement) {
             $this->ztdAffectedRowCount = $stmt->ztdAffectedRows();
         } else {

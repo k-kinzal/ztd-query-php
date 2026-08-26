@@ -20,11 +20,11 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 #[UsesClass(MysqliResultColumnExtractor::class)]
 final class MysqliResultStatementTest extends TestCase
 {
-    public function testImplementsStatementInterface(): void
+    public function testItIsTheStatementZtdReadsResultsThrough(): void
     {
         $stmt = new MysqliResultStatement(null, 0);
 
-        self::assertInstanceOf(StatementInterface::class, $stmt);
+        self::assertContains(StatementInterface::class, class_implements($stmt));
     }
 
     public function testExecuteAlwaysReturnsTrue(): void

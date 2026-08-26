@@ -6,8 +6,8 @@ namespace Tests\Fixtures;
 
 use mysqli_result;
 use mysqli_stmt;
+use mysqli_warning;
 use Override;
-use ReflectionClass;
 use ReturnTypeWillChange;
 
 /**
@@ -77,16 +77,38 @@ class StubMysqliStmt extends mysqli_stmt
     public int|string $affectedRowsValue = 0;
 
     /**
-     * Builds.
+     * @var mysqli_result|false What the statement says about the columns it answers
+     */
+    public mysqli_result|false $resultMetadataReturn = false;
+
+    /**
+     * @var int What the statement says an attribute is set to
+     */
+    public int $attributeValue = 0;
+
+    /**
+     * @var list<string> Names of the calls this was asked to make, in order
+     */
+    public array $calls = [];
+
+    /**
+     * Builds a statement with no connection behind it.
      *
-     * @return self
+     * mysqli_stmt's own constructor wants a connected mysqli, and a test double
+     * has none; nothing here reaches the parent, so nothing here needs one.
+     */
+    public function __construct()
+    {
+    }
+
+    /**
+     * Builds a statement with no connection behind it.
+     *
+     * @return self The statement
      */
     public static function create(): self
     {
-        /** @var self $instance */
-        $instance = (new ReflectionClass(self::class))->newInstanceWithoutConstructor();
-
-        return $instance;
+        return new self();
     }
 
     /**
@@ -185,6 +207,7 @@ class StubMysqliStmt extends mysqli_stmt
     #[Override]
     public function free_result(): void
     {
+        $this->calls[] = 'free_result';
     }
 
     /**
@@ -195,6 +218,7 @@ class StubMysqliStmt extends mysqli_stmt
     #[Override]
     public function data_seek(int $offset): void
     {
+        $this->calls[] = 'data_seek:' . $offset;
     }
 
     /**
@@ -205,7 +229,7 @@ class StubMysqliStmt extends mysqli_stmt
     #[Override]
     public function result_metadata(): mysqli_result|false
     {
-        return false;
+        return $this->resultMetadataReturn;
     }
 
     /**
@@ -217,7 +241,7 @@ class StubMysqliStmt extends mysqli_stmt
     #[Override]
     public function attr_get(int $attribute): int
     {
-        return 0;
+        return $this->attributeValue;
     }
 
     /**
@@ -230,6 +254,8 @@ class StubMysqliStmt extends mysqli_stmt
     #[Override]
     public function attr_set(int $attribute, int $value): bool
     {
+        $this->attributeValue = $value;
+
         return true;
     }
 
@@ -242,6 +268,8 @@ class StubMysqliStmt extends mysqli_stmt
     #[Override]
     public function prepare(string $query): bool
     {
+        $this->calls[] = 'prepare:' . $query;
+
         return true;
     }
 
@@ -255,6 +283,43 @@ class StubMysqliStmt extends mysqli_stmt
     #[Override]
     public function send_long_data(int $param_num, string $data): bool
     {
+        $this->calls[] = 'send_long_data:' . $param_num . ':' . $data;
+
+        return true;
+    }
+
+    /**
+     * Get_warnings.
+     *
+     * @return mysqli_warning|false
+     */
+    #[Override]
+    public function get_warnings(): mysqli_warning|false
+    {
+        return false;
+    }
+
+    /**
+     * More_results.
+     *
+     * @return bool
+     */
+    #[Override]
+    public function more_results(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Next_result.
+     *
+     * @return bool
+     */
+    #[Override]
+    public function next_result(): bool
+    {
+        $this->calls[] = 'next_result';
+
         return true;
     }
 

@@ -23,7 +23,10 @@ final class MysqliStatement implements StatementInterface
 {
     private mysqli_stmt $statement;
 
-    private mysqli $mysqli;
+    /**
+     * What the connection says after a statement has run.
+     */
+    private ConnectionState $state;
 
     /**
      * @var mysqli_result|false|null
@@ -33,17 +36,22 @@ final class MysqliStatement implements StatementInterface
     /**
      * Binds the instance to what it will work from.
      *
-     * @param mysqli_stmt $statement
-     * @param mysqli $mysqli
+     * @param mysqli_stmt $statement Statement the driver prepared
+     * @param mysqli $mysqli Connection it was prepared on
+     * @param ConnectionProperties|null $properties What the connection answers about itself, or null to read it off the connection
      */
-    public function __construct(mysqli_stmt $statement, mysqli $mysqli)
+    public function __construct(mysqli_stmt $statement, mysqli $mysqli, ?ConnectionProperties $properties = null)
     {
         $this->statement = $statement;
-        $this->mysqli = $mysqli;
+        $this->state = new ConnectionState($properties ?? new MysqliProperties($mysqli));
     }
 
     /**
      * {@inheritDoc}
+     *
+     * The result is not read here. ZtdMysqliStatement::get_result() reads it off
+     * the statement the driver prepared, and a result read twice is no result at
+     * all, so this leaves it where that can still find it.
      *
      * @throws DatabaseException On database error.
      */
@@ -51,35 +59,40 @@ final class MysqliStatement implements StatementInterface
     {
         if ($params !== null && $params !== []) {
             if (!$this->statement->execute($params)) {
-                if ($this->mysqli->errno !== 0) {
+                $errorNumber = $this->state->errorNumber();
+                if ($errorNumber !== 0) {
                     throw new DatabaseException(
-                        $this->mysqli->error,
-                        $this->mysqli->errno,
-                        $this->mysqli->errno
+                        $this->state->errorMessage(),
+                        $errorNumber,
+                        $errorNumber
                     );
                 }
+
                 return false;
             }
         } else {
             if (!$this->statement->execute()) {
-                if ($this->mysqli->errno !== 0) {
+                $errorNumber = $this->state->errorNumber();
+                if ($errorNumber !== 0) {
                     throw new DatabaseException(
-                        $this->mysqli->error,
-                        $this->mysqli->errno,
-                        $this->mysqli->errno
+                        $this->state->errorMessage(),
+                        $errorNumber,
+                        $errorNumber
                     );
                 }
+
                 return false;
             }
         }
-
-        /* get_result() is deferred so ZtdMysqliStatement::get_result() can call it on the underlying stmt */
 
         return true;
     }
 
     /**
      * {@inheritDoc}
+     *
+     * The result is freed as soon as it is read, because a statement left
+     * holding one puts the connection out of step with the server.
      */
     public function fetchAll(): array
     {
@@ -93,7 +106,6 @@ final class MysqliStatement implements StatementInterface
         /** @var list<Row> $rows */
         $rows = $result->fetch_all(MYSQLI_ASSOC);
 
-        /* Free the result to avoid "Commands out of sync" errors */
         $result->free();
         $this->result = null;
 
@@ -117,13 +129,29 @@ final class MysqliStatement implements StatementInterface
 
     /**
      * {@inheritDoc}
+     *
+     * The count is read off the connection rather than off the statement, for
+     * the same reason the error is: a statement built without a live connection
+     * refuses to answer its own properties, and the connection's count is the
+     * one the statement just set.
+     *
+     * @return int Rows the statement affected
      */
     public function rowCount(): int
     {
-        return (int) $this->statement->affected_rows;
+        return $this->state->affectedRows();
     }
 
-    private function loadResult(): mysqli_result|false
+    /**
+     * Answers the statement's result, reading it off the statement once.
+     *
+     * mysqli answers a statement's result exactly once; asking twice answers
+     * false the second time. Everything that needs the result asks here, so it
+     * is asked for once and kept.
+     *
+     * @return mysqli_result|false The result, or false where the statement has none
+     */
+    public function loadResult(): mysqli_result|false
     {
         if ($this->result === null) {
             $this->result = $this->statement->get_result();
