@@ -34,8 +34,6 @@ use Tests\Fixture\SqlFaker\ScriptedNumbers;
 #[UsesClass(PgTokenizer::class)]
 #[UsesClass(RandomStringGenerator::class)]
 #[UsesClass(RandomCharacters::class)]
-#[UsesClass(PgRealizers::class)]
-#[UsesClass(ScriptedNumbers::class)]
 final class PgTerminalRealizerTest extends TestCase
 {
     #[DataProvider('providerWitnessedRealizer')]
