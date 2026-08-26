@@ -607,4 +607,126 @@ final class SqlTokenStreamTest extends TestCase
         );
     }
 
+    public function testTokensKeepsEveryLexemeIncludingTheSpaceBetweenThem(): void
+    {
+        $stream = SqlTokenStream::tokenize('SELECT 1', FakeSqlLexerProfiles::standard());
+
+        self::assertGreaterThan(count($stream->significantTokens()), count($stream->tokens()));
+    }
+
+    public function testSignificantTokensLeavesOutWhitespaceAndComments(): void
+    {
+        $stream = SqlTokenStream::tokenize('SELECT /* c */ 1', FakeSqlLexerProfiles::standard());
+
+        $texts = array_map(static fn (SqlToken $t): string => $t->text, $stream->significantTokens());
+
+        self::assertSame(['SELECT', '1'], $texts);
+    }
+
+    public function testSignificantTokenBeforeAnswersTheLexemeThatCameFirst(): void
+    {
+        $stream = SqlTokenStream::tokenize('SELECT 1', FakeSqlLexerProfiles::standard());
+        $tokens = $stream->significantTokens();
+
+        self::assertSame($tokens[0], $stream->significantTokenBefore($tokens[1]));
+    }
+
+    public function testSignificantTokenBeforeIsNothingForTheFirstLexeme(): void
+    {
+        $stream = SqlTokenStream::tokenize('SELECT 1', FakeSqlLexerProfiles::standard());
+        $tokens = $stream->significantTokens();
+
+        self::assertNull($stream->significantTokenBefore($tokens[0]));
+    }
+
+    public function testSignificantTokenAfterAnswersTheLexemeThatComesNext(): void
+    {
+        $stream = SqlTokenStream::tokenize('SELECT 1', FakeSqlLexerProfiles::standard());
+        $tokens = $stream->significantTokens();
+
+        self::assertSame($tokens[1], $stream->significantTokenAfter($tokens[0]));
+    }
+
+    public function testSignificantTokenAfterIsNothingForTheLastLexeme(): void
+    {
+        $stream = SqlTokenStream::tokenize('SELECT 1', FakeSqlLexerProfiles::standard());
+        $tokens = $stream->significantTokens();
+
+        self::assertNull($stream->significantTokenAfter($tokens[count($tokens) - 1]));
+    }
+
+    public function testMatchingClosingNestingTokenAnswersTheParenthesisThatClosesOne(): void
+    {
+        $stream = SqlTokenStream::tokenize('SELECT (1 + (2))', FakeSqlLexerProfiles::standard());
+        $tokens = $stream->significantTokens();
+        $opening = null;
+        foreach ($tokens as $token) {
+            if ($token->text === '(') {
+                $opening = $token;
+                break;
+            }
+        }
+
+        self::assertNotNull($opening);
+        $closing = $stream->matchingClosingNestingToken($opening);
+        self::assertNotNull($closing);
+        self::assertSame(')', $closing->text);
+        self::assertSame(15, $closing->offset);
+    }
+
+    public function testMatchingClosingNestingTokenIsNothingForALexemeThatOpensNothing(): void
+    {
+        $stream = SqlTokenStream::tokenize('SELECT 1', FakeSqlLexerProfiles::standard());
+        $tokens = $stream->significantTokens();
+
+        self::assertNull($stream->matchingClosingNestingToken($tokens[0]));
+    }
+
+    public function testSplitStatementsReadsABatchAsTheStatementsItIsWrittenAs(): void
+    {
+        $stream = SqlTokenStream::tokenize('SELECT 1; SELECT 2', FakeSqlLexerProfiles::standard());
+
+        self::assertSame(['SELECT 1', 'SELECT 2'], array_map(trim(...), $stream->splitStatements()));
+    }
+
+    public function testSplitStatementsLeavesASemicolonInsideAStringAlone(): void
+    {
+        $stream = SqlTokenStream::tokenize("SELECT ';'", FakeSqlLexerProfiles::standard());
+
+        self::assertCount(1, $stream->splitStatements());
+    }
+
+    public function testTopLevelClauseAnswersTheTextBetweenTheKeywordsThatBoundIt(): void
+    {
+        $stream = SqlTokenStream::tokenize(
+            'SELECT * FROM users WHERE id = 1 ORDER BY id',
+            FakeSqlLexerProfiles::standard(),
+        );
+
+        self::assertSame('id = 1', trim((string) $stream->topLevelClause(['WHERE'], [['ORDER']])));
+    }
+
+    public function testTopLevelClauseIsNothingWhereTheKeywordIsNotWritten(): void
+    {
+        $stream = SqlTokenStream::tokenize('SELECT 1', FakeSqlLexerProfiles::standard());
+
+        self::assertNull($stream->topLevelClause(['WHERE']));
+    }
+
+    public function testTopLevelClauseAfterLooksOnlyPastTheAnchorItWasGiven(): void
+    {
+        $stream = SqlTokenStream::tokenize(
+            'UPDATE users SET name = \'a\' WHERE id = 1',
+            FakeSqlLexerProfiles::standard(),
+        );
+
+        self::assertSame('id = 1', trim((string) $stream->topLevelClauseAfter(['SET'], ['WHERE'], [])));
+    }
+
+    public function testTopLevelClauseAfterIsNothingWhereTheAnchorIsNotWritten(): void
+    {
+        $stream = SqlTokenStream::tokenize('SELECT 1 WHERE 1', FakeSqlLexerProfiles::standard());
+
+        self::assertNull($stream->topLevelClauseAfter(['SET'], ['WHERE'], []));
+    }
 }

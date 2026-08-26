@@ -401,4 +401,34 @@ final class SessionTest extends TestCase
 
         self::assertSame([['id' => 1]], $rows);
     }
+
+    public function testEnableTurnsZtdBackOn(): void
+    {
+        $session = SessionUnderTest::plain();
+        $session->disable();
+
+        $session->enable();
+
+        self::assertTrue($session->isEnabled());
+    }
+
+    public function testRollBackTransactionPutsTheShadowBackToWhereItBegan(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', [['id' => 1]]);
+        $session = SessionUnderTest::over($store);
+
+        $session->beginTransaction();
+        $store->set('users', []);
+        $session->rollBackTransaction();
+
+        self::assertSame([['id' => 1]], $store->get('users'));
+    }
+
+    public function testResultColumnTypeResolverAnswersTheOneTheSessionWasBuiltWith(): void
+    {
+        $session = SessionUnderTest::plain();
+
+        self::assertInstanceOf(MissingResultColumnTypeResolver::class, $session->resultColumnTypeResolver());
+    }
 }

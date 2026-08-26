@@ -7,6 +7,7 @@ namespace Tests\Unit\Rewrite;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Rewrite\AffectedRowsMode;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\ReturningProjection;
@@ -18,6 +19,7 @@ use ZtdQuery\Shadow\Mutation\InsertMutation;
 #[UsesClass(CandidateKeySet::class)]
 #[UsesClass(ReturningProjection::class)]
 #[CoversClass(RewritePlan::class)]
+#[UsesClass(UnsupportedSqlException::class)]
 final class RewritePlanTest extends TestCase
 {
     public function testKindSqlKindPlanHoldsSqlKindAndMutation(): void
@@ -50,5 +52,30 @@ final class RewritePlanTest extends TestCase
 
         self::assertSame($projection, $plan->returningProjection());
         self::assertSame(AffectedRowsMode::Matched, $plan->affectedRowsMode());
+    }
+
+    public function testSqlKeepsTheStatementThePlanIsFor(): void
+    {
+        self::assertSame('SELECT 1', (new RewritePlan('SELECT 1', QueryKind::READ))->sql());
+    }
+
+    public function testReturningProjectionIsNothingWherePlanCarriesNone(): void
+    {
+        self::assertNull((new RewritePlan('SELECT 1', QueryKind::READ))->returningProjection());
+    }
+
+    public function testRequireMutationAnswersTheMutationTheWriteWasSimulatedAs(): void
+    {
+        $mutation = new InsertMutation('users');
+        $plan = new RewritePlan('SELECT 1', QueryKind::WRITE_SIMULATED, $mutation);
+
+        self::assertSame($mutation, $plan->requireMutation());
+    }
+
+    public function testRequireMutationRefusesAPlanThatCarriesNone(): void
+    {
+        $this->expectException(UnsupportedSqlException::class);
+
+        (new RewritePlan('SELECT 1', QueryKind::WRITE_SIMULATED))->requireMutation();
     }
 }

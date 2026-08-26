@@ -74,4 +74,32 @@ final class CandidateKeySetTest extends TestCase
 
         self::assertNull($keys->findConflict($row, [$row]));
     }
+
+    public function testFromSchemaPutsThePrimaryKeyBeforeEveryUniqueOne(): void
+    {
+        $keys = CandidateKeySet::fromSchema(['id'], ['email' => ['email']]);
+
+        self::assertSame(['PRIMARY', 'email'], array_keys($keys->keys()));
+    }
+
+    public function testFromSchemaNamesOnlyTheUniqueKeysWhereThereIsNoPrimaryOne(): void
+    {
+        $keys = CandidateKeySet::fromSchema([], ['email' => ['email']]);
+
+        self::assertSame(['email' => ['email']], $keys->keys());
+    }
+
+    public function testKeysAnswersTheColumnsOfEveryKeyItWasBuiltFrom(): void
+    {
+        $keys = new CandidateKeySet(['PRIMARY' => ['id']]);
+
+        self::assertSame(['PRIMARY' => ['id']], $keys->keys());
+    }
+
+    public function testFindConflictIsNothingWhereNoRowCarriesTheSameKey(): void
+    {
+        $keys = CandidateKeySet::fromSchema(['id']);
+
+        self::assertNull($keys->findConflict(['id' => 2], [['id' => 1]]));
+    }
 }
