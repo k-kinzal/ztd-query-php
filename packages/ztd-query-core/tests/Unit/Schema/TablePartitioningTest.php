@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Schema;
 
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Schema\TablePartitioning;
 
 #[CoversClass(TablePartitioning::class)]
@@ -32,21 +32,21 @@ final class TablePartitioningTest extends TestCase
 
     public function testRejectsEmptyPartitionMetadata(): void
     {
-        self::expectException(InvalidArgumentException::class);
+        self::expectException(InvalidDefinitionException::class);
 
         new TablePartitioning(['' => 'id < 10']);
     }
 
     public function testRejectsEmptyPartitionPredicate(): void
     {
-        self::expectException(InvalidArgumentException::class);
+        self::expectException(InvalidDefinitionException::class);
 
         new TablePartitioning(['p0' => '  ']);
     }
 
     public function testRejectsWhitespacePartitionName(): void
     {
-        self::expectException(InvalidArgumentException::class);
+        self::expectException(InvalidDefinitionException::class);
 
         new TablePartitioning(['  ' => 'id < 10']);
     }

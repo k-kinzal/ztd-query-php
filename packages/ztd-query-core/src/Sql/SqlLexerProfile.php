@@ -4,10 +4,16 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Sql;
 
-use InvalidArgumentException;
+use ZtdQuery\Exception\InvalidDefinitionException;
 
 /**
- * Immutable lexical data supplied by a database package to the neutral scanner.
+ * Everything the neutral scanner needs to know about one dialect's spelling.
+ *
+ * The scanner itself knows no dialect: which characters open a comment, how an
+ * identifier is quoted, what a parameter looks like, whether a backslash
+ * escapes inside a string — all of it is answered from here. A database
+ * package builds one of these, and it is checked as it is built rather than
+ * relied on to be usable while scanning.
  */
 final class SqlLexerProfile
 {
@@ -58,8 +64,30 @@ final class SqlLexerProfile
      * @param array<string, list<string>> $namedParameterForbiddenPredecessors
      * @param list<string> $backslashEscapedStringPrefixes
      * @param list<string> $positionalParameterPatterns
-     * @param array{string, string}|null $bracketPair
-     * @param array{string, string} $nestingPair
+     * @param list<string> $lineCommentPrefixes Prefixes that start a comment running to the end of the line
+     * @param list<string> $whitespaceDelimitedLineCommentPrefixes Prefixes that do so only when whitespace follows
+     * @param array<string, string> $blockCommentPairs Opening delimiter => the one that closes the comment
+     * @param array<string, string> $stringQuotePairs Opening quote => the one that closes the string
+     * @param array<string, string> $identifierQuotePairs Opening quote => the one that closes the identifier
+     * @param array<string, list<string>> $namedParameterSeparators Parameter prefix => what may separate it from its name
+     * @param array<string, string> $namedParameterSuffixPatterns Parameter prefix => pattern for what may follow its name
+     * @param array<string, list<string>> $namedParameterForbiddenPredecessors Parameter prefix => what it is not a parameter after
+     * @param list<string> $backslashEscapedStringPrefixes Prefixes that make the string they introduce use backslash escapes
+     * @param list<string> $positionalParameterPatterns Patterns a positional parameter is written as
+     * @param string|null $dollarQuoteDelimiterPattern Pattern a dollar-quoted delimiter is written as, or null where the dialect has none
+     * @param string $numericLiteralPattern Pattern a number is written as
+     * @param string $identifierStartPattern Pattern the first character of an identifier matches
+     * @param string $identifierPartPattern Pattern every later character of an identifier matches
+     * @param array{string, string}|null $bracketPair Opening and closing bracket, or null where the dialect has none
+     * @param array{string, string} $nestingPair Opening and closing delimiter that nest
+     * @param string $statementDelimiter Single character that ends a statement
+     * @param string $listDelimiter Single character that separates list items
+     * @param bool $nestedBlockComments Whether a block comment may contain another
+     * @param bool $backslashEscapedStrings Whether every string uses backslash escapes
+     * @param LexicalPattern $patterns Reads a regular expression against a position
+     * @param LexicalDelimiters $delimiters Refuses lexical data a scanner could not use
+     *
+     * @throws InvalidDefinitionException When a delimiter is empty, a pattern is unreadable, or a single-character delimiter is not one character
      */
     public function __construct(
         array $lineCommentPrefixes,
@@ -82,40 +110,50 @@ final class SqlLexerProfile
         private readonly string $listDelimiter,
         private readonly bool $nestedBlockComments,
         private readonly bool $backslashEscapedStrings,
+        private readonly LexicalPattern $patterns = new LexicalPattern(),
+        LexicalDelimiters $delimiters = new LexicalDelimiters(),
     ) {
-        $this->lineCommentPrefixes = self::nonEmptyStrings($lineCommentPrefixes);
-        $this->whitespaceDelimitedLineCommentPrefixes = self::nonEmptyStrings(
+        $this->lineCommentPrefixes = $delimiters->nonEmpty($lineCommentPrefixes);
+        $this->whitespaceDelimitedLineCommentPrefixes = $delimiters->nonEmpty(
             $whitespaceDelimitedLineCommentPrefixes,
         );
-        $this->blockCommentPairs = self::delimiterPairs($blockCommentPairs, 'Block comment');
-        $this->stringQuotePairs = self::delimiterPairs($stringQuotePairs, 'String quote');
-        $this->identifierQuotePairs = self::delimiterPairs($identifierQuotePairs, 'Identifier quote');
-        $this->namedParameterSeparators = self::parameterLists($namedParameterSeparators);
-        $this->namedParameterSuffixPatterns = self::parameterPatterns($namedParameterSuffixPatterns);
-        $this->namedParameterForbiddenPredecessors = self::parameterLists(
+        $this->blockCommentPairs = $delimiters->pairs($blockCommentPairs, 'Block comment');
+        $this->stringQuotePairs = $delimiters->pairs($stringQuotePairs, 'String quote');
+        $this->identifierQuotePairs = $delimiters->pairs($identifierQuotePairs, 'Identifier quote');
+        $this->namedParameterSeparators = $delimiters->perPrefixLists($namedParameterSeparators);
+        $this->namedParameterSuffixPatterns = $delimiters->perPrefixPatterns($namedParameterSuffixPatterns);
+        $this->namedParameterForbiddenPredecessors = $delimiters->perPrefixLists(
             $namedParameterForbiddenPredecessors,
         );
-        $this->backslashEscapedStringPrefixes = self::nonEmptyStrings($backslashEscapedStringPrefixes);
-        $this->positionalParameterPatterns = self::patterns($positionalParameterPatterns);
-        self::assertPattern($this->dollarQuoteDelimiterPattern);
-        self::assertPattern($this->numericLiteralPattern);
-        self::assertPattern($this->identifierStartPattern);
-        self::assertPattern($this->identifierPartPattern);
+        $this->backslashEscapedStringPrefixes = $delimiters->nonEmpty($backslashEscapedStringPrefixes);
+        $this->positionalParameterPatterns = $delimiters->validPatterns($positionalParameterPatterns);
+        $this->patterns->assertValid($this->dollarQuoteDelimiterPattern);
+        $this->patterns->assertValid($this->numericLiteralPattern);
+        $this->patterns->assertValid($this->identifierStartPattern);
+        $this->patterns->assertValid($this->identifierPartPattern);
         if ($bracketPair !== null && ($bracketPair[0] === '' || $bracketPair[1] === '')) {
-            throw new InvalidArgumentException('Bracket delimiters must not be empty.');
+            throw new InvalidDefinitionException('Bracket delimiters must not be empty.');
         }
         /** @var array{non-empty-string, non-empty-string}|null $bracketPair */
         $this->bracketPair = $bracketPair;
         if ($nestingPair[0] === '' || $nestingPair[1] === '') {
-            throw new InvalidArgumentException('Nesting delimiters must not be empty.');
+            throw new InvalidDefinitionException('Nesting delimiters must not be empty.');
         }
         /** @var array{non-empty-string, non-empty-string} $nestingPair */
         $this->nestingPair = $nestingPair;
         if (strlen($this->statementDelimiter) !== 1 || strlen($this->listDelimiter) !== 1) {
-            throw new InvalidArgumentException('Statement and list delimiters must be single characters.');
+            throw new InvalidDefinitionException('Statement and list delimiters must be single characters.');
         }
     }
 
+    /**
+     * Reports whether a comment running to the end of the line starts here.
+     *
+     * @param string $sql Statement being scanned
+     * @param int $offset Position to look at
+     *
+     * @return bool True when one starts there
+     */
     public function startsLineComment(string $sql, int $offset): bool
     {
         foreach ($this->lineCommentPrefixes as $prefix) {
@@ -137,7 +175,12 @@ final class SqlLexerProfile
     }
 
     /**
-     * @return array{non-empty-string, non-empty-string}|null
+     * Answers the block comment delimiters starting here, if any.
+     *
+     * @param string $sql Statement being scanned
+     * @param int $offset Position to look at
+     *
+     * @return array{non-empty-string, non-empty-string}|null The opening and closing delimiters, or null when no comment starts there
      */
     public function blockCommentAt(string $sql, int $offset): ?array
     {
@@ -150,16 +193,40 @@ final class SqlLexerProfile
         return null;
     }
 
+    /**
+     * Answers the quote that closes a string this one opened.
+     *
+     * @param string $opening Quote that opened it
+     *
+     * @return string|null The closing quote, or null when nothing opens a string with that
+     */
     public function stringQuoteClosing(string $opening): ?string
     {
         return $this->stringQuotePairs[$opening] ?? null;
     }
 
+    /**
+     * Answers the quote that closes an identifier this one opened.
+     *
+     * @param string $opening Quote that opened it
+     *
+     * @return string|null The closing quote, or null when nothing opens an identifier with that
+     */
     public function identifierQuoteClosing(string $opening): ?string
     {
         return $this->identifierQuotePairs[$opening] ?? null;
     }
 
+    /**
+     * Answers the name a quoted identifier stands for.
+     *
+     * A closing quote doubled inside the name is one such character rather than
+     * the end of it, which is how every dialect here writes a quote in a name.
+     *
+     * @param string $identifier Identifier as it was written
+     *
+     * @return string The name, or the identifier unchanged when it was not quoted
+     */
     public function unquoteIdentifier(string $identifier): string
     {
         foreach ($this->identifierQuotePairs as $opening => $closing) {
@@ -174,6 +241,17 @@ final class SqlLexerProfile
         return $identifier;
     }
 
+    /**
+     * Answers the name a quoted identifier stands for, and nothing for anything else.
+     *
+     * This differs from unquoteIdentifier() in what it says about an identifier
+     * that was never quoted: here that is not an identifier this can speak for,
+     * rather than one that stands for itself.
+     *
+     * @param string $identifier Identifier as it was written
+     *
+     * @return string|null The name, or null when it was not a complete quoted identifier
+     */
     public function quotedIdentifierValue(string $identifier): ?string
     {
         foreach ($this->identifierQuotePairs as $opening => $closing) {
@@ -193,20 +271,41 @@ final class SqlLexerProfile
         return null;
     }
 
+    /**
+     * Reports whether a block comment may contain another.
+     *
+     * @return bool True when the dialect nests them
+     */
     public function supportsNestedBlockComments(): bool
     {
         return $this->nestedBlockComments;
     }
 
+    /**
+     * Answers the dollar-quoted delimiter starting here, if any.
+     *
+     * @param string $sql Statement being scanned
+     * @param int $offset Position to look at
+     *
+     * @return string|null The delimiter, or null when none starts there
+     */
     public function dollarQuoteDelimiterAt(string $sql, int $offset): ?string
     {
-        return $this->matchAt($this->dollarQuoteDelimiterPattern, $sql, $offset);
+        return $this->patterns->matchAt($this->dollarQuoteDelimiterPattern, $sql, $offset);
     }
 
+    /**
+     * Answers how long the positional parameter starting here is.
+     *
+     * @param string $sql Statement being scanned
+     * @param int $offset Position to look at
+     *
+     * @return int Its length, or zero when none starts there
+     */
     public function positionalParameterLengthAt(string $sql, int $offset): int
     {
         foreach ($this->positionalParameterPatterns as $pattern) {
-            $match = $this->matchAt($pattern, $sql, $offset);
+            $match = $this->patterns->matchAt($pattern, $sql, $offset);
             if ($match !== null) {
                 return strlen($match);
             }
@@ -215,6 +314,17 @@ final class SqlLexerProfile
         return 0;
     }
 
+    /**
+     * Answers the prefix of the named parameter starting here, if any.
+     *
+     * A prefix is not always a parameter: some dialects write the same character
+     * as part of an operator, and what comes before it is what tells them apart.
+     *
+     * @param string $sql Statement being scanned
+     * @param int $offset Position to look at
+     *
+     * @return string|null The prefix, or null when no parameter starts there
+     */
     public function namedParameterPrefixAt(string $sql, int $offset): ?string
     {
         foreach (array_keys($this->namedParameterSeparators) as $prefix) {
@@ -235,6 +345,15 @@ final class SqlLexerProfile
         return null;
     }
 
+    /**
+     * Answers what separates a parameter prefix from its name here, if anything.
+     *
+     * @param string $prefix Prefix the parameter was written with
+     * @param string $sql Statement being scanned
+     * @param int $offset Position to look at
+     *
+     * @return string|null The separator, or null when none is written there
+     */
     public function parameterNameSeparatorAt(string $prefix, string $sql, int $offset): ?string
     {
         foreach ($this->namedParameterSeparators[$prefix] ?? [] as $separator) {
@@ -246,13 +365,34 @@ final class SqlLexerProfile
         return null;
     }
 
+    /**
+     * Answers how much a parameter written with this prefix carries after its name.
+     *
+     * @param string $prefix Prefix the parameter was written with
+     * @param string $sql Statement being scanned
+     * @param int $offset Position to look at
+     *
+     * @return int How long it is, or zero when nothing follows
+     */
     public function parameterSuffixLength(string $prefix, string $sql, int $offset): int
     {
-        $match = $this->matchAt($this->namedParameterSuffixPatterns[$prefix] ?? null, $sql, $offset);
+        $match = $this->patterns->matchAt($this->namedParameterSuffixPatterns[$prefix] ?? null, $sql, $offset);
 
         return $match === null ? 0 : strlen($match);
     }
 
+    /**
+     * Reports whether the string opening here treats a backslash as an escape.
+     *
+     * Some dialects say so for every string; others only for a string introduced
+     * by a particular prefix, and only where that prefix is a prefix rather than
+     * the tail of an identifier.
+     *
+     * @param string $sql Statement being scanned
+     * @param int $quoteOffset Position of the quote that opens the string
+     *
+     * @return bool True when a backslash escapes inside it
+     */
     public function stringUsesBackslashEscapes(string $sql, int $quoteOffset): bool
     {
         if ($this->backslashEscapedStrings) {
@@ -276,158 +416,112 @@ final class SqlLexerProfile
         return false;
     }
 
+    /**
+     * Answers how long the number starting here is.
+     *
+     * @param string $sql Statement being scanned
+     * @param int $offset Position to look at
+     *
+     * @return int Its length, or zero when no number starts there
+     */
     public function numberLengthAt(string $sql, int $offset): int
     {
-        $match = $this->matchAt($this->numericLiteralPattern, $sql, $offset);
+        $match = $this->patterns->matchAt($this->numericLiteralPattern, $sql, $offset);
 
         return $match === null ? 0 : strlen($match);
     }
 
+    /**
+     * Reports whether an identifier may begin with this character.
+     *
+     * @param string $character Character to test
+     *
+     * @return bool True when it may
+     */
     public function isIdentifierStart(string $character): bool
     {
-        return $this->matchesCharacter($this->identifierStartPattern, $character);
+        return $this->patterns->matchesCharacter($this->identifierStartPattern, $character);
     }
 
+    /**
+     * Reports whether an identifier may continue with this character.
+     *
+     * @param string $character Character to test
+     *
+     * @return bool True when it may
+     */
     public function isIdentifierPart(string $character): bool
     {
-        return $this->matchesCharacter($this->identifierPartPattern, $character);
+        return $this->patterns->matchesCharacter($this->identifierPartPattern, $character);
     }
 
+    /**
+     * Reports whether this character opens a bracket.
+     *
+     * @param string $character Character to test
+     *
+     * @return bool True when it does, and false where the dialect brackets nothing
+     */
     public function isBracketOpening(string $character): bool
     {
         return $this->bracketPair !== null && $character === $this->bracketPair[0];
     }
 
+    /**
+     * Reports whether this character closes a bracket.
+     *
+     * @param string $character Character to test
+     *
+     * @return bool True when it does, and false where the dialect brackets nothing
+     */
     public function isBracketClosing(string $character): bool
     {
         return $this->bracketPair !== null && $character === $this->bracketPair[1];
     }
 
+    /**
+     * Reports whether this character opens a nesting.
+     *
+     * @param string $character Character to test
+     *
+     * @return bool True when it does
+     */
     public function isNestingOpening(string $character): bool
     {
         return $character === $this->nestingPair[0];
     }
 
+    /**
+     * Reports whether this character closes a nesting.
+     *
+     * @param string $character Character to test
+     *
+     * @return bool True when it does
+     */
     public function isNestingClosing(string $character): bool
     {
         return $character === $this->nestingPair[1];
     }
 
+    /**
+     * Reports whether this symbol ends a statement.
+     *
+     * @param string $symbol Symbol to test
+     *
+     * @return bool True when it does
+     */
     public function isStatementDelimiter(string $symbol): bool
     {
         return $symbol === $this->statementDelimiter;
     }
 
+    /**
+     * Answers the character that separates list items.
+     *
+     * @return string The separator
+     */
     public function listDelimiter(): string
     {
         return $this->listDelimiter;
-    }
-
-    private function matchesCharacter(string $pattern, string $character): bool
-    {
-        return $character !== '' && preg_match($pattern, $character) === 1;
-    }
-
-    private function matchAt(?string $pattern, string $subject, int $offset): ?string
-    {
-        if ($pattern === null || preg_match($pattern, substr($subject, $offset), $matches) !== 1) {
-            return null;
-        }
-
-        return $matches[0] === '' ? null : $matches[0];
-    }
-
-    /**
-     * @param list<string> $values
-     * @return list<non-empty-string>
-     */
-    private static function nonEmptyStrings(array $values): array
-    {
-        foreach ($values as $value) {
-            if ($value === '') {
-                throw new InvalidArgumentException('A lexical delimiter must not be empty.');
-            }
-        }
-
-        return $values;
-    }
-
-    /**
-     * @param array<string, string> $pairs
-     * @return array<non-empty-string, non-empty-string>
-     */
-    private static function delimiterPairs(array $pairs, string $kind): array
-    {
-        foreach ($pairs as $opening => $closing) {
-            if ($opening === '' || $closing === '') {
-                throw new InvalidArgumentException($kind . ' delimiters must not be empty.');
-            }
-        }
-
-        return $pairs;
-    }
-
-    /**
-     * @param array<string, list<string>> $parameters
-     * @return array<non-empty-string, list<non-empty-string>>
-     */
-    private static function parameterLists(array $parameters): array
-    {
-        foreach ($parameters as $prefix => $values) {
-            if ($prefix === '') {
-                throw new InvalidArgumentException('A parameter prefix must not be empty.');
-            }
-            $parameters[$prefix] = self::nonEmptyStrings($values);
-        }
-
-        return $parameters;
-    }
-
-    /**
-     * @param array<string, string> $patterns
-     * @return array<non-empty-string, non-empty-string>
-     */
-    private static function parameterPatterns(array $patterns): array
-    {
-        foreach ($patterns as $prefix => $pattern) {
-            if ($prefix === '' || $pattern === '') {
-                throw new InvalidArgumentException('Parameter suffix patterns and prefixes must not be empty.');
-            }
-            self::assertPattern($pattern);
-        }
-
-        return $patterns;
-    }
-
-    /**
-     * @param list<string> $patterns
-     * @return list<non-empty-string>
-     */
-    private static function patterns(array $patterns): array
-    {
-        $patterns = self::nonEmptyStrings($patterns);
-        foreach ($patterns as $pattern) {
-            self::assertPattern($pattern);
-        }
-
-        return $patterns;
-    }
-
-    private static function assertPattern(?string $pattern): void
-    {
-        if ($pattern === null) {
-            return;
-        }
-        set_error_handler(static function (): never {
-            throw new InvalidArgumentException('A lexical pattern must be a valid non-empty regular expression.');
-        });
-        try {
-            $valid = $pattern !== '' && preg_match($pattern, '') !== false;
-        } finally {
-            restore_error_handler();
-        }
-        if (!$valid) {
-            throw new InvalidArgumentException('A lexical pattern must be a valid non-empty regular expression.');
-        }
     }
 }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Rewrite;
 
-use InvalidArgumentException;
+use ZtdQuery\Exception\InvalidDefinitionException;
 
 final class InsertRowProjection
 {
@@ -30,7 +30,7 @@ final class InsertRowProjection
     public static function generatedIdentity(string $targetColumn, int $value): self
     {
         if ($value < 1) {
-            throw new InvalidArgumentException('Generated identity value must be positive.');
+            throw new InvalidDefinitionException('Generated identity value must be positive.');
         }
 
         return new self($targetColumn, null, null, $value, false);

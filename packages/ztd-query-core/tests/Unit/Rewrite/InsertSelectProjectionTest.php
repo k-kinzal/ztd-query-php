@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Rewrite;
 
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Rewrite\InsertSelectProjection;
 
 #[CoversClass(InsertSelectProjection::class)]
@@ -42,7 +42,7 @@ final class InsertSelectProjectionTest extends TestCase
 
     public function testSourceRejectsNegativeSourceIndex(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidDefinitionException::class);
         $this->expectExceptionMessage('Source index must not be negative.');
 
         InsertSelectProjection::source('name', -1);
@@ -50,7 +50,7 @@ final class InsertSelectProjectionTest extends TestCase
 
     public function testGeneratedIdentityRejectsNonPositiveGeneratedIdentityStart(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidDefinitionException::class);
         $this->expectExceptionMessage('Generated identity start must be positive.');
 
         InsertSelectProjection::generatedIdentity('id', 0);

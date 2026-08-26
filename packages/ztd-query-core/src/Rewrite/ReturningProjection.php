@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Rewrite;
 
-use InvalidArgumentException;
+use ZtdQuery\Exception\InvalidDefinitionException;
 
 /**
  * A dialect-neutral projection of mutation rows returned to the client.
@@ -24,14 +24,14 @@ final class ReturningProjection
     public static function fromItems(array $items): self
     {
         if ($items === []) {
-            throw new InvalidArgumentException('Returning projection requires at least one item.');
+            throw new InvalidDefinitionException('Returning projection requires at least one item.');
         }
         foreach ($items as $item) {
             if ($item['source'] === null && $item['output'] !== null) {
-                throw new InvalidArgumentException('Wildcard returning projections cannot have an output name.');
+                throw new InvalidDefinitionException('Wildcard returning projections cannot have an output name.');
             }
             if ($item['source'] === '' || $item['output'] === '') {
-                throw new InvalidArgumentException('Returning projection names must not be empty.');
+                throw new InvalidDefinitionException('Returning projection names must not be empty.');
             }
         }
 

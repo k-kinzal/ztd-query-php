@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Schema;
 
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Schema\TablePartitionKey;
 use ZtdQuery\Schema\TablePartitionStrategy;
 
@@ -23,14 +23,14 @@ final class TablePartitionKeyTest extends TestCase
 
     public function testRejectsEmptyExpression(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidDefinitionException::class);
 
         new TablePartitionKey(TablePartitionStrategy::List, ['']);
     }
 
     public function testRejectsWhitespaceOnlyExpression(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidDefinitionException::class);
 
         new TablePartitionKey(TablePartitionStrategy::List, ['  ']);
     }

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Rewrite;
 
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Rewrite\ReturningProjection;
 
 #[CoversClass(ReturningProjection::class)]
@@ -39,7 +39,7 @@ final class ReturningProjectionTest extends TestCase
 
     public function testRejectsEmptyProjection(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidDefinitionException::class);
         $this->expectExceptionMessage('Returning projection requires at least one item.');
 
         ReturningProjection::fromItems([]);
@@ -47,7 +47,7 @@ final class ReturningProjectionTest extends TestCase
 
     public function testRejectsWildcardOutputName(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidDefinitionException::class);
         $this->expectExceptionMessage('Wildcard returning projections cannot have an output name.');
 
         ReturningProjection::fromItems([['source' => null, 'output' => 'all']]);
@@ -55,7 +55,7 @@ final class ReturningProjectionTest extends TestCase
 
     public function testRejectsEmptySourceName(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidDefinitionException::class);
         $this->expectExceptionMessage('Returning projection names must not be empty.');
 
         ReturningProjection::fromItems([['source' => '', 'output' => null]]);
@@ -63,7 +63,7 @@ final class ReturningProjectionTest extends TestCase
 
     public function testRejectsEmptyOutputName(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidDefinitionException::class);
         $this->expectExceptionMessage('Returning projection names must not be empty.');
 
         ReturningProjection::fromItems([['source' => 'id', 'output' => '']]);
