@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow\Mutation;
 
+/**
+ * One table a statement writing to several of them writes to.
+ */
 final class MultiTableMutationTarget
 {
     private string $tableName;
