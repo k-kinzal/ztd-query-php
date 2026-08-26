@@ -12,7 +12,7 @@ use ZtdQuery\Exception\SimulationException;
 #[CoversClass(MissingPrimaryKeyException::class)]
 final class MissingPrimaryKeyExceptionTest extends TestCase
 {
-    public function testCarriesTableContext(): void
+    public function testGetTableNameCarriesTableContext(): void
     {
         $exception = new MissingPrimaryKeyException('users');
 

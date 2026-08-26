@@ -4,17 +4,20 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow\Mutation;
 
+use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Rewrite\AffectedRowsMode;
 
 /**
  * Derives observable execution metadata from a shadow-state transition.
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 final class MutationImpact
 {
     /**
-     * @param array<int, array<string, mixed>> $before
-     * @param array<int, array<string, mixed>> $input
-     * @param array<int, array<string, mixed>> $after
+     * @param list<Row> $before
+     * @param list<Row> $input
+     * @param list<Row> $after
      */
     public function __construct(
         private readonly ShadowMutation $mutation,
@@ -46,7 +49,7 @@ final class MutationImpact
     }
 
     /**
-     * @return array<int, array<string, mixed>>
+     * @return list<Row>
      */
     public function returningRows(): array
     {
@@ -74,9 +77,9 @@ final class MutationImpact
     }
 
     /**
-     * @param array<int, array<string, mixed>> $left
-     * @param array<int, array<string, mixed>> $right
-     * @return array<int, array<string, mixed>>
+     * @param list<Row> $left
+     * @param list<Row> $right
+     * @return list<Row>
      */
     private function difference(array $left, array $right): array
     {
@@ -100,8 +103,8 @@ final class MutationImpact
     }
 
     /**
-     * @param array<string, mixed> $left
-     * @param array<string, mixed> $right
+     * @param Row $left
+     * @param Row $right
      */
     private function rowsEqual(array $left, array $right): bool
     {
@@ -118,8 +121,8 @@ final class MutationImpact
     }
 
     /**
-     * @param array<int, array<string, mixed>> $rows
-     * @return array<int, array<string, mixed>>
+     * @param list<Row> $rows
+     * @return list<Row>
      */
     private function clean(array $rows): array
     {

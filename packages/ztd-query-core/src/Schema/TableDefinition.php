@@ -14,16 +14,24 @@ final class TableDefinition
      */
     public readonly array $typedColumns;
 
-    /** @var array<string, string> */
+    /**
+     * @var array<string, string>
+     */
     public readonly array $columnDefaults;
 
-    /** @var array<string, IdentityGenerationStrategy> */
+    /**
+     * @var array<string, IdentityGenerationStrategy>
+     */
     public readonly array $identityStrategies;
 
-    /** @var array<string, string> */
+    /**
+     * @var array<string, string>
+     */
     public readonly array $generatedExpressions;
 
-    /** @var array<string, ForeignKeyDefinition> */
+    /**
+     * @var array<string, ForeignKeyDefinition>
+     */
     public readonly array $foreignKeys;
 
     public readonly ?TablePartitioning $partitioning;
@@ -32,7 +40,9 @@ final class TableDefinition
 
     public readonly ?TablePartitionRelation $partitionRelation;
 
-    /** @var array<string, PartialUniqueIndex> */
+    /**
+     * @var array<string, PartialUniqueIndex>
+     */
     public readonly array $partialUniqueIndexes;
 
     /**

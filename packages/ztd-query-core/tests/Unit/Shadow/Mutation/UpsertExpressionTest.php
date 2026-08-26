@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Tests\Unit\Shadow\Mutation;
 
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Shadow\Mutation\UpsertColumnSource;
 use ZtdQuery\Shadow\Mutation\UpsertExpression;
@@ -16,7 +16,7 @@ use ZtdQuery\Shadow\Mutation\UpsertExpressionKind;
 
 #[CoversClass(UpsertExpression::class)]
 #[CoversClass(UpsertColumnSource::class)]
-#[UsesClass(\ZtdQuery\Exception\UnsupportedSqlException::class)]
+#[UsesClass(UnsupportedSqlException::class)]
 final class UpsertExpressionTest extends TestCase
 {
     public function testEvaluatesTypedExpressionTree(): void
@@ -233,14 +233,14 @@ final class UpsertExpressionTest extends TestCase
 
     public function testRejectsInvalidTreeShapes(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidDefinitionException::class);
 
         UpsertExpression::unary(UpsertExpressionKind::Add, UpsertExpression::literal(1));
     }
 
     public function testRejectsEmptyColumn(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidDefinitionException::class);
 
         UpsertExpression::column(UpsertColumnSource::Existing, '');
     }

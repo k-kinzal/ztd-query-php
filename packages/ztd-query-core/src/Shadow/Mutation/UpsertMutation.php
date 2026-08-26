@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow\Mutation;
 
+use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Schema\CandidateKeySet;
 use ZtdQuery\Shadow\ShadowStore;
 
 /**
  * Applies INSERT ... ON DUPLICATE KEY UPDATE (UPSERT) to the shadow store.
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 final class UpsertMutation implements DataMutation
 {
@@ -54,7 +57,7 @@ final class UpsertMutation implements DataMutation
 
     private ?string $updateSqlPredicate;
 
-    /** @var array<int, array<string, mixed>> */
+    /** @var list<Row> */
     private array $resultRows = [];
 
     /**
@@ -203,14 +206,16 @@ final class UpsertMutation implements DataMutation
         return $this->tableName;
     }
 
-    /** @return array<int, array<string, mixed>> */
+    /**
+     * @return list<Row>
+     */
     public function resultRows(): array
     {
         return $this->resultRows;
     }
     /**
-     * @param array<string, mixed> $incomingRow
-     * @param array<int, array<string, mixed>> $existingRows
+     * @param Row $incomingRow
+     * @param list<Row> $existingRows
      */
     private function findConflict(array $incomingRow, array $existingRows): ?\ZtdQuery\Schema\CandidateKeyConflict
     {

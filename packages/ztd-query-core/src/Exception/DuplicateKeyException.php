@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Exception;
 
+use ZtdQuery\Connection\StatementInterface;
+
 /**
  * Exception thrown when a PRIMARY KEY or UNIQUE constraint is violated.
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 final class DuplicateKeyException extends SimulationException
 {
@@ -27,7 +31,7 @@ final class DuplicateKeyException extends SimulationException
     /**
      * The duplicate key values.
      *
-     * @var array<string, mixed>
+     * @var Row
      */
     private array $keyValues;
 
@@ -35,12 +39,14 @@ final class DuplicateKeyException extends SimulationException
      * @param string $sql The SQL statement.
      * @param string $tableName The name of the table.
      * @param string $keyName The name of the key constraint.
-     * @param array<string, mixed> $keyValues The duplicate key values.
+     * @param Row $keyValues The duplicate key values.
      */
     public function __construct(string $sql, string $tableName, string $keyName, array $keyValues = [])
     {
         $keyValuesStr = implode(', ', array_map(
-            static fn (mixed $v): string => is_string($v) ? "'{$v}'" : (is_scalar($v) || $v === null ? (string) $v : '?'),
+            static fn (int|float|string|bool|null $value): string => is_string($value)
+                ? "'{$value}'"
+                : (string) $value,
             array_values($keyValues)
         ));
         parent::__construct(sprintf(
@@ -82,7 +88,7 @@ final class DuplicateKeyException extends SimulationException
     /**
      * Get the duplicate key values.
      *
-     * @return array<string, mixed>
+     * @return Row
      */
     public function getKeyValues(): array
     {

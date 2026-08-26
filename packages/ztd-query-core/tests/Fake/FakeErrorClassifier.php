@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Fake;
 
-use ZtdQuery\Platform\ErrorClassifier;
 use ZtdQuery\Connection\Exception\DatabaseException;
+use ZtdQuery\Platform\ErrorClassifier;
 
 /**
  * Fake ErrorClassifier that classifies errors based on driver error code.

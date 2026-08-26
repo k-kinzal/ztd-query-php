@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Rewrite;
 
+use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Schema\ColumnType;
 
 /**
@@ -11,6 +12,8 @@ use ZtdQuery\Schema\ColumnType;
  *
  * All implementations are stateless and domain-agnostic:
  * they receive table data as arguments and produce transformed SQL.
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 interface SqlTransformer
 {
@@ -19,7 +22,7 @@ interface SqlTransformer
      *
      * @param string $sql The original SQL statement.
      * @param array<string, array{viewSql: string}|array{
-     *     rows: array<int, array<string, mixed>>,
+     *     rows: list<Row>,
      *     columns: array<int, string>,
      *     columnTypes: array<string, ColumnType>,
      *     primaryKeys?: array<int, string>,

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Rewrite;
 
+use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Shadow\Mutation\ShadowMutation;
 
 /**
@@ -78,6 +79,26 @@ final class RewritePlan
      */
     public function mutation(): ?ShadowMutation
     {
+        return $this->mutation;
+    }
+
+    /**
+     * Answers the mutation a simulated write must carry.
+     *
+     * A plan whose kind says the write was simulated and that carries no
+     * mutation describes nothing the shadow could be told, so the statement
+     * is refused rather than read back as though it had been simulated.
+     *
+     * @return ShadowMutation The mutation
+     *
+     * @throws UnsupportedSqlException When the plan carries none
+     */
+    public function requireMutation(): ShadowMutation
+    {
+        if ($this->mutation === null) {
+            throw new UnsupportedSqlException($this->sql, 'Unsimulatable write');
+        }
+
         return $this->mutation;
     }
 

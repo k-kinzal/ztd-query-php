@@ -22,7 +22,9 @@ final class MultiUpdateMutation implements DataMutation
      */
     private string $primaryTable;
 
-    /** @param list<MultiTableMutationTarget> $targets */
+    /**
+     * @param list<MultiTableMutationTarget> $targets
+     */
     public function __construct(array $targets)
     {
         $this->targets = $targets;

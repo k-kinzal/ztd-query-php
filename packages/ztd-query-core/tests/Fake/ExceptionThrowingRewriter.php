@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Fake;
 
+use Throwable;
 use ZtdQuery\Rewrite\MultiRewritePlan;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
@@ -19,9 +20,9 @@ final class ExceptionThrowingRewriter implements SqlRewriter
         return null;
     }
 
-    private \Throwable $exception;
+    private Throwable $exception;
 
-    public function __construct(\Throwable $exception)
+    public function __construct(Throwable $exception)
     {
         $this->exception = $exception;
     }
