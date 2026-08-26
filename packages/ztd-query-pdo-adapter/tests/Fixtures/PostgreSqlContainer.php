@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
+use Override;
 use PDO;
 use Testcontainers\Containers\GenericContainer\GenericContainer;
 use Testcontainers\Containers\WaitStrategy\PDO\PDOConnectWaitStrategy;
@@ -53,6 +54,7 @@ final class PostgreSqlContainer extends GenericContainer
      */
     protected static $AUTO_REMOVE_ON_EXIT = true;
 
+    #[Override]
     protected function waitStrategy($instance): PDOConnectWaitStrategy
     {
         unset($instance);

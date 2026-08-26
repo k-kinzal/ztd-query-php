@@ -23,6 +23,9 @@ final class CreateTableAsCorrectnessTarget
     ) {
     }
 
+    /**
+     * @throws Error
+     */
     public function __invoke(string $input): void
     {
         $seed = crc32(str_pad($input, 4, "\0"));
@@ -91,6 +94,9 @@ final class CreateTableAsCorrectnessTarget
         };
     }
 
+    /**
+     * @throws Error
+     */
     private function compareQuery(string $query, string $createSql, int $seed, SchemaDefinition $schema): void
     {
         $rawRows = $this->fetchAll($this->harness->getRawPdo(), $query);
@@ -116,7 +122,11 @@ final class CreateTableAsCorrectnessTarget
         }
     }
 
-    /** @return array<int, array<string, mixed>> */
+    /**
+     * @return array<int, array<string, mixed>>
+     *
+     * @throws Error
+     */
     private function fetchAll(PDO $pdo, string $query): array
     {
         $statement = $pdo->query($query);

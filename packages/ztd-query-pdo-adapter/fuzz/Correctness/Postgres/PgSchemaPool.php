@@ -102,6 +102,9 @@ final class PgSchemaPool
         return self::$schemas;
     }
 
+    /**
+     * @throws InvalidArgumentException
+     */
     public static function get(string $name): SchemaDefinition
     {
         self::initialize();

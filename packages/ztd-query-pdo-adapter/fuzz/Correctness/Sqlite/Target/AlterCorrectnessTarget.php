@@ -25,6 +25,9 @@ final class AlterCorrectnessTarget
     ) {
     }
 
+    /**
+     * @throws Error
+     */
     public function __invoke(string $input): void
     {
         $seed = crc32(str_pad($input, 4, "\0"));
@@ -155,7 +158,11 @@ final class AlterCorrectnessTarget
         ];
     }
 
-    /** @param list<string> $columns */
+    /**
+     * @param list<string> $columns
+     *
+     * @throws Error
+     */
     private function randomColumn(array $columns): string
     {
         $column = $this->faker->randomElement($columns);
@@ -180,7 +187,11 @@ final class AlterCorrectnessTarget
         return $renamed;
     }
 
-    /** @return array<int, array<string, mixed>> */
+    /**
+     * @return array<int, array<string, mixed>>
+     *
+     * @throws Error
+     */
     private function fetchAll(PDO $pdo, string $table): array
     {
         $statement = $pdo->query('SELECT * FROM ' . $this->quote($table));

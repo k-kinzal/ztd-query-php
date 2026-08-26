@@ -109,6 +109,9 @@ final class PgCorrectnessHarness
         return $this->rawPdo;
     }
 
+    /**
+     * @throws RuntimeException
+     */
     public function getZtdPdo(): ZtdPdo
     {
         if ($this->ztdPdo === null) {

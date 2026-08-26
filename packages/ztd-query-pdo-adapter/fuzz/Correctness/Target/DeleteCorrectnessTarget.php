@@ -34,6 +34,9 @@ final class DeleteCorrectnessTarget
         $this->faker = $faker;
     }
 
+    /**
+     * @throws Error
+     */
     public function __invoke(string $input): void
     {
         $seed = crc32(str_pad($input, 4, "\0"));
@@ -71,6 +74,9 @@ final class DeleteCorrectnessTarget
         }
     }
 
+    /**
+     * @throws Error
+     */
     private function compareTableState(\Fuzz\Correctness\SchemaDefinition $schema, int $seed): void
     {
         $rawRows = $this->fetchAll($this->harness->getRawPdo(), $schema->name);

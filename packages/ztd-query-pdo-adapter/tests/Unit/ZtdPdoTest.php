@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use Override;
 use PDO;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -118,6 +119,7 @@ final class ZtdPdoTest extends TestCase
         $fakePdo = new class ('sqlite::memory:') extends PDO {
             public string $fakeDriver = '';
 
+            #[Override]
             public function getAttribute(int $attribute): mixed
             {
                 if ($attribute === PDO::ATTR_DRIVER_NAME) {
@@ -146,6 +148,7 @@ final class ZtdPdoTest extends TestCase
         $fakePdo = new class ('sqlite::memory:') extends PDO {
             public string $fakeDriver = '';
 
+            #[Override]
             public function getAttribute(int $attribute): mixed
             {
                 if ($attribute === PDO::ATTR_DRIVER_NAME) {
@@ -178,6 +181,7 @@ final class ZtdPdoTest extends TestCase
         $fakePdo = new class ('sqlite::memory:') extends PDO {
             public string $fakeDriver = '';
 
+            #[Override]
             public function getAttribute(int $attribute): mixed
             {
                 if ($attribute === PDO::ATTR_DRIVER_NAME) {

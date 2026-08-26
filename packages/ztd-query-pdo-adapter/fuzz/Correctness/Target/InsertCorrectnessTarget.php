@@ -70,6 +70,9 @@ final class InsertCorrectnessTarget
         }
     }
 
+    /**
+     * @throws Error
+     */
     private function compareTableState(\Fuzz\Correctness\SchemaDefinition $schema, int $seed): void
     {
         $rawRows = $this->fetchAll($this->harness->getRawPdo(), $schema->name);

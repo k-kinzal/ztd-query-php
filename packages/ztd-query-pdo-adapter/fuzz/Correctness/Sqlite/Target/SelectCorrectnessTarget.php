@@ -54,6 +54,9 @@ final class SelectCorrectnessTarget
         }
     }
 
+    /**
+     * @throws Error
+     */
     private function compareSelect(string $sql, SchemaDefinition $schema, int $seed): void
     {
         /** @var array<int, array<string, mixed>>|null $rawResult */

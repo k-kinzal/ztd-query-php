@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Fuzz\Container;
 
+use Override;
 use Testcontainers\Containers\GenericContainer\GenericContainer;
 use Testcontainers\Containers\WaitStrategy\PDO\PDOConnectWaitStrategy;
 
@@ -38,6 +39,7 @@ final class PostgreSqlContainer extends GenericContainer
      */
     protected static $STARTUP_TIMEOUT = 300;
 
+    #[Override]
     protected function waitStrategy($instance): PDOConnectWaitStrategy
     {
         unset($instance);

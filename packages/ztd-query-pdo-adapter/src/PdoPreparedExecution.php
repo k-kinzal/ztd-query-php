@@ -12,7 +12,9 @@ use ZtdQuery\Session;
 
 final class PdoPreparedExecution
 {
-    /** @param array<mixed> $options */
+    /**
+     * @param array<mixed> $options
+     */
     public function __construct(
         private readonly PDO $pdo,
         private readonly Session $session,
@@ -25,6 +27,8 @@ final class PdoPreparedExecution
     /**
      * @param array<int|string, mixed>|null $params
      * @return array{statement: PDOStatement, plan: RewritePlan, params: array<int|string, mixed>|null}
+     *
+     * @throws RuntimeException
      */
     public function prepare(?array $params): array
     {

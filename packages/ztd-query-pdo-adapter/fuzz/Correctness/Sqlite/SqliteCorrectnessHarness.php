@@ -103,6 +103,9 @@ final class SqliteCorrectnessHarness
         return $this->rawPdo;
     }
 
+    /**
+     * @throws RuntimeException
+     */
     public function getZtdPdo(): ZtdPdo
     {
         if ($this->ztdPdo === null) {

@@ -61,6 +61,9 @@ final class PostgreSqlDSN implements DSN, Stringable
         return $this;
     }
 
+    /**
+     * @throws LogicException
+     */
     public function toString(): string
     {
         if ($this->host === null) {

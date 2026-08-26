@@ -56,6 +56,9 @@ final class ExecutionTarget
         $this->storeChecker = new ShadowStoreConsistencyChecker($shadowStore);
     }
 
+    /**
+     * @throws Error
+     */
     public function __invoke(string $input): void
     {
         $seed = crc32(str_pad($input, 4, "\0"));
