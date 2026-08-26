@@ -60,9 +60,13 @@ final class ClassifyTarget
     }
 
     /**
+     * Answers the generator this input should be fuzzed through.
+     *
+     * @param string $input The input
+     *
      * @return callable(): string
      */
-    private function selectGenerator(string $input): callable
+    public function selectGenerator(string $input): callable
     {
         $generators = [
             fn () => $this->provider->sql(maxDepth: 8),

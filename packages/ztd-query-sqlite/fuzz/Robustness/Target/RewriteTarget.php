@@ -99,7 +99,13 @@ final class RewriteTarget
         }
     }
 
-    private function registerFixtureSchemas(TableDefinitionRegistry $registry, SqliteSchemaParser $schemaParser): void
+    /**
+     * Declares the tables a fuzzed statement is run against.
+     *
+     * @param TableDefinitionRegistry $registry The registry
+     * @param SqliteSchemaParser $schemaParser The schema parser
+     */
+    public function registerFixtureSchemas(TableDefinitionRegistry $registry, SqliteSchemaParser $schemaParser): void
     {
         $schemas = [
             'users' => 'CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, email TEXT, status TEXT)',
@@ -116,7 +122,12 @@ final class RewriteTarget
         }
     }
 
-    private function populateFixtureData(ShadowStore $store): void
+    /**
+     * Fills the shadow with the rows a fuzzed statement is run against.
+     *
+     * @param ShadowStore $store Shadow holding the rows
+     */
+    public function populateFixtureData(ShadowStore $store): void
     {
         $store->set('users', [
             ['id' => '1', 'name' => 'Alice', 'email' => 'alice@example.com', 'status' => 'active'],
@@ -139,9 +150,13 @@ final class RewriteTarget
     }
 
     /**
+     * Answers the generator this input should be fuzzed through.
+     *
+     * @param string $input The input
+     *
      * @return callable(): string
      */
-    private function selectGenerator(string $input): callable
+    public function selectGenerator(string $input): callable
     {
         $generators = [
             fn () => $this->provider->sql(maxDepth: 8),

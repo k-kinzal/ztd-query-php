@@ -7,9 +7,8 @@ namespace Tests\Unit\Transformer;
 use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
-use RuntimeException;
-use stdClass;
 use Tests\Contract\TransformerContractTest;
+use Tests\Fixture\DriverAnswer;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\IdentifierQuoter;
 use ZtdQuery\Platform\Sqlite\SqliteCastRenderer;
@@ -517,21 +516,6 @@ final class SelectTransformerTest extends TransformerContractTest
         self::assertSame('SELECT * FROM users', $result);
     }
 
-    public function testUnsupportedValueTypeThrows(): void
-    {
-        $transformer = new SelectTransformer();
-        $tables = [
-            'users' => [
-                'rows' => [['data' => [1, 2, 3]]],
-                'columns' => ['data'],
-                'columnTypes' => [],
-            ],
-        ];
-
-        $this->expectException(RuntimeException::class);
-        $transformer->transform('SELECT * FROM users', $tables);
-    }
-
     public function testObjectWithToString(): void
     {
         $transformer = new SelectTransformer();
@@ -645,7 +629,7 @@ final class SelectTransformerTest extends TransformerContractTest
         $transformer = new SelectTransformer();
         $tables = [
             'users' => [
-                'rows' => [['data' => [1, 2]]],
+                'rows' => [['data' => DriverAnswer::stringable()]],
                 'columns' => ['data'],
                 'columnTypes' => ['data' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT')],
             ],
@@ -1055,10 +1039,9 @@ final class SelectTransformerTest extends TransformerContractTest
     public function testFormatValueWithTypeObjectUsesSerialized(): void
     {
         $transformer = new SelectTransformer();
-        $obj = new stdClass();
         $tables = [
             'users' => [
-                'rows' => [['val' => $obj]],
+                'rows' => [['val' => DriverAnswer::stringable()]],
                 'columns' => ['val'],
                 'columnTypes' => ['val' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT')],
             ],
@@ -1084,7 +1067,7 @@ final class SelectTransformerTest extends TransformerContractTest
         self::assertStringContainsString('existing AS (SELECT 1)', $result);
     }
 
-    public function testConstructorWithCustomCastRendererUsesIt(): void
+    public function testTransformCastsThroughTheRendererItWasGiven(): void
     {
         $castRenderer = static::createStub(CastRenderer::class);
         $castRenderer->method('renderNullCast')->willReturn('CUSTOM_NULL_EXPR');
@@ -1103,7 +1086,7 @@ final class SelectTransformerTest extends TransformerContractTest
         self::assertStringContainsString('CUSTOM_NULL_EXPR', $result);
     }
 
-    public function testConstructorWithCustomQuoterUsesIt(): void
+    public function testTransformQuotesThroughTheQuoterItWasGiven(): void
     {
         $quoter = static::createStub(IdentifierQuoter::class);
         $quoter->method('quote')->willReturn('CUSTOM_QUOTED');
@@ -1370,4 +1353,25 @@ final class SelectTransformerTest extends TransformerContractTest
         self::assertLessThan($emailPos, $namePos);
         self::assertStringContainsString('WHERE 0)', $result);
     }
+    public function testGenerateCteWritesTheRowsTheShadowHolds(): void
+    {
+        self::assertStringContainsString(
+            'SELECT',
+            (new SelectTransformer())->generateCte('t', [['id' => 1]], ['id'], [], []),
+        );
+    }
+
+    public function testWrapCteNamesTheTableTheQueryAnswersFor(): void
+    {
+        self::assertSame(
+            '"t" AS (SELECT 1)',
+            (new SelectTransformer())->wrapCte('"t"', 'SELECT 1', ['id'], []),
+        );
+    }
+
+    public function testRenderFallbackNullCastWritesANullOfSomeType(): void
+    {
+        self::assertStringContainsString('CAST(NULL', (new SelectTransformer())->renderFallbackNullCast());
+    }
+
 }

@@ -29,6 +29,7 @@ use ZtdQuery\Platform\Sqlite\Transformer\SqliteTransformer;
 use ZtdQuery\Platform\Sqlite\Transformer\UpdateTransformer;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Schema\TableDefinitionRegistry;
+use ZtdQuery\Shadow\Mutation\ShadowMutation;
 use ZtdQuery\Shadow\ShadowStore;
 
 /**
@@ -43,7 +44,7 @@ final class RobustnessTarget
     private ShadowStoreConsistencyChecker $storeChecker;
     /** @var array<int, InvariantChecker> */
     private array $checkers;
-    /** @var array<string, array<int, array<string, mixed>>> */
+    /** @var array<string, list<array<string, bool|float|int|string|null>>> The rows every run starts from */
     private array $fixtureData;
 
     /**
@@ -112,10 +113,7 @@ final class RobustnessTarget
             if ($plan->kind() === QueryKind::WRITE_SIMULATED || $plan->kind() === QueryKind::DDL_SIMULATED) {
                 $mutation = $plan->mutation();
                 if ($mutation !== null) {
-                    try {
-                        $mutation->apply($this->shadowStore, []);
-                    } catch (SimulationException) {
-                    }
+                    $this->applyIfPossible($mutation);
 
                     $violation = $this->storeChecker->check($sql);
                     if ($violation !== null) {
@@ -128,7 +126,10 @@ final class RobustnessTarget
         }
     }
 
-    private function resetShadowStore(): void
+    /**
+     * Puts the shadow back to what every run starts from.
+     */
+    public function resetShadowStore(): void
     {
         $this->shadowStore->clear();
         foreach ($this->fixtureData as $table => $rows) {
@@ -136,7 +137,13 @@ final class RobustnessTarget
         }
     }
 
-    private function registerFixtureSchemas(TableDefinitionRegistry $registry, SqliteSchemaParser $schemaParser): void
+    /**
+     * Declares the tables a fuzzed statement is run against.
+     *
+     * @param TableDefinitionRegistry $registry The registry
+     * @param SqliteSchemaParser $schemaParser The schema parser
+     */
+    public function registerFixtureSchemas(TableDefinitionRegistry $registry, SqliteSchemaParser $schemaParser): void
     {
         $schemas = [
             'users' => 'CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, email TEXT, status TEXT)',
@@ -154,9 +161,11 @@ final class RobustnessTarget
     }
 
     /**
-     * @return array<string, array<int, array<string, mixed>>>
+     * Answers the rows every run starts from.
+     *
+     * @return array<string, list<array<string, bool|float|int|string|null>>> Table name => the rows it starts with What it answers
      */
-    private function buildFixtureData(): array
+    public function buildFixtureData(): array
     {
         return [
             'users' => [
@@ -181,9 +190,13 @@ final class RobustnessTarget
     }
 
     /**
+     * Answers the generator this input should be fuzzed through.
+     *
+     * @param string $input The input
+     *
      * @return callable(): string
      */
-    private function selectGenerator(string $input): callable
+    public function selectGenerator(string $input): callable
     {
         $generators = [
             fn () => $this->provider->sql(maxDepth: 8),
@@ -204,5 +217,23 @@ final class RobustnessTarget
 
         $index = ord($input[0] ?? "\0") % count($generators);
         return $generators[$index];
+    }
+
+    /**
+     * Applies a mutation, letting a refusal stand.
+     *
+     * A fuzzed statement is often one ZTD refuses, and a refusal is the
+     * shadow working -- what is being checked is that the shadow is still
+     * consistent afterwards, which is checked either way.
+     *
+     * @param ShadowMutation $mutation What the statement would do
+     */
+    public function applyIfPossible(ShadowMutation $mutation): void
+    {
+        try {
+            $mutation->apply($this->shadowStore, []);
+        } catch (SimulationException) {
+            return;
+        }
     }
 }

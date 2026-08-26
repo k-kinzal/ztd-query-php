@@ -62,7 +62,15 @@ final class SqliteLexicalMasker
         return $result;
     }
 
-    private static function quotedLength(string $sql, string $quote): int
+    /**
+     * Answers how long a quoted run is, from where it opens.
+     *
+     * @param string $sql Statement being read, as written
+     * @param string $quote The quote
+     *
+     * @return int What it answers
+     */
+    public static function quotedLength(string $sql, string $quote): int
     {
         $length = strlen($sql);
         $i = 1;
@@ -82,7 +90,14 @@ final class SqliteLexicalMasker
         }
     }
 
-    private static function bracketQuotedLength(string $sql): int
+    /**
+     * Answers how long a bracketed name is, from where it opens.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return int What it answers
+     */
+    public static function bracketQuotedLength(string $sql): int
     {
         $end = strpos($sql, ']');
         if ($end === false) {

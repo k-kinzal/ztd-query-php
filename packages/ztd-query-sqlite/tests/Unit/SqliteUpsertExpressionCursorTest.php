@@ -1,0 +1,149 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
+use PHPUnit\Framework\TestCase;
+use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\Sqlite\SqliteLexerProfile;
+use ZtdQuery\Platform\Sqlite\SqliteUpsertExpressionCursor;
+use ZtdQuery\Platform\Sqlite\SqliteUpsertLiteral;
+use ZtdQuery\Shadow\Mutation\UpsertColumnSource;
+
+#[CoversClass(SqliteUpsertExpressionCursor::class)]
+#[UsesClass(SqliteUpsertLiteral::class)]
+#[UsesClass(SqliteLexerProfile::class)]
+final class SqliteUpsertExpressionCursorTest extends TestCase
+{
+    public function testOverStartsAtTheFirstThingTheExpressionSays(): void
+    {
+        self::assertSame('qty', SqliteUpsertExpressionCursor::over('qty + 1', 'items')->token()?->text);
+    }
+
+    public function testTokenIsNothingPastTheEndOfTheExpression(): void
+    {
+        $cursor = SqliteUpsertExpressionCursor::over('1', 'items');
+        $cursor->advance();
+
+        self::assertNull($cursor->token());
+    }
+
+    public function testTokenAtLooksFurtherAlongWithoutMovingTheCursor(): void
+    {
+        $cursor = SqliteUpsertExpressionCursor::over('qty + 1', 'items');
+
+        self::assertSame(['+', 'qty'], [$cursor->tokenAt(1)?->text, $cursor->token()?->text]);
+    }
+
+    public function testAdvanceMovesPastAsManyTokensAsItIsTold(): void
+    {
+        $cursor = SqliteUpsertExpressionCursor::over('qty + 1', 'items');
+        $cursor->advance(2);
+
+        self::assertSame('1', $cursor->token()?->text);
+    }
+
+    public function testAtEndIsFalseWhileAnythingIsLeft(): void
+    {
+        self::assertFalse(SqliteUpsertExpressionCursor::over('1', 'items')->atEnd());
+    }
+
+    public function testAtEndReportsThatTheWholeExpressionHasBeenRead(): void
+    {
+        $cursor = SqliteUpsertExpressionCursor::over('1', 'items');
+        $cursor->advance();
+
+        self::assertTrue($cursor->atEnd());
+    }
+
+    public function testIsKeywordReportsTheKeywordTheCursorIsOn(): void
+    {
+        self::assertTrue(SqliteUpsertExpressionCursor::over('NOT TRUE', 'items')->isKeyword('NOT'));
+    }
+
+    public function testIsKeywordIsFalseForAnotherKeywordEntirely(): void
+    {
+        self::assertFalse(SqliteUpsertExpressionCursor::over('NOT TRUE', 'items')->isKeyword('AND'));
+    }
+
+    public function testIsSymbolReportsOneOfTheSymbolsItWasGiven(): void
+    {
+        $cursor = SqliteUpsertExpressionCursor::over('qty + 1', 'items');
+        $cursor->advance();
+
+        self::assertTrue($cursor->isSymbol(['+', '-']));
+    }
+
+    public function testIsSymbolIsFalseWhereTheExpressionHasBeenRead(): void
+    {
+        $cursor = SqliteUpsertExpressionCursor::over('1', 'items');
+        $cursor->advance();
+
+        self::assertFalse($cursor->isSymbol(['+']));
+    }
+
+    public function testIsSymbolAtLooksFurtherAlongWithoutMovingTheCursor(): void
+    {
+        $cursor = SqliteUpsertExpressionCursor::over('a <= 1', 'items');
+
+        self::assertTrue($cursor->isSymbolAt(2, ['=']));
+    }
+
+    public function testIsNameReportsThatTheCursorIsOnAName(): void
+    {
+        self::assertTrue(SqliteUpsertExpressionCursor::over('qty', 'items')->isName());
+    }
+
+    public function testIsNameIsFalseWhereTheCursorIsOnALiteral(): void
+    {
+        self::assertFalse(SqliteUpsertExpressionCursor::over('1', 'items')->isName());
+    }
+
+    public function testTakeNameReadsTheNameAndMovesPastIt(): void
+    {
+        $cursor = SqliteUpsertExpressionCursor::over('qty + 1', 'items');
+
+        self::assertSame(['qty', '+'], [$cursor->takeName(), $cursor->token()?->text]);
+    }
+
+    public function testTakeNameRefusesAnythingThatIsNotAName(): void
+    {
+        $this->expectException(UnsupportedSqlException::class);
+
+        SqliteUpsertExpressionCursor::over('1', 'items')->takeName();
+    }
+
+    public function testSourceOfReadsTheTablesOwnNameAsTheRowAlreadyThere(): void
+    {
+        self::assertSame(
+            UpsertColumnSource::Existing,
+            SqliteUpsertExpressionCursor::over('items.qty', 'items')->sourceOf('items'),
+        );
+    }
+
+    public function testSourceOfReadsTheAliasAsTheRowBeingWritten(): void
+    {
+        self::assertSame(
+            UpsertColumnSource::Incoming,
+            SqliteUpsertExpressionCursor::over('new.qty', 'items', 'new')->sourceOf('new'),
+        );
+    }
+
+    public function testSourceOfRefusesAQualifierThatNamesNeitherRow(): void
+    {
+        $this->expectException(UnsupportedSqlException::class);
+
+        SqliteUpsertExpressionCursor::over('other.qty', 'items')->sourceOf('other');
+    }
+
+    public function testUnsupportedNamesTheExpressionItIsRefusing(): void
+    {
+        self::assertSame(
+            'qty + 1',
+            SqliteUpsertExpressionCursor::over('qty + 1', 'items')->unsupported()->getSql(),
+        );
+    }
+}

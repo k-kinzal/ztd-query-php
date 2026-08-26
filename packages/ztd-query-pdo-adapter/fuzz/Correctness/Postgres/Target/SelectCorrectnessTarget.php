@@ -80,7 +80,12 @@ final class SelectCorrectnessTarget
         }
     }
 
-    private function setupJoinTable(SchemaDefinition $schema): void
+    /**
+     * Creates the second table a join reads.
+     *
+     * @param SchemaDefinition $schema The schema
+     */
+    public function setupJoinTable(SchemaDefinition $schema): void
     {
         $this->harness->getRawPdo()->exec('DROP TABLE IF EXISTS "_ztd_join_no_pk" CASCADE');
         $this->harness->getRawPdo()->exec($schema->sql);
@@ -95,9 +100,15 @@ final class SelectCorrectnessTarget
     }
 
     /**
+     * Runs the SELECT on both sides and fails if they disagree.
+     *
+     * @param string $sql Statement being read, as written
+     * @param SchemaDefinition $schema The schema
+     * @param int $seed The seed
+     *
      * @throws Error
      */
-    private function compareSelect(string $sql, SchemaDefinition $schema, int $seed): void
+    public function compareSelect(string $sql, SchemaDefinition $schema, int $seed): void
     {
         /** @var list<Row>|null $rawResult */
         $rawResult = null;

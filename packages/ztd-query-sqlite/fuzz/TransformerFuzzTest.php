@@ -10,7 +10,6 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\SqliteProvider;
-use Throwable;
 use ZtdQuery\Platform\Sqlite\SqliteCastRenderer;
 use ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter;
 use ZtdQuery\Platform\Sqlite\Transformer\SelectTransformer;
@@ -53,13 +52,9 @@ final class TransformerFuzzTest extends TestCase
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
             $sql = $this->provider->selectStatement(maxDepth: 8);
-            try {
-                $result = $this->transformer->transform($sql, []);
-                self::assertNotEmpty($result, "transform() returned empty string on iteration $i");
-                self::assertSame($sql, $result);
-            } catch (Throwable $e) {
-                self::fail("transform() crashed on iteration $i with SQL: $sql\nError: " . $e->getMessage());
-            }
+            $result = $this->transformer->transform($sql, []);
+            self::assertNotEmpty($result, "transform() returned empty string on iteration $i");
+            self::assertSame($sql, $result);
         }
         self::addToAssertionCount(self::ITERATIONS);
     }
@@ -70,7 +65,6 @@ final class TransformerFuzzTest extends TestCase
      */
     public function testTransformWithShadowDataContainsWithClause(): void
     {
-        /** @var array<string, array{rows: array<int, array<string, mixed>>, columns: array<int, string>, columnTypes: array<string, ColumnDeclaration>}> $tables */
         $tables = [
             'users' => [
                 'rows' => [
@@ -88,14 +82,10 @@ final class TransformerFuzzTest extends TestCase
 
         for ($i = 0; $i < self::ITERATIONS; $i++) {
             $sql = $this->provider->selectStatement(maxDepth: 8);
-            try {
-                $result = $this->transformer->transform($sql, $tables);
-                self::assertNotEmpty($result, "transform() returned empty string on iteration $i");
-                if (stripos($sql, 'users') !== false) {
-                    self::assertStringContainsString('WITH', $result, "transform() should inject CTE when SQL references shadowed table on iteration $i");
-                }
-            } catch (Throwable $e) {
-                self::fail("transform() crashed on iteration $i with SQL: $sql\nError: " . $e->getMessage());
+            $result = $this->transformer->transform($sql, $tables);
+            self::assertNotEmpty($result, "transform() returned empty string on iteration $i");
+            if (stripos($sql, 'users') !== false) {
+                self::assertStringContainsString('WITH', $result, "transform() should inject CTE when SQL references shadowed table on iteration $i");
             }
         }
         self::addToAssertionCount(self::ITERATIONS);
@@ -107,7 +97,6 @@ final class TransformerFuzzTest extends TestCase
      */
     public function testTransformWithEmptyRowsContainsWithClause(): void
     {
-        /** @var array<string, array{rows: array<int, array<string, mixed>>, columns: array<int, string>, columnTypes: array<string, ColumnDeclaration>}> $tables */
         $tables = [
             'users' => [
                 'rows' => [],
@@ -122,14 +111,10 @@ final class TransformerFuzzTest extends TestCase
 
         for ($i = 0; $i < self::ITERATIONS; $i++) {
             $sql = $this->provider->selectStatement(maxDepth: 8);
-            try {
-                $result = $this->transformer->transform($sql, $tables);
-                self::assertNotEmpty($result, "transform() returned empty string on iteration $i");
-                if (stripos($sql, 'users') !== false) {
-                    self::assertStringContainsString('WITH', $result, "transform() should inject CTE when SQL references shadowed table on iteration $i");
-                }
-            } catch (Throwable $e) {
-                self::fail("transform() crashed on iteration $i with SQL: $sql\nError: " . $e->getMessage());
+            $result = $this->transformer->transform($sql, $tables);
+            self::assertNotEmpty($result, "transform() returned empty string on iteration $i");
+            if (stripos($sql, 'users') !== false) {
+                self::assertStringContainsString('WITH', $result, "transform() should inject CTE when SQL references shadowed table on iteration $i");
             }
         }
         self::addToAssertionCount(self::ITERATIONS);

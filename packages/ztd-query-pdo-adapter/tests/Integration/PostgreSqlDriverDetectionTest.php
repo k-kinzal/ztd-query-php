@@ -13,8 +13,6 @@ use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Platform\Postgres\PgSqlSessionFactory;
 
 /**
- * Integration tests for ZtdPdo driver auto-detection with a real PostgreSQL database.
- *
  * @requires extension pdo_pgsql
  * @group integration
  * @group postgres

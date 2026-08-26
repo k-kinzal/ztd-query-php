@@ -85,7 +85,14 @@ final class NoPdoLeakChecker
                }
     }
 
-    private function isAllowedRawPdoException(PDOException $e): bool
+    /**
+     * Answers whether a raw PDO exception is one ZTD is allowed to let through.
+     *
+     * @param PDOException $e The e
+     *
+     * @return bool What it answers
+     */
+    public function isAllowedRawPdoException(PDOException $e): bool
     {
         $sqlState = is_scalar($e->errorInfo[0] ?? '') ? (string) ($e->errorInfo[0] ?? '') : '';
         $driverCode = $e->errorInfo[1] ?? null;

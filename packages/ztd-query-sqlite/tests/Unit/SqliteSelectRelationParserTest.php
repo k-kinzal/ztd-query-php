@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use ReflectionMethod;
 use ZtdQuery\Platform\Sqlite\SqliteLexerProfile;
 use ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser;
 use ZtdQuery\Sql\SqlToken;
@@ -229,9 +228,130 @@ final class SqliteSelectRelationParserTest extends TestCase
 
     public function testIdentifierComponentRejectsMismatchedTokenKind(): void
     {
-        $method = new ReflectionMethod(SqliteSelectRelationParser::class, 'identifierComponentAt');
         $token = new SqlToken(SqlTokenKind::String, '"users"', 0, 0, 0);
 
-        self::assertNull($method->invoke(new SqliteSelectRelationParser(), [$token], 0));
+        self::assertNull((new SqliteSelectRelationParser())->identifierComponentAt([$token], 0));
+    }
+    public function testReferencesFromClauseNamesEveryTableTheClauseJoins(): void
+    {
+        $references = (new SqliteSelectRelationParser())->referencesFromClause('users u JOIN orders o ON o.id = u.id');
+
+        self::assertSame(['users', 'orders'], array_column($references, 'name'));
+    }
+
+    public function testReferencesFromClauseLooksInsideAParenthesisedJoin(): void
+    {
+        $references = (new SqliteSelectRelationParser())->referencesFromClause('(users JOIN orders ON 1 = 1)');
+
+        self::assertSame(['users', 'orders'], array_column($references, 'name'));
+    }
+
+    public function testReferencesFromClauseLeavesAParenthesisedQueryToItself(): void
+    {
+        self::assertSame([], (new SqliteSelectRelationParser())->referencesFromClause('(SELECT 1) x'));
+    }
+
+    public function testClosingTokenAnswersTheParenthesisThatCloses(): void
+    {
+        $parser = new SqliteSelectRelationParser();
+        $tokens = $parser->tokens('(a)');
+
+        self::assertSame(')', $parser->closingToken($tokens, 0)?->text);
+    }
+
+    public function testClosingTokenIsNothingWhereItNeverCloses(): void
+    {
+        $parser = new SqliteSelectRelationParser();
+
+        self::assertNull($parser->closingToken($parser->tokens('(a'), 0));
+    }
+
+    public function testReferenceAtReadsAQualifiedNameDownToTheTable(): void
+    {
+        $parser = new SqliteSelectRelationParser();
+        $sql = 'app.users';
+
+        self::assertSame('users', $parser->referenceAt($sql, $parser->tokens($sql), 0)['name'] ?? null);
+    }
+
+    public function testReferenceAtIsNothingForAFunctionCall(): void
+    {
+        $parser = new SqliteSelectRelationParser();
+        $sql = 'JSON_TABLE(x)';
+
+        self::assertNull($parser->referenceAt($sql, $parser->tokens($sql), 0));
+    }
+
+    public function testIdentifierComponentAtReadsAQuotedNameWithoutItsQuotes(): void
+    {
+        $parser = new SqliteSelectRelationParser();
+
+        self::assertSame('order', $parser->identifierComponentAt($parser->tokens('"order"'), 0)[0] ?? null);
+    }
+
+    public function testIdentifierComponentAtIsNothingPastTheEndOfWhatWasWritten(): void
+    {
+        $parser = new SqliteSelectRelationParser();
+
+        self::assertNull($parser->identifierComponentAt($parser->tokens('a'), 5));
+    }
+
+    public function testFindFromEndStopsWhereTheNextClauseOpens(): void
+    {
+        $parser = new SqliteSelectRelationParser();
+        $sql = 'SELECT * FROM t WHERE a = 1';
+        $tokens = $parser->tokens($sql);
+
+        self::assertSame(16, $parser->findFromEnd($sql, $tokens, $tokens[2]));
+    }
+
+    public function testFindFromEndRunsToTheEndOfAStatementWithNoFurtherClause(): void
+    {
+        $parser = new SqliteSelectRelationParser();
+        $sql = 'SELECT * FROM t';
+        $tokens = $parser->tokens($sql);
+
+        self::assertSame(15, $parser->findFromEnd($sql, $tokens, $tokens[2]));
+    }
+
+    public function testMatchesKeywordSequenceReportsTheRunWrittenThere(): void
+    {
+        $parser = new SqliteSelectRelationParser();
+
+        self::assertTrue($parser->matchesKeywordSequence($parser->tokens('GROUP BY a'), 0, ['GROUP', 'BY']));
+    }
+
+    public function testMatchesKeywordSequenceIsFalseWhereOnlyPartOfItIsWritten(): void
+    {
+        $parser = new SqliteSelectRelationParser();
+
+        self::assertFalse($parser->matchesKeywordSequence($parser->tokens('GROUP a'), 0, ['GROUP', 'BY']));
+    }
+
+    public function testTokensLeavesOutWhatCarriesNoMeaning(): void
+    {
+        self::assertSame(
+            ['SELECT', '1'],
+            array_map(
+                static fn (SqlToken $token): string => $token->text,
+                (new SqliteSelectRelationParser())->tokens('SELECT /* c */ 1'),
+            ),
+        );
+    }
+
+    public function testTableNamesAnswersEveryTableTheStatementReads(): void
+    {
+        self::assertSame(
+            ['users'],
+            (new SqliteSelectRelationParser())->tableNames('SELECT * FROM users'),
+        );
+    }
+
+    public function testUnqualifyTakesTheSchemaOffTheTablesItWasNamed(): void
+    {
+        self::assertSame(
+            'SELECT * FROM users',
+            (new SqliteSelectRelationParser())->unqualify('SELECT * FROM app.users', ['users']),
+        );
     }
 }

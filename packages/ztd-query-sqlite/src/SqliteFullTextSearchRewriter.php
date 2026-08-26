@@ -54,10 +54,18 @@ final class SqliteFullTextSearchRewriter
     }
 
     /**
-     * @param array<string, TableContext> $tables
-     * @return array{start: int, end: int, replacement: string}|null
+     * Answers the edit that replaces one MATCH with what it comes to.
+     *
+     * There is no full-text index in the shadow, so a match is worked out from
+     * the columns themselves.
+     *
+     * @param SqlTokenStream $stream Stream to read
+     * @param SqlToken $operator The operator
+     * @param array<string, TableContext> $tables The tables
+     *
+     * @return array{start: int, end: int, replacement: string}|null What it answers
      */
-    private function expressionEdit(SqlTokenStream $stream, SqlToken $operator, array $tables): ?array
+    public function expressionEdit(SqlTokenStream $stream, SqlToken $operator, array $tables): ?array
     {
         if ($operator->isKeyword('MATCH')) {
             $allowsColumnName = true;
@@ -100,10 +108,14 @@ final class SqliteFullTextSearchRewriter
     }
 
     /**
-     * @param array<string, TableContext> $tables
-     * @return array<int, string>|null
+     * Answers the columns a table has, if the shadow knows it.
+     *
+     * @param string $name Name to read
+     * @param array<string, TableContext> $tables The tables
+     *
+     * @return array<int, string>|null What it answers
      */
-    private function tableColumns(string $name, array $tables): ?array
+    public function tableColumns(string $name, array $tables): ?array
     {
         foreach ($tables as $tableName => $context) {
             if (strcasecmp($name, $tableName) !== 0) {
@@ -120,10 +132,14 @@ final class SqliteFullTextSearchRewriter
     }
 
     /**
-     * @param array<string, TableContext> $tables
-     * @return list<string>|null
+     * Answers the column a match is against, and the table it belongs to.
+     *
+     * @param string $name Name to read
+     * @param array<string, TableContext> $tables The tables
+     *
+     * @return list<string>|null What it answers
      */
-    private function matchingColumn(string $name, array $tables): ?array
+    public function matchingColumn(string $name, array $tables): ?array
     {
         $match = null;
         foreach ($tables as $context) {
@@ -144,15 +160,26 @@ final class SqliteFullTextSearchRewriter
         return $match;
     }
 
-    private static function isIdentifier(SqlToken $token): bool
+    /**
+     * Reports whether a token is a name at all.
+     *
+     * @param SqlToken $token Token to read
+     *
+     * @return bool What it answers
+     */
+    public static function isIdentifier(SqlToken $token): bool
     {
-        return match ($token->kind) {
-            SqlTokenKind::Word, SqlTokenKind::QuotedIdentifier => true,
-            default => false,
-        };
+        return $token->kind === SqlTokenKind::Word || $token->kind === SqlTokenKind::QuotedIdentifier;
     }
 
-    private static function isQueryExpression(SqlToken $token): bool
+    /**
+     * Reports whether a token could be what is searched for.
+     *
+     * @param SqlToken $token Token to read
+     *
+     * @return bool What it answers
+     */
+    public static function isQueryExpression(SqlToken $token): bool
     {
         return in_array($token->kind, [SqlTokenKind::String, SqlTokenKind::Parameter], true);
     }

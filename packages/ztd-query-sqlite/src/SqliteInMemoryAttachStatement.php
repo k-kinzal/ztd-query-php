@@ -50,9 +50,14 @@ final class SqliteInMemoryAttachStatement
     }
 
     /**
-     * @param list<SqlToken> $tokens
+     * Reports whether a byte could carry a name on.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param int $index Where to read
+     *
+     * @return bool What it answers
      */
-    private static function isIdentifierSuffix(array $tokens, int $index): bool
+    public static function isIdentifierSuffix(array $tokens, int $index): bool
     {
         if (count($tokens) - $index !== 1) {
             return false;
@@ -75,7 +80,15 @@ final class SqliteInMemoryAttachStatement
             && $identifierTokens[0]->text === $identifier;
     }
 
-    private static function isSymbol(SqlToken $token, string $symbol): bool
+    /**
+     * Reports whether a token is this symbol.
+     *
+     * @param SqlToken $token Token to read
+     * @param string $symbol Symbol it must be
+     *
+     * @return bool What it answers
+     */
+    public static function isSymbol(SqlToken $token, string $symbol): bool
     {
         return $token->kind === SqlTokenKind::Symbol && $token->text === $symbol;
     }

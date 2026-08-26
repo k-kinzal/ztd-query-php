@@ -10,9 +10,6 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\SqliteProvider;
-use Throwable;
-use ZtdQuery\Exception\UnknownSchemaException;
-use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\Sqlite\SqliteCastRenderer;
 use ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter;
 use ZtdQuery\Platform\Sqlite\SqliteMutationResolver;
@@ -105,9 +102,14 @@ final class FullPipelineFuzzTest extends TestCase
     }
 
     /**
-     * Build a fresh rewriter with given registry and shadow store.
+     * Answers the rewriter a fuzzed statement is run through.
+     *
+     * @param ShadowStore $shadowStore The shadow store
+     * @param TableDefinitionRegistry $registry The registry
+     *
+     * @return SqliteRewriter What it answers
      */
-    private function buildRewriter(ShadowStore $shadowStore, TableDefinitionRegistry $registry): SqliteRewriter
+    public function buildRewriter(ShadowStore $shadowStore, TableDefinitionRegistry $registry): SqliteRewriter
     {
         $parser = new SqliteParser();
         $guard = new SqliteQueryGuard($parser);
@@ -125,11 +127,14 @@ final class FullPipelineFuzzTest extends TestCase
     }
 
     /**
-     * Generate random fixture rows for a table definition.
+     * Answers the rows a fuzzed statement is run against.
      *
-     * @return array<int, array<string, mixed>>
+     * @param TableDefinition $definition What the table holds
+     * @param int $count The count
+     *
+     * @return list<array<string, bool|float|int|string|null>> The rows, as the shadow would hold them What it answers
      */
-    private function generateFixtureRows(TableDefinition $definition, int $count): array
+    public function generateFixtureRows(TableDefinition $definition, int $count): array
     {
         $rows = [];
         for ($i = 0; $i < $count; $i++) {
@@ -145,9 +150,14 @@ final class FullPipelineFuzzTest extends TestCase
     }
 
     /**
-     * Generate a random value appropriate for the given SQL type.
+     * Answers a value a column of this type could hold.
+     *
+     * @param string $type How the column was declared
+     * @param int $seed The seed
+     *
+     * @return int|float|string|bool What it answers
      */
-    private function generateValueForType(string $type, int $seed): int|float|string|bool
+    public function generateValueForType(string $type, int $seed): int|float|string|bool
     {
         $baseType = preg_replace('/\(.*\)/', '', $type);
         $baseType = trim($baseType ?? $type);
@@ -189,15 +199,10 @@ final class FullPipelineFuzzTest extends TestCase
             $rewriter = $this->buildRewriter($shadowStore, $registry);
 
             $selectSql = 'SELECT * FROM "' . str_replace('"', '""', $tableName) . '"';
-            try {
-                $plan = $rewriter->rewrite($selectSql);
-                self::assertNotEmpty($plan->sql());
-                self::assertSame(QueryKind::READ, $plan->kind());
-                self::assertNull($plan->mutation());
-            } catch (UnsupportedSqlException|UnknownSchemaException) {
-            } catch (Throwable $e) {
-                self::fail("Full pipeline SELECT crashed on iteration $i\nCREATE: $createSql\nSELECT: $selectSql\nError: " . $e->getMessage());
-            }
+            $plan = $rewriter->rewrite($selectSql);
+            self::assertNotEmpty($plan->sql());
+            self::assertSame(QueryKind::READ, $plan->kind());
+            self::assertNull($plan->mutation());
         }
         self::addToAssertionCount(self::ITERATIONS);
     }
@@ -232,27 +237,22 @@ final class FullPipelineFuzzTest extends TestCase
             $values = $this->buildInsertValues($definition);
             $insertSql = 'INSERT INTO "' . str_replace('"', '""', $tableName) . '" (' . implode(', ', array_map(fn (string $c) => '"' . str_replace('"', '""', $c) . '"', $definition->columns)) . ') VALUES (' . $values . ')';
 
-            try {
-                $plan = $rewriter->rewrite($insertSql);
-                self::assertNotEmpty($plan->sql());
-                self::assertSame(QueryKind::WRITE_SIMULATED, $plan->kind());
+            $plan = $rewriter->rewrite($insertSql);
+            self::assertNotEmpty($plan->sql());
+            self::assertSame(QueryKind::WRITE_SIMULATED, $plan->kind());
 
-                if ($plan->mutation() !== null) {
-                    $countBefore = count($shadowStore->get($tableName));
-                    $fakeResultRows = [$this->generateFixtureRows($definition, 1)[0]];
-                    $plan->mutation()->apply($shadowStore, $fakeResultRows);
+            if ($plan->mutation() !== null) {
+                $countBefore = count($shadowStore->get($tableName));
+                $fakeResultRows = [$this->generateFixtureRows($definition, 1)[0]];
+                $plan->mutation()->apply($shadowStore, $fakeResultRows);
 
-                    $storedRows = $shadowStore->get($tableName);
-                    self::assertNotEmpty($storedRows);
-                    self::assertGreaterThanOrEqual(
-                        $countBefore,
-                        count($storedRows),
-                        "INSERT mutation should not decrease row count on iteration $i"
-                    );
-                }
-            } catch (UnsupportedSqlException|UnknownSchemaException) {
-            } catch (Throwable $e) {
-                self::fail("Full pipeline INSERT crashed on iteration $i\nCREATE: $createSql\nINSERT: $insertSql\nError: " . $e->getMessage());
+                $storedRows = $shadowStore->get($tableName);
+                self::assertNotEmpty($storedRows);
+                self::assertGreaterThanOrEqual(
+                    $countBefore,
+                    count($storedRows),
+                    "INSERT mutation should not decrease row count on iteration $i"
+                );
             }
         }
         self::addToAssertionCount(self::ITERATIONS);
@@ -289,25 +289,20 @@ final class FullPipelineFuzzTest extends TestCase
             $firstCol = $definition->columns[0];
             $updateSql = 'UPDATE "' . str_replace('"', '""', $tableName) . '" SET "' . str_replace('"', '""', $firstCol) . '" = "' . str_replace('"', '""', $firstCol) . '"';
 
-            try {
-                $plan = $rewriter->rewrite($updateSql);
-                self::assertNotEmpty($plan->sql());
-                self::assertSame(QueryKind::WRITE_SIMULATED, $plan->kind());
+            $plan = $rewriter->rewrite($updateSql);
+            self::assertNotEmpty($plan->sql());
+            self::assertSame(QueryKind::WRITE_SIMULATED, $plan->kind());
 
-                if ($plan->mutation() !== null) {
-                    $countBefore = count($shadowStore->get($tableName));
-                    $plan->mutation()->apply($shadowStore, $fixtureRows);
-                    $storedRows = $shadowStore->get($tableName);
+            if ($plan->mutation() !== null) {
+                $countBefore = count($shadowStore->get($tableName));
+                $plan->mutation()->apply($shadowStore, $fixtureRows);
+                $storedRows = $shadowStore->get($tableName);
 
-                    self::assertCount(
-                        $countBefore,
-                        $storedRows,
-                        "UPDATE mutation should preserve row count on iteration $i"
-                    );
-                }
-            } catch (UnsupportedSqlException|UnknownSchemaException) {
-            } catch (Throwable $e) {
-                self::fail("Full pipeline UPDATE crashed on iteration $i\nCREATE: $createSql\nUPDATE: $updateSql\nError: " . $e->getMessage());
+                self::assertCount(
+                    $countBefore,
+                    $storedRows,
+                    "UPDATE mutation should preserve row count on iteration $i"
+                );
             }
         }
         self::addToAssertionCount(self::ITERATIONS);
@@ -343,18 +338,13 @@ final class FullPipelineFuzzTest extends TestCase
 
             $deleteSql = 'DELETE FROM "' . str_replace('"', '""', $tableName) . '"';
 
-            try {
-                $plan = $rewriter->rewrite($deleteSql);
-                self::assertNotEmpty($plan->sql());
-                self::assertSame(QueryKind::WRITE_SIMULATED, $plan->kind());
+            $plan = $rewriter->rewrite($deleteSql);
+            self::assertNotEmpty($plan->sql());
+            self::assertSame(QueryKind::WRITE_SIMULATED, $plan->kind());
 
-                if ($plan->mutation() !== null) {
-                    $plan->mutation()->apply($shadowStore, $fixtureRows);
-                    $shadowStore->get($tableName);
-                }
-            } catch (UnsupportedSqlException|UnknownSchemaException) {
-            } catch (Throwable $e) {
-                self::fail("Full pipeline DELETE crashed on iteration $i\nCREATE: $createSql\nDELETE: $deleteSql\nError: " . $e->getMessage());
+            if ($plan->mutation() !== null) {
+                $plan->mutation()->apply($shadowStore, $fixtureRows);
+                $shadowStore->get($tableName);
             }
         }
         self::addToAssertionCount(self::ITERATIONS);
@@ -384,22 +374,17 @@ final class FullPipelineFuzzTest extends TestCase
 
             $rewriter = $this->buildRewriter($shadowStore, $registry);
 
-            try {
-                $createPlan = $rewriter->rewrite($createSql);
-                self::assertSame(QueryKind::DDL_SIMULATED, $createPlan->kind());
+            $createPlan = $rewriter->rewrite($createSql);
+            self::assertSame(QueryKind::DDL_SIMULATED, $createPlan->kind());
 
-                if ($createPlan->mutation() !== null) {
-                    $createPlan->mutation()->apply($shadowStore, []);
-                }
-
-                $selectSql = 'SELECT * FROM "' . str_replace('"', '""', $tableName) . '"';
-                $selectPlan = $rewriter->rewrite($selectSql);
-                self::assertNotEmpty($selectPlan->sql());
-                self::assertSame(QueryKind::READ, $selectPlan->kind());
-            } catch (UnsupportedSqlException|UnknownSchemaException) {
-            } catch (Throwable $e) {
-                self::fail("Full pipeline CREATE->SELECT crashed on iteration $i\nCREATE: $createSql\nError: " . $e->getMessage());
+            if ($createPlan->mutation() !== null) {
+                $createPlan->mutation()->apply($shadowStore, []);
             }
+
+            $selectSql = 'SELECT * FROM "' . str_replace('"', '""', $tableName) . '"';
+            $selectPlan = $rewriter->rewrite($selectSql);
+            self::assertNotEmpty($selectPlan->sql());
+            self::assertSame(QueryKind::READ, $selectPlan->kind());
         }
         self::addToAssertionCount(self::ITERATIONS);
     }
@@ -444,31 +429,26 @@ final class FullPipelineFuzzTest extends TestCase
             ];
 
             foreach ($operations as $sql) {
-                try {
-                    $plan = $rewriter->rewrite($sql);
-                    self::assertNotEmpty($plan->sql());
-                    self::assertInstanceOf(QueryKind::class, $plan->kind());
+                $plan = $rewriter->rewrite($sql);
+                self::assertNotEmpty($plan->sql());
+                self::assertInstanceOf(QueryKind::class, $plan->kind());
 
-                    if ($plan->mutation() !== null) {
-                        $fakeRows = $this->generateFixtureRows($definition, 1);
-                        $plan->mutation()->apply($shadowStore, $fakeRows);
-                    }
+                if ($plan->mutation() !== null) {
+                    $fakeRows = $this->generateFixtureRows($definition, 1);
+                    $plan->mutation()->apply($shadowStore, $fakeRows);
+                }
 
-                    $allData = $shadowStore->getAll();
-                    foreach ($allData as $tblName => $tblRows) {
-                        self::assertNotEmpty($tblName, 'ShadowStore contains empty table name key');
-                    }
+                $allData = $shadowStore->getAll();
+                foreach ($allData as $tblName => $tblRows) {
+                    self::assertNotEmpty($tblName, 'ShadowStore contains empty table name key');
+                }
 
-                    self::assertArrayHasKey($tableName, $allData);
+                self::assertArrayHasKey($tableName, $allData);
 
-                    if ($plan->kind() === QueryKind::READ) {
-                        self::assertNull($plan->mutation(), 'READ plan must have no mutation');
-                    } elseif ($plan->kind() === QueryKind::WRITE_SIMULATED || $plan->kind() === QueryKind::DDL_SIMULATED) {
-                        self::assertNotNull($plan->mutation(), "{$plan->kind()->value} plan must have a mutation");
-                    }
-                } catch (UnsupportedSqlException|UnknownSchemaException) {
-                } catch (Throwable $e) {
-                    self::fail("ShadowStore integrity check failed on iteration $i with SQL: $sql\nCREATE: $createSql\nError: " . $e->getMessage());
+                if ($plan->kind() === QueryKind::READ) {
+                    self::assertNull($plan->mutation(), 'READ plan must have no mutation');
+                } elseif ($plan->kind() === QueryKind::WRITE_SIMULATED || $plan->kind() === QueryKind::DDL_SIMULATED) {
+                    self::assertNotNull($plan->mutation(), "{$plan->kind()->value} plan must have a mutation");
                 }
             }
         }
@@ -476,9 +456,13 @@ final class FullPipelineFuzzTest extends TestCase
     }
 
     /**
-     * Extract table name from a CREATE TABLE statement.
+     * Answers the table a declaration declares.
+     *
+     * @param string $createSql The create sql
+     *
+     * @return string|null What it answers
      */
-    private function extractTableName(string $createSql): ?string
+    public function extractTableName(string $createSql): ?string
     {
         if (preg_match('/CREATE\s+(?:TEMPORARY\s+)?TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:"([^"]+)"|`([^`]+)`|\[([^\]]+)\]|(\S+))\s*\(/i', $createSql, $m) !== 1) {
             return null;
@@ -488,9 +472,13 @@ final class FullPipelineFuzzTest extends TestCase
     }
 
     /**
-     * Build a VALUES clause with placeholder literals for all columns.
+     * Writes the values of one row as an INSERT would write them.
+     *
+     * @param TableDefinition $definition What the table holds
+     *
+     * @return string What it answers
      */
-    private function buildInsertValues(TableDefinition $definition): string
+    public function buildInsertValues(TableDefinition $definition): string
     {
         $values = [];
         foreach ($definition->columns as $col) {

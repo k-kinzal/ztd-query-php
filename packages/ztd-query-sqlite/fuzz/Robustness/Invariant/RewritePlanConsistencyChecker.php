@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Fuzz\Robustness\Invariant;
 
-use Throwable;
+use ZtdQuery\Exception\SimulationException;
 use ZtdQuery\Platform\Sqlite\SqliteIndexHintStripper;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
@@ -37,7 +37,7 @@ final class RewritePlanConsistencyChecker implements InvariantChecker
     {
         try {
             $plan = $this->rewriter->rewrite($sql);
-        } catch (Throwable) {
+        } catch (SimulationException) {
             return null;
         }
 

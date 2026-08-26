@@ -8,10 +8,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer;
+use ZtdQuery\Platform\Sqlite\SqliteLexerProfile;
+use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(SqliteCteShadowComposer::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
+#[UsesClass(SqliteLexerProfile::class)]
 final class SqliteCteShadowComposerTest extends TestCase
 {
     public function testIncludesTransitivelyReferencedShadowCtes(): void
@@ -249,6 +251,117 @@ final class SqliteCteShadowComposerTest extends TestCase
                 'SELECT * FROM public."users"',
                 ['users' => 'users AS (SELECT 1 AS id)'],
             ),
+        );
+    }
+    public function testParseHeaderReadsWhatTheWithNamesAndWhereTheStatementStarts(): void
+    {
+        self::assertSame(
+            ['names' => ['x'], 'statementOffset' => 21],
+            (new SqliteCteShadowComposer())->parseHeader('WITH x AS (SELECT 1) SELECT * FROM x'),
+        );
+    }
+
+    public function testParseHeaderIsEmptyForAStatementThatOpensWithNoWith(): void
+    {
+        self::assertSame(
+            ['names' => [], 'statementOffset' => null],
+            (new SqliteCteShadowComposer())->parseHeader('SELECT 1'),
+        );
+    }
+
+    public function testFindAsIndexAnswersWhereTheAsIsWritten(): void
+    {
+        $tokens = SqlTokenStream::tokenize('x AS (SELECT 1)', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertSame(1, (new SqliteCteShadowComposer())->findAsIndex($tokens, 1));
+    }
+
+    public function testFindAsIndexIsNothingWhereABareWordComesFirst(): void
+    {
+        $tokens = SqlTokenStream::tokenize('x y', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertNull((new SqliteCteShadowComposer())->findAsIndex($tokens, 1));
+    }
+
+    public function testIsSymbolReportsATokenBeingThatSymbol(): void
+    {
+        $tokens = SqlTokenStream::tokenize('(1)', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertTrue((new SqliteCteShadowComposer())->isSymbol($tokens[0], '('));
+    }
+
+    public function testIsSymbolIsFalsePastTheEndOfWhatWasWritten(): void
+    {
+        self::assertFalse((new SqliteCteShadowComposer())->isSymbol(null, '('));
+    }
+
+    public function testReferencesIdentifierReportsAStatementNamingIt(): void
+    {
+        self::assertTrue((new SqliteCteShadowComposer())->referencesIdentifier('SELECT * FROM users', 'users'));
+    }
+
+    public function testReferencesIdentifierReadsAQuotedNameAsTheSameName(): void
+    {
+        self::assertTrue((new SqliteCteShadowComposer())->referencesIdentifier('SELECT * FROM "users"', 'users'));
+    }
+
+    public function testReferencesIdentifierIsFalseWhereTheStatementNamesSomethingElse(): void
+    {
+        self::assertFalse((new SqliteCteShadowComposer())->referencesIdentifier('SELECT * FROM orders', 'users'));
+    }
+
+    public function testReferencesAnyIdentifierReportsAStatementNamingOneOfThem(): void
+    {
+        self::assertTrue(
+            (new SqliteCteShadowComposer())->referencesAnyIdentifier('SELECT * FROM users', ['orders', 'users']),
+        );
+    }
+
+    public function testReferencesAnyIdentifierIsFalseWhereItNamesNoneOfThem(): void
+    {
+        self::assertFalse(
+            (new SqliteCteShadowComposer())->referencesAnyIdentifier('SELECT 1', ['orders', 'users']),
+        );
+    }
+
+    public function testIdentifierNameTakesTheQuotingOffAName(): void
+    {
+        $tokens = SqlTokenStream::tokenize('"order"', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertSame('order', (new SqliteCteShadowComposer())->identifierName($tokens[0]));
+    }
+
+    public function testIdentifierNameIsNothingForATokenThatIsNotAName(): void
+    {
+        $tokens = SqlTokenStream::tokenize('1', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertNull((new SqliteCteShadowComposer())->identifierName($tokens[0]));
+    }
+
+    public function testDeclaredCteNamesAnswersWhatTheStatementDeclaresForItself(): void
+    {
+        self::assertSame(
+            ['x'],
+            (new SqliteCteShadowComposer())->declaredCteNames('WITH x AS (SELECT 1) SELECT * FROM x'),
+        );
+    }
+
+    public function testCarryPrefixKeepsWhatTheStatementDeclaredForItself(): void
+    {
+        self::assertStringContainsString(
+            'x AS (SELECT 1)',
+            (new SqliteCteShadowComposer())->carryPrefix(
+                'WITH x AS (SELECT 1) SELECT * FROM x',
+                'SELECT * FROM x',
+            ),
+        );
+    }
+
+    public function testStatementSqlAnswersTheStatementWithoutItsHeader(): void
+    {
+        self::assertSame(
+            'SELECT * FROM x',
+            (new SqliteCteShadowComposer())->statementSql('WITH x AS (SELECT 1) SELECT * FROM x'),
         );
     }
 }

@@ -10,7 +10,6 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use Tests\Fixtures\PostgreSqlContainer;
-use ValueError;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 
@@ -141,7 +140,7 @@ final class CopyTest extends TestCase
             try {
                 $ztdPdo->pgsqlCopyFromArray('copy_target', ["1\tvalid\n", "2\n"]);
                 self::fail('Expected a malformed COPY row to be rejected.');
-            } catch (ValueError $exception) {
+            } catch (ZtdPdoException $exception) {
                 self::assertStringContainsString('2 fields are required', $exception->getMessage());
             }
 

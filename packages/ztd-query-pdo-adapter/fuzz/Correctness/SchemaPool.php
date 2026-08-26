@@ -17,7 +17,10 @@ final class SchemaPool
 
     private static bool $initialized = false;
 
-    private static function initialize(): void
+    /**
+     * Fills the pool the first time it is asked for.
+     */
+    public static function initialize(): void
     {
         if (self::$initialized) {
             return;

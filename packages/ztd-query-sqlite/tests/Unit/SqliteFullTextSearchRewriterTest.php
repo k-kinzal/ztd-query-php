@@ -10,12 +10,14 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Sqlite\SqliteFullTextSearchRewriter;
 use ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter;
+use ZtdQuery\Platform\Sqlite\SqliteLexerProfile;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
+use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(SqliteFullTextSearchRewriter::class)]
 #[UsesClass(SqliteIdentifierQuoter::class)]
 #[UsesClass(SqliteParser::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
+#[UsesClass(SqliteLexerProfile::class)]
 final class SqliteFullTextSearchRewriterTest extends TestCase
 {
     public function testRewritesTableMatchAcrossEveryFtsColumn(): void
@@ -187,4 +189,47 @@ final class SqliteFullTextSearchRewriterTest extends TestCase
             ),
         );
     }
+    public function testExpressionEditIsNothingWhereNoTableIsMatchedAgainst(): void
+    {
+        $sql = 'SELECT * FROM t WHERE a MATCH \'x\'';
+        $stream = SqlTokenStream::tokenize($sql, SqliteLexerProfile::create());
+        $operator = $stream->significantTokens()[5];
+
+        self::assertNull((new SqliteFullTextSearchRewriter())->expressionEdit($stream, $operator, []));
+    }
+
+    public function testTableColumnsAnswersTheColumnsATableHas(): void
+    {
+        self::assertSame(
+            ['id'],
+            (new SqliteFullTextSearchRewriter())->tableColumns('t', [
+                't' => ['rows' => [], 'columns' => ['id'], 'columnTypes' => []],
+            ]),
+        );
+    }
+
+    public function testTableColumnsIsNothingForATableTheShadowDoesNotKnow(): void
+    {
+        self::assertNull((new SqliteFullTextSearchRewriter())->tableColumns('t', []));
+    }
+
+    public function testMatchingColumnIsNothingWhereNoTableHasThatColumn(): void
+    {
+        self::assertNull((new SqliteFullTextSearchRewriter())->matchingColumn('missing', []));
+    }
+
+    public function testIsIdentifierReportsABareWord(): void
+    {
+        $tokens = SqlTokenStream::tokenize('a', SqliteLexerProfile::create())->significantTokens();
+
+        self::assertTrue(SqliteFullTextSearchRewriter::isIdentifier($tokens[0]));
+    }
+
+    public function testIsQueryExpressionReportsSomethingThatCouldBeSearchedFor(): void
+    {
+        $tokens = SqlTokenStream::tokenize("'x'", SqliteLexerProfile::create())->significantTokens();
+
+        self::assertTrue(SqliteFullTextSearchRewriter::isQueryExpression($tokens[0]));
+    }
+
 }

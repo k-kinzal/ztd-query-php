@@ -10,9 +10,10 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Adapter\Pdo\PdoConnection;
 use ZtdQuery\Adapter\Pdo\PdoParameterBinder;
-use ZtdQuery\Adapter\Pdo\PdoParameterType;
+use ZtdQuery\Adapter\Pdo\PdoParameterKind;
 use ZtdQuery\Adapter\Pdo\PdoPreparedExecution;
 use ZtdQuery\Adapter\Pdo\PdoStatement;
+use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Platform\ParameterBindingCompiler;
@@ -27,11 +28,12 @@ use ZtdQuery\Shadow\ShadowStore;
 #[CoversClass(PdoPreparedExecution::class)]
 #[UsesClass(PdoConnection::class)]
 #[UsesClass(PdoParameterBinder::class)]
-#[UsesClass(PdoParameterType::class)]
+#[UsesClass(PdoParameterKind::class)]
 #[UsesClass(PdoStatement::class)]
+#[UsesClass(ZtdPdoException::class)]
 final class PdoPreparedExecutionTest extends TestCase
 {
-    public function testParameterBinderRewritesAgainstCurrentShadowStateForEveryPreparation(): void
+    public function testPrepareRewritesAgainstTheShadowAsItStandsAtEachPreparation(): void
     {
         $pdo = new PDO('sqlite::memory:');
         $pdo->exec('CREATE TABLE items (id INTEGER PRIMARY KEY, value TEXT)');
@@ -49,7 +51,7 @@ final class PdoPreparedExecutionTest extends TestCase
         self::assertSame('after', $after['statement']->fetchColumn());
     }
 
-    public function testUsesThePlatformParameterBindingCompilerResult(): void
+    public function testPrepareUsesWhatThePlatformsParameterCompilerAnswered(): void
     {
         $pdo = new PDO('sqlite::memory:');
         $rewriter = static::createStub(SqlRewriter::class);
@@ -75,7 +77,7 @@ final class PdoPreparedExecutionTest extends TestCase
         self::assertSame(['compiled' => 11], $prepared['params']);
     }
 
-    public function testFallsBackWhenTheSessionHasNoParameterBindingCompiler(): void
+    public function testPrepareUsesThePlanAsItStandsWhereTheDialectCompilesNoParameters(): void
     {
         $pdo = new PDO('sqlite::memory:');
         $rewriter = static::createStub(SqlRewriter::class);
@@ -92,5 +94,26 @@ final class PdoPreparedExecutionTest extends TestCase
 
         self::assertSame('SELECT ? AS value', $prepared['statement']->queryString);
         self::assertSame([12], $prepared['params']);
+    }
+    public function testItRefusesADriverOptionPdoCannotBeGiven(): void
+    {
+        $pdo = new PDO('sqlite::memory:');
+        $session = new Session(static::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), static::createStub(ConnectionInterface::class));
+
+        $this->expectException(ZtdPdoException::class);
+        $this->expectExceptionMessage('Driver option "cursor" must be a PDO attribute set to a bool, int or string, int given.');
+
+        new PdoPreparedExecution($pdo, $session, 'SELECT 1', ['cursor' => 1]);
+    }
+
+    public function testParameterBinderAnswersWhatBindsTheCallersParameters(): void
+    {
+        $pdo = new PDO('sqlite::memory:');
+        $session = new Session(static::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), static::createStub(ConnectionInterface::class));
+        $binder = new PdoParameterBinder();
+
+        $execution = new PdoPreparedExecution($pdo, $session, 'SELECT 1', [], $binder);
+
+        self::assertSame($binder, $execution->parameterBinder());
     }
 }

@@ -13,11 +13,11 @@ use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 #[CoversClass(ZtdPdoException::class)]
 final class ZtdPdoExceptionTest extends TestCase
 {
-    public function testExtendsPdoException(): void
+    public function testItIsCaughtByCodeThatCatchesPdosOwnFailures(): void
     {
         $exception = new ZtdPdoException('test');
 
-        self::assertInstanceOf(PDOException::class, $exception);
+        self::assertContains(PDOException::class, class_parents($exception));
     }
 
     public function testMessageIsSet(): void

@@ -29,7 +29,7 @@ final class SqlitePdoParameterBindingCompiler implements ParameterBindingCompile
      * Compile.
      *
      * @param string $sql
-     * @param ?array $params
+     * @param array<array-key, mixed>|null $params Parameters the caller bound, or null where it bound none
      */
     public function compile(string $sql, ?array $params): array
     {
@@ -71,7 +71,14 @@ final class SqlitePdoParameterBindingCompiler implements ParameterBindingCompile
         return ['sql' => $sql, 'params' => $params];
     }
 
-    private function parameterType(mixed $value): ?ColumnDeclaration
+    /**
+     * Answers which of PDO's types a value is bound as.
+     *
+     * @param mixed $value Value to read
+     *
+     * @return ColumnDeclaration|null What it answers
+     */
+    public function parameterType(mixed $value): ?ColumnDeclaration
     {
         return match (true) {
             is_bool($value) => new ColumnDeclaration(ColumnTypeFamily::BOOLEAN, 'INTEGER'),

@@ -377,4 +377,12 @@ final class SqliteCastRendererTest extends CastRendererContractTest
         $result = $renderer->renderCast("'x'", $type);
         self::assertSame("CAST('x' AS TEXT)", $result);
     }
+    public function testMapToCastTypeAnswersWhatACastCallsThatKindOfColumn(): void
+    {
+        self::assertSame(
+            'INTEGER',
+            (new SqliteCastRenderer())->mapToCastType(new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER')),
+        );
+    }
+
 }

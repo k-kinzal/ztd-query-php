@@ -13,16 +13,9 @@ use ZtdQuery\Adapter\Pdo\ZtdPdo;
 use ZtdQuery\Connection\StatementInterface;
 
 /**
- * Integration tests for ZtdPdo with PostgreSQL: CTE shadowing behavior.
- *
- * PostgreSQL CTE shadowing replaces table references with CTE definitions
- * containing shadow data. Tables with no shadow data are shadowed with
- * empty CTEs (consistent with MySQL behavior).
- *
  * @requires extension pdo_pgsql
  * @group integration
  * @group postgres
- *
  * @phpstan-import-type Row from StatementInterface
  */
 #[CoversNothing]

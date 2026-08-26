@@ -151,7 +151,15 @@ final class SqliteSchemaAwareSqlBuilder
         return "DELETE FROM $table WHERE $whereClause";
     }
 
-    private function buildPkWhere(SchemaDefinition $schema, ?string $qualifier = null): string
+    /**
+     * Answers a WHERE that names one row by its primary key.
+     *
+     * @param SchemaDefinition $schema The schema
+     * @param string|null $qualifier The qualifier
+     *
+     * @return string What it answers
+     */
+    public function buildPkWhere(SchemaDefinition $schema, ?string $qualifier = null): string
     {
         $conditions = [];
         foreach ($schema->primaryKeys as $pk) {
@@ -165,7 +173,14 @@ final class SqliteSchemaAwareSqlBuilder
         return implode(' AND ', $conditions);
     }
 
-    private function buildGroupedSubqueryWhere(SchemaDefinition $schema): string
+    /**
+     * Answers a WHERE built from a grouped subquery.
+     *
+     * @param SchemaDefinition $schema The schema
+     *
+     * @return string What it answers
+     */
+    public function buildGroupedSubqueryWhere(SchemaDefinition $schema): string
     {
         $table = $this->quoteIdentifier($schema->name);
         $key = $this->quoteIdentifier($schema->primaryKeys[0] ?? $schema->columns[0]);
@@ -174,9 +189,13 @@ final class SqliteSchemaAwareSqlBuilder
     }
 
     /**
-     * @param array<int, string> $columns
+     * Answers a column list drawn from the ones the table has.
+     *
+     * @param array<int, string> $columns Columns to read
+     *
+     * @return string What it answers
      */
-    private function randomColumns(array $columns): string
+    public function randomColumns(array $columns): string
     {
         $count = $this->faker->numberBetween(1, count($columns));
         /** @var array<int, string> $selected */
@@ -184,7 +203,14 @@ final class SqliteSchemaAwareSqlBuilder
         return implode(', ', array_map(fn ($c) => $this->quoteIdentifier($c), $selected));
     }
 
-    private function generateLiteral(string $column): string
+    /**
+     * Answers a literal the column can hold.
+     *
+     * @param string $column Column to read
+     *
+     * @return string What it answers
+     */
+    public function generateLiteral(string $column): string
     {
         $col = strtolower($column);
 
@@ -200,7 +226,14 @@ final class SqliteSchemaAwareSqlBuilder
         return "'" . str_replace("'", "''", $str) . "'";
     }
 
-    private function quoteIdentifier(string $name): string
+    /**
+     * Answers the name as the dialect quotes it.
+     *
+     * @param string $name Name to read
+     *
+     * @return string What it answers
+     */
+    public function quoteIdentifier(string $name): string
     {
         return '"' . str_replace('"', '""', $name) . '"';
     }
