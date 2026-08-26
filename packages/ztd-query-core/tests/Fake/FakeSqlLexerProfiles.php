@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Fake;
 
+use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Sql\SqlLexerProfile;
 
 final class FakeSqlLexerProfiles
@@ -21,6 +22,8 @@ final class FakeSqlLexerProfiles
      * @param list<string> $positionalParameterPatterns
      * @param array{string, string}|null $bracketPair
      * @param array{string, string} $nestingPair
+     *
+     * @throws InvalidDefinitionException When the lexical data is not something a scanner could use
      */
     public static function custom(
         array $lineCommentPrefixes = ['--'],
