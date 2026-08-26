@@ -45,6 +45,7 @@ use ZtdQuery\Platform\MySql\UpdateSourceExtractor;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlNativeUpsertProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlGeneratedColumnProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlComponentSql::class)]
 final class MySqlTransformerTest extends TestCase
 {
     public function testTransformSelectPassthrough(): void

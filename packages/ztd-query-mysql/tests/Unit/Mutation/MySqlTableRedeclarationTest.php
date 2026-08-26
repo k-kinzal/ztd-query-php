@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Unit\Mutation;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\MySql\Mutation\MySqlTableRedeclaration;
 use ZtdQuery\Schema\ColumnDeclaration;
@@ -15,9 +14,6 @@ use ZtdQuery\Schema\ReferentialAction;
 use ZtdQuery\Schema\TableDefinition;
 
 #[CoversClass(MySqlTableRedeclaration::class)]
-#[UsesClass(TableDefinition::class)]
-#[UsesClass(ColumnDeclaration::class)]
-#[UsesClass(ForeignKeyDefinition::class)]
 final class MySqlTableRedeclarationTest extends TestCase
 {
     public function testSqlForDeclaresEveryColumnTheTableHolds(): void
