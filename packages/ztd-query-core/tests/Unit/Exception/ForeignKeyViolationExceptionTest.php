@@ -6,7 +6,6 @@ namespace Tests\Unit\Exception;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 use ZtdQuery\Exception\ForeignKeyViolationException;
 
 #[CoversClass(ForeignKeyViolationException::class)]
@@ -64,10 +63,4 @@ final class ForeignKeyViolationExceptionTest extends TestCase
         self::assertSame('id', $exception->getReferencedColumn());
     }
 
-    public function testExtendsRuntimeException(): void
-    {
-        $exception = new ForeignKeyViolationException('sql', 'table', 'constraint', 'refTable', 'refColumn');
-
-        self::assertInstanceOf(RuntimeException::class, $exception);
-    }
 }

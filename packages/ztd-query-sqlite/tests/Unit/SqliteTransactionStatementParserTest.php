@@ -11,7 +11,7 @@ use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Sqlite\SqliteLexerProfile;
 use ZtdQuery\Platform\Sqlite\SqliteTransactionStatementParser;
 use ZtdQuery\Shadow\ShadowStore;
-use ZtdQuery\Shadow\ShadowTransactionManager;
+use ZtdQuery\Shadow\ShadowTransactions;
 
 #[CoversClass(SqliteTransactionStatementParser::class)]
 #[UsesClass(SqliteLexerProfile::class)]
@@ -64,7 +64,7 @@ final class SqliteTransactionStatementParserTest extends TestCase
     {
         $store = new ShadowStore();
         $store->set('items', [['id' => 1]]);
-        $transactions = new ShadowTransactionManager($store);
+        $transactions = new ShadowTransactions($store);
         $transactions->begin();
         $statement = (new SqliteTransactionStatementParser())->parse('SAVEPOINT `a``b`');
         self::assertNotNull($statement);
