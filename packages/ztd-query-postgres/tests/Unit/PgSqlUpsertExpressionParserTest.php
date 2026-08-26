@@ -2,17 +2,16 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Platform\Postgres\Tests\Unit;
+namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use ReflectionMethod;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\Postgres\PgSqlUpsertExpressionCursor;
 use ZtdQuery\Platform\Postgres\PgSqlUpsertExpressionParser;
-use ZtdQuery\Sql\SqlToken;
-use ZtdQuery\Sql\SqlTokenKind;
+use ZtdQuery\Shadow\Mutation\UpsertExpressionKind;
 
 /**
  * The pg sql upsert expression parser test.
@@ -141,12 +140,11 @@ final class PgSqlUpsertExpressionParserTest extends TestCase
      * Test identifier rejects non postgres quoted token.
      *
      */
-    public function testIdentifierRejectsNonPostgresQuotedToken(): void
+    public function testRefusesANameQuotedTheWayAnotherDialectQuotesOne(): void
     {
-        $method = new ReflectionMethod(PgSqlUpsertExpressionParser::class, 'isIdentifier');
-        $token = new SqlToken(SqlTokenKind::QuotedIdentifier, '`quantity`', 0, 0, 0);
+        $this->expectException(UnsupportedSqlException::class);
 
-        self::assertFalse($method->invoke(new PgSqlUpsertExpressionParser(), $token));
+        (new PgSqlUpsertExpressionParser())->parse('`quantity`', 'items');
     }
 
     /**
@@ -177,5 +175,124 @@ final class PgSqlUpsertExpressionParserTest extends TestCase
         yield 'double equals' => ['1 == 1'];
         yield 'unknown qualifier' => ['other.value'];
         yield 'symbol primary' => ['*'];
+    }
+    public function testParseIfSupportedAnswersWhatItCanRead(): void
+    {
+        self::assertSame(
+            5,
+            (new PgSqlUpsertExpressionParser())->parseIfSupported('2 + 3', 'items')
+                ?->evaluate([], [], 'items'),
+        );
+    }
+
+    public function testDisjunctionBindsLooserThanConjunction(): void
+    {
+        $cursor = PgSqlUpsertExpressionCursor::over('TRUE OR FALSE AND FALSE', 'items');
+
+        self::assertTrue((new PgSqlUpsertExpressionParser())->disjunction($cursor)->evaluate([], [], 'items'));
+    }
+
+    public function testConjunctionReadsARunOfAnd(): void
+    {
+        $cursor = PgSqlUpsertExpressionCursor::over('TRUE AND FALSE', 'items');
+
+        self::assertFalse((new PgSqlUpsertExpressionParser())->conjunction($cursor)->evaluate([], [], 'items'));
+    }
+
+    public function testComparisonAnswersWhatTheOperatorMakesOfBothSides(): void
+    {
+        $cursor = PgSqlUpsertExpressionCursor::over('2 < 3', 'items');
+
+        self::assertTrue((new PgSqlUpsertExpressionParser())->comparison($cursor)->evaluate([], [], 'items'));
+    }
+
+    public function testComparisonLeavesASingleOperandAsItIs(): void
+    {
+        $cursor = PgSqlUpsertExpressionCursor::over('7', 'items');
+
+        self::assertSame(7, (new PgSqlUpsertExpressionParser())->comparison($cursor)->evaluate([], [], 'items'));
+    }
+
+    public function testAdditiveReadsARunOfPlusAndMinusLeftToRight(): void
+    {
+        $cursor = PgSqlUpsertExpressionCursor::over('10 - 3 - 2', 'items');
+
+        self::assertSame(5, (new PgSqlUpsertExpressionParser())->additive($cursor)->evaluate([], [], 'items'));
+    }
+
+    public function testMultiplicativeBindsTighterThanAddition(): void
+    {
+        $cursor = PgSqlUpsertExpressionCursor::over('2 * 3', 'items');
+
+        self::assertSame(6, (new PgSqlUpsertExpressionParser())->multiplicative($cursor)->evaluate([], [], 'items'));
+    }
+
+    public function testUnaryReadsAnOperatorWrittenOverItsOwnOperand(): void
+    {
+        $cursor = PgSqlUpsertExpressionCursor::over('- - 5', 'items');
+
+        self::assertSame(5, (new PgSqlUpsertExpressionParser())->unary($cursor)->evaluate([], [], 'items'));
+    }
+
+    public function testPrimaryReadsAWholeExpressionInParentheses(): void
+    {
+        $cursor = PgSqlUpsertExpressionCursor::over('(2 + 3)', 'items');
+
+        self::assertSame(5, (new PgSqlUpsertExpressionParser())->primary($cursor)->evaluate([], [], 'items'));
+    }
+
+    public function testPrimaryRefusesAnExpressionThatEndsBeforeItBegins(): void
+    {
+        $cursor = PgSqlUpsertExpressionCursor::over('', 'items');
+
+        $this->expectException(UnsupportedSqlException::class);
+
+        (new PgSqlUpsertExpressionParser())->primary($cursor);
+    }
+
+    public function testNamedReadsABareNameAsTheRowThatIsAlreadyThere(): void
+    {
+        $cursor = PgSqlUpsertExpressionCursor::over('qty', 'items');
+
+        self::assertSame(
+            4,
+            (new PgSqlUpsertExpressionParser())->named($cursor)->evaluate(['qty' => 4], ['qty' => 9], 'items'),
+        );
+    }
+
+    public function testNamedReadsExcludedAsTheIncomingRow(): void
+    {
+        $cursor = PgSqlUpsertExpressionCursor::over('excluded.qty', 'items');
+
+        self::assertSame(
+            9,
+            (new PgSqlUpsertExpressionParser())->named($cursor)->evaluate(['qty' => 4], ['qty' => 9], 'items'),
+        );
+    }
+
+    public function testNamedRefusesAQualifierThatNamesNeitherRow(): void
+    {
+        $cursor = PgSqlUpsertExpressionCursor::over('other.qty', 'items');
+
+        $this->expectException(UnsupportedSqlException::class);
+
+        (new PgSqlUpsertExpressionParser())->named($cursor);
+    }
+
+    public function testComparisonOperatorReadsAnOperatorWrittenAsTwoSymbols(): void
+    {
+        $cursor = PgSqlUpsertExpressionCursor::over('<= 1', 'items');
+
+        self::assertSame(
+            UpsertExpressionKind::LessOrEqual,
+            (new PgSqlUpsertExpressionParser())->comparisonOperator($cursor),
+        );
+    }
+
+    public function testComparisonOperatorIsNothingWhereNothingIsCompared(): void
+    {
+        $cursor = PgSqlUpsertExpressionCursor::over('1', 'items');
+
+        self::assertNull((new PgSqlUpsertExpressionParser())->comparisonOperator($cursor));
     }
 }
