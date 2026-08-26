@@ -382,6 +382,8 @@ final class Session
      * @param RewritePlan $plan The rewrite plan from rewrite().
      * @param StatementInterface $statement The already-executed statement.
      * @return ExecuteResult The execution result.
+     *
+     * @throws DatabaseException When the shadow refuses the statement
      */
     public function processExecutedStatement(RewritePlan $plan, StatementInterface $statement): ExecuteResult
     {
@@ -417,6 +419,8 @@ final class Session
      * @param callable(string): (StatementInterface|false) $executor Function to execute SQL.
      * @return list<Row> The affected rows.
      * @throws UnsupportedSqlException When the plan carries no mutation to write.
+     *
+     * @throws DatabaseException When the shadow refuses the statement
      */
     public function runResultSelectAndApplyShadow(RewritePlan $plan, callable $executor): array
     {

@@ -6,6 +6,13 @@ namespace ZtdQuery\Platform;
 
 use ZtdQuery\Schema\TableDefinition;
 
+/**
+ * How a dialect writes COPY, where it has one at all.
+ *
+ * COPY moves rows in and out of a table without a statement per row, so
+ * simulating it means knowing how the rows are written, how they are read
+ * back, and what the statement is written against.
+ */
 interface CopySupport
 {
     public function tableName(string $relation): string;
