@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use ZtdQuery\Exception\InvalidDefinitionException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Tests\Fixtures\StubMysqliField;
@@ -24,7 +25,7 @@ final class MysqliResultColumnExtractorTest extends TestCase
             new StubMysqliField('name', MYSQLI_TYPE_VAR_STRING, 255),
         ]);
 
-        $this->expectException(\LogicException::class);
+        $this->expectException(InvalidDefinitionException::class);
         $this->expectExceptionMessage('A database platform result column type resolver is required.');
 
         MysqliResultColumnExtractor::extract($result, new MissingResultColumnTypeResolver());
