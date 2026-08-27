@@ -151,4 +151,65 @@ final class SqliteCatalogTest extends TestCase
             ['CURRENT_TIMESTAMP', 'CURRENT_TIMESTAMP'],
         ];
     }
+    public function testCreateTableSqlOfAsksSqliteForTheTableItWasNamed(): void
+    {
+        $pdo = new PDO('sqlite::memory:');
+        $pdo->exec('CREATE TABLE users (id INTEGER)');
+        $pdo->exec('CREATE TABLE orders (id INTEGER)');
+
+        self::assertSame('CREATE TABLE orders (id INTEGER)', (new SqliteCatalog())->createTableSqlOf($pdo, 'orders'));
+    }
+
+    public function testTableInfoSaysSqliteHasNoUnsignedColumn(): void
+    {
+        $pdo = new PDO('sqlite::memory:');
+        $pdo->exec('CREATE TABLE users (id INTEGER)');
+
+        $schema = (new SqliteCatalog())->tableInfo($pdo, 'users');
+
+        self::assertFalse($schema->columns['id']->unsigned);
+    }
+
+    public function testTableInfoLeavesTheStatementToSayWhatCountsUpOrIsGenerated(): void
+    {
+        $pdo = new PDO('sqlite::memory:');
+        $pdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT)');
+
+        $schema = (new SqliteCatalog())->tableInfo($pdo, 'users');
+
+        self::assertSame(
+            [false, false],
+            [$schema->columns['id']->autoIncrement, $schema->columns['id']->generated],
+        );
+    }
+
+    public function testTableInfoNamesOnlyTheColumnsTheKeyIsMadeOf(): void
+    {
+        $pdo = new PDO('sqlite::memory:');
+        $pdo->exec('CREATE TABLE lines (order_id INTEGER, line_no INTEGER, note TEXT, PRIMARY KEY (order_id, line_no))');
+
+        $schema = (new SqliteCatalog())->tableInfo($pdo, 'lines');
+
+        self::assertSame(['order_id', 'line_no'], $schema->primaryKeys);
+    }
+
+    public function testTableInfoReadsATypeWrittenInLowerCaseAsTheTypeItNames(): void
+    {
+        $pdo = new PDO('sqlite::memory:');
+        $pdo->exec('CREATE TABLE users (name varchar(30))');
+
+        $schema = (new SqliteCatalog())->tableInfo($pdo, 'users');
+
+        self::assertSame(['VARCHAR', 30], [$schema->columns['name']->type, $schema->columns['name']->length]);
+    }
+
+    public function testDefaultValueOfReadsNullWrittenInLowerCaseAsNothing(): void
+    {
+        self::assertNull((new SqliteCatalog())->defaultValueOf('null'));
+    }
+
+    public function testDefaultValueOfKeepsTheWholeQuotedTextIncludingItsLineBreaks(): void
+    {
+        self::assertSame("one\ntwo", (new SqliteCatalog())->defaultValueOf("'one\ntwo'"));
+    }
 }
