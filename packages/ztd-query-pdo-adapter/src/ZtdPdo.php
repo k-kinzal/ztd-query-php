@@ -256,6 +256,12 @@ class ZtdPdo extends PDO
     /**
      * {@inheritDoc}
      *
+     * The connection is opened with PDO's constructor rather than with
+     * PDO::connect(), which exists only from PHP 8.4 on while this package
+     * supports 8.1. What connect() adds is a driver-specific subclass of PDO,
+     * and nothing here asks the wrapped connection for anything a subclass
+     * would answer differently.
+     *
      * @param array<mixed>|null $options Driver options, as PDO::connect() takes them
      *
      * @return static The new connection, with ZTD in front of it
@@ -269,7 +275,7 @@ class ZtdPdo extends PDO
         #[SensitiveParameter] ?string $password = null,
         ?array $options = null
     ): static {
-        return static::fromPdo(PDO::connect($dsn, $username, $password, $options));
+        return static::fromPdo(new PDO($dsn, $username, $password, $options));
     }
 
     /**
