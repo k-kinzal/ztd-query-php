@@ -16,6 +16,8 @@ use ZtdQuery\Platform\ResultColumnTypeResolver;
  *
  * This class wraps a mysqli_stmt and provides the minimal interface
  * required by the ZTD session for executing statements and fetching results.
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 final class MysqliStatement implements StatementInterface
 {
@@ -82,7 +84,7 @@ final class MysqliStatement implements StatementInterface
             return [];
         }
 
-        /** @var array<int, array<string, mixed>> $rows */
+        /** @var list<Row> $rows */
         $rows = $result->fetch_all(MYSQLI_ASSOC);
 
         // Free the result to avoid "Commands out of sync" errors

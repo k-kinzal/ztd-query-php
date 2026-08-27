@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Transformer;
 
+use ZtdQuery\Platform\MySql\MySqlValueRenderer;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use Tests\Contract\TransformerContractTest;
@@ -477,21 +478,12 @@ final class SelectTransformerTest extends TransformerContractTest
         self::assertStringContainsString('`orders` AS', $result);
     }
 
-    public function testTransformUnsupportedValueTypeThrows(): void
+    public function testRenderValueRejectsAValueNoColumnTypeCanCarry(): void
     {
-        $transformer = new SelectTransformer();
-        $sql = 'SELECT * FROM data';
-        $tables = [
-            'data' => [
-                'rows' => [['val' => [1, 2, 3]]],
-                'columns' => ['val'],
-                'columnTypes' => [],
-            ],
-        ];
-
         self::expectException(\RuntimeException::class);
         self::expectExceptionMessage('Unsupported value type');
-        $transformer->transform($sql, $tables);
+
+        (new MySqlValueRenderer())->renderValue([1, 2, 3]);
     }
 
     public function testTransformWithFallbackNullCastWhenNoColumnType(): void

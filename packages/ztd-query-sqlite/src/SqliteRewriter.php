@@ -6,25 +6,31 @@ namespace ZtdQuery\Platform\Sqlite;
 
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\Sqlite\Transformer\SqliteTransformer;
 use ZtdQuery\Platform\Sqlite\Mutation\AlterTableMutation;
+use ZtdQuery\Platform\Sqlite\Transformer\SqliteTransformer;
+use ZtdQuery\Platform\ValueRenderer;
+use ZtdQuery\Rewrite\AffectedRowsMode;
 use ZtdQuery\Rewrite\MultiRewritePlan;
 use ZtdQuery\Rewrite\QueryKind;
-use ZtdQuery\Rewrite\AffectedRowsMode;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\RewriteStateCommitter;
 use ZtdQuery\Rewrite\SqlRewriter;
-use ZtdQuery\Sql\TransactionStatement;
+use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Schema\ViewDefinitionSet;
 use ZtdQuery\Shadow\ShadowStore;
+use ZtdQuery\Sql\TransactionStatement;
 
 /**
  * SQLite rewrite implementation for ZTD.
  *
  * Orchestrates parsing, classification, transformation, and mutation resolution.
  * Uses Result Select Query approach (not RETURNING) for consistency.
+ *
+ * @phpstan-import-type ShadowTables from SqlTransformer
+ * @phpstan-import-type RenderableValue from ValueRenderer
+ * @phpstan-import-type ShadowRows from SqlTransformer
  */
 final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
 {
@@ -174,16 +180,7 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
     /**
      * Build the table context map for transformers.
      *
-     * @return array<string, array{viewSql: string}|array{
-     *     rows: array<int, array<string, mixed>>,
-     *     columns: array<int, string>,
-     *     columnTypes: array<string, \ZtdQuery\Schema\ColumnDeclaration>,
-     *     columnDefaults: array<string, string>,
-     *     identityStrategies: array<string, \ZtdQuery\Schema\IdentityGenerationStrategy>,
-     *     generatedExpressions: array<string, string>,
-     *     primaryKeys: array<int, string>,
-     *     candidateKeys: array<string, array<int, string>>
-     * }>
+     * @return ShadowTables Table name => what the shadow holds for it
      */
     private function buildTableContext(): array
     {
@@ -243,17 +240,9 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
     }
 
     /**
-     * @param array<int, array<string, mixed>> $rows
-     * @return array{
-     *     rows: array<int, array<string, mixed>>,
-     *     columns: array<int, string>,
-     *     columnTypes: array<string, \ZtdQuery\Schema\ColumnDeclaration>,
-     *     columnDefaults: array<string, string>,
-     *     identityStrategies: array<string, \ZtdQuery\Schema\IdentityGenerationStrategy>,
-     *     generatedExpressions: array<string, string>,
-     *     primaryKeys: array<int, string>,
-     *     candidateKeys: array<string, array<int, string>>
-     * }
+     * @param list<array<string, RenderableValue>> $rows Rows the shadow holds for it
+     *
+     * @return ShadowRows What the shadow holds for that table
      */
     private static function contextFromDefinition(TableDefinition $definition, array $rows): array
     {

@@ -12,10 +12,11 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\MySql\InsertSelectSourceExtractor;
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
+use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
 use ZtdQuery\Platform\MySql\MySqlNativeUpsertProjector;
 use ZtdQuery\Platform\MySql\MySqlParser;
-use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
 use ZtdQuery\Platform\MySql\MySqlUpsertAssignmentExtractor;
+use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Rewrite\ShadowIdentityAllocator;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnDeclaration;
@@ -24,6 +25,8 @@ use ZtdQuery\Schema\IdentityGenerationStrategy;
 /**
  * Transforms INSERT statements into SELECT queries that return the inserted rows.
  * Applies CTE shadowing via the SelectTransformer delegate.
+ *
+ * @phpstan-import-type RenderableValue from ValueRenderer
  */
 final class InsertTransformer implements SqlTransformer
 {
@@ -123,7 +126,7 @@ final class InsertTransformer implements SqlTransformer
      * @param array<string, ColumnDeclaration> $columnTypes
      * @param array<string, string> $columnDefaults
      * @param array<string, IdentityGenerationStrategy> $identityStrategies
-     * @param array<int, array<string, mixed>> $existingRows
+     * @param list<array<string, RenderableValue>> $existingRows The existing rows
      */
     private function buildInsertSelect(
         InsertStatement $statement,
@@ -193,7 +196,7 @@ final class InsertTransformer implements SqlTransformer
      * @param array<string, ColumnDeclaration> $columnTypes
      * @param array<string, string> $columnDefaults
      * @param array<string, IdentityGenerationStrategy> $identityStrategies
-     * @param array<int, array<string, mixed>> $existingRows
+     * @param list<array<string, RenderableValue>> $existingRows The existing rows
      */
     private function buildInsertRowSelect(
         ArrayObj $valueSet,
@@ -244,7 +247,7 @@ final class InsertTransformer implements SqlTransformer
      * @param array<string, ColumnDeclaration> $columnTypes
      * @param array<string, string> $columnDefaults
      * @param array<string, IdentityGenerationStrategy> $identityStrategies
-     * @param array<int, array<string, mixed>> $existingRows
+     * @param list<array<string, RenderableValue>> $existingRows The existing rows
      */
     private function buildInsertSetSelect(
         array $setOperations,

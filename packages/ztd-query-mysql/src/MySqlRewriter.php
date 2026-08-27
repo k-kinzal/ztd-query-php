@@ -4,31 +4,34 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\MySql;
 
-use ZtdQuery\Exception\UnknownSchemaException;
-use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Rewrite\MultiRewritePlan;
-use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
-use ZtdQuery\Rewrite\QueryKind;
-use ZtdQuery\Rewrite\RewritePlan;
-use ZtdQuery\Rewrite\RewriteStateCommitter;
-use ZtdQuery\Rewrite\SqlRewriter;
-use ZtdQuery\Sql\TransactionStatement;
 use PhpMyAdmin\SqlParser\Statement;
-use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
-use ZtdQuery\Schema\TableDefinitionRegistry;
-use ZtdQuery\Schema\ViewDefinitionSet;
-use ZtdQuery\Shadow\ShadowStore;
 use PhpMyAdmin\SqlParser\Statements\AlterStatement;
 use PhpMyAdmin\SqlParser\Statements\CreateStatement;
 use PhpMyAdmin\SqlParser\Statements\LoadStatement;
 use PhpMyAdmin\SqlParser\Statements\ReplaceStatement;
 use PhpMyAdmin\SqlParser\Statements\TruncateStatement;
 use PhpMyAdmin\SqlParser\Statements\WithStatement;
+use ZtdQuery\Exception\UnknownSchemaException;
+use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
+use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
+use ZtdQuery\Rewrite\MultiRewritePlan;
+use ZtdQuery\Rewrite\QueryKind;
+use ZtdQuery\Rewrite\RewritePlan;
+use ZtdQuery\Rewrite\RewriteStateCommitter;
+use ZtdQuery\Rewrite\SqlRewriter;
+use ZtdQuery\Rewrite\SqlTransformer;
+use ZtdQuery\Schema\TableDefinitionRegistry;
+use ZtdQuery\Schema\ViewDefinitionSet;
+use ZtdQuery\Shadow\ShadowStore;
+use ZtdQuery\Sql\TransactionStatement;
 
 /**
  * MySQL rewrite implementation for ZTD.
  *
  * Orchestrates parsing, classification, transformation, and mutation resolution.
+ *
+ * @phpstan-import-type ShadowTables from SqlTransformer
  */
 final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
 {
@@ -193,15 +196,7 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
     /**
      * Build the table context map for transformers.
      *
-     * @return array<string, array{viewSql: string}|array{
-     *     rows: array<int, array<string, mixed>>,
-     *     columns: array<int, string>,
-     *     columnTypes: array<string, \ZtdQuery\Schema\ColumnDeclaration>,
-     *     columnDefaults: array<string, string>,
-     *     identityStrategies: array<string, \ZtdQuery\Schema\IdentityGenerationStrategy>,
-     *     generatedExpressions: array<string, string>,
-     *     partitioning: \ZtdQuery\Schema\TablePartitioning|null
-     * }>
+     * @return ShadowTables Table name => what the shadow holds for it
      */
     private function buildTableContext(): array
     {

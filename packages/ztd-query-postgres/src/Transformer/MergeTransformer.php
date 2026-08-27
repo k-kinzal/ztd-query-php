@@ -5,17 +5,23 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\Postgres\Transformer;
 
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 use ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer;
 use ZtdQuery\Platform\Postgres\PgSqlGeneratedColumnProjector;
+use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 use ZtdQuery\Platform\Postgres\PgSqlMergeActionKind;
 use ZtdQuery\Platform\Postgres\PgSqlMergeClause;
 use ZtdQuery\Platform\Postgres\PgSqlMergeMatchKind;
 use ZtdQuery\Platform\Postgres\PgSqlMergeParser;
 use ZtdQuery\Platform\Postgres\PgSqlMergeStatement;
+use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Rewrite\ShadowIdentityAllocator;
 use ZtdQuery\Rewrite\SqlTransformer;
 
+/**
+ * The merge transformer, as sql transformer.
+ *
+ * @phpstan-import-type RenderableValue from ValueRenderer
+ */
 final class MergeTransformer implements SqlTransformer
 {
     private PgSqlIdentifierQuoter $quoter;
@@ -204,7 +210,7 @@ final class MergeTransformer implements SqlTransformer
      * @param list<string> $columns
      * @param array<string, string> $defaults
      * @param array<string, \ZtdQuery\Schema\IdentityGenerationStrategy> $identityStrategies
-     * @param array<int, array<string, mixed>> $existingRows
+     * @param list<array<string, RenderableValue>> $existingRows The existing rows
      */
     private function insertedRows(
         string $sql,

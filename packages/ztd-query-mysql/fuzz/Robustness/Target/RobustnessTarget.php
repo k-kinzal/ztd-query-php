@@ -40,7 +40,7 @@ final class RobustnessTarget
     private ShadowStoreConsistencyChecker $storeChecker;
     /** @var array<int, InvariantChecker> */
     private array $checkers;
-    /** @var array<string, array<int, array<string, mixed>>> */
+    /** @var array<string, list<array<string, bool|float|int|string|null>>> The rows every run starts from */
     private array $fixtureData;
 
     public function __construct(Generator $faker, MySqlProvider $provider)
@@ -144,7 +144,7 @@ final class RobustnessTarget
     }
 
     /**
-     * @return array<string, array<int, array<string, mixed>>>
+     * @return array<string, list<array<string, bool|float|int|string|null>>> Table name => the rows it starts with
      */
     private function buildFixtureData(): array
     {

@@ -59,7 +59,6 @@ final class TransformerFuzzTest extends TestCase
 
     public function testTransformWithShadowDataContainsWithClause(): void
     {
-        /** @var array<string, array{rows: array<int, array<string, mixed>>, columns: array<int, string>, columnTypes: array<string, ColumnDeclaration>}> $tables */
         $tables = [
             'users' => [
                 'rows' => [
@@ -94,7 +93,6 @@ final class TransformerFuzzTest extends TestCase
 
     public function testTransformWithEmptyRowsContainsWithClause(): void
     {
-        /** @var array<string, array{rows: array<int, array<string, mixed>>, columns: array<int, string>, columnTypes: array<string, ColumnDeclaration>}> $tables */
         $tables = [
             'users' => [
                 'rows' => [],
