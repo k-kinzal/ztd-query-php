@@ -24,15 +24,17 @@ use ZtdQuery\Session;
 final class PostgreSqlCopy
 {
     /**
-     * Binds the COPY to the connection that will carry it out.
+     * Binds the COPY to the session that says what ZTD makes of it.
      *
-     * @param PDO $connection Connection the rewritten statements run on
+     * The connection is passed to each call rather than held, because the one
+     * that carries a COPY out is the ZTD connection this belongs to: holding it
+     * would make the two point at each other, and a PDO that only the cycle
+     * collector frees is freed at a moment no one chose.
+     *
      * @param Session $session Session that says whether ZTD is shadowing the table
      */
-    public function __construct(
-        private readonly PDO $connection,
-        private readonly Session $session,
-    ) {
+    public function __construct(private readonly Session $session)
+    {
     }
 
     /**
@@ -55,6 +57,7 @@ final class PostgreSqlCopy
     /**
      * Answers the table's rows as COPY would have written them out.
      *
+     * @param PDO $connection Connection the rewritten statement runs on
      * @param mixed $tableName Relation to read, as the caller named it
      * @param mixed $separator Field separator COPY writes between values
      * @param mixed $nullAs Text COPY writes where a value is null
@@ -64,13 +67,13 @@ final class PostgreSqlCopy
      *
      * @throws ZtdPdoException When the dialect has no COPY, the table is undescribed, or a row cannot be read
      */
-    public function toArray(mixed $tableName, mixed $separator = "\t", mixed $nullAs = '\\N', mixed $fields = null): array|false
+    public function toArray(PDO $connection, mixed $tableName, mixed $separator = "\t", mixed $nullAs = '\\N', mixed $fields = null): array|false
     {
         [$copy, $target] = $this->target(
             $this->stringArgument($tableName, 'tableName'),
             $this->optionalStringArgument($fields, 'fields'),
         );
-        $statement = $this->connection->query($copy->selectSql($target));
+        $statement = $connection->query($copy->selectSql($target));
         if ($statement === false) {
             return false;
         }
@@ -92,6 +95,7 @@ final class PostgreSqlCopy
     /**
      * Writes encoded lines into the table as COPY would have read them in.
      *
+     * @param PDO $connection Connection the rewritten statement runs on
      * @param mixed $tableName Relation to write, as the caller named it
      * @param array<mixed>|Traversable<mixed, mixed> $rows One encoded line per row
      * @param mixed $separator Field separator COPY reads between values
@@ -102,7 +106,7 @@ final class PostgreSqlCopy
      *
      * @throws ZtdPdoException When the dialect has no COPY, the table is undescribed, or a line does not fit it
      */
-    public function fromArray(mixed $tableName, array|Traversable $rows, mixed $separator = "\t", mixed $nullAs = '\\N', mixed $fields = null): bool
+    public function fromArray(PDO $connection, mixed $tableName, array|Traversable $rows, mixed $separator = "\t", mixed $nullAs = '\\N', mixed $fields = null): bool
     {
         [$copy, $target] = $this->target(
             $this->stringArgument($tableName, 'tableName'),
@@ -134,7 +138,7 @@ final class PostgreSqlCopy
             return true;
         }
 
-        $statement = $this->connection->prepare($copy->insertSql($target, $rowCount, !$this->session->isEnabled()));
+        $statement = $connection->prepare($copy->insertSql($target, $rowCount, !$this->session->isEnabled()));
 
         return $statement !== false && $statement->execute($parameters);
     }
@@ -142,6 +146,7 @@ final class PostgreSqlCopy
     /**
      * Writes the table's rows into a file as COPY would have written them out.
      *
+     * @param PDO $connection Connection the rewritten statement runs on
      * @param mixed $tableName Relation to read, as the caller named it
      * @param mixed $filename File to write the encoded lines to
      * @param mixed $separator Field separator COPY writes between values
@@ -152,9 +157,9 @@ final class PostgreSqlCopy
      *
      * @throws ZtdPdoException When the dialect has no COPY, the table is undescribed, or a row cannot be read
      */
-    public function toFile(mixed $tableName, mixed $filename, mixed $separator = "\t", mixed $nullAs = '\\N', mixed $fields = null): bool
+    public function toFile(PDO $connection, mixed $tableName, mixed $filename, mixed $separator = "\t", mixed $nullAs = '\\N', mixed $fields = null): bool
     {
-        $rows = $this->toArray($tableName, $separator, $nullAs, $fields);
+        $rows = $this->toArray($connection, $tableName, $separator, $nullAs, $fields);
         if ($rows === false) {
             return false;
         }
@@ -165,6 +170,7 @@ final class PostgreSqlCopy
     /**
      * Reads encoded lines out of a file and writes them into the table.
      *
+     * @param PDO $connection Connection the rewritten statement runs on
      * @param mixed $tableName Relation to write, as the caller named it
      * @param mixed $filename File to read the encoded lines from
      * @param mixed $separator Field separator COPY reads between values
@@ -175,7 +181,7 @@ final class PostgreSqlCopy
      *
      * @throws ZtdPdoException When the dialect has no COPY, the table is undescribed, or a line does not fit it
      */
-    public function fromFile(mixed $tableName, mixed $filename, mixed $separator = "\t", mixed $nullAs = '\\N', mixed $fields = null): bool
+    public function fromFile(PDO $connection, mixed $tableName, mixed $filename, mixed $separator = "\t", mixed $nullAs = '\\N', mixed $fields = null): bool
     {
         $path = $this->stringArgument($filename, 'filename');
         if (!is_readable($path)) {
@@ -186,7 +192,7 @@ final class PostgreSqlCopy
             return false;
         }
 
-        return $this->fromArray($tableName, $rows, $separator, $nullAs, $fields);
+        return $this->fromArray($connection, $tableName, $rows, $separator, $nullAs, $fields);
     }
 
     /**
