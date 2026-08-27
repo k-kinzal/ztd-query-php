@@ -6,12 +6,13 @@ namespace ZtdQuery\Platform\Postgres;
 
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Rewrite\AffectedRowsMode;
 use ZtdQuery\Rewrite\MultiRewritePlan;
 use ZtdQuery\Rewrite\QueryKind;
-use ZtdQuery\Rewrite\AffectedRowsMode;
 use ZtdQuery\Rewrite\RewritePlan;
-use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Rewrite\RewriteStateCommitter;
+use ZtdQuery\Rewrite\SqlRewriter;
+use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Schema\ViewDefinitionSet;
 use ZtdQuery\Shadow\ShadowStore;
@@ -22,6 +23,8 @@ use ZtdQuery\Sql\TransactionStatement;
  *
  * Orchestrates parsing, classification, transformation, and mutation resolution.
  * Uses Result Select Query approach (not RETURNING) for consistency across platforms.
+ *
+ * @phpstan-import-type ShadowTables from SqlTransformer
  */
 final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
 {
@@ -198,16 +201,7 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
     /**
      * Build the table context map for transformers.
      *
-     * @return array<string, array{viewSql: string}|array{
-     *     rows: array<int, array<string, mixed>>,
-     *     columns: array<int, string>,
-     *     columnTypes: array<string, \ZtdQuery\Schema\ColumnDeclaration>,
-     *     columnDefaults: array<string, string>,
-     *     identityStrategies: array<string, \ZtdQuery\Schema\IdentityGenerationStrategy>,
-     *     generatedExpressions: array<string, string>,
-     *     sourceSql?: string,
-     *     storageTable?: string
-     * }>
+     * @return ShadowTables Table name => what the shadow holds for it
      */
     private function buildTableContext(): array
     {

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Transformer;
 
+use ZtdQuery\Platform\Postgres\PgSqlValueRenderer;
 use Tests\Contract\TransformerContractTest;
 use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
 use ZtdQuery\Platform\ValueRenderer;
@@ -680,20 +681,12 @@ final class SelectTransformerTest extends TransformerContractTest
         self::assertStringNotContainsString('"not_referenced"', $result);
     }
 
-    public function testTransformUnsupportedValueTypeThrows(): void
+    public function testRenderValueRejectsAValueNoColumnTypeCanCarry(): void
     {
-        $transformer = new SelectTransformer();
-        $tables = [
-            'users' => [
-                'rows' => [['data' => [1, 2, 3]]],
-                'columns' => ['data'],
-                'columnTypes' => [],
-            ],
-        ];
-
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Unsupported value type for CTE shadowing');
-        $transformer->transform('SELECT * FROM users', $tables);
+
+        (new PgSqlValueRenderer())->renderValue([1, 2, 3]);
     }
 
     public function testTransformObjectWithToStringNoColumnType(): void
@@ -717,20 +710,12 @@ final class SelectTransformerTest extends TransformerContractTest
         self::assertStringContainsString('stringified', $result);
     }
 
-    public function testTransformSerializesObjectWithColumnType(): void
+    public function testRenderValueCastsAnObjectTheColumnTypeNames(): void
     {
-        $transformer = new SelectTransformer();
-        $obj = new \stdClass();
-        $tables = [
-            'users' => [
-                'rows' => [['val' => $obj]],
-                'columns' => ['val'],
-                'columnTypes' => ['val' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT')],
-            ],
-        ];
-
-        $result = $transformer->transform('SELECT * FROM users', $tables);
-        self::assertStringContainsString('CAST(', $result);
+        self::assertStringContainsString(
+            'CAST(',
+            (new PgSqlValueRenderer())->renderValue(new \stdClass(), new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT')),
+        );
     }
 
     public function testTransformWithLeadingCommentAndWith(): void

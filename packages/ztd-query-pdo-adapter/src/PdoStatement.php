@@ -17,6 +17,8 @@ use ZtdQuery\Platform\ResultColumnTypeResolver;
  *
  * This class wraps a PDOStatement and provides the minimal interface
  * required by the ZTD session for executing statements and fetching results.
+ *
+ * @phpstan-import-type Row from StatementInterface
  */
 final class PdoStatement implements StatementInterface
 {
@@ -51,7 +53,7 @@ final class PdoStatement implements StatementInterface
      */
     public function fetchAll(): array
     {
-        /** @var array<int, array<string, mixed>> $rows */
+        /** @var list<Row> $rows */
         $rows = $this->statement->fetchAll(PDO::FETCH_ASSOC);
 
         return $rows;
