@@ -18,9 +18,9 @@ use SqlFixture\Schema\TableSchema;
 
 #[CoversClass(MySqlSchemaParser::class)]
 #[UsesClass(ColumnDefinition::class)]
+#[UsesClass(PlatformMySqlSchemaParser::class)]
 #[UsesClass(TableSchema::class)]
 #[UsesClass(SchemaParseException::class)]
-#[UsesClass(PlatformMySqlSchemaParser::class)]
 #[UsesClass(MySqlColumnReader::class)]
 #[UsesClass(MySqlCreateStatement::class)]
 final class MySqlSchemaParserTest extends TestCase

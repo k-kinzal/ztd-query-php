@@ -14,7 +14,6 @@ use Tests\Fixture\Platform\MySqlDefinition;
 
 #[CoversClass(MySqlCreateStatement::class)]
 #[UsesClass(SchemaParseException::class)]
-#[UsesClass(MySqlDefinition::class)]
 final class MySqlCreateStatementTest extends TestCase
 {
     #[Test]
