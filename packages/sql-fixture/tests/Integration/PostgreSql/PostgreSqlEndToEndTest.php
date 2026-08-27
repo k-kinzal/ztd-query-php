@@ -24,6 +24,14 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(PostgreSqlTypeMapper::class)]
 #[UsesClass(ColumnDefinition::class)]
 #[UsesClass(TableSchema::class)]
+#[UsesClass(\SqlFixture\Fixture\RowSpec::class)]
+#[UsesClass(\SqlFixture\Hydrator\ConstructorHydration::class)]
+#[UsesClass(\SqlFixture\Hydrator\PropertyHydration::class)]
+#[UsesClass(\SqlFixture\Hydrator\ReflectionHydrator::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\PostgreSqlColumnReader::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\PostgreSqlColumnSample::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\PostgreSqlCreateTable::class)]
+#[UsesClass(\SqlFixture\Schema\StaticSchemaResolver::class)]
 final class PostgreSqlEndToEndTest extends TestCase
 {
     #[Test]

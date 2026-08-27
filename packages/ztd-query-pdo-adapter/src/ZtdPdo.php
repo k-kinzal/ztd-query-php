@@ -64,7 +64,7 @@ class ZtdPdo extends PDO
         $resolvedFactory = $factory ?? (new DriverSessionFactory())->forConnection($this->pdo);
         $connection = new PdoConnection($this->pdo);
         $this->session = $resolvedFactory->create($connection, $config ?? ZtdConfig::default());
-        $this->copy = new PostgreSqlCopy($this, $this->session);
+        $this->copy = new PostgreSqlCopy($this->session);
     }
 
     /**
@@ -93,7 +93,7 @@ class ZtdPdo extends PDO
         $resolvedFactory = $factory ?? (new DriverSessionFactory())->forConnection($instance->pdo);
         $connection = new PdoConnection($instance->pdo);
         $instance->session = $resolvedFactory->create($connection, $config ?? ZtdConfig::default());
-        $instance->copy = new PostgreSqlCopy($instance, $instance->session);
+        $instance->copy = new PostgreSqlCopy($instance->session);
 
         return $instance;
     }
@@ -414,7 +414,7 @@ class ZtdPdo extends PDO
         mixed $nullAs = '\\N',
         mixed $fields = null,
     ): array|false {
-        return $this->copy->toArray($tableName, $separator, $nullAs, $fields);
+        return $this->copy->toArray($this, $tableName, $separator, $nullAs, $fields);
     }
 
     /**
@@ -435,7 +435,7 @@ class ZtdPdo extends PDO
         string $nullAs = '\\N',
         ?string $fields = null,
     ): array|false {
-        return $this->copy->toArray($tableName, $separator, $nullAs, $fields);
+        return $this->copy->toArray($this, $tableName, $separator, $nullAs, $fields);
     }
 
     /**
@@ -458,7 +458,7 @@ class ZtdPdo extends PDO
         mixed $nullAs = '\\N',
         mixed $fields = null,
     ): bool {
-        return $this->copy->fromArray($tableName, $rows, $separator, $nullAs, $fields);
+        return $this->copy->fromArray($this, $tableName, $rows, $separator, $nullAs, $fields);
     }
 
     /**
@@ -481,7 +481,7 @@ class ZtdPdo extends PDO
         string $nullAs = '\\N',
         ?string $fields = null,
     ): bool {
-        return $this->copy->fromArray($tableName, $rows, $separator, $nullAs, $fields);
+        return $this->copy->fromArray($this, $tableName, $rows, $separator, $nullAs, $fields);
     }
 
     /**
@@ -504,7 +504,7 @@ class ZtdPdo extends PDO
         mixed $nullAs = '\\N',
         mixed $fields = null,
     ): bool {
-        return $this->copy->toFile($tableName, $filename, $separator, $nullAs, $fields);
+        return $this->copy->toFile($this, $tableName, $filename, $separator, $nullAs, $fields);
     }
 
     /**
@@ -527,7 +527,7 @@ class ZtdPdo extends PDO
         string $nullAs = '\\N',
         ?string $fields = null,
     ): bool {
-        return $this->copy->toFile($tableName, $filename, $separator, $nullAs, $fields);
+        return $this->copy->toFile($this, $tableName, $filename, $separator, $nullAs, $fields);
     }
 
     /**
@@ -550,7 +550,7 @@ class ZtdPdo extends PDO
         mixed $nullAs = '\\N',
         mixed $fields = null,
     ): bool {
-        return $this->copy->fromFile($tableName, $filename, $separator, $nullAs, $fields);
+        return $this->copy->fromFile($this, $tableName, $filename, $separator, $nullAs, $fields);
     }
 
     /**
@@ -573,7 +573,7 @@ class ZtdPdo extends PDO
         string $nullAs = '\\N',
         ?string $fields = null,
     ): bool {
-        return $this->copy->fromFile($tableName, $filename, $separator, $nullAs, $fields);
+        return $this->copy->fromFile($this, $tableName, $filename, $separator, $nullAs, $fields);
     }
 
     /**
