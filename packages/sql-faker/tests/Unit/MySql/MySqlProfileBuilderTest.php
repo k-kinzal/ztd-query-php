@@ -249,4 +249,79 @@ final class MySqlProfileBuilderTest extends TestCase
             $catalog['coverage'],
         );
     }
+
+    /**
+     * @return list<string>
+     */
+    public static function providerLexerState(): array
+    {
+        return [
+            'MY_LEX_START', 'MY_LEX_CHAR', 'MY_LEX_IDENT', 'MY_LEX_IDENT_SEP', 'MY_LEX_IDENT_START',
+            'MY_LEX_REAL_OR_POINT', 'MY_LEX_REAL', 'MY_LEX_CMP_OP', 'MY_LEX_LONG_CMP_OP',
+            'MY_LEX_END_LONG_COMMENT', 'MY_LEX_SEMICOLON', 'MY_LEX_USER_END', 'MY_LEX_HOSTNAME',
+            'MY_LEX_USER_VARIABLE_DELIMITER', 'MY_LEX_SYSTEM_VAR', 'MY_LEX_IDENT_OR_KEYWORD',
+            'MY_LEX_ESCAPE', 'MY_LEX_STRING_OR_DELIMITER', 'MY_LEX_END', 'MY_LEX_EOL',
+            'MY_LEX_OPERATOR_OR_IDENT',
+        ];
+    }
+
+    /**
+     * @return list<array{id: string, sql: string, context_sql?: string, tokens: list<string>, units: list<string>}>
+     */
+    public static function providerCoverageWitnesses(): array
+    {
+        $terminals = (new MySqlProfileBuilder())->catalog(
+            'mysql-8.4.7',
+            ['symbols' => [], 'functions' => [], 'features' => ['dollar_quoted_strings' => false]],
+            self::providerLexerState(),
+            Grammar::load('mysql-8.4.7'),
+        )['terminals'];
+        self::assertIsArray($terminals);
+
+        /** @var list<array{id: string, sql: string, context_sql?: string, tokens: list<string>, units: list<string>}> */
+        return $terminals['@COVERAGE'];
+    }
+
+    public function testCatalogWitnessesEachLexerStateWithTheTextAndTokensThatReachIt(): void
+    {
+        self::assertSame(
+            [
+                'mysql.family.@COVERAGE.0' => ['\\N', ['NULL_SYM'], ['MY_LEX_START', 'MY_LEX_ESCAPE']],
+                'mysql.family.@COVERAGE.1' => ['"text"', ['TEXT_STRING'], ['MY_LEX_START', 'MY_LEX_STRING_OR_DELIMITER']],
+                'mysql.family.@COVERAGE.2' => ['name.column', ['IDENT', '.', 'IDENT'], ['MY_LEX_IDENT_SEP', 'MY_LEX_IDENT_START']],
+                'mysql.family.@COVERAGE.3' => ['.5', ['DECIMAL_NUM'], ['MY_LEX_REAL_OR_POINT', 'MY_LEX_REAL']],
+                'mysql.family.@COVERAGE.4' => ['<=', ['LE'], ['MY_LEX_CMP_OP']],
+                'mysql.family.@COVERAGE.5' => ['<=>', ['EQUAL_SYM'], ['MY_LEX_CMP_OP', 'MY_LEX_LONG_CMP_OP']],
+                'mysql.family.@COVERAGE.6' => ['*/', ['*', '/'], ['MY_LEX_END_LONG_COMMENT']],
+                'mysql.family.@COVERAGE.7' => [';', [';'], ['MY_LEX_SEMICOLON']],
+                'mysql.family.@COVERAGE.8' => ['@name', ['@', 'LEX_HOSTNAME'], ['MY_LEX_USER_END', 'MY_LEX_HOSTNAME']],
+                'mysql.family.@COVERAGE.9' => ["@'name'", ['@', 'IDENT_QUOTED'], ['MY_LEX_USER_END', 'MY_LEX_USER_VARIABLE_DELIMITER']],
+                'mysql.family.@COVERAGE.10' => ['@@name', ['@', '@', 'IDENT'], ['MY_LEX_USER_END', 'MY_LEX_SYSTEM_VAR', 'MY_LEX_IDENT_OR_KEYWORD']],
+                'mysql.coverage.MY_LEX_END' => ['', [], ['MY_LEX_END']],
+                'mysql.coverage.MY_LEX_EOL' => ['', [], ['MY_LEX_EOL']],
+                'mysql.coverage.MY_LEX_OPERATOR_OR_IDENT' => ['a + b', ['IDENT', '+', 'IDENT'], ['MY_LEX_OPERATOR_OR_IDENT']],
+            ],
+            array_map(
+                static fn (array $witness): array => [$witness['sql'], $witness['tokens'], $witness['units']],
+                array_column(self::providerCoverageWitnesses(), null, 'id'),
+            ),
+        );
+    }
+
+    public function testCatalogWitnessesEveryPunctuationCharacterAsAStartStateCharacter(): void
+    {
+        $terminals = (new MySqlProfileBuilder())->catalog(
+            'mysql-8.4.7',
+            ['symbols' => [], 'functions' => [], 'features' => ['dollar_quoted_strings' => false]],
+            self::providerLexerState(),
+            Grammar::load('mysql-8.4.7'),
+        )['terminals'];
+        self::assertIsArray($terminals);
+
+        /** @var array<string, list<array{id: string, sql: string, tokens: list<string>, units: list<string>}>> $terminals */
+        self::assertSame(
+            [['id' => 'mysql.punctuation.' . bin2hex('!'), 'sql' => '!', 'tokens' => ['!'], 'units' => ['MY_LEX_START', 'MY_LEX_CHAR']]],
+            $terminals['!'],
+        );
+    }
 }
