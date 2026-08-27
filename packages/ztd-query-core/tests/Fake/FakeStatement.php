@@ -26,6 +26,11 @@ final class FakeStatement implements StatementInterface
     private bool $executed = false;
 
     /**
+     * @var list<ResultColumnTypeResolver> Resolvers this statement was asked to read columns through
+     */
+    private array $typeResolversAsked = [];
+
+    /**
      * @var list<ResultColumn> Columns this statement reports
      */
     private array $columns;
@@ -69,12 +74,14 @@ final class FakeStatement implements StatementInterface
     /**
      * Answers the columns this statement was built with.
      *
-     * @param ResultColumnTypeResolver $typeResolver Ignored, because the columns are already decided
+     * @param ResultColumnTypeResolver $typeResolver Recorded, so a caller can be asked which resolver it passed
      *
      * @return list<ResultColumn> The columns
      */
     public function resultColumns(ResultColumnTypeResolver $typeResolver): array
     {
+        $this->typeResolversAsked[] = $typeResolver;
+
         return $this->columns;
     }
 
@@ -86,6 +93,16 @@ final class FakeStatement implements StatementInterface
     public function rowCount(): int
     {
         return count($this->rows);
+    }
+
+    /**
+     * Answers the resolvers this statement was asked to read its columns through.
+     *
+     * @return list<ResultColumnTypeResolver> The resolvers, in the order they arrived
+     */
+    public function typeResolversAsked(): array
+    {
+        return $this->typeResolversAsked;
     }
 
     /**
