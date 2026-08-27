@@ -50,6 +50,9 @@
         "test:unit:11": "@php -d memory_limit=512M vendor/bin/phpunit --configuration phpunit11.xml.dist tests/Unit/",
         "test:unit:12": "@php -d memory_limit=512M vendor/bin/phpunit --configuration phpunit12.xml.dist tests/Unit/",
         "test:integration": "phpunit tests/Integration/",
+        "test:integration:10": "phpunit --configuration phpunit10.xml.dist tests/Integration/",
+        "test:integration:11": "phpunit --configuration phpunit11.xml.dist tests/Integration/",
+        "test:integration:12": "phpunit --configuration phpunit12.xml.dist tests/Integration/",
         "lint": [
             "@format:check",
             "@phpstan"
