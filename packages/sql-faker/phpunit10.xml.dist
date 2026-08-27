@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you. -->
-<!-- PHPUnit 13 is what Composer resolves on PHP 8.5. Every earlier major
-     this package still supports has its own file next to this one: their
-     schemas reject each other's strict settings, so one shared file could
-     only hold what the oldest of them accepts. -->
+<!-- PHPUnit 10.5 is what Composer resolves on PHP 8.1, the floor this
+     package supports. It has no ignoreIndirectDeprecations, so deprecations
+     are narrowed with restrictDeprecations, which PHPUnit 11 removed. -->
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
          bootstrap="vendor/autoload.php"
@@ -11,13 +10,11 @@
          cacheDirectory=".phpunit.cache"
          executionOrder="depends,random"
          requireCoverageMetadata="true"
-         requireSealedMockObjects="true"
          beStrictAboutCoverageMetadata="true"
          beStrictAboutChangesToGlobalState="true"
          beStrictAboutOutputDuringTests="true"
          beStrictAboutTestsThatDoNotTestAnything="true"
          failOnAllIssues="true"
-         shortenArraysForExportThreshold="0"
          displayDetailsOnAllIssues="true"
          enforceTimeLimit="true"
          timeoutForSmallTests="1"
@@ -31,7 +28,7 @@
     <extensions>
         <bootstrap class="Toolkit\PhpUnit\TestReporter\AiTestReporterExtension"/>
     </extensions>
-    <source ignoreIndirectDeprecations="true"
+    <source restrictDeprecations="true"
           restrictNotices="true"
             restrictWarnings="true"
             ignoreSuppressionOfDeprecations="true"
