@@ -14,6 +14,7 @@ use SqlFaker\Grammar\SqlVersion;
 use SqlFaker\Grammar\SqlVersionRegistry;
 use SqlFaker\MySql\Grammar\Grammar;
 use SqlFaker\MySql\Grammar\TerminalInventory;
+use SqlFaker\MySql\MySqlLexicalSamples;
 use SqlFaker\MySql\MySqlProfileBuilder;
 
 #[CoversClass(MySqlProfileBuilder::class)]
@@ -21,6 +22,7 @@ use SqlFaker\MySql\MySqlProfileBuilder;
 #[UsesClass(SqlVersionRegistry::class)]
 #[UsesClass(Grammar::class)]
 #[UsesClass(TerminalInventory::class)]
+#[UsesClass(MySqlLexicalSamples::class)]
 final class MySqlProfileBuilderTest extends TestCase
 {
     public function testSourceUrlsReadsTheKeywordTableAndTheScanner(): void
