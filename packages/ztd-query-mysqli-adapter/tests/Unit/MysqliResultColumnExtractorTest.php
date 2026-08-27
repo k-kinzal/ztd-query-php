@@ -10,7 +10,6 @@ use PHPUnit\Framework\TestCase;
 use Tests\Fixtures\StubMysqliField;
 use Tests\Fixtures\StubMysqliResult;
 use ZtdQuery\Adapter\Mysqli\MysqliResultColumnExtractor;
-use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Platform\MissingResultColumnTypeResolver;
 use ZtdQuery\Platform\ResultColumnTypeResolver;
 use ZtdQuery\Schema\ColumnDeclaration;
