@@ -21,8 +21,10 @@ use SqlFaker\MySql\Bison\Lexer\NumberScanner;
 use SqlFaker\MySql\Bison\Lexer\PunctuationScanner;
 use SqlFaker\MySql\Bison\Lexer\QuotedLiteralScanner;
 use SqlFaker\MySql\Bison\Lexer\TypeTagScanner;
+use Tests\Fixture\SqlFaker\StuckScanner;
 
 #[CoversClass(BisonLexer::class)]
+#[UsesClass(StuckScanner::class)]
 #[UsesClass(ActionScanner::class)]
 #[UsesClass(BisonLexeme::class)]
 #[UsesClass(BisonScannerChain::class)]
@@ -145,5 +147,14 @@ final class BisonLexerTest extends TestCase
         $lexer->scan();
 
         self::assertSame('', $lexer->consumeRemaining());
+    }
+    public function testScanRefusesAScannerThatReadsACharacterWithoutConsumingIt(): void
+    {
+        $lexer = new BisonLexer(';', new BisonScannerChain([new StuckScanner()]));
+
+        $this->expectException(GrammarParseException::class);
+        $this->expectExceptionMessage("Scanner read ';' at offset 0 without consuming it");
+
+        $lexer->scan();
     }
 }

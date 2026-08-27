@@ -64,7 +64,12 @@ final class BisonLexer
         $scanner = $this->scanners->scannerFor($character)
             ?? throw GrammarParseException::unexpectedCharacter($character, $offset);
 
-        return $scanner->scan($this->cursor);
+        $token = $scanner->scan($this->cursor);
+        if ($this->cursor->offset() === $offset) {
+            throw GrammarParseException::scannerDidNotAdvance($character, $offset);
+        }
+
+        return $token;
     }
 
     /**

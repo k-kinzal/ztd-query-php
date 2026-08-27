@@ -177,6 +177,21 @@ final class PgTokenizerTest extends TestCase
         self::assertSame(['+*', 'Op'], (new PgTokenizer([], new PgLookahead([])))->operatorAt('+*x', 0));
     }
 
+    public function testOperatorAtStopsAtTheEndOfTheText(): void
+    {
+        self::assertSame(['+*', 'Op'], (new PgTokenizer([], new PgLookahead([])))->operatorAt('+*', 0));
+    }
+
+    public function testOperatorAtStopsWhereACommentOpens(): void
+    {
+        self::assertSame(['+', '+'], (new PgTokenizer([], new PgLookahead([])))->operatorAt('+--x', 0));
+    }
+
+    public function testOperatorAtStopsWhereABlockCommentOpens(): void
+    {
+        self::assertSame(['+', '+'], (new PgTokenizer([], new PgLookahead([])))->operatorAt('+/*x', 0));
+    }
+
     public function testOperatorAtReportsPunctuationAsItself(): void
     {
         self::assertSame(['(', '('], (new PgTokenizer([], new PgLookahead([])))->operatorAt('(x', 0));
@@ -203,5 +218,116 @@ final class PgTokenizerTest extends TestCase
         self::assertTrue($tokenizer->isPunctuation('('));
         self::assertFalse($tokenizer->isPunctuation('a'));
         self::assertFalse($tokenizer->isPunctuation('::'));
+    }
+    #[DataProvider('providerDollarToken')]
+    public function testDollarTokenAtReadsBothOfTheThingsADollarStarts(string $sql, ?string $token, int $consumed): void
+    {
+        $offset = 0;
+        $read = (new PgTokenizer([], new PgLookahead([])))->dollarTokenAt($sql, $offset);
+
+        self::assertSame([$token, $consumed], [$read, $offset]);
+    }
+
+    /**
+     * @return iterable<string, array{string, string|null, int}>
+     */
+    public static function providerDollarToken(): iterable
+    {
+        yield 'an untagged dollar-quoted string' => ['$$body$$x', 'SCONST', 8];
+        yield 'a tagged dollar-quoted string' => ['$tag$body$tag$x', 'SCONST', 14];
+        yield 'a parameter marker' => ['$12,', 'PARAM', 3];
+        yield 'a dollar that starts neither' => ['$0', null, 0];
+    }
+
+    public function testDollarTokenAtRefusesADollarQuotedStringThatNeverCloses(): void
+    {
+        $offset = 0;
+
+        $this->expectExceptionMessage('Unterminated PostgreSQL dollar-quoted string');
+
+        (new PgTokenizer([], new PgLookahead([])))->dollarTokenAt('$$body', $offset);
+    }
+
+    #[DataProvider('providerNumericLiteral')]
+    public function testNumericTokenAtReadsEverySpellingPostgresAcceptsForANumber(string $sql, string $token, int $consumed): void
+    {
+        $offset = 0;
+        $read = (new PgTokenizer([], new PgLookahead([])))->numericTokenAt($sql, $offset);
+
+        self::assertSame([$token, $consumed], [$read, $offset]);
+    }
+
+    /**
+     * @return iterable<string, array{string, string, int}>
+     */
+    public static function providerNumericLiteral(): iterable
+    {
+        yield 'a whole number' => ['42x', 'ICONST', 2];
+        yield 'a decimal with digits either side' => ['1.5x', 'FCONST', 3];
+        yield 'a decimal with nothing after the point' => ['1.x', 'FCONST', 2];
+        yield 'a decimal with nothing before the point' => ['.5x', 'FCONST', 2];
+        yield 'a float with a lower-case exponent' => ['1e3x', 'FCONST', 3];
+        yield 'a float with an upper-case exponent' => ['1E3x', 'FCONST', 3];
+        yield 'a float with a signed exponent' => ['1.5e-3x', 'FCONST', 6];
+    }
+
+    #[DataProvider('providerWord')]
+    public function testWordTokenAtReadsAKeywordHoweverItIsCased(string $sql, string $token): void
+    {
+        $offset = 0;
+        $tokenizer = new PgTokenizer(['SELECT' => 'SELECT'], new PgLookahead([]));
+
+        self::assertSame($token, $tokenizer->wordTokenAt($sql, $offset));
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerWord(): iterable
+    {
+        yield 'a keyword in upper case' => ['SELECT', 'SELECT'];
+        yield 'a keyword in lower case' => ['select', 'SELECT'];
+        yield 'a keyword in mixed case' => ['SeLeCt', 'SELECT'];
+        yield 'a word nothing else names' => ['users', 'IDENT'];
+        yield 'a word starting with an underscore' => ['_users', 'IDENT'];
+    }
+
+    public function testWordTokenAtMovesPastExactlyTheWordItRead(): void
+    {
+        $offset = 0;
+        (new PgTokenizer([], new PgLookahead([])))->wordTokenAt('users, id', $offset);
+
+        self::assertSame(5, $offset);
+    }
+
+    #[DataProvider('providerTrivia')]
+    public function testSkipTriviaMovesPastEveryKindOfSeparator(string $sql, bool $skipped, int $consumed): void
+    {
+        $offset = 0;
+        $read = (new PgTokenizer([], new PgLookahead([])))->skipTrivia($sql, $offset);
+
+        self::assertSame([$skipped, $consumed], [$read, $offset]);
+    }
+
+    /**
+     * @return iterable<string, array{string, bool, int}>
+     */
+    public static function providerTrivia(): iterable
+    {
+        yield 'whitespace' => ["  \n x", true, 4];
+        yield 'a line comment ending at a newline' => ["-- note\nx", true, 8];
+        yield 'a line comment ending at the text' => ['-- note', true, 7];
+        yield 'a block comment' => ['/* note */x', true, 10];
+        yield 'a block comment holding another' => ['/* a /* b */ c */x', true, 17];
+        yield 'text that is no separator at all' => ['x', false, 0];
+    }
+
+    public function testSkipTriviaRefusesABlockCommentThatNeverCloses(): void
+    {
+        $offset = 0;
+
+        $this->expectExceptionMessage('Unterminated PostgreSQL block comment');
+
+        (new PgTokenizer([], new PgLookahead([])))->skipTrivia('/* note', $offset);
     }
 }
