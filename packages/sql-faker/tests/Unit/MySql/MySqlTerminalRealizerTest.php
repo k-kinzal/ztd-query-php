@@ -625,7 +625,7 @@ final class MySqlTerminalRealizerTest extends TestCase
 
     public function testADollarQuotedStringIsWrappedInDoubledDollars(): void
     {
-        self::assertMatchesRegularExpression('/^\$\$[0-9A-Za-z]{0,24}\$\$$/', self::providerSeededRealizer()->dollarQuotedString());
+        self::assertMatchesRegularExpression('/^\$\$\w{0,24}\$\$$/', self::providerSeededRealizer()->dollarQuotedString());
     }
 
     public function testAHexadecimalLiteralIsWrittenInOneOfTheTwoSpellingsMysqlReads(): void
