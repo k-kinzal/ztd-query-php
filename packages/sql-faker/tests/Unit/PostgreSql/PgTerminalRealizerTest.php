@@ -682,7 +682,7 @@ final class PgTerminalRealizerTest extends TestCase
     {
         $realizer = self::providerSyntheticOnlyRealizer();
 
-        self::assertMatchesRegularExpression("/^U&'[0-9A-Za-z]{0,12}'\$/", $realizer->unicodeStringLiteral());
+        self::assertMatchesRegularExpression("/^U&'\w{0,12}'\$/", $realizer->unicodeStringLiteral());
     }
 
     public function testOperatorNeverCarriesACommentMarker(): void
