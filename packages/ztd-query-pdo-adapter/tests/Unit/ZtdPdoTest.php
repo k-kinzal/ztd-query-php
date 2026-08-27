@@ -317,7 +317,9 @@ final class ZtdPdoTest extends TestCase
 
     public function testIsZtdEnabledSaysWritesAreShadowedFromTheStart(): void
     {
-        self::assertTrue($this->providerShadowedUsers()->isZtdEnabled());
+        $ztdPdo = $this->providerShadowedUsers();
+
+        self::assertTrue($ztdPdo->isZtdEnabled());
     }
 
     public function testPrepareAnswersAStatementThatShadowsWhatItIsRunWith(): void
@@ -422,7 +424,9 @@ final class ZtdPdoTest extends TestCase
 
     public function testInTransactionSaysNothingIsOpenBeforeOneIsBegun(): void
     {
-        self::assertFalse($this->providerShadowedUsers()->inTransaction());
+        $ztdPdo = $this->providerShadowedUsers();
+
+        self::assertFalse($ztdPdo->inTransaction());
     }
 
     public function testLastInsertIdAnswersTheKeyTheShadowGaveTheRowItWrote(): void
@@ -435,17 +439,23 @@ final class ZtdPdoTest extends TestCase
 
     public function testErrorCodeAnswersWhatTheDriverSaysWentWrongLast(): void
     {
-        self::assertSame('00000', $this->providerShadowedUsers()->errorCode());
+        $ztdPdo = $this->providerShadowedUsers();
+
+        self::assertSame('00000', $ztdPdo->errorCode());
     }
 
     public function testErrorInfoAnswersWhatTheDriverSaysAboutTheLastFailure(): void
     {
-        self::assertSame('00000', $this->providerShadowedUsers()->errorInfo()[0]);
+        $ztdPdo = $this->providerShadowedUsers();
+
+        self::assertSame('00000', $ztdPdo->errorInfo()[0]);
     }
 
     public function testGetAttributeReadsTheAttributeOffTheConnectionItWraps(): void
     {
-        self::assertSame('sqlite', $this->providerShadowedUsers()->getAttribute(PDO::ATTR_DRIVER_NAME));
+        $ztdPdo = $this->providerShadowedUsers();
+
+        self::assertSame('sqlite', $ztdPdo->getAttribute(PDO::ATTR_DRIVER_NAME));
     }
 
     public function testSetAttributeSetsTheAttributeOnTheConnectionItWraps(): void
@@ -459,7 +469,9 @@ final class ZtdPdoTest extends TestCase
 
     public function testQuoteWritesAValueTheWayTheDriverWouldQuoteIt(): void
     {
-        self::assertSame("'ada'", $this->providerShadowedUsers()->quote('ada'));
+        $ztdPdo = $this->providerShadowedUsers();
+
+        self::assertSame("'ada'", $ztdPdo->quote('ada'));
     }
 
     public function testGetAvailableDriversAnswersTheDriversPdoWasBuiltWith(): void
@@ -472,56 +484,72 @@ final class ZtdPdoTest extends TestCase
         $this->expectException(ZtdPdoException::class);
         $this->expectExceptionMessage('PostgreSQL COPY methods require the PDO PostgreSQL driver.');
 
-        $this->providerShadowedUsers()->pgsqlCopyToArray('users');
+        $ztdPdo = $this->providerShadowedUsers();
+
+        $ztdPdo->pgsqlCopyToArray('users');
     }
 
     public function testCopyToArrayRefusesADialectWithNoCopy(): void
     {
         $this->expectExceptionMessage('PostgreSQL COPY methods require the PDO PostgreSQL driver.');
 
-        $this->providerShadowedUsers()->copyToArray('users');
+        $ztdPdo = $this->providerShadowedUsers();
+
+        $ztdPdo->copyToArray('users');
     }
 
     public function testPgsqlCopyFromArrayRefusesADialectWithNoCopy(): void
     {
         $this->expectExceptionMessage('PostgreSQL COPY methods require the PDO PostgreSQL driver.');
 
-        $this->providerShadowedUsers()->pgsqlCopyFromArray('users', ["1\tada\n"]);
+        $ztdPdo = $this->providerShadowedUsers();
+
+        $ztdPdo->pgsqlCopyFromArray('users', ["1\tada\n"]);
     }
 
     public function testCopyFromArrayRefusesADialectWithNoCopy(): void
     {
         $this->expectExceptionMessage('PostgreSQL COPY methods require the PDO PostgreSQL driver.');
 
-        $this->providerShadowedUsers()->copyFromArray('users', ["1\tada\n"]);
+        $ztdPdo = $this->providerShadowedUsers();
+
+        $ztdPdo->copyFromArray('users', ["1\tada\n"]);
     }
 
     public function testPgsqlCopyToFileRefusesADialectWithNoCopy(): void
     {
         $this->expectExceptionMessage('PostgreSQL COPY methods require the PDO PostgreSQL driver.');
 
-        $this->providerShadowedUsers()->pgsqlCopyToFile('users', '/dev/null');
+        $ztdPdo = $this->providerShadowedUsers();
+
+        $ztdPdo->pgsqlCopyToFile('users', '/dev/null');
     }
 
     public function testCopyToFileRefusesADialectWithNoCopy(): void
     {
         $this->expectExceptionMessage('PostgreSQL COPY methods require the PDO PostgreSQL driver.');
 
-        $this->providerShadowedUsers()->copyToFile('users', '/dev/null');
+        $ztdPdo = $this->providerShadowedUsers();
+
+        $ztdPdo->copyToFile('users', '/dev/null');
     }
 
     public function testPgsqlCopyFromFileRefusesADialectWithNoCopy(): void
     {
         $this->expectExceptionMessage('PostgreSQL COPY methods require the PDO PostgreSQL driver.');
 
-        $this->providerShadowedUsers()->pgsqlCopyFromFile('users', '/dev/null');
+        $ztdPdo = $this->providerShadowedUsers();
+
+        $ztdPdo->pgsqlCopyFromFile('users', '/dev/null');
     }
 
     public function testCopyFromFileRefusesADialectWithNoCopy(): void
     {
         $this->expectExceptionMessage('PostgreSQL COPY methods require the PDO PostgreSQL driver.');
 
-        $this->providerShadowedUsers()->copyFromFile('users', '/dev/null');
+        $ztdPdo = $this->providerShadowedUsers();
+
+        $ztdPdo->copyFromFile('users', '/dev/null');
     }
 
     /**
