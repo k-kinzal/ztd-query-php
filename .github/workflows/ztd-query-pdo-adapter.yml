@@ -141,6 +141,12 @@ jobs:
           dependency-versions: highest
           composer-options: --prefer-dist
 
+      # --strict is left off: this package reaches its siblings through path
+      # repositories, which Composer can only be given as "@dev", and --strict
+      # fails any unbound constraint. Everything else about the file is checked.
+      - name: Validate composer.json
+        run: composer validate --no-check-publish
+
       - name: Coding standards
         run: composer format:check
 
