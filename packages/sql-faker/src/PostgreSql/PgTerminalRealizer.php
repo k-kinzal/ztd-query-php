@@ -25,6 +25,15 @@ final class PgTerminalRealizer
 {
     private const OPERATOR_CHARACTERS = '+-*/<>=~!@#%^&|`?';
 
+    /**
+     * How many operators to draw before settling for one that is known to read.
+     *
+     * A drawn operator is rejected when it opens a comment or spells one the
+     * lexer already has a token for, and both are rare; drawing a bounded number
+     * of times keeps the search from being the only thing that ends this method.
+     */
+    private const OPERATOR_DRAWS = 32;
+
     /** @readonly */
     private RandomStringGenerator $strings;
 
@@ -315,13 +324,14 @@ final class PgTerminalRealizer
             return $common[$commonIndex];
         }
 
-        do {
-            $operator = $this->randomOperator();
-        } while (
-            str_contains($operator, '--')
-            || str_contains($operator, '/*')
-            || $this->tokenizer->fixedOperator($operator) !== null
-        );
+        $operator = '?|';
+        for ($draw = 0; $draw < self::OPERATOR_DRAWS; $draw++) {
+            $drawn = $this->randomOperator();
+            if ($this->readsAsItsOwnOperator($drawn)) {
+                $operator = $drawn;
+                break;
+            }
+        }
 
         $last = strlen($operator) - 1;
         if (($operator[$last] === '+' || $operator[$last] === '-')
@@ -331,6 +341,23 @@ final class PgTerminalRealizer
         }
 
         return $operator;
+    }
+
+    /**
+     * Reports whether a drawn operator reads as an operator of its own.
+     *
+     * A run that opens a comment is read as a comment, and one the lexer already
+     * has a token for is read as that token; neither stands for an operator.
+     *
+     * @param string $operator Operator as it was drawn
+     *
+     * @return bool Whether the lexer reads it as an operator of its own
+     */
+    public function readsAsItsOwnOperator(string $operator): bool
+    {
+        return !str_contains($operator, '--')
+            && !str_contains($operator, '/*')
+            && $this->tokenizer->fixedOperator($operator) === null;
     }
 
     /**
