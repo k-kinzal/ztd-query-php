@@ -8,6 +8,7 @@ use Faker\Factory;
 use Faker\Generator;
 use mysqli;
 use mysqli_result;
+use RuntimeException;
 use SqlFixture\FixtureProvider;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
 use ZtdQuery\Config\UnknownSchemaBehavior;
@@ -43,6 +44,34 @@ final class MysqliCorrectnessHarness
     }
 
     /**
+     * Answers a generated row the harness can write and compare.
+     *
+     * The generator answers whatever the column's type maps to; a row both
+     * sides can be asked about holds nothing but scalars and nulls.
+     *
+     * @param string $createTableSql Declaration of the table to build a row for
+     *
+     * @return array<string, bool|float|int|string|null> The row, keyed by column
+     *
+     * @throws RuntimeException When the generator answers something no comparison can read
+     */
+    public function fixtureRow(string $createTableSql): array
+    {
+        $row = [];
+        foreach ($this->fixtureProvider->fixture($createTableSql) as $column => $value) {
+            if (!is_string($column)) {
+                throw new RuntimeException('The fixture generator answered a row with an unnamed column.');
+            }
+            if ($value !== null && !is_scalar($value)) {
+                throw new RuntimeException(sprintf('The fixture generator answered %s for column "%s", which no comparison can read.', get_debug_type($value), $column));
+            }
+            $row[$column] = $value;
+        }
+
+        return $row;
+    }
+
+    /**
      * Set up both connections with the same schema and data.
      *
      * @return array<int, array<string, mixed>> The fixture rows inserted
@@ -57,7 +86,7 @@ final class MysqliCorrectnessHarness
 
         $this->fixtureRows = [];
         for ($i = 0; $i < $rowCount; $i++) {
-            $row = $this->fixtureProvider->fixture($schema->sql);
+            $row = $this->fixtureRow($schema->sql);
             if (count($schema->primaryKeys) === 1 && $schema->primaryKeys[0] === 'id') {
                 $row['id'] = $i + 1;
             }
