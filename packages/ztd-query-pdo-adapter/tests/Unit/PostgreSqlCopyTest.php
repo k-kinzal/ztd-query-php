@@ -40,7 +40,10 @@ final class PostgreSqlCopyTest extends TestCase
         [$copy, $pdo] = $this->providerCopyOverSqlite();
 
         $this->expectException(ZtdPdoException::class);
-        $this->expectExceptionMessage('ZTD Write Protection: Raw PostgreSQL COPY');
+        $this->expectExceptionMessage(
+            'ZTD Write Protection: Raw PostgreSQL COPY cannot preserve shadow isolation; '
+            . 'use the pgsqlCopyToArray(), pgsqlCopyFromArray(), pgsqlCopyToFile(), or pgsqlCopyFromFile() methods.',
+        );
 
         $copy->guardRaw('COPY copy_target FROM STDIN');
     }
@@ -76,7 +79,11 @@ final class PostgreSqlCopyTest extends TestCase
 
         $written = $copy->fromArray($pdo, 'copy_target', ["3\tlinus\n"]);
 
-        self::assertSame([true, 3], [$written, $this->providerRowCount($pdo)]);
+        $statement = $pdo->query('SELECT id, value FROM copy_target WHERE id = 3');
+        self::assertSame(
+            [true, 3, [['id' => 3, 'value' => 'linus']]],
+            [$written, $this->providerRowCount($pdo), $statement === false ? [] : $statement->fetchAll(PDO::FETCH_ASSOC)],
+        );
     }
 
     public function testFromArrayWritesNothingWhereItIsGivenNothing(): void
