@@ -54,4 +54,10 @@ final class ConnectionStateTest extends TestCase
     {
         self::assertSame(0, (new ConnectionState(new FakeConnectionProperties()))->affectedRows());
     }
+    public function testAffectedRowsAnswersZeroWhereTheConnectionSaysSomethingThatIsNoCount(): void
+    {
+        $state = new ConnectionState(new FakeConnectionProperties(['affected_rows' => 1.9]));
+
+        self::assertSame(0, $state->affectedRows());
+    }
 }

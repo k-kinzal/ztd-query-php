@@ -160,4 +160,12 @@ final class MysqliStatementTest extends TestCase
 
         self::assertSame([], $statement->resultColumns(self::createStub(ResultColumnTypeResolver::class)));
     }
+    public function testExecuteAnswersFalseWhereParametersDidNotRunAndTheDriverSaidNothing(): void
+    {
+        $stmt = StubMysqliStmt::create();
+        $stmt->executeReturn = false;
+        $statement = new MysqliStatement($stmt, new StubMysqli(), new FakeConnectionProperties());
+
+        self::assertFalse($statement->execute([1]));
+    }
 }

@@ -44,6 +44,7 @@
     },
     "scripts": {
         "test": "paratest --processes=auto",
+        "test:parallel": "paratest --processes=auto --testsuite=unit",
         "test:unit": "@php -d memory_limit=512M vendor/bin/phpunit tests/Unit/",
         "test:integration": "phpunit tests/Integration/",
         "lint": [
