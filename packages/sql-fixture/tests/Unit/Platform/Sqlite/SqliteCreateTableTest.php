@@ -99,4 +99,61 @@ final class SqliteCreateTableTest extends TestCase
     {
         self::assertSame([], (new SqliteCreateTable())->primaryKeys('id INTEGER PRIMARY KEY'));
     }
+    public function testNormalizedTakesABlockCommentOutOfTheStatement(): void
+    {
+        $normalized = (new SqliteCreateTable())->normalized("CREATE TABLE t (\n  id INTEGER /* the key */\n)");
+
+        self::assertSame('CREATE TABLE t ( id INTEGER )', $normalized);
+    }
+
+    public function testNormalizedLeavesNoSpaceAtEitherEndOfTheStatement(): void
+    {
+        $normalized = (new SqliteCreateTable())->normalized('   CREATE TABLE t (id INTEGER)   ');
+
+        self::assertSame('CREATE TABLE t (id INTEGER)', $normalized);
+    }
+
+    public function testColumnsBlockAnswersNothingWhereTheBracketsCloseBeforeTheyOpen(): void
+    {
+        self::assertNull((new SqliteCreateTable())->columnsBlock(') CREATE TABLE t ('));
+    }
+
+    public function testColumnsBlockAnswersNothingWhereTheBracketsAreEmptyOfEachOther(): void
+    {
+        self::assertNull((new SqliteCreateTable())->columnsBlock('CREATE TABLE t )('));
+    }
+
+    public function testDefinitionsLeaveNoSpaceAtEitherEndOfADeclaration(): void
+    {
+        $definitions = (new SqliteCreateTable())->definitions('  id INTEGER  ,  name TEXT  ');
+
+        self::assertSame(['id INTEGER', 'name TEXT'], $definitions);
+    }
+
+    public function testDefinitionsDropATrailingCommaThatDeclaresNothing(): void
+    {
+        $definitions = (new SqliteCreateTable())->definitions('id INTEGER,   ');
+
+        self::assertSame(['id INTEGER'], $definitions);
+    }
+
+    public function testIsTableConstraintIgnoresTheSpaceBeforeAConstraint(): void
+    {
+        self::assertTrue((new SqliteCreateTable())->isTableConstraint('   PRIMARY KEY (id)'));
+    }
+
+    public function testIsTableConstraintReadsAConstraintWrittenInLowerCase(): void
+    {
+        self::assertTrue((new SqliteCreateTable())->isTableConstraint('primary key (id)'));
+    }
+
+    public function testIsTableConstraintCallsAColumnThatMentionsAKeyLaterAColumn(): void
+    {
+        self::assertFalse((new SqliteCreateTable())->isTableConstraint('id INTEGER PRIMARY KEY'));
+    }
+
+    public function testPrimaryKeysReadsAKeyWrittenInLowerCase(): void
+    {
+        self::assertSame(['id'], (new SqliteCreateTable())->primaryKeys('id INTEGER, primary key (id)'));
+    }
 }

@@ -91,4 +91,61 @@ final class PostgreSqlCreateTableTest extends TestCase
     {
         self::assertSame([], (new PostgreSqlCreateTable())->primaryKeys('id SERIAL PRIMARY KEY'));
     }
+    public function testNormalizedTakesABlockCommentOutOfTheStatement(): void
+    {
+        $normalized = (new PostgreSqlCreateTable())->normalized("CREATE TABLE t (\n  id INTEGER /* the key */\n)");
+
+        self::assertSame('CREATE TABLE t ( id INTEGER )', $normalized);
+    }
+
+    public function testNormalizedLeavesNoSpaceAtEitherEndOfTheStatement(): void
+    {
+        $normalized = (new PostgreSqlCreateTable())->normalized('   CREATE TABLE t (id INTEGER)   ');
+
+        self::assertSame('CREATE TABLE t (id INTEGER)', $normalized);
+    }
+
+    public function testColumnsBlockAnswersNothingWhereTheBracketsCloseBeforeTheyOpen(): void
+    {
+        self::assertNull((new PostgreSqlCreateTable())->columnsBlock(') CREATE TABLE t ('));
+    }
+
+    public function testColumnsBlockAnswersNothingWhereTheBracketsAreEmptyOfEachOther(): void
+    {
+        self::assertNull((new PostgreSqlCreateTable())->columnsBlock('CREATE TABLE t )('));
+    }
+
+    public function testDefinitionsLeaveNoSpaceAtEitherEndOfADeclaration(): void
+    {
+        $definitions = (new PostgreSqlCreateTable())->definitions('  id INTEGER  ,  name TEXT  ');
+
+        self::assertSame(['id INTEGER', 'name TEXT'], $definitions);
+    }
+
+    public function testDefinitionsDropATrailingCommaThatDeclaresNothing(): void
+    {
+        $definitions = (new PostgreSqlCreateTable())->definitions('id INTEGER,   ');
+
+        self::assertSame(['id INTEGER'], $definitions);
+    }
+
+    public function testIsTableConstraintIgnoresTheSpaceBeforeAConstraint(): void
+    {
+        self::assertTrue((new PostgreSqlCreateTable())->isTableConstraint('   PRIMARY KEY (id)'));
+    }
+
+    public function testIsTableConstraintReadsAConstraintWrittenInLowerCase(): void
+    {
+        self::assertTrue((new PostgreSqlCreateTable())->isTableConstraint('primary key (id)'));
+    }
+
+    public function testIsTableConstraintCallsAColumnThatMentionsAKeyLaterAColumn(): void
+    {
+        self::assertFalse((new PostgreSqlCreateTable())->isTableConstraint('id INTEGER PRIMARY KEY'));
+    }
+
+    public function testPrimaryKeysReadsAKeyWrittenInLowerCase(): void
+    {
+        self::assertSame(['id'], (new PostgreSqlCreateTable())->primaryKeys('id INTEGER, primary key (id)'));
+    }
 }

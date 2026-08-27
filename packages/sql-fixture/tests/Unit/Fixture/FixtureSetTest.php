@@ -264,4 +264,67 @@ final class FixtureSetTest extends TestCase
 
         self::assertSame('', $set->resolve(9));
     }
+    public function testOffsetExistsSaysNothingIsThereUnderAnOffsetNoTableCanBeNamedBy(): void
+    {
+        $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
+
+        self::assertArrayNotHasKey(1.5, $set);
+    }
+
+    public function testOffsetExistsSaysATableThePlanNamesIsThere(): void
+    {
+        $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
+
+        self::assertArrayHasKey('order', $set);
+    }
+
+    public function testOffsetExistsSaysATableThePlanDoesNotNameIsNotThere(): void
+    {
+        $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
+
+        self::assertArrayNotHasKey('detail', $set);
+    }
+
+    public function testOffsetGetAnswersNothingForAnOffsetNoTableCanBeNamedBy(): void
+    {
+        $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
+
+        self::assertNull($set[1.5]);
+    }
+
+    public function testOffsetSetNamesTheTableItRefusedToChange(): void
+    {
+        $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
+
+        $this->expectExceptionMessage('Cannot set "order" on a generated fixture set');
+
+        $set['order'] = [];
+    }
+
+    public function testOffsetSetRefusesAWriteUnderAnOffsetNoTableCanBeNamedBy(): void
+    {
+        $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
+
+        $this->expectExceptionMessage('Cannot set "" on a generated fixture set');
+
+        $set[1.5] = [];
+    }
+
+    public function testOffsetUnsetNamesTheTableItRefusedToRemove(): void
+    {
+        $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
+
+        $this->expectExceptionMessage('Cannot remove "order" from a generated fixture set');
+
+        unset($set['order']);
+    }
+
+    public function testOffsetUnsetRefusesARemovalUnderAnOffsetNoTableCanBeNamedBy(): void
+    {
+        $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
+
+        $this->expectExceptionMessage('Cannot remove "" from a generated fixture set');
+
+        unset($set[1.5]);
+    }
 }

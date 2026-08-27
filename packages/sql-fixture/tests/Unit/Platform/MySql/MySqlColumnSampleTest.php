@@ -16,6 +16,7 @@ use SqlFixture\Platform\MySql\MySqlNumberSample;
 use SqlFixture\Platform\MySql\MySqlTextSample;
 use SqlFixture\Platform\MySql\WellKnownTextGeometry;
 use SqlFixture\Schema\ColumnDefinition;
+use Tests\Fixture\SpyGenerator;
 
 #[CoversClass(MySqlColumnSample::class)]
 #[UsesClass(ColumnDefinition::class)]
@@ -144,5 +145,231 @@ final class MySqlColumnSampleTest extends TestCase
         self::assertIsArray($decoded);
         self::assertArrayHasKey('key', $decoded);
         self::assertArrayHasKey('value', $decoded);
+    }
+    #[DataProvider('providerTypeAndSpelling')]
+    public function testOfWritesTheTypeInTheSpellingMysqlReadsItFrom(string $type, string $pattern): void
+    {
+        $value = (new MySqlColumnSample())->of(Factory::create(), new ColumnDefinition('c', $type, length: 6));
+
+        self::assertMatchesRegularExpression($pattern, (string) $value);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerTypeAndSpelling(): iterable
+    {
+        yield 'CHAR' => ['CHAR', '/^.{6}$/'];
+        yield 'VARCHAR' => ['VARCHAR', '/^.{1,6}$/s'];
+        yield 'TINYTEXT' => ['TINYTEXT', '/^[^\n]+$/'];
+        yield 'DATE' => ['DATE', '/^\d{4}-\d{2}-\d{2}$/'];
+        yield 'TIME' => ['TIME', '/^\d{2}:\d{2}:\d{2}$/'];
+        yield 'DATETIME' => ['DATETIME', '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/'];
+        yield 'TIMESTAMP' => ['TIMESTAMP', '/^(19[7-9]\d|20[0-3]\d)-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/'];
+        yield 'JSON' => ['JSON', '/^\{"key":.*,"value":\d+\}$/'];
+    }
+
+    #[DataProvider('providerTextTypeAndParagraphCount')]
+    public function testOfWritesAsManyParagraphsAsTheTypeHolds(string $type, int $paragraphs): void
+    {
+        $value = (new MySqlColumnSample())->of(Factory::create(), new ColumnDefinition('t', $type));
+
+        self::assertCount($paragraphs, explode("\n\n", (string) $value));
+    }
+
+    /**
+     * @return iterable<string, array{string, int}>
+     */
+    public static function providerTextTypeAndParagraphCount(): iterable
+    {
+        yield 'TEXT' => ['TEXT', 2];
+        yield 'MEDIUMTEXT' => ['MEDIUMTEXT', 3];
+        yield 'LONGTEXT' => ['LONGTEXT', 5];
+    }
+
+    public function testOfDrawsTwoHundredAndFiftyFiveCharactersForATinyText(): void
+    {
+        $faker = SpyGenerator::create();
+
+        (new MySqlColumnSample())->of($faker, new ColumnDefinition('t', 'TINYTEXT'));
+
+        self::assertSame([[255]], $faker->methodCalls['text'] ?? []);
+    }
+
+    public function testOfFallsBackToFiftyCharactersOfTextForATypeNothingNames(): void
+    {
+        $faker = SpyGenerator::create();
+
+        (new MySqlColumnSample())->of($faker, new ColumnDefinition('x', 'SOMETHING_ELSE'));
+
+        self::assertSame([[50]], $faker->methodCalls['text'] ?? []);
+    }
+
+    public function testOfKeepsAFloatWithinAThousandEitherWay(): void
+    {
+        $faker = SpyGenerator::create();
+
+        (new MySqlColumnSample())->of($faker, new ColumnDefinition('f', 'FLOAT'));
+
+        self::assertSame([[2, -1000.0, 1000.0]], $faker->randomFloatCalls);
+    }
+
+    #[DataProvider('providerWideFloatType')]
+    public function testOfGivesAWiderFloatTheRangeItsTypeSuggests(string $type): void
+    {
+        $faker = SpyGenerator::create();
+
+        (new MySqlColumnSample())->of($faker, new ColumnDefinition('f', $type));
+
+        self::assertSame([[4, -1000000.0, 1000000.0]], $faker->randomFloatCalls);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerWideFloatType(): iterable
+    {
+        yield 'DOUBLE' => ['DOUBLE'];
+        yield 'REAL' => ['REAL'];
+    }
+
+    public function testOfDrawsAYearFromTheYearsMysqlHolds(): void
+    {
+        $faker = SpyGenerator::create();
+
+        (new MySqlColumnSample())->of($faker, new ColumnDefinition('y', 'YEAR'));
+
+        self::assertSame([[1901, 2155]], $faker->numberBetweenCalls);
+    }
+
+    public function testOfFillsATinyBlobToTheLengthItsTypeAllows(): void
+    {
+        $faker = SpyGenerator::create();
+
+        (new MySqlColumnSample())->of($faker, new ColumnDefinition('b', 'TINYBLOB'));
+
+        self::assertSame([[1, 255]], $faker->numberBetweenCalls);
+    }
+
+    #[DataProvider('providerLargeBlobType')]
+    public function testOfFillsALargerBlobToTheLengthItsTypeAllows(string $type): void
+    {
+        $faker = SpyGenerator::create();
+
+        (new MySqlColumnSample())->of($faker, new ColumnDefinition('b', $type));
+
+        self::assertSame([[1, 1000]], $faker->numberBetweenCalls);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerLargeBlobType(): iterable
+    {
+        yield 'BLOB' => ['BLOB'];
+        yield 'MEDIUMBLOB' => ['MEDIUMBLOB'];
+        yield 'LONGBLOB' => ['LONGBLOB'];
+    }
+
+    #[DataProvider('providerIntegerTypeAndRange')]
+    public function testOfDrawsEachWholeNumberTypeFromTheRangeMysqlDeclaresForIt(string $type, int $low, int $high): void
+    {
+        $faker = SpyGenerator::create();
+
+        (new MySqlColumnSample())->of($faker, new ColumnDefinition('n', $type, length: 6));
+
+        self::assertSame([[$low, $high]], $faker->numberBetweenCalls);
+    }
+
+    /**
+     * @return iterable<string, array{string, int, int}>
+     */
+    public static function providerIntegerTypeAndRange(): iterable
+    {
+        yield 'TINYINT' => ['TINYINT', -128, 127];
+        yield 'SMALLINT' => ['SMALLINT', -32768, 32767];
+        yield 'MEDIUMINT' => ['MEDIUMINT', -8388608, 8388607];
+        yield 'INT' => ['INT', -2147483648, 2147483647];
+        yield 'INTEGER' => ['INTEGER', -2147483648, 2147483647];
+        yield 'BIGINT' => ['BIGINT', PHP_INT_MIN, PHP_INT_MAX];
+    }
+
+    #[DataProvider('providerExactNumericType')]
+    public function testOfDrawsAnExactNumericToTheDigitsItDeclares(string $type): void
+    {
+        $faker = SpyGenerator::create();
+
+        (new MySqlColumnSample())->of($faker, new ColumnDefinition('d', $type, precision: 6, scale: 3));
+
+        self::assertSame([[3, -999.0, 999.0]], $faker->randomFloatCalls);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerExactNumericType(): iterable
+    {
+        yield 'DECIMAL' => ['DECIMAL'];
+        yield 'NUMERIC' => ['NUMERIC'];
+        yield 'DEC' => ['DEC'];
+        yield 'FIXED' => ['FIXED'];
+    }
+
+    public function testOfDrawsABitFromZeroToWhatTheDeclaredBitsHold(): void
+    {
+        $faker = SpyGenerator::create();
+
+        (new MySqlColumnSample())->of($faker, new ColumnDefinition('b', 'BIT', length: 4));
+
+        self::assertSame([[0, 15]], $faker->numberBetweenCalls);
+    }
+
+    public function testOfFillsABinaryColumnToExactlyItsDeclaredLength(): void
+    {
+        $value = (new MySqlColumnSample())->of(Factory::create(), new ColumnDefinition('b', 'BINARY', length: 9));
+
+        self::assertSame(9, strlen((string) $value));
+    }
+
+    public function testOfDrawsAVarbinaryUpToItsDeclaredLength(): void
+    {
+        $faker = SpyGenerator::create();
+
+        (new MySqlColumnSample())->of($faker, new ColumnDefinition('b', 'VARBINARY', length: 32));
+
+        self::assertSame([[1, 32]], $faker->numberBetweenCalls);
+    }
+
+    #[DataProvider('providerBooleanType')]
+    public function testOfWritesABooleanAsTrueOrFalseAndNothingElse(string $type): void
+    {
+        $value = (new MySqlColumnSample())->of(Factory::create(), new ColumnDefinition('b', $type));
+
+        self::assertSame('bool', get_debug_type($value));
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerBooleanType(): iterable
+    {
+        yield 'BOOL' => ['BOOL'];
+        yield 'BOOLEAN' => ['BOOLEAN'];
+    }
+
+    public function testJsonDrawsTwentyCharactersOfTextAndANumberUpToAHundred(): void
+    {
+        $faker = SpyGenerator::create();
+
+        (new MySqlColumnSample())->json($faker);
+
+        self::assertSame([[[20]], [[1, 100]]], [$faker->methodCalls['text'] ?? [], $faker->numberBetweenCalls]);
+    }
+
+    public function testJsonCarriesAKeyAndAValue(): void
+    {
+        $decoded = json_decode((new MySqlColumnSample())->json(Factory::create()), true);
+
+        self::assertSame(['key', 'value'], is_array($decoded) ? array_keys($decoded) : []);
     }
 }

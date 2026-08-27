@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlFixture\Platform\MySql\MySqlCatalog;
+use Tests\Fixture\RecordingPdo;
 
 #[CoversClass(MySqlCatalog::class)]
 final class MySqlCatalogTest extends TestCase
@@ -39,5 +40,30 @@ final class MySqlCatalogTest extends TestCase
         $this->expectExceptionMessage('Failed to get CREATE TABLE for: users');
 
         (new MySqlCatalog())->createTableSqlOf($pdo, 'users');
+    }
+    public function testCreateTableSqlOfAsksTheServerHowTheTableWasCreated(): void
+    {
+        $pdo = new RecordingPdo();
+
+        try {
+            (new MySqlCatalog())->createTableSqlOf($pdo, 'orders');
+        } catch (RuntimeException) {
+            $this->addToAssertionCount(1);
+        }
+
+        self::assertSame(['SHOW CREATE TABLE `orders`'], $pdo->queried);
+    }
+
+    public function testCreateTableSqlOfQuotesEachHalfOfAQualifiedName(): void
+    {
+        $pdo = new RecordingPdo();
+
+        try {
+            (new MySqlCatalog())->createTableSqlOf($pdo, 'shop.orders');
+        } catch (RuntimeException) {
+            $this->addToAssertionCount(1);
+        }
+
+        self::assertSame(['SHOW CREATE TABLE `shop`.`orders`'], $pdo->queried);
     }
 }

@@ -28,7 +28,7 @@ final class PostgreSqlCopyTest extends TestCase
 {
     public function testGuardRawLetsAStatementThatIsNotACopyThrough(): void
     {
-        [$copy] = $this->providerCopyOverSqlite();
+        [$copy, $pdo] = $this->providerCopyOverSqlite();
 
         $this->expectNotToPerformAssertions();
 
@@ -37,7 +37,7 @@ final class PostgreSqlCopyTest extends TestCase
 
     public function testGuardRawRefusesACopyWrittenAsRawSql(): void
     {
-        [$copy] = $this->providerCopyOverSqlite();
+        [$copy, $pdo] = $this->providerCopyOverSqlite();
 
         $this->expectException(ZtdPdoException::class);
         $this->expectExceptionMessage('ZTD Write Protection: Raw PostgreSQL COPY');
@@ -47,7 +47,7 @@ final class PostgreSqlCopyTest extends TestCase
 
     public function testGuardRawLetsEverythingThroughWhereTheDialectHasNoCopy(): void
     {
-        $copy = new PostgreSqlCopy(new PDO('sqlite::memory:'), $this->providerSession(null, new TableDefinitionRegistry()));
+        $copy = new PostgreSqlCopy($this->providerSession(null, new TableDefinitionRegistry()));
 
         $this->expectNotToPerformAssertions();
 
@@ -56,25 +56,25 @@ final class PostgreSqlCopyTest extends TestCase
 
     public function testToArrayAnswersOneEncodedLinePerRow(): void
     {
-        [$copy] = $this->providerCopyOverSqlite();
+        [$copy, $pdo] = $this->providerCopyOverSqlite();
 
-        self::assertSame(["1\tada\n", "2\tgrace\n"], $copy->toArray('copy_target'));
+        self::assertSame(["1\tada\n", "2\tgrace\n"], $copy->toArray($pdo, 'copy_target'));
     }
 
     public function testToArrayRefusesATableNameThatIsNotAString(): void
     {
-        [$copy] = $this->providerCopyOverSqlite();
+        [$copy, $pdo] = $this->providerCopyOverSqlite();
 
         $this->expectExceptionMessage('PostgreSQL COPY argument $tableName must be a string, int given.');
 
-        $copy->toArray(1);
+        $copy->toArray($pdo, 1);
     }
 
     public function testFromArrayWritesEveryLineItIsGiven(): void
     {
         [$copy, $pdo] = $this->providerCopyOverSqlite();
 
-        $written = $copy->fromArray('copy_target', ["3\tlinus\n"]);
+        $written = $copy->fromArray($pdo, 'copy_target', ["3\tlinus\n"]);
 
         self::assertSame([true, 3], [$written, $this->providerRowCount($pdo)]);
     }
@@ -83,35 +83,35 @@ final class PostgreSqlCopyTest extends TestCase
     {
         [$copy, $pdo] = $this->providerCopyOverSqlite();
 
-        $written = $copy->fromArray('copy_target', []);
+        $written = $copy->fromArray($pdo, 'copy_target', []);
 
         self::assertSame([true, 2], [$written, $this->providerRowCount($pdo)]);
     }
 
     public function testFromArrayRefusesALineThatIsNotAString(): void
     {
-        [$copy] = $this->providerCopyOverSqlite();
+        [$copy, $pdo] = $this->providerCopyOverSqlite();
 
         $this->expectExceptionMessage('PostgreSQL COPY rows must be strings, int given.');
 
-        $copy->fromArray('copy_target', [1]);
+        $copy->fromArray($pdo, 'copy_target', [1]);
     }
 
     public function testFromArrayRefusesALineThatDoesNotFitTheTable(): void
     {
-        [$copy] = $this->providerCopyOverSqlite();
+        [$copy, $pdo] = $this->providerCopyOverSqlite();
 
         $this->expectExceptionMessage('PostgreSQL COPY row has 1 fields, but 2 fields are required.');
 
-        $copy->fromArray('copy_target', ["3\n"]);
+        $copy->fromArray($pdo, 'copy_target', ["3\n"]);
     }
 
     public function testToFileWritesEveryEncodedLineToTheFile(): void
     {
-        [$copy] = $this->providerCopyOverSqlite();
+        [$copy, $pdo] = $this->providerCopyOverSqlite();
         $path = tempnam(sys_get_temp_dir(), 'ztd');
 
-        $written = $copy->toFile('copy_target', $path === false ? '' : $path);
+        $written = $copy->toFile($pdo, 'copy_target', $path === false ? '' : $path);
 
         self::assertSame([true, "1\tada\n2\tgrace\n"], [$written, file_get_contents($path === false ? '' : $path)]);
     }
@@ -122,21 +122,21 @@ final class PostgreSqlCopyTest extends TestCase
         $path = tempnam(sys_get_temp_dir(), 'ztd');
         file_put_contents($path === false ? '' : $path, "3\tlinus\n4\tdennis\n");
 
-        $written = $copy->fromFile('copy_target', $path === false ? '' : $path);
+        $written = $copy->fromFile($pdo, 'copy_target', $path === false ? '' : $path);
 
         self::assertSame([true, 4], [$written, $this->providerRowCount($pdo)]);
     }
 
     public function testFromFileWritesNothingWhereThereIsNoFileToRead(): void
     {
-        [$copy] = $this->providerCopyOverSqlite();
+        [$copy, $pdo] = $this->providerCopyOverSqlite();
 
-        self::assertFalse($copy->fromFile('copy_target', sys_get_temp_dir() . '/ztd-no-such-file'));
+        self::assertFalse($copy->fromFile($pdo, 'copy_target', sys_get_temp_dir() . '/ztd-no-such-file'));
     }
 
     public function testTargetAnswersWhatTheCopyIsWrittenAgainst(): void
     {
-        [$copy] = $this->providerCopyOverSqlite();
+        [$copy, $pdo] = $this->providerCopyOverSqlite();
 
         [, $target] = $copy->target('copy_target', null);
 
@@ -145,7 +145,7 @@ final class PostgreSqlCopyTest extends TestCase
 
     public function testTargetRefusesADialectThatHasNoCopy(): void
     {
-        $copy = new PostgreSqlCopy(new PDO('sqlite::memory:'), $this->providerSession(null, new TableDefinitionRegistry()));
+        $copy = new PostgreSqlCopy($this->providerSession(null, new TableDefinitionRegistry()));
 
         $this->expectExceptionMessage('PostgreSQL COPY methods require the PDO PostgreSQL driver.');
 
@@ -154,7 +154,7 @@ final class PostgreSqlCopyTest extends TestCase
 
     public function testTargetRefusesATableNothingHasDescribed(): void
     {
-        [$copy] = $this->providerCopyOverSqlite();
+        [$copy, $pdo] = $this->providerCopyOverSqlite();
 
         $this->expectExceptionMessage('PostgreSQL COPY cannot resolve the schema for table "absent".');
 
@@ -163,14 +163,14 @@ final class PostgreSqlCopyTest extends TestCase
 
     public function testStringArgumentAnswersAStringAsItStands(): void
     {
-        [$copy] = $this->providerCopyOverSqlite();
+        [$copy, $pdo] = $this->providerCopyOverSqlite();
 
         self::assertSame('value', $copy->stringArgument('value', 'separator'));
     }
 
     public function testStringArgumentRefusesWhatIsNotAString(): void
     {
-        [$copy] = $this->providerCopyOverSqlite();
+        [$copy, $pdo] = $this->providerCopyOverSqlite();
 
         $this->expectExceptionMessage('PostgreSQL COPY argument $separator must be a string, null given.');
 
@@ -179,14 +179,14 @@ final class PostgreSqlCopyTest extends TestCase
 
     public function testOptionalStringArgumentAnswersNothingWhereNoneWasGiven(): void
     {
-        [$copy] = $this->providerCopyOverSqlite();
+        [$copy, $pdo] = $this->providerCopyOverSqlite();
 
         self::assertNull($copy->optionalStringArgument(null, 'fields'));
     }
 
     public function testOptionalStringArgumentRefusesWhatIsNeitherStringNorNull(): void
     {
-        [$copy] = $this->providerCopyOverSqlite();
+        [$copy, $pdo] = $this->providerCopyOverSqlite();
 
         $this->expectExceptionMessage('PostgreSQL COPY argument $fields must be a string, float given.');
 
@@ -211,7 +211,7 @@ final class PostgreSqlCopyTest extends TestCase
             [],
         ));
 
-        return [new PostgreSqlCopy($pdo, $this->providerSession($this->providerCopySupport(), $registry)), $pdo];
+        return [new PostgreSqlCopy($this->providerSession($this->providerCopySupport(), $registry)), $pdo];
     }
 
     /**
