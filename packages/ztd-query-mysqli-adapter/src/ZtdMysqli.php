@@ -742,14 +742,21 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      *
-     * @param array<mixed, mixed>|null $params
+     * While ZTD is not shadowing, the statement is prepared and run here rather
+     * than handed to mysqli::execute_query(), which PHP grew only in 8.2 while
+     * this package supports 8.1.
+     *
+     * @param array<mixed, mixed>|null $params Values to bind, in the order the statement writes them
+     *
+     * @return mysqli_result|bool The result, or whether a statement with no result ran
+     *
      * @throws ZtdMysqliException When ZTD-specific exception occurs (wraps DatabaseException).
      */
     #[Override]
     public function execute_query(string $query, ?array $params = null): mysqli_result|bool
     {
         if (!$this->session->isEnabled()) {
-            return $this->innerMysqli->execute_query($query, $params);
+            return $this->runWithoutZtd($query, $params);
         }
 
         $stmt = $this->prepare($query);
@@ -779,5 +786,34 @@ class ZtdMysqli extends mysqli
         }
 
         return $result;
+    }
+
+    /**
+     * Runs a statement on the connection itself, with the parameters bound.
+     *
+     * This is what mysqli::execute_query() does, written out because PHP grew
+     * that method only in 8.2 and this package supports 8.1.
+     *
+     * @param string $query Statement as it was written
+     * @param array<mixed, mixed>|null $params Values to bind, or null to run the statement as it stands
+     *
+     * @return mysqli_result|bool The result, or whether a statement with no result ran
+     */
+    public function runWithoutZtd(string $query, ?array $params): mysqli_result|bool
+    {
+        if ($params === null) {
+            return $this->innerMysqli->query($query);
+        }
+
+        $statement = $this->innerMysqli->prepare($query);
+        if ($statement === false) {
+            return false;
+        }
+        if (!$statement->execute(array_values($params))) {
+            return false;
+        }
+        $result = $statement->get_result();
+
+        return $result === false ? true : $result;
     }
 }
