@@ -46,6 +46,9 @@
         "test": "paratest --processes=auto",
         "test:parallel": "paratest --processes=auto --testsuite=unit",
         "test:unit": "@php -d memory_limit=512M vendor/bin/phpunit tests/Unit/",
+        "test:unit:10": "@php -d memory_limit=512M vendor/bin/phpunit --configuration phpunit10.xml.dist tests/Unit/",
+        "test:unit:11": "@php -d memory_limit=512M vendor/bin/phpunit --configuration phpunit11.xml.dist tests/Unit/",
+        "test:unit:12": "@php -d memory_limit=512M vendor/bin/phpunit --configuration phpunit12.xml.dist tests/Unit/",
         "test:integration": "phpunit tests/Integration/",
         "lint": [
             "@format:check",
@@ -55,7 +58,6 @@
         "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
         "fuzz:create-table": "php-fuzzer fuzz fuzz/fuzz_create_table.php fuzz/corpus/create-table/",
         "fuzz:insert-select": "php-fuzzer fuzz fuzz/fuzz_insert_select.php fuzz/corpus/insert-select/",
-        "infection": "infection --threads=max --show-mutations --no-progress",
         "phpstan": "phpstan analyse src fuzz tests --memory-limit=512M"
     },
     "config": {
