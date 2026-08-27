@@ -16,7 +16,6 @@ use Tests\Fixture\Platform\MySqlDefinition;
 
 #[CoversClass(MySqlColumnReader::class)]
 #[UsesClass(ColumnDefinition::class)]
-#[UsesClass(MySqlDefinition::class)]
 final class MySqlColumnReaderTest extends TestCase
 {
     #[Test]
