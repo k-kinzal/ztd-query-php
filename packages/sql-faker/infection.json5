@@ -8,7 +8,11 @@
     // on the mutation runner, so the bar is set above them with headroom. Lowering
     // this back would not make the suite stronger; it would report slow mutants as
     // escaped ones.
-    "timeout": 90,
+    // A later measurement found the provider tests, which cover most of this
+    // package, run to about three minutes together on the mutation runner, and a
+    // mutant re-runs every test that covers it. One timed out at 90 seconds; ten
+    // minutes clears that without letting a mutant that never terminates run long.
+    "timeout": 600,
     "source": {
         "directories": ["src"]
     },

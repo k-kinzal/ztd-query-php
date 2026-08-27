@@ -514,4 +514,105 @@ final class SqliteTerminalRealizerTest extends TestCase
 
         self::assertSame(' ', SqliteRealizers::witnessed($faker)->optionalTrivia());
     }
+    #[DataProvider('providerSyntheticTerminalAndSpelling')]
+    public function testRealizeSyntheticWritesEveryNamedTerminalInItsOwnSpelling(string $terminal, string $pattern): void
+    {
+        self::assertMatchesRegularExpression($pattern, self::providerSeededRealizer()->realizeSynthetic($terminal)[0]);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerSyntheticTerminalAndSpelling(): iterable
+    {
+        yield 'BLOB' => ['BLOB', "/^X'[0-9a-fA-F]*'\$/"];
+        yield 'number' => ['number', '/^\d+$/'];
+        yield 'INTEGER' => ['INTEGER', '/^\d+$/'];
+        yield 'FLOAT' => ['FLOAT', '/^[\d.]+$/'];
+        yield 'QNUMBER' => ['QNUMBER', '/^1_0$/'];
+        yield 'ANY' => ['ANY', '/^_any$/'];
+        yield 'VARIABLE' => ['VARIABLE', '/^[?:@$]/'];
+    }
+
+    public function testABlobLiteralCarriesAnEvenNumberOfDigits(): void
+    {
+        $realizer = self::providerSeededRealizer();
+        $odd = array_values(array_filter(
+            array_map(static fn (int $draw): string => $realizer->blobLiteral(), range(1, 200)),
+            static fn (string $written): bool => strlen($written) % 2 !== 1,
+        ));
+
+        self::assertSame([], $odd);
+    }
+
+    public function testAStringLiteralDoublesEveryQuoteItCarries(): void
+    {
+        $realizer = self::providerSeededRealizer();
+        $malformed = array_values(array_filter(
+            array_map(static fn (int $draw): string => $realizer->stringLiteral(), range(1, 200)),
+            static fn (string $written): bool => preg_match("/^'([^']|'')*'\$/s", $written) !== 1,
+        ));
+
+        self::assertSame([], $malformed);
+    }
+
+    public function testAParameterIsWrittenInEverySpellingSqliteReads(): void
+    {
+        $realizer = self::providerSeededRealizer();
+        $marks = array_map(
+            static fn (int $draw): string => substr($realizer->parameter(), 0, 1),
+            range(1, 300),
+        );
+        sort($marks);
+
+        self::assertSame(['$', ':', '?', '@'], array_values(array_unique($marks)));
+    }
+
+    public function testANumberedParameterIsNumberedFromOneToTen(): void
+    {
+        $realizer = self::providerSeededRealizer();
+        $numbers = array_values(array_filter(array_map(
+            static fn (int $draw): string => $realizer->parameter(),
+            range(1, 600),
+        ), static fn (string $written): bool => preg_match('/^\?\d+$/', $written) === 1));
+        $values = array_map(static fn (string $written): int => (int) substr($written, 1), $numbers);
+        sort($values);
+
+        self::assertSame(range(1, 10), array_values(array_unique($values)));
+    }
+
+    public function testAnIdentifierIsWrittenInEverySpellingSqliteQuotesWith(): void
+    {
+        $realizer = self::providerSeededRealizer();
+        $quotes = array_map(
+            static fn (int $draw): string => substr($realizer->identifier(), 0, 1),
+            range(1, 300),
+        );
+        sort($quotes);
+
+        self::assertSame(['"', '[', '_', '`', 's'], array_values(array_unique($quotes)));
+    }
+
+    /**
+     * @return SqliteTerminalRealizer A realizer that writes every terminal from its name, drawing the same way each run
+     */
+    public static function providerSeededRealizer(): SqliteTerminalRealizer
+    {
+        $faker = Factory::create();
+        $faker->seed(20260827);
+
+        return new SqliteTerminalRealizer(
+            $faker,
+            new LexicalCatalog([
+                'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+                'terminals' => [],
+                'terminal_exclusions' => [],
+                'coverage' => ['units' => [], 'witnessed' => [], 'excluded' => []],
+            ]),
+            new SqliteTokenizer(['SELECT' => 'SELECT']),
+            ['SELECT' => ['SELECT']],
+            'sqlite-3.47.2',
+            true,
+        );
+    }
 }
