@@ -8,6 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Tests\Fixtures\FakeConnectionProperties;
+use Tests\Fixtures\RecordingSessionFactory;
+use Tests\Fixtures\RecordingSqlRewriter;
 use Tests\Fixtures\StubMysqli;
 use Tests\Fixtures\StubMysqliResult;
 use Tests\Fixtures\StubMysqliStmt;
@@ -39,15 +41,12 @@ final class ZtdMysqliTest extends TestCase
     {
         $innerMysqli = new StubMysqli();
         $rewriter = static::createStub(SqlRewriter::class);
-        $factory = static::createMock(SessionFactory::class);
-        $factory->expects(self::once())
-            ->method('create')
-            ->willReturnCallback(static function (ConnectionInterface $connection, ZtdConfig $config) use ($rewriter): Session {
-                return new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $config, $connection);
-            });
+        $factory = RecordingSessionFactory::answeringWith($rewriter);
         $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
 
         self::assertTrue($ztd->isZtdEnabled());
+
+        self::assertCount(1, $factory->calls());
     }
 
     public function testFromMysqliUsesExplicitConfig(): void
@@ -56,27 +55,18 @@ final class ZtdMysqliTest extends TestCase
         $config = ZtdConfig::default();
         $rewriter = static::createStub(SqlRewriter::class);
 
-        $factory = static::createMock(SessionFactory::class);
-        $factory->expects(self::once())
-            ->method('create')
-            ->with(self::isInstanceOf(MysqliConnection::class), self::identicalTo($config))
-            ->willReturnCallback(function (ConnectionInterface $conn, ZtdConfig $cfg) use ($rewriter): Session {
-                return new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $cfg, $conn);
-            });
+        $factory = RecordingSessionFactory::answeringWith($rewriter);
 
         ZtdMysqli::fromMysqli($innerMysqli, $config, $factory);
+
+        self::assertCount(1, $factory->calls());
     }
 
     public function testEnableZtdEnableAndDisableZtd(): void
     {
         $innerMysqli = new StubMysqli();
         $rewriter = static::createStub(SqlRewriter::class);
-        $factory = static::createMock(SessionFactory::class);
-        $factory->expects(self::once())
-            ->method('create')
-            ->willReturnCallback(static function (ConnectionInterface $connection, ZtdConfig $config) use ($rewriter): Session {
-                return new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $config, $connection);
-            });
+        $factory = RecordingSessionFactory::answeringWith($rewriter);
         $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
 
         self::assertTrue($ztd->isZtdEnabled());
@@ -86,18 +76,15 @@ final class ZtdMysqliTest extends TestCase
 
         $ztd->enableZtd();
         self::assertTrue($ztd->isZtdEnabled());
+
+        self::assertCount(1, $factory->calls());
     }
 
     public function testPrepareWhenZtdDisabledDelegatesToInner(): void
     {
         $innerMysqli = new StubMysqli();
         $rewriter = static::createStub(SqlRewriter::class);
-        $factory = static::createMock(SessionFactory::class);
-        $factory->expects(self::once())
-            ->method('create')
-            ->willReturnCallback(static function (ConnectionInterface $connection, ZtdConfig $config) use ($rewriter): Session {
-                return new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $config, $connection);
-            });
+        $factory = RecordingSessionFactory::answeringWith($rewriter);
         $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
         $ztd->disableZtd();
 
@@ -107,45 +94,35 @@ final class ZtdMysqliTest extends TestCase
         $result = $ztd->prepare('SELECT 1');
 
         self::assertSame($nativeStmt, $result);
+
+        self::assertCount(1, $factory->calls());
     }
 
     public function testPrepareWhenZtdEnabledReturnsZtdStatement(): void
     {
-        $rewriter = static::createMock(SqlRewriter::class);
+        $plan = new RewritePlan('SELECT 1 /* rewritten */', QueryKind::READ);
+        $rewriter = new RecordingSqlRewriter(
+            static fn (string $sql): array => [$sql],
+            static fn (string $sql): RewritePlan => $plan,
+        );
         $innerMysqli = new StubMysqli();
-        $factory = static::createMock(SessionFactory::class);
-        $factory->expects(self::once())
-            ->method('create')
-            ->willReturnCallback(static function (ConnectionInterface $connection, ZtdConfig $config) use ($rewriter): Session {
-                return new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $config, $connection);
-            });
+        $factory = RecordingSessionFactory::answeringWith($rewriter);
         $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
 
-        $nativeStmt = StubMysqliStmt::create();
-        $plan = new RewritePlan('SELECT 1 /* rewritten */', QueryKind::READ);
-
-        $rewriter->expects(self::once())
-            ->method('rewrite')
-            ->with('SELECT 1')
-            ->willReturn($plan);
-
-        $innerMysqli->prepareReturn = $nativeStmt;
+        $innerMysqli->prepareReturn = StubMysqliStmt::create();
 
         $result = $ztd->prepare('SELECT 1');
 
         self::assertInstanceOf(ZtdMysqliStatement::class, $result);
+        self::assertSame(['SELECT 1'], $rewriter->rewritten);
+        self::assertCount(1, $factory->calls());
     }
 
     public function testPrepareWhenRewriteThrowsWrapsAsZtdException(): void
     {
         $innerMysqli = new StubMysqli();
         $rewriter = static::createStub(SqlRewriter::class);
-        $factory = static::createMock(SessionFactory::class);
-        $factory->expects(self::once())
-            ->method('create')
-            ->willReturnCallback(static function (ConnectionInterface $connection, ZtdConfig $config) use ($rewriter): Session {
-                return new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $config, $connection);
-            });
+        $factory = RecordingSessionFactory::answeringWith($rewriter);
         $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
 
         $rewriter->method('rewrite')
@@ -159,18 +136,15 @@ final class ZtdMysqliTest extends TestCase
             self::assertSame(0, $e->getCode());
             self::assertNotNull($e->getPrevious());
         }
+
+        self::assertCount(1, $factory->calls());
     }
 
     public function testPrepareWhenInnerPrepareFails(): void
     {
         $innerMysqli = new StubMysqli();
         $rewriter = static::createStub(SqlRewriter::class);
-        $factory = static::createMock(SessionFactory::class);
-        $factory->expects(self::once())
-            ->method('create')
-            ->willReturnCallback(static function (ConnectionInterface $connection, ZtdConfig $config) use ($rewriter): Session {
-                return new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $config, $connection);
-            });
+        $factory = RecordingSessionFactory::answeringWith($rewriter);
         $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
 
         $plan = new RewritePlan('SELECT 1', QueryKind::READ);
@@ -181,18 +155,15 @@ final class ZtdMysqliTest extends TestCase
         $result = $ztd->prepare('SELECT 1');
 
         self::assertFalse($result);
+
+        self::assertCount(1, $factory->calls());
     }
 
     public function testQueryWhenZtdDisabledDelegatesToInner(): void
     {
         $innerMysqli = new StubMysqli();
         $rewriter = static::createStub(SqlRewriter::class);
-        $factory = static::createMock(SessionFactory::class);
-        $factory->expects(self::once())
-            ->method('create')
-            ->willReturnCallback(static function (ConnectionInterface $connection, ZtdConfig $config) use ($rewriter): Session {
-                return new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $config, $connection);
-            });
+        $factory = RecordingSessionFactory::answeringWith($rewriter);
         $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
         $ztd->disableZtd();
 
@@ -201,41 +172,37 @@ final class ZtdMysqliTest extends TestCase
         $result = $ztd->query('SELECT 1');
 
         self::assertTrue($result);
+
+        self::assertCount(1, $factory->calls());
     }
 
     public function testReal_queryRealQueryWhenZtdDisabledDelegatesToInner(): void
     {
         $innerMysqli = new StubMysqli();
         $rewriter = static::createStub(SqlRewriter::class);
-        $factory = static::createMock(SessionFactory::class);
-        $factory->expects(self::once())
-            ->method('create')
-            ->willReturnCallback(static function (ConnectionInterface $connection, ZtdConfig $config) use ($rewriter): Session {
-                return new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $config, $connection);
-            });
+        $factory = RecordingSessionFactory::answeringWith($rewriter);
         $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
         $ztd->disableZtd();
 
         $innerMysqli->realQueryReturn = true;
 
         self::assertTrue($ztd->real_query('SELECT 1'));
+
+        self::assertCount(1, $factory->calls());
     }
 
     public function testMulti_queryMultiQueryDelegatesToInner(): void
     {
         $innerMysqli = new StubMysqli();
         $rewriter = static::createStub(SqlRewriter::class);
-        $factory = static::createMock(SessionFactory::class);
-        $factory->expects(self::once())
-            ->method('create')
-            ->willReturnCallback(static function (ConnectionInterface $connection, ZtdConfig $config) use ($rewriter): Session {
-                return new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $config, $connection);
-            });
+        $factory = RecordingSessionFactory::answeringWith($rewriter);
         $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
 
         $innerMysqli->multiQueryReturn = true;
 
         self::assertTrue($ztd->multi_query('SELECT 1; SELECT 2'));
+
+        self::assertCount(1, $factory->calls());
     }
 
     public function testBegin_transactionOpensOneOnTheShadowAsWellAsTheConnection(): void
@@ -244,12 +211,15 @@ final class ZtdMysqliTest extends TestCase
         $store = new ShadowStore();
         $store->set('items', [['id' => 1]]);
         $rewriter = static::createStub(SqlRewriter::class);
-        $factory = static::createMock(SessionFactory::class);
-        $factory->expects(self::once())
-            ->method('create')
-            ->willReturnCallback(static function (ConnectionInterface $connection, ZtdConfig $config) use ($rewriter, $store): Session {
-                return new Session($rewriter, $store, new ResultSelectRunner(), $config, $connection);
-            });
+        $factory = new RecordingSessionFactory(
+            static fn (ConnectionInterface $connection, ZtdConfig $config): Session => new Session(
+                $rewriter,
+                $store,
+                new ResultSelectRunner(),
+                $config,
+                $connection,
+            ),
+        );
         $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
 
         $innerMysqli->beginTransactionReturn = true;
@@ -259,6 +229,8 @@ final class ZtdMysqliTest extends TestCase
         $store->insert('items', [['id' => 2]]);
         self::assertTrue($ztd->rollback());
         self::assertSame([['id' => 1]], $store->get('items'));
+
+        self::assertCount(1, $factory->calls());
     }
 
     public function testCommitDelegatesToInner(): void
@@ -267,12 +239,15 @@ final class ZtdMysqliTest extends TestCase
         $store = new ShadowStore();
         $store->set('items', [['id' => 1]]);
         $rewriter = static::createStub(SqlRewriter::class);
-        $factory = static::createMock(SessionFactory::class);
-        $factory->expects(self::once())
-            ->method('create')
-            ->willReturnCallback(static function (ConnectionInterface $connection, ZtdConfig $config) use ($rewriter, $store): Session {
-                return new Session($rewriter, $store, new ResultSelectRunner(), $config, $connection);
-            });
+        $factory = new RecordingSessionFactory(
+            static fn (ConnectionInterface $connection, ZtdConfig $config): Session => new Session(
+                $rewriter,
+                $store,
+                new ResultSelectRunner(),
+                $config,
+                $connection,
+            ),
+        );
         $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
 
         $innerMysqli->commitReturn = true;
@@ -283,6 +258,8 @@ final class ZtdMysqliTest extends TestCase
         self::assertSame(0, $innerMysqli->commitCalledWithFlags);
         self::assertTrue($ztd->rollback());
         self::assertSame([['id' => 1], ['id' => 2]], $store->get('items'));
+
+        self::assertCount(1, $factory->calls());
     }
 
     public function testRollbackDelegatesToInner(): void
@@ -291,12 +268,15 @@ final class ZtdMysqliTest extends TestCase
         $store = new ShadowStore();
         $store->set('items', [['id' => 1]]);
         $rewriter = static::createStub(SqlRewriter::class);
-        $factory = static::createMock(SessionFactory::class);
-        $factory->expects(self::once())
-            ->method('create')
-            ->willReturnCallback(static function (ConnectionInterface $connection, ZtdConfig $config) use ($rewriter, $store): Session {
-                return new Session($rewriter, $store, new ResultSelectRunner(), $config, $connection);
-            });
+        $factory = new RecordingSessionFactory(
+            static fn (ConnectionInterface $connection, ZtdConfig $config): Session => new Session(
+                $rewriter,
+                $store,
+                new ResultSelectRunner(),
+                $config,
+                $connection,
+            ),
+        );
         $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
 
         $innerMysqli->rollbackReturn = true;
@@ -306,69 +286,57 @@ final class ZtdMysqliTest extends TestCase
         self::assertTrue($ztd->rollback());
         self::assertSame(0, $innerMysqli->rollbackCalledWithFlags);
         self::assertSame([['id' => 1]], $store->get('items'));
+
+        self::assertCount(1, $factory->calls());
     }
 
     public function testCloseDelegatesToInner(): void
     {
         $innerMysqli = new StubMysqli();
         $rewriter = static::createStub(SqlRewriter::class);
-        $factory = static::createMock(SessionFactory::class);
-        $factory->expects(self::once())
-            ->method('create')
-            ->willReturnCallback(static function (ConnectionInterface $connection, ZtdConfig $config) use ($rewriter): Session {
-                return new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $config, $connection);
-            });
+        $factory = RecordingSessionFactory::answeringWith($rewriter);
         $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
 
         $ztd->close();
 
         self::assertTrue($innerMysqli->closeCalled);
+
+        self::assertCount(1, $factory->calls());
     }
 
     public function testSelect_dbSelectDbDelegatesToInner(): void
     {
         $innerMysqli = new StubMysqli();
         $rewriter = static::createStub(SqlRewriter::class);
-        $factory = static::createMock(SessionFactory::class);
-        $factory->expects(self::once())
-            ->method('create')
-            ->willReturnCallback(static function (ConnectionInterface $connection, ZtdConfig $config) use ($rewriter): Session {
-                return new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $config, $connection);
-            });
+        $factory = RecordingSessionFactory::answeringWith($rewriter);
         $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
 
         $innerMysqli->selectDbReturn = true;
 
         self::assertTrue($ztd->select_db('test_db'));
+
+        self::assertCount(1, $factory->calls());
     }
 
     public function testReal_escape_stringRealEscapeStringDelegatesToInner(): void
     {
         $innerMysqli = new StubMysqli();
         $rewriter = static::createStub(SqlRewriter::class);
-        $factory = static::createMock(SessionFactory::class);
-        $factory->expects(self::once())
-            ->method('create')
-            ->willReturnCallback(static function (ConnectionInterface $connection, ZtdConfig $config) use ($rewriter): Session {
-                return new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $config, $connection);
-            });
+        $factory = RecordingSessionFactory::answeringWith($rewriter);
         $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
 
         $innerMysqli->realEscapeStringReturn = "O\\'Reilly";
 
         self::assertSame("O\\'Reilly", $ztd->real_escape_string("O'Reilly"));
+
+        self::assertCount(1, $factory->calls());
     }
 
     public function testExecute_queryExecuteQueryWhenZtdDisabledDelegatesToInner(): void
     {
         $innerMysqli = new StubMysqli();
         $rewriter = static::createStub(SqlRewriter::class);
-        $factory = static::createMock(SessionFactory::class);
-        $factory->expects(self::once())
-            ->method('create')
-            ->willReturnCallback(static function (ConnectionInterface $connection, ZtdConfig $config) use ($rewriter): Session {
-                return new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $config, $connection);
-            });
+        $factory = RecordingSessionFactory::answeringWith($rewriter);
         $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
         $ztd->disableZtd();
 
@@ -376,6 +344,8 @@ final class ZtdMysqliTest extends TestCase
         $innerMysqli->prepareReturn = $stmt;
 
         self::assertSame([true, [1]], [$ztd->execute_query('SELECT ?', [1]), $stmt->executeCalledWithParams]);
+
+        self::assertCount(1, $factory->calls());
     }
     public function testDisableZtdLetsStatementsReachTheServer(): void
     {
