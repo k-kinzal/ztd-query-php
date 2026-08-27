@@ -9,6 +9,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use Tests\Fixtures\RecordingSessionFactory;
+use Tests\Fixtures\RecordingSqlRewriter;
 use ZtdQuery\Adapter\Pdo\PdoConnection;
 use ZtdQuery\Adapter\Pdo\PdoStatement;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
@@ -44,28 +46,26 @@ final class ZtdPdoTest extends TestCase
     public function testItBuildsItsSessionWithAnExplicitFactory(): void
     {
         $rewriter = static::createStub(SqlRewriter::class);
-        $mockFactory = static::createMock(SessionFactory::class);
-        $mockFactory->expects(self::once())
-            ->method('create')
-            ->willReturnCallback(static fn (ConnectionInterface $connection, ZtdConfig $config): Session => new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $config, $connection));
+        $mockFactory = RecordingSessionFactory::answeringWith($rewriter);
 
         $ztdPdo = new ZtdPdo('sqlite::memory:', null, null, null, null, $mockFactory);
 
         self::assertTrue($ztdPdo->isZtdEnabled());
+
+        self::assertCount(1, $mockFactory->calls());
     }
 
     public function testFromPdoUsesExplicitSessionFactory(): void
     {
         $rewriter = static::createStub(SqlRewriter::class);
-        $mockFactory = static::createMock(SessionFactory::class);
-        $mockFactory->expects(self::once())
-            ->method('create')
-            ->willReturnCallback(static fn (ConnectionInterface $connection, ZtdConfig $config): Session => new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $config, $connection));
+        $mockFactory = RecordingSessionFactory::answeringWith($rewriter);
 
         $pdo = new PDO('sqlite::memory:');
         $ztdPdo = ZtdPdo::fromPdo($pdo, null, $mockFactory);
 
         self::assertTrue($ztdPdo->isZtdEnabled());
+
+        self::assertCount(1, $mockFactory->calls());
     }
 
     public function testAutoDetectionForSqliteDriver(): void
@@ -81,10 +81,7 @@ final class ZtdPdoTest extends TestCase
     public function testZtdToggleWithExplicitFactory(): void
     {
         $rewriter = static::createStub(SqlRewriter::class);
-        $mockFactory = static::createMock(SessionFactory::class);
-        $mockFactory->expects(self::once())
-            ->method('create')
-            ->willReturnCallback(static fn (ConnectionInterface $connection, ZtdConfig $config): Session => new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $config, $connection));
+        $mockFactory = RecordingSessionFactory::answeringWith($rewriter);
 
         $pdo = new PDO('sqlite::memory:');
         $ztdPdo = ZtdPdo::fromPdo($pdo, null, $mockFactory);
@@ -96,20 +93,21 @@ final class ZtdPdoTest extends TestCase
 
         $ztdPdo->enableZtd();
         self::assertTrue($ztdPdo->isZtdEnabled());
+
+        self::assertCount(1, $mockFactory->calls());
     }
 
     public function testSessionFactoryCalledOncePerInstance(): void
     {
         $callCount = 0;
         $rewriter = static::createStub(SqlRewriter::class);
-        $mockFactory = static::createMock(SessionFactory::class);
-        $mockFactory->expects(self::once())
-            ->method('create')
-            ->willReturnCallback(static function (ConnectionInterface $connection, ZtdConfig $config) use (&$callCount, $rewriter): Session {
+        $mockFactory = new RecordingSessionFactory(
+            static function (ConnectionInterface $connection, ZtdConfig $config) use (&$callCount, $rewriter): Session {
                 $callCount++;
 
                 return new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $config, $connection);
-            });
+            },
+        );
 
         $pdo = new PDO('sqlite::memory:');
         $ztdPdo = ZtdPdo::fromPdo($pdo, null, $mockFactory);
@@ -119,6 +117,8 @@ final class ZtdPdoTest extends TestCase
         $ztdPdo->isZtdEnabled();
 
         self::assertSame(1, $callCount);
+
+        self::assertCount(1, $mockFactory->calls());
     }
 
     public function testExplicitConfigPassedToFactory(): void
@@ -127,34 +127,31 @@ final class ZtdPdoTest extends TestCase
         $receivedConfig = null;
 
         $rewriter = static::createStub(SqlRewriter::class);
-        $mockFactory = static::createMock(SessionFactory::class);
-        $mockFactory->expects(self::once())
-            ->method('create')
-            ->willReturnCallback(static function (ConnectionInterface $connection, ZtdConfig $config) use (&$receivedConfig, $rewriter): Session {
+        $mockFactory = new RecordingSessionFactory(
+            static function (ConnectionInterface $connection, ZtdConfig $config) use (&$receivedConfig, $rewriter): Session {
                 $receivedConfig = $config;
 
                 return new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $config, $connection);
-            });
+            },
+        );
 
         $pdo = new PDO('sqlite::memory:');
         ZtdPdo::fromPdo($pdo, $expectedConfig, $mockFactory);
 
         self::assertSame($expectedConfig, $receivedConfig);
+
+        self::assertCount(1, $mockFactory->calls());
     }
 
     public function testExecRunsEachStatementSequentiallyAndReturnsLastAffectedRows(): void
     {
         $store = new ShadowStore();
-        $rewriter = static::createMock(SqlRewriter::class);
-        $rewriter->expects(self::exactly(3))
-            ->method('splitStatements')
-            ->willReturnCallback(static fn (string $sql): array => match ($sql) {
+        $rewriter = new RecordingSqlRewriter(
+            static fn (string $sql): array => match ($sql) {
                 'first; second' => ['first', 'second'],
                 default => [$sql],
-            });
-        $rewriter->expects(self::exactly(2))
-            ->method('rewrite')
-            ->willReturnCallback(static fn (string $sql): RewritePlan => match ($sql) {
+            },
+            static fn (string $sql): RewritePlan => match ($sql) {
                 'first' => new RewritePlan(
                     'SELECT 1 AS id UNION ALL SELECT 2 AS id',
                     QueryKind::WRITE_SIMULATED,
@@ -166,25 +163,30 @@ final class ZtdPdoTest extends TestCase
                     new InsertMutation('second_items'),
                 ),
                 default => throw new RuntimeException("Unexpected SQL: $sql"),
-            });
-        $factory = static::createMock(SessionFactory::class);
+            },
+        );
         $typeResolver = static::createStub(ResultColumnTypeResolver::class);
         $typeResolver->method('resolve')->willReturn(new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'));
-        $factory->expects(self::once())
-            ->method('create')
-            ->willReturnCallback(static fn (ConnectionInterface $connection, ZtdConfig $config): Session => new Session(
+        $factory = new RecordingSessionFactory(
+            static fn (ConnectionInterface $connection, ZtdConfig $config): Session => new Session(
                 $rewriter,
                 $store,
                 new ResultSelectRunner(),
                 $config,
                 $connection,
                 resultColumnTypeResolver: $typeResolver,
-            ));
+            ),
+        );
         $ztdPdo = ZtdPdo::fromPdo(new PDO('sqlite::memory:'), null, $factory);
 
         self::assertSame(1, $ztdPdo->exec('first; second'));
         self::assertSame([['id' => 1], ['id' => 2]], $store->get('first_items'));
         self::assertSame([['id' => 3]], $store->get('second_items'));
+
+        self::assertCount(1, $factory->calls());
+
+        self::assertCount(3, $rewriter->split);
+        self::assertCount(2, $rewriter->rewritten);
     }
 
     public function testExecRejectsRawPostgreSqlCopy(): void
@@ -215,65 +217,48 @@ final class ZtdPdoTest extends TestCase
 
     public function testExecStopsBatchWhenFirstStatementFails(): void
     {
-        $rewriter = static::createMock(SqlRewriter::class);
-        $rewriter->expects(self::exactly(2))
-            ->method('splitStatements')
-            ->willReturnCallback(static fn (string $sql): array => match ($sql) {
+        $rewriter = new RecordingSqlRewriter(
+            static fn (string $sql): array => match ($sql) {
                 'first; second' => ['first', 'second'],
                 default => [$sql],
-            });
-        $rewriter->expects(self::once())
-            ->method('rewrite')
-            ->with('first')
-            ->willReturn(new RewritePlan('SELECT * FROM missing_table', QueryKind::READ));
-        $factory = static::createMock(SessionFactory::class);
-        $factory->expects(self::once())
-            ->method('create')
-            ->willReturnCallback(static fn (ConnectionInterface $connection, ZtdConfig $config): Session => new Session(
-                $rewriter,
-                new ShadowStore(),
-                new ResultSelectRunner(),
-                $config,
-                $connection,
-            ));
+            },
+            static fn (string $sql): RewritePlan => new RewritePlan('SELECT * FROM missing_table', QueryKind::READ),
+        );
+        $factory = RecordingSessionFactory::answeringWith($rewriter);
         $pdo = new PDO('sqlite::memory:');
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_SILENT);
         $ztdPdo = ZtdPdo::fromPdo($pdo, null, $factory);
 
         self::assertFalse($ztdPdo->exec('first; second'));
+
+        self::assertSame(['first; second', 'first'], $rewriter->split);
+        self::assertSame(['first'], $rewriter->rewritten);
+        self::assertCount(1, $factory->calls());
     }
 
     public function testExecStopsBatchWhenLaterStatementFails(): void
     {
-        $rewriter = static::createMock(SqlRewriter::class);
-        $rewriter->expects(self::exactly(3))
-            ->method('splitStatements')
-            ->willReturnCallback(static fn (string $sql): array => match ($sql) {
+        $rewriter = new RecordingSqlRewriter(
+            static fn (string $sql): array => match ($sql) {
                 'first; second; third' => ['first', 'second', 'third'],
                 default => [$sql],
-            });
-        $rewriter->expects(self::exactly(2))
-            ->method('rewrite')
-            ->willReturnCallback(static fn (string $sql): RewritePlan => match ($sql) {
+            },
+            static fn (string $sql): RewritePlan => match ($sql) {
                 'first' => new RewritePlan('SELECT 1', QueryKind::READ),
                 'second' => new RewritePlan('SELECT * FROM missing_table', QueryKind::READ),
                 default => throw new RuntimeException("Unexpected SQL: $sql"),
-            });
-        $factory = static::createMock(SessionFactory::class);
-        $factory->expects(self::once())
-            ->method('create')
-            ->willReturnCallback(static fn (ConnectionInterface $connection, ZtdConfig $config): Session => new Session(
-                $rewriter,
-                new ShadowStore(),
-                new ResultSelectRunner(),
-                $config,
-                $connection,
-            ));
+            },
+        );
+        $factory = RecordingSessionFactory::answeringWith($rewriter);
         $pdo = new PDO('sqlite::memory:');
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_SILENT);
         $ztdPdo = ZtdPdo::fromPdo($pdo, null, $factory);
 
         self::assertFalse($ztdPdo->exec('first; second; third'));
+
+        self::assertCount(3, $rewriter->split);
+        self::assertCount(2, $rewriter->rewritten);
+        self::assertCount(1, $factory->calls());
     }
 
     public function testItHandsAnExplicitConfigToTheFactory(): void
@@ -282,18 +267,19 @@ final class ZtdPdoTest extends TestCase
         $receivedConfig = null;
 
         $rewriter = static::createStub(SqlRewriter::class);
-        $mockFactory = static::createMock(SessionFactory::class);
-        $mockFactory->expects(self::once())
-            ->method('create')
-            ->willReturnCallback(static function (ConnectionInterface $connection, ZtdConfig $config) use (&$receivedConfig, $rewriter): Session {
+        $mockFactory = new RecordingSessionFactory(
+            static function (ConnectionInterface $connection, ZtdConfig $config) use (&$receivedConfig, $rewriter): Session {
                 $receivedConfig = $config;
 
                 return new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $config, $connection);
-            });
+            },
+        );
 
         new ZtdPdo('sqlite::memory:', null, null, null, $expectedConfig, $mockFactory);
 
         self::assertSame($expectedConfig, $receivedConfig);
+
+        self::assertCount(1, $mockFactory->calls());
     }
 
     public function testEnableZtdPutsTheShadowBackInFrontOfTheDatabase(): void

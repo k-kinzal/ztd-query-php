@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use Tests\Fixtures\RecordingParameterBindingCompiler;
 use ZtdQuery\Adapter\Pdo\PdoConnection;
 use ZtdQuery\Adapter\Pdo\PdoParameterBinder;
 use ZtdQuery\Adapter\Pdo\PdoParameterKind;
@@ -17,7 +18,6 @@ use ZtdQuery\Adapter\Pdo\PdoStatement;
 use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\ConnectionInterface;
-use ZtdQuery\Platform\ParameterBindingCompiler;
 use ZtdQuery\Platform\Sqlite\SqliteSessionFactory;
 use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Rewrite\QueryKind;
@@ -57,11 +57,9 @@ final class PdoPreparedExecutionTest extends TestCase
         $pdo = new PDO('sqlite::memory:');
         $rewriter = static::createStub(SqlRewriter::class);
         $rewriter->method('rewrite')->willReturn(new RewritePlan('SELECT :original AS value', QueryKind::READ));
-        $compiler = static::createMock(ParameterBindingCompiler::class);
-        $compiler->expects(self::once())
-            ->method('compile')
-            ->with('SELECT :original AS value', ['original' => 11])
-            ->willReturn(['sql' => 'SELECT :compiled AS value', 'params' => ['compiled' => 11]]);
+        $compiler = new RecordingParameterBindingCompiler(
+            ['sql' => 'SELECT :compiled AS value', 'params' => ['compiled' => 11]],
+        );
         $session = new Session(
             $rewriter,
             new ShadowStore(),
@@ -76,6 +74,7 @@ final class PdoPreparedExecutionTest extends TestCase
 
         self::assertSame('SELECT :compiled AS value', $prepared['statement']->queryString);
         self::assertSame(['compiled' => 11], $prepared['params']);
+        self::assertSame([['SELECT :original AS value', ['original' => 11]]], $compiler->calls);
     }
 
     public function testPrepareUsesThePlanAsItStandsWhereTheDialectCompilesNoParameters(): void
