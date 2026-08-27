@@ -490,4 +490,25 @@ final class ZtdPdoStatementTest extends TestCase
 
         return $statement;
     }
+    public function testFetchAllAnswersFalseForAColumnTheBufferedRowDoesNotHold(): void
+    {
+        $statement = $this->providerReturningInsert();
+
+        self::assertSame([false], $statement->fetchAll(PDO::FETCH_COLUMN, 5));
+    }
+
+    public function testFetchAllAnswersEveryBufferedRowAndNotJustTheFirst(): void
+    {
+        $pdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+        $pdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $ztdPdo = ZtdPdo::fromPdo($pdo);
+        $statement = $ztdPdo->prepare("INSERT INTO users (name) VALUES ('ada'), ('grace') RETURNING id, name");
+        self::assertInstanceOf(ZtdPdoStatement::class, $statement);
+        $statement->execute();
+
+        self::assertSame(
+            [['id' => 1, 'name' => 'ada'], ['id' => 2, 'name' => 'grace']],
+            $statement->fetchAll(PDO::FETCH_ASSOC),
+        );
+    }
 }

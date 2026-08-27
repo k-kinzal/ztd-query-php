@@ -6,6 +6,7 @@ namespace Tests\Unit;
 
 use PDO;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Adapter\Pdo\PdoConnection;
@@ -115,5 +116,46 @@ final class PdoPreparedExecutionTest extends TestCase
         $execution = new PdoPreparedExecution($pdo, $session, 'SELECT 1', [], $binder);
 
         self::assertSame($binder, $execution->parameterBinder());
+    }
+    public function testItRefusesADriverOptionThatIsNotAPdoAttribute(): void
+    {
+        $pdo = new PDO('sqlite::memory:');
+        $session = new Session(static::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), static::createStub(ConnectionInterface::class));
+
+        $this->expectExceptionMessage('Driver option "cursor" must be a PDO attribute set to a bool, int or string, int given.');
+
+        new PdoPreparedExecution($pdo, $session, 'SELECT 1', ['cursor' => 1]);
+    }
+
+    public function testItRefusesADriverOptionSetToSomethingPdoCannotBeGiven(): void
+    {
+        $pdo = new PDO('sqlite::memory:');
+        $session = new Session(static::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), static::createStub(ConnectionInterface::class));
+
+        $this->expectExceptionMessage('Driver option #' . PDO::ATTR_CURSOR . ' must be a PDO attribute set to a bool, int or string, float given.');
+
+        new PdoPreparedExecution($pdo, $session, 'SELECT 1', [PDO::ATTR_CURSOR => 1.5]);
+    }
+
+    #[DataProvider('providerDriverOptionPdoAccepts')]
+    public function testItTakesADriverOptionPdoCanBeGiven(bool|int|string $value): void
+    {
+        $pdo = new PDO('sqlite::memory:');
+        $session = new Session(static::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), static::createStub(ConnectionInterface::class));
+        $binder = new PdoParameterBinder();
+
+        $execution = new PdoPreparedExecution($pdo, $session, 'SELECT 1', [PDO::ATTR_CURSOR => $value], $binder);
+
+        self::assertSame($binder, $execution->parameterBinder());
+    }
+
+    /**
+     * @return iterable<string, array{bool|int|string}>
+     */
+    public static function providerDriverOptionPdoAccepts(): iterable
+    {
+        yield 'a flag' => [true];
+        yield 'a number' => [PDO::CURSOR_FWDONLY];
+        yield 'a word' => ['forward'];
     }
 }
