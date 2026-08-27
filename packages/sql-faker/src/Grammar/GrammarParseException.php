@@ -88,4 +88,21 @@ final class GrammarParseException extends RuntimeException
     {
         return new self("Unterminated type tag starting at offset {$offset}");
     }
+
+    /**
+     * Reports a scanner that answered a token without consuming any input.
+     *
+     * Reading a token is what moves a reader through its source, so a scanner
+     * that answers one without advancing leaves the reader asking the same
+     * question forever. Saying so is the only way that ends.
+     *
+     * @param string $character Character the scanner was handed
+     * @param int $offset Where it was handed it
+     *
+     * @return self Exception naming the character the scanner stopped on
+     */
+    public static function scannerDidNotAdvance(string $character, int $offset): self
+    {
+        return new self("Scanner read '{$character}' at offset {$offset} without consuming it");
+    }
 }

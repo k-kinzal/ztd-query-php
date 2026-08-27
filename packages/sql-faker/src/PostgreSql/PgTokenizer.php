@@ -343,8 +343,12 @@ final class PgTokenizer
             return $this->isPunctuation($character) ? [$character, $character] : null;
         }
 
+        $length = strlen($sql);
         $end = $offset;
-        while (isset($sql[$end]) && str_contains(self::OPERATOR_CHARACTERS, $sql[$end])) {
+        while ($end < $length) {
+            if (!str_contains(self::OPERATOR_CHARACTERS, $sql[$end])) {
+                break;
+            }
             if ($end > $offset && in_array(substr($sql, $end, 2), ['/*', '--'], true)) {
                 break;
             }
