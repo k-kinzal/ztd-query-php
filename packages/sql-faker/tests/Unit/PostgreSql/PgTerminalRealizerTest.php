@@ -597,4 +597,187 @@ final class PgTerminalRealizerTest extends TestCase
 
         self::assertSame(' ', PgRealizers::witnessed($faker)->optionalTrivia());
     }
+    #[DataProvider('providerSyntheticTerminalAndSpelling')]
+    public function testRealizeSyntheticWritesEveryNamedTerminalInItsOwnSpelling(
+        PgTerminalRealizer $realizer,
+        string $terminal,
+        string $pattern,
+    ): void {
+        self::assertMatchesRegularExpression($pattern, (string) $realizer->realizeSynthetic($terminal)[0]);
+    }
+
+    /**
+     * @return iterable<string, array{PgTerminalRealizer, string, string}>
+     */
+    public static function providerSyntheticTerminalAndSpelling(): iterable
+    {
+        $realizer = self::providerSyntheticOnlyRealizer();
+
+        $spellings = [
+            'UIDENT' => '/^U&"([^"]|"")*"$/',
+            'USCONST' => "/^U&'.*'\$/s",
+            'ICONST' => '/^\d+$/',
+            'FCONST' => '/^(\.5|1\.|1e-1|[\d.]+)$/',
+            'BCONST' => "/^B'[01]*'\$/",
+            'XCONST' => "/^X'[0-9a-fA-F]*'\$/",
+            'Op' => '/^[-+*\/<>=~!@#%^&|`?]+$/',
+            'PARAM' => '/^\$([1-9]|10)$/',
+            'TYPECAST' => '/^::$/',
+            'DOT_DOT' => '/^\.\.$/',
+            'COLON_EQUALS' => '/^:=$/',
+            'EQUALS_GREATER' => '/^=>$/',
+            'NOT_EQUALS' => '/^(<>|!=)$/',
+            'LESS_EQUALS' => '/^<=$/',
+            'GREATER_EQUALS' => '/^>=$/',
+        ];
+
+        foreach ($spellings as $terminal => $pattern) {
+            yield $terminal => [$realizer, $terminal, $pattern];
+        }
+    }
+
+    public function testParamIsNumberedFromOneToTenAndNoFurther(): void
+    {
+        $realizer = self::providerSyntheticOnlyRealizer();
+        $numbers = array_map(
+            static fn (int $draw): int => (int) substr((string) $realizer->realizeSynthetic('PARAM')[0], 1),
+            range(1, 400),
+        );
+        sort($numbers);
+
+        self::assertSame(range(1, 10), array_values(array_unique($numbers)));
+    }
+
+    public function testStandardStringLiteralDoublesEveryQuoteItCarries(): void
+    {
+        $realizer = self::providerSyntheticOnlyRealizer();
+        $written = array_map(
+            static fn (int $draw): string => $realizer->standardStringLiteral(),
+            range(1, 200),
+        );
+        $malformed = array_values(array_filter(
+            $written,
+            static fn (string $literal): bool => preg_match("/^'([^']|'')*'\$/s", $literal) !== 1,
+        ));
+
+        self::assertSame([], $malformed);
+    }
+
+    public function testDollarQuotedStringCloseWithTheTagItOpenedWith(): void
+    {
+        $realizer = self::providerSyntheticOnlyRealizer();
+        $written = array_map(
+            static fn (int $draw): string => $realizer->dollarQuotedString(),
+            range(1, 200),
+        );
+        $malformed = array_values(array_filter(
+            $written,
+            static fn (string $literal): bool => preg_match('/^\$(\w*)\$.*\$\1\$$/s', $literal) !== 1,
+        ));
+
+        self::assertSame([], $malformed);
+    }
+
+    public function testUnicodeStringLiteralIsWrappedInTheUnicodePrefixAndAQuote(): void
+    {
+        $realizer = self::providerSyntheticOnlyRealizer();
+
+        self::assertMatchesRegularExpression("/^U&'[0-9A-Za-z]{0,12}'\$/", $realizer->unicodeStringLiteral());
+    }
+
+    public function testOperatorNeverCarriesACommentMarker(): void
+    {
+        $realizer = self::providerSyntheticOnlyRealizer();
+        $written = array_map(
+            static fn (int $draw): string => $realizer->operator(),
+            range(1, 400),
+        );
+        $marked = array_values(array_filter(
+            $written,
+            static fn (string $operator): bool => str_contains($operator, '--') || str_contains($operator, '/*'),
+        ));
+
+        self::assertSame([], $marked);
+    }
+
+    public function testOperatorNeverEndsInAPlusOrMinusThatWouldReadAsTwoTokens(): void
+    {
+        $realizer = self::providerSyntheticOnlyRealizer();
+        $written = array_map(
+            static fn (int $draw): string => $realizer->operator(),
+            range(1, 400),
+        );
+        $ambiguous = array_values(array_filter(
+            $written,
+            static fn (string $operator): bool => in_array($operator[strlen($operator) - 1], ['+', '-'], true)
+                && preg_match('/[~!@#%^&|`?]/', $operator) !== 1,
+        ));
+
+        self::assertSame([], $ambiguous);
+    }
+
+    public function testRandomOperatorIsTwoToFourCharactersLong(): void
+    {
+        $realizer = self::providerSyntheticOnlyRealizer();
+        $lengths = array_map(
+            static fn (int $draw): int => strlen($realizer->randomOperator()),
+            range(1, 300),
+        );
+        sort($lengths);
+
+        self::assertSame([2, 3, 4], array_values(array_unique($lengths)));
+    }
+
+    /**
+     * @return PgTerminalRealizer A realizer that writes every terminal from its name
+     */
+    public static function providerSyntheticOnlyRealizer(): PgTerminalRealizer
+    {
+        $lookahead = new PgLookahead([]);
+        $faker = Factory::create();
+        $faker->seed(20260827);
+
+        return new PgTerminalRealizer(
+            $faker,
+            new LexicalCatalog([
+                'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+                'terminals' => [],
+                'terminal_exclusions' => [],
+                'coverage' => ['units' => [], 'witnessed' => [], 'excluded' => []],
+            ]),
+            new PgTokenizer(['SELECT' => 'SELECT'], $lookahead),
+            $lookahead,
+            ['SELECT' => ['SELECT']],
+            'pg-17.2',
+            true,
+        );
+    }
+    #[DataProvider('providerDrawnOperator')]
+    public function testReadsAsItsOwnOperatorSaysWhetherTheLexerWouldReadItAsOne(string $operator, bool $reads): void
+    {
+        self::assertSame($reads, self::providerSyntheticOnlyRealizer()->readsAsItsOwnOperator($operator));
+    }
+
+    /**
+     * @return iterable<string, array{string, bool}>
+     */
+    public static function providerDrawnOperator(): iterable
+    {
+        yield 'a run nothing else spells' => ['?|~', true];
+        yield 'a run that opens a line comment' => ['-->', false];
+        yield 'a run that opens a block comment' => ['/*~', false];
+        yield 'a run the lexer already has a token for' => ['<=', false];
+    }
+
+    public function testOperatorSettlesForAKnownSpellingWhenNoDrawReadsAsItsOwn(): void
+    {
+        $realizer = self::providerSyntheticOnlyRealizer();
+        $unreadable = array_values(array_filter(
+            array_map(static fn (int $draw): string => $realizer->operator(), range(1, 400)),
+            static fn (string $operator): bool => !$realizer->readsAsItsOwnOperator($operator)
+                && !in_array($operator, ['?', '?|', '?&'], true),
+        ));
+
+        self::assertSame([], $unreadable);
+    }
 }
