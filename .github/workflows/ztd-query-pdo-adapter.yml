@@ -4,14 +4,14 @@ on:
   push:
     branches: [main]
   pull_request:
+    # Only this package's own sources gate the pull request run. A change to a
+    # package this one depends on is validated by that package's own workflow,
+    # and by the push-to-main run below, which rebuilds every package against
+    # the merged tree. Listing dependencies here instead would make a stacked
+    # series unmergeable: the first pull request in the stack would have to
+    # carry every later package's changes to keep this workflow passing.
     paths:
       - 'packages/ztd-query-pdo-adapter/**'
-      - 'packages/ztd-query-mysql/**'
-      - 'packages/ztd-query-postgres/**'
-      - 'packages/ztd-query-sqlite/**'
-      - 'packages/ztd-query-core/**'
-      - 'packages/sql-faker/**'
-      - 'packages/sql-fixture/**'
       - 'packages/phpstan-custom-rules/**'
       - '.github/workflows/ztd-query-pdo-adapter.yml'
 
