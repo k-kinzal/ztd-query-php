@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Transformer;
 
+use ZtdQuery\Platform\Sqlite\SqliteValueRenderer;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use Tests\Contract\TransformerContractTest;
@@ -514,19 +515,11 @@ final class SelectTransformerTest extends TransformerContractTest
         self::assertSame('SELECT * FROM users', $result);
     }
 
-    public function testUnsupportedValueTypeThrows(): void
+    public function testRenderValueRejectsAValueNoColumnTypeCanCarry(): void
     {
-        $transformer = new SelectTransformer();
-        $tables = [
-            'users' => [
-                'rows' => [['data' => [1, 2, 3]]],
-                'columns' => ['data'],
-                'columnTypes' => [],
-            ],
-        ];
-
         $this->expectException(\RuntimeException::class);
-        $transformer->transform('SELECT * FROM users', $tables);
+
+        (new SqliteValueRenderer())->renderValue([1, 2, 3]);
     }
 
     public function testObjectWithToString(): void
@@ -637,19 +630,12 @@ final class SelectTransformerTest extends TransformerContractTest
         self::assertStringContainsString('NULL AS "id"', $result);
     }
 
-    public function testSerializableObjectWithType(): void
+    public function testRenderValueCastsAListTheColumnTypeNames(): void
     {
-        $transformer = new SelectTransformer();
-        $tables = [
-            'users' => [
-                'rows' => [['data' => [1, 2]]],
-                'columns' => ['data'],
-                'columnTypes' => ['data' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT')],
-            ],
-        ];
-
-        $result = $transformer->transform('SELECT * FROM users', $tables);
-        self::assertStringContainsString('CAST(', $result);
+        self::assertStringContainsString(
+            'CAST(',
+            (new SqliteValueRenderer())->renderValue([1, 2], new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT')),
+        );
     }
 
     public function testExistingWithClauseAppendsCte(): void
@@ -1049,20 +1035,12 @@ final class SelectTransformerTest extends TransformerContractTest
         self::assertStringContainsString('stringified', $result);
     }
 
-    public function testFormatValueWithTypeObjectUsesSerialized(): void
+    public function testRenderValueCastsAnObjectTheColumnTypeNames(): void
     {
-        $transformer = new SelectTransformer();
-        $obj = new \stdClass();
-        $tables = [
-            'users' => [
-                'rows' => [['val' => $obj]],
-                'columns' => ['val'],
-                'columnTypes' => ['val' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT')],
-            ],
-        ];
-
-        $result = $transformer->transform('SELECT * FROM users', $tables);
-        self::assertStringContainsString('CAST(', $result);
+        self::assertStringContainsString(
+            'CAST(',
+            (new SqliteValueRenderer())->renderValue(new \stdClass(), new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT')),
+        );
     }
 
     public function testExistingWithClausePrependsCtes(): void

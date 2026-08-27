@@ -120,8 +120,7 @@ final class FullPipelineFuzzTest extends TestCase
     /**
      * Generate random fixture rows for a table definition.
      *
-     * @return array<int, array<string, mixed>>
-     */
+     * @return list<array<string, bool|float|int|string|null>> The rows, as the shadow would hold them     */
     private function generateFixtureRows(TableDefinition $definition, int $count): array
     {
         $rows = [];

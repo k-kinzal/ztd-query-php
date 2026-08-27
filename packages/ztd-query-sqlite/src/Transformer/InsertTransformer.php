@@ -7,10 +7,11 @@ namespace ZtdQuery\Platform\Sqlite\Transformer;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\Sqlite\SqliteCastRenderer;
-use ZtdQuery\Platform\Sqlite\SqliteNativeUpsertProjector;
-use ZtdQuery\Platform\Sqlite\SqliteLexerProfile;
-use ZtdQuery\Platform\Sqlite\SqliteParser;
 use ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer;
+use ZtdQuery\Platform\Sqlite\SqliteLexerProfile;
+use ZtdQuery\Platform\Sqlite\SqliteNativeUpsertProjector;
+use ZtdQuery\Platform\Sqlite\SqliteParser;
+use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Rewrite\ShadowIdentityAllocator;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnDeclaration;
@@ -26,6 +27,8 @@ use ZtdQuery\Sql\SqlTokenStream;
  * - REPLACE INTO ... VALUES (...)
  * - INSERT INTO ... SELECT ...
  * - INSERT INTO ... ON CONFLICT ... DO UPDATE SET ...
+ *
+ * @phpstan-import-type RenderableValue from ValueRenderer
  */
 final class InsertTransformer implements SqlTransformer
 {
@@ -115,7 +118,7 @@ final class InsertTransformer implements SqlTransformer
      * @param array<string, ColumnDeclaration> $columnTypes
      * @param array<string, string> $columnDefaults
      * @param array<string, \ZtdQuery\Schema\IdentityGenerationStrategy> $identityStrategies
-     * @param array<int, array<string, mixed>> $existingRows
+     * @param list<array<string, RenderableValue>> $existingRows The existing rows
      */
     private function buildInsertSelect(
         string $sql,
@@ -181,7 +184,7 @@ final class InsertTransformer implements SqlTransformer
      * @param array<string, ColumnDeclaration> $columnTypes
      * @param array<string, string> $columnDefaults
      * @param array<string, \ZtdQuery\Schema\IdentityGenerationStrategy> $identityStrategies
-     * @param array<int, array<string, mixed>> $existingRows
+     * @param list<array<string, RenderableValue>> $existingRows The existing rows
      */
     private function buildInsertRowSelect(
         array $values,
