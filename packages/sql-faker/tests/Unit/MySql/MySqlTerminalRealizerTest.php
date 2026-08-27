@@ -571,4 +571,120 @@ final class MySqlTerminalRealizerTest extends TestCase
 
         self::assertSame(' ', MySqlRealizers::witnessed($faker)->optionalTrivia());
     }
+    #[DataProvider('providerSyntheticTerminalAndSpelling')]
+    public function testRealizeSyntheticWritesEveryNamedTerminalInItsOwnSpelling(string $terminal, string $pattern): void
+    {
+        self::assertMatchesRegularExpression($pattern, (string) self::providerSeededRealizer()->realizeSynthetic($terminal)[0]);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerSyntheticTerminalAndSpelling(): iterable
+    {
+        yield 'IDENT' => ['IDENT', '/^_\w+$/'];
+        yield 'IDENT_QUOTED' => ['IDENT_QUOTED', '/^`.*`$/s'];
+        yield 'TEXT_STRING' => ['TEXT_STRING', "/^'.*'\$/s"];
+        yield 'NCHAR_STRING' => ['NCHAR_STRING', "/^N'.*'\$/s"];
+        yield 'DOLLAR_QUOTED_STRING_SYM' => ['DOLLAR_QUOTED_STRING_SYM', '/^\$\$.*\$\$$/s'];
+        yield 'NUM' => ['NUM', '/^\d+$/'];
+        yield 'LONG_NUM' => ['LONG_NUM', '/^\d{10,}$/'];
+        yield 'ULONGLONG_NUM' => ['ULONGLONG_NUM', '/^18446744073709551615$/'];
+        yield 'DECIMAL_NUM' => ['DECIMAL_NUM', '/^[\d.]+$/'];
+        yield 'HEX_NUM' => ['HEX_NUM', "/^(0x[0-9a-fA-F]*|X'[0-9a-fA-F]*')\$/"];
+    }
+
+    public function testALongNumberIsTooWideForAThirtyTwoBitInteger(): void
+    {
+        $written = (string) self::providerSeededRealizer()->realizeSynthetic('LONG_NUM')[0];
+
+        self::assertGreaterThan(2147483647, (int) $written);
+    }
+
+    public function testAQuotedIdentifierDoublesEveryBacktickItCarries(): void
+    {
+        $realizer = self::providerSeededRealizer();
+        $malformed = array_values(array_filter(
+            array_map(static fn (int $draw): string => $realizer->quotedIdentifier(), range(1, 200)),
+            static fn (string $written): bool => preg_match('/^`([^`]|``)*`$/s', $written) !== 1,
+        ));
+
+        self::assertSame([], $malformed);
+    }
+
+    public function testAStringLiteralDoublesEveryQuoteItCarries(): void
+    {
+        $realizer = self::providerSeededRealizer();
+        $malformed = array_values(array_filter(
+            array_map(static fn (int $draw): string => $realizer->stringLiteral(), range(1, 200)),
+            static fn (string $written): bool => preg_match("/^'([^']|'')*'\$/s", $written) !== 1,
+        ));
+
+        self::assertSame([], $malformed);
+    }
+
+    public function testADollarQuotedStringIsWrappedInDoubledDollars(): void
+    {
+        self::assertMatchesRegularExpression('/^\$\$[0-9A-Za-z]{0,24}\$\$$/', self::providerSeededRealizer()->dollarQuotedString());
+    }
+
+    public function testAHexadecimalLiteralIsWrittenInOneOfTheTwoSpellingsMysqlReads(): void
+    {
+        $realizer = self::providerSeededRealizer();
+        $spellings = array_map(
+            static fn (int $draw): string => str_starts_with($realizer->hexadecimalLiteral(), '0x') ? '0x' : "X'",
+            range(1, 200),
+        );
+        sort($spellings);
+
+        self::assertSame(['0x', "X'"], array_values(array_unique($spellings)));
+    }
+
+    public function testAHexadecimalLiteralInQuotesCarriesAnEvenNumberOfDigits(): void
+    {
+        $realizer = self::providerSeededRealizer();
+        $odd = array_values(array_filter(
+            array_map(static fn (int $draw): string => $realizer->hexadecimalLiteral(), range(1, 200)),
+            static fn (string $written): bool => str_starts_with($written, "X'")
+                && strlen($written) % 2 !== 1,
+        ));
+
+        self::assertSame([], $odd);
+    }
+
+    public function testABinaryLiteralIsWrittenInOneOfTheTwoSpellingsMysqlReads(): void
+    {
+        $realizer = self::providerSeededRealizer();
+        $spellings = array_map(
+            static fn (int $draw): string => str_starts_with($realizer->binaryLiteral(), '0b') ? '0b' : "B'",
+            range(1, 200),
+        );
+        sort($spellings);
+
+        self::assertSame(['0b', "B'"], array_values(array_unique($spellings)));
+    }
+
+    /**
+     * @return MySqlTerminalRealizer A realizer that writes every terminal from its name, drawing the same way each run
+     */
+    public static function providerSeededRealizer(): MySqlTerminalRealizer
+    {
+        $faker = Factory::create();
+        $faker->seed(20260827);
+
+        return new MySqlTerminalRealizer(
+            $faker,
+            new LexicalCatalog([
+                'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+                'terminals' => [],
+                'terminal_exclusions' => [],
+                'coverage' => ['units' => [], 'witnessed' => [], 'excluded' => []],
+            ]),
+            new MySqlTokenizer(['||' => 'OR_OR_SYM', 'SELECT' => 'SELECT_SYM'], [], true),
+            ['SELECT_SYM' => ['SELECT']],
+            [],
+            'mysql-8.4.7',
+            true,
+        );
+    }
 }
