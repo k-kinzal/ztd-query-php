@@ -67,8 +67,10 @@
         "fuzz:robustness": "php-fuzzer fuzz fuzz/fuzz_robustness.php fuzz/corpus/robustness/",
         "fuzz:robustness:classify": "php-fuzzer fuzz fuzz/fuzz_robustness_classify.php fuzz/corpus/robustness-classify/",
         "fuzz:robustness:rewrite": "php-fuzzer fuzz fuzz/fuzz_robustness_rewrite.php fuzz/corpus/robustness-rewrite/",
-        "infection": "infection --threads=max --show-mutations --no-progress",
         "test:unit": "@php -d memory_limit=512M vendor/bin/phpunit tests/Unit/",
+        "test:unit:10": "@php -d memory_limit=512M vendor/bin/phpunit --configuration phpunit10.xml.dist tests/Unit/",
+        "test:unit:11": "@php -d memory_limit=512M vendor/bin/phpunit --configuration phpunit11.xml.dist tests/Unit/",
+        "test:unit:12": "@php -d memory_limit=512M vendor/bin/phpunit --configuration phpunit12.xml.dist tests/Unit/",
         "test:fuzz": "phpunit fuzz/",
         "phpstan": "phpstan analyse src fuzz tests --memory-limit=512M"
     },

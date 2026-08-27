@@ -7,11 +7,11 @@ namespace Tests\Unit;
 use PDO;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Tests\Fixtures\RecordingColumnTypeResolver;
 use ZtdQuery\Adapter\Pdo\PdoStatement;
 use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Platform\MissingResultColumnTypeResolver;
-use ZtdQuery\Platform\ResultColumnTypeResolver;
 use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
@@ -84,13 +84,14 @@ final class PdoStatementTest extends TestCase
         $nativeStmt = $pdo->query('SELECT * FROM t WHERE 1 = 0');
         self::assertNotFalse($nativeStmt);
 
-        $resolver = self::createMock(ResultColumnTypeResolver::class);
-        $resolver->expects(self::exactly(3))->method('resolve')->willReturnOnConsecutiveCalls(
+        $resolver = new RecordingColumnTypeResolver(
             new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
             new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             new ColumnDeclaration(ColumnTypeFamily::FLOAT, 'REAL'),
         );
         $columns = (new PdoStatement($nativeStmt))->resultColumns($resolver);
+
+        self::assertCount(3, $resolver->metadataSeen);
 
         self::assertSame(['id', 'name', 'score'], array_map(static fn ($column) => $column->name, $columns));
         self::assertSame(ColumnTypeFamily::INTEGER, $columns[0]->type->family);
