@@ -112,6 +112,33 @@ jobs:
       - name: Coding standards
         run: composer format:check
 
+  # PHPStan reads the language and the dependency graph of the runtime it runs
+  # under, and a package supporting 8.1 through 8.5 has a different graph on
+  # each: PHPUnit 10's attributes on 8.1, PHPUnit 13's on 8.5. Analysing once,
+  # on the highest supported version, is the only way it can answer the same
+  # question every time.
+  static-analysis:
+    name: Static Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: '8.5'
+          extensions: mbstring
+          coverage: none
+
+      - name: Install dependencies
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda # 4.0.0
+        with:
+          working-directory: packages/sql-faker
+          dependency-versions: highest
+          composer-options: --prefer-dist
+
       - name: Static analysis
         run: composer phpstan
 
