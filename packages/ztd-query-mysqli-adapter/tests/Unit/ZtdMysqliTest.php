@@ -372,9 +372,10 @@ final class ZtdMysqliTest extends TestCase
         $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
         $ztd->disableZtd();
 
-        $innerMysqli->executeQueryReturn = true;
+        $stmt = StubMysqliStmt::create();
+        $innerMysqli->prepareReturn = $stmt;
 
-        self::assertTrue($ztd->execute_query('SELECT ?', [1]));
+        self::assertSame([true, [1]], [$ztd->execute_query('SELECT ?', [1]), $stmt->executeCalledWithParams]);
     }
     public function testDisableZtdLetsStatementsReachTheServer(): void
     {
@@ -679,5 +680,41 @@ final class ZtdMysqliTest extends TestCase
         );
 
         return ZtdMysqli::fromMysqli($inner, null, $factory, $properties ?? new FakeConnectionProperties());
+    }
+    public function testRunWithoutZtdRunsAStatementWithNothingToBindOnTheConnection(): void
+    {
+        $inner = new StubMysqli();
+        $inner->queryReturn = true;
+
+        self::assertSame([true, 'SELECT 1'], [$this->providerZtd($inner)->runWithoutZtd('SELECT 1', null), $inner->queryCalledWith]);
+    }
+
+    public function testRunWithoutZtdAnswersFalseWhereTheConnectionWillNotPrepareTheStatement(): void
+    {
+        $inner = new StubMysqli();
+        $inner->prepareReturn = false;
+
+        self::assertFalse($this->providerZtd($inner)->runWithoutZtd('SELECT ?', [1]));
+    }
+
+    public function testRunWithoutZtdAnswersFalseWhereTheStatementWillNotRun(): void
+    {
+        $inner = new StubMysqli();
+        $stmt = StubMysqliStmt::create();
+        $stmt->executeReturn = false;
+        $inner->prepareReturn = $stmt;
+
+        self::assertFalse($this->providerZtd($inner)->runWithoutZtd('SELECT ?', [1]));
+    }
+
+    public function testRunWithoutZtdAnswersTheResultTheStatementHeld(): void
+    {
+        $result = StubMysqliResult::create([['id' => 1]]);
+        $inner = new StubMysqli();
+        $stmt = StubMysqliStmt::create();
+        $stmt->getResultReturn = $result;
+        $inner->prepareReturn = $stmt;
+
+        self::assertSame($result, $this->providerZtd($inner)->runWithoutZtd('SELECT ?', [1]));
     }
 }

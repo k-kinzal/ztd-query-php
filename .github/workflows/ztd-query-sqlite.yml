@@ -111,6 +111,28 @@ jobs:
       - name: Coding standards
         run: composer format:check
 
+  static-analysis:
+    name: Static Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up PHP '8.5'
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: '8.5'
+          extensions: mbstring
+          coverage: none
+
+      - name: Install dependencies
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda # 4.0.0
+        with:
+          working-directory: packages/ztd-query-sqlite
+          dependency-versions: highest
+          composer-options: --prefer-dist
+
       - name: Static analysis
         run: composer phpstan
 
