@@ -16,6 +16,32 @@ use mysqli;
 final class MysqliProperties implements ConnectionProperties
 {
     /**
+     * Every property mysqli answers, and nothing else.
+     *
+     * @var array<string, true>
+     */
+    private const NAMES = [
+        'affected_rows' => true,
+        'client_info' => true,
+        'client_version' => true,
+        'connect_errno' => true,
+        'connect_error' => true,
+        'errno' => true,
+        'error' => true,
+        'error_list' => true,
+        'field_count' => true,
+        'host_info' => true,
+        'info' => true,
+        'insert_id' => true,
+        'protocol_version' => true,
+        'server_info' => true,
+        'server_version' => true,
+        'sqlstate' => true,
+        'thread_id' => true,
+        'warning_count' => true,
+    ];
+
+    /**
      * Binds the reader to the connection it reads from.
      *
      * @param mysqli $connection Connection whose properties are answered
@@ -27,32 +53,15 @@ final class MysqliProperties implements ConnectionProperties
     /**
      * {@inheritDoc}
      *
+     * A name mysqli has no property under is answered as nothing rather than
+     * read, because reading one raises a warning and answers nothing anyway.
+     *
      * @param string $name Property as it was written
      *
      * @return mixed What the connection has under that name, or null where mysqli has no such property
      */
     public function named(string $name): mixed
     {
-        return match ($name) {
-            'affected_rows' => $this->connection->affected_rows,
-            'client_info' => $this->connection->client_info,
-            'client_version' => $this->connection->client_version,
-            'connect_errno' => $this->connection->connect_errno,
-            'connect_error' => $this->connection->connect_error,
-            'errno' => $this->connection->errno,
-            'error' => $this->connection->error,
-            'error_list' => $this->connection->error_list,
-            'field_count' => $this->connection->field_count,
-            'host_info' => $this->connection->host_info,
-            'info' => $this->connection->info,
-            'insert_id' => $this->connection->insert_id,
-            'server_info' => $this->connection->server_info,
-            'server_version' => $this->connection->server_version,
-            'sqlstate' => $this->connection->sqlstate,
-            'protocol_version' => $this->connection->protocol_version,
-            'thread_id' => $this->connection->thread_id,
-            'warning_count' => $this->connection->warning_count,
-            default => null,
-        };
+        return isset(self::NAMES[$name]) ? $this->connection->{$name} : null;
     }
 }

@@ -32,4 +32,10 @@ final class MysqliPropertiesTest extends TestCase
 
         self::assertNull($properties->named('no_such_property'));
     }
+    public function testNamedAnswersNothingWhereTheNameIsOneMysqliDoesNotHold(): void
+    {
+        $properties = new MysqliProperties(new StubMysqli());
+
+        self::assertNull($properties->named('affected_rows_typo'));
+    }
 }
