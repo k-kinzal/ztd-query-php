@@ -262,13 +262,16 @@ class ZtdPdo extends PDO
      * and nothing here asks the wrapped connection for anything a subclass
      * would answer differently.
      *
+     * This carries no #[\Override] for the same reason: from PHP 8.3 on the
+     * attribute is checked, and on 8.1 through 8.3 there is no PDO::connect()
+     * for it to be checked against.
+     *
      * @param array<mixed>|null $options Driver options, as PDO::connect() takes them
      *
      * @return static The new connection, with ZTD in front of it
      *
      * @throws RuntimeException When the driver has no platform package installed
      */
-    #[Override]
     public static function connect(
         string $dsn,
         ?string $username = null,

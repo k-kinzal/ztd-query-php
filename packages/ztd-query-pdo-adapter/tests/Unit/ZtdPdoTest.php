@@ -563,4 +563,27 @@ final class ZtdPdoTest extends TestCase
 
         return ZtdPdo::fromPdo($pdo);
     }
+    public function testPrepareRefusesACopyWrittenAsRawSql(): void
+    {
+        $rewriter = static::createStub(SqlRewriter::class);
+        $copySupport = static::createStub(CopySupport::class);
+        $copySupport->method('isCopyStatement')->willReturn(true);
+        $factory = static::createStub(SessionFactory::class);
+        $factory->method('create')->willReturnCallback(
+            static fn (ConnectionInterface $connection, ZtdConfig $config): Session => new Session(
+                $rewriter,
+                new ShadowStore(),
+                new ResultSelectRunner(),
+                $config,
+                $connection,
+                copySupport: $copySupport,
+            ),
+        );
+        $ztdPdo = ZtdPdo::fromPdo(new PDO('sqlite::memory:'), null, $factory);
+
+        $this->expectException(ZtdPdoException::class);
+        $this->expectExceptionMessage('ZTD Write Protection: Raw PostgreSQL COPY');
+
+        $ztdPdo->prepare('COPY users TO STDOUT');
+    }
 }

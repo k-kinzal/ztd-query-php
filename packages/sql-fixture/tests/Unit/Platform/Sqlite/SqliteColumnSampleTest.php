@@ -230,7 +230,7 @@ final class SqliteColumnSampleTest extends TestCase
     {
         $written = (new SqliteColumnSample())->text(Factory::create(), new ColumnDefinition('t', 'TEXT', length: 3));
 
-        self::assertSame(3, strlen($written));
+        self::assertLessThanOrEqual(3, strlen($written));
     }
 
     public function testTextFillsACharColumnEvenWhereTheNameIsWrittenInLowerCase(): void

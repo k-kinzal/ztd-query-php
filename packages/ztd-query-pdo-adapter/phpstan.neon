@@ -17,5 +17,5 @@ parameters:
         # driver-level COPY from reading and writing past the shadow.
         -
             identifier: customRules.overrideMustHaveAttribute
-            message: '#^Add \#\[\\Override\] to override method pgsqlCopy(ToArray|FromArray|ToFile|FromFile)\(\)\.$#'
+            message: '#^Add \#\[\\Override\] to override method (pgsqlCopy(ToArray|FromArray|ToFile|FromFile)|connect)\(\)\.$#'
             path: src/ZtdPdo.php
