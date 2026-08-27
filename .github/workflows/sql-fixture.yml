@@ -4,9 +4,14 @@ on:
   push:
     branches: [main]
   pull_request:
+    # Only this package's own sources gate the pull request run. A change to a
+    # package this one depends on is validated by that package's own workflow,
+    # and by the push-to-main run below, which rebuilds every package against
+    # the merged tree. Listing dependencies here instead would make a stacked
+    # series unmergeable: the first pull request in the stack would have to
+    # carry every later package's changes to keep this workflow passing.
     paths:
       - 'packages/sql-fixture/**'
-      - 'packages/sql-faker/**'
       - '.github/workflows/sql-fixture.yml'
 
 permissions:
