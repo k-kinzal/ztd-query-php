@@ -11,10 +11,12 @@ use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlFaker\Grammar\LexerSource;
 use SqlFaker\Sqlite\SqliteCoverageSamples;
+use SqlFaker\Sqlite\SqliteLexicalSamples;
 use SqlFaker\Sqlite\SqliteProfileBuilder;
 
 #[CoversClass(SqliteProfileBuilder::class)]
 #[UsesClass(SqliteCoverageSamples::class)]
+#[UsesClass(SqliteLexicalSamples::class)]
 final class SqliteProfileBuilderTest extends TestCase
 {
     public function testSourceUrlsReadsTheKeywordHashAndTheTokenizer(): void
