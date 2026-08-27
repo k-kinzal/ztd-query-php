@@ -6,12 +6,15 @@ namespace Tests\Unit\SqlFaker\PostgreSql;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlFaker\Grammar\LexerSource;
+use SqlFaker\PostgreSql\PgLexicalSamples;
 use SqlFaker\PostgreSql\PgProfileBuilder;
 
 #[CoversClass(PgProfileBuilder::class)]
+#[UsesClass(PgLexicalSamples::class)]
 final class PgProfileBuilderTest extends TestCase
 {
     public function testSourceUrlsReadsTheKeywordListTheScannerAndTheParser(): void

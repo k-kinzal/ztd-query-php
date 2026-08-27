@@ -24,7 +24,6 @@ use SqlFaker\MySql\Bison\Lexer\TypeTagScanner;
 use Tests\Fixture\SqlFaker\StuckScanner;
 
 #[CoversClass(BisonLexer::class)]
-#[UsesClass(StuckScanner::class)]
 #[UsesClass(ActionScanner::class)]
 #[UsesClass(BisonLexeme::class)]
 #[UsesClass(BisonScannerChain::class)]
