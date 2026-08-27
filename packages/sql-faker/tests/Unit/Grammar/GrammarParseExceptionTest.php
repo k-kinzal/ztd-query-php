@@ -60,4 +60,11 @@ final class GrammarParseExceptionTest extends TestCase
             GrammarParseException::unterminatedTypeTag(42)->getMessage(),
         );
     }
+    public function testScannerDidNotAdvanceNamesTheCharacterItStoppedOn(): void
+    {
+        self::assertSame(
+            "Scanner read ';' at offset 7 without consuming it",
+            GrammarParseException::scannerDidNotAdvance(';', 7)->getMessage(),
+        );
+    }
 }

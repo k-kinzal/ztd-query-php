@@ -240,4 +240,89 @@ final class MySqlTokenizerTest extends TestCase
     {
         self::assertSame(['WITH_ROLLUP_SYM'], (new MySqlTokenizer([], [], true))->merged(['WITH', 'ROLLUP_SYM']));
     }
+    #[DataProvider('providerNumericLiteral')]
+    public function testNumericTokenAtReadsEverySpellingMysqlAcceptsForANumber(string $sql, string $token): void
+    {
+        $offset = 0;
+
+        self::assertSame($token, (new MySqlTokenizer([], [], true))->numericTokenAt($sql, $offset));
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerNumericLiteral(): iterable
+    {
+        yield 'a hex literal in lower case' => ['0xff', 'HEX_NUM'];
+        yield 'a hex literal in upper case' => ['0XFF', 'HEX_NUM'];
+        yield 'a binary literal in lower case' => ['0b01', 'BIN_NUM'];
+        yield 'a binary literal in upper case' => ['0B01', 'BIN_NUM'];
+        yield 'a national string in lower case' => ["n'a'", 'NCHAR_STRING'];
+        yield 'a national string in upper case' => ["N'a'", 'NCHAR_STRING'];
+        yield 'a quoted hex literal in lower case' => ["x'ff'", 'HEX_NUM'];
+        yield 'a quoted hex literal in upper case' => ["X'FF'", 'HEX_NUM'];
+        yield 'a quoted binary literal in lower case' => ["b'01'", 'BIN_NUM'];
+        yield 'a quoted binary literal in upper case' => ["B'01'", 'BIN_NUM'];
+        yield 'a decimal with digits either side' => ['1.5', 'DECIMAL_NUM'];
+        yield 'a decimal with nothing after the point' => ['1.', 'DECIMAL_NUM'];
+        yield 'a decimal with nothing before the point' => ['.5', 'DECIMAL_NUM'];
+        yield 'a float written with a lower-case exponent' => ['1.5e3', 'FLOAT_NUM'];
+        yield 'a float written with an upper-case exponent' => ['1.5E3', 'FLOAT_NUM'];
+        yield 'a float with no point at all' => ['15e3', 'FLOAT_NUM'];
+        yield 'a float with a signed exponent' => ['1.5e-3', 'FLOAT_NUM'];
+        yield 'a whole number' => ['42', 'NUM'];
+    }
+
+    #[DataProvider('providerNumericLiteralLength')]
+    public function testNumericTokenAtMovesPastExactlyWhatItRead(string $sql, int $consumed): void
+    {
+        $offset = 0;
+        (new MySqlTokenizer([], [], true))->numericTokenAt($sql, $offset);
+
+        self::assertSame($consumed, $offset);
+    }
+
+    /**
+     * @return iterable<string, array{string, int}>
+     */
+    public static function providerNumericLiteralLength(): iterable
+    {
+        yield 'a hex literal' => ['0xffx', 4];
+        yield 'a quoted hex literal' => ["x'ff'x", 5];
+        yield 'a float' => ['1.5e3x', 5];
+        yield 'a whole number' => ['42x', 2];
+    }
+
+    #[DataProvider('providerWord')]
+    public function testWordTokenAtReadsAWordHoweverItIsCased(string $sql, string $token): void
+    {
+        $offset = 0;
+        $tokenizer = new MySqlTokenizer(['SELECT' => 'SELECT_SYM'], ['COUNT' => 'COUNT_SYM'], true);
+
+        self::assertSame($token, $tokenizer->wordTokenAt($sql, $offset));
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerWord(): iterable
+    {
+        yield 'a keyword in upper case' => ['SELECT', 'SELECT_SYM'];
+        yield 'a keyword in lower case' => ['select', 'SELECT_SYM'];
+        yield 'a keyword in mixed case' => ['SeLeCt', 'SELECT_SYM'];
+        yield 'a function name followed by its bracket' => ['COUNT(', 'COUNT_SYM'];
+        yield 'a function name with no bracket after it' => ['COUNT ', 'IDENT'];
+        yield 'a word nothing else names' => ['users', 'IDENT'];
+        yield 'the charset introducer in lower case' => ['_utf8mb4', 'UNDERSCORE_CHARSET'];
+        yield 'the charset introducer in upper case' => ['_UTF8MB4', 'UNDERSCORE_CHARSET'];
+        yield 'an underscore word that names no charset' => ['_other', 'IDENT'];
+    }
+
+    public function testWordTokenAtMovesPastExactlyTheWordItRead(): void
+    {
+        $offset = 0;
+        (new MySqlTokenizer([], [], true))->wordTokenAt('users, id', $offset);
+
+        self::assertSame(5, $offset);
+    }
 }

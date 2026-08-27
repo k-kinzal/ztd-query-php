@@ -170,7 +170,11 @@ jobs:
   mutation:
     name: Mutation Testing
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    # Scoring this package takes about half an hour: a mutant re-runs every test
+    # that covers it, and the provider tests that cover most of it generate SQL
+    # by walking a grammar. The ceiling is set well above the measured run so a
+    # slow runner does not fail the build on the clock.
+    timeout-minutes: 90
     steps:
       - name: Check out the repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
