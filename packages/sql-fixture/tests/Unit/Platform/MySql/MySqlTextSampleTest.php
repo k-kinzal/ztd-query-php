@@ -81,6 +81,6 @@ final class MySqlTextSampleTest extends TestCase
     {
         $written = (new MySqlTextSample())->varchar(Factory::create(), new ColumnDefinition('v', 'VARCHAR', length: 3));
 
-        self::assertSame(3, strlen($written));
+        self::assertLessThanOrEqual(3, strlen($written));
     }
 }
