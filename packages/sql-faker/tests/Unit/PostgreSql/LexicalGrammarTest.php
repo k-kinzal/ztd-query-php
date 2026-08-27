@@ -389,4 +389,88 @@ SQL;
 
         (new LexicalGrammar(Factory::create(), 'pg-17.2'))->realize(['WITH_LA', 'RETURNS']);
     }
+    /**
+     * @param Closure(LexicalGrammar): string $write
+     */
+    #[DataProvider('providerLexemeAndSpelling')]
+    public function testEachLexemeIsWrittenInTheSpellingPostgreSqlReadsItFrom(Closure $write, string $pattern): void
+    {
+        $faker = Factory::create();
+        $faker->seed(20260827);
+        $lexical = new LexicalGrammar($faker, 'pg-17.2');
+
+        self::assertMatchesRegularExpression($pattern, $write($lexical));
+    }
+
+    /**
+     * @return iterable<string, array{Closure(LexicalGrammar): string, string}>
+     */
+    public static function providerLexemeAndSpelling(): iterable
+    {
+        yield 'a hex literal' => [
+            static fn (LexicalGrammar $l): string => $l->generateHexLiteral(),
+            "/^X'[0-9a-fA-F]{1,16}'\$/",
+        ];
+        yield 'a binary literal' => [
+            static fn (LexicalGrammar $l): string => $l->generateBinaryLiteral(),
+            "/^B'[01]{1,64}'\$/",
+        ];
+        yield 'a dollar-quoted string' => [
+            static fn (LexicalGrammar $l): string => $l->generateDollarQuotedString(),
+            '/^\$\$.{1,255}\$\$$/s',
+        ];
+        yield 'a parameter marker' => [
+            static fn (LexicalGrammar $l): string => $l->generateParameterMarker(),
+            '/^\$([1-9]|[1-9]\d)$/',
+        ];
+    }
+
+    /**
+     * @param Closure(LexicalGrammar, int): string $write
+     */
+    #[DataProvider('providerBoundedLexeme')]
+    public function testEachLexemeFillsExactlyTheLengthItIsAskedFor(Closure $write, int $length, string $pattern): void
+    {
+        $faker = Factory::create();
+        $faker->seed(20260827);
+        $lexical = new LexicalGrammar($faker, 'pg-17.2');
+
+        self::assertMatchesRegularExpression($pattern, $write($lexical, $length));
+    }
+
+    /**
+     * @return iterable<string, array{Closure(LexicalGrammar, int): string, int, string}>
+     */
+    public static function providerBoundedLexeme(): iterable
+    {
+        yield 'a hex literal' => [
+            static fn (LexicalGrammar $l, int $n): string => $l->generateHexLiteral($n, $n),
+            5,
+            "/^X'[0-9a-fA-F]{5}'\$/",
+        ];
+        yield 'a binary literal' => [
+            static fn (LexicalGrammar $l, int $n): string => $l->generateBinaryLiteral($n, $n),
+            7,
+            "/^B'[01]{7}'\$/",
+        ];
+        yield 'a dollar-quoted string' => [
+            static fn (LexicalGrammar $l, int $n): string => $l->generateDollarQuotedString($n, $n),
+            9,
+            '/^\$\$.{9}\$\$$/s',
+        ];
+    }
+
+    public function testAParameterMarkerIsNumberedWithinTheRangeItIsGiven(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(20260827);
+        $lexical = new LexicalGrammar($faker, 'pg-17.2');
+        $numbers = array_map(
+            static fn (int $draw): int => (int) substr($lexical->generateParameterMarker(3, 5), 1),
+            range(1, 200),
+        );
+        sort($numbers);
+
+        self::assertSame([3, 4, 5], array_values(array_unique($numbers)));
+    }
 }
