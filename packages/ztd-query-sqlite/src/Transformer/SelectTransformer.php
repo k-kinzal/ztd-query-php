@@ -13,6 +13,7 @@ use ZtdQuery\Platform\Sqlite\SqliteFullTextSearchRewriter;
 use ZtdQuery\Platform\Sqlite\SqliteGeneratedColumnProjector;
 use ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter;
 use ZtdQuery\Platform\Sqlite\SqliteIndexHintStripper;
+use ZtdQuery\Platform\Sqlite\SqliteValueRenderer;
 use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnDeclaration;
@@ -48,7 +49,7 @@ final class SelectTransformer implements SqlTransformer
     ) {
         $this->castRenderer = $castRenderer ?? new SqliteCastRenderer();
         $this->quoter = $quoter ?? new SqliteIdentifierQuoter();
-        $this->valueRenderer = $valueRenderer ?? new \ZtdQuery\Platform\Sqlite\SqliteValueRenderer($this->castRenderer);
+        $this->valueRenderer = $valueRenderer ?? new SqliteValueRenderer($this->castRenderer);
         $this->cteComposer = new SqliteCteShadowComposer();
         $this->indexHintStripper = new SqliteIndexHintStripper();
         $this->generatedColumnProjector = new SqliteGeneratedColumnProjector();
