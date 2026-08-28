@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<!-- NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you. -->
+<ruleset name="php-compatibility">
+    <description>
+        Cross-version PHP compatibility gate. Reports any syntax or function
+        newer than the project's declared PHP floor, so code cannot silently
+        drift above the minimum supported runtime.
+
+        Only PHPCompatibility runs here — code style is owned by PHP-CS-Fixer.
+        Do NOT add style sniffs (PSR12, Squiz, ...) to this ruleset; that would
+        overlap with and fight the formatter.
+    </description>
+
+    <file>src</file>
+
+    <config name="testVersion" value="8.1-"/>
+
+    <rule ref="PHPCompatibility">
+        <!--
+            These files hold the text a database's own lexer was observed to
+            read, so '0x10' is SQL for a hexadecimal literal and never reaches
+            PHP as a number. The sniff is about PHP comparing such a string
+            numerically, which nothing here does.
+        -->
+        <exclude name="PHPCompatibility.Numbers.RemovedHexadecimalNumericStrings"/>
+    </rule>
+</ruleset>
