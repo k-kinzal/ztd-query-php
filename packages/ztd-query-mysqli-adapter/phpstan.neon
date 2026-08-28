@@ -7,6 +7,10 @@ includes:
 
 parameters:
     level: max
+    paths:
+        - src
+        - fuzz
+        - tests
     excludePaths:
         # PHPStan Bug: functionMap incorrectly defines mysqli_stmt::bind_param signature
         #
