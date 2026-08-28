@@ -4,12 +4,6 @@ on:
   push:
     branches: [main]
   pull_request:
-    # Only this package's own sources gate the pull request run. A change to a
-    # package this one depends on is validated by that package's own workflow,
-    # and by the push-to-main run below, which rebuilds every package against
-    # the merged tree. Listing dependencies here instead would make a stacked
-    # series unmergeable: the first pull request in the stack would have to
-    # carry every later package's changes to keep this workflow passing.
     paths:
       - 'packages/ztd-query-pdo-adapter/**'
       - '.github/workflows/ztd-query-pdo-adapter.yml'
@@ -33,20 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Each PHP resolves a different PHPUnit major, and their schemas reject
-        # each other's strict settings, so every leg names the configuration
-        # written for the major it will actually install.
-        include:
-          - php: '8.1'
-            test-script: test:unit:10
-          - php: '8.2'
-            test-script: test:unit:11
-          - php: '8.3'
-            test-script: test:unit:12
-          - php: '8.4'
-            test-script: test:unit:12
-          - php: '8.5'
-            test-script: test:unit
+        php: ['8.1', '8.2', '8.3', '8.4', '8.5']
     steps:
       - name: Check out the repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -55,7 +36,7 @@ jobs:
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
         with:
           php-version: ${{ matrix.php }}
-          extensions: mbstring, pdo, pdo_mysql
+          extensions: mbstring, pdo, pdo_mysql, pcntl
           coverage: none
 
       - name: Install dependencies
@@ -69,35 +50,7 @@ jobs:
         run: composer check-platform-reqs
 
       - name: Unit tests
-        run: composer ${{ matrix.test-script }}
-
-  parallel-test:
-    name: Parallel Test Runner
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - name: Check out the repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Set up PHP '8.5'
-        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
-        with:
-          php-version: '8.5'
-          extensions: mbstring, pdo, pdo_mysql, pcntl
-          coverage: none
-
-      - name: Install dependencies
-        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda # 4.0.0
-        with:
-          working-directory: packages/ztd-query-pdo-adapter
-          dependency-versions: highest
-          composer-options: --prefer-dist
-
-      # What the version matrix cannot answer: whether the suite survives being
-      # split across processes. That does not depend on the PHP version, so it
-      # is asked once, on the highest one supported.
-      - name: Unit tests, split across processes
-        run: composer test:parallel
+        run: composer test
 
   test-integration:
     name: Integration (PHP ${{ matrix.php }})
@@ -106,8 +59,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # As in the unit job: each PHP installs a different PHPUnit major, and a
-        # configuration written for a later one does not validate on an earlier.
         include:
           - php: '8.1'
             test-script: test:integration:10
@@ -138,7 +89,7 @@ jobs:
           composer-options: --prefer-dist
 
       - name: Integration tests
-        run: composer ${{ matrix.test-script }}
+        run: composer test
 
   lint:
     name: Lint (PHP ${{ matrix.php }})
@@ -166,39 +117,17 @@ jobs:
           dependency-versions: highest
           composer-options: --prefer-dist
 
-      # --strict is left off: this package reaches its siblings through path
-      # repositories, which Composer can only be given as "@dev", and --strict
-      # fails any unbound constraint. Everything else about the file is checked.
       - name: Validate composer.json
         run: composer validate --no-check-publish
 
       - name: Coding standards
         run: composer format:check
 
-  static-analysis:
-    name: Static Analysis
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - name: Check out the repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Set up PHP '8.5'
-        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
-        with:
-          php-version: '8.5'
-          extensions: mbstring, pdo, pdo_mysql
-          coverage: none
-
-      - name: Install dependencies
-        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda # 4.0.0
-        with:
-          working-directory: packages/ztd-query-pdo-adapter
-          dependency-versions: highest
-          composer-options: --prefer-dist
-
       - name: Static analysis
         run: composer phpstan
+
+      - name: PHP compatibility
+        run: composer compat
 
   mutation:
     name: Mutation Testing
@@ -208,8 +137,6 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # Scoring a pull request means diffing it against its base branch,
-          # which needs more than the single commit a shallow clone provides.
           fetch-depth: 0
 
       - name: Set up PHP '8.5'
@@ -217,8 +144,6 @@ jobs:
         with:
           php-version: '8.5'
           extensions: mbstring, pdo, pdo_mysql, pcntl
-          # Infection needs a coverage driver. pcov is several times faster
-          # than Xdebug and Infection collects nothing Xdebug alone can provide.
           coverage: pcov
 
       - name: Install dependencies
@@ -231,31 +156,12 @@ jobs:
       - name: Check installed platform requirements
         run: composer check-platform-reqs
 
-      # Infection's own initial test run cannot be used against a strict toolkit
-      # PHPUnit configuration: it stops at the first byte on STDERR and adds
-      # stopOnDefect, so one risky test would leave the gate scoring a near-empty
-      # coverage report as if it had scored everything.
-      - name: Generate coverage for mutation testing
-        run: >-
-          php -d memory_limit=1G vendor/bin/phpunit
-          --testsuite=unit
-          --no-extensions
-          --do-not-fail-on-risky
-          --coverage-xml build/infection-coverage/coverage-xml
-          --log-junit build/infection-coverage/junit.xml
-
-      # Size memory_limit for the reports rather than for the run: Infection holds
-      # every mutant result and encodes all of them into build/infection.json once
-      # the score is printed, so a large source tree exhausts a limit the scoring
-      # itself never came close to.
       - name: Mutation testing on changed lines
         if: github.event_name == 'pull_request'
         run: >-
           php -d memory_limit=4G vendor/bin/infection
           --configuration=infection.json5
           --threads=max
-          --coverage=build/infection-coverage
-          --skip-initial-tests
           --git-diff-lines
           --git-diff-base="origin/${GITHUB_BASE_REF}"
           --ignore-msi-with-no-mutations
@@ -270,7 +176,5 @@ jobs:
           php -d memory_limit=4G vendor/bin/infection
           --configuration=infection.json5
           --threads=max
-          --coverage=build/infection-coverage
-          --skip-initial-tests
           --no-progress
           --logger-github

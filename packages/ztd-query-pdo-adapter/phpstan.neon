@@ -7,6 +7,10 @@ includes:
 
 parameters:
     level: max
+    paths:
+        - src
+        - fuzz
+        - tests
     ignoreErrors:
         # PHP 8.4 moved pdo_pgsql's COPY methods off PDO onto Pdo\Pgsql, so PDO
         # declares none of them on any PHP this package runs on, while PHPStan's

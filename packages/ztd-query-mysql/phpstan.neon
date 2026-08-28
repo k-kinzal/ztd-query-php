@@ -7,6 +7,10 @@ includes:
 
 parameters:
     level: max
+    paths:
+        - src
+        - fuzz
+        - tests
     toolkit:
         broadCatchAllowedPaths:
             - '*/src/MySqlComponentSql.php'
