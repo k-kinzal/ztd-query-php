@@ -8,6 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use SqlFaker\Grammar\Source\SqlVersion;
+use SqlFaker\Grammar\Source\SqlVersionRegistry;
 use SqlFaker\MySql\Grammar\Grammar;
 use SqlFaker\MySql\Grammar\TerminalInventory;
 use SqlFaker\MySql\MySqlCatalogWitnesses;
@@ -17,6 +19,8 @@ use SqlFaker\MySql\MySqlLexicalSamples;
 #[UsesClass(Grammar::class)]
 #[UsesClass(TerminalInventory::class)]
 #[UsesClass(MySqlLexicalSamples::class)]
+#[UsesClass(SqlVersion::class)]
+#[UsesClass(SqlVersionRegistry::class)]
 final class MySqlCatalogWitnessesTest extends TestCase
 {
     public function testWitness(): void
