@@ -113,151 +113,21 @@ final class MySqlProfileBuilder
         $functions = $profile['functions'];
         /** @var array{dollar_quoted_strings: bool} $features */
         $features = $profile['features'];
-        $terminals = [];
-        foreach ($symbols as $terminal => $lexemes) {
-            if (in_array($terminal, ['NOT2_SYM', 'OR_OR_SYM'], true)) {
-                continue;
-            }
-            foreach ($lexemes as $index => $lexeme) {
-                $terminals[$terminal][] = $this->witness(
-                    "mysql.symbol.{$terminal}.{$index}",
-                    $lexeme,
-                    [$terminal],
-                    ['MY_LEX_START', 'MY_LEX_IDENT'],
-                );
-            }
-        }
-        foreach ($functions as $terminal => $lexemes) {
-            foreach ($lexemes as $index => $lexeme) {
-                $terminals[$terminal][] = $this->witness(
-                    "mysql.function.{$terminal}.{$index}",
-                    $lexeme,
-                    [$terminal],
-                    ['MY_LEX_START', 'MY_LEX_IDENT'],
-                    $lexeme . '(',
-                );
-            }
-        }
-
-        $samples = (new MySqlLexicalSamples())->all();
-        $dollarState = current(array_values(array_filter(
-            $states,
-            static fn (string $state): bool => str_starts_with($state, 'MY_LEX_IDENT_OR_DOLLAR'),
-        )));
-        if ($features['dollar_quoted_strings']) {
-            if (!is_string($dollarState)) {
-                throw new RuntimeException('MySQL dollar-quoted string state was not found.');
-            }
-            $samples['DOLLAR_QUOTED_STRING_SYM'] = [
-                ['$$text$$', ['DOLLAR_QUOTED_STRING_SYM'], ['MY_LEX_START', $dollarState]],
-            ];
-        } elseif (is_string($dollarState)) {
-            $samples['@COVERAGE'][] = ['$identifier', ['IDENT'], ['MY_LEX_START', $dollarState]];
-        }
-        if (in_array('MY_LEX_ESCAPE', $states, true)) {
-            $samples['@COVERAGE'][] = ['\\N', ['NULL_SYM'], ['MY_LEX_START', 'MY_LEX_ESCAPE']];
-        }
-        if (in_array('MY_LEX_STRING_OR_DELIMITER', $states, true)) {
-            $samples['@COVERAGE'][] = ['"text"', ['TEXT_STRING'], ['MY_LEX_START', 'MY_LEX_STRING_OR_DELIMITER']];
-        }
-        $samples['@COVERAGE'][] = ['name.column', ['IDENT', '.', 'IDENT'], ['MY_LEX_IDENT_SEP', 'MY_LEX_IDENT_START']];
-        $samples['@COVERAGE'][] = ['.5', ['DECIMAL_NUM'], ['MY_LEX_REAL_OR_POINT', 'MY_LEX_REAL']];
-        $samples['@COVERAGE'][] = ['<=', ['LE'], ['MY_LEX_CMP_OP']];
-        $samples['@COVERAGE'][] = ['<=>', ['EQUAL_SYM'], ['MY_LEX_CMP_OP', 'MY_LEX_LONG_CMP_OP']];
-        $samples['@COVERAGE'][] = ['*/', ['*', '/'], ['MY_LEX_END_LONG_COMMENT']];
-        $samples['@COVERAGE'][] = [';', [';'], ['MY_LEX_SEMICOLON']];
-        $samples['@COVERAGE'][] = ['@name', ['@', 'LEX_HOSTNAME'], ['MY_LEX_USER_END', 'MY_LEX_HOSTNAME']];
-        $samples['@COVERAGE'][] = ["@'name'", ['@', 'IDENT_QUOTED'], ['MY_LEX_USER_END', 'MY_LEX_USER_VARIABLE_DELIMITER']];
-        $samples['@COVERAGE'][] = ['@@name', ['@', '@', 'IDENT'], ['MY_LEX_USER_END', 'MY_LEX_SYSTEM_VAR', 'MY_LEX_IDENT_OR_KEYWORD']];
-
-        foreach ($samples as $terminal => $witnesses) {
-            foreach ($witnesses as $index => $sample) {
-                [$sql, $tokens, $units] = $sample;
-                $terminals[$terminal][] = $this->witness(
-                    "mysql.family.{$terminal}.{$index}",
-                    $sql,
-                    $tokens,
-                    $units,
-                    $sample[3] ?? null,
-                );
-            }
-        }
-
-        $punctuation = str_split('!%&()*+,-./:;<=>?@[]^{}|~');
-        foreach ($punctuation as $terminal) {
-            if (!isset($terminals[$terminal])) {
-                $terminals[$terminal][] = $this->witness(
-                    'mysql.punctuation.' . bin2hex($terminal),
-                    $terminal,
-                    [$terminal],
-                    ['MY_LEX_START', 'MY_LEX_CHAR'],
-                );
-            }
-        }
-
-        $versionedParserTokens = ['END_OF_INPUT'];
-        foreach (\SqlFaker\MySql\Grammar\TerminalInventory::fromGrammar($grammar) as $terminal) {
-            if (str_starts_with($terminal, 'GRAMMAR_SELECTOR_')) {
-                $versionedParserTokens[] = $terminal;
-            }
-        }
-        foreach ($versionedParserTokens as $terminal) {
-            $unit = 'parser-entry:' . $terminal;
-            $terminals[$terminal][] = $this->witness(
-                'mysql.parser.' . $terminal,
-                '',
-                [],
-                [$unit],
-            );
-        }
-        if (version_compare(substr($version, strlen('mysql-')), '8.0.0', '<')) {
-            $terminals['WITH_CUBE_SYM'][] = $this->witness(
-                'mysql.parser.WITH_CUBE_SYM',
-                'WITH CUBE',
-                ['WITH_CUBE_SYM'],
-                ['MY_LEX_START', 'MY_LEX_IDENT'],
-            );
-        }
+        $witnesses = new MySqlCatalogWitnesses();
+        $terminals = $witnesses->fromTables($symbols, $functions);
+        $terminals = $witnesses->fromSamples($terminals, $states, $features['dollar_quoted_strings']);
+        [$terminals, $versionedParserTokens] = $witnesses->forStructure($terminals, $grammar, $version);
 
         $coverageUnits = $states;
         foreach ($versionedParserTokens as $terminal) {
             $coverageUnits[] = 'parser-entry:' . $terminal;
         }
-        $coverageWitnessed = [];
-        foreach ($terminals as $witnesses) {
-            foreach ($witnesses as $witness) {
-                foreach ($witness['units'] as $unit) {
-                    if (in_array($unit, $coverageUnits, true)) {
-                        $coverageWitnessed[$unit] ??= $witness['id'];
-                    }
-                }
-            }
+        $coverage = new MySqlLexicalCoverage();
+        foreach ($coverage->fillers($states) as $filler) {
+            $terminals['@COVERAGE'][] = $filler;
         }
-        foreach (['MY_LEX_END', 'MY_LEX_EOL'] as $endState) {
-            if (in_array($endState, $states, true)) {
-                $terminals['@COVERAGE'][] = $this->witness(
-                    'mysql.coverage.' . $endState,
-                    '',
-                    [],
-                    [$endState],
-                );
-                $coverageWitnessed[$endState] = 'mysql.coverage.' . $endState;
-            }
-        }
-        if (in_array('MY_LEX_OPERATOR_OR_IDENT', $states, true)) {
-            $terminals['@COVERAGE'][] = $this->witness(
-                'mysql.coverage.MY_LEX_OPERATOR_OR_IDENT',
-                'a + b',
-                ['IDENT', '+', 'IDENT'],
-                ['MY_LEX_OPERATOR_OR_IDENT'],
-            );
-            $coverageWitnessed['MY_LEX_OPERATOR_OR_IDENT'] = 'mysql.coverage.MY_LEX_OPERATOR_OR_IDENT';
-        }
+        $coverageWitnessed = $coverage->witnessed($terminals, $coverageUnits);
         $coverageExcluded = [];
-        $missingCoverage = array_values(array_diff($coverageUnits, array_keys($coverageWitnessed)));
-        if ($missingCoverage !== []) {
-            throw new RuntimeException('MySQL source model misses lexical states: ' . implode(', ', $missingCoverage));
-        }
 
         $terminalExclusions = [
             'NOT2_SYM' => 'Default sql_mode emits NOT_SYM; NOT2_SYM requires HIGH_NOT_PRECEDENCE.',
