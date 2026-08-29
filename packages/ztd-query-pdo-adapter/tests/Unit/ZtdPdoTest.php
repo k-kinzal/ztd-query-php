@@ -368,7 +368,7 @@ final class ZtdPdoTest extends TestCase
 
     public function testConnectOpensAConnectionWithZtdAlreadyInFrontOfIt(): void
     {
-        self::assertInstanceOf(ZtdPdo::class, ZtdPdo::connect('sqlite::memory:'));
+        self::assertSame(ZtdPdo::class, ZtdPdo::connect('sqlite::memory:')::class);
     }
 
     public function testBeginTransactionOpensOneOnTheShadowAsWellAsTheDatabase(): void
