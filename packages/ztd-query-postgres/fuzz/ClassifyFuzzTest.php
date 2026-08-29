@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\PostgreSqlProvider;
+use SqlFaker\PostgreSqlStatementProvider;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
 use ZtdQuery\Platform\Postgres\PgSqlQueryGuard;
 use ZtdQuery\Rewrite\QueryKind;
@@ -32,12 +33,15 @@ final class ClassifyFuzzTest extends TestCase
 
     private PostgreSqlProvider $provider;
 
+    private PostgreSqlStatementProvider $statements;
+
     #[Override]
     protected function setUp(): void
     {
         $this->guard = new PgSqlQueryGuard(new PgSqlParser());
         $faker = Factory::create();
         $this->provider = new PostgreSqlProvider($faker);
+        $this->statements = new PostgreSqlStatementProvider($faker);
         $faker->seed(20260815);
     }
 
@@ -63,7 +67,7 @@ final class ClassifyFuzzTest extends TestCase
     public function testClassifySelectReturnsReadOrNull(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->selectStatement(50);
+            $sql = $this->statements->selectStatement(50);
             $result = $this->guard->classify($sql);
             if ($result !== null) {
                 self::assertSame(
@@ -83,7 +87,7 @@ final class ClassifyFuzzTest extends TestCase
     public function testClassifyInsertReturnsWriteSimulatedOrNull(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->insertStatement(50);
+            $sql = $this->statements->insertStatement(50);
             $result = $this->guard->classify($sql);
             if ($result !== null) {
                 self::assertSame(
@@ -103,7 +107,7 @@ final class ClassifyFuzzTest extends TestCase
     public function testClassifyUpdateReturnsWriteSimulatedOrNull(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->updateStatement(50);
+            $sql = $this->statements->updateStatement(50);
             $result = $this->guard->classify($sql);
             if ($result !== null) {
                 self::assertSame(
@@ -123,7 +127,7 @@ final class ClassifyFuzzTest extends TestCase
     public function testClassifyDeleteReturnsWriteSimulatedOrNull(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->deleteStatement(50);
+            $sql = $this->statements->deleteStatement(50);
             $result = $this->guard->classify($sql);
             if ($result !== null) {
                 self::assertSame(
@@ -143,7 +147,7 @@ final class ClassifyFuzzTest extends TestCase
     public function testClassifyCreateTableReturnsDdlSimulatedOrNull(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->createTableStatement(50);
+            $sql = $this->statements->createTableStatement(50);
             $result = $this->guard->classify($sql);
             if ($result !== null) {
                 self::assertSame(
@@ -163,7 +167,7 @@ final class ClassifyFuzzTest extends TestCase
     public function testClassifyDropTableReturnsDdlSimulatedOrNull(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->dropTableStatement(50);
+            $sql = $this->statements->dropTableStatement(50);
             $result = $this->guard->classify($sql);
             if ($result !== null) {
                 self::assertSame(
@@ -183,7 +187,7 @@ final class ClassifyFuzzTest extends TestCase
     public function testClassifyAlterTableReturnsDdlSimulatedOrNull(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->alterTableStatement(50);
+            $sql = $this->statements->alterTableStatement(50);
             $result = $this->guard->classify($sql);
             if ($result !== null) {
                 self::assertSame(

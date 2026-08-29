@@ -9,7 +9,7 @@ use Override;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\PostgreSqlProvider;
+use SqlFaker\PostgreSqlStatementProvider;
 use ZtdQuery\Platform\Postgres\PgSqlSchemaParser;
 use ZtdQuery\Schema\TableDefinition;
 
@@ -34,14 +34,14 @@ final class SchemaParserFuzzTest extends TestCase
 
     private PgSqlSchemaParser $parser;
 
-    private PostgreSqlProvider $provider;
+    private PostgreSqlStatementProvider $provider;
 
     #[Override]
     protected function setUp(): void
     {
         $this->parser = new PgSqlSchemaParser();
         $faker = Factory::create();
-        $this->provider = new PostgreSqlProvider($faker);
+        $this->provider = new PostgreSqlStatementProvider($faker);
         $faker->seed(20260815);
     }
 

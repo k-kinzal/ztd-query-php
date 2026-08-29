@@ -10,6 +10,7 @@ use Fuzz\Robustness\Invariant\ClassifyDeterministicChecker;
 use Fuzz\Robustness\Invariant\ClassifyNeverThrowsChecker;
 use Fuzz\Robustness\Invariant\InvariantChecker;
 use SqlFaker\MySqlProvider;
+use SqlFaker\MySqlStatementProvider;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlQueryGuard;
 
@@ -20,6 +21,9 @@ final class ClassifyTarget
 {
     private Generator $faker;
     private MySqlProvider $provider;
+
+    /** @readonly */
+    private MySqlStatementProvider $statements;
     /** @var array<int, InvariantChecker> */
     private array $checkers;
 
@@ -33,6 +37,7 @@ final class ClassifyTarget
     {
         $this->faker = $faker;
         $this->provider = $provider;
+        $this->statements = new MySqlStatementProvider($faker);
 
         $guard = new MySqlQueryGuard(new MySqlParser());
         $this->checkers = [
@@ -66,17 +71,17 @@ final class ClassifyTarget
     {
         $generators = [
             fn () => $this->provider->sql(maxDepth: 8),
-            fn () => $this->provider->selectStatement(maxDepth: 8),
-            fn () => $this->provider->insertStatement(maxDepth: 8),
-            fn () => $this->provider->updateStatement(maxDepth: 8),
-            fn () => $this->provider->deleteStatement(maxDepth: 8),
-            fn () => $this->provider->createTableStatement(maxDepth: 5),
-            fn () => $this->provider->alterTableStatement(maxDepth: 5),
-            fn () => $this->provider->replaceStatement(maxDepth: 5),
-            fn () => $this->provider->truncateStatement(maxDepth: 3),
-            fn (): string => $this->provider->partitionSelectStatement(),
-            fn (): string => $this->provider->loadDataStatement(maxDepth: 8),
-            fn (): string => $this->provider->fullTextSearchStatement(),
+            fn () => $this->statements->selectStatement(maxDepth: 8),
+            fn () => $this->statements->insertStatement(maxDepth: 8),
+            fn () => $this->statements->updateStatement(maxDepth: 8),
+            fn () => $this->statements->deleteStatement(maxDepth: 8),
+            fn () => $this->statements->createTableStatement(maxDepth: 5),
+            fn () => $this->statements->alterTableStatement(maxDepth: 5),
+            fn () => $this->statements->replaceStatement(maxDepth: 5),
+            fn () => $this->statements->truncateStatement(maxDepth: 3),
+            fn (): string => $this->statements->partitionSelectStatement(),
+            fn (): string => $this->statements->loadDataStatement(maxDepth: 8),
+            fn (): string => $this->statements->fullTextSearchStatement(),
         ];
 
         $index = ord($input[0] ?? "\0") % count($generators);

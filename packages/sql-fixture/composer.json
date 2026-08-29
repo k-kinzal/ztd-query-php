@@ -45,10 +45,9 @@
         }
     },
     "scripts": {
-        "test": "paratest --processes=auto --configuration=\"$(php bin/phpunit-configuration.php)\"",
-        "test:parallel": "paratest --processes=auto --configuration=\"$(php bin/phpunit-configuration.php)\" --testsuite=unit",
-        "test:unit": "@php -d memory_limit=512M vendor/bin/phpunit --configuration=\"$(php bin/phpunit-configuration.php)\" tests/Unit/",
-        "test:integration": "phpunit --configuration=\"$(php bin/phpunit-configuration.php)\" tests/Integration/",
+        "test": "@php -d memory_limit=512M tests/run.php --parallel --processes=4 --testsuite unit",
+        "test:unit": "@php -d memory_limit=512M tests/run.php",
+        "test:integration": "@php -d memory_limit=512M tests/run.php --testsuite integration",
         "lint": [
             "@format:check",
             "@phpstan"
@@ -58,7 +57,9 @@
         "fuzz:create-table": "php-fuzzer fuzz fuzz/fuzz_create_table.php fuzz/corpus/create-table/",
         "fuzz:insert-select": "php-fuzzer fuzz fuzz/fuzz_insert_select.php fuzz/corpus/insert-select/",
         "phpstan": "phpstan analyse --memory-limit=512M",
-        "compat": "phpcs -q"
+        "compat": "phpcs -q",
+        "loc-guard": "loc-guard",
+        "tree-guard": "tree-guard"
     },
     "config": {
         "allow-plugins": {
