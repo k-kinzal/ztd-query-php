@@ -38,46 +38,118 @@ final class PostgreSqlColumnSample
      */
     public function of(Generator $faker, ColumnDefinition $column): int|float|string|bool
     {
-        return match (strtoupper($column->type)) {
+        $type = strtoupper($column->type);
+
+        return match ($type) {
+            'BOOLEAN', 'BOOL' => $faker->boolean(),
+            'BYTEA' => $this->bytea($faker),
+            'UUID' => $faker->uuid(),
+            default => $this->numeric($faker, $column, $type)
+                ?? $this->textual($faker, $column, $type)
+                ?? $this->temporal($faker, $type)
+                ?? $this->addressing($faker, $type)
+                ?? $this->structured($faker, $type)
+                ?? $faker->text(50),
+        };
+    }
+
+    /**
+     * Picks a number, when the type is one that counts.
+     *
+     * @param Generator $faker Source of every choice
+     * @param ColumnDefinition $column Column the value is for
+     * @param string $type The column's type, upper-cased
+     *
+     * @return int|float|null A number the type accepts, or null when it is not a numeric type
+     */
+    public function numeric(Generator $faker, ColumnDefinition $column, string $type): int|float|null
+    {
+        return match ($type) {
             'SMALLINT', 'INT2' => $faker->numberBetween(-32768, 32767),
             'INTEGER', 'INT', 'INT4' => $faker->numberBetween(-2147483648, 2147483647),
             'BIGINT', 'INT8' => $faker->numberBetween(PHP_INT_MIN, PHP_INT_MAX),
-
             'REAL', 'FLOAT4' => $faker->randomFloat(2, -1000.0, 1000.0),
             'DOUBLE PRECISION', 'FLOAT8' => $faker->randomFloat(4, -1000000.0, 1000000.0),
-
             'DECIMAL', 'NUMERIC', 'DEC' => $this->decimal($faker, $column),
             'MONEY' => $faker->randomFloat(2, 0.0, 99999.99),
+            default => null,
+        };
+    }
 
-            'BOOLEAN', 'BOOL' => $faker->boolean(),
-
+    /**
+     * Picks text, when the type is one that holds characters.
+     *
+     * @param Generator $faker Source of every choice
+     * @param ColumnDefinition $column Column the value is for
+     * @param string $type The column's type, upper-cased
+     *
+     * @return string|null Text the type accepts, or null when it is not a character type
+     */
+    public function textual(Generator $faker, ColumnDefinition $column, string $type): ?string
+    {
+        return match ($type) {
             'CHAR', 'CHARACTER' => $this->char($faker, $column),
             'VARCHAR', 'CHARACTER VARYING' => $this->varchar($faker, $column),
             'TEXT' => $this->paragraphs($faker, 2),
+            default => null,
+        };
+    }
 
-            'BYTEA' => $this->bytea($faker),
-
+    /**
+     * Picks a moment or a span of time, when the type is one that keeps either.
+     *
+     * @param Generator $faker Source of every choice
+     * @param string $type The column's type, upper-cased
+     *
+     * @return string|null A moment written as the type keeps it, or null when it keeps no time
+     */
+    public function temporal(Generator $faker, string $type): ?string
+    {
+        return match ($type) {
             'DATE' => $faker->date('Y-m-d'),
             'TIME', 'TIME WITHOUT TIME ZONE' => $faker->time('H:i:s'),
             'TIME WITH TIME ZONE', 'TIMETZ' => $faker->time('H:i:sP'),
             'TIMESTAMP', 'TIMESTAMP WITHOUT TIME ZONE' => $faker->dateTime()->format('Y-m-d H:i:s'),
             'TIMESTAMP WITH TIME ZONE', 'TIMESTAMPTZ' => $faker->dateTime()->format('Y-m-d H:i:sP'),
             'INTERVAL' => $this->interval($faker),
+            default => null,
+        };
+    }
 
-            'JSON', 'JSONB' => $this->json($faker),
-
-            'UUID' => $faker->uuid(),
-
+    /**
+     * Writes an address, when the type is one that names a host or a card.
+     *
+     * @param Generator $faker Source of every choice
+     * @param string $type The column's type, upper-cased
+     *
+     * @return string|null An address the type accepts, or null when it names none
+     */
+    public function addressing(Generator $faker, string $type): ?string
+    {
+        return match ($type) {
             'INET' => $faker->ipv4(),
             'CIDR' => $faker->ipv4() . '/24',
             'MACADDR' => $faker->macAddress(),
+            default => null,
+        };
+    }
 
+    /**
+     * Writes a document or a list, when the type holds one.
+     *
+     * @param Generator $faker Source of every choice
+     * @param string $type The column's type, upper-cased
+     *
+     * @return string|null Text the server will parse as the type expects, or null when it holds neither
+     */
+    public function structured(Generator $faker, string $type): ?string
+    {
+        return match ($type) {
+            'JSON', 'JSONB' => $this->json($faker),
+            'XML' => '<root>' . $faker->text(50) . '</root>',
             'INTEGER_ARRAY', 'INT_ARRAY' => $this->integerArray($faker),
             'TEXT_ARRAY' => $this->textArray($faker),
-
-            'XML' => '<root>' . $faker->text(50) . '</root>',
-
-            default => $faker->text(50),
+            default => null,
         };
     }
 
