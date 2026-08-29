@@ -9,14 +9,14 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use ZtdQuery\Exception\InvalidDefinitionException;
-use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
+use ZtdQuery\Platform\MySql\Dialect\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\Transformer\InsertSelectRenderer;
 use ZtdQuery\Platform\MySql\Transformer\MySqlSelectListAliaser;
 
 #[CoversClass(InsertSelectRenderer::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]
 #[UsesClass(MySqlSelectListAliaser::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlLexerProfile::class)]
 final class InsertSelectRendererTest extends TestCase
 {
     public function testRendersMySqlProjectionFromDialectNeutralPlan(): void

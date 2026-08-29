@@ -11,27 +11,27 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
-use ZtdQuery\Platform\MySql\DmlWhereClauseExtractor;
-use ZtdQuery\Platform\MySql\MySqlCastRenderer;
-use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
-use ZtdQuery\Platform\MySql\MySqlParser;
+use ZtdQuery\Platform\MySql\Dialect\MySqlCastRenderer;
+use ZtdQuery\Platform\MySql\Dialect\MySqlIdentifierQuoter;
+use ZtdQuery\Platform\MySql\Parse\DmlWhereClauseExtractor;
+use ZtdQuery\Platform\MySql\Parse\MySqlParser;
 use ZtdQuery\Platform\MySql\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 
 #[CoversClass(DeleteTransformer::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlSelectRelationParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Parse\MySqlSelectRelationParser::class)]
 #[UsesClass(MySqlParser::class)]
 #[UsesClass(SelectTransformer::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlFullTextSearchRewriter::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\MySqlFullTextSearchRewriter::class)]
 #[UsesClass(MySqlCastRenderer::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]
 #[UsesClass(DmlWhereClauseExtractor::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlTypeSemantics::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlGeneratedColumnProjector::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlComponentSql::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlValueRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlTypeSemantics::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\MySqlCteShadowComposer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\MySqlGeneratedColumnProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\MySqlComponentSql::class)]
 final class DeleteTransformerTest extends TestCase
 {
     public function testTransformPreservesCaseWhereExpression(): void

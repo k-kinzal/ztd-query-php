@@ -11,18 +11,18 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnknownSchemaException;
-use ZtdQuery\Platform\MySql\DmlWhereClauseExtractor;
+use ZtdQuery\Platform\MySql\Dialect\MySqlCastRenderer;
+use ZtdQuery\Platform\MySql\Dialect\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\Mutation\AlterTableMutation;
-use ZtdQuery\Platform\MySql\MySqlCastRenderer;
-use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlMutationResolver;
-use ZtdQuery\Platform\MySql\MySqlParser;
-use ZtdQuery\Platform\MySql\MySqlSchemaParser;
-use ZtdQuery\Platform\MySql\MySqlUpsertAssignmentExtractor;
+use ZtdQuery\Platform\MySql\Parse\DmlWhereClauseExtractor;
+use ZtdQuery\Platform\MySql\Parse\MySqlParser;
+use ZtdQuery\Platform\MySql\Parse\MySqlSchemaParser;
+use ZtdQuery\Platform\MySql\Parse\MySqlUpsertAssignmentExtractor;
+use ZtdQuery\Platform\MySql\Parse\UpdateSourceExtractor;
 use ZtdQuery\Platform\MySql\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
-use ZtdQuery\Platform\MySql\UpdateSourceExtractor;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
@@ -42,31 +42,31 @@ use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTableState;
 
 #[CoversClass(MySqlMutationResolver::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlColumnTypeMapper::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlForeignKeyDefinitionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlColumnTypeMapper::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Parse\MySqlForeignKeyDefinitionParser::class)]
 #[UsesClass(MySqlParser::class)]
 #[UsesClass(MySqlSchemaParser::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlUpsertExpressionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Parse\MySqlUpsertExpressionParser::class)]
 #[UsesClass(MySqlUpsertAssignmentExtractor::class)]
 #[UsesClass(SelectTransformer::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlFullTextSearchRewriter::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\MySqlFullTextSearchRewriter::class)]
 #[UsesClass(UpdateTransformer::class)]
 #[UsesClass(DeleteTransformer::class)]
 #[UsesClass(DmlWhereClauseExtractor::class)]
 #[UsesClass(UpdateSourceExtractor::class)]
 #[UsesClass(MySqlCastRenderer::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlTypeSemantics::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlValueRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlTypeSemantics::class)]
 #[UsesClass(AlterTableMutation::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlNativeUpsertProjector::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlGeneratedColumnProjector::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlComponentSql::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlStatementOptions::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlUpsertExpressionCursor::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlUpsertLiteral::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\MySqlCteShadowComposer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\MySqlNativeUpsertProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\MySqlGeneratedColumnProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\MySqlComponentSql::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlStatementOptions::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Parse\MySqlUpsertExpressionCursor::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Parse\MySqlUpsertLiteral::class)]
 final class MySqlMutationResolverTest extends TestCase
 {
     public function testResolveInsertReturnsInsertMutation(): void

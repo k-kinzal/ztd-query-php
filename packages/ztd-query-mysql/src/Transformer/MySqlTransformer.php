@@ -11,8 +11,8 @@ use PhpMyAdmin\SqlParser\Statements\SelectStatement;
 use PhpMyAdmin\SqlParser\Statements\UpdateStatement;
 use PhpMyAdmin\SqlParser\Statements\WithStatement;
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
-use ZtdQuery\Platform\MySql\MySqlParser;
+use ZtdQuery\Platform\MySql\Parse\MySqlParser;
+use ZtdQuery\Platform\MySql\Rewrite\MySqlCteShadowComposer;
 use ZtdQuery\Rewrite\SqlTransformer;
 
 /**

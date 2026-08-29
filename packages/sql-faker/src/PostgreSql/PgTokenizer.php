@@ -343,16 +343,12 @@ final class PgTokenizer
             return $this->isPunctuation($character) ? [$character, $character] : null;
         }
 
-        $length = strlen($sql);
-        $end = $offset;
-        while ($end < $length) {
-            if (!str_contains(self::OPERATOR_CHARACTERS, $sql[$end])) {
-                break;
+        $end = $offset + strspn($sql, self::OPERATOR_CHARACTERS, $offset);
+        foreach (['/*', '--'] as $commentOpening) {
+            $opensAt = strpos($sql, $commentOpening, $offset + 1);
+            if ($opensAt !== false && $opensAt < $end) {
+                $end = $opensAt;
             }
-            if ($end > $offset && in_array(substr($sql, $end, 2), ['/*', '--'], true)) {
-                break;
-            }
-            ++$end;
         }
 
         $lexeme = substr($sql, $offset, $end - $offset);
