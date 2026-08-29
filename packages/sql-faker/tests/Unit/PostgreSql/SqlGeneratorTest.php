@@ -22,6 +22,7 @@ use SqlFaker\Grammar\Source\TokenJoiner;
 use SqlFaker\Grammar\Walk\GenerationException;
 use SqlFaker\Grammar\Walk\GenerationPlan;
 use SqlFaker\Grammar\Walk\TerminationAnalyzer;
+use SqlFaker\PostgreSql\Grammar\PgGrammar;
 use SqlFaker\PostgreSql\SqlGenerator;
 use SqlFaker\PostgreSqlProvider;
 
@@ -767,5 +768,18 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $result = (new SqlGenerator($grammarSemicolon, $faker))->generate(GenerationPlan::fromRule('stmt'));
         self::assertSame('SELECT 1;', $result);
+    }
+
+    public function testFor(): void
+    {
+        $faker = Factory::create();
+        $named = SqlGenerator::for($faker, 'pg-17.2');
+        $direct = new SqlGenerator(PgGrammar::load(PgGrammar::resolveVersion('pg-17.2')), $faker, 'pg-17.2');
+
+        $faker->seed(3);
+        $fromNamed = $named->generate(GenerationPlan::fromRule('stmt')->withMaxDepth(4));
+        $faker->seed(3);
+
+        self::assertSame($fromNamed, $direct->generate(GenerationPlan::fromRule('stmt')->withMaxDepth(4)));
     }
 }
