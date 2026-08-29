@@ -12,6 +12,7 @@ use Fuzz\Robustness\Invariant\ShadowStoreConsistencyChecker;
 use PDO;
 use PDOException;
 use SqlFaker\MySqlProvider;
+use SqlFaker\MySqlStatementProvider;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 use ZtdQuery\Platform\MySql\MySqlQueryGuard;
 use ZtdQuery\Platform\MySql\MySqlRewriter;
@@ -25,6 +26,9 @@ final class ExecutionTarget
 {
     private Generator $faker;
     private MySqlProvider $provider;
+
+    /** @readonly */
+    private MySqlStatementProvider $statements;
     private PDO $rawPdo;
     private NoPdoLeakChecker $pdoLeakChecker;
     private NoSyntaxErrorOnRewriteChecker $syntaxChecker;
@@ -52,6 +56,7 @@ final class ExecutionTarget
     ) {
         $this->faker = $faker;
         $this->provider = $provider;
+        $this->statements = new MySqlStatementProvider($faker);
         $this->rawPdo = $rawPdo;
 
         $this->pdoLeakChecker = new NoPdoLeakChecker(function (string $sql) use ($ztdPdo, $guard): void {
@@ -115,14 +120,14 @@ final class ExecutionTarget
     {
         $generators = [
             fn () => $this->provider->sql(maxDepth: 8),
-            fn () => $this->provider->selectStatement(maxDepth: 8),
-            fn () => $this->provider->insertStatement(maxDepth: 8),
-            fn () => $this->provider->updateStatement(maxDepth: 8),
-            fn () => $this->provider->deleteStatement(maxDepth: 8),
-            fn () => $this->provider->createTableStatement(maxDepth: 5),
-            fn () => $this->provider->alterTableStatement(maxDepth: 5),
-            fn () => $this->provider->replaceStatement(maxDepth: 5),
-            fn () => $this->provider->truncateStatement(maxDepth: 3),
+            fn () => $this->statements->selectStatement(maxDepth: 8),
+            fn () => $this->statements->insertStatement(maxDepth: 8),
+            fn () => $this->statements->updateStatement(maxDepth: 8),
+            fn () => $this->statements->deleteStatement(maxDepth: 8),
+            fn () => $this->statements->createTableStatement(maxDepth: 5),
+            fn () => $this->statements->alterTableStatement(maxDepth: 5),
+            fn () => $this->statements->replaceStatement(maxDepth: 5),
+            fn () => $this->statements->truncateStatement(maxDepth: 3),
         ];
 
         $index = ord($input[0] ?? "\0") % count($generators);

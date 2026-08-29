@@ -9,7 +9,7 @@ use Override;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\PostgreSqlProvider;
+use SqlFaker\PostgreSqlStatementProvider;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
@@ -51,7 +51,7 @@ final class FullPipelineFuzzTest extends TestCase
 
     private PgSqlSchemaParser $schemaParser;
 
-    private PostgreSqlProvider $provider;
+    private PostgreSqlStatementProvider $statements;
 
     private \Faker\Generator $faker;
 
@@ -61,7 +61,7 @@ final class FullPipelineFuzzTest extends TestCase
         $this->schemaParser = new PgSqlSchemaParser();
         $this->faker = Factory::create();
         $this->faker->seed(20260815);
-        $this->provider = new PostgreSqlProvider($this->faker);
+        $this->statements = new PostgreSqlStatementProvider($this->faker);
     }
 
     /**
@@ -141,7 +141,7 @@ final class FullPipelineFuzzTest extends TestCase
     {
         $this->faker->seed(20260815);
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $createSql = $this->provider->createTableStatement(50);
+            $createSql = $this->statements->createTableStatement(50);
             $definition = $this->schemaParser->parse($createSql);
             if ($definition === null || $definition->columns === []) {
                 continue;
@@ -182,7 +182,7 @@ final class FullPipelineFuzzTest extends TestCase
     {
         $this->faker->seed(20260815);
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $createSql = $this->provider->createTableStatement(50);
+            $createSql = $this->statements->createTableStatement(50);
             $definition = $this->schemaParser->parse($createSql);
             if ($definition === null || $definition->columns === []) {
                 continue;
@@ -237,7 +237,7 @@ final class FullPipelineFuzzTest extends TestCase
     {
         $this->faker->seed(20260815);
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $createSql = $this->provider->createTableStatement(50);
+            $createSql = $this->statements->createTableStatement(50);
             $definition = $this->schemaParser->parse($createSql);
             if ($definition === null || $definition->columns === [] || $definition->primaryKeys === []) {
                 continue;
@@ -290,7 +290,7 @@ final class FullPipelineFuzzTest extends TestCase
     {
         $this->faker->seed(20260815);
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $createSql = $this->provider->createTableStatement(50);
+            $createSql = $this->statements->createTableStatement(50);
             $definition = $this->schemaParser->parse($createSql);
             if ($definition === null || $definition->columns === []) {
                 continue;
@@ -337,7 +337,7 @@ final class FullPipelineFuzzTest extends TestCase
     {
         $this->faker->seed(20260815);
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $createSql = $this->provider->createTableStatement(50);
+            $createSql = $this->statements->createTableStatement(50);
             $definition = $this->schemaParser->parse($createSql);
             if ($definition === null || $definition->columns === []) {
                 continue;
@@ -380,7 +380,7 @@ final class FullPipelineFuzzTest extends TestCase
     {
         $this->faker->seed(20260815);
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $createSql = $this->provider->createTableStatement(50);
+            $createSql = $this->statements->createTableStatement(50);
             $definition = $this->schemaParser->parse($createSql);
             if ($definition === null || $definition->columns === []) {
                 continue;

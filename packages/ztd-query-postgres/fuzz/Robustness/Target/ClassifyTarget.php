@@ -10,6 +10,7 @@ use Fuzz\Robustness\Invariant\ClassifyDeterministicChecker;
 use Fuzz\Robustness\Invariant\ClassifyNeverThrowsChecker;
 use Fuzz\Robustness\Invariant\InvariantChecker;
 use SqlFaker\PostgreSqlProvider;
+use SqlFaker\PostgreSqlStatementProvider;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
 use ZtdQuery\Platform\Postgres\PgSqlQueryGuard;
 
@@ -20,6 +21,9 @@ final class ClassifyTarget
 {
     private Generator $faker;
     private PostgreSqlProvider $provider;
+
+    /** @readonly */
+    private PostgreSqlStatementProvider $statements;
     /** @var array<int, InvariantChecker> */
     private array $checkers;
 
@@ -33,6 +37,7 @@ final class ClassifyTarget
     {
         $this->faker = $faker;
         $this->provider = $provider;
+        $this->statements = new PostgreSqlStatementProvider($faker);
 
         $guard = new PgSqlQueryGuard(new PgSqlParser());
         $this->checkers = [
@@ -70,22 +75,22 @@ final class ClassifyTarget
     {
         $generators = [
             fn (): string => $this->provider->sql(maxDepth: 8),
-            fn (): string => $this->provider->selectStatement(maxDepth: 8),
-            fn (): string => $this->provider->insertStatement(maxDepth: 8),
-            fn (): string => $this->provider->updateStatement(maxDepth: 8),
-            fn (): string => $this->provider->deleteStatement(maxDepth: 8),
-            fn (): string => $this->provider->createTableStatement(maxDepth: 5),
-            fn (): string => $this->provider->alterTableStatement(maxDepth: 5),
-            fn (): string => $this->provider->dropTableStatement(maxDepth: 3),
-            fn (): string => $this->provider->partitionOfStatement(),
-            fn (): string => $this->provider->tableSampleStatement(),
-            fn (): string => $this->provider->doStatement(),
-            fn (): string => $this->provider->mergeStatement(),
-            fn (): string => $this->provider->copyStatement(maxDepth: 8),
-            fn (): string => $this->provider->partialIndexUpsertStatement(),
-            fn (): string => $this->provider->createDomainStatement(maxDepth: 8),
-            fn (): string => $this->provider->domainDmlStatement(),
-            fn (): string => $this->provider->fullTextSearchStatement(),
+            fn (): string => $this->statements->selectStatement(maxDepth: 8),
+            fn (): string => $this->statements->insertStatement(maxDepth: 8),
+            fn (): string => $this->statements->updateStatement(maxDepth: 8),
+            fn (): string => $this->statements->deleteStatement(maxDepth: 8),
+            fn (): string => $this->statements->createTableStatement(maxDepth: 5),
+            fn (): string => $this->statements->alterTableStatement(maxDepth: 5),
+            fn (): string => $this->statements->dropTableStatement(maxDepth: 3),
+            fn (): string => $this->statements->partitionOfStatement(),
+            fn (): string => $this->statements->tableSampleStatement(),
+            fn (): string => $this->statements->doStatement(),
+            fn (): string => $this->statements->mergeStatement(),
+            fn (): string => $this->statements->copyStatement(maxDepth: 8),
+            fn (): string => $this->statements->partialIndexUpsertStatement(),
+            fn (): string => $this->statements->createDomainStatement(maxDepth: 8),
+            fn (): string => $this->statements->domainDmlStatement(),
+            fn (): string => $this->statements->fullTextSearchStatement(),
         ];
 
         $index = ord($input[0] ?? "\0") % count($generators);

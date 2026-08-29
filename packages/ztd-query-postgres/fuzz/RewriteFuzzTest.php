@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\PostgreSqlProvider;
+use SqlFaker\PostgreSqlStatementProvider;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
@@ -52,6 +53,8 @@ final class RewriteFuzzTest extends TestCase
 
     private PostgreSqlProvider $provider;
 
+    private PostgreSqlStatementProvider $statements;
+
     #[Override]
     protected function setUp(): void
     {
@@ -82,6 +85,7 @@ final class RewriteFuzzTest extends TestCase
 
         $faker = Factory::create();
         $this->provider = new PostgreSqlProvider($faker);
+        $this->statements = new PostgreSqlStatementProvider($faker);
         $faker->seed(20260815);
     }
 
@@ -92,7 +96,7 @@ final class RewriteFuzzTest extends TestCase
     public function testRewriteSelectReturnsReadKind(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->selectStatement(50);
+            $sql = $this->statements->selectStatement(50);
             try {
                 $plan = $this->rewriter->rewrite($sql);
                 self::assertNotEmpty($plan->sql());
@@ -112,7 +116,7 @@ final class RewriteFuzzTest extends TestCase
     public function testRewriteInsertReturnsWriteSimulatedKind(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->insertStatement(50);
+            $sql = $this->statements->insertStatement(50);
             try {
                 $plan = $this->rewriter->rewrite($sql);
                 self::assertNotEmpty($plan->sql());
@@ -132,7 +136,7 @@ final class RewriteFuzzTest extends TestCase
     public function testRewriteUpdateReturnsWriteSimulatedKind(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->updateStatement(50);
+            $sql = $this->statements->updateStatement(50);
             try {
                 $plan = $this->rewriter->rewrite($sql);
                 self::assertNotEmpty($plan->sql());
@@ -152,7 +156,7 @@ final class RewriteFuzzTest extends TestCase
     public function testRewriteDeleteReturnsWriteSimulatedKind(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->deleteStatement(50);
+            $sql = $this->statements->deleteStatement(50);
             try {
                 $plan = $this->rewriter->rewrite($sql);
                 self::assertNotEmpty($plan->sql());
@@ -172,7 +176,7 @@ final class RewriteFuzzTest extends TestCase
     public function testRewriteCreateTableReturnsDdlSimulatedKind(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->createTableStatement(50);
+            $sql = $this->statements->createTableStatement(50);
             try {
                 $plan = $this->rewriter->rewrite($sql);
                 self::assertNotEmpty($plan->sql());
@@ -191,7 +195,7 @@ final class RewriteFuzzTest extends TestCase
     public function testRewriteDropTableReturnsDdlSimulatedKind(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->dropTableStatement(50);
+            $sql = $this->statements->dropTableStatement(50);
             try {
                 $plan = $this->rewriter->rewrite($sql);
                 self::assertNotEmpty($plan->sql());
