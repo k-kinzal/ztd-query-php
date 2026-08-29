@@ -174,13 +174,9 @@ final class RobustnessTarget
     }
 
     /**
-<<<<<<< HEAD
-     * @return array<string, list<array<string, bool|float|int|string|null>>> Table name => the rows it starts with
-=======
      * Answers the rows every run starts from.
      *
      * @return array<string, list<array<string, bool|float|int|string|null>>> Table name => the rows it starts with What it answers
->>>>>>> feat/php-ai-toolkit-sql-fixture
      */
     public function buildFixtureData(): array
     {
