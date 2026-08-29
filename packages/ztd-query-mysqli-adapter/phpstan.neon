@@ -40,6 +40,13 @@ parameters:
         # TODO: Remove this excludePath once PHPStan fixes the functionMap for bind_param.
         - src/MysqliStatementBindingBridge.php
     ignoreErrors:
+        # Same reason as ZtdMysqli::execute_query(): the stub extends mysqli, whose
+        # execute_query() only exists from PHP 8.2, so the attribute the rule asks
+        # for is a fatal error on the 8.1 this package still supports.
+        -
+            identifier: customRules.overrideMustHaveAttribute
+            path: tests/Fixtures/StubMysqli.php
+            reportUnmatched: false
         # mysqli::execute_query() arrived in PHP 8.2. This package supports 8.1,
         # where the parent method does not exist, so writing #[\Override] on the
         # override would be a fatal error at class-declaration time there. The
@@ -48,6 +55,7 @@ parameters:
             identifier: customRules.overrideMustHaveAttribute
             message: '#^Add \#\[\\Override\] to override method execute_query\(\)\.$#'
             path: src/ZtdMysqli.php
+            reportUnmatched: false
         # mysqli_stmt and mysqli_result are built by the extension from a live
         # connection, and their constructors refuse to run without one. A test
         # double for either therefore cannot call the parent constructor; doing
@@ -55,6 +63,8 @@ parameters:
         -
             identifier: constructor.missingParentCall
             path: tests/Fixtures/StubMysqliStmt.php
+            reportUnmatched: false
         -
             identifier: constructor.missingParentCall
             path: tests/Fixtures/StubMysqliResult.php
+            reportUnmatched: false
