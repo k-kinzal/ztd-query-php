@@ -8,14 +8,14 @@ use Faker\Generator as FakerGenerator;
 use InvalidArgumentException;
 use Override;
 use RuntimeException;
-use SqlFaker\Grammar\GenerationPlan;
-use SqlFaker\Grammar\LexicalCatalog;
-use SqlFaker\Grammar\LexicalException;
-use SqlFaker\Grammar\LexicalGrammar as LexicalGrammarContract;
-use SqlFaker\Grammar\LexicalKeywordIndex;
-use SqlFaker\Grammar\LexicalProfileSource;
-use SqlFaker\Grammar\RandomStringGenerator;
-use SqlFaker\Grammar\TokenJoiner;
+use SqlFaker\Grammar\Lexical\LexicalCatalog;
+use SqlFaker\Grammar\Lexical\LexicalException;
+use SqlFaker\Grammar\Lexical\LexicalGrammar as LexicalGrammarContract;
+use SqlFaker\Grammar\Lexical\LexicalKeywordIndex;
+use SqlFaker\Grammar\Lexical\LexicalProfileSource;
+use SqlFaker\Grammar\Lexical\RandomStringGenerator;
+use SqlFaker\Grammar\Source\TokenJoiner;
+use SqlFaker\Grammar\Walk\GenerationPlan;
 
 /**
  * MySQL lexical realization for one exact server version and the default sql_mode.
@@ -112,7 +112,7 @@ final class LexicalGrammar implements LexicalGrammarContract
      *
      * @param list<string> $terminals Terminals the grammar declares
      *
-     * @throws \SqlFaker\Grammar\LexicalCatalogException When a terminal is neither witnessed nor excluded
+     * @throws \SqlFaker\Grammar\Lexical\LexicalCatalogException When a terminal is neither witnessed nor excluded
      */
     public function assertTerminalsCovered(array $terminals): void
     {

@@ -5,10 +5,10 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use SqlFaker\Grammar\GrammarCompiler;
-use SqlFaker\Grammar\LexicalProfileBuilder;
-use SqlFaker\Grammar\SqlVersion;
-use SqlFaker\Grammar\TerminalInventory;
+use SqlFaker\Grammar\Lexical\LexicalProfileBuilder;
+use SqlFaker\Grammar\Model\TerminalInventory;
+use SqlFaker\Grammar\Source\GrammarCompiler;
+use SqlFaker\Grammar\Source\SqlVersion;
 use SqlFaker\MySql\Bison\BisonParser;
 
 /**

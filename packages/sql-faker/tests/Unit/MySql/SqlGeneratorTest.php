@@ -11,12 +11,12 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\GenerationException;
-use SqlFaker\Grammar\GenerationPlan;
-use SqlFaker\Grammar\LexicalException;
-use SqlFaker\Grammar\ProductionPattern;
-use SqlFaker\Grammar\RandomStringGenerator;
-use SqlFaker\Grammar\TokenJoiner;
+use SqlFaker\Grammar\Lexical\LexicalException;
+use SqlFaker\Grammar\Lexical\RandomStringGenerator;
+use SqlFaker\Grammar\Model\ProductionPattern;
+use SqlFaker\Grammar\Source\TokenJoiner;
+use SqlFaker\Grammar\Walk\GenerationException;
+use SqlFaker\Grammar\Walk\GenerationPlan;
 use SqlFaker\MySql\GenerationPlans;
 use SqlFaker\MySql\Grammar\Grammar;
 use SqlFaker\MySql\Grammar\NonTerminal;
@@ -1355,5 +1355,18 @@ final class SqlGeneratorTest extends TestCase
         yield 'contains hyphen' => ['my-func'];
         yield 'contains space' => ['my func'];
         yield 'operator plus' => ['+'];
+    }
+
+    public function testFor(): void
+    {
+        $faker = Factory::create();
+        $named = SqlGenerator::for($faker, 'mysql-8.4.7');
+        $direct = new SqlGenerator(Grammar::load('mysql-8.4.7'), $faker, 'mysql-8.4.7');
+
+        $faker->seed(1);
+        $fromNamed = $named->generate(GenerationPlans::statement('literal', 4));
+        $faker->seed(1);
+
+        self::assertSame($fromNamed, $direct->generate(GenerationPlans::statement('literal', 4)));
     }
 }

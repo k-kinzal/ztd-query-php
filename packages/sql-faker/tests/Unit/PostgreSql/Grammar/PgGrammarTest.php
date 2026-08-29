@@ -8,13 +8,13 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
-use SqlFaker\Grammar\Grammar;
-use SqlFaker\Grammar\NonTerminal;
-use SqlFaker\Grammar\Production;
-use SqlFaker\Grammar\ProductionRule;
-use SqlFaker\Grammar\SqlVersion;
-use SqlFaker\Grammar\SqlVersionRegistry;
-use SqlFaker\Grammar\Terminal;
+use SqlFaker\Grammar\Model\Grammar;
+use SqlFaker\Grammar\Model\NonTerminal;
+use SqlFaker\Grammar\Model\Production;
+use SqlFaker\Grammar\Model\ProductionRule;
+use SqlFaker\Grammar\Model\Terminal;
+use SqlFaker\Grammar\Source\SqlVersion;
+use SqlFaker\Grammar\Source\SqlVersionRegistry;
 use SqlFaker\PostgreSql\Grammar\PgGrammar;
 
 #[CoversClass(PgGrammar::class)]

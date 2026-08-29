@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlFaker\Sqlite;
 
-use SqlFaker\Grammar\LexicalException;
+use SqlFaker\Grammar\Lexical\LexicalException;
 
 /**
  * Reads SQLite text back into the parser tokens the server would produce.
