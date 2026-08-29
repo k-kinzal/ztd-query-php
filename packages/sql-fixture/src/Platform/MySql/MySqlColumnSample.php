@@ -6,7 +6,6 @@ namespace SqlFixture\Platform\MySql;
 
 use Faker\Generator;
 use LogicException;
-use Random\RandomException;
 use SqlFixture\Schema\ColumnDefinition;
 
 /**
@@ -47,7 +46,6 @@ final class MySqlColumnSample
      * @return int|float|string|bool|null A value of the kind the type calls for
      *
      * @throws LogicException When a chosen SET member is not a string
-     * @throws RandomException When a binary column is asked for and the system has no source of randomness
      */
     public function of(Generator $faker, ColumnDefinition $column): int|float|string|bool|null
     {
