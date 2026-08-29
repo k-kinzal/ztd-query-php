@@ -6,7 +6,7 @@ namespace SqlFaker;
 
 use Faker\Generator;
 use Faker\Provider\Base;
-use SqlFaker\Grammar\GenerationPlan;
+use SqlFaker\Grammar\Walk\GenerationPlan;
 use SqlFaker\PostgreSql\GenerationPlans;
 use SqlFaker\PostgreSql\Grammar\PgGrammar;
 use SqlFaker\PostgreSql\SqlGenerator;

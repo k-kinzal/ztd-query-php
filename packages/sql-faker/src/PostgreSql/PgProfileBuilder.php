@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SqlFaker\PostgreSql;
 
 use RuntimeException;
-use SqlFaker\Grammar\LexerSource;
-use SqlFaker\Grammar\UpstreamLexerSource;
+use SqlFaker\Grammar\Source\LexerSource;
+use SqlFaker\Grammar\Source\UpstreamLexerSource;
 use SqlFaker\PostgreSql\LexicalProfileCompiler as PostgreSqlCompiler;
 use SqlFaker\PostgreSql\LexicalSourceParser as PostgreSqlSourceParser;
 

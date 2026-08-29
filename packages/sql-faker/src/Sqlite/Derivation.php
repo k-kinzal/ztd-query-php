@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace SqlFaker\Sqlite;
 
 use Faker\Generator as FakerGenerator;
-use SqlFaker\Grammar\GenerationException;
-use SqlFaker\Grammar\GenerationPlan;
-use SqlFaker\Grammar\Grammar;
-use SqlFaker\Grammar\NonTerminal;
-use SqlFaker\Grammar\Production;
-use SqlFaker\Grammar\Symbol;
-use SqlFaker\Grammar\Terminal;
-use SqlFaker\Grammar\TerminationAnalyzer;
+use SqlFaker\Grammar\Model\Grammar;
+use SqlFaker\Grammar\Model\NonTerminal;
+use SqlFaker\Grammar\Model\Production;
+use SqlFaker\Grammar\Model\Symbol;
+use SqlFaker\Grammar\Model\Terminal;
+use SqlFaker\Grammar\Walk\GenerationException;
+use SqlFaker\Grammar\Walk\GenerationPlan;
+use SqlFaker\Grammar\Walk\TerminationAnalyzer;
 
 /**
  * Rewrites a start symbol into terminals the way SQLite's grammar demands.

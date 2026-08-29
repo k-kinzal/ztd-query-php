@@ -7,7 +7,7 @@ namespace Tests\Unit\SqlFaker\MySql\Bison\Directive;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\SourceCursor;
+use SqlFaker\Grammar\Source\SourceCursor;
 use SqlFaker\MySql\Bison\Ast\BisonParamDeclaration;
 use SqlFaker\MySql\Bison\Directive\BisonDeclarationBoundary;
 use SqlFaker\MySql\Bison\Directive\ParamDirectiveReader;

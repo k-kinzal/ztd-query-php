@@ -6,10 +6,10 @@ namespace SqlFaker\MySql;
 
 use Faker\Generator as FakerGenerator;
 use RuntimeException;
-use SqlFaker\Grammar\GenerationException;
-use SqlFaker\Grammar\GenerationPlan;
-use SqlFaker\Grammar\LexicalCatalogException;
-use SqlFaker\Grammar\LexicalException;
+use SqlFaker\Grammar\Lexical\LexicalCatalogException;
+use SqlFaker\Grammar\Lexical\LexicalException;
+use SqlFaker\Grammar\Walk\GenerationException;
+use SqlFaker\Grammar\Walk\GenerationPlan;
 use SqlFaker\MySql\Grammar\Grammar;
 use SqlFaker\MySql\Grammar\Terminal;
 use SqlFaker\MySql\Grammar\TerminalInventory;

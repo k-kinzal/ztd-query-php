@@ -6,15 +6,15 @@ namespace SqlFaker\PostgreSql;
 
 use Faker\Generator as FakerGenerator;
 use RuntimeException;
-use SqlFaker\Grammar\Derivation;
-use SqlFaker\Grammar\GenerationException;
-use SqlFaker\Grammar\GenerationPlan;
-use SqlFaker\Grammar\Grammar;
-use SqlFaker\Grammar\LexicalCatalogException;
-use SqlFaker\Grammar\LexicalException;
-use SqlFaker\Grammar\Terminal;
-use SqlFaker\Grammar\TerminalInventory;
-use SqlFaker\Grammar\TerminationAnalyzer;
+use SqlFaker\Grammar\Lexical\LexicalCatalogException;
+use SqlFaker\Grammar\Lexical\LexicalException;
+use SqlFaker\Grammar\Model\Grammar;
+use SqlFaker\Grammar\Model\Terminal;
+use SqlFaker\Grammar\Model\TerminalInventory;
+use SqlFaker\Grammar\Walk\Derivation;
+use SqlFaker\Grammar\Walk\GenerationException;
+use SqlFaker\Grammar\Walk\GenerationPlan;
+use SqlFaker\Grammar\Walk\TerminationAnalyzer;
 use SqlFaker\PostgreSql\Grammar\PgGrammar;
 
 /**

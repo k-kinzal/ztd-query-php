@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SqlFaker\MySql;
 
 use RuntimeException;
-use SqlFaker\Grammar\LexerSource;
-use SqlFaker\Grammar\UpstreamLexerSource;
+use SqlFaker\Grammar\Source\LexerSource;
+use SqlFaker\Grammar\Source\UpstreamLexerSource;
 use SqlFaker\MySql\Grammar\Grammar;
 use SqlFaker\MySql\LexicalProfileCompiler as MySqlCompiler;
 use SqlFaker\MySql\LexicalSourceParser as MySqlSourceParser;
