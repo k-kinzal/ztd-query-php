@@ -6,7 +6,7 @@ namespace Fuzz\Robustness\Invariant;
 
 use PDO;
 use PDOException;
-use ZtdQuery\Platform\MySql\MySqlQueryGuard;
+use ZtdQuery\Platform\MySql\Dialect\MySqlQueryGuard;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\SqlRewriter;
 
