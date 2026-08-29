@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
-use SqlFaker\Grammar\LexerSource;
+use SqlFaker\Grammar\Source\LexerSource;
 use SqlFaker\PostgreSql\PgLexicalSamples;
 use SqlFaker\PostgreSql\PgProfileBuilder;
 

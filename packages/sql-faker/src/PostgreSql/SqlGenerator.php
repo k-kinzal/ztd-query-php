@@ -6,15 +6,15 @@ namespace SqlFaker\PostgreSql;
 
 use Faker\Generator as FakerGenerator;
 use RuntimeException;
-use SqlFaker\Grammar\Derivation;
-use SqlFaker\Grammar\GenerationException;
-use SqlFaker\Grammar\GenerationPlan;
-use SqlFaker\Grammar\Grammar;
-use SqlFaker\Grammar\LexicalCatalogException;
-use SqlFaker\Grammar\LexicalException;
-use SqlFaker\Grammar\Terminal;
-use SqlFaker\Grammar\TerminalInventory;
-use SqlFaker\Grammar\TerminationAnalyzer;
+use SqlFaker\Grammar\Lexical\LexicalCatalogException;
+use SqlFaker\Grammar\Lexical\LexicalException;
+use SqlFaker\Grammar\Model\Grammar;
+use SqlFaker\Grammar\Model\Terminal;
+use SqlFaker\Grammar\Model\TerminalInventory;
+use SqlFaker\Grammar\Walk\Derivation;
+use SqlFaker\Grammar\Walk\GenerationException;
+use SqlFaker\Grammar\Walk\GenerationPlan;
+use SqlFaker\Grammar\Walk\TerminationAnalyzer;
 use SqlFaker\PostgreSql\Grammar\PgGrammar;
 
 /**
@@ -36,6 +36,32 @@ final class SqlGenerator
      *
      * @throws LexicalCatalogException When the release's lexer cannot write a terminal the grammar declares
      * @throws RuntimeException When the release is not one this package ships
+     */
+    /**
+     * Answers a generator over the grammar of one PostgreSQL version.
+     *
+     * Every provider needs the same three steps to get here -- resolve the
+     * version, load its grammar, generate against it -- so they are written
+     * once rather than in each provider's constructor.
+     *
+     * @param FakerGenerator $faker Source of the choices generation makes
+     * @param string|null $version Version tag to generate for, or null for the default
+     *
+     * @return self A generator bound to that version's grammar
+     */
+    public static function for(FakerGenerator $faker, ?string $version = null): self
+    {
+        $resolved = PgGrammar::resolveVersion($version);
+
+        return new self(PgGrammar::load($resolved), $faker, $resolved);
+    }
+
+    /**
+     * Binds the generator to a grammar and the source of its choices.
+     *
+     * @param Grammar $grammar Grammar to walk
+     * @param FakerGenerator $faker Source of the choices generation makes
+     * @param string|null $version Version tag the grammar came from, or null for the default
      */
     public function __construct(
         Grammar $grammar,
