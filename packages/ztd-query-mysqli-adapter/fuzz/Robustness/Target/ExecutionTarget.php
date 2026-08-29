@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Fuzz\Robustness\Target;
 
+use Error;
 use Faker\Generator;
+use Fuzz\ReportingMysqli;
 use Fuzz\Robustness\Invariant\NoMysqliLeakChecker;
 use Fuzz\Robustness\Invariant\NoSyntaxErrorOnRewriteChecker;
 use Fuzz\Robustness\Invariant\ShadowStoreConsistencyChecker;
 use mysqli;
+use mysqli_result;
 use mysqli_sql_exception;
 use SqlFaker\MySqlProvider;
 use SqlFaker\MySqlStatementProvider;
@@ -18,17 +21,32 @@ use ZtdQuery\Platform\MySql\MySqlRewriter;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Shadow\ShadowStore;
 
+/**
+ * The execution target.
+ */
 final class ExecutionTarget
 {
     private Generator $faker;
     private MySqlProvider $provider;
 
+    /** @readonly */
     private MySqlStatementProvider $statements;
-    private mysqli $rawMysqli;
+    private ReportingMysqli $rawConnection;
     private NoMysqliLeakChecker $mysqliLeakChecker;
     private NoSyntaxErrorOnRewriteChecker $syntaxChecker;
     private ShadowStoreConsistencyChecker $storeChecker;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param Generator $faker
+     * @param MySqlProvider $provider
+     * @param mysqli $rawMysqli
+     * @param ZtdMysqli $ztdMysqli
+     * @param ShadowStore $shadowStore
+     * @param MySqlRewriter $rewriter
+     * @param MySqlQueryGuard $guard
+     */
     public function __construct(
         Generator $faker,
         MySqlProvider $provider,
@@ -41,13 +59,13 @@ final class ExecutionTarget
         $this->faker = $faker;
         $this->provider = $provider;
         $this->statements = new MySqlStatementProvider($faker);
-        $this->rawMysqli = $rawMysqli;
+        $this->rawConnection = new ReportingMysqli($rawMysqli);
 
         $this->mysqliLeakChecker = new NoMysqliLeakChecker(function (string $sql) use ($ztdMysqli, $guard): void {
             $kind = $guard->classify($sql);
             if ($kind === QueryKind::READ) {
                 $result = $ztdMysqli->query($sql);
-                if ($result instanceof \mysqli_result) {
+                if ($result instanceof mysqli_result) {
                     $result->fetch_all(MYSQLI_ASSOC);
                     $result->free();
                 }
@@ -60,6 +78,9 @@ final class ExecutionTarget
         $this->storeChecker = new ShadowStoreConsistencyChecker($shadowStore);
     }
 
+    /**
+     * @throws Error
+     */
     public function __invoke(string $input): void
     {
         $seed = crc32(str_pad($input, 4, "\0"));
@@ -68,10 +89,7 @@ final class ExecutionTarget
         $sql = $this->selectGenerator($input)();
 
         try {
-            $stmt = $this->rawMysqli->prepare($sql);
-            if ($stmt !== false) {
-                $stmt->close();
-            }
+            $this->rawConnection()->prepareAndClose($sql);
         } catch (mysqli_sql_exception $e) {
             if ($e->getCode() === 1064) {
                 return;
@@ -80,24 +98,28 @@ final class ExecutionTarget
 
         $violation = $this->mysqliLeakChecker->check($sql);
         if ($violation !== null) {
-            throw new \Error("Invariant violation: seed=$seed\n$violation");
+            throw new Error("Invariant violation: seed=$seed\n$violation");
         }
 
         $violation = $this->syntaxChecker->check($sql);
         if ($violation !== null) {
-            throw new \Error("Invariant violation: seed=$seed\n$violation");
+            throw new Error("Invariant violation: seed=$seed\n$violation");
         }
 
         $violation = $this->storeChecker->check($sql);
         if ($violation !== null) {
-            throw new \Error("Invariant violation: seed=$seed\n$violation");
+            throw new Error("Invariant violation: seed=$seed\n$violation");
         }
     }
 
     /**
+     * Answers the generator the input asks for.
+     *
+     * @param string $input The input
+     *
      * @return callable(): string
      */
-    private function selectGenerator(string $input): callable
+    public function selectGenerator(string $input): callable
     {
         $generators = [
             fn () => $this->provider->sql(maxDepth: 8),
@@ -113,5 +135,14 @@ final class ExecutionTarget
 
         $index = ord($input[0] ?? "\0") % count($generators);
         return $generators[$index];
+    }
+    /**
+     * Answers the connection ZTD is not in front of, as something that can fail.
+     *
+     * @return ReportingMysqli The raw connection, saying how it fails
+     */
+    public function rawConnection(): ReportingMysqli
+    {
+        return $this->rawConnection;
     }
 }

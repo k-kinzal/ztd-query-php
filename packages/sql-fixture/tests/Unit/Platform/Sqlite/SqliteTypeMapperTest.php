@@ -985,10 +985,15 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
+    /**
+     * Faker sets its providers up on first use and that draws, so a generation
+     * is spent before seeding and both comparisons start from the same state.
+     */
     public function lowercaseTinyintGeneratesSameAsUppercase(): void
     {
         $faker = Factory::create();
         $mapper = new SqliteTypeMapper();
+        $mapper->generate($faker, new ColumnDefinition('col', 'TINYINT', nullable: false));
 
         $faker->seed(42);
         $upper = $mapper->generate($faker, new ColumnDefinition('col', 'TINYINT', nullable: false));

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Fuzz\Robustness\Target;
 
+use Error;
 use Faker\Generator;
 use Fuzz\Robustness\Invariant\NoPdoLeakChecker;
 use Fuzz\Robustness\Invariant\NoSyntaxErrorOnRewriteChecker;
@@ -18,17 +19,32 @@ use ZtdQuery\Platform\MySql\MySqlRewriter;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Shadow\ShadowStore;
 
+/**
+ * The execution target.
+ */
 final class ExecutionTarget
 {
     private Generator $faker;
     private MySqlProvider $provider;
 
+    /** @readonly */
     private MySqlStatementProvider $statements;
     private PDO $rawPdo;
     private NoPdoLeakChecker $pdoLeakChecker;
     private NoSyntaxErrorOnRewriteChecker $syntaxChecker;
     private ShadowStoreConsistencyChecker $storeChecker;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param Generator $faker
+     * @param MySqlProvider $provider
+     * @param PDO $rawPdo
+     * @param ZtdPdo $ztdPdo
+     * @param ShadowStore $shadowStore
+     * @param MySqlRewriter $rewriter
+     * @param MySqlQueryGuard $guard
+     */
     public function __construct(
         Generator $faker,
         MySqlProvider $provider,
@@ -59,6 +75,9 @@ final class ExecutionTarget
         $this->storeChecker = new ShadowStoreConsistencyChecker($shadowStore);
     }
 
+    /**
+     * @throws Error
+     */
     public function __invoke(string $input): void
     {
         $seed = crc32(str_pad($input, 4, "\0"));
@@ -76,24 +95,28 @@ final class ExecutionTarget
 
         $violation = $this->pdoLeakChecker->check($sql);
         if ($violation !== null) {
-            throw new \Error("Invariant violation: seed=$seed\n$violation");
+            throw new Error("Invariant violation: seed=$seed\n$violation");
         }
 
         $violation = $this->syntaxChecker->check($sql);
         if ($violation !== null) {
-            throw new \Error("Invariant violation: seed=$seed\n$violation");
+            throw new Error("Invariant violation: seed=$seed\n$violation");
         }
 
         $violation = $this->storeChecker->check($sql);
         if ($violation !== null) {
-            throw new \Error("Invariant violation: seed=$seed\n$violation");
+            throw new Error("Invariant violation: seed=$seed\n$violation");
         }
     }
 
     /**
+     * Answers the generator the input asks for.
+     *
+     * @param string $input The input
+     *
      * @return callable(): string
      */
-    private function selectGenerator(string $input): callable
+    public function selectGenerator(string $input): callable
     {
         $generators = [
             fn () => $this->provider->sql(maxDepth: 8),
