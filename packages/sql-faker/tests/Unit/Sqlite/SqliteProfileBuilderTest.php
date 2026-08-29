@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
-use SqlFaker\Grammar\LexerSource;
+use SqlFaker\Grammar\Source\LexerSource;
 use SqlFaker\Sqlite\SqliteCoverageSamples;
 use SqlFaker\Sqlite\SqliteLexicalSamples;
 use SqlFaker\Sqlite\SqliteProfileBuilder;

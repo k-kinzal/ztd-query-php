@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Fixture\SqlFaker;
 
 use Faker\Generator;
-use SqlFaker\Grammar\LexicalCatalog;
+use SqlFaker\Grammar\Lexical\LexicalCatalog;
 use SqlFaker\Sqlite\SqliteTerminalRealizer;
 use SqlFaker\Sqlite\SqliteTokenizer;
 

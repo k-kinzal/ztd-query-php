@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlFaker\Sqlite;
 
-use SqlFaker\Grammar\Grammar;
-use SqlFaker\Grammar\Production;
-use SqlFaker\Grammar\ProductionRule;
-use SqlFaker\Grammar\Terminal;
+use SqlFaker\Grammar\Model\Grammar;
+use SqlFaker\Grammar\Model\Production;
+use SqlFaker\Grammar\Model\ProductionRule;
+use SqlFaker\Grammar\Model\Terminal;
 
 /**
  * Reshapes SQLite's parser grammar into one a generator can be aimed at.

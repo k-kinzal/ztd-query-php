@@ -7,11 +7,11 @@ namespace Tests\Unit\SqlFaker\Sqlite;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\Grammar;
-use SqlFaker\Grammar\NonTerminal;
-use SqlFaker\Grammar\Production;
-use SqlFaker\Grammar\ProductionRule;
-use SqlFaker\Grammar\Terminal;
+use SqlFaker\Grammar\Model\Grammar;
+use SqlFaker\Grammar\Model\NonTerminal;
+use SqlFaker\Grammar\Model\Production;
+use SqlFaker\Grammar\Model\ProductionRule;
+use SqlFaker\Grammar\Model\Terminal;
 use SqlFaker\Sqlite\GrammarAdaptation;
 use SqlFaker\Sqlite\LexicalGrammar;
 

@@ -7,7 +7,7 @@ namespace Tests\Unit\SqlFaker\MySql\Bison\Rule;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\SourceCursor;
+use SqlFaker\Grammar\Source\SourceCursor;
 use SqlFaker\MySql\Bison\Ast\BisonAlternativeNode;
 use SqlFaker\MySql\Bison\Ast\BisonRuleNode;
 use SqlFaker\MySql\Bison\Ast\BisonSymbolNode;

@@ -11,17 +11,18 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\GenerationException;
-use SqlFaker\Grammar\GenerationPlan;
-use SqlFaker\Grammar\Grammar;
-use SqlFaker\Grammar\NonTerminal;
-use SqlFaker\Grammar\Production;
-use SqlFaker\Grammar\ProductionPattern;
-use SqlFaker\Grammar\ProductionRule;
-use SqlFaker\Grammar\RandomStringGenerator;
-use SqlFaker\Grammar\Terminal;
-use SqlFaker\Grammar\TerminationAnalyzer;
-use SqlFaker\Grammar\TokenJoiner;
+use SqlFaker\Grammar\Lexical\RandomStringGenerator;
+use SqlFaker\Grammar\Model\Grammar;
+use SqlFaker\Grammar\Model\NonTerminal;
+use SqlFaker\Grammar\Model\Production;
+use SqlFaker\Grammar\Model\ProductionPattern;
+use SqlFaker\Grammar\Model\ProductionRule;
+use SqlFaker\Grammar\Model\Terminal;
+use SqlFaker\Grammar\Source\TokenJoiner;
+use SqlFaker\Grammar\Walk\GenerationException;
+use SqlFaker\Grammar\Walk\GenerationPlan;
+use SqlFaker\Grammar\Walk\TerminationAnalyzer;
+use SqlFaker\PostgreSql\Grammar\PgGrammar;
 use SqlFaker\PostgreSql\SqlGenerator;
 use SqlFaker\PostgreSqlProvider;
 
@@ -767,5 +768,18 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $result = (new SqlGenerator($grammarSemicolon, $faker))->generate(GenerationPlan::fromRule('stmt'));
         self::assertSame('SELECT 1;', $result);
+    }
+
+    public function testFor(): void
+    {
+        $faker = Factory::create();
+        $named = SqlGenerator::for($faker, 'pg-17.2');
+        $direct = new SqlGenerator(PgGrammar::load(PgGrammar::resolveVersion('pg-17.2')), $faker, 'pg-17.2');
+
+        $faker->seed(3);
+        $fromNamed = $named->generate(GenerationPlan::fromRule('stmt')->withMaxDepth(4));
+        $faker->seed(3);
+
+        self::assertSame($fromNamed, $direct->generate(GenerationPlan::fromRule('stmt')->withMaxDepth(4)));
     }
 }

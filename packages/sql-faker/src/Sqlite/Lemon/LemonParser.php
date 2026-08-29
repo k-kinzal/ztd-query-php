@@ -6,13 +6,13 @@ namespace SqlFaker\Sqlite\Lemon;
 
 use InvalidArgumentException;
 use RuntimeException;
-use SqlFaker\Grammar\Grammar;
-use SqlFaker\Grammar\GrammarParseException;
-use SqlFaker\Grammar\NonTerminal;
-use SqlFaker\Grammar\Production;
-use SqlFaker\Grammar\ProductionRule;
-use SqlFaker\Grammar\Symbol;
-use SqlFaker\Grammar\Terminal;
+use SqlFaker\Grammar\Model\Grammar;
+use SqlFaker\Grammar\Model\NonTerminal;
+use SqlFaker\Grammar\Model\Production;
+use SqlFaker\Grammar\Model\ProductionRule;
+use SqlFaker\Grammar\Model\Symbol;
+use SqlFaker\Grammar\Model\Terminal;
+use SqlFaker\Grammar\Source\GrammarParseException;
 
 /**
  * Reads a Lemon grammar file, such as SQLite's parse.y, as a grammar.
