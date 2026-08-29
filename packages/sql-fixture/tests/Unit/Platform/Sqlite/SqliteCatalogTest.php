@@ -212,4 +212,25 @@ final class SqliteCatalogTest extends TestCase
     {
         self::assertSame("one\ntwo", (new SqliteCatalog())->defaultValueOf("'one\ntwo'"));
     }
+
+    public function testDeclaredSizeReadsALengthWrittenInBrackets(): void
+    {
+        $size = (new SqliteCatalog())->declaredSize('VARCHAR(20)');
+
+        self::assertSame(['type' => 'VARCHAR', 'length' => 20, 'precision' => null, 'scale' => null], $size);
+    }
+
+    public function testDeclaredSizeReadsAPrecisionAndScaleWrittenTogether(): void
+    {
+        $size = (new SqliteCatalog())->declaredSize('DECIMAL(8,2)');
+
+        self::assertSame(['type' => 'DECIMAL', 'length' => null, 'precision' => 8, 'scale' => 2], $size);
+    }
+
+    public function testDeclaredSizeCallsAColumnDeclaredWithNoTypeABlob(): void
+    {
+        $size = (new SqliteCatalog())->declaredSize('');
+
+        self::assertSame('BLOB', $size['type']);
+    }
 }

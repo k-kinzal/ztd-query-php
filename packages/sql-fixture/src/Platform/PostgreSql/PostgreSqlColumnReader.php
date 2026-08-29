@@ -55,24 +55,8 @@ final class PostgreSqlColumnReader
             $type = self::SERIAL_TYPES[strtoupper($type)];
         }
 
-        $length = null;
-        $precision = null;
-        $scale = null;
-        if (preg_match('/^(\w+(?:\s+\w+)?)\s*\(\s*(\d+)\s*(?:,\s*(\d+)\s*)?\)/i', $rest, $typeMatches) === 1) {
-            $declared = strtoupper($typeMatches[1]);
-            if (!$autoIncrement) {
-                $type = $declared;
-            }
-            if (isset($typeMatches[3])) {
-                $precision = (int) $typeMatches[2];
-                $scale = (int) $typeMatches[3];
-            } elseif ($this->isExactNumeric($declared)) {
-                $precision = (int) $typeMatches[2];
-                $scale = 0;
-            } else {
-                $length = (int) $typeMatches[2];
-            }
-        }
+        ['type' => $type, 'length' => $length, 'precision' => $precision, 'scale' => $scale]
+            = $this->declaredSize($rest, $type, $autoIncrement);
         if (str_ends_with($type, '[]')) {
             $type = substr($type, 0, -2) . '_ARRAY';
         }
@@ -93,6 +77,39 @@ final class PostgreSqlColumnReader
             generated: preg_match('/\bGENERATED\s+/i', $rest) === 1,
             enumValues: null,
         );
+    }
+
+    /**
+     * Reads the size a type declaration writes in brackets.
+     *
+     * A declaration carries at most one size, written as either a length or a
+     * precision and scale. Which of them it means is the type's answer, not
+     * the number's: an exact numeric counts digits even when it names only
+     * one, and everything else counts characters. A serial keeps the type its
+     * name stood for, so the declared word is not allowed to replace it.
+     *
+     * @param string $rest The declaration, from the type onwards
+     * @param string $type The type read so far
+     * @param bool $autoIncrement Whether the name stood for a serial
+     *
+     * @return array{type: string, length: int|null, precision: int|null, scale: int|null} The type and the size it declares
+     */
+    public function declaredSize(string $rest, string $type, bool $autoIncrement): array
+    {
+        if (preg_match('/^(\w+(?:\s+\w+)?)\s*\(\s*(\d+)\s*(?:,\s*(\d+)\s*)?\)/i', $rest, $matches) !== 1) {
+            return ['type' => $type, 'length' => null, 'precision' => null, 'scale' => null];
+        }
+
+        $declared = strtoupper($matches[1]);
+        $sized = $autoIncrement ? $type : $declared;
+        if (isset($matches[3])) {
+            return ['type' => $sized, 'length' => null, 'precision' => (int) $matches[2], 'scale' => (int) $matches[3]];
+        }
+        if ($this->isExactNumeric($declared)) {
+            return ['type' => $sized, 'length' => null, 'precision' => (int) $matches[2], 'scale' => 0];
+        }
+
+        return ['type' => $sized, 'length' => (int) $matches[2], 'precision' => null, 'scale' => null];
     }
 
     /**
