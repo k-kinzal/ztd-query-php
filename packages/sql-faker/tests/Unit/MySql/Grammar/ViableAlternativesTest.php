@@ -15,6 +15,7 @@ use SqlFaker\MySql\Grammar\Production;
 use SqlFaker\MySql\Grammar\ProductionRule;
 use SqlFaker\MySql\Grammar\Terminal;
 use SqlFaker\MySql\Grammar\TerminationAnalyzer;
+use SqlFaker\MySql\Grammar\TerminationCost;
 use SqlFaker\MySql\Grammar\ViableAlternatives;
 
 #[CoversClass(ViableAlternatives::class)]
@@ -26,6 +27,7 @@ use SqlFaker\MySql\Grammar\ViableAlternatives;
 #[UsesClass(ProductionRule::class)]
 #[UsesClass(Terminal::class)]
 #[UsesClass(TerminationAnalyzer::class)]
+#[UsesClass(TerminationCost::class)]
 final class ViableAlternativesTest extends TestCase
 {
     /**

@@ -15,6 +15,7 @@ use SqlFaker\Grammar\Model\ProductionRule;
 use SqlFaker\Grammar\Model\Terminal;
 use SqlFaker\Grammar\Walk\GenerationException;
 use SqlFaker\Grammar\Walk\TerminationAnalyzer;
+use SqlFaker\Grammar\Walk\TerminationCost;
 use SqlFaker\Grammar\Walk\ViableAlternatives;
 
 #[CoversClass(ViableAlternatives::class)]
@@ -26,6 +27,7 @@ use SqlFaker\Grammar\Walk\ViableAlternatives;
 #[UsesClass(ProductionRule::class)]
 #[UsesClass(Terminal::class)]
 #[UsesClass(TerminationAnalyzer::class)]
+#[UsesClass(TerminationCost::class)]
 final class ViableAlternativesTest extends TestCase
 {
     /**
