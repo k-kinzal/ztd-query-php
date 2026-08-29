@@ -278,4 +278,39 @@ final class PostgreSqlColumnReaderTest extends TestCase
     {
         self::assertSame(7, (new PostgreSqlColumnReader())->defaultValue('DEFAULT 7 NOT NULL'));
     }
+
+    public function testDeclaredSizeReadsALengthWrittenInBrackets(): void
+    {
+        $size = (new PostgreSqlColumnReader())->declaredSize('VARCHAR(30) NOT NULL', 'VARCHAR', false);
+
+        self::assertSame(['type' => 'VARCHAR', 'length' => 30, 'precision' => null, 'scale' => null], $size);
+    }
+
+    public function testDeclaredSizeReadsAPrecisionAndScaleWrittenTogether(): void
+    {
+        $size = (new PostgreSqlColumnReader())->declaredSize('NUMERIC(10, 2)', 'NUMERIC', false);
+
+        self::assertSame(['type' => 'NUMERIC', 'length' => null, 'precision' => 10, 'scale' => 2], $size);
+    }
+
+    public function testDeclaredSizeCountsDigitsWhenAnExactNumericNamesOneNumber(): void
+    {
+        $size = (new PostgreSqlColumnReader())->declaredSize('DECIMAL(8)', 'DECIMAL', false);
+
+        self::assertSame(['type' => 'DECIMAL', 'length' => null, 'precision' => 8, 'scale' => 0], $size);
+    }
+
+    public function testDeclaredSizeKeepsTheTypeASerialNameStoodFor(): void
+    {
+        $size = (new PostgreSqlColumnReader())->declaredSize('NUMERIC(10, 2)', 'INTEGER', true);
+
+        self::assertSame('INTEGER', $size['type']);
+    }
+
+    public function testDeclaredSizeAnswersNoSizeWhenTheDeclarationWritesNone(): void
+    {
+        $size = (new PostgreSqlColumnReader())->declaredSize('TEXT NOT NULL', 'TEXT', false);
+
+        self::assertSame(['type' => 'TEXT', 'length' => null, 'precision' => null, 'scale' => null], $size);
+    }
 }
