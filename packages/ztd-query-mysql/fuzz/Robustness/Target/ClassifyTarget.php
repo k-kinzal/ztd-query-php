@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Fuzz\Robustness\Target;
 
+use Error;
 use Faker\Generator;
 use Fuzz\Robustness\Invariant\ClassifyDeterministicChecker;
 use Fuzz\Robustness\Invariant\ClassifyNeverThrowsChecker;
@@ -13,15 +14,25 @@ use SqlFaker\MySqlStatementProvider;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlQueryGuard;
 
+/**
+ * The classify target.
+ */
 final class ClassifyTarget
 {
     private Generator $faker;
     private MySqlProvider $provider;
 
+    /** @readonly */
     private MySqlStatementProvider $statements;
     /** @var array<int, InvariantChecker> */
     private array $checkers;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param Generator $faker
+     * @param MySqlProvider $provider
+     */
     public function __construct(Generator $faker, MySqlProvider $provider)
     {
         $this->faker = $faker;
@@ -35,6 +46,9 @@ final class ClassifyTarget
         ];
     }
 
+    /**
+     * @throws Error
+     */
     public function __invoke(string $input): void
     {
         $seed = crc32(str_pad($input, 4, "\0"));
@@ -45,7 +59,7 @@ final class ClassifyTarget
         foreach ($this->checkers as $checker) {
             $violation = $checker->check($sql);
             if ($violation !== null) {
-                throw new \Error("Invariant violation: seed=$seed\n$violation");
+                throw new Error("Invariant violation: seed=$seed\n$violation");
             }
         }
     }
@@ -53,7 +67,7 @@ final class ClassifyTarget
     /**
      * @return callable(): string
      */
-    private function selectGenerator(string $input): callable
+    public function selectGenerator(string $input): callable
     {
         $generators = [
             fn () => $this->provider->sql(maxDepth: 8),

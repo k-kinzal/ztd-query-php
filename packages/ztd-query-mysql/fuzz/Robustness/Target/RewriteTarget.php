@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Fuzz\Robustness\Target;
 
+use Error;
 use Faker\Generator;
 use Fuzz\Robustness\Invariant\ClassifyDeterministicChecker;
 use Fuzz\Robustness\Invariant\ClassifyNeverThrowsChecker;
@@ -28,17 +29,28 @@ use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
 
+/**
+ * The rewrite target.
+ */
 final class RewriteTarget
 {
     private Generator $faker;
     private MySqlProvider $provider;
 
+    /** @readonly */
     private MySqlStatementProvider $statements;
 
+    /** @readonly */
     private MySqlLiteralProvider $literals;
     /** @var array<int, InvariantChecker> */
     private array $checkers;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param Generator $faker
+     * @param MySqlProvider $provider
+     */
     public function __construct(Generator $faker, MySqlProvider $provider)
     {
         $this->faker = $faker;
@@ -73,6 +85,9 @@ final class RewriteTarget
         ];
     }
 
+    /**
+     * @throws Error
+     */
     public function __invoke(string $input): void
     {
         $seed = crc32(str_pad($input, 4, "\0"));
@@ -83,12 +98,18 @@ final class RewriteTarget
         foreach ($this->checkers as $checker) {
             $violation = $checker->check($sql);
             if ($violation !== null) {
-                throw new \Error("Invariant violation: seed=$seed\n$violation");
+                throw new Error("Invariant violation: seed=$seed\n$violation");
             }
         }
     }
 
-    private function registerFixtureSchemas(TableDefinitionRegistry $registry, MySqlSchemaParser $schemaParser): void
+    /**
+     * Declares the tables a fuzzed statement is run against.
+     *
+     * @param TableDefinitionRegistry $registry Registry to declare them in
+     * @param MySqlSchemaParser $schemaParser Reads each declaration
+     */
+    public function registerFixtureSchemas(TableDefinitionRegistry $registry, MySqlSchemaParser $schemaParser): void
     {
         $schemas = [
             'users' => 'CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255) NOT NULL, email VARCHAR(255), status VARCHAR(50))',
@@ -106,7 +127,12 @@ final class RewriteTarget
         }
     }
 
-    private function populateFixtureData(ShadowStore $store): void
+    /**
+     * Fills the shadow with the rows a fuzzed statement is run against.
+     *
+     * @param ShadowStore $store Shadow to fill
+     */
+    public function populateFixtureData(ShadowStore $store): void
     {
         $store->set('users', [
             ['id' => '1', 'name' => 'Alice', 'email' => 'alice@example.com', 'status' => 'active'],
@@ -135,7 +161,7 @@ final class RewriteTarget
     /**
      * @return callable(): string
      */
-    private function selectGenerator(string $input): callable
+    public function selectGenerator(string $input): callable
     {
         $generators = [
             fn () => $this->provider->sql(maxDepth: 8),
