@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\MySql;
 
 use ZtdQuery\Connection\ConnectionInterface;
+use ZtdQuery\Platform\MySql\Parse\MySqlViewDefinitionParser;
 use ZtdQuery\Platform\SchemaReflector;
 use ZtdQuery\Platform\ViewReflector;
 

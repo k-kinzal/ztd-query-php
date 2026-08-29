@@ -9,7 +9,7 @@ use PhpMyAdmin\SqlParser\Components\CreateDefinition;
 use PhpMyAdmin\SqlParser\Components\OptionsArray;
 use PhpMyAdmin\SqlParser\Parser;
 use PhpMyAdmin\SqlParser\Statements\CreateStatement;
-use ZtdQuery\Platform\MySql\MySqlStatementOptions;
+use ZtdQuery\Platform\MySql\Dialect\MySqlStatementOptions;
 
 /**
  * Reads the column an ALTER TABLE operation is about.
