@@ -288,7 +288,6 @@ class StubMysqli extends mysqli
     /**
      * @param array<mixed, mixed>|null $params
      */
-    #[Override]
     public function execute_query(string $query, ?array $params = null): mysqli_result|bool
     {
         return $this->executeQueryReturn;
