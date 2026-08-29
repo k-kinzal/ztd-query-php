@@ -59,11 +59,9 @@ final class ActionScanner implements BisonScanner
         $closed = false;
 
         while (!$cursor->atEnd()) {
-            $character = $cursor->current();
+            $this->trivia->skipCommentAt($cursor);
 
-            if ($this->trivia->skipCommentAt($cursor)) {
-                continue;
-            }
+            $character = $cursor->current();
 
             if ($character === '"' || $character === '\'') {
                 $cursor->takeQuoted($character);
