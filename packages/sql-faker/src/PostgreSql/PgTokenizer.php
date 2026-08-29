@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlFaker\PostgreSql;
 
-use SqlFaker\Grammar\LexicalException;
+use SqlFaker\Grammar\Lexical\LexicalException;
 
 /**
  * Reads PostgreSQL text back into the parser tokens the server would produce.

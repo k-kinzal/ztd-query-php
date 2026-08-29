@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SqlFaker\MySql;
 
 use Faker\Generator as FakerGenerator;
-use SqlFaker\Grammar\GenerationException;
-use SqlFaker\Grammar\GenerationPlan;
+use SqlFaker\Grammar\Walk\GenerationException;
+use SqlFaker\Grammar\Walk\GenerationPlan;
 use SqlFaker\MySql\Grammar\Grammar;
 use SqlFaker\MySql\Grammar\NonTerminal;
 use SqlFaker\MySql\Grammar\Production;

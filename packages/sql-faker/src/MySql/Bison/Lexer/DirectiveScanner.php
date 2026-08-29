@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SqlFaker\MySql\Bison\Lexer;
 
 use Override;
-use SqlFaker\Grammar\GrammarParseException;
-use SqlFaker\Grammar\SourceCursor;
+use SqlFaker\Grammar\Source\GrammarParseException;
+use SqlFaker\Grammar\Source\SourceCursor;
 
 /**
  * Consumes the three lexemes a percent sign can open.
