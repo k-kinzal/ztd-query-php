@@ -67,6 +67,18 @@ final class TransformerFuzzTest extends TestCase
     {
         $tables = [
             'users' => [
+<<<<<<< HEAD
+                'rows' => [
+                    ['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com'],
+                    ['id' => 2, 'name' => 'Bob', 'email' => 'bob@example.com'],
+                ],
+                'columns' => ['id', 'name', 'email'],
+                'columnTypes' => [
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                    'name' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
+                    'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
+                ],
+=======
         'rows' => [
             ['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com'],
             ['id' => 2, 'name' => 'Bob', 'email' => 'bob@example.com'],
@@ -77,6 +89,7 @@ final class TransformerFuzzTest extends TestCase
             'name' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
         ],
+>>>>>>> feat/php-ai-toolkit-sql-fixture
             ],
         ];
 
@@ -101,6 +114,15 @@ final class TransformerFuzzTest extends TestCase
     {
         $tables = [
             'users' => [
+<<<<<<< HEAD
+                'rows' => [],
+                'columns' => ['id', 'name', 'email'],
+                'columnTypes' => [
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+                    'name' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
+                    'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
+                ],
+=======
         'rows' => [],
         'columns' => ['id', 'name', 'email'],
         'columnTypes' => [
@@ -108,6 +130,7 @@ final class TransformerFuzzTest extends TestCase
             'name' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
             'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
         ],
+>>>>>>> feat/php-ai-toolkit-sql-fixture
             ],
         ];
 
