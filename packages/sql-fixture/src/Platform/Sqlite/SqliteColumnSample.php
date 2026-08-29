@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlFixture\Platform\Sqlite;
 
 use Faker\Generator;
-use Random\RandomException;
 use SqlFixture\Schema\ColumnDefinition;
 
 /**
@@ -35,7 +34,6 @@ final class SqliteColumnSample
      *
      * @return int|float|string A value of that kind
      *
-     * @throws RandomException When a blob column is asked for and the system has no source of randomness
      */
     public function of(Generator $faker, ColumnDefinition $column): int|float|string
     {
@@ -136,7 +134,6 @@ final class SqliteColumnSample
      *
      * @return string Bytes the schema author would expect
      *
-     * @throws RandomException When the system has no source of randomness
      */
     public function blob(Generator $faker, ColumnDefinition $column): string
     {

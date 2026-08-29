@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlFixture\Platform\MySql;
 
 use Faker\Generator;
-use Random\RandomException;
 use SqlFixture\Schema\ColumnDefinition;
 
 /**
@@ -25,7 +24,6 @@ final class MySqlBinarySample
      *
      * @return string Bytes of the declared length
      *
-     * @throws RandomException When the system has no source of randomness
      */
     public function binary(ColumnDefinition $column): string
     {
@@ -40,7 +38,6 @@ final class MySqlBinarySample
      *
      * @return string Bytes within the declared length
      *
-     * @throws RandomException When the system has no source of randomness
      */
     public function varbinary(Generator $faker, ColumnDefinition $column): string
     {
@@ -55,7 +52,6 @@ final class MySqlBinarySample
      *
      * @return string Bytes within that length
      *
-     * @throws RandomException When the system has no source of randomness
      */
     public function blob(Generator $faker, int $maxLength): string
     {
