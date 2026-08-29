@@ -47,7 +47,7 @@
         "bench": "@bench:quick",
         "bench:quick": "phpbench run bench --bootstrap=vendor/autoload.php --report=aggregate --php-config='{\"memory_limit\":\"512M\"}' --warmup=1 --iterations=3 --revs=25",
         "bench:full": "phpbench run bench --bootstrap=vendor/autoload.php --report=aggregate --php-config='{\"memory_limit\":\"512M\"}' --warmup=2 --iterations=8 --revs=100",
-        "test": "@php -d memory_limit=512M tests/run.php --parallel --processes=auto --max-processes=4",
+        "test": "@php -d memory_limit=512M tests/run.php --parallel --processes=4",
         "test:unit": "@php -d memory_limit=512M tests/run.php",
         "lint": [
             "@format:check",
