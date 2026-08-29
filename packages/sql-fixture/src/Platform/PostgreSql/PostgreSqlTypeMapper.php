@@ -6,7 +6,6 @@ namespace SqlFixture\Platform\PostgreSql;
 
 use Faker\Generator;
 use Override;
-use Random\RandomException;
 use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\TypeMapper\TypeMapperInterface;
 
@@ -38,7 +37,6 @@ final class PostgreSqlTypeMapper implements TypeMapperInterface
      *
      * @return int|float|string|bool|null The value, or null when the server fills the column in itself
      *
-     * @throws RandomException When a bytea column is asked for and the system has no source of randomness
      */
     #[Override]
     public function generate(Generator $faker, ColumnDefinition $column): int|float|string|bool|null
