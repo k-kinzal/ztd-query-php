@@ -102,7 +102,7 @@ final class RewritePlanConsistencyChecker implements InvariantChecker
         }
 
         $shadowTables = ['users', 'orders', 'order_items', 'products'];
-        $relationParser = new \ZtdQuery\Platform\MySql\MySqlSelectRelationParser();
+        $relationParser = new \ZtdQuery\Platform\MySql\Parse\MySqlSelectRelationParser();
         $normalizedInput = $relationParser->unqualify($sql, $shadowTables);
         $normalizedPlan = $relationParser->unqualify($plan->sql(), $shadowTables);
         if ($normalizedInput !== $sql && $normalizedPlan !== $plan->sql()) {
