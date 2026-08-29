@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlFaker\MySql;
 
-use SqlFaker\Grammar\LexicalException;
+use SqlFaker\Grammar\Lexical\LexicalException;
 
 /**
  * Reads MySQL text back into the parser tokens the server would produce.

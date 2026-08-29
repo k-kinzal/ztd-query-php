@@ -1,0 +1,32 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlFaker\Grammar\Model;
+
+/**
+ * Represents a terminal symbol in a formal grammar.
+ *
+ * Terminal symbols cannot be further expanded. They are the "leaves"
+ * of the derivation tree and correspond to actual tokens in the output.
+ */
+final class Terminal implements Symbol
+{
+    /**
+     * @param string $value Name of the symbol as the grammar spells it
+     */
+    public function __construct(
+        public readonly string $value,
+    ) {
+    }
+
+    /**
+     * Answers the symbol's name.
+     *
+     * @return string Name of the symbol as the grammar spells it
+     */
+    public function value(): string
+    {
+        return $this->value;
+    }
+}

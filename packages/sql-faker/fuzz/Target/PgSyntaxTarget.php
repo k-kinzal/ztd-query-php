@@ -8,6 +8,7 @@ use Faker\Factory;
 use Faker\Generator;
 use PDO;
 use SqlFaker\PostgreSqlProvider;
+use SqlFaker\PostgreSqlStatementProvider;
 
 /**
  * Fuzz target for PostgreSQL SQL syntax validation.
@@ -27,6 +28,9 @@ final class PgSyntaxTarget
 
     private readonly PostgreSqlProvider $provider;
 
+    /** @readonly */
+    private PostgreSqlStatementProvider $statements;
+
     private readonly CorpusSeed $seed;
 
     private readonly PgSyntaxCheck $check;
@@ -41,6 +45,7 @@ final class PgSyntaxTarget
     ) {
         $this->faker = Factory::create();
         $this->provider = new PostgreSqlProvider($this->faker);
+        $this->statements = new PostgreSqlStatementProvider($this->faker);
         $this->seed = new CorpusSeed();
         $this->check = new PgSyntaxCheck($pdo, new PgBracketIndirection());
 
@@ -58,7 +63,7 @@ final class PgSyntaxTarget
         $this->faker->seed($seed);
 
         $sql = $seed % 4 === 0
-            ? $this->provider->createTableAsStatement(maxDepth: $this->maxDepth)
+            ? $this->statements->createTableAsStatement(maxDepth: $this->maxDepth)
             : $this->provider->sql(maxDepth: $this->maxDepth);
 
         $this->check->verify($sql, $seed);
