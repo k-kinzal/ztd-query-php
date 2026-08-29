@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlFaker\MySql;
 
-use SqlFaker\Grammar\GenerationPlan;
-use SqlFaker\Grammar\ProductionPattern;
+use SqlFaker\Grammar\Model\ProductionPattern;
+use SqlFaker\Grammar\Walk\GenerationPlan;
 use SqlFaker\MySql\Grammar\Grammar;
 
 /**

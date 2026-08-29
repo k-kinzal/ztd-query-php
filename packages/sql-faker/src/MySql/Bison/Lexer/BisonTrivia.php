@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlFaker\MySql\Bison\Lexer;
 
-use SqlFaker\Grammar\GrammarParseException;
-use SqlFaker\Grammar\SourceCursor;
+use SqlFaker\Grammar\Source\GrammarParseException;
+use SqlFaker\Grammar\Source\SourceCursor;
 
 /**
  * The text between two lexemes that carries no token of its own.

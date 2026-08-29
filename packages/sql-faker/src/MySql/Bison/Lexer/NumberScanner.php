@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlFaker\MySql\Bison\Lexer;
 
 use Override;
-use SqlFaker\Grammar\SourceCursor;
+use SqlFaker\Grammar\Source\SourceCursor;
 
 /**
  * Consumes a decimal number.
