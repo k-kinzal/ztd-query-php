@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlFaker\MySql\Bison;
 
-use SqlFaker\Grammar\GrammarParseException;
+use SqlFaker\Grammar\Source\GrammarParseException;
 use SqlFaker\MySql\Bison\Ast\BisonAst;
 use SqlFaker\MySql\Bison\Lexer\BisonTokenStream;
 use SqlFaker\MySql\Bison\Rule\BisonRuleReader;

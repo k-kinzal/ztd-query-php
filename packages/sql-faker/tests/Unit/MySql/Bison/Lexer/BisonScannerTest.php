@@ -7,7 +7,7 @@ namespace Tests\Unit\SqlFaker\MySql\Bison\Lexer;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\SourceCursor;
+use SqlFaker\Grammar\Source\SourceCursor;
 use SqlFaker\MySql\Bison\Lexer\ActionScanner;
 use SqlFaker\MySql\Bison\Lexer\BisonScanner;
 use SqlFaker\MySql\Bison\Lexer\DirectiveScanner;

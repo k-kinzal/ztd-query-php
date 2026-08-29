@@ -6,7 +6,7 @@ namespace SqlFaker\MySql\Grammar;
 
 use InvalidArgumentException;
 use RuntimeException;
-use SqlFaker\Grammar\SqlVersion;
+use SqlFaker\Grammar\Source\SqlVersion;
 
 /**
  * Represents a formal grammar for SQL generation.

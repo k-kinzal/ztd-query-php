@@ -47,8 +47,8 @@
         "bench": "@bench:quick",
         "bench:quick": "phpbench run bench --bootstrap=vendor/autoload.php --report=aggregate --php-config='{\"memory_limit\":\"512M\"}' --warmup=1 --iterations=3 --revs=25",
         "bench:full": "phpbench run bench --bootstrap=vendor/autoload.php --report=aggregate --php-config='{\"memory_limit\":\"512M\"}' --warmup=2 --iterations=8 --revs=100",
-        "test": "paratest --processes=auto --configuration=\"$(php bin/phpunit-configuration.php)\"",
-        "test:unit": "@php -d memory_limit=512M vendor/bin/phpunit --configuration=\"$(php bin/phpunit-configuration.php)\" tests/Unit/",
+        "test": "@php -d memory_limit=512M tests/run.php --parallel --processes=auto --max-processes=4",
+        "test:unit": "@php -d memory_limit=512M tests/run.php",
         "lint": [
             "@format:check",
             "@phpstan"
@@ -64,7 +64,9 @@
         "fuzz:pg": "php-fuzzer fuzz fuzz/fuzz_pg_syntax.php fuzz/corpus/pg/",
         "fuzz:sqlite": "php-fuzzer fuzz fuzz/fuzz_sqlite_syntax.php fuzz/corpus/sqlite/",
         "phpstan": "phpstan analyse --memory-limit=512M",
-        "compat": "phpcs -q"
+        "compat": "phpcs -q",
+        "loc-guard": "loc-guard",
+        "tree-guard": "tree-guard"
     },
     "config": {
         "allow-plugins": {
