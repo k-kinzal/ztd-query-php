@@ -136,9 +136,10 @@ final class SqlTokenScanner
             }
 
             if ($profile->isIdentifierStart($char)) {
-                $offset++;
-                while ($offset < $length && $profile->isIdentifierPart($sql[$offset])) {
-                    $offset++;
+                for ($offset++; $offset < $length; $offset++) {
+                    if (!$profile->isIdentifierPart($sql[$offset])) {
+                        break;
+                    }
                 }
                 $tokens[] = SqlToken::slice($sql, SqlTokenKind::Word, $start, $offset, $depth, $bracketDepth);
                 continue;

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Fuzz\Robustness\Target;
 
-use Error;
 use Faker\Generator;
 use Fuzz\Robustness\Invariant\ClassifyDeterministicChecker;
 use Fuzz\Robustness\Invariant\ClassifyNeverThrowsChecker;
@@ -32,36 +31,24 @@ use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Schema\TableDefinitionRegistry;
-use ZtdQuery\Shadow\Mutation\ShadowMutation;
 use ZtdQuery\Shadow\ShadowStore;
 
-/**
- * The robustness target.
- */
 final class RobustnessTarget
 {
     private Generator $faker;
     private MySqlProvider $provider;
 
-    /** @readonly */
     private MySqlStatementProvider $statements;
 
-    /** @readonly */
     private MySqlLiteralProvider $literals;
     private MySqlRewriter $rewriter;
     private ShadowStore $shadowStore;
     private ShadowStoreConsistencyChecker $storeChecker;
     /** @var array<int, InvariantChecker> */
     private array $checkers;
-    /** @var array<string, list<array<string, bool|float|int|string|null>>> The rows every run starts from */
+    /** @var array<string, array<int, array<string, mixed>>> */
     private array $fixtureData;
 
-    /**
-     * Binds the instance to what it will work from.
-     *
-     * @param Generator $faker
-     * @param MySqlProvider $provider
-     */
     public function __construct(Generator $faker, MySqlProvider $provider)
     {
         $this->faker = $faker;
@@ -98,9 +85,6 @@ final class RobustnessTarget
         ];
     }
 
-    /**
-     * @throws Error
-     */
     public function __invoke(string $input): void
     {
         $seed = crc32(str_pad($input, 4, "\0"));
@@ -111,7 +95,7 @@ final class RobustnessTarget
         foreach ($this->checkers as $checker) {
             $violation = $checker->check($sql);
             if ($violation !== null) {
-                throw new Error("Invariant violation: seed=$seed\n$violation");
+                throw new \Error("Invariant violation: seed=$seed\n$violation");
             }
         }
 
@@ -125,11 +109,14 @@ final class RobustnessTarget
             if ($plan->kind() === QueryKind::WRITE_SIMULATED || $plan->kind() === QueryKind::DDL_SIMULATED) {
                 $mutation = $plan->mutation();
                 if ($mutation !== null) {
-                    $this->applyIfPossible($mutation);
+                    try {
+                        $mutation->apply($this->shadowStore, []);
+                    } catch (SimulationException) {
+                    }
 
                     $violation = $this->storeChecker->check($sql);
                     if ($violation !== null) {
-                        throw new Error("Invariant violation: seed=$seed\n$violation");
+                        throw new \Error("Invariant violation: seed=$seed\n$violation");
                     }
                 }
             }
@@ -138,10 +125,7 @@ final class RobustnessTarget
         }
     }
 
-    /**
-     * Puts the shadow back to what every run starts from.
-     */
-    public function resetShadowStore(): void
+    private function resetShadowStore(): void
     {
         $this->shadowStore->clear();
         foreach ($this->fixtureData as $table => $rows) {
@@ -149,13 +133,7 @@ final class RobustnessTarget
         }
     }
 
-    /**
-     * Declares the tables a fuzzed statement is run against.
-     *
-     * @param TableDefinitionRegistry $registry Registry to declare them in
-     * @param MySqlSchemaParser $schemaParser Reads each declaration
-     */
-    public function registerFixtureSchemas(TableDefinitionRegistry $registry, MySqlSchemaParser $schemaParser): void
+    private function registerFixtureSchemas(TableDefinitionRegistry $registry, MySqlSchemaParser $schemaParser): void
     {
         $schemas = [
             'users' => 'CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255) NOT NULL, email VARCHAR(255), status VARCHAR(50))',
@@ -174,11 +152,9 @@ final class RobustnessTarget
     }
 
     /**
-     * Answers the rows every run starts from.
-     *
-     * @return array<string, list<array<string, bool|float|int|string|null>>> Table name => the rows it starts with
+     * @return array<string, array<int, array<string, mixed>>>
      */
-    public function buildFixtureData(): array
+    private function buildFixtureData(): array
     {
         return [
             'users' => [
@@ -209,7 +185,7 @@ final class RobustnessTarget
     /**
      * @return callable(): string
      */
-    public function selectGenerator(string $input): callable
+    private function selectGenerator(string $input): callable
     {
         $generators = [
             fn () => $this->provider->sql(maxDepth: 8),
@@ -242,23 +218,5 @@ final class RobustnessTarget
 
         $index = ord($input[0] ?? "\0") % count($generators);
         return $generators[$index];
-    }
-
-    /**
-     * Applies a mutation, letting a refusal stand.
-     *
-     * A fuzzed statement is often one ZTD refuses, and a refusal is the
-     * shadow working -- what is being checked is that the shadow is still
-     * consistent afterwards, which is checked either way.
-     *
-     * @param ShadowMutation $mutation What the statement would do
-     */
-    public function applyIfPossible(ShadowMutation $mutation): void
-    {
-        try {
-            $mutation->apply($this->shadowStore, []);
-        } catch (SimulationException) {
-            return;
-        }
     }
 }
