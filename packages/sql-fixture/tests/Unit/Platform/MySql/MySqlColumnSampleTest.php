@@ -372,4 +372,92 @@ final class MySqlColumnSampleTest extends TestCase
 
         self::assertSame(['key', 'value'], is_array($decoded) ? array_keys($decoded) : []);
     }
+
+    public function testNumericCountsWhatANumericTypeHolds(): void
+    {
+        $value = (new MySqlColumnSample())->numeric(Factory::create(), new ColumnDefinition('c', 'SMALLINT'), 'SMALLINT');
+
+        self::assertIsInt($value);
+    }
+
+    public function testNumericAnswersNothingForATypeThatDoesNotCount(): void
+    {
+        $value = (new MySqlColumnSample())->numeric(Factory::create(), new ColumnDefinition('c', 'TEXT'), 'TEXT');
+
+        self::assertNull($value);
+    }
+
+    public function testTextualWritesCharactersACharacterTypeHolds(): void
+    {
+        $value = (new MySqlColumnSample())->textual(Factory::create(), new ColumnDefinition('c', 'VARCHAR', length: 8), 'VARCHAR');
+
+        self::assertIsString($value);
+    }
+
+    public function testTextualAnswersNothingForATypeThatHoldsNoCharacters(): void
+    {
+        $value = (new MySqlColumnSample())->textual(Factory::create(), new ColumnDefinition('c', 'INT'), 'INT');
+
+        self::assertNull($value);
+    }
+
+    public function testStoredWritesBytesABinaryTypeHolds(): void
+    {
+        $value = (new MySqlColumnSample())->stored(Factory::create(), new ColumnDefinition('c', 'VARBINARY', length: 8), 'VARBINARY');
+
+        self::assertIsString($value);
+    }
+
+    public function testStoredAnswersNothingForATypeThatIsNotBinary(): void
+    {
+        $value = (new MySqlColumnSample())->stored(Factory::create(), new ColumnDefinition('c', 'TEXT'), 'TEXT');
+
+        self::assertNull($value);
+    }
+
+    public function testEnumeratedPicksAMemberTheColumnDeclares(): void
+    {
+        $column = new ColumnDefinition('c', 'ENUM', enumValues: ['red', 'green']);
+
+        $value = (new MySqlColumnSample())->enumerated(Factory::create(), $column, 'ENUM');
+
+        self::assertContains($value, ['red', 'green']);
+    }
+
+    public function testEnumeratedAnswersNothingWhenTheColumnEnumeratesNothing(): void
+    {
+        $column = new ColumnDefinition('c', 'ENUM', enumValues: []);
+
+        $value = (new MySqlColumnSample())->enumerated(Factory::create(), $column, 'ENUM');
+
+        self::assertNull($value);
+    }
+
+    public function testTemporalWritesAMomentATimeTypeKeeps(): void
+    {
+        $value = (new MySqlColumnSample())->temporal(Factory::create(), 'DATE');
+
+        self::assertIsString($value);
+    }
+
+    public function testTemporalAnswersNothingForATypeThatKeepsNoTime(): void
+    {
+        $value = (new MySqlColumnSample())->temporal(Factory::create(), 'VARCHAR');
+
+        self::assertNull($value);
+    }
+
+    public function testSpatialWritesTextTheServerParsesAsAGeometry(): void
+    {
+        $value = (new MySqlColumnSample())->spatial(Factory::create(), 'POINT');
+
+        self::assertStringStartsWith('POINT', (string) $value);
+    }
+
+    public function testSpatialAnswersNothingForATypeThatIsNotSpatial(): void
+    {
+        $value = (new MySqlColumnSample())->spatial(Factory::create(), 'TEXT');
+
+        self::assertNull($value);
+    }
 }

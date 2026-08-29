@@ -49,7 +49,35 @@ final class MySqlColumnSample
      */
     public function of(Generator $faker, ColumnDefinition $column): int|float|string|bool|null
     {
-        return match (strtoupper($column->type)) {
+        $type = strtoupper($column->type);
+
+        return match ($type) {
+            'ENUM', 'SET' => $this->enumerated($faker, $column, $type),
+            'JSON' => $this->json($faker),
+            'BOOL', 'BOOLEAN' => $faker->boolean(),
+            default => $this->numeric($faker, $column, $type)
+                ?? $this->textual($faker, $column, $type)
+                ?? $this->stored($faker, $column, $type)
+                ?? $this->temporal($faker, $type)
+                ?? $this->spatial($faker, $type)
+                ?? $faker->text(50),
+        };
+    }
+
+    /**
+     * Picks a number, when the type is one that counts.
+     *
+     * TINYINT(1) is how MySQL writes a boolean, so this can answer with one.
+     *
+     * @param Generator $faker Source of every choice
+     * @param ColumnDefinition $column Column the value is for
+     * @param string $type The column's type, upper-cased
+     *
+     * @return int|float|bool|null A number the type accepts, or null when it is not a numeric type
+     */
+    public function numeric(Generator $faker, ColumnDefinition $column, string $type): int|float|bool|null
+    {
+        return match ($type) {
             'TINYINT' => $this->numbers->tinyInt($faker, $column),
             'SMALLINT' => $this->numbers->smallInt($faker, $column),
             'MEDIUMINT' => $this->numbers->mediumInt($faker, $column),
@@ -59,30 +87,105 @@ final class MySqlColumnSample
             'DOUBLE', 'REAL' => $faker->randomFloat(4, -1000000.0, 1000000.0),
             'DECIMAL', 'NUMERIC', 'DEC', 'FIXED' => $this->numbers->decimal($faker, $column),
             'BIT' => $this->numbers->bit($faker, $column),
+            default => null,
+        };
+    }
 
+    /**
+     * Picks text, when the type is one that holds characters.
+     *
+     * @param Generator $faker Source of every choice
+     * @param ColumnDefinition $column Column the value is for
+     * @param string $type The column's type, upper-cased
+     *
+     * @return string|null Text the type accepts, or null when it is not a character type
+     */
+    public function textual(Generator $faker, ColumnDefinition $column, string $type): ?string
+    {
+        return match ($type) {
             'CHAR' => $this->text->char($faker, $column),
             'VARCHAR' => $this->text->varchar($faker, $column),
             'TINYTEXT' => substr($faker->text(255), 0, 255),
             'TEXT' => $this->paragraphs($faker, 2),
             'MEDIUMTEXT' => $this->paragraphs($faker, 3),
             'LONGTEXT' => $this->paragraphs($faker, 5),
+            default => null,
+        };
+    }
 
+    /**
+     * Picks bytes, when the type is one that holds them unread.
+     *
+     * @param Generator $faker Source of every choice
+     * @param ColumnDefinition $column Column the value is for
+     * @param string $type The column's type, upper-cased
+     *
+     * @return string|null Bytes the type accepts, or null when it is not a binary type
+     */
+    public function stored(Generator $faker, ColumnDefinition $column, string $type): ?string
+    {
+        return match ($type) {
             'BINARY' => $this->bytes->binary($column),
             'VARBINARY' => $this->bytes->varbinary($faker, $column),
             'TINYBLOB' => $this->bytes->blob($faker, 255),
             'BLOB', 'MEDIUMBLOB', 'LONGBLOB' => $this->bytes->blob($faker, 1000),
+            default => null,
+        };
+    }
 
-            'ENUM' => $this->members->one($faker, $column),
-            'SET' => $this->members->some($faker, $column),
+    /**
+     * Picks from what the column enumerates.
+     *
+     * ENUM holds one member and SET holds any number of them, so the two are
+     * asked separately. A column that enumerates nothing has nothing to be
+     * given, and that is what no value means here.
+     *
+     * @param Generator $faker Source of every choice
+     * @param ColumnDefinition $column Column the value is for
+     * @param string $type The column's type, upper-cased, either ENUM or SET
+     *
+     * @return string|null A member the column declares, or null when it declares none
+     *
+     * @throws LogicException When a chosen SET member is not a string
+     */
+    public function enumerated(Generator $faker, ColumnDefinition $column, string $type): ?string
+    {
+        return $type === 'ENUM'
+            ? $this->members->one($faker, $column)
+            : $this->members->some($faker, $column);
+    }
 
+    /**
+     * Picks a moment, when the type is one that keeps time.
+     *
+     * @param Generator $faker Source of every choice
+     * @param string $type The column's type, upper-cased
+     *
+     * @return int|string|null A moment written as the type keeps it, or null when it keeps no time
+     */
+    public function temporal(Generator $faker, string $type): int|string|null
+    {
+        return match ($type) {
             'DATE' => $faker->date('Y-m-d'),
             'TIME' => $faker->time('H:i:s'),
             'DATETIME' => $faker->dateTime()->format('Y-m-d H:i:s'),
             'TIMESTAMP' => $faker->dateTimeBetween('1970-01-01', '2038-01-19')->format('Y-m-d H:i:s'),
             'YEAR' => $faker->numberBetween(1901, 2155),
+            default => null,
+        };
+    }
 
-            'JSON' => $this->json($faker),
-
+    /**
+     * Writes a geometry, when the type is one the server parses as one.
+     *
+     * @param Generator $faker Source of every choice
+     * @param string $type The column's type, upper-cased
+     *
+     * @return string|null Well-Known Text the server will parse, or null when the type is not spatial
+     */
+    public function spatial(Generator $faker, string $type): ?string
+    {
+        return match ($type) {
             'POINT', 'GEOMETRY' => $this->geometry->point($faker),
             'LINESTRING' => $this->geometry->lineString($faker),
             'POLYGON' => $this->geometry->polygon($faker),
@@ -90,10 +193,7 @@ final class MySqlColumnSample
             'MULTILINESTRING' => $this->geometry->multiLineString($faker),
             'MULTIPOLYGON' => $this->geometry->multiPolygon($faker),
             'GEOMETRYCOLLECTION' => $this->geometry->collection($faker),
-
-            'BOOL', 'BOOLEAN' => $faker->boolean(),
-
-            default => $faker->text(50),
+            default => null,
         };
     }
 
