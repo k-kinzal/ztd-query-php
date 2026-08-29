@@ -1356,4 +1356,17 @@ final class SqlGeneratorTest extends TestCase
         yield 'contains space' => ['my func'];
         yield 'operator plus' => ['+'];
     }
+
+    public function testFor(): void
+    {
+        $faker = Factory::create();
+        $named = SqlGenerator::for($faker, 'mysql-8.4.7');
+        $direct = new SqlGenerator(Grammar::load('mysql-8.4.7'), $faker, 'mysql-8.4.7');
+
+        $faker->seed(1);
+        $fromNamed = $named->generate(GenerationPlans::statement('literal', 4));
+        $faker->seed(1);
+
+        self::assertSame($fromNamed, $direct->generate(GenerationPlans::statement('literal', 4)));
+    }
 }

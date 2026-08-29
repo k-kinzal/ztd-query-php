@@ -71,6 +71,7 @@ final class SqliteProviderTest extends TestCase
         $set = array_search('SET', $tokens, true);
         $functionOpen = array_search('LP', array_slice($tokens, (int) $set, null, true), true);
 
+        $faker->seed($seed);
         self::assertSame($sql, $provider->insertFunctionUpsertStatement(40));
         self::assertSame('INSERT', $tokens[0]);
         self::assertIsInt($values);
@@ -93,6 +94,7 @@ final class SqliteProviderTest extends TestCase
         $tokens = (new LexicalGrammar($faker, 'sqlite-3.47.2', true))->tokenize($sql);
         $separator = array_search('SEMI', $tokens, true);
 
+        $faker->seed($seed);
         self::assertSame($sql, $provider->multiDmlStatement(40));
         self::assertIsInt($separator);
         self::assertContains($tokens[0], ['INSERT', 'UPDATE', 'DELETE']);
@@ -166,6 +168,7 @@ final class SqliteProviderTest extends TestCase
         $where = array_search('WHERE', $tokens, true);
         $match = array_search('MATCH', $tokens, true);
 
+        $faker->seed($seed);
         self::assertSame($sql, $provider->fullTextSearchStatement(40));
         self::assertSame('SELECT', $tokens[0]);
         self::assertContains('FROM', $tokens);
@@ -186,6 +189,7 @@ final class SqliteProviderTest extends TestCase
         $tokens = (new LexicalGrammar($faker, 'sqlite-3.47.2', true))
             ->tokenize($sql);
 
+        $faker->seed($seed);
         self::assertSame($sql, $provider->temporaryTableStatement(40));
         self::assertSame('CREATE', $tokens[0]);
         self::assertContains('TEMP', $tokens);
@@ -203,6 +207,7 @@ final class SqliteProviderTest extends TestCase
         $tokens = (new LexicalGrammar($faker, 'sqlite-3.47.2', true))
             ->tokenize($sql);
 
+        $faker->seed($seed);
         self::assertSame($sql, $provider->viewStatement(40));
         self::assertSame('CREATE', $tokens[0]);
         self::assertContains('VIEW', $tokens);
@@ -220,6 +225,7 @@ final class SqliteProviderTest extends TestCase
         $tokens = (new LexicalGrammar($faker, 'sqlite-3.47.2', true))
             ->tokenize($sql);
 
+        $faker->seed($seed);
         self::assertSame($sql, $provider->generatedColumnStatement(40));
         self::assertContains('GENERATED', $tokens);
         self::assertContains('ALWAYS', $tokens);
@@ -237,6 +243,7 @@ final class SqliteProviderTest extends TestCase
         $tokens = (new LexicalGrammar($faker, 'sqlite-3.47.2', true))
             ->tokenize($sql);
 
+        $faker->seed($seed);
         self::assertSame($sql, $provider->foreignKeyCascadeStatement(40));
         self::assertContains('FOREIGN', $tokens);
         self::assertContains('REFERENCES', $tokens);

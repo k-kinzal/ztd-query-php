@@ -64,6 +64,7 @@ final class PostgreSqlProviderTest extends TestCase
 
         $tokens = (new LexicalGrammar($faker, 'pg-17.2', true))->tokenize($sql);
 
+        $faker->seed($seed);
         self::assertSame($sql, $provider->partitionOfStatement(40));
         self::assertContains('PARTITION', $tokens);
         self::assertContains('FROM', $tokens);
@@ -86,6 +87,7 @@ final class PostgreSqlProviderTest extends TestCase
         $set = array_search('SET', $tokens, true);
         $functionOpen = array_search('(', array_slice($tokens, (int) $set, null, true), true);
 
+        $faker->seed($seed);
         self::assertSame($sql, $provider->insertFunctionUpsertStatement(40));
         self::assertIsInt($values);
         self::assertIsInt($conflict);
@@ -107,6 +109,7 @@ final class PostgreSqlProviderTest extends TestCase
         $tokens = (new LexicalGrammar($faker, 'pg-17.2', true))
             ->tokenize($sql);
 
+        $faker->seed($seed);
         self::assertSame($sql, $provider->partialIndexUpsertStatement(40));
         $conflict = array_search('CONFLICT', $tokens, true);
         $where = array_search('WHERE', $tokens, true);
@@ -129,6 +132,7 @@ final class PostgreSqlProviderTest extends TestCase
         $tokens = (new LexicalGrammar($faker, 'pg-17.2', true))->tokenize($sql);
         $where = array_search('WHERE', $tokens, true);
 
+        $faker->seed($seed);
         self::assertSame($sql, $provider->fullTextSearchStatement(40));
         self::assertSame('SELECT', $tokens[0]);
         self::assertContains('FROM', $tokens);
@@ -149,6 +153,7 @@ final class PostgreSqlProviderTest extends TestCase
         $tokens = (new LexicalGrammar($faker, 'pg-17.2', true))
             ->tokenize($sql);
 
+        $faker->seed($seed);
         self::assertSame($sql, $provider->temporaryTableStatement(40));
         self::assertSame('CREATE', $tokens[0]);
         self::assertContains('TEMP', $tokens);
@@ -166,6 +171,7 @@ final class PostgreSqlProviderTest extends TestCase
         $tokens = (new LexicalGrammar($faker, 'pg-17.2', true))
             ->tokenize($sql);
 
+        $faker->seed($seed);
         self::assertSame($sql, $provider->viewStatement(40));
         self::assertSame('CREATE', $tokens[0]);
         self::assertContains('VIEW', $tokens);
@@ -183,6 +189,7 @@ final class PostgreSqlProviderTest extends TestCase
         $tokens = (new LexicalGrammar($faker, 'pg-17.2', true))
             ->tokenize($sql);
 
+        $faker->seed($seed);
         self::assertSame($sql, $provider->generatedColumnStatement(40));
         self::assertContains('GENERATED', $tokens);
         self::assertContains('STORED', $tokens);
@@ -200,6 +207,7 @@ final class PostgreSqlProviderTest extends TestCase
         $tokens = (new LexicalGrammar($faker, 'pg-17.2', true))
             ->tokenize($sql);
 
+        $faker->seed($seed);
         self::assertSame($sql, $provider->foreignKeyCascadeStatement(40));
         self::assertContains('FOREIGN', $tokens);
         self::assertContains('REFERENCES', $tokens);
@@ -957,6 +965,7 @@ final class PostgreSqlProviderTest extends TestCase
 
         $tokens = (new LexicalGrammar($faker, 'pg-17.2', true))->tokenize($sql);
 
+        $faker->seed($seed);
         self::assertSame($sql, $provider->tableSampleStatement(40));
         self::assertSame('SELECT', $tokens[0]);
         self::assertContains('FROM', $tokens);
@@ -994,6 +1003,7 @@ final class PostgreSqlProviderTest extends TestCase
         $update = strpos($normalized, 'WHEN MATCHED THEN UPDATE');
         $insert = strpos($normalized, 'WHEN NOT MATCHED THEN INSERT');
 
+        $faker->seed($seed);
         self::assertSame($sql, $provider->mergeStatement(40));
         self::assertContains('MERGE', $tokens);
         self::assertGreaterThanOrEqual(
