@@ -7,8 +7,8 @@ namespace ZtdQuery\Platform\MySql\Transformer;
 use PhpMyAdmin\SqlParser\Statements\ReplaceStatement;
 use RuntimeException;
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\MySql\Dialect\MySqlLexerProfile;
-use ZtdQuery\Platform\MySql\Parse\MySqlParser;
+use ZtdQuery\Platform\MySql\MySqlLexerProfile;
+use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Sql\SqlTokenStream;
 

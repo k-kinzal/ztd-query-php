@@ -14,9 +14,9 @@ use ZtdQuery\Exception\ColumnNotFoundException;
 use ZtdQuery\Exception\SchemaNotFoundException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\Mutation\AlterTableMutation;
-use ZtdQuery\Platform\MySql\Parse\MySqlParser;
-use ZtdQuery\Platform\MySql\Parse\MySqlPartitioningParser;
-use ZtdQuery\Platform\MySql\Parse\MySqlSchemaParser;
+use ZtdQuery\Platform\MySql\MySqlParser;
+use ZtdQuery\Platform\MySql\MySqlPartitioningParser;
+use ZtdQuery\Platform\MySql\MySqlSchemaParser;
 use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\TableDefinition;
@@ -24,18 +24,18 @@ use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
 
 #[CoversClass(AlterTableMutation::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlColumnTypeMapper::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Parse\MySqlForeignKeyDefinitionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlColumnTypeMapper::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlForeignKeyDefinitionParser::class)]
 #[UsesClass(MySqlParser::class)]
 #[UsesClass(MySqlSchemaParser::class)]
 #[UsesClass(MySqlPartitioningParser::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Mutation\AlterTableColumn::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Mutation\AlterTableOperation::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Mutation\AlterTableRows::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Mutation\MySqlTableRedeclaration::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\MySqlComponentSql::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlStatementOptions::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlComponentSql::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlStatementOptions::class)]
 final class AlterTableMutationTest extends TestCase
 {
     public function testApplyAddColumnAddsNewColumn(): void

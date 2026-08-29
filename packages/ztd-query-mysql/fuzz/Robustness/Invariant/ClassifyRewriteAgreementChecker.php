@@ -6,8 +6,8 @@ namespace Fuzz\Robustness\Invariant;
 
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\MySql\Dialect\MySqlQueryGuard;
-use ZtdQuery\Platform\MySql\Rewrite\MySqlReadOnlyDiagnosticStatement;
+use ZtdQuery\Platform\MySql\MySqlQueryGuard;
+use ZtdQuery\Platform\MySql\MySqlReadOnlyDiagnosticStatement;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\SqlRewriter;
 

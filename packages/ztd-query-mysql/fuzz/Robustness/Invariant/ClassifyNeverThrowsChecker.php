@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Fuzz\Robustness\Invariant;
 
-use ZtdQuery\Platform\MySql\Dialect\MySqlQueryGuard;
+use ZtdQuery\Platform\MySql\MySqlQueryGuard;
 
 /**
  * The classify never throws checker, as invariant checker.
