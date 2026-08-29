@@ -13,4 +13,4 @@ parameters:
         - tests
     toolkit:
         broadCatchAllowedPaths:
-            - '*/src/Rewrite/MySqlComponentSql.php'
+            - '*/src/MySqlComponentSql.php'

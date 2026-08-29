@@ -11,11 +11,11 @@ use RuntimeException;
 use Tests\Contract\TransformerContractTest;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\IdentifierQuoter;
-use ZtdQuery\Platform\MySql\Dialect\MySqlCastRenderer;
-use ZtdQuery\Platform\MySql\Dialect\MySqlIdentifierQuoter;
-use ZtdQuery\Platform\MySql\Dialect\MySqlTypeSemantics;
-use ZtdQuery\Platform\MySql\Rewrite\MySqlFullTextSearchRewriter;
-use ZtdQuery\Platform\MySql\Rewrite\MySqlPartitionSelectionRewriter;
+use ZtdQuery\Platform\MySql\MySqlCastRenderer;
+use ZtdQuery\Platform\MySql\MySqlFullTextSearchRewriter;
+use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
+use ZtdQuery\Platform\MySql\MySqlPartitionSelectionRewriter;
+use ZtdQuery\Platform\MySql\MySqlTypeSemantics;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Rewrite\SqlTransformer;
@@ -24,16 +24,16 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\TablePartitioning;
 
 #[CoversClass(SelectTransformer::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Parse\MySqlSelectRelationParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlSelectRelationParser::class)]
 #[UsesClass(MySqlCastRenderer::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlValueRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
 #[UsesClass(MySqlTypeSemantics::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\MySqlCteShadowComposer::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\MySqlGeneratedColumnProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlGeneratedColumnProjector::class)]
 #[UsesClass(MySqlPartitionSelectionRewriter::class)]
 #[UsesClass(MySqlFullTextSearchRewriter::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 final class SelectTransformerTest extends TransformerContractTest
 {
     public function testTransformsPartitionSelectionBeforeComposingShadowCte(): void

@@ -10,31 +10,31 @@ use PhpMyAdmin\SqlParser\Statements\UpdateStatement;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use ZtdQuery\Platform\MySql\Dialect\MySqlCastRenderer;
-use ZtdQuery\Platform\MySql\Dialect\MySqlIdentifierQuoter;
-use ZtdQuery\Platform\MySql\Parse\DmlWhereClauseExtractor;
-use ZtdQuery\Platform\MySql\Parse\MySqlParser;
-use ZtdQuery\Platform\MySql\Parse\UpdateAssignmentExtractor;
-use ZtdQuery\Platform\MySql\Parse\UpdateSourceExtractor;
+use ZtdQuery\Platform\MySql\DmlWhereClauseExtractor;
+use ZtdQuery\Platform\MySql\MySqlCastRenderer;
+use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
+use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
+use ZtdQuery\Platform\MySql\UpdateAssignmentExtractor;
+use ZtdQuery\Platform\MySql\UpdateSourceExtractor;
 
 #[CoversClass(UpdateTransformer::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Parse\MySqlSelectRelationParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlSelectRelationParser::class)]
 #[UsesClass(MySqlParser::class)]
 #[UsesClass(SelectTransformer::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\MySqlFullTextSearchRewriter::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlFullTextSearchRewriter::class)]
 #[UsesClass(MySqlCastRenderer::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]
 #[UsesClass(DmlWhereClauseExtractor::class)]
 #[UsesClass(UpdateAssignmentExtractor::class)]
 #[UsesClass(UpdateSourceExtractor::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlValueRenderer::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlTypeSemantics::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\MySqlCteShadowComposer::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\MySqlGeneratedColumnProjector::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlLexerProfile::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\MySqlComponentSql::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlTypeSemantics::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlGeneratedColumnProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlComponentSql::class)]
 final class UpdateTransformerTest extends TestCase
 {
     public function testBuildProjectionPreservesDerivedJoinSource(): void

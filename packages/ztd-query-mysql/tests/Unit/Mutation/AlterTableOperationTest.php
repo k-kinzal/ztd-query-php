@@ -19,8 +19,8 @@ use ZtdQuery\Shadow\ShadowStore;
 #[CoversClass(AlterTableOperation::class)]
 #[UsesClass(AlterTableColumn::class)]
 #[UsesClass(AlterTableRows::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\MySqlComponentSql::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlStatementOptions::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlComponentSql::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlStatementOptions::class)]
 final class AlterTableOperationTest extends TestCase
 {
     public function testApplyToAddsTheColumnAnAddDeclares(): void
