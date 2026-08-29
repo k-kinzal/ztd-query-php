@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlFixture\Platform\PostgreSql;
 
 use Faker\Generator;
-use Random\RandomException;
 use SqlFixture\Schema\ColumnDefinition;
 
 /**
@@ -36,7 +35,6 @@ final class PostgreSqlColumnSample
      *
      * @return int|float|string|bool A value of the kind the type calls for
      *
-     * @throws RandomException When a bytea column is asked for and the system has no source of randomness
      */
     public function of(Generator $faker, ColumnDefinition $column): int|float|string|bool
     {
@@ -141,7 +139,6 @@ final class PostgreSqlColumnSample
      *
      * @return string Bytes as a bytea hex literal
      *
-     * @throws RandomException When the system has no source of randomness
      */
     public function bytea(Generator $faker): string
     {
