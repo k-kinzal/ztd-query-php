@@ -20,6 +20,7 @@ parameters:
         -
             identifier: class.notFound
             path: tests/Unit/ZtdPdoTest.php
+            reportUnmatched: false
         # PHP 8.4 moved pdo_pgsql's COPY methods off PDO onto Pdo\Pgsql, so PDO
         # declares none of them on any PHP this package runs on, while PHPStan's
         # bundled pdo_pgsql stub still puts them there. That makes it read
@@ -31,3 +32,4 @@ parameters:
             identifier: customRules.overrideMustHaveAttribute
             message: '#^Add \#\[\\Override\] to override method (pgsqlCopy(ToArray|FromArray|ToFile|FromFile)|connect)\(\)\.$#'
             path: src/ZtdPdo.php
+            reportUnmatched: false
