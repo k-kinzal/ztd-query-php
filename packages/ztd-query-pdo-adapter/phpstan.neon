@@ -12,6 +12,15 @@ parameters:
         - fuzz
         - tests
     ignoreErrors:
+        # PHPStan's bundled pdo_pgsql stub gives PDO::connect() a driver-specific
+        # return type, PDO\Sqlite among them, and its own reflection does not
+        # carry those classes. Anything the test does with what connect() hands
+        # back is then a call on an unknown class. The connection is real; only
+        # the analysis of its type is not.
+        -
+            identifier: class.notFound
+            path: tests/Unit/ZtdPdoTest.php
+            reportUnmatched: false
         # PHP 8.4 moved pdo_pgsql's COPY methods off PDO onto Pdo\Pgsql, so PDO
         # declares none of them on any PHP this package runs on, while PHPStan's
         # bundled pdo_pgsql stub still puts them there. That makes it read
@@ -23,3 +32,4 @@ parameters:
             identifier: customRules.overrideMustHaveAttribute
             message: '#^Add \#\[\\Override\] to override method (pgsqlCopy(ToArray|FromArray|ToFile|FromFile)|connect)\(\)\.$#'
             path: src/ZtdPdo.php
+            reportUnmatched: false
