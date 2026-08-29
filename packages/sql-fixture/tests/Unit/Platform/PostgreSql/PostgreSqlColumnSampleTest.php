@@ -415,4 +415,74 @@ final class PostgreSqlColumnSampleTest extends TestCase
 
         self::assertSame([1, 2, 3], array_values(array_unique($counts)));
     }
+
+    public function testNumericCountsWhatANumericTypeHolds(): void
+    {
+        $value = (new PostgreSqlColumnSample())->numeric(Factory::create(), new ColumnDefinition('c', 'SMALLINT'), 'SMALLINT');
+
+        self::assertIsInt($value);
+    }
+
+    public function testNumericAnswersNothingForATypeThatDoesNotCount(): void
+    {
+        $value = (new PostgreSqlColumnSample())->numeric(Factory::create(), new ColumnDefinition('c', 'TEXT'), 'TEXT');
+
+        self::assertNull($value);
+    }
+
+    public function testTextualWritesCharactersACharacterTypeHolds(): void
+    {
+        $value = (new PostgreSqlColumnSample())->textual(Factory::create(), new ColumnDefinition('c', 'VARCHAR', length: 8), 'VARCHAR');
+
+        self::assertIsString($value);
+    }
+
+    public function testTextualAnswersNothingForATypeThatHoldsNoCharacters(): void
+    {
+        $value = (new PostgreSqlColumnSample())->textual(Factory::create(), new ColumnDefinition('c', 'INTEGER'), 'INTEGER');
+
+        self::assertNull($value);
+    }
+
+    public function testTemporalWritesAMomentATimeTypeKeeps(): void
+    {
+        $value = (new PostgreSqlColumnSample())->temporal(Factory::create(), 'DATE');
+
+        self::assertIsString($value);
+    }
+
+    public function testTemporalAnswersNothingForATypeThatKeepsNoTime(): void
+    {
+        $value = (new PostgreSqlColumnSample())->temporal(Factory::create(), 'TEXT');
+
+        self::assertNull($value);
+    }
+
+    public function testAddressingWritesAnAddressTheTypeNames(): void
+    {
+        $value = (new PostgreSqlColumnSample())->addressing(Factory::create(), 'CIDR');
+
+        self::assertStringEndsWith('/24', (string) $value);
+    }
+
+    public function testAddressingAnswersNothingForATypeThatNamesNoAddress(): void
+    {
+        $value = (new PostgreSqlColumnSample())->addressing(Factory::create(), 'TEXT');
+
+        self::assertNull($value);
+    }
+
+    public function testStructuredWritesADocumentTheTypeHolds(): void
+    {
+        $value = (new PostgreSqlColumnSample())->structured(Factory::create(), 'XML');
+
+        self::assertStringStartsWith('<root>', (string) $value);
+    }
+
+    public function testStructuredAnswersNothingForATypeThatHoldsNeither(): void
+    {
+        $value = (new PostgreSqlColumnSample())->structured(Factory::create(), 'TEXT');
+
+        self::assertNull($value);
+    }
 }

@@ -77,19 +77,8 @@ final class SqliteCatalog
                 $primaryKeys[] = $row['name'];
             }
 
-            $type = strtoupper($row['type'] !== '' ? $row['type'] : 'BLOB');
-            $length = null;
-            $precision = null;
-            $scale = null;
-            if (preg_match('/^(\w+)\s*\(\s*(\d+)\s*(?:,\s*(\d+)\s*)?\)/i', $type, $matches) === 1) {
-                $type = strtoupper($matches[1]);
-                if (isset($matches[3])) {
-                    $precision = (int) $matches[2];
-                    $scale = (int) $matches[3];
-                } else {
-                    $length = (int) $matches[2];
-                }
-            }
+            ['type' => $type, 'length' => $length, 'precision' => $precision, 'scale' => $scale]
+                = $this->declaredSize($row['type']);
 
             $columns[$row['name']] = new ColumnDefinition(
                 name: $row['name'],
@@ -107,6 +96,33 @@ final class SqliteCatalog
         }
 
         return new TableSchema($tableName, $columns, $primaryKeys);
+    }
+
+    /**
+     * Reads the type and size a pragma reported for one column.
+     *
+     * SQLite stores whatever type name was written, brackets and all, and a
+     * column declared with no type at all holds anything, which is what BLOB
+     * means here. A size in brackets is a precision and scale when it names
+     * two numbers and a length when it names one.
+     *
+     * @param string $declared The type as the pragma reported it
+     *
+     * @return array{type: string, length: int|null, precision: int|null, scale: int|null} The type and the size it declares
+     */
+    public function declaredSize(string $declared): array
+    {
+        $type = strtoupper($declared !== '' ? $declared : 'BLOB');
+        if (preg_match('/^(\w+)\s*\(\s*(\d+)\s*(?:,\s*(\d+)\s*)?\)/i', $type, $matches) !== 1) {
+            return ['type' => $type, 'length' => null, 'precision' => null, 'scale' => null];
+        }
+
+        $named = strtoupper($matches[1]);
+        if (isset($matches[3])) {
+            return ['type' => $named, 'length' => null, 'precision' => (int) $matches[2], 'scale' => (int) $matches[3]];
+        }
+
+        return ['type' => $named, 'length' => (int) $matches[2], 'precision' => null, 'scale' => null];
     }
 
     /**
