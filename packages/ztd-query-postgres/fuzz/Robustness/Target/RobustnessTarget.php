@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Fuzz\Robustness\Target;
 
+use Error;
 use Faker\Generator;
 use Fuzz\Robustness\Invariant\ClassifyDeterministicChecker;
 use Fuzz\Robustness\Invariant\ClassifyNeverThrowsChecker;
@@ -13,6 +14,7 @@ use Fuzz\Robustness\Invariant\RewriteExceptionTypeChecker;
 use Fuzz\Robustness\Invariant\RewritePlanConsistencyChecker;
 use Fuzz\Robustness\Invariant\ShadowStoreConsistencyChecker;
 use SqlFaker\PostgreSqlProvider;
+use SqlFaker\PostgreSqlStatementProvider;
 use ZtdQuery\Exception\SimulationException;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
@@ -27,14 +29,21 @@ use ZtdQuery\Platform\Postgres\Transformer\InsertTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer;
 use ZtdQuery\Rewrite\QueryKind;
-use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Schema\PartialUniqueIndex;
+use ZtdQuery\Schema\TableDefinitionRegistry;
+use ZtdQuery\Shadow\Mutation\ShadowMutation;
 use ZtdQuery\Shadow\ShadowStore;
 
+/**
+ * The robustness target.
+ */
 final class RobustnessTarget
 {
     private Generator $faker;
     private PostgreSqlProvider $provider;
+
+    /** @readonly */
+    private PostgreSqlStatementProvider $statements;
     private PgSqlRewriter $rewriter;
     private ShadowStore $shadowStore;
     private ShadowStoreConsistencyChecker $storeChecker;
@@ -43,10 +52,17 @@ final class RobustnessTarget
     /** @var array<string, list<array<string, bool|float|int|string|null>>> The rows every run starts from */
     private array $fixtureData;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param Generator $faker
+     * @param PostgreSqlProvider $provider
+     */
     public function __construct(Generator $faker, PostgreSqlProvider $provider)
     {
         $this->faker = $faker;
         $this->provider = $provider;
+        $this->statements = new PostgreSqlStatementProvider($faker);
 
         $parser = new PgSqlParser();
         $schemaParser = new PgSqlSchemaParser();
@@ -76,6 +92,9 @@ final class RobustnessTarget
         ];
     }
 
+    /**
+     * @throws Error
+     */
     public function __invoke(string $input): void
     {
         $seed = crc32(str_pad($input, 4, "\0"));
@@ -86,7 +105,7 @@ final class RobustnessTarget
         foreach ($this->checkers as $checker) {
             $violation = $checker->check($sql);
             if ($violation !== null) {
-                throw new \Error("Invariant violation: seed=$seed\n$violation");
+                throw new Error("Invariant violation: seed=$seed\n$violation");
             }
         }
 
@@ -100,14 +119,11 @@ final class RobustnessTarget
             if ($plan->kind() === QueryKind::WRITE_SIMULATED || $plan->kind() === QueryKind::DDL_SIMULATED) {
                 $mutation = $plan->mutation();
                 if ($mutation !== null) {
-                    try {
-                        $mutation->apply($this->shadowStore, []);
-                    } catch (SimulationException) {
-                    }
+                    $this->applyIfPossible($mutation);
 
                     $violation = $this->storeChecker->check($sql);
                     if ($violation !== null) {
-                        throw new \Error("Invariant violation: seed=$seed\n$violation");
+                        throw new Error("Invariant violation: seed=$seed\n$violation");
                     }
                 }
             }
@@ -116,7 +132,10 @@ final class RobustnessTarget
         }
     }
 
-    private function resetShadowStore(): void
+    /**
+     * Puts the shadow back to what every run starts from.
+     */
+    public function resetShadowStore(): void
     {
         $this->shadowStore->clear();
         foreach ($this->fixtureData as $table => $rows) {
@@ -124,7 +143,13 @@ final class RobustnessTarget
         }
     }
 
-    private function registerFixtureSchemas(TableDefinitionRegistry $registry, PgSqlSchemaParser $schemaParser): void
+    /**
+     * Declares the tables a fuzzed statement is run against.
+     *
+     * @param TableDefinitionRegistry $registry The registry
+     * @param PgSqlSchemaParser $schemaParser The schema parser
+     */
+    public function registerFixtureSchemas(TableDefinitionRegistry $registry, PgSqlSchemaParser $schemaParser): void
     {
         $schemas = [
             'users' => 'CREATE TABLE users (id INTEGER PRIMARY KEY, name VARCHAR(255) NOT NULL, email VARCHAR(255), status VARCHAR(50))',
@@ -149,9 +174,15 @@ final class RobustnessTarget
     }
 
     /**
+<<<<<<< HEAD
      * @return array<string, list<array<string, bool|float|int|string|null>>> Table name => the rows it starts with
+=======
+     * Answers the rows every run starts from.
+     *
+     * @return array<string, list<array<string, bool|float|int|string|null>>> Table name => the rows it starts with What it answers
+>>>>>>> feat/php-ai-toolkit-sql-fixture
      */
-    private function buildFixtureData(): array
+    public function buildFixtureData(): array
     {
         return [
             'users' => [
@@ -183,33 +214,55 @@ final class RobustnessTarget
     }
 
     /**
+     * Answers the generator this input should be fuzzed through.
+     *
+     * @param string $input The input
+     *
      * @return callable(): string
      */
-    private function selectGenerator(string $input): callable
+    public function selectGenerator(string $input): callable
     {
         $generators = [
             fn (): string => $this->provider->sql(maxDepth: 8),
-            fn (): string => $this->provider->selectStatement(maxDepth: 8),
-            fn (): string => $this->provider->insertStatement(maxDepth: 8),
-            fn (): string => $this->provider->updateStatement(maxDepth: 8),
-            fn (): string => $this->provider->deleteStatement(maxDepth: 8),
-            fn (): string => $this->provider->createTableStatement(maxDepth: 5),
-            fn (): string => $this->provider->alterTableStatement(maxDepth: 5),
-            fn (): string => $this->provider->dropTableStatement(maxDepth: 3),
+            fn (): string => $this->statements->selectStatement(maxDepth: 8),
+            fn (): string => $this->statements->insertStatement(maxDepth: 8),
+            fn (): string => $this->statements->updateStatement(maxDepth: 8),
+            fn (): string => $this->statements->deleteStatement(maxDepth: 8),
+            fn (): string => $this->statements->createTableStatement(maxDepth: 5),
+            fn (): string => $this->statements->alterTableStatement(maxDepth: 5),
+            fn (): string => $this->statements->dropTableStatement(maxDepth: 3),
             fn (): string => 'EXPLAIN (FORMAT JSON) SELECT * FROM users',
             fn (): string => 'SELECT * FROM public.users',
-            fn (): string => $this->provider->partitionOfStatement(),
-            fn (): string => $this->provider->tableSampleStatement(),
-            fn (): string => $this->provider->doStatement(),
-            fn (): string => $this->provider->mergeStatement(),
-            fn (): string => $this->provider->copyStatement(maxDepth: 8),
-            fn (): string => $this->provider->partialIndexUpsertStatement(),
-            fn (): string => $this->provider->createDomainStatement(maxDepth: 8),
-            fn (): string => $this->provider->domainDmlStatement(),
-            fn (): string => $this->provider->fullTextSearchStatement(),
+            fn (): string => $this->statements->partitionOfStatement(),
+            fn (): string => $this->statements->tableSampleStatement(),
+            fn (): string => $this->statements->doStatement(),
+            fn (): string => $this->statements->mergeStatement(),
+            fn (): string => $this->statements->copyStatement(maxDepth: 8),
+            fn (): string => $this->statements->partialIndexUpsertStatement(),
+            fn (): string => $this->statements->createDomainStatement(maxDepth: 8),
+            fn (): string => $this->statements->domainDmlStatement(),
+            fn (): string => $this->statements->fullTextSearchStatement(),
         ];
 
         $index = ord($input[0] ?? "\0") % count($generators);
         return $generators[$index];
+    }
+
+    /**
+     * Applies a mutation, letting a refusal stand.
+     *
+     * A fuzzed statement is often one ZTD refuses, and a refusal is the
+     * shadow working -- what is being checked is that the shadow is still
+     * consistent afterwards, which is checked either way.
+     *
+     * @param ShadowMutation $mutation What the statement would do
+     */
+    public function applyIfPossible(ShadowMutation $mutation): void
+    {
+        try {
+            $mutation->apply($this->shadowStore, []);
+        } catch (SimulationException) {
+            return;
+        }
     }
 }

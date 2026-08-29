@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Fuzz\Robustness\Target;
 
+use Error;
 use Faker\Generator;
 use Fuzz\Robustness\Invariant\ClassifyDeterministicChecker;
 use Fuzz\Robustness\Invariant\ClassifyNeverThrowsChecker;
@@ -13,6 +14,7 @@ use Fuzz\Robustness\Invariant\RewriteExceptionTypeChecker;
 use Fuzz\Robustness\Invariant\RewritePlanConsistencyChecker;
 use Fuzz\Robustness\Invariant\TruncateTargetConsistencyChecker;
 use SqlFaker\PostgreSqlProvider;
+use SqlFaker\PostgreSqlStatementProvider;
 use ZtdQuery\Platform\Postgres\PgSqlMutationResolver;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
 use ZtdQuery\Platform\Postgres\PgSqlQueryGuard;
@@ -23,21 +25,34 @@ use ZtdQuery\Platform\Postgres\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\InsertTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer;
-use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Schema\PartialUniqueIndex;
+use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
 
+/**
+ * The rewrite target.
+ */
 final class RewriteTarget
 {
     private Generator $faker;
     private PostgreSqlProvider $provider;
+
+    /** @readonly */
+    private PostgreSqlStatementProvider $statements;
     /** @var array<int, InvariantChecker> */
     private array $checkers;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param Generator $faker
+     * @param PostgreSqlProvider $provider
+     */
     public function __construct(Generator $faker, PostgreSqlProvider $provider)
     {
         $this->faker = $faker;
         $this->provider = $provider;
+        $this->statements = new PostgreSqlStatementProvider($faker);
 
         $parser = new PgSqlParser();
         $schemaParser = new PgSqlSchemaParser();
@@ -66,6 +81,9 @@ final class RewriteTarget
         ];
     }
 
+    /**
+     * @throws Error
+     */
     public function __invoke(string $input): void
     {
         $seed = crc32(str_pad($input, 4, "\0"));
@@ -76,12 +94,18 @@ final class RewriteTarget
         foreach ($this->checkers as $checker) {
             $violation = $checker->check($sql);
             if ($violation !== null) {
-                throw new \Error("Invariant violation: seed=$seed\n$violation");
+                throw new Error("Invariant violation: seed=$seed\n$violation");
             }
         }
     }
 
-    private function registerFixtureSchemas(TableDefinitionRegistry $registry, PgSqlSchemaParser $schemaParser): void
+    /**
+     * Declares the tables a fuzzed statement is run against.
+     *
+     * @param TableDefinitionRegistry $registry The registry
+     * @param PgSqlSchemaParser $schemaParser The schema parser
+     */
+    public function registerFixtureSchemas(TableDefinitionRegistry $registry, PgSqlSchemaParser $schemaParser): void
     {
         $schemas = [
             'users' => 'CREATE TABLE users (id INTEGER PRIMARY KEY, name VARCHAR(255) NOT NULL, email VARCHAR(255), status VARCHAR(50))',
@@ -105,7 +129,12 @@ final class RewriteTarget
         }
     }
 
-    private function populateFixtureData(ShadowStore $store): void
+    /**
+     * Fills the shadow with the rows a fuzzed statement is run against.
+     *
+     * @param ShadowStore $store Shadow holding the rows
+     */
+    public function populateFixtureData(ShadowStore $store): void
     {
         $store->set('users', [
             ['id' => '1', 'name' => 'Alice', 'email' => 'alice@example.com', 'status' => 'active'],
@@ -135,34 +164,38 @@ final class RewriteTarget
     }
 
     /**
+     * Answers the generator this input should be fuzzed through.
+     *
+     * @param string $input The input
+     *
      * @return callable(): string
      */
-    private function selectGenerator(string $input): callable
+    public function selectGenerator(string $input): callable
     {
         $generators = [
             fn (): string => $this->provider->sql(maxDepth: 8),
-            fn (): string => $this->provider->selectStatement(maxDepth: 8),
-            fn (): string => $this->provider->insertStatement(maxDepth: 8),
-            fn (): string => $this->provider->updateStatement(maxDepth: 8),
-            fn (): string => $this->provider->deleteStatement(maxDepth: 8),
-            fn (): string => $this->provider->createTableStatement(maxDepth: 5),
-            fn (): string => $this->provider->alterTableStatement(maxDepth: 5),
-            fn (): string => $this->provider->dropTableStatement(maxDepth: 3),
-            fn (): string => $this->provider->truncateStatement(maxDepth: 8),
-            fn (): string => $this->provider->insertFunctionUpsertStatement(),
-            fn (): string => $this->provider->temporaryTableStatement(),
-            fn (): string => $this->provider->viewStatement(),
-            fn (): string => $this->provider->generatedColumnStatement(),
-            fn (): string => $this->provider->foreignKeyCascadeStatement(),
-            fn (): string => $this->provider->partitionOfStatement(),
-            fn (): string => $this->provider->tableSampleStatement(),
-            fn (): string => $this->provider->doStatement(),
-            fn (): string => $this->provider->mergeStatement(),
-            fn (): string => $this->provider->copyStatement(maxDepth: 8),
-            fn (): string => $this->provider->partialIndexUpsertStatement(),
-            fn (): string => $this->provider->createDomainStatement(maxDepth: 8),
-            fn (): string => $this->provider->domainDmlStatement(),
-            fn (): string => $this->provider->fullTextSearchStatement(),
+            fn (): string => $this->statements->selectStatement(maxDepth: 8),
+            fn (): string => $this->statements->insertStatement(maxDepth: 8),
+            fn (): string => $this->statements->updateStatement(maxDepth: 8),
+            fn (): string => $this->statements->deleteStatement(maxDepth: 8),
+            fn (): string => $this->statements->createTableStatement(maxDepth: 5),
+            fn (): string => $this->statements->alterTableStatement(maxDepth: 5),
+            fn (): string => $this->statements->dropTableStatement(maxDepth: 3),
+            fn (): string => $this->statements->truncateStatement(maxDepth: 8),
+            fn (): string => $this->statements->insertFunctionUpsertStatement(),
+            fn (): string => $this->statements->temporaryTableStatement(),
+            fn (): string => $this->statements->viewStatement(),
+            fn (): string => $this->statements->generatedColumnStatement(),
+            fn (): string => $this->statements->foreignKeyCascadeStatement(),
+            fn (): string => $this->statements->partitionOfStatement(),
+            fn (): string => $this->statements->tableSampleStatement(),
+            fn (): string => $this->statements->doStatement(),
+            fn (): string => $this->statements->mergeStatement(),
+            fn (): string => $this->statements->copyStatement(maxDepth: 8),
+            fn (): string => $this->statements->partialIndexUpsertStatement(),
+            fn (): string => $this->statements->createDomainStatement(maxDepth: 8),
+            fn (): string => $this->statements->domainDmlStatement(),
+            fn (): string => $this->statements->fullTextSearchStatement(),
         ];
 
         $index = ord($input[0] ?? "\0") % count($generators);
