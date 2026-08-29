@@ -751,8 +751,11 @@ class ZtdMysqli extends mysqli
      * @return mysqli_result|bool The result, or whether a statement with no result ran
      *
      * @throws ZtdMysqliException When ZTD-specific exception occurs (wraps DatabaseException).
+     *
+     * This carries no #[\Override] attribute: mysqli::execute_query() arrived in
+     * PHP 8.2, and on 8.1, which this package still supports, there is no parent
+     * method for the attribute to be checked against.
      */
-    #[Override]
     public function execute_query(string $query, ?array $params = null): mysqli_result|bool
     {
         if (!$this->session->isEnabled()) {

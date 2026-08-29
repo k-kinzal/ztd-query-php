@@ -40,6 +40,14 @@ parameters:
         # TODO: Remove this excludePath once PHPStan fixes the functionMap for bind_param.
         - src/MysqliStatementBindingBridge.php
     ignoreErrors:
+        # mysqli::execute_query() arrived in PHP 8.2. This package supports 8.1,
+        # where the parent method does not exist, so writing #[\Override] on the
+        # override would be a fatal error at class-declaration time there. The
+        # method has to stay: it is what keeps a one-shot query inside the shadow.
+        -
+            identifier: customRules.overrideMustHaveAttribute
+            message: '#^Add \#\[\\Override\] to override method execute_query\(\)\.$#'
+            path: src/ZtdMysqli.php
         # mysqli_stmt and mysqli_result are built by the extension from a live
         # connection, and their constructors refuse to run without one. A test
         # double for either therefore cannot call the parent constructor; doing

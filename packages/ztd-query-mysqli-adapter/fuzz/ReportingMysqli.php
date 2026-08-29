@@ -36,6 +36,9 @@ final class ReportingMysqli
      * @return mysqli_result|true The result, or true where the statement has none
      *
      * @throws mysqli_sql_exception When the server refuses the statement
+     *
+     * mysqli::execute_query() arrived in PHP 8.2 and this package still supports
+     * 8.1, so the statement is prepared and run the way both versions can.
      */
     public function query(string $sql): mysqli_result|bool
     {
@@ -56,15 +59,22 @@ final class ReportingMysqli
      * @return mysqli_result|true The result, or true where the statement has none
      *
      * @throws mysqli_sql_exception When the server refuses the statement
+     *
+     * mysqli::execute_query() arrived in PHP 8.2 and this package still supports
+     * 8.1, so the statement is prepared and run the way both versions can.
      */
     public function executeQuery(string $sql, array $parameters): mysqli_result|bool
     {
-        $result = $this->connection->execute_query($sql, $parameters);
-        if ($result === false) {
+        $statement = $this->connection->prepare($sql);
+        if ($statement === false) {
             throw $this->refusal();
         }
+        if (!$statement->execute($parameters === [] ? null : $parameters)) {
+            throw $this->refusal();
+        }
+        $result = $statement->get_result();
 
-        return $result;
+        return $result === false ? true : $result;
     }
 
     /**
@@ -73,6 +83,9 @@ final class ReportingMysqli
      * @param string $sql Statement as it was written
      *
      * @throws mysqli_sql_exception When the server refuses the statement
+     *
+     * mysqli::execute_query() arrived in PHP 8.2 and this package still supports
+     * 8.1, so the statement is prepared and run the way both versions can.
      */
     public function prepareAndClose(string $sql): void
     {
