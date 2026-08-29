@@ -11,8 +11,8 @@ use Fuzz\Robustness\Invariant\ClassifyNeverThrowsChecker;
 use Fuzz\Robustness\Invariant\InvariantChecker;
 use SqlFaker\MySqlProvider;
 use SqlFaker\MySqlStatementProvider;
-use ZtdQuery\Platform\MySql\Dialect\MySqlQueryGuard;
-use ZtdQuery\Platform\MySql\Parse\MySqlParser;
+use ZtdQuery\Platform\MySql\MySqlParser;
+use ZtdQuery\Platform\MySql\MySqlQueryGuard;
 
 /**
  * The classify target.

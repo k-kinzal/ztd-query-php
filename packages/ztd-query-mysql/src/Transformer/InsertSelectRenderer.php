@@ -6,7 +6,7 @@ namespace ZtdQuery\Platform\MySql\Transformer;
 
 use RuntimeException;
 use ZtdQuery\Exception\InvalidDefinitionException;
-use ZtdQuery\Platform\MySql\Dialect\MySqlIdentifierQuoter;
+use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Rewrite\InsertSelectProjectionPlanner;
 
 /**
