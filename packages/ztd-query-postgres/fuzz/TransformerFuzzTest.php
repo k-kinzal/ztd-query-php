@@ -9,7 +9,7 @@ use Override;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\PostgreSqlProvider;
+use SqlFaker\PostgreSqlStatementProvider;
 use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
 use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
@@ -33,14 +33,14 @@ final class TransformerFuzzTest extends TestCase
 
     private SelectTransformer $transformer;
 
-    private PostgreSqlProvider $provider;
+    private PostgreSqlStatementProvider $provider;
 
     #[Override]
     protected function setUp(): void
     {
         $this->transformer = new SelectTransformer(new PgSqlCastRenderer(), new PgSqlIdentifierQuoter());
         $faker = Factory::create();
-        $this->provider = new PostgreSqlProvider($faker);
+        $this->provider = new PostgreSqlStatementProvider($faker);
         $faker->seed(20260815);
     }
 
