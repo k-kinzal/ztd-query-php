@@ -28,7 +28,6 @@ final class PgSyntaxTarget
 
     private readonly PostgreSqlProvider $provider;
 
-    /** @readonly */
     private PostgreSqlStatementProvider $statements;
 
     private readonly CorpusSeed $seed;
