@@ -22,9 +22,7 @@ final class PartialUniqueIndexTest extends TestCase
         self::assertSame("status = 'active'", $index->predicate);
     }
 
-    /**
-     * @param list<string> $columns
-     */
+    /** @param list<string> $columns */
     #[TestWith(['', ['email'], "status = 'active'"])]
     #[TestWith([' ', ['email'], "status = 'active'"])]
     #[TestWith(['users_active_email', [], "status = 'active'"])]
