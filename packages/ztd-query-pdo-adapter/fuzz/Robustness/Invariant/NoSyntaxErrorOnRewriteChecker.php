@@ -8,7 +8,7 @@ use PDO;
 use PDOException;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\MySql\Dialect\MySqlQueryGuard;
+use ZtdQuery\Platform\MySql\MySqlQueryGuard;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\SqlRewriter;
 
