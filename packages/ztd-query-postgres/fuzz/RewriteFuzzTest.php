@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace Fuzz;
 
 use Faker\Factory;
+use Override;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\PostgreSqlProvider;
+use SqlFaker\PostgreSqlStatementProvider;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
 use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 use ZtdQuery\Platform\Postgres\PgSqlMutationResolver;
@@ -24,6 +25,7 @@ use ZtdQuery\Platform\Postgres\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\InsertTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer;
+use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
@@ -51,6 +53,9 @@ final class RewriteFuzzTest extends TestCase
 
     private PostgreSqlProvider $provider;
 
+    private PostgreSqlStatementProvider $statements;
+
+    #[Override]
     protected function setUp(): void
     {
         $parser = new PgSqlParser();
@@ -80,104 +85,123 @@ final class RewriteFuzzTest extends TestCase
 
         $faker = Factory::create();
         $this->provider = new PostgreSqlProvider($faker);
+        $this->statements = new PostgreSqlStatementProvider($faker);
         $faker->seed(20260815);
     }
 
+    /**
+     * Test rewrite select returns read kind.
+     *
+     */
     public function testRewriteSelectReturnsReadKind(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->selectStatement(50);
+            $sql = $this->statements->selectStatement(50);
             try {
                 $plan = $this->rewriter->rewrite($sql);
                 self::assertNotEmpty($plan->sql());
                 self::assertSame(QueryKind::READ, $plan->kind(), "SELECT rewrite should produce READ kind on iteration $i");
                 self::assertNull($plan->mutation(), "READ plan must have no mutation on iteration $i");
             } catch (UnsupportedSqlException|UnknownSchemaException) {
-            } catch (\Throwable $e) {
-                self::fail("rewrite() crashed on SELECT iteration $i with SQL: $sql\nError: " . $e->getMessage());
+                continue;
             }
         }
         self::addToAssertionCount(self::ITERATIONS);
     }
 
+    /**
+     * Test rewrite insert returns write simulated kind.
+     *
+     */
     public function testRewriteInsertReturnsWriteSimulatedKind(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->insertStatement(50);
+            $sql = $this->statements->insertStatement(50);
             try {
                 $plan = $this->rewriter->rewrite($sql);
                 self::assertNotEmpty($plan->sql());
                 self::assertSame(QueryKind::WRITE_SIMULATED, $plan->kind(), "INSERT rewrite should produce WRITE_SIMULATED kind on iteration $i");
                 self::assertNotNull($plan->mutation(), "WRITE_SIMULATED plan must have a mutation on iteration $i");
             } catch (UnsupportedSqlException|UnknownSchemaException) {
-            } catch (\Throwable $e) {
-                self::fail("rewrite() crashed on INSERT iteration $i with SQL: $sql\nError: " . $e->getMessage());
+                continue;
             }
         }
         self::addToAssertionCount(self::ITERATIONS);
     }
 
+    /**
+     * Test rewrite update returns write simulated kind.
+     *
+     */
     public function testRewriteUpdateReturnsWriteSimulatedKind(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->updateStatement(50);
+            $sql = $this->statements->updateStatement(50);
             try {
                 $plan = $this->rewriter->rewrite($sql);
                 self::assertNotEmpty($plan->sql());
                 self::assertSame(QueryKind::WRITE_SIMULATED, $plan->kind(), "UPDATE rewrite should produce WRITE_SIMULATED kind on iteration $i");
                 self::assertNotNull($plan->mutation(), "WRITE_SIMULATED plan must have a mutation on iteration $i");
             } catch (UnsupportedSqlException|UnknownSchemaException) {
-            } catch (\Throwable $e) {
-                self::fail("rewrite() crashed on UPDATE iteration $i with SQL: $sql\nError: " . $e->getMessage());
+                continue;
             }
         }
         self::addToAssertionCount(self::ITERATIONS);
     }
 
+    /**
+     * Test rewrite delete returns write simulated kind.
+     *
+     */
     public function testRewriteDeleteReturnsWriteSimulatedKind(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->deleteStatement(50);
+            $sql = $this->statements->deleteStatement(50);
             try {
                 $plan = $this->rewriter->rewrite($sql);
                 self::assertNotEmpty($plan->sql());
                 self::assertSame(QueryKind::WRITE_SIMULATED, $plan->kind(), "DELETE rewrite should produce WRITE_SIMULATED kind on iteration $i");
                 self::assertNotNull($plan->mutation(), "WRITE_SIMULATED plan must have a mutation on iteration $i");
             } catch (UnsupportedSqlException|UnknownSchemaException) {
-            } catch (\Throwable $e) {
-                self::fail("rewrite() crashed on DELETE iteration $i with SQL: $sql\nError: " . $e->getMessage());
+                continue;
             }
         }
         self::addToAssertionCount(self::ITERATIONS);
     }
 
+    /**
+     * Test rewrite create table returns ddl simulated kind.
+     *
+     */
     public function testRewriteCreateTableReturnsDdlSimulatedKind(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->createTableStatement(50);
+            $sql = $this->statements->createTableStatement(50);
             try {
                 $plan = $this->rewriter->rewrite($sql);
                 self::assertNotEmpty($plan->sql());
                 self::assertSame(QueryKind::DDL_SIMULATED, $plan->kind(), "CREATE TABLE rewrite should produce DDL_SIMULATED kind on iteration $i");
             } catch (UnsupportedSqlException|UnknownSchemaException) {
-            } catch (\Throwable $e) {
-                self::fail("rewrite() crashed on CREATE TABLE iteration $i with SQL: $sql\nError: " . $e->getMessage());
+                continue;
             }
         }
         self::addToAssertionCount(self::ITERATIONS);
     }
 
+    /**
+     * Test rewrite drop table returns ddl simulated kind.
+     *
+     */
     public function testRewriteDropTableReturnsDdlSimulatedKind(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
-            $sql = $this->provider->dropTableStatement(50);
+            $sql = $this->statements->dropTableStatement(50);
             try {
                 $plan = $this->rewriter->rewrite($sql);
                 self::assertNotEmpty($plan->sql());
                 self::assertSame(QueryKind::DDL_SIMULATED, $plan->kind(), "DROP TABLE rewrite should produce DDL_SIMULATED kind on iteration $i");
             } catch (UnsupportedSqlException|UnknownSchemaException) {
-            } catch (\Throwable $e) {
-                self::fail("rewrite() crashed on DROP TABLE iteration $i with SQL: $sql\nError: " . $e->getMessage());
+                continue;
             }
         }
         self::addToAssertionCount(self::ITERATIONS);
@@ -201,8 +225,7 @@ final class RewriteFuzzTest extends TestCase
                     self::assertNull($plan->mutation(), "READ plan must have no mutation on iteration $i");
                 }
             } catch (UnsupportedSqlException|UnknownSchemaException) {
-            } catch (\Throwable $e) {
-                self::fail("rewrite() threw unexpected " . get_class($e) . " on iteration $i with SQL: $sql\nError: " . $e->getMessage());
+                continue;
             }
         }
         self::addToAssertionCount(self::ITERATIONS);
@@ -215,11 +238,7 @@ final class RewriteFuzzTest extends TestCase
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
             $sql = $this->provider->sql(maxDepth: 50);
-            try {
-                $classifyResult = $this->guard->classify($sql);
-            } catch (\Throwable) {
-                continue;
-            }
+            $classifyResult = $this->guard->classify($sql);
 
             if ($classifyResult === null) {
                 continue;
@@ -233,8 +252,7 @@ final class RewriteFuzzTest extends TestCase
                     "classify() returned {$classifyResult->value} but rewrite() returned {$plan->kind()->value} on iteration $i with SQL: $sql"
                 );
             } catch (UnsupportedSqlException|UnknownSchemaException) {
-            } catch (\Throwable $e) {
-                self::fail("rewrite() crashed on iteration $i with SQL: $sql\nError: " . $e->getMessage());
+                continue;
             }
         }
         self::addToAssertionCount(self::ITERATIONS);
