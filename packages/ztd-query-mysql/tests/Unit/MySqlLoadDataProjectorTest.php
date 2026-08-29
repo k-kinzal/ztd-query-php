@@ -483,14 +483,14 @@ final class MySqlLoadDataProjectorTest extends TestCase
         );
     }
 
-    #[TestWith(["FIELDS TERMINATED BY ''", 'fixed-row'], 'empty field delimiter')]
-    #[TestWith(["LINES TERMINATED BY ''", 'fixed-row'], 'empty line delimiter')]
-    #[TestWith(["FIELDS ENCLOSED BY 'xx'", 'single-byte'], 'multi-byte enclosure')]
-    #[TestWith(["FIELDS ESCAPED BY 'xx'", 'single-byte'], 'multi-byte escape')]
-    #[TestWith(['PARTITION (p0)', 'PARTITION'], 'partition target')]
-    #[TestWith(['CHARACTER SET latin1', 'CHARACTER SET'], 'character conversion')]
-    #[TestWith(['(id, ID)', 'Duplicate'], 'duplicate target')]
-    #[TestWith(['(missing)', 'Unknown'], 'unknown target')]
+    #[TestWith(["FIELDS TERMINATED BY ''", 'fixed-row'])]
+    #[TestWith(["LINES TERMINATED BY ''", 'fixed-row'])]
+    #[TestWith(["FIELDS ENCLOSED BY 'xx'", 'single-byte'])]
+    #[TestWith(["FIELDS ESCAPED BY 'xx'", 'single-byte'])]
+    #[TestWith(['PARTITION (p0)', 'PARTITION'])]
+    #[TestWith(['CHARACTER SET latin1', 'CHARACTER SET'])]
+    #[TestWith(['(id, ID)', 'Duplicate'])]
+    #[TestWith(['(missing)', 'Unknown'])]
     public function testRejectsUnsupportedLoadDataShapes(string $clause, string $message): void
     {
         $stream = tmpfile();
