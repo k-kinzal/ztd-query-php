@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Fuzz\Robustness\Target;
 
+use Error;
 use Faker\Generator;
 use Fuzz\Robustness\Invariant\ClassifyDeterministicChecker;
 use Fuzz\Robustness\Invariant\ClassifyNeverThrowsChecker;
@@ -11,32 +12,51 @@ use Fuzz\Robustness\Invariant\ClassifyRewriteAgreementChecker;
 use Fuzz\Robustness\Invariant\InvariantChecker;
 use Fuzz\Robustness\Invariant\RewriteExceptionTypeChecker;
 use Fuzz\Robustness\Invariant\RewritePlanConsistencyChecker;
+use SqlFaker\MySqlLiteralProvider;
 use SqlFaker\MySqlProvider;
+use SqlFaker\MySqlStatementProvider;
 use ZtdQuery\Platform\MySql\MySqlMutationResolver;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlQueryGuard;
 use ZtdQuery\Platform\MySql\MySqlRewriter;
 use ZtdQuery\Platform\MySql\MySqlSchemaParser;
-use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
 use ZtdQuery\Platform\MySql\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\MySql\Transformer\InsertTransformer;
+use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
 use ZtdQuery\Platform\MySql\Transformer\ReplaceTransformer;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
 
+/**
+ * The rewrite target.
+ */
 final class RewriteTarget
 {
     private Generator $faker;
     private MySqlProvider $provider;
+
+    /** @readonly */
+    private MySqlStatementProvider $statements;
+
+    /** @readonly */
+    private MySqlLiteralProvider $literals;
     /** @var array<int, InvariantChecker> */
     private array $checkers;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param Generator $faker
+     * @param MySqlProvider $provider
+     */
     public function __construct(Generator $faker, MySqlProvider $provider)
     {
         $this->faker = $faker;
         $this->provider = $provider;
+        $this->statements = new MySqlStatementProvider($faker);
+        $this->literals = new MySqlLiteralProvider($faker);
 
         $parser = new MySqlParser();
         $schemaParser = new MySqlSchemaParser($parser);
@@ -65,6 +85,9 @@ final class RewriteTarget
         ];
     }
 
+    /**
+     * @throws Error
+     */
     public function __invoke(string $input): void
     {
         $seed = crc32(str_pad($input, 4, "\0"));
@@ -75,12 +98,18 @@ final class RewriteTarget
         foreach ($this->checkers as $checker) {
             $violation = $checker->check($sql);
             if ($violation !== null) {
-                throw new \Error("Invariant violation: seed=$seed\n$violation");
+                throw new Error("Invariant violation: seed=$seed\n$violation");
             }
         }
     }
 
-    private function registerFixtureSchemas(TableDefinitionRegistry $registry, MySqlSchemaParser $schemaParser): void
+    /**
+     * Declares the tables a fuzzed statement is run against.
+     *
+     * @param TableDefinitionRegistry $registry Registry to declare them in
+     * @param MySqlSchemaParser $schemaParser Reads each declaration
+     */
+    public function registerFixtureSchemas(TableDefinitionRegistry $registry, MySqlSchemaParser $schemaParser): void
     {
         $schemas = [
             'users' => 'CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255) NOT NULL, email VARCHAR(255), status VARCHAR(50))',
@@ -98,7 +127,12 @@ final class RewriteTarget
         }
     }
 
-    private function populateFixtureData(ShadowStore $store): void
+    /**
+     * Fills the shadow with the rows a fuzzed statement is run against.
+     *
+     * @param ShadowStore $store Shadow to fill
+     */
+    public function populateFixtureData(ShadowStore $store): void
     {
         $store->set('users', [
             ['id' => '1', 'name' => 'Alice', 'email' => 'alice@example.com', 'status' => 'active'],
@@ -127,38 +161,38 @@ final class RewriteTarget
     /**
      * @return callable(): string
      */
-    private function selectGenerator(string $input): callable
+    public function selectGenerator(string $input): callable
     {
         $generators = [
             fn () => $this->provider->sql(maxDepth: 8),
-            fn () => $this->provider->selectStatement(maxDepth: 8),
-            fn () => $this->provider->insertStatement(maxDepth: 8),
+            fn () => $this->statements->selectStatement(maxDepth: 8),
+            fn () => $this->statements->insertStatement(maxDepth: 8),
             fn (): string => (ord($input[1] ?? "\0") % 2) === 0
-                ? $this->provider->updateStatement(maxDepth: 8)
-                : $this->provider->multiTableUpdateStatement(maxDepth: 8),
+                ? $this->statements->updateStatement(maxDepth: 8)
+                : $this->statements->multiTableUpdateStatement(maxDepth: 8),
             fn (): string => (ord($input[1] ?? "\0") % 2) === 0
-                ? $this->provider->deleteStatement(maxDepth: 8)
-                : $this->provider->multiTableDeleteStatement(maxDepth: 8),
-            fn () => $this->provider->createTableStatement(maxDepth: 5),
-            fn () => $this->provider->alterTableStatement(maxDepth: 5),
-            fn () => $this->provider->replaceStatement(maxDepth: 5),
-            fn () => $this->provider->truncateStatement(maxDepth: 3),
-            fn (): string => "UPDATE users SET status = {$this->provider->quotedHexLiteral()} WHERE id = 1",
-            fn (): string => "UPDATE orders SET created_at = created_at + INTERVAL {$this->provider->integerLiteral(1, 30)} DAY WHERE id = 1",
+                ? $this->statements->deleteStatement(maxDepth: 8)
+                : $this->statements->multiTableDeleteStatement(maxDepth: 8),
+            fn () => $this->statements->createTableStatement(maxDepth: 5),
+            fn () => $this->statements->alterTableStatement(maxDepth: 5),
+            fn () => $this->statements->replaceStatement(maxDepth: 5),
+            fn () => $this->statements->truncateStatement(maxDepth: 3),
+            fn (): string => "UPDATE users SET status = {$this->literals->quotedHexLiteral()} WHERE id = 1",
+            fn (): string => "UPDATE orders SET created_at = created_at + INTERVAL {$this->literals->integerLiteral(1, 30)} DAY WHERE id = 1",
             fn (): string => 'UPDATE users SET status = 0 WHERE CASE WHEN id > 1 THEN 1 ELSE 0 END = 1',
             fn (): string => 'DELETE FROM users WHERE CASE WHEN id > 1 THEN 1 ELSE 0 END = 1',
-            fn (): string => "CREATE TABLE child (id INT, parent_id INT, {$this->provider->foreignKeyConstraint()})",
-            fn (): string => $this->provider->updateJoinDerivedStatement(),
-            fn (): string => $this->provider->insertSelectCompoundStatement(),
-            fn (): string => $this->provider->insertRowAliasUpsertStatement(),
-            fn (): string => $this->provider->insertFunctionUpsertStatement(),
-            fn (): string => $this->provider->temporaryTableStatement(),
-            fn (): string => $this->provider->viewStatement(),
-            fn (): string => $this->provider->generatedColumnStatement(),
-            fn (): string => $this->provider->foreignKeyCascadeStatement(),
-            fn (): string => $this->provider->partitionSelectStatement(),
-            fn (): string => $this->provider->loadDataStatement(maxDepth: 8),
-            fn (): string => $this->provider->fullTextSearchStatement(),
+            fn (): string => "CREATE TABLE child (id INT, parent_id INT, {$this->statements->foreignKeyConstraint()})",
+            fn (): string => $this->statements->updateJoinDerivedStatement(),
+            fn (): string => $this->statements->insertSelectCompoundStatement(),
+            fn (): string => $this->statements->insertRowAliasUpsertStatement(),
+            fn (): string => $this->statements->insertFunctionUpsertStatement(),
+            fn (): string => $this->statements->temporaryTableStatement(),
+            fn (): string => $this->statements->viewStatement(),
+            fn (): string => $this->statements->generatedColumnStatement(),
+            fn (): string => $this->statements->foreignKeyCascadeStatement(),
+            fn (): string => $this->statements->partitionSelectStatement(),
+            fn (): string => $this->statements->loadDataStatement(maxDepth: 8),
+            fn (): string => $this->statements->fullTextSearchStatement(),
         ];
 
         $index = ord($input[0] ?? "\0") % count($generators);
