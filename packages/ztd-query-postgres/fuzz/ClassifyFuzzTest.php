@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Fuzz;
 
 use Faker\Factory;
-use Override;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
@@ -35,7 +34,6 @@ final class ClassifyFuzzTest extends TestCase
 
     private PostgreSqlStatementProvider $statements;
 
-    #[Override]
     protected function setUp(): void
     {
         $this->guard = new PgSqlQueryGuard(new PgSqlParser());
@@ -53,148 +51,152 @@ final class ClassifyFuzzTest extends TestCase
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
             $sql = $this->provider->sql(maxDepth: 50);
-            $result1 = $this->guard->classify($sql);
-            $result2 = $this->guard->classify($sql);
-            self::assertSame($result1, $result2, "classify() returned different results for the same SQL on iteration $i: $sql");
+            try {
+                $result1 = $this->guard->classify($sql);
+                $result2 = $this->guard->classify($sql);
+                self::assertSame($result1, $result2, "classify() returned different results for the same SQL on iteration $i: $sql");
+            } catch (\Throwable $e) {
+                self::fail("classify() crashed on iteration $i with SQL: $sql\nError: " . $e->getMessage());
+            }
         }
         self::addToAssertionCount(self::ITERATIONS);
     }
 
-    /**
-     * Test classify select returns read or null.
-     *
-     */
     public function testClassifySelectReturnsReadOrNull(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
             $sql = $this->statements->selectStatement(50);
-            $result = $this->guard->classify($sql);
-            if ($result !== null) {
-                self::assertSame(
-                    QueryKind::READ,
-                    $result,
-                    "SELECT should classify as READ on iteration $i with SQL: $sql"
-                );
+            try {
+                $result = $this->guard->classify($sql);
+                if ($result !== null) {
+                    self::assertSame(
+                        QueryKind::READ,
+                        $result,
+                        "SELECT should classify as READ on iteration $i with SQL: $sql"
+                    );
+                }
+            } catch (\Throwable $e) {
+                self::fail("classify() crashed on SELECT iteration $i with SQL: $sql\nError: " . $e->getMessage());
             }
         }
         self::addToAssertionCount(self::ITERATIONS);
     }
 
-    /**
-     * Test classify insert returns write simulated or null.
-     *
-     */
     public function testClassifyInsertReturnsWriteSimulatedOrNull(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
             $sql = $this->statements->insertStatement(50);
-            $result = $this->guard->classify($sql);
-            if ($result !== null) {
-                self::assertSame(
-                    QueryKind::WRITE_SIMULATED,
-                    $result,
-                    "INSERT should classify as WRITE_SIMULATED on iteration $i with SQL: $sql"
-                );
+            try {
+                $result = $this->guard->classify($sql);
+                if ($result !== null) {
+                    self::assertSame(
+                        QueryKind::WRITE_SIMULATED,
+                        $result,
+                        "INSERT should classify as WRITE_SIMULATED on iteration $i with SQL: $sql"
+                    );
+                }
+            } catch (\Throwable $e) {
+                self::fail("classify() crashed on INSERT iteration $i with SQL: $sql\nError: " . $e->getMessage());
             }
         }
         self::addToAssertionCount(self::ITERATIONS);
     }
 
-    /**
-     * Test classify update returns write simulated or null.
-     *
-     */
     public function testClassifyUpdateReturnsWriteSimulatedOrNull(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
             $sql = $this->statements->updateStatement(50);
-            $result = $this->guard->classify($sql);
-            if ($result !== null) {
-                self::assertSame(
-                    QueryKind::WRITE_SIMULATED,
-                    $result,
-                    "UPDATE should classify as WRITE_SIMULATED on iteration $i with SQL: $sql"
-                );
+            try {
+                $result = $this->guard->classify($sql);
+                if ($result !== null) {
+                    self::assertSame(
+                        QueryKind::WRITE_SIMULATED,
+                        $result,
+                        "UPDATE should classify as WRITE_SIMULATED on iteration $i with SQL: $sql"
+                    );
+                }
+            } catch (\Throwable $e) {
+                self::fail("classify() crashed on UPDATE iteration $i with SQL: $sql\nError: " . $e->getMessage());
             }
         }
         self::addToAssertionCount(self::ITERATIONS);
     }
 
-    /**
-     * Test classify delete returns write simulated or null.
-     *
-     */
     public function testClassifyDeleteReturnsWriteSimulatedOrNull(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
             $sql = $this->statements->deleteStatement(50);
-            $result = $this->guard->classify($sql);
-            if ($result !== null) {
-                self::assertSame(
-                    QueryKind::WRITE_SIMULATED,
-                    $result,
-                    "DELETE should classify as WRITE_SIMULATED on iteration $i with SQL: $sql"
-                );
+            try {
+                $result = $this->guard->classify($sql);
+                if ($result !== null) {
+                    self::assertSame(
+                        QueryKind::WRITE_SIMULATED,
+                        $result,
+                        "DELETE should classify as WRITE_SIMULATED on iteration $i with SQL: $sql"
+                    );
+                }
+            } catch (\Throwable $e) {
+                self::fail("classify() crashed on DELETE iteration $i with SQL: $sql\nError: " . $e->getMessage());
             }
         }
         self::addToAssertionCount(self::ITERATIONS);
     }
 
-    /**
-     * Test classify create table returns ddl simulated or null.
-     *
-     */
     public function testClassifyCreateTableReturnsDdlSimulatedOrNull(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
             $sql = $this->statements->createTableStatement(50);
-            $result = $this->guard->classify($sql);
-            if ($result !== null) {
-                self::assertSame(
-                    QueryKind::DDL_SIMULATED,
-                    $result,
-                    "CREATE TABLE should classify as DDL_SIMULATED on iteration $i with SQL: $sql"
-                );
+            try {
+                $result = $this->guard->classify($sql);
+                if ($result !== null) {
+                    self::assertSame(
+                        QueryKind::DDL_SIMULATED,
+                        $result,
+                        "CREATE TABLE should classify as DDL_SIMULATED on iteration $i with SQL: $sql"
+                    );
+                }
+            } catch (\Throwable $e) {
+                self::fail("classify() crashed on CREATE TABLE iteration $i with SQL: $sql\nError: " . $e->getMessage());
             }
         }
         self::addToAssertionCount(self::ITERATIONS);
     }
 
-    /**
-     * Test classify drop table returns ddl simulated or null.
-     *
-     */
     public function testClassifyDropTableReturnsDdlSimulatedOrNull(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
             $sql = $this->statements->dropTableStatement(50);
-            $result = $this->guard->classify($sql);
-            if ($result !== null) {
-                self::assertSame(
-                    QueryKind::DDL_SIMULATED,
-                    $result,
-                    "DROP TABLE should classify as DDL_SIMULATED on iteration $i with SQL: $sql"
-                );
+            try {
+                $result = $this->guard->classify($sql);
+                if ($result !== null) {
+                    self::assertSame(
+                        QueryKind::DDL_SIMULATED,
+                        $result,
+                        "DROP TABLE should classify as DDL_SIMULATED on iteration $i with SQL: $sql"
+                    );
+                }
+            } catch (\Throwable $e) {
+                self::fail("classify() crashed on DROP TABLE iteration $i with SQL: $sql\nError: " . $e->getMessage());
             }
         }
         self::addToAssertionCount(self::ITERATIONS);
     }
 
-    /**
-     * Test classify alter table returns ddl simulated or null.
-     *
-     */
     public function testClassifyAlterTableReturnsDdlSimulatedOrNull(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
             $sql = $this->statements->alterTableStatement(50);
-            $result = $this->guard->classify($sql);
-            if ($result !== null) {
-                self::assertSame(
-                    QueryKind::DDL_SIMULATED,
-                    $result,
-                    "ALTER TABLE should classify as DDL_SIMULATED on iteration $i with SQL: $sql"
-                );
+            try {
+                $result = $this->guard->classify($sql);
+                if ($result !== null) {
+                    self::assertSame(
+                        QueryKind::DDL_SIMULATED,
+                        $result,
+                        "ALTER TABLE should classify as DDL_SIMULATED on iteration $i with SQL: $sql"
+                    );
+                }
+            } catch (\Throwable $e) {
+                self::fail("classify() crashed on ALTER TABLE iteration $i with SQL: $sql\nError: " . $e->getMessage());
             }
         }
         self::addToAssertionCount(self::ITERATIONS);
