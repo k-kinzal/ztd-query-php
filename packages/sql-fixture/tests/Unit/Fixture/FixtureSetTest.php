@@ -268,21 +268,21 @@ final class FixtureSetTest extends TestCase
     {
         $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
 
-        self::assertArrayNotHasKey(1.5, $set);
+        self::assertFalse($set->offsetExists(1.5));
     }
 
     public function testOffsetExistsSaysATableThePlanNamesIsThere(): void
     {
         $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
 
-        self::assertArrayHasKey('order', $set);
+        self::assertTrue($set->offsetExists('order'));
     }
 
     public function testOffsetExistsSaysATableThePlanDoesNotNameIsNotThere(): void
     {
         $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
 
-        self::assertArrayNotHasKey('detail', $set);
+        self::assertFalse($set->offsetExists('detail'));
     }
 
     public function testOffsetGetAnswersNothingForAnOffsetNoTableCanBeNamedBy(): void
