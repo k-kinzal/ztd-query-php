@@ -35,8 +35,8 @@
         }
     },
     "scripts": {
-        "test": "paratest --processes=auto --configuration=\"$(php bin/phpunit-configuration.php)\"",
-        "test:unit": "@php -d memory_limit=512M vendor/bin/phpunit --configuration=\"$(php bin/phpunit-configuration.php)\" tests/Unit/",
+        "test": "@php -d memory_limit=512M tests/run.php --parallel --processes=4",
+        "test:unit": "@php -d memory_limit=512M tests/run.php",
         "lint": [
             "@format:check",
             "@phpstan"
@@ -44,7 +44,9 @@
         "format": "php-cs-fixer fix --allow-risky=yes",
         "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
         "phpstan": "phpstan analyse --memory-limit=512M",
-        "compat": "phpcs -q"
+        "compat": "phpcs -q",
+        "loc-guard": "loc-guard",
+        "tree-guard": "tree-guard"
     },
     "config": {
         "allow-plugins": {
