@@ -13,6 +13,7 @@ use SqlFaker\Grammar\Model\Terminal;
 use SqlFaker\Grammar\Walk\GenerationException;
 use SqlFaker\Grammar\Walk\GenerationPlan;
 use SqlFaker\Grammar\Walk\TerminationAnalyzer;
+use SqlFaker\Grammar\Walk\ViableAlternatives;
 
 /**
  * Rewrites a start symbol into terminals the way SQLite's grammar demands.
@@ -31,6 +32,9 @@ final class Derivation
 
     private int $steps = 0;
 
+    /** @readonly */
+    private ViableAlternatives $alternatives;
+
     /**
      * @param Grammar $grammar Grammar being walked
      * @param FakerGenerator $faker Source of the choices the walk makes freely
@@ -40,7 +44,9 @@ final class Derivation
         private readonly Grammar $grammar,
         private readonly FakerGenerator $faker,
         private readonly TerminationAnalyzer $analyzer,
+        ?ViableAlternatives $alternatives = null,
     ) {
+        $this->alternatives = $alternatives ?? new ViableAlternatives($analyzer);
     }
 
     /**
@@ -83,40 +89,13 @@ final class Derivation
             }
 
             $rule = $this->grammar->ruleMap[$nonTerminal->value];
-            if ($rule->alternatives === []) {
-                throw GenerationException::ruleHasNoAlternatives($nonTerminal->value);
-            }
-            $alternatives = array_values(array_filter(
-                $rule->alternatives,
-                $this->analyzer->isProductionViable(...),
-            ));
-            if ($alternatives === []) {
-                throw GenerationException::noRealizableAlternative($nonTerminal->value);
-            }
             $occurrence = $occurrences[$nonTerminal->value] ?? 0;
             $occurrences[$nonTerminal->value] = $occurrence + 1;
-            $pattern = $plan->patternAt($nonTerminal->value, $occurrence);
-            if ($pattern !== null) {
-                $alternatives = array_values(array_filter(
-                    $alternatives,
-                    static fn (Production $production): bool => $pattern->matches(array_map(
-                        static fn (Symbol $symbol): string => $symbol->value(),
-                        $production->symbols,
-                    )),
-                ));
-                if ($alternatives === []) {
-                    throw GenerationException::noAlternativeMatchingPlan($nonTerminal->value);
-                }
-            }
-            if ($this->steps === 1 && $plan->requiresNonEmpty()) {
-                $alternatives = array_values(array_filter(
-                    $alternatives,
-                    fn (Production $production): bool => $this->analyzer->estimateProductionLength($production) > 0,
-                ));
-                if ($alternatives === []) {
-                    throw GenerationException::startRuleCannotProduceOutput($nonTerminal->value);
-                }
-            }
+            $alternatives = $this->alternatives->of(
+                $rule,
+                $plan->patternAt($nonTerminal->value, $occurrence),
+                $this->steps === 1 && $plan->requiresNonEmpty(),
+            );
 
             $alternatives = $this->affordable($alternatives, new Production(array_slice($form, $index + 1)));
             $production = $this->selectProduction($alternatives, $plan);
