@@ -92,12 +92,17 @@ final class FullPipelineFuzzTest extends TestCase
     /**
      * Answers the rows a fuzzed statement is run against.
      *
+<<<<<<< HEAD
+     * @return list<array<string, bool|float|int|string|null>> The rows, as the shadow would hold them     */
+    private function generateFixtureRows(TableDefinition $definition, int $count): array
+=======
      * @param TableDefinition $definition What the table holds
      * @param int $count The count
      *
      * @return list<array<string, bool|float|int|string|null>> The rows, as the shadow would hold them
      */
     public function generateFixtureRows(TableDefinition $definition, int $count): array
+>>>>>>> feat/php-ai-toolkit-sql-fixture
     {
         $rows = [];
         for ($i = 0; $i < $count; $i++) {
