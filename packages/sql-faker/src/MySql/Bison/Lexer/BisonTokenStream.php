@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlFaker\MySql\Bison\Lexer;
 
 use InvalidArgumentException;
-use SqlFaker\Grammar\GrammarParseException;
+use SqlFaker\Grammar\Source\GrammarParseException;
 
 /**
  * Adds lookahead to a Bison lexer.
