@@ -8,7 +8,7 @@ use Error;
 use Faker\Factory;
 use Faker\Generator;
 use Fuzz\FuzzerSeed;
-use SqlFaker\MySqlProvider;
+use SqlFaker\MySqlStatementProvider;
 use SqlFixture\FixtureProvider;
 use SqlFixture\Schema\SchemaParseException;
 
@@ -21,7 +21,7 @@ use SqlFixture\Schema\SchemaParseException;
 final class CreateTableTarget
 {
     private Generator $faker;
-    private MySqlProvider $sqlFakerProvider;
+    private MySqlStatementProvider $sqlFakerProvider;
     private FixtureProvider $fixtureProvider;
 
     /**
@@ -39,7 +39,7 @@ final class CreateTableTarget
         private readonly ParserLimitations $limitations = new ParserLimitations(),
     ) {
         $this->faker = Factory::create();
-        $this->sqlFakerProvider = new MySqlProvider($this->faker, $grammarVersion);
+        $this->sqlFakerProvider = new MySqlStatementProvider($this->faker, $grammarVersion);
         $this->fixtureProvider = new FixtureProvider($this->faker);
     }
 
