@@ -6,10 +6,12 @@ namespace Tests\Unit\SqlFaker;
 
 use Faker\Factory;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\PostgreSql\LexicalGrammar;
 use SqlFaker\PostgreSqlFragmentProvider;
 
+#[Medium]
 #[CoversClass(PostgreSqlFragmentProvider::class)]
 final class PostgreSqlFragmentProviderTest extends TestCase
 {

@@ -6,9 +6,11 @@ namespace Tests\Unit\SqlFaker;
 
 use Faker\Factory;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\PostgreSqlLiteralProvider;
 
+#[Medium]
 #[CoversClass(PostgreSqlLiteralProvider::class)]
 final class PostgreSqlLiteralProviderTest extends TestCase
 {

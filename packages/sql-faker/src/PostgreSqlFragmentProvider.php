@@ -28,12 +28,13 @@ final class PostgreSqlFragmentProvider extends Base
      *
      * @param Generator $generator Generator the methods are reached through
      * @param string|null $version Version tag to generate for, or null for the default
+     * @param SqlGenerator|null $sql Generator to share, or null to build one for this provider alone
      */
-    public function __construct(Generator $generator, ?string $version = null)
+    public function __construct(Generator $generator, ?string $version = null, ?SqlGenerator $sql = null)
     {
         parent::__construct($generator);
 
-        $this->sql = SqlGenerator::for($generator, $version);
+        $this->sql = $sql ?? SqlGenerator::for($generator, $version);
 
         $generator->addProvider($this);
     }

@@ -6,10 +6,12 @@ namespace Tests\Unit\SqlFaker;
 
 use Faker\Factory;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\MySql\LexicalGrammar;
 use SqlFaker\MySqlFragmentProvider;
 
+#[Medium]
 #[CoversClass(MySqlFragmentProvider::class)]
 final class MySqlFragmentProviderTest extends TestCase
 {

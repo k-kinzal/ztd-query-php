@@ -68,9 +68,9 @@ final class MySqlProvider extends Base
         $this->grammar = Grammar::load($resolvedVersion);
         $this->sql = new SqlGenerator($this->grammar, $generator, $resolvedVersion);
 
-        new MySqlLiteralProvider($generator, $version);
-        new MySqlFragmentProvider($generator, $version);
-        new MySqlStatementProvider($generator, $version);
+        new MySqlLiteralProvider($generator, $version, $this->sql);
+        new MySqlFragmentProvider($generator, $version, $this->sql);
+        new MySqlStatementProvider($generator, $version, $this->sql);
     }
 
     /**

@@ -44,9 +44,9 @@ final class PostgreSqlProvider extends Base
 
         $this->sql = SqlGenerator::for($generator, $version);
 
-        new PostgreSqlLiteralProvider($generator, $version);
-        new PostgreSqlFragmentProvider($generator, $version);
-        new PostgreSqlStatementProvider($generator, $version);
+        new PostgreSqlLiteralProvider($generator, $version, $this->sql);
+        new PostgreSqlFragmentProvider($generator, $version, $this->sql);
+        new PostgreSqlStatementProvider($generator, $version, $this->sql);
     }
 
     /**

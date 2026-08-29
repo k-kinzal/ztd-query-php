@@ -7,11 +7,13 @@ namespace Tests\Unit\SqlFaker;
 use Faker\Factory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Source\SqlVersion;
 use SqlFaker\MySql\LexicalGrammar;
 use SqlFaker\MySqlStatementProvider;
 
+#[Medium]
 #[CoversClass(MySqlStatementProvider::class)]
 final class MySqlStatementProviderTest extends TestCase
 {
