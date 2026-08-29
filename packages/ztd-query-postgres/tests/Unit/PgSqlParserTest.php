@@ -3742,19 +3742,19 @@ SELECT * FROM users'));
         self::assertSame("coalesce((status = 'active'), false)", $target->predicate);
     }
 
-    #[TestWith(['INSERT INTO users VALUES (1) ON'], 'trailing ON')]
-    #[TestWith(['INSERT INTO users VALUES (1) ON CONFLICT'], 'missing target')]
-    #[TestWith(['INSERT INTO users VALUES (1) ON CONFLICT ON'], 'missing constraint keyword')]
-    #[TestWith(['INSERT INTO users VALUES (1) ON CONFLICT ON INVALID users_email DO NOTHING'], 'invalid constraint keyword')]
-    #[TestWith(['INSERT INTO users VALUES (1) ON CONFLICT ON CONSTRAINT'], 'missing constraint name')]
-    #[TestWith(['INSERT INTO users VALUES (1) ON CONFLICT ON CONSTRAINT 123 DO NOTHING'], 'invalid constraint name')]
-    #[TestWith(['INSERT INTO users VALUES (1) ON CONFLICT email DO NOTHING'], 'target without parentheses')]
-    #[TestWith(['INSERT INTO users VALUES (1) ON CONFLICT email) DO NOTHING'], 'target word before closing parenthesis')]
-    #[TestWith(['INSERT INTO users VALUES (1) ON CONFLICT [email] DO NOTHING'], 'invalid opening symbol')]
-    #[TestWith(['INSERT INTO users VALUES (1) ON CONFLICT (email DO NOTHING'], 'unclosed target')]
-    #[TestWith(['INSERT INTO users VALUES (1) ON CONFLICT (email + tenant_id) DO NOTHING'], 'non-identifier target')]
-    #[TestWith(['INSERT INTO users VALUES (1) ON CONFLICT (email)'], 'missing action')]
-    #[TestWith(['INSERT INTO users VALUES (1) ON CONFLICT (email) WHERE DO UPDATE SET email = EXCLUDED.email'], 'empty predicate')]
+    #[TestWith(['INSERT INTO users VALUES (1) ON'])]
+    #[TestWith(['INSERT INTO users VALUES (1) ON CONFLICT'])]
+    #[TestWith(['INSERT INTO users VALUES (1) ON CONFLICT ON'])]
+    #[TestWith(['INSERT INTO users VALUES (1) ON CONFLICT ON INVALID users_email DO NOTHING'])]
+    #[TestWith(['INSERT INTO users VALUES (1) ON CONFLICT ON CONSTRAINT'])]
+    #[TestWith(['INSERT INTO users VALUES (1) ON CONFLICT ON CONSTRAINT 123 DO NOTHING'])]
+    #[TestWith(['INSERT INTO users VALUES (1) ON CONFLICT email DO NOTHING'])]
+    #[TestWith(['INSERT INTO users VALUES (1) ON CONFLICT email) DO NOTHING'])]
+    #[TestWith(['INSERT INTO users VALUES (1) ON CONFLICT [email] DO NOTHING'])]
+    #[TestWith(['INSERT INTO users VALUES (1) ON CONFLICT (email DO NOTHING'])]
+    #[TestWith(['INSERT INTO users VALUES (1) ON CONFLICT (email + tenant_id) DO NOTHING'])]
+    #[TestWith(['INSERT INTO users VALUES (1) ON CONFLICT (email)'])]
+    #[TestWith(['INSERT INTO users VALUES (1) ON CONFLICT (email) WHERE DO UPDATE SET email = EXCLUDED.email'])]
     public function testRejectsMalformedConflictTargets(string $sql): void
     {
         self::assertNull((new PgSqlParser())->extractOnConflictTarget($sql));
