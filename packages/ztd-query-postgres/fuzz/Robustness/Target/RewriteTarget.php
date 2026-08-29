@@ -14,6 +14,7 @@ use Fuzz\Robustness\Invariant\RewriteExceptionTypeChecker;
 use Fuzz\Robustness\Invariant\RewritePlanConsistencyChecker;
 use Fuzz\Robustness\Invariant\TruncateTargetConsistencyChecker;
 use SqlFaker\PostgreSqlProvider;
+use SqlFaker\PostgreSqlStatementProvider;
 use ZtdQuery\Platform\Postgres\PgSqlMutationResolver;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
 use ZtdQuery\Platform\Postgres\PgSqlQueryGuard;
@@ -35,6 +36,9 @@ final class RewriteTarget
 {
     private Generator $faker;
     private PostgreSqlProvider $provider;
+
+    /** @readonly */
+    private PostgreSqlStatementProvider $statements;
     /** @var array<int, InvariantChecker> */
     private array $checkers;
 
@@ -48,6 +52,7 @@ final class RewriteTarget
     {
         $this->faker = $faker;
         $this->provider = $provider;
+        $this->statements = new PostgreSqlStatementProvider($faker);
 
         $parser = new PgSqlParser();
         $schemaParser = new PgSqlSchemaParser();
@@ -169,28 +174,28 @@ final class RewriteTarget
     {
         $generators = [
             fn (): string => $this->provider->sql(maxDepth: 8),
-            fn (): string => $this->provider->selectStatement(maxDepth: 8),
-            fn (): string => $this->provider->insertStatement(maxDepth: 8),
-            fn (): string => $this->provider->updateStatement(maxDepth: 8),
-            fn (): string => $this->provider->deleteStatement(maxDepth: 8),
-            fn (): string => $this->provider->createTableStatement(maxDepth: 5),
-            fn (): string => $this->provider->alterTableStatement(maxDepth: 5),
-            fn (): string => $this->provider->dropTableStatement(maxDepth: 3),
-            fn (): string => $this->provider->truncateStatement(maxDepth: 8),
-            fn (): string => $this->provider->insertFunctionUpsertStatement(),
-            fn (): string => $this->provider->temporaryTableStatement(),
-            fn (): string => $this->provider->viewStatement(),
-            fn (): string => $this->provider->generatedColumnStatement(),
-            fn (): string => $this->provider->foreignKeyCascadeStatement(),
-            fn (): string => $this->provider->partitionOfStatement(),
-            fn (): string => $this->provider->tableSampleStatement(),
-            fn (): string => $this->provider->doStatement(),
-            fn (): string => $this->provider->mergeStatement(),
-            fn (): string => $this->provider->copyStatement(maxDepth: 8),
-            fn (): string => $this->provider->partialIndexUpsertStatement(),
-            fn (): string => $this->provider->createDomainStatement(maxDepth: 8),
-            fn (): string => $this->provider->domainDmlStatement(),
-            fn (): string => $this->provider->fullTextSearchStatement(),
+            fn (): string => $this->statements->selectStatement(maxDepth: 8),
+            fn (): string => $this->statements->insertStatement(maxDepth: 8),
+            fn (): string => $this->statements->updateStatement(maxDepth: 8),
+            fn (): string => $this->statements->deleteStatement(maxDepth: 8),
+            fn (): string => $this->statements->createTableStatement(maxDepth: 5),
+            fn (): string => $this->statements->alterTableStatement(maxDepth: 5),
+            fn (): string => $this->statements->dropTableStatement(maxDepth: 3),
+            fn (): string => $this->statements->truncateStatement(maxDepth: 8),
+            fn (): string => $this->statements->insertFunctionUpsertStatement(),
+            fn (): string => $this->statements->temporaryTableStatement(),
+            fn (): string => $this->statements->viewStatement(),
+            fn (): string => $this->statements->generatedColumnStatement(),
+            fn (): string => $this->statements->foreignKeyCascadeStatement(),
+            fn (): string => $this->statements->partitionOfStatement(),
+            fn (): string => $this->statements->tableSampleStatement(),
+            fn (): string => $this->statements->doStatement(),
+            fn (): string => $this->statements->mergeStatement(),
+            fn (): string => $this->statements->copyStatement(maxDepth: 8),
+            fn (): string => $this->statements->partialIndexUpsertStatement(),
+            fn (): string => $this->statements->createDomainStatement(maxDepth: 8),
+            fn (): string => $this->statements->domainDmlStatement(),
+            fn (): string => $this->statements->fullTextSearchStatement(),
         ];
 
         $index = ord($input[0] ?? "\0") % count($generators);
