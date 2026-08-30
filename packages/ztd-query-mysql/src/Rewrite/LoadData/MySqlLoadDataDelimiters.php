@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Platform\MySql\Rewrite;
+namespace ZtdQuery\Platform\MySql\Rewrite\LoadData;
 
 use PhpMyAdmin\SqlParser\Components\Expression;
 use PhpMyAdmin\SqlParser\Components\OptionsArray;
