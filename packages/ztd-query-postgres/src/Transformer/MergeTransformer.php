@@ -209,7 +209,7 @@ final class MergeTransformer implements SqlTransformer
     /**
      * @param list<string> $columns
      * @param array<string, string> $defaults
-     * @param array<string, \ZtdQuery\Schema\IdentityGenerationStrategy> $identityStrategies
+     * @param array<string, \ZtdQuery\Schema\Key\IdentityGenerationStrategy> $identityStrategies
      * @param list<array<string, RenderableValue>> $existingRows The existing rows
      */
     private function insertedRows(

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\Postgres;
 
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Schema\CandidateKeySet;
-use ZtdQuery\Schema\PartialUniqueIndex;
+use ZtdQuery\Schema\Key\CandidateKeySet;
+use ZtdQuery\Schema\Key\PartialUniqueIndex;
 
 /**
  * Structured ON CONFLICT arbiter target.

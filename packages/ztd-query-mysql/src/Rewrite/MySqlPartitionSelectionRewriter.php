@@ -8,7 +8,7 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\Dialect\MySqlLexerProfile;
 use ZtdQuery\Platform\MySql\Parse\MySqlSelectRelationParser;
 use ZtdQuery\Rewrite\SqlTransformer;
-use ZtdQuery\Schema\TablePartitioning;
+use ZtdQuery\Schema\Partition\TablePartitioning;
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;

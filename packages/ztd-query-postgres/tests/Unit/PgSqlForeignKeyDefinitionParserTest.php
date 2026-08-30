@@ -8,7 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Postgres\PgSqlForeignKeyDefinitionParser;
-use ZtdQuery\Schema\ReferentialAction;
+use ZtdQuery\Schema\Key\ReferentialAction;
 
 #[CoversClass(PgSqlForeignKeyDefinitionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]

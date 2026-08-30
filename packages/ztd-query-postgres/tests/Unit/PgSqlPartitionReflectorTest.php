@@ -12,7 +12,7 @@ use Tests\Fake\FakeStatement;
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Platform\Postgres\PgSqlPartitionParser;
 use ZtdQuery\Platform\Postgres\PgSqlPartitionReflector;
-use ZtdQuery\Schema\TablePartitionStrategy;
+use ZtdQuery\Schema\Partition\TablePartitionStrategy;
 
 #[CoversClass(PgSqlPartitionReflector::class)]
 #[UsesClass(PgSqlPartitionParser::class)]
