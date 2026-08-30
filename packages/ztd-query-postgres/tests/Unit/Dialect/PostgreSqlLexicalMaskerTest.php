@@ -221,4 +221,13 @@ final class PostgreSqlLexicalMaskerTest extends TestCase
         self::assertFalse(PostgreSqlLexicalMasker::isIdentifierContinuation(' '));
     }
 
+    public function testBlockCommentEndReadsTheWholeOfANestedComment(): void
+    {
+        self::assertSame(15, PostgreSqlLexicalMasker::blockCommentEnd('/* a /* b */ */x', 0));
+    }
+
+    public function testBlockCommentEndStopsAtTheEndOfAStatementThatNeverClosedTheComment(): void
+    {
+        self::assertSame(4, PostgreSqlLexicalMasker::blockCommentEnd('/* a', 0));
+    }
 }
