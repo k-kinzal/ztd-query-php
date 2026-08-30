@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Rewrite;
+namespace Tests\Unit\Rewrite\LoadData;
 
 use PhpMyAdmin\SqlParser\Parser;
 use PhpMyAdmin\SqlParser\Statements\LoadStatement;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use ZtdQuery\Platform\MySql\Rewrite\MySqlLoadDataDelimiters;
+use ZtdQuery\Platform\MySql\Rewrite\LoadData\MySqlLoadDataDelimiters;
 
 #[CoversClass(MySqlLoadDataDelimiters::class)]
 final class MySqlLoadDataDelimitersTest extends TestCase

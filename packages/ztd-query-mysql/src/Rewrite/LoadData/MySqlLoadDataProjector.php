@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Platform\MySql\Rewrite;
+namespace ZtdQuery\Platform\MySql\Rewrite\LoadData;
 
 use PhpMyAdmin\SqlParser\Statements\LoadStatement;
 use ZtdQuery\Exception\UnknownSchemaException;
