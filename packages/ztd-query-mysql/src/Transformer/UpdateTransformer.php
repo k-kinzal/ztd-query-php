@@ -17,9 +17,9 @@ use ZtdQuery\Platform\MySql\Parse\UpdateAssignmentExtractor;
 use ZtdQuery\Platform\MySql\Parse\UpdateSourceExtractor;
 use ZtdQuery\Platform\MySql\Rewrite\MySqlCteShadowComposer;
 use ZtdQuery\Rewrite\SqlTransformer;
-use ZtdQuery\Shadow\Mutation\MultiTableMutationRow;
-use ZtdQuery\Shadow\Mutation\MultiTableMutationTarget;
 use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
+use ZtdQuery\Shadow\Mutation\Row\MultiTableMutationRow;
+use ZtdQuery\Shadow\Mutation\Row\MultiTableMutationTarget;
 use ZtdQuery\Sql\SqlTokenStream;
 
 /**

@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Postgres\Dialect\PgSqlLexerProfile;
 use ZtdQuery\Platform\Postgres\Parse\PgSqlForeignKeyDefinitionParser;
-use ZtdQuery\Schema\ReferentialAction;
+use ZtdQuery\Schema\Key\ReferentialAction;
 use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(PgSqlForeignKeyDefinitionParser::class)]

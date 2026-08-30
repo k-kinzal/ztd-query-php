@@ -14,8 +14,8 @@ use ZtdQuery\Platform\MySql\Parse\DmlWhereClauseExtractor;
 use ZtdQuery\Platform\MySql\Parse\MySqlParser;
 use ZtdQuery\Platform\MySql\Rewrite\MySqlCteShadowComposer;
 use ZtdQuery\Rewrite\SqlTransformer;
-use ZtdQuery\Shadow\Mutation\MultiTableMutationRow;
-use ZtdQuery\Shadow\Mutation\MultiTableMutationTarget;
+use ZtdQuery\Shadow\Mutation\Row\MultiTableMutationRow;
+use ZtdQuery\Shadow\Mutation\Row\MultiTableMutationTarget;
 
 /**
  * Transforms DELETE statements into SELECT projections with CTE shadowing.

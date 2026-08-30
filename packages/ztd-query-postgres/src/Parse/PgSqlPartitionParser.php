@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\Postgres\Parse;
 
 use ZtdQuery\Platform\Postgres\Dialect\PgSqlLexerProfile;
-use ZtdQuery\Schema\TablePartitionKey;
-use ZtdQuery\Schema\TablePartitionRelation;
-use ZtdQuery\Schema\TablePartitionStrategy;
+use ZtdQuery\Schema\Partition\TablePartitionKey;
+use ZtdQuery\Schema\Partition\TablePartitionRelation;
+use ZtdQuery\Schema\Partition\TablePartitionStrategy;
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;

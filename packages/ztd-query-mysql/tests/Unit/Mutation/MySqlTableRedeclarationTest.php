@@ -9,8 +9,8 @@ use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\MySql\Mutation\MySqlTableRedeclaration;
 use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
-use ZtdQuery\Schema\ForeignKeyDefinition;
-use ZtdQuery\Schema\ReferentialAction;
+use ZtdQuery\Schema\Key\ForeignKeyDefinition;
+use ZtdQuery\Schema\Key\ReferentialAction;
 use ZtdQuery\Schema\TableDefinition;
 
 #[CoversClass(MySqlTableRedeclaration::class)]

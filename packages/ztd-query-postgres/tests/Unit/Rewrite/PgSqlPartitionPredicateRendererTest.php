@@ -7,7 +7,7 @@ namespace Tests\Unit\Rewrite;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Postgres\Rewrite\PgSqlPartitionPredicateRenderer;
-use ZtdQuery\Schema\TablePartitionRelation;
+use ZtdQuery\Schema\Partition\TablePartitionRelation;
 
 #[CoversClass(PgSqlPartitionPredicateRenderer::class)]
 final class PgSqlPartitionPredicateRendererTest extends TestCase
