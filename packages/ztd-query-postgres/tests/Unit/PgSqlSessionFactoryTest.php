@@ -20,6 +20,7 @@ use ZtdQuery\Platform\Postgres\Dialect\PgSqlPdoResultColumnTypeResolver;
 use ZtdQuery\Platform\Postgres\Parse\PgSqlParser;
 use ZtdQuery\Platform\Postgres\Parse\PgSqlPartitionParser;
 use ZtdQuery\Platform\Postgres\Parse\PgSqlSchemaParser;
+use ZtdQuery\Platform\Postgres\Parse\PgSqlWithPrefix;
 use ZtdQuery\Platform\Postgres\PgSqlPartitionReflector;
 use ZtdQuery\Platform\Postgres\PgSqlSchemaReflector;
 use ZtdQuery\Platform\Postgres\PgSqlSessionFactory;
@@ -74,6 +75,7 @@ use ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer;
 #[UsesClass(\ZtdQuery\Platform\Postgres\Dialect\PgSqlLexerProfile::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\Parse\PgSqlUpsertExpressionCursor::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\Parse\PgSqlUpsertLiteral::class)]
+#[UsesClass(PgSqlWithPrefix::class)]
 final class PgSqlSessionFactoryTest extends TestCase
 {
     public function testCreateRegistersReflectedPartitionMetadata(): void

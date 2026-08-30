@@ -17,6 +17,7 @@ use ZtdQuery\Platform\Postgres\Parse\PgSqlPartitionParser;
 use ZtdQuery\Platform\Postgres\Parse\PgSqlReturningProjectionParser;
 use ZtdQuery\Platform\Postgres\Parse\PgSqlSchemaParser;
 use ZtdQuery\Platform\Postgres\Parse\PgSqlViewDefinitionParser;
+use ZtdQuery\Platform\Postgres\Parse\PgSqlWithPrefix;
 use ZtdQuery\Platform\Postgres\Rewrite\PgSqlMutationResolver;
 use ZtdQuery\Platform\Postgres\Rewrite\PgSqlQueryGuard;
 use ZtdQuery\Platform\Postgres\Rewrite\PgSqlRewriter;
@@ -88,6 +89,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\Postgres\Dialect\PgSqlLexerProfile::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\Parse\PgSqlUpsertExpressionCursor::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\Parse\PgSqlUpsertLiteral::class)]
+#[UsesClass(PgSqlWithPrefix::class)]
 final class PgSqlRewriterTest extends RewriterContractTest
 {
     public function testMergeBuildsAtomicSynchronizationPlan(): void

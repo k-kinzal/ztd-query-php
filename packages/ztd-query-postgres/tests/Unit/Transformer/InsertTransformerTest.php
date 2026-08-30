@@ -12,6 +12,7 @@ use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\Postgres\Dialect\PgSqlCastRenderer;
 use ZtdQuery\Platform\Postgres\Dialect\PgSqlIdentifierQuoter;
 use ZtdQuery\Platform\Postgres\Parse\PgSqlParser;
+use ZtdQuery\Platform\Postgres\Parse\PgSqlWithPrefix;
 use ZtdQuery\Platform\Postgres\Transformer\InsertSelectRenderer;
 use ZtdQuery\Platform\Postgres\Transformer\InsertTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
@@ -37,6 +38,7 @@ use ZtdQuery\Schema\PartialUniqueIndex;
 #[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\PgSqlNativeUpsertProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\PgSqlGeneratedColumnProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\Dialect\PgSqlLexerProfile::class)]
+#[UsesClass(PgSqlWithPrefix::class)]
 final class InsertTransformerTest extends TestCase
 {
     public function testProjectsConflictExpressionUsingCandidateKeys(): void
