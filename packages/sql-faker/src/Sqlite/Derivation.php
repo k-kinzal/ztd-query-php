@@ -80,11 +80,7 @@ final class Derivation
             /** @var NonTerminal $nonTerminal */
             $nonTerminal = $form[$index];
             if (!isset($this->grammar->ruleMap[$nonTerminal->value])) {
-                $form = [
-                    ...array_slice($form, 0, $index),
-                    new Terminal($nonTerminal->value),
-                    ...array_slice($form, $index + 1),
-                ];
+                $form = $this->rewritten($form, $index, [new Terminal($nonTerminal->value)]);
                 continue;
             }
 
@@ -100,15 +96,32 @@ final class Derivation
             $alternatives = $this->affordable($alternatives, new Production(array_slice($form, $index + 1)));
             $production = $this->selectProduction($alternatives, $plan);
 
-            $form = [
-                ...array_slice($form, 0, $index),
-                ...$production->symbols,
-                ...array_slice($form, $index + 1),
-            ];
+            $form = $this->rewritten($form, $index, $production->symbols);
         }
 
         /** @var list<Terminal> $form */
         return $form;
+    }
+
+    /**
+     * Answers the sentential form with one symbol rewritten into others.
+     *
+     * A step of a derivation only ever replaces the symbol it acted on, so
+     * everything before and after it is carried across untouched.
+     *
+     * @param list<Symbol> $form Sentential form the walk has reached
+     * @param int $index Position of the symbol being rewritten
+     * @param list<Symbol> $symbols What that symbol is rewritten into
+     *
+     * @return list<Symbol> The form after the rewrite
+     */
+    public function rewritten(array $form, int $index, array $symbols): array
+    {
+        return [
+            ...array_slice($form, 0, $index),
+            ...$symbols,
+            ...array_slice($form, $index + 1),
+        ];
     }
 
     /**
