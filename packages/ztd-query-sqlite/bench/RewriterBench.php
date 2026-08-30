@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Bench;
 
-use ZtdQuery\Platform\Sqlite\SqliteMutationResolver;
-use ZtdQuery\Platform\Sqlite\SqliteParser;
-use ZtdQuery\Platform\Sqlite\SqliteQueryGuard;
-use ZtdQuery\Platform\Sqlite\SqliteRewriter;
-use ZtdQuery\Platform\Sqlite\SqliteSchemaParser;
+use ZtdQuery\Platform\Sqlite\Parse\SqliteParser;
+use ZtdQuery\Platform\Sqlite\Parse\SqliteSchemaParser;
+use ZtdQuery\Platform\Sqlite\Rewrite\SqliteMutationResolver;
+use ZtdQuery\Platform\Sqlite\Rewrite\SqliteQueryGuard;
+use ZtdQuery\Platform\Sqlite\Rewrite\SqliteRewriter;
 use ZtdQuery\Platform\Sqlite\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\Sqlite\Transformer\InsertTransformer;
 use ZtdQuery\Platform\Sqlite\Transformer\SelectTransformer;

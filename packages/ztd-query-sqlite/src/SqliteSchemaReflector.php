@@ -6,6 +6,7 @@ namespace ZtdQuery\Platform\Sqlite;
 
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Platform\SchemaReflector;
+use ZtdQuery\Platform\Sqlite\Parse\SqliteViewDefinitionParser;
 use ZtdQuery\Platform\ViewReflector;
 
 /**

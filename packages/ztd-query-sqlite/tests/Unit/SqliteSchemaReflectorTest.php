@@ -13,9 +13,9 @@ use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Platform\Sqlite\SqliteSchemaReflector;
 
 #[CoversClass(SqliteSchemaReflector::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteViewDefinitionParser::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parse\SqliteSelectRelationParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parse\SqliteViewDefinitionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Dialect\SqliteLexerProfile::class)]
 final class SqliteSchemaReflectorTest extends TestCase
 {
     public function testReflectViewsReturnsEmptyWhenQueryFails(): void

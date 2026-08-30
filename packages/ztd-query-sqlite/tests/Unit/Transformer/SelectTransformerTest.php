@@ -11,11 +11,11 @@ use Tests\Contract\TransformerContractTest;
 use Tests\Fixture\DriverAnswer;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\IdentifierQuoter;
-use ZtdQuery\Platform\Sqlite\SqliteCastRenderer;
-use ZtdQuery\Platform\Sqlite\SqliteFullTextSearchRewriter;
-use ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter;
-use ZtdQuery\Platform\Sqlite\SqliteLexicalMasker;
-use ZtdQuery\Platform\Sqlite\SqliteParser;
+use ZtdQuery\Platform\Sqlite\Dialect\SqliteCastRenderer;
+use ZtdQuery\Platform\Sqlite\Dialect\SqliteIdentifierQuoter;
+use ZtdQuery\Platform\Sqlite\Dialect\SqliteLexicalMasker;
+use ZtdQuery\Platform\Sqlite\Parse\SqliteParser;
+use ZtdQuery\Platform\Sqlite\Rewrite\SqliteFullTextSearchRewriter;
 use ZtdQuery\Platform\Sqlite\Transformer\SelectTransformer;
 use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Rewrite\SqlTransformer;
@@ -23,17 +23,17 @@ use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(SelectTransformer::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteIndexHintStripper::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parse\SqliteSelectRelationParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewrite\SqliteIndexHintStripper::class)]
 #[UsesClass(SqliteCastRenderer::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteValueRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Dialect\SqliteValueRenderer::class)]
 #[UsesClass(SqliteIdentifierQuoter::class)]
 #[UsesClass(SqliteLexicalMasker::class)]
 #[UsesClass(SqliteParser::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteGeneratedColumnProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewrite\SqliteCteShadowComposer::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewrite\SqliteGeneratedColumnProjector::class)]
 #[UsesClass(SqliteFullTextSearchRewriter::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Dialect\SqliteLexerProfile::class)]
 final class SelectTransformerTest extends TransformerContractTest
 {
     public function testGeneratedColumnsAreRecomputedFromBaseRow(): void
