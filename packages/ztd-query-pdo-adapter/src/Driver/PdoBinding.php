@@ -2,10 +2,11 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Adapter\Pdo;
+namespace ZtdQuery\Adapter\Pdo\Driver;
 
 use PDO;
 use Stringable;
+use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 
 /**
  * One value a caller bound to a placeholder, remembered as PDO was told it.

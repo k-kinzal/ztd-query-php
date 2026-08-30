@@ -1,0 +1,39 @@
+# NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
+#
+# What this package is, as layers.
+#
+# Adapter is what a caller uses in place of PDO: the two classes that extend
+# it, the factory that picks a platform from the driver name, and PostgreSQL's
+# COPY carried out through ZTD instead of by the server. Driver is how the core
+# library's contracts are answered with a real PDO handle, which nothing
+# outside this package has any reason to name. Contract is the refusal this
+# package raises, so either of the other two may throw one and neither is
+# depended on for it.
+deptrac:
+  paths:
+    - ./src
+  layers:
+    - name: Adapter
+      collectors:
+        - type: bool
+          must:
+            - type: directory
+              value: src/[^/]+\.php
+          must_not:
+            - type: classLike
+              value: ^ZtdQuery\\Adapter\\Pdo\\ZtdPdoException$
+    - name: Driver
+      collectors:
+        - type: directory
+          value: src/Driver/.*
+    - name: Contract
+      collectors:
+        - type: classLike
+          value: ^ZtdQuery\\Adapter\\Pdo\\ZtdPdoException$
+  ruleset:
+    Adapter:
+      - Driver
+      - Contract
+    Driver:
+      - Contract
+    Contract: ~

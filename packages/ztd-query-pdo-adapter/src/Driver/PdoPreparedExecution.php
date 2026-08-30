@@ -2,10 +2,11 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Adapter\Pdo;
+namespace ZtdQuery\Adapter\Pdo\Driver;
 
 use PDO;
 use PDOStatement;
+use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Session;
 
