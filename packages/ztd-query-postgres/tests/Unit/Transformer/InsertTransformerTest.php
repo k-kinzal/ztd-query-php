@@ -9,9 +9,9 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\CastRenderer;
-use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
-use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
-use ZtdQuery\Platform\Postgres\PgSqlParser;
+use ZtdQuery\Platform\Postgres\Dialect\PgSqlCastRenderer;
+use ZtdQuery\Platform\Postgres\Dialect\PgSqlIdentifierQuoter;
+use ZtdQuery\Platform\Postgres\Parse\PgSqlParser;
 use ZtdQuery\Platform\Postgres\Transformer\InsertSelectRenderer;
 use ZtdQuery\Platform\Postgres\Transformer\InsertTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
@@ -21,22 +21,22 @@ use ZtdQuery\Schema\IdentityGenerationStrategy;
 use ZtdQuery\Schema\PartialUniqueIndex;
 
 #[CoversClass(InsertTransformer::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parse\PgSqlSelectRelationParser::class)]
 #[UsesClass(PgSqlParser::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlConflictTarget::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PostgreSqlLexicalMasker::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Statement\PgSqlConflictTarget::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Dialect\PostgreSqlLexicalMasker::class)]
 #[UsesClass(SelectTransformer::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlTableSampleParser::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlTableSampleRewriter::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parse\PgSqlTableSampleParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\PgSqlTableSampleRewriter::class)]
 #[UsesClass(PgSqlCastRenderer::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlValueRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Dialect\PgSqlValueRenderer::class)]
 #[UsesClass(PgSqlIdentifierQuoter::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\InsertRowRenderer::class)]
 #[UsesClass(InsertSelectRenderer::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlNativeUpsertProjector::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlGeneratedColumnProjector::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\PgSqlCteShadowComposer::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\PgSqlNativeUpsertProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\PgSqlGeneratedColumnProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Dialect\PgSqlLexerProfile::class)]
 final class InsertTransformerTest extends TestCase
 {
     public function testProjectsConflictExpressionUsingCandidateKeys(): void

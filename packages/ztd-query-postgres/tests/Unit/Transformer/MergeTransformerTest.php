@@ -8,16 +8,16 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
-use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
-use ZtdQuery\Platform\Postgres\PgSqlMergeActionKind;
-use ZtdQuery\Platform\Postgres\PgSqlMergeClause;
-use ZtdQuery\Platform\Postgres\PgSqlMergeMatchKind;
-use ZtdQuery\Platform\Postgres\PgSqlMergeParser;
-use ZtdQuery\Platform\Postgres\PgSqlMergeStatement;
-use ZtdQuery\Platform\Postgres\PgSqlTableSampleParser;
-use ZtdQuery\Platform\Postgres\PgSqlTableSampleRewriter;
-use ZtdQuery\Platform\Postgres\PgSqlValueRenderer;
+use ZtdQuery\Platform\Postgres\Dialect\PgSqlCastRenderer;
+use ZtdQuery\Platform\Postgres\Dialect\PgSqlIdentifierQuoter;
+use ZtdQuery\Platform\Postgres\Dialect\PgSqlValueRenderer;
+use ZtdQuery\Platform\Postgres\Parse\PgSqlMergeParser;
+use ZtdQuery\Platform\Postgres\Parse\PgSqlTableSampleParser;
+use ZtdQuery\Platform\Postgres\Rewrite\PgSqlTableSampleRewriter;
+use ZtdQuery\Platform\Postgres\Statement\PgSqlMergeActionKind;
+use ZtdQuery\Platform\Postgres\Statement\PgSqlMergeClause;
+use ZtdQuery\Platform\Postgres\Statement\PgSqlMergeMatchKind;
+use ZtdQuery\Platform\Postgres\Statement\PgSqlMergeStatement;
 use ZtdQuery\Platform\Postgres\Transformer\MergeTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
 use ZtdQuery\Schema\ColumnDeclaration;
@@ -36,12 +36,12 @@ use ZtdQuery\Schema\IdentityGenerationStrategy;
 #[UsesClass(PgSqlTableSampleRewriter::class)]
 #[UsesClass(PgSqlValueRenderer::class)]
 #[UsesClass(SelectTransformer::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlGeneratedColumnProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\PgSqlCteShadowComposer::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\PgSqlGeneratedColumnProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\InsertSelectRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\InsertRowRenderer::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parse\PgSqlSelectRelationParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Dialect\PgSqlLexerProfile::class)]
 final class MergeTransformerTest extends TestCase
 {
     public function testTransformsMixedUpdateAndInsertIntoCompleteTargetState(): void

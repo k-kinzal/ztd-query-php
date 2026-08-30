@@ -12,8 +12,9 @@ use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\Platform\CopySupport;
 use ZtdQuery\Platform\CopyTarget;
-use ZtdQuery\Session;
+use ZtdQuery\Platform\Postgres\PgSqlSessionFactory;
 use ZtdQuery\Platform\SessionFactory;
+use ZtdQuery\Session;
 
 /**
  * PDO proxy that enforces ZTD behavior for reads and writes.

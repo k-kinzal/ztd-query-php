@@ -11,8 +11,8 @@ use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\PostgreSqlProvider;
 use SqlFaker\PostgreSqlStatementProvider;
-use ZtdQuery\Platform\Postgres\PgSqlParser;
-use ZtdQuery\Platform\Postgres\PgSqlQueryGuard;
+use ZtdQuery\Platform\Postgres\Parse\PgSqlParser;
+use ZtdQuery\Platform\Postgres\Rewrite\PgSqlQueryGuard;
 use ZtdQuery\Rewrite\QueryKind;
 
 /**

@@ -11,14 +11,14 @@ use Tests\Fake\FakeSequentialConnection;
 use Tests\Fake\FakeStatement;
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Connection\StatementInterface;
-use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
+use ZtdQuery\Platform\Postgres\Dialect\PgSqlIdentifierQuoter;
 use ZtdQuery\Platform\Postgres\PgSqlSchemaReflector;
 
 #[CoversClass(PgSqlSchemaReflector::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlViewDefinitionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parse\PgSqlSelectRelationParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parse\PgSqlViewDefinitionParser::class)]
 #[UsesClass(PgSqlIdentifierQuoter::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Dialect\PgSqlLexerProfile::class)]
 final class PgSqlSchemaReflectorTest extends TestCase
 {
     public function testReflectViewsReturnsEmptyWhenQueryFails(): void
