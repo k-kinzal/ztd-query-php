@@ -7,8 +7,8 @@ namespace Tests\Unit\Transformer;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
-use ZtdQuery\Platform\MySql\MySqlLexerProfile;
+use ZtdQuery\Platform\MySql\Dialect\MySqlIdentifierQuoter;
+use ZtdQuery\Platform\MySql\Dialect\MySqlLexerProfile;
 use ZtdQuery\Platform\MySql\Transformer\MySqlSelectListAliaser;
 use ZtdQuery\Sql\SqlTokenStream;
 

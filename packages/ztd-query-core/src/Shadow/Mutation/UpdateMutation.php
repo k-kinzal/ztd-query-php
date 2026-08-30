@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow\Mutation;
 
-use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Shadow\ShadowStore;
 
 /**
  * Applies UPDATE result rows to the shadow store.
  *
- * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
  */
 final class UpdateMutation implements DataMutation
 {

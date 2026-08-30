@@ -1,0 +1,48 @@
+<?php
+
+declare(strict_types=1);
+
+namespace ZtdQuery\Platform\Postgres\Rewrite;
+
+use ZtdQuery\Platform\Postgres\Parse\PgSqlParser;
+use ZtdQuery\Rewrite\QueryKind;
+
+/**
+ * Classifies PostgreSQL SQL statements into QueryKind categories.
+ */
+final class PgSqlQueryGuard
+{
+    private PgSqlParser $parser;
+
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param PgSqlParser $parser
+     */
+    public function __construct(PgSqlParser $parser)
+    {
+        $this->parser = $parser;
+    }
+
+    /**
+     * Classify a SQL string into READ/WRITE_SIMULATED/DDL_SIMULATED/SKIPPED or null.
+     */
+    public function classify(string $sql): ?QueryKind
+    {
+        if (PgSqlReadOnlyDiagnosticStatement::isSafe($sql)) {
+            return QueryKind::READ;
+        }
+        $type = $this->parser->classifyStatement($sql);
+        if ($type === null) {
+            return null;
+        }
+
+        return match ($type) {
+            'SELECT' => QueryKind::READ,
+            'DO' => QueryKind::READ,
+            'INSERT', 'UPDATE', 'DELETE', 'MERGE', 'TRUNCATE' => QueryKind::WRITE_SIMULATED,
+            'CREATE_TABLE', 'DROP_TABLE', 'ALTER_TABLE' => QueryKind::DDL_SIMULATED,
+            'TCL' => QueryKind::SKIPPED,
+        };
+    }
+}

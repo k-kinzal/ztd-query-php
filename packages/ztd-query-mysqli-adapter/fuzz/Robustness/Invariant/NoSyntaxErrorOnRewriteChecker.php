@@ -9,7 +9,7 @@ use mysqli;
 use mysqli_sql_exception;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\MySql\MySqlQueryGuard;
+use ZtdQuery\Platform\MySql\Rewrite\MySqlQueryGuard;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\SqlRewriter;
 

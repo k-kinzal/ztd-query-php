@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace ZtdQuery;
 
-use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Rewrite\QueryKind;
+use ZtdQuery\Schema\TableDefinition;
 
 /**
  * Result of a ZTD statement execution.
@@ -14,7 +14,7 @@ use ZtdQuery\Rewrite\QueryKind;
  * providing a unified API for fetching results whether from rewritten statements,
  * buffered rows (for simulated writes), or passthrough scenarios.
  *
- * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
  */
 interface ExecuteResult
 {

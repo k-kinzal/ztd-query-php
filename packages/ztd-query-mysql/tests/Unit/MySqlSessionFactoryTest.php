@@ -11,18 +11,18 @@ use PHPUnit\Framework\TestCase;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Connection\StatementInterface;
-use ZtdQuery\Platform\MySql\MySqlCastRenderer;
-use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
-use ZtdQuery\Platform\MySql\MySqlLexerProfile;
-use ZtdQuery\Platform\MySql\MySqlMutationResolver;
-use ZtdQuery\Platform\MySql\MySqlParser;
-use ZtdQuery\Platform\MySql\MySqlQueryGuard;
-use ZtdQuery\Platform\MySql\MySqlResultColumnTypeResolver;
-use ZtdQuery\Platform\MySql\MySqlRewriter;
-use ZtdQuery\Platform\MySql\MySqlSchemaParser;
+use ZtdQuery\Platform\MySql\Dialect\MySqlCastRenderer;
+use ZtdQuery\Platform\MySql\Dialect\MySqlIdentifierQuoter;
+use ZtdQuery\Platform\MySql\Dialect\MySqlLexerProfile;
+use ZtdQuery\Platform\MySql\Dialect\MySqlResultColumnTypeResolver;
 use ZtdQuery\Platform\MySql\MySqlSchemaReflector;
 use ZtdQuery\Platform\MySql\MySqlSessionFactory;
 use ZtdQuery\Platform\MySql\MySqlSessionSqlModeReflector;
+use ZtdQuery\Platform\MySql\Parse\MySqlParser;
+use ZtdQuery\Platform\MySql\Parse\MySqlSchemaParser;
+use ZtdQuery\Platform\MySql\Rewrite\MySqlMutationResolver;
+use ZtdQuery\Platform\MySql\Rewrite\MySqlQueryGuard;
+use ZtdQuery\Platform\MySql\Rewrite\MySqlRewriter;
 use ZtdQuery\Platform\MySql\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\MySql\Transformer\InsertTransformer;
 use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
@@ -52,17 +52,17 @@ use ZtdQuery\Sql\SqlTokenStream;
 #[UsesClass(MySqlTransformer::class)]
 #[UsesClass(ReplaceTransformer::class)]
 #[UsesClass(SelectTransformer::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlFullTextSearchRewriter::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\MySqlFullTextSearchRewriter::class)]
 #[UsesClass(UpdateTransformer::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlTypeSemantics::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlNativeUpsertProjector::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlGeneratedColumnProjector::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlReadOnlyDiagnosticStatement::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlSelectRelationParser::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlViewDefinitionParser::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlViewShadowRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlValueRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlTypeSemantics::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\MySqlCteShadowComposer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\MySqlNativeUpsertProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\MySqlGeneratedColumnProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\MySqlReadOnlyDiagnosticStatement::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Parse\MySqlSelectRelationParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Parse\MySqlViewDefinitionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\MySqlViewShadowRenderer::class)]
 final class MySqlSessionFactoryTest extends TestCase
 {
     public function testCreateRegistersReflectedViews(): void

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow\Mutation;
 
-use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Schema\TableDefinition;
 
 /**
  * Names the columns a multi-table statement carries its per-table values under.
@@ -15,7 +15,7 @@ use ZtdQuery\Connection\StatementInterface;
  * position of the table in the statement, which is the only thing both sides
  * agree on.
  *
- * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
  */
 final class MultiTableMutationRow
 {

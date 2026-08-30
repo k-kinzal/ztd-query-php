@@ -6,8 +6,8 @@ namespace Tests\Fixture\SqlFaker;
 
 use Faker\Generator;
 use SqlFaker\Grammar\Lexical\LexicalCatalog;
-use SqlFaker\MySql\MySqlTerminalRealizer;
-use SqlFaker\MySql\MySqlTokenizer;
+use SqlFaker\MySql\Lexical\MySqlTerminalRealizer;
+use SqlFaker\MySql\Lexical\MySqlTokenizer;
 
 /**
  * Builds MySQL terminal realizers over a catalog small enough to read.

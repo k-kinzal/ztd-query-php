@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlFixture;
 
 use Faker\Generator;
+use SqlFixture\Fixture\RowGenerator;
 use SqlFixture\Fixture\RowSpec;
 use SqlFixture\Hydrator\HydrationException;
 use SqlFixture\Hydrator\HydratorInterface;
@@ -25,7 +26,7 @@ use SqlFixture\TypeMapper\TypeMapperInterface;
  *
  * @phpstan-import-type FixtureRow from TypeMapperInterface
  */
-final class FixtureGenerator
+final class FixtureGenerator implements RowGenerator
 {
     private TypeMapperInterface $typeMapper;
     private HydratorInterface $hydrator;

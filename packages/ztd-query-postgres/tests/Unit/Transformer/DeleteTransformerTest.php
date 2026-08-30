@@ -8,27 +8,27 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
-use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
-use ZtdQuery\Platform\Postgres\PgSqlParser;
+use ZtdQuery\Platform\Postgres\Dialect\PgSqlCastRenderer;
+use ZtdQuery\Platform\Postgres\Dialect\PgSqlIdentifierQuoter;
+use ZtdQuery\Platform\Postgres\Parse\PgSqlParser;
 use ZtdQuery\Platform\Postgres\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
 use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(DeleteTransformer::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parse\PgSqlSelectRelationParser::class)]
 #[UsesClass(PgSqlParser::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PostgreSqlLexicalMasker::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Dialect\PostgreSqlLexicalMasker::class)]
 #[UsesClass(SelectTransformer::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlTableSampleParser::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlTableSampleRewriter::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parse\PgSqlTableSampleParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\PgSqlTableSampleRewriter::class)]
 #[UsesClass(PgSqlCastRenderer::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlValueRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Dialect\PgSqlValueRenderer::class)]
 #[UsesClass(PgSqlIdentifierQuoter::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlGeneratedColumnProjector::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\PgSqlCteShadowComposer::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\PgSqlGeneratedColumnProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Dialect\PgSqlLexerProfile::class)]
 final class DeleteTransformerTest extends TestCase
 {
     public function testBuildProjectionSimpleDelete(): void

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Bench;
 
-use ZtdQuery\Platform\MySql\MySqlParser;
+use ZtdQuery\Platform\MySql\Parse\MySqlParser;
 
 final class ParserBench
 {

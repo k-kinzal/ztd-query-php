@@ -47,21 +47,7 @@ final class TokenJoiner
                 continue;
             }
 
-            $needsSpace = true;
-
-            if ($token === '(' && self::isIdentifier($prev)) {
-                $needsSpace = false;
-            } elseif ($token === ')' || $prev === '(' || $token === ',' || $token === ';') {
-                $needsSpace = false;
-            } elseif ($prev === '.' || $token === '.') {
-                $needsSpace = false;
-            } elseif ($prev === '[' || $token === ']') {
-                $needsSpace = false;
-            } elseif (self::matchesNoSpacePair($noSpacePairs, $prev, $token)) {
-                $needsSpace = false;
-            }
-
-            if ($needsSpace) {
+            if (self::needsSpace($noSpacePairs, $prev, $token)) {
                 $out .= $separator !== null ? $separator() : ' ';
             } elseif ($optionalTrivia !== null) {
                 $out .= $optionalTrivia();
@@ -76,6 +62,38 @@ final class TokenJoiner
         }
 
         return $out;
+    }
+
+    /**
+     * Reports whether two adjacent tokens have to be written apart.
+     *
+     * Most tokens do, so this answers what stands together instead: a call's
+     * parentheses against the name in front of them, punctuation against what
+     * it belongs to, the parts of a qualified name, a subscript against what
+     * it indexes, and whatever the dialect itself names as inseparable.
+     *
+     * @param list<list<string>> $noSpacePairs Pairs of tokens that must be written together
+     * @param string $prev Token already written
+     * @param string $token Token about to be written
+     *
+     * @return bool True when the two have to be separated
+     */
+    public static function needsSpace(array $noSpacePairs, string $prev, string $token): bool
+    {
+        if ($token === '(' && self::isIdentifier($prev)) {
+            return false;
+        }
+        if ($token === ')' || $prev === '(' || $token === ',' || $token === ';') {
+            return false;
+        }
+        if ($prev === '.' || $token === '.') {
+            return false;
+        }
+        if ($prev === '[' || $token === ']') {
+            return false;
+        }
+
+        return !self::matchesNoSpacePair($noSpacePairs, $prev, $token);
     }
 
     /**

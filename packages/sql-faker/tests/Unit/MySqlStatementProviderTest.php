@@ -10,7 +10,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Source\SqlVersion;
-use SqlFaker\MySql\LexicalGrammar;
+use SqlFaker\MySql\Lexical\LexicalGrammar;
 use SqlFaker\MySqlStatementProvider;
 
 #[Medium]

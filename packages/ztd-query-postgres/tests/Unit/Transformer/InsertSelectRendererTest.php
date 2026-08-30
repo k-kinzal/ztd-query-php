@@ -8,7 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\InvalidDefinitionException;
-use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
+use ZtdQuery\Platform\Postgres\Dialect\PgSqlIdentifierQuoter;
 use ZtdQuery\Platform\Postgres\Transformer\InsertSelectRenderer;
 
 #[CoversClass(InsertSelectRenderer::class)]

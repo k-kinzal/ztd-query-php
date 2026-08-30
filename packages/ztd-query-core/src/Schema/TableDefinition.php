@@ -5,7 +5,14 @@ declare(strict_types=1);
 namespace ZtdQuery\Schema;
 
 /**
- * Structured representation of a table's schema metadata.
+ * Structured representation of a table's schema metadata. *
+ * A row of this table is a map of column name to value, and a value is a scalar
+ * or null: that is what a column can hold and what every driver hands back for
+ * one. Both are stated here so the rest of the library can name a row of a
+ * table without naming the connection it happened to arrive through.
+ *
+ * @phpstan-type RowValue int|float|string|bool|null
+ * @phpstan-type Row array<string, RowValue>
  */
 final class TableDefinition
 {

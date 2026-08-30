@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Rewrite;
 
-use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
+use ZtdQuery\Schema\TableDefinition;
 
 /**
  * Hands out the identity values a database would have assigned.
@@ -20,9 +20,9 @@ use ZtdQuery\Schema\IdentityGenerationStrategy;
  * written. It is allocated against a copy so that a projection thrown away
  * takes its numbers with it, and only a committed one moves the counter on.
  *
- * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
  * @phpstan-import-type RenderableValue from ValueRenderer
- * @phpstan-import-type RowValue from StatementInterface
+ * @phpstan-import-type RowValue from TableDefinition
  */
 final class ShadowIdentityAllocator
 {

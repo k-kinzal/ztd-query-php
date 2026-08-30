@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow\Mutation;
 
-use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Schema\CandidateKeySet;
+use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Shadow\ShadowStore;
 
 /**
  * Applies INSERT ... ON DUPLICATE KEY UPDATE (UPSERT) to the shadow store.
  *
- * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
  */
 final class UpsertMutation implements DataMutation
 {

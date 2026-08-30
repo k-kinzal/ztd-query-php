@@ -10,13 +10,13 @@ use PHPUnit\Framework\TestCase;
 use Tests\Fake\FakeSequentialConnection;
 use Tests\Fake\FakeStatement;
 use ZtdQuery\Connection\ConnectionInterface;
-use ZtdQuery\Platform\Postgres\PgSqlPartitionParser;
+use ZtdQuery\Platform\Postgres\Parse\PgSqlPartitionParser;
 use ZtdQuery\Platform\Postgres\PgSqlPartitionReflector;
 use ZtdQuery\Schema\TablePartitionStrategy;
 
 #[CoversClass(PgSqlPartitionReflector::class)]
 #[UsesClass(PgSqlPartitionParser::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Dialect\PgSqlLexerProfile::class)]
 final class PgSqlPartitionReflectorTest extends TestCase
 {
     public function testReflectsKeysAndParentRelationsFromCatalog(): void

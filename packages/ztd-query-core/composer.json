@@ -15,7 +15,8 @@
         "brianium/paratest": "^6.11 || ^7",
         "k-kinzal/php-ai-toolkit": "dev-main",
         "phpcompatibility/php-compatibility": "10.0.0-alpha2",
-        "squizlabs/php_codesniffer": "^3.13"
+        "squizlabs/php_codesniffer": "^3.13",
+        "deptrac/deptrac": "^4.0"
     },
     "repositories": [
         {
@@ -39,14 +40,16 @@
         "test:unit": "@php -d memory_limit=512M tests/run.php",
         "lint": [
             "@format:check",
-            "@phpstan"
+            "@phpstan",
+            "@deptrac"
         ],
         "format": "php-cs-fixer fix --allow-risky=yes",
         "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
         "phpstan": "phpstan analyse --memory-limit=512M",
         "compat": "phpcs -q",
         "loc-guard": "loc-guard",
-        "tree-guard": "tree-guard"
+        "tree-guard": "tree-guard",
+        "deptrac": "deptrac analyse --config-file=deptrac.yaml --no-cache"
     },
     "config": {
         "allow-plugins": {

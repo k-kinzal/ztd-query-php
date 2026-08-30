@@ -6,8 +6,8 @@ namespace Fuzz\Robustness\Invariant;
 
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\Postgres\PgSqlQueryGuard;
-use ZtdQuery\Platform\Postgres\PgSqlReadOnlyDiagnosticStatement;
+use ZtdQuery\Platform\Postgres\Rewrite\PgSqlQueryGuard;
+use ZtdQuery\Platform\Postgres\Rewrite\PgSqlReadOnlyDiagnosticStatement;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\SqlRewriter;
 

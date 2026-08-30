@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\Postgres\Transformer;
 
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer;
-use ZtdQuery\Platform\Postgres\PgSqlParser;
+use ZtdQuery\Platform\Postgres\Parse\PgSqlParser;
+use ZtdQuery\Platform\Postgres\Parse\PgSqlWithPrefix;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
 
@@ -21,7 +21,9 @@ final class UpdateTransformer implements SqlTransformer
 {
     private PgSqlParser $parser;
     private SelectTransformer $selectTransformer;
-    private PgSqlCteShadowComposer $cteComposer;
+
+    /** @readonly */
+    private PgSqlWithPrefix $withPrefix;
 
     /**
      * Binds the instance to what it will work from.
@@ -35,7 +37,7 @@ final class UpdateTransformer implements SqlTransformer
     ) {
         $this->parser = $parser;
         $this->selectTransformer = $selectTransformer;
-        $this->cteComposer = new PgSqlCteShadowComposer();
+        $this->withPrefix = new PgSqlWithPrefix();
     }
 
     /**
@@ -59,7 +61,7 @@ final class UpdateTransformer implements SqlTransformer
         );
 
         return $this->selectTransformer->transform(
-            $this->cteComposer->carryPrefix($sql, $projection['sql']),
+            $this->withPrefix->carryPrefix($sql, $projection['sql']),
             $tables,
         );
     }

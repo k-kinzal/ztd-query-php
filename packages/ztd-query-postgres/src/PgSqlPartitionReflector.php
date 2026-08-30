@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\Postgres;
 
 use ZtdQuery\Connection\ConnectionInterface;
+use ZtdQuery\Platform\Postgres\Parse\PgSqlPartitionParser;
 use ZtdQuery\Schema\TablePartitionKey;
 use ZtdQuery\Schema\TablePartitionRelation;
 

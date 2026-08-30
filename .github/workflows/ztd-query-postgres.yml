@@ -87,6 +87,12 @@ jobs:
       - name: Static analysis
         run: composer phpstan
 
+      - name: Source tree
+        run: composer tree-guard
+
+      - name: Architecture boundaries
+        run: composer deptrac
+
       - name: PHP compatibility
         run: composer compat
 

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow\Row;
 
-use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Schema\TableDefinition;
 
 /**
  * What happened to one table, as the rows themselves rather than as a count.
@@ -13,7 +13,7 @@ use ZtdQuery\Connection\StatementInterface;
  * what a statement did has to be carried around as those rows and not as the
  * number of them.
  *
- * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
  */
 final class TableTransition
 {

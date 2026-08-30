@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow;
 
-use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
 use ZtdQuery\Shadow\Mutation\ShadowMutation;
@@ -26,7 +26,7 @@ use ZtdQuery\Shadow\Row\TableTransition;
  * the result rows carry both the old key and the new one, so those pairs are
  * taken first and the guessing only fills in what they leave.
  *
- * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
  */
 final class TableTransitions
 {

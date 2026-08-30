@@ -1,0 +1,49 @@
+<?php
+
+declare(strict_types=1);
+
+namespace ZtdQuery\Platform\Postgres\Parse;
+
+use ZtdQuery\Platform\Postgres\Dialect\PgSqlLexerProfile;
+use ZtdQuery\Schema\ViewDefinition;
+use ZtdQuery\Sql\SqlTokenStream;
+
+/**
+ * The pg sql view definition parser.
+ */
+final class PgSqlViewDefinitionParser
+{
+    /**
+     * Builds query.
+     *
+     * @param string $query
+     * @return ViewDefinition
+     */
+    public function fromQuery(string $query): ViewDefinition
+    {
+        $query = rtrim(trim($query), ';');
+
+        return new ViewDefinition($query, (new PgSqlSelectRelationParser())->tableNames($query));
+    }
+
+    /**
+     * Builds create statement.
+     *
+     * @param string $sql
+     * @return ?ViewDefinition
+     */
+    public function fromCreateStatement(string $sql): ?ViewDefinition
+    {
+        foreach (SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->significantTokens() as $token) {
+            if (!$token->isTopLevel() || !$token->isKeyword('AS')) {
+                continue;
+            }
+            $query = substr($sql, $token->endOffset());
+            if (trim($query) !== '') {
+                return $this->fromQuery($query);
+            }
+        }
+
+        return null;
+    }
+}

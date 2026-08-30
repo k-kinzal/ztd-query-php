@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlFixture\Fixture;
 
-use SqlFixture\FixtureGenerator;
 use SqlFixture\Plan\FixturePlan;
+use SqlFixture\Plan\PlanSchemaException;
 use SqlFixture\Plan\Relation;
 use SqlFixture\Schema\SchemaNotFoundException;
 use SqlFixture\Schema\SchemaResolverInterface;
@@ -33,14 +33,14 @@ final class PlanWalk
      * @param FixturePlan $plan Plan being generated
      * @param GenerationRun $run Rows generated so far
      * @param SchemaResolverInterface $schemas Answers what a table looks like
-     * @param FixtureGenerator $generator Builds one row against a table
+     * @param RowGenerator $generator Builds one row against a table
      * @param ChildRowCount $count Decides how many child rows a relation gets
      */
     public function __construct(
         private readonly FixturePlan $plan,
         private readonly GenerationRun $run,
         private readonly SchemaResolverInterface $schemas,
-        private readonly FixtureGenerator $generator,
+        private readonly RowGenerator $generator,
         private readonly ChildRowCount $count,
     ) {
     }
