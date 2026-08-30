@@ -85,4 +85,18 @@ final class PgSqlPartitionReflectorTest extends TestCase
 
         self::assertSame(['keys' => [], 'relations' => []], $metadata);
     }
+
+    public function testKeysAnswersNothingWhereTheDatabaseWouldNotBeAsked(): void
+    {
+        $connection = new FakeSequentialConnection([]);
+
+        self::assertSame([], (new PgSqlPartitionReflector($connection))->keys());
+    }
+
+    public function testRelationsAnswersNothingWhereTheDatabaseWouldNotBeAsked(): void
+    {
+        $connection = new FakeSequentialConnection([]);
+
+        self::assertSame([], (new PgSqlPartitionReflector($connection))->relations());
+    }
 }

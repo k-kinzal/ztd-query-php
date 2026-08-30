@@ -224,4 +224,25 @@ final class PgSqlTableSampleParserTest extends TestCase
         self::assertFalse((new PgSqlTableSampleParser())->sameLevel($tokens[0], $tokens[2]));
     }
 
+    public function testBracketedExpressionRefusesAClauseWithNoOpeningParenthesis(): void
+    {
+        $sql = 'SELECT * FROM t TABLESAMPLE SYSTEM 10';
+        $tokens = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->significantTokens();
+
+        $this->expectException(UnsupportedSqlException::class);
+        $this->expectExceptionMessage('Malformed TABLESAMPLE opening parenthesis');
+
+        (new PgSqlTableSampleParser())->bracketedExpression($sql, $tokens, 7, $tokens[3], 'TABLESAMPLE', 'percentage');
+    }
+
+    public function testBracketedExpressionRefusesAClauseHoldingMoreThanOneExpression(): void
+    {
+        $sql = 'SELECT * FROM t TABLESAMPLE SYSTEM (10, 20)';
+        $tokens = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->significantTokens();
+
+        $this->expectException(UnsupportedSqlException::class);
+        $this->expectExceptionMessage('TABLESAMPLE requires one percentage expression');
+
+        (new PgSqlTableSampleParser())->bracketedExpression($sql, $tokens, 6, $tokens[3], 'TABLESAMPLE', 'percentage');
+    }
 }
