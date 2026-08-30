@@ -90,30 +90,8 @@ final class PostgreSqlLexicalMasker
             }
 
             if ($pair === '/*') {
-                $scan = $i;
-                $depth = 0;
-                while (true) {
-                    $open = strpos($sql, '/*', $scan);
-                    $close = strpos($sql, '*/', $scan);
-                    $openPosition = $open === false ? $length : $open;
-                    $closePosition = $close === false ? $length : $close;
-                    $markerPosition = min($openPosition, $closePosition);
-                    if ($markerPosition === $length) {
-                        $scan = $length;
-                        break;
-                    }
-                    $scan = $markerPosition + 2;
-                    if (substr($sql, $markerPosition, 2) === '/*') {
-                        $depth++;
-                        continue;
-                    }
-                    $depth--;
-                    if ($depth === 0) {
-                        break;
-                    }
-                }
                 $result .= ' ';
-                $i = $scan;
+                $i = self::blockCommentEnd($sql, $i);
                 continue;
             }
 
@@ -122,6 +100,40 @@ final class PostgreSqlLexicalMasker
         }
 
         return $result;
+    }
+
+    /**
+     * Answers where the block comment opening here ends.
+     *
+     * PostgreSQL lets one block comment hold another, so the comment ends at
+     * the closing delimiter that brings the nesting back to nothing; one that
+     * is never closed runs to the end of the statement.
+     *
+     * @param string $sql Statement being read, as written
+     * @param int $offset Where the comment opens
+     *
+     * @return int The offset just past the closing delimiter
+     */
+    public static function blockCommentEnd(string $sql, int $offset): int
+    {
+        $length = strlen($sql);
+        $scan = $offset;
+        $depth = 0;
+        for ($step = 0; $step < $length; $step++) {
+            $open = strpos($sql, '/*', $scan);
+            $close = strpos($sql, '*/', $scan);
+            $marker = min($open === false ? $length : $open, $close === false ? $length : $close);
+            if ($marker === $length) {
+                return $length;
+            }
+            $scan = $marker + 2;
+            $depth += substr($sql, $marker, 2) === '/*' ? 1 : -1;
+            if ($depth === 0) {
+                return $scan;
+            }
+        }
+
+        return $length;
     }
 
     /**

@@ -7,6 +7,7 @@ namespace Tests\Unit\Rewrite;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Platform\MySql\Dialect\MySqlLexerProfile;
 use ZtdQuery\Platform\MySql\Parse\MySqlSelectRelationParser;
 use ZtdQuery\Platform\MySql\Rewrite\MySqlCteShadowComposer;
 use ZtdQuery\Platform\MySql\Rewrite\MySqlKnownTables;
@@ -17,9 +18,7 @@ use ZtdQuery\Shadow\ShadowStore;
 #[CoversClass(MySqlKnownTables::class)]
 #[UsesClass(MySqlSelectRelationParser::class)]
 #[UsesClass(MySqlCteShadowComposer::class)]
-#[UsesClass(TableDefinitionRegistry::class)]
-#[UsesClass(ViewDefinitionSet::class)]
-#[UsesClass(ShadowStore::class)]
+#[UsesClass(MySqlLexerProfile::class)]
 final class MySqlKnownTablesTest extends TestCase
 {
     public function testFirstUnknownInAnswersTheFirstTableTheShadowCannotSpeakFor(): void

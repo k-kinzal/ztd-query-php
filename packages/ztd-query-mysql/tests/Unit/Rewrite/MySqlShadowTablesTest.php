@@ -7,10 +7,18 @@ namespace Tests\Unit\Rewrite;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Platform\MySql\Dialect\MySqlColumnTypeMapper;
+use ZtdQuery\Platform\MySql\Dialect\MySqlLexerProfile;
+use ZtdQuery\Platform\MySql\Dialect\MySqlStatementOptions;
+use ZtdQuery\Platform\MySql\Dialect\MySqlValueRenderer;
+use ZtdQuery\Platform\MySql\Parse\MySqlForeignKeyDefinitionParser;
 use ZtdQuery\Platform\MySql\Parse\MySqlParser;
 use ZtdQuery\Platform\MySql\Parse\MySqlSchemaParser;
+use ZtdQuery\Platform\MySql\Rewrite\MySqlCteShadowComposer;
+use ZtdQuery\Platform\MySql\Rewrite\MySqlGeneratedColumnProjector;
 use ZtdQuery\Platform\MySql\Rewrite\MySqlShadowTables;
 use ZtdQuery\Platform\MySql\Rewrite\MySqlViewShadowRenderer;
+use ZtdQuery\Platform\MySql\Transformer\MySqlUpdateClauses;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Schema\ViewDefinitionSet;
 use ZtdQuery\Shadow\ShadowStore;
@@ -19,9 +27,14 @@ use ZtdQuery\Shadow\ShadowStore;
 #[UsesClass(MySqlViewShadowRenderer::class)]
 #[UsesClass(MySqlParser::class)]
 #[UsesClass(MySqlSchemaParser::class)]
-#[UsesClass(TableDefinitionRegistry::class)]
-#[UsesClass(ShadowStore::class)]
-#[UsesClass(ViewDefinitionSet::class)]
+#[UsesClass(MySqlColumnTypeMapper::class)]
+#[UsesClass(MySqlLexerProfile::class)]
+#[UsesClass(MySqlStatementOptions::class)]
+#[UsesClass(MySqlValueRenderer::class)]
+#[UsesClass(MySqlForeignKeyDefinitionParser::class)]
+#[UsesClass(MySqlCteShadowComposer::class)]
+#[UsesClass(MySqlGeneratedColumnProjector::class)]
+#[UsesClass(MySqlUpdateClauses::class)]
 final class MySqlShadowTablesTest extends TestCase
 {
     public function testOfCarriesTheRowsTheShadowHolds(): void

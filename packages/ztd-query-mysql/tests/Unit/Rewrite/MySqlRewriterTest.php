@@ -110,6 +110,8 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(MySqlTopLevelWords::class)]
 #[UsesClass(MySqlDeleteClauses::class)]
 #[UsesClass(MySqlDeleteTargets::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\MySqlUpdateClauses::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\MySqlUpdateSelectList::class)]
 final class MySqlRewriterTest extends RewriterContractTest
 {
     public function testPartitionSelectionUsesRegisteredPartitionMetadata(): void

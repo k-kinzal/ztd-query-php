@@ -21,8 +21,6 @@ use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer;
 use ZtdQuery\Platform\SessionFactory;
 use ZtdQuery\ResultSelectRunner;
-use ZtdQuery\Schema\TableDefinitionRegistry;
-use ZtdQuery\Schema\ViewDefinitionSet;
 use ZtdQuery\Session;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTransactions;
@@ -39,52 +37,31 @@ final class PgSqlSessionFactory implements SessionFactory
     {
         $shadowStore = new ShadowStore();
         $parser = new PgSqlParser();
-        $schemaParser = new PgSqlSchemaParser();
-        $registry = new TableDefinitionRegistry();
-
         $reflector = new PgSqlSchemaReflector($connection);
-        foreach ($reflector->reflectAll() as $tableName => $createSql) {
-            $definition = $schemaParser->parse($createSql);
-            if ($definition !== null) {
-                $registry->register($tableName, $definition);
-            }
-        }
-        foreach ($reflector->partialUniqueIndexes() as $tableName => $indexes) {
-            $definition = $registry->get($tableName);
-            if ($definition === null) {
-                continue;
-            }
-            foreach ($indexes as $index) {
-                $definition = $definition->withPartialUniqueIndex($index);
-            }
-            $registry->register($tableName, $definition);
-        }
-        $partitionMetadata = (new PgSqlPartitionReflector($connection))->reflect();
-        foreach ($partitionMetadata['keys'] as $tableName => $partitionKey) {
-            $definition = $registry->get($tableName);
-            if ($definition !== null) {
-                $registry->register($tableName, $definition->withPartitionKey($partitionKey));
-            }
-        }
-        foreach ($partitionMetadata['relations'] as $tableName => $partitionRelation) {
-            $definition = $registry->get($tableName);
-            if ($definition !== null) {
-                $registry->register($tableName, $definition->withPartitionRelation($partitionRelation));
-            }
-        }
-        $views = new ViewDefinitionSet();
-        foreach ($reflector->reflectViews() as $viewName => $definition) {
-            $views->register($viewName, $definition);
-        }
+        $schema = new PgSqlReflectedSchema();
+        $registry = $schema->tables(
+            $reflector->reflectAll(),
+            $reflector->partialUniqueIndexes(),
+            (new PgSqlPartitionReflector($connection))->reflect(),
+        );
 
-        $guard = new PgSqlQueryGuard($parser);
         $selectTransformer = new SelectTransformer();
-        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
-        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
-        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
-        $transformer = new PgSqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer);
-        $mutationResolver = new PgSqlMutationResolver($shadowStore, $registry, $schemaParser, $parser);
-        $rewriter = new PgSqlRewriter($guard, $shadowStore, $registry, $transformer, $mutationResolver, $parser, $views);
+        $transformer = new PgSqlTransformer(
+            $parser,
+            $selectTransformer,
+            new InsertTransformer($parser, $selectTransformer),
+            new UpdateTransformer($parser, $selectTransformer),
+            new DeleteTransformer($parser, $selectTransformer),
+        );
+        $rewriter = new PgSqlRewriter(
+            new PgSqlQueryGuard($parser),
+            $shadowStore,
+            $registry,
+            $transformer,
+            new PgSqlMutationResolver($shadowStore, $registry, new PgSqlSchemaParser(), $parser),
+            $parser,
+            $schema->views($reflector->reflectViews()),
+        );
 
         return new Session(
             $rewriter,
