@@ -13,6 +13,7 @@ use ZtdQuery\Platform\Postgres\Parse\PgSqlMergeParser;
 use ZtdQuery\Platform\Postgres\Parse\PgSqlParser;
 use ZtdQuery\Platform\Postgres\Parse\PgSqlPartitionParser;
 use ZtdQuery\Platform\Postgres\Parse\PgSqlSchemaParser;
+use ZtdQuery\Platform\Postgres\Parse\PgSqlWithPrefix;
 use ZtdQuery\Platform\Postgres\Rewrite\PgSqlMutationResolver;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Schema\PartialUniqueIndex;
@@ -50,6 +51,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\Postgres\Dialect\PgSqlLexerProfile::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\Parse\PgSqlUpsertExpressionCursor::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\Parse\PgSqlUpsertLiteral::class)]
+#[UsesClass(PgSqlWithPrefix::class)]
 final class PgSqlMutationResolverTest extends TestCase
 {
     public function testPartitionDdlInheritsParentSchemaAndChildDmlUsesParentStorage(): void

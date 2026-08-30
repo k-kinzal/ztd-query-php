@@ -15,6 +15,7 @@ use ZtdQuery\Sql\SqlTokenStream;
 #[CoversClass(PgSqlCteShadowComposer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\Parse\PgSqlSelectRelationParser::class)]
 #[UsesClass(PgSqlLexerProfile::class)]
+#[UsesClass(PgSqlWithPrefix::class)]
 final class PgSqlCteShadowComposerTest extends TestCase
 {
     public function testIncludesTransitivelyReferencedShadowCtes(): void

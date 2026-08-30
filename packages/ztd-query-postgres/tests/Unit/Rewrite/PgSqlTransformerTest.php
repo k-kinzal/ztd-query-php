@@ -11,6 +11,7 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\Postgres\Dialect\PgSqlCastRenderer;
 use ZtdQuery\Platform\Postgres\Dialect\PgSqlIdentifierQuoter;
 use ZtdQuery\Platform\Postgres\Parse\PgSqlParser;
+use ZtdQuery\Platform\Postgres\Parse\PgSqlWithPrefix;
 use ZtdQuery\Platform\Postgres\Rewrite\PgSqlTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\InsertTransformer;
@@ -46,6 +47,7 @@ use ZtdQuery\Schema\IdentityGenerationStrategy;
 #[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\PgSqlNativeUpsertProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\PgSqlGeneratedColumnProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\Dialect\PgSqlLexerProfile::class)]
+#[UsesClass(PgSqlWithPrefix::class)]
 final class PgSqlTransformerTest extends TestCase
 {
     public function testTransformSelectDelegatesToSelectTransformer(): void

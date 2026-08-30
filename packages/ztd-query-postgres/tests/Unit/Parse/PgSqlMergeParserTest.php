@@ -11,6 +11,7 @@ use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\Postgres\Dialect\PgSqlLexerProfile;
 use ZtdQuery\Platform\Postgres\Parse\PgSqlMergeParser;
+use ZtdQuery\Platform\Postgres\Parse\PgSqlWithPrefix;
 use ZtdQuery\Platform\Postgres\Statement\PgSqlMergeActionKind;
 use ZtdQuery\Platform\Postgres\Statement\PgSqlMergeClause;
 use ZtdQuery\Platform\Postgres\Statement\PgSqlMergeMatchKind;
@@ -24,6 +25,7 @@ use ZtdQuery\Sql\SqlTokenStream;
 #[UsesClass(PgSqlMergeStatement::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\PgSqlCteShadowComposer::class)]
 #[UsesClass(PgSqlLexerProfile::class)]
+#[UsesClass(PgSqlWithPrefix::class)]
 final class PgSqlMergeParserTest extends TestCase
 {
     public function testParsesMatchedUpdateAndNotMatchedInsert(): void
