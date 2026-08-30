@@ -189,21 +189,26 @@ final class MySqlUpsertExpressionParser
      */
     public function unary(MySqlUpsertExpressionCursor $cursor): UpsertExpression
     {
-        if ($cursor->isKeyword('NOT')) {
+        $prefixes = [];
+        foreach ($cursor->remaining() as $ignored) {
+            if ($cursor->isKeyword('NOT')) {
+                $prefixes[] = UpsertExpressionKind::Not;
+            } elseif ($cursor->isSymbol(['+', '-'])) {
+                $prefixes[] = $cursor->token()?->text === '+'
+                    ? UpsertExpressionKind::UnaryPlus
+                    : UpsertExpressionKind::UnaryMinus;
+            } else {
+                break;
+            }
             $cursor->advance();
-
-            return UpsertExpression::unary(UpsertExpressionKind::Not, $this->unary($cursor));
-        }
-        if ($cursor->isSymbol(['+', '-'])) {
-            $kind = $cursor->token()?->text === '+'
-                ? UpsertExpressionKind::UnaryPlus
-                : UpsertExpressionKind::UnaryMinus;
-            $cursor->advance();
-
-            return UpsertExpression::unary($kind, $this->unary($cursor));
         }
 
-        return $this->primary($cursor);
+        $expression = $this->primary($cursor);
+        foreach (array_reverse($prefixes) as $prefix) {
+            $expression = UpsertExpression::unary($prefix, $expression);
+        }
+
+        return $expression;
     }
 
     /**
@@ -222,12 +227,11 @@ final class MySqlUpsertExpressionParser
             throw $cursor->unsupported();
         }
         if ($cursor->isSymbol(['('])) {
-            $cursor->advance();
-            $expression = $this->disjunction($cursor);
-            if (!$cursor->isSymbol([')'])) {
-                throw $cursor->unsupported();
+            $inside = $cursor->insideBrackets();
+            $expression = $this->disjunction($inside);
+            if (!$inside->atEnd()) {
+                throw $inside->unsupported();
             }
-            $cursor->advance();
 
             return $expression;
         }

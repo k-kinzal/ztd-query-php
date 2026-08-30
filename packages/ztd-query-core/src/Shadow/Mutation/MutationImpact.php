@@ -6,6 +6,11 @@ namespace ZtdQuery\Shadow\Mutation;
 
 use ZtdQuery\Rewrite\AffectedRowsMode;
 use ZtdQuery\Schema\TableDefinition;
+use ZtdQuery\Shadow\Mutation\Row\DeleteMutation;
+use ZtdQuery\Shadow\Mutation\Row\InsertMutation;
+use ZtdQuery\Shadow\Mutation\Row\ReplaceMutation;
+use ZtdQuery\Shadow\Mutation\Row\UpdateMutation;
+use ZtdQuery\Shadow\Mutation\Table\SynchronizeMutation;
 use ZtdQuery\Shadow\Row\RowMultiset;
 
 /**

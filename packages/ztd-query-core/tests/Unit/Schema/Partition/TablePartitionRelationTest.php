@@ -1,0 +1,51 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Schema\Partition;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\TestCase;
+use ZtdQuery\Exception\InvalidDefinitionException;
+use ZtdQuery\Schema\Partition\TablePartitionRelation;
+
+#[CoversClass(TablePartitionRelation::class)]
+final class TablePartitionRelationTest extends TestCase
+{
+    public function testSpecificPartitionUsesItsPredicate(): void
+    {
+        $relation = new TablePartitionRelation('events', 'created_at >= DATE \'2024-01-01\'');
+
+        self::assertSame('events', $relation->parentTable);
+        self::assertSame('created_at >= DATE \'2024-01-01\'', $relation->predicate);
+    }
+
+    public function testDefaultPartitionExcludesSpecificSiblingsAndIncludesNull(): void
+    {
+        $relation = new TablePartitionRelation('events', null);
+
+        self::assertSame('events', $relation->parentTable);
+        self::assertNull($relation->predicate);
+    }
+
+    public function testRejectsEmptyParentAndPredicate(): void
+    {
+        $this->expectException(InvalidDefinitionException::class);
+
+        new TablePartitionRelation('', 'id = 1');
+    }
+
+    public function testRejectsWhitespaceOnlyParent(): void
+    {
+        $this->expectException(InvalidDefinitionException::class);
+
+        new TablePartitionRelation('  ', 'id = 1');
+    }
+
+    public function testRejectsBlankPredicate(): void
+    {
+        $this->expectException(InvalidDefinitionException::class);
+
+        new TablePartitionRelation('events', ' ');
+    }
+}
