@@ -15,11 +15,9 @@ use ZtdQuery\Adapter\Pdo\Driver\PdoConnection;
 use ZtdQuery\Adapter\Pdo\Driver\PdoPreparedExecution;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\Exception\DatabaseException;
-use ZtdQuery\Platform\SessionFactory;
-use ZtdQuery\Platform\CopySupport;
-use ZtdQuery\Platform\CopyTarget;
-use ZtdQuery\Platform\Sqlite\SqliteSessionFactory;
 use ZtdQuery\Platform\Postgres\PgSqlSessionFactory;
+use ZtdQuery\Platform\SessionFactory;
+use ZtdQuery\Platform\Sqlite\SqliteSessionFactory;
 use ZtdQuery\Session;
 
 /**

@@ -113,6 +113,7 @@ final class ControlFlowInTestMethodFixtureTest extends TestCase
 
 namespace Tests\Integration\Fixture;
 
+use PHPUnit\Framework\TestCase;
 
 final class IntegrationControlFlowFixtureTest extends TestCase
 {
@@ -126,6 +127,7 @@ final class IntegrationControlFlowFixtureTest extends TestCase
 
 namespace App\Tests;
 
+use PHPUnit\Framework\TestCase;
 
 final class OutsideScopeControlFlowFixtureTest extends TestCase
 {
