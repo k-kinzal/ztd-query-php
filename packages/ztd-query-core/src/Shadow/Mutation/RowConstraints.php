@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow\Mutation;
 
-use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\DuplicateKeyException;
 use ZtdQuery\Exception\NotNullViolationException;
 use ZtdQuery\Schema\TableDefinition;
@@ -19,8 +18,8 @@ use ZtdQuery\Schema\TableDefinition;
  * A key with a null in it is left alone: SQL says such a key collides with
  * nothing, not even with another row carrying the same nulls.
  *
- * @phpstan-import-type Row from StatementInterface
- * @phpstan-import-type RowValue from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
+ * @phpstan-import-type RowValue from TableDefinition
  */
 final class RowConstraints
 {

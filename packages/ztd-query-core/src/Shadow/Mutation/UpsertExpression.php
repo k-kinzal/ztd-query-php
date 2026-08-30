@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow\Mutation;
 
-use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Shadow\Mutation\Upsert\UpsertColumn;
 use ZtdQuery\Shadow\Mutation\Upsert\UpsertComparison;
 use ZtdQuery\Shadow\Mutation\Upsert\UpsertNumber;
@@ -21,8 +21,8 @@ use ZtdQuery\Shadow\Mutation\Upsert\UpsertTruth;
  * them. What each operator means is left to the collaborator that owns it, so
  * this is only the tree and the walk over it.
  *
- * @phpstan-import-type Row from StatementInterface
- * @phpstan-import-type RowValue from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
+ * @phpstan-import-type RowValue from TableDefinition
  */
 final class UpsertExpression
 {

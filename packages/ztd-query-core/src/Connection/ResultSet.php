@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Connection;
 
+use ZtdQuery\Schema\TableDefinition;
+
 /**
  * Buffered rows together with metadata that remains available for an empty result.
  *
- * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
  */
 final class ResultSet
 {

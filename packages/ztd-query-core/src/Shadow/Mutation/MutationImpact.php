@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow\Mutation;
 
-use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Rewrite\AffectedRowsMode;
+use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Shadow\Row\RowMultiset;
 
 /**
  * Derives observable execution metadata from a shadow-state transition.
  *
- * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
  */
 final class MutationImpact
 {

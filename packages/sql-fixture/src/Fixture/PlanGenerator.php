@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SqlFixture\Fixture;
 
 use Faker\Generator;
-use SqlFixture\FixtureGenerator;
 use SqlFixture\Plan\FixturePlan;
+use SqlFixture\Plan\PlanSchemaException;
 use SqlFixture\Schema\SchemaNotFoundException;
 use SqlFixture\Schema\SchemaResolverInterface;
 
@@ -24,12 +24,12 @@ final class PlanGenerator
 {
     /**
      * @param SchemaResolverInterface $schemas Answers what a table looks like
-     * @param FixtureGenerator $generator Builds one row against a table
+     * @param RowGenerator $generator Builds one row against a table
      * @param Generator $faker Source of the choices the plan leaves open
      */
     public function __construct(
         private readonly SchemaResolverInterface $schemas,
-        private readonly FixtureGenerator $generator,
+        private readonly RowGenerator $generator,
         private readonly Generator $faker,
     ) {
     }

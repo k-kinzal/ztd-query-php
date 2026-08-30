@@ -1,0 +1,89 @@
+# NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
+#
+# What this package is, as layers.
+#
+# Exception is what the library refuses with and names nothing. Config is how a
+# caller says ZTD should behave. Schema is what a table looks like and Sql is
+# what a statement is made of; both are data read out of a definition, and
+# neither knows the shadow. Contract is what a driver and a platform package
+# have to provide, stated as interfaces. Simulation is the whole of the
+# simulation: rewriting a statement into the SQL that shadows it and holding
+# what the shadow then contains, which are two halves of one thing and so one
+# layer. Session is the entry point a caller holds, together with the factory
+# that builds one, and Simulator drives a session for a caller that only wants
+# to know what a statement would do.
+deptrac:
+  paths:
+    - ./src
+  layers:
+    - name: Simulator
+      collectors:
+        - type: directory
+          value: src/Simulator/.*
+    - name: Session
+      collectors:
+        - type: directory
+          value: src/[^/]+\.php
+        - type: classLike
+          value: ^ZtdQuery\\Platform\\SessionFactory$
+    - name: Simulation
+      collectors:
+        - type: directory
+          value: src/Rewrite/.*
+        - type: directory
+          value: src/Shadow/.*
+    - name: Contract
+      collectors:
+        - type: directory
+          value: src/Connection/.*
+        - type: bool
+          must:
+            - type: directory
+              value: src/Platform/.*
+          must_not:
+            - type: classLike
+              value: ^ZtdQuery\\Platform\\SessionFactory$
+    - name: Schema
+      collectors:
+        - type: directory
+          value: src/Schema/.*
+    - name: Sql
+      collectors:
+        - type: directory
+          value: src/Sql/.*
+    - name: Config
+      collectors:
+        - type: directory
+          value: src/Config/.*
+    - name: Exception
+      collectors:
+        - type: directory
+          value: src/Exception/.*
+  ruleset:
+    Simulator:
+      - Session
+      - Simulation
+      - Contract
+      - Exception
+    Session:
+      - Simulation
+      - Contract
+      - Schema
+      - Sql
+      - Config
+      - Exception
+    Simulation:
+      - Contract
+      - Schema
+      - Sql
+      - Exception
+    Contract:
+      - Schema
+      - Config
+      - Exception
+    Schema:
+      - Exception
+    Sql:
+      - Exception
+    Config: ~
+    Exception: ~

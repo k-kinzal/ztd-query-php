@@ -6,6 +6,7 @@ namespace ZtdQuery;
 
 use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Rewrite\QueryKind;
+use ZtdQuery\Schema\TableDefinition;
 
 /**
  * Generic implementation of ExecuteResult.
@@ -16,7 +17,7 @@ use ZtdQuery\Rewrite\QueryKind;
  * - Simulated WRITE: buffers rows and provides iteration
  * - Failure: represents execution failure
  *
- * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
  */
 final class GenericExecuteResult implements ExecuteResult
 {

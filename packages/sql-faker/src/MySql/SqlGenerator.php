@@ -14,6 +14,7 @@ use SqlFaker\MySql\Grammar\Grammar;
 use SqlFaker\MySql\Grammar\Terminal;
 use SqlFaker\MySql\Grammar\TerminalInventory;
 use SqlFaker\MySql\Grammar\TerminationAnalyzer;
+use SqlFaker\MySql\Lexical\LexicalGrammar;
 
 /**
  * Derives MySQL parser terminals and realizes them through the versioned lexer model.

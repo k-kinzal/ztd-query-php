@@ -6,14 +6,14 @@ namespace Tests\Unit\SqlFaker\MySql\Grammar;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\MySql\Bison\Ast\BisonAlternativeNode;
-use SqlFaker\MySql\Bison\Ast\BisonAst;
-use SqlFaker\MySql\Bison\Ast\BisonRuleNode;
-use SqlFaker\MySql\Bison\Ast\BisonStartDeclaration;
-use SqlFaker\MySql\Bison\Ast\BisonSymbolForm;
-use SqlFaker\MySql\Bison\Ast\BisonSymbolNode;
-use SqlFaker\MySql\Bison\Ast\BisonTokenDeclaration;
-use SqlFaker\MySql\Bison\Ast\BisonTokenDefinition;
+use SqlFaker\Grammar\Source\Bison\Ast\BisonAlternativeNode;
+use SqlFaker\Grammar\Source\Bison\Ast\BisonAst;
+use SqlFaker\Grammar\Source\Bison\Ast\BisonRuleNode;
+use SqlFaker\Grammar\Source\Bison\Ast\BisonStartDeclaration;
+use SqlFaker\Grammar\Source\Bison\Ast\BisonSymbolForm;
+use SqlFaker\Grammar\Source\Bison\Ast\BisonSymbolNode;
+use SqlFaker\Grammar\Source\Bison\Ast\BisonTokenDeclaration;
+use SqlFaker\Grammar\Source\Bison\Ast\BisonTokenDefinition;
 use SqlFaker\MySql\Grammar\GrammarCompiler;
 use SqlFaker\MySql\Grammar\NonTerminal;
 use SqlFaker\MySql\Grammar\Terminal;
@@ -442,5 +442,50 @@ final class GrammarCompilerTest extends TestCase
         $this->expectExceptionMessage('Unknown symbol: UNKNOWN');
 
         $compiler->compile($ast);
+    }
+
+    public function testRuleTableAnswersEveryNameTheGrammarDefinesARuleFor(): void
+    {
+        $ast = new BisonAst(
+            startSymbol: 'start',
+            prologue: null,
+            declarations: [],
+            rules: [new BisonRuleNode('start', []), new BisonRuleNode('tail', [])],
+            epilogue: null,
+        );
+
+        self::assertSame(['start', 'tail'], array_keys((new GrammarCompiler())->ruleTable($ast)));
+    }
+
+    public function testDeclarationTableAnswersEveryNameTheGrammarDeclaresAsAToken(): void
+    {
+        $ast = new BisonAst(
+            startSymbol: 'start',
+            prologue: null,
+            declarations: [new BisonTokenDeclaration(null, [new BisonTokenDefinition('WORD', null, null)])],
+            rules: [],
+            epilogue: null,
+        );
+
+        self::assertSame(['WORD'], array_keys((new GrammarCompiler())->declarationTable($ast)));
+    }
+
+    public function testSymbolsReadsANameWithARuleAsANonTerminal(): void
+    {
+        $symbols = (new GrammarCompiler())->symbols(
+            [new BisonSymbolNode(BisonSymbolForm::Identifier, 'tail')],
+            ['tail' => new BisonRuleNode('tail', [])],
+            [],
+        );
+
+        self::assertInstanceOf(NonTerminal::class, $symbols[0]);
+        self::assertSame('tail', $symbols[0]->value);
+    }
+
+    public function testSymbolsRefusesANameTheGrammarNeverDeclares(): void
+    {
+        $this->expectException(UnknownSymbolException::class);
+
+        (new GrammarCompiler())->symbols([new BisonSymbolNode(BisonSymbolForm::Identifier, 'gone')], [], []);
     }
 }

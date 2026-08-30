@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow\Mutation;
 
-use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Schema\TableDefinition;
 
 /**
  * Carries the key a row had, alongside the key it has.
@@ -14,7 +14,7 @@ use ZtdQuery\Connection\StatementInterface;
  * statement therefore selects the old key as well, under a name no table would
  * use, and this is what puts that name on and takes it off again.
  *
- * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
  */
 final class MutationRowIdentity
 {

@@ -134,4 +134,57 @@ final class DerivationTest extends TestCase
 
         self::assertEquals([new Terminal('A')], $derivation->of('stmt', GenerationPlan::all()));
     }
+
+    public function testOfKeepsWhatSurroundsTheSymbolItRewrites(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([new Terminal('BEFORE'), new NonTerminal('mid'), new Terminal('AFTER')]),
+            ]),
+            'mid' => new ProductionRule('mid', [
+                new Production([new Terminal('ONE'), new Terminal('TWO')]),
+            ]),
+        ]);
+        $derivation = new Derivation($grammar, Factory::create(), new TerminationAnalyzer(
+            $grammar,
+            static fn (string $terminal): bool => true,
+        ));
+
+        self::assertEquals(
+            [new Terminal('BEFORE'), new Terminal('ONE'), new Terminal('TWO'), new Terminal('AFTER')],
+            $derivation->of('stmt', GenerationPlan::all()),
+        );
+    }
+
+    public function testFirstNonTerminalAnswersWhereTheWalkActsNext(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [new Production([new Terminal('A')])]),
+        ]);
+        $derivation = new Derivation($grammar, Factory::create(), new TerminationAnalyzer(
+            $grammar,
+            static fn (string $terminal): bool => true,
+        ));
+
+        self::assertSame(1, $derivation->firstNonTerminal([new Terminal('A'), new NonTerminal('b'), new NonTerminal('c')]));
+        self::assertNull($derivation->firstNonTerminal([new Terminal('A'), new Terminal('B')]));
+    }
+    public function testOfTakesTheAlternativeThatFinishesSoonestOnceThePlanIsDeepEnough(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([new Terminal('A'), new NonTerminal('stmt')]),
+                new Production([new Terminal('B')]),
+            ]),
+        ]);
+        $derivation = new Derivation($grammar, Factory::create(), new TerminationAnalyzer(
+            $grammar,
+            static fn (string $terminal): bool => true,
+        ));
+
+        self::assertEquals(
+            [new Terminal('B')],
+            $derivation->of('stmt', GenerationPlan::all()->withMaxDepth(1)),
+        );
+    }
 }

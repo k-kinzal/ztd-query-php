@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow\Row;
 
-use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Schema\TableDefinition;
 
 /**
  * Rows counted with their repeats: what one set of rows has that another does not.
@@ -17,7 +17,7 @@ use ZtdQuery\Connection\StatementInterface;
  * Column order is not part of a row's identity: the same columns carrying the
  * same values are the same row however the reader happened to order them.
  *
- * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
  */
 final class RowMultiset
 {
