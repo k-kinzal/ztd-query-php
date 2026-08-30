@@ -18,6 +18,7 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
+use ZtdQuery\RewriteRefusal;
 use ZtdQuery\Schema\Key\CandidateKeySet;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Session;
@@ -52,6 +53,7 @@ use ZtdQuery\Simulator\StatementSimulator;
 #[UsesClass(\ZtdQuery\Shadow\Row\RowMultiset::class)]
 #[UsesClass(\ZtdQuery\Shadow\ShadowApplication::class)]
 #[UsesClass(\ZtdQuery\Shadow\TableTransitions::class)]
+#[UsesClass(RewriteRefusal::class)]
 final class StatementSimulatorTest extends TestCase
 {
     public function testUnsupportedSqlThrows(): void

@@ -201,7 +201,7 @@ class ZtdPdo extends PDO
             if ($transactionStatement !== null) {
                 $statement = $this->pdo->query($query, $fetchMode, ...$fetchModeArgs);
                 if ($statement !== false) {
-                    $this->session->applyTransactionStatement($transactionStatement);
+                    $transactionStatement->apply($this->session->transactions());
                 }
 
                 return $statement;
@@ -246,7 +246,7 @@ class ZtdPdo extends PDO
         if ($transactionStatement !== null) {
             $result = $this->pdo->exec($statement);
             if ($result !== false) {
-                $this->session->applyTransactionStatement($transactionStatement);
+                $transactionStatement->apply($this->session->transactions());
             }
 
             return $result;
@@ -301,7 +301,7 @@ class ZtdPdo extends PDO
     {
         $result = $this->pdo->beginTransaction();
         if ($result) {
-            $this->session->beginTransaction();
+            $this->session->transactions()->begin();
         }
 
         return $result;
@@ -314,7 +314,7 @@ class ZtdPdo extends PDO
     {
         $result = $this->pdo->commit();
         if ($result) {
-            $this->session->commitTransaction();
+            $this->session->transactions()->commit();
         }
 
         return $result;
@@ -327,7 +327,7 @@ class ZtdPdo extends PDO
     {
         $result = $this->pdo->rollBack();
         if ($result) {
-            $this->session->rollBackTransaction();
+            $this->session->transactions()->rollBack();
         }
 
         return $result;

@@ -56,9 +56,14 @@ final class ParserSemantics
             if ($terminal !== '@') {
                 continue;
             }
-            for ($dot = $index - 2; $dot >= 1 && $terminals[$dot] === '.'; $dot -= 2) {
+            $dot = $index - 2;
+            foreach ($terminals as $ignored) {
+                if ($dot < 1 || $terminals[$dot] !== '.') {
+                    break;
+                }
                 $remove[$dot] = true;
                 $remove[$dot - 1] = true;
+                $dot -= 2;
             }
         }
         if ($remove === []) {

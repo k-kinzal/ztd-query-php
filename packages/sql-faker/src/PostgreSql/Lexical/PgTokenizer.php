@@ -388,6 +388,6 @@ final class PgTokenizer
      */
     public function isPunctuation(string $character): bool
     {
-        return strlen($character) === 1 && str_contains(self::PUNCTUATION, $character);
+        return in_array($character, str_split(self::PUNCTUATION), true);
     }
 }
