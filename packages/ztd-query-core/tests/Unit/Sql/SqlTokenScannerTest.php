@@ -15,6 +15,12 @@ use ZtdQuery\Sql\SqlTokenScanner;
 
 #[CoversClass(SqlTokenScanner::class)]
 #[UsesClass(SqlToken::class)]
+#[UsesClass(\ZtdQuery\Sql\SqlLexeme::class)]
+#[UsesClass(\ZtdQuery\Sql\SqlTriviaReader::class)]
+#[UsesClass(\ZtdQuery\Sql\SqlBlockCommentReader::class)]
+#[UsesClass(\ZtdQuery\Sql\SqlDelimitedReader::class)]
+#[UsesClass(\ZtdQuery\Sql\SqlParameterReader::class)]
+#[UsesClass(\ZtdQuery\Sql\SqlWordReader::class)]
 #[UsesClass(SqlLexerProfile::class)]
 #[UsesClass(\ZtdQuery\Sql\LexicalDelimiters::class)]
 #[UsesClass(\ZtdQuery\Sql\LexicalPattern::class)]
@@ -67,23 +73,7 @@ final class SqlTokenScannerTest extends TestCase
         self::assertSame('/* a b */', $tokens[0]->text);
     }
 
-    public function testEndOfDelimitedAnswersWhereTheClosingDelimiterLeftOff(): void
-    {
-        self::assertSame(3, (new SqlTokenScanner())->endOfDelimited("'a'x", 0, "'", "'", false));
-    }
 
-    public function testEndOfDelimitedReadsPastADoubledDelimiterBecauseItWritesTheDelimiter(): void
-    {
-        self::assertSame(5, (new SqlTokenScanner())->endOfDelimited("'a'''", 0, "'", "'", false));
-    }
 
-    public function testEndOfDelimitedReadsPastAnEscapedDelimiterWhereBackslashesEscape(): void
-    {
-        self::assertSame(5, (new SqlTokenScanner())->endOfDelimited("'a\\''", 0, "'", "'", true));
-    }
 
-    public function testEndOfDelimitedStopsAtTheEndOfAStatementThatNeverClosedTheRun(): void
-    {
-        self::assertSame(2, (new SqlTokenScanner())->endOfDelimited("'a", 0, "'", "'", false));
-    }
 }

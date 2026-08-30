@@ -12,13 +12,17 @@ use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Sql\SqlLexerProfile;
 
 #[CoversClass(SqlLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Sql\SqlCommentProfile::class)]
+#[UsesClass(\ZtdQuery\Sql\SqlQuoteProfile::class)]
+#[UsesClass(\ZtdQuery\Sql\SqlParameterProfile::class)]
+#[UsesClass(\ZtdQuery\Sql\SqlSymbolProfile::class)]
 #[UsesClass(\ZtdQuery\Sql\LexicalDelimiters::class)]
 #[UsesClass(\ZtdQuery\Sql\LexicalPattern::class)]
 final class SqlLexerProfileTest extends TestCase
 {
     public function testStartsLineCommentSeesEveryPrefixTheDialectDeclares(): void
     {
-        $profile = new SqlLexerProfile(
+        $profile = FakeSqlLexerProfiles::custom(
             lineCommentPrefixes: ['--', '#'],
             whitespaceDelimitedLineCommentPrefixes: ['//'],
             blockCommentPairs: ['/*' => '*/'],
@@ -49,7 +53,7 @@ final class SqlLexerProfileTest extends TestCase
 
     public function testBlockCommentAtAnswersTheDelimitersThatOpenAndCloseOne(): void
     {
-        $profile = new SqlLexerProfile(
+        $profile = FakeSqlLexerProfiles::custom(
             lineCommentPrefixes: ['--', '#'],
             whitespaceDelimitedLineCommentPrefixes: ['//'],
             blockCommentPairs: ['/*' => '*/'],
@@ -78,7 +82,7 @@ final class SqlLexerProfileTest extends TestCase
 
     public function testStringQuoteClosingAnswersWhatClosesAStringThisOpened(): void
     {
-        $profile = new SqlLexerProfile(
+        $profile = FakeSqlLexerProfiles::custom(
             lineCommentPrefixes: ['--', '#'],
             whitespaceDelimitedLineCommentPrefixes: ['//'],
             blockCommentPairs: ['/*' => '*/'],
@@ -106,7 +110,7 @@ final class SqlLexerProfileTest extends TestCase
 
     public function testIdentifierQuoteClosingAnswersWhatClosesAnIdentifierThisOpened(): void
     {
-        $profile = new SqlLexerProfile(
+        $profile = FakeSqlLexerProfiles::custom(
             lineCommentPrefixes: ['--', '#'],
             whitespaceDelimitedLineCommentPrefixes: ['//'],
             blockCommentPairs: ['/*' => '*/'],
@@ -135,7 +139,7 @@ final class SqlLexerProfileTest extends TestCase
 
     public function testUnquoteIdentifierReadsTheNameAQuotedIdentifierStandsFor(): void
     {
-        $profile = new SqlLexerProfile(
+        $profile = FakeSqlLexerProfiles::custom(
             lineCommentPrefixes: ['--', '#'],
             whitespaceDelimitedLineCommentPrefixes: ['//'],
             blockCommentPairs: ['/*' => '*/'],
@@ -165,7 +169,7 @@ final class SqlLexerProfileTest extends TestCase
 
     public function testQuotedIdentifierValueSpeaksOnlyForACompleteQuotedIdentifier(): void
     {
-        $profile = new SqlLexerProfile(
+        $profile = FakeSqlLexerProfiles::custom(
             lineCommentPrefixes: ['--', '#'],
             whitespaceDelimitedLineCommentPrefixes: ['//'],
             blockCommentPairs: ['/*' => '*/'],
@@ -196,7 +200,7 @@ final class SqlLexerProfileTest extends TestCase
 
     public function testSupportsNestedBlockCommentsFollowsTheDialect(): void
     {
-        $profile = new SqlLexerProfile(
+        $profile = FakeSqlLexerProfiles::custom(
             lineCommentPrefixes: ['--', '#'],
             whitespaceDelimitedLineCommentPrefixes: ['//'],
             blockCommentPairs: ['/*' => '*/'],
@@ -224,7 +228,7 @@ final class SqlLexerProfileTest extends TestCase
 
     public function testDollarQuoteDelimiterAtAnswersTheDelimiterStartingThere(): void
     {
-        $profile = new SqlLexerProfile(
+        $profile = FakeSqlLexerProfiles::custom(
             lineCommentPrefixes: ['--', '#'],
             whitespaceDelimitedLineCommentPrefixes: ['//'],
             blockCommentPairs: ['/*' => '*/'],
@@ -252,7 +256,7 @@ final class SqlLexerProfileTest extends TestCase
 
     public function testPositionalParameterLengthAtMeasuresTheParameterStartingThere(): void
     {
-        $profile = new SqlLexerProfile(
+        $profile = FakeSqlLexerProfiles::custom(
             lineCommentPrefixes: ['--', '#'],
             whitespaceDelimitedLineCommentPrefixes: ['//'],
             blockCommentPairs: ['/*' => '*/'],
@@ -282,7 +286,7 @@ final class SqlLexerProfileTest extends TestCase
 
     public function testNamedParameterPrefixAtTellsAParameterFromAnOperatorSpelledAlike(): void
     {
-        $profile = new SqlLexerProfile(
+        $profile = FakeSqlLexerProfiles::custom(
             lineCommentPrefixes: ['--', '#'],
             whitespaceDelimitedLineCommentPrefixes: ['//'],
             blockCommentPairs: ['/*' => '*/'],
@@ -314,7 +318,7 @@ final class SqlLexerProfileTest extends TestCase
 
     public function testParameterNameSeparatorAtAnswersWhatSeparatesAPrefixFromItsName(): void
     {
-        $profile = new SqlLexerProfile(
+        $profile = FakeSqlLexerProfiles::custom(
             lineCommentPrefixes: ['--', '#'],
             whitespaceDelimitedLineCommentPrefixes: ['//'],
             blockCommentPairs: ['/*' => '*/'],
@@ -343,7 +347,7 @@ final class SqlLexerProfileTest extends TestCase
 
     public function testParameterSuffixLengthMeasuresWhatFollowsAParameterName(): void
     {
-        $profile = new SqlLexerProfile(
+        $profile = FakeSqlLexerProfiles::custom(
             lineCommentPrefixes: ['--', '#'],
             whitespaceDelimitedLineCommentPrefixes: ['//'],
             blockCommentPairs: ['/*' => '*/'],
@@ -372,7 +376,7 @@ final class SqlLexerProfileTest extends TestCase
 
     public function testStringUsesBackslashEscapesLooksAtWhatIntroducedTheString(): void
     {
-        $profile = new SqlLexerProfile(
+        $profile = FakeSqlLexerProfiles::custom(
             lineCommentPrefixes: ['--', '#'],
             whitespaceDelimitedLineCommentPrefixes: ['//'],
             blockCommentPairs: ['/*' => '*/'],
@@ -404,7 +408,7 @@ final class SqlLexerProfileTest extends TestCase
 
     public function testNumberLengthAtMeasuresTheNumberStartingThere(): void
     {
-        $profile = new SqlLexerProfile(
+        $profile = FakeSqlLexerProfiles::custom(
             lineCommentPrefixes: ['--', '#'],
             whitespaceDelimitedLineCommentPrefixes: ['//'],
             blockCommentPairs: ['/*' => '*/'],
@@ -434,7 +438,7 @@ final class SqlLexerProfileTest extends TestCase
 
     public function testIsIdentifierStartAnswersForTheFirstCharacterOfAName(): void
     {
-        $profile = new SqlLexerProfile(
+        $profile = FakeSqlLexerProfiles::custom(
             lineCommentPrefixes: ['--', '#'],
             whitespaceDelimitedLineCommentPrefixes: ['//'],
             blockCommentPairs: ['/*' => '*/'],
@@ -463,7 +467,7 @@ final class SqlLexerProfileTest extends TestCase
 
     public function testIsIdentifierPartAnswersForEveryLaterCharacterOfAName(): void
     {
-        $profile = new SqlLexerProfile(
+        $profile = FakeSqlLexerProfiles::custom(
             lineCommentPrefixes: ['--', '#'],
             whitespaceDelimitedLineCommentPrefixes: ['//'],
             blockCommentPairs: ['/*' => '*/'],
@@ -491,7 +495,7 @@ final class SqlLexerProfileTest extends TestCase
 
     public function testIsBracketOpeningAnswersForTheCharacterThatOpensOne(): void
     {
-        $profile = new SqlLexerProfile(
+        $profile = FakeSqlLexerProfiles::custom(
             lineCommentPrefixes: ['--', '#'],
             whitespaceDelimitedLineCommentPrefixes: ['//'],
             blockCommentPairs: ['/*' => '*/'],
@@ -520,7 +524,7 @@ final class SqlLexerProfileTest extends TestCase
 
     public function testIsBracketClosingAnswersForTheCharacterThatClosesOne(): void
     {
-        $profile = new SqlLexerProfile(
+        $profile = FakeSqlLexerProfiles::custom(
             lineCommentPrefixes: ['--', '#'],
             whitespaceDelimitedLineCommentPrefixes: ['//'],
             blockCommentPairs: ['/*' => '*/'],
@@ -549,7 +553,7 @@ final class SqlLexerProfileTest extends TestCase
 
     public function testIsNestingOpeningAnswersForTheCharacterThatOpensOne(): void
     {
-        $profile = new SqlLexerProfile(
+        $profile = FakeSqlLexerProfiles::custom(
             lineCommentPrefixes: ['--', '#'],
             whitespaceDelimitedLineCommentPrefixes: ['//'],
             blockCommentPairs: ['/*' => '*/'],
@@ -577,7 +581,7 @@ final class SqlLexerProfileTest extends TestCase
 
     public function testIsNestingClosingAnswersForTheCharacterThatClosesOne(): void
     {
-        $profile = new SqlLexerProfile(
+        $profile = FakeSqlLexerProfiles::custom(
             lineCommentPrefixes: ['--', '#'],
             whitespaceDelimitedLineCommentPrefixes: ['//'],
             blockCommentPairs: ['/*' => '*/'],
@@ -605,7 +609,7 @@ final class SqlLexerProfileTest extends TestCase
 
     public function testIsStatementDelimiterAnswersForTheSymbolThatEndsAStatement(): void
     {
-        $profile = new SqlLexerProfile(
+        $profile = FakeSqlLexerProfiles::custom(
             lineCommentPrefixes: ['--', '#'],
             whitespaceDelimitedLineCommentPrefixes: ['//'],
             blockCommentPairs: ['/*' => '*/'],
@@ -633,7 +637,7 @@ final class SqlLexerProfileTest extends TestCase
 
     public function testListDelimiterAnswersTheSeparatorBetweenListItems(): void
     {
-        $profile = new SqlLexerProfile(
+        $profile = FakeSqlLexerProfiles::custom(
             lineCommentPrefixes: ['--', '#'],
             whitespaceDelimitedLineCommentPrefixes: ['//'],
             blockCommentPairs: ['/*' => '*/'],
