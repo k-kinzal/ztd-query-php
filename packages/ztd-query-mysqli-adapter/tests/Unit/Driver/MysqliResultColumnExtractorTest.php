@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit;
+namespace Tests\Unit\Driver;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Tests\Fixtures\RecordingColumnTypeResolver;
 use Tests\Fixtures\StubMysqliField;
 use Tests\Fixtures\StubMysqliResult;
-use ZtdQuery\Adapter\Mysqli\MysqliResultColumnExtractor;
+use ZtdQuery\Adapter\Mysqli\Driver\MysqliResultColumnExtractor;
 use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Platform\MissingResultColumnTypeResolver;
 use ZtdQuery\Platform\ResultColumnTypeResolver;

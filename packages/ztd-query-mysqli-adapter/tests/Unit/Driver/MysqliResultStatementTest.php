@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit;
+namespace Tests\Unit\Driver;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Tests\Fixtures\StubMysqliField;
 use Tests\Fixtures\StubMysqliResult;
-use ZtdQuery\Adapter\Mysqli\MysqliResultColumnExtractor;
-use ZtdQuery\Adapter\Mysqli\MysqliResultStatement;
+use ZtdQuery\Adapter\Mysqli\Driver\MysqliResultColumnExtractor;
+use ZtdQuery\Adapter\Mysqli\Driver\MysqliResultStatement;
 use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Platform\ResultColumnTypeResolver;
 use ZtdQuery\Schema\ColumnDeclaration;

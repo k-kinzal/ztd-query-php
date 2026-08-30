@@ -9,6 +9,8 @@ use mysqli_stmt;
 use mysqli_warning;
 use Override;
 use ReturnTypeWillChange;
+use ZtdQuery\Adapter\Mysqli\Driver\MysqliResultStatement;
+use ZtdQuery\Adapter\Mysqli\Driver\MysqliStatementBindingBridge;
 use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\ExecuteResult;
 use ZtdQuery\Rewrite\RewritePlan;

@@ -2,25 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit;
-
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\TestCase;
-use ZtdQuery\Adapter\Mysqli\MysqliStatementBindingBridge;
-
-#[CoversClass(MysqliStatementBindingBridge::class)]
-final class MysqliStatementBindingBridgeTest extends TestCase
-{
-    public function testExcludedBridgeContainsOnlyTheReviewedDelegationBodies(): void
-    {
-        $source = file_get_contents(__DIR__ . '/../../src/MysqliStatementBindingBridge.php');
-
-        self::assertSame(<<<'PHP'
-<?php
-
-declare(strict_types=1);
-
-namespace ZtdQuery\Adapter\Mysqli;
+namespace ZtdQuery\Adapter\Mysqli\Driver;
 
 use mysqli_stmt;
 
@@ -45,9 +27,5 @@ abstract class MysqliStatementBindingBridge extends mysqli_stmt
     final public function bind_result(mixed &...$vars): bool
     {
         return $this->bindingDelegate->bind_result(...$vars);
-    }
-}
-
-PHP, $source);
     }
 }

@@ -2,11 +2,12 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Adapter\Mysqli;
+namespace ZtdQuery\Adapter\Mysqli\Driver;
 
 use mysqli;
 use mysqli_result;
 use mysqli_stmt;
+use ZtdQuery\Adapter\Mysqli\ZtdMysqliStatement;
 use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Platform\ResultColumnTypeResolver;

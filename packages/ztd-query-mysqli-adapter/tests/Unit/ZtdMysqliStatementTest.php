@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Tests\Fixtures\StubMysqliResult;
 use Tests\Fixtures\StubMysqliStmt;
-use ZtdQuery\Adapter\Mysqli\MysqliStatementBindingBridge;
+use ZtdQuery\Adapter\Mysqli\Driver\MysqliStatementBindingBridge;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqliStatement;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\ConnectionInterface;

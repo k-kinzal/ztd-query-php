@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit;
+namespace Tests\Unit\Driver;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -10,16 +10,16 @@ use PHPUnit\Framework\TestCase;
 use Tests\Fixtures\FakeConnectionProperties;
 use Tests\Fixtures\StubMysqli;
 use Tests\Fixtures\StubMysqliResult;
-use ZtdQuery\Adapter\Mysqli\ConnectionState;
-use ZtdQuery\Adapter\Mysqli\MysqliConnection;
-use ZtdQuery\Adapter\Mysqli\MysqliResultStatement;
+use ZtdQuery\Adapter\Mysqli\Driver\ConnectionState;
+use ZtdQuery\Adapter\Mysqli\Driver\MysqliConnection;
+use ZtdQuery\Adapter\Mysqli\Driver\MysqliResultStatement;
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Connection\Exception\DatabaseException;
 
 #[CoversClass(MysqliConnection::class)]
 #[UsesClass(ConnectionState::class)]
 #[UsesClass(MysqliResultStatement::class)]
-#[UsesClass(\ZtdQuery\Adapter\Mysqli\MysqliProperties::class)]
+#[UsesClass(\ZtdQuery\Adapter\Mysqli\Driver\MysqliProperties::class)]
 final class MysqliConnectionTest extends TestCase
 {
     public function testItIsTheConnectionZtdReadsAndWritesThrough(): void

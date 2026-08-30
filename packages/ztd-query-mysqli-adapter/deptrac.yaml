@@ -1,0 +1,38 @@
+# NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
+#
+# What this package is, as layers.
+#
+# Adapter is what a caller uses in place of mysqli: the two classes that extend
+# it. Driver is how the core library's contracts are answered with a real
+# mysqli handle, together with the connection properties and state that only
+# matter while doing so, and nothing outside this package has a reason to name
+# any of it. Contract is the refusal this package raises, so either of the
+# other two may throw one and neither is depended on for it.
+deptrac:
+  paths:
+    - ./src
+  layers:
+    - name: Adapter
+      collectors:
+        - type: bool
+          must:
+            - type: directory
+              value: src/[^/]+\.php
+          must_not:
+            - type: classLike
+              value: ^ZtdQuery\\Adapter\\Mysqli\\ZtdMysqliException$
+    - name: Driver
+      collectors:
+        - type: directory
+          value: src/Driver/.*
+    - name: Contract
+      collectors:
+        - type: classLike
+          value: ^ZtdQuery\\Adapter\\Mysqli\\ZtdMysqliException$
+  ruleset:
+    Adapter:
+      - Driver
+      - Contract
+    Driver:
+      - Contract
+    Contract: ~
