@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Platform\MySql;
 
 use Faker\Factory;
+use Faker\Generator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -17,6 +18,7 @@ use SqlFixture\Platform\MySql\MySqlTextSample;
 use SqlFixture\Platform\MySql\MySqlTypeMapper;
 use SqlFixture\Platform\MySql\WellKnownTextGeometry;
 use SqlFixture\Schema\ColumnDefinition;
+use Tests\Fake\FixedTextProvider;
 use Tests\Fixture\SpyGenerator;
 
 #[CoversClass(MySqlTypeMapper::class)]
@@ -2467,16 +2469,14 @@ final class MySqlTypeMapperTest extends TestCase
     public function generateVarcharStartsFromBeginning(): void
     {
         $faker = Factory::create();
-        $faker->seed(12345);
+        $faker = new Generator();
+        $faker->addProvider(new FixedTextProvider(str_repeat('abcdefghij', 40)));
         $mapper = new MySqlTypeMapper();
 
         $column = new ColumnDefinition('col', 'VARCHAR', length: 200, nullable: false);
         $value1 = $mapper->generate($faker, $column);
 
-        $faker->seed(12345);
-        $text = $faker->text(min(200, 200));
-        $expected = substr($text, 0, 200);
-        self::assertSame($expected, $value1);
+        self::assertSame(substr(str_repeat('abcdefghij', 40), 0, 200), $value1);
     }
 
     #[Test]
