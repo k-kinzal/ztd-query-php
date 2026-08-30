@@ -21,6 +21,8 @@ use ZtdQuery\Platform\MySql\Parse\MySqlUpsertAssignmentExtractor;
 use ZtdQuery\Platform\MySql\Parse\UpdateSourceExtractor;
 use ZtdQuery\Platform\MySql\Rewrite\MySqlMutationResolver;
 use ZtdQuery\Platform\MySql\Transformer\DeleteTransformer;
+use ZtdQuery\Platform\MySql\Transformer\MySqlDeleteClauses;
+use ZtdQuery\Platform\MySql\Transformer\MySqlDeleteTargets;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
 use ZtdQuery\Rewrite\QueryKind;
@@ -67,6 +69,8 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlStatementOptions::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Parse\MySqlUpsertExpressionCursor::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Parse\MySqlUpsertLiteral::class)]
+#[UsesClass(MySqlDeleteClauses::class)]
+#[UsesClass(MySqlDeleteTargets::class)]
 final class MySqlMutationResolverTest extends TestCase
 {
     public function testResolveInsertReturnsInsertMutation(): void
