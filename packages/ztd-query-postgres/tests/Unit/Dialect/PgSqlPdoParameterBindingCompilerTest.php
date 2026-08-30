@@ -9,10 +9,12 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Postgres\Dialect\PgSqlPdoParameterBindingCompiler;
 use ZtdQuery\Platform\Postgres\Dialect\PgSqlPdoPlaceholderEscaper;
+use ZtdQuery\Platform\Postgres\Dialect\PgSqlPdoRuns;
 
 #[CoversClass(PgSqlPdoParameterBindingCompiler::class)]
 #[UsesClass(PgSqlPdoPlaceholderEscaper::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\Dialect\PgSqlLexerProfile::class)]
+#[UsesClass(PgSqlPdoRuns::class)]
 final class PgSqlPdoParameterBindingCompilerTest extends TestCase
 {
     public function testMapsNativePositionsAndEscapesPostgreSqlOperators(): void
