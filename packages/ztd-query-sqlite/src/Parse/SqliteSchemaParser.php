@@ -9,7 +9,7 @@ use ZtdQuery\Platform\Sqlite\Dialect\SqliteColumnTypeMapper;
 use ZtdQuery\Platform\Sqlite\Dialect\SqliteLexerProfile;
 use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
-use ZtdQuery\Schema\IdentityGenerationStrategy;
+use ZtdQuery\Schema\Key\IdentityGenerationStrategy;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;

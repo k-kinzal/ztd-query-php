@@ -22,7 +22,7 @@ use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Rewrite\ShadowIdentityAllocator;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnDeclaration;
-use ZtdQuery\Schema\IdentityGenerationStrategy;
+use ZtdQuery\Schema\Key\IdentityGenerationStrategy;
 
 /**
  * Transforms INSERT statements into SELECT queries that return the inserted rows.

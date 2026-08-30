@@ -24,7 +24,7 @@ use ZtdQuery\Platform\MySql\Transformer\MySqlSelectListAliaser;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
-use ZtdQuery\Schema\IdentityGenerationStrategy;
+use ZtdQuery\Schema\Key\IdentityGenerationStrategy;
 
 #[CoversClass(InsertTransformer::class)]
 #[UsesClass(MySqlParser::class)]

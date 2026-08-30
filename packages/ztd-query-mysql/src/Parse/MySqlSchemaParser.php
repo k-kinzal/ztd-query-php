@@ -9,7 +9,7 @@ use ZtdQuery\Platform\MySql\Dialect\MySqlColumnTypeMapper;
 use ZtdQuery\Platform\MySql\Dialect\MySqlStatementOptions;
 use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\ColumnDeclaration;
-use ZtdQuery\Schema\IdentityGenerationStrategy;
+use ZtdQuery\Schema\Key\IdentityGenerationStrategy;
 use ZtdQuery\Schema\TableDefinition;
 
 /**

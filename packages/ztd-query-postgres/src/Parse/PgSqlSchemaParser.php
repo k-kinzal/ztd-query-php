@@ -8,7 +8,7 @@ use ZtdQuery\Platform\Postgres\Dialect\PgSqlColumnTypeMapper;
 use ZtdQuery\Platform\Postgres\Dialect\PgSqlLexerProfile;
 use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\ColumnDeclaration;
-use ZtdQuery\Schema\IdentityGenerationStrategy;
+use ZtdQuery\Schema\Key\IdentityGenerationStrategy;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;

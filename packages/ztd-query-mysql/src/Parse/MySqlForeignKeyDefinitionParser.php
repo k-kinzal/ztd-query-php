@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\MySql\Parse;
 
 use ZtdQuery\Platform\MySql\Dialect\MySqlLexerProfile;
-use ZtdQuery\Schema\ForeignKeyDefinition;
-use ZtdQuery\Schema\ReferentialAction;
+use ZtdQuery\Schema\Key\ForeignKeyDefinition;
+use ZtdQuery\Schema\Key\ReferentialAction;
 use ZtdQuery\Sql\SqlLexerProfile;
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;

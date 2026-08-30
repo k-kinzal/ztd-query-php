@@ -21,7 +21,7 @@ use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
-use ZtdQuery\Schema\TablePartitioning;
+use ZtdQuery\Schema\Partition\TablePartitioning;
 
 #[CoversClass(SelectTransformer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Parse\MySqlSelectRelationParser::class)]
