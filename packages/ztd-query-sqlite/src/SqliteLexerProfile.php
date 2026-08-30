@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\Sqlite;
 
 use ZtdQuery\Sql\Profile\SqlCommentProfile;
-use ZtdQuery\Sql\Profile\SqlQuoteProfile;
 use ZtdQuery\Sql\Profile\SqlParameterProfile;
+use ZtdQuery\Sql\Profile\SqlQuoteProfile;
 use ZtdQuery\Sql\Profile\SqlSymbolProfile;
 use ZtdQuery\Sql\SqlLexerProfile;
 
