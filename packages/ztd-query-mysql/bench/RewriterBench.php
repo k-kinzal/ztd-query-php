@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Bench;
 
 use LogicException;
-use ZtdQuery\Platform\MySql\MySqlMutationResolver;
-use ZtdQuery\Platform\MySql\MySqlParser;
-use ZtdQuery\Platform\MySql\MySqlQueryGuard;
-use ZtdQuery\Platform\MySql\MySqlRewriter;
-use ZtdQuery\Platform\MySql\MySqlSchemaParser;
+use ZtdQuery\Platform\MySql\Parse\MySqlParser;
+use ZtdQuery\Platform\MySql\Parse\MySqlSchemaParser;
+use ZtdQuery\Platform\MySql\Rewrite\MySqlMutationResolver;
+use ZtdQuery\Platform\MySql\Rewrite\MySqlQueryGuard;
+use ZtdQuery\Platform\MySql\Rewrite\MySqlRewriter;
 use ZtdQuery\Platform\MySql\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\MySql\Transformer\InsertTransformer;
 use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
