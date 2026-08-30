@@ -71,6 +71,8 @@ use ZtdQuery\Sql\SqlTokenStream;
 #[UsesClass(MySqlKnownTables::class)]
 #[UsesClass(MySqlShadowTables::class)]
 #[UsesClass(MySqlDeleteClauses::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\MySqlUpdateClauses::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\MySqlUpdateSelectList::class)]
 final class MySqlSessionFactoryTest extends TestCase
 {
     public function testCreateRegistersReflectedViews(): void

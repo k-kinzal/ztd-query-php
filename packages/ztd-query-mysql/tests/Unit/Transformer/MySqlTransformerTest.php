@@ -50,6 +50,8 @@ use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
 #[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlComponentSql::class)]
 #[UsesClass(MySqlDeleteClauses::class)]
 #[UsesClass(MySqlDeleteTargets::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\MySqlUpdateClauses::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\MySqlUpdateSelectList::class)]
 final class MySqlTransformerTest extends TestCase
 {
     public function testTransformSelectPassthrough(): void

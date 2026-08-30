@@ -71,6 +71,8 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\MySql\Parse\MySqlUpsertLiteral::class)]
 #[UsesClass(MySqlDeleteClauses::class)]
 #[UsesClass(MySqlDeleteTargets::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\MySqlUpdateClauses::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\MySqlUpdateSelectList::class)]
 final class MySqlMutationResolverTest extends TestCase
 {
     public function testResolveInsertReturnsInsertMutation(): void
