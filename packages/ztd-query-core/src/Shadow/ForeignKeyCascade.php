@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow;
 
-use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\ForeignKeyViolationException;
 use ZtdQuery\Schema\ForeignKeyDefinition;
 use ZtdQuery\Schema\ReferentialAction;
+use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Shadow\Row\RowChange;
 use ZtdQuery\Shadow\Row\RowMatch;
 use ZtdQuery\Shadow\Row\TableTransition;
@@ -25,8 +25,8 @@ use ZtdQuery\Shadow\Row\TableTransition;
  * what happened to the parent, which is what lets the caller keep following
  * the constraints outward without knowing how deep it is.
  *
- * @phpstan-import-type Row from StatementInterface
- * @phpstan-import-type RowValue from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
+ * @phpstan-import-type RowValue from TableDefinition
  */
 final class ForeignKeyCascade
 {

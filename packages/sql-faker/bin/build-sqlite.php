@@ -5,7 +5,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use SqlFaker\Grammar\Lexical\LexicalProfileBuilder;
+use SqlFaker\Build\LexicalProfileBuilder;
 use SqlFaker\Grammar\Model\TerminalInventory;
 use SqlFaker\Grammar\Source\SqlVersion;
 use SqlFaker\Sqlite\Lemon\LemonParser;

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlFixture\Plan;
 
+use SqlFixture\Plan\Syntax\PlanParser;
+use SqlFixture\Plan\Syntax\PlanPrinter;
 use Stringable;
 
 /**

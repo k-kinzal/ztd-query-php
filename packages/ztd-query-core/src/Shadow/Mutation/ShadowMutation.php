@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow\Mutation;
 
-use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\SimulationException;
+use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Shadow\ShadowStore;
 
 /**
  * What a statement would do to the shadow.
  *
- * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
  */
 interface ShadowMutation
 {

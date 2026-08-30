@@ -7,6 +7,7 @@ namespace Tests\Fake;
 use ZtdQuery\Connection\ResultColumn;
 use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Platform\ResultColumnTypeResolver;
+use ZtdQuery\Schema\TableDefinition;
 
 /**
  * A statement that answers from rows held in memory.
@@ -14,7 +15,7 @@ use ZtdQuery\Platform\ResultColumnTypeResolver;
  * Nothing here talks to a driver, so a test can say exactly what a statement
  * hands back and then check what the code around it made of that.
  *
- * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
  */
 final class FakeStatement implements StatementInterface
 {

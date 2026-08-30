@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow;
 
-use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\MissingPrimaryKeyException;
+use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Shadow\Row\RowMatch;
 
 /**
  * Holds in-memory shadow rows for tables.
  *
- * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
  */
 class ShadowStore
 {

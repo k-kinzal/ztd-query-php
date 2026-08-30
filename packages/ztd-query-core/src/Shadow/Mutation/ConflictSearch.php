@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow\Mutation;
 
-use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Schema\CandidateKeyConflict;
 use ZtdQuery\Schema\CandidateKeySet;
+use ZtdQuery\Schema\TableDefinition;
 
 /**
  * Finds the row an incoming row would collide with, where a clause narrows which.
@@ -16,7 +16,7 @@ use ZtdQuery\Schema\CandidateKeySet;
  * in a collision. Where a statement names one, a row that does not satisfy it
  * collides with nothing, and neither do the rows already there that do not.
  *
- * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
  */
 final class ConflictSearch
 {

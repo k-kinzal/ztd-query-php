@@ -88,6 +88,9 @@ jobs:
       - name: Static analysis
         run: composer phpstan
 
+      - name: Architecture boundaries
+        run: composer deptrac
+
       - name: PHP compatibility
         run: composer compat
 

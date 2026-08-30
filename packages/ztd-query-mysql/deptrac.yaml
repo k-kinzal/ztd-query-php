@@ -1,0 +1,55 @@
+# NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
+#
+# What this package is, as layers.
+#
+# Dialect is how MySQL spells and types things: quoting a name, rendering a
+# value, reading a lexeme, classifying an error. Parse reads a statement into
+# the pieces ZTD works with, and needs the dialect to know what it is reading.
+# Mutation is what a statement would change, written as values. Rewrite is the
+# whole of turning a statement into the SQL that shadows it: the rewriter, the
+# guard that refuses a write, the transformers it drives and the resolver that
+# decides which mutation a statement causes, which all build each other and so
+# are one layer. Session is what the core library is handed: a factory, a
+# schema reflector and the SQL mode a connection is in.
+deptrac:
+  paths:
+    - ./src
+  layers:
+    - name: Session
+      collectors:
+        - type: directory
+          value: src/[^/]+\.php
+    - name: Rewrite
+      collectors:
+        - type: directory
+          value: src/Rewrite/.*
+        - type: directory
+          value: src/Transformer/.*
+    - name: Mutation
+      collectors:
+        - type: directory
+          value: src/Mutation/.*
+    - name: Parse
+      collectors:
+        - type: directory
+          value: src/Parse/.*
+    - name: Dialect
+      collectors:
+        - type: directory
+          value: src/Dialect/.*
+  ruleset:
+    Session:
+      - Rewrite
+      - Mutation
+      - Parse
+      - Dialect
+    Rewrite:
+      - Mutation
+      - Parse
+      - Dialect
+    Mutation:
+      - Parse
+      - Dialect
+    Parse:
+      - Dialect
+    Dialect: ~

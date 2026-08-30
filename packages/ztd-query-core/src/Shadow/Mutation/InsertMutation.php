@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow\Mutation;
 
-use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\DuplicateKeyException;
 use ZtdQuery\Schema\CandidateKeySet;
 use ZtdQuery\Schema\TableDefinition;
@@ -13,7 +12,7 @@ use ZtdQuery\Shadow\ShadowStore;
 /**
  * Applies INSERT result rows to the shadow store.
  *
- * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
  */
 final class InsertMutation implements DataMutation
 {

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow\Row;
 
-use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Schema\TableDefinition;
 
 /**
  * One row as it was, and as it became.
@@ -12,7 +12,7 @@ use ZtdQuery\Connection\StatementInterface;
  * A cascade has to know both: which row to look for on the child side is
  * decided by the old values, and what to write there by the new ones.
  *
- * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
  */
 final class RowChange
 {

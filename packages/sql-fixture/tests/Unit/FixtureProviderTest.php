@@ -18,10 +18,10 @@ use SqlFixture\Hydrator\PropertyHydration;
 use SqlFixture\Hydrator\PropertyName;
 use SqlFixture\Hydrator\ReflectionHydrator;
 use SqlFixture\Plan\FixturePlan;
-use SqlFixture\Plan\PlanCursor;
 use SqlFixture\Plan\PlanIntegrity;
-use SqlFixture\Plan\PlanStatementReader;
-use SqlFixture\Plan\PlanStatements;
+use SqlFixture\Plan\Syntax\PlanCursor;
+use SqlFixture\Plan\Syntax\PlanStatementReader;
+use SqlFixture\Plan\Syntax\PlanStatements;
 use SqlFixture\Plan\TableName;
 use SqlFixture\Platform\MySql\MySqlBinarySample;
 use SqlFixture\Platform\MySql\MySqlColumnReader;
@@ -68,7 +68,7 @@ use Tests\Fixture\UserDto;
 #[UsesClass(\SqlFixture\Fixture\PlanWalk::class)]
 #[UsesClass(\SqlFixture\Fixture\ChildRowCount::class)]
 #[UsesClass(\SqlFixture\Fixture\PlanSchemaValidator::class)]
-#[UsesClass(\SqlFixture\Plan\PlanParser::class)]
+#[UsesClass(\SqlFixture\Plan\Syntax\PlanParser::class)]
 #[UsesClass(\SqlFixture\Plan\Relation::class)]
 #[UsesClass(\SqlFixture\Plan\ColumnRef::class)]
 #[UsesClass(\SqlFixture\Plan\RelationKind::class)]

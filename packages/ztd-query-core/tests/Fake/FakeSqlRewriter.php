@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Fake;
 
-use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Rewrite\MultiRewritePlan;
 use ZtdQuery\Rewrite\QueryKind;
@@ -27,7 +26,7 @@ use ZtdQuery\Sql\TransactionStatement;
  * Supports SELECT, INSERT, UPDATE, DELETE, CREATE TABLE, DROP TABLE, TRUNCATE.
  * Uses FakeSqlTransformer for CTE injection on SELECT queries.
  *
- * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
  */
 final class FakeSqlRewriter implements SqlRewriter
 {

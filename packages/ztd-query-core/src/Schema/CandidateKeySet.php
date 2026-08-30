@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Schema;
 
-use ZtdQuery\Connection\StatementInterface;
-
 /**
  * Relational candidate keys used to detect INSERT conflicts.
  *
- * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
  */
 final class CandidateKeySet
 {

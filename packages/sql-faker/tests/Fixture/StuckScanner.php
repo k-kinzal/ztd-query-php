@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Tests\Fixture\SqlFaker;
 
 use Override;
+use SqlFaker\Grammar\Source\Bison\Lexer\BisonLexeme;
+use SqlFaker\Grammar\Source\Bison\Lexer\BisonScanner;
+use SqlFaker\Grammar\Source\Bison\Lexer\BisonToken;
 use SqlFaker\Grammar\Source\SourceCursor;
-use SqlFaker\MySql\Bison\Lexer\BisonLexeme;
-use SqlFaker\MySql\Bison\Lexer\BisonScanner;
-use SqlFaker\MySql\Bison\Lexer\BisonToken;
 
 /**
  * A scanner that answers a token without consuming the character it read.

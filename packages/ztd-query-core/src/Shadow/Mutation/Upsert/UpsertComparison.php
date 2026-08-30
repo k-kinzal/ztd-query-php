@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow\Mutation\Upsert;
 
-use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Schema\TableDefinition;
 
 /**
  * Compares two values the way a database does it.
@@ -15,7 +15,7 @@ use ZtdQuery\Exception\UnsupportedSqlException;
  * would coerce depends on the column types and the collation, neither of which
  * is known here. Null is unknown, so every comparison against it is unknown.
  *
- * @phpstan-import-type RowValue from StatementInterface
+ * @phpstan-import-type RowValue from TableDefinition
  */
 final class UpsertComparison
 {

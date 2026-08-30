@@ -6,7 +6,7 @@ namespace Fuzz\Robustness\Invariant;
 
 use mysqli;
 use mysqli_sql_exception;
-use ZtdQuery\Platform\MySql\MySqlQueryGuard;
+use ZtdQuery\Platform\MySql\Dialect\MySqlQueryGuard;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\SqlRewriter;
 

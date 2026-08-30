@@ -311,4 +311,25 @@ final class TokenJoinerTest extends TestCase
     {
         self::assertFalse(TokenJoiner::matchesNoSpacePair([['(', 'SELECT']], 'SELECT', 'FROM'));
     }
+
+    public function testNeedsSpaceKeepsACallsParenthesesAgainstItsName(): void
+    {
+        self::assertFalse(TokenJoiner::needsSpace([], 'count', '('));
+    }
+
+    public function testNeedsSpaceKeepsThePartsOfAQualifiedNameTogether(): void
+    {
+        self::assertFalse(TokenJoiner::needsSpace([], 'db', '.'));
+        self::assertFalse(TokenJoiner::needsSpace([], '.', 'tbl'));
+    }
+
+    public function testNeedsSpaceSeparatesTwoWordsNothingBinds(): void
+    {
+        self::assertTrue(TokenJoiner::needsSpace([], 'SELECT', 'a'));
+    }
+
+    public function testNeedsSpaceObeysAPairTheDialectNamesAsInseparable(): void
+    {
+        self::assertFalse(TokenJoiner::needsSpace([['N', "'a'"]], 'N', "'a'"));
+    }
 }

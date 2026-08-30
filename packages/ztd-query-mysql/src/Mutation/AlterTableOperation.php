@@ -13,7 +13,7 @@ use PhpMyAdmin\SqlParser\Token;
 use ZtdQuery\Exception\ColumnAlreadyExistsException;
 use ZtdQuery\Exception\ColumnNotFoundException;
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\MySql\MySqlComponentSql;
+use ZtdQuery\Platform\MySql\Dialect\MySqlComponentSql;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
