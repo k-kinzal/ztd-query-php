@@ -8,6 +8,7 @@ use SqlFaker\Grammar\Model\Grammar;
 use SqlFaker\Grammar\Model\Production;
 use SqlFaker\Grammar\Model\ProductionRule;
 use SqlFaker\Grammar\Model\Terminal;
+use SqlFaker\Sqlite\Lexical\LexicalGrammar;
 
 /**
  * Reshapes SQLite's parser grammar into one a generator can be aimed at.

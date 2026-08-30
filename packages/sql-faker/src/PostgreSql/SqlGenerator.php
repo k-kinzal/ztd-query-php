@@ -16,6 +16,7 @@ use SqlFaker\Grammar\Walk\GenerationException;
 use SqlFaker\Grammar\Walk\GenerationPlan;
 use SqlFaker\Grammar\Walk\TerminationAnalyzer;
 use SqlFaker\PostgreSql\Grammar\PgGrammar;
+use SqlFaker\PostgreSql\Lexical\LexicalGrammar;
 
 /**
  * Derives PostgreSQL parser terminals and realizes them through the versioned lexer model.

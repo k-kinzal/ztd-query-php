@@ -6,8 +6,8 @@ namespace Tests\Fixture\SqlFaker;
 
 use Faker\Generator;
 use SqlFaker\Grammar\Lexical\LexicalCatalog;
-use SqlFaker\Sqlite\SqliteTerminalRealizer;
-use SqlFaker\Sqlite\SqliteTokenizer;
+use SqlFaker\Sqlite\Lexical\SqliteTerminalRealizer;
+use SqlFaker\Sqlite\Lexical\SqliteTokenizer;
 
 /**
  * Builds SQLite terminal realizers over a catalog small enough to read.

@@ -26,7 +26,7 @@ use SqlFaker\Grammar\Walk\GenerationPlan;
 use SqlFaker\Grammar\Walk\TerminationAnalyzer;
 use SqlFaker\PostgreSql\GenerationPlans;
 use SqlFaker\PostgreSql\Grammar\PgGrammar;
-use SqlFaker\PostgreSql\LexicalGrammar;
+use SqlFaker\PostgreSql\Lexical\LexicalGrammar;
 use SqlFaker\PostgreSql\SqlGenerator;
 use SqlFaker\PostgreSql\StatementRule;
 use SqlFaker\PostgreSqlProvider;

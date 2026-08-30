@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\Grammar\Lexical;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Lexical\LexicalCatalogException;
@@ -152,5 +153,108 @@ final class LexicalCatalogShapeTest extends TestCase
         $this->expectExceptionMessage('string units and nonempty reasons');
 
         (new LexicalCatalogShape())->excludedOf(['excluded' => ['comment' => '']]);
+    }
+
+    /**
+     * @param array<string, mixed> $catalog
+     */
+    #[DataProvider('providerMissingCatalogKey')]
+    public function testOfRefusesACatalogThatLeavesOutAKeyItHasToCarry(string $missing, array $catalog): void
+    {
+        $this->expectException(LexicalCatalogException::class);
+        $this->expectExceptionMessage($missing);
+
+        (new LexicalCatalogShape())->of($catalog);
+    }
+
+    /**
+     * @return iterable<string, array{string, array<string, mixed>}>
+     */
+    public static function providerMissingCatalogKey(): iterable
+    {
+        $source = ['engine' => 'mysql', 'entrypoint' => 'sql_lex.cc'];
+        $coverage = ['units' => [], 'witnessed' => [], 'excluded' => []];
+
+        yield 'source' => ['source', [
+            'terminals' => [],
+            'terminal_exclusions' => [],
+            'coverage' => $coverage,
+        ]];
+        yield 'source.engine' => ['source.engine', [
+            'source' => ['entrypoint' => 'sql_lex.cc'],
+            'terminals' => [],
+            'terminal_exclusions' => [],
+            'coverage' => $coverage,
+        ]];
+        yield 'source.entrypoint' => ['source.entrypoint', [
+            'source' => ['engine' => 'mysql'],
+            'terminals' => [],
+            'terminal_exclusions' => [],
+            'coverage' => $coverage,
+        ]];
+        yield 'terminals' => ['terminals', [
+            'source' => $source,
+            'terminal_exclusions' => [],
+            'coverage' => $coverage,
+        ]];
+        yield 'terminal_exclusions' => ['terminal_exclusions', [
+            'source' => $source,
+            'terminals' => [],
+            'coverage' => $coverage,
+        ]];
+        yield 'coverage' => ['coverage', [
+            'source' => $source,
+            'terminals' => [],
+            'terminal_exclusions' => [],
+        ]];
+        yield 'coverage.units' => ['coverage.units', [
+            'source' => $source,
+            'terminals' => [],
+            'terminal_exclusions' => [],
+            'coverage' => ['witnessed' => [], 'excluded' => []],
+        ]];
+        yield 'coverage.witnessed' => ['coverage.witnessed', [
+            'source' => $source,
+            'terminals' => [],
+            'terminal_exclusions' => [],
+            'coverage' => ['units' => [], 'excluded' => []],
+        ]];
+        yield 'coverage.excluded' => ['coverage.excluded', [
+            'source' => $source,
+            'terminals' => [],
+            'terminal_exclusions' => [],
+            'coverage' => ['units' => [], 'witnessed' => []],
+        ]];
+    }
+
+    public function testTerminalsOfReadsEveryTerminalTheCatalogCarries(): void
+    {
+        $read = (new LexicalCatalogShape())->terminalsOf(['terminals' => [
+            'A' => [['id' => 'a', 'sql' => 'a', 'tokens' => ['A'], 'units' => []]],
+            'B' => [['id' => 'b', 'sql' => 'b', 'tokens' => ['B'], 'units' => []]],
+        ]]);
+
+        self::assertSame(['A', 'B'], array_keys($read));
+    }
+
+    public function testWitnessedOfReadsEveryUnitTheCatalogAccountsFor(): void
+    {
+        $read = (new LexicalCatalogShape())->witnessedOf(['witnessed' => ['rule:1' => 'a', 'rule:2' => 'b']]);
+
+        self::assertSame(['rule:1' => 'a', 'rule:2' => 'b'], $read);
+    }
+
+    public function testExcludedOfReadsEveryUnitTheCatalogLeavesOutOnPurpose(): void
+    {
+        $read = (new LexicalCatalogShape())->excludedOf(['excluded' => ['rule:1' => 'why', 'rule:2' => 'also why']]);
+
+        self::assertSame(['rule:1' => 'why', 'rule:2' => 'also why'], $read);
+    }
+
+    public function testUnitsOfReadsEveryUnitTheCatalogNames(): void
+    {
+        $read = (new LexicalCatalogShape())->unitsOf(['units' => ['rule:1', 'rule:2']]);
+
+        self::assertSame(['rule:1', 'rule:2'], $read);
     }
 }
