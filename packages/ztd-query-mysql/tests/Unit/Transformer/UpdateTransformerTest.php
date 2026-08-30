@@ -35,6 +35,8 @@ use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
 #[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\MySqlGeneratedColumnProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlLexerProfile::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlComponentSql::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\MySqlUpdateClauses::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\MySqlUpdateSelectList::class)]
 final class UpdateTransformerTest extends TestCase
 {
     public function testBuildProjectionPreservesDerivedJoinSource(): void
@@ -956,57 +958,10 @@ final class UpdateTransformerTest extends TestCase
         self::assertSame(['users'], array_map(static fn ($target) => $target->tableName(), $targets));
     }
 
-    public function testMultiTableSelectColumnsCarriesTheKeyTheRowHadSeparately(): void
-    {
-        $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
-        $statement = (new Parser('UPDATE users AS u SET u.id = 2'))->statements[0];
-        self::assertInstanceOf(UpdateStatement::class, $statement);
-        $targets = $transformer->targetsFromContexts(
-            ['users' => ['alias' => 'u']],
-            ['users' => ['rows' => [], 'columns' => ['id'], 'columnTypes' => [], 'primaryKeys' => ['id']]],
-        );
 
-        $columns = $transformer->multiTableSelectColumns($statement, ['users' => ['alias' => 'u']], $targets, ['2']);
 
-        self::assertSame(
-            ['2 AS `__ztd_multi_0_value_0`', '`u`.`id` AS `__ztd_multi_0_identity_0`'],
-            $columns,
-        );
-    }
 
-    public function testAssignmentsByTableReadsAQualifiedAssignmentAsBelongingToThatTable(): void
-    {
-        $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
-        $statement = (new Parser('UPDATE users AS u SET u.name = 1'))->statements[0];
-        self::assertInstanceOf(UpdateStatement::class, $statement);
 
-        self::assertSame(
-            ['users' => ['name' => '1']],
-            $transformer->assignmentsByTable($statement, ['users' => ['alias' => 'u']], ['1']),
-        );
-    }
-
-    public function testAssignmentsByTableReadsABareAssignmentAsBelongingToTheFirstTable(): void
-    {
-        $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
-        $statement = (new Parser('UPDATE users AS u SET name = 1'))->statements[0];
-        self::assertInstanceOf(UpdateStatement::class, $statement);
-
-        self::assertSame(
-            ['users' => ['name' => '1']],
-            $transformer->assignmentsByTable($statement, ['users' => ['alias' => 'u']], ['1']),
-        );
-    }
-
-    public function testUnquoteIdentifierTakesTheQuotingOffTheName(): void
-    {
-        self::assertSame('order', UpdateTransformer::unquoteIdentifier('`order`'));
-    }
-
-    public function testUnquoteIdentifierLeavesAnUnquotedNameAlone(): void
-    {
-        self::assertSame('name', UpdateTransformer::unquoteIdentifier('name'));
-    }
 
     public function testBuildAdditionalTablesWritesTheTablesNamedAfterTheFirst(): void
     {
@@ -1061,4 +1016,49 @@ final class UpdateTransformerTest extends TestCase
         self::assertSame('users', UpdateTransformer::exprTable($expression));
     }
 
+    public function testRequireUpdateRefusesAStatementThatIsNotAnUpdate(): void
+    {
+        $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
+
+        $this->expectException(\ZtdQuery\Exception\UnsupportedSqlException::class);
+
+        $transformer->requireUpdate('SELECT 1');
+    }
+
+    public function testRequireUpdateRefusesAStatementNamingThePartitionsItChangesRowsIn(): void
+    {
+        $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
+
+        $this->expectException(\ZtdQuery\Exception\UnsupportedSqlException::class);
+
+        $transformer->requireUpdate('UPDATE t PARTITION (p1) SET a = 1');
+    }
+
+    public function testRequireTargetTableAnswersTheTableTheStatementWritesToFirst(): void
+    {
+        $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
+        $statement = $transformer->requireUpdate('UPDATE users AS u SET u.name = 1');
+
+        self::assertSame('users', $transformer->requireTargetTable($statement, 'UPDATE users AS u SET u.name = 1'));
+    }
+
+    public function testRequireTargetTableRefusesAStatementNamingNoTableToWriteTo(): void
+    {
+        $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
+
+        $this->expectException(\ZtdQuery\Exception\UnsupportedSqlException::class);
+
+        $transformer->requireTargetTable(new UpdateStatement(), 'UPDATE');
+    }
+
+    public function testWrittenTablesAnswersEveryTableTheStatementWritesTo(): void
+    {
+        $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
+        $statement = $transformer->requireUpdate('UPDATE users AS u, orders AS o SET u.name = 1');
+
+        self::assertSame(
+            ['users' => ['alias' => 'u'], 'orders' => ['alias' => 'o']],
+            $transformer->writtenTables($statement),
+        );
+    }
 }
