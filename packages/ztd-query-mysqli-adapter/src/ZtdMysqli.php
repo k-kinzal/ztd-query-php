@@ -227,7 +227,7 @@ class ZtdMysqli extends mysqli
         if ($transactionStatement !== null) {
             $result = $this->innerMysqli->query($query, $resultMode);
             if ($result !== false) {
-                $this->session->applyTransactionStatement($transactionStatement);
+                $transactionStatement->apply($this->session->transactions());
             }
 
             return $result;
@@ -273,7 +273,7 @@ class ZtdMysqli extends mysqli
         if ($transactionStatement !== null) {
             $result = $this->innerMysqli->real_query($query);
             if ($result) {
-                $this->session->applyTransactionStatement($transactionStatement);
+                $transactionStatement->apply($this->session->transactions());
             }
 
             return $result;
@@ -302,7 +302,7 @@ class ZtdMysqli extends mysqli
     {
         $result = $this->innerMysqli->begin_transaction($flags, $name);
         if ($result) {
-            $this->session->beginTransaction();
+            $this->session->transactions()->begin();
         }
 
         return $result;
@@ -315,7 +315,7 @@ class ZtdMysqli extends mysqli
     {
         $result = $this->innerMysqli->commit($flags, $name);
         if ($result) {
-            $this->session->commitTransaction();
+            $this->session->transactions()->commit();
         }
 
         return $result;
@@ -328,7 +328,7 @@ class ZtdMysqli extends mysqli
     {
         $result = $this->innerMysqli->rollback($flags, $name);
         if ($result) {
-            $this->session->rollBackTransaction();
+            $this->session->transactions()->rollBack();
         }
 
         return $result;
@@ -342,9 +342,9 @@ class ZtdMysqli extends mysqli
         $result = $this->innerMysqli->autocommit($enable);
         if ($result) {
             if ($enable) {
-                $this->session->commitTransaction();
+                $this->session->transactions()->commit();
             } else {
-                $this->session->beginTransaction();
+                $this->session->transactions()->begin();
             }
         }
 
@@ -577,7 +577,7 @@ class ZtdMysqli extends mysqli
     {
         $result = $this->innerMysqli->release_savepoint($name);
         if ($result) {
-            $this->session->applyTransactionStatement(TransactionStatement::release($name));
+            TransactionStatement::release($name)->apply($this->session->transactions());
         }
 
         return $result;
@@ -590,7 +590,7 @@ class ZtdMysqli extends mysqli
     {
         $result = $this->innerMysqli->savepoint($name);
         if ($result) {
-            $this->session->applyTransactionStatement(TransactionStatement::savepoint($name));
+            TransactionStatement::savepoint($name)->apply($this->session->transactions());
         }
 
         return $result;

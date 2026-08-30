@@ -5,6 +5,10 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\MySql\Dialect;
 
 use PhpMyAdmin\SqlParser\Context;
+use ZtdQuery\Sql\Profile\SqlCommentProfile;
+use ZtdQuery\Sql\Profile\SqlQuoteProfile;
+use ZtdQuery\Sql\Profile\SqlParameterProfile;
+use ZtdQuery\Sql\Profile\SqlSymbolProfile;
 use ZtdQuery\Sql\SqlLexerProfile;
 
 /**
@@ -23,26 +27,34 @@ final class MySqlLexerProfile
         $ansiQuotes ??= Context::hasMode(Context::SQL_MODE_ANSI_QUOTES);
 
         return new SqlLexerProfile(
-            lineCommentPrefixes: ['#'],
-            whitespaceDelimitedLineCommentPrefixes: ['--'],
-            blockCommentPairs: ['/*' => '*/'],
-            stringQuotePairs: $ansiQuotes ? ["'" => "'"] : ["'" => "'", '"' => '"'],
-            identifierQuotePairs: $ansiQuotes ? ['`' => '`', '"' => '"'] : ['`' => '`'],
-            namedParameterSeparators: [':' => []],
-            namedParameterSuffixPatterns: [],
-            namedParameterForbiddenPredecessors: [':' => [':']],
-            backslashEscapedStringPrefixes: [],
-            positionalParameterPatterns: ['/^\?/'],
-            dollarQuoteDelimiterPattern: null,
-            numericLiteralPattern: '/^(?:0[xX][0-9A-Fa-f]+|(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?)/',
-            identifierStartPattern: '/^[_A-Za-z$\x80-\xFF]$/',
-            identifierPartPattern: '/^[_A-Za-z0-9$\x80-\xFF]$/',
-            bracketPair: ['[', ']'],
-            nestingPair: ['(', ')'],
-            statementDelimiter: ';',
-            listDelimiter: ',',
-            nestedBlockComments: false,
-            backslashEscapedStrings: true,
+            new SqlCommentProfile(
+                lineCommentPrefixes: ['#'],
+                whitespaceDelimitedLineCommentPrefixes: ['--'],
+                blockCommentPairs: ['/*' => '*/'],
+                nestedBlockComments: false,
+            ),
+            new SqlQuoteProfile(
+                stringQuotePairs: $ansiQuotes ? ["'" => "'"] : ["'" => "'", '"' => '"'],
+                identifierQuotePairs: $ansiQuotes ? ['`' => '`', '"' => '"'] : ['`' => '`'],
+                dollarQuoteDelimiterPattern: null,
+                backslashEscapedStringPrefixes: [],
+                backslashEscapedStrings: true,
+            ),
+            new SqlParameterProfile(
+                positionalParameterPatterns: ['/^\?/'],
+                namedParameterSeparators: [':' => []],
+                namedParameterSuffixPatterns: [],
+                namedParameterForbiddenPredecessors: [':' => [':']],
+            ),
+            new SqlSymbolProfile(
+                numericLiteralPattern: '/^(?:0[xX][0-9A-Fa-f]+|(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?)/',
+                identifierStartPattern: '/^[_A-Za-z$\x80-\xFF]$/',
+                identifierPartPattern: '/^[_A-Za-z0-9$\x80-\xFF]$/',
+                bracketPair: ['[', ']'],
+                nestingPair: ['(', ')'],
+                statementDelimiter: ';',
+                listDelimiter: ',',
+            ),
         );
     }
 }

@@ -24,6 +24,7 @@ use ZtdQuery\Platform\ResultColumnTypeResolver;
 use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
+use ZtdQuery\RewriteRefusal;
 use ZtdQuery\Schema\Key\CandidateKeySet;
 use ZtdQuery\Schema\Key\ForeignKeyDefinition;
 use ZtdQuery\Schema\TableDefinition;
@@ -33,6 +34,7 @@ use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
 use ZtdQuery\Shadow\Mutation\Row\InsertMutation;
 use ZtdQuery\Shadow\Mutation\Row\UpdateMutation;
 use ZtdQuery\Shadow\ReferentialIntegrityEnforcer;
+use ZtdQuery\Shadow\Row\RowPairing;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTransactions;
 use ZtdQuery\Sql\TransactionStatement;
@@ -72,6 +74,8 @@ use ZtdQuery\Sql\TransactionStatement;
 #[UsesClass(\ZtdQuery\Shadow\Row\RowMultiset::class)]
 #[UsesClass(\ZtdQuery\Shadow\Row\TableTransition::class)]
 #[UsesClass(\ZtdQuery\Shadow\TableTransitions::class)]
+#[UsesClass(RewriteRefusal::class)]
+#[UsesClass(RowPairing::class)]
 final class SessionTest extends TestCase
 {
     public function testDisableEnableDisableEnableAndDisable(): void
@@ -188,9 +192,9 @@ final class SessionTest extends TestCase
             new ShadowTransactions($shadowStore, $registry),
         );
 
-        $session->beginTransaction();
+        $session->transactions()->begin();
         $registry->unregister('users');
-        $session->rollBackTransaction();
+        $session->transactions()->rollBack();
 
         self::assertSame($definition, $registry->get('users'));
     }
@@ -323,10 +327,10 @@ final class SessionTest extends TestCase
         $store->set('users', [['id' => 1]]);
         $session = SessionUnderTest::over($store);
 
-        $session->beginTransaction();
+        $session->transactions()->begin();
         $store->set('users', []);
-        $session->commitTransaction();
-        $session->rollBackTransaction();
+        $session->transactions()->commit();
+        $session->transactions()->rollBack();
 
         self::assertSame([], $store->get('users'));
     }
@@ -337,9 +341,9 @@ final class SessionTest extends TestCase
         $store->set('users', [['id' => 1]]);
         $session = SessionUnderTest::over($store);
 
-        $session->applyTransactionStatement(TransactionStatement::begin());
+        TransactionStatement::begin()->apply($session->transactions());
         $store->set('users', []);
-        $session->applyTransactionStatement(TransactionStatement::rollback());
+        TransactionStatement::rollback()->apply($session->transactions());
 
         self::assertSame([['id' => 1]], $store->get('users'));
     }
@@ -426,9 +430,9 @@ final class SessionTest extends TestCase
         $store->set('users', [['id' => 1]]);
         $session = SessionUnderTest::over($store);
 
-        $session->beginTransaction();
+        $session->transactions()->begin();
         $store->set('users', []);
-        $session->rollBackTransaction();
+        $session->transactions()->rollBack();
 
         self::assertSame([['id' => 1]], $store->get('users'));
     }
@@ -438,5 +442,18 @@ final class SessionTest extends TestCase
         $session = SessionUnderTest::plain();
 
         self::assertInstanceOf(MissingResultColumnTypeResolver::class, $session->resultColumnTypeResolver());
+    }
+
+    public function testTransactionsAnswersWhatATransactionStatementIsAppliedTo(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', [['id' => 1]]);
+        $session = SessionUnderTest::over($store);
+
+        TransactionStatement::begin()->apply($session->transactions());
+        $store->set('users', []);
+        TransactionStatement::rollback()->apply($session->transactions());
+
+        self::assertSame([['id' => 1]], $store->get('users'));
     }
 }
