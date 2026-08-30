@@ -41,6 +41,8 @@
         "lint": [
             "@format:check",
             "@phpstan",
+            "@loc-guard",
+            "@tree-guard",
             "@deptrac"
         ],
         "format": "php-cs-fixer fix --allow-risky=yes",

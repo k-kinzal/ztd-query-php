@@ -11,6 +11,8 @@ use ZtdQuery\Exception\ForeignKeyViolationException;
 use ZtdQuery\Schema\Key\ForeignKeyDefinition;
 use ZtdQuery\Schema\Key\ReferentialAction;
 use ZtdQuery\Schema\TableDefinitionRegistry;
+use ZtdQuery\Shadow\CascadedChildren;
+use ZtdQuery\Shadow\FollowedConstraint;
 use ZtdQuery\Shadow\ForeignKeyCascade;
 use ZtdQuery\Shadow\ForeignKeyEnds;
 use ZtdQuery\Shadow\ParentKeyLookup;
@@ -20,6 +22,8 @@ use ZtdQuery\Shadow\Row\TableTransition;
 use ZtdQuery\Shadow\ShadowStore;
 
 #[CoversClass(ForeignKeyCascade::class)]
+#[UsesClass(CascadedChildren::class)]
+#[UsesClass(FollowedConstraint::class)]
 #[UsesClass(ForeignKeyEnds::class)]
 #[UsesClass(ParentKeyLookup::class)]
 #[UsesClass(RowMatch::class)]
@@ -126,13 +130,9 @@ final class ForeignKeyCascadeTest extends TestCase
 
         $row = $cascade->applyAction(
             ['id' => 10, 'parent_id' => 1],
-            ['parent_id'],
             [],
             ReferentialAction::SetNull,
-            'children',
-            'fk',
-            $foreignKey,
-            'DELETE',
+            new FollowedConstraint('children', 'fk', $foreignKey, 'DELETE'),
         );
 
         self::assertSame(['id' => 10, 'parent_id' => null], $row);
@@ -145,13 +145,9 @@ final class ForeignKeyCascadeTest extends TestCase
 
         $row = $cascade->applyAction(
             ['id' => 10, 'parent_id' => 1],
-            ['parent_id'],
             [2],
             ReferentialAction::Cascade,
-            'children',
-            'fk',
-            $foreignKey,
-            'UPDATE',
+            new FollowedConstraint('children', 'fk', $foreignKey, 'UPDATE'),
         );
 
         self::assertSame(['id' => 10, 'parent_id' => 2], $row);
@@ -166,13 +162,100 @@ final class ForeignKeyCascadeTest extends TestCase
 
         $cascade->applyAction(
             ['id' => 10, 'parent_id' => 1],
-            ['parent_id'],
             [],
             ReferentialAction::Restrict,
-            'children',
-            'fk',
-            $foreignKey,
-            'DELETE',
+            new FollowedConstraint('children', 'fk', $foreignKey, 'DELETE'),
         );
+    }
+
+    public function testCarryUpdateWritesTheNewKeyIntoEveryChildThatWasHoldingTheOldOne(): void
+    {
+        $cascade = new ForeignKeyCascade(new ForeignKeyEnds(new TableDefinitionRegistry()));
+        $foreignKey = new ForeignKeyDefinition(
+            ['parent_id'],
+            'parents',
+            ['id'],
+            onUpdate: ReferentialAction::Cascade,
+        );
+        $constraint = new FollowedConstraint('children', 'fk', $foreignKey, 'UPDATE');
+        $store = new ShadowStore();
+        $store->set('parents', [['id' => 2]]);
+        $children = new CascadedChildren([['id' => 10, 'parent_id' => 1], ['id' => 11, 'parent_id' => 9]]);
+
+        $cascade->carryUpdate($children, $store, $constraint, ['id'], new RowChange(['id' => 1], ['id' => 2]));
+
+        self::assertSame(
+            [['id' => 10, 'parent_id' => 2], ['id' => 11, 'parent_id' => 9]],
+            $children->rows(),
+        );
+    }
+
+    public function testCarryUpdateReachesNothingWhereTheParentTableStillHoldsTheOldKey(): void
+    {
+        $cascade = new ForeignKeyCascade(new ForeignKeyEnds(new TableDefinitionRegistry()));
+        $foreignKey = new ForeignKeyDefinition(['parent_id'], 'parents', ['id']);
+        $constraint = new FollowedConstraint('children', 'fk', $foreignKey, 'UPDATE');
+        $store = new ShadowStore();
+        $store->set('parents', [['id' => 1], ['id' => 2]]);
+        $children = new CascadedChildren([['id' => 10, 'parent_id' => 1]]);
+
+        $cascade->carryUpdate($children, $store, $constraint, ['id'], new RowChange(['id' => 1], ['id' => 2]));
+
+        self::assertTrue($children->areUnchanged());
+    }
+
+    public function testCarryDeleteDropsEveryChildThatWasHoldingTheKeyWhereTheActionCascades(): void
+    {
+        $cascade = new ForeignKeyCascade(new ForeignKeyEnds(new TableDefinitionRegistry()));
+        $foreignKey = new ForeignKeyDefinition(
+            ['parent_id'],
+            'parents',
+            ['id'],
+            onDelete: ReferentialAction::Cascade,
+        );
+        $constraint = new FollowedConstraint('children', 'fk', $foreignKey, 'DELETE');
+        $store = new ShadowStore();
+        $store->set('parents', []);
+        $children = new CascadedChildren([['id' => 10, 'parent_id' => 1], ['id' => 11, 'parent_id' => 9]]);
+
+        $cascade->carryDelete($children, $store, $constraint, ['id'], ['id' => 1]);
+
+        self::assertSame(
+            [[['id' => 11, 'parent_id' => 9]], [['id' => 10, 'parent_id' => 1]]],
+            [$children->rows(), $children->deleted()],
+        );
+    }
+
+    public function testCarryDeleteSetsTheKeyToNullWhereTheActionSaysToRatherThanDroppingTheRow(): void
+    {
+        $cascade = new ForeignKeyCascade(new ForeignKeyEnds(new TableDefinitionRegistry()));
+        $foreignKey = new ForeignKeyDefinition(
+            ['parent_id'],
+            'parents',
+            ['id'],
+            onDelete: ReferentialAction::SetNull,
+        );
+        $constraint = new FollowedConstraint('children', 'fk', $foreignKey, 'DELETE');
+        $store = new ShadowStore();
+        $store->set('parents', []);
+        $children = new CascadedChildren([['id' => 10, 'parent_id' => 1]]);
+
+        $cascade->carryDelete($children, $store, $constraint, ['id'], ['id' => 1]);
+
+        self::assertSame([['id' => 10, 'parent_id' => null]], $children->rows());
+    }
+
+    public function testCarryDeleteReachesNothingWhereTheParentTableStillHoldsTheKey(): void
+    {
+        $cascade = new ForeignKeyCascade(new ForeignKeyEnds(new TableDefinitionRegistry()));
+        $foreignKey = new ForeignKeyDefinition(['parent_id'], 'parents', ['id']);
+        $constraint = new FollowedConstraint('children', 'fk', $foreignKey, 'DELETE');
+        $store = new ShadowStore();
+        $store->set('parents', [['id' => 1]]);
+        $children = new CascadedChildren([['id' => 10, 'parent_id' => 1]]);
+
+        $cascade->carryDelete($children, $store, $constraint, ['id'], ['id' => 1]);
+
+        self::assertTrue($children->areUnchanged());
     }
 }

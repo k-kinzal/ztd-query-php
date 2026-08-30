@@ -13,6 +13,7 @@ use ZtdQuery\Schema\Key\CandidateKeyConflict;
 use ZtdQuery\Schema\Key\CandidateKeySet;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Shadow\Mutation\Row\InsertMutation;
+use ZtdQuery\Shadow\Mutation\Upsert\UpsertOperator;
 use ZtdQuery\Shadow\Mutation\UpsertColumnSource;
 use ZtdQuery\Shadow\Mutation\UpsertExpression;
 use ZtdQuery\Shadow\Mutation\UpsertExpressionKind;
@@ -33,6 +34,7 @@ use ZtdQuery\Shadow\ShadowStore;
 #[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertComparison::class)]
 #[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertNumber::class)]
 #[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertTruth::class)]
+#[UsesClass(UpsertOperator::class)]
 final class InsertMutationTest extends TestCase
 {
     public function testTableNameApplyAppendsRows(): void

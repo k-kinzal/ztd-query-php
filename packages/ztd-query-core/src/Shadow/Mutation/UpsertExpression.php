@@ -8,8 +8,7 @@ use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Shadow\Mutation\Upsert\UpsertColumn;
-use ZtdQuery\Shadow\Mutation\Upsert\UpsertComparison;
-use ZtdQuery\Shadow\Mutation\Upsert\UpsertNumber;
+use ZtdQuery\Shadow\Mutation\Upsert\UpsertOperator;
 use ZtdQuery\Shadow\Mutation\Upsert\UpsertTruth;
 
 /**
@@ -32,10 +31,9 @@ final class UpsertExpression
      * @param UpsertColumnSource|null $columnSource Which row a column is read from
      * @param string|null $column Column a column node names
      * @param list<self> $operands Nodes this one is written over
-     * @param UpsertNumber $numbers Does the arithmetic
-     * @param UpsertComparison $comparisons Does the comparing
-     * @param UpsertTruth $truth Answers what counts as true
      * @param UpsertColumn $columns Reads a column off a row
+     * @param UpsertTruth $truth Answers what counts as true
+     * @param UpsertOperator $operators Says what an operator stands for
      */
     public function __construct(
         private readonly UpsertExpressionKind $kind,
@@ -43,10 +41,9 @@ final class UpsertExpression
         private readonly ?UpsertColumnSource $columnSource = null,
         private readonly ?string $column = null,
         private readonly array $operands = [],
-        private readonly UpsertNumber $numbers = new UpsertNumber(),
-        private readonly UpsertComparison $comparisons = new UpsertComparison(),
-        private readonly UpsertTruth $truth = new UpsertTruth(),
         private readonly UpsertColumn $columns = new UpsertColumn(),
+        private readonly UpsertTruth $truth = new UpsertTruth(),
+        private readonly UpsertOperator $operators = new UpsertOperator(),
     ) {
     }
 
@@ -143,74 +140,21 @@ final class UpsertExpression
      */
     public function evaluate(array $existingRow, array $incomingRow, string $tableName): int|float|string|bool|null
     {
-        return match ($this->kind) {
-            UpsertExpressionKind::Literal => $this->literal,
-            UpsertExpressionKind::Column => $this->columns->of(
+        if ($this->kind === UpsertExpressionKind::Literal) {
+            return $this->literal;
+        }
+        if ($this->kind === UpsertExpressionKind::Column) {
+            return $this->columns->of(
                 $this->columnSource === UpsertColumnSource::Incoming ? $incomingRow : $existingRow,
                 $this->column ?? '',
-            ),
-            UpsertExpressionKind::UnaryPlus => $this->numbers->positive(
-                $this->operand(0, $existingRow, $incomingRow, $tableName),
-            ),
-            UpsertExpressionKind::UnaryMinus => $this->numbers->negative(
-                $this->operand(0, $existingRow, $incomingRow, $tableName),
-            ),
-            UpsertExpressionKind::Not => $this->truth->not(
-                $this->operand(0, $existingRow, $incomingRow, $tableName),
-            ),
-            UpsertExpressionKind::Add => $this->numbers->add(
-                $this->operand(0, $existingRow, $incomingRow, $tableName),
-                $this->operand(1, $existingRow, $incomingRow, $tableName),
-            ),
-            UpsertExpressionKind::Subtract => $this->numbers->subtract(
-                $this->operand(0, $existingRow, $incomingRow, $tableName),
-                $this->operand(1, $existingRow, $incomingRow, $tableName),
-            ),
-            UpsertExpressionKind::Multiply => $this->numbers->multiply(
-                $this->operand(0, $existingRow, $incomingRow, $tableName),
-                $this->operand(1, $existingRow, $incomingRow, $tableName),
-            ),
-            UpsertExpressionKind::Divide => $this->numbers->divide(
-                $this->operand(0, $existingRow, $incomingRow, $tableName),
-                $this->operand(1, $existingRow, $incomingRow, $tableName),
-            ),
-            UpsertExpressionKind::Modulo => $this->numbers->modulo(
-                $this->operand(0, $existingRow, $incomingRow, $tableName),
-                $this->operand(1, $existingRow, $incomingRow, $tableName),
-            ),
-            UpsertExpressionKind::Equal => $this->comparisons->equal(
-                $this->operand(0, $existingRow, $incomingRow, $tableName),
-                $this->operand(1, $existingRow, $incomingRow, $tableName),
-            ),
-            UpsertExpressionKind::NotEqual => $this->comparisons->notEqual(
-                $this->operand(0, $existingRow, $incomingRow, $tableName),
-                $this->operand(1, $existingRow, $incomingRow, $tableName),
-            ),
-            UpsertExpressionKind::Less => $this->comparisons->less(
-                $this->operand(0, $existingRow, $incomingRow, $tableName),
-                $this->operand(1, $existingRow, $incomingRow, $tableName),
-            ),
-            UpsertExpressionKind::LessOrEqual => $this->comparisons->lessOrEqual(
-                $this->operand(0, $existingRow, $incomingRow, $tableName),
-                $this->operand(1, $existingRow, $incomingRow, $tableName),
-            ),
-            UpsertExpressionKind::Greater => $this->comparisons->greater(
-                $this->operand(0, $existingRow, $incomingRow, $tableName),
-                $this->operand(1, $existingRow, $incomingRow, $tableName),
-            ),
-            UpsertExpressionKind::GreaterOrEqual => $this->comparisons->greaterOrEqual(
-                $this->operand(0, $existingRow, $incomingRow, $tableName),
-                $this->operand(1, $existingRow, $incomingRow, $tableName),
-            ),
-            UpsertExpressionKind::And => $this->truth->and(
-                $this->truth->of($this->operand(0, $existingRow, $incomingRow, $tableName)),
-                $this->truth->of($this->operand(1, $existingRow, $incomingRow, $tableName)),
-            ),
-            UpsertExpressionKind::Or => $this->truth->or(
-                $this->truth->of($this->operand(0, $existingRow, $incomingRow, $tableName)),
-                $this->truth->of($this->operand(1, $existingRow, $incomingRow, $tableName)),
-            ),
-        };
+            );
+        }
+
+        return $this->operators->apply(
+            $this->kind,
+            $this->operand(0, $existingRow, $incomingRow, $tableName),
+            count($this->operands) > 1 ? $this->operand(1, $existingRow, $incomingRow, $tableName) : null,
+        );
     }
 
     /**
