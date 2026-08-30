@@ -22,7 +22,7 @@ use ZtdQuery\Platform\MySql\Parse\MySqlUpsertAssignmentExtractor;
 use ZtdQuery\Platform\MySql\Parse\MySqlViewDefinitionParser;
 use ZtdQuery\Platform\MySql\Parse\UpdateAssignmentExtractor;
 use ZtdQuery\Platform\MySql\Parse\UpdateSourceExtractor;
-use ZtdQuery\Platform\MySql\Rewrite\MySqlLoadDataProjector;
+use ZtdQuery\Platform\MySql\Rewrite\LoadData\MySqlLoadDataProjector;
 use ZtdQuery\Platform\MySql\Rewrite\MySqlMutationResolver;
 use ZtdQuery\Platform\MySql\Rewrite\MySqlPartitionSelectionRewriter;
 use ZtdQuery\Platform\MySql\Rewrite\MySqlQueryGuard;
@@ -302,6 +302,59 @@ final class MySqlRewriterTest extends RewriterContractTest
         $this->createRewriter(new ShadowStore(), $registry)->rewrite(
             'WITH users AS (SELECT 1 AS id) SELECT * FROM Users JOIN missing_table ON TRUE',
         );
+    }
+
+    public function testRewriteDefinitionReadsNothingBackForADefinitionThatCarriesNoRows(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        self::assertInstanceOf(MySqlRewriter::class, $rewriter);
+        $sql = 'CREATE TABLE t (id INT)';
+        $statement = (new MySqlParser())->parse($sql)[0];
+
+        $plan = $rewriter->rewriteDefinition($statement, $sql);
+
+        self::assertSame([QueryKind::DDL_SIMULATED, $rewriter->emptyResultSelect()], [$plan->kind(), $plan->sql()]);
+    }
+
+    public function testRewriteDefinitionRefusesAnAlterAskingForWhatTheShadowCannotHold(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        self::assertInstanceOf(MySqlRewriter::class, $rewriter);
+        $sql = 'ALTER TABLE t ADD INDEX idx (id)';
+        $statement = (new MySqlParser())->parse($sql)[0];
+
+        $this->expectException(UnsupportedSqlException::class);
+
+        $rewriter->rewriteDefinition($statement, $sql);
+    }
+
+    public function testRewriteWriteReadsNothingBackForATruncate(): void
+    {
+        $store = new ShadowStore();
+        $store->set('t', [['id' => 1]]);
+        $rewriter = $this->createRewriter($store, new TableDefinitionRegistry());
+        self::assertInstanceOf(MySqlRewriter::class, $rewriter);
+        $sql = 'TRUNCATE TABLE t';
+        $statement = (new MySqlParser())->parse($sql)[0];
+
+        $plan = $rewriter->rewriteWrite($statement, $sql, QueryKind::WRITE_SIMULATED);
+
+        self::assertSame([QueryKind::WRITE_SIMULATED, $rewriter->emptyResultSelect()], [$plan->kind(), $plan->sql()]);
+    }
+
+    public function testRewriteWriteAnswersTheRowsAWriteWouldHaveWritten(): void
+    {
+        $store = new ShadowStore();
+        $store->set('t', [['id' => 1]]);
+        $rewriter = $this->createRewriter($store, new TableDefinitionRegistry());
+        self::assertInstanceOf(MySqlRewriter::class, $rewriter);
+        $sql = 'UPDATE t SET id = 2 WHERE id = 1';
+        $statement = (new MySqlParser())->parse($sql)[0];
+
+        $plan = $rewriter->rewriteWrite($statement, $sql, QueryKind::WRITE_SIMULATED);
+
+        self::assertSame(QueryKind::WRITE_SIMULATED, $plan->kind());
+        self::assertStringStartsWith('WITH `t` AS', $plan->sql());
     }
 
     public function createRewriter(ShadowStore $store, TableDefinitionRegistry $registry): SqlRewriter

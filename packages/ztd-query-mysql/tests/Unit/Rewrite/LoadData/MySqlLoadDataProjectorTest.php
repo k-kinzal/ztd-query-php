@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Rewrite;
+namespace Tests\Unit\Rewrite\LoadData;
 
 use PhpMyAdmin\SqlParser\Statements\LoadStatement;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -13,7 +13,7 @@ use Tests\Fixture\MySqlLoadStatements;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\Parse\MySqlParser;
 use ZtdQuery\Platform\MySql\Parse\MySqlSchemaParser;
-use ZtdQuery\Platform\MySql\Rewrite\MySqlLoadDataProjector;
+use ZtdQuery\Platform\MySql\Rewrite\LoadData\MySqlLoadDataProjector;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 
 #[CoversClass(MySqlLoadDataProjector::class)]
@@ -25,9 +25,9 @@ use ZtdQuery\Schema\TableDefinitionRegistry;
 #[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlValueRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Parse\MySqlForeignKeyDefinitionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlLexerProfile::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\MySqlLoadDataDelimiters::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\MySqlLoadDataInsert::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\MySqlLoadDataTargets::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\LoadData\MySqlLoadDataDelimiters::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\LoadData\MySqlLoadDataInsert::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\LoadData\MySqlLoadDataTargets::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlStatementOptions::class)]
 final class MySqlLoadDataProjectorTest extends TestCase
 {
