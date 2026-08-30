@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace Tests\Unit\Parse;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Postgres\Dialect\PgSqlLexerProfile;
 use ZtdQuery\Platform\Postgres\Parse\PgSqlWithPrefix;
 use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(PgSqlWithPrefix::class)]
+#[UsesClass(PgSqlLexerProfile::class)]
 final class PgSqlWithPrefixTest extends TestCase
 {
     public function testParsesRecursiveMaterializationAndNestedCteBodies(): void
