@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlFixture\Plan;
 
+use SqlFixture\Plan\Syntax\PlanPrinter;
+
 /**
  * Refuses the plans that could be written but could never be generated.
  *

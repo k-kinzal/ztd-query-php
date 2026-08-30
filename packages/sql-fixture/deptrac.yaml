@@ -1,0 +1,101 @@
+# NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
+#
+# What this package is, as layers.
+#
+# A schema is what a table looks like and a plan is what a caller asked for;
+# both are data, and neither knows how a row is made. A plan is also read and
+# written back as text, and the reader and the plan build each other, so the two
+# are one layer with the reading kept in a directory of its own. Hydrator turns a row into
+# an object and knows nothing else. TypeMapper decides what a column is given,
+# Platform is one database's answer to schema reading and type mapping, and
+# Fixture is the walk that turns a plan and a schema into rows. Provider is what
+# a caller constructs, and it is the only layer allowed to assemble the rest.
+# Contract holds the refusals the published surface names, so any layer may
+# throw one; a refusal may name the schema it is about. Deprecated holds the shims kept for the old namespaces: they may
+# call the code that replaced them, and nothing may call them.
+deptrac:
+  paths:
+    - ./src
+  layers:
+    - name: Provider
+      collectors:
+        - type: bool
+          must:
+            - type: directory
+              value: src/[^/]+\.php
+          must_not:
+            - type: classLike
+              value: ^SqlFixture\\InvalidOverrideException$
+    - name: Contract
+      collectors:
+        - type: classLike
+          value: ^SqlFixture\\InvalidOverrideException$
+    - name: Deprecated
+      collectors:
+        - type: classLike
+          value: ^SqlFixture\\(Schema\\MySqlSchemaParser|TypeMapper\\MySqlTypeMapper)$
+    - name: Fixture
+      collectors:
+        - type: directory
+          value: src/Fixture/.*
+    - name: Plan
+      collectors:
+        - type: directory
+          value: src/Plan/.*
+    - name: Platform
+      collectors:
+        - type: directory
+          value: src/Platform/.*
+    - name: Schema
+      collectors:
+        - type: bool
+          must:
+            - type: directory
+              value: src/Schema/.*
+          must_not:
+            - type: classLike
+              value: ^SqlFixture\\Schema\\MySqlSchemaParser$
+    - name: TypeMapper
+      collectors:
+        - type: bool
+          must:
+            - type: directory
+              value: src/TypeMapper/.*
+          must_not:
+            - type: classLike
+              value: ^SqlFixture\\TypeMapper\\MySqlTypeMapper$
+    - name: Hydrator
+      collectors:
+        - type: directory
+          value: src/Hydrator/.*
+  ruleset:
+    Provider:
+      - Fixture
+      - Plan
+      - Platform
+      - Schema
+      - TypeMapper
+      - Hydrator
+      - Contract
+    Deprecated:
+      - Platform
+      - Schema
+      - TypeMapper
+    Fixture:
+      - Plan
+      - Schema
+      - TypeMapper
+      - Hydrator
+      - Contract
+    Plan:
+      - Schema
+      - TypeMapper
+    Platform:
+      - Schema
+      - TypeMapper
+    TypeMapper:
+      - Schema
+    Schema: ~
+    Hydrator: ~
+    Contract:
+      - Schema

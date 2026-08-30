@@ -1,0 +1,89 @@
+# NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
+#
+# What this package is, as layers.
+#
+# A grammar is data (Model). Reading one out of an upstream file (Source),
+# walking one to produce a sentence (Walk), and the catalogue of lexemes a
+# sentence is finally written with (Lexical) are three things done to that data,
+# so each may name it and none may name each other's callers. A dialect is one
+# SQL language expressed in those terms, and no dialect is any other dialect's
+# business. Provider is what a caller registers with Faker; Build is what the
+# bin/build-* entry points run to compile a profile from an upstream source, and
+# it is the only layer allowed to know all three dialects at once.
+deptrac:
+  paths:
+    - ./src
+  layers:
+    - name: Provider
+      collectors:
+        - type: directory
+          value: src/[^/]*\.php
+    - name: Build
+      collectors:
+        - type: directory
+          value: src/Build/.*
+    - name: MySql
+      collectors:
+        - type: directory
+          value: src/MySql/.*
+    - name: PostgreSql
+      collectors:
+        - type: directory
+          value: src/PostgreSql/.*
+    - name: Sqlite
+      collectors:
+        - type: directory
+          value: src/Sqlite/.*
+    - name: Source
+      collectors:
+        - type: directory
+          value: src/Grammar/Source/.*
+    - name: Lexical
+      collectors:
+        - type: directory
+          value: src/Grammar/Lexical/.*
+    - name: Walk
+      collectors:
+        - type: directory
+          value: src/Grammar/Walk/.*
+    - name: Model
+      collectors:
+        - type: directory
+          value: src/Grammar/Model/.*
+  ruleset:
+    Provider:
+      - MySql
+      - PostgreSql
+      - Sqlite
+      - Walk
+    Build:
+      - MySql
+      - PostgreSql
+      - Sqlite
+      - Lexical
+      - Source
+      - Model
+    MySql:
+      - Source
+      - Lexical
+      - Walk
+      - Model
+    PostgreSql:
+      - Source
+      - Lexical
+      - Walk
+      - Model
+    Sqlite:
+      - Source
+      - Lexical
+      - Walk
+      - Model
+    Source:
+      - Model
+    Lexical:
+      - Source
+      - Walk
+      - Model
+    Walk:
+      - Model
+    Model: ~

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlFaker\PostgreSql;
 
+use SqlFaker\PostgreSql\Lexical\LexicalGrammar;
+
 /**
  * Applies what PostgreSQL's parser enforces outside its grammar.
  *
@@ -37,9 +39,28 @@ final class ParserSemantics
     public function applied(array $terminals): array
     {
         $terminals = $this->truncateQualifiedNames($terminals);
+        $terminals = $this->withStorageParameterValues($terminals);
+        $terminals = $this->withOperatorArgument($terminals);
 
-        foreach ($terminals as $index => $terminal) {
-            if ($terminal !== 'SET' || ($terminals[$index + 1] ?? null) !== '(') {
+        return $this->lexicalGrammar->normalizeLookahead($terminals);
+    }
+
+    /**
+     * Gives every storage parameter the value the action insists it carries.
+     *
+     * The grammar derives `SET (name)`, but the action reads a parameter list
+     * as name and value pairs, so a bare name is given one. Writing a value in
+     * moves everything after it along, so the statement is read by position
+     * rather than over a copy of what it held to begin with.
+     *
+     * @param list<string> $terminals Terminals a derivation produced
+     *
+     * @return list<string> The terminals, with a value written after every bare parameter name
+     */
+    public function withStorageParameterValues(array $terminals): array
+    {
+        for ($index = 0; $index < count($terminals); $index++) {
+            if ($terminals[$index] !== 'SET' || ($terminals[$index + 1] ?? null) !== '(') {
                 continue;
             }
             $end = $this->matchingParen($terminals, $index + 1);
@@ -65,6 +86,21 @@ final class ParserSemantics
             }
         }
 
+        return $terminals;
+    }
+
+    /**
+     * Gives an OPERATOR the second argument its action reads.
+     *
+     * The grammar derives `OPERATOR (op)` with one argument; the action reads
+     * the argument list as a pair, so a missing one is written as NONE.
+     *
+     * @param list<string> $terminals Terminals a derivation produced
+     *
+     * @return list<string> The terminals, with both arguments written out
+     */
+    public function withOperatorArgument(array $terminals): array
+    {
         foreach ($terminals as $index => $terminal) {
             if ($terminal !== 'OPERATOR' || ($terminals[$index + 1] ?? null) === '(') {
                 continue;
@@ -80,7 +116,7 @@ final class ParserSemantics
             }
         }
 
-        return $this->lexicalGrammar->normalizeLookahead($terminals);
+        return $terminals;
     }
 
     /**
