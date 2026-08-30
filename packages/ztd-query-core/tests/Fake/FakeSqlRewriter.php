@@ -11,12 +11,12 @@ use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
-use ZtdQuery\Shadow\Mutation\CreateTableMutation;
-use ZtdQuery\Shadow\Mutation\DeleteMutation;
-use ZtdQuery\Shadow\Mutation\DropTableMutation;
-use ZtdQuery\Shadow\Mutation\InsertMutation;
-use ZtdQuery\Shadow\Mutation\TruncateMutation;
-use ZtdQuery\Shadow\Mutation\UpdateMutation;
+use ZtdQuery\Shadow\Mutation\Row\DeleteMutation;
+use ZtdQuery\Shadow\Mutation\Row\InsertMutation;
+use ZtdQuery\Shadow\Mutation\Row\UpdateMutation;
+use ZtdQuery\Shadow\Mutation\Table\CreateTableMutation;
+use ZtdQuery\Shadow\Mutation\Table\DropTableMutation;
+use ZtdQuery\Shadow\Mutation\Table\TruncateMutation;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Sql\TransactionStatement;
 

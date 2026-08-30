@@ -6,10 +6,11 @@ namespace Tests\Contract;
 
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Schema\TableDefinition;
-use ZtdQuery\Shadow\Mutation\DeleteMutation;
-use ZtdQuery\Shadow\Mutation\InsertMutation;
-use ZtdQuery\Shadow\Mutation\TruncateMutation;
-use ZtdQuery\Shadow\Mutation\UpdateMutation;
+use ZtdQuery\Shadow\Mutation\Row\DeleteMutation;
+use ZtdQuery\Shadow\Mutation\Row\InsertMutation;
+use ZtdQuery\Shadow\Mutation\Row\UpdateMutation;
+use ZtdQuery\Shadow\Mutation\ShadowMutation;
+use ZtdQuery\Shadow\Mutation\Table\TruncateMutation;
 use ZtdQuery\Shadow\ShadowStore;
 
 /**

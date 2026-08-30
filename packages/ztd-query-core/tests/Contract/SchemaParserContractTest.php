@@ -6,6 +6,8 @@ namespace Tests\Contract;
 
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\SchemaParser;
+use ZtdQuery\Schema\ColumnDeclaration;
+use ZtdQuery\Schema\TableDefinition;
 
 /**
  * Abstract contract test for SchemaParser implementations.
