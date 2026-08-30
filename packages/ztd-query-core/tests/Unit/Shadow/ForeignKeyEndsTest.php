@@ -7,7 +7,7 @@ namespace Tests\Unit\Shadow;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use ZtdQuery\Schema\ForeignKeyDefinition;
+use ZtdQuery\Schema\Key\ForeignKeyDefinition;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ForeignKeyEnds;

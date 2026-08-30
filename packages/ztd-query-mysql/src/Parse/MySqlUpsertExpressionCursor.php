@@ -95,6 +95,68 @@ final class MySqlUpsertExpressionCursor
     }
 
     /**
+     * Answers a cursor over what a bracketed group holds, and reads past it.
+     *
+     * A group is read from the tokens between its brackets, which is strictly
+     * fewer tokens than the cursor holds. Reading a group therefore always
+     * shrinks what is left to read, and a reader that descends into one cannot
+     * end up going round on the same token.
+     *
+     * @return self A cursor over what the group holds
+     *
+     * @throws UnsupportedSqlException When the cursor is not on a bracket, or the group never closes
+     */
+    public function insideBrackets(): self
+    {
+        if (!$this->isSymbol(['('])) {
+            throw $this->unsupported();
+        }
+
+        $depth = 0;
+        $close = null;
+        for ($index = $this->index; $index < count($this->tokens); $index++) {
+            $text = $this->tokens[$index]->text;
+            if ($text === '(') {
+                $depth++;
+            } elseif ($text === ')') {
+                $depth--;
+                if ($depth === 0) {
+                    $close = $index;
+                    break;
+                }
+            }
+        }
+        if ($close === null) {
+            throw $this->unsupported();
+        }
+
+        $inside = new self(
+            $this->sql,
+            $this->tableName,
+            $this->incomingAlias,
+            array_slice($this->tokens, $this->index + 1, $close - $this->index - 1),
+            $this->literals,
+        );
+        $this->index = $close + 1;
+
+        return $inside;
+    }
+
+    /**
+     * Answers the tokens the cursor has not read yet.
+     *
+     * A reader that takes a run of something needs a bound on how many times
+     * it can go round, and the tokens that are left are exactly that bound: it
+     * cannot take more of anything than there is left to read.
+     *
+     * @return list<SqlToken> What has not been read, in order
+     */
+    public function remaining(): array
+    {
+        return array_slice($this->tokens, $this->index);
+    }
+
+    /**
      * Reports whether the whole expression has been read.
      *
      * @return bool True when nothing is left

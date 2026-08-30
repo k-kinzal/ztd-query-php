@@ -146,4 +146,55 @@ final class SqliteUpsertExpressionCursorTest extends TestCase
             SqliteUpsertExpressionCursor::over('qty + 1', 'items')->unsupported()->getSql(),
         );
     }
+
+    public function testRemainingAnswersEverythingNotReadYet(): void
+    {
+        $cursor = SqliteUpsertExpressionCursor::over('a + b', 'target');
+
+        self::assertCount(3, $cursor->remaining());
+
+        $cursor->advance();
+
+        self::assertCount(2, $cursor->remaining());
+    }
+
+    public function testRemainingAnswersNothingOnceEverythingIsRead(): void
+    {
+        $cursor = SqliteUpsertExpressionCursor::over('a', 'target');
+        $cursor->advance();
+
+        self::assertSame([], $cursor->remaining());
+    }
+
+    public function testInsideBracketsAnswersWhatTheGroupHoldsAndReadsPastIt(): void
+    {
+        $cursor = SqliteUpsertExpressionCursor::over('(a + b) + c', 'target');
+
+        $inside = $cursor->insideBrackets();
+
+        self::assertCount(3, $inside->remaining());
+        self::assertCount(2, $cursor->remaining());
+    }
+
+    public function testInsideBracketsCountsTheGroupsOfItsOwn(): void
+    {
+        $cursor = SqliteUpsertExpressionCursor::over('((a))', 'target');
+
+        self::assertCount(3, $cursor->insideBrackets()->remaining());
+        self::assertTrue($cursor->atEnd());
+    }
+
+    public function testInsideBracketsRefusesWhereNoGroupBegins(): void
+    {
+        $this->expectException(UnsupportedSqlException::class);
+
+        SqliteUpsertExpressionCursor::over('a', 'target')->insideBrackets();
+    }
+
+    public function testInsideBracketsRefusesAGroupThatNeverCloses(): void
+    {
+        $this->expectException(UnsupportedSqlException::class);
+
+        SqliteUpsertExpressionCursor::over('(a', 'target')->insideBrackets();
+    }
 }

@@ -12,8 +12,8 @@ use ZtdQuery\Rewrite\AffectedRowsMode;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\ReturningProjection;
 use ZtdQuery\Rewrite\RewritePlan;
-use ZtdQuery\Schema\CandidateKeySet;
-use ZtdQuery\Shadow\Mutation\InsertMutation;
+use ZtdQuery\Schema\Key\CandidateKeySet;
+use ZtdQuery\Shadow\Mutation\Row\InsertMutation;
 
 #[UsesClass(InsertMutation::class)]
 #[UsesClass(CandidateKeySet::class)]
