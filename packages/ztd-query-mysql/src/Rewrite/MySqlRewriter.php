@@ -15,7 +15,6 @@ use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\Dialect\MySqlStatementOptions;
 use ZtdQuery\Platform\MySql\Parse\MySqlParser;
-use ZtdQuery\Platform\MySql\Parse\MySqlSelectRelationParser;
 use ZtdQuery\Platform\MySql\Parse\MySqlTransactionStatementParser;
 use ZtdQuery\Platform\MySql\Rewrite\LoadData\MySqlLoadDataProjector;
 use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
@@ -60,6 +59,7 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
     private ViewDefinitionSet $views;
     private MySqlShadowTables $shadowTables;
     private MySqlAlterSupport $alters;
+    private MySqlKnownTables $known;
 
     /**
      * Binds the instance to what it will work from.
@@ -92,6 +92,7 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
         $this->views = $views ?? new ViewDefinitionSet();
         $this->shadowTables = new MySqlShadowTables($shadowStore, $registry);
         $this->alters = new MySqlAlterSupport($this->options);
+        $this->known = new MySqlKnownTables($shadowStore, $registry, $this->views, ctes: $this->cteComposer);
     }
 
     /**
@@ -339,28 +340,13 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
     /**
      * Answers the first table a statement reads that the shadow does not know.
      *
-     * A name the statement declares for itself is not a table, so it is not
-     * one the shadow is missing.
-     *
      * @param string $sql The statement, as written
      *
      * @return string|null The table, or null where the shadow knows every one of them
      */
     public function findUnknownTable(string $sql): ?string
     {
-        $tableNames = (new MySqlSelectRelationParser())->tableNames($sql);
-        $declaredCtes = array_fill_keys($this->cteComposer->declaredCteNames($sql), true);
-
-        foreach ($tableNames as $tableName) {
-            if (isset($declaredCtes[strtolower($tableName)])) {
-                continue;
-            }
-            if (!$this->tableExists($tableName)) {
-                return $tableName;
-            }
-        }
-
-        return null;
+        return $this->known->firstUnknownIn($sql);
     }
 
     /**
@@ -372,19 +358,7 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
      */
     public function tableExists(string $tableName): bool
     {
-        if ($this->shadowStore->has($tableName)) {
-            return true;
-        }
-
-        if ($this->registry->has($tableName)) {
-            return true;
-        }
-
-        if ($this->views->has($tableName)) {
-            return true;
-        }
-
-        return false;
+        return $this->known->knows($tableName);
     }
 
     /**
@@ -397,24 +371,8 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
      */
     public function hasSchemaContext(): bool
     {
-        if ($this->shadowStore->getAll() !== []) {
-            return true;
-        }
-
-        if ($this->registry->hasAnyTables()) {
-            return true;
-        }
-
-        if ($this->views->hasAnyViews()) {
-            return true;
-        }
-
-        return false;
+        return $this->known->hasAnything();
     }
-
-    /**
-     * Check for unsupported ALTER TABLE operations.
-     */
 
     /**
      * Reports whether an ALTER asks for something ZTD does not model.
