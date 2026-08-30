@@ -26,7 +26,7 @@ use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Session;
 use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
-use ZtdQuery\Shadow\Mutation\UpdateMutation;
+use ZtdQuery\Shadow\Mutation\Row\UpdateMutation;
 use ZtdQuery\Shadow\ShadowStore;
 
 #[CoversClass(ZtdPdoStatement::class)]

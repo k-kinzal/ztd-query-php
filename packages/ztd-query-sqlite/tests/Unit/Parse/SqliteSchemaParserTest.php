@@ -15,7 +15,7 @@ use ZtdQuery\Platform\Sqlite\Dialect\SqliteLexicalMasker;
 use ZtdQuery\Platform\Sqlite\Parse\SqliteParser;
 use ZtdQuery\Platform\Sqlite\Parse\SqliteSchemaParser;
 use ZtdQuery\Schema\ColumnTypeFamily;
-use ZtdQuery\Schema\IdentityGenerationStrategy;
+use ZtdQuery\Schema\Key\IdentityGenerationStrategy;
 
 #[CoversClass(SqliteSchemaParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\Dialect\SqliteColumnTypeMapper::class)]

@@ -12,7 +12,7 @@ use ZtdQuery\Platform\MySql\Parse\MySqlPartitioningParser;
 use ZtdQuery\Platform\MySql\Parse\MySqlSchemaParser;
 use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\ColumnTypeFamily;
-use ZtdQuery\Schema\IdentityGenerationStrategy;
+use ZtdQuery\Schema\Key\IdentityGenerationStrategy;
 
 #[CoversClass(MySqlSchemaParser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlColumnTypeMapper::class)]

@@ -15,9 +15,9 @@ use ZtdQuery\Platform\Postgres\Rewrite\PgSqlNativeUpsertProjector;
 use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Rewrite\ShadowIdentityAllocator;
 use ZtdQuery\Rewrite\SqlTransformer;
-use ZtdQuery\Schema\CandidateKeySet;
 use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
+use ZtdQuery\Schema\Key\CandidateKeySet;
 use ZtdQuery\Sql\SqlTokenStream;
 
 /**

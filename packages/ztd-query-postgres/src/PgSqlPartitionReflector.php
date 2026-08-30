@@ -6,8 +6,8 @@ namespace ZtdQuery\Platform\Postgres;
 
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Platform\Postgres\Parse\PgSqlPartitionParser;
-use ZtdQuery\Schema\TablePartitionKey;
-use ZtdQuery\Schema\TablePartitionRelation;
+use ZtdQuery\Schema\Partition\TablePartitionKey;
+use ZtdQuery\Schema\Partition\TablePartitionRelation;
 
 /**
  * The pg sql partition reflector.
