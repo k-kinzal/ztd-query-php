@@ -13,11 +13,13 @@ use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
 use ZtdQuery\Shadow\Mutation\Row\DeleteMutation;
 use ZtdQuery\Shadow\Mutation\Row\UpdateMutation;
 use ZtdQuery\Shadow\Row\RowMatch;
+use ZtdQuery\Shadow\Row\RowPairing;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\TableTransitions;
 
 #[CoversClass(TableTransitions::class)]
 #[UsesClass(RowMatch::class)]
+#[UsesClass(RowPairing::class)]
 #[UsesClass(MutationRowIdentity::class)]
 #[UsesClass(ShadowStore::class)]
 #[UsesClass(TableDefinition::class)]
@@ -139,5 +141,92 @@ final class TableTransitionsTest extends TestCase
 
         self::assertSame([], $transitions[0]->deleted);
         self::assertCount(1, $transitions[0]->updated);
+    }
+
+    public function testPairIdenticalPairsOffOnlyRowsThatAreWhatTheyWere(): void
+    {
+        $transitions = new TableTransitions(new TableDefinitionRegistry());
+        $pairing = new RowPairing();
+
+        $transitions->pairIdentical($pairing, [['id' => 1], ['id' => 2]], [['id' => 2], ['id' => 3]]);
+
+        self::assertSame([[1], [0], []], [
+            $pairing->beforePositions(),
+            $pairing->afterPositions(),
+            $pairing->changes(),
+        ]);
+    }
+
+    public function testPairByIdentityTakesThePairsAnUpdateToldUsAbout(): void
+    {
+        $transitions = new TableTransitions(new TableDefinitionRegistry());
+        $pairing = new RowPairing();
+        $identity = new MutationRowIdentity();
+
+        $transitions->pairByIdentity(
+            $pairing,
+            [['id' => 1]],
+            [['id' => 2]],
+            ['id'],
+            [['id' => 2, $identity->column('id') => 1]],
+        );
+
+        self::assertSame([[0], [0], 1], [
+            $pairing->beforePositions(),
+            $pairing->afterPositions(),
+            count($pairing->changes()),
+        ]);
+    }
+
+    public function testPairByIdentityLeavesARowNoResultRowSpeaksFor(): void
+    {
+        $transitions = new TableTransitions(new TableDefinitionRegistry());
+        $pairing = new RowPairing();
+        $identity = new MutationRowIdentity();
+
+        $transitions->pairByIdentity(
+            $pairing,
+            [['id' => 1]],
+            [['id' => 2]],
+            ['id'],
+            [['id' => 9, $identity->column('id') => 8]],
+        );
+
+        self::assertSame([], $pairing->beforePositions());
+    }
+
+    public function testPairByKeyPairsOffWhateverTheKeyStillMatches(): void
+    {
+        $transitions = new TableTransitions(new TableDefinitionRegistry());
+        $pairing = new RowPairing();
+
+        $transitions->pairByKey($pairing, [['id' => 1, 'a' => 1]], [['id' => 1, 'a' => 2]], ['id']);
+
+        self::assertSame([[0], [0], 1], [
+            $pairing->beforePositions(),
+            $pairing->afterPositions(),
+            count($pairing->changes()),
+        ]);
+    }
+
+    public function testPairByKeyLeavesARowAlreadyPairedOff(): void
+    {
+        $transitions = new TableTransitions(new TableDefinitionRegistry());
+        $pairing = new RowPairing();
+        $pairing->pair(0, 0, ['id' => 1], ['id' => 1]);
+
+        $transitions->pairByKey($pairing, [['id' => 1]], [['id' => 1]], ['id']);
+
+        self::assertSame([0], $pairing->beforePositions());
+    }
+
+    public function testPairByKeyLeavesARowTheKeyNoLongerMatches(): void
+    {
+        $transitions = new TableTransitions(new TableDefinitionRegistry());
+        $pairing = new RowPairing();
+
+        $transitions->pairByKey($pairing, [['id' => 1]], [['id' => 2]], ['id']);
+
+        self::assertSame([], $pairing->beforePositions());
     }
 }

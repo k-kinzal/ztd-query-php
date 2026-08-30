@@ -11,11 +11,13 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Schema\Key\CandidateKeyConflict;
 use ZtdQuery\Schema\Key\CandidateKeySet;
 use ZtdQuery\Schema\TableDefinition;
+use ZtdQuery\Shadow\Mutation\Upsert\UpsertOperator;
 use ZtdQuery\Shadow\Mutation\UpsertColumnSource;
 use ZtdQuery\Shadow\Mutation\UpsertExpression;
 use ZtdQuery\Shadow\Mutation\UpsertExpressionKind;
 use ZtdQuery\Shadow\Mutation\UpsertMutation;
 use ZtdQuery\Shadow\Mutation\UpsertMutationRow;
+use ZtdQuery\Shadow\Mutation\UpsertUpdate;
 use ZtdQuery\Shadow\ShadowStore;
 
 #[UsesClass(ShadowStore::class)]
@@ -32,6 +34,8 @@ use ZtdQuery\Shadow\ShadowStore;
 #[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertComparison::class)]
 #[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertNumber::class)]
 #[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertTruth::class)]
+#[UsesClass(UpsertUpdate::class)]
+#[UsesClass(UpsertOperator::class)]
 final class UpsertMutationTest extends TestCase
 {
     public function testApplyInsertsNewRowWhenNoDuplicate(): void

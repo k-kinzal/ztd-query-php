@@ -18,10 +18,12 @@ use ZtdQuery\Shadow\Mutation\Row\InsertMutation;
 use ZtdQuery\Shadow\Mutation\Row\ReplaceMutation;
 use ZtdQuery\Shadow\Mutation\Row\UpdateMutation;
 use ZtdQuery\Shadow\Mutation\Table\SynchronizeMutation;
+use ZtdQuery\Shadow\Mutation\Upsert\UpsertOperator;
 use ZtdQuery\Shadow\Mutation\UpsertColumnSource;
 use ZtdQuery\Shadow\Mutation\UpsertExpression;
 use ZtdQuery\Shadow\Mutation\UpsertExpressionKind;
 use ZtdQuery\Shadow\Mutation\UpsertMutation;
+use ZtdQuery\Shadow\Mutation\UpsertUpdate;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenStream;
@@ -50,6 +52,8 @@ use ZtdQuery\Sql\SqlTokenStream;
 #[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertTruth::class)]
 #[UsesClass(\ZtdQuery\Shadow\Row\RowMatch::class)]
 #[UsesClass(\ZtdQuery\Shadow\Row\RowMultiset::class)]
+#[UsesClass(UpsertUpdate::class)]
+#[UsesClass(UpsertOperator::class)]
 final class MutationImpactTest extends TestCase
 {
     public function testInsertImpactContainsOnlyRowsActuallyAdded(): void

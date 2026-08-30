@@ -68,81 +68,101 @@ final class ForeignKeyCascade
             return null;
         }
 
+        $constraint = new FollowedConstraint($childTable, $constraintName, $foreignKey, $sql);
         $referencedColumns = $this->ends->referencedColumns($foreignKey);
-        $rows = $store->get($childTable);
-        $updatedChildren = [];
-
+        $children = new CascadedChildren($store->get($childTable));
         foreach ($parent->updated as $parentChange) {
-            $oldValues = $this->rows->valuesOf($parentChange->before, $referencedColumns);
-            $newValues = $this->rows->valuesOf($parentChange->after, $referencedColumns);
-            if ($oldValues === null || $newValues === null) {
-                continue;
-            }
-            if ($this->parents->exists($store, $foreignKey->referencedTable, $referencedColumns, $oldValues)) {
-                continue;
-            }
-
-            foreach ($rows as $index => $row) {
-                if (!$this->rows->carries($row, $foreignKey->columns, $oldValues)) {
-                    continue;
-                }
-                $updated = $this->applyAction(
-                    $row,
-                    $foreignKey->columns,
-                    $newValues,
-                    $foreignKey->onUpdate,
-                    $childTable,
-                    $constraintName,
-                    $foreignKey,
-                    $sql,
-                );
-                $rows[$index] = $updated;
-                $updatedChildren[] = new RowChange($row, $updated);
-            }
+            $this->carryUpdate($children, $store, $constraint, $referencedColumns, $parentChange);
         }
-
-        $deletedChildren = [];
         foreach ($parent->deleted as $parentRow) {
-            $oldValues = $this->rows->valuesOf($parentRow, $referencedColumns);
-            if ($oldValues === null
-                || $this->parents->exists($store, $foreignKey->referencedTable, $referencedColumns, $oldValues)
-            ) {
-                continue;
-            }
-
-            $remaining = [];
-            foreach ($rows as $row) {
-                if (!$this->rows->carries($row, $foreignKey->columns, $oldValues)) {
-                    $remaining[] = $row;
-                    continue;
-                }
-                if ($foreignKey->onDelete === ReferentialAction::Cascade) {
-                    $deletedChildren[] = $row;
-                    continue;
-                }
-                $updated = $this->applyAction(
-                    $row,
-                    $foreignKey->columns,
-                    [],
-                    $foreignKey->onDelete,
-                    $childTable,
-                    $constraintName,
-                    $foreignKey,
-                    $sql,
-                );
-                $remaining[] = $updated;
-                $updatedChildren[] = new RowChange($row, $updated);
-            }
-            $rows = $remaining;
+            $this->carryDelete($children, $store, $constraint, $referencedColumns, $parentRow);
         }
-
-        if ($deletedChildren === [] && $updatedChildren === []) {
+        if ($children->areUnchanged()) {
             return null;
         }
 
-        $store->set($childTable, $rows);
+        $store->set($childTable, $children->rows());
 
-        return new TableTransition($childTable, $deletedChildren, $updatedChildren);
+        return new TableTransition($childTable, $children->deleted(), $children->updated());
+    }
+
+    /**
+     * Carries a parent row that moved to the children that were holding it.
+     *
+     * A key the parent table still holds up somewhere else has not moved as
+     * far as the child is concerned, so nothing is carried for it.
+     *
+     * @param CascadedChildren $children Child rows as the cascade has left them
+     * @param ShadowStore $store Shadow the parent rows live in
+     * @param FollowedConstraint $constraint Constraint being followed
+     * @param list<string> $referencedColumns Parent columns the key points at
+     * @param RowChange $parentChange What happened to the one parent row
+     *
+     * @throws ForeignKeyViolationException When the action forbids the statement
+     */
+    public function carryUpdate(
+        CascadedChildren $children,
+        ShadowStore $store,
+        FollowedConstraint $constraint,
+        array $referencedColumns,
+        RowChange $parentChange,
+    ): void {
+        $foreignKey = $constraint->foreignKey;
+        $oldValues = $this->rows->valuesOf($parentChange->before, $referencedColumns);
+        $newValues = $this->rows->valuesOf($parentChange->after, $referencedColumns);
+        if ($oldValues === null
+            || $newValues === null
+            || $this->parents->exists($store, $foreignKey->referencedTable, $referencedColumns, $oldValues)
+        ) {
+            return;
+        }
+
+        foreach ($children->rows() as $index => $row) {
+            if (!$this->rows->carries($row, $foreignKey->columns, $oldValues)) {
+                continue;
+            }
+            $children->replace($index, $this->applyAction($row, $newValues, $foreignKey->onUpdate, $constraint));
+        }
+    }
+
+    /**
+     * Carries a parent row that went to the children that were holding it.
+     *
+     * @param CascadedChildren $children Child rows as the cascade has left them
+     * @param ShadowStore $store Shadow the parent rows live in
+     * @param FollowedConstraint $constraint Constraint being followed
+     * @param list<string> $referencedColumns Parent columns the key points at
+     * @param Row $parentRow The parent row that went
+     *
+     * @throws ForeignKeyViolationException When the action forbids the statement
+     */
+    public function carryDelete(
+        CascadedChildren $children,
+        ShadowStore $store,
+        FollowedConstraint $constraint,
+        array $referencedColumns,
+        array $parentRow,
+    ): void {
+        $foreignKey = $constraint->foreignKey;
+        $oldValues = $this->rows->valuesOf($parentRow, $referencedColumns);
+        if ($oldValues === null
+            || $this->parents->exists($store, $foreignKey->referencedTable, $referencedColumns, $oldValues)
+        ) {
+            return;
+        }
+
+        $gone = [];
+        foreach ($children->rows() as $index => $row) {
+            if (!$this->rows->carries($row, $foreignKey->columns, $oldValues)) {
+                continue;
+            }
+            if ($foreignKey->onDelete === ReferentialAction::Cascade) {
+                $gone[] = $index;
+                continue;
+            }
+            $children->replace($index, $this->applyAction($row, [], $foreignKey->onDelete, $constraint));
+        }
+        $children->remove($gone);
     }
 
     /**
@@ -153,13 +173,9 @@ final class ForeignKeyCascade
      * so the statement is refused rather than quietly rewritten.
      *
      * @param Row $row Child row to rewrite
-     * @param non-empty-list<string> $columns Child columns holding the key
      * @param list<RowValue> $values Values to carry over, empty when the parent went
      * @param ReferentialAction $action Action the constraint declares
-     * @param string $childTable Table holding the key, for the refusal
-     * @param string $constraintName Constraint being followed, for the refusal
-     * @param ForeignKeyDefinition $foreignKey Constraint being followed, for the refusal
-     * @param string $sql Statement being simulated, for the refusal
+     * @param FollowedConstraint $constraint Constraint being followed, for the refusal
      *
      * @return Row The child row as it should now be
      *
@@ -167,25 +183,21 @@ final class ForeignKeyCascade
      */
     public function applyAction(
         array $row,
-        array $columns,
         array $values,
         ReferentialAction $action,
-        string $childTable,
-        string $constraintName,
-        ForeignKeyDefinition $foreignKey,
-        string $sql,
+        FollowedConstraint $constraint,
     ): array {
         if ($action !== ReferentialAction::Cascade && $action !== ReferentialAction::SetNull) {
             throw ForeignKeyViolationException::of(
-                $sql,
-                $childTable,
-                $constraintName,
-                $foreignKey->referencedTable,
-                $this->ends->referencedColumns($foreignKey),
+                $constraint->sql,
+                $constraint->childTable,
+                $constraint->constraintName,
+                $constraint->foreignKey->referencedTable,
+                $this->ends->referencedColumns($constraint->foreignKey),
             );
         }
 
-        foreach ($columns as $index => $column) {
+        foreach ($constraint->foreignKey->columns as $index => $column) {
             $row[$column] = $action === ReferentialAction::SetNull ? null : ($values[$index] ?? null);
         }
 

@@ -13,6 +13,8 @@ use ZtdQuery\Schema\Key\ForeignKeyDefinition;
 use ZtdQuery\Schema\Key\ReferentialAction;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
+use ZtdQuery\Shadow\CascadedChildren;
+use ZtdQuery\Shadow\FollowedConstraint;
 use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
 use ZtdQuery\Shadow\Mutation\Row\DeleteMutation;
 use ZtdQuery\Shadow\Mutation\Row\InsertMutation;
@@ -22,6 +24,7 @@ use ZtdQuery\Shadow\Mutation\Table\CreateTableMutation;
 use ZtdQuery\Shadow\Mutation\Table\MultiTruncateMutation;
 use ZtdQuery\Shadow\Mutation\Table\SynchronizeMutation;
 use ZtdQuery\Shadow\ReferentialIntegrityEnforcer;
+use ZtdQuery\Shadow\Row\RowPairing;
 use ZtdQuery\Shadow\ShadowStore;
 
 #[CoversClass(ReferentialIntegrityEnforcer::class)]
@@ -49,6 +52,9 @@ use ZtdQuery\Shadow\ShadowStore;
 #[UsesClass(\ZtdQuery\Shadow\Row\RowMultiset::class)]
 #[UsesClass(\ZtdQuery\Shadow\Row\TableTransition::class)]
 #[UsesClass(\ZtdQuery\Shadow\TableTransitions::class)]
+#[UsesClass(CascadedChildren::class)]
+#[UsesClass(FollowedConstraint::class)]
+#[UsesClass(RowPairing::class)]
 final class ReferentialIntegrityEnforcerTest extends TestCase
 {
     public function testSchemaMutationSkipsRowIntegrityChecks(): void
