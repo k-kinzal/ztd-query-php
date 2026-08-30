@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Platform\Sqlite;
 
 use Faker\Factory;
+use Faker\Generator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -13,6 +14,7 @@ use SqlFixture\Platform\Sqlite\SqliteAffinity;
 use SqlFixture\Platform\Sqlite\SqliteColumnSample;
 use SqlFixture\Platform\Sqlite\SqliteTypeMapper;
 use SqlFixture\Schema\ColumnDefinition;
+use Tests\Fake\FixedTextProvider;
 use Tests\Fixture\SpyGenerator;
 
 #[CoversClass(SqliteTypeMapper::class)]
@@ -1683,17 +1685,14 @@ final class SqliteTypeMapperTest extends TestCase
     #[Test]
     public function generateTextWithLengthStartsFromBeginning(): void
     {
-        $faker = Factory::create();
-        $faker->seed(12345);
+        $faker = new Generator();
+        $faker->addProvider(new FixedTextProvider(str_repeat('abcdefghij', 40)));
         $mapper = new SqliteTypeMapper();
 
         $column = new ColumnDefinition('col', 'TEXT', length: 100, nullable: false);
         $value = $mapper->generate($faker, $column);
 
-        $faker->seed(12345);
-        $text = $faker->text(min(100, 200));
-        $expected = substr($text, 0, 100);
-        self::assertSame($expected, $value);
+        self::assertSame(substr(str_repeat('abcdefghij', 40), 0, 100), $value);
     }
 
     #[Test]
@@ -1772,52 +1771,39 @@ final class SqliteTypeMapperTest extends TestCase
     #[Test]
     public function generateCharSubstrStartsAtZero(): void
     {
-        $faker = Factory::create();
-        $faker->seed(42);
+        $faker = new Generator();
+        $faker->addProvider(new FixedTextProvider(str_repeat('abcdefghij', 40)));
         $mapper = new SqliteTypeMapper();
 
         $column = new ColumnDefinition('col', 'CHAR', length: 5, nullable: false);
         $value = $mapper->generate($faker, $column);
-        self::assertIsString($value);
 
-        $faker->seed(42);
-        $pattern = str_repeat('?', 5);
-        $result = $faker->lexify($pattern);
-        $expected = substr($result, 0, 5);
-        self::assertSame($expected, $value);
+        self::assertSame('abcde', $value);
     }
 
     #[Test]
     public function generateTextWithLengthSubstrStartsAtZero(): void
     {
-        $faker = Factory::create();
-        $faker->seed(42);
+        $faker = new Generator();
+        $faker->addProvider(new FixedTextProvider(str_repeat('abcdefghij', 40)));
         $mapper = new SqliteTypeMapper();
 
         $column = new ColumnDefinition('col', 'TEXT', length: 20, nullable: false);
         $value = $mapper->generate($faker, $column);
-        self::assertIsString($value);
 
-        $faker->seed(42);
-        $text = $faker->text(min(20, 200));
-        $expected = substr($text, 0, 20);
-        self::assertSame($expected, $value);
+        self::assertSame(substr(str_repeat('abcdefghij', 40), 0, 20), $value);
     }
 
     #[Test]
     public function generateTinyTextStartsFromBeginning(): void
     {
-        $faker = Factory::create();
-        $faker->seed(42);
+        $faker = new Generator();
+        $faker->addProvider(new FixedTextProvider(str_repeat('abcdefghij', 40)));
         $mapper = new SqliteTypeMapper();
 
         $column = new ColumnDefinition('col', 'TINYTEXT', nullable: false);
         $value = $mapper->generate($faker, $column);
-        self::assertIsString($value);
 
-        $faker->seed(42);
-        $fullText = $faker->text(255);
-        $expected = substr($fullText, 0, 255);
-        self::assertSame($expected, $value);
+        self::assertSame(substr(str_repeat('abcdefghij', 40), 0, 255), $value);
     }
 }
