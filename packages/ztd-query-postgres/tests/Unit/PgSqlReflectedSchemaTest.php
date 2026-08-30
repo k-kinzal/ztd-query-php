@@ -7,6 +7,10 @@ namespace Tests\Unit;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Platform\Postgres\Dialect\PgSqlColumnTypeMapper;
+use ZtdQuery\Platform\Postgres\Dialect\PgSqlLexerProfile;
+use ZtdQuery\Platform\Postgres\Parse\PgSqlForeignKeyDefinitionParser;
+use ZtdQuery\Platform\Postgres\Parse\PgSqlPartitionParser;
 use ZtdQuery\Platform\Postgres\Parse\PgSqlSchemaParser;
 use ZtdQuery\Platform\Postgres\PgSqlReflectedSchema;
 use ZtdQuery\Schema\Key\PartialUniqueIndex;
@@ -16,6 +20,10 @@ use ZtdQuery\Schema\ViewDefinition;
 
 #[CoversClass(PgSqlReflectedSchema::class)]
 #[UsesClass(PgSqlSchemaParser::class)]
+#[UsesClass(PgSqlColumnTypeMapper::class)]
+#[UsesClass(PgSqlLexerProfile::class)]
+#[UsesClass(PgSqlForeignKeyDefinitionParser::class)]
+#[UsesClass(PgSqlPartitionParser::class)]
 final class PgSqlReflectedSchemaTest extends TestCase
 {
     public function testTablesReadsEachDeclarationIntoADefinition(): void
