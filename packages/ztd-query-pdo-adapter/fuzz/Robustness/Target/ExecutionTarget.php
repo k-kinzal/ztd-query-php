@@ -13,7 +13,7 @@ use PDOException;
 use SqlFaker\MySqlProvider;
 use SqlFaker\MySqlStatementProvider;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
-use ZtdQuery\Platform\MySql\Dialect\MySqlQueryGuard;
+use ZtdQuery\Platform\MySql\Rewrite\MySqlQueryGuard;
 use ZtdQuery\Platform\MySql\Rewrite\MySqlRewriter;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Shadow\ShadowStore;
