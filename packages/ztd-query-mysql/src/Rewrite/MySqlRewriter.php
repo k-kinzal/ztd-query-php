@@ -17,6 +17,7 @@ use ZtdQuery\Platform\MySql\Dialect\MySqlStatementOptions;
 use ZtdQuery\Platform\MySql\Parse\MySqlParser;
 use ZtdQuery\Platform\MySql\Parse\MySqlSelectRelationParser;
 use ZtdQuery\Platform\MySql\Parse\MySqlTransactionStatementParser;
+use ZtdQuery\Platform\MySql\Rewrite\LoadData\MySqlLoadDataProjector;
 use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
 use ZtdQuery\Rewrite\MultiRewritePlan;
 use ZtdQuery\Rewrite\QueryKind;
@@ -57,6 +58,8 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
     private MySqlParser $parser;
     private MySqlCteShadowComposer $cteComposer;
     private ViewDefinitionSet $views;
+    private MySqlShadowTables $shadowTables;
+    private MySqlAlterSupport $alters;
 
     /**
      * Binds the instance to what it will work from.
@@ -87,6 +90,8 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
         $this->parser = $parser;
         $this->cteComposer = new MySqlCteShadowComposer();
         $this->views = $views ?? new ViewDefinitionSet();
+        $this->shadowTables = new MySqlShadowTables($shadowStore, $registry);
+        $this->alters = new MySqlAlterSupport($this->options);
     }
 
     /**
@@ -178,43 +183,88 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
         if ($kind === null) {
             throw new UnsupportedSqlException($sql, 'Statement type not supported');
         }
-
         if ($statement instanceof LoadStatement) {
             return $this->rewrite((new MySqlLoadDataProjector($this->registry))->project($sql, $statement));
         }
-
-        $tableContext = $this->buildTableContext();
-
         if ($kind === QueryKind::READ) {
-            if ($this->hasSchemaContext()) {
-                $unknownTable = $this->findUnknownTable($sql);
-                if ($unknownTable !== null) {
-                    throw new UnknownSchemaException($sql, $unknownTable, 'table');
-                }
-            }
-
-            $transformedSql = $this->transformer->transform($sql, $tableContext);
-            return new RewritePlan($transformedSql, QueryKind::READ);
+            return $this->rewriteRead($sql);
         }
-
         if ($kind === QueryKind::DDL_SIMULATED) {
-            if ($statement instanceof AlterStatement) {
-                if ($this->hasUnsupportedAlterOperation($statement, $sql)) {
-                    throw new UnsupportedSqlException($sql, 'Unsupported ALTER TABLE operation');
-                }
-            }
-
-            $mutation = $this->mutationResolver->resolve($sql, $statement, $kind);
-
-            if ($statement instanceof CreateStatement && $statement->select !== null) {
-                $selectSql = $statement->select->build();
-                $transformedSelectSql = $this->transformer->transform($selectSql, $tableContext);
-                return new RewritePlan($transformedSelectSql, QueryKind::DDL_SIMULATED, $mutation);
-            }
-
-            return new RewritePlan($this->emptyResultSelect(), QueryKind::DDL_SIMULATED, $mutation);
+            return $this->rewriteDefinition($statement, $sql);
         }
 
+        return $this->rewriteWrite($statement, $sql, $kind);
+    }
+
+    /**
+     * Rewrites a statement that only reads, to read the shadow instead.
+     *
+     * @param string $sql The statement, as written
+     *
+     * @return RewritePlan The statement to run against the shadow
+     *
+     * @throws UnknownSchemaException When it reads a table nothing has declared
+     */
+    public function rewriteRead(string $sql): RewritePlan
+    {
+        if ($this->hasSchemaContext()) {
+            $unknownTable = $this->findUnknownTable($sql);
+            if ($unknownTable !== null) {
+                throw new UnknownSchemaException($sql, $unknownTable, 'table');
+            }
+        }
+
+        return new RewritePlan($this->transformer->transform($sql, $this->buildTableContext()), QueryKind::READ);
+    }
+
+    /**
+     * Rewrites a statement that changes what a table is.
+     *
+     * There are no rows to answer for a definition, so the statement to run
+     * reads nothing back -- except where the definition carries a SELECT,
+     * whose rows are what the new table is to hold.
+     *
+     * @param Statement $statement The statement, as the parser reads it
+     * @param string $sql The statement, as written
+     *
+     * @return RewritePlan The statement to run, and what applying it would do
+     *
+     * @throws UnsupportedSqlException When ZTD cannot simulate what it asks for
+     * @throws UnknownSchemaException When it reads a table nothing has declared
+     */
+    public function rewriteDefinition(Statement $statement, string $sql): RewritePlan
+    {
+        if ($statement instanceof AlterStatement && $this->hasUnsupportedAlterOperation($statement, $sql)) {
+            throw new UnsupportedSqlException($sql, 'Unsupported ALTER TABLE operation');
+        }
+
+        $mutation = $this->mutationResolver->resolve($sql, $statement, QueryKind::DDL_SIMULATED);
+        if ($statement instanceof CreateStatement && $statement->select !== null) {
+            $selectSql = $this->transformer->transform($statement->select->build(), $this->buildTableContext());
+
+            return new RewritePlan($selectSql, QueryKind::DDL_SIMULATED, $mutation);
+        }
+
+        return new RewritePlan($this->emptyResultSelect(), QueryKind::DDL_SIMULATED, $mutation);
+    }
+
+    /**
+     * Rewrites a statement that writes, to answer the rows it would have written.
+     *
+     * A statement written with a CTE prefix is resolved against the statement
+     * the prefix leads to, because that is the one doing the writing.
+     *
+     * @param Statement $statement The statement, as the parser reads it
+     * @param string $sql The statement, as written
+     * @param QueryKind $kind What the statement was taken to be
+     *
+     * @return RewritePlan The statement to run, and what applying it would do
+     *
+     * @throws UnsupportedSqlException When ZTD cannot simulate what it asks for
+     * @throws UnknownSchemaException When it writes a table nothing has declared
+     */
+    public function rewriteWrite(Statement $statement, string $sql, QueryKind $kind): RewritePlan
+    {
         $mutationStatement = $statement;
         if ($statement instanceof WithStatement) {
             $mainStatements = $this->parser->parse($this->cteComposer->statementSql($sql));
@@ -222,16 +272,15 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
         }
 
         $mutation = $this->mutationResolver->resolve($sql, $mutationStatement, $kind);
-
         if ($statement instanceof TruncateStatement) {
             return new RewritePlan($this->emptyResultSelect(), QueryKind::WRITE_SIMULATED, $mutation);
         }
-
         if ($statement instanceof ReplaceStatement) {
             $this->ensureReplaceColumns($statement, $sql);
         }
 
-        $transformedSql = $this->transformer->transform($sql, $tableContext);
+        $transformedSql = $this->transformer->transform($sql, $this->buildTableContext());
+
         return new RewritePlan($transformedSql, QueryKind::WRITE_SIMULATED, $mutation);
     }
 
@@ -246,68 +295,7 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
      */
     public function buildTableContext(): array
     {
-        $context = [];
-        $allData = $this->shadowStore->getAll();
-
-        foreach ($allData as $tableName => $rows) {
-            $definition = $this->registry->get($tableName);
-            $columns = $definition?->columns;
-            if ($columns === null && $rows !== []) {
-                $columns = array_keys($rows[0]);
-                foreach ($rows as $row) {
-                    foreach (array_keys($row) as $column) {
-                        if (!in_array($column, $columns, true)) {
-                            $columns[] = $column;
-                        }
-                    }
-                }
-            }
-
-            $columnTypes = $definition !== null ? $definition->typedColumns : [];
-            $columnDefaults = $definition !== null ? $definition->columnDefaults : [];
-            $identityStrategies = $definition !== null ? $definition->identityStrategies : [];
-            $generatedExpressions = $definition !== null ? $definition->generatedExpressions : [];
-
-            $context[$tableName] = [
-                'rows' => $rows,
-                'columns' => $columns ?? [],
-                'columnTypes' => $columnTypes,
-                'columnDefaults' => $columnDefaults,
-                'identityStrategies' => $identityStrategies,
-                'generatedExpressions' => $generatedExpressions,
-                'partitioning' => $definition?->partitioning,
-                'primaryKeys' => $definition !== null ? $definition->primaryKeys : [],
-                'candidateKeys' => $definition !== null ? $definition->candidateKeys()->keys() : [],
-            ];
-        }
-
-        $allDefinitions = $this->registry->getAll();
-        foreach ($allDefinitions as $tableName => $definition) {
-            if (isset($context[$tableName])) {
-                continue;
-            }
-
-            $context[$tableName] = [
-                'rows' => [],
-                'columns' => $definition->columns,
-                'columnTypes' => $definition->typedColumns,
-                'columnDefaults' => $definition->columnDefaults,
-                'identityStrategies' => $definition->identityStrategies,
-                'generatedExpressions' => $definition->generatedExpressions,
-                'partitioning' => $definition->partitioning,
-                'primaryKeys' => $definition->primaryKeys,
-                'candidateKeys' => $definition->candidateKeys()->keys(),
-            ];
-        }
-
-        foreach ((new MySqlViewShadowRenderer())->render($this->views, array_keys($context)) as $viewName => $viewSql) {
-            if (isset($context[$viewName])) {
-                continue;
-            }
-            $context[$viewName] = ['viewSql' => $viewSql];
-        }
-
-        return $context;
+        return $this->shadowTables->of($this->views);
     }
 
     /**
@@ -442,94 +430,12 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
      */
     public function hasUnsupportedAlterOperation(AlterStatement $statement, string $sql): bool
     {
-        $upperSql = strtoupper($sql);
-        if (str_contains($upperSql, 'SET DEFAULT') || str_contains($upperSql, 'DROP DEFAULT')) {
+        if ($this->alters->refusesStatement($sql)) {
             return true;
         }
-        if (str_contains($upperSql, 'ORDER BY')) {
-            return true;
-        }
-        $altered = $statement->altered ?? [];
-
-        foreach ($altered as $op) {
-            $options = $op->options;
-            if ($options->isEmpty()) {
-                continue;
-            }
-
-            if ($this->options->isSet($options, 'ADD')) {
-                if ($this->options->isSet($options, 'INDEX') || $this->options->isSet($options, 'KEY') ||
-                    $this->options->isSet($options, 'FULLTEXT') || $this->options->isSet($options, 'SPATIAL') ||
-                    $this->options->isSet($options, 'UNIQUE') || $this->options->isSet($options, 'CONSTRAINT')) {
-                    return true;
-                }
-            }
-
-            if ($this->options->isSet($options, 'DROP')) {
-                if ($this->options->isSet($options, 'INDEX') || $this->options->isSet($options, 'KEY') || $this->options->isSet($options, 'CONSTRAINT')) {
-                    return true;
-                }
-            }
-
-            if ($this->options->isSet($options, 'RENAME')) {
-                if ($this->options->isSet($options, 'INDEX') || $this->options->isSet($options, 'KEY')) {
-                    return true;
-                }
-            }
-
-            if ($this->options->isSet($options, 'ALTER')) {
-                if ($this->options->isSet($options, 'SET DEFAULT') || $this->options->isSet($options, 'DROP DEFAULT')) {
-                    return true;
-                }
-                $unknownTokens = is_array($op->unknown) ? $op->unknown : [];
-                foreach ($unknownTokens as $token) {
-                    $tokenValue = is_string($token->value) ? $token->value : '';
-                    $value = strtoupper($tokenValue);
-                    if ($value === 'SET' || $value === 'DROP') {
-                        return true;
-                    }
-                }
-            }
-
-            if ($this->options->isSet($options, 'ORDER') || $this->options->isSet($options, 'ORDER BY')) {
+        foreach ($statement->altered ?? [] as $operation) {
+            if ($this->alters->refusesOperation($operation)) {
                 return true;
-            }
-
-            $unknownTokens = is_array($op->unknown) ? $op->unknown : [];
-            foreach ($unknownTokens as $token) {
-                $tokenValue = is_string($token->value) ? $token->value : '';
-                $value = strtoupper($tokenValue);
-                if ($value === 'ORDER BY' || $value === 'ORDER') {
-                    return true;
-                }
-            }
-
-            if ($this->options->isSet($options, 'CONVERT')) {
-                return true;
-            }
-
-            if ($this->options->isSet($options, 'ENGINE')) {
-                return true;
-            }
-
-            if ($this->options->isSet($options, 'PARTITION') || $this->options->isSet($options, 'ADD PARTITION') ||
-                $this->options->isSet($options, 'DROP PARTITION') || $this->options->isSet($options, 'TRUNCATE PARTITION') ||
-                $this->options->isSet($options, 'COALESCE PARTITION') || $this->options->isSet($options, 'REORGANIZE PARTITION') ||
-                $this->options->isSet($options, 'EXCHANGE PARTITION') || $this->options->isSet($options, 'ANALYZE PARTITION') ||
-                $this->options->isSet($options, 'CHECK PARTITION') || $this->options->isSet($options, 'OPTIMIZE PARTITION') ||
-                $this->options->isSet($options, 'REBUILD PARTITION') || $this->options->isSet($options, 'REPAIR PARTITION') ||
-                $this->options->isSet($options, 'REMOVE PARTITIONING')) {
-                return true;
-            }
-
-            $unknownTokens = is_array($op->unknown) ? $op->unknown : [];
-            foreach ($unknownTokens as $token) {
-                $tokenValue = is_string($token->value) ? $token->value : '';
-                $value = strtoupper($tokenValue);
-                if (str_contains($value, 'PARTITION') || str_contains($value, 'ENGINE') ||
-                    str_contains($value, 'SPATIAL') || str_contains($value, 'FULLTEXT')) {
-                    return true;
-                }
             }
         }
 
