@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Sql;
+namespace ZtdQuery\Sql\Reader;
+
+use ZtdQuery\Sql\SqlLexerProfile;
+use ZtdQuery\Sql\SqlTokenKind;
 
 /**
  * Reads what a pair of delimiters closes: strings and quoted identifiers.

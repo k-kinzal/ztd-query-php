@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Sql;
+namespace ZtdQuery\Sql\Reader;
+
+use ZtdQuery\Sql\SqlLexerProfile;
+use ZtdQuery\Sql\SqlTokenKind;
 
 /**
  * Reads a placeholder standing in for a value the driver will bind.

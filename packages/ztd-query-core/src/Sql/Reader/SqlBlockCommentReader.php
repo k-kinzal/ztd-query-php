@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Sql;
+namespace ZtdQuery\Sql\Reader;
+
+use ZtdQuery\Sql\SqlLexerProfile;
 
 /**
  * Reads a block comment, opening to closing.

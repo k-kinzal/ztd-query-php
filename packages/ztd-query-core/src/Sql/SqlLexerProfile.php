@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Sql;
 
+use ZtdQuery\Sql\Profile\SqlCommentProfile;
+use ZtdQuery\Sql\Profile\SqlParameterProfile;
+use ZtdQuery\Sql\Profile\SqlQuoteProfile;
+use ZtdQuery\Sql\Profile\SqlSymbolProfile;
+
 /**
  * Everything the neutral scanner needs to know about one dialect's spelling.
  *

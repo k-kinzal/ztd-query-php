@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Sql;
+namespace Tests\Unit\Sql\Profile;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Tests\Fake\FakeSqlLexerProfiles;
 use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Sql\LexicalPattern;
-use ZtdQuery\Sql\SqlSymbolProfile;
+use ZtdQuery\Sql\Profile\SqlSymbolProfile;
 
 #[CoversClass(SqlSymbolProfile::class)]
 #[UsesClass(LexicalPattern::class)]

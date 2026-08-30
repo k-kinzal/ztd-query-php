@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Sql;
+namespace Tests\Unit\Sql\Reader;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use ZtdQuery\Sql\SqlLexeme;
+use ZtdQuery\Sql\Reader\SqlLexeme;
 use ZtdQuery\Sql\SqlTokenKind;
 
 #[CoversClass(SqlLexeme::class)]

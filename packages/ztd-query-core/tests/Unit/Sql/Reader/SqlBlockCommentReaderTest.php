@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Sql;
+namespace Tests\Unit\Sql\Reader;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Tests\Fake\FakeSqlLexerProfiles;
 use ZtdQuery\Sql\LexicalDelimiters;
 use ZtdQuery\Sql\LexicalPattern;
-use ZtdQuery\Sql\SqlBlockCommentReader;
+use ZtdQuery\Sql\Reader\SqlBlockCommentReader;
 use ZtdQuery\Sql\SqlLexerProfile;
 
 #[CoversClass(SqlBlockCommentReader::class)]

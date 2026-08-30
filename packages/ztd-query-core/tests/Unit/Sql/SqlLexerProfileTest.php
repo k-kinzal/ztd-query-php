@@ -12,10 +12,10 @@ use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Sql\SqlLexerProfile;
 
 #[CoversClass(SqlLexerProfile::class)]
-#[UsesClass(\ZtdQuery\Sql\SqlCommentProfile::class)]
-#[UsesClass(\ZtdQuery\Sql\SqlQuoteProfile::class)]
-#[UsesClass(\ZtdQuery\Sql\SqlParameterProfile::class)]
-#[UsesClass(\ZtdQuery\Sql\SqlSymbolProfile::class)]
+#[UsesClass(\ZtdQuery\Sql\Profile\SqlCommentProfile::class)]
+#[UsesClass(\ZtdQuery\Sql\Profile\SqlQuoteProfile::class)]
+#[UsesClass(\ZtdQuery\Sql\Profile\SqlParameterProfile::class)]
+#[UsesClass(\ZtdQuery\Sql\Profile\SqlSymbolProfile::class)]
 #[UsesClass(\ZtdQuery\Sql\LexicalDelimiters::class)]
 #[UsesClass(\ZtdQuery\Sql\LexicalPattern::class)]
 final class SqlLexerProfileTest extends TestCase

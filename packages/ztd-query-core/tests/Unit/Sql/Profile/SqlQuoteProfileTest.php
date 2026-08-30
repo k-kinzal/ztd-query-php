@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Sql;
+namespace Tests\Unit\Sql\Profile;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -11,8 +11,8 @@ use Tests\Fake\FakeSqlLexerProfiles;
 use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Sql\LexicalDelimiters;
 use ZtdQuery\Sql\LexicalPattern;
-use ZtdQuery\Sql\SqlQuoteProfile;
-use ZtdQuery\Sql\SqlSymbolProfile;
+use ZtdQuery\Sql\Profile\SqlQuoteProfile;
+use ZtdQuery\Sql\Profile\SqlSymbolProfile;
 
 #[CoversClass(SqlQuoteProfile::class)]
 #[UsesClass(SqlSymbolProfile::class)]

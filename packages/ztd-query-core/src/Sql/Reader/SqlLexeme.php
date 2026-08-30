@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Sql;
+namespace ZtdQuery\Sql\Reader;
+
+use ZtdQuery\Sql\SqlTokenKind;
 
 /**
  * What a reader made of the statement at an offset, and where it left off.

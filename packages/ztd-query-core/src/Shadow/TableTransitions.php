@@ -9,8 +9,8 @@ use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
 use ZtdQuery\Shadow\Mutation\Row\UpdateMutation;
 use ZtdQuery\Shadow\Mutation\ShadowMutation;
-use ZtdQuery\Shadow\Row\RowChange;
 use ZtdQuery\Shadow\Row\RowMatch;
+use ZtdQuery\Shadow\Row\RowPairing;
 use ZtdQuery\Shadow\Row\TableTransition;
 
 /**
@@ -92,52 +92,108 @@ final class TableTransitions
         array $primaryKeys,
         array $identityRows,
     ): TableTransition {
-        $matchedBefore = [];
-        $matchedAfter = [];
-        $updated = [];
-
+        $pairing = new RowPairing();
         if ($primaryKeys === []) {
-            foreach ($beforeRows as $beforeIndex => $beforeRow) {
-                $afterIndex = $this->rows->positionOfIdentical($afterRows, $beforeRow, $matchedAfter);
-                if ($afterIndex !== null) {
-                    $matchedBefore[] = $beforeIndex;
-                    $matchedAfter[] = $afterIndex;
-                }
-            }
-
-            return new TableTransition($table, $this->unmatched($beforeRows, $matchedBefore), []);
+            $this->pairIdentical($pairing, $beforeRows, $afterRows);
+        } else {
+            $this->pairByIdentity($pairing, $beforeRows, $afterRows, $primaryKeys, $identityRows);
+            $this->pairByKey($pairing, $beforeRows, $afterRows, $primaryKeys);
         }
 
+        return new TableTransition(
+            $table,
+            $this->unmatched($beforeRows, $pairing->beforePositions()),
+            $pairing->changes(),
+        );
+    }
+
+    /**
+     * Pairs off the rows that are the same row because they are the same row.
+     *
+     * Where a table declares no key there is nothing to say that two rows
+     * that differ were once each other, so only an identical row is paired,
+     * and no row is ever said to have changed.
+     *
+     * @param RowPairing $pairing Pairs made so far, added to in place
+     * @param list<Row> $beforeRows Rows as they were
+     * @param list<Row> $afterRows Rows as they became
+     */
+    public function pairIdentical(RowPairing $pairing, array $beforeRows, array $afterRows): void
+    {
+        foreach ($beforeRows as $beforeIndex => $beforeRow) {
+            $afterIndex = $this->rows->positionOfIdentical($afterRows, $beforeRow, $pairing->afterPositions());
+            if ($afterIndex !== null) {
+                $pairing->pair($beforeIndex, $afterIndex, $beforeRow, $afterRows[$afterIndex]);
+            }
+        }
+    }
+
+    /**
+     * Pairs off the rows an UPDATE told us about.
+     *
+     * A result row carries both the key the row had and the key it has, so
+     * these pairs are known rather than guessed, and taking them first is
+     * what keeps a changed key from looking like a delete and an insert.
+     *
+     * @param RowPairing $pairing Pairs made so far, added to in place
+     * @param list<Row> $beforeRows Rows as they were
+     * @param list<Row> $afterRows Rows as they became
+     * @param list<string> $primaryKeys Columns that identify one row
+     * @param list<Row> $identityRows Result rows carrying both the old key and the new one
+     */
+    public function pairByIdentity(
+        RowPairing $pairing,
+        array $beforeRows,
+        array $afterRows,
+        array $primaryKeys,
+        array $identityRows,
+    ): void {
         foreach ($identityRows as $resultRow) {
             $change = $this->identity->extract($resultRow, $primaryKeys);
-            $beforeIndex = $this->rows->positionOfSameKey($beforeRows, $change['identity'], $primaryKeys, $matchedBefore);
-            $afterIndex = $this->rows->positionOfSameKey($afterRows, $change['row'], $primaryKeys, $matchedAfter);
+            $beforeIndex = $this->rows->positionOfSameKey(
+                $beforeRows,
+                $change['identity'],
+                $primaryKeys,
+                $pairing->beforePositions(),
+            );
+            $afterIndex = $this->rows->positionOfSameKey(
+                $afterRows,
+                $change['row'],
+                $primaryKeys,
+                $pairing->afterPositions(),
+            );
             if ($beforeIndex === null || $afterIndex === null) {
                 continue;
             }
-            $matchedBefore[] = $beforeIndex;
-            $matchedAfter[] = $afterIndex;
-            if ($beforeRows[$beforeIndex] !== $afterRows[$afterIndex]) {
-                $updated[] = new RowChange($beforeRows[$beforeIndex], $afterRows[$afterIndex]);
-            }
+            $pairing->pair($beforeIndex, $afterIndex, $beforeRows[$beforeIndex], $afterRows[$afterIndex]);
         }
+    }
 
+    /**
+     * Pairs off whatever the key can still match.
+     *
+     * @param RowPairing $pairing Pairs made so far, added to in place
+     * @param list<Row> $beforeRows Rows as they were
+     * @param list<Row> $afterRows Rows as they became
+     * @param list<string> $primaryKeys Columns that identify one row
+     */
+    public function pairByKey(RowPairing $pairing, array $beforeRows, array $afterRows, array $primaryKeys): void
+    {
         foreach ($beforeRows as $beforeIndex => $beforeRow) {
-            if (in_array($beforeIndex, $matchedBefore, true)) {
+            if (in_array($beforeIndex, $pairing->beforePositions(), true)) {
                 continue;
             }
-            $afterIndex = $this->rows->positionOfSameKey($afterRows, $beforeRow, $primaryKeys, $matchedAfter);
+            $afterIndex = $this->rows->positionOfSameKey(
+                $afterRows,
+                $beforeRow,
+                $primaryKeys,
+                $pairing->afterPositions(),
+            );
             if ($afterIndex === null) {
                 continue;
             }
-            $matchedBefore[] = $beforeIndex;
-            $matchedAfter[] = $afterIndex;
-            if ($beforeRow !== $afterRows[$afterIndex]) {
-                $updated[] = new RowChange($beforeRow, $afterRows[$afterIndex]);
-            }
+            $pairing->pair($beforeIndex, $afterIndex, $beforeRow, $afterRows[$afterIndex]);
         }
-
-        return new TableTransition($table, $this->unmatched($beforeRows, $matchedBefore), $updated);
     }
 
     /**

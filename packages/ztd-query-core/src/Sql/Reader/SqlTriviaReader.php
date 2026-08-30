@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Sql;
+namespace ZtdQuery\Sql\Reader;
+
+use ZtdQuery\Sql\SqlLexerProfile;
+use ZtdQuery\Sql\SqlTokenKind;
 
 /**
  * Reads what carries no meaning of its own: whitespace and comments.

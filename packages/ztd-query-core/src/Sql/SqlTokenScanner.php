@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Sql;
 
+use ZtdQuery\Sql\Reader\SqlDelimitedReader;
+use ZtdQuery\Sql\Reader\SqlParameterReader;
+use ZtdQuery\Sql\Reader\SqlTriviaReader;
+use ZtdQuery\Sql\Reader\SqlWordReader;
+
 /**
  * Reads a statement into the lexemes it is written as, losing nothing.
  *

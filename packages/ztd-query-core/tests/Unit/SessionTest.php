@@ -188,9 +188,9 @@ final class SessionTest extends TestCase
             new ShadowTransactions($shadowStore, $registry),
         );
 
-        $session->beginTransaction();
+        $session->transactions()->begin();
         $registry->unregister('users');
-        $session->rollBackTransaction();
+        $session->transactions()->rollBack();
 
         self::assertSame($definition, $registry->get('users'));
     }
@@ -323,10 +323,10 @@ final class SessionTest extends TestCase
         $store->set('users', [['id' => 1]]);
         $session = SessionUnderTest::over($store);
 
-        $session->beginTransaction();
+        $session->transactions()->begin();
         $store->set('users', []);
-        $session->commitTransaction();
-        $session->rollBackTransaction();
+        $session->transactions()->commit();
+        $session->transactions()->rollBack();
 
         self::assertSame([], $store->get('users'));
     }
@@ -337,9 +337,9 @@ final class SessionTest extends TestCase
         $store->set('users', [['id' => 1]]);
         $session = SessionUnderTest::over($store);
 
-        $session->applyTransactionStatement(TransactionStatement::begin());
+        TransactionStatement::begin()->apply($session->transactions());
         $store->set('users', []);
-        $session->applyTransactionStatement(TransactionStatement::rollback());
+        TransactionStatement::rollback()->apply($session->transactions());
 
         self::assertSame([['id' => 1]], $store->get('users'));
     }
@@ -426,9 +426,9 @@ final class SessionTest extends TestCase
         $store->set('users', [['id' => 1]]);
         $session = SessionUnderTest::over($store);
 
-        $session->beginTransaction();
+        $session->transactions()->begin();
         $store->set('users', []);
-        $session->rollBackTransaction();
+        $session->transactions()->rollBack();
 
         self::assertSame([['id' => 1]], $store->get('users'));
     }
@@ -438,5 +438,18 @@ final class SessionTest extends TestCase
         $session = SessionUnderTest::plain();
 
         self::assertInstanceOf(MissingResultColumnTypeResolver::class, $session->resultColumnTypeResolver());
+    }
+
+    public function testTransactionsAnswersWhatATransactionStatementIsAppliedTo(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', [['id' => 1]]);
+        $session = SessionUnderTest::over($store);
+
+        TransactionStatement::begin()->apply($session->transactions());
+        $store->set('users', []);
+        TransactionStatement::rollback()->apply($session->transactions());
+
+        self::assertSame([['id' => 1]], $store->get('users'));
     }
 }

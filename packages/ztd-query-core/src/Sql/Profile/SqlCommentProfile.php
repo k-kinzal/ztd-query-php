@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Sql;
+namespace ZtdQuery\Sql\Profile;
 
 use ZtdQuery\Exception\InvalidDefinitionException;
+use ZtdQuery\Sql\LexicalDelimiters;
 
 /**
  * How one dialect writes a comment.

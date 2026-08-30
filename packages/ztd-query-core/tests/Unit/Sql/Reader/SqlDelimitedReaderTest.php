@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Sql;
+namespace Tests\Unit\Sql\Reader;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -10,8 +10,8 @@ use PHPUnit\Framework\TestCase;
 use Tests\Fake\FakeSqlLexerProfiles;
 use ZtdQuery\Sql\LexicalDelimiters;
 use ZtdQuery\Sql\LexicalPattern;
-use ZtdQuery\Sql\SqlDelimitedReader;
-use ZtdQuery\Sql\SqlLexeme;
+use ZtdQuery\Sql\Reader\SqlDelimitedReader;
+use ZtdQuery\Sql\Reader\SqlLexeme;
 use ZtdQuery\Sql\SqlLexerProfile;
 use ZtdQuery\Sql\SqlTokenKind;
 

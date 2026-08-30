@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tests\Fake;
 
 use ZtdQuery\Exception\InvalidDefinitionException;
-use ZtdQuery\Sql\SqlCommentProfile;
+use ZtdQuery\Sql\Profile\SqlCommentProfile;
+use ZtdQuery\Sql\Profile\SqlParameterProfile;
+use ZtdQuery\Sql\Profile\SqlQuoteProfile;
+use ZtdQuery\Sql\Profile\SqlSymbolProfile;
 use ZtdQuery\Sql\SqlLexerProfile;
-use ZtdQuery\Sql\SqlParameterProfile;
-use ZtdQuery\Sql\SqlQuoteProfile;
-use ZtdQuery\Sql\SqlSymbolProfile;
 
 /**
  * Lexer profiles for tests, built around whatever one test is about.
