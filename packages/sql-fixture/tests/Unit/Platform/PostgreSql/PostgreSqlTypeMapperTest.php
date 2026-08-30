@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Platform\PostgreSql;
 
 use Faker\Factory;
+use Faker\Generator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -12,6 +13,7 @@ use PHPUnit\Framework\TestCase;
 use SqlFixture\Platform\PostgreSql\PostgreSqlColumnSample;
 use SqlFixture\Platform\PostgreSql\PostgreSqlTypeMapper;
 use SqlFixture\Schema\ColumnDefinition;
+use Tests\Fake\FixedTextProvider;
 use Tests\Fixture\SpyGenerator;
 
 #[CoversClass(PostgreSqlTypeMapper::class)]
@@ -2178,17 +2180,14 @@ final class PostgreSqlTypeMapperTest extends TestCase
     #[Test]
     public function generateVarcharStartsFromBeginning(): void
     {
-        $faker = Factory::create();
-        $faker->seed(12345);
+        $faker = new Generator();
+        $faker->addProvider(new FixedTextProvider(str_repeat('abcdefghij', 40)));
         $mapper = new PostgreSqlTypeMapper();
 
         $column = new ColumnDefinition('col', 'VARCHAR', length: 200, nullable: false);
         $value = $mapper->generate($faker, $column);
 
-        $faker->seed(12345);
-        $text = $faker->text(min(200, 200));
-        $expected = substr($text, 0, 200);
-        self::assertSame($expected, $value);
+        self::assertSame(substr(str_repeat('abcdefghij', 40), 0, 200), $value);
     }
 
     #[Test]
