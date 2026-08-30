@@ -25,7 +25,7 @@ use SqlFaker\MySql\Grammar\ProductionRule;
 use SqlFaker\MySql\Grammar\Terminal;
 use SqlFaker\MySql\Grammar\TerminalInventory;
 use SqlFaker\MySql\Grammar\TerminationAnalyzer;
-use SqlFaker\MySql\LexicalGrammar;
+use SqlFaker\MySql\Lexical\LexicalGrammar;
 use SqlFaker\MySql\SqlGenerator;
 use SqlFaker\MySql\StatementRule;
 use SqlFaker\MySqlProvider;

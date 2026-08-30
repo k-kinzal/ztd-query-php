@@ -7,11 +7,11 @@ namespace ZtdQuery\Platform\Postgres\Transformer;
 use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\CastRenderer;
-use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
-use ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer;
-use ZtdQuery\Platform\Postgres\PgSqlLexerProfile;
-use ZtdQuery\Platform\Postgres\PgSqlNativeUpsertProjector;
-use ZtdQuery\Platform\Postgres\PgSqlParser;
+use ZtdQuery\Platform\Postgres\Dialect\PgSqlCastRenderer;
+use ZtdQuery\Platform\Postgres\Dialect\PgSqlLexerProfile;
+use ZtdQuery\Platform\Postgres\Parse\PgSqlParser;
+use ZtdQuery\Platform\Postgres\Parse\PgSqlWithPrefix;
+use ZtdQuery\Platform\Postgres\Rewrite\PgSqlNativeUpsertProjector;
 use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Rewrite\ShadowIdentityAllocator;
 use ZtdQuery\Rewrite\SqlTransformer;
@@ -35,7 +35,9 @@ final class InsertTransformer implements SqlTransformer
     private InsertRowRenderer $rowRenderer;
     private ShadowIdentityAllocator $identityAllocator;
     private InsertSelectRenderer $insertSelectRenderer;
-    private PgSqlCteShadowComposer $cteComposer;
+
+    /** @readonly */
+    private PgSqlWithPrefix $withPrefix;
     private PgSqlNativeUpsertProjector $upsertProjector;
 
     /**
@@ -56,7 +58,7 @@ final class InsertTransformer implements SqlTransformer
         $this->rowRenderer = new InsertRowRenderer();
         $this->identityAllocator = new ShadowIdentityAllocator();
         $this->insertSelectRenderer = new InsertSelectRenderer();
-        $this->cteComposer = new PgSqlCteShadowComposer();
+        $this->withPrefix = new PgSqlWithPrefix();
         $this->upsertProjector = new PgSqlNativeUpsertProjector();
     }
 
@@ -98,7 +100,7 @@ final class InsertTransformer implements SqlTransformer
                 $existingRows,
             );
             $projectedSql = $this->insertSelectRenderer->render(
-                $this->cteComposer->carryPrefix($sql, $selectSql),
+                $this->withPrefix->carryPrefix($sql, $selectSql),
                 $tableColumns,
                 $sourceColumns,
                 $columnDefaults,
@@ -148,7 +150,7 @@ final class InsertTransformer implements SqlTransformer
         $selectSql = $this->projectUpsert($sql, $selectSql, $tableName, $tableColumns, $tables);
 
         return $this->selectTransformer->transform(
-            $this->cteComposer->carryPrefix($sql, $selectSql),
+            $this->withPrefix->carryPrefix($sql, $selectSql),
             $tables,
         );
     }

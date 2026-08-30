@@ -13,4 +13,4 @@ parameters:
         - tests
     toolkit:
         broadCatchAllowedPaths:
-            - '*/src/MySqlComponentSql.php'
+            - '*/src/Dialect/MySqlComponentSql.php'

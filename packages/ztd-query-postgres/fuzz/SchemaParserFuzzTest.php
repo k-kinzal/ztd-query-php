@@ -10,7 +10,7 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\PostgreSqlStatementProvider;
-use ZtdQuery\Platform\Postgres\PgSqlSchemaParser;
+use ZtdQuery\Platform\Postgres\Parse\PgSqlSchemaParser;
 use ZtdQuery\Schema\TableDefinition;
 
 /**

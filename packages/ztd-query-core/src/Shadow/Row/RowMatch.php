@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow\Row;
 
-use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Schema\TableDefinition;
 
 /**
  * Finds a row among rows, by the columns that identify it.
@@ -13,8 +13,8 @@ use ZtdQuery\Connection\StatementInterface;
  * question every part of the shadow keeps asking — is this the same row, and
  * where is it — so that the answer is given the same way everywhere.
  *
- * @phpstan-import-type Row from StatementInterface
- * @phpstan-import-type RowValue from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
+ * @phpstan-import-type RowValue from TableDefinition
  */
 final class RowMatch
 {

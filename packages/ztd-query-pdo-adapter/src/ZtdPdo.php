@@ -19,6 +19,7 @@ use ZtdQuery\Platform\SessionFactory;
 use ZtdQuery\Platform\CopySupport;
 use ZtdQuery\Platform\CopyTarget;
 use ZtdQuery\Platform\Sqlite\SqliteSessionFactory;
+use ZtdQuery\Platform\Postgres\PgSqlSessionFactory;
 use ZtdQuery\Session;
 
 /**

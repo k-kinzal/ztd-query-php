@@ -1,0 +1,54 @@
+# NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
+#
+# What this package is, as layers.
+#
+# Dialect is how PostgreSQL spells and types things: quoting a name, rendering
+# a value, reading a lexeme, classifying an error. Statement is what a read
+# statement is, written as values. Parse reads a statement into those values,
+# and needs the dialect to know what it is reading. Rewrite is the whole of
+# turning a statement into the SQL that shadows it: the rewriter, the guard
+# that refuses a write, the transformers it drives and the resolver that
+# decides which mutation a statement causes, which all build each other and so
+# are one layer. Session is what the core library is handed: a factory and the
+# reflectors it reads a schema through.
+deptrac:
+  paths:
+    - ./src
+  layers:
+    - name: Session
+      collectors:
+        - type: directory
+          value: src/[^/]+\.php
+    - name: Rewrite
+      collectors:
+        - type: directory
+          value: src/Rewrite/.*
+        - type: directory
+          value: src/Transformer/.*
+    - name: Parse
+      collectors:
+        - type: directory
+          value: src/Parse/.*
+    - name: Statement
+      collectors:
+        - type: directory
+          value: src/Statement/.*
+    - name: Dialect
+      collectors:
+        - type: directory
+          value: src/Dialect/.*
+  ruleset:
+    Session:
+      - Rewrite
+      - Parse
+      - Statement
+      - Dialect
+    Rewrite:
+      - Parse
+      - Statement
+      - Dialect
+    Parse:
+      - Statement
+      - Dialect
+    Statement: ~
+    Dialect: ~

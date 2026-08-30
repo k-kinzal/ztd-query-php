@@ -7,12 +7,13 @@ namespace ZtdQuery;
 use ZtdQuery\Connection\ResultSet;
 use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Platform\ResultColumnTypeResolver;
+use ZtdQuery\Schema\TableDefinition;
 
 /**
  * Executes result-select queries and returns rows.
  *
- * @phpstan-import-type Row from StatementInterface
- * @phpstan-import-type RowValue from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
+ * @phpstan-import-type RowValue from TableDefinition
  */
 final class ResultSelectRunner
 {

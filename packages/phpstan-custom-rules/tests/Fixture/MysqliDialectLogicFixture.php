@@ -10,7 +10,7 @@ final class MysqliDialectLogicFixture
 {
     public function resolverClass(): string
     {
-        return \ZtdQuery\Platform\MySql\MySqlMysqliResultColumnTypeResolver::class;
+        return \ZtdQuery\Platform\MySql\Dialect\MySqlMysqliResultColumnTypeResolver::class;
     }
 
     public function fieldType(): int

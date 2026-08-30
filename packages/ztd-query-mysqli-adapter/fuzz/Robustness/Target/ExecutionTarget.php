@@ -13,8 +13,8 @@ use mysqli_sql_exception;
 use SqlFaker\MySqlProvider;
 use SqlFaker\MySqlStatementProvider;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
-use ZtdQuery\Platform\MySql\MySqlQueryGuard;
-use ZtdQuery\Platform\MySql\MySqlRewriter;
+use ZtdQuery\Platform\MySql\Rewrite\MySqlQueryGuard;
+use ZtdQuery\Platform\MySql\Rewrite\MySqlRewriter;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Shadow\ShadowStore;
 

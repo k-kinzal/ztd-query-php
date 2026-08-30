@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Rewrite;
 
-use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
 use ZtdQuery\Schema\PartialUniqueIndex;
+use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TablePartitioning;
 
 /**
@@ -22,7 +22,7 @@ use ZtdQuery\Schema\TablePartitioning;
  * than what a row holds once it has been read: a driver may answer a large
  * column as an open stream, or an object that says how it spells itself.
  *
- * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
  * @phpstan-import-type RenderableValue from ValueRenderer
  *
  * @phpstan-type ShadowView array{viewSql: string}
