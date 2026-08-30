@@ -12,6 +12,7 @@ use Tests\Fixture\DriverAnswer;
 use ZtdQuery\Platform\Postgres\Dialect\PgSqlCastRenderer;
 use ZtdQuery\Platform\Postgres\Dialect\PgSqlIdentifierQuoter;
 use ZtdQuery\Platform\Postgres\Parse\PgSqlTableSampleParser;
+use ZtdQuery\Platform\Postgres\Parse\PgSqlWithPrefix;
 use ZtdQuery\Platform\Postgres\Rewrite\PgSqlTableSampleRewriter;
 use ZtdQuery\Platform\Postgres\Statement\PgSqlTableSample;
 use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
@@ -31,6 +32,7 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 #[UsesClass(PgSqlTableSampleRewriter::class)]
 #[UsesClass(PgSqlTableSample::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\Dialect\PgSqlLexerProfile::class)]
+#[UsesClass(PgSqlWithPrefix::class)]
 final class SelectTransformerTest extends TransformerContractTest
 {
     public function testTableSampleReadsFromGeneratedShadowCte(): void
