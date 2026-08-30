@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Fuzz\Robustness\Invariant;
 
 use ZtdQuery\Exception\SimulationException;
-use ZtdQuery\Platform\Sqlite\SqliteIndexHintStripper;
+use ZtdQuery\Platform\Sqlite\Rewrite\SqliteIndexHintStripper;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
@@ -84,7 +84,7 @@ final class RewritePlanConsistencyChecker implements InvariantChecker
         }
 
         $shadowTables = ['users', 'orders', 'order_items', 'products'];
-        $relationParser = new \ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser();
+        $relationParser = new \ZtdQuery\Platform\Sqlite\Parse\SqliteSelectRelationParser();
         $normalizedInput = $relationParser->unqualify($sql, $shadowTables);
         $normalizedPlan = $relationParser->unqualify($plan->sql(), $shadowTables);
         if ($normalizedInput !== $sql && $normalizedPlan !== $plan->sql()) {

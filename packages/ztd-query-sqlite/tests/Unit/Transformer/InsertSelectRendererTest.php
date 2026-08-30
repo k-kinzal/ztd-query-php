@@ -8,7 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\InvalidDefinitionException;
-use ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter;
+use ZtdQuery\Platform\Sqlite\Dialect\SqliteIdentifierQuoter;
 use ZtdQuery\Platform\Sqlite\Transformer\InsertSelectRenderer;
 
 #[CoversClass(InsertSelectRenderer::class)]

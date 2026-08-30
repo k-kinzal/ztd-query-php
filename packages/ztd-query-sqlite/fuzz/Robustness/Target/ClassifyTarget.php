@@ -10,8 +10,8 @@ use Fuzz\Robustness\Invariant\ClassifyDeterministicChecker;
 use Fuzz\Robustness\Invariant\ClassifyNeverThrowsChecker;
 use Fuzz\Robustness\Invariant\InvariantChecker;
 use SqlFaker\SqliteProvider;
-use ZtdQuery\Platform\Sqlite\SqliteParser;
-use ZtdQuery\Platform\Sqlite\SqliteQueryGuard;
+use ZtdQuery\Platform\Sqlite\Parse\SqliteParser;
+use ZtdQuery\Platform\Sqlite\Rewrite\SqliteQueryGuard;
 
 /**
  * The classify target.

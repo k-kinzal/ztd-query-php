@@ -6,9 +6,9 @@ namespace Fuzz\Robustness\Invariant;
 
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\Sqlite\SqliteInMemoryAttachStatement;
-use ZtdQuery\Platform\Sqlite\SqliteQueryGuard;
-use ZtdQuery\Platform\Sqlite\SqliteReadOnlyDiagnosticStatement;
+use ZtdQuery\Platform\Sqlite\Rewrite\SqliteInMemoryAttachStatement;
+use ZtdQuery\Platform\Sqlite\Rewrite\SqliteQueryGuard;
+use ZtdQuery\Platform\Sqlite\Rewrite\SqliteReadOnlyDiagnosticStatement;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\SqlRewriter;
 
