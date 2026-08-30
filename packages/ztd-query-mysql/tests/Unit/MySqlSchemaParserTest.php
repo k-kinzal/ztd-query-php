@@ -11,7 +11,7 @@ use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlSchemaParser;
 use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\ColumnTypeFamily;
-use ZtdQuery\Schema\IdentityGenerationStrategy;
+use ZtdQuery\Schema\Key\IdentityGenerationStrategy;
 use ZtdQuery\Platform\MySql\MySqlPartitioningParser;
 
 #[CoversClass(MySqlSchemaParser::class)]

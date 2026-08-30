@@ -22,7 +22,7 @@ use ZtdQuery\Platform\Postgres\Transformer\MergeTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
 use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
-use ZtdQuery\Schema\IdentityGenerationStrategy;
+use ZtdQuery\Schema\Key\IdentityGenerationStrategy;
 
 #[CoversClass(MergeTransformer::class)]
 #[UsesClass(PgSqlCastRenderer::class)]

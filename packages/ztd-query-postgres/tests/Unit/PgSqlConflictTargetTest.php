@@ -8,8 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\Postgres\PgSqlConflictTarget;
-use ZtdQuery\Schema\CandidateKeySet;
-use ZtdQuery\Schema\PartialUniqueIndex;
+use ZtdQuery\Schema\Key\CandidateKeySet;
+use ZtdQuery\Schema\Key\PartialUniqueIndex;
 
 #[CoversClass(PgSqlConflictTarget::class)]
 final class PgSqlConflictTargetTest extends TestCase

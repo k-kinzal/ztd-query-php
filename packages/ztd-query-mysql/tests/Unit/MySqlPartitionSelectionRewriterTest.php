@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\MySqlPartitionSelectionRewriter;
 use ZtdQuery\Platform\MySql\MySqlSelectRelationParser;
-use ZtdQuery\Schema\TablePartitioning;
+use ZtdQuery\Schema\Partition\TablePartitioning;
 
 #[CoversClass(MySqlPartitionSelectionRewriter::class)]
 #[UsesClass(MySqlSelectRelationParser::class)]

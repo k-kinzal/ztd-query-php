@@ -18,8 +18,8 @@ use ZtdQuery\Platform\MySql\UpdateAssignmentExtractor;
 use ZtdQuery\Platform\MySql\UpdateSourceExtractor;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
-use ZtdQuery\Shadow\Mutation\MultiTableMutationRow;
-use ZtdQuery\Shadow\Mutation\MultiTableMutationTarget;
+use ZtdQuery\Shadow\Mutation\Row\MultiTableMutationRow;
+use ZtdQuery\Shadow\Mutation\Row\MultiTableMutationTarget;
 use ZtdQuery\Platform\MySql\MySqlLexerProfile;
 use ZtdQuery\Sql\SqlTokenStream;
 

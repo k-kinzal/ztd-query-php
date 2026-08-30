@@ -22,17 +22,17 @@ use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
-use ZtdQuery\Shadow\Mutation\DeleteMutation;
-use ZtdQuery\Shadow\Mutation\InsertMutation;
-use ZtdQuery\Shadow\Mutation\ReplaceMutation;
-use ZtdQuery\Shadow\Mutation\TruncateMutation;
-use ZtdQuery\Shadow\Mutation\UpdateMutation;
-use ZtdQuery\Shadow\Mutation\CreateTableAsSelectMutation;
-use ZtdQuery\Shadow\Mutation\CreateTableLikeMutation;
-use ZtdQuery\Shadow\Mutation\CreateTableMutation;
-use ZtdQuery\Shadow\Mutation\DropTableMutation;
-use ZtdQuery\Shadow\Mutation\MultiDeleteMutation;
-use ZtdQuery\Shadow\Mutation\MultiUpdateMutation;
+use ZtdQuery\Shadow\Mutation\Row\DeleteMutation;
+use ZtdQuery\Shadow\Mutation\Row\InsertMutation;
+use ZtdQuery\Shadow\Mutation\Row\ReplaceMutation;
+use ZtdQuery\Shadow\Mutation\Table\TruncateMutation;
+use ZtdQuery\Shadow\Mutation\Row\UpdateMutation;
+use ZtdQuery\Shadow\Mutation\Table\CreateTableAsSelectMutation;
+use ZtdQuery\Shadow\Mutation\Table\CreateTableLikeMutation;
+use ZtdQuery\Shadow\Mutation\Table\CreateTableMutation;
+use ZtdQuery\Shadow\Mutation\Table\DropTableMutation;
+use ZtdQuery\Shadow\Mutation\Row\MultiDeleteMutation;
+use ZtdQuery\Shadow\Mutation\Row\MultiUpdateMutation;
 use ZtdQuery\Shadow\Mutation\UpsertMutation;
 use ZtdQuery\Platform\MySql\Mutation\AlterTableMutation;
 use ZtdQuery\Shadow\ShadowStore;
@@ -335,7 +335,7 @@ final class MySqlMutationResolverTest extends TestCase
         $statements = $parser->parse($sql);
         $mutation = $resolver->resolve($sql, $statements[0], QueryKind::WRITE_SIMULATED);
 
-        self::assertInstanceOf(\ZtdQuery\Shadow\Mutation\MultiUpdateMutation::class, $mutation);
+        self::assertInstanceOf(\ZtdQuery\Shadow\Mutation\Row\MultiUpdateMutation::class, $mutation);
         $mutation->apply($shadowStore, [[
             '__ztd_multi_0_value_0' => 1,
             '__ztd_multi_0_value_1' => 'Updated',
@@ -377,7 +377,7 @@ final class MySqlMutationResolverTest extends TestCase
         $statements = $parser->parse($sql);
         $mutation = $resolver->resolve($sql, $statements[0], QueryKind::WRITE_SIMULATED);
 
-        self::assertInstanceOf(\ZtdQuery\Shadow\Mutation\MultiDeleteMutation::class, $mutation);
+        self::assertInstanceOf(\ZtdQuery\Shadow\Mutation\Row\MultiDeleteMutation::class, $mutation);
         $mutation->apply($shadowStore, [[
             '__ztd_multi_0_value_0' => 1,
             '__ztd_multi_1_value_0' => 9,
@@ -509,7 +509,7 @@ final class MySqlMutationResolverTest extends TestCase
         $statements = $parser->parse($sql);
         $mutation = $resolver->resolve($sql, $statements[0], QueryKind::DDL_SIMULATED);
 
-        self::assertInstanceOf(\ZtdQuery\Shadow\Mutation\CreateTableMutation::class, $mutation);
+        self::assertInstanceOf(\ZtdQuery\Shadow\Mutation\Table\CreateTableMutation::class, $mutation);
         self::assertSame('t', $mutation->tableName());
     }
 
@@ -532,7 +532,7 @@ final class MySqlMutationResolverTest extends TestCase
         $statements = $parser->parse($sql);
         $mutation = $resolver->resolve($sql, $statements[0], QueryKind::DDL_SIMULATED);
 
-        self::assertInstanceOf(\ZtdQuery\Shadow\Mutation\DropTableMutation::class, $mutation);
+        self::assertInstanceOf(\ZtdQuery\Shadow\Mutation\Table\DropTableMutation::class, $mutation);
         self::assertSame('users', $mutation->tableName());
     }
 
@@ -578,7 +578,7 @@ final class MySqlMutationResolverTest extends TestCase
         $statements = $parser->parse($sql);
         $mutation = $resolver->resolve($sql, $statements[0], QueryKind::DDL_SIMULATED);
 
-        self::assertInstanceOf(\ZtdQuery\Shadow\Mutation\CreateTableLikeMutation::class, $mutation);
+        self::assertInstanceOf(\ZtdQuery\Shadow\Mutation\Table\CreateTableLikeMutation::class, $mutation);
         self::assertSame('dest', $mutation->tableName());
     }
 
@@ -598,7 +598,7 @@ final class MySqlMutationResolverTest extends TestCase
         $statements = $parser->parse($sql);
         $mutation = $resolver->resolve($sql, $statements[0], QueryKind::DDL_SIMULATED);
 
-        self::assertInstanceOf(\ZtdQuery\Shadow\Mutation\CreateTableAsSelectMutation::class, $mutation);
+        self::assertInstanceOf(\ZtdQuery\Shadow\Mutation\Table\CreateTableAsSelectMutation::class, $mutation);
         self::assertSame('dest', $mutation->tableName());
     }
 

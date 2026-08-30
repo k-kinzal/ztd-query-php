@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Postgres;
 
-use ZtdQuery\Schema\TablePartitionRelation;
+use ZtdQuery\Schema\Partition\TablePartitionRelation;
 
 final class PgSqlPartitionPredicateRenderer
 {

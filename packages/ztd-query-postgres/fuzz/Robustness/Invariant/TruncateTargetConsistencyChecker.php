@@ -7,7 +7,7 @@ namespace Fuzz\Robustness\Invariant;
 use Throwable;
 use ZtdQuery\Platform\Postgres\PgSqlLexerProfile;
 use ZtdQuery\Rewrite\SqlRewriter;
-use ZtdQuery\Shadow\Mutation\MultiTruncateMutation;
+use ZtdQuery\Shadow\Mutation\Table\MultiTruncateMutation;
 use ZtdQuery\Sql\SqlTokenStream;
 
 final class TruncateTargetConsistencyChecker implements InvariantChecker

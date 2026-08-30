@@ -15,8 +15,8 @@ use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Rewrite\SqlTransformer;
-use ZtdQuery\Shadow\Mutation\MultiTableMutationRow;
-use ZtdQuery\Shadow\Mutation\MultiTableMutationTarget;
+use ZtdQuery\Shadow\Mutation\Row\MultiTableMutationRow;
+use ZtdQuery\Shadow\Mutation\Row\MultiTableMutationTarget;
 
 /**
  * Transforms DELETE statements into SELECT projections with CTE shadowing.

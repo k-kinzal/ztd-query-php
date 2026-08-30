@@ -11,16 +11,16 @@ use ZtdQuery\Exception\ColumnNotFoundException;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Platform\Sqlite\Mutation\AlterTableMutation;
-use ZtdQuery\Schema\ForeignKeyDefinition;
+use ZtdQuery\Schema\Key\ForeignKeyDefinition;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
-use ZtdQuery\Shadow\Mutation\CreateTableMutation;
-use ZtdQuery\Shadow\Mutation\DeleteMutation;
-use ZtdQuery\Shadow\Mutation\DropTableMutation;
-use ZtdQuery\Shadow\Mutation\InsertMutation;
-use ZtdQuery\Shadow\Mutation\ReplaceMutation;
+use ZtdQuery\Shadow\Mutation\Table\CreateTableMutation;
+use ZtdQuery\Shadow\Mutation\Row\DeleteMutation;
+use ZtdQuery\Shadow\Mutation\Table\DropTableMutation;
+use ZtdQuery\Shadow\Mutation\Row\InsertMutation;
+use ZtdQuery\Shadow\Mutation\Row\ReplaceMutation;
 use ZtdQuery\Shadow\Mutation\ShadowMutation;
-use ZtdQuery\Shadow\Mutation\UpdateMutation;
+use ZtdQuery\Shadow\Mutation\Row\UpdateMutation;
 use ZtdQuery\Shadow\Mutation\UpsertMutation;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTableState;
@@ -328,7 +328,7 @@ final class SqliteMutationResolver
         $newGeneratedExpressions = self::withoutMapKey($existing->generatedExpressions, $columnName);
         $newForeignKeys = array_filter(
             $existing->foreignKeys,
-            static fn (\ZtdQuery\Schema\ForeignKeyDefinition $foreignKey): bool => !in_array(
+            static fn (\ZtdQuery\Schema\Key\ForeignKeyDefinition $foreignKey): bool => !in_array(
                 $columnName,
                 $foreignKey->columns,
                 true,

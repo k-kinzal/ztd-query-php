@@ -15,17 +15,17 @@ use ZtdQuery\Platform\Postgres\PgSqlPartitionParser;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
-use ZtdQuery\Schema\PartialUniqueIndex;
-use ZtdQuery\Shadow\Mutation\CreateTableAsSelectMutation;
-use ZtdQuery\Shadow\Mutation\CreateTableLikeMutation;
-use ZtdQuery\Shadow\Mutation\CreateTableMutation;
-use ZtdQuery\Shadow\Mutation\DeleteMutation;
-use ZtdQuery\Shadow\Mutation\DropTableMutation;
-use ZtdQuery\Shadow\Mutation\InsertMutation;
-use ZtdQuery\Shadow\Mutation\MultiTruncateMutation;
-use ZtdQuery\Shadow\Mutation\SynchronizeMutation;
-use ZtdQuery\Shadow\Mutation\TruncateMutation;
-use ZtdQuery\Shadow\Mutation\UpdateMutation;
+use ZtdQuery\Schema\Key\PartialUniqueIndex;
+use ZtdQuery\Shadow\Mutation\Table\CreateTableAsSelectMutation;
+use ZtdQuery\Shadow\Mutation\Table\CreateTableLikeMutation;
+use ZtdQuery\Shadow\Mutation\Table\CreateTableMutation;
+use ZtdQuery\Shadow\Mutation\Row\DeleteMutation;
+use ZtdQuery\Shadow\Mutation\Table\DropTableMutation;
+use ZtdQuery\Shadow\Mutation\Row\InsertMutation;
+use ZtdQuery\Shadow\Mutation\Table\MultiTruncateMutation;
+use ZtdQuery\Shadow\Mutation\Table\SynchronizeMutation;
+use ZtdQuery\Shadow\Mutation\Table\TruncateMutation;
+use ZtdQuery\Shadow\Mutation\Row\UpdateMutation;
 use ZtdQuery\Shadow\Mutation\UpsertMutation;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTableState;
@@ -142,7 +142,7 @@ final class PgSqlMutationResolverTest extends TestCase
 
         $key = $registry->get('logs_2024')?->partitionKey;
         self::assertNotNull($key);
-        self::assertSame(\ZtdQuery\Schema\TablePartitionStrategy::List, $key->strategy);
+        self::assertSame(\ZtdQuery\Schema\Partition\TablePartitionStrategy::List, $key->strategy);
         self::assertSame(['level'], $key->expressions);
     }
 
@@ -153,10 +153,10 @@ final class PgSqlMutationResolverTest extends TestCase
         $definition = new TableDefinition(['id'], ['id' => 'INTEGER'], ['id'], [], []);
         $registry->register('root_table', $definition);
         $registry->register('child_table', $definition->withPartitionRelation(
-            new \ZtdQuery\Schema\TablePartitionRelation('root_table', 'id >= 0'),
+            new \ZtdQuery\Schema\Partition\TablePartitionRelation('root_table', 'id >= 0'),
         ));
         $registry->register('grandchild_table', $definition->withPartitionRelation(
-            new \ZtdQuery\Schema\TablePartitionRelation('child_table', 'id < 10'),
+            new \ZtdQuery\Schema\Partition\TablePartitionRelation('child_table', 'id < 10'),
         ));
         $resolver = new PgSqlMutationResolver(
             $shadowStore,

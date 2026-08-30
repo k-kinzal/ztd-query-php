@@ -117,7 +117,7 @@ final class InsertTransformer implements SqlTransformer
      * @param list<string> $insertColumns
      * @param array<string, ColumnDeclaration> $columnTypes
      * @param array<string, string> $columnDefaults
-     * @param array<string, \ZtdQuery\Schema\IdentityGenerationStrategy> $identityStrategies
+     * @param array<string, \ZtdQuery\Schema\Key\IdentityGenerationStrategy> $identityStrategies
      * @param list<array<string, RenderableValue>> $existingRows The existing rows
      */
     private function buildInsertSelect(
@@ -183,7 +183,7 @@ final class InsertTransformer implements SqlTransformer
      * @param list<string> $insertColumns
      * @param array<string, ColumnDeclaration> $columnTypes
      * @param array<string, string> $columnDefaults
-     * @param array<string, \ZtdQuery\Schema\IdentityGenerationStrategy> $identityStrategies
+     * @param array<string, \ZtdQuery\Schema\Key\IdentityGenerationStrategy> $identityStrategies
      * @param list<array<string, RenderableValue>> $existingRows The existing rows
      */
     private function buildInsertRowSelect(

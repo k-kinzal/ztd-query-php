@@ -13,7 +13,7 @@ use ZtdQuery\Platform\Sqlite\SqliteLexicalMasker;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
 use ZtdQuery\Platform\Sqlite\SqliteSchemaParser;
 use ZtdQuery\Schema\ColumnTypeFamily;
-use ZtdQuery\Schema\IdentityGenerationStrategy;
+use ZtdQuery\Schema\Key\IdentityGenerationStrategy;
 
 #[CoversClass(SqliteSchemaParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteColumnTypeMapper::class)]

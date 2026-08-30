@@ -19,7 +19,7 @@ use ZtdQuery\Platform\MySql\Transformer\InsertSelectRenderer;
 use ZtdQuery\Platform\MySql\Transformer\InsertTransformer;
 use ZtdQuery\Platform\MySql\Transformer\MySqlSelectListAliaser;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
-use ZtdQuery\Schema\IdentityGenerationStrategy;
+use ZtdQuery\Schema\Key\IdentityGenerationStrategy;
 use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 

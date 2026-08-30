@@ -31,16 +31,16 @@ use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
-use ZtdQuery\Schema\TablePartitionRelation;
+use ZtdQuery\Schema\Partition\TablePartitionRelation;
 use ZtdQuery\Schema\ViewDefinition;
 use ZtdQuery\Schema\ViewDefinitionSet;
-use ZtdQuery\Shadow\Mutation\CreateTableMutation;
-use ZtdQuery\Shadow\Mutation\DeleteMutation;
-use ZtdQuery\Shadow\Mutation\DropTableMutation;
-use ZtdQuery\Shadow\Mutation\InsertMutation;
-use ZtdQuery\Shadow\Mutation\SynchronizeMutation;
-use ZtdQuery\Shadow\Mutation\TruncateMutation;
-use ZtdQuery\Shadow\Mutation\UpdateMutation;
+use ZtdQuery\Shadow\Mutation\Table\CreateTableMutation;
+use ZtdQuery\Shadow\Mutation\Row\DeleteMutation;
+use ZtdQuery\Shadow\Mutation\Table\DropTableMutation;
+use ZtdQuery\Shadow\Mutation\Row\InsertMutation;
+use ZtdQuery\Shadow\Mutation\Table\SynchronizeMutation;
+use ZtdQuery\Shadow\Mutation\Table\TruncateMutation;
+use ZtdQuery\Shadow\Mutation\Row\UpdateMutation;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTableState;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -216,7 +216,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
             ['id'],
             ['id'],
             [],
-            identityStrategies: ['id' => \ZtdQuery\Schema\IdentityGenerationStrategy::MaxValue],
+            identityStrategies: ['id' => \ZtdQuery\Schema\Key\IdentityGenerationStrategy::MaxValue],
         );
         $registry->register('root_table', $definition);
         $registry->register('child_table', $definition->withPartitionRelation(

@@ -8,7 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\MySql\MySqlForeignKeyDefinitionParser;
-use ZtdQuery\Schema\ReferentialAction;
+use ZtdQuery\Schema\Key\ReferentialAction;
 
 #[CoversClass(MySqlForeignKeyDefinitionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]

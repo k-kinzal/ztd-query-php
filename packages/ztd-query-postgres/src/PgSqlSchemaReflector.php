@@ -7,7 +7,7 @@ namespace ZtdQuery\Platform\Postgres;
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Platform\SchemaReflector;
 use ZtdQuery\Platform\ViewReflector;
-use ZtdQuery\Schema\PartialUniqueIndex;
+use ZtdQuery\Schema\Key\PartialUniqueIndex;
 use ZtdQuery\Schema\ViewDefinition;
 
 /**

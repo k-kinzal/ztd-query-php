@@ -8,7 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Sqlite\SqliteForeignKeyDefinitionParser;
-use ZtdQuery\Schema\ReferentialAction;
+use ZtdQuery\Schema\Key\ReferentialAction;
 
 #[CoversClass(SqliteForeignKeyDefinitionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
