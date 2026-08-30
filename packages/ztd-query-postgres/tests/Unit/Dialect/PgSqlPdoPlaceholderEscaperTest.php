@@ -349,4 +349,53 @@ final class PgSqlPdoPlaceholderEscaperTest extends TestCase
         self::assertNull(PgSqlPdoPlaceholderEscaper::dollarQuoteDelimiter('$1', 0));
     }
 
+    public function testPlaceholderAtLeavesAQuestionMarkWhereAValueIsExpected(): void
+    {
+        $escaper = new PgSqlPdoPlaceholderEscaper();
+
+        self::assertSame(
+            ['text' => '?', 'end' => 1, 'expectsOperand' => false],
+            $escaper->placeholderAt('?', 0, true),
+        );
+    }
+
+    public function testPlaceholderAtDoublesAQuestionMarkThatIsPostgresOwnOperator(): void
+    {
+        $escaper = new PgSqlPdoPlaceholderEscaper();
+
+        self::assertSame(
+            [
+                ['text' => '??', 'end' => 1, 'expectsOperand' => true],
+                ['text' => '??', 'end' => 2, 'expectsOperand' => true],
+                ['text' => '??|', 'end' => 2, 'expectsOperand' => true],
+            ],
+            [
+                $escaper->placeholderAt('?', 0, false),
+                $escaper->placeholderAt('??', 0, true),
+                $escaper->placeholderAt('?|', 0, true),
+            ],
+        );
+    }
+
+    public function testPlaceholderAtReadsADoubleColonAsACastAndNotAsAPlaceholder(): void
+    {
+        $escaper = new PgSqlPdoPlaceholderEscaper();
+
+        self::assertSame(
+            [['text' => '::', 'end' => 2, 'expectsOperand' => true], null, null],
+            [$escaper->placeholderAt('::', 0, true), $escaper->placeholderAt(':a', 0, true), $escaper->placeholderAt('a', 0, true)],
+        );
+    }
+
+    public function testLeavesOperandExpectedSaysWhatComesAfterAnOperatorAndAfterAName(): void
+    {
+        self::assertSame(
+            [true, false, true],
+            [
+                PgSqlPdoPlaceholderEscaper::leavesOperandExpected('=', false),
+                PgSqlPdoPlaceholderEscaper::leavesOperandExpected(')', true),
+                PgSqlPdoPlaceholderEscaper::leavesOperandExpected('x', true),
+            ],
+        );
+    }
 }

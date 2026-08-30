@@ -9,18 +9,13 @@ use PhpMyAdmin\SqlParser\Statements\UpdateStatement;
 use RuntimeException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\Dialect\MySqlComponentSql;
-use ZtdQuery\Platform\MySql\Dialect\MySqlIdentifierQuoter;
-use ZtdQuery\Platform\MySql\Dialect\MySqlLexerProfile;
 use ZtdQuery\Platform\MySql\Parse\DmlWhereClauseExtractor;
 use ZtdQuery\Platform\MySql\Parse\MySqlParser;
 use ZtdQuery\Platform\MySql\Parse\UpdateAssignmentExtractor;
 use ZtdQuery\Platform\MySql\Parse\UpdateSourceExtractor;
 use ZtdQuery\Platform\MySql\Rewrite\MySqlCteShadowComposer;
 use ZtdQuery\Rewrite\SqlTransformer;
-use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
-use ZtdQuery\Shadow\Mutation\Row\MultiTableMutationRow;
 use ZtdQuery\Shadow\Mutation\Row\MultiTableMutationTarget;
-use ZtdQuery\Sql\SqlTokenStream;
 
 /**
  * Transforms UPDATE statements into SELECT projections with CTE shadowing.
@@ -32,6 +27,7 @@ final class UpdateTransformer implements SqlTransformer
     private MySqlParser $parser;
     private SelectTransformer $selectTransformer;
     private MySqlCteShadowComposer $cteComposer;
+    private MySqlUpdateClauses $clauses;
 
     /**
      * Binds the instance to what it will work from.
@@ -43,10 +39,13 @@ final class UpdateTransformer implements SqlTransformer
         MySqlParser $parser,
         SelectTransformer $selectTransformer,
         private readonly MySqlComponentSql $components = new MySqlComponentSql(),
+        ?MySqlUpdateClauses $clauses = null,
+        private readonly MySqlUpdateSelectList $selectList = new MySqlUpdateSelectList(),
     ) {
         $this->parser = $parser;
         $this->selectTransformer = $selectTransformer;
         $this->cteComposer = new MySqlCteShadowComposer();
+        $this->clauses = $clauses ?? new MySqlUpdateClauses($this->components);
     }
 
     /**
@@ -56,33 +55,14 @@ final class UpdateTransformer implements SqlTransformer
      */
     public function transform(string $sql, array $tables): string
     {
-        $statements = $this->parser->parse($sql);
-        if (!isset($statements[0]) || !$statements[0] instanceof UpdateStatement) {
-            throw new UnsupportedSqlException($sql, 'Expected UPDATE statement');
-        }
-
-        if (preg_match('/\bPARTITION\s*\(([^)]+)\)/i', $sql) === 1) {
-            throw new UnsupportedSqlException($sql, 'PARTITION clause not supported');
-        }
-
-        $statement = $statements[0];
-
-        if ($statement->tables === [] || !isset($statement->tables[0])) {
-            throw new UnsupportedSqlException($sql, 'Cannot resolve UPDATE target');
-        }
-
-        $targetExpr = $statement->tables[0];
-        $targetTable = self::exprTable($targetExpr);
-        if ($targetTable === null) {
-            throw new UnsupportedSqlException($sql, 'Cannot resolve table name');
-        }
-
+        $statement = $this->requireUpdate($sql);
+        $targetTable = $this->requireTargetTable($statement, $sql);
         $columns = $tables[$targetTable]['columns'] ?? [];
-
         $primaryKeys = $tables[$targetTable]['primaryKeys'] ?? [];
         $assignmentValues = (new UpdateAssignmentExtractor())->values($sql);
         $whereExpression = (new DmlWhereClauseExtractor())->extract($sql);
         $sourceExpression = (new UpdateSourceExtractor())->extract($sql);
+
         $projection = $this->buildProjection(
             $statement,
             $columns,
@@ -92,14 +72,12 @@ final class UpdateTransformer implements SqlTransformer
             $whereExpression,
             $sourceExpression,
         );
-        $targetTableNames = array_keys($projection['tables']);
-        if (isset($targetTableNames[1])) {
-            $targets = $this->targetsFromContexts($projection['tables'], $tables);
+        if (count($projection['tables']) > 1) {
             $projection = $this->buildProjection(
                 $statement,
                 $columns,
                 $primaryKeys,
-                $targets,
+                $this->targetsFromContexts($projection['tables'], $tables),
                 $assignmentValues,
                 $whereExpression,
                 $sourceExpression,
@@ -110,6 +88,55 @@ final class UpdateTransformer implements SqlTransformer
             $this->cteComposer->carryPrefix($sql, $projection['sql']),
             $tables,
         );
+    }
+
+    /**
+     * Reads a statement as the UPDATE it has to be for ZTD to simulate it.
+     *
+     * The shadow holds a table's rows and not the partitions they are kept
+     * in, so a statement naming one would change rows in all of them.
+     *
+     * @param string $sql The statement, as written
+     *
+     * @return UpdateStatement The statement, as the parser reads it
+     *
+     * @throws UnsupportedSqlException When it is not an UPDATE, or names a partition
+     */
+    public function requireUpdate(string $sql): UpdateStatement
+    {
+        $statement = $this->parser->parse($sql)[0] ?? null;
+        if (!$statement instanceof UpdateStatement) {
+            throw new UnsupportedSqlException($sql, 'Expected UPDATE statement');
+        }
+        if (preg_match('/\bPARTITION\s*\(([^)]+)\)/i', $sql) === 1) {
+            throw new UnsupportedSqlException($sql, 'PARTITION clause not supported');
+        }
+
+        return $statement;
+    }
+
+    /**
+     * Answers the table an UPDATE writes to first, insisting it names one.
+     *
+     * @param UpdateStatement $statement The statement, as the parser reads it
+     * @param string $sql The statement, as written
+     *
+     * @return string The table
+     *
+     * @throws UnsupportedSqlException When the statement names no table to write to
+     */
+    public function requireTargetTable(UpdateStatement $statement, string $sql): string
+    {
+        $target = $statement->tables[0] ?? null;
+        if ($target === null) {
+            throw new UnsupportedSqlException($sql, 'Cannot resolve UPDATE target');
+        }
+        $table = self::exprTable($target);
+        if ($table === null) {
+            throw new UnsupportedSqlException($sql, 'Cannot resolve table name');
+        }
+
+        return $table;
     }
 
     /**
@@ -133,104 +160,57 @@ final class UpdateTransformer implements SqlTransformer
         ?string $whereExpression = null,
         ?string $sourceExpression = null,
     ): array {
-        if ($stmt->tables === null || $stmt->tables === []) {
+        $targetTableExpr = $stmt->tables[0] ?? null;
+        if ($targetTableExpr === null) {
             throw new RuntimeException('Update statement has no tables?');
         }
-        $targetTableExpr = $stmt->tables[0];
         $targetTableName = $targetTableExpr->table;
         if ($targetTableName === null || $targetTableName === '') {
             throw new RuntimeException('Update statement target table name is empty.');
         }
 
-        $qualifier = (($targetTableExpr->alias ?? '') !== '') ? $targetTableExpr->alias : $targetTableName;
-
-        /** @var array<string, array{alias: string}> $allTargetTables */
-        $allTargetTables = [];
-        foreach ($stmt->tables as $tableExpr) {
-            $tableName = self::exprTable($tableExpr) ?? '';
-            $alias = $tableExpr->alias ?? $tableName;
-            if ($tableName !== '') {
-                $allTargetTables[$tableName] = ['alias' => $alias];
-            }
-        }
-
-        $selectCols = [];
-        $coveredCols = [];
-
-        if ($stmt->set !== null && $stmt->set !== []) {
-            foreach ($stmt->set as $index => $setOp) {
-                $colName = $setOp->column;
-                $colName = trim($colName, '`"\'');
-                if (str_contains($colName, '.')) {
-                    $parts = explode('.', $colName);
-                    $colName = trim(end($parts), '`"\'');
-                }
-
-                $selectCols[] = ($assignmentValues[$index] ?? $setOp->value) . ' AS `' . $colName . '`';
-                $coveredCols[$colName] = true;
-            }
-        }
-
-        foreach ($columns as $col) {
-            if (!isset($coveredCols[$col])) {
-                $selectCols[] = "`$qualifier`.`$col`";
-            }
-        }
-
-        $identity = new MutationRowIdentity();
-        foreach ($primaryKeys as $primaryKey) {
-            $selectCols[] = "`$qualifier`.`$primaryKey` AS `" . $identity->column($primaryKey) . '`';
-        }
-
-        if ($targets !== []) {
-            $selectCols = $this->multiTableSelectColumns($stmt, $allTargetTables, $targets, $assignmentValues);
-        }
-
-        if ($selectCols === []) {
-            $selectCols[] = '*';
-        }
-        $selectList = implode(', ', $selectCols);
-
-        $aliasClause = '';
-        if (($targetTableExpr->alias ?? '') !== '') {
-            $aliasClause = ' AS ' . $targetTableExpr->alias;
-        }
+        $alias = $targetTableExpr->alias ?? '';
+        $qualifier = $alias !== '' ? $alias : $targetTableName;
+        $allTargetTables = $this->writtenTables($stmt);
+        $selectCols = $targets === []
+            ? $this->selectList->selectColumns($stmt, $columns, $primaryKeys, $assignmentValues, $qualifier)
+            : $this->selectList->multiTableSelectColumns($stmt, $allTargetTables, $targets, $assignmentValues);
+        $selectList = $selectCols === [] ? '*' : implode(', ', $selectCols);
 
         $additionalTables = $this->buildAdditionalTables($stmt);
-
         $joinClause = $this->buildJoinClause($stmt);
-
-        $whereClause = '';
-        if ($whereExpression === null) {
-            $whereExpression = $this->components->condition($stmt->where ?? [], $stmt->build());
-        }
-        if ($whereExpression !== '') {
-            $whereClause = ' WHERE ' . $whereExpression;
-        }
-
-        $orderByClause = '';
-        if ($stmt->order !== null && $stmt->order !== []) {
-            $orderParts = [];
-            foreach ($stmt->order as $orderExpr) {
-                $orderParts[] = $this->components->order($orderExpr, $stmt->build());
-            }
-            $orderByClause = ' ORDER BY ' . implode(', ', $orderParts);
-        }
-
-        $limitClause = '';
-        if ($stmt->limit !== null) {
-            $limitClause = ' LIMIT ' . $this->components->limit($stmt->limit, $stmt->build());
-        }
-
-        $sourceClause = $sourceExpression ?? "`$targetTableName`$aliasClause$additionalTables$joinClause";
-        if ($additionalTables === '' && $joinClause === '' && ($orderByClause !== '' || $limitClause !== '')) {
-            $selectedRows = "SELECT * FROM $sourceClause$whereClause$orderByClause$limitClause";
-            $sql = "SELECT $selectList FROM ($selectedRows) AS `$qualifier`";
-        } else {
-            $sql = "SELECT $selectList FROM $sourceClause$whereClause$orderByClause$limitClause";
-        }
+        $whereClause = $this->clauses->whereClause($stmt, $whereExpression);
+        $orderByClause = $this->clauses->orderClause($stmt);
+        $limitClause = $this->clauses->limitClause($stmt);
+        $aliasClause = $alias !== '' ? ' AS ' . $alias : '';
+        $sourceClause = $sourceExpression ?? "`{$targetTableName}`{$aliasClause}{$additionalTables}{$joinClause}";
+        $read = "{$sourceClause}{$whereClause}{$orderByClause}{$limitClause}";
+        $reachesOneTableOnly = $additionalTables === '' && $joinClause === '';
+        $sql = $reachesOneTableOnly && ($orderByClause !== '' || $limitClause !== '')
+            ? "SELECT {$selectList} FROM (SELECT * FROM {$read}) AS `{$qualifier}`"
+            : "SELECT {$selectList} FROM {$read}";
 
         return ['sql' => $sql, 'table' => $targetTableName, 'tables' => $allTargetTables];
+    }
+
+    /**
+     * Answers every table the statement writes to, by its own name.
+     *
+     * @param UpdateStatement $stmt The statement, as the parser reads it
+     *
+     * @return array<string, array{alias: string}> Table name => the name the statement gave it
+     */
+    public function writtenTables(UpdateStatement $stmt): array
+    {
+        $tables = [];
+        foreach ($stmt->tables ?? [] as $tableExpr) {
+            $tableName = self::exprTable($tableExpr) ?? '';
+            if ($tableName !== '') {
+                $tables[$tableName] = ['alias' => $tableExpr->alias ?? $tableName];
+            }
+        }
+
+        return $tables;
     }
 
     /**
@@ -255,103 +235,6 @@ final class UpdateTransformer implements SqlTransformer
         }
 
         return $targets;
-    }
-
-    /**
-     * Writes the select list that carries every changed row back, and the key it had.
-     *
-     * A column the statement does not assign carries what it already held, so
-     * the row read back is the whole row as it would become. Its key is
-     * carried separately, because assigning to a key column changes it, and
-     * the row still has to be found by the key it had.
-     *
-     * @param UpdateStatement $stmt The statement, as the parser reads it
-     * @param array<string, array{alias: string}> $targetTables Table name => the name the statement gave it
-     * @param list<MultiTableMutationTarget> $targets The tables being written to
-     * @param list<string> $assignmentValues What each assignment assigns, in the order written
-     *
-     * @return list<string> The select list, one entry per column carried back
-     */
-    public function multiTableSelectColumns(
-        UpdateStatement $stmt,
-        array $targetTables,
-        array $targets,
-        array $assignmentValues,
-    ): array {
-        $assignments = $this->assignmentsByTable($stmt, $targetTables, $assignmentValues);
-        $codec = new MultiTableMutationRow();
-        $quoter = new MySqlIdentifierQuoter();
-        $selectColumns = [];
-        foreach ($targets as $targetIndex => $target) {
-            $tableInfo = $targetTables[$target->tableName()] ?? null;
-            if ($tableInfo === null) {
-                continue;
-            }
-            $alias = $quoter->quote($tableInfo['alias']);
-            foreach ($target->columns() as $columnIndex => $column) {
-                $value = $assignments[$target->tableName()][$column] ?? $alias . '.' . $quoter->quote($column);
-                $metadata = $quoter->quote($codec->valueColumn($targetIndex, $columnIndex));
-                $selectColumns[] = "$value AS $metadata";
-            }
-            foreach ($target->primaryKeys() as $primaryKeyIndex => $primaryKey) {
-                $metadata = $quoter->quote($codec->identityColumn($targetIndex, $primaryKeyIndex));
-                $selectColumns[] = $alias . '.' . $quoter->quote($primaryKey) . " AS $metadata";
-            }
-        }
-
-        return $selectColumns;
-    }
-
-    /**
-     * Answers what each assignment assigns, under the table it writes to.
-     *
-     * An assignment to a bare column name writes to the first table the
-     * statement names, which is what MySQL does with one.
-     *
-     * @param UpdateStatement $stmt The statement, as the parser reads it
-     * @param array<string, array{alias: string}> $targetTables Table name => the name the statement gave it
-     * @param list<string> $assignmentValues What each assignment assigns, in the order written
-     *
-     * @return array<string, array<string, string>> Table => column => what is assigned to it
-     */
-    public function assignmentsByTable(UpdateStatement $stmt, array $targetTables, array $assignmentValues): array
-    {
-        $assignments = [];
-        $primaryTable = array_key_first($targetTables);
-        $qualifiedTables = [];
-        foreach ($targetTables as $tableName => $tableInfo) {
-            $qualifiedTables[$tableName] = $tableName;
-            $qualifiedTables[$tableInfo['alias']] = $tableName;
-        }
-        foreach ($stmt->set ?? [] as $index => $setOperation) {
-            $parts = array_map(self::unquoteIdentifier(...), explode('.', $setOperation->column));
-            $column = array_pop($parts);
-            if ($column === '') {
-                continue;
-            }
-            $tableName = $primaryTable;
-            $qualifier = array_pop($parts);
-            if ($qualifier !== null) {
-                $tableName = $qualifiedTables[$qualifier] ?? $primaryTable;
-            }
-            if ($tableName !== null) {
-                $assignments[$tableName][$column] = $assignmentValues[$index] ?? $setOperation->value;
-            }
-        }
-
-        return $assignments;
-    }
-
-    /**
-     * Answers the name a written identifier stands for.
-     *
-     * @param string $identifier The name, as it was written
-     *
-     * @return string The name, with the quoting taken off
-     */
-    public static function unquoteIdentifier(string $identifier): string
-    {
-        return SqlTokenStream::tokenize($identifier, MySqlLexerProfile::create())->identifierAt()['name'] ?? $identifier;
     }
 
     /**
