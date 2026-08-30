@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace ZtdQuery\Rewrite;
 
 use ZtdQuery\Platform\ValueRenderer;
-use ZtdQuery\Schema\IdentityGenerationStrategy;
+use ZtdQuery\Schema\Key\IdentityGenerationStrategy;
 use ZtdQuery\Schema\TableDefinition;
 
 /**

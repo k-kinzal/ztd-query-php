@@ -8,16 +8,16 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Rewrite\AffectedRowsMode;
-use ZtdQuery\Schema\CandidateKeyConflict;
-use ZtdQuery\Schema\CandidateKeySet;
+use ZtdQuery\Schema\Key\CandidateKeyConflict;
+use ZtdQuery\Schema\Key\CandidateKeySet;
 use ZtdQuery\Schema\TableDefinition;
-use ZtdQuery\Shadow\Mutation\DeleteMutation;
-use ZtdQuery\Shadow\Mutation\InsertMutation;
 use ZtdQuery\Shadow\Mutation\MutationImpact;
 use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
-use ZtdQuery\Shadow\Mutation\ReplaceMutation;
-use ZtdQuery\Shadow\Mutation\SynchronizeMutation;
-use ZtdQuery\Shadow\Mutation\UpdateMutation;
+use ZtdQuery\Shadow\Mutation\Row\DeleteMutation;
+use ZtdQuery\Shadow\Mutation\Row\InsertMutation;
+use ZtdQuery\Shadow\Mutation\Row\ReplaceMutation;
+use ZtdQuery\Shadow\Mutation\Row\UpdateMutation;
+use ZtdQuery\Shadow\Mutation\Table\SynchronizeMutation;
 use ZtdQuery\Shadow\Mutation\UpsertColumnSource;
 use ZtdQuery\Shadow\Mutation\UpsertExpression;
 use ZtdQuery\Shadow\Mutation\UpsertExpressionKind;
@@ -41,7 +41,7 @@ use ZtdQuery\Sql\SqlTokenStream;
 #[UsesClass(ShadowStore::class)]
 #[UsesClass(SqlToken::class)]
 #[UsesClass(SqlTokenStream::class)]
-#[UsesClass(\ZtdQuery\Schema\CandidateKeyMatch::class)]
+#[UsesClass(\ZtdQuery\Schema\Key\CandidateKeyMatch::class)]
 #[UsesClass(\ZtdQuery\Shadow\Mutation\ConflictSearch::class)]
 #[UsesClass(\ZtdQuery\Shadow\Mutation\RowConstraints::class)]
 #[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertColumn::class)]

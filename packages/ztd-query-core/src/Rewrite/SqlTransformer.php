@@ -6,10 +6,10 @@ namespace ZtdQuery\Rewrite;
 
 use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Schema\ColumnDeclaration;
-use ZtdQuery\Schema\IdentityGenerationStrategy;
-use ZtdQuery\Schema\PartialUniqueIndex;
+use ZtdQuery\Schema\Key\IdentityGenerationStrategy;
+use ZtdQuery\Schema\Key\PartialUniqueIndex;
+use ZtdQuery\Schema\Partition\TablePartitioning;
 use ZtdQuery\Schema\TableDefinition;
-use ZtdQuery\Schema\TablePartitioning;
 
 /**
  * Rewrites a statement so that it reads the shadow instead of the database.
