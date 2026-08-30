@@ -28,6 +28,8 @@ final class TraitUseUnitFixtureTest extends TestCase
 
 namespace Tests\Integration\Fixture;
 
+use Tests\Fixture\SomeTestTrait;
+use PHPUnit\Framework\TestCase;
 
 final class TraitUseIntegrationFixtureTest extends TestCase
 {
@@ -41,6 +43,8 @@ final class TraitUseIntegrationFixtureTest extends TestCase
 
 namespace App\Tests;
 
+use Tests\Fixture\SomeTestTrait;
+use PHPUnit\Framework\TestCase;
 
 final class TraitUseOutsideScopeFixtureTest extends TestCase
 {

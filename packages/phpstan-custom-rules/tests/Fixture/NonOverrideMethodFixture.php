@@ -44,6 +44,7 @@ final class NonOverrideMethodFixtureTest extends TestCase
 
 namespace Tests\Integration\Fixture;
 
+use PHPUnit\Framework\TestCase;
 
 final class IntegrationNonOverrideFixtureTest extends TestCase
 {
@@ -64,6 +65,7 @@ final class IntegrationNonOverrideFixtureTest extends TestCase
 
 namespace App\Tests;
 
+use PHPUnit\Framework\TestCase;
 
 final class OutsideScopeNonOverrideFixtureTest extends TestCase
 {
