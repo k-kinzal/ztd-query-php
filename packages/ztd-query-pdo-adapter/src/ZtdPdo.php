@@ -11,6 +11,8 @@ use ReflectionClass;
 use RuntimeException;
 use SensitiveParameter;
 use Traversable;
+use ZtdQuery\Adapter\Pdo\Driver\PdoConnection;
+use ZtdQuery\Adapter\Pdo\Driver\PdoPreparedExecution;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\Platform\SessionFactory;

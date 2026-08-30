@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Fixtures;
 
 use Override;
-use ZtdQuery\Adapter\Mysqli\ConnectionProperties;
+use ZtdQuery\Adapter\Mysqli\Driver\ConnectionProperties;
 
 /**
  * A connection's properties, held as whatever a test needs them to be.

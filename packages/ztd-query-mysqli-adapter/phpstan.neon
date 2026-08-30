@@ -38,7 +38,7 @@ parameters:
         # Related issue: https://github.com/phpstan/phpstan/issues/2553
         #
         # TODO: Remove this excludePath once PHPStan fixes the functionMap for bind_param.
-        - src/MysqliStatementBindingBridge.php
+        - src/Driver/MysqliStatementBindingBridge.php
     ignoreErrors:
         # Same reason as ZtdMysqli::execute_query(): the stub extends mysqli, whose
         # execute_query() only exists from PHP 8.2, so the attribute the rule asks

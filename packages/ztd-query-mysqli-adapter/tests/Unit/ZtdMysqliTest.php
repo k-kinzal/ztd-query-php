@@ -13,8 +13,8 @@ use Tests\Fixtures\RecordingSqlRewriter;
 use Tests\Fixtures\StubMysqli;
 use Tests\Fixtures\StubMysqliResult;
 use Tests\Fixtures\StubMysqliStmt;
-use ZtdQuery\Adapter\Mysqli\ConnectionState;
-use ZtdQuery\Adapter\Mysqli\MysqliConnection;
+use ZtdQuery\Adapter\Mysqli\Driver\ConnectionState;
+use ZtdQuery\Adapter\Mysqli\Driver\MysqliConnection;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqliException;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqliStatement;
@@ -34,7 +34,7 @@ use ZtdQuery\Shadow\ShadowStore;
 #[UsesClass(MysqliConnection::class)]
 #[UsesClass(ZtdMysqliStatement::class)]
 #[UsesClass(ZtdMysqliException::class)]
-#[UsesClass(\ZtdQuery\Adapter\Mysqli\MysqliProperties::class)]
+#[UsesClass(\ZtdQuery\Adapter\Mysqli\Driver\MysqliProperties::class)]
 final class ZtdMysqliTest extends TestCase
 {
     public function testFromMysqliCreatesInstanceWithFactory(): void

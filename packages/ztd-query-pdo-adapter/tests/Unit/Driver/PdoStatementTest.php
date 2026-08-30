@@ -1,0 +1,113 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Driver;
+
+use PDO;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\TestCase;
+use Tests\Fixtures\RecordingColumnTypeResolver;
+use ZtdQuery\Adapter\Pdo\Driver\PdoStatement;
+use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Exception\InvalidDefinitionException;
+use ZtdQuery\Platform\MissingResultColumnTypeResolver;
+use ZtdQuery\Schema\ColumnDeclaration;
+use ZtdQuery\Schema\ColumnTypeFamily;
+
+#[CoversClass(PdoStatement::class)]
+final class PdoStatementTest extends TestCase
+{
+    public function testImplementsStatementInterface(): void
+    {
+        $pdo = new PDO('sqlite::memory:');
+        $pdo->exec('CREATE TABLE t (id INTEGER)');
+        $nativeStmt = $pdo->query('SELECT * FROM t');
+        self::assertNotFalse($nativeStmt);
+
+        $stmt = new PdoStatement($nativeStmt);
+
+        self::assertContains(StatementInterface::class, class_implements($stmt));
+    }
+
+    public function testFetchAllReturnsAssociativeArrays(): void
+    {
+        $pdo = new PDO('sqlite::memory:');
+        $pdo->exec('CREATE TABLE t (id INTEGER, name TEXT)');
+        $pdo->exec("INSERT INTO t VALUES (1, 'a')");
+        $pdo->exec("INSERT INTO t VALUES (2, 'b')");
+
+        $nativeStmt = $pdo->query('SELECT * FROM t ORDER BY id');
+        self::assertNotFalse($nativeStmt);
+
+        $stmt = new PdoStatement($nativeStmt);
+        $rows = $stmt->fetchAll();
+
+        self::assertCount(2, $rows);
+        self::assertSame(1, $rows[0]['id']);
+        self::assertSame('a', $rows[0]['name']);
+    }
+
+    public function testRowCountReturnsAffectedRows(): void
+    {
+        $pdo = new PDO('sqlite::memory:');
+        $pdo->exec('CREATE TABLE t (id INTEGER)');
+        $pdo->exec('INSERT INTO t VALUES (1)');
+        $pdo->exec('INSERT INTO t VALUES (2)');
+
+        $nativeStmt = $pdo->prepare('DELETE FROM t');
+        self::assertNotFalse($nativeStmt);
+        $nativeStmt->execute();
+
+        $stmt = new PdoStatement($nativeStmt);
+
+        self::assertSame(2, $stmt->rowCount());
+    }
+
+    public function testExecuteReturnsTrueOnSuccess(): void
+    {
+        $pdo = new PDO('sqlite::memory:');
+        $pdo->exec('CREATE TABLE t (id INTEGER)');
+
+        $nativeStmt = $pdo->prepare('INSERT INTO t VALUES (1)');
+        self::assertNotFalse($nativeStmt);
+
+        $stmt = new PdoStatement($nativeStmt);
+
+        self::assertTrue($stmt->execute());
+    }
+
+    public function testResultColumnsDelegateTypesForEmptyResult(): void
+    {
+        $pdo = new PDO('sqlite::memory:');
+        $pdo->exec('CREATE TABLE t (id INTEGER, name TEXT, score REAL)');
+        $nativeStmt = $pdo->query('SELECT * FROM t WHERE 1 = 0');
+        self::assertNotFalse($nativeStmt);
+
+        $resolver = new RecordingColumnTypeResolver(
+            new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'),
+            new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
+            new ColumnDeclaration(ColumnTypeFamily::FLOAT, 'REAL'),
+        );
+        $columns = (new PdoStatement($nativeStmt))->resultColumns($resolver);
+
+        self::assertCount(3, $resolver->metadataSeen);
+
+        self::assertSame(['id', 'name', 'score'], array_map(static fn ($column) => $column->name, $columns));
+        self::assertSame(ColumnTypeFamily::INTEGER, $columns[0]->type->family);
+        self::assertSame(ColumnTypeFamily::TEXT, $columns[1]->type->family);
+        self::assertSame(ColumnTypeFamily::FLOAT, $columns[2]->type->family);
+    }
+
+    public function testResultColumnsFailWithoutDialectResolver(): void
+    {
+        $pdo = new PDO('sqlite::memory:');
+        $nativeStmt = $pdo->query('SELECT 1 AS id');
+        self::assertNotFalse($nativeStmt);
+
+        $this->expectException(InvalidDefinitionException::class);
+        $this->expectExceptionMessage('A database platform result column type resolver is required.');
+
+        (new PdoStatement($nativeStmt))->resultColumns(new MissingResultColumnTypeResolver());
+    }
+}

@@ -8,7 +8,7 @@ use PDO;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use ZtdQuery\Adapter\Pdo\PdoConnection;
+use ZtdQuery\Adapter\Pdo\Driver\PdoConnection;
 use ZtdQuery\Adapter\Pdo\PostgreSqlCopy;
 use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 use ZtdQuery\Config\ZtdConfig;
