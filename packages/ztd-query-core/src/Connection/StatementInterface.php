@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ZtdQuery\Connection;
 
 use ZtdQuery\Platform\ResultColumnTypeResolver;
+use ZtdQuery\Schema\TableDefinition;
 
 /**
  * Minimal statement interface for ZTD layer.
@@ -13,13 +14,13 @@ use ZtdQuery\Platform\ResultColumnTypeResolver;
  * to work with the ZTD session. It provides a driver-agnostic API for executing
  * prepared statements and fetching results.
  *
- * A column of a row is a scalar or null. That is what every driver behind this
- * interface hands back and what every driver will take on the way in, so it is
- * declared here, at the edge, and the code inside works with the narrowed type
- * rather than guessing at each step what a row might be holding.
+ * A column of a row is a scalar or null, which is what every driver behind this
+ * interface hands back and what every driver will take on the way in. The row
+ * itself is a row of a table, so its shape is stated with the table definition
+ * and imported here rather than the other way round.
  *
- * @phpstan-type RowValue int|float|string|bool|null
- * @phpstan-type Row array<string, RowValue>
+ * @phpstan-import-type Row from TableDefinition
+ * @phpstan-import-type RowValue from TableDefinition
  */
 interface StatementInterface
 {

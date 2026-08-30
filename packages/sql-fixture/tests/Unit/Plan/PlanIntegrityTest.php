@@ -9,11 +9,11 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\Plan\ColumnRef;
 use SqlFixture\Plan\PlanIntegrity;
-use SqlFixture\Plan\PlanPrinter;
 use SqlFixture\Plan\PlanStructureException;
 use SqlFixture\Plan\Relation;
 use SqlFixture\Plan\RelationKind;
 use SqlFixture\Plan\RelationSide;
+use SqlFixture\Plan\Syntax\PlanPrinter;
 
 #[CoversClass(PlanIntegrity::class)]
 #[UsesClass(ColumnRef::class)]

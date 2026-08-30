@@ -21,9 +21,10 @@ use SqlFaker\Grammar\Lexical\RandomStringGenerator;
 use SqlFaker\Grammar\Source\SqlVersion;
 use SqlFaker\Grammar\Source\SqlVersionRegistry;
 use SqlFaker\Grammar\Source\TokenJoiner;
-use SqlFaker\MySql\LexicalGrammar;
-use SqlFaker\MySql\MySqlTerminalRealizer;
-use SqlFaker\MySql\MySqlTokenizer;
+use SqlFaker\MySql\Lexical\LexicalGrammar;
+use SqlFaker\MySql\Lexical\MySqlTerminalRealizer;
+use SqlFaker\MySql\Lexical\MySqlTokenizer;
+use SqlFaker\MySql\Lexical\MySqlTrivia;
 
 #[CoversClass(LexicalException::class)]
 #[UsesClass(LexicalCatalog::class)]
@@ -41,6 +42,7 @@ use SqlFaker\MySql\MySqlTokenizer;
 #[UsesClass(SqlVersionRegistry::class)]
 #[UsesClass(MySqlTerminalRealizer::class)]
 #[UsesClass(MySqlTokenizer::class)]
+#[UsesClass(MySqlTrivia::class)]
 final class LexicalExceptionTest extends TestCase
 {
     public function testTokenizingUnsupportedInputReportsTheOffsetAndTheInput(): void

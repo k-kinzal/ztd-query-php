@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow\Mutation\Upsert;
 
-use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Schema\TableDefinition;
 
 /**
  * Answers whether a value counts as true, in SQL's three-valued logic.
@@ -15,7 +15,7 @@ use ZtdQuery\Exception\UnsupportedSqlException;
  * false makes an AND false, one true makes an OR true — which is what makes
  * these different from PHP's own operators.
  *
- * @phpstan-import-type RowValue from StatementInterface
+ * @phpstan-import-type RowValue from TableDefinition
  */
 final class UpsertTruth
 {

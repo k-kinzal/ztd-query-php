@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Rewrite;
 
-use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\InvalidDefinitionException;
+use ZtdQuery\Schema\TableDefinition;
 
 /**
  * A dialect-neutral projection of mutation rows returned to the client.
  *
- * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
  */
 final class ReturningProjection
 {

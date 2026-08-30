@@ -11,40 +11,40 @@ use Tests\Fake\FakeStatement;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Connection\StatementInterface;
-use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
-use ZtdQuery\Platform\Postgres\PgSqlCopySupport;
-use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
-use ZtdQuery\Platform\Postgres\PgSqlMutationResolver;
-use ZtdQuery\Platform\Postgres\PgSqlParser;
-use ZtdQuery\Platform\Postgres\PgSqlPartitionParser;
+use ZtdQuery\Platform\Postgres\Dialect\PgSqlCastRenderer;
+use ZtdQuery\Platform\Postgres\Dialect\PgSqlCopySupport;
+use ZtdQuery\Platform\Postgres\Dialect\PgSqlIdentifierQuoter;
+use ZtdQuery\Platform\Postgres\Dialect\PgSqlPdoParameterBindingCompiler;
+use ZtdQuery\Platform\Postgres\Dialect\PgSqlPdoPlaceholderEscaper;
+use ZtdQuery\Platform\Postgres\Dialect\PgSqlPdoResultColumnTypeResolver;
+use ZtdQuery\Platform\Postgres\Parse\PgSqlParser;
+use ZtdQuery\Platform\Postgres\Parse\PgSqlPartitionParser;
+use ZtdQuery\Platform\Postgres\Parse\PgSqlSchemaParser;
 use ZtdQuery\Platform\Postgres\PgSqlPartitionReflector;
-use ZtdQuery\Platform\Postgres\PgSqlPdoParameterBindingCompiler;
-use ZtdQuery\Platform\Postgres\PgSqlPdoPlaceholderEscaper;
-use ZtdQuery\Platform\Postgres\PgSqlPdoResultColumnTypeResolver;
-use ZtdQuery\Platform\Postgres\PgSqlQueryGuard;
-use ZtdQuery\Platform\Postgres\PgSqlRewriter;
-use ZtdQuery\Platform\Postgres\PgSqlSchemaParser;
 use ZtdQuery\Platform\Postgres\PgSqlSchemaReflector;
 use ZtdQuery\Platform\Postgres\PgSqlSessionFactory;
-use ZtdQuery\Platform\Postgres\PgSqlTransformer;
+use ZtdQuery\Platform\Postgres\Rewrite\PgSqlMutationResolver;
+use ZtdQuery\Platform\Postgres\Rewrite\PgSqlQueryGuard;
+use ZtdQuery\Platform\Postgres\Rewrite\PgSqlRewriter;
+use ZtdQuery\Platform\Postgres\Rewrite\PgSqlTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\InsertTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer;
 
 #[CoversClass(PgSqlSessionFactory::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlColumnTypeMapper::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlForeignKeyDefinitionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Dialect\PgSqlColumnTypeMapper::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parse\PgSqlForeignKeyDefinitionParser::class)]
 #[UsesClass(PgSqlParser::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlConflictTarget::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PostgreSqlLexicalMasker::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Statement\PgSqlConflictTarget::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Dialect\PostgreSqlLexicalMasker::class)]
 #[UsesClass(PgSqlSchemaParser::class)]
 #[UsesClass(PgSqlPartitionParser::class)]
 #[UsesClass(PgSqlPartitionReflector::class)]
 #[UsesClass(PgSqlQueryGuard::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlReadOnlyDiagnosticStatement::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\PgSqlReadOnlyDiagnosticStatement::class)]
 #[UsesClass(PgSqlRewriter::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parse\PgSqlSelectRelationParser::class)]
 #[UsesClass(PgSqlMutationResolver::class)]
 #[UsesClass(PgSqlTransformer::class)]
 #[UsesClass(PgSqlSchemaReflector::class)]
@@ -53,27 +53,27 @@ use ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer;
 #[UsesClass(PgSqlPdoParameterBindingCompiler::class)]
 #[UsesClass(PgSqlPdoPlaceholderEscaper::class)]
 #[UsesClass(PgSqlPdoResultColumnTypeResolver::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlValueRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Dialect\PgSqlValueRenderer::class)]
 #[UsesClass(PgSqlIdentifierQuoter::class)]
 #[UsesClass(SelectTransformer::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlTableSampleParser::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlTableSampleRewriter::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parse\PgSqlTableSampleParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\PgSqlTableSampleRewriter::class)]
 #[UsesClass(InsertTransformer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\InsertRowRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\InsertSelectRenderer::class)]
 #[UsesClass(UpdateTransformer::class)]
 #[UsesClass(DeleteTransformer::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlNativeUpsertProjector::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlViewDefinitionParser::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlViewShadowRenderer::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlGeneratedColumnProjector::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlPartitionPredicateRenderer::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlReturningProjectionParser::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlUpsertExpressionParser::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlUpsertExpressionCursor::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlUpsertLiteral::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\PgSqlCteShadowComposer::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\PgSqlNativeUpsertProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parse\PgSqlViewDefinitionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\PgSqlViewShadowRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\PgSqlGeneratedColumnProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\PgSqlPartitionPredicateRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parse\PgSqlReturningProjectionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parse\PgSqlUpsertExpressionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Dialect\PgSqlLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parse\PgSqlUpsertExpressionCursor::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parse\PgSqlUpsertLiteral::class)]
 final class PgSqlSessionFactoryTest extends TestCase
 {
     public function testCreateRegistersReflectedPartitionMetadata(): void

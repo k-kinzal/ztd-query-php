@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow;
 
-use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Shadow\Row\RowMatch;
 
 /**
@@ -14,7 +14,7 @@ use ZtdQuery\Shadow\Row\RowMatch;
  * of the parent may carry the same values — the key need not be unique — and
  * while one does, the children still reference something that exists.
  *
- * @phpstan-import-type RowValue from StatementInterface
+ * @phpstan-import-type RowValue from TableDefinition
  */
 final class ParentKeyLookup
 {

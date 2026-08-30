@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow;
 
-use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\ForeignKeyViolationException;
+use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\Mutation\DataMutation;
 use ZtdQuery\Shadow\Mutation\ShadowMutation;
@@ -19,7 +19,7 @@ use ZtdQuery\Shadow\Mutation\ShadowMutation;
  * nothing more follows, and only then is the result checked for the references
  * it has left dangling.
  *
- * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
  */
 final class ReferentialIntegrityEnforcer
 {

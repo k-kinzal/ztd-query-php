@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow\Mutation;
 
-use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\DuplicateKeyException;
 use ZtdQuery\Exception\NotNullViolationException;
 use ZtdQuery\Schema\TableDefinition;
@@ -15,7 +14,7 @@ use ZtdQuery\Shadow\ShadowStore;
 /**
  * Replaces a table with a database-evaluated complete result set.
  *
- * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
  */
 final class SynchronizeMutation implements DataMutation
 {

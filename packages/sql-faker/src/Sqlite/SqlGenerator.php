@@ -17,6 +17,7 @@ use SqlFaker\Grammar\Walk\GenerationException;
 use SqlFaker\Grammar\Walk\GenerationPlan;
 use SqlFaker\Grammar\Walk\TerminationAnalyzer;
 use SqlFaker\Sqlite\Grammar\SqliteGrammar;
+use SqlFaker\Sqlite\Lexical\LexicalGrammar;
 
 /**
  * Grammar-driven SQL generator for SQLite.

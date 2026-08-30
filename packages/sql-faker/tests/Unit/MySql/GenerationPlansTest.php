@@ -12,12 +12,14 @@ use SqlFaker\Grammar\Walk\GenerationPlan;
 use SqlFaker\MySql\GenerationPlans;
 use SqlFaker\MySql\Grammar\Grammar;
 use SqlFaker\MySql\Grammar\ProductionRule;
+use SqlFaker\MySql\MySqlLexicalPlans;
 
 #[CoversClass(GenerationPlans::class)]
 #[UsesClass(GenerationPlan::class)]
 #[UsesClass(ProductionPattern::class)]
 #[UsesClass(Grammar::class)]
 #[UsesClass(ProductionRule::class)]
+#[UsesClass(MySqlLexicalPlans::class)]
 final class GenerationPlansTest extends TestCase
 {
     public function testWithoutEmptyRowsConstrainsEveryOptionalValuesOccurrence(): void
@@ -286,7 +288,7 @@ final class GenerationPlansTest extends TestCase
 
     public function testQuotedIdentifierPlansThatLexeme(): void
     {
-        $plan = GenerationPlans::quotedIdentifier(1, 2);
+        $plan = MySqlLexicalPlans::quotedIdentifier(1, 2);
 
         self::assertSame('quoted_identifier', $plan->lexicalTarget());
         self::assertSame(['minLength' => 1, 'maxLength' => 2], $plan->parameters());
@@ -294,7 +296,7 @@ final class GenerationPlansTest extends TestCase
 
     public function testStringLiteralPlansThatLexeme(): void
     {
-        $plan = GenerationPlans::stringLiteral(1, 2);
+        $plan = MySqlLexicalPlans::stringLiteral(1, 2);
 
         self::assertSame('string_literal', $plan->lexicalTarget());
         self::assertSame(['minLength' => 1, 'maxLength' => 2], $plan->parameters());
@@ -302,7 +304,7 @@ final class GenerationPlansTest extends TestCase
 
     public function testNationalStringLiteralPlansThatLexeme(): void
     {
-        $plan = GenerationPlans::nationalStringLiteral(1, 2);
+        $plan = MySqlLexicalPlans::nationalStringLiteral(1, 2);
 
         self::assertSame('national_string_literal', $plan->lexicalTarget());
         self::assertSame(['minLength' => 1, 'maxLength' => 2], $plan->parameters());
@@ -310,7 +312,7 @@ final class GenerationPlansTest extends TestCase
 
     public function testDollarQuotedStringPlansThatLexeme(): void
     {
-        $plan = GenerationPlans::dollarQuotedString(1, 2);
+        $plan = MySqlLexicalPlans::dollarQuotedString(1, 2);
 
         self::assertSame('dollar_quoted_string', $plan->lexicalTarget());
         self::assertSame(['minLength' => 1, 'maxLength' => 2], $plan->parameters());
@@ -318,7 +320,7 @@ final class GenerationPlansTest extends TestCase
 
     public function testIntegerLiteralPlansThatLexeme(): void
     {
-        $plan = GenerationPlans::integerLiteral(1, 2);
+        $plan = MySqlLexicalPlans::integerLiteral(1, 2);
 
         self::assertSame('integer_literal', $plan->lexicalTarget());
         self::assertSame(['min' => 1, 'max' => 2], $plan->parameters());
@@ -326,7 +328,7 @@ final class GenerationPlansTest extends TestCase
 
     public function testLongIntegerLiteralPlansThatLexeme(): void
     {
-        $plan = GenerationPlans::longIntegerLiteral(1, 2);
+        $plan = MySqlLexicalPlans::longIntegerLiteral(1, 2);
 
         self::assertSame('long_integer_literal', $plan->lexicalTarget());
         self::assertSame(['min' => 1, 'max' => 2], $plan->parameters());
@@ -334,7 +336,7 @@ final class GenerationPlansTest extends TestCase
 
     public function testUnsignedBigIntLiteralPlansThatLexeme(): void
     {
-        $plan = GenerationPlans::unsignedBigIntLiteral(1, 2);
+        $plan = MySqlLexicalPlans::unsignedBigIntLiteral(1, 2);
 
         self::assertSame('unsigned_big_int_literal', $plan->lexicalTarget());
         self::assertSame(['minLength' => 1, 'maxLength' => 2], $plan->parameters());
@@ -342,7 +344,7 @@ final class GenerationPlansTest extends TestCase
 
     public function testDecimalLiteralPlansThatLexeme(): void
     {
-        $plan = GenerationPlans::decimalLiteral(1, 2);
+        $plan = MySqlLexicalPlans::decimalLiteral(1, 2);
 
         self::assertSame('decimal_literal', $plan->lexicalTarget());
         self::assertSame(['precision' => 1, 'scale' => 2], $plan->parameters());
@@ -350,7 +352,7 @@ final class GenerationPlansTest extends TestCase
 
     public function testFloatLiteralPlansThatLexeme(): void
     {
-        $plan = GenerationPlans::floatLiteral(1, 2, 3, 4);
+        $plan = MySqlLexicalPlans::floatLiteral(1, 2, 3, 4);
 
         self::assertSame('float_literal', $plan->lexicalTarget());
         self::assertSame(['precision' => 1, 'scale' => 2, 'minExponent' => 3, 'maxExponent' => 4], $plan->parameters());
@@ -358,7 +360,7 @@ final class GenerationPlansTest extends TestCase
 
     public function testHexLiteralPlansThatLexeme(): void
     {
-        $plan = GenerationPlans::hexLiteral(1, 2);
+        $plan = MySqlLexicalPlans::hexLiteral(1, 2);
 
         self::assertSame('hex_literal', $plan->lexicalTarget());
         self::assertSame(['minLength' => 1, 'maxLength' => 2], $plan->parameters());
@@ -366,7 +368,7 @@ final class GenerationPlansTest extends TestCase
 
     public function testQuotedHexLiteralPlansThatLexeme(): void
     {
-        $plan = GenerationPlans::quotedHexLiteral(1, 2);
+        $plan = MySqlLexicalPlans::quotedHexLiteral(1, 2);
 
         self::assertSame('quoted_hex_literal', $plan->lexicalTarget());
         self::assertSame(['minBytes' => 1, 'maxBytes' => 2], $plan->parameters());
@@ -374,7 +376,7 @@ final class GenerationPlansTest extends TestCase
 
     public function testBinaryLiteralPlansThatLexeme(): void
     {
-        $plan = GenerationPlans::binaryLiteral(1, 2);
+        $plan = MySqlLexicalPlans::binaryLiteral(1, 2);
 
         self::assertSame('binary_literal', $plan->lexicalTarget());
         self::assertSame(['minLength' => 1, 'maxLength' => 2], $plan->parameters());
@@ -382,7 +384,7 @@ final class GenerationPlansTest extends TestCase
 
     public function testHostnamePlansThatLexeme(): void
     {
-        $plan = GenerationPlans::hostname(1, 2, 3);
+        $plan = MySqlLexicalPlans::hostname(1, 2, 3);
 
         self::assertSame('hostname', $plan->lexicalTarget());
         self::assertSame(['minParts' => 1, 'maxParts' => 2, 'maxPartLength' => 3], $plan->parameters());

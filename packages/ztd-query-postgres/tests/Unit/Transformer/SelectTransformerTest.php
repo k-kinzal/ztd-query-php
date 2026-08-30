@@ -9,11 +9,11 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use Tests\Contract\TransformerContractTest;
 use Tests\Fixture\DriverAnswer;
-use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
-use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
-use ZtdQuery\Platform\Postgres\PgSqlTableSample;
-use ZtdQuery\Platform\Postgres\PgSqlTableSampleParser;
-use ZtdQuery\Platform\Postgres\PgSqlTableSampleRewriter;
+use ZtdQuery\Platform\Postgres\Dialect\PgSqlCastRenderer;
+use ZtdQuery\Platform\Postgres\Dialect\PgSqlIdentifierQuoter;
+use ZtdQuery\Platform\Postgres\Parse\PgSqlTableSampleParser;
+use ZtdQuery\Platform\Postgres\Rewrite\PgSqlTableSampleRewriter;
+use ZtdQuery\Platform\Postgres\Statement\PgSqlTableSample;
 use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
 use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Rewrite\SqlTransformer;
@@ -21,16 +21,16 @@ use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(SelectTransformer::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parse\PgSqlSelectRelationParser::class)]
 #[UsesClass(PgSqlCastRenderer::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlValueRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Dialect\PgSqlValueRenderer::class)]
 #[UsesClass(PgSqlIdentifierQuoter::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlGeneratedColumnProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\PgSqlCteShadowComposer::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\PgSqlGeneratedColumnProjector::class)]
 #[UsesClass(PgSqlTableSampleParser::class)]
 #[UsesClass(PgSqlTableSampleRewriter::class)]
 #[UsesClass(PgSqlTableSample::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Dialect\PgSqlLexerProfile::class)]
 final class SelectTransformerTest extends TransformerContractTest
 {
     public function testTableSampleReadsFromGeneratedShadowCte(): void

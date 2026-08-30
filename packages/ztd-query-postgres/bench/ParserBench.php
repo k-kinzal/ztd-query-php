@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Bench;
 
-use ZtdQuery\Platform\Postgres\PgSqlParser;
+use ZtdQuery\Platform\Postgres\Parse\PgSqlParser;
 
 final class ParserBench
 {
