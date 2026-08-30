@@ -11,6 +11,7 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\Postgres\Dialect\PgSqlCastRenderer;
 use ZtdQuery\Platform\Postgres\Dialect\PgSqlIdentifierQuoter;
 use ZtdQuery\Platform\Postgres\Parse\PgSqlParser;
+use ZtdQuery\Platform\Postgres\Parse\PgSqlWithPrefix;
 use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer;
 use ZtdQuery\Schema\ColumnDeclaration;
@@ -29,6 +30,7 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 #[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\PgSqlCteShadowComposer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\PgSqlGeneratedColumnProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\Dialect\PgSqlLexerProfile::class)]
+#[UsesClass(PgSqlWithPrefix::class)]
 final class UpdateTransformerTest extends TestCase
 {
     public function testBuildProjectionSimpleUpdate(): void

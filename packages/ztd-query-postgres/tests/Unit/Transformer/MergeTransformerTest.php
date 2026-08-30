@@ -13,6 +13,7 @@ use ZtdQuery\Platform\Postgres\Dialect\PgSqlIdentifierQuoter;
 use ZtdQuery\Platform\Postgres\Dialect\PgSqlValueRenderer;
 use ZtdQuery\Platform\Postgres\Parse\PgSqlMergeParser;
 use ZtdQuery\Platform\Postgres\Parse\PgSqlTableSampleParser;
+use ZtdQuery\Platform\Postgres\Parse\PgSqlWithPrefix;
 use ZtdQuery\Platform\Postgres\Rewrite\PgSqlTableSampleRewriter;
 use ZtdQuery\Platform\Postgres\Statement\PgSqlMergeActionKind;
 use ZtdQuery\Platform\Postgres\Statement\PgSqlMergeClause;
@@ -42,6 +43,7 @@ use ZtdQuery\Schema\IdentityGenerationStrategy;
 #[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\InsertRowRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\Parse\PgSqlSelectRelationParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\Dialect\PgSqlLexerProfile::class)]
+#[UsesClass(PgSqlWithPrefix::class)]
 final class MergeTransformerTest extends TestCase
 {
     public function testTransformsMixedUpdateAndInsertIntoCompleteTargetState(): void
