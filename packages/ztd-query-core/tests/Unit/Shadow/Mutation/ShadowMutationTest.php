@@ -7,12 +7,12 @@ namespace Tests\Unit\Shadow\Mutation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use Tests\Contract\MutationContractTest;
-use ZtdQuery\Schema\CandidateKeySet;
-use ZtdQuery\Shadow\Mutation\DeleteMutation;
-use ZtdQuery\Shadow\Mutation\InsertMutation;
+use ZtdQuery\Schema\Key\CandidateKeySet;
 use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
-use ZtdQuery\Shadow\Mutation\TruncateMutation;
-use ZtdQuery\Shadow\Mutation\UpdateMutation;
+use ZtdQuery\Shadow\Mutation\Row\DeleteMutation;
+use ZtdQuery\Shadow\Mutation\Row\InsertMutation;
+use ZtdQuery\Shadow\Mutation\Row\UpdateMutation;
+use ZtdQuery\Shadow\Mutation\Table\TruncateMutation;
 use ZtdQuery\Shadow\ShadowStore;
 
 #[CoversClass(InsertMutation::class)]

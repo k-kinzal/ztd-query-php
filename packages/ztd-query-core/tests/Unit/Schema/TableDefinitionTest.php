@@ -7,17 +7,17 @@ namespace Tests\Unit\Schema;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use ZtdQuery\Schema\CandidateKeySet;
 use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
-use ZtdQuery\Schema\ForeignKeyDefinition;
-use ZtdQuery\Schema\IdentityGenerationStrategy;
-use ZtdQuery\Schema\PartialUniqueIndex;
+use ZtdQuery\Schema\Key\CandidateKeySet;
+use ZtdQuery\Schema\Key\ForeignKeyDefinition;
+use ZtdQuery\Schema\Key\IdentityGenerationStrategy;
+use ZtdQuery\Schema\Key\PartialUniqueIndex;
+use ZtdQuery\Schema\Partition\TablePartitioning;
+use ZtdQuery\Schema\Partition\TablePartitionKey;
+use ZtdQuery\Schema\Partition\TablePartitionRelation;
+use ZtdQuery\Schema\Partition\TablePartitionStrategy;
 use ZtdQuery\Schema\TableDefinition;
-use ZtdQuery\Schema\TablePartitioning;
-use ZtdQuery\Schema\TablePartitionKey;
-use ZtdQuery\Schema\TablePartitionRelation;
-use ZtdQuery\Schema\TablePartitionStrategy;
 
 #[UsesClass(ColumnDeclaration::class)]
 #[UsesClass(CandidateKeySet::class)]

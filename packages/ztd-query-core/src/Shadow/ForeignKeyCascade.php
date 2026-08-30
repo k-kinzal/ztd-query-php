@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace ZtdQuery\Shadow;
 
 use ZtdQuery\Exception\ForeignKeyViolationException;
-use ZtdQuery\Schema\ForeignKeyDefinition;
-use ZtdQuery\Schema\ReferentialAction;
+use ZtdQuery\Schema\Key\ForeignKeyDefinition;
+use ZtdQuery\Schema\Key\ReferentialAction;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Shadow\Row\RowChange;
 use ZtdQuery\Shadow\Row\RowMatch;

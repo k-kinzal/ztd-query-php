@@ -10,12 +10,12 @@ use PHPUnit\Framework\TestCase;
 use Tests\Fake\FakeSqlRewriter;
 use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\Connection\ResultSet;
-use ZtdQuery\Schema\IdentityGenerationStrategy;
+use ZtdQuery\Schema\Key\IdentityGenerationStrategy;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
-use ZtdQuery\Shadow\Mutation\DeleteMutation;
-use ZtdQuery\Shadow\Mutation\InsertMutation;
 use ZtdQuery\Shadow\Mutation\MutationImpact;
+use ZtdQuery\Shadow\Mutation\Row\DeleteMutation;
+use ZtdQuery\Shadow\Mutation\Row\InsertMutation;
 use ZtdQuery\Shadow\ReferentialIntegrityEnforcer;
 use ZtdQuery\Shadow\ShadowApplication;
 use ZtdQuery\Shadow\ShadowStore;
@@ -31,9 +31,9 @@ use ZtdQuery\Shadow\ShadowStore;
 #[UsesClass(ResultSet::class)]
 #[UsesClass(DatabaseException::class)]
 #[UsesClass(\ZtdQuery\Exception\DuplicateKeyException::class)]
-#[UsesClass(\ZtdQuery\Schema\CandidateKeyConflict::class)]
-#[UsesClass(\ZtdQuery\Schema\CandidateKeyMatch::class)]
-#[UsesClass(\ZtdQuery\Schema\CandidateKeySet::class)]
+#[UsesClass(\ZtdQuery\Schema\Key\CandidateKeyConflict::class)]
+#[UsesClass(\ZtdQuery\Schema\Key\CandidateKeyMatch::class)]
+#[UsesClass(\ZtdQuery\Schema\Key\CandidateKeySet::class)]
 #[UsesClass(\ZtdQuery\Shadow\ForeignKeyCascade::class)]
 #[UsesClass(\ZtdQuery\Shadow\ForeignKeyEnds::class)]
 #[UsesClass(\ZtdQuery\Shadow\ForeignKeyIntegrity::class)]

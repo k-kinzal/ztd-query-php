@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Fake;
 
-use ZtdQuery\Schema\ForeignKeyDefinition;
-use ZtdQuery\Schema\ReferentialAction;
+use ZtdQuery\Schema\Key\ForeignKeyDefinition;
+use ZtdQuery\Schema\Key\ReferentialAction;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
