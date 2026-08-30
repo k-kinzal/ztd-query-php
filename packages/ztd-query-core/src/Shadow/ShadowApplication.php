@@ -11,7 +11,7 @@ use ZtdQuery\Rewrite\RewriteStateCommitter;
 use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\Mutation\MutationImpact;
-use ZtdQuery\Shadow\Mutation\ResultSetMutation;
+use ZtdQuery\Shadow\Mutation\Row\ResultSetMutation;
 use ZtdQuery\Shadow\Mutation\ShadowMutation;
 
 /**

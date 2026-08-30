@@ -7,7 +7,7 @@ namespace Tests\Unit\Rewrite;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Rewrite\ShadowIdentityAllocator;
-use ZtdQuery\Schema\IdentityGenerationStrategy;
+use ZtdQuery\Schema\Key\IdentityGenerationStrategy;
 
 #[CoversClass(ShadowIdentityAllocator::class)]
 final class ShadowIdentityAllocatorTest extends TestCase

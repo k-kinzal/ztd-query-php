@@ -4,6 +4,14 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Schema;
 
+use ZtdQuery\Schema\Key\CandidateKeySet;
+use ZtdQuery\Schema\Key\ForeignKeyDefinition;
+use ZtdQuery\Schema\Key\IdentityGenerationStrategy;
+use ZtdQuery\Schema\Key\PartialUniqueIndex;
+use ZtdQuery\Schema\Partition\TablePartitioning;
+use ZtdQuery\Schema\Partition\TablePartitionKey;
+use ZtdQuery\Schema\Partition\TablePartitionRelation;
+
 /**
  * Structured representation of a table's schema metadata. *
  * A row of this table is a map of column name to value, and a value is a scalar

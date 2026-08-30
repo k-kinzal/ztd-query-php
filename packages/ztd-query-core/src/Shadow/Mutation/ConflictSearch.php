@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace ZtdQuery\Shadow\Mutation;
 
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Schema\CandidateKeyConflict;
-use ZtdQuery\Schema\CandidateKeySet;
+use ZtdQuery\Schema\Key\CandidateKeyConflict;
+use ZtdQuery\Schema\Key\CandidateKeySet;
 use ZtdQuery\Schema\TableDefinition;
 
 /**

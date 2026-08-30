@@ -8,8 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Schema\CandidateKeyConflict;
-use ZtdQuery\Schema\CandidateKeySet;
+use ZtdQuery\Schema\Key\CandidateKeyConflict;
+use ZtdQuery\Schema\Key\CandidateKeySet;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Shadow\Mutation\UpsertColumnSource;
 use ZtdQuery\Shadow\Mutation\UpsertExpression;
@@ -26,7 +26,7 @@ use ZtdQuery\Shadow\ShadowStore;
 #[UsesClass(UpsertExpression::class)]
 #[UsesClass(UpsertMutationRow::class)]
 #[CoversClass(UpsertMutation::class)]
-#[UsesClass(\ZtdQuery\Schema\CandidateKeyMatch::class)]
+#[UsesClass(\ZtdQuery\Schema\Key\CandidateKeyMatch::class)]
 #[UsesClass(\ZtdQuery\Shadow\Mutation\ConflictSearch::class)]
 #[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertColumn::class)]
 #[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertComparison::class)]
