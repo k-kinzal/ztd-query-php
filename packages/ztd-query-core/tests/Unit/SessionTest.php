@@ -24,6 +24,7 @@ use ZtdQuery\Platform\ResultColumnTypeResolver;
 use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
+use ZtdQuery\RewriteRefusal;
 use ZtdQuery\Schema\Key\CandidateKeySet;
 use ZtdQuery\Schema\Key\ForeignKeyDefinition;
 use ZtdQuery\Schema\TableDefinition;
@@ -33,6 +34,7 @@ use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
 use ZtdQuery\Shadow\Mutation\Row\InsertMutation;
 use ZtdQuery\Shadow\Mutation\Row\UpdateMutation;
 use ZtdQuery\Shadow\ReferentialIntegrityEnforcer;
+use ZtdQuery\Shadow\Row\RowPairing;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTransactions;
 use ZtdQuery\Sql\TransactionStatement;
@@ -72,6 +74,8 @@ use ZtdQuery\Sql\TransactionStatement;
 #[UsesClass(\ZtdQuery\Shadow\Row\RowMultiset::class)]
 #[UsesClass(\ZtdQuery\Shadow\Row\TableTransition::class)]
 #[UsesClass(\ZtdQuery\Shadow\TableTransitions::class)]
+#[UsesClass(RewriteRefusal::class)]
+#[UsesClass(RowPairing::class)]
 final class SessionTest extends TestCase
 {
     public function testDisableEnableDisableEnableAndDisable(): void

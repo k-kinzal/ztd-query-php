@@ -10,6 +10,10 @@ use PHPUnit\Framework\TestCase;
 use Tests\Fake\FakeSqlLexerProfiles;
 use ZtdQuery\Sql\LexicalDelimiters;
 use ZtdQuery\Sql\LexicalPattern;
+use ZtdQuery\Sql\Profile\SqlCommentProfile;
+use ZtdQuery\Sql\Profile\SqlParameterProfile;
+use ZtdQuery\Sql\Profile\SqlQuoteProfile;
+use ZtdQuery\Sql\Profile\SqlSymbolProfile;
 use ZtdQuery\Sql\Reader\SqlBlockCommentReader;
 use ZtdQuery\Sql\SqlLexerProfile;
 
@@ -17,6 +21,10 @@ use ZtdQuery\Sql\SqlLexerProfile;
 #[UsesClass(SqlLexerProfile::class)]
 #[UsesClass(LexicalDelimiters::class)]
 #[UsesClass(LexicalPattern::class)]
+#[UsesClass(SqlCommentProfile::class)]
+#[UsesClass(SqlParameterProfile::class)]
+#[UsesClass(SqlQuoteProfile::class)]
+#[UsesClass(SqlSymbolProfile::class)]
 final class SqlBlockCommentReaderTest extends TestCase
 {
     public function testEndAtAnswersNothingWhereNoCommentBegins(): void

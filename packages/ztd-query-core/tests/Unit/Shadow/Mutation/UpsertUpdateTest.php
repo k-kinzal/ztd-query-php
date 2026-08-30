@@ -9,6 +9,8 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Shadow\Mutation\Upsert\UpsertColumn;
+use ZtdQuery\Shadow\Mutation\Upsert\UpsertComparison;
+use ZtdQuery\Shadow\Mutation\Upsert\UpsertNumber;
 use ZtdQuery\Shadow\Mutation\Upsert\UpsertOperator;
 use ZtdQuery\Shadow\Mutation\Upsert\UpsertTruth;
 use ZtdQuery\Shadow\Mutation\UpsertColumnSource;
@@ -23,6 +25,9 @@ use ZtdQuery\Shadow\Mutation\UpsertUpdate;
 #[UsesClass(UpsertColumn::class)]
 #[UsesClass(UpsertOperator::class)]
 #[UsesClass(UpsertTruth::class)]
+#[UsesClass(UnsupportedSqlException::class)]
+#[UsesClass(UpsertComparison::class)]
+#[UsesClass(UpsertNumber::class)]
 final class UpsertUpdateTest extends TestCase
 {
     public function testIncomingRowLeavesARowAloneWhereTheDatabaseWorkedNothingOut(): void

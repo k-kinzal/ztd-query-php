@@ -8,6 +8,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Tests\Fake\FakeSqlLexerProfiles;
+use ZtdQuery\Sql\Profile\SqlCommentProfile;
+use ZtdQuery\Sql\Profile\SqlParameterProfile;
+use ZtdQuery\Sql\Profile\SqlQuoteProfile;
+use ZtdQuery\Sql\Profile\SqlSymbolProfile;
 use ZtdQuery\Sql\SqlLexerProfile;
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
@@ -24,6 +28,10 @@ use ZtdQuery\Sql\SqlTokenScanner;
 #[UsesClass(SqlLexerProfile::class)]
 #[UsesClass(\ZtdQuery\Sql\LexicalDelimiters::class)]
 #[UsesClass(\ZtdQuery\Sql\LexicalPattern::class)]
+#[UsesClass(SqlCommentProfile::class)]
+#[UsesClass(SqlParameterProfile::class)]
+#[UsesClass(SqlQuoteProfile::class)]
+#[UsesClass(SqlSymbolProfile::class)]
 final class SqlTokenScannerTest extends TestCase
 {
     public function testScanLosesNothingOfTheStatementItRead(): void
