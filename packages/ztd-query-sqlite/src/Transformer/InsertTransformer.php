@@ -136,7 +136,7 @@ final class InsertTransformer implements SqlTransformer
      * @param list<string> $insertColumns The insert columns
      * @param array<string, ColumnDeclaration> $columnTypes The column types
      * @param array<string, string> $columnDefaults The column defaults
-     * @param array<string, \ZtdQuery\Schema\IdentityGenerationStrategy> $identityStrategies The identity strategies
+     * @param array<string, \ZtdQuery\Schema\Key\IdentityGenerationStrategy> $identityStrategies The identity strategies
      * @param list<array<string, RenderableValue>> $existingRows The existing rows
      *
      * @return string What it answers
@@ -209,7 +209,7 @@ final class InsertTransformer implements SqlTransformer
      * @param list<string> $insertColumns The insert columns
      * @param array<string, ColumnDeclaration> $columnTypes The column types
      * @param array<string, string> $columnDefaults The column defaults
-     * @param array<string, \ZtdQuery\Schema\IdentityGenerationStrategy> $identityStrategies The identity strategies
+     * @param array<string, \ZtdQuery\Schema\Key\IdentityGenerationStrategy> $identityStrategies The identity strategies
      * @param list<array<string, RenderableValue>> $existingRows The existing rows
      *
      * @return string What it answers

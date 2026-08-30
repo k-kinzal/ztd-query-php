@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\Sqlite\Parse;
 
 use ZtdQuery\Platform\Sqlite\Dialect\SqliteLexerProfile;
-use ZtdQuery\Schema\ForeignKeyDefinition;
-use ZtdQuery\Schema\ReferentialAction;
+use ZtdQuery\Schema\Key\ForeignKeyDefinition;
+use ZtdQuery\Schema\Key\ReferentialAction;
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;

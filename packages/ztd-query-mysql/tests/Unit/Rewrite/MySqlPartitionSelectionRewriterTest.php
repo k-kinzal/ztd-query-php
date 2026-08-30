@@ -11,7 +11,7 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\Dialect\MySqlLexerProfile;
 use ZtdQuery\Platform\MySql\Parse\MySqlSelectRelationParser;
 use ZtdQuery\Platform\MySql\Rewrite\MySqlPartitionSelectionRewriter;
-use ZtdQuery\Schema\TablePartitioning;
+use ZtdQuery\Schema\Partition\TablePartitioning;
 use ZtdQuery\Sql\SqlTokenStream;
 
 #[CoversClass(MySqlPartitionSelectionRewriter::class)]
