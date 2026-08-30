@@ -7,7 +7,7 @@ namespace ZtdQuery\Platform\MySql\Parse;
 use PhpMyAdmin\SqlParser\Components\PartitionDefinition;
 use PhpMyAdmin\SqlParser\Statements\CreateStatement;
 use ZtdQuery\Platform\MySql\Dialect\MySqlLexerProfile;
-use ZtdQuery\Schema\TablePartitioning;
+use ZtdQuery\Schema\Partition\TablePartitioning;
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;

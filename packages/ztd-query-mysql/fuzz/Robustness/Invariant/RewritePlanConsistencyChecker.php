@@ -8,8 +8,8 @@ use ZtdQuery\Exception\SimulationException;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
-use ZtdQuery\Shadow\Mutation\MultiDeleteMutation;
-use ZtdQuery\Shadow\Mutation\MultiUpdateMutation;
+use ZtdQuery\Shadow\Mutation\Row\MultiDeleteMutation;
+use ZtdQuery\Shadow\Mutation\Row\MultiUpdateMutation;
 
 /**
  * The rewrite plan consistency checker, as invariant checker.

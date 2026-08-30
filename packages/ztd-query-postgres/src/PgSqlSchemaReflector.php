@@ -9,7 +9,7 @@ use ZtdQuery\Platform\Postgres\Dialect\PgSqlIdentifierQuoter;
 use ZtdQuery\Platform\Postgres\Parse\PgSqlViewDefinitionParser;
 use ZtdQuery\Platform\SchemaReflector;
 use ZtdQuery\Platform\ViewReflector;
-use ZtdQuery\Schema\PartialUniqueIndex;
+use ZtdQuery\Schema\Key\PartialUniqueIndex;
 
 /**
  * Fetches PostgreSQL schema information via information_schema queries.
