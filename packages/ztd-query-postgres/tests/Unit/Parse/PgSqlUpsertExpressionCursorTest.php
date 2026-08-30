@@ -146,4 +146,55 @@ final class PgSqlUpsertExpressionCursorTest extends TestCase
             PgSqlUpsertExpressionCursor::over('qty + 1', 'items')->unsupported()->getSql(),
         );
     }
+
+    public function testRemainingAnswersEverythingNotReadYet(): void
+    {
+        $cursor = PgSqlUpsertExpressionCursor::over('a + b', 'target');
+
+        self::assertCount(3, $cursor->remaining());
+
+        $cursor->advance();
+
+        self::assertCount(2, $cursor->remaining());
+    }
+
+    public function testRemainingAnswersNothingOnceEverythingIsRead(): void
+    {
+        $cursor = PgSqlUpsertExpressionCursor::over('a', 'target');
+        $cursor->advance();
+
+        self::assertSame([], $cursor->remaining());
+    }
+
+    public function testInsideBracketsAnswersWhatTheGroupHoldsAndReadsPastIt(): void
+    {
+        $cursor = PgSqlUpsertExpressionCursor::over('(a + b) + c', 'target');
+
+        $inside = $cursor->insideBrackets();
+
+        self::assertCount(3, $inside->remaining());
+        self::assertCount(2, $cursor->remaining());
+    }
+
+    public function testInsideBracketsCountsTheGroupsOfItsOwn(): void
+    {
+        $cursor = PgSqlUpsertExpressionCursor::over('((a))', 'target');
+
+        self::assertCount(3, $cursor->insideBrackets()->remaining());
+        self::assertTrue($cursor->atEnd());
+    }
+
+    public function testInsideBracketsRefusesWhereNoGroupBegins(): void
+    {
+        $this->expectException(UnsupportedSqlException::class);
+
+        PgSqlUpsertExpressionCursor::over('a', 'target')->insideBrackets();
+    }
+
+    public function testInsideBracketsRefusesAGroupThatNeverCloses(): void
+    {
+        $this->expectException(UnsupportedSqlException::class);
+
+        PgSqlUpsertExpressionCursor::over('(a', 'target')->insideBrackets();
+    }
 }
