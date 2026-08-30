@@ -15,6 +15,7 @@ use ZtdQuery\Platform\MySql\Transformer\MySqlDeleteClauses;
 
 #[CoversClass(MySqlDeleteClauses::class)]
 #[UsesClass(MySqlComponentSql::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlLexerProfile::class)]
 #[UsesClass(DmlWhereClauseExtractor::class)]
 final class MySqlDeleteClausesTest extends TestCase
 {
