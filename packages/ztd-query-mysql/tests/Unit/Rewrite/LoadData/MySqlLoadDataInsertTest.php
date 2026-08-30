@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Rewrite;
+namespace Tests\Unit\Rewrite\LoadData;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Tests\Fixture\MySqlLoadStatements;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\Dialect\MySqlIdentifierQuoter;
-use ZtdQuery\Platform\MySql\Rewrite\MySqlLoadDataInsert;
+use ZtdQuery\Platform\MySql\Rewrite\LoadData\MySqlLoadDataInsert;
 
 #[CoversClass(MySqlLoadDataInsert::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]

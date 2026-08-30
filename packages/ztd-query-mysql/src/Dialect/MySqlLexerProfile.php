@@ -6,8 +6,8 @@ namespace ZtdQuery\Platform\MySql\Dialect;
 
 use PhpMyAdmin\SqlParser\Context;
 use ZtdQuery\Sql\Profile\SqlCommentProfile;
-use ZtdQuery\Sql\Profile\SqlQuoteProfile;
 use ZtdQuery\Sql\Profile\SqlParameterProfile;
+use ZtdQuery\Sql\Profile\SqlQuoteProfile;
 use ZtdQuery\Sql\Profile\SqlSymbolProfile;
 use ZtdQuery\Sql\SqlLexerProfile;
 
