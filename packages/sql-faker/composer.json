@@ -71,7 +71,7 @@
         "compat": "phpcs -q",
         "loc-guard": "loc-guard",
         "tree-guard": "tree-guard",
-        "deptrac": "deptrac analyse --config-file=deptrac.yaml"
+        "deptrac": "deptrac analyse --config-file=deptrac.yaml --no-cache"
     },
     "config": {
         "allow-plugins": {
