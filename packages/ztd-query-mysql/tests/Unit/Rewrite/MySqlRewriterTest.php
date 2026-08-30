@@ -23,12 +23,18 @@ use ZtdQuery\Platform\MySql\Parse\MySqlViewDefinitionParser;
 use ZtdQuery\Platform\MySql\Parse\UpdateAssignmentExtractor;
 use ZtdQuery\Platform\MySql\Parse\UpdateSourceExtractor;
 use ZtdQuery\Platform\MySql\Rewrite\LoadData\MySqlLoadDataProjector;
+use ZtdQuery\Platform\MySql\Rewrite\MySqlAlterSupport;
+use ZtdQuery\Platform\MySql\Rewrite\MySqlKnownTables;
 use ZtdQuery\Platform\MySql\Rewrite\MySqlMutationResolver;
 use ZtdQuery\Platform\MySql\Rewrite\MySqlPartitionSelectionRewriter;
 use ZtdQuery\Platform\MySql\Rewrite\MySqlQueryGuard;
 use ZtdQuery\Platform\MySql\Rewrite\MySqlRewriter;
+use ZtdQuery\Platform\MySql\Rewrite\MySqlShadowTables;
+use ZtdQuery\Platform\MySql\Rewrite\MySqlTopLevelWords;
 use ZtdQuery\Platform\MySql\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\MySql\Transformer\InsertTransformer;
+use ZtdQuery\Platform\MySql\Transformer\MySqlDeleteClauses;
+use ZtdQuery\Platform\MySql\Transformer\MySqlDeleteTargets;
 use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
 use ZtdQuery\Platform\MySql\Transformer\ReplaceTransformer;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
@@ -98,6 +104,12 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlStatementOptions::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Parse\MySqlUpsertExpressionCursor::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Parse\MySqlUpsertLiteral::class)]
+#[UsesClass(MySqlAlterSupport::class)]
+#[UsesClass(MySqlKnownTables::class)]
+#[UsesClass(MySqlShadowTables::class)]
+#[UsesClass(MySqlTopLevelWords::class)]
+#[UsesClass(MySqlDeleteClauses::class)]
+#[UsesClass(MySqlDeleteTargets::class)]
 final class MySqlRewriterTest extends RewriterContractTest
 {
     public function testPartitionSelectionUsesRegisteredPartitionMetadata(): void

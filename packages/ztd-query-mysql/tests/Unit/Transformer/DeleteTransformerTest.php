@@ -16,6 +16,8 @@ use ZtdQuery\Platform\MySql\Dialect\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\Parse\DmlWhereClauseExtractor;
 use ZtdQuery\Platform\MySql\Parse\MySqlParser;
 use ZtdQuery\Platform\MySql\Transformer\DeleteTransformer;
+use ZtdQuery\Platform\MySql\Transformer\MySqlDeleteClauses;
+use ZtdQuery\Platform\MySql\Transformer\MySqlDeleteTargets;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 
 #[CoversClass(DeleteTransformer::class)]
@@ -32,6 +34,8 @@ use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 #[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\MySqlGeneratedColumnProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlLexerProfile::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlComponentSql::class)]
+#[UsesClass(MySqlDeleteClauses::class)]
+#[UsesClass(MySqlDeleteTargets::class)]
 final class DeleteTransformerTest extends TestCase
 {
     public function testTransformPreservesCaseWhereExpression(): void
@@ -972,4 +976,44 @@ final class DeleteTransformerTest extends TestCase
         self::assertSame('users', DeleteTransformer::exprAlias($expression));
     }
 
+    public function testRefusePartitionClauseRefusesADeleteNamingThePartitionsItRemovesRowsFrom(): void
+    {
+        $transformer = new DeleteTransformer(new MySqlParser(), new SelectTransformer());
+
+        $this->expectException(RuntimeException::class);
+
+        $transformer->refusePartitionClause('DELETE FROM t PARTITION (p1) WHERE id = 1');
+    }
+
+    public function testResolvedTablesAnswersTheOneTableASingleTableDeleteRemovesRowsFrom(): void
+    {
+        $transformer = new DeleteTransformer(new MySqlParser(), new SelectTransformer());
+        $statement = (new Parser('DELETE FROM users'))->statements[0];
+        self::assertInstanceOf(DeleteStatement::class, $statement);
+
+        $resolved = $transformer->resolvedTables($statement, ['name' => 'users', 'alias' => 'users']);
+
+        self::assertSame(['users' => ['alias' => 'users']], $resolved);
+    }
+
+    public function testResolvedTablesAnswersEachTableAMultiTableDeleteNames(): void
+    {
+        $transformer = new DeleteTransformer(new MySqlParser(), new SelectTransformer());
+        $statement = (new Parser('DELETE u, o FROM users AS u JOIN orders AS o ON o.user_id = u.id'))->statements[0];
+        self::assertInstanceOf(DeleteStatement::class, $statement);
+
+        $resolved = $transformer->resolvedTables($statement, ['name' => 'users', 'alias' => 'u']);
+
+        self::assertSame(['users' => ['alias' => 'u'], 'orders' => ['alias' => 'o']], $resolved);
+    }
+
+    public function testSingleTableSelectListCarriesEveryColumnWhereNoneIsNamed(): void
+    {
+        $transformer = new DeleteTransformer(new MySqlParser(), new SelectTransformer());
+
+        self::assertSame(
+            ['`u`.*', '`u`.`id` AS `id`'],
+            [$transformer->singleTableSelectList('u', []), $transformer->singleTableSelectList('u', ['id'])],
+        );
+    }
 }
