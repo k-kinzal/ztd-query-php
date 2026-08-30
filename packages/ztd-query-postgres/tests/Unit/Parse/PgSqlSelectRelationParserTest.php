@@ -334,4 +334,32 @@ final class PgSqlSelectRelationParserTest extends TestCase
             (new PgSqlSelectRelationParser())->unqualify('SELECT * FROM app.users', ['users']),
         );
     }
+
+    public function testReferencesInBracketsNamesWhatAParenthesisedJoinNames(): void
+    {
+        $parser = new PgSqlSelectRelationParser();
+        $clause = '(users JOIN orders ON TRUE)';
+        $names = array_map(
+            static fn (array $reference): string => $reference['name'],
+            $parser->referencesInBrackets($clause, $parser->tokens($clause), 0),
+        );
+
+        self::assertSame(['users', 'orders'], $names);
+    }
+
+    public function testReferencesInBracketsLeavesAParenthesisedQueryAlone(): void
+    {
+        $parser = new PgSqlSelectRelationParser();
+        $clause = '(SELECT 1) AS t';
+
+        self::assertSame([], $parser->referencesInBrackets($clause, $parser->tokens($clause), 0));
+    }
+
+    public function testReferencesInBracketsLeavesAParenthesisThatNeverCloses(): void
+    {
+        $parser = new PgSqlSelectRelationParser();
+        $clause = '(users';
+
+        self::assertSame([], $parser->referencesInBrackets($clause, $parser->tokens($clause), 0));
+    }
 }
