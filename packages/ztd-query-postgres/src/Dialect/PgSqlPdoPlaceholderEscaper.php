@@ -12,10 +12,18 @@ use ZtdQuery\Platform\SqlPlaceholderEscaper;
 final class PgSqlPdoPlaceholderEscaper implements SqlPlaceholderEscaper
 {
     /**
-     * Escape.
+     * @param PgSqlPdoRuns $runs Says where a run carried over as written ends
+     */
+    public function __construct(private readonly PgSqlPdoRuns $runs = new PgSqlPdoRuns())
+    {
+    }
+
+    /**
+     * Writes a statement so that PDO reads only its placeholders as placeholders.
      *
-     * @param string $sql
-     * @return string
+     * @param string $sql Statement being read, as written
+     *
+     * @return string The statement, with PostgreSQL's own question marks doubled
      */
     public function escape(string $sql): string
     {
@@ -23,152 +31,103 @@ final class PgSqlPdoPlaceholderEscaper implements SqlPlaceholderEscaper
         $length = strlen($sql);
         $expectsOperand = true;
 
-        for ($i = 0; $i < $length; $i++) {
-            $char = $sql[$i];
-            $next = $i + 1 < $length ? $sql[$i + 1] : '';
-
-            if (ctype_space($char)) {
-                $result .= $char;
+        for ($offset = 0; $offset < $length; $offset++) {
+            $trivia = $this->runs->triviaEnd($sql, $offset);
+            if ($trivia !== null) {
+                $result .= substr($sql, $offset, $trivia - $offset);
+                $offset = max($offset, $trivia - 1);
                 continue;
             }
-
-            if ($char === '-' && $next === '-') {
-                $commentLength = strcspn($sql, "\r\n", $i);
-                $result .= substr($sql, $i, $commentLength);
-                $i += $commentLength - 1;
+            $value = $this->runs->valueEnd($sql, $offset);
+            if ($value !== null) {
+                $result .= substr($sql, $offset, $value - $offset);
+                $offset = max($offset, $value - 1);
+                $expectsOperand = false;
                 continue;
             }
-
-            if ($char === '/' && $next === '*') {
-                $start = $i;
-                $scan = $i;
-                $depth = 0;
-                while (true) {
-                    $open = strpos($sql, '/*', $scan);
-                    $close = strpos($sql, '*/', $scan);
-                    $openPosition = $open === false ? $length : $open;
-                    $closePosition = $close === false ? $length : $close;
-                    $markerPosition = min($openPosition, $closePosition);
-                    if ($markerPosition === $length) {
-                        $scan = $length;
-                        break;
-                    }
-                    $scan = $markerPosition + 2;
-                    if (substr($sql, $markerPosition, 2) === '/*') {
-                        $depth++;
-                        continue;
-                    }
-                    $depth--;
-                    if ($depth === 0) {
-                        break;
-                    }
-                }
-                $result .= substr($sql, $start, $scan - $start);
-                $i = $scan - 1;
+            $written = $this->placeholderAt($sql, $offset, $expectsOperand);
+            if ($written !== null) {
+                $result .= $written['text'];
+                $offset = max($offset, $written['end'] - 1);
+                $expectsOperand = $written['expectsOperand'];
                 continue;
             }
-
-            if ($char === '\'' || $char === '"') {
-                $quote = $char;
-                $escapeBackslash = $quote === '\'' && self::isEscapeStringStart($sql, $i);
-                $result .= $char;
-                for ($i++; $i < $length; $i++) {
-                    $result .= $sql[$i];
-                    if ($escapeBackslash && $sql[$i] === '\\') {
-                        $escapedCharacter = substr($sql, $i + 1, 1);
-                        $result .= $escapedCharacter;
-                        $i += strlen($escapedCharacter);
-                        continue;
-                    }
-                    if ($sql[$i] !== $quote) {
-                        continue;
-                    }
-                    if (substr($sql, $i, 2) === $quote . $quote) {
-                        $result .= $sql[++$i];
-                        continue;
-                    }
-                    break;
-                }
+            $word = $this->runs->wordEnd($sql, $offset);
+            if ($word !== null) {
+                $text = substr($sql, $offset, $word - $offset);
+                $expectsOperand = !str_ends_with($result, ':')
+                    && self::keywordExpectsOperand(strtoupper($text));
+                $result .= $text;
+                $offset = max($offset, $word - 1);
+                continue;
+            }
+            $number = $this->runs->numberEnd($sql, $offset);
+            if ($number !== null) {
+                $result .= substr($sql, $offset, $number - $offset);
+                $offset = max($offset, $number - 1);
                 $expectsOperand = false;
                 continue;
             }
 
-            if ($char === '$') {
-                $delimiter = self::dollarQuoteDelimiter($sql, $i);
-                if ($delimiter !== null) {
-                    $end = strpos($sql, $delimiter, $i + strlen($delimiter));
-                    if ($end === false) {
-                        $result .= substr($sql, $i);
-                        break;
-                    }
-                    $quotedLength = $end + strlen($delimiter) - $i;
-                    $result .= substr($sql, $i, $quotedLength);
-                    $i += $quotedLength - 1;
-                    $expectsOperand = false;
-                    continue;
-                }
-            }
-
-            if ($char === '?') {
-                if ($next === '?') {
-                    $result .= '??';
-                    $i++;
-                    $expectsOperand = true;
-                    continue;
-                }
-                if ($next === '|' || $next === '&') {
-                    $result .= '??' . $next;
-                    $i++;
-                    $expectsOperand = true;
-                    continue;
-                }
-                if ($expectsOperand) {
-                    $result .= '?';
-                    $expectsOperand = false;
-                    continue;
-                }
-
-                $result .= '??';
-                $expectsOperand = true;
-                continue;
-            }
-
-            if ($char === ':') {
-                if ($next === ':') {
-                    $result .= '::';
-                    $i++;
-                    $expectsOperand = true;
-                    continue;
-                }
-            }
-
-            if (self::isIdentifierStart($char)) {
-                $colonPrefixed = str_ends_with($result, ':');
-                $wordLength = strspn($sql, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_0123456789$', $i);
-                $word = substr($sql, $i, $wordLength);
-                $result .= $word;
-                $i += $wordLength - 1;
-                $expectsOperand = !$colonPrefixed && self::keywordExpectsOperand(strtoupper($word));
-                continue;
-            }
-
-            if (ctype_digit($char)) {
-                $numberLength = strspn($sql, '0123456789.', $i);
-                $result .= substr($sql, $i, $numberLength);
-                $i += $numberLength - 1;
-                $expectsOperand = false;
-                continue;
-            }
-
-            $result .= $char;
-            $expectsOperand = match ($char) {
-                ')', ']' => false,
-                '(', '[', ',', ';', '.', '=', '<', '>', '!', '~', '+', '-', '*', '/', '%', '^', '|', '&', '#', '@' => true,
-                default => $expectsOperand,
-            };
+            $result .= $sql[$offset];
+            $expectsOperand = self::leavesOperandExpected($sql[$offset], $expectsOperand);
         }
 
         return $result;
+    }
+
+    /**
+     * Answers what a question mark or a colon here has to be written as.
+     *
+     * PDO reads a question mark as a placeholder, so PostgreSQL's own
+     * operators written with one have to be doubled to stand for themselves;
+     * a question mark where a value is expected is a placeholder and is left
+     * alone. A double colon is a cast and never opens a placeholder.
+     *
+     * @param string $sql Statement being read, as written
+     * @param int $offset Where to look
+     * @param bool $expectsOperand Whether a value is what would come next
+     *
+     * @return array{text: string, end: int, expectsOperand: bool}|null What to write and where it left off, or null where neither is written there
+     */
+    public function placeholderAt(string $sql, int $offset, bool $expectsOperand): ?array
+    {
+        $character = $sql[$offset];
+        $next = $sql[$offset + 1] ?? '';
+        if ($character === ':') {
+            return $next === ':' ? ['text' => '::', 'end' => $offset + 2, 'expectsOperand' => true] : null;
+        }
+        if ($character !== '?') {
+            return null;
+        }
+        if ($next === '?') {
+            return ['text' => '??', 'end' => $offset + 2, 'expectsOperand' => true];
+        }
+        if ($next === '|' || $next === '&') {
+            return ['text' => '??' . $next, 'end' => $offset + 2, 'expectsOperand' => true];
+        }
+        if ($expectsOperand) {
+            return ['text' => '?', 'end' => $offset + 1, 'expectsOperand' => false];
+        }
+
+        return ['text' => '??', 'end' => $offset + 1, 'expectsOperand' => true];
+    }
+
+    /**
+     * Reports whether a value is what would come after this byte.
+     *
+     * @param string $character The byte, as written
+     * @param bool $expectsOperand Whether a value was expected before it
+     *
+     * @return bool True when a value is what comes next
+     */
+    public static function leavesOperandExpected(string $character, bool $expectsOperand): bool
+    {
+        return match ($character) {
+            ')', ']' => false,
+            '(', '[', ',', ';', '.', '=', '<', '>', '!', '~', '+', '-', '*', '/', '%', '^', '|', '&', '#', '@' => true,
+            default => $expectsOperand,
+        };
     }
 
     /**
