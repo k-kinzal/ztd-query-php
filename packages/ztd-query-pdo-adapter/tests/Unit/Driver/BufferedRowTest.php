@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit;
+namespace Tests\Unit\Driver;
 
 use PDO;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use ZtdQuery\Adapter\Pdo\BufferedRow;
+use ZtdQuery\Adapter\Pdo\Driver\BufferedRow;
 
 #[CoversClass(BufferedRow::class)]
 final class BufferedRowTest extends TestCase

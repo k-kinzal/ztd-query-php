@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Adapter\Pdo;
+namespace ZtdQuery\Adapter\Pdo\Driver;
 
 use PDO;
 use PDOException;

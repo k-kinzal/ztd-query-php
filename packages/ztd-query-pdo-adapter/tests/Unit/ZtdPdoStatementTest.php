@@ -10,13 +10,13 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ReflectionException;
 use Tests\Fixtures\AnsweringPdoStatement;
-use ZtdQuery\Adapter\Pdo\BufferedRow;
-use ZtdQuery\Adapter\Pdo\PdoBinding;
-use ZtdQuery\Adapter\Pdo\PdoFetchMode;
-use ZtdQuery\Adapter\Pdo\PdoParameterBinder;
-use ZtdQuery\Adapter\Pdo\PdoParameterKind;
-use ZtdQuery\Adapter\Pdo\PdoPreparedExecution;
-use ZtdQuery\Adapter\Pdo\PdoStatement;
+use ZtdQuery\Adapter\Pdo\Driver\BufferedRow;
+use ZtdQuery\Adapter\Pdo\Driver\PdoBinding;
+use ZtdQuery\Adapter\Pdo\Driver\PdoFetchMode;
+use ZtdQuery\Adapter\Pdo\Driver\PdoParameterBinder;
+use ZtdQuery\Adapter\Pdo\Driver\PdoParameterKind;
+use ZtdQuery\Adapter\Pdo\Driver\PdoPreparedExecution;
+use ZtdQuery\Adapter\Pdo\Driver\PdoStatement;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 use ZtdQuery\Adapter\Pdo\ZtdPdoStatement;
@@ -45,7 +45,7 @@ use ZtdQuery\Shadow\ShadowStore;
 #[UsesClass(PdoPreparedExecution::class)]
 #[UsesClass(ZtdPdoException::class)]
 #[UsesClass(\ZtdQuery\Adapter\Pdo\DriverSessionFactory::class)]
-#[UsesClass(\ZtdQuery\Adapter\Pdo\PdoConnection::class)]
+#[UsesClass(\ZtdQuery\Adapter\Pdo\Driver\PdoConnection::class)]
 #[UsesClass(\ZtdQuery\Adapter\Pdo\PostgreSqlCopy::class)]
 #[UsesClass(ZtdPdo::class)]
 final class ZtdPdoStatementTest extends TestCase

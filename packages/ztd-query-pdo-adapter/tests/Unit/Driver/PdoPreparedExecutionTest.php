@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit;
+namespace Tests\Unit\Driver;
 
 use PDO;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -10,11 +10,11 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Tests\Fixtures\RecordingParameterBindingCompiler;
-use ZtdQuery\Adapter\Pdo\PdoConnection;
-use ZtdQuery\Adapter\Pdo\PdoParameterBinder;
-use ZtdQuery\Adapter\Pdo\PdoParameterKind;
-use ZtdQuery\Adapter\Pdo\PdoPreparedExecution;
-use ZtdQuery\Adapter\Pdo\PdoStatement;
+use ZtdQuery\Adapter\Pdo\Driver\PdoConnection;
+use ZtdQuery\Adapter\Pdo\Driver\PdoParameterBinder;
+use ZtdQuery\Adapter\Pdo\Driver\PdoParameterKind;
+use ZtdQuery\Adapter\Pdo\Driver\PdoPreparedExecution;
+use ZtdQuery\Adapter\Pdo\Driver\PdoStatement;
 use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\ConnectionInterface;

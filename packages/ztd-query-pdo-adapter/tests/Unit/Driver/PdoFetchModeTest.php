@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit;
+namespace Tests\Unit\Driver;
 
 use PDO;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use ZtdQuery\Adapter\Pdo\PdoFetchMode;
+use ZtdQuery\Adapter\Pdo\Driver\PdoFetchMode;
 
 #[CoversClass(PdoFetchMode::class)]
 final class PdoFetchModeTest extends TestCase
