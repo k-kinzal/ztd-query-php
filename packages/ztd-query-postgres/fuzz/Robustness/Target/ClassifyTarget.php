@@ -11,8 +11,8 @@ use Fuzz\Robustness\Invariant\ClassifyNeverThrowsChecker;
 use Fuzz\Robustness\Invariant\InvariantChecker;
 use SqlFaker\PostgreSqlProvider;
 use SqlFaker\PostgreSqlStatementProvider;
-use ZtdQuery\Platform\Postgres\PgSqlParser;
-use ZtdQuery\Platform\Postgres\PgSqlQueryGuard;
+use ZtdQuery\Platform\Postgres\Parse\PgSqlParser;
+use ZtdQuery\Platform\Postgres\Rewrite\PgSqlQueryGuard;
 
 /**
  * The classify target.

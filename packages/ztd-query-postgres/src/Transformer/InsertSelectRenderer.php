@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\Postgres\Transformer;
 
 use ZtdQuery\Exception\InvalidDefinitionException;
-use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
+use ZtdQuery\Platform\Postgres\Dialect\PgSqlIdentifierQuoter;
 use ZtdQuery\Rewrite\InsertSelectProjectionPlanner;
 
 /**

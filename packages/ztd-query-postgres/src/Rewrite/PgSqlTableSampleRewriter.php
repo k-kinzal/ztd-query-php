@@ -1,0 +1,135 @@
+<?php
+
+declare(strict_types=1);
+
+namespace ZtdQuery\Platform\Postgres\Rewrite;
+
+use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\Postgres\Dialect\PgSqlIdentifierQuoter;
+use ZtdQuery\Platform\Postgres\Parse\PgSqlTableSampleParser;
+use ZtdQuery\Platform\Postgres\Statement\PgSqlTableSample;
+use ZtdQuery\Platform\Postgres\Statement\PgSqlTableSampleMethod;
+
+/**
+ * The pg sql table sample rewriter.
+ */
+final class PgSqlTableSampleRewriter
+{
+    private PgSqlTableSampleParser $parser;
+    private PgSqlIdentifierQuoter $quoter;
+
+    /**
+     * Binds the instance to what it will work from.
+     *
+     */
+    public function __construct()
+    {
+        $this->parser = new PgSqlTableSampleParser();
+        $this->quoter = new PgSqlIdentifierQuoter();
+    }
+
+    /**
+     * @param array<string, array<string, mixed>> $tables
+     *
+     * @throws UnsupportedSqlException
+     */
+    public function rewrite(string $sql, array $tables): string
+    {
+        $samples = $this->parser->parse($sql);
+        usort($samples, static fn (PgSqlTableSample $left, PgSqlTableSample $right): int => $right->startOffset <=> $left->startOffset);
+
+        foreach ($samples as $index => $sample) {
+            $columns = $this->columns($sample->tableName, $tables);
+            if ($columns === []) {
+                throw new UnsupportedSqlException(
+                    $sql,
+                    "Cannot determine columns for TABLESAMPLE source '{$sample->tableName}'",
+                );
+            }
+            $replacement = $this->replacement($sample, $columns, $index);
+            $sql = substr_replace(
+                $sql,
+                $replacement,
+                $sample->startOffset,
+                $sample->endOffset - $sample->startOffset,
+            );
+        }
+
+        return $sql;
+    }
+
+    /**
+     * Answers the columns the sampled table has.
+     *
+     * @param string $tableName Table it belongs to
+     * @param array<string, array<string, mixed>> $tables The tables
+     *
+     * @return list<string> What it answers
+     */
+    public function columns(string $tableName, array $tables): array
+    {
+        foreach ($tables as $candidate => $context) {
+            if (strcasecmp($candidate, $tableName) !== 0) {
+                continue;
+            }
+            $columns = $context['columns'] ?? null;
+            if (!is_array($columns)) {
+                return [];
+            }
+
+            $names = [];
+            foreach ($columns as $column) {
+                if (is_string($column)) {
+                    $names[] = $column;
+                }
+            }
+
+            return $names;
+        }
+
+        return [];
+    }
+
+    /**
+     * Answers what a TABLESAMPLE is rewritten to.
+     *
+     * There is no sampling in the shadow, so a sample becomes a plain read of
+     * the rows the shadow holds.
+     *
+     * @param PgSqlTableSample $sample The sample
+     * @param non-empty-list<string> $columns Columns to read
+     * @param int $index Where to read
+     *
+     * @return string What it answers
+     */
+    public function replacement(PgSqlTableSample $sample, array $columns, int $index): string
+    {
+        $sourceAlias = $this->quoter->quote("__ztd_sample_source_$index");
+        $parametersAlias = $this->quoter->quote("__ztd_sample_parameters_$index");
+        $ordinal = $this->quoter->quote('__ztd_sample_ordinal');
+        $percentage = $this->quoter->quote('__ztd_sample_percentage');
+        $seed = $this->quoter->quote('__ztd_sample_seed');
+        $columnList = implode(', ', array_map($this->quoter->quote(...), $columns));
+        $seedSql = $sample->seedSql === null ? 'random()' : "CAST(({$sample->seedSql}) AS DOUBLE PRECISION)";
+        $sampleKey = $sample->method === PgSqlTableSampleMethod::System ? '0' : "$sourceAlias.$ordinal";
+        $randomValue = "((('x' || SUBSTRING(MD5(CAST($sampleKey AS TEXT) || ':' || "
+            . "CAST($parametersAlias.$seed AS TEXT)), 1, 8))::BIT(32)::BIGINT)::DOUBLE PRECISION "
+            . '/ 4294967296.0) * 100';
+        $valid = "$parametersAlias.$percentage IS NOT NULL"
+            . " AND $parametersAlias.$percentage >= 0"
+            . " AND $parametersAlias.$percentage <= 100"
+            . " AND $parametersAlias.$seed IS NOT NULL";
+        $invalid = "CAST('invalid sample argument: ' || COALESCE(CAST($parametersAlias.$percentage AS TEXT), 'NULL') AS BOOLEAN)";
+        $predicate = "CASE WHEN $valid THEN $randomValue < $parametersAlias.$percentage ELSE $invalid END";
+        $alias = $sample->aliasSql !== ''
+            ? ' ' . $sample->aliasSql
+            : ' AS ' . $this->quoter->quote($sample->tableName);
+
+        return '(SELECT ' . $columnList
+            . ' FROM (SELECT ' . $columnList . ", ROW_NUMBER() OVER () AS $ordinal"
+            . " FROM {$sample->sourceSql}) AS $sourceAlias"
+            . " CROSS JOIN (SELECT CAST(({$sample->percentageSql}) AS DOUBLE PRECISION) AS $percentage, "
+            . "$seedSql AS $seed) AS $parametersAlias"
+            . " WHERE $predicate)$alias";
+    }
+}

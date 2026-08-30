@@ -6,14 +6,14 @@ namespace ZtdQuery\Platform\Postgres\Transformer;
 
 use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer;
-use ZtdQuery\Platform\Postgres\PgSqlGeneratedColumnProjector;
-use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
-use ZtdQuery\Platform\Postgres\PgSqlMergeActionKind;
-use ZtdQuery\Platform\Postgres\PgSqlMergeClause;
-use ZtdQuery\Platform\Postgres\PgSqlMergeMatchKind;
-use ZtdQuery\Platform\Postgres\PgSqlMergeParser;
-use ZtdQuery\Platform\Postgres\PgSqlMergeStatement;
+use ZtdQuery\Platform\Postgres\Dialect\PgSqlIdentifierQuoter;
+use ZtdQuery\Platform\Postgres\Parse\PgSqlMergeParser;
+use ZtdQuery\Platform\Postgres\Parse\PgSqlWithPrefix;
+use ZtdQuery\Platform\Postgres\Rewrite\PgSqlGeneratedColumnProjector;
+use ZtdQuery\Platform\Postgres\Statement\PgSqlMergeActionKind;
+use ZtdQuery\Platform\Postgres\Statement\PgSqlMergeClause;
+use ZtdQuery\Platform\Postgres\Statement\PgSqlMergeMatchKind;
+use ZtdQuery\Platform\Postgres\Statement\PgSqlMergeStatement;
 use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Rewrite\ShadowIdentityAllocator;
 use ZtdQuery\Rewrite\SqlTransformer;
@@ -28,7 +28,9 @@ final class MergeTransformer implements SqlTransformer
     private PgSqlIdentifierQuoter $quoter;
     private InsertRowRenderer $rowRenderer;
     private PgSqlGeneratedColumnProjector $generatedColumnProjector;
-    private PgSqlCteShadowComposer $cteComposer;
+
+    /** @readonly */
+    private PgSqlWithPrefix $withPrefix;
     private InsertSelectRenderer $insertSelectRenderer;
 
     /**
@@ -44,7 +46,7 @@ final class MergeTransformer implements SqlTransformer
         $this->quoter = new PgSqlIdentifierQuoter();
         $this->rowRenderer = new InsertRowRenderer();
         $this->generatedColumnProjector = new PgSqlGeneratedColumnProjector();
-        $this->cteComposer = new PgSqlCteShadowComposer();
+        $this->withPrefix = new PgSqlWithPrefix();
         $this->insertSelectRenderer = new InsertSelectRenderer();
     }
 
@@ -104,7 +106,7 @@ final class MergeTransformer implements SqlTransformer
 
         $resultSql = implode(' UNION ALL ', $parts);
         $resultSql = $this->generatedColumnProjector->project($resultSql, $columns, $generatedExpressions);
-        $resultSql = $this->cteComposer->carryPrefix($sql, $resultSql);
+        $resultSql = $this->withPrefix->carryPrefix($sql, $resultSql);
 
         return $this->selectTransformer->transform($resultSql, $tables);
     }

@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Schema;
 
-use ZtdQuery\Connection\StatementInterface;
-
 /**
  * Reads what a row carries in a candidate key, and tells when another row repeats it.
  *
@@ -15,7 +13,7 @@ use ZtdQuery\Connection\StatementInterface;
  * column or holds null there has no key values at all — which is a different
  * answer from having key values that happen to be empty.
  *
- * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
  */
 final class CandidateKeyMatch
 {

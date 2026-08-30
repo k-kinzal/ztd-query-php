@@ -83,7 +83,7 @@ final class RewritePlanConsistencyChecker implements InvariantChecker
         }
 
         $shadowTables = ['users', 'orders', 'order_items', 'products'];
-        $relationParser = new \ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser();
+        $relationParser = new \ZtdQuery\Platform\Postgres\Parse\PgSqlSelectRelationParser();
         $normalizedInput = $relationParser->unqualify($sql, $shadowTables);
         $normalizedPlan = $relationParser->unqualify($plan->sql(), $shadowTables);
         if ($normalizedInput !== $sql && $normalizedPlan !== $plan->sql()) {

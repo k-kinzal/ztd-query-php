@@ -6,9 +6,9 @@ namespace Tests\Fixture\SqlFaker;
 
 use Faker\Generator;
 use SqlFaker\Grammar\Lexical\LexicalCatalog;
-use SqlFaker\PostgreSql\PgLookahead;
-use SqlFaker\PostgreSql\PgTerminalRealizer;
-use SqlFaker\PostgreSql\PgTokenizer;
+use SqlFaker\PostgreSql\Lexical\PgLookahead;
+use SqlFaker\PostgreSql\Lexical\PgTerminalRealizer;
+use SqlFaker\PostgreSql\Lexical\PgTokenizer;
 
 /**
  * Builds PostgreSQL terminal realizers over a catalog small enough to read.

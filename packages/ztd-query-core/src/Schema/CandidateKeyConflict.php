@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Schema;
 
-use ZtdQuery\Connection\StatementInterface;
-
 /**
  * Identifies the existing row and candidate key responsible for a conflict.
  *
- * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
  */
 final class CandidateKeyConflict
 {

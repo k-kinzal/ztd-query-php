@@ -25,7 +25,7 @@ use SqlFaker\Grammar\Walk\GenerationException;
 use SqlFaker\Grammar\Walk\GenerationPlan;
 use SqlFaker\Grammar\Walk\TerminationAnalyzer;
 use SqlFaker\Sqlite\Grammar\SqliteGrammar;
-use SqlFaker\Sqlite\LexicalGrammar;
+use SqlFaker\Sqlite\Lexical\LexicalGrammar;
 use SqlFaker\Sqlite\SqlGenerator;
 use SqlFaker\SqliteProvider;
 

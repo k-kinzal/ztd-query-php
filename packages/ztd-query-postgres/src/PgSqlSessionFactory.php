@@ -6,6 +6,15 @@ namespace ZtdQuery\Platform\Postgres;
 
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\ConnectionInterface;
+use ZtdQuery\Platform\Postgres\Dialect\PgSqlCopySupport;
+use ZtdQuery\Platform\Postgres\Dialect\PgSqlPdoParameterBindingCompiler;
+use ZtdQuery\Platform\Postgres\Dialect\PgSqlPdoResultColumnTypeResolver;
+use ZtdQuery\Platform\Postgres\Parse\PgSqlParser;
+use ZtdQuery\Platform\Postgres\Parse\PgSqlSchemaParser;
+use ZtdQuery\Platform\Postgres\Rewrite\PgSqlMutationResolver;
+use ZtdQuery\Platform\Postgres\Rewrite\PgSqlQueryGuard;
+use ZtdQuery\Platform\Postgres\Rewrite\PgSqlRewriter;
+use ZtdQuery\Platform\Postgres\Rewrite\PgSqlTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\InsertTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;

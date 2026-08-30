@@ -7,11 +7,11 @@ namespace ZtdQuery\Platform\Postgres\Transformer;
 use RuntimeException;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\IdentifierQuoter;
-use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
-use ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer;
-use ZtdQuery\Platform\Postgres\PgSqlGeneratedColumnProjector;
-use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
-use ZtdQuery\Platform\Postgres\PgSqlTableSampleRewriter;
+use ZtdQuery\Platform\Postgres\Dialect\PgSqlCastRenderer;
+use ZtdQuery\Platform\Postgres\Dialect\PgSqlIdentifierQuoter;
+use ZtdQuery\Platform\Postgres\Rewrite\PgSqlCteShadowComposer;
+use ZtdQuery\Platform\Postgres\Rewrite\PgSqlGeneratedColumnProjector;
+use ZtdQuery\Platform\Postgres\Rewrite\PgSqlTableSampleRewriter;
 use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnDeclaration;
@@ -52,7 +52,7 @@ final class SelectTransformer implements SqlTransformer
     ) {
         $this->castRenderer = $castRenderer ?? new PgSqlCastRenderer();
         $this->quoter = $quoter ?? new PgSqlIdentifierQuoter();
-        $this->valueRenderer = $valueRenderer ?? new \ZtdQuery\Platform\Postgres\PgSqlValueRenderer($this->castRenderer);
+        $this->valueRenderer = $valueRenderer ?? new \ZtdQuery\Platform\Postgres\Dialect\PgSqlValueRenderer($this->castRenderer);
         $this->cteComposer = new PgSqlCteShadowComposer();
         $this->generatedColumnProjector = new PgSqlGeneratedColumnProjector();
         $this->tableSampleRewriter = new PgSqlTableSampleRewriter();

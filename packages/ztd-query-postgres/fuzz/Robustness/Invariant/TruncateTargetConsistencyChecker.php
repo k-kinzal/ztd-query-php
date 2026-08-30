@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Fuzz\Robustness\Invariant;
 
 use ZtdQuery\Exception\SimulationException;
-use ZtdQuery\Platform\Postgres\PgSqlLexerProfile;
+use ZtdQuery\Platform\Postgres\Dialect\PgSqlLexerProfile;
 use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Shadow\Mutation\MultiTruncateMutation;
 use ZtdQuery\Sql\SqlTokenStream;

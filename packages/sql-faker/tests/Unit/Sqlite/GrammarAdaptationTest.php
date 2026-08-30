@@ -13,7 +13,7 @@ use SqlFaker\Grammar\Model\Production;
 use SqlFaker\Grammar\Model\ProductionRule;
 use SqlFaker\Grammar\Model\Terminal;
 use SqlFaker\Sqlite\GrammarAdaptation;
-use SqlFaker\Sqlite\LexicalGrammar;
+use SqlFaker\Sqlite\Lexical\LexicalGrammar;
 
 #[CoversClass(GrammarAdaptation::class)]
 #[UsesClass(Grammar::class)]
@@ -146,5 +146,60 @@ final class GrammarAdaptationTest extends TestCase
         $alternative = new Production([new Terminal('PARTITION'), new NonTerminal('frame_opt')]);
 
         self::assertFalse((new GrammarAdaptation())->isFrameOnlyWindow($alternative));
+    }
+
+    public function testWithStrictTableOptionCarriesEveryOtherRuleAcrossUntouched(): void
+    {
+        $other = new ProductionRule('nm', [new Production([new Terminal('ID')])]);
+
+        $ruleMap = (new GrammarAdaptation())->withStrictTableOption([
+            'table_option' => new ProductionRule('table_option', [new Production([new NonTerminal('nm')])]),
+            'nm' => $other,
+        ]);
+
+        self::assertSame(['table_option', 'nm'], array_keys($ruleMap));
+        self::assertSame($other, $ruleMap['nm']);
+    }
+
+    public function testWithStrictTableOptionCarriesEveryRuleAcrossWhenThereIsNoTableOption(): void
+    {
+        $first = new ProductionRule('nm', [new Production([new Terminal('ID')])]);
+        $second = new ProductionRule('expr', [new Production([new Terminal('NUM')])]);
+
+        $ruleMap = (new GrammarAdaptation())->withStrictTableOption(['nm' => $first, 'expr' => $second]);
+
+        self::assertSame(['nm' => $first, 'expr' => $second], $ruleMap);
+    }
+
+    public function testWithoutWithinGroupExpressionsCarriesEveryOtherRuleAcross(): void
+    {
+        $other = new ProductionRule('nm', [new Production([new Terminal('ID')])]);
+
+        $ruleMap = (new GrammarAdaptation())->withoutWithinGroupExpressions([
+            'expr' => new ProductionRule('expr', [
+                new Production([new Terminal('NUM')]),
+                new Production([new Terminal('WITHIN'), new Terminal('GROUP')]),
+            ]),
+            'nm' => $other,
+        ]);
+
+        self::assertSame(['expr', 'nm'], array_keys($ruleMap));
+        self::assertSame($other, $ruleMap['nm']);
+    }
+
+    public function testWithoutFrameOnlyWindowsCarriesEveryOtherRuleAcross(): void
+    {
+        $other = new ProductionRule('nm', [new Production([new Terminal('ID')])]);
+
+        $ruleMap = (new GrammarAdaptation())->withoutFrameOnlyWindows([
+            'windowdefn' => new ProductionRule('windowdefn', [
+                new Production([new Terminal('PARTITION')]),
+                new Production([new NonTerminal('frame_opt')]),
+            ]),
+            'nm' => $other,
+        ]);
+
+        self::assertSame(['windowdefn', 'nm'], array_keys($ruleMap));
+        self::assertSame($other, $ruleMap['nm']);
     }
 }

@@ -6,6 +6,7 @@ namespace SqlFixture\Fixture;
 
 use SqlFixture\Plan\ColumnRef;
 use SqlFixture\Plan\FixturePlan;
+use SqlFixture\Plan\PlanSchemaException;
 use SqlFixture\Schema\SchemaNotFoundException;
 use SqlFixture\Schema\SchemaResolverInterface;
 
