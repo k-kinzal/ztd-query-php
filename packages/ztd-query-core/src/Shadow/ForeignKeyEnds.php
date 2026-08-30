@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow;
 
-use ZtdQuery\Schema\ForeignKeyDefinition;
+use ZtdQuery\Schema\Key\ForeignKeyDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 
 /**
