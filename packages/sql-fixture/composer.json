@@ -10,6 +10,7 @@
     },
     "require-dev": {
         "brianium/paratest": "^6.11 || ^7",
+        "deptrac/deptrac": "^4.0",
         "friendsofphp/php-cs-fixer": "^3.92",
         "infection/infection": "^0.28 || ^0.29 || ^0.30 || ^0.31 || ^0.32 || ^0.34.1",
         "k-kinzal/php-ai-toolkit": "dev-main",
@@ -50,7 +51,10 @@
         "test:integration": "@php -d memory_limit=512M tests/run.php --testsuite integration",
         "lint": [
             "@format:check",
-            "@phpstan"
+            "@phpstan",
+            "@loc-guard",
+            "@tree-guard",
+            "@deptrac"
         ],
         "format": "php-cs-fixer fix --allow-risky=yes",
         "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
@@ -59,7 +63,8 @@
         "phpstan": "phpstan analyse --memory-limit=512M",
         "compat": "phpcs -q",
         "loc-guard": "loc-guard",
-        "tree-guard": "tree-guard"
+        "tree-guard": "tree-guard",
+        "deptrac": "deptrac analyse --config-file=deptrac.yaml"
     },
     "config": {
         "allow-plugins": {

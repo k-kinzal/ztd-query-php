@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
-namespace SqlFixture\Plan;
+namespace SqlFixture\Plan\Syntax;
+
+use SqlFixture\Plan\FixturePlan;
+use SqlFixture\Plan\Relation;
 
 /**
  * Writes a plan back out in the syntax PlanParser reads.

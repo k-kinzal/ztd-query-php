@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Fixture;
+namespace Tests\Unit\Plan;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFixture\Fixture\PlanSchemaException;
 use SqlFixture\Plan\ColumnRef;
+use SqlFixture\Plan\PlanSchemaException;
 use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\TableSchema;
 

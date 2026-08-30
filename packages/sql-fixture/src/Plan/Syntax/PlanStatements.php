@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-namespace SqlFixture\Plan;
+namespace SqlFixture\Plan\Syntax;
+
+use SqlFixture\Plan\PlanSyntaxException;
 
 /**
  * Separates a plan into the statements written in it.

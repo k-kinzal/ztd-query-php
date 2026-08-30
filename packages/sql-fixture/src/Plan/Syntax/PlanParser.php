@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
-namespace SqlFixture\Plan;
+namespace SqlFixture\Plan\Syntax;
+
+use SqlFixture\Plan\FixturePlan;
+use SqlFixture\Plan\PlanSyntaxException;
 
 /**
  * Reads the relation syntax of DBML into a plan.

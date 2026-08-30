@@ -2,19 +2,19 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Plan;
+namespace Tests\Unit\Plan\Syntax;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\Plan\ColumnRef;
-use SqlFixture\Plan\PlanCursor;
-use SqlFixture\Plan\PlanStatementReader;
 use SqlFixture\Plan\PlanSyntaxException;
 use SqlFixture\Plan\Relation;
 use SqlFixture\Plan\RelationKind;
 use SqlFixture\Plan\RelationSide;
+use SqlFixture\Plan\Syntax\PlanCursor;
+use SqlFixture\Plan\Syntax\PlanStatementReader;
 
 #[CoversClass(PlanStatementReader::class)]
 #[UsesClass(ColumnRef::class)]

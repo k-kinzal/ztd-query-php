@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Plan;
+namespace Tests\Unit\Plan\Syntax;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -12,16 +12,16 @@ use PHPUnit\Framework\TestCase;
 use SqlFixture\Plan\ColumnRef;
 use SqlFixture\Plan\FixturePlan;
 use SqlFixture\Plan\GenerationOrder;
-use SqlFixture\Plan\PlanCursor;
 use SqlFixture\Plan\PlanIntegrity;
-use SqlFixture\Plan\PlanParser;
-use SqlFixture\Plan\PlanPrinter;
-use SqlFixture\Plan\PlanStatementReader;
-use SqlFixture\Plan\PlanStatements;
 use SqlFixture\Plan\PlanSyntaxException;
 use SqlFixture\Plan\Relation;
 use SqlFixture\Plan\RelationKind;
 use SqlFixture\Plan\RelationSide;
+use SqlFixture\Plan\Syntax\PlanCursor;
+use SqlFixture\Plan\Syntax\PlanParser;
+use SqlFixture\Plan\Syntax\PlanPrinter;
+use SqlFixture\Plan\Syntax\PlanStatementReader;
+use SqlFixture\Plan\Syntax\PlanStatements;
 use SqlFixture\Plan\TableName;
 
 #[CoversClass(PlanPrinter::class)]

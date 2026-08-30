@@ -2,10 +2,9 @@
 
 declare(strict_types=1);
 
-namespace SqlFixture\Fixture;
+namespace SqlFixture\Plan;
 
 use RuntimeException;
-use SqlFixture\Plan\ColumnRef;
 use SqlFixture\Schema\TableSchema;
 
 /**

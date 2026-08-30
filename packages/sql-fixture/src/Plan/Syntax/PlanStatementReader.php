@@ -2,7 +2,12 @@
 
 declare(strict_types=1);
 
-namespace SqlFixture\Plan;
+namespace SqlFixture\Plan\Syntax;
+
+use SqlFixture\Plan\ColumnRef;
+use SqlFixture\Plan\PlanSyntaxException;
+use SqlFixture\Plan\Relation;
+use SqlFixture\Plan\RelationKind;
 
 /**
  * Reads one statement of a plan.

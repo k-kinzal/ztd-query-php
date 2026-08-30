@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Plan;
+namespace Tests\Unit\Plan\Syntax;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFixture\Plan\PlanCursor;
 use SqlFixture\Plan\PlanSyntaxException;
+use SqlFixture\Plan\Syntax\PlanCursor;
 
 #[CoversClass(PlanCursor::class)]
 #[UsesClass(PlanSyntaxException::class)]
