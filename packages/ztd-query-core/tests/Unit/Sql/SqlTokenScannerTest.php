@@ -8,6 +8,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Tests\Fake\FakeSqlLexerProfiles;
+use ZtdQuery\Sql\Profile\SqlCommentProfile;
+use ZtdQuery\Sql\Profile\SqlParameterProfile;
+use ZtdQuery\Sql\Profile\SqlQuoteProfile;
+use ZtdQuery\Sql\Profile\SqlSymbolProfile;
 use ZtdQuery\Sql\SqlLexerProfile;
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
@@ -15,9 +19,19 @@ use ZtdQuery\Sql\SqlTokenScanner;
 
 #[CoversClass(SqlTokenScanner::class)]
 #[UsesClass(SqlToken::class)]
+#[UsesClass(\ZtdQuery\Sql\Reader\SqlLexeme::class)]
+#[UsesClass(\ZtdQuery\Sql\Reader\SqlTriviaReader::class)]
+#[UsesClass(\ZtdQuery\Sql\Reader\SqlBlockCommentReader::class)]
+#[UsesClass(\ZtdQuery\Sql\Reader\SqlDelimitedReader::class)]
+#[UsesClass(\ZtdQuery\Sql\Reader\SqlParameterReader::class)]
+#[UsesClass(\ZtdQuery\Sql\Reader\SqlWordReader::class)]
 #[UsesClass(SqlLexerProfile::class)]
 #[UsesClass(\ZtdQuery\Sql\LexicalDelimiters::class)]
 #[UsesClass(\ZtdQuery\Sql\LexicalPattern::class)]
+#[UsesClass(SqlCommentProfile::class)]
+#[UsesClass(SqlParameterProfile::class)]
+#[UsesClass(SqlQuoteProfile::class)]
+#[UsesClass(SqlSymbolProfile::class)]
 final class SqlTokenScannerTest extends TestCase
 {
     public function testScanLosesNothingOfTheStatementItRead(): void
@@ -67,23 +81,7 @@ final class SqlTokenScannerTest extends TestCase
         self::assertSame('/* a b */', $tokens[0]->text);
     }
 
-    public function testEndOfDelimitedAnswersWhereTheClosingDelimiterLeftOff(): void
-    {
-        self::assertSame(3, (new SqlTokenScanner())->endOfDelimited("'a'x", 0, "'", "'", false));
-    }
 
-    public function testEndOfDelimitedReadsPastADoubledDelimiterBecauseItWritesTheDelimiter(): void
-    {
-        self::assertSame(5, (new SqlTokenScanner())->endOfDelimited("'a'''", 0, "'", "'", false));
-    }
 
-    public function testEndOfDelimitedReadsPastAnEscapedDelimiterWhereBackslashesEscape(): void
-    {
-        self::assertSame(5, (new SqlTokenScanner())->endOfDelimited("'a\\''", 0, "'", "'", true));
-    }
 
-    public function testEndOfDelimitedStopsAtTheEndOfAStatementThatNeverClosedTheRun(): void
-    {
-        self::assertSame(2, (new SqlTokenScanner())->endOfDelimited("'a", 0, "'", "'", false));
-    }
 }

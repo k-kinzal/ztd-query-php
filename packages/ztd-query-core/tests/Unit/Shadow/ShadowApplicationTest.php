@@ -17,6 +17,7 @@ use ZtdQuery\Shadow\Mutation\MutationImpact;
 use ZtdQuery\Shadow\Mutation\Row\DeleteMutation;
 use ZtdQuery\Shadow\Mutation\Row\InsertMutation;
 use ZtdQuery\Shadow\ReferentialIntegrityEnforcer;
+use ZtdQuery\Shadow\Row\RowPairing;
 use ZtdQuery\Shadow\ShadowApplication;
 use ZtdQuery\Shadow\ShadowStore;
 
@@ -44,6 +45,7 @@ use ZtdQuery\Shadow\ShadowStore;
 #[UsesClass(\ZtdQuery\Shadow\Row\RowMultiset::class)]
 #[UsesClass(\ZtdQuery\Shadow\Row\TableTransition::class)]
 #[UsesClass(\ZtdQuery\Shadow\TableTransitions::class)]
+#[UsesClass(RowPairing::class)]
 final class ShadowApplicationTest extends TestCase
 {
     public function testApplyWritesTheRowsAMutationDescribesIntoTheShadow(): void

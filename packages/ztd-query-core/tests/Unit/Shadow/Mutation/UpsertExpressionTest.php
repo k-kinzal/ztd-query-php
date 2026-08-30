@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\InvalidDefinitionException;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Shadow\Mutation\Upsert\UpsertOperator;
 use ZtdQuery\Shadow\Mutation\UpsertColumnSource;
 use ZtdQuery\Shadow\Mutation\UpsertExpression;
 use ZtdQuery\Shadow\Mutation\UpsertExpressionKind;
@@ -21,6 +22,7 @@ use ZtdQuery\Shadow\Mutation\UpsertExpressionKind;
 #[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertComparison::class)]
 #[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertNumber::class)]
 #[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertTruth::class)]
+#[UsesClass(UpsertOperator::class)]
 final class UpsertExpressionTest extends TestCase
 {
     public function testLiteralAnswersTheValueTheStatementWrote(): void

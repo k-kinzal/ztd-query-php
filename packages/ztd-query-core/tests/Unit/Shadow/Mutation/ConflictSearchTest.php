@@ -11,6 +11,7 @@ use ZtdQuery\Schema\Key\CandidateKeyConflict;
 use ZtdQuery\Schema\Key\CandidateKeyMatch;
 use ZtdQuery\Schema\Key\CandidateKeySet;
 use ZtdQuery\Shadow\Mutation\ConflictSearch;
+use ZtdQuery\Shadow\Mutation\Upsert\UpsertOperator;
 use ZtdQuery\Shadow\Mutation\UpsertColumnSource;
 use ZtdQuery\Shadow\Mutation\UpsertExpression;
 use ZtdQuery\Shadow\Mutation\UpsertExpressionKind;
@@ -24,6 +25,7 @@ use ZtdQuery\Shadow\Mutation\UpsertExpressionKind;
 #[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertComparison::class)]
 #[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertNumber::class)]
 #[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertTruth::class)]
+#[UsesClass(UpsertOperator::class)]
 final class ConflictSearchTest extends TestCase
 {
     public function testOfAnswersTheRowTheIncomingRowWouldCollideWith(): void
