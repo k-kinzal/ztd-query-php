@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow\Mutation;
 
-use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Schema\TableDefinition;
 
 /**
  * Names the columns an UPSERT carries its assignment values under.
@@ -14,7 +14,7 @@ use ZtdQuery\Connection\StatementInterface;
  * row. Those columns are carried under names no table would use, and taken
  * off again before the row is handed to the caller.
  *
- * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
  */
 final class UpsertMutationRow
 {

@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Tests\Contract;
 
 use PHPUnit\Framework\TestCase;
-use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
+use ZtdQuery\Schema\TableDefinition;
 
 /**
  * Abstract contract test for SqlTransformer implementations.
@@ -20,7 +20,7 @@ use ZtdQuery\Schema\ColumnTypeFamily;
  * - P-TF-4: Transform is deterministic.
  * - P-TF-5: Output is always non-empty.
  *
- * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
  */
 abstract class TransformerContractTest extends TestCase
 {

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Fake;
 
-use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnDeclaration;
+use ZtdQuery\Schema\TableDefinition;
 
 /**
  * Fake SqlTransformer that injects CTEs for shadow tables.
@@ -14,7 +14,7 @@ use ZtdQuery\Schema\ColumnDeclaration;
  * Generates simplified CTE syntax using double-quoted identifiers
  * and generic CAST expressions.
  *
- * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
  * @phpstan-import-type ShadowRows from SqlTransformer
  */
 final class FakeSqlTransformer implements SqlTransformer

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow\Mutation\Upsert;
 
-use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Schema\TableDefinition;
 
 /**
  * Reads a column off a row the way SQL names one.
@@ -15,8 +15,8 @@ use ZtdQuery\Exception\UnsupportedSqlException;
  * answers to is refused: quietly reading it as null would make the assignment
  * that depends on it silently wrong.
  *
- * @phpstan-import-type Row from StatementInterface
- * @phpstan-import-type RowValue from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
+ * @phpstan-import-type RowValue from TableDefinition
  */
 final class UpsertColumn
 {

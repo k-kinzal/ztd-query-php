@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Shadow\Mutation\Upsert;
 
-use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Schema\TableDefinition;
 
 /**
  * Does arithmetic the way a database does it, over the values a row carries.
@@ -14,7 +14,7 @@ use ZtdQuery\Exception\UnsupportedSqlException;
  * text however it was declared, so '12' is a number here; and null is unknown
  * rather than zero, so anything touching it is unknown too.
  *
- * @phpstan-import-type RowValue from StatementInterface
+ * @phpstan-import-type RowValue from TableDefinition
  */
 final class UpsertNumber
 {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ZtdQuery\Shadow;
 
 use ZtdQuery\Schema\TableDefinitionRegistry;
+use ZtdQuery\Sql\TransactionTarget;
 
 /**
  * Keeps the shadow at the point each open transaction could go back to.
@@ -14,7 +15,7 @@ use ZtdQuery\Schema\TableDefinitionRegistry;
  * a database does with one; a savepoint declared twice under the same name
  * takes the place of the first, which is what SQL says it does.
  */
-final class ShadowTransactions
+final class ShadowTransactions implements TransactionTarget
 {
     /**
      * @var list<ShadowSavepoint> Points the shadow can be put back to, outermost first

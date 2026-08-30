@@ -6,6 +6,7 @@ namespace Tests\Fake;
 
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Schema\TableDefinition;
 
 /**
  * Fake ConnectionInterface that returns pre-configured FakeStatements.
@@ -14,7 +15,7 @@ use ZtdQuery\Connection\StatementInterface;
  * or a default result set can be provided. Specific queries can be configured to
  * fail by returning false, enabling tests for error-handling branches.
  *
- * @phpstan-import-type Row from StatementInterface
+ * @phpstan-import-type Row from TableDefinition
  */
 final class FakeConnection implements ConnectionInterface
 {
