@@ -162,29 +162,8 @@ final class PgSqlSelectRelationParser
             }
 
             if ($token->kind === SqlTokenKind::Symbol && $token->text === '(') {
-                $closingToken = $this->closingToken($tokens, $index);
-                if ($closingToken === null) {
-                    continue;
-                }
-                $innerStart = $token->endOffset();
-                $inner = substr($clause, $innerStart, $closingToken->offset - $innerStart);
-                $innerTokens = $this->tokens($inner);
-                if ($innerTokens === []) {
-                    continue;
-                }
-                if ($innerTokens[0]->isKeyword('SELECT')
-                    || $innerTokens[0]->isKeyword('WITH')
-                    || $innerTokens[0]->isKeyword('VALUES')
-                ) {
-                    continue;
-                }
-                foreach ($this->referencesFromClause($inner) as $reference) {
-                    $references[] = [
-                        'name' => $reference['name'],
-                        'start' => $innerStart + $reference['start'],
-                        'unqualifiedStart' => $innerStart + $reference['unqualifiedStart'],
-                        'end' => $innerStart + $reference['end'],
-                    ];
+                foreach ($this->referencesInBrackets($clause, $tokens, $index) as $reference) {
+                    $references[] = $reference;
                 }
                 continue;
             }
@@ -194,6 +173,49 @@ final class PgSqlSelectRelationParser
             if ($reference !== null) {
                 $references[] = $reference;
             }
+        }
+
+        return $references;
+    }
+
+    /**
+     * Answers what a parenthesised source names.
+     *
+     * A parenthesised join is a join like any other, so what it names is
+     * named by the clause it is written in; a parenthesised query names
+     * nothing the clause around it can speak for, so it is left alone.
+     *
+     * @param string $clause The clause the parenthesis is written in
+     * @param list<SqlToken> $tokens Tokens the clause was read as
+     * @param int $index Where the opening parenthesis is
+     *
+     * @return list<array{name: string, start: int, unqualifiedStart: int, end: int}> What it names, at offsets into the clause
+     */
+    public function referencesInBrackets(string $clause, array $tokens, int $index): array
+    {
+        $closing = $this->closingToken($tokens, $index);
+        if ($closing === null) {
+            return [];
+        }
+        $innerStart = $tokens[$index]->endOffset();
+        $inner = substr($clause, $innerStart, $closing->offset - $innerStart);
+        $first = $this->tokens($inner)[0] ?? null;
+        if ($first === null
+            || $first->isKeyword('SELECT')
+            || $first->isKeyword('WITH')
+            || $first->isKeyword('VALUES')
+        ) {
+            return [];
+        }
+
+        $references = [];
+        foreach ($this->referencesFromClause($inner) as $reference) {
+            $references[] = [
+                'name' => $reference['name'],
+                'start' => $innerStart + $reference['start'],
+                'unqualifiedStart' => $innerStart + $reference['unqualifiedStart'],
+                'end' => $innerStart + $reference['end'],
+            ];
         }
 
         return $references;

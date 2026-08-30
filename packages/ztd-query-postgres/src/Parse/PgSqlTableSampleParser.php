@@ -68,42 +68,30 @@ final class PgSqlTableSampleParser
             throw new UnsupportedSqlException($sql, 'TABLESAMPLE method not supported for shadow relations');
         }
 
-        $openIndex = $sampleIndex + 2;
-        $open = $tokens[$openIndex] ?? null;
-        if (!$open instanceof SqlToken || !$this->isOpeningParenthesis($open, $referenceToken)) {
-            throw new UnsupportedSqlException($sql, 'Malformed TABLESAMPLE opening parenthesis');
-        }
-        $closeIndex = $this->closingParenthesisIndex($tokens, $openIndex);
-        if ($closeIndex === null) {
-            throw new UnsupportedSqlException($sql, 'Malformed TABLESAMPLE closing parenthesis');
-        }
-        $close = $tokens[$closeIndex];
-        $percentageSql = trim(substr($sql, $open->endOffset(), $close->offset - $open->endOffset()));
-        if ($percentageSql === '' || count(SqlTokenStream::tokenize($percentageSql, PgSqlLexerProfile::create())->splitTopLevel()) !== 1) {
-            throw new UnsupportedSqlException($sql, 'TABLESAMPLE requires one percentage expression');
-        }
+        $percentage = $this->bracketedExpression(
+            $sql,
+            $tokens,
+            $sampleIndex + 2,
+            $referenceToken,
+            'TABLESAMPLE',
+            'percentage',
+        );
+        $percentageSql = $percentage['sql'];
+        $endOffset = $percentage['endOffset'];
 
         $seedSql = null;
-        $endOffset = $close->endOffset();
-        $repeatable = $tokens[$closeIndex + 1] ?? null;
-        if ($repeatable?->isKeyword('REPEATABLE') === true
-            && $this->sameLevel($repeatable, $referenceToken)
-        ) {
-            $seedOpenIndex = $closeIndex + 2;
-            $seedOpen = $tokens[$seedOpenIndex] ?? null;
-            if (!$seedOpen instanceof SqlToken || !$this->isOpeningParenthesis($seedOpen, $referenceToken)) {
-                throw new UnsupportedSqlException($sql, 'Malformed TABLESAMPLE REPEATABLE opening parenthesis');
-            }
-            $seedCloseIndex = $this->closingParenthesisIndex($tokens, $seedOpenIndex);
-            if ($seedCloseIndex === null) {
-                throw new UnsupportedSqlException($sql, 'Malformed TABLESAMPLE REPEATABLE closing parenthesis');
-            }
-            $seedClose = $tokens[$seedCloseIndex];
-            $seedSql = trim(substr($sql, $seedOpen->endOffset(), $seedClose->offset - $seedOpen->endOffset()));
-            if ($seedSql === '' || count(SqlTokenStream::tokenize($seedSql, PgSqlLexerProfile::create())->splitTopLevel()) !== 1) {
-                throw new UnsupportedSqlException($sql, 'TABLESAMPLE REPEATABLE requires one seed expression');
-            }
-            $endOffset = $seedClose->endOffset();
+        $repeatable = $tokens[$percentage['closeIndex'] + 1] ?? null;
+        if ($repeatable?->isKeyword('REPEATABLE') === true && $this->sameLevel($repeatable, $referenceToken)) {
+            $seed = $this->bracketedExpression(
+                $sql,
+                $tokens,
+                $percentage['closeIndex'] + 2,
+                $referenceToken,
+                'TABLESAMPLE REPEATABLE',
+                'seed',
+            );
+            $seedSql = $seed['sql'];
+            $endOffset = $seed['endOffset'];
         }
 
         $sampleToken = $tokens[$sampleIndex];
@@ -124,6 +112,50 @@ final class PgSqlTableSampleParser
             $reference['start'],
             $endOffset,
         );
+    }
+
+    /**
+     * Answers the one expression written between the parentheses at an index.
+     *
+     * TABLESAMPLE takes a percentage and, where it repeats, a seed, and each
+     * is one expression written between parentheses of its own; anything
+     * else there is something ZTD cannot work out what to sample from.
+     *
+     * @param string $sql Statement being read, as written
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param int $openIndex Where the opening parenthesis should be
+     * @param SqlToken $referenceToken The relation being sampled, for the nesting it is written at
+     * @param string $clause The clause being read, for the refusal
+     * @param string $expression What the clause takes, for the refusal
+     *
+     * @return array{sql: string, closeIndex: int, endOffset: int} The expression, where it closes and where that leaves off
+     *
+     * @throws UnsupportedSqlException When the parentheses are not written as they have to be, or hold anything but one expression
+     */
+    public function bracketedExpression(
+        string $sql,
+        array $tokens,
+        int $openIndex,
+        SqlToken $referenceToken,
+        string $clause,
+        string $expression,
+    ): array {
+        $open = $tokens[$openIndex] ?? null;
+        if (!$open instanceof SqlToken || !$this->isOpeningParenthesis($open, $referenceToken)) {
+            throw new UnsupportedSqlException($sql, 'Malformed ' . $clause . ' opening parenthesis');
+        }
+        $closeIndex = $this->closingParenthesisIndex($tokens, $openIndex);
+        if ($closeIndex === null) {
+            throw new UnsupportedSqlException($sql, 'Malformed ' . $clause . ' closing parenthesis');
+        }
+        $close = $tokens[$closeIndex];
+        $written = trim(substr($sql, $open->endOffset(), $close->offset - $open->endOffset()));
+        $parts = SqlTokenStream::tokenize($written, PgSqlLexerProfile::create())->splitTopLevel();
+        if ($written === '' || count($parts) !== 1) {
+            throw new UnsupportedSqlException($sql, $clause . ' requires one ' . $expression . ' expression');
+        }
+
+        return ['sql' => $written, 'closeIndex' => $closeIndex, 'endOffset' => $close->endOffset()];
     }
 
     /**
