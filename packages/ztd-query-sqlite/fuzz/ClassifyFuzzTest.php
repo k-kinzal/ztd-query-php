@@ -10,8 +10,8 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\SqliteProvider;
-use ZtdQuery\Platform\Sqlite\SqliteParser;
-use ZtdQuery\Platform\Sqlite\SqliteQueryGuard;
+use ZtdQuery\Platform\Sqlite\Parse\SqliteParser;
+use ZtdQuery\Platform\Sqlite\Rewrite\SqliteQueryGuard;
 use ZtdQuery\Rewrite\QueryKind;
 
 /**

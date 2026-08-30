@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\Sqlite\Transformer;
 
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\Sqlite\SqliteParser;
+use ZtdQuery\Platform\Sqlite\Parse\SqliteParser;
 use ZtdQuery\Rewrite\SqlTransformer;
 
 /**

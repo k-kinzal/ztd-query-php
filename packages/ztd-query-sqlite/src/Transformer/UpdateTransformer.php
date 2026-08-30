@@ -6,8 +6,8 @@ namespace ZtdQuery\Platform\Sqlite\Transformer;
 
 use RuntimeException;
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer;
-use ZtdQuery\Platform\Sqlite\SqliteParser;
+use ZtdQuery\Platform\Sqlite\Parse\SqliteParser;
+use ZtdQuery\Platform\Sqlite\Rewrite\SqliteCteShadowComposer;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
 
