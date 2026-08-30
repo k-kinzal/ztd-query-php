@@ -10,17 +10,17 @@ use PHPUnit\Framework\TestCase;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Connection\StatementInterface;
-use ZtdQuery\Platform\Sqlite\SqliteCastRenderer;
-use ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter;
-use ZtdQuery\Platform\Sqlite\SqliteInMemoryAttachStatement;
-use ZtdQuery\Platform\Sqlite\SqliteLexicalMasker;
-use ZtdQuery\Platform\Sqlite\SqliteMutationResolver;
-use ZtdQuery\Platform\Sqlite\SqliteParser;
-use ZtdQuery\Platform\Sqlite\SqlitePdoParameterBindingCompiler;
-use ZtdQuery\Platform\Sqlite\SqlitePdoResultColumnTypeResolver;
-use ZtdQuery\Platform\Sqlite\SqliteQueryGuard;
-use ZtdQuery\Platform\Sqlite\SqliteRewriter;
-use ZtdQuery\Platform\Sqlite\SqliteSchemaParser;
+use ZtdQuery\Platform\Sqlite\Dialect\SqliteCastRenderer;
+use ZtdQuery\Platform\Sqlite\Dialect\SqliteIdentifierQuoter;
+use ZtdQuery\Platform\Sqlite\Dialect\SqliteLexicalMasker;
+use ZtdQuery\Platform\Sqlite\Dialect\SqlitePdoParameterBindingCompiler;
+use ZtdQuery\Platform\Sqlite\Dialect\SqlitePdoResultColumnTypeResolver;
+use ZtdQuery\Platform\Sqlite\Parse\SqliteParser;
+use ZtdQuery\Platform\Sqlite\Parse\SqliteSchemaParser;
+use ZtdQuery\Platform\Sqlite\Rewrite\SqliteInMemoryAttachStatement;
+use ZtdQuery\Platform\Sqlite\Rewrite\SqliteMutationResolver;
+use ZtdQuery\Platform\Sqlite\Rewrite\SqliteQueryGuard;
+use ZtdQuery\Platform\Sqlite\Rewrite\SqliteRewriter;
 use ZtdQuery\Platform\Sqlite\SqliteSchemaReflector;
 use ZtdQuery\Platform\Sqlite\SqliteSessionFactory;
 use ZtdQuery\Platform\Sqlite\Transformer\DeleteTransformer;
@@ -30,20 +30,20 @@ use ZtdQuery\Platform\Sqlite\Transformer\SqliteTransformer;
 use ZtdQuery\Platform\Sqlite\Transformer\UpdateTransformer;
 
 #[CoversClass(SqliteSessionFactory::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteColumnTypeMapper::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteForeignKeyDefinitionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Dialect\SqliteColumnTypeMapper::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parse\SqliteForeignKeyDefinitionParser::class)]
 #[UsesClass(SqliteCastRenderer::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteValueRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Dialect\SqliteValueRenderer::class)]
 #[UsesClass(SqliteIdentifierQuoter::class)]
 #[UsesClass(SqliteInMemoryAttachStatement::class)]
 #[UsesClass(SqliteLexicalMasker::class)]
 #[UsesClass(SqliteMutationResolver::class)]
 #[UsesClass(SqliteParser::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parse\SqliteSelectRelationParser::class)]
 #[UsesClass(SqlitePdoParameterBindingCompiler::class)]
 #[UsesClass(SqlitePdoResultColumnTypeResolver::class)]
 #[UsesClass(SqliteQueryGuard::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteReadOnlyDiagnosticStatement::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewrite\SqliteReadOnlyDiagnosticStatement::class)]
 #[UsesClass(SqliteRewriter::class)]
 #[UsesClass(SqliteSchemaParser::class)]
 #[UsesClass(SqliteSchemaReflector::class)]
@@ -52,16 +52,16 @@ use ZtdQuery\Platform\Sqlite\Transformer\UpdateTransformer;
 #[UsesClass(\ZtdQuery\Platform\Sqlite\Transformer\InsertRowRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\Transformer\InsertSelectRenderer::class)]
 #[UsesClass(SelectTransformer::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteFullTextSearchRewriter::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteIndexHintStripper::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewrite\SqliteFullTextSearchRewriter::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewrite\SqliteIndexHintStripper::class)]
 #[UsesClass(SqliteTransformer::class)]
 #[UsesClass(UpdateTransformer::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteNativeUpsertProjector::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteViewDefinitionParser::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteViewShadowRenderer::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteGeneratedColumnProjector::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewrite\SqliteCteShadowComposer::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewrite\SqliteNativeUpsertProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parse\SqliteViewDefinitionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewrite\SqliteViewShadowRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewrite\SqliteGeneratedColumnProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Dialect\SqliteLexerProfile::class)]
 final class SqliteSessionFactoryTest extends TestCase
 {
     public function testCreateRegistersReflectedViews(): void

@@ -8,26 +8,26 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\Sqlite\SqliteCastRenderer;
-use ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter;
-use ZtdQuery\Platform\Sqlite\SqliteLexicalMasker;
-use ZtdQuery\Platform\Sqlite\SqliteParser;
+use ZtdQuery\Platform\Sqlite\Dialect\SqliteCastRenderer;
+use ZtdQuery\Platform\Sqlite\Dialect\SqliteIdentifierQuoter;
+use ZtdQuery\Platform\Sqlite\Dialect\SqliteLexicalMasker;
+use ZtdQuery\Platform\Sqlite\Parse\SqliteParser;
 use ZtdQuery\Platform\Sqlite\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\Sqlite\Transformer\SelectTransformer;
 
 #[CoversClass(DeleteTransformer::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parse\SqliteSelectRelationParser::class)]
 #[UsesClass(SqliteLexicalMasker::class)]
 #[UsesClass(SqliteParser::class)]
 #[UsesClass(SelectTransformer::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteFullTextSearchRewriter::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteIndexHintStripper::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewrite\SqliteFullTextSearchRewriter::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewrite\SqliteIndexHintStripper::class)]
 #[UsesClass(SqliteCastRenderer::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteValueRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Dialect\SqliteValueRenderer::class)]
 #[UsesClass(SqliteIdentifierQuoter::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteGeneratedColumnProjector::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewrite\SqliteCteShadowComposer::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewrite\SqliteGeneratedColumnProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Dialect\SqliteLexerProfile::class)]
 final class DeleteTransformerTest extends TestCase
 {
     public function testTransformSimpleDelete(): void

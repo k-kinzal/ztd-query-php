@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Bench;
 
-use ZtdQuery\Platform\Sqlite\SqliteParser;
+use ZtdQuery\Platform\Sqlite\Parse\SqliteParser;
 
 final class ParserBench
 {

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\Sqlite\Transformer;
 
 use ZtdQuery\Exception\InvalidDefinitionException;
-use ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter;
+use ZtdQuery\Platform\Sqlite\Dialect\SqliteIdentifierQuoter;
 use ZtdQuery\Rewrite\InsertSelectProjectionPlanner;
 
 /**

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Fuzz\Robustness\Invariant;
 
-use ZtdQuery\Platform\Sqlite\SqliteQueryGuard;
+use ZtdQuery\Platform\Sqlite\Rewrite\SqliteQueryGuard;
 
 /**
  * The classify never throws checker, as invariant checker.
