@@ -20,11 +20,15 @@ use ZtdQuery\Platform\MySql\MySqlSessionFactory;
 use ZtdQuery\Platform\MySql\MySqlSessionSqlModeReflector;
 use ZtdQuery\Platform\MySql\Parse\MySqlParser;
 use ZtdQuery\Platform\MySql\Parse\MySqlSchemaParser;
+use ZtdQuery\Platform\MySql\Rewrite\MySqlAlterSupport;
+use ZtdQuery\Platform\MySql\Rewrite\MySqlKnownTables;
 use ZtdQuery\Platform\MySql\Rewrite\MySqlMutationResolver;
 use ZtdQuery\Platform\MySql\Rewrite\MySqlQueryGuard;
 use ZtdQuery\Platform\MySql\Rewrite\MySqlRewriter;
+use ZtdQuery\Platform\MySql\Rewrite\MySqlShadowTables;
 use ZtdQuery\Platform\MySql\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\MySql\Transformer\InsertTransformer;
+use ZtdQuery\Platform\MySql\Transformer\MySqlDeleteClauses;
 use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
 use ZtdQuery\Platform\MySql\Transformer\ReplaceTransformer;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
@@ -63,6 +67,10 @@ use ZtdQuery\Sql\SqlTokenStream;
 #[UsesClass(\ZtdQuery\Platform\MySql\Parse\MySqlSelectRelationParser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Parse\MySqlViewDefinitionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\MySqlViewShadowRenderer::class)]
+#[UsesClass(MySqlAlterSupport::class)]
+#[UsesClass(MySqlKnownTables::class)]
+#[UsesClass(MySqlShadowTables::class)]
+#[UsesClass(MySqlDeleteClauses::class)]
 final class MySqlSessionFactoryTest extends TestCase
 {
     public function testCreateRegistersReflectedViews(): void

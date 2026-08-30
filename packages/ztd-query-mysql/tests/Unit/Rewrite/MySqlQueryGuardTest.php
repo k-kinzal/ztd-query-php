@@ -5,12 +5,17 @@ declare(strict_types=1);
 namespace Tests\Unit\Rewrite;
 
 use PhpMyAdmin\SqlParser\Parser;
+use PhpMyAdmin\SqlParser\Statements\CreateStatement;
+use PhpMyAdmin\SqlParser\Statements\DeleteStatement;
+use PhpMyAdmin\SqlParser\Statements\SelectStatement;
+use PhpMyAdmin\SqlParser\Statements\WithStatement;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use RuntimeException;
 use Tests\Contract\QueryClassifierContractTest;
 use ZtdQuery\Platform\MySql\Parse\MySqlParser;
 use ZtdQuery\Platform\MySql\Rewrite\MySqlQueryGuard;
+use ZtdQuery\Platform\MySql\Rewrite\MySqlTopLevelWords;
 use ZtdQuery\Rewrite\QueryKind;
 
 #[CoversClass(MySqlQueryGuard::class)]
@@ -18,6 +23,7 @@ use ZtdQuery\Rewrite\QueryKind;
 #[UsesClass(MySqlParser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlLexerProfile::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlStatementOptions::class)]
+#[UsesClass(MySqlTopLevelWords::class)]
 class MySqlQueryGuardTest extends QueryClassifierContractTest
 {
     public function classify(string $sql): ?QueryKind
@@ -612,4 +618,45 @@ class MySqlQueryGuardTest extends QueryClassifierContractTest
         self::assertNull((new MySqlQueryGuard(new MySqlParser()))->classifyWithFallback('GIBBERISH'));
     }
 
+    public function testIsAnyOfReportsWhetherTheStatementIsOneOfTheseKinds(): void
+    {
+        $guard = new MySqlQueryGuard(new MySqlParser());
+        $statement = (new Parser('DELETE FROM t'))->statements[0];
+
+        self::assertSame(
+            [true, false],
+            [
+                $guard->isAnyOf($statement, [SelectStatement::class, DeleteStatement::class]),
+                $guard->isAnyOf($statement, [SelectStatement::class]),
+            ],
+        );
+    }
+
+    public function testNamesATableSaysWhetherADefinitionIsAboutATable(): void
+    {
+        $guard = new MySqlQueryGuard(new MySqlParser());
+        $table = (new Parser('CREATE TABLE t (id INT)'))->statements[0];
+        $database = (new Parser('CREATE DATABASE d'))->statements[0];
+        self::assertInstanceOf(CreateStatement::class, $table);
+        self::assertInstanceOf(CreateStatement::class, $database);
+
+        self::assertSame([true, false], [$guard->namesATable($table), $guard->namesATable($database)]);
+    }
+
+    public function testClassifyCteBodiesIsAReadWhereEveryBodyOnlyReads(): void
+    {
+        $guard = new MySqlQueryGuard(new MySqlParser());
+        $statement = (new Parser('WITH c AS (SELECT 1 AS id) SELECT * FROM c'))->statements[0];
+        self::assertInstanceOf(WithStatement::class, $statement);
+
+        self::assertSame(QueryKind::READ, $guard->classifyCteBodies($statement));
+    }
+
+    public function testClassifyCteBodiesIsAReadWhereTheParserReadNoBodyAtAll(): void
+    {
+        $guard = new MySqlQueryGuard(new MySqlParser());
+        $statement = new WithStatement();
+
+        self::assertSame(QueryKind::READ, $guard->classifyCteBodies($statement));
+    }
 }

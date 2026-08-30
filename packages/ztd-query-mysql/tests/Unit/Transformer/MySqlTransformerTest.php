@@ -16,6 +16,8 @@ use ZtdQuery\Platform\MySql\Parse\MySqlUpsertAssignmentExtractor;
 use ZtdQuery\Platform\MySql\Parse\UpdateSourceExtractor;
 use ZtdQuery\Platform\MySql\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\MySql\Transformer\InsertTransformer;
+use ZtdQuery\Platform\MySql\Transformer\MySqlDeleteClauses;
+use ZtdQuery\Platform\MySql\Transformer\MySqlDeleteTargets;
 use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
 use ZtdQuery\Platform\MySql\Transformer\ReplaceTransformer;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
@@ -46,6 +48,8 @@ use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
 #[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\MySqlGeneratedColumnProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlLexerProfile::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Dialect\MySqlComponentSql::class)]
+#[UsesClass(MySqlDeleteClauses::class)]
+#[UsesClass(MySqlDeleteTargets::class)]
 final class MySqlTransformerTest extends TestCase
 {
     public function testTransformSelectPassthrough(): void

@@ -26,6 +26,16 @@ use ZtdQuery\Rewrite\QueryKind;
  */
 final class MySqlQueryGuard
 {
+    /** @var list<class-string> Statements that write rows, whatever else they do */
+    private const WRITE_STATEMENTS = [
+        UpdateStatement::class,
+        DeleteStatement::class,
+        InsertStatement::class,
+        TruncateStatement::class,
+        ReplaceStatement::class,
+        LoadStatement::class,
+    ];
+
     private MySqlParser $parser;
 
     /**
@@ -36,6 +46,7 @@ final class MySqlQueryGuard
     public function __construct(
         MySqlParser $parser,
         private readonly MySqlStatementOptions $options = new MySqlStatementOptions(),
+        private readonly MySqlTopLevelWords $words = new MySqlTopLevelWords(),
     ) {
         $this->parser = $parser;
     }
@@ -78,60 +89,96 @@ final class MySqlQueryGuard
     }
 
     /**
-     * Classify a parsed statement into its QueryKind, or null if unsupported.
+     * Answers what a statement the parser read does, or nothing where ZTD cannot say.
+     *
+     * @param Statement $statement The statement, as the parser reads it
+     *
+     * @return QueryKind|null What it does, or null where ZTD cannot simulate it
      */
     public function classifyStatement(Statement $statement): ?QueryKind
     {
         if ($statement instanceof SelectStatement) {
-            if ($statement->into !== null) {
-                return null;
-            }
-            return QueryKind::READ;
+            return $statement->into === null ? QueryKind::READ : null;
         }
-
-        if ($statement instanceof UpdateStatement || $statement instanceof DeleteStatement || $statement instanceof InsertStatement || $statement instanceof TruncateStatement || $statement instanceof ReplaceStatement || $statement instanceof LoadStatement) {
+        if ($statement instanceof WithStatement) {
+            return $this->classifyCteBodies($statement);
+        }
+        if ($this->isAnyOf($statement, self::WRITE_STATEMENTS)) {
             return QueryKind::WRITE_SIMULATED;
         }
-
-        if ($statement instanceof CreateStatement) {
-            if ($statement->options !== null && $this->options->isSet($statement->options, 'TABLE')) {
-                return QueryKind::DDL_SIMULATED;
-            }
-            return null;
-        }
-
-        if ($statement instanceof DropStatement) {
-            if ($statement->options !== null && $this->options->isSet($statement->options, 'TABLE')) {
-                return QueryKind::DDL_SIMULATED;
-            }
-            return null;
-        }
-
-        if ($statement instanceof AlterStatement) {
-            if ($statement->options !== null && $this->options->isSet($statement->options, 'TABLE')) {
-                return QueryKind::DDL_SIMULATED;
-            }
-            return null;
-        }
-
-        if ($statement instanceof WithStatement) {
-            if ($statement->cteStatementParser === null) {
-                return QueryKind::READ;
-            }
-            $kind = QueryKind::READ;
-            foreach ($statement->cteStatementParser->statements as $inner) {
-                $innerKind = $this->classifyStatement($inner);
-                if ($innerKind === null) {
-                    return null;
-                }
-                if ($innerKind === QueryKind::WRITE_SIMULATED) {
-                    $kind = QueryKind::WRITE_SIMULATED;
-                }
-            }
-            return $kind;
+        if ($statement instanceof CreateStatement
+            || $statement instanceof DropStatement
+            || $statement instanceof AlterStatement
+        ) {
+            return $this->namesATable($statement) ? QueryKind::DDL_SIMULATED : null;
         }
 
         return null;
+    }
+
+    /**
+     * Reports whether the statement is one of these kinds.
+     *
+     * @param Statement $statement The statement, as the parser reads it
+     * @param list<class-string> $kinds Kinds to look for
+     *
+     * @return bool True when it is one of them
+     */
+    public function isAnyOf(Statement $statement, array $kinds): bool
+    {
+        foreach ($kinds as $kind) {
+            if ($statement instanceof $kind) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Reports whether a definition is one about a table.
+     *
+     * MySQL writes CREATE, DROP and ALTER of a database, a view, an index and
+     * much else besides, and the shadow holds only tables, so what the
+     * definition is about is what decides whether ZTD can simulate it.
+     *
+     * @param AlterStatement|CreateStatement|DropStatement $statement The statement, as the parser reads it
+     *
+     * @return bool True when it says TABLE
+     */
+    public function namesATable(AlterStatement|CreateStatement|DropStatement $statement): bool
+    {
+        return $statement->options !== null && $this->options->isSet($statement->options, 'TABLE');
+    }
+
+    /**
+     * Answers what a statement written with a WITH prefix does.
+     *
+     * The bodies of the prefix are statements of their own, and one of them
+     * writing is what makes the whole of it a write.
+     *
+     * @param WithStatement $statement The statement, as the parser reads it
+     *
+     * @return QueryKind|null What it does, or null where ZTD cannot simulate one of its bodies
+     */
+    public function classifyCteBodies(WithStatement $statement): ?QueryKind
+    {
+        if ($statement->cteStatementParser === null) {
+            return QueryKind::READ;
+        }
+
+        $kind = QueryKind::READ;
+        foreach ($statement->cteStatementParser->statements as $inner) {
+            $innerKind = $this->classifyStatement($inner);
+            if ($innerKind === null) {
+                return null;
+            }
+            if ($innerKind === QueryKind::WRITE_SIMULATED) {
+                $kind = QueryKind::WRITE_SIMULATED;
+            }
+        }
+
+        return $kind;
     }
 
     /**
@@ -147,70 +194,16 @@ final class MySqlQueryGuard
      */
     public function classifyWithFallback(string $sql): ?QueryKind
     {
-        $upper = strtoupper($sql);
-        $len = strlen($upper);
-        $depth = 0;
-        $seenCteBody = false;
-        $quote = '';
-
-        for ($i = 0; $i < $len; $i++) {
-            $char = $upper[$i];
-
-            if ($quote !== '') {
-                if ($char === $quote) {
-                    $prev = $i > 0 ? $upper[$i - 1] : '';
-                    if ($quote === '`' || $prev !== '\\') {
-                        $quote = '';
-                    }
-                }
-                continue;
-            }
-
-            if ($char === '\'' || $char === '"' || $char === '`') {
-                $quote = $char;
-                continue;
-            }
-
-            if ($char === '(') {
-                $depth++;
-                $seenCteBody = true;
-                continue;
-            }
-
-            if ($char === ')') {
-                if ($depth > 0) {
-                    $depth--;
-                }
-                continue;
-            }
-
-            if (!$seenCteBody || $depth !== 0 || !ctype_alpha($char)) {
-                continue;
-            }
-
-            $prev = $i > 0 ? $upper[$i - 1] : '';
-            if (ctype_alpha($prev)) {
-                continue;
-            }
-
-            $j = $i;
-            while ($j < $len && ctype_alpha($upper[$j])) {
-                $j++;
-            }
-
-            $keyword = substr($upper, $i, $j - $i);
-            $kind = match ($keyword) {
+        foreach ($this->words->afterBody($sql) as $word) {
+            $kind = match ($word) {
                 'SELECT' => QueryKind::READ,
                 'UPDATE', 'DELETE', 'INSERT', 'REPLACE', 'TRUNCATE' => QueryKind::WRITE_SIMULATED,
                 'CREATE', 'DROP', 'ALTER' => QueryKind::DDL_SIMULATED,
                 default => null,
             };
-
             if ($kind !== null) {
                 return $kind;
             }
-
-            $i = $j - 1;
         }
 
         return null;
