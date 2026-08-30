@@ -3506,4 +3506,56 @@ final class PgSqlRewriterTest extends RewriterContractTest
         self::assertSame('SELECT 1 WHERE FALSE', $rewriter->emptyResultSelect());
     }
 
+    public function testRewriteReadReadsTheShadowInsteadOfTheDatabase(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', [['id' => 1]]);
+        $rewriter = $this->createRewriter($store, new TableDefinitionRegistry());
+        self::assertInstanceOf(PgSqlRewriter::class, $rewriter);
+
+        $plan = $rewriter->rewriteRead('SELECT * FROM users');
+
+        self::assertSame(QueryKind::READ, $plan->kind());
+        self::assertStringStartsWith('WITH', $plan->sql());
+    }
+
+    public function testFirstUnknownTableAnswersNothingWhereTheShadowHasBeenToldNothing(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        self::assertInstanceOf(PgSqlRewriter::class, $rewriter);
+
+        self::assertNull($rewriter->firstUnknownTable('SELECT * FROM missing'));
+    }
+
+    public function testFirstUnknownTableAnswersTheTableTheShadowCannotSpeakFor(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', []);
+        $rewriter = $this->createRewriter($store, new TableDefinitionRegistry());
+        self::assertInstanceOf(PgSqlRewriter::class, $rewriter);
+
+        self::assertSame('missing', $rewriter->firstUnknownTable('SELECT * FROM users JOIN missing ON TRUE'));
+    }
+
+    public function testRewriteDefinitionReadsNothingBackForADefinitionThatCarriesNoRows(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        self::assertInstanceOf(PgSqlRewriter::class, $rewriter);
+
+        $plan = $rewriter->rewriteDefinition('CREATE TABLE t (id integer)', 'CREATE_TABLE');
+
+        self::assertSame([QueryKind::DDL_SIMULATED, $rewriter->emptyResultSelect()], [$plan->kind(), $plan->sql()]);
+    }
+
+    public function testRewriteWriteReadsNothingBackForATruncate(): void
+    {
+        $store = new ShadowStore();
+        $store->set('t', [['id' => 1]]);
+        $rewriter = $this->createRewriter($store, new TableDefinitionRegistry());
+        self::assertInstanceOf(PgSqlRewriter::class, $rewriter);
+
+        $plan = $rewriter->rewriteWrite('TRUNCATE TABLE t', 'TRUNCATE', QueryKind::WRITE_SIMULATED);
+
+        self::assertSame([QueryKind::WRITE_SIMULATED, $rewriter->emptyResultSelect()], [$plan->kind(), $plan->sql()]);
+    }
 }

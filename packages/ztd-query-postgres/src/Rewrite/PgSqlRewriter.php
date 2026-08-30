@@ -6,7 +6,6 @@ namespace ZtdQuery\Platform\Postgres\Rewrite;
 
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\Postgres\Dialect\PgSqlIdentifierQuoter;
 use ZtdQuery\Platform\Postgres\Parse\PgSqlParser;
 use ZtdQuery\Platform\Postgres\Parse\PgSqlReturningProjectionParser;
 use ZtdQuery\Platform\Postgres\Parse\PgSqlTransactionStatementParser;
@@ -56,6 +55,7 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
     private PgSqlWithPrefix $withPrefix;
     private PgSqlPartitionPredicateRenderer $partitionPredicateRenderer;
     private ViewDefinitionSet $views;
+    private PgSqlShadowTables $shadowTables;
 
     /**
      * Binds the instance to what it will work from.
@@ -86,6 +86,7 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
         $this->returningProjectionParser = new PgSqlReturningProjectionParser();
         $this->withPrefix = new PgSqlWithPrefix();
         $this->partitionPredicateRenderer = new PgSqlPartitionPredicateRenderer();
+        $this->shadowTables = new PgSqlShadowTables($shadowStore, $registry, $this->partitionPredicateRenderer);
         $this->views = $views ?? new ViewDefinitionSet();
     }
 
@@ -183,61 +184,124 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
         if ($kind === null) {
             throw new UnsupportedSqlException($sql, 'Statement type not supported');
         }
-
         if ($kind === QueryKind::SKIPPED) {
             return new RewritePlan($sql, QueryKind::SKIPPED);
         }
 
-        $statementType = $this->parser->classifyStatement($sql);
+        $statementType = $this->parser->classifyStatement($sql) ?? '';
         if ($statementType === 'DO') {
             return new RewritePlan($sql, QueryKind::READ);
         }
-        $tableContext = $this->buildTableContext();
-
         if ($kind === QueryKind::READ) {
-            if ($this->hasSchemaContext()) {
-                $tableNames = $this->parser->extractSelectTableNames($sql);
-                $declaredCtes = array_fill_keys($this->withPrefix->declaredCteNames($sql), true);
-                foreach ($tableNames as $tableName) {
-                    if (isset($declaredCtes[strtolower($tableName)])) {
-                        continue;
-                    }
-                    if (!$this->tableExists($tableName)) {
-                        throw new UnknownSchemaException($sql, $tableName, 'table');
-                    }
-                }
-            }
-
-            $transformedSql = $this->transformer->transform($sql, $tableContext);
-
-            return new RewritePlan($transformedSql, QueryKind::READ);
+            return $this->rewriteRead($sql);
         }
-
         if ($kind === QueryKind::DDL_SIMULATED) {
-            $mutation = $this->mutationResolver->resolve($sql, $statementType ?? '', $kind);
-
-            if ($statementType === 'CREATE_TABLE' && $this->parser->hasCreateTableAsSelect($sql)) {
-                $selectSql = $this->parser->extractCreateTableSelectSql($sql);
-                if ($selectSql !== null) {
-                    $transformedSelectSql = $this->transformer->transform($selectSql, $tableContext);
-
-                    return new RewritePlan($transformedSelectSql, QueryKind::DDL_SIMULATED, $mutation);
-                }
-            }
-
-            return new RewritePlan($this->emptyResultSelect(), QueryKind::DDL_SIMULATED, $mutation);
+            return $this->rewriteDefinition($sql, $statementType);
         }
 
-        $mutation = $this->mutationResolver->resolve($sql, $statementType ?? '', $kind);
+        return $this->rewriteWrite($sql, $statementType, $kind);
+    }
 
+    /**
+     * Rewrites a statement that only reads, to read the shadow instead.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return RewritePlan The statement to run against the shadow
+     *
+     * @throws UnknownSchemaException When it reads a table nothing has declared
+     */
+    public function rewriteRead(string $sql): RewritePlan
+    {
+        $unknown = $this->firstUnknownTable($sql);
+        if ($unknown !== null) {
+            throw new UnknownSchemaException($sql, $unknown, 'table');
+        }
+
+        return new RewritePlan($this->transformer->transform($sql, $this->buildTableContext()), QueryKind::READ);
+    }
+
+    /**
+     * Answers the first table a statement reads that the shadow does not know.
+     *
+     * A shadow that has been told nothing knows no table, so nothing is
+     * refused for being missing; a name the statement declares for itself is
+     * not a table, so it is not one the shadow is missing either.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return string|null The table, or null where the shadow knows every one of them
+     */
+    public function firstUnknownTable(string $sql): ?string
+    {
+        if (!$this->hasSchemaContext()) {
+            return null;
+        }
+
+        $declaredCtes = array_fill_keys($this->withPrefix->declaredCteNames($sql), true);
+        foreach ($this->parser->extractSelectTableNames($sql) as $tableName) {
+            if (isset($declaredCtes[strtolower($tableName)])) {
+                continue;
+            }
+            if (!$this->tableExists($tableName)) {
+                return $tableName;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Rewrites a statement that changes what a table is.
+     *
+     * There are no rows to answer for a definition, so the statement to run
+     * reads nothing back -- except where the definition carries a SELECT,
+     * whose rows are what the new table is to hold.
+     *
+     * @param string $sql Statement being read, as written
+     * @param string $statementType What the parser takes the statement to be
+     *
+     * @return RewritePlan The statement to run, and what applying it would do
+     *
+     * @throws UnsupportedSqlException When ZTD cannot simulate what it asks for
+     * @throws UnknownSchemaException When it reads a table nothing has declared
+     */
+    public function rewriteDefinition(string $sql, string $statementType): RewritePlan
+    {
+        $mutation = $this->mutationResolver->resolve($sql, $statementType, QueryKind::DDL_SIMULATED);
+        $selectSql = $statementType === 'CREATE_TABLE' && $this->parser->hasCreateTableAsSelect($sql)
+            ? $this->parser->extractCreateTableSelectSql($sql)
+            : null;
+        if ($selectSql !== null) {
+            $transformed = $this->transformer->transform($selectSql, $this->buildTableContext());
+
+            return new RewritePlan($transformed, QueryKind::DDL_SIMULATED, $mutation);
+        }
+
+        return new RewritePlan($this->emptyResultSelect(), QueryKind::DDL_SIMULATED, $mutation);
+    }
+
+    /**
+     * Rewrites a statement that writes, to answer the rows it would have written.
+     *
+     * @param string $sql Statement being read, as written
+     * @param string $statementType What the parser takes the statement to be
+     * @param QueryKind $kind What the statement was taken to be
+     *
+     * @return RewritePlan The statement to run, and what applying it would do
+     *
+     * @throws UnsupportedSqlException When ZTD cannot simulate what it asks for
+     * @throws UnknownSchemaException When it writes a table nothing has declared
+     */
+    public function rewriteWrite(string $sql, string $statementType, QueryKind $kind): RewritePlan
+    {
+        $mutation = $this->mutationResolver->resolve($sql, $statementType, $kind);
         if ($statementType === 'TRUNCATE') {
             return new RewritePlan($this->emptyResultSelect(), QueryKind::WRITE_SIMULATED, $mutation);
         }
 
-        $transformedSql = $this->transformer->transform($sql, $tableContext);
-
         return new RewritePlan(
-            $transformedSql,
+            $this->transformer->transform($sql, $this->buildTableContext()),
             QueryKind::WRITE_SIMULATED,
             $mutation,
             $this->returningProjectionParser->parse($sql),
@@ -252,100 +316,7 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
      */
     public function buildTableContext(): array
     {
-        $context = [];
-        $allData = $this->shadowStore->getAll();
-
-        foreach ($allData as $tableName => $rows) {
-            $definition = $this->registry->get($tableName);
-            $columns = $definition?->columns;
-            if ($columns === null && $rows !== []) {
-                $columns = array_keys($rows[0]);
-                foreach ($rows as $row) {
-                    foreach (array_keys($row) as $column) {
-                        if (!in_array($column, $columns, true)) {
-                            $columns[] = $column;
-                        }
-                    }
-                }
-            }
-
-            $columnTypes = $definition !== null ? $definition->typedColumns : [];
-            $columnDefaults = $definition !== null ? $definition->columnDefaults : [];
-            $identityStrategies = $definition !== null ? $definition->identityStrategies : [];
-            $generatedExpressions = $definition !== null ? $definition->generatedExpressions : [];
-
-            $context[$tableName] = [
-                'rows' => $rows,
-                'columns' => $columns ?? [],
-                'columnTypes' => $columnTypes,
-                'columnDefaults' => $columnDefaults,
-                'identityStrategies' => $identityStrategies,
-                'generatedExpressions' => $generatedExpressions,
-                'primaryKeys' => $definition !== null ? $definition->primaryKeys : [],
-                'candidateKeys' => $definition !== null ? $definition->candidateKeys()->keys() : [],
-                'partialUniqueIndexes' => $definition !== null ? $definition->partialUniqueIndexes : [],
-            ];
-        }
-
-        $allDefinitions = $this->registry->getAll();
-        foreach ($allDefinitions as $tableName => $definition) {
-            if (isset($context[$tableName])) {
-                continue;
-            }
-
-            $definitionContext = [
-                'rows' => [],
-                'columns' => $definition->columns,
-                'columnTypes' => $definition->typedColumns,
-                'columnDefaults' => $definition->columnDefaults,
-                'identityStrategies' => $definition->identityStrategies,
-                'generatedExpressions' => $definition->generatedExpressions,
-                'primaryKeys' => $definition->primaryKeys,
-                'candidateKeys' => $definition->candidateKeys()->keys(),
-            ];
-            $definitionContext['partialUniqueIndexes'] = $definition->partialUniqueIndexes;
-            $context[$tableName] = $definitionContext;
-        }
-
-        $quoter = new PgSqlIdentifierQuoter();
-        foreach ($allDefinitions as $tableName => $definition) {
-            $relation = $definition->partitionRelation;
-            if ($relation === null) {
-                continue;
-            }
-
-            $siblingPredicates = [];
-            foreach ($allDefinitions as $siblingDefinition) {
-                $sibling = $siblingDefinition->partitionRelation;
-                if ($sibling !== null
-                    && strcasecmp($sibling->parentTable, $relation->parentTable) === 0
-                    && $sibling->predicate !== null
-                ) {
-                    $siblingPredicates[] = $sibling->predicate;
-                }
-            }
-            $predicate = $this->partitionPredicateRenderer->render($relation, $siblingPredicates);
-            $storageTable = $this->storageTable($tableName);
-            $partitionContext = $context[$tableName] ?? null;
-            if ($partitionContext === null) {
-                continue;
-            }
-            $partitionContext['rows'] = $this->shadowStore->get($storageTable);
-            $partitionContext['storageTable'] = $storageTable;
-            $partitionContext['sourceSql'] = 'SELECT * FROM '
-                . $quoter->quote($relation->parentTable)
-                . " WHERE $predicate";
-            $context[$tableName] = $partitionContext;
-        }
-
-        foreach ((new PgSqlViewShadowRenderer())->render($this->views, array_keys($context)) as $viewName => $viewSql) {
-            if (isset($context[$viewName])) {
-                continue;
-            }
-            $context[$viewName] = ['viewSql' => $viewSql];
-        }
-
-        return $context;
+        return $this->shadowTables->of($this->views);
     }
 
     /**
@@ -357,18 +328,9 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
      */
     public function storageTable(string $tableName): string
     {
-        $seen = [];
-        while (!in_array($tableName, $seen, true)) {
-            $seen[] = $tableName;
-            $parent = $this->registry->get($tableName)?->partitionRelation?->parentTable;
-            if ($parent === null) {
-                return $tableName;
-            }
-            $tableName = $parent;
-        }
-
-        return $tableName;
+        return $this->shadowTables->storageTable($tableName);
     }
+
 
     /**
      * Reports whether the shadow knows a table at all.
