@@ -45,60 +45,76 @@ final class PgSqlWithPrefix
      */
     public function parseHeader(string $sql): array
     {
+        $tokens = $this->topLevelTokens($sql);
+        if (($tokens[0] ?? null)?->isKeyword('WITH') !== true) {
+            return ['names' => [], 'statementOffset' => null];
+        }
+
+        $index = ($tokens[1] ?? null)?->isKeyword('RECURSIVE') === true ? 2 : 1;
+        $names = [];
+        foreach ($tokens as $ignored) {
+            $name = isset($tokens[$index]) ? $this->identifierName($tokens[$index]) : null;
+            if ($name === null) {
+                break;
+            }
+            $body = $this->bodyIndex($tokens, $index + 1);
+            if (!$this->isSymbol($tokens[$body] ?? null, '(')
+                || !$this->isSymbol($tokens[$body + 1] ?? null, ')')
+            ) {
+                return ['names' => $names, 'statementOffset' => null];
+            }
+            $names[] = strtolower($name);
+            $index = $body + 2;
+            if (!$this->isSymbol($tokens[$index] ?? null, ',')) {
+                break;
+            }
+            $index++;
+        }
+
+        return ['names' => $names, 'statementOffset' => ($tokens[$index] ?? null)?->offset];
+    }
+
+    /**
+     * Answers the tokens of the statement itself, leaving out what it nests.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return list<SqlToken> The tokens written inside no parenthesis
+     */
+    public function topLevelTokens(string $sql): array
+    {
         $tokens = [];
         foreach (SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->significantTokens() as $token) {
             if ($token->isTopLevel()) {
                 $tokens[] = $token;
             }
         }
-        if (($tokens[0] ?? null)?->isKeyword('WITH') !== true) {
-            return ['names' => [], 'statementOffset' => null];
-        }
 
-        $index = 1;
-        if (($tokens[$index] ?? null)?->isKeyword('RECURSIVE') === true) {
+        return $tokens;
+    }
+
+    /**
+     * Answers where the body of one WITH entry begins.
+     *
+     * What is written between the name and the body is the column list, the
+     * AS, and whichever of NOT and MATERIALIZED the entry declares.
+     *
+     * @param list<SqlToken> $tokens Tokens the statement was read as
+     * @param int $index Where the name left off
+     *
+     * @return int Where the body begins
+     */
+    public function bodyIndex(array $tokens, int $index): int
+    {
+        $index = ($this->findAsIndex($tokens, $index) ?? count($tokens)) + 1;
+        if (($tokens[$index] ?? null)?->isKeyword('NOT') === true) {
+            $index++;
+        }
+        if (($tokens[$index] ?? null)?->isKeyword('MATERIALIZED') === true) {
             $index++;
         }
 
-        $names = [];
-        while (isset($tokens[$index])) {
-            $name = $this->identifierName($tokens[$index]);
-            if ($name === null) {
-                break;
-            }
-            $index++;
-
-            $asIndex = $this->findAsIndex($tokens, $index);
-            $index = ($asIndex ?? count($tokens)) + 1;
-
-            if (($tokens[$index] ?? null)?->isKeyword('NOT') === true) {
-                $index++;
-            }
-            if (($tokens[$index] ?? null)?->isKeyword('MATERIALIZED') === true) {
-                $index++;
-            }
-
-            if (!$this->isSymbol($tokens[$index] ?? null, '(')
-                || !$this->isSymbol($tokens[$index + 1] ?? null, ')')
-            ) {
-                return ['names' => $names, 'statementOffset' => null];
-            }
-            $names[] = strtolower($name);
-            $index += 2;
-
-            $separator = $tokens[$index] ?? null;
-            if (!$this->isSymbol($separator, ',')) {
-                break;
-            }
-            $index++;
-        }
-
-        $statement = $tokens[$index] ?? null;
-
-        return [
-            'names' => $names,
-            'statementOffset' => $statement?->offset,
-        ];
+        return $index;
     }
 
     /**
@@ -124,59 +140,58 @@ final class PgSqlWithPrefix
         }
 
         $prefix = rtrim(substr($originalSql, 0, $header['statementOffset']));
-
-        $rewrittenTokens = SqlTokenStream::tokenize($rewrittenStatement, PgSqlLexerProfile::create())->significantTokens();
-        $rewrittenWith = $rewrittenTokens[0] ?? null;
-        if ($rewrittenWith !== null && $rewrittenWith->isKeyword('WITH')) {
-            $rewrittenHeader = $this->parseHeader($rewrittenStatement);
-            $rewrittenStatementOffset = $rewrittenHeader['statementOffset'];
-            if ($rewrittenStatementOffset === null) {
-                return $prefix . "\n" . $rewrittenStatement;
-            }
-
-            $contentToken = $rewrittenWith;
-            $rewrittenNext = $rewrittenTokens[1] ?? null;
-            if ($rewrittenNext !== null && $rewrittenNext->isKeyword('RECURSIVE')) {
-                $contentToken = $rewrittenNext;
-            }
-
-            $rewrittenBody = trim(substr(
-                $rewrittenStatement,
-                $contentToken->endOffset(),
-                $rewrittenStatementOffset - $contentToken->endOffset(),
-            ));
-            $rewrittenTail = substr($rewrittenStatement, $rewrittenStatementOffset);
-            if ($this->referencesAnyIdentifier($rewrittenBody, $header['names'])) {
-                return $prefix . ",\n" . $rewrittenBody . "\n" . $rewrittenTail;
-            }
-
-            $originalTokens = SqlTokenStream::tokenize($originalSql, PgSqlLexerProfile::create())->significantTokens();
-            $originalWith = $originalTokens[0];
-            $originalContentToken = $originalWith;
-            $recursive = false;
-            $originalNext = $originalTokens[1] ?? null;
-            if ($originalNext !== null && $originalNext->isKeyword('RECURSIVE')) {
-                $originalContentToken = $originalNext;
-                $recursive = true;
-            }
-            $originalBody = trim(substr(
-                $originalSql,
-                $originalContentToken->endOffset(),
-                $header['statementOffset'] - $originalContentToken->endOffset(),
-            ));
-            $leading = substr($originalSql, 0, $originalWith->offset);
-
-            return $leading
-                . 'WITH '
-                . ($recursive ? 'RECURSIVE ' : '')
-                . $rewrittenBody
-                . ",\n"
-                . $originalBody
-                . "\n"
-                . $rewrittenTail;
+        $rewritten = $this->prefixOf($rewrittenStatement);
+        if ($rewritten === null) {
+            return $prefix . "\n" . $rewrittenStatement;
+        }
+        if ($this->referencesAnyIdentifier($rewritten['body'], $header['names'])) {
+            return $prefix . ",\n" . $rewritten['body'] . "\n" . $rewritten['tail'];
         }
 
-        return $prefix . "\n" . $rewrittenStatement;
+        $original = $this->prefixOf($originalSql);
+        if ($original === null) {
+            return $prefix . "\n" . $rewrittenStatement;
+        }
+
+        return $original['leading']
+            . 'WITH '
+            . ($original['recursive'] ? 'RECURSIVE ' : '')
+            . $rewritten['body']
+            . ",\n"
+            . $original['body']
+            . "\n"
+            . $rewritten['tail'];
+    }
+
+    /**
+     * Answers the WITH prefix a statement opens with, taken apart.
+     *
+     * @param string $sql Statement being read, as written
+     *
+     * @return array{leading: string, recursive: bool, body: string, tail: string}|null What is written before the prefix, whether it recurses, the entries it declares and the statement they lead to, or null where the statement opens with no prefix ZTD can read
+     */
+    public function prefixOf(string $sql): ?array
+    {
+        $tokens = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->significantTokens();
+        $with = $tokens[0] ?? null;
+        if ($with === null || !$with->isKeyword('WITH')) {
+            return null;
+        }
+        $statementOffset = $this->parseHeader($sql)['statementOffset'];
+        if ($statementOffset === null) {
+            return null;
+        }
+
+        $next = $tokens[1] ?? null;
+        $content = $next !== null && $next->isKeyword('RECURSIVE') ? $next : $with;
+        $recursive = $content !== $with;
+
+        return [
+            'leading' => substr($sql, 0, $with->offset),
+            'recursive' => $recursive,
+            'body' => trim(substr($sql, $content->endOffset(), $statementOffset - $content->endOffset())),
+            'tail' => substr($sql, $statementOffset),
+        ];
     }
 
     /**

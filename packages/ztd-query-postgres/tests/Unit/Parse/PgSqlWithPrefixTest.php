@@ -135,4 +135,41 @@ final class PgSqlWithPrefixTest extends TestCase
         self::assertTrue($prefix->referencesAnyIdentifier('SELECT * FROM users', ['orders', 'users']));
         self::assertFalse($prefix->referencesAnyIdentifier('SELECT * FROM users', ['orders']));
     }
+
+    public function testTopLevelTokensLeavesWhatTheStatementNests(): void
+    {
+        $tokens = (new PgSqlWithPrefix())->topLevelTokens('SELECT (1 + 2)');
+
+        self::assertSame(['SELECT', '(', ')'], array_map(static fn ($t): string => $t->text, $tokens));
+    }
+
+    public function testBodyIndexPassesOverTheColumnListAndTheAsAndWhatFollowsIt(): void
+    {
+        $prefix = new PgSqlWithPrefix();
+        $tokens = $prefix->topLevelTokens('WITH c AS NOT MATERIALIZED () SELECT 1');
+
+        self::assertSame(5, $prefix->bodyIndex($tokens, 2));
+    }
+
+    public function testPrefixOfAnswersNothingForAStatementThatOpensWithNoPrefix(): void
+    {
+        self::assertNull((new PgSqlWithPrefix())->prefixOf('SELECT 1'));
+    }
+
+    public function testPrefixOfTakesThePrefixApart(): void
+    {
+        $prefix = (new PgSqlWithPrefix())->prefixOf('WITH c AS (SELECT 1) SELECT * FROM c');
+
+        self::assertSame(
+            ['', false, 'c AS (SELECT 1)', 'SELECT * FROM c'],
+            [$prefix['leading'] ?? null, $prefix['recursive'] ?? null, $prefix['body'] ?? null, $prefix['tail'] ?? null],
+        );
+    }
+
+    public function testPrefixOfSaysWhenThePrefixRecurses(): void
+    {
+        $prefix = (new PgSqlWithPrefix())->prefixOf('WITH RECURSIVE c AS (SELECT 1) SELECT * FROM c');
+
+        self::assertTrue($prefix['recursive'] ?? false);
+    }
 }
