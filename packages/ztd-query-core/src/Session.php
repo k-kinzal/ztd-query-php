@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace ZtdQuery;
 
-use ZtdQuery\Config\UnknownSchemaBehavior;
-use ZtdQuery\Config\UnsupportedSqlBehavior;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Connection\Exception\DatabaseException;
@@ -30,6 +28,7 @@ use ZtdQuery\Shadow\ShadowApplication;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTransactions;
 use ZtdQuery\Sql\TransactionStatement;
+use ZtdQuery\Sql\TransactionTarget;
 
 /**
  * Aggregates ZTD session state and core collaborators.
@@ -52,12 +51,6 @@ final class Session
      */
     private ResultSelectRunner $resultSelectRunner;
 
-    /**
-     * ZTD configuration for error handling behavior.
-     *
-     * @var ZtdConfig
-     */
-    private ZtdConfig $config;
 
     /**
      * Database connection for query execution.
@@ -87,6 +80,8 @@ final class Session
 
     private ShadowApplication $shadowApplication;
 
+    private RewriteRefusal $refusals;
+
     private ?string $lastInsertId = null;
 
     /**
@@ -110,7 +105,7 @@ final class Session
     ) {
         $this->rewriter = $rewriter;
         $this->resultSelectRunner = $resultSelectRunner;
-        $this->config = $config;
+        $this->refusals = new RewriteRefusal($config);
         $this->connection = $connection;
         $this->transactions = $transactions ?? new ShadowTransactions($shadowStore);
         $this->registry = $registry ?? new TableDefinitionRegistry();
@@ -195,40 +190,17 @@ final class Session
     }
 
     /**
-     * Starts a transaction over the shadow.
+     * Answers what a transaction here is kept in.
      *
-     * Nothing is sent to the database: the shadow is what a transaction here can
-     * roll back to.
-     */
-    public function beginTransaction(): void
-    {
-        $this->transactions->begin();
-    }
-
-    /**
-     * Keeps what the shadow was changed to since the transaction began.
-     */
-    public function commitTransaction(): void
-    {
-        $this->transactions->commit();
-    }
-
-    /**
-     * Puts the shadow back to what it was when the transaction began.
-     */
-    public function rollBackTransaction(): void
-    {
-        $this->transactions->rollBack();
-    }
-
-    /**
-     * Applies to the shadow what a transaction statement says.
+     * Nothing is sent to the database: the shadow is what a transaction here
+     * can roll back to, so beginning, keeping or undoing one is asked of the
+     * shadow rather than mirrored on the session.
      *
-     * @param TransactionStatement $statement Statement to apply
+     * @return TransactionTarget What a transaction statement is applied to
      */
-    public function applyTransactionStatement(TransactionStatement $statement): void
+    public function transactions(): TransactionTarget
     {
-        $statement->apply($this->transactions);
+        return $this->transactions;
     }
 
     /**
@@ -329,39 +301,9 @@ final class Session
         try {
             return $this->rewriter->rewrite($sql);
         } catch (UnsupportedSqlException $e) {
-            $behavior = $this->config->resolveUnsupportedBehavior($sql);
-
-            if ($behavior === UnsupportedSqlBehavior::Exception) {
-                throw new DatabaseException($e->getMessage(), null, 0, $e);
-            }
-
-            if ($behavior === UnsupportedSqlBehavior::Notice) {
-                trigger_error(
-                    sprintf('[ZTD Notice] Unsupported SQL ignored: %s', $sql),
-                    E_USER_NOTICE
-                );
-            }
-
-            return new RewritePlan($sql, QueryKind::SKIPPED);
+            return $this->refusals->forUnsupported($e, $sql);
         } catch (UnknownSchemaException $e) {
-            $behavior = $this->config->unknownSchemaBehavior();
-
-            if ($behavior === UnknownSchemaBehavior::Exception) {
-                throw new DatabaseException($e->getMessage(), null, 0, $e);
-            }
-
-            if ($behavior === UnknownSchemaBehavior::Passthrough) {
-                return new RewritePlan($sql, QueryKind::READ);
-            }
-
-            if ($behavior === UnknownSchemaBehavior::Notice) {
-                trigger_error(
-                    sprintf('[ZTD Notice] Unknown table referenced: %s', $e->getIdentifier()),
-                    E_USER_NOTICE
-                );
-            }
-
-            return new RewritePlan($this->rewriter->emptyResultSelect(), QueryKind::READ);
+            return $this->refusals->forUnknownSchema($e, $sql, $this->rewriter->emptyResultSelect());
         }
     }
 

@@ -62,6 +62,8 @@ final class UpsertMutation implements DataMutation
 
     private ConflictSearch $conflicts;
 
+    private UpsertUpdate $update;
+
     /**
      * @param string $tableName Target table.
      * @param array<int, string> $primaryKeys Primary key columns.
@@ -94,6 +96,16 @@ final class UpsertMutation implements DataMutation
         $this->databaseEvaluated = $databaseEvaluated;
         $this->conflictPredicate = $conflictPredicate;
         $this->conflicts = new ConflictSearch($this->candidateKeys, $this->conflictPredicate, $this->tableName);
+        $this->update = new UpsertUpdate(
+            $this->tableName,
+            $this->primaryKeys,
+            $this->updateColumns,
+            $this->updateValues,
+            $this->updateSqlValues,
+            $this->updateSqlPredicate,
+            $this->updatePredicate,
+            $this->databaseEvaluated,
+        );
     }
 
     /**
@@ -106,98 +118,25 @@ final class UpsertMutation implements DataMutation
         $existingRows = $store->get($this->tableName);
         $changedRows = [];
         $this->resultRows = [];
-        $codec = new UpsertMutationRow();
         foreach ($rows as $row) {
-            $incomingRow = $this->databaseEvaluated
-                ? $codec->incomingRow($row, count($this->updateColumns))
-                : $row;
+            $incomingRow = $this->update->incomingRow($row);
             $conflict = $this->conflicts->of($incomingRow, $existingRows);
-            if ($conflict !== null) {
-                $existingIndex = $conflict->rowIndex;
-                $updatedRow = $existingRows[$existingIndex];
-                $requiresLocalEvaluation = ($changedRows[$existingIndex] ?? false) === true;
-                if ($this->databaseEvaluated) {
-                    if ($requiresLocalEvaluation && $this->updateSqlPredicate !== null) {
-                        if ($this->updatePredicate === null) {
-                            throw new UnsupportedSqlException(
-                                $this->updateSqlPredicate,
-                                'Sequential UPSERT predicate',
-                            );
-                        }
-                        if (!$this->updatePredicate->matches($updatedRow, $incomingRow, $this->tableName)) {
-                            continue;
-                        }
-                    } elseif (array_key_exists($codec->predicateColumn(), $row)) {
-                        if (!$codec->predicateMatches($row[$codec->predicateColumn()])) {
-                            continue;
-                        }
-                    } elseif ($this->updateSqlPredicate !== null) {
-                        if ($this->updatePredicate === null) {
-                            throw new UnsupportedSqlException(
-                                $this->updateSqlPredicate,
-                                'UPSERT predicate requires local evaluation',
-                            );
-                        }
-                        if (!$this->updatePredicate->matches($updatedRow, $incomingRow, $this->tableName)) {
-                            continue;
-                        }
-                    }
-                } elseif ($this->updatePredicate !== null) {
-                    if (!$this->updatePredicate->matches($updatedRow, $incomingRow, $this->tableName)) {
-                        continue;
-                    }
-                }
-                foreach ($this->updateColumns as $index => $col) {
-                    if ($this->databaseEvaluated) {
-                        $metadata = $codec->valueColumn($index);
-                        if ($requiresLocalEvaluation && isset($this->updateSqlValues[$col])) {
-                            if (!isset($this->updateValues[$col])) {
-                                throw new UnsupportedSqlException(
-                                    $this->updateSqlValues[$col],
-                                    'Sequential UPSERT expression',
-                                );
-                            }
-                            $updatedRow[$col] = $this->updateValues[$col]->evaluate(
-                                $updatedRow,
-                                $incomingRow,
-                                $this->tableName,
-                            );
-                        } elseif (array_key_exists($metadata, $row)) {
-                            $updatedRow[$col] = $row[$metadata];
-                        } elseif (isset($this->updateSqlValues[$col])) {
-                            if (!isset($this->updateValues[$col])) {
-                                throw new UnsupportedSqlException(
-                                    $this->updateSqlValues[$col],
-                                    'UPSERT expression requires local evaluation',
-                                );
-                            }
-                            $updatedRow[$col] = $this->updateValues[$col]->evaluate(
-                                $updatedRow,
-                                $incomingRow,
-                                $this->tableName,
-                            );
-                        }
-                    } elseif (isset($this->updateValues[$col])) {
-                        $updatedRow[$col] = $this->updateValues[$col]->evaluate($updatedRow, $incomingRow, $this->tableName);
-                    } elseif (isset($incomingRow[$col])) {
-                        $updatedRow[$col] = $incomingRow[$col];
-                    }
-                }
-                if ($this->updateColumns === []) {
-                    foreach ($incomingRow as $col => $value) {
-                        if (!in_array($col, $this->primaryKeys, true)) {
-                            $updatedRow[$col] = $value;
-                        }
-                    }
-                }
-                $existingRows[$existingIndex] = $updatedRow;
-                $changedRows[$existingIndex] = true;
-                $this->resultRows[] = $updatedRow;
-            } else {
+            if ($conflict === null) {
                 $existingRows[] = $incomingRow;
                 $changedRows[array_key_last($existingRows)] = true;
                 $this->resultRows[] = $incomingRow;
+                continue;
             }
+
+            $index = $conflict->rowIndex;
+            $changedEarlier = ($changedRows[$index] ?? false) === true;
+            if (!$this->update->applies($row, $existingRows[$index], $incomingRow, $changedEarlier)) {
+                continue;
+            }
+
+            $existingRows[$index] = $this->update->of($row, $existingRows[$index], $incomingRow, $changedEarlier);
+            $changedRows[$index] = true;
+            $this->resultRows[] = $existingRows[$index];
         }
 
         $store->set($this->tableName, $existingRows);

@@ -8,6 +8,16 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Tests\Fake\FakeSqlLexerProfiles;
+use ZtdQuery\Sql\Profile\SqlCommentProfile;
+use ZtdQuery\Sql\Profile\SqlParameterProfile;
+use ZtdQuery\Sql\Profile\SqlQuoteProfile;
+use ZtdQuery\Sql\Profile\SqlSymbolProfile;
+use ZtdQuery\Sql\Reader\SqlBlockCommentReader;
+use ZtdQuery\Sql\Reader\SqlDelimitedReader;
+use ZtdQuery\Sql\Reader\SqlLexeme;
+use ZtdQuery\Sql\Reader\SqlParameterReader;
+use ZtdQuery\Sql\Reader\SqlTriviaReader;
+use ZtdQuery\Sql\Reader\SqlWordReader;
 use ZtdQuery\Sql\SqlIdentifierComponent;
 use ZtdQuery\Sql\SqlLexerProfile;
 use ZtdQuery\Sql\SqlToken;
@@ -21,6 +31,16 @@ use ZtdQuery\Sql\SqlTokenStream;
 #[UsesClass(SqlLexerProfile::class)]
 #[UsesClass(\ZtdQuery\Sql\LexicalDelimiters::class)]
 #[UsesClass(\ZtdQuery\Sql\LexicalPattern::class)]
+#[UsesClass(SqlCommentProfile::class)]
+#[UsesClass(SqlParameterProfile::class)]
+#[UsesClass(SqlQuoteProfile::class)]
+#[UsesClass(SqlSymbolProfile::class)]
+#[UsesClass(SqlBlockCommentReader::class)]
+#[UsesClass(SqlDelimitedReader::class)]
+#[UsesClass(SqlLexeme::class)]
+#[UsesClass(SqlParameterReader::class)]
+#[UsesClass(SqlTriviaReader::class)]
+#[UsesClass(SqlWordReader::class)]
 final class SqlIdentifierComponentTest extends TestCase
 {
     public function testAtReadsABareNameAndSaysWhereItLeftOff(): void
