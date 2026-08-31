@@ -271,3 +271,12 @@ modules.xml
 # End of https://www.toptal.com/developers/gitignore/api/intellij+all,phpunit,phpstorm+iml,phpcodesniffer,phpstorm
 
 scripts/
+
+# entire
+.entire/
+.claude/
+.codex/
+.cursor/
+.entire/
+.gemini/
+.github/hooks/
