@@ -11,6 +11,7 @@
         "brianium/paratest": "^6.11 || ^7",
         "friendsofphp/php-cs-fixer": "^3.92",
         "infection/infection": "^0.28 || ^0.29 || ^0.30 || ^0.31 || ^0.32 || ^0.34.1",
+        "k-kinzal/php-ai-toolkit": "dev-main",
         "k-kinzal/phpstan-custom-rules": "@dev",
         "k-kinzal/testcontainers-php": "^0.5.1",
         "nikic/php-fuzzer": "^0.0.11",
@@ -20,6 +21,11 @@
         "phpunit/phpunit": "^10.5 || ^11 || ^12 || ~13.0.0"
     },
     "repositories": [
+        {
+            "name": "php-ai-toolkit",
+            "type": "vcs",
+            "url": "https://github.com/k-kinzal/php-ai-toolkit.git"
+        },
         {
             "type": "path",
             "url": "../phpstan-custom-rules"
