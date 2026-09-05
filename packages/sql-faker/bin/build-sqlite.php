@@ -5,10 +5,10 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use SqlFaker\Grammar\LexicalProfileBuilder;
+use SqlFaker\Compiler\Lemon\LemonParser;
 use SqlFaker\Grammar\SqlVersion;
 use SqlFaker\Grammar\TerminalInventory;
-use SqlFaker\Sqlite\Lemon\LemonParser;
+use SqlFaker\Tooling\LexicalProfileBuilder;
 
 /**
  * Build script for generating a versioned grammar and lexical profile from SQLite sources.

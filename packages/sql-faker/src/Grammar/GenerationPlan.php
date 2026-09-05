@@ -32,6 +32,7 @@ final class GenerationPlan
      * @param non-empty-string|null $lexicalTarget Lexical rule to realize instead of walking the grammar
      * @param array<string, int> $parameters Parameters the lexical target is realized with
      * @param TRequiresNonEmpty $requiresNonEmpty Whether the walk must produce at least one symbol
+     * @param bool $reserveSteps Whether to budget the remaining form and prefer fewer rule expansions
      * @param int $maxDepth How deep the walk may recurse
      *
      * @visibility namespace
@@ -45,6 +46,7 @@ final class GenerationPlan
         private readonly array $parameters,
         private readonly bool $requiresNonEmpty,
         private readonly int $maxDepth,
+        private readonly bool $reserveSteps = false,
     ) {
     }
 
@@ -133,6 +135,7 @@ final class GenerationPlan
             $this->parameters,
             true,
             $this->maxDepth,
+            $this->reserveSteps,
         );
     }
 
@@ -160,6 +163,7 @@ final class GenerationPlan
             $this->parameters,
             $this->requiresNonEmpty,
             $this->maxDepth,
+            $this->reserveSteps,
         );
     }
 
@@ -185,6 +189,7 @@ final class GenerationPlan
             $this->parameters,
             $this->requiresNonEmpty,
             max(1, $maxDepth),
+            $this->reserveSteps,
         );
     }
 
@@ -240,6 +245,7 @@ final class GenerationPlan
             $this->parameters,
             $this->requiresNonEmpty,
             $this->maxDepth,
+            $this->reserveSteps,
         );
     }
 
@@ -294,5 +300,37 @@ final class GenerationPlan
     public function maxDepth(): int
     {
         return $this->maxDepth;
+    }
+    /**
+     * Reserves enough derivation steps to finish the entire remaining form.
+     *
+     * Recursive grammars can prefer fewer expansions over shorter token output.
+     * This policy belongs to the generation plan and has no dialect identity.
+     *
+     * @return self<TRequiresNonEmpty> Plan with a bounded completion policy
+     */
+    public function withStepBudget(): self
+    {
+        return new self(
+            $this->startRule,
+            $this->patterns,
+            $this->patternsForEveryOccurrence,
+            $this->lexemes,
+            $this->lexicalTarget,
+            $this->parameters,
+            $this->requiresNonEmpty,
+            $this->maxDepth,
+            true,
+        );
+    }
+
+    /**
+     * Reports whether production choice reserves steps for the remaining form.
+     *
+     * @return bool Whether to prefer bounded completion over shortest token output
+     */
+    public function usesStepBudget(): bool
+    {
+        return $this->reserveSteps;
     }
 }

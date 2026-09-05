@@ -147,4 +147,16 @@ final class GrammarAdaptationTest extends TestCase
 
         self::assertFalse((new GrammarAdaptation())->isFrameOnlyWindow($alternative));
     }
+    public function testWithResolvedSymbolsMakesImplicitTokensExplicit(): void
+    {
+        $rules = ['stmt' => new ProductionRule('stmt', [new Production([
+            new NonTerminal('stmt'), new NonTerminal('implicit'), new Terminal('EXPLICIT'),
+        ])])];
+        $adapted = (new GrammarAdaptation())->withResolvedSymbols($rules);
+
+        self::assertEquals([
+            new NonTerminal('stmt'), new Terminal('implicit'), new Terminal('EXPLICIT'),
+        ], $adapted['stmt']->alternatives[0]->symbols);
+        self::assertInstanceOf(NonTerminal::class, $rules['stmt']->alternatives[0]->symbols[1]);
+    }
 }

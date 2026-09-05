@@ -6,17 +6,13 @@ namespace SqlFaker\Sqlite;
 
 use Faker\Generator as FakerGenerator;
 use RuntimeException;
-use SqlFaker\Grammar\GenerationException;
+use SqlFaker\Generation\SqlGenerator as CommonSqlGenerator;
 use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\LexicalCatalogException;
-use SqlFaker\Grammar\LexicalException;
 use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\Symbol;
 use SqlFaker\Grammar\Terminal;
-use SqlFaker\Grammar\TerminalInventory;
-use SqlFaker\Grammar\TerminationAnalyzer;
-use SqlFaker\Sqlite\Grammar\SqliteGrammar;
 
 /**
  * Grammar-driven SQL generator for SQLite.
@@ -28,12 +24,7 @@ use SqlFaker\Sqlite\Grammar\SqliteGrammar;
  */
 final class SqlGenerator
 {
-    private const LEXICAL_ATTEMPT_LIMIT = 32;
-
-    private Grammar $grammar;
-    private FakerGenerator $faker;
-    private LexicalGrammar $lexicalGrammar;
-    private TerminationAnalyzer $terminationAnalyzer;
+    private CommonSqlGenerator $generator;
 
     /**
      * @param Grammar $grammar Compiled SQLite grammar to derive from
@@ -48,19 +39,13 @@ final class SqlGenerator
         FakerGenerator $faker,
         ?string $version = null,
     ) {
-        $this->grammar = (new GrammarAdaptation())->adapted($grammar);
-        $this->faker = $faker;
-        $this->lexicalGrammar = new LexicalGrammar(
+        $context = new GenerationContext($grammar, $faker, $version);
+        $this->generator = new CommonSqlGenerator(
+            $context->grammar,
             $faker,
-            SqliteGrammar::resolveVersion($version),
-            $version === null,
-        );
-        if ($version !== null) {
-            $this->lexicalGrammar->assertTerminalsCovered(TerminalInventory::fromGrammar($this->grammar));
-        }
-        $this->terminationAnalyzer = new TerminationAnalyzer(
-            $this->grammar,
-            $this->lexicalGrammar->supports(...),
+            $context->lexicalGrammar,
+            $context->normalize,
+            $context->startSymbol,
         );
     }
 
@@ -73,29 +58,6 @@ final class SqlGenerator
      */
     public function generate(GenerationPlan $plan): string
     {
-        if ($plan->lexicalTarget() !== null) {
-            return $this->lexicalGrammar->generate($plan);
-        }
-        $start = $plan->startRule() ?? 'cmd';
-        $lastException = null;
-        for ($attempt = 0; $attempt < self::LEXICAL_ATTEMPT_LIMIT; $attempt++) {
-            $terminals = (new Derivation($this->grammar, $this->faker, $this->terminationAnalyzer))
-                ->of($start, $plan);
-            try {
-                $sql = $this->lexicalGrammar->realize(array_map(
-                    static fn (Terminal $terminal): string => $terminal->value,
-                    $terminals,
-                ), $plan);
-                if ($sql !== '' || !$plan->requiresNonEmpty()) {
-                    return $sql;
-                }
-                $lastException = GenerationException::planRequiresNonEmptyOutput('SQLite');
-            } catch (LexicalException $exception) {
-                $lastException = $exception;
-            }
-        }
-
-        throw $lastException ?? GenerationException::lexicalRealizationFailed('SQLite');
+        return $this->generator->generate($plan->withStepBudget());
     }
-
 }

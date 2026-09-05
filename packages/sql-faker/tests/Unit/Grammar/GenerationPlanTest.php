@@ -164,4 +164,26 @@ final class GenerationPlanTest extends TestCase
     {
         self::assertSame(PHP_INT_MAX, GenerationPlan::all()->maxDepth());
     }
+    public function testWithStepBudgetPreservesPolicyAcrossEveryRefinement(): void
+    {
+        $original = GenerationPlan::fromRule('stmt');
+        $bounded = $original->withStepBudget()
+            ->requiringNonEmpty()
+            ->withLexemes(['TOKEN' => ['literal']])
+            ->withMaxDepth(2)
+            ->withPatternForEveryOccurrence('stmt', ProductionPattern::exactly('TOKEN'));
+
+        self::assertFalse($original->usesStepBudget());
+        self::assertTrue($bounded->usesStepBudget());
+        self::assertSame('stmt', $bounded->startRule());
+        self::assertSame('literal', $bounded->lexemeAt('TOKEN', 0));
+        self::assertSame(2, $bounded->maxDepth());
+        self::assertNotNull($bounded->patternAt('stmt', 0));
+    }
+
+    public function testUsesStepBudgetDefaultsToFalse(): void
+    {
+        self::assertFalse(GenerationPlan::all()->usesStepBudget());
+        self::assertFalse(GenerationPlan::lexical('identifier', [])->usesStepBudget());
+    }
 }

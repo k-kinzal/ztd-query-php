@@ -6,26 +6,19 @@ namespace SqlFaker\MySql;
 
 use Faker\Generator as FakerGenerator;
 use RuntimeException;
-use SqlFaker\Grammar\GenerationException;
+use SqlFaker\Generation\SqlGenerator as CommonSqlGenerator;
 use SqlFaker\Grammar\GenerationPlan;
+use SqlFaker\Grammar\Grammar as CommonGrammar;
 use SqlFaker\Grammar\LexicalCatalogException;
-use SqlFaker\Grammar\LexicalException;
+use SqlFaker\Grammar\Terminal;
 use SqlFaker\MySql\Grammar\Grammar;
-use SqlFaker\MySql\Grammar\Terminal;
-use SqlFaker\MySql\Grammar\TerminalInventory;
-use SqlFaker\MySql\Grammar\TerminationAnalyzer;
 
 /**
  * Derives MySQL parser terminals and realizes them through the versioned lexer model.
  */
 final class SqlGenerator
 {
-    private const LEXICAL_ATTEMPT_LIMIT = 32;
-
-    private Grammar $grammar;
-    private FakerGenerator $faker;
-    private LexicalGrammar $lexicalGrammar;
-    private TerminationAnalyzer $terminationAnalyzer;
+    private CommonSqlGenerator $generator;
 
     /**
      * @param Grammar $grammar Compiled MySQL grammar to derive from
@@ -40,17 +33,14 @@ final class SqlGenerator
         FakerGenerator $faker,
         ?string $version = null,
     ) {
-        $this->grammar = $grammar;
-        $this->faker = $faker;
-        $this->lexicalGrammar = new LexicalGrammar(
+        $context = new GenerationContext(new CommonGrammar($grammar->startSymbol, $grammar->ruleMap), $faker, $version);
+        $this->generator = new CommonSqlGenerator(
+            $context->grammar,
             $faker,
-            Grammar::resolveVersion($version),
-            $version === null,
+            $context->lexicalGrammar,
+            $context->normalize,
+            $context->startSymbol,
         );
-        if ($version !== null) {
-            $this->lexicalGrammar->assertTerminalsCovered(TerminalInventory::fromGrammar($this->grammar));
-        }
-        $this->terminationAnalyzer = new TerminationAnalyzer($grammar, $this->lexicalGrammar->supports(...));
     }
 
     /**
@@ -60,30 +50,6 @@ final class SqlGenerator
      */
     public function generate(GenerationPlan $plan): string
     {
-        if ($plan->lexicalTarget() !== null) {
-            return $this->lexicalGrammar->generate($plan);
-        }
-        $startSymbol = $this->grammar->startSymbolFor($plan->startRule());
-        $lastException = null;
-        for ($attempt = 0; $attempt < self::LEXICAL_ATTEMPT_LIMIT; $attempt++) {
-            $terminals = (new Derivation($this->grammar, $this->faker, $this->terminationAnalyzer))
-                ->of($startSymbol, $plan);
-            $terminalNames = (new ParserSemantics())->applied(array_map(
-                static fn (Terminal $terminal): string => $terminal->value,
-                $terminals,
-            ));
-            try {
-                $sql = $this->lexicalGrammar->realize($terminalNames, $plan);
-                if ($sql !== '' || !$plan->requiresNonEmpty()) {
-                    return $sql;
-                }
-                $lastException = GenerationException::planRequiresNonEmptyOutput('MySQL');
-            } catch (LexicalException $exception) {
-                $lastException = $exception;
-            }
-        }
-
-        throw $lastException ?? GenerationException::lexicalRealizationFailed('MySQL');
+        return $this->generator->generate($plan);
     }
-
 }

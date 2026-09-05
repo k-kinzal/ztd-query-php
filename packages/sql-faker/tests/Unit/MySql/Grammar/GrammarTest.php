@@ -8,13 +8,13 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use SqlFaker\Grammar\NonTerminal;
+use SqlFaker\Grammar\Production;
+use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\SqlVersion;
 use SqlFaker\Grammar\SqlVersionRegistry;
+use SqlFaker\Grammar\Terminal;
 use SqlFaker\MySql\Grammar\Grammar;
-use SqlFaker\MySql\Grammar\NonTerminal;
-use SqlFaker\MySql\Grammar\Production;
-use SqlFaker\MySql\Grammar\ProductionRule;
-use SqlFaker\MySql\Grammar\Terminal;
 
 #[CoversClass(Grammar::class)]
 #[CoversClass(ProductionRule::class)]

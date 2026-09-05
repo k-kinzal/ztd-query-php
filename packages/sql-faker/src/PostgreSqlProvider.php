@@ -6,10 +6,11 @@ namespace SqlFaker;
 
 use Faker\Generator;
 use Faker\Provider\Base;
+use SqlFaker\Generation\SqlGenerator;
 use SqlFaker\Grammar\GenerationPlan;
+use SqlFaker\PostgreSql\GenerationContext;
 use SqlFaker\PostgreSql\GenerationPlans;
 use SqlFaker\PostgreSql\Grammar\PgGrammar;
-use SqlFaker\PostgreSql\SqlGenerator;
 use SqlFaker\PostgreSql\StatementType;
 
 /**
@@ -45,7 +46,14 @@ final class PostgreSqlProvider extends Base
         $generator->addProvider($this);
 
         $resolvedVersion = PgGrammar::resolveVersion($version);
-        $this->sql = new SqlGenerator(PgGrammar::load($resolvedVersion), $generator, $resolvedVersion);
+        $context = new GenerationContext(PgGrammar::load($resolvedVersion), $generator, $resolvedVersion);
+        $this->sql = new SqlGenerator(
+            $context->grammar,
+            $generator,
+            $context->lexicalGrammar,
+            $context->normalize,
+            $context->startSymbol,
+        );
     }
 
     /**

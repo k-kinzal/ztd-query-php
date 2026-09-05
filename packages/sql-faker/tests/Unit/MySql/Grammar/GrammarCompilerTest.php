@@ -6,18 +6,18 @@ namespace Tests\Unit\SqlFaker\MySql\Grammar;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\MySql\Bison\Ast\BisonAlternativeNode;
-use SqlFaker\MySql\Bison\Ast\BisonAst;
-use SqlFaker\MySql\Bison\Ast\BisonRuleNode;
-use SqlFaker\MySql\Bison\Ast\BisonStartDeclaration;
-use SqlFaker\MySql\Bison\Ast\BisonSymbolForm;
-use SqlFaker\MySql\Bison\Ast\BisonSymbolNode;
-use SqlFaker\MySql\Bison\Ast\BisonTokenDeclaration;
-use SqlFaker\MySql\Bison\Ast\BisonTokenDefinition;
+use SqlFaker\Compiler\Bison\Ast\BisonAlternativeNode;
+use SqlFaker\Compiler\Bison\Ast\BisonAst;
+use SqlFaker\Compiler\Bison\Ast\BisonRuleNode;
+use SqlFaker\Compiler\Bison\Ast\BisonStartDeclaration;
+use SqlFaker\Compiler\Bison\Ast\BisonSymbolForm;
+use SqlFaker\Compiler\Bison\Ast\BisonSymbolNode;
+use SqlFaker\Compiler\Bison\Ast\BisonTokenDeclaration;
+use SqlFaker\Compiler\Bison\Ast\BisonTokenDefinition;
+use SqlFaker\Grammar\NonTerminal;
+use SqlFaker\Grammar\Terminal;
+use SqlFaker\Grammar\UnknownSymbolException;
 use SqlFaker\MySql\Grammar\GrammarCompiler;
-use SqlFaker\MySql\Grammar\NonTerminal;
-use SqlFaker\MySql\Grammar\Terminal;
-use SqlFaker\MySql\Grammar\UnknownSymbolException;
 
 #[CoversClass(GrammarCompiler::class)]
 #[CoversClass(BisonAst::class)]
@@ -31,8 +31,8 @@ use SqlFaker\MySql\Grammar\UnknownSymbolException;
 #[CoversClass(NonTerminal::class)]
 #[CoversClass(UnknownSymbolException::class)]
 #[CoversClass(\SqlFaker\MySql\Grammar\Grammar::class)]
-#[CoversClass(\SqlFaker\MySql\Grammar\Production::class)]
-#[CoversClass(\SqlFaker\MySql\Grammar\ProductionRule::class)]
+#[CoversClass(\SqlFaker\Grammar\Production::class)]
+#[CoversClass(\SqlFaker\Grammar\ProductionRule::class)]
 final class GrammarCompilerTest extends TestCase
 {
     public function testCompile(): void

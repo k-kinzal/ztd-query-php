@@ -6,28 +6,19 @@ namespace SqlFaker\PostgreSql;
 
 use Faker\Generator as FakerGenerator;
 use RuntimeException;
+use SqlFaker\Generation\SqlGenerator as CommonSqlGenerator;
 use SqlFaker\Grammar\Derivation;
-use SqlFaker\Grammar\GenerationException;
 use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\LexicalCatalogException;
-use SqlFaker\Grammar\LexicalException;
 use SqlFaker\Grammar\Terminal;
-use SqlFaker\Grammar\TerminalInventory;
-use SqlFaker\Grammar\TerminationAnalyzer;
-use SqlFaker\PostgreSql\Grammar\PgGrammar;
 
 /**
  * Derives PostgreSQL parser terminals and realizes them through the versioned lexer model.
  */
 final class SqlGenerator
 {
-    private const LEXICAL_ATTEMPT_LIMIT = 32;
-
-    private Grammar $grammar;
-    private FakerGenerator $faker;
-    private LexicalGrammar $lexicalGrammar;
-    private TerminationAnalyzer $terminationAnalyzer;
+    private CommonSqlGenerator $generator;
 
     /**
      * @param Grammar $grammar Compiled PostgreSQL grammar to derive from
@@ -42,17 +33,14 @@ final class SqlGenerator
         FakerGenerator $faker,
         ?string $version = null,
     ) {
-        $this->grammar = $grammar;
-        $this->faker = $faker;
-        $this->lexicalGrammar = new LexicalGrammar(
+        $context = new GenerationContext($grammar, $faker, $version);
+        $this->generator = new CommonSqlGenerator(
+            $context->grammar,
             $faker,
-            PgGrammar::resolveVersion($version),
-            $version === null,
+            $context->lexicalGrammar,
+            $context->normalize,
+            $context->startSymbol,
         );
-        if ($version !== null) {
-            $this->lexicalGrammar->assertTerminalsCovered(TerminalInventory::fromGrammar($this->grammar));
-        }
-        $this->terminationAnalyzer = new TerminationAnalyzer($grammar, $this->lexicalGrammar->supports(...));
     }
 
     /**
@@ -62,29 +50,6 @@ final class SqlGenerator
      */
     public function generate(GenerationPlan $plan): string
     {
-        if ($plan->lexicalTarget() !== null) {
-            return $this->lexicalGrammar->generate($plan);
-        }
-        $lastException = null;
-        for ($attempt = 0; $attempt < self::LEXICAL_ATTEMPT_LIMIT; $attempt++) {
-            $terminals = (new Derivation($this->grammar, $this->faker, $this->terminationAnalyzer))
-                ->of($plan->startRule() ?? 'stmtmulti', $plan);
-            $terminalNames = (new ParserSemantics($this->lexicalGrammar))->applied(array_map(
-                static fn (Terminal $terminal): string => $terminal->value,
-                $terminals,
-            ));
-            try {
-                $sql = $this->lexicalGrammar->realize($terminalNames, $plan);
-                if ($sql !== '' || !$plan->requiresNonEmpty()) {
-                    return $sql;
-                }
-                $lastException = GenerationException::planRequiresNonEmptyOutput('PostgreSQL');
-            } catch (LexicalException $exception) {
-                $lastException = $exception;
-            }
-        }
-
-        throw $lastException ?? GenerationException::lexicalRealizationFailed('PostgreSQL');
+        return $this->generator->generate($plan);
     }
-
 }

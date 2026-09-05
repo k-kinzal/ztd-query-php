@@ -5,3 +5,4 @@
 .phpstan.cache/
 .php-cs-fixer.cache
 composer.lock
+.deptrac.cache

@@ -46,6 +46,7 @@ interface LexicalGrammar
      * @param GenerationPlan<bool>|null $plan Plan that may pin exact lexemes for some terminals
      *
      * @return string SQL that tokenizes back to the terminals it was written from
+     * @throws LexicalException When realization cannot round-trip through the lexer
      */
     public function realize(array $terminals, ?GenerationPlan $plan = null): string;
 }

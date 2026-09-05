@@ -5,11 +5,11 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use SqlFaker\Grammar\GrammarCompiler;
-use SqlFaker\Grammar\LexicalProfileBuilder;
+use SqlFaker\Compiler\Bison\BisonParser;
+use SqlFaker\Compiler\Bison\GrammarCompiler;
 use SqlFaker\Grammar\SqlVersion;
 use SqlFaker\Grammar\TerminalInventory;
-use SqlFaker\MySql\Bison\BisonParser;
+use SqlFaker\Tooling\LexicalProfileBuilder;
 
 /**
  * Build script for generating a versioned grammar and lexical profile from PostgreSQL sources.

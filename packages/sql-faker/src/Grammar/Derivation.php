@@ -7,13 +7,7 @@ namespace SqlFaker\Grammar;
 use Faker\Generator as FakerGenerator;
 
 /**
- * Rewrites a start symbol into terminals by repeatedly taking a production.
- *
- * A derivation is a walk with a memory: how many rewrites it has spent so far
- * decides whether it may still choose freely or must start heading for an end,
- * and how many times it has already reached a rule decides which of the plan's
- * patterns applies. That count belongs to one walk, so a derivation is used
- * once and asked for its result.
+ * Derives terminals from a common grammar while reserving enough steps to finish the remaining form.
  *
  * @visibility root
  */
@@ -43,7 +37,7 @@ final class Derivation
      *
      * @return list<Terminal> Terminals the walk arrived at
      *
-     * @throws GenerationException When the grammar, the plan, or the step limit leaves no production to take
+     * @throws GenerationException When the grammar, the plan, or the step budget leaves no production to take
      */
     public function of(string $startSymbol, GenerationPlan $plan): array
     {
@@ -102,7 +96,11 @@ final class Derivation
                 }
             }
 
+            if ($plan->usesStepBudget()) {
+                $alternatives = $this->affordable($alternatives, new Production(array_slice($form, $index + 1)));
+            }
             $production = $this->selectProduction($alternatives, $plan);
+
             $form = [
                 ...array_slice($form, 0, $index),
                 ...$production->symbols,
@@ -116,9 +114,6 @@ final class Derivation
 
     /**
      * Answers where in the sentential form the walk acts next.
-     *
-     * Always the leftmost non-terminal, so one seed and one plan describe the
-     * same walk every time it is run.
      *
      * @param list<Symbol> $form Sentential form the walk has reached
      *
@@ -136,12 +131,45 @@ final class Derivation
     }
 
     /**
+     * Keeps only the alternatives the walk can still afford to finish.
+     *
+     * What is left of the form behind the symbol being rewritten has to be
+     * derived too, so the budget an alternative may spend is the step limit
+     * less what has been spent and less what the remainder will cost.
+     *
+     * @param non-empty-list<Production> $alternatives Alternatives the grammar and the plan both allow
+     * @param Production $remainder What the walk still has to derive behind this symbol
+     *
+     * @return non-empty-list<Production> Alternatives that still leave room to finish
+     *
+     * @throws GenerationException When none of them fits in the remaining budget
+     */
+    public function affordable(array $alternatives, Production $remainder): array
+    {
+        $budget = self::STEP_LIMIT - $this->steps - $this->analyzer->estimateProductionSteps($remainder);
+        if ($budget < 0) {
+            throw GenerationException::derivationLimitExceeded();
+        }
+
+        $affordable = array_values(array_filter(
+            $alternatives,
+            fn (Production $alternative): bool => $this->analyzer->estimateProductionSteps($alternative) <= $budget,
+        ));
+        if ($affordable === []) {
+            throw GenerationException::derivationLimitExceeded();
+        }
+
+        return $affordable;
+    }
+
+    /**
      * Answers which of the alternatives the walk takes.
      *
      * Up to the plan's depth the choice is free. Past it the walk is trying to
-     * finish, so it takes whichever alternative writes the least.
+     * finish, so it takes whichever alternative gets there in the fewest steps,
+     * and among equals whichever writes the least.
      *
-     * @param non-empty-array<int, Production> $alternatives Alternatives the grammar and the plan both allow
+     * @param non-empty-list<Production> $alternatives Alternatives the walk may still take
      * @param GenerationPlan<bool> $plan Plan directing the walk
      *
      * @return Production Alternative to rewrite with
@@ -149,21 +177,22 @@ final class Derivation
     public function selectProduction(array $alternatives, GenerationPlan $plan): Production
     {
         if ($this->steps < $plan->maxDepth()) {
-            $keys = array_keys($alternatives);
-
-            return $alternatives[$keys[$this->faker->numberBetween(0, count($keys) - 1)]];
+            return $alternatives[$this->faker->numberBetween(0, count($alternatives) - 1)];
         }
 
-        $selected = $alternatives[array_key_first($alternatives)];
-        $bestLength = $this->analyzer->estimateProductionLength($selected);
-        foreach (array_slice($alternatives, 1) as $alternative) {
+        $selected = 0;
+        $bestSteps = PHP_INT_MAX;
+        $bestLength = PHP_INT_MAX;
+        foreach ($alternatives as $index => $alternative) {
+            $steps = $plan->usesStepBudget() ? $this->analyzer->estimateProductionSteps($alternative) : 0;
             $length = $this->analyzer->estimateProductionLength($alternative);
-            if ($length < $bestLength) {
-                $selected = $alternative;
+            if ($steps < $bestSteps || ($steps === $bestSteps && $length < $bestLength)) {
+                $bestSteps = $steps;
                 $bestLength = $length;
+                $selected = $index;
             }
         }
 
-        return $selected;
+        return $alternatives[$selected];
     }
 }

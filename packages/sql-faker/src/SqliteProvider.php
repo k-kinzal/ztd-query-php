@@ -6,9 +6,10 @@ namespace SqlFaker;
 
 use Faker\Generator;
 use Faker\Provider\Base;
+use SqlFaker\Generation\SqlGenerator;
+use SqlFaker\Sqlite\GenerationContext;
 use SqlFaker\Sqlite\GenerationPlans;
 use SqlFaker\Sqlite\Grammar\SqliteGrammar;
-use SqlFaker\Sqlite\SqlGenerator;
 use SqlFaker\Sqlite\StatementType;
 
 /**
@@ -44,7 +45,14 @@ final class SqliteProvider extends Base
         $generator->addProvider($this);
 
         $resolvedVersion = SqliteGrammar::resolveVersion($version);
-        $this->sql = new SqlGenerator(SqliteGrammar::load($resolvedVersion), $generator, $resolvedVersion);
+        $context = new GenerationContext(SqliteGrammar::load($resolvedVersion), $generator, $resolvedVersion);
+        $this->sql = new SqlGenerator(
+            $context->grammar,
+            $generator,
+            $context->lexicalGrammar,
+            $context->normalize,
+            $context->startSymbol,
+        );
     }
 
     /**

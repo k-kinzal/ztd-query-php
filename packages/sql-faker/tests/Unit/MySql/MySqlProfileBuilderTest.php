@@ -9,11 +9,12 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\LexerSource;
 use SqlFaker\Grammar\SqlVersion;
 use SqlFaker\Grammar\SqlVersionRegistry;
-use SqlFaker\MySql\Grammar\Grammar;
-use SqlFaker\MySql\Grammar\TerminalInventory;
+use SqlFaker\Grammar\TerminalInventory;
+use SqlFaker\MySql\Grammar\MySqlGrammar;
 use SqlFaker\MySql\MySqlProfileBuilder;
 
 #[UsesClass(\SqlFaker\Grammar\LexicalCatalogShape::class)]
@@ -68,7 +69,7 @@ final class MySqlProfileBuilderTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Failed to fetch');
 
-        (new MySqlProfileBuilder($source))->build('mysql-8.4.7', Grammar::load('mysql-8.4.7'));
+        (new MySqlProfileBuilder($source))->build('mysql-8.4.7', MySqlGrammar::load('mysql-8.4.7'));
     }
 
     public function testCatalogNamesTheLexerTheWitnessesWereReadThrough(): void
@@ -77,7 +78,7 @@ final class MySqlProfileBuilderTest extends TestCase
             'mysql-8.4.7',
             ['symbols' => [], 'functions' => [], 'features' => ['dollar_quoted_strings' => false]],
             [],
-            Grammar::load('mysql-8.4.7'),
+            MySqlGrammar::load('mysql-8.4.7'),
         );
 
         self::assertSame(['engine' => 'mysql', 'entrypoint' => 'my_sql_parser_lex'], $catalog['source']);
@@ -112,7 +113,7 @@ final class MySqlProfileBuilderTest extends TestCase
             'mysql-8.4.7',
             ['symbols' => [], 'functions' => [], 'features' => ['dollar_quoted_strings' => false]],
             [],
-            Grammar::load('mysql-8.4.7'),
+            MySqlGrammar::load('mysql-8.4.7'),
         );
 
         /** @var array<string, list<array{id: string}>> $terminals */
@@ -203,7 +204,7 @@ final class MySqlProfileBuilderTest extends TestCase
             'mysql-8.4.7',
             ['symbols' => [], 'functions' => [], 'features' => ['dollar_quoted_strings' => false]],
             [],
-            Grammar::load('mysql-8.4.7'),
+            MySqlGrammar::load('mysql-8.4.7'),
         );
 
         self::assertSame(
@@ -224,7 +225,7 @@ final class MySqlProfileBuilderTest extends TestCase
             'mysql-8.4.7',
             ['symbols' => [], 'functions' => [], 'features' => ['dollar_quoted_strings' => false]],
             [],
-            Grammar::load('mysql-8.4.7'),
+            MySqlGrammar::load('mysql-8.4.7'),
         );
 
         self::assertSame(

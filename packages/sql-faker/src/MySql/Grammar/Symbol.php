@@ -5,15 +5,6 @@ declare(strict_types=1);
 namespace SqlFaker\MySql\Grammar;
 
 /**
- * Represents a symbol in a formal grammar.
- *
- * A symbol is either a terminal (cannot be further expanded) or
- * a non-terminal (can be expanded via production rules).
+ * Preserves the former MySQL symbol name for callers of the compatibility grammar facade.
  */
-interface Symbol
-{
-    /**
-     * Get the symbol's value (name).
-     */
-    public function value(): string;
-}
+class_alias(\SqlFaker\Grammar\Symbol::class, __NAMESPACE__ . '\\Symbol');

@@ -6,6 +6,8 @@ namespace SqlFaker\MySql\Grammar;
 
 use InvalidArgumentException;
 use RuntimeException;
+use SqlFaker\Grammar\Grammar as CommonGrammar;
+use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\SqlVersion;
 
 /**
@@ -49,23 +51,9 @@ final class Grammar
     {
         $path = SqlVersion::resolve('mysql', $version)->astPath;
 
-        if (!file_exists($path)) {
-            throw new RuntimeException("Grammar file not found: {$path}");
-        }
+        $grammar = CommonGrammar::loadFromFile($path);
 
-        /** @var array<string, string> $data */
-        $data = require $path;
-        $hash = array_key_first($data);
-        if ($hash === null) {
-            throw new RuntimeException("Invalid grammar file: {$path}");
-        }
-        $grammar = unserialize($data[$hash]);
-
-        if (!$grammar instanceof self) {
-            throw new RuntimeException("Failed to load grammar from: {$path}");
-        }
-
-        return $grammar;
+        return new self($grammar->startSymbol, $grammar->ruleMap);
     }
 
     /**
@@ -83,44 +71,14 @@ final class Grammar
     }
 
     /**
-     * Answers which of this grammar's rules a requested start rule is grown from.
+     * Resolves the requested MySQL rule name.
      *
-     * MySQL renamed its top-level rules across releases, so the name a caller
-     * asks for may not be the name this release declares. A request the
-     * grammar knows is taken as it stands; otherwise the rule that release
-     * calls the same thing is used, and a request nothing matches is handed
-     * back for the derivation to report.
-     *
-     * @param string|null $requested Rule the caller asked for, or null for the grammar's own entry point
-     *
-     * @return string Rule this grammar declares
+     * @param string|null $requested Requested rule or the default
+     * @return string Rule name used by this grammar release
      */
     public function startSymbolFor(?string $requested): string
     {
-        if ($requested === null) {
-            if (isset($this->ruleMap['simple_statement_or_begin'])) {
-                return 'simple_statement_or_begin';
-            }
-
-            return isset($this->ruleMap['statement']) ? 'statement' : $this->startSymbol;
-        }
-        if (isset($this->ruleMap[$requested])) {
-            return $requested;
-        }
-
-        $fallbacks = [
-            'select_stmt' => 'select',
-            'insert_stmt' => 'insert',
-            'update_stmt' => 'update',
-            'delete_stmt' => 'delete',
-            'create_table_stmt' => 'create',
-            'alter_table_stmt' => 'alter',
-            'drop_table_stmt' => 'drop',
-            'simple_statement' => 'statement',
-            'simple_statement_or_begin' => $this->startSymbol,
-        ];
-        $fallback = $fallbacks[$requested] ?? $requested;
-
-        return isset($this->ruleMap[$fallback]) ? $fallback : $requested;
+        return (new \SqlFaker\MySql\StartRuleResolver(new CommonGrammar($this->startSymbol, $this->ruleMap)))
+            ->startSymbolFor($requested);
     }
 }

@@ -132,4 +132,16 @@ final class DerivationTest extends TestCase
 
         self::assertEquals([new Terminal('A')], $derivation->of('stmt', GenerationPlan::all()));
     }
+    public function testAffordableKeepsAnAlternativeThatStillLeavesRoomToFinish(): void
+    {
+        $short = new Production([new Terminal('A')]);
+        $grammar = new Grammar('stmt', ['stmt' => new ProductionRule('stmt', [$short])]);
+        $derivation = new Derivation($grammar, Factory::create(), new TerminationAnalyzer(
+            $grammar,
+            static fn (string $terminal): bool => true,
+        ));
+
+        self::assertSame([$short], $derivation->affordable([$short], new Production([])));
+    }
+
 }
