@@ -61,7 +61,7 @@ final class LexicalProfileCheckTest extends TestCase
     /**
      * @param array<string, mixed> $profile
      */
-    #[DataProvider('invalidIdentities')]
+    #[DataProvider('providerInvalidIdentities')]
     public function testAssertCompatibleRejectsAnInvalidReleaseIdentity(array $profile): void
     {
         $this->expectException(RuntimeException::class);
@@ -78,7 +78,7 @@ final class LexicalProfileCheckTest extends TestCase
     /**
      * @return iterable<string, array{array<string, mixed>}>
      */
-    public static function invalidIdentities(): iterable
+    public static function providerInvalidIdentities(): iterable
     {
         yield 'other version' => [['dialect' => 'mysql', 'version' => 'mysql-8.0.44']];
         yield 'other dialect' => [['dialect' => 'postgresql', 'version' => 'mysql-8.4.7']];
@@ -89,7 +89,7 @@ final class LexicalProfileCheckTest extends TestCase
     /**
      * @param array<string, mixed> $catalog
      */
-    #[DataProvider('invalidCatalogs')]
+    #[DataProvider('providerInvalidCatalogs')]
     public function testAssertCompatibleRejectsAMissingOrMalformedCatalog(array $catalog): void
     {
         $this->expectException(RuntimeException::class);
@@ -106,7 +106,7 @@ final class LexicalProfileCheckTest extends TestCase
     /**
      * @return iterable<string, array{array<string, mixed>}>
      */
-    public static function invalidCatalogs(): iterable
+    public static function providerInvalidCatalogs(): iterable
     {
         yield 'missing' => [[]];
         yield 'null' => [['catalog' => null]];
