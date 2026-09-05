@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlFaker\Grammar;
 
 use RuntimeException;
+use SqlFaker\Grammar\Resource\SqlVersionRegistry;
 
 /**
  * Binds the grammar and lexical profile generated for one SQL implementation version.

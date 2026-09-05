@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlFaker\Compiler\Bison\Lexer\BisonLexeme;
 use SqlFaker\Compiler\Bison\Lexer\BisonToken;
 use SqlFaker\Compiler\Bison\Lexer\NumberScanner;
-use SqlFaker\Grammar\SourceCursor;
+use SqlFaker\Grammar\Lexical\SourceCursor;
 
 #[CoversClass(NumberScanner::class)]
 #[UsesClass(BisonLexeme::class)]

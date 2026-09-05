@@ -13,8 +13,8 @@ use SqlFaker\Grammar\LexerSource;
 use SqlFaker\Sqlite\SqliteCoverageSamples;
 use SqlFaker\Sqlite\SqliteProfileBuilder;
 
-#[UsesClass(\SqlFaker\Grammar\LexicalCatalogShape::class)]
-#[UsesClass(\SqlFaker\Grammar\LexicalWitnessShape::class)]
+#[UsesClass(\SqlFaker\Grammar\Lexical\LexicalCatalogShape::class)]
+#[UsesClass(\SqlFaker\Grammar\Lexical\LexicalWitnessShape::class)]
 #[CoversClass(SqliteProfileBuilder::class)]
 #[UsesClass(SqliteCoverageSamples::class)]
 #[UsesClass(\SqlFaker\Sqlite\SqliteLexicalSamples::class)]
@@ -225,7 +225,7 @@ final class SqliteProfileBuilderTest extends TestCase
         self::assertIsArray($profile['catalog']['source']['character_classes']);
         $classes = array_values(array_filter($profile['catalog']['source']['character_classes'], is_string(...)));
         self::assertSame($profile['catalog']['source']['character_classes'], $classes);
-        $shape = new \SqlFaker\Grammar\LexicalCatalogShape();
+        $shape = new \SqlFaker\Grammar\Lexical\LexicalCatalogShape();
         $expected = $shape->of(array_filter($profile['catalog'], is_string(...), ARRAY_FILTER_USE_KEY));
         $actual = $shape->of((new SqliteProfileBuilder())->catalog(array_filter($profile, is_string(...), ARRAY_FILTER_USE_KEY), $classes));
 
@@ -242,7 +242,7 @@ final class SqliteProfileBuilderTest extends TestCase
         self::assertIsArray($profile['catalog']['source']['character_classes']);
         $classes = array_values(array_filter($profile['catalog']['source']['character_classes'], is_string(...)));
         self::assertSame($profile['catalog']['source']['character_classes'], $classes);
-        $catalog = (new \SqlFaker\Grammar\LexicalCatalogShape())->of(
+        $catalog = (new \SqlFaker\Grammar\Lexical\LexicalCatalogShape())->of(
             (new SqliteProfileBuilder())->catalog(['keywords' => []], $classes),
         );
         $witnesses = array_column($catalog['terminals']['@COVERAGE'], null, 'id');

@@ -56,6 +56,7 @@
         "lint": [
             "@format:check",
             "@phpstan",
+            "@tree-guard",
             "@deptrac",
             "@compat"
         ],
@@ -79,7 +80,8 @@
         "deptrac:debug": [
             "deptrac debug:unassigned --config-file=deptrac.yaml",
             "deptrac debug:unused --config-file=deptrac.yaml"
-        ]
+        ],
+        "tree-guard": "tree-guard --config=tree.yaml"
     },
     "config": {
         "allow-plugins": {

@@ -6,7 +6,7 @@ namespace SqlFaker\Sqlite;
 
 use RuntimeException;
 use SqlFaker\Grammar\LexerSource;
-use SqlFaker\Grammar\UpstreamLexerSource;
+use SqlFaker\Grammar\Lexical\UpstreamLexerSource;
 use SqlFaker\Sqlite\LexicalProfileCompiler as SqliteCompiler;
 use SqlFaker\Sqlite\LexicalSourceParser as SqliteSourceParser;
 

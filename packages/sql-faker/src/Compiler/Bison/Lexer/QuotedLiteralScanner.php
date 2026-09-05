@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlFaker\Compiler\Bison\Lexer;
 
 use Override;
-use SqlFaker\Grammar\SourceCursor;
+use SqlFaker\Grammar\Lexical\SourceCursor;
 
 /**
  * Consumes a quoted literal.

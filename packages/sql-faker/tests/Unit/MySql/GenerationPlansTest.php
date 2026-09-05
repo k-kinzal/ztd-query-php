@@ -7,9 +7,9 @@ namespace Tests\Unit\SqlFaker\MySql;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\GenerationPlan;
+use SqlFaker\Grammar\Derivation\GenerationPlan;
+use SqlFaker\Grammar\Derivation\ProductionPattern;
 use SqlFaker\Grammar\Grammar;
-use SqlFaker\Grammar\ProductionPattern;
 use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\MySql\GenerationPlans;
 

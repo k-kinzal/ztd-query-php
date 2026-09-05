@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlFaker\PostgreSql;
 
-use SqlFaker\Grammar\GenerationPlan;
-use SqlFaker\Grammar\ProductionPattern;
+use SqlFaker\Grammar\Derivation\GenerationPlan;
+use SqlFaker\Grammar\Derivation\ProductionPattern;
 
 /**
  * Names the generation plans this dialect's provider is built from.

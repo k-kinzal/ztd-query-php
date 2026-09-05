@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlFaker\MySql;
 
-use SqlFaker\Grammar\GenerationPlan;
+use SqlFaker\Grammar\Derivation\GenerationPlan;
+use SqlFaker\Grammar\Derivation\ProductionPattern;
 use SqlFaker\Grammar\Grammar;
-use SqlFaker\Grammar\ProductionPattern;
 
 /**
  * Names the generation plans this dialect's provider is built from.
