@@ -16,6 +16,9 @@ use SqlFaker\PostgreSql\LexicalSourceParser as PostgreSqlSourceParser;
  * PostgreSQL splits what one release calls a keyword across a keyword list and
  * a scanner, and its parser frontend rewrites some tokens by looking ahead, so
  * the profile records both and is bound to one exact version.
+ *
+ * @phpstan-type Witness array{id: string, sql: string, tokens: list<string>, units: list<string>, context_sql?: string}
+ * @phpstan-type Terminals array<string, list<Witness>>
  */
 final class PgProfileBuilder
 {
@@ -110,6 +113,82 @@ final class PgProfileBuilder
         $keywords = $profile['keywords'];
         /** @var array<string, array{token: string, followed_by: list<string>}> $lookahead */
         $lookahead = $profile['lookahead'];
+        $terminals = $this->keywordWitnesses($keywords, $lookahead);
+
+        $this->addLexicalWitnesses($terminals);
+
+        $coverage = $this->coverage($terminals, $source['rules']);
+        ksort($terminals);
+
+        return [
+            'source' => [
+                'engine' => 'postgresql',
+                'entrypoint' => 'scan.l/base_yylex',
+                'states' => $source['states'],
+                'rules' => $source['rules'],
+            ],
+            'terminals' => $terminals,
+            'terminal_exclusions' => [],
+            'coverage' => $coverage,
+        ];
+    }
+
+    /**
+     * @param list<string> $expectedTokens
+     * @return array{id: string, sql: string, tokens: list<string>, units: list<string>}
+     */
+    public function witness(string $id, string $sql, array $expectedTokens): array
+    {
+        return [
+            'id' => $id,
+            'sql' => $sql,
+            'tokens' => $expectedTokens,
+            'units' => [],
+        ];
+    }
+
+    /**
+     * Maps the PostgreSQL 17 scanner rule inventory to a successful witness.
+     * Rules which can only report a lexical error are classified separately.
+     *
+     * @return array<int, string>
+     */
+    public function ruleWitnesses(): array
+    {
+        return (new PgLexicalSamples())->ruleWitnesses();
+    }
+
+    /**
+     * @param array<string, list<array{id: string, sql: string, tokens: list<string>, units: list<string>}>> $terminals
+     *
+     * @throws RuntimeException When the witness the unit names is missing
+     */
+    public function attachUnit(array &$terminals, string $witnessId, string $unit): void
+    {
+        foreach ($terminals as &$witnesses) {
+            foreach ($witnesses as &$witness) {
+                if ($witness['id'] === $witnessId) {
+                    $witness['units'][] = $unit;
+
+                    return;
+                }
+            }
+            unset($witness);
+        }
+        unset($witnesses);
+
+        throw new RuntimeException("PostgreSQL scanner rule references an unknown witness: {$witnessId}");
+    }
+
+    /**
+     * Builds keyword witnesses including the lookahead context required by the parser.
+     *
+     * @param array<string, list<string>> $keywords
+     * @param array<string, array{token: string, followed_by: list<string>}> $lookahead
+     * @return Terminals
+     */
+    public function keywordWitnesses(array $keywords, array $lookahead): array
+    {
         $terminals = [];
         foreach ($keywords as $terminal => $lexemes) {
             foreach ($lexemes as $index => $lexeme) {
@@ -135,6 +214,16 @@ final class PgProfileBuilder
             ];
         }
 
+        return $terminals;
+    }
+
+    /**
+     * Adds lexical families and scanner branch witnesses.
+     *
+     * @param Terminals $terminals
+     */
+    public function addLexicalWitnesses(array &$terminals): void
+    {
         $samples = (new PgLexicalSamples())->all();
         foreach (str_split('%()*+,-./:;<=>[]^') as $punctuation) {
             $samples[$punctuation] = [$punctuation];
@@ -168,37 +257,21 @@ final class PgProfileBuilder
                 $expected,
             );
         }
+    }
 
-        foreach ([
-            'MODE_TYPE_NAME',
-            'MODE_PLPGSQL_EXPR',
-            'MODE_PLPGSQL_ASSIGN1',
-            'MODE_PLPGSQL_ASSIGN2',
-            'MODE_PLPGSQL_ASSIGN3',
-        ] as $mode) {
-            $unit = 'parser-mode:' . $mode;
-            $terminals[$mode][] = [
-                'id' => 'postgresql.mode.' . $mode,
-                'sql' => '',
-                'tokens' => [],
-                'units' => [$unit],
-            ];
-        }
-
-        $ruleCount = count($source['rules']) + 1;
-        $coverageUnits = [];
-        for ($rule = 1; $rule <= $ruleCount; $rule++) {
-            $coverageUnits[] = 'rule:' . $rule;
-        }
-        foreach ([
-            'MODE_TYPE_NAME',
-            'MODE_PLPGSQL_EXPR',
-            'MODE_PLPGSQL_ASSIGN1',
-            'MODE_PLPGSQL_ASSIGN2',
-            'MODE_PLPGSQL_ASSIGN3',
-        ] as $mode) {
-            $coverageUnits[] = 'parser-mode:' . $mode;
-        }
+    /**
+     * Verifies that scanner rules and parser modes are witnessed or explicitly excluded.
+     *
+     * @param Terminals $terminals
+     * @param list<string> $rules
+     * @return array{units: list<string>, witnessed: array<string, string>, excluded: array<string, string>}
+     *
+     * @throws RuntimeException When the inventory and its witness mapping disagree
+     */
+    public function coverage(array &$terminals, array $rules): array
+    {
+        $ruleCount = count($rules) + 1;
+        $coverageUnits = $this->addParserModes($terminals, $ruleCount);
 
         $ruleWitnesses = $this->ruleWitnesses();
         if ($ruleWitnesses === [] || max(array_keys($ruleWitnesses)) >= $ruleCount) {
@@ -216,7 +289,28 @@ final class PgProfileBuilder
                 }
             }
         }
-        $coverageExcluded = [
+        $coverageExcluded = $this->excludedRules($ruleCount);
+        $missing = array_values(array_diff(
+            $coverageUnits,
+            array_keys($coverageWitnessed),
+            array_keys($coverageExcluded),
+        ));
+        if ($missing !== []) {
+            throw new RuntimeException('PostgreSQL source model misses scanner rules: ' . implode(', ', $missing));
+        }
+        ksort($coverageWitnessed);
+
+        return ['units' => $coverageUnits, 'witnessed' => $coverageWitnessed, 'excluded' => $coverageExcluded];
+    }
+
+    /**
+     * Names scanner branches that only reject input and the Flex default jam rule.
+     *
+     * @return array<string, string>
+     */
+    public function excludedRules(int $ruleCount): array
+    {
+        return [
             'rule:25' => 'Malformed Unicode surrogate continuation is an error-only scanner branch.',
             'rule:26' => 'Missing Unicode surrogate continuation is an error-only scanner branch.',
             'rule:27' => 'Malformed Unicode escape is an error-only scanner branch.',
@@ -231,139 +325,46 @@ final class PgProfileBuilder
             'rule:70' => 'Trailing identifier junk after a real is an error-only scanner branch.',
             'rule:' . $ruleCount => 'Flex default jam rule is not a PostgreSQL lexical language branch.',
         ];
-        $missing = array_values(array_diff(
-            $coverageUnits,
-            array_keys($coverageWitnessed),
-            array_keys($coverageExcluded),
-        ));
-        if ($missing !== []) {
-            throw new RuntimeException('PostgreSQL source model misses scanner rules: ' . implode(', ', $missing));
-        }
-        ksort($terminals);
-        ksort($coverageWitnessed);
-
-        return [
-            'source' => [
-                'engine' => 'postgresql',
-                'entrypoint' => 'scan.l/base_yylex',
-                'states' => $source['states'],
-                'rules' => $source['rules'],
-            ],
-            'terminals' => $terminals,
-            'terminal_exclusions' => [],
-            'coverage' => [
-                'units' => $coverageUnits,
-                'witnessed' => $coverageWitnessed,
-                'excluded' => $coverageExcluded,
-            ],
-        ];
     }
 
     /**
-     * @param list<string> $expectedTokens
-     * @return array{id: string, sql: string, tokens: list<string>, units: list<string>}
-     */
-    public function witness(string $id, string $sql, array $expectedTokens): array
-    {
-        return [
-            'id' => $id,
-            'sql' => $sql,
-            'tokens' => $expectedTokens,
-            'units' => [],
-        ];
-    }
-
-    /**
-     * Maps the PostgreSQL 17 scanner rule inventory to a successful witness.
-     * Rules which can only report a lexical error are classified separately.
+     * Adds parser entry witnesses and enumerates all scanner and mode coverage units.
      *
-     * @return array<int, string>
+     * @param Terminals $terminals
+     * @return list<string>
      */
-    public function ruleWitnesses(): array
+    public function addParserModes(array &$terminals, int $ruleCount): array
     {
-        return [
-            1 => 'postgresql.lookahead.FORMAT_LA',
-            2 => 'postgresql.family.@TRIVIA.3',
-            3 => 'postgresql.family.@TRIVIA.3',
-            4 => 'postgresql.family.@TRIVIA.3',
-            5 => 'postgresql.family.@TRIVIA.3',
-            6 => 'postgresql.family.@TRIVIA.4',
-            7 => 'postgresql.family.@TRIVIA.4',
-            8 => 'postgresql.family.BCONST.0',
-            9 => 'postgresql.family.XCONST.0',
-            10 => 'postgresql.family.BCONST.0',
-            11 => 'postgresql.family.XCONST.0',
-            12 => 'postgresql.coverage.national-string',
-            13 => 'postgresql.family.SCONST.0',
-            14 => 'postgresql.family.SCONST.4',
-            15 => 'postgresql.family.SCONST.9',
-            16 => 'postgresql.family.SCONST.0',
-            17 => 'postgresql.family.SCONST.2',
-            18 => 'postgresql.family.SCONST.3',
-            19 => 'postgresql.coverage.quote-stop-other',
-            20 => 'postgresql.family.SCONST.1',
-            21 => 'postgresql.family.SCONST.0',
-            22 => 'postgresql.family.SCONST.4',
-            23 => 'postgresql.family.SCONST.5',
-            24 => 'postgresql.family.SCONST.6',
-            28 => 'postgresql.family.SCONST.4',
-            29 => 'postgresql.family.SCONST.7',
-            30 => 'postgresql.family.SCONST.8',
-            32 => 'postgresql.family.SCONST.10',
-            33 => 'postgresql.coverage.dollar-prefix-fallback',
-            34 => 'postgresql.family.SCONST.10',
-            35 => 'postgresql.family.SCONST.10',
-            36 => 'postgresql.coverage.dollar-failed-inside',
-            37 => 'postgresql.coverage.dollar-character-inside',
-            38 => 'postgresql.family.IDENT.1',
-            39 => 'postgresql.family.IDENT.2',
-            40 => 'postgresql.family.IDENT.1',
-            41 => 'postgresql.family.IDENT.2',
-            42 => 'postgresql.family.IDENT.3',
-            43 => 'postgresql.family.IDENT.1',
-            44 => 'postgresql.coverage.unicode-prefix-fallback',
-            45 => 'postgresql.family.TYPECAST.0',
-            46 => 'postgresql.family.DOT_DOT.0',
-            47 => 'postgresql.family.COLON_EQUALS.0',
-            48 => 'postgresql.family.EQUALS_GREATER.0',
-            49 => 'postgresql.family.LESS_EQUALS.0',
-            50 => 'postgresql.family.GREATER_EQUALS.0',
-            51 => 'postgresql.family.NOT_EQUALS.0',
-            52 => 'postgresql.family.NOT_EQUALS.1',
-            53 => 'postgresql.family.%.0',
-            54 => 'postgresql.family.Op.0',
-            55 => 'postgresql.family.PARAM.0',
-            57 => 'postgresql.family.ICONST.0',
-            58 => 'postgresql.family.ICONST.1',
-            59 => 'postgresql.family.ICONST.2',
-            60 => 'postgresql.family.ICONST.3',
-            64 => 'postgresql.family.FCONST.0',
-            65 => 'postgresql.coverage.numeric-range',
-            66 => 'postgresql.family.FCONST.2',
-            71 => 'postgresql.keyword.ABORT_P.0',
-            72 => 'postgresql.coverage.other-character',
-        ];
-    }
-
-    /**
-     * @param array<string, list<array{id: string, sql: string, tokens: list<string>, units: list<string>}>> $terminals
-     *
-     * @throws RuntimeException When the witness the unit names is missing
-     */
-    public function attachUnit(array &$terminals, string $witnessId, string $unit): void
-    {
-        foreach ($terminals as &$witnesses) {
-            foreach ($witnesses as &$witness) {
-                if ($witness['id'] === $witnessId) {
-                    $witness['units'][] = $unit;
-
-                    return;
-                }
-            }
-            unset($witness);
+        foreach ([
+            'MODE_TYPE_NAME',
+            'MODE_PLPGSQL_EXPR',
+            'MODE_PLPGSQL_ASSIGN1',
+            'MODE_PLPGSQL_ASSIGN2',
+            'MODE_PLPGSQL_ASSIGN3',
+        ] as $mode) {
+            $unit = 'parser-mode:' . $mode;
+            $terminals[$mode][] = [
+                'id' => 'postgresql.mode.' . $mode,
+                'sql' => '',
+                'tokens' => [],
+                'units' => [$unit],
+            ];
         }
-        unset($witnesses);
 
-        throw new RuntimeException("PostgreSQL scanner rule references an unknown witness: {$witnessId}");
+        $coverageUnits = [];
+        for ($rule = 1; $rule <= $ruleCount; $rule++) {
+            $coverageUnits[] = 'rule:' . $rule;
+        }
+        foreach ([
+            'MODE_TYPE_NAME',
+            'MODE_PLPGSQL_EXPR',
+            'MODE_PLPGSQL_ASSIGN1',
+            'MODE_PLPGSQL_ASSIGN2',
+            'MODE_PLPGSQL_ASSIGN3',
+        ] as $mode) {
+            $coverageUnits[] = 'parser-mode:' . $mode;
+        }
+
+        return $coverageUnits;
     }
 }

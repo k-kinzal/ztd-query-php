@@ -38,15 +38,7 @@ final class GrammarCompiler
             $ruleTable[$rule->name] = $rule;
         }
 
-        /** @var array<string, BisonTokenDefinition> $declarationTable */
-        $declarationTable = [];
-        foreach ($ast->declarations as $declaration) {
-            if ($declaration instanceof BisonTokenDeclaration) {
-                foreach ($declaration->tokens as $token) {
-                    $declarationTable[$token->name] = $token;
-                }
-            }
-        }
+        $declarationTable = $this->declarations($ast);
 
         /** @var array<string, ProductionRule> $ruleMap */
         $ruleMap = [];
@@ -86,5 +78,25 @@ final class GrammarCompiler
         }
 
         return new Grammar($ast->startSymbol, $ruleMap);
+    }
+
+    /**
+     * Indexes declared terminal tokens by name before compiling productions.
+     *
+     * @return array<string, BisonTokenDefinition>
+     */
+    public function declarations(BisonAst $ast): array
+    {
+        /** @var array<string, BisonTokenDefinition> $declarationTable */
+        $declarationTable = [];
+        foreach ($ast->declarations as $declaration) {
+            if ($declaration instanceof BisonTokenDeclaration) {
+                foreach ($declaration->tokens as $token) {
+                    $declarationTable[$token->name] = $token;
+                }
+            }
+        }
+
+        return $declarationTable;
     }
 }

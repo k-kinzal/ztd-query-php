@@ -65,42 +65,9 @@ final class Derivation
 
             /** @var NonTerminal $nonTerminal */
             $nonTerminal = $form[$index];
-            $rule = $this->grammar->ruleMap[$nonTerminal->value]
-                ?? throw GenerationException::unknownRule($nonTerminal->value);
-            if ($rule->alternatives === []) {
-                throw GenerationException::ruleHasNoAlternatives($nonTerminal->value);
-            }
-            $alternatives = array_values(array_filter(
-                $rule->alternatives,
-                $this->analyzer->isProductionViable(...),
-            ));
-            if ($alternatives === []) {
-                throw GenerationException::noRealizableAlternative($nonTerminal->value);
-            }
             $occurrence = $occurrences[$nonTerminal->value] ?? 0;
             $occurrences[$nonTerminal->value] = $occurrence + 1;
-            $pattern = $plan->patternAt($nonTerminal->value, $occurrence);
-            if ($pattern !== null) {
-                $alternatives = array_values(array_filter(
-                    $alternatives,
-                    static fn (Production $production): bool => $pattern->matches(array_map(
-                        static fn (Symbol $symbol): string => $symbol->value(),
-                        $production->symbols,
-                    )),
-                ));
-                if ($alternatives === []) {
-                    throw GenerationException::noAlternativeMatchingPlan($nonTerminal->value);
-                }
-            }
-            if ($this->steps === 1 && $plan->requiresNonEmpty()) {
-                $alternatives = array_values(array_filter(
-                    $alternatives,
-                    fn (Production $production): bool => $this->analyzer->estimateProductionLength($production) > 0,
-                ));
-                if ($alternatives === []) {
-                    throw GenerationException::startRuleCannotProduceOutput($nonTerminal->value);
-                }
-            }
+            $alternatives = $this->alternatives($nonTerminal, $plan, $occurrence);
 
             if ($plan->usesStepBudget()) {
                 $alternatives = $this->affordable($alternatives, new Production(array_slice($form, $index + 1)));
@@ -200,5 +167,53 @@ final class Derivation
         }
 
         return $alternatives[$selected];
+    }
+
+    /**
+     * Finds realizable alternatives satisfying the plan at this occurrence.
+     *
+     * @param GenerationPlan<bool> $plan Plan directing the walk
+     * @return non-empty-list<Production>
+     *
+     * @throws GenerationException When no alternative satisfies the grammar and plan
+     */
+    public function alternatives(NonTerminal $nonTerminal, GenerationPlan $plan, int $occurrence): array
+    {
+        $rule = $this->grammar->ruleMap[$nonTerminal->value]
+            ?? throw GenerationException::unknownRule($nonTerminal->value);
+        if ($rule->alternatives === []) {
+            throw GenerationException::ruleHasNoAlternatives($nonTerminal->value);
+        }
+        $alternatives = array_values(array_filter(
+            $rule->alternatives,
+            $this->analyzer->isProductionViable(...),
+        ));
+        if ($alternatives === []) {
+            throw GenerationException::noRealizableAlternative($nonTerminal->value);
+        }
+        $pattern = $plan->patternAt($nonTerminal->value, $occurrence);
+        if ($pattern !== null) {
+            $alternatives = array_values(array_filter(
+                $alternatives,
+                static fn (Production $production): bool => $pattern->matches(array_map(
+                    static fn (Symbol $symbol): string => $symbol->value(),
+                    $production->symbols,
+                )),
+            ));
+            if ($alternatives === []) {
+                throw GenerationException::noAlternativeMatchingPlan($nonTerminal->value);
+            }
+        }
+        if ($this->steps === 1 && $plan->requiresNonEmpty()) {
+            $alternatives = array_values(array_filter(
+                $alternatives,
+                fn (Production $production): bool => $this->analyzer->estimateProductionLength($production) > 0,
+            ));
+            if ($alternatives === []) {
+                throw GenerationException::startRuleCannotProduceOutput($nonTerminal->value);
+            }
+        }
+
+        return $alternatives;
     }
 }

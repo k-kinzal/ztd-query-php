@@ -107,29 +107,7 @@ final class SqliteProfileBuilder
 
         /** @var array<string, list<string>> $keywords */
         $keywords = $profile['keywords'];
-        $terminals = [];
-        foreach ($keywords as $terminal => $lexemes) {
-            foreach ($lexemes as $index => $lexeme) {
-                $terminals[$terminal][] = $this->witness(
-                    "sqlite.keyword.{$terminal}.{$index}",
-                    $lexeme,
-                    [$terminal === 'WITHIN' ? 'TK_ID' : 'TK_' . $terminal],
-                    ['CC_KYWD0'],
-                );
-            }
-        }
-
-        $samples = (new SqliteLexicalSamples())->all();
-        foreach ($samples as $terminal => $witnesses) {
-            foreach ($witnesses as $index => [$sql, $tokens, $units]) {
-                $terminals[$terminal][] = $this->witness(
-                    "sqlite.family.{$terminal}.{$index}",
-                    $sql,
-                    $tokens,
-                    $units,
-                );
-            }
-        }
+        $terminals = $this->terminalWitnesses($keywords);
         foreach ($coverageSamples as $id => [$sql, $tokens, $units]) {
             $terminals['@COVERAGE'][] = $this->witness($id, $sql, $tokens, $units);
         }
@@ -165,5 +143,39 @@ final class SqliteProfileBuilder
             'tokens' => $tokens,
             'units' => $units,
         ];
+    }
+
+    /**
+     * Builds witnesses for keywords and lexical families.
+     *
+     * @param array<string, list<string>> $keywords
+     * @return array<string, list<array{id: string, sql: string, tokens: list<string>, units: list<string>}>>
+     */
+    public function terminalWitnesses(array $keywords): array
+    {
+        $terminals = [];
+        foreach ($keywords as $terminal => $lexemes) {
+            foreach ($lexemes as $index => $lexeme) {
+                $terminals[$terminal][] = $this->witness(
+                    "sqlite.keyword.{$terminal}.{$index}",
+                    $lexeme,
+                    [$terminal === 'WITHIN' ? 'TK_ID' : 'TK_' . $terminal],
+                    ['CC_KYWD0'],
+                );
+            }
+        }
+
+        $samples = (new SqliteLexicalSamples())->all();
+        foreach ($samples as $terminal => $witnesses) {
+            foreach ($witnesses as $index => [$sql, $tokens, $units]) {
+                $terminals[$terminal][] = $this->witness(
+                    "sqlite.family.{$terminal}.{$index}",
+                    $sql,
+                    $tokens,
+                    $units,
+                );
+            }
+        }
+        return $terminals;
     }
 }

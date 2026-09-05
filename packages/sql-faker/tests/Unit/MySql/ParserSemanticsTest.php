@@ -57,4 +57,16 @@ final class ParserSemanticsTest extends TestCase
     {
         self::assertSame(['SYSTEM', 'NUM'], (new ParserSemantics())->applied(['SYSTEM', 'DECIMAL_NUM']));
     }
+
+    public function testNormalizeStatementRemovesUserQualificationAndCompletesAnAlterEvent(): void
+    {
+        $semantics = new ParserSemantics();
+
+        self::assertSame(['IDENT', '@', 'IDENT'], $semantics->normalizeStatement(['IDENT', '.', 'IDENT', '@', 'IDENT']));
+        self::assertSame(
+            ['ALTER_SYM', 'EVENT_SYM', 'IDENT', '.', 'IDENT', 'ENABLE_SYM'],
+            $semantics->normalizeStatement(['ALTER_SYM', 'EVENT_SYM', 'IDENT', '.', 'IDENT']),
+        );
+        self::assertSame(['CURRENT_USER', ':'], $semantics->normalizeStatement(['CURRENT_USER', '(', ')', ':']));
+    }
 }
