@@ -192,9 +192,6 @@ composer test
 # Run linter (PHP-CS-Fixer + PHPStan level max + PHPCompatibility)
 composer lint
 
-# Check the shipped library's PHP compatibility only
-composer compat
-
 # Run fuzz tests
 composer fuzz
 
