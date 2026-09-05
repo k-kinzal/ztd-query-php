@@ -6,11 +6,30 @@ namespace Tests\Unit\SqlFaker\PostgreSql;
 
 use Faker\Factory;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\PostgreSql\GenerationContext;
 
 #[CoversClass(GenerationContext::class)]
+#[UsesClass(Grammar::class)]
+#[UsesClass(\SqlFaker\Grammar\LexicalCatalog::class)]
+#[UsesClass(\SqlFaker\Grammar\LexicalCatalogShape::class)]
+#[UsesClass(\SqlFaker\Grammar\LexicalCoverageCheck::class)]
+#[UsesClass(\SqlFaker\Grammar\LexicalKeywordIndex::class)]
+#[UsesClass(\SqlFaker\Grammar\LexicalProfileSource::class)]
+#[UsesClass(\SqlFaker\Grammar\LexicalWitnessCheck::class)]
+#[UsesClass(\SqlFaker\Grammar\LexicalWitnessShape::class)]
+#[UsesClass(\SqlFaker\Grammar\RandomCharacters::class)]
+#[UsesClass(\SqlFaker\Grammar\RandomStringGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\SqlVersion::class)]
+#[UsesClass(\SqlFaker\Grammar\SqlVersionRegistry::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Grammar\PgGrammar::class)]
+#[UsesClass(\SqlFaker\PostgreSql\LexicalGrammar::class)]
+#[UsesClass(\SqlFaker\PostgreSql\ParserSemantics::class)]
+#[UsesClass(\SqlFaker\PostgreSql\PgLookahead::class)]
+#[UsesClass(\SqlFaker\PostgreSql\PgTerminalRealizer::class)]
+#[UsesClass(\SqlFaker\PostgreSql\PgTokenizer::class)]
 final class GenerationContextTest extends TestCase
 {
     public function testGrammarAndLexicalReleaseAreBoundTogether(): void

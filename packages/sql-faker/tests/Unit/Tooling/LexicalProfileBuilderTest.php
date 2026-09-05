@@ -39,6 +39,7 @@ use SqlFaker\Tooling\LexicalProfileBuilder;
 #[UsesClass(SqliteProfileBuilder::class)]
 #[UsesClass(SqlVersion::class)]
 #[Medium]
+#[UsesClass(MySqlGrammar::class)]
 final class LexicalProfileBuilderTest extends TestCase
 {
     public function testMysqlDelegatesToTheDialectBuilderItWasGiven(): void

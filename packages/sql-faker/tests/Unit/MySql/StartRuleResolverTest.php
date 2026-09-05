@@ -25,6 +25,7 @@ use SqlFaker\MySql\StartRuleResolver;
 #[CoversClass(NonTerminal::class)]
 #[UsesClass(SqlVersion::class)]
 #[UsesClass(SqlVersionRegistry::class)]
+#[UsesClass(MySqlGrammar::class)]
 final class StartRuleResolverTest extends TestCase
 {
     public function testStartSymbolForTakesARuleThisReleaseDeclaresAsItStands(): void
