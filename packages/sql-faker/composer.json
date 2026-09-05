@@ -18,7 +18,6 @@
         "phpbench/phpbench": "^1.4",
         "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
         "phpstan/phpstan": "^2.1",
-        "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^10.5",
         "squizlabs/php_codesniffer": "^4.0.4"
     },
@@ -41,7 +40,8 @@
     "autoload-dev": {
         "psr-4": {
             "Tests\\Unit\\SqlFaker\\": "tests/Unit/",
-            "Fuzz\\": "fuzz/"
+            "Fuzz\\": "fuzz/",
+            "Tests\\Fixture\\SqlFaker\\": "tests/Fixture/"
         }
     },
     "scripts": {
@@ -55,7 +55,7 @@
         "test:unit": "phpunit --testsuite unit",
         "lint": [
             "@format:check",
-            "phpstan analyse --memory-limit=512M",
+            "@phpstan",
             "@compat"
         ],
         "compat": "phpcs",
@@ -69,7 +69,8 @@
         "fuzz:mysql": "php-fuzzer fuzz fuzz/fuzz_mysql_syntax.php fuzz/corpus/mysql/",
         "fuzz:pg": "php-fuzzer fuzz fuzz/fuzz_pg_syntax.php fuzz/corpus/pg/",
         "fuzz:sqlite": "php-fuzzer fuzz fuzz/fuzz_sqlite_syntax.php fuzz/corpus/sqlite/",
-        "infection": "infection --threads=max --show-mutations --no-progress"
+        "infection": "infection --threads=max --show-mutations --no-progress",
+        "phpstan": "phpstan analyse --memory-limit=512M"
     },
     "config": {
         "allow-plugins": {
