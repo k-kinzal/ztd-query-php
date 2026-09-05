@@ -208,19 +208,6 @@ composer build-sqlite
 composer format
 ```
 
-The compatibility gate follows php-ai-toolkit's
-[`setup-toolkit-php-compatibility`](https://github.com/k-kinzal/php-ai-toolkit/tree/main/skills/setup-toolkit-php-compatibility)
-template. `phpcs.xml.dist` checks all of `src/` against PHP 8.1 through later
-8.x minors (`8.1-8.99`), matching Composer's `^8.1` constraint and excluding
-PHP 9. The CI test matrix exercises PHP 8.1–8.5, and the lint job runs this
-static check through `composer lint`.
-
-PHPCompatibility is locked to the tagged `10.0.0-alpha2` release because the
-latest stable release, 9.3.5, lacks PHP 8.x sniff coverage. The
-[`10.0.0-alpha2` release](https://github.com/PHPCompatibility/PHPCompatibility/releases/tag/10.0.0-alpha2)
-includes PHP 8.5 checks. PHPCS 4 runs the compatibility standard; PHP-CS-Fixer
-continues to handle formatting.
-
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
