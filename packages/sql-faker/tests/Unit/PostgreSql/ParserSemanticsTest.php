@@ -103,4 +103,15 @@ final class ParserSemanticsTest extends TestCase
         self::assertTrue($semantics->isIdentifierTerminal('users'));
         self::assertFalse($semantics->isIdentifierTerminal('SELECT'));
     }
+
+    public function testCompleteSetOptionsPreservesExplicitValuesAndCompletesBareOptions(): void
+    {
+        $semantics = new ParserSemantics(new LexicalGrammar(Factory::create(), 'pg-17.2'));
+
+        self::assertSame(
+            ['SET', '(', 'IDENT', '=', 'ICONST', ',', 'IDENT', '=', 'NONE', ')'],
+            $semantics->completeSetOptions(['SET', '(', 'IDENT', '=', 'ICONST', ',', 'IDENT', ')']),
+        );
+        self::assertSame(['SET', '(', 'IDENT'], $semantics->completeSetOptions(['SET', '(', 'IDENT']));
+    }
 }

@@ -177,4 +177,64 @@ final class PgProfileBuilderTest extends TestCase
         self::assertSame($expected['terminals']['ICONST'], $actual['terminals']['ICONST']);
         self::assertSame($expected['terminals']['@TRIVIA'], $actual['terminals']['@TRIVIA']);
     }
+
+    public function testKeywordWitnessesIncludesLookaheadContextWithoutChangingTheBaseLexeme(): void
+    {
+        $terminals = (new PgProfileBuilder())->keywordWitnesses(
+            ['NOT' => ['NOT'], 'IN_P' => ['IN']],
+            ['NOT' => ['token' => 'NOT_LA', 'followed_by' => ['IN_P']]],
+        );
+
+        self::assertSame('NOT', $terminals['NOT_LA'][0]['sql']);
+        self::assertSame('NOT IN', $terminals['NOT_LA'][0]['context_sql'] ?? null);
+        self::assertSame(['NOT_LA'], $terminals['NOT_LA'][0]['tokens']);
+        self::assertSame(['NOT'], $terminals['NOT'][0]['tokens']);
+    }
+
+    public function testAddLexicalWitnessesAddsTokenlessTriviaAndScannerCoverage(): void
+    {
+        $terminals = [];
+        (new PgProfileBuilder())->addLexicalWitnesses($terminals);
+
+        self::assertSame([], $terminals['@TRIVIA'][0]['tokens']);
+        self::assertSame(['%'], $terminals['%'][0]['tokens']);
+        self::assertContains([
+            'id' => 'postgresql.coverage.numeric-range',
+            'sql' => '1..2',
+            'tokens' => ['ICONST', 'DOT_DOT', 'ICONST'],
+            'units' => [],
+        ], $terminals['@COVERAGE']);
+    }
+
+    public function testCoverageRejectsAnInventoryShorterThanItsWitnessMapping(): void
+    {
+        $terminals = [];
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('PostgreSQL source rule mapping exceeds the parsed rule inventory.');
+
+        (new PgProfileBuilder())->coverage($terminals, ['{identifier}']);
+    }
+
+    public function testExcludedRulesKeepsTheDefaultJamRuleBoundToTheInventory(): void
+    {
+        $excluded = (new PgProfileBuilder())->excludedRules(73);
+
+        self::assertArrayHasKey('rule:25', $excluded);
+        self::assertArrayNotHasKey('rule:72', $excluded);
+        self::assertSame('Flex default jam rule is not a PostgreSQL lexical language branch.', $excluded['rule:73']);
+    }
+
+    public function testAddParserModesEnumeratesScannerRulesAndAddsTokenlessEntryWitnesses(): void
+    {
+        $terminals = [];
+        $units = (new PgProfileBuilder())->addParserModes($terminals, 2);
+
+        self::assertSame([
+            'rule:1', 'rule:2', 'parser-mode:MODE_TYPE_NAME', 'parser-mode:MODE_PLPGSQL_EXPR',
+            'parser-mode:MODE_PLPGSQL_ASSIGN1', 'parser-mode:MODE_PLPGSQL_ASSIGN2', 'parser-mode:MODE_PLPGSQL_ASSIGN3',
+        ], $units);
+        self::assertSame('', $terminals['MODE_TYPE_NAME'][0]['sql']);
+        self::assertSame([], $terminals['MODE_TYPE_NAME'][0]['tokens']);
+        self::assertSame(['parser-mode:MODE_TYPE_NAME'], $terminals['MODE_TYPE_NAME'][0]['units']);
+    }
 }

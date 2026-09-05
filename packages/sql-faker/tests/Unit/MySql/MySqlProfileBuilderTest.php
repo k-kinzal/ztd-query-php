@@ -291,4 +291,65 @@ final class MySqlProfileBuilderTest extends TestCase
             yield $punctuation => [$punctuation];
         }
     }
+
+    public function testKeywordWitnessesRetainsFunctionContextAndSkipsSqlModeOnlyTokens(): void
+    {
+        $terminals = (new MySqlProfileBuilder())->keywordWitnesses(
+            ['SELECT' => ['SELECT'], 'NOT2_SYM' => ['!'], 'OR_OR_SYM' => ['||']],
+            ['COUNT_SYM' => ['COUNT']],
+        );
+
+        self::assertSame(['SELECT', 'COUNT_SYM'], array_keys($terminals));
+        self::assertSame('mysql.symbol.SELECT.0', $terminals['SELECT'][0]['id']);
+        self::assertSame('COUNT(', $terminals['COUNT_SYM'][0]['context_sql'] ?? null);
+    }
+
+    public function testLexicalSamplesRequiresTheDollarQuotedStateWhenTheFeatureIsEnabled(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('MySQL dollar-quoted string state was not found.');
+
+        (new MySqlProfileBuilder())->lexicalSamples([], true);
+    }
+
+    public function testAddLexicalWitnessesPreservesExistingPunctuationAndAppendsFamilies(): void
+    {
+        $builder = new MySqlProfileBuilder();
+        $existing = $builder->witness('existing', '+', ['+'], []);
+        $terminals = ['+' => [$existing]];
+        $builder->addLexicalWitnesses($terminals, ['IDENT' => [['name', ['IDENT'], ['MY_LEX_IDENT'], 'name(']]]);
+
+        self::assertSame([$existing], $terminals['+']);
+        self::assertSame('name(', $terminals['IDENT'][0]['context_sql'] ?? null);
+        self::assertSame('mysql.punctuation.21', $terminals['!'][0]['id']);
+    }
+
+    public function testAddParserWitnessesKeepsEntryTokensEmptyAndLegacyCubeSpelling(): void
+    {
+        $terminals = [];
+        $tokens = (new MySqlProfileBuilder())->addParserWitnesses($terminals, 'mysql-5.7.44', new Grammar('stmt', []));
+
+        self::assertSame(['END_OF_INPUT'], $tokens);
+        self::assertSame('', $terminals['END_OF_INPUT'][0]['sql']);
+        self::assertSame(['parser-entry:END_OF_INPUT'], $terminals['END_OF_INPUT'][0]['units']);
+        self::assertSame('WITH CUBE', $terminals['WITH_CUBE_SYM'][0]['sql']);
+    }
+
+    public function testCoverageAddsEndStatesAndRejectsUnwitnessedStates(): void
+    {
+        $builder = new MySqlProfileBuilder();
+        $terminals = [];
+
+        self::assertSame([
+            'units' => ['MY_LEX_EOL', 'MY_LEX_END'],
+            'witnessed' => ['MY_LEX_END' => 'mysql.coverage.MY_LEX_END', 'MY_LEX_EOL' => 'mysql.coverage.MY_LEX_EOL'],
+            'excluded' => [],
+        ], $builder->coverage($terminals, ['MY_LEX_EOL', 'MY_LEX_END'], []));
+        self::assertCount(2, $terminals['@COVERAGE']);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('MySQL source model misses lexical states: UNKNOWN');
+
+        $builder->coverage($terminals, ['UNKNOWN'], []);
+    }
 }

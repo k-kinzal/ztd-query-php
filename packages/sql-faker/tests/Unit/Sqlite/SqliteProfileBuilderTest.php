@@ -255,4 +255,14 @@ final class SqliteProfileBuilderTest extends TestCase
             'units' => ['CC_ID'],
         ], $witnesses['cc-id']);
     }
+
+    public function testTerminalWitnessesKeepsWithinAsAnIdentifierAndPrefixesOtherKeywords(): void
+    {
+        $terminals = (new SqliteProfileBuilder())->terminalWitnesses(['WITHIN' => ['WITHIN'], 'SELECT' => ['SELECT']]);
+
+        self::assertSame(['TK_ID'], $terminals['WITHIN'][0]['tokens']);
+        self::assertSame(['TK_SELECT'], $terminals['SELECT'][0]['tokens']);
+        self::assertSame(['CC_KYWD0'], $terminals['SELECT'][0]['units']);
+        self::assertArrayHasKey('@TRIVIA', $terminals);
+    }
 }

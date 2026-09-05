@@ -189,8 +189,11 @@ The round-trip invariant guarantees the lexical layer: after dialect-specific pa
 # Run tests
 composer test
 
-# Run linter (PHP-CS-Fixer + PHPStan level max + PHPCompatibility)
+# Run all checks (PHP-CS-Fixer, PHPStan, LocGuard, TreeGuard, Deptrac, PHPCompatibility)
 composer lint
+
+# Run source metrics checks separately
+composer loc-guard
 
 # Run fuzz tests
 composer fuzz
@@ -204,6 +207,42 @@ composer build-sqlite
 # Fix code style
 composer format
 ```
+
+### Source metrics
+
+`composer loc-guard` runs php-ai-toolkit's LocGuard with the AI reporter configured
+in [`loc.yaml`](loc.yaml). `composer lint` includes the same command after PHPStan,
+so the existing CI lint job enforces it. All production PHP under `src/` is scanned,
+including the files listed in Composer's `autoload.files`; no source is excluded.
+Tests, build tools, and grammar resources are outside this production scan.
+
+The standard policy explicitly enables every toolkit metric: file length 500,
+NCLOC 350, class length 400, trait length 300, interface and enum length 200,
+function and method length 50, and function and method cyclomatic complexity 20.
+A value equal to its limit passes.
+
+Two policies inherit the standard limits for source with a larger declarative API:
+
+| Policy | Exact files | Changed limits | Design reason |
+|--------|-------------|----------------|---------------|
+| `faker-provider` | `src/MySqlProvider.php`, `src/PostgreSqlProvider.php`, `src/SqliteProvider.php` | File length 800; class length 750 | Faker discovers the documented statement, fragment, and literal methods on each dialect provider. Their implementations delegate to generation plans. |
+| `generation-plan-catalog` | `src/MySql/GenerationPlans.php`, `src/PostgreSql/GenerationPlans.php`, `src/Sqlite/GenerationPlans.php` | Class length 450 | Each dialect keeps its named statement constraints and lexical plans together as a declarative vocabulary. |
+
+Both policies retain NCLOC 350, method length 50, and complexity 20; they do not
+permit larger algorithms. Tokenizers, derivation, parser semantics, and profile
+builders use the standard policy. New files also receive the standard policy
+unless explicitly assigned. LocGuard rejects overlapping or stale path rules.
+
+Inspect the effective limits for each custom rule with:
+
+```bash
+composer loc-guard -- --explain=src/MySqlProvider.php
+composer loc-guard -- --explain=src/MySql/GenerationPlans.php
+```
+
+For machine-readable results, run `composer loc-guard -- --reporter=json`.
+LocGuard exits with 0 on success, 1 for metric violations, and 2 for invalid
+configuration or runtime errors.
 
 ## License
 

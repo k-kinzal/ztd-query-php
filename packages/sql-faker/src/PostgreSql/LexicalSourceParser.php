@@ -38,8 +38,33 @@ final class LexicalSourceParser
             throw new RuntimeException('PostgreSQL Flex start conditions were not found.');
         }
 
+        $rules = $this->rules($sections[1]);
+
+        preg_match_all('/\bcur_token\s*=\s*([A-Z][A-Z0-9_]*_LA)\s*;/', $parser, $lookaheadMatches);
+        $lookaheadTokens = array_values(array_unique($lookaheadMatches[1]));
+        sort($lookaheadTokens);
+        if ($lookaheadTokens === []) {
+            throw new RuntimeException('PostgreSQL parser lookahead tokens were not found.');
+        }
+
+        return [
+            'states' => $states,
+            'rules' => $rules,
+            'lookahead_tokens' => $lookaheadTokens,
+        ];
+    }
+
+    /**
+     * Reads the non-EOF rule inventory from the Flex rules section.
+     *
+     * @return list<string>
+     *
+     * @throws RuntimeException When a rule is unsupported or the inventory is empty
+     */
+    public function rules(string $section): array
+    {
         $rules = [];
-        $ruleLines = preg_split('/\R/', $sections[1]);
+        $ruleLines = preg_split('/\R/', $section);
         foreach ($ruleLines === false ? [] : $ruleLines as $line) {
             if ($line === '' || preg_match('/^\s/', $line) === 1
                 || str_starts_with($line, '/*') || str_starts_with($line, '}')
@@ -58,17 +83,6 @@ final class LexicalSourceParser
             throw new RuntimeException('PostgreSQL Flex rule inventory was empty.');
         }
 
-        preg_match_all('/\bcur_token\s*=\s*([A-Z][A-Z0-9_]*_LA)\s*;/', $parser, $lookaheadMatches);
-        $lookaheadTokens = array_values(array_unique($lookaheadMatches[1]));
-        sort($lookaheadTokens);
-        if ($lookaheadTokens === []) {
-            throw new RuntimeException('PostgreSQL parser lookahead tokens were not found.');
-        }
-
-        return [
-            'states' => $states,
-            'rules' => $rules,
-            'lookahead_tokens' => $lookaheadTokens,
-        ];
+        return $rules;
     }
 }

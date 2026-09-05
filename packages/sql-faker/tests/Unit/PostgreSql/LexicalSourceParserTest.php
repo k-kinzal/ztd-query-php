@@ -66,4 +66,12 @@ PARSER;
         yield 'missing rules' => ["%x state\n%%\n<state><<EOF>> {\n%%", 'cur_token = TOKEN_LA;', 'rule inventory was empty'];
         yield 'missing lookahead' => ["%x state\n%%\n{identifier} {\n%%", '', 'lookahead tokens were not found'];
     }
+
+    public function testRulesSkipsActionsAndEofBranchesWhileKeepingRuleOrder(): void
+    {
+        self::assertSame(
+            ['{space}+', '{identifier}'],
+            (new LexicalSourceParser())->rules("{space}+ {\n  skip();\n}\n<INITIAL>{\n<<EOF>> {\n{identifier} |\n"),
+        );
+    }
 }
