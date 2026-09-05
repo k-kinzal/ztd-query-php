@@ -8,14 +8,68 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
 use RuntimeException;
 use SqlFaker\Grammar\LexicalCatalog;
 use SqlFaker\Grammar\LexicalProfileBuilder;
+use SqlFaker\MySql\Grammar\Grammar;
+use SqlFaker\MySql\Grammar\TerminalInventory;
 
 #[CoversClass(LexicalProfileBuilder::class)]
 #[UsesClass(LexicalCatalog::class)]
+#[UsesClass(Grammar::class)]
+#[UsesClass(TerminalInventory::class)]
 final class LexicalProfileBuilderTest extends TestCase
 {
+    #[DataProvider('providerMySqlPunctuation')]
+    public function testMySqlCatalogPreservesPunctuation(string $punctuation): void
+    {
+        /** @var array{terminals: array<string, list<array{sql: string, tokens: list<string>}>>} $catalog */
+        $catalog = (new ReflectionMethod(LexicalProfileBuilder::class, 'mySqlCatalog'))->invoke(
+            new LexicalProfileBuilder(),
+            'mysql-8.4.7',
+            ['symbols' => [], 'functions' => [], 'features' => ['dollar_quoted_strings' => false]],
+            [],
+            new Grammar('start', []),
+        );
+
+        self::assertArrayHasKey($punctuation, $catalog['terminals']);
+        self::assertSame($punctuation, $catalog['terminals'][$punctuation][0]['sql']);
+        self::assertSame([$punctuation], $catalog['terminals'][$punctuation][0]['tokens']);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerMySqlPunctuation(): iterable
+    {
+        foreach (['!', '%', '&', '(', ')', '*', '+', ',', '-', '.', '/', ':', ';', '<', '=', '>', '?', '@', '[', ']', '^', '{', '}', '|', '~'] as $punctuation) {
+            yield $punctuation => [$punctuation];
+        }
+    }
+
+    public function testSqliteCatalogPreservesUnicodeIdentifierWitness(): void
+    {
+        /** @var array{catalog: array{source: array{character_classes: list<string>}}} $profile */
+        $profile = require __DIR__ . '/../../../resources/lexical/sqlite-3.47.2.php';
+
+        /** @var array{terminals: array<string, list<array{id: string, sql: string, tokens: list<string>, units: list<string>}>>} $catalog */
+        $catalog = (new ReflectionMethod(LexicalProfileBuilder::class, 'sqliteCatalog'))->invoke(
+            new LexicalProfileBuilder(),
+            ['keywords' => []],
+            $profile['catalog']['source']['character_classes'],
+        );
+        $witnesses = array_column($catalog['terminals']['@COVERAGE'], null, 'id');
+
+        self::assertArrayHasKey('cc-id', $witnesses);
+        self::assertSame([
+            'id' => 'cc-id',
+            'sql' => 'é',
+            'tokens' => ['TK_ID'],
+            'units' => ['CC_ID'],
+        ], $witnesses['cc-id']);
+    }
+
     public function testAcceptsACompleteVersionBoundProfile(): void
     {
         $this->expectNotToPerformAssertions();
