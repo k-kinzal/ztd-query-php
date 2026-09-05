@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlFaker\Grammar\SqlVersion;
+use SqlFaker\Grammar\SqlVersionRegistry;
 use SqlFaker\MySql\Grammar\Grammar;
 use SqlFaker\MySql\Grammar\NonTerminal;
 use SqlFaker\MySql\Grammar\Production;
@@ -21,6 +22,7 @@ use SqlFaker\MySql\Grammar\Terminal;
 #[CoversClass(Terminal::class)]
 #[CoversClass(NonTerminal::class)]
 #[UsesClass(SqlVersion::class)]
+#[UsesClass(SqlVersionRegistry::class)]
 final class GrammarTest extends TestCase
 {
     public function testLoad(): void
@@ -83,5 +85,26 @@ final class GrammarTest extends TestCase
         $grammar84 = Grammar::load('mysql-8.4.7');
 
         self::assertNotSame(count($grammar56->ruleMap), count($grammar84->ruleMap));
+    }
+
+    public function testStartSymbolForTakesARuleThisReleaseDeclaresAsItStands(): void
+    {
+        $grammar = Grammar::load('mysql-8.4.7');
+
+        self::assertSame('select_stmt', $grammar->startSymbolFor('select_stmt'));
+    }
+
+    public function testStartSymbolForFallsBackToTheEntryPointOfTheReleaseItWasAskedOf(): void
+    {
+        $grammar = new Grammar('start', ['start' => new ProductionRule('start', [new Production([new Terminal('A')])])]);
+
+        self::assertSame('start', $grammar->startSymbolFor(null));
+    }
+
+    public function testStartSymbolForHandsBackARequestNothingMatches(): void
+    {
+        $grammar = new Grammar('start', ['start' => new ProductionRule('start', [new Production([new Terminal('A')])])]);
+
+        self::assertSame('no_such_rule', $grammar->startSymbolFor('no_such_rule'));
     }
 }

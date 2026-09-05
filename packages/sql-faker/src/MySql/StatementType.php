@@ -5,16 +5,6 @@ declare(strict_types=1);
 namespace SqlFaker\MySql;
 
 /**
- * Available statement types for MySQL SQL generation.
+ * Keeps the statement argument accepted by the public Provider API.
  */
-enum StatementType: string
-{
-    case Select = 'select_stmt';
-    case Insert = 'insert_stmt';
-    case Update = 'update_stmt';
-    case Delete = 'delete_stmt';
-    case CreateTable = 'create_table_stmt';
-    case AlterTable = 'alter_table_stmt';
-    case DropTable = 'drop_table_stmt';
-    case SimpleStatement = 'simple_statement';
-}
+class_alias(StatementRule::class, __NAMESPACE__ . '\\StatementType');

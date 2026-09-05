@@ -17,7 +17,7 @@ use SqlFaker\MySql\Bison\Ast\BisonStartDeclaration;
 #[CoversClass(BisonAlternativeNode::class)]
 final class BisonAstTest extends TestCase
 {
-    public function testConstructor(): void
+    public function testExposesEveryPartOfTheGrammarFile(): void
     {
         $declaration = new BisonStartDeclaration('start');
         $rule = new BisonRuleNode('start', [
@@ -33,7 +33,7 @@ final class BisonAstTest extends TestCase
         self::assertSame('epilogue', $ast->epilogue);
     }
 
-    public function testConstructorWithNulls(): void
+    public function testExposesOmittedPartsAsNull(): void
     {
         $ast = new BisonAst('start', null, [], [], null);
 

@@ -21,6 +21,8 @@ final class Grammar
     /**
      * @param string $startSymbol The grammar's start symbol
      * @param array<string, ProductionRule> $ruleMap Non-terminal name => ProductionRule
+     *
+     * @throws InvalidArgumentException When a rule is filed under a name other than its own left-hand side
      */
     public function __construct(
         public readonly string $startSymbol,
@@ -37,6 +39,8 @@ final class Grammar
 
     /**
      * Load a pre-compiled grammar from a file path.
+     *
+     * @throws RuntimeException When the compiled grammar is missing, empty, or is not a grammar
      */
     public static function loadFromFile(string $path): self
     {

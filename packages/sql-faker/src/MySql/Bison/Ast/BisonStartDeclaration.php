@@ -11,6 +11,9 @@ namespace SqlFaker\MySql\Bison\Ast;
  */
 final class BisonStartDeclaration implements BisonDeclaration
 {
+    /**
+     * @param string $symbol Rule a derivation begins from
+     */
     public function __construct(
         public readonly string $symbol,
     ) {

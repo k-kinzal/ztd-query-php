@@ -6,28 +6,19 @@ namespace Tests\Unit\SqlFaker\PostgreSql;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use SqlFaker\PostgreSql\StatementRule;
 use SqlFaker\PostgreSql\StatementType;
 
 #[CoversClass(StatementType::class)]
 final class StatementTypeTest extends TestCase
 {
-    public function testSelectHasExpectedValue(): void
+    public function testAliasPreservesAllProviderStatementCases(): void
     {
-        self::assertSame('SelectStmt', StatementType::Select->value);
+        self::assertSame(StatementRule::cases(), StatementType::cases());
     }
 
-    public function testCreateTableAsHasExpectedValue(): void
+    public function testAliasPreservesBackedValueLookup(): void
     {
-        self::assertSame('CreateAsStmt', StatementType::CreateTableAs->value);
-    }
-
-    public function testCreateDomainHasExpectedValue(): void
-    {
-        self::assertSame('CreateDomainStmt', StatementType::CreateDomain->value);
-    }
-
-    public function testCasesCount(): void
-    {
-        self::assertCount(10, StatementType::cases());
+        self::assertSame(StatementRule::Select, StatementType::from(StatementRule::Select->value));
     }
 }

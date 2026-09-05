@@ -6,9 +6,9 @@ namespace SqlFaker\MySql\Grammar;
 
 use SqlFaker\MySql\Bison\Ast\BisonAst;
 use SqlFaker\MySql\Bison\Ast\BisonRuleNode;
-use SqlFaker\MySql\Bison\Ast\BisonSymbolType;
+use SqlFaker\MySql\Bison\Ast\BisonSymbolForm;
 use SqlFaker\MySql\Bison\Ast\BisonTokenDeclaration;
-use SqlFaker\MySql\Bison\Ast\BisonTokenInfo;
+use SqlFaker\MySql\Bison\Ast\BisonTokenDefinition;
 
 /**
  * Compiles a Grammar from a BisonAst.
@@ -23,6 +23,8 @@ final class GrammarCompiler
      *
      * Extracts production rules from the AST, determining terminal/non-terminal
      * status for each symbol based on rule and declaration tables.
+     *
+     * @throws UnknownSymbolException When a production names a symbol the grammar never declares
      */
     public function compile(BisonAst $ast): Grammar
     {
@@ -32,7 +34,7 @@ final class GrammarCompiler
             $ruleTable[$rule->name] = $rule;
         }
 
-        /** @var array<string, BisonTokenInfo> $declarationTable */
+        /** @var array<string, BisonTokenDefinition> $declarationTable */
         $declarationTable = [];
         foreach ($ast->declarations as $declaration) {
             if ($declaration instanceof BisonTokenDeclaration) {
@@ -54,7 +56,7 @@ final class GrammarCompiler
                 $symbols = [];
 
                 foreach ($altNode->symbols as $symNode) {
-                    if ($symNode->type === BisonSymbolType::CharLiteral) {
+                    if ($symNode->type === BisonSymbolForm::CharLiteral) {
                         $symbols[] = new Terminal($symNode->value);
                     } elseif (isset($ruleTable[$symNode->value])) {
                         $symbols[] = new NonTerminal($symNode->value);

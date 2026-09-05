@@ -122,6 +122,8 @@ final class SqliteProviderTest extends TestCase
             /**
              * @param mixed $min
              * @param mixed $max
+             *
+             * @throws UnexpectedValueException When the bound is not an integer
              */
             #[Override]
             public function numberBetween($min = 0, $max = 2147483647): int
@@ -249,7 +251,7 @@ final class SqliteProviderTest extends TestCase
         gc_collect_cycles();
     }
 
-    public function testConstructorRegistersProviderWithFaker(): void
+    public function testRegistersItselfWithTheFakerGenerator(): void
     {
         $faker = Factory::create();
         $provider = new SqliteProvider($faker);

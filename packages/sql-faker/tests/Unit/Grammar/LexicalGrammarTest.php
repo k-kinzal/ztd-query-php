@@ -9,25 +9,98 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\LexicalGrammar;
+use SqlFaker\MySql\LexicalGrammar as MySqlLexicalGrammar;
 use SqlFaker\MySqlProvider;
+use SqlFaker\PostgreSql\LexicalGrammar as PostgreSqlLexicalGrammar;
 use SqlFaker\PostgreSql\StatementType as PostgreSqlStatementType;
 use SqlFaker\PostgreSqlProvider;
+use SqlFaker\Sqlite\LexicalGrammar as SqliteLexicalGrammar;
 use SqlFaker\SqliteProvider;
 
 #[CoversNothing]
 #[Medium]
 final class LexicalGrammarTest extends TestCase
 {
-    public function testDialectImplementationsShareOnlyTheRealizationContract(): void
-    {
-        $faker = Factory::create();
+    #[DataProvider('providerDialectLexicalGrammar')]
+    public function testVersionReportsTheProfileTheGrammarWasBuiltFor(
+        LexicalGrammar $lexical,
+        string $version,
+        string $terminal,
+    ): void {
+        unset($terminal);
 
-        self::assertInstanceOf(LexicalGrammar::class, new \SqlFaker\MySql\LexicalGrammar($faker, 'mysql-8.4.7'));
-        self::assertInstanceOf(LexicalGrammar::class, new \SqlFaker\PostgreSql\LexicalGrammar($faker, 'pg-17.2'));
-        self::assertInstanceOf(LexicalGrammar::class, new \SqlFaker\Sqlite\LexicalGrammar($faker, 'sqlite-3.47.2'));
+        self::assertSame($version, $lexical->version());
     }
 
+    #[DataProvider('providerDialectLexicalGrammar')]
+    public function testSupportsAcceptsATerminalTheDialectDeclares(
+        LexicalGrammar $lexical,
+        string $version,
+        string $terminal,
+    ): void {
+        unset($version);
+
+        self::assertTrue($lexical->supports($terminal));
+    }
+
+    #[DataProvider('providerDialectLexicalGrammar')]
+    public function testSupportsRejectsATerminalNoDialectDeclares(
+        LexicalGrammar $lexical,
+        string $version,
+        string $terminal,
+    ): void {
+        unset($version, $terminal);
+
+        self::assertFalse($lexical->supports('NOT_A_TERMINAL'));
+    }
+
+    #[DataProvider('providerDialectLexicalGrammar')]
+    public function testRealizeTurnsTerminalsIntoConcreteSql(
+        LexicalGrammar $lexical,
+        string $version,
+        string $terminal,
+    ): void {
+        unset($version);
+
+        self::assertNotSame('', $lexical->realize([$terminal]));
+    }
+
+    #[DataProvider('providerDialectLexicalGrammar')]
+    public function testGenerateProducesSqlForALexicalPlan(
+        LexicalGrammar $lexical,
+        string $version,
+        string $terminal,
+    ): void {
+        unset($version, $terminal);
+
+        $plan = GenerationPlan::lexical('quoted_identifier', ['minLength' => 2, 'maxLength' => 8]);
+
+        self::assertNotSame('', $lexical->generate($plan));
+    }
+
+    /**
+     * @return iterable<string, array{LexicalGrammar, string, string}>
+     */
+    public static function providerDialectLexicalGrammar(): iterable
+    {
+        yield 'MySQL' => [
+            new MySqlLexicalGrammar(Factory::create(), 'mysql-8.4.7'),
+            'mysql-8.4.7',
+            'SELECT_SYM',
+        ];
+        yield 'PostgreSQL' => [
+            new PostgreSqlLexicalGrammar(Factory::create(), 'pg-17.2'),
+            'pg-17.2',
+            'SELECT',
+        ];
+        yield 'SQLite' => [
+            new SqliteLexicalGrammar(Factory::create(), 'sqlite-3.47.2'),
+            'sqlite-3.47.2',
+            'SELECT',
+        ];
+    }
     #[DataProvider('providerSupportedMySqlVersion')]
     public function testSupportedMySqlVersionBindsGrammarAndLexerProfileTogether(string $version): void
     {

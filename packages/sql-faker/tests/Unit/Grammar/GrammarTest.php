@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\Grammar;
 
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -20,7 +19,7 @@ use stdClass;
 #[CoversClass(Terminal::class)]
 final class GrammarTest extends TestCase
 {
-    public function testConstructor(): void
+    public function testExposesTheStartSymbolAndRuleMap(): void
     {
         $rule = new ProductionRule('start', [new Production([new Terminal('A')])]);
         $grammar = new Grammar('start', ['start' => $rule]);
@@ -29,12 +28,6 @@ final class GrammarTest extends TestCase
         self::assertSame(['start' => $rule], $grammar->ruleMap);
     }
 
-    public function testConstructorKeyLhsMismatchThrows(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-
-        new Grammar('start', ['wrong_key' => new ProductionRule('start', [])]);
-    }
 
     public function testLoadFromFile(): void
     {

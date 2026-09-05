@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\MySql\Bison;
 
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use SqlFaker\Grammar\GrammarParseException;
+use SqlFaker\Grammar\SourceCursor;
 use SqlFaker\MySql\Bison\Ast\BisonAlternativeNode;
 use SqlFaker\MySql\Bison\Ast\BisonAst;
 use SqlFaker\MySql\Bison\Ast\BisonDefineDeclaration;
@@ -17,35 +19,90 @@ use SqlFaker\MySql\Bison\Ast\BisonParamDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonPrecedenceDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonRuleNode;
 use SqlFaker\MySql\Bison\Ast\BisonStartDeclaration;
+use SqlFaker\MySql\Bison\Ast\BisonSymbolForm;
 use SqlFaker\MySql\Bison\Ast\BisonSymbolNode;
-use SqlFaker\MySql\Bison\Ast\BisonSymbolType;
 use SqlFaker\MySql\Bison\Ast\BisonTokenDeclaration;
-use SqlFaker\MySql\Bison\Ast\BisonTokenInfo;
+use SqlFaker\MySql\Bison\Ast\BisonTokenDefinition;
 use SqlFaker\MySql\Bison\Ast\BisonTypeDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonUnknownDeclaration;
 use SqlFaker\MySql\Bison\BisonParser;
+use SqlFaker\MySql\Bison\BisonPreamble;
+use SqlFaker\MySql\Bison\BisonPreambleReader;
+use SqlFaker\MySql\Bison\BisonStartSymbol;
+use SqlFaker\MySql\Bison\Directive\BisonDeclarationBoundary;
+use SqlFaker\MySql\Bison\Directive\BisonDirectiveReaderChain;
+use SqlFaker\MySql\Bison\Directive\DefineDirectiveReader;
+use SqlFaker\MySql\Bison\Directive\ExpectDirectiveReader;
+use SqlFaker\MySql\Bison\Directive\ParamDirectiveReader;
+use SqlFaker\MySql\Bison\Directive\PrecedenceDirectiveReader;
+use SqlFaker\MySql\Bison\Directive\StartDirectiveReader;
+use SqlFaker\MySql\Bison\Directive\TokenDirectiveReader;
+use SqlFaker\MySql\Bison\Directive\TypeDirectiveReader;
+use SqlFaker\MySql\Bison\Directive\UnknownDirectiveReader;
+use SqlFaker\MySql\Bison\Lexer\ActionScanner;
+use SqlFaker\MySql\Bison\Lexer\BisonLexeme;
 use SqlFaker\MySql\Bison\Lexer\BisonLexer;
+use SqlFaker\MySql\Bison\Lexer\BisonScannerChain;
 use SqlFaker\MySql\Bison\Lexer\BisonToken;
-use SqlFaker\MySql\Bison\Lexer\BisonTokenType;
+use SqlFaker\MySql\Bison\Lexer\BisonTokenStream;
+use SqlFaker\MySql\Bison\Lexer\BisonTrivia;
+use SqlFaker\MySql\Bison\Lexer\DirectiveScanner;
+use SqlFaker\MySql\Bison\Lexer\IdentifierScanner;
+use SqlFaker\MySql\Bison\Lexer\NumberScanner;
+use SqlFaker\MySql\Bison\Lexer\PunctuationScanner;
+use SqlFaker\MySql\Bison\Lexer\QuotedLiteralScanner;
+use SqlFaker\MySql\Bison\Lexer\TypeTagScanner;
+use SqlFaker\MySql\Bison\Rule\BisonAlternativeDraft;
+use SqlFaker\MySql\Bison\Rule\BisonAlternativeReader;
+use SqlFaker\MySql\Bison\Rule\BisonRuleReader;
 
 #[CoversClass(BisonParser::class)]
 #[CoversClass(BisonLexer::class)]
 #[CoversClass(BisonToken::class)]
-#[CoversClass(BisonTokenType::class)]
+#[CoversClass(BisonLexeme::class)]
 #[CoversClass(BisonAst::class)]
 #[CoversClass(BisonRuleNode::class)]
 #[CoversClass(BisonAlternativeNode::class)]
 #[CoversClass(BisonSymbolNode::class)]
-#[CoversClass(BisonSymbolType::class)]
+#[CoversClass(BisonSymbolForm::class)]
 #[CoversClass(BisonDefineDeclaration::class)]
 #[CoversClass(BisonExpectDeclaration::class)]
 #[CoversClass(BisonParamDeclaration::class)]
 #[CoversClass(BisonPrecedenceDeclaration::class)]
 #[CoversClass(BisonStartDeclaration::class)]
 #[CoversClass(BisonTokenDeclaration::class)]
-#[CoversClass(BisonTokenInfo::class)]
+#[CoversClass(BisonTokenDefinition::class)]
 #[CoversClass(BisonTypeDeclaration::class)]
 #[CoversClass(BisonUnknownDeclaration::class)]
+#[UsesClass(GrammarParseException::class)]
+#[UsesClass(SourceCursor::class)]
+#[UsesClass(BisonPreamble::class)]
+#[UsesClass(BisonPreambleReader::class)]
+#[UsesClass(BisonStartSymbol::class)]
+#[UsesClass(BisonDeclarationBoundary::class)]
+#[UsesClass(BisonDirectiveReaderChain::class)]
+#[UsesClass(DefineDirectiveReader::class)]
+#[UsesClass(ExpectDirectiveReader::class)]
+#[UsesClass(ParamDirectiveReader::class)]
+#[UsesClass(PrecedenceDirectiveReader::class)]
+#[UsesClass(StartDirectiveReader::class)]
+#[UsesClass(TokenDirectiveReader::class)]
+#[UsesClass(TypeDirectiveReader::class)]
+#[UsesClass(UnknownDirectiveReader::class)]
+#[UsesClass(ActionScanner::class)]
+#[UsesClass(BisonScannerChain::class)]
+#[UsesClass(BisonTokenStream::class)]
+#[UsesClass(BisonTrivia::class)]
+#[UsesClass(DirectiveScanner::class)]
+#[UsesClass(IdentifierScanner::class)]
+#[UsesClass(NumberScanner::class)]
+#[UsesClass(PunctuationScanner::class)]
+#[UsesClass(QuotedLiteralScanner::class)]
+#[UsesClass(TypeTagScanner::class)]
+#[UsesClass(BisonAlternativeDraft::class)]
+#[UsesClass(BisonAlternativeReader::class)]
+#[UsesClass(BisonRuleReader::class)]
+#[UsesClass(BisonLexer::class)]
 final class BisonParserTest extends TestCase
 {
     public function testParseMinimalGrammar(): void
@@ -71,8 +128,8 @@ BISON;
 %%
 BISON;
 
-        $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('No grammar rules parsed.');
+        $this->expectException(GrammarParseException::class);
+        $this->expectExceptionMessage('No grammar rules parsed from the Bison grammar.');
 
         (new BisonParser())->parse($input);
     }
@@ -624,10 +681,10 @@ BISON;
 
         $symbols = $ast->rules[0]->alternatives[0]->symbols;
         self::assertCount(3, $symbols);
-        self::assertSame(BisonSymbolType::CharLiteral, $symbols[0]->type);
+        self::assertSame(BisonSymbolForm::CharLiteral, $symbols[0]->type);
         self::assertSame('+', $symbols[0]->value);
-        self::assertSame(BisonSymbolType::Identifier, $symbols[1]->type);
-        self::assertSame(BisonSymbolType::CharLiteral, $symbols[2]->type);
+        self::assertSame(BisonSymbolForm::Identifier, $symbols[1]->type);
+        self::assertSame(BisonSymbolForm::CharLiteral, $symbols[2]->type);
     }
 
     public function testParseRuleTerminatedBySemicolon(): void
@@ -929,8 +986,8 @@ BISON;
     {
         $input = '%token TOKEN';
 
-        $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('No grammar rules parsed.');
+        $this->expectException(GrammarParseException::class);
+        $this->expectExceptionMessage('No grammar rules parsed from the Bison grammar.');
 
         (new BisonParser())->parse($input);
     }

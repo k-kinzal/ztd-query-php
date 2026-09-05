@@ -58,12 +58,14 @@ final class MySqlProviderTest extends TestCase
         gc_collect_cycles();
     }
 
-    public function testConstructorRegistersProviderWithFaker(): void
+    public function testRegistersItselfWithTheFakerGenerator(): void
     {
         $faker = Factory::create();
         $provider = new MySqlProvider($faker);
 
-        /** @var list<object> $providers */
+        /**
+         * @var list<object> $providers
+         */
         $providers = $faker->getProviders();
         self::assertContains($provider, $providers);
 
@@ -75,10 +77,9 @@ final class MySqlProviderTest extends TestCase
     public function testInsertFunctionUpsertStatementDerivesConditionalExpressionFromGrammar(int $seed): void
     {
         $faker = Factory::create();
-        $faker->seed($seed);
         $provider = new MySqlProvider($faker);
-        $sql = $provider->insertFunctionUpsertStatement();
         $faker->seed($seed);
+        $sql = $provider->insertFunctionUpsertStatement();
 
         $tokens = (new LexicalGrammar($faker, 'mysql-8.4.7', true))
             ->tokenize($sql);
@@ -87,6 +88,7 @@ final class MySqlProviderTest extends TestCase
         $update = array_search('UPDATE_SYM', $tokens, true);
         $conditional = array_search('IF', $tokens, true);
 
+        $faker->seed($seed);
         self::assertSame($sql, $provider->insertFunctionUpsertStatement(40));
         self::assertIsInt($values);
         self::assertIsInt($update);
@@ -1269,7 +1271,9 @@ final class MySqlProviderTest extends TestCase
         }
     }
 
-    /** @return iterable<string, array{string}> */
+    /**
+     * @return iterable<string, array{string}>
+     */
     public static function providerSupportedMySqlVersion(): iterable
     {
         yield 'MySQL 5.6' => ['mysql-5.6.51'];

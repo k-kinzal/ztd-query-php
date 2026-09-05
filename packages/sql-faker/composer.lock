@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "8a823d1780467f63fa04e383cecc82a6",
+    "content-hash": "b761ef9fa3ba809090e5f9ed2f40d560",
     "packages": [
         {
             "name": "fakerphp/faker",
@@ -1828,61 +1828,6 @@
             "time": "2026-08-29T18:35:12+00:00"
         },
         {
-            "name": "k-kinzal/phpstan-custom-rules",
-            "version": "dev-feat/sql-faker-toolkit-php-compatibility",
-            "dist": {
-                "type": "path",
-                "url": "../phpstan-custom-rules",
-                "reference": "6915e17c9a3ddee6bc2e737035a87a1b75695c11"
-            },
-            "require": {
-                "php": "^8.1",
-                "phpstan/phpstan": "^2.1"
-            },
-            "require-dev": {
-                "brianium/paratest": "^6.11 || ^7",
-                "friendsofphp/php-cs-fixer": "^3.92",
-                "phpstan/phpstan-strict-rules": "^2.0",
-                "phpunit/phpunit": "^10.5 || ^11 || ^12 || ^13"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "ZtdQuery\\PhpStanCustomRules\\": "src/"
-                }
-            },
-            "autoload-dev": {
-                "psr-4": {
-                    "Tests\\": "tests/"
-                }
-            },
-            "scripts": {
-                "test": [
-                    "paratest --processes=auto"
-                ],
-                "test:unit": [
-                    "phpunit tests/Unit/"
-                ],
-                "lint": [
-                    "@format:check",
-                    "phpstan analyse --memory-limit=512M"
-                ],
-                "format": [
-                    "php-cs-fixer fix --allow-risky=yes"
-                ],
-                "format:check": [
-                    "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
-                ]
-            },
-            "license": [
-                "MIT"
-            ],
-            "description": "Project-specific PHPStan rules for ztd-query packages",
-            "transport-options": {
-                "relative": true
-            }
-        },
-        {
             "name": "k-kinzal/testcontainers-php",
             "version": "v0.5.1",
             "source": {
@@ -2717,11 +2662,11 @@
         },
         {
             "name": "phpstan/phpstan",
-            "version": "2.2.11",
+            "version": "2.2.13",
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/0eb899d48d9b784eee3f1b58a6c9dc79734cf811",
-                "reference": "0eb899d48d9b784eee3f1b58a6c9dc79734cf811",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/9ba9ac76ee9c5cf5b56d58eb5deec6315b7a0260",
+                "reference": "9ba9ac76ee9c5cf5b56d58eb5deec6315b7a0260",
                 "shasum": ""
             },
             "require": {
@@ -2777,7 +2722,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-08-31T10:33:10+00:00"
+            "time": "2026-09-03T20:38:19+00:00"
         },
         {
             "name": "phpstan/phpstan-strict-rules",
@@ -6935,7 +6880,6 @@
     "minimum-stability": "stable",
     "stability-flags": {
         "k-kinzal/php-ai-toolkit": 20,
-        "k-kinzal/phpstan-custom-rules": 20,
         "phpcompatibility/php-compatibility": 15
     },
     "prefer-stable": false,

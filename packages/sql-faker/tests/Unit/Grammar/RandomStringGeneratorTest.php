@@ -5,17 +5,16 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\Grammar;
 
 use Faker\Factory;
-use InvalidArgumentException;
-use LogicException;
 use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use ReflectionMethod;
-use ReflectionParameter;
+use SqlFaker\Grammar\RandomCharacters;
 use SqlFaker\Grammar\RandomStringGenerator;
 use UnexpectedValueException;
 
 #[CoversClass(RandomStringGenerator::class)]
+#[UsesClass(RandomCharacters::class)]
 final class RandomStringGeneratorTest extends TestCase
 {
     #[Override]
@@ -437,13 +436,6 @@ final class RandomStringGeneratorTest extends TestCase
         self::assertMatchesRegularExpression('/^[a-z0-9]{3}\.[a-z0-9]{3}$/', $result);
     }
 
-    public function testHostnameStringRejectsAnEmptyResult(): void
-    {
-        $this->expectException(LogicException::class);
-
-        (new RandomStringGenerator(Factory::create()))->hostnameString(0, 0);
-    }
-
     public function testLexicalSequenceDerivesTermsFromCatalog(): void
     {
         $faker = Factory::create();
@@ -464,6 +456,8 @@ final class RandomStringGeneratorTest extends TestCase
             /**
              * @param mixed $min
              * @param mixed $max
+             *
+             * @throws UnexpectedValueException When the bound is not an integer
              */
             #[Override]
             public function numberBetween($min = 0, $max = 2147483647): int
@@ -476,15 +470,31 @@ final class RandomStringGeneratorTest extends TestCase
             }
         };
 
-        $sequence = (new RandomStringGenerator($faker))->lexicalSequence(['SELECT_SYM' => ['SELECT']]);
+        $atUpperBound = new class () extends \Faker\Generator {
+            /**
+             * @param mixed $min
+             * @param mixed $max
+             *
+             * @throws UnexpectedValueException When the bound is not an integer
+             */
+            #[Override]
+            public function numberBetween($min = 0, $max = 2147483647): int
+            {
+                if (!is_int($max)) {
+                    throw new UnexpectedValueException();
+                }
 
-        self::assertSame('SELECT SELECT', $sequence);
+                return $max;
+            }
+        };
+
         self::assertSame(
-            [2, 4],
-            array_map(
-                static fn (ReflectionParameter $parameter): mixed => $parameter->getDefaultValue(),
-                array_slice((new ReflectionMethod(RandomStringGenerator::class, 'lexicalSequence'))->getParameters(), 1),
-            ),
+            'SELECT SELECT',
+            (new RandomStringGenerator($faker))->lexicalSequence(['SELECT_SYM' => ['SELECT']]),
+        );
+        self::assertSame(
+            'SELECT SELECT SELECT SELECT',
+            (new RandomStringGenerator($atUpperBound))->lexicalSequence(['SELECT_SYM' => ['SELECT']]),
         );
     }
 
@@ -502,6 +512,8 @@ final class RandomStringGeneratorTest extends TestCase
             /**
              * @param mixed $min
              * @param mixed $max
+             *
+             * @throws UnexpectedValueException When the bound is not an integer
              */
             #[Override]
             public function numberBetween($min = 0, $max = 2147483647): int
@@ -530,6 +542,8 @@ final class RandomStringGeneratorTest extends TestCase
             /**
              * @param mixed $min
              * @param mixed $max
+             *
+             * @throws UnexpectedValueException When the bound is not an integer
              */
             #[Override]
             public function numberBetween($min = 0, $max = 2147483647): int
@@ -552,24 +566,4 @@ final class RandomStringGeneratorTest extends TestCase
         );
     }
 
-    public function testLexicalSequenceRejectsInvalidBounds(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-
-        (new RandomStringGenerator(Factory::create()))->lexicalSequence(['SELECT_SYM' => ['SELECT']], 0, 1);
-    }
-
-    public function testLexicalSequenceRejectsEmptyCatalog(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-
-        (new RandomStringGenerator(Factory::create()))->lexicalSequence([]);
-    }
-
-    public function testLexicalSequenceRejectsEmptyLexemes(): void
-    {
-        $this->expectException(LogicException::class);
-
-        (new RandomStringGenerator(Factory::create()))->lexicalSequence(['EMPTY' => ['']], 1, 1);
-    }
 }

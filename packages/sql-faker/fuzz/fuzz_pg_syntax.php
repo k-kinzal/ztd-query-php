@@ -12,8 +12,12 @@
 
 declare(strict_types=1);
 
-/* Disable php-fuzzer's timeout handler before testcontainers shutdown */
-/* This must be registered BEFORE Testcontainers::run() so it executes FIRST in FIFO order */
+/**
+ * Disables php-fuzzer's alarm before testcontainers tears the container down.
+ *
+ * Shutdown functions run in FIFO order, so this has to be registered before
+ * Testcontainers::run() registers its own handler.
+ */
 register_shutdown_function(static function (): void {
     if (function_exists('pcntl_alarm')) {
         pcntl_alarm(0);
@@ -24,10 +28,8 @@ use Fuzz\Container\PostgreSqlContainer;
 use Fuzz\Target\PgSyntaxTarget;
 use Testcontainers\Testcontainers;
 
-/* Configuration from environment */
 $maxDepth = (int) (getenv('MAX_DEPTH') !== false ? getenv('MAX_DEPTH') : 8);
 
-/* Start PostgreSQL container */
 fwrite(STDERR, "Starting PostgreSQL container...\n");
 
 $instance = Testcontainers::run(PostgreSqlContainer::class);
@@ -49,10 +51,8 @@ fwrite(STDERR, "PostgreSQL ready on $host:$port\n");
 fwrite(STDERR, "Max depth: $maxDepth\n");
 fwrite(STDERR, "Starting fuzzer...\n\n");
 
-/* Create fuzz target */
 $target = new PgSyntaxTarget($pdo, $maxDepth);
 
-/* Configure fuzzer via $config (provided by php-fuzzer) */
 /** @var PhpFuzzer\Config $config */
 $config->setAllowedExceptions([]);
 $config->setTarget(Closure::fromCallable($target));

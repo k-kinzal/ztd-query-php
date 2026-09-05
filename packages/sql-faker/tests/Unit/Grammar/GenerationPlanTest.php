@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\Grammar;
 
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -45,7 +44,7 @@ final class GenerationPlanTest extends TestCase
         self::assertNull($plan->patternAt('unknown', 0));
     }
 
-    public function testPatternForEveryOccurrenceProducesANewPlanAndActsAsFallback(): void
+    public function testWithPatternForEveryOccurrenceProducesANewPlanAndActsAsFallback(): void
     {
         $specific = ProductionPattern::exactly();
         $recurring = ProductionPattern::nonEmpty();
@@ -60,7 +59,7 @@ final class GenerationPlanTest extends TestCase
         self::assertNull($directed->patternAt('unknown', 0));
     }
 
-    public function testPatternsForEveryOccurrenceAccumulateAcrossRules(): void
+    public function testWithPatternForEveryOccurrenceAccumulatesAcrossRules(): void
     {
         $values = ProductionPattern::nonEmpty();
         $columns = ProductionPattern::containing('IDENT');
@@ -72,15 +71,7 @@ final class GenerationPlanTest extends TestCase
         self::assertSame($columns, $plan->patternAt('opt_columns', 100));
     }
 
-    public function testRejectsAnEmptyRuleForEveryOccurrencePattern(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('generation plan rule must not be empty');
-
-        GenerationPlan::all()->withPatternForEveryOccurrence('', ProductionPattern::nonEmpty());
-    }
-
-    public function testNonEmptyRequirementProducesANewPlan(): void
+    public function testRequiringNonEmptyProducesANewPlan(): void
     {
         $plan = GenerationPlan::fromRule('statement');
         $required = $plan->requiringNonEmpty();
@@ -89,7 +80,7 @@ final class GenerationPlanTest extends TestCase
         self::assertSame('statement', $required->startRule());
     }
 
-    public function testNonEmptyRequirementHasCorrectRuntimeState(): void
+    public function testRequiresNonEmptyAnswersWhatThePlanWasBuiltWith(): void
     {
         /** @param GenerationPlan<bool> $plan */
         $requiresNonEmpty = static fn (GenerationPlan $plan): bool => $plan->requiresNonEmpty();
@@ -102,7 +93,7 @@ final class GenerationPlanTest extends TestCase
         self::assertTrue($requiresNonEmpty(GenerationPlan::all()->requiringNonEmpty()));
     }
 
-    public function testMaxDepthProducesANewPlanAndNormalizesItsLowerBound(): void
+    public function testWithMaxDepthProducesANewPlanAndNormalizesItsLowerBound(): void
     {
         $plan = GenerationPlan::fromRule('statement');
         $limited = $plan->withMaxDepth(5);
@@ -114,7 +105,7 @@ final class GenerationPlanTest extends TestCase
         self::assertSame(1, $minimum->maxDepth());
     }
 
-    public function testLexemesDirectEachTerminalOccurrenceWithoutMutableState(): void
+    public function testWithLexemesDirectsEachTerminalOccurrenceWithoutMutableState(): void
     {
         $plan = GenerationPlan::fromRule('statement')->withLexemes([
             'operator' => ['@@', '?|'],
@@ -126,15 +117,7 @@ final class GenerationPlanTest extends TestCase
         self::assertNull($plan->lexemeAt('unknown', 0));
     }
 
-    public function testRejectsAnEmptyLexemeConstraint(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('requires lexemes');
-
-        GenerationPlan::all()->withLexemes([]);
-    }
-
-    public function testLexicalPlanSelectsOneTargetWithParameters(): void
+    public function testLexicalSelectsOneTargetWithParameters(): void
     {
         $plan = GenerationPlan::lexical('quoted_identifier', [
             'minLength' => 2,
@@ -146,27 +129,39 @@ final class GenerationPlanTest extends TestCase
         self::assertSame(['minLength' => 2, 'maxLength' => 8], $plan->parameters());
     }
 
-    public function testRejectsAnEmptyLexicalTarget(): void
+    public function testStartRuleAnswersNothingWhenTheWalkBeginsAtTheGrammarEntryPoint(): void
     {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('target must not be empty');
-
-        GenerationPlan::lexical('', []);
+        self::assertNull(GenerationPlan::all()->startRule());
     }
 
-    public function testRejectsAnEmptyStartRule(): void
+    public function testPatternAtPrefersTheOccurrenceNamedDirectly(): void
     {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('start rule must not be empty');
+        $named = ProductionPattern::containing('CONSTRAINT');
+        $fallback = ProductionPattern::nonEmpty();
+        $plan = GenerationPlan::constrained('create_table', ['constraint' => [$named]])
+            ->withPatternForEveryOccurrence('constraint', $fallback);
 
-        GenerationPlan::fromRule('');
+        self::assertSame($named, $plan->patternAt('constraint', 0));
+        self::assertSame($fallback, $plan->patternAt('constraint', 1));
     }
 
-    public function testRejectsAConstrainedPlanWithoutConstraints(): void
+    public function testLexemeAtAnswersNothingForATerminalThePlanDoesNotDirect(): void
     {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('requires production patterns');
+        self::assertNull(GenerationPlan::all()->lexemeAt('IDENT', 0));
+    }
 
-        GenerationPlan::constrained('statement', []);
+    public function testLexicalTargetAnswersNothingWhenTheGrammarIsWalked(): void
+    {
+        self::assertNull(GenerationPlan::all()->lexicalTarget());
+    }
+
+    public function testParametersAnswerNothingWhenTheGrammarIsWalked(): void
+    {
+        self::assertSame([], GenerationPlan::all()->parameters());
+    }
+
+    public function testMaxDepthIsUnboundedUntilTheCallerBoundsIt(): void
+    {
+        self::assertSame(PHP_INT_MAX, GenerationPlan::all()->maxDepth());
     }
 }

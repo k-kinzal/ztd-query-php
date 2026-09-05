@@ -11,6 +11,9 @@ namespace SqlFaker\MySql\Bison\Ast;
  */
 final class BisonExpectDeclaration implements BisonDeclaration
 {
+    /**
+     * @param int $count Shift/reduce conflicts the grammar's author accepts
+     */
     public function __construct(
         public readonly int $count,
     ) {

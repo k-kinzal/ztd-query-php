@@ -13,6 +13,7 @@ use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\SqlVersion;
+use SqlFaker\Grammar\SqlVersionRegistry;
 use SqlFaker\Grammar\Terminal;
 use SqlFaker\Sqlite\Grammar\SqliteGrammar;
 
@@ -23,20 +24,21 @@ use SqlFaker\Sqlite\Grammar\SqliteGrammar;
 #[CoversClass(Terminal::class)]
 #[CoversClass(NonTerminal::class)]
 #[UsesClass(SqlVersion::class)]
+#[UsesClass(SqlVersionRegistry::class)]
 final class SqliteGrammarTest extends TestCase
 {
     public function testLoad(): void
     {
         $grammar = SqliteGrammar::load();
 
-        self::assertInstanceOf(Grammar::class, $grammar);
+        self::assertNotEmpty($grammar->ruleMap);
     }
 
     public function testLoadWithExplicitVersion(): void
     {
         $grammar = SqliteGrammar::load('sqlite-3.47.2');
 
-        self::assertInstanceOf(Grammar::class, $grammar);
+        self::assertNotEmpty($grammar->ruleMap);
     }
 
     public function testResolveVersionUsesExactConfiguredDefault(): void
