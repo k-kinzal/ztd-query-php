@@ -9,6 +9,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Grammar;
+use SqlFaker\Grammar\Production;
+use SqlFaker\Grammar\ProductionRule;
+use SqlFaker\Grammar\Terminal;
+use SqlFaker\Grammar\LexicalCatalogException;
 use SqlFaker\Sqlite\GenerationContext;
 
 #[CoversClass(GenerationContext::class)]
@@ -29,6 +33,11 @@ use SqlFaker\Sqlite\GenerationContext;
 #[UsesClass(\SqlFaker\Sqlite\LexicalGrammar::class)]
 #[UsesClass(\SqlFaker\Sqlite\SqliteTerminalRealizer::class)]
 #[UsesClass(\SqlFaker\Sqlite\SqliteTokenizer::class)]
+#[UsesClass(\SqlFaker\Grammar\Production::class)]
+#[UsesClass(\SqlFaker\Grammar\ProductionRule::class)]
+#[UsesClass(\SqlFaker\Grammar\Terminal::class)]
+#[UsesClass(\SqlFaker\Grammar\TerminalInventory::class)]
+#[UsesClass(\SqlFaker\Grammar\LexicalCatalogException::class)]
 final class GenerationContextTest extends TestCase
 {
     public function testGrammarAndLexicalReleaseAreBoundTogether(): void
@@ -41,5 +50,25 @@ final class GenerationContextTest extends TestCase
         self::assertNotSame('', $context->lexicalGrammar->version());
         self::assertNull($context->startSymbol);
         self::assertNull($context->normalize);
+    }
+    public function testSyntheticTerminalsAreAllowedOnlyWithoutAnExplicitRelease(): void
+    {
+        $grammar = new Grammar('stmt', []);
+        $synthetic = new GenerationContext($grammar, Factory::create());
+        $released = new GenerationContext($grammar, Factory::create(), 'sqlite-3.47.2');
+
+        self::assertTrue($synthetic->lexicalGrammar->supports('SYNTHETIC_TEST_TOKEN'));
+        self::assertFalse($released->lexicalGrammar->supports('SYNTHETIC_TEST_TOKEN'));
+        self::assertSame('sqlite-3.47.2', $released->lexicalGrammar->version());
+    }
+
+    public function testExplicitReleaseRejectsAnUncataloguedGrammarTerminal(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [new Production([new Terminal('SYNTHETIC_TEST_TOKEN')])]),
+        ]);
+        $this->expectException(LexicalCatalogException::class);
+
+        new GenerationContext($grammar, Factory::create(), 'sqlite-3.47.2');
     }
 }

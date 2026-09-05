@@ -48,4 +48,15 @@ final class StartRuleResolverTest extends TestCase
 
         self::assertSame('no_such_rule', (new StartRuleResolver($grammar))->startSymbolFor('no_such_rule'));
     }
+    public function testStartSymbolForMapsModernRequestsToLegacyGrammarRules(): void
+    {
+        $grammar = MySqlGrammar::load('mysql-5.6.51');
+        $resolver = new StartRuleResolver($grammar);
+
+        self::assertSame('select', $resolver->startSymbolFor('select_stmt'));
+        self::assertSame('insert', $resolver->startSymbolFor('insert_stmt'));
+        self::assertSame('update', $resolver->startSymbolFor('update_stmt'));
+        self::assertSame('delete', $resolver->startSymbolFor('delete_stmt'));
+        self::assertSame($grammar->startSymbol, $resolver->startSymbolFor('simple_statement_or_begin'));
+    }
 }

@@ -193,4 +193,27 @@ final class DerivationTest extends TestCase
             (new Derivation($grammar, $faker, $analyzer))->of('stmt', $plan->withStepBudget()),
         );
     }
+    public function testAffordableAllowsATerminalOnlyProductionWithNoExpansionBudgetLeft(): void
+    {
+        $grammar = new Grammar('stmt', ['stmt' => new ProductionRule('stmt', [new Production([new Terminal('T')])])]);
+        $derivation = new Derivation($grammar, Factory::create(), new TerminationAnalyzer($grammar));
+        $production = new Production([new Terminal('T')]);
+
+        self::assertSame(
+            [$production],
+            $derivation->affordable([$production], new Production(array_fill(0, 5000, new NonTerminal('stmt')))),
+        );
+    }
+
+    public function testAffordableReturnsAListAfterDiscardingAnOverBudgetAlternative(): void
+    {
+        $grammar = new Grammar('stmt', ['stmt' => new ProductionRule('stmt', [new Production([new Terminal('T')])])]);
+        $derivation = new Derivation($grammar, Factory::create(), new TerminationAnalyzer($grammar));
+        $production = new Production([new Terminal('T')]);
+
+        self::assertSame([$production], $derivation->affordable([
+            new Production(array_fill(0, 5001, new NonTerminal('stmt'))),
+            $production,
+        ], new Production([])));
+    }
 }

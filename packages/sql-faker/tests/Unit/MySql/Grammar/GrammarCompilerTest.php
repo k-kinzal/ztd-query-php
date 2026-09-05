@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\MySql\Grammar;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Compiler\Bison\Ast\BisonAlternativeNode;
 use SqlFaker\Compiler\Bison\Ast\BisonAst;
