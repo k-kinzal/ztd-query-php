@@ -48,6 +48,7 @@ use UnexpectedValueException;
 #[UsesClass(SqlVersionRegistry::class)]
 #[UsesClass(MySqlTerminalRealizer::class)]
 #[UsesClass(MySqlTokenizer::class)]
+#[UsesClass(\SqlFaker\MySql\MySqlQuoting::class)]
 final class LexicalGrammarTest extends TestCase
 {
     public function testGeneratesPublicProviderLexemesThroughDialectGrammar(): void

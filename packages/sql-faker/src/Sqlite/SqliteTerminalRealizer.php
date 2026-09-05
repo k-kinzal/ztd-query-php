@@ -212,9 +212,9 @@ final class SqliteTerminalRealizer
         $body = $this->faker->numberBetween(0, 3) === 0 ? 'select' : '_' . $this->strings->rawIdentifier();
 
         return match ($this->faker->numberBetween(0, 7)) {
-            0 => '"' . str_replace('"', '""', $body . '"quoted') . '"',
-            1 => '`' . str_replace('`', '``', $body . '`quoted') . '`',
-            2 => '[' . str_replace(']', '', $body . ']quoted') . ']',
+            0 => SqliteQuoting::identifier($body . '"quoted'),
+            1 => SqliteQuoting::backtickIdentifier($body . '`quoted'),
+            2 => SqliteQuoting::bracketIdentifier($body . ']quoted'),
             default => $body,
         };
     }
@@ -233,7 +233,7 @@ final class SqliteTerminalRealizer
             default => $this->strings->mixedAlnumString(0, 24),
         };
 
-        return "'" . str_replace("'", "''", $body) . "'";
+        return SqliteQuoting::stringLiteral($body);
     }
 
     /**

@@ -41,6 +41,7 @@ use SqlFaker\MySql\MySqlTokenizer;
 #[UsesClass(SqlVersionRegistry::class)]
 #[UsesClass(MySqlTerminalRealizer::class)]
 #[UsesClass(MySqlTokenizer::class)]
+#[UsesClass(\SqlFaker\MySql\MySqlQuoting::class)]
 final class LexicalExceptionTest extends TestCase
 {
     public function testTokenizingUnsupportedInputReportsTheOffsetAndTheInput(): void

@@ -56,6 +56,14 @@ final class PgTokenizerTest extends TestCase
         yield 'named argument' => ['=>', ['EQUALS_GREATER']];
         yield 'inequality' => ['<>', ['NOT_EQUALS']];
         yield 'user operator' => ['?|', ['Op']];
+        yield 'named argument prefix in a longer operator' => ['=>@', ['Op']];
+        yield 'inequality prefix in a longer operator' => ['<>*', ['Op']];
+        yield 'comparison prefix in a longer operator' => ['<=?', ['Op']];
+        yield 'SQL operator before a sign' => ['=-1', ['=', '-', 'ICONST']];
+        yield 'comparison before a sign' => ['<=+1', ['LESS_EQUALS', '+', 'ICONST']];
+        yield 'all signs are separate operators' => ['++1', ['+', '+', 'ICONST']];
+        yield 'non-SQL operator retains a trailing sign' => ['?-1', ['Op', 'ICONST']];
+        yield 'named argument stops before a comment' => ['=>/* note */1', ['EQUALS_GREATER', 'ICONST']];
         yield 'punctuation' => ['(', ['(']];
         yield 'line comment is trivia' => ["SELECT -- note\nusers", ['SELECT', 'IDENT']];
         yield 'block comment is trivia' => ['SELECT /* note */ users', ['SELECT', 'IDENT']];

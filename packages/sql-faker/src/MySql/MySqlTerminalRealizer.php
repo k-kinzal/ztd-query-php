@@ -259,7 +259,7 @@ final class MySqlTerminalRealizer
             $body .= '`' . $this->strings->rawIdentifier();
         }
 
-        return '`' . str_replace('`', '``', $body) . '`';
+        return MySqlQuoting::identifier($body);
     }
 
     /**
@@ -276,7 +276,7 @@ final class MySqlTerminalRealizer
             default => $this->strings->mixedAlnumString(0, 24),
         };
 
-        return "'" . str_replace("'", "''", $body) . "'";
+        return MySqlQuoting::stringLiteral($body);
     }
 
     /**

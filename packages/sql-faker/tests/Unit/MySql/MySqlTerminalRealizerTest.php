@@ -19,8 +19,6 @@ use SqlFaker\Grammar\RandomCharacters;
 use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\MySql\MySqlTerminalRealizer;
 use SqlFaker\MySql\MySqlTokenizer;
-use Tests\Fixture\SqlFaker\MySqlRealizers;
-use Tests\Fixture\SqlFaker\ScriptedNumbers;
 
 #[CoversClass(MySqlTerminalRealizer::class)]
 #[UsesClass(LexicalCatalog::class)]
@@ -32,211 +30,283 @@ use Tests\Fixture\SqlFaker\ScriptedNumbers;
 #[UsesClass(MySqlTokenizer::class)]
 #[UsesClass(RandomStringGenerator::class)]
 #[UsesClass(RandomCharacters::class)]
+#[UsesClass(\SqlFaker\MySql\MySqlQuoting::class)]
 final class MySqlTerminalRealizerTest extends TestCase
 {
-    #[DataProvider('providerWitnessedRealizer')]
-    public function testRealizeReplaysACataloguedExample(MySqlTerminalRealizer $realizer): void
+    public function testRealizeReplaysACataloguedExample(): void
     {
-        self::assertSame(['users', ['IDENT']], $realizer->realize('IDENT'));
-    }
+        $faker = Factory::create();
+        $faker->seed(1729);
 
-    #[DataProvider('providerWitnessedRealizer')]
-    public function testRealizeReportsATerminalTheCatalogDoesNotWitness(MySqlTerminalRealizer $realizer): void
-    {
-        $this->expectException(LexicalException::class);
-        $this->expectExceptionMessage('Unsupported MySQL terminal for mysql-8.4.7: NOT_A_TERMINAL');
-
-        $realizer->realize('NOT_A_TERMINAL');
-    }
-
-    #[DataProvider('providerWitnessedRealizer')]
-    public function testRealizeAcceptsARequestedLexemeTheCatalogWitnesses(MySqlTerminalRealizer $realizer): void
-    {
-        self::assertSame(['users', ['IDENT']], $realizer->realize('IDENT', 'users'));
-    }
-
-    #[DataProvider('providerWitnessedRealizer')]
-    public function testRealizeWitnessedReplaysTheExampleText(MySqlTerminalRealizer $realizer): void
-    {
-        self::assertSame(['users', ['IDENT']], $realizer->realizeWitnessed('IDENT'));
-    }
-
-    #[DataProvider('providerWitnessedRealizer')]
-    public function testSupportsFollowsTheCatalog(MySqlTerminalRealizer $realizer): void
-    {
-        self::assertTrue($realizer->supports('IDENT'));
-        self::assertFalse($realizer->supports('NOT_A_TERMINAL'));
-    }
-
-    #[DataProvider('providerWitnessedRealizer')]
-    public function testRealizeRequestedRejectsALexemeTheCatalogDoesNotWitness(
-        MySqlTerminalRealizer $realizer,
-    ): void {
-        $this->expectException(LexicalException::class);
-        $this->expectExceptionMessage('MySQL lexical catalog has no IDENT witness for: other');
-
-        $realizer->realizeRequested('IDENT', 'other');
-    }
-
-    #[DataProvider('providerWitnessedRealizer')]
-    public function testRealizeFixedPrefersASpellingTheProfileLists(MySqlTerminalRealizer $realizer): void
-    {
-        self::assertSame(['SELECT', ['SELECT_SYM']], $realizer->realizeFixed('SELECT_SYM'));
-    }
-
-    #[DataProvider('providerWitnessedRealizer')]
-    public function testTriviaReplaysAWitnessedSeparator(MySqlTerminalRealizer $realizer): void
-    {
-        self::assertSame(' ', $realizer->trivia());
-    }
-
-    #[DataProvider('providerSyntheticRealizer')]
-    public function testSupportsAcceptsAnythingOnceSyntheticWritingIsAllowed(
-        MySqlTerminalRealizer $realizer,
-    ): void {
-        self::assertTrue($realizer->supports('NOT_A_TERMINAL'));
-    }
-
-    #[DataProvider('providerSyntheticRealizer')]
-    public function testRealizeSkipsTheTerminalsThatStandForNoText(MySqlTerminalRealizer $realizer): void
-    {
-        self::assertSame([null, []], $realizer->realize('END_OF_INPUT'));
-        self::assertSame([null, []], $realizer->realize('GRAMMAR_SELECTOR_EXPR'));
-    }
-
-    #[DataProvider('providerSyntheticRealizer')]
-    public function testRealizeSyntheticWritesTerminalsNoCatalogWitnesses(
-        MySqlTerminalRealizer $realizer,
-    ): void {
-        self::assertSame(['?', ['PARAM_MARKER']], $realizer->realizeSynthetic('PARAM_MARKER'));
-        self::assertSame(['||', ['OR2_SYM']], $realizer->realizeSynthetic('OR2_SYM'));
-        self::assertSame(['_utf8mb4', ['UNDERSCORE_CHARSET']], $realizer->realizeSynthetic('UNDERSCORE_CHARSET'));
-    }
-
-    #[DataProvider('providerSyntheticRealizer')]
-    public function testRealizeRequestedAcceptsALexemeThatReadsBackAsTheTerminal(
-        MySqlTerminalRealizer $realizer,
-    ): void {
-        self::assertSame(['?', ['PARAM_MARKER']], $realizer->realizeRequested('PARAM_MARKER', '?'));
-    }
-
-    #[DataProvider('providerSyntheticRealizer')]
-    public function testRealizeRequestedRejectsALexemeThatReadsBackAsSomethingElse(
-        MySqlTerminalRealizer $realizer,
-    ): void {
-        $this->expectException(LexicalException::class);
-        $this->expectExceptionMessage('Requested MySQL lexeme does not realize PARAM_MARKER: users');
-
-        $realizer->realizeRequested('PARAM_MARKER', 'users');
-    }
-
-    #[DataProvider('providerSyntheticRealizer')]
-    public function testIdentifierCannotCollideWithAKeyword(MySqlTerminalRealizer $realizer): void
-    {
-        self::assertStringStartsWith('_', $realizer->identifier());
-    }
-
-    #[DataProvider('providerSyntheticRealizer')]
-    public function testQuotedIdentifierIsWrappedInBackticks(MySqlTerminalRealizer $realizer): void
-    {
-        self::assertMatchesRegularExpression('/^`.*`$/', $realizer->quotedIdentifier());
-    }
-
-    #[DataProvider('providerSyntheticRealizer')]
-    public function testStringLiteralIsWrappedInSingleQuotes(MySqlTerminalRealizer $realizer): void
-    {
-        self::assertMatchesRegularExpression("/^'.*'$/s", $realizer->stringLiteral());
-    }
-
-    #[DataProvider('providerSyntheticRealizer')]
-    public function testDollarQuotedStringIsWrappedInDoubleDollars(MySqlTerminalRealizer $realizer): void
-    {
-        self::assertMatchesRegularExpression('/^\$\$.*\$\$$/s', $realizer->dollarQuotedString());
-    }
-
-    #[DataProvider('providerSyntheticRealizer')]
-    public function testHexadecimalLiteralUsesOneOfItsTwoSpellings(MySqlTerminalRealizer $realizer): void
-    {
-        self::assertMatchesRegularExpression(
-            "/^(?:0x[0-9a-fA-F]*|X'[0-9a-fA-F]*')$/",
-            $realizer->hexadecimalLiteral(),
-        );
-    }
-
-    #[DataProvider('providerSyntheticRealizer')]
-    public function testBinaryLiteralUsesOneOfItsTwoSpellings(MySqlTerminalRealizer $realizer): void
-    {
-        self::assertMatchesRegularExpression("/^(?:0b[01]*|B'[01]*')$/", $realizer->binaryLiteral());
-    }
-
-    #[DataProvider('providerSyntheticRealizer')]
-    public function testTriviaIsASingleSpaceWhenNothingIsWitnessed(MySqlTerminalRealizer $realizer): void
-    {
-        self::assertSame(' ', $realizer->trivia());
-    }
-
-    #[DataProvider('providerSyntheticRealizer')]
-    public function testOptionalTriviaIsNothingWhenNothingIsWitnessed(MySqlTerminalRealizer $realizer): void
-    {
-        self::assertSame('', $realizer->optionalTrivia());
-    }
-
-    #[DataProvider('providerSyntheticRealizer')]
-    public function testSyntheticSpellingWritesOperatorsByNameAndKeywordsBySuffix(
-        MySqlTerminalRealizer $realizer,
-    ): void {
-        self::assertSame('=', $realizer->syntheticSpelling('EQ'));
-        self::assertSame('<=>', $realizer->syntheticSpelling('EQUAL_SYM'));
-        self::assertSame('->', $realizer->syntheticSpelling('JSON_SEPARATOR_SYM'));
-        self::assertSame('SELECT', $realizer->syntheticSpelling('SELECT_SYM'));
-        self::assertSame('IDENT', $realizer->syntheticSpelling('IDENT'));
-    }
-
-    /**
-     * @return iterable<string, array{MySqlTerminalRealizer}>
-     */
-    public static function providerWitnessedRealizer(): iterable
-    {
         $catalogue = [
             'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
             'terminals' => [
-                'IDENT' => [[
-                    'id' => 'ident.bare',
-                    'sql' => 'users',
-                    'tokens' => ['IDENT'],
-                    'units' => ['identifier'],
-                ]],
-                '@TRIVIA' => [[
-                    'id' => 'trivia.space',
-                    'sql' => ' ',
-                    'tokens' => [],
-                    'units' => ['trivia'],
-                ]],
+                'IDENT' => [
+                    ['id' => 'identifier.0', 'sql' => 'users', 'tokens' => ['IDENT'], 'units' => ['identifier']],
+                ],
             ],
             'terminal_exclusions' => [],
             'coverage' => [
-                'units' => ['identifier', 'trivia'],
-                'witnessed' => ['identifier' => 'ident.bare', 'trivia' => 'trivia.space'],
+                'units' => ['identifier'],
+                'witnessed' => ['identifier' => 'identifier.0'],
                 'excluded' => [],
             ],
         ];
 
-        yield 'catalogued only' => [new MySqlTerminalRealizer(
-            Factory::create(),
+        $realizer = new MySqlTerminalRealizer(
+            $faker,
             new LexicalCatalog($catalogue),
             new MySqlTokenizer(['SELECT' => 'SELECT_SYM'], [], false),
             ['SELECT_SYM' => ['SELECT']],
             [],
             'mysql-8.4.7',
             false,
-        )];
+        );
+
+        self::assertSame(['users', ['IDENT']], $realizer->realize('IDENT'));
     }
 
-    /**
-     * @return iterable<string, array{MySqlTerminalRealizer}>
-     */
-    public static function providerSyntheticRealizer(): iterable
+    public function testRealizeReportsATerminalTheCatalogDoesNotWitness(): void
     {
+        $faker = Factory::create();
+        $faker->seed(1729);
+
+        $catalogue = [
+            'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+            'terminals' => [
+                'IDENT' => [
+                    ['id' => 'identifier.0', 'sql' => 'users', 'tokens' => ['IDENT'], 'units' => ['identifier']],
+                ],
+            ],
+            'terminal_exclusions' => [],
+            'coverage' => [
+                'units' => ['identifier'],
+                'witnessed' => ['identifier' => 'identifier.0'],
+                'excluded' => [],
+            ],
+        ];
+
+        $realizer = new MySqlTerminalRealizer(
+            $faker,
+            new LexicalCatalog($catalogue),
+            new MySqlTokenizer(['SELECT' => 'SELECT_SYM'], [], false),
+            ['SELECT_SYM' => ['SELECT']],
+            [],
+            'mysql-8.4.7',
+            false,
+        );
+
+        $this->expectException(LexicalException::class);
+        $this->expectExceptionMessage('Unsupported MySQL terminal for mysql-8.4.7: NOT_A_TERMINAL');
+
+        $realizer->realize('NOT_A_TERMINAL');
+    }
+
+    public function testRealizeAcceptsARequestedLexemeTheCatalogWitnesses(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(1729);
+
+        $catalogue = [
+            'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+            'terminals' => [
+                'IDENT' => [
+                    ['id' => 'identifier.0', 'sql' => 'users', 'tokens' => ['IDENT'], 'units' => ['identifier']],
+                ],
+            ],
+            'terminal_exclusions' => [],
+            'coverage' => [
+                'units' => ['identifier'],
+                'witnessed' => ['identifier' => 'identifier.0'],
+                'excluded' => [],
+            ],
+        ];
+
+        $realizer = new MySqlTerminalRealizer(
+            $faker,
+            new LexicalCatalog($catalogue),
+            new MySqlTokenizer(['SELECT' => 'SELECT_SYM'], [], false),
+            ['SELECT_SYM' => ['SELECT']],
+            [],
+            'mysql-8.4.7',
+            false,
+        );
+
+        self::assertSame(['users', ['IDENT']], $realizer->realize('IDENT', 'users'));
+    }
+
+    public function testRealizeWitnessedReplaysTheExampleText(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(1729);
+
+        $catalogue = [
+            'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+            'terminals' => [
+                'IDENT' => [
+                    ['id' => 'identifier.0', 'sql' => 'users', 'tokens' => ['IDENT'], 'units' => ['identifier']],
+                ],
+            ],
+            'terminal_exclusions' => [],
+            'coverage' => [
+                'units' => ['identifier'],
+                'witnessed' => ['identifier' => 'identifier.0'],
+                'excluded' => [],
+            ],
+        ];
+
+        $realizer = new MySqlTerminalRealizer(
+            $faker,
+            new LexicalCatalog($catalogue),
+            new MySqlTokenizer(['SELECT' => 'SELECT_SYM'], [], false),
+            ['SELECT_SYM' => ['SELECT']],
+            [],
+            'mysql-8.4.7',
+            false,
+        );
+
+        self::assertSame(['users', ['IDENT']], $realizer->realizeWitnessed('IDENT'));
+    }
+
+    public function testSupportsFollowsTheCatalog(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(1729);
+
+        $catalogue = [
+            'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+            'terminals' => [
+                'IDENT' => [
+                    ['id' => 'identifier.0', 'sql' => 'users', 'tokens' => ['IDENT'], 'units' => ['identifier']],
+                ],
+            ],
+            'terminal_exclusions' => [],
+            'coverage' => [
+                'units' => ['identifier'],
+                'witnessed' => ['identifier' => 'identifier.0'],
+                'excluded' => [],
+            ],
+        ];
+
+        $realizer = new MySqlTerminalRealizer(
+            $faker,
+            new LexicalCatalog($catalogue),
+            new MySqlTokenizer(['SELECT' => 'SELECT_SYM'], [], false),
+            ['SELECT_SYM' => ['SELECT']],
+            [],
+            'mysql-8.4.7',
+            false,
+        );
+
+        self::assertTrue($realizer->supports('IDENT'));
+        self::assertFalse($realizer->supports('NOT_A_TERMINAL'));
+    }
+
+    public function testRealizeRequestedRejectsALexemeTheCatalogDoesNotWitness(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(1729);
+
+        $catalogue = [
+            'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+            'terminals' => [
+                'IDENT' => [
+                    ['id' => 'identifier.0', 'sql' => 'users', 'tokens' => ['IDENT'], 'units' => ['identifier']],
+                ],
+            ],
+            'terminal_exclusions' => [],
+            'coverage' => [
+                'units' => ['identifier'],
+                'witnessed' => ['identifier' => 'identifier.0'],
+                'excluded' => [],
+            ],
+        ];
+
+        $realizer = new MySqlTerminalRealizer(
+            $faker,
+            new LexicalCatalog($catalogue),
+            new MySqlTokenizer(['SELECT' => 'SELECT_SYM'], [], false),
+            ['SELECT_SYM' => ['SELECT']],
+            [],
+            'mysql-8.4.7',
+            false,
+        );
+
+        $this->expectException(LexicalException::class);
+        $this->expectExceptionMessage('MySQL lexical catalog has no IDENT witness for: other');
+
+        $realizer->realizeRequested('IDENT', 'other');
+    }
+
+    public function testRealizeFixedPrefersASpellingTheProfileLists(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(1729);
+
+        $catalogue = [
+            'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+            'terminals' => [
+
+            ],
+            'terminal_exclusions' => [],
+            'coverage' => [
+                'units' => [],
+                'witnessed' => [],
+                'excluded' => [],
+            ],
+        ];
+
+        $realizer = new MySqlTerminalRealizer(
+            $faker,
+            new LexicalCatalog($catalogue),
+            new MySqlTokenizer(['SELECT' => 'SELECT_SYM'], [], false),
+            ['SELECT_SYM' => ['SELECT']],
+            [],
+            'mysql-8.4.7',
+            false,
+        );
+
+        self::assertSame(['SELECT', ['SELECT_SYM']], $realizer->realizeFixed('SELECT_SYM'));
+    }
+
+    public function testTriviaReplaysAWitnessedSeparator(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(1729);
+
+        $catalogue = [
+            'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+            'terminals' => [
+                '@TRIVIA' => [
+                    ['id' => 'trivia.0', 'sql' => ' ', 'tokens' => [], 'units' => ['trivia']],
+                ],
+            ],
+            'terminal_exclusions' => [],
+            'coverage' => [
+                'units' => ['trivia'],
+                'witnessed' => ['trivia' => 'trivia.0'],
+                'excluded' => [],
+            ],
+        ];
+
+        $realizer = new MySqlTerminalRealizer(
+            $faker,
+            new LexicalCatalog($catalogue),
+            new MySqlTokenizer(['SELECT' => 'SELECT_SYM'], [], false),
+            ['SELECT_SYM' => ['SELECT']],
+            [],
+            'mysql-8.4.7',
+            false,
+        );
+
+        self::assertSame(' ', $realizer->trivia());
+    }
+
+    public function testSupportsAcceptsAnythingOnceSyntheticWritingIsAllowed(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(1729);
+
         $catalogue = [
             'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
             'terminals' => [],
@@ -244,33 +314,210 @@ final class MySqlTerminalRealizerTest extends TestCase
             'coverage' => ['units' => [], 'witnessed' => [], 'excluded' => []],
         ];
 
-        yield 'synthetic allowed' => [new MySqlTerminalRealizer(
-            Factory::create(),
+        $realizer = new MySqlTerminalRealizer(
+            $faker,
             new LexicalCatalog($catalogue),
             new MySqlTokenizer(['||' => 'OR_OR_SYM', 'SELECT' => 'SELECT_SYM'], [], true),
             ['SELECT_SYM' => ['SELECT']],
             [],
             'mysql-8.4.7',
             true,
-        )];
+        );
+
+        self::assertTrue($realizer->supports('NOT_A_TERMINAL'));
+    }
+
+    public function testRealizeSkipsTheTerminalsThatStandForNoText(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(1729);
+
+        $catalogue = [
+            'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+            'terminals' => [],
+            'terminal_exclusions' => [],
+            'coverage' => ['units' => [], 'witnessed' => [], 'excluded' => []],
+        ];
+
+        $realizer = new MySqlTerminalRealizer(
+            $faker,
+            new LexicalCatalog($catalogue),
+            new MySqlTokenizer(['||' => 'OR_OR_SYM', 'SELECT' => 'SELECT_SYM'], [], true),
+            ['SELECT_SYM' => ['SELECT']],
+            [],
+            'mysql-8.4.7',
+            true,
+        );
+
+        self::assertSame([null, []], $realizer->realize('END_OF_INPUT'));
+        self::assertSame([null, []], $realizer->realize('GRAMMAR_SELECTOR_EXPR'));
+    }
+
+    public function testRealizeSyntheticWritesTerminalsNoCatalogWitnesses(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(1729);
+
+        $catalogue = [
+            'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+            'terminals' => [],
+            'terminal_exclusions' => [],
+            'coverage' => ['units' => [], 'witnessed' => [], 'excluded' => []],
+        ];
+
+        $realizer = new MySqlTerminalRealizer(
+            $faker,
+            new LexicalCatalog($catalogue),
+            new MySqlTokenizer(['||' => 'OR_OR_SYM', 'SELECT' => 'SELECT_SYM'], [], true),
+            ['SELECT_SYM' => ['SELECT']],
+            [],
+            'mysql-8.4.7',
+            true,
+        );
+
+        self::assertSame(['?', ['PARAM_MARKER']], $realizer->realizeSynthetic('PARAM_MARKER'));
+        self::assertSame(['||', ['OR2_SYM']], $realizer->realizeSynthetic('OR2_SYM'));
+        self::assertSame(['_utf8mb4', ['UNDERSCORE_CHARSET']], $realizer->realizeSynthetic('UNDERSCORE_CHARSET'));
+    }
+
+    public function testRealizeRequestedAcceptsALexemeThatReadsBackAsTheTerminal(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(1729);
+
+        $catalogue = [
+            'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+            'terminals' => [],
+            'terminal_exclusions' => [],
+            'coverage' => ['units' => [], 'witnessed' => [], 'excluded' => []],
+        ];
+
+        $realizer = new MySqlTerminalRealizer(
+            $faker,
+            new LexicalCatalog($catalogue),
+            new MySqlTokenizer(['||' => 'OR_OR_SYM', 'SELECT' => 'SELECT_SYM'], [], true),
+            ['SELECT_SYM' => ['SELECT']],
+            [],
+            'mysql-8.4.7',
+            true,
+        );
+
+        self::assertSame(['?', ['PARAM_MARKER']], $realizer->realizeRequested('PARAM_MARKER', '?'));
+    }
+
+    public function testRealizeRequestedRejectsALexemeThatReadsBackAsSomethingElse(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(1729);
+
+        $catalogue = [
+            'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+            'terminals' => [],
+            'terminal_exclusions' => [],
+            'coverage' => ['units' => [], 'witnessed' => [], 'excluded' => []],
+        ];
+
+        $realizer = new MySqlTerminalRealizer(
+            $faker,
+            new LexicalCatalog($catalogue),
+            new MySqlTokenizer(['||' => 'OR_OR_SYM', 'SELECT' => 'SELECT_SYM'], [], true),
+            ['SELECT_SYM' => ['SELECT']],
+            [],
+            'mysql-8.4.7',
+            true,
+        );
+
+        $this->expectException(LexicalException::class);
+        $this->expectExceptionMessage('Requested MySQL lexeme does not realize PARAM_MARKER: users');
+
+        $realizer->realizeRequested('PARAM_MARKER', 'users');
+    }
+
+    public function testIdentifierCannotCollideWithAKeyword(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(1729);
+
+        $catalogue = [
+            'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+            'terminals' => [],
+            'terminal_exclusions' => [],
+            'coverage' => ['units' => [], 'witnessed' => [], 'excluded' => []],
+        ];
+
+        $realizer = new MySqlTerminalRealizer(
+            $faker,
+            new LexicalCatalog($catalogue),
+            new MySqlTokenizer(['||' => 'OR_OR_SYM', 'SELECT' => 'SELECT_SYM'], [], true),
+            ['SELECT_SYM' => ['SELECT']],
+            [],
+            'mysql-8.4.7',
+            true,
+        );
+
+        self::assertStringStartsWith('_', $realizer->identifier());
+    }
+
+    public function testTriviaIsASingleSpaceWhenNothingIsWitnessed(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(1729);
+
+        $catalogue = [
+            'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+            'terminals' => [],
+            'terminal_exclusions' => [],
+            'coverage' => ['units' => [], 'witnessed' => [], 'excluded' => []],
+        ];
+
+        $realizer = new MySqlTerminalRealizer(
+            $faker,
+            new LexicalCatalog($catalogue),
+            new MySqlTokenizer(['||' => 'OR_OR_SYM', 'SELECT' => 'SELECT_SYM'], [], true),
+            ['SELECT_SYM' => ['SELECT']],
+            [],
+            'mysql-8.4.7',
+            true,
+        );
+
+        self::assertSame(' ', $realizer->trivia());
+    }
+
+    public function testOptionalTriviaIsNothingWhenNothingIsWitnessed(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(1729);
+
+        $catalogue = [
+            'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+            'terminals' => [],
+            'terminal_exclusions' => [],
+            'coverage' => ['units' => [], 'witnessed' => [], 'excluded' => []],
+        ];
+
+        $realizer = new MySqlTerminalRealizer(
+            $faker,
+            new LexicalCatalog($catalogue),
+            new MySqlTokenizer(['||' => 'OR_OR_SYM', 'SELECT' => 'SELECT_SYM'], [], true),
+            ['SELECT_SYM' => ['SELECT']],
+            [],
+            'mysql-8.4.7',
+            true,
+        );
+
+        self::assertSame('', $realizer->optionalTrivia());
     }
 
     #[DataProvider('providerSyntheticTerminal')]
     public function testRealizeSyntheticWritesEveryNamedTerminalAsItsOwnKindOfToken(
-        MySqlTerminalRealizer $realizer,
         string $terminal,
         string $token,
     ): void {
-        self::assertSame([$token], $realizer->realizeSynthetic($terminal)[1]);
-    }
+        $faker = Factory::create();
+        $faker->seed(1729);
 
-    /**
-     * @return iterable<string, array{MySqlTerminalRealizer, string, string}>
-     */
-    public static function providerSyntheticTerminal(): iterable
-    {
         $realizer = new MySqlTerminalRealizer(
-            Factory::create(),
+            $faker,
             new LexicalCatalog([
                 'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
                 'terminals' => [],
@@ -283,6 +530,15 @@ final class MySqlTerminalRealizerTest extends TestCase
             'mysql-8.4.7',
             true,
         );
+
+        self::assertSame([$token], $realizer->realizeSynthetic($terminal)[1]);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerSyntheticTerminal(): iterable
+    {
 
         $terminals = [
             'IDENT' => 'IDENT',
@@ -304,26 +560,20 @@ final class MySqlTerminalRealizerTest extends TestCase
             'UNDERSCORE_CHARSET' => 'UNDERSCORE_CHARSET',
         ];
         foreach ($terminals as $terminal => $token) {
-            yield $terminal => [$realizer, $terminal, $token];
+            yield $terminal => [$terminal, $token];
         }
     }
 
     #[DataProvider('providerFixedSyntheticTerminal')]
     public function testRealizeSyntheticWritesEveryFixedTerminalAsItsOneSpelling(
-        MySqlTerminalRealizer $realizer,
         string $terminal,
         string $lexeme,
     ): void {
-        self::assertSame($lexeme, $realizer->realizeSynthetic($terminal)[0]);
-    }
+        $faker = Factory::create();
+        $faker->seed(1729);
 
-    /**
-     * @return iterable<string, array{MySqlTerminalRealizer, string, string}>
-     */
-    public static function providerFixedSyntheticTerminal(): iterable
-    {
         $realizer = new MySqlTerminalRealizer(
-            Factory::create(),
+            $faker,
             new LexicalCatalog([
                 'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
                 'terminals' => [],
@@ -337,6 +587,15 @@ final class MySqlTerminalRealizerTest extends TestCase
             true,
         );
 
+        self::assertSame($lexeme, $realizer->realizeSynthetic($terminal)[0]);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerFixedSyntheticTerminal(): iterable
+    {
+
         $spellings = [
             'ULONGLONG_NUM' => '18446744073709551615',
             'LEX_HOSTNAME' => 'localhost',
@@ -346,7 +605,7 @@ final class MySqlTerminalRealizerTest extends TestCase
             'UNDERSCORE_CHARSET' => '_utf8mb4',
         ];
         foreach ($spellings as $terminal => $lexeme) {
-            yield $terminal => [$realizer, $terminal, $lexeme];
+            yield $terminal => [$terminal, $lexeme];
         }
     }
 
@@ -355,9 +614,29 @@ final class MySqlTerminalRealizerTest extends TestCase
         string $terminal,
         string $expected,
     ): void {
+        $faker = Factory::create();
+        $faker->seed(1729);
+
+        $catalogue = [
+            'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+            'terminals' => [],
+            'terminal_exclusions' => [],
+            'coverage' => ['units' => [], 'witnessed' => [], 'excluded' => []],
+        ];
+
+        $realizer = new MySqlTerminalRealizer(
+            $faker,
+            new LexicalCatalog($catalogue),
+            new MySqlTokenizer(['||' => 'OR_OR_SYM', 'SELECT' => 'SELECT_SYM'], [], true),
+            ['SELECT_SYM' => ['SELECT']],
+            [],
+            'mysql-8.4.7',
+            true,
+        );
+
         self::assertSame(
             $expected,
-            MySqlRealizers::synthetic(ScriptedNumbers::answering())->syntheticSpelling($terminal),
+            $realizer->syntheticSpelling($terminal),
         );
     }
 
@@ -387,188 +666,367 @@ final class MySqlTerminalRealizerTest extends TestCase
         yield 'a terminal without the suffix stands for itself' => ['IDENT', 'IDENT'];
     }
 
-    public function testRealizeFixedFallsBackToTheTerminalItselfWhereNothingSpellsIt(): void
+    public function testRealizeWitnessedSelectsFromBothConfiguredExamples(): void
     {
-        $faker = ScriptedNumbers::answering();
+        $faker = Factory::create();
+        $faker->seed(1729);
+        $tokenizer = new MySqlTokenizer(['SELECT' => 'SELECT_SYM'], [], true);
+        $realizer = new MySqlTerminalRealizer(
+            $faker,
+            new LexicalCatalog([
+                'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+                'terminals' => [
+                    'IDENT' => [
+                        ['id' => 'identifier.0', 'sql' => 'users', 'tokens' => ['IDENT'], 'units' => ['identifier']],
+                        ['id' => 'identifier.1', 'sql' => 'orders', 'tokens' => ['IDENT'], 'units' => ['identifier']],
+                    ],
+                ],
+                'terminal_exclusions' => [],
+                'coverage' => [
+                    'units' => ['identifier'],
+                    'witnessed' => ['identifier' => 'identifier.0'],
+                    'excluded' => [],
+                ],
+            ]),
+            $tokenizer,
+            ['SELECT_SYM' => ['SELECT']],
+            [],
+            'mysql-8.4.7',
+            false,
+        );
 
-        self::assertSame('OTHER', MySqlRealizers::witnessed($faker)->realizeFixed('OTHER')[0]);
-        self::assertSame([], $faker->numberBetweenCalls);
+        $results = array_map(static fn (): array => $realizer->realizeWitnessed('IDENT'), range(1, 64));
+
+        self::assertContains(['users', ['IDENT']], $results);
+        self::assertContains(['orders', ['IDENT']], $results);
+        self::assertSame([], array_diff(array_column($results, 0), ['users', 'orders']));
+        self::assertSame(array_fill(0, 64, ['IDENT']), array_column($results, 1));
     }
 
-    public function testRealizeFixedWritesTheSpellingATerminalNameStandsForWhereSyntheticIsAllowed(): void
+    public function testRealizeFixedSelectsFromBothConfiguredSpellings(): void
     {
-        $faker = ScriptedNumbers::answering();
+        $faker = Factory::create();
+        $faker->seed(1729);
+        $tokenizer = new MySqlTokenizer(['SELECT' => 'SELECT_SYM'], [], true);
+        $realizer = new MySqlTerminalRealizer(
+            $faker,
+            new LexicalCatalog([
+                'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+                'terminals' => [
 
-        self::assertSame(['||', ['OR2_SYM']], MySqlRealizers::synthetic($faker)->realizeFixed('OR_OR_SYM'));
-        self::assertSame([], $faker->numberBetweenCalls);
+                ],
+                'terminal_exclusions' => [],
+                'coverage' => [
+                    'units' => [],
+                    'witnessed' => [],
+                    'excluded' => [],
+                ],
+            ]),
+            $tokenizer,
+            ['SELECT_SYM' => ['SELECT', 'select']],
+            [],
+            'mysql-8.4.7',
+            false,
+        );
+
+        $results = array_map(static fn (): array => $realizer->realizeFixed('SELECT_SYM'), range(1, 64));
+
+        self::assertContains(['SELECT', ['SELECT_SYM']], $results);
+        self::assertContains(['select', ['SELECT_SYM']], $results);
+        self::assertSame([], array_diff(array_column($results, 0), ['SELECT', 'select']));
+        self::assertSame(array_fill(0, 64, ['SELECT_SYM']), array_column($results, 1));
     }
 
-    public function testRealizeFixedChoosesFromEverySpellingAndNoFurther(): void
+    public function testTriviaSelectsOnlyConfiguredSeparators(): void
     {
-        $faker = ScriptedNumbers::answering(1);
+        $faker = Factory::create();
+        $faker->seed(1729);
+        $tokenizer = new MySqlTokenizer(['SELECT' => 'SELECT_SYM'], [], true);
+        $realizer = new MySqlTerminalRealizer(
+            $faker,
+            new LexicalCatalog([
+                'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+                'terminals' => [
+                    '@TRIVIA' => [
+                        ['id' => 'trivia.0', 'sql' => ' ', 'tokens' => [], 'units' => ['trivia']],
+                        ['id' => 'trivia.1', 'sql' => '/* separator */', 'tokens' => [], 'units' => ['trivia']],
+                    ],
+                ],
+                'terminal_exclusions' => [],
+                'coverage' => [
+                    'units' => ['trivia'],
+                    'witnessed' => ['trivia' => 'trivia.0'],
+                    'excluded' => [],
+                ],
+            ]),
+            $tokenizer,
+            ['SELECT_SYM' => ['SELECT']],
+            [],
+            'mysql-8.4.7',
+            false,
+        );
 
-        $realized = MySqlRealizers::witnessed($faker)->realizeFixed('SELECT_SYM');
+        $samples = array_map(static fn (): string => $realizer->trivia(), range(1, 64));
 
-        self::assertSame(['select', ['SELECT_SYM']], $realized);
-        self::assertSame([[0, 1]], $faker->numberBetweenCalls);
+        self::assertContains(' ', $samples);
+        self::assertContains('/* separator */', $samples);
+        self::assertSame([], array_diff($samples, [' ', '/* separator */']));
     }
 
-    public function testRealizeFixedReadsAFunctionSpellingTheSameWayAsASymbolOne(): void
+    public function testOptionalTriviaSelectsAbsenceOrAConfiguredSeparator(): void
     {
-        $faker = ScriptedNumbers::answering(0);
+        $faker = Factory::create();
+        $faker->seed(1729);
+        $tokenizer = new MySqlTokenizer(['SELECT' => 'SELECT_SYM'], [], true);
+        $realizer = new MySqlTerminalRealizer(
+            $faker,
+            new LexicalCatalog([
+                'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+                'terminals' => [
+                    '@TRIVIA' => [
+                        ['id' => 'trivia.0', 'sql' => ' ', 'tokens' => [], 'units' => ['trivia']],
+                        ['id' => 'trivia.1', 'sql' => '/* separator */', 'tokens' => [], 'units' => ['trivia']],
+                    ],
+                ],
+                'terminal_exclusions' => [],
+                'coverage' => [
+                    'units' => ['trivia'],
+                    'witnessed' => ['trivia' => 'trivia.0'],
+                    'excluded' => [],
+                ],
+            ]),
+            $tokenizer,
+            ['SELECT_SYM' => ['SELECT']],
+            [],
+            'mysql-8.4.7',
+            false,
+        );
 
-        self::assertSame(['COUNT', ['COUNT_SYM']], MySqlRealizers::witnessed($faker)->realizeFixed('COUNT_SYM'));
+        $samples = array_map(static fn (): string => $realizer->optionalTrivia(), range(1, 64));
+
+        self::assertContains('', $samples);
+        self::assertContains(' ', $samples);
+        self::assertContains('/* separator */', $samples);
+        self::assertSame([], array_diff($samples, ['', ' ', '/* separator */']));
     }
 
-    public function testIdentifierIsKeptFromCollidingWithAKeyword(): void
+    public function testStringLiteralProducesStringsThatLexAsOneToken(): void
     {
-        self::assertStringStartsWith('_', MySqlRealizers::synthetic(ScriptedNumbers::answering())->identifier());
+        $faker = Factory::create();
+        $faker->seed(1729);
+        $tokenizer = new MySqlTokenizer(['SELECT' => 'SELECT_SYM'], [], true);
+        $realizer = new MySqlTerminalRealizer(
+            $faker,
+            new LexicalCatalog([
+                'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+                'terminals' => [
+
+                ],
+                'terminal_exclusions' => [],
+                'coverage' => [
+                    'units' => [],
+                    'witnessed' => [],
+                    'excluded' => [],
+                ],
+            ]),
+            $tokenizer,
+            ['SELECT_SYM' => ['SELECT']],
+            [],
+            'mysql-8.4.7',
+            true,
+        );
+
+        $samples = array_map(static fn (): string => $realizer->stringLiteral(), range(1, 128));
+        self::assertSame(array_fill(0, 128, ['TEXT_STRING']), array_map($tokenizer->tokenize(...), $samples));
+        self::assertNotSame([], array_filter($samples, static fn (string $sql): bool => str_contains(substr($sql, 1, -1), "''")));
+        self::assertNotSame([], array_filter($samples, static fn (string $sql): bool => str_contains($sql, '\\')));
+        self::assertNotSame([], array_filter($samples, static fn (string $sql): bool => str_contains($sql, 'SELECT')));
     }
 
-    public function testQuotedIdentifierWritesAKeywordOnOneOfFourDraws(): void
+    public function testQuotedIdentifierProducesEscapedIdentifiers(): void
     {
-        $faker = ScriptedNumbers::answering(0, 1);
+        $faker = Factory::create();
+        $faker->seed(1729);
+        $tokenizer = new MySqlTokenizer(['SELECT' => 'SELECT_SYM'], [], true);
+        $realizer = new MySqlTerminalRealizer(
+            $faker,
+            new LexicalCatalog([
+                'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+                'terminals' => [
 
-        self::assertSame('`select`', MySqlRealizers::synthetic($faker)->quotedIdentifier());
-        self::assertSame([[0, 3], [0, 7]], $faker->numberBetweenCalls);
+                ],
+                'terminal_exclusions' => [],
+                'coverage' => [
+                    'units' => [],
+                    'witnessed' => [],
+                    'excluded' => [],
+                ],
+            ]),
+            $tokenizer,
+            ['SELECT_SYM' => ['SELECT']],
+            [],
+            'mysql-8.4.7',
+            true,
+        );
+
+        $samples = array_map(static fn (): string => $realizer->quotedIdentifier(), range(1, 256));
+        self::assertSame(array_fill(0, 256, ['IDENT_QUOTED']), array_map($tokenizer->tokenize(...), $samples));
+        self::assertContains('`select`', $samples);
+        self::assertNotSame([], array_filter($samples, static fn (string $sql): bool => str_contains($sql, '``')));
+        self::assertNotSame([], array_filter($samples, static fn (string $sql): bool => str_starts_with($sql, '`_')));
     }
 
-    public function testQuotedIdentifierDoublesABacktickWrittenIntoTheBody(): void
+    public function testHexadecimalLiteralProducesBothValidSpellings(): void
     {
-        $faker = ScriptedNumbers::answering(0, 0);
+        $faker = Factory::create();
+        $faker->seed(1729);
+        $tokenizer = new MySqlTokenizer(['SELECT' => 'SELECT_SYM'], [], true);
+        $realizer = new MySqlTerminalRealizer(
+            $faker,
+            new LexicalCatalog([
+                'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+                'terminals' => [
 
-        $identifier = MySqlRealizers::synthetic($faker)->quotedIdentifier();
+                ],
+                'terminal_exclusions' => [],
+                'coverage' => [
+                    'units' => [],
+                    'witnessed' => [],
+                    'excluded' => [],
+                ],
+            ]),
+            $tokenizer,
+            ['SELECT_SYM' => ['SELECT']],
+            [],
+            'mysql-8.4.7',
+            true,
+        );
 
-        self::assertStringStartsWith('`select``', $identifier);
-        self::assertSame([[0, 3], [0, 7]], array_slice($faker->numberBetweenCalls, 0, 2));
+        $samples = array_map(static fn (): string => $realizer->hexadecimalLiteral(), range(1, 128));
+        self::assertSame(array_fill(0, 128, ['HEX_NUM']), array_map($tokenizer->tokenize(...), $samples));
+        self::assertNotSame([], array_filter($samples, static fn (string $sql): bool => str_starts_with($sql, '0x')));
+        self::assertNotSame([], array_filter($samples, static fn (string $sql): bool => str_starts_with($sql, "X'")));
+        self::assertSame([], array_filter($samples, static fn (string $sql): bool => preg_match("/^(?:0x[0-9a-f]+|X'(?:[0-9a-f]{2})*')$/", $sql) !== 1));
     }
 
-    public function testQuotedIdentifierIsAnOrdinaryIdentifierOnEveryOtherDraw(): void
+    public function testBinaryLiteralProducesBothValidSpellings(): void
     {
-        $faker = ScriptedNumbers::answering(1, 1);
+        $faker = Factory::create();
+        $faker->seed(1729);
+        $tokenizer = new MySqlTokenizer(['SELECT' => 'SELECT_SYM'], [], true);
+        $realizer = new MySqlTerminalRealizer(
+            $faker,
+            new LexicalCatalog([
+                'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+                'terminals' => [
 
-        self::assertStringStartsWith('`_', MySqlRealizers::synthetic($faker)->quotedIdentifier());
+                ],
+                'terminal_exclusions' => [],
+                'coverage' => [
+                    'units' => [],
+                    'witnessed' => [],
+                    'excluded' => [],
+                ],
+            ]),
+            $tokenizer,
+            ['SELECT_SYM' => ['SELECT']],
+            [],
+            'mysql-8.4.7',
+            true,
+        );
+
+        $samples = array_map(static fn (): string => $realizer->binaryLiteral(), range(1, 128));
+        self::assertSame(array_fill(0, 128, ['BIN_NUM']), array_map($tokenizer->tokenize(...), $samples));
+        self::assertNotSame([], array_filter($samples, static fn (string $sql): bool => str_starts_with($sql, '0b')));
+        self::assertNotSame([], array_filter($samples, static fn (string $sql): bool => str_starts_with($sql, "B'")));
+        self::assertSame([], array_filter($samples, static fn (string $sql): bool => preg_match("/^(?:0b[01]+|B'[01]*')$/", $sql) !== 1));
     }
 
-    public function testStringLiteralDoublesAQuoteInsideTheBody(): void
+    public function testDollarQuotedStringProducesOneStringToken(): void
     {
-        $faker = ScriptedNumbers::answering(2);
+        $faker = Factory::create();
+        $faker->seed(1729);
+        $tokenizer = new MySqlTokenizer(['SELECT' => 'SELECT_SYM'], [], true);
+        $realizer = new MySqlTerminalRealizer(
+            $faker,
+            new LexicalCatalog([
+                'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+                'terminals' => [
 
-        self::assertSame("'a''b'", MySqlRealizers::synthetic($faker)->stringLiteral());
-        self::assertSame([[0, 6]], $faker->numberBetweenCalls);
+                ],
+                'terminal_exclusions' => [],
+                'coverage' => [
+                    'units' => [],
+                    'witnessed' => [],
+                    'excluded' => [],
+                ],
+            ]),
+            $tokenizer,
+            ['SELECT_SYM' => ['SELECT']],
+            [],
+            'mysql-8.4.7',
+            true,
+        );
+
+        $samples = array_map(static fn (): string => $realizer->dollarQuotedString(), range(1, 128));
+        self::assertSame(array_fill(0, 128, ['DOLLAR_QUOTED_STRING_SYM']), array_map($tokenizer->tokenize(...), $samples));
     }
 
-    public function testStringLiteralWritesABackslashOnItsFourthDraw(): void
+    public function testRealizeFixedUsesFunctionSpellings(): void
     {
-        $faker = ScriptedNumbers::answering(3);
+        $faker = Factory::create();
+        $faker->seed(1729);
+        $tokenizer = new MySqlTokenizer(['SELECT' => 'SELECT_SYM'], [], true);
+        $realizer = new MySqlTerminalRealizer(
+            $faker,
+            new LexicalCatalog([
+                'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+                'terminals' => [
 
-        self::assertSame("'a\\b'", MySqlRealizers::synthetic($faker)->stringLiteral());
+                ],
+                'terminal_exclusions' => [],
+                'coverage' => [
+                    'units' => [],
+                    'witnessed' => [],
+                    'excluded' => [],
+                ],
+            ]),
+            $tokenizer,
+            ['SELECT_SYM' => ['SELECT']],
+            ['COUNT_SYM' => ['COUNT']],
+            'mysql-8.4.7',
+            false,
+        );
+
+        self::assertSame(['COUNT', ['COUNT_SYM']], $realizer->realizeFixed('COUNT_SYM'));
     }
 
-    #[DataProvider('providerLexicalSequenceDraw')]
-    public function testStringLiteralWritesALexicalSequenceOnItsFirstTwoDraws(int $draw): void
+    public function testRealizeFixedTokenizesAnUnconfiguredTerminal(): void
     {
-        $literal = MySqlRealizers::synthetic(ScriptedNumbers::answering($draw))->stringLiteral();
+        $faker = Factory::create();
+        $faker->seed(1729);
+        $tokenizer = new MySqlTokenizer(['SELECT' => 'SELECT_SYM'], [], true);
+        $realizer = new MySqlTerminalRealizer(
+            $faker,
+            new LexicalCatalog([
+                'source' => ['engine' => 'official', 'entrypoint' => 'lexer'],
+                'terminals' => [
 
-        self::assertStringStartsWith("'", $literal);
-        self::assertStringEndsWith("'", $literal);
-    }
+                ],
+                'terminal_exclusions' => [],
+                'coverage' => [
+                    'units' => [],
+                    'witnessed' => [],
+                    'excluded' => [],
+                ],
+            ]),
+            $tokenizer,
+            ['SELECT_SYM' => ['SELECT']],
+            [],
+            'mysql-8.4.7',
+            false,
+        );
 
-    /**
-     * @return iterable<string, array{int}>
-     */
-    public static function providerLexicalSequenceDraw(): iterable
-    {
-        yield 'first draw' => [0];
-        yield 'second draw' => [1];
-    }
-
-    public function testDollarQuotedStringIsWrittenBetweenBareDollarPairs(): void
-    {
-        $literal = MySqlRealizers::synthetic(ScriptedNumbers::answering())->dollarQuotedString();
-
-        self::assertStringStartsWith('$$', $literal);
-        self::assertStringEndsWith('$$', $literal);
-    }
-
-    public function testHexadecimalLiteralIsWrittenWithThePrefixOnOneOfTwoDraws(): void
-    {
-        $faker = ScriptedNumbers::answering(0);
-
-        self::assertStringStartsWith('0x', MySqlRealizers::synthetic($faker)->hexadecimalLiteral());
-        self::assertSame([0, 1], $faker->numberBetweenCalls[0]);
-    }
-
-    public function testHexadecimalLiteralIsWrittenQuotedOnEveryOtherDraw(): void
-    {
-        $faker = ScriptedNumbers::answering(1, 2);
-
-        $literal = MySqlRealizers::synthetic($faker)->hexadecimalLiteral();
-
-        self::assertSame(4, strlen($literal) - 3);
-        self::assertStringStartsWith("X'", $literal);
-        self::assertSame([0, 8], $faker->numberBetweenCalls[1]);
-    }
-
-    public function testBinaryLiteralIsWrittenWithThePrefixOnOneOfTwoDraws(): void
-    {
-        $faker = ScriptedNumbers::answering(0);
-
-        self::assertStringStartsWith('0b', MySqlRealizers::synthetic($faker)->binaryLiteral());
-        self::assertSame([0, 1], $faker->numberBetweenCalls[0]);
-    }
-
-    public function testBinaryLiteralIsWrittenQuotedOnEveryOtherDraw(): void
-    {
-        $faker = ScriptedNumbers::answering(1);
-
-        self::assertStringStartsWith("B'", MySqlRealizers::synthetic($faker)->binaryLiteral());
-    }
-
-    public function testRealizeWitnessedChoosesFromEveryWitnessAndNoFurther(): void
-    {
-        $faker = ScriptedNumbers::answering(1);
-
-        self::assertSame(['orders', ['IDENT']], MySqlRealizers::witnessed($faker)->realizeWitnessed('IDENT'));
-        self::assertSame([[0, 1]], $faker->numberBetweenCalls);
-    }
-
-    public function testTriviaIsASpaceWhereTerminalsMayBeWrittenWithoutAWitness(): void
-    {
-        $faker = ScriptedNumbers::answering();
-
-        self::assertSame(' ', MySqlRealizers::synthetic($faker)->trivia());
-        self::assertSame([], $faker->numberBetweenCalls);
-    }
-
-    public function testTriviaIsChosenFromEveryWitnessAndNoFurther(): void
-    {
-        $faker = ScriptedNumbers::answering(1);
-
-        self::assertSame('/* c */', MySqlRealizers::witnessed($faker)->trivia());
-        self::assertSame([[0, 1]], $faker->numberBetweenCalls);
-    }
-
-    public function testOptionalTriviaIsNothingWhereTerminalsMayBeWrittenWithoutAWitness(): void
-    {
-        $faker = ScriptedNumbers::answering();
-
-        self::assertSame('', MySqlRealizers::synthetic($faker)->optionalTrivia());
-        self::assertSame([], $faker->numberBetweenCalls);
-    }
-
-    public function testOptionalTriviaIsNothingOnOneOfTwoDraws(): void
-    {
-        $faker = ScriptedNumbers::answering(0);
-
-        self::assertSame('', MySqlRealizers::witnessed($faker)->optionalTrivia());
-        self::assertSame([[0, 1]], $faker->numberBetweenCalls);
-    }
-
-    public function testOptionalTriviaIsTriviaOnEveryOtherDraw(): void
-    {
-        $faker = ScriptedNumbers::answering(1, 0);
-
-        self::assertSame(' ', MySqlRealizers::witnessed($faker)->optionalTrivia());
+        self::assertSame(['OTHER', ['IDENT']], $realizer->realizeFixed('OTHER'));
     }
 }

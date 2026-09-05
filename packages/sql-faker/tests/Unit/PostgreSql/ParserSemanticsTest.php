@@ -41,6 +41,7 @@ use SqlFaker\PostgreSql\PgTokenizer;
 #[UsesClass(PgLookahead::class)]
 #[UsesClass(PgTerminalRealizer::class)]
 #[UsesClass(PgTokenizer::class)]
+#[UsesClass(\SqlFaker\PostgreSql\PgQuoting::class)]
 final class ParserSemanticsTest extends TestCase
 {
     public function testAppliedGivesEveryOptionInASetListAValue(): void

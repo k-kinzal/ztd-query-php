@@ -48,6 +48,7 @@ use UnexpectedValueException;
 #[UsesClass(SqlVersionRegistry::class)]
 #[UsesClass(SqliteTerminalRealizer::class)]
 #[UsesClass(SqliteTokenizer::class)]
+#[UsesClass(\SqlFaker\Sqlite\SqliteQuoting::class)]
 final class LexicalGrammarTest extends TestCase
 {
     public function testGenerateQuotedIdentifierWritesWhatTheLexerReadsBackAsAnIdentifier(): void

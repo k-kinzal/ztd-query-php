@@ -24,7 +24,7 @@ final class PgTokenizer
 
     private const PUNCTUATION = '%()*+,-./:;<=>[]^';
 
-    private const FIXED_OPERATORS = ['::', '..', ':=', '=>', '<=', '>=', '<>', '!='];
+    private const PUNCTUATION_PAIRS = ['::', '..', ':='];
 
     /** @readonly */
     private PgLookahead $lookahead;
@@ -334,7 +334,7 @@ final class PgTokenizer
      */
     public function operatorAt(string $sql, int $offset): ?array
     {
-        foreach (self::FIXED_OPERATORS as $operator) {
+        foreach (self::PUNCTUATION_PAIRS as $operator) {
             if (substr($sql, $offset, strlen($operator)) === $operator) {
                 return [$operator, $this->fixedOperator($operator) ?? 'Op'];
             }
@@ -354,6 +354,17 @@ final class PgTokenizer
         }
 
         $lexeme = substr($sql, $offset, $end - $offset);
+        if (preg_match('/[~!@#%^&|`?]/', $lexeme) !== 1) {
+            $lexeme = rtrim($lexeme, '+-');
+            if ($lexeme === '') {
+                return [$character, $character];
+            }
+        }
+
+        $fixed = $this->fixedOperator($lexeme);
+        if ($fixed !== null) {
+            return [$lexeme, $fixed];
+        }
 
         return strlen($lexeme) === 1 && $this->isPunctuation($lexeme)
             ? [$lexeme, $lexeme]

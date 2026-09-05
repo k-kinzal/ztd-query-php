@@ -223,7 +223,7 @@ final class PgTerminalRealizer
             $body .= '"' . $this->strings->rawIdentifier();
         }
 
-        return ($unicode ? 'U&' : '') . '"' . str_replace('"', '""', $body) . '"';
+        return ($unicode ? 'U&' : '') . PgQuoting::identifier($body);
     }
 
     /**
@@ -253,7 +253,7 @@ final class PgTerminalRealizer
             default => $this->strings->mixedAlnumString(0, 24),
         };
 
-        return "'" . str_replace("'", "''", $body) . "'";
+        return PgQuoting::stringLiteral($body);
     }
 
     /**
