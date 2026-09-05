@@ -6,25 +6,26 @@ namespace Tests\Unit\SqlFaker\MySql;
 
 use Faker\Factory;
 use LogicException;
+use Override;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\ProductionPattern;
+use SqlFaker\Grammar\RandomStringGenerator;
+use SqlFaker\Grammar\TokenJoiner;
+use SqlFaker\MySql\GenerationPlans;
 use SqlFaker\MySql\Grammar\Grammar;
 use SqlFaker\MySql\Grammar\NonTerminal;
 use SqlFaker\MySql\Grammar\Production;
 use SqlFaker\MySql\Grammar\ProductionRule;
 use SqlFaker\MySql\Grammar\Terminal;
 use SqlFaker\MySql\Grammar\TerminationAnalyzer;
-use SqlFaker\MySql\GenerationPlans;
-use SqlFaker\MySql\SqlGenerator;
-use SqlFaker\Grammar\RandomStringGenerator;
-use SqlFaker\Grammar\TokenJoiner;
 use SqlFaker\MySql\LexicalGrammar;
+use SqlFaker\MySql\SqlGenerator;
 use SqlFaker\MySqlProvider;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 
 #[CoversClass(SqlGenerator::class)]
 #[CoversClass(TokenJoiner::class)]
@@ -40,7 +41,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[Medium]
 final class SqlGeneratorTest extends TestCase
 {
-    #[\Override]
+    #[Override]
     protected function setUp(): void
     {
         parent::setUp();
@@ -474,7 +475,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $generator = new SqlGenerator($grammar, $faker);
 
-        $this->expectException(\LogicException::class);
+        $this->expectException(LogicException::class);
 
         $generator->generate(GenerationPlan::fromRule('non_existent_rule'));
     }

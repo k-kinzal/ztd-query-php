@@ -4,17 +4,23 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\MySql;
 
+use Closure;
 use Faker\Factory;
+use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
+use ReflectionParameter;
+use RuntimeException;
 use SqlFaker\Grammar\LexicalCatalog;
 use SqlFaker\Grammar\LexicalException;
-use SqlFaker\Grammar\SqlVersion;
 use SqlFaker\Grammar\RandomStringGenerator;
+use SqlFaker\Grammar\SqlVersion;
 use SqlFaker\Grammar\TokenJoiner;
 use SqlFaker\MySql\LexicalGrammar;
+use UnexpectedValueException;
 
 #[CoversClass(LexicalGrammar::class)]
 #[CoversClass(RandomStringGenerator::class)]
@@ -54,23 +60,23 @@ final class LexicalGrammarTest extends TestCase
     }
 
     /**
-     * @param \Closure(LexicalGrammar): string $generate
+     * @param Closure(LexicalGrammar): string $generate
      * @param list<int> $expected
      */
     #[DataProvider('providerPublicLexemeDefaults')]
-    public function testPublicLexemeDefaultBounds(\Closure $generate, string $method, array $expected): void
+    public function testPublicLexemeDefaultBounds(Closure $generate, string $method, array $expected): void
     {
         self::assertNotSame('', $generate(new LexicalGrammar(Factory::create(), 'mysql-8.4.7')));
         self::assertSame(
             $expected,
             array_map(
-                static fn (\ReflectionParameter $parameter): mixed => $parameter->getDefaultValue(),
-                (new \ReflectionMethod(LexicalGrammar::class, $method))->getParameters(),
+                static fn (ReflectionParameter $parameter): mixed => $parameter->getDefaultValue(),
+                (new ReflectionMethod(LexicalGrammar::class, $method))->getParameters(),
             ),
         );
     }
 
-    /** @return iterable<string, array{\Closure(LexicalGrammar): string, string, list<int>}> */
+    /** @return iterable<string, array{Closure(LexicalGrammar): string, string, list<int>}> */
     public static function providerPublicLexemeDefaults(): iterable
     {
         yield 'quoted identifier' => [static fn (LexicalGrammar $grammar): string => $grammar->generateQuotedIdentifier(), 'generateQuotedIdentifier', [1, 64]];
@@ -103,7 +109,7 @@ final class LexicalGrammarTest extends TestCase
              * @param mixed $min
              * @param mixed $max
              */
-            #[\Override]
+            #[Override]
             public function numberBetween($min = 0, $max = 2147483647): int
             {
                 if ($this->first) {
@@ -112,7 +118,7 @@ final class LexicalGrammarTest extends TestCase
                     return $this->choice;
                 }
                 if (!is_int($min)) {
-                    throw new \UnexpectedValueException();
+                    throw new UnexpectedValueException();
                 }
 
                 return $min;
@@ -213,7 +219,7 @@ SQL;
     {
         $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('NOT_A_TERMINAL');
 
         $lexical->assertTerminalsCovered(['NOT_A_TERMINAL']);

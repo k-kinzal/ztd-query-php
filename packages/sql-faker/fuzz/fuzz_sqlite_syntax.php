@@ -35,5 +35,5 @@ fwrite(STDERR, "Starting fuzzer...\n\n");
 $target = new SqliteSyntaxTarget($pdo, $maxDepth);
 
 /* Configure fuzzer via $config (provided by php-fuzzer) */
-/** @var \PhpFuzzer\Config $config */
+/** @var PhpFuzzer\Config $config */
 $config->setTarget(Closure::fromCallable($target));

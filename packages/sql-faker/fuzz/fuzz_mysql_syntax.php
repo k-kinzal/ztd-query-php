@@ -53,7 +53,7 @@ $containerMap = [
 
 if (!isset($containerMap[$mysqlVersion])) {
     fwrite(STDERR, "Unknown MySQL version: $mysqlVersion\n");
-    fwrite(STDERR, "Supported versions: " . implode(', ', array_keys($containerMap)) . "\n");
+    fwrite(STDERR, 'Supported versions: ' . implode(', ', array_keys($containerMap)) . "\n");
     exit(1);
 }
 
@@ -86,5 +86,5 @@ fwrite(STDERR, "Starting fuzzer...\n\n");
 $target = new MySqlSyntaxTarget($pdo, $grammarVersion, $maxDepth);
 
 /* Configure fuzzer via $config (provided by php-fuzzer) */
-/** @var \PhpFuzzer\Config $config */
+/** @var PhpFuzzer\Config $config */
 $config->setTarget(Closure::fromCallable($target));

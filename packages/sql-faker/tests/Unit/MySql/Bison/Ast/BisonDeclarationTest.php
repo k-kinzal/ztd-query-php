@@ -6,6 +6,7 @@ namespace Tests\Unit\SqlFaker\MySql\Bison\Ast;
 
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 use SqlFaker\MySql\Bison\Ast\BisonDeclaration;
 
 #[CoversNothing]
@@ -13,7 +14,7 @@ final class BisonDeclarationTest extends TestCase
 {
     public function testIsInterface(): void
     {
-        $ref = new \ReflectionClass(BisonDeclaration::class);
+        $ref = new ReflectionClass(BisonDeclaration::class);
         self::assertTrue($ref->isInterface());
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\MySql\Grammar;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\MySql\Bison\Ast\BisonAlternativeNode;
 use SqlFaker\MySql\Bison\Ast\BisonAst;
@@ -17,7 +18,6 @@ use SqlFaker\MySql\Grammar\GrammarCompiler;
 use SqlFaker\MySql\Grammar\NonTerminal;
 use SqlFaker\MySql\Grammar\Terminal;
 use SqlFaker\MySql\Grammar\UnknownSymbolException;
-use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(GrammarCompiler::class)]
 #[CoversClass(BisonAst::class)]

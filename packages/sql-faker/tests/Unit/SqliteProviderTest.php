@@ -6,30 +6,32 @@ namespace Tests\Unit\SqlFaker;
 
 use Faker\Factory;
 use Faker\Generator;
+use Override;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\Grammar;
+use SqlFaker\Grammar\LexicalCatalog;
 use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
-use SqlFaker\Grammar\ProductionRule;
-use SqlFaker\Grammar\Terminal;
-use SqlFaker\Grammar\TerminationAnalyzer;
 use SqlFaker\Grammar\ProductionPattern;
-use SqlFaker\Sqlite\LexicalGrammar;
-use SqlFaker\Sqlite\Grammar\SqliteGrammar;
+use SqlFaker\Grammar\ProductionRule;
+use SqlFaker\Grammar\RandomStringGenerator;
+use SqlFaker\Grammar\SqlVersion;
+use SqlFaker\Grammar\Terminal;
+use SqlFaker\Grammar\TerminalInventory;
+use SqlFaker\Grammar\TerminationAnalyzer;
+use SqlFaker\Grammar\TokenJoiner;
 use SqlFaker\Sqlite\GenerationPlans;
+use SqlFaker\Sqlite\Grammar\SqliteGrammar;
+use SqlFaker\Sqlite\LexicalGrammar;
 use SqlFaker\Sqlite\SqlGenerator;
 use SqlFaker\Sqlite\StatementType;
-use SqlFaker\Grammar\RandomStringGenerator;
-use SqlFaker\Grammar\TokenJoiner;
 use SqlFaker\SqliteProvider;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
-use SqlFaker\Grammar\LexicalCatalog;
-use SqlFaker\Grammar\SqlVersion;
-use SqlFaker\Grammar\TerminalInventory;
+use UnexpectedValueException;
 
 #[CoversClass(SqliteProvider::class)]
 #[CoversClass(TokenJoiner::class)]
@@ -121,20 +123,20 @@ final class SqliteProviderTest extends TestCase
              * @param mixed $min
              * @param mixed $max
              */
-            #[\Override]
+            #[Override]
             public function numberBetween($min = 0, $max = 2147483647): int
             {
                 if ($this->call < count($this->choices)) {
                     $choice = $this->choices[$this->call];
                     ++$this->call;
                     if ($min !== 0 || $max !== 2 || $choice < $min || $choice > $max) {
-                        throw new \UnexpectedValueException();
+                        throw new UnexpectedValueException();
                     }
 
                     return $choice;
                 }
                 if (!is_int($min)) {
-                    throw new \UnexpectedValueException();
+                    throw new UnexpectedValueException();
                 }
 
                 return $min;
@@ -240,7 +242,7 @@ final class SqliteProviderTest extends TestCase
         self::assertStringContainsString('ON DELETE CASCADE', implode(' ', $tokens));
     }
 
-    #[\Override]
+    #[Override]
     protected function setUp(): void
     {
         parent::setUp();

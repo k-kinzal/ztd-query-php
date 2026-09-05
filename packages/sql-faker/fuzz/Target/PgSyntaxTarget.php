@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Fuzz\Target;
 
+use Error;
 use Faker\Factory;
 use Faker\Generator;
 use PDO;
@@ -46,7 +47,7 @@ final class PgSyntaxTarget
      *
      * @param string $input Raw fuzzer input (mutated bytes)
      *
-     * @throws \Error On syntax validation failure (caught by fuzzer)
+     * @throws Error On syntax validation failure (caught by fuzzer)
      */
     public function __invoke(string $input): void
     {
@@ -155,7 +156,7 @@ final class PgSyntaxTarget
                 return;
             }
 
-            throw new \Error(
+            throw new Error(
                 "Unexpected error in generated SQL\n" .
                 "Seed: $seed\n" .
                 "SQL: $sql\n" .

@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\Sqlite\Grammar;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
+use SqlFaker\Grammar\SqlVersion;
 use SqlFaker\Grammar\Terminal;
 use SqlFaker\Sqlite\Grammar\SqliteGrammar;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
-use SqlFaker\Grammar\SqlVersion;
 
 #[CoversClass(SqliteGrammar::class)]
 #[CoversClass(Grammar::class)]

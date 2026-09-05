@@ -350,7 +350,7 @@ final class LexicalProfileBuilder
             }
         }
 
-        $punctuation = str_split("!%&()*+,-./:;<=>?@[]^{}|~");
+        $punctuation = str_split('!%&()*+,-./:;<=>?@[]^{}|~');
         foreach ($punctuation as $terminal) {
             if (!isset($terminals[$terminal])) {
                 $terminals[$terminal][] = $this->mySqlWitness(
@@ -875,7 +875,7 @@ final class LexicalProfileBuilder
             'cc-and' => ['&', ['TK_BITAND'], ['CC_AND']],
             'cc-tilde' => ['~', ['TK_BITNOT'], ['CC_TILDA']],
             'cc-dot' => ['. .5', ['TK_DOT', 'TK_SPACE', 'TK_FLOAT'], ['CC_DOT', 'CC_SPACE']],
-            'cc-id' => ["é", ['TK_ID'], ['CC_ID']],
+            'cc-id' => ['é', ['TK_ID'], ['CC_ID']],
             'cc-illegal' => ["\x01", ['TK_ILLEGAL'], ['CC_ILLEGAL']],
             'cc-bom' => ["\xef\xbb\xbf", ['TK_SPACE'], ['CC_BOM']],
         ];

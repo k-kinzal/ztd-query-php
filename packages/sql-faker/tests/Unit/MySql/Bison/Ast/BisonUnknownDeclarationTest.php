@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\MySql\Bison\Ast;
 
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\MySql\Bison\Ast\BisonDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonUnknownDeclaration;
-use PHPUnit\Framework\Attributes\CoversNothing;
 
 #[CoversNothing]
 final class BisonUnknownDeclarationTest extends TestCase
