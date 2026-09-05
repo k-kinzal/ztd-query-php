@@ -53,6 +53,6 @@ fwrite(STDERR, "Starting fuzzer...\n\n");
 $target = new PgSyntaxTarget($pdo, $maxDepth);
 
 /* Configure fuzzer via $config (provided by php-fuzzer) */
-/** @var \PhpFuzzer\Config $config */
+/** @var PhpFuzzer\Config $config */
 $config->setAllowedExceptions([]);
 $config->setTarget(Closure::fromCallable($target));

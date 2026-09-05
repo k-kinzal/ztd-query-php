@@ -6,27 +6,29 @@ namespace Tests\Unit\SqlFaker\Sqlite;
 
 use Faker\Factory;
 use LogicException;
-use RuntimeException;
+use Override;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Large;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
+use RuntimeException;
 use SqlFaker\Grammar\GenerationPlan;
-use SqlFaker\Grammar\Symbol;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionPattern;
 use SqlFaker\Grammar\ProductionRule;
+use SqlFaker\Grammar\RandomStringGenerator;
+use SqlFaker\Grammar\Symbol;
 use SqlFaker\Grammar\Terminal;
 use SqlFaker\Grammar\TerminationAnalyzer;
-use SqlFaker\Sqlite\LexicalGrammar;
-use SqlFaker\Sqlite\Grammar\SqliteGrammar;
-use SqlFaker\Sqlite\SqlGenerator;
-use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\Grammar\TokenJoiner;
+use SqlFaker\Sqlite\Grammar\SqliteGrammar;
+use SqlFaker\Sqlite\LexicalGrammar;
+use SqlFaker\Sqlite\SqlGenerator;
 use SqlFaker\SqliteProvider;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 
 #[CoversClass(SqlGenerator::class)]
 #[CoversClass(TokenJoiner::class)]
@@ -43,7 +45,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[Large]
 final class SqlGeneratorTest extends TestCase
 {
-    #[\Override]
+    #[Override]
     protected function setUp(): void
     {
         parent::setUp();
@@ -854,7 +856,7 @@ final class SqlGeneratorTest extends TestCase
         $faker->seed(12345);
         $generator = new SqlGenerator($grammar, $faker);
 
-        $ref = new \ReflectionClass($generator);
+        $ref = new ReflectionClass($generator);
         $prop = $ref->getProperty('grammar');
         /** @var Grammar $augmented */
         $augmented = $prop->getValue($generator);
@@ -879,7 +881,7 @@ final class SqlGeneratorTest extends TestCase
         $faker->seed(12345);
         $generator = new SqlGenerator($grammar, $faker);
 
-        $ref = new \ReflectionClass($generator);
+        $ref = new ReflectionClass($generator);
         $prop = $ref->getProperty('grammar');
         /** @var Grammar $augmented */
         $augmented = $prop->getValue($generator);
@@ -904,7 +906,7 @@ final class SqlGeneratorTest extends TestCase
         $faker->seed(12345);
         $generator = new SqlGenerator($grammar, $faker);
 
-        $ref = new \ReflectionClass($generator);
+        $ref = new ReflectionClass($generator);
         $prop = $ref->getProperty('grammar');
         /** @var Grammar $augmented */
         $augmented = $prop->getValue($generator);

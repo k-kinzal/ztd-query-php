@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\Sqlite;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -35,14 +36,14 @@ final class GenerationPlansTest extends TestCase
 
     public function testMultiDmlPlanRejectsAnUnknownFirstChoice(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
 
         GenerationPlans::multiDmlStatement(3, 0);
     }
 
     public function testMultiDmlPlanRejectsAnUnknownSecondChoice(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
 
         GenerationPlans::multiDmlStatement(0, 3);
     }

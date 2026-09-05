@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\Grammar;
 
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\Terminal;
-use PHPUnit\Framework\Attributes\CoversClass;
+use stdClass;
 
 #[CoversClass(Grammar::class)]
 #[CoversClass(ProductionRule::class)]
@@ -70,7 +71,7 @@ final class GrammarTest extends TestCase
     {
         $tmpFile = tempnam(sys_get_temp_dir(), 'grammar_test_');
         self::assertNotFalse($tmpFile);
-        $serialized = serialize(new \stdClass());
+        $serialized = serialize(new stdClass());
         file_put_contents($tmpFile, "<?php return ['key' => '" . $serialized . "'];");
 
         $this->expectException(RuntimeException::class);

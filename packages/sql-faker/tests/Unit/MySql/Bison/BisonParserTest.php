@@ -5,28 +5,28 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\MySql\Bison;
 
 use LogicException;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use SqlFaker\MySql\Bison\Ast\BisonAlternativeNode;
+use SqlFaker\MySql\Bison\Ast\BisonAst;
 use SqlFaker\MySql\Bison\Ast\BisonDefineDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonExpectDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonParamDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonPrecedenceDeclaration;
+use SqlFaker\MySql\Bison\Ast\BisonRuleNode;
 use SqlFaker\MySql\Bison\Ast\BisonStartDeclaration;
+use SqlFaker\MySql\Bison\Ast\BisonSymbolNode;
 use SqlFaker\MySql\Bison\Ast\BisonSymbolType;
 use SqlFaker\MySql\Bison\Ast\BisonTokenDeclaration;
+use SqlFaker\MySql\Bison\Ast\BisonTokenInfo;
 use SqlFaker\MySql\Bison\Ast\BisonTypeDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonUnknownDeclaration;
-use SqlFaker\MySql\Bison\Ast\BisonAlternativeNode;
-use SqlFaker\MySql\Bison\Ast\BisonAst;
-use SqlFaker\MySql\Bison\Ast\BisonRuleNode;
-use SqlFaker\MySql\Bison\Ast\BisonSymbolNode;
-use SqlFaker\MySql\Bison\Ast\BisonTokenInfo;
 use SqlFaker\MySql\Bison\BisonParser;
 use SqlFaker\MySql\Bison\Lexer\BisonLexer;
 use SqlFaker\MySql\Bison\Lexer\BisonToken;
 use SqlFaker\MySql\Bison\Lexer\BisonTokenType;
-use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(BisonParser::class)]
 #[CoversClass(BisonLexer::class)]

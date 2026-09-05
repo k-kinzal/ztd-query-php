@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\MySql\Grammar;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\MySql\Grammar\Symbol;
 use SqlFaker\MySql\Grammar\Terminal;
-use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(Terminal::class)]
 final class TerminalTest extends TestCase

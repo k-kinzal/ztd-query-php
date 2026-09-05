@@ -62,11 +62,11 @@ function pgFetchGramFile(string $url): string
     ]);
 
     set_error_handler(static function (int $severity, string $message): never {
-        throw new \RuntimeException($message);
+        throw new RuntimeException($message);
     });
     try {
         $contents = file_get_contents($url, false, $context);
-    } catch (\RuntimeException $e) {
+    } catch (RuntimeException $e) {
         fwrite(STDERR, "Error: Failed to fetch {$url}: {$e->getMessage()}\n");
         exit(1);
     } finally {
@@ -112,13 +112,13 @@ function pgBuildVersion(
         fwrite(STDOUT, "Building lexical profile...\n");
         $profile = $lexical->postgreSql($version);
         $lexical->assertCompatible($profile, 'postgresql', $version, TerminalInventory::fromGrammar($grammar));
-    } catch (\Throwable $e) {
+    } catch (Throwable $e) {
         fwrite(STDERR, "Error building {$version}: {$e->getMessage()}\n");
         fwrite(STDERR, "Trace: {$e->getTraceAsString()}\n");
         return false;
     }
 
-    fwrite(STDOUT, "Rules: " . count($grammar->ruleMap) . "\n");
+    fwrite(STDOUT, 'Rules: ' . count($grammar->ruleMap) . "\n");
     fwrite(STDOUT, "Start symbol: {$grammar->startSymbol}\n");
     fwrite(STDOUT, "Serializing AST...\n");
 
@@ -166,7 +166,7 @@ function pgMain(array $argv): int
     $args = pgParseArguments($argv);
     $versions = $args['versions'];
 
-    fwrite(STDOUT, "Building " . count($versions) . " PostgreSQL version(s): " . implode(', ', $versions) . "\n");
+    fwrite(STDOUT, 'Building ' . count($versions) . ' PostgreSQL version(s): ' . implode(', ', $versions) . "\n");
 
     $parser = new BisonParser();
     $compiler = new GrammarCompiler();
@@ -189,7 +189,7 @@ function pgMain(array $argv): int
     fwrite(STDOUT, "Build complete: {$success} succeeded, {$failed} failed\n");
 
     if ($failed > 0) {
-        fwrite(STDERR, "Failed versions: " . implode(', ', $failedVersions) . "\n");
+        fwrite(STDERR, 'Failed versions: ' . implode(', ', $failedVersions) . "\n");
         return 1;
     }
 

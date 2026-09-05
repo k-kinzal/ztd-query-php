@@ -5,29 +5,30 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker;
 
 use Faker\Factory;
+use Override;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use SqlFaker\Grammar\GenerationPlan;
+use SqlFaker\Grammar\LexicalCatalog;
+use SqlFaker\Grammar\ProductionPattern;
+use SqlFaker\Grammar\RandomStringGenerator;
+use SqlFaker\Grammar\SqlVersion;
+use SqlFaker\Grammar\TokenJoiner;
+use SqlFaker\MySql\GenerationPlans;
 use SqlFaker\MySql\Grammar\Grammar;
 use SqlFaker\MySql\Grammar\NonTerminal;
 use SqlFaker\MySql\Grammar\Production;
 use SqlFaker\MySql\Grammar\ProductionRule;
 use SqlFaker\MySql\Grammar\Terminal;
+use SqlFaker\MySql\Grammar\TerminalInventory;
 use SqlFaker\MySql\Grammar\TerminationAnalyzer;
-use SqlFaker\MySql\GenerationPlans;
-use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\MySql\LexicalGrammar;
 use SqlFaker\MySql\SqlGenerator;
 use SqlFaker\MySql\StatementType;
-use SqlFaker\Grammar\TokenJoiner;
 use SqlFaker\MySqlProvider;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Medium;
-use PHPUnit\Framework\Attributes\UsesClass;
-use SqlFaker\Grammar\LexicalCatalog;
-use SqlFaker\Grammar\GenerationPlan;
-use SqlFaker\Grammar\ProductionPattern;
-use SqlFaker\Grammar\SqlVersion;
-use SqlFaker\MySql\Grammar\TerminalInventory;
 
 #[CoversClass(MySqlProvider::class)]
 #[CoversClass(TokenJoiner::class)]
@@ -50,7 +51,7 @@ use SqlFaker\MySql\Grammar\TerminalInventory;
 #[Medium]
 final class MySqlProviderTest extends TestCase
 {
-    #[\Override]
+    #[Override]
     protected function setUp(): void
     {
         parent::setUp();

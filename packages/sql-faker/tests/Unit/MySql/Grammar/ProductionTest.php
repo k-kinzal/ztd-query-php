@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\MySql\Grammar;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\MySql\Grammar\NonTerminal;
 use SqlFaker\MySql\Grammar\Production;
 use SqlFaker\MySql\Grammar\Terminal;
-use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(Production::class)]
 #[CoversClass(Terminal::class)]

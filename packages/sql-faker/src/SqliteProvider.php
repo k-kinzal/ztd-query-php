@@ -7,8 +7,8 @@ namespace SqlFaker;
 use Faker\Generator;
 use Faker\Provider\Base;
 use SqlFaker\Grammar\GenerationPlan;
-use SqlFaker\Sqlite\Grammar\SqliteGrammar;
 use SqlFaker\Sqlite\GenerationPlans;
+use SqlFaker\Sqlite\Grammar\SqliteGrammar;
 use SqlFaker\Sqlite\SqlGenerator;
 use SqlFaker\Sqlite\StatementType;
 

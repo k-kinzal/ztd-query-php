@@ -81,6 +81,11 @@ jobs:
         with:
           working-directory: packages/sql-faker
       - name: infection
+        env:
+          # Infection resolves diff paths from the package working directory.
+          GIT_CONFIG_COUNT: '1'
+          GIT_CONFIG_KEY_0: diff.relative
+          GIT_CONFIG_VALUE_0: 'true'
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             php -d memory_limit=512M vendor/bin/infection \

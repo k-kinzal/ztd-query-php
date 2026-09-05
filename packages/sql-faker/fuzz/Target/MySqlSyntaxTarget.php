@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Fuzz\Target;
 
+use Error;
 use Faker\Factory;
 use Faker\Generator;
 use PDO;
@@ -46,7 +47,7 @@ final class MySqlSyntaxTarget
      *
      * @param string $input Raw fuzzer input (mutated bytes)
      *
-     * @throws \Error On syntax validation failure (caught by fuzzer)
+     * @throws Error On syntax validation failure (caught by fuzzer)
      */
     public function __invoke(string $input): void
     {
@@ -76,7 +77,7 @@ final class MySqlSyntaxTarget
         try {
             $stmt = $this->pdo->prepare($sql);
             if ($stmt === false) {
-                throw new \Error(
+                throw new Error(
                     "PDO::prepare returned false\n" .
                     "Grammar: {$this->grammarVersion}\n" .
                     "Seed: $seed\n" .
@@ -142,13 +143,13 @@ final class MySqlSyntaxTarget
                 return;
             }
 
-            throw new \Error(
+            throw new Error(
                 "Unexpected error in generated SQL\n" .
                 "Grammar: {$this->grammarVersion}\n" .
                 "Seed: $seed\n" .
                 "SQL: $sql\n" .
-                "SQLSTATE: " . (is_scalar($e->errorInfo[0] ?? null) ? (string) $e->errorInfo[0] : 'unknown') . "\n" .
-                "Error Code: " . (is_scalar($e->errorInfo[1] ?? null) ? (string) $e->errorInfo[1] : 'unknown') . "\n" .
+                'SQLSTATE: ' . (is_scalar($e->errorInfo[0] ?? null) ? (string) $e->errorInfo[0] : 'unknown') . "\n" .
+                'Error Code: ' . (is_scalar($e->errorInfo[1] ?? null) ? (string) $e->errorInfo[1] : 'unknown') . "\n" .
                 "Error: {$e->getMessage()}"
             );
         }
