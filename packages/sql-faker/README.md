@@ -189,7 +189,7 @@ The round-trip invariant guarantees the lexical layer: after dialect-specific pa
 # Run tests
 composer test
 
-# Run linter (PHP-CS-Fixer + PHPStan level max)
+# Run linter (PHP-CS-Fixer + PHPStan level max + PHPCompatibility)
 composer lint
 
 # Run fuzz tests

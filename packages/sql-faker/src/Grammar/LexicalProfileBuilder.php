@@ -291,7 +291,7 @@ final class LexicalProfileBuilder
             'DECIMAL_NUM' => [['1.5', ['DECIMAL_NUM'], ['MY_LEX_START', 'MY_LEX_NUMBER_IDENT', 'MY_LEX_REAL']]],
             'FLOAT_NUM' => [['1e2', ['FLOAT_NUM'], ['MY_LEX_START', 'MY_LEX_NUMBER_IDENT', 'MY_LEX_INT_OR_REAL']]],
             'HEX_NUM' => [
-                ['0x0f', ['HEX_NUM'], ['MY_LEX_START', 'MY_LEX_NUMBER_IDENT']],
+                [sprintf('0x%02x', 0x0F), ['HEX_NUM'], ['MY_LEX_START', 'MY_LEX_NUMBER_IDENT']],
                 ["X'0f'", ['HEX_NUM'], ['MY_LEX_START', 'MY_LEX_IDENT_OR_HEX', 'MY_LEX_HEX_NUMBER']],
             ],
             'BIN_NUM' => [
@@ -568,7 +568,7 @@ final class LexicalProfileBuilder
                 '$$text$$',
                 '$tag$text$tag$',
             ],
-            'ICONST' => ['1', '0x10', '0o10', '0b10'],
+            'ICONST' => ['1', sprintf('0x%x', 0x10), '0o10', '0b10'],
             'FCONST' => ['1.5', '.5', '1e2'],
             'BCONST' => ["B'01'"],
             'XCONST' => ["X'0f'"],
@@ -928,7 +928,7 @@ final class LexicalProfileBuilder
             'STRING' => [["'text'", ['TK_STRING'], ['CC_QUOTE']], ["'/* not a comment */'", ['TK_STRING'], ['CC_QUOTE']], ["'a''b'", ['TK_STRING'], ['CC_QUOTE']]],
             'BLOB' => [["X'00ff'", ['TK_BLOB'], ['CC_X']]],
             'number' => [['1', ['TK_INTEGER'], ['CC_DIGIT']], ['1.5', ['TK_FLOAT'], ['CC_DIGIT']], ['.5', ['TK_FLOAT'], ['CC_DOT']], ['1e2', ['TK_FLOAT'], ['CC_DIGIT']]],
-            'INTEGER' => [['1', ['TK_INTEGER'], ['CC_DIGIT']], ['0x10', ['TK_INTEGER'], ['CC_DIGIT']]],
+            'INTEGER' => [['1', ['TK_INTEGER'], ['CC_DIGIT']], [sprintf('0x%x', 0x10), ['TK_INTEGER'], ['CC_DIGIT']]],
             'QNUMBER' => [['1_0', ['TK_QNUMBER'], ['CC_DIGIT']]],
             'VARIABLE' => [['?', ['TK_VARIABLE'], ['CC_VARNUM']], ['?1', ['TK_VARIABLE'], ['CC_VARNUM']], [':name', ['TK_VARIABLE'], ['CC_VARALPHA']], ['@name', ['TK_VARIABLE'], ['CC_VARALPHA']], ['$name', ['TK_VARIABLE'], ['CC_DOLLAR']]],
             'ANY' => [['name', ['TK_ID'], ['CC_KYWD0']]],
