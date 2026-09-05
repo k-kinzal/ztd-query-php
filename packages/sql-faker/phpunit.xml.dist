@@ -10,10 +10,9 @@
          beStrictAboutCoverageMetadata="true"
          beStrictAboutChangesToGlobalState="true"
          beStrictAboutOutputDuringTests="true"
+         beStrictAboutTestsThatDoNotTestAnything="true"
          failOnAllIssues="true"
-         failOnEmptyTestSuite="true"
-         failOnRisky="true"
-         failOnWarning="true"
+         displayDetailsOnAllIssues="true"
          enforceTimeLimit="true"
          timeoutForSmallTests="1"
          timeoutForMediumTests="10"
@@ -23,7 +22,11 @@
             <directory>tests/Unit</directory>
         </testsuite>
     </testsuites>
-    <source restrictNotices="true"
+    <extensions>
+        <bootstrap class="Toolkit\PhpUnit\TestReporter\AiTestReporterExtension"/>
+    </extensions>
+    <source restrictDeprecations="true"
+            restrictNotices="true"
             restrictWarnings="true"
             ignoreSuppressionOfDeprecations="true"
             ignoreSuppressionOfPhpDeprecations="true"
@@ -36,4 +39,6 @@
             <directory>src</directory>
         </include>
     </source>
+    <coverage includeUncoveredFiles="true"
+              disableCodeCoverageIgnore="true"/>
 </phpunit>
