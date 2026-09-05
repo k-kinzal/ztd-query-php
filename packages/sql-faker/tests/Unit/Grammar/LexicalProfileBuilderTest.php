@@ -21,6 +21,61 @@ use SqlFaker\MySql\Grammar\TerminalInventory;
 #[UsesClass(TerminalInventory::class)]
 final class LexicalProfileBuilderTest extends TestCase
 {
+    public function testMySqlCatalogPreservesHexadecimalWitnesses(): void
+    {
+        /** @var array{catalog: array<string, mixed>} $profile */
+        $profile = require __DIR__ . '/../../../resources/lexical/mysql-8.4.7.php';
+
+        /** @var array{terminals: array<string, list<array<string, mixed>>>} $catalog */
+        $catalog = (new ReflectionMethod(LexicalProfileBuilder::class, 'mySqlCatalog'))->invoke(
+            new LexicalProfileBuilder(),
+            'mysql-8.4.7',
+            ['symbols' => [], 'functions' => [], 'features' => ['dollar_quoted_strings' => false]],
+            [],
+            new Grammar('start', []),
+        );
+        $expected = new LexicalCatalog($profile['catalog']);
+
+        self::assertSame($expected->witnesses('HEX_NUM'), $catalog['terminals']['HEX_NUM']);
+        self::assertSame($expected->witnesses('@TRIVIA'), $catalog['terminals']['@TRIVIA']);
+    }
+
+    public function testPostgreSqlCatalogPreservesIntegerWitnesses(): void
+    {
+        /** @var array{catalog: array{source: array<string, mixed>}} $profile */
+        $profile = require __DIR__ . '/../../../resources/lexical/pg-17.2.php';
+
+        /** @var array<string, mixed> $catalog */
+        $catalog = (new ReflectionMethod(LexicalProfileBuilder::class, 'postgreSqlCatalog'))->invoke(
+            new LexicalProfileBuilder(),
+            $profile,
+            $profile['catalog']['source'],
+        );
+        $expected = new LexicalCatalog($profile['catalog']);
+        $actual = new LexicalCatalog($catalog);
+
+        self::assertSame($expected->witnesses('ICONST'), $actual->witnesses('ICONST'));
+        self::assertSame($expected->witnesses('@TRIVIA'), $actual->witnesses('@TRIVIA'));
+    }
+
+    public function testSqliteCatalogPreservesIntegerWitnesses(): void
+    {
+        /** @var array{catalog: array{source: array{character_classes: list<string>}}} $profile */
+        $profile = require __DIR__ . '/../../../resources/lexical/sqlite-3.47.2.php';
+
+        /** @var array<string, mixed> $catalog */
+        $catalog = (new ReflectionMethod(LexicalProfileBuilder::class, 'sqliteCatalog'))->invoke(
+            new LexicalProfileBuilder(),
+            $profile,
+            $profile['catalog']['source']['character_classes'],
+        );
+        $expected = new LexicalCatalog($profile['catalog']);
+        $actual = new LexicalCatalog($catalog);
+
+        self::assertSame($expected->witnesses('INTEGER'), $actual->witnesses('INTEGER'));
+        self::assertSame($expected->witnesses('@TRIVIA'), $actual->witnesses('@TRIVIA'));
+    }
+
     #[DataProvider('providerMySqlPunctuation')]
     public function testMySqlCatalogPreservesPunctuation(string $punctuation): void
     {
