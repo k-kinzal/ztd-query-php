@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace SqlFaker\MySql;
 
 use Faker\Generator as FakerGenerator;
+use SqlFaker\Grammar\Lexical\RandomStringGenerator;
 use SqlFaker\Grammar\LexicalCatalog;
 use SqlFaker\Grammar\LexicalException;
-use SqlFaker\Grammar\RandomStringGenerator;
 
 /**
  * Writes one MySQL parser terminal as the SQL text that produces it.

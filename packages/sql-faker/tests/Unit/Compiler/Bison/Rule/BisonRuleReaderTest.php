@@ -26,7 +26,7 @@ use SqlFaker\Compiler\Bison\Lexer\TypeTagScanner;
 use SqlFaker\Compiler\Bison\Rule\BisonAlternativeDraft;
 use SqlFaker\Compiler\Bison\Rule\BisonAlternativeReader;
 use SqlFaker\Compiler\Bison\Rule\BisonRuleReader;
-use SqlFaker\Grammar\SourceCursor;
+use SqlFaker\Grammar\Lexical\SourceCursor;
 
 #[CoversClass(BisonRuleReader::class)]
 #[UsesClass(ActionScanner::class)]

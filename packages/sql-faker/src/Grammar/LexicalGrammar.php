@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlFaker\Grammar;
 
+use SqlFaker\Grammar\Derivation\GenerationPlan;
+
 /**
  * Realizes parser terminals as SQL text and verifies the resulting token stream.
  *

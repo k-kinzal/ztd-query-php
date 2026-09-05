@@ -11,7 +11,7 @@ use SqlFaker\Compiler\Bison\Lexer\BisonLexeme;
 use SqlFaker\Compiler\Bison\Lexer\BisonToken;
 use SqlFaker\Compiler\Bison\Lexer\DirectiveScanner;
 use SqlFaker\Grammar\GrammarParseException;
-use SqlFaker\Grammar\SourceCursor;
+use SqlFaker\Grammar\Lexical\SourceCursor;
 
 #[CoversClass(DirectiveScanner::class)]
 #[UsesClass(BisonLexeme::class)]

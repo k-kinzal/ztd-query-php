@@ -54,7 +54,7 @@ use SqlFaker\Compiler\Bison\Rule\BisonAlternativeDraft;
 use SqlFaker\Compiler\Bison\Rule\BisonAlternativeReader;
 use SqlFaker\Compiler\Bison\Rule\BisonRuleReader;
 use SqlFaker\Grammar\GrammarParseException;
-use SqlFaker\Grammar\SourceCursor;
+use SqlFaker\Grammar\Lexical\SourceCursor;
 
 #[CoversClass(BisonParser::class)]
 #[CoversClass(BisonLexer::class)]

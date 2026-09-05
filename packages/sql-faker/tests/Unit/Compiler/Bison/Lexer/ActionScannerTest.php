@@ -11,7 +11,7 @@ use SqlFaker\Compiler\Bison\Lexer\ActionScanner;
 use SqlFaker\Compiler\Bison\Lexer\BisonLexeme;
 use SqlFaker\Compiler\Bison\Lexer\BisonToken;
 use SqlFaker\Compiler\Bison\Lexer\BisonTrivia;
-use SqlFaker\Grammar\SourceCursor;
+use SqlFaker\Grammar\Lexical\SourceCursor;
 
 #[CoversClass(ActionScanner::class)]
 #[UsesClass(BisonLexeme::class)]

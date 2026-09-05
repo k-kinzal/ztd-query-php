@@ -9,8 +9,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Generation\SqlGenerator;
+use SqlFaker\Grammar\Derivation\GenerationPlan;
 use SqlFaker\Grammar\GenerationException;
-use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\LexicalException;
 use SqlFaker\Grammar\LexicalGrammar;
@@ -19,7 +19,7 @@ use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\Terminal;
 
 #[CoversClass(SqlGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Derivation::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\Derivation::class)]
 #[UsesClass(GenerationException::class)]
 #[UsesClass(GenerationPlan::class)]
 #[UsesClass(Grammar::class)]
@@ -27,8 +27,8 @@ use SqlFaker\Grammar\Terminal;
 #[UsesClass(Production::class)]
 #[UsesClass(ProductionRule::class)]
 #[UsesClass(Terminal::class)]
-#[UsesClass(\SqlFaker\Grammar\TerminationAnalyzer::class)]
-#[UsesClass(\SqlFaker\Grammar\TerminationCost::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\TerminationAnalyzer::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\TerminationCost::class)]
 #[UsesClass(LexicalException::class)]
 final class SqlGeneratorTest extends TestCase
 {

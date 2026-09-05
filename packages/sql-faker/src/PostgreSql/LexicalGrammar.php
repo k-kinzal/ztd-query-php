@@ -8,15 +8,15 @@ use Faker\Generator as FakerGenerator;
 use InvalidArgumentException;
 use Override;
 use RuntimeException;
-use SqlFaker\Grammar\GenerationPlan;
+use SqlFaker\Grammar\Derivation\GenerationPlan;
+use SqlFaker\Grammar\Lexical\LexicalKeywordIndex;
+use SqlFaker\Grammar\Lexical\LexicalProfileSource;
+use SqlFaker\Grammar\Lexical\RandomStringGenerator;
+use SqlFaker\Grammar\Lexical\TokenJoiner;
 use SqlFaker\Grammar\LexicalCatalog;
 use SqlFaker\Grammar\LexicalCatalogException;
 use SqlFaker\Grammar\LexicalException;
 use SqlFaker\Grammar\LexicalGrammar as LexicalGrammarContract;
-use SqlFaker\Grammar\LexicalKeywordIndex;
-use SqlFaker\Grammar\LexicalProfileSource;
-use SqlFaker\Grammar\RandomStringGenerator;
-use SqlFaker\Grammar\TokenJoiner;
 
 /**
  * PostgreSQL lexical realization for one exact server version.

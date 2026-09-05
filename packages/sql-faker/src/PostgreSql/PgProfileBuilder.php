@@ -6,7 +6,7 @@ namespace SqlFaker\PostgreSql;
 
 use RuntimeException;
 use SqlFaker\Grammar\LexerSource;
-use SqlFaker\Grammar\UpstreamLexerSource;
+use SqlFaker\Grammar\Lexical\UpstreamLexerSource;
 use SqlFaker\PostgreSql\LexicalProfileCompiler as PostgreSqlCompiler;
 use SqlFaker\PostgreSql\LexicalSourceParser as PostgreSqlSourceParser;
 

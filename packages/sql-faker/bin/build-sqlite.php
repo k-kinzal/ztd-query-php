@@ -6,10 +6,10 @@ declare(strict_types=1);
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use SqlFaker\Compiler\Lemon\LemonParser;
-use SqlFaker\Grammar\LexicalProfileCheck;
-use SqlFaker\Grammar\LexicalProfileWriter;
+use SqlFaker\Grammar\Lexical\LexicalProfileCheck;
+use SqlFaker\Grammar\Lexical\LexicalProfileWriter;
+use SqlFaker\Grammar\Lexical\TerminalInventory;
 use SqlFaker\Grammar\SqlVersion;
-use SqlFaker\Grammar\TerminalInventory;
 use SqlFaker\Sqlite\SqliteProfileBuilder;
 
 /**

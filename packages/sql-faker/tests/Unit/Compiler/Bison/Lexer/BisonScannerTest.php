@@ -15,7 +15,7 @@ use SqlFaker\Compiler\Bison\Lexer\NumberScanner;
 use SqlFaker\Compiler\Bison\Lexer\PunctuationScanner;
 use SqlFaker\Compiler\Bison\Lexer\QuotedLiteralScanner;
 use SqlFaker\Compiler\Bison\Lexer\TypeTagScanner;
-use SqlFaker\Grammar\SourceCursor;
+use SqlFaker\Grammar\Lexical\SourceCursor;
 
 #[CoversNothing]
 final class BisonScannerTest extends TestCase

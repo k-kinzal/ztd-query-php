@@ -40,7 +40,7 @@ use SqlFaker\Compiler\Bison\Lexer\IdentifierScanner;
 use SqlFaker\Compiler\Bison\Lexer\NumberScanner;
 use SqlFaker\Compiler\Bison\Lexer\QuotedLiteralScanner;
 use SqlFaker\Compiler\Bison\Lexer\TypeTagScanner;
-use SqlFaker\Grammar\SourceCursor;
+use SqlFaker\Grammar\Lexical\SourceCursor;
 
 #[CoversClass(BisonDirectiveReaderChain::class)]
 #[UsesClass(ActionScanner::class)]

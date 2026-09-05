@@ -7,8 +7,8 @@ namespace Tests\Unit\SqlFaker\PostgreSql;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\GenerationPlan;
-use SqlFaker\Grammar\ProductionPattern;
+use SqlFaker\Grammar\Derivation\GenerationPlan;
+use SqlFaker\Grammar\Derivation\ProductionPattern;
 use SqlFaker\PostgreSql\GenerationPlans;
 
 #[CoversClass(GenerationPlans::class)]

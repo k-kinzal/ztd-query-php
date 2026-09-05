@@ -6,7 +6,7 @@ namespace SqlFaker\Compiler\Bison\Lexer;
 
 use Override;
 use SqlFaker\Grammar\GrammarParseException;
-use SqlFaker\Grammar\SourceCursor;
+use SqlFaker\Grammar\Lexical\SourceCursor;
 
 /**
  * Consumes the three lexemes a percent sign can open.

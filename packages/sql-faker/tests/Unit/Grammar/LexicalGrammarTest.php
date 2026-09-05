@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\GenerationPlan;
+use SqlFaker\Grammar\Derivation\GenerationPlan;
 use SqlFaker\Grammar\LexicalGrammar;
 use SqlFaker\MySql\LexicalGrammar as MySqlLexicalGrammar;
 use SqlFaker\MySqlProvider;

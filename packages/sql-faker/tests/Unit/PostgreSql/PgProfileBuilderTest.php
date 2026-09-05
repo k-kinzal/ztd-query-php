@@ -12,8 +12,8 @@ use RuntimeException;
 use SqlFaker\Grammar\LexerSource;
 use SqlFaker\PostgreSql\PgProfileBuilder;
 
-#[UsesClass(\SqlFaker\Grammar\LexicalCatalogShape::class)]
-#[UsesClass(\SqlFaker\Grammar\LexicalWitnessShape::class)]
+#[UsesClass(\SqlFaker\Grammar\Lexical\LexicalCatalogShape::class)]
+#[UsesClass(\SqlFaker\Grammar\Lexical\LexicalWitnessShape::class)]
 #[CoversClass(PgProfileBuilder::class)]
 #[UsesClass(\SqlFaker\PostgreSql\PgLexicalSamples::class)]
 final class PgProfileBuilderTest extends TestCase
@@ -170,7 +170,7 @@ final class PgProfileBuilderTest extends TestCase
         self::assertIsArray($profile['catalog']['source']['rules']);
         $rules = array_values(array_filter($profile['catalog']['source']['rules'], is_string(...)));
         self::assertSame($profile['catalog']['source']['rules'], $rules);
-        $shape = new \SqlFaker\Grammar\LexicalCatalogShape();
+        $shape = new \SqlFaker\Grammar\Lexical\LexicalCatalogShape();
         $expected = $shape->of(array_filter($profile['catalog'], is_string(...), ARRAY_FILTER_USE_KEY));
         $actual = $shape->of((new PgProfileBuilder())->catalog(array_filter($profile, is_string(...), ARRAY_FILTER_USE_KEY), ['states' => $states, 'rules' => $rules, 'lookahead_tokens' => []]));
 

@@ -12,18 +12,18 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Generation\SqlGenerator;
+use SqlFaker\Grammar\Derivation\GenerationPlan;
+use SqlFaker\Grammar\Derivation\ProductionPattern;
+use SqlFaker\Grammar\Derivation\TerminationAnalyzer;
 use SqlFaker\Grammar\GenerationException;
-use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\Grammar;
+use SqlFaker\Grammar\Lexical\RandomStringGenerator;
+use SqlFaker\Grammar\Lexical\TokenJoiner;
 use SqlFaker\Grammar\LexicalCatalogException;
 use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
-use SqlFaker\Grammar\ProductionPattern;
 use SqlFaker\Grammar\ProductionRule;
-use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\Grammar\Terminal;
-use SqlFaker\Grammar\TerminationAnalyzer;
-use SqlFaker\Grammar\TokenJoiner;
 use SqlFaker\PostgreSql\GenerationContext;
 use SqlFaker\PostgreSqlProvider;
 
@@ -46,17 +46,17 @@ use SqlFaker\PostgreSqlProvider;
 #[UsesClass(ProductionRule::class)]
 #[UsesClass(Terminal::class)]
 #[UsesClass(\SqlFaker\Grammar\LexicalCatalog::class)]
-#[UsesClass(\SqlFaker\Grammar\LexicalCatalogShape::class)]
-#[UsesClass(\SqlFaker\Grammar\LexicalCoverageCheck::class)]
-#[UsesClass(\SqlFaker\Grammar\LexicalKeywordIndex::class)]
-#[UsesClass(\SqlFaker\Grammar\LexicalProfileSource::class)]
-#[UsesClass(\SqlFaker\Grammar\LexicalWitnessCheck::class)]
-#[UsesClass(\SqlFaker\Grammar\LexicalWitnessShape::class)]
-#[UsesClass(\SqlFaker\Grammar\RandomCharacters::class)]
+#[UsesClass(\SqlFaker\Grammar\Lexical\LexicalCatalogShape::class)]
+#[UsesClass(\SqlFaker\Grammar\Lexical\LexicalCoverageCheck::class)]
+#[UsesClass(\SqlFaker\Grammar\Lexical\LexicalKeywordIndex::class)]
+#[UsesClass(\SqlFaker\Grammar\Lexical\LexicalProfileSource::class)]
+#[UsesClass(\SqlFaker\Grammar\Lexical\LexicalWitnessCheck::class)]
+#[UsesClass(\SqlFaker\Grammar\Lexical\LexicalWitnessShape::class)]
+#[UsesClass(\SqlFaker\Grammar\Lexical\RandomCharacters::class)]
 #[UsesClass(RandomStringGenerator::class)]
 #[UsesClass(\SqlFaker\Grammar\SqlVersion::class)]
-#[UsesClass(\SqlFaker\Grammar\SqlVersionRegistry::class)]
-#[UsesClass(\SqlFaker\Grammar\TerminalInventory::class)]
+#[UsesClass(\SqlFaker\Grammar\Resource\SqlVersionRegistry::class)]
+#[UsesClass(\SqlFaker\Grammar\Lexical\TerminalInventory::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Grammar\PgGrammar::class)]
 #[UsesClass(\SqlFaker\PostgreSql\LexicalGrammar::class)]
 #[UsesClass(\SqlFaker\PostgreSql\ParserSemantics::class)]

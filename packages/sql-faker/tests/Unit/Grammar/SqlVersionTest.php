@@ -8,8 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use SqlFaker\Grammar\Resource\SqlVersionRegistry;
 use SqlFaker\Grammar\SqlVersion;
-use SqlFaker\Grammar\SqlVersionRegistry;
 
 #[CoversClass(SqlVersion::class)]
 #[UsesClass(SqlVersionRegistry::class)]

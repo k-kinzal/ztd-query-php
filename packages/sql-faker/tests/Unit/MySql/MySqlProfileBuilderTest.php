@@ -11,14 +11,14 @@ use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\LexerSource;
+use SqlFaker\Grammar\Lexical\TerminalInventory;
+use SqlFaker\Grammar\Resource\SqlVersionRegistry;
 use SqlFaker\Grammar\SqlVersion;
-use SqlFaker\Grammar\SqlVersionRegistry;
-use SqlFaker\Grammar\TerminalInventory;
 use SqlFaker\MySql\Grammar\MySqlGrammar;
 use SqlFaker\MySql\MySqlProfileBuilder;
 
-#[UsesClass(\SqlFaker\Grammar\LexicalCatalogShape::class)]
-#[UsesClass(\SqlFaker\Grammar\LexicalWitnessShape::class)]
+#[UsesClass(\SqlFaker\Grammar\Lexical\LexicalCatalogShape::class)]
+#[UsesClass(\SqlFaker\Grammar\Lexical\LexicalWitnessShape::class)]
 #[CoversClass(MySqlProfileBuilder::class)]
 #[UsesClass(SqlVersion::class)]
 #[UsesClass(SqlVersionRegistry::class)]
@@ -259,7 +259,7 @@ final class MySqlProfileBuilderTest extends TestCase
         self::assertIsArray($profile);
         self::assertIsArray($profile['catalog']);
 
-        $shape = new \SqlFaker\Grammar\LexicalCatalogShape();
+        $shape = new \SqlFaker\Grammar\Lexical\LexicalCatalogShape();
         $expected = $shape->of(array_filter($profile['catalog'], is_string(...), ARRAY_FILTER_USE_KEY));
         $actual = $shape->of((new MySqlProfileBuilder())->catalog('mysql-8.4.7', ['symbols' => [], 'functions' => [], 'features' => ['dollar_quoted_strings' => false]], [], new Grammar('start', [])));
 
@@ -270,7 +270,7 @@ final class MySqlProfileBuilderTest extends TestCase
     #[DataProvider('providerPunctuation')]
     public function testCatalogPreservesPunctuation(string $punctuation): void
     {
-        $catalog = (new \SqlFaker\Grammar\LexicalCatalogShape())->of((new MySqlProfileBuilder())->catalog(
+        $catalog = (new \SqlFaker\Grammar\Lexical\LexicalCatalogShape())->of((new MySqlProfileBuilder())->catalog(
             'mysql-8.4.7',
             ['symbols' => [], 'functions' => [], 'features' => ['dollar_quoted_strings' => false]],
             [],

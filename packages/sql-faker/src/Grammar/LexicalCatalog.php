@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace SqlFaker\Grammar;
 
+use SqlFaker\Grammar\Lexical\LexicalCatalogShape;
+use SqlFaker\Grammar\Lexical\LexicalCoverageCheck;
+use SqlFaker\Grammar\Lexical\LexicalWitnessCheck;
+
 /**
  * The checked-in terminal catalog derived from an upstream lexer source.
  *

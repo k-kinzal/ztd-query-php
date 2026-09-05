@@ -8,8 +8,8 @@ use Closure;
 use Faker\Generator;
 use RuntimeException;
 use SqlFaker\Grammar\Grammar;
+use SqlFaker\Grammar\Lexical\TerminalInventory;
 use SqlFaker\Grammar\LexicalGrammar as LexicalContract;
-use SqlFaker\Grammar\TerminalInventory;
 use SqlFaker\Sqlite\Grammar\SqliteGrammar;
 
 /**

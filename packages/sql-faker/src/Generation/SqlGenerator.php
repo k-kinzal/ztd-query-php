@@ -6,14 +6,14 @@ namespace SqlFaker\Generation;
 
 use Closure;
 use Faker\Generator;
-use SqlFaker\Grammar\Derivation;
+use SqlFaker\Grammar\Derivation\Derivation;
+use SqlFaker\Grammar\Derivation\GenerationPlan;
+use SqlFaker\Grammar\Derivation\TerminationAnalyzer;
 use SqlFaker\Grammar\GenerationException;
-use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\LexicalException;
 use SqlFaker\Grammar\LexicalGrammar;
 use SqlFaker\Grammar\Terminal;
-use SqlFaker\Grammar\TerminationAnalyzer;
 
 /**
  * Generates SQL from a common grammar and a plan supplied by the caller.

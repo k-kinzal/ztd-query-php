@@ -12,8 +12,8 @@ use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
+use SqlFaker\Grammar\Resource\SqlVersionRegistry;
 use SqlFaker\Grammar\SqlVersion;
-use SqlFaker\Grammar\SqlVersionRegistry;
 use SqlFaker\Grammar\Terminal;
 use SqlFaker\Sqlite\Grammar\SqliteGrammar;
 
