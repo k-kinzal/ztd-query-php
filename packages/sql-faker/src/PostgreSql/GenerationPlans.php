@@ -7,33 +7,51 @@ namespace SqlFaker\PostgreSql;
 use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\ProductionPattern;
 
+/**
+ * Names the generation plans this dialect's provider is built from.
+ *
+ * A plan is how a caller says which SQL it wants, and the ones a provider
+ * offers are a fixed vocabulary rather than something each caller assembles.
+ * Naming them here keeps that vocabulary in one place and lets the provider
+ * read as a list of what it can generate.
+ */
 final class GenerationPlans
 {
-    /** @return GenerationPlan<true> */
+    /**
+     * @return GenerationPlan<true>
+     */
     public static function quotedIdentifier(int $minLength, int $maxLength): GenerationPlan
     {
         return GenerationPlan::lexical('quoted_identifier', compact('minLength', 'maxLength'));
     }
 
-    /** @return GenerationPlan<true> */
+    /**
+     * @return GenerationPlan<true>
+     */
     public static function stringLiteral(int $minLength, int $maxLength): GenerationPlan
     {
         return GenerationPlan::lexical('string_literal', compact('minLength', 'maxLength'));
     }
 
-    /** @return GenerationPlan<true> */
+    /**
+     * @return GenerationPlan<true>
+     */
     public static function integerLiteral(int $min, int $max): GenerationPlan
     {
         return GenerationPlan::lexical('integer_literal', compact('min', 'max'));
     }
 
-    /** @return GenerationPlan<true> */
+    /**
+     * @return GenerationPlan<true>
+     */
     public static function decimalLiteral(int $precision, int $scale): GenerationPlan
     {
         return GenerationPlan::lexical('decimal_literal', compact('precision', 'scale'));
     }
 
-    /** @return GenerationPlan<true> */
+    /**
+     * @return GenerationPlan<true>
+     */
     public static function floatLiteral(
         int $precision,
         int $scale,
@@ -46,31 +64,41 @@ final class GenerationPlans
         );
     }
 
-    /** @return GenerationPlan<true> */
+    /**
+     * @return GenerationPlan<true>
+     */
     public static function hexLiteral(int $minLength, int $maxLength): GenerationPlan
     {
         return GenerationPlan::lexical('hex_literal', compact('minLength', 'maxLength'));
     }
 
-    /** @return GenerationPlan<true> */
+    /**
+     * @return GenerationPlan<true>
+     */
     public static function binaryLiteral(int $minLength, int $maxLength): GenerationPlan
     {
         return GenerationPlan::lexical('binary_literal', compact('minLength', 'maxLength'));
     }
 
-    /** @return GenerationPlan<true> */
+    /**
+     * @return GenerationPlan<true>
+     */
     public static function dollarQuotedString(int $minLength, int $maxLength): GenerationPlan
     {
         return GenerationPlan::lexical('dollar_quoted_string', compact('minLength', 'maxLength'));
     }
 
-    /** @return GenerationPlan<true> */
+    /**
+     * @return GenerationPlan<true>
+     */
     public static function parameterMarker(int $min, int $max): GenerationPlan
     {
         return GenerationPlan::lexical('parameter_marker', compact('min', 'max'));
     }
 
-    /** @return GenerationPlan<true> */
+    /**
+     * @return GenerationPlan<true>
+     */
     public static function insertFunctionUpsertStatement(): GenerationPlan
     {
         return GenerationPlan::constrained('InsertStmt', [
@@ -102,7 +130,9 @@ final class GenerationPlans
         ])->requiringNonEmpty();
     }
 
-    /** @return GenerationPlan<true> */
+    /**
+     * @return GenerationPlan<true>
+     */
     public static function temporaryTableStatement(): GenerationPlan
     {
         return GenerationPlan::constrained('CreateStmt', [
@@ -110,13 +140,17 @@ final class GenerationPlans
         ])->requiringNonEmpty();
     }
 
-    /** @return GenerationPlan<true> */
+    /**
+     * @return GenerationPlan<true>
+     */
     public static function viewStatement(): GenerationPlan
     {
         return GenerationPlan::fromRule('ViewStmt')->requiringNonEmpty();
     }
 
-    /** @return GenerationPlan<true> */
+    /**
+     * @return GenerationPlan<true>
+     */
     public static function generatedColumnStatement(): GenerationPlan
     {
         return GenerationPlan::constrained('CreateStmt', [
@@ -132,7 +166,9 @@ final class GenerationPlans
         ])->requiringNonEmpty();
     }
 
-    /** @return GenerationPlan<true> */
+    /**
+     * @return GenerationPlan<true>
+     */
     public static function foreignKeyCascadeStatement(): GenerationPlan
     {
         return GenerationPlan::constrained('CreateStmt', [
@@ -148,7 +184,9 @@ final class GenerationPlans
         ])->requiringNonEmpty();
     }
 
-    /** @return GenerationPlan<true> */
+    /**
+     * @return GenerationPlan<true>
+     */
     public static function partitionOfStatement(): GenerationPlan
     {
         return GenerationPlan::constrained('CreateStmt', [
@@ -157,7 +195,9 @@ final class GenerationPlans
         ])->requiringNonEmpty();
     }
 
-    /** @return GenerationPlan<true> */
+    /**
+     * @return GenerationPlan<true>
+     */
     public static function tableSampleStatement(): GenerationPlan
     {
         return GenerationPlan::constrained('SelectStmt', [
@@ -171,7 +211,9 @@ final class GenerationPlans
         ])->requiringNonEmpty();
     }
 
-    /** @return GenerationPlan<true> */
+    /**
+     * @return GenerationPlan<true>
+     */
     public static function doStatement(): GenerationPlan
     {
         return GenerationPlan::constrained('DoStmt', [
@@ -180,7 +222,9 @@ final class GenerationPlans
         ])->requiringNonEmpty();
     }
 
-    /** @return GenerationPlan<true> */
+    /**
+     * @return GenerationPlan<true>
+     */
     public static function mergeStatement(): GenerationPlan
     {
         return GenerationPlan::constrained('MergeStmt', [
@@ -199,13 +243,17 @@ final class GenerationPlans
         ])->requiringNonEmpty();
     }
 
-    /** @return GenerationPlan<true> */
+    /**
+     * @return GenerationPlan<true>
+     */
     public static function copyStatement(): GenerationPlan
     {
         return GenerationPlan::fromRule('CopyStmt')->requiringNonEmpty();
     }
 
-    /** @return GenerationPlan<true> */
+    /**
+     * @return GenerationPlan<true>
+     */
     public static function partialIndexUpsertStatement(): GenerationPlan
     {
         return GenerationPlan::constrained('InsertStmt', [
@@ -218,7 +266,9 @@ final class GenerationPlans
         ])->requiringNonEmpty();
     }
 
-    /** @return non-empty-list<GenerationPlan<true>> */
+    /**
+     * @return non-empty-list<GenerationPlan<true>>
+     */
     public static function domainDmlStatements(): array
     {
         return array_map(
@@ -229,7 +279,9 @@ final class GenerationPlans
         );
     }
 
-    /** @return GenerationPlan<true> */
+    /**
+     * @return GenerationPlan<true>
+     */
     public static function fullTextSearchStatement(): GenerationPlan
     {
         return GenerationPlan::constrained('SelectStmt', [
@@ -274,7 +326,9 @@ final class GenerationPlans
         ])->withLexemes(['Op' => ['@@']])->requiringNonEmpty();
     }
 
-    /** @return GenerationPlan<true> */
+    /**
+     * @return GenerationPlan<true>
+     */
     public static function foreignKeyConstraint(): GenerationPlan
     {
         return GenerationPlan::constrained('TableConstraint', [

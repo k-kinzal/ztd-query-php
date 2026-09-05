@@ -39,4 +39,24 @@ final class BisonTokenTest extends TestCase
 
         self::assertSame(99, $token->offset);
     }
+
+    public function testAsStringReadsTextAsItIs(): void
+    {
+        self::assertSame('IDENT', (new BisonToken(BisonTokenType::Identifier, 'IDENT', 0))->asString());
+    }
+
+    public function testAsStringRendersANumberAsItsDigits(): void
+    {
+        self::assertSame('42', (new BisonToken(BisonTokenType::Number, 42, 0))->asString());
+    }
+
+    public function testAsIntReadsANumberAsItIs(): void
+    {
+        self::assertSame(42, (new BisonToken(BisonTokenType::Number, 42, 0))->asInt());
+    }
+
+    public function testAsIntReadsTextThatNamesNoNumberAsZero(): void
+    {
+        self::assertSame(0, (new BisonToken(BisonTokenType::Identifier, 'IDENT', 0))->asInt());
+    }
 }

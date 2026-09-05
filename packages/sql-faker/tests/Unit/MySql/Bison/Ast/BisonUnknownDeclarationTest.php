@@ -6,7 +6,6 @@ namespace Tests\Unit\SqlFaker\MySql\Bison\Ast;
 
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\MySql\Bison\Ast\BisonDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonUnknownDeclaration;
 
 #[CoversNothing]
@@ -24,10 +23,5 @@ final class BisonUnknownDeclarationTest extends TestCase
         $decl = new BisonUnknownDeclaration('%custom', 'some content');
 
         self::assertSame('some content', $decl->content);
-    }
-
-    public function testImplementsBisonDeclaration(): void
-    {
-        self::assertInstanceOf(BisonDeclaration::class, new BisonUnknownDeclaration('%x', ''));
     }
 }

@@ -4,10 +4,18 @@ declare(strict_types=1);
 
 namespace Fuzz\Container;
 
+use Override;
 use Testcontainers\Containers\GenericContainer\GenericContainer;
 use Testcontainers\Containers\WaitStrategy\PDO\MySQLDSN;
 use Testcontainers\Containers\WaitStrategy\PDO\PDOConnectWaitStrategy;
 
+/**
+ * Testcontainers definition for the MySQL 8.4.7 server the fuzzer runs against.
+ *
+ * The image tag is pinned so that a finding always reproduces against the
+ * same server build, and the container is reused across runs to keep
+ * start-up cost off every fuzzing iteration.
+ */
 final class MySql84Container extends GenericContainer
 {
     /**
@@ -42,6 +50,7 @@ final class MySql84Container extends GenericContainer
      */
     protected static $AUTO_REMOVE_ON_EXIT = true;
 
+    #[Override]
     protected function waitStrategy($instance): PDOConnectWaitStrategy
     {
         unset($instance);
@@ -54,6 +63,11 @@ final class MySql84Container extends GenericContainer
             ->withRetryInterval(250000);
     }
 
+    /**
+     * Names the grammar version matching this container's server version.
+     *
+     * @return string Grammar version identifier, e.g. "mysql-8.4.7"
+     */
     public static function getGrammarVersion(): string
     {
         return 'mysql-8.4.7';

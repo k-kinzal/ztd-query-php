@@ -4,16 +4,22 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\Sqlite\Lemon;
 
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use SqlFaker\Grammar\Grammar;
+use SqlFaker\Grammar\GrammarParseException;
 use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\Symbol;
 use SqlFaker\Grammar\Terminal;
+use SqlFaker\Sqlite\Lemon\LemonDirectives;
 use SqlFaker\Sqlite\Lemon\LemonParser;
+use SqlFaker\Sqlite\Lemon\LemonRules;
+use SqlFaker\Sqlite\Lemon\LemonSymbols;
+use SqlFaker\Sqlite\Lemon\LemonText;
 
 #[CoversClass(LemonParser::class)]
 #[CoversClass(Grammar::class)]
@@ -21,6 +27,11 @@ use SqlFaker\Sqlite\Lemon\LemonParser;
 #[CoversClass(Terminal::class)]
 #[CoversClass(Production::class)]
 #[CoversClass(ProductionRule::class)]
+#[UsesClass(GrammarParseException::class)]
+#[UsesClass(LemonDirectives::class)]
+#[UsesClass(LemonRules::class)]
+#[UsesClass(LemonSymbols::class)]
+#[UsesClass(LemonText::class)]
 final class LemonParserTest extends TestCase
 {
     public function testParseSimpleRule(): void
@@ -163,8 +174,8 @@ final class LemonParserTest extends TestCase
 
     public function testParseThrowsOnNoRules(): void
     {
-        $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('No grammar rules parsed');
+        $this->expectException(GrammarParseException::class);
+        $this->expectExceptionMessage('No grammar rules parsed from the Lemon grammar.');
 
         (new LemonParser())->parse('%left AND.');
     }
@@ -198,5 +209,24 @@ final class LemonParserTest extends TestCase
         self::assertArrayHasKey('select', $grammar->ruleMap);
         self::assertArrayHasKey('expr', $grammar->ruleMap);
         self::assertGreaterThan(100, count($grammar->ruleMap));
+    }
+
+    public function testParseFileReadsAGrammarFromDisk(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'lemon-');
+        self::assertIsString($path);
+        file_put_contents($path, "cmd ::= SELECT.\n");
+
+        self::assertSame('cmd', (new LemonParser())->parseFile($path)->startSymbol);
+
+        unlink($path);
+    }
+
+    public function testParseFileReportsAFileItCannotRead(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Failed to read: ');
+
+        (new LemonParser())->parseFile(sys_get_temp_dir() . '/no-such-lemon-grammar.y');
     }
 }

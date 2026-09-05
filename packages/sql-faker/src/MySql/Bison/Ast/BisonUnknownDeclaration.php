@@ -11,6 +11,10 @@ namespace SqlFaker\MySql\Bison\Ast;
  */
 final class BisonUnknownDeclaration implements BisonDeclaration
 {
+    /**
+     * @param string $directive Directive name including its percent sign
+     * @param string $content Arguments as written, joined by single spaces
+     */
     public function __construct(
         public readonly string $directive,
         public readonly string $content,

@@ -6,94 +6,149 @@ namespace SqlFaker\Sqlite;
 
 use Faker\Generator as FakerGenerator;
 use InvalidArgumentException;
+use Override;
 use RuntimeException;
 use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\LexicalCatalog;
+use SqlFaker\Grammar\LexicalCatalogException;
 use SqlFaker\Grammar\LexicalException;
 use SqlFaker\Grammar\LexicalGrammar as LexicalGrammarContract;
+use SqlFaker\Grammar\LexicalKeywordIndex;
+use SqlFaker\Grammar\LexicalProfileSource;
 use SqlFaker\Grammar\RandomStringGenerator;
-use SqlFaker\Grammar\SqlVersion;
 use SqlFaker\Grammar\TokenJoiner;
 
 /**
  * SQLite lexical realization for one exact release.
+ *
+ * Writing a terminal sequence as SQL is only half of what this does. The text
+ * is read straight back by the dialect's own tokenizer and the two token
+ * sequences are compared, so a generator that believed it was writing one
+ * statement and a server that would have read another is caught here rather
+ * than by the server. That round trip is the contract; realizing and tokenizing
+ * are the two collaborators it holds.
+ * @phpstan-import-type Catalog from LexicalCatalog
  */
 final class LexicalGrammar implements LexicalGrammarContract
 {
-    public const STRICT_TABLE_OPTION = 'STRICT_TABLE_OPTION';
+    /**
+     * The table option that makes a table reject values of the wrong type.
+     */
+    public const STRICT_TABLE_OPTION = SqliteTerminalRealizer::STRICT_TABLE_OPTION;
 
-    /** @var array<string, list<string>> */
-    private array $keywords;
-
-    /** @var array<string, string> */
-    private array $keywordTokens;
-
+    /** @readonly */
     private RandomStringGenerator $strings;
+
+    /** @readonly */
     private LexicalCatalog $catalog;
 
+    /** @readonly */
+    private SqliteTokenizer $tokenizer;
+
+    /** @readonly */
+    private SqliteTerminalRealizer $realizer;
+
+    /**
+     * @param FakerGenerator $faker Source of the choices realization makes
+     * @param string $profileVersion Exact release to generate for, e.g. "sqlite-3.47.2"
+     * @param bool $allowSyntheticTerminals Whether terminals may be written without a catalogued witness
+     * @param LexicalProfileSource|null $profiles Loads the checked-in profile for the version
+     * @param LexicalKeywordIndex|null $index Inverts the profile's terminal-to-spelling map
+     *
+     * @throws RuntimeException When the profile is missing or describes another release
+     */
     public function __construct(
         private readonly FakerGenerator $faker,
         private readonly string $profileVersion,
         private readonly bool $allowSyntheticTerminals = false,
+        ?LexicalProfileSource $profiles = null,
+        ?LexicalKeywordIndex $index = null,
     ) {
-        $path = SqlVersion::resolve('sqlite', $profileVersion)->lexicalPath;
-        if (!file_exists($path)) {
-            throw new RuntimeException("Lexical profile file not found: {$path}");
-        }
+        /**
+         * @var array{keywords: array<string, list<string>>, catalog: Catalog} $profile
+         */
+        $profile = ($profiles ?? new LexicalProfileSource())->load('sqlite', $profileVersion);
+        $index ??= new LexicalKeywordIndex();
 
-        /** @var array{dialect: string, version: string, keywords: array<string, list<string>>, catalog: array<string, mixed>} $profile */
-        $profile = require $path;
-        if ($profile['dialect'] !== 'sqlite' || $profile['version'] !== $profileVersion) {
-            throw new RuntimeException("Invalid SQLite lexical profile: {$path}");
-        }
-
-        $this->keywords = $profile['keywords'];
-        $this->keywordTokens = $this->reverse($this->keywords);
         $this->strings = new RandomStringGenerator($faker);
         $this->catalog = new LexicalCatalog($profile['catalog']);
+        $this->tokenizer = new SqliteTokenizer($index->reversed($profile['keywords']));
+        $this->realizer = new SqliteTerminalRealizer(
+            $faker,
+            $this->catalog,
+            $this->tokenizer,
+            $profile['keywords'],
+            $profileVersion,
+            $allowSyntheticTerminals,
+            $this->strings,
+        );
     }
 
+    /**
+     * Names the release this grammar generates for.
+     *
+     * @return string Profile version, e.g. "sqlite-3.47.2"
+     */
+    #[Override]
     public function version(): string
     {
         return $this->profileVersion;
     }
 
+    /**
+     * Reports whether a parser terminal can be written as SQL.
+     *
+     * @param string $terminal Terminal to look for
+     *
+     * @return bool True when the terminal can be realized
+     */
+    #[Override]
     public function supports(string $terminal): bool
     {
-        return $terminal === self::STRICT_TABLE_OPTION
-            || $this->allowSyntheticTerminals
-            || $this->catalog->supports($terminal);
+        return $this->realizer->supports($terminal);
     }
 
     /**
-     * @param list<string> $terminals
+     * Checks that every terminal a grammar declares can be accounted for.
+     *
+     * The strict-table option is spelled as an ordinary identifier, so the
+     * catalog has no witness under that name and it is not asked about.
+     *
+     * @param list<string> $terminals Terminals the grammar declares
+     *
+     * @throws LexicalCatalogException When a terminal is neither witnessed nor excluded
      */
     public function assertTerminalsCovered(array $terminals): void
     {
-        $catalogTerminals = [];
-        foreach ($terminals as $terminal) {
-            if ($terminal !== self::STRICT_TABLE_OPTION) {
-                $catalogTerminals[] = $terminal;
-            }
-        }
-
-        $this->catalog->assertTerminalsCovered($catalogTerminals);
+        $this->catalog->assertTerminalsCovered(array_values(array_filter(
+            $terminals,
+            static fn (string $terminal): bool => $terminal !== self::STRICT_TABLE_OPTION,
+        )));
     }
 
     /**
-     * @param list<string> $terminals
-     * @param GenerationPlan<bool>|null $plan
+     * Writes a terminal sequence as SQL and checks that it reads back as itself.
+     *
+     * @param list<string> $terminals Terminals to write, in order
+     * @param GenerationPlan<bool>|null $plan Plan that may pin exact lexemes for some terminals
+     *
+     * @return string SQL that tokenizes back to the terminals it was written from
+     *
+     * @throws LexicalException When a terminal cannot be written, or the text does not read back
      */
+    #[Override]
     public function realize(array $terminals, ?GenerationPlan $plan = null): string
     {
         $lexemes = [];
         $expected = [];
         /** @var array<string, int> $occurrences */
         $occurrences = [];
+
         foreach ($terminals as $terminal) {
             $occurrence = $occurrences[$terminal] ?? 0;
             $occurrences[$terminal] = $occurrence + 1;
-            [$lexeme, $tokens] = $this->realizeTerminal($terminal, $plan?->lexemeAt($terminal, $occurrence));
+
+            [$lexeme, $tokens] = $this->realizer->realize($terminal, $plan?->lexemeAt($terminal, $occurrence));
             $lexemes[] = $lexeme;
             array_push($expected, ...$tokens);
         }
@@ -101,413 +156,97 @@ final class LexicalGrammar implements LexicalGrammarContract
         $sql = TokenJoiner::join(
             $lexemes,
             [['->', '*'], ['*', '->']],
-            fn (): string => $this->trivia(),
-            fn (): string => $this->optionalTrivia(),
+            fn (): string => $this->realizer->trivia(),
+            fn (): string => $this->realizer->optionalTrivia(),
         );
+
         $actual = $this->tokenize($sql);
         if ($this->allowSyntheticTerminals) {
             $expected = $actual;
         }
         if ($actual !== $expected) {
-            throw new LexicalException($this->roundTripMessage($expected, $actual, $sql));
+            throw LexicalException::roundTripMismatch('SQLite', $this->profileVersion, $expected, $actual, $sql);
         }
 
         return $sql;
     }
 
-    /** @return non-empty-string */
+    /**
+     * Reads SQL text into the tokens SQLite's own lexer would produce.
+     *
+     * @param string $sql Text to read
+     *
+     * @return list<string> Parser token names, in order
+     *
+     * @throws LexicalException When the text holds something the lexer cannot read
+     */
+    public function tokenize(string $sql): array
+    {
+        return $this->tokenizer->tokenize($sql);
+    }
+
+    /**
+     * Writes a double-quoted identifier of a bounded length.
+     *
+     * @param int $minLength Shortest identifier body to write
+     * @param int $maxLength Longest identifier body to write
+     *
+     * @return non-empty-string A quoted identifier
+     */
     public function generateQuotedIdentifier(int $minLength = 1, int $maxLength = 128): string
     {
         return '"' . $this->strings->rawIdentifier($minLength, $maxLength) . '"';
     }
 
-    /** @return non-empty-string */
+    /**
+     * Writes a single-quoted string literal of a bounded length.
+     *
+     * @param int $minLength Shortest body to write
+     * @param int $maxLength Longest body to write
+     *
+     * @return non-empty-string A string literal
+     */
     public function generateStringLiteral(int $minLength = 1, int $maxLength = 255): string
     {
         return "'" . $this->strings->mixedAlnumString($minLength, $maxLength) . "'";
     }
 
-    /** @return non-empty-string */
+    /**
+     * Writes an integer literal.
+     *
+     * @param int $min Smallest value to write
+     * @param int $max Largest value to write
+     *
+     * @return non-empty-string An integer literal
+     */
     public function generateIntegerLiteral(int $min = 1, int $max = PHP_INT_MAX): string
     {
         return $this->strings->integerString($min, $max);
     }
 
-    /** @return non-empty-string */
+    /**
+     * Writes a fixed-point literal.
+     *
+     * @param int $precision Total digits to write
+     * @param int $scale Digits after the point
+     *
+     * @return non-empty-string A decimal literal
+     */
     public function generateDecimalLiteral(int $precision = 15, int $scale = 2): string
     {
         return $this->strings->decimalString($precision, $scale);
     }
 
     /**
-     * @return list<string>
+     * Writes the one lexeme a lexical generation plan asks for.
+     *
+     * @param GenerationPlan<bool> $plan Plan naming the lexeme kind and its bounds
+     *
+     * @return non-empty-string The lexeme
+     *
+     * @throws InvalidArgumentException When the plan names a lexeme kind this dialect has none of
      */
-    public function tokenize(string $sql): array
-    {
-        $tokens = [];
-        $length = strlen($sql);
-        $offset = 0;
-
-        while ($offset < $length) {
-            if ($this->skipTrivia($sql, $offset)) {
-                continue;
-            }
-
-            $char = $sql[$offset];
-            if ($char === "'") {
-                $this->skipQuoted($sql, $offset, "'");
-                $tokens[] = 'STRING';
-                continue;
-            }
-            if ($char === '"' || $char === '`') {
-                $this->skipQuoted($sql, $offset, $char);
-                $tokens[] = 'ID';
-                continue;
-            }
-            if ($char === '[') {
-                $end = strpos($sql, ']', $offset + 1);
-                if ($end === false) {
-                    throw new LexicalException('Unterminated SQLite bracket identifier.');
-                }
-                $offset = $end + 1;
-                $tokens[] = 'ID';
-                continue;
-            }
-            if (preg_match('/\G[Xx]\'(?:[0-9A-Fa-f]{2})*\'/', $sql, $match, 0, $offset) === 1) {
-                $offset += strlen($match[0]);
-                $tokens[] = 'BLOB';
-                continue;
-            }
-            if (preg_match('/\G(?:\?[0-9]*|[:@$#][A-Za-z_][A-Za-z0-9_]*)/', $sql, $match, 0, $offset) === 1) {
-                $offset += strlen($match[0]);
-                $tokens[] = 'VARIABLE';
-                continue;
-            }
-            if (preg_match('/\G(?:(?:\d+\.\d*|\.\d+)(?:[eE][+-]?\d+)?|\d+[eE][+-]?\d+)/', $sql, $match, 0, $offset) === 1) {
-                $offset += strlen($match[0]);
-                $tokens[] = 'FLOAT';
-                continue;
-            }
-            if (preg_match('/\G(?:0[xX][0-9A-Fa-f](?:_?[0-9A-Fa-f])*|\d(?:_?\d)*)/', $sql, $match, 0, $offset) === 1) {
-                $offset += strlen($match[0]);
-                $tokens[] = str_contains($match[0], '_') ? 'QNUMBER' : 'INTEGER';
-                continue;
-            }
-            if (preg_match('/\G[A-Za-z_][A-Za-z0-9_$]*/', $sql, $match, 0, $offset) === 1) {
-                $offset += strlen($match[0]);
-                $word = strtoupper($match[0]);
-                $tokens[] = $this->keywordTokens[$word] ?? 'ID';
-                continue;
-            }
-
-            $operator = $this->operatorAt($sql, $offset);
-            if ($operator !== null) {
-                $offset += strlen($operator[0]);
-                $tokens[] = $operator[1];
-                continue;
-            }
-
-            throw new LexicalException("Unsupported SQLite lexical input at offset {$offset}: {$sql}");
-        }
-
-        return $tokens;
-    }
-
-    /**
-     * @param non-empty-string|null $requestedLexeme
-     * @return array{string, list<string>}
-     */
-    private function realizeTerminal(string $terminal, ?string $requestedLexeme = null): array
-    {
-        if (!$this->supports($terminal)) {
-            throw new LexicalException("Unsupported SQLite terminal for {$this->profileVersion}: {$terminal}");
-        }
-
-        if ($terminal === self::STRICT_TABLE_OPTION) {
-            return ['STRICT', ['ID']];
-        }
-
-        if ($requestedLexeme !== null) {
-            return $this->realizeRequestedLexeme($terminal, $requestedLexeme);
-        }
-
-        if (!$this->allowSyntheticTerminals) {
-            $witnesses = $this->catalog->witnesses($terminal);
-            $witness = $witnesses[$this->faker->numberBetween(0, count($witnesses) - 1)];
-
-            return [$witness['sql'], $this->normalizeSourceTokens($witness['tokens'])];
-        }
-
-        return match ($terminal) {
-            'ID', 'id', 'idj' => [$this->identifier(), ['ID']],
-            'ids', 'STRING' => [$this->stringLiteral(), ['STRING']],
-            'BLOB' => [$this->blobLiteral(), ['BLOB']],
-            'number', 'INTEGER' => [$this->strings->integerString(0, PHP_INT_MAX), ['INTEGER']],
-            'FLOAT' => [$this->strings->decimalString(), ['FLOAT']],
-            'QNUMBER' => ['1_0', ['QNUMBER']],
-            'VARIABLE' => [$this->parameter(), ['VARIABLE']],
-            'ANY' => ['_any', ['ID']],
-            'LP' => ['(', ['LP']],
-            'RP' => [')', ['RP']],
-            'SEMI' => [';', ['SEMI']],
-            'COMMA' => [',', ['COMMA']],
-            'DOT' => ['.', ['DOT']],
-            'EQ' => ['=', ['EQ']],
-            'LT' => ['<', ['LT']],
-            'LE' => ['<=', ['LE']],
-            'GT' => ['>', ['GT']],
-            'GE' => ['>=', ['GE']],
-            'NE' => ['<>', ['NE']],
-            'PLUS' => ['+', ['PLUS']],
-            'MINUS' => ['-', ['MINUS']],
-            'STAR' => ['*', ['STAR']],
-            'SLASH' => ['/', ['SLASH']],
-            'REM' => ['%', ['REM']],
-            'BITAND' => ['&', ['BITAND']],
-            'BITOR' => ['|', ['BITOR']],
-            'BITNOT' => ['~', ['BITNOT']],
-            'LSHIFT' => ['<<', ['LSHIFT']],
-            'RSHIFT' => ['>>', ['RSHIFT']],
-            'CONCAT' => ['||', ['CONCAT']],
-            'PTR' => ['->', ['PTR']],
-            default => $this->fixedTerminal($terminal),
-        };
-    }
-
-    /**
-     * @param non-empty-string $requestedLexeme
-     * @return array{non-empty-string, list<string>}
-     */
-    private function realizeRequestedLexeme(string $terminal, string $requestedLexeme): array
-    {
-        if ($this->allowSyntheticTerminals) {
-            $tokens = $this->tokenize($requestedLexeme);
-            if ($tokens !== [$terminal]) {
-                throw new LexicalException("Requested SQLite lexeme does not realize {$terminal}: {$requestedLexeme}");
-            }
-
-            return [$requestedLexeme, $tokens];
-        }
-
-        foreach ($this->catalog->witnesses($terminal) as $witness) {
-            if ($witness['sql'] === $requestedLexeme) {
-                return [$requestedLexeme, $this->normalizeSourceTokens($witness['tokens'])];
-            }
-        }
-
-        throw new LexicalException("SQLite lexical catalog has no {$terminal} witness for: {$requestedLexeme}");
-    }
-
-    /**
-     * @return array{string, list<string>}
-     */
-    private function fixedTerminal(string $terminal): array
-    {
-        $lexemes = $this->keywords[$terminal] ?? null;
-        $lexeme = $lexemes !== null
-            ? $lexemes[$this->faker->numberBetween(0, count($lexemes) - 1)]
-            : $terminal;
-
-        return [$lexeme, $lexemes !== null ? [$terminal] : $this->tokenize($lexeme)];
-    }
-
-    private function identifier(): string
-    {
-        $body = $this->faker->numberBetween(0, 3) === 0 ? 'select' : '_' . $this->strings->rawIdentifier();
-
-        return match ($this->faker->numberBetween(0, 7)) {
-            0 => '"' . str_replace('"', '""', $body . '"quoted') . '"',
-            1 => '`' . str_replace('`', '``', $body . '`quoted') . '`',
-            2 => '[' . str_replace(']', '', $body . ']quoted') . ']',
-            default => $body,
-        };
-    }
-
-    private function stringLiteral(): string
-    {
-        $body = match ($this->faker->numberBetween(0, 5)) {
-            0, 1 => $this->strings->lexicalSequence($this->keywords),
-            2 => "a'b",
-            3 => 'a\\b',
-            default => $this->strings->mixedAlnumString(0, 24),
-        };
-
-        return "'" . str_replace("'", "''", $body) . "'";
-    }
-
-    private function blobLiteral(): string
-    {
-        $length = $this->faker->numberBetween(0, 8) * 2;
-
-        return "X'" . $this->strings->hexString($length, $length) . "'";
-    }
-
-    private function parameter(): string
-    {
-        return match ($this->faker->numberBetween(0, 4)) {
-            0 => '?',
-            1 => '?' . $this->faker->numberBetween(1, 10),
-            2 => ':' . $this->strings->rawIdentifier(),
-            3 => '@' . $this->strings->rawIdentifier(),
-            default => '$' . $this->strings->rawIdentifier(),
-        };
-    }
-
-    private function trivia(): string
-    {
-        if ($this->allowSyntheticTerminals) {
-            return ' ';
-        }
-
-        $witnesses = $this->catalog->witnesses('@TRIVIA');
-
-        return $witnesses[$this->faker->numberBetween(0, count($witnesses) - 1)]['sql'];
-    }
-
-    private function optionalTrivia(): string
-    {
-        if ($this->allowSyntheticTerminals || $this->faker->numberBetween(0, 1) === 0) {
-            return '';
-        }
-
-        return $this->trivia();
-    }
-
-    private function skipTrivia(string $sql, int &$offset): bool
-    {
-        if (preg_match('/\G\s+/A', $sql, $match, 0, $offset) === 1) {
-            $offset += strlen($match[0]);
-
-            return true;
-        }
-        if (substr($sql, $offset, 2) === '--') {
-            $end = strpos($sql, "\n", $offset + 2);
-            $offset = $end === false ? strlen($sql) : $end + 1;
-
-            return true;
-        }
-        if (substr($sql, $offset, 2) === '/*') {
-            $end = strpos($sql, '*/', $offset + 2);
-            if ($end === false) {
-                throw new LexicalException('Unterminated SQLite block comment.');
-            }
-            $offset = $end + 2;
-
-            return true;
-        }
-
-        return false;
-    }
-
-    private function skipQuoted(string $sql, int &$offset, string $quote): void
-    {
-        $length = strlen($sql);
-        $offset++;
-        while ($offset < $length) {
-            if ($sql[$offset] !== $quote) {
-                $offset++;
-                continue;
-            }
-            if (($sql[$offset + 1] ?? null) === $quote) {
-                $offset += 2;
-                continue;
-            }
-            $offset++;
-
-            return;
-        }
-
-        throw new LexicalException("Unterminated SQLite quoted token: {$sql}");
-    }
-
-    /**
-     * @return array{string, string}|null
-     */
-    private function operatorAt(string $sql, int $offset): ?array
-    {
-        foreach ([
-            '->>' => 'PTR', '->' => 'PTR', '||' => 'CONCAT', '==' => 'EQ', '<=' => 'LE', '<>' => 'NE',
-            '!=' => 'NE', '>=' => 'GE', '<<' => 'LSHIFT', '>>' => 'RSHIFT',
-        ] as $operator => $token) {
-            if (substr($sql, $offset, strlen($operator)) === $operator) {
-                return [$operator, $token];
-            }
-        }
-
-        $token = match ($sql[$offset]) {
-            '(' => 'LP',
-            ')' => 'RP',
-            ';' => 'SEMI',
-            ',' => 'COMMA',
-            '.' => 'DOT',
-            '=' => 'EQ',
-            '<' => 'LT',
-            '>' => 'GT',
-            '+' => 'PLUS',
-            '-' => 'MINUS',
-            '*' => 'STAR',
-            '/' => 'SLASH',
-            '%' => 'REM',
-            '&' => 'BITAND',
-            '|' => 'BITOR',
-            '~' => 'BITNOT',
-            default => null,
-        };
-
-        return $token !== null ? [$sql[$offset], $token] : null;
-    }
-
-    /**
-     * @param array<string, list<string>> $keywords
-     * @return array<string, string>
-     */
-    private function reverse(array $keywords): array
-    {
-        $result = [];
-        foreach ($keywords as $token => $lexemes) {
-            foreach ($lexemes as $lexeme) {
-                $result[$lexeme] = $token;
-            }
-        }
-
-        return $result;
-    }
-
-    /**
-     * @param list<string> $expected
-     * @param list<string> $actual
-     */
-    private function roundTripMessage(array $expected, array $actual, string $sql): string
-    {
-        return sprintf(
-            "SQLite lexical round-trip failed for %s.\nExpected: %s\nActual: %s\nSQL: %s",
-            $this->profileVersion,
-            json_encode($expected, JSON_THROW_ON_ERROR),
-            json_encode($actual, JSON_THROW_ON_ERROR),
-            $sql,
-        );
-    }
-
-    /**
-     * @param list<string> $tokens
-     * @return list<string>
-     */
-    private function normalizeSourceTokens(array $tokens): array
-    {
-        $normalized = [];
-        foreach ($tokens as $token) {
-            if ($token !== 'TK_SPACE') {
-                $normalized[] = str_starts_with($token, 'TK_') ? substr($token, 3) : $token;
-            }
-        }
-
-        return $normalized;
-    }
-
-    /**
-     * @param GenerationPlan<bool> $plan
-     * @return non-empty-string
-     */
+    #[Override]
     public function generate(GenerationPlan $plan): string
     {
         $target = $plan->lexicalTarget();

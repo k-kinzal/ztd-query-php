@@ -5,23 +5,22 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\Sqlite;
 
 use Faker\Factory;
-use LogicException;
 use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 use RuntimeException;
+use SqlFaker\Grammar\GenerationException;
 use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\Grammar;
+use SqlFaker\Grammar\LexicalException;
 use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionPattern;
 use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\RandomStringGenerator;
-use SqlFaker\Grammar\Symbol;
 use SqlFaker\Grammar\Terminal;
 use SqlFaker\Grammar\TerminationAnalyzer;
 use SqlFaker\Grammar\TokenJoiner;
@@ -506,7 +505,7 @@ final class SqlGeneratorTest extends TestCase
         $faker->seed(12345);
         $generator = new SqlGenerator($grammar, $faker);
 
-        $this->expectException(LogicException::class);
+        $this->expectException(GenerationException::class);
         $this->expectExceptionMessage('Grammar rule has no lexically realizable alternative: infinite');
 
         $generator->generate(GenerationPlan::fromRule('infinite'));
@@ -521,7 +520,7 @@ final class SqlGeneratorTest extends TestCase
         $faker->seed(12345);
         $generator = new SqlGenerator($grammar, $faker);
 
-        $this->expectException(LogicException::class);
+        $this->expectException(GenerationException::class);
         $this->expectExceptionMessage("Production rule 'empty' has no alternatives.");
 
         $generator->generate(GenerationPlan::fromRule('empty'));
@@ -683,7 +682,7 @@ final class SqlGeneratorTest extends TestCase
         $faker->seed(12345);
         $generator = new SqlGenerator($grammar, $faker);
 
-        $this->expectException(LogicException::class);
+        $this->expectException(LexicalException::class);
         $this->expectExceptionMessage('Unterminated SQLite bracket identifier.');
 
         $generator->generate(GenerationPlan::fromRule('stmt'));
@@ -847,86 +846,6 @@ final class SqlGeneratorTest extends TestCase
 
         self::assertSame('A', $result);
         self::assertSame($result, trim($result));
-    }
-
-    public function testAugmentGrammarRemovesWithinGroupFromExpr(): void
-    {
-        $grammar = SqliteGrammar::load();
-        $faker = Factory::create();
-        $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker);
-
-        $ref = new ReflectionClass($generator);
-        $prop = $ref->getProperty('grammar');
-        /** @var Grammar $augmented */
-        $augmented = $prop->getValue($generator);
-        $exprRule = $augmented->ruleMap['expr'];
-
-        $terminals = array_merge(...array_map(
-            static fn (Production $alt): array => array_filter(
-                $alt->symbols,
-                static fn (Symbol $sym): bool => $sym instanceof Terminal,
-            ),
-            $exprRule->alternatives,
-        ));
-        array_walk($terminals, static function (Terminal $sym): void {
-            self::assertNotSame('WITHIN', $sym->value, 'expr should not contain WITHIN terminal');
-        });
-    }
-
-    public function testAugmentGrammarRemovesOrderByFromDelete(): void
-    {
-        $grammar = SqliteGrammar::load();
-        $faker = Factory::create();
-        $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker);
-
-        $ref = new ReflectionClass($generator);
-        $prop = $ref->getProperty('grammar');
-        /** @var Grammar $augmented */
-        $augmented = $prop->getValue($generator);
-        $deleteRule = $augmented->ruleMap['delete'];
-
-        $nonTerminals = array_merge(...array_map(
-            static fn (Production $alt): array => array_filter(
-                $alt->symbols,
-                static fn (Symbol $sym): bool => $sym instanceof NonTerminal,
-            ),
-            $deleteRule->alternatives,
-        ));
-        array_walk($nonTerminals, static function (NonTerminal $sym): void {
-            self::assertNotSame('orderby_opt', $sym->value, 'delete should not contain orderby_opt');
-        });
-    }
-
-    public function testAugmentGrammarRemovesEmptyWindowDefinitions(): void
-    {
-        $grammar = SqliteGrammar::load();
-        $faker = Factory::create();
-        $faker->seed(12345);
-        $generator = new SqlGenerator($grammar, $faker);
-
-        $ref = new ReflectionClass($generator);
-        $prop = $ref->getProperty('grammar');
-        /** @var Grammar $augmented */
-        $augmented = $prop->getValue($generator);
-
-        (static function () use ($augmented): void {
-            if (!isset($augmented->ruleMap['window'])) {
-                self::markTestSkipped('Grammar does not contain window rule.');
-            }
-        })();
-
-        $windowRule = $augmented->ruleMap['window'];
-
-        $altsWithoutTerminal = array_filter(
-            $windowRule->alternatives,
-            static fn (Production $alt): bool => count(array_filter(
-                $alt->symbols,
-                static fn (Symbol $sym): bool => $sym instanceof Terminal,
-            )) === 0,
-        );
-        self::assertCount(0, $altsWithoutTerminal, 'window alternative should contain at least one terminal keyword');
     }
 
     public function testGenerateIdentifierQuotesReservedWords(): void

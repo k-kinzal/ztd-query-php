@@ -6,7 +6,6 @@ namespace Tests\Unit\SqlFaker\Grammar;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\Symbol;
 use SqlFaker\Grammar\Terminal;
 
 #[CoversClass(Terminal::class)]
@@ -15,11 +14,6 @@ final class TerminalTest extends TestCase
     public function testValue(): void
     {
         self::assertSame('foo', (new Terminal('foo'))->value());
-    }
-
-    public function testImplementsSymbolInterface(): void
-    {
-        self::assertInstanceOf(Symbol::class, new Terminal('x'));
     }
 
     public function testValueProperty(): void

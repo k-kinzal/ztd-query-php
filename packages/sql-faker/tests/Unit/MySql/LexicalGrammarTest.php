@@ -11,15 +11,24 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use ReflectionMethod;
-use ReflectionParameter;
 use RuntimeException;
 use SqlFaker\Grammar\LexicalCatalog;
+use SqlFaker\Grammar\LexicalCatalogException;
+use SqlFaker\Grammar\LexicalCatalogShape;
+use SqlFaker\Grammar\LexicalCoverageCheck;
 use SqlFaker\Grammar\LexicalException;
+use SqlFaker\Grammar\LexicalKeywordIndex;
+use SqlFaker\Grammar\LexicalProfileSource;
+use SqlFaker\Grammar\LexicalWitnessCheck;
+use SqlFaker\Grammar\LexicalWitnessShape;
+use SqlFaker\Grammar\RandomCharacters;
 use SqlFaker\Grammar\RandomStringGenerator;
 use SqlFaker\Grammar\SqlVersion;
+use SqlFaker\Grammar\SqlVersionRegistry;
 use SqlFaker\Grammar\TokenJoiner;
 use SqlFaker\MySql\LexicalGrammar;
+use SqlFaker\MySql\MySqlTerminalRealizer;
+use SqlFaker\MySql\MySqlTokenizer;
 use UnexpectedValueException;
 
 #[CoversClass(LexicalGrammar::class)]
@@ -27,6 +36,18 @@ use UnexpectedValueException;
 #[CoversClass(TokenJoiner::class)]
 #[UsesClass(LexicalCatalog::class)]
 #[UsesClass(SqlVersion::class)]
+#[UsesClass(LexicalCatalogException::class)]
+#[UsesClass(LexicalCatalogShape::class)]
+#[UsesClass(LexicalCoverageCheck::class)]
+#[UsesClass(LexicalException::class)]
+#[UsesClass(LexicalKeywordIndex::class)]
+#[UsesClass(LexicalProfileSource::class)]
+#[UsesClass(LexicalWitnessCheck::class)]
+#[UsesClass(LexicalWitnessShape::class)]
+#[UsesClass(RandomCharacters::class)]
+#[UsesClass(SqlVersionRegistry::class)]
+#[UsesClass(MySqlTerminalRealizer::class)]
+#[UsesClass(MySqlTokenizer::class)]
 final class LexicalGrammarTest extends TestCase
 {
     public function testGeneratesPublicProviderLexemesThroughDialectGrammar(): void
@@ -60,38 +81,82 @@ final class LexicalGrammarTest extends TestCase
     }
 
     /**
-     * @param Closure(LexicalGrammar): string $generate
-     * @param list<int> $expected
+     * @param Closure(LexicalGrammar): string $withDefaults
+     * @param Closure(LexicalGrammar): string $withExplicitBounds
      */
     #[DataProvider('providerPublicLexemeDefaults')]
-    public function testPublicLexemeDefaultBounds(Closure $generate, string $method, array $expected): void
+    public function testPublicLexemeDefaultBounds(Closure $withDefaults, Closure $withExplicitBounds): void
     {
-        self::assertNotSame('', $generate(new LexicalGrammar(Factory::create(), 'mysql-8.4.7')));
-        self::assertSame(
-            $expected,
-            array_map(
-                static fn (ReflectionParameter $parameter): mixed => $parameter->getDefaultValue(),
-                (new ReflectionMethod(LexicalGrammar::class, $method))->getParameters(),
-            ),
-        );
+        $faker = Factory::create();
+        $grammar = new LexicalGrammar($faker, 'mysql-8.4.7');
+
+        $faker->seed(20_260_824);
+        $generated = $withDefaults($grammar);
+
+        $faker->seed(20_260_824);
+        $explicit = $withExplicitBounds($grammar);
+
+        self::assertNotSame('', $generated);
+        self::assertSame($generated, $explicit);
     }
 
-    /** @return iterable<string, array{Closure(LexicalGrammar): string, string, list<int>}> */
+    /**
+     * @return iterable<string, array{Closure(LexicalGrammar): string, Closure(LexicalGrammar): string}>
+     */
     public static function providerPublicLexemeDefaults(): iterable
     {
-        yield 'quoted identifier' => [static fn (LexicalGrammar $grammar): string => $grammar->generateQuotedIdentifier(), 'generateQuotedIdentifier', [1, 64]];
-        yield 'string' => [static fn (LexicalGrammar $grammar): string => $grammar->generateStringLiteral(), 'generateStringLiteral', [1, 255]];
-        yield 'national string' => [static fn (LexicalGrammar $grammar): string => $grammar->generateNationalStringLiteral(), 'generateNationalStringLiteral', [1, 255]];
-        yield 'dollar quoted string' => [static fn (LexicalGrammar $grammar): string => $grammar->generateDollarQuotedString(), 'generateDollarQuotedString', [1, 255]];
-        yield 'integer' => [static fn (LexicalGrammar $grammar): string => $grammar->generateIntegerLiteral(), 'generateIntegerLiteral', [1, 2147483647]];
-        yield 'long integer' => [static fn (LexicalGrammar $grammar): string => $grammar->generateLongIntegerLiteral(), 'generateLongIntegerLiteral', [0, 2147483647]];
-        yield 'unsigned big integer' => [static fn (LexicalGrammar $grammar): string => $grammar->generateUnsignedBigIntLiteral(), 'generateUnsignedBigIntLiteral', [1, 20]];
-        yield 'decimal' => [static fn (LexicalGrammar $grammar): string => $grammar->generateDecimalLiteral(), 'generateDecimalLiteral', [10, 2]];
-        yield 'float' => [static fn (LexicalGrammar $grammar): string => $grammar->generateFloatLiteral(), 'generateFloatLiteral', [10, 2, -38, 38]];
-        yield 'hex' => [static fn (LexicalGrammar $grammar): string => $grammar->generateHexLiteral(), 'generateHexLiteral', [1, 16]];
-        yield 'quoted hex' => [static fn (LexicalGrammar $grammar): string => $grammar->generateQuotedHexLiteral(), 'generateQuotedHexLiteral', [1, 8]];
-        yield 'binary' => [static fn (LexicalGrammar $grammar): string => $grammar->generateBinaryLiteral(), 'generateBinaryLiteral', [1, 64]];
-        yield 'hostname' => [static fn (LexicalGrammar $grammar): string => $grammar->generateHostname(), 'generateHostname', [1, 4, 63]];
+        yield 'quoted identifier' => [
+            static fn (LexicalGrammar $grammar): string => $grammar->generateQuotedIdentifier(),
+            static fn (LexicalGrammar $grammar): string => $grammar->generateQuotedIdentifier(1, 64),
+        ];
+        yield 'string' => [
+            static fn (LexicalGrammar $grammar): string => $grammar->generateStringLiteral(),
+            static fn (LexicalGrammar $grammar): string => $grammar->generateStringLiteral(1, 255),
+        ];
+        yield 'national string' => [
+            static fn (LexicalGrammar $grammar): string => $grammar->generateNationalStringLiteral(),
+            static fn (LexicalGrammar $grammar): string => $grammar->generateNationalStringLiteral(1, 255),
+        ];
+        yield 'dollar quoted string' => [
+            static fn (LexicalGrammar $grammar): string => $grammar->generateDollarQuotedString(),
+            static fn (LexicalGrammar $grammar): string => $grammar->generateDollarQuotedString(1, 255),
+        ];
+        yield 'integer' => [
+            static fn (LexicalGrammar $grammar): string => $grammar->generateIntegerLiteral(),
+            static fn (LexicalGrammar $grammar): string => $grammar->generateIntegerLiteral(1, 2147483647),
+        ];
+        yield 'long integer' => [
+            static fn (LexicalGrammar $grammar): string => $grammar->generateLongIntegerLiteral(),
+            static fn (LexicalGrammar $grammar): string => $grammar->generateLongIntegerLiteral(0, 2147483647),
+        ];
+        yield 'unsigned big integer' => [
+            static fn (LexicalGrammar $grammar): string => $grammar->generateUnsignedBigIntLiteral(),
+            static fn (LexicalGrammar $grammar): string => $grammar->generateUnsignedBigIntLiteral(1, 20),
+        ];
+        yield 'decimal' => [
+            static fn (LexicalGrammar $grammar): string => $grammar->generateDecimalLiteral(),
+            static fn (LexicalGrammar $grammar): string => $grammar->generateDecimalLiteral(10, 2),
+        ];
+        yield 'float' => [
+            static fn (LexicalGrammar $grammar): string => $grammar->generateFloatLiteral(),
+            static fn (LexicalGrammar $grammar): string => $grammar->generateFloatLiteral(10, 2, -38, 38),
+        ];
+        yield 'hex' => [
+            static fn (LexicalGrammar $grammar): string => $grammar->generateHexLiteral(),
+            static fn (LexicalGrammar $grammar): string => $grammar->generateHexLiteral(1, 16),
+        ];
+        yield 'quoted hex' => [
+            static fn (LexicalGrammar $grammar): string => $grammar->generateQuotedHexLiteral(),
+            static fn (LexicalGrammar $grammar): string => $grammar->generateQuotedHexLiteral(1, 8),
+        ];
+        yield 'binary' => [
+            static fn (LexicalGrammar $grammar): string => $grammar->generateBinaryLiteral(),
+            static fn (LexicalGrammar $grammar): string => $grammar->generateBinaryLiteral(1, 64),
+        ];
+        yield 'hostname' => [
+            static fn (LexicalGrammar $grammar): string => $grammar->generateHostname(),
+            static fn (LexicalGrammar $grammar): string => $grammar->generateHostname(1, 4, 63),
+        ];
     }
 
     #[DataProvider('providerGeneratedStringLiteral')]
@@ -108,6 +173,8 @@ final class LexicalGrammarTest extends TestCase
             /**
              * @param mixed $min
              * @param mixed $max
+             *
+             * @throws UnexpectedValueException When the bound is not an integer
              */
             #[Override]
             public function numberBetween($min = 0, $max = 2147483647): int
@@ -131,7 +198,9 @@ final class LexicalGrammarTest extends TestCase
         );
     }
 
-    /** @return iterable<string, array{int, string}> */
+    /**
+     * @return iterable<string, array{int, string}>
+     */
     public static function providerGeneratedStringLiteral(): iterable
     {
         yield 'combined arm value zero' => [0, "'ACCESSIBLE ACCESSIBLE'"];
@@ -358,5 +427,162 @@ SQL;
         yield 'WITH_ROLLUP_SYM' => ['WITH_ROLLUP_SYM', 'WITH ROLLUP'];
         yield 'UNDERSCORE_CHARSET' => ['UNDERSCORE_CHARSET', '_utf8mb4'];
         yield 'PARAM_MARKER' => ['PARAM_MARKER', '?'];
+    }
+
+    public function testGenerateQuotedIdentifierWrapsTheNameInBackticks(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+
+        self::assertMatchesRegularExpression(
+            '/^`.+`$/',
+            $lexical->generateQuotedIdentifier(),
+        );
+    }
+
+    public function testGenerateStringLiteralWrapsTheBodyInSingleQuotes(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+
+        self::assertMatchesRegularExpression(
+            '/^\'.*\'$/s',
+            $lexical->generateStringLiteral(),
+        );
+    }
+
+    public function testGenerateNationalStringLiteralPrefixesTheStringWithN(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+
+        self::assertMatchesRegularExpression(
+            '/^N\'.*\'$/s',
+            $lexical->generateNationalStringLiteral(),
+        );
+    }
+
+    public function testGenerateDollarQuotedStringWrapsTheBodyInDoubleDollars(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+
+        self::assertMatchesRegularExpression(
+            '/^\$\$.*\$\$$/s',
+            $lexical->generateDollarQuotedString(),
+        );
+    }
+
+    public function testGenerateIntegerLiteralWritesOnlyDigits(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+
+        self::assertMatchesRegularExpression(
+            '/^\d+$/',
+            $lexical->generateIntegerLiteral(),
+        );
+    }
+
+    public function testGenerateLongIntegerLiteralWritesOnlyDigits(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+
+        self::assertMatchesRegularExpression(
+            '/^\d+$/',
+            $lexical->generateLongIntegerLiteral(),
+        );
+    }
+
+    public function testGenerateUnsignedBigIntLiteralWritesOnlyDigits(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+
+        self::assertMatchesRegularExpression(
+            '/^\d+$/',
+            $lexical->generateUnsignedBigIntLiteral(),
+        );
+    }
+
+    public function testGenerateDecimalLiteralWritesDigitsAroundAPoint(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+
+        self::assertMatchesRegularExpression(
+            '/^-?\d+\.\d+$/',
+            $lexical->generateDecimalLiteral(),
+        );
+    }
+
+    public function testGenerateFloatLiteralWritesAnExponent(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+
+        self::assertMatchesRegularExpression(
+            '/[eE][+-]?\d+$/',
+            $lexical->generateFloatLiteral(),
+        );
+    }
+
+    public function testGenerateHexLiteralWritesHexDigitsAfterAPrefix(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+
+        self::assertMatchesRegularExpression(
+            '/^0x[0-9a-fA-F]+$/',
+            $lexical->generateHexLiteral(),
+        );
+    }
+
+    public function testGenerateQuotedHexLiteralWritesWholeBytesInQuotes(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+
+        self::assertMatchesRegularExpression(
+            '/^X\'(?:[0-9a-fA-F]{2})+\'$/',
+            $lexical->generateQuotedHexLiteral(),
+        );
+    }
+
+    public function testGenerateBinaryLiteralWritesBitsAfterAPrefix(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+
+        self::assertMatchesRegularExpression(
+            '/^0b[01]+$/',
+            $lexical->generateBinaryLiteral(),
+        );
+    }
+
+    public function testGenerateHostnameWritesDotSeparatedParts(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+
+        self::assertMatchesRegularExpression(
+            '/^[A-Za-z0-9.-]+$/',
+            $lexical->generateHostname(),
+        );
+    }
+
+    public function testSupportsAcceptsATerminalTheCatalogWitnesses(): void
+    {
+        self::assertTrue((new LexicalGrammar(Factory::create(), 'mysql-8.4.7'))->supports('SELECT_SYM'));
+    }
+
+    public function testSupportsRejectsATerminalNoCatalogWitnesses(): void
+    {
+        self::assertFalse((new LexicalGrammar(Factory::create(), 'mysql-8.4.7'))->supports('NOT_A_TERMINAL'));
+    }
+
+    public function testAssertTerminalsCoveredAcceptsTerminalsTheProfileClassifies(): void
+    {
+        (new LexicalGrammar(Factory::create(), 'mysql-8.4.7'))->assertTerminalsCovered(['SELECT_SYM', 'IDENT']);
+
+        $this->expectNotToPerformAssertions();
+    }
+
+    public function testAssertTerminalsCoveredReportsATerminalTheProfileDoesNotClassify(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+
+        $this->expectException(LexicalCatalogException::class);
+        $this->expectExceptionMessage('missing grammar terminals: NOT_A_TERMINAL');
+
+        $lexical->assertTerminalsCovered(['NOT_A_TERMINAL']);
     }
 }

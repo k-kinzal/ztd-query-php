@@ -23,6 +23,8 @@ final class GrammarCompiler
      *
      * Extracts production rules from the AST, determining terminal/non-terminal
      * status for each symbol based on rule and declaration tables.
+     *
+     * @throws UnknownSymbolException When a production names a symbol the grammar never declares
      */
     public function compile(BisonAst $ast): Grammar
     {

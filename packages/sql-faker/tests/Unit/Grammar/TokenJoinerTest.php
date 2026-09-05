@@ -295,4 +295,20 @@ final class TokenJoinerTest extends TestCase
     {
         self::assertFalse(TokenJoiner::isQuotedIdentifier('`a"'));
     }
+
+    public function testMatchesNoSpacePairFindsAPairNamedOutright(): void
+    {
+        self::assertTrue(TokenJoiner::matchesNoSpacePair([['(', 'SELECT']], '(', 'SELECT'));
+    }
+
+    public function testMatchesNoSpacePairAcceptsAWildcardOnEitherSide(): void
+    {
+        self::assertTrue(TokenJoiner::matchesNoSpacePair([['(', '*']], '(', 'anything'));
+        self::assertTrue(TokenJoiner::matchesNoSpacePair([['*', ')']], 'anything', ')'));
+    }
+
+    public function testMatchesNoSpacePairRejectsAPairNothingNames(): void
+    {
+        self::assertFalse(TokenJoiner::matchesNoSpacePair([['(', 'SELECT']], 'SELECT', 'FROM'));
+    }
 }

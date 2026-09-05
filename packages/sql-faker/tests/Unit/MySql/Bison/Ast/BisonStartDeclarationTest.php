@@ -6,7 +6,6 @@ namespace Tests\Unit\SqlFaker\MySql\Bison\Ast;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\MySql\Bison\Ast\BisonDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonStartDeclaration;
 
 #[CoversClass(BisonStartDeclaration::class)]
@@ -17,10 +16,5 @@ final class BisonStartDeclarationTest extends TestCase
         $decl = new BisonStartDeclaration('sql_statement');
 
         self::assertSame('sql_statement', $decl->symbol);
-    }
-
-    public function testImplementsBisonDeclaration(): void
-    {
-        self::assertInstanceOf(BisonDeclaration::class, new BisonStartDeclaration('start'));
     }
 }

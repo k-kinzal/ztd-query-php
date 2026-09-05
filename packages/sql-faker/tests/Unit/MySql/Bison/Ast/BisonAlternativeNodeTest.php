@@ -14,7 +14,7 @@ use SqlFaker\MySql\Bison\Ast\BisonSymbolType;
 #[CoversClass(BisonSymbolNode::class)]
 final class BisonAlternativeNodeTest extends TestCase
 {
-    public function testConstructorAllValues(): void
+    public function testExposesEveryPartOfTheAlternative(): void
     {
         $sym = new BisonSymbolNode(BisonSymbolType::Identifier, 'SELECT');
         $node = new BisonAlternativeNode([$sym], '{ $$ = $1; }', 'UMINUS', 1, '<merge>');
@@ -26,7 +26,7 @@ final class BisonAlternativeNodeTest extends TestCase
         self::assertSame('<merge>', $node->merge);
     }
 
-    public function testConstructorWithNulls(): void
+    public function testExposesOmittedPartsAsNull(): void
     {
         $node = new BisonAlternativeNode([], null, null, null, null);
 

@@ -15,7 +15,7 @@ use SqlFaker\MySql\Grammar\Terminal;
 #[CoversClass(Terminal::class)]
 final class ProductionRuleTest extends TestCase
 {
-    public function testConstructor(): void
+    public function testExposesItsLeftHandSideAndAlternatives(): void
     {
         $alternatives = [new Production([new Terminal('A')])];
         $rule = new ProductionRule('expr', $alternatives);

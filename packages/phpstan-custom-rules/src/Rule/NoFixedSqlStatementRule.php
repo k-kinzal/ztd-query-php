@@ -14,6 +14,7 @@ use PhpParser\Node\Expr\BinaryOp\Concat;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\Match_;
 use PhpParser\Node\Expr\MethodCall;
+use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Expr\PropertyFetch;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Identifier;
@@ -256,6 +257,33 @@ final class NoFixedSqlStatementRule implements Rule
 
             return $argument instanceof Expr
                 && $this->isDerivedTerminalExpression($argument, $assignments, $scope, $visited);
+        }
+        if ($expr instanceof MethodCall
+            && $expr->name instanceof Identifier
+            && $expr->var instanceof New_
+            && $expr->var->class instanceof Name
+        ) {
+            $class = $scope->resolveName($expr->var->class);
+            if ($expr->name->name === 'of'
+                && in_array($class, [
+                    'SqlFaker\\Grammar\\Derivation',
+                    'SqlFaker\\MySql\\Derivation',
+                    'SqlFaker\\Sqlite\\Derivation',
+                ], true)
+            ) {
+                return true;
+            }
+            if ($expr->name->name === 'applied'
+                && in_array($class, [
+                    'SqlFaker\\MySql\\ParserSemantics',
+                    'SqlFaker\\PostgreSql\\ParserSemantics',
+                ], true)
+            ) {
+                $argument = $expr->getArgs()[0]->value ?? null;
+
+                return $argument instanceof Expr
+                    && $this->isDerivedTerminalExpression($argument, $assignments, $scope, $visited);
+            }
         }
         if (!$expr instanceof MethodCall
             || !$expr->var instanceof Variable

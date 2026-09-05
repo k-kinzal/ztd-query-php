@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace SqlFaker\MySql\Bison\Lexer;
 
+/**
+ * The kinds of lexeme a Bison grammar file is written from.
+ */
 enum BisonTokenType
 {
     case Directive;

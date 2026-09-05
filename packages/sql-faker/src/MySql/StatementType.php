@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlFaker\MySql;
 
 /**
- * Available statement types for MySQL SQL generation.
+ * Statement start rules available to MySQL SQL generation.
  */
 enum StatementType: string
 {

@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace SqlFaker\Grammar;
 
-use RuntimeException;
-
 /**
- * Validates the checked-in terminal catalog derived from an upstream lexer source.
+ * The checked-in terminal catalog derived from an upstream lexer source.
+ *
+ * The catalog records, for each terminal the grammar can produce, SQL that the
+ * server's own lexer turns into that terminal. It is generated from an upstream
+ * lexer and committed, so it is read rather than trusted: a catalog that cannot
+ * be shown to describe a whole lexer is refused at construction rather than
+ * producing wrong answers later.
  *
  * @phpstan-type Witness array{id: string, sql: string, tokens: list<string>, units: list<string>, context_sql?: string}
  * @phpstan-type Catalog array{
@@ -20,40 +24,84 @@ use RuntimeException;
 final class LexicalCatalog
 {
     /** @var Catalog */
-    private array $catalog;
+    private readonly array $catalog;
 
     /**
-     * @param array<string, mixed> $catalog
+     * @param array<string, mixed> $catalog Catalog as decoded from its resource file
+     * @param LexicalCatalogShape|null $shape Reads the file into the shape below
+     * @param LexicalCoverageCheck|null $coverage Checks that every lexer unit is accounted for
+     * @param LexicalWitnessCheck|null $witnesses Checks that witnesses and coverage agree
+     *
+     * @throws LexicalCatalogException When the catalog is malformed or self-contradictory
      */
-    public function __construct(array $catalog)
-    {
-        $this->catalog = $this->validateShape($catalog);
-        $this->validateCoveragePartition();
-        $this->validateWitnesses();
+    public function __construct(
+        array $catalog,
+        ?LexicalCatalogShape $shape = null,
+        ?LexicalCoverageCheck $coverage = null,
+        ?LexicalWitnessCheck $witnesses = null,
+    ) {
+        $read = ($shape ?? new LexicalCatalogShape())->of($catalog);
+
+        ($coverage ?? new LexicalCoverageCheck())->verify($read['coverage']);
+        ($witnesses ?? new LexicalWitnessCheck())->verify(
+            $read['terminals'],
+            $read['terminal_exclusions'],
+            $read['coverage'],
+        );
+
+        $this->catalog = $read;
     }
 
+    /**
+     * Names the lexer the catalog was generated from.
+     *
+     * @return string Engine name, e.g. "official"
+     */
     public function sourceEngine(): string
     {
         return $this->catalog['source']['engine'];
     }
 
+    /**
+     * Names the entry point of the lexer the catalog was generated from.
+     *
+     * @return string Entry point name
+     */
     public function sourceEntrypoint(): string
     {
         return $this->catalog['source']['entrypoint'];
     }
 
+    /**
+     * Reports whether the catalog can produce SQL for a terminal.
+     *
+     * @param string $terminal Grammar terminal to look for
+     *
+     * @return bool True when at least one witness is catalogued
+     */
     public function supports(string $terminal): bool
     {
         return isset($this->catalog['terminals'][$terminal]);
     }
 
+    /**
+     * Reports whether the catalog leaves a terminal out on purpose.
+     *
+     * @param string $terminal Grammar terminal to look for
+     *
+     * @return bool True when the terminal is excluded with a reason
+     */
     public function excludes(string $terminal): bool
     {
         return isset($this->catalog['terminal_exclusions'][$terminal]);
     }
 
     /**
-     * @return list<array{id: string, sql: string, tokens: list<string>, units: list<string>, context_sql?: string}>
+     * Reports the lexing examples catalogued for a terminal.
+     *
+     * @param string $terminal Grammar terminal to look for
+     *
+     * @return list<Witness> The witnesses, empty when the terminal is not catalogued
      */
     public function witnesses(string $terminal): array
     {
@@ -61,7 +109,11 @@ final class LexicalCatalog
     }
 
     /**
-     * @param list<string> $terminals
+     * Checks that the catalog classifies every terminal a grammar can produce.
+     *
+     * @param list<string> $terminals Terminals the grammar declares
+     *
+     * @throws LexicalCatalogException When a terminal is neither witnessed nor excluded
      */
     public function assertTerminalsCovered(array $terminals): void
     {
@@ -71,188 +123,13 @@ final class LexicalCatalog
                 $missing[] = $terminal;
             }
         }
+
+        if ($missing === []) {
+            return;
+        }
+
         sort($missing);
-        if ($missing !== []) {
-            throw new RuntimeException(sprintf(
-                'Upstream lexer catalog is missing grammar terminals: %s',
-                implode(', ', $missing),
-            ));
-        }
-    }
 
-    /**
-     * @param array<string, mixed> $catalog
-     * @return Catalog
-     */
-    private function validateShape(array $catalog): array
-    {
-        if (!isset($catalog['source'])) {
-            throw new RuntimeException('Invalid upstream lexical catalog shape.');
-        }
-        if (!is_array($catalog['source'])) {
-            throw new RuntimeException('Invalid upstream lexical catalog shape.');
-        }
-        if (!isset($catalog['source']['engine'], $catalog['source']['entrypoint'])) {
-            throw new RuntimeException('Invalid upstream lexical catalog shape.');
-        }
-        if (!is_string($catalog['source']['engine'])) {
-            throw new RuntimeException('Invalid upstream lexical catalog shape.');
-        }
-        if (!is_string($catalog['source']['entrypoint'])) {
-            throw new RuntimeException('Invalid upstream lexical catalog shape.');
-        }
-        if (!isset($catalog['terminals'])) {
-            throw new RuntimeException('Invalid upstream lexical catalog shape.');
-        }
-        if (!is_array($catalog['terminals'])) {
-            throw new RuntimeException('Invalid upstream lexical catalog shape.');
-        }
-        if (!isset($catalog['terminal_exclusions'])) {
-            throw new RuntimeException('Invalid upstream lexical catalog shape.');
-        }
-        if (!is_array($catalog['terminal_exclusions'])) {
-            throw new RuntimeException('Invalid upstream lexical catalog shape.');
-        }
-        if (!isset($catalog['coverage'])) {
-            throw new RuntimeException('Invalid upstream lexical catalog shape.');
-        }
-        if (!is_array($catalog['coverage'])) {
-            throw new RuntimeException('Invalid upstream lexical catalog shape.');
-        }
-        if (!isset($catalog['coverage']['units'], $catalog['coverage']['witnessed'], $catalog['coverage']['excluded'])) {
-            throw new RuntimeException('Invalid upstream lexical catalog shape.');
-        }
-        if (!is_array($catalog['coverage']['units'])) {
-            throw new RuntimeException('Invalid upstream lexical catalog shape.');
-        }
-        if (!is_array($catalog['coverage']['witnessed'])) {
-            throw new RuntimeException('Invalid upstream lexical catalog shape.');
-        }
-        if (!is_array($catalog['coverage']['excluded'])) {
-            throw new RuntimeException('Invalid upstream lexical catalog shape.');
-        }
-        $normalizedTerminals = [];
-        foreach ($catalog['terminals'] as $terminal => $witnesses) {
-            if (!is_string($terminal) || !is_array($witnesses)) {
-                throw new RuntimeException('Invalid upstream lexical terminal catalog.');
-            }
-            $normalizedTerminals[$terminal] = [];
-            foreach ($witnesses as $witness) {
-                if (is_array($witness) && array_is_list($witness) && in_array(count($witness), [4, 5], true)) {
-                    $witness = [
-                        'id' => $witness[0],
-                        'sql' => $witness[1],
-                        'tokens' => $witness[2],
-                        'units' => $witness[3],
-                        ...isset($witness[4]) ? ['context_sql' => $witness[4]] : [],
-                    ];
-                }
-                if (!is_array($witness)
-                    || !isset($witness['id'], $witness['sql'], $witness['tokens'], $witness['units'])
-                    || !is_string($witness['id']) || !is_string($witness['sql'])
-                    || !is_array($witness['tokens']) || !array_is_list($witness['tokens'])
-                    || !is_array($witness['units']) || !array_is_list($witness['units'])
-                    || (isset($witness['context_sql']) && !is_string($witness['context_sql']))
-                    || array_filter($witness['tokens'], static fn (mixed $token): bool => !is_string($token)) !== []
-                    || array_filter($witness['units'], static fn (mixed $unit): bool => !is_string($unit)) !== []
-                ) {
-                    throw new RuntimeException("Invalid terminal witness: {$terminal}");
-                }
-                $normalizedTerminals[$terminal][] = $witness;
-            }
-        }
-        $catalog['terminals'] = $normalizedTerminals;
-        foreach ($catalog['terminal_exclusions'] as $terminal => $reason) {
-            if (!is_string($terminal) || !is_string($reason) || $reason === '') {
-                throw new RuntimeException('Terminal exclusions require string terminals and nonempty reasons.');
-            }
-        }
-        if (!array_is_list($catalog['coverage']['units'])
-            || array_filter(
-                $catalog['coverage']['units'],
-                static fn (mixed $unit): bool => !is_string($unit),
-            ) !== []
-        ) {
-            throw new RuntimeException('Coverage units must be a list of strings.');
-        }
-        foreach ($catalog['coverage']['witnessed'] as $unit => $id) {
-            if (!is_string($unit) || !is_string($id)) {
-                throw new RuntimeException('Coverage witnesses require string units and identifiers.');
-            }
-        }
-        foreach ($catalog['coverage']['excluded'] as $unit => $reason) {
-            if (!is_string($unit) || !is_string($reason) || $reason === '') {
-                throw new RuntimeException('Coverage exclusions require string units and nonempty reasons.');
-            }
-        }
-
-        /** @var Catalog $catalog */
-        return $catalog;
-    }
-
-    private function validateCoveragePartition(): void
-    {
-        if (count($this->catalog['coverage']['units']) !== count(array_unique($this->catalog['coverage']['units']))) {
-            throw new RuntimeException('Upstream lexer coverage units must be unique.');
-        }
-        $overlap = array_intersect_key(
-            $this->catalog['coverage']['witnessed'],
-            $this->catalog['coverage']['excluded'],
-        );
-        if ($overlap !== []) {
-            throw new RuntimeException('Upstream lexer coverage units cannot be both witnessed and excluded.');
-        }
-
-        $units = $this->catalog['coverage']['units'];
-        sort($units);
-        $classified = [
-            ...array_keys($this->catalog['coverage']['witnessed']),
-            ...array_keys($this->catalog['coverage']['excluded']),
-        ];
-        sort($classified);
-        if ($units !== $classified) {
-            throw new RuntimeException('Upstream lexer coverage units are not completely classified.');
-        }
-    }
-
-    private function validateWitnesses(): void
-    {
-        $coverageUnits = array_fill_keys($this->catalog['coverage']['units'], true);
-        $ids = [];
-        foreach ($this->catalog['terminals'] as $terminal => $witnesses) {
-            if (isset($this->catalog['terminal_exclusions'][$terminal])) {
-                throw new RuntimeException('Terminal catalog and exclusions must be disjoint string keys.');
-            }
-            if ($witnesses === []) {
-                throw new RuntimeException("Terminal catalog is empty: {$terminal}");
-            }
-            foreach ($witnesses as $witness) {
-                if (isset($ids[$witness['id']])) {
-                    throw new RuntimeException("Duplicate terminal witness identifier: {$witness['id']}");
-                }
-                $ids[$witness['id']] = $witness['id'];
-                foreach ($witness['units'] as $unit) {
-                    if (!isset($coverageUnits[$unit])) {
-                        throw new RuntimeException("Terminal witness references an unknown coverage unit: {$unit}");
-                    }
-                }
-            }
-        }
-        foreach ($this->catalog['coverage']['witnessed'] as $unit => $id) {
-            if (!isset($ids[$id])) {
-                throw new RuntimeException("Coverage unit references an unknown witness: {$unit}");
-            }
-            $found = false;
-            foreach ($this->catalog['terminals'] as $witnesses) {
-                foreach ($witnesses as $witness) {
-                    if ($witness['id'] === $id && in_array($unit, $witness['units'], true)) {
-                        $found = true;
-                    }
-                }
-            }
-            if (!$found) {
-                throw new RuntimeException("Coverage witness does not reference its unit: {$unit}");
-            }
-        }
+        throw LexicalCatalogException::missingTerminals($missing);
     }
 }

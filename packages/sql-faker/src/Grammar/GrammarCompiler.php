@@ -20,6 +20,8 @@ final class GrammarCompiler
 {
     /**
      * Compile a BisonAst into a Grammar.
+     *
+     * @throws UnknownSymbolException When a production names a symbol the grammar never declares
      */
     public function compile(BisonAst $ast): Grammar
     {

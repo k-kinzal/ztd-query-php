@@ -20,7 +20,7 @@ use SqlFaker\MySql\Grammar\ProductionRule;
 #[UsesClass(ProductionRule::class)]
 final class GenerationPlansTest extends TestCase
 {
-    public function testWithoutEmptyRowsPlanConstrainsEveryOptionalValuesOccurrence(): void
+    public function testWithoutEmptyRowsConstrainsEveryOptionalValuesOccurrence(): void
     {
         $all = GenerationPlans::withoutEmptyRows();
         $insert = GenerationPlans::withoutEmptyRows('insert_stmt');
@@ -39,7 +39,7 @@ final class GenerationPlansTest extends TestCase
         self::assertTrue($insertPattern->matches(['values']));
     }
 
-    public function testMultiTableUpdatePlanRestrictsTheUpdateGrammar(): void
+    public function testMultiTableUpdateStatementRestrictsTheUpdateGrammar(): void
     {
         $plan = GenerationPlans::multiTableUpdateStatement();
 
@@ -63,7 +63,7 @@ final class GenerationPlansTest extends TestCase
         self::assertTrue($plan->patternAt('update_list', 1)?->matches(['update_elem']) ?? false);
     }
 
-    public function testMultiTableDeletePlanRestrictsTheDeleteGrammar(): void
+    public function testMultiTableDeleteStatementRestrictsTheDeleteGrammar(): void
     {
         $plan = GenerationPlans::multiTableDeleteStatement();
 
@@ -98,7 +98,7 @@ final class GenerationPlansTest extends TestCase
         self::assertTrue($plan->patternAt('opt_use_partition', 1)?->matches([]) ?? false);
     }
 
-    public function testForeignKeyPlanAdaptsToTheGrammarVersion(): void
+    public function testForeignKeyConstraintAdaptsToTheGrammarVersion(): void
     {
         $modernGrammar = new Grammar('table_constraint_def', [
             'table_constraint_def' => new ProductionRule('table_constraint_def', []),
@@ -123,7 +123,7 @@ final class GenerationPlansTest extends TestCase
         self::assertTrue($legacy->patternAt('opt_ref_list', 0)?->matches(['reference']) ?? false);
     }
 
-    public function testJoinedUpdatePlanRestrictsTheDerivedTableGrammar(): void
+    public function testUpdateJoinDerivedStatementRestrictsTheDerivedTableGrammar(): void
     {
         $plan = GenerationPlans::updateJoinDerivedStatement();
 
@@ -141,7 +141,7 @@ final class GenerationPlansTest extends TestCase
         self::assertTrue($plan->patternAt('opt_group_clause', 0)?->matches(['GROUP_SYM']) ?? false);
     }
 
-    public function testCompoundInsertPlanRestrictsTheUnionGrammar(): void
+    public function testInsertSelectCompoundStatementRestrictsTheUnionGrammar(): void
     {
         $plan = GenerationPlans::insertSelectCompoundStatement();
 
@@ -154,7 +154,7 @@ final class GenerationPlansTest extends TestCase
         self::assertTrue($plan->patternAt('union_option', 0)?->matches(['ALL']) ?? false);
     }
 
-    public function testRowAliasUpsertPlanRestrictsTheValuesGrammar(): void
+    public function testInsertRowAliasUpsertStatementRestrictsTheValuesGrammar(): void
     {
         $plan = GenerationPlans::insertRowAliasUpsertStatement();
 
@@ -168,7 +168,7 @@ final class GenerationPlansTest extends TestCase
         self::assertTrue($plan->patternAt('opt_insert_update_list', 0)?->matches(['update']) ?? false);
     }
 
-    public function testFunctionUpsertPlanRestrictsTheConflictFunctionGrammar(): void
+    public function testInsertFunctionUpsertStatementRestrictsTheConflictFunctionGrammar(): void
     {
         $plan = GenerationPlans::insertFunctionUpsertStatement();
 
@@ -187,7 +187,7 @@ final class GenerationPlansTest extends TestCase
         self::assertTrue($plan->patternAt('function_call_conflict', 0)?->matches(['IF']) ?? false);
     }
 
-    public function testTemporaryTablePlanRequiresTheTemporaryProduction(): void
+    public function testTemporaryTableStatementRequiresTheTemporaryProduction(): void
     {
         $plan = GenerationPlans::temporaryTableStatement();
 
@@ -195,7 +195,7 @@ final class GenerationPlansTest extends TestCase
         self::assertTrue($plan->patternAt('opt_temporary', 0)?->matches(['TEMPORARY']) ?? false);
     }
 
-    public function testViewPlanRestrictsTheCreateGrammar(): void
+    public function testViewStatementRestrictsTheCreateGrammar(): void
     {
         $plan = GenerationPlans::viewStatement();
 
@@ -214,7 +214,7 @@ final class GenerationPlansTest extends TestCase
         self::assertTrue($plan->patternAt('query_primary', 0)?->matches(['query_specification']) ?? false);
     }
 
-    public function testGeneratedColumnPlanRequiresTheGeneratedAttribute(): void
+    public function testGeneratedColumnStatementRequiresTheGeneratedAttribute(): void
     {
         $plan = GenerationPlans::generatedColumnStatement();
 
@@ -226,7 +226,7 @@ final class GenerationPlansTest extends TestCase
         self::assertTrue($plan->patternAt('opt_stored_attribute', 0)?->matches(['STORED_SYM']) ?? false);
     }
 
-    public function testForeignKeyCascadePlanRequiresBothCascadeActions(): void
+    public function testForeignKeyCascadeStatementRequiresBothCascadeActions(): void
     {
         $plan = GenerationPlans::foreignKeyCascadeStatement();
 
@@ -244,7 +244,7 @@ final class GenerationPlansTest extends TestCase
         self::assertTrue($plan->patternAt('delete_option', 1)?->matches(['CASCADE']) ?? false);
     }
 
-    public function testPartitionSelectPlanRequiresThePartitionClause(): void
+    public function testPartitionSelectStatementRequiresThePartitionClause(): void
     {
         $plan = GenerationPlans::partitionSelectStatement();
 
@@ -264,14 +264,14 @@ final class GenerationPlansTest extends TestCase
         self::assertTrue($plan->patternAt('opt_use_partition', 0)?->matches(['PARTITION_SYM']) ?? false);
     }
 
-    public function testLoadDataPlanStartsFromTheLoadGrammar(): void
+    public function testLoadDataStatementStartsFromTheLoadGrammar(): void
     {
         $plan = GenerationPlans::loadDataStatement();
 
         self::assertSame('load_stmt', $plan->startRule());
     }
 
-    public function testFullTextPlanRequiresMatchAgainstGrammar(): void
+    public function testFullTextSearchStatementRequiresMatchAgainstGrammar(): void
     {
         $plan = GenerationPlans::fullTextSearchStatement();
 
@@ -282,5 +282,122 @@ final class GenerationPlansTest extends TestCase
         self::assertTrue($plan->patternAt('from_tables', 0)?->matches(['table_reference_list']) ?? false);
         self::assertTrue($plan->patternAt('opt_where_clause', 0)?->matches(['expr']) ?? false);
         self::assertTrue($plan->patternAt('simple_expr', 0)?->matches(['MATCH', 'AGAINST']) ?? false);
+    }
+
+    public function testQuotedIdentifierPlansThatLexeme(): void
+    {
+        $plan = GenerationPlans::quotedIdentifier(1, 2);
+
+        self::assertSame('quoted_identifier', $plan->lexicalTarget());
+        self::assertSame(['minLength' => 1, 'maxLength' => 2], $plan->parameters());
+    }
+
+    public function testStringLiteralPlansThatLexeme(): void
+    {
+        $plan = GenerationPlans::stringLiteral(1, 2);
+
+        self::assertSame('string_literal', $plan->lexicalTarget());
+        self::assertSame(['minLength' => 1, 'maxLength' => 2], $plan->parameters());
+    }
+
+    public function testNationalStringLiteralPlansThatLexeme(): void
+    {
+        $plan = GenerationPlans::nationalStringLiteral(1, 2);
+
+        self::assertSame('national_string_literal', $plan->lexicalTarget());
+        self::assertSame(['minLength' => 1, 'maxLength' => 2], $plan->parameters());
+    }
+
+    public function testDollarQuotedStringPlansThatLexeme(): void
+    {
+        $plan = GenerationPlans::dollarQuotedString(1, 2);
+
+        self::assertSame('dollar_quoted_string', $plan->lexicalTarget());
+        self::assertSame(['minLength' => 1, 'maxLength' => 2], $plan->parameters());
+    }
+
+    public function testIntegerLiteralPlansThatLexeme(): void
+    {
+        $plan = GenerationPlans::integerLiteral(1, 2);
+
+        self::assertSame('integer_literal', $plan->lexicalTarget());
+        self::assertSame(['min' => 1, 'max' => 2], $plan->parameters());
+    }
+
+    public function testLongIntegerLiteralPlansThatLexeme(): void
+    {
+        $plan = GenerationPlans::longIntegerLiteral(1, 2);
+
+        self::assertSame('long_integer_literal', $plan->lexicalTarget());
+        self::assertSame(['min' => 1, 'max' => 2], $plan->parameters());
+    }
+
+    public function testUnsignedBigIntLiteralPlansThatLexeme(): void
+    {
+        $plan = GenerationPlans::unsignedBigIntLiteral(1, 2);
+
+        self::assertSame('unsigned_big_int_literal', $plan->lexicalTarget());
+        self::assertSame(['minLength' => 1, 'maxLength' => 2], $plan->parameters());
+    }
+
+    public function testDecimalLiteralPlansThatLexeme(): void
+    {
+        $plan = GenerationPlans::decimalLiteral(1, 2);
+
+        self::assertSame('decimal_literal', $plan->lexicalTarget());
+        self::assertSame(['precision' => 1, 'scale' => 2], $plan->parameters());
+    }
+
+    public function testFloatLiteralPlansThatLexeme(): void
+    {
+        $plan = GenerationPlans::floatLiteral(1, 2, 3, 4);
+
+        self::assertSame('float_literal', $plan->lexicalTarget());
+        self::assertSame(['precision' => 1, 'scale' => 2, 'minExponent' => 3, 'maxExponent' => 4], $plan->parameters());
+    }
+
+    public function testHexLiteralPlansThatLexeme(): void
+    {
+        $plan = GenerationPlans::hexLiteral(1, 2);
+
+        self::assertSame('hex_literal', $plan->lexicalTarget());
+        self::assertSame(['minLength' => 1, 'maxLength' => 2], $plan->parameters());
+    }
+
+    public function testQuotedHexLiteralPlansThatLexeme(): void
+    {
+        $plan = GenerationPlans::quotedHexLiteral(1, 2);
+
+        self::assertSame('quoted_hex_literal', $plan->lexicalTarget());
+        self::assertSame(['minBytes' => 1, 'maxBytes' => 2], $plan->parameters());
+    }
+
+    public function testBinaryLiteralPlansThatLexeme(): void
+    {
+        $plan = GenerationPlans::binaryLiteral(1, 2);
+
+        self::assertSame('binary_literal', $plan->lexicalTarget());
+        self::assertSame(['minLength' => 1, 'maxLength' => 2], $plan->parameters());
+    }
+
+    public function testHostnamePlansThatLexeme(): void
+    {
+        $plan = GenerationPlans::hostname(1, 2, 3);
+
+        self::assertSame('hostname', $plan->lexicalTarget());
+        self::assertSame(['minParts' => 1, 'maxParts' => 2, 'maxPartLength' => 3], $plan->parameters());
+    }
+
+    public function testStatementBoundsTheWalkAtTheRuleItIsGrownFrom(): void
+    {
+        $plan = GenerationPlans::statement('select_stmt', 12);
+
+        self::assertSame('select_stmt', $plan->startRule());
+        self::assertSame(12, $plan->maxDepth());
+    }
+
+    public function testStatementWalksTheWholeGrammarWhenNoRuleIsNamed(): void
+    {
+        self::assertNull(GenerationPlans::statement(null, 12)->startRule());
     }
 }

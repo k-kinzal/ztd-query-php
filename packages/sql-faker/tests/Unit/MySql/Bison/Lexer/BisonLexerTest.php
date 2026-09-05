@@ -15,6 +15,19 @@ use SqlFaker\MySql\Bison\Lexer\BisonTokenType;
 #[CoversClass(BisonLexer::class)]
 #[CoversClass(BisonToken::class)]
 #[CoversClass(BisonTokenType::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\GrammarParseException::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\SourceCursor::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\MySql\Bison\Lexer\ActionScanner::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\MySql\Bison\Lexer\BisonScannerChain::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\MySql\Bison\Lexer\BisonTokenScanner::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\MySql\Bison\Lexer\BisonTokenStream::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\MySql\Bison\Lexer\BisonTrivia::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\MySql\Bison\Lexer\DirectiveScanner::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\MySql\Bison\Lexer\IdentifierScanner::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\MySql\Bison\Lexer\NumberScanner::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\MySql\Bison\Lexer\PunctuationScanner::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\MySql\Bison\Lexer\QuotedLiteralScanner::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\MySql\Bison\Lexer\TypeTagScanner::class)]
 final class BisonLexerTest extends TestCase
 {
     public function testNextReturnsEofForEmptyInput(): void
@@ -941,5 +954,24 @@ YY;
         yield 'type tag' => ['<type>', BisonTokenType::TypeTag, 'type'];
         yield 'prologue' => ['%{ code %}', BisonTokenType::Prologue, ' code '];
         yield 'action' => ['{ code }', BisonTokenType::Action, ' code '];
+    }
+
+    public function testNextIntReadsBufferedNumbers(): void
+    {
+        $lexer = new BisonLexer(input: '42 7');
+        $lexer->peekN(n: 2);
+
+        self::assertSame(42, $lexer->nextInt());
+        self::assertSame(7, $lexer->nextInt());
+    }
+
+    public function testConsumeRemainingDiscardsLookaheadAndReturnsRawSource(): void
+    {
+        $lexer = new BisonLexer('foo bar raw text');
+        $lexer->peekN(2);
+
+        self::assertSame(' raw text', $lexer->consumeRemaining());
+        self::assertSame(BisonTokenType::Eof, $lexer->next()->type);
+        self::assertSame('', $lexer->consumeRemaining());
     }
 }

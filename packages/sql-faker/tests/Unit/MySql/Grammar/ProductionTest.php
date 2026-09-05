@@ -15,7 +15,7 @@ use SqlFaker\MySql\Grammar\Terminal;
 #[CoversClass(NonTerminal::class)]
 final class ProductionTest extends TestCase
 {
-    public function testConstructor(): void
+    public function testExposesTheSymbolsItWasBuiltFrom(): void
     {
         $symbols = [new Terminal('A'), new NonTerminal('b')];
         $production = new Production($symbols);
@@ -23,7 +23,7 @@ final class ProductionTest extends TestCase
         self::assertSame($symbols, $production->symbols);
     }
 
-    public function testConstructorEmpty(): void
+    public function testExposesAnEmptySymbolListForAnEmptyProduction(): void
     {
         $production = new Production([]);
 
