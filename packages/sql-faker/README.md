@@ -185,13 +185,6 @@ The round-trip invariant guarantees the lexical layer: after dialect-specific pa
 
 ## Development
 
-Run these commands from `packages/sql-faker` after `composer install`.
-PHP-CS-Fixer uses the strict rules from php-ai-toolkit's
-[`setup-toolkit-php-cs-fixer` skill](https://github.com/k-kinzal/php-ai-toolkit/tree/main/skills/setup-toolkit-php-cs-fixer).
-The configuration covers maintained PHP files, including tests, build scripts, and fuzz targets.
-Generated AST and lexical profiles (`resources/ast` and `resources/lexical`), dependencies,
-and build/cache directories are excluded. CI checks formatting through `composer lint`.
-
 ```bash
 # Run tests
 composer test
@@ -210,9 +203,6 @@ composer build-sqlite
 
 # Fix code style
 composer format
-
-# Check code style without changing files
-composer format:check
 ```
 
 ## License
