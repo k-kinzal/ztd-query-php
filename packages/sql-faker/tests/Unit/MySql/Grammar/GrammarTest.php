@@ -23,6 +23,8 @@ use SqlFaker\MySql\Grammar\Grammar;
 #[CoversClass(NonTerminal::class)]
 #[UsesClass(SqlVersion::class)]
 #[UsesClass(SqlVersionRegistry::class)]
+#[UsesClass(\SqlFaker\MySql\StartRuleResolver::class)]
+#[UsesClass(\SqlFaker\Grammar\Grammar::class)]
 final class GrammarTest extends TestCase
 {
     public function testLoad(): void

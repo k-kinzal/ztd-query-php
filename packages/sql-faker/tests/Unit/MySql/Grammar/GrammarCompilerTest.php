@@ -33,6 +33,8 @@ use SqlFaker\MySql\Grammar\GrammarCompiler;
 #[CoversClass(\SqlFaker\MySql\Grammar\Grammar::class)]
 #[CoversClass(\SqlFaker\Grammar\Production::class)]
 #[CoversClass(\SqlFaker\Grammar\ProductionRule::class)]
+#[UsesClass(\SqlFaker\Compiler\Bison\GrammarCompiler::class)]
+#[UsesClass(\SqlFaker\Grammar\Grammar::class)]
 final class GrammarCompilerTest extends TestCase
 {
     public function testCompile(): void
