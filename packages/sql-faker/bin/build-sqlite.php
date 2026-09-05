@@ -5,10 +5,12 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use SqlFaker\Grammar\LexicalProfileBuilder;
+use SqlFaker\Compiler\Lemon\LemonParser;
+use SqlFaker\Grammar\LexicalProfileCheck;
+use SqlFaker\Grammar\LexicalProfileWriter;
 use SqlFaker\Grammar\SqlVersion;
 use SqlFaker\Grammar\TerminalInventory;
-use SqlFaker\Sqlite\Lemon\LemonParser;
+use SqlFaker\Sqlite\SqliteProfileBuilder;
 
 /**
  * Build script for generating a versioned grammar and lexical profile from SQLite sources.
@@ -83,7 +85,7 @@ function sqliteFetchGramFile(string $url): string
 function sqliteBuildVersion(
     string $version,
     LemonParser $parser,
-    LexicalProfileBuilder $lexical,
+    SqliteProfileBuilder $lexical,
 ): bool {
     try {
         $sqlVersion = SqlVersion::resolve('sqlite', $version);
@@ -107,8 +109,8 @@ function sqliteBuildVersion(
     try {
         $grammar = $parser->parse($contents);
         fwrite(STDOUT, "Building lexical profile...\n");
-        $profile = $lexical->sqlite($version);
-        $lexical->assertCompatible($profile, 'sqlite', $version, TerminalInventory::fromGrammar($grammar));
+        $profile = $lexical->build($version);
+        (new LexicalProfileCheck())->assertCompatible($profile, 'sqlite', $version, TerminalInventory::fromGrammar($grammar));
     } catch (Throwable $e) {
         fwrite(STDERR, "Error building {$version}: {$e->getMessage()}\n");
         fwrite(STDERR, "Trace: {$e->getTraceAsString()}\n");
@@ -148,7 +150,7 @@ PHP;
     );
 
     try {
-        $lexical->publishVersion($sqlVersion, $output, $profile);
+        (new LexicalProfileWriter())->publishVersion($sqlVersion, $output, $profile);
     } catch (Throwable $throwable) {
         fwrite(STDERR, "Error publishing {$version}: {$throwable->getMessage()}\n");
 
@@ -166,7 +168,7 @@ function sqliteMain(array $argv): int
     fwrite(STDOUT, 'Building ' . count($versions) . ' SQLite version(s): ' . implode(', ', $versions) . "\n");
 
     $parser = new LemonParser();
-    $lexical = new LexicalProfileBuilder();
+    $lexical = new SqliteProfileBuilder();
 
     $success = 0;
     $failed = 0;

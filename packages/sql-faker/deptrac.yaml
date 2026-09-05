@@ -1,0 +1,50 @@
+# NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
+deptrac:
+  paths:
+    - ./src
+  analyser:
+    types:
+      - class
+      - use
+  layers:
+    - name: Provider
+      collectors:
+        - type: directory
+          value: src/[^/]+Provider\.php$
+    - name: Generation
+      collectors:
+        - type: directory
+          value: src/Generation/.*
+    - name: Grammar
+      collectors:
+        - type: directory
+          value: src/Grammar/.*
+    - name: Compiler
+      collectors:
+        - type: directory
+          value: src/Compiler/.*
+    - name: MySql
+      collectors:
+        - type: directory
+          value: src/MySql/.*
+    - name: PostgreSql
+      collectors:
+        - type: directory
+          value: src/PostgreSql/.*
+    - name: Sqlite
+      collectors:
+        - type: directory
+          value: src/Sqlite/.*
+    - name: Faker
+      collectors:
+        - type: classLike
+          value: ^Faker\\.*
+  ruleset:
+    Provider: [Generation, Grammar, MySql, PostgreSql, Sqlite, Faker]
+    Generation: [Grammar, Faker]
+    Grammar: [Faker]
+    Compiler: [Grammar]
+    MySql: [Grammar, Faker]
+    PostgreSql: [Grammar, Faker]
+    Sqlite: [Grammar, Faker]
+    Faker: []

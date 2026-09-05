@@ -49,12 +49,12 @@ final class NoFixedSqlStatementRule implements Rule
         }
         if ($node instanceof ClassMethod
             && str_starts_with($node->name->name, 'generate')
-            && $this->isDialectGeneratorClass($scope)
+            && $this->isSqlGeneratorClass($scope)
         ) {
             return $this->invalidGeneratorReturnErrors($node, $scope);
         }
         if ($node instanceof Return_ && $node->expr !== null) {
-            if ($this->isDialectGeneratorMethod($scope)) {
+            if ($this->isSqlGeneratorMethod($scope)) {
                 return [];
             }
             foreach ($scope->getType($node->expr)->getConstantStrings() as $constantString) {
@@ -98,16 +98,16 @@ final class NoFixedSqlStatementRule implements Rule
         return [$this->error($node->getStartLine())];
     }
 
-    private function isDialectGeneratorMethod(Scope $scope): bool
+    private function isSqlGeneratorMethod(Scope $scope): bool
     {
         $function = $scope->getFunctionName();
 
         return $function !== null
             && str_starts_with($function, 'generate')
-            && $this->isDialectGeneratorClass($scope);
+            && $this->isSqlGeneratorClass($scope);
     }
 
-    private function isDialectGeneratorClass(Scope $scope): bool
+    private function isSqlGeneratorClass(Scope $scope): bool
     {
         $class = $scope->getClassReflection();
         if ($class === null) {
@@ -115,9 +115,7 @@ final class NoFixedSqlStatementRule implements Rule
         }
         $className = $class->getName();
 
-        return strcmp($className, 'SqlFaker\\MySql\\SqlGenerator') === 0
-            || strcmp($className, 'SqlFaker\\PostgreSql\\SqlGenerator') === 0
-            || strcmp($className, 'SqlFaker\\Sqlite\\SqlGenerator') === 0;
+        return strcmp($className, 'SqlFaker\\Generation\\SqlGenerator') === 0;
     }
 
     /**

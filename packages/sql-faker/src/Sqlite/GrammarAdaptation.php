@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace SqlFaker\Sqlite;
 
 use SqlFaker\Grammar\Grammar;
+use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
+use SqlFaker\Grammar\Symbol;
 use SqlFaker\Grammar\Terminal;
 
 /**
@@ -34,7 +36,7 @@ final class GrammarAdaptation
      */
     public function adapted(Grammar $grammar): Grammar
     {
-        $ruleMap = $this->withStrictTableOption($grammar->ruleMap);
+        $ruleMap = $this->withStrictTableOption($this->withResolvedSymbols($grammar->ruleMap));
         $cmd = $ruleMap['cmd'] ?? null;
         if ($cmd === null) {
             return new Grammar($grammar->startSymbol, $ruleMap);
@@ -231,5 +233,29 @@ final class GrammarAdaptation
         return !$alternative->hasAnyTerminal()
             && in_array('frame_opt', $nonTerminals, true)
             && array_diff($nonTerminals, ['nm', 'frame_opt']) === [];
+    }
+    /**
+     * Resolves symbols without a Lemon production into terminals before derivation.
+     *
+     * @param array<string, ProductionRule> $rules Rules from the grammar source
+     * @return array<string, ProductionRule> Rules using explicit terminal types
+     */
+    public function withResolvedSymbols(array $rules): array
+    {
+        return array_map(
+            static fn (ProductionRule $rule): ProductionRule => new ProductionRule(
+                $rule->lhs,
+                array_map(
+                    static fn (Production $production): Production => new Production(array_map(
+                        static fn (Symbol $symbol): Symbol => $symbol instanceof NonTerminal && !isset($rules[$symbol->value])
+                            ? new Terminal($symbol->value)
+                            : $symbol,
+                        $production->symbols,
+                    )),
+                    $rule->alternatives,
+                ),
+            ),
+            $rules,
+        );
     }
 }

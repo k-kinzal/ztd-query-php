@@ -11,6 +11,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use SqlFaker\Generation\SqlGenerator;
 use SqlFaker\Grammar\GenerationPlan;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\LexicalCatalog;
@@ -27,7 +28,6 @@ use SqlFaker\Grammar\TokenJoiner;
 use SqlFaker\PostgreSql\GenerationPlans;
 use SqlFaker\PostgreSql\Grammar\PgGrammar;
 use SqlFaker\PostgreSql\LexicalGrammar;
-use SqlFaker\PostgreSql\SqlGenerator;
 use SqlFaker\PostgreSql\StatementType;
 use SqlFaker\PostgreSqlProvider;
 

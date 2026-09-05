@@ -8,10 +8,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\GenerationPlan;
+use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\ProductionPattern;
+use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\MySql\GenerationPlans;
-use SqlFaker\MySql\Grammar\Grammar;
-use SqlFaker\MySql\Grammar\ProductionRule;
 
 #[CoversClass(GenerationPlans::class)]
 #[UsesClass(GenerationPlan::class)]

@@ -13,8 +13,8 @@ use RuntimeException;
 use SqlFaker\Grammar\LexicalCatalog;
 use SqlFaker\Grammar\SqlVersion;
 use SqlFaker\Grammar\TerminalInventory;
-use SqlFaker\MySql\Grammar\Grammar as MySqlGrammar;
-use SqlFaker\MySql\Grammar\TerminalInventory as MySqlTerminalInventory;
+use SqlFaker\Grammar\TerminalInventory as MySqlTerminalInventory;
+use SqlFaker\MySql\Grammar\MySqlGrammar;
 use SqlFaker\PostgreSql\Grammar\PgGrammar;
 use SqlFaker\Sqlite\Grammar\SqliteGrammar;
 

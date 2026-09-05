@@ -42,7 +42,7 @@ final class NoFixedSqlStatementRuleTest extends RuleTestCase
         $this->analyse([__DIR__ . '/../../Fixture/Other/MySqlProvider.php'], []);
     }
 
-    public function testDetectsFixedSqlConstructionInMySqlGenerator(): void
+    public function testDetectsFixedSqlConstructionInCommonGenerator(): void
     {
         $message = 'SQLFaker must not construct SQL statements from fixed templates; derive them from the dialect grammar.';
 
@@ -54,7 +54,7 @@ final class NoFixedSqlStatementRuleTest extends RuleTestCase
         ]);
     }
 
-    public function testDetectsFixedSqlConstructionInSqliteGenerator(): void
+    public function testDetectsComputedSqlConstructionInCommonGenerator(): void
     {
         $message = 'SQLFaker must not construct SQL statements from fixed templates; derive them from the dialect grammar.';
 

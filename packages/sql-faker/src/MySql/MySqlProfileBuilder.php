@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace SqlFaker\MySql;
 
 use RuntimeException;
+use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\LexerSource;
 use SqlFaker\Grammar\UpstreamLexerSource;
-use SqlFaker\MySql\Grammar\Grammar;
 use SqlFaker\MySql\LexicalProfileCompiler as MySqlCompiler;
 use SqlFaker\MySql\LexicalSourceParser as MySqlSourceParser;
 
@@ -196,7 +196,7 @@ final class MySqlProfileBuilder
         }
 
         $versionedParserTokens = ['END_OF_INPUT'];
-        foreach (\SqlFaker\MySql\Grammar\TerminalInventory::fromGrammar($grammar) as $terminal) {
+        foreach (\SqlFaker\Grammar\TerminalInventory::fromGrammar($grammar) as $terminal) {
             if (str_starts_with($terminal, 'GRAMMAR_SELECTOR_')) {
                 $versionedParserTokens[] = $terminal;
             }

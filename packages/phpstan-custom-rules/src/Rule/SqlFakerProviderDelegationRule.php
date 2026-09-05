@@ -43,14 +43,14 @@ final class SqlFakerProviderDelegationRule implements Rule
             && $node->flags !== 0
             && $node->var instanceof Variable
             && $node->var->name === 'sql'
-            && !$this->isDialectSqlGeneratorType($node->type, $scope)
+            && !$this->isSqlGeneratorType($node->type, $scope)
         ) {
             return [$this->error($node->getStartLine())];
         }
         if ($node instanceof Property) {
             foreach ($node->props as $property) {
                 if ($property->name->name === 'sql'
-                    && !$this->isDialectSqlGeneratorType($node->type, $scope)
+                    && !$this->isSqlGeneratorType($node->type, $scope)
                 ) {
                     return [$this->error($node->getStartLine())];
                 }
@@ -81,14 +81,10 @@ final class SqlFakerProviderDelegationRule implements Rule
         return [$this->error($statement?->getStartLine() ?? $node->getStartLine())];
     }
 
-    private function isDialectSqlGeneratorType(Node|null $type, Scope $scope): bool
+    private function isSqlGeneratorType(Node|null $type, Scope $scope): bool
     {
         return $type instanceof \PhpParser\Node\Name
-            && in_array($scope->resolveName($type), [
-                'SqlFaker\\MySql\\SqlGenerator',
-                'SqlFaker\\PostgreSql\\SqlGenerator',
-                'SqlFaker\\Sqlite\\SqlGenerator',
-            ], true);
+            && $scope->resolveName($type) === 'SqlFaker\\Generation\\SqlGenerator';
     }
 
     private function error(int $line): IdentifierRuleError

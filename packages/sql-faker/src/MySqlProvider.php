@@ -6,9 +6,11 @@ namespace SqlFaker;
 
 use Faker\Generator;
 use Faker\Provider\Base;
+use SqlFaker\Generation\SqlGenerator;
+use SqlFaker\Grammar\Grammar;
+use SqlFaker\MySql\GenerationContext;
 use SqlFaker\MySql\GenerationPlans;
-use SqlFaker\MySql\Grammar\Grammar;
-use SqlFaker\MySql\SqlGenerator;
+use SqlFaker\MySql\Grammar\MySqlGrammar;
 use SqlFaker\MySql\StatementType;
 
 /**
@@ -64,9 +66,16 @@ final class MySqlProvider extends Base
 
         $generator->addProvider($this);
 
-        $resolvedVersion = Grammar::resolveVersion($version);
-        $this->grammar = Grammar::load($resolvedVersion);
-        $this->sql = new SqlGenerator($this->grammar, $generator, $resolvedVersion);
+        $resolvedVersion = MySqlGrammar::resolveVersion($version);
+        $this->grammar = MySqlGrammar::load($resolvedVersion);
+        $context = new GenerationContext($this->grammar, $generator, $resolvedVersion);
+        $this->sql = new SqlGenerator(
+            $context->grammar,
+            $generator,
+            $context->lexicalGrammar,
+            $context->normalize,
+            $context->startSymbol,
+        );
     }
 
     /**

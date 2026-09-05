@@ -1,0 +1,863 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\SqlFaker\PostgreSql;
+
+use Faker\Factory;
+use Override;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\UsesClass;
+use PHPUnit\Framework\TestCase;
+use SqlFaker\Generation\SqlGenerator;
+use SqlFaker\Grammar\GenerationException;
+use SqlFaker\Grammar\GenerationPlan;
+use SqlFaker\Grammar\Grammar;
+use SqlFaker\Grammar\LexicalCatalogException;
+use SqlFaker\Grammar\NonTerminal;
+use SqlFaker\Grammar\Production;
+use SqlFaker\Grammar\ProductionPattern;
+use SqlFaker\Grammar\ProductionRule;
+use SqlFaker\Grammar\RandomStringGenerator;
+use SqlFaker\Grammar\Terminal;
+use SqlFaker\Grammar\TerminationAnalyzer;
+use SqlFaker\Grammar\TokenJoiner;
+use SqlFaker\PostgreSql\GenerationContext;
+use SqlFaker\PostgreSqlProvider;
+
+#[CoversClass(GenerationContext::class)]
+#[CoversClass(Grammar::class)]
+#[CoversClass(NonTerminal::class)]
+#[CoversClass(PostgreSqlProvider::class)]
+#[CoversClass(Production::class)]
+#[CoversClass(ProductionRule::class)]
+#[CoversClass(RandomStringGenerator::class)]
+#[CoversClass(SqlGenerator::class)]
+#[CoversClass(Terminal::class)]
+#[CoversClass(TerminationAnalyzer::class)]
+#[CoversClass(TokenJoiner::class)]
+#[Medium]
+#[UsesClass(GenerationPlan::class)]
+#[UsesClass(Grammar::class)]
+#[UsesClass(LexicalCatalogException::class)]
+#[UsesClass(Production::class)]
+#[UsesClass(ProductionRule::class)]
+#[UsesClass(Terminal::class)]
+#[UsesClass(\SqlFaker\Grammar\LexicalCatalog::class)]
+#[UsesClass(\SqlFaker\Grammar\LexicalCatalogShape::class)]
+#[UsesClass(\SqlFaker\Grammar\LexicalCoverageCheck::class)]
+#[UsesClass(\SqlFaker\Grammar\LexicalKeywordIndex::class)]
+#[UsesClass(\SqlFaker\Grammar\LexicalProfileSource::class)]
+#[UsesClass(\SqlFaker\Grammar\LexicalWitnessCheck::class)]
+#[UsesClass(\SqlFaker\Grammar\LexicalWitnessShape::class)]
+#[UsesClass(\SqlFaker\Grammar\RandomCharacters::class)]
+#[UsesClass(RandomStringGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\SqlVersion::class)]
+#[UsesClass(\SqlFaker\Grammar\SqlVersionRegistry::class)]
+#[UsesClass(\SqlFaker\Grammar\TerminalInventory::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Grammar\PgGrammar::class)]
+#[UsesClass(\SqlFaker\PostgreSql\LexicalGrammar::class)]
+#[UsesClass(\SqlFaker\PostgreSql\ParserSemantics::class)]
+#[UsesClass(\SqlFaker\PostgreSql\PgLookahead::class)]
+#[UsesClass(\SqlFaker\PostgreSql\PgTerminalRealizer::class)]
+#[UsesClass(\SqlFaker\PostgreSql\PgTokenizer::class)]
+final class GenerationContextTest extends TestCase
+{
+    #[Override]
+    protected function setUp(): void
+    {
+        parent::setUp();
+        gc_collect_cycles();
+    }
+
+    public function testGenerateIsTheOnlyPublicGenerationMethod(): void
+    {
+        $methods = array_values(array_filter(
+            get_class_methods(SqlGenerator::class),
+            static fn (string $method): bool => str_starts_with($method, 'generate'),
+        ));
+
+        self::assertSame(['generate'], $methods);
+    }
+
+    public function testGenerate(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([
+                    new Terminal('SELECT'),
+                    new Terminal('foo'),
+                ]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $context = new GenerationContext($grammar, $faker);
+        $generator = new SqlGenerator($context->grammar, $faker, $context->lexicalGrammar, $context->normalize, $context->startSymbol);
+
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
+
+        self::assertSame('SELECT foo', $result);
+    }
+
+    public function testGenerateUsesProductionConstraintsFromThePlan(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([new Terminal('OTHER')]),
+                new Production([new Terminal('EXPECTED')]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $context = new GenerationContext($grammar, $faker);
+        $generator = new SqlGenerator($context->grammar, $faker, $context->lexicalGrammar, $context->normalize, $context->startSymbol);
+        $plan = GenerationPlan::constrained('stmt', [
+            'stmt' => [ProductionPattern::exactly('EXPECTED')],
+        ]);
+
+        self::assertSame('EXPECTED', $generator->generate($plan));
+    }
+
+    public function testGenerateEnforcesThePlansNonEmptyRequirement(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([]),
+                new Production([new Terminal('EXPECTED')]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $context = new GenerationContext($grammar, $faker);
+        $generator = new SqlGenerator($context->grammar, $faker, $context->lexicalGrammar, $context->normalize, $context->startSymbol);
+        $plan = GenerationPlan::fromRule('stmt')->requiringNonEmpty();
+
+        self::assertSame('EXPECTED', $generator->generate($plan->withMaxDepth(1)));
+    }
+
+    public function testGenerateDefaultStartRule(): void
+    {
+        $grammar = new Grammar('stmtmulti', [
+            'stmtmulti' => new ProductionRule('stmtmulti', [
+                new Production([new Terminal('DEFAULT_RULE_USED')]),
+            ]),
+            'other_rule' => new ProductionRule('other_rule', [
+                new Production([new Terminal('OTHER_RULE_USED')]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $context = new GenerationContext($grammar, $faker);
+        $generator = new SqlGenerator($context->grammar, $faker, $context->lexicalGrammar, $context->normalize, $context->startSymbol);
+
+        $result = $generator->generate(GenerationPlan::all());
+
+        self::assertSame('DEFAULT_RULE_USED', $result);
+    }
+
+    public function testGenerateNormalizesParserLookaheadTerminals(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([
+                    new Terminal('WITH_LA'),
+                    new Terminal('IDENT'),
+                    new Terminal('WITH'),
+                    new Terminal('TIME'),
+                ]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $provider = new PostgreSqlProvider($faker, 'pg-17.2');
+        $context = new GenerationContext($grammar, $faker, 'pg-17.2');
+        $generator = new SqlGenerator($context->grammar, $faker, $context->lexicalGrammar, $context->normalize, $context->startSymbol);
+        $faker->seed(12345);
+
+        self::assertNotEmpty($generator->generate(GenerationPlan::fromRule('stmt')));
+    }
+
+    public function testFixedSeedWithOperatorAdjacentToCommentGeneratesSql(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(72);
+        $provider = new PostgreSqlProvider($faker, 'pg-17.2');
+
+        self::assertNotEmpty($provider->sql(maxDepth: 50));
+    }
+
+    public function testGenerateResetsBetweenCalls(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([new Terminal('a')]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $context = new GenerationContext($grammar, $faker);
+        $generator = new SqlGenerator($context->grammar, $faker, $context->lexicalGrammar, $context->normalize, $context->startSymbol);
+
+        $result1 = $generator->generate(GenerationPlan::fromRule('stmt'));
+        $result2 = $generator->generate(GenerationPlan::fromRule('stmt'));
+
+        self::assertSame('a', $result1);
+        self::assertSame('a', $result2);
+    }
+
+    public function testGenerateSelectsShortestAlternativeAtTargetDepth(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([
+                    new Terminal('SELECT'),
+                    new NonTerminal('expr'),
+                    new Terminal('FROM'),
+                    new NonTerminal('table'),
+                ]),
+                new Production([new Terminal('SHORT')]),
+            ]),
+            'expr' => new ProductionRule('expr', [
+                new Production([new Terminal('x')]),
+            ]),
+            'table' => new ProductionRule('table', [
+                new Production([new Terminal('t')]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $context = new GenerationContext($grammar, $faker);
+        $generator = new SqlGenerator($context->grammar, $faker, $context->lexicalGrammar, $context->normalize, $context->startSymbol);
+
+        $result = $generator->generate(GenerationPlan::fromRule('stmt')->withMaxDepth(1));
+
+        self::assertSame('SHORT', $result);
+    }
+
+    public function testGeneratePreservesEmptyStartProduction(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([]),
+                new Production([new Terminal('SELECT')]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $context = new GenerationContext($grammar, $faker);
+        $generator = new SqlGenerator($context->grammar, $faker, $context->lexicalGrammar, $context->normalize, $context->startSymbol);
+
+        self::assertSame('', $generator->generate(GenerationPlan::fromRule('stmt')->withMaxDepth(1)));
+    }
+
+    public function testGenerateThrowsOnDerivationLimit(): void
+    {
+        $grammar = new Grammar('infinite', [
+            'infinite' => new ProductionRule('infinite', [
+                new Production([
+                    new NonTerminal('infinite'),
+                    new Terminal('a'),
+                ]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $context = new GenerationContext($grammar, $faker);
+        $generator = new SqlGenerator($context->grammar, $faker, $context->lexicalGrammar, $context->normalize, $context->startSymbol);
+
+        $this->expectException(GenerationException::class);
+        $this->expectExceptionMessage('Grammar rule has no lexically realizable alternative: infinite');
+
+        $generator->generate(GenerationPlan::fromRule('infinite'));
+    }
+
+    public function testGenerateThrowsOnEmptyAlternatives(): void
+    {
+        $grammar = new Grammar('empty', [
+            'empty' => new ProductionRule('empty', []),
+        ]);
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $context = new GenerationContext($grammar, $faker);
+        $generator = new SqlGenerator($context->grammar, $faker, $context->lexicalGrammar, $context->normalize, $context->startSymbol);
+
+        $this->expectException(GenerationException::class);
+        $this->expectExceptionMessage("Production rule 'empty' has no alternatives.");
+
+        $generator->generate(GenerationPlan::fromRule('empty'));
+    }
+
+    #[DataProvider('providerGenerateOperator')]
+    public function testGenerateOperator(string $terminalName, string $pattern): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([new Terminal($terminalName)]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $context = new GenerationContext($grammar, $faker);
+        $generator = new SqlGenerator($context->grammar, $faker, $context->lexicalGrammar, $context->normalize, $context->startSymbol);
+
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
+
+        self::assertMatchesRegularExpression($pattern, $result);
+    }
+
+    #[DataProvider('providerGenerateLexicalToken')]
+    public function testGenerateLexicalToken(string $terminalName, string $pattern): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([new Terminal($terminalName)]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $provider = new PostgreSqlProvider($faker);
+        $context = new GenerationContext($grammar, $faker);
+        $generator = new SqlGenerator($context->grammar, $faker, $context->lexicalGrammar, $context->normalize, $context->startSymbol);
+        $faker->seed(12345);
+
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
+
+        self::assertMatchesRegularExpression($pattern, $result);
+    }
+
+    #[DataProvider('providerGenerateLookaheadToken')]
+    public function testGenerateLookaheadToken(string $terminalName, string $expected): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([new Terminal($terminalName)]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $context = new GenerationContext($grammar, $faker);
+        $generator = new SqlGenerator($context->grammar, $faker, $context->lexicalGrammar, $context->normalize, $context->startSymbol);
+
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
+
+        self::assertSame($expected, $result);
+    }
+
+    #[DataProvider('providerGenerateStripsPSuffix')]
+    public function testGenerateStripsPSuffix(string $terminalName, string $expected): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([new Terminal($terminalName)]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $context = new GenerationContext($grammar, $faker);
+        $generator = new SqlGenerator($context->grammar, $faker, $context->lexicalGrammar, $context->normalize, $context->startSymbol);
+
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
+
+        self::assertSame($expected, $result);
+    }
+
+    public function testGenerateTruncatesQualifiedNameToThreeParts(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([
+                    new Terminal('a'),
+                    new Terminal('.'),
+                    new Terminal('b'),
+                    new Terminal('.'),
+                    new Terminal('c'),
+                    new Terminal('.'),
+                    new Terminal('d'),
+                    new Terminal('.'),
+                    new Terminal('e'),
+                ]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $context = new GenerationContext($grammar, $faker);
+        $generator = new SqlGenerator($context->grammar, $faker, $context->lexicalGrammar, $context->normalize, $context->startSymbol);
+
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
+
+        self::assertSame('a.b.c', $result);
+    }
+
+    public function testGenerateKeepsThreePartQualifiedName(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([
+                    new Terminal('a'),
+                    new Terminal('.'),
+                    new Terminal('b'),
+                    new Terminal('.'),
+                    new Terminal('c'),
+                ]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $context = new GenerationContext($grammar, $faker);
+        $generator = new SqlGenerator($context->grammar, $faker, $context->lexicalGrammar, $context->normalize, $context->startSymbol);
+
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
+
+        self::assertSame('a.b.c', $result);
+    }
+
+    public function testGenerateKeepsSingleIdentifier(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([
+                    new Terminal('a'),
+                ]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $context = new GenerationContext($grammar, $faker);
+        $generator = new SqlGenerator($context->grammar, $faker, $context->lexicalGrammar, $context->normalize, $context->startSymbol);
+
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
+
+        self::assertSame('a', $result);
+    }
+
+    public function testGenerateSanitizesBareColLabelInSetParens(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([
+                    new Terminal('SET'),
+                    new Terminal('('),
+                    new Terminal('foo'),
+                    new Terminal(')'),
+                ]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $context = new GenerationContext($grammar, $faker);
+        $generator = new SqlGenerator($context->grammar, $faker, $context->lexicalGrammar, $context->normalize, $context->startSymbol);
+
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
+
+        self::assertSame('SET(foo = NONE)', $result);
+    }
+
+    public function testGenerateKeepsSetWithEqualsUnchanged(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([
+                    new Terminal('SET'),
+                    new Terminal('('),
+                    new Terminal('foo'),
+                    new Terminal('='),
+                    new Terminal('bar'),
+                    new Terminal(')'),
+                ]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $context = new GenerationContext($grammar, $faker);
+        $generator = new SqlGenerator($context->grammar, $faker, $context->lexicalGrammar, $context->normalize, $context->startSymbol);
+
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
+
+        self::assertSame('SET(foo = bar)', $result);
+    }
+
+    public function testGenerateStripsDotStarFromQualifiedName(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([
+                    new Terminal('a'),
+                    new Terminal('.'),
+                    new Terminal('*'),
+                ]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $context = new GenerationContext($grammar, $faker);
+        $generator = new SqlGenerator($context->grammar, $faker, $context->lexicalGrammar, $context->normalize, $context->startSymbol);
+
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
+
+        self::assertSame('a', $result);
+    }
+
+    public function testGenerateStripsDotStarAfterQualifiedNameChain(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([
+                    new Terminal('a'),
+                    new Terminal('.'),
+                    new Terminal('b'),
+                    new Terminal('.'),
+                    new Terminal('*'),
+                ]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $context = new GenerationContext($grammar, $faker);
+        $generator = new SqlGenerator($context->grammar, $faker, $context->lexicalGrammar, $context->normalize, $context->startSymbol);
+
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
+
+        self::assertSame('a.b', $result);
+    }
+
+    public function testGenerateInsertsNoneForSingleOperatorArgType(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([
+                    new Terminal('DROP'),
+                    new Terminal('OPERATOR'),
+                    new Terminal('myop'),
+                    new Terminal('('),
+                    new Terminal('int4'),
+                    new Terminal(')'),
+                ]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $context = new GenerationContext($grammar, $faker);
+        $generator = new SqlGenerator($context->grammar, $faker, $context->lexicalGrammar, $context->normalize, $context->startSymbol);
+
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
+
+        self::assertSame('DROP OPERATOR myop(NONE, int4)', $result);
+    }
+
+    public function testGenerateKeepsTwoTypeOperatorArgs(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([
+                    new Terminal('DROP'),
+                    new Terminal('OPERATOR'),
+                    new Terminal('myop'),
+                    new Terminal('('),
+                    new Terminal('int4'),
+                    new Terminal(','),
+                    new Terminal('int4'),
+                    new Terminal(')'),
+                ]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $context = new GenerationContext($grammar, $faker);
+        $generator = new SqlGenerator($context->grammar, $faker, $context->lexicalGrammar, $context->normalize, $context->startSymbol);
+
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
+
+        self::assertSame('DROP OPERATOR myop(int4, int4)', $result);
+    }
+
+    public function testGenerateSkipsExpressionContextOperator(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([
+                    new Terminal('OPERATOR'),
+                    new Terminal('('),
+                    new Terminal('pg_catalog'),
+                    new Terminal('.'),
+                    new Terminal('+'),
+                    new Terminal(')'),
+                ]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $context = new GenerationContext($grammar, $faker);
+        $generator = new SqlGenerator($context->grammar, $faker, $context->lexicalGrammar, $context->normalize, $context->startSymbol);
+
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
+
+        self::assertStringNotContainsString('NONE', $result);
+    }
+
+    public function testGenerateSetWithUnclosedParenKeepsTokensUnchanged(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([
+                    new Terminal('SET'),
+                    new Terminal('('),
+                    new Terminal('foo'),
+                ]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $context = new GenerationContext($grammar, $faker);
+        $generator = new SqlGenerator($context->grammar, $faker, $context->lexicalGrammar, $context->normalize, $context->startSymbol);
+
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
+
+        self::assertSame('SET(foo', $result);
+    }
+
+    public function testGenerateSetWithNestedParensSkipsInnerIdentifiers(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([
+                    new Terminal('SET'),
+                    new Terminal('('),
+                    new Terminal('foo'),
+                    new Terminal(','),
+                    new Terminal('bar'),
+                    new Terminal('('),
+                    new Terminal('x'),
+                    new Terminal(')'),
+                    new Terminal(','),
+                    new Terminal('baz'),
+                    new Terminal(')'),
+                ]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $context = new GenerationContext($grammar, $faker);
+        $generator = new SqlGenerator($context->grammar, $faker, $context->lexicalGrammar, $context->normalize, $context->startSymbol);
+
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
+
+        self::assertSame('SET(foo = NONE, bar(x), baz = NONE)', $result);
+    }
+
+    public function testGenerateOperatorArgTypesWithUnclosedParenKeepsTokensUnchanged(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([
+                    new Terminal('DROP'),
+                    new Terminal('OPERATOR'),
+                    new Terminal('myop'),
+                    new Terminal('('),
+                    new Terminal('int4'),
+                ]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $context = new GenerationContext($grammar, $faker);
+        $generator = new SqlGenerator($context->grammar, $faker, $context->lexicalGrammar, $context->normalize, $context->startSymbol);
+
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
+
+        self::assertSame('DROP OPERATOR myop(int4', $result);
+    }
+
+    public function testGenerateOperatorArgTypesWithNoParenKeepsTokensUnchanged(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([
+                    new Terminal('DROP'),
+                    new Terminal('OPERATOR'),
+                    new Terminal('myop'),
+                ]),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $context = new GenerationContext($grammar, $faker);
+        $generator = new SqlGenerator($context->grammar, $faker, $context->lexicalGrammar, $context->normalize, $context->startSymbol);
+
+        $result = $generator->generate(GenerationPlan::fromRule('stmt'));
+
+        self::assertSame('DROP OPERATOR myop', $result);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerGenerateOperator(): iterable
+    {
+        yield 'TYPECAST' => ['TYPECAST', '/^::$/'];
+        yield 'DOT_DOT' => ['DOT_DOT', '/^\.\.$/'];
+        yield 'COLON_EQUALS' => ['COLON_EQUALS', '/^:=$/'];
+        yield 'EQUALS_GREATER' => ['EQUALS_GREATER', '/^=>$/'];
+        yield 'NOT_EQUALS' => ['NOT_EQUALS', '/^(?:<>|!=)$/'];
+        yield 'LESS_EQUALS' => ['LESS_EQUALS', '/^<=$/'];
+        yield 'GREATER_EQUALS' => ['GREATER_EQUALS', '/^>=$/'];
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerGenerateLexicalToken(): iterable
+    {
+        yield 'IDENT' => ['IDENT', '/^(?:[a-z_][a-z0-9_]*|"(?:""|[^"])+")$/'];
+        yield 'SCONST' => ['SCONST', "/^(?:'(?:''|[^'])*'|E'.*'|\\$.*\\$)$/s"];
+        yield 'ICONST' => ['ICONST', '/^[1-9]\d*$/'];
+        yield 'FCONST' => ['FCONST', '/^(?:\d+\.\d*|\.\d+)$/'];
+        yield 'BCONST' => ['BCONST', "/^B'[01]*'$/"];
+        yield 'XCONST' => ['XCONST', "/^X'[0-9a-f]*'$/"];
+        yield 'Op' => ['Op', '/^[+\-*\/<>=~!@#%^&|`?]{1,4}$/'];
+        yield 'PARAM' => ['PARAM', '/^\$\d+$/'];
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerGenerateLookaheadToken(): iterable
+    {
+        yield 'NOT_LA' => ['NOT_LA', 'NOT'];
+        yield 'NULLS_LA' => ['NULLS_LA', 'NULLS'];
+        yield 'WITH_LA' => ['WITH_LA', 'WITH'];
+        yield 'WITHOUT_LA' => ['WITHOUT_LA', 'WITHOUT'];
+        yield 'FORMAT_LA' => ['FORMAT_LA', 'FORMAT'];
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerGenerateStripsPSuffix(): iterable
+    {
+        yield 'ABORT_P' => ['ABORT_P', 'ABORT'];
+        yield 'BEGIN_P' => ['BEGIN_P', 'BEGIN'];
+        yield 'END_P' => ['END_P', 'END'];
+        yield 'BOOLEAN_P' => ['BOOLEAN_P', 'BOOLEAN'];
+        yield 'DELETE_P' => ['DELETE_P', 'DELETE'];
+        yield 'NULL_P' => ['NULL_P', 'NULL'];
+        yield 'TRUE_P' => ['TRUE_P', 'TRUE'];
+        yield 'FALSE_P' => ['FALSE_P', 'FALSE'];
+    }
+
+    public function testGenerateSpacing(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $provider = new PostgreSqlProvider($faker);
+
+        $grammarFuncParen = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([
+                    new Terminal('COUNT'),
+                    new Terminal('('),
+                    new Terminal('*'),
+                    new Terminal(')'),
+                ]),
+            ]),
+        ]);
+        $context = new GenerationContext($grammarFuncParen, $faker);
+        $result = (new SqlGenerator($context->grammar, $faker, $context->lexicalGrammar, $context->normalize, $context->startSymbol))->generate(GenerationPlan::fromRule('stmt'));
+        self::assertSame('COUNT(*)', $result);
+
+        $grammarDot = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([
+                    new Terminal('schema'),
+                    new Terminal('.'),
+                    new Terminal('table'),
+                ]),
+            ]),
+        ]);
+        $context = new GenerationContext($grammarDot, $faker);
+        $result = (new SqlGenerator($context->grammar, $faker, $context->lexicalGrammar, $context->normalize, $context->startSymbol))->generate(GenerationPlan::fromRule('stmt'));
+        self::assertSame('schema.table', $result);
+
+        $grammarTypecast = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([
+                    new Terminal('col'),
+                    new Terminal('TYPECAST'),
+                    new Terminal('INTEGER'),
+                ]),
+            ]),
+        ]);
+        $context = new GenerationContext($grammarTypecast, $faker);
+        $result = (new SqlGenerator($context->grammar, $faker, $context->lexicalGrammar, $context->normalize, $context->startSymbol))->generate(GenerationPlan::fromRule('stmt'));
+        self::assertSame('col::INTEGER', $result);
+
+        $grammarBracket = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([
+                    new Terminal('arr'),
+                    new Terminal('['),
+                    new Terminal('1'),
+                    new Terminal(']'),
+                ]),
+            ]),
+        ]);
+        $context = new GenerationContext($grammarBracket, $faker);
+        $result = (new SqlGenerator($context->grammar, $faker, $context->lexicalGrammar, $context->normalize, $context->startSymbol))->generate(GenerationPlan::fromRule('stmt'));
+        self::assertSame('arr [1]', $result);
+
+        $grammarComma = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([
+                    new Terminal('a'),
+                    new Terminal(','),
+                    new Terminal('b'),
+                ]),
+            ]),
+        ]);
+        $context = new GenerationContext($grammarComma, $faker);
+        $result = (new SqlGenerator($context->grammar, $faker, $context->lexicalGrammar, $context->normalize, $context->startSymbol))->generate(GenerationPlan::fromRule('stmt'));
+        self::assertSame('a, b', $result);
+
+        $grammarSemicolon = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([
+                    new Terminal('SELECT'),
+                    new Terminal('1'),
+                    new Terminal(';'),
+                ]),
+            ]),
+        ]);
+        $context = new GenerationContext($grammarSemicolon, $faker);
+        $result = (new SqlGenerator($context->grammar, $faker, $context->lexicalGrammar, $context->normalize, $context->startSymbol))->generate(GenerationPlan::fromRule('stmt'));
+        self::assertSame('SELECT 1;', $result);
+    }
+
+    public function testGrammarAndLexicalReleaseAreBoundTogether(): void
+    {
+        $grammar = new Grammar('start_entry', []);
+        $context = new GenerationContext($grammar, Factory::create());
+
+        self::assertSame('stmtmulti', $context->grammar->startSymbol);
+        self::assertSame([], $context->grammar->ruleMap);
+        self::assertNotSame('', $context->lexicalGrammar->version());
+        self::assertNull($context->startSymbol);
+        self::assertNotNull($context->normalize);
+    }
+    public function testSyntheticTerminalsAreAllowedOnlyWithoutAnExplicitRelease(): void
+    {
+        $grammar = new Grammar('stmt', []);
+        $synthetic = new GenerationContext($grammar, Factory::create());
+        $released = new GenerationContext($grammar, Factory::create(), 'pg-17.2');
+
+        self::assertTrue($synthetic->lexicalGrammar->supports('SYNTHETIC_TEST_TOKEN'));
+        self::assertFalse($released->lexicalGrammar->supports('SYNTHETIC_TEST_TOKEN'));
+        self::assertSame('pg-17.2', $released->lexicalGrammar->version());
+    }
+
+    public function testExplicitReleaseRejectsAnUncataloguedGrammarTerminal(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [new Production([new Terminal('SYNTHETIC_TEST_TOKEN')])]),
+        ]);
+        $this->expectException(LexicalCatalogException::class);
+
+        new GenerationContext($grammar, Factory::create(), 'pg-17.2');
+    }
+}

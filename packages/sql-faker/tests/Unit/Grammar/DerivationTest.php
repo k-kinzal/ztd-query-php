@@ -132,4 +132,88 @@ final class DerivationTest extends TestCase
 
         self::assertEquals([new Terminal('A')], $derivation->of('stmt', GenerationPlan::all()));
     }
+    public function testAffordableKeepsAnAlternativeThatStillLeavesRoomToFinish(): void
+    {
+        $short = new Production([new Terminal('A')]);
+        $grammar = new Grammar('stmt', ['stmt' => new ProductionRule('stmt', [$short])]);
+        $derivation = new Derivation($grammar, Factory::create(), new TerminationAnalyzer(
+            $grammar,
+            static fn (string $terminal): bool => true,
+        ));
+
+        self::assertSame([$short], $derivation->affordable([$short], new Production([])));
+    }
+
+    public function testAffordableRejectsARemainderThatExceedsTheWholeBudget(): void
+    {
+        $grammar = new Grammar('stmt', ['stmt' => new ProductionRule('stmt', [new Production([new Terminal('T')])])]);
+        $derivation = new Derivation($grammar, Factory::create(), new TerminationAnalyzer($grammar));
+        $this->expectException(GenerationException::class);
+
+        $derivation->affordable([new Production([])], new Production(array_fill(0, 5001, new NonTerminal('stmt'))));
+    }
+
+    public function testAffordableRejectsAnAlternativeThatCannotFitAfterTheRemainder(): void
+    {
+        $grammar = new Grammar('stmt', ['stmt' => new ProductionRule('stmt', [new Production([new Terminal('T')])])]);
+        $derivation = new Derivation($grammar, Factory::create(), new TerminationAnalyzer($grammar));
+        $this->expectException(GenerationException::class);
+
+        $derivation->affordable(
+            [new Production(array_fill(0, 5000, new NonTerminal('stmt')))],
+            new Production([new NonTerminal('stmt')]),
+        );
+    }
+
+    public function testAffordableAcceptsAnAlternativeThatExactlyUsesTheBudget(): void
+    {
+        $grammar = new Grammar('stmt', ['stmt' => new ProductionRule('stmt', [new Production([new Terminal('T')])])]);
+        $derivation = new Derivation($grammar, Factory::create(), new TerminationAnalyzer($grammar));
+        $production = new Production(array_fill(0, 4999, new NonTerminal('stmt')));
+
+        self::assertSame([$production], $derivation->affordable([$production], new Production([new NonTerminal('stmt')])));
+    }
+
+    public function testOfSelectsTerminationPolicyFromThePlan(): void
+    {
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [
+                new Production([new NonTerminal('short')]),
+                new Production([new Terminal('A'), new Terminal('B')]),
+            ]),
+            'short' => new ProductionRule('short', [new Production([new Terminal('T')])]),
+        ]);
+        $faker = Factory::create();
+        $analyzer = new TerminationAnalyzer($grammar);
+        $plan = GenerationPlan::all()->withMaxDepth(1);
+
+        self::assertEquals([new Terminal('T')], (new Derivation($grammar, $faker, $analyzer))->of('stmt', $plan));
+        self::assertEquals(
+            [new Terminal('A'), new Terminal('B')],
+            (new Derivation($grammar, $faker, $analyzer))->of('stmt', $plan->withStepBudget()),
+        );
+    }
+    public function testAffordableAllowsATerminalOnlyProductionWithNoExpansionBudgetLeft(): void
+    {
+        $grammar = new Grammar('stmt', ['stmt' => new ProductionRule('stmt', [new Production([new Terminal('T')])])]);
+        $derivation = new Derivation($grammar, Factory::create(), new TerminationAnalyzer($grammar));
+        $production = new Production([new Terminal('T')]);
+
+        self::assertSame(
+            [$production],
+            $derivation->affordable([$production], new Production(array_fill(0, 5000, new NonTerminal('stmt')))),
+        );
+    }
+
+    public function testAffordableReturnsAListAfterDiscardingAnOverBudgetAlternative(): void
+    {
+        $grammar = new Grammar('stmt', ['stmt' => new ProductionRule('stmt', [new Production([new Terminal('T')])])]);
+        $derivation = new Derivation($grammar, Factory::create(), new TerminationAnalyzer($grammar));
+        $production = new Production([new Terminal('T')]);
+
+        self::assertSame([$production], $derivation->affordable([
+            new Production(array_fill(0, 5001, new NonTerminal('stmt'))),
+            $production,
+        ], new Production([])));
+    }
 }

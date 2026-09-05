@@ -23,7 +23,7 @@ final class GenerationPlans
      */
     public static function quotedIdentifier(int $minLength, int $maxLength): GenerationPlan
     {
-        return GenerationPlan::lexical('quoted_identifier', compact('minLength', 'maxLength'));
+        return GenerationPlan::lexical('quoted_identifier', compact('minLength', 'maxLength'))->withStepBudget();
     }
 
     /**
@@ -31,7 +31,7 @@ final class GenerationPlans
      */
     public static function stringLiteral(int $minLength, int $maxLength): GenerationPlan
     {
-        return GenerationPlan::lexical('string_literal', compact('minLength', 'maxLength'));
+        return GenerationPlan::lexical('string_literal', compact('minLength', 'maxLength'))->withStepBudget();
     }
 
     /**
@@ -39,7 +39,7 @@ final class GenerationPlans
      */
     public static function integerLiteral(int $min, int $max): GenerationPlan
     {
-        return GenerationPlan::lexical('integer_literal', compact('min', 'max'));
+        return GenerationPlan::lexical('integer_literal', compact('min', 'max'))->withStepBudget();
     }
 
     /**
@@ -47,7 +47,7 @@ final class GenerationPlans
      */
     public static function decimalLiteral(int $precision, int $scale): GenerationPlan
     {
-        return GenerationPlan::lexical('decimal_literal', compact('precision', 'scale'));
+        return GenerationPlan::lexical('decimal_literal', compact('precision', 'scale'))->withStepBudget();
     }
 
     /**
@@ -83,7 +83,7 @@ final class GenerationPlans
                 ProductionPattern::exactly(),
                 ProductionPattern::exactly(),
             ],
-        ])->requiringNonEmpty();
+        ])->requiringNonEmpty()->withStepBudget();
     }
 
     /**
@@ -107,7 +107,7 @@ final class GenerationPlans
                 ProductionPattern::exactly('term'),
             ],
             'likeop' => [ProductionPattern::exactly('MATCH')],
-        ])->requiringNonEmpty();
+        ])->requiringNonEmpty()->withStepBudget();
     }
 
     /**
@@ -131,7 +131,7 @@ final class GenerationPlans
                 ProductionPattern::exactly('term'),
                 ProductionPattern::containing('idj', 'LP', 'RP'),
             ],
-        ])->requiringNonEmpty();
+        ])->requiringNonEmpty()->withStepBudget();
     }
 
     /**
@@ -142,7 +142,7 @@ final class GenerationPlans
         return GenerationPlan::constrained('cmd', [
             'cmd' => [ProductionPattern::containing('create_table', 'create_table_args')],
             'temp' => [ProductionPattern::containing('TEMP')],
-        ])->requiringNonEmpty();
+        ])->requiringNonEmpty()->withStepBudget();
     }
 
     /**
@@ -153,7 +153,7 @@ final class GenerationPlans
         return GenerationPlan::constrained('cmd', [
             'cmd' => [ProductionPattern::containing('createkw', 'VIEW', 'select')],
             'oneselect' => [ProductionPattern::containing('SELECT')],
-        ])->requiringNonEmpty();
+        ])->requiringNonEmpty()->withStepBudget();
     }
 
     /**
@@ -169,7 +169,7 @@ final class GenerationPlans
                 ProductionPattern::exactly(),
             ],
             'ccons' => [ProductionPattern::containing('GENERATED', 'generated')],
-        ])->requiringNonEmpty();
+        ])->requiringNonEmpty()->withStepBudget();
     }
 
     /**
@@ -195,7 +195,7 @@ final class GenerationPlans
                 ProductionPattern::exactly('CASCADE'),
                 ProductionPattern::exactly('CASCADE'),
             ],
-        ])->requiringNonEmpty();
+        ])->requiringNonEmpty()->withStepBudget();
     }
 
     /**
@@ -214,7 +214,7 @@ final class GenerationPlans
             ],
             'tconscomma' => [ProductionPattern::exactly()],
             'eidlist_opt' => [ProductionPattern::nonEmpty()],
-        ])->requiringNonEmpty();
+        ])->requiringNonEmpty()->withStepBudget();
     }
 
     /**
@@ -227,6 +227,6 @@ final class GenerationPlans
      */
     public static function statement(string $startRule, int $maxDepth): GenerationPlan
     {
-        return GenerationPlan::fromRule($startRule)->withMaxDepth($maxDepth);
+        return GenerationPlan::fromRule($startRule)->withMaxDepth($maxDepth)->withStepBudget();
     }
 }
