@@ -208,10 +208,3 @@ composer format
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
-
-## Architecture and dependency checks
-
-See [the architecture guide](docs/architecture.md) for the common SQL generator,
-dialect generation plans, compiler boundaries and compatibility facades.
-Run `composer deptrac` to check dependencies and production layer assignment.
-These checks also run as part of `composer lint` in CI.
