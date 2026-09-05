@@ -9,10 +9,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Grammar;
+use SqlFaker\Grammar\LexicalCatalogException;
 use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\Terminal;
-use SqlFaker\Grammar\LexicalCatalogException;
 use SqlFaker\PostgreSql\GenerationContext;
 
 #[CoversClass(GenerationContext::class)]
@@ -34,11 +34,11 @@ use SqlFaker\PostgreSql\GenerationContext;
 #[UsesClass(\SqlFaker\PostgreSql\PgLookahead::class)]
 #[UsesClass(\SqlFaker\PostgreSql\PgTerminalRealizer::class)]
 #[UsesClass(\SqlFaker\PostgreSql\PgTokenizer::class)]
-#[UsesClass(\SqlFaker\Grammar\Production::class)]
-#[UsesClass(\SqlFaker\Grammar\ProductionRule::class)]
-#[UsesClass(\SqlFaker\Grammar\Terminal::class)]
+#[UsesClass(Production::class)]
+#[UsesClass(ProductionRule::class)]
+#[UsesClass(Terminal::class)]
 #[UsesClass(\SqlFaker\Grammar\TerminalInventory::class)]
-#[UsesClass(\SqlFaker\Grammar\LexicalCatalogException::class)]
+#[UsesClass(LexicalCatalogException::class)]
 final class GenerationContextTest extends TestCase
 {
     public function testGrammarAndLexicalReleaseAreBoundTogether(): void
