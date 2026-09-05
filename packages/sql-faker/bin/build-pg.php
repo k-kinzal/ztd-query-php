@@ -7,9 +7,11 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 use SqlFaker\Compiler\Bison\BisonParser;
 use SqlFaker\Compiler\Bison\GrammarCompiler;
+use SqlFaker\Grammar\LexicalProfileCheck;
+use SqlFaker\Grammar\LexicalProfileWriter;
 use SqlFaker\Grammar\SqlVersion;
 use SqlFaker\Grammar\TerminalInventory;
-use SqlFaker\Tooling\LexicalProfileBuilder;
+use SqlFaker\PostgreSql\PgProfileBuilder;
 
 /**
  * Build script for generating a versioned grammar and lexical profile from PostgreSQL sources.
@@ -85,7 +87,7 @@ function pgBuildVersion(
     string $version,
     BisonParser $parser,
     GrammarCompiler $compiler,
-    LexicalProfileBuilder $lexical,
+    PgProfileBuilder $lexical,
 ): bool {
     try {
         $sqlVersion = SqlVersion::resolve('postgresql', $version);
@@ -110,8 +112,8 @@ function pgBuildVersion(
         $ast = $parser->parse($contents);
         $grammar = $compiler->compile($ast);
         fwrite(STDOUT, "Building lexical profile...\n");
-        $profile = $lexical->postgreSql($version);
-        $lexical->assertCompatible($profile, 'postgresql', $version, TerminalInventory::fromGrammar($grammar));
+        $profile = $lexical->build($version);
+        (new LexicalProfileCheck())->assertCompatible($profile, 'postgresql', $version, TerminalInventory::fromGrammar($grammar));
     } catch (Throwable $e) {
         fwrite(STDERR, "Error building {$version}: {$e->getMessage()}\n");
         fwrite(STDERR, "Trace: {$e->getTraceAsString()}\n");
@@ -151,7 +153,7 @@ PHP;
     );
 
     try {
-        $lexical->publishVersion($sqlVersion, $output, $profile);
+        (new LexicalProfileWriter())->publishVersion($sqlVersion, $output, $profile);
     } catch (Throwable $throwable) {
         fwrite(STDERR, "Error publishing {$version}: {$throwable->getMessage()}\n");
 
@@ -170,7 +172,7 @@ function pgMain(array $argv): int
 
     $parser = new BisonParser();
     $compiler = new GrammarCompiler();
-    $lexical = new LexicalProfileBuilder();
+    $lexical = new PgProfileBuilder();
 
     $success = 0;
     $failed = 0;

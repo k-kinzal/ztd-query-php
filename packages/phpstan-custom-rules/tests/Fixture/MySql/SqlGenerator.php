@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SqlFaker\MySql;
+namespace SqlFaker\Generation;
 
 final class SqlGenerator
 {

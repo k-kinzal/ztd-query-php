@@ -13,17 +13,14 @@ names. The Provider passes those inputs directly to
 to each `generate()` call. The generator never selects a database implementation.
 
 ```mermaid
-flowchart TD
-    Provider --> Generation
-    Provider --> Dialect[MySQL / PostgreSQL / SQLite]
-    Generation --> Grammar[Common grammar and lexical contract]
-    Dialect --> Grammar
-    Compiler[Bison / Lemon compiler] --> Grammar
-    Tooling[Artifact build orchestration] --> Dialect
-    Tooling --> Grammar
-    Compatibility --> Generation
-    Compatibility --> Dialect
-    Compatibility --> Compiler
+flowchart LR
+    Provider --> Generation & Grammar & MySql & PostgreSql & Sqlite & Faker
+    Generation --> Grammar & Faker
+    Grammar --> Faker
+    Compiler --> Grammar
+    MySql --> Grammar & Faker
+    PostgreSql --> Grammar & Faker
+    Sqlite --> Grammar & Faker
 ```
 
 | Layer | Responsibility | Allowed dependencies |
@@ -33,11 +30,8 @@ flowchart TD
 | Grammar | Shared symbol model, generation plans, termination analysis, lexical contracts and artifact support | Faker |
 | MySql / PostgreSql / Sqlite | Release loading, plans, grammar adaptations, lexer realization and parser semantics | Grammar, Faker |
 | Compiler | Parse Bison or Lemon source into the common model | Grammar |
-| Tooling | Build and publish matching grammar and lexer artifacts | Grammar, individual dialects |
-| Compatibility | Existing DB-specific generator and MySQL grammar/compiler facades | Generation, Grammar, Compiler, individual dialects, Faker |
 
-The dialect layers cannot depend on one another, the common engine, Provider, or
-tooling. Generation and Grammar cannot depend on a dialect or compiler. Bison
+The dialect layers cannot depend on one another, the common engine or Provider. Generation and Grammar cannot depend on a dialect or compiler. Bison
 belongs to Compiler because both MySQL and PostgreSQL use that grammar format.
 Lemon belongs there for the same reason: source syntax is a compilation concern.
 
@@ -49,11 +43,16 @@ SQLite's implicit terminals are resolved during grammar adaptation, so the commo
 derivation can reject undeclared nonterminals consistently.
 
 Public Provider methods and `StatementType` aliases retain their signatures.
-The old DB-specific `SqlGenerator` classes only compose inputs and delegate to the
-common engine. MySQL's old grammar facade uses the common symbol types; its old
-symbol names are aliases. New code should use the common model and engine.
-Compiler implementation namespaces moved to `SqlFaker\Compiler\Bison` and
-`SqlFaker\Compiler\Lemon`; artifact orchestration moved to `SqlFaker\Tooling`.
+`SqlFaker\Generation\SqlGenerator` is the only SQL generator. The previous
+DB-specific generator classes, MySQL grammar/compiler facades and MySQL symbol
+aliases have been removed. Internal callers use the common grammar types and
+`SqlFaker\Compiler\Bison` or `SqlFaker\Compiler\Lemon` directly.
+
+The `bin/build-*.php` commands compose each dialect's profile builder with the
+shared compiler, `Grammar\LexicalProfileCheck` and `Grammar\LexicalProfileWriter`.
+The profile check validates the release identity and terminal coverage before the
+writer publishes the grammar and profile. There is no cross-dialect builder
+facade or separate Tooling layer.
 
 ## Architecture checks
 

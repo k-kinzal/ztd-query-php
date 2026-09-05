@@ -35,13 +35,7 @@
         "files": [
             "src/MySql/StatementType.php",
             "src/PostgreSql/StatementType.php",
-            "src/Sqlite/StatementType.php",
-            "src/MySql/Grammar/Symbol.php",
-            "src/MySql/Grammar/NonTerminal.php",
-            "src/MySql/Grammar/Terminal.php",
-            "src/MySql/Grammar/Production.php",
-            "src/MySql/Grammar/ProductionRule.php",
-            "src/MySql/Grammar/UnknownSymbolException.php"
+            "src/Sqlite/StatementType.php"
         ]
     },
     "autoload-dev": {

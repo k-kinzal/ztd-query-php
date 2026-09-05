@@ -7,9 +7,11 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 use SqlFaker\Compiler\Bison\BisonParser;
 use SqlFaker\Compiler\Bison\GrammarCompiler;
+use SqlFaker\Grammar\LexicalProfileCheck;
+use SqlFaker\Grammar\LexicalProfileWriter;
 use SqlFaker\Grammar\SqlVersion;
 use SqlFaker\Grammar\TerminalInventory;
-use SqlFaker\Tooling\LexicalProfileBuilder;
+use SqlFaker\MySql\MySqlProfileBuilder;
 
 /**
  * Build script for generating a versioned grammar and lexical profile from MySQL sources.
@@ -85,7 +87,7 @@ function buildVersion(
     string $tag,
     BisonParser $parser,
     GrammarCompiler $compiler,
-    LexicalProfileBuilder $lexical,
+    MySqlProfileBuilder $lexical,
 ): bool {
     try {
         $version = SqlVersion::resolve('mysql', $tag);
@@ -110,8 +112,8 @@ function buildVersion(
         $ast = $parser->parse($contents);
         $grammar = $compiler->compile($ast);
         fwrite(STDOUT, "Building lexical profile...\n");
-        $profile = $lexical->mysql($tag, $grammar);
-        $lexical->assertCompatible($profile, 'mysql', $tag, TerminalInventory::fromGrammar($grammar));
+        $profile = $lexical->build($tag, $grammar);
+        (new LexicalProfileCheck())->assertCompatible($profile, 'mysql', $tag, TerminalInventory::fromGrammar($grammar));
     } catch (Throwable $e) {
         fwrite(STDERR, "Error building {$tag}: {$e->getMessage()}\n");
         return false;
@@ -148,7 +150,7 @@ PHP;
     );
 
     try {
-        $lexical->publishVersion($version, $output, $profile);
+        (new LexicalProfileWriter())->publishVersion($version, $output, $profile);
     } catch (Throwable $throwable) {
         fwrite(STDERR, "Error publishing {$tag}: {$throwable->getMessage()}\n");
 
@@ -167,7 +169,7 @@ function main(array $argv): int
 
     $parser = new BisonParser();
     $compiler = new GrammarCompiler();
-    $lexical = new LexicalProfileBuilder();
+    $lexical = new MySqlProfileBuilder();
 
     $success = 0;
     $failed = 0;

@@ -6,7 +6,7 @@ namespace SqlFaker;
 
 final class MySqlProvider
 {
-    private \SqlFaker\MySql\SqlGenerator $sql;
+    private \SqlFaker\Generation\SqlGenerator $sql;
 
     public function quotedIdentifier(): string
     {
@@ -36,7 +36,7 @@ final class MySqlProvider
 
 final class PostgreSqlProvider
 {
-    private \SqlFaker\PostgreSql\SqlGenerator $sql;
+    private \SqlFaker\Generation\SqlGenerator $sql;
 
     public function statement(): string
     {
@@ -51,7 +51,7 @@ final class PostgreSqlProvider
 
 final class SqliteProvider
 {
-    private \SqlFaker\Sqlite\SqlGenerator $sql;
+    private \SqlFaker\Generation\SqlGenerator $sql;
 
     public function statement(): string
     {

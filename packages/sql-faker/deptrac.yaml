@@ -23,43 +23,18 @@ deptrac:
       collectors:
         - type: directory
           value: src/Compiler/.*
-    - name: Tooling
-      collectors:
-        - type: directory
-          value: src/Tooling/.*
-    - name: Compatibility
-      collectors:
-        - type: directory
-          value: src/(MySql|PostgreSql|Sqlite)/SqlGenerator\.php$
-        - type: directory
-          value: src/MySql/Grammar/Grammar(Compiler)?\.php$
     - name: MySql
       collectors:
-        - type: bool
-          must:
-            - type: directory
-              value: src/MySql/.*
-          must_not:
-            - type: layer
-              value: Compatibility
+        - type: directory
+          value: src/MySql/.*
     - name: PostgreSql
       collectors:
-        - type: bool
-          must:
-            - type: directory
-              value: src/PostgreSql/.*
-          must_not:
-            - type: layer
-              value: Compatibility
+        - type: directory
+          value: src/PostgreSql/.*
     - name: Sqlite
       collectors:
-        - type: bool
-          must:
-            - type: directory
-              value: src/Sqlite/.*
-          must_not:
-            - type: layer
-              value: Compatibility
+        - type: directory
+          value: src/Sqlite/.*
     - name: Faker
       collectors:
         - type: classLike
@@ -72,6 +47,4 @@ deptrac:
     MySql: [Grammar, Faker]
     PostgreSql: [Grammar, Faker]
     Sqlite: [Grammar, Faker]
-    Tooling: [Grammar, MySql, PostgreSql, Sqlite]
-    Compatibility: [Generation, Grammar, Compiler, MySql, PostgreSql, Sqlite, Faker]
     Faker: []
