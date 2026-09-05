@@ -536,10 +536,4 @@ final class PostgreSqlProvider extends Base
     {
         return $this->sql->generate(GenerationPlans::mergeStatement()->withMaxDepth($maxDepth));
     }
-
-    /**
-     * @template TRequiresNonEmpty of bool
-     * @param GenerationPlan<TRequiresNonEmpty> $plan
-     * @return (TRequiresNonEmpty is true ? non-empty-string : string)
-     */
 }

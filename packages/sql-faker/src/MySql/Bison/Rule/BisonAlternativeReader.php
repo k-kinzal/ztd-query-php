@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace SqlFaker\MySql\Bison\Rule;
 
 use SqlFaker\MySql\Bison\Ast\BisonAlternativeNode;
+use SqlFaker\MySql\Bison\Ast\BisonSymbolForm;
 use SqlFaker\MySql\Bison\Ast\BisonSymbolNode;
-use SqlFaker\MySql\Bison\Ast\BisonSymbolType;
+use SqlFaker\MySql\Bison\Lexer\BisonLexeme;
 use SqlFaker\MySql\Bison\Lexer\BisonTokenStream;
-use SqlFaker\MySql\Bison\Lexer\BisonTokenType;
 
 /**
  * Reads the alternatives on the right-hand side of one rule.
@@ -42,14 +42,14 @@ final class BisonAlternativeReader
             }
 
             $lexeme = $stream->peek()->type;
-            if ($lexeme === BisonTokenType::Semicolon) {
+            if ($lexeme === BisonLexeme::Semicolon) {
                 $stream->next();
                 $alternatives[] = $draft->complete();
 
                 return $alternatives;
             }
 
-            if ($lexeme === BisonTokenType::Pipe) {
+            if ($lexeme === BisonLexeme::Pipe) {
                 $stream->next();
                 $alternatives[] = $draft->complete();
                 continue;
@@ -70,11 +70,11 @@ final class BisonAlternativeReader
     {
         $lexeme = $stream->peek()->type;
 
-        if ($lexeme === BisonTokenType::Eof || $lexeme === BisonTokenType::PercentPercent) {
+        if ($lexeme === BisonLexeme::Eof || $lexeme === BisonLexeme::PercentPercent) {
             return true;
         }
 
-        return $lexeme === BisonTokenType::Identifier && $stream->peekN(2)->type === BisonTokenType::Colon;
+        return $lexeme === BisonLexeme::Identifier && $stream->peekN(2)->type === BisonLexeme::Colon;
     }
 
     /**
@@ -86,23 +86,23 @@ final class BisonAlternativeReader
     public function readPart(BisonTokenStream $stream, BisonAlternativeDraft $draft): void
     {
         match ($stream->peek()->type) {
-            BisonTokenType::Action => $draft->setAction($stream->nextString()),
-            BisonTokenType::Identifier => $draft->addSymbol(
-                new BisonSymbolNode(BisonSymbolType::Identifier, $stream->nextString()),
+            BisonLexeme::Action => $draft->setAction($stream->nextString()),
+            BisonLexeme::Identifier => $draft->addSymbol(
+                new BisonSymbolNode(BisonSymbolForm::Identifier, $stream->nextString()),
             ),
-            BisonTokenType::CharLiteral => $draft->addSymbol(
-                new BisonSymbolNode(BisonSymbolType::CharLiteral, $stream->nextString()),
+            BisonLexeme::CharLiteral => $draft->addSymbol(
+                new BisonSymbolNode(BisonSymbolForm::CharLiteral, $stream->nextString()),
             ),
-            BisonTokenType::Directive => $this->readInlineDirective($stream, $draft),
-            BisonTokenType::Number,
-            BisonTokenType::StringLiteral,
-            BisonTokenType::TypeTag,
-            BisonTokenType::Colon,
-            BisonTokenType::Semicolon,
-            BisonTokenType::Pipe,
-            BisonTokenType::PercentPercent,
-            BisonTokenType::Prologue,
-            BisonTokenType::Eof => $stream->next(),
+            BisonLexeme::Directive => $this->readInlineDirective($stream, $draft),
+            BisonLexeme::Number,
+            BisonLexeme::StringLiteral,
+            BisonLexeme::TypeTag,
+            BisonLexeme::Colon,
+            BisonLexeme::Semicolon,
+            BisonLexeme::Pipe,
+            BisonLexeme::PercentPercent,
+            BisonLexeme::Prologue,
+            BisonLexeme::Eof => $stream->next(),
         };
     }
 
@@ -131,7 +131,7 @@ final class BisonAlternativeReader
      */
     public function readPrecedenceSymbol(BisonTokenStream $stream): ?string
     {
-        return $stream->nextIf(BisonTokenType::Identifier, BisonTokenType::CharLiteral)?->asString();
+        return $stream->nextIf(BisonLexeme::Identifier, BisonLexeme::CharLiteral)?->asString();
     }
 
     /**
@@ -143,7 +143,7 @@ final class BisonAlternativeReader
      */
     public function readDynamicPrecedence(BisonTokenStream $stream): ?int
     {
-        return $stream->nextIf(BisonTokenType::Number)?->asInt();
+        return $stream->nextIf(BisonLexeme::Number)?->asInt();
     }
 
     /**
@@ -155,6 +155,6 @@ final class BisonAlternativeReader
      */
     public function readMergeFunction(BisonTokenStream $stream): ?string
     {
-        return $stream->nextIf(BisonTokenType::TypeTag)?->asString();
+        return $stream->nextIf(BisonLexeme::TypeTag)?->asString();
     }
 }

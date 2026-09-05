@@ -8,12 +8,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\SourceCursor;
+use SqlFaker\MySql\Bison\Lexer\BisonLexeme;
 use SqlFaker\MySql\Bison\Lexer\BisonToken;
-use SqlFaker\MySql\Bison\Lexer\BisonTokenType;
 use SqlFaker\MySql\Bison\Lexer\IdentifierScanner;
 
 #[CoversClass(IdentifierScanner::class)]
-#[UsesClass(BisonTokenType::class)]
+#[UsesClass(BisonLexeme::class)]
 #[UsesClass(BisonToken::class)]
 #[UsesClass(SourceCursor::class)]
 final class IdentifierScannerTest extends TestCase
@@ -38,7 +38,7 @@ final class IdentifierScannerTest extends TestCase
 
         $token = (new IdentifierScanner())->scan($cursor);
 
-        self::assertSame(BisonTokenType::Identifier, $token->type);
+        self::assertSame(BisonLexeme::Identifier, $token->type);
         self::assertSame('select_stmt', $token->value);
         self::assertSame(0, $token->offset);
         self::assertSame(' rest', $cursor->takeRest());

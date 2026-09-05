@@ -20,7 +20,7 @@ use SqlFaker\Grammar\GrammarParseException;
 final class BisonTokenStream
 {
     /** @readonly */
-    private BisonTokenScanner $lexer;
+    private BisonLexer $lexer;
 
     /**
      * Tokens already scanned but not yet consumed, in reading order.
@@ -30,9 +30,9 @@ final class BisonTokenStream
     private array $lookahead = [];
 
     /**
-     * @param BisonTokenScanner $lexer Source of tokens
+     * @param BisonLexer $lexer Source of tokens
      */
-    public function __construct(BisonTokenScanner $lexer)
+    public function __construct(BisonLexer $lexer)
     {
         $this->lexer = $lexer;
     }
@@ -46,7 +46,7 @@ final class BisonTokenStream
      */
     public static function over(string $source): self
     {
-        return new self(new BisonTokenScanner($source));
+        return new self(new BisonLexer($source));
     }
 
     /**
@@ -105,13 +105,13 @@ final class BisonTokenStream
      * explicit token code, an alias. Asking the stream keeps that one step, so
      * a reader cannot look at one token and then consume another.
      *
-     * @param BisonTokenType ...$accepted Kinds the caller is willing to take
+     * @param BisonLexeme ...$accepted Kinds the caller is willing to take
      *
      * @return BisonToken|null The consumed token, or null with the stream unmoved
      *
      * @throws GrammarParseException When the source cannot be tokenized
      */
-    public function nextIf(BisonTokenType ...$accepted): ?BisonToken
+    public function nextIf(BisonLexeme ...$accepted): ?BisonToken
     {
         if (!in_array($this->peek()->type, $accepted, true)) {
             return null;

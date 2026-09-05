@@ -11,11 +11,11 @@ use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\GrammarParseException;
 use SqlFaker\Grammar\SourceCursor;
 use SqlFaker\MySql\Bison\Lexer\ActionScanner;
+use SqlFaker\MySql\Bison\Lexer\BisonLexeme;
+use SqlFaker\MySql\Bison\Lexer\BisonLexer;
 use SqlFaker\MySql\Bison\Lexer\BisonScannerChain;
 use SqlFaker\MySql\Bison\Lexer\BisonToken;
-use SqlFaker\MySql\Bison\Lexer\BisonTokenScanner;
 use SqlFaker\MySql\Bison\Lexer\BisonTokenStream;
-use SqlFaker\MySql\Bison\Lexer\BisonTokenType;
 use SqlFaker\MySql\Bison\Lexer\BisonTrivia;
 use SqlFaker\MySql\Bison\Lexer\DirectiveScanner;
 use SqlFaker\MySql\Bison\Lexer\IdentifierScanner;
@@ -26,8 +26,8 @@ use SqlFaker\MySql\Bison\Lexer\TypeTagScanner;
 
 #[CoversClass(BisonTokenStream::class)]
 #[UsesClass(ActionScanner::class)]
-#[UsesClass(BisonTokenType::class)]
-#[UsesClass(BisonTokenScanner::class)]
+#[UsesClass(BisonLexeme::class)]
+#[UsesClass(BisonLexer::class)]
 #[UsesClass(BisonScannerChain::class)]
 #[UsesClass(BisonToken::class)]
 #[UsesClass(BisonTrivia::class)]
@@ -47,7 +47,7 @@ final class BisonTokenStreamTest extends TestCase
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Eof, $token->type);
+        self::assertSame(BisonLexeme::Eof, $token->type);
         self::assertSame('', $token->value);
         self::assertSame(0, $token->offset);
     }
@@ -58,7 +58,7 @@ final class BisonTokenStreamTest extends TestCase
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Eof, $token->type);
+        self::assertSame(BisonLexeme::Eof, $token->type);
     }
 
     public function testNextReturnsEofAfterEof(): void
@@ -69,8 +69,8 @@ final class BisonTokenStreamTest extends TestCase
         $eof1 = $lexer->next();
         $eof2 = $lexer->next();
 
-        self::assertSame(BisonTokenType::Eof, $eof1->type);
-        self::assertSame(BisonTokenType::Eof, $eof2->type);
+        self::assertSame(BisonLexeme::Eof, $eof1->type);
+        self::assertSame(BisonLexeme::Eof, $eof2->type);
     }
 
     public function testNextReturnsTokenFromBuffer(): void
@@ -91,7 +91,7 @@ final class BisonTokenStreamTest extends TestCase
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Identifier, $token->type);
+        self::assertSame(BisonLexeme::Identifier, $token->type);
         self::assertSame('foo', $token->value);
     }
 
@@ -101,7 +101,7 @@ final class BisonTokenStreamTest extends TestCase
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Identifier, $token->type);
+        self::assertSame(BisonLexeme::Identifier, $token->type);
         self::assertSame('foo', $token->value);
     }
 
@@ -111,7 +111,7 @@ final class BisonTokenStreamTest extends TestCase
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Eof, $token->type);
+        self::assertSame(BisonLexeme::Eof, $token->type);
     }
 
     public function testNextSkipsBlockComment(): void
@@ -120,7 +120,7 @@ final class BisonTokenStreamTest extends TestCase
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Identifier, $token->type);
+        self::assertSame(BisonLexeme::Identifier, $token->type);
         self::assertSame('foo', $token->value);
     }
 
@@ -136,7 +136,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Identifier, $token->type);
+        self::assertSame(BisonLexeme::Identifier, $token->type);
         self::assertSame('foo', $token->value);
     }
 
@@ -146,7 +146,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Eof, $token->type);
+        self::assertSame(BisonLexeme::Eof, $token->type);
     }
 
     public function testNextSkipsConsecutiveLineComments(): void
@@ -155,7 +155,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Identifier, $token->type);
+        self::assertSame(BisonLexeme::Identifier, $token->type);
         self::assertSame('foo', $token->value);
     }
 
@@ -165,7 +165,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Identifier, $token->type);
+        self::assertSame(BisonLexeme::Identifier, $token->type);
         self::assertSame('foo', $token->value);
     }
 
@@ -175,7 +175,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Identifier, $token->type);
+        self::assertSame(BisonLexeme::Identifier, $token->type);
         self::assertSame('foo', $token->value);
     }
 
@@ -186,7 +186,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Identifier, $token->type);
+        self::assertSame(BisonLexeme::Identifier, $token->type);
         self::assertSame('simple_ident', $token->value);
         self::assertSame(0, $token->offset);
     }
@@ -197,7 +197,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Identifier, $token->type);
+        self::assertSame(BisonLexeme::Identifier, $token->type);
         self::assertSame('a', $token->value);
     }
 
@@ -207,7 +207,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Identifier, $token->type);
+        self::assertSame(BisonLexeme::Identifier, $token->type);
         self::assertSame('foo123', $token->value);
     }
 
@@ -217,7 +217,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Identifier, $token->type);
+        self::assertSame(BisonLexeme::Identifier, $token->type);
         self::assertSame('api.pure.full', $token->value);
     }
 
@@ -227,7 +227,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Identifier, $token->type);
+        self::assertSame(BisonLexeme::Identifier, $token->type);
         self::assertSame('_private', $token->value);
     }
 
@@ -237,7 +237,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Identifier, $token->type);
+        self::assertSame(BisonLexeme::Identifier, $token->type);
         self::assertSame('SELECT_SYM', $token->value);
     }
 
@@ -248,7 +248,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Number, $token->type);
+        self::assertSame(BisonLexeme::Number, $token->type);
         self::assertSame(12345, $token->value);
         self::assertSame(0, $token->offset);
     }
@@ -259,7 +259,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Number, $token->type);
+        self::assertSame(BisonLexeme::Number, $token->type);
         self::assertSame(7, $token->value);
     }
 
@@ -269,7 +269,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Number, $token->type);
+        self::assertSame(BisonLexeme::Number, $token->type);
         self::assertSame(0, $token->value);
     }
 
@@ -280,7 +280,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::StringLiteral, $token->type);
+        self::assertSame(BisonLexeme::StringLiteral, $token->type);
         self::assertSame('hello world', $token->value);
     }
 
@@ -290,7 +290,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::StringLiteral, $token->type);
+        self::assertSame(BisonLexeme::StringLiteral, $token->type);
         self::assertSame('', $token->value);
     }
 
@@ -300,7 +300,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::StringLiteral, $token->type);
+        self::assertSame(BisonLexeme::StringLiteral, $token->type);
         self::assertSame('say "hi"', $token->value);
     }
 
@@ -310,7 +310,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::StringLiteral, $token->type);
+        self::assertSame(BisonLexeme::StringLiteral, $token->type);
         self::assertSame('path\\to\\file', $token->value);
     }
 
@@ -320,7 +320,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::StringLiteral, $token->type);
+        self::assertSame(BisonLexeme::StringLiteral, $token->type);
         self::assertSame('unterminated', $token->value);
     }
 
@@ -330,7 +330,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::StringLiteral, $token->type);
+        self::assertSame(BisonLexeme::StringLiteral, $token->type);
         self::assertSame('end', $token->value);
     }
 
@@ -341,7 +341,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::CharLiteral, $token->type);
+        self::assertSame(BisonLexeme::CharLiteral, $token->type);
         self::assertSame('c', $token->value);
     }
 
@@ -351,7 +351,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::CharLiteral, $token->type);
+        self::assertSame(BisonLexeme::CharLiteral, $token->type);
         self::assertSame('', $token->value);
     }
 
@@ -361,7 +361,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::CharLiteral, $token->type);
+        self::assertSame(BisonLexeme::CharLiteral, $token->type);
         self::assertSame('n', $token->value);
     }
 
@@ -371,7 +371,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::CharLiteral, $token->type);
+        self::assertSame(BisonLexeme::CharLiteral, $token->type);
         self::assertSame('x', $token->value);
     }
 
@@ -382,7 +382,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Colon, $token->type);
+        self::assertSame(BisonLexeme::Colon, $token->type);
         self::assertSame(':', $token->value);
     }
 
@@ -392,7 +392,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Semicolon, $token->type);
+        self::assertSame(BisonLexeme::Semicolon, $token->type);
         self::assertSame(';', $token->value);
     }
 
@@ -402,7 +402,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Pipe, $token->type);
+        self::assertSame(BisonLexeme::Pipe, $token->type);
         self::assertSame('|', $token->value);
     }
 
@@ -412,7 +412,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::PercentPercent, $token->type);
+        self::assertSame(BisonLexeme::PercentPercent, $token->type);
         self::assertSame('%%', $token->value);
     }
 
@@ -423,7 +423,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Directive, $token->type);
+        self::assertSame(BisonLexeme::Directive, $token->type);
         self::assertSame('%token', $token->value);
     }
 
@@ -433,7 +433,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Directive, $token->type);
+        self::assertSame(BisonLexeme::Directive, $token->type);
         self::assertSame('%parse-param', $token->value);
     }
 
@@ -443,7 +443,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Directive, $token->type);
+        self::assertSame(BisonLexeme::Directive, $token->type);
         self::assertSame('%define123', $token->value);
     }
 
@@ -453,7 +453,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Directive, $token->type);
+        self::assertSame(BisonLexeme::Directive, $token->type);
         self::assertSame('%api.pure', $token->value);
     }
 
@@ -464,7 +464,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::TypeTag, $token->type);
+        self::assertSame(BisonLexeme::TypeTag, $token->type);
         self::assertSame('node_type', $token->value);
     }
 
@@ -474,7 +474,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::TypeTag, $token->type);
+        self::assertSame(BisonLexeme::TypeTag, $token->type);
         self::assertSame('', $token->value);
     }
 
@@ -484,7 +484,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::TypeTag, $token->type);
+        self::assertSame(BisonLexeme::TypeTag, $token->type);
         self::assertSame('spaced', $token->value);
     }
 
@@ -494,7 +494,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::TypeTag, $token->type);
+        self::assertSame(BisonLexeme::TypeTag, $token->type);
         self::assertSame('Item*', $token->value);
     }
 
@@ -505,7 +505,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Prologue, $token->type);
+        self::assertSame(BisonLexeme::Prologue, $token->type);
         self::assertSame(' #include <stdio.h> ', $token->value);
     }
 
@@ -515,7 +515,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Prologue, $token->type);
+        self::assertSame(BisonLexeme::Prologue, $token->type);
         self::assertSame('', $token->value);
     }
 
@@ -525,7 +525,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Prologue, $token->type);
+        self::assertSame(BisonLexeme::Prologue, $token->type);
         self::assertSame('   ', $token->value);
     }
 
@@ -535,7 +535,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Prologue, $token->type);
+        self::assertSame(BisonLexeme::Prologue, $token->type);
         self::assertSame(' incomplete prologue', $token->value);
     }
 
@@ -546,7 +546,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Action, $token->type);
+        self::assertSame(BisonLexeme::Action, $token->type);
         self::assertSame(' $$ = $1; ', $token->value);
     }
 
@@ -556,7 +556,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Action, $token->type);
+        self::assertSame(BisonLexeme::Action, $token->type);
         self::assertSame('', $token->value);
     }
 
@@ -566,7 +566,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Action, $token->type);
+        self::assertSame(BisonLexeme::Action, $token->type);
         self::assertSame('   ', $token->value);
     }
 
@@ -576,7 +576,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Action, $token->type);
+        self::assertSame(BisonLexeme::Action, $token->type);
         self::assertSame(' if (x) { y(); } ', $token->value);
     }
 
@@ -586,7 +586,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Action, $token->type);
+        self::assertSame(BisonLexeme::Action, $token->type);
         self::assertSame(' a { b { c } d } e ', $token->value);
     }
 
@@ -596,7 +596,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Action, $token->type);
+        self::assertSame(BisonLexeme::Action, $token->type);
         self::assertSame(' printf("{"); ', $token->value);
     }
 
@@ -606,7 +606,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Action, $token->type);
+        self::assertSame(BisonLexeme::Action, $token->type);
         self::assertSame(" char c = '{'; ", $token->value);
     }
 
@@ -616,7 +616,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Action, $token->type);
+        self::assertSame(BisonLexeme::Action, $token->type);
         self::assertIsString($token->value);
         self::assertStringContainsString('x = 1;', $token->value);
         self::assertStringContainsString('y = 2;', $token->value);
@@ -628,7 +628,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Action, $token->type);
+        self::assertSame(BisonLexeme::Action, $token->type);
         self::assertIsString($token->value);
         self::assertStringContainsString('x = 1;', $token->value);
         self::assertStringContainsString('y = 2;', $token->value);
@@ -640,7 +640,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Action, $token->type);
+        self::assertSame(BisonLexeme::Action, $token->type);
         self::assertSame(' incomplete action', $token->value);
     }
 
@@ -650,7 +650,7 @@ INPUT;
 
         $token = $lexer->next();
 
-        self::assertSame(BisonTokenType::Action, $token->type);
+        self::assertSame(BisonLexeme::Action, $token->type);
         self::assertIsString($token->value);
     }
 
@@ -664,16 +664,16 @@ INPUT;
         $t3 = $lexer->next();
         $t4 = $lexer->next();
 
-        self::assertSame(BisonTokenType::Directive, $t1->type);
+        self::assertSame(BisonLexeme::Directive, $t1->type);
         self::assertSame('%token', $t1->value);
 
-        self::assertSame(BisonTokenType::Identifier, $t2->type);
+        self::assertSame(BisonLexeme::Identifier, $t2->type);
         self::assertSame('FOO', $t2->value);
 
-        self::assertSame(BisonTokenType::Number, $t3->type);
+        self::assertSame(BisonLexeme::Number, $t3->type);
         self::assertSame(123, $t3->value);
 
-        self::assertSame(BisonTokenType::StringLiteral, $t4->type);
+        self::assertSame(BisonLexeme::StringLiteral, $t4->type);
         self::assertSame('alias', $t4->value);
     }
 
@@ -754,9 +754,9 @@ INPUT;
         $t1 = $lexer->next();
         $t2 = $lexer->next();
 
-        self::assertSame(BisonTokenType::Number, $t1->type);
+        self::assertSame(BisonLexeme::Number, $t1->type);
         self::assertSame(123, $t1->value);
-        self::assertSame(BisonTokenType::Identifier, $t2->type);
+        self::assertSame(BisonLexeme::Identifier, $t2->type);
         self::assertSame('abc', $t2->value);
     }
 
@@ -800,31 +800,31 @@ YY;
         $t19 = $lexer->next();
         $t20 = $lexer->next();
 
-        self::assertSame(BisonTokenType::Prologue, $t0->type);
-        self::assertSame(BisonTokenType::Directive, $t1->type);
-        self::assertSame(BisonTokenType::Identifier, $t2->type);
-        self::assertSame(BisonTokenType::Directive, $t3->type);
-        self::assertSame(BisonTokenType::TypeTag, $t4->type);
-        self::assertSame(BisonTokenType::Identifier, $t5->type);
-        self::assertSame(BisonTokenType::Number, $t6->type);
-        self::assertSame(BisonTokenType::Directive, $t7->type);
-        self::assertSame(BisonTokenType::Identifier, $t8->type);
-        self::assertSame(BisonTokenType::Identifier, $t9->type);
-        self::assertSame(BisonTokenType::PercentPercent, $t10->type);
-        self::assertSame(BisonTokenType::Identifier, $t11->type);
-        self::assertSame(BisonTokenType::Colon, $t12->type);
-        self::assertSame(BisonTokenType::Identifier, $t13->type);
-        self::assertSame(BisonTokenType::Pipe, $t14->type);
-        self::assertSame(BisonTokenType::Identifier, $t15->type);
-        self::assertSame(BisonTokenType::Identifier, $t16->type);
-        self::assertSame(BisonTokenType::Identifier, $t17->type);
-        self::assertSame(BisonTokenType::Action, $t18->type);
-        self::assertSame(BisonTokenType::Semicolon, $t19->type);
-        self::assertSame(BisonTokenType::Eof, $t20->type);
+        self::assertSame(BisonLexeme::Prologue, $t0->type);
+        self::assertSame(BisonLexeme::Directive, $t1->type);
+        self::assertSame(BisonLexeme::Identifier, $t2->type);
+        self::assertSame(BisonLexeme::Directive, $t3->type);
+        self::assertSame(BisonLexeme::TypeTag, $t4->type);
+        self::assertSame(BisonLexeme::Identifier, $t5->type);
+        self::assertSame(BisonLexeme::Number, $t6->type);
+        self::assertSame(BisonLexeme::Directive, $t7->type);
+        self::assertSame(BisonLexeme::Identifier, $t8->type);
+        self::assertSame(BisonLexeme::Identifier, $t9->type);
+        self::assertSame(BisonLexeme::PercentPercent, $t10->type);
+        self::assertSame(BisonLexeme::Identifier, $t11->type);
+        self::assertSame(BisonLexeme::Colon, $t12->type);
+        self::assertSame(BisonLexeme::Identifier, $t13->type);
+        self::assertSame(BisonLexeme::Pipe, $t14->type);
+        self::assertSame(BisonLexeme::Identifier, $t15->type);
+        self::assertSame(BisonLexeme::Identifier, $t16->type);
+        self::assertSame(BisonLexeme::Identifier, $t17->type);
+        self::assertSame(BisonLexeme::Action, $t18->type);
+        self::assertSame(BisonLexeme::Semicolon, $t19->type);
+        self::assertSame(BisonLexeme::Eof, $t20->type);
     }
 
     #[DataProvider('providerNextTokenTypes')]
-    public function testNextTokenTypes(string $input, BisonTokenType $expectedType, string|int $expectedValue): void
+    public function testNextTokenTypes(string $input, BisonLexeme $expectedType, string|int $expectedValue): void
     {
         $lexer = BisonTokenStream::over($input);
 
@@ -928,7 +928,7 @@ YY;
     {
         $stream = BisonTokenStream::over('foo bar');
 
-        self::assertSame('foo', $stream->nextIf(BisonTokenType::Identifier)?->value);
+        self::assertSame('foo', $stream->nextIf(BisonLexeme::Identifier)?->value);
         self::assertSame('bar', $stream->next()->value);
     }
 
@@ -936,14 +936,14 @@ YY;
     {
         $stream = BisonTokenStream::over('42');
 
-        self::assertSame(42, $stream->nextIf(BisonTokenType::Identifier, BisonTokenType::Number)?->value);
+        self::assertSame(42, $stream->nextIf(BisonLexeme::Identifier, BisonLexeme::Number)?->value);
     }
 
     public function testNextIfLeavesTheStreamUnmovedWhenTheKindDoesNotMatch(): void
     {
         $stream = BisonTokenStream::over('foo');
 
-        self::assertNull($stream->nextIf(BisonTokenType::Number));
+        self::assertNull($stream->nextIf(BisonLexeme::Number));
         self::assertSame('foo', $stream->next()->value);
     }
 
@@ -988,25 +988,25 @@ YY;
     }
 
     /**
-     * @return iterable<string, array{string, BisonTokenType, string|int}>
+     * @return iterable<string, array{string, BisonLexeme, string|int}>
      */
     public static function providerNextTokenTypes(): iterable
     {
-        yield 'identifier' => ['foo', BisonTokenType::Identifier, 'foo'];
-        yield 'identifier with digits' => ['foo123', BisonTokenType::Identifier, 'foo123'];
-        yield 'number' => ['42', BisonTokenType::Number, 42];
-        yield 'number zero' => ['0', BisonTokenType::Number, 0];
-        yield 'string literal' => ['"str"', BisonTokenType::StringLiteral, 'str'];
-        yield 'char literal' => ["'x'", BisonTokenType::CharLiteral, 'x'];
-        yield 'colon' => [':', BisonTokenType::Colon, ':'];
-        yield 'semicolon' => [';', BisonTokenType::Semicolon, ';'];
-        yield 'pipe' => ['|', BisonTokenType::Pipe, '|'];
-        yield 'percent percent' => ['%%', BisonTokenType::PercentPercent, '%%'];
-        yield 'directive token' => ['%token', BisonTokenType::Directive, '%token'];
-        yield 'directive start' => ['%start', BisonTokenType::Directive, '%start'];
-        yield 'directive left' => ['%left', BisonTokenType::Directive, '%left'];
-        yield 'type tag' => ['<type>', BisonTokenType::TypeTag, 'type'];
-        yield 'prologue' => ['%{ code %}', BisonTokenType::Prologue, ' code '];
-        yield 'action' => ['{ code }', BisonTokenType::Action, ' code '];
+        yield 'identifier' => ['foo', BisonLexeme::Identifier, 'foo'];
+        yield 'identifier with digits' => ['foo123', BisonLexeme::Identifier, 'foo123'];
+        yield 'number' => ['42', BisonLexeme::Number, 42];
+        yield 'number zero' => ['0', BisonLexeme::Number, 0];
+        yield 'string literal' => ['"str"', BisonLexeme::StringLiteral, 'str'];
+        yield 'char literal' => ["'x'", BisonLexeme::CharLiteral, 'x'];
+        yield 'colon' => [':', BisonLexeme::Colon, ':'];
+        yield 'semicolon' => [';', BisonLexeme::Semicolon, ';'];
+        yield 'pipe' => ['|', BisonLexeme::Pipe, '|'];
+        yield 'percent percent' => ['%%', BisonLexeme::PercentPercent, '%%'];
+        yield 'directive token' => ['%token', BisonLexeme::Directive, '%token'];
+        yield 'directive start' => ['%start', BisonLexeme::Directive, '%start'];
+        yield 'directive left' => ['%left', BisonLexeme::Directive, '%left'];
+        yield 'type tag' => ['<type>', BisonLexeme::TypeTag, 'type'];
+        yield 'prologue' => ['%{ code %}', BisonLexeme::Prologue, ' code '];
+        yield 'action' => ['{ code }', BisonLexeme::Action, ' code '];
     }
 }

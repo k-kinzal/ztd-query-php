@@ -6,22 +6,22 @@ namespace Tests\Unit\SqlFaker\MySql\Bison\Ast;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use SqlFaker\MySql\Bison\Ast\BisonSymbolForm;
 use SqlFaker\MySql\Bison\Ast\BisonSymbolNode;
-use SqlFaker\MySql\Bison\Ast\BisonSymbolType;
 
 #[CoversClass(BisonSymbolNode::class)]
 final class BisonSymbolNodeTest extends TestCase
 {
     public function testType(): void
     {
-        $node = new BisonSymbolNode(BisonSymbolType::Identifier, 'SELECT');
+        $node = new BisonSymbolNode(BisonSymbolForm::Identifier, 'SELECT');
 
-        self::assertSame(BisonSymbolType::Identifier, $node->type);
+        self::assertSame(BisonSymbolForm::Identifier, $node->type);
     }
 
     public function testValue(): void
     {
-        $node = new BisonSymbolNode(BisonSymbolType::CharLiteral, ',');
+        $node = new BisonSymbolNode(BisonSymbolForm::CharLiteral, ',');
 
         self::assertSame(',', $node->value);
     }

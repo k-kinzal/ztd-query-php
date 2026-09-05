@@ -44,6 +44,6 @@ final class NumberScanner implements BisonScanner
         $offset = $cursor->offset();
         $digits = $cursor->takeWhile(static fn (string $character): bool => ctype_digit($character));
 
-        return new BisonToken(BisonTokenType::Number, (int) $digits, $offset);
+        return new BisonToken(BisonLexeme::Number, (int) $digits, $offset);
     }
 }

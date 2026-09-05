@@ -7,10 +7,10 @@ namespace Tests\Unit\SqlFaker\MySql\Bison\Ast;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\MySql\Bison\Ast\BisonTokenDeclaration;
-use SqlFaker\MySql\Bison\Ast\BisonTokenInfo;
+use SqlFaker\MySql\Bison\Ast\BisonTokenDefinition;
 
 #[CoversClass(BisonTokenDeclaration::class)]
-#[CoversClass(BisonTokenInfo::class)]
+#[CoversClass(BisonTokenDefinition::class)]
 final class BisonTokenDeclarationTest extends TestCase
 {
     public function testTypeTag(): void
@@ -29,7 +29,7 @@ final class BisonTokenDeclarationTest extends TestCase
 
     public function testTokens(): void
     {
-        $token = new BisonTokenInfo('SELECT', 123, '"SELECT"');
+        $token = new BisonTokenDefinition('SELECT', 123, '"SELECT"');
         $decl = new BisonTokenDeclaration(null, [$token]);
 
         self::assertSame([$token], $decl->tokens);

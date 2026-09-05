@@ -42,7 +42,7 @@ final class GrammarAdaptation
 
         $ruleMap = $this->withoutWithinGroupExpressions($ruleMap);
         $ruleMap = $this->withoutFrameOnlyWindows($ruleMap);
-        $ruleMap = $this->withStatementTypes($ruleMap, $cmd);
+        $ruleMap = $this->withStatementRules($ruleMap, $cmd);
 
         return new Grammar($grammar->startSymbol, $ruleMap);
     }
@@ -84,7 +84,7 @@ final class GrammarAdaptation
      *
      * @return array<string, ProductionRule> Rules a statement kind can be named in
      */
-    public function withStatementTypes(array $ruleMap, ProductionRule $cmd): array
+    public function withStatementRules(array $ruleMap, ProductionRule $cmd): array
     {
         $groups = $this->statementAlternatives($cmd);
         $groups['delete'] = array_values(array_filter(

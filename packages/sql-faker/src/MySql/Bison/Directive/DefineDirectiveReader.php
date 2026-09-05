@@ -7,8 +7,8 @@ namespace SqlFaker\MySql\Bison\Directive;
 use Override;
 use SqlFaker\MySql\Bison\Ast\BisonDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonDefineDeclaration;
+use SqlFaker\MySql\Bison\Lexer\BisonLexeme;
 use SqlFaker\MySql\Bison\Lexer\BisonTokenStream;
-use SqlFaker\MySql\Bison\Lexer\BisonTokenType;
 
 /**
  * Reads `%define`, which sets a named option of the generated parser.
@@ -48,15 +48,15 @@ final class DefineDirectiveReader implements BisonDirectiveReader
     {
         unset($directive);
 
-        $name = $stream->nextIf(BisonTokenType::Identifier)?->asString();
+        $name = $stream->nextIf(BisonLexeme::Identifier)?->asString();
         if ($name === null) {
             return null;
         }
 
         $value = $stream->nextIf(
-            BisonTokenType::Identifier,
-            BisonTokenType::StringLiteral,
-            BisonTokenType::Number,
+            BisonLexeme::Identifier,
+            BisonLexeme::StringLiteral,
+            BisonLexeme::Number,
         )?->asString();
 
         return new BisonDefineDeclaration($name, $value);

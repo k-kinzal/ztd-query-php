@@ -8,12 +8,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\SourceCursor;
+use SqlFaker\MySql\Bison\Lexer\BisonLexeme;
 use SqlFaker\MySql\Bison\Lexer\BisonToken;
-use SqlFaker\MySql\Bison\Lexer\BisonTokenType;
 use SqlFaker\MySql\Bison\Lexer\QuotedLiteralScanner;
 
 #[CoversClass(QuotedLiteralScanner::class)]
-#[UsesClass(BisonTokenType::class)]
+#[UsesClass(BisonLexeme::class)]
 #[UsesClass(BisonToken::class)]
 #[UsesClass(SourceCursor::class)]
 final class QuotedLiteralScannerTest extends TestCase
@@ -33,7 +33,7 @@ final class QuotedLiteralScannerTest extends TestCase
 
         $token = (new QuotedLiteralScanner())->scan($cursor);
 
-        self::assertSame(BisonTokenType::CharLiteral, $token->type);
+        self::assertSame(BisonLexeme::CharLiteral, $token->type);
         self::assertSame('+', $token->value);
         self::assertSame(0, $token->offset);
         self::assertSame(' rest', $cursor->takeRest());
@@ -45,7 +45,7 @@ final class QuotedLiteralScannerTest extends TestCase
 
         $token = (new QuotedLiteralScanner())->scan($cursor);
 
-        self::assertSame(BisonTokenType::StringLiteral, $token->type);
+        self::assertSame(BisonLexeme::StringLiteral, $token->type);
         self::assertSame('alias', $token->value);
         self::assertSame(' rest', $cursor->takeRest());
     }

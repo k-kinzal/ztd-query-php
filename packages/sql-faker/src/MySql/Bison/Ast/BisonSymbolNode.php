@@ -14,11 +14,11 @@ namespace SqlFaker\MySql\Bison\Ast;
 final class BisonSymbolNode
 {
     /**
-     * @param BisonSymbolType $type How the symbol was spelled in the grammar
+     * @param BisonSymbolForm $type How the symbol was spelled in the grammar
      * @param string $value The symbol's name, or the character it stands for
      */
     public function __construct(
-        public readonly BisonSymbolType $type,
+        public readonly BisonSymbolForm $type,
         public readonly string $value,
     ) {
     }

@@ -9,12 +9,12 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\SourceCursor;
 use SqlFaker\MySql\Bison\Lexer\ActionScanner;
+use SqlFaker\MySql\Bison\Lexer\BisonLexeme;
 use SqlFaker\MySql\Bison\Lexer\BisonToken;
-use SqlFaker\MySql\Bison\Lexer\BisonTokenType;
 use SqlFaker\MySql\Bison\Lexer\BisonTrivia;
 
 #[CoversClass(ActionScanner::class)]
-#[UsesClass(BisonTokenType::class)]
+#[UsesClass(BisonLexeme::class)]
 #[UsesClass(BisonToken::class)]
 #[UsesClass(BisonTrivia::class)]
 #[UsesClass(SourceCursor::class)]
@@ -34,7 +34,7 @@ final class ActionScannerTest extends TestCase
 
         $token = (new ActionScanner())->scan($cursor);
 
-        self::assertSame(BisonTokenType::Action, $token->type);
+        self::assertSame(BisonLexeme::Action, $token->type);
         self::assertSame(' $$ = $1; ', $token->value);
         self::assertSame(0, $token->offset);
         self::assertSame(' rest', $cursor->takeRest());

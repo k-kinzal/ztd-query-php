@@ -43,7 +43,7 @@ final class QuotedLiteralScanner implements BisonScanner
     {
         $offset = $cursor->offset();
         $quote = $cursor->current();
-        $lexeme = $quote === '\'' ? BisonTokenType::CharLiteral : BisonTokenType::StringLiteral;
+        $lexeme = $quote === '\'' ? BisonLexeme::CharLiteral : BisonLexeme::StringLiteral;
 
         return new BisonToken($lexeme, $cursor->takeQuoted($quote), $offset);
     }

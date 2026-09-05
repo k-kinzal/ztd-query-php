@@ -7,8 +7,8 @@ namespace SqlFaker\MySql\Bison\Directive;
 use Override;
 use SqlFaker\MySql\Bison\Ast\BisonDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonTypeDeclaration;
+use SqlFaker\MySql\Bison\Lexer\BisonLexeme;
 use SqlFaker\MySql\Bison\Lexer\BisonTokenStream;
-use SqlFaker\MySql\Bison\Lexer\BisonTokenType;
 
 /**
  * Reads `%type`, which gives rules the semantic type their values carry.
@@ -57,7 +57,7 @@ final class TypeDirectiveReader implements BisonDirectiveReader
     {
         unset($directive);
 
-        $typeTag = $stream->nextIf(BisonTokenType::TypeTag)?->asString();
+        $typeTag = $stream->nextIf(BisonLexeme::TypeTag)?->asString();
         if ($typeTag === null) {
             return null;
         }
@@ -65,7 +65,7 @@ final class TypeDirectiveReader implements BisonDirectiveReader
         /** @var list<string> $symbols */
         $symbols = [];
         while ($this->boundary->continuesWith($stream->peek()->type)) {
-            $symbol = $stream->nextIf(BisonTokenType::Identifier)?->asString();
+            $symbol = $stream->nextIf(BisonLexeme::Identifier)?->asString();
             if ($symbol === null) {
                 $stream->next();
                 continue;

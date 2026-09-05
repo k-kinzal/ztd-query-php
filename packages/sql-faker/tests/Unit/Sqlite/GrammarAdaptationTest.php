@@ -62,13 +62,13 @@ final class GrammarAdaptationTest extends TestCase
         self::assertSame([], (new GrammarAdaptation())->withStrictTableOption([]));
     }
 
-    public function testWithStatementTypesLeavesOutADeleteThatOnlyASpecialBuildAccepts(): void
+    public function testWithStatementRulesLeavesOutADeleteThatOnlyASpecialBuildAccepts(): void
     {
         $cmd = new ProductionRule('cmd', [
             new Production([new Terminal('DELETE'), new NonTerminal('orderby_opt')]),
         ]);
 
-        self::assertSame([], array_keys((new GrammarAdaptation())->withStatementTypes([], $cmd)));
+        self::assertSame([], array_keys((new GrammarAdaptation())->withStatementRules([], $cmd)));
     }
 
     public function testStatementAlternativesSortsAnAlternativeByTheKeywordItLeadsWith(): void

@@ -93,6 +93,6 @@ final class ActionScanner implements BisonScanner
 
         $bodyEnd = $closed ? $cursor->offset() - 1 : $cursor->offset();
 
-        return new BisonToken(BisonTokenType::Action, $cursor->textBetween($bodyStart, $bodyEnd), $offset);
+        return new BisonToken(BisonLexeme::Action, $cursor->textBetween($bodyStart, $bodyEnd), $offset);
     }
 }

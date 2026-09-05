@@ -55,6 +55,6 @@ final class TypeTagScanner implements BisonScanner
 
         $cursor->advance();
 
-        return new BisonToken(BisonTokenType::TypeTag, trim($tag), $offset);
+        return new BisonToken(BisonLexeme::TypeTag, trim($tag), $offset);
     }
 }

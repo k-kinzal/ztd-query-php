@@ -64,7 +64,7 @@ final class DirectiveScanner implements BisonScanner
         $offset = $cursor->offset();
         $cursor->advance(2);
 
-        return new BisonToken(BisonTokenType::PercentPercent, '%%', $offset);
+        return new BisonToken(BisonLexeme::PercentPercent, '%%', $offset);
     }
 
     /**
@@ -82,7 +82,7 @@ final class DirectiveScanner implements BisonScanner
         $offset = $cursor->offset();
         $cursor->advance(2);
 
-        return new BisonToken(BisonTokenType::Prologue, $cursor->takeUntil('%}'), $offset);
+        return new BisonToken(BisonLexeme::Prologue, $cursor->takeUntil('%}'), $offset);
     }
 
     /**
@@ -106,6 +106,6 @@ final class DirectiveScanner implements BisonScanner
             throw GrammarParseException::namelessDirective($offset);
         }
 
-        return new BisonToken(BisonTokenType::Directive, '%' . $name, $offset);
+        return new BisonToken(BisonLexeme::Directive, '%' . $name, $offset);
     }
 }

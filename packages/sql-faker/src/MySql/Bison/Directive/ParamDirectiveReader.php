@@ -7,8 +7,8 @@ namespace SqlFaker\MySql\Bison\Directive;
 use Override;
 use SqlFaker\MySql\Bison\Ast\BisonDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonParamDeclaration;
+use SqlFaker\MySql\Bison\Lexer\BisonLexeme;
 use SqlFaker\MySql\Bison\Lexer\BisonTokenStream;
-use SqlFaker\MySql\Bison\Lexer\BisonTokenType;
 
 /**
  * Reads `%parse-param` and `%lex-param`, which add arguments to the generated
@@ -45,7 +45,7 @@ final class ParamDirectiveReader implements BisonDirectiveReader
     #[Override]
     public function read(BisonTokenStream $stream, string $directive): ?BisonDeclaration
     {
-        $code = $stream->nextIf(BisonTokenType::Action)?->asString();
+        $code = $stream->nextIf(BisonLexeme::Action)?->asString();
         if ($code === null) {
             return null;
         }

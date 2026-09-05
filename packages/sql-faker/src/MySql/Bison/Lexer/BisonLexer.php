@@ -4,77 +4,80 @@ declare(strict_types=1);
 
 namespace SqlFaker\MySql\Bison\Lexer;
 
-use RuntimeException;
+use SqlFaker\Grammar\GrammarParseException;
+use SqlFaker\Grammar\SourceCursor;
 
 /**
- * Tokenizes Bison grammar text with buffered lookahead.
+ * Turns Bison grammar source into a stream of tokens, one call at a time.
  *
- * Scanning and buffering are delegated to separate collaborators while this
- * facade retains the original lexer API and named constructor argument.
+ * The lexer owns no lexeme rule. It skips whitespace, asks the chain which
+ * scanner claims the character it is looking at, and hands over the cursor. A
+ * scanner that consumed only trivia returns the lexer to that same starting
+ * state, so comments cost a loop iteration instead of a recursive call.
+ *
+ * Lookahead is owned by BisonTokenStream.
+ *
+ * @visibility root
  */
 final class BisonLexer
 {
-    private readonly BisonTokenStream $tokens;
+    /** @readonly */
+    private SourceCursor $cursor;
+
+    /** @readonly */
+    private BisonScannerChain $scanners;
+
+    /** @readonly */
+    private BisonTrivia $trivia;
 
     /**
-     * @param string $input Bison grammar text
+     * @param string $source Bison grammar text
+     * @param BisonScannerChain|null $scanners Lexeme rules to recognise, defaulting to the Bison set
+     * @param BisonTrivia|null $trivia Text between lexemes that carries no token
      */
-    public function __construct(string $input)
-    {
-        $this->tokens = BisonTokenStream::over($input);
+    public function __construct(
+        string $source,
+        ?BisonScannerChain $scanners = null,
+        ?BisonTrivia $trivia = null,
+    ) {
+        $this->cursor = new SourceCursor($source);
+        $this->scanners = $scanners ?? BisonScannerChain::forBisonGrammar();
+        $this->trivia = $trivia ?? new BisonTrivia();
     }
 
     /**
-     * Consumes the next token, including any buffered lookahead.
-     */
-    public function next(): BisonToken
-    {
-        return $this->tokens->next();
-    }
-
-    /**
-     * Reads the next token without consuming it.
-     */
-    public function peek(): BisonToken
-    {
-        return $this->tokens->peek();
-    }
-
-    /**
-     * Reads the nth token ahead without consuming any tokens.
+     * Reads the next token, skipping any whitespace and comments before it.
      *
-     * @throws RuntimeException When the lookahead distance is less than one
+     * @return BisonToken The next token, or an end-of-file token once the source runs out
+     *
+     * @throws GrammarParseException When no scanner recognises the character reached
      */
-    public function peekN(int $n): BisonToken
+    public function scan(): BisonToken
     {
-        if ($n < 1) {
-            throw new RuntimeException('peekN($n) requires $n >= 1');
+        $this->trivia->skipFrom($this->cursor);
+
+        $offset = $this->cursor->offset();
+        if ($this->cursor->atEnd()) {
+            return new BisonToken(BisonLexeme::Eof, '', $offset);
         }
 
-        return $this->tokens->peekN($n);
+        $character = $this->cursor->current();
+        $scanner = $this->scanners->scannerFor($character)
+            ?? throw GrammarParseException::unexpectedCharacter($character, $offset);
+
+        return $scanner->scan($this->cursor);
     }
 
     /**
-     * Consumes the next token and returns its text.
-     */
-    public function nextString(): string
-    {
-        return $this->tokens->nextString();
-    }
-
-    /**
-     * Consumes the next token and returns its integer value.
-     */
-    public function nextInt(): int
-    {
-        return $this->tokens->nextInt();
-    }
-
-    /**
-     * Discards lookahead and consumes the remaining source as raw text.
+     * Consumes the rest of the source as raw text.
+     *
+     * The epilogue of a grammar file is host-language code that has no lexemes
+     * of its own, so it is taken whole rather than scanned.
+     *
+     * @return string Everything the cursor has not passed over yet
      */
     public function consumeRemaining(): string
     {
-        return $this->tokens->consumeRemaining();
+        return $this->cursor->takeRest();
     }
 }

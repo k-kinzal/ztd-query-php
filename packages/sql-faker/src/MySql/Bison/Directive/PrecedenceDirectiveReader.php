@@ -7,8 +7,8 @@ namespace SqlFaker\MySql\Bison\Directive;
 use Override;
 use SqlFaker\MySql\Bison\Ast\BisonDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonPrecedenceDeclaration;
+use SqlFaker\MySql\Bison\Lexer\BisonLexeme;
 use SqlFaker\MySql\Bison\Lexer\BisonTokenStream;
-use SqlFaker\MySql\Bison\Lexer\BisonTokenType;
 
 /**
  * Reads the four directives that rank operators against each other.
@@ -63,12 +63,12 @@ final class PrecedenceDirectiveReader implements BisonDirectiveReader
         /** @var 'left'|'right'|'nonassoc'|'precedence' $associativity */
         $associativity = substr($directive, 1);
 
-        $typeTag = $stream->nextIf(BisonTokenType::TypeTag)?->asString();
+        $typeTag = $stream->nextIf(BisonLexeme::TypeTag)?->asString();
 
         /** @var list<string> $symbols */
         $symbols = [];
         while ($this->boundary->continuesWith($stream->peek()->type)) {
-            $symbol = $stream->nextIf(BisonTokenType::Identifier, BisonTokenType::CharLiteral)?->asString();
+            $symbol = $stream->nextIf(BisonLexeme::Identifier, BisonLexeme::CharLiteral)?->asString();
             if ($symbol === null) {
                 $stream->next();
                 continue;

@@ -7,9 +7,9 @@ namespace SqlFaker\MySql\Bison\Directive;
 use Override;
 use SqlFaker\MySql\Bison\Ast\BisonDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonTokenDeclaration;
-use SqlFaker\MySql\Bison\Ast\BisonTokenInfo;
+use SqlFaker\MySql\Bison\Ast\BisonTokenDefinition;
+use SqlFaker\MySql\Bison\Lexer\BisonLexeme;
 use SqlFaker\MySql\Bison\Lexer\BisonTokenStream;
-use SqlFaker\MySql\Bison\Lexer\BisonTokenType;
 
 /**
  * Reads `%token`, which names the terminals the scanner may hand the parser.
@@ -59,12 +59,12 @@ final class TokenDirectiveReader implements BisonDirectiveReader
     {
         unset($directive);
 
-        $typeTag = $stream->nextIf(BisonTokenType::TypeTag)?->asString();
+        $typeTag = $stream->nextIf(BisonLexeme::TypeTag)?->asString();
 
-        /** @var list<BisonTokenInfo> $declared */
+        /** @var list<BisonTokenDefinition> $declared */
         $declared = [];
         while ($this->boundary->continuesWith($stream->peek()->type)) {
-            if ($stream->peek()->type !== BisonTokenType::Identifier) {
+            if ($stream->peek()->type !== BisonLexeme::Identifier) {
                 $stream->next();
                 continue;
             }
@@ -80,14 +80,14 @@ final class TokenDirectiveReader implements BisonDirectiveReader
      *
      * @param BisonTokenStream $stream Stream positioned on the terminal's name
      *
-     * @return BisonTokenInfo The terminal, with null for whatever it omitted
+     * @return BisonTokenDefinition The terminal, with null for whatever it omitted
      */
-    public function readTerminal(BisonTokenStream $stream): BisonTokenInfo
+    public function readTerminal(BisonTokenStream $stream): BisonTokenDefinition
     {
-        return new BisonTokenInfo(
+        return new BisonTokenDefinition(
             $stream->nextString(),
-            $stream->nextIf(BisonTokenType::Number)?->asInt(),
-            $stream->nextIf(BisonTokenType::StringLiteral)?->asString(),
+            $stream->nextIf(BisonLexeme::Number)?->asInt(),
+            $stream->nextIf(BisonLexeme::StringLiteral)?->asString(),
         );
     }
 }

@@ -7,8 +7,8 @@ namespace SqlFaker\MySql\Bison\Directive;
 use Override;
 use SqlFaker\MySql\Bison\Ast\BisonDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonStartDeclaration;
+use SqlFaker\MySql\Bison\Lexer\BisonLexeme;
 use SqlFaker\MySql\Bison\Lexer\BisonTokenStream;
-use SqlFaker\MySql\Bison\Lexer\BisonTokenType;
 
 /**
  * Reads `%start`, which names the rule a derivation begins from.
@@ -43,7 +43,7 @@ final class StartDirectiveReader implements BisonDirectiveReader
     {
         unset($directive);
 
-        $symbol = $stream->nextIf(BisonTokenType::Identifier)?->asString();
+        $symbol = $stream->nextIf(BisonLexeme::Identifier)?->asString();
 
         return $symbol === null ? null : new BisonStartDeclaration($symbol);
     }

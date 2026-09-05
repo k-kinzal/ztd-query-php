@@ -6,8 +6,8 @@ namespace SqlFaker\MySql\Bison;
 
 use SqlFaker\MySql\Bison\Ast\BisonDeclaration;
 use SqlFaker\MySql\Bison\Directive\BisonDirectiveReaderChain;
+use SqlFaker\MySql\Bison\Lexer\BisonLexeme;
 use SqlFaker\MySql\Bison\Lexer\BisonTokenStream;
-use SqlFaker\MySql\Bison\Lexer\BisonTokenType;
 
 /**
  * Reads the declarations section of a Bison grammar.
@@ -46,20 +46,20 @@ final class BisonPreambleReader
         /** @var list<BisonDeclaration> $declarations */
         $declarations = [];
 
-        while ($stream->peek()->type !== BisonTokenType::Eof) {
+        while ($stream->peek()->type !== BisonLexeme::Eof) {
             $lexeme = $stream->peek()->type;
 
-            if ($lexeme === BisonTokenType::PercentPercent) {
+            if ($lexeme === BisonLexeme::PercentPercent) {
                 $stream->next();
                 break;
             }
 
-            if ($lexeme === BisonTokenType::Prologue) {
+            if ($lexeme === BisonLexeme::Prologue) {
                 $prologue = $stream->nextString();
                 continue;
             }
 
-            if ($lexeme !== BisonTokenType::Directive) {
+            if ($lexeme !== BisonLexeme::Directive) {
                 $stream->next();
                 continue;
             }

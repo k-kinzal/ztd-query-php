@@ -10,7 +10,7 @@ namespace SqlFaker\MySql\Bison\Ast;
  * Example: `TOKEN1 123 "alias"`. The code and the alias are optional and
  * independent of each other, so both are absent unless the grammar wrote them.
  */
-final class BisonTokenInfo
+final class BisonTokenDefinition
 {
     /**
      * @param string $name Terminal being declared

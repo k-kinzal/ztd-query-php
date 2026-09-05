@@ -51,11 +51,6 @@ final class NoFixedSqlStatementRuleTest extends RuleTestCase
             [$message, 16],
             [$message, 21],
             [$message, 53],
-            [$message, 101],
-            [$message, 108],
-            [$message, 113],
-            [$message, 118],
-            [$message, 126],
         ]);
     }
 

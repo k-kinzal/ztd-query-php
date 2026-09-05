@@ -9,12 +9,12 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\SourceCursor;
+use SqlFaker\MySql\Bison\Lexer\BisonLexeme;
 use SqlFaker\MySql\Bison\Lexer\BisonToken;
-use SqlFaker\MySql\Bison\Lexer\BisonTokenType;
 use SqlFaker\MySql\Bison\Lexer\PunctuationScanner;
 
 #[CoversClass(PunctuationScanner::class)]
-#[UsesClass(BisonTokenType::class)]
+#[UsesClass(BisonLexeme::class)]
 #[UsesClass(BisonToken::class)]
 #[UsesClass(SourceCursor::class)]
 final class PunctuationScannerTest extends TestCase
@@ -29,7 +29,7 @@ final class PunctuationScannerTest extends TestCase
     }
 
     #[DataProvider('providerPunctuation')]
-    public function testScanReadsEachPunctuationCharacterAsItsOwnLexeme(string $character, BisonTokenType $expected): void
+    public function testScanReadsEachPunctuationCharacterAsItsOwnLexeme(string $character, BisonLexeme $expected): void
     {
         $scanner = new PunctuationScanner();
         $cursor = new SourceCursor($character . 'rest');
@@ -45,18 +45,18 @@ final class PunctuationScannerTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{string, BisonTokenType}>
+     * @return iterable<string, array{string, BisonLexeme}>
      */
     public static function providerPunctuation(): iterable
     {
-        yield 'colon opens the alternatives' => [':', BisonTokenType::Colon];
-        yield 'semicolon closes the rule' => [';', BisonTokenType::Semicolon];
-        yield 'pipe separates alternatives' => ['|', BisonTokenType::Pipe];
-        yield 'equals' => ['=', BisonTokenType::CharLiteral];
-        yield 'comma' => [',', BisonTokenType::CharLiteral];
-        yield 'open paren' => ['(', BisonTokenType::CharLiteral];
-        yield 'close paren' => [')', BisonTokenType::CharLiteral];
-        yield 'open bracket' => ['[', BisonTokenType::CharLiteral];
-        yield 'close bracket' => [']', BisonTokenType::CharLiteral];
+        yield 'colon opens the alternatives' => [':', BisonLexeme::Colon];
+        yield 'semicolon closes the rule' => [';', BisonLexeme::Semicolon];
+        yield 'pipe separates alternatives' => ['|', BisonLexeme::Pipe];
+        yield 'equals' => ['=', BisonLexeme::CharLiteral];
+        yield 'comma' => [',', BisonLexeme::CharLiteral];
+        yield 'open paren' => ['(', BisonLexeme::CharLiteral];
+        yield 'close paren' => [')', BisonLexeme::CharLiteral];
+        yield 'open bracket' => ['[', BisonLexeme::CharLiteral];
+        yield 'close bracket' => [']', BisonLexeme::CharLiteral];
     }
 }

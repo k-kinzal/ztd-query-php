@@ -9,15 +9,15 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\SourceCursor;
 use SqlFaker\MySql\Bison\Ast\BisonTokenDeclaration;
-use SqlFaker\MySql\Bison\Ast\BisonTokenInfo;
+use SqlFaker\MySql\Bison\Ast\BisonTokenDefinition;
 use SqlFaker\MySql\Bison\Directive\BisonDeclarationBoundary;
 use SqlFaker\MySql\Bison\Directive\TokenDirectiveReader;
 use SqlFaker\MySql\Bison\Lexer\ActionScanner;
+use SqlFaker\MySql\Bison\Lexer\BisonLexeme;
 use SqlFaker\MySql\Bison\Lexer\BisonLexer;
 use SqlFaker\MySql\Bison\Lexer\BisonScannerChain;
 use SqlFaker\MySql\Bison\Lexer\BisonToken;
 use SqlFaker\MySql\Bison\Lexer\BisonTokenStream;
-use SqlFaker\MySql\Bison\Lexer\BisonTokenType;
 use SqlFaker\MySql\Bison\Lexer\BisonTrivia;
 use SqlFaker\MySql\Bison\Lexer\DirectiveScanner;
 use SqlFaker\MySql\Bison\Lexer\IdentifierScanner;
@@ -27,13 +27,13 @@ use SqlFaker\MySql\Bison\Lexer\TypeTagScanner;
 
 #[CoversClass(TokenDirectiveReader::class)]
 #[UsesClass(BisonDeclarationBoundary::class)]
-#[UsesClass(BisonTokenType::class)]
+#[UsesClass(BisonLexeme::class)]
 #[UsesClass(BisonLexer::class)]
-#[UsesClass(\SqlFaker\MySql\Bison\Lexer\BisonTokenScanner::class)]
+#[UsesClass(BisonLexer::class)]
 #[UsesClass(BisonScannerChain::class)]
 #[UsesClass(BisonToken::class)]
 #[UsesClass(BisonTokenDeclaration::class)]
-#[UsesClass(BisonTokenInfo::class)]
+#[UsesClass(BisonTokenDefinition::class)]
 #[UsesClass(BisonTokenStream::class)]
 #[UsesClass(BisonTrivia::class)]
 #[UsesClass(SourceCursor::class)]
@@ -61,7 +61,7 @@ final class TokenDirectiveReaderTest extends TestCase
         self::assertInstanceOf(BisonTokenDeclaration::class, $declaration);
         self::assertSame(
             ['SELECT_SYM', 'FROM_SYM', 'WHERE_SYM'],
-            array_map(static fn (BisonTokenInfo $token): string => $token->name, $declaration->tokens),
+            array_map(static fn (BisonTokenDefinition $token): string => $token->name, $declaration->tokens),
         );
     }
 

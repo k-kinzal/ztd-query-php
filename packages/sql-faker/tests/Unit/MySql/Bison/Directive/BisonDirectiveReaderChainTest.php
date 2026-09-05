@@ -16,7 +16,7 @@ use SqlFaker\MySql\Bison\Ast\BisonParamDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonPrecedenceDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonStartDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonTokenDeclaration;
-use SqlFaker\MySql\Bison\Ast\BisonTokenInfo;
+use SqlFaker\MySql\Bison\Ast\BisonTokenDefinition;
 use SqlFaker\MySql\Bison\Ast\BisonTypeDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonUnknownDeclaration;
 use SqlFaker\MySql\Bison\Directive\BisonDeclarationBoundary;
@@ -30,11 +30,11 @@ use SqlFaker\MySql\Bison\Directive\TokenDirectiveReader;
 use SqlFaker\MySql\Bison\Directive\TypeDirectiveReader;
 use SqlFaker\MySql\Bison\Directive\UnknownDirectiveReader;
 use SqlFaker\MySql\Bison\Lexer\ActionScanner;
+use SqlFaker\MySql\Bison\Lexer\BisonLexeme;
 use SqlFaker\MySql\Bison\Lexer\BisonLexer;
 use SqlFaker\MySql\Bison\Lexer\BisonScannerChain;
 use SqlFaker\MySql\Bison\Lexer\BisonToken;
 use SqlFaker\MySql\Bison\Lexer\BisonTokenStream;
-use SqlFaker\MySql\Bison\Lexer\BisonTokenType;
 use SqlFaker\MySql\Bison\Lexer\BisonTrivia;
 use SqlFaker\MySql\Bison\Lexer\DirectiveScanner;
 use SqlFaker\MySql\Bison\Lexer\IdentifierScanner;
@@ -47,16 +47,16 @@ use SqlFaker\MySql\Bison\Lexer\TypeTagScanner;
 #[UsesClass(BisonDeclarationBoundary::class)]
 #[UsesClass(BisonDefineDeclaration::class)]
 #[UsesClass(BisonExpectDeclaration::class)]
-#[UsesClass(BisonTokenType::class)]
+#[UsesClass(BisonLexeme::class)]
 #[UsesClass(BisonLexer::class)]
-#[UsesClass(\SqlFaker\MySql\Bison\Lexer\BisonTokenScanner::class)]
+#[UsesClass(BisonLexer::class)]
 #[UsesClass(BisonParamDeclaration::class)]
 #[UsesClass(BisonPrecedenceDeclaration::class)]
 #[UsesClass(BisonScannerChain::class)]
 #[UsesClass(BisonStartDeclaration::class)]
 #[UsesClass(BisonToken::class)]
 #[UsesClass(BisonTokenDeclaration::class)]
-#[UsesClass(BisonTokenInfo::class)]
+#[UsesClass(BisonTokenDefinition::class)]
 #[UsesClass(BisonTokenStream::class)]
 #[UsesClass(BisonTrivia::class)]
 #[UsesClass(BisonTypeDeclaration::class)]

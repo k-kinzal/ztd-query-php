@@ -13,7 +13,7 @@ use SqlFaker\MySql\Bison\Ast\BisonParamDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonPrecedenceDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonStartDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonTokenDeclaration;
-use SqlFaker\MySql\Bison\Ast\BisonTokenInfo;
+use SqlFaker\MySql\Bison\Ast\BisonTokenDefinition;
 use SqlFaker\MySql\Bison\Ast\BisonTypeDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonUnknownDeclaration;
 
@@ -28,7 +28,7 @@ final class BisonDeclarationTest extends TestCase
             new BisonDefineDeclaration('api.pure', null),
             new BisonParamDeclaration('parse-param', 'THD *thd'),
             new BisonPrecedenceDeclaration('left', null, ['OR_SYM']),
-            new BisonTokenDeclaration('<lexer>', [new BisonTokenInfo('SELECT_SYM', null, null)]),
+            new BisonTokenDeclaration('<lexer>', [new BisonTokenDefinition('SELECT_SYM', null, null)]),
             new BisonTypeDeclaration('<num>', ['expr']),
             new BisonUnknownDeclaration('%pure-parser', ''),
         ];

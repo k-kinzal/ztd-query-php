@@ -7,8 +7,8 @@ namespace SqlFaker\MySql\Bison\Directive;
 use Override;
 use SqlFaker\MySql\Bison\Ast\BisonDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonExpectDeclaration;
+use SqlFaker\MySql\Bison\Lexer\BisonLexeme;
 use SqlFaker\MySql\Bison\Lexer\BisonTokenStream;
-use SqlFaker\MySql\Bison\Lexer\BisonTokenType;
 
 /**
  * Reads `%expect`, the count of shift/reduce conflicts the author accepts.
@@ -43,7 +43,7 @@ final class ExpectDirectiveReader implements BisonDirectiveReader
     {
         unset($directive);
 
-        $count = $stream->nextIf(BisonTokenType::Number)?->asInt();
+        $count = $stream->nextIf(BisonLexeme::Number)?->asInt();
 
         return $count === null ? null : new BisonExpectDeclaration($count);
     }

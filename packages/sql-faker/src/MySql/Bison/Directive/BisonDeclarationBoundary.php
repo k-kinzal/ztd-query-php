@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlFaker\MySql\Bison\Directive;
 
-use SqlFaker\MySql\Bison\Lexer\BisonTokenType;
+use SqlFaker\MySql\Bison\Lexer\BisonLexeme;
 
 /**
  * Decides where one declaration stops and the next thing starts.
@@ -22,26 +22,26 @@ final class BisonDeclarationBoundary
     /**
      * Reports whether a lexeme still belongs to the declaration being read.
      *
-     * @param BisonTokenType $lexeme Lexeme waiting at the front of the stream
+     * @param BisonLexeme $lexeme Lexeme waiting at the front of the stream
      *
      * @return bool True while the declaration continues, false where it ends
      */
-    public function continuesWith(BisonTokenType $lexeme): bool
+    public function continuesWith(BisonLexeme $lexeme): bool
     {
         return match ($lexeme) {
-            BisonTokenType::Directive,
-            BisonTokenType::Prologue,
-            BisonTokenType::PercentPercent,
-            BisonTokenType::Eof => false,
-            BisonTokenType::Identifier,
-            BisonTokenType::Number,
-            BisonTokenType::CharLiteral,
-            BisonTokenType::StringLiteral,
-            BisonTokenType::TypeTag,
-            BisonTokenType::Colon,
-            BisonTokenType::Semicolon,
-            BisonTokenType::Pipe,
-            BisonTokenType::Action => true,
+            BisonLexeme::Directive,
+            BisonLexeme::Prologue,
+            BisonLexeme::PercentPercent,
+            BisonLexeme::Eof => false,
+            BisonLexeme::Identifier,
+            BisonLexeme::Number,
+            BisonLexeme::CharLiteral,
+            BisonLexeme::StringLiteral,
+            BisonLexeme::TypeTag,
+            BisonLexeme::Colon,
+            BisonLexeme::Semicolon,
+            BisonLexeme::Pipe,
+            BisonLexeme::Action => true,
         };
     }
 }

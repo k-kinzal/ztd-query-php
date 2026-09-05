@@ -12,11 +12,11 @@ use SqlFaker\MySql\Bison\Ast\BisonAlternativeNode;
 use SqlFaker\MySql\Bison\Ast\BisonRuleNode;
 use SqlFaker\MySql\Bison\Ast\BisonSymbolNode;
 use SqlFaker\MySql\Bison\Lexer\ActionScanner;
+use SqlFaker\MySql\Bison\Lexer\BisonLexeme;
 use SqlFaker\MySql\Bison\Lexer\BisonLexer;
 use SqlFaker\MySql\Bison\Lexer\BisonScannerChain;
 use SqlFaker\MySql\Bison\Lexer\BisonToken;
 use SqlFaker\MySql\Bison\Lexer\BisonTokenStream;
-use SqlFaker\MySql\Bison\Lexer\BisonTokenType;
 use SqlFaker\MySql\Bison\Lexer\BisonTrivia;
 use SqlFaker\MySql\Bison\Lexer\DirectiveScanner;
 use SqlFaker\MySql\Bison\Lexer\IdentifierScanner;
@@ -39,9 +39,9 @@ use SqlFaker\MySql\Bison\Rule\BisonRuleReader;
 #[UsesClass(BisonAlternativeDraft::class)]
 #[UsesClass(BisonAlternativeNode::class)]
 #[UsesClass(BisonAlternativeReader::class)]
-#[UsesClass(BisonTokenType::class)]
+#[UsesClass(BisonLexeme::class)]
 #[UsesClass(BisonLexer::class)]
-#[UsesClass(\SqlFaker\MySql\Bison\Lexer\BisonTokenScanner::class)]
+#[UsesClass(BisonLexer::class)]
 #[UsesClass(BisonRuleNode::class)]
 #[UsesClass(BisonScannerChain::class)]
 #[UsesClass(BisonSymbolNode::class)]

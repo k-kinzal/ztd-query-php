@@ -47,6 +47,6 @@ final class IdentifierScanner implements BisonScanner
             static fn (string $character): bool => preg_match('/[A-Za-z0-9_.]/', $character) === 1,
         );
 
-        return new BisonToken(BisonTokenType::Identifier, $name, $offset);
+        return new BisonToken(BisonLexeme::Identifier, $name, $offset);
     }
 }

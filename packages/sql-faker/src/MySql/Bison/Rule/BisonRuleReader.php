@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SqlFaker\MySql\Bison\Rule;
 
 use SqlFaker\MySql\Bison\Ast\BisonRuleNode;
+use SqlFaker\MySql\Bison\Lexer\BisonLexeme;
 use SqlFaker\MySql\Bison\Lexer\BisonTokenStream;
-use SqlFaker\MySql\Bison\Lexer\BisonTokenType;
 
 /**
  * Reads the rules section of a Bison grammar.
@@ -43,13 +43,13 @@ final class BisonRuleReader
     {
         $rules = [];
 
-        while ($stream->peek()->type !== BisonTokenType::Eof) {
-            if ($stream->peek()->type === BisonTokenType::PercentPercent) {
+        while ($stream->peek()->type !== BisonLexeme::Eof) {
+            if ($stream->peek()->type === BisonLexeme::PercentPercent) {
                 $stream->next();
                 break;
             }
 
-            if ($stream->peek()->type !== BisonTokenType::Identifier) {
+            if ($stream->peek()->type !== BisonLexeme::Identifier) {
                 $stream->next();
                 continue;
             }
@@ -72,7 +72,7 @@ final class BisonRuleReader
      */
     public function read(BisonTokenStream $stream): ?BisonRuleNode
     {
-        if ($stream->peekN(2)->type !== BisonTokenType::Colon) {
+        if ($stream->peekN(2)->type !== BisonLexeme::Colon) {
             $stream->next();
 
             return null;

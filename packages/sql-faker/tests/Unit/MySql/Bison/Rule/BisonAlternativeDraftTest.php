@@ -8,8 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\MySql\Bison\Ast\BisonAlternativeNode;
+use SqlFaker\MySql\Bison\Ast\BisonSymbolForm;
 use SqlFaker\MySql\Bison\Ast\BisonSymbolNode;
-use SqlFaker\MySql\Bison\Ast\BisonSymbolType;
 use SqlFaker\MySql\Bison\Rule\BisonAlternativeDraft;
 
 #[CoversClass(BisonAlternativeDraft::class)]
@@ -31,8 +31,8 @@ final class BisonAlternativeDraftTest extends TestCase
     public function testAddSymbolKeepsTheOrderTheSymbolsWereRead(): void
     {
         $draft = new BisonAlternativeDraft();
-        $first = new BisonSymbolNode(BisonSymbolType::Identifier, 'expr');
-        $second = new BisonSymbolNode(BisonSymbolType::CharLiteral, '+');
+        $first = new BisonSymbolNode(BisonSymbolForm::Identifier, 'expr');
+        $second = new BisonSymbolNode(BisonSymbolForm::CharLiteral, '+');
 
         $draft->addSymbol($first);
         $draft->addSymbol($second);
@@ -79,7 +79,7 @@ final class BisonAlternativeDraftTest extends TestCase
     public function testCompleteStartsANewAlternativeSoNothingCarriesOver(): void
     {
         $draft = new BisonAlternativeDraft();
-        $draft->addSymbol(new BisonSymbolNode(BisonSymbolType::Identifier, 'expr'));
+        $draft->addSymbol(new BisonSymbolNode(BisonSymbolForm::Identifier, 'expr'));
         $draft->setAction('$$ = $1;');
         $draft->setPrecedenceSymbol('UMINUS');
         $draft->setDynamicPrecedence(2);

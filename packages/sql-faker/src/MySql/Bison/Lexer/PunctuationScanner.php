@@ -48,10 +48,10 @@ final class PunctuationScanner implements BisonScanner
         $cursor->advance();
 
         $lexeme = match ($character) {
-            ':' => BisonTokenType::Colon,
-            ';' => BisonTokenType::Semicolon,
-            '|' => BisonTokenType::Pipe,
-            default => BisonTokenType::CharLiteral,
+            ':' => BisonLexeme::Colon,
+            ';' => BisonLexeme::Semicolon,
+            '|' => BisonLexeme::Pipe,
+            default => BisonLexeme::CharLiteral,
         };
 
         return new BisonToken($lexeme, $character, $offset);

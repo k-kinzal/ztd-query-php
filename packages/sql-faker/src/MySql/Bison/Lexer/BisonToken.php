@@ -14,12 +14,12 @@ namespace SqlFaker\MySql\Bison\Lexer;
 final class BisonToken
 {
     /**
-     * @param BisonTokenType $type Which lexeme was recognised
+     * @param BisonLexeme $type Which lexeme was recognised
      * @param string|int $value The text it spelled, or its numeric value for a number
      * @param int $offset Where the lexeme starts in the grammar source
      */
     public function __construct(
-        public readonly BisonTokenType $type,
+        public readonly BisonLexeme $type,
         public readonly string|int $value,
         public readonly int $offset,
     ) {

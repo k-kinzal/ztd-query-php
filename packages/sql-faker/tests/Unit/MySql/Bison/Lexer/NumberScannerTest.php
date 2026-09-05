@@ -8,12 +8,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\SourceCursor;
+use SqlFaker\MySql\Bison\Lexer\BisonLexeme;
 use SqlFaker\MySql\Bison\Lexer\BisonToken;
-use SqlFaker\MySql\Bison\Lexer\BisonTokenType;
 use SqlFaker\MySql\Bison\Lexer\NumberScanner;
 
 #[CoversClass(NumberScanner::class)]
-#[UsesClass(BisonTokenType::class)]
+#[UsesClass(BisonLexeme::class)]
 #[UsesClass(BisonToken::class)]
 #[UsesClass(SourceCursor::class)]
 final class NumberScannerTest extends TestCase
@@ -34,7 +34,7 @@ final class NumberScannerTest extends TestCase
 
         $token = (new NumberScanner())->scan($cursor);
 
-        self::assertSame(BisonTokenType::Number, $token->type);
+        self::assertSame(BisonLexeme::Number, $token->type);
         self::assertSame(123, $token->value);
         self::assertSame(0, $token->offset);
         self::assertSame(' rest', $cursor->takeRest());

@@ -9,14 +9,14 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\SourceCursor;
 use SqlFaker\MySql\Bison\Ast\BisonAlternativeNode;
+use SqlFaker\MySql\Bison\Ast\BisonSymbolForm;
 use SqlFaker\MySql\Bison\Ast\BisonSymbolNode;
-use SqlFaker\MySql\Bison\Ast\BisonSymbolType;
 use SqlFaker\MySql\Bison\Lexer\ActionScanner;
+use SqlFaker\MySql\Bison\Lexer\BisonLexeme;
 use SqlFaker\MySql\Bison\Lexer\BisonLexer;
 use SqlFaker\MySql\Bison\Lexer\BisonScannerChain;
 use SqlFaker\MySql\Bison\Lexer\BisonToken;
 use SqlFaker\MySql\Bison\Lexer\BisonTokenStream;
-use SqlFaker\MySql\Bison\Lexer\BisonTokenType;
 use SqlFaker\MySql\Bison\Lexer\BisonTrivia;
 use SqlFaker\MySql\Bison\Lexer\DirectiveScanner;
 use SqlFaker\MySql\Bison\Lexer\IdentifierScanner;
@@ -30,9 +30,9 @@ use SqlFaker\MySql\Bison\Rule\BisonAlternativeReader;
 #[CoversClass(BisonAlternativeReader::class)]
 #[UsesClass(BisonAlternativeDraft::class)]
 #[UsesClass(BisonAlternativeNode::class)]
-#[UsesClass(BisonTokenType::class)]
+#[UsesClass(BisonLexeme::class)]
 #[UsesClass(BisonLexer::class)]
-#[UsesClass(\SqlFaker\MySql\Bison\Lexer\BisonTokenScanner::class)]
+#[UsesClass(BisonLexer::class)]
 #[UsesClass(BisonScannerChain::class)]
 #[UsesClass(BisonSymbolNode::class)]
 #[UsesClass(BisonToken::class)]
@@ -135,7 +135,7 @@ final class BisonAlternativeReaderTest extends TestCase
 
         (new BisonAlternativeReader())->readPart(BisonTokenStream::over('expr'), $draft);
 
-        self::assertSame(BisonSymbolType::Identifier, $draft->complete()->symbols[0]->type);
+        self::assertSame(BisonSymbolForm::Identifier, $draft->complete()->symbols[0]->type);
     }
 
     public function testReadPartAddsACharacterSymbol(): void
@@ -144,7 +144,7 @@ final class BisonAlternativeReaderTest extends TestCase
 
         (new BisonAlternativeReader())->readPart(BisonTokenStream::over("'+'"), $draft);
 
-        self::assertSame(BisonSymbolType::CharLiteral, $draft->complete()->symbols[0]->type);
+        self::assertSame(BisonSymbolForm::CharLiteral, $draft->complete()->symbols[0]->type);
     }
 
     public function testReadPartSkipsWhatBelongsToNoAlternative(): void

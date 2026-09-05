@@ -19,10 +19,10 @@ use SqlFaker\MySql\Bison\Ast\BisonParamDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonPrecedenceDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonRuleNode;
 use SqlFaker\MySql\Bison\Ast\BisonStartDeclaration;
+use SqlFaker\MySql\Bison\Ast\BisonSymbolForm;
 use SqlFaker\MySql\Bison\Ast\BisonSymbolNode;
-use SqlFaker\MySql\Bison\Ast\BisonSymbolType;
 use SqlFaker\MySql\Bison\Ast\BisonTokenDeclaration;
-use SqlFaker\MySql\Bison\Ast\BisonTokenInfo;
+use SqlFaker\MySql\Bison\Ast\BisonTokenDefinition;
 use SqlFaker\MySql\Bison\Ast\BisonTypeDeclaration;
 use SqlFaker\MySql\Bison\Ast\BisonUnknownDeclaration;
 use SqlFaker\MySql\Bison\BisonParser;
@@ -40,11 +40,11 @@ use SqlFaker\MySql\Bison\Directive\TokenDirectiveReader;
 use SqlFaker\MySql\Bison\Directive\TypeDirectiveReader;
 use SqlFaker\MySql\Bison\Directive\UnknownDirectiveReader;
 use SqlFaker\MySql\Bison\Lexer\ActionScanner;
+use SqlFaker\MySql\Bison\Lexer\BisonLexeme;
 use SqlFaker\MySql\Bison\Lexer\BisonLexer;
 use SqlFaker\MySql\Bison\Lexer\BisonScannerChain;
 use SqlFaker\MySql\Bison\Lexer\BisonToken;
 use SqlFaker\MySql\Bison\Lexer\BisonTokenStream;
-use SqlFaker\MySql\Bison\Lexer\BisonTokenType;
 use SqlFaker\MySql\Bison\Lexer\BisonTrivia;
 use SqlFaker\MySql\Bison\Lexer\DirectiveScanner;
 use SqlFaker\MySql\Bison\Lexer\IdentifierScanner;
@@ -59,19 +59,19 @@ use SqlFaker\MySql\Bison\Rule\BisonRuleReader;
 #[CoversClass(BisonParser::class)]
 #[CoversClass(BisonLexer::class)]
 #[CoversClass(BisonToken::class)]
-#[CoversClass(BisonTokenType::class)]
+#[CoversClass(BisonLexeme::class)]
 #[CoversClass(BisonAst::class)]
 #[CoversClass(BisonRuleNode::class)]
 #[CoversClass(BisonAlternativeNode::class)]
 #[CoversClass(BisonSymbolNode::class)]
-#[CoversClass(BisonSymbolType::class)]
+#[CoversClass(BisonSymbolForm::class)]
 #[CoversClass(BisonDefineDeclaration::class)]
 #[CoversClass(BisonExpectDeclaration::class)]
 #[CoversClass(BisonParamDeclaration::class)]
 #[CoversClass(BisonPrecedenceDeclaration::class)]
 #[CoversClass(BisonStartDeclaration::class)]
 #[CoversClass(BisonTokenDeclaration::class)]
-#[CoversClass(BisonTokenInfo::class)]
+#[CoversClass(BisonTokenDefinition::class)]
 #[CoversClass(BisonTypeDeclaration::class)]
 #[CoversClass(BisonUnknownDeclaration::class)]
 #[UsesClass(GrammarParseException::class)]
@@ -102,7 +102,7 @@ use SqlFaker\MySql\Bison\Rule\BisonRuleReader;
 #[UsesClass(BisonAlternativeDraft::class)]
 #[UsesClass(BisonAlternativeReader::class)]
 #[UsesClass(BisonRuleReader::class)]
-#[UsesClass(\SqlFaker\MySql\Bison\Lexer\BisonTokenScanner::class)]
+#[UsesClass(BisonLexer::class)]
 final class BisonParserTest extends TestCase
 {
     public function testParseMinimalGrammar(): void
@@ -681,10 +681,10 @@ BISON;
 
         $symbols = $ast->rules[0]->alternatives[0]->symbols;
         self::assertCount(3, $symbols);
-        self::assertSame(BisonSymbolType::CharLiteral, $symbols[0]->type);
+        self::assertSame(BisonSymbolForm::CharLiteral, $symbols[0]->type);
         self::assertSame('+', $symbols[0]->value);
-        self::assertSame(BisonSymbolType::Identifier, $symbols[1]->type);
-        self::assertSame(BisonSymbolType::CharLiteral, $symbols[2]->type);
+        self::assertSame(BisonSymbolForm::Identifier, $symbols[1]->type);
+        self::assertSame(BisonSymbolForm::CharLiteral, $symbols[2]->type);
     }
 
     public function testParseRuleTerminatedBySemicolon(): void

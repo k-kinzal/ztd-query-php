@@ -9,12 +9,12 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\GrammarParseException;
 use SqlFaker\Grammar\SourceCursor;
+use SqlFaker\MySql\Bison\Lexer\BisonLexeme;
 use SqlFaker\MySql\Bison\Lexer\BisonToken;
-use SqlFaker\MySql\Bison\Lexer\BisonTokenType;
 use SqlFaker\MySql\Bison\Lexer\TypeTagScanner;
 
 #[CoversClass(TypeTagScanner::class)]
-#[UsesClass(BisonTokenType::class)]
+#[UsesClass(BisonLexeme::class)]
 #[UsesClass(BisonToken::class)]
 #[UsesClass(GrammarParseException::class)]
 #[UsesClass(SourceCursor::class)]
@@ -34,7 +34,7 @@ final class TypeTagScannerTest extends TestCase
 
         $token = (new TypeTagScanner())->scan($cursor);
 
-        self::assertSame(BisonTokenType::TypeTag, $token->type);
+        self::assertSame(BisonLexeme::TypeTag, $token->type);
         self::assertSame('num', $token->value);
         self::assertSame(0, $token->offset);
         self::assertSame(' rest', $cursor->takeRest());

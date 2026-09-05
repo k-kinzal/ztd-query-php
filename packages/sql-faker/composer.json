@@ -12,7 +12,6 @@
         "friendsofphp/php-cs-fixer": "^3.95.24",
         "infection/infection": "^0.28 || ^0.29 || ^0.30 || ^0.31 || ^0.32 || ^0.34.1",
         "k-kinzal/php-ai-toolkit": "dev-main",
-        "k-kinzal/phpstan-custom-rules": "@dev",
         "k-kinzal/testcontainers-php": "^0.5.1",
         "nikic/php-fuzzer": "^0.0.11",
         "phpbench/phpbench": "^1.4",
@@ -26,16 +25,17 @@
             "name": "php-ai-toolkit",
             "type": "vcs",
             "url": "https://github.com/k-kinzal/php-ai-toolkit.git"
-        },
-        {
-            "type": "path",
-            "url": "../phpstan-custom-rules"
         }
     ],
     "autoload": {
         "psr-4": {
             "SqlFaker\\": "src/"
-        }
+        },
+        "files": [
+            "src/MySql/StatementType.php",
+            "src/PostgreSql/StatementType.php",
+            "src/Sqlite/StatementType.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {

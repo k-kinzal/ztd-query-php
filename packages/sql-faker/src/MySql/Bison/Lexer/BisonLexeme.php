@@ -7,7 +7,7 @@ namespace SqlFaker\MySql\Bison\Lexer;
 /**
  * The kinds of lexeme a Bison grammar file is written from.
  */
-enum BisonTokenType
+enum BisonLexeme
 {
     case Directive;
     case Identifier;
