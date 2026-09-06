@@ -99,6 +99,7 @@ jobs:
           require-lock-file: true
       - name: Check installed platform requirements
         run: |
+          # ParaTest is not used by this job; validate the package runtime and isolated tool.
           composer check-platform-reqs --no-dev
           composer --working-dir=tools/infection check-platform-reqs
       - name: Mutation testing on changed lines
@@ -107,6 +108,7 @@ jobs:
           php -d memory_limit=4G tools/infection/vendor/bin/infection
           --configuration=infection.json5
           --threads=4
+          --only-covering-test-cases
           --git-diff-lines
           --git-diff-base="origin/${GITHUB_BASE_REF}"
           --ignore-msi-with-no-mutations
@@ -120,6 +122,7 @@ jobs:
           php -d memory_limit=4G tools/infection/vendor/bin/infection
           --configuration=infection.json5
           --threads=4
+          --only-covering-test-cases
           --no-progress
           --logger-github
       - name: Upload mutation reports
