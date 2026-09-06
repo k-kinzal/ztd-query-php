@@ -11,6 +11,8 @@ namespace SqlFaker\Grammar\Derivation;
  * generating a specific statement usually wants one of them. A pattern says
  * which, either by naming symbols the alternative must contain, by naming the
  * alternative outright, or by asking only that it write something.
+ *
+ * @visibility root
  */
 final class ProductionPattern
 {

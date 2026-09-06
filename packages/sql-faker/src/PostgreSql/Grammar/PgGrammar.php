@@ -12,6 +12,8 @@ use SqlFaker\Grammar\SqlVersion;
  * PostgreSQL grammar loader.
  *
  * Loads pre-compiled grammar from the ast/pg-*.php cache files.
+ *
+ * @visibility root
  */
 final class PgGrammar
 {

@@ -23,6 +23,8 @@ use SqlFaker\Grammar\Terminal;
  * carries the C its parser is built from alongside the rules. Reading the
  * declarations, reading the rules, and remembering what each name turned out
  * to be are three subjects, and this brings their answers together.
+ *
+ * @visibility root
  */
 final class LemonParser
 {

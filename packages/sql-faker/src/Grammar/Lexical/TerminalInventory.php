@@ -10,6 +10,8 @@ use SqlFaker\Grammar\Terminal;
 
 /**
  * Extracts every terminal required by a compiled grammar resource.
+ *
+ * @visibility root
  */
 final class TerminalInventory
 {

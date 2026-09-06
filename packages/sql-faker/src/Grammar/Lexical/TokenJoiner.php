@@ -10,6 +10,8 @@ namespace SqlFaker\Grammar\Lexical;
  * Shared across all SQL generators. Handles common spacing rules
  * (parentheses, dots, brackets, commas) while supporting dialect-specific
  * no-space pairs.
+ *
+ * @visibility root
  */
 final class TokenJoiner
 {

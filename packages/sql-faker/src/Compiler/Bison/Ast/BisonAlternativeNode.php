@@ -10,6 +10,8 @@ namespace SqlFaker\Compiler\Bison\Ast;
  * Example: SELECT select_item_list { $$ = $2; } %prec LOWER_THAN_EMPTY
  *
  * @phpstan-type SymbolNodeList list<BisonSymbolNode>
+ *
+ * @visibility root
  */
 final class BisonAlternativeNode
 {

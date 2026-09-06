@@ -17,6 +17,12 @@ use RuntimeException;
  *
  * The three dialect generators hit the same failures, so the wording lives here
  * rather than being repeated at each throw site.
+ *
+ * @visibility public
+ * @example Catch this failure as a runtime exception
+ *     $failure = new \SqlFaker\Grammar\GenerationException('SQL generation failed');
+ *     $failure instanceof \RuntimeException // => true
+ *     $failure->getMessage() // => 'SQL generation failed'
  */
 final class GenerationException extends RuntimeException
 {
@@ -24,6 +30,7 @@ final class GenerationException extends RuntimeException
      * Reports a derivation that ran past the plan's depth budget.
      *
      * @return self Exception describing the exhausted budget
+     * @visibility root
      */
     public static function derivationLimitExceeded(): self
     {
@@ -36,6 +43,7 @@ final class GenerationException extends RuntimeException
      * @param string $rule Name the production referred to
      *
      * @return self Exception naming the missing rule
+     * @visibility root
      */
     public static function unknownRule(string $rule): self
     {
@@ -48,6 +56,7 @@ final class GenerationException extends RuntimeException
      * @param string $rule Name of the empty rule
      *
      * @return self Exception naming the empty rule
+     * @visibility root
      */
     public static function ruleHasNoAlternatives(string $rule): self
     {
@@ -60,6 +69,7 @@ final class GenerationException extends RuntimeException
      * @param string $rule Name of the unrealizable rule
      *
      * @return self Exception naming the unrealizable rule
+     * @visibility root
      */
     public static function noRealizableAlternative(string $rule): self
     {
@@ -72,6 +82,7 @@ final class GenerationException extends RuntimeException
      * @param string $rule Name of the constrained rule
      *
      * @return self Exception naming the constrained rule
+     * @visibility root
      */
     public static function noAlternativeMatchingPlan(string $rule): self
     {
@@ -84,6 +95,7 @@ final class GenerationException extends RuntimeException
      * @param string $rule Name of the start rule
      *
      * @return self Exception naming the start rule
+     * @visibility root
      */
     public static function startRuleCannotProduceOutput(string $rule): self
     {
@@ -98,6 +110,7 @@ final class GenerationException extends RuntimeException
      * @param string $dialect Dialect the generator was producing for
      *
      * @return self Exception naming the dialect
+     * @visibility root
      */
     public static function planRequiresNonEmptyOutput(string $dialect): self
     {
@@ -110,6 +123,7 @@ final class GenerationException extends RuntimeException
      * @param string $dialect Dialect the generator was producing for
      *
      * @return self Exception naming the dialect
+     * @visibility root
      */
     public static function lexicalRealizationFailed(string $dialect): self
     {

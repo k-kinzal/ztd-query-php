@@ -16,6 +16,12 @@ use RuntimeException;
  * wording lives here rather than being spelled out three times. What the
  * generator writes and what the tokenizer reads back are the two halves of one
  * contract, and every way they can disagree is named below.
+ *
+ * @visibility public
+ * @example Catch this failure as a runtime exception
+ *     $failure = new \SqlFaker\Grammar\LexicalException('SQL generation failed');
+ *     $failure instanceof \RuntimeException // => true
+ *     $failure->getMessage() // => 'SQL generation failed'
  */
 final class LexicalException extends RuntimeException
 {
@@ -27,6 +33,7 @@ final class LexicalException extends RuntimeException
      * @param string $terminal Terminal that was asked for
      *
      * @return self Exception naming the terminal and the profile
+     * @visibility root
      */
     public static function unsupportedTerminal(string $dialect, string $version, string $terminal): self
     {
@@ -41,6 +48,7 @@ final class LexicalException extends RuntimeException
      * @param string $sql The text being read
      *
      * @return self Exception naming the offset and the text
+     * @visibility root
      */
     public static function unsupportedInput(string $dialect, int $offset, string $sql): self
     {
@@ -59,6 +67,7 @@ final class LexicalException extends RuntimeException
      * @param string $sql The text being read
      *
      * @return self Exception naming the offset and the text
+     * @visibility root
      */
     public static function noProgress(string $dialect, int $offset, string $sql): self
     {
@@ -72,6 +81,7 @@ final class LexicalException extends RuntimeException
      * @param string $sql The text being read
      *
      * @return self Exception naming the text
+     * @visibility root
      */
     public static function unterminatedQuotedToken(string $dialect, string $sql): self
     {
@@ -84,6 +94,7 @@ final class LexicalException extends RuntimeException
      * @param string $dialect Dialect name as it appears in messages
      *
      * @return self Exception describing the truncation
+     * @visibility root
      */
     public static function unterminatedBracketIdentifier(string $dialect): self
     {
@@ -96,6 +107,7 @@ final class LexicalException extends RuntimeException
      * @param string $dialect Dialect name as it appears in messages
      *
      * @return self Exception describing the truncation
+     * @visibility root
      */
     public static function unterminatedBlockComment(string $dialect): self
     {
@@ -108,6 +120,7 @@ final class LexicalException extends RuntimeException
      * @param string $dialect Dialect name as it appears in messages
      *
      * @return self Exception describing the truncation
+     * @visibility root
      */
     public static function unterminatedDollarQuotedString(string $dialect): self
     {
@@ -122,6 +135,7 @@ final class LexicalException extends RuntimeException
      * @param string $lexeme The text the caller asked for
      *
      * @return self Exception naming the terminal and the text
+     * @visibility root
      */
     public static function lexemeDoesNotRealizeTerminal(string $dialect, string $terminal, string $lexeme): self
     {
@@ -136,6 +150,7 @@ final class LexicalException extends RuntimeException
      * @param string $lexeme The text the caller asked for
      *
      * @return self Exception naming the terminal and the text
+     * @visibility root
      */
     public static function noWitnessForLexeme(string $dialect, string $terminal, string $lexeme): self
     {
@@ -156,6 +171,7 @@ final class LexicalException extends RuntimeException
      * @param string $sql The generated text
      *
      * @return self Exception carrying both sequences and the text
+     * @visibility root
      */
     public static function roundTripMismatch(
         string $dialect,
@@ -186,6 +202,7 @@ final class LexicalException extends RuntimeException
      * @param list<string> $tokens Tokens to render
      *
      * @return string The sequence as JSON, or a placeholder when it cannot be rendered
+     * @visibility root
      */
     public static function rendered(array $tokens): string
     {

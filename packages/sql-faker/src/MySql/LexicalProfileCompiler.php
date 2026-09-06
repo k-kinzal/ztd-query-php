@@ -8,6 +8,8 @@ use RuntimeException;
 
 /**
  * Extracts MySQL's keyword and function-token tables from sql/lex.h.
+ *
+ * @visibility root
  */
 final class LexicalProfileCompiler
 {

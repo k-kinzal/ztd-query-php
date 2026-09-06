@@ -9,6 +9,8 @@ namespace SqlFaker\Compiler\Bison\Ast;
  *
  * Example: `TOKEN1 123 "alias"`. The code and the alias are optional and
  * independent of each other, so both are absent unless the grammar wrote them.
+ *
+ * @visibility root
  */
 final class BisonTokenDefinition
 {

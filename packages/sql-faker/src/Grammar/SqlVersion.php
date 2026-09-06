@@ -14,6 +14,8 @@ use SqlFaker\Grammar\Resource\SqlVersionRegistry;
  * what may be written, the lexical profile says how it is spelled — so a
  * generator that held one without the other would produce SQL its own lexer
  * could not read back. They are named together and travel together.
+ *
+ * @visibility root
  */
 final class SqlVersion
 {

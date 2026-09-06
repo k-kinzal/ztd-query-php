@@ -15,6 +15,8 @@ use InvalidArgumentException;
  * across generations without a previous walk leaking into the next.
  *
  * @template-covariant TRequiresNonEmpty of bool
+ *
+ * @visibility root
  */
 final class GenerationPlan
 {

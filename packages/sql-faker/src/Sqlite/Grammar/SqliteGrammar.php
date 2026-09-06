@@ -12,6 +12,8 @@ use SqlFaker\Grammar\SqlVersion;
  * SQLite grammar loader.
  *
  * Loads pre-compiled grammar from the ast/sqlite-*.php cache files.
+ *
+ * @visibility root
  */
 final class SqliteGrammar
 {

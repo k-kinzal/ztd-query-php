@@ -15,6 +15,8 @@ use SqlFaker\Grammar\Grammar;
  * offers are a fixed vocabulary rather than something each caller assembles.
  * Naming them here keeps that vocabulary in one place and lets the provider
  * read as a list of what it can generate.
+ *
+ * @visibility root
  */
 final class GenerationPlans
 {

@@ -15,6 +15,8 @@ use RuntimeException;
  * - Sigma: Set of terminal symbols (implicitly defined by Symbol types)
  * - P: Set of production rules (ruleMap)
  * - S: Start symbol (startSymbol)
+ *
+ * @visibility root
  */
 final class Grammar
 {

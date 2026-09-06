@@ -10,6 +10,8 @@ namespace SqlFaker\Compiler\Bison\Ast;
  * Example: %token <lexer.keyword> SELECT 123 "SELECT"
  *
  * @phpstan-type TokenList list<BisonTokenDefinition>
+ *
+ * @visibility root
  */
 final class BisonTokenDeclaration implements BisonDeclaration
 {

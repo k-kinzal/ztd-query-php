@@ -14,6 +14,8 @@ use SqlFaker\MySql\Grammar\MySqlGrammar;
 
 /**
  * Binds the MySql grammar and lexical profile to the common SQL generation engine.
+ *
+ * @visibility root
  */
 final class GenerationContext
 {

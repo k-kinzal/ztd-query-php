@@ -162,6 +162,15 @@ $faker->addProvider(new MySqlProvider($faker));
 $sql = $faker->selectStatement(maxDepth: 6);
 ```
 
+## Public API
+
+`MySqlProvider`, `PostgreSqlProvider`, and `SqliteProvider` are the consumer entry points.
+Their documented formatters, each dialect's `StatementRule` enum (also available as
+`StatementType`), and the documented generation exceptions carry `@visibility public`.
+PHPStan requires runnable examples on those declarations, and `composer test` executes
+them on every PHP version in CI. See [Public API and executable examples](docs/public-api.md)
+for the boundary, exception contracts, and commands for running individual examples.
+
 ## How It Works
 
 SQL Faker implements formal grammar derivation (leftmost derivation):
@@ -186,8 +195,11 @@ The round-trip invariant guarantees the lexical layer: after dialect-specific pa
 ## Development
 
 ```bash
-# Run tests
+# Run unit tests and executable PHPDoc examples
 composer test
+
+# Run only documented examples
+composer doctest
 
 # Run linter (PHP-CS-Fixer + PHPStan level max + PHPCompatibility)
 composer lint

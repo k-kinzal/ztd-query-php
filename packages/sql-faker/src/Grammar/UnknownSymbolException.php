@@ -13,6 +13,8 @@ use RuntimeException;
  * source, so a symbol nothing declares says the file and the parser that
  * wrote it disagree. That is a condition of the input, not a mistake in the
  * code reading it, so it is reported rather than declared.
+ *
+ * @visibility root
  */
 final class UnknownSymbolException extends RuntimeException
 {

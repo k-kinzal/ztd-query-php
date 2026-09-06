@@ -8,6 +8,8 @@ namespace SqlFaker\Compiler\Bison\Ast;
  * Represents a %type declaration.
  *
  * Example: %type <item> expr literal
+ *
+ * @visibility root
  */
 final class BisonTypeDeclaration implements BisonDeclaration
 {

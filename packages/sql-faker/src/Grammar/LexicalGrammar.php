@@ -13,6 +13,8 @@ use SqlFaker\Grammar\Derivation\GenerationPlan;
  * guarantee: text written from a terminal sequence must read back as that same
  * sequence through the dialect's own lexer. An implementation that only wrote
  * text would let a generator drift away from the server it claims to target.
+ *
+ * @visibility root
  */
 interface LexicalGrammar
 {

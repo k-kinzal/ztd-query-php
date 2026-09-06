@@ -16,6 +16,8 @@ use SqlFaker\Grammar\Production;
  * written, which decides how long the SQL gets, and how many rules will be
  * expanded, which decides whether the walk fits in its step budget. Both are
  * asked of the same grammar, so both are answered here.
+ *
+ * @visibility root
  */
 final class TerminationAnalyzer
 {

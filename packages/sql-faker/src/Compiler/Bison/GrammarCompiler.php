@@ -22,6 +22,8 @@ use SqlFaker\Grammar\UnknownSymbolException;
  *
  * This compiler works for any Bison grammar (MySQL, PostgreSQL, etc.)
  * by transforming the Bison AST into a formal grammar structure.
+ *
+ * @visibility root
  */
 final class GrammarCompiler
 {

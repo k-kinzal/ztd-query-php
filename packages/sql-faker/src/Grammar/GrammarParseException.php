@@ -13,6 +13,8 @@ use RuntimeException;
  * describe, so a grammar that declares tokens but no rules, or that ends before
  * its rules section, is a property of the input rather than a defect in the
  * parser. Callers that load grammars at runtime are expected to handle this.
+ *
+ * @visibility root
  */
 final class GrammarParseException extends RuntimeException
 {

@@ -8,6 +8,8 @@ namespace SqlFaker\Compiler\Bison\Ast;
  * Represents a %define declaration.
  *
  * Example: %define api.pure full
+ *
+ * @visibility root
  */
 final class BisonDefineDeclaration implements BisonDeclaration
 {

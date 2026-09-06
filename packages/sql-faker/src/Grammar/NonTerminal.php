@@ -9,6 +9,8 @@ namespace SqlFaker\Grammar;
  *
  * Non-terminal symbols can be expanded via production rules.
  * They correspond to grammar rules and are replaced during derivation.
+ *
+ * @visibility root
  */
 final class NonTerminal implements Symbol
 {

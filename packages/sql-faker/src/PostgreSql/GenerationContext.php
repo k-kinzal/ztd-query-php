@@ -14,6 +14,8 @@ use SqlFaker\PostgreSql\Grammar\PgGrammar;
 
 /**
  * Binds the PostgreSql grammar and lexical profile to the common SQL generation engine.
+ *
+ * @visibility root
  */
 final class GenerationContext
 {
