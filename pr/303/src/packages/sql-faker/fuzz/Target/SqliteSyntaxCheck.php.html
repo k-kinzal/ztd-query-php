@@ -57,7 +57,8 @@
 <span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-com"> * tolerated cases — name lookups a schema-less fuzz run cannot satisfy, plus a</span></span>
 <span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-com"> * handful of documented restrictions — are matched on the message. Any other</span></span>
 <span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a><span class="tok-com"> * rejection means the grammar emitted something SQLite cannot parse, which is a</span></span>
-<span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a><span class="tok-com"> * finding and surfaces as an Error for php-fuzzer to record.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">20</span><span class="tok-com"> * finding and surfaces as an Error for php-fuzzer to record.</span></span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> * finding and surfaces as a SyntaxFailure for PHP-Fuzzer to record.</span></span>
 <span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">SqliteSyntaxCheck</span></span>
 <span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a>{</span>
@@ -80,7 +81,7 @@
 <span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com">     * @throws SyntaxFailure When SQLite rejects the statement for a reason the grammar should not produce</span></span>
 <span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a><span class="tok-com">     */</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">39</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">verify</span>(<span class="tok-id">string</span> <span class="tok-var">$sql</span>, <span class="tok-id">int</span> <span class="tok-var">$seed</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">verify</span>(<span class="tok-id">string</span> <span class="tok-var">$sql</span>, <span class="tok-id">string</span> <span class="tok-var">$input</span>): <span class="tok-id">VerificationResult</span></span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">verify</span>(<span class="tok-id">string</span> <span class="tok-var">$sql</span>, <span class="tok-id">string</span> <span class="tok-var">$input</span>): <span class="tok-id">void</span></span>
 <span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a>    {</span>
 <span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a>        <span class="tok-kw">if</span> (<span class="tok-var">$sql</span> === <span class="tok-str">&#039;&#039;</span>) {</span>
 <span class="src-line" data-diff="removed"><span class="ln">42</span>            <span class="tok-kw">return</span>;</span>
@@ -100,7 +101,7 @@
 <span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a>                    &quot;<span class="tok-str">SQL: </span><span class="tok-var">$sql</span>&quot;</span>
 <span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a>                );</span>
 <span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a>            }</span>
-<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>            <span class="tok-kw">return</span> <span class="tok-id">VerificationResult</span>::<span class="tok-id">Accepted</span>;</span>
+<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>            <span class="tok-kw">return</span>;</span>
 <span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a>        } <span class="tok-kw">catch</span> (<span class="tok-id">PDOException</span> <span class="tok-var">$rejection</span>) {</span>
 <span class="src-line" data-diff="removed"><span class="ln">55</span>            <span class="tok-com">// A schema-less fuzz run cannot satisfy name lookups, so those messages are expected.</span></span>
 <span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a></span>
@@ -134,8 +135,7 @@
 <span class="src-line" id="L79" data-diff="same"><a class="ln" href="#L79">79</a>            };</span>
 <span class="src-line" id="L80" data-diff="same"><a class="ln" href="#L80">80</a></span>
 <span class="src-line" id="L81" data-diff="same"><a class="ln" href="#L81">81</a>            <span class="tok-kw">if</span> (<span class="tok-var">$acceptable</span>) {</span>
-<span class="src-line" data-diff="removed"><span class="ln">83</span>                <span class="tok-kw">return</span>;</span>
-<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a>                <span class="tok-kw">return</span> <span class="tok-id">VerificationResult</span>::<span class="tok-id">Rejected</span>;</span>
+<span class="src-line" id="L82" data-diff="same"><a class="ln" href="#L82">82</a>                <span class="tok-kw">return</span>;</span>
 <span class="src-line" id="L83" data-diff="same"><a class="ln" href="#L83">83</a>            }</span>
 <span class="src-line" id="L84" data-diff="same"><a class="ln" href="#L84">84</a></span>
 <span class="src-line" data-diff="removed"><span class="ln">86</span>            <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">Error</span>(</span>
