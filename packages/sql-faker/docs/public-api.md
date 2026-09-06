@@ -37,8 +37,9 @@ internal collaborators. An absent visibility tag is not a promise of API stabili
 
 Examples create their own Faker generator. Names are fully qualified because
 doctest evaluation does not inherit the source file's imports. Random examples
-seed Faker, then assert the statement or lexical shape instead of pinning an
-incidental spelling or comment layout. Fixed numeric bounds produce exact values.
+seed Faker after constructing the provider, then assert the statement or lexical shape instead of pinning an
+incidental spelling or comment layout. Fixed numeric bounds produce exact values. Unsigned big integers discard leading
+zeroes, so their final length can be shorter than the sampled digit count.
 Seeds reproduce a run within the same package and Faker versions, not an output
 format guaranteed across upgrades.
 

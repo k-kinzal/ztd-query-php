@@ -155,8 +155,8 @@ Use a seeded Faker generator for reproducible SQL output:
 
 ```php
 $faker = Factory::create();
-$faker->seed(12345);
 $faker->addProvider(new MySqlProvider($faker));
+$faker->seed(12345);
 
 // Same seed always produces the same SQL
 $sql = $faker->selectStatement(maxDepth: 6);
