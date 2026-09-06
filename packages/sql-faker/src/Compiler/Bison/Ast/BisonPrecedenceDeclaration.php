@@ -8,6 +8,8 @@ namespace SqlFaker\Compiler\Bison\Ast;
  * Represents a %left, %right, or %nonassoc declaration.
  *
  * Example: %left OR_SYM OR2_SYM
+ *
+ * @visibility root
  */
 final class BisonPrecedenceDeclaration implements BisonDeclaration
 {

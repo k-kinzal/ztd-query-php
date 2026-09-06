@@ -20,6 +20,8 @@ use SqlFaker\Grammar\LexicalException;
  * off unless a caller asks for it.
  *
  * @phpstan-type Realization array{string|null, list<string>}
+ *
+ * @visibility root
  */
 final class PgTerminalRealizer
 {

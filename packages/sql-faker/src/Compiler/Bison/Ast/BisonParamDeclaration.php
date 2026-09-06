@@ -8,6 +8,8 @@ namespace SqlFaker\Compiler\Bison\Ast;
  * Represents a %parse-param or %lex-param declaration.
  *
  * Example: %parse-param { THD *thd }
+ *
+ * @visibility root
  */
 final class BisonParamDeclaration implements BisonDeclaration
 {

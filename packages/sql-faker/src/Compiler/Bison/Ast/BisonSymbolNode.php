@@ -10,6 +10,8 @@ namespace SqlFaker\Compiler\Bison\Ast;
  * The form records how the symbol was written: a name refers to a rule or a
  * declared terminal, while a quoted character is a terminal that stands for
  * itself. The parser needs the difference because only the first can be a rule.
+ *
+ * @visibility root
  */
 final class BisonSymbolNode
 {

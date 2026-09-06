@@ -8,6 +8,8 @@ use RuntimeException;
 
 /**
  * Extracts the complete MySQL lexer-state inventory from official sources.
+ *
+ * @visibility root
  */
 final class LexicalSourceParser
 {

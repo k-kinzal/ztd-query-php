@@ -21,6 +21,8 @@ use SqlFaker\Grammar\GrammarParseException;
  * understand is carried through rather than dropped, because MySQL's grammar
  * uses constructs no model here covers and the rules after one of them are
  * still worth having.
+ *
+ * @visibility root
  */
 final class BisonParser
 {

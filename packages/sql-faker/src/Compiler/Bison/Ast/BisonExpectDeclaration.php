@@ -8,6 +8,8 @@ namespace SqlFaker\Compiler\Bison\Ast;
  * Represents a %expect declaration.
  *
  * Example: %expect 37
+ *
+ * @visibility root
  */
 final class BisonExpectDeclaration implements BisonDeclaration
 {

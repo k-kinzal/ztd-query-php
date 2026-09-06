@@ -51,7 +51,8 @@
         "bench": "@bench:quick",
         "bench:quick": "phpbench run bench --bootstrap=vendor/autoload.php --report=aggregate --php-config='{\"memory_limit\":\"512M\"}' --warmup=1 --iterations=3 --revs=25",
         "bench:full": "phpbench run bench --bootstrap=vendor/autoload.php --report=aggregate --php-config='{\"memory_limit\":\"512M\"}' --warmup=2 --iterations=8 --revs=100",
-        "test": "paratest --testsuite unit --processes=auto",
+        "test": "paratest --processes=auto",
+        "doctest": "phpunit --testsuite doctest",
         "test:unit": "phpunit --testsuite unit",
         "lint": [
             "@format:check",

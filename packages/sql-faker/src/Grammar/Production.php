@@ -8,6 +8,8 @@ namespace SqlFaker\Grammar;
  * Represents a single production (right-hand side) in a grammar rule.
  *
  * A production is a sequence of symbols that a non-terminal can expand to.
+ *
+ * @visibility root
  */
 final class Production
 {

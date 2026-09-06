@@ -8,6 +8,8 @@ use RuntimeException;
 
 /**
  * Extracts SQLite's keyword-token table from tool/mkkeywordhash.c.
+ *
+ * @visibility root
  */
 final class LexicalProfileCompiler
 {

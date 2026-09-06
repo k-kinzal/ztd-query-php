@@ -6,6 +6,8 @@ namespace SqlFaker\Compiler\Bison\Lexer;
 
 /**
  * The kinds of lexeme a Bison grammar file is written from.
+ *
+ * @visibility root
  */
 enum BisonLexeme
 {

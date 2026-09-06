@@ -9,6 +9,8 @@ namespace SqlFaker\Grammar;
  *
  * A production rule defines how a non-terminal symbol (left-hand side) can be
  * expanded into a sequence of symbols (right-hand side alternatives).
+ *
+ * @visibility root
  */
 final class ProductionRule
 {

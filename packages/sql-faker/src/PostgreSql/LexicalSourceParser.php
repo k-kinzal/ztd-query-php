@@ -8,6 +8,8 @@ use RuntimeException;
 
 /**
  * Parses PostgreSQL's official scan.l and parser.c lexical definitions.
+ *
+ * @visibility root
  */
 final class LexicalSourceParser
 {

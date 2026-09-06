@@ -9,6 +9,8 @@ namespace SqlFaker\Grammar;
  *
  * Terminal symbols cannot be further expanded. They are the "leaves"
  * of the derivation tree and correspond to actual tokens in the output.
+ *
+ * @visibility root
  */
 final class Terminal implements Symbol
 {

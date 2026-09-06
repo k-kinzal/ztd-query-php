@@ -8,6 +8,8 @@ use RuntimeException;
 
 /**
  * Extracts PostgreSQL's keyword-token table from kwlist.h.
+ *
+ * @visibility root
  */
 final class LexicalProfileCompiler
 {

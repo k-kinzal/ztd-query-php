@@ -155,54 +155,11 @@ Use a seeded Faker generator for reproducible SQL output:
 
 ```php
 $faker = Factory::create();
-$faker->seed(12345);
 $faker->addProvider(new MySqlProvider($faker));
+$faker->seed(12345);
 
 // Same seed always produces the same SQL
 $sql = $faker->selectStatement(maxDepth: 6);
-```
-
-## How It Works
-
-SQL Faker implements formal grammar derivation (leftmost derivation):
-
-1. **Grammar Loading** - Pre-compiled MySQL Bison grammar is loaded from serialized AST
-2. **Derivation** - Starting from a non-terminal (e.g., `select_stmt`), the generator repeatedly replaces the leftmost non-terminal with a randomly chosen production alternative
-3. **Depth Control** - Before `maxDepth`, alternatives are chosen randomly; at/after `maxDepth`, the shortest alternative is selected to terminate quickly
-4. **Lexical Expansion** - Lexer terminals select dialect- and version-specific spellings from the catalog bound to the official lexer source inventory
-5. **Round-trip Validation** - The rendered SQL is tokenized again and rejected if lexical expansion, trivia insertion, or token joining changed the expected dialect token sequence
-
-```
-select_stmt
-  → SELECT select_item_list FROM table_reference
-  → SELECT expr FROM table_ident
-  → SELECT simple_expr FROM IDENT
-  → SELECT NUM FROM IDENT
-  → SELECT 42 FROM t1
-```
-
-The round-trip invariant guarantees the lexical layer: after dialect-specific parser tokens and token classes are normalized, the generated SQL produces the lexer tokens expected by the derivation. It deliberately does not claim semantic validity, which still depends on schema and server state. MySQL, PostgreSQL, and SQLite use separate versioned lexical implementations rather than a shared hand-written profile format. See [Versioned lexical realization](docs/lexical-algorithm.md) for the algorithm and its guarantees.
-
-## Development
-
-```bash
-# Run tests
-composer test
-
-# Run linter (PHP-CS-Fixer + PHPStan level max + PHPCompatibility)
-composer lint
-
-# Run fuzz tests
-composer fuzz
-
-# Build and verify the grammar and lexical profile for each database
-# Lexer sources are parsed directly in PHP; no compiler or database server is required.
-composer build-mysql
-composer build-pg
-composer build-sqlite
-
-# Fix code style
-composer format
 ```
 
 ## License

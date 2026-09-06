@@ -12,6 +12,8 @@ use SqlFaker\Grammar\SqlVersion;
  * MySQL grammar loader.
  *
  * Loads pre-compiled grammar from the ast/mysql-*.php cache files.
+ *
+ * @visibility root
  */
 final class MySqlGrammar
 {

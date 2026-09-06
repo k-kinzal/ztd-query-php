@@ -9,6 +9,8 @@ namespace SqlFaker\Compiler\Bison\Ast;
  *
  * @phpstan-type DeclarationList list<BisonDeclaration>
  * @phpstan-type RuleList list<BisonRuleNode>
+ *
+ * @visibility root
  */
 final class BisonAst
 {

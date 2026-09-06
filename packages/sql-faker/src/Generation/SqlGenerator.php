@@ -20,6 +20,8 @@ use SqlFaker\Grammar\Terminal;
  *
  * Dialect spelling and parser semantic actions are supplied at construction;
  * the derivation, retry budget and non-empty guarantee are shared by all grammars.
+ *
+ * @visibility root
  */
 final class SqlGenerator
 {

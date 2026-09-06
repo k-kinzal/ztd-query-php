@@ -8,6 +8,8 @@ namespace SqlFaker\Compiler\Bison\Ast;
  * Represents a %start declaration.
  *
  * Example: %start sql_statement
+ *
+ * @visibility root
  */
 final class BisonStartDeclaration implements BisonDeclaration
 {

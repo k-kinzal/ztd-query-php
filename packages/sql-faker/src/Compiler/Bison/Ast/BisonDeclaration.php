@@ -6,6 +6,8 @@ namespace SqlFaker\Compiler\Bison\Ast;
 
 /**
  * Marker interface for Bison declaration nodes.
+ *
+ * @visibility root
  */
 interface BisonDeclaration
 {

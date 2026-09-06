@@ -8,6 +8,8 @@ use RuntimeException;
 
 /**
  * Parses SQLite's official tokenize.c lexical dispatch inventory.
+ *
+ * @visibility root
  */
 final class LexicalSourceParser
 {

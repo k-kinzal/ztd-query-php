@@ -13,6 +13,8 @@ use LogicException;
  *
  * Shared by dialect lexical grammars to produce identifiers, string literals,
  * numeric literals, and other lexical tokens.
+ *
+ * @visibility root
  */
 final class RandomStringGenerator
 {

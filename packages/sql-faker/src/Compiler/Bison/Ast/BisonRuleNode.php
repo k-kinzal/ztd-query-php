@@ -14,6 +14,8 @@ namespace SqlFaker\Compiler\Bison\Ast;
  *     ;
  *
  * @phpstan-type AlternativeNodeList list<BisonAlternativeNode>
+ *
+ * @visibility root
  */
 final class BisonRuleNode
 {

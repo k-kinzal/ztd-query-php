@@ -13,6 +13,8 @@ use RuntimeException;
  * a network read in the middle of the build. Naming that boundary is what lets
  * a profile builder be exercised against text a test chose rather than against
  * whatever an upstream repository serves today.
+ *
+ * @visibility root
  */
 interface LexerSource
 {

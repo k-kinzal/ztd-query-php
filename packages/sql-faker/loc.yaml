@@ -25,13 +25,15 @@ policies:
         lines: 50
         cyclomatic_complexity: 20
 
+  # Provider PHPDoc carries executable examples for each supported formatter.
+  # Physical lines include those examples; code and method limits stay strict.
   faker-provider:
     extends: standard
     limits:
       file:
-        lines: 800
+        lines: 1100
       class:
-        lines: 750
+        lines: 1050
       function:
         lines: 10
         cyclomatic_complexity: 1

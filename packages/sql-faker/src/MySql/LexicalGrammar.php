@@ -27,6 +27,8 @@ use SqlFaker\Grammar\LexicalGrammar as LexicalGrammarContract;
  * than by the server. That round trip is the contract; realizing and tokenizing
  * are the two collaborators it holds.
  * @phpstan-import-type Catalog from LexicalCatalog
+ *
+ * @visibility root
  */
 final class LexicalGrammar implements LexicalGrammarContract
 {

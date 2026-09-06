@@ -9,6 +9,8 @@ namespace SqlFaker\Grammar;
  *
  * A symbol is either a terminal (cannot be further expanded) or
  * a non-terminal (can be expanded via production rules).
+ *
+ * @visibility root
  */
 interface Symbol
 {

@@ -10,6 +10,8 @@ namespace SqlFaker\Compiler\Bison\Lexer;
  * The offset is kept alongside the value because the parser reports failures
  * against the grammar source, and a token that has been read is otherwise no
  * longer locatable in the file it came from.
+ *
+ * @visibility root
  */
 final class BisonToken
 {

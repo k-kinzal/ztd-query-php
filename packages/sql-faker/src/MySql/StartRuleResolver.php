@@ -8,6 +8,8 @@ use SqlFaker\Grammar\Grammar;
 
 /**
  * Resolves MySQL rule names across grammar releases.
+ *
+ * @visibility root
  */
 final class StartRuleResolver
 {

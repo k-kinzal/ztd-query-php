@@ -8,6 +8,8 @@ namespace SqlFaker\Compiler\Bison\Ast;
  * Represents an unknown or unsupported directive.
  *
  * Used for forward compatibility with new Bison directives.
+ *
+ * @visibility root
  */
 final class BisonUnknownDeclaration implements BisonDeclaration
 {
