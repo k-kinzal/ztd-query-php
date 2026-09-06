@@ -403,8 +403,7 @@ final class MySqlTokenizer
     public function merged(array $tokens): array
     {
         $merged = [];
-        $count = count($tokens);
-        for ($index = 0; $index < $count; $index++) {
+        for ($index = 0; isset($tokens[$index]); $index++) {
             $token = $tokens[$index];
             if ($token === 'WITH' && ($tokens[$index + 1] ?? null) === 'ROLLUP_SYM') {
                 $merged[] = 'WITH_ROLLUP_SYM';

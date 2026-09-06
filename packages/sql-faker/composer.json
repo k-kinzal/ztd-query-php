@@ -15,7 +15,6 @@
         "brianium/paratest": "^6.11 || ^7",
         "deptrac/deptrac": "^3.0",
         "friendsofphp/php-cs-fixer": "^3.95.24",
-        "infection/infection": "^0.28 || ^0.29 || ^0.30 || ^0.31 || ^0.32 || ^0.34.1",
         "k-kinzal/php-ai-toolkit": "dev-main",
         "k-kinzal/testcontainers-php": "^0.5.1",
         "nikic/php-fuzzer": "^0.0.11",
@@ -81,7 +80,6 @@
         "fuzz:mysql": "php-fuzzer fuzz fuzz/fuzz_mysql_syntax.php fuzz/corpus/mysql/",
         "fuzz:pg": "php-fuzzer fuzz fuzz/fuzz_pg_syntax.php fuzz/corpus/pg/",
         "fuzz:sqlite": "php-fuzzer fuzz fuzz/fuzz_sqlite_syntax.php fuzz/corpus/sqlite/",
-        "infection": "infection --threads=max --show-mutations --no-progress",
         "phpstan": "phpstan analyse --memory-limit=512M",
         "deptrac": [
             "deptrac analyse --config-file=deptrac.yaml",
@@ -96,7 +94,6 @@
     },
     "config": {
         "allow-plugins": {
-            "infection/extension-installer": true,
             "dealerdirect/phpcodesniffer-composer-installer": true
         },
         "platform": {

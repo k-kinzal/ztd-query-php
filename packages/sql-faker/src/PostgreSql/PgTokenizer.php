@@ -346,7 +346,10 @@ final class PgTokenizer
         }
 
         $end = $offset;
-        while (isset($sql[$end]) && str_contains(self::OPERATOR_CHARACTERS, $sql[$end])) {
+        while (isset($sql[$end])) {
+            if (!str_contains(self::OPERATOR_CHARACTERS, $sql[$end])) {
+                break;
+            }
             if ($end > $offset && in_array(substr($sql, $end, 2), ['/*', '--'], true)) {
                 break;
             }
