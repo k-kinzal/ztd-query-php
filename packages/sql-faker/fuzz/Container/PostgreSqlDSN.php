@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Fuzz\Container;
+namespace SqlFaker\Fuzz\Container;
 
 use LogicException;
 use Testcontainers\Containers\WaitStrategy\PDO\DSN;

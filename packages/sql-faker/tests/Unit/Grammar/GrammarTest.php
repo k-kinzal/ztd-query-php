@@ -19,6 +19,9 @@ use stdClass;
 #[CoversClass(Production::class)]
 #[CoversClass(Terminal::class)]
 #[UsesClass(\SqlFaker\Grammar\NonTerminal::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Choice\ChoiceSource::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Derivation\CompletionCosts::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Derivation\DerivationNode::class)]
 final class GrammarTest extends TestCase
 {
     public function testExposesTheStartSymbolAndRuleMap(): void
@@ -78,4 +81,28 @@ final class GrammarTest extends TestCase
             unlink($tmpFile);
         }
     }
+
+    public function testIdentifiedAssignsOriginalOrdinalsBeforeFiltering(): void
+    {
+        $grammar = new Grammar('stmt', ['stmt' => new ProductionRule('stmt', [new Production([]), new Production([new Terminal('SELECT')])])]);
+        $identified = $grammar->identified();
+        self::assertSame(0, $identified->ruleMap['stmt']->alternatives[0]->ordinal);
+        self::assertSame('stmt#1', $identified->ruleMap['stmt']->alternatives[1]->origin);
+        self::assertEquals($identified, $identified->identified());
+    }
+    public function testIdentifiedPreservesTheSourceAndEveryExistingProductionIdentity(): void
+    {
+        $grammar = new Grammar('stmt', ['stmt' => new ProductionRule('stmt', [
+            new Production([new Terminal('A')]), new Production([new Terminal('B')], 7, 'upstream#7'), new Production([]),
+        ])]);
+        $identified = $grammar->identified();
+        self::assertSame('stmt', $identified->startSymbol);
+        self::assertNull($grammar->ruleMap['stmt']->alternatives[0]->ordinal);
+        self::assertSame([0, 7, 2], array_column($identified->ruleMap['stmt']->alternatives, 'ordinal'));
+        self::assertSame(['stmt#0', 'upstream#7', 'stmt#2'], array_column($identified->ruleMap['stmt']->alternatives, 'origin'));
+        self::assertSame($grammar->ruleMap['stmt']->alternatives[0]->symbols, $identified->ruleMap['stmt']->alternatives[0]->symbols);
+        self::assertSame([], $identified->ruleMap['stmt']->alternatives[2]->symbols);
+        self::assertEquals($identified, $identified->identified());
+    }
+
 }

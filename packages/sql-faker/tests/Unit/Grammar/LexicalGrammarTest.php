@@ -21,6 +21,9 @@ use SqlFaker\SqliteProvider;
 
 #[CoversNothing]
 #[Medium]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Choice\ChoiceSource::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Derivation\CompletionCosts::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Derivation\DerivationNode::class)]
 final class LexicalGrammarTest extends TestCase
 {
     #[DataProvider('providerDialectLexicalGrammar')]

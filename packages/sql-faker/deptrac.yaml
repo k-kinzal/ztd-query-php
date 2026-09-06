@@ -19,6 +19,10 @@ deptrac:
       collectors:
         - type: directory
           value: src/Grammar/.*
+    - name: Coverage
+      collectors:
+        - type: directory
+          value: src/Coverage/.*
     - name: Compiler
       collectors:
         - type: directory
@@ -40,9 +44,10 @@ deptrac:
         - type: classLike
           value: ^Faker\\.*
   ruleset:
-    Provider: [Generation, Grammar, MySql, PostgreSql, Sqlite, Faker]
-    Generation: [Grammar, Faker]
-    Grammar: [Faker]
+    Provider: [Generation, Grammar, Coverage, MySql, PostgreSql, Sqlite, Faker]
+    Generation: [Grammar, Coverage, Faker]
+    Grammar: [Coverage, Faker]
+    Coverage: [Grammar]
     Compiler: [Grammar]
     MySql: [Grammar, Faker]
     PostgreSql: [Grammar, Faker]

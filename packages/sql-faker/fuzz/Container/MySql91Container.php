@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Fuzz\Container;
+namespace SqlFaker\Fuzz\Container;
 
 use Override;
 use Testcontainers\Containers\GenericContainer\GenericContainer;
@@ -13,8 +13,8 @@ use Testcontainers\Containers\WaitStrategy\PDO\PDOConnectWaitStrategy;
  * Testcontainers definition for the MySQL 9.1.0 server the fuzzer runs against.
  *
  * The image tag is pinned so that a finding always reproduces against the
- * same server build, and the container is reused across runs to keep
- * start-up cost off every fuzzing iteration.
+ * same server build, and each run receives a disposable container. The same server
+ * is used by every input within that run.
  */
 final class MySql91Container extends GenericContainer
 {
@@ -26,7 +26,7 @@ final class MySql91Container extends GenericContainer
     /**
      * @var null|string
      */
-    protected static $REUSE_MODE = 'reuse';
+    protected static $REUSE_MODE = 'add';
 
     /**
      * @var array<int>|null
@@ -38,6 +38,7 @@ final class MySql91Container extends GenericContainer
      */
     protected static $ENVIRONMENTS = [
         'MYSQL_ROOT_PASSWORD' => 'root',
+        'MYSQL_ROOT_HOST' => '%',
     ];
 
     /**

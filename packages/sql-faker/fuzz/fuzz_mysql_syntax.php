@@ -7,9 +7,9 @@
  *   MYSQL_VERSION=8.0.44 vendor/bin/php-fuzzer fuzz fuzz/fuzz_mysql_syntax.php fuzz/corpus/mysql/
  *
  * Environment variables:
- *   MYSQL_VERSION - MySQL version to test (default: 8.0.44)
+ *   MYSQL_VERSION - MySQL version to test (default: 8.4.7)
  *                   Supported: 5.6.51, 5.7.44, 8.0.44, 8.1.0, 8.2.0, 8.3.0, 8.4.7, 9.0.1, 9.1.0
- *   MAX_DEPTH     - Grammar expansion max depth (default: 8)
+ *   FUZZ_MAX_EXPANSIONS - Total grammar expansion budget (default: 5000)
  */
 
 declare(strict_types=1);
@@ -26,20 +26,21 @@ register_shutdown_function(static function (): void {
     }
 });
 
-use Fuzz\Container\MySql56Container;
-use Fuzz\Container\MySql57Container;
-use Fuzz\Container\MySql80Container;
-use Fuzz\Container\MySql81Container;
-use Fuzz\Container\MySql82Container;
-use Fuzz\Container\MySql83Container;
-use Fuzz\Container\MySql84Container;
-use Fuzz\Container\MySql90Container;
-use Fuzz\Container\MySql91Container;
-use Fuzz\Target\MySqlSyntaxTarget;
+use SqlFaker\Fuzz\Container\MySql56Container;
+use SqlFaker\Fuzz\Container\MySql57Container;
+use SqlFaker\Fuzz\Container\MySql80Container;
+use SqlFaker\Fuzz\Container\MySql81Container;
+use SqlFaker\Fuzz\Container\MySql82Container;
+use SqlFaker\Fuzz\Container\MySql83Container;
+use SqlFaker\Fuzz\Container\MySql84Container;
+use SqlFaker\Fuzz\Container\MySql90Container;
+use SqlFaker\Fuzz\Container\MySql91Container;
+use SqlFaker\Fuzz\Run\FuzzRegistration;
+use SqlFaker\Fuzz\Run\FuzzSetup;
+use SqlFaker\Fuzz\Target\MySqlSyntaxCheck;
 use Testcontainers\Testcontainers;
 
-$mysqlVersion = getenv('MYSQL_VERSION') !== false ? getenv('MYSQL_VERSION') : '8.0.44';
-$maxDepth = (int) (getenv('MAX_DEPTH') !== false ? getenv('MAX_DEPTH') : 8);
+$mysqlVersion = getenv('MYSQL_VERSION') !== false ? getenv('MYSQL_VERSION') : '8.4.7';
 
 $containerMap = [
     '5.6.51' => [MySql56Container::class, 'mysql-5.6.51'],
@@ -74,17 +75,15 @@ $pdo = new PDO(
     'root',
     [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        // Required to detect syntax errors at prepare() time.
         PDO::ATTR_EMULATE_PREPARES => false,
     ]
 );
 
-fwrite(STDERR, "MySQL $mysqlVersion ready on $host:$port\n");
-fwrite(STDERR, "Grammar version: $grammarVersion\n");
-fwrite(STDERR, "Max depth: $maxDepth\n");
-fwrite(STDERR, "Starting fuzzer...\n\n");
-
-$target = new MySqlSyntaxTarget($pdo, $grammarVersion, $maxDepth);
-
-/** @var PhpFuzzer\Config $config */
-$config->setTarget(Closure::fromCallable($target));
+$setup = new FuzzSetup('mysql', $grammarVersion);
+$check = new MySqlSyntaxCheck($pdo, $grammarVersion);
+$attribute = $pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
+$databaseVersion = is_string($attribute) ? $attribute : 'unknown';
+/**
+ * @var PhpFuzzer\Config $config
+ */
+FuzzRegistration::register($config, $setup, $check->verify(...), $databaseVersion);

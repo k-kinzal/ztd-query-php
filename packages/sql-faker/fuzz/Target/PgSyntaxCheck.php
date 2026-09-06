@@ -2,145 +2,75 @@
 
 declare(strict_types=1);
 
-namespace Fuzz\Target;
+namespace SqlFaker\Fuzz\Target;
 
-use Error;
-use PDO;
-use PDOException;
+use PgSql\Connection;
 
 /**
- * Executes generated SQL against PostgreSQL and reports unexpected rejections.
+ * Sends only Parse and Sync to PostgreSQL; generated SQL is never executed.
  *
- * PostgreSQL defers preparation, so PDO::prepare() accepts syntax the server
- * would still refuse. The statement therefore has to be executed, and each run
- * is wrapped in a savepoint so a rejected statement does not poison the
- * surrounding transaction. A fuzz run has no schema, so the grammar
- * legitimately produces statements that reference missing objects; those
- * SQLSTATEs are tolerated. Any other rejection means the grammar emitted
- * something PostgreSQL cannot parse, which is a finding and surfaces as an
- * Error for php-fuzzer to record.
+ * The unnamed prepared statement is replaced for each input. There is no
+ * transaction, savepoint or SQL session state carried between cases.
  */
 final class PgSyntaxCheck
 {
     /**
-     * @param PDO $pdo Connection to the PostgreSQL instance under test, with a transaction already open
-     * @param PgBracketIndirection $bracketIndirection Recognises the dialect's bracketed-indirection syntax error
+     * Binds one fixed disposable PostgreSQL instance for the entire run.
      */
-    public function __construct(
-        private readonly PDO $pdo,
-        private readonly PgBracketIndirection $bracketIndirection,
-    ) {
+    public function __construct(private readonly Connection $connection)
+    {
     }
 
     /**
-     * Verifies that PostgreSQL accepts the generated statement.
+     * Verifies original SQL using the server's extended query protocol.
      *
-     * @param string $sql Statement produced by the grammar
-     * @param int $seed Seed that produced the statement, so a finding can be replayed
-     *
-     * @throws Error When PostgreSQL rejects the statement for a reason the grammar should not produce
+     * @throws InfrastructureFailure When the connection cannot complete Parse
+     * @throws SyntaxFailure When syntax or an unclassified server rejection is observed
      */
-    public function verify(string $sql, int $seed): void
+    public function verify(string $sql, string $input): VerificationResult
     {
-        try {
-            $this->pdo->exec('SAVEPOINT fuzz_check');
-            $this->pdo->exec($sql);
-            $this->pdo->exec('RELEASE SAVEPOINT fuzz_check');
-        } catch (PDOException $rejection) {
-            $this->rollBack();
-
-            $sqlState = is_string($rejection->errorInfo[0] ?? null) ? $rejection->errorInfo[0] : '';
-
-            // A schema-less fuzz run cannot satisfy name lookups, so those SQLSTATEs are expected.
-            $acceptable = match ($sqlState) {
-                // SQLSTATE 42704: Undefined object
-                '42704' => true,
-                // SQLSTATE 42P01: Undefined table
-                '42P01' => true,
-                // SQLSTATE 42703: Undefined column
-                '42703' => true,
-                // SQLSTATE 3F000: Invalid schema name
-                '3F000' => true,
-                // SQLSTATE 0A000: Feature not supported
-                '0A000' => true,
-                // SQLSTATE 42809: Wrong object type
-                '42809' => true,
-                // SQLSTATE 25001: Active sql transaction
-                '25001' => true,
-                // SQLSTATE 22023: Invalid parameter value
-                '22023' => true,
-                // SQLSTATE 26000: Invalid sql statement name
-                '26000' => true,
-                // SQLSTATE 2BP01: Dependent objects still exist
-                '2BP01' => true,
-                // SQLSTATE 42602: Invalid name
-                '42602' => true,
-                // SQLSTATE 42883: Undefined function
-                '42883' => true,
-                // SQLSTATE 42939: Reserved name
-                '42939' => true,
-                // SQLSTATE 42P07: Duplicate table
-                '42P07' => true,
-                // SQLSTATE 42P10: Invalid column reference
-                '42P10' => true,
-                // SQLSTATE 58P01: Undefined file
-                '58P01' => true,
-                // SQLSTATE 42P13: Invalid function definition
-                '42P13' => true,
-                // SQLSTATE 3D000: Invalid catalog name
-                '3D000' => true,
-                // SQLSTATE 42P03: Duplicate cursor
-                '42P03' => true,
-                // SQLSTATE 22P02: Invalid text representation
-                '22P02' => true,
-                // SQLSTATE 25P01: No active sql transaction
-                '25P01' => true,
-                // SQLSTATE 42601: Syntax error (bracket indirection)
-                '42601' => $this->bracketIndirection->explains($sql, $rejection->getMessage()),
-                default => false,
-            };
-
-            if ($acceptable) {
-                return;
-            }
-
-            throw new Error(
-                "Unexpected error in generated SQL\n" .
-                "Seed: $seed\n" .
-                "SQL: $sql\n" .
-                "SQLSTATE: $sqlState\n" .
-                "Error: {$rejection->getMessage()}",
-                0,
-                $rejection
-            );
+        if ($sql === '') {
+            throw new SyntaxFailure('Statement generation returned an empty string.');
         }
+        if (pg_connection_status($this->connection) !== PGSQL_CONNECTION_OK
+            || pg_send_prepare($this->connection, '', $sql) === false) {
+            throw new InfrastructureFailure('PostgreSQL Parse connection is unavailable.');
+        }
+        $result = pg_get_result($this->connection);
+        if ($result === false) {
+            throw new InfrastructureFailure('PostgreSQL Parse returned no result.');
+        }
+        $state = pg_result_error_field($result, PGSQL_DIAG_SQLSTATE);
+        $error = pg_result_error($result);
+        $message = is_string($error) ? $error : 'No server error text.';
+        $status = pg_result_status($result);
+        pg_free_result($result);
+        while (($extra = pg_get_result($this->connection)) !== false) {
+            pg_free_result($extra);
+        }
+        if ($status === PGSQL_COMMAND_OK) {
+            return VerificationResult::Accepted;
+        }
+        if (!is_string($state) || str_starts_with($state, '08') || in_array($state, ['57P01', '57P02', '57P03'], true)) {
+            throw new InfrastructureFailure('PostgreSQL Parse failed: ' . $message);
+        }
+        return self::rejection($state, $message, $sql, $input);
     }
 
     /**
-     * Returns the connection to a state where the next statement can be checked.
+     * Classifies server rejections without treating syntax errors as expected state.
      *
-     * Rolling back to the savepoint is enough for an ordinary rejection. When
-     * the savepoint itself is gone the whole transaction is unusable, so it is
-     * discarded and a fresh one is opened instead.
+     * @throws SyntaxFailure When syntax or an unclassified rejection is observed
      */
-    public function rollBack(): void
+    public static function rejection(string $state, string $message, string $sql, string $input): VerificationResult
     {
-        try {
-            $this->pdo->exec('ROLLBACK TO SAVEPOINT fuzz_check');
-
-            return;
-        } catch (PDOException $savepointLoss) {
-            // The savepoint did not survive the rejection, so the transaction is replaced below.
-            fwrite(STDERR, "Savepoint rollback failed: {$savepointLoss->getMessage()}\n");
+        if (in_array($state, ['42704', '42P01', '42703', '3F000', '42809', '22023', '26000',
+            '2BP01', '42602', '42883', '42939', '42P07', '42P10', '3D000', '42P03', '22P02'], true)) {
+            return VerificationResult::Rejected;
         }
-
-        try {
-            $this->pdo->exec('ROLLBACK');
-        } catch (PDOException $rollbackFailure) {
-            // No transaction was open, which the BEGIN below settles on its own.
-            fwrite(STDERR, "Transaction rollback failed: {$rollbackFailure->getMessage()}\n");
+        if ($state === '0A000') {
+            return VerificationResult::Incomplete;
         }
-
-        $this->pdo->exec('BEGIN');
+        throw new SyntaxFailure("PostgreSQL syntax verification failed\nInput (hex): $input\nSQL: $sql\nSQLSTATE: $state\n$message");
     }
 }

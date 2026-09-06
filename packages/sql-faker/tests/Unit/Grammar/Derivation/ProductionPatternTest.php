@@ -9,6 +9,9 @@ use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Derivation\ProductionPattern;
 
 #[CoversClass(ProductionPattern::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Choice\ChoiceSource::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Derivation\CompletionCosts::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Derivation\DerivationNode::class)]
 final class ProductionPatternTest extends TestCase
 {
     public function testContainingRequiresEveryNamedSymbol(): void

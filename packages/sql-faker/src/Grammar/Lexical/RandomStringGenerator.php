@@ -7,6 +7,7 @@ namespace SqlFaker\Grammar\Lexical;
 use Faker\Generator as FakerGenerator;
 use InvalidArgumentException;
 use LogicException;
+use SqlFaker\Grammar\Choice\ChoiceSource;
 
 /**
  * Generates random strings for SQL token production.
@@ -26,14 +27,14 @@ final class RandomStringGenerator
     private const DIGIT_CHARS = '0123456789';
     private const BINARY_CHARS = '01';
 
-    private FakerGenerator $faker;
+    private FakerGenerator|ChoiceSource $faker;
 
     private RandomCharacters $characters;
 
     /**
-     * @param FakerGenerator $faker Source of every choice the generated strings make
+     * @param FakerGenerator|ChoiceSource $faker Source of every choice the generated strings make
      */
-    public function __construct(FakerGenerator $faker)
+    public function __construct(FakerGenerator|ChoiceSource $faker)
     {
         $this->faker = $faker;
         $this->characters = new RandomCharacters($faker);

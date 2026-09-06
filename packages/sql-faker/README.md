@@ -163,6 +163,13 @@ $faker->seed(12345);
 $sql = $faker->selectStatement(maxDepth: 6);
 ```
 
+## Fuzzing and grammar coverage
+
+All three database providers support reproducible byte-driven generation plans
+and optional grammar coverage with separate reached and emitted measurements.
+See the [fuzzing guide](fuzz/README.md) for corpus preparation, failure replay,
+coverage persistence, database verification limits, and scheduled CI runs.
+
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.

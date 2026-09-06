@@ -7,7 +7,7 @@
  *   vendor/bin/php-fuzzer fuzz fuzz/fuzz_pg_syntax.php fuzz/corpus/pg/
  *
  * Environment variables:
- *   MAX_DEPTH - Grammar expansion max depth (default: 8)
+ *   FUZZ_MAX_EXPANSIONS - Total grammar expansion budget (default: 5000)
  */
 
 declare(strict_types=1);
@@ -24,11 +24,11 @@ register_shutdown_function(static function (): void {
     }
 });
 
-use Fuzz\Container\PostgreSqlContainer;
-use Fuzz\Target\PgSyntaxTarget;
+use SqlFaker\Fuzz\Container\PostgreSqlContainer;
+use SqlFaker\Fuzz\Run\FuzzRegistration;
+use SqlFaker\Fuzz\Run\FuzzSetup;
+use SqlFaker\Fuzz\Target\PgSyntaxCheck;
 use Testcontainers\Testcontainers;
-
-$maxDepth = (int) (getenv('MAX_DEPTH') !== false ? getenv('MAX_DEPTH') : 8);
 
 fwrite(STDERR, "Starting PostgreSQL container...\n");
 
@@ -37,22 +37,13 @@ $instance = Testcontainers::run(PostgreSqlContainer::class);
 $port = $instance->getMappedPort(5432);
 $host = str_replace('localhost', '127.0.0.1', $instance->getHost());
 
-$pdo = new PDO(
-    "pgsql:host=$host;port=$port;dbname=fuzz_test",
-    'test',
-    'test',
-    [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_EMULATE_PREPARES => false,
-    ]
-);
-
-fwrite(STDERR, "PostgreSQL ready on $host:$port\n");
-fwrite(STDERR, "Max depth: $maxDepth\n");
-fwrite(STDERR, "Starting fuzzer...\n\n");
-
-$target = new PgSyntaxTarget($pdo, $maxDepth);
-
-/** @var PhpFuzzer\Config $config */
-$config->setAllowedExceptions([]);
-$config->setTarget(Closure::fromCallable($target));
+$connection = pg_connect("host=$host port=$port dbname=fuzz_test user=test password=test");
+if ($connection === false) {
+    throw new SqlFaker\Fuzz\Target\InfrastructureFailure('Cannot connect to the fixed PostgreSQL instance.');
+}
+$setup = new FuzzSetup('pg', 'pg-17.2');
+$check = new PgSyntaxCheck($connection);
+/**
+ * @var PhpFuzzer\Config $config
+ */
+FuzzRegistration::register($config, $setup, $check->verify(...), (string) (pg_version($connection)['server'] ?? 'unknown'));

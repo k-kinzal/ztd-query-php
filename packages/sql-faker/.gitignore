@@ -6,3 +6,8 @@
 .php-cs-fixer.cache
 composer.lock
 .deptrac.cache
+/fuzz/corpus/
+/fuzz/coverage/
+/fuzz/seeds/generated/
+/crash-*
+/minimized-*
