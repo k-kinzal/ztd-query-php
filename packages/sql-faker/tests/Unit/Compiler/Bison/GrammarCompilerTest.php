@@ -594,4 +594,15 @@ final class GrammarCompilerTest extends TestCase
 
         $compiler->compile($ast);
     }
+
+    public function testDeclarationsIndexesTokensAndIgnoresStartDeclarations(): void
+    {
+        $token = new BisonTokenDefinition('SELECT', 10, 'select');
+        $ast = new BisonAst('stmt', null, [
+            new BisonStartDeclaration('stmt'),
+            new BisonTokenDeclaration(null, [$token]),
+        ], [], null);
+
+        self::assertSame(['SELECT' => $token], (new GrammarCompiler())->declarations($ast));
+    }
 }

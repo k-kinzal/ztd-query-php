@@ -67,6 +67,7 @@ use SqlFaker\SqliteProvider;
 #[UsesClass(LexicalGrammar::class)]
 #[UsesClass(\SqlFaker\Sqlite\SqliteTerminalRealizer::class)]
 #[UsesClass(\SqlFaker\Sqlite\SqliteTokenizer::class)]
+#[UsesClass(\SqlFaker\Provider\SqlGeneratorFactory::class)]
 final class GenerationContextTest extends TestCase
 {
     #[Override]

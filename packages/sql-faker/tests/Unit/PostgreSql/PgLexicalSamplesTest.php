@@ -113,4 +113,15 @@ final class PgLexicalSamplesTest extends TestCase
             (new PgLexicalSamples())->all(),
         );
     }
+
+    public function testRuleWitnessesMapsSuccessfulRulesAndOmitsErrorOnlyRules(): void
+    {
+        $rules = (new PgLexicalSamples())->ruleWitnesses();
+
+        self::assertSame('postgresql.lookahead.FORMAT_LA', $rules[1]);
+        self::assertSame('postgresql.coverage.numeric-range', $rules[65]);
+        self::assertSame('postgresql.coverage.other-character', $rules[72]);
+        self::assertArrayNotHasKey(25, $rules);
+        self::assertArrayNotHasKey(70, $rules);
+    }
 }

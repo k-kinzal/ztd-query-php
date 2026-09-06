@@ -18,6 +18,9 @@ use SqlFaker\MySql\LexicalSourceParser as MySqlSourceParser;
  * state header, and where the last of those lives moved twice across the
  * supported releases — so the profile is bound to one exact version and records
  * the hash of every file it was built from.
+ *
+ * @phpstan-type Witness array{id: string, sql: string, tokens: list<string>, units: list<string>, context_sql?: string}
+ * @phpstan-type Terminals array<string, list<Witness>>
  */
 final class MySqlProfileBuilder
 {
@@ -113,6 +116,61 @@ final class MySqlProfileBuilder
         $functions = $profile['functions'];
         /** @var array{dollar_quoted_strings: bool} $features */
         $features = $profile['features'];
+        $terminals = $this->keywordWitnesses($symbols, $functions);
+        $samples = $this->lexicalSamples($states, $features['dollar_quoted_strings']);
+        $this->addLexicalWitnesses($terminals, $samples);
+
+        $versionedParserTokens = $this->addParserWitnesses($terminals, $version, $grammar);
+
+        $coverage = $this->coverage($terminals, $states, $versionedParserTokens);
+
+        $terminalExclusions = [
+            'NOT2_SYM' => 'Default sql_mode emits NOT_SYM; NOT2_SYM requires HIGH_NOT_PRECEDENCE.',
+            'OR_OR_SYM' => 'Default sql_mode normalizes double-pipe to OR2_SYM; OR_OR_SYM requires PIPES_AS_CONCAT.',
+            'UDF_RETURNS_SYM' => 'The token is declared by legacy grammars but has no mapping in the official lexer table.',
+        ];
+        ksort($terminals);
+
+        return [
+            'source' => [
+                'engine' => 'mysql',
+                'entrypoint' => 'my_sql_parser_lex',
+            ],
+            'terminals' => $terminals,
+            'terminal_exclusions' => $terminalExclusions,
+            'coverage' => $coverage,
+        ];
+    }
+
+    /**
+     * @param list<string> $tokens
+     * @param list<string> $units
+     * @return array{id: string, sql: string, tokens: list<string>, units: list<string>, context_sql?: string}
+     */
+    public function witness(
+        string $id,
+        string $sql,
+        array $tokens,
+        array $units,
+        ?string $contextSql = null,
+    ): array {
+        $witness = ['id' => $id, 'sql' => $sql, 'tokens' => $tokens, 'units' => $units];
+        if ($contextSql !== null) {
+            $witness['context_sql'] = $contextSql;
+        }
+
+        return $witness;
+    }
+
+    /**
+     * Builds witnesses for the keyword and function tables.
+     *
+     * @param array<string, list<string>> $symbols
+     * @param array<string, list<string>> $functions
+     * @return Terminals
+     */
+    public function keywordWitnesses(array $symbols, array $functions): array
+    {
         $terminals = [];
         foreach ($symbols as $terminal => $lexemes) {
             if (in_array($terminal, ['NOT2_SYM', 'OR_OR_SYM'], true)) {
@@ -139,12 +197,25 @@ final class MySqlProfileBuilder
             }
         }
 
+        return $terminals;
+    }
+
+    /**
+     * Adds witnesses for lexical states available in this server version.
+     *
+     * @param list<string> $states
+     * @return array<string, list<array{string, list<string>, list<string>, 3?: string}>>
+     *
+     * @throws RuntimeException When dollar quoting has no source state
+     */
+    public function lexicalSamples(array $states, bool $dollarQuotedStrings): array
+    {
         $samples = (new MySqlLexicalSamples())->all();
         $dollarState = current(array_values(array_filter(
             $states,
             static fn (string $state): bool => str_starts_with($state, 'MY_LEX_IDENT_OR_DOLLAR'),
         )));
-        if ($features['dollar_quoted_strings']) {
+        if ($dollarQuotedStrings) {
             if (!is_string($dollarState)) {
                 throw new RuntimeException('MySQL dollar-quoted string state was not found.');
             }
@@ -170,6 +241,17 @@ final class MySqlProfileBuilder
         $samples['@COVERAGE'][] = ["@'name'", ['@', 'IDENT_QUOTED'], ['MY_LEX_USER_END', 'MY_LEX_USER_VARIABLE_DELIMITER']];
         $samples['@COVERAGE'][] = ['@@name', ['@', '@', 'IDENT'], ['MY_LEX_USER_END', 'MY_LEX_SYSTEM_VAR', 'MY_LEX_IDENT_OR_KEYWORD']];
 
+        return $samples;
+    }
+
+    /**
+     * Adds lexical families and punctuation absent from the keyword table.
+     *
+     * @param Terminals $terminals
+     * @param array<string, list<array{string, list<string>, list<string>, 3?: string}>> $samples
+     */
+    public function addLexicalWitnesses(array &$terminals, array $samples): void
+    {
         foreach ($samples as $terminal => $witnesses) {
             foreach ($witnesses as $index => $sample) {
                 [$sql, $tokens, $units] = $sample;
@@ -194,7 +276,16 @@ final class MySqlProfileBuilder
                 );
             }
         }
+    }
 
+    /**
+     * Adds grammar entry tokens and version-specific parser spellings.
+     *
+     * @param Terminals $terminals
+     * @return list<string>
+     */
+    public function addParserWitnesses(array &$terminals, string $version, Grammar $grammar): array
+    {
         $versionedParserTokens = ['END_OF_INPUT'];
         foreach (\SqlFaker\Grammar\Lexical\TerminalInventory::fromGrammar($grammar) as $terminal) {
             if (str_starts_with($terminal, 'GRAMMAR_SELECTOR_')) {
@@ -219,6 +310,21 @@ final class MySqlProfileBuilder
             );
         }
 
+        return $versionedParserTokens;
+    }
+
+    /**
+     * Verifies every lexer state and parser entry has a witness.
+     *
+     * @param Terminals $terminals
+     * @param list<string> $states
+     * @param list<string> $versionedParserTokens
+     * @return array{units: list<string>, witnessed: array<string, string>, excluded: array<string, string>}
+     *
+     * @throws RuntimeException When a source state lacks coverage
+     */
+    public function coverage(array &$terminals, array $states, array $versionedParserTokens): array
+    {
         $coverageUnits = $states;
         foreach ($versionedParserTokens as $terminal) {
             $coverageUnits[] = 'parser-entry:' . $terminal;
@@ -259,46 +365,8 @@ final class MySqlProfileBuilder
             throw new RuntimeException('MySQL source model misses lexical states: ' . implode(', ', $missingCoverage));
         }
 
-        $terminalExclusions = [
-            'NOT2_SYM' => 'Default sql_mode emits NOT_SYM; NOT2_SYM requires HIGH_NOT_PRECEDENCE.',
-            'OR_OR_SYM' => 'Default sql_mode normalizes double-pipe to OR2_SYM; OR_OR_SYM requires PIPES_AS_CONCAT.',
-            'UDF_RETURNS_SYM' => 'The token is declared by legacy grammars but has no mapping in the official lexer table.',
-        ];
-        ksort($terminals);
         ksort($coverageWitnessed);
 
-        return [
-            'source' => [
-                'engine' => 'mysql',
-                'entrypoint' => 'my_sql_parser_lex',
-            ],
-            'terminals' => $terminals,
-            'terminal_exclusions' => $terminalExclusions,
-            'coverage' => [
-                'units' => $coverageUnits,
-                'witnessed' => $coverageWitnessed,
-                'excluded' => $coverageExcluded,
-            ],
-        ];
-    }
-
-    /**
-     * @param list<string> $tokens
-     * @param list<string> $units
-     * @return array{id: string, sql: string, tokens: list<string>, units: list<string>, context_sql?: string}
-     */
-    public function witness(
-        string $id,
-        string $sql,
-        array $tokens,
-        array $units,
-        ?string $contextSql = null,
-    ): array {
-        $witness = ['id' => $id, 'sql' => $sql, 'tokens' => $tokens, 'units' => $units];
-        if ($contextSql !== null) {
-            $witness['context_sql'] = $contextSql;
-        }
-
-        return $witness;
+        return ['units' => $coverageUnits, 'witnessed' => $coverageWitnessed, 'excluded' => $coverageExcluded];
     }
 }

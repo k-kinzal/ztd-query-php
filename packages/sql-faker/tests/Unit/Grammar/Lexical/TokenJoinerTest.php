@@ -311,4 +311,13 @@ final class TokenJoinerTest extends TestCase
     {
         self::assertFalse(TokenJoiner::matchesNoSpacePair([['(', 'SELECT']], 'SELECT', 'FROM'));
     }
+
+    public function testNeedsSpaceSeparatesWordsAndPreservesCompactBoundaries(): void
+    {
+        self::assertTrue(TokenJoiner::needsSpace('SELECT', 'name', []));
+        self::assertFalse(TokenJoiner::needsSpace('fn', '(', []));
+        self::assertFalse(TokenJoiner::needsSpace('name', '.', []));
+        self::assertFalse(TokenJoiner::needsSpace('@', 'name', [['@', '*']]));
+        self::assertTrue(TokenJoiner::needsSpace('name', '@', [['@', '*']]));
+    }
 }

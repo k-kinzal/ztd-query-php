@@ -47,19 +47,7 @@ final class TokenJoiner
                 continue;
             }
 
-            $needsSpace = true;
-
-            if ($token === '(' && self::isIdentifier($prev)) {
-                $needsSpace = false;
-            } elseif ($token === ')' || $prev === '(' || $token === ',' || $token === ';') {
-                $needsSpace = false;
-            } elseif ($prev === '.' || $token === '.') {
-                $needsSpace = false;
-            } elseif ($prev === '[' || $token === ']') {
-                $needsSpace = false;
-            } elseif (self::matchesNoSpacePair($noSpacePairs, $prev, $token)) {
-                $needsSpace = false;
-            }
+            $needsSpace = self::needsSpace($prev, $token, $noSpacePairs);
 
             if ($needsSpace) {
                 $out .= $separator !== null ? $separator() : ' ';
@@ -130,5 +118,29 @@ final class TokenJoiner
         $first = $token[0];
 
         return ($first === '"' || $first === '`') && $token[$len - 1] === $first;
+    }
+
+    /**
+     * Decides whether a token boundary requires separating trivia.
+     *
+     * @param list<list<string>> $noSpacePairs Dialect-specific compact boundaries
+     */
+    public static function needsSpace(string $prev, string $token, array $noSpacePairs): bool
+    {
+        $needsSpace = true;
+
+        if ($token === '(' && self::isIdentifier($prev)) {
+            $needsSpace = false;
+        } elseif ($token === ')' || $prev === '(' || $token === ',' || $token === ';') {
+            $needsSpace = false;
+        } elseif ($prev === '.' || $token === '.') {
+            $needsSpace = false;
+        } elseif ($prev === '[' || $token === ']') {
+            $needsSpace = false;
+        } elseif (self::matchesNoSpacePair($noSpacePairs, $prev, $token)) {
+            $needsSpace = false;
+        }
+
+        return $needsSpace;
     }
 }

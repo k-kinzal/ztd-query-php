@@ -7,7 +7,7 @@ namespace SqlFaker;
 use Faker\Generator;
 use Faker\Provider\Base;
 use SqlFaker\Generation\SqlGenerator;
-use SqlFaker\Sqlite\GenerationContext;
+use SqlFaker\Provider\SqlGeneratorFactory;
 use SqlFaker\Sqlite\GenerationPlans;
 use SqlFaker\Sqlite\Grammar\SqliteGrammar;
 use SqlFaker\Sqlite\StatementType;
@@ -43,16 +43,8 @@ final class SqliteProvider extends Base
         parent::__construct($generator);
 
         $generator->addProvider($this);
-
         $resolvedVersion = SqliteGrammar::resolveVersion($version);
-        $context = new GenerationContext(SqliteGrammar::load($resolvedVersion), $generator, $resolvedVersion);
-        $this->sql = new SqlGenerator(
-            $context->grammar,
-            $generator,
-            $context->lexicalGrammar,
-            $context->normalize,
-            $context->startSymbol,
-        );
+        $this->sql = SqlGeneratorFactory::forSqlite($generator, SqliteGrammar::load($resolvedVersion), $resolvedVersion);
     }
 
     /**
@@ -64,14 +56,7 @@ final class SqliteProvider extends Base
      */
     public function sql(?StatementType $type = null, int $maxDepth = PHP_INT_MAX): string
     {
-        if ($type === null) {
-            /**
-             * @var StatementType $type
-             */
-            $type = $this->generator->randomElement(StatementType::cases());
-        }
-
-        return $this->sql->generate(GenerationPlans::statement($type->value, $maxDepth));
+        return $this->sql->generate(GenerationPlans::statementOfType($this->generator, $type, $maxDepth));
     }
 
     /**

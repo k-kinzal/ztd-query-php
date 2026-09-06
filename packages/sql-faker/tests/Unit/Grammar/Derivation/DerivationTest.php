@@ -216,4 +216,24 @@ final class DerivationTest extends TestCase
             $production,
         ], new Production([])));
     }
+
+    public function testAlternativesRespectsTheOccurrenceAndRejectsUnrealizableProductions(): void
+    {
+        $first = new Production([new Terminal('SELECT')]);
+        $second = new Production([new Terminal('DELETE')]);
+        $grammar = new Grammar('stmt', [
+            'stmt' => new ProductionRule('stmt', [$first, $second, new Production([new Terminal('UNKNOWN')])]),
+        ]);
+        $derivation = new Derivation($grammar, Factory::create(), new TerminationAnalyzer(
+            $grammar,
+            static fn (string $terminal): bool => $terminal !== 'UNKNOWN',
+        ));
+        $plan = GenerationPlan::constrained('stmt', [
+            'stmt' => [ProductionPattern::containing('SELECT'), ProductionPattern::containing('DELETE')],
+        ]);
+
+        self::assertSame([$first], $derivation->alternatives(new NonTerminal('stmt'), $plan, 0));
+        self::assertSame([$second], $derivation->alternatives(new NonTerminal('stmt'), $plan, 1));
+        self::assertSame([$first, $second], $derivation->alternatives(new NonTerminal('stmt'), GenerationPlan::all(), 0));
+    }
 }

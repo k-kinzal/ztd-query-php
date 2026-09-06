@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlFaker\PostgreSql;
 
+use Faker\Generator;
 use SqlFaker\Grammar\Derivation\GenerationPlan;
 use SqlFaker\Grammar\Derivation\ProductionPattern;
 
@@ -336,5 +337,20 @@ final class GenerationPlans
             'ConstraintElem' => [ProductionPattern::containing('FOREIGN', 'KEY')],
             'opt_column_list' => [ProductionPattern::nonEmpty()],
         ])->requiringNonEmpty();
+    }
+
+    /**
+     * Selects a statement type when omitted and bounds its generation plan.
+     *
+     * @return GenerationPlan<true>
+     */
+    public static function statementOfType(Generator $faker, ?StatementType $type, int $maxDepth): GenerationPlan
+    {
+        if ($type === null) {
+            /** @var StatementType $type */
+            $type = $faker->randomElement(StatementType::cases());
+        }
+
+        return GenerationPlan::statement($type->value, $maxDepth);
     }
 }

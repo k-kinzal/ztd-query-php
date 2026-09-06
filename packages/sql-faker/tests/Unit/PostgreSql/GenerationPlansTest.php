@@ -317,4 +317,31 @@ final class GenerationPlansTest extends TestCase
         self::assertSame('parameter_marker', $plan->lexicalTarget());
         self::assertSame(['min' => 1, 'max' => 2], $plan->parameters());
     }
+
+    public function testStatementOfTypePreservesAnExplicitTypeWithoutConsumingRandomness(): void
+    {
+        $faker = \Faker\Factory::create();
+        $faker->seed(17);
+        $plan = GenerationPlans::statementOfType($faker, \SqlFaker\PostgreSql\StatementType::Select, 6);
+        $next = $faker->randomNumber();
+        $faker->seed(17);
+
+        self::assertSame($faker->randomNumber(), $next);
+        self::assertSame(\SqlFaker\PostgreSql\StatementType::Select->value, $plan->startRule());
+        self::assertSame(6, $plan->maxDepth());
+        self::assertSame(false, $plan->usesStepBudget());
+    }
+
+    public function testStatementOfTypeUsesTheSeededFakerChoiceWhenNoTypeIsSpecified(): void
+    {
+        $faker = \Faker\Factory::create();
+        $faker->seed(17);
+        $plan = GenerationPlans::statementOfType($faker, null, 8);
+        $faker->seed(17);
+        /** @var \SqlFaker\PostgreSql\StatementType $expected */
+        $expected = $faker->randomElement(\SqlFaker\PostgreSql\StatementType::cases());
+
+        self::assertSame($expected->value, $plan->startRule());
+        self::assertSame(8, $plan->maxDepth());
+    }
 }

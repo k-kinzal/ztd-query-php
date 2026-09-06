@@ -53,6 +53,7 @@ use UnexpectedValueException;
 #[UsesClass(TerminalInventory::class)]
 #[UsesClass(GenerationPlans::class)]
 #[Medium]
+#[UsesClass(\SqlFaker\Provider\SqlGeneratorFactory::class)]
 final class SqliteProviderTest extends TestCase
 {
     #[DataProvider('providerTargetedGenerationSeed')]

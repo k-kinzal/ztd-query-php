@@ -194,4 +194,31 @@ final class GenerationPlansTest extends TestCase
         self::assertSame('select_stmt', $plan->startRule());
         self::assertSame(12, $plan->maxDepth());
     }
+
+    public function testStatementOfTypePreservesAnExplicitTypeWithoutConsumingRandomness(): void
+    {
+        $faker = \Faker\Factory::create();
+        $faker->seed(17);
+        $plan = GenerationPlans::statementOfType($faker, \SqlFaker\Sqlite\StatementType::Select, 6);
+        $next = $faker->randomNumber();
+        $faker->seed(17);
+
+        self::assertSame($faker->randomNumber(), $next);
+        self::assertSame(\SqlFaker\Sqlite\StatementType::Select->value, $plan->startRule());
+        self::assertSame(6, $plan->maxDepth());
+        self::assertSame(true, $plan->usesStepBudget());
+    }
+
+    public function testStatementOfTypeUsesTheSeededFakerChoiceWhenNoTypeIsSpecified(): void
+    {
+        $faker = \Faker\Factory::create();
+        $faker->seed(17);
+        $plan = GenerationPlans::statementOfType($faker, null, 8);
+        $faker->seed(17);
+        /** @var \SqlFaker\Sqlite\StatementType $expected */
+        $expected = $faker->randomElement(\SqlFaker\Sqlite\StatementType::cases());
+
+        self::assertSame($expected->value, $plan->startRule());
+        self::assertSame(8, $plan->maxDepth());
+    }
 }

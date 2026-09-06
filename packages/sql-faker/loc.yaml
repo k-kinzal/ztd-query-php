@@ -1,0 +1,59 @@
+# NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
+scan:
+  roots:
+    - src
+  exclude: []
+
+policies:
+  standard:
+    limits:
+      file:
+        lines: 500
+        ncloc: 350
+      class:
+        lines: 400
+      trait:
+        lines: 300
+      interface:
+        lines: 200
+      enum:
+        lines: 200
+      function:
+        lines: 50
+        cyclomatic_complexity: 20
+      method:
+        lines: 50
+        cyclomatic_complexity: 20
+
+  faker-provider:
+    extends: standard
+    limits:
+      file:
+        lines: 800
+      class:
+        lines: 750
+      function:
+        lines: 10
+        cyclomatic_complexity: 1
+      method:
+        lines: 10
+        cyclomatic_complexity: 1
+
+
+apply:
+  default: standard
+  rules:
+    - name: faker-providers
+      match:
+        paths:
+          - src/MySqlProvider.php
+          - src/PostgreSqlProvider.php
+          - src/SqliteProvider.php
+      policy: faker-provider
+
+report:
+  reporter: ai
+  order_by:
+    - path
+    - line
+    - rule

@@ -40,32 +40,7 @@ final class ParserSemantics
     {
         $terminals = $this->truncateQualifiedNames($terminals);
 
-        foreach ($terminals as $index => $terminal) {
-            if ($terminal !== 'SET' || ($terminals[$index + 1] ?? null) !== '(') {
-                continue;
-            }
-            $end = $this->matchingParen($terminals, $index + 1);
-            if ($end === null) {
-                continue;
-            }
-            $depth = 1;
-            for ($cursor = $index + 2; $cursor < $end; $cursor++) {
-                if ($terminals[$cursor] === '(') {
-                    $depth++;
-                } elseif ($terminals[$cursor] === ')') {
-                    $depth--;
-                }
-                if ($depth === 1
-                    && $this->isIdentifierTerminal($terminals[$cursor])
-                    && in_array($terminals[$cursor + 1] ?? null, [',', ')'], true)
-                    && ($terminals[$cursor - 1] ?? null) !== '='
-                ) {
-                    array_splice($terminals, $cursor + 1, 0, ['=', 'NONE']);
-                    $end += 2;
-                    $cursor += 2;
-                }
-            }
-        }
+        $terminals = $this->completeSetOptions($terminals);
 
         foreach ($terminals as $index => $terminal) {
             if ($terminal !== 'OPERATOR' || ($terminals[$index + 1] ?? null) === '(') {
@@ -156,5 +131,43 @@ final class ParserSemantics
     {
         return in_array($terminal, ['IDENT', 'UIDENT'], true)
             || preg_match('/^[a-z_][a-z0-9_]*$/', $terminal) === 1;
+    }
+
+    /**
+     * Supplies NONE for SET options without an explicit value.
+     *
+     * @param list<string> $terminals
+     * @return list<string>
+     */
+    public function completeSetOptions(array $terminals): array
+    {
+        foreach ($terminals as $index => $terminal) {
+            if ($terminal !== 'SET' || ($terminals[$index + 1] ?? null) !== '(') {
+                continue;
+            }
+            $end = $this->matchingParen($terminals, $index + 1);
+            if ($end === null) {
+                continue;
+            }
+            $depth = 1;
+            for ($cursor = $index + 2; $cursor < $end; $cursor++) {
+                if ($terminals[$cursor] === '(') {
+                    $depth++;
+                } elseif ($terminals[$cursor] === ')') {
+                    $depth--;
+                }
+                if ($depth === 1
+                    && $this->isIdentifierTerminal($terminals[$cursor])
+                    && in_array($terminals[$cursor + 1] ?? null, [',', ')'], true)
+                    && ($terminals[$cursor - 1] ?? null) !== '='
+                ) {
+                    array_splice($terminals, $cursor + 1, 0, ['=', 'NONE']);
+                    $end += 2;
+                    $cursor += 2;
+                }
+            }
+        }
+
+        return $terminals;
     }
 }

@@ -49,6 +49,7 @@ use SqlFaker\MySqlProvider;
 #[UsesClass(SqlVersion::class)]
 #[UsesClass(TerminalInventory::class)]
 #[Medium]
+#[UsesClass(\SqlFaker\Provider\SqlGeneratorFactory::class)]
 final class MySqlProviderTest extends TestCase
 {
     #[Override]

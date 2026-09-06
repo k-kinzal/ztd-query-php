@@ -10,7 +10,7 @@ deptrac:
     - name: Provider
       collectors:
         - type: directory
-          value: src/[^/]+Provider\.php$
+          value: src/([^/]+Provider\.php$|Provider/)
     - name: Generation
       collectors:
         - type: directory

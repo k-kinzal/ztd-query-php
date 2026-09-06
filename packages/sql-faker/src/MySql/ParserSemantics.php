@@ -33,6 +33,41 @@ final class ParserSemantics
      */
     public function applied(array $terminals): array
     {
+        $terminals = $this->normalizeStatement($terminals);
+
+        $result = [];
+        foreach ($terminals as $index => $terminal) {
+            $previous = $result[count($result) - 1] ?? null;
+            if ($terminal === 'EQUAL_SYM'
+                && in_array($terminals[$index + 1] ?? null, ['ALL', 'ALL_SYM', 'ANY', 'ANY_SYM', 'SOME', 'SOME_SYM'], true)
+            ) {
+                $terminal = 'EQ';
+            }
+            if (in_array($terminal, ['RELEASE', 'RELEASE_SYM'], true)
+                && in_array($previous, ['CHAIN', 'CHAIN_SYM'], true)
+                && !in_array($result[count($result) - 2] ?? null, ['NO', 'NO_SYM'], true)
+            ) {
+                continue;
+            }
+            if (in_array($terminal, ['DECIMAL_NUM', 'FLOAT_NUM'], true)
+                && ($previous === ':' || in_array($previous, ['SYSTEM', 'SYSTEM_SYM'], true))
+            ) {
+                $terminal = 'NUM';
+            }
+            $result[] = $terminal;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Normalizes user names and ensures ALTER EVENT has an action.
+     *
+     * @param list<string> $terminals
+     * @return list<string>
+     */
+    public function normalizeStatement(array $terminals): array
+    {
         $remove = [];
         foreach ($terminals as $index => $terminal) {
             if ($terminal !== '@') {
@@ -69,28 +104,6 @@ final class ParserSemantics
             }
         }
 
-        $result = [];
-        foreach ($terminals as $index => $terminal) {
-            $previous = $result[count($result) - 1] ?? null;
-            if ($terminal === 'EQUAL_SYM'
-                && in_array($terminals[$index + 1] ?? null, ['ALL', 'ALL_SYM', 'ANY', 'ANY_SYM', 'SOME', 'SOME_SYM'], true)
-            ) {
-                $terminal = 'EQ';
-            }
-            if (in_array($terminal, ['RELEASE', 'RELEASE_SYM'], true)
-                && in_array($previous, ['CHAIN', 'CHAIN_SYM'], true)
-                && !in_array($result[count($result) - 2] ?? null, ['NO', 'NO_SYM'], true)
-            ) {
-                continue;
-            }
-            if (in_array($terminal, ['DECIMAL_NUM', 'FLOAT_NUM'], true)
-                && ($previous === ':' || in_array($previous, ['SYSTEM', 'SYSTEM_SYM'], true))
-            ) {
-                $terminal = 'NUM';
-            }
-            $result[] = $terminal;
-        }
-
-        return $result;
+        return $terminals;
     }
 }
