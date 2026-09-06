@@ -121,11 +121,14 @@ final class ProductionWitness
         $input = pack('V', $witness->cost - $this->costs->rule($witness->rule, true));
         $steps = 0;
         foreach ($witness->sequence() as [$name, $ordinal]) {
-            $index = 0;
-            while (isset($form[$index]) && !$form[$index] instanceof NonTerminal) {
-                ++$index;
+            $index = null;
+            foreach ($form as $position => $symbol) {
+                if ($symbol instanceof NonTerminal) {
+                    $index = $position;
+                    break;
+                }
             }
-            if (($form[$index] ?? null)?->value() !== $name) {
+            if ($index === null || $form[$index]->value() !== $name) {
                 throw new LogicException('Witness expansion order differs from the sentential form.');
             }
             $remainder = array_slice($form, $index + 1);

@@ -75,9 +75,9 @@ final class GenerationPlan
         }
         $structure = '';
         $lexical = '';
-        for ($index = 4; $index < strlen($input); $index += 2) {
-            $structure .= $input[$index];
-            $lexical .= $input[$index + 1] ?? '';
+        foreach (str_split(substr($input, 4), 2) as $pair) {
+            $structure .= $pair[0] ?? '';
+            $lexical .= $pair[1] ?? '';
         }
         return self::all()->requiringNonEmpty()->withExpansionBudget($minimumExpansions + $header)
             ->withChoiceBytes($structure, $lexical);
