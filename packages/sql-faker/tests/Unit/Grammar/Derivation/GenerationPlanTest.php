@@ -289,4 +289,37 @@ final class GenerationPlanTest extends TestCase
     }
 
 
+    /**
+     * @return list<array{string, int, int, int, string, string}>
+     */
+    public static function providerBytePlans(): array
+    {
+        return [
+            ['', 2, 5000, 2, '', ''],
+            ["\x01", 2, 5000, 3, '', ''],
+            ["\0\x01", 2, 5000, 258, '', ''],
+            ["\0\0\x01", 2, 5000, 551, '', ''],
+            ["\0\0\0\x01", 2, 5000, 574, '', ''],
+            ["\xff\xff\xff\xff", 2, 5000, 1462, '', ''],
+            ["\0\0\0\0abcdef", 2, 5000, 2, 'ace', 'bdf'],
+            ["\0\0\0\0abc", 2, 5000, 2, 'ac', 'b'],
+            ["\xff\xff\xff\xffx", 7, 7, 7, 'x', ''],
+            [pack('V', 4998), 2, 5000, 5000, '', ''],
+            [pack('V', 4999), 2, 5000, 2, '', ''],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerBytePlans')]
+    public function testFromBytesAcceptsEveryHeaderAndKeepsChoiceStreamsSeparate(string $input, int $minimum, int $maximum, int $budget, string $structure, string $lexical): void
+    {
+        $plan = GenerationPlan::fromBytes($input, $minimum, $maximum);
+        self::assertSame($budget, $plan->expansionBudget());
+        self::assertSame($structure, $plan->structureBytes());
+        self::assertSame($lexical, $plan->lexicalBytes());
+        self::assertNull($plan->startRule());
+        self::assertNull($plan->lexicalTarget());
+        self::assertSame(PHP_INT_MAX, $plan->maxDepth());
+        self::assertSame([], $plan->parameters());
+    }
+
 }

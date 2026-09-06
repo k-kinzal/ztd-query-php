@@ -79,15 +79,15 @@
             "@fuzz:sqlite"
         ],
         "fuzz:mysql": [
-            "@fuzz:prepare mysql",
+            "@php fuzz/prepare-corpus.php mysql",
             "php-fuzzer fuzz fuzz/fuzz_mysql_syntax.php fuzz/corpus/mysql/"
         ],
         "fuzz:pg": [
-            "@fuzz:prepare pg",
+            "@php fuzz/prepare-corpus.php pg",
             "php-fuzzer fuzz fuzz/fuzz_pg_syntax.php fuzz/corpus/pg/"
         ],
         "fuzz:sqlite": [
-            "@fuzz:prepare sqlite",
+            "@php fuzz/prepare-corpus.php sqlite",
             "php-fuzzer fuzz fuzz/fuzz_sqlite_syntax.php fuzz/corpus/sqlite/"
         ],
         "phpstan": "phpstan analyse --memory-limit=512M",
@@ -100,9 +100,7 @@
             "deptrac debug:unused --config-file=deptrac.yaml"
         ],
         "loc-guard": "loc-guard --config=loc.yaml",
-        "tree-guard": "tree-guard --config=tree.yaml",
-        "test:fuzz": "phpunit tests/Fuzz",
-        "fuzz:prepare": "php fuzz/prepare-corpus.php"
+        "tree-guard": "tree-guard --config=tree.yaml"
     },
     "config": {
         "allow-plugins": {

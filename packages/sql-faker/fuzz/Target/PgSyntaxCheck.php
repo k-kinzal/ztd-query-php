@@ -27,7 +27,7 @@ final class PgSyntaxCheck
      * @throws InfrastructureFailure When the connection cannot complete Parse
      * @throws SyntaxFailure When syntax or an unclassified server rejection is observed
      */
-    public function verify(string $sql, string $input): VerificationResult
+    public function verify(string $sql, string $input): void
     {
         if ($sql === '') {
             throw new SyntaxFailure('Statement generation returned an empty string.');
@@ -49,12 +49,12 @@ final class PgSyntaxCheck
             pg_free_result($extra);
         }
         if ($status === PGSQL_COMMAND_OK) {
-            return VerificationResult::Accepted;
+            return;
         }
         if (!is_string($state) || str_starts_with($state, '08') || in_array($state, ['57P01', '57P02', '57P03'], true)) {
             throw new InfrastructureFailure('PostgreSQL Parse failed: ' . $message);
         }
-        return self::rejection($state, $message, $sql, $input);
+        self::rejection($state, $message, $sql, $input);
     }
 
     /**
@@ -62,14 +62,14 @@ final class PgSyntaxCheck
      *
      * @throws SyntaxFailure When syntax or an unclassified rejection is observed
      */
-    public static function rejection(string $state, string $message, string $sql, string $input): VerificationResult
+    public static function rejection(string $state, string $message, string $sql, string $input): void
     {
         if (in_array($state, ['42704', '42P01', '42703', '3F000', '42809', '22023', '26000',
             '2BP01', '42602', '42883', '42939', '42P07', '42P10', '3D000', '42P03', '22P02'], true)) {
-            return VerificationResult::Rejected;
+            return;
         }
         if ($state === '0A000') {
-            return VerificationResult::Incomplete;
+            return;
         }
         throw new SyntaxFailure("PostgreSQL syntax verification failed\nInput (hex): $input\nSQL: $sql\nSQLSTATE: $state\n$message");
     }

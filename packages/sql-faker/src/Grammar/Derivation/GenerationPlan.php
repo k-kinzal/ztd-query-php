@@ -7,12 +7,8 @@ namespace SqlFaker\Grammar\Derivation;
 use InvalidArgumentException;
 
 /**
- * Directs one act of generation: where to start, which productions to take, and how deep to go.
- *
- * A generator walks a grammar that describes far more SQL than any single
- * caller wants, so the plan is what narrows it. Every plan is immutable and
- * every refinement answers a new one, which is what lets one plan be reused
- * across generations without a previous walk leaking into the next.
+ * An immutable plan selecting the start rule, productions, lexemes and expansion limits.
+ * Plans can be reused without carrying mutable choice cursors between generations.
  *
  * @template-covariant TRequiresNonEmpty of bool
  *
@@ -33,7 +29,6 @@ final class GenerationPlan
      * @param array<string, int> $parameters Parameters the lexical target is realized with
      * @param TRequiresNonEmpty $requiresNonEmpty Whether the walk must produce at least one symbol
      * @param bool $reserveSteps Whether to budget the remaining form and prefer fewer rule expansions
-     * @param int $maxDepth How deep the walk may recurse
      * @visibility namespace
      */
     public function __construct(
@@ -59,6 +54,33 @@ final class GenerationPlan
     public static function all(): self
     {
         return new self(null, [], [], [], null, [], false, PHP_INT_MAX);
+    }
+
+    /**
+     * Decodes any byte string into a deterministic, bounded statement plan.
+     * The first four bytes select the expansion budget (little endian, zero padded).
+     * Remaining bytes alternate between production and lexical choices.
+     * @return self<true>
+     * @throws InvalidArgumentException When the configured budget cannot complete a statement
+     */
+    public static function fromBytes(string $input, int $minimumExpansions, int $maximumExpansions = 5000): self
+    {
+        if ($minimumExpansions < 1 || $maximumExpansions < $minimumExpansions || $maximumExpansions > 1000000) {
+            throw new InvalidArgumentException('Require 1 <= minimum expansions <= maximum expansions <= 1000000.');
+        }
+        $header = 0;
+        $range = $maximumExpansions - $minimumExpansions + 1;
+        for ($index = 3; $index >= 0; --$index) {
+            $header = ($header * 256 + (isset($input[$index]) ? ord($input[$index]) : 0)) % $range;
+        }
+        $structure = '';
+        $lexical = '';
+        for ($index = 4; $index < strlen($input); $index += 2) {
+            $structure .= $input[$index];
+            $lexical .= $input[$index + 1] ?? '';
+        }
+        return self::all()->requiringNonEmpty()->withExpansionBudget($minimumExpansions + $header)
+            ->withChoiceBytes($structure, $lexical);
     }
 
     /**
@@ -163,7 +185,6 @@ final class GenerationPlan
 
     /**
      * Answers a plan whose walk recurses no deeper than the caller allows.
-     * @param int $maxDepth How deep the walk may recurse
      * @return self<TRequiresNonEmpty> Plan bounded to that depth
      */
     public function withMaxDepth(int $maxDepth): self
@@ -273,7 +294,6 @@ final class GenerationPlan
 
     /**
      * Answers how deep the walk may recurse.
-     * @return int Deepest recursion the walk may reach
      */
     public function maxDepth(): int
     {
@@ -281,8 +301,6 @@ final class GenerationPlan
     }
     /**
      * Reserves enough derivation steps to finish the entire remaining form.
-     * Recursive grammars can prefer fewer expansions over shorter token output.
-     * This policy belongs to the generation plan and has no dialect identity.
      * @return self<TRequiresNonEmpty> Plan with a bounded completion policy
      */
     public function withStepBudget(): self
@@ -305,7 +323,6 @@ final class GenerationPlan
 
     /**
      * Reports whether production choice reserves steps for the remaining form.
-     * @return bool Whether to prefer bounded completion over shortest token output
      */
     public function usesStepBudget(): bool
     {
@@ -387,7 +404,6 @@ final class GenerationPlan
     /**
      * Directs a bounded walk that must produce a statement.
      * @param non-empty-string|null $startRule Rule the statement is grown from, or null for the grammar entry point
-     * @param int $maxDepth How deep the walk may recurse
      * @return self<true> Plan for one bounded, non-empty statement
      */
     public static function statement(?string $startRule, int $maxDepth): self

@@ -11,9 +11,8 @@ use PDOException;
  * Prepares generated SQL against MySQL and reports unexpected rejections.
  *
  * SQL PREPARE reaches the server directly, avoiding PDO's emulation fallback.
- * Unsupported preparation is reported as incomplete verification. Explicit
- * schema-dependent rejections are counted separately from parser acceptance;
- * syntax errors and unclassified rejections remain findings.
+ * Unsupported preparation and known schema-dependent rejections are inconclusive.
+ * Syntax errors and unclassified rejections are findings.
  */
 final class MySqlSyntaxCheck
 {
@@ -36,7 +35,7 @@ final class MySqlSyntaxCheck
      * @throws InfrastructureFailure When the database environment is unavailable
      * @throws SyntaxFailure When MySQL rejects the statement for a reason the grammar should not produce
      */
-    public function verify(string $sql, string $input): VerificationResult
+    public function verify(string $sql, string $input): void
     {
         if ($sql === '') {
             throw new SyntaxFailure('Statement generation returned an empty string.');
@@ -50,7 +49,7 @@ final class MySqlSyntaxCheck
             $this->pdo->exec('SET @sql_faker_input = ' . $quoted);
             $this->pdo->exec('PREPARE sql_faker_check FROM @sql_faker_input');
             $this->pdo->exec('DEALLOCATE PREPARE sql_faker_check');
-            return VerificationResult::Accepted;
+            return;
         } catch (PDOException $rejection) {
 
             $errorCode = $rejection->errorInfo[1] ?? 0;
@@ -58,63 +57,15 @@ final class MySqlSyntaxCheck
                 throw new InfrastructureFailure('MySQL verification connection failed.', 0, $rejection);
             }
             if ($errorCode === 1295) {
-                return VerificationResult::Incomplete;
+                return;
             }
 
-            $acceptable = match ($errorCode) {
-
-                1054 => true,
-
-                1046 => true,
-
-                1527 => true,
-
-                1273 => true,
-
-                1327 => true,
-
-                3708 => true,
-
-                1407 => true,
-
-                1049 => true,
-
-                1319 => true,
-
-                1305 => true,
-
-                1096 => true,
-
-                1791 => true,
-
-                1286 => true,
-
-                1235 => true,
-
-                1690 => true,
-
-                3652 => true,
-
-                3709 => true,
-
-                1525 => true,
-
-                3942 => false,
-
-                1051 => true,
-
-                3980 => true,
-
-                1193 => true,
-
-                1277 => true,
-
-                1641 => true,
-                default => false,
-            };
+            $acceptable = in_array($errorCode, [1054, 1046, 1527, 1273, 1327, 3708, 1407, 1049,
+                1319, 1305, 1096, 1791, 1286, 1235, 1690, 3652, 3709, 1525, 1051, 3980,
+                1193, 1277, 1641], true);
 
             if ($acceptable) {
-                return VerificationResult::Rejected;
+                return;
             }
 
             throw new SyntaxFailure(

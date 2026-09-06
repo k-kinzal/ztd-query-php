@@ -18,7 +18,7 @@ use PDOException;
  * tolerated cases — name lookups a schema-less fuzz run cannot satisfy, plus a
  * handful of documented restrictions — are matched on the message. Any other
  * rejection means the grammar emitted something SQLite cannot parse, which is a
- * finding and surfaces as an Error for php-fuzzer to record.
+ * finding and surfaces as a SyntaxFailure for PHP-Fuzzer to record.
  */
 final class SqliteSyntaxCheck
 {
@@ -31,7 +31,7 @@ final class SqliteSyntaxCheck
      * @throws InfrastructureFailure When the database environment is unavailable
      * @throws SyntaxFailure When SQLite rejects the statement for a reason the grammar should not produce
      */
-    public function verify(string $sql, string $input): VerificationResult
+    public function verify(string $sql, string $input): void
     {
         if ($sql === '') {
             throw new SyntaxFailure('Statement generation returned an empty string.');
@@ -47,7 +47,7 @@ final class SqliteSyntaxCheck
                     "SQL: $sql"
                 );
             }
-            return VerificationResult::Accepted;
+            return;
         } catch (PDOException $rejection) {
 
             $message = $rejection->getMessage();
@@ -79,7 +79,7 @@ final class SqliteSyntaxCheck
             };
 
             if ($acceptable) {
-                return VerificationResult::Rejected;
+                return;
             }
 
             throw new SyntaxFailure(

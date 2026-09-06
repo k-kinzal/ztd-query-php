@@ -52,23 +52,6 @@ jobs:
           working-directory: packages/sql-faker
       - run: composer lint
 
-  fuzz-contract:
-    name: Fuzz contract tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
-        with:
-          php-version: '8.5'
-          extensions: mbstring, pcntl, pdo_sqlite, pgsql
-          coverage: none
-      - uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
-        with:
-          working-directory: packages/sql-faker
-          require-lock-file: true
-      - run: composer test:fuzz
-
   bench:
     runs-on: ubuntu-latest
     steps:

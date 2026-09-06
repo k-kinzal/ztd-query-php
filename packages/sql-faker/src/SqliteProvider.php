@@ -59,6 +59,19 @@ final class SqliteProvider extends Base
     }
 
     /**
+     * Returns the minimum expansion budget for a non-empty statement.
+     * @visibility public
+     * @example Decode arbitrary bytes with this grammar's minimum budget
+     *     $provider = new \SqlFaker\SqliteProvider(\Faker\Factory::create());
+     *     $plan = \SqlFaker\Grammar\Derivation\GenerationPlan::fromBytes('', $provider->minimumExpansionBudget());
+     *     $provider->generate($plan) !== '' // => true
+     */
+    public function minimumExpansionBudget(): int
+    {
+        return $this->sql->minimumExpansionBudget();
+    }
+
+    /**
      * Generates through the same engine used by the convenience methods.
      *
      * @throws Grammar\GenerationException When derivation fails

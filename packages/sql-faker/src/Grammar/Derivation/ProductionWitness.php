@@ -2,10 +2,13 @@
 
 declare(strict_types=1);
 
-namespace SqlFaker\Fuzz\Input;
+namespace SqlFaker\Grammar\Derivation;
 
 use Closure;
+use LogicException;
+use SqlFaker\Grammar\Choice\ByteChoices;
 use SqlFaker\Grammar\Grammar;
+use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\Terminal;
 
@@ -14,6 +17,8 @@ use SqlFaker\Grammar\Terminal;
  */
 final class ProductionWitness
 {
+    private readonly CompletionCosts $costs;
+
     /**
      * @var array<string, array<int, WitnessNode>>
      */
@@ -25,6 +30,7 @@ final class ProductionWitness
     public function __construct(private readonly Grammar $grammar, private readonly Closure $supported)
     {
         $this->baseline = $this->settled('', -1, []);
+        $this->costs = new CompletionCosts($grammar, $supported);
     }
 
     /**
@@ -102,5 +108,46 @@ final class ProductionWitness
             $states = $combined;
         }
         return $states;
+    }
+
+    /**
+     * Encodes one complete minimum witness, including its siblings.
+     *
+     * @throws LogicException When a witness disagrees with the actual candidate policy
+     */
+    public function encode(WitnessNode $witness): string
+    {
+        $form = [new NonTerminal($witness->rule)];
+        $input = pack('V', $witness->cost - $this->costs->rule($witness->rule, true));
+        $steps = 0;
+        foreach ($witness->sequence() as [$name, $ordinal]) {
+            $index = 0;
+            while (isset($form[$index]) && !$form[$index] instanceof NonTerminal) {
+                ++$index;
+            }
+            if (($form[$index] ?? null)?->value() !== $name) {
+                throw new LogicException('Witness expansion order differs from the sentential form.');
+            }
+            $remainder = array_slice($form, $index + 1);
+            ++$steps;
+            $candidates = $this->costs->affordable(
+                $this->grammar->ruleMap[$name]->alternatives,
+                $remainder,
+                $index === 0,
+                $witness->cost - $steps
+            );
+            $production = $this->grammar->ruleMap[$name]->alternatives[$ordinal];
+            $choice = array_search($production, $candidates, true);
+            if ($choice === false) {
+                throw new LogicException('Witness production is not affordable after candidate filtering.');
+            }
+            $width = ByteChoices::width(count($candidates));
+            for ($byte = 0; $byte < $width; ++$byte) {
+                $input .= chr($choice % 256) . "\0";
+                $choice = intdiv($choice, 256);
+            }
+            array_splice($form, $index, 1, $production->symbols);
+        }
+        return $input;
     }
 }

@@ -9,7 +9,6 @@
  * Environment variables:
  *   MYSQL_VERSION - MySQL version to test (default: 8.4.7)
  *                   Supported: 5.6.51, 5.7.44, 8.0.44, 8.1.0, 8.2.0, 8.3.0, 8.4.7, 9.0.1, 9.1.0
- *   FUZZ_MAX_EXPANSIONS - Total grammar expansion budget (default: 5000)
  */
 
 declare(strict_types=1);
@@ -26,6 +25,9 @@ register_shutdown_function(static function (): void {
     }
 });
 
+use Faker\Factory;
+use SqlFaker\Coverage\CoverageException;
+use SqlFaker\Coverage\GrammarCoverage;
 use SqlFaker\Fuzz\Container\MySql56Container;
 use SqlFaker\Fuzz\Container\MySql57Container;
 use SqlFaker\Fuzz\Container\MySql80Container;
@@ -35,9 +37,10 @@ use SqlFaker\Fuzz\Container\MySql83Container;
 use SqlFaker\Fuzz\Container\MySql84Container;
 use SqlFaker\Fuzz\Container\MySql90Container;
 use SqlFaker\Fuzz\Container\MySql91Container;
-use SqlFaker\Fuzz\Run\FuzzRegistration;
-use SqlFaker\Fuzz\Run\FuzzSetup;
+use SqlFaker\Fuzz\Target\InfrastructureFailure;
 use SqlFaker\Fuzz\Target\MySqlSyntaxCheck;
+use SqlFaker\Grammar\Derivation\GenerationPlan;
+use SqlFaker\MySqlProvider;
 use Testcontainers\Testcontainers;
 
 $mysqlVersion = getenv('MYSQL_VERSION') !== false ? getenv('MYSQL_VERSION') : '8.4.7';
@@ -79,11 +82,35 @@ $pdo = new PDO(
     ]
 );
 
-$setup = new FuzzSetup('mysql', $grammarVersion);
+$coverage = new GrammarCoverage(__DIR__ . '/coverage/mysql');
+$provider = new MySqlProvider(Factory::create(), $grammarVersion, $coverage);
 $check = new MySqlSyntaxCheck($pdo, $grammarVersion);
-$attribute = $pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
-$databaseVersion = is_string($attribute) ? $attribute : 'unknown';
+$minimum = $provider->minimumExpansionBudget();
+$generations = 0;
+register_shutdown_function(static function () use ($coverage): void {
+    if (function_exists('pcntl_alarm')) {
+        pcntl_alarm(0);
+    }
+    $coverage->flush();
+});
 /**
  * @var PhpFuzzer\Config $config
  */
-FuzzRegistration::register($config, $setup, $check->verify(...), $databaseVersion);
+$config->setAllowedExceptions([]);
+$config->setMaxLen(80004);
+$config->setTarget(static function (string $input) use ($provider, $minimum, $check, $coverage, &$generations): void {
+    try {
+        $plan = GenerationPlan::fromBytes($input, $minimum);
+        $sql = $provider->generate($plan);
+        if ($provider->generate($plan) !== $sql) {
+            throw new LogicException('The same input produced different SQL.');
+        }
+        $check->verify($sql, bin2hex($input));
+        if (++$generations % 100 === 0) {
+            $coverage->flush();
+        }
+    } catch (InfrastructureFailure|CoverageException $failure) {
+        fwrite(STDERR, $failure->getMessage() . "\n");
+        exit(2);
+    }
+});

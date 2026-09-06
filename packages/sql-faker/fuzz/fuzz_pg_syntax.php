@@ -6,8 +6,6 @@
  * Usage:
  *   vendor/bin/php-fuzzer fuzz fuzz/fuzz_pg_syntax.php fuzz/corpus/pg/
  *
- * Environment variables:
- *   FUZZ_MAX_EXPANSIONS - Total grammar expansion budget (default: 5000)
  */
 
 declare(strict_types=1);
@@ -24,10 +22,14 @@ register_shutdown_function(static function (): void {
     }
 });
 
+use Faker\Factory;
+use SqlFaker\Coverage\CoverageException;
+use SqlFaker\Coverage\GrammarCoverage;
 use SqlFaker\Fuzz\Container\PostgreSqlContainer;
-use SqlFaker\Fuzz\Run\FuzzRegistration;
-use SqlFaker\Fuzz\Run\FuzzSetup;
+use SqlFaker\Fuzz\Target\InfrastructureFailure;
 use SqlFaker\Fuzz\Target\PgSyntaxCheck;
+use SqlFaker\Grammar\Derivation\GenerationPlan;
+use SqlFaker\PostgreSqlProvider;
 use Testcontainers\Testcontainers;
 
 fwrite(STDERR, "Starting PostgreSQL container...\n");
@@ -39,11 +41,37 @@ $host = str_replace('localhost', '127.0.0.1', $instance->getHost());
 
 $connection = pg_connect("host=$host port=$port dbname=fuzz_test user=test password=test");
 if ($connection === false) {
-    throw new SqlFaker\Fuzz\Target\InfrastructureFailure('Cannot connect to the fixed PostgreSQL instance.');
+    throw new InfrastructureFailure('Cannot connect to the fixed PostgreSQL instance.');
 }
-$setup = new FuzzSetup('pg', 'pg-17.2');
+$coverage = new GrammarCoverage(__DIR__ . '/coverage/pg');
+$provider = new PostgreSqlProvider(Factory::create(), 'pg-17.2', $coverage);
 $check = new PgSyntaxCheck($connection);
+$minimum = $provider->minimumExpansionBudget();
+$generations = 0;
+register_shutdown_function(static function () use ($coverage): void {
+    if (function_exists('pcntl_alarm')) {
+        pcntl_alarm(0);
+    }
+    $coverage->flush();
+});
 /**
  * @var PhpFuzzer\Config $config
  */
-FuzzRegistration::register($config, $setup, $check->verify(...), (string) (pg_version($connection)['server'] ?? 'unknown'));
+$config->setAllowedExceptions([]);
+$config->setMaxLen(80004);
+$config->setTarget(static function (string $input) use ($provider, $minimum, $check, $coverage, &$generations): void {
+    try {
+        $plan = GenerationPlan::fromBytes($input, $minimum);
+        $sql = $provider->generate($plan);
+        if ($provider->generate($plan) !== $sql) {
+            throw new LogicException('The same input produced different SQL.');
+        }
+        $check->verify($sql, bin2hex($input));
+        if (++$generations % 100 === 0) {
+            $coverage->flush();
+        }
+    } catch (InfrastructureFailure|CoverageException $failure) {
+        fwrite(STDERR, $failure->getMessage() . "\n");
+        exit(2);
+    }
+});

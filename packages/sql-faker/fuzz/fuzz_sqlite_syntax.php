@@ -2,16 +2,43 @@
 
 declare(strict_types=1);
 
-use SqlFaker\Fuzz\Run\FuzzRegistration;
-use SqlFaker\Fuzz\Run\FuzzSetup;
+use Faker\Factory;
+use SqlFaker\Coverage\CoverageException;
+use SqlFaker\Coverage\GrammarCoverage;
+use SqlFaker\Fuzz\Target\InfrastructureFailure;
 use SqlFaker\Fuzz\Target\SqliteSyntaxCheck;
+use SqlFaker\Grammar\Derivation\GenerationPlan;
+use SqlFaker\SqliteProvider;
 
-$pdo = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-$setup = new FuzzSetup('sqlite', 'sqlite-3.47.2');
+$coverage = new GrammarCoverage(__DIR__ . '/coverage/sqlite');
+$provider = new SqliteProvider(Factory::create(), 'sqlite-3.47.2', $coverage);
 $check = new SqliteSyntaxCheck();
-$attribute = $pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
-$databaseVersion = is_string($attribute) ? $attribute : 'unknown';
+$minimum = $provider->minimumExpansionBudget();
+$generations = 0;
+register_shutdown_function(static function () use ($coverage): void {
+    if (function_exists('pcntl_alarm')) {
+        pcntl_alarm(0);
+    }
+    $coverage->flush();
+});
 /**
  * @var PhpFuzzer\Config $config
  */
-FuzzRegistration::register($config, $setup, $check->verify(...), $databaseVersion);
+$config->setAllowedExceptions([]);
+$config->setMaxLen(80004);
+$config->setTarget(static function (string $input) use ($provider, $minimum, $check, $coverage, &$generations): void {
+    try {
+        $plan = GenerationPlan::fromBytes($input, $minimum);
+        $sql = $provider->generate($plan);
+        if ($provider->generate($plan) !== $sql) {
+            throw new LogicException('The same input produced different SQL.');
+        }
+        $check->verify($sql, bin2hex($input));
+        if (++$generations % 100 === 0) {
+            $coverage->flush();
+        }
+    } catch (InfrastructureFailure|CoverageException $failure) {
+        fwrite(STDERR, $failure->getMessage() . "\n");
+        exit(2);
+    }
+});

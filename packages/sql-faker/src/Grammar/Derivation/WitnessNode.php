@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SqlFaker\Fuzz\Input;
+namespace SqlFaker\Grammar\Derivation;
 
 /**
  * Stores one finite minimum-cost derivation and its actual production choices.
