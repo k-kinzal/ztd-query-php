@@ -381,65 +381,68 @@
 <span class="src-line" id="L346"><a class="ln" href="#L346">346</a>        }</span>
 <span class="src-line" id="L347"><a class="ln" href="#L347">347</a></span>
 <span class="src-line" id="L348"><a class="ln" href="#L348">348</a>        <span class="tok-var">$end</span> = <span class="tok-var">$offset</span>;</span>
-<span class="src-line" id="L349"><a class="ln" href="#L349">349</a>        <span class="tok-kw">while</span> (<span class="tok-kw">isset</span>(<span class="tok-var">$sql</span>[<span class="tok-var">$end</span>]) &amp;&amp; <span class="tok-id">str_contains</span>(<span class="tok-id">self</span>::<span class="tok-id">OPERATOR_CHARACTERS</span>, <span class="tok-var">$sql</span>[<span class="tok-var">$end</span>])) {</span>
-<span class="src-line" id="L350"><a class="ln" href="#L350">350</a>            <span class="tok-kw">if</span> (<span class="tok-var">$end</span> &gt; <span class="tok-var">$offset</span> &amp;&amp; <span class="tok-id">in_array</span>(<span class="tok-id">substr</span>(<span class="tok-var">$sql</span>, <span class="tok-var">$end</span>, <span class="tok-num">2</span>), [<span class="tok-str">&#039;/*&#039;</span>, <span class="tok-str">&#039;--&#039;</span>], <span class="tok-id">true</span>)) {</span>
+<span class="src-line" id="L349"><a class="ln" href="#L349">349</a>        <span class="tok-kw">while</span> (<span class="tok-kw">isset</span>(<span class="tok-var">$sql</span>[<span class="tok-var">$end</span>])) {</span>
+<span class="src-line" id="L350"><a class="ln" href="#L350">350</a>            <span class="tok-kw">if</span> (!<span class="tok-id">str_contains</span>(<span class="tok-id">self</span>::<span class="tok-id">OPERATOR_CHARACTERS</span>, <span class="tok-var">$sql</span>[<span class="tok-var">$end</span>])) {</span>
 <span class="src-line" id="L351"><a class="ln" href="#L351">351</a>                <span class="tok-kw">break</span>;</span>
 <span class="src-line" id="L352"><a class="ln" href="#L352">352</a>            }</span>
-<span class="src-line" id="L353"><a class="ln" href="#L353">353</a>            ++<span class="tok-var">$end</span>;</span>
-<span class="src-line" id="L354"><a class="ln" href="#L354">354</a>        }</span>
-<span class="src-line" id="L355"><a class="ln" href="#L355">355</a></span>
-<span class="src-line" id="L356"><a class="ln" href="#L356">356</a>        <span class="tok-var">$lexeme</span> = <span class="tok-id">substr</span>(<span class="tok-var">$sql</span>, <span class="tok-var">$offset</span>, <span class="tok-var">$end</span> - <span class="tok-var">$offset</span>);</span>
-<span class="src-line" id="L357"><a class="ln" href="#L357">357</a>        <span class="tok-kw">if</span> (<span class="tok-id">preg_match</span>(<span class="tok-str">&#039;/[~!@#%^&amp;|`?]/&#039;</span>, <span class="tok-var">$lexeme</span>) !== <span class="tok-num">1</span>) {</span>
-<span class="src-line" id="L358"><a class="ln" href="#L358">358</a>            <span class="tok-var">$lexeme</span> = <span class="tok-id">rtrim</span>(<span class="tok-var">$lexeme</span>, <span class="tok-str">&#039;+-&#039;</span>);</span>
-<span class="src-line" id="L359"><a class="ln" href="#L359">359</a>            <span class="tok-kw">if</span> (<span class="tok-var">$lexeme</span> === <span class="tok-str">&#039;&#039;</span>) {</span>
-<span class="src-line" id="L360"><a class="ln" href="#L360">360</a>                <span class="tok-kw">return</span> [<span class="tok-var">$character</span>, <span class="tok-var">$character</span>];</span>
-<span class="src-line" id="L361"><a class="ln" href="#L361">361</a>            }</span>
-<span class="src-line" id="L362"><a class="ln" href="#L362">362</a>        }</span>
-<span class="src-line" id="L363"><a class="ln" href="#L363">363</a></span>
-<span class="src-line" id="L364"><a class="ln" href="#L364">364</a>        <span class="tok-var">$fixed</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">fixedOperator</span>(<span class="tok-var">$lexeme</span>);</span>
-<span class="src-line" id="L365"><a class="ln" href="#L365">365</a>        <span class="tok-kw">if</span> (<span class="tok-var">$fixed</span> !== <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L366"><a class="ln" href="#L366">366</a>            <span class="tok-kw">return</span> [<span class="tok-var">$lexeme</span>, <span class="tok-var">$fixed</span>];</span>
-<span class="src-line" id="L367"><a class="ln" href="#L367">367</a>        }</span>
-<span class="src-line" id="L368"><a class="ln" href="#L368">368</a></span>
-<span class="src-line" id="L369"><a class="ln" href="#L369">369</a>        <span class="tok-kw">return</span> <span class="tok-id">strlen</span>(<span class="tok-var">$lexeme</span>) === <span class="tok-num">1</span> &amp;&amp; <span class="tok-var">$this</span>-&gt;<span class="tok-id">isPunctuation</span>(<span class="tok-var">$lexeme</span>)</span>
-<span class="src-line" id="L370"><a class="ln" href="#L370">370</a>            ? [<span class="tok-var">$lexeme</span>, <span class="tok-var">$lexeme</span>]</span>
-<span class="src-line" id="L371"><a class="ln" href="#L371">371</a>            : [<span class="tok-var">$lexeme</span>, <span class="tok-str">&#039;Op&#039;</span>];</span>
-<span class="src-line" id="L372"><a class="ln" href="#L372">372</a>    }</span>
-<span class="src-line" id="L373"><a class="ln" href="#L373">373</a></span>
-<span class="src-line" id="L374"><a class="ln" href="#L374">374</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L375"><a class="ln" href="#L375">375</a><span class="tok-com">     * Reports the token a spelling with a name of its own stands for.</span></span>
-<span class="src-line" id="L376"><a class="ln" href="#L376">376</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L377"><a class="ln" href="#L377">377</a><span class="tok-com">     * @param string $operator Operator as written</span></span>
-<span class="src-line" id="L378"><a class="ln" href="#L378">378</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L379"><a class="ln" href="#L379">379</a><span class="tok-com">     * @return string|null The token name, or null when the operator has none</span></span>
-<span class="src-line" id="L380"><a class="ln" href="#L380">380</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L381"><a class="ln" href="#L381">381</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">fixedOperator</span>(<span class="tok-id">string</span> <span class="tok-var">$operator</span>): ?<span class="tok-id">string</span></span>
-<span class="src-line" id="L382"><a class="ln" href="#L382">382</a>    {</span>
-<span class="src-line" id="L383"><a class="ln" href="#L383">383</a>        <span class="tok-kw">return</span> <span class="tok-kw">match</span> (<span class="tok-var">$operator</span>) {</span>
-<span class="src-line" id="L384"><a class="ln" href="#L384">384</a>            <span class="tok-str">&#039;::&#039;</span> =&gt; <span class="tok-str">&#039;TYPECAST&#039;</span>,</span>
-<span class="src-line" id="L385"><a class="ln" href="#L385">385</a>            <span class="tok-str">&#039;..&#039;</span> =&gt; <span class="tok-str">&#039;DOT_DOT&#039;</span>,</span>
-<span class="src-line" id="L386"><a class="ln" href="#L386">386</a>            <span class="tok-str">&#039;:=&#039;</span> =&gt; <span class="tok-str">&#039;COLON_EQUALS&#039;</span>,</span>
-<span class="src-line" id="L387"><a class="ln" href="#L387">387</a>            <span class="tok-str">&#039;=&gt;&#039;</span> =&gt; <span class="tok-str">&#039;EQUALS_GREATER&#039;</span>,</span>
-<span class="src-line" id="L388"><a class="ln" href="#L388">388</a>            <span class="tok-str">&#039;&lt;&gt;&#039;</span>, <span class="tok-str">&#039;!=&#039;</span> =&gt; <span class="tok-str">&#039;NOT_EQUALS&#039;</span>,</span>
-<span class="src-line" id="L389"><a class="ln" href="#L389">389</a>            <span class="tok-str">&#039;&lt;=&#039;</span> =&gt; <span class="tok-str">&#039;LESS_EQUALS&#039;</span>,</span>
-<span class="src-line" id="L390"><a class="ln" href="#L390">390</a>            <span class="tok-str">&#039;&gt;=&#039;</span> =&gt; <span class="tok-str">&#039;GREATER_EQUALS&#039;</span>,</span>
-<span class="src-line" id="L391"><a class="ln" href="#L391">391</a>            <span class="tok-kw">default</span> =&gt; <span class="tok-id">null</span>,</span>
-<span class="src-line" id="L392"><a class="ln" href="#L392">392</a>        };</span>
-<span class="src-line" id="L393"><a class="ln" href="#L393">393</a>    }</span>
-<span class="src-line" id="L394"><a class="ln" href="#L394">394</a></span>
-<span class="src-line" id="L395"><a class="ln" href="#L395">395</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L396"><a class="ln" href="#L396">396</a><span class="tok-com">     * Reports whether a single character is punctuation that stands for itself.</span></span>
-<span class="src-line" id="L397"><a class="ln" href="#L397">397</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L398"><a class="ln" href="#L398">398</a><span class="tok-com">     * @param string $character Character to inspect</span></span>
-<span class="src-line" id="L399"><a class="ln" href="#L399">399</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L400"><a class="ln" href="#L400">400</a><span class="tok-com">     * @return bool True for a punctuation character</span></span>
-<span class="src-line" id="L401"><a class="ln" href="#L401">401</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L402"><a class="ln" href="#L402">402</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">isPunctuation</span>(<span class="tok-id">string</span> <span class="tok-var">$character</span>): <span class="tok-id">bool</span></span>
-<span class="src-line" id="L403"><a class="ln" href="#L403">403</a>    {</span>
-<span class="src-line" id="L404"><a class="ln" href="#L404">404</a>        <span class="tok-kw">return</span> <span class="tok-id">strlen</span>(<span class="tok-var">$character</span>) === <span class="tok-num">1</span> &amp;&amp; <span class="tok-id">str_contains</span>(<span class="tok-id">self</span>::<span class="tok-id">PUNCTUATION</span>, <span class="tok-var">$character</span>);</span>
-<span class="src-line" id="L405"><a class="ln" href="#L405">405</a>    }</span>
-<span class="src-line" id="L406"><a class="ln" href="#L406">406</a>}</span>
-<span class="src-line" id="L407"><a class="ln" href="#L407">407</a></span>
+<span class="src-line" id="L353"><a class="ln" href="#L353">353</a>            <span class="tok-kw">if</span> (<span class="tok-var">$end</span> &gt; <span class="tok-var">$offset</span> &amp;&amp; <span class="tok-id">in_array</span>(<span class="tok-id">substr</span>(<span class="tok-var">$sql</span>, <span class="tok-var">$end</span>, <span class="tok-num">2</span>), [<span class="tok-str">&#039;/*&#039;</span>, <span class="tok-str">&#039;--&#039;</span>], <span class="tok-id">true</span>)) {</span>
+<span class="src-line" id="L354"><a class="ln" href="#L354">354</a>                <span class="tok-kw">break</span>;</span>
+<span class="src-line" id="L355"><a class="ln" href="#L355">355</a>            }</span>
+<span class="src-line" id="L356"><a class="ln" href="#L356">356</a>            ++<span class="tok-var">$end</span>;</span>
+<span class="src-line" id="L357"><a class="ln" href="#L357">357</a>        }</span>
+<span class="src-line" id="L358"><a class="ln" href="#L358">358</a></span>
+<span class="src-line" id="L359"><a class="ln" href="#L359">359</a>        <span class="tok-var">$lexeme</span> = <span class="tok-id">substr</span>(<span class="tok-var">$sql</span>, <span class="tok-var">$offset</span>, <span class="tok-var">$end</span> - <span class="tok-var">$offset</span>);</span>
+<span class="src-line" id="L360"><a class="ln" href="#L360">360</a>        <span class="tok-kw">if</span> (<span class="tok-id">preg_match</span>(<span class="tok-str">&#039;/[~!@#%^&amp;|`?]/&#039;</span>, <span class="tok-var">$lexeme</span>) !== <span class="tok-num">1</span>) {</span>
+<span class="src-line" id="L361"><a class="ln" href="#L361">361</a>            <span class="tok-var">$lexeme</span> = <span class="tok-id">rtrim</span>(<span class="tok-var">$lexeme</span>, <span class="tok-str">&#039;+-&#039;</span>);</span>
+<span class="src-line" id="L362"><a class="ln" href="#L362">362</a>            <span class="tok-kw">if</span> (<span class="tok-var">$lexeme</span> === <span class="tok-str">&#039;&#039;</span>) {</span>
+<span class="src-line" id="L363"><a class="ln" href="#L363">363</a>                <span class="tok-kw">return</span> [<span class="tok-var">$character</span>, <span class="tok-var">$character</span>];</span>
+<span class="src-line" id="L364"><a class="ln" href="#L364">364</a>            }</span>
+<span class="src-line" id="L365"><a class="ln" href="#L365">365</a>        }</span>
+<span class="src-line" id="L366"><a class="ln" href="#L366">366</a></span>
+<span class="src-line" id="L367"><a class="ln" href="#L367">367</a>        <span class="tok-var">$fixed</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">fixedOperator</span>(<span class="tok-var">$lexeme</span>);</span>
+<span class="src-line" id="L368"><a class="ln" href="#L368">368</a>        <span class="tok-kw">if</span> (<span class="tok-var">$fixed</span> !== <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L369"><a class="ln" href="#L369">369</a>            <span class="tok-kw">return</span> [<span class="tok-var">$lexeme</span>, <span class="tok-var">$fixed</span>];</span>
+<span class="src-line" id="L370"><a class="ln" href="#L370">370</a>        }</span>
+<span class="src-line" id="L371"><a class="ln" href="#L371">371</a></span>
+<span class="src-line" id="L372"><a class="ln" href="#L372">372</a>        <span class="tok-kw">return</span> <span class="tok-id">strlen</span>(<span class="tok-var">$lexeme</span>) === <span class="tok-num">1</span> &amp;&amp; <span class="tok-var">$this</span>-&gt;<span class="tok-id">isPunctuation</span>(<span class="tok-var">$lexeme</span>)</span>
+<span class="src-line" id="L373"><a class="ln" href="#L373">373</a>            ? [<span class="tok-var">$lexeme</span>, <span class="tok-var">$lexeme</span>]</span>
+<span class="src-line" id="L374"><a class="ln" href="#L374">374</a>            : [<span class="tok-var">$lexeme</span>, <span class="tok-str">&#039;Op&#039;</span>];</span>
+<span class="src-line" id="L375"><a class="ln" href="#L375">375</a>    }</span>
+<span class="src-line" id="L376"><a class="ln" href="#L376">376</a></span>
+<span class="src-line" id="L377"><a class="ln" href="#L377">377</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L378"><a class="ln" href="#L378">378</a><span class="tok-com">     * Reports the token a spelling with a name of its own stands for.</span></span>
+<span class="src-line" id="L379"><a class="ln" href="#L379">379</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L380"><a class="ln" href="#L380">380</a><span class="tok-com">     * @param string $operator Operator as written</span></span>
+<span class="src-line" id="L381"><a class="ln" href="#L381">381</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L382"><a class="ln" href="#L382">382</a><span class="tok-com">     * @return string|null The token name, or null when the operator has none</span></span>
+<span class="src-line" id="L383"><a class="ln" href="#L383">383</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L384"><a class="ln" href="#L384">384</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">fixedOperator</span>(<span class="tok-id">string</span> <span class="tok-var">$operator</span>): ?<span class="tok-id">string</span></span>
+<span class="src-line" id="L385"><a class="ln" href="#L385">385</a>    {</span>
+<span class="src-line" id="L386"><a class="ln" href="#L386">386</a>        <span class="tok-kw">return</span> <span class="tok-kw">match</span> (<span class="tok-var">$operator</span>) {</span>
+<span class="src-line" id="L387"><a class="ln" href="#L387">387</a>            <span class="tok-str">&#039;::&#039;</span> =&gt; <span class="tok-str">&#039;TYPECAST&#039;</span>,</span>
+<span class="src-line" id="L388"><a class="ln" href="#L388">388</a>            <span class="tok-str">&#039;..&#039;</span> =&gt; <span class="tok-str">&#039;DOT_DOT&#039;</span>,</span>
+<span class="src-line" id="L389"><a class="ln" href="#L389">389</a>            <span class="tok-str">&#039;:=&#039;</span> =&gt; <span class="tok-str">&#039;COLON_EQUALS&#039;</span>,</span>
+<span class="src-line" id="L390"><a class="ln" href="#L390">390</a>            <span class="tok-str">&#039;=&gt;&#039;</span> =&gt; <span class="tok-str">&#039;EQUALS_GREATER&#039;</span>,</span>
+<span class="src-line" id="L391"><a class="ln" href="#L391">391</a>            <span class="tok-str">&#039;&lt;&gt;&#039;</span>, <span class="tok-str">&#039;!=&#039;</span> =&gt; <span class="tok-str">&#039;NOT_EQUALS&#039;</span>,</span>
+<span class="src-line" id="L392"><a class="ln" href="#L392">392</a>            <span class="tok-str">&#039;&lt;=&#039;</span> =&gt; <span class="tok-str">&#039;LESS_EQUALS&#039;</span>,</span>
+<span class="src-line" id="L393"><a class="ln" href="#L393">393</a>            <span class="tok-str">&#039;&gt;=&#039;</span> =&gt; <span class="tok-str">&#039;GREATER_EQUALS&#039;</span>,</span>
+<span class="src-line" id="L394"><a class="ln" href="#L394">394</a>            <span class="tok-kw">default</span> =&gt; <span class="tok-id">null</span>,</span>
+<span class="src-line" id="L395"><a class="ln" href="#L395">395</a>        };</span>
+<span class="src-line" id="L396"><a class="ln" href="#L396">396</a>    }</span>
+<span class="src-line" id="L397"><a class="ln" href="#L397">397</a></span>
+<span class="src-line" id="L398"><a class="ln" href="#L398">398</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L399"><a class="ln" href="#L399">399</a><span class="tok-com">     * Reports whether a single character is punctuation that stands for itself.</span></span>
+<span class="src-line" id="L400"><a class="ln" href="#L400">400</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L401"><a class="ln" href="#L401">401</a><span class="tok-com">     * @param string $character Character to inspect</span></span>
+<span class="src-line" id="L402"><a class="ln" href="#L402">402</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L403"><a class="ln" href="#L403">403</a><span class="tok-com">     * @return bool True for a punctuation character</span></span>
+<span class="src-line" id="L404"><a class="ln" href="#L404">404</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L405"><a class="ln" href="#L405">405</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">isPunctuation</span>(<span class="tok-id">string</span> <span class="tok-var">$character</span>): <span class="tok-id">bool</span></span>
+<span class="src-line" id="L406"><a class="ln" href="#L406">406</a>    {</span>
+<span class="src-line" id="L407"><a class="ln" href="#L407">407</a>        <span class="tok-kw">return</span> <span class="tok-id">strlen</span>(<span class="tok-var">$character</span>) === <span class="tok-num">1</span> &amp;&amp; <span class="tok-id">str_contains</span>(<span class="tok-id">self</span>::<span class="tok-id">PUNCTUATION</span>, <span class="tok-var">$character</span>);</span>
+<span class="src-line" id="L408"><a class="ln" href="#L408">408</a>    }</span>
+<span class="src-line" id="L409"><a class="ln" href="#L409">409</a>}</span>
+<span class="src-line" id="L410"><a class="ln" href="#L410">410</a></span>
 </code></pre>
 </main>
 <footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
