@@ -1,6 +1,7 @@
 # SQL Faker
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Docs](https://img.shields.io/badge/docs-sql--faker-0969da?logo=php&logoColor=white)](https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-faker/)
 [![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 
 A [FakerPHP](https://github.com/FakerPHP/Faker) provider for generating syntactically valid MySQL SQL statements based on MySQL's official Bison grammar (`sql_yacc.yy`).
