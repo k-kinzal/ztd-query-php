@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/ja_JP/Text.php — k-kinzal/sql-faker</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/src/packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/ja_JP/Text.php.html">
+<meta name="description" content="The source of packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/ja_JP/Text.php.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="k-kinzal/sql-faker">
+<meta property="og:title" content="packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/ja_JP/Text.php — k-kinzal/sql-faker">
+<meta property="og:description" content="The source of packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/ja_JP/Text.php.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/src/packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/ja_JP/Text.php.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="k-kinzal/sql-faker">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../../../../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.theme=t}}catch(e){}</script>
+</head>
+<body data-root="../../../../../../../../../../">
+<nav class="sidebar" id="sidebar"><div class="sb-head"><a class="sb-site" href="../../../../../../../../../../index.html">k-kinzal/sql-faker</a></div><nav class="sb-block"><div class="sb-title">Packages</div><ul class="sb-list"><li><a href="../../../../../../../../../../k-kinzal/sql-faker/index.html">k-kinzal/sql-faker</a></li><li><a href="../../../../../../../../../../fakerphp/faker/index.html">fakerphp/faker</a><span class="sb-note">vendor</span></li></ul></nav></nav>
+<div class="page">
+<header class="topbar">
+<button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>
+<nav class="crumbs"><a href="../../../../../../../../../../index.html">src</a><span class="crumb-sep">::</span><span class="crumb-current">packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/ja_JP/Text.php</span></nav>
+<div class="topbar-tools">
+<input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-faker" title="Repository: https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-faker" rel="noreferrer">github.com</a>
+<button id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content">
+<div class="symbol-head"><h1 class="source-title">packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/ja_JP/Text.php</h1></div>
+<pre class="source"><code><span class="src-line" id="L1"><a class="ln" href="#L1">1</a>&lt;?php</span>
+<span class="src-line" id="L2"><a class="ln" href="#L2">2</a></span>
+<span class="src-line" id="L3"><a class="ln" href="#L3">3</a><span class="tok-kw">namespace</span> <span class="tok-id">Faker\Provider\ja_JP</span>;</span>
+<span class="src-line" id="L4"><a class="ln" href="#L4">4</a></span>
+<span class="src-line" id="L5"><a class="ln" href="#L5">5</a><span class="tok-kw">class</span> <span class="tok-id">Text</span> <span class="tok-kw">extends</span> <span class="tok-id">\Faker\Provider\Text</span></span>
+<span class="src-line" id="L6"><a class="ln" href="#L6">6</a>{</span>
+<span class="src-line" id="L7"><a class="ln" href="#L7">7</a>    <span class="tok-kw">protected</span> <span class="tok-kw">static</span> <span class="tok-var">$separator</span> = <span class="tok-str">&#039;&#039;</span>;</span>
+<span class="src-line" id="L8"><a class="ln" href="#L8">8</a>    <span class="tok-kw">protected</span> <span class="tok-kw">static</span> <span class="tok-var">$separatorLen</span> = <span class="tok-num">0</span>;</span>
+<span class="src-line" id="L9"><a class="ln" href="#L9">9</a></span>
+<span class="src-line" id="L10"><a class="ln" href="#L10">10</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-com">     * All punctuation in $baseText: 、 。 「 」 『 』 ！ ？ ー ， ： ；</span></span>
+<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L13"><a class="ln" href="#L13">13</a>    <span class="tok-kw">protected</span> <span class="tok-kw">static</span> <span class="tok-var">$notEndPunct</span> = [<span class="tok-str">&#039;、&#039;</span>, <span class="tok-str">&#039;「&#039;</span>, <span class="tok-str">&#039;『&#039;</span>, <span class="tok-str">&#039;ー&#039;</span>, <span class="tok-str">&#039;，&#039;</span>, <span class="tok-str">&#039;：&#039;</span>, <span class="tok-str">&#039;；&#039;</span>];</span>
+<span class="src-line" id="L14"><a class="ln" href="#L14">14</a>    <span class="tok-kw">protected</span> <span class="tok-kw">static</span> <span class="tok-var">$endPunct</span> = [<span class="tok-str">&#039;。&#039;</span>, <span class="tok-str">&#039;」&#039;</span>, <span class="tok-str">&#039;』&#039;</span>, <span class="tok-str">&#039;！&#039;</span>, <span class="tok-str">&#039;？&#039;</span>];</span>
+<span class="src-line" id="L15"><a class="ln" href="#L15">15</a>    <span class="tok-kw">protected</span> <span class="tok-kw">static</span> <span class="tok-var">$notBeginPunct</span> = [<span class="tok-str">&#039;、&#039;</span>, <span class="tok-str">&#039;。&#039;</span>, <span class="tok-str">&#039;」&#039;</span>, <span class="tok-str">&#039;』&#039;</span>, <span class="tok-str">&#039;！&#039;</span>, <span class="tok-str">&#039;？&#039;</span>, <span class="tok-str">&#039;ー&#039;</span>, <span class="tok-str">&#039;，&#039;</span>, <span class="tok-str">&#039;：&#039;</span>, <span class="tok-str">&#039;；&#039;</span>];</span>
+<span class="src-line" id="L16"><a class="ln" href="#L16">16</a></span>
+<span class="src-line" id="L17"><a class="ln" href="#L17">17</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-com">     * Title: 銀河鉄道の夜 Night On The Milky Way Train</span></span>
+<span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-com">     * Author: 宮沢賢治 Kenji Miyazawa</span></span>
+<span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-com">     * Language: Japanese</span></span>
+<span class="src-line" id="L21"><a class="ln" href="#L21">21</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L22"><a class="ln" href="#L22">22</a><span class="tok-com">     * @see http://www.aozora.gr.jp/cards/000081/files/43737_19215.html</span></span>
+<span class="src-line" id="L23"><a class="ln" href="#L23">23</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L24"><a class="ln" href="#L24">24</a><span class="tok-com">     * @var string</span></span>
+<span class="src-line" id="L25"><a class="ln" href="#L25">25</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L26"><a class="ln" href="#L26">26</a>    <span class="tok-kw">protected</span> <span class="tok-kw">static</span> <span class="tok-var">$baseText</span> = &lt;&lt;&lt;&#039;EOT&#039;</span>
+<span class="src-line" id="L27"><a class="ln" href="#L27">27</a><span class="tok-str">一　午後の授業</span></span>
+<span class="src-line" id="L28"><a class="ln" href="#L28">28</a></span>
+<span class="src-line" id="L29"><a class="ln" href="#L29">29</a><span class="tok-str">「ではみなさんは、そういうふうに川だと言いわれたり、乳ちちの流ながれたあとだと言いわれたりしていた、このぼんやりと白いものがほんとうは何かご承知しょうちですか」先生は、黒板こくばんにつるした大きな黒い星座せいざの図の、上から下へ白くけぶった銀河帯ぎんがたいのようなところを指さしながら、みんなに問といをかけました。</span></span>
+<span class="src-line" id="L30"><a class="ln" href="#L30">30</a><span class="tok-str">カムパネルラが手をあげました。それから四、五人手をあげました。ジョバンニも手をあげようとして、急いそいでそのままやめました。たしかにあれがみんな星だと、いつか雑誌ざっしで読んだのでしたが、このごろはジョバンニはまるで毎日教室でもねむく、本を読むひまも読む本もないので、なんだかどんなこともよくわからないという気持きもちがするのでした。</span></span>
+<span class="src-line" id="L31"><a class="ln" href="#L31">31</a><span class="tok-str">ところが先生は早くもそれを見つけたのでした。</span></span>
+<span class="src-line" id="L32"><a class="ln" href="#L32">32</a><span class="tok-str">「ジョバンニさん。あなたはわかっているのでしょう」</span></span>
+<span class="src-line" id="L33"><a class="ln" href="#L33">33</a><span class="tok-str">ジョバンニは勢いきおいよく立ちあがりましたが、立ってみるともうはっきりとそれを答えることができないのでした。ザネリが前の席せきからふりかえって、ジョバンニを見てくすっとわらいました。ジョバンニはもうどぎまぎしてまっ赤になってしまいました。先生がまた言いいました。</span></span>
+<span class="src-line" id="L34"><a class="ln" href="#L34">34</a><span class="tok-str">「大きな望遠鏡ぼうえんきょうで銀河ぎんがをよっく調しらべると銀河ぎんがはだいたい何でしょう」</span></span>
+<span class="src-line" id="L35"><a class="ln" href="#L35">35</a><span class="tok-str">やっぱり星だとジョバンニは思いましたが、こんどもすぐに答えることができませんでした。</span></span>
+<span class="src-line" id="L36"><a class="ln" href="#L36">36</a><span class="tok-str">先生はしばらく困こまったようすでしたが、眼めをカムパネルラの方へ向むけて、</span></span>
+<span class="src-line" id="L37"><a class="ln" href="#L37">37</a><span class="tok-str">「ではカムパネルラさん」と名指なざしました。</span></span>
+<span class="src-line" id="L38"><a class="ln" href="#L38">38</a><span class="tok-str">するとあんなに元気に手をあげたカムパネルラが、やはりもじもじ立ち上がったままやはり答えができませんでした。</span></span>
+<span class="src-line" id="L39"><a class="ln" href="#L39">39</a><span class="tok-str">先生は意外いがいなようにしばらくじっとカムパネルラを見ていましたが、急いそいで、</span></span>
+<span class="src-line" id="L40"><a class="ln" href="#L40">40</a><span class="tok-str">「では、よし」と言いいながら、自分で星図を指さしました。</span></span>
+<span class="src-line" id="L41"><a class="ln" href="#L41">41</a><span class="tok-str">「このぼんやりと白い銀河ぎんがを大きないい望遠鏡ぼうえんきょうで見ますと、もうたくさんの小さな星に見えるのです。ジョバンニさんそうでしょう」</span></span>
+<span class="src-line" id="L42"><a class="ln" href="#L42">42</a><span class="tok-str">ジョバンニはまっ赤かになってうなずきました。けれどもいつかジョバンニの眼めのなかには涙なみだがいっぱいになりました。そうだ僕ぼくは知っていたのだ、もちろんカムパネルラも知っている、それはいつかカムパネルラのお父さんの博士はかせのうちでカムパネルラといっしょに読んだ雑誌ざっしのなかにあったのだ。それどこでなくカムパネルラは、その雑誌ざっしを読むと、すぐお父さんの書斎しょさいから巨おおきな本をもってきて、ぎんがというところをひろげ、まっ黒な頁ページいっぱいに白に点々てんてんのある美うつくしい写真しゃしんを二人でいつまでも見たのでした。それをカムパネルラが忘わすれるはずもなかったのに、すぐに返事へんじをしなかったのは、このごろぼくが、朝にも午後にも仕事しごとがつらく、学校に出てももうみんなともはきはき遊あそばず、カムパネルラともあんまり物を言いわないようになったので、カムパネルラがそれを知ってきのどくがってわざと返事へんじをしなかったのだ、そう考えるとたまらないほど、じぶんもカムパネルラもあわれなような気がするのでした。</span></span>
+<span class="src-line" id="L43"><a class="ln" href="#L43">43</a><span class="tok-str">先生はまた言いいました。</span></span>
+<span class="src-line" id="L44"><a class="ln" href="#L44">44</a><span class="tok-str">「ですからもしもこの天の川がほんとうに川だと考えるなら、その一つ一つの小さな星はみんなその川のそこの砂すなや砂利じゃりの粒つぶにもあたるわけです。またこれを巨おおきな乳ちちの流ながれと考えるなら、もっと天の川とよく似にています。つまりその星はみな、乳ちちのなかにまるで細こまかにうかんでいる脂油あぶらの球たまにもあたるのです。そんなら何がその川の水にあたるかと言いいますと、それは真空しんくうという光をある速はやさで伝つたえるもので、太陽たいようや地球ちきゅうもやっぱりそのなかに浮うかんでいるのです。つまりは私わたしどもも天の川の水のなかに棲すんでいるわけです。そしてその天の川の水のなかから四方を見ると、ちょうど水が深いほど青く見えるように、天の川の底そこの深ふかく遠いところほど星がたくさん集まって見え、したがって白くぼんやり見えるのです。この模型もけいをごらんなさい」</span></span>
+<span class="src-line" id="L45"><a class="ln" href="#L45">45</a><span class="tok-str">先生は中にたくさん光る砂すなのつぶのはいった大きな両面りょうめんの凸とつレンズを指さしました。</span></span>
+<span class="src-line" id="L46"><a class="ln" href="#L46">46</a><span class="tok-str">「天の川の形はちょうどこんななのです。このいちいちの光るつぶがみんな私わたしどもの太陽たいようと同じようにじぶんで光っている星だと考えます。私どもの太陽たいようがこのほぼ中ごろにあって地球ちきゅうがそのすぐ近くにあるとします。みなさんは夜にこのまん中に立ってこのレンズの中を見まわすとしてごらんなさい。こっちの方はレンズが薄うすいのでわずかの光る粒つぶすなわち星しか見えないでしょう。こっちやこっちの方はガラスが厚あついので、光る粒つぶすなわち星がたくさん見えその遠いのはぼうっと白く見えるという、これがつまり今日の銀河ぎんがの説せつなのです。そんならこのレンズの大きさがどれくらいあるか、またその中のさまざまの星についてはもう時間ですから、この次つぎの理科の時間にお話します。では今日はその銀河ぎんがのお祭まつりなのですから、みなさんは外へでてよくそらをごらんなさい。ではここまでです。本やノートをおしまいなさい」</span></span>
+<span class="src-line" id="L47"><a class="ln" href="#L47">47</a><span class="tok-str">そして教室じゅうはしばらく机つくえの蓋ふたをあけたりしめたり本を重かさねたりする音がいっぱいでしたが、まもなくみんなはきちんと立って礼れいをすると教室を出ました。</span></span>
+<span class="src-line" id="L48"><a class="ln" href="#L48">48</a></span>
+<span class="src-line" id="L49"><a class="ln" href="#L49">49</a><span class="tok-str">二　活版所かっぱんじょ</span></span>
+<span class="src-line" id="L50"><a class="ln" href="#L50">50</a></span>
+<span class="src-line" id="L51"><a class="ln" href="#L51">51</a><span class="tok-str">ジョバンニが学校の門を出るとき、同じ組の七、八人は家へ帰らずカムパネルラをまん中にして校庭こうていの隅すみの桜さくらの木のところに集あつまっていました。それはこんやの星祭ほしまつりに青いあかりをこしらえて川へ流ながす烏瓜からすうりを取とりに行く相談そうだんらしかったのです。</span></span>
+<span class="src-line" id="L52"><a class="ln" href="#L52">52</a><span class="tok-str">けれどもジョバンニは手を大きく振ふってどしどし学校の門もんを出て来ました。すると町の家々ではこんやの銀河ぎんがの祭まつりにいちいの葉はの玉たまをつるしたり、ひのきの枝えだにあかりをつけたり、いろいろしたくをしているのでした。</span></span>
+<span class="src-line" id="L53"><a class="ln" href="#L53">53</a><span class="tok-str">家へは帰らずジョバンニが町を三つ曲まがってある大きな活版所かっぱんじょにはいって靴くつをぬいで上がりますと、突つき当たりの大きな扉とびらをあけました。中にはまだ昼ひるなのに電燈でんとうがついて、たくさんの輪転機りんてんきがばたりばたりとまわり、きれで頭をしばったりラムプシェードをかけたりした人たちが、何か歌うように読んだり数えたりしながらたくさん働はたらいておりました。</span></span>
+<span class="src-line" id="L54"><a class="ln" href="#L54">54</a><span class="tok-str">ジョバンニはすぐ入口から三番目の高い卓子テーブルにすわった人の所ところへ行っておじぎをしました。その人はしばらく棚たなをさがしてから、</span></span>
+<span class="src-line" id="L55"><a class="ln" href="#L55">55</a><span class="tok-str">「これだけ拾ひろって行けるかね」と言いいながら、一枚の紙切れを渡わたしました。ジョバンニはその人の卓子テーブルの足もとから一つの小さな平ひらたい函はこをとりだして向むこうの電燈でんとうのたくさんついた、たてかけてある壁かべの隅すみの所ところへしゃがみ込こむと、小さなピンセットでまるで粟粒あわつぶぐらいの活字かつじを次つぎから次つぎへと拾ひろいはじめました。青い胸むねあてをした人がジョバンニのうしろを通りながら、</span></span>
+<span class="src-line" id="L56"><a class="ln" href="#L56">56</a><span class="tok-str">「よう、虫めがね君くん、お早う」と言いいますと、近くの四、五人の人たちが声もたてずこっちも向むかずに冷つめたくわらいました。</span></span>
+<span class="src-line" id="L57"><a class="ln" href="#L57">57</a><span class="tok-str">ジョバンニは何べんも眼めをぬぐいながら活字かつじをだんだんひろいました。</span></span>
+<span class="src-line" id="L58"><a class="ln" href="#L58">58</a><span class="tok-str">六時がうってしばらくたったころ、ジョバンニは拾ひろった活字かつじをいっぱいに入れた平ひらたい箱はこをもういちど手にもった紙きれと引き合わせてから、さっきの卓子テーブルの人へ持もって来ました。その人は黙だまってそれを受うけ取とってかすかにうなずきました。</span></span>
+<span class="src-line" id="L59"><a class="ln" href="#L59">59</a><span class="tok-str">ジョバンニはおじぎをすると扉とびらをあけて計算台のところに来ました。すると白服しろふくを着きた人がやっぱりだまって小さな銀貨ぎんかを一つジョバンニに渡わたしました。ジョバンニはにわかに顔いろがよくなって威勢いせいよくおじぎをすると、台の下に置おいた鞄かばんをもっておもてへ飛とびだしました。それから元気よく口笛くちぶえを吹ふきながらパン屋やへ寄よってパンの塊かたまりを一つと角砂糖かくざとうを一袋ふくろ買いますといちもくさんに走りだしました。</span></span>
+<span class="src-line" id="L60"><a class="ln" href="#L60">60</a></span>
+<span class="src-line" id="L61"><a class="ln" href="#L61">61</a><span class="tok-str">三　家</span></span>
+<span class="src-line" id="L62"><a class="ln" href="#L62">62</a></span>
+<span class="src-line" id="L63"><a class="ln" href="#L63">63</a><span class="tok-str">ジョバンニが勢いきおいよく帰って来たのは、ある裏町うらまちの小さな家でした。その三つならんだ入口のいちばん左側ひだりがわには空箱あきばこに紫むらさきいろのケールやアスパラガスが植うえてあって小さな二つの窓まどには日覆ひおおいがおりたままになっていました。</span></span>
+<span class="src-line" id="L64"><a class="ln" href="#L64">64</a><span class="tok-str">「お母さん、いま帰ったよ。ぐあい悪わるくなかったの」ジョバンニは靴くつをぬぎながら言いました。</span></span>
+<span class="src-line" id="L65"><a class="ln" href="#L65">65</a><span class="tok-str">「ああ、ジョバンニ、お仕事しごとがひどかったろう。今日きょうは涼すずしくてね。わたしはずうっとぐあいがいいよ」</span></span>
+<span class="src-line" id="L66"><a class="ln" href="#L66">66</a><span class="tok-str">ジョバンニは玄関げんかんを上がって行きますとジョバンニのお母さんがすぐ入口の室へやに白い巾きれをかぶって寝やすんでいたのでした。ジョバンニは窓まどをあけました。</span></span>
+<span class="src-line" id="L67"><a class="ln" href="#L67">67</a><span class="tok-str">「お母さん、今日は角砂糖かくざとうを買ってきたよ。牛乳ぎゅうにゅうに入れてあげようと思って」</span></span>
+<span class="src-line" id="L68"><a class="ln" href="#L68">68</a><span class="tok-str">「ああ、お前さきにおあがり。あたしはまだほしくないんだから」</span></span>
+<span class="src-line" id="L69"><a class="ln" href="#L69">69</a><span class="tok-str">「お母さん。姉ねえさんはいつ帰ったの」</span></span>
+<span class="src-line" id="L70"><a class="ln" href="#L70">70</a><span class="tok-str">「ああ、三時ころ帰ったよ。みんなそこらをしてくれてね」</span></span>
+<span class="src-line" id="L71"><a class="ln" href="#L71">71</a><span class="tok-str">「お母さんの牛乳ぎゅうにゅうは来ていないんだろうか」</span></span>
+<span class="src-line" id="L72"><a class="ln" href="#L72">72</a><span class="tok-str">「来なかったろうかねえ」</span></span>
+<span class="src-line" id="L73"><a class="ln" href="#L73">73</a><span class="tok-str">「ぼく行ってとって来よう」</span></span>
+<span class="src-line" id="L74"><a class="ln" href="#L74">74</a><span class="tok-str">「ああ、あたしはゆっくりでいいんだからお前さきにおあがり、姉ねえさんがね、トマトで何かこしらえてそこへ置おいて行ったよ」</span></span>
+<span class="src-line" id="L75"><a class="ln" href="#L75">75</a><span class="tok-str">「ではぼくたべよう」</span></span>
+<span class="src-line" id="L76"><a class="ln" href="#L76">76</a><span class="tok-str">ジョバンニは［＃「　ジョバンニは」は底本では「「ジョバンニは」］窓まどのところからトマトの皿さらをとってパンといっしょにしばらくむしゃむしゃたべました。</span></span>
+<span class="src-line" id="L77"><a class="ln" href="#L77">77</a><span class="tok-str">「ねえお母さん。ぼくお父さんはきっとまもなく帰ってくると思うよ」</span></span>
+<span class="src-line" id="L78"><a class="ln" href="#L78">78</a><span class="tok-str">「ああ、あたしもそう思う。けれどもおまえはどうしてそう思うの」</span></span>
+<span class="src-line" id="L79"><a class="ln" href="#L79">79</a><span class="tok-str">「だって今朝けさの新聞に今年は北の方の漁りょうはたいへんよかったと書いてあったよ」</span></span>
+<span class="src-line" id="L80"><a class="ln" href="#L80">80</a><span class="tok-str">「ああだけどねえ、お父さんは漁りょうへ出ていないかもしれない」</span></span>
+<span class="src-line" id="L81"><a class="ln" href="#L81">81</a><span class="tok-str">「きっと出ているよ。お父さんが監獄かんごくへはいるようなそんな悪わるいことをしたはずがないんだ。この前お父さんが持ってきて学校へ寄贈きぞうした巨おおきな蟹かにの甲こうらだのとなかいの角つのだの今だってみんな標本室ひょうほんしつにあるんだ。六年生なんか授業じゅぎょうのとき先生がかわるがわる教室へ持もって行くよ」</span></span>
+<span class="src-line" id="L82"><a class="ln" href="#L82">82</a><span class="tok-str">「お父さんはこの次つぎはおまえにラッコの上着うわぎをもってくるといったねえ」</span></span>
+<span class="src-line" id="L83"><a class="ln" href="#L83">83</a><span class="tok-str">「みんながぼくにあうとそれを言いうよ。ひやかすように言いうんだ」</span></span>
+<span class="src-line" id="L84"><a class="ln" href="#L84">84</a><span class="tok-str">「おまえに悪口わるくちを言いうの」</span></span>
+<span class="src-line" id="L85"><a class="ln" href="#L85">85</a><span class="tok-str">「うん、けれどもカムパネルラなんか決けっして言いわない。カムパネルラはみんながそんなことを言いうときはきのどくそうにしているよ」</span></span>
+<span class="src-line" id="L86"><a class="ln" href="#L86">86</a><span class="tok-str">「カムパネルラのお父さんとうちのお父さんとは、ちょうどおまえたちのように小さいときからのお友達ともだちだったそうだよ」</span></span>
+<span class="src-line" id="L87"><a class="ln" href="#L87">87</a><span class="tok-str">「ああだからお父さんはぼくをつれてカムパネルラのうちへもつれて行ったよ。あのころはよかったなあ。ぼくは学校から帰る途中とちゅうたびたびカムパネルラのうちに寄よった。カムパネルラのうちにはアルコールランプで走る汽車があったんだ。レールを七つ組み合わせるとまるくなってそれに電柱でんちゅうや信号標しんごうひょうもついていて信号標しんごうひょうのあかりは汽車が通るときだけ青くなるようになっていたんだ。いつかアルコールがなくなったとき石油せきゆをつかったら、缶かんがすっかりすすけたよ」</span></span>
+<span class="src-line" id="L88"><a class="ln" href="#L88">88</a><span class="tok-str">「そうかねえ」</span></span>
+<span class="src-line" id="L89"><a class="ln" href="#L89">89</a><span class="tok-str">「いまも毎朝新聞をまわしに行くよ。けれどもいつでも家じゅうまだしいんとしているからな」</span></span>
+<span class="src-line" id="L90"><a class="ln" href="#L90">90</a><span class="tok-str">「早いからねえ」</span></span>
+<span class="src-line" id="L91"><a class="ln" href="#L91">91</a><span class="tok-str">「ザウエルという犬がいるよ。しっぽがまるで箒ほうきのようだ。ぼくが行くと鼻はなを鳴らしてついてくるよ。ずうっと町の角かどまでついてくる。もっとついてくることもあるよ。今夜はみんなで烏瓜からすうりのあかりを川へながしに行くんだって。きっと犬もついて行くよ」</span></span>
+<span class="src-line" id="L92"><a class="ln" href="#L92">92</a><span class="tok-str">「そうだ。今晩こんばんは銀河ぎんがのお祭まつりだねえ」</span></span>
+<span class="src-line" id="L93"><a class="ln" href="#L93">93</a><span class="tok-str">「うん。ぼく牛乳ぎゅうにゅうをとりながら見てくるよ」</span></span>
+<span class="src-line" id="L94"><a class="ln" href="#L94">94</a><span class="tok-str">「ああ行っておいで。川へははいらないでね」</span></span>
+<span class="src-line" id="L95"><a class="ln" href="#L95">95</a><span class="tok-str">「ああぼく岸きしから見るだけなんだ。一時間で行ってくるよ」</span></span>
+<span class="src-line" id="L96"><a class="ln" href="#L96">96</a><span class="tok-str">「もっと遊あそんでおいで。カムパネルラさんといっしょなら心配しんぱいはないから」</span></span>
+<span class="src-line" id="L97"><a class="ln" href="#L97">97</a><span class="tok-str">「ああきっといっしょだよ。お母さん、窓をしめておこうか」</span></span>
+<span class="src-line" id="L98"><a class="ln" href="#L98">98</a><span class="tok-str">「ああ、どうか。もう涼すずしいからね」</span></span>
+<span class="src-line" id="L99"><a class="ln" href="#L99">99</a><span class="tok-str">ジョバンニは立って窓まどをしめ、お皿さらやパンの袋ふくろをかたづけると勢いきおいよく靴くつをはいて、</span></span>
+<span class="src-line" id="L100"><a class="ln" href="#L100">100</a><span class="tok-str">「では一時間半はんで帰ってくるよ」と言いいながら暗くらい戸口とぐちを出ました。</span></span>
+<span class="src-line" id="L101"><a class="ln" href="#L101">101</a></span>
+<span class="src-line" id="L102"><a class="ln" href="#L102">102</a><span class="tok-str">四　ケンタウル祭さいの夜</span></span>
+<span class="src-line" id="L103"><a class="ln" href="#L103">103</a></span>
+<span class="src-line" id="L104"><a class="ln" href="#L104">104</a><span class="tok-str">ジョバンニは、口笛くちぶえを吹ふいているようなさびしい口つきで、檜ひのきのまっ黒にならんだ町の坂さかをおりて来たのでした。</span></span>
+<span class="src-line" id="L105"><a class="ln" href="#L105">105</a><span class="tok-str">坂さかの下に大きな一つの街燈がいとうが、青白く立派りっぱに光って立っていました。ジョバンニが、どんどん電燈でんとうの方へおりて行きますと、いままでばけもののように、長くぼんやり、うしろへ引いていたジョバンニの影かげぼうしは、だんだん濃こく黒くはっきりなって、足をあげたり手を振ふったり、ジョバンニの横よこの方へまわって来るのでした。</span></span>
+<span class="src-line" id="L106"><a class="ln" href="#L106">106</a><span class="tok-str">（ぼくは立派りっぱな機関車きかんしゃだ。ここは勾配こうばいだから速はやいぞ。ぼくはいまその電燈でんとうを通り越こす。そうら、こんどはぼくの影法師かげぼうしはコンパスだ。あんなにくるっとまわって、前の方へ来た）</span></span>
+<span class="src-line" id="L107"><a class="ln" href="#L107">107</a><span class="tok-str">とジョバンニが思いながら、大股おおまたにその街燈がいとうの下を通り過すぎたとき、いきなりひるまのザネリが、新しいえりのとがったシャツを着きて、電燈でんとうの向むこう側がわの暗くらい小路こうじから出て来て、ひらっとジョバンニとすれちがいました。</span></span>
+<span class="src-line" id="L108"><a class="ln" href="#L108">108</a><span class="tok-str">「ザネリ、烏瓜からすうりながしに行くの」ジョバンニがまだそう言いってしまわないうちに、</span></span>
+<span class="src-line" id="L109"><a class="ln" href="#L109">109</a><span class="tok-str">「ジョバンニ、お父さんから、ラッコの上着うわぎが来るよ」その子が投なげつけるようにうしろから叫さけびました。</span></span>
+<span class="src-line" id="L110"><a class="ln" href="#L110">110</a><span class="tok-str">ジョバンニは、ばっと胸むねがつめたくなり、そこらじゅうきいんと鳴るように思いました。</span></span>
+<span class="src-line" id="L111"><a class="ln" href="#L111">111</a><span class="tok-str">「なんだい、ザネリ」とジョバンニは高く叫さけび返かえしましたが、もうザネリは向むこうのひばの植うわった家の中へはいっていました。</span></span>
+<span class="src-line" id="L112"><a class="ln" href="#L112">112</a><span class="tok-str">（ザネリはどうしてぼくがなんにもしないのにあんなことを言いうのだろう。走るときはまるで鼠ねずみのようなくせに。ぼくがなんにもしないのにあんなことを言いうのはザネリがばかなからだ）</span></span>
+<span class="src-line" id="L113"><a class="ln" href="#L113">113</a><span class="tok-str">ジョバンニは、せわしくいろいろのことを考えながら、さまざまの灯あかりや木の枝えだで、すっかりきれいに飾かざられた街まちを通って行きました。時計屋とけいやの店には明るくネオン燈とうがついて、一秒びょうごとに石でこさえたふくろうの赤い眼めが、くるっくるっとうごいたり、いろいろな宝石ほうせきが海のような色をした厚あつい硝子ガラスの盤ばんに載のって、星のようにゆっくり循めぐったり、また向むこう側がわから、銅どうの人馬がゆっくりこっちへまわって来たりするのでした。そのまん中にまるい黒い星座早見せいざはやみが青いアスパラガスの葉はで飾かざってありました。</span></span>
+<span class="src-line" id="L114"><a class="ln" href="#L114">114</a><span class="tok-str">ジョバンニはわれを忘わすれて、その星座せいざの図に見入りました。</span></span>
+<span class="src-line" id="L115"><a class="ln" href="#L115">115</a><span class="tok-str">それはひる学校で見たあの図よりはずうっと小さかったのですが、その日と時間に合わせて盤ばんをまわすと、そのとき出ているそらがそのまま楕円形だえんけいのなかにめぐってあらわれるようになっており、やはりそのまん中には上から下へかけて銀河ぎんががぼうとけむったような帯おびになって、その下の方ではかすかに爆発ばくはつして湯ゆげでもあげているように見えるのでした。またそのうしろには三本の脚あしのついた小さな望遠鏡ぼうえんきょうが黄いろに光って立っていましたし、いちばんうしろの壁かべには空じゅうの星座せいざをふしぎな獣けものや蛇へびや魚や瓶びんの形に書いた大きな図ずがかかっていました。ほんとうにこんなような蠍さそりだの勇士ゆうしだのそらにぎっしりいるだろうか、ああぼくはその中をどこまでも歩いてみたいと思ってたりしてしばらくぼんやり立っていました。</span></span>
+<span class="src-line" id="L116"><a class="ln" href="#L116">116</a><span class="tok-str">それからにわかにお母さんの牛乳ぎゅうにゅうのことを思いだしてジョバンニはその店をはなれました。</span></span>
+<span class="src-line" id="L117"><a class="ln" href="#L117">117</a><span class="tok-str">そしてきゅうくつな上着うわぎの肩かたを気にしながら、それでもわざと胸むねを張はって大きく手を振ふって町を通って行きました。</span></span>
+<span class="src-line" id="L118"><a class="ln" href="#L118">118</a><span class="tok-str">空気は澄すみきって、まるで水のように通りや店の中を流ながれましたし、街燈がいとうはみなまっ青なもみや楢ならの枝えだで包つつまれ、電気会社の前の六本のプラタナスの木などは、中にたくさんの豆電燈まめでんとうがついて、ほんとうにそこらは人魚の都みやこのように見えるのでした。子どもらは、みんな新しい折おりのついた着物きものを着きて、星めぐりの口笛くちぶえを吹ふいたり、</span></span>
+<span class="src-line" id="L119"><a class="ln" href="#L119">119</a><span class="tok-str">「ケンタウルス、露つゆをふらせ」と叫さけんで走ったり、青いマグネシヤの花火を燃もしたりして、たのしそうに遊あそんでいるのでした。けれどもジョバンニは、いつかまた深ふかく首くびをたれて、そこらのにぎやかさとはまるでちがったことを考えながら、牛乳屋ぎゅうにゅうやの方へ急いそぐのでした。</span></span>
+<span class="src-line" id="L120"><a class="ln" href="#L120">120</a><span class="tok-str">ジョバンニは、いつか町はずれのポプラの木が幾本いくほんも幾本いくほんも、高く星ぞらに浮うかんでいるところに来ていました。その牛乳屋ぎゅうにゅうやの黒い門もんをはいり、牛のにおいのするうすくらい台所だいどころの前に立って、ジョバンニは帽子ぼうしをぬいで、</span></span>
+<span class="src-line" id="L121"><a class="ln" href="#L121">121</a><span class="tok-str">「今晩こんばんは」と言いいましたら、家の中はしいんとして誰だれもいたようではありませんでした。</span></span>
+<span class="src-line" id="L122"><a class="ln" href="#L122">122</a><span class="tok-str">「今晩こんばんは、ごめんなさい」ジョバンニはまっすぐに立ってまた叫さけびました。するとしばらくたってから、年とった女の人が、どこかぐあいが悪わるいようにそろそろと出て来て、何か用かと口の中で言いいました。</span></span>
+<span class="src-line" id="L123"><a class="ln" href="#L123">123</a><span class="tok-str">「あの、今日、牛乳ぎゅうにゅうが僕ぼく※［＃小書き平仮名ん、183-7］とこへ来なかったので、もらいにあがったんです」ジョバンニが一生けん命めい勢いきおいよく言いいました。</span></span>
+<span class="src-line" id="L124"><a class="ln" href="#L124">124</a><span class="tok-str">「いま誰だれもいないでわかりません。あしたにしてください」その人は赤い眼めの下のとこをこすりながら、ジョバンニを見おろして言いいました。</span></span>
+<span class="src-line" id="L125"><a class="ln" href="#L125">125</a><span class="tok-str">「おっかさんが病気びょうきなんですから今晩こんばんでないと困こまるんです」</span></span>
+<span class="src-line" id="L126"><a class="ln" href="#L126">126</a><span class="tok-str">「ではもう少したってから来てください」その人はもう行ってしまいそうでした。</span></span>
+<span class="src-line" id="L127"><a class="ln" href="#L127">127</a><span class="tok-str">「そうですか。ではありがとう」ジョバンニは、お辞儀じぎをして台所だいどころから出ました。</span></span>
+<span class="src-line" id="L128"><a class="ln" href="#L128">128</a><span class="tok-str">十字になった町のかどを、まがろうとしましたら、向むこうの橋はしへ行く方の雑貨店ざっかてんの前で、黒い影かげやぼんやり白いシャツが入り乱みだれて、六、七人の生徒らが、口笛くちぶえを吹ふいたり笑わらったりして、めいめい烏瓜からすうりの燈火あかりを持もってやって来くるのを見みました。その笑わらい声も口笛くちぶえも、みんな聞きおぼえのあるものでした。ジョバンニの同級どうきゅうの子供こどもらだったのです。ジョバンニは思わずどきっとして戻もどろうとしましたが、思い直なおして、いっそう勢いきおいよくそっちへ歩いて行きました。</span></span>
+<span class="src-line" id="L129"><a class="ln" href="#L129">129</a><span class="tok-str">「川へ行くの」ジョバンニが言いおうとして、少しのどがつまったように思ったとき、</span></span>
+<span class="src-line" id="L130"><a class="ln" href="#L130">130</a><span class="tok-str">「ジョバンニ、ラッコの上着うわぎが来るよ」さっきのザネリがまた叫さけびました。</span></span>
+<span class="src-line" id="L131"><a class="ln" href="#L131">131</a><span class="tok-str">「ジョバンニ、ラッコの上着うわぎが来るよ」すぐみんなが、続つづいて叫さけびました。ジョバンニはまっ赤になって、もう歩いているかもわからず、急いそいで行きすぎようとしましたら、そのなかにカムパネルラがいたのです。カムパネルラはきのどくそうに、だまって少しわらって、おこらないだろうかというようにジョバンニの方を見ていました。</span></span>
+<span class="src-line" id="L132"><a class="ln" href="#L132">132</a><span class="tok-str">ジョバンニは、にげるようにその眼めを避さけ、そしてカムパネルラのせいの高いかたちが過すぎて行ってまもなく、みんなはてんでに口笛くちぶえを吹ふきました。町かどを曲まがるとき、ふりかえって見ましたら、ザネリがやはりふりかえって見ていました。そしてカムパネルラもまた、高く口笛くちぶえを吹ふいて向むこうにぼんやり見える橋はしの方へ歩いて行ってしまったのでした。ジョバンニは、なんとも言いえずさびしくなって、いきなり走りだしました。すると耳に手をあてて、わあわあと言いいながら片足かたあしでぴょんぴょん跳とんでいた小さな子供こどもらは、ジョバンニがおもしろくてかけるのだと思って、わあいと叫さけびました。</span></span>
+<span class="src-line" id="L133"><a class="ln" href="#L133">133</a><span class="tok-str">まもなくジョバンニは走りだして黒い丘おかの方へ急いそぎました。</span></span>
+<span class="src-line" id="L134"><a class="ln" href="#L134">134</a></span>
+<span class="src-line" id="L135"><a class="ln" href="#L135">135</a><span class="tok-str">五　天気輪てんきりんの柱はしら</span></span>
+<span class="src-line" id="L136"><a class="ln" href="#L136">136</a></span>
+<span class="src-line" id="L137"><a class="ln" href="#L137">137</a><span class="tok-str">牧場ぼくじょうのうしろはゆるい丘おかになって、その黒い平たいらな頂上ちょうじょうは、北の大熊星おおくまぼしの下に、ぼんやりふだんよりも低ひくく、連つらなって見えました。</span></span>
+<span class="src-line" id="L138"><a class="ln" href="#L138">138</a><span class="tok-str">ジョバンニは、もう露つゆの降おりかかった小さな林のこみちを、どんどんのぼって行きました。まっくらな草や、いろいろな形に見えるやぶのしげみの間を、その小さなみちが、一すじ白く星あかりに照てらしだされてあったのです。草の中には、ぴかぴか青びかりを出す小さな虫もいて、ある葉はは青くすかし出され、ジョバンニは、さっきみんなの持もって行った烏瓜からすうりのあかりのようだとも思いました。</span></span>
+<span class="src-line" id="L139"><a class="ln" href="#L139">139</a><span class="tok-str">そのまっ黒な、松まつや楢ならの林を越こえると、にわかにがらんと空がひらけて、天の川がしらしらと南から北へ亙わたっているのが見え、また頂いただきの、天気輪てんきりんの柱はしらも見わけられたのでした。つりがねそうか野ぎくかの花が、そこらいちめんに、夢ゆめの中からでもかおりだしたというように咲さき、鳥が一疋ぴき、丘おかの上を鳴き続つづけながら通って行きました。</span></span>
+<span class="src-line" id="L140"><a class="ln" href="#L140">140</a><span class="tok-str">ジョバンニは、頂いただきの天気輪てんきりんの柱はしらの下に来て、どかどかするからだを、つめたい草に投なげました。</span></span>
+<span class="src-line" id="L141"><a class="ln" href="#L141">141</a><span class="tok-str">町の灯あかりは、暗やみの中をまるで海の底そこのお宮みやのけしきのようにともり、子供こどもらの歌う声や口笛くちぶえ、きれぎれの叫さけび声もかすかに聞こえて来るのでした。風が遠くで鳴り、丘おかの草もしずかにそよぎ、ジョバンニの汗あせでぬれたシャツもつめたく冷ひやされました。</span></span>
+<span class="src-line" id="L142"><a class="ln" href="#L142">142</a><span class="tok-str">野原から汽車の音が聞こえてきました。その小さな列車れっしゃの窓まどは一列いちれつ小さく赤く見え、その中にはたくさんの旅人たびびとが、苹果りんごをむいたり、わらったり、いろいろなふうにしていると考えますと、ジョバンニは、もうなんとも言いえずかなしくなって、また眼めをそらに挙あげました。</span></span>
+<span class="src-line" id="L143"><a class="ln" href="#L143">143</a><span class="tok-str">（この間原稿げんこう五枚分まいぶんなし）</span></span>
+<span class="src-line" id="L144"><a class="ln" href="#L144">144</a><span class="tok-str">ところがいくら見ていても、そのそらは、ひる先生の言いったような、がらんとした冷つめたいとこだとは思われませんでした。それどころでなく、見れば見るほど、そこは小さな林や牧場ぼくじょうやらある野原のはらのように考えられてしかたなかったのです。そしてジョバンニは青い琴ことの星が、三つにも四つにもなって、ちらちらまたたき、脚あしが何べんも出たり引っ込こんだりして、とうとう蕈きのこのように長く延のびるのを見ました。またすぐ眼めの下のまちまでが、やっぱりぼんやりしたたくさんの星の集あつまりか一つの大きなけむりかのように見えるように思いました。</span></span>
+<span class="src-line" id="L145"><a class="ln" href="#L145">145</a></span>
+<span class="src-line" id="L146"><a class="ln" href="#L146">146</a><span class="tok-str">六　銀河ぎんがステーション</span></span>
+<span class="src-line" id="L147"><a class="ln" href="#L147">147</a></span>
+<span class="src-line" id="L148"><a class="ln" href="#L148">148</a><span class="tok-str">そしてジョバンニはすぐうしろの天気輪てんきりんの柱はしらがいつかぼんやりした三角標さんかくひょうの形になって、しばらく蛍ほたるのように、ぺかぺか消きえたりともったりしているのを見ました。それはだんだんはっきりして、とうとうりんとうごかないようになり、濃こい鋼青はがねのそらの野原にたちました。いま新しく灼やいたばかりの青い鋼はがねの板いたのような、そらの野原に、まっすぐにすきっと立ったのです。</span></span>
+<span class="src-line" id="L149"><a class="ln" href="#L149">149</a><span class="tok-str">するとどこかで、ふしぎな声が、銀河ぎんがステーション、銀河ぎんがステーションと言いう声がしたと思うと、いきなり眼めの前が、ぱっと明るくなって、まるで億万おくまんの蛍烏賊ほたるいかの火を一ぺんに化石かせきさせて、そらじゅうに沈しずめたというぐあい、またダイアモンド会社で、ねだんがやすくならないために、わざと穫とれないふりをして、かくしておいた金剛石こんごうせきを、誰だれかがいきなりひっくりかえして、ばらまいたというふうに、眼めの前がさあっと明るくなって、ジョバンニは、思わず何べんも眼めをこすってしまいました。</span></span>
+<span class="src-line" id="L150"><a class="ln" href="#L150">150</a><span class="tok-str">気がついてみると、さっきから、ごとごとごとごと、ジョバンニの乗のっている小さな列車れっしゃが走りつづけていたのでした。ほんとうにジョバンニは、夜の軽便鉄道けいべんてつどうの、小さな黄いろの電燈でんとうのならんだ車室に、窓まどから外を見ながらすわっていたのです。車室の中は、青い天鵞絨ビロードを張はった腰掛こしかけが、まるでがらあきで、向むこうの鼠ねずみいろのワニスを塗ぬった壁かべには、真鍮しんちゅうの大きなぼたんが二つ光っているのでした。</span></span>
+<span class="src-line" id="L151"><a class="ln" href="#L151">151</a><span class="tok-str">すぐ前の席せきに、ぬれたようにまっ黒な上着うわぎを着た、せいの高い子供こどもが、窓から頭を出して外を見ているのに気がつきました。そしてそのこどもの肩かたのあたりが、どうも見たことのあるような気がして、そう思うと、もうどうしても誰だれだかわかりたくて、たまらなくなりました。いきなりこっちも窓まどから顔を出そうとしたとき、にわかにその子供こどもが頭を引っ込こめて、こっちを見ました。</span></span>
+<span class="src-line" id="L152"><a class="ln" href="#L152">152</a><span class="tok-str">それはカムパネルラだったのです。ジョバンニが、</span></span>
+<span class="src-line" id="L153"><a class="ln" href="#L153">153</a><span class="tok-str">カムパネルラ、きみは前からここにいたの、と言いおうと思ったとき、カムパネルラが、</span></span>
+<span class="src-line" id="L154"><a class="ln" href="#L154">154</a><span class="tok-str">「みんなはね、ずいぶん走ったけれども遅おくれてしまったよ。ザネリもね、ずいぶん走ったけれども追おいつかなかった」と言いいました。</span></span>
+<span class="src-line" id="L155"><a class="ln" href="#L155">155</a><span class="tok-str">ジョバンニは、</span></span>
+<span class="src-line" id="L156"><a class="ln" href="#L156">156</a><span class="tok-str">（そうだ、ぼくたちはいま、いっしょにさそって出かけたのだ）とおもいながら、</span></span>
+<span class="src-line" id="L157"><a class="ln" href="#L157">157</a><span class="tok-str">「どこかで待まっていようか」と言いいました。するとカムパネルラは、</span></span>
+<span class="src-line" id="L158"><a class="ln" href="#L158">158</a><span class="tok-str">「ザネリはもう帰ったよ。お父さんが迎むかいにきたんだ」</span></span>
+<span class="src-line" id="L159"><a class="ln" href="#L159">159</a><span class="tok-str">カムパネルラは、なぜかそう言いいながら、少し顔いろが青ざめて、どこか苦くるしいというふうでした。するとジョバンニも、なんだかどこかに、何か忘わすれたものがあるというような、おかしな気持きもちがしてだまってしまいました。</span></span>
+<span class="src-line" id="L160"><a class="ln" href="#L160">160</a><span class="tok-str">ところがカムパネルラは、窓まどから外をのぞきながら、もうすっかり元気が直なおって、勢いきおいよく言いいました。</span></span>
+<span class="src-line" id="L161"><a class="ln" href="#L161">161</a><span class="tok-str">「ああしまった。ぼく、水筒すいとうを忘わすれてきた。スケッチ帳ちょうも忘わすれてきた。けれどかまわない。もうじき白鳥の停車場ていしゃばだから。ぼく、白鳥を見るなら、ほんとうにすきだ。川の遠くを飛とんでいたって、ぼくはきっと見える」</span></span>
+<span class="src-line" id="L162"><a class="ln" href="#L162">162</a><span class="tok-str">そして、カムパネルラは、まるい板いたのようになった地図ちずを、しきりにぐるぐるまわして見ていました。まったく、その中に、白くあらわされた天の川の左の岸きしに沿そって一条じょうの鉄道線路てつどうせんろが、南へ南へとたどって行くのでした。そしてその地図の立派りっぱなことは、夜のようにまっ黒な盤ばんの上に、一々の停車場ていしゃばや三角標さんかくひょう、泉水せんすいや森が、青や橙だいだいや緑みどりや、うつくしい光でちりばめられてありました。</span></span>
+<span class="src-line" id="L163"><a class="ln" href="#L163">163</a><span class="tok-str">ジョバンニはなんだかその地図をどこかで見たようにおもいました。</span></span>
+<span class="src-line" id="L164"><a class="ln" href="#L164">164</a><span class="tok-str">「この地図ちずはどこで買ったの。黒曜石こくようせきでできてるねえ」</span></span>
+<span class="src-line" id="L165"><a class="ln" href="#L165">165</a><span class="tok-str">ジョバンニが言いいました。</span></span>
+<span class="src-line" id="L166"><a class="ln" href="#L166">166</a><span class="tok-str">「銀河ぎんがステーションで、もらったんだ。君きみもらわなかったの」</span></span>
+<span class="src-line" id="L167"><a class="ln" href="#L167">167</a><span class="tok-str">「ああ、ぼく銀河ぎんがステーションを通ったろうか。いまぼくたちのいるとこ、ここだろう」</span></span>
+<span class="src-line" id="L168"><a class="ln" href="#L168">168</a><span class="tok-str">ジョバンニは、白鳥と書いてある停車場ていしゃばのしるしの、すぐ北を指さしました。</span></span>
+<span class="src-line" id="L169"><a class="ln" href="#L169">169</a><span class="tok-str">「そうだ。おや、あの河原かわらは月夜だろうか」そっちを見ますと、青白く光る銀河ぎんがの岸きしに、銀ぎんいろの空のすすきが、もうまるでいちめん、風にさらさらさらさら、ゆられてうごいて、波なみを立てているのでした。</span></span>
+<span class="src-line" id="L170"><a class="ln" href="#L170">170</a><span class="tok-str">「月夜でないよ。銀河ぎんがだから光るんだよ」ジョバンニは言いいながら、まるではね上がりたいくらい愉快ゆかいになって、足をこつこつ鳴らし、窓まどから顔を出して、高く高く星めぐりの口笛くちぶえを吹ふきながら一生けん命めい延のびあがって、その天の川の水を、見きわめようとしましたが、はじめはどうしてもそれが、はっきりしませんでした。けれどもだんだん気をつけて見ると、そのきれいな水は、ガラスよりも水素すいそよりもすきとおって、ときどき眼めのかげんか、ちらちら紫むらさきいろのこまかな波なみをたてたり、虹にじのようにぎらっと光ったりしながら、声もなくどんどん流ながれて行き、野原にはあっちにもこっちにも、燐光りんこうの三角標さんかくひょうが、うつくしく立っていたのです。遠いものは小さく、近いものは大きく、遠いものは橙だいだいや黄いろではっきりし、近いものは青白く少しかすんで、あるいは三角形さんかくけい、あるいは四辺形しへんけい、あるいは電いなずまや鎖くさりの形、さまざまにならんで、野原いっぱいに光っているのでした。ジョバンニは、まるでどきどきして、頭をやけに振ふりました。するとほんとうに、そのきれいな野原のはらじゅうの青や橙だいだいや、いろいろかがやく三角標さんかくひょうも、てんでに息をつくように、ちらちらゆれたり顫ふるえたりしました。</span></span>
+<span class="src-line" id="L171"><a class="ln" href="#L171">171</a><span class="tok-str">「ぼくはもう、すっかり天の野原に来た」ジョバンニは言いいました。</span></span>
+<span class="src-line" id="L172"><a class="ln" href="#L172">172</a><span class="tok-str">「それに、この汽車石炭せきたんをたいていないねえ」ジョバンニが左手をつき出して窓まどから前の方を見ながら言いいました。</span></span>
+<span class="src-line" id="L173"><a class="ln" href="#L173">173</a><span class="tok-str">「アルコールか電気だろう」カムパネルラが言いいました。</span></span>
+<span class="src-line" id="L174"><a class="ln" href="#L174">174</a><span class="tok-str">するとちょうど、それに返事へんじするように、どこか遠くの遠くのもやのもやの中から、セロのようなごうごうした声がきこえて来ました。</span></span>
+<span class="src-line" id="L175"><a class="ln" href="#L175">175</a><span class="tok-str">「ここの汽車は、スティームや電気でうごいていない。ただうごくようにきまっているからうごいているのだ。ごとごと音をたてていると、そうおまえたちは思っているけれども、それはいままで音をたてる汽車にばかりなれているためなのだ」</span></span>
+<span class="src-line" id="L176"><a class="ln" href="#L176">176</a><span class="tok-str">「あの声、ぼくなんべんもどこかできいた」</span></span>
+<span class="src-line" id="L177"><a class="ln" href="#L177">177</a><span class="tok-str">「ぼくだって、林の中や川で、何べんも聞いた」</span></span>
+<span class="src-line" id="L178"><a class="ln" href="#L178">178</a><span class="tok-str">ごとごとごとごと、その小さなきれいな汽車は、そらのすすきの風にひるがえる中を、天の川の水や、三角点さんかくてんの青じろい微光びこうの中を、どこまでもどこまでもと、走って行くのでした。</span></span>
+<span class="src-line" id="L179"><a class="ln" href="#L179">179</a><span class="tok-str">「ああ、りんどうの花が咲さいている。もうすっかり秋だねえ」カムパネルラが、窓まどの外を指ゆびさして言いいました。</span></span>
+<span class="src-line" id="L180"><a class="ln" href="#L180">180</a><span class="tok-str">線路せんろのへりになったみじかい芝草しばくさの中に、月長石げっちょうせきででも刻きざまれたような、すばらしい紫むらさきのりんどうの花が咲さいていました。</span></span>
+<span class="src-line" id="L181"><a class="ln" href="#L181">181</a><span class="tok-str">「ぼく飛とびおりて、あいつをとって、また飛とび乗のってみせようか」ジョバンニは胸むねをおどらせて言いいました。</span></span>
+<span class="src-line" id="L182"><a class="ln" href="#L182">182</a><span class="tok-str">「もうだめだ。あんなにうしろへ行ってしまったから」</span></span>
+<span class="src-line" id="L183"><a class="ln" href="#L183">183</a><span class="tok-str">カムパネルラが、そう言いってしまうかしまわないうち、次つぎのりんどうの花が、いっぱいに光って過すぎて行きました。</span></span>
+<span class="src-line" id="L184"><a class="ln" href="#L184">184</a><span class="tok-str">と思ったら、もう次つぎから次つぎから、たくさんのきいろな底そこをもったりんどうの花のコップが、湧わくように、雨のように、眼めの前を通り、三角標さんかくひょうの列れつは、けむるように燃もえるように、いよいよ光って立ったのです。</span></span>
+<span class="src-line" id="L185"><a class="ln" href="#L185">185</a></span>
+<span class="src-line" id="L186"><a class="ln" href="#L186">186</a><span class="tok-str">七　北十字きたじゅうじとプリオシン海岸かいがん</span></span>
+<span class="src-line" id="L187"><a class="ln" href="#L187">187</a></span>
+<span class="src-line" id="L188"><a class="ln" href="#L188">188</a><span class="tok-str">「おっかさんは、ぼくをゆるしてくださるだろうか」</span></span>
+<span class="src-line" id="L189"><a class="ln" href="#L189">189</a><span class="tok-str">いきなり、カムパネルラが、思い切ったというように、少しどもりながら、せきこんで言いいました。</span></span>
+<span class="src-line" id="L190"><a class="ln" href="#L190">190</a><span class="tok-str">ジョバンニは、</span></span>
+<span class="src-line" id="L191"><a class="ln" href="#L191">191</a><span class="tok-str">（ああ、そうだ、ぼくのおっかさんは、あの遠い一つのちりのように見える橙だいだいいろの三角標さんかくひょうのあたりにいらっしゃって、いまぼくのことを考えているんだった）と思いながら、ぼんやりしてだまっていました。</span></span>
+<span class="src-line" id="L192"><a class="ln" href="#L192">192</a><span class="tok-str">「ぼくはおっかさんが、ほんとうに幸さいわいになるなら、どんなことでもする。けれども、いったいどんなことが、おっかさんのいちばんの幸さいわいなんだろう」カムパネルラは、なんだか、泣なきだしたいのを、一生けん命めいこらえているようでした。</span></span>
+<span class="src-line" id="L193"><a class="ln" href="#L193">193</a><span class="tok-str">「きみのおっかさんは、なんにもひどいことないじゃないの」ジョバンニはびっくりして叫さけびました。</span></span>
+<span class="src-line" id="L194"><a class="ln" href="#L194">194</a><span class="tok-str">「ぼくわからない。けれども、誰だれだって、ほんとうにいいことをしたら、いちばん幸さいわいなんだねえ。だから、おっかさんは、ぼくをゆるしてくださると思う」カムパネルラは、なにかほんとうに決心けっしんしているように見えました。</span></span>
+<span class="src-line" id="L195"><a class="ln" href="#L195">195</a><span class="tok-str">にわかに、車のなかが、ぱっと白く明るくなりました。見ると、もうじつに、金剛石こんごうせきや草の露つゆやあらゆる立派りっぱさをあつめたような、きらびやかな銀河ぎんがの河床かわどこの上を、水は声もなくかたちもなく流ながれ、その流ながれのまん中に、ぼうっと青白く後光ごこうの射さした一つの島しまが見えるのでした。その島しまの平たいらないただきに、立派りっぱな眼めもさめるような、白い十字架じゅうじかがたって、それはもう、凍こおった北極ほっきょくの雲で鋳いたといったらいいか、すきっとした金いろの円光をいただいて、しずかに永久えいきゅうに立っているのでした。</span></span>
+<span class="src-line" id="L196"><a class="ln" href="#L196">196</a><span class="tok-str">「ハレルヤ、ハレルヤ」前からもうしろからも声が起おこりました。ふりかえって見ると、車室の中の旅人たびびとたちは、みなまっすぐにきもののひだを垂たれ、黒いバイブルを胸むねにあてたり、水晶すいしょうの数珠じゅずをかけたり、どの人もつつましく指ゆびを組み合わせて、そっちに祈いのっているのでした。思わず二人ふたりともまっすぐに立ちあがりました。カムパネルラの頬ほおは、まるで熟じゅくした苹果りんごのあかしのようにうつくしくかがやいて見えました。</span></span>
+<span class="src-line" id="L197"><a class="ln" href="#L197">197</a><span class="tok-str">そして島しまと十字架じゅうじかとは、だんだんうしろの方へうつって行きました。</span></span>
+<span class="src-line" id="L198"><a class="ln" href="#L198">198</a><span class="tok-str">向むこう岸ぎしも、青じろくぼうっと光ってけむり、時々、やっぱりすすきが風にひるがえるらしく、さっとその銀ぎんいろがけむって、息いきでもかけたように見え、また、たくさんのりんどうの花が、草をかくれたり出たりするのは、やさしい狐火きつねびのように思われました。</span></span>
+<span class="src-line" id="L199"><a class="ln" href="#L199">199</a><span class="tok-str">それもほんのちょっとの間、川と汽車との間は、すすきの列れつでさえぎられ、白鳥の島しまは、二度どばかり、うしろの方に見えましたが、じきもうずうっと遠く小さく、絵えのようになってしまい、またすすきがざわざわ鳴って、とうとうすっかり見えなくなってしまいました。ジョバンニのうしろには、いつから乗のっていたのか、せいの高い、黒いかつぎをしたカトリックふうの尼あまさんが、まんまるな緑みどりの瞳ひとみを、じっとまっすぐに落おとして、まだ何かことばか声かが、そっちから伝つたわって来るのを、虔つつしんで聞いているというように見えました。旅人たびびとたちはしずかに席せきに戻もどり、二人ふたりも胸むねいっぱいのかなしみに似にた新しい気持きもちを、何気なくちがった語ことばで、そっと談はなし合ったのです。</span></span>
+<span class="src-line" id="L200"><a class="ln" href="#L200">200</a><span class="tok-str">「もうじき白鳥の停車場ていしゃばだねえ」</span></span>
+<span class="src-line" id="L201"><a class="ln" href="#L201">201</a><span class="tok-str">「ああ、十一時かっきりには着つくんだよ」</span></span>
+<span class="src-line" id="L202"><a class="ln" href="#L202">202</a><span class="tok-str">早くも、シグナルの緑みどりの燈と、ぼんやり白い柱はしらとが、ちらっと窓まどのそとを過すぎ、それから硫黄いおうのほのおのようなくらいぼんやりした転てんてつ機きの前のあかりが窓まどの下を通り、汽車はだんだんゆるやかになって、まもなくプラットホームの一列れつの電燈でんとうが、うつくしく規則きそく正しくあらわれ、それがだんだん大きくなってひろがって、二人はちょうど白鳥停車場ていしゃじょうの、大きな時計とけいの前に来てとまりました。</span></span>
+<span class="src-line" id="L203"><a class="ln" href="#L203">203</a><span class="tok-str">さわやかな秋の時計とけいの盤面ばんめんには、青く灼やかれたはがねの二本の針はりが、くっきり十一時を指さしました。みんなは、一ぺんにおりて、車室の中はがらんとなってしまいました。</span></span>
+<span class="src-line" id="L204"><a class="ln" href="#L204">204</a><span class="tok-str">〔二十分停車ていしゃ〕と時計とけいの下に書いてありました。</span></span>
+<span class="src-line" id="L205"><a class="ln" href="#L205">205</a><span class="tok-str">「ぼくたちも降おりて見ようか」ジョバンニが言いいました。</span></span>
+<span class="src-line" id="L206"><a class="ln" href="#L206">206</a><span class="tok-str">「降おりよう」二人ふたりは一度どにはねあがってドアを飛とび出して改札口かいさつぐちへかけて行きました。ところが改札口かいさつぐちには、明るい紫むらさきがかった電燈でんとうが、一つ点ついているばかり、誰だれもいませんでした。そこらじゅうを見ても、駅長えきちょうや赤帽あかぼうらしい人の、影かげもなかったのです。</span></span>
+<span class="src-line" id="L207"><a class="ln" href="#L207">207</a><span class="tok-str">二人ふたりは、停車場ていしゃばの前の、水晶細工すいしょうざいくのように見える銀杏いちょうの木に囲かこまれた、小さな広場に出ました。</span></span>
+<span class="src-line" id="L208"><a class="ln" href="#L208">208</a><span class="tok-str">そこから幅はばの広いみちが、まっすぐに銀河ぎんがの青光あおびかりの中へ通っていました。</span></span>
+<span class="src-line" id="L209"><a class="ln" href="#L209">209</a><span class="tok-str">さきに降おりた人たちは、もうどこへ行ったか一人ひとりも見えませんでした。二人ふたりがその白い道を、肩かたをならべて行きますと、二人ふたりの影かげは、ちょうど四方に窓まどのある室へやの中の、二本の柱はしらの影かげのように、また二つの車輪しゃりんの輻やのように幾本いくほんも幾本いくほんも四方へ出るのでした。そしてまもなく、あの汽車から見えたきれいな河原かわらに来ました。</span></span>
+<span class="src-line" id="L210"><a class="ln" href="#L210">210</a><span class="tok-str">カムパネルラは、そのきれいな砂すなを一つまみ、掌てのひらにひろげ、指ゆびできしきしさせながら、夢ゆめのように言いっているのでした。</span></span>
+<span class="src-line" id="L211"><a class="ln" href="#L211">211</a><span class="tok-str">「この砂すなはみんな水晶すいしょうだ。中で小さな火が燃もえている」</span></span>
+<span class="src-line" id="L212"><a class="ln" href="#L212">212</a><span class="tok-str">「そうだ」どこでぼくは、そんなことを習ならったろうと思いながら、ジョバンニもぼんやり答えていました。</span></span>
+<span class="src-line" id="L213"><a class="ln" href="#L213">213</a><span class="tok-str">河原かわらの礫こいしは、みんなすきとおって、たしかに水晶すいしょうや黄玉トパーズや、またくしゃくしゃの皺曲しゅうきょくをあらわしたのや、また稜かどから霧きりのような青白い光を出す鋼玉コランダムやらでした。ジョバンニは、走ってその渚なぎさに行って、水に手をひたしました。けれどもあやしいその銀河ぎんがの水は、水素すいそよりももっとすきとおっていたのです。それでもたしかに流ながれていたことは、二人ふたりの手首てくびの、水にひたったとこが、少し水銀すいぎんいろに浮ういたように見え、その手首てくびにぶっつかってできた波なみは、うつくしい燐光りんこうをあげて、ちらちらと燃もえるように見えたのでもわかりました。</span></span>
+<span class="src-line" id="L214"><a class="ln" href="#L214">214</a><span class="tok-str">川上の方を見ると、すすきのいっぱいにはえている崖がけの下に、白い岩いわが、まるで運動場うんどうじょうのように平たいらに川に沿そって出ているのでした。そこに小さな五、六人の人かげが、何か掘ほり出すか埋うめるかしているらしく、立ったりかがんだり、時々なにかの道具どうぐが、ピカッと光ったりしました。</span></span>
+<span class="src-line" id="L215"><a class="ln" href="#L215">215</a><span class="tok-str">「行ってみよう」二人ふたりは、まるで一度どに叫さけんで、そっちの方へ走りました。その白い岩いわになったところの入口に、〔プリオシン海岸かいがん〕という、瀬戸物せともののつるつるした標札ひょうさつが立って、向こうの渚なぎさには、ところどころ、細ほそい鉄てつの欄干らんかんも植うえられ、木製もくせいのきれいなベンチも置おいてありました。</span></span>
+<span class="src-line" id="L216"><a class="ln" href="#L216">216</a><span class="tok-str">「おや、変へんなものがあるよ」カムパネルラが、不思議ふしぎそうに立ちどまって、岩いわから黒い細長ほそながいさきのとがったくるみの実みのようなものをひろいました。</span></span>
+<span class="src-line" id="L217"><a class="ln" href="#L217">217</a><span class="tok-str">「くるみの実みだよ。そら、たくさんある。流ながれて来たんじゃない。岩いわの中にはいってるんだ」</span></span>
+<span class="src-line" id="L218"><a class="ln" href="#L218">218</a><span class="tok-str">「大きいね、このくるみ、倍ばいあるね。こいつはすこしもいたんでない」</span></span>
+<span class="src-line" id="L219"><a class="ln" href="#L219">219</a><span class="tok-str">「早くあすこへ行って見よう。きっと何か掘ほってるから」</span></span>
+<span class="src-line" id="L220"><a class="ln" href="#L220">220</a><span class="tok-str">二人ふたりは、ぎざぎざの黒いくるみの実みを持もちながら、またさっきの方へ近よって行きました。左手の渚なぎさには、波なみがやさしい稲妻いなずまのように燃もえて寄よせ、右手の崖がけには、いちめん銀ぎんや貝殻かいがらでこさえたようなすすきの穂ほがゆれたのです。</span></span>
+<span class="src-line" id="L221"><a class="ln" href="#L221">221</a><span class="tok-str">だんだん近づいて見ると、一人のせいの高い、ひどい近眼鏡きんがんきょうをかけ、長靴ながぐつをはいた学者がくしゃらしい人が、手帳てちょうに何かせわしそうに書きつけながら、つるはしをふりあげたり、スコップをつかったりしている、三人の助手じょしゅらしい人たちに夢中むちゅうでいろいろ指図さしずをしていました。</span></span>
+<span class="src-line" id="L222"><a class="ln" href="#L222">222</a><span class="tok-str">「そこのその突起とっきをこわさないように、スコップを使いたまえ、スコップを。おっと、も少し遠くから掘ほって。いけない、いけない、なぜそんな乱暴らんぼうをするんだ」</span></span>
+<span class="src-line" id="L223"><a class="ln" href="#L223">223</a><span class="tok-str">見ると、その白い柔やわらかな岩いわの中から、大きな大きな青じろい獣けものの骨ほねが、横に倒たおれてつぶれたというふうになって、半分以上はんぶんいじょう掘ほり出されていました。そして気をつけて見ると、そこらには、蹄ひづめの二つある足跡あしあとのついた岩いわが、四角しかくに十ばかり、きれいに切り取られて番号ばんごうがつけられてありました。</span></span>
+<span class="src-line" id="L224"><a class="ln" href="#L224">224</a><span class="tok-str">「君たちは参観さんかんかね」その大学士だいがくしらしい人が、眼鏡めがねをきらっとさせて、こっちを見て話しかけました。</span></span>
+<span class="src-line" id="L225"><a class="ln" href="#L225">225</a><span class="tok-str">「くるみがたくさんあったろう。それはまあ、ざっと百二十万年まんねんぐらい前のくるみだよ。ごく新しい方さ。ここは百二十万年前まんねんまえ、第三紀だいさんきのあとのころは海岸かいがんでね、この下からは貝かいがらも出る。いま川の流れているとこに、そっくり塩水しおみずが寄よせたり引いたりもしていたのだ。このけものかね、これはボスといってね、おいおい、そこ、つるはしはよしたまえ。ていねいに鑿のみでやってくれたまえ。ボスといってね、いまの牛うしの先祖せんぞで、昔むかしはたくさんいたのさ」</span></span>
+<span class="src-line" id="L226"><a class="ln" href="#L226">226</a><span class="tok-str">「標本ひょうほんにするんですか」</span></span>
+<span class="src-line" id="L227"><a class="ln" href="#L227">227</a><span class="tok-str">「いや、証明しょうめいするに要いるんだ。ぼくらからみると、ここは厚あつい立派りっぱな地層ちそうで、百二十万年まんねんぐらい前にできたという証拠しょうこもいろいろあがるけれども、ぼくらとちがったやつからみてもやっぱりこんな地層ちそうに見えるかどうか、あるいは風か水や、がらんとした空かに見えやしないかということなのだ。わかったかい。けれども、おいおい、そこもスコップではいけない。そのすぐ下に肋骨ろっこつが埋うもれてるはずじゃないか」</span></span>
+<span class="src-line" id="L228"><a class="ln" href="#L228">228</a><span class="tok-str">大学士だいがくしはあわてて走って行きました。</span></span>
+<span class="src-line" id="L229"><a class="ln" href="#L229">229</a><span class="tok-str">「もう時間だよ。行こう」カムパネルラが地図と腕時計うでどけいとをくらべながら言いいました。</span></span>
+<span class="src-line" id="L230"><a class="ln" href="#L230">230</a><span class="tok-str">「ああ、ではわたくしどもは失礼しつれいいたします」ジョバンニは、ていねいに大学士だいがくしにおじぎしました。</span></span>
+<span class="src-line" id="L231"><a class="ln" href="#L231">231</a><span class="tok-str">「そうですか。いや、さよなら」大学士だいがくしは、また忙いそがしそうに、あちこち歩きまわって監督かんとくをはじめました。</span></span>
+<span class="src-line" id="L232"><a class="ln" href="#L232">232</a><span class="tok-str">二人ふたりは、その白い岩いわの上を、一生けん命めい汽車におくれないように走りました。そしてほんとうに、風のように走れたのです。息いきも切れず膝ひざもあつくなりませんでした。</span></span>
+<span class="src-line" id="L233"><a class="ln" href="#L233">233</a><span class="tok-str">こんなにしてかけるなら、もう世界せかいじゅうだってかけれると、ジョバンニは思いました。</span></span>
+<span class="src-line" id="L234"><a class="ln" href="#L234">234</a><span class="tok-str">そして二人ふたりは、前のあの河原かわらを通り、改札口かいさつぐちの電燈でんとうがだんだん大きくなって、まもなく二人ふたりは、もとの車室の席せきにすわっていま行って来た方を、窓まどから見ていました。</span></span>
+<span class="src-line" id="L235"><a class="ln" href="#L235">235</a></span>
+<span class="src-line" id="L236"><a class="ln" href="#L236">236</a><span class="tok-str">八　鳥を捕とる人</span></span>
+<span class="src-line" id="L237"><a class="ln" href="#L237">237</a></span>
+<span class="src-line" id="L238"><a class="ln" href="#L238">238</a><span class="tok-str">「ここへかけてもようございますか」</span></span>
+<span class="src-line" id="L239"><a class="ln" href="#L239">239</a><span class="tok-str">がさがさした、けれども親切そうな、大人おとなの声が、二人ふたりのうしろで聞こえました。</span></span>
+<span class="src-line" id="L240"><a class="ln" href="#L240">240</a><span class="tok-str">それは、茶いろの少しぼろぼろの外套がいとうを着きて、白い巾きれでつつんだ荷物にもつを、二つに分けて肩かたに掛かけた、赤髯あかひげのせなかのかがんだ人でした。</span></span>
+<span class="src-line" id="L241"><a class="ln" href="#L241">241</a><span class="tok-str">「ええ、いいんです」ジョバンニは、少し肩かたをすぼめてあいさつしました。その人は、ひげの中でかすかに微笑わらいながら荷物にもつをゆっくり網棚あみだなにのせました。ジョバンニは、なにかたいへんさびしいようなかなしいような気がして、だまって正面しょうめんの時計とけいを見ていましたら、ずうっと前の方で、硝子ガラスの笛ふえのようなものが鳴りました。汽車はもう、しずかにうごいていたのです。カムパネルラは、車室の天井てんじょうを、あちこち見ていました。その一つのあかりに黒い甲虫かぶとむしがとまって、その影かげが大きく天井てんじょうにうつっていたのです。赤ひげの人は、なにかなつかしそうにわらいながら、ジョバンニやカムパネルラのようすを見ていました。汽車はもうだんだん早くなって、すすきと川と、かわるがわる窓まどの外から光りました。</span></span>
+<span class="src-line" id="L242"><a class="ln" href="#L242">242</a><span class="tok-str">赤ひげの人が、少しおずおずしながら、二人に訊ききました。</span></span>
+<span class="src-line" id="L243"><a class="ln" href="#L243">243</a><span class="tok-str">「あなた方は、どちらへいらっしゃるんですか」</span></span>
+<span class="src-line" id="L244"><a class="ln" href="#L244">244</a><span class="tok-str">「どこまでも行くんです」ジョバンニは、少しきまり悪わるそうに答えました。</span></span>
+<span class="src-line" id="L245"><a class="ln" href="#L245">245</a><span class="tok-str">「それはいいね。この汽車は、じっさい、どこまででも行きますぜ」</span></span>
+<span class="src-line" id="L246"><a class="ln" href="#L246">246</a><span class="tok-str">「あなたはどこへ行くんです」カムパネルラが、いきなり、喧嘩けんかのようにたずねましたので、ジョバンニは思わずわらいました。すると、向むこうの席せきにいた、とがった帽子ぼうしをかぶり、大きな鍵かぎを腰こしに下げた人も、ちらっとこっちを見てわらいましたので、カムパネルラも、つい顔を赤くして笑わらいだしてしまいました。ところがその人は別べつにおこったでもなく、頬ほおをぴくぴくしながら返事へんじをしました。</span></span>
+<span class="src-line" id="L247"><a class="ln" href="#L247">247</a><span class="tok-str">「わっしはすぐそこで降おります。わっしは、鳥をつかまえる商売しょうばいでね」</span></span>
+<span class="src-line" id="L248"><a class="ln" href="#L248">248</a><span class="tok-str">「何鳥ですか」</span></span>
+<span class="src-line" id="L249"><a class="ln" href="#L249">249</a><span class="tok-str">「鶴つるや雁がんです。さぎも白鳥もです」</span></span>
+<span class="src-line" id="L250"><a class="ln" href="#L250">250</a><span class="tok-str">「鶴つるはたくさんいますか」</span></span>
+<span class="src-line" id="L251"><a class="ln" href="#L251">251</a><span class="tok-str">「いますとも、さっきから鳴いてまさあ。聞かなかったのですか」</span></span>
+<span class="src-line" id="L252"><a class="ln" href="#L252">252</a><span class="tok-str">「いいえ」</span></span>
+<span class="src-line" id="L253"><a class="ln" href="#L253">253</a><span class="tok-str">「いまでも聞こえるじゃありませんか。そら、耳をすまして聴きいてごらんなさい」</span></span>
+<span class="src-line" id="L254"><a class="ln" href="#L254">254</a><span class="tok-str">二人ふたりは眼めを挙あげ、耳をすましました。ごとごと鳴る汽車のひびきと、すすきの風との間から、ころんころんと水の湧わくような音が聞こえて来るのでした。</span></span>
+<span class="src-line" id="L255"><a class="ln" href="#L255">255</a><span class="tok-str">「鶴つる、どうしてとるんですか」</span></span>
+<span class="src-line" id="L256"><a class="ln" href="#L256">256</a><span class="tok-str">「鶴つるですか、それとも鷺さぎですか」</span></span>
+<span class="src-line" id="L257"><a class="ln" href="#L257">257</a><span class="tok-str">「鷺さぎです」ジョバンニは、どっちでもいいと思いながら答えました。</span></span>
+<span class="src-line" id="L258"><a class="ln" href="#L258">258</a><span class="tok-str">「そいつはな、雑作ぞうさない。さぎというものは、みんな天の川の砂すなが凝かたまって、ぼおっとできるもんですからね、そして始終しじゅう川へ帰りますからね、川原で待まっていて、鷺さぎがみんな、脚あしをこういうふうにしておりてくるとこを、そいつが地べたへつくかつかないうちに、ぴたっと押おさえちまうんです。するともう鷺さぎは、かたまって安心あんしんして死しんじまいます。あとはもう、わかり切ってまさあ。押おし葉ばにするだけです」</span></span>
+<span class="src-line" id="L259"><a class="ln" href="#L259">259</a><span class="tok-str">「鷺さぎを押おし葉ばにするんですか。標本ひょうほんですか」</span></span>
+<span class="src-line" id="L260"><a class="ln" href="#L260">260</a><span class="tok-str">「標本ひょうほんじゃありません。みんなたべるじゃありませんか」</span></span>
+<span class="src-line" id="L261"><a class="ln" href="#L261">261</a><span class="tok-str">「おかしいねえ」カムパネルラが首くびをかしげました。</span></span>
+<span class="src-line" id="L262"><a class="ln" href="#L262">262</a><span class="tok-str">「おかしいも不審ふしんもありませんや。そら」その男は立って、網棚あみだなから包つつみをおろして、手ばやくくるくると解ときました。</span></span>
+<span class="src-line" id="L263"><a class="ln" href="#L263">263</a><span class="tok-str">「さあ、ごらんなさい。いまとって来たばかりです」</span></span>
+<span class="src-line" id="L264"><a class="ln" href="#L264">264</a><span class="tok-str">「ほんとうに鷺さぎだねえ」二人ふたりは思わず叫さけびました。まっ白な、あのさっきの北の十字架じゅうじかのように光る鷺さぎのからだが、十ばかり、少しひらべったくなって、黒い脚あしをちぢめて、浮彫うきぼりのようにならんでいたのです。</span></span>
+<span class="src-line" id="L265"><a class="ln" href="#L265">265</a><span class="tok-str">「眼めをつぶってるね」カムパネルラは、指ゆびでそっと、鷺さぎの三日月みかづきがたの白いつぶった眼めにさわりました。頭の上の槍やりのような白い毛もちゃんとついていました。</span></span>
+<span class="src-line" id="L266"><a class="ln" href="#L266">266</a><span class="tok-str">「ね、そうでしょう」鳥捕とりとりは風呂敷ふろしきを重かさねて、またくるくると包つつんで紐ひもでくくりました。誰だれがいったいここらで鷺さぎなんぞたべるだろうとジョバンニは思いながら訊ききました。</span></span>
+<span class="src-line" id="L267"><a class="ln" href="#L267">267</a><span class="tok-str">「鷺さぎはおいしいんですか」</span></span>
+<span class="src-line" id="L268"><a class="ln" href="#L268">268</a><span class="tok-str">「ええ、毎日注文ちゅうもんがあります。しかし雁がんの方が、もっと売れます。雁がんの方がずっと柄がらがいいし、第一だいいち手数てすうがありませんからな。そら」鳥捕とりとりは、また別べつの方の包つつみを解ときました。すると黄と青じろとまだらになって、なにかのあかりのようにひかる雁がんが、ちょうどさっきの鷺さぎのように、くちばしをそろえて、少しひらべったくなって、ならんでいました。</span></span>
+<span class="src-line" id="L269"><a class="ln" href="#L269">269</a><span class="tok-str">「こっちはすぐたべられます。どうです、少しおあがりなさい」鳥捕とりとりは、黄いろの雁がんの足を、軽かるくひっぱりました。するとそれは、チョコレートででもできているように、すっときれいにはなれました。</span></span>
+<span class="src-line" id="L270"><a class="ln" href="#L270">270</a><span class="tok-str">「どうです。すこしたべてごらんなさい」鳥捕とりとりは、それを二つにちぎってわたしました。ジョバンニは、ちょっとたべてみて、</span></span>
+<span class="src-line" id="L271"><a class="ln" href="#L271">271</a><span class="tok-str">（なんだ、やっぱりこいつはお菓子かしだ。チョコレートよりも、もっとおいしいけれども、こんな雁がんが飛とんでいるもんか。この男は、どこかそこらの野原の菓子屋かしやだ。けれどもぼくは、このひとをばかにしながら、この人のお菓子かしをたべているのは、たいへんきのどくだ）とおもいながら、やっぱりぽくぽくそれをたべていました。</span></span>
+<span class="src-line" id="L272"><a class="ln" href="#L272">272</a><span class="tok-str">「も少しおあがりなさい」鳥捕とりとりがまた包つつみを出しました。ジョバンニは、もっとたべたかったのですけれども、</span></span>
+<span class="src-line" id="L273"><a class="ln" href="#L273">273</a><span class="tok-str">「ええ、ありがとう」といって遠慮えんりょしましたら、鳥捕とりとりは、こんどは向むこうの席せきの、鍵かぎをもった人に出しました。</span></span>
+<span class="src-line" id="L274"><a class="ln" href="#L274">274</a><span class="tok-str">「いや、商売しょうばいものをもらっちゃすみませんな」その人は、帽子ぼうしをとりました。</span></span>
+<span class="src-line" id="L275"><a class="ln" href="#L275">275</a><span class="tok-str">「いいえ、どういたしまして。どうです、今年の渡わたり鳥どりの景気けいきは」</span></span>
+<span class="src-line" id="L276"><a class="ln" href="#L276">276</a><span class="tok-str">「いや、すてきなもんですよ。一昨日おとといの第二限だいにげんころなんか、なぜ燈台とうだいの灯ひを、規則以外きそくいがいに間（一時空白）させるかって、あっちからもこっちからも、電話で故障こしょうが来ましたが、なあに、こっちがやるんじゃなくて、渡わたり鳥どりどもが、まっ黒にかたまって、あかしの前を通るのですからしかたありませんや、わたしぁ、べらぼうめ、そんな苦情くじょうは、おれのとこへ持もって来たってしかたがねえや、ばさばさのマントを着きて脚あしと口との途方とほうもなく細ほそい大将たいしょうへやれって、こう言いってやりましたがね、はっは」</span></span>
+<span class="src-line" id="L277"><a class="ln" href="#L277">277</a><span class="tok-str">すすきがなくなったために、向むこうの野原から、ぱっとあかりが射さして来ました。</span></span>
+<span class="src-line" id="L278"><a class="ln" href="#L278">278</a><span class="tok-str">「鷺さぎの方はなぜ手数てすうなんですか」カムパネルラは、さっきから、訊きこうと思っていたのです。</span></span>
+<span class="src-line" id="L279"><a class="ln" href="#L279">279</a><span class="tok-str">「それはね、鷺さぎをたべるには」鳥捕とりとりは、こっちに向むき直なおりました。「天の川の水あかりに、十日もつるしておくかね、そうでなけぁ、砂すなに三、四日うずめなけぁいけないんだ。そうすると、水銀すいぎんがみんな蒸発じょうはつして、たべられるようになるよ」</span></span>
+<span class="src-line" id="L280"><a class="ln" href="#L280">280</a><span class="tok-str">「こいつは鳥じゃない。ただのお菓子かしでしょう」やっぱりおなじことを考えていたとみえて、カムパネルラが、思い切ったというように、尋たずねました。鳥捕とりとりは、何かたいへんあわてたふうで、</span></span>
+<span class="src-line" id="L281"><a class="ln" href="#L281">281</a><span class="tok-str">「そうそう、ここで降おりなけぁ」と言いいながら、立って荷物にもつをとったと思うと、もう見えなくなっていました。</span></span>
+<span class="src-line" id="L282"><a class="ln" href="#L282">282</a><span class="tok-str">「どこへ行ったんだろう」二人ふたりは顔を見合わせましたら、燈台守とうだいもりは、にやにや笑わらって、少し伸のびあがるようにしながら、二人の横よこの窓まどの外をのぞきました。二人ふたりもそっちを見ましたら、たったいまの鳥捕とりとりが、黄いろと青じろの、うつくしい燐光りんこうを出す、いちめんのかわらははこぐさの上に立って、まじめな顔をして両手りょうてをひろげて、じっとそらを見ていたのです。</span></span>
+<span class="src-line" id="L283"><a class="ln" href="#L283">283</a><span class="tok-str">「あすこへ行ってる。ずいぶん奇体きたいだねえ。きっとまた鳥をつかまえるとこだねえ。汽車が走って行かないうちに、早く鳥がおりるといいな」と言いったとたん、がらんとした桔梗ききょういろの空から、さっき見たような鷺さぎが、まるで雪の降ふるように、ぎゃあぎゃあ叫さけびながら、いっぱいに舞まいおりて来ました。するとあの鳥捕とりとりは、すっかり注文ちゅうもん通りだというようにほくほくして、両足りょうあしをかっきり六十度どに開いて立って、鷺さぎのちぢめて降おりて来る黒い脚あしを両手りょうてで片かたっぱしから押おさえて、布ぬのの袋ふくろの中に入れるのでした。すると鷺さぎは、蛍ほたるのように、袋ふくろの中でしばらく、青くぺかぺか光ったり消きえたりしていましたが、おしまいとうとう、みんなぼんやり白くなって、眼めをつぶるのでした。ところが、つかまえられる鳥よりは、つかまえられないで無事ぶじに天の川の砂すなの上に降おりるものの方が多おおかったのです。それは見ていると、足が砂すなへつくや否いなや、まるで雪ゆきの解とけるように、縮ちぢまってひらべったくなって、まもなく溶鉱炉ようこうろから出た銅どうの汁しるのように、砂すなや砂利じゃりの上にひろがり、しばらくは鳥の形が、砂すなについているのでしたが、それも二、三度ど明るくなったり暗くらくなったりしているうちに、もうすっかりまわりと同じいろになってしまうのでした。</span></span>
+<span class="src-line" id="L284"><a class="ln" href="#L284">284</a><span class="tok-str">鳥捕とりとりは、二十疋ぴきばかり、袋ふくろに入れてしまうと、急きゅうに両手りょうてをあげて、兵隊へいたいが鉄砲弾てっぽうだまにあたって、死しぬときのような形をしました。と思ったら、もうそこに鳥捕とりとりの形はなくなって、かえって、</span></span>
+<span class="src-line" id="L285"><a class="ln" href="#L285">285</a><span class="tok-str">「ああせいせいした。どうもからだにちょうど合うほど稼かせいでいるくらい、いいことはありませんな」というききおぼえのある声が、ジョバンニの隣となりにしました。見ると鳥捕とりとりは、もうそこでとって来た鷺さぎを、きちんとそろえて、一つずつ重かさね直なおしているのでした。</span></span>
+<span class="src-line" id="L286"><a class="ln" href="#L286">286</a><span class="tok-str">「どうして、あすこから、いっぺんにここへ来たんですか」ジョバンニが、なんだかあたりまえのような、あたりまえでないような、おかしな気がして問といました。</span></span>
+<span class="src-line" id="L287"><a class="ln" href="#L287">287</a><span class="tok-str">「どうしてって、来ようとしたから来たんです。ぜんたいあなた方は、どちらからおいでですか」</span></span>
+<span class="src-line" id="L288"><a class="ln" href="#L288">288</a><span class="tok-str">ジョバンニは、すぐ返事へんじをしようと思いましたけれども、さあ、ぜんたいどこから来たのか、もうどうしても考えつきませんでした。カムパネルラも、顔をまっ赤にして何か思い出そうとしているのでした。</span></span>
+<span class="src-line" id="L289"><a class="ln" href="#L289">289</a><span class="tok-str">「ああ、遠くからですね」鳥捕とりとりは、わかったというように雑作ぞうさなくうなずきました。</span></span>
+<span class="src-line" id="L290"><a class="ln" href="#L290">290</a></span>
+<span class="src-line" id="L291"><a class="ln" href="#L291">291</a><span class="tok-str">九　ジョバンニの切符きっぷ</span></span>
+<span class="src-line" id="L292"><a class="ln" href="#L292">292</a></span>
+<span class="src-line" id="L293"><a class="ln" href="#L293">293</a><span class="tok-str">「もうここらは白鳥区くのおしまいです。ごらんなさい。あれが名高いアルビレオの観測所かんそくじょです」</span></span>
+<span class="src-line" id="L294"><a class="ln" href="#L294">294</a><span class="tok-str">窓まどの外の、まるで花火でいっぱいのような、あまの川のまん中に、黒い大きな建物たてものが四棟むねばかり立って、その一つの平屋根ひらやねの上に、眼めもさめるような、青宝玉サファイアと黄玉トパーズの大きな二つのすきとおった球たまが、輪わになってしずかにくるくるとまわっていました。黄いろのがだんだん向むこうへまわって行って、青い小さいのがこっちへ進すすんで来、まもなく二つのはじは、重かさなり合って、きれいな緑みどりいろの両面凸りょうめんとつレンズのかたちをつくり、それもだんだん、まん中がふくらみだして、とうとう青いのは、すっかりトパーズの正面しょうめんに来ましたので、緑みどりの中心と黄いろな明るい環わとができました。それがまただんだん横よこへ外それて、前のレンズの形を逆ぎゃくにくり返かえし、とうとうすっとはなれて、サファイアは向むこうへめぐり、黄いろのはこっちへ進すすみ、またちょうどさっきのようなふうになりました。銀河ぎんがの、かたちもなく音もない水にかこまれて、ほんとうにその黒い測候所そっこうじょが、睡ねむっているように、しずかによこたわったのです。</span></span>
+<span class="src-line" id="L295"><a class="ln" href="#L295">295</a><span class="tok-str">「あれは、水の速はやさをはかる器械きかいです。水も……」鳥捕とりとりが言いいかけたとき、</span></span>
+<span class="src-line" id="L296"><a class="ln" href="#L296">296</a><span class="tok-str">「切符きっぷを拝見はいけんいたします」三人の席せきの横よこに、赤い帽子ぼうしをかぶったせいの高い車掌しゃしょうが、いつかまっすぐに立っていて言いいました。鳥捕とりとりは、だまってかくしから、小さな紙きれを出しました。車掌しゃしょうはちょっと見て、すぐ眼めをそらして（あなた方のは？）というように、指ゆびをうごかしながら、手をジョバンニたちの方へ出しました。</span></span>
+<span class="src-line" id="L297"><a class="ln" href="#L297">297</a><span class="tok-str">「さあ」ジョバンニは困こまって、もじもじしていましたら、カムパネルラはわけもないというふうで、小さな鼠ねずみいろの切符きっぷを出しました。ジョバンニは、すっかりあわててしまって、もしか上着うわぎのポケットにでも、はいっていたかとおもいながら、手を入れてみましたら、何か大きなたたんだ紙きれにあたりました。こんなものはいっていたろうかと思って、急いそいで出してみましたら、それは四つに折おったはがきぐらいの大さ［＃「大さ」はママ］の緑みどりいろの紙でした。車掌しゃしょうが手を出しているもんですからなんでもかまわない、やっちまえと思って渡わたしましたら、車掌しゃしょうはまっすぐに立ち直なおってていねいにそれを開いて見ていました。そして読みながら上着うわぎのぼたんやなんかしきりに直なおしたりしていましたし燈台看守とうだいかんしゅも下からそれを熱心ねっしんにのぞいていましたから、ジョバンニはたしかにあれは証明書しょうめいしょか何かだったと考えて少し胸むねが熱あつくなるような気がしました。</span></span>
+<span class="src-line" id="L298"><a class="ln" href="#L298">298</a><span class="tok-str">「これは三次空間じくうかんの方からお持もちになったのですか」車掌しゃしょうがたずねました。</span></span>
+<span class="src-line" id="L299"><a class="ln" href="#L299">299</a><span class="tok-str">「なんだかわかりません」もう大丈夫だいじょうぶだと安心しながらジョバンニはそっちを見あげてくつくつ笑わらいました。</span></span>
+<span class="src-line" id="L300"><a class="ln" href="#L300">300</a><span class="tok-str">「よろしゅうございます。南十字サウザンクロスへ着つきますのは、次つぎの第だい三時ころになります」車掌しゃしょうは紙をジョバンニに渡わたして向むこうへ行きました。</span></span>
+<span class="src-line" id="L301"><a class="ln" href="#L301">301</a><span class="tok-str">カムパネルラは、その紙切れが何だったか待まちかねたというように急いそいでのぞきこみました。ジョバンニも全まったく早く見たかったのです。ところがそれはいちめん黒い唐草からくさのような模様もようの中に、おかしな十ばかりの字を印刷いんさつしたもので、だまって見ているとなんだかその中へ吸すい込こまれてしまうような気がするのでした。すると鳥捕とりとりが横からちらっとそれを見てあわてたように言いいました。</span></span>
+<span class="src-line" id="L302"><a class="ln" href="#L302">302</a><span class="tok-str">「おや、こいつはたいしたもんですぜ。こいつはもう、ほんとうの天上へさえ行ける切符きっぷだ。天上どこじゃない、どこでもかってにあるける通行券つうこうけんです。こいつをお持もちになれぁ、なるほど、こんな不完全ふかんぜんな幻想第四次げんそうだいよじの銀河鉄道ぎんがてつどうなんか、どこまででも行けるはずでさあ、あなた方たいしたもんですね」</span></span>
+<span class="src-line" id="L303"><a class="ln" href="#L303">303</a><span class="tok-str">「なんだかわかりません」ジョバンニが赤くなって答えながら、それをまたたたんでかくしに入れました。そしてきまりが悪わるいのでカムパネルラと二人ふたり、また窓まどの外をながめていましたが、その鳥捕とりとりの時々たいしたもんだというように、ちらちらこっちを見ているのがぼんやりわかりました。</span></span>
+<span class="src-line" id="L304"><a class="ln" href="#L304">304</a><span class="tok-str">「もうじき鷲わしの停車場ていしゃじょうだよ」カムパネルラが向むこう岸ぎしの、三つならんだ小さな青じろい三角標さんかくひょうと、地図とを見くらべて言いいました。</span></span>
+<span class="src-line" id="L305"><a class="ln" href="#L305">305</a><span class="tok-str">ジョバンニはなんだかわけもわからずに、にわかにとなりの鳥捕とりとりがきのどくでたまらなくなりました。鷺さぎをつかまえてせいせいしたとよろこんだり、白いきれでそれをくるくる包つつんだり、ひとの切符きっぷをびっくりしたように横目よこめで見てあわててほめだしたり、そんなことを一々考えていると、もうその見ず知らずの鳥捕とりとりのために、ジョバンニの持もっているものでも食べるものでもなんでもやってしまいたい、もうこの人のほんとうの幸さいわいになるなら、自分があの光る天の川の河原かわらに立って百年つづけて立って鳥をとってやってもいいというような気がして、どうしてももう黙だまっていられなくなりました。ほんとうにあなたのほしいものはいったい何ですかと訊きこうとして、それではあんまり出し抜ぬけだから、どうしようかと考えてふり返かえって見ましたら、そこにはもうあの鳥捕とりとりがいませんでした。網棚あみだなの上には白い荷物にもつも見えなかったのです。また窓まどの外で足をふんばってそらを見上げて鷺さぎを捕とるしたくをしているのかと思って、急いそいでそっちを見ましたが、外はいちめんのうつくしい砂子すなごと白いすすきの波なみばかり、あの鳥捕とりとりの広いせなかもとがった帽子ぼうしも見えませんでした。</span></span>
+<span class="src-line" id="L306"><a class="ln" href="#L306">306</a><span class="tok-str">「あの人どこへ行ったろう」カムパネルラもぼんやりそう言いっていました。</span></span>
+<span class="src-line" id="L307"><a class="ln" href="#L307">307</a><span class="tok-str">「どこへ行ったろう。いったいどこでまたあうのだろう。僕ぼくはどうしても少しあの人に物ものを言いわなかったろう」</span></span>
+<span class="src-line" id="L308"><a class="ln" href="#L308">308</a><span class="tok-str">「ああ、僕ぼくもそう思っているよ」</span></span>
+<span class="src-line" id="L309"><a class="ln" href="#L309">309</a><span class="tok-str">「僕ぼくはあの人が邪魔じゃまなような気がしたんだ。だから僕ぼくはたいへんつらい」ジョバンニはこんなへんてこな気もちは、ほんとうにはじめてだし、こんなこと今まで言いったこともないと思いました。</span></span>
+<span class="src-line" id="L310"><a class="ln" href="#L310">310</a><span class="tok-str">「なんだか苹果りんごのにおいがする。僕ぼくいま苹果りんごのことを考えたためだろうか」カムパネルラが不思議ふしぎそうにあたりを見まわしました。</span></span>
+<span class="src-line" id="L311"><a class="ln" href="#L311">311</a><span class="tok-str">「ほんとうに苹果りんごのにおいだよ。それから野茨のいばらのにおいもする」</span></span>
+<span class="src-line" id="L312"><a class="ln" href="#L312">312</a><span class="tok-str">ジョバンニもそこらを見ましたがやっぱりそれは窓まどからでもはいって来るらしいのでした。いま秋だから野茨のいばらの花のにおいのするはずはないとジョバンニは思いました。</span></span>
+<span class="src-line" id="L313"><a class="ln" href="#L313">313</a><span class="tok-str">そしたらにわかにそこに、つやつやした黒い髪かみの六つばかりの男の子が赤いジャケツのぼたんもかけず、ひどくびっくりしたような顔をして、がたがたふるえてはだしで立っていました。隣となりには黒い洋服ようふくをきちんと着きたせいの高い青年がいっぱいに風に吹ふかれているけやきの木のような姿勢しせいで、男の子の手をしっかりひいて立っていました。</span></span>
+<span class="src-line" id="L314"><a class="ln" href="#L314">314</a><span class="tok-str">「あら、ここどこでしょう。まあ、きれいだわ」青年のうしろに、もひとり、十二ばかりの眼めの茶いろな可愛かわいらしい女の子が、黒い外套がいとうを着きて青年の腕うでにすがって不思議ふしぎそうに窓まどの外を見ているのでした。</span></span>
+<span class="src-line" id="L315"><a class="ln" href="#L315">315</a><span class="tok-str">「ああ、ここはランカシャイヤだ。いや、コンネクテカット州しゅうだ。いや、ああ、ぼくたちはそらへ来たのだ。わたしたちは天へ行くのです。ごらんなさい。あのしるしは天上のしるしです。もうなんにもこわいことありません。わたくしたちは神かみさまに召めされているのです」黒服くろふくの青年はよろこびにかがやいてその女の子に言いいました。けれどもなぜかまた額ひたいに深ふかく皺しわを刻きざんで、それにたいへんつかれているらしく、無理むりに笑わらいながら男の子をジョバンニのとなりにすわらせました。それから女の子にやさしくカムパネルラのとなりの席せきを指ゆびさしました。女の子はすなおにそこへすわって、きちんと両手りょうてを組み合わせました。</span></span>
+<span class="src-line" id="L316"><a class="ln" href="#L316">316</a><span class="tok-str">「ぼく、おおねえさんのとこへ行くんだよう」腰掛こしかけたばかりの男の子は顔を変へんにして燈台看守とうだいかんしゅの向むこうの席せきにすわったばかりの青年に言いいました。青年はなんとも言いえず悲かなしそうな顔をして、じっとその子の、ちぢれたぬれた頭を見ました。女の子は、いきなり両手りょうてを顔にあててしくしく泣ないてしまいました。</span></span>
+<span class="src-line" id="L317"><a class="ln" href="#L317">317</a><span class="tok-str">「お父さんやきくよねえさんはまだいろいろお仕事しごとがあるのです。けれどももうすぐあとからいらっしゃいます。それよりも、おっかさんはどんなに永ながく待まっていらっしゃったでしょう。わたしの大事だいじなタダシはいまどんな歌をうたっているだろう、雪ゆきの降ふる朝にみんなと手をつないで、ぐるぐるにわとこのやぶをまわってあそんでいるだろうかと考えたり、ほんとうに待まって心配しんぱいしていらっしゃるんですから、早く行って、おっかさんにお目にかかりましょうね」</span></span>
+<span class="src-line" id="L318"><a class="ln" href="#L318">318</a><span class="tok-str">「うん、だけど僕ぼく、船に乗のらなけぁよかったなあ」</span></span>
+<span class="src-line" id="L319"><a class="ln" href="#L319">319</a><span class="tok-str">「ええ、けれど、ごらんなさい、そら、どうです、あの立派りっぱな川、ね、あすこはあの夏じゅう、ツィンクル、ツィンクル、リトル、スターをうたってやすむとき、いつも窓まどからぼんやり白く見えていたでしょう。あすこですよ。ね、きれいでしょう、あんなに光っています」</span></span>
+<span class="src-line" id="L320"><a class="ln" href="#L320">320</a><span class="tok-str">泣ないていた姉あねもハンケチで眼めをふいて外を見ました。青年は教えるようにそっと姉弟きょうだいにまた言いいました。</span></span>
+<span class="src-line" id="L321"><a class="ln" href="#L321">321</a><span class="tok-str">「わたしたちはもう、なんにもかなしいことないのです。わたしたちはこんないいとこを旅たびして、じき神かみさまのとこへ行きます。そこならもう、ほんとうに明るくてにおいがよくて立派りっぱな人たちでいっぱいです。そしてわたしたちの代かわりにボートへ乗のれた人たちは、きっとみんな助たすけられて、心配しんぱいして待まっているめいめいのお父さんやお母さんや自分のお家へやら行くのです。さあ、もうじきですから元気を出しておもしろくうたって行きましょう」青年は男の子のぬれたような黒い髪かみをなで、みんなを慰なぐさめながら、自分もだんだん顔いろがかがやいてきました。</span></span>
+<span class="src-line" id="L322"><a class="ln" href="#L322">322</a><span class="tok-str">「あなた方はどちらからいらっしゃったのですか。どうなすったのですか」</span></span>
+<span class="src-line" id="L323"><a class="ln" href="#L323">323</a><span class="tok-str">さっきの燈台看守とうだいかんしゅがやっと少しわかったように青年にたずねました。青年はかすかにわらいました。</span></span>
+<span class="src-line" id="L324"><a class="ln" href="#L324">324</a><span class="tok-str">「いえ、氷山ひょうざんにぶっつかって船が沈しずみましてね、わたしたちはこちらのお父さんが急きゅうな用ようで二か月前、一足さきに本国へお帰りになったので、あとから発たったのです。私は大学へはいっていて、家庭教師かていきょうしにやとわれていたのです。ところがちょうど十二日目、今日か昨日きのうのあたりです、船が氷山ひょうざんにぶっつかって一ぺんに傾かたむきもう沈しずみかけました。月のあかりはどこかぼんやりありましたが、霧きりが非常ひじょうに深ふかかったのです。ところがボートは左舷さげんの方半分はんぶんはもうだめになっていましたから、とてもみんなは乗のり切らないのです。もうそのうちにも船は沈しずみますし、私は必死ひっしとなって、どうか小さな人たちを乗のせてくださいと叫さけびました。近くの人たちはすぐみちを開いて、そして子供たちのために祈いのってくれました。けれどもそこからボートまでのところには、まだまだ小さな子どもたちや親たちやなんかいて、とても押おしのける勇気ゆうきがなかったのです。それでもわたくしはどうしてもこの方たちをお助たすけするのが私の義務ぎむだと思いましたから前にいる子供らを押おしのけようとしました。けれどもまた、そんなにして助たすけてあげるよりはこのまま神かみの御前みまえにみんなで行く方が、ほんとうにこの方たちの幸福こうふくだとも思いました。それからまた、その神かみにそむく罪つみはわたくしひとりでしょってぜひとも助たすけてあげようと思いました。けれども、どうしても見ているとそれができないのでした。子どもらばかりのボートの中へはなしてやって、お母さんが狂気きょうきのようにキスを送おくりお父さんがかなしいのをじっとこらえてまっすぐに立っているなど、とてももう腸はらわたもちぎれるようでした。そのうち船はもうずんずん沈しずみますから、私たちはかたまって、もうすっかり覚悟かくごして、この人たち二人を抱だいて、浮うかべるだけは浮うかぼうと船の沈しずむのを待まっていました。誰だれが投なげたかライフヴイが一つ飛とんで来ましたけれどもすべってずうっと向むこうへ行ってしまいました。私は一生けん命めいで甲板かんぱんの格子こうしになったとこをはなして、三人それにしっかりとりつきました。どこからともなく三〇六番の声があがりました。たちまちみんなはいろいろな国語で一ぺんにそれをうたいました。そのときにわかに大きな音がして私たちは水に落おち、もう渦うずにはいったと思いながらしっかりこの人たちをだいて、それからぼうっとしたと思ったらもうここへ来ていたのです。この方たちのお母さんは一昨年さくねん没なくなられました。ええ、ボートはきっと助たすかったにちがいありません、なにせよほど熟練じゅくれんな水夫すいふたちが漕こいで、すばやく船からはなれていましたから」</span></span>
+<span class="src-line" id="L325"><a class="ln" href="#L325">325</a><span class="tok-str">そこらから小さな嘆息たんそくやいのりの声が聞こえジョバンニもカムパネルラもいままで忘わすれていたいろいろのことをぼんやり思い出して眼めが熱あつくなりました。</span></span>
+<span class="src-line" id="L326"><a class="ln" href="#L326">326</a><span class="tok-str">（ああ、その大きな海はパシフィックというのではなかったろうか。その氷山ひょうざんの流ながれる北のはての海で、小さな船に乗のって、風や凍こおりつく潮水しおみずや、はげしい寒さむさとたたかって、たれかが一生けんめいはたらいている。ぼくはそのひとにほんとうにきのどくでそしてすまないような気がする。ぼくはそのひとのさいわいのためにいったいどうしたらいいのだろう）</span></span>
+<span class="src-line" id="L327"><a class="ln" href="#L327">327</a><span class="tok-str">ジョバンニは首くびをたれて、すっかりふさぎ込こんでしまいました。</span></span>
+<span class="src-line" id="L328"><a class="ln" href="#L328">328</a><span class="tok-str">「なにがしあわせかわからないです。ほんとうにどんなつらいことでもそれがただしいみちを進すすむ中でのできごとなら、峠とうげの上りも下りもみんなほんとうの幸福こうふくに近づく一あしずつですから」</span></span>
+<span class="src-line" id="L329"><a class="ln" href="#L329">329</a><span class="tok-str">燈台守とうだいもりがなぐさめていました。</span></span>
+<span class="src-line" id="L330"><a class="ln" href="#L330">330</a><span class="tok-str">「ああそうです。ただいちばんのさいわいに至いたるためにいろいろのかなしみもみんなおぼしめしです」</span></span>
+<span class="src-line" id="L331"><a class="ln" href="#L331">331</a><span class="tok-str">青年が祈いのるようにそう答えました。</span></span>
+<span class="src-line" id="L332"><a class="ln" href="#L332">332</a><span class="tok-str">そしてあの姉弟きょうだいはもうつかれてめいめいぐったり席せきによりかかって睡ねむっていました。さっきのあのはだしだった足にはいつか白い柔やわらかな靴くつをはいていたのです。</span></span>
+<span class="src-line" id="L333"><a class="ln" href="#L333">333</a><span class="tok-str">ごとごとごとごと汽車はきらびやかな燐光りんこうの川の岸きしを進すすみました。向むこうの方の窓まどを見ると、野原はまるで幻燈げんとうのようでした。百も千もの大小さまざまの三角標さんかくひょう、その大きなものの上には赤い点々をうった測量旗そくりょうきも見え、野原のはらのはてはそれらがいちめん、たくさんたくさん集あつまってぼおっと青白い霧きりのよう、そこからか、またはもっと向むこうからか、ときどきさまざまの形のぼんやりした狼煙のろしのようなものが、かわるがわるきれいな桔梗ききょういろのそらにうちあげられるのでした。じつにそのすきとおった奇麗きれいな風は、ばらのにおいでいっぱいでした。</span></span>
+<span class="src-line" id="L334"><a class="ln" href="#L334">334</a><span class="tok-str">「いかがですか。こういう苹果りんごはおはじめてでしょう」向むこうの席せきの燈台看守とうだいかんしゅがいつか黄金きんと紅べにでうつくしくいろどられた大きな苹果りんごを落おとさないように両手りょうてで膝ひざの上にかかえていました。</span></span>
+<span class="src-line" id="L335"><a class="ln" href="#L335">335</a><span class="tok-str">「おや、どっから来たのですか。立派りっぱですねえ。ここらではこんな苹果りんごができるのですか」青年はほんとうにびっくりしたらしく、燈台看守とうだいかんしゅの両手りょうてにかかえられた一もりの苹果りんごを、眼めを細ほそくしたり首くびをまげたりしながら、われを忘わすれてながめていました。</span></span>
+<span class="src-line" id="L336"><a class="ln" href="#L336">336</a><span class="tok-str">「いや、まあおとりください。どうか、まあおとりください」</span></span>
+<span class="src-line" id="L337"><a class="ln" href="#L337">337</a><span class="tok-str">青年は一つとってジョバンニたちの方をちょっと見ました。</span></span>
+<span class="src-line" id="L338"><a class="ln" href="#L338">338</a><span class="tok-str">「さあ、向むこうの坊ぼっちゃんがた。いかがですか。おとりください」</span></span>
+<span class="src-line" id="L339"><a class="ln" href="#L339">339</a><span class="tok-str">ジョバンニは坊ぼっちゃんといわれたので、すこししゃくにさわってだまっていましたが、カムパネルラは、</span></span>
+<span class="src-line" id="L340"><a class="ln" href="#L340">340</a><span class="tok-str">「ありがとう」と言いいました。</span></span>
+<span class="src-line" id="L341"><a class="ln" href="#L341">341</a><span class="tok-str">すると青年は自分でとって一つずつ二人に送おくってよこしましたので、ジョバンニも立って、ありがとうと言いいました。</span></span>
+<span class="src-line" id="L342"><a class="ln" href="#L342">342</a><span class="tok-str">燈台看守とうだいかんしゅはやっと両腕りょううでがあいたので、こんどは自分で一つずつ睡ねむっている姉弟きょうだいの膝ひざにそっと置おきました。</span></span>
+<span class="src-line" id="L343"><a class="ln" href="#L343">343</a><span class="tok-str">「どうもありがとう。どこでできるのですか。こんな立派りっぱな苹果りんごは」</span></span>
+<span class="src-line" id="L344"><a class="ln" href="#L344">344</a><span class="tok-str">青年はつくづく見ながら言いいました。</span></span>
+<span class="src-line" id="L345"><a class="ln" href="#L345">345</a><span class="tok-str">「この辺あたりではもちろん農業のうぎょうはいたしますけれどもたいていひとりでにいいものができるような約束やくそくになっております。農業のうぎょうだってそんなにほねはおれはしません。たいてい自分の望のぞむ種子たねさえ播まけばひとりでにどんどんできます。米だってパシフィック辺へんのように殻からもないし十倍ばいも大きくてにおいもいいのです。けれどもあなたがたのいらっしゃる方なら農業のうぎょうはもうありません。苹果りんごだってお菓子かしだって、かすが少しもありませんから、みんなそのひとそのひとによってちがった、わずかのいいかおりになって毛あなからちらけてしまうのです」</span></span>
+<span class="src-line" id="L346"><a class="ln" href="#L346">346</a><span class="tok-str">にわかに男の子がばっちり眼めをあいて言いいました。</span></span>
+<span class="src-line" id="L347"><a class="ln" href="#L347">347</a><span class="tok-str">「ああぼくいまお母っかさんの夢ゆめをみていたよ。お母っかさんがね、立派りっぱな戸棚とだなや本のあるとこにいてね、ぼくの方を見て手をだしてにこにこにこにこわらったよ。ぼく、おっかさん。りんごをひろってきてあげましょうか、と言いったら眼めがさめちゃった。ああここ、さっきの汽車のなかだねえ」</span></span>
+<span class="src-line" id="L348"><a class="ln" href="#L348">348</a><span class="tok-str">「その苹果りんごがそこにあります。このおじさんにいただいたのですよ」青年が言いいました。</span></span>
+<span class="src-line" id="L349"><a class="ln" href="#L349">349</a><span class="tok-str">「ありがとうおじさん。おや、かおるねえさんまだねてるねえ、ぼくおこしてやろう。ねえさん。ごらん、りんごをもらったよ。おきてごらん」</span></span>
+<span class="src-line" id="L350"><a class="ln" href="#L350">350</a><span class="tok-str">姉あねはわらって眼めをさまし、まぶしそうに両手りょうてを眼めにあてて、それから苹果りんごを見ました。</span></span>
+<span class="src-line" id="L351"><a class="ln" href="#L351">351</a><span class="tok-str">男の子はまるでパイをたべるように、もうそれをたべていました。またせっかくむいたそのきれいな皮かわも、くるくるコルク抜ぬきのような形になって床ゆかへ落おちるまでの間にはすうっと、灰はいいろに光って蒸発じょうはつしてしまうのでした。</span></span>
+<span class="src-line" id="L352"><a class="ln" href="#L352">352</a><span class="tok-str">二人ふたりはりんごをたいせつにポケットにしまいました。</span></span>
+<span class="src-line" id="L353"><a class="ln" href="#L353">353</a><span class="tok-str">川下の向むこう岸ぎしに青く茂しげった大きな林が見え、その枝えだには熟じゅくしてまっ赤に光るまるい実みがいっぱい、その林のまん中に高い高い三角標さんかくひょうが立って、森の中からはオーケストラベルやジロフォンにまじってなんとも言いえずきれいな音ねいろが、とけるように浸しみるように風につれて流ながれて来るのでした。</span></span>
+<span class="src-line" id="L354"><a class="ln" href="#L354">354</a><span class="tok-str">青年はぞくっとしてからだをふるうようにしました。</span></span>
+<span class="src-line" id="L355"><a class="ln" href="#L355">355</a><span class="tok-str">だまってその譜ふを聞いていると、そこらにいちめん黄いろや、うすい緑みどりの明るい野原のはらか敷物しきものかがひろがり、またまっ白な蝋ろうのような露つゆが太陽たいようの面めんをかすめて行くように思われました。</span></span>
+<span class="src-line" id="L356"><a class="ln" href="#L356">356</a><span class="tok-str">「まあ、あの烏からす」カムパネルラのとなりの、かおると呼よばれた女の子が叫さけびました。</span></span>
+<span class="src-line" id="L357"><a class="ln" href="#L357">357</a><span class="tok-str">「からすでない。みんなかささぎだ」カムパネルラがまた何気なくしかるように叫さけびましたので、ジョバンニはまた思わず笑わらい、女の子はきまり悪わるそうにしました。まったく河原かわらの青じろいあかりの上に、黒い鳥がたくさんたくさんいっぱいに列れつになってとまってじっと川の微光びこうを受けているのでした。</span></span>
+<span class="src-line" id="L358"><a class="ln" href="#L358">358</a><span class="tok-str">「かささぎですねえ、頭のうしろのとこに毛がぴんと延のびてますから」青年はとりなすように言いいました。</span></span>
+<span class="src-line" id="L359"><a class="ln" href="#L359">359</a><span class="tok-str">向むこうの青い森の中の三角標さんかくひょうはすっかり汽車の正面しょうめんに来ました。そのとき汽車のずうっとうしろの方から、あの聞きなれた三〇六番の讃美歌さんびかのふしが聞こえてきました。よほどの人数で合唱がっしょうしているらしいのでした。青年はさっと顔いろが青ざめ、たって一ぺんそっちへ行きそうにしましたが思いかえしてまたすわりました。かおる子はハンケチを顔にあててしまいました。</span></span>
+<span class="src-line" id="L360"><a class="ln" href="#L360">360</a><span class="tok-str">ジョバンニまでなんだか鼻はなが変へんになりました。けれどもいつともなく誰だれともなくその歌は歌い出されだんだんはっきり強くなりました。思わずジョバンニもカムパネルラもいっしょにうたいだしたのです。</span></span>
+<span class="src-line" id="L361"><a class="ln" href="#L361">361</a><span class="tok-str">そして青い橄欖かんらんの森が、見えない天の川の向むこうにさめざめと光りながらだんだんうしろの方へ行ってしまい、そこから流ながれて来るあやしい楽器がっきの音も、もう汽車のひびきや風の音にすりへらされてずうっとかすかになりました。</span></span>
+<span class="src-line" id="L362"><a class="ln" href="#L362">362</a><span class="tok-str">「あ、孔雀くじゃくがいるよ。あ、孔雀くじゃくがいるよ」</span></span>
+<span class="src-line" id="L363"><a class="ln" href="#L363">363</a><span class="tok-str">「あの森琴ライラの宿やどでしょう。あたしきっとあの森の中にむかしの大きなオーケストラの人たちが集あつまっていらっしゃると思うわ、まわりには青い孔雀くじゃくやなんかたくさんいると思うわ」</span></span>
+<span class="src-line" id="L364"><a class="ln" href="#L364">364</a><span class="tok-str">「ええ、たくさんいたわ」女の子がこたえました。</span></span>
+<span class="src-line" id="L365"><a class="ln" href="#L365">365</a><span class="tok-str">ジョバンニはその小さく小さくなっていまはもう一つの緑みどりいろの貝かいぼたんのように見える森の上にさっさっと青じろく時々光ってその孔雀くじゃくがはねをひろげたりとじたりする光の反射はんしゃを見ました。</span></span>
+<span class="src-line" id="L366"><a class="ln" href="#L366">366</a><span class="tok-str">「そうだ、孔雀くじゃくの声だってさっき聞こえた」カムパネルラが女の子に言いいました。</span></span>
+<span class="src-line" id="L367"><a class="ln" href="#L367">367</a><span class="tok-str">「ええ、三十疋ぴきぐらいはたしかにいたわ」女の子が答えました。</span></span>
+<span class="src-line" id="L368"><a class="ln" href="#L368">368</a><span class="tok-str">ジョバンニはにわかになんとも言いえずかなしい気がして思わず、</span></span>
+<span class="src-line" id="L369"><a class="ln" href="#L369">369</a><span class="tok-str">「カムパネルラ、ここからはねおりて遊あそんで行こうよ」とこわい顔をして言いおうとしたくらいでした。</span></span>
+<span class="src-line" id="L370"><a class="ln" href="#L370">370</a><span class="tok-str">ところがそのときジョバンニは川下の遠くの方に不思議ふしぎなものを見ました。それはたしかになにか黒いつるつるした細長ほそながいもので、あの見えない天の川の水の上に飛とび出してちょっと弓ゆみのようなかたちに進すすんで、また水の中にかくれたようでした。おかしいと思ってまたよく気をつけていましたら、こんどはずっと近くでまたそんなことがあったらしいのでした。そのうちもうあっちでもこっちでも、その黒いつるつるした変へんなものが水から飛とび出して、まるく飛とんでまた頭から水へくぐるのがたくさん見えてきました。みんな魚のように川上へのぼるらしいのでした。</span></span>
+<span class="src-line" id="L371"><a class="ln" href="#L371">371</a><span class="tok-str">「まあ、なんでしょう。たあちゃん。ごらんなさい。まあたくさんだわね。なんでしょうあれ」</span></span>
+<span class="src-line" id="L372"><a class="ln" href="#L372">372</a><span class="tok-str">睡ねむそうに眼めをこすっていた男の子はびっくりしたように立ちあがりました。</span></span>
+<span class="src-line" id="L373"><a class="ln" href="#L373">373</a><span class="tok-str">「なんだろう」青年も立ちあがりました。</span></span>
+<span class="src-line" id="L374"><a class="ln" href="#L374">374</a><span class="tok-str">「まあ、おかしな魚だわ、なんでしょうあれ」</span></span>
+<span class="src-line" id="L375"><a class="ln" href="#L375">375</a><span class="tok-str">「海豚いるかです」カムパネルラがそっちを見ながら答えました。</span></span>
+<span class="src-line" id="L376"><a class="ln" href="#L376">376</a><span class="tok-str">「海豚いるかだなんてあたしはじめてだわ。けどここ海じゃないんでしょう」</span></span>
+<span class="src-line" id="L377"><a class="ln" href="#L377">377</a><span class="tok-str">「いるかは海にいるときまっていない」あの不思議ふしぎな低ひくい声がまたどこからかしました。</span></span>
+<span class="src-line" id="L378"><a class="ln" href="#L378">378</a><span class="tok-str">ほんとうにそのいるかのかたちのおかしいことは、二つのひれをちょうど両手りょうてをさげて不動ふどうの姿勢しせいをとったようなふうにして水の中から飛とび出して来て、うやうやしく頭を下にして不動ふどうの姿勢しせいのまままた水の中へくぐって行くのでした。見えない天の川の水もそのときはゆらゆらと青い焔ほのおのように波なみをあげるのでした。</span></span>
+<span class="src-line" id="L379"><a class="ln" href="#L379">379</a><span class="tok-str">「いるかお魚でしょうか」女の子がカムパネルラにはなしかけました。男の子はぐったりつかれたように席せきにもたれて睡ねむっていました。</span></span>
+<span class="src-line" id="L380"><a class="ln" href="#L380">380</a><span class="tok-str">「いるか、魚じゃありません。くじらと同じようなけだものです」カムパネルラが答えました。</span></span>
+<span class="src-line" id="L381"><a class="ln" href="#L381">381</a><span class="tok-str">「あなたくじら見たことあって」</span></span>
+<span class="src-line" id="L382"><a class="ln" href="#L382">382</a><span class="tok-str">「僕ぼくあります。くじら、頭と黒いしっぽだけ見えます。潮しおを吹ふくとちょうど本にあるようになります」</span></span>
+<span class="src-line" id="L383"><a class="ln" href="#L383">383</a><span class="tok-str">「くじらなら大きいわねえ」</span></span>
+<span class="src-line" id="L384"><a class="ln" href="#L384">384</a><span class="tok-str">「くじら大きいです。子供こどもだっているかぐらいあります」</span></span>
+<span class="src-line" id="L385"><a class="ln" href="#L385">385</a><span class="tok-str">「そうよ、あたしアラビアンナイトで見たわ」姉あねは細ほそい銀ぎんいろの指輪ゆびわをいじりながらおもしろそうにはなししていました。</span></span>
+<span class="src-line" id="L386"><a class="ln" href="#L386">386</a><span class="tok-str">（カムパネルラ、僕ぼくもう行っちまうぞ。僕ぼくなんか鯨くじらだって見たことないや）</span></span>
+<span class="src-line" id="L387"><a class="ln" href="#L387">387</a><span class="tok-str">ジョバンニはまるでたまらないほどいらいらしながら、それでも堅かたく、唇くちびるを噛かんでこらえて窓まどの外を見ていました。その窓まどの外には海豚いるかのかたちももう見えなくなって川は二つにわかれました。そのまっくらな島しまのまん中に高い高いやぐらが一つ組まれて、その上に一人の寛ゆるい服ふくを着きて赤い帽子ぼうしをかぶった男が立っていました。そして両手りょうてに赤と青の旗はたをもってそらを見上げて信号しんごうしているのでした。</span></span>
+<span class="src-line" id="L388"><a class="ln" href="#L388">388</a><span class="tok-str">ジョバンニが見ている間その人はしきりに赤い旗はたをふっていましたが、にわかに赤旗あかはたをおろしてうしろにかくすようにし、青い旗はたを高く高くあげてまるでオーケストラの指揮者しきしゃのようにはげしく振ふりました。すると空中にざあっと雨のような音がして、何かまっくらなものが、いくかたまりもいくかたまりも鉄砲丸てっぽうだまのように川の向むこうの方へ飛とんで行くのでした。ジョバンニは思わず窓まどからからだを半分出して、そっちを見あげました。美うつくしい美うつくしい桔梗ききょういろのがらんとした空の下を、実じつに何万なんまんという小さな鳥どもが、幾組いくくみも幾組いくくみもめいめいせわしくせわしく鳴いて通って行くのでした。</span></span>
+<span class="src-line" id="L389"><a class="ln" href="#L389">389</a><span class="tok-str">「鳥が飛とんで行くな」ジョバンニが窓まどの外で言いました。</span></span>
+<span class="src-line" id="L390"><a class="ln" href="#L390">390</a><span class="tok-str">「どら」カムパネルラもそらを見ました。</span></span>
+<span class="src-line" id="L391"><a class="ln" href="#L391">391</a><span class="tok-str">そのときあのやぐらの上のゆるい服ふくの男はにわかに赤い旗はたをあげて狂気きょうきのようにふりうごかしました。するとぴたっと鳥の群むれは通らなくなり、それと同時にぴしゃあんというつぶれたような音が川下の方で起おこって、それからしばらくしいんとしました。と思ったらあの赤帽あかぼうの信号手しんごうしゅがまた青い旗はたをふって叫さけんでいたのです。</span></span>
+<span class="src-line" id="L392"><a class="ln" href="#L392">392</a><span class="tok-str">「いまこそわたれわたり鳥、いまこそわたれわたり鳥」その声もはっきり聞こえました。</span></span>
+<span class="src-line" id="L393"><a class="ln" href="#L393">393</a><span class="tok-str">それといっしょにまた幾万いくまんという鳥の群むれがそらをまっすぐにかけたのです。二人ふたりの顔を出しているまん中の窓まどからあの女の子が顔を出して美うつくしい頬ほおをかがやかせながらそらを仰あおぎました。</span></span>
+<span class="src-line" id="L394"><a class="ln" href="#L394">394</a><span class="tok-str">「まあ、この鳥、たくさんですわねえ、あらまあそらのきれいなこと」女の子はジョバンニにはなしかけましたけれどもジョバンニは生意気なまいきな、いやだいと思いながら、だまって口をむすんでそらを見あげていました。女の子は小さくほっと息いきをして、だまって席せきへ戻もどりました。カムパネルラがきのどくそうに窓まどから顔を引っ込こめて地図を見ていました。</span></span>
+<span class="src-line" id="L395"><a class="ln" href="#L395">395</a><span class="tok-str">「あの人鳥へ教えてるんでしょうか」女の子がそっとカムパネルラにたずねました。</span></span>
+<span class="src-line" id="L396"><a class="ln" href="#L396">396</a><span class="tok-str">「わたり鳥へ信号しんごうしてるんです。きっとどこからかのろしがあがるためでしょう」</span></span>
+<span class="src-line" id="L397"><a class="ln" href="#L397">397</a><span class="tok-str">カムパネルラが少しおぼつかなそうに答えました。そして車の中はしいんとなりました。ジョバンニはもう頭を引っ込こめたかったのですけれども明るいとこへ顔を出すのがつらかったので、だまってこらえてそのまま立って口笛くちぶえを吹ふいていました。</span></span>
+<span class="src-line" id="L398"><a class="ln" href="#L398">398</a><span class="tok-str">（どうして僕ぼくはこんなにかなしいのだろう。僕ぼくはもっとこころもちをきれいに大きくもたなければいけない。あすこの岸きしのずうっと向むこうにまるでけむりのような小さな青い火が見える。あれはほんとうにしずかでつめたい。僕ぼくはあれをよく見てこころもちをしずめるんだ）</span></span>
+<span class="src-line" id="L399"><a class="ln" href="#L399">399</a><span class="tok-str">ジョバンニは熱ほてって痛いたいあたまを両手りょうてで押おさえるようにして、そっちの方を見ました。</span></span>
+<span class="src-line" id="L400"><a class="ln" href="#L400">400</a><span class="tok-str">（ああほんとうにどこまでもどこまでも僕ぼくといっしょに行くひとはないだろうか。カムパネルラだってあんな女の子とおもしろそうに談はなしているし僕ぼくはほんとうにつらいなあ）</span></span>
+<span class="src-line" id="L401"><a class="ln" href="#L401">401</a><span class="tok-str">ジョバンニの眼めはまた泪なみだでいっぱいになり、天の川もまるで遠くへ行いったようにぼんやり白く見えるだけでした。</span></span>
+<span class="src-line" id="L402"><a class="ln" href="#L402">402</a><span class="tok-str">そのとき汽車はだんだん川からはなれて崖がけの上を通るようになりました。向むこう岸ぎしもまた黒いいろの崖がけが川の岸きしを下流かりゅうに下るにしたがって、だんだん高くなっていくのでした。そしてちらっと大きなとうもろこしの木を見ました。その葉ははぐるぐるに縮ちぢれ葉はの下にはもう美しい緑みどりいろの大きな苞ほうが赤い毛を吐はいて真珠しんじゅのような実みもちらっと見えたのでした。それはだんだん数を増ましてきて、もういまは列れつのように崖がけと線路せんろとの間にならび、思わずジョバンニが窓まどから顔を引っ込こめて向むこう側がわの窓まどを見ましたときは、美うつくしいそらの野原の地平線ちへいせんのはてまで、その大きなとうもろこしの木がほとんどいちめんに植うえられて、さやさや風にゆらぎ、その立派りっぱなちぢれた葉はのさきからは、まるでひるの間にいっぱい日光を吸すった金剛石こんごうせきのように露つゆがいっぱいについて、赤や緑みどりやきらきら燃もえて光っているのでした。カムパネルラが、</span></span>
+<span class="src-line" id="L403"><a class="ln" href="#L403">403</a><span class="tok-str">「あれとうもろこしだねえ」とジョバンニに言いいましたけれども、ジョバンニはどうしても気持きもちがなおりませんでしたから、ただぶっきらぼうに野原を見たまま、</span></span>
+<span class="src-line" id="L404"><a class="ln" href="#L404">404</a><span class="tok-str">「そうだろう」と答えました。</span></span>
+<span class="src-line" id="L405"><a class="ln" href="#L405">405</a><span class="tok-str">そのとき汽車はだんだんしずかになって、いくつかのシグナルとてんてつ器きの灯あかりを過ぎ、小さな停車場ていしゃばにとまりました。</span></span>
+<span class="src-line" id="L406"><a class="ln" href="#L406">406</a><span class="tok-str">その正面しょうめんの青じろい時計とけいはかっきり第二時だいにじを示しめし、風もなくなり汽車もうごかず、しずかなしずかな野原のなかにその振ふり子こはカチッカチッと正しく時を刻きざんでいくのでした。</span></span>
+<span class="src-line" id="L407"><a class="ln" href="#L407">407</a><span class="tok-str">そしてまったくその振ふり子この音のたえまを遠くの遠くの野原のはてから、かすかなかすかな旋律せんりつが糸のように流ながれて来るのでした。</span></span>
+<span class="src-line" id="L408"><a class="ln" href="#L408">408</a><span class="tok-str">「新世界交響楽しんせかいこうきょうがくだわ」向むこうの席せきの姉あねがひとりごとのようにこっちを見ながらそっと言いいました。</span></span>
+<span class="src-line" id="L409"><a class="ln" href="#L409">409</a><span class="tok-str">全まったくもう車の中ではあの黒服くろふくの丈高たけたかい青年も誰だれもみんなやさしい夢ゆめを見ているのでした。</span></span>
+<span class="src-line" id="L410"><a class="ln" href="#L410">410</a><span class="tok-str">（こんなしずかないいとこで僕ぼくはどうしてもっと愉快ゆかいになれないだろう。どうしてこんなにひとりさびしいのだろう。けれどもカムパネルラなんかあんまりひどい、僕ぼくといっしょに汽車に乗のっていながら、まるであんな女の子とばかり談はなしているんだもの。僕ぼくはほんとうにつらい）</span></span>
+<span class="src-line" id="L411"><a class="ln" href="#L411">411</a><span class="tok-str">ジョバンニはまた手で顔を半分はんぶんかくすようにして向むこうの窓まどのそとを見つめていました。</span></span>
+<span class="src-line" id="L412"><a class="ln" href="#L412">412</a><span class="tok-str">すきとおった硝子ガラスのような笛ふえが鳴って汽車はしずかに動きだし、カムパネルラもさびしそうに星めぐりの口笛くちぶえを吹ふきました。</span></span>
+<span class="src-line" id="L413"><a class="ln" href="#L413">413</a><span class="tok-str">「ええ、ええ、もうこの辺へんはひどい高原ですから」</span></span>
+<span class="src-line" id="L414"><a class="ln" href="#L414">414</a><span class="tok-str">うしろの方で誰だれかとしよりらしい人の、いま眼めがさめたというふうではきはき談はなしている声がしました。</span></span>
+<span class="src-line" id="L415"><a class="ln" href="#L415">415</a><span class="tok-str">「とうもろこしだって棒ぼうで二尺も孔あなをあけておいてそこへ播まかないとはえないんです」</span></span>
+<span class="src-line" id="L416"><a class="ln" href="#L416">416</a><span class="tok-str">「そうですか。川まではよほどありましょうかねえ」</span></span>
+<span class="src-line" id="L417"><a class="ln" href="#L417">417</a><span class="tok-str">「ええ、ええ、河かわまでは二千尺じゃくから六千尺じゃくあります。もうまるでひどい峡谷きょうこくになっているんです」</span></span>
+<span class="src-line" id="L418"><a class="ln" href="#L418">418</a><span class="tok-str">そうそうここはコロラドの高原じゃなかったろうか、ジョバンニは思わずそう思いました。</span></span>
+<span class="src-line" id="L419"><a class="ln" href="#L419">419</a><span class="tok-str">あの姉あねは弟を自分の胸むねによりかからせて睡ねむらせながら黒い瞳ひとみをうっとりと遠くへ投なげて何を見るでもなしに考え込こんでいるのでしたし、カムパネルラはまださびしそうにひとり口笛くちぶえを吹ふき、男の子はまるで絹きぬで包つつんだ苹果りんごのような顔いろをしてジョバンニの見る方を見ているのでした。</span></span>
+<span class="src-line" id="L420"><a class="ln" href="#L420">420</a><span class="tok-str">突然とつぜんとうもろこしがなくなって巨おおきな黒い野原のはらがいっぱいにひらけました。</span></span>
+<span class="src-line" id="L421"><a class="ln" href="#L421">421</a><span class="tok-str">新世界交響楽しんせかいこうきょうがくはいよいよはっきり地平線ちへいせんのはてから湧わき、そのまっ黒な野原のはらのなかを一人のインデアンが白い鳥の羽根はねを頭につけ、たくさんの石を腕うでと胸むねにかざり、小さな弓ゆみに矢やをつがえていちもくさんに汽車を追おって来るのでした。</span></span>
+<span class="src-line" id="L422"><a class="ln" href="#L422">422</a><span class="tok-str">「あら、インデアンですよ。インデアンですよ。おねえさまごらんなさい」</span></span>
+<span class="src-line" id="L423"><a class="ln" href="#L423">423</a><span class="tok-str">黒服くろふくの青年も眼めをさましました。</span></span>
+<span class="src-line" id="L424"><a class="ln" href="#L424">424</a><span class="tok-str">ジョバンニもカムパネルラも立ちあがりました。</span></span>
+<span class="src-line" id="L425"><a class="ln" href="#L425">425</a><span class="tok-str">「走って来るわ、あら、走って来るわ。追おいかけているんでしょう」</span></span>
+<span class="src-line" id="L426"><a class="ln" href="#L426">426</a><span class="tok-str">「いいえ、汽車を追おってるんじゃないんですよ。猟りょうをするか踊おどるかしてるんですよ」</span></span>
+<span class="src-line" id="L427"><a class="ln" href="#L427">427</a><span class="tok-str">青年はいまどこにいるか忘わすれたというふうにポケットに手を入れて立ちながら言いいました。</span></span>
+<span class="src-line" id="L428"><a class="ln" href="#L428">428</a><span class="tok-str">まったくインデアンは半分はんぶんは踊おどっているようでした。第一だいいちかけるにしても足のふみようがもっと経済けいざいもとれ本気にもなれそうでした。にわかにくっきり白いその羽根はねは前の方へ倒たおれるようになり、インデアンはぴたっと立ちどまって、すばやく弓ゆみを空にひきました。そこから一羽わの鶴つるがふらふらと落おちて来て、また走り出したインデアンの大きくひろげた両手りょうてに落おちこみました。インデアンはうれしそうに立ってわらいました。そしてその鶴つるをもってこっちを見ている影かげも、もうどんどん小さく遠くなり、電しんばしらの碍子がいしがきらっきらっと続つづいて二つばかり光って、またとうもろこしの林になってしまいました。こっち側がわの窓まどを見ますと汽車はほんとうに高い高い崖がけの上を走っていて、その谷の底そこには川がやっぱり幅はばひろく明るく流ながれていたのです。</span></span>
+<span class="src-line" id="L429"><a class="ln" href="#L429">429</a><span class="tok-str">「ええ、もうこの辺へんから下りです。なんせこんどは一ぺんにあの水面すいめんまでおりて行くんですから容易よういじゃありません。この傾斜けいしゃがあるもんですから汽車は決けっして向むこうからこっちへは来ないんです。そら、もうだんだん早くなったでしょう」さっきの老人ろうじんらしい声が言いいました。</span></span>
+<span class="src-line" id="L430"><a class="ln" href="#L430">430</a><span class="tok-str">どんどんどんどん汽車は降おりて行きました。崖がけのはじに鉄道てつどうがかかるときは川が明るく下にのぞけたのです。ジョバンニはだんだんこころもちが明るくなってきました。汽車が小さな小屋こやの前を通って、その前にしょんぼりひとりの子供こどもが立ってこっちを見ているときなどは思わず、ほう、と叫さけびました。</span></span>
+<span class="src-line" id="L431"><a class="ln" href="#L431">431</a><span class="tok-str">どんどんどんどん汽車は走って行きました。室中へやじゅうのひとたちは半分はんぶんうしろの方へ倒たおれるようになりながら腰掛こしかけにしっかりしがみついていました。ジョバンニは思わずカムパネルラとわらいました。もうそして天の川は汽車のすぐ横手よこてをいままでよほど激はげしく流ながれて来たらしく、ときどきちらちら光ってながれているのでした。うすあかい河原かわらなでしこの花があちこち咲さいていました。汽車はようやく落おち着ついたようにゆっくり走っていました。</span></span>
+<span class="src-line" id="L432"><a class="ln" href="#L432">432</a><span class="tok-str">向むこうとこっちの岸きしに星のかたちとつるはしを書いた旗はたがたっていました。</span></span>
+<span class="src-line" id="L433"><a class="ln" href="#L433">433</a><span class="tok-str">「あれなんの旗はただろうね」ジョバンニがやっとものを言いいました。</span></span>
+<span class="src-line" id="L434"><a class="ln" href="#L434">434</a><span class="tok-str">「さあ、わからないねえ、地図にもないんだもの。鉄てつの舟ふねがおいてあるねえ」</span></span>
+<span class="src-line" id="L435"><a class="ln" href="#L435">435</a><span class="tok-str">「ああ」</span></span>
+<span class="src-line" id="L436"><a class="ln" href="#L436">436</a><span class="tok-str">「橋はしを架かけるとこじゃないんでしょうか」女の子が言いいました。</span></span>
+<span class="src-line" id="L437"><a class="ln" href="#L437">437</a><span class="tok-str">「ああ、あれ工兵こうへいの旗はただねえ。架橋演習かきょうえんしゅうをしてるんだ。けれど兵隊へいたいのかたちが見えないねえ」</span></span>
+<span class="src-line" id="L438"><a class="ln" href="#L438">438</a><span class="tok-str">その時向むこう岸ぎしちかくの少し下流かりゅうの方で、見えない天の川の水がぎらっと光って、柱はしらのように高くはねあがり、どおとはげしい音がしました。</span></span>
+<span class="src-line" id="L439"><a class="ln" href="#L439">439</a><span class="tok-str">「発破はっぱだよ、発破はっぱだよ」カムパネルラはこおどりしました。</span></span>
+<span class="src-line" id="L440"><a class="ln" href="#L440">440</a><span class="tok-str">その柱はしらのようになった水は見えなくなり、大きな鮭さけや鱒ますがきらっきらっと白く腹はらを光らせて空中にほうり出されてまるい輪わを描えがいてまた水に落おちました。ジョバンニはもうはねあがりたいくらい気持きもちが軽かるくなって言いいました。</span></span>
+<span class="src-line" id="L441"><a class="ln" href="#L441">441</a><span class="tok-str">「空の工兵大隊こうへいだいたいだ。どうだ、鱒ますなんかがまるでこんなになってはねあげられたねえ。僕ぼくこんな愉快ゆかいな旅たびはしたことない。いいねえ」</span></span>
+<span class="src-line" id="L442"><a class="ln" href="#L442">442</a><span class="tok-str">「あの鱒ますなら近くで見たらこれくらいあるねえ、たくさんさかないるんだな、この水の中に」</span></span>
+<span class="src-line" id="L443"><a class="ln" href="#L443">443</a><span class="tok-str">「小さなお魚もいるんでしょうか」女の子が談はなしにつり込こまれて言いいました。</span></span>
+<span class="src-line" id="L444"><a class="ln" href="#L444">444</a><span class="tok-str">「いるんでしょう。大きなのがいるんだから小さいのもいるんでしょう。けれど遠くだから、いま小さいの見えなかったねえ」ジョバンニはもうすっかり機嫌きげんが直なおっておもしろそうにわらって女の子に答えました。</span></span>
+<span class="src-line" id="L445"><a class="ln" href="#L445">445</a><span class="tok-str">「あれきっと双子ふたごのお星さまのお宮みやだよ」男の子がいきなり窓まどの外をさして叫さけびました。</span></span>
+<span class="src-line" id="L446"><a class="ln" href="#L446">446</a><span class="tok-str">右手の低ひくい丘おかの上に小さな水晶すいしょうででもこさえたような二つのお宮みやがならんで立っていました。</span></span>
+<span class="src-line" id="L447"><a class="ln" href="#L447">447</a><span class="tok-str">「双子ふたごのお星さまのお宮みやってなんだい」</span></span>
+<span class="src-line" id="L448"><a class="ln" href="#L448">448</a><span class="tok-str">「あたし前になんべんもお母っかさんから聞いたわ。ちゃんと小さな水晶すいしょうのお宮みやで二つならんでいるからきっとそうだわ」</span></span>
+<span class="src-line" id="L449"><a class="ln" href="#L449">449</a><span class="tok-str">「はなしてごらん。双子ふたごのお星さまが何をしたっての」</span></span>
+<span class="src-line" id="L450"><a class="ln" href="#L450">450</a><span class="tok-str">「ぼくも知ってらい。双子ふたごのお星さまが野原へ遊あそびにでて、からすと喧嘩けんかしたんだろう」</span></span>
+<span class="src-line" id="L451"><a class="ln" href="#L451">451</a><span class="tok-str">「そうじゃないわよ。あのね、天の川の岸きしにね、おっかさんお話しなすったわ、……」</span></span>
+<span class="src-line" id="L452"><a class="ln" href="#L452">452</a><span class="tok-str">「それから彗星ほうきぼしがギーギーフーギーギーフーて言いって来たねえ」</span></span>
+<span class="src-line" id="L453"><a class="ln" href="#L453">453</a><span class="tok-str">「いやだわ、たあちゃん、そうじゃないわよ。それはべつの方だわ」</span></span>
+<span class="src-line" id="L454"><a class="ln" href="#L454">454</a><span class="tok-str">「するとあすこにいま笛ふえを吹ふいているんだろうか」</span></span>
+<span class="src-line" id="L455"><a class="ln" href="#L455">455</a><span class="tok-str">「いま海へ行ってらあ」</span></span>
+<span class="src-line" id="L456"><a class="ln" href="#L456">456</a><span class="tok-str">「いけないわよ。もう海からあがっていらっしゃったのよ」</span></span>
+<span class="src-line" id="L457"><a class="ln" href="#L457">457</a><span class="tok-str">「そうそう。ぼく知ってらあ、ぼくおはなししよう」</span></span>
+<span class="src-line" id="L458"><a class="ln" href="#L458">458</a></span>
+<span class="src-line" id="L459"><a class="ln" href="#L459">459</a><span class="tok-str">川の向こう岸ぎしがにわかに赤くなりました。</span></span>
+<span class="src-line" id="L460"><a class="ln" href="#L460">460</a><span class="tok-str">楊やなぎの木や何かもまっ黒にすかし出され、見えない天の川の波なみも、ときどきちらちら針はりのように赤く光りました。まったく向むこう岸ぎしの野原に大きなまっ赤な火が燃もやされ、その黒いけむりは高く桔梗ききょういろのつめたそうな天をも焦こがしそうでした。ルビーよりも赤くすきとおり、リチウムよりもうつくしく酔よったようになって、その火は燃もえているのでした。</span></span>
+<span class="src-line" id="L461"><a class="ln" href="#L461">461</a><span class="tok-str">「あれはなんの火だろう。あんな赤く光る火は何を燃もやせばできるんだろう」ジョバンニが言いいました。</span></span>
+<span class="src-line" id="L462"><a class="ln" href="#L462">462</a><span class="tok-str">「蠍さそりの火だな」カムパネルラがまた地図と首くびっぴきして答えました。</span></span>
+<span class="src-line" id="L463"><a class="ln" href="#L463">463</a><span class="tok-str">「あら、蠍さそりの火のことならあたし知ってるわ」</span></span>
+<span class="src-line" id="L464"><a class="ln" href="#L464">464</a><span class="tok-str">「蠍さそりの火ってなんだい」ジョバンニがききました。</span></span>
+<span class="src-line" id="L465"><a class="ln" href="#L465">465</a><span class="tok-str">「蠍さそりがやけて死んだのよ。その火がいまでも燃もえてるって、あたし何べんもお父さんから聴きいたわ」</span></span>
+<span class="src-line" id="L466"><a class="ln" href="#L466">466</a><span class="tok-str">「蠍さそりって、虫だろう」</span></span>
+<span class="src-line" id="L467"><a class="ln" href="#L467">467</a><span class="tok-str">「ええ、蠍さそりは虫よ。だけどいい虫だわ」</span></span>
+<span class="src-line" id="L468"><a class="ln" href="#L468">468</a><span class="tok-str">「蠍さそりいい虫じゃないよ。僕ぼく博物館はくぶつかんでアルコールにつけてあるの見た。尾おにこんなかぎがあってそれで螫さされると死しぬって先生が言いってたよ」</span></span>
+<span class="src-line" id="L469"><a class="ln" href="#L469">469</a><span class="tok-str">「そうよ。だけどいい虫だわ、お父さんこう言いったのよ。むかしのバルドラの野原に一ぴきの蠍さそりがいて小さな虫やなんか殺ころしてたべて生きていたんですって。するとある日いたちに見つかって食べられそうになったんですって。さそりは一生けん命めいにげてにげたけど、とうとういたちに押おさえられそうになったわ、そのときいきなり前に井戸いどがあってその中に落おちてしまったわ、もうどうしてもあがられないで、さそりはおぼれはじめたのよ。そのときさそりはこう言いってお祈いのりしたというの。</span></span>
+<span class="src-line" id="L470"><a class="ln" href="#L470">470</a><span class="tok-str">ああ、わたしはいままで、いくつのものの命いのちをとったかわからない、そしてその私がこんどいたちにとられようとしたときはあんなに一生けん命めいにげた。それでもとうとうこんなになってしまった。ああなんにもあてにならない。どうしてわたしはわたしのからだを、だまっていたちにくれてやらなかったろう。そしたらいたちも一日生きのびたろうに。どうか神かみさま。私の心をごらんください。こんなにむなしく命いのちをすてず、どうかこの次つぎには、まことのみんなの幸さいわいのために私のからだをおつかいください。って言いったというの。</span></span>
+<span class="src-line" id="L471"><a class="ln" href="#L471">471</a><span class="tok-str">そしたらいつか蠍さそりはじぶんのからだが、まっ赤なうつくしい火になって燃もえて、よるのやみを照てらしているのを見たって。いまでも燃もえてるってお父さんおっしゃったわ。ほんとうにあの火、それだわ」</span></span>
+<span class="src-line" id="L472"><a class="ln" href="#L472">472</a><span class="tok-str">「そうだ。見たまえ。そこらの三角標さんかくひょうはちょうどさそりの形にならんでいるよ」</span></span>
+<span class="src-line" id="L473"><a class="ln" href="#L473">473</a><span class="tok-str">ジョバンニはまったくその大きな火の向むこうに三つの三角標さんかくひょうが、ちょうどさそりの腕うでのように、こっちに五つの三角標さんかくひょうがさそりの尾おやかぎのようにならんでいるのを見ました。そしてほんとうにそのまっ赤なうつくしいさそりの火は音なくあかるくあかるく燃もえたのです。</span></span>
+<span class="src-line" id="L474"><a class="ln" href="#L474">474</a><span class="tok-str">その火がだんだんうしろの方になるにつれて、みんなはなんとも言いえずにぎやかな、さまざまの楽がくの音ねや草花のにおいのようなもの、口笛くちぶえや人々のざわざわ言いう声やらを聞きました。それはもうじきちかくに町か何かがあって、そこにお祭まつりでもあるというような気がするのでした。</span></span>
+<span class="src-line" id="L475"><a class="ln" href="#L475">475</a><span class="tok-str">「ケンタウル露つゆをふらせ」いきなりいままで睡ねむっていたジョバンニのとなりの男の子が向むこうの窓まどを見ながら叫さけんでいました。</span></span>
+<span class="src-line" id="L476"><a class="ln" href="#L476">476</a><span class="tok-str">ああそこにはクリスマストリイのようにまっ青な唐檜とうひかもみの木がたって、その中にはたくさんのたくさんの豆電燈まめでんとうがまるで千の蛍ほたるでも集あつまったようについていました。</span></span>
+<span class="src-line" id="L477"><a class="ln" href="#L477">477</a><span class="tok-str">「ああ、そうだ、今夜ケンタウル祭さいだねえ」</span></span>
+<span class="src-line" id="L478"><a class="ln" href="#L478">478</a><span class="tok-str">「ああ、ここはケンタウルの村だよ」カムパネルラがすぐ言いいました。</span></span>
+<span class="src-line" id="L479"><a class="ln" href="#L479">479</a><span class="tok-str">（此この間原稿げんこうなし）</span></span>
+<span class="src-line" id="L480"><a class="ln" href="#L480">480</a><span class="tok-str">「ボール投げなら僕ぼく決けっしてはずさない」</span></span>
+<span class="src-line" id="L481"><a class="ln" href="#L481">481</a><span class="tok-str">男の子が大いばりで言いいました。</span></span>
+<span class="src-line" id="L482"><a class="ln" href="#L482">482</a><span class="tok-str">「もうじきサウザンクロスです。おりるしたくをしてください」青年がみんなに言いいました。</span></span>
+<span class="src-line" id="L483"><a class="ln" href="#L483">483</a><span class="tok-str">「僕ぼく、も少し汽車に乗ってるんだよ」男の子が言いいました。</span></span>
+<span class="src-line" id="L484"><a class="ln" href="#L484">484</a><span class="tok-str">カムパネルラのとなりの女の子はそわそわ立ってしたくをはじめましたけれどもやっぱりジョバンニたちとわかれたくないようなようすでした。</span></span>
+<span class="src-line" id="L485"><a class="ln" href="#L485">485</a><span class="tok-str">「ここでおりなけぁいけないのです」青年はきちっと口を結むすんで男の子を見おろしながら言いいました。</span></span>
+<span class="src-line" id="L486"><a class="ln" href="#L486">486</a><span class="tok-str">「厭いやだい。僕ぼくもう少し汽車へ乗のってから行くんだい」</span></span>
+<span class="src-line" id="L487"><a class="ln" href="#L487">487</a><span class="tok-str">ジョバンニがこらえかねて言いいました。</span></span>
+<span class="src-line" id="L488"><a class="ln" href="#L488">488</a><span class="tok-str">「僕ぼくたちといっしょに乗のって行こう。僕ぼくたちどこまでだって行ける切符きっぷ持もってるんだ」</span></span>
+<span class="src-line" id="L489"><a class="ln" href="#L489">489</a><span class="tok-str">「だけどあたしたち、もうここで降おりなけぁいけないのよ。ここ天上へ行くとこなんだから」</span></span>
+<span class="src-line" id="L490"><a class="ln" href="#L490">490</a><span class="tok-str">女の子がさびしそうに言いいました。</span></span>
+<span class="src-line" id="L491"><a class="ln" href="#L491">491</a><span class="tok-str">「天上へなんか行かなくたっていいじゃないか。ぼくたちここで天上よりももっといいとこをこさえなけぁいけないって僕ぼくの先生が言いったよ」</span></span>
+<span class="src-line" id="L492"><a class="ln" href="#L492">492</a><span class="tok-str">「だっておっ母かさんも行ってらっしゃるし、それに神かみさまがおっしゃるんだわ」</span></span>
+<span class="src-line" id="L493"><a class="ln" href="#L493">493</a><span class="tok-str">「そんな神かみさまうその神かみさまだい」</span></span>
+<span class="src-line" id="L494"><a class="ln" href="#L494">494</a><span class="tok-str">「あなたの神かみさまうその神かみさまよ」</span></span>
+<span class="src-line" id="L495"><a class="ln" href="#L495">495</a><span class="tok-str">「そうじゃないよ」</span></span>
+<span class="src-line" id="L496"><a class="ln" href="#L496">496</a><span class="tok-str">「あなたの神かみさまってどんな神かみさまですか」青年は笑わらいながら言いいました。</span></span>
+<span class="src-line" id="L497"><a class="ln" href="#L497">497</a><span class="tok-str">「ぼくほんとうはよく知りません。けれどもそんなんでなしに、ほんとうのたった一人ひとりの神かみさまです」</span></span>
+<span class="src-line" id="L498"><a class="ln" href="#L498">498</a><span class="tok-str">「ほんとうの神かみさまはもちろんたった一人ひとりです」</span></span>
+<span class="src-line" id="L499"><a class="ln" href="#L499">499</a><span class="tok-str">「ああ、そんなんでなしに、たったひとりのほんとうのほんとうの神かみさまです」</span></span>
+<span class="src-line" id="L500"><a class="ln" href="#L500">500</a><span class="tok-str">「だからそうじゃありませんか。わたくしはあなた方がいまにそのほんとうの神かみさまの前に、わたくしたちとお会いになることを祈いのります」青年はつつましく両手りょうてを組みました。</span></span>
+<span class="src-line" id="L501"><a class="ln" href="#L501">501</a><span class="tok-str">女の子もちょうどその通りにしました。みんなほんとうに別わかれが惜おしそうで、その顔いろも少し青ざめて見えました。ジョバンニはあぶなく声をあげて泣なき出そうとしました。</span></span>
+<span class="src-line" id="L502"><a class="ln" href="#L502">502</a><span class="tok-str">「さあもうしたくはいいんですか。じきサウザンクロスですから」</span></span>
+<span class="src-line" id="L503"><a class="ln" href="#L503">503</a><span class="tok-str">ああそのときでした。見えない天の川のずうっと川下に青や橙だいだいや、もうあらゆる光でちりばめられた十字架じゅうじかが、まるで一本の木というふうに川の中から立ってかがやき、その上には青じろい雲がまるい環わになって後光のようにかかっているのでした。汽車の中がまるでざわざわしました。みんなあの北の十字のときのようにまっすぐに立ってお祈いのりをはじめました。あっちにもこっちにも子供が瓜うりに飛とびついたときのようなよろこびの声や、なんとも言いようない深ふかいつつましいためいきの音ばかりきこえました。そしてだんだん十字架じゅうじかは窓まどの正面しょうめんになり、あの苹果りんごの肉にくのような青じろい環わの雲も、ゆるやかにゆるやかに繞めぐっているのが見えました。</span></span>
+<span class="src-line" id="L504"><a class="ln" href="#L504">504</a><span class="tok-str">「ハレルヤ、ハレルヤ」明るくたのしくみんなの声はひびき、みんなはそのそらの遠くから、つめたいそらの遠くから、すきとおったなんとも言いえずさわやかなラッパの声をききました。そしてたくさんのシグナルや電燈でんとうの灯あかりのなかを汽車はだんだんゆるやかになり、とうとう十字架じゅうじかのちょうどま向むかいに行ってすっかりとまりました。</span></span>
+<span class="src-line" id="L505"><a class="ln" href="#L505">505</a><span class="tok-str">「さあ、おりるんですよ」青年は男の子の手をひき姉あねは互たがいにえりや肩かたをなおしてやってだんだん向むこうの出口の方へ歩き出しました。</span></span>
+<span class="src-line" id="L506"><a class="ln" href="#L506">506</a><span class="tok-str">「じゃさよなら」女の子がふりかえって二人に言いいました。</span></span>
+<span class="src-line" id="L507"><a class="ln" href="#L507">507</a><span class="tok-str">「さよなら」ジョバンニはまるで泣なき出したいのをこらえておこったようにぶっきらぼうに言いいました。</span></span>
+<span class="src-line" id="L508"><a class="ln" href="#L508">508</a><span class="tok-str">女の子はいかにもつらそうに眼めを大きくして、も一度どこっちをふりかえって、それからあとはもうだまって出て行ってしまいました。汽車の中はもう半分以上はんぶんいじょうも空すいてしまいにわかにがらんとして、さびしくなり風がいっぱいに吹ふき込こみました。</span></span>
+<span class="src-line" id="L509"><a class="ln" href="#L509">509</a><span class="tok-str">そして見ているとみんなはつつましく列れつを組んで、あの十字架じゅうじかの前の天の川のなぎさにひざまずいていました。そしてその見えない天の川の水をわたって、ひとりのこうごうしい白いきものの人が手をのばしてこっちへ来るのを二人は見ました。けれどもそのときはもう硝子ガラスの呼よび子は鳴らされ汽車はうごきだし、と思ううちに銀ぎんいろの霧きりが川下の方から、すうっと流ながれて来て、もうそっちは何も見えなくなりました。ただたくさんのくるみの木が葉はをさんさんと光らしてその霧きりの中に立ち、黄金きんの円光をもった電気栗鼠でんきりすが可愛かわいい顔をその中からちらちらのぞいているだけでした。</span></span>
+<span class="src-line" id="L510"><a class="ln" href="#L510">510</a><span class="tok-str">そのとき、すうっと霧きりがはれかかりました。どこかへ行く街道かいどうらしく小さな電燈でんとうの一列いちれつについた通りがありました。それはしばらく線路せんろに沿そって進すすんでいました。そして二人ふたりがそのあかしの前を通って行くときは、その小さな豆いろの火はちょうどあいさつでもするようにぽかっと消きえ、二人ふたりが過ぎて行くときまた点つくのでした。</span></span>
+<span class="src-line" id="L511"><a class="ln" href="#L511">511</a><span class="tok-str">ふりかえって見ると、さっきの十字架じゅうじかはすっかり小さくなってしまい、ほんとうにもうそのまま胸むねにもつるされそうになり、さっきの女の子や青年たちがその前の白い渚なぎさにまだひざまずいているのか、それともどこか方角ほうがくもわからないその天上へ行ったのか、ぼんやりして見分けられませんでした。</span></span>
+<span class="src-line" id="L512"><a class="ln" href="#L512">512</a><span class="tok-str">ジョバンニは、ああ、と深ふかく息いきしました。</span></span>
+<span class="src-line" id="L513"><a class="ln" href="#L513">513</a><span class="tok-str">「カムパネルラ、また僕ぼくたち二人ふたりきりになったねえ、どこまでもどこまでもいっしょに行こう。僕ぼくはもう、あのさそりのように、ほんとうにみんなの幸さいわいのためならば僕ぼくのからだなんか百ぺん灼やいてもかまわない」</span></span>
+<span class="src-line" id="L514"><a class="ln" href="#L514">514</a><span class="tok-str">「うん。僕ぼくだってそうだ」カムパネルラの眼めにはきれいな涙なみだがうかんでいました。</span></span>
+<span class="src-line" id="L515"><a class="ln" href="#L515">515</a><span class="tok-str">「けれどもほんとうのさいわいはいったいなんだろう」</span></span>
+<span class="src-line" id="L516"><a class="ln" href="#L516">516</a><span class="tok-str">ジョバンニが言いいました。</span></span>
+<span class="src-line" id="L517"><a class="ln" href="#L517">517</a><span class="tok-str">「僕ぼくわからない」カムパネルラがぼんやり言いいました。</span></span>
+<span class="src-line" id="L518"><a class="ln" href="#L518">518</a><span class="tok-str">「僕ぼくたちしっかりやろうねえ」ジョバンニが胸むねいっぱい新しい力が湧わくように、ふうと息いきをしながら言いいました。</span></span>
+<span class="src-line" id="L519"><a class="ln" href="#L519">519</a><span class="tok-str">「あ、あすこ石炭袋せきたんぶくろだよ。そらの孔あなだよ」カムパネルラが少しそっちを避さけるようにしながら天の川のひととこを指ゆびさしました。</span></span>
+<span class="src-line" id="L520"><a class="ln" href="#L520">520</a><span class="tok-str">ジョバンニはそっちを見て、まるでぎくっとしてしまいました。天の川の一とこに大きなまっくらな孔あなが、どおんとあいているのです。その底そこがどれほど深ふかいか、その奥おくに何があるか、いくら眼めをこすってのぞいてもなんにも見えず、ただ眼めがしんしんと痛いたむのでした。ジョバンニが言いいました。</span></span>
+<span class="src-line" id="L521"><a class="ln" href="#L521">521</a><span class="tok-str">「僕ぼくもうあんな大きな暗やみの中だってこわくない。きっとみんなのほんとうのさいわいをさがしに行く。どこまでもどこまでも僕ぼくたちいっしょに進すすんで行こう」</span></span>
+<span class="src-line" id="L522"><a class="ln" href="#L522">522</a><span class="tok-str">「ああきっと行くよ。ああ、あすこの野原はなんてきれいだろう。みんな集あつまってるねえ。あすこがほんとうの天上なんだ。あっ、あすこにいるのはぼくのお母さんだよ」</span></span>
+<span class="src-line" id="L523"><a class="ln" href="#L523">523</a><span class="tok-str">カムパネルラはにわかに窓まどの遠くに見えるきれいな野原を指さして叫さけびました。</span></span>
+<span class="src-line" id="L524"><a class="ln" href="#L524">524</a><span class="tok-str">ジョバンニもそっちを見ましたけれども、そこはぼんやり白くけむっているばかり、どうしてもカムパネルラが言いったように思われませんでした。</span></span>
+<span class="src-line" id="L525"><a class="ln" href="#L525">525</a><span class="tok-str">なんとも言いえずさびしい気がして、ぼんやりそっちを見ていましたら、向むこうの河岸かわぎしに二本の電信でんしんばしらが、ちょうど両方りょうほうから腕うでを組んだように赤い腕木うでぎをつらねて立っていました。</span></span>
+<span class="src-line" id="L526"><a class="ln" href="#L526">526</a><span class="tok-str">「カムパネルラ、僕ぼくたちいっしょに行こうねえ」ジョバンニがこう言いいながらふりかえって見ましたら、そのいままでカムパネルラのすわっていた席せきに、もうカムパネルラの形は見えず、ただ黒いびろうどばかりひかっていました。</span></span>
+<span class="src-line" id="L527"><a class="ln" href="#L527">527</a><span class="tok-str">ジョバンニはまるで鉄砲丸てっぽうだまのように立ちあがりました。そして誰だれにも聞こえないように窓まどの外へからだを乗のり出して、力いっぱいはげしく胸むねをうって叫さけび、それからもう咽喉のどいっぱい泣なきだしました。</span></span>
+<span class="src-line" id="L528"><a class="ln" href="#L528">528</a><span class="tok-str">もうそこらが一ぺんにまっくらになったように思いました。そのとき、</span></span>
+<span class="src-line" id="L529"><a class="ln" href="#L529">529</a><span class="tok-str">「おまえはいったい何を泣ないているの。ちょっとこっちをごらん」いままでたびたび聞こえた、あのやさしいセロのような声が、ジョバンニのうしろから聞こえました。</span></span>
+<span class="src-line" id="L530"><a class="ln" href="#L530">530</a><span class="tok-str">ジョバンニは、はっと思って涙なみだをはらってそっちをふり向むきました、さっきまでカムパネルラのすわっていた席せきに黒い大きな帽子ぼうしをかぶった青白い顔のやせた大人おとなが、やさしくわらって大きな一冊さつの本をもっていました。</span></span>
+<span class="src-line" id="L531"><a class="ln" href="#L531">531</a><span class="tok-str">「おまえのともだちがどこかへ行ったのだろう。あのひとはね、ほんとうにこんや遠くへ行ったのだ。おまえはもうカムパネルラをさがしてもむだだ」</span></span>
+<span class="src-line" id="L532"><a class="ln" href="#L532">532</a><span class="tok-str">「ああ、どうしてなんですか。ぼくはカムパネルラといっしょにまっすぐに行こうと言いったんです」</span></span>
+<span class="src-line" id="L533"><a class="ln" href="#L533">533</a><span class="tok-str">「ああ、そうだ。みんながそう考える。けれどもいっしょに行けない。そしてみんながカムパネルラだ。おまえがあうどんなひとでも、みんな何べんもおまえといっしょに苹果りんごをたべたり汽車に乗のったりしたのだ。だからやっぱりおまえはさっき考えたように、あらゆるひとのいちばんの幸福こうふくをさがし、みんなといっしょに早くそこに行くがいい、そこでばかりおまえはほんとうにカムパネルラといつまでもいっしょに行けるのだ」</span></span>
+<span class="src-line" id="L534"><a class="ln" href="#L534">534</a><span class="tok-str">「ああぼくはきっとそうします。ぼくはどうしてそれをもとめたらいいでしょう」</span></span>
+<span class="src-line" id="L535"><a class="ln" href="#L535">535</a><span class="tok-str">「ああわたくしもそれをもとめている。おまえはおまえの切符きっぷをしっかりもっておいで。そして一しんに勉強べんきょうしなけぁいけない。おまえは化学かがくをならったろう、水は酸素さんそと水素すいそからできているということを知っている。いまはたれだってそれを疑うたがやしない。実験じっけんしてみるとほんとうにそうなんだから。けれども昔むかしはそれを水銀すいぎんと塩しおでできていると言いったり、水銀すいぎんと硫黄いおうでできていると言いったりいろいろ議論ぎろんしたのだ。みんながめいめいじぶんの神かみさまがほんとうの神さまだというだろう、けれどもお互たがいほかの神かみさまを信しんずる人たちのしたことでも涙なみだがこぼれるだろう。それからぼくたちの心がいいとかわるいとか議論ぎろんするだろう。そして勝負しょうぶがつかないだろう。けれども、もしおまえがほんとうに勉強べんきょうして実験じっけんでちゃんとほんとうの考えと、うその考えとを分けてしまえば、その実験じっけんの方法ほうほうさえきまれば、もう信仰しんこうも化学かがくと同じようになる。けれども、ね、ちょっとこの本をごらん、いいかい、これは地理ちりと歴史れきしの辞典じてんだよ。この本のこの頁ページはね、紀元前きげんぜん二千二百年の地理ちりと歴史れきしが書いてある。よくごらん、紀元前きげんぜん二千二百年のことでないよ、紀元前きげんぜん二千二百年のころにみんなが考えていた地理ちりと歴史れきしというものが書いてある。</span></span>
+<span class="src-line" id="L536"><a class="ln" href="#L536">536</a><span class="tok-str">だからこの頁ページ一つが一冊さつの地歴ちれきの本にあたるんだ。いいかい、そしてこの中に書いてあることは紀元前きげんぜん二千二百年ころにはたいてい本当ほんとうだ。さがすと証拠しょうこもぞくぞく出ている。けれどもそれが少しどうかなとこう考えだしてごらん、そら、それは次つぎの頁ページだよ。</span></span>
+<span class="src-line" id="L537"><a class="ln" href="#L537">537</a><span class="tok-str">紀元前きげんぜん一千年。だいぶ、地理ちりも歴史れきしも変かわってるだろう。このときにはこうなのだ。変へんな顔をしてはいけない。ぼくたちはぼくたちのからだだって考えだって、天の川だって汽車だって歴史れきしだって、ただそう感じているのなんだから、そらごらん、ぼくといっしょにすこしこころもちをしずかにしてごらん。いいか」</span></span>
+<span class="src-line" id="L538"><a class="ln" href="#L538">538</a><span class="tok-str">そのひとは指ゆびを一本あげてしずかにそれをおろしました。するといきなりジョバンニは自分というものが、じぶんの考えというものが、汽車やその学者がくしゃや天の川や、みんないっしょにぽかっと光って、しいんとなくなって、ぽかっとともってまたなくなって、そしてその一つがぽかっとともると、あらゆる広ひろい世界せかいががらんとひらけ、あらゆる歴史れきしがそなわり、すっと消きえると、もうがらんとした、ただもうそれっきりになってしまうのを見ました。だんだんそれが早くなって、まもなくすっかりもとのとおりになりました。</span></span>
+<span class="src-line" id="L539"><a class="ln" href="#L539">539</a><span class="tok-str">「さあいいか。だからおまえの実験じっけんは、このきれぎれの考えのはじめから終おわりすべてにわたるようでなければいけない。それがむずかしいことなのだ。けれども、もちろんそのときだけのでもいいのだ。ああごらん、あすこにプレシオスが見える。おまえはあのプレシオスの鎖くさりを解とかなければならない」</span></span>
+<span class="src-line" id="L540"><a class="ln" href="#L540">540</a><span class="tok-str">そのときまっくらな地平線ちへいせんの向むこうから青じろいのろしが、まるでひるまのようにうちあげられ、汽車の中はすっかり明るくなりました。そしてのろしは高くそらにかかって光りつづけました。</span></span>
+<span class="src-line" id="L541"><a class="ln" href="#L541">541</a><span class="tok-str">「ああマジェランの星雲せいうんだ。さあもうきっと僕ぼくは僕ぼくのために、僕ぼくのお母さんのために、カムパネルラのために、みんなのために、ほんとうのほんとうの幸福こうふくをさがすぞ」</span></span>
+<span class="src-line" id="L542"><a class="ln" href="#L542">542</a><span class="tok-str">ジョバンニは唇くちびるを噛かんで、そのマジェランの星雲せいうんをのぞんで立ちました。そのいちばん幸福こうふくなそのひとのために！</span></span>
+<span class="src-line" id="L543"><a class="ln" href="#L543">543</a><span class="tok-str">「さあ、切符きっぷをしっかり持もっておいで。お前はもう夢ゆめの鉄道てつどうの中でなしにほんとうの世界せかいの火やはげしい波なみの中を大股おおまたにまっすぐに歩いて行かなければいけない。天の川のなかでたった一つの、ほんとうのその切符きっぷを決けっしておまえはなくしてはいけない」</span></span>
+<span class="src-line" id="L544"><a class="ln" href="#L544">544</a><span class="tok-str">あのセロのような声がしたと思うとジョバンニは、あの天の川がもうまるで遠く遠くなって風が吹ふき自分はまっすぐに草の丘おかに立っているのを見、また遠くからあのブルカニロ博士はかせの足おとのしずかに近づいて来るのをききました。</span></span>
+<span class="src-line" id="L545"><a class="ln" href="#L545">545</a><span class="tok-str">「ありがとう。私はたいへんいい実験じっけんをした。私はこんなしずかな場所ばしょで遠くから私の考えを人に伝つたえる実験じっけんをしたいとさっき考えていた。お前の言いった語はみんな私の手帳てちょうにとってある。さあ帰っておやすみ。お前は夢ゆめの中で決心けっしんしたとおりまっすぐに進すすんで行くがいい。そしてこれからなんでもいつでも私のとこへ相談そうだんにおいでなさい」</span></span>
+<span class="src-line" id="L546"><a class="ln" href="#L546">546</a><span class="tok-str">「僕ぼくきっとまっすぐに進すすみます。きっとほんとうの幸福こうふくを求もとめます」ジョバンニは力強ちからづよく言いいました。</span></span>
+<span class="src-line" id="L547"><a class="ln" href="#L547">547</a><span class="tok-str">「ああではさよなら。これはさっきの切符きっぷです」</span></span>
+<span class="src-line" id="L548"><a class="ln" href="#L548">548</a><span class="tok-str">博士はかせは小さく折おった緑みどりいろの紙をジョバンニのポケットに入れました。そしてもうそのかたちは天気輪てんきりんの柱はしらの向むこうに見えなくなっていました。</span></span>
+<span class="src-line" id="L549"><a class="ln" href="#L549">549</a><span class="tok-str">ジョバンニはまっすぐに走って丘おかをおりました。</span></span>
+<span class="src-line" id="L550"><a class="ln" href="#L550">550</a><span class="tok-str">そしてポケットがたいへん重おもくカチカチ鳴るのに気がつきました。林の中でとまってそれをしらべてみましたら、あの緑みどりいろのさっき夢ゆめの中で見たあやしい天の切符きっぷの中に大きな二枚まいの金貨きんかが包つつんでありました。</span></span>
+<span class="src-line" id="L551"><a class="ln" href="#L551">551</a><span class="tok-str">「博士はかせありがとう、おっかさん。すぐ乳ちちをもって行きますよ」</span></span>
+<span class="src-line" id="L552"><a class="ln" href="#L552">552</a><span class="tok-str">ジョバンニは叫さけんでまた走りはじめました。何かいろいろのものが一ぺんにジョバンニの胸むねに集あつまってなんとも言いえずかなしいような新しいような気がするのでした。</span></span>
+<span class="src-line" id="L553"><a class="ln" href="#L553">553</a><span class="tok-str">琴ことの星がずうっと西の方へ移うつってそしてまた夢ゆめのように足をのばしていました。</span></span>
+<span class="src-line" id="L554"><a class="ln" href="#L554">554</a></span>
+<span class="src-line" id="L555"><a class="ln" href="#L555">555</a><span class="tok-str">ジョバンニは眼めをひらきました。もとの丘おかの草の中につかれてねむっていたのでした。胸むねはなんだかおかしく熱ほてり、頬ほおにはつめたい涙なみだがながれていました。</span></span>
+<span class="src-line" id="L556"><a class="ln" href="#L556">556</a><span class="tok-str">ジョバンニはばねのようにはね起おきました。町はすっかりさっきの通りに下でたくさんの灯あかりを綴つづってはいましたが、その光はなんだかさっきよりは熱ねっしたというふうでした。</span></span>
+<span class="src-line" id="L557"><a class="ln" href="#L557">557</a><span class="tok-str">そしてたったいま夢ゆめであるいた天の川もやっぱりさっきの通りに白くぼんやりかかり、まっ黒な南の地平線ちへいせんの上ではことにけむったようになって、その右には蠍座さそりざの赤い星がうつくしくきらめき、そらぜんたいの位置いちはそんなに変かわってもいないようでした。</span></span>
+<span class="src-line" id="L558"><a class="ln" href="#L558">558</a><span class="tok-str">ジョバンニはいっさんに丘おかを走って下りました。まだ夕ごはんをたべないで待まっているお母さんのことが胸むねいっぱいに思いだされたのです。どんどん黒い松まつの林の中を通って、それからほの白い牧場ぼくじょうの柵さくをまわって、さっきの入口から暗くらい牛舎ぎゅうしゃの前へまた来ました。そこには誰だれかがいま帰ったらしく、さっきなかった一つの車が何かの樽たるを二つ載のっけて置おいてありました。</span></span>
+<span class="src-line" id="L559"><a class="ln" href="#L559">559</a><span class="tok-str">「今晩こんばんは」ジョバンニは叫さけびました。</span></span>
+<span class="src-line" id="L560"><a class="ln" href="#L560">560</a><span class="tok-str">「はい」白い太いずぼんをはいた人がすぐ出て来て立ちました。</span></span>
+<span class="src-line" id="L561"><a class="ln" href="#L561">561</a><span class="tok-str">「なんのご用ですか」</span></span>
+<span class="src-line" id="L562"><a class="ln" href="#L562">562</a><span class="tok-str">「今日牛乳ぎゅうにゅうがぼくのところへ来なかったのですが」</span></span>
+<span class="src-line" id="L563"><a class="ln" href="#L563">563</a><span class="tok-str">「あ、済すみませんでした」その人はすぐ奥おくへ行って一本の牛乳瓶ぎゅうにゅうびんをもって来てジョバンニに渡わたしながら、また言いいました。</span></span>
+<span class="src-line" id="L564"><a class="ln" href="#L564">564</a><span class="tok-str">「ほんとうに済すみませんでした。今日はひるすぎ、うっかりしてこうしの柵さくをあけておいたもんですから、大将たいしょうさっそく親牛おやうしのところへ行って半分はんぶんばかりのんでしまいましてね……」その人はわらいました。</span></span>
+<span class="src-line" id="L565"><a class="ln" href="#L565">565</a><span class="tok-str">「そうですか。ではいただいて行きます」</span></span>
+<span class="src-line" id="L566"><a class="ln" href="#L566">566</a><span class="tok-str">「ええ、どうも済すみませんでした」</span></span>
+<span class="src-line" id="L567"><a class="ln" href="#L567">567</a><span class="tok-str">「いいえ」</span></span>
+<span class="src-line" id="L568"><a class="ln" href="#L568">568</a><span class="tok-str">ジョバンニはまだ熱あつい乳ちちの瓶びんを両方りょうほうのてのひらで包つつむようにもって牧場ぼくじょうの柵さくを出ました。</span></span>
+<span class="src-line" id="L569"><a class="ln" href="#L569">569</a><span class="tok-str">そしてしばらく木のある町を通って大通りへ出てまたしばらく行きますとみちは十文字になって、その右手の方、通りのはずれにさっきカムパネルラたちのあかりを流ながしに行った川へかかった大きな橋はしのやぐらが夜のそらにぼんやり立っていました。</span></span>
+<span class="src-line" id="L570"><a class="ln" href="#L570">570</a><span class="tok-str">ところがその十字になった町かどや店の前に女たちが七、八人ぐらいずつ集あつまって橋はしの方を見ながら何かひそひそ談はなしているのです。それから橋はしの上にもいろいろなあかりがいっぱいなのでした。</span></span>
+<span class="src-line" id="L571"><a class="ln" href="#L571">571</a><span class="tok-str">ジョバンニはなぜかさあっと胸むねが冷つめたくなったように思いました。そしていきなり近くの人たちへ、</span></span>
+<span class="src-line" id="L572"><a class="ln" href="#L572">572</a><span class="tok-str">「何かあったんですか」と叫さけぶようにききました。</span></span>
+<span class="src-line" id="L573"><a class="ln" href="#L573">573</a><span class="tok-str">「こどもが水へ落おちたんですよ」一人ひとりが言いいますと、その人たちは一斉いっせいにジョバンニの方を見ました。ジョバンニはまるで夢中むちゅうで橋はしの方へ走りました。橋はしの上は人でいっぱいで河かわが見えませんでした。白い服ふくを着きた巡査じゅんさも出ていました。</span></span>
+<span class="src-line" id="L574"><a class="ln" href="#L574">574</a><span class="tok-str">ジョバンニは橋はしの袂たもとから飛とぶように下の広い河原かわらへおりました。</span></span>
+<span class="src-line" id="L575"><a class="ln" href="#L575">575</a><span class="tok-str">その河原かわらの水ぎわに沿そってたくさんのあかりがせわしくのぼったり下ったりしていました。向むこう岸ぎしの暗くらいどてにも火が七つ八つうごいていました。そのまん中をもう烏瓜からすうりのあかりもない川が、わずかに音をたてて灰はいいろにしずかに流ながれていたのでした。</span></span>
+<span class="src-line" id="L576"><a class="ln" href="#L576">576</a><span class="tok-str">河原かわらのいちばん下流かりゅうの方へ洲すのようになって出たところに人の集あつまりがくっきりまっ黒に立っていました。ジョバンニはどんどんそっちへ走りました。するとジョバンニはいきなりさっきカムパネルラといっしょだったマルソに会あいました。マルソがジョバンニに走り寄よって言いいました。</span></span>
+<span class="src-line" id="L577"><a class="ln" href="#L577">577</a><span class="tok-str">「ジョバンニ、カムパネルラが川へはいったよ」</span></span>
+<span class="src-line" id="L578"><a class="ln" href="#L578">578</a><span class="tok-str">「どうして、いつ」</span></span>
+<span class="src-line" id="L579"><a class="ln" href="#L579">579</a><span class="tok-str">「ザネリがね、舟ふねの上から烏からすうりのあかりを水の流ながれる方へ押おしてやろうとしたんだ。そのとき舟ふねがゆれたもんだから水へ落おっこったろう。するとカムパネルラがすぐ飛とびこんだんだ。そしてザネリを舟ふねの方へ押おしてよこした。ザネリはカトウにつかまった。けれどもあとカムパネルラが見えないんだ」</span></span>
+<span class="src-line" id="L580"><a class="ln" href="#L580">580</a><span class="tok-str">「みんなさがしてるんだろう」</span></span>
+<span class="src-line" id="L581"><a class="ln" href="#L581">581</a><span class="tok-str">「ああ、すぐみんな来た。カムパネルラのお父さんも来た。けれども見つからないんだ。ザネリはうちへ連つれられてった」</span></span>
+<span class="src-line" id="L582"><a class="ln" href="#L582">582</a><span class="tok-str">ジョバンニはみんなのいるそっちの方へ行きました。そこに学生たちや町の人たちに囲かこまれて青じろいとがったあごをしたカムパネルラのお父さんが黒い服ふくを着きてまっすぐに立って左手に時計とけいを持もってじっと見つめていたのです。</span></span>
+<span class="src-line" id="L583"><a class="ln" href="#L583">583</a><span class="tok-str">みんなもじっと河かわを見ていました。誰だれも一言ひとことも物ものを言いう人もありませんでした。ジョバンニはわくわくわくわく足がふるえました。魚をとるときのアセチレンランプがたくさんせわしく行ったり来たりして、黒い川の水はちらちら小さな波なみをたてて流ながれているのが見えるのでした。</span></span>
+<span class="src-line" id="L584"><a class="ln" href="#L584">584</a><span class="tok-str">下流かりゅうの方の川はばいっぱい銀河ぎんがが巨おおきく写うつって、まるで水のないそのままのそらのように見えました。</span></span>
+<span class="src-line" id="L585"><a class="ln" href="#L585">585</a><span class="tok-str">ジョバンニは、そのカムパネルラはもうあの銀河ぎんがのはずれにしかいないというような気がしてしかたなかったのです。</span></span>
+<span class="src-line" id="L586"><a class="ln" href="#L586">586</a><span class="tok-str">けれどもみんなはまだ、どこかの波なみの間から、</span></span>
+<span class="src-line" id="L587"><a class="ln" href="#L587">587</a><span class="tok-str">「ぼくずいぶん泳およいだぞ」と言いながらカムパネルラが出て来るか、あるいはカムパネルラがどこかの人の知らない洲すにでも着ついて立っていて誰だれかの来るのを待まっているかというような気がしてしかたないらしいのでした。けれどもにわかにカムパネルラのお父さんがきっぱり言いいました。</span></span>
+<span class="src-line" id="L588"><a class="ln" href="#L588">588</a><span class="tok-str">「もう駄目だめです。落おちてから四十五分たちましたから」</span></span>
+<span class="src-line" id="L589"><a class="ln" href="#L589">589</a><span class="tok-str">ジョバンニは思わずかけよって博士はかせの前に立って、ぼくはカムパネルラの行った方を知っています、ぼくはカムパネルラといっしょに歩いていたのです、と言いおうとしましたが、もうのどがつまってなんとも言いえませんでした。すると博士はかせはジョバンニがあいさつに来たとでも思ったものですか、しばらくしげしげジョバンニを見ていましたが、</span></span>
+<span class="src-line" id="L590"><a class="ln" href="#L590">590</a><span class="tok-str">「あなたはジョバンニさんでしたね。どうも今晩こんばんはありがとう」とていねいに言いいました。</span></span>
+<span class="src-line" id="L591"><a class="ln" href="#L591">591</a><span class="tok-str">ジョバンニは何も言いえずにただおじぎをしました。</span></span>
+<span class="src-line" id="L592"><a class="ln" href="#L592">592</a><span class="tok-str">「あなたのお父さんはもう帰っていますか」博士はかせは堅かたく時計とけいを握にぎったまま、またききました。</span></span>
+<span class="src-line" id="L593"><a class="ln" href="#L593">593</a><span class="tok-str">「いいえ」ジョバンニはかすかに頭をふりました。</span></span>
+<span class="src-line" id="L594"><a class="ln" href="#L594">594</a><span class="tok-str">「どうしたのかなあ、ぼくには一昨日おとといたいへん元気な便たよりがあったんだが。今日きょうあたりもう着つくころなんだが。船ふねが遅おくれたんだな。ジョバンニさん。あした放課後ほうかごみなさんとうちへ遊あそびに来てくださいね」</span></span>
+<span class="src-line" id="L595"><a class="ln" href="#L595">595</a><span class="tok-str">そう言いいながら博士はかせはまた、川下の銀河ぎんがのいっぱいにうつった方へじっと眼めを送おくりました。</span></span>
+<span class="src-line" id="L596"><a class="ln" href="#L596">596</a><span class="tok-str">ジョバンニはもういろいろなことで胸むねがいっぱいで、なんにも言いえずに博士はかせの前をはなれて、早くお母さんに牛乳ぎゅうにゅうを持もって行って、お父さんの帰ることを知らせようと思うと、もういちもくさんに河原かわらを街まちの方へ走りました。</span></span>
+<span class="src-line" id="L597"><a class="ln" href="#L597">597</a><span class="tok-kw">EOT</span>;</span>
+<span class="src-line" id="L598"><a class="ln" href="#L598">598</a></span>
+<span class="src-line" id="L599"><a class="ln" href="#L599">599</a>    <span class="tok-kw">protected</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">explode</span>(<span class="tok-var">$text</span>)</span>
+<span class="src-line" id="L600"><a class="ln" href="#L600">600</a>    {</span>
+<span class="src-line" id="L601"><a class="ln" href="#L601">601</a>        <span class="tok-var">$chars</span> = [];</span>
+<span class="src-line" id="L602"><a class="ln" href="#L602">602</a></span>
+<span class="src-line" id="L603"><a class="ln" href="#L603">603</a>        <span class="tok-kw">foreach</span> (<span class="tok-id">preg_split</span>(<span class="tok-str">&#039;//u&#039;</span>, <span class="tok-id">preg_replace</span>(<span class="tok-str">&#039;/\s+/u&#039;</span>, <span class="tok-str">&#039;&#039;</span>, <span class="tok-var">$text</span>)) <span class="tok-kw">as</span> <span class="tok-var">$char</span>) {</span>
+<span class="src-line" id="L604"><a class="ln" href="#L604">604</a>            <span class="tok-kw">if</span> (<span class="tok-var">$char</span> !== <span class="tok-str">&#039;&#039;</span>) {</span>
+<span class="src-line" id="L605"><a class="ln" href="#L605">605</a>                <span class="tok-var">$chars</span>[] = <span class="tok-var">$char</span>;</span>
+<span class="src-line" id="L606"><a class="ln" href="#L606">606</a>            }</span>
+<span class="src-line" id="L607"><a class="ln" href="#L607">607</a>        }</span>
+<span class="src-line" id="L608"><a class="ln" href="#L608">608</a></span>
+<span class="src-line" id="L609"><a class="ln" href="#L609">609</a>        <span class="tok-kw">return</span> <span class="tok-var">$chars</span>;</span>
+<span class="src-line" id="L610"><a class="ln" href="#L610">610</a>    }</span>
+<span class="src-line" id="L611"><a class="ln" href="#L611">611</a></span>
+<span class="src-line" id="L612"><a class="ln" href="#L612">612</a>    <span class="tok-kw">protected</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">strlen</span>(<span class="tok-var">$text</span>)</span>
+<span class="src-line" id="L613"><a class="ln" href="#L613">613</a>    {</span>
+<span class="src-line" id="L614"><a class="ln" href="#L614">614</a>        <span class="tok-kw">return</span> <span class="tok-id">function_exists</span>(<span class="tok-str">&#039;mb_strlen&#039;</span>) ? <span class="tok-id">mb_strlen</span>(<span class="tok-var">$text</span>, <span class="tok-str">&#039;UTF-8&#039;</span>) : <span class="tok-id">count</span>(<span class="tok-kw">static</span>::<span class="tok-id">explode</span>(<span class="tok-var">$text</span>));</span>
+<span class="src-line" id="L615"><a class="ln" href="#L615">615</a>    }</span>
+<span class="src-line" id="L616"><a class="ln" href="#L616">616</a></span>
+<span class="src-line" id="L617"><a class="ln" href="#L617">617</a>    <span class="tok-kw">protected</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">validStart</span>(<span class="tok-var">$word</span>)</span>
+<span class="src-line" id="L618"><a class="ln" href="#L618">618</a>    {</span>
+<span class="src-line" id="L619"><a class="ln" href="#L619">619</a>        <span class="tok-kw">return</span> !<span class="tok-id">in_array</span>(<span class="tok-var">$word</span>, <span class="tok-kw">static</span>::<span class="tok-var">$notBeginPunct</span>, <span class="tok-id">false</span>);</span>
+<span class="src-line" id="L620"><a class="ln" href="#L620">620</a>    }</span>
+<span class="src-line" id="L621"><a class="ln" href="#L621">621</a></span>
+<span class="src-line" id="L622"><a class="ln" href="#L622">622</a>    <span class="tok-kw">protected</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">appendEnd</span>(<span class="tok-var">$text</span>)</span>
+<span class="src-line" id="L623"><a class="ln" href="#L623">623</a>    {</span>
+<span class="src-line" id="L624"><a class="ln" href="#L624">624</a>        <span class="tok-com">// extract the last char of $text</span></span>
+<span class="src-line" id="L625"><a class="ln" href="#L625">625</a>        <span class="tok-kw">if</span> (<span class="tok-id">function_exists</span>(<span class="tok-str">&#039;mb_substr&#039;</span>)) {</span>
+<span class="src-line" id="L626"><a class="ln" href="#L626">626</a>            <span class="tok-var">$last</span> = <span class="tok-id">mb_substr</span>(<span class="tok-var">$text</span>, <span class="tok-num">0</span>, <span class="tok-id">mb_strlen</span>(<span class="tok-var">$text</span>) - <span class="tok-num">1</span>, <span class="tok-str">&#039;UTF-8&#039;</span>);</span>
+<span class="src-line" id="L627"><a class="ln" href="#L627">627</a>        } <span class="tok-kw">else</span> {</span>
+<span class="src-line" id="L628"><a class="ln" href="#L628">628</a>            <span class="tok-var">$chars</span> = <span class="tok-kw">static</span>::<span class="tok-id">split</span>(<span class="tok-var">$text</span>);</span>
+<span class="src-line" id="L629"><a class="ln" href="#L629">629</a>            <span class="tok-var">$last</span> = <span class="tok-id">end</span>(<span class="tok-var">$chars</span>);</span>
+<span class="src-line" id="L630"><a class="ln" href="#L630">630</a>        }</span>
+<span class="src-line" id="L631"><a class="ln" href="#L631">631</a></span>
+<span class="src-line" id="L632"><a class="ln" href="#L632">632</a>        <span class="tok-com">// if the last char is a not-valid-end punctuation, remove it</span></span>
+<span class="src-line" id="L633"><a class="ln" href="#L633">633</a>        <span class="tok-kw">if</span> (<span class="tok-id">in_array</span>(<span class="tok-var">$last</span>, <span class="tok-kw">static</span>::<span class="tok-var">$notEndPunct</span>, <span class="tok-id">false</span>)) {</span>
+<span class="src-line" id="L634"><a class="ln" href="#L634">634</a>            <span class="tok-var">$text</span> = <span class="tok-id">preg_replace</span>(<span class="tok-str">&#039;/.$/u&#039;</span>, <span class="tok-str">&#039;&#039;</span>, <span class="tok-var">$text</span>);</span>
+<span class="src-line" id="L635"><a class="ln" href="#L635">635</a>        }</span>
+<span class="src-line" id="L636"><a class="ln" href="#L636">636</a></span>
+<span class="src-line" id="L637"><a class="ln" href="#L637">637</a>        <span class="tok-com">// if the last char is not a valid punctuation, append a default one.</span></span>
+<span class="src-line" id="L638"><a class="ln" href="#L638">638</a>        <span class="tok-kw">return</span> <span class="tok-id">in_array</span>(<span class="tok-var">$last</span>, <span class="tok-kw">static</span>::<span class="tok-var">$endPunct</span>, <span class="tok-id">false</span>) ? <span class="tok-var">$text</span> : <span class="tok-var">$text</span> . <span class="tok-str">&#039;。&#039;</span>;</span>
+<span class="src-line" id="L639"><a class="ln" href="#L639">639</a>    }</span>
+<span class="src-line" id="L640"><a class="ln" href="#L640">640</a>}</span>
+<span class="src-line" id="L641"><a class="ln" href="#L641">641</a></span>
+</code></pre>
+</main>
+<footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div>
+<script src="../../../../../../../../../../assets/search-index.js" defer></script>
+<script src="../../../../../../../../../../assets/app.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Symbol — k-kinzal/sql-faker</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-faker/SqlFaker/Grammar/interface.Symbol.html">
+<meta name="description" content="Represents a symbol in a formal grammar.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="k-kinzal/sql-faker">
+<meta property="og:title" content="Symbol — k-kinzal/sql-faker">
+<meta property="og:description" content="Represents a symbol in a formal grammar.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-faker/SqlFaker/Grammar/interface.Symbol.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="k-kinzal/sql-faker">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.theme=t}}catch(e){}</script>
+</head>
+<body data-root="../../../../">
+<nav class="sidebar" id="sidebar"><div class="sb-head"><a class="sb-site" href="../../../../index.html">k-kinzal/sql-faker</a></div><div class="sb-pkg"><a href="../../../../k-kinzal/sql-faker/index.html">k-kinzal/sql-faker</a></div><nav class="sb-block"><div class="sb-title">On this page</div><ul class="sb-list"><li><a href="#methods">Methods</a></li><li><a href="#test-cases">Test cases</a></li><li><a href="#relations">Relations</a></li></ul></nav><nav class="sb-block"><div class="sb-title">Package</div><ul class="sb-list"><li><a href="../../../../k-kinzal/sql-faker/all-items.html">All items</a></li><li><a href="../../../../k-kinzal/sql-faker/index.html#documents">Documents</a></li></ul><div class="sb-kind">Layers</div><ul class="sb-list"><li><a href="../../../../k-kinzal/sql-faker/layer.Compiler.html">Compiler</a></li><li><a href="../../../../k-kinzal/sql-faker/layer.Generation.html">Generation</a></li><li><a href="../../../../k-kinzal/sql-faker/layer.Grammar.html">Grammar</a></li><li><a href="../../../../k-kinzal/sql-faker/layer.MySql.html">MySql</a></li><li><a href="../../../../k-kinzal/sql-faker/layer.PostgreSql.html">PostgreSql</a></li><li><a href="../../../../k-kinzal/sql-faker/layer.Provider.html">Provider</a></li><li><a href="../../../../k-kinzal/sql-faker/layer.Sqlite.html">Sqlite</a></li></ul></nav><nav class="sb-block"><div class="sb-title"><a href="../../../../k-kinzal/sql-faker/SqlFaker/Grammar/index.html">In SqlFaker\Grammar</a></div><div class="sb-kind">Namespaces</div><ul class="sb-list"><li><a href="../../../../k-kinzal/sql-faker/SqlFaker/Grammar/Derivation/index.html">Derivation</a></li><li><a href="../../../../k-kinzal/sql-faker/SqlFaker/Grammar/Lexical/index.html">Lexical</a></li><li><a href="../../../../k-kinzal/sql-faker/SqlFaker/Grammar/Resource/index.html">Resource</a></li></ul><div class="sb-kind">Interfaces</div><ul class="sb-list"><li><a class="k-interface" href="../../../../k-kinzal/sql-faker/SqlFaker/Grammar/interface.LexerSource.html">LexerSource</a></li><li><a class="k-interface" href="../../../../k-kinzal/sql-faker/SqlFaker/Grammar/interface.LexicalGrammar.html">LexicalGrammar</a></li><li class="is-active"><a class="k-interface" href="../../../../k-kinzal/sql-faker/SqlFaker/Grammar/interface.Symbol.html">Symbol</a></li></ul><div class="sb-kind">Classes</div><ul class="sb-list"><li><a class="k-class" href="../../../../k-kinzal/sql-faker/SqlFaker/Grammar/class.GenerationException.html">GenerationException</a></li><li><a class="k-class" href="../../../../k-kinzal/sql-faker/SqlFaker/Grammar/class.Grammar.html">Grammar</a></li><li><a class="k-class" href="../../../../k-kinzal/sql-faker/SqlFaker/Grammar/class.GrammarParseException.html">GrammarParseException</a></li><li><a class="k-class" href="../../../../k-kinzal/sql-faker/SqlFaker/Grammar/class.LexicalCatalog.html">LexicalCatalog</a></li><li><a class="k-class" href="../../../../k-kinzal/sql-faker/SqlFaker/Grammar/class.LexicalCatalogException.html">LexicalCatalogException</a></li><li><a class="k-class" href="../../../../k-kinzal/sql-faker/SqlFaker/Grammar/class.LexicalException.html">LexicalException</a></li><li><a class="k-class" href="../../../../k-kinzal/sql-faker/SqlFaker/Grammar/class.NonTerminal.html">NonTerminal</a></li><li><a class="k-class" href="../../../../k-kinzal/sql-faker/SqlFaker/Grammar/class.Production.html">Production</a></li><li><a class="k-class" href="../../../../k-kinzal/sql-faker/SqlFaker/Grammar/class.ProductionRule.html">ProductionRule</a></li><li><a class="k-class" href="../../../../k-kinzal/sql-faker/SqlFaker/Grammar/class.SqlVersion.html">SqlVersion</a></li><li><a class="k-class" href="../../../../k-kinzal/sql-faker/SqlFaker/Grammar/class.Terminal.html">Terminal</a></li><li><a class="k-class" href="../../../../k-kinzal/sql-faker/SqlFaker/Grammar/class.UnknownSymbolException.html">UnknownSymbolException</a></li></ul></nav></nav>
+<div class="page">
+<header class="topbar">
+<button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>
+<nav class="crumbs"><a href="../../../../k-kinzal/sql-faker/index.html">k-kinzal/sql-faker</a><span class="crumb-sep">::</span><a href="../../../../k-kinzal/sql-faker/SqlFaker/Grammar/index.html">SqlFaker\Grammar</a><span class="crumb-sep">::</span><span class="crumb-current">Symbol</span></nav>
+<div class="topbar-tools">
+<input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-faker" title="Repository: https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-faker" rel="noreferrer">github.com</a>
+<button id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content">
+<div class="symbol-head"><h1><span class="chip chip-kind k-interface">interface</span>Symbol</h1><div class="symbol-meta"><a class="chip chip-layer" href="../../../../k-kinzal/sql-faker/layer.Grammar.html" title="deptrac layer">Grammar</a><a class="src-link" href="../../../../src/packages/sql-faker/src/Grammar/Symbol.php.html#L15">packages/sql-faker/src/Grammar/Symbol.php:15</a></div></div>
+<pre class="signature"><code><span class="t-key">interface</span> <span class="sig-name">Symbol</span></code></pre>
+<div class="notice notice-visibility"><strong>Restricted visibility</strong>: declared "@visibility root". Code outside that scope must not name this declaration.</div>
+<p class="lede">Represents a symbol in a formal grammar.</p>
+<div class="doc-body"><p>A symbol is either a terminal (cannot be further expanded) or a non-terminal (can be expanded via production rules).</p>
+</div>
+<section><h2 id="methods">Methods<a class="anchor" href="#methods">§</a></h2><div class="member" id="method.value"><div class="member-head"><pre class="member-sig"><code><span class="t-key">public</span> <span class="t-key">function</span> <span class="sig-name">value</span>(): <span class="t-key">string</span></code></pre><div class="member-meta"><a class="src-link" href="../../../../src/packages/sql-faker/src/Grammar/Symbol.php.html#L20">source</a><a class="anchor" href="#method.value">§</a></div></div><div class="member-body"><p class="lede">Get the symbol&#039;s value (name).</p>
+<div class="member-block"><h4>Returns</h4><div class="type-row"><code><span class="t-key">string</span></code></div></div>
+<details class="usage-details test-cases"><summary>Test cases <span class="count">2</span></summary><ul class="usage-list"><li><a href="../../../../src/packages/sql-faker/tests/Unit/Compiler/Lemon/LemonParserTest.php.html#L123" title="Tests\Unit\SqlFaker\Compiler\Lemon\LemonParserTest"><code>LemonParserTest::testParseExpandsInlineTokenAlternatives</code></a> <span class="usage-kind">calls</span></li><li><a href="../../../../src/packages/sql-faker/tests/Unit/Grammar/SymbolTest.php.html#L22" title="Tests\Unit\SqlFaker\Grammar\SymbolTest"><code>SymbolTest::testEveryImplementationReportsItsOwnValue</code></a> <span class="usage-kind">calls</span></li></ul></details>
+<details class="usage-details"><summary>Called from <span class="count">1</span></summary><ul class="usage-list"><li><span class="usage-kind">method-call</span> <a href="../../../../k-kinzal/sql-faker/SqlFaker/Grammar/Derivation/class.Derivation.html" title="SqlFaker\Grammar\Derivation\Derivation">SqlFaker\Grammar\Derivation\Derivation::alternatives()</a> <a class="usage-loc" href="../../../../src/packages/sql-faker/src/Grammar/Derivation/Derivation.php.html#L199">packages/sql-faker/src/Grammar/Derivation/Derivation.php:199</a></li></ul></details>
+</div></div>
+</section>
+<section><h2 id="test-cases">Test cases <span class="count">2</span><a class="anchor" href="#test-cases">§</a></h2><p class="section-note">Test cases that cover or call this symbol, from the coverage report and from the analyzed test sources.</p><details class="usage-details test-cases" open><summary>Dedicated tests <span class="count">1</span></summary><ul class="usage-list"><li><a href="../../../../src/packages/sql-faker/tests/Unit/Grammar/SymbolTest.php.html#L22" title="Tests\Unit\SqlFaker\Grammar\SymbolTest"><code>SymbolTest::testEveryImplementationReportsItsOwnValue</code></a> <span class="usage-kind">calls</span></li></ul>
+</details>
+<details class="usage-details test-cases"><summary>Other tests reaching this symbol <span class="count">1</span></summary><ul class="usage-list"><li><a href="../../../../src/packages/sql-faker/tests/Unit/Compiler/Lemon/LemonParserTest.php.html#L123" title="Tests\Unit\SqlFaker\Compiler\Lemon\LemonParserTest"><code>LemonParserTest::testParseExpandsInlineTokenAlternatives</code></a> <span class="usage-kind">calls</span></li></ul>
+</details>
+</section>
+<section class="relations"><h2 id="relations">Relations<a class="anchor" href="#relations">§</a></h2>
+<details class="usage-details" open><summary>Implemented by <span class="count">2</span></summary><ul class="usage-list"><li><a class="k-class" href="../../../../k-kinzal/sql-faker/SqlFaker/Grammar/class.NonTerminal.html" title="SqlFaker\Grammar\NonTerminal">NonTerminal</a> <a class="usage-loc" href="../../../../src/packages/sql-faker/src/Grammar/NonTerminal.php.html#L15">packages/sql-faker/src/Grammar/NonTerminal.php:15</a></li><li><a class="k-class" href="../../../../k-kinzal/sql-faker/SqlFaker/Grammar/class.Terminal.html" title="SqlFaker\Grammar\Terminal">Terminal</a> <a class="usage-loc" href="../../../../src/packages/sql-faker/src/Grammar/Terminal.php.html#L15">packages/sql-faker/src/Grammar/Terminal.php:15</a></li></ul></details>
+<details class="usage-details"><summary>Method calls <span class="count">1</span></summary><ul class="usage-list"><li><span class="usage-kind">method-call</span> <a href="../../../../k-kinzal/sql-faker/SqlFaker/Grammar/Derivation/class.Derivation.html" title="SqlFaker\Grammar\Derivation\Derivation">SqlFaker\Grammar\Derivation\Derivation::alternatives()</a> <a class="usage-loc" href="../../../../src/packages/sql-faker/src/Grammar/Derivation/Derivation.php.html#L199">packages/sql-faker/src/Grammar/Derivation/Derivation.php:199</a></li></ul></details>
+<details class="usage-details"><summary>Type declarations <span class="count">2</span></summary><ul class="usage-list"><li><span class="usage-kind">type</span> <a href="../../../../k-kinzal/sql-faker/SqlFaker/Grammar/Derivation/class.Derivation.html" title="SqlFaker\Grammar\Derivation\Derivation">SqlFaker\Grammar\Derivation\Derivation::alternatives()</a> <a class="usage-loc" href="../../../../src/packages/sql-faker/src/Grammar/Derivation/Derivation.php.html#L199">packages/sql-faker/src/Grammar/Derivation/Derivation.php:199</a></li><li><span class="usage-kind">type</span> <a href="../../../../k-kinzal/sql-faker/SqlFaker/Sqlite/class.GrammarAdaptation.html" title="SqlFaker\Sqlite\GrammarAdaptation">SqlFaker\Sqlite\GrammarAdaptation::withResolvedSymbols()</a> <a class="usage-loc" href="../../../../src/packages/sql-faker/src/Sqlite/GrammarAdaptation.php.html#L250">packages/sql-faker/src/Sqlite/GrammarAdaptation.php:250</a></li></ul></details>
+</section>
+</main>
+<footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div>
+<script src="../../../../assets/search-index.js" defer></script>
+<script src="../../../../assets/app.js" defer></script>
+</body>
+</html>
