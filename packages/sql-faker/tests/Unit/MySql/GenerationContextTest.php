@@ -66,6 +66,7 @@ use SqlFaker\MySqlProvider;
 #[UsesClass(\SqlFaker\MySql\MySqlTerminalRealizer::class)]
 #[UsesClass(\SqlFaker\MySql\MySqlTokenizer::class)]
 #[UsesClass(\SqlFaker\MySql\StartRuleResolver::class)]
+#[UsesClass(\SqlFaker\Provider\SqlGeneratorFactory::class)]
 final class GenerationContextTest extends TestCase
 {
     #[Override]

@@ -32,12 +32,13 @@ policies:
         lines: 800
       class:
         lines: 750
+      function:
+        lines: 10
+        cyclomatic_complexity: 1
+      method:
+        lines: 10
+        cyclomatic_complexity: 1
 
-  generation-plan-catalog:
-    extends: standard
-    limits:
-      class:
-        lines: 450
 
 apply:
   default: standard
@@ -49,13 +50,6 @@ apply:
           - src/PostgreSqlProvider.php
           - src/SqliteProvider.php
       policy: faker-provider
-    - name: generation-plan-catalogs
-      match:
-        paths:
-          - src/MySql/GenerationPlans.php
-          - src/PostgreSql/GenerationPlans.php
-          - src/Sqlite/GenerationPlans.php
-      policy: generation-plan-catalog
 
 report:
   reporter: ai

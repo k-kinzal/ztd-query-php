@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlFaker\Sqlite;
 
+use Faker\Generator;
 use InvalidArgumentException;
 use SqlFaker\Grammar\Derivation\GenerationPlan;
 use SqlFaker\Grammar\Derivation\ProductionPattern;
@@ -228,5 +229,20 @@ final class GenerationPlans
     public static function statement(string $startRule, int $maxDepth): GenerationPlan
     {
         return GenerationPlan::fromRule($startRule)->withMaxDepth($maxDepth)->withStepBudget();
+    }
+
+    /**
+     * Selects a statement type when omitted and bounds its generation plan.
+     *
+     * @return GenerationPlan<false>
+     */
+    public static function statementOfType(Generator $faker, ?StatementType $type, int $maxDepth): GenerationPlan
+    {
+        if ($type === null) {
+            /** @var StatementType $type */
+            $type = $faker->randomElement(StatementType::cases());
+        }
+
+        return self::statement($type->value, $maxDepth);
     }
 }

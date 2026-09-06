@@ -7,11 +7,12 @@ namespace SqlFaker;
 use Faker\Generator;
 use Faker\Provider\Base;
 use SqlFaker\Generation\SqlGenerator;
+use SqlFaker\Grammar\Derivation\GenerationPlan;
 use SqlFaker\Grammar\Grammar;
-use SqlFaker\MySql\GenerationContext;
 use SqlFaker\MySql\GenerationPlans;
 use SqlFaker\MySql\Grammar\MySqlGrammar;
 use SqlFaker\MySql\StatementType;
+use SqlFaker\Provider\SqlGeneratorFactory;
 
 /**
  * Faker Provider for generating syntactically valid MySQL SQL statements.
@@ -65,17 +66,9 @@ final class MySqlProvider extends Base
         parent::__construct($generator);
 
         $generator->addProvider($this);
-
         $resolvedVersion = MySqlGrammar::resolveVersion($version);
         $this->grammar = MySqlGrammar::load($resolvedVersion);
-        $context = new GenerationContext($this->grammar, $generator, $resolvedVersion);
-        $this->sql = new SqlGenerator(
-            $context->grammar,
-            $generator,
-            $context->lexicalGrammar,
-            $context->normalize,
-            $context->startSymbol,
-        );
+        $this->sql = SqlGeneratorFactory::forMySql($generator, $this->grammar, $resolvedVersion);
     }
 
     /**
@@ -91,7 +84,7 @@ final class MySqlProvider extends Base
      */
     public function sql(?StatementType $startRule = null, int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(GenerationPlans::statement($startRule?->value, $maxDepth));
+        return $this->sql->generate(GenerationPlan::statement($startRule?->value, $maxDepth));
     }
 
     /**
@@ -117,7 +110,7 @@ final class MySqlProvider extends Base
      */
     public function selectStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(GenerationPlans::statement(StatementType::Select->value, $maxDepth));
+        return $this->sql->generate(GenerationPlan::statement(StatementType::Select->value, $maxDepth));
     }
 
     /**
@@ -131,7 +124,7 @@ final class MySqlProvider extends Base
      */
     public function insertStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(GenerationPlans::statement(StatementType::Insert->value, $maxDepth));
+        return $this->sql->generate(GenerationPlan::statement(StatementType::Insert->value, $maxDepth));
     }
 
     /**
@@ -145,7 +138,7 @@ final class MySqlProvider extends Base
      */
     public function updateStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(GenerationPlans::statement(StatementType::Update->value, $maxDepth));
+        return $this->sql->generate(GenerationPlan::statement(StatementType::Update->value, $maxDepth));
     }
 
     /**
@@ -159,7 +152,7 @@ final class MySqlProvider extends Base
      */
     public function deleteStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(GenerationPlans::statement(StatementType::Delete->value, $maxDepth));
+        return $this->sql->generate(GenerationPlan::statement(StatementType::Delete->value, $maxDepth));
     }
 
     /**
@@ -196,7 +189,7 @@ final class MySqlProvider extends Base
      */
     public function createTableStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(GenerationPlans::statement(StatementType::CreateTable->value, $maxDepth));
+        return $this->sql->generate(GenerationPlan::statement(StatementType::CreateTable->value, $maxDepth));
     }
 
     /**
@@ -209,7 +202,7 @@ final class MySqlProvider extends Base
      */
     public function alterTableStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(GenerationPlans::statement(StatementType::AlterTable->value, $maxDepth));
+        return $this->sql->generate(GenerationPlan::statement(StatementType::AlterTable->value, $maxDepth));
     }
 
     /**
@@ -222,7 +215,7 @@ final class MySqlProvider extends Base
      */
     public function dropTableStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(GenerationPlans::statement(StatementType::DropTable->value, $maxDepth));
+        return $this->sql->generate(GenerationPlan::statement(StatementType::DropTable->value, $maxDepth));
     }
 
     /**
@@ -238,7 +231,7 @@ final class MySqlProvider extends Base
      */
     public function simpleStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(GenerationPlans::statement(StatementType::SimpleStatement->value, $maxDepth));
+        return $this->sql->generate(GenerationPlan::statement(StatementType::SimpleStatement->value, $maxDepth));
     }
 
     /**
@@ -251,7 +244,7 @@ final class MySqlProvider extends Base
      */
     public function identifier(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(GenerationPlans::statement('ident', $maxDepth));
+        return $this->sql->generate(GenerationPlan::statement('ident', $maxDepth));
     }
 
     /**
@@ -422,7 +415,7 @@ final class MySqlProvider extends Base
      */
     public function replaceStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(GenerationPlans::statement('replace_stmt', $maxDepth));
+        return $this->sql->generate(GenerationPlan::statement('replace_stmt', $maxDepth));
     }
 
     /**
@@ -435,7 +428,7 @@ final class MySqlProvider extends Base
      */
     public function truncateStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(GenerationPlans::statement('truncate_stmt', $maxDepth));
+        return $this->sql->generate(GenerationPlan::statement('truncate_stmt', $maxDepth));
     }
 
     /**
@@ -448,7 +441,7 @@ final class MySqlProvider extends Base
      */
     public function createIndexStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(GenerationPlans::statement('create_index_stmt', $maxDepth));
+        return $this->sql->generate(GenerationPlan::statement('create_index_stmt', $maxDepth));
     }
 
     /**
@@ -461,7 +454,7 @@ final class MySqlProvider extends Base
      */
     public function dropIndexStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(GenerationPlans::statement('drop_index_stmt', $maxDepth));
+        return $this->sql->generate(GenerationPlan::statement('drop_index_stmt', $maxDepth));
     }
 
     /**
@@ -474,7 +467,7 @@ final class MySqlProvider extends Base
      */
     public function beginStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(GenerationPlans::statement('begin_stmt', $maxDepth));
+        return $this->sql->generate(GenerationPlan::statement('begin_stmt', $maxDepth));
     }
 
     /**
@@ -487,7 +480,7 @@ final class MySqlProvider extends Base
      */
     public function commitStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(GenerationPlans::statement('commit', $maxDepth));
+        return $this->sql->generate(GenerationPlan::statement('commit', $maxDepth));
     }
 
     /**
@@ -500,7 +493,7 @@ final class MySqlProvider extends Base
      */
     public function rollbackStatement(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(GenerationPlans::statement('rollback', $maxDepth));
+        return $this->sql->generate(GenerationPlan::statement('rollback', $maxDepth));
     }
 
     /**
@@ -513,7 +506,7 @@ final class MySqlProvider extends Base
      */
     public function expr(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(GenerationPlans::statement('expr', $maxDepth));
+        return $this->sql->generate(GenerationPlan::statement('expr', $maxDepth));
     }
 
     /**
@@ -526,7 +519,7 @@ final class MySqlProvider extends Base
      */
     public function simpleExpr(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(GenerationPlans::statement('simple_expr', $maxDepth));
+        return $this->sql->generate(GenerationPlan::statement('simple_expr', $maxDepth));
     }
 
     /**
@@ -539,7 +532,7 @@ final class MySqlProvider extends Base
      */
     public function literal(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(GenerationPlans::statement('literal', $maxDepth));
+        return $this->sql->generate(GenerationPlan::statement('literal', $maxDepth));
     }
 
     /**
@@ -552,7 +545,7 @@ final class MySqlProvider extends Base
      */
     public function predicate(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(GenerationPlans::statement('predicate', $maxDepth));
+        return $this->sql->generate(GenerationPlan::statement('predicate', $maxDepth));
     }
 
     /**
@@ -565,7 +558,7 @@ final class MySqlProvider extends Base
      */
     public function whereClause(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(GenerationPlans::statement('where_clause', $maxDepth));
+        return $this->sql->generate(GenerationPlan::statement('where_clause', $maxDepth));
     }
 
     /**
@@ -578,7 +571,7 @@ final class MySqlProvider extends Base
      */
     public function orderClause(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(GenerationPlans::statement('order_clause', $maxDepth));
+        return $this->sql->generate(GenerationPlan::statement('order_clause', $maxDepth));
     }
 
     /**
@@ -591,7 +584,7 @@ final class MySqlProvider extends Base
      */
     public function limitClause(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(GenerationPlans::statement('limit_clause', $maxDepth));
+        return $this->sql->generate(GenerationPlan::statement('limit_clause', $maxDepth));
     }
 
     /**
@@ -604,7 +597,7 @@ final class MySqlProvider extends Base
      */
     public function tableReference(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(GenerationPlans::statement('table_reference', $maxDepth));
+        return $this->sql->generate(GenerationPlan::statement('table_reference', $maxDepth));
     }
 
     /**
@@ -617,7 +610,7 @@ final class MySqlProvider extends Base
      */
     public function joinedTable(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(GenerationPlans::statement('joined_table', $maxDepth));
+        return $this->sql->generate(GenerationPlan::statement('joined_table', $maxDepth));
     }
 
     /**
@@ -630,7 +623,7 @@ final class MySqlProvider extends Base
      */
     public function tableIdent(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(GenerationPlans::statement('table_ident', $maxDepth));
+        return $this->sql->generate(GenerationPlan::statement('table_ident', $maxDepth));
     }
 
     /**
@@ -643,7 +636,7 @@ final class MySqlProvider extends Base
      */
     public function subquery(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(GenerationPlans::statement('subquery', $maxDepth));
+        return $this->sql->generate(GenerationPlan::statement('subquery', $maxDepth));
     }
 
     /**
@@ -656,7 +649,7 @@ final class MySqlProvider extends Base
      */
     public function withClause(int $maxDepth = PHP_INT_MAX): string
     {
-        return $this->sql->generate(GenerationPlans::statement('with_clause', $maxDepth));
+        return $this->sql->generate(GenerationPlan::statement('with_clause', $maxDepth));
     }
 
     /**

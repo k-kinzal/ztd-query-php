@@ -186,4 +186,17 @@ final class GenerationPlanTest extends TestCase
         self::assertFalse(GenerationPlan::all()->usesStepBudget());
         self::assertFalse(GenerationPlan::lexical('identifier', [])->usesStepBudget());
     }
+
+    public function testStatementBoundsTheWalkAtTheRuleItIsGrownFrom(): void
+    {
+        $plan = GenerationPlan::statement('select_stmt', 12);
+
+        self::assertSame('select_stmt', $plan->startRule());
+        self::assertSame(12, $plan->maxDepth());
+    }
+
+    public function testStatementWalksTheWholeGrammarWhenNoRuleIsNamed(): void
+    {
+        self::assertNull(GenerationPlan::statement(null, 12)->startRule());
+    }
 }

@@ -51,6 +51,7 @@ use SqlFaker\PostgreSqlProvider;
 #[UsesClass(TerminalInventory::class)]
 #[UsesClass(GenerationPlans::class)]
 #[Medium]
+#[UsesClass(\SqlFaker\Provider\SqlGeneratorFactory::class)]
 final class PostgreSqlProviderTest extends TestCase
 {
     #[DataProvider('providerTargetedGenerationSeed')]

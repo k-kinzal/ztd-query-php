@@ -8,10 +8,10 @@ use Faker\Generator;
 use Faker\Provider\Base;
 use SqlFaker\Generation\SqlGenerator;
 use SqlFaker\Grammar\Derivation\GenerationPlan;
-use SqlFaker\PostgreSql\GenerationContext;
 use SqlFaker\PostgreSql\GenerationPlans;
 use SqlFaker\PostgreSql\Grammar\PgGrammar;
 use SqlFaker\PostgreSql\StatementType;
+use SqlFaker\Provider\SqlGeneratorFactory;
 
 /**
  * Faker Provider for generating syntactically valid PostgreSQL SQL statements.
@@ -44,16 +44,8 @@ final class PostgreSqlProvider extends Base
         parent::__construct($generator);
 
         $generator->addProvider($this);
-
         $resolvedVersion = PgGrammar::resolveVersion($version);
-        $context = new GenerationContext(PgGrammar::load($resolvedVersion), $generator, $resolvedVersion);
-        $this->sql = new SqlGenerator(
-            $context->grammar,
-            $generator,
-            $context->lexicalGrammar,
-            $context->normalize,
-            $context->startSymbol,
-        );
+        $this->sql = SqlGeneratorFactory::forPostgreSql($generator, PgGrammar::load($resolvedVersion), $resolvedVersion);
     }
 
     /**
@@ -65,14 +57,7 @@ final class PostgreSqlProvider extends Base
      */
     public function sql(?StatementType $type = null, int $maxDepth = PHP_INT_MAX): string
     {
-        if ($type === null) {
-            /**
-             * @var StatementType $type
-             */
-            $type = $this->generator->randomElement(StatementType::cases());
-        }
-
-        return $this->sql->generate(GenerationPlan::fromRule($type->value)->requiringNonEmpty()->withMaxDepth($maxDepth));
+        return $this->sql->generate(GenerationPlans::statementOfType($this->generator, $type, $maxDepth));
     }
 
     /**

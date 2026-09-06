@@ -63,6 +63,7 @@ use SqlFaker\PostgreSqlProvider;
 #[UsesClass(\SqlFaker\PostgreSql\PgLookahead::class)]
 #[UsesClass(\SqlFaker\PostgreSql\PgTerminalRealizer::class)]
 #[UsesClass(\SqlFaker\PostgreSql\PgTokenizer::class)]
+#[UsesClass(\SqlFaker\Provider\SqlGeneratorFactory::class)]
 final class GenerationContextTest extends TestCase
 {
     #[Override]
