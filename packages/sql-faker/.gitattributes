@@ -10,3 +10,4 @@ phpunit.xml.dist    export-ignore
 /fuzz/              export-ignore
 /bin/               export-ignore
 /resources/         export-ignore
+/tools/             export-ignore
