@@ -125,6 +125,16 @@ jobs:
           --only-covering-test-cases
           --no-progress
           --logger-github
+      - name: Reject skipped whole-tree mutants
+        if: github.event_name != 'pull_request'
+        run: |
+          php -r '
+            $report = json_decode(file_get_contents("build/infection/infection.json"), true, 512, JSON_THROW_ON_ERROR);
+            if ($report["stats"]["skippedCount"] !== 0) {
+                fwrite(STDERR, "Infection skipped mutants before execution; review the timeout against test durations.\n");
+                exit(1);
+            }
+          '
       - name: Upload mutation reports
         if: always()
         uses: actions/upload-artifact@v7

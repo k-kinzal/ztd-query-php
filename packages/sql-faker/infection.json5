@@ -30,9 +30,9 @@
     },
     "minMsi": 80,
     "minCoveredMsi": 80,
-    // Operational starting point only. Measure the slowest relevant mutant test and
-    // raise this above that duration with runner headroom.
-    "timeout": 30,
+    // The initial covered suite takes about 200 seconds. Allow runner headroom
+    // so Infection does not skip shared-source mutants before executing them.
+    "timeout": 300,
     // A hung or excessively slow mutant is not evidence that the test suite detected
     // the behavioral change. Validate these keys against the schema shipped by the
     // target project's resolved Infection release.
