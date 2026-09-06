@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/Lorem.php — k-kinzal/sql-faker</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/301/src/packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/Lorem.php.html">
+<meta name="description" content="The source of packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/Lorem.php.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="k-kinzal/sql-faker">
+<meta property="og:title" content="packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/Lorem.php — k-kinzal/sql-faker">
+<meta property="og:description" content="The source of packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/Lorem.php.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/301/src/packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/Lorem.php.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/301/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="k-kinzal/sql-faker">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../../../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.theme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../../../../../../">
+<nav class="sidebar" id="sidebar"><div class="sb-head"><a class="sb-site" href="../../../../../../../../../index.html">k-kinzal/sql-faker</a></div><nav class="sb-block"><div class="sb-title">Packages</div><ul class="sb-list"><li data-diff="same"><a href="../../../../../../../../../k-kinzal/sql-faker/index.html">k-kinzal/sql-faker</a></li><li data-diff="added"><a href="../../../../../../../../../fakerphp/faker/index.html">fakerphp/faker</a><span class="sb-note">vendor</span></li></ul></nav></nav>
+<div class="page">
+<header class="topbar">
+<button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>
+<nav class="crumbs"><a href="../../../../../../../../../index.html">src</a><span class="crumb-sep">::</span><span class="crumb-current">packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/Lorem.php</span></nav>
+<div class="topbar-tools">
+<input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing 43253dbf to working tree">43253dbf <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><button id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 43253dbf and working tree." data-off="This page documents what 43253dbf had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1 class="source-title">packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/Lorem.php</h1></div>
+<div class="notice diff-banner" data-diff="added">Added in working tree, compared to 43253dbf.</div>
+<pre class="source" data-diff="added"><code><span class="src-line" id="L1" data-diff="added"><a class="ln" href="#L1">1</a>&lt;?php</span>
+<span class="src-line" id="L2" data-diff="added"><a class="ln" href="#L2">2</a></span>
+<span class="src-line" id="L3" data-diff="added"><a class="ln" href="#L3">3</a><span class="tok-kw">namespace</span> <span class="tok-id">Faker\Provider</span>;</span>
+<span class="src-line" id="L4" data-diff="added"><a class="ln" href="#L4">4</a></span>
+<span class="src-line" id="L5" data-diff="added"><a class="ln" href="#L5">5</a><span class="tok-kw">class</span> <span class="tok-id">Lorem</span> <span class="tok-kw">extends</span> <span class="tok-id">Base</span></span>
+<span class="src-line" id="L6" data-diff="added"><a class="ln" href="#L6">6</a>{</span>
+<span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a>    <span class="tok-kw">protected</span> <span class="tok-kw">static</span> <span class="tok-var">$wordList</span> = [</span>
+<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a>        <span class="tok-str">&#039;alias&#039;</span>, <span class="tok-str">&#039;consequatur&#039;</span>, <span class="tok-str">&#039;aut&#039;</span>, <span class="tok-str">&#039;perferendis&#039;</span>, <span class="tok-str">&#039;sit&#039;</span>, <span class="tok-str">&#039;voluptatem&#039;</span>,</span>
+<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a>        <span class="tok-str">&#039;accusantium&#039;</span>, <span class="tok-str">&#039;doloremque&#039;</span>, <span class="tok-str">&#039;aperiam&#039;</span>, <span class="tok-str">&#039;eaque&#039;</span>, <span class="tok-str">&#039;ipsa&#039;</span>, <span class="tok-str">&#039;quae&#039;</span>, <span class="tok-str">&#039;ab&#039;</span>,</span>
+<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a>        <span class="tok-str">&#039;illo&#039;</span>, <span class="tok-str">&#039;inventore&#039;</span>, <span class="tok-str">&#039;veritatis&#039;</span>, <span class="tok-str">&#039;et&#039;</span>, <span class="tok-str">&#039;quasi&#039;</span>, <span class="tok-str">&#039;architecto&#039;</span>,</span>
+<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a>        <span class="tok-str">&#039;beatae&#039;</span>, <span class="tok-str">&#039;vitae&#039;</span>, <span class="tok-str">&#039;dicta&#039;</span>, <span class="tok-str">&#039;sunt&#039;</span>, <span class="tok-str">&#039;explicabo&#039;</span>, <span class="tok-str">&#039;aspernatur&#039;</span>, <span class="tok-str">&#039;aut&#039;</span>,</span>
+<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a>        <span class="tok-str">&#039;odit&#039;</span>, <span class="tok-str">&#039;aut&#039;</span>, <span class="tok-str">&#039;fugit&#039;</span>, <span class="tok-str">&#039;sed&#039;</span>, <span class="tok-str">&#039;quia&#039;</span>, <span class="tok-str">&#039;consequuntur&#039;</span>, <span class="tok-str">&#039;magni&#039;</span>,</span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a>        <span class="tok-str">&#039;dolores&#039;</span>, <span class="tok-str">&#039;eos&#039;</span>, <span class="tok-str">&#039;qui&#039;</span>, <span class="tok-str">&#039;ratione&#039;</span>, <span class="tok-str">&#039;voluptatem&#039;</span>, <span class="tok-str">&#039;sequi&#039;</span>, <span class="tok-str">&#039;nesciunt&#039;</span>,</span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a>        <span class="tok-str">&#039;neque&#039;</span>, <span class="tok-str">&#039;dolorem&#039;</span>, <span class="tok-str">&#039;ipsum&#039;</span>, <span class="tok-str">&#039;quia&#039;</span>, <span class="tok-str">&#039;dolor&#039;</span>, <span class="tok-str">&#039;sit&#039;</span>, <span class="tok-str">&#039;amet&#039;</span>,</span>
+<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a>        <span class="tok-str">&#039;consectetur&#039;</span>, <span class="tok-str">&#039;adipisci&#039;</span>, <span class="tok-str">&#039;velit&#039;</span>, <span class="tok-str">&#039;sed&#039;</span>, <span class="tok-str">&#039;quia&#039;</span>, <span class="tok-str">&#039;non&#039;</span>, <span class="tok-str">&#039;numquam&#039;</span>,</span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a>        <span class="tok-str">&#039;eius&#039;</span>, <span class="tok-str">&#039;modi&#039;</span>, <span class="tok-str">&#039;tempora&#039;</span>, <span class="tok-str">&#039;incidunt&#039;</span>, <span class="tok-str">&#039;ut&#039;</span>, <span class="tok-str">&#039;labore&#039;</span>, <span class="tok-str">&#039;et&#039;</span>, <span class="tok-str">&#039;dolore&#039;</span>,</span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a>        <span class="tok-str">&#039;magnam&#039;</span>, <span class="tok-str">&#039;aliquam&#039;</span>, <span class="tok-str">&#039;quaerat&#039;</span>, <span class="tok-str">&#039;voluptatem&#039;</span>, <span class="tok-str">&#039;ut&#039;</span>, <span class="tok-str">&#039;enim&#039;</span>, <span class="tok-str">&#039;ad&#039;</span>,</span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a>        <span class="tok-str">&#039;minima&#039;</span>, <span class="tok-str">&#039;veniam&#039;</span>, <span class="tok-str">&#039;quis&#039;</span>, <span class="tok-str">&#039;nostrum&#039;</span>, <span class="tok-str">&#039;exercitationem&#039;</span>, <span class="tok-str">&#039;ullam&#039;</span>,</span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a>        <span class="tok-str">&#039;corporis&#039;</span>, <span class="tok-str">&#039;nemo&#039;</span>, <span class="tok-str">&#039;enim&#039;</span>, <span class="tok-str">&#039;ipsam&#039;</span>, <span class="tok-str">&#039;voluptatem&#039;</span>, <span class="tok-str">&#039;quia&#039;</span>, <span class="tok-str">&#039;voluptas&#039;</span>,</span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a>        <span class="tok-str">&#039;sit&#039;</span>, <span class="tok-str">&#039;suscipit&#039;</span>, <span class="tok-str">&#039;laboriosam&#039;</span>, <span class="tok-str">&#039;nisi&#039;</span>, <span class="tok-str">&#039;ut&#039;</span>, <span class="tok-str">&#039;aliquid&#039;</span>, <span class="tok-str">&#039;ex&#039;</span>, <span class="tok-str">&#039;ea&#039;</span>,</span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a>        <span class="tok-str">&#039;commodi&#039;</span>, <span class="tok-str">&#039;consequatur&#039;</span>, <span class="tok-str">&#039;quis&#039;</span>, <span class="tok-str">&#039;autem&#039;</span>, <span class="tok-str">&#039;vel&#039;</span>, <span class="tok-str">&#039;eum&#039;</span>, <span class="tok-str">&#039;iure&#039;</span>,</span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>        <span class="tok-str">&#039;reprehenderit&#039;</span>, <span class="tok-str">&#039;qui&#039;</span>, <span class="tok-str">&#039;in&#039;</span>, <span class="tok-str">&#039;ea&#039;</span>, <span class="tok-str">&#039;voluptate&#039;</span>, <span class="tok-str">&#039;velit&#039;</span>, <span class="tok-str">&#039;esse&#039;</span>,</span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>        <span class="tok-str">&#039;quam&#039;</span>, <span class="tok-str">&#039;nihil&#039;</span>, <span class="tok-str">&#039;molestiae&#039;</span>, <span class="tok-str">&#039;et&#039;</span>, <span class="tok-str">&#039;iusto&#039;</span>, <span class="tok-str">&#039;odio&#039;</span>, <span class="tok-str">&#039;dignissimos&#039;</span>,</span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>        <span class="tok-str">&#039;ducimus&#039;</span>, <span class="tok-str">&#039;qui&#039;</span>, <span class="tok-str">&#039;blanditiis&#039;</span>, <span class="tok-str">&#039;praesentium&#039;</span>, <span class="tok-str">&#039;laudantium&#039;</span>, <span class="tok-str">&#039;totam&#039;</span>,</span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>        <span class="tok-str">&#039;rem&#039;</span>, <span class="tok-str">&#039;voluptatum&#039;</span>, <span class="tok-str">&#039;deleniti&#039;</span>, <span class="tok-str">&#039;atque&#039;</span>, <span class="tok-str">&#039;corrupti&#039;</span>, <span class="tok-str">&#039;quos&#039;</span>,</span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>        <span class="tok-str">&#039;dolores&#039;</span>, <span class="tok-str">&#039;et&#039;</span>, <span class="tok-str">&#039;quas&#039;</span>, <span class="tok-str">&#039;molestias&#039;</span>, <span class="tok-str">&#039;excepturi&#039;</span>, <span class="tok-str">&#039;sint&#039;</span>,</span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>        <span class="tok-str">&#039;occaecati&#039;</span>, <span class="tok-str">&#039;cupiditate&#039;</span>, <span class="tok-str">&#039;non&#039;</span>, <span class="tok-str">&#039;provident&#039;</span>, <span class="tok-str">&#039;sed&#039;</span>, <span class="tok-str">&#039;ut&#039;</span>,</span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>        <span class="tok-str">&#039;perspiciatis&#039;</span>, <span class="tok-str">&#039;unde&#039;</span>, <span class="tok-str">&#039;omnis&#039;</span>, <span class="tok-str">&#039;iste&#039;</span>, <span class="tok-str">&#039;natus&#039;</span>, <span class="tok-str">&#039;error&#039;</span>,</span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>        <span class="tok-str">&#039;similique&#039;</span>, <span class="tok-str">&#039;sunt&#039;</span>, <span class="tok-str">&#039;in&#039;</span>, <span class="tok-str">&#039;culpa&#039;</span>, <span class="tok-str">&#039;qui&#039;</span>, <span class="tok-str">&#039;officia&#039;</span>, <span class="tok-str">&#039;deserunt&#039;</span>,</span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>        <span class="tok-str">&#039;mollitia&#039;</span>, <span class="tok-str">&#039;animi&#039;</span>, <span class="tok-str">&#039;id&#039;</span>, <span class="tok-str">&#039;est&#039;</span>, <span class="tok-str">&#039;laborum&#039;</span>, <span class="tok-str">&#039;et&#039;</span>, <span class="tok-str">&#039;dolorum&#039;</span>, <span class="tok-str">&#039;fuga&#039;</span>,</span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>        <span class="tok-str">&#039;et&#039;</span>, <span class="tok-str">&#039;harum&#039;</span>, <span class="tok-str">&#039;quidem&#039;</span>, <span class="tok-str">&#039;rerum&#039;</span>, <span class="tok-str">&#039;facilis&#039;</span>, <span class="tok-str">&#039;est&#039;</span>, <span class="tok-str">&#039;et&#039;</span>, <span class="tok-str">&#039;expedita&#039;</span>,</span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>        <span class="tok-str">&#039;distinctio&#039;</span>, <span class="tok-str">&#039;nam&#039;</span>, <span class="tok-str">&#039;libero&#039;</span>, <span class="tok-str">&#039;tempore&#039;</span>, <span class="tok-str">&#039;cum&#039;</span>, <span class="tok-str">&#039;soluta&#039;</span>, <span class="tok-str">&#039;nobis&#039;</span>,</span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>        <span class="tok-str">&#039;est&#039;</span>, <span class="tok-str">&#039;eligendi&#039;</span>, <span class="tok-str">&#039;optio&#039;</span>, <span class="tok-str">&#039;cumque&#039;</span>, <span class="tok-str">&#039;nihil&#039;</span>, <span class="tok-str">&#039;impedit&#039;</span>, <span class="tok-str">&#039;quo&#039;</span>,</span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>        <span class="tok-str">&#039;porro&#039;</span>, <span class="tok-str">&#039;quisquam&#039;</span>, <span class="tok-str">&#039;est&#039;</span>, <span class="tok-str">&#039;qui&#039;</span>, <span class="tok-str">&#039;minus&#039;</span>, <span class="tok-str">&#039;id&#039;</span>, <span class="tok-str">&#039;quod&#039;</span>, <span class="tok-str">&#039;maxime&#039;</span>,</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>        <span class="tok-str">&#039;placeat&#039;</span>, <span class="tok-str">&#039;facere&#039;</span>, <span class="tok-str">&#039;possimus&#039;</span>, <span class="tok-str">&#039;omnis&#039;</span>, <span class="tok-str">&#039;voluptas&#039;</span>, <span class="tok-str">&#039;assumenda&#039;</span>,</span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>        <span class="tok-str">&#039;est&#039;</span>, <span class="tok-str">&#039;omnis&#039;</span>, <span class="tok-str">&#039;dolor&#039;</span>, <span class="tok-str">&#039;repellendus&#039;</span>, <span class="tok-str">&#039;temporibus&#039;</span>, <span class="tok-str">&#039;autem&#039;</span>,</span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>        <span class="tok-str">&#039;quibusdam&#039;</span>, <span class="tok-str">&#039;et&#039;</span>, <span class="tok-str">&#039;aut&#039;</span>, <span class="tok-str">&#039;consequatur&#039;</span>, <span class="tok-str">&#039;vel&#039;</span>, <span class="tok-str">&#039;illum&#039;</span>, <span class="tok-str">&#039;qui&#039;</span>,</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>        <span class="tok-str">&#039;dolorem&#039;</span>, <span class="tok-str">&#039;eum&#039;</span>, <span class="tok-str">&#039;fugiat&#039;</span>, <span class="tok-str">&#039;quo&#039;</span>, <span class="tok-str">&#039;voluptas&#039;</span>, <span class="tok-str">&#039;nulla&#039;</span>, <span class="tok-str">&#039;pariatur&#039;</span>,</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>        <span class="tok-str">&#039;at&#039;</span>, <span class="tok-str">&#039;vero&#039;</span>, <span class="tok-str">&#039;eos&#039;</span>, <span class="tok-str">&#039;et&#039;</span>, <span class="tok-str">&#039;accusamus&#039;</span>, <span class="tok-str">&#039;officiis&#039;</span>, <span class="tok-str">&#039;debitis&#039;</span>, <span class="tok-str">&#039;aut&#039;</span>,</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>        <span class="tok-str">&#039;rerum&#039;</span>, <span class="tok-str">&#039;necessitatibus&#039;</span>, <span class="tok-str">&#039;saepe&#039;</span>, <span class="tok-str">&#039;eveniet&#039;</span>, <span class="tok-str">&#039;ut&#039;</span>, <span class="tok-str">&#039;et&#039;</span>,</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>        <span class="tok-str">&#039;voluptates&#039;</span>, <span class="tok-str">&#039;repudiandae&#039;</span>, <span class="tok-str">&#039;sint&#039;</span>, <span class="tok-str">&#039;et&#039;</span>, <span class="tok-str">&#039;molestiae&#039;</span>, <span class="tok-str">&#039;non&#039;</span>,</span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>        <span class="tok-str">&#039;recusandae&#039;</span>, <span class="tok-str">&#039;itaque&#039;</span>, <span class="tok-str">&#039;earum&#039;</span>, <span class="tok-str">&#039;rerum&#039;</span>, <span class="tok-str">&#039;hic&#039;</span>, <span class="tok-str">&#039;tenetur&#039;</span>, <span class="tok-str">&#039;a&#039;</span>,</span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>        <span class="tok-str">&#039;sapiente&#039;</span>, <span class="tok-str">&#039;delectus&#039;</span>, <span class="tok-str">&#039;ut&#039;</span>, <span class="tok-str">&#039;aut&#039;</span>, <span class="tok-str">&#039;reiciendis&#039;</span>, <span class="tok-str">&#039;voluptatibus&#039;</span>,</span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>        <span class="tok-str">&#039;maiores&#039;</span>, <span class="tok-str">&#039;doloribus&#039;</span>, <span class="tok-str">&#039;asperiores&#039;</span>, <span class="tok-str">&#039;repellat&#039;</span>,</span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>    ];</span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a></span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a><span class="tok-com">     * @example &#039;Lorem&#039;</span></span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a><span class="tok-com">     * @return string</span></span>
+<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">word</span>()</span>
+<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a>    {</span>
+<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a>        <span class="tok-kw">return</span> <span class="tok-kw">static</span>::<span class="tok-id">randomElement</span>(<span class="tok-kw">static</span>::<span class="tok-var">$wordList</span>);</span>
+<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>    }</span>
+<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a></span>
+<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a><span class="tok-com">     * Generate an array of random words</span></span>
+<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a><span class="tok-com">     * @example array(&#039;Lorem&#039;, &#039;ipsum&#039;, &#039;dolor&#039;)</span></span>
+<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a><span class="tok-com">     * @param int  $nb     how many words to return</span></span>
+<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a><span class="tok-com">     * @param bool $asText if true the sentences are returned as one string</span></span>
+<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a><span class="tok-com">     * @return array|string</span></span>
+<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">words</span>(<span class="tok-var">$nb</span> = <span class="tok-num">3</span>, <span class="tok-var">$asText</span> = <span class="tok-id">false</span>)</span>
+<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>    {</span>
+<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>        <span class="tok-var">$words</span> = [];</span>
+<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a></span>
+<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>        <span class="tok-kw">for</span> (<span class="tok-var">$i</span> = <span class="tok-num">0</span>; <span class="tok-var">$i</span> &lt; <span class="tok-var">$nb</span>; ++<span class="tok-var">$i</span>) {</span>
+<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>            <span class="tok-var">$words</span>[] = <span class="tok-kw">static</span>::<span class="tok-id">word</span>();</span>
+<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>        }</span>
+<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a></span>
+<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>        <span class="tok-kw">return</span> <span class="tok-var">$asText</span> ? <span class="tok-id">implode</span>(<span class="tok-str">&#039; &#039;</span>, <span class="tok-var">$words</span>) : <span class="tok-var">$words</span>;</span>
+<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>    }</span>
+<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a></span>
+<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a><span class="tok-com">     * Generate a random sentence</span></span>
+<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a><span class="tok-com">     * @example &#039;Lorem ipsum dolor sit amet.&#039;</span></span>
+<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a><span class="tok-com">     * @param int  $nbWords         around how many words the sentence should contain</span></span>
+<span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a><span class="tok-com">     * @param bool $variableNbWords set to false if you want exactly $nbWords returned,</span></span>
+<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a><span class="tok-com">     *                              otherwise $nbWords may vary by +/-40% with a minimum of 1</span></span>
+<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a><span class="tok-com">     * @return string</span></span>
+<span class="src-line" id="L88" data-diff="added"><a class="ln" href="#L88">88</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L89" data-diff="added"><a class="ln" href="#L89">89</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">sentence</span>(<span class="tok-var">$nbWords</span> = <span class="tok-num">6</span>, <span class="tok-var">$variableNbWords</span> = <span class="tok-id">true</span>)</span>
+<span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a>    {</span>
+<span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a>        <span class="tok-kw">if</span> (<span class="tok-var">$nbWords</span> &lt;= <span class="tok-num">0</span>) {</span>
+<span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a>            <span class="tok-kw">return</span> <span class="tok-str">&#039;&#039;</span>;</span>
+<span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a>        }</span>
+<span class="src-line" id="L94" data-diff="added"><a class="ln" href="#L94">94</a></span>
+<span class="src-line" id="L95" data-diff="added"><a class="ln" href="#L95">95</a>        <span class="tok-kw">if</span> (<span class="tok-var">$variableNbWords</span>) {</span>
+<span class="src-line" id="L96" data-diff="added"><a class="ln" href="#L96">96</a>            <span class="tok-var">$nbWords</span> = <span class="tok-id">self</span>::<span class="tok-id">randomizeNbElements</span>(<span class="tok-var">$nbWords</span>);</span>
+<span class="src-line" id="L97" data-diff="added"><a class="ln" href="#L97">97</a>        }</span>
+<span class="src-line" id="L98" data-diff="added"><a class="ln" href="#L98">98</a></span>
+<span class="src-line" id="L99" data-diff="added"><a class="ln" href="#L99">99</a>        <span class="tok-var">$words</span> = <span class="tok-kw">static</span>::<span class="tok-id">words</span>(<span class="tok-var">$nbWords</span>);</span>
+<span class="src-line" id="L100" data-diff="added"><a class="ln" href="#L100">100</a>        <span class="tok-var">$words</span>[<span class="tok-num">0</span>] = <span class="tok-id">ucwords</span>(<span class="tok-var">$words</span>[<span class="tok-num">0</span>]);</span>
+<span class="src-line" id="L101" data-diff="added"><a class="ln" href="#L101">101</a></span>
+<span class="src-line" id="L102" data-diff="added"><a class="ln" href="#L102">102</a>        <span class="tok-kw">return</span> <span class="tok-id">implode</span>(<span class="tok-str">&#039; &#039;</span>, <span class="tok-var">$words</span>) . <span class="tok-str">&#039;.&#039;</span>;</span>
+<span class="src-line" id="L103" data-diff="added"><a class="ln" href="#L103">103</a>    }</span>
+<span class="src-line" id="L104" data-diff="added"><a class="ln" href="#L104">104</a></span>
+<span class="src-line" id="L105" data-diff="added"><a class="ln" href="#L105">105</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L106" data-diff="added"><a class="ln" href="#L106">106</a><span class="tok-com">     * Generate an array of sentences</span></span>
+<span class="src-line" id="L107" data-diff="added"><a class="ln" href="#L107">107</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L108" data-diff="added"><a class="ln" href="#L108">108</a><span class="tok-com">     * @example array(&#039;Lorem ipsum dolor sit amet.&#039;, &#039;Consectetur adipisicing eli.&#039;)</span></span>
+<span class="src-line" id="L109" data-diff="added"><a class="ln" href="#L109">109</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L110" data-diff="added"><a class="ln" href="#L110">110</a><span class="tok-com">     * @param int  $nb     how many sentences to return</span></span>
+<span class="src-line" id="L111" data-diff="added"><a class="ln" href="#L111">111</a><span class="tok-com">     * @param bool $asText if true the sentences are returned as one string</span></span>
+<span class="src-line" id="L112" data-diff="added"><a class="ln" href="#L112">112</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L113" data-diff="added"><a class="ln" href="#L113">113</a><span class="tok-com">     * @return array|string</span></span>
+<span class="src-line" id="L114" data-diff="added"><a class="ln" href="#L114">114</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L115" data-diff="added"><a class="ln" href="#L115">115</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">sentences</span>(<span class="tok-var">$nb</span> = <span class="tok-num">3</span>, <span class="tok-var">$asText</span> = <span class="tok-id">false</span>)</span>
+<span class="src-line" id="L116" data-diff="added"><a class="ln" href="#L116">116</a>    {</span>
+<span class="src-line" id="L117" data-diff="added"><a class="ln" href="#L117">117</a>        <span class="tok-var">$sentences</span> = [];</span>
+<span class="src-line" id="L118" data-diff="added"><a class="ln" href="#L118">118</a></span>
+<span class="src-line" id="L119" data-diff="added"><a class="ln" href="#L119">119</a>        <span class="tok-kw">for</span> (<span class="tok-var">$i</span> = <span class="tok-num">0</span>; <span class="tok-var">$i</span> &lt; <span class="tok-var">$nb</span>; ++<span class="tok-var">$i</span>) {</span>
+<span class="src-line" id="L120" data-diff="added"><a class="ln" href="#L120">120</a>            <span class="tok-var">$sentences</span>[] = <span class="tok-kw">static</span>::<span class="tok-id">sentence</span>();</span>
+<span class="src-line" id="L121" data-diff="added"><a class="ln" href="#L121">121</a>        }</span>
+<span class="src-line" id="L122" data-diff="added"><a class="ln" href="#L122">122</a></span>
+<span class="src-line" id="L123" data-diff="added"><a class="ln" href="#L123">123</a>        <span class="tok-kw">return</span> <span class="tok-var">$asText</span> ? <span class="tok-id">implode</span>(<span class="tok-str">&#039; &#039;</span>, <span class="tok-var">$sentences</span>) : <span class="tok-var">$sentences</span>;</span>
+<span class="src-line" id="L124" data-diff="added"><a class="ln" href="#L124">124</a>    }</span>
+<span class="src-line" id="L125" data-diff="added"><a class="ln" href="#L125">125</a></span>
+<span class="src-line" id="L126" data-diff="added"><a class="ln" href="#L126">126</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L127" data-diff="added"><a class="ln" href="#L127">127</a><span class="tok-com">     * Generate a single paragraph</span></span>
+<span class="src-line" id="L128" data-diff="added"><a class="ln" href="#L128">128</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L129" data-diff="added"><a class="ln" href="#L129">129</a><span class="tok-com">     * @example &#039;Sapiente sunt omnis. Ut pariatur ad autem ducimus et. Voluptas rem voluptas sint modi dolorem amet.&#039;</span></span>
+<span class="src-line" id="L130" data-diff="added"><a class="ln" href="#L130">130</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L131" data-diff="added"><a class="ln" href="#L131">131</a><span class="tok-com">     * @param int  $nbSentences         around how many sentences the paragraph should contain</span></span>
+<span class="src-line" id="L132" data-diff="added"><a class="ln" href="#L132">132</a><span class="tok-com">     * @param bool $variableNbSentences set to false if you want exactly $nbSentences returned,</span></span>
+<span class="src-line" id="L133" data-diff="added"><a class="ln" href="#L133">133</a><span class="tok-com">     *                                  otherwise $nbSentences may vary by +/-40% with a minimum of 1</span></span>
+<span class="src-line" id="L134" data-diff="added"><a class="ln" href="#L134">134</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L135" data-diff="added"><a class="ln" href="#L135">135</a><span class="tok-com">     * @return string</span></span>
+<span class="src-line" id="L136" data-diff="added"><a class="ln" href="#L136">136</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L137" data-diff="added"><a class="ln" href="#L137">137</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">paragraph</span>(<span class="tok-var">$nbSentences</span> = <span class="tok-num">3</span>, <span class="tok-var">$variableNbSentences</span> = <span class="tok-id">true</span>)</span>
+<span class="src-line" id="L138" data-diff="added"><a class="ln" href="#L138">138</a>    {</span>
+<span class="src-line" id="L139" data-diff="added"><a class="ln" href="#L139">139</a>        <span class="tok-kw">if</span> (<span class="tok-var">$nbSentences</span> &lt;= <span class="tok-num">0</span>) {</span>
+<span class="src-line" id="L140" data-diff="added"><a class="ln" href="#L140">140</a>            <span class="tok-kw">return</span> <span class="tok-str">&#039;&#039;</span>;</span>
+<span class="src-line" id="L141" data-diff="added"><a class="ln" href="#L141">141</a>        }</span>
+<span class="src-line" id="L142" data-diff="added"><a class="ln" href="#L142">142</a></span>
+<span class="src-line" id="L143" data-diff="added"><a class="ln" href="#L143">143</a>        <span class="tok-kw">if</span> (<span class="tok-var">$variableNbSentences</span>) {</span>
+<span class="src-line" id="L144" data-diff="added"><a class="ln" href="#L144">144</a>            <span class="tok-var">$nbSentences</span> = <span class="tok-id">self</span>::<span class="tok-id">randomizeNbElements</span>(<span class="tok-var">$nbSentences</span>);</span>
+<span class="src-line" id="L145" data-diff="added"><a class="ln" href="#L145">145</a>        }</span>
+<span class="src-line" id="L146" data-diff="added"><a class="ln" href="#L146">146</a></span>
+<span class="src-line" id="L147" data-diff="added"><a class="ln" href="#L147">147</a>        <span class="tok-kw">return</span> <span class="tok-id">implode</span>(<span class="tok-str">&#039; &#039;</span>, <span class="tok-kw">static</span>::<span class="tok-id">sentences</span>(<span class="tok-var">$nbSentences</span>));</span>
+<span class="src-line" id="L148" data-diff="added"><a class="ln" href="#L148">148</a>    }</span>
+<span class="src-line" id="L149" data-diff="added"><a class="ln" href="#L149">149</a></span>
+<span class="src-line" id="L150" data-diff="added"><a class="ln" href="#L150">150</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L151" data-diff="added"><a class="ln" href="#L151">151</a><span class="tok-com">     * Generate an array of paragraphs</span></span>
+<span class="src-line" id="L152" data-diff="added"><a class="ln" href="#L152">152</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L153" data-diff="added"><a class="ln" href="#L153">153</a><span class="tok-com">     * @example array($paragraph1, $paragraph2, $paragraph3)</span></span>
+<span class="src-line" id="L154" data-diff="added"><a class="ln" href="#L154">154</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L155" data-diff="added"><a class="ln" href="#L155">155</a><span class="tok-com">     * @param int  $nb     how many paragraphs to return</span></span>
+<span class="src-line" id="L156" data-diff="added"><a class="ln" href="#L156">156</a><span class="tok-com">     * @param bool $asText if true the paragraphs are returned as one string, separated by two newlines</span></span>
+<span class="src-line" id="L157" data-diff="added"><a class="ln" href="#L157">157</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L158" data-diff="added"><a class="ln" href="#L158">158</a><span class="tok-com">     * @return array|string</span></span>
+<span class="src-line" id="L159" data-diff="added"><a class="ln" href="#L159">159</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L160" data-diff="added"><a class="ln" href="#L160">160</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">paragraphs</span>(<span class="tok-var">$nb</span> = <span class="tok-num">3</span>, <span class="tok-var">$asText</span> = <span class="tok-id">false</span>)</span>
+<span class="src-line" id="L161" data-diff="added"><a class="ln" href="#L161">161</a>    {</span>
+<span class="src-line" id="L162" data-diff="added"><a class="ln" href="#L162">162</a>        <span class="tok-var">$paragraphs</span> = [];</span>
+<span class="src-line" id="L163" data-diff="added"><a class="ln" href="#L163">163</a></span>
+<span class="src-line" id="L164" data-diff="added"><a class="ln" href="#L164">164</a>        <span class="tok-kw">for</span> (<span class="tok-var">$i</span> = <span class="tok-num">0</span>; <span class="tok-var">$i</span> &lt; <span class="tok-var">$nb</span>; ++<span class="tok-var">$i</span>) {</span>
+<span class="src-line" id="L165" data-diff="added"><a class="ln" href="#L165">165</a>            <span class="tok-var">$paragraphs</span>[] = <span class="tok-kw">static</span>::<span class="tok-id">paragraph</span>();</span>
+<span class="src-line" id="L166" data-diff="added"><a class="ln" href="#L166">166</a>        }</span>
+<span class="src-line" id="L167" data-diff="added"><a class="ln" href="#L167">167</a></span>
+<span class="src-line" id="L168" data-diff="added"><a class="ln" href="#L168">168</a>        <span class="tok-kw">return</span> <span class="tok-var">$asText</span> ? <span class="tok-id">implode</span>(<span class="tok-str">&quot;\n\n&quot;</span>, <span class="tok-var">$paragraphs</span>) : <span class="tok-var">$paragraphs</span>;</span>
+<span class="src-line" id="L169" data-diff="added"><a class="ln" href="#L169">169</a>    }</span>
+<span class="src-line" id="L170" data-diff="added"><a class="ln" href="#L170">170</a></span>
+<span class="src-line" id="L171" data-diff="added"><a class="ln" href="#L171">171</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L172" data-diff="added"><a class="ln" href="#L172">172</a><span class="tok-com">     * Generate a text string.</span></span>
+<span class="src-line" id="L173" data-diff="added"><a class="ln" href="#L173">173</a><span class="tok-com">     * Depending on the $maxNbChars, returns a string made of words, sentences, or paragraphs.</span></span>
+<span class="src-line" id="L174" data-diff="added"><a class="ln" href="#L174">174</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L175" data-diff="added"><a class="ln" href="#L175">175</a><span class="tok-com">     * @example &#039;Sapiente sunt omnis. Ut pariatur ad autem ducimus et. Voluptas rem voluptas sint modi dolorem amet.&#039;</span></span>
+<span class="src-line" id="L176" data-diff="added"><a class="ln" href="#L176">176</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L177" data-diff="added"><a class="ln" href="#L177">177</a><span class="tok-com">     * @param int $maxNbChars Maximum number of characters the text should contain (minimum 5)</span></span>
+<span class="src-line" id="L178" data-diff="added"><a class="ln" href="#L178">178</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L179" data-diff="added"><a class="ln" href="#L179">179</a><span class="tok-com">     * @return string</span></span>
+<span class="src-line" id="L180" data-diff="added"><a class="ln" href="#L180">180</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L181" data-diff="added"><a class="ln" href="#L181">181</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">text</span>(<span class="tok-var">$maxNbChars</span> = <span class="tok-num">200</span>)</span>
+<span class="src-line" id="L182" data-diff="added"><a class="ln" href="#L182">182</a>    {</span>
+<span class="src-line" id="L183" data-diff="added"><a class="ln" href="#L183">183</a>        <span class="tok-kw">if</span> (<span class="tok-var">$maxNbChars</span> &lt; <span class="tok-num">5</span>) {</span>
+<span class="src-line" id="L184" data-diff="added"><a class="ln" href="#L184">184</a>            <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">\InvalidArgumentException</span>(<span class="tok-str">&#039;text() can only generate text of at least 5 characters&#039;</span>);</span>
+<span class="src-line" id="L185" data-diff="added"><a class="ln" href="#L185">185</a>        }</span>
+<span class="src-line" id="L186" data-diff="added"><a class="ln" href="#L186">186</a></span>
+<span class="src-line" id="L187" data-diff="added"><a class="ln" href="#L187">187</a>        <span class="tok-var">$type</span> = <span class="tok-str">&#039;paragraph&#039;</span>;</span>
+<span class="src-line" id="L188" data-diff="added"><a class="ln" href="#L188">188</a></span>
+<span class="src-line" id="L189" data-diff="added"><a class="ln" href="#L189">189</a>        <span class="tok-kw">if</span> (<span class="tok-var">$maxNbChars</span> &lt; <span class="tok-num">100</span>) {</span>
+<span class="src-line" id="L190" data-diff="added"><a class="ln" href="#L190">190</a>            <span class="tok-var">$type</span> = <span class="tok-str">&#039;sentence&#039;</span>;</span>
+<span class="src-line" id="L191" data-diff="added"><a class="ln" href="#L191">191</a>        }</span>
+<span class="src-line" id="L192" data-diff="added"><a class="ln" href="#L192">192</a></span>
+<span class="src-line" id="L193" data-diff="added"><a class="ln" href="#L193">193</a>        <span class="tok-kw">if</span> (<span class="tok-var">$maxNbChars</span> &lt; <span class="tok-num">25</span>) {</span>
+<span class="src-line" id="L194" data-diff="added"><a class="ln" href="#L194">194</a>            <span class="tok-var">$type</span> = <span class="tok-str">&#039;word&#039;</span>;</span>
+<span class="src-line" id="L195" data-diff="added"><a class="ln" href="#L195">195</a>        }</span>
+<span class="src-line" id="L196" data-diff="added"><a class="ln" href="#L196">196</a></span>
+<span class="src-line" id="L197" data-diff="added"><a class="ln" href="#L197">197</a>        <span class="tok-var">$text</span> = [];</span>
+<span class="src-line" id="L198" data-diff="added"><a class="ln" href="#L198">198</a></span>
+<span class="src-line" id="L199" data-diff="added"><a class="ln" href="#L199">199</a>        <span class="tok-kw">while</span> (<span class="tok-kw">empty</span>(<span class="tok-var">$text</span>)) {</span>
+<span class="src-line" id="L200" data-diff="added"><a class="ln" href="#L200">200</a>            <span class="tok-var">$size</span> = <span class="tok-num">0</span>;</span>
+<span class="src-line" id="L201" data-diff="added"><a class="ln" href="#L201">201</a></span>
+<span class="src-line" id="L202" data-diff="added"><a class="ln" href="#L202">202</a>            <span class="tok-com">// until $maxNbChars is reached</span></span>
+<span class="src-line" id="L203" data-diff="added"><a class="ln" href="#L203">203</a>            <span class="tok-kw">while</span> (<span class="tok-var">$size</span> &lt; <span class="tok-var">$maxNbChars</span>) {</span>
+<span class="src-line" id="L204" data-diff="added"><a class="ln" href="#L204">204</a>                <span class="tok-var">$word</span> = (<span class="tok-var">$size</span> ? <span class="tok-str">&#039; &#039;</span> : <span class="tok-str">&#039;&#039;</span>) . <span class="tok-kw">static</span>::<span class="tok-var">$type</span>();</span>
+<span class="src-line" id="L205" data-diff="added"><a class="ln" href="#L205">205</a>                <span class="tok-var">$text</span>[] = <span class="tok-var">$word</span>;</span>
+<span class="src-line" id="L206" data-diff="added"><a class="ln" href="#L206">206</a></span>
+<span class="src-line" id="L207" data-diff="added"><a class="ln" href="#L207">207</a>                <span class="tok-var">$size</span> += <span class="tok-id">strlen</span>(<span class="tok-var">$word</span>);</span>
+<span class="src-line" id="L208" data-diff="added"><a class="ln" href="#L208">208</a>            }</span>
+<span class="src-line" id="L209" data-diff="added"><a class="ln" href="#L209">209</a></span>
+<span class="src-line" id="L210" data-diff="added"><a class="ln" href="#L210">210</a>            <span class="tok-id">array_pop</span>(<span class="tok-var">$text</span>);</span>
+<span class="src-line" id="L211" data-diff="added"><a class="ln" href="#L211">211</a>        }</span>
+<span class="src-line" id="L212" data-diff="added"><a class="ln" href="#L212">212</a></span>
+<span class="src-line" id="L213" data-diff="added"><a class="ln" href="#L213">213</a>        <span class="tok-kw">if</span> (<span class="tok-var">$type</span> === <span class="tok-str">&#039;word&#039;</span>) {</span>
+<span class="src-line" id="L214" data-diff="added"><a class="ln" href="#L214">214</a>            <span class="tok-com">// capitalize first letter</span></span>
+<span class="src-line" id="L215" data-diff="added"><a class="ln" href="#L215">215</a>            <span class="tok-var">$text</span>[<span class="tok-num">0</span>] = <span class="tok-id">ucwords</span>(<span class="tok-var">$text</span>[<span class="tok-num">0</span>]);</span>
+<span class="src-line" id="L216" data-diff="added"><a class="ln" href="#L216">216</a></span>
+<span class="src-line" id="L217" data-diff="added"><a class="ln" href="#L217">217</a>            <span class="tok-com">// end sentence with full stop</span></span>
+<span class="src-line" id="L218" data-diff="added"><a class="ln" href="#L218">218</a>            <span class="tok-var">$text</span>[<span class="tok-id">count</span>(<span class="tok-var">$text</span>) - <span class="tok-num">1</span>] .= <span class="tok-str">&#039;.&#039;</span>;</span>
+<span class="src-line" id="L219" data-diff="added"><a class="ln" href="#L219">219</a>        }</span>
+<span class="src-line" id="L220" data-diff="added"><a class="ln" href="#L220">220</a></span>
+<span class="src-line" id="L221" data-diff="added"><a class="ln" href="#L221">221</a>        <span class="tok-kw">return</span> <span class="tok-id">implode</span>(<span class="tok-str">&#039;&#039;</span>, <span class="tok-var">$text</span>);</span>
+<span class="src-line" id="L222" data-diff="added"><a class="ln" href="#L222">222</a>    }</span>
+<span class="src-line" id="L223" data-diff="added"><a class="ln" href="#L223">223</a></span>
+<span class="src-line" id="L224" data-diff="added"><a class="ln" href="#L224">224</a>    <span class="tok-kw">protected</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">randomizeNbElements</span>(<span class="tok-var">$nbElements</span>)</span>
+<span class="src-line" id="L225" data-diff="added"><a class="ln" href="#L225">225</a>    {</span>
+<span class="src-line" id="L226" data-diff="added"><a class="ln" href="#L226">226</a>        <span class="tok-kw">return</span> (int) (<span class="tok-var">$nbElements</span> * <span class="tok-id">self</span>::<span class="tok-id">numberBetween</span>(<span class="tok-num">60</span>, <span class="tok-num">140</span>) / <span class="tok-num">100</span>) + <span class="tok-num">1</span>;</span>
+<span class="src-line" id="L227" data-diff="added"><a class="ln" href="#L227">227</a>    }</span>
+<span class="src-line" id="L228" data-diff="added"><a class="ln" href="#L228">228</a>}</span>
+<span class="src-line" id="L229" data-diff="added"><a class="ln" href="#L229">229</a></span>
+</code></pre>
+</main>
+<footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div>
+<script src="../../../../../../../../../assets/search-index.js" defer></script>
+<script src="../../../../../../../../../assets/app.js" defer></script>
+</body>
+</html>

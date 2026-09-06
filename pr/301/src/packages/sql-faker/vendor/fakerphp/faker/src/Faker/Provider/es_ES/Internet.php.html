@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/es_ES/Internet.php — k-kinzal/sql-faker</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/301/src/packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/es_ES/Internet.php.html">
+<meta name="description" content="The source of packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/es_ES/Internet.php.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="k-kinzal/sql-faker">
+<meta property="og:title" content="packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/es_ES/Internet.php — k-kinzal/sql-faker">
+<meta property="og:description" content="The source of packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/es_ES/Internet.php.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/301/src/packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/es_ES/Internet.php.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/301/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="k-kinzal/sql-faker">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../../../../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.theme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../../../../../../../">
+<nav class="sidebar" id="sidebar"><div class="sb-head"><a class="sb-site" href="../../../../../../../../../../index.html">k-kinzal/sql-faker</a></div><nav class="sb-block"><div class="sb-title">Packages</div><ul class="sb-list"><li data-diff="same"><a href="../../../../../../../../../../k-kinzal/sql-faker/index.html">k-kinzal/sql-faker</a></li><li data-diff="added"><a href="../../../../../../../../../../fakerphp/faker/index.html">fakerphp/faker</a><span class="sb-note">vendor</span></li></ul></nav></nav>
+<div class="page">
+<header class="topbar">
+<button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>
+<nav class="crumbs"><a href="../../../../../../../../../../index.html">src</a><span class="crumb-sep">::</span><span class="crumb-current">packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/es_ES/Internet.php</span></nav>
+<div class="topbar-tools">
+<input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing 43253dbf to working tree">43253dbf <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><button id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 43253dbf and working tree." data-off="This page documents what 43253dbf had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1 class="source-title">packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/es_ES/Internet.php</h1></div>
+<div class="notice diff-banner" data-diff="added">Added in working tree, compared to 43253dbf.</div>
+<pre class="source" data-diff="added"><code><span class="src-line" id="L1" data-diff="added"><a class="ln" href="#L1">1</a>&lt;?php</span>
+<span class="src-line" id="L2" data-diff="added"><a class="ln" href="#L2">2</a></span>
+<span class="src-line" id="L3" data-diff="added"><a class="ln" href="#L3">3</a><span class="tok-kw">namespace</span> <span class="tok-id">Faker\Provider\es_ES</span>;</span>
+<span class="src-line" id="L4" data-diff="added"><a class="ln" href="#L4">4</a></span>
+<span class="src-line" id="L5" data-diff="added"><a class="ln" href="#L5">5</a><span class="tok-kw">class</span> <span class="tok-id">Internet</span> <span class="tok-kw">extends</span> <span class="tok-id">\Faker\Provider\Internet</span></span>
+<span class="src-line" id="L6" data-diff="added"><a class="ln" href="#L6">6</a>{</span>
+<span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a>    <span class="tok-kw">protected</span> <span class="tok-kw">static</span> <span class="tok-var">$freeEmailDomain</span> = [<span class="tok-str">&#039;gmail.com&#039;</span>, <span class="tok-str">&#039;hotmail.com&#039;</span>, <span class="tok-str">&#039;hotmail.es&#039;</span>, <span class="tok-str">&#039;yahoo.com&#039;</span>, <span class="tok-str">&#039;yahoo.es&#039;</span>, <span class="tok-str">&#039;live.com&#039;</span>, <span class="tok-str">&#039;hispavista.com&#039;</span>, <span class="tok-str">&#039;latinmail.com&#039;</span>, <span class="tok-str">&#039;terra.com&#039;</span>];</span>
+<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a>    <span class="tok-kw">protected</span> <span class="tok-kw">static</span> <span class="tok-var">$tld</span> = [<span class="tok-str">&#039;com&#039;</span>, <span class="tok-str">&#039;com&#039;</span>, <span class="tok-str">&#039;com&#039;</span>, <span class="tok-str">&#039;com&#039;</span>, <span class="tok-str">&#039;net&#039;</span>, <span class="tok-str">&#039;org&#039;</span>, <span class="tok-str">&#039;org&#039;</span>, <span class="tok-str">&#039;es&#039;</span>, <span class="tok-str">&#039;es&#039;</span>, <span class="tok-str">&#039;es&#039;</span>, <span class="tok-str">&#039;com.es&#039;</span>];</span>
+<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a>}</span>
+<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a></span>
+</code></pre>
+</main>
+<footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div>
+<script src="../../../../../../../../../../assets/search-index.js" defer></script>
+<script src="../../../../../../../../../../assets/app.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/ms_MY/Address.php — k-kinzal/sql-faker</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/301/src/packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/ms_MY/Address.php.html">
+<meta name="description" content="The source of packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/ms_MY/Address.php.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="k-kinzal/sql-faker">
+<meta property="og:title" content="packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/ms_MY/Address.php — k-kinzal/sql-faker">
+<meta property="og:description" content="The source of packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/ms_MY/Address.php.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/301/src/packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/ms_MY/Address.php.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/301/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="k-kinzal/sql-faker">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../../../../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.theme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../../../../../../../">
+<nav class="sidebar" id="sidebar"><div class="sb-head"><a class="sb-site" href="../../../../../../../../../../index.html">k-kinzal/sql-faker</a></div><nav class="sb-block"><div class="sb-title">Packages</div><ul class="sb-list"><li data-diff="same"><a href="../../../../../../../../../../k-kinzal/sql-faker/index.html">k-kinzal/sql-faker</a></li><li data-diff="added"><a href="../../../../../../../../../../fakerphp/faker/index.html">fakerphp/faker</a><span class="sb-note">vendor</span></li></ul></nav></nav>
+<div class="page">
+<header class="topbar">
+<button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>
+<nav class="crumbs"><a href="../../../../../../../../../../index.html">src</a><span class="crumb-sep">::</span><span class="crumb-current">packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/ms_MY/Address.php</span></nav>
+<div class="topbar-tools">
+<input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing 43253dbf to working tree">43253dbf <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><button id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 43253dbf and working tree." data-off="This page documents what 43253dbf had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1 class="source-title">packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/ms_MY/Address.php</h1></div>
+<div class="notice diff-banner" data-diff="added">Added in working tree, compared to 43253dbf.</div>
+<pre class="source" data-diff="added"><code><span class="src-line" id="L1" data-diff="added"><a class="ln" href="#L1">1</a>&lt;?php</span>
+<span class="src-line" id="L2" data-diff="added"><a class="ln" href="#L2">2</a></span>
+<span class="src-line" id="L3" data-diff="added"><a class="ln" href="#L3">3</a><span class="tok-kw">namespace</span> <span class="tok-id">Faker\Provider\ms_MY</span>;</span>
+<span class="src-line" id="L4" data-diff="added"><a class="ln" href="#L4">4</a></span>
+<span class="src-line" id="L5" data-diff="added"><a class="ln" href="#L5">5</a><span class="tok-kw">class</span> <span class="tok-id">Address</span> <span class="tok-kw">extends</span> <span class="tok-id">\Faker\Provider\Address</span></span>
+<span class="src-line" id="L6" data-diff="added"><a class="ln" href="#L6">6</a>{</span>
+<span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/Addresses_in_Malaysia</span></span>
+<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a>    <span class="tok-kw">protected</span> <span class="tok-kw">static</span> <span class="tok-var">$addressFormats</span> = [</span>
+<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a>        <span class="tok-str">&#039;{{streetAddress}}, {{township}}, {{townState}}&#039;</span>,</span>
+<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a>    ];</span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a></span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a>    <span class="tok-kw">protected</span> <span class="tok-kw">static</span> <span class="tok-var">$streetAddressFormats</span> = [</span>
+<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a>        <span class="tok-str">&#039;{{buildingPrefix}}{{buildingNumber}}, {{streetName}}&#039;</span>,</span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a>    ];</span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a></span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com">     * Most of the time &#039;No.&#039; is not needed, and &#039;Lot&#039; is less used.</span></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a>    <span class="tok-kw">protected</span> <span class="tok-kw">static</span> <span class="tok-var">$buildingPrefix</span> = [</span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>        <span class="tok-str">&#039;&#039;</span>, <span class="tok-str">&#039;&#039;</span>, <span class="tok-str">&#039;&#039;</span>, <span class="tok-str">&#039;&#039;</span>, <span class="tok-str">&#039;&#039;</span>, <span class="tok-str">&#039;&#039;</span>,</span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>        <span class="tok-str">&#039;No. &#039;</span>, <span class="tok-str">&#039;No. &#039;</span>, <span class="tok-str">&#039;No. &#039;</span>,</span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>        <span class="tok-str">&#039;Lot &#039;</span>,</span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>    ];</span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a></span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>    <span class="tok-kw">protected</span> <span class="tok-kw">static</span> <span class="tok-var">$buildingNumber</span> = [</span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>        <span class="tok-str">&#039;%&#039;</span>, <span class="tok-str">&#039;%&#039;</span>, <span class="tok-str">&#039;%&#039;</span>,</span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>        <span class="tok-str">&#039;%#&#039;</span>, <span class="tok-str">&#039;%#&#039;</span>, <span class="tok-str">&#039;%#&#039;</span>, <span class="tok-str">&#039;%#&#039;</span>,</span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>        <span class="tok-str">&#039;%##&#039;</span>,</span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>        <span class="tok-str">&#039;%-%&#039;</span>,</span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>        <span class="tok-str">&#039;?-##-##&#039;</span>,</span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>        <span class="tok-str">&#039;%?-##&#039;</span>,</span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    ];</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a></span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    <span class="tok-kw">protected</span> <span class="tok-kw">static</span> <span class="tok-var">$streetNameFormats</span> = [</span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>        <span class="tok-str">&#039;{{streetPrefix}} %&#039;</span>,</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>        <span class="tok-str">&#039;{{streetPrefix}} %/%&#039;</span>,</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>        <span class="tok-str">&#039;{{streetPrefix}} %/%#&#039;</span>,</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>        <span class="tok-str">&#039;{{streetPrefix}} %/%?&#039;</span>,</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>        <span class="tok-str">&#039;{{streetPrefix}} %/%#?&#039;</span>,</span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>        <span class="tok-str">&#039;{{streetPrefix}} %?&#039;</span>,</span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>        <span class="tok-str">&#039;{{streetPrefix}} %#?&#039;</span>,</span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>        <span class="tok-str">&#039;{{streetPrefix}} {{streetSuffix}}&#039;</span>,</span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>        <span class="tok-str">&#039;{{streetPrefix}} {{streetSuffix}} %&#039;</span>,</span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>        <span class="tok-str">&#039;{{streetPrefix}} {{streetSuffix}} %/%&#039;</span>,</span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>        <span class="tok-str">&#039;{{streetPrefix}} {{streetSuffix}} %/%#&#039;</span>,</span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>        <span class="tok-str">&#039;{{streetPrefix}} {{streetSuffix}} %/%?&#039;</span>,</span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>        <span class="tok-str">&#039;{{streetPrefix}} {{streetSuffix}} %/%#?&#039;</span>,</span>
+<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>        <span class="tok-str">&#039;{{streetPrefix}} {{streetSuffix}} %?&#039;</span>,</span>
+<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>        <span class="tok-str">&#039;{{streetPrefix}} {{streetSuffix}} %#?&#039;</span>,</span>
+<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a>    ];</span>
+<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a></span>
+<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a>    <span class="tok-kw">protected</span> <span class="tok-kw">static</span> <span class="tok-var">$townshipFormats</span> = [</span>
+<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>        <span class="tok-str">&#039;{{townshipPrefix}} {{townshipSuffix}}&#039;</span>,</span>
+<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a>        <span class="tok-str">&#039;{{townshipPrefix}} {{townshipSuffix}}&#039;</span>,</span>
+<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>        <span class="tok-str">&#039;{{townshipPrefix}} {{townshipSuffix}}&#039;</span>,</span>
+<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>        <span class="tok-str">&#039;{{townshipPrefix}} {{townshipSuffix}}&#039;</span>,</span>
+<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>        <span class="tok-str">&#039;{{townshipPrefix}} {{townshipSuffix}}&#039;</span>,</span>
+<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>        <span class="tok-str">&#039;{{townshipPrefix}} {{townshipSuffix}}&#039;</span>,</span>
+<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>        <span class="tok-str">&#039;{{townshipPrefixAbbr}}%&#039;</span>,</span>
+<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>        <span class="tok-str">&#039;{{townshipPrefixAbbr}}%#&#039;</span>,</span>
+<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>        <span class="tok-str">&#039;{{townshipPrefixAbbr}}%#?&#039;</span>,</span>
+<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>    ];</span>
+<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a></span>
+<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a><span class="tok-com">     * &#039;Jalan&#039; &amp; &#039;Jln&#039; are more frequently used than &#039;Lorong&#039;</span></span>
+<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/List_of_roads_in_Kuala_Lumpur#Standard_translations</span></span>
+<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>    <span class="tok-kw">protected</span> <span class="tok-kw">static</span> <span class="tok-var">$streetPrefix</span> = [</span>
+<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>        <span class="tok-str">&#039;Jln&#039;</span>, <span class="tok-str">&#039;Jln&#039;</span>,</span>
+<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>        <span class="tok-str">&#039;Jalan&#039;</span>, <span class="tok-str">&#039;Jalan&#039;</span>, <span class="tok-str">&#039;Jalan&#039;</span>,</span>
+<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>        <span class="tok-str">&#039;Lorong&#039;</span>,</span>
+<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>    ];</span>
+<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a></span>
+<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/List_of_roads_in_Kuala_Lumpur</span></span>
+<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/List_of_roads_in_Ipoh</span></span>
+<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/Transportation_in_Seremban#Inner_city_roads</span></span>
+<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/List_of_streets_in_George_Town,_Penang</span></span>
+<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a>    <span class="tok-kw">protected</span> <span class="tok-kw">static</span> <span class="tok-var">$streetSuffix</span> = [</span>
+<span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a>        <span class="tok-str">&#039;Air Itam&#039;</span>, <span class="tok-str">&#039;Alor&#039;</span>, <span class="tok-str">&#039;Ampang&#039;</span>, <span class="tok-str">&#039;Ampang Hilir&#039;</span>, <span class="tok-str">&#039;Anson&#039;</span>, <span class="tok-str">&#039;Ariffin&#039;</span>,</span>
+<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a>        <span class="tok-str">&#039;Bangsar&#039;</span>, <span class="tok-str">&#039;Baru&#039;</span>, <span class="tok-str">&#039;Bellamy&#039;</span>, <span class="tok-str">&#039;Birch&#039;</span>, <span class="tok-str">&#039;Bijih Timah&#039;</span>, <span class="tok-str">&#039;Bukit Aman&#039;</span>, <span class="tok-str">&#039;Bukit Bintang&#039;</span>, <span class="tok-str">&#039;Bukit Petaling&#039;</span>, <span class="tok-str">&#039;Bukit Tunku&#039;</span>,</span>
+<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a>        <span class="tok-str">&#039;Cantonment&#039;</span>, <span class="tok-str">&#039;Cenderawasih&#039;</span>, <span class="tok-str">&#039;Chan Sow Lin&#039;</span>, <span class="tok-str">&#039;Chow Kit&#039;</span>, <span class="tok-str">&#039;Cinta&#039;</span>, <span class="tok-str">&#039;Cochrane&#039;</span>, <span class="tok-str">&#039;Conlay&#039;</span>,</span>
+<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a>        <span class="tok-str">&#039;D. S. Ramanathan&#039;</span>, <span class="tok-str">&#039;Damansara&#039;</span>, <span class="tok-str">&#039;Dang Wangi&#039;</span>, <span class="tok-str">&#039;Davis&#039;</span>, <span class="tok-str">&#039;Dewan Bahasa&#039;</span>, <span class="tok-str">&#039;Dato Abdul Rahman&#039;</span>, <span class="tok-str">&#039;Dato\&#039;Keramat&#039;</span>, <span class="tok-str">&#039;Dato\&#039; Maharaja Lela&#039;</span>, <span class="tok-str">&#039;Doraisamy&#039;</span>,</span>
+<span class="src-line" id="L88" data-diff="added"><a class="ln" href="#L88">88</a>        <span class="tok-str">&#039;Eaton&#039;</span>,</span>
+<span class="src-line" id="L89" data-diff="added"><a class="ln" href="#L89">89</a>        <span class="tok-str">&#039;Faraday&#039;</span>,</span>
+<span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a>        <span class="tok-str">&#039;Galloway&#039;</span>, <span class="tok-str">&#039;Genting Klang&#039;</span>, <span class="tok-str">&#039;Gereja&#039;</span>,</span>
+<span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a>        <span class="tok-str">&#039;Hang Jebat&#039;</span>, <span class="tok-str">&#039;Hang Kasturi&#039;</span>, <span class="tok-str">&#039;Hang Lekir&#039;</span>, <span class="tok-str">&#039;Hang Lekiu&#039;</span>, <span class="tok-str">&#039;Hang Tuah&#039;</span>, <span class="tok-str">&#039;Hospital&#039;</span>,</span>
+<span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a>        <span class="tok-str">&#039;Imbi&#039;</span>, <span class="tok-str">&#039;Istana&#039;</span>,</span>
+<span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a>        <span class="tok-str">&#039;Jelutong&#039;</span>,</span>
+<span class="src-line" id="L94" data-diff="added"><a class="ln" href="#L94">94</a>        <span class="tok-str">&#039;Kampung Attap&#039;</span>, <span class="tok-str">&#039;Kebun Bunga&#039;</span>, <span class="tok-str">&#039;Kedah&#039;</span>, <span class="tok-str">&#039;Keliling&#039;</span>, <span class="tok-str">&#039;Kia Peng&#039;</span>, <span class="tok-str">&#039;Kinabalu&#039;</span>, <span class="tok-str">&#039;Kuala Kangsar&#039;</span>, <span class="tok-str">&#039;Kuching&#039;</span>,</span>
+<span class="src-line" id="L95" data-diff="added"><a class="ln" href="#L95">95</a>        <span class="tok-str">&#039;Ledang&#039;</span>, <span class="tok-str">&#039;Lembah Permai&#039;</span>, <span class="tok-str">&#039;Loke Yew&#039;</span>, <span class="tok-str">&#039;Lt. Adnan&#039;</span>, <span class="tok-str">&#039;Lumba Kuda&#039;</span>,</span>
+<span class="src-line" id="L96" data-diff="added"><a class="ln" href="#L96">96</a>        <span class="tok-str">&#039;Madras&#039;</span>, <span class="tok-str">&#039;Magazine&#039;</span>, <span class="tok-str">&#039;Maharajalela&#039;</span>, <span class="tok-str">&#039;Masjid&#039;</span>, <span class="tok-str">&#039;Maxwell&#039;</span>, <span class="tok-str">&#039;Mohana Chandran&#039;</span>, <span class="tok-str">&#039;Muda&#039;</span>,</span>
+<span class="src-line" id="L97" data-diff="added"><a class="ln" href="#L97">97</a>        <span class="tok-str">&#039;P. Ramlee&#039;</span>, <span class="tok-str">&#039;Padang Kota Lama&#039;</span>, <span class="tok-str">&#039;Pahang&#039;</span>, <span class="tok-str">&#039;Pantai Baharu&#039;</span>, <span class="tok-str">&#039;Parlimen&#039;</span>, <span class="tok-str">&#039;Pasar&#039;</span>, <span class="tok-str">&#039;Pasar Besar&#039;</span>, <span class="tok-str">&#039;Perak&#039;</span>, <span class="tok-str">&#039;Perdana&#039;</span>, <span class="tok-str">&#039;Petaling&#039;</span>, <span class="tok-str">&#039;Prangin&#039;</span>, <span class="tok-str">&#039;Pudu&#039;</span>, <span class="tok-str">&#039;Pudu Lama&#039;</span>,</span>
+<span class="src-line" id="L98" data-diff="added"><a class="ln" href="#L98">98</a>        <span class="tok-str">&#039;Raja&#039;</span>, <span class="tok-str">&#039;Raja Abdullah&#039;</span>, <span class="tok-str">&#039;Raja Chulan&#039;</span>, <span class="tok-str">&#039;Raja Laut&#039;</span>, <span class="tok-str">&#039;Rakyat&#039;</span>, <span class="tok-str">&#039;Residensi&#039;</span>, <span class="tok-str">&#039;Robson&#039;</span>,</span>
+<span class="src-line" id="L99" data-diff="added"><a class="ln" href="#L99">99</a>        <span class="tok-str">&#039;S.P. Seenivasagam&#039;</span>, <span class="tok-str">&#039;Samarahan 1&#039;</span>, <span class="tok-str">&#039;Selamat&#039;</span>, <span class="tok-str">&#039;Sempadan&#039;</span>, <span class="tok-str">&#039;Sentul&#039;</span>, <span class="tok-str">&#039;Serian 1&#039;</span>, <span class="tok-str">&#039;Sasaran&#039;</span>, <span class="tok-str">&#039;Sin Chee&#039;</span>, <span class="tok-str">&#039;Sultan Abdul Samad&#039;</span>, <span class="tok-str">&#039;Sultan Azlan Shah&#039;</span>, <span class="tok-str">&#039;Sultan Iskandar&#039;</span>, <span class="tok-str">&#039;Sultan Ismail&#039;</span>, <span class="tok-str">&#039;Sultan Sulaiman&#039;</span>, <span class="tok-str">&#039;Sungai Besi&#039;</span>, <span class="tok-str">&#039;Syed Putra&#039;</span>,</span>
+<span class="src-line" id="L100" data-diff="added"><a class="ln" href="#L100">100</a>        <span class="tok-str">&#039;Tan Cheng Lock&#039;</span>, <span class="tok-str">&#039;Thambipillay&#039;</span>, <span class="tok-str">&#039;Tugu&#039;</span>, <span class="tok-str">&#039;Tuanku Abdul Halim&#039;</span>, <span class="tok-str">&#039;Tuanku Abdul Rahman&#039;</span>, <span class="tok-str">&#039;Tun Abdul Razak&#039;</span>, <span class="tok-str">&#039;Tun Dr Ismail&#039;</span>, <span class="tok-str">&#039;Tun H S Lee&#039;</span>, <span class="tok-str">&#039;Tun Ismail&#039;</span>, <span class="tok-str">&#039;Tun Perak&#039;</span>, <span class="tok-str">&#039;Tun Razak&#039;</span>, <span class="tok-str">&#039;Tun Sambanthan&#039;</span>,</span>
+<span class="src-line" id="L101" data-diff="added"><a class="ln" href="#L101">101</a>        <span class="tok-str">&#039;U-Thant&#039;</span>, <span class="tok-str">&#039;Utama&#039;</span>,</span>
+<span class="src-line" id="L102" data-diff="added"><a class="ln" href="#L102">102</a>        <span class="tok-str">&#039;Vermont&#039;</span>, <span class="tok-str">&#039;Vivekananda&#039;</span>,</span>
+<span class="src-line" id="L103" data-diff="added"><a class="ln" href="#L103">103</a>        <span class="tok-str">&#039;Wan Kadir&#039;</span>, <span class="tok-str">&#039;Wesley&#039;</span>, <span class="tok-str">&#039;Wisma Putra&#039;</span>,</span>
+<span class="src-line" id="L104" data-diff="added"><a class="ln" href="#L104">104</a>        <span class="tok-str">&#039;Yaacob Latif&#039;</span>, <span class="tok-str">&#039;Yap Ah Loy&#039;</span>, <span class="tok-str">&#039;Yap Ah Shak&#039;</span>, <span class="tok-str">&#039;Yap Kwan Seng&#039;</span>, <span class="tok-str">&#039;Yew&#039;</span>,</span>
+<span class="src-line" id="L105" data-diff="added"><a class="ln" href="#L105">105</a>        <span class="tok-str">&#039;Zaaba&#039;</span>, <span class="tok-str">&#039;Zainal Abidin&#039;</span>,</span>
+<span class="src-line" id="L106" data-diff="added"><a class="ln" href="#L106">106</a>    ];</span>
+<span class="src-line" id="L107" data-diff="added"><a class="ln" href="#L107">107</a></span>
+<span class="src-line" id="L108" data-diff="added"><a class="ln" href="#L108">108</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L109" data-diff="added"><a class="ln" href="#L109">109</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/List_of_Petaling_Jaya_city_sections</span></span>
+<span class="src-line" id="L110" data-diff="added"><a class="ln" href="#L110">110</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/UEP_Subang_Jaya#History</span></span>
+<span class="src-line" id="L111" data-diff="added"><a class="ln" href="#L111">111</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L112" data-diff="added"><a class="ln" href="#L112">112</a>    <span class="tok-kw">protected</span> <span class="tok-kw">static</span> <span class="tok-var">$townshipPrefixAbbr</span> = [</span>
+<span class="src-line" id="L113" data-diff="added"><a class="ln" href="#L113">113</a>        <span class="tok-str">&#039;SS&#039;</span>, <span class="tok-str">&#039;Seksyen &#039;</span>, <span class="tok-str">&#039;PJS&#039;</span>, <span class="tok-str">&#039;PJU&#039;</span>, <span class="tok-str">&#039;USJ &#039;</span>,</span>
+<span class="src-line" id="L114" data-diff="added"><a class="ln" href="#L114">114</a>    ];</span>
+<span class="src-line" id="L115" data-diff="added"><a class="ln" href="#L115">115</a></span>
+<span class="src-line" id="L116" data-diff="added"><a class="ln" href="#L116">116</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L117" data-diff="added"><a class="ln" href="#L117">117</a><span class="tok-com">     * &#039;Bandar&#039; and &#039;Taman&#039; are the most common township prefix</span></span>
+<span class="src-line" id="L118" data-diff="added"><a class="ln" href="#L118">118</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L119" data-diff="added"><a class="ln" href="#L119">119</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/Template:Greater_Kuala_Lumpur &gt; Townships</span></span>
+<span class="src-line" id="L120" data-diff="added"><a class="ln" href="#L120">120</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/Template:Johor &gt; Townships</span></span>
+<span class="src-line" id="L121" data-diff="added"><a class="ln" href="#L121">121</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/Template:Kedah &gt; Townships</span></span>
+<span class="src-line" id="L122" data-diff="added"><a class="ln" href="#L122">122</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/Template:Kelantan &gt; Townships</span></span>
+<span class="src-line" id="L123" data-diff="added"><a class="ln" href="#L123">123</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/Template:Melaka &gt; Townships</span></span>
+<span class="src-line" id="L124" data-diff="added"><a class="ln" href="#L124">124</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/Template:Negeri_Sembilan &gt; Townships</span></span>
+<span class="src-line" id="L125" data-diff="added"><a class="ln" href="#L125">125</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/Template:Perak &gt; Townships</span></span>
+<span class="src-line" id="L126" data-diff="added"><a class="ln" href="#L126">126</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/Template:Penang &gt; Townships</span></span>
+<span class="src-line" id="L127" data-diff="added"><a class="ln" href="#L127">127</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/Template:Selangor &gt; Townships</span></span>
+<span class="src-line" id="L128" data-diff="added"><a class="ln" href="#L128">128</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/Template:Terengganu &gt; Townships</span></span>
+<span class="src-line" id="L129" data-diff="added"><a class="ln" href="#L129">129</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L130" data-diff="added"><a class="ln" href="#L130">130</a>    <span class="tok-kw">protected</span> <span class="tok-kw">static</span> <span class="tok-var">$townshipPrefix</span> = [</span>
+<span class="src-line" id="L131" data-diff="added"><a class="ln" href="#L131">131</a>        <span class="tok-str">&#039;Alam&#039;</span>, <span class="tok-str">&#039;Apartment&#039;</span>, <span class="tok-str">&#039;Ara&#039;</span>,</span>
+<span class="src-line" id="L132" data-diff="added"><a class="ln" href="#L132">132</a>        <span class="tok-str">&#039;Bandar&#039;</span>, <span class="tok-str">&#039;Bandar&#039;</span>, <span class="tok-str">&#039;Bandar&#039;</span>, <span class="tok-str">&#039;Bandar&#039;</span>, <span class="tok-str">&#039;Bandar&#039;</span>, <span class="tok-str">&#039;Bandar&#039;</span>,</span>
+<span class="src-line" id="L133" data-diff="added"><a class="ln" href="#L133">133</a>        <span class="tok-str">&#039;Bandar Bukit&#039;</span>, <span class="tok-str">&#039;Bandar Seri&#039;</span>, <span class="tok-str">&#039;Bandar Sri&#039;</span>, <span class="tok-str">&#039;Bandar Baru&#039;</span>, <span class="tok-str">&#039;Batu&#039;</span>, <span class="tok-str">&#039;Bukit&#039;</span>,</span>
+<span class="src-line" id="L134" data-diff="added"><a class="ln" href="#L134">134</a>        <span class="tok-str">&#039;Desa&#039;</span>, <span class="tok-str">&#039;Damansara&#039;</span>,</span>
+<span class="src-line" id="L135" data-diff="added"><a class="ln" href="#L135">135</a>        <span class="tok-str">&#039;Kampung&#039;</span>, <span class="tok-str">&#039;Kampung Baru&#039;</span>, <span class="tok-str">&#039;Kampung Baru&#039;</span>, <span class="tok-str">&#039;Kondominium&#039;</span>, <span class="tok-str">&#039;Kota&#039;</span>,</span>
+<span class="src-line" id="L136" data-diff="added"><a class="ln" href="#L136">136</a>        <span class="tok-str">&#039;Laman&#039;</span>, <span class="tok-str">&#039;Lembah&#039;</span>,</span>
+<span class="src-line" id="L137" data-diff="added"><a class="ln" href="#L137">137</a>        <span class="tok-str">&#039;Medan&#039;</span>,</span>
+<span class="src-line" id="L138" data-diff="added"><a class="ln" href="#L138">138</a>        <span class="tok-str">&#039;Pandan&#039;</span>, <span class="tok-str">&#039;Pangsapuri&#039;</span>, <span class="tok-str">&#039;Petaling&#039;</span>, <span class="tok-str">&#039;Puncak&#039;</span>,</span>
+<span class="src-line" id="L139" data-diff="added"><a class="ln" href="#L139">139</a>        <span class="tok-str">&#039;Seri&#039;</span>, <span class="tok-str">&#039;Sri&#039;</span>,</span>
+<span class="src-line" id="L140" data-diff="added"><a class="ln" href="#L140">140</a>        <span class="tok-str">&#039;Taman&#039;</span>, <span class="tok-str">&#039;Taman&#039;</span>, <span class="tok-str">&#039;Taman&#039;</span>, <span class="tok-str">&#039;Taman&#039;</span>, <span class="tok-str">&#039;Taman&#039;</span>, <span class="tok-str">&#039;Taman&#039;</span>,</span>
+<span class="src-line" id="L141" data-diff="added"><a class="ln" href="#L141">141</a>        <span class="tok-str">&#039;Taman Desa&#039;</span>,</span>
+<span class="src-line" id="L142" data-diff="added"><a class="ln" href="#L142">142</a>    ];</span>
+<span class="src-line" id="L143" data-diff="added"><a class="ln" href="#L143">143</a>    <span class="tok-kw">protected</span> <span class="tok-kw">static</span> <span class="tok-var">$townshipSuffix</span> = [</span>
+<span class="src-line" id="L144" data-diff="added"><a class="ln" href="#L144">144</a>        <span class="tok-str">&#039;Aman&#039;</span>, <span class="tok-str">&#039;Amanjaya&#039;</span>, <span class="tok-str">&#039;Anggerik&#039;</span>, <span class="tok-str">&#039;Angkasa&#039;</span>, <span class="tok-str">&#039;Antarabangsa&#039;</span>, <span class="tok-str">&#039;Awan&#039;</span>,</span>
+<span class="src-line" id="L145" data-diff="added"><a class="ln" href="#L145">145</a>        <span class="tok-str">&#039;Bahagia&#039;</span>, <span class="tok-str">&#039;Bangsar&#039;</span>, <span class="tok-str">&#039;Baru&#039;</span>, <span class="tok-str">&#039;Belakong&#039;</span>, <span class="tok-str">&#039;Bendahara&#039;</span>, <span class="tok-str">&#039;Bestari&#039;</span>, <span class="tok-str">&#039;Bintang&#039;</span>, <span class="tok-str">&#039;Brickfields&#039;</span>,</span>
+<span class="src-line" id="L146" data-diff="added"><a class="ln" href="#L146">146</a>        <span class="tok-str">&#039;Casa&#039;</span>, <span class="tok-str">&#039;Changkat&#039;</span>, <span class="tok-str">&#039;Country Heights&#039;</span>,</span>
+<span class="src-line" id="L147" data-diff="added"><a class="ln" href="#L147">147</a>        <span class="tok-str">&#039;Damansara&#039;</span>, <span class="tok-str">&#039;Damai&#039;</span>, <span class="tok-str">&#039;Dato Harun&#039;</span>, <span class="tok-str">&#039;Delima&#039;</span>, <span class="tok-str">&#039;Duta&#039;</span>,</span>
+<span class="src-line" id="L148" data-diff="added"><a class="ln" href="#L148">148</a>        <span class="tok-str">&#039;Flora&#039;</span>,</span>
+<span class="src-line" id="L149" data-diff="added"><a class="ln" href="#L149">149</a>        <span class="tok-str">&#039;Gembira&#039;</span>, <span class="tok-str">&#039;Genting&#039;</span>,</span>
+<span class="src-line" id="L150" data-diff="added"><a class="ln" href="#L150">150</a>        <span class="tok-str">&#039;Harmoni&#039;</span>, <span class="tok-str">&#039;Hartamas&#039;</span>,</span>
+<span class="src-line" id="L151" data-diff="added"><a class="ln" href="#L151">151</a>        <span class="tok-str">&#039;Impian&#039;</span>, <span class="tok-str">&#039;Indah&#039;</span>, <span class="tok-str">&#039;Intan&#039;</span>,</span>
+<span class="src-line" id="L152" data-diff="added"><a class="ln" href="#L152">152</a>        <span class="tok-str">&#039;Jasa&#039;</span>, <span class="tok-str">&#039;Jaya&#039;</span>,</span>
+<span class="src-line" id="L153" data-diff="added"><a class="ln" href="#L153">153</a>        <span class="tok-str">&#039;Keramat&#039;</span>, <span class="tok-str">&#039;Kerinchi&#039;</span>, <span class="tok-str">&#039;Kiara&#039;</span>, <span class="tok-str">&#039;Kinrara&#039;</span>, <span class="tok-str">&#039;Kuchai&#039;</span>,</span>
+<span class="src-line" id="L154" data-diff="added"><a class="ln" href="#L154">154</a>        <span class="tok-str">&#039;Laksamana&#039;</span>,</span>
+<span class="src-line" id="L155" data-diff="added"><a class="ln" href="#L155">155</a>        <span class="tok-str">&#039;Mahkota&#039;</span>, <span class="tok-str">&#039;Maluri&#039;</span>, <span class="tok-str">&#039;Manggis&#039;</span>, <span class="tok-str">&#039;Maxwell&#039;</span>, <span class="tok-str">&#039;Medan&#039;</span>, <span class="tok-str">&#039;Melawati&#039;</span>, <span class="tok-str">&#039;Menjalara&#039;</span>, <span class="tok-str">&#039;Meru&#039;</span>, <span class="tok-str">&#039;Mulia&#039;</span>, <span class="tok-str">&#039;Mutiara&#039;</span>,</span>
+<span class="src-line" id="L156" data-diff="added"><a class="ln" href="#L156">156</a>        <span class="tok-str">&#039;Pahlawan&#039;</span>, <span class="tok-str">&#039;Perdana&#039;</span>, <span class="tok-str">&#039;Pertama&#039;</span>, <span class="tok-str">&#039;Permai&#039;</span>, <span class="tok-str">&#039;Pelangi&#039;</span>, <span class="tok-str">&#039;Petaling&#039;</span>, <span class="tok-str">&#039;Pinang&#039;</span>, <span class="tok-str">&#039;Puchong&#039;</span>, <span class="tok-str">&#039;Puteri&#039;</span>, <span class="tok-str">&#039;Putra&#039;</span>,</span>
+<span class="src-line" id="L157" data-diff="added"><a class="ln" href="#L157">157</a>        <span class="tok-str">&#039;Rahman&#039;</span>, <span class="tok-str">&#039;Rahmat&#039;</span>, <span class="tok-str">&#039;Raya&#039;</span>, <span class="tok-str">&#039;Razak&#039;</span>, <span class="tok-str">&#039;Ria&#039;</span>,</span>
+<span class="src-line" id="L158" data-diff="added"><a class="ln" href="#L158">158</a>        <span class="tok-str">&#039;Saujana&#039;</span>, <span class="tok-str">&#039;Segambut&#039;</span>, <span class="tok-str">&#039;Selamat&#039;</span>, <span class="tok-str">&#039;Selatan&#039;</span>, <span class="tok-str">&#039;Semarak&#039;</span>, <span class="tok-str">&#039;Sentosa&#039;</span>, <span class="tok-str">&#039;Seputeh&#039;</span>, <span class="tok-str">&#039;Setapak&#039;</span>, <span class="tok-str">&#039;Setia Jaya&#039;</span>, <span class="tok-str">&#039;Sinar&#039;</span>, <span class="tok-str">&#039;Sungai Besi&#039;</span>, <span class="tok-str">&#039;Sungai Buaya&#039;</span>, <span class="tok-str">&#039;Sungai Long&#039;</span>, <span class="tok-str">&#039;Suria&#039;</span>,</span>
+<span class="src-line" id="L159" data-diff="added"><a class="ln" href="#L159">159</a>        <span class="tok-str">&#039;Tasik Puteri&#039;</span>, <span class="tok-str">&#039;Tengah&#039;</span>, <span class="tok-str">&#039;Timur&#039;</span>, <span class="tok-str">&#039;Tinggi&#039;</span>, <span class="tok-str">&#039;Tropika&#039;</span>, <span class="tok-str">&#039;Tun Hussein Onn&#039;</span>, <span class="tok-str">&#039;Tun Perak&#039;</span>, <span class="tok-str">&#039;Tunku&#039;</span>,</span>
+<span class="src-line" id="L160" data-diff="added"><a class="ln" href="#L160">160</a>        <span class="tok-str">&#039;Ulu&#039;</span>, <span class="tok-str">&#039;Utama&#039;</span>, <span class="tok-str">&#039;Utara&#039;</span>,</span>
+<span class="src-line" id="L161" data-diff="added"><a class="ln" href="#L161">161</a>        <span class="tok-str">&#039;Wangi&#039;</span>,</span>
+<span class="src-line" id="L162" data-diff="added"><a class="ln" href="#L162">162</a>    ];</span>
+<span class="src-line" id="L163" data-diff="added"><a class="ln" href="#L163">163</a></span>
+<span class="src-line" id="L164" data-diff="added"><a class="ln" href="#L164">164</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L165" data-diff="added"><a class="ln" href="#L165">165</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/Template:Greater_Kuala_Lumpur</span></span>
+<span class="src-line" id="L166" data-diff="added"><a class="ln" href="#L166">166</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/Template:Johor</span></span>
+<span class="src-line" id="L167" data-diff="added"><a class="ln" href="#L167">167</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/Template:Kedah</span></span>
+<span class="src-line" id="L168" data-diff="added"><a class="ln" href="#L168">168</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/Template:Kelantan</span></span>
+<span class="src-line" id="L169" data-diff="added"><a class="ln" href="#L169">169</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/Template:Labuan</span></span>
+<span class="src-line" id="L170" data-diff="added"><a class="ln" href="#L170">170</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/Template:Melaka</span></span>
+<span class="src-line" id="L171" data-diff="added"><a class="ln" href="#L171">171</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/Template:Negeri_Sembilan</span></span>
+<span class="src-line" id="L172" data-diff="added"><a class="ln" href="#L172">172</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/Template:Pahang</span></span>
+<span class="src-line" id="L173" data-diff="added"><a class="ln" href="#L173">173</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/Template:Perak</span></span>
+<span class="src-line" id="L174" data-diff="added"><a class="ln" href="#L174">174</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/Template:Perlis</span></span>
+<span class="src-line" id="L175" data-diff="added"><a class="ln" href="#L175">175</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/Template:Penang</span></span>
+<span class="src-line" id="L176" data-diff="added"><a class="ln" href="#L176">176</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/Template:Sabah</span></span>
+<span class="src-line" id="L177" data-diff="added"><a class="ln" href="#L177">177</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/Template:Sarawak</span></span>
+<span class="src-line" id="L178" data-diff="added"><a class="ln" href="#L178">178</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/Template:Selangor</span></span>
+<span class="src-line" id="L179" data-diff="added"><a class="ln" href="#L179">179</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/Template:Terengganu</span></span>
+<span class="src-line" id="L180" data-diff="added"><a class="ln" href="#L180">180</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L181" data-diff="added"><a class="ln" href="#L181">181</a>    <span class="tok-kw">protected</span> <span class="tok-kw">static</span> <span class="tok-var">$towns</span> = [</span>
+<span class="src-line" id="L182" data-diff="added"><a class="ln" href="#L182">182</a>        <span class="tok-str">&#039;johor&#039;</span> =&gt; [</span>
+<span class="src-line" id="L183" data-diff="added"><a class="ln" href="#L183">183</a>            <span class="tok-str">&#039;Ayer Hitam&#039;</span>,</span>
+<span class="src-line" id="L184" data-diff="added"><a class="ln" href="#L184">184</a>            <span class="tok-str">&#039;Batu Pahat&#039;</span>, <span class="tok-str">&#039;Bukit Gambir&#039;</span>, <span class="tok-str">&#039;Bukit Kepong&#039;</span>, <span class="tok-str">&#039;Bukit Naning&#039;</span>,</span>
+<span class="src-line" id="L185" data-diff="added"><a class="ln" href="#L185">185</a>            <span class="tok-str">&#039;Desaru&#039;</span>,</span>
+<span class="src-line" id="L186" data-diff="added"><a class="ln" href="#L186">186</a>            <span class="tok-str">&#039;Endau&#039;</span>,</span>
+<span class="src-line" id="L187" data-diff="added"><a class="ln" href="#L187">187</a>            <span class="tok-str">&#039;Gelang Patah&#039;</span>, <span class="tok-str">&#039;Gemas Baharu&#039;</span>,</span>
+<span class="src-line" id="L188" data-diff="added"><a class="ln" href="#L188">188</a>            <span class="tok-str">&#039;Iskandar Puteri&#039;</span>,</span>
+<span class="src-line" id="L189" data-diff="added"><a class="ln" href="#L189">189</a>            <span class="tok-str">&#039;Jementah&#039;</span>, <span class="tok-str">&#039;Johor Lama&#039;</span>, <span class="tok-str">&#039;Johor Bahru&#039;</span>,</span>
+<span class="src-line" id="L190" data-diff="added"><a class="ln" href="#L190">190</a>            <span class="tok-str">&#039;Kempas&#039;</span>, <span class="tok-str">&#039;Kluang&#039;</span>, <span class="tok-str">&#039;Kota Iskandar&#039;</span>, <span class="tok-str">&#039;Kota Tinggi&#039;</span>, <span class="tok-str">&#039;Kukup&#039;</span>, <span class="tok-str">&#039;Kulai&#039;</span>,</span>
+<span class="src-line" id="L191" data-diff="added"><a class="ln" href="#L191">191</a>            <span class="tok-str">&#039;Labis &#039;</span>, <span class="tok-str">&#039;Larkin&#039;</span>, <span class="tok-str">&#039;Layang-Layang&#039;</span>,</span>
+<span class="src-line" id="L192" data-diff="added"><a class="ln" href="#L192">192</a>            <span class="tok-str">&#039;Mersing&#039;</span>, <span class="tok-str">&#039;Muar&#039;</span>,</span>
+<span class="src-line" id="L193" data-diff="added"><a class="ln" href="#L193">193</a>            <span class="tok-str">&#039;Pagoh&#039;</span>, <span class="tok-str">&#039;Paloh&#039;</span>, <span class="tok-str">&#039;Parit Jawa&#039;</span>, <span class="tok-str">&#039;Pasir Gudang&#039;</span>, <span class="tok-str">&#039;Pekan Nanas&#039;</span>, <span class="tok-str">&#039;Permas Jaya&#039;</span>, <span class="tok-str">&#039;Pontian Kechil&#039;</span>,</span>
+<span class="src-line" id="L194" data-diff="added"><a class="ln" href="#L194">194</a>            <span class="tok-str">&#039;Renggam&#039;</span>,</span>
+<span class="src-line" id="L195" data-diff="added"><a class="ln" href="#L195">195</a>            <span class="tok-str">&#039;Segamat&#039;</span>, <span class="tok-str">&#039;Senai&#039;</span>, <span class="tok-str">&#039;Simpang Renggam&#039;</span>, <span class="tok-str">&#039;Skudai&#039;</span>, <span class="tok-str">&#039;Sri Gading&#039;</span>,</span>
+<span class="src-line" id="L196" data-diff="added"><a class="ln" href="#L196">196</a>            <span class="tok-str">&#039;Tangkak&#039;</span>, <span class="tok-str">&#039;Tebrau&#039;</span>,</span>
+<span class="src-line" id="L197" data-diff="added"><a class="ln" href="#L197">197</a>            <span class="tok-str">&#039;Ulu Tiram&#039;</span>,</span>
+<span class="src-line" id="L198" data-diff="added"><a class="ln" href="#L198">198</a>            <span class="tok-str">&#039;Yong Peng&#039;</span>,</span>
+<span class="src-line" id="L199" data-diff="added"><a class="ln" href="#L199">199</a>        ],</span>
+<span class="src-line" id="L200" data-diff="added"><a class="ln" href="#L200">200</a>        <span class="tok-str">&#039;kedah&#039;</span> =&gt; [</span>
+<span class="src-line" id="L201" data-diff="added"><a class="ln" href="#L201">201</a>            <span class="tok-str">&#039;Alor Setar&#039;</span>,</span>
+<span class="src-line" id="L202" data-diff="added"><a class="ln" href="#L202">202</a>            <span class="tok-str">&#039;Baling&#039;</span>, <span class="tok-str">&#039;Bukit Kayu Hitam&#039;</span>,</span>
+<span class="src-line" id="L203" data-diff="added"><a class="ln" href="#L203">203</a>            <span class="tok-str">&#039;Changlun&#039;</span>,</span>
+<span class="src-line" id="L204" data-diff="added"><a class="ln" href="#L204">204</a>            <span class="tok-str">&#039;Durian Burung&#039;</span>,</span>
+<span class="src-line" id="L205" data-diff="added"><a class="ln" href="#L205">205</a>            <span class="tok-str">&#039;Gurun&#039;</span>,</span>
+<span class="src-line" id="L206" data-diff="added"><a class="ln" href="#L206">206</a>            <span class="tok-str">&#039;Jitra&#039;</span>,</span>
+<span class="src-line" id="L207" data-diff="added"><a class="ln" href="#L207">207</a>            <span class="tok-str">&#039;Kepala Batas&#039;</span>, <span class="tok-str">&#039;Kuah&#039;</span>, <span class="tok-str">&#039;Kuala Kedah&#039;</span>, <span class="tok-str">&#039;Kuala Ketil&#039;</span>, <span class="tok-str">&#039;Kulim&#039;</span>,</span>
+<span class="src-line" id="L208" data-diff="added"><a class="ln" href="#L208">208</a>            <span class="tok-str">&#039;Langgar&#039;</span>, <span class="tok-str">&#039;Lunas&#039;</span>,</span>
+<span class="src-line" id="L209" data-diff="added"><a class="ln" href="#L209">209</a>            <span class="tok-str">&#039;Merbok&#039;</span>,</span>
+<span class="src-line" id="L210" data-diff="added"><a class="ln" href="#L210">210</a>            <span class="tok-str">&#039;Padang Serai&#039;</span>, <span class="tok-str">&#039;Pendang&#039;</span>,</span>
+<span class="src-line" id="L211" data-diff="added"><a class="ln" href="#L211">211</a>            <span class="tok-str">&#039;Serdang&#039;</span>, <span class="tok-str">&#039;Sintok&#039;</span>, <span class="tok-str">&#039;Sungai Petani&#039;</span>,</span>
+<span class="src-line" id="L212" data-diff="added"><a class="ln" href="#L212">212</a>            <span class="tok-str">&#039;Tawar, Baling&#039;</span>,</span>
+<span class="src-line" id="L213" data-diff="added"><a class="ln" href="#L213">213</a>            <span class="tok-str">&#039;Yan&#039;</span>,</span>
+<span class="src-line" id="L214" data-diff="added"><a class="ln" href="#L214">214</a>        ],</span>
+<span class="src-line" id="L215" data-diff="added"><a class="ln" href="#L215">215</a>        <span class="tok-str">&#039;kelantan&#039;</span> =&gt; [</span>
+<span class="src-line" id="L216" data-diff="added"><a class="ln" href="#L216">216</a>            <span class="tok-str">&#039;Bachok&#039;</span>, <span class="tok-str">&#039;Bunut Payong&#039;</span>,</span>
+<span class="src-line" id="L217" data-diff="added"><a class="ln" href="#L217">217</a>            <span class="tok-str">&#039;Dabong&#039;</span>,</span>
+<span class="src-line" id="L218" data-diff="added"><a class="ln" href="#L218">218</a>            <span class="tok-str">&#039;Gua Musang&#039;</span>,</span>
+<span class="src-line" id="L219" data-diff="added"><a class="ln" href="#L219">219</a>            <span class="tok-str">&#039;Jeli&#039;</span>,</span>
+<span class="src-line" id="L220" data-diff="added"><a class="ln" href="#L220">220</a>            <span class="tok-str">&#039;Ketereh&#039;</span>, <span class="tok-str">&#039;Kota Bharu&#039;</span>, <span class="tok-str">&#039;Kuala Krai&#039;</span>,</span>
+<span class="src-line" id="L221" data-diff="added"><a class="ln" href="#L221">221</a>            <span class="tok-str">&#039;Lojing&#039;</span>,</span>
+<span class="src-line" id="L222" data-diff="added"><a class="ln" href="#L222">222</a>            <span class="tok-str">&#039;Machang&#039;</span>,</span>
+<span class="src-line" id="L223" data-diff="added"><a class="ln" href="#L223">223</a>            <span class="tok-str">&#039;Pasir Mas&#039;</span>, <span class="tok-str">&#039;Pasir Puteh&#039;</span>,</span>
+<span class="src-line" id="L224" data-diff="added"><a class="ln" href="#L224">224</a>            <span class="tok-str">&#039;Rantau Panjang&#039;</span>,</span>
+<span class="src-line" id="L225" data-diff="added"><a class="ln" href="#L225">225</a>            <span class="tok-str">&#039;Salor&#039;</span>,</span>
+<span class="src-line" id="L226" data-diff="added"><a class="ln" href="#L226">226</a>            <span class="tok-str">&#039;Tok Bali&#039;</span>,</span>
+<span class="src-line" id="L227" data-diff="added"><a class="ln" href="#L227">227</a>            <span class="tok-str">&#039;Wakaf Bharu&#039;</span>, <span class="tok-str">&#039;Wakaf Che Yeh&#039;</span>,</span>
+<span class="src-line" id="L228" data-diff="added"><a class="ln" href="#L228">228</a>        ],</span>
+<span class="src-line" id="L229" data-diff="added"><a class="ln" href="#L229">229</a>        <span class="tok-str">&#039;kl&#039;</span> =&gt; [</span>
+<span class="src-line" id="L230" data-diff="added"><a class="ln" href="#L230">230</a>            <span class="tok-str">&#039;Ampang&#039;</span>,</span>
+<span class="src-line" id="L231" data-diff="added"><a class="ln" href="#L231">231</a>            <span class="tok-str">&#039;Bandar Tasik Selatan&#039;</span>, <span class="tok-str">&#039;Bandar Tun Razak&#039;</span>, <span class="tok-str">&#039;Bangsar&#039;</span>, <span class="tok-str">&#039;Batu&#039;</span>, <span class="tok-str">&#039;Brickfields&#039;</span>, <span class="tok-str">&#039;Bukit Bintang&#039;</span>, <span class="tok-str">&#039;Bukit Jalil&#039;</span>, <span class="tok-str">&#039;Bukit Tunku&#039;</span>,</span>
+<span class="src-line" id="L232" data-diff="added"><a class="ln" href="#L232">232</a>            <span class="tok-str">&#039;Cheras&#039;</span>, <span class="tok-str">&#039;Chow Kit&#039;</span>,</span>
+<span class="src-line" id="L233" data-diff="added"><a class="ln" href="#L233">233</a>            <span class="tok-str">&#039;Damansara Town Centre&#039;</span>, <span class="tok-str">&#039;Dang Wangi&#039;</span>, <span class="tok-str">&#039;Desa Petaling&#039;</span>, <span class="tok-str">&#039;Desa Tun Hussein Onn&#039;</span>,</span>
+<span class="src-line" id="L234" data-diff="added"><a class="ln" href="#L234">234</a>            <span class="tok-str">&#039;Jinjang&#039;</span>,</span>
+<span class="src-line" id="L235" data-diff="added"><a class="ln" href="#L235">235</a>            <span class="tok-str">&#039;Kampung Baru&#039;</span>, <span class="tok-str">&#039;Kampung Kasipillay&#039;</span>, <span class="tok-str">&#039;Kampung Pandan&#039;</span>, <span class="tok-str">&#039;Kampung Sungai Penchala&#039;</span>, <span class="tok-str">&#039;Kepong&#039;</span>, <span class="tok-str">&#039;KLCC&#039;</span>, <span class="tok-str">&#039;Kuchai Lama&#039;</span>,</span>
+<span class="src-line" id="L236" data-diff="added"><a class="ln" href="#L236">236</a>            <span class="tok-str">&#039;Lake Gardens&#039;</span>, <span class="tok-str">&#039;Lembah Pantai&#039;</span>,</span>
+<span class="src-line" id="L237" data-diff="added"><a class="ln" href="#L237">237</a>            <span class="tok-str">&#039;Medan Tuanku&#039;</span>, <span class="tok-str">&#039;Mid Valley City&#039;</span>, <span class="tok-str">&#039;Mont Kiara&#039;</span>,</span>
+<span class="src-line" id="L238" data-diff="added"><a class="ln" href="#L238">238</a>            <span class="tok-str">&#039;Pantai Dalam&#039;</span>, <span class="tok-str">&#039;Pudu&#039;</span>,</span>
+<span class="src-line" id="L239" data-diff="added"><a class="ln" href="#L239">239</a>            <span class="tok-str">&#039;Salak South&#039;</span>, <span class="tok-str">&#039;Segambut&#039;</span>, <span class="tok-str">&#039;Semarak&#039;</span>, <span class="tok-str">&#039;Sentul&#039;</span>, <span class="tok-str">&#039;Setapak&#039;</span>, <span class="tok-str">&#039;Setiawangsa&#039;</span>, <span class="tok-str">&#039;Seputeh&#039;</span>, <span class="tok-str">&#039;Sri Hartamas&#039;</span>, <span class="tok-str">&#039;Sri Petaling&#039;</span>, <span class="tok-str">&#039;Sungai Besi&#039;</span>,</span>
+<span class="src-line" id="L240" data-diff="added"><a class="ln" href="#L240">240</a>            <span class="tok-str">&#039;Taman Desa&#039;</span>, <span class="tok-str">&#039;Taman Melawati&#039;</span>, <span class="tok-str">&#039;Taman OUG&#039;</span>, <span class="tok-str">&#039;Taman Tun Dr Ismail&#039;</span>, <span class="tok-str">&#039;Taman U-Thant&#039;</span>, <span class="tok-str">&#039;Taman Wahyu&#039;</span>, <span class="tok-str">&#039;Titiwangsa&#039;</span>, <span class="tok-str">&#039;Tun Razak Exchange&#039;</span>,</span>
+<span class="src-line" id="L241" data-diff="added"><a class="ln" href="#L241">241</a>            <span class="tok-str">&#039;Wangsa Maju&#039;</span>,</span>
+<span class="src-line" id="L242" data-diff="added"><a class="ln" href="#L242">242</a>        ],</span>
+<span class="src-line" id="L243" data-diff="added"><a class="ln" href="#L243">243</a>        <span class="tok-str">&#039;labuan&#039;</span> =&gt; [</span>
+<span class="src-line" id="L244" data-diff="added"><a class="ln" href="#L244">244</a>            <span class="tok-str">&#039;Batu Manikar&#039;</span>,</span>
+<span class="src-line" id="L245" data-diff="added"><a class="ln" href="#L245">245</a>            <span class="tok-str">&#039;Kiamsam&#039;</span>,</span>
+<span class="src-line" id="L246" data-diff="added"><a class="ln" href="#L246">246</a>            <span class="tok-str">&#039;Layang-Layang&#039;</span>,</span>
+<span class="src-line" id="L247" data-diff="added"><a class="ln" href="#L247">247</a>            <span class="tok-str">&#039;Rancha-Rancha&#039;</span>,</span>
+<span class="src-line" id="L248" data-diff="added"><a class="ln" href="#L248">248</a>        ],</span>
+<span class="src-line" id="L249" data-diff="added"><a class="ln" href="#L249">249</a>        <span class="tok-str">&#039;melaka&#039;</span> =&gt; [</span>
+<span class="src-line" id="L250" data-diff="added"><a class="ln" href="#L250">250</a>            <span class="tok-str">&#039;Alor Gajah&#039;</span>,</span>
+<span class="src-line" id="L251" data-diff="added"><a class="ln" href="#L251">251</a>            <span class="tok-str">&#039;Bandaraya Melaka&#039;</span>, <span class="tok-str">&#039;Batu Berendam&#039;</span>, <span class="tok-str">&#039;Bukit Beruang&#039;</span>, <span class="tok-str">&#039;Bukit Katil&#039;</span>,</span>
+<span class="src-line" id="L252" data-diff="added"><a class="ln" href="#L252">252</a>            <span class="tok-str">&#039;Cheng&#039;</span>,</span>
+<span class="src-line" id="L253" data-diff="added"><a class="ln" href="#L253">253</a>            <span class="tok-str">&#039;Durian Tunggal&#039;</span>,</span>
+<span class="src-line" id="L254" data-diff="added"><a class="ln" href="#L254">254</a>            <span class="tok-str">&#039;Hang Tuah Jaya&#039;</span>,</span>
+<span class="src-line" id="L255" data-diff="added"><a class="ln" href="#L255">255</a>            <span class="tok-str">&#039;Jasin&#039;</span>,</span>
+<span class="src-line" id="L256" data-diff="added"><a class="ln" href="#L256">256</a>            <span class="tok-str">&#039;Klebang&#039;</span>,</span>
+<span class="src-line" id="L257" data-diff="added"><a class="ln" href="#L257">257</a>            <span class="tok-str">&#039;Lubuk China&#039;</span>,</span>
+<span class="src-line" id="L258" data-diff="added"><a class="ln" href="#L258">258</a>            <span class="tok-str">&#039;Masjid Tanah&#039;</span>,</span>
+<span class="src-line" id="L259" data-diff="added"><a class="ln" href="#L259">259</a>            <span class="tok-str">&#039;Naning&#039;</span>,</span>
+<span class="src-line" id="L260" data-diff="added"><a class="ln" href="#L260">260</a>            <span class="tok-str">&#039;Pekan Asahan&#039;</span>,</span>
+<span class="src-line" id="L261" data-diff="added"><a class="ln" href="#L261">261</a>            <span class="tok-str">&#039;Ramuan China&#039;</span>,</span>
+<span class="src-line" id="L262" data-diff="added"><a class="ln" href="#L262">262</a>            <span class="tok-str">&#039;Simpang Ampat&#039;</span>,</span>
+<span class="src-line" id="L263" data-diff="added"><a class="ln" href="#L263">263</a>            <span class="tok-str">&#039;Tanjung Bidara&#039;</span>, <span class="tok-str">&#039;Telok Mas&#039;</span>,</span>
+<span class="src-line" id="L264" data-diff="added"><a class="ln" href="#L264">264</a>            <span class="tok-str">&#039;Umbai&#039;</span>,</span>
+<span class="src-line" id="L265" data-diff="added"><a class="ln" href="#L265">265</a>        ],</span>
+<span class="src-line" id="L266" data-diff="added"><a class="ln" href="#L266">266</a>        <span class="tok-str">&#039;nsembilan&#039;</span> =&gt; [</span>
+<span class="src-line" id="L267" data-diff="added"><a class="ln" href="#L267">267</a>            <span class="tok-str">&#039;Ayer Kuning&#039;</span>, <span class="tok-str">&#039;Ampangan&#039;</span>,</span>
+<span class="src-line" id="L268" data-diff="added"><a class="ln" href="#L268">268</a>            <span class="tok-str">&#039;Bahau&#039;</span>, <span class="tok-str">&#039;Batang Benar&#039;</span>,</span>
+<span class="src-line" id="L269" data-diff="added"><a class="ln" href="#L269">269</a>            <span class="tok-str">&#039;Chembong&#039;</span>,</span>
+<span class="src-line" id="L270" data-diff="added"><a class="ln" href="#L270">270</a>            <span class="tok-str">&#039;Dangi&#039;</span>,</span>
+<span class="src-line" id="L271" data-diff="added"><a class="ln" href="#L271">271</a>            <span class="tok-str">&#039;Gemas&#039;</span>,</span>
+<span class="src-line" id="L272" data-diff="added"><a class="ln" href="#L272">272</a>            <span class="tok-str">&#039;Juasseh&#039;</span>,</span>
+<span class="src-line" id="L273" data-diff="added"><a class="ln" href="#L273">273</a>            <span class="tok-str">&#039;Kuala Pilah&#039;</span>,</span>
+<span class="src-line" id="L274" data-diff="added"><a class="ln" href="#L274">274</a>            <span class="tok-str">&#039;Labu&#039;</span>, <span class="tok-str">&#039;Lenggeng&#039;</span>, <span class="tok-str">&#039;Linggi&#039;</span>,</span>
+<span class="src-line" id="L275" data-diff="added"><a class="ln" href="#L275">275</a>            <span class="tok-str">&#039;Mantin&#039;</span>,</span>
+<span class="src-line" id="L276" data-diff="added"><a class="ln" href="#L276">276</a>            <span class="tok-str">&#039;Nilai&#039;</span>,</span>
+<span class="src-line" id="L277" data-diff="added"><a class="ln" href="#L277">277</a>            <span class="tok-str">&#039;Pajam&#039;</span>, <span class="tok-str">&#039;Pedas&#039;</span>, <span class="tok-str">&#039;Pengkalan Kempas&#039;</span>, <span class="tok-str">&#039;Port Dickson&#039;</span>,</span>
+<span class="src-line" id="L278" data-diff="added"><a class="ln" href="#L278">278</a>            <span class="tok-str">&#039;Rantau&#039;</span>, <span class="tok-str">&#039;Rompin&#039;</span>,</span>
+<span class="src-line" id="L279" data-diff="added"><a class="ln" href="#L279">279</a>            <span class="tok-str">&#039;Senawang&#039;</span>, <span class="tok-str">&#039;Seremban&#039;</span>, <span class="tok-str">&#039;Sungai Gadut&#039;</span>,</span>
+<span class="src-line" id="L280" data-diff="added"><a class="ln" href="#L280">280</a>            <span class="tok-str">&#039;Tampin&#039;</span>, <span class="tok-str">&#039;Tiroi&#039;</span>,</span>
+<span class="src-line" id="L281" data-diff="added"><a class="ln" href="#L281">281</a>        ],</span>
+<span class="src-line" id="L282" data-diff="added"><a class="ln" href="#L282">282</a>        <span class="tok-str">&#039;pahang&#039;</span> =&gt; [</span>
+<span class="src-line" id="L283" data-diff="added"><a class="ln" href="#L283">283</a>            <span class="tok-str">&#039;Bandar Tun Razak&#039;</span>, <span class="tok-str">&#039;Bentong&#039;</span>, <span class="tok-str">&#039;Brinchang&#039;</span>, <span class="tok-str">&#039;Bukit Fraser&#039;</span>, <span class="tok-str">&#039;Bukit Tinggi&#039;</span>,</span>
+<span class="src-line" id="L284" data-diff="added"><a class="ln" href="#L284">284</a>            <span class="tok-str">&#039;Chendor&#039;</span>,</span>
+<span class="src-line" id="L285" data-diff="added"><a class="ln" href="#L285">285</a>            <span class="tok-str">&#039;Gambang&#039;</span>, <span class="tok-str">&#039;Genting Highlands&#039;</span>, <span class="tok-str">&#039;Genting Sempah&#039;</span>,</span>
+<span class="src-line" id="L286" data-diff="added"><a class="ln" href="#L286">286</a>            <span class="tok-str">&#039;Jerantut&#039;</span>,</span>
+<span class="src-line" id="L287" data-diff="added"><a class="ln" href="#L287">287</a>            <span class="tok-str">&#039;Karak&#039;</span>, <span class="tok-str">&#039;Kemayan&#039;</span>, <span class="tok-str">&#039;Kota Shahbandar&#039;</span>, <span class="tok-str">&#039;Kuala Lipis&#039;</span>, <span class="tok-str">&#039;Kuala Pahang&#039;</span>, <span class="tok-str">&#039;Kuala Rompin&#039;</span>, <span class="tok-str">&#039;Kuantan&#039;</span>,</span>
+<span class="src-line" id="L288" data-diff="added"><a class="ln" href="#L288">288</a>            <span class="tok-str">&#039;Lanchang&#039;</span>, <span class="tok-str">&#039;Lubuk Paku&#039;</span>,</span>
+<span class="src-line" id="L289" data-diff="added"><a class="ln" href="#L289">289</a>            <span class="tok-str">&#039;Maran&#039;</span>, <span class="tok-str">&#039;Mengkuang&#039;</span>, <span class="tok-str">&#039;Mentakab&#039;</span>,</span>
+<span class="src-line" id="L290" data-diff="added"><a class="ln" href="#L290">290</a>            <span class="tok-str">&#039;Nenasi&#039;</span>,</span>
+<span class="src-line" id="L291" data-diff="added"><a class="ln" href="#L291">291</a>            <span class="tok-str">&#039;Panching&#039;</span>,</span>
+<span class="src-line" id="L292" data-diff="added"><a class="ln" href="#L292">292</a>            <span class="tok-str">&#039;Pekan&#039;</span>, <span class="tok-str">&#039;Penor&#039;</span>,</span>
+<span class="src-line" id="L293" data-diff="added"><a class="ln" href="#L293">293</a>            <span class="tok-str">&#039;Raub&#039;</span>,</span>
+<span class="src-line" id="L294" data-diff="added"><a class="ln" href="#L294">294</a>            <span class="tok-str">&#039;Sebertak&#039;</span>, <span class="tok-str">&#039;Sungai Lembing&#039;</span>,</span>
+<span class="src-line" id="L295" data-diff="added"><a class="ln" href="#L295">295</a>            <span class="tok-str">&#039;Tanah Rata&#039;</span>, <span class="tok-str">&#039;Tanjung Sepat&#039;</span>, <span class="tok-str">&#039;Tasik Chini&#039;</span>, <span class="tok-str">&#039;Temerloh&#039;</span>, <span class="tok-str">&#039;Teriang&#039;</span>, <span class="tok-str">&#039;Tringkap&#039;</span>,</span>
+<span class="src-line" id="L296" data-diff="added"><a class="ln" href="#L296">296</a>        ],</span>
+<span class="src-line" id="L297" data-diff="added"><a class="ln" href="#L297">297</a>        <span class="tok-str">&#039;penang&#039;</span> =&gt; [</span>
+<span class="src-line" id="L298" data-diff="added"><a class="ln" href="#L298">298</a>            <span class="tok-str">&#039;Air Itam&#039;</span>,</span>
+<span class="src-line" id="L299" data-diff="added"><a class="ln" href="#L299">299</a>            <span class="tok-str">&#039;Balik Pulau&#039;</span>, <span class="tok-str">&#039;Batu Ferringhi&#039;</span>, <span class="tok-str">&#039;Batu Kawan&#039;</span>, <span class="tok-str">&#039;Bayan Lepas&#039;</span>, <span class="tok-str">&#039;Bukit Mertajam&#039;</span>, <span class="tok-str">&#039;Butterworth&#039;</span>,</span>
+<span class="src-line" id="L300" data-diff="added"><a class="ln" href="#L300">300</a>            <span class="tok-str">&#039;Gelugor&#039;</span>, <span class="tok-str">&#039;George Town&#039;</span>,</span>
+<span class="src-line" id="L301" data-diff="added"><a class="ln" href="#L301">301</a>            <span class="tok-str">&#039;Jelutong&#039;</span>,</span>
+<span class="src-line" id="L302" data-diff="added"><a class="ln" href="#L302">302</a>            <span class="tok-str">&#039;Kepala Batas&#039;</span>,</span>
+<span class="src-line" id="L303" data-diff="added"><a class="ln" href="#L303">303</a>            <span class="tok-str">&#039;Nibong Tebal&#039;</span>,</span>
+<span class="src-line" id="L304" data-diff="added"><a class="ln" href="#L304">304</a>            <span class="tok-str">&#039;Permatang Pauh&#039;</span>, <span class="tok-str">&#039;Pulau Tikus&#039;</span>,</span>
+<span class="src-line" id="L305" data-diff="added"><a class="ln" href="#L305">305</a>            <span class="tok-str">&#039;Simpang Ampat&#039;</span>,</span>
+<span class="src-line" id="L306" data-diff="added"><a class="ln" href="#L306">306</a>            <span class="tok-str">&#039;Tanjung Bungah&#039;</span>, <span class="tok-str">&#039;Tanjung Tokong&#039;</span>,</span>
+<span class="src-line" id="L307" data-diff="added"><a class="ln" href="#L307">307</a>        ],</span>
+<span class="src-line" id="L308" data-diff="added"><a class="ln" href="#L308">308</a>        <span class="tok-str">&#039;perak&#039;</span> =&gt; [</span>
+<span class="src-line" id="L309" data-diff="added"><a class="ln" href="#L309">309</a>            <span class="tok-str">&#039;Ayer Tawar&#039;</span>,</span>
+<span class="src-line" id="L310" data-diff="added"><a class="ln" href="#L310">310</a>            <span class="tok-str">&#039;Bagan Serai&#039;</span>, <span class="tok-str">&#039;Batu Gajah&#039;</span>, <span class="tok-str">&#039;Behrang&#039;</span>, <span class="tok-str">&#039;Bidor&#039;</span>, <span class="tok-str">&#039;Bukit Gantang&#039;</span>, <span class="tok-str">&#039;Bukit Merah&#039;</span>,</span>
+<span class="src-line" id="L311" data-diff="added"><a class="ln" href="#L311">311</a>            <span class="tok-str">&#039;Changkat Jering&#039;</span>, <span class="tok-str">&#039;Chemor&#039;</span>, <span class="tok-str">&#039;Chenderiang&#039;</span>,</span>
+<span class="src-line" id="L312" data-diff="added"><a class="ln" href="#L312">312</a>            <span class="tok-str">&#039;Damar Laut&#039;</span>,</span>
+<span class="src-line" id="L313" data-diff="added"><a class="ln" href="#L313">313</a>            <span class="tok-str">&#039;Gerik&#039;</span>, <span class="tok-str">&#039;Gopeng&#039;</span>, <span class="tok-str">&#039;Gua Tempurung&#039;</span>,</span>
+<span class="src-line" id="L314" data-diff="added"><a class="ln" href="#L314">314</a>            <span class="tok-str">&#039;Hutan Melintang&#039;</span>,</span>
+<span class="src-line" id="L315" data-diff="added"><a class="ln" href="#L315">315</a>            <span class="tok-str">&#039;Ipoh&#039;</span>,</span>
+<span class="src-line" id="L316" data-diff="added"><a class="ln" href="#L316">316</a>            <span class="tok-str">&#039;Jelapang&#039;</span>,</span>
+<span class="src-line" id="L317" data-diff="added"><a class="ln" href="#L317">317</a>            <span class="tok-str">&#039;Kamunting&#039;</span>, <span class="tok-str">&#039;Kampar&#039;</span>, <span class="tok-str">&#039;Kuala Kangsar&#039;</span>,</span>
+<span class="src-line" id="L318" data-diff="added"><a class="ln" href="#L318">318</a>            <span class="tok-str">&#039;Lekir&#039;</span>, <span class="tok-str">&#039;Lenggong&#039;</span>, <span class="tok-str">&#039;Lumut&#039;</span>,</span>
+<span class="src-line" id="L319" data-diff="added"><a class="ln" href="#L319">319</a>            <span class="tok-str">&#039;Malim Nawar&#039;</span>, <span class="tok-str">&#039;Manong&#039;</span>, <span class="tok-str">&#039;Menglembu&#039;</span>,</span>
+<span class="src-line" id="L320" data-diff="added"><a class="ln" href="#L320">320</a>            <span class="tok-str">&#039;Pantai Remis&#039;</span>, <span class="tok-str">&#039;Parit&#039;</span>, <span class="tok-str">&#039;Parit Buntar&#039;</span>, <span class="tok-str">&#039;Pasir Salak&#039;</span>, <span class="tok-str">&#039;Proton City&#039;</span>,</span>
+<span class="src-line" id="L321" data-diff="added"><a class="ln" href="#L321">321</a>            <span class="tok-str">&#039;Simpang Pulai&#039;</span>, <span class="tok-str">&#039;Sitiawan&#039;</span>, <span class="tok-str">&#039;Slim River&#039;</span>, <span class="tok-str">&#039;Sungai Siput&#039;</span>, <span class="tok-str">&#039;Sungkai&#039;</span>,</span>
+<span class="src-line" id="L322" data-diff="added"><a class="ln" href="#L322">322</a>            <span class="tok-str">&#039;Taiping&#039;</span>, <span class="tok-str">&#039;Tambun&#039;</span>, <span class="tok-str">&#039;Tanjung Malim&#039;</span>, <span class="tok-str">&#039;Tanjung Rambutan&#039;</span>, <span class="tok-str">&#039;Tapah&#039;</span>, <span class="tok-str">&#039;Teluk Intan&#039;</span>,</span>
+<span class="src-line" id="L323" data-diff="added"><a class="ln" href="#L323">323</a>            <span class="tok-str">&#039;Ulu Bernam&#039;</span>,</span>
+<span class="src-line" id="L324" data-diff="added"><a class="ln" href="#L324">324</a>        ],</span>
+<span class="src-line" id="L325" data-diff="added"><a class="ln" href="#L325">325</a>        <span class="tok-str">&#039;perlis&#039;</span> =&gt; [</span>
+<span class="src-line" id="L326" data-diff="added"><a class="ln" href="#L326">326</a>            <span class="tok-str">&#039;Arau&#039;</span>,</span>
+<span class="src-line" id="L327" data-diff="added"><a class="ln" href="#L327">327</a>            <span class="tok-str">&#039;Beseri&#039;</span>,</span>
+<span class="src-line" id="L328" data-diff="added"><a class="ln" href="#L328">328</a>            <span class="tok-str">&#039;Chuping&#039;</span>,</span>
+<span class="src-line" id="L329" data-diff="added"><a class="ln" href="#L329">329</a>            <span class="tok-str">&#039;Kaki Bukit&#039;</span>, <span class="tok-str">&#039;Kangar&#039;</span>, <span class="tok-str">&#039;Kuala Perlis&#039;</span>,</span>
+<span class="src-line" id="L330" data-diff="added"><a class="ln" href="#L330">330</a>            <span class="tok-str">&#039;Mata Ayer&#039;</span>,</span>
+<span class="src-line" id="L331" data-diff="added"><a class="ln" href="#L331">331</a>            <span class="tok-str">&#039;Padang Besar&#039;</span>,</span>
+<span class="src-line" id="L332" data-diff="added"><a class="ln" href="#L332">332</a>            <span class="tok-str">&#039;Sanglang&#039;</span>, <span class="tok-str">&#039;Simpang Empat&#039;</span>,</span>
+<span class="src-line" id="L333" data-diff="added"><a class="ln" href="#L333">333</a>            <span class="tok-str">&#039;Wang Kelian&#039;</span>,</span>
+<span class="src-line" id="L334" data-diff="added"><a class="ln" href="#L334">334</a>        ],</span>
+<span class="src-line" id="L335" data-diff="added"><a class="ln" href="#L335">335</a>        <span class="tok-str">&#039;putrajaya&#039;</span> =&gt; [</span>
+<span class="src-line" id="L336" data-diff="added"><a class="ln" href="#L336">336</a>            <span class="tok-str">&#039;Precinct 1&#039;</span>, <span class="tok-str">&#039;Precinct 4&#039;</span>, <span class="tok-str">&#039;Precinct 5&#039;</span>,</span>
+<span class="src-line" id="L337" data-diff="added"><a class="ln" href="#L337">337</a>            <span class="tok-str">&#039;Precinct 6&#039;</span>, <span class="tok-str">&#039;Precinct 8&#039;</span>, <span class="tok-str">&#039;Precinct 10&#039;</span>,</span>
+<span class="src-line" id="L338" data-diff="added"><a class="ln" href="#L338">338</a>            <span class="tok-str">&#039;Precinct 11&#039;</span>, <span class="tok-str">&#039;Precinct 12&#039;</span>, <span class="tok-str">&#039;Precinct 13&#039;</span>,</span>
+<span class="src-line" id="L339" data-diff="added"><a class="ln" href="#L339">339</a>            <span class="tok-str">&#039;Precinct 16&#039;</span>, <span class="tok-str">&#039;Precinct 18&#039;</span>, <span class="tok-str">&#039;Precinct 19&#039;</span>,</span>
+<span class="src-line" id="L340" data-diff="added"><a class="ln" href="#L340">340</a>        ],</span>
+<span class="src-line" id="L341" data-diff="added"><a class="ln" href="#L341">341</a>        <span class="tok-str">&#039;sabah&#039;</span> =&gt; [</span>
+<span class="src-line" id="L342" data-diff="added"><a class="ln" href="#L342">342</a>            <span class="tok-str">&#039;Beaufort&#039;</span>, <span class="tok-str">&#039;Bingkor&#039;</span>,</span>
+<span class="src-line" id="L343" data-diff="added"><a class="ln" href="#L343">343</a>            <span class="tok-str">&#039;Donggongon&#039;</span>,</span>
+<span class="src-line" id="L344" data-diff="added"><a class="ln" href="#L344">344</a>            <span class="tok-str">&#039;Inanam&#039;</span>,</span>
+<span class="src-line" id="L345" data-diff="added"><a class="ln" href="#L345">345</a>            <span class="tok-str">&#039;Kinabatangan&#039;</span>, <span class="tok-str">&#039;Kota Belud&#039;</span>, <span class="tok-str">&#039;Kota Kinabalu&#039;</span>, <span class="tok-str">&#039;Kuala Penyu&#039;</span>, <span class="tok-str">&#039;Kimanis&#039;</span>, <span class="tok-str">&#039;Kundasang&#039;</span>,</span>
+<span class="src-line" id="L346" data-diff="added"><a class="ln" href="#L346">346</a>            <span class="tok-str">&#039;Lahad Datu&#039;</span>, <span class="tok-str">&#039;Likas&#039;</span>, <span class="tok-str">&#039;Lok Kawi&#039;</span>,</span>
+<span class="src-line" id="L347" data-diff="added"><a class="ln" href="#L347">347</a>            <span class="tok-str">&#039;Manggatal&#039;</span>,</span>
+<span class="src-line" id="L348" data-diff="added"><a class="ln" href="#L348">348</a>            <span class="tok-str">&#039;Nabawan&#039;</span>,</span>
+<span class="src-line" id="L349" data-diff="added"><a class="ln" href="#L349">349</a>            <span class="tok-str">&#039;Papar&#039;</span>, <span class="tok-str">&#039;Pitas&#039;</span>,</span>
+<span class="src-line" id="L350" data-diff="added"><a class="ln" href="#L350">350</a>            <span class="tok-str">&#039;Ranau&#039;</span>,</span>
+<span class="src-line" id="L351" data-diff="added"><a class="ln" href="#L351">351</a>            <span class="tok-str">&#039;Sandakan&#039;</span>, <span class="tok-str">&#039;Sapulut&#039;</span>, <span class="tok-str">&#039;Semporna&#039;</span>, <span class="tok-str">&#039;Sepanggar&#039;</span>,</span>
+<span class="src-line" id="L352" data-diff="added"><a class="ln" href="#L352">352</a>            <span class="tok-str">&#039;Tambunan&#039;</span>, <span class="tok-str">&#039;Tanjung Aru&#039;</span>, <span class="tok-str">&#039;Tawau&#039;</span>, <span class="tok-str">&#039;Tenom&#039;</span>, <span class="tok-str">&#039;Tuaran&#039;</span>,</span>
+<span class="src-line" id="L353" data-diff="added"><a class="ln" href="#L353">353</a>            <span class="tok-str">&#039;Weston&#039;</span>,</span>
+<span class="src-line" id="L354" data-diff="added"><a class="ln" href="#L354">354</a>        ],</span>
+<span class="src-line" id="L355" data-diff="added"><a class="ln" href="#L355">355</a>        <span class="tok-str">&#039;sarawak&#039;</span> =&gt; [</span>
+<span class="src-line" id="L356" data-diff="added"><a class="ln" href="#L356">356</a>            <span class="tok-str">&#039;Asajaya&#039;</span>,</span>
+<span class="src-line" id="L357" data-diff="added"><a class="ln" href="#L357">357</a>            <span class="tok-str">&#039;Ba\&#039;kelalan&#039;</span>, <span class="tok-str">&#039;Bario&#039;</span>, <span class="tok-str">&#039;Batu Kawa&#039;</span>, <span class="tok-str">&#039;Batu Niah&#039;</span>, <span class="tok-str">&#039;Betong&#039;</span>, <span class="tok-str">&#039;Bintulu&#039;</span>,</span>
+<span class="src-line" id="L358" data-diff="added"><a class="ln" href="#L358">358</a>            <span class="tok-str">&#039;Dalat&#039;</span>, <span class="tok-str">&#039;Daro&#039;</span>,</span>
+<span class="src-line" id="L359" data-diff="added"><a class="ln" href="#L359">359</a>            <span class="tok-str">&#039;Engkilili&#039;</span>,</span>
+<span class="src-line" id="L360" data-diff="added"><a class="ln" href="#L360">360</a>            <span class="tok-str">&#039;Julau&#039;</span>,</span>
+<span class="src-line" id="L361" data-diff="added"><a class="ln" href="#L361">361</a>            <span class="tok-str">&#039;Kapit&#039;</span>, <span class="tok-str">&#039;Kota Samarahan&#039;</span>, <span class="tok-str">&#039;Kuching&#039;</span>,</span>
+<span class="src-line" id="L362" data-diff="added"><a class="ln" href="#L362">362</a>            <span class="tok-str">&#039;Lawas&#039;</span>, <span class="tok-str">&#039;Limbang&#039;</span>, <span class="tok-str">&#039;Lubok Antu&#039;</span>,</span>
+<span class="src-line" id="L363" data-diff="added"><a class="ln" href="#L363">363</a>            <span class="tok-str">&#039;Marudi&#039;</span>, <span class="tok-str">&#039;Matu&#039;</span>, <span class="tok-str">&#039;Miri&#039;</span>,</span>
+<span class="src-line" id="L364" data-diff="added"><a class="ln" href="#L364">364</a>            <span class="tok-str">&#039;Oya&#039;</span>,</span>
+<span class="src-line" id="L365" data-diff="added"><a class="ln" href="#L365">365</a>            <span class="tok-str">&#039;Pakan&#039;</span>,</span>
+<span class="src-line" id="L366" data-diff="added"><a class="ln" href="#L366">366</a>            <span class="tok-str">&#039;Sadong Jaya&#039;</span>, <span class="tok-str">&#039;Sematan&#039;</span>, <span class="tok-str">&#039;Sibu&#039;</span>, <span class="tok-str">&#039;Siburan&#039;</span>, <span class="tok-str">&#039;Song&#039;</span>, <span class="tok-str">&#039;Sri Aman&#039;</span>, <span class="tok-str">&#039;Sungai Tujoh&#039;</span>,</span>
+<span class="src-line" id="L367" data-diff="added"><a class="ln" href="#L367">367</a>            <span class="tok-str">&#039;Tanjung Kidurong&#039;</span>, <span class="tok-str">&#039;Tanjung Manis&#039;</span>, <span class="tok-str">&#039;Tatau&#039;</span>,</span>
+<span class="src-line" id="L368" data-diff="added"><a class="ln" href="#L368">368</a>        ],</span>
+<span class="src-line" id="L369" data-diff="added"><a class="ln" href="#L369">369</a>        <span class="tok-str">&#039;selangor&#039;</span> =&gt; [</span>
+<span class="src-line" id="L370" data-diff="added"><a class="ln" href="#L370">370</a>            <span class="tok-str">&#039;Ampang&#039;</span>, <span class="tok-str">&#039;Assam Jawa&#039;</span>,</span>
+<span class="src-line" id="L371" data-diff="added"><a class="ln" href="#L371">371</a>            <span class="tok-str">&#039;Balakong&#039;</span>, <span class="tok-str">&#039;Bandar Baru Bangi&#039;</span>, <span class="tok-str">&#039;Bandar Baru Selayang&#039;</span>, <span class="tok-str">&#039;Bandar Sunway&#039;</span>, <span class="tok-str">&#039;Bangi&#039;</span>, <span class="tok-str">&#039;Banting&#039;</span>, <span class="tok-str">&#039;Batang Kali&#039;</span>, <span class="tok-str">&#039;Batu Caves&#039;</span>, <span class="tok-str">&#039;Bestari Jaya&#039;</span>, <span class="tok-str">&#039;Bukit Lanjan&#039;</span>,</span>
+<span class="src-line" id="L372" data-diff="added"><a class="ln" href="#L372">372</a>            <span class="tok-str">&#039;Cheras&#039;</span>, <span class="tok-str">&#039;Cyberjaya&#039;</span>,</span>
+<span class="src-line" id="L373" data-diff="added"><a class="ln" href="#L373">373</a>            <span class="tok-str">&#039;Damansara&#039;</span>, <span class="tok-str">&#039;Dengkil&#039;</span>,</span>
+<span class="src-line" id="L374" data-diff="added"><a class="ln" href="#L374">374</a>            <span class="tok-str">&#039;Ijok&#039;</span>,</span>
+<span class="src-line" id="L375" data-diff="added"><a class="ln" href="#L375">375</a>            <span class="tok-str">&#039;Jenjarom&#039;</span>,</span>
+<span class="src-line" id="L376" data-diff="added"><a class="ln" href="#L376">376</a>            <span class="tok-str">&#039;Kajang&#039;</span>, <span class="tok-str">&#039;Kelana Jaya&#039;</span>, <span class="tok-str">&#039;Klang&#039;</span>, <span class="tok-str">&#039;Kuala Kubu Bharu&#039;</span>, <span class="tok-str">&#039;Kuala Selangor&#039;</span>, <span class="tok-str">&#039;Kuang&#039;</span>,</span>
+<span class="src-line" id="L377" data-diff="added"><a class="ln" href="#L377">377</a>            <span class="tok-str">&#039;Lagong&#039;</span>,</span>
+<span class="src-line" id="L378" data-diff="added"><a class="ln" href="#L378">378</a>            <span class="tok-str">&#039;Morib&#039;</span>,</span>
+<span class="src-line" id="L379" data-diff="added"><a class="ln" href="#L379">379</a>            <span class="tok-str">&#039;Pandamaran&#039;</span>, <span class="tok-str">&#039;Paya Jaras&#039;</span>, <span class="tok-str">&#039;Petaling Jaya&#039;</span>, <span class="tok-str">&#039;Port Klang&#039;</span>, <span class="tok-str">&#039;Puchong&#039;</span>,</span>
+<span class="src-line" id="L380" data-diff="added"><a class="ln" href="#L380">380</a>            <span class="tok-str">&#039;Rasa&#039;</span>, <span class="tok-str">&#039;Rawang&#039;</span>,</span>
+<span class="src-line" id="L381" data-diff="added"><a class="ln" href="#L381">381</a>            <span class="tok-str">&#039;Salak Tinggi&#039;</span>, <span class="tok-str">&#039;Sekinchan&#039;</span>, <span class="tok-str">&#039;Selayang&#039;</span>, <span class="tok-str">&#039;Semenyih&#039;</span>, <span class="tok-str">&#039;Sepang&#039;</span>, <span class="tok-str">&#039;Serendah&#039;</span>, <span class="tok-str">&#039;Seri Kembangan&#039;</span>, <span class="tok-str">&#039;Shah Alam&#039;</span>, <span class="tok-str">&#039;Subang&#039;</span>, <span class="tok-str">&#039;Subang Jaya&#039;</span>, <span class="tok-str">&#039;Sungai Buloh&#039;</span>,</span>
+<span class="src-line" id="L382" data-diff="added"><a class="ln" href="#L382">382</a>            <span class="tok-str">&#039;Tanjung Karang&#039;</span>, <span class="tok-str">&#039;Tanjung Sepat&#039;</span>,</span>
+<span class="src-line" id="L383" data-diff="added"><a class="ln" href="#L383">383</a>            <span class="tok-str">&#039;Ulu Klang&#039;</span>, <span class="tok-str">&#039;Ulu Yam&#039;</span>,</span>
+<span class="src-line" id="L384" data-diff="added"><a class="ln" href="#L384">384</a>        ],</span>
+<span class="src-line" id="L385" data-diff="added"><a class="ln" href="#L385">385</a>        <span class="tok-str">&#039;terengganu&#039;</span> =&gt; [</span>
+<span class="src-line" id="L386" data-diff="added"><a class="ln" href="#L386">386</a>            <span class="tok-str">&#039;Ajil&#039;</span>,</span>
+<span class="src-line" id="L387" data-diff="added"><a class="ln" href="#L387">387</a>            <span class="tok-str">&#039;Bandar Ketengah Jaya&#039;</span>, <span class="tok-str">&#039;Bandar Permaisuri&#039;</span>, <span class="tok-str">&#039;Bukit Besi&#039;</span>, <span class="tok-str">&#039;Bukit Payong&#039;</span>,</span>
+<span class="src-line" id="L388" data-diff="added"><a class="ln" href="#L388">388</a>            <span class="tok-str">&#039;Chukai&#039;</span>,</span>
+<span class="src-line" id="L389" data-diff="added"><a class="ln" href="#L389">389</a>            <span class="tok-str">&#039;Jerteh&#039;</span>,</span>
+<span class="src-line" id="L390" data-diff="added"><a class="ln" href="#L390">390</a>            <span class="tok-str">&#039;Kampung Raja&#039;</span>, <span class="tok-str">&#039;Kerteh&#039;</span>, <span class="tok-str">&#039;Kijal&#039;</span>, <span class="tok-str">&#039;Kuala Besut&#039;</span>, <span class="tok-str">&#039;Kuala Berang&#039;</span>, <span class="tok-str">&#039;Kuala Dungun&#039;</span>, <span class="tok-str">&#039;Kuala Terengganu&#039;</span>,</span>
+<span class="src-line" id="L391" data-diff="added"><a class="ln" href="#L391">391</a>            <span class="tok-str">&#039;Marang&#039;</span>, <span class="tok-str">&#039;Merchang&#039;</span>,</span>
+<span class="src-line" id="L392" data-diff="added"><a class="ln" href="#L392">392</a>            <span class="tok-str">&#039;Pasir Raja&#039;</span>,</span>
+<span class="src-line" id="L393" data-diff="added"><a class="ln" href="#L393">393</a>            <span class="tok-str">&#039;Rantau Abang&#039;</span>,</span>
+<span class="src-line" id="L394" data-diff="added"><a class="ln" href="#L394">394</a>            <span class="tok-str">&#039;Teluk Kalung&#039;</span>,</span>
+<span class="src-line" id="L395" data-diff="added"><a class="ln" href="#L395">395</a>            <span class="tok-str">&#039;Wakaf Tapai&#039;</span>,</span>
+<span class="src-line" id="L396" data-diff="added"><a class="ln" href="#L396">396</a>        ],</span>
+<span class="src-line" id="L397" data-diff="added"><a class="ln" href="#L397">397</a>    ];</span>
+<span class="src-line" id="L398" data-diff="added"><a class="ln" href="#L398">398</a></span>
+<span class="src-line" id="L399" data-diff="added"><a class="ln" href="#L399">399</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L400" data-diff="added"><a class="ln" href="#L400">400</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/States_and_federal_territories_of_Malaysia</span></span>
+<span class="src-line" id="L401" data-diff="added"><a class="ln" href="#L401">401</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L402" data-diff="added"><a class="ln" href="#L402">402</a>    <span class="tok-kw">protected</span> <span class="tok-kw">static</span> <span class="tok-var">$states</span> = [</span>
+<span class="src-line" id="L403" data-diff="added"><a class="ln" href="#L403">403</a>        <span class="tok-str">&#039;johor&#039;</span> =&gt; [</span>
+<span class="src-line" id="L404" data-diff="added"><a class="ln" href="#L404">404</a>            <span class="tok-str">&#039;Johor Darul Ta\&#039;zim&#039;</span>,</span>
+<span class="src-line" id="L405" data-diff="added"><a class="ln" href="#L405">405</a>            <span class="tok-str">&#039;Johor&#039;</span>,</span>
+<span class="src-line" id="L406" data-diff="added"><a class="ln" href="#L406">406</a>        ],</span>
+<span class="src-line" id="L407" data-diff="added"><a class="ln" href="#L407">407</a>        <span class="tok-str">&#039;kedah&#039;</span> =&gt; [</span>
+<span class="src-line" id="L408" data-diff="added"><a class="ln" href="#L408">408</a>            <span class="tok-str">&#039;Kedah Darul Aman&#039;</span>,</span>
+<span class="src-line" id="L409" data-diff="added"><a class="ln" href="#L409">409</a>            <span class="tok-str">&#039;Kedah&#039;</span>,</span>
+<span class="src-line" id="L410" data-diff="added"><a class="ln" href="#L410">410</a>        ],</span>
+<span class="src-line" id="L411" data-diff="added"><a class="ln" href="#L411">411</a>        <span class="tok-str">&#039;kelantan&#039;</span> =&gt; [</span>
+<span class="src-line" id="L412" data-diff="added"><a class="ln" href="#L412">412</a>            <span class="tok-str">&#039;Kelantan Darul Naim&#039;</span>,</span>
+<span class="src-line" id="L413" data-diff="added"><a class="ln" href="#L413">413</a>            <span class="tok-str">&#039;Kelantan&#039;</span>,</span>
+<span class="src-line" id="L414" data-diff="added"><a class="ln" href="#L414">414</a>        ],</span>
+<span class="src-line" id="L415" data-diff="added"><a class="ln" href="#L415">415</a>        <span class="tok-str">&#039;kl&#039;</span> =&gt; [</span>
+<span class="src-line" id="L416" data-diff="added"><a class="ln" href="#L416">416</a>            <span class="tok-str">&#039;KL&#039;</span>,</span>
+<span class="src-line" id="L417" data-diff="added"><a class="ln" href="#L417">417</a>            <span class="tok-str">&#039;Kuala Lumpur&#039;</span>,</span>
+<span class="src-line" id="L418" data-diff="added"><a class="ln" href="#L418">418</a>            <span class="tok-str">&#039;WP Kuala Lumpur&#039;</span>,</span>
+<span class="src-line" id="L419" data-diff="added"><a class="ln" href="#L419">419</a>        ],</span>
+<span class="src-line" id="L420" data-diff="added"><a class="ln" href="#L420">420</a>        <span class="tok-str">&#039;labuan&#039;</span> =&gt; [</span>
+<span class="src-line" id="L421" data-diff="added"><a class="ln" href="#L421">421</a>            <span class="tok-str">&#039;Labuan&#039;</span>,</span>
+<span class="src-line" id="L422" data-diff="added"><a class="ln" href="#L422">422</a>        ],</span>
+<span class="src-line" id="L423" data-diff="added"><a class="ln" href="#L423">423</a>        <span class="tok-str">&#039;melaka&#039;</span> =&gt; [</span>
+<span class="src-line" id="L424" data-diff="added"><a class="ln" href="#L424">424</a>            <span class="tok-str">&#039;Malacca&#039;</span>,</span>
+<span class="src-line" id="L425" data-diff="added"><a class="ln" href="#L425">425</a>            <span class="tok-str">&#039;Melaka&#039;</span>,</span>
+<span class="src-line" id="L426" data-diff="added"><a class="ln" href="#L426">426</a>        ],</span>
+<span class="src-line" id="L427" data-diff="added"><a class="ln" href="#L427">427</a>        <span class="tok-str">&#039;nsembilan&#039;</span> =&gt; [</span>
+<span class="src-line" id="L428" data-diff="added"><a class="ln" href="#L428">428</a>            <span class="tok-str">&#039;Negeri Sembilan Darul Khusus&#039;</span>,</span>
+<span class="src-line" id="L429" data-diff="added"><a class="ln" href="#L429">429</a>            <span class="tok-str">&#039;Negeri Sembilan&#039;</span>,</span>
+<span class="src-line" id="L430" data-diff="added"><a class="ln" href="#L430">430</a>        ],</span>
+<span class="src-line" id="L431" data-diff="added"><a class="ln" href="#L431">431</a>        <span class="tok-str">&#039;pahang&#039;</span> =&gt; [</span>
+<span class="src-line" id="L432" data-diff="added"><a class="ln" href="#L432">432</a>            <span class="tok-str">&#039;Pahang Darul Makmur&#039;</span>,</span>
+<span class="src-line" id="L433" data-diff="added"><a class="ln" href="#L433">433</a>            <span class="tok-str">&#039;Pahang&#039;</span>,</span>
+<span class="src-line" id="L434" data-diff="added"><a class="ln" href="#L434">434</a>        ],</span>
+<span class="src-line" id="L435" data-diff="added"><a class="ln" href="#L435">435</a>        <span class="tok-str">&#039;penang&#039;</span> =&gt; [</span>
+<span class="src-line" id="L436" data-diff="added"><a class="ln" href="#L436">436</a>            <span class="tok-str">&#039;Penang&#039;</span>,</span>
+<span class="src-line" id="L437" data-diff="added"><a class="ln" href="#L437">437</a>            <span class="tok-str">&#039;Pulau Pinang&#039;</span>,</span>
+<span class="src-line" id="L438" data-diff="added"><a class="ln" href="#L438">438</a>        ],</span>
+<span class="src-line" id="L439" data-diff="added"><a class="ln" href="#L439">439</a>        <span class="tok-str">&#039;perak&#039;</span> =&gt; [</span>
+<span class="src-line" id="L440" data-diff="added"><a class="ln" href="#L440">440</a>            <span class="tok-str">&#039;Perak Darul Ridzuan&#039;</span>,</span>
+<span class="src-line" id="L441" data-diff="added"><a class="ln" href="#L441">441</a>            <span class="tok-str">&#039;Perak&#039;</span>,</span>
+<span class="src-line" id="L442" data-diff="added"><a class="ln" href="#L442">442</a>        ],</span>
+<span class="src-line" id="L443" data-diff="added"><a class="ln" href="#L443">443</a>        <span class="tok-str">&#039;perlis&#039;</span> =&gt; [</span>
+<span class="src-line" id="L444" data-diff="added"><a class="ln" href="#L444">444</a>            <span class="tok-str">&#039;Perlis Indera Kayangan&#039;</span>,</span>
+<span class="src-line" id="L445" data-diff="added"><a class="ln" href="#L445">445</a>            <span class="tok-str">&#039;Perlis&#039;</span>,</span>
+<span class="src-line" id="L446" data-diff="added"><a class="ln" href="#L446">446</a>        ],</span>
+<span class="src-line" id="L447" data-diff="added"><a class="ln" href="#L447">447</a>        <span class="tok-str">&#039;putrajaya&#039;</span> =&gt; [</span>
+<span class="src-line" id="L448" data-diff="added"><a class="ln" href="#L448">448</a>            <span class="tok-str">&#039;Putrajaya&#039;</span>,</span>
+<span class="src-line" id="L449" data-diff="added"><a class="ln" href="#L449">449</a>        ],</span>
+<span class="src-line" id="L450" data-diff="added"><a class="ln" href="#L450">450</a>        <span class="tok-str">&#039;sabah&#039;</span> =&gt; [</span>
+<span class="src-line" id="L451" data-diff="added"><a class="ln" href="#L451">451</a>            <span class="tok-str">&#039;Sabah&#039;</span>,</span>
+<span class="src-line" id="L452" data-diff="added"><a class="ln" href="#L452">452</a>        ],</span>
+<span class="src-line" id="L453" data-diff="added"><a class="ln" href="#L453">453</a>        <span class="tok-str">&#039;sarawak&#039;</span> =&gt; [</span>
+<span class="src-line" id="L454" data-diff="added"><a class="ln" href="#L454">454</a>            <span class="tok-str">&#039;Sarawak&#039;</span>,</span>
+<span class="src-line" id="L455" data-diff="added"><a class="ln" href="#L455">455</a>        ],</span>
+<span class="src-line" id="L456" data-diff="added"><a class="ln" href="#L456">456</a>        <span class="tok-str">&#039;selangor&#039;</span> =&gt; [</span>
+<span class="src-line" id="L457" data-diff="added"><a class="ln" href="#L457">457</a>            <span class="tok-str">&#039;Selangor Darul Ehsan&#039;</span>,</span>
+<span class="src-line" id="L458" data-diff="added"><a class="ln" href="#L458">458</a>            <span class="tok-str">&#039;Selangor&#039;</span>,</span>
+<span class="src-line" id="L459" data-diff="added"><a class="ln" href="#L459">459</a>        ],</span>
+<span class="src-line" id="L460" data-diff="added"><a class="ln" href="#L460">460</a>        <span class="tok-str">&#039;terengganu&#039;</span> =&gt; [</span>
+<span class="src-line" id="L461" data-diff="added"><a class="ln" href="#L461">461</a>            <span class="tok-str">&#039;Terengganu Darul Iman&#039;</span>,</span>
+<span class="src-line" id="L462" data-diff="added"><a class="ln" href="#L462">462</a>            <span class="tok-str">&#039;Terengganu&#039;</span>,</span>
+<span class="src-line" id="L463" data-diff="added"><a class="ln" href="#L463">463</a>        ],</span>
+<span class="src-line" id="L464" data-diff="added"><a class="ln" href="#L464">464</a>    ];</span>
+<span class="src-line" id="L465" data-diff="added"><a class="ln" href="#L465">465</a></span>
+<span class="src-line" id="L466" data-diff="added"><a class="ln" href="#L466">466</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L467" data-diff="added"><a class="ln" href="#L467">467</a><span class="tok-com">     * @see https://ms.wikipedia.org/wiki/Senarai_negara_berdaulat</span></span>
+<span class="src-line" id="L468" data-diff="added"><a class="ln" href="#L468">468</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L469" data-diff="added"><a class="ln" href="#L469">469</a>    <span class="tok-kw">protected</span> <span class="tok-kw">static</span> <span class="tok-var">$country</span> = [</span>
+<span class="src-line" id="L470" data-diff="added"><a class="ln" href="#L470">470</a>        <span class="tok-str">&#039;Abkhazia&#039;</span>, <span class="tok-str">&#039;Afghanistan&#039;</span>, <span class="tok-str">&#039;Afrika Selatan&#039;</span>, <span class="tok-str">&#039;Republik Afrika Tengah&#039;</span>, <span class="tok-str">&#039;Akrotiri dan Dhekelia&#039;</span>, <span class="tok-str">&#039;Albania&#039;</span>, <span class="tok-str">&#039;Algeria&#039;</span>, <span class="tok-str">&#039;Amerika Syarikat&#039;</span>, <span class="tok-str">&#039;Andorra&#039;</span>, <span class="tok-str">&#039;Angola&#039;</span>, <span class="tok-str">&#039;Antigua dan Barbuda&#039;</span>, <span class="tok-str">&#039;Arab Saudi&#039;</span>, <span class="tok-str">&#039;Argentina&#039;</span>, <span class="tok-str">&#039;Armenia&#039;</span>, <span class="tok-str">&#039;Australia&#039;</span>, <span class="tok-str">&#039;Austria&#039;</span>, <span class="tok-str">&#039;Azerbaijan&#039;</span>,</span>
+<span class="src-line" id="L471" data-diff="added"><a class="ln" href="#L471">471</a>        <span class="tok-str">&#039;Bahamas&#039;</span>, <span class="tok-str">&#039;Bahrain&#039;</span>, <span class="tok-str">&#039;Bangladesh&#039;</span>, <span class="tok-str">&#039;Barbados&#039;</span>, <span class="tok-str">&#039;Belanda&#039;</span>, <span class="tok-str">&#039;Belarus&#039;</span>, <span class="tok-str">&#039;Belgium&#039;</span>, <span class="tok-str">&#039;Belize&#039;</span>, <span class="tok-str">&#039;Benin&#039;</span>, <span class="tok-str">&#039;Bhutan&#039;</span>, <span class="tok-str">&#039;Bolivia&#039;</span>, <span class="tok-str">&#039;Bonaire&#039;</span>, <span class="tok-str">&#039;Bosnia dan Herzegovina&#039;</span>, <span class="tok-str">&#039;Botswana&#039;</span>, <span class="tok-str">&#039;Brazil&#039;</span>, <span class="tok-str">&#039;Brunei Darussalam&#039;</span>, <span class="tok-str">&#039;Bulgaria&#039;</span>, <span class="tok-str">&#039;Burkina Faso&#039;</span>, <span class="tok-str">&#039;Burundi&#039;</span>,</span>
+<span class="src-line" id="L472" data-diff="added"><a class="ln" href="#L472">472</a>        <span class="tok-str">&#039;Cameroon&#039;</span>, <span class="tok-str">&#039;Chad&#039;</span>, <span class="tok-str">&#039;Chile&#039;</span>, <span class="tok-str">&#039;Republik Rakyat China&#039;</span>, <span class="tok-str">&#039;Republik China di Taiwan&#039;</span>, <span class="tok-str">&#039;Colombia&#039;</span>, <span class="tok-str">&#039;Comoros&#039;</span>, <span class="tok-str">&#039;Republik Demokratik Congo&#039;</span>, <span class="tok-str">&#039;Republik Congo&#039;</span>, <span class="tok-str">&#039;Kepulauan Cook&#039;</span>, <span class="tok-str">&#039;Costa Rica&#039;</span>, <span class="tok-str">&#039;Côte d\&#039;Ivoire (Ivory Coast)&#039;</span>, <span class="tok-str">&#039;Croatia&#039;</span>, <span class="tok-str">&#039;Cuba&#039;</span>, <span class="tok-str">&#039;Curaçao&#039;</span>, <span class="tok-str">&#039;Cyprus&#039;</span>, <span class="tok-str">&#039;Republik Turki Cyprus Utara&#039;</span>, <span class="tok-str">&#039;Republik Czech&#039;</span>,</span>
+<span class="src-line" id="L473" data-diff="added"><a class="ln" href="#L473">473</a>        <span class="tok-str">&#039;Denmark&#039;</span>, <span class="tok-str">&#039;Djibouti&#039;</span>, <span class="tok-str">&#039;Dominika&#039;</span>, <span class="tok-str">&#039;Republik Dominika&#039;</span>,</span>
+<span class="src-line" id="L474" data-diff="added"><a class="ln" href="#L474">474</a>        <span class="tok-str">&#039;Ecuador&#039;</span>, <span class="tok-str">&#039;El Salvador&#039;</span>, <span class="tok-str">&#039;Emiriah Arab Bersatu&#039;</span>, <span class="tok-str">&#039;Eritrea&#039;</span>, <span class="tok-str">&#039;Estonia&#039;</span>,</span>
+<span class="src-line" id="L475" data-diff="added"><a class="ln" href="#L475">475</a>        <span class="tok-str">&#039;Kepulauan Faroe&#039;</span>, <span class="tok-str">&#039;Fiji&#039;</span>, <span class="tok-str">&#039;Filipina&#039;</span>, <span class="tok-str">&#039;Finland&#039;</span>,</span>
+<span class="src-line" id="L476" data-diff="added"><a class="ln" href="#L476">476</a>        <span class="tok-str">&#039;Gabon&#039;</span>, <span class="tok-str">&#039;Gambia&#039;</span>, <span class="tok-str">&#039;Georgia&#039;</span>, <span class="tok-str">&#039;Ghana&#039;</span>, <span class="tok-str">&#039;Grenada&#039;</span>, <span class="tok-str">&#039;Greece (Yunani)&#039;</span>, <span class="tok-str">&#039;Guatemala&#039;</span>, <span class="tok-str">&#039;Guinea&#039;</span>, <span class="tok-str">&#039;Guinea-Bissau&#039;</span>, <span class="tok-str">&#039;Guinea Khatulistiwa&#039;</span>, <span class="tok-str">&#039;Guiana Perancis&#039;</span>, <span class="tok-str">&#039;Guyana&#039;</span>,</span>
+<span class="src-line" id="L477" data-diff="added"><a class="ln" href="#L477">477</a>        <span class="tok-str">&#039;Habsyah (Etiopia)&#039;</span>, <span class="tok-str">&#039;Haiti&#039;</span>, <span class="tok-str">&#039;Honduras&#039;</span>, <span class="tok-str">&#039;Hungary&#039;</span>,</span>
+<span class="src-line" id="L478" data-diff="added"><a class="ln" href="#L478">478</a>        <span class="tok-str">&#039;Iceland&#039;</span>, <span class="tok-str">&#039;India&#039;</span>, <span class="tok-str">&#039;Indonesia&#039;</span>, <span class="tok-str">&#039;Iran&#039;</span>, <span class="tok-str">&#039;Iraq&#039;</span>, <span class="tok-str">&#039;Ireland&#039;</span>, <span class="tok-str">&#039;Israel&#039;</span>, <span class="tok-str">&#039;Itali&#039;</span>,</span>
+<span class="src-line" id="L479" data-diff="added"><a class="ln" href="#L479">479</a>        <span class="tok-str">&#039;Jamaika&#039;</span>, <span class="tok-str">&#039;Jepun&#039;</span>, <span class="tok-str">&#039;Jerman&#039;</span>, <span class="tok-str">&#039;Jordan&#039;</span>,</span>
+<span class="src-line" id="L480" data-diff="added"><a class="ln" href="#L480">480</a>        <span class="tok-str">&#039;Kanada&#039;</span>, <span class="tok-str">&#039;Kazakhstan&#039;</span>, <span class="tok-str">&#039;Kemboja&#039;</span>, <span class="tok-str">&#039;Kenya&#039;</span>, <span class="tok-str">&#039;Kiribati&#039;</span>, <span class="tok-str">&#039;Korea Selatan&#039;</span>, <span class="tok-str">&#039;Korea Utara&#039;</span>, <span class="tok-str">&#039;Kosovo&#039;</span>, <span class="tok-str">&#039;Kuwait&#039;</span>, <span class="tok-str">&#039;Kyrgyzstan&#039;</span>,</span>
+<span class="src-line" id="L481" data-diff="added"><a class="ln" href="#L481">481</a>        <span class="tok-str">&#039;Laos&#039;</span>, <span class="tok-str">&#039;Latvia&#039;</span>, <span class="tok-str">&#039;Lesotho&#039;</span>, <span class="tok-str">&#039;Liberia&#039;</span>, <span class="tok-str">&#039;Libya&#039;</span>, <span class="tok-str">&#039;Liechtenstein&#039;</span>, <span class="tok-str">&#039;Lithuania&#039;</span>, <span class="tok-str">&#039;Lubnan&#039;</span>, <span class="tok-str">&#039;Luxembourg&#039;</span>,</span>
+<span class="src-line" id="L482" data-diff="added"><a class="ln" href="#L482">482</a>        <span class="tok-str">&#039;Macedonia&#039;</span>, <span class="tok-str">&#039;Madagaskar&#039;</span>, <span class="tok-str">&#039;Maghribi&#039;</span>, <span class="tok-str">&#039;Malawi&#039;</span>, <span class="tok-str">&#039;Malaysia&#039;</span>, <span class="tok-str">&#039;Maldives&#039;</span>, <span class="tok-str">&#039;Mali&#039;</span>, <span class="tok-str">&#039;Malta&#039;</span>, <span class="tok-str">&#039;Kepulauan Marshall&#039;</span>, <span class="tok-str">&#039;Mauritania&#039;</span>, <span class="tok-str">&#039;Mauritius&#039;</span>, <span class="tok-str">&#039;Mesir&#039;</span>, <span class="tok-str">&#039;Mexico&#039;</span>, <span class="tok-str">&#039;Persekutuan Micronesia&#039;</span>, <span class="tok-str">&#039;Moldova&#039;</span>, <span class="tok-str">&#039;Monaco&#039;</span>, <span class="tok-str">&#039;Montenegro&#039;</span>, <span class="tok-str">&#039;Mongolia&#039;</span>, <span class="tok-str">&#039;Mozambique&#039;</span>, <span class="tok-str">&#039;Myanmar&#039;</span>,</span>
+<span class="src-line" id="L483" data-diff="added"><a class="ln" href="#L483">483</a>        <span class="tok-str">&#039;Namibia&#039;</span>, <span class="tok-str">&#039;Nauru&#039;</span>, <span class="tok-str">&#039;Nepal&#039;</span>, <span class="tok-str">&#039;New Zealand&#039;</span>, <span class="tok-str">&#039;Nicaragua&#039;</span>, <span class="tok-str">&#039;Niger&#039;</span>, <span class="tok-str">&#039;Nigeria&#039;</span>, <span class="tok-str">&#039;Niue&#039;</span>, <span class="tok-str">&#039;Norway&#039;</span>,</span>
+<span class="src-line" id="L484" data-diff="added"><a class="ln" href="#L484">484</a>        <span class="tok-str">&#039;Oman&#039;</span>, <span class="tok-str">&#039;Ossetia Selatan&#039;</span>,</span>
+<span class="src-line" id="L485" data-diff="added"><a class="ln" href="#L485">485</a>        <span class="tok-str">&#039;Pakistan&#039;</span>, <span class="tok-str">&#039;Palau&#039;</span>, <span class="tok-str">&#039;Palestin&#039;</span>, <span class="tok-str">&#039;Panama&#039;</span>, <span class="tok-str">&#039;Papua New Guinea&#039;</span>, <span class="tok-str">&#039;Paraguay&#039;</span>, <span class="tok-str">&#039;Perancis&#039;</span>, <span class="tok-str">&#039;Peru&#039;</span>, <span class="tok-str">&#039;Poland&#039;</span>, <span class="tok-str">&#039;Portugal&#039;</span>,</span>
+<span class="src-line" id="L486" data-diff="added"><a class="ln" href="#L486">486</a>        <span class="tok-str">&#039;Qatar&#039;</span>,</span>
+<span class="src-line" id="L487" data-diff="added"><a class="ln" href="#L487">487</a>        <span class="tok-str">&#039;Romania&#039;</span>, <span class="tok-str">&#039;Russia&#039;</span>, <span class="tok-str">&#039;Rwanda&#039;</span>,</span>
+<span class="src-line" id="L488" data-diff="added"><a class="ln" href="#L488">488</a>        <span class="tok-str">&#039;Sahara Barat&#039;</span>, <span class="tok-str">&#039;Saint Kitts dan Nevis&#039;</span>, <span class="tok-str">&#039;Saint Lucia&#039;</span>, <span class="tok-str">&#039;Saint Vincent dan Grenadines&#039;</span>, <span class="tok-str">&#039;Samoa&#039;</span>, <span class="tok-str">&#039;San Marino&#039;</span>, <span class="tok-str">&#039;São Tomé dan Príncipe&#039;</span>, <span class="tok-str">&#039;Scotland&#039;</span>, <span class="tok-str">&#039;Senegal&#039;</span>, <span class="tok-str">&#039;Sepanyol&#039;</span>, <span class="tok-str">&#039;Serbia&#039;</span>, <span class="tok-str">&#039;Seychelles&#039;</span>, <span class="tok-str">&#039;Sierra Leone&#039;</span>, <span class="tok-str">&#039;Singapura&#039;</span>, <span class="tok-str">&#039;Slovakia&#039;</span>, <span class="tok-str">&#039;Slovenia&#039;</span>, <span class="tok-str">&#039;Kepulauan Solomon&#039;</span>, <span class="tok-str">&#039;Somalia&#039;</span>, <span class="tok-str">&#039;Somaliland&#039;</span>, <span class="tok-str">&#039;Sri Lanka&#039;</span>, <span class="tok-str">&#039;Sudan&#039;</span>, <span class="tok-str">&#039;Sudan Selatan&#039;</span>, <span class="tok-str">&#039;Suriname&#039;</span>, <span class="tok-str">&#039;Swaziland&#039;</span>, <span class="tok-str">&#039;Sweden&#039;</span>, <span class="tok-str">&#039;Switzerland&#039;</span>, <span class="tok-str">&#039;Syria&#039;</span>,</span>
+<span class="src-line" id="L489" data-diff="added"><a class="ln" href="#L489">489</a>        <span class="tok-str">&#039;Tajikistan&#039;</span>, <span class="tok-str">&#039;Tanjung Verde&#039;</span>, <span class="tok-str">&#039;Tanzania&#039;</span>, <span class="tok-str">&#039;Thailand&#039;</span>, <span class="tok-str">&#039;Timor Leste&#039;</span>, <span class="tok-str">&#039;Togo&#039;</span>, <span class="tok-str">&#039;Tonga&#039;</span>, <span class="tok-str">&#039;Transnistria&#039;</span>, <span class="tok-str">&#039;Trinidad dan Tobago&#039;</span>, <span class="tok-str">&#039;Tunisia&#039;</span>, <span class="tok-str">&#039;Turki&#039;</span>, <span class="tok-str">&#039;Turkmenistan&#039;</span>, <span class="tok-str">&#039;Tuvalu&#039;</span>,</span>
+<span class="src-line" id="L490" data-diff="added"><a class="ln" href="#L490">490</a>        <span class="tok-str">&#039;Uganda&#039;</span>, <span class="tok-str">&#039;Ukraine&#039;</span>, <span class="tok-str">&#039;United Kingdom&#039;</span>, <span class="tok-str">&#039;Uruguay&#039;</span>, <span class="tok-str">&#039;Uzbekistan&#039;</span>,</span>
+<span class="src-line" id="L491" data-diff="added"><a class="ln" href="#L491">491</a>        <span class="tok-str">&#039;Vanuatu&#039;</span>, <span class="tok-str">&#039;Kota Vatican&#039;</span>, <span class="tok-str">&#039;Venezuela&#039;</span>, <span class="tok-str">&#039;Vietnam&#039;</span>,</span>
+<span class="src-line" id="L492" data-diff="added"><a class="ln" href="#L492">492</a>        <span class="tok-str">&#039;Yaman&#039;</span>,</span>
+<span class="src-line" id="L493" data-diff="added"><a class="ln" href="#L493">493</a>        <span class="tok-str">&#039;Zambia&#039;</span>, <span class="tok-str">&#039;Zimbabwe&#039;</span>,</span>
+<span class="src-line" id="L494" data-diff="added"><a class="ln" href="#L494">494</a>    ];</span>
+<span class="src-line" id="L495" data-diff="added"><a class="ln" href="#L495">495</a></span>
+<span class="src-line" id="L496" data-diff="added"><a class="ln" href="#L496">496</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L497" data-diff="added"><a class="ln" href="#L497">497</a><span class="tok-com">     * Return a building prefix</span></span>
+<span class="src-line" id="L498" data-diff="added"><a class="ln" href="#L498">498</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L499" data-diff="added"><a class="ln" href="#L499">499</a><span class="tok-com">     * @example &#039;No.&#039;</span></span>
+<span class="src-line" id="L500" data-diff="added"><a class="ln" href="#L500">500</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L501" data-diff="added"><a class="ln" href="#L501">501</a><span class="tok-com">     * @return string</span></span>
+<span class="src-line" id="L502" data-diff="added"><a class="ln" href="#L502">502</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L503" data-diff="added"><a class="ln" href="#L503">503</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">buildingPrefix</span>()</span>
+<span class="src-line" id="L504" data-diff="added"><a class="ln" href="#L504">504</a>    {</span>
+<span class="src-line" id="L505" data-diff="added"><a class="ln" href="#L505">505</a>        <span class="tok-kw">return</span> <span class="tok-kw">static</span>::<span class="tok-id">randomElement</span>(<span class="tok-kw">static</span>::<span class="tok-var">$buildingPrefix</span>);</span>
+<span class="src-line" id="L506" data-diff="added"><a class="ln" href="#L506">506</a>    }</span>
+<span class="src-line" id="L507" data-diff="added"><a class="ln" href="#L507">507</a></span>
+<span class="src-line" id="L508" data-diff="added"><a class="ln" href="#L508">508</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L509" data-diff="added"><a class="ln" href="#L509">509</a><span class="tok-com">     * Return a building number</span></span>
+<span class="src-line" id="L510" data-diff="added"><a class="ln" href="#L510">510</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L511" data-diff="added"><a class="ln" href="#L511">511</a><span class="tok-com">     * @example &#039;123&#039;</span></span>
+<span class="src-line" id="L512" data-diff="added"><a class="ln" href="#L512">512</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L513" data-diff="added"><a class="ln" href="#L513">513</a><span class="tok-com">     * @return string</span></span>
+<span class="src-line" id="L514" data-diff="added"><a class="ln" href="#L514">514</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L515" data-diff="added"><a class="ln" href="#L515">515</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">buildingNumber</span>()</span>
+<span class="src-line" id="L516" data-diff="added"><a class="ln" href="#L516">516</a>    {</span>
+<span class="src-line" id="L517" data-diff="added"><a class="ln" href="#L517">517</a>        <span class="tok-kw">return</span> <span class="tok-kw">static</span>::<span class="tok-id">toUpper</span>(<span class="tok-kw">static</span>::<span class="tok-id">lexify</span>(<span class="tok-kw">static</span>::<span class="tok-id">numerify</span>(<span class="tok-kw">static</span>::<span class="tok-id">randomElement</span>(<span class="tok-kw">static</span>::<span class="tok-var">$buildingNumber</span>))));</span>
+<span class="src-line" id="L518" data-diff="added"><a class="ln" href="#L518">518</a>    }</span>
+<span class="src-line" id="L519" data-diff="added"><a class="ln" href="#L519">519</a></span>
+<span class="src-line" id="L520" data-diff="added"><a class="ln" href="#L520">520</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L521" data-diff="added"><a class="ln" href="#L521">521</a><span class="tok-com">     * Return a street prefix</span></span>
+<span class="src-line" id="L522" data-diff="added"><a class="ln" href="#L522">522</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L523" data-diff="added"><a class="ln" href="#L523">523</a><span class="tok-com">     * @example &#039;Jalan&#039;</span></span>
+<span class="src-line" id="L524" data-diff="added"><a class="ln" href="#L524">524</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L525" data-diff="added"><a class="ln" href="#L525">525</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">streetPrefix</span>()</span>
+<span class="src-line" id="L526" data-diff="added"><a class="ln" href="#L526">526</a>    {</span>
+<span class="src-line" id="L527" data-diff="added"><a class="ln" href="#L527">527</a>        <span class="tok-var">$format</span> = <span class="tok-kw">static</span>::<span class="tok-id">randomElement</span>(<span class="tok-kw">static</span>::<span class="tok-var">$streetPrefix</span>);</span>
+<span class="src-line" id="L528" data-diff="added"><a class="ln" href="#L528">528</a></span>
+<span class="src-line" id="L529" data-diff="added"><a class="ln" href="#L529">529</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">generator</span>-&gt;<span class="tok-id">parse</span>(<span class="tok-var">$format</span>);</span>
+<span class="src-line" id="L530" data-diff="added"><a class="ln" href="#L530">530</a>    }</span>
+<span class="src-line" id="L531" data-diff="added"><a class="ln" href="#L531">531</a></span>
+<span class="src-line" id="L532" data-diff="added"><a class="ln" href="#L532">532</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L533" data-diff="added"><a class="ln" href="#L533">533</a><span class="tok-com">     * Return a complete streename</span></span>
+<span class="src-line" id="L534" data-diff="added"><a class="ln" href="#L534">534</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L535" data-diff="added"><a class="ln" href="#L535">535</a><span class="tok-com">     * @example &#039;Jalan Utama 7&#039;</span></span>
+<span class="src-line" id="L536" data-diff="added"><a class="ln" href="#L536">536</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L537" data-diff="added"><a class="ln" href="#L537">537</a><span class="tok-com">     * @return string</span></span>
+<span class="src-line" id="L538" data-diff="added"><a class="ln" href="#L538">538</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L539" data-diff="added"><a class="ln" href="#L539">539</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">streetName</span>()</span>
+<span class="src-line" id="L540" data-diff="added"><a class="ln" href="#L540">540</a>    {</span>
+<span class="src-line" id="L541" data-diff="added"><a class="ln" href="#L541">541</a>        <span class="tok-var">$format</span> = <span class="tok-kw">static</span>::<span class="tok-id">toUpper</span>(<span class="tok-kw">static</span>::<span class="tok-id">lexify</span>(<span class="tok-kw">static</span>::<span class="tok-id">numerify</span>(<span class="tok-kw">static</span>::<span class="tok-id">randomElement</span>(<span class="tok-kw">static</span>::<span class="tok-var">$streetNameFormats</span>))));</span>
+<span class="src-line" id="L542" data-diff="added"><a class="ln" href="#L542">542</a></span>
+<span class="src-line" id="L543" data-diff="added"><a class="ln" href="#L543">543</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">generator</span>-&gt;<span class="tok-id">parse</span>(<span class="tok-var">$format</span>);</span>
+<span class="src-line" id="L544" data-diff="added"><a class="ln" href="#L544">544</a>    }</span>
+<span class="src-line" id="L545" data-diff="added"><a class="ln" href="#L545">545</a></span>
+<span class="src-line" id="L546" data-diff="added"><a class="ln" href="#L546">546</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L547" data-diff="added"><a class="ln" href="#L547">547</a><span class="tok-com">     * Return a randown township</span></span>
+<span class="src-line" id="L548" data-diff="added"><a class="ln" href="#L548">548</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L549" data-diff="added"><a class="ln" href="#L549">549</a><span class="tok-com">     * @example Taman Bahagia</span></span>
+<span class="src-line" id="L550" data-diff="added"><a class="ln" href="#L550">550</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L551" data-diff="added"><a class="ln" href="#L551">551</a><span class="tok-com">     * @return string</span></span>
+<span class="src-line" id="L552" data-diff="added"><a class="ln" href="#L552">552</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L553" data-diff="added"><a class="ln" href="#L553">553</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">township</span>()</span>
+<span class="src-line" id="L554" data-diff="added"><a class="ln" href="#L554">554</a>    {</span>
+<span class="src-line" id="L555" data-diff="added"><a class="ln" href="#L555">555</a>        <span class="tok-var">$format</span> = <span class="tok-kw">static</span>::<span class="tok-id">toUpper</span>(<span class="tok-kw">static</span>::<span class="tok-id">lexify</span>(<span class="tok-kw">static</span>::<span class="tok-id">numerify</span>(<span class="tok-kw">static</span>::<span class="tok-id">randomElement</span>(<span class="tok-kw">static</span>::<span class="tok-var">$townshipFormats</span>))));</span>
+<span class="src-line" id="L556" data-diff="added"><a class="ln" href="#L556">556</a></span>
+<span class="src-line" id="L557" data-diff="added"><a class="ln" href="#L557">557</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">generator</span>-&gt;<span class="tok-id">parse</span>(<span class="tok-var">$format</span>);</span>
+<span class="src-line" id="L558" data-diff="added"><a class="ln" href="#L558">558</a>    }</span>
+<span class="src-line" id="L559" data-diff="added"><a class="ln" href="#L559">559</a></span>
+<span class="src-line" id="L560" data-diff="added"><a class="ln" href="#L560">560</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L561" data-diff="added"><a class="ln" href="#L561">561</a><span class="tok-com">     * Return a township prefix abbreviation</span></span>
+<span class="src-line" id="L562" data-diff="added"><a class="ln" href="#L562">562</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L563" data-diff="added"><a class="ln" href="#L563">563</a><span class="tok-com">     * @example &#039;USJ&#039;</span></span>
+<span class="src-line" id="L564" data-diff="added"><a class="ln" href="#L564">564</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L565" data-diff="added"><a class="ln" href="#L565">565</a><span class="tok-com">     * @return string</span></span>
+<span class="src-line" id="L566" data-diff="added"><a class="ln" href="#L566">566</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L567" data-diff="added"><a class="ln" href="#L567">567</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">townshipPrefixAbbr</span>()</span>
+<span class="src-line" id="L568" data-diff="added"><a class="ln" href="#L568">568</a>    {</span>
+<span class="src-line" id="L569" data-diff="added"><a class="ln" href="#L569">569</a>        <span class="tok-kw">return</span> <span class="tok-kw">static</span>::<span class="tok-id">randomElement</span>(<span class="tok-kw">static</span>::<span class="tok-var">$townshipPrefixAbbr</span>);</span>
+<span class="src-line" id="L570" data-diff="added"><a class="ln" href="#L570">570</a>    }</span>
+<span class="src-line" id="L571" data-diff="added"><a class="ln" href="#L571">571</a></span>
+<span class="src-line" id="L572" data-diff="added"><a class="ln" href="#L572">572</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L573" data-diff="added"><a class="ln" href="#L573">573</a><span class="tok-com">     * Return a township prefix</span></span>
+<span class="src-line" id="L574" data-diff="added"><a class="ln" href="#L574">574</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L575" data-diff="added"><a class="ln" href="#L575">575</a><span class="tok-com">     * @example &#039;Taman&#039;</span></span>
+<span class="src-line" id="L576" data-diff="added"><a class="ln" href="#L576">576</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L577" data-diff="added"><a class="ln" href="#L577">577</a><span class="tok-com">     * @return string</span></span>
+<span class="src-line" id="L578" data-diff="added"><a class="ln" href="#L578">578</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L579" data-diff="added"><a class="ln" href="#L579">579</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">townshipPrefix</span>()</span>
+<span class="src-line" id="L580" data-diff="added"><a class="ln" href="#L580">580</a>    {</span>
+<span class="src-line" id="L581" data-diff="added"><a class="ln" href="#L581">581</a>        <span class="tok-kw">return</span> <span class="tok-kw">static</span>::<span class="tok-id">randomElement</span>(<span class="tok-kw">static</span>::<span class="tok-var">$townshipPrefix</span>);</span>
+<span class="src-line" id="L582" data-diff="added"><a class="ln" href="#L582">582</a>    }</span>
+<span class="src-line" id="L583" data-diff="added"><a class="ln" href="#L583">583</a></span>
+<span class="src-line" id="L584" data-diff="added"><a class="ln" href="#L584">584</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L585" data-diff="added"><a class="ln" href="#L585">585</a><span class="tok-com">     * Return a township suffix</span></span>
+<span class="src-line" id="L586" data-diff="added"><a class="ln" href="#L586">586</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L587" data-diff="added"><a class="ln" href="#L587">587</a><span class="tok-com">     * @example &#039;Bahagia&#039;</span></span>
+<span class="src-line" id="L588" data-diff="added"><a class="ln" href="#L588">588</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L589" data-diff="added"><a class="ln" href="#L589">589</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">townshipSuffix</span>()</span>
+<span class="src-line" id="L590" data-diff="added"><a class="ln" href="#L590">590</a>    {</span>
+<span class="src-line" id="L591" data-diff="added"><a class="ln" href="#L591">591</a>        <span class="tok-kw">return</span> <span class="tok-kw">static</span>::<span class="tok-id">randomElement</span>(<span class="tok-kw">static</span>::<span class="tok-var">$townshipSuffix</span>);</span>
+<span class="src-line" id="L592" data-diff="added"><a class="ln" href="#L592">592</a>    }</span>
+<span class="src-line" id="L593" data-diff="added"><a class="ln" href="#L593">593</a></span>
+<span class="src-line" id="L594" data-diff="added"><a class="ln" href="#L594">594</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L595" data-diff="added"><a class="ln" href="#L595">595</a><span class="tok-com">     * Return a postcode based on state</span></span>
+<span class="src-line" id="L596" data-diff="added"><a class="ln" href="#L596">596</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L597" data-diff="added"><a class="ln" href="#L597">597</a><span class="tok-com">     * @example &#039;55100&#039;</span></span>
+<span class="src-line" id="L598" data-diff="added"><a class="ln" href="#L598">598</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L599" data-diff="added"><a class="ln" href="#L599">599</a><span class="tok-com">     * @see https://en.wikipedia.org/wiki/Postal_codes_in_Malaysia#States</span></span>
+<span class="src-line" id="L600" data-diff="added"><a class="ln" href="#L600">600</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L601" data-diff="added"><a class="ln" href="#L601">601</a><span class="tok-com">     * @param string|null $state &#039;state&#039; or null</span></span>
+<span class="src-line" id="L602" data-diff="added"><a class="ln" href="#L602">602</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L603" data-diff="added"><a class="ln" href="#L603">603</a><span class="tok-com">     * @return string</span></span>
+<span class="src-line" id="L604" data-diff="added"><a class="ln" href="#L604">604</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L605" data-diff="added"><a class="ln" href="#L605">605</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">postcode</span>(<span class="tok-var">$state</span> = <span class="tok-id">null</span>)</span>
+<span class="src-line" id="L606" data-diff="added"><a class="ln" href="#L606">606</a>    {</span>
+<span class="src-line" id="L607" data-diff="added"><a class="ln" href="#L607">607</a>        <span class="tok-var">$format</span> = [</span>
+<span class="src-line" id="L608" data-diff="added"><a class="ln" href="#L608">608</a>            <span class="tok-str">&#039;perlis&#039;</span> =&gt; [ <span class="tok-com">// (01000 - 02800)</span></span>
+<span class="src-line" id="L609" data-diff="added"><a class="ln" href="#L609">609</a>                <span class="tok-str">&#039;0&#039;</span> . <span class="tok-id">self</span>::<span class="tok-id">numberBetween</span>(<span class="tok-num">1000</span>, <span class="tok-num">2800</span>),</span>
+<span class="src-line" id="L610" data-diff="added"><a class="ln" href="#L610">610</a>            ],</span>
+<span class="src-line" id="L611" data-diff="added"><a class="ln" href="#L611">611</a>            <span class="tok-str">&#039;kedah&#039;</span> =&gt; [ <span class="tok-com">// (05000 - 09810)</span></span>
+<span class="src-line" id="L612" data-diff="added"><a class="ln" href="#L612">612</a>                <span class="tok-str">&#039;0&#039;</span> . <span class="tok-id">self</span>::<span class="tok-id">numberBetween</span>(<span class="tok-num">5000</span>, <span class="tok-num">9810</span>),</span>
+<span class="src-line" id="L613" data-diff="added"><a class="ln" href="#L613">613</a>            ],</span>
+<span class="src-line" id="L614" data-diff="added"><a class="ln" href="#L614">614</a>            <span class="tok-str">&#039;penang&#039;</span> =&gt; [ <span class="tok-com">// (10000 - 14400)</span></span>
+<span class="src-line" id="L615" data-diff="added"><a class="ln" href="#L615">615</a>                <span class="tok-id">self</span>::<span class="tok-id">numberBetween</span>(<span class="tok-num">10000</span>, <span class="tok-num">14400</span>),</span>
+<span class="src-line" id="L616" data-diff="added"><a class="ln" href="#L616">616</a>            ],</span>
+<span class="src-line" id="L617" data-diff="added"><a class="ln" href="#L617">617</a>            <span class="tok-str">&#039;kelantan&#039;</span> =&gt; [ <span class="tok-com">// (15000 - 18500)</span></span>
+<span class="src-line" id="L618" data-diff="added"><a class="ln" href="#L618">618</a>                <span class="tok-id">self</span>::<span class="tok-id">numberBetween</span>(<span class="tok-num">15000</span>, <span class="tok-num">18500</span>),</span>
+<span class="src-line" id="L619" data-diff="added"><a class="ln" href="#L619">619</a>            ],</span>
+<span class="src-line" id="L620" data-diff="added"><a class="ln" href="#L620">620</a>            <span class="tok-str">&#039;terengganu&#039;</span> =&gt; [ <span class="tok-com">// (20000 - 24300)</span></span>
+<span class="src-line" id="L621" data-diff="added"><a class="ln" href="#L621">621</a>                <span class="tok-id">self</span>::<span class="tok-id">numberBetween</span>(<span class="tok-num">20000</span>, <span class="tok-num">24300</span>),</span>
+<span class="src-line" id="L622" data-diff="added"><a class="ln" href="#L622">622</a>            ],</span>
+<span class="src-line" id="L623" data-diff="added"><a class="ln" href="#L623">623</a>            <span class="tok-str">&#039;pahang&#039;</span> =&gt; [ <span class="tok-com">// (25000 - 28800 | 39000 - 39200 | 49000, 69000)</span></span>
+<span class="src-line" id="L624" data-diff="added"><a class="ln" href="#L624">624</a>                <span class="tok-id">self</span>::<span class="tok-id">numberBetween</span>(<span class="tok-num">25000</span>, <span class="tok-num">28800</span>),</span>
+<span class="src-line" id="L625" data-diff="added"><a class="ln" href="#L625">625</a>                <span class="tok-id">self</span>::<span class="tok-id">numberBetween</span>(<span class="tok-num">39000</span>, <span class="tok-num">39200</span>),</span>
+<span class="src-line" id="L626" data-diff="added"><a class="ln" href="#L626">626</a>                <span class="tok-id">self</span>::<span class="tok-id">numberBetween</span>(<span class="tok-num">49000</span>, <span class="tok-num">69000</span>),</span>
+<span class="src-line" id="L627" data-diff="added"><a class="ln" href="#L627">627</a>            ],</span>
+<span class="src-line" id="L628" data-diff="added"><a class="ln" href="#L628">628</a>            <span class="tok-str">&#039;perak&#039;</span> =&gt; [ <span class="tok-com">// (30000 - 36810)</span></span>
+<span class="src-line" id="L629" data-diff="added"><a class="ln" href="#L629">629</a>                <span class="tok-id">self</span>::<span class="tok-id">numberBetween</span>(<span class="tok-num">30000</span>, <span class="tok-num">36810</span>),</span>
+<span class="src-line" id="L630" data-diff="added"><a class="ln" href="#L630">630</a>            ],</span>
+<span class="src-line" id="L631" data-diff="added"><a class="ln" href="#L631">631</a>            <span class="tok-str">&#039;selangor&#039;</span> =&gt; [ <span class="tok-com">// (40000 - 48300 | 63000 - 68100)</span></span>
+<span class="src-line" id="L632" data-diff="added"><a class="ln" href="#L632">632</a>                <span class="tok-id">self</span>::<span class="tok-id">numberBetween</span>(<span class="tok-num">40000</span>, <span class="tok-num">48300</span>),</span>
+<span class="src-line" id="L633" data-diff="added"><a class="ln" href="#L633">633</a>                <span class="tok-id">self</span>::<span class="tok-id">numberBetween</span>(<span class="tok-num">63000</span>, <span class="tok-num">68100</span>),</span>
+<span class="src-line" id="L634" data-diff="added"><a class="ln" href="#L634">634</a>            ],</span>
+<span class="src-line" id="L635" data-diff="added"><a class="ln" href="#L635">635</a>            <span class="tok-str">&#039;kl&#039;</span> =&gt; [ <span class="tok-com">// (50000 - 60000)</span></span>
+<span class="src-line" id="L636" data-diff="added"><a class="ln" href="#L636">636</a>                <span class="tok-id">self</span>::<span class="tok-id">numberBetween</span>(<span class="tok-num">50000</span>, <span class="tok-num">60000</span>),</span>
+<span class="src-line" id="L637" data-diff="added"><a class="ln" href="#L637">637</a>            ],</span>
+<span class="src-line" id="L638" data-diff="added"><a class="ln" href="#L638">638</a>            <span class="tok-str">&#039;putrajaya&#039;</span> =&gt; [ <span class="tok-com">// (62000 - 62988)</span></span>
+<span class="src-line" id="L639" data-diff="added"><a class="ln" href="#L639">639</a>                <span class="tok-id">self</span>::<span class="tok-id">numberBetween</span>(<span class="tok-num">62000</span>, <span class="tok-num">62988</span>),</span>
+<span class="src-line" id="L640" data-diff="added"><a class="ln" href="#L640">640</a>            ],</span>
+<span class="src-line" id="L641" data-diff="added"><a class="ln" href="#L641">641</a>            <span class="tok-str">&#039;nsembilan&#039;</span> =&gt; [ <span class="tok-com">// (70000 - 73509)</span></span>
+<span class="src-line" id="L642" data-diff="added"><a class="ln" href="#L642">642</a>                <span class="tok-id">self</span>::<span class="tok-id">numberBetween</span>(<span class="tok-num">70000</span>, <span class="tok-num">73509</span>),</span>
+<span class="src-line" id="L643" data-diff="added"><a class="ln" href="#L643">643</a>            ],</span>
+<span class="src-line" id="L644" data-diff="added"><a class="ln" href="#L644">644</a>            <span class="tok-str">&#039;melaka&#039;</span> =&gt; [ <span class="tok-com">// (75000 - 78309)</span></span>
+<span class="src-line" id="L645" data-diff="added"><a class="ln" href="#L645">645</a>                <span class="tok-id">self</span>::<span class="tok-id">numberBetween</span>(<span class="tok-num">75000</span>, <span class="tok-num">78309</span>),</span>
+<span class="src-line" id="L646" data-diff="added"><a class="ln" href="#L646">646</a>            ],</span>
+<span class="src-line" id="L647" data-diff="added"><a class="ln" href="#L647">647</a>            <span class="tok-str">&#039;johor&#039;</span> =&gt; [ <span class="tok-com">// (79000 - 86900)</span></span>
+<span class="src-line" id="L648" data-diff="added"><a class="ln" href="#L648">648</a>                <span class="tok-id">self</span>::<span class="tok-id">numberBetween</span>(<span class="tok-num">79000</span>, <span class="tok-num">86900</span>),</span>
+<span class="src-line" id="L649" data-diff="added"><a class="ln" href="#L649">649</a>            ],</span>
+<span class="src-line" id="L650" data-diff="added"><a class="ln" href="#L650">650</a>            <span class="tok-str">&#039;labuan&#039;</span> =&gt; [ <span class="tok-com">// (87000 - 87033)</span></span>
+<span class="src-line" id="L651" data-diff="added"><a class="ln" href="#L651">651</a>                <span class="tok-id">self</span>::<span class="tok-id">numberBetween</span>(<span class="tok-num">87000</span>, <span class="tok-num">87033</span>),</span>
+<span class="src-line" id="L652" data-diff="added"><a class="ln" href="#L652">652</a>            ],</span>
+<span class="src-line" id="L653" data-diff="added"><a class="ln" href="#L653">653</a>            <span class="tok-str">&#039;sabah&#039;</span> =&gt; [ <span class="tok-com">// (88000 - 91309)</span></span>
+<span class="src-line" id="L654" data-diff="added"><a class="ln" href="#L654">654</a>                <span class="tok-id">self</span>::<span class="tok-id">numberBetween</span>(<span class="tok-num">88000</span>, <span class="tok-num">91309</span>),</span>
+<span class="src-line" id="L655" data-diff="added"><a class="ln" href="#L655">655</a>            ],</span>
+<span class="src-line" id="L656" data-diff="added"><a class="ln" href="#L656">656</a>            <span class="tok-str">&#039;sarawak&#039;</span> =&gt; [ <span class="tok-com">// (93000 - 98859)</span></span>
+<span class="src-line" id="L657" data-diff="added"><a class="ln" href="#L657">657</a>                <span class="tok-id">self</span>::<span class="tok-id">numberBetween</span>(<span class="tok-num">93000</span>, <span class="tok-num">98859</span>),</span>
+<span class="src-line" id="L658" data-diff="added"><a class="ln" href="#L658">658</a>            ],</span>
+<span class="src-line" id="L659" data-diff="added"><a class="ln" href="#L659">659</a>        ];</span>
+<span class="src-line" id="L660" data-diff="added"><a class="ln" href="#L660">660</a></span>
+<span class="src-line" id="L661" data-diff="added"><a class="ln" href="#L661">661</a>        <span class="tok-var">$postcode</span> = <span class="tok-id">null</span> === <span class="tok-var">$state</span> ? <span class="tok-kw">static</span>::<span class="tok-id">randomElement</span>(<span class="tok-var">$format</span>) : <span class="tok-var">$format</span>[<span class="tok-var">$state</span>];</span>
+<span class="src-line" id="L662" data-diff="added"><a class="ln" href="#L662">662</a></span>
+<span class="src-line" id="L663" data-diff="added"><a class="ln" href="#L663">663</a>        <span class="tok-kw">return</span> (string) <span class="tok-kw">static</span>::<span class="tok-id">randomElement</span>(<span class="tok-var">$postcode</span>);</span>
+<span class="src-line" id="L664" data-diff="added"><a class="ln" href="#L664">664</a>    }</span>
+<span class="src-line" id="L665" data-diff="added"><a class="ln" href="#L665">665</a></span>
+<span class="src-line" id="L666" data-diff="added"><a class="ln" href="#L666">666</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L667" data-diff="added"><a class="ln" href="#L667">667</a><span class="tok-com">     * Return the complete town address with matching postcode and state</span></span>
+<span class="src-line" id="L668" data-diff="added"><a class="ln" href="#L668">668</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L669" data-diff="added"><a class="ln" href="#L669">669</a><span class="tok-com">     * @example 55100 Bukit Bintang, Kuala Lumpur</span></span>
+<span class="src-line" id="L670" data-diff="added"><a class="ln" href="#L670">670</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L671" data-diff="added"><a class="ln" href="#L671">671</a><span class="tok-com">     * @return string</span></span>
+<span class="src-line" id="L672" data-diff="added"><a class="ln" href="#L672">672</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L673" data-diff="added"><a class="ln" href="#L673">673</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">townState</span>()</span>
+<span class="src-line" id="L674" data-diff="added"><a class="ln" href="#L674">674</a>    {</span>
+<span class="src-line" id="L675" data-diff="added"><a class="ln" href="#L675">675</a>        <span class="tok-var">$state</span> = <span class="tok-kw">static</span>::<span class="tok-id">randomElement</span>(<span class="tok-id">array_keys</span>(<span class="tok-kw">static</span>::<span class="tok-var">$states</span>));</span>
+<span class="src-line" id="L676" data-diff="added"><a class="ln" href="#L676">676</a>        <span class="tok-var">$postcode</span> = <span class="tok-kw">static</span>::<span class="tok-id">postcode</span>(<span class="tok-var">$state</span>);</span>
+<span class="src-line" id="L677" data-diff="added"><a class="ln" href="#L677">677</a>        <span class="tok-var">$town</span> = <span class="tok-kw">static</span>::<span class="tok-id">randomElement</span>(<span class="tok-kw">static</span>::<span class="tok-var">$towns</span>[<span class="tok-var">$state</span>]);</span>
+<span class="src-line" id="L678" data-diff="added"><a class="ln" href="#L678">678</a>        <span class="tok-var">$state</span> = <span class="tok-kw">static</span>::<span class="tok-id">randomElement</span>(<span class="tok-kw">static</span>::<span class="tok-var">$states</span>[<span class="tok-var">$state</span>]);</span>
+<span class="src-line" id="L679" data-diff="added"><a class="ln" href="#L679">679</a></span>
+<span class="src-line" id="L680" data-diff="added"><a class="ln" href="#L680">680</a>        <span class="tok-kw">return</span> <span class="tok-var">$postcode</span> . <span class="tok-str">&#039; &#039;</span> . <span class="tok-var">$town</span> . <span class="tok-str">&#039;, &#039;</span> . <span class="tok-var">$state</span>;</span>
+<span class="src-line" id="L681" data-diff="added"><a class="ln" href="#L681">681</a>    }</span>
+<span class="src-line" id="L682" data-diff="added"><a class="ln" href="#L682">682</a></span>
+<span class="src-line" id="L683" data-diff="added"><a class="ln" href="#L683">683</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L684" data-diff="added"><a class="ln" href="#L684">684</a><span class="tok-com">     * Return a random city (town)</span></span>
+<span class="src-line" id="L685" data-diff="added"><a class="ln" href="#L685">685</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L686" data-diff="added"><a class="ln" href="#L686">686</a><span class="tok-com">     * @example &#039;Ampang&#039;</span></span>
+<span class="src-line" id="L687" data-diff="added"><a class="ln" href="#L687">687</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L688" data-diff="added"><a class="ln" href="#L688">688</a><span class="tok-com">     * @return string</span></span>
+<span class="src-line" id="L689" data-diff="added"><a class="ln" href="#L689">689</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L690" data-diff="added"><a class="ln" href="#L690">690</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">city</span>()</span>
+<span class="src-line" id="L691" data-diff="added"><a class="ln" href="#L691">691</a>    {</span>
+<span class="src-line" id="L692" data-diff="added"><a class="ln" href="#L692">692</a>        <span class="tok-var">$state</span> = <span class="tok-kw">static</span>::<span class="tok-id">randomElement</span>(<span class="tok-id">array_keys</span>(<span class="tok-kw">static</span>::<span class="tok-var">$towns</span>));</span>
+<span class="src-line" id="L693" data-diff="added"><a class="ln" href="#L693">693</a></span>
+<span class="src-line" id="L694" data-diff="added"><a class="ln" href="#L694">694</a>        <span class="tok-kw">return</span> <span class="tok-kw">static</span>::<span class="tok-id">randomElement</span>(<span class="tok-kw">static</span>::<span class="tok-var">$towns</span>[<span class="tok-var">$state</span>]);</span>
+<span class="src-line" id="L695" data-diff="added"><a class="ln" href="#L695">695</a>    }</span>
+<span class="src-line" id="L696" data-diff="added"><a class="ln" href="#L696">696</a></span>
+<span class="src-line" id="L697" data-diff="added"><a class="ln" href="#L697">697</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L698" data-diff="added"><a class="ln" href="#L698">698</a><span class="tok-com">     * Return a random state</span></span>
+<span class="src-line" id="L699" data-diff="added"><a class="ln" href="#L699">699</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L700" data-diff="added"><a class="ln" href="#L700">700</a><span class="tok-com">     * @example &#039;Johor&#039;</span></span>
+<span class="src-line" id="L701" data-diff="added"><a class="ln" href="#L701">701</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L702" data-diff="added"><a class="ln" href="#L702">702</a><span class="tok-com">     * @return string</span></span>
+<span class="src-line" id="L703" data-diff="added"><a class="ln" href="#L703">703</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L704" data-diff="added"><a class="ln" href="#L704">704</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">state</span>()</span>
+<span class="src-line" id="L705" data-diff="added"><a class="ln" href="#L705">705</a>    {</span>
+<span class="src-line" id="L706" data-diff="added"><a class="ln" href="#L706">706</a>        <span class="tok-var">$state</span> = <span class="tok-kw">static</span>::<span class="tok-id">randomElement</span>(<span class="tok-id">array_keys</span>(<span class="tok-kw">static</span>::<span class="tok-var">$states</span>));</span>
+<span class="src-line" id="L707" data-diff="added"><a class="ln" href="#L707">707</a></span>
+<span class="src-line" id="L708" data-diff="added"><a class="ln" href="#L708">708</a>        <span class="tok-kw">return</span> <span class="tok-kw">static</span>::<span class="tok-id">randomElement</span>(<span class="tok-kw">static</span>::<span class="tok-var">$states</span>[<span class="tok-var">$state</span>]);</span>
+<span class="src-line" id="L709" data-diff="added"><a class="ln" href="#L709">709</a>    }</span>
+<span class="src-line" id="L710" data-diff="added"><a class="ln" href="#L710">710</a>}</span>
+<span class="src-line" id="L711" data-diff="added"><a class="ln" href="#L711">711</a></span>
+</code></pre>
+</main>
+<footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div>
+<script src="../../../../../../../../../../assets/search-index.js" defer></script>
+<script src="../../../../../../../../../../assets/app.js" defer></script>
+</body>
+</html>

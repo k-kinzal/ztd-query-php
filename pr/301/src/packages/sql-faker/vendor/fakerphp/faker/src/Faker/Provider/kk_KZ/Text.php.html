@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/kk_KZ/Text.php — k-kinzal/sql-faker</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/301/src/packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/kk_KZ/Text.php.html">
+<meta name="description" content="The source of packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/kk_KZ/Text.php.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="k-kinzal/sql-faker">
+<meta property="og:title" content="packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/kk_KZ/Text.php — k-kinzal/sql-faker">
+<meta property="og:description" content="The source of packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/kk_KZ/Text.php.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/301/src/packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/kk_KZ/Text.php.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/301/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="k-kinzal/sql-faker">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../../../../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.theme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../../../../../../../">
+<nav class="sidebar" id="sidebar"><div class="sb-head"><a class="sb-site" href="../../../../../../../../../../index.html">k-kinzal/sql-faker</a></div><nav class="sb-block"><div class="sb-title">Packages</div><ul class="sb-list"><li data-diff="same"><a href="../../../../../../../../../../k-kinzal/sql-faker/index.html">k-kinzal/sql-faker</a></li><li data-diff="added"><a href="../../../../../../../../../../fakerphp/faker/index.html">fakerphp/faker</a><span class="sb-note">vendor</span></li></ul></nav></nav>
+<div class="page">
+<header class="topbar">
+<button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>
+<nav class="crumbs"><a href="../../../../../../../../../../index.html">src</a><span class="crumb-sep">::</span><span class="crumb-current">packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/kk_KZ/Text.php</span></nav>
+<div class="topbar-tools">
+<input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing 43253dbf to working tree">43253dbf <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><button id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 43253dbf and working tree." data-off="This page documents what 43253dbf had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1 class="source-title">packages/sql-faker/vendor/fakerphp/faker/src/Faker/Provider/kk_KZ/Text.php</h1></div>
+<div class="notice diff-banner" data-diff="added">Added in working tree, compared to 43253dbf.</div>
+<pre class="source" data-diff="added"><code><span class="src-line" id="L1" data-diff="added"><a class="ln" href="#L1">1</a>&lt;?php</span>
+<span class="src-line" id="L2" data-diff="added"><a class="ln" href="#L2">2</a></span>
+<span class="src-line" id="L3" data-diff="added"><a class="ln" href="#L3">3</a><span class="tok-kw">namespace</span> <span class="tok-id">Faker\Provider\kk_KZ</span>;</span>
+<span class="src-line" id="L4" data-diff="added"><a class="ln" href="#L4">4</a></span>
+<span class="src-line" id="L5" data-diff="added"><a class="ln" href="#L5">5</a><span class="tok-kw">class</span> <span class="tok-id">Text</span> <span class="tok-kw">extends</span> <span class="tok-id">\Faker\Provider\Text</span></span>
+<span class="src-line" id="L6" data-diff="added"><a class="ln" href="#L6">6</a>{</span>
+<span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-com">     * From kk.wikipedia.org</span></span>
+<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-com">     * Мәтін Creative Commons Attribution-ShareAlike лицензиясы аясында қолжетімді</span></span>
+<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-com">     * кейбір жағдайларда қосымша шарттардың талаптары атқарылады.</span></span>
+<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-com">     * Толығырақ қ. Қолдану шарттары.</span></span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com">     * Title: Арыстан баб кесенесі</span></span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com">     * Posting Date: 22:55, 2015 ж. сәуірдің 12.</span></span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com">     * Language: Kazakh</span></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com">     * @licence Creative Commons Attribution-ShareAlike http://creativecommons.org/licenses/by-sa/3.0/deed.ru</span></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com">     * @see     https://wikimediafoundation.org/wiki/Terms_of_Use/</span></span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com">     * @see    http://ru.wikipedia.org/wiki/%D0%92%D0%B8%D0%BA%D0%B8%D0%BF%D0%B5%D0%B4%D0%B8%D1%8F:%D0%A2%D0%B5%D0%BA%D1%81%D1%82_%D0%BB%D0%B8%D1%86%D0%B5%D0%BD%D0%B7%D0%B8%D0%B8_Creative_Commons_Attribution-ShareAlike_3.0_Unported</span></span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com">     * @var string</span></span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>    <span class="tok-kw">protected</span> <span class="tok-kw">static</span> <span class="tok-var">$baseText</span> = &lt;&lt;&lt;&#039;EOT&#039;</span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-str">Арыстан баб кесенесі - көне Отырар жеріндегі сәулет өнері ескерткіші.</span></span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a></span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-str">Түркістан халқының арасында мұсылман дінін таратушы Қожа Ахмет Иасауидің ұстазы болған Арыстан баб ата</span></span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-str">қабірінің басына салынған. Кесене дәлізхана, мешіт, құжырахана, азан шақыратын мұнара сияқты жеке бөлмелерден құралған.</span></span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a><span class="tok-str">Кесененің ең көне бөлігі қабірхана болуы тиіс. Қазір де оның едені басқа бөлмелермен салыстырғанда едәуір биік.</span></span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a><span class="tok-str">Қабір үстіне алғашқы белгі 12 ғ. шамасында салынған. Мазар 14 ғасырда қайта жөнделген. Арыстан баб кесенесі 20 ғасырдың</span></span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a><span class="tok-str">басында жергілікті халықтың қаражатымен күйдірілген кірпіштен ауданы 35x12 м, биіктігі 12 м, бұрынғы Меккеге қараған</span></span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a><span class="tok-str">есігі Түркістанға, Әзірет Сұлтанға бағытталып, Солтүстік жағы кесене, Оңтүстік жағы мешіт есебінде қайта жәнделді.</span></span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a><span class="tok-str">Дәліз-қақпа маңдайшасына мәрмәр тақта қаланып, бетіне һижра бойынша 1327 жыл, яғни соңғы құрылыс жүрген</span></span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a><span class="tok-str">уақыт деп көрсетілген.</span></span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a></span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a><span class="tok-str">Қысқаша мәлімет</span></span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a></span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a><span class="tok-str">Бұл кесене XII ғасырда өмір сүрген діни көріпкел Арыстан баб мазарының үстіне салынған.</span></span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a><span class="tok-str">Кесененің бірінші құрылысы XIV-XV ғасырға жатады. Сол құрылыстан кесілген айван тізбектері қалған.</span></span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a><span class="tok-str">XVIII ғасырда көне мазардың орнында жер сілкінісінен кейін екі кесілген ағаш тізбекке тірелген айванмен салынған</span></span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a><span class="tok-str">екі күмбезді құрылыс орнатылды. XVIII ғасырда құрылыс қиратылып, фриз жазбалары бойынша 1909 жылы қайта салынды.</span></span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a><span class="tok-str">1971 жылы жоғары деңгейдегі грунт сулары салдарынан мешіт құлатылып, қайта орнатылды. Құрылыс алебастр ерітіндісінде</span></span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a><span class="tok-str">күйдірілген кірпіштен қабырғаның сырт жағына салынды. Қазіргі кезде бұл кесене Орталық Азиядағы қажылық міндетті</span></span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a><span class="tok-str">өтейтін мұсылман киелі жерлерінің бірі болып саналады Аңыз бойынша Арыстан баб Мұхаммед пайғамбардың елшісі болған.</span></span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a><span class="tok-str">Бір күні Мұхаммед пайғамбар өзінің шәкірттерімен құрма жеп отырған еді. Бір құрма қайта-қайта ыдыстан құлай беріп,</span></span>
+<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a><span class="tok-str">пайғамбар ішкі дауысты естіді: «Бұл құрма Сізден кейін 400 жыл алдағы уақытта туылатын мұсылман бала Ахметке арналған».</span></span>
+<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a><span class="tok-str">Сонда пайғамбар шәкірттері ішінен бұл құрманы кім иесіне жеткізетінін сұрайды. Ешкім сұранған жоқ. Пайғамбар сұрақты</span></span>
+<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a><span class="tok-str">қайта қойғаннан кейін, Арыстан баб былай деді: «Егер Сіз Алла Тағаладан 400 жыл сұрап берсеңіз мен бұл құрманы</span></span>
+<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a><span class="tok-str">иесіне жеткіземін». Халық аңыздарынан және жазба деректеріне қарағанда («Рисолаи Сарем-Исфижоб» және</span></span>
+<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a><span class="tok-str">Куприлозада кітабы) Арыстан баб Ахмет Яссауидің ұстазы болып құрманы жеткізеді. Қазіргі кезде Арыстан баб мазары</span></span>
+<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a><span class="tok-str">үстінде 30*13 метр аумағы бар кесене тұр. Тарихи деректер бойынша XII-XVIII ғасырларда кесене бірнеше рет қайта</span></span>
+<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a><span class="tok-str">салынып, қайта жаңартылды. Қожа Ахмет Яссауи ұлы әулие мен діни көріпкел 1103 жылы туылып 1166 жылы қайтыс болған.</span></span>
+<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a><span class="tok-str">Арыстанбаб туралы аңыздар</span></span>
+<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a></span>
+<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a><span class="tok-str">Арыстанбабтың дүние салуы Қожа Ахмет Иасауи хикметінде былайша суреттеледі:</span></span>
+<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a><span class="tok-str">«Бабам айтты: Ей балам, қасымда тұр өлейін,</span></span>
+<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a><span class="tok-str">Жаназамды оқып көм, жан тәсілім қалайын.</span></span>
+<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a><span class="tok-str">Медет берсе Мұстафа, ғарыш биігіне шығайын.</span></span>
+<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a><span class="tok-str">Арыслан бабам сөздерін есітіңіз - тәбәрік.</span></span>
+<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a><span class="tok-str">Жылап айттым: ей бала, жас көдекпін білмеймін.</span></span>
+<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a><span class="tok-str">Көріңізді қазармын, көтеріп сала алмаспын.</span></span>
+<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a><span class="tok-str">Хақ Мұстафа сүндетін, балапанмын, білмеймін.</span></span>
+<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a><span class="tok-str">Бабам айтты: Ей балам, періштелер жиылады.</span></span>
+<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a><span class="tok-str">Жебірейіл имам болып, өзгелер оған ұйиды.</span></span>
+<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a><span class="tok-str">Макаил мен Исрафил көтеріп көрге қояды».Отырар өңірінде біз естіген аңыз байынша Арыстанбаб дүние салған соң,</span></span>
+<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a><span class="tok-str">оның денесін ақ бураға артып, еркіне жіберіп, соңынан ілесіп отырған. Ақ бура жүре-жүре осы жерге шөккен екен.</span></span>
+<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a><span class="tok-str">Сол шөккен жерге Арыстанбаб қойылыпты. «Алпамыс жырының» бір үлгісінде Байбөрі мен Аналық «Самарқанда сансыз баб»,</span></span>
+<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a><span class="tok-str">Бұқарадағы «Баһауәдин Нақишбент» молаларына зират қылады, және</span></span>
+<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a><span class="tok-str">&quot;Түнейді үш күн Байбөрі</span></span>
+<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a><span class="tok-str">Әзіретті сұлтанға.</span></span>
+<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a><span class="tok-str">Түркістанда түмен бап,</span></span>
+<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a><span class="tok-str">Сайрамда бар сансыз бап,</span></span>
+<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a><span class="tok-str">Отырарда отыз бап,</span></span>
+<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a><span class="tok-str">Бабалардың бабын сұрасаң,</span></span>
+<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a><span class="tok-str">Ең үлкені Арыстан бап.</span></span>
+<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a><span class="tok-str">Әулие қоймай қыдырып,</span></span>
+<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a><span class="tok-str">Бабалардың бәрін қылды сап» Әзірет Сұлтан қорық-музейінің сақтаулы тұрған Баян ауылдан бір зияратшылдың</span></span>
+<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a><span class="tok-str">қолжазбасында мынадай қызық мағұлмат бар: Арыстанбаб дүние салған соң, оның моласының басына екі құс – бірі лашын,</span></span>
+<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a><span class="tok-str">бірі қарға ұшып келеді. Бұл әңгіме бізді ежелгі түркі шаманизміне жетелейді. Көне түркілер бұл аталған құстарды киелі</span></span>
+<span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a><span class="tok-str">деп санаған. Мысалы, ескі жылнамаларда жазылған аңыз бойынша көне түркілердің Ашина тайпасына жау шауып, жаппай қырып</span></span>
+<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a><span class="tok-str">кетеді. Сонда жалғыз қалған бала ғана аман қалады. Баланы қасқыр емізіп, аспан әлемінің елшісі – қарға ет әкеліп</span></span>
+<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a><span class="tok-str">асыраған. Осы баладан түркілердің ұрпағы деседі. Қазақтардың қарғаны киелі құс санағаны жөнінде дерек ер аз емес.</span></span>
+<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a><span class="tok-str">Қарға сөзімен байланысты мынадай мақал-мәтелдер бар: «Біздің де қолымызға қарға тышар», «Қарға тамырлы қазақ»,</span></span>
+<span class="src-line" id="L88" data-diff="added"><a class="ln" href="#L88">88</a><span class="tok-str">«Қарғам-ау» деген сөз қарағым, қалқам деген мағынада қолданылады. «Қарғам, қарғашым, қарғатайым&quot; деп қарттар</span></span>
+<span class="src-line" id="L89" data-diff="added"><a class="ln" href="#L89">89</a><span class="tok-str">немере-шөберелерін еркелеткен. Қанша балаң бар деп жауап қайтарған.</span></span>
+<span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a><span class="tok-str">Құрылымы</span></span>
+<span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a></span>
+<span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a><span class="tok-str">Арыстанбаб кесенесі ғасырлар бойы түрлі өндеу-жөндеуді басынан кешірген құрылыс.</span></span>
+<span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a><span class="tok-str">Кейде Арыстанбабтың ХІ-ХІІ ғасырларда өмір сүргенін тілге тиек ете отырып, оның кесенесі Арыстанбаб дүние салған соң</span></span>
+<span class="src-line" id="L94" data-diff="added"><a class="ln" href="#L94">94</a><span class="tok-str">іле-шала тұрғызылған деген жорамал айтылады. Алайда бізге жеткен қазіргі кесенеде ХІІ ғасырдың белгілері жоқ.</span></span>
+<span class="src-line" id="L95" data-diff="added"><a class="ln" href="#L95">95</a><span class="tok-str">Бұл арада біз ислам дінінің алғашқы кезде қабыр үстіне төбесі жабық құрылыс тұрғызуға тыйым салғанын есте ұстағанымыз</span></span>
+<span class="src-line" id="L96" data-diff="added"><a class="ln" href="#L96">96</a><span class="tok-str">жөн. Осы тұрғыдан қарағанда, ХІІ ғасырда Арыстанбаб ғимаратының болмауы да мүмкін. А.Черкасовтың жазбаларында</span></span>
+<span class="src-line" id="L97" data-diff="added"><a class="ln" href="#L97">97</a><span class="tok-str">Арыстанбаб кесенесі әулие және шәкірттері жатқан екі бөлмеден, сондай-ақ алдындағы бастырмадан тұрғанын жоғарыда</span></span>
+<span class="src-line" id="L98" data-diff="added"><a class="ln" href="#L98">98</a><span class="tok-str">айтқан болатынбыз. Бұлардың жобасы ХІV ғасырдың құрылысына сай келеді. Осымен қатар бастырмадағы ұстындар да ХІҮ</span></span>
+<span class="src-line" id="L99" data-diff="added"><a class="ln" href="#L99">99</a><span class="tok-str">ғасырдың аяғы мен ХV ғасырдың басында жасалған деген тұжырымды мамандар айтқан болатын. Яғни қазіргі Арыстанбаб құрылыс</span></span>
+<span class="src-line" id="L100" data-diff="added"><a class="ln" href="#L100">100</a><span class="tok-str">кешеніндегі қабырғаналар бөлігі ең көнесі, әуелгісі болып табылады. Бұған қоса халық арасында кең тараған мынадай</span></span>
+<span class="src-line" id="L101" data-diff="added"><a class="ln" href="#L101">101</a><span class="tok-str">аңыз бар: «Қожа Ахмет кесенесінің қабырғалары қаланып болған түні алып жасыл өгіз көтерілген дуалдарды мүйізімен соғып,</span></span>
+<span class="src-line" id="L102" data-diff="added"><a class="ln" href="#L102">102</a><span class="tok-str">құлатады. Ғимарат қабырғалары қайта тұрғызылып, күмбездері қалана бастағанда бұл оқиға тағы да қайталанып, бәрі</span></span>
+<span class="src-line" id="L103" data-diff="added"><a class="ln" href="#L103">103</a><span class="tok-str">үйелген төбеге айналады. Бұл жай Әмір Темірді көп ойландырады. Түсінде бір шал келіп, аян береді, ол Қожа Ахметтің</span></span>
+<span class="src-line" id="L104" data-diff="added"><a class="ln" href="#L104">104</a><span class="tok-str">ең алғашқы ұстазы, Арыстанбаб моласының үстіне мазар көтеруге әмір ететінін жеткізеді. Бұл талап орындалған соң ғана</span></span>
+<span class="src-line" id="L105" data-diff="added"><a class="ln" href="#L105">105</a><span class="tok-str">Әмір Темір Түркістандағы құрылысын ойдағыдай аяқтайды». Арыстанбаб қабірханасының едені басқа бөлмелермен салыстырғанда</span></span>
+<span class="src-line" id="L106" data-diff="added"><a class="ln" href="#L106">106</a><span class="tok-str">едәуір биік. Тігінен көтерілген қабырғалары бір биіктікте сәулет өнерінде «желкен» деп аталатын өріммен иіліп барым</span></span>
+<span class="src-line" id="L107" data-diff="added"><a class="ln" href="#L107">107</a><span class="tok-str">күмбезге ұласады. Күмбез ауқымы кең, һәм биік етіп тұрғызылған. Қабірхананың есігі күнбатысқа, дәлірек айтсақ, Меккеге</span></span>
+<span class="src-line" id="L108" data-diff="added"><a class="ln" href="#L108">108</a><span class="tok-str">бағышталған. Бұл қасиетті қабірлерге тағзым етудің мұсылмандық ережелерінен туындайды: зиярат етушінің беті сағанаға,</span></span>
+<span class="src-line" id="L109" data-diff="added"><a class="ln" href="#L109">109</a><span class="tok-str">арқасы құбылаға қарауға тиіс болған. Оның ұзындығы 3 м. 90 см., ені 1 м. 30 см., биіктігі 1 м. 20 см. Қабаттас, көлемі</span></span>
+<span class="src-line" id="L110" data-diff="added"><a class="ln" href="#L110">110</a><span class="tok-str">5,4м х 5,4 м. Бөлмеде үш қабір бар. Ол да биік күмбезбен жабылған. Алайда күмбездің іші алебастрмен сыланып,</span></span>
+<span class="src-line" id="L111" data-diff="added"><a class="ln" href="#L111">111</a><span class="tok-str">геометриялық үлгідегі өрнектермен нақышталған. Әулиеге кірер есіктің екі жағында екі қабір орналасқан.</span></span>
+<span class="src-line" id="L112" data-diff="added"><a class="ln" href="#L112">112</a><span class="tok-str">Шырақшылар бұларды Лашынбаб пен Қарғабаб дейді. Олар әулие қабірімен салыстырғанда аса шағын болып келген.</span></span>
+<span class="src-line" id="L113" data-diff="added"><a class="ln" href="#L113">113</a><span class="tok-str">Лашын баб қабырының көлемі 1,63м х 0,92м., Қарғабабтікі 1,70 м х 0,90 м. Осы қабарханаларға оңтүстік-батыс жақтан</span></span>
+<span class="src-line" id="L114" data-diff="added"><a class="ln" href="#L114">114</a><span class="tok-str">бірнеше бөлмелер қосылған. Екі қанаттағы бөлмелерді біріктіріп, байланыстырып тұрған дәліз-бастырма бар. Ол әдеттегі</span></span>
+<span class="src-line" id="L115" data-diff="added"><a class="ln" href="#L115">115</a><span class="tok-str">бастырма-айвандардан өзгеше, тұтасымен қыштан өріліп, төбесі иіліп жабылған. Оның көлемі 7,60м х 4,35м. Қабырханалар,</span></span>
+<span class="src-line" id="L116" data-diff="added"><a class="ln" href="#L116">116</a><span class="tok-str">дәліз қышпен қаланып күмбезделсе, мешіт бөлігі негізінен қам кесектен тұрғызылып, төбесін жабуда ағаш кең пайдаланылған.</span></span>
+<span class="src-line" id="L117" data-diff="added"><a class="ln" href="#L117">117</a><span class="tok-str">Мешіттің ортасында В.В.Константинова жасаған жоба бойынша алты ағаш тіреу болған. Олардың үстіне қары қойылып, ағаштан</span></span>
+<span class="src-line" id="L118" data-diff="added"><a class="ln" href="#L118">118</a><span class="tok-str">қырлы күмбез қиыстырылған. Мешіт қабырғасында Мекке бағытын көрсететін ойық-михраб бар</span></span>
+<span class="src-line" id="L119" data-diff="added"><a class="ln" href="#L119">119</a><span class="tok-str">Зерттелуі</span></span>
+<span class="src-line" id="L120" data-diff="added"><a class="ln" href="#L120">120</a></span>
+<span class="src-line" id="L121" data-diff="added"><a class="ln" href="#L121">121</a><span class="tok-str">Арыстан баб ескерткіші деп аталатын мазарлар басқа аймақтардың бірі – Қырғызстандағы Ош өңірінде.</span></span>
+<span class="src-line" id="L122" data-diff="added"><a class="ln" href="#L122">122</a><span class="tok-str">Бірақ қырғыздардың діни-нанымдарын зерттеген ғалым С.М.Абрамзонның пікірінше, жергілікті халық бұл жерде жерленген</span></span>
+<span class="src-line" id="L123" data-diff="added"><a class="ln" href="#L123">123</a><span class="tok-str">Арыстанбабты қалмақтарға қарсы соғысқан батыр деп таниды. Яғни Оштағы Арыстанбаб XYII-XVII ғасырларда болған адам.</span></span>
+<span class="src-line" id="L124" data-diff="added"><a class="ln" href="#L124">124</a><span class="tok-str">Арыстанбаб қабірінің басына тұрғызылған ғимарат алғаш ғылыми әдебиетте 1898 ж.ж. И.Т.Пославскийдің «Развалины города</span></span>
+<span class="src-line" id="L125" data-diff="added"><a class="ln" href="#L125">125</a><span class="tok-str">Отрара» атты мақаласында аталады. 1903 жылы кесене түркістандық археология әуесқойлар үйірмесінің мүшесі А.Черкасовтың</span></span>
+<span class="src-line" id="L126" data-diff="added"><a class="ln" href="#L126">126</a><span class="tok-str">Отырар төбені көріп айтқаны жөніндегі есебінде аталып өтіледі. А.Черкасовты түкпір бөлмедегі Арсытанбабтың қабірі таң</span></span>
+<span class="src-line" id="L127" data-diff="added"><a class="ln" href="#L127">127</a><span class="tok-str">қалдырады: «Надгробие Арстан – Баба такой же формы, как и остальные, покрыто куском белого коленкора и поражает своими</span></span>
+<span class="src-line" id="L128" data-diff="added"><a class="ln" href="#L128">128</a><span class="tok-str">размерами. Такого роста, по ловам шейха, достигал и сам святой...». А.Черкасовтың деректері кеінірек орыс-француз</span></span>
+<span class="src-line" id="L129" data-diff="added"><a class="ln" href="#L129">129</a><span class="tok-str">тілдерінде жарық көрген. И.А.Кастеньенің «Древности Киргизской степи и Оренбургского края» деген еңбегінде де</span></span>
+<span class="src-line" id="L130" data-diff="added"><a class="ln" href="#L130">130</a><span class="tok-str">қайталанады. Көп үзілістен кейін Арыстанбаб кесенесі жөніндегі ғылыми сипаттама 1950 ж.</span></span>
+<span class="src-line" id="L131" data-diff="added"><a class="ln" href="#L131">131</a><span class="tok-str">В.В.Константинованың «Некоторые архитектурные памятники по среднему течению р.Сырдарьи» деген мақаласында жарияланды.</span></span>
+<span class="src-line" id="L132" data-diff="added"><a class="ln" href="#L132">132</a><span class="tok-str">1987 жылы «Білім мен Еңбекте» М.Сембиннің кесене жайлы мақаласы жарияланды. М.Сембин Арыстанбаб туралы мақаласында</span></span>
+<span class="src-line" id="L133" data-diff="added"><a class="ln" href="#L133">133</a><span class="tok-str">О.Дастановтың «Әулиелі жерлер туралы шындық» атты кітабындағы келтірілген мәліметтерге сүйене отырып, Арыстанбаб</span></span>
+<span class="src-line" id="L134" data-diff="added"><a class="ln" href="#L134">134</a><span class="tok-str">кесенесінің сәулетшісі ташкенттік Ескендір қажы болған деген болатын. «Ол өзінше бір қайта жырау, тыңнан толғау,</span></span>
+<span class="src-line" id="L135" data-diff="added"><a class="ln" href="#L135">135</a><span class="tok-str">немесе ақындық шабыт-шалым сынасып, жырмен жарысу есепті...»,- деген М.Әуезов сөздері Арыстанбаб сәулетшісіне</span></span>
+<span class="src-line" id="L136" data-diff="added"><a class="ln" href="#L136">136</a><span class="tok-str">толығымен тән.</span></span>
+<span class="src-line" id="L137" data-diff="added"><a class="ln" href="#L137">137</a><span class="tok-str">XXI ғасырдағы Арыстан баб кесенесі</span></span>
+<span class="src-line" id="L138" data-diff="added"><a class="ln" href="#L138">138</a></span>
+<span class="src-line" id="L139" data-diff="added"><a class="ln" href="#L139">139</a><span class="tok-str">Әлемге танымал “Арыстан баб” мавзолейінің құрылысы екі жыл бұрын жаңа архитектуралық кешен тұрғысында басталған.</span></span>
+<span class="src-line" id="L140" data-diff="added"><a class="ln" href="#L140">140</a><span class="tok-str">Идея авторы – белгілі мемлекет және қоғам қайраткері, инженер-ғалым, танымал меценат Асқар Құлыбаев болып табылады.</span></span>
+<span class="src-line" id="L141" data-diff="added"><a class="ln" href="#L141">141</a><span class="tok-str">Бір кездері Асқар Алтынбекұлы халық игілігі үшін рухани құндылық орнатуды армандаған. Бүгінде Асқар Құлыбаевтың және</span></span>
+<span class="src-line" id="L142" data-diff="added"><a class="ln" href="#L142">142</a><span class="tok-str">оның ұлдарының Қазақстанның жан азығы байлығын еселей түсу мақсатындағы сіңірген үлесі зор екендігін айту қажет.</span></span>
+<span class="src-line" id="L143" data-diff="added"><a class="ln" href="#L143">143</a><span class="tok-str">Елбасымыз Н.Ә.Назарбаев өзі бастама көтеріп, бүкіл мемлекеттік деңгейде жүзеге “Мәдени мұра” бағдарламасы асырылып</span></span>
+<span class="src-line" id="L144" data-diff="added"><a class="ln" href="#L144">144</a><span class="tok-str">жатыр.</span></span>
+<span class="src-line" id="L145" data-diff="added"><a class="ln" href="#L145">145</a></span>
+<span class="src-line" id="L146" data-diff="added"><a class="ln" href="#L146">146</a><span class="tok-kw">EOT</span>;</span>
+<span class="src-line" id="L147" data-diff="added"><a class="ln" href="#L147">147</a></span>
+<span class="src-line" id="L148" data-diff="added"><a class="ln" href="#L148">148</a>    <span class="tok-com">/*</span></span>
+<span class="src-line" id="L149" data-diff="added"><a class="ln" href="#L149">149</a><span class="tok-com">    *** START: FULL LICENSE ***</span></span>
+<span class="src-line" id="L150" data-diff="added"><a class="ln" href="#L150">150</a></span>
+<span class="src-line" id="L151" data-diff="added"><a class="ln" href="#L151">151</a><span class="tok-com">    Creative Commons Legal Code</span></span>
+<span class="src-line" id="L152" data-diff="added"><a class="ln" href="#L152">152</a></span>
+<span class="src-line" id="L153" data-diff="added"><a class="ln" href="#L153">153</a><span class="tok-com">    Attribution-ShareAlike 3.0 Unported</span></span>
+<span class="src-line" id="L154" data-diff="added"><a class="ln" href="#L154">154</a></span>
+<span class="src-line" id="L155" data-diff="added"><a class="ln" href="#L155">155</a></span>
+<span class="src-line" id="L156" data-diff="added"><a class="ln" href="#L156">156</a><span class="tok-com">    CREATIVE COMMONS CORPORATION IS NOT A LAW FIRM AND DOES NOT PROVIDE</span></span>
+<span class="src-line" id="L157" data-diff="added"><a class="ln" href="#L157">157</a><span class="tok-com">    LEGAL SERVICES. DISTRIBUTION OF THIS LICENSE DOES NOT CREATE AN</span></span>
+<span class="src-line" id="L158" data-diff="added"><a class="ln" href="#L158">158</a><span class="tok-com">    ATTORNEY-CLIENT RELATIONSHIP. CREATIVE COMMONS PROVIDES THIS</span></span>
+<span class="src-line" id="L159" data-diff="added"><a class="ln" href="#L159">159</a><span class="tok-com">    INFORMATION ON AN &quot;AS-IS&quot; BASIS. CREATIVE COMMONS MAKES NO WARRANTIES</span></span>
+<span class="src-line" id="L160" data-diff="added"><a class="ln" href="#L160">160</a><span class="tok-com">    REGARDING THE INFORMATION PROVIDED, AND DISCLAIMS LIABILITY FOR</span></span>
+<span class="src-line" id="L161" data-diff="added"><a class="ln" href="#L161">161</a><span class="tok-com">    DAMAGES RESULTING FROM ITS USE. License</span></span>
+<span class="src-line" id="L162" data-diff="added"><a class="ln" href="#L162">162</a></span>
+<span class="src-line" id="L163" data-diff="added"><a class="ln" href="#L163">163</a><span class="tok-com">    THE WORK (AS DEFINED BELOW) IS PROVIDED UNDER THE TERMS OF THIS</span></span>
+<span class="src-line" id="L164" data-diff="added"><a class="ln" href="#L164">164</a><span class="tok-com">    CREATIVE COMMONS PUBLIC LICENSE (&quot;CCPL&quot; OR &quot;LICENSE&quot;). THE WORK IS</span></span>
+<span class="src-line" id="L165" data-diff="added"><a class="ln" href="#L165">165</a><span class="tok-com">    PROTECTED BY COPYRIGHT AND/OR OTHER APPLICABLE LAW. ANY USE OF THE</span></span>
+<span class="src-line" id="L166" data-diff="added"><a class="ln" href="#L166">166</a><span class="tok-com">    WORK OTHER THAN AS AUTHORIZED UNDER THIS LICENSE OR COPYRIGHT LAW IS</span></span>
+<span class="src-line" id="L167" data-diff="added"><a class="ln" href="#L167">167</a><span class="tok-com">    PROHIBITED.</span></span>
+<span class="src-line" id="L168" data-diff="added"><a class="ln" href="#L168">168</a></span>
+<span class="src-line" id="L169" data-diff="added"><a class="ln" href="#L169">169</a><span class="tok-com">    BY EXERCISING ANY RIGHTS TO THE WORK PROVIDED HERE, YOU ACCEPT AND</span></span>
+<span class="src-line" id="L170" data-diff="added"><a class="ln" href="#L170">170</a><span class="tok-com">    AGREE TO BE BOUND BY THE TERMS OF THIS LICENSE. TO THE EXTENT THIS</span></span>
+<span class="src-line" id="L171" data-diff="added"><a class="ln" href="#L171">171</a><span class="tok-com">    LICENSE MAY BE CONSIDERED TO BE A CONTRACT, THE LICENSOR GRANTS YOU</span></span>
+<span class="src-line" id="L172" data-diff="added"><a class="ln" href="#L172">172</a><span class="tok-com">    THE RIGHTS CONTAINED HERE IN CONSIDERATION OF YOUR ACCEPTANCE OF SUCH</span></span>
+<span class="src-line" id="L173" data-diff="added"><a class="ln" href="#L173">173</a><span class="tok-com">    TERMS AND CONDITIONS.</span></span>
+<span class="src-line" id="L174" data-diff="added"><a class="ln" href="#L174">174</a></span>
+<span class="src-line" id="L175" data-diff="added"><a class="ln" href="#L175">175</a><span class="tok-com">    1. Definitions</span></span>
+<span class="src-line" id="L176" data-diff="added"><a class="ln" href="#L176">176</a></span>
+<span class="src-line" id="L177" data-diff="added"><a class="ln" href="#L177">177</a><span class="tok-com">    &quot;Adaptation&quot; means a work based upon the Work, or upon the Work and</span></span>
+<span class="src-line" id="L178" data-diff="added"><a class="ln" href="#L178">178</a><span class="tok-com">    other pre-existing works, such as a translation, adaptation,</span></span>
+<span class="src-line" id="L179" data-diff="added"><a class="ln" href="#L179">179</a><span class="tok-com">    derivative work, arrangement of music or other alterations of a</span></span>
+<span class="src-line" id="L180" data-diff="added"><a class="ln" href="#L180">180</a><span class="tok-com">    literary or artistic work, or phonogram or performance and includes</span></span>
+<span class="src-line" id="L181" data-diff="added"><a class="ln" href="#L181">181</a><span class="tok-com">    cinematographic adaptations or any other form in which the Work may be</span></span>
+<span class="src-line" id="L182" data-diff="added"><a class="ln" href="#L182">182</a><span class="tok-com">    recast, transformed, or adapted including in any form recognizably</span></span>
+<span class="src-line" id="L183" data-diff="added"><a class="ln" href="#L183">183</a><span class="tok-com">    derived from the original, except that a work that constitutes a</span></span>
+<span class="src-line" id="L184" data-diff="added"><a class="ln" href="#L184">184</a><span class="tok-com">    Collection will not be considered an Adaptation for the purpose of</span></span>
+<span class="src-line" id="L185" data-diff="added"><a class="ln" href="#L185">185</a><span class="tok-com">    this License. For the avoidance of doubt, where the Work is a musical</span></span>
+<span class="src-line" id="L186" data-diff="added"><a class="ln" href="#L186">186</a><span class="tok-com">    work, performance or phonogram, the synchronization of the Work in</span></span>
+<span class="src-line" id="L187" data-diff="added"><a class="ln" href="#L187">187</a><span class="tok-com">    timed-relation with a moving image (&quot;synching&quot;) will be considered an</span></span>
+<span class="src-line" id="L188" data-diff="added"><a class="ln" href="#L188">188</a><span class="tok-com">    Adaptation for the purpose of this License. &quot;Collection&quot; means a</span></span>
+<span class="src-line" id="L189" data-diff="added"><a class="ln" href="#L189">189</a><span class="tok-com">    collection of literary or artistic works, such as encyclopedias and</span></span>
+<span class="src-line" id="L190" data-diff="added"><a class="ln" href="#L190">190</a><span class="tok-com">    anthologies, or performances, phonograms or broadcasts, or other works</span></span>
+<span class="src-line" id="L191" data-diff="added"><a class="ln" href="#L191">191</a><span class="tok-com">    or subject matter other than works listed in Section 1(f) below,</span></span>
+<span class="src-line" id="L192" data-diff="added"><a class="ln" href="#L192">192</a><span class="tok-com">    which, by reason of the selection and arrangement of their contents,</span></span>
+<span class="src-line" id="L193" data-diff="added"><a class="ln" href="#L193">193</a><span class="tok-com">    constitute intellectual creations, in which the Work is included in</span></span>
+<span class="src-line" id="L194" data-diff="added"><a class="ln" href="#L194">194</a><span class="tok-com">    its entirety in unmodified form along with one or more other</span></span>
+<span class="src-line" id="L195" data-diff="added"><a class="ln" href="#L195">195</a><span class="tok-com">    contributions, each constituting separate and independent works in</span></span>
+<span class="src-line" id="L196" data-diff="added"><a class="ln" href="#L196">196</a><span class="tok-com">    themselves, which together are assembled into a collective whole. A</span></span>
+<span class="src-line" id="L197" data-diff="added"><a class="ln" href="#L197">197</a><span class="tok-com">    work that constitutes a Collection will not be considered an</span></span>
+<span class="src-line" id="L198" data-diff="added"><a class="ln" href="#L198">198</a><span class="tok-com">    Adaptation (as defined below) for the purposes of this License.</span></span>
+<span class="src-line" id="L199" data-diff="added"><a class="ln" href="#L199">199</a><span class="tok-com">    &quot;Creative Commons Compatible License&quot; means a license that is listed</span></span>
+<span class="src-line" id="L200" data-diff="added"><a class="ln" href="#L200">200</a><span class="tok-com">    at http://creativecommons.org/compatiblelicenses that has been</span></span>
+<span class="src-line" id="L201" data-diff="added"><a class="ln" href="#L201">201</a><span class="tok-com">    approved by Creative Commons as being essentially equivalent to this</span></span>
+<span class="src-line" id="L202" data-diff="added"><a class="ln" href="#L202">202</a><span class="tok-com">    License, including, at a minimum, because that license: (i) contains</span></span>
+<span class="src-line" id="L203" data-diff="added"><a class="ln" href="#L203">203</a><span class="tok-com">    terms that have the same purpose, meaning and effect as the License</span></span>
+<span class="src-line" id="L204" data-diff="added"><a class="ln" href="#L204">204</a><span class="tok-com">    Elements of this License; and, (ii) explicitly permits the relicensing</span></span>
+<span class="src-line" id="L205" data-diff="added"><a class="ln" href="#L205">205</a><span class="tok-com">    of adaptations of works made available under that license under this</span></span>
+<span class="src-line" id="L206" data-diff="added"><a class="ln" href="#L206">206</a><span class="tok-com">    License or a Creative Commons jurisdiction license with the same</span></span>
+<span class="src-line" id="L207" data-diff="added"><a class="ln" href="#L207">207</a><span class="tok-com">    License Elements as this License. &quot;Distribute&quot; means to make available</span></span>
+<span class="src-line" id="L208" data-diff="added"><a class="ln" href="#L208">208</a><span class="tok-com">    to the public the original and copies of the Work or Adaptation, as</span></span>
+<span class="src-line" id="L209" data-diff="added"><a class="ln" href="#L209">209</a><span class="tok-com">    appropriate, through sale or other transfer of ownership. &quot;License</span></span>
+<span class="src-line" id="L210" data-diff="added"><a class="ln" href="#L210">210</a><span class="tok-com">    Elements&quot; means the following high-level license attributes as</span></span>
+<span class="src-line" id="L211" data-diff="added"><a class="ln" href="#L211">211</a><span class="tok-com">    selected by Licensor and indicated in the title of this License:</span></span>
+<span class="src-line" id="L212" data-diff="added"><a class="ln" href="#L212">212</a><span class="tok-com">    Attribution, ShareAlike. &quot;Licensor&quot; means the individual, individuals,</span></span>
+<span class="src-line" id="L213" data-diff="added"><a class="ln" href="#L213">213</a><span class="tok-com">    entity or entities that offer(s) the Work under the terms of this</span></span>
+<span class="src-line" id="L214" data-diff="added"><a class="ln" href="#L214">214</a><span class="tok-com">    License. &quot;Original Author&quot; means, in the case of a literary or</span></span>
+<span class="src-line" id="L215" data-diff="added"><a class="ln" href="#L215">215</a><span class="tok-com">    artistic work, the individual, individuals, entity or entities who</span></span>
+<span class="src-line" id="L216" data-diff="added"><a class="ln" href="#L216">216</a><span class="tok-com">    created the Work or if no individual or entity can be identified, the</span></span>
+<span class="src-line" id="L217" data-diff="added"><a class="ln" href="#L217">217</a><span class="tok-com">    publisher; and in addition (i) in the case of a performance the</span></span>
+<span class="src-line" id="L218" data-diff="added"><a class="ln" href="#L218">218</a><span class="tok-com">    actors, singers, musicians, dancers, and other persons who act, sing,</span></span>
+<span class="src-line" id="L219" data-diff="added"><a class="ln" href="#L219">219</a><span class="tok-com">    deliver, declaim, play in, interpret or otherwise perform literary or</span></span>
+<span class="src-line" id="L220" data-diff="added"><a class="ln" href="#L220">220</a><span class="tok-com">    artistic works or expressions of folklore; (ii) in the case of a</span></span>
+<span class="src-line" id="L221" data-diff="added"><a class="ln" href="#L221">221</a><span class="tok-com">    phonogram the producer being the person or legal entity who first</span></span>
+<span class="src-line" id="L222" data-diff="added"><a class="ln" href="#L222">222</a><span class="tok-com">    fixes the sounds of a performance or other sounds; and, (iii) in the</span></span>
+<span class="src-line" id="L223" data-diff="added"><a class="ln" href="#L223">223</a><span class="tok-com">    case of broadcasts, the organization that transmits the broadcast.</span></span>
+<span class="src-line" id="L224" data-diff="added"><a class="ln" href="#L224">224</a><span class="tok-com">    &quot;Work&quot; means the literary and/or artistic work offered under the terms</span></span>
+<span class="src-line" id="L225" data-diff="added"><a class="ln" href="#L225">225</a><span class="tok-com">    of this License including without limitation any production in the</span></span>
+<span class="src-line" id="L226" data-diff="added"><a class="ln" href="#L226">226</a><span class="tok-com">    literary, scientific and artistic domain, whatever may be the mode or</span></span>
+<span class="src-line" id="L227" data-diff="added"><a class="ln" href="#L227">227</a><span class="tok-com">    form of its expression including digital form, such as a book,</span></span>
+<span class="src-line" id="L228" data-diff="added"><a class="ln" href="#L228">228</a><span class="tok-com">    pamphlet and other writing; a lecture, address, sermon or other work</span></span>
+<span class="src-line" id="L229" data-diff="added"><a class="ln" href="#L229">229</a><span class="tok-com">    of the same nature; a dramatic or dramatico-musical work; a</span></span>
+<span class="src-line" id="L230" data-diff="added"><a class="ln" href="#L230">230</a><span class="tok-com">    choreographic work or entertainment in dumb show; a musical</span></span>
+<span class="src-line" id="L231" data-diff="added"><a class="ln" href="#L231">231</a><span class="tok-com">    composition with or without words; a cinematographic work to which are</span></span>
+<span class="src-line" id="L232" data-diff="added"><a class="ln" href="#L232">232</a><span class="tok-com">    assimilated works expressed by a process analogous to cinematography;</span></span>
+<span class="src-line" id="L233" data-diff="added"><a class="ln" href="#L233">233</a><span class="tok-com">    a work of drawing, painting, architecture, sculpture, engraving or</span></span>
+<span class="src-line" id="L234" data-diff="added"><a class="ln" href="#L234">234</a><span class="tok-com">    lithography; a photographic work to which are assimilated works</span></span>
+<span class="src-line" id="L235" data-diff="added"><a class="ln" href="#L235">235</a><span class="tok-com">    expressed by a process analogous to photography; a work of applied</span></span>
+<span class="src-line" id="L236" data-diff="added"><a class="ln" href="#L236">236</a><span class="tok-com">    art; an illustration, map, plan, sketch or three-dimensional work</span></span>
+<span class="src-line" id="L237" data-diff="added"><a class="ln" href="#L237">237</a><span class="tok-com">    relative to geography, topography, architecture or science; a</span></span>
+<span class="src-line" id="L238" data-diff="added"><a class="ln" href="#L238">238</a><span class="tok-com">    performance; a broadcast; a phonogram; a compilation of data to the</span></span>
+<span class="src-line" id="L239" data-diff="added"><a class="ln" href="#L239">239</a><span class="tok-com">    extent it is protected as a copyrightable work; or a work performed by</span></span>
+<span class="src-line" id="L240" data-diff="added"><a class="ln" href="#L240">240</a><span class="tok-com">    a variety or circus performer to the extent it is not otherwise</span></span>
+<span class="src-line" id="L241" data-diff="added"><a class="ln" href="#L241">241</a><span class="tok-com">    considered a literary or artistic work. &quot;You&quot; means an individual or</span></span>
+<span class="src-line" id="L242" data-diff="added"><a class="ln" href="#L242">242</a><span class="tok-com">    entity exercising rights under this License who has not previously</span></span>
+<span class="src-line" id="L243" data-diff="added"><a class="ln" href="#L243">243</a><span class="tok-com">    violated the terms of this License with respect to the Work, or who</span></span>
+<span class="src-line" id="L244" data-diff="added"><a class="ln" href="#L244">244</a><span class="tok-com">    has received express permission from the Licensor to exercise rights</span></span>
+<span class="src-line" id="L245" data-diff="added"><a class="ln" href="#L245">245</a><span class="tok-com">    under this License despite a previous violation. &quot;Publicly Perform&quot;</span></span>
+<span class="src-line" id="L246" data-diff="added"><a class="ln" href="#L246">246</a><span class="tok-com">    means to perform public recitations of the Work and to communicate to</span></span>
+<span class="src-line" id="L247" data-diff="added"><a class="ln" href="#L247">247</a><span class="tok-com">    the public those public recitations, by any means or process,</span></span>
+<span class="src-line" id="L248" data-diff="added"><a class="ln" href="#L248">248</a><span class="tok-com">    including by wire or wireless means or public digital performances; to</span></span>
+<span class="src-line" id="L249" data-diff="added"><a class="ln" href="#L249">249</a><span class="tok-com">    make available to the public Works in such a way that members of the</span></span>
+<span class="src-line" id="L250" data-diff="added"><a class="ln" href="#L250">250</a><span class="tok-com">    public may access these Works from a place and at a place individually</span></span>
+<span class="src-line" id="L251" data-diff="added"><a class="ln" href="#L251">251</a><span class="tok-com">    chosen by them; to perform the Work to the public by any means or</span></span>
+<span class="src-line" id="L252" data-diff="added"><a class="ln" href="#L252">252</a><span class="tok-com">    process and the communication to the public of the performances of the</span></span>
+<span class="src-line" id="L253" data-diff="added"><a class="ln" href="#L253">253</a><span class="tok-com">    Work, including by public digital performance; to broadcast and</span></span>
+<span class="src-line" id="L254" data-diff="added"><a class="ln" href="#L254">254</a><span class="tok-com">    rebroadcast the Work by any means including signs, sounds or images.</span></span>
+<span class="src-line" id="L255" data-diff="added"><a class="ln" href="#L255">255</a><span class="tok-com">    &quot;Reproduce&quot; means to make copies of the Work by any means including</span></span>
+<span class="src-line" id="L256" data-diff="added"><a class="ln" href="#L256">256</a><span class="tok-com">    without limitation by sound or visual recordings and the right of</span></span>
+<span class="src-line" id="L257" data-diff="added"><a class="ln" href="#L257">257</a><span class="tok-com">    fixation and reproducing fixations of the Work, including storage of a</span></span>
+<span class="src-line" id="L258" data-diff="added"><a class="ln" href="#L258">258</a><span class="tok-com">    protected performance or phonogram in digital form or other electronic</span></span>
+<span class="src-line" id="L259" data-diff="added"><a class="ln" href="#L259">259</a><span class="tok-com">    medium. 2. Fair Dealing Rights. Nothing in this License is intended to</span></span>
+<span class="src-line" id="L260" data-diff="added"><a class="ln" href="#L260">260</a><span class="tok-com">    reduce, limit, or restrict any uses free from copyright or rights</span></span>
+<span class="src-line" id="L261" data-diff="added"><a class="ln" href="#L261">261</a><span class="tok-com">    arising from limitations or exceptions that are provided for in</span></span>
+<span class="src-line" id="L262" data-diff="added"><a class="ln" href="#L262">262</a><span class="tok-com">    connection with the copyright protection under copyright law or other</span></span>
+<span class="src-line" id="L263" data-diff="added"><a class="ln" href="#L263">263</a><span class="tok-com">    applicable laws.</span></span>
+<span class="src-line" id="L264" data-diff="added"><a class="ln" href="#L264">264</a></span>
+<span class="src-line" id="L265" data-diff="added"><a class="ln" href="#L265">265</a><span class="tok-com">    3. License Grant. Subject to the terms and conditions of this License,</span></span>
+<span class="src-line" id="L266" data-diff="added"><a class="ln" href="#L266">266</a><span class="tok-com">    Licensor hereby grants You a worldwide, royalty-free, non-exclusive,</span></span>
+<span class="src-line" id="L267" data-diff="added"><a class="ln" href="#L267">267</a><span class="tok-com">    perpetual (for the duration of the applicable copyright) license to</span></span>
+<span class="src-line" id="L268" data-diff="added"><a class="ln" href="#L268">268</a><span class="tok-com">    exercise the rights in the Work as stated below:</span></span>
+<span class="src-line" id="L269" data-diff="added"><a class="ln" href="#L269">269</a></span>
+<span class="src-line" id="L270" data-diff="added"><a class="ln" href="#L270">270</a><span class="tok-com">    to Reproduce the Work, to incorporate the Work into one or more</span></span>
+<span class="src-line" id="L271" data-diff="added"><a class="ln" href="#L271">271</a><span class="tok-com">    Collections, and to Reproduce the Work as incorporated in the</span></span>
+<span class="src-line" id="L272" data-diff="added"><a class="ln" href="#L272">272</a><span class="tok-com">    Collections; to create and Reproduce Adaptations provided that any</span></span>
+<span class="src-line" id="L273" data-diff="added"><a class="ln" href="#L273">273</a><span class="tok-com">    such Adaptation, including any translation in any medium, takes</span></span>
+<span class="src-line" id="L274" data-diff="added"><a class="ln" href="#L274">274</a><span class="tok-com">    reasonable steps to clearly label, demarcate or otherwise identify</span></span>
+<span class="src-line" id="L275" data-diff="added"><a class="ln" href="#L275">275</a><span class="tok-com">    that changes were made to the original Work. For example, a</span></span>
+<span class="src-line" id="L276" data-diff="added"><a class="ln" href="#L276">276</a><span class="tok-com">    translation could be marked &quot;The original work was translated from</span></span>
+<span class="src-line" id="L277" data-diff="added"><a class="ln" href="#L277">277</a><span class="tok-com">    English to Spanish,&quot; or a modification could indicate &quot;The original</span></span>
+<span class="src-line" id="L278" data-diff="added"><a class="ln" href="#L278">278</a><span class="tok-com">    work has been modified.&quot;; to Distribute and Publicly Perform the Work</span></span>
+<span class="src-line" id="L279" data-diff="added"><a class="ln" href="#L279">279</a><span class="tok-com">    including as incorporated in Collections; and, to Distribute and</span></span>
+<span class="src-line" id="L280" data-diff="added"><a class="ln" href="#L280">280</a><span class="tok-com">    Publicly Perform Adaptations. For the avoidance of doubt:</span></span>
+<span class="src-line" id="L281" data-diff="added"><a class="ln" href="#L281">281</a></span>
+<span class="src-line" id="L282" data-diff="added"><a class="ln" href="#L282">282</a><span class="tok-com">    Non-waivable Compulsory License Schemes. In those jurisdictions in</span></span>
+<span class="src-line" id="L283" data-diff="added"><a class="ln" href="#L283">283</a><span class="tok-com">    which the right to collect royalties through any statutory or</span></span>
+<span class="src-line" id="L284" data-diff="added"><a class="ln" href="#L284">284</a><span class="tok-com">    compulsory licensing scheme cannot be waived, the Licensor reserves</span></span>
+<span class="src-line" id="L285" data-diff="added"><a class="ln" href="#L285">285</a><span class="tok-com">    the exclusive right to collect such royalties for any exercise by You</span></span>
+<span class="src-line" id="L286" data-diff="added"><a class="ln" href="#L286">286</a><span class="tok-com">    of the rights granted under this License; Waivable Compulsory License</span></span>
+<span class="src-line" id="L287" data-diff="added"><a class="ln" href="#L287">287</a><span class="tok-com">    Schemes. In those jurisdictions in which the right to collect</span></span>
+<span class="src-line" id="L288" data-diff="added"><a class="ln" href="#L288">288</a><span class="tok-com">    royalties through any statutory or compulsory licensing scheme can be</span></span>
+<span class="src-line" id="L289" data-diff="added"><a class="ln" href="#L289">289</a><span class="tok-com">    waived, the Licensor waives the exclusive right to collect such</span></span>
+<span class="src-line" id="L290" data-diff="added"><a class="ln" href="#L290">290</a><span class="tok-com">    royalties for any exercise by You of the rights granted under this</span></span>
+<span class="src-line" id="L291" data-diff="added"><a class="ln" href="#L291">291</a><span class="tok-com">    License; and, Voluntary License Schemes. The Licensor waives the right</span></span>
+<span class="src-line" id="L292" data-diff="added"><a class="ln" href="#L292">292</a><span class="tok-com">    to collect royalties, whether individually or, in the event that the</span></span>
+<span class="src-line" id="L293" data-diff="added"><a class="ln" href="#L293">293</a><span class="tok-com">    Licensor is a member of a collecting society that administers</span></span>
+<span class="src-line" id="L294" data-diff="added"><a class="ln" href="#L294">294</a><span class="tok-com">    voluntary licensing schemes, via that society, from any exercise by</span></span>
+<span class="src-line" id="L295" data-diff="added"><a class="ln" href="#L295">295</a><span class="tok-com">    You of the rights granted under this License. The above rights may be</span></span>
+<span class="src-line" id="L296" data-diff="added"><a class="ln" href="#L296">296</a><span class="tok-com">    exercised in all media and formats whether now known or hereafter</span></span>
+<span class="src-line" id="L297" data-diff="added"><a class="ln" href="#L297">297</a><span class="tok-com">    devised. The above rights include the right to make such modifications</span></span>
+<span class="src-line" id="L298" data-diff="added"><a class="ln" href="#L298">298</a><span class="tok-com">    as are technically necessary to exercise the rights in other media and</span></span>
+<span class="src-line" id="L299" data-diff="added"><a class="ln" href="#L299">299</a><span class="tok-com">    formats. Subject to Section 8(f), all rights not expressly granted by</span></span>
+<span class="src-line" id="L300" data-diff="added"><a class="ln" href="#L300">300</a><span class="tok-com">    Licensor are hereby reserved.</span></span>
+<span class="src-line" id="L301" data-diff="added"><a class="ln" href="#L301">301</a></span>
+<span class="src-line" id="L302" data-diff="added"><a class="ln" href="#L302">302</a><span class="tok-com">    4. Restrictions. The license granted in Section 3 above is expressly</span></span>
+<span class="src-line" id="L303" data-diff="added"><a class="ln" href="#L303">303</a><span class="tok-com">    made subject to and limited by the following restrictions:</span></span>
+<span class="src-line" id="L304" data-diff="added"><a class="ln" href="#L304">304</a></span>
+<span class="src-line" id="L305" data-diff="added"><a class="ln" href="#L305">305</a><span class="tok-com">    You may Distribute or Publicly Perform the Work only under the terms</span></span>
+<span class="src-line" id="L306" data-diff="added"><a class="ln" href="#L306">306</a><span class="tok-com">    of this License. You must include a copy of, or the Uniform Resource</span></span>
+<span class="src-line" id="L307" data-diff="added"><a class="ln" href="#L307">307</a><span class="tok-com">    Identifier (URI) for, this License with every copy of the Work You</span></span>
+<span class="src-line" id="L308" data-diff="added"><a class="ln" href="#L308">308</a><span class="tok-com">    Distribute or Publicly Perform. You may not offer or impose any terms</span></span>
+<span class="src-line" id="L309" data-diff="added"><a class="ln" href="#L309">309</a><span class="tok-com">    on the Work that restrict the terms of this License or the ability of</span></span>
+<span class="src-line" id="L310" data-diff="added"><a class="ln" href="#L310">310</a><span class="tok-com">    the recipient of the Work to exercise the rights granted to that</span></span>
+<span class="src-line" id="L311" data-diff="added"><a class="ln" href="#L311">311</a><span class="tok-com">    recipient under the terms of the License. You may not sublicense the</span></span>
+<span class="src-line" id="L312" data-diff="added"><a class="ln" href="#L312">312</a><span class="tok-com">    Work. You must keep intact all notices that refer to this License and</span></span>
+<span class="src-line" id="L313" data-diff="added"><a class="ln" href="#L313">313</a><span class="tok-com">    to the disclaimer of warranties with every copy of the Work You</span></span>
+<span class="src-line" id="L314" data-diff="added"><a class="ln" href="#L314">314</a><span class="tok-com">    Distribute or Publicly Perform. When You Distribute or Publicly</span></span>
+<span class="src-line" id="L315" data-diff="added"><a class="ln" href="#L315">315</a><span class="tok-com">    Perform the Work, You may not impose any effective technological</span></span>
+<span class="src-line" id="L316" data-diff="added"><a class="ln" href="#L316">316</a><span class="tok-com">    measures on the Work that restrict the ability of a recipient of the</span></span>
+<span class="src-line" id="L317" data-diff="added"><a class="ln" href="#L317">317</a><span class="tok-com">    Work from You to exercise the rights granted to that recipient under</span></span>
+<span class="src-line" id="L318" data-diff="added"><a class="ln" href="#L318">318</a><span class="tok-com">    the terms of the License. This Section 4(a) applies to the Work as</span></span>
+<span class="src-line" id="L319" data-diff="added"><a class="ln" href="#L319">319</a><span class="tok-com">    incorporated in a Collection, but this does not require the Collection</span></span>
+<span class="src-line" id="L320" data-diff="added"><a class="ln" href="#L320">320</a><span class="tok-com">    apart from the Work itself to be made subject to the terms of this</span></span>
+<span class="src-line" id="L321" data-diff="added"><a class="ln" href="#L321">321</a><span class="tok-com">    License. If You create a Collection, upon notice from any Licensor You</span></span>
+<span class="src-line" id="L322" data-diff="added"><a class="ln" href="#L322">322</a><span class="tok-com">    must, to the extent practicable, remove from the Collection any credit</span></span>
+<span class="src-line" id="L323" data-diff="added"><a class="ln" href="#L323">323</a><span class="tok-com">    as required by Section 4(c), as requested. If You create an</span></span>
+<span class="src-line" id="L324" data-diff="added"><a class="ln" href="#L324">324</a><span class="tok-com">    Adaptation, upon notice from any Licensor You must, to the extent</span></span>
+<span class="src-line" id="L325" data-diff="added"><a class="ln" href="#L325">325</a><span class="tok-com">    practicable, remove from the Adaptation any credit as required by</span></span>
+<span class="src-line" id="L326" data-diff="added"><a class="ln" href="#L326">326</a><span class="tok-com">    Section 4(c), as requested. You may Distribute or Publicly Perform an</span></span>
+<span class="src-line" id="L327" data-diff="added"><a class="ln" href="#L327">327</a><span class="tok-com">    Adaptation only under the terms of: (i) this License; (ii) a later</span></span>
+<span class="src-line" id="L328" data-diff="added"><a class="ln" href="#L328">328</a><span class="tok-com">    version of this License with the same License Elements as this</span></span>
+<span class="src-line" id="L329" data-diff="added"><a class="ln" href="#L329">329</a><span class="tok-com">    License; (iii) a Creative Commons jurisdiction license (either this or</span></span>
+<span class="src-line" id="L330" data-diff="added"><a class="ln" href="#L330">330</a><span class="tok-com">    a later license version) that contains the same License Elements as</span></span>
+<span class="src-line" id="L331" data-diff="added"><a class="ln" href="#L331">331</a><span class="tok-com">    this License (e.g., Attribution-ShareAlike 3.0 US)); (iv) a Creative</span></span>
+<span class="src-line" id="L332" data-diff="added"><a class="ln" href="#L332">332</a><span class="tok-com">    Commons Compatible License. If you license the Adaptation under one of</span></span>
+<span class="src-line" id="L333" data-diff="added"><a class="ln" href="#L333">333</a><span class="tok-com">    the licenses mentioned in (iv), you must comply with the terms of that</span></span>
+<span class="src-line" id="L334" data-diff="added"><a class="ln" href="#L334">334</a><span class="tok-com">    license. If you license the Adaptation under the terms of any of the</span></span>
+<span class="src-line" id="L335" data-diff="added"><a class="ln" href="#L335">335</a><span class="tok-com">    licenses mentioned in (i), (ii) or (iii) (the &quot;Applicable License&quot;),</span></span>
+<span class="src-line" id="L336" data-diff="added"><a class="ln" href="#L336">336</a><span class="tok-com">    you must comply with the terms of the Applicable License generally and</span></span>
+<span class="src-line" id="L337" data-diff="added"><a class="ln" href="#L337">337</a><span class="tok-com">    the following provisions: (I) You must include a copy of, or the URI</span></span>
+<span class="src-line" id="L338" data-diff="added"><a class="ln" href="#L338">338</a><span class="tok-com">    for, the Applicable License with every copy of each Adaptation You</span></span>
+<span class="src-line" id="L339" data-diff="added"><a class="ln" href="#L339">339</a><span class="tok-com">    Distribute or Publicly Perform; (II) You may not offer or impose any</span></span>
+<span class="src-line" id="L340" data-diff="added"><a class="ln" href="#L340">340</a><span class="tok-com">    terms on the Adaptation that restrict the terms of the Applicable</span></span>
+<span class="src-line" id="L341" data-diff="added"><a class="ln" href="#L341">341</a><span class="tok-com">    License or the ability of the recipient of the Adaptation to exercise</span></span>
+<span class="src-line" id="L342" data-diff="added"><a class="ln" href="#L342">342</a><span class="tok-com">    the rights granted to that recipient under the terms of the Applicable</span></span>
+<span class="src-line" id="L343" data-diff="added"><a class="ln" href="#L343">343</a><span class="tok-com">    License; (III) You must keep intact all notices that refer to the</span></span>
+<span class="src-line" id="L344" data-diff="added"><a class="ln" href="#L344">344</a><span class="tok-com">    Applicable License and to the disclaimer of warranties with every copy</span></span>
+<span class="src-line" id="L345" data-diff="added"><a class="ln" href="#L345">345</a><span class="tok-com">    of the Work as included in the Adaptation You Distribute or Publicly</span></span>
+<span class="src-line" id="L346" data-diff="added"><a class="ln" href="#L346">346</a><span class="tok-com">    Perform; (IV) when You Distribute or Publicly Perform the Adaptation,</span></span>
+<span class="src-line" id="L347" data-diff="added"><a class="ln" href="#L347">347</a><span class="tok-com">    You may not impose any effective technological measures on the</span></span>
+<span class="src-line" id="L348" data-diff="added"><a class="ln" href="#L348">348</a><span class="tok-com">    Adaptation that restrict the ability of a recipient of the Adaptation</span></span>
+<span class="src-line" id="L349" data-diff="added"><a class="ln" href="#L349">349</a><span class="tok-com">    from You to exercise the rights granted to that recipient under the</span></span>
+<span class="src-line" id="L350" data-diff="added"><a class="ln" href="#L350">350</a><span class="tok-com">    terms of the Applicable License. This Section 4(b) applies to the</span></span>
+<span class="src-line" id="L351" data-diff="added"><a class="ln" href="#L351">351</a><span class="tok-com">    Adaptation as incorporated in a Collection, but this does not require</span></span>
+<span class="src-line" id="L352" data-diff="added"><a class="ln" href="#L352">352</a><span class="tok-com">    the Collection apart from the Adaptation itself to be made subject to</span></span>
+<span class="src-line" id="L353" data-diff="added"><a class="ln" href="#L353">353</a><span class="tok-com">    the terms of the Applicable License. If You Distribute, or Publicly</span></span>
+<span class="src-line" id="L354" data-diff="added"><a class="ln" href="#L354">354</a><span class="tok-com">    Perform the Work or any Adaptations or Collections, You must, unless a</span></span>
+<span class="src-line" id="L355" data-diff="added"><a class="ln" href="#L355">355</a><span class="tok-com">    request has been made pursuant to Section 4(a), keep intact all</span></span>
+<span class="src-line" id="L356" data-diff="added"><a class="ln" href="#L356">356</a><span class="tok-com">    copyright notices for the Work and provide, reasonable to the medium</span></span>
+<span class="src-line" id="L357" data-diff="added"><a class="ln" href="#L357">357</a><span class="tok-com">    or means You are utilizing: (i) the name of the Original Author (or</span></span>
+<span class="src-line" id="L358" data-diff="added"><a class="ln" href="#L358">358</a><span class="tok-com">    pseudonym, if applicable) if supplied, and/or if the Original Author</span></span>
+<span class="src-line" id="L359" data-diff="added"><a class="ln" href="#L359">359</a><span class="tok-com">    and/or Licensor designate another party or parties (e.g., a sponsor</span></span>
+<span class="src-line" id="L360" data-diff="added"><a class="ln" href="#L360">360</a><span class="tok-com">    institute, publishing entity, journal) for attribution (&quot;Attribution</span></span>
+<span class="src-line" id="L361" data-diff="added"><a class="ln" href="#L361">361</a><span class="tok-com">    Parties&quot;) in Licensor&#039;s copyright notice, terms of service or by other</span></span>
+<span class="src-line" id="L362" data-diff="added"><a class="ln" href="#L362">362</a><span class="tok-com">    reasonable means, the name of such party or parties; (ii) the title of</span></span>
+<span class="src-line" id="L363" data-diff="added"><a class="ln" href="#L363">363</a><span class="tok-com">    the Work if supplied; (iii) to the extent reasonably practicable, the</span></span>
+<span class="src-line" id="L364" data-diff="added"><a class="ln" href="#L364">364</a><span class="tok-com">    URI, if any, that Licensor specifies to be associated with the Work,</span></span>
+<span class="src-line" id="L365" data-diff="added"><a class="ln" href="#L365">365</a><span class="tok-com">    unless such URI does not refer to the copyright notice or licensing</span></span>
+<span class="src-line" id="L366" data-diff="added"><a class="ln" href="#L366">366</a><span class="tok-com">    information for the Work; and (iv) , consistent with Ssection 3(b), in</span></span>
+<span class="src-line" id="L367" data-diff="added"><a class="ln" href="#L367">367</a><span class="tok-com">    the case of an Adaptation, a credit identifying the use of the Work in</span></span>
+<span class="src-line" id="L368" data-diff="added"><a class="ln" href="#L368">368</a><span class="tok-com">    the Adaptation (e.g., &quot;French translation of the Work by Original</span></span>
+<span class="src-line" id="L369" data-diff="added"><a class="ln" href="#L369">369</a><span class="tok-com">    Author,&quot; or &quot;Screenplay based on original Work by Original Author&quot;).</span></span>
+<span class="src-line" id="L370" data-diff="added"><a class="ln" href="#L370">370</a><span class="tok-com">    The credit required by this Section 4(c) may be implemented in any</span></span>
+<span class="src-line" id="L371" data-diff="added"><a class="ln" href="#L371">371</a><span class="tok-com">    reasonable manner; provided, however, that in the case of a Adaptation</span></span>
+<span class="src-line" id="L372" data-diff="added"><a class="ln" href="#L372">372</a><span class="tok-com">    or Collection, at a minimum such credit will appear, if a credit for</span></span>
+<span class="src-line" id="L373" data-diff="added"><a class="ln" href="#L373">373</a><span class="tok-com">    all contributing authors of the Adaptation or Collection appears, then</span></span>
+<span class="src-line" id="L374" data-diff="added"><a class="ln" href="#L374">374</a><span class="tok-com">    as part of these credits and in a manner at least as prominent as the</span></span>
+<span class="src-line" id="L375" data-diff="added"><a class="ln" href="#L375">375</a><span class="tok-com">    credits for the other contributing authors. For the avoidance of</span></span>
+<span class="src-line" id="L376" data-diff="added"><a class="ln" href="#L376">376</a><span class="tok-com">    doubt, You may only use the credit required by this Section for the</span></span>
+<span class="src-line" id="L377" data-diff="added"><a class="ln" href="#L377">377</a><span class="tok-com">    purpose of attribution in the manner set out above and, by exercising</span></span>
+<span class="src-line" id="L378" data-diff="added"><a class="ln" href="#L378">378</a><span class="tok-com">    Your rights under this License, You may not implicitly or explicitly</span></span>
+<span class="src-line" id="L379" data-diff="added"><a class="ln" href="#L379">379</a><span class="tok-com">    assert or imply any connection with, sponsorship or endorsement by the</span></span>
+<span class="src-line" id="L380" data-diff="added"><a class="ln" href="#L380">380</a><span class="tok-com">    Original Author, Licensor and/or Attribution Parties, as appropriate,</span></span>
+<span class="src-line" id="L381" data-diff="added"><a class="ln" href="#L381">381</a><span class="tok-com">    of You or Your use of the Work, without the separate, express prior</span></span>
+<span class="src-line" id="L382" data-diff="added"><a class="ln" href="#L382">382</a><span class="tok-com">    written permission of the Original Author, Licensor and/or Attribution</span></span>
+<span class="src-line" id="L383" data-diff="added"><a class="ln" href="#L383">383</a><span class="tok-com">    Parties. Except as otherwise agreed in writing by the Licensor or as</span></span>
+<span class="src-line" id="L384" data-diff="added"><a class="ln" href="#L384">384</a><span class="tok-com">    may be otherwise permitted by applicable law, if You Reproduce,</span></span>
+<span class="src-line" id="L385" data-diff="added"><a class="ln" href="#L385">385</a><span class="tok-com">    Distribute or Publicly Perform the Work either by itself or as part of</span></span>
+<span class="src-line" id="L386" data-diff="added"><a class="ln" href="#L386">386</a><span class="tok-com">    any Adaptations or Collections, You must not distort, mutilate, modify</span></span>
+<span class="src-line" id="L387" data-diff="added"><a class="ln" href="#L387">387</a><span class="tok-com">    or take other derogatory action in relation to the Work which would be</span></span>
+<span class="src-line" id="L388" data-diff="added"><a class="ln" href="#L388">388</a><span class="tok-com">    prejudicial to the Original Author&#039;s honor or reputation. Licensor</span></span>
+<span class="src-line" id="L389" data-diff="added"><a class="ln" href="#L389">389</a><span class="tok-com">    agrees that in those jurisdictions (e.g. Japan), in which any exercise</span></span>
+<span class="src-line" id="L390" data-diff="added"><a class="ln" href="#L390">390</a><span class="tok-com">    of the right granted in Section 3(b) of this License (the right to</span></span>
+<span class="src-line" id="L391" data-diff="added"><a class="ln" href="#L391">391</a><span class="tok-com">    make Adaptations) would be deemed to be a distortion, mutilation,</span></span>
+<span class="src-line" id="L392" data-diff="added"><a class="ln" href="#L392">392</a><span class="tok-com">    modification or other derogatory action prejudicial to the Original</span></span>
+<span class="src-line" id="L393" data-diff="added"><a class="ln" href="#L393">393</a><span class="tok-com">    Author&#039;s honor and reputation, the Licensor will waive or not assert,</span></span>
+<span class="src-line" id="L394" data-diff="added"><a class="ln" href="#L394">394</a><span class="tok-com">    as appropriate, this Section, to the fullest extent permitted by the</span></span>
+<span class="src-line" id="L395" data-diff="added"><a class="ln" href="#L395">395</a><span class="tok-com">    applicable national law, to enable You to reasonably exercise Your</span></span>
+<span class="src-line" id="L396" data-diff="added"><a class="ln" href="#L396">396</a><span class="tok-com">    right under Section 3(b) of this License (right to make Adaptations)</span></span>
+<span class="src-line" id="L397" data-diff="added"><a class="ln" href="#L397">397</a><span class="tok-com">    but not otherwise. 5. Representations, Warranties and Disclaimer</span></span>
+<span class="src-line" id="L398" data-diff="added"><a class="ln" href="#L398">398</a></span>
+<span class="src-line" id="L399" data-diff="added"><a class="ln" href="#L399">399</a><span class="tok-com">    UNLESS OTHERWISE MUTUALLY AGREED TO BY THE PARTIES IN WRITING,</span></span>
+<span class="src-line" id="L400" data-diff="added"><a class="ln" href="#L400">400</a><span class="tok-com">    LICENSOR OFFERS THE WORK AS-IS AND MAKES NO REPRESENTATIONS OR</span></span>
+<span class="src-line" id="L401" data-diff="added"><a class="ln" href="#L401">401</a><span class="tok-com">    WARRANTIES OF ANY KIND CONCERNING THE WORK, EXPRESS, IMPLIED,</span></span>
+<span class="src-line" id="L402" data-diff="added"><a class="ln" href="#L402">402</a><span class="tok-com">    STATUTORY OR OTHERWISE, INCLUDING, WITHOUT LIMITATION, WARRANTIES OF</span></span>
+<span class="src-line" id="L403" data-diff="added"><a class="ln" href="#L403">403</a><span class="tok-com">    TITLE, MERCHANTIBILITY, FITNESS FOR A PARTICULAR PURPOSE,</span></span>
+<span class="src-line" id="L404" data-diff="added"><a class="ln" href="#L404">404</a><span class="tok-com">    NONINFRINGEMENT, OR THE ABSENCE OF LATENT OR OTHER DEFECTS, ACCURACY,</span></span>
+<span class="src-line" id="L405" data-diff="added"><a class="ln" href="#L405">405</a><span class="tok-com">    OR THE PRESENCE OF ABSENCE OF ERRORS, WHETHER OR NOT DISCOVERABLE.</span></span>
+<span class="src-line" id="L406" data-diff="added"><a class="ln" href="#L406">406</a><span class="tok-com">    SOME JURISDICTIONS DO NOT ALLOW THE EXCLUSION OF IMPLIED WARRANTIES,</span></span>
+<span class="src-line" id="L407" data-diff="added"><a class="ln" href="#L407">407</a><span class="tok-com">    SO SUCH EXCLUSION MAY NOT APPLY TO YOU.</span></span>
+<span class="src-line" id="L408" data-diff="added"><a class="ln" href="#L408">408</a></span>
+<span class="src-line" id="L409" data-diff="added"><a class="ln" href="#L409">409</a><span class="tok-com">    6. Limitation on Liability. EXCEPT TO THE EXTENT REQUIRED BY</span></span>
+<span class="src-line" id="L410" data-diff="added"><a class="ln" href="#L410">410</a><span class="tok-com">    APPLICABLE LAW, IN NO EVENT WILL LICENSOR BE LIABLE TO YOU ON ANY</span></span>
+<span class="src-line" id="L411" data-diff="added"><a class="ln" href="#L411">411</a><span class="tok-com">    LEGAL THEORY FOR ANY SPECIAL, INCIDENTAL, CONSEQUENTIAL, PUNITIVE OR</span></span>
+<span class="src-line" id="L412" data-diff="added"><a class="ln" href="#L412">412</a><span class="tok-com">    EXEMPLARY DAMAGES ARISING OUT OF THIS LICENSE OR THE USE OF THE WORK,</span></span>
+<span class="src-line" id="L413" data-diff="added"><a class="ln" href="#L413">413</a><span class="tok-com">    EVEN IF LICENSOR HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.</span></span>
+<span class="src-line" id="L414" data-diff="added"><a class="ln" href="#L414">414</a></span>
+<span class="src-line" id="L415" data-diff="added"><a class="ln" href="#L415">415</a><span class="tok-com">    7. Termination</span></span>
+<span class="src-line" id="L416" data-diff="added"><a class="ln" href="#L416">416</a></span>
+<span class="src-line" id="L417" data-diff="added"><a class="ln" href="#L417">417</a><span class="tok-com">    This License and the rights granted hereunder will terminate</span></span>
+<span class="src-line" id="L418" data-diff="added"><a class="ln" href="#L418">418</a><span class="tok-com">    automatically upon any breach by You of the terms of this License.</span></span>
+<span class="src-line" id="L419" data-diff="added"><a class="ln" href="#L419">419</a><span class="tok-com">    Individuals or entities who have received Adaptations or Collections</span></span>
+<span class="src-line" id="L420" data-diff="added"><a class="ln" href="#L420">420</a><span class="tok-com">    from You under this License, however, will not have their licenses</span></span>
+<span class="src-line" id="L421" data-diff="added"><a class="ln" href="#L421">421</a><span class="tok-com">    terminated provided such individuals or entities remain in full</span></span>
+<span class="src-line" id="L422" data-diff="added"><a class="ln" href="#L422">422</a><span class="tok-com">    compliance with those licenses. Sections 1, 2, 5, 6, 7, and 8 will</span></span>
+<span class="src-line" id="L423" data-diff="added"><a class="ln" href="#L423">423</a><span class="tok-com">    survive any termination of this License. Subject to the above terms</span></span>
+<span class="src-line" id="L424" data-diff="added"><a class="ln" href="#L424">424</a><span class="tok-com">    and conditions, the license granted here is perpetual (for the</span></span>
+<span class="src-line" id="L425" data-diff="added"><a class="ln" href="#L425">425</a><span class="tok-com">    duration of the applicable copyright in the Work). Notwithstanding the</span></span>
+<span class="src-line" id="L426" data-diff="added"><a class="ln" href="#L426">426</a><span class="tok-com">    above, Licensor reserves the right to release the Work under different</span></span>
+<span class="src-line" id="L427" data-diff="added"><a class="ln" href="#L427">427</a><span class="tok-com">    license terms or to stop distributing the Work at any time; provided,</span></span>
+<span class="src-line" id="L428" data-diff="added"><a class="ln" href="#L428">428</a><span class="tok-com">    however that any such election will not serve to withdraw this License</span></span>
+<span class="src-line" id="L429" data-diff="added"><a class="ln" href="#L429">429</a><span class="tok-com">    (or any other license that has been, or is required to be, granted</span></span>
+<span class="src-line" id="L430" data-diff="added"><a class="ln" href="#L430">430</a><span class="tok-com">    under the terms of this License), and this License will continue in</span></span>
+<span class="src-line" id="L431" data-diff="added"><a class="ln" href="#L431">431</a><span class="tok-com">    full force and effect unless terminated as stated above. 8.</span></span>
+<span class="src-line" id="L432" data-diff="added"><a class="ln" href="#L432">432</a><span class="tok-com">    Miscellaneous</span></span>
+<span class="src-line" id="L433" data-diff="added"><a class="ln" href="#L433">433</a></span>
+<span class="src-line" id="L434" data-diff="added"><a class="ln" href="#L434">434</a><span class="tok-com">    Each time You Distribute or Publicly Perform the Work or a Collection,</span></span>
+<span class="src-line" id="L435" data-diff="added"><a class="ln" href="#L435">435</a><span class="tok-com">    the Licensor offers to the recipient a license to the Work on the same</span></span>
+<span class="src-line" id="L436" data-diff="added"><a class="ln" href="#L436">436</a><span class="tok-com">    terms and conditions as the license granted to You under this License.</span></span>
+<span class="src-line" id="L437" data-diff="added"><a class="ln" href="#L437">437</a><span class="tok-com">    Each time You Distribute or Publicly Perform an Adaptation, Licensor</span></span>
+<span class="src-line" id="L438" data-diff="added"><a class="ln" href="#L438">438</a><span class="tok-com">    offers to the recipient a license to the original Work on the same</span></span>
+<span class="src-line" id="L439" data-diff="added"><a class="ln" href="#L439">439</a><span class="tok-com">    terms and conditions as the license granted to You under this License.</span></span>
+<span class="src-line" id="L440" data-diff="added"><a class="ln" href="#L440">440</a><span class="tok-com">    If any provision of this License is invalid or unenforceable under</span></span>
+<span class="src-line" id="L441" data-diff="added"><a class="ln" href="#L441">441</a><span class="tok-com">    applicable law, it shall not affect the validity or enforceability of</span></span>
+<span class="src-line" id="L442" data-diff="added"><a class="ln" href="#L442">442</a><span class="tok-com">    the remainder of the terms of this License, and without further action</span></span>
+<span class="src-line" id="L443" data-diff="added"><a class="ln" href="#L443">443</a><span class="tok-com">    by the parties to this agreement, such provision shall be reformed to</span></span>
+<span class="src-line" id="L444" data-diff="added"><a class="ln" href="#L444">444</a><span class="tok-com">    the minimum extent necessary to make such provision valid and</span></span>
+<span class="src-line" id="L445" data-diff="added"><a class="ln" href="#L445">445</a><span class="tok-com">    enforceable. No term or provision of this License shall be deemed</span></span>
+<span class="src-line" id="L446" data-diff="added"><a class="ln" href="#L446">446</a><span class="tok-com">    waived and no breach consented to unless such waiver or consent shall</span></span>
+<span class="src-line" id="L447" data-diff="added"><a class="ln" href="#L447">447</a><span class="tok-com">    be in writing and signed by the party to be charged with such waiver</span></span>
+<span class="src-line" id="L448" data-diff="added"><a class="ln" href="#L448">448</a><span class="tok-com">    or consent. This License constitutes the entire agreement between the</span></span>
+<span class="src-line" id="L449" data-diff="added"><a class="ln" href="#L449">449</a><span class="tok-com">    parties with respect to the Work licensed here. There are no</span></span>
+<span class="src-line" id="L450" data-diff="added"><a class="ln" href="#L450">450</a><span class="tok-com">    understandings, agreements or representations with respect to the Work</span></span>
+<span class="src-line" id="L451" data-diff="added"><a class="ln" href="#L451">451</a><span class="tok-com">    not specified here. Licensor shall not be bound by any additional</span></span>
+<span class="src-line" id="L452" data-diff="added"><a class="ln" href="#L452">452</a><span class="tok-com">    provisions that may appear in any communication from You. This License</span></span>
+<span class="src-line" id="L453" data-diff="added"><a class="ln" href="#L453">453</a><span class="tok-com">    may not be modified without the mutual written agreement of the</span></span>
+<span class="src-line" id="L454" data-diff="added"><a class="ln" href="#L454">454</a><span class="tok-com">    Licensor and You. The rights granted under, and the subject matter</span></span>
+<span class="src-line" id="L455" data-diff="added"><a class="ln" href="#L455">455</a><span class="tok-com">    referenced, in this License were drafted utilizing the terminology of</span></span>
+<span class="src-line" id="L456" data-diff="added"><a class="ln" href="#L456">456</a><span class="tok-com">    the Berne Convention for the Protection of Literary and Artistic Works</span></span>
+<span class="src-line" id="L457" data-diff="added"><a class="ln" href="#L457">457</a><span class="tok-com">    (as amended on September 28, 1979), the Rome Convention of 1961, the</span></span>
+<span class="src-line" id="L458" data-diff="added"><a class="ln" href="#L458">458</a><span class="tok-com">    WIPO Copyright Treaty of 1996, the WIPO Performances and Phonograms</span></span>
+<span class="src-line" id="L459" data-diff="added"><a class="ln" href="#L459">459</a><span class="tok-com">    Treaty of 1996 and the Universal Copyright Convention (as revised on</span></span>
+<span class="src-line" id="L460" data-diff="added"><a class="ln" href="#L460">460</a><span class="tok-com">    July 24, 1971). These rights and subject matter take effect in the</span></span>
+<span class="src-line" id="L461" data-diff="added"><a class="ln" href="#L461">461</a><span class="tok-com">    relevant jurisdiction in which the License terms are sought to be</span></span>
+<span class="src-line" id="L462" data-diff="added"><a class="ln" href="#L462">462</a><span class="tok-com">    enforced according to the corresponding provisions of the</span></span>
+<span class="src-line" id="L463" data-diff="added"><a class="ln" href="#L463">463</a><span class="tok-com">    implementation of those treaty provisions in the applicable national</span></span>
+<span class="src-line" id="L464" data-diff="added"><a class="ln" href="#L464">464</a><span class="tok-com">    law. If the standard suite of rights granted under applicable</span></span>
+<span class="src-line" id="L465" data-diff="added"><a class="ln" href="#L465">465</a><span class="tok-com">    copyright law includes additional rights not granted under this</span></span>
+<span class="src-line" id="L466" data-diff="added"><a class="ln" href="#L466">466</a><span class="tok-com">    License, such additional rights are deemed to be included in the</span></span>
+<span class="src-line" id="L467" data-diff="added"><a class="ln" href="#L467">467</a><span class="tok-com">    License; this License is not intended to restrict the license of any</span></span>
+<span class="src-line" id="L468" data-diff="added"><a class="ln" href="#L468">468</a><span class="tok-com">    rights under applicable law. Creative Commons Notice</span></span>
+<span class="src-line" id="L469" data-diff="added"><a class="ln" href="#L469">469</a></span>
+<span class="src-line" id="L470" data-diff="added"><a class="ln" href="#L470">470</a><span class="tok-com">    Creative Commons is not a party to this License, and makes no warranty</span></span>
+<span class="src-line" id="L471" data-diff="added"><a class="ln" href="#L471">471</a><span class="tok-com">    whatsoever in connection with the Work. Creative Commons will not be</span></span>
+<span class="src-line" id="L472" data-diff="added"><a class="ln" href="#L472">472</a><span class="tok-com">    liable to You or any party on any legal theory for any damages</span></span>
+<span class="src-line" id="L473" data-diff="added"><a class="ln" href="#L473">473</a><span class="tok-com">    whatsoever, including without limitation any general, special,</span></span>
+<span class="src-line" id="L474" data-diff="added"><a class="ln" href="#L474">474</a><span class="tok-com">    incidental or consequential damages arising in connection to this</span></span>
+<span class="src-line" id="L475" data-diff="added"><a class="ln" href="#L475">475</a><span class="tok-com">    license. Notwithstanding the foregoing two (2) sentences, if Creative</span></span>
+<span class="src-line" id="L476" data-diff="added"><a class="ln" href="#L476">476</a><span class="tok-com">    Commons has expressly identified itself as the Licensor hereunder, it</span></span>
+<span class="src-line" id="L477" data-diff="added"><a class="ln" href="#L477">477</a><span class="tok-com">    shall have all rights and obligations of Licensor.</span></span>
+<span class="src-line" id="L478" data-diff="added"><a class="ln" href="#L478">478</a></span>
+<span class="src-line" id="L479" data-diff="added"><a class="ln" href="#L479">479</a><span class="tok-com">    Except for the limited purpose of indicating to the public that the</span></span>
+<span class="src-line" id="L480" data-diff="added"><a class="ln" href="#L480">480</a><span class="tok-com">    Work is licensed under the CCPL, Creative Commons does not authorize</span></span>
+<span class="src-line" id="L481" data-diff="added"><a class="ln" href="#L481">481</a><span class="tok-com">    the use by either party of the trademark &quot;Creative Commons&quot; or any</span></span>
+<span class="src-line" id="L482" data-diff="added"><a class="ln" href="#L482">482</a><span class="tok-com">    related trademark or logo of Creative Commons without the prior</span></span>
+<span class="src-line" id="L483" data-diff="added"><a class="ln" href="#L483">483</a><span class="tok-com">    written consent of Creative Commons. Any permitted use will be in</span></span>
+<span class="src-line" id="L484" data-diff="added"><a class="ln" href="#L484">484</a><span class="tok-com">    compliance with Creative Commons&#039; then-current trademark usage</span></span>
+<span class="src-line" id="L485" data-diff="added"><a class="ln" href="#L485">485</a><span class="tok-com">    guidelines, as may be published on its website or otherwise made</span></span>
+<span class="src-line" id="L486" data-diff="added"><a class="ln" href="#L486">486</a><span class="tok-com">    available upon request from time to time. For the avoidance of doubt,</span></span>
+<span class="src-line" id="L487" data-diff="added"><a class="ln" href="#L487">487</a><span class="tok-com">    this trademark restriction does not form part of the License.</span></span>
+<span class="src-line" id="L488" data-diff="added"><a class="ln" href="#L488">488</a></span>
+<span class="src-line" id="L489" data-diff="added"><a class="ln" href="#L489">489</a><span class="tok-com">    Creative Commons may be contacted at http://creativecommons.org/.</span></span>
+<span class="src-line" id="L490" data-diff="added"><a class="ln" href="#L490">490</a></span>
+<span class="src-line" id="L491" data-diff="added"><a class="ln" href="#L491">491</a><span class="tok-com">    */</span></span>
+<span class="src-line" id="L492" data-diff="added"><a class="ln" href="#L492">492</a>}</span>
+<span class="src-line" id="L493" data-diff="added"><a class="ln" href="#L493">493</a></span>
+</code></pre>
+</main>
+<footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div>
+<script src="../../../../../../../../../../assets/search-index.js" defer></script>
+<script src="../../../../../../../../../../assets/app.js" defer></script>
+</body>
+</html>
