@@ -63,7 +63,6 @@
             "@docgen --coverage=build/coverage-xml"
         ],
         "docgen:serve": "@docgen --serve",
-        "docgen:diff": "@docgen --diff=origin/main --serve",
         "docgen:fresh": "@docgen --no-cache",
         "test:unit": "phpunit --testsuite unit",
         "lint": [
