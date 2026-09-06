@@ -3,6 +3,9 @@
     "description": "Faker Provider for generating syntactically valid SQL statements",
     "type": "library",
     "license": "MIT",
+    "support": {
+        "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-faker"
+    },
     "require": {
         "php": "^8.1",
         "fakerphp/faker": "^1.23"
@@ -52,7 +55,16 @@
         "bench:quick": "phpbench run bench --bootstrap=vendor/autoload.php --report=aggregate --php-config='{\"memory_limit\":\"512M\"}' --warmup=1 --iterations=3 --revs=25",
         "bench:full": "phpbench run bench --bootstrap=vendor/autoload.php --report=aggregate --php-config='{\"memory_limit\":\"512M\"}' --warmup=2 --iterations=8 --revs=100",
         "test": "paratest --processes=auto",
+        "test:coverage": "@test --coverage-xml build/coverage-xml",
         "doctest": "phpunit --testsuite doctest",
+        "docgen": "docgen --vendor=fakerphp/faker",
+        "docgen:coverage": [
+            "@test:coverage",
+            "@docgen --coverage=build/coverage-xml"
+        ],
+        "docgen:serve": "@docgen --serve",
+        "docgen:diff": "@docgen --diff=origin/main --serve",
+        "docgen:fresh": "@docgen --no-cache",
         "test:unit": "phpunit --testsuite unit",
         "lint": [
             "@format:check",
