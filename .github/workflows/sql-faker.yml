@@ -69,11 +69,6 @@ jobs:
     name: Mutation Testing
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    env:
-      # Infection resolves diff paths from the package working directory.
-      GIT_CONFIG_COUNT: '1'
-      GIT_CONFIG_KEY_0: diff.relative
-      GIT_CONFIG_VALUE_0: 'true'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
