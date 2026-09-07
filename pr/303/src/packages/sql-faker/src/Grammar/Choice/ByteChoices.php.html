@@ -44,7 +44,7 @@
 <span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">InvalidArgumentException</span>;</span>
 <span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a></span>
 <span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-com"> * Consumes a generation&#039;s bytes without changing the immutable plan.</span></span>
+<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-com"> * Consumes input choices while constructing an immutable generation plan.</span></span>
 <span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-com"> * @visibility root</span></span>
 <span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com"> */</span></span>
@@ -53,7 +53,7 @@
 <span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a>    <span class="tok-kw">private</span> <span class="tok-id">int</span> <span class="tok-var">$position</span> = <span class="tok-num">0</span>;</span>
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a></span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com">     * Captures one stream for this generation only.</span></span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com">     * Captures one stream for this plan construction only.</span></span>
 <span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">private</span> <span class="tok-kw">readonly</span> <span class="tok-id">string</span> <span class="tok-var">$bytes</span>)</span>
 <span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>    {</span>
