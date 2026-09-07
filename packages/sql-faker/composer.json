@@ -78,18 +78,9 @@
             "@fuzz:pg",
             "@fuzz:sqlite"
         ],
-        "fuzz:mysql": [
-            "@php fuzz/prepare-corpus.php mysql",
-            "php-fuzzer fuzz fuzz/fuzz_mysql_syntax.php fuzz/corpus/mysql/"
-        ],
-        "fuzz:pg": [
-            "@php fuzz/prepare-corpus.php pg",
-            "php-fuzzer fuzz fuzz/fuzz_pg_syntax.php fuzz/corpus/pg/"
-        ],
-        "fuzz:sqlite": [
-            "@php fuzz/prepare-corpus.php sqlite",
-            "php-fuzzer fuzz fuzz/fuzz_sqlite_syntax.php fuzz/corpus/sqlite/"
-        ],
+        "fuzz:mysql": "php-fuzzer fuzz fuzz/fuzz_mysql_syntax.php",
+        "fuzz:pg": "php-fuzzer fuzz fuzz/fuzz_pg_syntax.php",
+        "fuzz:sqlite": "php-fuzzer fuzz fuzz/fuzz_sqlite_syntax.php",
         "phpstan": "phpstan analyse --memory-limit=512M",
         "deptrac": [
             "deptrac analyse --config-file=deptrac.yaml",

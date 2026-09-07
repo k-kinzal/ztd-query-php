@@ -72,25 +72,21 @@ jobs:
       - name: Restore the evolving raw-input corpus
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: |
-            packages/sql-faker/fuzz/corpus/${{ matrix.target.database }}
-            packages/sql-faker/fuzz/seeds/generated/${{ matrix.target.database }}
-          key: sql-faker-corpus-v2-${{ matrix.target.database }}-${{ github.run_id }}-${{ github.run_attempt }}
-          restore-keys: sql-faker-corpus-v2-${{ matrix.target.database }}-
+          path: packages/sql-faker/fuzz/corpus/${{ matrix.target.database }}
+          key: sql-faker-corpus-v3-${{ matrix.target.database }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: sql-faker-corpus-v3-${{ matrix.target.database }}-
       - name: Restore grammar coverage snapshots independently of the corpus
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: packages/sql-faker/fuzz/coverage/${{ matrix.target.database }}
           key: sql-faker-coverage-v1-${{ matrix.target.database }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: sql-faker-coverage-v1-${{ matrix.target.database }}-
-      - name: Prepare grammar-derived initial inputs
-        run: php fuzz/prepare-corpus.php "${{ matrix.target.database }}"
       - name: Run PHP-Fuzzer
         env:
           FUZZ_MAX_RUNS: ${{ inputs.max_runs || '10000' }}
         run: |
           set -euo pipefail
-          mkdir -p build/fuzz
+          mkdir -p build/fuzz "fuzz/corpus/${{ matrix.target.database }}"
           vendor/bin/php-fuzzer fuzz \
             "fuzz/${{ matrix.target.script }}" \
             "fuzz/corpus/${{ matrix.target.database }}/" \
@@ -141,10 +137,8 @@ jobs:
         if: always()
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: |
-            packages/sql-faker/fuzz/corpus/${{ matrix.target.database }}
-            packages/sql-faker/fuzz/seeds/generated/${{ matrix.target.database }}
-          key: sql-faker-corpus-v2-${{ matrix.target.database }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: packages/sql-faker/fuzz/corpus/${{ matrix.target.database }}
+          key: sql-faker-corpus-v3-${{ matrix.target.database }}-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Save grammar coverage history
         if: always()
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
@@ -160,7 +154,6 @@ jobs:
             packages/sql-faker/crash-*
             packages/sql-faker/build/fuzz/${{ matrix.target.database }}.log
             packages/sql-faker/fuzz/corpus/${{ matrix.target.database }}/
-            packages/sql-faker/fuzz/seeds/generated/${{ matrix.target.database }}/
             packages/sql-faker/fuzz/coverage/${{ matrix.target.database }}/*.json
           if-no-files-found: ignore
           retention-days: 14
