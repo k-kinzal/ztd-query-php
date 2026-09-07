@@ -5,23 +5,90 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\Grammar\Derivation;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Derivation\GenerationPlan;
+use SqlFaker\Grammar\Derivation\PlanBuilder;
 use SqlFaker\Grammar\Derivation\ProductionPattern;
+use SqlFaker\Grammar\Grammar;
+use SqlFaker\Grammar\LexicalGrammar;
+use SqlFaker\Grammar\NonTerminal;
+use SqlFaker\Grammar\Production;
+use SqlFaker\Grammar\ProductionRule;
+use SqlFaker\Grammar\Terminal;
 
 #[CoversClass(GenerationPlan::class)]
 #[UsesClass(ProductionPattern::class)]
-#[UsesClass(\SqlFaker\Grammar\Derivation\PlanBuilder::class)]
+#[UsesClass(PlanBuilder::class)]
 #[UsesClass(\SqlFaker\Grammar\Choice\ByteChoices::class)]
 #[UsesClass(\SqlFaker\Grammar\Derivation\CompletionCosts::class)]
-#[UsesClass(\SqlFaker\Grammar\Grammar::class)]
-#[UsesClass(\SqlFaker\Grammar\NonTerminal::class)]
-#[UsesClass(\SqlFaker\Grammar\Production::class)]
-#[UsesClass(\SqlFaker\Grammar\ProductionRule::class)]
-#[UsesClass(\SqlFaker\Grammar\Terminal::class)]
+#[UsesClass(Grammar::class)]
+#[UsesClass(NonTerminal::class)]
+#[UsesClass(Production::class)]
+#[UsesClass(ProductionRule::class)]
+#[UsesClass(Terminal::class)]
 final class GenerationPlanTest extends TestCase
 {
+    /**
+     * @param GenerationPlan<bool>|null $constraints
+     */
+    #[DataProvider('providerInputBudgets')]
+    public function testFromBytesMapsTheHeaderIntoTheAllowedExpansionRange(string $input, ?GenerationPlan $constraints, int $expected): void
+    {
+        $grammar = new Grammar('root', [
+            'root' => new ProductionRule('root', [new Production([new NonTerminal('leaf')])]),
+            'leaf' => new ProductionRule('leaf', [new Production([new Terminal('T')])]),
+        ]);
+        $lexical = $this->createMock(LexicalGrammar::class);
+        $lexical->method('supports')->willReturn(true);
+        $lexical->method('spellings')->willReturn(['name']);
+        $plan = GenerationPlan::fromBytes($input, new PlanBuilder($grammar, $lexical), $constraints);
+
+        self::assertSame($expected, $plan->expansionBudget());
+        self::assertSame($constraints?->startRule(), $plan->startRule());
+    }
+
+    /**
+     * @return iterable<string, array{string, GenerationPlan<bool>|null, int}>
+     */
+    public static function providerInputBudgets(): iterable
+    {
+        yield 'empty' => ['', null, 2];
+        yield 'short header' => ["\x01", null, 3];
+        yield 'second header byte' => ["\0\x01", null, 258];
+        yield 'third header byte' => ["\0\0\x01", null, 551];
+        yield 'all header bytes' => ["\x01\x02\x03\x04", null, 4450];
+        yield 'body does not change budget' => ["\x01\x02\x03\x04\xff", null, 4450];
+        yield 'default maximum' => [pack('V', 4998), null, 5000];
+        yield 'default wraparound' => [pack('V', 4999), null, 2];
+        yield 'unsigned header' => ["\xff\xff\xff\xff", null, 1462];
+        yield 'explicit maximum' => [pack('V', 7), GenerationPlan::all()->withExpansionBudget(9), 9];
+        yield 'explicit wraparound' => [pack('V', 8), GenerationPlan::all()->withExpansionBudget(9), 2];
+        yield 'single possible budget' => ["\xff", GenerationPlan::fromRule('leaf')->withExpansionBudget(1), 1];
+        yield 'largest allowed budget' => [pack('V', 999998), GenerationPlan::all()->withExpansionBudget(1000000), 1000000];
+    }
+
+    public function testFromBytesSeparatesProductionChoicesFromLexemesAndCompletesAnOddInput(): void
+    {
+        $grammar = new Grammar('root', [
+            'root' => new ProductionRule('root', [new Production([new NonTerminal('choice'), new NonTerminal('choice')])]),
+            'choice' => new ProductionRule('choice', [new Production([new Terminal('T')]), new Production([new Terminal('U')])]),
+        ]);
+        $lexical = $this->createMock(LexicalGrammar::class);
+        $lexical->method('supports')->willReturn(true);
+        $lexical->method('spellings')->willReturn(['first', 'second']);
+        $builder = new PlanBuilder($grammar, $lexical);
+        $plan = GenerationPlan::fromBytes("\0\0\0\0\0\x01\x01\0\0", $builder);
+
+        self::assertEquals(ProductionPattern::at(1), $plan->patternAt('choice', 0));
+        self::assertEquals(ProductionPattern::at(0), $plan->patternAt('choice', 1));
+        self::assertSame('second', $plan->lexemeAt('U', 0));
+        self::assertSame('first', $plan->lexemeAt('T', 0));
+        self::assertSame('first', $plan->triviaAt(0, false));
+        self::assertSame('', $plan->triviaAt(0, true));
+    }
+
     public function testAllCoversTheGrammarWithoutProductionConstraints(): void
     {
         $plan = GenerationPlan::all();
@@ -232,7 +299,7 @@ final class GenerationPlanTest extends TestCase
     /**
      * @param GenerationPlan<bool> $plan
      */
-    #[\PHPUnit\Framework\Attributes\DataProvider('providerRefinedPlans')]
+    #[DataProvider('providerRefinedPlans')]
     public function testWithTriviaPreservesExplicitInstructionsAcrossRefinements(GenerationPlan $plan): void
     {
         self::assertSame('stmt', $plan->startRule());
@@ -264,14 +331,14 @@ final class GenerationPlanTest extends TestCase
         return [[''], ["\x01"], ["\xff\xff\xff\xff"], ["\0\0\0\0abc"], [str_repeat("\xff", 40)]];
     }
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('providerInputs')]
+    #[DataProvider('providerInputs')]
     public function testFromBytesResolvesChoicesIntoInspectableReusableInstructions(string $input): void
     {
         $grammar = \Tests\Fixtures\SqlFaker\CoverageFixture::syntaxGrammar();
-        $lexical = $this->createMock(\SqlFaker\Grammar\LexicalGrammar::class);
+        $lexical = $this->createMock(LexicalGrammar::class);
         $lexical->method('supports')->willReturn(true);
         $lexical->method('spellings')->willReturnCallback(static fn (string $terminal): array => [$terminal === '@TRIVIA' ? ' ' : $terminal]);
-        $builder = new \SqlFaker\Grammar\Derivation\PlanBuilder($grammar, $lexical);
+        $builder = new PlanBuilder($grammar, $lexical);
         $plan = GenerationPlan::fromBytes($input, $builder);
         self::assertEquals($plan, GenerationPlan::fromBytes($input, $builder));
         self::assertNotNull($plan->patternAt('stmt', 0));

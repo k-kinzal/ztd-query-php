@@ -99,6 +99,52 @@ final class PlanBuilderTest extends TestCase
         );
         self::assertSame('/*x*/', $plan->triviaAt(0, false));
         self::assertSame('/*x*/', $plan->triviaAt(0, true));
+        self::assertSame('/*x*/', $plan->triviaAt(1, true));
+    }
+
+    public function testBuildPreservesRepeatedProductionAndLexemeConstraints(): void
+    {
+        $grammar = new Grammar('root', [
+            'root' => new ProductionRule('root', [new Production([new NonTerminal('leaf'), new NonTerminal('leaf'), new NonTerminal('leaf')])]),
+            'leaf' => new ProductionRule('leaf', [new Production([new Terminal('T')]), new Production([new Terminal('U')])]),
+        ]);
+        $lexical = $this->createMock(LexicalGrammar::class);
+        $lexical->method('supports')->willReturn(true);
+        $lexical->method('spellings')->willReturn([' ']);
+        $constraints = GenerationPlan::constrained('root', [
+            'leaf' => [ProductionPattern::exactly('T'), ProductionPattern::exactly('T'), ProductionPattern::exactly('U')],
+        ])->withLexemes(['T' => ['first', 'second'], 'U' => ['third']]);
+        $plan = (new PlanBuilder($grammar, $lexical))->build(
+            $constraints,
+            4,
+            static fn (int $count): ?int => null,
+            static fn (int $count): ?int => null
+        );
+
+        self::assertEquals(ProductionPattern::at(0), $plan->patternAt('leaf', 0));
+        self::assertEquals(ProductionPattern::at(0), $plan->patternAt('leaf', 1));
+        self::assertEquals(ProductionPattern::at(1), $plan->patternAt('leaf', 2));
+        self::assertSame('first', $plan->lexemeAt('T', 0));
+        self::assertSame('second', $plan->lexemeAt('T', 1));
+        self::assertSame('third', $plan->lexemeAt('U', 0));
+        self::assertSame('', $plan->triviaAt(0, true));
+    }
+
+    public function testDeriveKeepsEmptyOutputAvailableUnlessThePlanRequiresContent(): void
+    {
+        $grammar = new Grammar('root', [
+            'root' => new ProductionRule('root', [new Production([new Terminal('END'), new NonTerminal('leaf')])]),
+            'leaf' => new ProductionRule('leaf', [new Production([]), new Production([new Terminal('T')])]),
+        ]);
+        $lexical = $this->createMock(LexicalGrammar::class);
+        $lexical->method('supports')->willReturn(true);
+        $lexical->method('spellings')->willReturnCallback(static fn (string $name): array => [$name === 'END' ? '' : 'name']);
+        $builder = new PlanBuilder($grammar, $lexical);
+        [, $empty] = $builder->derive(GenerationPlan::all(), 2, static fn (int $count): ?int => null);
+        [, $nonEmpty] = $builder->derive(GenerationPlan::all()->requiringNonEmpty(), 2, static fn (int $count): ?int => null);
+
+        self::assertEquals([new Terminal('END')], $empty);
+        self::assertEquals([new Terminal('END'), new Terminal('T')], $nonEmpty);
     }
 
     public function testDeriveReservesEverySiblingAndReturnsExplicitOccurrencePatterns(): void

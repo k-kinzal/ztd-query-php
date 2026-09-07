@@ -7,7 +7,7 @@ namespace SqlFaker\Grammar\Choice;
 use InvalidArgumentException;
 
 /**
- * Consumes a generation's bytes without changing the immutable plan.
+ * Consumes input choices while constructing an immutable generation plan.
  *
  * @visibility root
  */
@@ -16,7 +16,7 @@ final class ByteChoices
     private int $position = 0;
 
     /**
-     * Captures one stream for this generation only.
+     * Captures one stream for this plan construction only.
      */
     public function __construct(private readonly string $bytes)
     {
