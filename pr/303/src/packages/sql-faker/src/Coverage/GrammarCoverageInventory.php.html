@@ -127,9 +127,9 @@
 <span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a><span class="tok-com">     * @return array&lt;string, true&gt;</span></span>
 <span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">reachableRules</span>(): <span class="tok-kw">array</span></span>
+<span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">reachableRules</span>(?<span class="tok-id">string</span> <span class="tok-var">$root</span> = <span class="tok-id">null</span>): <span class="tok-kw">array</span></span>
 <span class="src-line" id="L94" data-diff="added"><a class="ln" href="#L94">94</a>    {</span>
-<span class="src-line" id="L95" data-diff="added"><a class="ln" href="#L95">95</a>        <span class="tok-var">$pending</span> = [<span class="tok-var">$this</span>-&gt;<span class="tok-id">root</span>];</span>
+<span class="src-line" id="L95" data-diff="added"><a class="ln" href="#L95">95</a>        <span class="tok-var">$pending</span> = [<span class="tok-var">$root</span> ?? <span class="tok-var">$this</span>-&gt;<span class="tok-id">root</span>];</span>
 <span class="src-line" id="L96" data-diff="added"><a class="ln" href="#L96">96</a>        <span class="tok-var">$visited</span> = [];</span>
 <span class="src-line" id="L97" data-diff="added"><a class="ln" href="#L97">97</a>        <span class="tok-kw">while</span> (<span class="tok-var">$pending</span> !== []) {</span>
 <span class="src-line" id="L98" data-diff="added"><a class="ln" href="#L98">98</a>            <span class="tok-var">$name</span> = <span class="tok-id">array_pop</span>(<span class="tok-var">$pending</span>);</span>

@@ -1113,16 +1113,16 @@
 <span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>    }</span>
 <span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a></span>
 <span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a><span class="tok-com">     * Returns the minimum expansion budget for a non-empty statement.</span></span>
+<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a><span class="tok-com">     * Prepares grammar analysis for constructing concrete generation plans.</span></span>
 <span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a><span class="tok-com">     * @visibility public</span></span>
-<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a><span class="tok-com">     * @example Decode arbitrary bytes with this grammar&#039;s minimum budget</span></span>
-<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a><span class="tok-com">     *     $provider = new \SqlFaker\SqliteProvider(\Faker\Factory::create());</span></span>
-<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a><span class="tok-com">     *     $plan = \SqlFaker\Grammar\Derivation\GenerationPlan::fromBytes(&#039;&#039;, $provider-&gt;minimumExpansionBudget());</span></span>
-<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a><span class="tok-com">     *     $provider-&gt;generate($plan) !== &#039;&#039; // =&gt; true</span></span>
+<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a><span class="tok-com">     * @example Compile input before generating SQL</span></span>
+<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a><span class="tok-com">     *     $provider = new \SqlFaker\MySqlProvider(\Faker\Factory::create());</span></span>
+<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a><span class="tok-com">     *     $plan = \SqlFaker\Grammar\Derivation\GenerationPlan::fromBytes(&#039;&#039;, $provider-&gt;planner());</span></span>
+<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a><span class="tok-com">     *     $provider-&gt;generate($plan) === $provider-&gt;generate($plan) // =&gt; true</span></span>
 <span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">minimumExpansionBudget</span>(): <span class="tok-id">int</span></span>
+<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">planner</span>(): <span class="tok-id">\SqlFaker\Grammar\Derivation\PlanBuilder</span></span>
 <span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a>    {</span>
-<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">sql</span>-&gt;<span class="tok-id">minimumExpansionBudget</span>();</span>
+<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">sql</span>-&gt;<span class="tok-id">planner</span>();</span>
 <span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a>    }</span>
 <span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a></span>
 <span class="src-line" id="L88" data-diff="added"><a class="ln" href="#L88">88</a>    <span class="tok-com">/**</span></span>
@@ -1137,7 +1137,7 @@
 <span class="src-line" id="L97" data-diff="added"><a class="ln" href="#L97">97</a><span class="tok-com">     * @visibility public</span></span>
 <span class="src-line" id="L98" data-diff="added"><a class="ln" href="#L98">98</a><span class="tok-com">     * @example Generate a statement from deterministic choice bytes</span></span>
 <span class="src-line" id="L99" data-diff="added"><a class="ln" href="#L99">99</a><span class="tok-com">     *     $provider = new \SqlFaker\SqliteProvider(\Faker\Factory::create());</span></span>
-<span class="src-line" id="L100" data-diff="added"><a class="ln" href="#L100">100</a><span class="tok-com">     *     $plan = \SqlFaker\Grammar\Derivation\GenerationPlan::all()-&gt;requiringNonEmpty()-&gt;withExpansionBudget(100)-&gt;withChoiceBytes(&#039;&#039;, &#039;&#039;);</span></span>
+<span class="src-line" id="L100" data-diff="added"><a class="ln" href="#L100">100</a><span class="tok-com">     *     $plan = \SqlFaker\Grammar\Derivation\GenerationPlan::all()-&gt;requiringNonEmpty()-&gt;withExpansionBudget(100);</span></span>
 <span class="src-line" id="L101" data-diff="added"><a class="ln" href="#L101">101</a><span class="tok-com">     *     $provider-&gt;generate($plan) !== &#039;&#039; // =&gt; true</span></span>
 <span class="src-line" id="L102" data-diff="added"><a class="ln" href="#L102">102</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L103" data-diff="added"><a class="ln" href="#L103">103</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">generate</span>(<span class="tok-id">GenerationPlan</span> <span class="tok-var">$plan</span>): <span class="tok-id">string</span></span>
