@@ -11,8 +11,10 @@ use PDOException;
  * Prepares generated SQL against MySQL and reports unexpected rejections.
  *
  * SQL PREPARE reaches the server directly, avoiding PDO's emulation fallback.
- * Unsupported preparation and known schema-dependent rejections are inconclusive.
- * Syntax errors and unclassified rejections are findings.
+ * Unsupported preparation and known schema or semantic rejections are inconclusive.
+ * In particular, ALGORITHM and LOCK accept identifiers in the grammar, then
+ * semantic actions reject unknown values with errors 1800 and 1801.
+ * Other syntax errors and unclassified rejections are findings.
  */
 final class MySqlSyntaxCheck
 {
@@ -62,7 +64,7 @@ final class MySqlSyntaxCheck
 
             $acceptable = in_array($errorCode, [1054, 1046, 1527, 1273, 1327, 3708, 1407, 1049,
                 1319, 1305, 1096, 1791, 1286, 1235, 1690, 3652, 3709, 1525, 1051, 3980,
-                1193, 1277, 1641], true);
+                1193, 1277, 1641, 1800, 1801], true);
 
             if ($acceptable) {
                 return;

@@ -58,7 +58,10 @@ final class PgSyntaxCheck
     }
 
     /**
-     * Classifies server rejections without treating syntax errors as expected state.
+     * Classifies known semantic rejections separately from unexpected syntax errors.
+     *
+     * The grammar admits DEFAULT as an expression; parse analysis checks its context
+     * and reports 42601 too, so only that specific diagnostic is inconclusive.
      *
      * @throws SyntaxFailure When syntax or an unclassified rejection is observed
      */
@@ -69,6 +72,9 @@ final class PgSyntaxCheck
             return;
         }
         if ($state === '0A000') {
+            return;
+        }
+        if ($state === '42601' && str_starts_with(trim($message), 'ERROR:  DEFAULT is not allowed in this context')) {
             return;
         }
         throw new SyntaxFailure("PostgreSQL syntax verification failed\nInput (hex): $input\nSQL: $sql\nSQLSTATE: $state\n$message");

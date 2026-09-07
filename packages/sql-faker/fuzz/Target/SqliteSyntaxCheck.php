@@ -12,13 +12,15 @@ use PDOException;
  *
  * Every input starts a fresh session of the same fixed SQLite engine because
  * some PRAGMAs take effect during preparation. SQLite validates syntax when a
- * statement is prepared, so a statement that
- * survives PDO::prepare() is syntactically accepted. SQLite reports its
+ * statement is prepared, so a statement that survives PDO::prepare() is accepted.
+ * Preparation also checks semantic restrictions: the grammar admits NULLS FIRST
+ * and NULLS LAST in index column lists, then sqlite3HasExplicitNulls rejects them.
+ * SQLite reports its
  * failures as message text rather than as distinct error codes, so the
  * tolerated cases — name lookups a schema-less fuzz run cannot satisfy, plus a
  * handful of documented restrictions — are matched on the message. Any other
- * rejection means the grammar emitted something SQLite cannot parse, which is a
- * finding and surfaces as a SyntaxFailure for PHP-Fuzzer to record.
+ * rejection is an unclassified finding and surfaces as a SyntaxFailure for
+ * PHP-Fuzzer to record.
  */
 final class SqliteSyntaxCheck
 {
@@ -75,6 +77,8 @@ final class SqliteSyntaxCheck
                 str_contains($message, 'DISTINCT is not supported for window functions') => true,
                 str_contains($message, 'wrong number of arguments to function GLOB()') => true,
                 str_contains($message, 'duplicate WITH table name:') => true,
+                str_ends_with($message, 'General error: 1 unsupported use of NULLS FIRST') => true,
+                str_ends_with($message, 'General error: 1 unsupported use of NULLS LAST') => true,
                 default => false,
             };
 
