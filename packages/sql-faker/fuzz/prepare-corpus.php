@@ -81,11 +81,9 @@ if (!is_file($directory . '/inventory.json')) {
     }
     fwrite(STDOUT, json_encode(array_count_values(array_column($report, 'status')), JSON_THROW_ON_ERROR) . "\n");
 }
-foreach ([$directory, __DIR__ . '/seeds/reviewed/' . $database] as $source) {
-    $seeds = glob($source . '/*.bin');
-    foreach ($seeds === false ? [] : $seeds as $seed) {
-        if (!copy($seed, $corpus . '/' . basename($seed))) {
-            throw new RuntimeException('Cannot copy initial input: ' . $seed);
-        }
+$seeds = glob($directory . '/*.bin');
+foreach ($seeds === false ? [] : $seeds as $seed) {
+    if (!copy($seed, $corpus . '/' . basename($seed))) {
+        throw new RuntimeException('Cannot copy initial input: ' . $seed);
     }
 }
