@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlFaker\Grammar\Derivation;
 
 use InvalidArgumentException;
+use SqlFaker\Grammar\Choice\ByteChoices;
 
 /**
  * An immutable plan selecting the start rule, productions, lexemes and expansion limits.
@@ -14,7 +15,7 @@ use InvalidArgumentException;
  *
  * @visibility public
  * @example Keep a generation plan immutable and independent of earlier calls
- *     $plan = \SqlFaker\Grammar\Derivation\GenerationPlan::all()->withExpansionBudget(100)->withChoiceBytes('', '');
+ *     $plan = \SqlFaker\Grammar\Derivation\GenerationPlan::all()->withExpansionBudget(100);
  *     $plan->expansionBudget() // => 100
  */
 final class GenerationPlan
@@ -24,11 +25,12 @@ final class GenerationPlan
      * @param non-empty-string|null $startRule Rule the walk begins at, or null for the grammar entry point
      * @param array<string, non-empty-list<ProductionPattern>> $patterns Patterns directing each occurrence of a rule
      * @param array<string, ProductionPattern> $patternsForEveryOccurrence Pattern directing every further occurrence of a rule
-     * @param array<string, non-empty-list<non-empty-string>> $lexemes Lexemes directing each occurrence of a terminal
+     * @param array<string, non-empty-list<string>> $lexemes Lexemes directing each occurrence of a terminal
      * @param non-empty-string|null $lexicalTarget Lexical rule to realize instead of walking the grammar
      * @param array<string, int> $parameters Parameters the lexical target is realized with
      * @param TRequiresNonEmpty $requiresNonEmpty Whether the walk must produce at least one symbol
      * @param bool $reserveSteps Whether to budget the remaining form and prefer fewer rule expansions
+     * @param array{list<string>, list<string>}|null $trivia Required and optional separators by occurrence
      * @visibility namespace
      */
     public function __construct(
@@ -42,8 +44,7 @@ final class GenerationPlan
         private readonly int $maxDepth,
         private readonly bool $reserveSteps = false,
         private readonly ?int $expansionBudget = null,
-        private readonly ?string $structureBytes = null,
-        private readonly ?string $lexicalBytes = null,
+        private readonly ?array $trivia = null,
     ) {
     }
 
@@ -57,19 +58,21 @@ final class GenerationPlan
     }
 
     /**
-     * Decodes any byte string into a deterministic, bounded statement plan.
-     * The first four bytes select the expansion budget (little endian, zero padded).
-     * Remaining bytes alternate between production and lexical choices.
-     * @return self<true>
-     * @throws InvalidArgumentException When the configured budget cannot complete a statement
+     * Compiles arbitrary input into explicit instructions; no input is retained.
+     * @param GenerationPlan<bool>|null $constraints Caller-selected start rule and output constraints
+     * @return self<bool>
+     * @throws InvalidArgumentException When the configured constraints cannot be completed
      */
-    public static function fromBytes(string $input, int $minimumExpansions, int $maximumExpansions = 5000): self
+    public static function fromBytes(string $input, PlanBuilder $builder, ?self $constraints = null): self
     {
-        if ($minimumExpansions < 1 || $maximumExpansions < $minimumExpansions || $maximumExpansions > 1000000) {
-            throw new InvalidArgumentException('Require 1 <= minimum expansions <= maximum expansions <= 1000000.');
+        $constraints ??= self::all();
+        $minimum = $builder->minimumExpansions($constraints);
+        $maximum = $constraints->expansionBudget() ?? 5000;
+        if ($minimum < 1 || $maximum < $minimum || $maximum > 1000000 || $constraints->lexicalTarget() !== null) {
+            throw new InvalidArgumentException('Require a derivation plan with 1 <= minimum expansions <= maximum expansions <= 1000000.');
         }
         $header = 0;
-        $range = $maximumExpansions - $minimumExpansions + 1;
+        $range = $maximum - $minimum + 1;
         for ($index = 3; $index >= 0; --$index) {
             $header = ($header * 256 + (isset($input[$index]) ? ord($input[$index]) : 0)) % $range;
         }
@@ -79,8 +82,12 @@ final class GenerationPlan
             $structure .= $pair[0] ?? '';
             $lexical .= $pair[1] ?? '';
         }
-        return self::all()->requiringNonEmpty()->withExpansionBudget($minimumExpansions + $header)
-            ->withChoiceBytes($structure, $lexical);
+        return $builder->build(
+            $constraints,
+            $minimum + $header,
+            (new ByteChoices($structure))->index(...),
+            (new ByteChoices($lexical))->index(...)
+        );
     }
 
     /**
@@ -150,14 +157,13 @@ final class GenerationPlan
             $this->maxDepth,
             $this->reserveSteps,
             $this->expansionBudget,
-            $this->structureBytes,
-            $this->lexicalBytes,
+            $this->trivia,
         );
     }
 
     /**
      * Answers a plan that spells each occurrence of a terminal the way the caller asked.
-     * @param array<string, non-empty-list<non-empty-string>> $lexemes Lexemes directing each occurrence of a terminal
+     * @param array<string, non-empty-list<string>> $lexemes Lexemes directing each occurrence of a terminal
      * @return self<TRequiresNonEmpty> Plan carrying those lexemes
      * @throws InvalidArgumentException When a required generation constraint is empty
      */
@@ -178,8 +184,7 @@ final class GenerationPlan
             $this->maxDepth,
             $this->reserveSteps,
             $this->expansionBudget,
-            $this->structureBytes,
-            $this->lexicalBytes,
+            $this->trivia,
         );
     }
 
@@ -200,8 +205,7 @@ final class GenerationPlan
             max(1, $maxDepth),
             $this->reserveSteps,
             $this->expansionBudget,
-            $this->structureBytes,
-            $this->lexicalBytes,
+            $this->trivia,
         );
     }
 
@@ -249,8 +253,7 @@ final class GenerationPlan
             $this->maxDepth,
             $this->reserveSteps,
             $this->expansionBudget,
-            $this->structureBytes,
-            $this->lexicalBytes,
+            $this->trivia,
         );
     }
 
@@ -258,7 +261,7 @@ final class GenerationPlan
      * Answers the lexeme one occurrence of a terminal is spelled with.
      * @param string $terminal Terminal the walk has reached
      * @param int $occurrence How many times the walk has reached it before
-     * @return non-empty-string|null Lexeme to write, or null when the walk may choose freely
+     * @return string|null Lexeme to write, or null when the walk may choose freely
      */
     public function lexemeAt(string $terminal, int $occurrence): ?string
     {
@@ -316,8 +319,7 @@ final class GenerationPlan
             $this->maxDepth,
             true,
             $this->expansionBudget,
-            $this->structureBytes,
-            $this->lexicalBytes,
+            $this->trivia,
         );
     }
 
@@ -350,16 +352,17 @@ final class GenerationPlan
             $this->maxDepth,
             $this->reserveSteps,
             $budget,
-            $this->structureBytes,
-            $this->lexicalBytes
+            $this->trivia
         );
     }
 
     /**
-     * Carries independent production and lexical streams without mutable cursors.
+     * Specifies the separators to use, with deterministic defaults after the last entry.
+     * @param list<string> $required
+     * @param list<string> $optional
      * @return self<TRequiresNonEmpty>
      */
-    public function withChoiceBytes(string $structureBytes, string $lexicalBytes): self
+    public function withTrivia(array $required, array $optional): self
     {
         return new self(
             $this->startRule,
@@ -372,9 +375,16 @@ final class GenerationPlan
             $this->maxDepth,
             $this->reserveSteps,
             $this->expansionBudget,
-            $structureBytes,
-            $lexicalBytes
+            [$required, $optional]
         );
+    }
+
+    /**
+     * Answers a concrete separator, or null when the caller leaves its choice free.
+     */
+    public function triviaAt(int $occurrence, bool $optional): ?string
+    {
+        return $this->trivia === null ? null : ($this->trivia[$optional ? 1 : 0][$occurrence] ?? ($optional ? '' : ' '));
     }
 
     /**
@@ -383,22 +393,6 @@ final class GenerationPlan
     public function expansionBudget(): ?int
     {
         return $this->expansionBudget;
-    }
-
-    /**
-     * Returns production bytes, distinguishing empty input from ordinary Faker mode.
-     */
-    public function structureBytes(): ?string
-    {
-        return $this->structureBytes;
-    }
-
-    /**
-     * Returns lexical bytes for this generation and all its retries.
-     */
-    public function lexicalBytes(): ?string
-    {
-        return $this->lexicalBytes;
     }
 
     /**

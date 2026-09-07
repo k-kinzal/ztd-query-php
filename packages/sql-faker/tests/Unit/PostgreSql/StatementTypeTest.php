@@ -12,7 +12,6 @@ use SqlFaker\PostgreSql\StatementType;
 
 #[CoversClass(StatementType::class)]
 #[UsesClass(StatementRule::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Choice\ChoiceSource::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Derivation\CompletionCosts::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Derivation\DerivationNode::class)]
 final class StatementTypeTest extends TestCase

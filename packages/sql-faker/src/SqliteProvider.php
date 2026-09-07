@@ -59,16 +59,16 @@ final class SqliteProvider extends Base
     }
 
     /**
-     * Returns the minimum expansion budget for a non-empty statement.
+     * Prepares grammar analysis for constructing concrete generation plans.
      * @visibility public
-     * @example Decode arbitrary bytes with this grammar's minimum budget
+     * @example Compile input before generating SQL
      *     $provider = new \SqlFaker\SqliteProvider(\Faker\Factory::create());
-     *     $plan = \SqlFaker\Grammar\Derivation\GenerationPlan::fromBytes('', $provider->minimumExpansionBudget());
-     *     $provider->generate($plan) !== '' // => true
+     *     $plan = \SqlFaker\Grammar\Derivation\GenerationPlan::fromBytes('', $provider->planner());
+     *     $provider->generate($plan) === $provider->generate($plan) // => true
      */
-    public function minimumExpansionBudget(): int
+    public function planner(): Grammar\Derivation\PlanBuilder
     {
-        return $this->sql->minimumExpansionBudget();
+        return $this->sql->planner();
     }
 
     /**
@@ -83,7 +83,7 @@ final class SqliteProvider extends Base
      * @visibility public
      * @example Generate a statement from deterministic choice bytes
      *     $provider = new \SqlFaker\SqliteProvider(\Faker\Factory::create());
-     *     $plan = \SqlFaker\Grammar\Derivation\GenerationPlan::all()->requiringNonEmpty()->withExpansionBudget(100)->withChoiceBytes('', '');
+     *     $plan = \SqlFaker\Grammar\Derivation\GenerationPlan::all()->requiringNonEmpty()->withExpansionBudget(100);
      *     $provider->generate($plan) !== '' // => true
      */
     public function generate(GenerationPlan $plan): string

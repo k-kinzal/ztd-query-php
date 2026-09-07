@@ -33,6 +33,8 @@ use Tests\Fixtures\SqlFaker\CoverageFixture;
 #[UsesClass(\SqlFaker\Grammar\Production::class)]
 #[UsesClass(\SqlFaker\Grammar\ProductionRule::class)]
 #[UsesClass(Terminal::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\PlanBuilder::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\ProductionPattern::class)]
 final class ProductionWitnessTest extends TestCase
 {
     /**
@@ -64,11 +66,14 @@ final class ProductionWitnessTest extends TestCase
         self::assertArrayHasKey($rule . "\0" . $ordinal, $witness->contains);
         $costs = new CompletionCosts($grammar, $supported);
         $input = $search->encode($witness);
-        $plan = GenerationPlan::fromBytes($input, $costs->rule('stmt', true));
+        $lexical = $this->createMock(\SqlFaker\Grammar\LexicalGrammar::class);
+        $lexical->method('supports')->willReturn(true);
+        $lexical->method('spellings')->willReturnCallback(static fn (string $terminal): array => [$terminal === '@TRIVIA' ? ' ' : $terminal]);
+        $builder = new \SqlFaker\Grammar\Derivation\PlanBuilder($grammar, $lexical);
+        $plan = GenerationPlan::fromBytes($input, $builder, GenerationPlan::all()->requiringNonEmpty());
         self::assertSame($witness->cost, $plan->expansionBudget());
         self::assertSame($input, $search->encode($witness));
-        self::assertNotNull($plan->structureBytes());
-        $derivation = new Derivation($grammar, Factory::create(), new TerminationAnalyzer($grammar, $supported), $costs, new ByteChoices($plan->structureBytes()));
+        $derivation = new Derivation($grammar, Factory::create(), new TerminationAnalyzer($grammar, $supported), $costs);
         self::assertSame($expected, array_map(static fn (Terminal $token): string => $token->value, $derivation->of('stmt', $plan)));
     }
 

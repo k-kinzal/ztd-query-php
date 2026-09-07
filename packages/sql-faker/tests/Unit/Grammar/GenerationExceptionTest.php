@@ -9,7 +9,6 @@ use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\GenerationException;
 
 #[CoversClass(GenerationException::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Choice\ChoiceSource::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Derivation\CompletionCosts::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Derivation\DerivationNode::class)]
 final class GenerationExceptionTest extends TestCase

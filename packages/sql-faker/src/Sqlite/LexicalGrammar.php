@@ -8,7 +8,6 @@ use Faker\Generator as FakerGenerator;
 use InvalidArgumentException;
 use Override;
 use RuntimeException;
-use SqlFaker\Grammar\Choice\ChoiceSource;
 use SqlFaker\Grammar\Derivation\GenerationPlan;
 use SqlFaker\Grammar\Generation\Output\ReverseLexemeGenerator;
 use SqlFaker\Grammar\Generation\Output\SqlSerializer;
@@ -45,14 +44,14 @@ final class LexicalGrammar implements LexicalGrammarContract
     private SqliteTokenizer $tokenizer;
 
     /**
-     * @param FakerGenerator|ChoiceSource $faker Source of the choices realization makes
+     * @param FakerGenerator $faker Source of the choices realization makes
      * @param string $profileVersion Exact release to generate for, e.g. "sqlite-3.47.2"
      * @param LexicalKeywordIndex|null $index Inverts the profile's terminal-to-spelling map
      *
      * @throws RuntimeException When the exact release has no declaration
      */
     public function __construct(
-        private readonly FakerGenerator|ChoiceSource $faker,
+        private readonly FakerGenerator $faker,
         private readonly string $profileVersion,
         ?LexicalKeywordIndex $index = null,
     ) {

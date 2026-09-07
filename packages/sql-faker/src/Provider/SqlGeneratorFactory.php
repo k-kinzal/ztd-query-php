@@ -7,7 +7,6 @@ namespace SqlFaker\Provider;
 use Faker\Generator;
 use SqlFaker\Coverage\GrammarCoverage;
 use SqlFaker\Generation\SqlGenerator;
-use SqlFaker\Grammar\Choice\ChoiceSource;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\MySql\GenerationContext as MySqlContext;
 use SqlFaker\PostgreSql\GenerationContext as PgContext;
@@ -25,9 +24,8 @@ final class SqlGeneratorFactory
      */
     public static function forMySql(Generator $faker, Grammar $grammar, string $version, ?GrammarCoverage $coverage = null): SqlGenerator
     {
-        $choices = new ChoiceSource($faker);
         $grammar = $grammar->identified();
-        $context = new MySqlContext($grammar, $choices, $version);
+        $context = new MySqlContext($grammar, $faker, $version);
 
         return new SqlGenerator(
             $context->grammar,
@@ -35,7 +33,6 @@ final class SqlGeneratorFactory
             $context->lexicalGrammar,
             $context->rewriter,
             $context->startSymbol,
-            $choices,
             $coverage,
             $grammar,
         );
@@ -46,9 +43,8 @@ final class SqlGeneratorFactory
      */
     public static function forPostgreSql(Generator $faker, Grammar $grammar, string $version, ?GrammarCoverage $coverage = null): SqlGenerator
     {
-        $choices = new ChoiceSource($faker);
         $grammar = $grammar->identified();
-        $context = new PgContext($grammar, $choices, $version);
+        $context = new PgContext($grammar, $faker, $version);
 
         return new SqlGenerator(
             $context->grammar,
@@ -56,7 +52,6 @@ final class SqlGeneratorFactory
             $context->lexicalGrammar,
             $context->rewriter,
             $context->startSymbol,
-            $choices,
             $coverage,
             $grammar,
         );
@@ -67,9 +62,8 @@ final class SqlGeneratorFactory
      */
     public static function forSqlite(Generator $faker, Grammar $grammar, string $version, ?GrammarCoverage $coverage = null): SqlGenerator
     {
-        $choices = new ChoiceSource($faker);
         $grammar = $grammar->identified();
-        $context = new SqliteContext($grammar, $choices, $version);
+        $context = new SqliteContext($grammar, $faker, $version);
 
         return new SqlGenerator(
             $context->grammar,
@@ -77,7 +71,6 @@ final class SqlGeneratorFactory
             $context->lexicalGrammar,
             $context->rewriter,
             $context->startSymbol,
-            $choices,
             $coverage,
             $grammar,
         );

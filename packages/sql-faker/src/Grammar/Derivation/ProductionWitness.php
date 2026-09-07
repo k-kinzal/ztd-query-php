@@ -26,11 +26,12 @@ final class ProductionWitness
 
     /**
      * @param Closure(string): bool $supported
+     * @param (Closure(string): list<string>)|null $spellings
      */
-    public function __construct(private readonly Grammar $grammar, private readonly Closure $supported)
+    public function __construct(private readonly Grammar $grammar, private readonly Closure $supported, ?Closure $spellings = null)
     {
+        $this->costs = new CompletionCosts($grammar, $supported, $spellings);
         $this->baseline = $this->settled('', -1, []);
-        $this->costs = new CompletionCosts($grammar, $supported);
     }
 
     /**
@@ -89,7 +90,11 @@ final class ProductionWitness
                 if (!($this->supported)($symbol->value)) {
                     return [];
                 }
-                $children[1] = [0, []];
+                foreach ($this->costs->sequence([$symbol]) as $state => $cost) {
+                    if ($cost !== PHP_INT_MAX) {
+                        $children[$state] = [0, []];
+                    }
+                }
             } else {
                 foreach ($best[$symbol->value()] ?? [] as $state => $node) {
                     $children[$state] = [$node->cost, [$node]];
@@ -136,7 +141,7 @@ final class ProductionWitness
             $candidates = $this->costs->affordable(
                 $this->grammar->ruleMap[$name]->alternatives,
                 $remainder,
-                $index === 0,
+                $this->costs->sequence(array_slice($form, 0, $index))[1] === PHP_INT_MAX,
                 $witness->cost - $steps
             );
             $production = $this->grammar->ruleMap[$name]->alternatives[$ordinal];

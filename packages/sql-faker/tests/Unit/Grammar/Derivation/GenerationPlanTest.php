@@ -12,6 +12,14 @@ use SqlFaker\Grammar\Derivation\ProductionPattern;
 
 #[CoversClass(GenerationPlan::class)]
 #[UsesClass(ProductionPattern::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\PlanBuilder::class)]
+#[UsesClass(\SqlFaker\Grammar\Choice\ByteChoices::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionCosts::class)]
+#[UsesClass(\SqlFaker\Grammar\Grammar::class)]
+#[UsesClass(\SqlFaker\Grammar\NonTerminal::class)]
+#[UsesClass(\SqlFaker\Grammar\Production::class)]
+#[UsesClass(\SqlFaker\Grammar\ProductionRule::class)]
+#[UsesClass(\SqlFaker\Grammar\Terminal::class)]
 final class GenerationPlanTest extends TestCase
 {
     public function testAllCoversTheGrammarWithoutProductionConstraints(): void
@@ -200,21 +208,47 @@ final class GenerationPlanTest extends TestCase
         self::assertNull(GenerationPlan::statement(null, 12)->startRule());
     }
 
-    public function testWithExpansionBudgetPreservesTheLegacyDepthAndOtherPlanConstraints(): void
+    public function testWithExpansionBudgetPreservesTheOtherConstraints(): void
     {
         $base = GenerationPlan::all()->withMaxDepth(7);
-        $plan = $base->withExpansionBudget(300)->requiringNonEmpty()->withChoiceBytes('structure', 'lexical');
+        $plan = $base->withExpansionBudget(300)->requiringNonEmpty()->withTrivia([' '], ['']);
         self::assertNull($base->expansionBudget());
         self::assertSame(300, $plan->expansionBudget());
         self::assertSame(7, $plan->maxDepth());
     }
 
-    public function testWithChoiceBytesPreservesIndependentStreamsAcrossPlanRefinements(): void
+    /**
+     * @return list<array{GenerationPlan<bool>}>
+     */
+    public static function providerRefinedPlans(): array
     {
-        $plan = GenerationPlan::all()->withChoiceBytes('s', 'l')->withExpansionBudget(99)->withStepBudget()->withMaxDepth(1);
-        self::assertSame('s', $plan->structureBytes());
-        self::assertSame('l', $plan->lexicalBytes());
-        self::assertSame(99, $plan->expansionBudget());
+        $base = GenerationPlan::constrained('stmt', ['stmt' => [ProductionPattern::at(1)]])
+            ->withLexemes(['T' => ['name']])->withTrivia(['/*separator*/'], ['/*optional*/']);
+        return [[$base->requiringNonEmpty()], [$base->withMaxDepth(7)], [$base->withExpansionBudget(9)],
+            [$base->withStepBudget()], [$base->withLexemes(['T' => ['name']])],
+            [$base->withPatternForEveryOccurrence('tail', ProductionPattern::exactly())]];
+    }
+
+    /**
+     * @param GenerationPlan<bool> $plan
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerRefinedPlans')]
+    public function testWithTriviaPreservesExplicitInstructionsAcrossRefinements(GenerationPlan $plan): void
+    {
+        self::assertSame('stmt', $plan->startRule());
+        self::assertEquals(ProductionPattern::at(1), $plan->patternAt('stmt', 0));
+        self::assertSame('name', $plan->lexemeAt('T', 0));
+        self::assertSame('/*separator*/', $plan->triviaAt(0, false));
+        self::assertSame('/*optional*/', $plan->triviaAt(0, true));
+    }
+
+    public function testTriviaAtDistinguishesUnspecifiedFromExplicitEmptyAndDefaults(): void
+    {
+        self::assertNull(GenerationPlan::all()->triviaAt(0, false));
+        $plan = GenerationPlan::all()->withTrivia([' '], ['']);
+        self::assertSame('', $plan->triviaAt(0, true));
+        self::assertSame('', $plan->triviaAt(50, true));
+        self::assertSame(' ', $plan->triviaAt(50, false));
     }
 
     public function testExpansionBudgetIsOptionalForExistingPlans(): void
@@ -222,104 +256,27 @@ final class GenerationPlanTest extends TestCase
         self::assertNull(GenerationPlan::all()->expansionBudget());
     }
 
-    public function testStructureBytesDistinguishesEmptyInputFromFakerMode(): void
-    {
-        self::assertNull(GenerationPlan::all()->structureBytes());
-        self::assertSame('', GenerationPlan::all()->withChoiceBytes('', '')->structureBytes());
-    }
-
-    public function testLexicalBytesAreRetainedWithoutACursorOnThePlan(): void
-    {
-        self::assertNull(GenerationPlan::all()->lexicalBytes());
-        $plan = GenerationPlan::all()->withChoiceBytes('s', 'l');
-        self::assertSame('l', $plan->lexicalBytes());
-        self::assertSame('l', $plan->lexicalBytes());
-    }
     /**
-     * @return list<array{GenerationPlan<true>}>
+     * @return list<array{string}>
      */
-    public static function providerCompletePlans(): array
+    public static function providerInputs(): array
     {
-        $pattern = ProductionPattern::exactly('T');
-        $base = GenerationPlan::constrained('stmt', ['stmt' => [$pattern]])
-            ->withPatternForEveryOccurrence('stmt', $pattern)->withLexemes(['T' => ['name']])
-            ->requiringNonEmpty()->withMaxDepth(7)->withStepBudget()
-            ->withExpansionBudget(23)->withChoiceBytes('structure', 'lexical');
-        return [[$base->requiringNonEmpty()], [$base->withLexemes(['T' => ['name']])],
-            [$base->withMaxDepth(7)], [$base->withStepBudget()], [$base->withExpansionBudget(23)],
-            [$base->withChoiceBytes('structure', 'lexical')], [$base->withPatternForEveryOccurrence('stmt', $pattern)]];
+        return [[''], ["\x01"], ["\xff\xff\xff\xff"], ["\0\0\0\0abc"], [str_repeat("\xff", 40)]];
     }
 
-    /**
-     * @param GenerationPlan<true> $plan
-     */
-    #[\PHPUnit\Framework\Attributes\DataProvider('providerCompletePlans')]
-    public function testEveryRefinementPreservesIndependentGenerationConstraints(GenerationPlan $plan): void
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerInputs')]
+    public function testFromBytesResolvesChoicesIntoInspectableReusableInstructions(string $input): void
     {
-        self::assertSame('stmt', $plan->startRule());
-        self::assertEquals(ProductionPattern::exactly('T'), $plan->patternAt('stmt', 0));
-        self::assertEquals(ProductionPattern::exactly('T'), $plan->patternAt('stmt', 10));
-        self::assertSame('name', $plan->lexemeAt('T', 0));
-        self::assertTrue($plan->usesStepBudget());
-        self::assertSame(7, $plan->maxDepth());
-        self::assertSame(23, $plan->expansionBudget());
-        self::assertSame('structure', $plan->structureBytes());
-        self::assertSame('lexical', $plan->lexicalBytes());
-    }
-
-    /**
-     * @return list<array{GenerationPlan<true>}>
-     */
-    public static function providerLexicalRefinements(): array
-    {
-        $base = GenerationPlan::lexical('identifier', ['min' => 2, 'max' => 9]);
-        return [[$base->requiringNonEmpty()], [$base->withLexemes(['T' => ['name']])],
-            [$base->withMaxDepth(7)], [$base->withStepBudget()], [$base->withExpansionBudget(23)],
-            [$base->withChoiceBytes('s', 'l')], [$base->withPatternForEveryOccurrence('stmt', ProductionPattern::exactly('T'))]];
-    }
-
-    /**
-     * @param GenerationPlan<true> $plan
-     */
-    #[\PHPUnit\Framework\Attributes\DataProvider('providerLexicalRefinements')]
-    public function testRefinementsRetainLexicalTargetAndItsParameters(GenerationPlan $plan): void
-    {
-        self::assertSame('identifier', $plan->lexicalTarget());
-        self::assertSame(['min' => 2, 'max' => 9], $plan->parameters());
-    }
-
-
-    /**
-     * @return list<array{string, int, int, int, string, string}>
-     */
-    public static function providerBytePlans(): array
-    {
-        return [
-            ['', 2, 5000, 2, '', ''],
-            ["\x01", 2, 5000, 3, '', ''],
-            ["\0\x01", 2, 5000, 258, '', ''],
-            ["\0\0\x01", 2, 5000, 551, '', ''],
-            ["\0\0\0\x01", 2, 5000, 574, '', ''],
-            ["\xff\xff\xff\xff", 2, 5000, 1462, '', ''],
-            ["\0\0\0\0abcdef", 2, 5000, 2, 'ace', 'bdf'],
-            ["\0\0\0\0abc", 2, 5000, 2, 'ac', 'b'],
-            ["\xff\xff\xff\xffx", 7, 7, 7, 'x', ''],
-            [pack('V', 4998), 2, 5000, 5000, '', ''],
-            [pack('V', 4999), 2, 5000, 2, '', ''],
-        ];
-    }
-
-    #[\PHPUnit\Framework\Attributes\DataProvider('providerBytePlans')]
-    public function testFromBytesAcceptsEveryHeaderAndKeepsChoiceStreamsSeparate(string $input, int $minimum, int $maximum, int $budget, string $structure, string $lexical): void
-    {
-        $plan = GenerationPlan::fromBytes($input, $minimum, $maximum);
-        self::assertSame($budget, $plan->expansionBudget());
-        self::assertSame($structure, $plan->structureBytes());
-        self::assertSame($lexical, $plan->lexicalBytes());
+        $grammar = \Tests\Fixtures\SqlFaker\CoverageFixture::syntaxGrammar();
+        $lexical = $this->createMock(\SqlFaker\Grammar\LexicalGrammar::class);
+        $lexical->method('supports')->willReturn(true);
+        $lexical->method('spellings')->willReturnCallback(static fn (string $terminal): array => [$terminal === '@TRIVIA' ? ' ' : $terminal]);
+        $builder = new \SqlFaker\Grammar\Derivation\PlanBuilder($grammar, $lexical);
+        $plan = GenerationPlan::fromBytes($input, $builder);
+        self::assertEquals($plan, GenerationPlan::fromBytes($input, $builder));
+        self::assertNotNull($plan->patternAt('stmt', 0));
+        self::assertNotNull($plan->triviaAt(0, false));
+        self::assertFalse($plan->requiresNonEmpty());
         self::assertNull($plan->startRule());
-        self::assertNull($plan->lexicalTarget());
-        self::assertSame(PHP_INT_MAX, $plan->maxDepth());
-        self::assertSame([], $plan->parameters());
     }
-
 }

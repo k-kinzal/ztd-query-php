@@ -85,7 +85,9 @@ $pdo = new PDO(
 $coverage = new GrammarCoverage(__DIR__ . '/coverage/mysql');
 $provider = new MySqlProvider(Factory::create(), $grammarVersion, $coverage);
 $check = new MySqlSyntaxCheck($pdo, $grammarVersion);
-$minimum = $provider->minimumExpansionBudget();
+$planner = $provider->planner();
+$root = isset($coverage->inventory()->grammar->ruleMap['simple_statement_or_begin']) ? 'simple_statement_or_begin' : 'statement';
+$constraints = GenerationPlan::fromRule($root)->requiringNonEmpty();
 $generations = 0;
 register_shutdown_function(static function () use ($coverage): void {
     if (function_exists('pcntl_alarm')) {
@@ -98,9 +100,9 @@ register_shutdown_function(static function () use ($coverage): void {
  */
 $config->setAllowedExceptions([]);
 $config->setMaxLen(80004);
-$config->setTarget(static function (string $input) use ($provider, $minimum, $check, $coverage, &$generations): void {
+$config->setTarget(static function (string $input) use ($provider, $planner, $constraints, $check, $coverage, &$generations): void {
     try {
-        $plan = GenerationPlan::fromBytes($input, $minimum);
+        $plan = GenerationPlan::fromBytes($input, $planner, $constraints);
         $sql = $provider->generate($plan);
         if ($provider->generate($plan) !== $sql) {
             throw new LogicException('The same input produced different SQL.');

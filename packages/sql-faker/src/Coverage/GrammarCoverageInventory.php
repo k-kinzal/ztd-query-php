@@ -90,9 +90,9 @@ final class GrammarCoverageInventory
      *
      * @return array<string, true>
      */
-    public function reachableRules(): array
+    public function reachableRules(?string $root = null): array
     {
-        $pending = [$this->root];
+        $pending = [$root ?? $this->root];
         $visited = [];
         while ($pending !== []) {
             $name = array_pop($pending);

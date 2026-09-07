@@ -32,8 +32,15 @@ $mysqlVersion = 'mysql-' . (getenv('MYSQL_VERSION') !== false ? getenv('MYSQL_VE
     default => throw new InvalidArgumentException('Expected mysql, pg or sqlite.'),
 };
 $inventory = $coverage->inventory();
-$minimum = $provider->minimumExpansionBudget();
-$key = hash('sha256', $inventory->fingerprint . ':' . GeneratorRevision::current() . ':5000');
+$planner = $provider->planner();
+$root = match ($database) {
+    'mysql' => isset($inventory->grammar->ruleMap['simple_statement_or_begin']) ? 'simple_statement_or_begin' : 'statement',
+    'pg' => 'stmt',
+    'sqlite' => 'cmd',
+};
+$constraints = GenerationPlan::fromRule($root)->requiringNonEmpty();
+$reachable = $inventory->reachableRules($root);
+$key = hash('sha256', $inventory->fingerprint . ':' . GeneratorRevision::current() . ':' . $root . ':5000');
 $directory = __DIR__ . '/seeds/generated/' . $database . '/' . $key;
 $corpus = __DIR__ . '/corpus/' . $database;
 foreach ([$directory, $corpus] as $path) {
@@ -43,16 +50,16 @@ foreach ([$directory, $corpus] as $path) {
 }
 
 if (!is_file($directory . '/inventory.json')) {
-    $search = new ProductionWitness($inventory->grammar, $lexical->supports(...));
+    $search = new ProductionWitness($inventory->grammar, $lexical->supports(...), $lexical->spellings(...));
     $report = [];
     foreach ($inventory->grammar->ruleMap as $name => $rule) {
         foreach ($rule->alternatives as $ordinal => $production) {
             $id = $inventory->id($name, $production, $ordinal);
-            if (!$inventory->entries[$id]['rootReachable']) {
-                $report[$id] = ['status' => 'outside-root'];
+            if (!isset($reachable[$name])) {
+                $report[$id] = ['status' => 'outside-plan'];
                 continue;
             }
-            $witness = $search->find($inventory->root, $name, $ordinal);
+            $witness = $search->find($root, $name, $ordinal);
             if ($witness === null || $witness->cost > 5000) {
                 $report[$id] = ['status' => $witness === null ? 'no-lexically-supported-witness' : 'exceeds-budget',
                     'minimumCost' => $witness?->cost];
@@ -64,7 +71,7 @@ if (!is_file($directory . '/inventory.json')) {
                 throw new RuntimeException('Cannot save initial input: ' . $file);
             }
             try {
-                $provider->generate(GenerationPlan::fromBytes($input, $minimum));
+                $provider->generate(GenerationPlan::fromBytes($input, $planner, $constraints));
                 if (!in_array($id, $coverage->lastGeneration()['reachedIds'] ?? [], true)) {
                     throw new LogicException('Initial input did not reach its intended production: ' . $id);
                 }

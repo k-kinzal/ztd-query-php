@@ -9,7 +9,6 @@ use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Derivation\ProductionPattern;
 
 #[CoversClass(ProductionPattern::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Choice\ChoiceSource::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Derivation\CompletionCosts::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Derivation\DerivationNode::class)]
 final class ProductionPatternTest extends TestCase
@@ -67,5 +66,12 @@ final class ProductionPatternTest extends TestCase
     {
         self::assertTrue(ProductionPattern::nonEmpty()->matches(['ecmd']));
         self::assertFalse(ProductionPattern::nonEmpty()->matches([]));
+    }
+    public function testAtSelectsAnOrdinalIndependentlyOfItsSymbols(): void
+    {
+        $pattern = ProductionPattern::at(2);
+        self::assertTrue($pattern->matches(['T'], 2));
+        self::assertFalse($pattern->matches(['T'], 1));
+        self::assertFalse($pattern->matches(['T']));
     }
 }

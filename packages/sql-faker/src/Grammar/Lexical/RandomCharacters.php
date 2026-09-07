@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlFaker\Grammar\Lexical;
 
 use Faker\Generator as FakerGenerator;
-use SqlFaker\Grammar\Choice\ChoiceSource;
 
 /**
  * Draws characters at random from an alphabet.
@@ -20,9 +19,9 @@ use SqlFaker\Grammar\Choice\ChoiceSource;
 final class RandomCharacters
 {
     /**
-     * @param FakerGenerator|ChoiceSource $faker Source of every choice a draw makes
+     * @param FakerGenerator $faker Source of every choice a draw makes
      */
-    public function __construct(private readonly FakerGenerator|ChoiceSource $faker)
+    public function __construct(private readonly FakerGenerator $faker)
     {
     }
 

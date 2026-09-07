@@ -26,7 +26,6 @@ use Tests\Fixtures\SqlFaker\CoverageFixture;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Coverage\SnapshotValidation::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Coverage\GenerationTrace::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Coverage\CoverageSets::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Choice\ChoiceSource::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Choice\ByteChoices::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Derivation\CompletionCosts::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Derivation\DerivationNode::class)]
@@ -90,5 +89,12 @@ final class GrammarCoverageInventoryTest extends TestCase
         self::assertNotSame($first, $inventory->id('stmt', $production, 1));
         self::assertNotSame($first, (new GrammarCoverageInventory(CoverageFixture::grammar(), 'stmt', 'another'))->id('stmt', $production, 0));
         self::assertStringStartsWith($inventory->fingerprint . ':stmt#0:', $first);
+    }
+    public function testReachableRulesCanInspectAPlanRootWithoutChangingTheInventory(): void
+    {
+        $inventory = CoverageFixture::inventory();
+        self::assertSame(['expr' => true], $inventory->reachableRules('expr'));
+        self::assertSame('stmt', $inventory->root);
+        self::assertArrayHasKey('stmt', $inventory->reachableRules());
     }
 }

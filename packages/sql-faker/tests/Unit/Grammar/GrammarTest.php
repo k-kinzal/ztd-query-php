@@ -19,7 +19,6 @@ use stdClass;
 #[CoversClass(Production::class)]
 #[CoversClass(Terminal::class)]
 #[UsesClass(\SqlFaker\Grammar\NonTerminal::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Choice\ChoiceSource::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Derivation\CompletionCosts::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Derivation\DerivationNode::class)]
 final class GrammarTest extends TestCase

@@ -530,4 +530,11 @@ SQL;
         self::assertSame('!=', $lexical->realizeSequence(TerminalSequence::fromNames(['NE']), GenerationPlan::all()->withLexemes(['NE' => ['!=']])));
         self::assertSame('<>', $lexical->realizeSequence(TerminalSequence::fromNames(['NE']), GenerationPlan::all()->withLexemes(['NE' => ['<>']])));
     }
+    public function testSpellingsExposesTheCatalogForConcretePlans(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+        self::assertNotEmpty($lexical->spellings('IDENT'));
+        self::assertNotEmpty($lexical->spellings('@TRIVIA'));
+        self::assertSame([], $lexical->spellings('MISSING_TERMINAL'));
+    }
 }
