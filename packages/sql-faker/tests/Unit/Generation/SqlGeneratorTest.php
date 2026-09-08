@@ -10,6 +10,9 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Generation\SqlGenerator;
 use SqlFaker\Grammar\Derivation\GenerationPlan;
+use SqlFaker\Grammar\Generation\Token\RewriteRule;
+use SqlFaker\Grammar\Generation\Token\TerminalSequence;
+use SqlFaker\Grammar\Generation\Token\TokenRewriter;
 use SqlFaker\Grammar\GenerationException;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\LexicalException;
@@ -30,6 +33,14 @@ use SqlFaker\Grammar\Terminal;
 #[UsesClass(\SqlFaker\Grammar\Derivation\TerminationAnalyzer::class)]
 #[UsesClass(\SqlFaker\Grammar\Derivation\TerminationCost::class)]
 #[UsesClass(LexicalException::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionCosts::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\DerivationTrace::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalOccurrence::class)]
+#[UsesClass(TerminalSequence::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\TokenGenerator::class)]
+#[UsesClass(TokenRewriter::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\ProductionPattern::class)]
 final class SqlGeneratorTest extends TestCase
 {
     public function testGenerateUsesTheGrammarEntryPointWithoutDialectKnowledge(): void
@@ -39,8 +50,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $plan = GenerationPlan::all();
         $lexer = $this->createMock(LexicalGrammar::class);
-        $lexer->method('supports')->willReturn(true);
-        $lexer->expects(self::once())->method('realize')->with(['CUSTOM'], $plan)->willReturn('custom sql');
+        $lexer->expects(self::once())->method('realizeSequence')->with(self::callback(static fn (TerminalSequence $sequence): bool => $sequence->names() === ['CUSTOM']), $plan)->willReturn('custom sql');
         $generator = new SqlGenerator($grammar, Factory::create(), $lexer);
 
         self::assertSame('custom sql', $generator->generate($plan));
@@ -53,14 +63,11 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $plan = GenerationPlan::fromRule('selected')->requiringNonEmpty();
         $lexer = $this->createMock(LexicalGrammar::class);
-        $lexer->method('supports')->willReturn(true);
-        $lexer->expects(self::once())->method('realize')->with(['NORMALIZED', 'RAW'], $plan)->willReturn('normalized');
-        $generator = new SqlGenerator(
-            $grammar,
-            Factory::create(),
-            $lexer,
-            static fn (array $terminals): array => ['NORMALIZED', ...$terminals],
-        );
+        $lexer->expects(self::once())->method('realizeSequence')->with(self::callback(static fn (TerminalSequence $sequence): bool => $sequence->names() === ['NORMALIZED', 'RAW']), $plan)->willReturn('normalized');
+        $rule = $this->createMock(RewriteRule::class);
+        $rule->method('rewrite')->willReturnCallback(static fn (TerminalSequence $sequence): TerminalSequence =>
+            $sequence->replace(0, 0, [$sequence->inserted('NORMALIZED', $sequence->terminals[0], 'test.rule')], 'test.rule'));
+        $generator = new SqlGenerator($grammar, Factory::create(), $lexer, new TokenRewriter($rule));
 
         self::assertSame('normalized', $generator->generate($plan));
     }
@@ -71,8 +78,7 @@ final class SqlGeneratorTest extends TestCase
             'old_rule' => new ProductionRule('old_rule', [new Production([new Terminal('TOKEN')])]),
         ]);
         $lexer = $this->createMock(LexicalGrammar::class);
-        $lexer->method('supports')->willReturn(true);
-        $lexer->expects(self::once())->method('realize')->with(['TOKEN'])->willReturn('token');
+        $lexer->expects(self::once())->method('realizeSequence')->with(self::callback(static fn (TerminalSequence $sequence): bool => $sequence->names() === ['TOKEN']))->willReturn('token');
         $generator = new SqlGenerator(
             $grammar,
             Factory::create(),
@@ -89,36 +95,18 @@ final class SqlGeneratorTest extends TestCase
         $plan = GenerationPlan::lexical('identifier', []);
         $lexer = $this->createMock(LexicalGrammar::class);
         $lexer->expects(self::once())->method('generate')->with($plan)->willReturn('name');
-        $lexer->expects(self::never())->method('realize');
+        $lexer->expects(self::never())->method('realizeSequence');
         $generator = new SqlGenerator(new Grammar('missing', []), Factory::create(), $lexer);
 
         self::assertSame('name', $generator->generate($plan));
     }
 
-    public function testGenerateRetriesLexicalFailuresUntilRealizationSucceeds(): void
-    {
-        $grammar = new Grammar('stmt', ['stmt' => new ProductionRule('stmt', [new Production([])])]);
-        $lexer = $this->createMock(LexicalGrammar::class);
-        $attempt = 0;
-        $lexer->expects(self::exactly(2))->method('realize')->willReturnCallback(
-            static function () use (&$attempt): string {
-                if ($attempt++ === 0) {
-                    throw new LexicalException('retry');
-                }
-                return 'success';
-            },
-        );
-        $generator = new SqlGenerator($grammar, Factory::create(), $lexer);
-
-        self::assertSame('success', $generator->generate(GenerationPlan::all()));
-    }
-
-    public function testGenerateExhaustsTheRetryBudgetAndPreservesTheLastFailure(): void
+    public function testGeneratePreservesTheFirstLexicalFailureWithoutRetrying(): void
     {
         $grammar = new Grammar('stmt', ['stmt' => new ProductionRule('stmt', [new Production([])])]);
         $lexer = $this->createMock(LexicalGrammar::class);
         $failure = new LexicalException('last failure');
-        $lexer->expects(self::exactly(32))->method('realize')->willThrowException($failure);
+        $lexer->expects(self::once())->method('realizeSequence')->willThrowException($failure);
         $generator = new SqlGenerator($grammar, Factory::create(), $lexer);
         $this->expectExceptionObject($failure);
 
@@ -129,19 +117,18 @@ final class SqlGeneratorTest extends TestCase
     {
         $grammar = new Grammar('stmt', ['stmt' => new ProductionRule('stmt', [new Production([])])]);
         $lexer = $this->createMock(LexicalGrammar::class);
-        $lexer->expects(self::once())->method('realize')->willReturn('');
+        $lexer->expects(self::once())->method('realizeSequence')->willReturn('');
         $generator = new SqlGenerator($grammar, Factory::create(), $lexer);
 
         self::assertSame('', $generator->generate(GenerationPlan::all()));
     }
 
-    public function testGenerateRejectsRepeatedEmptyOutputForANonEmptyPlan(): void
+    public function testGenerateRejectsUnexpectedEmptyOutputWithoutRetrying(): void
     {
         $grammar = new Grammar('stmt', ['stmt' => new ProductionRule('stmt', [new Production([new Terminal('T')])])]);
         $lexer = $this->createMock(LexicalGrammar::class);
-        $lexer->method('supports')->willReturn(true);
         $lexer->method('version')->willReturn('custom-1');
-        $lexer->expects(self::exactly(32))->method('realize')->willReturn('');
+        $lexer->expects(self::once())->method('realizeSequence')->willReturn('');
         $generator = new SqlGenerator($grammar, Factory::create(), $lexer);
         $this->expectException(GenerationException::class);
         $this->expectExceptionMessage('custom-1 generation plan requires non-empty output.');

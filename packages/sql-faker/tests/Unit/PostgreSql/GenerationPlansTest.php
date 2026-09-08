@@ -344,4 +344,16 @@ final class GenerationPlansTest extends TestCase
         self::assertSame($expected->value, $plan->startRule());
         self::assertSame(8, $plan->maxDepth());
     }
+    public function testTableSampleStatementKeepsTheConstraintBeyondTheFirstOccurrence(): void
+    {
+        $plan = GenerationPlans::tableSampleStatement();
+        $from = $plan->patternAt('from_clause', 1);
+        $table = $plan->patternAt('table_ref', 1);
+        self::assertNotNull($from);
+        self::assertNotNull($table);
+        self::assertFalse($from->matches([]));
+        self::assertTrue($table->matches(['relation_expr', 'tablesample_clause']));
+        self::assertFalse($table->matches(['relation_expr']));
+    }
+
 }

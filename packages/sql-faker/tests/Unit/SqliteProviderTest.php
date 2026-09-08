@@ -19,8 +19,6 @@ use SqlFaker\Grammar\Derivation\TerminationAnalyzer;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\Lexical\RandomStringGenerator;
 use SqlFaker\Grammar\Lexical\TerminalInventory;
-use SqlFaker\Grammar\Lexical\TokenJoiner;
-use SqlFaker\Grammar\LexicalCatalog;
 use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
@@ -34,7 +32,6 @@ use SqlFaker\SqliteProvider;
 use UnexpectedValueException;
 
 #[CoversClass(SqliteProvider::class)]
-#[CoversClass(TokenJoiner::class)]
 #[CoversClass(RandomStringGenerator::class)]
 #[CoversClass(SqlGenerator::class)]
 #[CoversClass(SqliteGrammar::class)]
@@ -47,13 +44,117 @@ use UnexpectedValueException;
 #[CoversClass(StatementType::class)]
 #[CoversClass(LexicalGrammar::class)]
 #[UsesClass(GenerationPlan::class)]
-#[UsesClass(LexicalCatalog::class)]
 #[UsesClass(ProductionPattern::class)]
 #[UsesClass(SqlVersion::class)]
 #[UsesClass(TerminalInventory::class)]
 #[UsesClass(GenerationPlans::class)]
 #[Medium]
 #[UsesClass(\SqlFaker\Provider\SqlGeneratorFactory::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionCosts::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\Derivation::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\DerivationTrace::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\TerminationCost::class)]
+#[UsesClass(\SqlFaker\Grammar\GenerationException::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\ChoiceLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\FixedLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\IntegerLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\Lexeme::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeInput::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeSequence::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\MatchingLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\PatternLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\RegisteredLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\SequenceLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\CandidateResolver::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\OutputPart::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\ResolvedOutput::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\ReverseLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\SqlSerializer::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\CombinedSpacingRule::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\KeywordPhraseSpacingRule::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\LexemeBoundary::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\SpacingConstraint::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalMappingRule::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalOccurrence::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalSequence::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\TokenGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\TokenRewriter::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\UniqueOptionRule::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Version\VersionCase::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Version\VersionedLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\LexicalException::class)]
+#[UsesClass(\SqlFaker\Grammar\Lexical\LexicalKeywordIndex::class)]
+#[UsesClass(\SqlFaker\Grammar\Lexical\LexicalProfileSource::class)]
+#[UsesClass(\SqlFaker\Grammar\Lexical\RandomCharacters::class)]
+#[UsesClass(\SqlFaker\Grammar\Resource\SqlVersionRegistry::class)]
+#[UsesClass(\SqlFaker\MySql\GenerationContext::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\CommonKeywordDefinitions::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\ContextualValueDefinitions::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\DefinitionFactory::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\DollarStringDefinitions::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\KeywordDefinitions::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\KeywordLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\SymbolDefinitions::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\ValueDefinitions::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\AlterDatabaseRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\ConstraintEnforcementRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\FlushExportRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\InstanceActionRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\IntegerContextRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\LoadSourceCountRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\RequiredAliasRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\RewriteDefinitions::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\RoleGrantRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\SetNamesRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Spacing\CloneAddressSpacingRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Spacing\FunctionSpacingRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Spacing\QualifiedNameSpacingRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Spacing\VariableSpacingRule::class)]
+#[UsesClass(\SqlFaker\MySql\Grammar\MySqlGrammar::class)]
+#[UsesClass(\SqlFaker\MySql\LexicalGrammar::class)]
+#[UsesClass(\SqlFaker\MySql\MySqlTokenizer::class)]
+#[UsesClass(\SqlFaker\MySql\StartRuleResolver::class)]
+#[UsesClass(\SqlFaker\PostgreSql\GenerationContext::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\ContextualNameDefinitions::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\DefinitionFactory::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\HashBoundLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\KeywordDefinitions::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\KeywordLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\ValueDefinitions::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\CopySourceRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\FetchWithTiesRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\FunctionNameRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\HashPartitionBoundRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\LimitOffsetRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\LookaheadRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\OperatorArgumentsRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\OverlapsArgumentsRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\PublicationObjectRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\RelationNameRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\RewriteDefinitions::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\TimeZoneIntervalRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\WindowFrameRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Grammar\PgGrammar::class)]
+#[UsesClass(\SqlFaker\PostgreSql\LexicalGrammar::class)]
+#[UsesClass(\SqlFaker\PostgreSql\PgLookahead::class)]
+#[UsesClass(\SqlFaker\PostgreSql\PgTokenizer::class)]
+#[UsesClass(\SqlFaker\Sqlite\GenerationContext::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\DefinitionFactory::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\JoinLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\JoinModifiers::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\KeywordDefinitions::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\ValueDefinitions::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\IdentifierListRule::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\JoinRule::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\RewriteDefinitions::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\StrictTableRule::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\TableOptionRule::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\WindowFrameRule::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\WithoutRowidRule::class)]
+#[UsesClass(\SqlFaker\Sqlite\GrammarAdaptation::class)]
+#[UsesClass(\SqlFaker\Sqlite\SqliteTokenizer::class)]
 final class SqliteProviderTest extends TestCase
 {
     #[DataProvider('providerTargetedGenerationSeed')]
@@ -65,7 +166,7 @@ final class SqliteProviderTest extends TestCase
         $sql = $provider->insertFunctionUpsertStatement();
         $faker->seed($seed);
 
-        $tokens = (new LexicalGrammar($faker, 'sqlite-3.47.2', true))
+        $tokens = (new LexicalGrammar($faker, 'sqlite-3.47.2'))
             ->tokenize($sql);
         $values = array_search('VALUES', $tokens, true);
         $conflict = array_search('CONFLICT', $tokens, true);
@@ -91,7 +192,7 @@ final class SqliteProviderTest extends TestCase
         $provider = new SqliteProvider($faker);
         $sql = $provider->multiDmlStatement();
         $faker->seed($seed);
-        $tokens = (new LexicalGrammar($faker, 'sqlite-3.47.2', true))->tokenize($sql);
+        $tokens = (new LexicalGrammar($faker, 'sqlite-3.47.2'))->tokenize($sql);
         $separator = array_search('SEMI', $tokens, true);
 
         self::assertSame($sql, $provider->multiDmlStatement(40));
@@ -146,7 +247,7 @@ final class SqliteProviderTest extends TestCase
             }
         };
         $sql = (new SqliteProvider($generator))->multiDmlStatement();
-        $tokens = (new LexicalGrammar(Factory::create(), 'sqlite-3.47.2', true))->tokenize($sql);
+        $tokens = (new LexicalGrammar(Factory::create(), 'sqlite-3.47.2'))->tokenize($sql);
         $separator = array_search('SEMI', $tokens, true);
 
         self::assertIsInt($separator);
@@ -162,7 +263,7 @@ final class SqliteProviderTest extends TestCase
         $provider = new SqliteProvider($faker);
         $sql = $provider->fullTextSearchStatement();
         $faker->seed($seed);
-        $tokens = (new LexicalGrammar($faker, 'sqlite-3.47.2', true))
+        $tokens = (new LexicalGrammar($faker, 'sqlite-3.47.2'))
             ->tokenize($sql);
         $where = array_search('WHERE', $tokens, true);
         $match = array_search('MATCH', $tokens, true);
@@ -184,7 +285,7 @@ final class SqliteProviderTest extends TestCase
         $sql = $provider->temporaryTableStatement();
         $faker->seed($seed);
 
-        $tokens = (new LexicalGrammar($faker, 'sqlite-3.47.2', true))
+        $tokens = (new LexicalGrammar($faker, 'sqlite-3.47.2'))
             ->tokenize($sql);
 
         self::assertSame($sql, $provider->temporaryTableStatement(40));
@@ -201,7 +302,7 @@ final class SqliteProviderTest extends TestCase
         $provider = new SqliteProvider($faker);
         $sql = $provider->viewStatement();
         $faker->seed($seed);
-        $tokens = (new LexicalGrammar($faker, 'sqlite-3.47.2', true))
+        $tokens = (new LexicalGrammar($faker, 'sqlite-3.47.2'))
             ->tokenize($sql);
 
         self::assertSame($sql, $provider->viewStatement(40));
@@ -218,7 +319,7 @@ final class SqliteProviderTest extends TestCase
         $provider = new SqliteProvider($faker);
         $sql = $provider->generatedColumnStatement();
         $faker->seed($seed);
-        $tokens = (new LexicalGrammar($faker, 'sqlite-3.47.2', true))
+        $tokens = (new LexicalGrammar($faker, 'sqlite-3.47.2'))
             ->tokenize($sql);
 
         self::assertSame($sql, $provider->generatedColumnStatement(40));
@@ -235,7 +336,7 @@ final class SqliteProviderTest extends TestCase
         $provider = new SqliteProvider($faker);
         $sql = $provider->foreignKeyCascadeStatement();
         $faker->seed($seed);
-        $tokens = (new LexicalGrammar($faker, 'sqlite-3.47.2', true))
+        $tokens = (new LexicalGrammar($faker, 'sqlite-3.47.2'))
             ->tokenize($sql);
 
         self::assertSame($sql, $provider->foreignKeyCascadeStatement(40));
@@ -513,7 +614,7 @@ final class SqliteProviderTest extends TestCase
         $result = $provider->foreignKeyConstraint(1);
 
         $tokens = array_map(
-            static fn (string $token): string => in_array($token, ['ID', 'STRING'], true) ? 'NAME' : $token,
+            static fn (string $token): string => in_array($token, ['ID', 'STRING', 'INDEXED', 'JOIN_KW'], true) ? 'NAME' : $token,
             (new LexicalGrammar($faker, 'sqlite-3.47.2'))->tokenize($result),
         );
 
@@ -526,7 +627,7 @@ final class SqliteProviderTest extends TestCase
         $result = $provider->foreignKeyConstraint(20);
 
         $tokens = array_map(
-            static fn (string $token): string => in_array($token, ['ID', 'STRING'], true) ? 'NAME' : $token,
+            static fn (string $token): string => in_array($token, ['ID', 'STRING', 'INDEXED', 'JOIN_KW'], true) ? 'NAME' : $token,
             (new LexicalGrammar($faker, 'sqlite-3.47.2'))->tokenize($result),
         );
 

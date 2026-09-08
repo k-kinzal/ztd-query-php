@@ -45,7 +45,8 @@ final class LemonDirectivesTest extends TestCase
         $symbols = new LemonSymbols();
         (new LemonDirectives())->declareInto("%token_class anytype INTEGER|TEXT|BLOB.\n", $symbols);
 
-        self::assertTrue($symbols->isTerminal('anytype'));
+        self::assertFalse($symbols->isTerminal('anytype'));
+        self::assertSame(['anytype' => ['INT', 'REAL']], (new LemonDirectives())->tokenClasses('%token_class anytype INT|REAL.'));
         self::assertTrue($symbols->isTerminal('BLOB'));
     }
 
@@ -56,4 +57,10 @@ final class LemonDirectivesTest extends TestCase
 
         self::assertTrue($symbols->isTerminal('ANY'));
     }
+
+    public function testTokenClassesRetainsEveryAlternativeAcrossLines(): void
+    {
+        self::assertSame(['id' => ['ID', 'INDEXED'], 'number' => ['INTEGER', 'FLOAT']], (new LemonDirectives())->tokenClasses("%token_class id ID|INDEXED.\n%token_class number INTEGER\n FLOAT."));
+    }
+
 }

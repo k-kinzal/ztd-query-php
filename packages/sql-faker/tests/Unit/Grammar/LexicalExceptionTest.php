@@ -8,40 +8,64 @@ use Faker\Factory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\Lexical\LexicalCatalogShape;
-use SqlFaker\Grammar\Lexical\LexicalCoverageCheck;
 use SqlFaker\Grammar\Lexical\LexicalKeywordIndex;
 use SqlFaker\Grammar\Lexical\LexicalProfileSource;
-use SqlFaker\Grammar\Lexical\LexicalWitnessCheck;
-use SqlFaker\Grammar\Lexical\LexicalWitnessShape;
 use SqlFaker\Grammar\Lexical\RandomCharacters;
 use SqlFaker\Grammar\Lexical\RandomStringGenerator;
-use SqlFaker\Grammar\Lexical\TokenJoiner;
-use SqlFaker\Grammar\LexicalCatalog;
 use SqlFaker\Grammar\LexicalException;
 use SqlFaker\Grammar\Resource\SqlVersionRegistry;
 use SqlFaker\Grammar\SqlVersion;
 use SqlFaker\MySql\LexicalGrammar;
-use SqlFaker\MySql\MySqlTerminalRealizer;
 use SqlFaker\MySql\MySqlTokenizer;
 
 #[CoversClass(LexicalException::class)]
-#[UsesClass(LexicalCatalog::class)]
 #[UsesClass(LexicalGrammar::class)]
 #[UsesClass(RandomStringGenerator::class)]
 #[UsesClass(SqlVersion::class)]
-#[UsesClass(TokenJoiner::class)]
-#[UsesClass(LexicalCatalogShape::class)]
-#[UsesClass(LexicalCoverageCheck::class)]
 #[UsesClass(LexicalKeywordIndex::class)]
 #[UsesClass(LexicalProfileSource::class)]
-#[UsesClass(LexicalWitnessCheck::class)]
-#[UsesClass(LexicalWitnessShape::class)]
 #[UsesClass(RandomCharacters::class)]
 #[UsesClass(SqlVersionRegistry::class)]
-#[UsesClass(MySqlTerminalRealizer::class)]
 #[UsesClass(MySqlTokenizer::class)]
 #[UsesClass(\SqlFaker\MySql\MySqlQuoting::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\ChoiceLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\FixedLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\IntegerLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeInput::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\MatchingLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\PatternLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\SequenceLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\CandidateResolver::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\ResolvedOutput::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\ReverseLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\CombinedSpacingRule::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalOccurrence::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalSequence::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Version\VersionCase::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Version\VersionedLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\CommonKeywordDefinitions::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\ContextualValueDefinitions::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\DefinitionFactory::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\DollarStringDefinitions::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\KeywordDefinitions::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\KeywordLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\SymbolDefinitions::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\ValueDefinitions::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\GenerationPlan::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\ProductionPattern::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\Lexeme::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeSequence::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\OutputPart::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\SqlSerializer::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\KeywordPhraseSpacingRule::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\LexemeBoundary::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\SpacingConstraint::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Spacing\CloneAddressSpacingRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Spacing\FunctionSpacingRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Spacing\QualifiedNameSpacingRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Spacing\VariableSpacingRule::class)]
 final class LexicalExceptionTest extends TestCase
 {
     public function testTokenizingUnsupportedInputReportsTheOffsetAndTheInput(): void

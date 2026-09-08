@@ -14,6 +14,32 @@ use RuntimeException;
 final class LexicalProfileCompiler
 {
     /**
+     * Preserves the registration class declared in lex.h, including hint-only entries.
+     * Legacy separate tables have the same keyword/function distinction.
+     * @return array<string, array<string, list<string>>>
+     * @throws RuntimeException When neither supported table syntax is present
+     */
+    public function registrations(string $source): array
+    {
+        $modern = $this->extractModern($source, 'SYM_FN');
+        if ($modern !== []) {
+            $classes = [];
+            foreach (['SYM', 'SYM_FN', 'SYM_HK', 'SYM_H'] as $class) {
+                preg_match_all(
+                    '/\{\s*' . $class . '\(\s*"((?:\\\\.|[^"\\\\])*)"\s*,\s*([A-Z][A-Z0-9_]*)\s*\)\s*\}/',
+                    $source,
+                    $matches,
+                    PREG_SET_ORDER,
+                );
+                $classes[$class] = $this->group($matches);
+            }
+            return $classes;
+        }
+        $legacy = $this->compile($source);
+        return ['SYM' => $legacy['symbols'], 'SYM_FN' => $legacy['functions'], 'SYM_HK' => [], 'SYM_H' => []];
+    }
+
+    /**
      * @return array{symbols: array<string, list<string>>, functions: array<string, list<string>>}
      *
      * @throws RuntimeException When the upstream source declares no keyword or function table

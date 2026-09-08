@@ -31,6 +31,11 @@ use SqlFaker\Grammar\Terminal;
 #[UsesClass(Terminal::class)]
 #[UsesClass(TerminationAnalyzer::class)]
 #[UsesClass(TerminationCost::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionCosts::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\DerivationTrace::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalOccurrence::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalSequence::class)]
 final class DerivationTest extends TestCase
 {
     public function testOfRewritesTheStartSymbolUntilOnlyTerminalsAreLeft(): void
@@ -236,4 +241,12 @@ final class DerivationTest extends TestCase
         self::assertSame([$second], $derivation->alternatives(new NonTerminal('stmt'), $plan, 1));
         self::assertSame([$first, $second], $derivation->alternatives(new NonTerminal('stmt'), GenerationPlan::all(), 0));
     }
+    public function testCompletableKeepsAnEmptyAlternativeWhenTheRemainingSiblingSatisfiesNonEmpty(): void
+    {
+        $empty = new Production([]);
+        $grammar = new Grammar('s', ['s' => new ProductionRule('s', [$empty])]);
+        $derivation = new Derivation($grammar, Factory::create(), new TerminationAnalyzer($grammar, static fn (string $terminal): bool => true));
+        self::assertSame([$empty], $derivation->completable([$empty], [new NonTerminal('s'), new Terminal('X')], 0, GenerationPlan::all()->requiringNonEmpty()));
+    }
+
 }

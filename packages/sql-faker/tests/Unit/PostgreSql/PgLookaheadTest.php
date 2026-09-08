@@ -81,4 +81,12 @@ final class PgLookaheadTest extends TestCase
             'NOT' => ['token' => 'NOT_LA', 'followed_by' => ['NULL_P', 'IN_P']],
         ])];
     }
+
+    public function testDefinitionsKeepsTheParserLookaheadFollowersExplicit(): void
+    {
+        $definitions = PgLookahead::definitions();
+        self::assertSame('WITH_LA', $definitions['WITH']['token']);
+        self::assertSame(['TIME', 'ORDINALITY'], $definitions['WITH']['followed_by']);
+    }
+
 }

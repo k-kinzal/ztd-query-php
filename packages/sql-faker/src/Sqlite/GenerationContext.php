@@ -7,9 +7,10 @@ namespace SqlFaker\Sqlite;
 use Closure;
 use Faker\Generator;
 use RuntimeException;
+use SqlFaker\Grammar\Generation\Token\TokenRewriter;
 use SqlFaker\Grammar\Grammar;
-use SqlFaker\Grammar\Lexical\TerminalInventory;
 use SqlFaker\Grammar\LexicalGrammar as LexicalContract;
+use SqlFaker\Sqlite\Generation\Rewrite\RewriteDefinitions;
 use SqlFaker\Sqlite\Grammar\SqliteGrammar;
 
 /**
@@ -30,9 +31,9 @@ final class GenerationContext
     public readonly LexicalContract $lexicalGrammar;
 
     /**
-     * @var (Closure(list<string>): list<string>)|null
+     * Declared structural transformations for this dialect.
      */
-    public readonly ?Closure $normalize;
+    public readonly TokenRewriter $rewriter;
 
     /**
      * @var (Closure(string|null): string)|null
@@ -44,19 +45,15 @@ final class GenerationContext
      *
      * @param Grammar $grammar Common AST for this release
      * @param Generator $faker Source of random lexical choices
-     * @param string|null $version Exact release or null for synthetic terminals
-     * @throws \SqlFaker\Grammar\LexicalCatalogException When a grammar terminal has no lexical witness
+     * @param string|null $version Exact release or null for the declared default
      * @throws RuntimeException When the requested release is unavailable
      */
     public function __construct(Grammar $grammar, Generator $faker, ?string $version = null)
     {
-        $lexical = new LexicalGrammar($faker, SqliteGrammar::resolveVersion($version), $version === null);
-        $this->grammar = (new GrammarAdaptation())->adapted(new Grammar('cmd', $grammar->ruleMap));
-        $this->normalize = null;
+        $lexical = new LexicalGrammar($faker, SqliteGrammar::resolveVersion($version));
+        $this->grammar = (new GrammarAdaptation())->adapted($grammar);
+        $this->rewriter = (new RewriteDefinitions())->create();
         $this->startSymbol = null;
-        if ($version !== null) {
-            $lexical->assertTerminalsCovered(TerminalInventory::fromGrammar($this->grammar));
-        }
         $this->lexicalGrammar = $lexical;
     }
 }

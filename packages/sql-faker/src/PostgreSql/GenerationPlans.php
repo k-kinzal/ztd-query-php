@@ -211,7 +211,10 @@ final class GenerationPlans
             ],
             'from_clause' => [ProductionPattern::nonEmpty()],
             'table_ref' => [ProductionPattern::containing('relation_expr', 'tablesample_clause')],
-        ])->requiringNonEmpty();
+        ])
+            ->withPatternForEveryOccurrence('from_clause', ProductionPattern::nonEmpty())
+            ->withPatternForEveryOccurrence('table_ref', ProductionPattern::containing('relation_expr', 'tablesample_clause'))
+            ->requiringNonEmpty();
     }
 
     /**

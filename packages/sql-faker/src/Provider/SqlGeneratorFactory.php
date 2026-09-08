@@ -29,7 +29,7 @@ final class SqlGeneratorFactory
             $context->grammar,
             $faker,
             $context->lexicalGrammar,
-            $context->normalize,
+            $context->rewriter,
             $context->startSymbol,
         );
     }
@@ -45,7 +45,7 @@ final class SqlGeneratorFactory
             $context->grammar,
             $faker,
             $context->lexicalGrammar,
-            $context->normalize,
+            $context->rewriter,
             $context->startSymbol,
         );
     }
@@ -61,7 +61,7 @@ final class SqlGeneratorFactory
             $context->grammar,
             $faker,
             $context->lexicalGrammar,
-            $context->normalize,
+            $context->rewriter,
             $context->startSymbol,
         );
     }

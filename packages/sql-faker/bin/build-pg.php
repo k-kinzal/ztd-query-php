@@ -9,7 +9,6 @@ use SqlFaker\Compiler\Bison\BisonParser;
 use SqlFaker\Compiler\Bison\GrammarCompiler;
 use SqlFaker\Grammar\Lexical\LexicalProfileCheck;
 use SqlFaker\Grammar\Lexical\LexicalProfileWriter;
-use SqlFaker\Grammar\Lexical\TerminalInventory;
 use SqlFaker\Grammar\SqlVersion;
 use SqlFaker\PostgreSql\PgProfileBuilder;
 
@@ -113,7 +112,7 @@ function pgBuildVersion(
         $grammar = $compiler->compile($ast);
         fwrite(STDOUT, "Building lexical profile...\n");
         $profile = $lexical->build($version);
-        (new LexicalProfileCheck())->assertCompatible($profile, 'postgresql', $version, TerminalInventory::fromGrammar($grammar));
+        (new LexicalProfileCheck())->assertCompatible($profile, 'postgresql', $version);
     } catch (Throwable $e) {
         fwrite(STDERR, "Error building {$version}: {$e->getMessage()}\n");
         fwrite(STDERR, "Trace: {$e->getTraceAsString()}\n");

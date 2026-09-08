@@ -9,25 +9,19 @@ use InvalidArgumentException;
 use Override;
 use RuntimeException;
 use SqlFaker\Grammar\Derivation\GenerationPlan;
+use SqlFaker\Grammar\Generation\Output\ReverseLexemeGenerator;
+use SqlFaker\Grammar\Generation\Output\SqlSerializer;
+use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 use SqlFaker\Grammar\Lexical\LexicalKeywordIndex;
 use SqlFaker\Grammar\Lexical\LexicalProfileSource;
 use SqlFaker\Grammar\Lexical\RandomStringGenerator;
-use SqlFaker\Grammar\Lexical\TokenJoiner;
-use SqlFaker\Grammar\LexicalCatalog;
-use SqlFaker\Grammar\LexicalCatalogException;
 use SqlFaker\Grammar\LexicalException;
 use SqlFaker\Grammar\LexicalGrammar as LexicalGrammarContract;
+use SqlFaker\PostgreSql\Generation\Lexeme\DefinitionFactory;
 
 /**
- * PostgreSQL lexical realization for one exact server version.
- *
- * Writing a terminal sequence as SQL is only half of what this does. The text
- * is read straight back by the dialect's own tokenizer and the two token
- * sequences are compared, so a generator that believed it was writing one
- * statement and a server that would have read another is caught here rather
- * than by the server. That round trip is the contract; realizing, tokenizing
- * and the parser frontend's lookahead are the collaborators it holds.
- * @phpstan-import-type Catalog from LexicalCatalog
+ * PostgreSQL lexical generation using source-based candidate and boundary definitions.
+ * Tokenization is exposed separately for diagnostics and does not decide generation success.
  *
  * @visibility root
  */
@@ -36,8 +30,7 @@ final class LexicalGrammar implements LexicalGrammarContract
     /** @readonly */
     private RandomStringGenerator $strings;
 
-    /** @readonly */
-    private LexicalCatalog $catalog;
+    private readonly ReverseLexemeGenerator $pipeline;
 
     /** @readonly */
     private PgLookahead $lookahead;
@@ -45,13 +38,9 @@ final class LexicalGrammar implements LexicalGrammarContract
     /** @readonly */
     private PgTokenizer $tokenizer;
 
-    /** @readonly */
-    private PgTerminalRealizer $realizer;
-
     /**
      * @param FakerGenerator $faker Source of the choices realization makes
      * @param string $profileVersion Exact server version to generate for, e.g. "pg-17.2"
-     * @param bool $allowSyntheticTerminals Whether terminals may be written without a catalogued witness
      * @param LexicalProfileSource|null $profiles Loads the checked-in profile for the version
      * @param LexicalKeywordIndex|null $index Inverts the profile's terminal-to-spelling map
      *
@@ -60,30 +49,19 @@ final class LexicalGrammar implements LexicalGrammarContract
     public function __construct(
         private readonly FakerGenerator $faker,
         private readonly string $profileVersion,
-        private readonly bool $allowSyntheticTerminals = false,
         ?LexicalProfileSource $profiles = null,
         ?LexicalKeywordIndex $index = null,
     ) {
         /**
-         * @var array{keywords: array<string, list<string>>, lookahead: array<string, array{token: string, followed_by: list<string>}>, catalog: Catalog} $profile
+         * @var array{keywords: array<string, list<string>>} $profile
          */
         $profile = ($profiles ?? new LexicalProfileSource())->load('postgresql', $profileVersion);
         $index ??= new LexicalKeywordIndex();
 
         $this->strings = new RandomStringGenerator($faker);
-        $this->catalog = new LexicalCatalog($profile['catalog']);
-        $this->lookahead = new PgLookahead($profile['lookahead']);
+        $this->pipeline = (new DefinitionFactory())->create($profileVersion, $profile['keywords']);
+        $this->lookahead = new PgLookahead(PgLookahead::definitions());
         $this->tokenizer = new PgTokenizer($index->reversed($profile['keywords']), $this->lookahead);
-        $this->realizer = new PgTerminalRealizer(
-            $faker,
-            $this->catalog,
-            $this->tokenizer,
-            $this->lookahead,
-            $profile['keywords'],
-            $profileVersion,
-            $allowSyntheticTerminals,
-            $this->strings,
-        );
     }
 
     /**
@@ -98,28 +76,12 @@ final class LexicalGrammar implements LexicalGrammarContract
     }
 
     /**
-     * Reports whether a parser terminal can be written as SQL.
-     *
-     * @param string $terminal Terminal to look for
-     *
-     * @return bool True when the terminal can be realized
+     * Reports parser selector tokens that intentionally write no characters.
      */
     #[Override]
-    public function supports(string $terminal): bool
+    public function isNonOutput(string $terminal): bool
     {
-        return $this->realizer->supports($terminal);
-    }
-
-    /**
-     * Checks that every terminal a grammar declares can be accounted for.
-     *
-     * @param list<string> $terminals Terminals the grammar declares
-     *
-     * @throws LexicalCatalogException When a terminal is neither witnessed nor excluded
-     */
-    public function assertTerminalsCovered(array $terminals): void
-    {
-        $this->catalog->assertTerminalsCovered($terminals);
+        return in_array($terminal, (new DefinitionFactory())->nonOutput(), true);
     }
 
     /**
@@ -135,50 +97,26 @@ final class LexicalGrammar implements LexicalGrammarContract
     }
 
     /**
-     * Writes a terminal sequence as SQL and checks that it reads back as itself.
-     *
-     * @param list<string> $terminals Terminals to write, in order
-     * @param GenerationPlan<bool>|null $plan Plan that may pin exact lexemes for some terminals
-     *
-     * @return string SQL that tokenizes back to the terminals it was written from
-     *
-     * @throws LexicalException When a terminal cannot be written, or the text does not read back
+     * Realizes a terminal sequence using the same candidate and spacing pipeline as grammar generation.
+     * @param list<string> $terminals
+     * @param GenerationPlan<bool>|null $plan
+     * @throws LexicalException When a requested realization is unavailable
      */
     #[Override]
     public function realize(array $terminals, ?GenerationPlan $plan = null): string
     {
-        $lexemes = [];
-        $expected = [];
-        /** @var array<string, int> $occurrences */
-        $occurrences = [];
+        return $this->realizeSequence(TerminalSequence::fromNames($terminals), $plan);
+    }
 
-        foreach ($terminals as $terminal) {
-            $occurrence = $occurrences[$terminal] ?? 0;
-            $occurrences[$terminal] = $occurrence + 1;
-
-            [$lexeme, $tokens] = $this->realizer->realize($terminal, $plan?->lexemeAt($terminal, $occurrence));
-            if ($lexeme !== null) {
-                $lexemes[] = $lexeme;
-            }
-            array_push($expected, ...$tokens);
-        }
-
-        $sql = TokenJoiner::join(
-            $lexemes,
-            [['::', '*'], ['*', '::']],
-            fn (): string => $this->realizer->trivia(),
-            fn (): string => $this->realizer->optionalTrivia(),
-        );
-
-        $actual = $this->tokenize($sql);
-        if ($this->allowSyntheticTerminals) {
-            $expected = $actual;
-        }
-        if ($actual !== $expected) {
-            throw LexicalException::roundTripMismatch('PostgreSQL', $this->profileVersion, $expected, $actual, $sql);
-        }
-
-        return $sql;
+    /**
+     * Resolves candidates and boundaries before serialization; tokenization remains a diagnostic API.
+     * @param GenerationPlan<bool>|null $plan
+     * @throws LexicalException When the selected terminals have no applicable realization
+     */
+    public function realizeSequence(TerminalSequence $sequence, ?GenerationPlan $plan = null): string
+    {
+        $output = $this->pipeline->generate($sequence, $plan, fn (int $count): int => $this->faker->numberBetween(0, $count - 1));
+        return (new SqlSerializer())->serialize($output->pieces());
     }
 
     /**

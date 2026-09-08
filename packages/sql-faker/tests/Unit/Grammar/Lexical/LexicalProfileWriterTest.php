@@ -15,6 +15,7 @@ use SqlFaker\Grammar\SqlVersion;
 #[CoversClass(LexicalProfileWriter::class)]
 #[UsesClass(ArtifactDirectory::class)]
 #[UsesClass(SqlVersion::class)]
+#[UsesClass(\SqlFaker\Grammar\Resource\SqlVersionRegistry::class)]
 final class LexicalProfileWriterTest extends TestCase
 {
     public function testExportedWritesAnArrayAsPhpSource(): void
@@ -50,67 +51,15 @@ final class LexicalProfileWriterTest extends TestCase
         self::assertSame("'plain'", (new LexicalProfileWriter())->exported('plain'));
     }
 
-    public function testCompactedTurnsKeyedWitnessesIntoLists(): void
-    {
-        self::assertSame(
-            ['catalog' => ['terminals' => ['IDENT' => [['ident.bare', 'users', ['IDENT'], ['identifier']]]]]],
-            (new LexicalProfileWriter())->compacted([
-                'catalog' => [
-                    'terminals' => [
-                        'IDENT' => [[
-                            'id' => 'ident.bare',
-                            'sql' => 'users',
-                            'tokens' => ['IDENT'],
-                            'units' => ['identifier'],
-                        ]],
-                    ],
-                ],
-            ]),
-        );
-    }
 
-    public function testCompactedKeepsTheContextOfAWitnessThatCarriesOne(): void
-    {
-        self::assertSame(
-            ['catalog' => ['terminals' => ['IDENT' => [['ident.bare', 'users', ['IDENT'], ['identifier'], 'SELECT %s']]]]],
-            (new LexicalProfileWriter())->compacted([
-                'catalog' => [
-                    'terminals' => [
-                        'IDENT' => [[
-                            'id' => 'ident.bare',
-                            'sql' => 'users',
-                            'tokens' => ['IDENT'],
-                            'units' => ['identifier'],
-                            'context_sql' => 'SELECT %s',
-                        ]],
-                    ],
-                ],
-            ]),
-        );
-    }
 
-    public function testCompactedLeavesAProfileWithNoCatalogAlone(): void
-    {
-        self::assertSame(['dialect' => 'mysql'], (new LexicalProfileWriter())->compacted(['dialect' => 'mysql']));
-    }
 
-    public function testCompactedReportsAWitnessThatIsNotShapedLikeOne(): void
-    {
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Invalid lexical witness while compacting.');
 
-        (new LexicalProfileWriter())->compacted([
-            'catalog' => ['terminals' => ['IDENT' => [['id' => 'ident.bare']]]],
-        ]);
-    }
 
-    public function testCompactedReportsTerminalWitnessesThatAreNotAList(): void
-    {
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Invalid lexical terminal witnesses while compacting.');
 
-        (new LexicalProfileWriter())->compacted(['catalog' => ['terminals' => ['IDENT' => 'users']]]);
-    }
+
+
+
 
     public function testRenderedWritesAFileThatReturnsTheProfile(): void
     {

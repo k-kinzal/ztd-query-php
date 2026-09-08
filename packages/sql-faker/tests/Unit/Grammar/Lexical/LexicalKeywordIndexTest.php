@@ -46,4 +46,10 @@ final class LexicalKeywordIndexTest extends TestCase
     {
         self::assertSame([], (new LexicalKeywordIndex())->reversed([]));
     }
+
+    public function testMergedRetainsClassOrderWithoutDuplicatingAliases(): void
+    {
+        self::assertSame(['TOKEN' => ['A', 'B'], 'OTHER' => ['C']], (new LexicalKeywordIndex())->merged(['TOKEN' => ['A']], ['TOKEN' => ['A', 'B'], 'OTHER' => ['C']]));
+    }
+
 }

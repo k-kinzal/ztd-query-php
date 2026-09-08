@@ -9,7 +9,6 @@ use SqlFaker\Compiler\Bison\BisonParser;
 use SqlFaker\Compiler\Bison\GrammarCompiler;
 use SqlFaker\Grammar\Lexical\LexicalProfileCheck;
 use SqlFaker\Grammar\Lexical\LexicalProfileWriter;
-use SqlFaker\Grammar\Lexical\TerminalInventory;
 use SqlFaker\Grammar\SqlVersion;
 use SqlFaker\MySql\MySqlProfileBuilder;
 
@@ -112,8 +111,8 @@ function buildVersion(
         $ast = $parser->parse($contents);
         $grammar = $compiler->compile($ast);
         fwrite(STDOUT, "Building lexical profile...\n");
-        $profile = $lexical->build($tag, $grammar);
-        (new LexicalProfileCheck())->assertCompatible($profile, 'mysql', $tag, TerminalInventory::fromGrammar($grammar));
+        $profile = $lexical->build($tag);
+        (new LexicalProfileCheck())->assertCompatible($profile, 'mysql', $tag);
     } catch (Throwable $e) {
         fwrite(STDERR, "Error building {$tag}: {$e->getMessage()}\n");
         return false;

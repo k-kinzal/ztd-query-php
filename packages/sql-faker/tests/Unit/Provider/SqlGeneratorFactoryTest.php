@@ -16,25 +16,17 @@ use SqlFaker\Grammar\Terminal;
 use SqlFaker\Provider\SqlGeneratorFactory;
 
 #[CoversClass(SqlGeneratorFactory::class)]
-#[UsesClass(\SqlFaker\MySql\ParserSemantics::class)]
 #[UsesClass(\SqlFaker\Generation\SqlGenerator::class)]
 #[UsesClass(\SqlFaker\Grammar\Derivation\Derivation::class)]
 #[UsesClass(GenerationPlan::class)]
 #[UsesClass(\SqlFaker\Grammar\Derivation\TerminationAnalyzer::class)]
 #[UsesClass(\SqlFaker\Grammar\Derivation\TerminationCost::class)]
 #[UsesClass(Grammar::class)]
-#[UsesClass(\SqlFaker\Grammar\LexicalCatalog::class)]
-#[UsesClass(\SqlFaker\Grammar\LexicalCatalogException::class)]
-#[UsesClass(\SqlFaker\Grammar\Lexical\LexicalCatalogShape::class)]
-#[UsesClass(\SqlFaker\Grammar\Lexical\LexicalCoverageCheck::class)]
 #[UsesClass(\SqlFaker\Grammar\Lexical\LexicalKeywordIndex::class)]
 #[UsesClass(\SqlFaker\Grammar\Lexical\LexicalProfileSource::class)]
-#[UsesClass(\SqlFaker\Grammar\Lexical\LexicalWitnessCheck::class)]
-#[UsesClass(\SqlFaker\Grammar\Lexical\LexicalWitnessShape::class)]
 #[UsesClass(\SqlFaker\Grammar\Lexical\RandomCharacters::class)]
 #[UsesClass(\SqlFaker\Grammar\Lexical\RandomStringGenerator::class)]
 #[UsesClass(\SqlFaker\Grammar\Lexical\TerminalInventory::class)]
-#[UsesClass(\SqlFaker\Grammar\Lexical\TokenJoiner::class)]
 #[UsesClass(\SqlFaker\Grammar\NonTerminal::class)]
 #[UsesClass(Production::class)]
 #[UsesClass(ProductionRule::class)]
@@ -44,30 +36,113 @@ use SqlFaker\Provider\SqlGeneratorFactory;
 #[UsesClass(\SqlFaker\MySql\GenerationContext::class)]
 #[UsesClass(\SqlFaker\MySql\Grammar\MySqlGrammar::class)]
 #[UsesClass(\SqlFaker\MySql\LexicalGrammar::class)]
-#[UsesClass(\SqlFaker\MySql\MySqlTerminalRealizer::class)]
 #[UsesClass(\SqlFaker\MySql\MySqlTokenizer::class)]
 #[UsesClass(\SqlFaker\MySql\StartRuleResolver::class)]
 #[UsesClass(\SqlFaker\PostgreSql\GenerationContext::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Grammar\PgGrammar::class)]
 #[UsesClass(\SqlFaker\PostgreSql\LexicalGrammar::class)]
-#[UsesClass(\SqlFaker\PostgreSql\ParserSemantics::class)]
 #[UsesClass(\SqlFaker\PostgreSql\PgLookahead::class)]
-#[UsesClass(\SqlFaker\PostgreSql\PgTerminalRealizer::class)]
 #[UsesClass(\SqlFaker\PostgreSql\PgTokenizer::class)]
 #[UsesClass(\SqlFaker\Sqlite\GenerationContext::class)]
 #[UsesClass(\SqlFaker\Sqlite\GrammarAdaptation::class)]
 #[UsesClass(\SqlFaker\Sqlite\Grammar\SqliteGrammar::class)]
 #[UsesClass(\SqlFaker\Sqlite\LexicalGrammar::class)]
-#[UsesClass(\SqlFaker\Sqlite\SqliteTerminalRealizer::class)]
 #[UsesClass(\SqlFaker\Sqlite\SqliteTokenizer::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionCosts::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\DerivationTrace::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\ChoiceLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\FixedLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\IntegerLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\Lexeme::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeInput::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeSequence::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\MatchingLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\PatternLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\RegisteredLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\SequenceLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\CandidateResolver::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\OutputPart::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\ResolvedOutput::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\ReverseLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\SqlSerializer::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\CombinedSpacingRule::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\SpacingConstraint::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalOccurrence::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalSequence::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\TokenGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\TokenRewriter::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\UniqueOptionRule::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Version\VersionCase::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Version\VersionedLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\CommonKeywordDefinitions::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\ContextualValueDefinitions::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\DefinitionFactory::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\DollarStringDefinitions::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\KeywordDefinitions::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\KeywordLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\SymbolDefinitions::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\ValueDefinitions::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\AlterDatabaseRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\ConstraintEnforcementRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\FlushExportRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\InstanceActionRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\IntegerContextRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\LoadSourceCountRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\RequiredAliasRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\RewriteDefinitions::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\RoleGrantRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\SetNamesRule::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\DefinitionFactory::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\JoinLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\KeywordDefinitions::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\ValueDefinitions::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\IdentifierListRule::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\JoinRule::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\RewriteDefinitions::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\StrictTableRule::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\TableOptionRule::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\WindowFrameRule::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\WithoutRowidRule::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalMappingRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\ContextualNameDefinitions::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\DefinitionFactory::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\HashBoundLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\KeywordDefinitions::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\KeywordLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\ValueDefinitions::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\CopySourceRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\FetchWithTiesRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\FunctionNameRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\HashPartitionBoundRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\LimitOffsetRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\LookaheadRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\OperatorArgumentsRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\OverlapsArgumentsRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\PublicationObjectRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\RelationNameRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\RewriteDefinitions::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\TimeZoneIntervalRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\WindowFrameRule::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\ProductionPattern::class)]
+#[UsesClass(\SqlFaker\Grammar\GenerationException::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\KeywordPhraseSpacingRule::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\LexemeBoundary::class)]
+#[UsesClass(\SqlFaker\Grammar\LexicalException::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Spacing\CloneAddressSpacingRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Spacing\FunctionSpacingRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Spacing\QualifiedNameSpacingRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Spacing\VariableSpacingRule::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\JoinModifiers::class)]
 final class SqlGeneratorFactoryTest extends TestCase
 {
-    public function testForMySqlBindsTheDialectEntryPointAndLexicalGrammar(): void
+    public function testForMySqlPreservesTheGrammarEntryPointAndBindsLexicalDefinitions(): void
     {
         $faker = Factory::create();
         $faker->seed(17);
         $grammar = new Grammar('entry', [
-            'statement' => new ProductionRule('statement', [new Production([new Terminal('SELECT_SYM')])]),
+            'entry' => new ProductionRule('entry', [new Production([new Terminal('SELECT_SYM')])]),
         ]);
         $generator = SqlGeneratorFactory::forMySql($faker, $grammar, 'mysql-8.4.7');
 
@@ -75,12 +150,12 @@ final class SqlGeneratorFactoryTest extends TestCase
         self::assertSame('7', $generator->generate(GenerationPlan::lexical('integer_literal', ['min' => 7, 'max' => 7])));
     }
 
-    public function testForPostgreSqlBindsTheDialectEntryPointAndLexicalGrammar(): void
+    public function testForPostgreSqlPreservesTheGrammarEntryPointAndBindsLexicalDefinitions(): void
     {
         $faker = Factory::create();
         $faker->seed(17);
         $grammar = new Grammar('entry', [
-            'stmtmulti' => new ProductionRule('stmtmulti', [new Production([new Terminal('SELECT')])]),
+            'entry' => new ProductionRule('entry', [new Production([new Terminal('SELECT')])]),
         ]);
         $generator = SqlGeneratorFactory::forPostgreSql($faker, $grammar, 'pg-17.2');
 
@@ -88,12 +163,12 @@ final class SqlGeneratorFactoryTest extends TestCase
         self::assertSame('7', $generator->generate(GenerationPlan::lexical('integer_literal', ['min' => 7, 'max' => 7])));
     }
 
-    public function testForSqliteBindsTheDialectEntryPointAndLexicalGrammar(): void
+    public function testForSqlitePreservesTheGrammarEntryPointAndBindsLexicalDefinitions(): void
     {
         $faker = Factory::create();
         $faker->seed(17);
         $grammar = new Grammar('entry', [
-            'cmd' => new ProductionRule('cmd', [new Production([new Terminal('SELECT')])]),
+            'entry' => new ProductionRule('entry', [new Production([new Terminal('SELECT')])]),
         ]);
         $generator = SqlGeneratorFactory::forSqlite($faker, $grammar, 'sqlite-3.47.2');
 

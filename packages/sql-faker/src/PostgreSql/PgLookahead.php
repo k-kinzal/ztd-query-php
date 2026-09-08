@@ -23,6 +23,21 @@ namespace SqlFaker\PostgreSql;
 final class PgLookahead
 {
     /**
+     * Declares the token substitutions from PostgreSQL 17.2 parser.c/base_yylex.
+     * @return array<string, LookaheadRule>
+     */
+    public static function definitions(): array
+    {
+        return [
+            'FORMAT' => ['token' => 'FORMAT_LA', 'followed_by' => ['JSON']],
+            'NOT' => ['token' => 'NOT_LA', 'followed_by' => ['BETWEEN', 'IN_P', 'LIKE', 'ILIKE', 'SIMILAR']],
+            'NULLS_P' => ['token' => 'NULLS_LA', 'followed_by' => ['FIRST_P', 'LAST_P']],
+            'WITH' => ['token' => 'WITH_LA', 'followed_by' => ['TIME', 'ORDINALITY']],
+            'WITHOUT' => ['token' => 'WITHOUT_LA', 'followed_by' => ['TIME']],
+        ];
+    }
+
+    /**
      * @param array<string, LookaheadRule> $rules Substitution by the token that triggers it
      */
     public function __construct(private readonly array $rules)

@@ -32,6 +32,8 @@ use SqlFaker\Grammar\Terminal;
 #[UsesClass(LemonRules::class)]
 #[UsesClass(LemonSymbols::class)]
 #[UsesClass(LemonText::class)]
+#[UsesClass(\SqlFaker\Compiler\Lemon\LemonCondition::class)]
+#[UsesClass(\SqlFaker\Compiler\Lemon\LemonPreprocessor::class)]
 final class LemonParserTest extends TestCase
 {
     public function testParseSimpleRule(): void

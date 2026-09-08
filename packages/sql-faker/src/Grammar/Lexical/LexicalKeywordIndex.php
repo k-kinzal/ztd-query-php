@@ -37,4 +37,17 @@ final class LexicalKeywordIndex
 
         return $index;
     }
+    /**
+     * Combines registration classes without changing spelling order or losing terminal types.
+     * @param array<string, list<string>> $left
+     * @param array<string, list<string>> $right
+     * @return array<string, list<string>>
+     */
+    public function merged(array $left, array $right): array
+    {
+        foreach ($right as $terminal => $spellings) {
+            $left[$terminal] = array_values(array_unique([...($left[$terminal] ?? []), ...$spellings]));
+        }
+        return $left;
+    }
 }

@@ -1,0 +1,21 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlFaker\Sqlite\Generation\Rewrite;
+
+use SqlFaker\Grammar\Generation\Token\TokenRewriter;
+
+/**
+ * Declares SQLite parser conditions without removing their original grammar alternatives.
+ */
+final class RewriteDefinitions
+{
+    /**
+     * Runs source-scoped transformations before spelling and spacing.
+     */
+    public function create(): TokenRewriter
+    {
+        return new TokenRewriter(new TableOptionRule(), new StrictTableRule(), new WithoutRowidRule(), new IdentifierListRule(), new JoinRule(), new WindowFrameRule());
+    }
+}

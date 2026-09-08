@@ -71,45 +71,8 @@ final class LexicalProfileWriter
     public function rendered(array $profile): string
     {
         return "<?php\n\ndeclare(strict_types=1);\n\n/**\n * Auto-generated lexical profile.\n *\n * @return array<string, mixed>\n */\nreturn "
-            . $this->exported($this->compacted($profile))
+            . $this->exported($profile)
             . ";\n";
-    }
-
-    /**
-     * @param array<string, mixed> $profile
-     * @return array<string, mixed>
-     *
-     * @throws RuntimeException When a witness is not shaped like one
-     */
-    public function compacted(array $profile): array
-    {
-        if (!isset($profile['catalog']) || !is_array($profile['catalog'])
-            || !isset($profile['catalog']['terminals']) || !is_array($profile['catalog']['terminals'])
-        ) {
-            return $profile;
-        }
-
-        $terminals = [];
-        foreach ($profile['catalog']['terminals'] as $terminal => $witnesses) {
-            if (!is_array($witnesses)) {
-                throw new RuntimeException('Invalid lexical terminal witnesses while compacting.');
-            }
-            foreach ($witnesses as $witness) {
-                if (!is_array($witness)
-                    || !isset($witness['id'], $witness['sql'], $witness['tokens'], $witness['units'])
-                ) {
-                    throw new RuntimeException('Invalid lexical witness while compacting.');
-                }
-                $compact = [$witness['id'], $witness['sql'], $witness['tokens'], $witness['units']];
-                if (isset($witness['context_sql'])) {
-                    $compact[] = $witness['context_sql'];
-                }
-                $terminals[$terminal][] = $compact;
-            }
-        }
-        $profile['catalog']['terminals'] = $terminals;
-
-        return $profile;
     }
 
     /**

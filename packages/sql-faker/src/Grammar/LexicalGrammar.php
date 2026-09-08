@@ -5,14 +5,11 @@ declare(strict_types=1);
 namespace SqlFaker\Grammar;
 
 use SqlFaker\Grammar\Derivation\GenerationPlan;
+use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
- * Realizes parser terminals as SQL text and verifies the resulting token stream.
- *
- * Every dialect writes its terminals differently, but all of them owe the same
- * guarantee: text written from a terminal sequence must read back as that same
- * sequence through the dialect's own lexer. An implementation that only wrote
- * text would let a generator drift away from the server it claims to target.
+ * Generates lexical values and realizes grammar terminals using fixed dialect definitions.
+ * Output validity is checked against the target database; tokenizer identity is not a success condition.
  *
  * @visibility root
  */
@@ -35,22 +32,25 @@ interface LexicalGrammar
     public function version(): string;
 
     /**
-     * Reports whether a parser terminal can be written as SQL.
-     *
-     * @param string $terminal Terminal to look for
-     *
-     * @return bool True when the terminal can be realized
+     * Identifies non-output parser markers for derivation budgets, independently of handler availability.
      */
-    public function supports(string $terminal): bool;
+    public function isNonOutput(string $terminal): bool;
 
     /**
-     * Writes a terminal sequence as SQL and checks that it reads back as itself.
+     * Resolves lexical candidates and their boundary constraints into SQL.
      *
      * @param list<string> $terminals Terminals to write, in order
      * @param GenerationPlan<bool>|null $plan Plan that may pin exact lexemes for some terminals
      *
-     * @return string SQL that tokenizes back to the terminals it was written from
-     * @throws LexicalException When realization cannot round-trip through the lexer
+     * @return string SQL assembled from resolved lexical candidates
+     * @throws LexicalException When no compatible lexical candidate is available
      */
     public function realize(array $terminals, ?GenerationPlan $plan = null): string;
+
+    /**
+     * Realizes terminal occurrences using their grammar context, without requiring tokenizer identity.
+     * @param GenerationPlan<bool>|null $plan
+     * @throws LexicalException When no applicable realization exists
+     */
+    public function realizeSequence(TerminalSequence $sequence, ?GenerationPlan $plan = null): string;
 }

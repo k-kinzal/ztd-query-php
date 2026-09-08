@@ -16,6 +16,7 @@ use SqlFaker\Grammar\SqlVersion;
 #[CoversClass(LexicalProfileSource::class)]
 #[UsesClass(SqlVersion::class)]
 #[Medium]
+#[UsesClass(\SqlFaker\Grammar\Resource\SqlVersionRegistry::class)]
 final class LexicalProfileSourceTest extends TestCase
 {
     #[DataProvider('providerSupportedVersion')]
@@ -28,11 +29,11 @@ final class LexicalProfileSourceTest extends TestCase
     }
 
     #[DataProvider('providerSupportedVersion')]
-    public function testLoadCarriesTheCatalogTheProfileDeclares(string $dialect, string $version): void
+    public function testLoadPreservesSourceHashesForTheRegisteredFacts(string $dialect, string $version): void
     {
         $profile = (new LexicalProfileSource())->load($dialect, $version);
 
-        self::assertIsArray($profile['catalog'] ?? null);
+        self::assertIsArray($profile['sources'] ?? null);
     }
 
     /**

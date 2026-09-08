@@ -42,7 +42,7 @@ final class LemonDirectives
         if (preg_match_all('/%token_class\s+(\w+)\s+(.+?)\.?\s*$/m', $input, $matches) > 0) {
             $count = count($matches[0]);
             for ($index = 0; $index < $count; $index++) {
-                $symbols->declareToken($matches[1][$index]);
+                $symbols->declareRule($matches[1][$index]);
                 $symbols->declareTokensOn($matches[2][$index], '/[\s|]+/');
             }
         }
@@ -50,5 +50,19 @@ final class LemonDirectives
         if (preg_match('/%wildcard\s+(\w+)/', $input, $match) === 1) {
             $symbols->declareToken($match[1]);
         }
+    }
+    /**
+     * Exposes each declared token class as its complete set of alternatives.
+     * @return array<string, list<string>>
+     */
+    public function tokenClasses(string $input): array
+    {
+        preg_match_all('/%token_class\s+(\w+)\s+([^.]*)\./s', $input, $matches, PREG_SET_ORDER);
+        $classes = [];
+        foreach ($matches as $match) {
+            $tokens = preg_split('/[\s|]+/', trim($match[2]));
+            $classes[$match[1]] = $tokens === false ? [] : array_values(array_filter($tokens, static fn (string $name): bool => $name !== ''));
+        }
+        return $classes;
     }
 }

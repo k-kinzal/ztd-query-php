@@ -6,50 +6,64 @@ namespace Tests\Unit\SqlFaker\PostgreSql;
 
 use Closure;
 use Faker\Factory;
-use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\Lexical\LexicalCatalogShape;
-use SqlFaker\Grammar\Lexical\LexicalCoverageCheck;
+use SqlFaker\Grammar\Derivation\GenerationPlan;
+use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 use SqlFaker\Grammar\Lexical\LexicalKeywordIndex;
 use SqlFaker\Grammar\Lexical\LexicalProfileSource;
-use SqlFaker\Grammar\Lexical\LexicalWitnessCheck;
-use SqlFaker\Grammar\Lexical\LexicalWitnessShape;
 use SqlFaker\Grammar\Lexical\RandomCharacters;
 use SqlFaker\Grammar\Lexical\RandomStringGenerator;
-use SqlFaker\Grammar\Lexical\TokenJoiner;
-use SqlFaker\Grammar\LexicalCatalog;
-use SqlFaker\Grammar\LexicalCatalogException;
 use SqlFaker\Grammar\LexicalException;
 use SqlFaker\Grammar\Resource\SqlVersionRegistry;
 use SqlFaker\Grammar\SqlVersion;
 use SqlFaker\PostgreSql\LexicalGrammar;
 use SqlFaker\PostgreSql\PgLookahead;
-use SqlFaker\PostgreSql\PgTerminalRealizer;
 use SqlFaker\PostgreSql\PgTokenizer;
-use UnexpectedValueException;
 
 #[CoversClass(LexicalGrammar::class)]
 #[CoversClass(RandomStringGenerator::class)]
-#[CoversClass(TokenJoiner::class)]
-#[UsesClass(LexicalCatalog::class)]
-#[UsesClass(LexicalCatalogException::class)]
 #[UsesClass(SqlVersion::class)]
-#[UsesClass(LexicalCatalogShape::class)]
-#[UsesClass(LexicalCoverageCheck::class)]
 #[UsesClass(LexicalException::class)]
 #[UsesClass(LexicalKeywordIndex::class)]
 #[UsesClass(LexicalProfileSource::class)]
-#[UsesClass(LexicalWitnessCheck::class)]
-#[UsesClass(LexicalWitnessShape::class)]
 #[UsesClass(RandomCharacters::class)]
 #[UsesClass(SqlVersionRegistry::class)]
 #[UsesClass(PgLookahead::class)]
-#[UsesClass(PgTerminalRealizer::class)]
 #[UsesClass(PgTokenizer::class)]
 #[UsesClass(\SqlFaker\PostgreSql\PgQuoting::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\ChoiceLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\FixedLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\Lexeme::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeInput::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeSequence::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\MatchingLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\PatternLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\RegisteredLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\CandidateResolver::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\OutputPart::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\ResolvedOutput::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\ReverseLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\SqlSerializer::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\CombinedSpacingRule::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\LexemeBoundary::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\SpacingConstraint::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalOccurrence::class)]
+#[UsesClass(TerminalSequence::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Version\VersionCase::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Version\VersionedLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\ContextualNameDefinitions::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\DefinitionFactory::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\HashBoundLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\KeywordDefinitions::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\KeywordLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\ValueDefinitions::class)]
+#[UsesClass(GenerationPlan::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\ProductionPattern::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
 final class LexicalGrammarTest extends TestCase
 {
     public function testGenerateQuotedIdentifierWritesWhatTheLexerReadsBackAsAnIdentifier(): void
@@ -138,30 +152,6 @@ final class LexicalGrammarTest extends TestCase
         self::assertSame('pg-17.2', (new LexicalGrammar(Factory::create(), 'pg-17.2'))->version());
     }
 
-    public function testSupportsAcceptsATerminalThePostgreSqlLexerCanWrite(): void
-    {
-        self::assertTrue((new LexicalGrammar(Factory::create(), 'pg-17.2'))->supports('IDENT'));
-    }
-
-    public function testSupportsRejectsATerminalNoPostgreSqlLexerDeclares(): void
-    {
-        self::assertFalse((new LexicalGrammar(Factory::create(), 'pg-17.2'))->supports('NO_SUCH_TERMINAL'));
-    }
-
-    public function testAssertTerminalsCoveredAcceptsATerminalTheCatalogWitnesses(): void
-    {
-        (new LexicalGrammar(Factory::create(), 'pg-17.2'))->assertTerminalsCovered(['IDENT']);
-
-        $this->expectNotToPerformAssertions();
-    }
-
-    public function testAssertTerminalsCoveredReportsATerminalTheCatalogNeitherWitnessesNorExcludes(): void
-    {
-        $this->expectException(LexicalCatalogException::class);
-
-        (new LexicalGrammar(Factory::create(), 'pg-17.2'))->assertTerminalsCovered(['NO_SUCH_TERMINAL']);
-    }
-
     /**
      * @param Closure(LexicalGrammar): string $withDefaults
      * @param Closure(LexicalGrammar): string $withExplicitBounds
@@ -225,94 +215,6 @@ final class LexicalGrammarTest extends TestCase
         ];
     }
 
-    /**
-     * @param list<int> $choices
-     */
-    #[DataProvider('providerGeneratedStringLiteral')]
-    public function testGeneratesEveryStringLiteralStrategy(array $choices, string $expected): void
-    {
-        $faker = new class ($choices) extends \Faker\Generator {
-            private int $call = 0;
-
-            /**
-             * @param list<int> $choices
-             */
-            public function __construct(private readonly array $choices)
-            {
-                parent::__construct();
-            }
-
-            /**
-             * @param mixed $min
-             * @param mixed $max
-             *
-             * @throws UnexpectedValueException When the bound is not an integer
-             */
-            #[Override]
-            public function numberBetween($min = 0, $max = 2147483647): int
-            {
-                if (isset($this->choices[$this->call])) {
-                    return $this->choices[$this->call++];
-                }
-                if (!is_int($min)) {
-                    throw new UnexpectedValueException();
-                }
-
-                return $min;
-            }
-        };
-
-        self::assertSame(
-            $expected,
-            (new LexicalGrammar($faker, 'pg-17.2', true))->realize(['SCONST']),
-        );
-    }
-
-    /**
-     * @return iterable<string, array{list<int>, string}>
-     */
-    public static function providerGeneratedStringLiteral(): iterable
-    {
-        yield 'escape string' => [[0], "E'a\\\\b'"];
-        yield 'dollar quoted string' => [[1], '$$ABORT ABORT ? $$'];
-        yield 'combined arm value zero' => [[2, 0], "'ABORT ABORT'"];
-        yield 'combined arm value one' => [[2, 1], "'ABORT ABORT'"];
-        yield 'quote escaping' => [[2, 2], "'a''b'"];
-        yield 'random body' => [[2, 3], "''"];
-    }
-
-    public function testDollarQuotedStringIncludesTheGeneratedMaximumLengthSuffix(): void
-    {
-        $faker = new class () extends \Faker\Generator {
-            /**
-             * @param mixed $min
-             * @param mixed $max
-             *
-             * @throws UnexpectedValueException When the bound is not an integer
-             */
-            #[Override]
-            public function numberBetween($min = 0, $max = 2147483647): int
-            {
-                if ($min === 0 && $max === 3) {
-                    return 1;
-                }
-                if ($min === 0 && $max === 12) {
-                    return 12;
-                }
-                if (!is_int($min)) {
-                    throw new UnexpectedValueException();
-                }
-
-                return $min;
-            }
-        };
-
-        self::assertSame(
-            '$$ABORT ABORT ? aaaaaaaaaaaa$$',
-            (new LexicalGrammar($faker, 'pg-17.2', true))->realize(['SCONST']),
-        );
-    }
-
     public function testTokenizesAllProblematicLiteralAndOperatorFamilies(): void
     {
         $lexical = new LexicalGrammar(Factory::create(), 'pg-17.2');
@@ -367,27 +269,33 @@ SQL;
         self::assertSame(['WITH_LA', 'TIME', 'ZONE'], $lexical->tokenize($sql));
     }
 
-    public function testRealizationCanPlaceACommentBeforeTheFirstToken(): void
-    {
-        $faker = Factory::create();
-        $faker->seed(20260815);
-        $lexical = new LexicalGrammar($faker, 'pg-17.2');
-        $statements = array_map(
-            static fn (int $iteration): string => $lexical->realize(['SELECT', 'IDENT']),
-            range(1, 32),
-        );
-
-        self::assertNotEmpty(array_filter(
-            $statements,
-            static fn (string $sql): bool => preg_match('/^\s*(?:--|\/\*)/', $sql) === 1,
-        ));
-    }
-
     public function testRejectsLookaheadTokenWithoutRequiredFollower(): void
     {
         $this->expectException(LexicalException::class);
-        $this->expectExceptionMessage('Expected: ["WITH_LA","RETURNS"]');
+        $this->expectExceptionMessage('No compatible lexeme for WITH_LA');
 
         (new LexicalGrammar(Factory::create(), 'pg-17.2'))->realize(['WITH_LA', 'RETURNS']);
     }
+    public function testRealizeSequenceHonorsThePlannedStringWithoutRequiringTrivia(): void
+    {
+        $grammar = new LexicalGrammar(Factory::create(), 'pg-17.2');
+        $plan = GenerationPlan::all()->withLexemes(['SCONST' => ["'a''b'"]]);
+        self::assertSame("'a''b'", $grammar->realizeSequence(TerminalSequence::fromNames(['SCONST']), $plan));
+    }
+
+    public function testIsNonOutputDoesNotConfuseOrdinaryValuesWithParserMarkers(): void
+    {
+        $grammar = new LexicalGrammar(Factory::create(), 'pg-17.2');
+        self::assertFalse($grammar->isNonOutput('SCONST'));
+        self::assertFalse($grammar->isNonOutput('UNIMPLEMENTED'));
+    }
+
+    public function testRealizeReportsAnUnimplementedTerminalAtItsActualUse(): void
+    {
+        $grammar = new LexicalGrammar(Factory::create(), 'pg-17.2');
+        $this->expectException(LexicalException::class);
+        $this->expectExceptionMessage('UNIMPLEMENTED');
+        $grammar->realize(['UNIMPLEMENTED']);
+    }
+
 }

@@ -23,6 +23,13 @@ final class Derivation
 
     private int $steps = 0;
 
+    private readonly CompletionCosts $completion;
+
+    /**
+     * Occurrences from the most recent derivation, including empty productions.
+     */
+    public ?DerivationTrace $trace = null;
+
     /**
      * @param Grammar $grammar Grammar being walked
      * @param FakerGenerator $faker Source of the choices the walk makes freely
@@ -32,7 +39,9 @@ final class Derivation
         private readonly Grammar $grammar,
         private readonly FakerGenerator $faker,
         private readonly TerminationAnalyzer $analyzer,
+        ?CompletionCosts $completion = null,
     ) {
+        $this->completion = $completion ?? new CompletionCosts($grammar, static fn (string $terminal): bool => false);
     }
 
     /**
@@ -47,6 +56,8 @@ final class Derivation
      */
     public function of(string $startSymbol, GenerationPlan $plan): array
     {
+        $this->steps = 0;
+        $this->trace = new DerivationTrace($startSymbol);
         /** @var list<Symbol> $form */
         $form = [new NonTerminal($startSymbol)];
         /** @var array<string, int> $occurrences */
@@ -69,10 +80,10 @@ final class Derivation
             $occurrences[$nonTerminal->value] = $occurrence + 1;
             $alternatives = $this->alternatives($nonTerminal, $plan, $occurrence);
 
-            if ($plan->usesStepBudget()) {
-                $alternatives = $this->affordable($alternatives, new Production(array_slice($form, $index + 1)));
-            }
+            $alternatives = $this->completable($alternatives, $form, $index, $plan);
             $production = $this->selectProduction($alternatives, $plan);
+            $ordinal = array_search($production, $this->grammar->ruleMap[$nonTerminal->value]->alternatives, true);
+            $this->trace->expand($index, $production, $ordinal === false ? 0 : $ordinal);
 
             $form = [
                 ...array_slice($form, 0, $index),
@@ -204,16 +215,25 @@ final class Derivation
                 throw GenerationException::noAlternativeMatchingPlan($nonTerminal->value);
             }
         }
-        if ($this->steps === 1 && $plan->requiresNonEmpty()) {
-            $alternatives = array_values(array_filter(
-                $alternatives,
-                fn (Production $production): bool => $this->analyzer->estimateProductionLength($production) > 0,
-            ));
-            if ($alternatives === []) {
-                throw GenerationException::startRuleCannotProduceOutput($nonTerminal->value);
-            }
-        }
 
         return $alternatives;
+    }
+
+    /**
+     * Reserves a complete non-empty continuation when required, independently of lexical handler availability.
+     * @param non-empty-list<Production> $alternatives
+     * @param list<Symbol> $form
+     * @param GenerationPlan<bool> $plan
+     * @return non-empty-list<Production>
+     * @throws GenerationException When the explicit plan has no affordable completion
+     */
+    public function completable(array $alternatives, array $form, int $index, GenerationPlan $plan): array
+    {
+        $nonEmpty = $plan->requiresNonEmpty() && $this->completion->sequence(array_slice($form, 0, $index))[1] === PHP_INT_MAX;
+        $candidates = $this->completion->affordable($alternatives, array_slice($form, $index + 1), $nonEmpty, self::STEP_LIMIT - $this->steps);
+        if ($candidates === []) {
+            throw GenerationException::derivationLimitExceeded();
+        }
+        return $candidates;
     }
 }

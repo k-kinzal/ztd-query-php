@@ -8,7 +8,6 @@ require_once __DIR__ . '/../vendor/autoload.php';
 use SqlFaker\Compiler\Lemon\LemonParser;
 use SqlFaker\Grammar\Lexical\LexicalProfileCheck;
 use SqlFaker\Grammar\Lexical\LexicalProfileWriter;
-use SqlFaker\Grammar\Lexical\TerminalInventory;
 use SqlFaker\Grammar\SqlVersion;
 use SqlFaker\Sqlite\SqliteProfileBuilder;
 
@@ -110,7 +109,7 @@ function sqliteBuildVersion(
         $grammar = $parser->parse($contents);
         fwrite(STDOUT, "Building lexical profile...\n");
         $profile = $lexical->build($version);
-        (new LexicalProfileCheck())->assertCompatible($profile, 'sqlite', $version, TerminalInventory::fromGrammar($grammar));
+        (new LexicalProfileCheck())->assertCompatible($profile, 'sqlite', $version);
     } catch (Throwable $e) {
         fwrite(STDERR, "Error building {$version}: {$e->getMessage()}\n");
         fwrite(STDERR, "Trace: {$e->getTraceAsString()}\n");
@@ -133,6 +132,7 @@ declare(strict_types=1);
  *
  * Source: {$url}
  * Version: {$version}
+ * Lemon build defines: none (default source configuration)
  * Generated: %s
  *
  * @return array<string, string>

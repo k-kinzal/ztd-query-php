@@ -97,4 +97,15 @@ SOURCE);
             (new LexicalProfileCompiler())->group([['', 'SELECT', 'SELECT_SYM'], ['', 'SELECT', 'SELECT_SYM']]),
         );
     }
+
+    public function testRegistrationsKeepsHintOnlyAndFunctionClassesDistinct(): void
+    {
+        $source = '{SYM("SELECT", SELECT_SYM)}, {SYM_FN("NOW", NOW_SYM)}, {SYM_HK("DELETE", DELETE_SYM)}, {SYM_H("BKA", BKA_HINT)}';
+        $result = (new LexicalProfileCompiler())->registrations($source);
+        self::assertSame(['SELECT_SYM' => ['SELECT']], $result['SYM']);
+        self::assertSame(['NOW_SYM' => ['NOW']], $result['SYM_FN']);
+        self::assertSame(['DELETE_SYM' => ['DELETE']], $result['SYM_HK']);
+        self::assertSame(['BKA_HINT' => ['BKA']], $result['SYM_H']);
+    }
+
 }

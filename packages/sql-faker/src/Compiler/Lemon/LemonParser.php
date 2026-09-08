@@ -47,18 +47,21 @@ final class LemonParser
      * assumes when no other is named.
      *
      * @param string $input Contents of the grammar file
+     * @param list<string> $defines Named parser-build definitions
      *
      * @return Grammar Grammar the file describes
      *
+     * @throws RuntimeException When source conditionals are malformed
      * @throws GrammarParseException When the file writes no rules
      * @throws InvalidArgumentException When a rule is filed under a name other than its own left-hand side
      */
-    public function parse(string $input): Grammar
+    public function parse(string $input, array $defines = []): Grammar
     {
         $symbols = new LemonSymbols();
-        $input = $this->text->withoutComments($input);
+        $input = (new LemonPreprocessor(new LemonCondition($defines)))->process($this->text->withoutComments($input));
         $this->directives->declareInto($input, $symbols);
         $rules = $this->rules->readFrom($input, $symbols);
+        $classes = $this->directives->tokenClasses($input);
         if ($rules === []) {
             throw GrammarParseException::noRulesParsed('Lemon');
         }
@@ -82,6 +85,12 @@ final class LemonParser
             $ruleMap[$lhs] = new ProductionRule($lhs, $productions);
         }
 
+        foreach ($classes as $name => $tokens) {
+            $ruleMap[$name] = new ProductionRule($name, array_map(
+                static fn (string $token): Production => new Production([new Terminal($token)]),
+                $tokens,
+            ));
+        }
         return new Grammar($startSymbol, $ruleMap);
     }
 

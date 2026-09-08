@@ -35,28 +35,6 @@ final class LexicalGrammarTest extends TestCase
     }
 
     #[DataProvider('providerDialectLexicalGrammar')]
-    public function testSupportsAcceptsATerminalTheDialectDeclares(
-        LexicalGrammar $lexical,
-        string $version,
-        string $terminal,
-    ): void {
-        unset($version);
-
-        self::assertTrue($lexical->supports($terminal));
-    }
-
-    #[DataProvider('providerDialectLexicalGrammar')]
-    public function testSupportsRejectsATerminalNoDialectDeclares(
-        LexicalGrammar $lexical,
-        string $version,
-        string $terminal,
-    ): void {
-        unset($version, $terminal);
-
-        self::assertFalse($lexical->supports('NOT_A_TERMINAL'));
-    }
-
-    #[DataProvider('providerDialectLexicalGrammar')]
     public function testRealizeTurnsTerminalsIntoConcreteSql(
         LexicalGrammar $lexical,
         string $version,
@@ -157,4 +135,18 @@ final class LexicalGrammarTest extends TestCase
 
         self::assertNotContains('', $statements);
     }
+    public function testIsNonOutputDistinguishesParserSelectorsFromKeywords(): void
+    {
+        $lexical = new MySqlLexicalGrammar(Factory::create(), 'mysql-8.4.7');
+        self::assertTrue($lexical->isNonOutput('END_OF_INPUT'));
+        self::assertFalse($lexical->isNonOutput('SELECT_SYM'));
+    }
+
+    public function testRealizeSequenceHonorsAnExplicitLexemePlan(): void
+    {
+        $lexical = new MySqlLexicalGrammar(Factory::create(), 'mysql-8.4.7');
+        $sequence = \SqlFaker\Grammar\Generation\Token\TerminalSequence::fromNames(['NUM']);
+        self::assertSame('42', $lexical->realizeSequence($sequence, GenerationPlan::all()->withLexemes(['NUM' => ['42']])));
+    }
+
 }

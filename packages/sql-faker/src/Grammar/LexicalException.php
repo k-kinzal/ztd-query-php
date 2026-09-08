@@ -7,15 +7,10 @@ namespace SqlFaker\Grammar;
 use RuntimeException;
 
 /**
- * Reports that concrete SQL did not preserve the derived parser-token sequence.
+ * Reports missing lexical definitions, incompatible candidates and diagnostic tokenizer failures.
  *
- * Tokenizing is applied to SQL text, so a mismatch describes the input rather
- * than a defect in the lexer, and callers are expected to handle it.
- *
- * Each dialect hits the same failures with its own name attached, so the
- * wording lives here rather than being spelled out three times. What the
- * generator writes and what the tokenizer reads back are the two halves of one
- * contract, and every way they can disagree is named below.
+ * Generation checks source-derived lexical and spacing conditions before serialization.
+ * Tokenizer diagnostics remain available separately; token equality is not the acceptance oracle.
  *
  * @visibility public
  * @example Catch this failure as a runtime exception
@@ -26,7 +21,7 @@ use RuntimeException;
 final class LexicalException extends RuntimeException
 {
     /**
-     * Reports a terminal the dialect's profile does not describe.
+     * Reports a terminal without an applicable lexical generator.
      *
      * @param string $dialect Dialect name as it appears in messages, e.g. "MySQL"
      * @param string $version Lexical profile version in use
@@ -143,7 +138,7 @@ final class LexicalException extends RuntimeException
     }
 
     /**
-     * Reports a caller-supplied lexeme the catalog has no witness for.
+     * Formats a legacy lexical-catalog diagnostic for callers retaining such reports.
      *
      * @param string $dialect Dialect name as it appears in messages
      * @param string $terminal Terminal the lexeme was meant to realize
@@ -160,9 +155,8 @@ final class LexicalException extends RuntimeException
     /**
      * Reports SQL that did not tokenize back to the terminals it was generated from.
      *
-     * This is the failure the whole realization path exists to catch: the
-     * generator believed it was writing one token sequence and the dialect's own
-     * rules read another, so both sequences and the text are reported together.
+     * This diagnostic compares a generated token sequence with a local tokenizer.
+     * It does not determine whether the target database accepts the SQL.
      *
      * @param string $dialect Dialect name as it appears in messages
      * @param string $version Lexical profile version in use
