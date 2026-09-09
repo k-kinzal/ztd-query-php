@@ -124,6 +124,14 @@ use SqlFaker\MySql\GenerationContext;
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\DollarQuotedDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Output\BoundaryCompletion::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Expression\ConcatenationRule::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionState::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionFrontier::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\ConstrainedCompletion::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\ValueChoices::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionMemo::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionReduction::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\ConstraintDependencies::class)]
+#[UsesClass(\SqlFaker\Grammar\Choice\BytePlanCompiler::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Name\HostNameRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\CharsetLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\CharsetValueLexemeGenerator::class)]
@@ -131,6 +139,8 @@ use SqlFaker\MySql\GenerationContext;
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\QuotedDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\RadixDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Choice\PatternProductions::class)]
+#[UsesClass(\SqlFaker\Grammar\Choice\CompletionWitness::class)]
 final class GenerationContextTest extends TestCase
 {
     public function testBindsTheRequestedReleaseAndPreservesTheGrammarStart(): void

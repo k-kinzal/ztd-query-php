@@ -86,7 +86,7 @@ final class ReverseLexemeGenerator
         $contradictions = [];
         $rejections = [];
         foreach ($candidates->sequences() as $candidate) {
-            if (!$this->matchesRequest($candidate, $input) || ($key !== null && $candidate->key() !== $key)) {
+            if (!$this->matchesRequest($candidate, $input, $key)) {
                 continue;
             }
             $resolved = $this->resolver->resolve($candidate, $input);
@@ -94,6 +94,7 @@ final class ReverseLexemeGenerator
                 $contradictions[] = $candidate->id . ': ' . implode(', ', $resolved->rules);
                 $rejections[] = ['index' => $input->index, 'candidate' => $candidate->id, 'rules' => $resolved->rules];
             } elseif ($canComplete !== null && !$canComplete($resolved)) {
+                $contradictions[] = $candidate->id . ': uncompletable-left-boundary';
                 $rejections[] = ['index' => $input->index, 'candidate' => $candidate->id, 'rules' => ['uncompletable-left-boundary']];
             } else {
                 ++$eligible;
@@ -109,7 +110,7 @@ final class ReverseLexemeGenerator
             throw new LexicalException('Candidate selector returned an out-of-range index for ' . $input->terminal()->name);
         }
         foreach ($candidates->sequences() as $candidate) {
-            if (!$this->matchesRequest($candidate, $input) || ($key !== null && $candidate->key() !== $key)) {
+            if (!$this->matchesRequest($candidate, $input, $key)) {
                 continue;
             }
             $resolved = $this->resolver->resolve($candidate, $input);
@@ -123,9 +124,9 @@ final class ReverseLexemeGenerator
     /**
      * Compares a requested spelling with the candidate's complete output, before boundary selection.
      */
-    public function matchesRequest(LexemeSequence $candidate, LexemeInput $input): bool
+    public function matchesRequest(LexemeSequence $candidate, LexemeInput $input, ?string $key = null): bool
     {
-        return $input->requested === null
-            || implode(' ', array_map(static fn ($lexeme): string => $lexeme->text, $candidate->lexemes)) === $input->requested;
+        return ($key === null || $candidate->key() === $key) && ($input->requested === null
+            || implode(' ', array_map(static fn ($lexeme): string => $lexeme->text, $candidate->lexemes)) === $input->requested);
     }
 }

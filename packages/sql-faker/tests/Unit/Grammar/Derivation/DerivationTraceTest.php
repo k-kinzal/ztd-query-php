@@ -94,6 +94,16 @@ use SqlFaker\Grammar\Terminal;
 #[UsesClass(LexicalException::class)]
 #[UsesClass(\SqlFaker\Grammar\Derivation\ProductionPattern::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Output\BoundaryCompletion::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionState::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionFrontier::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\ConstrainedCompletion::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\ValueChoices::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionMemo::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionReduction::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\ConstraintDependencies::class)]
+#[UsesClass(\SqlFaker\Grammar\Choice\BytePlanCompiler::class)]
+#[UsesClass(\SqlFaker\Grammar\Choice\PatternProductions::class)]
+#[UsesClass(\SqlFaker\Grammar\Choice\CompletionWitness::class)]
 final class DerivationTraceTest extends TestCase
 {
     public function testExpandPreservesRuleAncestorsAndProductionOrdinals(): void

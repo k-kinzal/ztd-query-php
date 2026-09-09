@@ -115,12 +115,22 @@ use SqlFaker\PostgreSql\GenerationContext;
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Routine\JsonTablePathRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Routine\AggregateArgumentRule::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\IntegerLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionState::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionFrontier::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\ConstrainedCompletion::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\ValueChoices::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionMemo::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionReduction::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\ConstraintDependencies::class)]
+#[UsesClass(\SqlFaker\Grammar\Choice\BytePlanCompiler::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Name\ParserNameRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Column\NumericContextRule::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\IdentifierDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\OperatorDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\QuotedDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Choice\PatternProductions::class)]
+#[UsesClass(\SqlFaker\Grammar\Choice\CompletionWitness::class)]
 final class GenerationContextTest extends TestCase
 {
     public function testBindsTheRequestedReleaseAndPreservesTheGrammarStart(): void

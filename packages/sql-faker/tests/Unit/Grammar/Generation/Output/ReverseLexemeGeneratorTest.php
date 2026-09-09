@@ -53,6 +53,8 @@ use SqlFaker\Grammar\LexicalException;
 #[UsesClass(\SqlFaker\Grammar\Generation\Output\BoundaryCompletion::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\CharacterDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\ValueChoices::class)]
+#[UsesClass(\SqlFaker\Grammar\Choice\BytePlanCompiler::class)]
 final class ReverseLexemeGeneratorTest extends TestCase
 {
     public function testGenerateCompoundOutputRemainsInOrderAndEofAddsNoBoundary(): void

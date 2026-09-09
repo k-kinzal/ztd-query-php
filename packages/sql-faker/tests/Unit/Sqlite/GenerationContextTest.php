@@ -95,6 +95,16 @@ use SqlFaker\Sqlite\GenerationContext;
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\QuotedDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\RepeatDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionState::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionFrontier::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\ConstrainedCompletion::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\ValueChoices::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionMemo::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionReduction::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\ConstraintDependencies::class)]
+#[UsesClass(\SqlFaker\Grammar\Choice\BytePlanCompiler::class)]
+#[UsesClass(\SqlFaker\Grammar\Choice\PatternProductions::class)]
+#[UsesClass(\SqlFaker\Grammar\Choice\CompletionWitness::class)]
 final class GenerationContextTest extends TestCase
 {
     public function testBindsTheRequestedReleaseAndPreservesTheGrammarStart(): void

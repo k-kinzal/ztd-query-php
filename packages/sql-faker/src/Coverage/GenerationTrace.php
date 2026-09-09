@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace SqlFaker\Coverage;
 
 /**
- * Retains only the latest generation's occurrence paths and retry boundaries.
+ * Retains only the latest generation's occurrence paths and diagnostic attempt boundaries.
  *
+ * @phpstan-import-type Rewrite from LexicalObservation
  * @phpstan-type Event array{generationId: int, attemptId: int, nodeId: int, parentNodeId: int|null, rhsPosition: int|null, ruleId: string, productionId: string, selectionReason: string}
  * @phpstan-type Attempt array{id: int, events: list<Event>, status: string, error: string|null, sqlHash: string|null}
- * @phpstan-type Trace array{generationId: int, root: string, planSummary: array<string, int|string|bool|null>, attempts: list<Attempt>, lexicalEvents: list<string>, rewrites: list<string>, spacingEvents: list<array{candidate: string, separator: string, rules: list<string>}>, status: string, reachedIds: list<string>, emittedIds: list<string>}
+ * @phpstan-type Trace array{generationId: int, root: string, planSummary: array<string, int|string|bool|null>, attempts: list<Attempt>, lexicalEvents: list<string>, features: array<string, list<string>>, candidateSources: array<int, list<string>>, candidateConditions: array<int, array{left: array{allowed: int, rules: list<string>}|null, boundaries: array<int, array{allowed: int, rules: list<string>}>}>, candidateRejections: list<array{index: int, candidate: string, rules: list<string>}>, rewriteOperations: list<Rewrite>, rewrites: list<string>, spacingEvents: list<array{candidate: string, separator: string, allowed: int, rules: list<string>}>, status: string, reachedIds: list<string>, emittedIds: list<string>}
  * @visibility root
  */
 final class GenerationTrace
@@ -32,11 +33,11 @@ final class GenerationTrace
     public function __construct(int $id, string $root, array $plan)
     {
         $this->value = ['generationId' => $id, 'root' => $root, 'planSummary' => $plan,
-            'attempts' => [], 'rewrites' => [], 'spacingEvents' => [], 'lexicalEvents' => is_string($plan['lexicalTarget'] ?? null) ? [$plan['lexicalTarget']] : [], 'status' => 'in-progress', 'reachedIds' => [], 'emittedIds' => []];
+            'attempts' => [], 'features' => [], 'candidateSources' => [], 'candidateConditions' => [], 'candidateRejections' => [], 'rewriteOperations' => [], 'rewrites' => [], 'spacingEvents' => [], 'lexicalEvents' => is_string($plan['lexicalTarget'] ?? null) ? [$plan['lexicalTarget']] : [], 'status' => 'in-progress', 'reachedIds' => [], 'emittedIds' => []];
     }
 
     /**
-     * Opens a retry boundary within the current generation.
+     * Opens a diagnostic attempt; the standard generator makes one attempt per call.
      */
     public function beginAttempt(int $id): void
     {

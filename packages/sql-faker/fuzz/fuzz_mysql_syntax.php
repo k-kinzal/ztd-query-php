@@ -28,6 +28,8 @@ register_shutdown_function(static function (): void {
 use Faker\Factory;
 use SqlFaker\Coverage\CoverageException;
 use SqlFaker\Coverage\GrammarCoverage;
+use SqlFaker\Coverage\Verification\FeatureFeedback;
+use SqlFaker\Coverage\Verification\VerificationCoverage;
 use SqlFaker\Fuzz\Container\MySql56Container;
 use SqlFaker\Fuzz\Container\MySql57Container;
 use SqlFaker\Fuzz\Container\MySql80Container;
@@ -39,6 +41,8 @@ use SqlFaker\Fuzz\Container\MySql90Container;
 use SqlFaker\Fuzz\Container\MySql91Container;
 use SqlFaker\Fuzz\Target\InfrastructureFailure;
 use SqlFaker\Fuzz\Target\MySqlSyntaxCheck;
+use SqlFaker\Fuzz\Target\ObservedCheck;
+use SqlFaker\Fuzz\Target\OracleEnvironment;
 use SqlFaker\Grammar\Derivation\GenerationPlan;
 use SqlFaker\MySqlProvider;
 use Testcontainers\Testcontainers;
@@ -85,6 +89,10 @@ $pdo = new PDO(
 $coverage = new GrammarCoverage(__DIR__ . '/coverage/mysql');
 $provider = new MySqlProvider(Factory::create(), $grammarVersion, $coverage);
 $check = new MySqlSyntaxCheck($pdo, $grammarVersion);
+$oracleRevision = OracleEnvironment::revision();
+$verification = new VerificationCoverage($coverage, $oracleRevision, OracleEnvironment::mysql($pdo, $grammarVersion), __DIR__ . '/coverage/mysql/verification');
+$observed = new ObservedCheck($check, $verification);
+$feedback = new FeatureFeedback();
 $planner = $provider->planner();
 $root = isset($coverage->inventory()->grammar->ruleMap['simple_statement_or_begin']) ? 'simple_statement_or_begin' : 'statement';
 $constraints = GenerationPlan::fromRule($root)->requiringNonEmpty();
@@ -94,11 +102,12 @@ $generations = 0;
  * Each production contributes one stable feature; PHP-Fuzzer still owns mutation and corpus selection.
  */
 $grammarFeatures = array_flip(array_keys($coverage->inventory()->entries));
-register_shutdown_function(static function () use ($coverage): void {
+register_shutdown_function(static function () use ($coverage, $verification): void {
     if (function_exists('pcntl_alarm')) {
         pcntl_alarm(0);
     }
     $coverage->flush();
+    $verification->flush();
 });
 /**
  * Stops at the next input boundary so coverage flushes and container shutdown run outside an active generation.
@@ -118,7 +127,7 @@ if (function_exists('pcntl_signal')) {
  */
 $config->setAllowedExceptions([]);
 $config->setMaxLen(80004);
-$config->setTarget(static function (string $input) use ($provider, $planner, $constraints, $check, $coverage, $grammarFeatures, &$generations, &$stopSignal): void {
+$config->setTarget(static function (string $input) use ($provider, $planner, $constraints, $observed, $verification, $feedback, $coverage, $grammarFeatures, &$generations, &$stopSignal): void {
     if ($stopSignal !== null) {
         exit(128 + $stopSignal);
     }
@@ -131,9 +140,17 @@ $config->setTarget(static function (string $input) use ($provider, $planner, $co
         foreach ($coverage->lastGeneration()['reachedIds'] ?? [] as $id) {
             PhpFuzzer\FuzzingContext::$edges[-1 - $grammarFeatures[$id]] = 1;
         }
-        $check->verify($sql, bin2hex($input));
+        $trace = $coverage->lastGeneration();
+        if ($trace !== null) {
+            PhpFuzzer\FuzzingContext::$edges += $feedback->edges($trace);
+        }
+        $verdict = $observed->verify($sql, $input);
+        if ($trace !== null) {
+            PhpFuzzer\FuzzingContext::$edges += $feedback->edges($trace, $verdict->status);
+        }
         if (++$generations % 100 === 0) {
             $coverage->flush();
+            $verification->flush();
         }
     } catch (InfrastructureFailure|CoverageException $failure) {
         fwrite(STDERR, $failure->getMessage() . "\n");

@@ -81,6 +81,8 @@ jobs:
           path: packages/sql-faker/fuzz/coverage/${{ matrix.target.database }}
           key: sql-faker-coverage-v1-${{ matrix.target.database }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: sql-faker-coverage-v1-${{ matrix.target.database }}-
+      - name: Check oracle classifications
+        run: composer test:oracles
       - name: Run PHP-Fuzzer
         env:
           FUZZ_MAX_RUNS: ${{ inputs.max_runs || '10000' }}
@@ -154,6 +156,6 @@ jobs:
             packages/sql-faker/crash-*
             packages/sql-faker/build/fuzz/${{ matrix.target.database }}.log
             packages/sql-faker/fuzz/corpus/${{ matrix.target.database }}/
-            packages/sql-faker/fuzz/coverage/${{ matrix.target.database }}/*.json
+            packages/sql-faker/fuzz/coverage/${{ matrix.target.database }}/
           if-no-files-found: ignore
           retention-days: 14

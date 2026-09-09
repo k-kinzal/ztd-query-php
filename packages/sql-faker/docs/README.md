@@ -10,6 +10,9 @@ that inspect SQL. No database connection is needed to generate strings.
   and exceptions you can handle.
 - [Supported versions](versions.md) — version tags and defaults for each dialect.
 
+- [Native verification](../fuzz/README.md) — deterministic byte plans, parser verdicts, persistent coverage and replay.
+- [Design review resolution](design-review-resolution.md) — implemented corrections and the remaining scope of each guarantee.
+
 Start with the [first example](usage.md#generate-your-first-statement). Generated
 SQL follows the selected dialect's grammar; executing it also requires a suitable
 database schema and server configuration.

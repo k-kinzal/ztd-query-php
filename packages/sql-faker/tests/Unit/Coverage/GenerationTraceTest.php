@@ -69,7 +69,7 @@ final class GenerationTraceTest extends TestCase
         $plan = ['budget' => 12, 'lexicalTarget' => 'identifier'];
         $trace = new GenerationTrace(42, 'expr', $plan);
         self::assertSame(['generationId' => 42, 'root' => 'expr', 'planSummary' => $plan,
-            'attempts' => [], 'rewrites' => [],
+            'attempts' => [], 'features' => [], 'candidateSources' => [], 'candidateConditions' => [], 'candidateRejections' => [], 'rewriteOperations' => [], 'rewrites' => [],
             'spacingEvents' => [],
             'lexicalEvents' => ['identifier'], 'status' => 'in-progress',
             'reachedIds' => [], 'emittedIds' => []], $trace->value);

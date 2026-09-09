@@ -50,6 +50,17 @@ use SqlFaker\Grammar\Terminal;
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalOccurrence::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalSequence::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\TokenGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionState::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionFrontier::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\ConstrainedCompletion::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\ValueChoices::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\BoundaryCompletion::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionMemo::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionReduction::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\ConstraintDependencies::class)]
+#[UsesClass(\SqlFaker\Grammar\Choice\BytePlanCompiler::class)]
+#[UsesClass(\SqlFaker\Grammar\Choice\PatternProductions::class)]
+#[UsesClass(\SqlFaker\Grammar\Choice\CompletionWitness::class)]
 final class GenerationPlanTest extends TestCase
 {
     /**
@@ -100,7 +111,7 @@ final class GenerationPlanTest extends TestCase
         $lexical = $this->createMock(LexicalGrammar::class);
         $lexical->method('isNonOutput')->willReturn(false);
         $lexical->method('resolveSequence')->willReturnCallback(static fn (\SqlFaker\Grammar\Generation\Token\TerminalSequence $sequence, ?GenerationPlan $plan, Closure $choose) =>
-            \Tests\Fixtures\SqlFaker\CoverageFixture::resolve($sequence, $plan, $choose, ['T' => ['first', 'second'], 'U' => ['first', 'second']]));
+            \Tests\Fixtures\SqlFaker\CoverageFixture::resolve($sequence, $plan, $choose, null, ['T' => ['first', 'second'], 'U' => ['first', 'second']]));
         $builder = new PlanBuilder($grammar, $lexical);
         $plan = GenerationPlan::fromBytes("\0\0\0\0\0\x01\x01\0\0", $builder);
 
@@ -367,5 +378,23 @@ final class GenerationPlanTest extends TestCase
         self::assertNotNull($plan->candidateKeyAt('SELECT', 0) ?? $plan->candidateKeyAt('DELETE', 0));
         self::assertFalse($plan->requiresNonEmpty());
         self::assertNull($plan->startRule());
+    }
+    public function testHasRemainingPatternsRetainsRecurringConstraintsAfterExplicitOccurrences(): void
+    {
+        $plan = GenerationPlan::constrained('root', ['leaf' => [ProductionPattern::at(0), ProductionPattern::at(1)]]);
+        self::assertTrue($plan->hasRemainingPatterns([]));
+        self::assertTrue($plan->hasRemainingPatterns(['leaf' => 1]));
+        self::assertFalse($plan->hasRemainingPatterns(['leaf' => 2]));
+        self::assertTrue($plan->withPatternForEveryOccurrence('leaf', ProductionPattern::at(0))->hasRemainingPatterns(['leaf' => 2]));
+        self::assertFalse(GenerationPlan::all()->hasRemainingPatterns([]));
+    }
+
+    public function testPatternStateCapsOnlyEquivalentFutureOccurrenceCounters(): void
+    {
+        $plan = GenerationPlan::constrained('root', ['leaf' => [ProductionPattern::at(0), ProductionPattern::at(1)]])
+            ->withPatternForEveryOccurrence('other', ProductionPattern::at(0));
+        self::assertSame(['leaf' => 0, 'other' => 0], $plan->patternState([]));
+        self::assertSame(['leaf' => 1, 'other' => 0], $plan->patternState(['leaf' => 1, 'other' => 8, 'unused' => 4]));
+        self::assertSame(['leaf' => 2, 'other' => 0], $plan->patternState(['leaf' => 8]));
     }
 }

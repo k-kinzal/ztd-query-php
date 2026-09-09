@@ -25,8 +25,12 @@ register_shutdown_function(static function (): void {
 use Faker\Factory;
 use SqlFaker\Coverage\CoverageException;
 use SqlFaker\Coverage\GrammarCoverage;
+use SqlFaker\Coverage\Verification\FeatureFeedback;
+use SqlFaker\Coverage\Verification\VerificationCoverage;
 use SqlFaker\Fuzz\Container\PostgreSqlContainer;
 use SqlFaker\Fuzz\Target\InfrastructureFailure;
+use SqlFaker\Fuzz\Target\ObservedCheck;
+use SqlFaker\Fuzz\Target\OracleEnvironment;
 use SqlFaker\Fuzz\Target\PgSyntaxCheck;
 use SqlFaker\Grammar\Derivation\GenerationPlan;
 use SqlFaker\PostgreSqlProvider;
@@ -46,6 +50,10 @@ if ($connection === false) {
 $coverage = new GrammarCoverage(__DIR__ . '/coverage/pg');
 $provider = new PostgreSqlProvider(Factory::create(), 'pg-17.2', $coverage);
 $check = new PgSyntaxCheck($connection);
+$oracleRevision = OracleEnvironment::revision();
+$verification = new VerificationCoverage($coverage, $oracleRevision, OracleEnvironment::pg($connection), __DIR__ . '/coverage/pg/verification');
+$observed = new ObservedCheck($check, $verification);
+$feedback = new FeatureFeedback();
 $planner = $provider->planner();
 $constraints = GenerationPlan::fromRule('stmt')->requiringNonEmpty();
 $generations = 0;
@@ -54,11 +62,12 @@ $generations = 0;
  * Each production contributes one stable feature; PHP-Fuzzer still owns mutation and corpus selection.
  */
 $grammarFeatures = array_flip(array_keys($coverage->inventory()->entries));
-register_shutdown_function(static function () use ($coverage): void {
+register_shutdown_function(static function () use ($coverage, $verification): void {
     if (function_exists('pcntl_alarm')) {
         pcntl_alarm(0);
     }
     $coverage->flush();
+    $verification->flush();
 });
 /**
  * Stops at the next input boundary so coverage flushes and container shutdown run outside an active generation.
@@ -78,7 +87,7 @@ if (function_exists('pcntl_signal')) {
  */
 $config->setAllowedExceptions([]);
 $config->setMaxLen(80004);
-$config->setTarget(static function (string $input) use ($provider, $planner, $constraints, $check, $coverage, $grammarFeatures, &$generations, &$stopSignal): void {
+$config->setTarget(static function (string $input) use ($provider, $planner, $constraints, $observed, $verification, $feedback, $coverage, $grammarFeatures, &$generations, &$stopSignal): void {
     if ($stopSignal !== null) {
         exit(128 + $stopSignal);
     }
@@ -91,9 +100,17 @@ $config->setTarget(static function (string $input) use ($provider, $planner, $co
         foreach ($coverage->lastGeneration()['reachedIds'] ?? [] as $id) {
             PhpFuzzer\FuzzingContext::$edges[-1 - $grammarFeatures[$id]] = 1;
         }
-        $check->verify($sql, bin2hex($input));
+        $trace = $coverage->lastGeneration();
+        if ($trace !== null) {
+            PhpFuzzer\FuzzingContext::$edges += $feedback->edges($trace);
+        }
+        $verdict = $observed->verify($sql, $input);
+        if ($trace !== null) {
+            PhpFuzzer\FuzzingContext::$edges += $feedback->edges($trace, $verdict->status);
+        }
         if (++$generations % 100 === 0) {
             $coverage->flush();
+            $verification->flush();
         }
     } catch (InfrastructureFailure|CoverageException $failure) {
         fwrite(STDERR, $failure->getMessage() . "\n");

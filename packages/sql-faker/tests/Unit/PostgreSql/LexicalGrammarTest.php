@@ -70,6 +70,8 @@ use SqlFaker\PostgreSql\PgTokenizer;
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\OperatorDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\QuotedDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\ValueChoices::class)]
+#[UsesClass(\SqlFaker\Grammar\Choice\BytePlanCompiler::class)]
 final class LexicalGrammarTest extends TestCase
 {
     public function testGenerateQuotedIdentifierWritesWhatTheLexerReadsBackAsAnIdentifier(): void
@@ -308,7 +310,7 @@ SQL;
     {
         $lexical = new LexicalGrammar(Factory::create(), 'pg-17.2');
         $output = $lexical->resolveSequence(TerminalSequence::fromNames(['ICONST']), null, static fn (int $count): int => $count - 1);
-        self::assertSame('2', $output->parts[0]->lexeme->text);
+        self::assertSame('1_0', $output->parts[0]->lexeme->text);
         self::assertCount(1, $output->candidates);
         self::assertSame('', $output->parts[0]->separator);
     }

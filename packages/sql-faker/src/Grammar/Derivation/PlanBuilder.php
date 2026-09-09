@@ -11,7 +11,7 @@ use SqlFaker\Grammar\Generation\Token\TokenGenerator;
 use SqlFaker\Grammar\Generation\Token\TokenRewriter;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\LexicalGrammar;
-use SqlFaker\Grammar\Symbol;
+use SqlFaker\Grammar\NonTerminal;
 
 /**
  * Compiles choices through the production generation pipeline into immutable instructions.
@@ -35,24 +35,18 @@ final class PlanBuilder
     }
 
     /**
-     * Includes the first root pattern in the grammar's expansion lower bound.
-     * Descendant costs remain grammar costs; occurrence-specific constraints can require more steps.
+     * Includes descendant and repeated-occurrence constraints before drawing an expansion budget.
      * @param GenerationPlan<bool> $plan
      */
     public function minimumExpansions(GenerationPlan $plan): int
     {
-        $root = $this->root($plan);
-        $pattern = $plan->patternAt($root, 0);
-        if ($pattern === null) {
-            return $this->costs->rule($root, $plan->requiresNonEmpty());
-        }
-        $minimum = PHP_INT_MAX;
-        foreach (($this->grammar->ruleMap[$root]->alternatives ?? []) as $ordinal => $production) {
-            if ($pattern->matches(array_map(static fn (Symbol $symbol): string => $symbol->value(), $production->symbols), $ordinal)) {
-                $minimum = min($minimum, CompletionCosts::add(1, $this->costs->completion($production, [], $plan->requiresNonEmpty())));
-            }
-        }
-        return $minimum;
+        return (new ConstrainedCompletion($this->grammar, $this->costs))->minimum(
+            [new NonTerminal($this->root($plan))],
+            $plan,
+            [],
+            $plan->requiresNonEmpty(),
+            $plan->expansionBudget() ?? 5000,
+        );
     }
 
     /**
@@ -82,7 +76,7 @@ final class PlanBuilder
             $patterns[$production->rule][] = ProductionPattern::at($production->ordinal);
         }
         $sequence = $this->rewriter?->rewrite($sequence) ?? $sequence;
-        $output = $this->lexical->resolveSequence($sequence, $constraints, static fn (int $count): int => $lexicalChoice($count) ?? 0);
+        $output = $this->lexical->resolveSequence($sequence, $constraints, static fn (int $count): int => $lexicalChoice($count) ?? 0, $lexicalChoice);
         $lexemes = [];
         $keys = [];
         foreach ($sequence->terminals as $index => $terminal) {

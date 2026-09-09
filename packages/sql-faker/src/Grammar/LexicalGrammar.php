@@ -60,7 +60,8 @@ interface LexicalGrammar
      * Resolves and exposes complete choices through the same lexical pipeline used to generate SQL.
      * @param GenerationPlan<bool>|null $plan
      * @param Closure(int): int $choose
+     * @param (Closure(positive-int): ?int)|null $valueChoice Constructive values selected only while compiling a plan
      * @throws LexicalException When no applicable realization exists
      */
-    public function resolveSequence(TerminalSequence $sequence, ?GenerationPlan $plan, Closure $choose): ResolvedOutput;
+    public function resolveSequence(TerminalSequence $sequence, ?GenerationPlan $plan, Closure $choose, ?Closure $valueChoice = null): ResolvedOutput;
 }

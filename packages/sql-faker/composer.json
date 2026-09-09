@@ -62,6 +62,7 @@
         "docgen:diff": "@docgen --diff=origin/main --serve",
         "docgen:fresh": "@docgen --no-cache",
         "test:unit": "phpunit --testsuite unit",
+        "test:oracles": "phpunit --no-coverage tests/Integration/Fuzz",
         "lint": [
             "@format:check",
             "@phpstan",
@@ -78,6 +79,7 @@
             "@fuzz:pg",
             "@fuzz:sqlite"
         ],
+        "fuzz:program": "php-fuzzer fuzz fuzz/fuzz_program_syntax.php",
         "fuzz:mysql": "php-fuzzer fuzz fuzz/fuzz_mysql_syntax.php",
         "fuzz:pg": "php-fuzzer fuzz fuzz/fuzz_pg_syntax.php",
         "fuzz:sqlite": "php-fuzzer fuzz fuzz/fuzz_sqlite_syntax.php",

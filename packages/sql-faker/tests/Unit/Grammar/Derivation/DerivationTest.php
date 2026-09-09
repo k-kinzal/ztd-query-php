@@ -36,6 +36,15 @@ use SqlFaker\Grammar\Terminal;
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalOccurrence::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalSequence::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionState::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionFrontier::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\ConstrainedCompletion::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionMemo::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionReduction::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\ConstraintDependencies::class)]
+#[UsesClass(\SqlFaker\Grammar\Choice\BytePlanCompiler::class)]
+#[UsesClass(\SqlFaker\Grammar\Choice\PatternProductions::class)]
+#[UsesClass(\SqlFaker\Grammar\Choice\CompletionWitness::class)]
 final class DerivationTest extends TestCase
 {
     public function testOfRewritesTheStartSymbolUntilOnlyTerminalsAreLeft(): void
@@ -249,4 +258,24 @@ final class DerivationTest extends TestCase
         self::assertSame([$empty], $derivation->completable([$empty], [new NonTerminal('s'), new Terminal('X')], 0, GenerationPlan::all()->requiringNonEmpty()));
     }
 
+
+    public function testAffordableCompletionRetainsOnlyProductionsWithAnAffordableNonEmptyContinuation(): void
+    {
+        $empty = new Production([]);
+        $output = new Production([new Terminal('T')]);
+        $grammar = new Grammar('s', ['s' => new ProductionRule('s', [$empty, $output])]);
+        $derivation = new Derivation($grammar, Factory::create(), new TerminationAnalyzer($grammar));
+        self::assertSame([$output], $derivation->affordableCompletion([$empty, $output], [new NonTerminal('s')], 0, GenerationPlan::all()->requiringNonEmpty()));
+    }
+
+    public function testOfStillRejectsAnEntirelyForcedPlanWhoseDescendantCannotSatisfyNonEmpty(): void
+    {
+        $grammar = new Grammar('root', [
+            'root' => new ProductionRule('root', [new Production([new NonTerminal('child')])]),
+            'child' => new ProductionRule('child', [new Production([]), new Production([new Terminal('T')])]),
+        ]);
+        $derivation = new Derivation($grammar, Factory::create(), new TerminationAnalyzer($grammar));
+        $this->expectException(GenerationException::class);
+        $derivation->of('root', GenerationPlan::constrained('root', ['child' => [ProductionPattern::at(0)]])->requiringNonEmpty());
+    }
 }

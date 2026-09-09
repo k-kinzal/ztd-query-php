@@ -37,8 +37,8 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 #[UsesClass(LexemeBoundary::class)]
 #[UsesClass(TerminalOccurrence::class)]
 #[UsesClass(TerminalSequence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\CharacterDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\ValueChoices::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\CharacterDomain::class)]
 final class BoundaryCompletionTest extends TestCase
 {
     #[DataProvider('providerMarkers')]

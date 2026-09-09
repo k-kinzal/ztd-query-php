@@ -26,6 +26,7 @@ use Tests\Fixtures\SqlFaker\CoverageFixture;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Choice\ByteChoices::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Derivation\CompletionCosts::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Derivation\DerivationNode::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Coverage\LexicalObservation::class)]
 final class CoverageSnapshotStoreTest extends TestCase
 {
     public function testReadReturnsNoHistoryWhenTheKeyHasNoSnapshot(): void

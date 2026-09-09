@@ -158,6 +158,8 @@ final class GrammarCoverage
         }
         if ($this->trace !== null) {
             $this->trace->value['rewrites'] = $sequence->rewrites;
+            $this->trace->value['features']['rewrite'] = array_values(array_unique($sequence->rewrites));
+            $this->trace->value['rewriteOperations'] = (new LexicalObservation())->rewrites($sequence);
         }
     }
 
@@ -169,9 +171,14 @@ final class GrammarCoverage
         if ($this->trace === null) {
             return;
         }
+        $observation = new LexicalObservation();
+        $this->trace->value['features'] = [...$this->trace->value['features'], ...$observation->features($output)];
+        $this->trace->value['candidateSources'] = $observation->sources($output);
+        $this->trace->value['candidateConditions'] = $observation->conditions($output);
+        $this->trace->value['candidateRejections'] = $output->rejections;
         $this->trace->value['lexicalEvents'] = array_map(static fn ($candidate): string => $candidate->id, $output->candidates);
         $this->trace->value['spacingEvents'] = array_map(static fn ($part): array =>
-            ['candidate' => $part->candidate, 'separator' => $part->separator, 'rules' => $part->spacingRules], $output->parts);
+            ['candidate' => $part->candidate, 'separator' => $part->separator, 'allowed' => $part->allowed, 'rules' => $part->spacingRules], $output->parts);
     }
 
     /**

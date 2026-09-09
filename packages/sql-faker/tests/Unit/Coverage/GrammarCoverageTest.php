@@ -44,6 +44,9 @@ use Tests\Fixtures\SqlFaker\CoverageFixture;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalOccurrence::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalSequence::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Coverage\LexicalObservation::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Value\ValueChoices::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Output\BoundaryCompletion::class)]
 final class GrammarCoverageTest extends TestCase
 {
     public function testSnapshotSeparatesReachedFromEmittedAndKeepsTheFullDenominator(): void

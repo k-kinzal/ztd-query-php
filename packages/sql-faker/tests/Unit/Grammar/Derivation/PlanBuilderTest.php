@@ -63,6 +63,17 @@ use Tests\Fixtures\SqlFaker\CoverageFixture;
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalSequence::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\TokenGenerator::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\TokenRewriter::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionState::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionFrontier::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\ConstrainedCompletion::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\ValueChoices::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\BoundaryCompletion::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionMemo::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionReduction::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\ConstraintDependencies::class)]
+#[UsesClass(\SqlFaker\Grammar\Choice\BytePlanCompiler::class)]
+#[UsesClass(\SqlFaker\Grammar\Choice\PatternProductions::class)]
+#[UsesClass(\SqlFaker\Grammar\Choice\CompletionWitness::class)]
 final class PlanBuilderTest extends TestCase
 {
     public function testRootResolvesOnlyAnExplicitReleaseAlias(): void
@@ -157,7 +168,7 @@ final class PlanBuilderTest extends TestCase
         ]);
         $lexical = $this->createMock(LexicalGrammar::class);
         $lexical->method('isNonOutput')->willReturnCallback(static fn (string $name): bool => $name === 'END');
-        $lexical->method('resolveSequence')->willReturnCallback(static fn (\SqlFaker\Grammar\Generation\Token\TerminalSequence $sequence, ?GenerationPlan $plan, Closure $choose) => CoverageFixture::resolve($sequence, $plan, $choose, ['END' => ['']]));
+        $lexical->method('resolveSequence')->willReturnCallback(static fn (\SqlFaker\Grammar\Generation\Token\TerminalSequence $sequence, ?GenerationPlan $plan, Closure $choose) => CoverageFixture::resolve($sequence, $plan, $choose, null, ['END' => ['']]));
         $builder = new PlanBuilder($grammar, $lexical);
         $empty = $builder->build(GenerationPlan::all(), 2, static fn (int $count): ?int => null, static fn (int $count): ?int => null);
         $nonEmpty = $builder->build(GenerationPlan::all()->requiringNonEmpty(), 2, static fn (int $count): ?int => null, static fn (int $count): ?int => null);
@@ -192,5 +203,21 @@ final class PlanBuilderTest extends TestCase
         $builder = new PlanBuilder(CoverageFixture::syntaxGrammar(), $this->createMock(LexicalGrammar::class));
         $this->expectException(GenerationException::class);
         $builder->build(GenerationPlan::fromRule('missing'), 5, static fn (int $count): ?int => null, static fn (int $count): ?int => null);
+    }
+    public function testMinimumExpansionsIncludesTheConstrainedDescendantBeforeDrawingTheBudget(): void
+    {
+        $grammar = new Grammar('root', [
+            'root' => new ProductionRule('root', [new Production([new NonTerminal('child')])]),
+            'child' => new ProductionRule('child', [new Production([new Terminal('T')]), new Production([new NonTerminal('leaf')])]),
+            'leaf' => new ProductionRule('leaf', [new Production([new Terminal('U')])]),
+        ]);
+        $lexical = $this->createMock(LexicalGrammar::class);
+        $lexical->method('resolveSequence')->willReturnCallback(CoverageFixture::resolve(...));
+        $builder = new PlanBuilder($grammar, $lexical);
+        $constraints = GenerationPlan::constrained('root', ['child' => [ProductionPattern::at(1)]])->requiringNonEmpty()->withExpansionBudget(5);
+        self::assertSame(3, $builder->minimumExpansions($constraints));
+        $plan = GenerationPlan::fromBytes('', $builder, $constraints);
+        self::assertSame(3, $plan->expansionBudget());
+        self::assertSame('U', (new \SqlFaker\Generation\SqlGenerator($grammar, Factory::create(), $lexical))->generate($plan));
     }
 }

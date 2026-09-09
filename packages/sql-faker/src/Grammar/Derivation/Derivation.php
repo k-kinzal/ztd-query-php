@@ -25,6 +25,7 @@ final class Derivation
     private int $steps = 0;
 
     private readonly CompletionCosts $completion;
+    private readonly ConstrainedCompletion $constrainedCompletion;
 
     /**
      * Occurrences from the most recent derivation, including empty productions.
@@ -45,6 +46,7 @@ final class Derivation
         private readonly ?Closure $choose = null,
     ) {
         $this->completion = $completion ?? new CompletionCosts($grammar, static fn (string $terminal): bool => false);
+        $this->constrainedCompletion = new ConstrainedCompletion($grammar, $this->completion);
     }
 
     /**
@@ -83,7 +85,9 @@ final class Derivation
             $occurrences[$nonTerminal->value] = $occurrence + 1;
             $alternatives = $this->alternatives($nonTerminal, $plan, $occurrence);
 
-            $alternatives = $this->completable($alternatives, $form, $index, $plan);
+            $alternatives = count($alternatives) === 1
+                ? $this->affordableCompletion($alternatives, $form, $index, $plan)
+                : $this->completable($alternatives, $form, $index, $plan, $occurrences);
             $production = $this->selectProduction($alternatives, $plan);
             $ordinal = array_search($production, $this->grammar->ruleMap[$nonTerminal->value]->alternatives, true);
             $this->trace->expand($index, $production, $ordinal === false ? 0 : $ordinal);
@@ -231,15 +235,37 @@ final class Derivation
      * @param list<Symbol> $form
      * @param GenerationPlan<bool> $plan
      * @return non-empty-list<Production>
+     * @param array<string, int> $occurrences Occurrences already selected before the pending continuation
      * @throws GenerationException When the explicit plan has no affordable completion
      */
-    public function completable(array $alternatives, array $form, int $index, GenerationPlan $plan): array
+    public function completable(array $alternatives, array $form, int $index, GenerationPlan $plan, array $occurrences = []): array
     {
         $nonEmpty = $plan->requiresNonEmpty() && !$this->completion->hasTerminalOutput(array_slice($form, 0, $index));
-        $candidates = $this->completion->affordable($alternatives, array_slice($form, $index + 1), $nonEmpty, ($plan->expansionBudget() ?? self::STEP_LIMIT) - $this->steps);
+        $candidates = $this->affordableCompletion($alternatives, $form, $index, $plan);
+        if ($plan->hasRemainingPatterns($occurrences)) {
+            $budget = ($plan->expansionBudget() ?? self::STEP_LIMIT) - $this->steps;
+            $candidates = array_values(array_filter($candidates, fn (Production $production): bool =>
+                $this->constrainedCompletion->within([...$production->symbols, ...array_slice($form, $index + 1)], $plan, $occurrences, $nonEmpty, $budget)));
+        }
         if ($candidates === []) {
             throw GenerationException::derivationLimitExceeded();
         }
         return $candidates;
+    }
+
+    /**
+     * Checks budget/output lower bounds when the next production is forced; the walk validates subsequent forced steps directly.
+     * Looking ahead cannot select a different production here, so it would only repeat the frozen plan's remaining walk.
+     * @param non-empty-list<Production> $alternatives
+     * @param list<Symbol> $form
+     * @param GenerationPlan<bool> $plan
+     * @return non-empty-list<Production>
+     * @throws GenerationException When no production can satisfy the remaining budget and output requirement
+     */
+    public function affordableCompletion(array $alternatives, array $form, int $index, GenerationPlan $plan): array
+    {
+        $nonEmpty = $plan->requiresNonEmpty() && !$this->completion->hasTerminalOutput(array_slice($form, 0, $index));
+        $candidates = $this->completion->affordable($alternatives, array_slice($form, $index + 1), $nonEmpty, ($plan->expansionBudget() ?? self::STEP_LIMIT) - $this->steps);
+        return $candidates === [] ? throw GenerationException::derivationLimitExceeded() : $candidates;
     }
 }

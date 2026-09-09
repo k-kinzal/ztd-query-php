@@ -95,7 +95,11 @@ final class CoverageFixture
     {
         $files = glob($directory . '/*');
         foreach ($files === false ? [] : $files as $file) {
-            unlink($file);
+            if (is_dir($file)) {
+                self::remove($file);
+            } else {
+                unlink($file);
+            }
         }
         rmdir($directory);
     }
@@ -176,12 +180,14 @@ final class CoverageFixture
      * Resolves the fixture's literal terminal names through the production candidate pipeline.
      * @param \SqlFaker\Grammar\Derivation\GenerationPlan<bool>|null $plan
      * @param Closure(int): int $choose
+     * @param (Closure(positive-int): ?int)|null $valueChoice
      * @param array<string, non-empty-list<string>> $spellings
      */
     public static function resolve(
         \SqlFaker\Grammar\Generation\Token\TerminalSequence $sequence,
         ?\SqlFaker\Grammar\Derivation\GenerationPlan $plan,
         Closure $choose,
+        ?Closure $valueChoice = null,
         array $spellings = [],
     ): \SqlFaker\Grammar\Generation\Output\ResolvedOutput {
         $definitions = [];
@@ -198,7 +204,7 @@ final class CoverageFixture
             new \SqlFaker\Grammar\Generation\Lexeme\ChoiceLexemeGenerator(...$definitions),
             new \SqlFaker\Grammar\Generation\Output\CandidateResolver(new \SqlFaker\Grammar\Generation\Spacing\CombinedSpacingRule()),
             'fixture',
-        ))->generate($sequence, $plan, $choose);
+        ))->generate($sequence, $plan, $choose, $valueChoice);
     }
     /**
      * Supplies a resolved literal response for lexical contract mocks.

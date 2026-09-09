@@ -57,6 +57,7 @@ use SqlFaker\Sqlite\Generation\Lexeme\DefinitionFactory;
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Resource\SqlVersionRegistry::class)]
 #[UsesClass(\SqlFaker\Grammar\SqlVersion::class)]
+#[UsesClass(\SqlFaker\Grammar\Choice\BytePlanCompiler::class)]
 final class DefinitionFactoryTest extends TestCase
 {
     public function testCreateCombinesLexicalOutputAndBoundaryDecisions(): void

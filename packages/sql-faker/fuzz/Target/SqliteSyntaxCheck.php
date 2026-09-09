@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace SqlFaker\Fuzz\Target;
 
+use Override;
 use PDO;
 use PDOException;
+use SqlFaker\Coverage\Verification\VerificationResult;
 
 /**
  * Prepares generated SQL against SQLite and reports unexpected rejections.
@@ -28,7 +30,7 @@ use PDOException;
  * window.c/windowFind resolves names against the current SELECT's window definitions.
  * attach.c/fixSelectCb checks cross-database trigger references.
  */
-final class SqliteSyntaxCheck
+final class SqliteSyntaxCheck implements SyntaxCheck
 {
     /**
      * Verifies that SQLite parses the generated statement.
@@ -42,7 +44,8 @@ final class SqliteSyntaxCheck
      * @throws InfrastructureFailure When the database environment is unavailable
      * @throws SyntaxFailure When SQLite rejects the statement for a reason the grammar should not produce
      */
-    public function verify(string $sql, string $input): void
+    #[Override]
+    public function verify(string $sql, string $input): VerificationResult
     {
         if ($sql === '') {
             throw new SyntaxFailure('Statement generation returned an empty string.');
@@ -58,10 +61,12 @@ final class SqliteSyntaxCheck
                     "SQL: $sql"
                 );
             }
-            return;
+            return new VerificationResult('accepted');
         } catch (PDOException $rejection) {
 
             $message = $rejection->getMessage();
+            $errorCode = $rejection->errorInfo[1] ?? 0;
+            $code = is_int($errorCode) || is_string($errorCode) ? (string) $errorCode : '';
             if (in_array($rejection->errorInfo[1] ?? 0, [7, 10, 11, 13, 14, 26], true)) {
                 throw new InfrastructureFailure('SQLite verification environment failed.', 0, $rejection);
             }
@@ -112,7 +117,7 @@ final class SqliteSyntaxCheck
             };
 
             if ($acceptable) {
-                return;
+                return new VerificationResult('semantic-inconclusive', $code, $rejection->getMessage());
             }
 
             throw new SyntaxFailure(

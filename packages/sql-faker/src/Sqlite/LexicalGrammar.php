@@ -112,12 +112,13 @@ final class LexicalGrammar implements LexicalGrammarContract
      * Exposes the resolved choices to a plan compiler without interpreting its input.
      * @param GenerationPlan<bool>|null $plan
      * @param Closure(int): int $choose
+     * @param (Closure(positive-int): ?int)|null $valueChoice Constructive values selected only while compiling a plan
      * @throws LexicalException When no compatible candidate exists
      */
     #[Override]
-    public function resolveSequence(TerminalSequence $sequence, ?GenerationPlan $plan, Closure $choose): ResolvedOutput
+    public function resolveSequence(TerminalSequence $sequence, ?GenerationPlan $plan, Closure $choose, ?Closure $valueChoice = null): ResolvedOutput
     {
-        return $this->pipeline->generate($sequence, $plan, $choose);
+        return $this->pipeline->generate($sequence, $plan, $choose, $valueChoice);
     }
 
     /**

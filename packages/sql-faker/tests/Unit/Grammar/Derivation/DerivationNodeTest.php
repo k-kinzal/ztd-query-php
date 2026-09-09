@@ -25,6 +25,7 @@ use SqlFaker\Grammar\NonTerminal;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Coverage\CoverageSets::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Choice\ByteChoices::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Derivation\CompletionCosts::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Coverage\LexicalObservation::class)]
 final class DerivationNodeTest extends TestCase
 {
     public function testSymbolRetainsAnOccurrenceWithoutChangingTheGrammarSymbol(): void

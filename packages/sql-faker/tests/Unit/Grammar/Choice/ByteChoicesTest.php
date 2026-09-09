@@ -24,6 +24,7 @@ use SqlFaker\Grammar\Choice\ByteChoices;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Coverage\CoverageSets::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Derivation\CompletionCosts::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Derivation\DerivationNode::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Coverage\LexicalObservation::class)]
 final class ByteChoicesTest extends TestCase
 {
     public function testIndexConsumesLittleEndianChoicesWiderThanOneByte(): void

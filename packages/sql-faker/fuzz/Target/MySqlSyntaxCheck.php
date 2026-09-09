@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace SqlFaker\Fuzz\Target;
 
+use Override;
 use PDO;
 use PDOException;
+use SqlFaker\Coverage\Verification\VerificationResult;
 
 /**
  * Prepares generated SQL against MySQL and reports unexpected rejections.
@@ -41,7 +43,7 @@ use PDOException;
  * item.cc and parse_tree_items.cc prohibit parameters and session variables in view definitions.
  * create_field.cc checks defaults against resolved column types and SQL mode; table.cc rejects disallowed default-expression functions.
  */
-final class MySqlSyntaxCheck
+final class MySqlSyntaxCheck implements SyntaxCheck
 {
     /**
      * @param PDO $pdo Connection to the MySQL instance under test
@@ -50,6 +52,7 @@ final class MySqlSyntaxCheck
     public function __construct(
         private readonly PDO $pdo,
         private readonly string $grammarVersion,
+        private readonly bool $allowEmptyProgram = false,
     ) {
     }
 
@@ -62,9 +65,10 @@ final class MySqlSyntaxCheck
      * @throws InfrastructureFailure When the database environment is unavailable
      * @throws SyntaxFailure When MySQL rejects the statement for a reason the grammar should not produce
      */
-    public function verify(string $sql, string $input): void
+    #[Override]
+    public function verify(string $sql, string $input): VerificationResult
     {
-        if ($sql === '') {
+        if ($sql === '' && !$this->allowEmptyProgram) {
             throw new SyntaxFailure('Statement generation returned an empty string.');
         }
 
@@ -76,15 +80,19 @@ final class MySqlSyntaxCheck
             $this->pdo->exec('SET @sql_faker_input = ' . $quoted);
             $this->pdo->exec('PREPARE sql_faker_check FROM @sql_faker_input');
             $this->pdo->exec('DEALLOCATE PREPARE sql_faker_check');
-            return;
+            return new VerificationResult('accepted');
         } catch (PDOException $rejection) {
 
             $errorCode = $rejection->errorInfo[1] ?? 0;
+            $code = is_int($errorCode) || is_string($errorCode) ? (string) $errorCode : '';
             if (in_array($errorCode, [2002, 2006, 2013, 1040], true)) {
                 throw new InfrastructureFailure('MySQL verification connection failed.', 0, $rejection);
             }
+            if ($sql === '' && $errorCode === 1065) {
+                return new VerificationResult('unsupported', $code, 'The grammar permits an empty program; server PREPARE requires a statement.');
+            }
             if ($errorCode === 1295) {
-                return;
+                return new VerificationResult('unsupported', $code, $rejection->getMessage());
             }
 
             $acceptable = in_array($errorCode, [1054, 1046, 1527, 1273, 1327, 3708, 1407, 1049,
@@ -96,42 +104,42 @@ final class MySqlSyntaxCheck
 
             if ($errorCode === 1221 && (str_ends_with($rejection->getMessage(), 'Incorrect usage of spatial/fulltext/hash index and explicit index order')
                 || str_ends_with($rejection->getMessage(), 'Incorrect usage of SRID and non-geometry column'))) {
-                return;
+                return new VerificationResult('semantic-inconclusive', $code, $rejection->getMessage());
             }
             if ($errorCode === 1064 && preg_match('/\ASHOW\s+PARSE_TREE\b/i', $sql) === 1
                 && str_contains($rejection->getMessage(), "near 'PARSE_TREE ")) {
-                return;
+                return new VerificationResult('unsupported', $code, $rejection->getMessage());
             }
             $detail = $rejection->errorInfo[2] ?? null;
             if ($errorCode === 3591 && is_string($detail) && preg_match("/\\AWindow '[^\\r\\n]*' is defined twice\\.\\z/D", $detail) === 1) {
-                return;
+                return new VerificationResult('semantic-inconclusive', $code, $rejection->getMessage());
             }
             if (($errorCode === 3580 && $detail === 'There is a circularity in the window dependency graph.')
                 || ($errorCode === 3581 && $detail === 'A window which depends on another cannot define partitioning.')) {
-                return;
+                return new VerificationResult('semantic-inconclusive', $code, $rejection->getMessage());
             }
             if ($errorCode === 3587 && is_string($detail) && preg_match("/\\AWindow '[^\\r\\n]*' with RANGE N PRECEDING\/FOLLOWING frame requires exactly one ORDER BY expression, of numeric or temporal type\\z/D", $detail) === 1) {
-                return;
+                return new VerificationResult('semantic-inconclusive', $code, $rejection->getMessage());
             }
             if ($errorCode === 1367 && is_string($detail) && preg_match("/\\AIllegal non geometric '[^\\r\\n]*' value found during parsing\\z/D", $detail) === 1) {
-                return;
+                return new VerificationResult('semantic-inconclusive', $code, $rejection->getMessage());
             }
             if ($errorCode === 1351 && $detail === "View's SELECT contains a variable or parameter") {
-                return;
+                return new VerificationResult('semantic-inconclusive', $code, $rejection->getMessage());
             }
             if ($errorCode === 3998 && $detail === 'Cannot cast value to TIMESTAMP WITH TIME ZONE.') {
-                return;
+                return new VerificationResult('semantic-inconclusive', $code, $rejection->getMessage());
             }
             if ($errorCode === 1210 && in_array($detail, ['Incorrect arguments to >>', 'Incorrect arguments to <<', 'Incorrect arguments to &', 'Incorrect arguments to |', 'Incorrect arguments to ^', 'Incorrect arguments to <', 'Incorrect arguments to <=', 'Incorrect arguments to >', 'Incorrect arguments to >=', 'Incorrect arguments to like', 'Incorrect arguments to DIV', 'Incorrect arguments to %', 'Incorrect arguments to +', 'Incorrect arguments to -', 'Incorrect arguments to *', 'Incorrect arguments to /'], true)) {
-                return;
+                return new VerificationResult('semantic-inconclusive', $code, $rejection->getMessage());
             }
             if ($errorCode === 1064 && is_string($detail) && (str_starts_with($detail, 'Constant, random or timezone-dependent expressions in (sub)partitioning function are not allowed near ')
                 || str_starts_with($detail, 'Wrong number of subpartitions defined, mismatch with previous setting near '))) {
-                return;
+                return new VerificationResult('semantic-inconclusive', $code, $rejection->getMessage());
             }
 
             if ($acceptable) {
-                return;
+                return new VerificationResult('semantic-inconclusive', $code, $rejection->getMessage());
             }
 
             throw new SyntaxFailure(

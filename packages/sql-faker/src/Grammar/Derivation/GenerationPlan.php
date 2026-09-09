@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlFaker\Grammar\Derivation;
 
 use InvalidArgumentException;
-use SqlFaker\Grammar\Choice\ByteChoices;
+use SqlFaker\Grammar\Choice\BytePlanCompiler;
 
 /**
  * An immutable plan selecting the start rule, productions, lexemes and expansion limits.
@@ -65,29 +65,7 @@ final class GenerationPlan
      */
     public static function fromBytes(string $input, PlanBuilder $builder, ?self $constraints = null): self
     {
-        $constraints ??= self::all();
-        $minimum = $builder->minimumExpansions($constraints);
-        $maximum = $constraints->expansionBudget() ?? 5000;
-        if ($minimum < 1 || $maximum < $minimum || $maximum > 1000000 || $constraints->lexicalTarget() !== null) {
-            throw new InvalidArgumentException('Require a derivation plan with 1 <= minimum expansions <= maximum expansions <= 1000000.');
-        }
-        $header = 0;
-        $range = $maximum - $minimum + 1;
-        for ($index = 3; $index >= 0; --$index) {
-            $header = ($header * 256 + (isset($input[$index]) ? ord($input[$index]) : 0)) % $range;
-        }
-        $structure = '';
-        $lexical = '';
-        foreach (str_split(substr($input, 4), 2) as $pair) {
-            $structure .= $pair[0] ?? '';
-            $lexical .= $pair[1] ?? '';
-        }
-        return $builder->build(
-            $constraints,
-            $minimum + $header,
-            (new ByteChoices($structure))->index(...),
-            (new ByteChoices($lexical))->index(...)
-        );
+        return (new BytePlanCompiler())->compile($input, $builder, $constraints);
     }
 
     /**
@@ -227,6 +205,37 @@ final class GenerationPlan
     public function patternAt(string $rule, int $occurrence): ?ProductionPattern
     {
         return $this->patterns[$rule][$occurrence] ?? $this->patternsForEveryOccurrence[$rule] ?? null;
+    }
+
+    /**
+     * Reports whether any occurrence-specific or recurring pattern can still constrain a continuation.
+     * @param array<string, int> $occurrences
+     */
+    public function hasRemainingPatterns(array $occurrences): bool
+    {
+        if ($this->patternsForEveryOccurrence !== []) {
+            return true;
+        }
+        foreach ($this->patterns as $rule => $patterns) {
+            if (($occurrences[$rule] ?? 0) < count($patterns)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Caps counters only once later occurrences use the same default pattern, making recursive states finite.
+     * @param array<string, int> $occurrences
+     * @return array<string, int>
+     */
+    public function patternState(array $occurrences): array
+    {
+        $state = [];
+        foreach (array_unique([...array_keys($this->patterns), ...array_keys($this->patternsForEveryOccurrence)]) as $rule) {
+            $state[$rule] = min($occurrences[$rule] ?? 0, count($this->patterns[$rule] ?? []));
+        }
+        return $state;
     }
 
     /**
