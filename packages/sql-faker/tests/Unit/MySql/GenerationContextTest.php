@@ -109,6 +109,8 @@ use SqlFaker\MySql\GenerationContext;
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Replication\TablePatternRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Expression\QuantifiedComparisonRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Expression\TableValueConstructorRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Query\QueryContextRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Query\JoinGroupingRule::class)]
 final class GenerationContextTest extends TestCase
 {
     public function testBindsTheRequestedReleaseAndPreservesTheGrammarStart(): void

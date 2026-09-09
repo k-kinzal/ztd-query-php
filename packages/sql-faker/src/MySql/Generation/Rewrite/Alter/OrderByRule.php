@@ -6,6 +6,7 @@ namespace SqlFaker\MySql\Generation\Rewrite\Alter;
 
 use Override;
 use SqlFaker\Grammar\Generation\Token\RewriteRule;
+use SqlFaker\Grammar\Generation\Token\TerminalOccurrence;
 use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
@@ -61,15 +62,18 @@ final class OrderByRule implements RewriteRule
             }
         }
         $ordered = [...$others, ...$orders];
-        if ($ordered === $chunks) {
+        if ($ordered === $chunks && count($orders) < 2) {
             return $sequence;
         }
         $output = [];
         foreach ($ordered as $index => $chunk) {
             if ($index !== 0) {
-                $output[] = $separators[$index - 1];
+                $separator = $separators[$index - 1];
+                $output[] = $index > count($others) && isset($chunk[2])
+                    ? new TerminalOccurrence(',', $separator->id, $chunk[2]->ancestors, $chunk[2]->rules, 'sql_yacc.yy:alter_list:order-by-last')
+                    : $separator;
             }
-            array_push($output, ...$chunk);
+            array_push($output, ...($index > count($others) ? array_slice($chunk, 2) : $chunk));
         }
         return $sequence->replace($range[0], $range[1] - $range[0], $output, 'sql_yacc.yy:alter_list:order-by-last');
     }

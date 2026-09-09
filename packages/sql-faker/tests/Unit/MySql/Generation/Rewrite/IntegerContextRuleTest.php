@@ -42,6 +42,54 @@ final class IntegerContextRuleTest extends TestCase
         return [['source_def', 'SOURCE_DELAY_SYM', 'SOURCE_DELAY_NUMBER'], ['master_def', 'MASTER_DELAY_SYM', 'SOURCE_DELAY_NUMBER'], ['create_table_option', 'STATS_SAMPLE_PAGES_SYM', 'STATS_SAMPLE_PAGES_NUMBER'], ['create_table_option', 'AUTO_INC', 'LONG_NUM'], ['source_def', 'STATS_SAMPLE_PAGES_SYM', 'LONG_NUM'], ['ordinary', 'SOURCE_DELAY_SYM', 'LONG_NUM']];
     }
 
+    #[DataProvider('providerNewNumericContexts')]
+    public function testOptionsKeepsNumericLimitsWithinTheirGrammarScope(string $context, string $option, string $number, string $expected): void
+    {
+        $trace = new DerivationTrace($context);
+        $trace->expand(0, new Production([new Terminal($option), new Terminal('EQ'), new NonTerminal($number)]), 0);
+        $trace->expand(2, new Production([new Terminal('ULONGLONG_NUM')]), 0);
+        $input = $trace->terminals();
+        $result = (new IntegerContextRule())->rewrite($input);
+        self::assertSame([$option, 'EQ', $expected], $result->names());
+        self::assertSame($input->original, $result->original);
+        self::assertSame($input->productions, $result->productions);
+    }
+
+    /**
+     * @return list<array{string, string, string, string}>
+     */
+    public static function providerNewNumericContexts(): array
+    {
+        return [
+            ['create_table_option', 'AVG_ROW_LENGTH', 'ulonglong_num', 'AVG_ROW_LENGTH_NUMBER'],
+            ['create_table_option', 'AVG_ROW_LENGTH', 'ulong_num', 'AVG_ROW_LENGTH_NUMBER'],
+            ['opt_key_algo', 'ALGORITHM_SYM', 'real_ulong_num', 'KEY_ALGORITHM_NUMBER'],
+            ['ordinary', 'ALGORITHM_SYM', 'real_ulong_num', 'ULONGLONG_NUM'],
+            ['create_table_option', 'AUTO_INC', 'ulonglong_num', 'ULONGLONG_NUM'],
+        ];
+    }
+
+    #[DataProvider('providerYearWidths')]
+    public function testYearWidthConstrainsOnlyExplicitYearWidths(string $type, bool $strict): void
+    {
+        $trace = new DerivationTrace('type');
+        $trace->expand(0, new Production([new Terminal($type), new NonTerminal('opt_field_length')]), 0);
+        $trace->expand(1, new Production([new NonTerminal('field_length')]), 0);
+        $trace->expand(1, new Production([new Terminal('('), new Terminal('LONG_NUM'), new Terminal(')')]), 0);
+        $rule = new IntegerContextRule($strict);
+        $result = $rule->yearWidth($trace->terminals());
+        self::assertSame([$type, '(', $type === 'YEAR_SYM' && $strict ? 'YEAR_WIDTH_NUMBER' : 'LONG_NUM', ')'], $result->names());
+        self::assertSame($result->names(), $rule->rewrite($trace->terminals())->names());
+    }
+
+    /**
+     * @return list<array{string, bool}>
+     */
+    public static function providerYearWidths(): array
+    {
+        return [['YEAR_SYM', true], ['CHAR_SYM', true], ['YEAR_SYM', false]];
+    }
+
     public function testRewriteKeepsTheDefaultStatisticsOption(): void
     {
         $trace = new DerivationTrace('create_table_option');

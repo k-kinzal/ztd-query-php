@@ -9,7 +9,7 @@ use SqlFaker\Grammar\Generation\Token\RewriteRule;
 use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
- * PT_subquery, PT_handler_read_base and PT_install_component forbid subqueries in these statement expressions.
+ * PT_subquery and partition contextualization forbid subqueries in these statement expressions.
  */
 final class SubqueryContextRule implements RewriteRule
 {
@@ -25,7 +25,7 @@ final class SubqueryContextRule implements RewriteRule
                 continue;
             }
             $origin = $sequence->terminals[$range[0]];
-            if (array_intersect(['handler_stmt', 'purge', 'install_stmt'], $origin->rules) === []) {
+            if (array_intersect(['handler_stmt', 'purge', 'install_stmt', 'part_type_def', 'opt_sub_part'], $origin->rules) === []) {
                 continue;
             }
             $position = array_search($id, $origin->ancestors, true);

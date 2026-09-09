@@ -14,6 +14,13 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 final class IntegerContextRule implements RewriteRule
 {
     /**
+     * MySQL 5.6 and 5.7 normalize unsupported YEAR widths instead of rejecting them.
+     */
+    public function __construct(private readonly bool $strictYearWidth = true)
+    {
+    }
+
+    /**
      * Keeps ordinary numeric expressions unchanged and constrains only the checked grammar positions.
      */
     #[Override]
@@ -36,6 +43,7 @@ final class IntegerContextRule implements RewriteRule
             }
         }
         $sequence = $this->options($sequence);
+        $sequence = $this->yearWidth($sequence);
         foreach ($sequence->occurrences('size_number') as $id) {
             $identifier = $sequence->child($id, 'IDENT_sys');
             if ($identifier !== null) {
@@ -59,14 +67,36 @@ final class IntegerContextRule implements RewriteRule
     }
 
     /**
+     * Keeps YEAR width checks independent of general integer and table-option domains.
+     */
+    public function yearWidth(TerminalSequence $sequence): TerminalSequence
+    {
+        if (!$this->strictYearWidth) {
+            return $sequence;
+        }
+        foreach ($sequence->occurrences('type') as $id) {
+            $range = $sequence->range($id);
+            $width = $sequence->child($id, 'opt_field_length');
+            $field = $width === null ? null : $sequence->child($width->id, 'field_length');
+            $length = $field === null ? null : $sequence->range($field->id);
+            if ($range !== null && $sequence->nameAt($range[0]) === 'YEAR_SYM' && $length !== null) {
+                $sequence = $sequence->replace($length[0] + 1, 1, [
+                    $sequence->terminals[$length[0] + 1]->replaced('YEAR_WIDTH_NUMBER', 'sql/sql_yacc.yy:YEAR_SYM'),
+                ], 'sql/sql_yacc.yy:YEAR_SYM');
+            }
+        }
+        return $sequence;
+    }
+
+    /**
      * Applies the independently bounded delay and statistics options in their owning productions.
      */
     public function options(TerminalSequence $sequence): TerminalSequence
     {
-        foreach (['source_def' => ['SOURCE_DELAY_SYM' => 'SOURCE_DELAY_NUMBER'], 'master_def' => ['MASTER_DELAY_SYM' => 'SOURCE_DELAY_NUMBER'], 'create_table_option' => ['STATS_SAMPLE_PAGES_SYM' => 'STATS_SAMPLE_PAGES_NUMBER', 'KEY_BLOCK_SIZE' => 'KEY_BLOCK_SIZE_NUMBER']] as $context => $terminals) {
+        foreach (['source_def' => ['SOURCE_DELAY_SYM' => 'SOURCE_DELAY_NUMBER'], 'master_def' => ['MASTER_DELAY_SYM' => 'SOURCE_DELAY_NUMBER'], 'create_table_option' => ['STATS_SAMPLE_PAGES_SYM' => 'STATS_SAMPLE_PAGES_NUMBER', 'KEY_BLOCK_SIZE' => 'KEY_BLOCK_SIZE_NUMBER', 'AVG_ROW_LENGTH' => 'AVG_ROW_LENGTH_NUMBER'], 'opt_key_algo' => ['ALGORITHM_SYM' => 'KEY_ALGORITHM_NUMBER']] as $context => $terminals) {
             foreach ($sequence->occurrences($context) as $id) {
                 $range = $sequence->range($id);
-                $number = $sequence->child($id, 'ulong_num') ?? $sequence->child($id, 'ulonglong_num');
+                $number = $sequence->child($id, 'ulong_num') ?? $sequence->child($id, 'ulonglong_num') ?? $sequence->child($id, 'real_ulong_num');
                 $name = $range === null ? null : $sequence->nameAt($range[0]);
                 $terminal = $terminals[$name ?? ''] ?? null;
                 if ($number !== null && $terminal !== null) {

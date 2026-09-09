@@ -91,4 +91,28 @@ final class DefinitionFactoryTest extends TestCase
             }
         }
     }
+    #[DataProvider('providerNumericLimits')]
+    public function testLexemesKeepsParserNumericBoundaries(string $terminal, string $value, bool $valid): void
+    {
+        $generator = (new DefinitionFactory())->lexemes('mysql-8.4.7', [], []);
+        $candidates = $generator->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput(), $value));
+        self::assertNotNull($candidates);
+        self::assertSame($valid ? [$value] : [], array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$candidates->sequences()]));
+    }
+
+    /**
+     * @return list<array{string, string, bool}>
+     */
+    public static function providerNumericLimits(): array
+    {
+        return [
+            ['AVG_ROW_LENGTH_NUMBER', '0', true], ['AVG_ROW_LENGTH_NUMBER', '4294967295', true],
+            ['AVG_ROW_LENGTH_NUMBER', '4294967296', false], ['AVG_ROW_LENGTH_NUMBER', '-1', false],
+            ['KEY_ALGORITHM_NUMBER', '1', true], ['KEY_ALGORITHM_NUMBER', '2', true],
+            ['KEY_ALGORITHM_NUMBER', '0x02', true], ['KEY_ALGORITHM_NUMBER', '0', false], ['KEY_ALGORITHM_NUMBER', '3', false],
+            ['YEAR_WIDTH_NUMBER', '4', true], ['YEAR_WIDTH_NUMBER', '04', true],
+            ['YEAR_WIDTH_NUMBER', '2', false], ['YEAR_WIDTH_NUMBER', '5', false],
+        ];
+    }
+
 }

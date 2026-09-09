@@ -62,4 +62,25 @@ final class OrderByRuleTest extends TestCase
         $input = TerminalSequence::fromNames(['ORDER_SYM', 'BY', 'IDENT', ',', 'ENABLE_SYM', 'KEYS']);
         self::assertSame($input, (new OrderByRule())->rewrite($input));
     }
+    public function testRewriteCombinesRepeatedOrderByActionsIntoOneColumnList(): void
+    {
+        $tokens = [
+            new TerminalOccurrence('ORDER_SYM', 10, [0, 1], ['alter_list', 'alter_list_item']),
+            new TerminalOccurrence('BY', 11, [0, 1], ['alter_list', 'alter_list_item']),
+            new TerminalOccurrence('A', 12, [0, 1], ['alter_list', 'alter_list_item']),
+            new TerminalOccurrence(',', 13, [0], ['alter_list']),
+            new TerminalOccurrence('ORDER_SYM', 14, [0, 2], ['alter_list', 'alter_list_item']),
+            new TerminalOccurrence('BY', 15, [0, 2], ['alter_list', 'alter_list_item']),
+            new TerminalOccurrence('B', 16, [0, 2], ['alter_list', 'alter_list_item']),
+        ];
+        $input = new TerminalSequence($tokens, $tokens, [], [new ProductionOccurrence(0, null, 'alter_list', 1), new ProductionOccurrence(1, 0, 'alter_list_item', 0), new ProductionOccurrence(2, 0, 'alter_list_item', 0)]);
+        $rule = new OrderByRule();
+        $result = $rule->rewrite($input);
+        self::assertSame(['ORDER_SYM', 'BY', 'A', ',', 'B'], $result->names());
+        self::assertSame([10, 11, 12, 13, 16], array_map(static fn ($terminal): int => $terminal->id, $result->terminals));
+        self::assertSame($input->original, $result->original);
+        self::assertSame($input->productions, $result->productions);
+        self::assertSame($result, $rule->rewrite($result));
+    }
+
 }

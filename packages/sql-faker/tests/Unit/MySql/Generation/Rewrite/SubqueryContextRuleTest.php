@@ -39,6 +39,6 @@ final class SubqueryContextRuleTest extends TestCase
      */
     public static function providerScopes(): array
     {
-        return [['handler_stmt', true], ['purge', true], ['install_stmt', true], ['select_stmt', false]];
+        return [['handler_stmt', true], ['purge', true], ['install_stmt', true], ['part_type_def', true], ['opt_sub_part', true], ['select_stmt', false], ['create_table_stmt', false]];
     }
 }
