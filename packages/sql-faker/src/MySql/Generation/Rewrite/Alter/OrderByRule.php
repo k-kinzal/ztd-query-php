@@ -12,6 +12,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 /**
  * sql_yacc.yy alter_order_list shifts comma plus identifier before reducing alter_list.
  * Keeping ORDER BY last prevents a following nonreserved action from becoming an order item.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_yacc.yy
  */
 final class OrderByRule implements RewriteRule
 {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlFaker\Grammar\Generation\Lexeme;
 
 use Override;
+use SqlFaker\Grammar\Generation\Value\IntegerDomain;
 
 /**
  * An unsigned decimal scanner domain whose inclusive bounds do not depend on PHP's integer width.
@@ -21,6 +22,7 @@ final class IntegerLexemeGenerator implements LexemeGenerator
         private readonly string $maximum,
         private readonly array $defaults,
         private readonly string $definition,
+        private readonly bool $digitSeparators = false,
     ) {
     }
 
@@ -33,8 +35,9 @@ final class IntegerLexemeGenerator implements LexemeGenerator
         if ($input->terminal()->name !== $this->terminal) {
             return null;
         }
+        $value = $input->requested ?? $input->values?->value($input->index, $this->definition, new IntegerDomain($this->minimum, $this->maximum));
         $candidates = [];
-        foreach ($input->requested === null ? $this->defaults : [$input->requested] as $spelling) {
+        foreach ($value === null ? $this->defaults : [$value] as $spelling) {
             if (!$this->accepts($spelling)) {
                 continue;
             }
@@ -50,10 +53,11 @@ final class IntegerLexemeGenerator implements LexemeGenerator
      */
     public function accepts(string $spelling): bool
     {
-        if (preg_match('/\A[0-9]+\z/D', $spelling) !== 1) {
+        $pattern = $this->digitSeparators ? '/\A[0-9]+(?:_[0-9]+)*\z/D' : '/\A[0-9]+\z/D';
+        if (preg_match($pattern, $spelling) !== 1) {
             return false;
         }
-        $significant = ltrim($spelling, '0');
+        $significant = ltrim(str_replace('_', '', $spelling), '0');
         $value = $significant === '' ? '0' : $significant;
         $minimumLength = strlen($this->minimum);
         $maximumLength = strlen($this->maximum);

@@ -11,6 +11,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * sql_resolver.cc disallows empty rows and DEFAULT outside an INSERT table value constructor.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_resolver.cc
  */
 final class TableValueConstructorRule implements RewriteRule
 {

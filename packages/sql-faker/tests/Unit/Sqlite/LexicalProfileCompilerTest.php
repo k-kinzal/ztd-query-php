@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\Sqlite;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlFaker\Sqlite\LexicalProfileCompiler;
 
 #[CoversClass(LexicalProfileCompiler::class)]
+#[UsesClass(\SqlFaker\Grammar\Lexical\RegistrationTable::class)]
 final class LexicalProfileCompilerTest extends TestCase
 {
     public function testCompilesKeywordFamilies(): void
@@ -31,5 +33,11 @@ SOURCE;
         $this->expectException(RuntimeException::class);
 
         (new LexicalProfileCompiler())->compile('');
+    }
+    public function testRejectsPartialRegistrationReads(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Unsupported registration declaration');
+        (new LexicalProfileCompiler())->compile('{"SELECT", "TK_SELECT", ALWAYS, 1}, {"LOST" "NAME", "TK_SELECT", ALWAYS, 1}');
     }
 }

@@ -17,6 +17,9 @@ use SqlFaker\Grammar\Generation\Version\VersionedLexemeGenerator;
 
 /**
  * Composes the reviewed SQLite tokenizer cases without post-serialization whitespace changes.
+ * @see https://github.com/sqlite/sqlite/blob/version-3.47.2/src/build.c
+ * @see https://github.com/sqlite/sqlite/blob/version-3.47.2/src/global.c
+ * @see https://github.com/sqlite/sqlite/blob/version-3.47.2/src/tokenize.c
  */
 final class DefinitionFactory
 {

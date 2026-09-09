@@ -6,12 +6,15 @@ namespace SqlFaker\MySql\Generation\Lexeme;
 
 use SqlFaker\Grammar\Generation\Lexeme\LexemeGenerator;
 use SqlFaker\Grammar\Generation\Lexeme\PatternLexemeGenerator;
+use SqlFaker\Grammar\Generation\Value\CharacterDomain;
+use SqlFaker\Grammar\Generation\Value\DollarQuotedDomain;
 use SqlFaker\Grammar\Generation\Version\VersionCase;
 use SqlFaker\Grammar\Generation\Version\VersionedLexemeGenerator;
 
 /**
  * Implements sql_lex.cc/MY_LEX_IDENT_OR_DOLLAR_QUOTED_TEXT and get_dollar_quoted_text.
  * The tag is an identifier run excluding dollars; the first identical delimiter closes the text.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_lex.cc
  */
 final class DollarStringDefinitions
 {
@@ -37,6 +40,10 @@ final class DollarStringDefinitions
                 ['$$text$$', '$tag$text$tag$'],
                 'string',
                 'sql/sql_lex.cc:get_dollar_quoted_text',
+                new DollarQuotedDomain(
+                    new CharacterDomain(str_split('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_'), 0, 16),
+                    new CharacterDomain([...array_map(chr(...), array_values(array_diff(range(1, 127), [36]))), 'é', '猫'], 0, 255),
+                ),
             ),
             'mysql-dollar-quoted-strings',
         ));

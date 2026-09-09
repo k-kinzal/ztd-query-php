@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * gram.y/makeColumnRef and check_indirection allow a star only at the end of its own chain.
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/gram.y
  */
 final class IndirectionStarRule implements RewriteRule
 {

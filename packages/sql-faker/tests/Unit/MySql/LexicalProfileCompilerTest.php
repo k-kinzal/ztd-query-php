@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\MySql;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlFaker\MySql\LexicalProfileCompiler;
 
 #[CoversClass(LexicalProfileCompiler::class)]
+#[UsesClass(\SqlFaker\Grammar\Lexical\RegistrationTable::class)]
 final class LexicalProfileCompilerTest extends TestCase
 {
     public function testCompilesModernKeywordKindsAndFunctionTokens(): void
@@ -41,11 +43,10 @@ SOURCE;
     public function testCompilesLegacySeparatedTables(): void
     {
         $source = <<<'SOURCE'
-{ "SELECT", SYM(SELECT_SYM)}
-sql_functions
-{
+static SYMBOL symbols[] = {{ "SELECT", SYM(SELECT_SYM)}};
+static SYMBOL sql_functions[] = {
   { "COUNT", SYM(COUNT_SYM)}
-}
+};
 SOURCE;
 
         self::assertSame([
@@ -108,4 +109,10 @@ SOURCE);
         self::assertSame(['BKA_HINT' => ['BKA']], $result['SYM_H']);
     }
 
+    public function testUnsupportedEntryCannotBeHiddenByAnotherSpellingOfTheSameToken(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Unsupported registration declaration');
+        (new LexicalProfileCompiler())->registrations('static const SYMBOL symbols[] = {{SYM("SELECT", SELECT_SYM)}, {SYM_FN("NOW", NOW_SYM)}, {SYM_FN("CURRENT_" "TIMESTAMP", NOW_SYM)}};');
+    }
 }

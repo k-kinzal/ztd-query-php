@@ -8,6 +8,7 @@ use SqlFaker\Grammar\LexicalException;
 
 /**
  * The word flags and validity conditions in SQLite 3.47.2 select.c/sqlite3JoinType.
+ * @see https://github.com/sqlite/sqlite/blob/version-3.47.2/src/select.c
  */
 final class JoinModifiers
 {

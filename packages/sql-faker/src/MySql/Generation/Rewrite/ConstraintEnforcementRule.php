@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * sql/sql_yacc.yy column_attribute_list allows enforcement only immediately after a CHECK attribute.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_yacc.yy
  */
 final class ConstraintEnforcementRule implements RewriteRule
 {

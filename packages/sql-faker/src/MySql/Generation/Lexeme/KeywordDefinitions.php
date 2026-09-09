@@ -14,6 +14,7 @@ use SqlFaker\Grammar\Generation\Version\VersionedLexemeGenerator;
 /**
  * Explicit keyword dispatch for the checked-in releases, based on each tag's sql/lex.h.
  * These declarations select handlers; spellings remain in the upstream registration table.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/lex.h
  */
 final class KeywordDefinitions
 {

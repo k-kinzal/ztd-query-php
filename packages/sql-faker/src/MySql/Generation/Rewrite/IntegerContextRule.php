@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * Completes source-defined integer contexts in sql_yacc.yy, including diagnostic decimal alternatives.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_yacc.yy
  */
 final class IntegerContextRule implements RewriteRule
 {

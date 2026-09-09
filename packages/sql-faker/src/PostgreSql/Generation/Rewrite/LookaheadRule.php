@@ -11,6 +11,7 @@ use SqlFaker\PostgreSql\PgLookahead;
 
 /**
  * Settles parser.c/base_yylex aliases after the grammar's otherwise ambiguous followers have been selected.
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/parser.c
  */
 final class LookaheadRule implements RewriteRule
 {

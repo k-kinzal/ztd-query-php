@@ -25,6 +25,11 @@ use SqlFaker\MySql\Generation\Lexeme\DollarStringDefinitions;
 #[UsesClass(\SqlFaker\Grammar\Generation\Version\VersionedLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Spacing\SpacingConstraint::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\CharacterDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\ChoiceDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\IntegerDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\SequenceDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\DollarQuotedDomain::class)]
 final class DollarStringDefinitionsTest extends TestCase
 {
     public function testCreateUsesTheFirstMatchingDelimiterAndRejectsAnUnclosedTag(): void

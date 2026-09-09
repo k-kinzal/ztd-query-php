@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * gram.y:mergeTableFuncParameters permits only default, IN or VARIADIC input modes.
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/gram.y
  */
 final class TableFunctionRule implements RewriteRule
 {

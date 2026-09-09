@@ -12,6 +12,7 @@ use SqlFaker\Grammar\Generation\Version\VersionedLexemeGenerator;
 
 /**
  * Keyword dispatch shared by all checked-in MySQL releases, derived from their sql/lex.h declarations.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/lex.h
  */
 final class CommonKeywordDefinitions
 {

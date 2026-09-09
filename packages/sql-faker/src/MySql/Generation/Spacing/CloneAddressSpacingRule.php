@@ -12,6 +12,7 @@ use SqlFaker\Grammar\Generation\Spacing\SpacingRule;
 
 /**
  * sql/sql_yacc.yy clone_stmt checks the raw token positions on both sides of the port colon.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_yacc.yy
  */
 final class CloneAddressSpacingRule implements SpacingRule
 {

@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * Completes the ordering required by gram.y/insertSelectOptions for FETCH WITH TIES.
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/gram.y
  */
 final class FetchWithTiesRule implements RewriteRule
 {

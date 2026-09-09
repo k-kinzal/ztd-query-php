@@ -33,7 +33,7 @@ use SqlFaker\Provider\SqlGeneratorFactory;
  *   - mysql-9.1.0
  *
  * maxDepth selects shortest productions once the depth is reached; it is not a SQL length limit.
- * Generated statements may include whitespace and SQL comments. Optional clauses may be empty.
+ * The basic pipeline resolves lexical spaces without inserting comments. Optional clauses may be empty.
  * Seed the supplied Faker generator to reproduce a run within the same package version.
  *
  * @visibility public

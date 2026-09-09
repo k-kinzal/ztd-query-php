@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * sql/sql_yacc.yy option_value_no_option_type declares NAMES equal expr solely to reject it.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_yacc.yy
  */
 final class SetNamesRule implements RewriteRule
 {

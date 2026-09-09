@@ -10,6 +10,8 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * sql_yacc.yy/grant and revoke share privilege syntax, but PT_grant_roles requires role identifiers without ON.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/parse_tree_nodes.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_yacc.yy
  */
 final class RoleGrantRule implements RewriteRule
 {

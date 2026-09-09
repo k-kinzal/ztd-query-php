@@ -45,6 +45,12 @@ use SqlFaker\Sqlite\Generation\Lexeme\DefinitionFactory;
 #[UsesClass(\SqlFaker\Grammar\LexicalException::class)]
 #[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\JoinModifiers::class)]
 #[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\WindowNameLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\CharacterDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\ChoiceDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\IntegerDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\SequenceDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\DollarQuotedDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\BoundaryCompletion::class)]
 final class DefinitionFactoryTest extends TestCase
 {
     public function testCreateCombinesLexicalOutputAndBoundaryDecisions(): void

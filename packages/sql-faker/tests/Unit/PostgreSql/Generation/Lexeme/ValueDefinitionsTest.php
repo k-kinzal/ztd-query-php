@@ -25,6 +25,12 @@ use SqlFaker\PostgreSql\Generation\Lexeme\ValueDefinitions;
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalOccurrence::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Spacing\SpacingConstraint::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\CharacterDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\ChoiceDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\IntegerDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\SequenceDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\DollarQuotedDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\IntegerLexemeGenerator::class)]
 final class ValueDefinitionsTest extends TestCase
 {
     public function testCreateLeavesUnknownTerminalsUnclaimed(): void
@@ -123,5 +129,25 @@ final class ValueDefinitionsTest extends TestCase
             ['Op', '|-', ['|-']],
             ['Op', '--', []],
         ];
+    }
+    #[DataProvider('providerDollarStrings')]
+    public function testStringsRecognizesDollarDelimitersLiterally(string $value, bool $valid): void
+    {
+        $result = (new ValueDefinitions())->strings()->generate(new LexemeInput(TerminalSequence::fromNames(['SCONST']), 0, new ResolvedOutput(), $value));
+        self::assertNotNull($result);
+        self::assertSame($valid ? [$value] : [], array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$result->sequences()]));
+    }
+
+    /**
+     * @return iterable<array{string, bool}>
+     */
+    public static function providerDollarStrings(): iterable
+    {
+        yield ['$$text$$', true];
+        yield ['$tag$text$tag$', true];
+        yield ['$_0$a\'b$_0$', true];
+        yield ['$tag$text$other$', false];
+        yield ['$0$text$0$', false];
+        yield ['$$a$$b$$', false];
     }
 }

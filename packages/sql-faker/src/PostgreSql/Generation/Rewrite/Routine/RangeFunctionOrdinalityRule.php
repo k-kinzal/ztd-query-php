@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * parse_clause.c:transformRangeFunction disallows ordinality beside a top-level column definition list.
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/parse_clause.c
  */
 final class RangeFunctionOrdinalityRule implements RewriteRule
 {

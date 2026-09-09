@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * Implements the frame_extent rejection conditions in PostgreSQL 17.2 gram.y.
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/gram.y
  */
 final class WindowFrameRule implements RewriteRule
 {

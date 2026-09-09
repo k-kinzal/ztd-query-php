@@ -10,6 +10,8 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * SQLite 3.47.2 expr.c:sqlite3ExprFunction enforces sqliteLimit.h's default 127 arguments.
+ * @see https://github.com/sqlite/sqlite/blob/version-3.47.2/src/expr.c
+ * @see https://github.com/sqlite/sqlite/blob/version-3.47.2/src/sqliteLimit.h
  */
 final class FunctionArgumentRule implements RewriteRule
 {

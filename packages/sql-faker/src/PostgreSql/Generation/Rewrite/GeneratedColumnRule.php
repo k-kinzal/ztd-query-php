@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * gram.y ColConstraintElem requires GENERATED ALWAYS for expressions; IDENTITY also permits BY DEFAULT.
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/gram.y
  */
 final class GeneratedColumnRule implements RewriteRule
 {

@@ -9,6 +9,8 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * parse_expr.c and parse_target.c allow up to four ColumnRef fields before subscripting.
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/parse_expr.c
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/parse_target.c
  */
 final class ColumnNameRule implements RewriteRule
 {

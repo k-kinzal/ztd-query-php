@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * gram.y/ConstraintAttributeSpec rejects three conflicting pairs of accumulated option bits.
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/gram.y
  */
 final class ConstraintAttributesRule implements RewriteRule
 {

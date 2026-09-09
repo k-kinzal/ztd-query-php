@@ -27,6 +27,7 @@ use SqlFaker\MySql\MySqlProfileBuilder;
 #[UsesClass(MySqlGrammar::class)]
 #[UsesClass(\SqlFaker\Grammar\NonTerminal::class)]
 #[UsesClass(\SqlFaker\Grammar\Terminal::class)]
+#[UsesClass(\SqlFaker\Grammar\Lexical\RegistrationTable::class)]
 final class MySqlProfileBuilderTest extends TestCase
 {
     public function testSourceUrlsReadsTheKeywordTableAndTheScanner(): void

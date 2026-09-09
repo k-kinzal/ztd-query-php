@@ -12,6 +12,7 @@ use SqlFaker\Grammar\Generation\Spacing\SpacingRule;
 
 /**
  * sql/sql_lex.cc MY_LEX_IDENT_SEP / MY_LEX_IDENT_START: preserves qualified-name adjacency.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_lex.cc
  */
 final class QualifiedNameSpacingRule implements SpacingRule
 {

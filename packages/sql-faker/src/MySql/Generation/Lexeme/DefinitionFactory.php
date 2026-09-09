@@ -20,6 +20,11 @@ use SqlFaker\MySql\Generation\Spacing\VariableSpacingRule;
 
 /**
  * Binds the exact release's registration data to executable scanner and spacing definitions.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/create_field.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_yacc.yy
+ * @see https://github.com/mysql/mysql-server/blob/mysql-5.6.51/sql/field.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-5.7.44/sql/field.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/field.cc
  */
 final class DefinitionFactory
 {

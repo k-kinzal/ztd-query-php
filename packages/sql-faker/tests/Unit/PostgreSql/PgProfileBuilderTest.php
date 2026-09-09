@@ -15,6 +15,7 @@ use SqlFaker\PostgreSql\PgProfileBuilder;
 #[CoversClass(PgProfileBuilder::class)]
 #[UsesClass(\SqlFaker\PostgreSql\LexicalProfileCompiler::class)]
 #[UsesClass(\SqlFaker\Grammar\Lexical\UpstreamLexerSource::class)]
+#[UsesClass(\SqlFaker\Grammar\Lexical\RegistrationTable::class)]
 final class PgProfileBuilderTest extends TestCase
 {
     public function testSourceUrlsReadsTheKeywordListTheScannerAndTheParser(): void

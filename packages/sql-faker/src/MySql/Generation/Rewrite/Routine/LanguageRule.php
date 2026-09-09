@@ -9,6 +9,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * sql_yacc.yy/stored_routine_body requires a non-SQL language for AS strings and SQL for statement bodies.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_yacc.yy
  */
 final class LanguageRule implements RewriteRule
 {

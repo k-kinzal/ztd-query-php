@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * Implements the contextual identifier checks in sql_yacc.yy/alter_instance_action and opt_source_count.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_yacc.yy
  */
 final class InstanceActionRule implements RewriteRule
 {

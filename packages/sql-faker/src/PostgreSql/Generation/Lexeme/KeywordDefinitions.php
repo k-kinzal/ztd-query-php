@@ -12,6 +12,7 @@ use SqlFaker\Grammar\Generation\Version\VersionedLexemeGenerator;
 
 /**
  * Explicit keyword handlers from src/include/parser/kwlist.h; spellings remain in the upstream table.
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/include/parser/kwlist.h
  */
 final class KeywordDefinitions
 {

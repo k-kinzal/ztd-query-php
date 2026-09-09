@@ -7,6 +7,7 @@ namespace SqlFaker\Grammar\Generation\Lexeme;
 use SqlFaker\Grammar\Generation\Output\ResolvedOutput;
 use SqlFaker\Grammar\Generation\Token\TerminalOccurrence;
 use SqlFaker\Grammar\Generation\Token\TerminalSequence;
+use SqlFaker\Grammar\Generation\Value\ValueChoices;
 
 /**
  * Per-generation input; dialect, version and registration tables belong to the generators.
@@ -21,6 +22,7 @@ final class LexemeInput
         public readonly int $index,
         public readonly ResolvedOutput $right,
         public readonly ?string $requested = null,
+        public readonly ?ValueChoices $values = null,
     ) {
     }
 

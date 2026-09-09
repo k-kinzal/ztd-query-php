@@ -11,6 +11,7 @@ use SqlFaker\Grammar\Generation\Token\UniqueOptionRule;
 use SqlFaker\MySql\Generation\Rewrite\Alter\OrderByRule;
 use SqlFaker\MySql\Generation\Rewrite\Column\AutoIncrementRule;
 use SqlFaker\MySql\Generation\Rewrite\Column\FieldLengthRule;
+use SqlFaker\MySql\Generation\Rewrite\Expression\ConcatenationRule;
 use SqlFaker\MySql\Generation\Rewrite\Expression\QuantifiedComparisonRule;
 use SqlFaker\MySql\Generation\Rewrite\Expression\TableValueConstructorRule;
 use SqlFaker\MySql\Generation\Rewrite\Name\SystemVariableRule;
@@ -28,6 +29,8 @@ use SqlFaker\MySql\Generation\Rewrite\Routine\ReturnRule;
 
 /**
  * Declares structural repairs of MySQL parser diagnostic alternatives and ambiguity.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_lex.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_yacc.yy
  */
 final class RewriteDefinitions
 {
@@ -42,6 +45,9 @@ final class RewriteDefinitions
                 'SUBJECT_SYM' => 'subject', 'ISSUER_SYM' => 'issuer', 'CIPHER_SYM' => 'cipher',
             ], 'AND_SYM', 'sql_yacc.yy:require_list_element'),
             new UniqueOptionRule('start', 'start_transaction_option', ['READ_SYM' => 'access-mode'], ',', 'sql_yacc.yy:start'),
+            new TerminalMappingRule('not', 'NOT2_SYM', 'NOT_SYM', 'sql/sql_lex.cc:find_keyword:default-mode'),
+            new TerminalMappingRule('not2', 'NOT2_SYM', '!', 'sql/sql_lex.cc:find_keyword:default-mode'),
+            new ConcatenationRule(),
             new SubqueryContextRule(),
             new QuantifiedComparisonRule(),
             new TableValueConstructorRule(),

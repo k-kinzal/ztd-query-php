@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * Implements the required PRIMARY KEY and forbidden AUTOINCREMENT conditions in build.c/sqlite3EndTable.
+ * @see https://github.com/sqlite/sqlite/blob/version-3.47.2/src/build.c
  */
 final class WithoutRowidRule implements RewriteRule
 {

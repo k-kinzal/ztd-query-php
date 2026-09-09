@@ -14,6 +14,8 @@ use SqlFaker\Grammar\Generation\Lexeme\LexemeSequence;
 /**
  * tokenize.c getToken excludes INDEXED although parse.y idj allows it as a name.
  * Quoting that spelling keeps WINDOW/OVER recognized by their scanner lookahead.
+ * @see https://github.com/sqlite/sqlite/blob/version-3.47.2/src/parse.y
+ * @see https://github.com/sqlite/sqlite/blob/version-3.47.2/src/tokenize.c
  */
 final class WindowNameLexemeGenerator implements LexemeGenerator
 {

@@ -12,6 +12,7 @@ use SqlFaker\Grammar\Generation\Spacing\SpacingRule;
 
 /**
  * sql/sql_lex.cc MY_LEX_IDENT: SYM_FN lookup requires a directly following parenthesis.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_lex.cc
  */
 final class FunctionSpacingRule implements SpacingRule
 {

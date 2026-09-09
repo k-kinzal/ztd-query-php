@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * build.c:sqlite3AddGenerated permits one generated expression without a DEFAULT on the same column.
+ * @see https://github.com/sqlite/sqlite/blob/version-3.47.2/src/build.c
  */
 final class GeneratedColumnRule implements RewriteRule
 {

@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * Implements gram.y/zone_value's HOUR and MINUTE interval-mask restriction.
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/gram.y
  */
 final class TimeZoneIntervalRule implements RewriteRule
 {

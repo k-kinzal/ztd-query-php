@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * Replaces gram.y's always-error LIMIT value,value diagnostic alternative with LIMIT/OFFSET.
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/gram.y
  */
 final class LimitOffsetRule implements RewriteRule
 {

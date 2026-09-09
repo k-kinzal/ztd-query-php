@@ -49,9 +49,15 @@ use SqlFaker\PostgreSql\Generation\Rewrite\RewriteDefinitions;
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Name\AliasRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Routine\RangeFunctionOrdinalityRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Routine\JsonOptionsRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Column\ConstraintCapabilitiesRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Column\ForeignKeyActionRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Query\SchemaElementsRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Query\ParserOptionsRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Routine\JsonTablePathRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Routine\AggregateArgumentRule::class)]
 final class RewriteDefinitionsTest extends TestCase
 {
-    public function testCreateKeepsOneDefaultNamespacePerXmlTable(): void
+    public function testUniqueOptionsKeepsOneDefaultNamespacePerXmlTable(): void
     {
         $first = new TerminalOccurrence('DEFAULT', 10, [0, 1], ['xmltable', 'xml_namespace_el']);
         $firstValue = new TerminalOccurrence('SCONST', 11, [0, 1], ['xmltable', 'xml_namespace_el']);
@@ -68,7 +74,7 @@ final class RewriteDefinitionsTest extends TestCase
             new ProductionOccurrence(3, null, 'xmltable', 1),
             new ProductionOccurrence(4, 3, 'xml_namespace_el', 1),
         ]);
-        $rule = (new RewriteDefinitions())->create();
+        $rule = (new RewriteDefinitions())->uniqueOptions();
         $result = $rule->rewrite($input);
         self::assertSame([$first, $firstValue, $other, $otherValue], $result->terminals);
         self::assertSame($input->original, $result->original);

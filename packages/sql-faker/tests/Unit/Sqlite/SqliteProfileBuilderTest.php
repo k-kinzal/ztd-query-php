@@ -15,6 +15,7 @@ use SqlFaker\Sqlite\SqliteProfileBuilder;
 #[CoversClass(SqliteProfileBuilder::class)]
 #[UsesClass(\SqlFaker\Sqlite\LexicalProfileCompiler::class)]
 #[UsesClass(\SqlFaker\Grammar\Lexical\UpstreamLexerSource::class)]
+#[UsesClass(\SqlFaker\Grammar\Lexical\RegistrationTable::class)]
 final class SqliteProfileBuilderTest extends TestCase
 {
     public function testSourceUrlsReadsTheKeywordHashAndTheTokenizer(): void

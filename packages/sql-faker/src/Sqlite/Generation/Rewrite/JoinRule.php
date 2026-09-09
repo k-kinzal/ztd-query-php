@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * Declares the word domain checked by select.c/sqlite3JoinType and the source-list condition on ON/USING.
+ * @see https://github.com/sqlite/sqlite/blob/version-3.47.2/src/select.c
  */
 final class JoinRule implements RewriteRule
 {

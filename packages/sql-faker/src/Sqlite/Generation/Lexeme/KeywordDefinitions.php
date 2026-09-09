@@ -13,6 +13,7 @@ use SqlFaker\Grammar\Generation\Version\VersionedLexemeGenerator;
 
 /**
  * Explicit keyword handlers from tool/mkkeywordhash.c; spellings remain in the upstream table.
+ * @see https://github.com/sqlite/sqlite/blob/version-3.47.2/tool/mkkeywordhash.c
  */
 final class KeywordDefinitions
 {

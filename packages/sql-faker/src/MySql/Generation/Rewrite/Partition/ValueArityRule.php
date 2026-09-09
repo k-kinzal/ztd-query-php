@@ -10,6 +10,10 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 /**
  * parse_tree_partitions.cc requires a common value width, and two or more fields for LIST rows.
  * Runs after kind selection, expression grouping and scalar-list disambiguation.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/parse_tree_partitions.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-5.7.44/sql/sql_partition.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_partition.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-5.6.51/sql/sql_partition.cc
  */
 final class ValueArityRule implements RewriteRule
 {

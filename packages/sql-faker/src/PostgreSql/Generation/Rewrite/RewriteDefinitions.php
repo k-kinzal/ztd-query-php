@@ -8,6 +8,8 @@ use SqlFaker\Grammar\Generation\Token\ExpressionGroupingRule;
 use SqlFaker\Grammar\Generation\Token\TerminalMappingRule;
 use SqlFaker\Grammar\Generation\Token\TokenRewriter;
 use SqlFaker\Grammar\Generation\Token\UniqueOptionRule;
+use SqlFaker\PostgreSql\Generation\Rewrite\Column\ConstraintCapabilitiesRule;
+use SqlFaker\PostgreSql\Generation\Rewrite\Column\ForeignKeyActionRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Column\IdentityOptionRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Name\AliasRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Name\AnyRelationNameRule;
@@ -16,8 +18,12 @@ use SqlFaker\PostgreSql\Generation\Rewrite\Name\FunctionNameRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Name\IndirectionStarRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Name\RelationNameRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Query\IntoClauseRule;
+use SqlFaker\PostgreSql\Generation\Rewrite\Query\ParserOptionsRule;
+use SqlFaker\PostgreSql\Generation\Rewrite\Query\SchemaElementsRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Query\SelectOptionsRule;
+use SqlFaker\PostgreSql\Generation\Rewrite\Routine\AggregateArgumentRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Routine\JsonOptionsRule;
+use SqlFaker\PostgreSql\Generation\Rewrite\Routine\JsonTablePathRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Routine\RangeFunctionOrdinalityRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Routine\SubstringRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Routine\TableFunctionRule;
@@ -26,6 +32,8 @@ use SqlFaker\PostgreSql\Generation\Rewrite\Routine\WithinGroupRule;
 
 /**
  * Declares PostgreSQL structural rules by their original grammar scope.
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/gram.y
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/parse_clause.c
  */
 final class RewriteDefinitions
 {
@@ -41,6 +49,11 @@ final class RewriteDefinitions
             new IndirectionStarRule(),
             new ColumnNameRule(),
             new ConstraintAttributesRule(),
+            new ConstraintCapabilitiesRule(),
+            new ForeignKeyActionRule(),
+            new SchemaElementsRule(),
+            new ParserOptionsRule(),
+            new AggregateArgumentRule(),
             new GeneratedColumnRule(),
             new WindowFrameRule(),
             new RelationNameRule(),
@@ -59,7 +72,23 @@ final class RewriteDefinitions
             new IdentityOptionRule(),
             new IntoClauseRule(),
             new JsonOptionsRule(),
+            new JsonTablePathRule(),
             new HashPartitionBoundRule(),
+            $this->uniqueOptions(),
+            new TerminalMappingRule('RowSecurityDefaultPermissive', 'IDENT', 'POLICY_MODE', 'gram.y:RowSecurityDefaultPermissive'),
+            new TerminalMappingRule('AlterOptRoleElem', 'IDENT', 'ROLE_OPTION', 'gram.y:AlterOptRoleElem'),
+            new TerminalMappingRule('xmltable_column_option_el', 'IDENT', 'PATH', 'gram.y:xmltable_column_el'),
+            new ExpressionGroupingRule(['a_expr', 'b_expr'], 'gram.y:a_expr/b_expr:c_expr:parenthesized-operands'),
+            new SubstringRule(),
+            new LookaheadRule(),
+        );
+    }
+    /**
+     * Applies parser uniqueness constraints while retaining the first original option in each scope.
+     */
+    public function uniqueOptions(): TokenRewriter
+    {
+        return new TokenRewriter(
             new UniqueOptionRule('columnDef', 'ColConstraint', ['COLLATE' => 'collation'], null, 'gram.y:SplitColQualList'),
             new UniqueOptionRule('columnOptions', 'ColConstraint', ['COLLATE' => 'collation'], null, 'gram.y:SplitColQualList'),
             new UniqueOptionRule('CreateDomainStmt', 'ColConstraint', ['COLLATE' => 'collation'], null, 'gram.y:SplitColQualList'),
@@ -70,12 +99,6 @@ final class RewriteDefinitions
                 'DEFAULT' => 'default', 'IDENT' => 'path', 'NOT' => 'null', 'NULL_P' => 'null',
             ], null, 'gram.y:xmltable_column_el'),
             new UniqueOptionRule('xmltable', 'xml_namespace_el', ['DEFAULT' => 'default'], ',', 'parse_clause.c:transformRangeTableFunc'),
-            new TerminalMappingRule('RowSecurityDefaultPermissive', 'IDENT', 'POLICY_MODE', 'gram.y:RowSecurityDefaultPermissive'),
-            new TerminalMappingRule('AlterOptRoleElem', 'IDENT', 'ROLE_OPTION', 'gram.y:AlterOptRoleElem'),
-            new TerminalMappingRule('xmltable_column_option_el', 'IDENT', 'PATH', 'gram.y:xmltable_column_el'),
-            new ExpressionGroupingRule(['a_expr', 'b_expr'], 'gram.y:a_expr/b_expr:c_expr:parenthesized-operands'),
-            new SubstringRule(),
-            new LookaheadRule(),
         );
     }
 }

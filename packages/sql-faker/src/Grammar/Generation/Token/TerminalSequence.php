@@ -13,6 +13,7 @@ final class TerminalSequence
      * @param list<TerminalOccurrence> $terminals
      * @param list<TerminalOccurrence> $original
      * @param list<string> $rewrites
+     * @param list<array{rule: string, offset: int, removed: list<TerminalOccurrence>, inserted: list<TerminalOccurrence>}> $operations
      * @param list<ProductionOccurrence> $productions
      */
     public function __construct(
@@ -20,6 +21,7 @@ final class TerminalSequence
         public readonly array $original = [],
         public readonly array $rewrites = [],
         public readonly array $productions = [],
+        public readonly array $operations = [],
     ) {
     }
 
@@ -58,7 +60,9 @@ final class TerminalSequence
     {
         $terminals = $this->terminals;
         array_splice($terminals, $offset, $length, $replacement);
-        return new self($terminals, $this->original, [...$this->rewrites, $rule], $this->productions);
+        return new self($terminals, $this->original, [...$this->rewrites, $rule], $this->productions, [...$this->operations, [
+            'rule' => $rule, 'offset' => $offset, 'removed' => array_slice($this->terminals, $offset, $length), 'inserted' => $replacement,
+        ]]);
     }
 
     /**

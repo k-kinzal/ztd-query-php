@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * analyze.c:transformOptionalSelectInto accepts INTO only on a top-level query's leftmost SELECT.
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/analyze.c
  */
 final class IntoClauseRule implements RewriteRule
 {

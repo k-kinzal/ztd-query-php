@@ -11,6 +11,10 @@ use SqlFaker\Grammar\Generation\Lexeme\LexemeInput;
 
 /**
  * Create_field::init requires M >= D; my_decimal_trim gives (0,0) its default precision.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/create_field.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-5.6.51/sql/field.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-5.7.44/sql/field.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/field.cc
  */
 final class PrecisionLexemeGenerator implements LexemeGenerator
 {

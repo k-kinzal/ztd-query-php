@@ -11,6 +11,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * gram.y:insertSelectOptions merges parenthesized query options into the same SelectStmt.
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/gram.y
  */
 final class SelectOptionsRule implements RewriteRule
 {

@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * sql_yacc.yy/opt_source_count requires the identifier COUNT and a nonzero NUM value.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_yacc.yy
  */
 final class LoadSourceCountRule implements RewriteRule
 {

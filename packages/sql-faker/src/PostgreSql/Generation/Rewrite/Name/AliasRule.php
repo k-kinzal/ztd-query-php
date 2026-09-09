@@ -9,6 +9,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * gram.y/relation_expr_opt_alias reduces before SET unless the alias has an explicit AS.
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/gram.y
  */
 final class AliasRule implements RewriteRule
 {

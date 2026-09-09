@@ -13,6 +13,7 @@ use SqlFaker\Grammar\Generation\Lexeme\LexemeSequence;
 
 /**
  * sql_yacc.yy:filter_wild_db_table_string requires a dot and forbids line feeds after get_text decoding.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_yacc.yy
  */
 final class ReplicationTablePatternLexemeGenerator implements LexemeGenerator
 {

@@ -93,6 +93,7 @@ use SqlFaker\Grammar\Terminal;
 #[UsesClass(GenerationException::class)]
 #[UsesClass(LexicalException::class)]
 #[UsesClass(\SqlFaker\Grammar\Derivation\ProductionPattern::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\BoundaryCompletion::class)]
 final class DerivationTraceTest extends TestCase
 {
     public function testExpandPreservesRuleAncestorsAndProductionOrdinals(): void

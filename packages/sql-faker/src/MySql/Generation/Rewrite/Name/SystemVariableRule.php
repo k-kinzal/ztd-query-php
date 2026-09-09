@@ -9,6 +9,8 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * sql_lex.cc/MY_LEX_SYSTEM_VAR accepts an identifier or backtick immediately after the second at-sign.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_lex.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_yacc.yy
  */
 final class SystemVariableRule implements RewriteRule
 {

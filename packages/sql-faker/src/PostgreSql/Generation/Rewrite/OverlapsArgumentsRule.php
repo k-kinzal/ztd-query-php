@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * Implements gram.y's two-argument row requirement for each side of OVERLAPS.
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/gram.y
  */
 final class OverlapsArgumentsRule implements RewriteRule
 {

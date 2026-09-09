@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * Implements gram.y/CopyStmt: PROGRAM needs a filename and COPY TO cannot carry a WHERE clause.
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/gram.y
  */
 final class CopySourceRule implements RewriteRule
 {

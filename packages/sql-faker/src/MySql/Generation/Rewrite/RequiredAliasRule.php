@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * sql_yacc.yy marks derived-table and JSON_TABLE aliases optional solely to provide a targeted diagnostic.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_yacc.yy
  */
 final class RequiredAliasRule implements RewriteRule
 {

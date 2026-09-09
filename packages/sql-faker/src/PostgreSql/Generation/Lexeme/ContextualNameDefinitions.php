@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Lexeme\PatternLexemeGenerator;
 
 /**
  * Identifier domains explicitly recognized by gram.y semantic actions in PostgreSQL 17.2.
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/gram.y
  */
 final class ContextualNameDefinitions
 {

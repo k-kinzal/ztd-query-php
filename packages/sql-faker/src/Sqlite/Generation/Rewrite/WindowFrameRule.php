@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * Implements the relative boundary order required by window.c/sqlite3WindowAlloc.
+ * @see https://github.com/sqlite/sqlite/blob/version-3.47.2/src/window.c
  */
 final class WindowFrameRule implements RewriteRule
 {

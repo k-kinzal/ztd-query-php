@@ -48,6 +48,7 @@ final class VersionedLexemeGeneratorTest extends TestCase
         self::assertNotNull($firstResult);
         self::assertNotNull($secondResult);
         self::assertSame('NOW', [...$firstResult->sequences()][0]->lexemes[0]->text);
+        self::assertSame(['shared:NOW', 'version-case:shared-case'], [...[...$firstResult->sequences()][0]->sources()]);
         self::assertSame('NOW', [...$secondResult->sequences()][0]->lexemes[0]->text);
         self::assertNull((new VersionedLexemeGenerator('unknown', $old, $new))->generate($input));
     }

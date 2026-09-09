@@ -12,9 +12,11 @@ use SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeGenerator;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeInput;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeSequence;
+use SqlFaker\Grammar\Generation\Value\IntegerDomain;
 
 /**
  * Restricts MySQL decimal and hexadecimal forms to a source-defined nonnegative 31-bit interval.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_lex.cc
  */
 final class BoundedIntegerLexemeGenerator implements LexemeGenerator
 {
@@ -43,8 +45,9 @@ final class BoundedIntegerLexemeGenerator implements LexemeGenerator
         if ($input->terminal()->name !== $this->terminal) {
             return null;
         }
+        $value = $input->requested ?? $input->values?->value($input->index, $this->definition, new IntegerDomain((string) $this->minimum, (string) $this->maximum));
         $candidates = [];
-        foreach ($input->requested === null ? $this->defaults : [$input->requested] as $spelling) {
+        foreach ($value === null ? $this->defaults : [$value] as $spelling) {
             if (!$this->accepts($spelling)) {
                 continue;
             }

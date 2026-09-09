@@ -14,6 +14,7 @@ use SqlFaker\Grammar\Generation\Lexeme\LexemeSequence;
 
 /**
  * Supplies identifier-form sizes accepted by sql_yacc.yy:size_number, with a 31-bit magnitude prefix.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_yacc.yy
  */
 final class SizeNumberLexemeGenerator implements LexemeGenerator
 {

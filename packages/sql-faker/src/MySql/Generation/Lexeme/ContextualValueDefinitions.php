@@ -13,6 +13,7 @@ use SqlFaker\Grammar\Generation\Version\VersionedLexemeGenerator;
 
 /**
  * Value domains checked by sql_yacc.yy semantic actions, separate from unrestricted scanner values.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_yacc.yy
  */
 final class ContextualValueDefinitions
 {

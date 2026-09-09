@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * PT_subquery and partition contextualization forbid subqueries in these statement expressions.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/parse_tree_nodes.cc
  */
 final class SubqueryContextRule implements RewriteRule
 {

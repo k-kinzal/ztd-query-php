@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * sql_const.h:MAX_REF_PARTS limits partition and subpartition field lists to sixteen names.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_const.h
  */
 final class FieldListRule implements RewriteRule
 {

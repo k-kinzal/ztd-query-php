@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * sql_yacc.yy requires the IO thread when START REPLICA/SLAVE supplies authentication options.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_yacc.yy
  */
 final class StartRule implements RewriteRule
 {

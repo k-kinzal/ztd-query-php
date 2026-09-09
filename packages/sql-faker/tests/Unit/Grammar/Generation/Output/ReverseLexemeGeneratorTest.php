@@ -50,6 +50,7 @@ use SqlFaker\Grammar\LexicalException;
 #[UsesClass(LexicalException::class)]
 #[UsesClass(\SqlFaker\Grammar\Derivation\ProductionPattern::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\BoundaryCompletion::class)]
 final class ReverseLexemeGeneratorTest extends TestCase
 {
     public function testGenerateCompoundOutputRemainsInOrderAndEofAddsNoBoundary(): void

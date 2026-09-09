@@ -83,7 +83,7 @@ A dash means there is no dedicated method for that fragment on the provider.
 
 PostgreSQL's `selectLimit()` can include LIMIT, OFFSET, or FETCH syntax. Optional
 clauses can return empty strings; see [output behavior](usage.md#understand-the-output).
-A generated identifier may be quoted or accompanied by whitespace and comments.
+A generated identifier may be quoted. The basic pipeline does not insert comments.
 
 ## Lexical tokens
 

@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * version-3.47.2 parse.y table_option recognizes the ID spelling STRICT and WITHOUT ROWID.
+ * @see https://github.com/sqlite/sqlite/blob/version-3.47.2/src/parse.y
  */
 final class TableOptionRule implements RewriteRule
 {

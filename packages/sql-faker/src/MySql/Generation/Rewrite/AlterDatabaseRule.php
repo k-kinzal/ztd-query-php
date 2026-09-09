@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * sql/sql_yacc.yy ident_or_empty and alter_database_options compete for an initial option keyword that is also allowed as an identifier.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_yacc.yy
  */
 final class AlterDatabaseRule implements RewriteRule
 {

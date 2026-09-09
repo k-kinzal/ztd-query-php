@@ -9,6 +9,10 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * PT_part_definition requires one partition kind for the list; PT_partition checks its declared count.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/parse_tree_partitions.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-5.7.44/sql/sql_partition.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_partition.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-5.6.51/sql/sql_partition.cc
  */
 final class DefinitionRule implements RewriteRule
 {

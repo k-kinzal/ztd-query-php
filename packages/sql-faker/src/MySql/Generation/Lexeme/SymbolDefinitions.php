@@ -14,6 +14,9 @@ use SqlFaker\Grammar\Generation\Version\VersionedLexemeGenerator;
 
 /**
  * sql/sql_lex.cc single-character returns, scanner operators, EOF and parser lookahead phrases.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/lex.h
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_lex.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_yacc.yy
  */
 final class SymbolDefinitions
 {
@@ -29,6 +32,7 @@ final class SymbolDefinitions
         foreach (['PARAM_MARKER' => '?', 'SET_VAR' => ':=', 'OR2_SYM' => '||', 'NOT2_SYM' => 'NOT'] as $terminal => $text) {
             $symbols[] = new MatchingLexemeGenerator($terminal, new FixedLexemeGenerator($text, 'symbol', 'sql/sql_lex.cc:' . $terminal));
         }
+        $symbols[] = new MatchingLexemeGenerator('CONCAT_FUNCTION_NAME', new FixedLexemeGenerator('CONCAT', 'function', 'sql/sql_yacc.yy:simple_expr:Item_func_concat'));
         return new ChoiceLexemeGenerator(...[...$symbols, $this->json($version), $this->phrases($version), $this->selectors($version)]);
     }
 

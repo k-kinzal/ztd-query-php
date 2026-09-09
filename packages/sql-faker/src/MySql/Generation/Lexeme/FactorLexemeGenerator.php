@@ -11,6 +11,7 @@ use SqlFaker\Grammar\Generation\Lexeme\PatternLexemeGenerator;
 
 /**
  * sql_yacc.yy/factor accepts exactly 2 or 3; paired ALTER USER factors differ and ADD factors ascend.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_yacc.yy
  */
 final class FactorLexemeGenerator implements LexemeGenerator
 {

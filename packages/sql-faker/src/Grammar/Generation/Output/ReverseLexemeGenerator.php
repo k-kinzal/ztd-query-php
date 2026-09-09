@@ -11,6 +11,7 @@ use SqlFaker\Grammar\Generation\Lexeme\LexemeInput;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeSequence;
 use SqlFaker\Grammar\Generation\Spacing\SpacingConstraint;
 use SqlFaker\Grammar\Generation\Token\TerminalSequence;
+use SqlFaker\Grammar\Generation\Value\ValueChoices;
 use SqlFaker\Grammar\LexicalException;
 
 /**
@@ -32,9 +33,10 @@ final class ReverseLexemeGenerator
     /**
      * @throws LexicalException When a candidate is missing, incompatible or unstable
      * @param GenerationPlan<bool>|null $plan
+     * @param (Closure(positive-int): ?int)|null $valueChoice Explicit plan-time value decisions
      * @param Closure(int): int $choose Chooses once after each applicable candidate set has been evaluated
      */
-    public function generate(TerminalSequence $sequence, ?GenerationPlan $plan, Closure $choose): ResolvedOutput
+    public function generate(TerminalSequence $sequence, ?GenerationPlan $plan, Closure $choose, ?Closure $valueChoice = null): ResolvedOutput
     {
         $occurrences = [];
         $requested = [];
@@ -50,9 +52,15 @@ final class ReverseLexemeGenerator
             $occurrences[$terminal->name] = $occurrence + 1;
             $requested[$index] = $plan?->lexemeAt($terminal->name, $occurrence) ?? $original[$terminal->id] ?? null;
         }
+        $values = $valueChoice === null ? null : new ValueChoices($valueChoice);
+        $completion = new BoundaryCompletion($this->lexemes, $this->resolver, $requested);
         $right = new ResolvedOutput();
         for ($index = count($sequence->terminals) - 1; $index >= 0; --$index) {
-            $right = $this->select(new LexemeInput($sequence, $index, $right, $requested[$index]), $choose);
+            $right = $this->select(
+                new LexemeInput($sequence, $index, $right, $requested[$index], $values),
+                $choose,
+                static fn (ResolvedOutput $suffix): bool => $completion->accepts($sequence, $index - 1, $suffix)
+            );
         }
         if ($right->left !== null && $right->left->allowed !== SpacingConstraint::EITHER) {
             throw new LexicalException('Unresolved left boundary: ' . implode(', ', $right->left->rules));
@@ -63,8 +71,9 @@ final class ReverseLexemeGenerator
     /**
      * @throws LexicalException When a candidate is missing, incompatible or unstable
      * @param Closure(int): int $choose
+     * @param (Closure(ResolvedOutput): bool)|null $canComplete Checks outstanding left-boundary obligations
      */
-    public function select(LexemeInput $input, Closure $choose): ResolvedOutput
+    public function select(LexemeInput $input, Closure $choose, ?Closure $canComplete = null): ResolvedOutput
     {
         $candidates = $this->lexemes->generate($input);
         if ($candidates === null) {
@@ -72,6 +81,7 @@ final class ReverseLexemeGenerator
         }
         $eligible = 0;
         $contradictions = [];
+        $rejections = [];
         foreach ($candidates->sequences() as $candidate) {
             if (!$this->matchesRequest($candidate, $input)) {
                 continue;
@@ -79,6 +89,9 @@ final class ReverseLexemeGenerator
             $resolved = $this->resolver->resolve($candidate, $input);
             if ($resolved instanceof SpacingConstraint) {
                 $contradictions[] = $candidate->id . ': ' . implode(', ', $resolved->rules);
+                $rejections[] = ['index' => $input->index, 'candidate' => $candidate->id, 'rules' => $resolved->rules];
+            } elseif ($canComplete !== null && !$canComplete($resolved)) {
+                $rejections[] = ['index' => $input->index, 'candidate' => $candidate->id, 'rules' => ['uncompletable-left-boundary']];
             } else {
                 ++$eligible;
             }
@@ -97,8 +110,8 @@ final class ReverseLexemeGenerator
                 continue;
             }
             $resolved = $this->resolver->resolve($candidate, $input);
-            if ($resolved instanceof ResolvedOutput && $selected-- === 0) {
-                return $resolved;
+            if ($resolved instanceof ResolvedOutput && ($canComplete === null || $canComplete($resolved)) && $selected-- === 0) {
+                return new ResolvedOutput($resolved->parts, $resolved->left, $resolved->candidates, [...$resolved->rejections, ...$rejections]);
             }
         }
         throw new LexicalException('Lexeme candidates changed during selection for ' . $input->terminal()->name);

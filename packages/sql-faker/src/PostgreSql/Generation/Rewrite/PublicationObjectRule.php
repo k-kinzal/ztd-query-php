@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * Resolves the table/schema continuation state checked by gram.y/preprocess_pubobj_list.
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/gram.y
  */
 final class PublicationObjectRule implements RewriteRule
 {

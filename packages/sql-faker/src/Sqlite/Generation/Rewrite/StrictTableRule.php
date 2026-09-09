@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * Implements sqlite3EndTable's STRICT column-type restriction using global.c/sqlite3StdType.
+ * @see https://github.com/sqlite/sqlite/blob/version-3.47.2/src/global.c
  */
 final class StrictTableRule implements RewriteRule
 {

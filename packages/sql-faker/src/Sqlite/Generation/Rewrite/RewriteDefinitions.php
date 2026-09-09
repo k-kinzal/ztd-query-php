@@ -10,6 +10,8 @@ use SqlFaker\Grammar\Generation\Token\TokenRewriter;
 
 /**
  * Declares SQLite parser conditions without removing their original grammar alternatives.
+ * @see https://github.com/sqlite/sqlite/blob/version-3.47.2/src/build.c
+ * @see https://github.com/sqlite/sqlite/blob/version-3.47.2/src/parse.y
  */
 final class RewriteDefinitions
 {

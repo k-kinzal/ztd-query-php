@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlFaker\Grammar\Generation\Lexeme;
 
 use Override;
+use SqlFaker\Grammar\Generation\Value\ValueDomain;
 
 /**
  * A declared lexical value domain with bounded default representatives and arbitrary explicit values.
@@ -20,6 +21,7 @@ final class PatternLexemeGenerator implements LexemeGenerator
         private readonly array $defaults,
         private readonly string $kind,
         private readonly string $definition,
+        private readonly ?ValueDomain $domain = null,
     ) {
     }
 
@@ -32,7 +34,8 @@ final class PatternLexemeGenerator implements LexemeGenerator
         if ($input->terminal()->name !== $this->terminal) {
             return null;
         }
-        $values = $input->requested === null ? $this->defaults : [$input->requested];
+        $requested = $input->requested ?? $input->values?->value($input->index, $this->definition, $this->domain);
+        $values = $requested === null ? $this->defaults : [$requested];
         $candidates = [];
         foreach ($values as $value) {
             if (preg_match($this->pattern, $value) === 1) {

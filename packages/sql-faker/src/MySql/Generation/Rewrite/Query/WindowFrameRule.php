@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * Preserves the frame boundary ordering and interval units required by window.cc.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/window.cc
  */
 final class WindowFrameRule implements RewriteRule
 {

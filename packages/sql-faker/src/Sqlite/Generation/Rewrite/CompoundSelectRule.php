@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * parse.y:parserDoubleLinkSelect permits ORDER BY and LIMIT only on the final compound operand.
+ * @see https://github.com/sqlite/sqlite/blob/version-3.47.2/src/parse.y
  */
 final class CompoundSelectRule implements RewriteRule
 {

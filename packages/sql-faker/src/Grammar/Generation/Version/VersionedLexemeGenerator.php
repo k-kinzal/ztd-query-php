@@ -9,6 +9,7 @@ use RuntimeException;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeGenerator;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeInput;
+use SqlFaker\Grammar\Generation\Lexeme\LexemeSequence;
 
 /**
  * Binds one exact release at construction without invoking unselected definitions.
@@ -45,6 +46,24 @@ final class VersionedLexemeGenerator implements LexemeGenerator
     #[Override]
     public function generate(LexemeInput $input): ?LexemeCandidates
     {
-        return $this->selected?->generator->generate($input);
+        $case = $this->selected;
+        $result = $case?->generator->generate($input);
+        if ($result === null) {
+            return null;
+        }
+        return new LexemeCandidates(static function () use ($result, $case): iterable {
+            foreach ($result->sequences() as $candidate) {
+                yield new LexemeSequence(
+                    $candidate->lexemes,
+                    $candidate->id,
+                    $candidate->left,
+                    $candidate->boundaries,
+                    static function () use ($candidate, $case): iterable {
+                        yield from $candidate->sources();
+                        yield 'version-case:' . $case->id;
+                    }
+                );
+            }
+        });
     }
 }

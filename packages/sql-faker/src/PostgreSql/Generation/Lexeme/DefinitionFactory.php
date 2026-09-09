@@ -16,6 +16,8 @@ use SqlFaker\Grammar\Generation\Version\VersionedLexemeGenerator;
 
 /**
  * Composes REL_17_2 scan.l domains and parser.c selector/lookahead tokens.
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/parser.c
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/scan.l
  */
 final class DefinitionFactory
 {

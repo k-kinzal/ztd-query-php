@@ -9,6 +9,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * gram.y:substr_list uses SIMILAR/ESCAPE as argument separators, also accepted inside a_expr.
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/gram.y
  */
 final class SubstringRule implements RewriteRule
 {

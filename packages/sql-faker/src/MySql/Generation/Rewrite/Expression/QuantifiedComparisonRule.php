@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * sql_yacc.yy:bool_pri explicitly rejects null-safe equality before ALL or ANY.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_yacc.yy
  */
 final class QuantifiedComparisonRule implements RewriteRule
 {

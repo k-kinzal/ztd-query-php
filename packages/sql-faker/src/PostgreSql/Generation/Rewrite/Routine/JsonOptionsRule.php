@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * Applies syntax-level SQL/JSON option restrictions from parse_expr.c/transformJsonFuncExpr.
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/parse_expr.c
  */
 final class JsonOptionsRule implements RewriteRule
 {

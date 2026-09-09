@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * gram.y:AexprConst reuses function arguments for type modifiers but rejects names and ordering.
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/gram.y
  */
 final class TypeModifierRule implements RewriteRule
 {

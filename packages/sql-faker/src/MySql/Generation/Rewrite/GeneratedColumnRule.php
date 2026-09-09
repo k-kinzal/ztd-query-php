@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * parse_tree_column_attrs.h rejects SERIAL and storage/default attributes on generated fields.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/parse_tree_column_attrs.h
  */
 final class GeneratedColumnRule implements RewriteRule
 {

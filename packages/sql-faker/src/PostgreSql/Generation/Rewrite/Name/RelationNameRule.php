@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * gram.y/makeRangeVarFromQualifiedName accepts at most three String components, without star or subscripts.
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/gram.y
  */
 final class RelationNameRule implements RewriteRule
 {

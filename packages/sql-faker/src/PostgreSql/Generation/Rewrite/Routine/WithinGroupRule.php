@@ -9,6 +9,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * gram.y:func_expr forbids inner ordering, DISTINCT and VARIADIC with WITHIN GROUP.
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/gram.y
  */
 final class WithinGroupRule implements RewriteRule
 {

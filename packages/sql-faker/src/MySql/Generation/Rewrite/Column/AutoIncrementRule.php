@@ -9,6 +9,10 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * create_field.cc/Create_field::init permits AUTO_INCREMENT only for integer storage types.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/create_field.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-5.6.51/sql/field.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-5.7.44/sql/field.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/field.cc
  */
 final class AutoIncrementRule implements RewriteRule
 {

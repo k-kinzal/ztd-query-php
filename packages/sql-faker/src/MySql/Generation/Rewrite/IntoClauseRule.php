@@ -11,6 +11,9 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 /**
  * PT_subquery rejects INTO in subqueries; sql_lex.cc/new_set_operation_query allows it only in the final SELECT.
  * sql_yacc.yy/view_query_block disables SELECT destinations throughout a view definition.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/parse_tree_nodes.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_lex.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_yacc.yy
  */
 final class IntoClauseRule implements RewriteRule
 {

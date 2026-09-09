@@ -8,6 +8,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalOccurrence;
 
 /**
  * Models the scalar and row value lists of sql_yacc.yy:part_values_in and part_func_max.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_yacc.yy
  */
 final class ValueShape
 {

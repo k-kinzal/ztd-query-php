@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlFaker\PostgreSql;
 
 use RuntimeException;
+use SqlFaker\Grammar\Lexical\RegistrationTable;
 
 /**
  * Extracts PostgreSQL's keyword-token table from kwlist.h.
@@ -20,11 +21,9 @@ final class LexicalProfileCompiler
      */
     public function compile(string $source): array
     {
-        preg_match_all(
-            '/PG_KEYWORD\("([a-z_]+)",\s*([A-Z][A-Z0-9_]*)\s*,/',
+        $matches = (new RegistrationTable())->entries(
             $source,
-            $matches,
-            PREG_SET_ORDER,
+            '/PG_KEYWORD\(\s*"([a-z_]+)"\s*,\s*([A-Z][A-Z0-9_]*)\s*,\s*[A-Z_]+\s*,\s*[A-Z_]+\s*\)/'
         );
 
         /** @var array<string, list<string>> $keywords */

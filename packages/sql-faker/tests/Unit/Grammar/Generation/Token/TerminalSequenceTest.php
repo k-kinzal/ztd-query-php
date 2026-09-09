@@ -93,6 +93,7 @@ use SqlFaker\Grammar\Terminal;
 #[UsesClass(GenerationException::class)]
 #[UsesClass(LexicalException::class)]
 #[UsesClass(\SqlFaker\Grammar\Derivation\ProductionPattern::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\BoundaryCompletion::class)]
 final class TerminalSequenceTest extends TestCase
 {
     public function testFromNamesPreservesOccurrenceIdentityForRepeatedTerminalNames(): void
@@ -206,5 +207,17 @@ final class TerminalSequenceTest extends TestCase
         self::assertSame(['previous', 'remove'], $result->rewrites);
         self::assertSame(['previous'], $input->rewrites);
         self::assertSame([$prefix, $second, $tail], $result->terminals);
+    }
+    public function testReplaceRetainsEachIntermediateOperation(): void
+    {
+        $input = TerminalSequence::fromNames(['A', 'B']);
+        $middle = $input->terminals[0]->replaced('C', 'first');
+        $first = $input->replace(0, 1, [$middle], 'first');
+        $result = $first->replace(0, 1, [], 'second');
+        self::assertSame([
+            ['rule' => 'first', 'offset' => 0, 'removed' => [$input->terminals[0]], 'inserted' => [$middle]],
+            ['rule' => 'second', 'offset' => 0, 'removed' => [$middle], 'inserted' => []],
+        ], $result->operations);
+        self::assertSame([], $input->operations);
     }
 }

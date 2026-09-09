@@ -57,6 +57,6 @@ final class CandidateResolver
         if ($input->index === 0 && $pending !== null && $pending->allowed !== SpacingConstraint::EITHER) {
             return new SpacingConstraint(0, [...$pending->rules, 'missing-left-neighbor']);
         }
-        return new ResolvedOutput($parts, $pending, [$sequence, ...$input->right->candidates]);
+        return new ResolvedOutput($parts, $pending, [$sequence, ...$input->right->candidates], $input->right->rejections);
     }
 }

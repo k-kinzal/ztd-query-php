@@ -94,6 +94,7 @@ use SqlFaker\Grammar\Terminal;
 #[UsesClass(GenerationException::class)]
 #[UsesClass(LexicalException::class)]
 #[UsesClass(\SqlFaker\Grammar\Derivation\ProductionPattern::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\BoundaryCompletion::class)]
 final class TokenGeneratorTest extends TestCase
 {
     public function testGenerateCanChooseNullableChildrenWhenAnotherSiblingProvidesOutput(): void

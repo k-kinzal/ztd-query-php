@@ -11,6 +11,8 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 /**
  * gram.y/check_func_name accepts String name components, excluding A_Star and A_Indices.
  * catalog/namespace.c DeconstructQualifiedName limits function lookup to three components.
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/catalog/namespace.c
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/gram.y
  */
 final class FunctionNameRule implements RewriteRule
 {

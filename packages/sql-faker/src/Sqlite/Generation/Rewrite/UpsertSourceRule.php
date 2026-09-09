@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * parse.y:on_using resolves ON in favor of a JOIN until a SELECT clause separates the UPSERT.
+ * @see https://github.com/sqlite/sqlite/blob/version-3.47.2/src/parse.y
  */
 final class UpsertSourceRule implements RewriteRule
 {

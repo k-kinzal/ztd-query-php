@@ -9,6 +9,11 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * parse_tree_partitions.cc/PT_part_value_item_max forbids MAXVALUE in a VALUES IN list.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/parse_tree_partitions.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_yacc.yy
+ * @see https://github.com/mysql/mysql-server/blob/mysql-5.7.44/sql/sql_partition.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_partition.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-5.6.51/sql/sql_partition.cc
  */
 final class ListValueRule implements RewriteRule
 {

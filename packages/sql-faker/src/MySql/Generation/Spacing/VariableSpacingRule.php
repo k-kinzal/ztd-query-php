@@ -12,6 +12,7 @@ use SqlFaker\Grammar\Generation\Spacing\SpacingRule;
 
 /**
  * sql/sql_lex.cc MY_LEX_USER_END, MY_LEX_HOSTNAME and MY_LEX_SYSTEM_VAR consume adjacent input.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_lex.cc
  */
 final class VariableSpacingRule implements SpacingRule
 {

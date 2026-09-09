@@ -13,6 +13,7 @@ use SqlFaker\Grammar\Generation\Lexeme\LexemeSequence;
 
 /**
  * Implements the modulus/remainder name checks in PostgreSQL 17.2 gram.y/PartitionBoundSpec.
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/gram.y
  */
 final class HashBoundLexemeGenerator implements LexemeGenerator
 {

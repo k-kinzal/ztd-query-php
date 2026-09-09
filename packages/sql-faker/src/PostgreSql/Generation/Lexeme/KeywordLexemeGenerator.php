@@ -13,6 +13,8 @@ use SqlFaker\PostgreSql\PgLookahead;
 
 /**
  * Combines kwlist.h registrations with parser.c/base_yylex's required followers for lookahead tokens.
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/parser.c
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/include/parser/kwlist.h
  */
 final class KeywordLexemeGenerator implements LexemeGenerator
 {

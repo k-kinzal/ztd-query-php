@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlFaker\MySql;
 
 use RuntimeException;
+use SqlFaker\Grammar\Lexical\RegistrationTable;
 
 /**
  * Extracts MySQL's keyword and function-token tables from sql/lex.h.
@@ -21,13 +22,15 @@ final class LexicalProfileCompiler
      */
     public function registrations(string $source): array
     {
-        $modern = $this->extractModern($source, 'SYM_FN');
+        $reader = new RegistrationTable();
+        $region = str_contains($source, 'symbols[') ? $reader->body($source, 'symbols') : $source;
+        $modern = $this->extractModern($region, 'SYM_FN');
         if ($modern !== []) {
             $classes = [];
             foreach (['SYM', 'SYM_FN', 'SYM_HK', 'SYM_H'] as $class) {
                 preg_match_all(
                     '/\{\s*' . $class . '\(\s*"((?:\\\\.|[^"\\\\])*)"\s*,\s*([A-Z][A-Z0-9_]*)\s*\)\s*\}/',
-                    $source,
+                    $region,
                     $matches,
                     PREG_SET_ORDER,
                 );
@@ -46,8 +49,10 @@ final class LexicalProfileCompiler
      */
     public function compile(string $source): array
     {
-        $symbols = $this->extractModern($source, 'SYM');
-        $functions = $this->extractModern($source, 'SYM_FN');
+        $reader = new RegistrationTable();
+        $region = str_contains($source, 'symbols[') ? $reader->body($source, 'symbols') : $source;
+        $symbols = $this->extractModern($region, 'SYM');
+        $functions = $this->extractModern($region, 'SYM_FN');
 
         if ($functions === []) {
             $functionOffset = strpos($source, 'sql_functions');
@@ -55,8 +60,8 @@ final class LexicalProfileCompiler
                 throw new RuntimeException('MySQL sql_functions table was not found.');
             }
 
-            $symbols = $this->extractLegacy(substr($source, 0, $functionOffset));
-            $functions = $this->extractLegacy(substr($source, $functionOffset));
+            $symbols = $this->extractLegacy($reader->body($source, 'symbols'));
+            $functions = $this->extractLegacy($reader->body($source, 'sql_functions'));
         }
 
         if ($symbols === [] || $functions === []) {
@@ -79,6 +84,9 @@ final class LexicalProfileCompiler
      */
     public function extractModern(string $source, string $macro): array
     {
+        if (preg_match('/\{\s*SYM(?:_[A-Z]+)?\s*\(/', $source) === 1) {
+            (new RegistrationTable())->entries($source, '/\{\s*SYM(?:_FN|_HK|_H)?\(\s*"((?:\\\\.|[^"\\\\])*)"\s*,\s*([A-Z][A-Z0-9_]*)\s*\)\s*\}/');
+        }
         $macroPattern = $macro === 'SYM' ? 'SYM(?:_HK|_H)?' : $macro;
         preg_match_all(
             '/\{\s*' . $macroPattern . '\(\s*"((?:\\\\.|[^"\\\\])*)"\s*,\s*([A-Z][A-Z0-9_]*)\s*\)\s*\}/',
@@ -103,11 +111,9 @@ final class LexicalProfileCompiler
      */
     public function extractLegacy(string $source): array
     {
-        preg_match_all(
-            '/\{\s*"((?:\\\\.|[^"\\\\])*)"\s*,\s*SYM\(\s*([A-Z][A-Z0-9_]*)\s*\)\s*\}/',
+        $matches = (new RegistrationTable())->entries(
             $source,
-            $matches,
-            PREG_SET_ORDER,
+            '/\{\s*"((?:\\\\.|[^"\\\\])*)"\s*,\s*SYM\(\s*([A-Z][A-Z0-9_]*)\s*\)\s*\}/'
         );
 
         return $this->group($matches);

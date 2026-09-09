@@ -15,6 +15,8 @@ use SqlFaker\Grammar\LexicalException;
 /**
  * Implements lex.h registration classes and sql_lex.cc find_keyword/function lookahead.
  * A SYM_FN spelling needs an opening parenthesis when used as a function.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/lex.h
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_lex.cc
  */
 final class KeywordLexemeGenerator implements LexemeGenerator
 {

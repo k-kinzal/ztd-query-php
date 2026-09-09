@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * sql_yacc.yy/opt_flush_lock requires a table list for FOR EXPORT, but not for WITH READ LOCK.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_yacc.yy
  */
 final class FlushExportRule implements RewriteRule
 {

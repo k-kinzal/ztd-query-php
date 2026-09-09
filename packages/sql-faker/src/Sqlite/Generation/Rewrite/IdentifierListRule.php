@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * parse.y/parserAddExprIdListTerm only accepts COLLATE and sort order while loading legacy schemas.
+ * @see https://github.com/sqlite/sqlite/blob/version-3.47.2/src/parse.y
  */
 final class IdentifierListRule implements RewriteRule
 {

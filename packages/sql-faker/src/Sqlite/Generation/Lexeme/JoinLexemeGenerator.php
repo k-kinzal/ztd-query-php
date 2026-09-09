@@ -14,6 +14,7 @@ use SqlFaker\Grammar\LexicalException;
 
 /**
  * Realizes JOIN_KW registrations under the complete join-type condition from select.c/sqlite3JoinType.
+ * @see https://github.com/sqlite/sqlite/blob/version-3.47.2/src/select.c
  */
 final class JoinLexemeGenerator implements LexemeGenerator
 {

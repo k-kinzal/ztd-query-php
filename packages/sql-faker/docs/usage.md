@@ -143,10 +143,12 @@ version, and database version fixed; exact output is not promised across upgrade
 
 ## Understand the output
 
-Generated SQL can contain comments, whitespace, and quoted identifiers. Do not
-assume a statement starts at byte zero with an uppercase keyword or ends with a
-semicolon. If your test concerns syntax, inspect parsed syntax rather than a fixed
-string layout.
+The basic generation pipeline inserts only the spaces required by lexical
+boundaries and does not add SQL comments. Identifiers may be quoted; string
+contents may contain text resembling comments. Statements need not end with a
+semicolon. Inspect parsed syntax instead of assuming a fixed string layout.
+See [scanner settings and verification scope](source-audit.md#configuration-and-runtime-verification)
+for the supported SQL modes and database configurations.
 
 Some fragments are optional in the database grammar. PostgreSQL's `whereClause()`
 and SQLite's `whereClause()`, `orderByClause()`, `limitClause()`, `groupByClause()`,

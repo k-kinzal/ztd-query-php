@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * Supplies exactly the two named bounds required by gram.y/PartitionBoundSpec.
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/gram.y
  */
 final class HashPartitionBoundRule implements RewriteRule
 {

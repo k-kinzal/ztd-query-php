@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlFaker\Sqlite;
 
 use RuntimeException;
+use SqlFaker\Grammar\Lexical\RegistrationTable;
 
 /**
  * Extracts SQLite's keyword-token table from tool/mkkeywordhash.c.
@@ -20,11 +21,11 @@ final class LexicalProfileCompiler
      */
     public function compile(string $source): array
     {
-        preg_match_all(
-            '/\{\s*"([A-Z_]+)"\s*,\s*"TK_([A-Z][A-Z0-9_]*)"\s*,/',
-            $source,
-            $matches,
-            PREG_SET_ORDER,
+        $reader = new RegistrationTable();
+        $region = str_contains($source, 'aKeywordTable[') ? $reader->body($source, 'aKeywordTable') : $source;
+        $matches = $reader->entries(
+            $region,
+            '/\{\s*"([A-Z_]+)"\s*,\s*"TK_([A-Z][A-Z0-9_]*)"\s*,\s*[A-Z_|0-9 \t]+\s*,\s*[0-9]+\s*\}/'
         );
 
         /** @var array<string, list<string>> $keywords */

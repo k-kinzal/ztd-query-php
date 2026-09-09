@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * REL_17_2 gram.y oper_argtypes rejects a lone type and prescribes NONE for a missing unary argument.
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/gram.y
  */
 final class OperatorArgumentsRule implements RewriteRule
 {
