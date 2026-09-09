@@ -32,6 +32,8 @@ final class SqliteSyntaxCheck
 {
     /**
      * Verifies that SQLite parses the generated statement.
+     * build.c validates column defaults, generated columns and key shapes; select.c checks compound widths.
+     * window.c resolves a named base window before checking whether its frame can be inherited.
      *
      * @param string $sql Statement produced by the grammar
      * @param string $input Original fuzzer input, encoded as hex by the target
@@ -77,7 +79,7 @@ final class SqliteSyntaxCheck
                 preg_match('/General error: 1 [0-9]+ columns assigned [0-9]+ values\z/D', $message) === 1 => true,
                 str_contains($message, 'General error: 1 no such function:') => true,
                 str_starts_with($message, 'SQLSTATE[HY000]: General error: 1 no such window: ') => true,
-                str_contains($message, 'SELECTs to the left and right of UNION do not have the same number of result columns') => true,
+                preg_match('/General error: 1 SELECTs to the left and right of (?:UNION(?: ALL)?|INTERSECT|EXCEPT) do not have the same number of result columns\z/D', $message) === 1 => true,
                 str_contains($message, 'General error: 1 no such trigger:') => true,
                 str_contains($message, 'unable to identify the object to be reindexed') => true,
                 str_contains($message, 'RAISE() may only be used within a trigger-program') => true,
@@ -93,6 +95,11 @@ final class SqliteSyntaxCheck
                 preg_match('/General error: 1 table "[^\r\n]*" has more than one primary key\z/D', $message) === 1 => true,
                 str_ends_with($message, 'General error: 1 AUTOINCREMENT is only allowed on an INTEGER PRIMARY KEY') => true,
                 str_ends_with($message, 'General error: 1 generated columns cannot be part of the PRIMARY KEY') => true,
+                str_ends_with($message, 'General error: 1 must have at least one non-generated column') => true,
+                preg_match('/General error: 1 default value of column \[[^\r\n]*\] is not constant\z/D', $message) === 1 => true,
+                str_ends_with($message, 'General error: 1 number of columns in foreign key does not match the number of columns in the referenced table') => true,
+                str_ends_with($message, 'General error: 1 expressions prohibited in PRIMARY KEY and UNIQUE constraints') => true,
+                str_starts_with($message, 'SQLSTATE[HY000]: General error: 1 cannot override frame specification of window: ') => true,
                 str_ends_with($message, 'General error: 1 conflicting ON CONFLICT clauses specified') => true,
                 preg_match('/General error: 1 parameters prohibited in (?:CHECK constraints|index expressions|partial index WHERE clauses|generated columns)\z/D', $message) === 1 => true,
                 preg_match('/General error: 1 trigger .* cannot reference objects in database /', $message) === 1 => true,
