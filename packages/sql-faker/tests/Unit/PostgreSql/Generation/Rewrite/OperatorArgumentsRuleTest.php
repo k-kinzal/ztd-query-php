@@ -31,6 +31,7 @@ final class OperatorArgumentsRuleTest extends TestCase
         $result = (new OperatorArgumentsRule())->rewrite($input);
         self::assertSame(['(', 'NONE', ',', 'NUMERIC', '(', 'ICONST', ',', 'ICONST', ')', ')'], $result->names());
         self::assertSame($input->original, $result->original);
+        self::assertCount(count($result->terminals), array_unique(array_map(static fn ($terminal): int => $terminal->id, $result->terminals)));
         self::assertSame($result, (new OperatorArgumentsRule())->rewrite($result));
     }
 

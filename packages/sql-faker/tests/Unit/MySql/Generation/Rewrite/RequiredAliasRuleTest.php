@@ -34,6 +34,7 @@ final class RequiredAliasRuleTest extends TestCase
         self::assertSame(['QUERY', 'AS', 'IDENT_QUOTED', '(', 'IDENT', ')'], $result->names());
         self::assertSame(['derived_table', 'opt_table_alias'], $result->terminals[1]->rules);
         self::assertSame($input->original, $result->original);
+        self::assertCount(count($result->terminals), array_unique(array_map(static fn ($terminal): int => $terminal->id, $result->terminals)));
     }
 
     public function testRewriteKeepsTheCallerSelectedAlias(): void

@@ -28,6 +28,7 @@ final class AlterEventRuleTest extends TestCase
         self::assertSame(['IDENT', 'ENABLE_SYM'], $result->names());
         self::assertSame([0, 2], $result->terminals[1]->ancestors);
         self::assertSame($input->original, $result->original);
+        self::assertCount(count($result->terminals), array_unique(array_map(static fn ($terminal): int => $terminal->id, $result->terminals)));
         self::assertSame($result, $rule->rewrite($result));
     }
 

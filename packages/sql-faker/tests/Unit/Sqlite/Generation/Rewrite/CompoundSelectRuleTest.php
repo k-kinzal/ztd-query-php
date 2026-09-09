@@ -50,6 +50,7 @@ final class CompoundSelectRuleTest extends TestCase
         $result = $rule->rewrite($input);
         self::assertSame(['SELECT', 'LP', 'SELECT', 'INTEGER', 'ORDER', 'BY', 'INTEGER', 'LIMIT', 'INTEGER', 'RP', ...$operator, 'SELECT', 'INTEGER', 'ORDER', 'BY', 'INTEGER', 'LIMIT', 'INTEGER'], $result->names());
         self::assertSame($input->original, $result->original);
+        self::assertCount(count($result->terminals), array_unique(array_map(static fn ($terminal): int => $terminal->id, $result->terminals)));
         self::assertSame($input->productions, $result->productions);
         self::assertSame($result, $rule->rewrite($result));
     }

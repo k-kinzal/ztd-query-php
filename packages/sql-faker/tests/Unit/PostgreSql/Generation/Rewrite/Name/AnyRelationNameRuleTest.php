@@ -29,6 +29,7 @@ final class AnyRelationNameRuleTest extends TestCase
         $result = $rule->rewrite($input);
         self::assertSame($expected, $result->names());
         self::assertSame($input->original, $result->original);
+        self::assertCount(count($result->terminals), array_unique(array_map(static fn ($terminal): int => $terminal->id, $result->terminals)));
         self::assertSame($result, $rule->rewrite($result));
     }
 

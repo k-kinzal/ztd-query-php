@@ -151,7 +151,7 @@ final class ReverseLexemeGeneratorTest extends TestCase
 
     public function testSelectReportsCandidateAndBoundarySourcesWhenAllCandidatesConflict(): void
     {
-        $spacing = $this->createStub(SpacingRule::class);
+        $spacing = self::createStub(SpacingRule::class);
         $spacing->method('apply')->willReturn(new SpacingConstraint(0, ['require-join', 'require-space']));
         $generator = new ReverseLexemeGenerator(new FixedLexemeGenerator('WORD', 'keyword', 'word-definition'), new CandidateResolver($spacing), 'demo');
         $this->expectException(LexicalException::class);

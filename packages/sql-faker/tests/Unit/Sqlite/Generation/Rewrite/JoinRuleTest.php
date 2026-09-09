@@ -47,6 +47,7 @@ final class JoinRuleTest extends TestCase
         self::assertSame(['ID'], $result->names());
         self::assertSame($input->productions, $result->productions);
         self::assertSame($input->original, $result->original);
+        self::assertCount(count($result->terminals), array_unique(array_map(static fn ($terminal): int => $terminal->id, $result->terminals)));
     }
 
     public function testRewriteKeepsConditionsOfAJoinedTable(): void

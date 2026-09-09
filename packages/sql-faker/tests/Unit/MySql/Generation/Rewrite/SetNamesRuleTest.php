@@ -32,6 +32,7 @@ final class SetNamesRuleTest extends TestCase
         $result = (new SetNamesRule())->rewrite($input);
         self::assertSame(['NAMES_SYM', 'DEFAULT_SYM', ',', 'IDENT', 'EQ', 'NUM'], $result->names());
         self::assertSame($input->original, $result->original);
+        self::assertCount(count($result->terminals), array_unique(array_map(static fn ($terminal): int => $terminal->id, $result->terminals)));
         self::assertSame($result, (new SetNamesRule())->rewrite($result));
     }
 }

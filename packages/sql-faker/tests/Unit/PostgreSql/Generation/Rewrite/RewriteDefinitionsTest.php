@@ -40,6 +40,8 @@ use SqlFaker\PostgreSql\Generation\Rewrite\RewriteDefinitions;
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\GeneratedColumnRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Query\SelectOptionsRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Routine\TableFunctionRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Column\IdentityOptionRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Query\IntoClauseRule::class)]
 final class RewriteDefinitionsTest extends TestCase
 {
     public function testCreateComposesTheDeclaredSourceRules(): void
@@ -48,6 +50,7 @@ final class RewriteDefinitionsTest extends TestCase
         $result = (new RewriteDefinitions())->create()->rewrite($input);
         self::assertSame(['NOT_LA', 'LIKE'], $result->names());
         self::assertSame($input->original, $result->original);
+        self::assertCount(count($result->terminals), array_unique(array_map(static fn ($terminal): int => $terminal->id, $result->terminals)));
     }
 
     #[DataProvider('providerColumnScopes')]
@@ -69,6 +72,7 @@ final class RewriteDefinitionsTest extends TestCase
         $result = $rule->rewrite($input);
         self::assertSame([$first, $firstName, $other, $expression], $result->terminals);
         self::assertSame($input->original, $result->original);
+        self::assertCount(count($result->terminals), array_unique(array_map(static fn ($terminal): int => $terminal->id, $result->terminals)));
         self::assertSame($input->productions, $result->productions);
         self::assertSame($result, $rule->rewrite($result));
     }

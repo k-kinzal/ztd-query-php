@@ -28,6 +28,7 @@ final class IntoClauseRuleTest extends TestCase
         $result = $rule->rewrite($input);
         self::assertSame([$outer], $result->terminals);
         self::assertSame($input->original, $result->original);
+        self::assertCount(count($result->terminals), array_unique(array_map(static fn ($terminal): int => $terminal->id, $result->terminals)));
         self::assertSame($input->productions, $result->productions);
         self::assertSame(['sql/parse_tree_nodes.cc:PT_subquery:into'], $result->rewrites);
         self::assertSame($result, $rule->rewrite($result));
@@ -45,6 +46,7 @@ final class IntoClauseRuleTest extends TestCase
         $result = $rule->rewrite($input);
         self::assertSame([$union, $last, $nestedUnion], $result->terminals);
         self::assertSame($input->original, $result->original);
+        self::assertCount(count($result->terminals), array_unique(array_map(static fn ($terminal): int => $terminal->id, $result->terminals)));
         self::assertSame($input->productions, $result->productions);
         self::assertSame(['sql/sql_lex.cc:new_set_operation_query:into'], $result->rewrites);
         self::assertSame($result, $rule->rewrite($result));

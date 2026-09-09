@@ -29,8 +29,21 @@ use SqlFaker\Sqlite\Generation\Rewrite\RewriteDefinitions;
 #[UsesClass(\SqlFaker\Grammar\NonTerminal::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\ExpressionGroupingRule::class)]
 #[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\CompoundSelectRule::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalMappingRule::class)]
 final class RewriteDefinitionsTest extends TestCase
 {
+    public function testCreateMapsOnlyTheGeneratedColumnStorageName(): void
+    {
+        $expression = new \SqlFaker\Grammar\Generation\Token\TerminalOccurrence('ID', 2, [0, 1], ['generated', 'expr']);
+        $storage = new \SqlFaker\Grammar\Generation\Token\TerminalOccurrence('ID', 3, [0], ['generated']);
+        $plain = new \SqlFaker\Grammar\Generation\Token\TerminalOccurrence('ID', 4, [5], ['nm']);
+        $input = new \SqlFaker\Grammar\Generation\Token\TerminalSequence([$expression, $storage, $plain], [$expression, $storage, $plain]);
+        $result = (new RewriteDefinitions())->create()->rewrite($input);
+        self::assertSame(['ID', 'GENERATED_STORAGE', 'ID'], $result->names());
+        self::assertSame($expression, $result->terminals[0]);
+        self::assertSame($plain, $result->terminals[2]);
+        self::assertSame($storage->id, $result->terminals[1]->id);
+    }
     public function testCreateComposesTheDeclaredSourceRules(): void
     {
         $trace = new DerivationTrace('table_option');

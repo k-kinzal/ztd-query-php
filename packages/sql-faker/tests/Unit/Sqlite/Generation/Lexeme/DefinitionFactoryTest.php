@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\Sqlite\Generation\Lexeme;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeInput;
@@ -71,5 +72,29 @@ final class DefinitionFactoryTest extends TestCase
         $result = (new DefinitionFactory())->strictTypes()->generate(new LexemeInput(TerminalSequence::fromNames(['STRICT_COLUMN_TYPE']), 0, new ResolvedOutput()));
         self::assertNotNull($result);
         self::assertSame(['ANY', 'BLOB', 'INT', 'INTEGER', 'REAL', 'TEXT'], array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$result->sequences()]));
+    }
+
+    /**
+     * @param list<string> $expected
+     */
+    #[DataProvider('providerGeneratedStorage')]
+    public function testLexemesRestrictsGeneratedStorageToTheBuildSourceNames(?string $spelling, array $expected): void
+    {
+        $result = (new DefinitionFactory())->lexemes('sqlite-3.47.2', [])->generate(new LexemeInput(TerminalSequence::fromNames(['GENERATED_STORAGE']), 0, new ResolvedOutput(), $spelling));
+        self::assertNotNull($result);
+        self::assertSame($expected, array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$result->sequences()]));
+    }
+
+    /**
+     * @return iterable<array{?string, list<string>}>
+     */
+    public static function providerGeneratedStorage(): iterable
+    {
+        yield [null, ['VIRTUAL', 'STORED']];
+        yield ['virtual', ['virtual']];
+        yield ['Stored', ['Stored']];
+        yield ['name', []];
+        yield ['"VIRTUAL"', []];
+        yield ['[STORED]', []];
     }
 }

@@ -39,6 +39,7 @@ final class OrderByRuleTest extends TestCase
         $result = $rule->rewrite($input);
         self::assertSame([$enable, $keys, $comma, $order, $by, $a, $innerComma, $b, $outside], $result->terminals);
         self::assertSame($input->original, $result->original);
+        self::assertCount(count($result->terminals), array_unique(array_map(static fn ($terminal): int => $terminal->id, $result->terminals)));
         self::assertSame($input->productions, $result->productions);
         self::assertSame(['sql_yacc.yy:alter_list:order-by-last'], $result->rewrites);
         self::assertSame($result, $rule->rewrite($result));

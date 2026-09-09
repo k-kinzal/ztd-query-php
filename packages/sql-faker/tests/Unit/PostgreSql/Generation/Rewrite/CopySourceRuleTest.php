@@ -37,6 +37,7 @@ final class CopySourceRuleTest extends TestCase
         $result = (new CopySourceRule())->rewrite($input);
         self::assertSame(['TO', 'PROGRAM', 'SCONST', 'WHERE', 'ICONST'], $result->names());
         self::assertSame($input->original, $result->original);
+        self::assertCount(count($result->terminals), array_unique(array_map(static fn ($terminal): int => $terminal->id, $result->terminals)));
         self::assertSame($input->terminals[5], $result->terminals[3]);
     }
 

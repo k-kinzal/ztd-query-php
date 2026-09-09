@@ -36,6 +36,7 @@ final class WithoutRowidRuleTest extends TestCase
         self::assertSame(['ID', 'PRIMARY', 'KEY', 'ROWID_TABLE_OPTION'], $result->names());
         self::assertSame(['create_table_args', 'column', 'carglist'], $result->terminals[1]->rules);
         self::assertSame($input->original, $result->original);
+        self::assertCount(count($result->terminals), array_unique(array_map(static fn ($terminal): int => $terminal->id, $result->terminals)));
         self::assertSame($input->productions, $result->productions);
     }
 

@@ -41,6 +41,7 @@ final class StartRuleTest extends TestCase
         $result = $rule->rewrite($input);
         self::assertSame([$verb, 'REPLICA_SYM', ...$threads, ...($added ? [',', 'RELAY_THREAD'] : []), ...$authentication], $result->names());
         self::assertSame($input->original, $result->original);
+        self::assertCount(count($result->terminals), array_unique(array_map(static fn ($terminal): int => $terminal->id, $result->terminals)));
         self::assertSame($result, $rule->rewrite($result));
         $ids = array_map(static fn ($terminal): int => $terminal->id, $result->terminals);
         self::assertCount(count($ids), array_unique($ids));

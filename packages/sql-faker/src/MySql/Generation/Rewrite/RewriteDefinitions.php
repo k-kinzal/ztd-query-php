@@ -8,6 +8,7 @@ use SqlFaker\Grammar\Generation\Token\ExpressionGroupingRule;
 use SqlFaker\Grammar\Generation\Token\TokenRewriter;
 use SqlFaker\Grammar\Generation\Token\UniqueOptionRule;
 use SqlFaker\MySql\Generation\Rewrite\Alter\OrderByRule;
+use SqlFaker\MySql\Generation\Rewrite\Partition\FieldListRule;
 use SqlFaker\MySql\Generation\Rewrite\Replication\StartRule;
 
 /**
@@ -28,6 +29,7 @@ final class RewriteDefinitions
             new SubqueryContextRule(),
             new TransactionCompletionRule(),
             new StartRule(),
+            new FieldListRule(),
             new IntoClauseRule(),
             new ConstraintEnforcementRule(),
             new GeneratedColumnRule(),

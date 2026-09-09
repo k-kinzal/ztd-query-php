@@ -34,6 +34,7 @@ final class FlushExportRuleTest extends TestCase
         self::assertSame(['TABLES', 'IDENT_QUOTED', 'FOR_SYM', 'EXPORT'], $result->names());
         self::assertTrue($result->terminals[1]->within('opt_table_list'));
         self::assertSame($input->original, $result->original);
+        self::assertCount(count($result->terminals), array_unique(array_map(static fn ($terminal): int => $terminal->id, $result->terminals)));
     }
 
     public function testRewriteLeavesGlobalReadLocksValidWithoutTables(): void

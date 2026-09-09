@@ -38,6 +38,7 @@ final class SelectOptionsRuleTest extends TestCase
         $result = $rule->rewrite($input);
         self::assertSame($removed ? [$body, $inner] : $terminals, $result->terminals);
         self::assertSame($input->original, $result->original);
+        self::assertCount(count($result->terminals), array_unique(array_map(static fn ($terminal): int => $terminal->id, $result->terminals)));
         self::assertSame($input->productions, $result->productions);
         self::assertSame($result, $rule->rewrite($result));
     }

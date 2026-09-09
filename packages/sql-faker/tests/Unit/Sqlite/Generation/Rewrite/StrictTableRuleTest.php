@@ -38,6 +38,7 @@ final class StrictTableRuleTest extends TestCase
         self::assertSame(['ID', 'STRICT_COLUMN_TYPE', 'STRICT_TABLE_OPTION', 'ID'], $result->names());
         self::assertSame(['root', 'create_table_args', 'columnname', 'typetoken'], $result->terminals[1]->rules);
         self::assertSame($input->original, $result->original);
+        self::assertCount(count($result->terminals), array_unique(array_map(static fn ($terminal): int => $terminal->id, $result->terminals)));
         self::assertSame($input->productions, $result->productions);
     }
 

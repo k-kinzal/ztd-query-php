@@ -40,6 +40,7 @@ final class GeneratedColumnRuleTest extends TestCase
         self::assertSame($input->terminals[2], $result->terminals[3]);
         self::assertSame($input->terminals[0]->id, $result->terminals[0]->id);
         self::assertSame($input->original, $result->original);
+        self::assertCount(count($result->terminals), array_unique(array_map(static fn ($terminal): int => $terminal->id, $result->terminals)));
         self::assertSame($result, $rule->rewrite($result));
     }
 
@@ -60,6 +61,7 @@ final class GeneratedColumnRuleTest extends TestCase
         $result = $rule->rewrite($input);
         self::assertSame(['INT_SYM', 'AS', 'NUM', ...$expected], $result->names());
         self::assertSame($input->original, $result->original);
+        self::assertCount(count($result->terminals), array_unique(array_map(static fn ($terminal): int => $terminal->id, $result->terminals)));
         self::assertSame($input->productions, $result->productions);
         self::assertSame($result, $rule->rewrite($result));
     }

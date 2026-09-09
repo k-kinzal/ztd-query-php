@@ -8,6 +8,7 @@ use SqlFaker\Grammar\Generation\Lexeme\ChoiceLexemeGenerator;
 use SqlFaker\Grammar\Generation\Lexeme\FixedLexemeGenerator;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeGenerator;
 use SqlFaker\Grammar\Generation\Lexeme\MatchingLexemeGenerator;
+use SqlFaker\Grammar\Generation\Lexeme\PatternLexemeGenerator;
 use SqlFaker\Grammar\Generation\Output\CandidateResolver;
 use SqlFaker\Grammar\Generation\Output\ReverseLexemeGenerator;
 use SqlFaker\Grammar\Generation\Spacing\CombinedSpacingRule;
@@ -38,6 +39,7 @@ final class DefinitionFactory
                 (new ValueDefinitions())->create(),
                 $this->symbols(),
                 $this->strictTypes(),
+                new PatternLexemeGenerator('GENERATED_STORAGE', '/\A(?:VIRTUAL|STORED)\z/Di', ['VIRTUAL', 'STORED'], 'identifier', 'src/build.c:sqlite3AddGenerated'),
                 new JoinLexemeGenerator($keywords['JOIN_KW'] ?? []),
             ), 'sqlite-3.47.2-scanner')),
         );

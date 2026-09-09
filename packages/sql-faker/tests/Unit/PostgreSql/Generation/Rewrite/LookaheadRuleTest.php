@@ -23,6 +23,7 @@ final class LookaheadRuleTest extends TestCase
         $result = (new LookaheadRule())->rewrite($input);
         self::assertSame(['WITH', 'IDENT', 'WITH_LA', 'ORDINALITY'], $result->names());
         self::assertSame($input->original, $result->original);
+        self::assertCount(count($result->terminals), array_unique(array_map(static fn ($terminal): int => $terminal->id, $result->terminals)));
         self::assertCount(2, $result->rewrites);
         self::assertSame($result, (new LookaheadRule())->rewrite($result));
     }

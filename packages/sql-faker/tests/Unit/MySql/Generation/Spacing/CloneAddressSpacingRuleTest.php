@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\MySql\Generation\Spacing;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Generation\Lexeme\Lexeme;
@@ -40,5 +41,30 @@ final class CloneAddressSpacingRuleTest extends TestCase
         self::assertSame(SpacingConstraint::JOIN, $rule->apply(new LexemeBoundary($left, $right), $input)?->allowed);
         $plain = new Lexeme('word', 'keyword', new TerminalOccurrence('OTHER', 2), 'other');
         self::assertNull($rule->apply(new LexemeBoundary($plain, $plain), $input));
+    }
+
+    #[DataProvider('providerColonSides')]
+    public function testApplyRecognizesAFlatStatementAndBothSidesOfTheAddressColon(bool $left): void
+    {
+        $sequence = TerminalSequence::fromNames(['CLONE_SYM', 'INSTANCE_SYM', 'FROM', 'HOST', ':', 'PORT']);
+        $input = new LexemeInput($sequence, 3, new ResolvedOutput());
+        $host = new Lexeme('host', 'string', $sequence->terminals[3], 'host');
+        $colon = new Lexeme(':', 'symbol', $sequence->terminals[4], 'colon');
+        $port = new Lexeme('3306', 'number', $sequence->terminals[5], 'port');
+        $rule = new CloneAddressSpacingRule();
+        $boundary = $left ? new LexemeBoundary($colon, $port) : new LexemeBoundary($host, $colon);
+        $constraint = $rule->apply($boundary, $input);
+        self::assertNotNull($constraint);
+        self::assertSame(SpacingConstraint::JOIN, $constraint->allowed);
+        self::assertSame(['mysql.clone-address'], $constraint->rules);
+        self::assertNull($rule->apply($boundary, new LexemeInput(TerminalSequence::fromNames(['OTHER']), 0, new ResolvedOutput())));
+    }
+    /**
+     * @return iterable<array{bool}>
+     */
+    public static function providerColonSides(): iterable
+    {
+        yield [false];
+        yield [true];
     }
 }

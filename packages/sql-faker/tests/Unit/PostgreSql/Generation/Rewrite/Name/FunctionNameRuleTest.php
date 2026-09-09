@@ -32,6 +32,7 @@ final class FunctionNameRuleTest extends TestCase
         self::assertSame($function->ancestors, $result->terminals[0]->ancestors);
         self::assertSame($result, (new FunctionNameRule())->rewrite($result));
         self::assertSame($input->original, $result->original);
+        self::assertCount(count($result->terminals), array_unique(array_map(static fn ($terminal): int => $terminal->id, $result->terminals)));
     }
 
     public function testIsFunctionNameRejectsArgumentExpressionsAndRecognizesRecursiveIndirection(): void
@@ -41,6 +42,27 @@ final class FunctionNameRuleTest extends TestCase
         self::assertTrue($rule->isFunctionName(['function_with_argtypes', 'indirection', 'indirection_el']));
         self::assertFalse($rule->isFunctionName(['function_with_argtypes', 'func_args', 'columnref', 'indirection', 'indirection_el']));
         self::assertFalse($rule->isFunctionName([]));
+        self::assertTrue($rule->isFunctionName(['func_name', 'indirection_el']));
+        self::assertFalse($rule->isFunctionName(['func_name', 'columnref', 'indirection_el']));
+    }
+
+    public function testRewriteReplacesAStarBetweenUnaffectedExpressionsAndKeepsTrailingOutput(): void
+    {
+        $prefix = new TerminalOccurrence('SELECT', 10);
+        $expression = new TerminalOccurrence('.', 11, [0, 1], ['columnref', 'indirection_el']);
+        $star = new TerminalOccurrence('.', 12, [2, 3], ['func_name', 'indirection_el']);
+        $suffix = new TerminalOccurrence('*', 13, [2, 3], ['func_name', 'indirection_el']);
+        $tail = new TerminalOccurrence('TAIL', 14);
+        $input = new TerminalSequence([$prefix, $expression, $star, $suffix, $tail], [], [], [
+            new ProductionOccurrence(0, null, 'columnref', 0), new ProductionOccurrence(1, 0, 'indirection_el', 0),
+            new ProductionOccurrence(2, null, 'func_name', 0), new ProductionOccurrence(3, 2, 'indirection_el', 0),
+            new ProductionOccurrence(4, 2, 'indirection_el', 0),
+        ]);
+        $result = (new FunctionNameRule())->rewrite($input);
+        self::assertSame(['SELECT', '.', '.', 'IDENT', 'TAIL'], $result->names());
+        self::assertSame($expression, $result->terminals[1]);
+        self::assertSame($tail, $result->terminals[4]);
+        self::assertSame($star->ancestors, $result->terminals[3]->ancestors);
     }
 
     #[DataProvider('providerFunctionScopes')]
@@ -63,6 +85,7 @@ final class FunctionNameRuleTest extends TestCase
         $result = $rule->rewrite($input);
         self::assertSame([$base, $first, $firstName, $second, $secondName], $result->terminals);
         self::assertSame($input->original, $result->original);
+        self::assertCount(count($result->terminals), array_unique(array_map(static fn ($terminal): int => $terminal->id, $result->terminals)));
         self::assertSame($input->productions, $result->productions);
         self::assertSame($result, $rule->rewrite($result));
     }

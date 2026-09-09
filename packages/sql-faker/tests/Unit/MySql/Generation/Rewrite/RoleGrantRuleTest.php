@@ -32,6 +32,7 @@ final class RoleGrantRuleTest extends TestCase
         $result = (new RoleGrantRule())->rewrite($input);
         self::assertSame(['GRANT', 'IDENT_QUOTED', 'TO_SYM', 'IDENT'], $result->names());
         self::assertSame($input->original, $result->original);
+        self::assertCount(count($result->terminals), array_unique(array_map(static fn ($terminal): int => $terminal->id, $result->terminals)));
         self::assertSame(29, $result->productions[1]->ordinal);
     }
 

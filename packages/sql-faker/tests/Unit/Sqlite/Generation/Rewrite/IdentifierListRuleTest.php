@@ -36,6 +36,7 @@ final class IdentifierListRuleTest extends TestCase
         $result = (new IdentifierListRule())->rewrite($input);
         self::assertSame(['ID', 'ID', 'DESC'], $result->names());
         self::assertSame($input->original, $result->original);
+        self::assertCount(count($result->terminals), array_unique(array_map(static fn ($terminal): int => $terminal->id, $result->terminals)));
         self::assertSame($input->terminals[5], $result->terminals[2]);
     }
 }

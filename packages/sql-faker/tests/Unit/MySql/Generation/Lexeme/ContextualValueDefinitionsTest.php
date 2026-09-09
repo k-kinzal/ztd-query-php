@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\MySql\Generation\Lexeme;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeInput;
@@ -60,5 +61,56 @@ final class ContextualValueDefinitionsTest extends TestCase
         $invalid = $generator->generate(new LexemeInput($input->terminals, 0, new ResolvedOutput(), '2'));
         self::assertNotNull($invalid);
         self::assertSame([], [...$invalid->sequences()]);
+    }
+
+    /**
+     * @param list<string> $spellings
+     */
+    #[DataProvider('providerContextualDomains')]
+    public function testCreatePreservesTheVersionedParserValueDomains(string $version, string $terminal, array $spellings): void
+    {
+        $result = (new ContextualValueDefinitions())->create($version)->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput()));
+        self::assertNotNull($result);
+        self::assertSame($spellings, array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$result->sequences()]));
+    }
+
+    /**
+     * @return iterable<array{string, string, list<string>}>
+     */
+    public static function providerContextualDomains(): iterable
+    {
+        yield ['mysql-5.7.44', 'ROTATE_KEY_ENGINE', ['INNODB']];
+        foreach (['mysql-8.0.44', 'mysql-8.1.0', 'mysql-8.2.0', 'mysql-8.3.0', 'mysql-8.4.7', 'mysql-9.0.1', 'mysql-9.1.0'] as $version) {
+            yield [$version, 'REDO_ENGINE', ['INNODB']];
+            yield [$version, 'REDO_LOG_NAME', ['REDO_LOG']];
+            yield [$version, 'LOAD_COUNT_NAME', ['COUNT']];
+            yield [$version, 'LOAD_SOURCE_COUNT', ['1']];
+            yield [$version, 'REPLICATION_FLAG_NUMBER', ['0', '1']];
+            yield [$version, 'BINLOG_RESET_INDEX', ['1', '2000000000', "X'01'"]];
+        }
+    }
+
+    #[DataProvider('providerLiteralNames')]
+    public function testDomainTreatsNamesLiterallyAndRetainsTheirSourceDefinition(string $spelling): void
+    {
+        $generator = (new ContextualValueDefinitions())->domain('NAME', ['A.B', 'C~D'], 'names');
+        $input = TerminalSequence::fromNames(['NAME']);
+        $result = $generator->generate(new LexemeInput($input, 0, new ResolvedOutput(), $spelling));
+        self::assertNotNull($result);
+        $candidates = [...$result->sequences()];
+        self::assertCount(1, $candidates);
+        self::assertSame($spelling, $candidates[0]->lexemes[0]->text);
+        self::assertSame('sql/sql_yacc.yy:names', $candidates[0]->lexemes[0]->definition);
+        $invalid = $generator->generate(new LexemeInput($input, 0, new ResolvedOutput(), 'axb'));
+        self::assertNotNull($invalid);
+        self::assertSame([], [...$invalid->sequences()]);
+    }
+    /**
+     * @return iterable<array{string}>
+     */
+    public static function providerLiteralNames(): iterable
+    {
+        yield ['a.b'];
+        yield ['C~D'];
     }
 }

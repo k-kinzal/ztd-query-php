@@ -34,5 +34,6 @@ final class LoadSourceCountRuleTest extends TestCase
         self::assertSame(['NUM', 'LOAD_COUNT_NAME', 'LOAD_SOURCE_COUNT'], $result->names());
         self::assertSame($input->terminals[1]->id, $result->terminals[1]->id);
         self::assertSame($input->original, $result->original);
+        self::assertCount(count($result->terminals), array_unique(array_map(static fn ($terminal): int => $terminal->id, $result->terminals)));
     }
 }

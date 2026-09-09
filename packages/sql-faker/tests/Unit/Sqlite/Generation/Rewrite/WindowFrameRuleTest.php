@@ -34,6 +34,7 @@ final class WindowFrameRuleTest extends TestCase
         self::assertSame(['BETWEEN', 'VALUE', 'FOLLOWING', 'AND', 'UNBOUNDED', 'FOLLOWING'], $result->names());
         self::assertSame($input->terminals[0], $result->terminals[1]);
         self::assertSame($input->original, $result->original);
+        self::assertCount(count($result->terminals), array_unique(array_map(static fn ($terminal): int => $terminal->id, $result->terminals)));
         self::assertSame($input->productions, $result->productions);
         self::assertSame($result, (new WindowFrameRule())->rewrite($result));
     }
@@ -98,6 +99,7 @@ final class WindowFrameRuleTest extends TestCase
         $result = $rule->rewrite($input);
         self::assertSame($expected, $result->names());
         self::assertSame($input->original, $result->original);
+        self::assertCount(count($result->terminals), array_unique(array_map(static fn ($terminal): int => $terminal->id, $result->terminals)));
         self::assertSame($input->productions, $result->productions);
         self::assertSame($result, $rule->rewrite($result));
     }

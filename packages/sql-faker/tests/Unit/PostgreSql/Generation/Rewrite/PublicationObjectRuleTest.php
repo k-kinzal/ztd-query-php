@@ -34,6 +34,7 @@ final class PublicationObjectRuleTest extends TestCase
         $result = (new PublicationObjectRule())->rewrite($input);
         self::assertSame(['TABLE', 'IDENT', ',', 'IDENT'], $result->names());
         self::assertSame($input->original, $result->original);
+        self::assertCount(count($result->terminals), array_unique(array_map(static fn ($terminal): int => $terminal->id, $result->terminals)));
     }
 
     public function testKindRecognizesCurrentSchemaAndInheritsAnUnqualifiedName(): void

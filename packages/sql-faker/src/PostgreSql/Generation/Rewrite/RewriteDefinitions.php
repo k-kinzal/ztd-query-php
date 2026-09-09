@@ -8,10 +8,12 @@ use SqlFaker\Grammar\Generation\Token\ExpressionGroupingRule;
 use SqlFaker\Grammar\Generation\Token\TerminalMappingRule;
 use SqlFaker\Grammar\Generation\Token\TokenRewriter;
 use SqlFaker\Grammar\Generation\Token\UniqueOptionRule;
+use SqlFaker\PostgreSql\Generation\Rewrite\Column\IdentityOptionRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Name\AnyRelationNameRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Name\FunctionNameRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Name\IndirectionStarRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Name\RelationNameRule;
+use SqlFaker\PostgreSql\Generation\Rewrite\Query\IntoClauseRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Query\SelectOptionsRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Routine\TableFunctionRule;
 
@@ -42,6 +44,8 @@ final class RewriteDefinitions
             new FetchWithTiesRule(),
             new SelectOptionsRule(),
             new TableFunctionRule(),
+            new IdentityOptionRule(),
+            new IntoClauseRule(),
             new HashPartitionBoundRule(),
             new UniqueOptionRule('columnDef', 'ColConstraint', ['COLLATE' => 'collation'], null, 'gram.y:SplitColQualList'),
             new UniqueOptionRule('columnOptions', 'ColConstraint', ['COLLATE' => 'collation'], null, 'gram.y:SplitColQualList'),

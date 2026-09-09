@@ -36,6 +36,7 @@ final class TableOptionRuleTest extends TestCase
         $result = (new TableOptionRule())->rewrite($input);
         self::assertSame(['ID', 'STRICT_TABLE_OPTION', 'WITHOUT', 'ROWID_TABLE_OPTION'], $result->names());
         self::assertSame($input->original, $result->original);
+        self::assertCount(count($result->terminals), array_unique(array_map(static fn ($terminal): int => $terminal->id, $result->terminals)));
         self::assertSame($input->productions, $result->productions);
     }
 

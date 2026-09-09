@@ -33,6 +33,7 @@ final class LimitOffsetRuleTest extends TestCase
         self::assertSame(['LIMIT', 'ICONST', 'OFFSET', 'ICONST'], $result->names());
         self::assertSame($input->terminals[3], $result->terminals[3]);
         self::assertSame($input->original, $result->original);
+        self::assertCount(count($result->terminals), array_unique(array_map(static fn ($terminal): int => $terminal->id, $result->terminals)));
     }
 
     public function testRewriteRetainsAnExistingSeparateOffset(): void
