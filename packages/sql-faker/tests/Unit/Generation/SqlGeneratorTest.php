@@ -43,6 +43,29 @@ use SqlFaker\Grammar\Terminal;
 #[UsesClass(\SqlFaker\Grammar\Derivation\ProductionPattern::class)]
 final class SqlGeneratorTest extends TestCase
 {
+    public function testGenerateReusesCompletionAnalysisAcrossDifferentPlans(): void
+    {
+        $grammar = new Grammar('first', [
+            'first' => new ProductionRule('first', [new Production([new Terminal('T')])]),
+            'second' => new ProductionRule('second', [new Production([new Terminal('U')])]),
+        ]);
+        $lexer = $this->createMock(LexicalGrammar::class);
+        $observations = [];
+        $lexer->method('isNonOutput')->willReturnCallback(static function (string $terminal) use (&$observations): bool {
+            $observations[] = $terminal;
+            return false;
+        });
+        $lexer->method('realizeSequence')->willReturnCallback(static fn (TerminalSequence $sequence): string => implode(' ', $sequence->names()));
+        $generator = new SqlGenerator($grammar, Factory::create(), $lexer);
+
+        self::assertSame('T', $generator->generate(GenerationPlan::all()));
+        self::assertSame(['T', 'U'], $observations);
+        self::assertSame('U', $generator->generate(GenerationPlan::fromRule('second')));
+        self::assertSame(['T', 'U'], $observations);
+        self::assertSame('T', $generator->generate(GenerationPlan::all()));
+        self::assertSame(['T', 'U'], $observations);
+    }
+
     public function testGenerateUsesTheGrammarEntryPointWithoutDialectKnowledge(): void
     {
         $grammar = new Grammar('custom_entry', [
