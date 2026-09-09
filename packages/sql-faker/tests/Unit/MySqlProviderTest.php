@@ -184,6 +184,9 @@ use SqlFaker\MySqlProvider;
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Query\QueryContextRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Query\JoinGroupingRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Routine\WithinGroupRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Column\FieldLengthRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Routine\ReturnRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Name\ColumnNameRule::class)]
 final class MySqlProviderTest extends TestCase
 {
     #[Override]

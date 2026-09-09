@@ -36,6 +36,12 @@ final class DefinitionFactory
                 ['mysql-5.6.51', 'mysql-5.7.44', 'mysql-8.0.44', 'mysql-8.1.0', 'mysql-8.2.0', 'mysql-8.3.0', 'mysql-8.4.7', 'mysql-9.0.1', 'mysql-9.1.0'],
                 new ChoiceLexemeGenerator(
                     new SizeNumberLexemeGenerator(),
+                    new IntegerLexemeGenerator('DISPLAY_WIDTH_NUMBER', '0', '255', ['0', '1', '255'], 'sql/create_field.cc:Create_field::init'),
+                    new IntegerLexemeGenerator('BIT_WIDTH_NUMBER', '0', '64', ['0', '1', '64'], 'sql/create_field.cc:Create_field::init'),
+                    new IntegerLexemeGenerator('DECIMAL_PRECISION_NUMBER', '0', '65', ['0', '1', '65'], 'sql/create_field.cc:Create_field::init'),
+                    new IntegerLexemeGenerator('FLOAT_PRECISION_NUMBER', '0', '53', ['0', '24', '53'], 'sql/create_field.cc:Create_field::init'),
+                    new IntegerLexemeGenerator('VARCHAR_LENGTH_NUMBER', '0', '65535', ['0', '1', '65535'], 'sql/create_field.cc:Create_field::init'),
+                    new IntegerLexemeGenerator('FIELD_LENGTH_NUMBER', '0', '4294967295', ['0', '1', '4294967295'], 'sql/create_field.cc:Create_field::init'),
                     new BoundedIntegerLexemeGenerator('KEY_ALGORITHM_NUMBER', 1, 2, ['1', '2'], 'sql/sql_yacc.yy:opt_key_algo'),
                     new IntegerLexemeGenerator('AVG_ROW_LENGTH_NUMBER', '0', '4294967295', ['0', '1', '4294967295'], 'sql/sql_yacc.yy:AVG_ROW_LENGTH'),
                     new IntegerLexemeGenerator('YEAR_WIDTH_NUMBER', '4', '4', ['4'], 'sql/sql_yacc.yy:YEAR_SYM'),

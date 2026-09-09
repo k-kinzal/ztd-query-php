@@ -8,6 +8,7 @@ use SqlFaker\Grammar\Generation\Token\ExpressionGroupingRule;
 use SqlFaker\Grammar\Generation\Token\TokenRewriter;
 use SqlFaker\Grammar\Generation\Token\UniqueOptionRule;
 use SqlFaker\MySql\Generation\Rewrite\Alter\OrderByRule;
+use SqlFaker\MySql\Generation\Rewrite\Column\FieldLengthRule;
 use SqlFaker\MySql\Generation\Rewrite\Expression\QuantifiedComparisonRule;
 use SqlFaker\MySql\Generation\Rewrite\Expression\TableValueConstructorRule;
 use SqlFaker\MySql\Generation\Rewrite\Partition\FieldListRule;
@@ -15,6 +16,7 @@ use SqlFaker\MySql\Generation\Rewrite\Query\JoinGroupingRule;
 use SqlFaker\MySql\Generation\Rewrite\Query\QueryContextRule;
 use SqlFaker\MySql\Generation\Rewrite\Replication\StartRule;
 use SqlFaker\MySql\Generation\Rewrite\Replication\TablePatternRule;
+use SqlFaker\MySql\Generation\Rewrite\Routine\ReturnRule;
 
 /**
  * Declares structural repairs of MySQL parser diagnostic alternatives and ambiguity.
@@ -47,11 +49,13 @@ final class RewriteDefinitions
             new SetNamesRule($defaultTerminal),
             new AlterDatabaseRule($defaultTerminal),
             new AlterEventRule(),
+            new ReturnRule(),
             new OrderByRule(),
             new RoleGrantRule(),
             new RequiredAliasRule(),
             new InstanceActionRule(),
             new IntegerContextRule(!in_array($version, ['mysql-5.6.51', 'mysql-5.7.44'], true)),
+            new FieldLengthRule(),
             new LoadSourceCountRule(),
             new FlushExportRule(),
             new ExpressionGroupingRule(['expr', 'bool_pri', 'predicate', 'bit_expr', 'simple_expr'], 'sql_yacc.yy:simple_expr:parenthesized-operands'),

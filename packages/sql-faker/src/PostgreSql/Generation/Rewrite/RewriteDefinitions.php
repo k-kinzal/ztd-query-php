@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TokenRewriter;
 use SqlFaker\Grammar\Generation\Token\UniqueOptionRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Column\IdentityOptionRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Name\AnyRelationNameRule;
+use SqlFaker\PostgreSql\Generation\Rewrite\Name\ColumnNameRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Name\FunctionNameRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Name\IndirectionStarRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Name\RelationNameRule;
@@ -34,6 +35,7 @@ final class RewriteDefinitions
             new CopySourceRule(),
             new FunctionNameRule(),
             new IndirectionStarRule(),
+            new ColumnNameRule(),
             new ConstraintAttributesRule(),
             new GeneratedColumnRule(),
             new WindowFrameRule(),

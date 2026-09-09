@@ -19,12 +19,14 @@ final class IntoClauseRule implements RewriteRule
     #[Override]
     public function rewrite(TerminalSequence $sequence): TerminalSequence
     {
+        $destinations = [];
         foreach ($sequence->occurrences('into_clause') as $id) {
             $range = $sequence->range($id);
             if ($range === null) {
                 continue;
             }
             $origin = $sequence->terminals[$range[0]];
+            $statement = $origin->ancestor('select_stmt');
             $source = $origin->ancestor('subquery') === null ? null : 'sql/parse_tree_nodes.cc:PT_subquery:into';
             for ($index = $range[1]; $source === null && $index < count($sequence->terminals); ++$index) {
                 $following = $sequence->terminals[$index];
@@ -34,6 +36,10 @@ final class IntoClauseRule implements RewriteRule
                     && in_array($following->ancestors[$last], $origin->ancestors, true)) {
                     $source = 'sql/sql_lex.cc:new_set_operation_query:into';
                 }
+            }
+            if ($source === null && $statement !== null) {
+                $source = isset($destinations[$statement]) ? 'sql/parse_tree_nodes.cc:PT_select_stmt:multiple-into' : null;
+                $destinations[$statement] = true;
             }
             if ($source !== null) {
                 $sequence = $sequence->replace($range[0], $range[1] - $range[0], [], $source);

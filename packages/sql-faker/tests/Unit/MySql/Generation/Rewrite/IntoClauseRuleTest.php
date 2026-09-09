@@ -52,6 +52,22 @@ final class IntoClauseRuleTest extends TestCase
         self::assertSame($result, $rule->rewrite($result));
     }
 
+    public function testRewriteKeepsOneDestinationPerSelectStatement(): void
+    {
+        $first = new TerminalOccurrence('INTO', 10, [0, 1, 2], ['select_stmt', 'query_specification', 'into_clause']);
+        $last = new TerminalOccurrence('INTO', 11, [0, 3], ['select_stmt', 'into_clause']);
+        $other = new TerminalOccurrence('INTO', 12, [4, 5], ['select_stmt', 'into_clause']);
+        $nested = new TerminalOccurrence('INTO', 13, [0, 6, 7], ['select_stmt', 'subquery', 'into_clause']);
+        $input = new TerminalSequence([$first, $nested, $last, $other], [$first, $nested, $last, $other], [], [new ProductionOccurrence(2, 1, 'into_clause', 0), new ProductionOccurrence(7, 6, 'into_clause', 0), new ProductionOccurrence(3, 0, 'into_clause', 0), new ProductionOccurrence(5, 4, 'into_clause', 0)]);
+        $rule = new IntoClauseRule();
+        $result = $rule->rewrite($input);
+        self::assertSame([$last, $other], $result->terminals);
+        self::assertSame($input->original, $result->original);
+        self::assertSame($input->productions, $result->productions);
+        self::assertContains('sql/parse_tree_nodes.cc:PT_select_stmt:multiple-into', $result->rewrites);
+        self::assertSame($result, $rule->rewrite($result));
+    }
+
     public function testRewritePreservesDestinationsBeforeUnrelatedOperatorUses(): void
     {
         $into = new TerminalOccurrence('INTO', 10, [0, 1], ['query_expression_body', 'into_clause']);
