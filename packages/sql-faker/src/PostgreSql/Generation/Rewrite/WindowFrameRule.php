@@ -34,7 +34,8 @@ final class WindowFrameRule implements RewriteRule
                 $sequence = $this->unbounded($sequence, $end, 'FOLLOWING');
             } elseif ($end === null && $this->rank($sequence, $start) > 2) {
                 $range = $sequence->range($start);
-                if ($range !== null) {
+                if ($range !== null && !($sequence->nameAt($range[0] - 1) === 'BETWEEN'
+                    && ($sequence->terminals[$range[0] - 1]->rewrite ?? null) === 'postgresql.frame-order')) {
                     $sequence = $sequence->replace($range[1], 0, [
                         $sequence->insertedFor('AND', $extent, 'postgresql.frame-order'),
                         $sequence->insertedFor('UNBOUNDED', $extent, 'postgresql.frame-order', 1),

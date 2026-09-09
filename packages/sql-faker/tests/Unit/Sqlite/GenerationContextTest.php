@@ -82,6 +82,7 @@ use SqlFaker\Sqlite\GenerationContext;
 #[UsesClass(\SqlFaker\Grammar\Generation\Spacing\LexemeBoundary::class)]
 #[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\JoinModifiers::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\ExpressionGroupingRule::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\WindowNameLexemeGenerator::class)]
 final class GenerationContextTest extends TestCase
 {
     public function testBindsTheRequestedReleaseAndPreservesTheGrammarStart(): void

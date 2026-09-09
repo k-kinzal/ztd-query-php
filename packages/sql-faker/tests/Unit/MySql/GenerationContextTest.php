@@ -98,6 +98,9 @@ use SqlFaker\MySql\GenerationContext;
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\AlterEventRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\SubqueryContextRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\IntoClauseRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\GeneratedColumnRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\TransactionCompletionRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Alter\OrderByRule::class)]
 final class GenerationContextTest extends TestCase
 {
     public function testBindsTheRequestedReleaseAndPreservesTheGrammarStart(): void

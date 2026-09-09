@@ -43,6 +43,7 @@ use SqlFaker\Sqlite\Generation\Lexeme\DefinitionFactory;
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
 #[UsesClass(\SqlFaker\Grammar\LexicalException::class)]
 #[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\JoinModifiers::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\WindowNameLexemeGenerator::class)]
 final class DefinitionFactoryTest extends TestCase
 {
     public function testCreateCombinesLexicalOutputAndBoundaryDecisions(): void

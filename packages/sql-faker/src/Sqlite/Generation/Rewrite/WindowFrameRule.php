@@ -30,7 +30,8 @@ final class WindowFrameRule implements RewriteRule
             }
             if ($end === null) {
                 $range = $sequence->range($start->id);
-                if ($range !== null) {
+                if ($range !== null && !($sequence->nameAt($range[0] - 1) === 'BETWEEN'
+                    && ($sequence->terminals[$range[0] - 1]->rewrite ?? null) === 'sqlite.frame-order')) {
                     $sequence = $sequence->replace($range[1], 0, [
                         $sequence->insertedFor('AND', $id, 'sqlite.frame-order'),
                         $sequence->insertedFor('UNBOUNDED', $id, 'sqlite.frame-order', 1),

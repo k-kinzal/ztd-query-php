@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * gram.y/check_func_name accepts String name components, excluding A_Star and A_Indices.
+ * catalog/namespace.c DeconstructQualifiedName limits function lookup to three components.
  */
 final class FunctionNameRule implements RewriteRule
 {
@@ -19,13 +20,23 @@ final class FunctionNameRule implements RewriteRule
     #[Override]
     public function rewrite(TerminalSequence $sequence): TerminalSequence
     {
-        foreach ($sequence->occurrences('indirection_el') as $id) {
+        $components = [];
+        foreach (array_reverse($sequence->occurrences('indirection_el')) as $id) {
             $range = $sequence->range($id);
             if ($range === null) {
                 continue;
             }
             $origin = $sequence->terminals[$range[0]];
             if (!$this->isFunctionName($origin->rules)) {
+                continue;
+            }
+            $scope = $origin->ancestor('func_name') ?? $origin->ancestor('function_with_argtypes');
+            if ($scope === null) {
+                continue;
+            }
+            $components[$scope] = ($components[$scope] ?? 0) + 1;
+            if ($components[$scope] > 2) {
+                $sequence = $sequence->replace($range[0], $range[1] - $range[0], [], 'catalog/namespace.c:DeconstructQualifiedName:function');
                 continue;
             }
             if ($origin->name === '[' || ($origin->name === '.' && $sequence->nameAt($range[0] + 1) === '*')) {

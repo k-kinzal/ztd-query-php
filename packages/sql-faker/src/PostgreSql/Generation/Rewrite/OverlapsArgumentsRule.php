@@ -61,10 +61,10 @@ final class OverlapsArgumentsRule implements RewriteRule
     {
         $elements = $this->elements($sequence, $row);
         $range = $sequence->range($row);
-        if (count($elements) === 2 || $range === null) {
+        $source = 'gram.y:OVERLAPS-row-arity';
+        if (count($elements) === 2 || $range === null || $sequence->terminals[$range[0]]->rewrite === $source) {
             return $sequence;
         }
-        $source = 'gram.y:OVERLAPS-row-arity';
         $output = [$sequence->insertedFor('ROW', $row, $source), $sequence->insertedFor('(', $row, $source, 1)];
         for ($index = 0; $index < 2; ++$index) {
             if ($index !== 0) {

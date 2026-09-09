@@ -57,7 +57,7 @@ final class KeywordDefinitions
             ['sqlite-3.47.2'],
             new MatchingLexemeGenerator(
                 static fn (LexemeInput $input): bool => in_array($input->terminal()->name, self::TERMINALS, true) && !($input->terminal()->name === 'JOIN_KW' && $input->terminal()->within('joinop')),
-                new RegisteredLexemeGenerator($keywords, 'tool/mkkeywordhash.c', []),
+                new WindowNameLexemeGenerator(new RegisteredLexemeGenerator($keywords, 'tool/mkkeywordhash.c', [])),
             ),
             'sqlite-3.47.2-keywords',
         ));

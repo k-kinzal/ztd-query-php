@@ -29,6 +29,7 @@ final class RewriteDefinitions
             new FunctionNameRule(),
             new IndirectionStarRule(),
             new ConstraintAttributesRule(),
+            new GeneratedColumnRule(),
             new WindowFrameRule(),
             new RelationNameRule(),
             new AnyRelationNameRule(),
@@ -38,6 +39,9 @@ final class RewriteDefinitions
             new LimitOffsetRule(),
             new FetchWithTiesRule(),
             new HashPartitionBoundRule(),
+            new UniqueOptionRule('columnDef', 'ColConstraint', ['COLLATE' => 'collation'], null, 'gram.y:SplitColQualList'),
+            new UniqueOptionRule('columnOptions', 'ColConstraint', ['COLLATE' => 'collation'], null, 'gram.y:SplitColQualList'),
+            new UniqueOptionRule('CreateDomainStmt', 'ColConstraint', ['COLLATE' => 'collation'], null, 'gram.y:SplitColQualList'),
             new UniqueOptionRule('CreateTrigStmt', 'TriggerOneEvent', [
                 'INSERT' => 'insert', 'DELETE_P' => 'delete', 'UPDATE' => 'update', 'TRUNCATE' => 'truncate',
             ], 'OR', 'gram.y:TriggerEvents'),
