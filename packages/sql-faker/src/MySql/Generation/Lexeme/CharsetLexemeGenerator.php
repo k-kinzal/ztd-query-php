@@ -49,6 +49,9 @@ final class CharsetLexemeGenerator implements LexemeGenerator
         }
         if (preg_match("/\\A(?:0b([01]+)|[bB]'([01]*)')\\z/D", $literal, $match) === 1) {
             $bits = $match[1] !== '' ? $match[1] : $match[2];
+            if ($bits === '') {
+                return '';
+            }
             $bits = str_pad($bits, (int) (ceil(strlen($bits) / 8) * 8), '0', STR_PAD_LEFT);
             return implode('', array_map(static fn (string $byte): string => chr(intval($byte, 2)), str_split($bits, 8)));
         }
