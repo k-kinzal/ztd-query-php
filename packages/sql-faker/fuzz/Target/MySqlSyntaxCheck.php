@@ -68,7 +68,7 @@ final class MySqlSyntaxCheck
 
             $acceptable = in_array($errorCode, [1054, 1046, 1527, 1273, 1327, 3708, 1407, 1049,
                 1319, 1305, 1096, 1791, 1286, 1235, 1690, 3652, 3709, 1525, 1051, 3980,
-                1193, 1277, 1641, 1800, 1801, 1066, 1115, 3714, 6006, 3573, 3568, 1302, 1391, 3763], true);
+                1193, 1277, 1641, 1800, 1801, 1066, 1115, 3714, 6006, 3573, 3568, 1302, 1391, 3763, 1060, 1492], true);
 
             if ($errorCode === 1221 && (str_ends_with($rejection->getMessage(), 'Incorrect usage of spatial/fulltext/hash index and explicit index order')
                 || str_ends_with($rejection->getMessage(), 'Incorrect usage of SRID and non-geometry column'))) {
