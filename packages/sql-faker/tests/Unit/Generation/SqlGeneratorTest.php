@@ -41,6 +41,22 @@ use SqlFaker\Grammar\Terminal;
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\TokenGenerator::class)]
 #[UsesClass(TokenRewriter::class)]
 #[UsesClass(\SqlFaker\Grammar\Derivation\ProductionPattern::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\ChoiceLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\Lexeme::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeInput::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeSequence::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\PatternLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\CandidateResolver::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\OutputPart::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\ResolvedOutput::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\ReverseLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\SqlSerializer::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\CombinedSpacingRule::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\SpacingConstraint::class)]
+#[UsesClass(\SqlFaker\Grammar\Choice\ByteChoices::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\PlanBuilder::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\LexemeBoundary::class)]
 final class SqlGeneratorTest extends TestCase
 {
     public function testGenerateReusesCompletionAnalysisAcrossDifferentPlans(): void

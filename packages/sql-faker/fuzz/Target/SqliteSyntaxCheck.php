@@ -24,6 +24,7 @@ use PDOException;
  * names; resolve.c resolves operator functions and validates arity.
  * expr.c checks vector assignment dimensions before or after SELECT expansion.
  * build.c resolves local foreign-key columns against the table being defined.
+ * window.c/windowFind resolves names against the current SELECT's window definitions.
  * attach.c/fixSelectCb checks cross-database trigger references.
  */
 final class SqliteSyntaxCheck
@@ -74,6 +75,7 @@ final class SqliteSyntaxCheck
                 str_contains($message, 'all VALUES must have the same number of terms') => true,
                 preg_match('/General error: 1 [0-9]+ columns assigned [0-9]+ values\z/D', $message) === 1 => true,
                 str_contains($message, 'General error: 1 no such function:') => true,
+                str_starts_with($message, 'SQLSTATE[HY000]: General error: 1 no such window: ') => true,
                 str_contains($message, 'SELECTs to the left and right of UNION do not have the same number of result columns') => true,
                 str_contains($message, 'General error: 1 no such trigger:') => true,
                 str_contains($message, 'unable to identify the object to be reindexed') => true,

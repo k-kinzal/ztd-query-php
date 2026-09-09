@@ -65,6 +65,7 @@ final class PgSyntaxCheck
      * reject missing relations, option values and an unsupported MERGE feature.
      * parse_coerce.c reports 42804 for incompatible expression types after parsing.
      * parse_expr.c reports 42P18 when an empty array has no inferable element type.
+     * parse_merge.c checks unreachable WHEN clauses; parse_clause.c rejects duplicate window names.
      * Only those specific diagnostics are inconclusive; grammar-action errors remain findings.
      *
      * @throws SyntaxFailure When syntax or an unclassified rejection is observed
@@ -82,7 +83,11 @@ final class PgSyntaxCheck
         if ($state === '42601' && (str_starts_with(trim($message), 'ERROR:  DEFAULT is not allowed in this context')
             || str_starts_with(trim($message), 'ERROR:  format requires a parameter')
             || str_starts_with(trim($message), 'ERROR:  SELECT * with no tables specified is not valid')
+            || str_starts_with(trim($message), 'ERROR:  unreachable WHEN clause specified after unconditional WHEN clause')
             || str_starts_with(trim($message), 'ERROR:  WITH RECURSIVE is not supported for MERGE statement'))) {
+            return;
+        }
+        if ($state === '42P20' && preg_match('/\AERROR:  window "[^\r\n]*" is already defined(?:\r?\n|\z)/D', trim($message)) === 1) {
             return;
         }
         throw new SyntaxFailure("PostgreSQL syntax verification failed\nInput (hex): $input\nSQL: $sql\nSQLSTATE: $state\n$message");
