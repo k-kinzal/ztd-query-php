@@ -326,4 +326,36 @@ final class GrammarCoverageTest extends TestCase
         unset($restored);
         CoverageFixture::remove($directory);
     }
+    public function testRecordSequenceKeepsTransformedSelectionsOutOfPreservedOutputCoverage(): void
+    {
+        $coverage = CoverageFixture::coverage();
+        $grammar = CoverageFixture::grammar();
+        $trace = new \SqlFaker\Grammar\Derivation\DerivationTrace('stmt');
+        $trace->expand(0, $grammar->ruleMap['stmt']->alternatives[0], 0);
+        $trace->expand(1, $grammar->ruleMap['expr']->alternatives[0], 0);
+        $sequence = $trace->terminals();
+        $changed = $sequence->replace(0, 1, [$sequence->terminals[0]->replaced('OTHER', 'fixture')], 'fixture');
+        $coverage->beginGeneration('stmt', []);
+        $coverage->beginAttempt(0);
+        $coverage->recordSequence($changed);
+        $coverage->commitAttempt('sql-hash', (new \SqlFaker\Coverage\SequenceObservation())->preserved($changed));
+        $coverage->endGeneration();
+        self::assertSame(2, $coverage->snapshot()['current']['reached']);
+        self::assertSame(1, $coverage->snapshot()['current']['emitted']);
+        $trace = $coverage->lastGeneration();
+        self::assertNotNull($trace);
+        self::assertSame(['fixture'], $trace['rewrites']);
+    }
+
+    public function testRecordOutputExposesCandidateAndBoundaryDecisions(): void
+    {
+        $coverage = CoverageFixture::coverage();
+        $coverage->beginGeneration('stmt', []);
+        $coverage->recordOutput(CoverageFixture::output('SELECT'));
+        $trace = $coverage->lastGeneration();
+        self::assertNotNull($trace);
+        self::assertCount(1, $trace['lexicalEvents']);
+        self::assertSame('', $trace['spacingEvents'][0]['separator']);
+        self::assertSame([], $trace['spacingEvents'][0]['rules']);
+    }
 }

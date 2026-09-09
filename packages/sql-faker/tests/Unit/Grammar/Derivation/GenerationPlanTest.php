@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\Grammar\Derivation;
 
+use Closure;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -41,8 +42,8 @@ final class GenerationPlanTest extends TestCase
             'leaf' => new ProductionRule('leaf', [new Production([new Terminal('T')])]),
         ]);
         $lexical = $this->createMock(LexicalGrammar::class);
-        $lexical->method('supports')->willReturn(true);
-        $lexical->method('spellings')->willReturn(['name']);
+        $lexical->method('isNonOutput')->willReturn(false);
+        $lexical->method('resolveSequence')->willReturnCallback(\Tests\Fixtures\SqlFaker\CoverageFixture::resolve(...));
         $plan = GenerationPlan::fromBytes($input, new PlanBuilder($grammar, $lexical), $constraints);
 
         self::assertSame($expected, $plan->expansionBudget());
@@ -76,17 +77,17 @@ final class GenerationPlanTest extends TestCase
             'choice' => new ProductionRule('choice', [new Production([new Terminal('T')]), new Production([new Terminal('U')])]),
         ]);
         $lexical = $this->createMock(LexicalGrammar::class);
-        $lexical->method('supports')->willReturn(true);
-        $lexical->method('spellings')->willReturn(['first', 'second']);
+        $lexical->method('isNonOutput')->willReturn(false);
+        $lexical->method('resolveSequence')->willReturnCallback(static fn (\SqlFaker\Grammar\Generation\Token\TerminalSequence $sequence, ?GenerationPlan $plan, Closure $choose) =>
+            \Tests\Fixtures\SqlFaker\CoverageFixture::resolve($sequence, $plan, $choose, ['T' => ['first', 'second'], 'U' => ['first', 'second']]));
         $builder = new PlanBuilder($grammar, $lexical);
         $plan = GenerationPlan::fromBytes("\0\0\0\0\0\x01\x01\0\0", $builder);
 
         self::assertEquals(ProductionPattern::at(1), $plan->patternAt('choice', 0));
         self::assertEquals(ProductionPattern::at(0), $plan->patternAt('choice', 1));
-        self::assertSame('second', $plan->lexemeAt('U', 0));
-        self::assertSame('first', $plan->lexemeAt('T', 0));
-        self::assertSame('first', $plan->triviaAt(0, false));
-        self::assertSame('', $plan->triviaAt(0, true));
+        self::assertSame('first', $plan->lexemeAt('U', 0));
+        self::assertSame('second', $plan->lexemeAt('T', 0));
+        self::assertNotNull($plan->candidateKeyAt('U', 0));
     }
 
     public function testAllCoversTheGrammarWithoutProductionConstraints(): void
@@ -278,7 +279,7 @@ final class GenerationPlanTest extends TestCase
     public function testWithExpansionBudgetPreservesTheOtherConstraints(): void
     {
         $base = GenerationPlan::all()->withMaxDepth(7);
-        $plan = $base->withExpansionBudget(300)->requiringNonEmpty()->withTrivia([' '], ['']);
+        $plan = $base->withExpansionBudget(300)->requiringNonEmpty()->withCandidateKeys(['T' => ['candidate']]);
         self::assertNull($base->expansionBudget());
         self::assertSame(300, $plan->expansionBudget());
         self::assertSame(7, $plan->maxDepth());
@@ -290,7 +291,7 @@ final class GenerationPlanTest extends TestCase
     public static function providerRefinedPlans(): array
     {
         $base = GenerationPlan::constrained('stmt', ['stmt' => [ProductionPattern::at(1)]])
-            ->withLexemes(['T' => ['name']])->withTrivia(['/*separator*/'], ['/*optional*/']);
+            ->withLexemes(['T' => ['name']])->withCandidateKeys(['T' => ['candidate']]);
         return [[$base->requiringNonEmpty()], [$base->withMaxDepth(7)], [$base->withExpansionBudget(9)],
             [$base->withStepBudget()], [$base->withLexemes(['T' => ['name']])],
             [$base->withPatternForEveryOccurrence('tail', ProductionPattern::exactly())]];
@@ -300,22 +301,22 @@ final class GenerationPlanTest extends TestCase
      * @param GenerationPlan<bool> $plan
      */
     #[DataProvider('providerRefinedPlans')]
-    public function testWithTriviaPreservesExplicitInstructionsAcrossRefinements(GenerationPlan $plan): void
+    public function testWithCandidateKeysPreservesExplicitInstructionsAcrossRefinements(GenerationPlan $plan): void
     {
         self::assertSame('stmt', $plan->startRule());
         self::assertEquals(ProductionPattern::at(1), $plan->patternAt('stmt', 0));
         self::assertSame('name', $plan->lexemeAt('T', 0));
-        self::assertSame('/*separator*/', $plan->triviaAt(0, false));
-        self::assertSame('/*optional*/', $plan->triviaAt(0, true));
+        self::assertSame('candidate', $plan->candidateKeyAt('T', 0));
     }
 
-    public function testTriviaAtDistinguishesUnspecifiedFromExplicitEmptyAndDefaults(): void
+    public function testCandidateKeyAtDistinguishesPinnedAndUnspecifiedOccurrences(): void
     {
-        self::assertNull(GenerationPlan::all()->triviaAt(0, false));
-        $plan = GenerationPlan::all()->withTrivia([' '], ['']);
-        self::assertSame('', $plan->triviaAt(0, true));
-        self::assertSame('', $plan->triviaAt(50, true));
-        self::assertSame(' ', $plan->triviaAt(50, false));
+        self::assertNull(GenerationPlan::all()->candidateKeyAt('T', 0));
+        $plan = GenerationPlan::all()->withCandidateKeys(['T' => ['one', 'two']]);
+        self::assertSame('one', $plan->candidateKeyAt('T', 0));
+        self::assertSame('two', $plan->candidateKeyAt('T', 1));
+        self::assertNull($plan->candidateKeyAt('T', 2));
+        self::assertNull($plan->candidateKeyAt('U', 0));
     }
 
     public function testExpansionBudgetIsOptionalForExistingPlans(): void
@@ -336,13 +337,13 @@ final class GenerationPlanTest extends TestCase
     {
         $grammar = \Tests\Fixtures\SqlFaker\CoverageFixture::syntaxGrammar();
         $lexical = $this->createMock(LexicalGrammar::class);
-        $lexical->method('supports')->willReturn(true);
-        $lexical->method('spellings')->willReturnCallback(static fn (string $terminal): array => [$terminal === '@TRIVIA' ? ' ' : $terminal]);
+        $lexical->method('isNonOutput')->willReturn(false);
+        $lexical->method('resolveSequence')->willReturnCallback(\Tests\Fixtures\SqlFaker\CoverageFixture::resolve(...));
         $builder = new PlanBuilder($grammar, $lexical);
         $plan = GenerationPlan::fromBytes($input, $builder);
         self::assertEquals($plan, GenerationPlan::fromBytes($input, $builder));
         self::assertNotNull($plan->patternAt('stmt', 0));
-        self::assertNotNull($plan->triviaAt(0, false));
+        self::assertNotNull($plan->candidateKeyAt('SELECT', 0) ?? $plan->candidateKeyAt('DELETE', 0));
         self::assertFalse($plan->requiresNonEmpty());
         self::assertNull($plan->startRule());
     }

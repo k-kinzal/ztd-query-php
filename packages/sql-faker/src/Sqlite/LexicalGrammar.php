@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace SqlFaker\Sqlite;
 
+use Closure;
 use Faker\Generator as FakerGenerator;
 use InvalidArgumentException;
 use Override;
 use RuntimeException;
 use SqlFaker\Grammar\Derivation\GenerationPlan;
+use SqlFaker\Grammar\Generation\Output\ResolvedOutput;
 use SqlFaker\Grammar\Generation\Output\ReverseLexemeGenerator;
 use SqlFaker\Grammar\Generation\Output\SqlSerializer;
 use SqlFaker\Grammar\Generation\Token\TerminalSequence;
@@ -102,8 +104,20 @@ final class LexicalGrammar implements LexicalGrammarContract
      */
     public function realizeSequence(TerminalSequence $sequence, ?GenerationPlan $plan = null): string
     {
-        $output = $this->pipeline->generate($sequence, $plan, fn (int $count): int => $this->faker->numberBetween(0, $count - 1));
+        $output = $this->resolveSequence($sequence, $plan, fn (int $count): int => $this->faker->numberBetween(0, $count - 1));
         return (new SqlSerializer())->serialize($output->pieces());
+    }
+
+    /**
+     * Exposes the resolved choices to a plan compiler without interpreting its input.
+     * @param GenerationPlan<bool>|null $plan
+     * @param Closure(int): int $choose
+     * @throws LexicalException When no compatible candidate exists
+     */
+    #[Override]
+    public function resolveSequence(TerminalSequence $sequence, ?GenerationPlan $plan, Closure $choose): ResolvedOutput
+    {
+        return $this->pipeline->generate($sequence, $plan, $choose);
     }
 
     /**

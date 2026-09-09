@@ -9,7 +9,7 @@ namespace SqlFaker\Coverage;
  *
  * @phpstan-type Event array{generationId: int, attemptId: int, nodeId: int, parentNodeId: int|null, rhsPosition: int|null, ruleId: string, productionId: string, selectionReason: string}
  * @phpstan-type Attempt array{id: int, events: list<Event>, status: string, error: string|null, sqlHash: string|null}
- * @phpstan-type Trace array{generationId: int, root: string, planSummary: array<string, int|string|bool|null>, attempts: list<Attempt>, lexicalEvents: list<string>, status: string, reachedIds: list<string>, emittedIds: list<string>}
+ * @phpstan-type Trace array{generationId: int, root: string, planSummary: array<string, int|string|bool|null>, attempts: list<Attempt>, lexicalEvents: list<string>, rewrites: list<string>, spacingEvents: list<array{candidate: string, separator: string, rules: list<string>}>, status: string, reachedIds: list<string>, emittedIds: list<string>}
  * @visibility root
  */
 final class GenerationTrace
@@ -32,7 +32,7 @@ final class GenerationTrace
     public function __construct(int $id, string $root, array $plan)
     {
         $this->value = ['generationId' => $id, 'root' => $root, 'planSummary' => $plan,
-            'attempts' => [], 'lexicalEvents' => is_string($plan['lexicalTarget'] ?? null) ? [$plan['lexicalTarget']] : [], 'status' => 'in-progress', 'reachedIds' => [], 'emittedIds' => []];
+            'attempts' => [], 'rewrites' => [], 'spacingEvents' => [], 'lexicalEvents' => is_string($plan['lexicalTarget'] ?? null) ? [$plan['lexicalTarget']] : [], 'status' => 'in-progress', 'reachedIds' => [], 'emittedIds' => []];
     }
 
     /**
@@ -74,9 +74,10 @@ final class GenerationTrace
     /**
      * Credits emitted productions only to the attempt returning SQL.
      *
+     * @param list<int>|null $nodes Source occurrences preserved in the output
      * @return list<string>
      */
-    public function commit(string $hash): array
+    public function commit(string $hash, ?array $nodes = null): array
     {
         $index = count($this->value['attempts']) - 1;
         if (!isset($this->value['attempts'][$index])) {
@@ -85,7 +86,12 @@ final class GenerationTrace
         $this->value['attempts'][$index]['status'] = 'committed';
         $this->value['attempts'][$index]['sqlHash'] = $hash;
         $this->value['status'] = 'success';
-        $this->value['emittedIds'] = array_values(array_unique(array_column($this->value['attempts'][$index]['events'], 'productionId')));
+        $events = $this->value['attempts'][$index]['events'];
+        if ($nodes !== null) {
+            $preserved = array_fill_keys($nodes, true);
+            $events = array_filter($events, static fn (array $event): bool => isset($preserved[$event['nodeId']]));
+        }
+        $this->value['emittedIds'] = array_values(array_unique(array_column($events, 'productionId')));
         return $this->value['emittedIds'];
     }
 

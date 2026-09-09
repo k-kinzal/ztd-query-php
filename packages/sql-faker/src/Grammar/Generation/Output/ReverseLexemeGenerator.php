@@ -40,6 +40,7 @@ final class ReverseLexemeGenerator
     {
         $occurrences = [];
         $requested = [];
+        $keys = [];
         $original = [];
         foreach ($sequence->original as $terminal) {
             $occurrence = $occurrences[$terminal->name] ?? 0;
@@ -50,15 +51,17 @@ final class ReverseLexemeGenerator
         foreach ($sequence->terminals as $index => $terminal) {
             $occurrence = $occurrences[$terminal->name] ?? 0;
             $occurrences[$terminal->name] = $occurrence + 1;
+            $keys[$index] = $plan?->candidateKeyAt($terminal->name, $occurrence);
             $requested[$index] = $plan?->lexemeAt($terminal->name, $occurrence) ?? $original[$terminal->id] ?? null;
         }
         $values = $valueChoice === null ? null : new ValueChoices($valueChoice);
-        $completion = new BoundaryCompletion($this->lexemes, $this->resolver, $requested, values: $values);
+        $completion = new BoundaryCompletion($this->lexemes, $this->resolver, $requested, $keys, $values);
         $right = new ResolvedOutput();
         for ($index = count($sequence->terminals) - 1; $index >= 0; --$index) {
             $right = $this->select(
                 new LexemeInput($sequence, $index, $right, $requested[$index], $values),
                 $choose,
+                $keys[$index],
                 static fn (ResolvedOutput $suffix): bool => $completion->accepts($sequence, $index - 1, $suffix)
             );
         }
@@ -73,7 +76,7 @@ final class ReverseLexemeGenerator
      * @param Closure(int): int $choose
      * @param (Closure(ResolvedOutput): bool)|null $canComplete Checks outstanding left-boundary obligations
      */
-    public function select(LexemeInput $input, Closure $choose, ?Closure $canComplete = null): ResolvedOutput
+    public function select(LexemeInput $input, Closure $choose, ?string $key = null, ?Closure $canComplete = null): ResolvedOutput
     {
         $candidates = $this->lexemes->generate($input);
         if ($candidates === null) {
@@ -83,7 +86,7 @@ final class ReverseLexemeGenerator
         $contradictions = [];
         $rejections = [];
         foreach ($candidates->sequences() as $candidate) {
-            if (!$this->matchesRequest($candidate, $input)) {
+            if (!$this->matchesRequest($candidate, $input) || ($key !== null && $candidate->key() !== $key)) {
                 continue;
             }
             $resolved = $this->resolver->resolve($candidate, $input);
@@ -106,7 +109,7 @@ final class ReverseLexemeGenerator
             throw new LexicalException('Candidate selector returned an out-of-range index for ' . $input->terminal()->name);
         }
         foreach ($candidates->sequences() as $candidate) {
-            if (!$this->matchesRequest($candidate, $input)) {
+            if (!$this->matchesRequest($candidate, $input) || ($key !== null && $candidate->key() !== $key)) {
                 continue;
             }
             $resolved = $this->resolver->resolve($candidate, $input);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures\SqlFaker;
 
+use Closure;
 use RuntimeException;
 use SqlFaker\Coverage\CoverageException;
 use SqlFaker\Coverage\GrammarCoverage;
@@ -159,5 +160,40 @@ final class CoverageFixture
             return $failure;
         }
         return null;
+    }
+    /**
+     * Resolves the fixture's literal terminal names through the production candidate pipeline.
+     * @param \SqlFaker\Grammar\Derivation\GenerationPlan<bool>|null $plan
+     * @param Closure(int): int $choose
+     * @param array<string, non-empty-list<string>> $spellings
+     */
+    public static function resolve(
+        \SqlFaker\Grammar\Generation\Token\TerminalSequence $sequence,
+        ?\SqlFaker\Grammar\Derivation\GenerationPlan $plan,
+        Closure $choose,
+        array $spellings = [],
+    ): \SqlFaker\Grammar\Generation\Output\ResolvedOutput {
+        $definitions = [];
+        foreach (array_unique($sequence->names()) as $name) {
+            $definitions[] = new \SqlFaker\Grammar\Generation\Lexeme\PatternLexemeGenerator(
+                $name,
+                '~\\A.*\\z~Ds',
+                $spellings[$name] ?? [$name],
+                'fixture',
+                'fixture-literal'
+            );
+        }
+        return (new \SqlFaker\Grammar\Generation\Output\ReverseLexemeGenerator(
+            new \SqlFaker\Grammar\Generation\Lexeme\ChoiceLexemeGenerator(...$definitions),
+            new \SqlFaker\Grammar\Generation\Output\CandidateResolver(new \SqlFaker\Grammar\Generation\Spacing\CombinedSpacingRule()),
+            'fixture',
+        ))->generate($sequence, $plan, $choose);
+    }
+    /**
+     * Supplies a resolved literal response for lexical contract mocks.
+     */
+    public static function output(string $text): \SqlFaker\Grammar\Generation\Output\ResolvedOutput
+    {
+        return self::resolve(\SqlFaker\Grammar\Generation\Token\TerminalSequence::fromNames([$text]), null, static fn (int $count): int => 0);
     }
 }

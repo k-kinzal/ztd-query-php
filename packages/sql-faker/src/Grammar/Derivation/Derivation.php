@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlFaker\Grammar\Derivation;
 
+use Closure;
 use Faker\Generator as FakerGenerator;
 use SqlFaker\Grammar\GenerationException;
 use SqlFaker\Grammar\Grammar;
@@ -34,12 +35,14 @@ final class Derivation
      * @param Grammar $grammar Grammar being walked
      * @param FakerGenerator $faker Source of the choices the walk makes freely
      * @param TerminationAnalyzer $analyzer Answers what a production still costs to finish
+     * @param (Closure(int): ?int)|null $choose Optional choice policy; null results choose the shortest completion
      */
     public function __construct(
         private readonly Grammar $grammar,
         private readonly FakerGenerator $faker,
         private readonly TerminationAnalyzer $analyzer,
         ?CompletionCosts $completion = null,
+        private readonly ?Closure $choose = null,
     ) {
         $this->completion = $completion ?? new CompletionCosts($grammar, static fn (string $terminal): bool => false);
     }
@@ -70,7 +73,7 @@ final class Derivation
             }
 
             $this->steps++;
-            if ($this->steps > self::STEP_LIMIT) {
+            if ($this->steps > ($plan->expansionBudget() ?? self::STEP_LIMIT)) {
                 throw GenerationException::derivationLimitExceeded();
             }
 
@@ -161,7 +164,12 @@ final class Derivation
     public function selectProduction(array $alternatives, GenerationPlan $plan): Production
     {
         if ($this->steps < $plan->maxDepth()) {
-            return $alternatives[$this->faker->numberBetween(0, count($alternatives) - 1)];
+            $index = $this->choose === null
+                ? $this->faker->numberBetween(0, count($alternatives) - 1)
+                : ($this->choose)(count($alternatives));
+            if ($index !== null) {
+                return $alternatives[$index];
+            }
         }
 
         $selected = 0;
@@ -195,10 +203,7 @@ final class Derivation
         if ($rule->alternatives === []) {
             throw GenerationException::ruleHasNoAlternatives($nonTerminal->value);
         }
-        $alternatives = array_values(array_filter(
-            $rule->alternatives,
-            $this->analyzer->isProductionViable(...),
-        ));
+        $alternatives = array_filter($rule->alternatives, $this->analyzer->isProductionViable(...));
         if ($alternatives === []) {
             throw GenerationException::noRealizableAlternative($nonTerminal->value);
         }
@@ -206,17 +211,18 @@ final class Derivation
         if ($pattern !== null) {
             $alternatives = array_values(array_filter(
                 $alternatives,
-                static fn (Production $production): bool => $pattern->matches(array_map(
+                static fn (Production $production, int $ordinal): bool => $pattern->matches(array_map(
                     static fn (Symbol $symbol): string => $symbol->value(),
                     $production->symbols,
-                )),
+                ), $ordinal),
+                ARRAY_FILTER_USE_BOTH,
             ));
             if ($alternatives === []) {
                 throw GenerationException::noAlternativeMatchingPlan($nonTerminal->value);
             }
         }
 
-        return $alternatives;
+        return array_values($alternatives);
     }
 
     /**
@@ -230,7 +236,7 @@ final class Derivation
     public function completable(array $alternatives, array $form, int $index, GenerationPlan $plan): array
     {
         $nonEmpty = $plan->requiresNonEmpty() && !$this->completion->hasTerminalOutput(array_slice($form, 0, $index));
-        $candidates = $this->completion->affordable($alternatives, array_slice($form, $index + 1), $nonEmpty, self::STEP_LIMIT - $this->steps);
+        $candidates = $this->completion->affordable($alternatives, array_slice($form, $index + 1), $nonEmpty, ($plan->expansionBudget() ?? self::STEP_LIMIT) - $this->steps);
         if ($candidates === []) {
             throw GenerationException::derivationLimitExceeded();
         }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\Grammar\Derivation;
 
+use Closure;
 use Faker\Factory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -42,64 +43,38 @@ use Tests\Fixtures\SqlFaker\CoverageFixture;
 #[UsesClass(LexicalException::class)]
 final class PlanBuilderTest extends TestCase
 {
-    public function testRootResolvesExplicitReleaseAliasesAndPreservesTheUnspecifiedEntry(): void
+    public function testRootResolvesOnlyAnExplicitReleaseAlias(): void
     {
-        $lexical = $this->createMock(LexicalGrammar::class);
-        $lexical->method('supports')->willReturn(true);
-        $builder = new PlanBuilder(
-            CoverageFixture::syntaxGrammar(),
-            $lexical,
-            startSymbol: static fn (?string $requested): string => 'expr'
-        );
+        $builder = new PlanBuilder(CoverageFixture::syntaxGrammar(), $this->createMock(LexicalGrammar::class), startSymbol: static fn (?string $requested): string => 'expr');
         self::assertSame('stmt', $builder->root(GenerationPlan::all()));
-        self::assertSame('expr', $builder->root(GenerationPlan::fromRule('expression-alias')));
+        self::assertSame('expr', $builder->root(GenerationPlan::fromRule('alias')));
     }
 
-    public function testMinimumExpansionsRespectsTheRootAndExplicitNonEmptyRequirement(): void
+    public function testMinimumExpansionsKeepsTheNonEmptyRequirementSeparateFromNullability(): void
     {
         $grammar = new Grammar('root', [
             'root' => new ProductionRule('root', [new Production([]), new Production([new NonTerminal('leaf')])]),
             'leaf' => new ProductionRule('leaf', [new Production([new Terminal('T')])]),
         ]);
-        $lexical = $this->createMock(LexicalGrammar::class);
-        $lexical->method('supports')->willReturn(true);
-        $builder = new PlanBuilder($grammar, $lexical);
+        $builder = new PlanBuilder($grammar, $this->createMock(LexicalGrammar::class));
         self::assertSame(1, $builder->minimumExpansions(GenerationPlan::all()));
         self::assertSame(2, $builder->minimumExpansions(GenerationPlan::all()->requiringNonEmpty()));
-        self::assertSame(1, $builder->minimumExpansions(GenerationPlan::fromRule('leaf')->requiringNonEmpty()));
     }
 
-    public function testBuildResolvesNormalizedLexemesAndKeepsCallerSpecifiedTrivia(): void
+    public function testBuildUsesTheSameContextualRewriteAndPinsItsCompleteCandidate(): void
     {
         $grammar = new Grammar('root', ['root' => new ProductionRule('root', [new Production([new Terminal('T')])])]);
         $lexical = $this->createMock(LexicalGrammar::class);
-        $lexical->method('supports')->willReturn(true);
-        $lexical->method('spellings')->willReturnCallback(static fn (string $terminal): array => $terminal === '@TRIVIA' ? [' ', '/*x*/'] : ['first', 'second']);
-        $builder = new PlanBuilder($grammar, $lexical, static fn (array $tokens): array => [...$tokens, 'ADDED']);
-        $constraints = GenerationPlan::all()->withLexemes(['T' => ['explicit']])->withTrivia(['/*required*/'], ['/*optional*/']);
-        $plan = $builder->build($constraints, 1, static fn (int $count): int => 0, static fn (int $count): int => $count - 1);
-        self::assertSame('explicit', $plan->lexemeAt('T', 0));
-        self::assertSame('second', $plan->lexemeAt('ADDED', 0));
-        self::assertSame('/*required*/', $plan->triviaAt(0, false));
-        self::assertSame('/*optional*/', $plan->triviaAt(0, true));
+        $lexical->method('resolveSequence')->willReturnCallback(CoverageFixture::resolve(...));
+        $rewriter = new \SqlFaker\Grammar\Generation\Token\TokenRewriter(new \SqlFaker\Grammar\Generation\Token\TerminalMappingRule('root', 'T', 'CONTEXTUAL', 'fixture'));
+        $constraints = GenerationPlan::all()->withLexemes(['T' => ['explicit']]);
+        $plan = (new PlanBuilder($grammar, $lexical, $rewriter))->build($constraints, 1, static fn (int $count): int => 0, static fn (int $count): int => $count - 1);
+        self::assertSame('explicit', $plan->lexemeAt('CONTEXTUAL', 0));
+        self::assertNotNull($plan->candidateKeyAt('CONTEXTUAL', 0));
         self::assertNull($plan->startRule());
-    }
-
-    public function testBuildMakesAllSeparatorChoicesBeforeGeneration(): void
-    {
-        $grammar = new Grammar('root', ['root' => new ProductionRule('root', [new Production([new Terminal('T')])])]);
-        $lexical = $this->createMock(LexicalGrammar::class);
-        $lexical->method('supports')->willReturn(true);
-        $lexical->method('spellings')->willReturnCallback(static fn (string $terminal): array => $terminal === '@TRIVIA' ? [' ', '/*x*/'] : ['name']);
-        $plan = (new PlanBuilder($grammar, $lexical))->build(
-            GenerationPlan::all(),
-            1,
-            static fn (int $count): int => 0,
-            static fn (int $count): int => $count - 1
-        );
-        self::assertSame('/*x*/', $plan->triviaAt(0, false));
-        self::assertSame('/*x*/', $plan->triviaAt(0, true));
-        self::assertSame('/*x*/', $plan->triviaAt(1, true));
+        $generator = new \SqlFaker\Generation\SqlGenerator($grammar, Factory::create(), $lexical, $rewriter);
+        self::assertSame('explicit', $generator->generate($plan));
+        self::assertSame('explicit', $generator->generate($plan));
     }
 
     public function testBuildPreservesRepeatedProductionAndLexemeConstraints(): void
@@ -109,110 +84,60 @@ final class PlanBuilderTest extends TestCase
             'leaf' => new ProductionRule('leaf', [new Production([new Terminal('T')]), new Production([new Terminal('U')])]),
         ]);
         $lexical = $this->createMock(LexicalGrammar::class);
-        $lexical->method('supports')->willReturn(true);
-        $lexical->method('spellings')->willReturn([' ']);
-        $constraints = GenerationPlan::constrained('root', [
-            'leaf' => [ProductionPattern::exactly('T'), ProductionPattern::exactly('T'), ProductionPattern::exactly('U')],
-        ])->withLexemes(['T' => ['first', 'second'], 'U' => ['third']]);
-        $plan = (new PlanBuilder($grammar, $lexical))->build(
-            $constraints,
-            4,
-            static fn (int $count): ?int => null,
-            static fn (int $count): ?int => null
-        );
-
+        $lexical->method('resolveSequence')->willReturnCallback(CoverageFixture::resolve(...));
+        $constraints = GenerationPlan::constrained('root', ['leaf' => [ProductionPattern::at(0), ProductionPattern::at(0), ProductionPattern::at(1)]])
+            ->withLexemes(['T' => ['first', 'second'], 'U' => ['third']]);
+        $plan = (new PlanBuilder($grammar, $lexical))->build($constraints, 4, static fn (int $count): ?int => null, static fn (int $count): ?int => null);
         self::assertEquals(ProductionPattern::at(0), $plan->patternAt('leaf', 0));
         self::assertEquals(ProductionPattern::at(0), $plan->patternAt('leaf', 1));
         self::assertEquals(ProductionPattern::at(1), $plan->patternAt('leaf', 2));
         self::assertSame('first', $plan->lexemeAt('T', 0));
         self::assertSame('second', $plan->lexemeAt('T', 1));
         self::assertSame('third', $plan->lexemeAt('U', 0));
-        self::assertSame('', $plan->triviaAt(0, true));
     }
 
-    public function testDeriveKeepsEmptyOutputAvailableUnlessThePlanRequiresContent(): void
+    public function testBuildPreservesEmptyMarkerCandidatesWithoutLosingNonEmptyCompletion(): void
     {
         $grammar = new Grammar('root', [
             'root' => new ProductionRule('root', [new Production([new Terminal('END'), new NonTerminal('leaf')])]),
             'leaf' => new ProductionRule('leaf', [new Production([]), new Production([new Terminal('T')])]),
         ]);
         $lexical = $this->createMock(LexicalGrammar::class);
-        $lexical->method('supports')->willReturn(true);
-        $lexical->method('spellings')->willReturnCallback(static fn (string $name): array => [$name === 'END' ? '' : 'name']);
+        $lexical->method('isNonOutput')->willReturnCallback(static fn (string $name): bool => $name === 'END');
+        $lexical->method('resolveSequence')->willReturnCallback(static fn (\SqlFaker\Grammar\Generation\Token\TerminalSequence $sequence, ?GenerationPlan $plan, Closure $choose) => CoverageFixture::resolve($sequence, $plan, $choose, ['END' => ['']]));
         $builder = new PlanBuilder($grammar, $lexical);
-        [, $empty] = $builder->derive(GenerationPlan::all(), 2, static fn (int $count): ?int => null);
-        [, $nonEmpty] = $builder->derive(GenerationPlan::all()->requiringNonEmpty(), 2, static fn (int $count): ?int => null);
-
-        self::assertEquals([new Terminal('END')], $empty);
-        self::assertEquals([new Terminal('END'), new Terminal('T')], $nonEmpty);
+        $empty = $builder->build(GenerationPlan::all(), 2, static fn (int $count): ?int => null, static fn (int $count): ?int => null);
+        $nonEmpty = $builder->build(GenerationPlan::all()->requiringNonEmpty(), 2, static fn (int $count): ?int => null, static fn (int $count): ?int => null);
+        self::assertSame('', $empty->lexemeAt('END', 0));
+        self::assertNotNull($empty->candidateKeyAt('END', 0));
+        self::assertNull($empty->lexemeAt('T', 0));
+        self::assertSame('T', $nonEmpty->lexemeAt('T', 0));
     }
 
-    public function testDeriveReservesEverySiblingAndReturnsExplicitOccurrencePatterns(): void
+    public function testBuildReservesAllPendingSiblingsAndRetainsTheOriginalOrdinal(): void
     {
         $grammar = CoverageFixture::syntaxGrammar();
         $lexical = $this->createMock(LexicalGrammar::class);
-        $lexical->method('supports')->willReturn(true);
-        $builder = new PlanBuilder($grammar, $lexical);
+        $lexical->method('resolveSequence')->willReturnCallback(CoverageFixture::resolve(...));
         $constraints = GenerationPlan::constrained('stmt', ['stmt' => [ProductionPattern::at(0)]])->requiringNonEmpty();
-        [$patterns, $terminals] = $builder->derive($constraints, 3, static fn (int $count): ?int => null);
-        self::assertSame(['SELECT', '1'], array_map(static fn (Terminal $t): string => $t->value, $terminals));
-        self::assertEquals(ProductionPattern::at(0), $patterns['tail'][0]);
-        $plan = GenerationPlan::constrained('stmt', $patterns)->withExpansionBudget(3);
-        $derivation = new Derivation($grammar, Factory::create(), new TerminationAnalyzer($grammar));
-        self::assertEquals($terminals, $derivation->of('stmt', $plan));
+        $plan = (new PlanBuilder($grammar, $lexical))->build($constraints, 3, static fn (int $count): ?int => null, static fn (int $count): ?int => null);
+        self::assertEquals(ProductionPattern::at(0), $plan->patternAt('tail', 0));
+        self::assertSame('SELECT 1', (new \SqlFaker\Generation\SqlGenerator($grammar, Factory::create(), $lexical))->generate($plan));
     }
 
-    public function testDeriveReportsUnknownRequestedRules(): void
+    public function testBuildPropagatesMissingCandidateFailuresWithoutRetrying(): void
     {
         $lexical = $this->createMock(LexicalGrammar::class);
-        $builder = new PlanBuilder(CoverageFixture::syntaxGrammar(), $lexical);
-        $this->expectException(GenerationException::class);
-        $builder->derive(GenerationPlan::fromRule('missing'), 10, static fn (int $count): ?int => null);
-    }
-
-    public function testDeriveReportsExhaustedBudget(): void
-    {
-        $lexical = $this->createMock(LexicalGrammar::class);
-        $builder = new PlanBuilder(CoverageFixture::syntaxGrammar(), $lexical);
-        $this->expectException(GenerationException::class);
-        $builder->derive(GenerationPlan::all(), 0, static fn (int $count): ?int => null);
-    }
-
-    public function testSelectUsesTheMinimumFiniteCompletionWhenNoChoiceIsSupplied(): void
-    {
-        $grammar = new Grammar('root', [
-            'root' => new ProductionRule('root', [new Production([new NonTerminal('leaf')]), new Production([new Terminal('A')]), new Production([new Terminal('B')])]),
-            'leaf' => new ProductionRule('leaf', [new Production([new Terminal('T')])]),
-        ]);
-        $lexical = $this->createMock(LexicalGrammar::class);
-        $lexical->method('supports')->willReturn(true);
-        $builder = new PlanBuilder($grammar, $lexical);
-        self::assertSame($grammar->ruleMap['root']->alternatives[1], $builder->select($grammar->ruleMap['root']->alternatives, [], true, 5, static fn (int $count): ?int => null));
-        self::assertSame($grammar->ruleMap['root']->alternatives[2], $builder->select($grammar->ruleMap['root']->alternatives, [], true, 5, static fn (int $count): int => 2));
-    }
-
-    public function testSelectReportsConstraintsWithNoFiniteCompletion(): void
-    {
-        $lexical = $this->createMock(LexicalGrammar::class);
-        $builder = new PlanBuilder(CoverageFixture::syntaxGrammar(), $lexical);
-        $this->expectException(GenerationException::class);
-        $builder->select([], [], false, 1, static fn (int $count): ?int => null);
-    }
-
-    public function testSpellingKeepsExplicitEmptyWitnesses(): void
-    {
-        $lexical = $this->createMock(LexicalGrammar::class);
-        $lexical->method('spellings')->willReturn(['', 'name']);
-        $builder = new PlanBuilder(CoverageFixture::syntaxGrammar(), $lexical);
-        self::assertSame('', $builder->spelling('T', static fn (int $count): ?int => null));
-        self::assertSame('name', $builder->spelling('T', static fn (int $count): int => 1));
-    }
-
-    public function testSpellingReportsMissingWitnesses(): void
-    {
-        $lexical = $this->createMock(LexicalGrammar::class);
+        $lexical->expects(self::once())->method('resolveSequence')->willThrowException(new LexicalException('missing candidate'));
         $builder = new PlanBuilder(CoverageFixture::syntaxGrammar(), $lexical);
         $this->expectException(LexicalException::class);
-        $builder->spelling('T', static fn (int $count): ?int => null);
+        $builder->build(GenerationPlan::all(), 5, static fn (int $count): ?int => null, static fn (int $count): ?int => null);
+    }
+
+    public function testBuildReportsAnUnknownRequestedRule(): void
+    {
+        $builder = new PlanBuilder(CoverageFixture::syntaxGrammar(), $this->createMock(LexicalGrammar::class));
+        $this->expectException(GenerationException::class);
+        $builder->build(GenerationPlan::fromRule('missing'), 5, static fn (int $count): ?int => null, static fn (int $count): ?int => null);
     }
 }

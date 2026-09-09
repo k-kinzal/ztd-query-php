@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace SqlFaker\Grammar;
 
+use Closure;
 use SqlFaker\Grammar\Derivation\GenerationPlan;
+use SqlFaker\Grammar\Generation\Output\ResolvedOutput;
 use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
@@ -53,4 +55,12 @@ interface LexicalGrammar
      * @throws LexicalException When no applicable realization exists
      */
     public function realizeSequence(TerminalSequence $sequence, ?GenerationPlan $plan = null): string;
+
+    /**
+     * Resolves and exposes complete choices through the same lexical pipeline used to generate SQL.
+     * @param GenerationPlan<bool>|null $plan
+     * @param Closure(int): int $choose
+     * @throws LexicalException When no applicable realization exists
+     */
+    public function resolveSequence(TerminalSequence $sequence, ?GenerationPlan $plan, Closure $choose): ResolvedOutput;
 }

@@ -30,7 +30,7 @@ final class GenerationPlan
      * @param array<string, int> $parameters Parameters the lexical target is realized with
      * @param TRequiresNonEmpty $requiresNonEmpty Whether the walk must produce at least one symbol
      * @param bool $reserveSteps Whether to budget the remaining form and prefer fewer rule expansions
-     * @param array{list<string>, list<string>}|null $trivia Required and optional separators by occurrence
+     * @param array<string, non-empty-list<string>> $candidateKeys Exact candidate semantics by terminal occurrence
      * @visibility namespace
      */
     public function __construct(
@@ -44,7 +44,7 @@ final class GenerationPlan
         private readonly int $maxDepth,
         private readonly bool $reserveSteps = false,
         private readonly ?int $expansionBudget = null,
-        private readonly ?array $trivia = null,
+        private readonly array $candidateKeys = [],
     ) {
     }
 
@@ -157,7 +157,7 @@ final class GenerationPlan
             $this->maxDepth,
             $this->reserveSteps,
             $this->expansionBudget,
-            $this->trivia,
+            $this->candidateKeys,
         );
     }
 
@@ -184,7 +184,7 @@ final class GenerationPlan
             $this->maxDepth,
             $this->reserveSteps,
             $this->expansionBudget,
-            $this->trivia,
+            $this->candidateKeys,
         );
     }
 
@@ -205,7 +205,7 @@ final class GenerationPlan
             max(1, $maxDepth),
             $this->reserveSteps,
             $this->expansionBudget,
-            $this->trivia,
+            $this->candidateKeys,
         );
     }
 
@@ -253,7 +253,7 @@ final class GenerationPlan
             $this->maxDepth,
             $this->reserveSteps,
             $this->expansionBudget,
-            $this->trivia,
+            $this->candidateKeys,
         );
     }
 
@@ -319,7 +319,7 @@ final class GenerationPlan
             $this->maxDepth,
             true,
             $this->expansionBudget,
-            $this->trivia,
+            $this->candidateKeys,
         );
     }
 
@@ -352,17 +352,16 @@ final class GenerationPlan
             $this->maxDepth,
             $this->reserveSteps,
             $budget,
-            $this->trivia
+            $this->candidateKeys
         );
     }
 
     /**
-     * Specifies the separators to use, with deterministic defaults after the last entry.
-     * @param list<string> $required
-     * @param list<string> $optional
+     * Pins candidate semantics as well as spelling, including empty marker candidates.
+     * @param array<string, non-empty-list<string>> $keys
      * @return self<TRequiresNonEmpty>
      */
-    public function withTrivia(array $required, array $optional): self
+    public function withCandidateKeys(array $keys): self
     {
         return new self(
             $this->startRule,
@@ -375,16 +374,16 @@ final class GenerationPlan
             $this->maxDepth,
             $this->reserveSteps,
             $this->expansionBudget,
-            [$required, $optional]
+            $keys
         );
     }
 
     /**
-     * Answers a concrete separator, or null when the caller leaves its choice free.
+     * Returns the exact candidate semantics requested for one terminal occurrence.
      */
-    public function triviaAt(int $occurrence, bool $optional): ?string
+    public function candidateKeyAt(string $terminal, int $occurrence): ?string
     {
-        return $this->trivia === null ? null : ($this->trivia[$optional ? 1 : 0][$occurrence] ?? ($optional ? '' : ' '));
+        return $this->candidateKeys[$terminal][$occurrence] ?? null;
     }
 
     /**

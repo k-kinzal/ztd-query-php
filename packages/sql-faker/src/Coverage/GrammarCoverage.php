@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace SqlFaker\Coverage;
 
 use JsonException;
+use SqlFaker\Grammar\Generation\Output\ResolvedOutput;
+use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * Observes derivations without influencing generation or consuming randomness.
@@ -138,6 +140,41 @@ final class GrammarCoverage
     }
 
     /**
+     * Records original grammar choices even when a rewrite replaces their entire output.
+     */
+    public function recordSequence(TerminalSequence $sequence): void
+    {
+        $inventory = $this->inventory();
+        foreach ($sequence->productions as $occurrence) {
+            $production = $inventory->grammar->ruleMap[$occurrence->rule]->alternatives[$occurrence->ordinal];
+            $this->record(
+                $occurrence->id,
+                $occurrence->parent,
+                null,
+                $occurrence->rule,
+                $inventory->id($occurrence->rule, $production, $occurrence->ordinal),
+                'selected'
+            );
+        }
+        if ($this->trace !== null) {
+            $this->trace->value['rewrites'] = $sequence->rewrites;
+        }
+    }
+
+    /**
+     * Exposes chosen compound candidates and the boundary rules used in the final output.
+     */
+    public function recordOutput(ResolvedOutput $output): void
+    {
+        if ($this->trace === null) {
+            return;
+        }
+        $this->trace->value['lexicalEvents'] = array_map(static fn ($candidate): string => $candidate->id, $output->candidates);
+        $this->trace->value['spacingEvents'] = array_map(static fn ($part): array =>
+            ['candidate' => $part->candidate, 'separator' => $part->separator, 'rules' => $part->spacingRules], $output->parts);
+    }
+
+    /**
      * Keeps failed paths reached without treating them as SQL output.
      */
     public function discardAttempt(string $error): void
@@ -146,11 +183,12 @@ final class GrammarCoverage
     }
 
     /**
-     * Adds only the successful attempt's productions to emitted coverage.
+     * Adds only preserved source productions from the successful attempt to emitted coverage.
+     * @param list<int>|null $nodes Preserved occurrence IDs, or null for an unmodified derivation
      */
-    public function commitAttempt(string $sqlHash): void
+    public function commitAttempt(string $sqlHash, ?array $nodes = null): void
     {
-        foreach ($this->trace?->commit($sqlHash) ?? [] as $id) {
+        foreach ($this->trace?->commit($sqlHash, $nodes) ?? [] as $id) {
             if (!isset($this->saved->emitted[$id]) && !isset($this->current->emitted[$id])) {
                 $this->dirty = true;
             }

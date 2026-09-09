@@ -49,6 +49,11 @@ $check = new PgSyntaxCheck($connection);
 $planner = $provider->planner();
 $constraints = GenerationPlan::fromRule('stmt')->requiringNonEmpty();
 $generations = 0;
+/**
+ * Negative edge IDs are disjoint from PHP-Fuzzer's nonnegative instrumented edges.
+ * Each production contributes one stable feature; PHP-Fuzzer still owns mutation and corpus selection.
+ */
+$grammarFeatures = array_flip(array_keys($coverage->inventory()->entries));
 register_shutdown_function(static function () use ($coverage): void {
     if (function_exists('pcntl_alarm')) {
         pcntl_alarm(0);
@@ -60,12 +65,15 @@ register_shutdown_function(static function () use ($coverage): void {
  */
 $config->setAllowedExceptions([]);
 $config->setMaxLen(80004);
-$config->setTarget(static function (string $input) use ($provider, $planner, $constraints, $check, $coverage, &$generations): void {
+$config->setTarget(static function (string $input) use ($provider, $planner, $constraints, $check, $coverage, $grammarFeatures, &$generations): void {
     try {
         $plan = GenerationPlan::fromBytes($input, $planner, $constraints);
         $sql = $provider->generate($plan);
         if ($provider->generate($plan) !== $sql) {
             throw new LogicException('The same input produced different SQL.');
+        }
+        foreach ($coverage->lastGeneration()['reachedIds'] ?? [] as $id) {
+            PhpFuzzer\FuzzingContext::$edges[-1 - $grammarFeatures[$id]] = 1;
         }
         $check->verify($sql, bin2hex($input));
         if (++$generations % 100 === 0) {

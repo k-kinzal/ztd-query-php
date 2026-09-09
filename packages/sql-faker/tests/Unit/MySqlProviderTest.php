@@ -1460,4 +1460,11 @@ final class MySqlProviderTest extends TestCase
         }
     }
 
+    public function testPlannerCompilesReusableInstructionsWithoutChangingTheDefaultStart(): void
+    {
+        $provider = new MySqlProvider(Factory::create(), 'mysql-8.4.7');
+        $plan = GenerationPlan::fromBytes('', $provider->planner());
+        self::assertNull($plan->startRule());
+        self::assertSame($provider->generate($plan), $provider->generate($plan));
+    }
 }

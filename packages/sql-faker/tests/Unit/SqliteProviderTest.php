@@ -1023,4 +1023,11 @@ final class SqliteProviderTest extends TestCase
         yield 'DropTable' => [StatementType::DropTable];
     }
 
+    public function testPlannerCompilesReusableInstructionsWithoutChangingTheDefaultStart(): void
+    {
+        $provider = new SqliteProvider(Factory::create(), 'sqlite-3.47.2');
+        $plan = GenerationPlan::fromBytes('', $provider->planner());
+        self::assertNull($plan->startRule());
+        self::assertSame($provider->generate($plan), $provider->generate($plan));
+    }
 }

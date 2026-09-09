@@ -530,4 +530,12 @@ SQL;
         self::assertSame('!=', $lexical->realizeSequence(TerminalSequence::fromNames(['NE']), GenerationPlan::all()->withLexemes(['NE' => ['!=']])));
         self::assertSame('<>', $lexical->realizeSequence(TerminalSequence::fromNames(['NE']), GenerationPlan::all()->withLexemes(['NE' => ['<>']])));
     }
+    public function testResolveSequenceExposesTheChosenCandidateAndItsOutput(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+        $output = $lexical->resolveSequence(TerminalSequence::fromNames(['NUM']), null, static fn (int $count): int => $count - 1);
+        self::assertSame('2', $output->parts[0]->lexeme->text);
+        self::assertCount(1, $output->candidates);
+        self::assertSame('', $output->parts[0]->separator);
+    }
 }

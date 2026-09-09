@@ -341,4 +341,12 @@ SQL;
         $grammar->realize(['UNIMPLEMENTED']);
     }
 
+    public function testResolveSequenceExposesTheChosenCandidateAndItsOutput(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'sqlite-3.47.2');
+        $output = $lexical->resolveSequence(TerminalSequence::fromNames(['INTEGER']), null, static fn (int $count): int => $count - 1);
+        self::assertSame('2', $output->parts[0]->lexeme->text);
+        self::assertCount(1, $output->candidates);
+        self::assertSame('', $output->parts[0]->separator);
+    }
 }

@@ -1248,4 +1248,11 @@ final class PostgreSqlProviderTest extends TestCase
         self::assertSame($sql, $provider->domainDmlStatement(40));
         self::assertContains($tokens[0], ['INSERT', 'UPDATE', 'DELETE_P']);
     }
+    public function testPlannerCompilesReusableInstructionsWithoutChangingTheDefaultStart(): void
+    {
+        $provider = new PostgreSqlProvider(Factory::create(), 'pg-17.2');
+        $plan = GenerationPlan::fromBytes('', $provider->planner());
+        self::assertNull($plan->startRule());
+        self::assertSame($provider->generate($plan), $provider->generate($plan));
+    }
 }
