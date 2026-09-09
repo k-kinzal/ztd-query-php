@@ -63,10 +63,10 @@ final class IntegerContextRule implements RewriteRule
      */
     public function options(TerminalSequence $sequence): TerminalSequence
     {
-        foreach (['source_def' => ['SOURCE_DELAY_SYM' => 'SOURCE_DELAY_NUMBER'], 'master_def' => ['MASTER_DELAY_SYM' => 'SOURCE_DELAY_NUMBER'], 'create_table_option' => ['STATS_SAMPLE_PAGES_SYM' => 'STATS_SAMPLE_PAGES_NUMBER']] as $context => $terminals) {
+        foreach (['source_def' => ['SOURCE_DELAY_SYM' => 'SOURCE_DELAY_NUMBER'], 'master_def' => ['MASTER_DELAY_SYM' => 'SOURCE_DELAY_NUMBER'], 'create_table_option' => ['STATS_SAMPLE_PAGES_SYM' => 'STATS_SAMPLE_PAGES_NUMBER', 'KEY_BLOCK_SIZE' => 'KEY_BLOCK_SIZE_NUMBER']] as $context => $terminals) {
             foreach ($sequence->occurrences($context) as $id) {
                 $range = $sequence->range($id);
-                $number = $sequence->child($id, 'ulong_num');
+                $number = $sequence->child($id, 'ulong_num') ?? $sequence->child($id, 'ulonglong_num');
                 $name = $range === null ? null : $sequence->nameAt($range[0]);
                 $terminal = $terminals[$name ?? ''] ?? null;
                 if ($number !== null && $terminal !== null) {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\Compiler\Lemon;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -13,6 +14,7 @@ use SqlFaker\Compiler\Lemon\LemonPreprocessor;
 
 #[CoversClass(LemonPreprocessor::class)]
 #[UsesClass(LemonCondition::class)]
+#[Small]
 final class LemonPreprocessorTest extends TestCase
 {
     public function testProcessSelectsNestedSourceBranchesAndPreservesLineCount(): void

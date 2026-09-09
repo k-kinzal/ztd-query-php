@@ -14,6 +14,13 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 final class AlterDatabaseRule implements RewriteRule
 {
     /**
+     * Binds the release's DEFAULT token name from sql_yacc.yy.
+     */
+    public function __construct(private readonly string $defaultTerminal = 'DEFAULT_SYM')
+    {
+    }
+
+    /**
      * Uses the option's explicit DEFAULT introducer when the database name is omitted.
      */
     #[Override]
@@ -30,7 +37,7 @@ final class AlterDatabaseRule implements RewriteRule
             }
             $option = $sequence->terminals[$range[0] + 2];
             $sequence = $sequence->replace($range[0] + 2, 0, [
-                $sequence->inserted('DEFAULT_SYM', $option, 'mysql.database-option-introducer'),
+                $sequence->inserted($this->defaultTerminal, $option, 'mysql.database-option-introducer'),
             ], 'mysql.database-option-introducer');
         }
         return $sequence;

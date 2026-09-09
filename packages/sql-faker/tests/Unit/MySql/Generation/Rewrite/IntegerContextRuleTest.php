@@ -50,6 +50,24 @@ final class IntegerContextRuleTest extends TestCase
         self::assertSame($input, (new IntegerContextRule())->rewrite($input));
     }
 
+    #[DataProvider('providerKeyBlockSizes')]
+    public function testOptionsBoundsKeyBlockSizeInOldAndModernGrammars(string $context, string $number, string $expected): void
+    {
+        $trace = new DerivationTrace($context);
+        $trace->expand(0, new Production([new Terminal('KEY_BLOCK_SIZE'), new Terminal('EQ'), new NonTerminal($number), new Terminal('LONG_NUM')]), 0);
+        $trace->expand(2, new Production([new Terminal('LONG_NUM')]), 0);
+        self::assertSame(['KEY_BLOCK_SIZE', 'EQ', $expected, 'LONG_NUM'], (new IntegerContextRule())->options($trace->terminals())->names());
+        self::assertSame(['KEY_BLOCK_SIZE', 'EQ', $expected, 'LONG_NUM'], (new IntegerContextRule())->rewrite($trace->terminals())->names());
+    }
+
+    /**
+     * @return list<array{string, string, string}>
+     */
+    public static function providerKeyBlockSizes(): array
+    {
+        return [['create_table_option', 'ulong_num', 'KEY_BLOCK_SIZE_NUMBER'], ['create_table_option', 'ulonglong_num', 'KEY_BLOCK_SIZE_NUMBER'], ['ordinary', 'ulonglong_num', 'LONG_NUM'], ['source_def', 'ulonglong_num', 'LONG_NUM'], ['create_table_option', 'expr', 'LONG_NUM']];
+    }
+
     public function testRewriteReplacesOnlyDiagnosticDecimalAlternatives(): void
     {
         $trace = new DerivationTrace('root');

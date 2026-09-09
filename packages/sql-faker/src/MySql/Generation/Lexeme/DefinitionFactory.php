@@ -35,6 +35,7 @@ final class DefinitionFactory
                 ['mysql-5.6.51', 'mysql-5.7.44', 'mysql-8.0.44', 'mysql-8.1.0', 'mysql-8.2.0', 'mysql-8.3.0', 'mysql-8.4.7', 'mysql-9.0.1', 'mysql-9.1.0'],
                 new ChoiceLexemeGenerator(
                     new SizeNumberLexemeGenerator(),
+                    new BoundedIntegerLexemeGenerator('KEY_BLOCK_SIZE_NUMBER', 0, 65535, ['0', '1', '65535'], 'sql/sql_yacc.yy:KEY_BLOCK_SIZE'),
                     new BoundedIntegerLexemeGenerator('STATS_SAMPLE_PAGES_NUMBER', 1, 65535, ['1', '65535'], 'sql/sql_yacc.yy:STATS_SAMPLE_PAGES'),
                     new BoundedIntegerLexemeGenerator('SOURCE_DELAY_NUMBER', 0, 2147483647, ['0', '1', '2147483647'], 'sql/sql_yacc.yy:SOURCE_DELAY'),
                     (new ValueDefinitions())->create(),

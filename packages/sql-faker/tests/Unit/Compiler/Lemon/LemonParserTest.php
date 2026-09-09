@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\Compiler\Lemon;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -34,6 +35,7 @@ use SqlFaker\Grammar\Terminal;
 #[UsesClass(LemonText::class)]
 #[UsesClass(\SqlFaker\Compiler\Lemon\LemonCondition::class)]
 #[UsesClass(\SqlFaker\Compiler\Lemon\LemonPreprocessor::class)]
+#[Small]
 final class LemonParserTest extends TestCase
 {
     public function testParseSimpleRule(): void

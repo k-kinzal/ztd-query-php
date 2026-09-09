@@ -50,9 +50,10 @@ final class GenerationContext
      */
     public function __construct(Grammar $grammar, Generator $faker, ?string $version = null)
     {
-        $lexical = new LexicalGrammar($faker, MySqlGrammar::resolveVersion($version));
+        $version = MySqlGrammar::resolveVersion($version);
+        $lexical = new LexicalGrammar($faker, $version);
         $this->grammar = $grammar;
-        $this->rewriter = (new RewriteDefinitions())->create();
+        $this->rewriter = (new RewriteDefinitions())->create($version);
         $this->startSymbol = (new StartRuleResolver($grammar))->startSymbolFor(...);
         $this->lexicalGrammar = $lexical;
     }

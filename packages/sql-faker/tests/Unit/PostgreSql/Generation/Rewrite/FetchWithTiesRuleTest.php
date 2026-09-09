@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\PostgreSql\Generation\Rewrite;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Derivation\DerivationTrace;
@@ -42,6 +43,31 @@ final class FetchWithTiesRuleTest extends TestCase
         $terminal = new TerminalOccurrence('ORDER', 2, [0, 1], ['select_no_parens', 'sort_clause']);
         $input = new TerminalSequence([$terminal]);
         self::assertSame($input, (new FetchWithTiesRule())->ordered($input, 0, 0));
+    }
+
+    #[DataProvider('providerLimitWrappers')]
+    public function testOrderedPlacesOrderingBeforeOffsetAndFetch(string $wrapper): void
+    {
+        $trace = new DerivationTrace('select_no_parens');
+        $trace->expand(0, new Production([new Terminal('SELECT'), new Terminal('ICONST'), new NonTerminal('opt_sort_clause'), new NonTerminal($wrapper)]), 0);
+        $trace->expand(2, new Production([]), 0);
+        $trace->expand(2, new Production([new Terminal('OFFSET'), new Terminal('ICONST'), new NonTerminal('limit_clause')]), 0);
+        $trace->expand(4, new Production([new Terminal('FETCH'), new Terminal('FIRST_P'), new Terminal('ROW'), new Terminal('WITH'), new Terminal('TIES')]), 0);
+        $input = $trace->terminals();
+        $rule = new FetchWithTiesRule();
+        $result = $rule->ordered($input, 0, 4);
+        self::assertSame(['SELECT', 'ICONST', 'ORDER', 'BY', 'ICONST', 'OFFSET', 'ICONST', 'FETCH', 'FIRST_P', 'ROW', 'WITH', 'TIES'], $result->names());
+        self::assertSame($result->names(), $rule->rewrite($input)->names());
+        self::assertSame($input->original, $result->original);
+        self::assertSame($result, $rule->rewrite($result));
+    }
+
+    /**
+     * @return list<array{string}>
+     */
+    public static function providerLimitWrappers(): array
+    {
+        return [['select_limit'], ['opt_select_limit']];
     }
     public function testOrderedPlacesTheNewSortClauseBeforeAnExistingLockingClause(): void
     {

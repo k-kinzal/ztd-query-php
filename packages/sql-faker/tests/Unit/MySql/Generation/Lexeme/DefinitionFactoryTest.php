@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\MySql\Generation\Lexeme;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeInput;
@@ -68,5 +69,26 @@ final class DefinitionFactoryTest extends TestCase
     {
         $generator = (new DefinitionFactory())->lexemes('future-version', [], []);
         self::assertNull($generator->generate(new LexemeInput(TerminalSequence::fromNames(['NUM']), 0, new ResolvedOutput())));
+    }
+
+    #[DataProvider('providerKeyBlockSizes')]
+    public function testLexemesUsesTheTwoByteKeyBlockSizeDomain(string $version, string $value, bool $valid): void
+    {
+        $generator = (new DefinitionFactory())->lexemes($version, [], []);
+        $candidates = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['KEY_BLOCK_SIZE_NUMBER']), 0, new ResolvedOutput(), $value));
+        self::assertNotNull($candidates);
+        self::assertSame($valid ? [$value] : [], array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$candidates->sequences()]));
+    }
+
+    /**
+     * @return iterable<array{string, string, bool}>
+     */
+    public static function providerKeyBlockSizes(): iterable
+    {
+        foreach (['mysql-5.6.51', 'mysql-5.7.44', 'mysql-8.0.44', 'mysql-8.1.0', 'mysql-8.2.0', 'mysql-8.3.0', 'mysql-8.4.7', 'mysql-9.0.1', 'mysql-9.1.0'] as $version) {
+            foreach ([['0', true], ['1', true], ['65535', true], ['0xffff', true], ["X'ffff'", true], ['65536', false], ['0x10000', false], ['2147483648', false]] as [$value, $valid]) {
+                yield [$version, $value, $valid];
+            }
+        }
     }
 }

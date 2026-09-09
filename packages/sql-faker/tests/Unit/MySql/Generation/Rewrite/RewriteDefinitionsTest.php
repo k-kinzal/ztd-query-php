@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\MySql\Generation\Rewrite;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Derivation\DerivationTrace;
@@ -42,6 +43,7 @@ use SqlFaker\MySql\Generation\Rewrite\RewriteDefinitions;
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Partition\FieldListRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Replication\TablePatternRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Expression\QuantifiedComparisonRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Expression\TableValueConstructorRule::class)]
 final class RewriteDefinitionsTest extends TestCase
 {
     public function testCreateComposesTheDeclaredSourceRules(): void
@@ -50,5 +52,21 @@ final class RewriteDefinitionsTest extends TestCase
         $trace->expand(0, new Production([new Terminal('NAMES_SYM'), new Terminal('EQ'), new Terminal('NUM')]), 0);
         $result = (new RewriteDefinitions())->create()->rewrite($trace->terminals());
         self::assertSame(['NAMES_SYM', 'DEFAULT_SYM'], $result->names());
+    }
+
+    #[DataProvider('providerDefaultTokens')]
+    public function testCreateBindsTheReleaseSpecificDefaultToken(string $version, string $expected): void
+    {
+        $trace = new DerivationTrace('option_value_no_option_type');
+        $trace->expand(0, new Production([new Terminal('NAMES_SYM'), new Terminal('EQ'), new Terminal('NUM')]), 0);
+        self::assertSame(['NAMES_SYM', $expected], (new RewriteDefinitions())->create($version)->rewrite($trace->terminals())->names());
+    }
+
+    /**
+     * @return list<array{string, string}>
+     */
+    public static function providerDefaultTokens(): array
+    {
+        return [['mysql-5.6.51', 'DEFAULT'], ['mysql-5.7.44', 'DEFAULT'], ['mysql-8.0.44', 'DEFAULT_SYM'], ['mysql-8.4.7', 'DEFAULT_SYM'], ['mysql-9.1.0', 'DEFAULT_SYM']];
     }
 }

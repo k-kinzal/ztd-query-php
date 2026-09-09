@@ -14,6 +14,13 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 final class SetNamesRule implements RewriteRule
 {
     /**
+     * Binds the release's DEFAULT token name from sql_yacc.yy.
+     */
+    public function __construct(private readonly string $defaultTerminal = 'DEFAULT_SYM')
+    {
+    }
+
+    /**
      * Replaces that diagnostic alternative with its valid NAMES DEFAULT sibling, including arbitrary expressions.
      */
     #[Override]
@@ -27,7 +34,7 @@ final class SetNamesRule implements RewriteRule
             }
             $names = $sequence->terminals[$range[0]];
             $sequence = $sequence->replace($range[0], $range[1] - $range[0], [
-                $names, $sequence->inserted('DEFAULT_SYM', $names, 'mysql.set-names'),
+                $names, $sequence->inserted($this->defaultTerminal, $names, 'mysql.set-names'),
             ], 'mysql.set-names');
         }
         return $sequence;

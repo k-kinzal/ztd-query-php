@@ -16,6 +16,7 @@ use SqlFaker\PostgreSql\Generation\Rewrite\Name\RelationNameRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Query\IntoClauseRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Query\SelectOptionsRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Routine\TableFunctionRule;
+use SqlFaker\PostgreSql\Generation\Rewrite\Routine\TypeModifierRule;
 
 /**
  * Declares PostgreSQL structural rules by their original grammar scope.
@@ -44,6 +45,7 @@ final class RewriteDefinitions
             new FetchWithTiesRule(),
             new SelectOptionsRule(),
             new TableFunctionRule(),
+            new TypeModifierRule(),
             new IdentityOptionRule(),
             new IntoClauseRule(),
             new HashPartitionBoundRule(),

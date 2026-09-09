@@ -51,10 +51,12 @@ final class FetchWithTiesRule implements RewriteRule
                 return $sequence;
             }
         }
-        $locking = $sequence->child($query, 'for_locking_clause');
-        $lockRange = $locking === null ? null : $sequence->range($locking->id);
-        if ($lockRange !== null) {
-            $offset = min($offset, $lockRange[0]);
+        foreach (['for_locking_clause', 'select_limit', 'opt_select_limit'] as $following) {
+            $clause = $sequence->child($query, $following);
+            $range = $clause === null ? null : $sequence->range($clause->id);
+            if ($range !== null) {
+                $offset = min($offset, $range[0]);
+            }
         }
         $sort = $sequence->child($query, 'opt_sort_clause');
         $scope = $sort->id ?? $query;
