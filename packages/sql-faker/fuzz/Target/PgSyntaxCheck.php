@@ -64,6 +64,7 @@ final class PgSyntaxCheck
      * and reports 42601 too. parse_target.c, define.c and parse_merge.c likewise
      * reject missing relations, option values and an unsupported MERGE feature.
      * parse_coerce.c reports 42804 for incompatible expression types after parsing.
+     * parse_expr.c reports 42P18 when an empty array has no inferable element type.
      * Only those specific diagnostics are inconclusive; grammar-action errors remain findings.
      *
      * @throws SyntaxFailure When syntax or an unclassified rejection is observed
@@ -72,7 +73,7 @@ final class PgSyntaxCheck
     {
         if (in_array($state, ['42704', '42P01', '42703', '3F000', '42809', '22023', '26000',
             '2BP01', '42602', '42883', '42939', '42P07', '42P10', '3D000', '42P03', '22P02',
-            '42712', '42P19', '42P11', '42804'], true)) {
+            '42712', '42P19', '42P11', '42804', '42P18'], true)) {
             return;
         }
         if ($state === '0A000') {

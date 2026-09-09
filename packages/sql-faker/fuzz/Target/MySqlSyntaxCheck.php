@@ -78,6 +78,10 @@ final class MySqlSyntaxCheck
                 && str_contains($rejection->getMessage(), "near 'PARSE_TREE ")) {
                 return;
             }
+            $detail = $rejection->errorInfo[2] ?? null;
+            if ($errorCode === 1064 && is_string($detail) && str_starts_with($detail, 'Constant, random or timezone-dependent expressions in (sub)partitioning function are not allowed near ')) {
+                return;
+            }
 
             if ($acceptable) {
                 return;
