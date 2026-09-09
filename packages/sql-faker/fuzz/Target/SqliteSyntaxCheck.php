@@ -22,6 +22,7 @@ use PDOException;
  * rejection is an unclassified finding and surfaces as a SyntaxFailure for
  * PHP-Fuzzer to record. build.c checks view parameters and duplicate column
  * names; resolve.c resolves operator functions and validates arity.
+ * expr.c checks vector assignment dimensions before or after SELECT expansion.
  * attach.c/fixSelectCb checks cross-database trigger references.
  */
 final class SqliteSyntaxCheck
@@ -69,6 +70,7 @@ final class SqliteSyntaxCheck
                 str_contains($message, 'General error: 1 no tables specified') => true,
                 str_contains($message, 'General error: 1 no such column:') => true,
                 str_contains($message, 'all VALUES must have the same number of terms') => true,
+                preg_match('/General error: 1 [0-9]+ columns assigned [0-9]+ values\z/D', $message) === 1 => true,
                 str_contains($message, 'General error: 1 no such function:') => true,
                 str_contains($message, 'SELECTs to the left and right of UNION do not have the same number of result columns') => true,
                 str_contains($message, 'General error: 1 no such trigger:') => true,
