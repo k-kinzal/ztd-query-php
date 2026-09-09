@@ -31,9 +31,11 @@ use PDOException;
  * window.cc resolves named windows and item_sum.cc checks their expression context.
  * sql_parse.cc checks default-value types; sql_view.cc checks view column counts.
  * item.cc and item_func.cc validate resolved row widths and bitwise operand types.
+ * item_cmpfunc.cc rejects ordered comparisons of geometry values after resolving operand types.
  * sql_partition.cc and table.cc validate expression functions after itemization.
  * sql_yacc.yy resolves duplicate routine names; user-name lengths are checked against USERNAME_CHAR_LENGTH.
  * item_timefunc.cc checks resolved AT TIME ZONE operand types.
+ * item.cc and parse_tree_items.cc prohibit parameters and session variables in view definitions.
  * create_field.cc checks defaults against resolved column types and SQL mode; table.cc rejects disallowed default-expression functions.
  */
 final class MySqlSyntaxCheck
@@ -98,10 +100,13 @@ final class MySqlSyntaxCheck
                 return;
             }
             $detail = $rejection->errorInfo[2] ?? null;
+            if ($errorCode === 1351 && $detail === "View's SELECT contains a variable or parameter") {
+                return;
+            }
             if ($errorCode === 3998 && $detail === 'Cannot cast value to TIMESTAMP WITH TIME ZONE.') {
                 return;
             }
-            if ($errorCode === 1210 && in_array($detail, ['Incorrect arguments to >>', 'Incorrect arguments to <<', 'Incorrect arguments to &', 'Incorrect arguments to |', 'Incorrect arguments to ^'], true)) {
+            if ($errorCode === 1210 && in_array($detail, ['Incorrect arguments to >>', 'Incorrect arguments to <<', 'Incorrect arguments to &', 'Incorrect arguments to |', 'Incorrect arguments to ^', 'Incorrect arguments to <', 'Incorrect arguments to <=', 'Incorrect arguments to >', 'Incorrect arguments to >='], true)) {
                 return;
             }
             if ($errorCode === 1064 && is_string($detail) && (str_starts_with($detail, 'Constant, random or timezone-dependent expressions in (sub)partitioning function are not allowed near ')

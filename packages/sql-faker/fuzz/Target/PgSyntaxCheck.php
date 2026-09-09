@@ -73,6 +73,7 @@ final class PgSyntaxCheck
      * parse_clause.c resolves non-integer sort/group positions; parse_cte.c checks whether SEARCH/CYCLE queries are recursive.
      * parse_expr.c rejects unresolved explicit casts with 42846 after resolving both types.
      * parse_agg.c checks aggregate/grouping expression contexts after function analysis.
+     * parse_clause.c checks GROUPS against the resolved window ordering, including inherited clauses.
      * Only those specific diagnostics are inconclusive; grammar-action errors remain findings.
      *
      * @throws SyntaxFailure When syntax or an unclassified rejection is observed
@@ -97,7 +98,7 @@ final class PgSyntaxCheck
             || str_starts_with(trim($message), 'ERROR:  WITH RECURSIVE is not supported for MERGE statement'))) {
             return;
         }
-        if ($state === '42P20' && preg_match('/\AERROR:  window "[^\r\n]*" is already defined(?:\r?\n|\z)/D', trim($message)) === 1) {
+        if ($state === '42P20' && preg_match('/\AERROR:  (?:window "[^\r\n]*" is already defined|GROUPS mode requires an ORDER BY clause)(?:\r?\n|\z)/D', trim($message)) === 1) {
             return;
         }
         throw new SyntaxFailure("PostgreSQL syntax verification failed\nInput (hex): $input\nSQL: $sql\nSQLSTATE: $state\n$message");
