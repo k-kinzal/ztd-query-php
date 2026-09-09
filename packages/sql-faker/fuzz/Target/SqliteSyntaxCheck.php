@@ -82,6 +82,7 @@ final class SqliteSyntaxCheck
                 str_ends_with($message, 'General error: 1 unsupported use of NULLS LAST') => true,
                 str_contains($message, 'General error: 1 parameters are not allowed in views') => true,
                 str_contains($message, 'General error: 1 duplicate column name:') => true,
+                preg_match('/General error: 1 table "[^\r\n]*" has more than one primary key\z/D', $message) === 1 => true,
                 preg_match('/General error: 1 trigger .* cannot reference objects in database /', $message) === 1 => true,
                 default => false,
             };
