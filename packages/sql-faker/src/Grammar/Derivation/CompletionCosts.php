@@ -81,10 +81,7 @@ final class CompletionCosts
             } else {
                 $child = $this->costs[$symbol->value()] ?? [PHP_INT_MAX, PHP_INT_MAX];
             }
-            $costs = [self::add($costs[0], $child[0]), min(
-                self::add($costs[1], min($child)),
-                self::add($costs[0], $child[1]),
-            )];
+            $costs = self::combine($costs, $child);
         }
         return $costs;
     }
@@ -96,7 +93,7 @@ final class CompletionCosts
      */
     public function completion(Production $production, array $remainder, bool $nonEmpty): int
     {
-        $costs = $this->sequence([...$production->symbols, ...$remainder]);
+        $costs = self::combine($this->sequence($production->symbols), $this->sequence($remainder));
         return $nonEmpty ? $costs[1] : min($costs);
     }
 
@@ -109,10 +106,43 @@ final class CompletionCosts
      */
     public function affordable(array $alternatives, array $remainder, bool $nonEmpty, int $budget): array
     {
-        return array_values(array_filter(
-            $alternatives,
-            fn (Production $production): bool => $this->completion($production, $remainder, $nonEmpty) <= $budget
-        ));
+        $tail = $this->sequence($remainder);
+        $affordable = [];
+        foreach ($alternatives as $production) {
+            $costs = self::combine($this->sequence($production->symbols), $tail);
+            if (($nonEmpty ? $costs[1] : min($costs)) <= $budget) {
+                $affordable[] = $production;
+            }
+        }
+        return $affordable;
+    }
+
+    /**
+     * Combines independent prefix and suffix costs, including their empty-output alternatives.
+     * @param array{int, int} $left
+     * @param array{int, int} $right
+     * @return array{int, int}
+     */
+    public static function combine(array $left, array $right): array
+    {
+        return [self::add($left[0], $right[0]), min(
+            self::add($left[1], min($right)),
+            self::add($left[0], $right[1]),
+        )];
+    }
+
+    /**
+     * Stops once the already-derived prefix contains an emitting terminal; pending rules are not output.
+     * @param list<Symbol> $symbols
+     */
+    public function hasTerminalOutput(array $symbols): bool
+    {
+        foreach ($symbols as $symbol) {
+            if ($symbol instanceof Terminal && $this->sequence([$symbol])[1] === 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

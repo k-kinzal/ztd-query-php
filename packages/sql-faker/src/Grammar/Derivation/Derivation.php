@@ -229,7 +229,7 @@ final class Derivation
      */
     public function completable(array $alternatives, array $form, int $index, GenerationPlan $plan): array
     {
-        $nonEmpty = $plan->requiresNonEmpty() && $this->completion->sequence(array_slice($form, 0, $index))[1] === PHP_INT_MAX;
+        $nonEmpty = $plan->requiresNonEmpty() && !$this->completion->hasTerminalOutput(array_slice($form, 0, $index));
         $candidates = $this->completion->affordable($alternatives, array_slice($form, $index + 1), $nonEmpty, self::STEP_LIMIT - $this->steps);
         if ($candidates === []) {
             throw GenerationException::derivationLimitExceeded();

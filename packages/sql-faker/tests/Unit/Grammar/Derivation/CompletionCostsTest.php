@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\Grammar\Derivation;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Derivation\CompletionCosts;
@@ -60,5 +61,40 @@ final class CompletionCostsTest extends TestCase
     {
         self::assertSame(PHP_INT_MAX, CompletionCosts::add(PHP_INT_MAX, 1));
         self::assertSame(7, CompletionCosts::add(3, 4));
+    }
+
+    /**
+     * @param array{int, int} $left
+     * @param array{int, int} $right
+     * @param array{int, int} $expected
+     */
+    #[DataProvider('providerCosts')]
+    public function testCombinePreservesEmptyAndNonEmptyCompletions(array $left, array $right, array $expected): void
+    {
+        self::assertSame($expected, CompletionCosts::combine($left, $right));
+        self::assertSame($expected, CompletionCosts::combine($right, $left));
+    }
+
+    /**
+     * @return iterable<string, array{array{int, int}, array{int, int}, array{int, int}}>
+     */
+    public static function providerCosts(): iterable
+    {
+        yield 'empty pair' => [[0, PHP_INT_MAX], [0, PHP_INT_MAX], [0, PHP_INT_MAX]];
+        yield 'empty plus output' => [[2, PHP_INT_MAX], [PHP_INT_MAX, 3], [PHP_INT_MAX, 5]];
+        yield 'nullable pair' => [[2, 5], [7, 3], [9, 5]];
+        yield 'cheaper nonempty left' => [[8, 2], [1, 9], [9, 3]];
+        yield 'unreachable' => [[PHP_INT_MAX, PHP_INT_MAX], [0, 1], [PHP_INT_MAX, PHP_INT_MAX]];
+        yield 'saturating' => [[PHP_INT_MAX - 1, PHP_INT_MAX - 1], [2, 3], [PHP_INT_MAX, PHP_INT_MAX]];
+    }
+
+    public function testHasTerminalOutputDistinguishesEmittedTerminalsFromMarkersAndPendingRules(): void
+    {
+        $costs = new CompletionCosts(new Grammar('s', ['s' => new ProductionRule('s', [new Production([new Terminal('X')])])]), static fn (string $name): bool => $name === 'EOF');
+        self::assertFalse($costs->hasTerminalOutput([]));
+        self::assertFalse($costs->hasTerminalOutput([new Terminal('EOF')]));
+        self::assertFalse($costs->hasTerminalOutput([new NonTerminal('s')]));
+        self::assertTrue($costs->hasTerminalOutput([new Terminal('EOF'), new Terminal('X')]));
+        self::assertTrue($costs->hasTerminalOutput([new Terminal('X'), new Terminal('EOF')]));
     }
 }
