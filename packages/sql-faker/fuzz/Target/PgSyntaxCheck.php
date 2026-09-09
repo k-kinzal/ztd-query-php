@@ -67,6 +67,7 @@ final class PgSyntaxCheck
      * parse_expr.c reports 42P18 when an empty array has no inferable element type.
      * parse_merge.c checks unreachable WHEN clauses; parse_clause.c rejects duplicate window names.
      * Datetime input conversion and overloaded function resolution report 22007 and 42725 after parsing.
+     * parse_expr.c checks scalar subquery width after target-list analysis.
      * Only those specific diagnostics are inconclusive; grammar-action errors remain findings.
      *
      * @throws SyntaxFailure When syntax or an unclassified rejection is observed
@@ -82,6 +83,7 @@ final class PgSyntaxCheck
             return;
         }
         if ($state === '42601' && (str_starts_with(trim($message), 'ERROR:  DEFAULT is not allowed in this context')
+            || preg_match('/\AERROR:  subquery must return only one column(?:\r?\n|\z)/D', trim($message)) === 1
             || str_starts_with(trim($message), 'ERROR:  format requires a parameter')
             || str_starts_with(trim($message), 'ERROR:  SELECT * with no tables specified is not valid')
             || str_starts_with(trim($message), 'ERROR:  unreachable WHEN clause specified after unconditional WHEN clause')
