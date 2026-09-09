@@ -79,4 +79,46 @@ final class ExpressionGroupingRuleTest extends TestCase
         $rule = new ExpressionGroupingRule(['expr'], 'parse.y', 'LP', 'RP');
         self::assertSame(['LP', 'INTEGER', 'PLUS', 'INTEGER', 'RP', 'EQ', 'INTEGER'], $rule->rewrite($trace->terminals())->names());
     }
+
+    public function testRewriteRetainsNestedBoundaryProvenanceAndPreviouslyInsertedIdentities(): void
+    {
+        $a = new TerminalOccurrence('NOT', -1, [0, 1, 2], ['a_expr', 'b_expr', 'a_expr'], 'earlier');
+        $b = new TerminalOccurrence('TRUE', 10, [0, 1, 2], ['a_expr', 'b_expr', 'a_expr']);
+        $tail = new TerminalOccurrence('TAIL', 11, [0], ['a_expr']);
+        $input = new TerminalSequence([$a, $b, $tail], [$a, $b, $tail], ['earlier'], [
+            new ProductionOccurrence(0, null, 'a_expr', 0),
+            new ProductionOccurrence(1, 0, 'b_expr', 0),
+            new ProductionOccurrence(2, 1, 'a_expr', 0),
+        ]);
+        $result = (new ExpressionGroupingRule(['a_expr', 'b_expr'], 'group'))->rewrite($input);
+        self::assertSame(['(', '(', 'NOT', 'TRUE', ')', ')', 'TAIL'], $result->names());
+        $ids = array_map(static fn (TerminalOccurrence $terminal): int => $terminal->id, $result->terminals);
+        self::assertCount(count($ids), array_unique($ids));
+        self::assertLessThan(-1, max($ids[0], $ids[1], $ids[4], $ids[5]));
+        self::assertSame([0, 1], $result->terminals[0]->ancestors);
+        self::assertSame(['a_expr', 'b_expr'], $result->terminals[0]->rules);
+        self::assertSame([0, 1, 2], $result->terminals[4]->ancestors);
+        self::assertSame(['a_expr', 'b_expr', 'a_expr'], $result->terminals[4]->rules);
+        self::assertSame([0, 1], $result->terminals[5]->ancestors);
+        self::assertSame($a, $result->terminals[2]);
+        self::assertSame($b, $result->terminals[3]);
+        self::assertSame(['earlier', 'group'], $result->rewrites);
+    }
+
+    public function testRewriteContinuesAfterAnAlreadyGroupedOperand(): void
+    {
+        $left = new TerminalOccurrence('(', -1, [0, 1], ['expr', 'expr'], 'group');
+        $leftEnd = new TerminalOccurrence(')', -2, [0, 1], ['expr', 'expr'], 'group');
+        $right = new TerminalOccurrence('NOT', 10, [0, 2], ['expr', 'expr']);
+        $rightEnd = new TerminalOccurrence('TRUE', 11, [0, 2], ['expr', 'expr']);
+        $input = new TerminalSequence([$left, $leftEnd, $right, $rightEnd], [], [], [
+            new ProductionOccurrence(0, null, 'expr', 0),
+            new ProductionOccurrence(1, 0, 'expr', 0),
+            new ProductionOccurrence(2, 0, 'expr', 0),
+        ]);
+        $result = (new ExpressionGroupingRule(['expr'], 'group'))->rewrite($input);
+        self::assertSame(['(', ')', '(', 'NOT', 'TRUE', ')'], $result->names());
+        self::assertSame($left, $result->terminals[0]);
+        self::assertSame($leftEnd, $result->terminals[1]);
+    }
 }

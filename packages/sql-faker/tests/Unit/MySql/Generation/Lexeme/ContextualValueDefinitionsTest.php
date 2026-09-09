@@ -31,6 +31,7 @@ use SqlFaker\Sqlite\Generation\Lexeme\ValueDefinitions;
 #[UsesClass(\SqlFaker\Grammar\Generation\Spacing\SpacingConstraint::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\BoundedIntegerLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\ReplicationTablePatternLexemeGenerator::class)]
 final class ContextualValueDefinitionsTest extends TestCase
 {
     public function testCreateRestrictsTheContextualDomain(): void
@@ -80,7 +81,9 @@ final class ContextualValueDefinitionsTest extends TestCase
     public static function providerContextualDomains(): iterable
     {
         yield ['mysql-5.7.44', 'ROTATE_KEY_ENGINE', ['INNODB']];
+        yield ['mysql-5.7.44', 'REPLICATION_TABLE_PATTERN', ["'db.table'", "'db.%'", "'%.table'"]];
         foreach (['mysql-8.0.44', 'mysql-8.1.0', 'mysql-8.2.0', 'mysql-8.3.0', 'mysql-8.4.7', 'mysql-9.0.1', 'mysql-9.1.0'] as $version) {
+            yield [$version, 'REPLICATION_TABLE_PATTERN', ["'db.table'", "'db.%'", "'%.table'"]];
             yield [$version, 'REDO_ENGINE', ['INNODB']];
             yield [$version, 'REDO_LOG_NAME', ['REDO_LOG']];
             yield [$version, 'LOAD_COUNT_NAME', ['COUNT']];

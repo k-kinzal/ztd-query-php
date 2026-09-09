@@ -8,8 +8,10 @@ use SqlFaker\Grammar\Generation\Token\ExpressionGroupingRule;
 use SqlFaker\Grammar\Generation\Token\TokenRewriter;
 use SqlFaker\Grammar\Generation\Token\UniqueOptionRule;
 use SqlFaker\MySql\Generation\Rewrite\Alter\OrderByRule;
+use SqlFaker\MySql\Generation\Rewrite\Expression\QuantifiedComparisonRule;
 use SqlFaker\MySql\Generation\Rewrite\Partition\FieldListRule;
 use SqlFaker\MySql\Generation\Rewrite\Replication\StartRule;
+use SqlFaker\MySql\Generation\Rewrite\Replication\TablePatternRule;
 
 /**
  * Declares structural repairs of MySQL parser diagnostic alternatives and ambiguity.
@@ -27,8 +29,10 @@ final class RewriteDefinitions
             ], 'AND_SYM', 'sql_yacc.yy:require_list_element'),
             new UniqueOptionRule('start', 'start_transaction_option', ['READ_SYM' => 'access-mode'], ',', 'sql_yacc.yy:start'),
             new SubqueryContextRule(),
+            new QuantifiedComparisonRule(),
             new TransactionCompletionRule(),
             new StartRule(),
+            new TablePatternRule(),
             new FieldListRule(),
             new IntoClauseRule(),
             new ConstraintEnforcementRule(),

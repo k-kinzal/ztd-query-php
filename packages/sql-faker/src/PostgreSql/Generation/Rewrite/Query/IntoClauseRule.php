@@ -25,7 +25,7 @@ final class IntoClauseRule implements RewriteRule
                 continue;
             }
             $origin = $sequence->terminals[$range[0]];
-            $nested = array_diff($origin->rules, ['stmtblock', 'stmtmulti', 'toplevel_stmt', 'stmt', 'SelectStmt',
+            $nested = array_diff($origin->rules, ['parse_toplevel', 'stmtmulti', 'toplevel_stmt', 'stmt', 'SelectStmt',
                 'select_no_parens', 'select_with_parens', 'select_clause', 'simple_select', 'into_clause',
                 'ExplainStmt', 'ExplainableStmt']) !== [];
             foreach ($origin->ancestors as $ancestor) {

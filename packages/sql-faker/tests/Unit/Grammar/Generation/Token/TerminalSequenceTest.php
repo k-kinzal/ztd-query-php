@@ -192,4 +192,19 @@ final class TerminalSequenceTest extends TestCase
         self::assertSame($sequence->productions, $output->productions);
     }
 
+
+    public function testRangeIncludesAllRetainedTerminalsAndReplacementPreservesEarlierRewrites(): void
+    {
+        $prefix = new TerminalOccurrence('PREFIX', 1);
+        $first = new TerminalOccurrence('A', 2, [0], ['root']);
+        $second = new TerminalOccurrence('B', 3, [0], ['root']);
+        $tail = new TerminalOccurrence('TAIL', 4);
+        $input = new TerminalSequence([$prefix, $first, $second, $tail], [], ['previous']);
+        self::assertSame([1, 3], $input->range(0));
+        $result = $input->replace(1, 1, [], 'remove');
+        self::assertSame([1, 2], $result->range(0));
+        self::assertSame(['previous', 'remove'], $result->rewrites);
+        self::assertSame(['previous'], $input->rewrites);
+        self::assertSame([$prefix, $second, $tail], $result->terminals);
+    }
 }

@@ -40,6 +40,8 @@ use SqlFaker\MySql\Generation\Rewrite\RewriteDefinitions;
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Alter\OrderByRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Replication\StartRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Partition\FieldListRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Replication\TablePatternRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Expression\QuantifiedComparisonRule::class)]
 final class RewriteDefinitionsTest extends TestCase
 {
     public function testCreateComposesTheDeclaredSourceRules(): void

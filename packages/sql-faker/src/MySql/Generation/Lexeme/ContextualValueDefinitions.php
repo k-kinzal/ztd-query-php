@@ -23,10 +23,11 @@ final class ContextualValueDefinitions
     {
         return new VersionedLexemeGenerator(
             $version,
-            new VersionCase(['mysql-5.7.44'], $this->domain('ROTATE_KEY_ENGINE', ['INNODB'], 'alter_instance_action'), 'mysql-5.7-key-rotation'),
+            new VersionCase(['mysql-5.7.44'], new ChoiceLexemeGenerator($this->domain('ROTATE_KEY_ENGINE', ['INNODB'], 'alter_instance_action'), new ReplicationTablePatternLexemeGenerator()), 'mysql-5.7-key-rotation'),
             new VersionCase(
                 ['mysql-8.0.44', 'mysql-8.1.0', 'mysql-8.2.0', 'mysql-8.3.0', 'mysql-8.4.7', 'mysql-9.0.1', 'mysql-9.1.0'],
                 new ChoiceLexemeGenerator(
+                    new ReplicationTablePatternLexemeGenerator(),
                     new BoundedIntegerLexemeGenerator('BINLOG_RESET_INDEX', 1, 2000000000, ['1', '2000000000', "X'01'"], 'sql/sql_yacc.yy:source_reset_options'),
                     $this->domain('ROTATE_KEY_ENGINE', ['INNODB', 'BINLOG'], 'alter_instance_action'),
                     $this->domain('REDO_ENGINE', ['INNODB'], 'alter_instance_action'),

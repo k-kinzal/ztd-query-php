@@ -29,6 +29,8 @@ use SqlFaker\Sqlite\Generation\Rewrite\RewriteDefinitions;
 #[UsesClass(\SqlFaker\Grammar\NonTerminal::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\ExpressionGroupingRule::class)]
 #[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\CompoundSelectRule::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\FunctionArgumentRule::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\GeneratedColumnRule::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalMappingRule::class)]
 final class RewriteDefinitionsTest extends TestCase
 {

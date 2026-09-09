@@ -135,4 +135,37 @@ final class SqlGeneratorTest extends TestCase
 
         $generator->generate(GenerationPlan::all()->requiringNonEmpty());
     }
+
+    public function testGenerateClearsPreviousGrammarTraceBeforeALexicalPlan(): void
+    {
+        $grammar = new Grammar('stmt', ['stmt' => new ProductionRule('stmt', [new Production([new Terminal('TOKEN')])])]);
+        $lexer = $this->createMock(LexicalGrammar::class);
+        $lexer->method('realizeSequence')->willReturn('token');
+        $lexer->method('generate')->willReturn('name');
+        $generator = new SqlGenerator($grammar, Factory::create(), $lexer);
+        self::assertSame('token', $generator->generate(GenerationPlan::all()));
+        self::assertSame(['TOKEN'], $generator->lastSequence?->names());
+        self::assertSame('name', $generator->generate(GenerationPlan::lexical('identifier', [])));
+        self::assertNull($generator->lastSequence);
+    }
+
+    public function testGenerateReportsOnlyTheLatestRewrittenDerivation(): void
+    {
+        $grammar = new Grammar('first', [
+            'first' => new ProductionRule('first', [new Production([new Terminal('A')])]),
+            'second' => new ProductionRule('second', [new Production([new Terminal('B')])]),
+        ]);
+        $lexer = $this->createMock(LexicalGrammar::class);
+        $lexer->method('realizeSequence')->willReturn('output');
+        $rule = $this->createMock(RewriteRule::class);
+        $rule->method('rewrite')->willReturnCallback(static fn (TerminalSequence $sequence): TerminalSequence => $sequence->replace(0, 0, [], 'observed'));
+        $generator = new SqlGenerator($grammar, Factory::create(), $lexer, new TokenRewriter($rule));
+        $generator->generate(GenerationPlan::all());
+        $first = $generator->lastSequence;
+        $generator->generate(GenerationPlan::fromRule('second'));
+        self::assertSame(['A'], $first?->names());
+        self::assertSame(['B'], $generator->lastSequence->names());
+        self::assertSame(['observed'], $generator->lastSequence->rewrites);
+        self::assertSame('second', $generator->lastSequence->productions[0]->rule);
+    }
 }

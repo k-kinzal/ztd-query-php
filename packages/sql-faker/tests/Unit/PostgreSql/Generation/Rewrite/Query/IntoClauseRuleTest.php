@@ -44,7 +44,7 @@ final class IntoClauseRuleTest extends TestCase
      */
     public static function providerContexts(): iterable
     {
-        foreach (['stmtblock', 'stmtmulti', 'toplevel_stmt', 'stmt', 'SelectStmt', 'select_no_parens', 'select_with_parens', 'select_clause', 'simple_select', 'ExplainStmt', 'ExplainableStmt'] as $scope) {
+        foreach (['parse_toplevel', 'stmtmulti', 'toplevel_stmt', 'stmt', 'SelectStmt', 'select_no_parens', 'select_with_parens', 'select_clause', 'simple_select', 'ExplainStmt', 'ExplainableStmt'] as $scope) {
             yield [$scope, true];
         }
         foreach (['common_table_expr', 'c_expr', 'table_ref', 'DeclareCursorStmt', 'InsertStmt', 'CreateTableAsStmt', 'PrepareStmt', 'rule_action_stmt'] as $scope) {
