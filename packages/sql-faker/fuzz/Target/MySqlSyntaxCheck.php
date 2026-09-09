@@ -29,6 +29,10 @@ use PDOException;
  * sql_update.cc checks updatability; sp_head.h checks trigger result sets; table.cc validates generated expressions.
  * item_func.cc checks stored-function argument names; item_json_func.cc resolves JSON paths and cast types.
  * window.cc resolves named windows and item_sum.cc checks their expression context.
+ * sql_parse.cc checks default-value types; sql_view.cc checks view column counts.
+ * item.cc and item_func.cc validate resolved row widths and bitwise operand types.
+ * sql_partition.cc and table.cc validate expression functions after itemization.
+ * sql_yacc.yy resolves duplicate routine names; user-name lengths are checked against USERNAME_CHAR_LENGTH.
  */
 final class MySqlSyntaxCheck
 {
@@ -80,7 +84,8 @@ final class MySqlSyntaxCheck
                 1319, 1305, 1096, 1791, 1286, 1235, 1690, 3652, 3709, 1525, 1051, 3980,
                 1193, 1277, 1641, 1800, 1801, 1066, 1115, 3714, 6006, 3573, 3568, 3569, 1302, 1391, 3763, 1060, 1492, 3654, 1109,
                 1128, 1426, 1624, 6033, 6037, 1294, 3577, 1585, 1253, 1324, 1136, 1308,
-                1288, 1310, 1415, 1584, 1630, 3102, 3143, 3579, 3593, 3772, 4032, 4101], true);
+                1288, 1310, 1415, 1584, 1630, 3102, 3143, 3579, 3593, 3772, 4032, 4101,
+                1353, 1067, 1111, 3769, 1564, 1332, 1241, 1330, 1470], true);
 
             if ($errorCode === 1221 && (str_ends_with($rejection->getMessage(), 'Incorrect usage of spatial/fulltext/hash index and explicit index order')
                 || str_ends_with($rejection->getMessage(), 'Incorrect usage of SRID and non-geometry column'))) {
@@ -91,6 +96,9 @@ final class MySqlSyntaxCheck
                 return;
             }
             $detail = $rejection->errorInfo[2] ?? null;
+            if ($errorCode === 1210 && in_array($detail, ['Incorrect arguments to >>', 'Incorrect arguments to <<', 'Incorrect arguments to &', 'Incorrect arguments to |', 'Incorrect arguments to ^'], true)) {
+                return;
+            }
             if ($errorCode === 1064 && is_string($detail) && (str_starts_with($detail, 'Constant, random or timezone-dependent expressions in (sub)partitioning function are not allowed near ')
                 || str_starts_with($detail, 'Wrong number of subpartitions defined, mismatch with previous setting near '))) {
                 return;

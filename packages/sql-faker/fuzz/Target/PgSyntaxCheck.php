@@ -70,6 +70,7 @@ final class PgSyntaxCheck
      * parse_expr.c checks scalar subquery width after target-list analysis.
      * parse_type.c validates resolved type modifiers; parse_relation.c checks a function's result type.
      * parse_expr.c validates MERGE_ACTION against the current analyzed expression context.
+     * parse_clause.c resolves non-integer sort/group positions; parse_cte.c checks whether SEARCH/CYCLE queries are recursive.
      * Only those specific diagnostics are inconclusive; grammar-action errors remain findings.
      *
      * @throws SyntaxFailure When syntax or an unclassified rejection is observed
@@ -85,6 +86,7 @@ final class PgSyntaxCheck
             return;
         }
         if ($state === '42601' && (str_starts_with(trim($message), 'ERROR:  DEFAULT is not allowed in this context')
+            || preg_match('/\AERROR:  (?:non-integer constant in (?:GROUP BY|ORDER BY|DISTINCT ON)|WITH query is not recursive)(?:\r?\n|\z)/D', trim($message)) === 1
             || preg_match('/\AERROR:  subquery must return only one column(?:\r?\n|\z)/D', trim($message)) === 1
             || preg_match('/\AERROR:  (?:type modifiers must be simple constants or identifiers|a column definition list is only allowed for functions returning "record"|MERGE_ACTION\(\) can only be used in the RETURNING list of a MERGE command)(?:\r?\n|\z)/D', trim($message)) === 1
             || str_starts_with(trim($message), 'ERROR:  format requires a parameter')
