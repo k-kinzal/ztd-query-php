@@ -49,20 +49,21 @@
 <span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a></span>
 <span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> * sql/sql_lex.cc MY_LEX_IDENT_SEP / MY_LEX_IDENT_START: preserves qualified-name adjacency.</span></span>
-<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">QualifiedNameSpacingRule</span> <span class="tok-kw">implements</span> <span class="tok-id">SpacingRule</span></span>
-<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a>{</span>
-<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com">     * Chooses the joined spelling for grammar dots; decimal points remain internal to numeric lexemes.</span></span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a>    #[<span class="tok-id">Override</span>]</span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">apply</span>(<span class="tok-id">LexemeBoundary</span> <span class="tok-var">$boundary</span>, <span class="tok-id">LexemeInput</span> <span class="tok-var">$input</span>): ?<span class="tok-id">SpacingConstraint</span></span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>    {</span>
-<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>        <span class="tok-kw">return</span> <span class="tok-var">$boundary</span>-&gt;<span class="tok-id">left</span>-&gt;<span class="tok-id">text</span> === <span class="tok-str">&#039;.&#039;</span> || <span class="tok-var">$boundary</span>-&gt;<span class="tok-id">right</span>-&gt;<span class="tok-id">text</span> === <span class="tok-str">&#039;.&#039;</span></span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>            ? <span class="tok-kw">new</span> <span class="tok-id">SpacingConstraint</span>(<span class="tok-id">SpacingConstraint</span>::<span class="tok-id">JOIN</span>, [<span class="tok-str">&#039;mysql.qualified-name&#039;</span>]) : <span class="tok-id">null</span>;</span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>    }</span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>}</span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a></span>
+<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_lex.cc</span></span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">QualifiedNameSpacingRule</span> <span class="tok-kw">implements</span> <span class="tok-id">SpacingRule</span></span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a>{</span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com">     * Chooses the joined spelling for grammar dots; decimal points remain internal to numeric lexemes.</span></span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>    #[<span class="tok-id">Override</span>]</span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">apply</span>(<span class="tok-id">LexemeBoundary</span> <span class="tok-var">$boundary</span>, <span class="tok-id">LexemeInput</span> <span class="tok-var">$input</span>): ?<span class="tok-id">SpacingConstraint</span></span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>    {</span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>        <span class="tok-kw">return</span> <span class="tok-var">$boundary</span>-&gt;<span class="tok-id">left</span>-&gt;<span class="tok-id">text</span> === <span class="tok-str">&#039;.&#039;</span> || <span class="tok-var">$boundary</span>-&gt;<span class="tok-id">right</span>-&gt;<span class="tok-id">text</span> === <span class="tok-str">&#039;.&#039;</span></span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>            ? <span class="tok-kw">new</span> <span class="tok-id">SpacingConstraint</span>(<span class="tok-id">SpacingConstraint</span>::<span class="tok-id">JOIN</span>, [<span class="tok-str">&#039;mysql.qualified-name&#039;</span>]) : <span class="tok-id">null</span>;</span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>    }</span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>}</span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a></span>
 </code></pre>
 </main>
 <footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
