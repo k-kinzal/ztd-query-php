@@ -121,6 +121,8 @@ use SqlFaker\MySql\GenerationContext;
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\FactorLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\PrecisionLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalMappingRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Partition\ValueArityRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Partition\ValueShape::class)]
 final class GenerationContextTest extends TestCase
 {
     public function testBindsTheRequestedReleaseAndPreservesTheGrammarStart(): void

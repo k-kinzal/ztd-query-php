@@ -198,6 +198,9 @@ use UnexpectedValueException;
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\FactorLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\PrecisionLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Name\AliasRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Partition\ValueArityRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Partition\ValueShape::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Routine\SubstringRule::class)]
 final class SqliteProviderTest extends TestCase
 {
     #[DataProvider('providerTargetedGenerationSeed')]
