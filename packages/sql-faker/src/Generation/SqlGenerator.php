@@ -88,8 +88,10 @@ final class SqlGenerator
             if ($sql === '' && $plan->requiresNonEmpty()) {
                 throw GenerationException::planRequiresNonEmptyOutput($this->lexicalGrammar->version());
             }
-            $nodes = $this->lastSequence === null ? [] : (new SequenceObservation())->preserved($this->lastSequence);
-            $this->coverage?->commitAttempt(hash('sha256', $sql), $nodes);
+            $this->coverage?->commitAttempt(
+                hash('sha256', $sql),
+                $this->lastSequence === null ? [] : (new SequenceObservation())->preserved($this->lastSequence)
+            );
             return $sql;
         } finally {
             $this->coverage?->endGeneration();

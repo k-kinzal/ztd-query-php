@@ -21,8 +21,9 @@ final class SequenceObservation
     {
         $result = [];
         foreach ($terminals as $terminal) {
+            $leaf = [$terminal->id, $terminal->name];
             foreach ($terminal->ancestors as $ancestor) {
-                $result[$ancestor][] = [$terminal->id, $terminal->name];
+                $result[$ancestor][] = $leaf;
             }
         }
         return $result;
