@@ -30,6 +30,7 @@ use SqlFaker\PostgreSql\Generation\Rewrite\RewriteDefinitions;
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\WindowFrameRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\PgLookahead::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\ExpressionGroupingRule::class)]
 final class RewriteDefinitionsTest extends TestCase
 {
     public function testCreateComposesTheDeclaredSourceRules(): void

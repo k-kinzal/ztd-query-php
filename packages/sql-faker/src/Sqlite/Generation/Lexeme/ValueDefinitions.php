@@ -53,8 +53,8 @@ final class ValueDefinitions
     public function strings(): LexemeGenerator
     {
         return new ChoiceLexemeGenerator(
-            new PatternLexemeGenerator('STRING', "/\A'(?:[^'\x00]|'')*'\z/Ds", ["'text'", "'a''b'"], 'string', 'src/tokenize.c:CC_QUOTE'),
-            new PatternLexemeGenerator('ids', "/\A'(?:[^'\x00]|'')*'\z/Ds", ["'text'"], 'string', 'src/parse.y:ids'),
+            new PatternLexemeGenerator('STRING', "/\A'(?:[^'\\x00]|'')*'\z/Ds", ["'text'", "'a''b'"], 'string', 'src/tokenize.c:CC_QUOTE'),
+            new PatternLexemeGenerator('ids', "/\A'(?:[^'\\x00]|'')*'\z/Ds", ["'text'"], 'string', 'src/parse.y:ids'),
             new PatternLexemeGenerator('BLOB', "/\A[xX]'(?:[0-9a-fA-F]{2})*'\z/D", ["X'00'", "X''"], 'string', 'src/tokenize.c:CC_X'),
         );
     }

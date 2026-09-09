@@ -49,6 +49,8 @@ use SqlFaker\Grammar\Lexical\SourceCursor;
 #[UsesClass(BisonTokenStream::class)]
 #[UsesClass(BisonTrivia::class)]
 #[UsesClass(SourceCursor::class)]
+#[UsesClass(\SqlFaker\Compiler\Bison\Ast\BisonSymbolForm::class)]
+#[UsesClass(\SqlFaker\Grammar\GrammarParseException::class)]
 final class BisonRuleReaderTest extends TestCase
 {
     public function testReadAllKeepsTheRulesInTheOrderTheyWereDeclared(): void

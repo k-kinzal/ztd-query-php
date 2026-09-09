@@ -33,6 +33,7 @@ final class ContextualValueDefinitions
                     $this->domain('LOAD_COUNT_NAME', ['COUNT'], 'opt_source_count'),
                     new IntegerLexemeGenerator('LOAD_SOURCE_COUNT', '1', '2147483647', ['1'], 'sql/sql_yacc.yy:opt_source_count'),
                     new PatternLexemeGenerator('REPLICATION_FLAG_NUMBER', "/\\A(?:0*[01]|0x0*[01]|[xX]'(?:00)*0[01]')\\z/D", ['0', '1'], 'number', 'sql/sql_yacc.yy:SOURCE_CONNECTION_AUTO_FAILOVER'),
+                    new PatternLexemeGenerator('TERNARY_OPTION_NUMBER', "/\\A(?:0*[01]|0x0*[01]|[xX]'(?:00)*0[01]')\\z/D", ['0', '1'], 'number', 'sql/sql_yacc.yy:ternary_option'),
                 ),
                 'mysql-8-and-9-instance-actions',
             ),

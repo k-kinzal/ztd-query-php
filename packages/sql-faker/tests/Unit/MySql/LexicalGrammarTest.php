@@ -311,7 +311,7 @@ SQL;
         self::assertStringStartsWith('`', $lexical->realize(['IDENT_QUOTED']));
         self::assertStringStartsWith("'", $lexical->realize(['TEXT_STRING']));
         self::assertStringStartsWith("N'", $lexical->realize(['NCHAR_STRING']));
-        self::assertSame('$tag$text$tag$', $lexical->realize(['DOLLAR_QUOTED_STRING_SYM']));
+        self::assertSame(['DOLLAR_QUOTED_STRING_SYM'], $lexical->tokenize($lexical->realize(['DOLLAR_QUOTED_STRING_SYM'])));
         self::assertMatchesRegularExpression('/^\d+$/', $lexical->realize(['NUM']));
         self::assertMatchesRegularExpression('/^\d+$/', $lexical->realize(['LONG_NUM']));
         self::assertSame('18446744073709551615', $lexical->realize(['ULONGLONG_NUM']));

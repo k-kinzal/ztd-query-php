@@ -152,6 +152,7 @@ use SqlFaker\MySqlProvider;
 #[UsesClass(\SqlFaker\Sqlite\Grammar\SqliteGrammar::class)]
 #[UsesClass(\SqlFaker\Sqlite\LexicalGrammar::class)]
 #[UsesClass(\SqlFaker\Sqlite\SqliteTokenizer::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\ExpressionGroupingRule::class)]
 final class MySqlProviderTest extends TestCase
 {
     #[Override]

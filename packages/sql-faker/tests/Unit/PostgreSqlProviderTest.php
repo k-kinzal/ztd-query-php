@@ -153,6 +153,7 @@ use SqlFaker\PostgreSqlProvider;
 #[UsesClass(\SqlFaker\Sqlite\Grammar\SqliteGrammar::class)]
 #[UsesClass(\SqlFaker\Sqlite\LexicalGrammar::class)]
 #[UsesClass(\SqlFaker\Sqlite\SqliteTokenizer::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\ExpressionGroupingRule::class)]
 final class PostgreSqlProviderTest extends TestCase
 {
     #[DataProvider('providerTargetedGenerationSeed')]

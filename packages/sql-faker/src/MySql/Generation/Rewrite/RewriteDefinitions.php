@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlFaker\MySql\Generation\Rewrite;
 
+use SqlFaker\Grammar\Generation\Token\ExpressionGroupingRule;
 use SqlFaker\Grammar\Generation\Token\TokenRewriter;
 use SqlFaker\Grammar\Generation\Token\UniqueOptionRule;
 
@@ -30,6 +31,7 @@ final class RewriteDefinitions
             new IntegerContextRule(),
             new LoadSourceCountRule(),
             new FlushExportRule(),
+            new ExpressionGroupingRule(['expr', 'bool_pri', 'predicate', 'bit_expr', 'simple_expr'], 'sql_yacc.yy:simple_expr:parenthesized-operands'),
         );
     }
 }

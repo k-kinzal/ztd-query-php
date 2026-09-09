@@ -27,6 +27,7 @@ use SqlFaker\Sqlite\Generation\Rewrite\RewriteDefinitions;
 #[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\WindowFrameRule::class)]
 #[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\WithoutRowidRule::class)]
 #[UsesClass(\SqlFaker\Grammar\NonTerminal::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\ExpressionGroupingRule::class)]
 final class RewriteDefinitionsTest extends TestCase
 {
     public function testCreateComposesTheDeclaredSourceRules(): void

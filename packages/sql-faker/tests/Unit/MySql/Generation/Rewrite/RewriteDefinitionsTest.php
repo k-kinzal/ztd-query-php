@@ -31,6 +31,7 @@ use SqlFaker\MySql\Generation\Rewrite\RewriteDefinitions;
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\RoleGrantRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\SetNamesRule::class)]
 #[UsesClass(\SqlFaker\Grammar\NonTerminal::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\ExpressionGroupingRule::class)]
 final class RewriteDefinitionsTest extends TestCase
 {
     public function testCreateComposesTheDeclaredSourceRules(): void

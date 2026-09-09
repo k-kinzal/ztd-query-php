@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\Compiler\Bison\Lexer;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Compiler\Bison\Lexer\BisonLexeme;
 use SqlFaker\Compiler\Bison\Lexer\BisonToken;
 
 #[CoversClass(BisonToken::class)]
+#[UsesClass(BisonLexeme::class)]
 final class BisonTokenTest extends TestCase
 {
     public function testType(): void

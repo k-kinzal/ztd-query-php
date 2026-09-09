@@ -52,4 +52,13 @@ final class IntegerContextRuleTest extends TestCase
         self::assertSame($input->terminals[0]->id, $result->terminals[0]->id);
         self::assertSame($input, (new IntegerContextRule())->mapped($input, 999, 'FLAG', 'source'));
     }
+    public function testRewritePreservesDefaultAndRestrictsOnlyTheNumericTernaryOption(): void
+    {
+        $trace = new DerivationTrace('root');
+        $trace->expand(0, new Production([new NonTerminal('ternary_option'), new NonTerminal('ternary_option')]), 0);
+        $trace->expand(0, new Production([new NonTerminal('ulong_num')]), 0);
+        $trace->expand(0, new Production([new Terminal('LONG_NUM')]), 2);
+        $trace->expand(1, new Production([new Terminal('DEFAULT_SYM')]), 1);
+        self::assertSame(['TERNARY_OPTION_NUMBER', 'DEFAULT_SYM'], (new IntegerContextRule())->rewrite($trace->terminals())->names());
+    }
 }

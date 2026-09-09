@@ -39,6 +39,8 @@ use SqlFaker\Grammar\Lexical\SourceCursor;
 #[UsesClass(DirectiveScanner::class)]
 #[UsesClass(QuotedLiteralScanner::class)]
 #[UsesClass(TypeTagScanner::class)]
+#[UsesClass(\SqlFaker\Compiler\Bison\Lexer\PunctuationScanner::class)]
+#[UsesClass(\SqlFaker\Grammar\GrammarParseException::class)]
 final class StartDirectiveReaderTest extends TestCase
 {
     public function testHandlesClaimsOnlyTheStartDirective(): void

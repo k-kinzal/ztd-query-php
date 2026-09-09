@@ -39,8 +39,8 @@ final class ValueDefinitions
     public function strings(): LexemeGenerator
     {
         return new ChoiceLexemeGenerator(
-            new PatternLexemeGenerator('SCONST', "~\A(?:'(?:[^'\x00]|'')*'|[eE]'(?:[^'\\\\\x00]|''|\\\\.)*'|\$\$(?:(?!\$\$).)*\$\$)\z~Ds", ["'text'", "'a''b'", '$$text$$'], 'string', 'scan.l:xq/xe/xdolq'),
-            new PatternLexemeGenerator('USCONST', "~\A[Uu]&'(?:[^'\x00]|'')*'\z~Ds", ["U&'text'"], 'string', 'scan.l:xus'),
+            new PatternLexemeGenerator('SCONST', "~\A(?:'(?:[^'\\x00]|'')*'|[eE]'(?:[^'\\\\\\x00]|''|\\\\.)*'|\$\$(?:(?!\$\$).)*\$\$)\z~Ds", ["'text'", "'a''b'", '$$text$$'], 'string', 'scan.l:xq/xe/xdolq'),
+            new PatternLexemeGenerator('USCONST', "~\A[Uu]&'(?:[^'\\x00]|'')*'\z~Ds", ["U&'text'"], 'string', 'scan.l:xus'),
             new PatternLexemeGenerator('BCONST', "/\A[bB]'[01]*'\z/D", ["B'01'"], 'string', 'scan.l:xb'),
             new PatternLexemeGenerator('XCONST', "/\A[xX]'[0-9a-fA-F]*'\z/D", ["X'0f'"], 'string', 'scan.l:xh'),
         );

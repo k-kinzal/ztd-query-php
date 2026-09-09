@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\PostgreSql\Generation\Lexeme;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeInput;
@@ -62,5 +63,65 @@ final class ValueDefinitionsTest extends TestCase
         self::assertNotNull($invalid);
         self::assertSame('?&', [...$valid->sequences()][0]->lexemes[0]->text);
         self::assertSame([], [...$invalid->sequences()]);
+    }
+
+    #[DataProvider('providerValueTokens')]
+    public function testCreateOffersACompleteCandidateForEverySourceValueToken(string $terminal): void
+    {
+        $result = (new ValueDefinitions())->create()->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput()));
+        self::assertNotNull($result);
+        self::assertNotEmpty([...$result->sequences()]);
+    }
+
+    /**
+     * @return list<array{string}>
+     */
+    public static function providerValueTokens(): array
+    {
+        return [['IDENT'], ['UIDENT'], ['PARAM'], ['SCONST'], ['USCONST'], ['BCONST'], ['XCONST'], ['ICONST'], ['FCONST'], ['Op']];
+    }
+
+    /**
+     * @param list<string> $expected
+     */
+    #[DataProvider('providerLexicalForms')]
+    public function testCreateRetainsValidSourceSpellingsAndRejectsMalformedOnes(string $terminal, string $spelling, array $expected): void
+    {
+        $result = (new ValueDefinitions())->create()->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput(), $spelling));
+        self::assertNotNull($result);
+        self::assertSame($expected, array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$result->sequences()]));
+    }
+
+    /**
+     * @return list<array{string, string, list<string>}>
+     */
+    public static function providerLexicalForms(): array
+    {
+        return [
+            ['SCONST', "'ordinary'", ["'ordinary'"]],
+            ['SCONST', "'with\0nul'", []],
+            ['USCONST', "U&'ordinary'", ["U&'ordinary'"]],
+            ['USCONST', "U&'with\0nul'", []],
+            ['UIDENT', 'u&"a""b"', ['u&"a""b"']],
+            ['UIDENT', 'u&"unterminated', []],
+            ['PARAM', '$17', ['$17']],
+            ['PARAM', '$', []],
+            ['SCONST', 'E\'a\\\'b\'', ['E\'a\\\'b\'']],
+            ['SCONST', '\'unclosed', []],
+            ['USCONST', 'u&\'a\'\'b\'', ['u&\'a\'\'b\'']],
+            ['USCONST', 'u\'wrong prefix\'', []],
+            ['BCONST', 'b\'001\'', ['b\'001\'']],
+            ['BCONST', 'b\'02\'', []],
+            ['XCONST', 'x\'f\'', ['x\'f\'']],
+            ['XCONST', 'x\'g\'', []],
+            ['ICONST', '1_000', ['1_000']],
+            ['ICONST', '1__000', []],
+            ['FCONST', '.5e+7', ['.5e+7']],
+            ['FCONST', '.5e', []],
+            ['Op', '?@', ['?@']],
+            ['Op', '/*', []],
+            ['Op', '|-', ['|-']],
+            ['Op', '--', []],
+        ];
     }
 }

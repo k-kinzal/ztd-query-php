@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\MySql\Generation\Lexeme;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeInput;
@@ -74,5 +75,59 @@ final class ValueDefinitionsTest extends TestCase
         self::assertNotNull($invalid);
         self::assertSame("X'0f'", [...$valid->sequences()][0]->lexemes[0]->text);
         self::assertSame([], [...$invalid->sequences()]);
+    }
+
+    #[DataProvider('providerValueTokens')]
+    public function testCreateOffersACompleteCandidateForEverySourceValueToken(string $terminal): void
+    {
+        $result = (new ValueDefinitions())->create()->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput()));
+        self::assertNotNull($result);
+        self::assertNotEmpty([...$result->sequences()]);
+    }
+
+    /**
+     * @return list<array{string}>
+     */
+    public static function providerValueTokens(): array
+    {
+        return [['IDENT'], ['IDENT_QUOTED'], ['LEX_HOSTNAME'], ['UNDERSCORE_CHARSET'], ['TEXT_STRING'], ['NCHAR_STRING'], ['NUM'], ['LONG_NUM'], ['ULONGLONG_NUM'], ['DECIMAL_NUM'], ['FLOAT_NUM'], ['HEX_NUM'], ['BIN_NUM']];
+    }
+
+    /**
+     * @param list<string> $expected
+     */
+    #[DataProvider('providerLexicalForms')]
+    public function testCreateRetainsValidSourceSpellingsAndRejectsMalformedOnes(string $terminal, string $spelling, array $expected): void
+    {
+        $result = (new ValueDefinitions())->create()->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput(), $spelling));
+        self::assertNotNull($result);
+        self::assertSame($expected, array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$result->sequences()]));
+    }
+
+    /**
+     * @return list<array{string, string, list<string>}>
+     */
+    public static function providerLexicalForms(): array
+    {
+        return [
+            ['IDENT', 'alpha_2', ['alpha_2']],
+            ['IDENT', '$bad name', []],
+            ['LEX_HOSTNAME', 'host.example', ['host.example']],
+            ['LEX_HOSTNAME', 'host/name', []],
+            ['UNDERSCORE_CHARSET', '_UTF8MB4', ['_UTF8MB4']],
+            ['UNDERSCORE_CHARSET', 'utf8mb4', []],
+            ['NCHAR_STRING', 'n\'a\\\'b\'', ['n\'a\\\'b\'']],
+            ['NCHAR_STRING', 'N\'unclosed', []],
+            ['LONG_NUM', '9223372036854775807', ['9223372036854775807']],
+            ['LONG_NUM', '2147483647', []],
+            ['ULONGLONG_NUM', '9223372036854775808', ['9223372036854775808']],
+            ['ULONGLONG_NUM', '18446744073709551616', []],
+            ['DECIMAL_NUM', '.75', ['.75']],
+            ['DECIMAL_NUM', '1.5e2', []],
+            ['FLOAT_NUM', '12.5E-4', ['12.5E-4']],
+            ['FLOAT_NUM', '12.5', []],
+            ['BIN_NUM', 'b\'001\'', ['b\'001\'']],
+            ['BIN_NUM', 'B\'02\'', []],
+        ];
     }
 }

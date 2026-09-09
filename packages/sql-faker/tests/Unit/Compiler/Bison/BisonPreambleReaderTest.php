@@ -67,6 +67,13 @@ use SqlFaker\Grammar\Lexical\SourceCursor;
 #[UsesClass(NumberScanner::class)]
 #[UsesClass(QuotedLiteralScanner::class)]
 #[UsesClass(TypeTagScanner::class)]
+#[UsesClass(\SqlFaker\Compiler\Bison\Ast\BisonDefineDeclaration::class)]
+#[UsesClass(\SqlFaker\Compiler\Bison\Ast\BisonExpectDeclaration::class)]
+#[UsesClass(\SqlFaker\Compiler\Bison\Ast\BisonParamDeclaration::class)]
+#[UsesClass(\SqlFaker\Compiler\Bison\Ast\BisonPrecedenceDeclaration::class)]
+#[UsesClass(\SqlFaker\Compiler\Bison\Ast\BisonTypeDeclaration::class)]
+#[UsesClass(\SqlFaker\Compiler\Bison\Lexer\PunctuationScanner::class)]
+#[UsesClass(\SqlFaker\Grammar\GrammarParseException::class)]
 final class BisonPreambleReaderTest extends TestCase
 {
     public function testReadTakesThePrologueAndTheDeclarations(): void

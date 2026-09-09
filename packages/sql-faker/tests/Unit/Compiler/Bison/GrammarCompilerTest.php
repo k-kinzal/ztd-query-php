@@ -37,6 +37,7 @@ use SqlFaker\Grammar\UnknownSymbolException;
 #[CoversClass(\SqlFaker\Grammar\ProductionRule::class)]
 #[UsesClass(GrammarCompiler::class)]
 #[UsesClass(\SqlFaker\Grammar\Grammar::class)]
+#[UsesClass(BisonSymbolForm::class)]
 final class GrammarCompilerTest extends TestCase
 {
     public function testCompile(): void

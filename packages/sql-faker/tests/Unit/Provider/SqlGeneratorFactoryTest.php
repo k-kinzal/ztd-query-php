@@ -135,6 +135,7 @@ use SqlFaker\Provider\SqlGeneratorFactory;
 #[UsesClass(\SqlFaker\MySql\Generation\Spacing\QualifiedNameSpacingRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Spacing\VariableSpacingRule::class)]
 #[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\JoinModifiers::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\ExpressionGroupingRule::class)]
 final class SqlGeneratorFactoryTest extends TestCase
 {
     public function testForMySqlPreservesTheGrammarEntryPointAndBindsLexicalDefinitions(): void

@@ -49,4 +49,15 @@ final class ContextualValueDefinitionsTest extends TestCase
         self::assertNotNull($result);
         self::assertSame('valid', [...$result->sequences()][0]->lexemes[0]->text);
     }
+    public function testCreateEnumeratesOnlySourceAcceptedTernaryValues(): void
+    {
+        $generator = (new ContextualValueDefinitions())->create('mysql-8.4.7');
+        $input = new LexemeInput(TerminalSequence::fromNames(['TERNARY_OPTION_NUMBER']), 0, new ResolvedOutput());
+        $result = $generator->generate($input);
+        self::assertNotNull($result);
+        self::assertSame(['0', '1'], array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$result->sequences()]));
+        $invalid = $generator->generate(new LexemeInput($input->terminals, 0, new ResolvedOutput(), '2'));
+        self::assertNotNull($invalid);
+        self::assertSame([], [...$invalid->sequences()]);
+    }
 }

@@ -43,6 +43,8 @@ use SqlFaker\Grammar\Lexical\SourceCursor;
 #[UsesClass(NumberScanner::class)]
 #[UsesClass(QuotedLiteralScanner::class)]
 #[UsesClass(TypeTagScanner::class)]
+#[UsesClass(\SqlFaker\Compiler\Bison\Lexer\PunctuationScanner::class)]
+#[UsesClass(\SqlFaker\Grammar\GrammarParseException::class)]
 final class TokenDirectiveReaderTest extends TestCase
 {
     public function testHandlesClaimsOnlyTheTokenDirective(): void

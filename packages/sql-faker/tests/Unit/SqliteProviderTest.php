@@ -155,6 +155,7 @@ use UnexpectedValueException;
 #[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\WithoutRowidRule::class)]
 #[UsesClass(\SqlFaker\Sqlite\GrammarAdaptation::class)]
 #[UsesClass(\SqlFaker\Sqlite\SqliteTokenizer::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\ExpressionGroupingRule::class)]
 final class SqliteProviderTest extends TestCase
 {
     #[DataProvider('providerTargetedGenerationSeed')]

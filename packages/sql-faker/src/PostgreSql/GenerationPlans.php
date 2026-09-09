@@ -268,6 +268,7 @@ final class GenerationPlans
             'insert_rest' => [ProductionPattern::exactly('DEFAULT', 'VALUES')],
             'opt_on_conflict' => [ProductionPattern::containing('DO', 'UPDATE')],
             'opt_conf_expr' => [ProductionPattern::containing('index_params', 'where_clause')],
+            'index_elem' => [ProductionPattern::exactly('ColId', 'index_elem_options')],
             'where_clause' => [ProductionPattern::nonEmpty()],
         ])->requiringNonEmpty();
     }

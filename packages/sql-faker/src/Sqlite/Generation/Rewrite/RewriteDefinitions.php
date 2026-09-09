@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlFaker\Sqlite\Generation\Rewrite;
 
+use SqlFaker\Grammar\Generation\Token\ExpressionGroupingRule;
 use SqlFaker\Grammar\Generation\Token\TokenRewriter;
 
 /**
@@ -16,6 +17,6 @@ final class RewriteDefinitions
      */
     public function create(): TokenRewriter
     {
-        return new TokenRewriter(new TableOptionRule(), new StrictTableRule(), new WithoutRowidRule(), new IdentifierListRule(), new JoinRule(), new WindowFrameRule());
+        return new TokenRewriter(new TableOptionRule(), new StrictTableRule(), new WithoutRowidRule(), new IdentifierListRule(), new JoinRule(), new WindowFrameRule(), new ExpressionGroupingRule(['expr'], 'parse.y:expr:parenthesized-operands', 'LP', 'RP'));
     }
 }

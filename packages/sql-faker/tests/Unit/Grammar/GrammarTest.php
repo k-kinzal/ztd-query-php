@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\Grammar;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlFaker\Grammar\Grammar;
@@ -17,6 +18,7 @@ use stdClass;
 #[CoversClass(ProductionRule::class)]
 #[CoversClass(Production::class)]
 #[CoversClass(Terminal::class)]
+#[UsesClass(\SqlFaker\Grammar\NonTerminal::class)]
 final class GrammarTest extends TestCase
 {
     public function testExposesTheStartSymbolAndRuleMap(): void

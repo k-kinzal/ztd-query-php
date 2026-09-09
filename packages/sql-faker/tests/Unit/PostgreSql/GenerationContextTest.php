@@ -90,6 +90,7 @@ use SqlFaker\PostgreSql\GenerationContext;
 #[UsesClass(\SqlFaker\PostgreSql\PgLookahead::class)]
 #[UsesClass(\SqlFaker\PostgreSql\PgTokenizer::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Spacing\LexemeBoundary::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\ExpressionGroupingRule::class)]
 final class GenerationContextTest extends TestCase
 {
     public function testBindsTheRequestedReleaseAndPreservesTheGrammarStart(): void

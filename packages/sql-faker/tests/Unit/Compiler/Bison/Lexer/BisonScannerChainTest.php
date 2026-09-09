@@ -26,6 +26,11 @@ use SqlFaker\Compiler\Bison\Lexer\TypeTagScanner;
 #[UsesClass(PunctuationScanner::class)]
 #[UsesClass(QuotedLiteralScanner::class)]
 #[UsesClass(TypeTagScanner::class)]
+#[UsesClass(\SqlFaker\Compiler\Bison\Lexer\BisonLexeme::class)]
+#[UsesClass(\SqlFaker\Compiler\Bison\Lexer\BisonToken::class)]
+#[UsesClass(\SqlFaker\Compiler\Bison\Lexer\BisonTrivia::class)]
+#[UsesClass(\SqlFaker\Grammar\GrammarParseException::class)]
+#[UsesClass(\SqlFaker\Grammar\Lexical\SourceCursor::class)]
 final class BisonScannerChainTest extends TestCase
 {
     /**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlFaker\PostgreSql\Generation\Rewrite;
 
+use SqlFaker\Grammar\Generation\Token\ExpressionGroupingRule;
 use SqlFaker\Grammar\Generation\Token\TerminalMappingRule;
 use SqlFaker\Grammar\Generation\Token\TokenRewriter;
 use SqlFaker\Grammar\Generation\Token\UniqueOptionRule;
@@ -39,6 +40,7 @@ final class RewriteDefinitions
             new TerminalMappingRule('RowSecurityDefaultPermissive', 'IDENT', 'POLICY_MODE', 'gram.y:RowSecurityDefaultPermissive'),
             new TerminalMappingRule('AlterOptRoleElem', 'IDENT', 'ROLE_OPTION', 'gram.y:AlterOptRoleElem'),
             new TerminalMappingRule('xmltable_column_option_el', 'IDENT', 'PATH', 'gram.y:xmltable_column_el'),
+            new ExpressionGroupingRule(['a_expr', 'b_expr'], 'gram.y:a_expr/b_expr:c_expr:parenthesized-operands'),
             new LookaheadRule(),
         );
     }

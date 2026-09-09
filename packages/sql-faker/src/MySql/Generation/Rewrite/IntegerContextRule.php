@@ -29,6 +29,12 @@ final class IntegerContextRule implements RewriteRule
                 $sequence = $this->mapped($sequence, $number->id, 'REPLICATION_FLAG_NUMBER', 'mysql.replication-flag');
             }
         }
+        foreach ($sequence->occurrences('ternary_option') as $id) {
+            $number = $sequence->child($id, 'ulong_num');
+            if ($number !== null) {
+                $sequence = $this->mapped($sequence, $number->id, 'TERNARY_OPTION_NUMBER', 'sql/sql_yacc.yy:ternary_option');
+            }
+        }
         foreach ($sequence->occurrences('xid') as $id) {
             $number = $sequence->child($id, 'ulong_num');
             $range = $number === null ? null : $sequence->range($number->id);

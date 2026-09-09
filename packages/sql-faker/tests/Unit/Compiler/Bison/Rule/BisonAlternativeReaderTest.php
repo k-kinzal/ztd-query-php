@@ -46,6 +46,8 @@ use SqlFaker\Grammar\Lexical\SourceCursor;
 #[UsesClass(PunctuationScanner::class)]
 #[UsesClass(QuotedLiteralScanner::class)]
 #[UsesClass(TypeTagScanner::class)]
+#[UsesClass(BisonSymbolForm::class)]
+#[UsesClass(\SqlFaker\Grammar\GrammarParseException::class)]
 final class BisonAlternativeReaderTest extends TestCase
 {
     public function testReadAllTakesTheSymbolsUpToTheSemicolon(): void
