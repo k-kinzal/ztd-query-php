@@ -53,7 +53,7 @@ final class ReverseLexemeGenerator
             $requested[$index] = $plan?->lexemeAt($terminal->name, $occurrence) ?? $original[$terminal->id] ?? null;
         }
         $values = $valueChoice === null ? null : new ValueChoices($valueChoice);
-        $completion = new BoundaryCompletion($this->lexemes, $this->resolver, $requested);
+        $completion = new BoundaryCompletion($this->lexemes, $this->resolver, $requested, values: $values);
         $right = new ResolvedOutput();
         for ($index = count($sequence->terminals) - 1; $index >= 0; --$index) {
             $right = $this->select(

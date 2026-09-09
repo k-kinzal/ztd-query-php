@@ -188,13 +188,14 @@ final class PgTokenizer
             return 'FCONST';
         }
 
-        if (preg_match('/\G\d+/A', $sql, $match, 0, $offset) !== 1) {
+        if (preg_match('/\G[0-9]+(?:_[0-9]+)*/A', $sql, $match, 0, $offset) !== 1) {
             return null;
         }
 
         $offset += strlen($match[0]);
 
-        return 'ICONST';
+        $magnitude = ltrim(str_replace('_', '', $match[0]), '0');
+        return strlen($magnitude) < 10 || (strlen($magnitude) === 10 && strcmp($magnitude, '2147483647') <= 0) ? 'ICONST' : 'FCONST';
     }
 
     /**

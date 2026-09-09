@@ -20,6 +20,8 @@ final class ContextualNameDefinitions
     public function create(): LexemeGenerator
     {
         return new ChoiceLexemeGenerator(
+            $this->domain('PARTITION_STRATEGY', ['LIST', 'RANGE', 'HASH'], 'parsePartitionStrategy'),
+            $this->domain('JSON_ENCODING', ['UTF8', 'UTF16', 'UTF32'], 'json_format_clause'),
             $this->domain('POLICY_MODE', ['PERMISSIVE', 'RESTRICTIVE'], 'RowSecurityDefaultPermissive'),
             $this->domain('ROLE_OPTION', [
                 'SUPERUSER', 'NOSUPERUSER', 'CREATEROLE', 'NOCREATEROLE',

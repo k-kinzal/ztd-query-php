@@ -14,12 +14,13 @@ final class IntegerLexemeGenerator implements LexemeGenerator
 {
     /**
      * Binds the source-defined magnitude interval and bounded default representatives.
+     * A null upper bound supports scanners that classify all larger integers into another token family.
      * @param non-empty-list<string> $defaults
      */
     public function __construct(
         private readonly string $terminal,
         private readonly string $minimum,
-        private readonly string $maximum,
+        private readonly ?string $maximum,
         private readonly array $defaults,
         private readonly string $definition,
         private readonly bool $digitSeparators = false,
@@ -35,7 +36,7 @@ final class IntegerLexemeGenerator implements LexemeGenerator
         if ($input->terminal()->name !== $this->terminal) {
             return null;
         }
-        $value = $input->requested ?? $input->values?->value($input->index, $this->definition, new IntegerDomain($this->minimum, $this->maximum));
+        $value = $input->requested ?? $input->values?->value($input->index, $this->definition, new IntegerDomain($this->minimum, $this->maximum ?? str_repeat('9', max(65, strlen($this->minimum)))));
         $candidates = [];
         foreach ($value === null ? $this->defaults : [$value] as $spelling) {
             if (!$this->accepts($spelling)) {
@@ -60,9 +61,14 @@ final class IntegerLexemeGenerator implements LexemeGenerator
         $significant = ltrim(str_replace('_', '', $spelling), '0');
         $value = $significant === '' ? '0' : $significant;
         $minimumLength = strlen($this->minimum);
-        $maximumLength = strlen($this->maximum);
         $length = strlen($value);
-        return ($length > $minimumLength || ($length === $minimumLength && strcmp($value, $this->minimum) >= 0))
-            && ($length < $maximumLength || ($length === $maximumLength && strcmp($value, $this->maximum) <= 0));
+        if ($length < $minimumLength || ($length === $minimumLength && strcmp($value, $this->minimum) < 0)) {
+            return false;
+        }
+        if ($this->maximum === null) {
+            return true;
+        }
+        $maximumLength = strlen($this->maximum);
+        return $length < $maximumLength || ($length === $maximumLength && strcmp($value, $this->maximum) <= 0);
     }
 }

@@ -44,4 +44,15 @@ final class ContextualNameDefinitionsTest extends TestCase
         self::assertNotNull($result);
         self::assertSame('valid', [...$result->sequences()][0]->lexemes[0]->text);
     }
+
+    public function testCreateIncludesEveryGrammarEncodingAndPartitionStrategy(): void
+    {
+        $generator = (new ContextualNameDefinitions())->create();
+        $encoding = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['JSON_ENCODING']), 0, new ResolvedOutput()));
+        $strategy = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['PARTITION_STRATEGY']), 0, new ResolvedOutput()));
+        self::assertNotNull($encoding);
+        self::assertNotNull($strategy);
+        self::assertSame(['UTF8', 'UTF16', 'UTF32'], array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$encoding->sequences()]));
+        self::assertSame(['LIST', 'RANGE', 'HASH'], array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$strategy->sequences()]));
+    }
 }

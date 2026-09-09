@@ -27,6 +27,8 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 #[UsesClass(TerminalSequence::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Spacing\SpacingConstraint::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\ValueChoices::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\IntegerDomain::class)]
 final class IntegerLexemeGeneratorTest extends TestCase
 {
     #[DataProvider('providerUnsigned64')]
@@ -83,5 +85,24 @@ final class IntegerLexemeGeneratorTest extends TestCase
         self::assertNotNull($invalid);
         self::assertSame([], [...$invalid->sequences()]);
         self::assertNull($generator->generate(new LexemeInput(TerminalSequence::fromNames(['LONG_NUM']), 0, new ResolvedOutput())));
+    }
+
+    public function testAcceptsSupportsTheScannerOverflowFamilyWithNoArtificialExplicitUpperBound(): void
+    {
+        $generator = new IntegerLexemeGenerator('FCONST', '2147483648', null, ['2147483648'], 'scanner:overflow');
+        self::assertFalse($generator->accepts('2147483647'));
+        self::assertTrue($generator->accepts('2147483648'));
+        self::assertTrue($generator->accepts(str_repeat('9', 1000)));
+    }
+
+    public function testGenerateBoundsExplorationOfAnUnboundedScannerFamilyWithoutEnumeratingItsValues(): void
+    {
+        $generator = new IntegerLexemeGenerator('FCONST', '2147483648', null, ['2147483648'], 'scanner:overflow');
+        $input = new LexemeInput(TerminalSequence::fromNames(['FCONST']), 0, new ResolvedOutput(), values: new \SqlFaker\Grammar\Generation\Value\ValueChoices(static fn (int $count): int => $count - 1));
+        $result = $generator->generate($input);
+        self::assertNotNull($result);
+        $value = [...$result->sequences()][0]->lexemes[0]->text;
+        self::assertSame(str_repeat('0', 16) . str_repeat('9', 65), $value);
+        self::assertTrue($generator->accepts($value));
     }
 }

@@ -16,6 +16,8 @@ use SqlFaker\Grammar\Generation\Value\SequenceDomain;
 /**
  * Lexical domains from sql/sql_lex.cc: identifiers, get_text, int_token and numeric scanner states.
  * Representative values are defaults, not the accepted domain for an explicit Plan.
+ * Constructed names also satisfy sql/table.cc:check_table_name length and final-space checks.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/table.cc#L3749-L3786
  * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_lex.cc
  */
 final class ValueDefinitions
@@ -35,9 +37,9 @@ final class ValueDefinitions
     {
         return new ChoiceLexemeGenerator(
             new PatternLexemeGenerator('IDENT', '/\A[A-Za-z_$][A-Za-z0-9_$]*\z/D', ['_sqlfaker_identifier'], 'identifier', 'sql/sql_lex.cc:MY_LEX_IDENT', new CharacterDomain(str_split('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_$'), 0, 60, '_sf')),
-            new PatternLexemeGenerator('IDENT_QUOTED', '/\A`(?:[^`\x00]|``)+`\z/D', ['`name`'], 'quoted-identifier', 'sql/sql_lex.cc:MY_LEX_USER_VARIABLE_DELIMITER', new CharacterDomain(['a', 'Z', '0', ' ', '``', 'é', '猫'], 1, 64, '`', '`')),
+            new PatternLexemeGenerator('IDENT_QUOTED', '/\A`(?:[^`\x00]|``)+`\z/D', ['`name`'], 'quoted-identifier', 'sql/sql_lex.cc:MY_LEX_USER_VARIABLE_DELIMITER', new SequenceDomain(new CharacterDomain(['a', 'Z', '0', ' ', '``', 'é', '猫'], 0, 63, '`'), new CharacterDomain(['a', 'Z', '0', '``', 'é', '猫'], 1, 1, '', '`'))),
             new PatternLexemeGenerator('LEX_HOSTNAME', '/\A[A-Za-z0-9_.$]+\z/D', ['localhost'], 'hostname', 'sql/sql_lex.cc:MY_LEX_HOSTNAME', new CharacterDomain(str_split('abcdefghijklmnopqrstuvwxyz0123456789_.$'), 1, 64)),
-            new PatternLexemeGenerator('UNDERSCORE_CHARSET', '/\A_(?:utf8mb4|utf8mb3|latin1|ascii|binary)\z/Di', ['_utf8mb4'], 'charset', 'sql/sql_lex.cc:MY_LEX_IDENT:charset'),
+            new CharsetLexemeGenerator(),
         );
     }
 
@@ -51,7 +53,7 @@ final class ValueDefinitions
         }, range(1, 127));
         $text = "'(?:[^'\\\\\\x00]|''|\\\\.)*'";
         return new ChoiceLexemeGenerator(
-            new PatternLexemeGenerator('TEXT_STRING', '~\A' . $text . '\z~Ds', ["'text'", "'a''b'"], 'string', 'sql/sql_lex.cc:get_text', new CharacterDomain([...$atoms, 'é', '猫'], 0, 255, "'", "'")),
+            new CharsetValueLexemeGenerator(new PatternLexemeGenerator('TEXT_STRING', '~\A' . $text . '\z~Ds', ["'text'", "'a''b'"], 'string', 'sql/sql_lex.cc:get_text', new CharacterDomain([...$atoms, 'é', '猫'], 0, 255, "'", "'")), new PatternLexemeGenerator('TEXT_STRING', '~\A' . $text . '\z~Ds', ["'text'", "'a''b'"], 'string', 'sql/sql_lex.cc:get_text', new CharacterDomain($atoms, 0, 255, "'", "'"))),
             new PatternLexemeGenerator('NCHAR_STRING', '~\AN' . $text . '\z~Dis', ["N'text'"], 'string', 'sql/sql_lex.cc:MY_LEX_IDENT_OR_NCHAR', new CharacterDomain([...$atoms, 'é', '猫'], 0, 255, "N'", "'")),
         );
     }
@@ -65,7 +67,8 @@ final class ValueDefinitions
             new IntegerLexemeGenerator('NUM', '0', '2147483647', ['1', '0', '2'], 'sql/sql_lex.cc:int_token:NUM'),
             new IntegerLexemeGenerator('LONG_NUM', '2147483648', '9223372036854775807', ['2147483648'], 'sql/sql_lex.cc:int_token:LONG_NUM'),
             new IntegerLexemeGenerator('ULONGLONG_NUM', '9223372036854775808', '18446744073709551615', ['18446744073709551615'], 'sql/sql_lex.cc:int_token:ULONGLONG_NUM'),
-            new PatternLexemeGenerator('DECIMAL_NUM', '/\A(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)\z/D', ['1.5'], 'number', 'sql/sql_lex.cc:MY_LEX_REAL', new SequenceDomain(new IntegerDomain('0', '18446744073709551615'), new CharacterDomain(['.'], 1, 1), new CharacterDomain(str_split('0123456789'), 0, 30))),
+            new IntegerLexemeGenerator('DECIMAL_NUM', '18446744073709551616', null, ['18446744073709551616'], 'sql/sql_lex.cc:int_token:DECIMAL_NUM'),
+            new PatternLexemeGenerator('DECIMAL_NUM', '/\A(?:[0-9]+\.[0-9]*|\.[0-9]+)\z/D', ['1.5'], 'number', 'sql/sql_lex.cc:MY_LEX_REAL', new SequenceDomain(new IntegerDomain('0', '18446744073709551615'), new CharacterDomain(['.'], 1, 1), new CharacterDomain(str_split('0123456789'), 0, 30))),
             new PatternLexemeGenerator('FLOAT_NUM', '/\A(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)[eE][+-]?[0-9]+\z/D', ['1e2'], 'number', 'sql/sql_lex.cc:MY_LEX_REAL:exponent', new SequenceDomain(new SequenceDomain(new IntegerDomain('0', '18446744073709551615'), new CharacterDomain(['.'], 1, 1), new CharacterDomain(str_split('0123456789'), 0, 30)), new CharacterDomain(['e+', 'E-'], 1, 1), new IntegerDomain('0', '308'))),
         );
     }
@@ -75,9 +78,18 @@ final class ValueDefinitions
      */
     public function binary(): LexemeGenerator
     {
+        return new CharsetValueLexemeGenerator($this->binaryDomain(false), $this->binaryDomain(true));
+    }
+    /**
+     * Encodes complete ASCII bytes for introduced literals and arbitrary binary bytes in ordinary literals.
+     */
+    public function binaryDomain(bool $character): LexemeGenerator
+    {
+        $hex = $character ? array_map(static fn (int $byte): string => sprintf('%02x', $byte), range(0, 127)) : str_split('0123456789abcdefABCDEF');
+        $bits = $character ? array_map(static fn (int $byte): string => sprintf('%08b', $byte), range(0, 127)) : ['0', '1'];
         return new ChoiceLexemeGenerator(
-            new PatternLexemeGenerator('HEX_NUM', "/\A(?:0x[0-9a-fA-F]+|[xX]'(?:[0-9a-fA-F]{2})*')\z/D", [sprintf('0x%02x', 15), "X'0f'"], 'number', 'sql/sql_lex.cc:MY_LEX_HEX_NUMBER', new ChoiceDomain(new CharacterDomain(str_split('0123456789abcdefABCDEF'), 1, 32, '0x'), new CharacterDomain(str_split('0123456789abcdefABCDEF'), 0, 16, "X'", "'", 2))),
-            new PatternLexemeGenerator('BIN_NUM', "/\A(?:0b[01]+|[bB]'[01]*')\z/D", ['0b01', "B'01'"], 'number', 'sql/sql_lex.cc:MY_LEX_BIN_NUMBER', new ChoiceDomain(new CharacterDomain(['0', '1'], 1, 64, '0b'), new CharacterDomain(['0', '1'], 0, 64, "B'", "'"))),
+            new PatternLexemeGenerator('HEX_NUM', "/\A(?:0x[0-9a-fA-F]+|[xX]'(?:[0-9a-fA-F]{2})*')\z/D", [sprintf('0x%02x', 15), "X'0f'"], 'number', 'sql/sql_lex.cc:MY_LEX_HEX_NUMBER', new ChoiceDomain(new CharacterDomain($hex, 1, $character ? 16 : 32, '0x'), new CharacterDomain($hex, 0, 16, "X'", "'", $character ? 1 : 2))),
+            new PatternLexemeGenerator('BIN_NUM', "/\A(?:0b[01]+|[bB]'[01]*')\z/D", ['0b01', "B'01'"], 'number', 'sql/sql_lex.cc:MY_LEX_BIN_NUMBER', new ChoiceDomain(new CharacterDomain($bits, 1, $character ? 8 : 64, '0b'), new CharacterDomain($bits, 0, $character ? 8 : 64, "B'", "'"))),
         );
     }
 }

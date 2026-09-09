@@ -48,6 +48,8 @@ final class RewriteDefinitions
             new FunctionNameRule(),
             new IndirectionStarRule(),
             new ColumnNameRule(),
+            new Name\ParserNameRule(),
+            new Column\NumericContextRule(),
             new ConstraintAttributesRule(),
             new ConstraintCapabilitiesRule(),
             new ForeignKeyActionRule(),

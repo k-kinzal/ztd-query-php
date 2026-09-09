@@ -81,6 +81,8 @@ use SqlFaker\MySql\MySqlTokenizer;
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\SequenceDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\DollarQuotedDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Output\BoundaryCompletion::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\CharsetLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\CharsetValueLexemeGenerator::class)]
 final class LexicalGrammarTest extends TestCase
 {
     public function testGeneratesPublicProviderLexemesThroughDialectGrammar(): void
@@ -326,7 +328,8 @@ SQL;
         self::assertMatchesRegularExpression('/^\d+$/', $lexical->realize(['NUM']));
         self::assertMatchesRegularExpression('/^\d+$/', $lexical->realize(['LONG_NUM']));
         self::assertSame('18446744073709551615', $lexical->realize(['ULONGLONG_NUM']));
-        self::assertMatchesRegularExpression('/^\d+\.\d+$/', $lexical->realize(['DECIMAL_NUM']));
+        self::assertSame(['DECIMAL_NUM'], $lexical->tokenize($lexical->realize(['DECIMAL_NUM'])));
+        self::assertSame(['UNDERSCORE_CHARSET'], $lexical->tokenize($lexical->realize(['UNDERSCORE_CHARSET'])));
         self::assertMatchesRegularExpression('/^[+-]?\d+(?:\.\d+)?[eE][+-]?\d+$/', $lexical->realize(['FLOAT_NUM']));
         self::assertSame(['HEX_NUM'], $lexical->tokenize($lexical->realize(['HEX_NUM'])));
         self::assertSame(['BIN_NUM'], $lexical->tokenize($lexical->realize(['BIN_NUM'])));
@@ -365,7 +368,6 @@ SQL;
         yield 'JSON_SEPARATOR_SYM' => ['JSON_SEPARATOR_SYM', '->'];
         yield 'JSON_UNQUOTED_SEPARATOR_SYM' => ['JSON_UNQUOTED_SEPARATOR_SYM', '->>'];
         yield 'WITH_ROLLUP_SYM' => ['WITH_ROLLUP_SYM', 'WITH ROLLUP'];
-        yield 'UNDERSCORE_CHARSET' => ['UNDERSCORE_CHARSET', '_utf8mb4'];
         yield 'PARAM_MARKER' => ['PARAM_MARKER', '?'];
     }
 

@@ -9,12 +9,9 @@ use SqlFaker\Grammar\LexicalException;
 /**
  * Reads MySQL text back into the parser tokens the server would produce.
  *
- * This is the inverse of realization and the reason realization can be trusted:
- * SQL written from a terminal sequence is read back here, and the two sequences
- * must agree. It follows the server's own rules — a word before an open
- * parenthesis may be a function name, a run of digits widens from NUM through
- * LONG_NUM by magnitude, `WITH ROLLUP` is one token — because a tokenizer that
- * merely looked plausible would agree with a generator that was equally wrong.
+ * This diagnostic tokenizer supports the declared generated spellings and selected scanner contracts.
+ * It is not a substitute for an independent native parser verdict.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_lex.cc
  *
  * @visibility root
  */
@@ -231,7 +228,7 @@ final class MySqlTokenizer
         if (preg_match('/\G_[A-Za-z0-9_]*/A', $sql, $match, 0, $offset) === 1) {
             $offset += strlen($match[0]);
 
-            return strtolower($match[0]) === '_utf8mb4' ? 'UNDERSCORE_CHARSET' : 'IDENT';
+            return in_array(strtolower($match[0]), ['_utf8mb4', '_utf8mb3', '_latin1', '_ascii', '_binary'], true) ? 'UNDERSCORE_CHARSET' : 'IDENT';
         }
 
         if (preg_match('/\G[A-Za-z][A-Za-z0-9_$]*/A', $sql, $match, 0, $offset) !== 1) {
@@ -352,14 +349,13 @@ final class MySqlTokenizer
         $normalized = ltrim($integer, '0');
         $normalized = $normalized === '' ? '0' : $normalized;
 
-        if (strlen($normalized) < 10 || (strlen($normalized) === 10 && strcmp($normalized, '2147483647') <= 0)) {
-            return 'NUM';
-        }
-        if (strlen($normalized) < 19 || (strlen($normalized) === 19 && strcmp($normalized, '9223372036854775807') <= 0)) {
-            return 'LONG_NUM';
+        foreach ([['2147483647', 'NUM'], ['9223372036854775807', 'LONG_NUM'], ['18446744073709551615', 'ULONGLONG_NUM']] as [$maximum, $token]) {
+            if (strlen($normalized) < strlen($maximum) || (strlen($normalized) === strlen($maximum) && strcmp($normalized, $maximum) <= 0)) {
+                return $token;
+            }
         }
 
-        return 'ULONGLONG_NUM';
+        return 'DECIMAL_NUM';
     }
 
     /**

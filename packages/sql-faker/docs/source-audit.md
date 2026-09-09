@@ -33,7 +33,7 @@ transpiled from C. Their semantics are implemented manually by the declarations
 and rules above, with version cases for actual differences.
 
 MySQL structural rules also reference `sql_yacc.yy`, `create_field.cc`,
-`parse_tree_*.cc`, `sql_lex.cc` and `window.cc`. In 5.6/5.7,
+`parse_tree_*.cc`, `sql_lex.cc`, `table.cc` and `window.cc`. In 5.6/5.7,
 `Create_field::init` lives in `field.cc`; older partition checks live in
 `sql_partition.cc`. Rules for a production absent from a release do not create
 that production. PostgreSQL grammar actions rejecting combinations of otherwise
@@ -42,9 +42,18 @@ options, constraint capabilities, foreign-key actions, trigger/view options and
 aggregate argument modes are examples. A source map and passing tests do not
 establish that every semantic restriction of a DBMS has been implemented.
 
+Additional scanner and grammar-action contracts cover hostname tokens only after
+a single `@`, quoted identifier length and trailing spaces, PostgreSQL role names,
+partition strategies, JSON encodings, FLOAT precision and positive column positions.
+MySQL introduced string/hex/bit literals use a composed domain valid for every
+declared introducer, including one fixed by a partial plan. Their constructive
+values encode ASCII bytes; ordinary text still explores UTF-8 and ordinary binary
+literals still explore all byte values. Explicit values keep their lexical domain
+and incompatible introducers are filtered against the actual literal bytes.
+
 ## Configuration and runtime verification
 
-MySQL rules target the release's default SQL mode, without `ANSI_QUOTES`,
+MySQL rules target the release's default SQL mode, without `ANSI_QUOTES`, `IGNORE_SPACE`,
 `NO_BACKSLASH_ESCAPES`, `HIGH_NOT_PRECEDENCE` or `PIPES_AS_CONCAT`.
 `OR_OR_SYM` concatenation productions become `CONCAT(left, right)` so the
 original operand trees and precedence survive the default scanner's pipes
@@ -72,7 +81,11 @@ are frozen into the plan. Leaf generators never read fuzz bytes.
 
 The value explorer uses bounded subsets: default strings contain at most 255
 atoms, decimal fractional parts at most 30 digits, and custom operator bodies a
-bounded alphabet. This is not exhaustive coverage of every scanner spelling,
+bounded alphabet. Overflow integers retain their scanner token family: MySQL
+DECIMAL_NUM starts above the unsigned 64-bit range for integer spellings and
+PostgreSQL FCONST above the signed 32-bit positive range. Constructive overflow
+sampling is bounded to 65 significant digits; valid explicit magnitudes have no
+artificial upper bound. This is not exhaustive coverage of every scanner spelling,
 Unicode character or database size limit. Fixed representatives remain available
 alongside constructive sampling, and explicit caller requests are validated by
 the applicable domain. Domains never claim to be empty because a finite sample
@@ -85,7 +98,8 @@ structural Cartesian product. Keep large variation in value domains.
 
 Before committing a reverse candidate with an explicit pending left boundary,
 `BoundaryCompletion` witnesses a compatible prefix, including intervening empty
-markers and planned spelling/candidate constraints. It stops when that explicit
+markers and planned spelling/candidate constraints. Boundary witnesses and final
+realization share the same memoized sampled values. It stops when that explicit
 obligation is discharged. This contract covers local lexical boundaries; it is
 not a solver for arbitrary nonlocal dependencies introduced by a custom plugin.
 Such a dependency needs an explicit structural or domain rule.

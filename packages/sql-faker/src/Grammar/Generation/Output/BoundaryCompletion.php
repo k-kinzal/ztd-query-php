@@ -8,6 +8,7 @@ use SqlFaker\Grammar\Generation\Lexeme\LexemeGenerator;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeInput;
 use SqlFaker\Grammar\Generation\Spacing\SpacingConstraint;
 use SqlFaker\Grammar\Generation\Token\TerminalSequence;
+use SqlFaker\Grammar\Generation\Value\ValueChoices;
 
 /**
  * Discharges explicit left-boundary obligations before a candidate is committed.
@@ -24,11 +25,12 @@ final class BoundaryCompletion
         private readonly CandidateResolver $resolver,
         private readonly array $requests = [],
         private readonly array $keys = [],
+        private readonly ?ValueChoices $values = null,
     ) {
     }
 
     /**
-     * Finds a witness for each pending boundary across compounds and empty markers without consuming choices.
+     * Finds a witness for each pending boundary across compounds and empty markers using the same memoized value decisions as final realization.
      */
     public function accepts(TerminalSequence $sequence, int $index, ResolvedOutput $right): bool
     {
@@ -38,7 +40,7 @@ final class BoundaryCompletion
         if ($index < 0) {
             return false;
         }
-        $input = new LexemeInput($sequence, $index, $right, $this->requests[$index] ?? null);
+        $input = new LexemeInput($sequence, $index, $right, $this->requests[$index] ?? null, $this->values);
         $candidates = $this->lexemes->generate($input);
         if ($candidates === null) {
             return false;

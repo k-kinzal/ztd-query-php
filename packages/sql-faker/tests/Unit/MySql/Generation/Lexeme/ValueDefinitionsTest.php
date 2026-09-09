@@ -31,6 +31,9 @@ use SqlFaker\MySql\Generation\Lexeme\ValueDefinitions;
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\IntegerDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\SequenceDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\DollarQuotedDomain::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\CharsetLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\CharsetValueLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\ValueChoices::class)]
 final class ValueDefinitionsTest extends TestCase
 {
     public function testCreateLeavesUnknownTerminalsUnclaimed(): void
@@ -127,6 +130,9 @@ final class ValueDefinitionsTest extends TestCase
             ['LONG_NUM', '2147483647', []],
             ['ULONGLONG_NUM', '9223372036854775808', ['9223372036854775808']],
             ['ULONGLONG_NUM', '18446744073709551616', []],
+            ['DECIMAL_NUM', '1', []],
+            ['DECIMAL_NUM', '18446744073709551615', []],
+            ['DECIMAL_NUM', '18446744073709551616', ['18446744073709551616']],
             ['DECIMAL_NUM', '.75', ['.75']],
             ['DECIMAL_NUM', '1.5e2', []],
             ['FLOAT_NUM', '12.5E-4', ['12.5E-4']],
@@ -134,5 +140,21 @@ final class ValueDefinitionsTest extends TestCase
             ['BIN_NUM', 'b\'001\'', ['b\'001\'']],
             ['BIN_NUM', 'B\'02\'', []],
         ];
+    }
+
+    public function testBinaryDomainKeepsExplicitByteSpellingsAvailableForCompatibleCharsets(): void
+    {
+        $input = new LexemeInput(TerminalSequence::fromNames(['HEX_NUM']), 0, new ResolvedOutput(), "X'ff'");
+        $result = (new ValueDefinitions())->binaryDomain(true)->generate($input);
+        self::assertNotNull($result);
+        self::assertSame("X'ff'", [...$result->sequences()][0]->lexemes[0]->text);
+    }
+
+    public function testStringsKeepsConstructedIntroducedValuesValidUnderAnExplicitAsciiCharset(): void
+    {
+        $tokens = TerminalSequence::fromNames(['UNDERSCORE_CHARSET', 'TEXT_STRING']);
+        $result = (new ValueDefinitions())->strings()->generate(new LexemeInput($tokens, 1, new ResolvedOutput(), values: new \SqlFaker\Grammar\Generation\Value\ValueChoices(static fn (int $count): int => $count - 1)));
+        self::assertNotNull($result);
+        self::assertSame(1, preg_match('/\A[\x00-\x7f]*\z/D', [...$result->sequences()][0]->lexemes[0]->text));
     }
 }

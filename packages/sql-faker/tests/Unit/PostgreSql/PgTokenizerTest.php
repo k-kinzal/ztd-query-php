@@ -48,6 +48,11 @@ final class PgTokenizerTest extends TestCase
         yield 'tagged dollar quoted string' => ['$tag$text$tag$', ['SCONST']];
         yield 'positional parameter' => ['$1', ['PARAM']];
         yield 'integer' => ['42', ['ICONST']];
+        yield 'integer digit separators' => ['1_0', ['ICONST']];
+        yield 'largest integer' => ['2_147_483_647', ['ICONST']];
+        yield 'first overflow integer' => ['2_147_483_648', ['FCONST']];
+        yield 'leading zeroes retain magnitude' => ['00000000000000000000001', ['ICONST']];
+        yield 'large overflow integer' => [str_repeat('9', 100), ['FCONST']];
         yield 'float' => ['1.5', ['FCONST']];
         yield 'exponent float' => ['1e3', ['FCONST']];
         yield 'typecast' => ['::', ['TYPECAST']];

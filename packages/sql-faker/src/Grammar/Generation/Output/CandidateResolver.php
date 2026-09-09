@@ -48,7 +48,7 @@ final class CandidateResolver
             if ($separator === null) {
                 return $constraint;
             }
-            array_unshift($parts, new OutputPart($lexeme, $right === null ? '' : $separator, $sequence->id, $constraint->rules));
+            array_unshift($parts, new OutputPart($lexeme, $right === null ? '' : $separator, $sequence->id, $constraint->rules, $constraint->allowed));
             $pending = $sequence->boundaries[$index] ?? null;
         }
         if ($sequence->left !== null) {

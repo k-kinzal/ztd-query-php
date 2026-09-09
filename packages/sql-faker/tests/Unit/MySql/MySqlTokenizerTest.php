@@ -43,6 +43,10 @@ final class MySqlTokenizerTest extends TestCase
         yield 'string literal' => ["'text'", ['TEXT_STRING']];
         yield 'parameter marker' => ['?', ['PARAM_MARKER']];
         yield 'charset introducer' => ['_utf8mb4', ['UNDERSCORE_CHARSET']];
+        yield 'ASCII charset introducer' => ['_ascii', ['UNDERSCORE_CHARSET']];
+        yield 'UTF8MB3 charset introducer' => ['_utf8mb3', ['UNDERSCORE_CHARSET']];
+        yield 'Latin1 charset introducer' => ['_LATIN1', ['UNDERSCORE_CHARSET']];
+        yield 'binary charset introducer' => ['_binary', ['UNDERSCORE_CHARSET']];
         yield 'other underscore word' => ['_other', ['IDENT']];
         yield 'hex in 0x form' => ['0xFF', ['HEX_NUM']];
         yield 'hex in quoted form' => ["X'FF'", ['HEX_NUM']];
@@ -202,7 +206,9 @@ final class MySqlTokenizerTest extends TestCase
         yield 'one past the largest NUM' => ['2147483648', 'LONG_NUM'];
         yield 'the largest LONG_NUM' => ['9223372036854775807', 'LONG_NUM'];
         yield 'one past the largest LONG_NUM' => ['9223372036854775808', 'ULONGLONG_NUM'];
-        yield 'wider than any integer' => ['18446744073709551615', 'ULONGLONG_NUM'];
+        yield 'the largest ULONGLONG_NUM' => ['18446744073709551615', 'ULONGLONG_NUM'];
+        yield 'first overflowing unsigned integer' => ['18446744073709551616', 'DECIMAL_NUM'];
+        yield 'wider overflow' => [str_repeat('9', 100), 'DECIMAL_NUM'];
     }
 
     public function testOperatorAtPrefersTheLongestOperator(): void

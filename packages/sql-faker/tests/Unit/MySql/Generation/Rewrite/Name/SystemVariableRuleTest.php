@@ -17,6 +17,7 @@ use SqlFaker\MySql\Generation\Rewrite\Name\SystemVariableRule;
 #[UsesClass(ProductionOccurrence::class)]
 #[UsesClass(TerminalOccurrence::class)]
 #[UsesClass(TerminalSequence::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Name\HostNameRule::class)]
 final class SystemVariableRuleTest extends TestCase
 {
     /**

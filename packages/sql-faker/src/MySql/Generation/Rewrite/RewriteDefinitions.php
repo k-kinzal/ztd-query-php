@@ -65,6 +65,7 @@ final class RewriteDefinitions
             new GeneratedColumnRule(),
             new AutoIncrementRule(),
             new SystemVariableRule(),
+            new Name\HostNameRule(),
             new SetNamesRule($defaultTerminal),
             new AlterDatabaseRule($defaultTerminal),
             new AlterEventRule(),

@@ -9,6 +9,7 @@ that inspect SQL. No database connection is needed to generate strings.
 - [API reference](api.md) — provider methods, dialect differences, argument bounds,
   and exceptions you can handle.
 - [Supported versions](versions.md) — version tags and defaults for each dialect.
+- [Source audit](source-audit.md) — pinned scanner sources, rule contracts, supported settings and exploration bounds.
 
 Start with the [first example](usage.md#generate-your-first-statement). Generated
 SQL follows the selected dialect's grammar; executing it also requires a suitable

@@ -37,6 +37,8 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 #[UsesClass(LexemeBoundary::class)]
 #[UsesClass(TerminalOccurrence::class)]
 #[UsesClass(TerminalSequence::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\CharacterDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\ValueChoices::class)]
 final class BoundaryCompletionTest extends TestCase
 {
     #[DataProvider('providerMarkers')]
@@ -58,6 +60,21 @@ final class BoundaryCompletionTest extends TestCase
         self::assertSame('l r', implode('', $result->pieces()));
         self::assertSame('join', $result->rejections[0]['candidate']);
         self::assertSame(['uncompletable-left-boundary'], $result->rejections[0]['rules']);
+    }
+
+    public function testAcceptsUsesTheSampledLeftValueInsteadOfAnUnrelatedDefaultWitness(): void
+    {
+        $lexemes = self::createStub(LexemeGenerator::class);
+        $lexemes->method('generate')->willReturnCallback(static fn (LexemeInput $input): LexemeCandidates => $input->terminal()->name === 'L'
+            ? LexemeCandidates::of(new LexemeSequence([new Lexeme($input->values?->value(0, 'sample', new \SqlFaker\Grammar\Generation\Value\CharacterDomain(['a', 'b'], 1, 1)) ?? 'a', 'identifier', $input->terminal(), 'sample')], 'left'))
+            : LexemeCandidates::of(new LexemeSequence([new Lexeme('r', 'identifier', $input->terminal(), 'right')], 'join', new SpacingConstraint(SpacingConstraint::JOIN)), new LexemeSequence([new Lexeme('r', 'identifier', $input->terminal(), 'right')], 'space', new SpacingConstraint(SpacingConstraint::SPACE))));
+        $spacing = self::createStub(SpacingRule::class);
+        $spacing->method('apply')->willReturnCallback(static fn (LexemeBoundary $boundary): SpacingConstraint => new SpacingConstraint($boundary->left->text === 'a' ? SpacingConstraint::JOIN : SpacingConstraint::SPACE));
+        $generator = new ReverseLexemeGenerator($lexemes, new CandidateResolver($spacing), 'test');
+        $result = $generator->generate(TerminalSequence::fromNames(['L', 'R']), null, static fn (int $count): int => 0, static fn (int $count): int => $count - 1);
+        self::assertSame('b r', implode('', $result->pieces()));
+        self::assertSame('join', $result->rejections[0]['candidate']);
+        self::assertSame(SpacingConstraint::SPACE, $result->parts[0]->allowed);
     }
 
     public function testAcceptsRejectsMissingOrPlannedAwayWitnesses(): void

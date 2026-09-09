@@ -104,6 +104,12 @@ final class ValueDefinitionsTest extends TestCase
     public static function providerLexicalForms(): array
     {
         return [
+            ['FLOAT_PRECISION_NUMBER', '53', ['53']],
+            ['FLOAT_PRECISION_NUMBER', '54', []],
+            ['FLOAT_PRECISION_NUMBER', '0', []],
+            ['COLUMN_POSITION_NUMBER', '32767', ['32767']],
+            ['COLUMN_POSITION_NUMBER', '32768', []],
+            ['COLUMN_POSITION_NUMBER', '0', []],
             ['SCONST', "'ordinary'", ["'ordinary'"]],
             ['SCONST', "'with\0nul'", []],
             ['USCONST', "U&'ordinary'", ["U&'ordinary'"]],
@@ -122,6 +128,9 @@ final class ValueDefinitionsTest extends TestCase
             ['XCONST', 'x\'g\'', []],
             ['ICONST', '1_000', ['1_000']],
             ['ICONST', '1__000', []],
+            ['FCONST', '1', []],
+            ['FCONST', '2147483647', []],
+            ['FCONST', '2147483648', ['2147483648']],
             ['FCONST', '.5e+7', ['.5e+7']],
             ['FCONST', '.5e', []],
             ['Op', '?@', ['?@']],

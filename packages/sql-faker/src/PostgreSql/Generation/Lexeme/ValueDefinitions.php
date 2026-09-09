@@ -65,8 +65,11 @@ final class ValueDefinitions
     public function numbers(): LexemeGenerator
     {
         return new ChoiceLexemeGenerator(
+            new IntegerLexemeGenerator('FLOAT_PRECISION_NUMBER', '1', '53', ['1', '24', '53'], 'gram.y:opt_float', true),
+            new IntegerLexemeGenerator('COLUMN_POSITION_NUMBER', '1', '32767', ['1', '32767'], 'gram.y:alter_table_cmd:column-number', true),
             new IntegerLexemeGenerator('ICONST', '0', '2147483647', ['1', '0', '2', '1_0'], 'scan.l:process_integer_literal:ICONST', true),
-            new PatternLexemeGenerator('FCONST', '/\A(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?\z/D', ['1.5', '.5', '1e2'], 'number', 'scan.l:numeric/real', new ChoiceDomain(new SequenceDomain(new IntegerDomain('0', '18446744073709551615'), new CharacterDomain(['.'], 1, 1), new CharacterDomain(str_split('0123456789'), 0, 30)), new SequenceDomain(new SequenceDomain(new IntegerDomain('0', '18446744073709551615'), new CharacterDomain(['.'], 1, 1), new CharacterDomain(str_split('0123456789'), 0, 30)), new CharacterDomain(['e+', 'E-'], 1, 1), new IntegerDomain('0', '308')))),
+            new IntegerLexemeGenerator('FCONST', '2147483648', null, ['2147483648'], 'scan.l:process_integer_literal:FCONST', true),
+            new PatternLexemeGenerator('FCONST', '/\A(?:(?:[0-9]+\.[0-9]*|\.[0-9]+)(?:[eE][+-]?[0-9]+)?|[0-9]+[eE][+-]?[0-9]+)\z/D', ['1.5', '.5', '1e2'], 'number', 'scan.l:numeric/real', new ChoiceDomain(new SequenceDomain(new IntegerDomain('0', '18446744073709551615'), new CharacterDomain(['.'], 1, 1), new CharacterDomain(str_split('0123456789'), 0, 30)), new SequenceDomain(new SequenceDomain(new IntegerDomain('0', '18446744073709551615'), new CharacterDomain(['.'], 1, 1), new CharacterDomain(str_split('0123456789'), 0, 30)), new CharacterDomain(['e+', 'E-'], 1, 1), new IntegerDomain('0', '308')))),
             new PatternLexemeGenerator('Op', '~\A(?!.*(?:--|/\*))(?!(?:[+*/%^<>=-]|>=|<=|=>|<>|!=)\z)(?![+*/<>=-]+[+-]\z)[+*/<>=!@#%^&|`?\x7e-]{1,63}\z~D', ['?', '?|', '?&'], 'operator', 'scan.l:operator', new CharacterDomain(str_split('+*<>=!@#%^&|`?~'), 0, 31, '?')),
         );
     }

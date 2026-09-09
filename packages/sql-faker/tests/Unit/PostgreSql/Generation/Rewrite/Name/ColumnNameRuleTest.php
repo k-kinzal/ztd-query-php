@@ -17,6 +17,8 @@ use SqlFaker\PostgreSql\Generation\Rewrite\Name\ColumnNameRule;
 #[UsesClass(ProductionOccurrence::class)]
 #[UsesClass(TerminalOccurrence::class)]
 #[UsesClass(TerminalSequence::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Name\ParserNameRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Column\NumericContextRule::class)]
 final class ColumnNameRuleTest extends TestCase
 {
     /**

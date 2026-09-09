@@ -58,6 +58,13 @@
       "lines": 8514
     },
     {
+      "version": "mysql-5.6.51",
+      "path": "sql/table.cc",
+      "url": "https://raw.githubusercontent.com/mysql/mysql-server/mysql-5.6.51/sql/table.cc",
+      "sha256": "199f556c692106dd0c8395a46febe1c763a37df971a0d71c635672b89e332a4a",
+      "lines": 6482
+    },
+    {
       "version": "mysql-5.7.44",
       "path": "sql/lex.h",
       "url": "https://raw.githubusercontent.com/mysql/mysql-server/mysql-5.7.44/sql/lex.h",
@@ -119,6 +126,13 @@
       "url": "https://raw.githubusercontent.com/mysql/mysql-server/mysql-5.7.44/sql/sql_partition.cc",
       "sha256": "c6cd494447ebb058b5e17598823adb2f1f35191a986bbbc583a84001e518c4ac",
       "lines": 8490
+    },
+    {
+      "version": "mysql-5.7.44",
+      "path": "sql/table.cc",
+      "url": "https://raw.githubusercontent.com/mysql/mysql-server/mysql-5.7.44/sql/table.cc",
+      "sha256": "99a0bf4db57505657a4e146e2f9b5f6dddb73af121980e8176e4e8bd03ec690b",
+      "lines": 7988
     },
     {
       "version": "mysql-8.0.44",
@@ -212,6 +226,13 @@
       "lines": 6140
     },
     {
+      "version": "mysql-8.0.44",
+      "path": "sql/table.cc",
+      "url": "https://raw.githubusercontent.com/mysql/mysql-server/mysql-8.0.44/sql/table.cc",
+      "sha256": "5786f9dec6e8129fc17c024e94c0061a1dc133c43e5739c0385bf00b20a17c25",
+      "lines": 8061
+    },
+    {
       "version": "mysql-8.1.0",
       "path": "sql/lex.h",
       "url": "https://raw.githubusercontent.com/mysql/mysql-server/mysql-8.1.0/sql/lex.h",
@@ -301,6 +322,13 @@
       "url": "https://raw.githubusercontent.com/mysql/mysql-server/mysql-8.1.0/sql/sql_partition.cc",
       "sha256": "9555fd9d386a35638ab0bd6581f8e42a6f0381c6e960bbbfd0f078fc5bea1261",
       "lines": 6132
+    },
+    {
+      "version": "mysql-8.1.0",
+      "path": "sql/table.cc",
+      "url": "https://raw.githubusercontent.com/mysql/mysql-server/mysql-8.1.0/sql/table.cc",
+      "sha256": "e0c634e664e78481f6cdffcca46917501f6d9e9a0d18a0481cf1992f2586e869",
+      "lines": 8040
     },
     {
       "version": "mysql-8.2.0",
@@ -394,6 +422,13 @@
       "lines": 6132
     },
     {
+      "version": "mysql-8.2.0",
+      "path": "sql/table.cc",
+      "url": "https://raw.githubusercontent.com/mysql/mysql-server/mysql-8.2.0/sql/table.cc",
+      "sha256": "128df41005d4552dd5e71ecef86925817d222e6e7669c32eb2fcc209c013cf0f",
+      "lines": 8045
+    },
+    {
       "version": "mysql-8.3.0",
       "path": "sql/lex.h",
       "url": "https://raw.githubusercontent.com/mysql/mysql-server/mysql-8.3.0/sql/lex.h",
@@ -483,6 +518,13 @@
       "url": "https://raw.githubusercontent.com/mysql/mysql-server/mysql-8.3.0/sql/sql_partition.cc",
       "sha256": "8cb012ba786ebb3aec4f4f9d605f41ea51ae10ef857f2f4faa12d0737c8399b8",
       "lines": 6132
+    },
+    {
+      "version": "mysql-8.3.0",
+      "path": "sql/table.cc",
+      "url": "https://raw.githubusercontent.com/mysql/mysql-server/mysql-8.3.0/sql/table.cc",
+      "sha256": "be5e2999a46ffbae113ae95a3453ba176a27cc054ec365672d490c3a4500f335",
+      "lines": 8046
     },
     {
       "version": "mysql-8.4.7",
@@ -576,6 +618,13 @@
       "lines": 6147
     },
     {
+      "version": "mysql-8.4.7",
+      "path": "sql/table.cc",
+      "url": "https://raw.githubusercontent.com/mysql/mysql-server/mysql-8.4.7/sql/table.cc",
+      "sha256": "8005643ab2637a541cc2f97b56ab9cefbf525f422337434584adeb625a49eecf",
+      "lines": 8157
+    },
+    {
       "version": "mysql-9.0.1",
       "path": "sql/lex.h",
       "url": "https://raw.githubusercontent.com/mysql/mysql-server/mysql-9.0.1/sql/lex.h",
@@ -667,6 +716,13 @@
       "lines": 6147
     },
     {
+      "version": "mysql-9.0.1",
+      "path": "sql/table.cc",
+      "url": "https://raw.githubusercontent.com/mysql/mysql-server/mysql-9.0.1/sql/table.cc",
+      "sha256": "ab507d815a0caa9f51a4a2369df0246e9f872a61eef2d4732fcc6d947bb79b4b",
+      "lines": 8106
+    },
+    {
       "version": "mysql-9.1.0",
       "path": "sql/lex.h",
       "url": "https://raw.githubusercontent.com/mysql/mysql-server/mysql-9.1.0/sql/lex.h",
@@ -756,6 +812,13 @@
       "url": "https://raw.githubusercontent.com/mysql/mysql-server/mysql-9.1.0/sql/sql_partition.cc",
       "sha256": "5f0e2245b426cbfc6a5e1631750effa42652baa55e50d2c29e426079bd7d5bc2",
       "lines": 6148
+    },
+    {
+      "version": "mysql-9.1.0",
+      "path": "sql/table.cc",
+      "url": "https://raw.githubusercontent.com/mysql/mysql-server/mysql-9.1.0/sql/table.cc",
+      "sha256": "dfdcc1fbee2acac1d33a4bf4965329849191fe251b6a77c23ea32cd5975a2e3c",
+      "lines": 8327
     },
     {
       "version": "pg-17.2",
@@ -968,6 +1031,160 @@
           {
             "role": "sql/sql_lex.cc",
             "source": "sql/sql_lex.cc"
+          }
+        ]
+      }
+    },
+    {
+      "rule": "src/MySql/Generation/Lexeme/CharsetLexemeGenerator.php",
+      "sourcesByVersion": {
+        "mysql-5.6.51": [
+          {
+            "role": "sql/sql_yacc.yy",
+            "source": "sql/sql_yacc.yy"
+          }
+        ],
+        "mysql-5.7.44": [
+          {
+            "role": "sql/sql_yacc.yy",
+            "source": "sql/sql_yacc.yy"
+          }
+        ],
+        "mysql-8.0.44": [
+          {
+            "role": "sql/sql_yacc.yy",
+            "source": "sql/sql_yacc.yy"
+          }
+        ],
+        "mysql-8.1.0": [
+          {
+            "role": "sql/sql_yacc.yy",
+            "source": "sql/sql_yacc.yy"
+          }
+        ],
+        "mysql-8.2.0": [
+          {
+            "role": "sql/sql_yacc.yy",
+            "source": "sql/sql_yacc.yy"
+          }
+        ],
+        "mysql-8.3.0": [
+          {
+            "role": "sql/sql_yacc.yy",
+            "source": "sql/sql_yacc.yy"
+          }
+        ],
+        "mysql-8.4.7": [
+          {
+            "role": "sql/sql_yacc.yy",
+            "source": "sql/sql_yacc.yy"
+          }
+        ],
+        "mysql-9.0.1": [
+          {
+            "role": "sql/sql_yacc.yy",
+            "source": "sql/sql_yacc.yy"
+          }
+        ],
+        "mysql-9.1.0": [
+          {
+            "role": "sql/sql_yacc.yy",
+            "source": "sql/sql_yacc.yy"
+          }
+        ]
+      }
+    },
+    {
+      "rule": "src/MySql/Generation/Lexeme/CharsetValueLexemeGenerator.php",
+      "sourcesByVersion": {
+        "mysql-5.6.51": [
+          {
+            "role": "sql/sql_lex.cc",
+            "source": "sql/sql_lex.cc"
+          },
+          {
+            "role": "sql/sql_yacc.yy",
+            "source": "sql/sql_yacc.yy"
+          }
+        ],
+        "mysql-5.7.44": [
+          {
+            "role": "sql/sql_lex.cc",
+            "source": "sql/sql_lex.cc"
+          },
+          {
+            "role": "sql/sql_yacc.yy",
+            "source": "sql/sql_yacc.yy"
+          }
+        ],
+        "mysql-8.0.44": [
+          {
+            "role": "sql/sql_lex.cc",
+            "source": "sql/sql_lex.cc"
+          },
+          {
+            "role": "sql/sql_yacc.yy",
+            "source": "sql/sql_yacc.yy"
+          }
+        ],
+        "mysql-8.1.0": [
+          {
+            "role": "sql/sql_lex.cc",
+            "source": "sql/sql_lex.cc"
+          },
+          {
+            "role": "sql/sql_yacc.yy",
+            "source": "sql/sql_yacc.yy"
+          }
+        ],
+        "mysql-8.2.0": [
+          {
+            "role": "sql/sql_lex.cc",
+            "source": "sql/sql_lex.cc"
+          },
+          {
+            "role": "sql/sql_yacc.yy",
+            "source": "sql/sql_yacc.yy"
+          }
+        ],
+        "mysql-8.3.0": [
+          {
+            "role": "sql/sql_lex.cc",
+            "source": "sql/sql_lex.cc"
+          },
+          {
+            "role": "sql/sql_yacc.yy",
+            "source": "sql/sql_yacc.yy"
+          }
+        ],
+        "mysql-8.4.7": [
+          {
+            "role": "sql/sql_lex.cc",
+            "source": "sql/sql_lex.cc"
+          },
+          {
+            "role": "sql/sql_yacc.yy",
+            "source": "sql/sql_yacc.yy"
+          }
+        ],
+        "mysql-9.0.1": [
+          {
+            "role": "sql/sql_lex.cc",
+            "source": "sql/sql_lex.cc"
+          },
+          {
+            "role": "sql/sql_yacc.yy",
+            "source": "sql/sql_yacc.yy"
+          }
+        ],
+        "mysql-9.1.0": [
+          {
+            "role": "sql/sql_lex.cc",
+            "source": "sql/sql_lex.cc"
+          },
+          {
+            "role": "sql/sql_yacc.yy",
+            "source": "sql/sql_yacc.yy"
           }
         ]
       }
@@ -1844,54 +2061,90 @@
           {
             "role": "sql/sql_lex.cc",
             "source": "sql/sql_lex.cc"
+          },
+          {
+            "role": "sql/table.cc",
+            "source": "sql/table.cc"
           }
         ],
         "mysql-5.7.44": [
           {
             "role": "sql/sql_lex.cc",
             "source": "sql/sql_lex.cc"
+          },
+          {
+            "role": "sql/table.cc",
+            "source": "sql/table.cc"
           }
         ],
         "mysql-8.0.44": [
           {
             "role": "sql/sql_lex.cc",
             "source": "sql/sql_lex.cc"
+          },
+          {
+            "role": "sql/table.cc",
+            "source": "sql/table.cc"
           }
         ],
         "mysql-8.1.0": [
           {
             "role": "sql/sql_lex.cc",
             "source": "sql/sql_lex.cc"
+          },
+          {
+            "role": "sql/table.cc",
+            "source": "sql/table.cc"
           }
         ],
         "mysql-8.2.0": [
           {
             "role": "sql/sql_lex.cc",
             "source": "sql/sql_lex.cc"
+          },
+          {
+            "role": "sql/table.cc",
+            "source": "sql/table.cc"
           }
         ],
         "mysql-8.3.0": [
           {
             "role": "sql/sql_lex.cc",
             "source": "sql/sql_lex.cc"
+          },
+          {
+            "role": "sql/table.cc",
+            "source": "sql/table.cc"
           }
         ],
         "mysql-8.4.7": [
           {
             "role": "sql/sql_lex.cc",
             "source": "sql/sql_lex.cc"
+          },
+          {
+            "role": "sql/table.cc",
+            "source": "sql/table.cc"
           }
         ],
         "mysql-9.0.1": [
           {
             "role": "sql/sql_lex.cc",
             "source": "sql/sql_lex.cc"
+          },
+          {
+            "role": "sql/table.cc",
+            "source": "sql/table.cc"
           }
         ],
         "mysql-9.1.0": [
           {
             "role": "sql/sql_lex.cc",
             "source": "sql/sql_lex.cc"
+          },
+          {
+            "role": "sql/table.cc",
+            "source": "sql/table.cc"
           }
         ]
       }
@@ -2957,6 +3210,65 @@
           {
             "role": "sql/sql_yacc.yy",
             "source": "sql/sql_yacc.yy"
+          }
+        ]
+      }
+    },
+    {
+      "rule": "src/MySql/Generation/Rewrite/Name/HostNameRule.php",
+      "sourcesByVersion": {
+        "mysql-5.6.51": [
+          {
+            "role": "sql/sql_lex.cc",
+            "source": "sql/sql_lex.cc"
+          }
+        ],
+        "mysql-5.7.44": [
+          {
+            "role": "sql/sql_lex.cc",
+            "source": "sql/sql_lex.cc"
+          }
+        ],
+        "mysql-8.0.44": [
+          {
+            "role": "sql/sql_lex.cc",
+            "source": "sql/sql_lex.cc"
+          }
+        ],
+        "mysql-8.1.0": [
+          {
+            "role": "sql/sql_lex.cc",
+            "source": "sql/sql_lex.cc"
+          }
+        ],
+        "mysql-8.2.0": [
+          {
+            "role": "sql/sql_lex.cc",
+            "source": "sql/sql_lex.cc"
+          }
+        ],
+        "mysql-8.3.0": [
+          {
+            "role": "sql/sql_lex.cc",
+            "source": "sql/sql_lex.cc"
+          }
+        ],
+        "mysql-8.4.7": [
+          {
+            "role": "sql/sql_lex.cc",
+            "source": "sql/sql_lex.cc"
+          }
+        ],
+        "mysql-9.0.1": [
+          {
+            "role": "sql/sql_lex.cc",
+            "source": "sql/sql_lex.cc"
+          }
+        ],
+        "mysql-9.1.0": [
+          {
+            "role": "sql/sql_lex.cc",
+            "source": "sql/sql_lex.cc"
           }
         ]
       }
@@ -4708,6 +5020,17 @@
       }
     },
     {
+      "rule": "src/PostgreSql/Generation/Rewrite/Column/NumericContextRule.php",
+      "sourcesByVersion": {
+        "pg-17.2": [
+          {
+            "role": "src/backend/parser/gram.y",
+            "source": "src/backend/parser/gram.y"
+          }
+        ]
+      }
+    },
+    {
       "rule": "src/PostgreSql/Generation/Rewrite/ConstraintAttributesRule.php",
       "sourcesByVersion": {
         "pg-17.2": [
@@ -4838,6 +5161,17 @@
     },
     {
       "rule": "src/PostgreSql/Generation/Rewrite/Name/IndirectionStarRule.php",
+      "sourcesByVersion": {
+        "pg-17.2": [
+          {
+            "role": "src/backend/parser/gram.y",
+            "source": "src/backend/parser/gram.y"
+          }
+        ]
+      }
+    },
+    {
+      "rule": "src/PostgreSql/Generation/Rewrite/Name/ParserNameRule.php",
       "sourcesByVersion": {
         "pg-17.2": [
           {
