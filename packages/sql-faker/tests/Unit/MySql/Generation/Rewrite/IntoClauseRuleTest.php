@@ -19,6 +19,29 @@ use SqlFaker\MySql\Generation\Rewrite\IntoClauseRule;
 #[UsesClass(TerminalSequence::class)]
 final class IntoClauseRuleTest extends TestCase
 {
+    public function testRewriteRemovesViewDestinationsAndKeepsIndependentSelectOutput(): void
+    {
+        $view = new TerminalOccurrence('INTO', 10, [0, 1, 2], ['view_query_block', 'query_specification', 'into_clause']);
+        $outfile = new TerminalOccurrence('OUTFILE', 11, [0, 1, 2], ['view_query_block', 'query_specification', 'into_clause']);
+        $path = new TerminalOccurrence('TEXT_STRING', 12, [0, 1, 2], ['view_query_block', 'query_specification', 'into_clause']);
+        $outer = new TerminalOccurrence('INTO', 13, [3, 4], ['select_stmt', 'into_clause']);
+        $terminals = [$view, $outfile, $path, $outer];
+        $input = new TerminalSequence($terminals, $terminals, [], [
+            new ProductionOccurrence(0, null, 'view_query_block', 0),
+            new ProductionOccurrence(1, 0, 'query_specification', 0),
+            new ProductionOccurrence(2, 1, 'into_clause', 0),
+            new ProductionOccurrence(3, null, 'select_stmt', 0),
+            new ProductionOccurrence(4, 3, 'into_clause', 0),
+        ]);
+        $rule = new IntoClauseRule();
+        $result = $rule->rewrite($input);
+        self::assertSame([$outer], $result->terminals);
+        self::assertSame($input->original, $result->original);
+        self::assertSame($input->productions, $result->productions);
+        self::assertSame(['sql/sql_yacc.yy:view_query_block:into'], $result->rewrites);
+        self::assertSame($result, $rule->rewrite($result));
+    }
+
     public function testRewriteRemovesOnlySubqueryDestinations(): void
     {
         $inner = new TerminalOccurrence('INTO', 4, [0, 1, 2], ['stmt', 'subquery', 'into_clause']);

@@ -10,11 +10,12 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
  * PT_subquery rejects INTO in subqueries; sql_lex.cc/new_set_operation_query allows it only in the final SELECT.
+ * sql_yacc.yy/view_query_block disables SELECT destinations throughout a view definition.
  */
 final class IntoClauseRule implements RewriteRule
 {
     /**
-     * Removes nested or non-final INTO clauses, preserving the final SELECT and outer output destinations.
+     * Removes view, nested or non-final INTO clauses, preserving ordinary outer output destinations.
      */
     #[Override]
     public function rewrite(TerminalSequence $sequence): TerminalSequence
@@ -28,6 +29,9 @@ final class IntoClauseRule implements RewriteRule
             $origin = $sequence->terminals[$range[0]];
             $statement = $origin->ancestor('select_stmt');
             $source = $origin->ancestor('subquery') === null ? null : 'sql/parse_tree_nodes.cc:PT_subquery:into';
+            if ($origin->within('view_query_block')) {
+                $source = 'sql/sql_yacc.yy:view_query_block:into';
+            }
             for ($index = $range[1]; $source === null && $index < count($sequence->terminals); ++$index) {
                 $following = $sequence->terminals[$index];
                 $last = count($following->ancestors) - 1;

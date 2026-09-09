@@ -17,6 +17,7 @@ use SqlFaker\PostgreSql\Generation\Rewrite\Name\IndirectionStarRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Name\RelationNameRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Query\IntoClauseRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Query\SelectOptionsRule;
+use SqlFaker\PostgreSql\Generation\Rewrite\Routine\RangeFunctionOrdinalityRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Routine\SubstringRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Routine\TableFunctionRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Routine\TypeModifierRule;
@@ -51,6 +52,7 @@ final class RewriteDefinitions
             new FetchWithTiesRule(),
             new SelectOptionsRule(),
             new TableFunctionRule(),
+            new RangeFunctionOrdinalityRule(),
             new TypeModifierRule(),
             new WithinGroupRule(),
             new IdentityOptionRule(),
@@ -65,6 +67,7 @@ final class RewriteDefinitions
             new UniqueOptionRule('xmltable_column_el', 'xmltable_column_option_el', [
                 'DEFAULT' => 'default', 'IDENT' => 'path', 'NOT' => 'null', 'NULL_P' => 'null',
             ], null, 'gram.y:xmltable_column_el'),
+            new UniqueOptionRule('xmltable', 'xml_namespace_el', ['DEFAULT' => 'default'], ',', 'parse_clause.c:transformRangeTableFunc'),
             new TerminalMappingRule('RowSecurityDefaultPermissive', 'IDENT', 'POLICY_MODE', 'gram.y:RowSecurityDefaultPermissive'),
             new TerminalMappingRule('AlterOptRoleElem', 'IDENT', 'ROLE_OPTION', 'gram.y:AlterOptRoleElem'),
             new TerminalMappingRule('xmltable_column_option_el', 'IDENT', 'PATH', 'gram.y:xmltable_column_el'),

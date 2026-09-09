@@ -47,8 +47,34 @@ use SqlFaker\PostgreSql\Generation\Rewrite\RewriteDefinitions;
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Routine\WithinGroupRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Name\ColumnNameRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Name\AliasRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Routine\RangeFunctionOrdinalityRule::class)]
 final class RewriteDefinitionsTest extends TestCase
 {
+    public function testCreateKeepsOneDefaultNamespacePerXmlTable(): void
+    {
+        $first = new TerminalOccurrence('DEFAULT', 10, [0, 1], ['xmltable', 'xml_namespace_el']);
+        $firstValue = new TerminalOccurrence('SCONST', 11, [0, 1], ['xmltable', 'xml_namespace_el']);
+        $comma = new TerminalOccurrence(',', 12, [0], ['xmltable']);
+        $duplicate = new TerminalOccurrence('DEFAULT', 13, [0, 2], ['xmltable', 'xml_namespace_el']);
+        $duplicateValue = new TerminalOccurrence('SCONST', 14, [0, 2], ['xmltable', 'xml_namespace_el']);
+        $other = new TerminalOccurrence('DEFAULT', 15, [3, 4], ['xmltable', 'xml_namespace_el']);
+        $otherValue = new TerminalOccurrence('SCONST', 16, [3, 4], ['xmltable', 'xml_namespace_el']);
+        $terminals = [$first, $firstValue, $comma, $duplicate, $duplicateValue, $other, $otherValue];
+        $input = new TerminalSequence($terminals, $terminals, [], [
+            new ProductionOccurrence(0, null, 'xmltable', 1),
+            new ProductionOccurrence(1, 0, 'xml_namespace_el', 1),
+            new ProductionOccurrence(2, 0, 'xml_namespace_el', 1),
+            new ProductionOccurrence(3, null, 'xmltable', 1),
+            new ProductionOccurrence(4, 3, 'xml_namespace_el', 1),
+        ]);
+        $rule = (new RewriteDefinitions())->create();
+        $result = $rule->rewrite($input);
+        self::assertSame([$first, $firstValue, $other, $otherValue], $result->terminals);
+        self::assertSame($input->original, $result->original);
+        self::assertSame($input->productions, $result->productions);
+        self::assertSame($result, $rule->rewrite($result));
+    }
+
     public function testCreateComposesTheDeclaredSourceRules(): void
     {
         $input = TerminalSequence::fromNames(['NOT', 'LIKE']);
