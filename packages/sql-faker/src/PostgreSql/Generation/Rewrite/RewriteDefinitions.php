@@ -17,6 +17,7 @@ use SqlFaker\PostgreSql\Generation\Rewrite\Name\IndirectionStarRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Name\RelationNameRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Query\IntoClauseRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Query\SelectOptionsRule;
+use SqlFaker\PostgreSql\Generation\Rewrite\Routine\JsonOptionsRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Routine\RangeFunctionOrdinalityRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Routine\SubstringRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Routine\TableFunctionRule;
@@ -57,6 +58,7 @@ final class RewriteDefinitions
             new WithinGroupRule(),
             new IdentityOptionRule(),
             new IntoClauseRule(),
+            new JsonOptionsRule(),
             new HashPartitionBoundRule(),
             new UniqueOptionRule('columnDef', 'ColConstraint', ['COLLATE' => 'collation'], null, 'gram.y:SplitColQualList'),
             new UniqueOptionRule('columnOptions', 'ColConstraint', ['COLLATE' => 'collation'], null, 'gram.y:SplitColQualList'),

@@ -20,6 +20,7 @@ use SqlFaker\MySql\Generation\Rewrite\Partition\ListValueRule;
 use SqlFaker\MySql\Generation\Rewrite\Partition\ValueArityRule;
 use SqlFaker\MySql\Generation\Rewrite\Query\JoinGroupingRule;
 use SqlFaker\MySql\Generation\Rewrite\Query\QueryContextRule;
+use SqlFaker\MySql\Generation\Rewrite\Query\WindowFrameRule;
 use SqlFaker\MySql\Generation\Rewrite\Replication\StartRule;
 use SqlFaker\MySql\Generation\Rewrite\Replication\TablePatternRule;
 use SqlFaker\MySql\Generation\Rewrite\Routine\LanguageRule;
@@ -51,6 +52,7 @@ final class RewriteDefinitions
             new DefinitionRule(),
             new TerminalMappingRule('factor', 'NUM', 'AUTH_FACTOR_NUMBER', 'sql/sql_yacc.yy:factor'),
             new IntoClauseRule(),
+            new WindowFrameRule(),
             new QueryContextRule(),
             new JoinGroupingRule(),
             new ConstraintEnforcementRule(),

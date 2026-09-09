@@ -48,6 +48,7 @@ use SqlFaker\PostgreSql\Generation\Rewrite\RewriteDefinitions;
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Name\ColumnNameRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Name\AliasRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Routine\RangeFunctionOrdinalityRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Routine\JsonOptionsRule::class)]
 final class RewriteDefinitionsTest extends TestCase
 {
     public function testCreateKeepsOneDefaultNamespacePerXmlTable(): void
