@@ -34,6 +34,7 @@ final class SqliteSyntaxCheck
      * Verifies that SQLite parses the generated statement.
      * build.c validates column defaults, generated columns and key shapes; select.c checks compound widths.
      * window.c resolves a named base window before checking whether its frame can be inherited.
+     * resolve.c checks aggregate context and schema-expression restrictions; attach.c checks view references.
      *
      * @param string $sql Statement produced by the grammar
      * @param string $input Original fuzzer input, encoded as hex by the target
@@ -71,6 +72,7 @@ final class SqliteSyntaxCheck
                 str_contains($message, 'General error: 1 no such view:') => true,
                 str_contains($message, 'temporary trigger may not have qualified name') => true,
                 str_contains($message, 'ORDER BY may not be used with non-aggregate') => true,
+                str_ends_with($message, 'General error: 1 HAVING clause on a non-aggregate query') => true,
                 str_contains($message, 'General error: 1 no such index:') => true,
                 str_contains($message, 'General error: 1 no tables specified') => true,
                 str_contains($message, 'General error: 1 no such column:') => true,
@@ -102,6 +104,8 @@ final class SqliteSyntaxCheck
                 preg_match('/\ASQLSTATE\[HY000\]: General error: 1 cannot override (?:frame specification|PARTITION clause|ORDER BY clause) of window: /D', $message) === 1 => true,
                 str_ends_with($message, 'General error: 1 conflicting ON CONFLICT clauses specified') => true,
                 preg_match('/General error: 1 parameters prohibited in (?:CHECK constraints|index expressions|partial index WHERE clauses|generated columns)\z/D', $message) === 1 => true,
+                preg_match('/General error: 1 (?:non-deterministic functions|the "\." operator) prohibited in (?:CHECK constraints|index expressions|partial index WHERE clauses|generated columns)\z/D', $message) === 1 => true,
+                preg_match('/General error: 1 view [^\r\n]* cannot reference objects in database [^\r\n]*\z/D', $message) === 1 => true,
                 preg_match('/General error: 1 trigger .* cannot reference objects in database /', $message) === 1 => true,
                 default => false,
             };

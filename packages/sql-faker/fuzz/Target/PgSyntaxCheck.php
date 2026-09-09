@@ -68,6 +68,8 @@ final class PgSyntaxCheck
      * parse_merge.c checks unreachable WHEN clauses; parse_clause.c rejects duplicate window names.
      * Datetime input conversion and overloaded function resolution report 22007 and 42725 after parsing.
      * parse_expr.c checks scalar subquery width after target-list analysis.
+     * parse_type.c validates resolved type modifiers; parse_relation.c checks a function's result type.
+     * parse_expr.c validates MERGE_ACTION against the current analyzed expression context.
      * Only those specific diagnostics are inconclusive; grammar-action errors remain findings.
      *
      * @throws SyntaxFailure When syntax or an unclassified rejection is observed
@@ -84,6 +86,7 @@ final class PgSyntaxCheck
         }
         if ($state === '42601' && (str_starts_with(trim($message), 'ERROR:  DEFAULT is not allowed in this context')
             || preg_match('/\AERROR:  subquery must return only one column(?:\r?\n|\z)/D', trim($message)) === 1
+            || preg_match('/\AERROR:  (?:type modifiers must be simple constants or identifiers|a column definition list is only allowed for functions returning "record"|MERGE_ACTION\(\) can only be used in the RETURNING list of a MERGE command)(?:\r?\n|\z)/D', trim($message)) === 1
             || str_starts_with(trim($message), 'ERROR:  format requires a parameter')
             || str_starts_with(trim($message), 'ERROR:  SELECT * with no tables specified is not valid')
             || str_starts_with(trim($message), 'ERROR:  unreachable WHEN clause specified after unconditional WHEN clause')

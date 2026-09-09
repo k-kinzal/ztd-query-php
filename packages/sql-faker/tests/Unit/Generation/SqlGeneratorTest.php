@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Unit\SqlFaker\Generation;
 
+use Closure;
 use Faker\Factory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use SqlFaker\Coverage\GrammarCoverage;
 use SqlFaker\Generation\SqlGenerator;
 use SqlFaker\Grammar\Derivation\GenerationPlan;
 use SqlFaker\Grammar\Generation\Token\RewriteRule;
@@ -20,6 +22,7 @@ use SqlFaker\Grammar\LexicalGrammar;
 use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\Terminal;
+use Tests\Fixtures\SqlFaker\CoverageFixture;
 
 #[CoversClass(SqlGenerator::class)]
 #[UsesClass(\SqlFaker\Grammar\Derivation\Derivation::class)]
@@ -57,8 +60,112 @@ use SqlFaker\Grammar\Terminal;
 #[UsesClass(\SqlFaker\Grammar\Choice\ByteChoices::class)]
 #[UsesClass(\SqlFaker\Grammar\Derivation\PlanBuilder::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Spacing\LexemeBoundary::class)]
+#[UsesClass(GrammarCoverage::class)]
+#[UsesClass(\SqlFaker\Coverage\GrammarCoverageInventory::class)]
+#[UsesClass(\SqlFaker\Coverage\GeneratorRevision::class)]
+#[UsesClass(\SqlFaker\Coverage\GenerationTrace::class)]
+#[UsesClass(\SqlFaker\Coverage\CoverageSets::class)]
+#[UsesClass(\SqlFaker\Coverage\SequenceObservation::class)]
 final class SqlGeneratorTest extends TestCase
 {
+    public function testGenerateRecordsACompleteCoverageObservation(): void
+    {
+        $coverage = new GrammarCoverage();
+        $lexical = $this->createMock(LexicalGrammar::class);
+        $lexical->method('version')->willReturn('test-v1');
+        $lexical->method('resolveSequence')->willReturnCallback(CoverageFixture::resolve(...));
+        $generator = new SqlGenerator(CoverageFixture::syntaxGrammar(), Factory::create(), $lexical, coverage: $coverage);
+        $sql = $generator->generate(GenerationPlan::all()->withMaxDepth(1)->withStepBudget()->withExpansionBudget(17));
+        self::assertSame('DELETE FROM missing', $sql);
+        $trace = $coverage->lastGeneration();
+        self::assertNotNull($trace);
+        self::assertSame('stmt', $trace['root']);
+        self::assertSame(['budget' => 17, 'lexicalTarget' => null], $trace['planSummary']);
+        self::assertSame('success', $trace['status']);
+        self::assertCount(1, $trace['attempts']);
+        self::assertSame(0, $trace['attempts'][0]['id']);
+        self::assertSame('committed', $trace['attempts'][0]['status']);
+        self::assertSame(hash('sha256', $sql), $trace['attempts'][0]['sqlHash']);
+        self::assertCount(1, $trace['reachedIds']);
+        self::assertSame($trace['reachedIds'], $trace['emittedIds']);
+        self::assertCount(3, $trace['lexicalEvents']);
+        self::assertCount(3, $trace['spacingEvents']);
+        self::assertSame(1, $coverage->snapshot()['checkpoint']['generationsObservedInRun']);
+        self::assertFalse($coverage->snapshot()['checkpoint']['generationInProgress']);
+    }
+
+    public function testGenerateKeepsRewrittenSourcesReachedWithoutCreditingTheirOutput(): void
+    {
+        $coverage = new GrammarCoverage();
+        $lexical = $this->createMock(LexicalGrammar::class);
+        $lexical->method('resolveSequence')->willReturnCallback(CoverageFixture::resolve(...));
+        $rule = $this->createMock(RewriteRule::class);
+        $rule->method('rewrite')->willReturnCallback(static fn (TerminalSequence $sequence): TerminalSequence => $sequence->replace(0, 1, [$sequence->terminals[0]->replaced('CHANGED', 'fixture.change')], 'fixture.change'));
+        $generator = new SqlGenerator(CoverageFixture::syntaxGrammar(), Factory::create(), $lexical, new TokenRewriter($rule), coverage: $coverage);
+        self::assertSame('CHANGED FROM missing', $generator->generate(GenerationPlan::all()->withMaxDepth(1)->withStepBudget()));
+        self::assertNotNull($coverage->lastGeneration());
+        self::assertSame(['fixture.change'], $coverage->lastGeneration()['rewrites']);
+        self::assertSame(1, $coverage->snapshot()['current']['reached']);
+        self::assertSame(0, $coverage->snapshot()['current']['emitted']);
+    }
+
+    public function testGenerateClosesCoverageAfterARejectedEmptyLexicalResult(): void
+    {
+        $coverage = new GrammarCoverage();
+        $lexical = $this->createMock(LexicalGrammar::class);
+        $lexical->method('generate')->willReturn('');
+        $generator = new SqlGenerator(CoverageFixture::syntaxGrammar(), Factory::create(), $lexical, coverage: $coverage);
+        self::assertInstanceOf(GenerationException::class, CoverageFixture::generationFailure($generator, GenerationPlan::lexical('identifier', [])->requiringNonEmpty()));
+        self::assertNotNull($coverage->lastGeneration());
+        self::assertSame('failed', $coverage->lastGeneration()['status']);
+        self::assertSame('discarded', $coverage->lastGeneration()['attempts'][0]['status']);
+        self::assertSame([], $coverage->lastGeneration()['emittedIds']);
+        self::assertFalse($coverage->snapshot()['checkpoint']['generationInProgress']);
+    }
+
+    public function testGenerateReplacesGrammarCoverageWithTheLatestLexicalTrace(): void
+    {
+        $coverage = new GrammarCoverage();
+        $lexical = $this->createMock(LexicalGrammar::class);
+        $lexical->method('resolveSequence')->willReturnCallback(CoverageFixture::resolve(...));
+        $lexical->method('generate')->willReturn('name');
+        $generator = new SqlGenerator(CoverageFixture::syntaxGrammar(), Factory::create(), $lexical, coverage: $coverage);
+        $generator->generate(GenerationPlan::all()->withMaxDepth(1)->withStepBudget());
+        self::assertSame('name', $generator->generate(GenerationPlan::lexical('identifier', [])));
+        self::assertNotNull($coverage->lastGeneration());
+        self::assertSame(2, $coverage->lastGeneration()['generationId']);
+        self::assertSame(['budget' => null, 'lexicalTarget' => 'identifier'], $coverage->lastGeneration()['planSummary']);
+        self::assertSame(['identifier'], $coverage->lastGeneration()['lexicalEvents']);
+        self::assertSame([], $coverage->lastGeneration()['reachedIds']);
+        self::assertSame([], $coverage->lastGeneration()['emittedIds']);
+        self::assertSame(hash('sha256', 'name'), $coverage->lastGeneration()['attempts'][0]['sqlHash']);
+        self::assertSame('success', $coverage->lastGeneration()['status']);
+        self::assertFalse($coverage->snapshot()['checkpoint']['generationInProgress']);
+    }
+
+    public function testRealizeOffersTheWholeZeroBasedCandidateRange(): void
+    {
+        $faker = Factory::create();
+        $faker->seed(19);
+        $grammar = new Grammar('stmt', ['stmt' => new ProductionRule('stmt', [new Production([new Terminal('T')])])]);
+        $lexical = $this->createMock(LexicalGrammar::class);
+        $lexical->method('resolveSequence')->willReturnCallback(
+            /**
+             * @param GenerationPlan<bool> $plan
+             * @param Closure(int): int $choose
+             */
+            static function (TerminalSequence $sequence, GenerationPlan $plan, Closure $choose) {
+                $choices = CoverageFixture::candidateChoices($choose);
+                self::assertContains(0, $choices);
+                self::assertContains(1, $choices);
+                self::assertSame([], array_diff($choices, [0, 1]));
+                self::assertSame(0, $choose(1));
+                return CoverageFixture::output('T');
+            }
+        );
+        self::assertSame('T', (new SqlGenerator($grammar, $faker, $lexical))->realize('stmt', GenerationPlan::all()));
+    }
+
     public function testGenerateReusesCompletionAnalysisAcrossDifferentPlans(): void
     {
         $grammar = new Grammar('first', [
@@ -71,7 +178,7 @@ final class SqlGeneratorTest extends TestCase
             $observations[] = $terminal;
             return false;
         });
-        $lexer->method('resolveSequence')->willReturnCallback(static fn (TerminalSequence $sequence) => \Tests\Fixtures\SqlFaker\CoverageFixture::output(implode(' ', $sequence->names())));
+        $lexer->method('resolveSequence')->willReturnCallback(static fn (TerminalSequence $sequence) => CoverageFixture::output(implode(' ', $sequence->names())));
         $generator = new SqlGenerator($grammar, Factory::create(), $lexer);
 
         self::assertSame('T', $generator->generate(GenerationPlan::all()));
@@ -89,7 +196,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $plan = GenerationPlan::all();
         $lexer = $this->createMock(LexicalGrammar::class);
-        $lexer->expects(self::once())->method('resolveSequence')->with(self::callback(static fn (TerminalSequence $sequence): bool => $sequence->names() === ['CUSTOM']), $plan)->willReturn(\Tests\Fixtures\SqlFaker\CoverageFixture::output('custom sql'));
+        $lexer->expects(self::once())->method('resolveSequence')->with(self::callback(static fn (TerminalSequence $sequence): bool => $sequence->names() === ['CUSTOM']), $plan)->willReturn(CoverageFixture::output('custom sql'));
         $generator = new SqlGenerator($grammar, Factory::create(), $lexer);
 
         self::assertSame('custom sql', $generator->generate($plan));
@@ -102,7 +209,7 @@ final class SqlGeneratorTest extends TestCase
         ]);
         $plan = GenerationPlan::fromRule('selected')->requiringNonEmpty();
         $lexer = $this->createMock(LexicalGrammar::class);
-        $lexer->expects(self::once())->method('resolveSequence')->with(self::callback(static fn (TerminalSequence $sequence): bool => $sequence->names() === ['NORMALIZED', 'RAW']), $plan)->willReturn(\Tests\Fixtures\SqlFaker\CoverageFixture::output('normalized'));
+        $lexer->expects(self::once())->method('resolveSequence')->with(self::callback(static fn (TerminalSequence $sequence): bool => $sequence->names() === ['NORMALIZED', 'RAW']), $plan)->willReturn(CoverageFixture::output('normalized'));
         $rule = $this->createMock(RewriteRule::class);
         $rule->method('rewrite')->willReturnCallback(static fn (TerminalSequence $sequence): TerminalSequence =>
             $sequence->replace(0, 0, [$sequence->inserted('NORMALIZED', $sequence->terminals[0], 'test.rule')], 'test.rule'));
@@ -117,7 +224,7 @@ final class SqlGeneratorTest extends TestCase
             'old_rule' => new ProductionRule('old_rule', [new Production([new Terminal('TOKEN')])]),
         ]);
         $lexer = $this->createMock(LexicalGrammar::class);
-        $lexer->expects(self::once())->method('resolveSequence')->with(self::callback(static fn (TerminalSequence $sequence): bool => $sequence->names() === ['TOKEN']))->willReturn(\Tests\Fixtures\SqlFaker\CoverageFixture::output('token'));
+        $lexer->expects(self::once())->method('resolveSequence')->with(self::callback(static fn (TerminalSequence $sequence): bool => $sequence->names() === ['TOKEN']))->willReturn(CoverageFixture::output('token'));
         $generator = new SqlGenerator(
             $grammar,
             Factory::create(),
@@ -156,7 +263,7 @@ final class SqlGeneratorTest extends TestCase
     {
         $grammar = new Grammar('stmt', ['stmt' => new ProductionRule('stmt', [new Production([])])]);
         $lexer = $this->createMock(LexicalGrammar::class);
-        $lexer->expects(self::once())->method('resolveSequence')->willReturn(\Tests\Fixtures\SqlFaker\CoverageFixture::output(''));
+        $lexer->expects(self::once())->method('resolveSequence')->willReturn(CoverageFixture::output(''));
         $generator = new SqlGenerator($grammar, Factory::create(), $lexer);
 
         self::assertSame('', $generator->generate(GenerationPlan::all()));
@@ -167,7 +274,7 @@ final class SqlGeneratorTest extends TestCase
         $grammar = new Grammar('stmt', ['stmt' => new ProductionRule('stmt', [new Production([new Terminal('T')])])]);
         $lexer = $this->createMock(LexicalGrammar::class);
         $lexer->method('version')->willReturn('custom-1');
-        $lexer->expects(self::once())->method('resolveSequence')->willReturn(\Tests\Fixtures\SqlFaker\CoverageFixture::output(''));
+        $lexer->expects(self::once())->method('resolveSequence')->willReturn(CoverageFixture::output(''));
         $generator = new SqlGenerator($grammar, Factory::create(), $lexer);
         $this->expectException(GenerationException::class);
         $this->expectExceptionMessage('custom-1 generation plan requires non-empty output.');
@@ -179,7 +286,7 @@ final class SqlGeneratorTest extends TestCase
     {
         $grammar = new Grammar('stmt', ['stmt' => new ProductionRule('stmt', [new Production([new Terminal('TOKEN')])])]);
         $lexer = $this->createMock(LexicalGrammar::class);
-        $lexer->method('resolveSequence')->willReturn(\Tests\Fixtures\SqlFaker\CoverageFixture::output('token'));
+        $lexer->method('resolveSequence')->willReturn(CoverageFixture::output('token'));
         $lexer->method('generate')->willReturn('name');
         $generator = new SqlGenerator($grammar, Factory::create(), $lexer);
         self::assertSame('token', $generator->generate(GenerationPlan::all()));
@@ -195,7 +302,7 @@ final class SqlGeneratorTest extends TestCase
             'second' => new ProductionRule('second', [new Production([new Terminal('B')])]),
         ]);
         $lexer = $this->createMock(LexicalGrammar::class);
-        $lexer->method('resolveSequence')->willReturn(\Tests\Fixtures\SqlFaker\CoverageFixture::output('output'));
+        $lexer->method('resolveSequence')->willReturn(CoverageFixture::output('output'));
         $rule = $this->createMock(RewriteRule::class);
         $rule->method('rewrite')->willReturnCallback(static fn (TerminalSequence $sequence): TerminalSequence => $sequence->replace(0, 0, [], 'observed'));
         $generator = new SqlGenerator($grammar, Factory::create(), $lexer, new TokenRewriter($rule));
@@ -211,8 +318,8 @@ final class SqlGeneratorTest extends TestCase
     public function testPlannerBindsTheSameGrammarEntryAndFreezesEveryChoice(): void
     {
         $lexical = $this->createMock(LexicalGrammar::class);
-        $lexical->method('resolveSequence')->willReturnCallback(\Tests\Fixtures\SqlFaker\CoverageFixture::resolve(...));
-        $generator = new SqlGenerator(\Tests\Fixtures\SqlFaker\CoverageFixture::syntaxGrammar(), Factory::create(), $lexical);
+        $lexical->method('resolveSequence')->willReturnCallback(CoverageFixture::resolve(...));
+        $generator = new SqlGenerator(CoverageFixture::syntaxGrammar(), Factory::create(), $lexical);
         $plan = GenerationPlan::fromBytes('', $generator->planner());
         self::assertSame('stmt', $generator->planner()->root($plan));
         self::assertSame($generator->generate($plan), $generator->generate($plan));
@@ -221,8 +328,8 @@ final class SqlGeneratorTest extends TestCase
     public function testRealizeRetainsTheActualTerminalAndLexicalTrace(): void
     {
         $lexical = $this->createMock(LexicalGrammar::class);
-        $lexical->method('resolveSequence')->willReturnCallback(\Tests\Fixtures\SqlFaker\CoverageFixture::resolve(...));
-        $generator = new SqlGenerator(\Tests\Fixtures\SqlFaker\CoverageFixture::syntaxGrammar(), Factory::create(), $lexical);
+        $lexical->method('resolveSequence')->willReturnCallback(CoverageFixture::resolve(...));
+        $generator = new SqlGenerator(CoverageFixture::syntaxGrammar(), Factory::create(), $lexical);
         self::assertSame('DELETE FROM missing', $generator->realize('stmt', GenerationPlan::all()->withMaxDepth(1)->withStepBudget()));
         self::assertNotNull($generator->lastSequence);
         self::assertSame(['DELETE', 'FROM', 'missing'], $generator->lastSequence->names());

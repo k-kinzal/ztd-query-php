@@ -21,6 +21,17 @@ use SqlFaker\Grammar\Terminal;
 final class CoverageFixture
 {
     /**
+     * Samples a generator's candidate selector without involving grammar choices.
+     *
+     * @param Closure(int): int $choose
+     * @return list<int>
+     */
+    public static function candidateChoices(Closure $choose): array
+    {
+        return array_map(static fn (int $attempt): int => $choose(2), range(1, 32));
+    }
+
+    /**
      * Returns a grammar whose alternatives have stable original ordinals.
      */
     public static function grammar(): Grammar

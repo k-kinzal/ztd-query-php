@@ -26,6 +26,9 @@ use PDOException;
  * parse_tree_nodes.cc and sql_lex.cc reject CUBE and QUALIFY when the required engine or optimizer is unavailable.
  * sql_parse.cc checks ON UPDATE types and recursive references; sql_resolver.cc checks row widths.
  * sql_yacc.yy checks native function-name collisions and resolves cursor and loop labels; parse_tree_nodes.cc compares collations and charsets.
+ * sql_update.cc checks updatability; sp_head.h checks trigger result sets; table.cc validates generated expressions.
+ * item_func.cc checks stored-function argument names; item_json_func.cc resolves JSON paths and cast types.
+ * window.cc resolves named windows and item_sum.cc checks their expression context.
  */
 final class MySqlSyntaxCheck
 {
@@ -76,7 +79,8 @@ final class MySqlSyntaxCheck
             $acceptable = in_array($errorCode, [1054, 1046, 1527, 1273, 1327, 3708, 1407, 1049,
                 1319, 1305, 1096, 1791, 1286, 1235, 1690, 3652, 3709, 1525, 1051, 3980,
                 1193, 1277, 1641, 1800, 1801, 1066, 1115, 3714, 6006, 3573, 3568, 3569, 1302, 1391, 3763, 1060, 1492, 3654, 1109,
-                1128, 1426, 1624, 6033, 6037, 1294, 3577, 1585, 1253, 1324, 1136, 1308], true);
+                1128, 1426, 1624, 6033, 6037, 1294, 3577, 1585, 1253, 1324, 1136, 1308,
+                1288, 1310, 1415, 1584, 1630, 3102, 3143, 3579, 3593, 3772, 4032, 4101], true);
 
             if ($errorCode === 1221 && (str_ends_with($rejection->getMessage(), 'Incorrect usage of spatial/fulltext/hash index and explicit index order')
                 || str_ends_with($rejection->getMessage(), 'Incorrect usage of SRID and non-geometry column'))) {
