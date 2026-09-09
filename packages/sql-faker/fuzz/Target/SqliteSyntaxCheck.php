@@ -20,7 +20,8 @@ use PDOException;
  * tolerated cases — name lookups a schema-less fuzz run cannot satisfy, plus a
  * handful of documented restrictions — are matched on the message. Any other
  * rejection is an unclassified finding and surfaces as a SyntaxFailure for
- * PHP-Fuzzer to record.
+ * PHP-Fuzzer to record. build.c checks view parameters and duplicate column
+ * names, while attach.c/fixSelectCb checks cross-database trigger references.
  */
 final class SqliteSyntaxCheck
 {
@@ -79,6 +80,9 @@ final class SqliteSyntaxCheck
                 str_contains($message, 'duplicate WITH table name:') => true,
                 str_ends_with($message, 'General error: 1 unsupported use of NULLS FIRST') => true,
                 str_ends_with($message, 'General error: 1 unsupported use of NULLS LAST') => true,
+                str_contains($message, 'General error: 1 parameters are not allowed in views') => true,
+                str_contains($message, 'General error: 1 duplicate column name:') => true,
+                preg_match('/General error: 1 trigger .* cannot reference objects in database /', $message) === 1 => true,
                 default => false,
             };
 

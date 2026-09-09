@@ -61,20 +61,26 @@ final class PgSyntaxCheck
      * Classifies known semantic rejections separately from unexpected syntax errors.
      *
      * The grammar admits DEFAULT as an expression; parse analysis checks its context
-     * and reports 42601 too, so only that specific diagnostic is inconclusive.
+     * and reports 42601 too. parse_target.c, define.c and parse_merge.c likewise
+     * reject missing relations, option values and an unsupported MERGE feature.
+     * Only those specific diagnostics are inconclusive; grammar-action errors remain findings.
      *
      * @throws SyntaxFailure When syntax or an unclassified rejection is observed
      */
     public static function rejection(string $state, string $message, string $sql, string $input): void
     {
         if (in_array($state, ['42704', '42P01', '42703', '3F000', '42809', '22023', '26000',
-            '2BP01', '42602', '42883', '42939', '42P07', '42P10', '3D000', '42P03', '22P02'], true)) {
+            '2BP01', '42602', '42883', '42939', '42P07', '42P10', '3D000', '42P03', '22P02',
+            '42712', '42P19', '42P11'], true)) {
             return;
         }
         if ($state === '0A000') {
             return;
         }
-        if ($state === '42601' && str_starts_with(trim($message), 'ERROR:  DEFAULT is not allowed in this context')) {
+        if ($state === '42601' && (str_starts_with(trim($message), 'ERROR:  DEFAULT is not allowed in this context')
+            || str_starts_with(trim($message), 'ERROR:  format requires a parameter')
+            || str_starts_with(trim($message), 'ERROR:  SELECT * with no tables specified is not valid')
+            || str_starts_with(trim($message), 'ERROR:  WITH RECURSIVE is not supported for MERGE statement'))) {
             return;
         }
         throw new SyntaxFailure("PostgreSQL syntax verification failed\nInput (hex): $input\nSQL: $sql\nSQLSTATE: $state\n$message");
