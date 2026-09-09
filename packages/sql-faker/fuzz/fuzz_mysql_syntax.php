@@ -101,11 +101,27 @@ register_shutdown_function(static function () use ($coverage): void {
     $coverage->flush();
 });
 /**
+ * Stops at the next input boundary so coverage flushes and container shutdown run outside an active generation.
+ */
+$stopSignal = null;
+if (function_exists('pcntl_signal')) {
+    pcntl_async_signals(true);
+    foreach ([SIGINT, SIGTERM] as $signal) {
+        pcntl_signal($signal, static function (int $received) use (&$stopSignal): void {
+            $stopSignal ??= $received;
+        });
+    }
+}
+
+/**
  * @var PhpFuzzer\Config $config
  */
 $config->setAllowedExceptions([]);
 $config->setMaxLen(80004);
-$config->setTarget(static function (string $input) use ($provider, $planner, $constraints, $check, $coverage, $grammarFeatures, &$generations): void {
+$config->setTarget(static function (string $input) use ($provider, $planner, $constraints, $check, $coverage, $grammarFeatures, &$generations, &$stopSignal): void {
+    if ($stopSignal !== null) {
+        exit(128 + $stopSignal);
+    }
     try {
         $plan = GenerationPlan::fromBytes($input, $planner, $constraints);
         $sql = $provider->generate($plan);
