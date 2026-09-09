@@ -27,12 +27,12 @@
 <nav class="crumbs"><a href="../../../../../../index.html">src</a><span class="crumb-sep">::</span><span class="crumb-current">packages/sql-faker/src/Grammar/Derivation/GenerationPlan.php</span></nav>
 <div class="topbar-tools">
 <input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
-<span class="diff-range" title="Comparing f78c921d to working tree">f78c921d <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><button id="theme-toggle" title="Toggle theme">◐</button>
+<span class="diff-range" title="Comparing 34d1b569 to working tree">34d1b569 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><button id="theme-toggle" title="Toggle theme">◐</button>
 </div>
 </header>
 <div class="search-results" id="search-results" hidden></div>
 <main class="content">
-<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between f78c921d and working tree." data-off="This page documents what f78c921d had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 34d1b569 and working tree." data-off="This page documents what 34d1b569 had and working tree no longer has. Switch to Diff to read it." hidden></p>
 <div class="symbol-head"><h1 class="source-title">packages/sql-faker/src/Grammar/Derivation/GenerationPlan.php</h1></div>
 <pre class="source" data-diff="modified"><code><span class="src-line" id="L1" data-diff="same"><a class="ln" href="#L1">1</a>&lt;?php</span>
 <span class="src-line" id="L2" data-diff="same"><a class="ln" href="#L2">2</a></span>
@@ -81,7 +81,7 @@
 <span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a><span class="tok-com">     * @param bool $reserveSteps Whether to budget the remaining form and prefer fewer rule expansions</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">38</span><span class="tok-com">     * @param int $maxDepth How deep the walk may recurse</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">39</span><span class="tok-com">     *</span></span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a><span class="tok-com">     * @param array{list&lt;string&gt;, list&lt;string&gt;}|null $trivia Required and optional separators by occurrence</span></span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a><span class="tok-com">     * @param array&lt;string, non-empty-list&lt;string&gt;&gt; $candidateKeys Exact candidate semantics by terminal occurrence</span></span>
 <span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a><span class="tok-com">     * @visibility namespace</span></span>
 <span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
@@ -95,7 +95,7 @@
 <span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a>        <span class="tok-kw">private</span> <span class="tok-kw">readonly</span> <span class="tok-id">int</span> <span class="tok-var">$maxDepth</span>,</span>
 <span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a>        <span class="tok-kw">private</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$reserveSteps</span> = <span class="tok-id">false</span>,</span>
 <span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>        <span class="tok-kw">private</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">int</span> <span class="tok-var">$expansionBudget</span> = <span class="tok-id">null</span>,</span>
-<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>        <span class="tok-kw">private</span> <span class="tok-kw">readonly</span> ?<span class="tok-kw">array</span> <span class="tok-var">$trivia</span> = <span class="tok-id">null</span>,</span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>        <span class="tok-kw">private</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$candidateKeys</span> = [],</span>
 <span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a>    ) {</span>
 <span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a>    }</span>
 <span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a></span>
@@ -219,7 +219,7 @@
 <span class="src-line" id="L157" data-diff="same"><a class="ln" href="#L157">157</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">maxDepth</span>,</span>
 <span class="src-line" id="L158" data-diff="same"><a class="ln" href="#L158">158</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">reserveSteps</span>,</span>
 <span class="src-line" id="L159" data-diff="added"><a class="ln" href="#L159">159</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">expansionBudget</span>,</span>
-<span class="src-line" id="L160" data-diff="added"><a class="ln" href="#L160">160</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">trivia</span>,</span>
+<span class="src-line" id="L160" data-diff="added"><a class="ln" href="#L160">160</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">candidateKeys</span>,</span>
 <span class="src-line" id="L161" data-diff="same"><a class="ln" href="#L161">161</a>        );</span>
 <span class="src-line" id="L162" data-diff="same"><a class="ln" href="#L162">162</a>    }</span>
 <span class="src-line" id="L163" data-diff="same"><a class="ln" href="#L163">163</a></span>
@@ -250,7 +250,7 @@
 <span class="src-line" id="L184" data-diff="same"><a class="ln" href="#L184">184</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">maxDepth</span>,</span>
 <span class="src-line" id="L185" data-diff="same"><a class="ln" href="#L185">185</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">reserveSteps</span>,</span>
 <span class="src-line" id="L186" data-diff="added"><a class="ln" href="#L186">186</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">expansionBudget</span>,</span>
-<span class="src-line" id="L187" data-diff="added"><a class="ln" href="#L187">187</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">trivia</span>,</span>
+<span class="src-line" id="L187" data-diff="added"><a class="ln" href="#L187">187</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">candidateKeys</span>,</span>
 <span class="src-line" id="L188" data-diff="same"><a class="ln" href="#L188">188</a>        );</span>
 <span class="src-line" id="L189" data-diff="same"><a class="ln" href="#L189">189</a>    }</span>
 <span class="src-line" id="L190" data-diff="same"><a class="ln" href="#L190">190</a></span>
@@ -278,7 +278,7 @@
 <span class="src-line" id="L205" data-diff="same"><a class="ln" href="#L205">205</a>            <span class="tok-id">max</span>(<span class="tok-num">1</span>, <span class="tok-var">$maxDepth</span>),</span>
 <span class="src-line" id="L206" data-diff="same"><a class="ln" href="#L206">206</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">reserveSteps</span>,</span>
 <span class="src-line" id="L207" data-diff="added"><a class="ln" href="#L207">207</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">expansionBudget</span>,</span>
-<span class="src-line" id="L208" data-diff="added"><a class="ln" href="#L208">208</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">trivia</span>,</span>
+<span class="src-line" id="L208" data-diff="added"><a class="ln" href="#L208">208</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">candidateKeys</span>,</span>
 <span class="src-line" id="L209" data-diff="same"><a class="ln" href="#L209">209</a>        );</span>
 <span class="src-line" id="L210" data-diff="same"><a class="ln" href="#L210">210</a>    }</span>
 <span class="src-line" id="L211" data-diff="same"><a class="ln" href="#L211">211</a></span>
@@ -336,7 +336,7 @@
 <span class="src-line" id="L253" data-diff="same"><a class="ln" href="#L253">253</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">maxDepth</span>,</span>
 <span class="src-line" id="L254" data-diff="same"><a class="ln" href="#L254">254</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">reserveSteps</span>,</span>
 <span class="src-line" id="L255" data-diff="added"><a class="ln" href="#L255">255</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">expansionBudget</span>,</span>
-<span class="src-line" id="L256" data-diff="added"><a class="ln" href="#L256">256</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">trivia</span>,</span>
+<span class="src-line" id="L256" data-diff="added"><a class="ln" href="#L256">256</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">candidateKeys</span>,</span>
 <span class="src-line" id="L257" data-diff="same"><a class="ln" href="#L257">257</a>        );</span>
 <span class="src-line" id="L258" data-diff="same"><a class="ln" href="#L258">258</a>    }</span>
 <span class="src-line" id="L259" data-diff="same"><a class="ln" href="#L259">259</a></span>
@@ -414,7 +414,7 @@
 <span class="src-line" id="L319" data-diff="same"><a class="ln" href="#L319">319</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">maxDepth</span>,</span>
 <span class="src-line" id="L320" data-diff="same"><a class="ln" href="#L320">320</a>            <span class="tok-id">true</span>,</span>
 <span class="src-line" id="L321" data-diff="added"><a class="ln" href="#L321">321</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">expansionBudget</span>,</span>
-<span class="src-line" id="L322" data-diff="added"><a class="ln" href="#L322">322</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">trivia</span>,</span>
+<span class="src-line" id="L322" data-diff="added"><a class="ln" href="#L322">322</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">candidateKeys</span>,</span>
 <span class="src-line" id="L323" data-diff="same"><a class="ln" href="#L323">323</a>        );</span>
 <span class="src-line" id="L324" data-diff="same"><a class="ln" href="#L324">324</a>    }</span>
 <span class="src-line" id="L325" data-diff="same"><a class="ln" href="#L325">325</a></span>
@@ -449,71 +449,70 @@
 <span class="src-line" id="L352" data-diff="added"><a class="ln" href="#L352">352</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">maxDepth</span>,</span>
 <span class="src-line" id="L353" data-diff="added"><a class="ln" href="#L353">353</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">reserveSteps</span>,</span>
 <span class="src-line" id="L354" data-diff="added"><a class="ln" href="#L354">354</a>            <span class="tok-var">$budget</span>,</span>
-<span class="src-line" id="L355" data-diff="added"><a class="ln" href="#L355">355</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">trivia</span></span>
+<span class="src-line" id="L355" data-diff="added"><a class="ln" href="#L355">355</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">candidateKeys</span></span>
 <span class="src-line" id="L356" data-diff="added"><a class="ln" href="#L356">356</a>        );</span>
 <span class="src-line" id="L357" data-diff="added"><a class="ln" href="#L357">357</a>    }</span>
 <span class="src-line" id="L358" data-diff="added"><a class="ln" href="#L358">358</a></span>
 <span class="src-line" id="L359" data-diff="added"><a class="ln" href="#L359">359</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L360" data-diff="added"><a class="ln" href="#L360">360</a><span class="tok-com">     * Specifies the separators to use, with deterministic defaults after the last entry.</span></span>
-<span class="src-line" id="L361" data-diff="added"><a class="ln" href="#L361">361</a><span class="tok-com">     * @param list&lt;string&gt; $required</span></span>
-<span class="src-line" id="L362" data-diff="added"><a class="ln" href="#L362">362</a><span class="tok-com">     * @param list&lt;string&gt; $optional</span></span>
-<span class="src-line" id="L363" data-diff="added"><a class="ln" href="#L363">363</a><span class="tok-com">     * @return self&lt;TRequiresNonEmpty&gt;</span></span>
-<span class="src-line" id="L364" data-diff="added"><a class="ln" href="#L364">364</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L365" data-diff="added"><a class="ln" href="#L365">365</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">withTrivia</span>(<span class="tok-kw">array</span> <span class="tok-var">$required</span>, <span class="tok-kw">array</span> <span class="tok-var">$optional</span>): <span class="tok-id">self</span></span>
-<span class="src-line" id="L366" data-diff="added"><a class="ln" href="#L366">366</a>    {</span>
-<span class="src-line" id="L367" data-diff="added"><a class="ln" href="#L367">367</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">self</span>(</span>
-<span class="src-line" id="L368" data-diff="added"><a class="ln" href="#L368">368</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">startRule</span>,</span>
-<span class="src-line" id="L369" data-diff="added"><a class="ln" href="#L369">369</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">patterns</span>,</span>
-<span class="src-line" id="L370" data-diff="added"><a class="ln" href="#L370">370</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">patternsForEveryOccurrence</span>,</span>
-<span class="src-line" id="L371" data-diff="added"><a class="ln" href="#L371">371</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">lexemes</span>,</span>
-<span class="src-line" id="L372" data-diff="added"><a class="ln" href="#L372">372</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">lexicalTarget</span>,</span>
-<span class="src-line" id="L373" data-diff="added"><a class="ln" href="#L373">373</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">parameters</span>,</span>
-<span class="src-line" id="L374" data-diff="added"><a class="ln" href="#L374">374</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">requiresNonEmpty</span>,</span>
-<span class="src-line" id="L375" data-diff="added"><a class="ln" href="#L375">375</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">maxDepth</span>,</span>
-<span class="src-line" id="L376" data-diff="added"><a class="ln" href="#L376">376</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">reserveSteps</span>,</span>
-<span class="src-line" id="L377" data-diff="added"><a class="ln" href="#L377">377</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">expansionBudget</span>,</span>
-<span class="src-line" id="L378" data-diff="added"><a class="ln" href="#L378">378</a>            [<span class="tok-var">$required</span>, <span class="tok-var">$optional</span>]</span>
-<span class="src-line" id="L379" data-diff="added"><a class="ln" href="#L379">379</a>        );</span>
-<span class="src-line" id="L380" data-diff="added"><a class="ln" href="#L380">380</a>    }</span>
-<span class="src-line" id="L381" data-diff="added"><a class="ln" href="#L381">381</a></span>
-<span class="src-line" id="L382" data-diff="added"><a class="ln" href="#L382">382</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L383" data-diff="added"><a class="ln" href="#L383">383</a><span class="tok-com">     * Answers a concrete separator, or null when the caller leaves its choice free.</span></span>
-<span class="src-line" id="L384" data-diff="added"><a class="ln" href="#L384">384</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L385" data-diff="added"><a class="ln" href="#L385">385</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">triviaAt</span>(<span class="tok-id">int</span> <span class="tok-var">$occurrence</span>, <span class="tok-id">bool</span> <span class="tok-var">$optional</span>): ?<span class="tok-id">string</span></span>
-<span class="src-line" id="L386" data-diff="added"><a class="ln" href="#L386">386</a>    {</span>
-<span class="src-line" id="L387" data-diff="added"><a class="ln" href="#L387">387</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">trivia</span> === <span class="tok-id">null</span> ? <span class="tok-id">null</span> : (<span class="tok-var">$this</span>-&gt;<span class="tok-id">trivia</span>[<span class="tok-var">$optional</span> ? <span class="tok-num">1</span> : <span class="tok-num">0</span>][<span class="tok-var">$occurrence</span>] ?? (<span class="tok-var">$optional</span> ? <span class="tok-str">&#039;&#039;</span> : <span class="tok-str">&#039; &#039;</span>));</span>
-<span class="src-line" id="L388" data-diff="added"><a class="ln" href="#L388">388</a>    }</span>
-<span class="src-line" id="L389" data-diff="added"><a class="ln" href="#L389">389</a></span>
-<span class="src-line" id="L390" data-diff="added"><a class="ln" href="#L390">390</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L391" data-diff="added"><a class="ln" href="#L391">391</a><span class="tok-com">     * Returns the explicit total expansion budget, if configured.</span></span>
-<span class="src-line" id="L392" data-diff="added"><a class="ln" href="#L392">392</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L393" data-diff="added"><a class="ln" href="#L393">393</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">expansionBudget</span>(): ?<span class="tok-id">int</span></span>
-<span class="src-line" id="L394" data-diff="added"><a class="ln" href="#L394">394</a>    {</span>
-<span class="src-line" id="L395" data-diff="added"><a class="ln" href="#L395">395</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">expansionBudget</span>;</span>
-<span class="src-line" id="L396" data-diff="added"><a class="ln" href="#L396">396</a>    }</span>
-<span class="src-line" id="L397" data-diff="added"><a class="ln" href="#L397">397</a></span>
-<span class="src-line" id="L398" data-diff="added"><a class="ln" href="#L398">398</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L399" data-diff="same"><a class="ln" href="#L399">399</a><span class="tok-com">     * Directs a bounded walk that must produce a statement.</span></span>
+<span class="src-line" id="L360" data-diff="added"><a class="ln" href="#L360">360</a><span class="tok-com">     * Pins candidate semantics as well as spelling, including empty marker candidates.</span></span>
+<span class="src-line" id="L361" data-diff="added"><a class="ln" href="#L361">361</a><span class="tok-com">     * @param array&lt;string, non-empty-list&lt;string&gt;&gt; $keys</span></span>
+<span class="src-line" id="L362" data-diff="added"><a class="ln" href="#L362">362</a><span class="tok-com">     * @return self&lt;TRequiresNonEmpty&gt;</span></span>
+<span class="src-line" id="L363" data-diff="added"><a class="ln" href="#L363">363</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L364" data-diff="added"><a class="ln" href="#L364">364</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">withCandidateKeys</span>(<span class="tok-kw">array</span> <span class="tok-var">$keys</span>): <span class="tok-id">self</span></span>
+<span class="src-line" id="L365" data-diff="added"><a class="ln" href="#L365">365</a>    {</span>
+<span class="src-line" id="L366" data-diff="added"><a class="ln" href="#L366">366</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">self</span>(</span>
+<span class="src-line" id="L367" data-diff="added"><a class="ln" href="#L367">367</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">startRule</span>,</span>
+<span class="src-line" id="L368" data-diff="added"><a class="ln" href="#L368">368</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">patterns</span>,</span>
+<span class="src-line" id="L369" data-diff="added"><a class="ln" href="#L369">369</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">patternsForEveryOccurrence</span>,</span>
+<span class="src-line" id="L370" data-diff="added"><a class="ln" href="#L370">370</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">lexemes</span>,</span>
+<span class="src-line" id="L371" data-diff="added"><a class="ln" href="#L371">371</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">lexicalTarget</span>,</span>
+<span class="src-line" id="L372" data-diff="added"><a class="ln" href="#L372">372</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">parameters</span>,</span>
+<span class="src-line" id="L373" data-diff="added"><a class="ln" href="#L373">373</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">requiresNonEmpty</span>,</span>
+<span class="src-line" id="L374" data-diff="added"><a class="ln" href="#L374">374</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">maxDepth</span>,</span>
+<span class="src-line" id="L375" data-diff="added"><a class="ln" href="#L375">375</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">reserveSteps</span>,</span>
+<span class="src-line" id="L376" data-diff="added"><a class="ln" href="#L376">376</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">expansionBudget</span>,</span>
+<span class="src-line" id="L377" data-diff="added"><a class="ln" href="#L377">377</a>            <span class="tok-var">$keys</span></span>
+<span class="src-line" id="L378" data-diff="added"><a class="ln" href="#L378">378</a>        );</span>
+<span class="src-line" id="L379" data-diff="added"><a class="ln" href="#L379">379</a>    }</span>
+<span class="src-line" id="L380" data-diff="added"><a class="ln" href="#L380">380</a></span>
+<span class="src-line" id="L381" data-diff="added"><a class="ln" href="#L381">381</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L382" data-diff="added"><a class="ln" href="#L382">382</a><span class="tok-com">     * Returns the exact candidate semantics requested for one terminal occurrence.</span></span>
+<span class="src-line" id="L383" data-diff="added"><a class="ln" href="#L383">383</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L384" data-diff="added"><a class="ln" href="#L384">384</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">candidateKeyAt</span>(<span class="tok-id">string</span> <span class="tok-var">$terminal</span>, <span class="tok-id">int</span> <span class="tok-var">$occurrence</span>): ?<span class="tok-id">string</span></span>
+<span class="src-line" id="L385" data-diff="added"><a class="ln" href="#L385">385</a>    {</span>
+<span class="src-line" id="L386" data-diff="added"><a class="ln" href="#L386">386</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">candidateKeys</span>[<span class="tok-var">$terminal</span>][<span class="tok-var">$occurrence</span>] ?? <span class="tok-id">null</span>;</span>
+<span class="src-line" id="L387" data-diff="added"><a class="ln" href="#L387">387</a>    }</span>
+<span class="src-line" id="L388" data-diff="added"><a class="ln" href="#L388">388</a></span>
+<span class="src-line" id="L389" data-diff="added"><a class="ln" href="#L389">389</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L390" data-diff="added"><a class="ln" href="#L390">390</a><span class="tok-com">     * Returns the explicit total expansion budget, if configured.</span></span>
+<span class="src-line" id="L391" data-diff="added"><a class="ln" href="#L391">391</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L392" data-diff="added"><a class="ln" href="#L392">392</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">expansionBudget</span>(): ?<span class="tok-id">int</span></span>
+<span class="src-line" id="L393" data-diff="added"><a class="ln" href="#L393">393</a>    {</span>
+<span class="src-line" id="L394" data-diff="added"><a class="ln" href="#L394">394</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">expansionBudget</span>;</span>
+<span class="src-line" id="L395" data-diff="added"><a class="ln" href="#L395">395</a>    }</span>
+<span class="src-line" id="L396" data-diff="added"><a class="ln" href="#L396">396</a></span>
+<span class="src-line" id="L397" data-diff="added"><a class="ln" href="#L397">397</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L398" data-diff="same"><a class="ln" href="#L398">398</a><span class="tok-com">     * Directs a bounded walk that must produce a statement.</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">341</span><span class="tok-com">     *</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">342</span><span class="tok-com">     * Every generator method on the provider makes the same promise: the SQL</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">343</span><span class="tok-com">     * it answers is a statement, not the empty string a nullable rule may</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">344</span><span class="tok-com">     * otherwise reduce to, and it stops before the caller&#039;s depth.</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">345</span><span class="tok-com">     *</span></span>
-<span class="src-line" id="L400" data-diff="same"><a class="ln" href="#L400">400</a><span class="tok-com">     * @param non-empty-string|null $startRule Rule the statement is grown from, or null for the grammar entry point</span></span>
+<span class="src-line" id="L399" data-diff="same"><a class="ln" href="#L399">399</a><span class="tok-com">     * @param non-empty-string|null $startRule Rule the statement is grown from, or null for the grammar entry point</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">347</span><span class="tok-com">     * @param int $maxDepth How deep the walk may recurse</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">348</span><span class="tok-com">     *</span></span>
-<span class="src-line" id="L401" data-diff="same"><a class="ln" href="#L401">401</a><span class="tok-com">     * @return self&lt;true&gt; Plan for one bounded, non-empty statement</span></span>
-<span class="src-line" id="L402" data-diff="same"><a class="ln" href="#L402">402</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L403" data-diff="same"><a class="ln" href="#L403">403</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">statement</span>(?<span class="tok-id">string</span> <span class="tok-var">$startRule</span>, <span class="tok-id">int</span> <span class="tok-var">$maxDepth</span>): <span class="tok-id">self</span></span>
-<span class="src-line" id="L404" data-diff="same"><a class="ln" href="#L404">404</a>    {</span>
-<span class="src-line" id="L405" data-diff="same"><a class="ln" href="#L405">405</a>        <span class="tok-var">$plan</span> = <span class="tok-var">$startRule</span> === <span class="tok-id">null</span></span>
-<span class="src-line" id="L406" data-diff="same"><a class="ln" href="#L406">406</a>            ? <span class="tok-id">self</span>::<span class="tok-id">all</span>()</span>
-<span class="src-line" id="L407" data-diff="same"><a class="ln" href="#L407">407</a>            : <span class="tok-id">self</span>::<span class="tok-id">fromRule</span>(<span class="tok-var">$startRule</span>);</span>
-<span class="src-line" id="L408" data-diff="same"><a class="ln" href="#L408">408</a></span>
-<span class="src-line" id="L409" data-diff="same"><a class="ln" href="#L409">409</a>        <span class="tok-kw">return</span> <span class="tok-var">$plan</span>-&gt;<span class="tok-id">requiringNonEmpty</span>()-&gt;<span class="tok-id">withMaxDepth</span>(<span class="tok-var">$maxDepth</span>);</span>
-<span class="src-line" id="L410" data-diff="same"><a class="ln" href="#L410">410</a>    }</span>
-<span class="src-line" id="L411" data-diff="same"><a class="ln" href="#L411">411</a>}</span>
-<span class="src-line" id="L412" data-diff="same"><a class="ln" href="#L412">412</a></span>
+<span class="src-line" id="L400" data-diff="same"><a class="ln" href="#L400">400</a><span class="tok-com">     * @return self&lt;true&gt; Plan for one bounded, non-empty statement</span></span>
+<span class="src-line" id="L401" data-diff="same"><a class="ln" href="#L401">401</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L402" data-diff="same"><a class="ln" href="#L402">402</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">statement</span>(?<span class="tok-id">string</span> <span class="tok-var">$startRule</span>, <span class="tok-id">int</span> <span class="tok-var">$maxDepth</span>): <span class="tok-id">self</span></span>
+<span class="src-line" id="L403" data-diff="same"><a class="ln" href="#L403">403</a>    {</span>
+<span class="src-line" id="L404" data-diff="same"><a class="ln" href="#L404">404</a>        <span class="tok-var">$plan</span> = <span class="tok-var">$startRule</span> === <span class="tok-id">null</span></span>
+<span class="src-line" id="L405" data-diff="same"><a class="ln" href="#L405">405</a>            ? <span class="tok-id">self</span>::<span class="tok-id">all</span>()</span>
+<span class="src-line" id="L406" data-diff="same"><a class="ln" href="#L406">406</a>            : <span class="tok-id">self</span>::<span class="tok-id">fromRule</span>(<span class="tok-var">$startRule</span>);</span>
+<span class="src-line" id="L407" data-diff="same"><a class="ln" href="#L407">407</a></span>
+<span class="src-line" id="L408" data-diff="same"><a class="ln" href="#L408">408</a>        <span class="tok-kw">return</span> <span class="tok-var">$plan</span>-&gt;<span class="tok-id">requiringNonEmpty</span>()-&gt;<span class="tok-id">withMaxDepth</span>(<span class="tok-var">$maxDepth</span>);</span>
+<span class="src-line" id="L409" data-diff="same"><a class="ln" href="#L409">409</a>    }</span>
+<span class="src-line" id="L410" data-diff="same"><a class="ln" href="#L410">410</a>}</span>
+<span class="src-line" id="L411" data-diff="same"><a class="ln" href="#L411">411</a></span>
 </code></pre>
 </main>
 <footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
