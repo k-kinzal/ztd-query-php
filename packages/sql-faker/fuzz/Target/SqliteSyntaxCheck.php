@@ -24,6 +24,7 @@ use PDOException;
  * names; resolve.c resolves operator functions and validates arity.
  * expr.c checks vector assignment dimensions before or after SELECT expansion.
  * build.c resolves local foreign-key columns against the table being defined.
+ * Its makeColumnPartOfPrimaryKey rejects generated columns in primary keys.
  * window.c/windowFind resolves names against the current SELECT's window definitions.
  * attach.c/fixSelectCb checks cross-database trigger references.
  */
@@ -91,6 +92,7 @@ final class SqliteSyntaxCheck
                 str_contains($message, 'General error: 1 duplicate column name:') => true,
                 preg_match('/General error: 1 table "[^\r\n]*" has more than one primary key\z/D', $message) === 1 => true,
                 str_ends_with($message, 'General error: 1 AUTOINCREMENT is only allowed on an INTEGER PRIMARY KEY') => true,
+                str_ends_with($message, 'General error: 1 generated columns cannot be part of the PRIMARY KEY') => true,
                 str_ends_with($message, 'General error: 1 conflicting ON CONFLICT clauses specified') => true,
                 preg_match('/General error: 1 parameters prohibited in (?:CHECK constraints|index expressions|partial index WHERE clauses|generated columns)\z/D', $message) === 1 => true,
                 preg_match('/General error: 1 trigger .* cannot reference objects in database /', $message) === 1 => true,
