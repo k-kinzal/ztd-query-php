@@ -31,6 +31,7 @@ use SqlFaker\PostgreSql\Generation\Lexeme\ValueDefinitions;
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\SequenceDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\DollarQuotedDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\IntegerLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\ValueChoices::class)]
 final class ValueDefinitionsTest extends TestCase
 {
     public function testCreateLeavesUnknownTerminalsUnclaimed(): void
@@ -158,5 +159,66 @@ final class ValueDefinitionsTest extends TestCase
         yield ['$tag$text$other$', false];
         yield ['$0$text$0$', false];
         yield ['$$a$$b$$', false];
+    }
+
+    /**
+     * @param list<int> $decisions
+     * @param list<string> $expected
+     */
+    #[DataProvider('providerConstructedBoundaries')]
+    public function testCreateConstructsScannerBoundaryValues(string $terminal, array $decisions, array $expected): void
+    {
+        $values = new \SqlFaker\Grammar\Generation\Value\ValueChoices(static function (int $count) use (&$decisions): int {
+            return array_shift($decisions) ?? $count - 1;
+        });
+        $result = (new ValueDefinitions())->create()->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput(), values: $values));
+        self::assertNotNull($result);
+        self::assertSame($expected, array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$result->sequences()]));
+    }
+
+    /**
+     * @return iterable<array{string, list<int>, list<string>}>
+     */
+    public static function providerConstructedBoundaries(): iterable
+    {
+        $minimum = [1, ...array_fill(0, 512, 0)];
+        $padding = str_repeat('0', 16);
+
+        yield ['IDENT', $minimum, ['_sf']];
+        yield ['IDENT', [], ['"' . str_repeat('猫', 63) . '"']];
+        yield ['IDENT', [1, 0], ['_sf' . str_repeat('$', 59)]];
+        yield ['UIDENT', $minimum, ['U&"a"']];
+        yield ['UIDENT', [], ['U&"' . str_repeat('猫', 63) . '"']];
+        yield ['PARAM', $minimum, ['$1']];
+        yield ['PARAM', [], ['$65535']];
+        yield ['SCONST', $minimum, ["''"]];
+        yield ['SCONST', [], ['$' . str_repeat('_', 17) . '$' . str_repeat('😀', 255) . '$' . str_repeat('_', 17) . '$']];
+        yield ['SCONST', [1, 0], ["'" . str_repeat('😀', 255) . "'"]];
+        yield ['SCONST', [1, 1], ["E'" . str_repeat('😀', 255) . "'"]];
+        yield ['USCONST', $minimum, ["U&''"]];
+        yield ['USCONST', [], ["U&'" . str_repeat('😀', 255) . "'"]];
+        yield ['BCONST', $minimum, ["B''"]];
+        yield ['BCONST', [], ["B'" . str_repeat('1', 255) . "'"]];
+        yield ['XCONST', $minimum, ["X''"]];
+        yield ['XCONST', [], ["X'" . str_repeat('F', 255) . "'"]];
+        yield ['FLOAT_PRECISION_NUMBER', $minimum, ['1']];
+        yield ['FLOAT_PRECISION_NUMBER', [], [$padding . '53']];
+        yield ['COLUMN_POSITION_NUMBER', $minimum, ['1']];
+        yield ['COLUMN_POSITION_NUMBER', [], [$padding . '32767']];
+        yield ['ICONST', $minimum, ['0']];
+        yield ['ICONST', [], [$padding . '2147483647']];
+        yield ['FCONST', $minimum, ['2147483648', '1.5', '.5', '1e2']];
+        yield ['FCONST', [], [$padding . str_repeat('9', 65), $padding . '18446744073709551615.' . str_repeat('9', 30) . 'E-' . $padding . '308']];
+        yield ['FCONST', [0, 1, 0], ['2147483648', $padding . '18446744073709551615.' . str_repeat('9', 30)]];
+        yield ['Op', $minimum, ['?']];
+        yield ['Op', [], ['?' . str_repeat('~', 31)]];
+
+        foreach (range(1, 127) as $byte) {
+            $plain = str_replace("'", "''", chr($byte));
+            $escaped = str_replace('\\', '\\\\', $plain);
+            yield ['SCONST', [1, 0, 1, $byte - 1], ["'" . $plain . "'"]];
+            yield ['SCONST', [1, 1, 1, $byte - 1], ["E'" . $escaped . "'"]];
+            yield ['USCONST', [1, 1, $byte - 1], ["U&'" . $escaped . "'"]];
+        }
     }
 }

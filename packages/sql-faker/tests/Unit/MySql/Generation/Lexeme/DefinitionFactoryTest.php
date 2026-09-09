@@ -116,6 +116,13 @@ final class DefinitionFactoryTest extends TestCase
     public static function providerNumericLimits(): array
     {
         return [
+
+            ['WEIGHT_STRING_LENGTH', '0', false], ['WEIGHT_STRING_LENGTH', '1', true],
+            ['WEIGHT_STRING_LENGTH', '2147483647', true], ['WEIGHT_STRING_LENGTH', '2147483648', false],
+            ['STATS_SAMPLE_PAGES_NUMBER', '0', false], ['STATS_SAMPLE_PAGES_NUMBER', '1', true],
+            ['STATS_SAMPLE_PAGES_NUMBER', '65535', true], ['STATS_SAMPLE_PAGES_NUMBER', '65536', false],
+            ['SOURCE_DELAY_NUMBER', '0', true], ['SOURCE_DELAY_NUMBER', '2147483647', true],
+            ['SOURCE_DELAY_NUMBER', '2147483648', false],
             ['DISPLAY_WIDTH_NUMBER', '0', true],
             ['DISPLAY_WIDTH_NUMBER', '255', true],
             ['DISPLAY_WIDTH_NUMBER', '256', false],

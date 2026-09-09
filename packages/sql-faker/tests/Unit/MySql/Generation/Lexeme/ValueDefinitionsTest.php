@@ -157,4 +157,94 @@ final class ValueDefinitionsTest extends TestCase
         self::assertNotNull($result);
         self::assertSame(1, preg_match('/\A[\x00-\x7f]*\z/D', [...$result->sequences()][0]->lexemes[0]->text));
     }
+
+    /**
+     * @param list<int> $decisions
+     * @param list<string> $expected
+     */
+    #[DataProvider('providerConstructedBoundaries')]
+    public function testCreateConstructsScannerBoundaryValues(string $terminal, array $decisions, array $expected): void
+    {
+        $values = new \SqlFaker\Grammar\Generation\Value\ValueChoices(static function (int $count) use (&$decisions): int {
+            return array_shift($decisions) ?? $count - 1;
+        });
+        $result = (new ValueDefinitions())->create()->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput(), values: $values));
+        self::assertNotNull($result);
+        self::assertSame($expected, array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$result->sequences()]));
+    }
+
+    /**
+     * @return iterable<array{string, list<int>, list<string>}>
+     */
+    public static function providerConstructedBoundaries(): iterable
+    {
+        $minimum = [1, ...array_fill(0, 512, 0)];
+        $padding = str_repeat('0', 16);
+
+        yield ['IDENT', $minimum, ['_sf']];
+        yield ['IDENT', [], ['_sf' . str_repeat('$', 60)]];
+        yield ['IDENT_QUOTED', $minimum, ['`a`']];
+        yield ['IDENT_QUOTED', [], ['`' . str_repeat('猫', 64) . '`']];
+        yield ['LEX_HOSTNAME', $minimum, ['a']];
+        yield ['LEX_HOSTNAME', [], [str_repeat('$', 64)]];
+        yield ['TEXT_STRING', $minimum, ["''"]];
+        yield ['TEXT_STRING', [], ["'" . str_repeat('猫', 255) . "'"]];
+        yield ['NCHAR_STRING', $minimum, ["N''"]];
+        yield ['NCHAR_STRING', [], ["N'" . str_repeat('猫', 255) . "'"]];
+        yield ['NUM', $minimum, ['0']];
+        yield ['NUM', [], [$padding . '2147483647']];
+        yield ['LONG_NUM', $minimum, ['2147483648']];
+        yield ['LONG_NUM', [], [$padding . '9223372036854775807']];
+        yield ['ULONGLONG_NUM', $minimum, ['9223372036854775808']];
+        yield ['ULONGLONG_NUM', [], [$padding . '18446744073709551615']];
+        yield ['DECIMAL_NUM', $minimum, ['18446744073709551616', '1.5']];
+        yield ['DECIMAL_NUM', [], [$padding . str_repeat('9', 65), $padding . '18446744073709551615.' . str_repeat('9', 30)]];
+        yield ['FLOAT_NUM', $minimum, ['0.e+0']];
+        yield ['FLOAT_NUM', [], [$padding . '18446744073709551615.' . str_repeat('9', 30) . 'E-' . $padding . '308']];
+        yield ['HEX_NUM', $minimum, ['0x0']];
+        yield ['HEX_NUM', [], ["X'" . str_repeat('F', 32) . "'"]];
+        yield ['BIN_NUM', $minimum, ['0b0']];
+        yield ['BIN_NUM', [], ["B'" . str_repeat('1', 64) . "'"]];
+
+        foreach (range(1, 127) as $byte) {
+            $encoded = str_replace(['\\', "'"], ['\\\\', "''"], chr($byte));
+            yield ['TEXT_STRING', [1, 1, $byte - 1], ["'" . $encoded . "'"]];
+            yield ['NCHAR_STRING', [1, 1, $byte - 1], ["N'" . $encoded . "'"]];
+        }
+    }
+
+    /**
+     * @param list<int> $decisions
+     */
+    #[DataProvider('providerIntroducedBoundaries')]
+    public function testBinaryAndStringsConstructCompleteAsciiValuesAfterIntroducers(string $terminal, array $decisions, string $expected): void
+    {
+        $values = new \SqlFaker\Grammar\Generation\Value\ValueChoices(static function (int $count) use (&$decisions): int {
+            return array_shift($decisions) ?? $count - 1;
+        });
+        $result = (new ValueDefinitions())->create()->generate(new LexemeInput(TerminalSequence::fromNames(['UNDERSCORE_CHARSET', $terminal]), 1, new ResolvedOutput(), values: $values));
+        self::assertNotNull($result);
+        self::assertSame([$expected], array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$result->sequences()]));
+    }
+
+    /**
+     * @return iterable<array{string, list<int>, string}>
+     */
+    public static function providerIntroducedBoundaries(): iterable
+    {
+        yield ['TEXT_STRING', [], "'" . str_repeat("\x7f", 255) . "'"];
+        yield ['TEXT_STRING', [1, 0], "''"];
+        yield ['HEX_NUM', [], "X'" . str_repeat('7f', 16) . "'"];
+        yield ['HEX_NUM', [1, 0], '0x' . str_repeat('7f', 16)];
+        yield ['HEX_NUM', [1, 0, 0, 0], '0x00'];
+        yield ['HEX_NUM', [1, 1, 0], "X''"];
+        yield ['BIN_NUM', [], "B'" . str_repeat('01111111', 8) . "'"];
+        yield ['BIN_NUM', [1, 0], '0b' . str_repeat('01111111', 8)];
+        yield ['BIN_NUM', [1, 0, 0, 0], '0b00000000'];
+        yield ['BIN_NUM', [1, 1, 0], "B''"];
+        foreach (range(1, 127) as $byte) {
+            $encoded = str_replace(['\\', "'"], ['\\\\', "''"], chr($byte));
+            yield ['TEXT_STRING', [1, 1, $byte - 1], "'" . $encoded . "'"];
+        }
+    }
 }

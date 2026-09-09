@@ -30,6 +30,7 @@ use SqlFaker\Sqlite\Generation\Lexeme\ValueDefinitions;
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\IntegerDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\SequenceDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\DollarQuotedDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\ValueChoices::class)]
 final class ValueDefinitionsTest extends TestCase
 {
     public function testCreateLeavesUnknownTerminalsUnclaimed(): void
@@ -130,5 +131,58 @@ final class ValueDefinitionsTest extends TestCase
             ['BLOB', 'x\'01af\'', ['x\'01af\'']],
             ['BLOB', 'X\'abc\'', []],
         ];
+    }
+
+    /**
+     * @param list<int> $decisions
+     * @param list<string> $expected
+     */
+    #[DataProvider('providerConstructedBoundaries')]
+    public function testCreateConstructsScannerBoundaryValues(string $terminal, array $decisions, array $expected): void
+    {
+        $values = new \SqlFaker\Grammar\Generation\Value\ValueChoices(static function (int $count) use (&$decisions): int {
+            return array_shift($decisions) ?? $count - 1;
+        });
+        $result = (new ValueDefinitions())->create()->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput(), values: $values));
+        self::assertNotNull($result);
+        self::assertSame($expected, array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$result->sequences()]));
+    }
+
+    /**
+     * @return iterable<array{string, list<int>, list<string>}>
+     */
+    public static function providerConstructedBoundaries(): iterable
+    {
+        $minimum = [1, ...array_fill(0, 512, 0)];
+        $padding = str_repeat('0', 16);
+
+        foreach (['ID', 'id', 'idj', 'ANY'] as $terminal) {
+            yield [$terminal, $minimum, ['"a"']];
+            yield [$terminal, [], ['"' . str_repeat('猫', 64) . '"']];
+        }
+        yield ['VARIABLE', $minimum, ['?1']];
+        yield ['VARIABLE', [], [':v' . str_repeat('$', 63)]];
+        yield ['VARIABLE', [1, 0], ['?32766']];
+        yield ['INTEGER', $minimum, ['0']];
+        yield ['INTEGER', [], [$padding . '9223372036854775807']];
+        yield ['number', $minimum, ['0']];
+        yield ['number', [], [$padding . '9223372036854775807']];
+        yield ['FLOAT', $minimum, ['0.']];
+        yield ['FLOAT', [], [$padding . '18446744073709551615.' . str_repeat('9', 30) . 'E-' . $padding . '308']];
+        yield ['FLOAT', [1, 0], [$padding . '18446744073709551615.' . str_repeat('9', 30)]];
+        yield ['QNUMBER', $minimum, ['0_0']];
+        yield ['QNUMBER', [], [$padding . '2147483647_' . $padding . '2147483647']];
+        foreach (['STRING', 'ids'] as $terminal) {
+            yield [$terminal, $minimum, ["''"]];
+            yield [$terminal, [], ["'" . str_repeat('😀', 255) . "'"]];
+        }
+        yield ['BLOB', $minimum, ["X''"]];
+        yield ['BLOB', [], ["X'" . str_repeat('F', 254) . "'"]];
+
+        foreach (range(1, 127) as $byte) {
+            $encoded = str_replace("'", "''", chr($byte));
+            yield ['STRING', [1, 1, $byte - 1], ["'" . $encoded . "'"]];
+            yield ['ids', [1, 1, $byte - 1], ["'" . $encoded . "'"]];
+        }
     }
 }
