@@ -17,6 +17,7 @@ use SqlFaker\PostgreSql\Generation\Rewrite\Name\IndirectionStarRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Name\RelationNameRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Query\IntoClauseRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Query\SelectOptionsRule;
+use SqlFaker\PostgreSql\Generation\Rewrite\Routine\SubstringRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Routine\TableFunctionRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Routine\TypeModifierRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Routine\WithinGroupRule;
@@ -68,6 +69,7 @@ final class RewriteDefinitions
             new TerminalMappingRule('AlterOptRoleElem', 'IDENT', 'ROLE_OPTION', 'gram.y:AlterOptRoleElem'),
             new TerminalMappingRule('xmltable_column_option_el', 'IDENT', 'PATH', 'gram.y:xmltable_column_el'),
             new ExpressionGroupingRule(['a_expr', 'b_expr'], 'gram.y:a_expr/b_expr:c_expr:parenthesized-operands'),
+            new SubstringRule(),
             new LookaheadRule(),
         );
     }

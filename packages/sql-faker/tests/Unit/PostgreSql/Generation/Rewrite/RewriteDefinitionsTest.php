@@ -14,6 +14,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 use SqlFaker\PostgreSql\Generation\Rewrite\RewriteDefinitions;
 
 #[CoversClass(RewriteDefinitions::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Routine\SubstringRule::class)]
 #[UsesClass(TerminalSequence::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalMappingRule::class)]
 #[UsesClass(TerminalOccurrence::class)]
