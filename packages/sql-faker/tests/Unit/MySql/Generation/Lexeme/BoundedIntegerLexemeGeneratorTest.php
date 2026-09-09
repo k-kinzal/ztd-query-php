@@ -26,6 +26,15 @@ use SqlFaker\MySql\Generation\Lexeme\BoundedIntegerLexemeGenerator;
 #[UsesClass(TerminalSequence::class)]
 final class BoundedIntegerLexemeGeneratorTest extends TestCase
 {
+    public function testGenerateSupportsASingletonDomainAndContinuesPastInvalidDefaults(): void
+    {
+        $generator = new BoundedIntegerLexemeGenerator('NUMBER', 1, 1, ['0', '1', '2', '0x1'], 'source');
+        $result = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['NUMBER']), 0, new ResolvedOutput()));
+        self::assertNotNull($result);
+        self::assertSame(['1', '0x1'], array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$result->sequences()]));
+        self::assertCount(2, array_unique(array_map(static fn ($candidate): string => $candidate->id, [...$result->sequences()])));
+    }
+
     public function testAcceptsUsesBothConfiguredBoundsForDecimalAndHexadecimalValues(): void
     {
         $delay = new BoundedIntegerLexemeGenerator('DELAY', 0, 2147483647, ['0'], 'delay');
