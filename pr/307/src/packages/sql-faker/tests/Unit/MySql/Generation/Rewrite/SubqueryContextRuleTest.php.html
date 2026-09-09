@@ -67,18 +67,19 @@
 <span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>        <span class="tok-var">$result</span> = <span class="tok-var">$rule</span>-&gt;<span class="tok-id">rewrite</span>(<span class="tok-var">$input</span>);</span>
 <span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-var">$replace</span> ? [<span class="tok-str">&#039;NUM&#039;</span>, <span class="tok-str">&#039;IDENT&#039;</span>] : [<span class="tok-str">&#039;IDENT&#039;</span>, <span class="tok-str">&#039;SUBQUERY&#039;</span>, <span class="tok-str">&#039;IDENT&#039;</span>], <span class="tok-var">$result</span>-&gt;<span class="tok-id">names</span>());</span>
 <span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-var">$input</span>-&gt;<span class="tok-id">original</span>, <span class="tok-var">$result</span>-&gt;<span class="tok-id">original</span>);</span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-var">$result</span>, <span class="tok-var">$rule</span>-&gt;<span class="tok-id">rewrite</span>(<span class="tok-var">$result</span>));</span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    }</span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a></span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a><span class="tok-com">     * @return list&lt;array{string, bool}&gt;</span></span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">providerScopes</span>(): <span class="tok-kw">array</span></span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    {</span>
-<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>        <span class="tok-kw">return</span> [[<span class="tok-str">&#039;handler_stmt&#039;</span>, <span class="tok-id">true</span>], [<span class="tok-str">&#039;purge&#039;</span>, <span class="tok-id">true</span>], [<span class="tok-str">&#039;install_stmt&#039;</span>, <span class="tok-id">true</span>], [<span class="tok-str">&#039;select_stmt&#039;</span>, <span class="tok-id">false</span>]];</span>
-<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>    }</span>
-<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>}</span>
-<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a></span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>        <span class="tok-id">self</span>::<span class="tok-id">assertCount</span>(<span class="tok-id">count</span>(<span class="tok-var">$result</span>-&gt;<span class="tok-id">terminals</span>), <span class="tok-id">array_unique</span>(<span class="tok-id">array_map</span>(<span class="tok-kw">static</span> <span class="tok-kw">fn</span> (<span class="tok-var">$terminal</span>): <span class="tok-id">int</span> =&gt; <span class="tok-var">$terminal</span>-&gt;<span class="tok-id">id</span>, <span class="tok-var">$result</span>-&gt;<span class="tok-id">terminals</span>)));</span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-var">$result</span>, <span class="tok-var">$rule</span>-&gt;<span class="tok-id">rewrite</span>(<span class="tok-var">$result</span>));</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>    }</span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a></span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a><span class="tok-com">     * @return list&lt;array{string, bool}&gt;</span></span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">providerScopes</span>(): <span class="tok-kw">array</span></span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>    {</span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>        <span class="tok-kw">return</span> [[<span class="tok-str">&#039;handler_stmt&#039;</span>, <span class="tok-id">true</span>], [<span class="tok-str">&#039;purge&#039;</span>, <span class="tok-id">true</span>], [<span class="tok-str">&#039;install_stmt&#039;</span>, <span class="tok-id">true</span>], [<span class="tok-str">&#039;select_stmt&#039;</span>, <span class="tok-id">false</span>]];</span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>    }</span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>}</span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a></span>
 </code></pre>
 </main>
 <footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
