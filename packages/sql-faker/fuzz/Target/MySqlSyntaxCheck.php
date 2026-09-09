@@ -19,6 +19,9 @@ use PDOException;
  * checks are semantic rejections. SHOW PARSE_TREE requires WITH_SHOW_PARSE_TREE
  * in sql_yacc.yy, which is absent in the pinned release build.
  * Key-prefix lengths and allowed generated-column functions are semantic constraints.
+ * parse_tree_partitions.cc compares subpartition counts after building partition metadata;
+ * only its specific diagnostic is accepted when wrapped by error 1064.
+ * parse_tree_helpers.cc validates resource-group priority using runtime platform bounds.
  */
 final class MySqlSyntaxCheck
 {
@@ -68,7 +71,7 @@ final class MySqlSyntaxCheck
 
             $acceptable = in_array($errorCode, [1054, 1046, 1527, 1273, 1327, 3708, 1407, 1049,
                 1319, 1305, 1096, 1791, 1286, 1235, 1690, 3652, 3709, 1525, 1051, 3980,
-                1193, 1277, 1641, 1800, 1801, 1066, 1115, 3714, 6006, 3573, 3568, 1302, 1391, 3763, 1060, 1492], true);
+                1193, 1277, 1641, 1800, 1801, 1066, 1115, 3714, 6006, 3573, 3568, 1302, 1391, 3763, 1060, 1492, 3654, 1109], true);
 
             if ($errorCode === 1221 && (str_ends_with($rejection->getMessage(), 'Incorrect usage of spatial/fulltext/hash index and explicit index order')
                 || str_ends_with($rejection->getMessage(), 'Incorrect usage of SRID and non-geometry column'))) {
@@ -79,7 +82,8 @@ final class MySqlSyntaxCheck
                 return;
             }
             $detail = $rejection->errorInfo[2] ?? null;
-            if ($errorCode === 1064 && is_string($detail) && str_starts_with($detail, 'Constant, random or timezone-dependent expressions in (sub)partitioning function are not allowed near ')) {
+            if ($errorCode === 1064 && is_string($detail) && (str_starts_with($detail, 'Constant, random or timezone-dependent expressions in (sub)partitioning function are not allowed near ')
+                || str_starts_with($detail, 'Wrong number of subpartitions defined, mismatch with previous setting near '))) {
                 return;
             }
 
