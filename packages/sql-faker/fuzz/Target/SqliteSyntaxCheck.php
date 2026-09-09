@@ -99,7 +99,7 @@ final class SqliteSyntaxCheck
                 preg_match('/General error: 1 default value of column \[[^\r\n]*\] is not constant\z/D', $message) === 1 => true,
                 str_ends_with($message, 'General error: 1 number of columns in foreign key does not match the number of columns in the referenced table') => true,
                 str_ends_with($message, 'General error: 1 expressions prohibited in PRIMARY KEY and UNIQUE constraints') => true,
-                str_starts_with($message, 'SQLSTATE[HY000]: General error: 1 cannot override frame specification of window: ') => true,
+                preg_match('/\ASQLSTATE\[HY000\]: General error: 1 cannot override (?:frame specification|PARTITION clause|ORDER BY clause) of window: /D', $message) === 1 => true,
                 str_ends_with($message, 'General error: 1 conflicting ON CONFLICT clauses specified') => true,
                 preg_match('/General error: 1 parameters prohibited in (?:CHECK constraints|index expressions|partial index WHERE clauses|generated columns)\z/D', $message) === 1 => true,
                 preg_match('/General error: 1 trigger .* cannot reference objects in database /', $message) === 1 => true,
