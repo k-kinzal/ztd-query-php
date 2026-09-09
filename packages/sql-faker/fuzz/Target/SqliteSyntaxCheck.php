@@ -21,7 +21,8 @@ use PDOException;
  * handful of documented restrictions — are matched on the message. Any other
  * rejection is an unclassified finding and surfaces as a SyntaxFailure for
  * PHP-Fuzzer to record. build.c checks view parameters and duplicate column
- * names, while attach.c/fixSelectCb checks cross-database trigger references.
+ * names; resolve.c resolves operator functions and validates arity.
+ * attach.c/fixSelectCb checks cross-database trigger references.
  */
 final class SqliteSyntaxCheck
 {
@@ -76,7 +77,7 @@ final class SqliteSyntaxCheck
                 str_contains($message, 'General error: 1 row value misused') => true,
                 str_contains($message, 'General error: 1 no such collation sequence:') => true,
                 str_contains($message, 'DISTINCT is not supported for window functions') => true,
-                str_contains($message, 'wrong number of arguments to function GLOB()') => true,
+                preg_match('/General error: 1 wrong number of arguments to function (?:GLOB|MATCH)\(\)\z/D', $message) === 1 => true,
                 str_contains($message, 'duplicate WITH table name:') => true,
                 str_ends_with($message, 'General error: 1 unsupported use of NULLS FIRST') => true,
                 str_ends_with($message, 'General error: 1 unsupported use of NULLS LAST') => true,
