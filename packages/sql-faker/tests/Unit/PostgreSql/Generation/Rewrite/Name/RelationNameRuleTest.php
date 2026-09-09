@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\SqlFaker\PostgreSql\Generation\Rewrite;
+namespace Tests\Unit\SqlFaker\PostgreSql\Generation\Rewrite\Name;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Generation\Token\ProductionOccurrence;
 use SqlFaker\Grammar\Generation\Token\TerminalOccurrence;
 use SqlFaker\Grammar\Generation\Token\TerminalSequence;
-use SqlFaker\PostgreSql\Generation\Rewrite\RelationNameRule;
+use SqlFaker\PostgreSql\Generation\Rewrite\Name\RelationNameRule;
 
 #[CoversClass(RelationNameRule::class)]
 #[UsesClass(ProductionOccurrence::class)]

@@ -32,6 +32,9 @@ use SqlFaker\MySql\Generation\Rewrite\RewriteDefinitions;
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\SetNamesRule::class)]
 #[UsesClass(\SqlFaker\Grammar\NonTerminal::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\ExpressionGroupingRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\AlterEventRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\SubqueryContextRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\IntoClauseRule::class)]
 final class RewriteDefinitionsTest extends TestCase
 {
     public function testCreateComposesTheDeclaredSourceRules(): void

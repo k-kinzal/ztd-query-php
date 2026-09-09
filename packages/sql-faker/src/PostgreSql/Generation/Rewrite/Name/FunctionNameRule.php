@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SqlFaker\PostgreSql\Generation\Rewrite;
+namespace SqlFaker\PostgreSql\Generation\Rewrite\Name;
 
 use Override;
 use SqlFaker\Grammar\Generation\Token\RewriteRule;
@@ -14,7 +14,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 final class FunctionNameRule implements RewriteRule
 {
     /**
-     * Removes non-name indirections from function names while preserving them in ordinary column references.
+     * Replaces non-name components with named qualification, preserving ColId disambiguation and column subscripts.
      */
     #[Override]
     public function rewrite(TerminalSequence $sequence): TerminalSequence
@@ -29,7 +29,10 @@ final class FunctionNameRule implements RewriteRule
                 continue;
             }
             if ($origin->name === '[' || ($origin->name === '.' && $sequence->nameAt($range[0] + 1) === '*')) {
-                $sequence = $sequence->replace($range[0], $range[1] - $range[0], [], 'postgresql.function-name');
+                $sequence = $sequence->replace($range[0], $range[1] - $range[0], [
+                    $origin->replaced('.', 'postgresql.function-name'),
+                    $sequence->inserted('IDENT', $origin, 'postgresql.function-name'),
+                ], 'postgresql.function-name');
             }
         }
         return $sequence;

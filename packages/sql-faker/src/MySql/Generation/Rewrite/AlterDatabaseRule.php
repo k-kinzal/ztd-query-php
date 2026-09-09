@@ -9,7 +9,7 @@ use SqlFaker\Grammar\Generation\Token\RewriteRule;
 use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
- * sql/sql_yacc.yy ident_or_empty and alter_database_options compete for an initial ENCRYPTION identifier.
+ * sql/sql_yacc.yy ident_or_empty and alter_database_options compete for an initial option keyword that is also allowed as an identifier.
  */
 final class AlterDatabaseRule implements RewriteRule
 {
@@ -25,7 +25,7 @@ final class AlterDatabaseRule implements RewriteRule
                 continue;
             }
             $range = $sequence->range($occurrence);
-            if ($range === null || $sequence->nameAt($range[0] + 2) !== 'ENCRYPTION_SYM') {
+            if ($range === null || !in_array($sequence->nameAt($range[0] + 2), ['ENCRYPTION_SYM', 'CHARSET', 'CHAR_SYM', 'COLLATE_SYM'], true)) {
                 continue;
             }
             $option = $sequence->terminals[$range[0] + 2];

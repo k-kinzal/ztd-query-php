@@ -95,6 +95,9 @@ use SqlFaker\MySql\GenerationContext;
 #[UsesClass(\SqlFaker\MySql\Generation\Spacing\QualifiedNameSpacingRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Spacing\VariableSpacingRule::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\ExpressionGroupingRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\AlterEventRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\SubqueryContextRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\IntoClauseRule::class)]
 final class GenerationContextTest extends TestCase
 {
     public function testBindsTheRequestedReleaseAndPreservesTheGrammarStart(): void

@@ -8,6 +8,10 @@ use SqlFaker\Grammar\Generation\Token\ExpressionGroupingRule;
 use SqlFaker\Grammar\Generation\Token\TerminalMappingRule;
 use SqlFaker\Grammar\Generation\Token\TokenRewriter;
 use SqlFaker\Grammar\Generation\Token\UniqueOptionRule;
+use SqlFaker\PostgreSql\Generation\Rewrite\Name\AnyRelationNameRule;
+use SqlFaker\PostgreSql\Generation\Rewrite\Name\FunctionNameRule;
+use SqlFaker\PostgreSql\Generation\Rewrite\Name\IndirectionStarRule;
+use SqlFaker\PostgreSql\Generation\Rewrite\Name\RelationNameRule;
 
 /**
  * Declares PostgreSQL structural rules by their original grammar scope.
@@ -23,8 +27,11 @@ final class RewriteDefinitions
             new OperatorArgumentsRule(),
             new CopySourceRule(),
             new FunctionNameRule(),
+            new IndirectionStarRule(),
+            new ConstraintAttributesRule(),
             new WindowFrameRule(),
             new RelationNameRule(),
+            new AnyRelationNameRule(),
             new PublicationObjectRule(),
             new OverlapsArgumentsRule(),
             new TimeZoneIntervalRule(),

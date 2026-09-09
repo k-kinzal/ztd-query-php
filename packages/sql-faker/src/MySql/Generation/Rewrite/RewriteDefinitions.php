@@ -22,9 +22,13 @@ final class RewriteDefinitions
             new UniqueOptionRule('require_clause', 'require_list_element', [
                 'SUBJECT_SYM' => 'subject', 'ISSUER_SYM' => 'issuer', 'CIPHER_SYM' => 'cipher',
             ], 'AND_SYM', 'sql_yacc.yy:require_list_element'),
+            new UniqueOptionRule('start', 'start_transaction_option', ['READ_SYM' => 'access-mode'], ',', 'sql_yacc.yy:start'),
+            new SubqueryContextRule(),
+            new IntoClauseRule(),
             new ConstraintEnforcementRule(),
             new SetNamesRule(),
             new AlterDatabaseRule(),
+            new AlterEventRule(),
             new RoleGrantRule(),
             new RequiredAliasRule(),
             new InstanceActionRule(),

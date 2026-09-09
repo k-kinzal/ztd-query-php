@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\MySql\Generation\Rewrite;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Derivation\DerivationTrace;
@@ -23,13 +24,14 @@ use SqlFaker\MySql\Generation\Rewrite\AlterDatabaseRule;
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalSequence::class)]
 final class AlterDatabaseRuleTest extends TestCase
 {
-    public function testRewriteAddsTheOptionIntroducerOnlyForAnOmittedDatabase(): void
+    #[DataProvider('providerOptions')]
+    public function testRewriteAddsTheOptionIntroducerOnlyForAnOmittedDatabase(string $option): void
     {
         $trace = new DerivationTrace('alter_database_stmt');
-        $trace->expand(0, new Production([new Terminal('ALTER'), new Terminal('DATABASE'), new NonTerminal('ident_or_empty'), new Terminal('ENCRYPTION_SYM')]), 0);
+        $trace->expand(0, new Production([new Terminal('ALTER'), new Terminal('DATABASE'), new NonTerminal('ident_or_empty'), new Terminal($option)]), 0);
         $trace->expand(2, new Production([]), 0);
         $input = $trace->terminals();
-        self::assertSame(['ALTER', 'DATABASE', 'DEFAULT_SYM', 'ENCRYPTION_SYM'], (new AlterDatabaseRule())->rewrite($input)->names());
+        self::assertSame(['ALTER', 'DATABASE', 'DEFAULT_SYM', $option], (new AlterDatabaseRule())->rewrite($input)->names());
     }
 
     public function testRewriteKeepsAnExplicitDatabaseNamedEncryption(): void
@@ -39,5 +41,12 @@ final class AlterDatabaseRuleTest extends TestCase
         $trace->expand(2, new Production([new Terminal('ENCRYPTION_SYM')]), 1);
         $input = $trace->terminals();
         self::assertSame($input, (new AlterDatabaseRule())->rewrite($input));
+    }
+    /**
+     * @return list<array{string}>
+     */
+    public static function providerOptions(): array
+    {
+        return [['ENCRYPTION_SYM'], ['CHARSET'], ['CHAR_SYM'], ['COLLATE_SYM']];
     }
 }

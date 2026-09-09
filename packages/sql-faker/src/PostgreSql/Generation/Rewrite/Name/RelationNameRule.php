@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SqlFaker\PostgreSql\Generation\Rewrite;
+namespace SqlFaker\PostgreSql\Generation\Rewrite\Name;
 
 use Override;
 use SqlFaker\Grammar\Generation\Token\RewriteRule;
