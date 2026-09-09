@@ -141,9 +141,9 @@ vendor/bin/php-fuzzer fuzz --max-runs 10000 --timeout 10 \
 ```
 
 `SQLFAKER_COVERAGE_DIR` selects an independent program-campaign coverage root.
-`composer test:oracles` runs classifier and recording controls plus live controls
-for the connection/module/library variables provided above. Missing optional
-native infrastructure is reported as skipped tests; a complete native control run
-must have no skips. These checks include invalid second statements and the
+`composer test:oracles` runs the classifier and recording controls without native
+infrastructure. `composer test:oracles:native` additionally runs all live controls
+and requires the connection/module/library variables above. Missing settings fail
+the native command; no native control is silently skipped. These checks include invalid second statements and the
 inconclusive SQLite-tail case, so first-statement acceptance cannot be mistaken
 for complete-program acceptance.

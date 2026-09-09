@@ -6,7 +6,6 @@ namespace Tests\Fixtures\SqlFaker;
 
 use PDO;
 use PgSql\Connection;
-use PHPUnit\Framework\Assert;
 use SqlFaker\Fuzz\Target\InfrastructureFailure;
 use SqlFaker\Fuzz\Target\OracleEnvironment;
 
@@ -16,13 +15,14 @@ use SqlFaker\Fuzz\Target\OracleEnvironment;
 final class OracleFixture
 {
     /**
-     * Makes missing optional infrastructure visible as skipped native controls in the ordinary unit CI job.
+     * Requires explicit infrastructure for the native control command; the ordinary command excludes that group.
+     * @throws InfrastructureFailure When a required native control setting is missing
      */
     public static function requiredSetting(string $name): string
     {
         $value = getenv($name);
         if ($value === false || $value === '') {
-            Assert::markTestSkipped('Native oracle control requires ' . $name . '.');
+            throw new InfrastructureFailure('Native oracle control requires ' . $name . '.');
         }
         return $value;
     }

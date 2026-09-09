@@ -62,7 +62,7 @@
         "docgen:diff": "@docgen --diff=origin/main --serve",
         "docgen:fresh": "@docgen --no-cache",
         "test:unit": "phpunit --testsuite unit",
-        "test:oracles": "phpunit --no-coverage tests/Integration/Fuzz",
+        "test:oracles": "phpunit --no-coverage --exclude-group native tests/Integration/Fuzz",
         "lint": [
             "@format:check",
             "@phpstan",
@@ -93,7 +93,8 @@
             "deptrac debug:unused --config-file=deptrac.yaml"
         ],
         "loc-guard": "loc-guard --config=loc.yaml",
-        "tree-guard": "tree-guard --config=tree.yaml"
+        "tree-guard": "tree-guard --config=tree.yaml",
+        "test:oracles:native": "phpunit --no-coverage tests/Integration/Fuzz"
     },
     "config": {
         "allow-plugins": {

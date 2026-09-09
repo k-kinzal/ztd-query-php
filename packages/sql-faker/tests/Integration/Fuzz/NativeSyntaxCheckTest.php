@@ -6,6 +6,7 @@ namespace Tests\Integration\SqlFaker\Fuzz;
 
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Fuzz\Target\InfrastructureFailure;
 use SqlFaker\Fuzz\Target\MySqlSyntaxCheck;
@@ -18,6 +19,7 @@ use SqlFaker\Fuzz\Target\SyntaxFailure;
 use Tests\Fixtures\SqlFaker\OracleFixture;
 
 #[CoversNothing]
+#[Group('native')]
 final class NativeSyntaxCheckTest extends TestCase
 {
     public function testMySqlSeparatesActualPrepareAcceptanceSemanticRejectionAndUnsupportedCommands(): void
