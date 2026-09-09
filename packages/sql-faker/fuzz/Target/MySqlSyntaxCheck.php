@@ -31,7 +31,10 @@ use PDOException;
  * window.cc resolves named windows and item_sum.cc checks their expression context.
  * sql_parse.cc checks default-value types; sql_view.cc checks view column counts.
  * item.cc and item_func.cc validate resolved row widths and bitwise operand types.
- * item_cmpfunc.cc rejects ordered comparisons of geometry values after resolving operand types.
+ * item_cmpfunc.cc and item_func.cc reject geometry operands after resolving their types.
+ * item_geofunc.h checks spatial constructor argument types; item.cc resolves collations.
+ * item_regexp_func.cc rejects incompatible charsets; item_json_func.cc requires JSON-compatible input types.
+ * window.cc resolves duplicate names, dependency cycles, inherited partitioning and RANGE ordering types.
  * sql_partition.cc and table.cc validate expression functions after itemization.
  * sql_yacc.yy resolves duplicate routine names; user-name lengths are checked against USERNAME_CHAR_LENGTH.
  * item_timefunc.cc checks resolved AT TIME ZONE operand types.
@@ -89,7 +92,7 @@ final class MySqlSyntaxCheck
                 1193, 1277, 1641, 1800, 1801, 1066, 1115, 3714, 6006, 3573, 3568, 3569, 1302, 1391, 3763, 1060, 1492, 3654, 1109,
                 1128, 1426, 1624, 6033, 6037, 1294, 3577, 1585, 1253, 1324, 1136, 1308,
                 1288, 1310, 1415, 1584, 1630, 3102, 3143, 3579, 3593, 3772, 4032, 4101,
-                1353, 1067, 1111, 3769, 1564, 1332, 1241, 1330, 1470, 1101, 3770], true);
+                1353, 1067, 1111, 3769, 1564, 1332, 1241, 1330, 1470, 1101, 3770, 3146, 3995, 1267], true);
 
             if ($errorCode === 1221 && (str_ends_with($rejection->getMessage(), 'Incorrect usage of spatial/fulltext/hash index and explicit index order')
                 || str_ends_with($rejection->getMessage(), 'Incorrect usage of SRID and non-geometry column'))) {
@@ -100,13 +103,26 @@ final class MySqlSyntaxCheck
                 return;
             }
             $detail = $rejection->errorInfo[2] ?? null;
+            if ($errorCode === 3591 && is_string($detail) && preg_match("/\\AWindow '[^\\r\\n]*' is defined twice\\.\\z/D", $detail) === 1) {
+                return;
+            }
+            if (($errorCode === 3580 && $detail === 'There is a circularity in the window dependency graph.')
+                || ($errorCode === 3581 && $detail === 'A window which depends on another cannot define partitioning.')) {
+                return;
+            }
+            if ($errorCode === 3587 && is_string($detail) && preg_match("/\\AWindow '[^\\r\\n]*' with RANGE N PRECEDING\/FOLLOWING frame requires exactly one ORDER BY expression, of numeric or temporal type\\z/D", $detail) === 1) {
+                return;
+            }
+            if ($errorCode === 1367 && is_string($detail) && preg_match("/\\AIllegal non geometric '[^\\r\\n]*' value found during parsing\\z/D", $detail) === 1) {
+                return;
+            }
             if ($errorCode === 1351 && $detail === "View's SELECT contains a variable or parameter") {
                 return;
             }
             if ($errorCode === 3998 && $detail === 'Cannot cast value to TIMESTAMP WITH TIME ZONE.') {
                 return;
             }
-            if ($errorCode === 1210 && in_array($detail, ['Incorrect arguments to >>', 'Incorrect arguments to <<', 'Incorrect arguments to &', 'Incorrect arguments to |', 'Incorrect arguments to ^', 'Incorrect arguments to <', 'Incorrect arguments to <=', 'Incorrect arguments to >', 'Incorrect arguments to >='], true)) {
+            if ($errorCode === 1210 && in_array($detail, ['Incorrect arguments to >>', 'Incorrect arguments to <<', 'Incorrect arguments to &', 'Incorrect arguments to |', 'Incorrect arguments to ^', 'Incorrect arguments to <', 'Incorrect arguments to <=', 'Incorrect arguments to >', 'Incorrect arguments to >=', 'Incorrect arguments to like', 'Incorrect arguments to DIV', 'Incorrect arguments to %', 'Incorrect arguments to +', 'Incorrect arguments to -', 'Incorrect arguments to *', 'Incorrect arguments to /'], true)) {
                 return;
             }
             if ($errorCode === 1064 && is_string($detail) && (str_starts_with($detail, 'Constant, random or timezone-dependent expressions in (sub)partitioning function are not allowed near ')

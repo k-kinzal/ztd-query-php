@@ -74,6 +74,7 @@ final class PgSyntaxCheck
      * parse_expr.c rejects unresolved explicit casts with 42846 after resolving both types.
      * parse_agg.c checks aggregate/grouping expression contexts after function analysis.
      * parse_clause.c checks GROUPS against the resolved window ordering, including inherited clauses.
+     * jsonpath_scan.l reports 42601 for invalid JSONPath string values after SQL parsing.
      * Only those specific diagnostics are inconclusive; grammar-action errors remain findings.
      *
      * @throws SyntaxFailure When syntax or an unclassified rejection is observed
@@ -92,6 +93,7 @@ final class PgSyntaxCheck
             || preg_match('/\AERROR:  (?:non-integer constant in (?:GROUP BY|ORDER BY|DISTINCT ON)|WITH query is not recursive)(?:\r?\n|\z)/D', trim($message)) === 1
             || preg_match('/\AERROR:  subquery must return only one column(?:\r?\n|\z)/D', trim($message)) === 1
             || preg_match('/\AERROR:  (?:type modifiers must be simple constants or identifiers|a column definition list is only allowed for functions returning "record"|MERGE_ACTION\(\) can only be used in the RETURNING list of a MERGE command)(?:\r?\n|\z)/D', trim($message)) === 1
+            || preg_match('/\AERROR:  syntax error (?:at end of jsonpath input|at or near "[^\r\n]*" of jsonpath input)(?:\r?\n|\z)/D', trim($message)) === 1
             || str_starts_with(trim($message), 'ERROR:  format requires a parameter')
             || str_starts_with(trim($message), 'ERROR:  SELECT * with no tables specified is not valid')
             || str_starts_with(trim($message), 'ERROR:  unreachable WHEN clause specified after unconditional WHEN clause')
