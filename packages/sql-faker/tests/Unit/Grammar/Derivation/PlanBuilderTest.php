@@ -83,6 +83,37 @@ final class PlanBuilderTest extends TestCase
         self::assertSame(2, $builder->minimumExpansions(GenerationPlan::all()->requiringNonEmpty()));
     }
 
+    public function testMinimumExpansionsIncludesTheSelectedRootAlternativeBeforeAllocatingInputBudget(): void
+    {
+        $grammar = new Grammar('root', [
+            'root' => new ProductionRule('root', [new Production([new Terminal('T')]), new Production([new NonTerminal('leaf')])]),
+            'leaf' => new ProductionRule('leaf', [new Production([new NonTerminal('end')])]),
+            'end' => new ProductionRule('end', [new Production([new Terminal('U')])]),
+        ]);
+        $lexical = $this->createMock(LexicalGrammar::class);
+        $lexical->method('resolveSequence')->willReturnCallback(CoverageFixture::resolve(...));
+        $builder = new PlanBuilder($grammar, $lexical);
+        $constraints = GenerationPlan::constrained('root', ['root' => [ProductionPattern::at(1)]])->requiringNonEmpty()->withExpansionBudget(5);
+        self::assertSame(3, $builder->minimumExpansions($constraints));
+        $plan = GenerationPlan::fromBytes('', $builder, $constraints);
+        self::assertSame(3, $plan->expansionBudget());
+        self::assertEquals(ProductionPattern::at(1), $plan->patternAt('root', 0));
+        self::assertSame('U', (new \SqlFaker\Generation\SqlGenerator($grammar, Factory::create(), $lexical))->generate($plan));
+    }
+
+    public function testMinimumExpansionsRetainsNonEmptyCostsAndTheUnreachableSentinelForRootPatterns(): void
+    {
+        $grammar = new Grammar('root', [
+            'root' => new ProductionRule('root', [new Production([]), new Production([new Terminal('T')])]),
+        ]);
+        $builder = new PlanBuilder($grammar, $this->createMock(LexicalGrammar::class));
+        $empty = GenerationPlan::constrained('root', ['root' => [ProductionPattern::at(0)]]);
+        self::assertSame(1, $builder->minimumExpansions($empty));
+        self::assertSame(PHP_INT_MAX, $builder->minimumExpansions($empty->requiringNonEmpty()));
+        self::assertSame(PHP_INT_MAX, $builder->minimumExpansions(GenerationPlan::constrained('root', ['root' => [ProductionPattern::at(5)]])));
+        self::assertSame(PHP_INT_MAX, $builder->minimumExpansions(GenerationPlan::constrained('missing', ['missing' => [ProductionPattern::at(0)]])));
+    }
+
     public function testBuildUsesTheSameContextualRewriteAndPinsItsCompleteCandidate(): void
     {
         $grammar = new Grammar('root', ['root' => new ProductionRule('root', [new Production([new Terminal('T')])])]);
