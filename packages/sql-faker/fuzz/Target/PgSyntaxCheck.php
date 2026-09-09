@@ -71,6 +71,8 @@ final class PgSyntaxCheck
      * parse_type.c validates resolved type modifiers; parse_relation.c checks a function's result type.
      * parse_expr.c validates MERGE_ACTION against the current analyzed expression context.
      * parse_clause.c resolves non-integer sort/group positions; parse_cte.c checks whether SEARCH/CYCLE queries are recursive.
+     * parse_expr.c rejects unresolved explicit casts with 42846 after resolving both types.
+     * parse_agg.c checks aggregate/grouping expression contexts after function analysis.
      * Only those specific diagnostics are inconclusive; grammar-action errors remain findings.
      *
      * @throws SyntaxFailure When syntax or an unclassified rejection is observed
@@ -79,7 +81,7 @@ final class PgSyntaxCheck
     {
         if (in_array($state, ['42704', '42P01', '42703', '3F000', '42809', '22023', '26000',
             '2BP01', '42602', '42883', '42939', '42P07', '42P10', '3D000', '42P03', '22P02',
-            '42712', '42P19', '42P11', '42804', '42P18', '22007', '42725'], true)) {
+            '42712', '42P19', '42P11', '42804', '42P18', '22007', '42725', '42803', '42846'], true)) {
             return;
         }
         if ($state === '0A000') {

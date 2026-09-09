@@ -33,6 +33,7 @@ use PDOException;
  * item.cc and item_func.cc validate resolved row widths and bitwise operand types.
  * sql_partition.cc and table.cc validate expression functions after itemization.
  * sql_yacc.yy resolves duplicate routine names; user-name lengths are checked against USERNAME_CHAR_LENGTH.
+ * item_timefunc.cc checks resolved AT TIME ZONE operand types.
  * create_field.cc checks defaults against resolved column types and SQL mode; table.cc rejects disallowed default-expression functions.
  */
 final class MySqlSyntaxCheck
@@ -97,6 +98,9 @@ final class MySqlSyntaxCheck
                 return;
             }
             $detail = $rejection->errorInfo[2] ?? null;
+            if ($errorCode === 3998 && $detail === 'Cannot cast value to TIMESTAMP WITH TIME ZONE.') {
+                return;
+            }
             if ($errorCode === 1210 && in_array($detail, ['Incorrect arguments to >>', 'Incorrect arguments to <<', 'Incorrect arguments to &', 'Incorrect arguments to |', 'Incorrect arguments to ^'], true)) {
                 return;
             }

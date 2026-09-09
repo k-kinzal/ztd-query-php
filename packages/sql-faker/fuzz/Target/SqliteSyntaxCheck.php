@@ -23,7 +23,7 @@ use PDOException;
  * PHP-Fuzzer to record. build.c checks view parameters and duplicate column
  * names; resolve.c resolves operator functions and validates arity.
  * expr.c checks vector assignment dimensions before or after SELECT expansion.
- * build.c resolves local foreign-key columns against the table being defined.
+ * build.c resolves local foreign-key columns and checks inline and table-level key widths.
  * Its makeColumnPartOfPrimaryKey rejects generated columns in primary keys.
  * window.c/windowFind resolves names against the current SELECT's window definitions.
  * attach.c/fixSelectCb checks cross-database trigger references.
@@ -100,6 +100,7 @@ final class SqliteSyntaxCheck
                 str_ends_with($message, 'General error: 1 must have at least one non-generated column') => true,
                 preg_match('/General error: 1 default value of column \[[^\r\n]*\] is not constant\z/D', $message) === 1 => true,
                 str_ends_with($message, 'General error: 1 number of columns in foreign key does not match the number of columns in the referenced table') => true,
+                preg_match('/\\ASQLSTATE\\[HY000\\]: General error: 1 foreign key on [^\\r\\n]+ should reference only one column of table [^\\r\\n]+\\z/D', $message) === 1 => true,
                 str_ends_with($message, 'General error: 1 expressions prohibited in PRIMARY KEY and UNIQUE constraints') => true,
                 preg_match('/\ASQLSTATE\[HY000\]: General error: 1 cannot override (?:frame specification|PARTITION clause|ORDER BY clause) of window: /D', $message) === 1 => true,
                 str_ends_with($message, 'General error: 1 conflicting ON CONFLICT clauses specified') => true,
