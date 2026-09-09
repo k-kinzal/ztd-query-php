@@ -33,6 +33,7 @@ use PDOException;
  * item.cc and item_func.cc validate resolved row widths and bitwise operand types.
  * sql_partition.cc and table.cc validate expression functions after itemization.
  * sql_yacc.yy resolves duplicate routine names; user-name lengths are checked against USERNAME_CHAR_LENGTH.
+ * create_field.cc checks defaults against resolved column types and SQL mode; table.cc rejects disallowed default-expression functions.
  */
 final class MySqlSyntaxCheck
 {
@@ -85,7 +86,7 @@ final class MySqlSyntaxCheck
                 1193, 1277, 1641, 1800, 1801, 1066, 1115, 3714, 6006, 3573, 3568, 3569, 1302, 1391, 3763, 1060, 1492, 3654, 1109,
                 1128, 1426, 1624, 6033, 6037, 1294, 3577, 1585, 1253, 1324, 1136, 1308,
                 1288, 1310, 1415, 1584, 1630, 3102, 3143, 3579, 3593, 3772, 4032, 4101,
-                1353, 1067, 1111, 3769, 1564, 1332, 1241, 1330, 1470], true);
+                1353, 1067, 1111, 3769, 1564, 1332, 1241, 1330, 1470, 1101, 3770], true);
 
             if ($errorCode === 1221 && (str_ends_with($rejection->getMessage(), 'Incorrect usage of spatial/fulltext/hash index and explicit index order')
                 || str_ends_with($rejection->getMessage(), 'Incorrect usage of SRID and non-geometry column'))) {
