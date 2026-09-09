@@ -165,6 +165,12 @@ use SqlFaker\PostgreSqlProvider;
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\GeneratedColumnRule::class)]
 #[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\WindowNameLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Alter\OrderByRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\BoundedIntegerLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\SizeNumberLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\CompoundSelectRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Replication\StartRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Query\SelectOptionsRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Routine\TableFunctionRule::class)]
 final class PostgreSqlProviderTest extends TestCase
 {
     #[DataProvider('providerTargetedGenerationSeed')]

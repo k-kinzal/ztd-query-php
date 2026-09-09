@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\MySql\Generation\Rewrite;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Derivation\DerivationTrace;
@@ -23,6 +24,32 @@ use SqlFaker\MySql\Generation\Rewrite\IntegerContextRule;
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalSequence::class)]
 final class IntegerContextRuleTest extends TestCase
 {
+    #[DataProvider('providerBoundedOptions')]
+    public function testOptionsLimitsOnlyTheDeclaredNumericOption(string $context, string $option, string $expected): void
+    {
+        $trace = new DerivationTrace($context);
+        $trace->expand(0, new Production([new Terminal($option), new Terminal('EQ'), new NonTerminal('ulong_num'), new Terminal('LONG_NUM')]), 0);
+        $trace->expand(2, new Production([new Terminal('LONG_NUM')]), 0);
+        self::assertSame([$option, 'EQ', $expected, 'LONG_NUM'], (new IntegerContextRule())->rewrite($trace->terminals())->names());
+        self::assertSame([$option, 'EQ', $expected, 'LONG_NUM'], (new IntegerContextRule())->options($trace->terminals())->names());
+    }
+
+    /**
+     * @return list<array{string, string, string}>
+     */
+    public static function providerBoundedOptions(): array
+    {
+        return [['source_def', 'SOURCE_DELAY_SYM', 'SOURCE_DELAY_NUMBER'], ['master_def', 'MASTER_DELAY_SYM', 'SOURCE_DELAY_NUMBER'], ['create_table_option', 'STATS_SAMPLE_PAGES_SYM', 'STATS_SAMPLE_PAGES_NUMBER'], ['create_table_option', 'AUTO_INC', 'LONG_NUM'], ['source_def', 'STATS_SAMPLE_PAGES_SYM', 'LONG_NUM'], ['ordinary', 'SOURCE_DELAY_SYM', 'LONG_NUM']];
+    }
+
+    public function testRewriteKeepsTheDefaultStatisticsOption(): void
+    {
+        $trace = new DerivationTrace('create_table_option');
+        $trace->expand(0, new Production([new Terminal('STATS_SAMPLE_PAGES_SYM'), new Terminal('DEFAULT_SYM')]), 0);
+        $input = $trace->terminals();
+        self::assertSame($input, (new IntegerContextRule())->rewrite($input));
+    }
+
     public function testRewriteReplacesOnlyDiagnosticDecimalAlternatives(): void
     {
         $trace = new DerivationTrace('root');
@@ -60,5 +87,32 @@ final class IntegerContextRuleTest extends TestCase
         $trace->expand(0, new Production([new Terminal('LONG_NUM')]), 2);
         $trace->expand(1, new Production([new Terminal('DEFAULT_SYM')]), 1);
         self::assertSame(['TERNARY_OPTION_NUMBER', 'DEFAULT_SYM'], (new IntegerContextRule())->rewrite($trace->terminals())->names());
+    }
+
+    public function testRewriteConstrainsOnlyIdentifierFormSizesAndResetIndices(): void
+    {
+        $trace = new DerivationTrace('root');
+        $trace->expand(0, new Production([new NonTerminal('size_number'), new NonTerminal('size_number'), new NonTerminal('source_reset_options'), new Terminal('IDENT'), new Terminal('NUM')]), 0);
+        $trace->expand(0, new Production([new NonTerminal('IDENT_sys')]), 1);
+        $trace->expand(0, new Production([new Terminal('IDENT_QUOTED')]), 1);
+        $trace->expand(1, new Production([new NonTerminal('real_ulonglong_num')]), 0);
+        $trace->expand(1, new Production([new Terminal('LONG_NUM')]), 3);
+        $trace->expand(2, new Production([new Terminal('TO_SYM'), new NonTerminal('real_ulonglong_num')]), 1);
+        $trace->expand(3, new Production([new Terminal('HEX_NUM')]), 1);
+        $input = $trace->terminals();
+        $rule = new IntegerContextRule();
+        $result = $rule->rewrite($input);
+        self::assertSame(['SIZE_NUMBER', 'LONG_NUM', 'TO_SYM', 'BINLOG_RESET_INDEX', 'IDENT', 'NUM'], $result->names());
+        self::assertSame($input->original, $result->original);
+        self::assertSame($input->productions, $result->productions);
+        self::assertSame(array_map(static fn ($terminal): int => $terminal->id, $input->terminals), array_map(static fn ($terminal): int => $terminal->id, $result->terminals));
+    }
+
+    public function testRewritePreservesEmptyResetOptions(): void
+    {
+        $trace = new DerivationTrace('source_reset_options');
+        $trace->expand(0, new Production([]), 0);
+        $input = $trace->terminals();
+        self::assertSame($input, (new IntegerContextRule())->rewrite($input));
     }
 }

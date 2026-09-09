@@ -12,6 +12,8 @@ use SqlFaker\PostgreSql\Generation\Rewrite\Name\AnyRelationNameRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Name\FunctionNameRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Name\IndirectionStarRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Name\RelationNameRule;
+use SqlFaker\PostgreSql\Generation\Rewrite\Query\SelectOptionsRule;
+use SqlFaker\PostgreSql\Generation\Rewrite\Routine\TableFunctionRule;
 
 /**
  * Declares PostgreSQL structural rules by their original grammar scope.
@@ -38,6 +40,8 @@ final class RewriteDefinitions
             new TimeZoneIntervalRule(),
             new LimitOffsetRule(),
             new FetchWithTiesRule(),
+            new SelectOptionsRule(),
+            new TableFunctionRule(),
             new HashPartitionBoundRule(),
             new UniqueOptionRule('columnDef', 'ColConstraint', ['COLLATE' => 'collation'], null, 'gram.y:SplitColQualList'),
             new UniqueOptionRule('columnOptions', 'ColConstraint', ['COLLATE' => 'collation'], null, 'gram.y:SplitColQualList'),

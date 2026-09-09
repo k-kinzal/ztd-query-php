@@ -42,6 +42,7 @@ final class VersionedLexemeGeneratorTest extends TestCase
         $second = new VersionedLexemeGenerator('demo-2', $old, $new);
         self::assertSame($old, $first->selected);
         self::assertSame($old, $second->selected);
+        self::assertSame($old, (new VersionedLexemeGenerator('demo-1', $new, $old))->selected);
         $firstResult = $first->generate($input);
         $secondResult = $second->generate($input);
         self::assertNotNull($firstResult);
@@ -55,6 +56,7 @@ final class VersionedLexemeGeneratorTest extends TestCase
     {
         $fixed = new FixedLexemeGenerator('NOW', 'function', 'shared');
         $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Overlapping version cases for demo: first, second');
         new VersionedLexemeGenerator('demo', new VersionCase(['demo'], $fixed, 'first'), new VersionCase(['demo'], $fixed, 'second'));
     }
 }

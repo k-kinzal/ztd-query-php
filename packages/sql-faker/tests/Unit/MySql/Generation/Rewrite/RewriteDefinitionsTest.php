@@ -38,6 +38,7 @@ use SqlFaker\MySql\Generation\Rewrite\RewriteDefinitions;
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\GeneratedColumnRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\TransactionCompletionRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Alter\OrderByRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Replication\StartRule::class)]
 final class RewriteDefinitionsTest extends TestCase
 {
     public function testCreateComposesTheDeclaredSourceRules(): void

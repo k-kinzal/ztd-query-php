@@ -17,6 +17,6 @@ final class RewriteDefinitions
      */
     public function create(): TokenRewriter
     {
-        return new TokenRewriter(new TableOptionRule(), new StrictTableRule(), new WithoutRowidRule(), new IdentifierListRule(), new JoinRule(), new WindowFrameRule(), new ExpressionGroupingRule(['expr'], 'parse.y:expr:parenthesized-operands', 'LP', 'RP'));
+        return new TokenRewriter(new CompoundSelectRule(), new TableOptionRule(), new StrictTableRule(), new WithoutRowidRule(), new IdentifierListRule(), new JoinRule(), new WindowFrameRule(), new ExpressionGroupingRule(['expr'], 'parse.y:expr:parenthesized-operands', 'LP', 'RP'));
     }
 }

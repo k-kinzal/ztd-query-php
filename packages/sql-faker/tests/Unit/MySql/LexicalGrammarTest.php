@@ -70,6 +70,8 @@ use SqlFaker\MySql\MySqlTokenizer;
 #[UsesClass(\SqlFaker\MySql\Generation\Spacing\VariableSpacingRule::class)]
 #[UsesClass(\SqlFaker\Grammar\Derivation\ProductionPattern::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\BoundedIntegerLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\SizeNumberLexemeGenerator::class)]
 final class LexicalGrammarTest extends TestCase
 {
     public function testGeneratesPublicProviderLexemesThroughDialectGrammar(): void

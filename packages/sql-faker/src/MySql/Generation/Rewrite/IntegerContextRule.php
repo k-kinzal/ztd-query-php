@@ -35,11 +35,43 @@ final class IntegerContextRule implements RewriteRule
                 $sequence = $this->mapped($sequence, $number->id, 'TERNARY_OPTION_NUMBER', 'sql/sql_yacc.yy:ternary_option');
             }
         }
+        $sequence = $this->options($sequence);
+        foreach ($sequence->occurrences('size_number') as $id) {
+            $identifier = $sequence->child($id, 'IDENT_sys');
+            if ($identifier !== null) {
+                $sequence = $this->mapped($sequence, $identifier->id, 'SIZE_NUMBER', 'sql/sql_yacc.yy:size_number');
+            }
+        }
+        foreach ($sequence->occurrences('source_reset_options') as $id) {
+            $number = $sequence->child($id, 'real_ulonglong_num');
+            if ($number !== null) {
+                $sequence = $this->mapped($sequence, $number->id, 'BINLOG_RESET_INDEX', 'sql/sql_yacc.yy:source_reset_options');
+            }
+        }
         foreach ($sequence->occurrences('xid') as $id) {
             $number = $sequence->child($id, 'ulong_num');
             $range = $number === null ? null : $sequence->range($number->id);
             if ($number !== null && $range !== null && $sequence->nameAt($range[0]) === 'ULONGLONG_NUM') {
                 $sequence = $this->mapped($sequence, $number->id, 'NUM', 'mysql.xid-format-overflow');
+            }
+        }
+        return $sequence;
+    }
+
+    /**
+     * Applies the independently bounded delay and statistics options in their owning productions.
+     */
+    public function options(TerminalSequence $sequence): TerminalSequence
+    {
+        foreach (['source_def' => ['SOURCE_DELAY_SYM' => 'SOURCE_DELAY_NUMBER'], 'master_def' => ['MASTER_DELAY_SYM' => 'SOURCE_DELAY_NUMBER'], 'create_table_option' => ['STATS_SAMPLE_PAGES_SYM' => 'STATS_SAMPLE_PAGES_NUMBER']] as $context => $terminals) {
+            foreach ($sequence->occurrences($context) as $id) {
+                $range = $sequence->range($id);
+                $number = $sequence->child($id, 'ulong_num');
+                $name = $range === null ? null : $sequence->nameAt($range[0]);
+                $terminal = $terminals[$name ?? ''] ?? null;
+                if ($number !== null && $terminal !== null) {
+                    $sequence = $this->mapped($sequence, $number->id, $terminal, 'sql/sql_yacc.yy:' . $name);
+                }
             }
         }
         return $sequence;

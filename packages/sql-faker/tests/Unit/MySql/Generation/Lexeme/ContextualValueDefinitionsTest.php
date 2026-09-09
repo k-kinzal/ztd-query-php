@@ -29,6 +29,7 @@ use SqlFaker\Sqlite\Generation\Lexeme\ValueDefinitions;
 #[UsesClass(\SqlFaker\Grammar\Generation\Version\VersionedLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Spacing\SpacingConstraint::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\BoundedIntegerLexemeGenerator::class)]
 final class ContextualValueDefinitionsTest extends TestCase
 {
     public function testCreateRestrictsTheContextualDomain(): void

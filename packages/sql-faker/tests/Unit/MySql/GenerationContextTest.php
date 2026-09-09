@@ -101,6 +101,9 @@ use SqlFaker\MySql\GenerationContext;
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\GeneratedColumnRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\TransactionCompletionRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Alter\OrderByRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\BoundedIntegerLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\SizeNumberLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Replication\StartRule::class)]
 final class GenerationContextTest extends TestCase
 {
     public function testBindsTheRequestedReleaseAndPreservesTheGrammarStart(): void

@@ -111,7 +111,7 @@ final class ReverseLexemeGeneratorTest extends TestCase
     {
         $generator = new ReverseLexemeGenerator(new ChoiceLexemeGenerator(new FixedLexemeGenerator('A', 'keyword', 'a'), new FixedLexemeGenerator('B', 'keyword', 'b')), new CandidateResolver(new CombinedSpacingRule()), 'test');
         $this->expectException(LexicalException::class);
-        $this->expectExceptionMessage('out-of-range');
+        $this->expectExceptionMessage('Candidate selector returned an out-of-range index for WORD');
         $generator->select(new LexemeInput(TerminalSequence::fromNames(['WORD']), 0, new ResolvedOutput()), static fn (int $count): int => $count);
     }
 
@@ -122,6 +122,41 @@ final class ReverseLexemeGeneratorTest extends TestCase
         $generator = new ReverseLexemeGenerator(new ChoiceLexemeGenerator(), new CandidateResolver(new CombinedSpacingRule()), 'test');
         self::assertTrue($generator->matchesRequest($candidate, $input));
         self::assertFalse($generator->matchesRequest(new LexemeSequence([], 'empty'), $input));
+    }
+
+    public function testGenerateRespectsTheOrderOfRepeatedPlannedOccurrencesAfterRenaming(): void
+    {
+        $original = TerminalSequence::fromNames(['IDENT', 'IDENT', 'IDENT']);
+        $sequence = $original->replace(0, 3, array_map(static fn ($terminal) => $terminal->replaced('NAME', 'context'), $original->terminals), 'context');
+        $generator = new ReverseLexemeGenerator(new PatternLexemeGenerator('NAME', '/\A[a-z]+\z/D', ['fallback'], 'identifier', 'names'), new CandidateResolver(new CombinedSpacingRule()), 'test');
+        $plan = GenerationPlan::all()->withLexemes(['IDENT' => ['first', 'second', 'third']]);
+        self::assertSame('first second third', (new SqlSerializer())->serialize($generator->generate($sequence, $plan, static fn (int $count): int => 0)->pieces()));
+        $overridden = $plan->withLexemes(['NAME' => ['fourth', 'fifth', 'sixth']]);
+        self::assertSame('fourth fifth sixth', (new SqlSerializer())->serialize($generator->generate($sequence, $overridden, static fn (int $count): int => 0)->pieces()));
+    }
+
+    public function testSelectCanChooseTheLastOfSeveralCompatibleCandidates(): void
+    {
+        $generator = new ReverseLexemeGenerator(new ChoiceLexemeGenerator(
+            new FixedLexemeGenerator('FIRST', 'keyword', 'first'),
+            new FixedLexemeGenerator('MIDDLE', 'keyword', 'middle'),
+            new FixedLexemeGenerator('LAST', 'keyword', 'last'),
+        ), new CandidateResolver(new CombinedSpacingRule()), 'test');
+        $output = $generator->generate(TerminalSequence::fromNames(['WORD']), null, static function (int $count): int {
+            self::assertSame(3, $count);
+            return 2;
+        });
+        self::assertSame('LAST', (new SqlSerializer())->serialize($output->pieces()));
+    }
+
+    public function testSelectReportsCandidateAndBoundarySourcesWhenAllCandidatesConflict(): void
+    {
+        $spacing = $this->createStub(SpacingRule::class);
+        $spacing->method('apply')->willReturn(new SpacingConstraint(0, ['require-join', 'require-space']));
+        $generator = new ReverseLexemeGenerator(new FixedLexemeGenerator('WORD', 'keyword', 'word-definition'), new CandidateResolver($spacing), 'demo');
+        $this->expectException(LexicalException::class);
+        $this->expectExceptionMessage('No compatible lexeme for WORD at 0 in demo before WORD; word-definition:WORD: require-join, require-space');
+        $generator->generate(TerminalSequence::fromNames(['WORD', 'WORD']), null, static fn (int $count): int => 0);
     }
 
 }

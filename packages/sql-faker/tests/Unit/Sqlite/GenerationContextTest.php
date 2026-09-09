@@ -83,6 +83,7 @@ use SqlFaker\Sqlite\GenerationContext;
 #[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\JoinModifiers::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\ExpressionGroupingRule::class)]
 #[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\WindowNameLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\CompoundSelectRule::class)]
 final class GenerationContextTest extends TestCase
 {
     public function testBindsTheRequestedReleaseAndPreservesTheGrammarStart(): void
