@@ -71,7 +71,7 @@ final class SqlGeneratorTest extends TestCase
             $observations[] = $terminal;
             return false;
         });
-        $lexer->method('realizeSequence')->willReturnCallback(static fn (TerminalSequence $sequence): string => implode(' ', $sequence->names()));
+        $lexer->method('resolveSequence')->willReturnCallback(static fn (TerminalSequence $sequence) => \Tests\Fixtures\SqlFaker\CoverageFixture::output(implode(' ', $sequence->names())));
         $generator = new SqlGenerator($grammar, Factory::create(), $lexer);
 
         self::assertSame('T', $generator->generate(GenerationPlan::all()));
