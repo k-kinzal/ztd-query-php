@@ -76,6 +76,8 @@ final class IntegerContextRuleTest extends TestCase
             ['create_table_option', 'AVG_ROW_LENGTH', 'ulonglong_num', 'AVG_ROW_LENGTH_NUMBER'],
             ['create_table_option', 'AVG_ROW_LENGTH', 'ulong_num', 'AVG_ROW_LENGTH_NUMBER'],
             ['opt_key_algo', 'ALGORITHM_SYM', 'real_ulong_num', 'KEY_ALGORITHM_NUMBER'],
+            ['opt_num_parts', 'PARTITIONS_SYM', 'real_ulong_num', 'PARTITION_COUNT_NUMBER'],
+            ['opt_num_subparts', 'SUBPARTITIONS_SYM', 'real_ulong_num', 'PARTITION_COUNT_NUMBER'],
             ['ordinary', 'ALGORITHM_SYM', 'real_ulong_num', 'ULONGLONG_NUM'],
             ['create_table_option', 'AUTO_INC', 'ulonglong_num', 'ULONGLONG_NUM'],
         ];

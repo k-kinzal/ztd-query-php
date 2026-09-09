@@ -22,7 +22,7 @@ final class AutoIncrementRule implements RewriteRule
             $field = $range === null ? null : $sequence->terminals[$range[0]]->ancestor('field_def');
             $type = $field === null ? null : $sequence->child($field, 'type');
             $owner = $type === null ? null : $sequence->range($type->id);
-            if ($range === null || $owner === null || $sequence->nameAt($range[0]) !== 'AUTO_INC') {
+            if ($range === null || $owner === null || !in_array($sequence->nameAt($range[0]), ['AUTO_INC', 'SERIAL_SYM'], true)) {
                 continue;
             }
             if (!in_array($sequence->nameAt($owner[0]), ['INT_SYM', 'TINYINT_SYM', 'SMALLINT_SYM', 'MEDIUMINT_SYM', 'BIGINT_SYM', 'BOOL_SYM', 'BOOLEAN_SYM'], true)) {

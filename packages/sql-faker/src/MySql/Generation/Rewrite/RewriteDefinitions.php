@@ -17,6 +17,7 @@ use SqlFaker\MySql\Generation\Rewrite\Name\SystemVariableRule;
 use SqlFaker\MySql\Generation\Rewrite\Partition\DefinitionRule;
 use SqlFaker\MySql\Generation\Rewrite\Partition\FieldListRule;
 use SqlFaker\MySql\Generation\Rewrite\Partition\ListValueRule;
+use SqlFaker\MySql\Generation\Rewrite\Partition\ValueArityRule;
 use SqlFaker\MySql\Generation\Rewrite\Query\JoinGroupingRule;
 use SqlFaker\MySql\Generation\Rewrite\Query\QueryContextRule;
 use SqlFaker\MySql\Generation\Rewrite\Replication\StartRule;
@@ -71,6 +72,7 @@ final class RewriteDefinitions
             new FlushExportRule(),
             new ExpressionGroupingRule(['expr', 'bool_pri', 'predicate', 'bit_expr', 'simple_expr', 'part_value_item'], 'sql_yacc.yy:simple_expr:parenthesized-operands'),
             new ListValueRule(),
+            new ValueArityRule(),
         );
     }
 }

@@ -25,6 +25,17 @@ final class SystemVariableRule implements RewriteRule
                 ], 'sql/sql_lex.cc:MY_LEX_SYSTEM_VAR');
             }
         }
+        foreach (['rvalue_system_variable', 'lvalue_variable'] as $rule) {
+            foreach ($sequence->occurrences($rule) as $id) {
+                $range = $sequence->range($id);
+                if ($range !== null && $sequence->nameAt($range[0] + 1) === '.'
+                    && in_array($sequence->nameAt($range[0]), ['GLOBAL_SYM', 'LOCAL_SYM', 'SESSION_SYM'], true)) {
+                    $sequence = $sequence->replace($range[0], 1, [
+                        $sequence->terminals[$range[0]]->replaced('IDENT_QUOTED', 'sql/sql_yacc.yy:check_reserved_words'),
+                    ], 'sql/sql_yacc.yy:check_reserved_words');
+                }
+            }
+        }
         return $sequence;
     }
 }

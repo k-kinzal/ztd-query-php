@@ -108,7 +108,7 @@ final class IntegerContextRule implements RewriteRule
      */
     public function options(TerminalSequence $sequence): TerminalSequence
     {
-        foreach (['source_def' => ['SOURCE_DELAY_SYM' => 'SOURCE_DELAY_NUMBER'], 'master_def' => ['MASTER_DELAY_SYM' => 'SOURCE_DELAY_NUMBER'], 'create_table_option' => ['STATS_SAMPLE_PAGES_SYM' => 'STATS_SAMPLE_PAGES_NUMBER', 'KEY_BLOCK_SIZE' => 'KEY_BLOCK_SIZE_NUMBER', 'AVG_ROW_LENGTH' => 'AVG_ROW_LENGTH_NUMBER'], 'opt_key_algo' => ['ALGORITHM_SYM' => 'KEY_ALGORITHM_NUMBER']] as $context => $terminals) {
+        foreach (['source_def' => ['SOURCE_DELAY_SYM' => 'SOURCE_DELAY_NUMBER'], 'master_def' => ['MASTER_DELAY_SYM' => 'SOURCE_DELAY_NUMBER'], 'create_table_option' => ['STATS_SAMPLE_PAGES_SYM' => 'STATS_SAMPLE_PAGES_NUMBER', 'KEY_BLOCK_SIZE' => 'KEY_BLOCK_SIZE_NUMBER', 'AVG_ROW_LENGTH' => 'AVG_ROW_LENGTH_NUMBER'], 'opt_key_algo' => ['ALGORITHM_SYM' => 'KEY_ALGORITHM_NUMBER'], 'opt_num_parts' => ['PARTITIONS_SYM' => 'PARTITION_COUNT_NUMBER'], 'opt_num_subparts' => ['SUBPARTITIONS_SYM' => 'PARTITION_COUNT_NUMBER']] as $context => $terminals) {
             foreach ($sequence->occurrences($context) as $id) {
                 $range = $sequence->range($id);
                 $number = $sequence->child($id, 'ulong_num') ?? $sequence->child($id, 'ulonglong_num') ?? $sequence->child($id, 'real_ulong_num');

@@ -55,4 +55,37 @@ final class RoleGrantRuleTest extends TestCase
         $trace->expand(1, new Production([new Terminal('('), new Terminal('IDENT'), new Terminal(')')]), 1);
         self::assertSame(['IDENT_QUOTED'], (new RoleGrantRule())->rewrite($trace->terminals())->names());
     }
+
+    public function testRewriteRemovesAHostOnlyWhenTheRoleIsUsedAsAPrivilege(): void
+    {
+        $trace = new DerivationTrace('grant');
+        $trace->expand(0, new Production([new NonTerminal('role_or_privilege'), new NonTerminal('grant_ident')]), 1);
+        $trace->expand(0, new Production([new NonTerminal('role_ident_or_text'), new Terminal('@'), new Terminal('IDENT')]), 1);
+        $trace->expand(0, new Production([new Terminal('IDENT_QUOTED')]), 0);
+        $trace->expand(3, new Production([new Terminal('*')]), 0);
+        $input = $trace->terminals();
+        $result = (new RoleGrantRule())->rewrite($input);
+        self::assertSame(['IDENT_QUOTED', '*'], $result->names());
+        self::assertSame($input->terminals[0], $result->terminals[0]);
+        self::assertSame($input->original, $result->original);
+        self::assertSame($result, (new RoleGrantRule())->rewrite($result));
+    }
+
+    public function testRewriteRemovesColumnListsFromRoutinePrivileges(): void
+    {
+        $trace = new DerivationTrace('revoke');
+        $trace->expand(0, new Production([new NonTerminal('role_or_privilege'), new NonTerminal('opt_acl_type'), new NonTerminal('grant_ident')]), 1);
+        $trace->expand(0, new Production([new Terminal('INSERT_SYM'), new NonTerminal('opt_column_list')]), 1);
+        $trace->expand(1, new Production([new Terminal('('), new Terminal('IDENT'), new Terminal(')')]), 1);
+        $trace->expand(4, new Production([new Terminal('FUNCTION_SYM')]), 2);
+        $trace->expand(5, new Production([new Terminal('*')]), 0);
+        $input = $trace->terminals();
+        self::assertSame(['INSERT_SYM', 'FUNCTION_SYM', '*'], (new RoleGrantRule())->rewrite($input)->names());
+    }
+
+    public function testPrivilegePreservesMissingOccurrences(): void
+    {
+        $input = \SqlFaker\Grammar\Generation\Token\TerminalSequence::fromNames(['SELECT_SYM']);
+        self::assertSame($input, (new RoleGrantRule())->privilege($input, 0, 1));
+    }
 }
