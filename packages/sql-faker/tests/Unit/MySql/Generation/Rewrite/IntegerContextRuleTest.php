@@ -24,6 +24,18 @@ use SqlFaker\MySql\Generation\Rewrite\IntegerContextRule;
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalSequence::class)]
 final class IntegerContextRuleTest extends TestCase
 {
+    public function testWeightStringLengthRestrictsOnlyTheDeclaredLength(): void
+    {
+        $trace = new DerivationTrace('ws_num_codepoints');
+        $trace->expand(0, new Production([new Terminal('('), new NonTerminal('real_ulong_num'), new Terminal(')')]), 0);
+        $trace->expand(1, new Production([new Terminal('NUM')]), 0);
+        $input = $trace->terminals();
+        $result = (new IntegerContextRule())->weightStringLength($input);
+        self::assertSame(['(', 'WEIGHT_STRING_LENGTH', ')'], $result->names());
+        self::assertSame($input->original, $result->original);
+        self::assertSame($input->productions, $result->productions);
+    }
+
     #[DataProvider('providerBoundedOptions')]
     public function testOptionsLimitsOnlyTheDeclaredNumericOption(string $context, string $option, string $expected): void
     {
@@ -135,6 +147,34 @@ final class IntegerContextRuleTest extends TestCase
         $trace->expand(0, new Production([new Terminal('SOURCE_CONNECTION_AUTO_FAILOVER_SYM'), new Terminal('EQ'), new NonTerminal('real_ulong_num')]), 0);
         $trace->expand(2, new Production([new Terminal('NUM')]), 0);
         self::assertSame(['SOURCE_CONNECTION_AUTO_FAILOVER_SYM', 'EQ', 'REPLICATION_FLAG_NUMBER'], (new IntegerContextRule())->rewrite($trace->terminals())->names());
+    }
+
+    #[DataProvider('providerReplicationFlags')]
+    public function testRewriteConstrainsEachBooleanReplicationOption(string $option, string $number, bool $restricted): void
+    {
+        $trace = new DerivationTrace('source_def');
+        $trace->expand(0, new Production([new Terminal($option), new Terminal('EQ'), new NonTerminal($number)]), 0);
+        $trace->expand(2, new Production([new Terminal('NUM')]), 0);
+        $input = $trace->terminals();
+        $result = (new IntegerContextRule())->rewrite($input);
+        self::assertSame([$option, 'EQ', $restricted ? 'REPLICATION_FLAG_NUMBER' : 'NUM'], $result->names());
+        self::assertSame($input->original, $result->original);
+        self::assertSame($input->productions, $result->productions);
+        self::assertSame($input->terminals[2]->id, $result->terminals[2]->id);
+    }
+
+    /**
+     * @return list<array{string, string, bool}>
+     */
+    public static function providerReplicationFlags(): array
+    {
+        return [
+            ['GTID_ONLY_SYM', 'real_ulong_num', true],
+            ['REQUIRE_ROW_FORMAT_SYM', 'ulong_num', true],
+            ['SOURCE_CONNECTION_AUTO_FAILOVER_SYM', 'real_ulong_num', true],
+            ['SOURCE_AUTO_POSITION_SYM', 'ulong_num', false],
+            ['GTID_ONLY_SYM', 'expr', false],
+        ];
     }
 
     public function testMappedKeepsCompatiblePlanOccurrenceIdentity(): void

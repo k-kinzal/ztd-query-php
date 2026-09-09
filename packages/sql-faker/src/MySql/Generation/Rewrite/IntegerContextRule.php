@@ -31,8 +31,8 @@ final class IntegerContextRule implements RewriteRule
         }
         foreach ($sequence->occurrences('source_def') as $id) {
             $range = $sequence->range($id);
-            $number = $sequence->child($id, 'real_ulong_num');
-            if ($range !== null && $number !== null && $sequence->nameAt($range[0]) === 'SOURCE_CONNECTION_AUTO_FAILOVER_SYM') {
+            $number = $sequence->child($id, 'real_ulong_num') ?? $sequence->child($id, 'ulong_num');
+            if ($range !== null && $number !== null && in_array($sequence->nameAt($range[0]), ['SOURCE_CONNECTION_AUTO_FAILOVER_SYM', 'GTID_ONLY_SYM', 'REQUIRE_ROW_FORMAT_SYM'], true)) {
                 $sequence = $this->mapped($sequence, $number->id, 'REPLICATION_FLAG_NUMBER', 'mysql.replication-flag');
             }
         }
@@ -44,6 +44,7 @@ final class IntegerContextRule implements RewriteRule
         }
         $sequence = $this->options($sequence);
         $sequence = $this->yearWidth($sequence);
+        $sequence = $this->weightStringLength($sequence);
         foreach ($sequence->occurrences('size_number') as $id) {
             $identifier = $sequence->child($id, 'IDENT_sys');
             if ($identifier !== null) {
@@ -61,6 +62,20 @@ final class IntegerContextRule implements RewriteRule
             $range = $number === null ? null : $sequence->range($number->id);
             if ($number !== null && $range !== null && $sequence->nameAt($range[0]) === 'ULONGLONG_NUM') {
                 $sequence = $this->mapped($sequence, $number->id, 'NUM', 'mysql.xid-format-overflow');
+            }
+        }
+        return $sequence;
+    }
+
+    /**
+     * Gives WEIGHT_STRING its positive code-point count domain.
+     */
+    public function weightStringLength(TerminalSequence $sequence): TerminalSequence
+    {
+        foreach ($sequence->occurrences('ws_num_codepoints') as $id) {
+            $number = $sequence->child($id, 'real_ulong_num') ?? $sequence->child($id, 'ulong_num');
+            if ($number !== null) {
+                $sequence = $this->mapped($sequence, $number->id, 'WEIGHT_STRING_LENGTH', 'sql/sql_yacc.yy:ws_num_codepoints');
             }
         }
         return $sequence;

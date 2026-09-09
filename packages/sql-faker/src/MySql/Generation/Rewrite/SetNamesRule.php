@@ -29,7 +29,7 @@ final class SetNamesRule implements RewriteRule
         foreach ($sequence->occurrences('option_value_no_option_type') as $occurrence) {
             $range = $sequence->range($occurrence);
             if ($range === null || $sequence->nameAt($range[0]) !== 'NAMES_SYM'
-                || !in_array($sequence->nameAt($range[0] + 1), ['EQ', 'EQUAL_SYM', '='], true)) {
+                || !in_array($sequence->nameAt($range[0] + 1), ['EQ', 'EQUAL_SYM', 'SET_VAR', '='], true)) {
                 continue;
             }
             $names = $sequence->terminals[$range[0]];

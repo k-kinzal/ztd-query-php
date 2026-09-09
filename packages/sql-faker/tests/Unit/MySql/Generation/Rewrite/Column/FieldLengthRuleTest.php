@@ -19,8 +19,29 @@ use SqlFaker\MySql\Generation\Rewrite\Column\FieldLengthRule;
 #[UsesClass(TerminalSequence::class)]
 final class FieldLengthRuleTest extends TestCase
 {
+    #[DataProvider('providerPrecisions')]
+    public function testPrecisionRetainsBothNumericOccurrencesWithDependentDomains(string $type, string $domain): void
+    {
+        $terminals = [new TerminalOccurrence($type, 10, [0], ['type']), ...array_map(static fn (string $name, int $index): TerminalOccurrence => new TerminalOccurrence($name, 11 + $index, [0, 1], ['type', 'precision']), ['(', 'NUM', ',', 'NUM', ')'], [0, 1, 2, 3, 4])];
+        $input = new TerminalSequence($terminals, productions: [new ProductionOccurrence(0, null, 'type', 0), new ProductionOccurrence(1, 0, 'precision', 0)]);
+        $result = (new FieldLengthRule())->precision($input);
+        self::assertSame([$type, '(', $domain, ',', 'NUMERIC_SCALE_NUMBER', ')'], $result->names());
+        self::assertSame(array_column($input->terminals, 'id'), array_column($result->terminals, 'id'));
+        self::assertSame($input->original, $result->original);
+        self::assertSame($input->productions, $result->productions);
+        self::assertSame($result, (new FieldLengthRule())->rewrite($result));
+    }
+
+    /**
+     * @return list<array{string, string}>
+     */
+    public static function providerPrecisions(): array
+    {
+        return [['DECIMAL_SYM', 'DECIMAL_DIGITS_NUMBER'], ['NUMERIC_SYM', 'DECIMAL_DIGITS_NUMBER'], ['FIXED_SYM', 'DECIMAL_DIGITS_NUMBER'], ['FLOAT_SYM', 'FLOAT_DIGITS_NUMBER'], ['DOUBLE_SYM', 'FLOAT_DIGITS_NUMBER']];
+    }
+
     #[DataProvider('providerTypes')]
-    public function testRewriteRestrictsOnlyTheWidthOwnedByItsType(string $name, string $domain, string $context, ?string $wrapper): void
+    public function testWidthRestrictsOnlyTheWidthOwnedByItsType(string $name, string $domain, string $context, ?string $wrapper): void
     {
         $type = new TerminalOccurrence($name, 10, [0], [$context]);
         $rules = [$context, 'field_length'];
@@ -30,7 +51,7 @@ final class FieldLengthRuleTest extends TestCase
         $ordinary = new TerminalOccurrence('LONG_NUM', 14);
         $input = new TerminalSequence([$type, $open, $number, $close, $ordinary], [$type, $open, $number, $close, $ordinary], [], [new ProductionOccurrence(0, null, $context, 0), new ProductionOccurrence(1, 0, 'field_length', 1), ...($wrapper === null ? [] : [new ProductionOccurrence(2, 0, $wrapper, 0)])]);
         $rule = new FieldLengthRule();
-        $result = $rule->rewrite($input);
+        $result = $rule->width($input);
         self::assertSame([$name, '(', $domain, ')', 'LONG_NUM'], $result->names());
         self::assertSame($number->id, $result->terminals[2]->id);
         self::assertSame($input->original, $result->original);

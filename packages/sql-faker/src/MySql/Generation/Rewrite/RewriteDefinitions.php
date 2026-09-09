@@ -5,17 +5,23 @@ declare(strict_types=1);
 namespace SqlFaker\MySql\Generation\Rewrite;
 
 use SqlFaker\Grammar\Generation\Token\ExpressionGroupingRule;
+use SqlFaker\Grammar\Generation\Token\TerminalMappingRule;
 use SqlFaker\Grammar\Generation\Token\TokenRewriter;
 use SqlFaker\Grammar\Generation\Token\UniqueOptionRule;
 use SqlFaker\MySql\Generation\Rewrite\Alter\OrderByRule;
+use SqlFaker\MySql\Generation\Rewrite\Column\AutoIncrementRule;
 use SqlFaker\MySql\Generation\Rewrite\Column\FieldLengthRule;
 use SqlFaker\MySql\Generation\Rewrite\Expression\QuantifiedComparisonRule;
 use SqlFaker\MySql\Generation\Rewrite\Expression\TableValueConstructorRule;
+use SqlFaker\MySql\Generation\Rewrite\Name\SystemVariableRule;
+use SqlFaker\MySql\Generation\Rewrite\Partition\DefinitionRule;
 use SqlFaker\MySql\Generation\Rewrite\Partition\FieldListRule;
+use SqlFaker\MySql\Generation\Rewrite\Partition\ListValueRule;
 use SqlFaker\MySql\Generation\Rewrite\Query\JoinGroupingRule;
 use SqlFaker\MySql\Generation\Rewrite\Query\QueryContextRule;
 use SqlFaker\MySql\Generation\Rewrite\Replication\StartRule;
 use SqlFaker\MySql\Generation\Rewrite\Replication\TablePatternRule;
+use SqlFaker\MySql\Generation\Rewrite\Routine\LanguageRule;
 use SqlFaker\MySql\Generation\Rewrite\Routine\ReturnRule;
 
 /**
@@ -41,15 +47,20 @@ final class RewriteDefinitions
             new StartRule(),
             new TablePatternRule(),
             new FieldListRule(),
+            new DefinitionRule(),
+            new TerminalMappingRule('factor', 'NUM', 'AUTH_FACTOR_NUMBER', 'sql/sql_yacc.yy:factor'),
             new IntoClauseRule(),
             new QueryContextRule(),
             new JoinGroupingRule(),
             new ConstraintEnforcementRule(),
             new GeneratedColumnRule(),
+            new AutoIncrementRule(),
+            new SystemVariableRule(),
             new SetNamesRule($defaultTerminal),
             new AlterDatabaseRule($defaultTerminal),
             new AlterEventRule(),
             new ReturnRule(),
+            new LanguageRule(),
             new OrderByRule(),
             new RoleGrantRule(),
             new RequiredAliasRule(),
@@ -58,7 +69,8 @@ final class RewriteDefinitions
             new FieldLengthRule(),
             new LoadSourceCountRule(),
             new FlushExportRule(),
-            new ExpressionGroupingRule(['expr', 'bool_pri', 'predicate', 'bit_expr', 'simple_expr'], 'sql_yacc.yy:simple_expr:parenthesized-operands'),
+            new ExpressionGroupingRule(['expr', 'bool_pri', 'predicate', 'bit_expr', 'simple_expr', 'part_value_item'], 'sql_yacc.yy:simple_expr:parenthesized-operands'),
+            new ListValueRule(),
         );
     }
 }

@@ -9,6 +9,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalMappingRule;
 use SqlFaker\Grammar\Generation\Token\TokenRewriter;
 use SqlFaker\Grammar\Generation\Token\UniqueOptionRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Column\IdentityOptionRule;
+use SqlFaker\PostgreSql\Generation\Rewrite\Name\AliasRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Name\AnyRelationNameRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Name\ColumnNameRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Name\FunctionNameRule;
@@ -40,6 +41,7 @@ final class RewriteDefinitions
             new GeneratedColumnRule(),
             new WindowFrameRule(),
             new RelationNameRule(),
+            new AliasRule(),
             new AnyRelationNameRule(),
             new PublicationObjectRule(),
             new OverlapsArgumentsRule(),

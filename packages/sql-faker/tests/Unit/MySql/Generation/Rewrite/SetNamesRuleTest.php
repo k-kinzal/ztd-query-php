@@ -23,6 +23,23 @@ use SqlFaker\MySql\Generation\Rewrite\SetNamesRule;
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalSequence::class)]
 final class SetNamesRuleTest extends TestCase
 {
+    public function testRewriteRepairsColonEqualsWithoutChangingOtherAssignments(): void
+    {
+        $trace = new DerivationTrace('option_value_no_option_type');
+        $trace->expand(0, new Production([new Terminal('NAMES_SYM'), new Terminal('SET_VAR'), new Terminal('NUM')]), 0);
+        $input = $trace->terminals();
+        $result = (new SetNamesRule())->rewrite($input);
+        self::assertSame(['NAMES_SYM', 'DEFAULT_SYM'], $result->names());
+        self::assertSame($input->original, $result->original);
+        self::assertSame($input->productions, $result->productions);
+        self::assertSame($result, (new SetNamesRule())->rewrite($result));
+
+        $ordinary = new DerivationTrace('option_value_no_option_type');
+        $ordinary->expand(0, new Production([new Terminal('IDENT'), new Terminal('SET_VAR'), new Terminal('NUM')]), 0);
+        $assignment = $ordinary->terminals();
+        self::assertSame($assignment, (new SetNamesRule())->rewrite($assignment));
+    }
+
     public function testRewriteUsesTheConfiguredDefaultToken(): void
     {
         $trace = new DerivationTrace('option_value_no_option_type');

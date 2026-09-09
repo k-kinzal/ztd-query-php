@@ -32,6 +32,7 @@ use SqlFaker\Sqlite\Generation\Lexeme\ValueDefinitions;
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\BoundedIntegerLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\ReplicationTablePatternLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\FactorLexemeGenerator::class)]
 final class ContextualValueDefinitionsTest extends TestCase
 {
     public function testCreateRestrictsTheContextualDomain(): void

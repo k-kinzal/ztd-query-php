@@ -36,6 +36,9 @@ final class DefinitionFactory
                 ['mysql-5.6.51', 'mysql-5.7.44', 'mysql-8.0.44', 'mysql-8.1.0', 'mysql-8.2.0', 'mysql-8.3.0', 'mysql-8.4.7', 'mysql-9.0.1', 'mysql-9.1.0'],
                 new ChoiceLexemeGenerator(
                     new SizeNumberLexemeGenerator(),
+                    new PrecisionLexemeGenerator(),
+                    new BoundedIntegerLexemeGenerator('WEIGHT_STRING_LENGTH', 1, 2147483647, ['1', '2147483647'], 'sql/sql_yacc.yy:ws_num_codepoints'),
+                    new IntegerLexemeGenerator('NUMERIC_SCALE_NUMBER', '0', '30', ['0', '1', '30'], 'sql/create_field.cc:Create_field::init:decimals'),
                     new IntegerLexemeGenerator('DISPLAY_WIDTH_NUMBER', '0', '255', ['0', '1', '255'], 'sql/create_field.cc:Create_field::init'),
                     new IntegerLexemeGenerator('BIT_WIDTH_NUMBER', '0', '64', ['0', '1', '64'], 'sql/create_field.cc:Create_field::init'),
                     new IntegerLexemeGenerator('DECIMAL_PRECISION_NUMBER', '0', '65', ['0', '1', '65'], 'sql/create_field.cc:Create_field::init'),

@@ -45,6 +45,7 @@ use SqlFaker\PostgreSql\Generation\Rewrite\RewriteDefinitions;
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Query\IntoClauseRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Routine\WithinGroupRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Name\ColumnNameRule::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Name\AliasRule::class)]
 final class RewriteDefinitionsTest extends TestCase
 {
     public function testCreateComposesTheDeclaredSourceRules(): void

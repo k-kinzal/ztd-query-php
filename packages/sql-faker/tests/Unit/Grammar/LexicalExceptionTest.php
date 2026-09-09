@@ -69,6 +69,8 @@ use SqlFaker\MySql\MySqlTokenizer;
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\BoundedIntegerLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\ReplicationTablePatternLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\SizeNumberLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\FactorLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\PrecisionLexemeGenerator::class)]
 final class LexicalExceptionTest extends TestCase
 {
     public function testTokenizingUnsupportedInputReportsTheOffsetAndTheInput(): void

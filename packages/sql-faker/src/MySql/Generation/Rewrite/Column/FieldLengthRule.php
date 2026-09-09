@@ -17,6 +17,38 @@ final class FieldLengthRule implements RewriteRule
      */
     public function rewrite(TerminalSequence $sequence): TerminalSequence
     {
+        return $this->width($this->precision($sequence));
+    }
+
+    /**
+     * Resolves precision and scale together so the digit count can depend on the selected scale.
+     */
+    public function precision(TerminalSequence $sequence): TerminalSequence
+    {
+        foreach ($sequence->occurrences('precision') as $id) {
+            $range = $sequence->range($id);
+            $type = $range === null ? null : $sequence->terminals[$range[0]]->ancestor('type');
+            $owner = $type === null ? null : $sequence->range($type);
+            if ($range === null || $owner === null || $range[1] - $range[0] !== 5) {
+                continue;
+            }
+            $decimal = in_array($sequence->nameAt($owner[0]), ['DECIMAL_SYM', 'NUMERIC_SYM', 'FIXED_SYM'], true);
+            foreach ([$range[0] + 1 => $decimal ? 'DECIMAL_DIGITS_NUMBER' : 'FLOAT_DIGITS_NUMBER', $range[0] + 3 => 'NUMERIC_SCALE_NUMBER'] as $index => $name) {
+                if ($sequence->nameAt($index) !== $name) {
+                    $sequence = $sequence->replace($index, 1, [
+                        $sequence->terminals[$index]->replaced($name, 'sql/create_field.cc:precision-and-scale'),
+                    ], 'sql/create_field.cc:precision-and-scale');
+                }
+            }
+        }
+        return $sequence;
+    }
+
+    /**
+     * Resolves the single width argument using its owning column type.
+     */
+    public function width(TerminalSequence $sequence): TerminalSequence
+    {
         foreach ($sequence->occurrences('field_length') as $id) {
             $range = $sequence->range($id);
             $type = $range === null ? null : $sequence->terminals[$range[0]]->ancestor('type');
