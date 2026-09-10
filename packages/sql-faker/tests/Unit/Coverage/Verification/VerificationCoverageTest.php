@@ -42,7 +42,7 @@ use Tests\Fixtures\SqlFaker\VerificationFixture;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeInput::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeSequence::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Lexeme\PatternLexemeGenerator::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Lexeme\ValueLexemeGenerator::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Output\CandidateResolver::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Output\OutputPart::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Output\ResolvedOutput::class)]
@@ -57,6 +57,7 @@ use Tests\Fixtures\SqlFaker\VerificationFixture;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Output\BoundaryCompletion::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Coverage\Verification\SqlContext::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Coverage\Verification\VerificationWitnessStore::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Value\CharacterDomain::class)]
 final class VerificationCoverageTest extends TestCase
 {
     public function testRecordSeparatesAcceptedInconclusiveAndUnsupportedObservations(): void

@@ -177,7 +177,8 @@ final class CoverageFixture
         return null;
     }
     /**
-     * Resolves the fixture's literal terminal names through the production candidate pipeline.
+     * Resolves literal candidates and explicit values through the production pipeline.
+     * The fixture samples fixed candidates; it does not consume constructive-value decisions.
      * @param \SqlFaker\Grammar\Derivation\GenerationPlan<bool>|null $plan
      * @param Closure(int): int $choose
      * @param (Closure(positive-int): ?int)|null $valueChoice
@@ -192,9 +193,9 @@ final class CoverageFixture
     ): \SqlFaker\Grammar\Generation\Output\ResolvedOutput {
         $definitions = [];
         foreach (array_unique($sequence->names()) as $name) {
-            $definitions[] = new \SqlFaker\Grammar\Generation\Lexeme\PatternLexemeGenerator(
+            $definitions[] = new \SqlFaker\Grammar\Generation\Lexeme\ValueLexemeGenerator(
                 $name,
-                '~\\A.*\\z~Ds',
+                new \SqlFaker\Grammar\Generation\Value\CharacterDomain(array_map(chr(...), range(0, 255)), 0, 255),
                 $spellings[$name] ?? [$name],
                 'fixture',
                 'fixture-literal'
@@ -204,7 +205,7 @@ final class CoverageFixture
             new \SqlFaker\Grammar\Generation\Lexeme\ChoiceLexemeGenerator(...$definitions),
             new \SqlFaker\Grammar\Generation\Output\CandidateResolver(new \SqlFaker\Grammar\Generation\Spacing\CombinedSpacingRule()),
             'fixture',
-        ))->generate($sequence, $plan, $choose, $valueChoice);
+        ))->generate($sequence, $plan, $choose);
     }
     /**
      * Supplies a resolved literal response for lexical contract mocks.

@@ -39,7 +39,7 @@ use SqlFaker\Grammar\Terminal;
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeInput::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeSequence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\PatternLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\ValueLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Output\CandidateResolver::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Output\OutputPart::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Output\ResolvedOutput::class)]
@@ -61,6 +61,7 @@ use SqlFaker\Grammar\Terminal;
 #[UsesClass(\SqlFaker\Grammar\Derivation\ConstraintDependencies::class)]
 #[UsesClass(\SqlFaker\Grammar\Choice\PatternProductions::class)]
 #[UsesClass(\SqlFaker\Grammar\Choice\CompletionWitness::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Value\CharacterDomain::class)]
 final class BytePlanCompilerTest extends TestCase
 {
     /**

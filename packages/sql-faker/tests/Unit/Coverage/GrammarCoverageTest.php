@@ -34,7 +34,7 @@ use Tests\Fixtures\SqlFaker\CoverageFixture;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeInput::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeSequence::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Lexeme\PatternLexemeGenerator::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Lexeme\ValueLexemeGenerator::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Output\CandidateResolver::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Output\OutputPart::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Output\ResolvedOutput::class)]
@@ -47,6 +47,7 @@ use Tests\Fixtures\SqlFaker\CoverageFixture;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Coverage\LexicalObservation::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Value\ValueChoices::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Output\BoundaryCompletion::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Value\CharacterDomain::class)]
 final class GrammarCoverageTest extends TestCase
 {
     public function testSnapshotSeparatesReachedFromEmittedAndKeepsTheFullDenominator(): void

@@ -4,7 +4,7 @@
 statement entry points with PHP-Fuzzer. MySQL and PostgreSQL use disposable
 Testcontainers. SQLite must link PHP's PDO SQLite extension to **3.47.2**.
 The pinned live engines are MySQL **8.4.7**, PostgreSQL **17.2** and SQLite
-**3.47.2**. Other MySQL releases have source/profile and unit verification;
+**3.47.2**. Other MySQL releases have source/declaration and unit verification;
 these campaigns do not claim live coverage for them.
 
 The generator reads bytes only when compiling a `GenerationPlan`. The first four
