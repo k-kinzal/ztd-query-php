@@ -213,6 +213,9 @@ use UnexpectedValueException;
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\QuotedDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\RepeatDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Value\OperatorDomain::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Value\RadixDomain::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Value\Utf8::class)]
 final class SqliteProviderTest extends TestCase
 {
     #[DataProvider('providerTargetedGenerationSeed')]
