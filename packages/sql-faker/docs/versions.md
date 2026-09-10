@@ -33,6 +33,3 @@ $sql = $provider->selectStatement(maxDepth: 3);
 An unsupported tag raises `RuntimeException` during construction. Choose a
 version matching the SQL parser or database under test. Some syntax-specific
 methods need newer database features and cannot be used with every MySQL version.
-
-See [source and verification scope](source-audit.md) for the source comparison,
-SQL-mode assumptions and the exact versions exercised by live database campaigns.
