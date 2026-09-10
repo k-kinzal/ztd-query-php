@@ -92,9 +92,11 @@ contexts with its first input byte:
 | SQLite | Original `input` program root, preparing every successive statement tail in one fresh connection without executing statements. A semantic failure stops the loop and leaves the tail explicitly inconclusive. |
 
 Provision disposable pinned engines, then supply connection settings. These
-connections must use the scanner settings described in
-[the source audit](../docs/source-audit.md). The targets validate actual settings
-before running.
+connections must use the configured scanner settings. MySQL uses UTF-8 and
+its default SQL mode without ANSI_QUOTES, IGNORE_SPACE, NO_BACKSLASH_ESCAPES,
+HIGH_NOT_PRECEDENCE or PIPES_AS_CONCAT. PostgreSQL uses UTF-8 with
+standard_conforming_strings enabled. SQLite uses the pinned build and default
+limits. The targets validate actual settings before running.
 
 ```sh
 mkdir -p fuzz/corpus/program-mysql
