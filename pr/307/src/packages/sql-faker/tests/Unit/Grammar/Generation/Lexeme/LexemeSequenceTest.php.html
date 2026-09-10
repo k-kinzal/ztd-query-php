@@ -58,9 +58,9 @@
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Lexeme\LexemeInput</span>;</span>
 <span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Lexeme\LexemeSequence</span>;</span>
 <span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Lexeme\MatchingLexemeGenerator</span>;</span>
-<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Lexeme\PatternLexemeGenerator</span>;</span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Lexeme\RegisteredLexemeGenerator</span>;</span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Lexeme\SequenceLexemeGenerator</span>;</span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Lexeme\RegisteredLexemeGenerator</span>;</span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Lexeme\SequenceLexemeGenerator</span>;</span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Lexeme\ValueLexemeGenerator</span>;</span>
 <span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Output\CandidateResolver</span>;</span>
 <span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Output\OutputPart</span>;</span>
 <span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Output\ResolvedOutput</span>;</span>
@@ -108,7 +108,7 @@
 <span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">SpacingConstraint</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">Lexeme</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">LexemeGenerator</span>::<span class="tok-kw">class</span>)]</span>
-<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">PatternLexemeGenerator</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">ValueLexemeGenerator</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">RegisteredLexemeGenerator</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">LexemeCandidates</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">SequenceLexemeGenerator</span>::<span class="tok-kw">class</span>)]</span>

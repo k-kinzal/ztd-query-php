@@ -43,7 +43,8 @@
 <span class="src-line" id="L7" data-diff="same"><a class="ln" href="#L7">7</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L8" data-diff="same"><a class="ln" href="#L8">8</a><span class="tok-com"> * Turns a terminal&#039;s spellings into a lookup from spelling to terminal.</span></span>
 <span class="src-line" id="L9" data-diff="same"><a class="ln" href="#L9">9</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L10" data-diff="same"><a class="ln" href="#L10">10</a><span class="tok-com"> * A lexical profile lists, for each terminal, every word that spells it. Both</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">10</span><span class="tok-com"> * A lexical profile lists, for each terminal, every word that spells it. Both</span></span>
+<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-com"> * Lexical declarations list, for each terminal, every word that spells it. Both</span></span>
 <span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-com"> * directions are needed: realization picks a spelling for a terminal, and</span></span>
 <span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a><span class="tok-com"> * tokenizing recognises a terminal from the spelling it met. Deriving the</span></span>
 <span class="src-line" id="L13" data-diff="same"><a class="ln" href="#L13">13</a><span class="tok-com"> * second from the first keeps the profile a single statement of the mapping.</span></span>
@@ -72,7 +73,7 @@
 <span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a>        }</span>
 <span class="src-line" id="L37" data-diff="same"><a class="ln" href="#L37">37</a></span>
 <span class="src-line" id="L38" data-diff="same"><a class="ln" href="#L38">38</a>        <span class="tok-kw">return</span> <span class="tok-var">$index</span>;</span>
-<span class="src-line" id="L39" data-diff="same"><a class="ln" href="#L39">39</a>    }</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    }</span>
 <span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a><span class="tok-com">     * Combines registration classes without changing spelling order or losing terminal types.</span></span>
 <span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a><span class="tok-com">     * @param array&lt;string, list&lt;string&gt;&gt; $left</span></span>
@@ -85,7 +86,7 @@
 <span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>            <span class="tok-var">$left</span>[<span class="tok-var">$terminal</span>] = <span class="tok-id">array_values</span>(<span class="tok-id">array_unique</span>([...(<span class="tok-var">$left</span>[<span class="tok-var">$terminal</span>] ?? []), ...<span class="tok-var">$spellings</span>]));</span>
 <span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>        }</span>
 <span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>        <span class="tok-kw">return</span> <span class="tok-var">$left</span>;</span>
-<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a>    }</span>
+<span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a>    }</span>
 <span class="src-line" id="L53" data-diff="same"><a class="ln" href="#L53">53</a>}</span>
 <span class="src-line" id="L54" data-diff="same"><a class="ln" href="#L54">54</a></span>
 </code></pre>
