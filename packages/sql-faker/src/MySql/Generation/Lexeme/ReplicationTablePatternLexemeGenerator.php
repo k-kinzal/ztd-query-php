@@ -10,6 +10,7 @@ use SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeGenerator;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeInput;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeSequence;
+use SqlFaker\Grammar\Generation\Value\QuotedDomain;
 
 /**
  * sql_yacc.yy:filter_wild_db_table_string requires a dot and forbids line feeds after get_text decoding.
@@ -42,14 +43,21 @@ final class ReplicationTablePatternLexemeGenerator implements LexemeGenerator
      */
     public function accepts(string $spelling): bool
     {
-        if (preg_match("~\\A'(?:[^'\\\\\\x00]|''|\\\\.)*'\\z~Ds", $spelling) !== 1) {
+        $domain = new QuotedDomain("'", backslash: true);
+        if (!in_array(strlen($spelling), $domain->match($spelling), true)) {
             return false;
         }
-        $decoded = preg_replace_callback('/\\\\(.)/s', static fn (array $match): string => match ($match[1]) {
-            'n' => "\n", '0' => "\0", default => $match[1],
-        }, substr($spelling, 1, -1));
-        if ($decoded === null) {
-            return false;
+        $decoded = '';
+        for ($index = 1; $index < strlen($spelling) - 1; ++$index) {
+            $character = $spelling[$index];
+            if ($character === '\\') {
+                $character = match ($spelling[++$index]) {
+                    'n' => "\n", '0' => "\0", default => $spelling[$index],
+                };
+            } elseif ($character === "'" && ($spelling[$index + 1] ?? null) === "'") {
+                ++$index;
+            }
+            $decoded .= $character;
         }
         $prefix = explode("\0", $decoded)[0];
         return str_contains($prefix, '.') && !str_contains($prefix, "\n");

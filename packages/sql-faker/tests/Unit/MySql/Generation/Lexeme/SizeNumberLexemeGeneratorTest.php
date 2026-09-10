@@ -24,6 +24,9 @@ use SqlFaker\MySql\Generation\Lexeme\SizeNumberLexemeGenerator;
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalOccurrence::class)]
 #[UsesClass(TerminalSequence::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\IntegerDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\SequenceDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
 final class SizeNumberLexemeGeneratorTest extends TestCase
 {
     #[DataProvider('providerSizes')]

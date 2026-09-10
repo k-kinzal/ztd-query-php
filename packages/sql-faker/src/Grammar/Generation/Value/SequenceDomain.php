@@ -33,4 +33,21 @@ final class SequenceDomain implements ValueDomain
     {
         return implode('', array_map(static fn (ValueDomain $domain): string => $domain->choose($choose), $this->domains));
     }
+    /**
+     * @return list<int>
+     */
+    #[Override]
+    public function match(string $value, int $offset = 0): array
+    {
+        $positions = [$offset];
+        foreach ($this->domains as $domain) {
+            $next = [];
+            foreach ($positions as $position) {
+                $next = [...$next, ...$domain->match($value, $position)];
+            }
+            $positions = array_values(array_unique($next));
+        }
+        return $positions;
+    }
+
 }

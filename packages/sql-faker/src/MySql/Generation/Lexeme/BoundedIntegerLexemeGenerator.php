@@ -13,6 +13,7 @@ use SqlFaker\Grammar\Generation\Lexeme\LexemeGenerator;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeInput;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeSequence;
 use SqlFaker\Grammar\Generation\Value\IntegerDomain;
+use SqlFaker\Grammar\Generation\Value\RadixDomain;
 
 /**
  * Restricts MySQL decimal and hexadecimal forms to a source-defined nonnegative 31-bit interval.
@@ -66,10 +67,11 @@ final class BoundedIntegerLexemeGenerator implements LexemeGenerator
         if ((new IntegerLexemeGenerator($this->terminal, (string) $this->minimum, (string) $this->maximum, $this->defaults, $this->definition))->accepts($spelling)) {
             return true;
         }
-        if (preg_match("/\A(?:0x([0-9a-fA-F]+)|[xX]'((?:[0-9a-fA-F]{2})*)')\z/D", $spelling, $matches) !== 1) {
+        $encoded = (new RadixDomain('0123456789abcdefABCDEF', '0x', ['X', 'x'], 2, 32))->digits($spelling);
+        if ($encoded === null) {
             return false;
         }
-        $digits = ltrim($matches[2] ?? $matches[1], '0');
+        $digits = ltrim($encoded, '0');
         if (strlen($digits) > 8) {
             return false;
         }

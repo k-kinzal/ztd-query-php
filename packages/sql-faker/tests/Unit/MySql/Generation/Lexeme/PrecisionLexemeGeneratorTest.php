@@ -27,6 +27,7 @@ use SqlFaker\MySql\Generation\Lexeme\PrecisionLexemeGenerator;
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeSequence::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Spacing\SpacingConstraint::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\IntegerLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\IntegerDomain::class)]
 final class PrecisionLexemeGeneratorTest extends TestCase
 {
     #[DataProvider('providerWidths')]

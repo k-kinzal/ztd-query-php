@@ -7,7 +7,7 @@ namespace SqlFaker\Grammar\Lexical;
 /**
  * Turns a terminal's spellings into a lookup from spelling to terminal.
  *
- * A lexical profile lists, for each terminal, every word that spells it. Both
+ * Lexical declarations list, for each terminal, every word that spells it. Both
  * directions are needed: realization picks a spelling for a terminal, and
  * tokenizing recognises a terminal from the spelling it met. Deriving the
  * second from the first keeps the profile a single statement of the mapping.

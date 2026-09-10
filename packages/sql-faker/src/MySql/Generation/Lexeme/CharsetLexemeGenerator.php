@@ -8,7 +8,10 @@ use Override;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeGenerator;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeInput;
-use SqlFaker\Grammar\Generation\Lexeme\PatternLexemeGenerator;
+use SqlFaker\Grammar\Generation\Lexeme\ValueLexemeGenerator;
+use SqlFaker\Grammar\Generation\Value\RadixDomain;
+use SqlFaker\Grammar\Generation\Value\Utf8;
+use SqlFaker\Grammar\Generation\Value\WordDomain;
 
 /**
  * sql_yacc.yy literal actions require introduced bytes to be well formed in the selected character set.
@@ -23,7 +26,7 @@ final class CharsetLexemeGenerator implements LexemeGenerator
     #[Override]
     public function generate(LexemeInput $input): ?LexemeCandidates
     {
-        $generator = new PatternLexemeGenerator('UNDERSCORE_CHARSET', '/\A_(?:utf8mb4|utf8mb3|latin1|ascii|binary)\z/Di', ['_utf8mb4', '_utf8mb3', '_latin1', '_ascii', '_binary'], 'charset', 'sql/sql_yacc.yy:literal:well-formed-charset');
+        $generator = new ValueLexemeGenerator('UNDERSCORE_CHARSET', new WordDomain(['_utf8mb4', '_utf8mb3', '_latin1', '_ascii', '_binary'], true), ['_utf8mb4', '_utf8mb3', '_latin1', '_ascii', '_binary'], 'charset', 'sql/sql_yacc.yy:literal:well-formed-charset');
         $candidates = $generator->generate($input);
         if ($candidates === null) {
             return null;
@@ -43,12 +46,12 @@ final class CharsetLexemeGenerator implements LexemeGenerator
      */
     public function bytes(string $literal): string
     {
-        if (preg_match("/\\A(?:0x([0-9a-fA-F]+)|[xX]'([0-9a-fA-F]*)')\\z/D", $literal, $match) === 1) {
-            $hex = $match[1] !== '' ? $match[1] : $match[2];
+        $hex = (new RadixDomain('0123456789abcdefABCDEF', '0x', ['X', 'x'], 1, 32))->digits($literal);
+        if ($hex !== null) {
             return pack('H*', (strlen($hex) % 2 === 1 ? '0' : '') . $hex);
         }
-        if (preg_match("/\\A(?:0b([01]+)|[bB]'([01]*)')\\z/D", $literal, $match) === 1) {
-            $bits = $match[1] !== '' ? $match[1] : $match[2];
+        $bits = (new RadixDomain('01', '0b', ['B', 'b'], 1, 64))->digits($literal);
+        if ($bits !== null) {
             if ($bits === '') {
                 return '';
             }
@@ -65,9 +68,9 @@ final class CharsetLexemeGenerator implements LexemeGenerator
     {
         return match (strtolower($charset)) {
             '_binary', '_latin1' => true,
-            '_ascii' => preg_match('/[\x80-\xff]/', $bytes) !== 1,
-            '_utf8mb3' => preg_match('//u', $bytes) === 1 && preg_match('/[\xf0-\xf4]/', $bytes) !== 1,
-            '_utf8mb4' => preg_match('//u', $bytes) === 1,
+            '_ascii' => (new Utf8())->valid($bytes, 1),
+            '_utf8mb3' => (new Utf8())->valid($bytes, 3),
+            '_utf8mb4' => (new Utf8())->valid($bytes, 4),
             default => false,
         };
     }

@@ -36,7 +36,7 @@ final class IntegerLexemeGenerator implements LexemeGenerator
         if ($input->terminal()->name !== $this->terminal) {
             return null;
         }
-        $value = $input->requested ?? $input->values?->value($input->index, $this->definition, new IntegerDomain($this->minimum, $this->maximum ?? str_repeat('9', max(65, strlen($this->minimum)))));
+        $value = $input->requested ?? $input->values?->value($input->index, $this->definition, new IntegerDomain($this->minimum, $this->maximum, digitSeparators: $this->digitSeparators));
         $candidates = [];
         foreach ($value === null ? $this->defaults : [$value] as $spelling) {
             if (!$this->accepts($spelling)) {
@@ -54,21 +54,7 @@ final class IntegerLexemeGenerator implements LexemeGenerator
      */
     public function accepts(string $spelling): bool
     {
-        $pattern = $this->digitSeparators ? '/\A[0-9]+(?:_[0-9]+)*\z/D' : '/\A[0-9]+\z/D';
-        if (preg_match($pattern, $spelling) !== 1) {
-            return false;
-        }
-        $significant = ltrim(str_replace('_', '', $spelling), '0');
-        $value = $significant === '' ? '0' : $significant;
-        $minimumLength = strlen($this->minimum);
-        $length = strlen($value);
-        if ($length < $minimumLength || ($length === $minimumLength && strcmp($value, $this->minimum) < 0)) {
-            return false;
-        }
-        if ($this->maximum === null) {
-            return true;
-        }
-        $maximumLength = strlen($this->maximum);
-        return $length < $maximumLength || ($length === $maximumLength && strcmp($value, $this->maximum) <= 0);
+        $domain = new IntegerDomain($this->minimum, $this->maximum, digitSeparators: $this->digitSeparators);
+        return in_array(strlen($spelling), $domain->match($spelling), true);
     }
 }

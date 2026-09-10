@@ -22,7 +22,7 @@ use SqlFaker\MySql\Generation\Lexeme\CharsetLexemeGenerator;
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\Lexeme::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeSequence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\PatternLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\ValueLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalOccurrence::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Spacing\SpacingConstraint::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]

@@ -22,6 +22,7 @@ use SqlFaker\MySql\Generation\Lexeme\ReplicationTablePatternLexemeGenerator;
 #[UsesClass(\SqlFaker\Grammar\Generation\Spacing\SpacingConstraint::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalOccurrence::class)]
 #[UsesClass(TerminalSequence::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\QuotedDomain::class)]
 final class ReplicationTablePatternLexemeGeneratorTest extends TestCase
 {
     public function testGenerateKeepsDefaultPatternsAndOrdinaryStringsSeparate(): void

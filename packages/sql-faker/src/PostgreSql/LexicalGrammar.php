@@ -13,7 +13,6 @@ use SqlFaker\Grammar\Generation\Output\ReverseLexemeGenerator;
 use SqlFaker\Grammar\Generation\Output\SqlSerializer;
 use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 use SqlFaker\Grammar\Lexical\LexicalKeywordIndex;
-use SqlFaker\Grammar\Lexical\LexicalProfileSource;
 use SqlFaker\Grammar\Lexical\RandomStringGenerator;
 use SqlFaker\Grammar\LexicalException;
 use SqlFaker\Grammar\LexicalGrammar as LexicalGrammarContract;
@@ -27,41 +26,42 @@ use SqlFaker\PostgreSql\Generation\Lexeme\DefinitionFactory;
  */
 final class LexicalGrammar implements LexicalGrammarContract
 {
-    /** @readonly */
+    /**
+     * @readonly
+     */
     private RandomStringGenerator $strings;
 
     private readonly ReverseLexemeGenerator $pipeline;
 
-    /** @readonly */
+    /**
+     * @readonly
+     */
     private PgLookahead $lookahead;
 
-    /** @readonly */
+    /**
+     * @readonly
+     */
     private PgTokenizer $tokenizer;
 
     /**
      * @param FakerGenerator $faker Source of the choices realization makes
      * @param string $profileVersion Exact server version to generate for, e.g. "pg-17.2"
-     * @param LexicalProfileSource|null $profiles Loads the checked-in profile for the version
      * @param LexicalKeywordIndex|null $index Inverts the profile's terminal-to-spelling map
      *
-     * @throws RuntimeException When the profile is missing or describes another server
+     * @throws RuntimeException When the exact release has no declaration
      */
     public function __construct(
         private readonly FakerGenerator $faker,
         private readonly string $profileVersion,
-        ?LexicalProfileSource $profiles = null,
         ?LexicalKeywordIndex $index = null,
     ) {
-        /**
-         * @var array{keywords: array<string, list<string>>} $profile
-         */
-        $profile = ($profiles ?? new LexicalProfileSource())->load('postgresql', $profileVersion);
+        $definitions = new DefinitionFactory();
+        $keywords = $definitions->keywords($profileVersion);
         $index ??= new LexicalKeywordIndex();
-
         $this->strings = new RandomStringGenerator($faker);
-        $this->pipeline = (new DefinitionFactory())->create($profileVersion, $profile['keywords']);
+        $this->pipeline = $definitions->create($profileVersion);
         $this->lookahead = new PgLookahead(PgLookahead::definitions());
-        $this->tokenizer = new PgTokenizer($index->reversed($profile['keywords']), $this->lookahead);
+        $this->tokenizer = new PgTokenizer($index->reversed($keywords), $this->lookahead);
     }
 
     /**

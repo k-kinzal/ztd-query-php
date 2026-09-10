@@ -26,7 +26,8 @@ use SqlFaker\MySql\Generation\Lexeme\FactorLexemeGenerator;
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeSequence::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Spacing\SpacingConstraint::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\PatternLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\ValueLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
 final class FactorLexemeGeneratorTest extends TestCase
 {
     /**

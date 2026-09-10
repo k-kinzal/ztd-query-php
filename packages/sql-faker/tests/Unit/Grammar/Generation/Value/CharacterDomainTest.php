@@ -30,4 +30,14 @@ final class CharacterDomainTest extends TestCase
         self::assertSame("'a''b'", (new CharacterDomain(["a''b"], 1, 1, "'", "'"))->choose(static fn (int $count): int => 0));
     }
 
+    public function testMatchKeepsAtomsDelimitersAndMultiplesTogether(): void
+    {
+        $domain = new CharacterDomain(['a', 'bb'], 0, 1, "'", "'", 2);
+        self::assertSame([2], $domain->match("''"));
+        self::assertSame([6], $domain->match("!'abb'!", 1));
+        self::assertSame([], $domain->match("'a'"));
+        self::assertSame([], $domain->match("'ab'"));
+        self::assertSame([], $domain->match('abb'));
+        self::assertSame([6], $domain->match("'aaaa'"));
+    }
 }

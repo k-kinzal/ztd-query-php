@@ -34,4 +34,12 @@ final class SequenceDomainTest extends TestCase
         self::assertLessThan(60, $visits);
         self::assertSame('', (new SequenceDomain())->choose(static fn (int $count): int => 0));
     }
+
+    public function testMatchRetainsAmbiguousPrefixesUntilTheSuffixResolvesThem(): void
+    {
+        $domain = new SequenceDomain(new CharacterDomain(['a'], 1, 3), new CharacterDomain(['a'], 1, 1));
+        self::assertSame([2, 3], $domain->match('aaa!'));
+        self::assertSame([], $domain->match('a!'));
+        self::assertSame([2], (new SequenceDomain())->match('xx', 2));
+    }
 }

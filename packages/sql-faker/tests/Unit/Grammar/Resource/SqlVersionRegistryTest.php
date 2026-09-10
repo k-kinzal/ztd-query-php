@@ -22,7 +22,6 @@ final class SqlVersionRegistryTest extends TestCase
         self::assertSame('mysql', $version->dialect);
         self::assertSame('mysql-8.4.7', $version->name);
         self::assertFileExists($version->astPath);
-        self::assertFileExists($version->lexicalPath);
     }
 
     public function testResolveRejectsADialectThePackageDoesNotShip(): void

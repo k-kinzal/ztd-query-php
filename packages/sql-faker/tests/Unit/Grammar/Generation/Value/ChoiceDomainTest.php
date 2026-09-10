@@ -28,4 +28,11 @@ final class ChoiceDomainTest extends TestCase
         self::assertSame('0x0', $domain->choose(static fn (int $count): int => 0));
         self::assertSame("X'ff'", $domain->choose(static fn (int $count): int => $count - 1));
     }
+
+    public function testMatchUnionsAndDeduplicatesAlternativeEndPositions(): void
+    {
+        $domain = new ChoiceDomain(new CharacterDomain(['a'], 1, 2), new CharacterDomain(['a'], 1, 1));
+        self::assertSame([2, 3], $domain->match('!aa?', 1));
+        self::assertSame([], $domain->match('b'));
+    }
 }

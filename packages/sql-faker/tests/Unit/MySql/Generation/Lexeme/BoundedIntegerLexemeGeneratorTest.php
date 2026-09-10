@@ -24,6 +24,11 @@ use SqlFaker\MySql\Generation\Lexeme\BoundedIntegerLexemeGenerator;
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalOccurrence::class)]
 #[UsesClass(TerminalSequence::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\CharacterDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\IntegerDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\RadixDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\SequenceDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
 final class BoundedIntegerLexemeGeneratorTest extends TestCase
 {
     public function testGenerateSupportsASingletonDomainAndContinuesPastInvalidDefaults(): void

@@ -20,4 +20,15 @@ final class DollarQuotedDomainTest extends TestCase
         self::assertSame('$b$x$b$', $domain->choose(static fn (int $count): int => $count - 1));
         self::assertSame('$$x$$', (new DollarQuotedDomain(new CharacterDomain(['a'], 0, 0), new CharacterDomain(['x'], 1, 1)))->choose(static fn (int $count): int => 0));
     }
+
+    public function testMatchBindsTagsAndStopsAtTheFirstIdenticalDelimiter(): void
+    {
+        $domain = new DollarQuotedDomain(new CharacterDomain(['a'], 0, 3), new CharacterDomain(['x'], 0, 3));
+        self::assertSame([7], $domain->match('$a$x$a$'));
+        self::assertSame([5], $domain->match('$$x$$tail$$'));
+        self::assertSame([], $domain->match('$a$x$b$'));
+        self::assertSame([], $domain->match("$$\0$$"));
+        self::assertSame([], $domain->match('plain'));
+        self::assertSame([], $domain->match('$a'));
+    }
 }

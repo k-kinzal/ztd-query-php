@@ -28,4 +28,10 @@ final class ValueDomainTest extends TestCase
         $composite = new SequenceDomain($leaf, new ChoiceDomain($leaf));
         self::assertSame('aa', $composite->choose(static fn (int $count): int => 0));
     }
+
+    public function testMatchConsumesLeavesAndCompositeDomainsThroughOneContract(): void
+    {
+        $domain = new SequenceDomain(new CharacterDomain(['a'], 1, 2), new CharacterDomain(['b'], 1, 2));
+        self::assertSame([3, 4], $domain->match('aabb'));
+    }
 }

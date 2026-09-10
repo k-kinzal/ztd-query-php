@@ -33,4 +33,17 @@ final class ChoiceDomain implements ValueDomain
     {
         return $this->domains[$choose(count($this->domains))]->choose($choose);
     }
+    /**
+     * @return list<int>
+     */
+    #[Override]
+    public function match(string $value, int $offset = 0): array
+    {
+        $ends = [];
+        foreach ($this->domains as $domain) {
+            $ends = [...$ends, ...$domain->match($value, $offset)];
+        }
+        return array_values(array_unique($ends));
+    }
+
 }

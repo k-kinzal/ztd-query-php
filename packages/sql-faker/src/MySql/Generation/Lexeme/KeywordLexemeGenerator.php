@@ -10,7 +10,6 @@ use SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeGenerator;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeInput;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeSequence;
-use SqlFaker\Grammar\LexicalException;
 
 /**
  * Implements lex.h registration classes and sql_lex.cc find_keyword/function lookahead.
@@ -30,16 +29,15 @@ final class KeywordLexemeGenerator implements LexemeGenerator
 
     /**
      * Supplies registered keyword spellings with their context-dependent lexical use.
-     * @throws LexicalException When a declared handler has no corresponding upstream registration
      */
     #[Override]
-    public function generate(LexemeInput $input): LexemeCandidates
+    public function generate(LexemeInput $input): ?LexemeCandidates
     {
         $terminal = $input->terminal()->name;
         $symbols = $this->symbols[$terminal] ?? [];
         $functions = $this->functions[$terminal] ?? [];
         if ($symbols === [] && $functions === []) {
-            throw new LexicalException('Missing MySQL registration for declared keyword ' . $terminal);
+            return null;
         }
         $next = $input->right->parts[0]->lexeme->text ?? null;
         $identifier = $input->terminal()->within('ident')

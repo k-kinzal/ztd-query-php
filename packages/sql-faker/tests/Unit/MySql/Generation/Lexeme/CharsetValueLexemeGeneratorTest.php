@@ -22,7 +22,7 @@ use SqlFaker\MySql\Generation\Lexeme\CharsetValueLexemeGenerator;
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\Lexeme::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeSequence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\PatternLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\ValueLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalOccurrence::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Spacing\SpacingConstraint::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
@@ -34,13 +34,16 @@ use SqlFaker\MySql\Generation\Lexeme\CharsetValueLexemeGenerator;
 #[UsesClass(\SqlFaker\Grammar\Generation\Output\OutputPart::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\ValueChoices::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\CharsetLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\ValueDefinitions::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\RadixDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\Utf8::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\DefinitionFactory::class)]
 final class CharsetValueLexemeGeneratorTest extends TestCase
 {
     #[DataProvider('providerBinaryTokens')]
     public function testGenerateSamplesCharsetCompatibleBytesWithoutRestrictingOrdinaryBinaryValues(string $terminal): void
     {
-        $generator = (new \SqlFaker\MySql\Generation\Lexeme\ValueDefinitions())->binary();
+        $generator = (new \SqlFaker\MySql\Generation\Lexeme\DefinitionFactory())->binary();
         $ordinary = TerminalSequence::fromNames([$terminal]);
         $introduced = TerminalSequence::fromNames(['UNDERSCORE_CHARSET', $terminal]);
         $unrestricted = $generator->generate(new LexemeInput($ordinary, 0, new ResolvedOutput(), values: new \SqlFaker\Grammar\Generation\Value\ValueChoices(static fn (int $count): int => $count - 1)));

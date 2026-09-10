@@ -41,7 +41,7 @@ use SqlFaker\Sqlite\GenerationContext;
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeInput::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeSequence::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\MatchingLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\PatternLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\ValueLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\RegisteredLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Output\CandidateResolver::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Output\OutputPart::class)]
@@ -58,7 +58,6 @@ use SqlFaker\Sqlite\GenerationContext;
 #[UsesClass(\SqlFaker\Grammar\Generation\Version\VersionCase::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Version\VersionedLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\Grammar\Lexical\LexicalKeywordIndex::class)]
-#[UsesClass(\SqlFaker\Grammar\Lexical\LexicalProfileSource::class)]
 #[UsesClass(\SqlFaker\Grammar\Lexical\RandomCharacters::class)]
 #[UsesClass(\SqlFaker\Grammar\Lexical\RandomStringGenerator::class)]
 #[UsesClass(\SqlFaker\Grammar\NonTerminal::class)]
@@ -66,8 +65,6 @@ use SqlFaker\Sqlite\GenerationContext;
 #[UsesClass(\SqlFaker\Grammar\SqlVersion::class)]
 #[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\DefinitionFactory::class)]
 #[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\JoinLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\KeywordDefinitions::class)]
-#[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\ValueDefinitions::class)]
 #[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\IdentifierListRule::class)]
 #[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\JoinRule::class)]
 #[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\RewriteDefinitions::class)]
@@ -94,6 +91,10 @@ use SqlFaker\Sqlite\GenerationContext;
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\SequenceDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\DollarQuotedDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Output\BoundaryCompletion::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\IdentifierDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\QuotedDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\RepeatDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
 final class GenerationContextTest extends TestCase
 {
     public function testBindsTheRequestedReleaseAndPreservesTheGrammarStart(): void

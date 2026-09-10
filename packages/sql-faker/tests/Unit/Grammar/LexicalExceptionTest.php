@@ -9,7 +9,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Lexical\LexicalKeywordIndex;
-use SqlFaker\Grammar\Lexical\LexicalProfileSource;
 use SqlFaker\Grammar\Lexical\RandomCharacters;
 use SqlFaker\Grammar\Lexical\RandomStringGenerator;
 use SqlFaker\Grammar\LexicalException;
@@ -23,7 +22,6 @@ use SqlFaker\MySql\MySqlTokenizer;
 #[UsesClass(RandomStringGenerator::class)]
 #[UsesClass(SqlVersion::class)]
 #[UsesClass(LexicalKeywordIndex::class)]
-#[UsesClass(LexicalProfileSource::class)]
 #[UsesClass(RandomCharacters::class)]
 #[UsesClass(SqlVersionRegistry::class)]
 #[UsesClass(MySqlTokenizer::class)]
@@ -33,7 +31,7 @@ use SqlFaker\MySql\MySqlTokenizer;
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\IntegerLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeInput::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\MatchingLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\PatternLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\ValueLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\SequenceLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Output\CandidateResolver::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Output\ResolvedOutput::class)]
@@ -43,14 +41,8 @@ use SqlFaker\MySql\MySqlTokenizer;
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalSequence::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Version\VersionCase::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Version\VersionedLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\CommonKeywordDefinitions::class)]
-#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\ContextualValueDefinitions::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\DefinitionFactory::class)]
-#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\DollarStringDefinitions::class)]
-#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\KeywordDefinitions::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\KeywordLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\SymbolDefinitions::class)]
-#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\ValueDefinitions::class)]
 #[UsesClass(\SqlFaker\Grammar\Derivation\GenerationPlan::class)]
 #[UsesClass(\SqlFaker\Grammar\Derivation\ProductionPattern::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\Lexeme::class)]
@@ -79,6 +71,10 @@ use SqlFaker\MySql\MySqlTokenizer;
 #[UsesClass(\SqlFaker\Grammar\Generation\Output\BoundaryCompletion::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\CharsetLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\CharsetValueLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\IdentifierDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\QuotedDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\RadixDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
 final class LexicalExceptionTest extends TestCase
 {
     public function testTokenizingUnsupportedInputReportsTheOffsetAndTheInput(): void

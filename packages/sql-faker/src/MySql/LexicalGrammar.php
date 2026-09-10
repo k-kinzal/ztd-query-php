@@ -13,7 +13,6 @@ use SqlFaker\Grammar\Generation\Output\ReverseLexemeGenerator;
 use SqlFaker\Grammar\Generation\Output\SqlSerializer;
 use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 use SqlFaker\Grammar\Lexical\LexicalKeywordIndex;
-use SqlFaker\Grammar\Lexical\LexicalProfileSource;
 use SqlFaker\Grammar\Lexical\RandomStringGenerator;
 use SqlFaker\Grammar\LexicalException;
 use SqlFaker\Grammar\LexicalGrammar as LexicalGrammarContract;
@@ -27,42 +26,39 @@ use SqlFaker\MySql\Generation\Lexeme\DefinitionFactory;
  */
 final class LexicalGrammar implements LexicalGrammarContract
 {
-    /** @readonly */
+    /**
+     * @readonly
+     */
     private RandomStringGenerator $strings;
 
     private readonly ReverseLexemeGenerator $pipeline;
 
-    /** @readonly */
+    /**
+     * @readonly
+     */
     private MySqlTokenizer $tokenizer;
 
     /**
      * @param FakerGenerator $faker Source of the choices realization makes
      * @param string $profileVersion Exact server version to generate for, e.g. "mysql-8.4.7"
-     * @param LexicalProfileSource|null $profiles Loads the checked-in profile for the version
      * @param LexicalKeywordIndex|null $index Inverts the profile's terminal-to-spelling maps
      *
-     * @throws RuntimeException When the profile is missing or describes another server
+     * @throws RuntimeException When the exact release has no declaration
      */
     public function __construct(
         private readonly FakerGenerator $faker,
         private readonly string $profileVersion,
-        ?LexicalProfileSource $profiles = null,
         ?LexicalKeywordIndex $index = null,
     ) {
-        /**
-         * @var array{registrations: array<string, array<string, list<string>>>} $profile
-         */
-        $profile = ($profiles ?? new LexicalProfileSource())->load('mysql', $profileVersion);
+        $definitions = new DefinitionFactory();
+        $keywords = $definitions->keywords($profileVersion);
         $index ??= new LexicalKeywordIndex();
-
-        $symbols = (new LexicalKeywordIndex())->merged($profile['registrations']['SYM'], $profile['registrations']['SYM_HK']);
-        $functions = $profile['registrations']['SYM_FN'];
         $this->strings = new RandomStringGenerator($faker);
-        $this->pipeline = (new DefinitionFactory())->create($profileVersion, $symbols, $functions);
+        $this->pipeline = $definitions->create($profileVersion);
         $this->tokenizer = new MySqlTokenizer(
-            $index->reversed($symbols),
-            $index->reversed($functions),
-            in_array($profileVersion, (new Generation\Lexeme\DollarStringDefinitions())->versions(), true),
+            $index->reversed($keywords['symbols']),
+            $index->reversed($keywords['functions']),
+            in_array($profileVersion, $definitions->dollarVersions(), true),
         );
     }
 
@@ -83,7 +79,7 @@ final class LexicalGrammar implements LexicalGrammarContract
     #[Override]
     public function isNonOutput(string $terminal): bool
     {
-        return in_array($terminal, (new Generation\Lexeme\SymbolDefinitions())->nonOutput(), true);
+        return in_array($terminal, (new DefinitionFactory())->nonOutput(), true);
     }
 
     /**

@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeInput;
 use SqlFaker\Grammar\Generation\Output\ResolvedOutput;
 use SqlFaker\Grammar\Generation\Output\SqlSerializer;
@@ -19,72 +20,74 @@ use SqlFaker\MySql\Generation\Lexeme\DefinitionFactory;
 #[UsesClass(ResolvedOutput::class)]
 #[UsesClass(SqlSerializer::class)]
 #[UsesClass(TerminalSequence::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\GenerationPlan::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\ProductionPattern::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\ChoiceLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\FixedLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\IntegerLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\MatchingLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\PatternLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\SequenceLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalOccurrence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Version\VersionCase::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Version\VersionedLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\CommonKeywordDefinitions::class)]
-#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\ContextualValueDefinitions::class)]
-#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\DollarStringDefinitions::class)]
-#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\KeywordDefinitions::class)]
-#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\KeywordLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\SymbolDefinitions::class)]
-#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\ValueDefinitions::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\Lexeme::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeSequence::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\MatchingLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\ValueLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\SequenceLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\BoundaryCompletion::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Output\CandidateResolver::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Output\OutputPart::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Output\ReverseLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Spacing\CombinedSpacingRule::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\SpacingConstraint::class)]
-#[UsesClass(\SqlFaker\Grammar\Derivation\GenerationPlan::class)]
-#[UsesClass(\SqlFaker\Grammar\Derivation\ProductionPattern::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Spacing\KeywordPhraseSpacingRule::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Spacing\LexemeBoundary::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\SpacingConstraint::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalOccurrence::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\CharacterDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\ChoiceDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\DollarQuotedDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\IntegerDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\SequenceDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\ValueChoices::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Version\VersionCase::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Version\VersionedLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\Grammar\LexicalException::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\BoundedIntegerLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\CharsetLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\CharsetValueLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\FactorLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\KeywordLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\PrecisionLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\ReplicationTablePatternLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\SizeNumberLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Spacing\CloneAddressSpacingRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Spacing\FunctionSpacingRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Spacing\QualifiedNameSpacingRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Spacing\VariableSpacingRule::class)]
-#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\BoundedIntegerLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\ReplicationTablePatternLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\SizeNumberLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\FactorLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\PrecisionLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\CharacterDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\ChoiceDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\IntegerDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\SequenceDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\DollarQuotedDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Output\BoundaryCompletion::class)]
-#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\CharsetLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\CharsetValueLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\IdentifierDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\QuotedDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\RadixDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\Utf8::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Resource\SqlVersionRegistry::class)]
+#[UsesClass(\SqlFaker\Grammar\SqlVersion::class)]
 final class DefinitionFactoryTest extends TestCase
 {
     public function testCreateCombinesLexicalOutputAndBoundaryDecisions(): void
     {
-        $pipeline = (new DefinitionFactory())->create('mysql-8.4.7', [], []);
+        $pipeline = (new DefinitionFactory())->create('mysql-8.4.7');
         $result = $pipeline->generate(TerminalSequence::fromNames(['NUM', 'END_OF_INPUT']), null, static fn (int $count): int => 0);
         self::assertSame('1', (new SqlSerializer())->serialize($result->pieces()));
     }
 
-    public function testLexemesLeavesAnUnreviewedVersionUnclaimed(): void
+    public function testLexemesRejectsAnUnreviewedVersion(): void
     {
-        $generator = (new DefinitionFactory())->lexemes('future-version', [], []);
-        self::assertNull($generator->generate(new LexemeInput(TerminalSequence::fromNames(['NUM']), 0, new ResolvedOutput())));
+        $this->expectException(RuntimeException::class);
+        (new DefinitionFactory())->lexemes('future-version');
     }
 
     #[DataProvider('providerKeyBlockSizes')]
     public function testLexemesUsesTheTwoByteKeyBlockSizeDomain(string $version, string $value, bool $valid): void
     {
-        $generator = (new DefinitionFactory())->lexemes($version, [], []);
+        $generator = (new DefinitionFactory())->lexemes($version);
         $candidates = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['KEY_BLOCK_SIZE_NUMBER']), 0, new ResolvedOutput(), $value));
         self::assertNotNull($candidates);
         self::assertSame($valid ? [$value] : [], array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$candidates->sequences()]));
@@ -104,7 +107,7 @@ final class DefinitionFactoryTest extends TestCase
     #[DataProvider('providerNumericLimits')]
     public function testLexemesKeepsParserNumericBoundaries(string $terminal, string $value, bool $valid): void
     {
-        $generator = (new DefinitionFactory())->lexemes('mysql-8.4.7', [], []);
+        $generator = (new DefinitionFactory())->lexemes('mysql-8.4.7');
         $candidates = $generator->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput(), $value));
         self::assertNotNull($candidates);
         self::assertSame($valid ? [$value] : [], array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$candidates->sequences()]));
@@ -161,4 +164,402 @@ final class DefinitionFactoryTest extends TestCase
         ];
     }
 
+    public function testValuesLeavesUnknownTerminalsUnclaimed(): void
+    {
+        self::assertNull((new DefinitionFactory())->values()->generate(new LexemeInput(TerminalSequence::fromNames(['UNKNOWN']), 0, new ResolvedOutput())));
+    }
+
+    public function testNamesChecksSourceDelimiterOrValueBoundariesValue(): void
+    {
+        $generator = (new DefinitionFactory())->names();
+        $valid = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['IDENT_QUOTED']), 0, new ResolvedOutput(), '`a``b`'));
+        $invalid = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['IDENT_QUOTED']), 0, new ResolvedOutput(), '`unclosed'));
+        self::assertNotNull($valid);
+        self::assertNotNull($invalid);
+        self::assertSame('`a``b`', [...$valid->sequences()][0]->lexemes[0]->text);
+        self::assertSame([], [...$invalid->sequences()]);
+    }
+
+    public function testStringsChecksSourceDelimiterOrValueBoundariesValue(): void
+    {
+        $generator = (new DefinitionFactory())->strings();
+        $valid = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['TEXT_STRING']), 0, new ResolvedOutput(), "'a''b'"));
+        $invalid = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['TEXT_STRING']), 0, new ResolvedOutput(), "'unclosed"));
+        self::assertNotNull($valid);
+        self::assertNotNull($invalid);
+        self::assertSame("'a''b'", [...$valid->sequences()][0]->lexemes[0]->text);
+        self::assertSame([], [...$invalid->sequences()]);
+    }
+
+    public function testNumbersChecksSourceDelimiterOrValueBoundariesValue(): void
+    {
+        $generator = (new DefinitionFactory())->numbers();
+        $valid = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['NUM']), 0, new ResolvedOutput(), '2147483647'));
+        $invalid = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['NUM']), 0, new ResolvedOutput(), '2147483648'));
+        self::assertNotNull($valid);
+        self::assertNotNull($invalid);
+        self::assertSame('2147483647', [...$valid->sequences()][0]->lexemes[0]->text);
+        self::assertSame([], [...$invalid->sequences()]);
+    }
+
+    public function testBinaryChecksSourceDelimiterOrValueBoundariesValue(): void
+    {
+        $generator = (new DefinitionFactory())->binary();
+        $valid = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['HEX_NUM']), 0, new ResolvedOutput(), "X'0f'"));
+        $invalid = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['HEX_NUM']), 0, new ResolvedOutput(), "X'f'"));
+        self::assertNotNull($valid);
+        self::assertNotNull($invalid);
+        self::assertSame("X'0f'", [...$valid->sequences()][0]->lexemes[0]->text);
+        self::assertSame([], [...$invalid->sequences()]);
+    }
+
+    #[DataProvider('providerValueTokensValue')]
+    public function testCreateOffersACompleteCandidateForEverySourceValueTokenValue(string $terminal): void
+    {
+        $result = (new DefinitionFactory())->values()->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput()));
+        self::assertNotNull($result);
+        self::assertNotEmpty([...$result->sequences()]);
+    }
+
+    /**
+     * @return list<array{string}>
+     */
+    public static function providerValueTokensValue(): array
+    {
+        return [['IDENT'], ['IDENT_QUOTED'], ['LEX_HOSTNAME'], ['UNDERSCORE_CHARSET'], ['TEXT_STRING'], ['NCHAR_STRING'], ['NUM'], ['LONG_NUM'], ['ULONGLONG_NUM'], ['DECIMAL_NUM'], ['FLOAT_NUM'], ['HEX_NUM'], ['BIN_NUM']];
+    }
+
+    /**
+     * @param list<string> $expected
+     */
+    #[DataProvider('providerLexicalFormsValue')]
+    public function testCreateRetainsValidSourceSpellingsAndRejectsMalformedOnesValue(string $terminal, string $spelling, array $expected): void
+    {
+        $result = (new DefinitionFactory())->values()->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput(), $spelling));
+        self::assertNotNull($result);
+        self::assertSame($expected, array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$result->sequences()]));
+    }
+
+    /**
+     * @return list<array{string, string, list<string>}>
+     */
+    public static function providerLexicalFormsValue(): array
+    {
+        return [
+            ['IDENT', 'alpha_2', ['alpha_2']],
+            ['IDENT', '$bad name', []],
+            ['LEX_HOSTNAME', 'host.example', ['host.example']],
+            ['LEX_HOSTNAME', 'host/name', []],
+            ['UNDERSCORE_CHARSET', '_UTF8MB4', ['_UTF8MB4']],
+            ['UNDERSCORE_CHARSET', 'utf8mb4', []],
+            ['NCHAR_STRING', 'n\'a\\\'b\'', ['n\'a\\\'b\'']],
+            ['NCHAR_STRING', 'N\'unclosed', []],
+            ['LONG_NUM', '9223372036854775807', ['9223372036854775807']],
+            ['LONG_NUM', '2147483647', []],
+            ['ULONGLONG_NUM', '9223372036854775808', ['9223372036854775808']],
+            ['ULONGLONG_NUM', '18446744073709551616', []],
+            ['DECIMAL_NUM', '1', []],
+            ['DECIMAL_NUM', '18446744073709551615', []],
+            ['DECIMAL_NUM', '18446744073709551616', ['18446744073709551616']],
+            ['DECIMAL_NUM', '.75', ['.75']],
+            ['DECIMAL_NUM', '1.5e2', []],
+            ['FLOAT_NUM', '12.5E-4', ['12.5E-4']],
+            ['FLOAT_NUM', '12.5', []],
+            ['BIN_NUM', 'b\'001\'', ['b\'001\'']],
+            ['BIN_NUM', 'B\'02\'', []],
+        ];
+    }
+
+    public function testBinaryDomainKeepsExplicitByteSpellingsAvailableForCompatibleCharsetsValue(): void
+    {
+        $input = new LexemeInput(TerminalSequence::fromNames(['HEX_NUM']), 0, new ResolvedOutput(), "X'ff'");
+        $result = (new DefinitionFactory())->binaryDomain(true)->generate($input);
+        self::assertNotNull($result);
+        self::assertSame("X'ff'", [...$result->sequences()][0]->lexemes[0]->text);
+    }
+
+    public function testStringsKeepsConstructedIntroducedValuesValidUnderAnExplicitAsciiCharsetValue(): void
+    {
+        $tokens = TerminalSequence::fromNames(['UNDERSCORE_CHARSET', 'TEXT_STRING']);
+        $result = (new DefinitionFactory())->strings()->generate(new LexemeInput($tokens, 1, new ResolvedOutput(), values: new \SqlFaker\Grammar\Generation\Value\ValueChoices(static fn (int $count): int => $count - 1)));
+        self::assertNotNull($result);
+        self::assertSame(1, preg_match('/\A[\x00-\x7f]*\z/D', [...$result->sequences()][0]->lexemes[0]->text));
+    }
+
+    /**
+     * @param list<int> $decisions
+     * @param list<string> $expected
+     */
+    #[DataProvider('providerConstructedBoundariesValue')]
+    public function testCreateConstructsScannerBoundaryValuesValue(string $terminal, array $decisions, array $expected): void
+    {
+        $values = new \SqlFaker\Grammar\Generation\Value\ValueChoices(static function (int $count) use (&$decisions): int {
+            return array_shift($decisions) ?? $count - 1;
+        });
+        $result = (new DefinitionFactory())->values()->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput(), values: $values));
+        self::assertNotNull($result);
+        self::assertSame($expected, array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$result->sequences()]));
+    }
+
+    /**
+     * @return iterable<array{string, list<int>, list<string>}>
+     */
+    public static function providerConstructedBoundariesValue(): iterable
+    {
+        $minimum = [1, ...array_fill(0, 512, 0)];
+        $padding = str_repeat('0', 16);
+
+        yield ['IDENT', $minimum, ['_sf']];
+        yield ['IDENT', [], ['_sf' . str_repeat('$', 60)]];
+        yield ['IDENT_QUOTED', $minimum, ['`a`']];
+        yield ['IDENT_QUOTED', [], ['`' . str_repeat('猫', 64) . '`']];
+        yield ['LEX_HOSTNAME', $minimum, ['a']];
+        yield ['LEX_HOSTNAME', [], [str_repeat('$', 64)]];
+        yield ['TEXT_STRING', $minimum, ["''"]];
+        yield ['TEXT_STRING', [], ["'" . str_repeat('猫', 255) . "'"]];
+        yield ['NCHAR_STRING', $minimum, ["N''"]];
+        yield ['NCHAR_STRING', [], ["n'" . str_repeat('猫', 255) . "'"]];
+        yield ['NUM', $minimum, ['0']];
+        yield ['NUM', [], [$padding . '2147483647']];
+        yield ['LONG_NUM', $minimum, ['2147483648']];
+        yield ['LONG_NUM', [], [$padding . '9223372036854775807']];
+        yield ['ULONGLONG_NUM', $minimum, ['9223372036854775808']];
+        yield ['ULONGLONG_NUM', [], [$padding . '18446744073709551615']];
+        yield ['DECIMAL_NUM', $minimum, ['18446744073709551616', '1.5']];
+        yield ['DECIMAL_NUM', [], [$padding . str_repeat('9', 65), '.' . str_repeat('9', 20)]];
+        yield ['FLOAT_NUM', $minimum, ['0e0']];
+        yield ['FLOAT_NUM', [], ['.' . str_repeat('9', 20) . 'E-999']];
+        yield ['HEX_NUM', $minimum, ['0x0']];
+        yield ['HEX_NUM', [], ["X'" . str_repeat('F', 32) . "'"]];
+        yield ['BIN_NUM', $minimum, ['0b0']];
+        yield ['BIN_NUM', [], ["B'" . str_repeat('1', 64) . "'"]];
+
+        foreach (range(1, 127) as $byte) {
+            $encoded = str_replace(['\\', "'"], ['\\\\', "''"], chr($byte));
+            yield ['TEXT_STRING', [1, 0, 1, $byte - 1], ["'" . $encoded . "'"]];
+            yield ['NCHAR_STRING', [1, 0, 1, $byte - 1], ["N'" . $encoded . "'"]];
+        }
+    }
+
+    /**
+     * @param list<int> $decisions
+     */
+    #[DataProvider('providerIntroducedBoundariesValue')]
+    public function testBinaryAndStringsConstructCompleteAsciiValuesAfterIntroducersValue(string $terminal, array $decisions, string $expected): void
+    {
+        $values = new \SqlFaker\Grammar\Generation\Value\ValueChoices(static function (int $count) use (&$decisions): int {
+            return array_shift($decisions) ?? $count - 1;
+        });
+        $result = (new DefinitionFactory())->values()->generate(new LexemeInput(TerminalSequence::fromNames(['UNDERSCORE_CHARSET', $terminal]), 1, new ResolvedOutput(), values: $values));
+        self::assertNotNull($result);
+        self::assertSame([$expected], array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$result->sequences()]));
+    }
+
+    /**
+     * @return iterable<array{string, list<int>, string}>
+     */
+    public static function providerIntroducedBoundariesValue(): iterable
+    {
+        yield ['TEXT_STRING', [], "'" . str_repeat("\x7f", 255) . "'"];
+        yield ['TEXT_STRING', [1, 0, 0], "''"];
+        yield ['HEX_NUM', [], "X'" . str_repeat('7f', 16) . "'"];
+        yield ['HEX_NUM', [1, 0], '0x' . str_repeat('7f', 16)];
+        yield ['HEX_NUM', [1, 0, 0, 0], '0x00'];
+        yield ['HEX_NUM', [1, 1, 0], "X''"];
+        yield ['BIN_NUM', [], "B'" . str_repeat('01111111', 8) . "'"];
+        yield ['BIN_NUM', [1, 0], '0b' . str_repeat('01111111', 8)];
+        yield ['BIN_NUM', [1, 0, 0, 0], '0b00000000'];
+        yield ['BIN_NUM', [1, 1, 0], "B''"];
+        foreach (range(1, 127) as $byte) {
+            $encoded = str_replace(['\\', "'"], ['\\\\', "''"], chr($byte));
+            yield ['TEXT_STRING', [1, 0, 1, $byte - 1], "'" . $encoded . "'"];
+        }
+    }
+
+    public function testSymbolsKeepsTheCompleteOutput(): void
+    {
+        $result = (new DefinitionFactory())->symbols('mysql-8.4.7')->generate(new LexemeInput(TerminalSequence::fromNames(['SET_VAR']), 0, new ResolvedOutput()));
+        self::assertNotNull($result);
+        self::assertSame(':=', implode(' ', array_map(static fn ($lexeme): string => $lexeme->text, [...$result->sequences()][0]->lexemes)));
+    }
+
+    public function testJsonKeepsTheCompleteDeclaredOutputSymbol(): void
+    {
+        $result = (new DefinitionFactory())->json('mysql-5.7.44')->generate(new LexemeInput(TerminalSequence::fromNames(['JSON_SEPARATOR_SYM']), 0, new ResolvedOutput()));
+        self::assertNotNull($result);
+        self::assertSame('->', implode(' ', array_map(static fn ($lexeme): string => $lexeme->text, [...$result->sequences()][0]->lexemes)));
+    }
+
+    public function testPhrasesKeepsTheCompleteDeclaredOutputSymbol(): void
+    {
+        $result = (new DefinitionFactory())->phrases('mysql-8.4.7')->generate(new LexemeInput(TerminalSequence::fromNames(['WITH_ROLLUP_SYM']), 0, new ResolvedOutput()));
+        self::assertNotNull($result);
+        self::assertSame('WITH ROLLUP', implode(' ', array_map(static fn ($lexeme): string => $lexeme->text, [...$result->sequences()][0]->lexemes)));
+    }
+
+    public function testSelectorsKeepsTheCompleteDeclaredOutputSymbol(): void
+    {
+        $result = (new DefinitionFactory())->selectors('mysql-8.4.7')->generate(new LexemeInput(TerminalSequence::fromNames(['GRAMMAR_SELECTOR_EXPR']), 0, new ResolvedOutput()));
+        self::assertNotNull($result);
+        self::assertSame('', implode(' ', array_map(static fn ($lexeme): string => $lexeme->text, [...$result->sequences()][0]->lexemes)));
+    }
+
+    public function testPhraseKeepsBothWordsInTheSameOriginalOccurrenceSymbol(): void
+    {
+        $result = (new DefinitionFactory())->phrase('ROLLUP')->generate(new LexemeInput(TerminalSequence::fromNames(['WITH_ROLLUP_SYM']), 0, new ResolvedOutput()));
+        self::assertNotNull($result);
+        $lexemes = [...$result->sequences()][0]->lexemes;
+        self::assertSame($lexemes[0]->origin, $lexemes[1]->origin);
+        self::assertSame($lexemes[0]->phrase, $lexemes[1]->phrase);
+    }
+
+    public function testNonOutputDoesNotMisclassifyAStatementKeywordAsAMarkerSymbol(): void
+    {
+        $markers = (new DefinitionFactory())->nonOutput();
+        self::assertContains('END_OF_INPUT', $markers);
+        self::assertContains('GRAMMAR_SELECTOR_EXPR', $markers);
+        self::assertNotContains('SELECT_SYM', $markers);
+    }
+
+    public function testDollarStringsUsesTheFirstMatchingDelimiter(): void
+    {
+        $generator = (new DefinitionFactory())->dollarStrings('mysql-8.4.7');
+        $valid = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['DOLLAR_QUOTED_STRING_SYM']), 0, new ResolvedOutput(), '$tag$a$other$b$tag$'));
+        $invalid = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['DOLLAR_QUOTED_STRING_SYM']), 0, new ResolvedOutput(), '$tag$a$tag$b$tag$'));
+        self::assertNotNull($valid);
+        self::assertNotNull($invalid);
+        self::assertCount(1, [...$valid->sequences()]);
+        self::assertSame([], [...$invalid->sequences()]);
+    }
+
+    public function testDollarVersionsDoesNotAssumeFutureCompatibility(): void
+    {
+        $definitions = new DefinitionFactory();
+        self::assertNotContains('mysql-8.0.44', $definitions->dollarVersions());
+        self::assertContains('mysql-8.1.0', $definitions->dollarVersions());
+        self::assertNull($definitions->dollarStrings('mysql-9.2.0')->generate(new LexemeInput(TerminalSequence::fromNames(['DOLLAR_QUOTED_STRING_SYM']), 0, new ResolvedOutput())));
+    }
+
+    /**
+     * @param list<int> $decisions
+     */
+    #[DataProvider('providerConstructedStringsDollarString')]
+    public function testCreateConstructsCompleteDollarDelimitersAndUnescapedBodiesDollarString(array $decisions, string $expected): void
+    {
+        $values = new \SqlFaker\Grammar\Generation\Value\ValueChoices(static function (int $count) use (&$decisions): int {
+            return array_shift($decisions) ?? $count - 1;
+        });
+        $result = (new DefinitionFactory())->dollarStrings('mysql-8.4.7')->generate(new LexemeInput(TerminalSequence::fromNames(['DOLLAR_QUOTED_STRING_SYM']), 0, new ResolvedOutput(), values: $values));
+        self::assertNotNull($result);
+        self::assertSame([$expected], array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$result->sequences()]));
+    }
+
+    /**
+     * @return iterable<array{list<int>, string}>
+     */
+    public static function providerConstructedStringsDollarString(): iterable
+    {
+        yield [[1, 0, 0], '$$$$'];
+        yield [[], '$' . str_repeat('猫', 16) . '$' . str_repeat('猫', 255) . '$' . str_repeat('猫', 16) . '$'];
+        foreach ([...range(1, 35), ...range(37, 127)] as $index => $byte) {
+            yield [[1, 0, 1, $index], '$$' . chr($byte) . '$$'];
+        }
+    }
+
+    public function testContextualValuesRestrictsTheDomain(): void
+    {
+        $generator = (new DefinitionFactory())->contextualValues('mysql-8.4.7');
+        $result = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['ROTATE_KEY_ENGINE']), 0, new ResolvedOutput(), null));
+        self::assertNotNull($result);
+        self::assertSame(['INNODB', 'BINLOG'], array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$result->sequences()]));
+        $invalid = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['ROTATE_KEY_ENGINE']), 0, new ResolvedOutput(), 'unknown'));
+        self::assertNotNull($invalid);
+        self::assertSame([], [...$invalid->sequences()]);
+    }
+
+    public function testContextualWordPreservesExplicitCase(): void
+    {
+        $generator = (new DefinitionFactory())->contextualWord('MODE', ['VALID'], 'checked_rule');
+        $result = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['MODE']), 0, new ResolvedOutput(), 'valid'));
+        self::assertNotNull($result);
+        self::assertSame('valid', [...$result->sequences()][0]->lexemes[0]->text);
+    }
+    public function testCreateEnumeratesOnlySourceAcceptedTernaryValuesContextualValue(): void
+    {
+        $generator = (new DefinitionFactory())->contextualValues('mysql-8.4.7');
+        $input = new LexemeInput(TerminalSequence::fromNames(['TERNARY_OPTION_NUMBER']), 0, new ResolvedOutput());
+        $result = $generator->generate($input);
+        self::assertNotNull($result);
+        self::assertSame(['0', '1'], array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$result->sequences()]));
+        $invalid = $generator->generate(new LexemeInput($input->terminals, 0, new ResolvedOutput(), '2'));
+        self::assertNotNull($invalid);
+        self::assertSame([], [...$invalid->sequences()]);
+    }
+
+    /**
+     * @param list<string> $spellings
+     */
+    #[DataProvider('providerContextualDomainsContextualValue')]
+    public function testCreatePreservesTheVersionedParserValueDomainsContextualValue(string $version, string $terminal, array $spellings): void
+    {
+        $result = (new DefinitionFactory())->contextualValues($version)->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput()));
+        self::assertNotNull($result);
+        self::assertSame($spellings, array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$result->sequences()]));
+    }
+
+    /**
+     * @return iterable<array{string, string, list<string>}>
+     */
+    public static function providerContextualDomainsContextualValue(): iterable
+    {
+        yield ['mysql-5.7.44', 'ROTATE_KEY_ENGINE', ['INNODB']];
+        yield ['mysql-5.7.44', 'REPLICATION_TABLE_PATTERN', ["'db.table'", "'db.%'", "'%.table'"]];
+        foreach (['mysql-8.0.44', 'mysql-8.1.0', 'mysql-8.2.0', 'mysql-8.3.0', 'mysql-8.4.7', 'mysql-9.0.1', 'mysql-9.1.0'] as $version) {
+            yield [$version, 'REPLICATION_TABLE_PATTERN', ["'db.table'", "'db.%'", "'%.table'"]];
+            yield [$version, 'REDO_ENGINE', ['INNODB']];
+            yield [$version, 'REDO_LOG_NAME', ['REDO_LOG']];
+            yield [$version, 'LOAD_COUNT_NAME', ['COUNT']];
+            yield [$version, 'LOAD_SOURCE_COUNT', ['1']];
+            yield [$version, 'REPLICATION_FLAG_NUMBER', ['0', '1']];
+            yield [$version, 'BINLOG_RESET_INDEX', ['1', '2000000000', "X'01'"]];
+        }
+    }
+
+    #[DataProvider('providerLiteralNamesContextualValue')]
+    public function testDomainTreatsNamesLiterallyAndRetainsTheirSourceDefinitionContextualValue(string $spelling): void
+    {
+        $generator = (new DefinitionFactory())->contextualWord('NAME', ['A.B', 'C~D'], 'names');
+        $input = TerminalSequence::fromNames(['NAME']);
+        $result = $generator->generate(new LexemeInput($input, 0, new ResolvedOutput(), $spelling));
+        self::assertNotNull($result);
+        $candidates = [...$result->sequences()];
+        self::assertCount(1, $candidates);
+        self::assertSame($spelling, $candidates[0]->lexemes[0]->text);
+        self::assertSame('sql/sql_yacc.yy:names', $candidates[0]->lexemes[0]->definition);
+        $invalid = $generator->generate(new LexemeInput($input, 0, new ResolvedOutput(), 'axb'));
+        self::assertNotNull($invalid);
+        self::assertSame([], [...$invalid->sequences()]);
+    }
+    /**
+     * @return iterable<array{string}>
+     */
+    public static function providerLiteralNamesContextualValue(): iterable
+    {
+        yield ['a.b'];
+        yield ['C~D'];
+    }
+
+    public function testKeywordsKeepsAliasesFunctionCategoriesAndReleaseChangesExplicit(): void
+    {
+        $factory = new DefinitionFactory();
+        $current = $factory->keywords('mysql-8.4.7');
+        self::assertSame(['CURRENT_TIMESTAMP', 'LOCALTIME', 'LOCALTIMESTAMP'], $current['symbols']['NOW_SYM']);
+        self::assertSame(['NOW'], $current['functions']['NOW_SYM']);
+        self::assertSame(['BIGINT', 'INT8'], $current['symbols']['BIGINT_SYM']);
+        self::assertArrayNotHasKey('MASTER_HOST_SYM', $current['symbols']);
+        self::assertSame(['MASTER_HOST'], $factory->keywords('mysql-8.3.0')['symbols']['MASTER_HOST_SYM']);
+        self::assertSame(['BIGINT', 'INT8'], $factory->keywords('mysql-5.6.51')['symbols']['BIGINT']);
+        self::assertArrayNotHasKey('VECTOR_SYM', $current['symbols']);
+        self::assertSame(['VECTOR'], $factory->keywords('mysql-9.0.1')['symbols']['VECTOR_SYM']);
+    }
 }

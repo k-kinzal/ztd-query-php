@@ -11,7 +11,7 @@ use SqlFaker\Grammar\Generation\Lexeme\FixedLexemeGenerator;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeGenerator;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeInput;
 use SqlFaker\Grammar\Generation\Lexeme\MatchingLexemeGenerator;
-use SqlFaker\Grammar\Generation\Lexeme\PatternLexemeGenerator;
+use SqlFaker\Grammar\Generation\Lexeme\ValueLexemeGenerator;
 use SqlFaker\Grammar\Generation\Output\ResolvedOutput;
 use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
@@ -19,7 +19,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 #[UsesClass(FixedLexemeGenerator::class)]
 #[UsesClass(LexemeGenerator::class)]
 #[UsesClass(LexemeInput::class)]
-#[UsesClass(PatternLexemeGenerator::class)]
+#[UsesClass(ValueLexemeGenerator::class)]
 #[UsesClass(ResolvedOutput::class)]
 #[UsesClass(TerminalSequence::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\Lexeme::class)]
@@ -28,12 +28,13 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalOccurrence::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Spacing\SpacingConstraint::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
 final class MatchingLexemeGeneratorTest extends TestCase
 {
     public function testGenerateDistinguishesNonApplicabilityFromAMatchedEmptyCandidateSet(): void
     {
-        $input = new LexemeInput(TerminalSequence::fromNames(['NAME']), 0, new ResolvedOutput());
-        $child = new PatternLexemeGenerator('NAME', '/^x$/', ['y'], 'identifier', 'test');
+        $input = new LexemeInput(TerminalSequence::fromNames(['NAME']), 0, new ResolvedOutput(), 'y');
+        $child = new ValueLexemeGenerator('NAME', new \SqlFaker\Grammar\Generation\Value\WordDomain(['x']), ['x'], 'identifier', 'test');
         self::assertNull((new MatchingLexemeGenerator('OTHER', $child))->generate($input));
         $result = (new MatchingLexemeGenerator('NAME', $child))->generate($input);
         self::assertNotNull($result);

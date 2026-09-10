@@ -45,7 +45,6 @@ final class IntegerDomainTest extends TestCase
         }));
     }
 
-
     /**
      * @return iterable<array{string, string}>
      */
@@ -56,5 +55,35 @@ final class IntegerDomainTest extends TestCase
         yield ['2147483648', '9223372036854775807'];
         yield ['9223372036854775808', '18446744073709551615'];
         yield ['99', '101'];
+    }
+
+    public function testMatchChecksMagnitudeWhilePreservingLeadingZeroesAndSeparators(): void
+    {
+        $domain = new IntegerDomain('10', '20', digitSeparators: true);
+        self::assertSame([5], $domain->match('00020!'));
+        self::assertSame([3], $domain->match('1_0'));
+        self::assertSame([], $domain->match('1__0'));
+        self::assertNotContains(3, $domain->match('20_'));
+        self::assertSame([], $domain->match('-10'));
+        self::assertSame([], $domain->match('21'));
+        self::assertContains(70, (new IntegerDomain('0', null))->match(str_repeat('9', 70)));
+    }
+
+    public function testNormalizedRecognizesCanonicalDeclarationBounds(): void
+    {
+        $domain = new IntegerDomain('0', '10');
+        self::assertTrue($domain->normalized('0'));
+        self::assertTrue($domain->normalized('18446744073709551615'));
+        self::assertFalse($domain->normalized('00'));
+        self::assertFalse($domain->normalized(''));
+        self::assertFalse($domain->normalized('1x'));
+    }
+
+    public function testCompareOrdersMagnitudesWithoutMachineIntegerConversion(): void
+    {
+        $domain = new IntegerDomain('0', '10');
+        self::assertLessThan(0, $domain->compare('9', '10'));
+        self::assertSame(0, $domain->compare('10', '10'));
+        self::assertGreaterThan(0, $domain->compare('18446744073709551615', '18446744073709551614'));
     }
 }

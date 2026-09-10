@@ -7,13 +7,11 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 use SqlFaker\Compiler\Bison\BisonParser;
 use SqlFaker\Compiler\Bison\GrammarCompiler;
-use SqlFaker\Grammar\Lexical\LexicalProfileCheck;
-use SqlFaker\Grammar\Lexical\LexicalProfileWriter;
+use SqlFaker\Grammar\Resource\GrammarWriter;
 use SqlFaker\Grammar\SqlVersion;
-use SqlFaker\MySql\MySqlProfileBuilder;
 
 /**
- * Build script for generating a versioned grammar and lexical profile from MySQL sources.
+ * Build script for generating a versioned grammar AST from MySQL sources.
  *
  * Usage:
  *   php bin/build-mysql.php                    # Use the default supported version
@@ -86,7 +84,6 @@ function buildVersion(
     string $tag,
     BisonParser $parser,
     GrammarCompiler $compiler,
-    MySqlProfileBuilder $lexical,
 ): bool {
     try {
         $version = SqlVersion::resolve('mysql', $tag);
@@ -110,9 +107,6 @@ function buildVersion(
     try {
         $ast = $parser->parse($contents);
         $grammar = $compiler->compile($ast);
-        fwrite(STDOUT, "Building lexical profile...\n");
-        $profile = $lexical->build($tag);
-        (new LexicalProfileCheck())->assertCompatible($profile, 'mysql', $tag);
     } catch (Throwable $e) {
         fwrite(STDERR, "Error building {$tag}: {$e->getMessage()}\n");
         return false;
@@ -149,7 +143,8 @@ PHP;
     );
 
     try {
-        (new LexicalProfileWriter())->publishVersion($version, $output, $profile);
+        (new GrammarWriter())->publish($version, $output);
+        fwrite(STDOUT, 'Generated: ' . $version->astPath . "\n");
     } catch (Throwable $throwable) {
         fwrite(STDERR, "Error publishing {$tag}: {$throwable->getMessage()}\n");
 
@@ -168,14 +163,13 @@ function main(array $argv): int
 
     $parser = new BisonParser();
     $compiler = new GrammarCompiler();
-    $lexical = new MySqlProfileBuilder();
 
     $success = 0;
     $failed = 0;
     $failedTags = [];
 
     foreach ($tags as $tag) {
-        if (buildVersion($tag, $parser, $compiler, $lexical)) {
+        if (buildVersion($tag, $parser, $compiler)) {
             $success++;
         } else {
             $failed++;

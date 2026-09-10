@@ -14,8 +14,8 @@ use SqlFaker\Grammar\Generation\Lexeme\Lexeme;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeInput;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeSequence;
 use SqlFaker\Grammar\Generation\Lexeme\MatchingLexemeGenerator;
-use SqlFaker\Grammar\Generation\Lexeme\PatternLexemeGenerator;
 use SqlFaker\Grammar\Generation\Lexeme\SequenceLexemeGenerator;
+use SqlFaker\Grammar\Generation\Lexeme\ValueLexemeGenerator;
 use SqlFaker\Grammar\Generation\Output\CandidateResolver;
 use SqlFaker\Grammar\Generation\Output\ResolvedOutput;
 use SqlFaker\Grammar\Generation\Output\ReverseLexemeGenerator;
@@ -36,7 +36,7 @@ use SqlFaker\Grammar\LexicalException;
 #[UsesClass(LexemeInput::class)]
 #[UsesClass(LexemeSequence::class)]
 #[UsesClass(MatchingLexemeGenerator::class)]
-#[UsesClass(PatternLexemeGenerator::class)]
+#[UsesClass(ValueLexemeGenerator::class)]
 #[UsesClass(SequenceLexemeGenerator::class)]
 #[UsesClass(CandidateResolver::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Output\OutputPart::class)]
@@ -51,6 +51,8 @@ use SqlFaker\Grammar\LexicalException;
 #[UsesClass(\SqlFaker\Grammar\Derivation\ProductionPattern::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Output\BoundaryCompletion::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\CharacterDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
 final class ReverseLexemeGeneratorTest extends TestCase
 {
     public function testGenerateCompoundOutputRemainsInOrderAndEofAddsNoBoundary(): void
@@ -97,7 +99,7 @@ final class ReverseLexemeGeneratorTest extends TestCase
         $original = TerminalSequence::fromNames(['IDENT']);
         $sequence = $original->replace(0, 1, [$original->terminals[0]->replaced('POLICY_MODE', 'policy')], 'policy');
         $generator = new ReverseLexemeGenerator(
-            new PatternLexemeGenerator('POLICY_MODE', '/\\A(?:permissive|restrictive)\\z/Di', ['PERMISSIVE'], 'identifier', 'policy-mode'),
+            new ValueLexemeGenerator('POLICY_MODE', new \SqlFaker\Grammar\Generation\Value\WordDomain(['PERMISSIVE', 'RESTRICTIVE'], true), ['PERMISSIVE'], 'identifier', 'policy-mode'),
             new CandidateResolver(new CombinedSpacingRule()),
             'test',
         );
@@ -129,7 +131,7 @@ final class ReverseLexemeGeneratorTest extends TestCase
     {
         $original = TerminalSequence::fromNames(['IDENT', 'IDENT', 'IDENT']);
         $sequence = $original->replace(0, 3, array_map(static fn ($terminal) => $terminal->replaced('NAME', 'context'), $original->terminals), 'context');
-        $generator = new ReverseLexemeGenerator(new PatternLexemeGenerator('NAME', '/\A[a-z]+\z/D', ['fallback'], 'identifier', 'names'), new CandidateResolver(new CombinedSpacingRule()), 'test');
+        $generator = new ReverseLexemeGenerator(new ValueLexemeGenerator('NAME', new \SqlFaker\Grammar\Generation\Value\CharacterDomain(str_split('abcdefghijklmnopqrstuvwxyz'), 1, 64), ['fallback'], 'identifier', 'names'), new CandidateResolver(new CombinedSpacingRule()), 'test');
         $plan = GenerationPlan::all()->withLexemes(['IDENT' => ['first', 'second', 'third']]);
         self::assertSame('first second third', (new SqlSerializer())->serialize($generator->generate($sequence, $plan, static fn (int $count): int => 0)->pieces()));
         $overridden = $plan->withLexemes(['NAME' => ['fourth', 'fifth', 'sixth']]);

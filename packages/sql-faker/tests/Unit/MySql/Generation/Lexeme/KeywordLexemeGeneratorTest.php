@@ -38,17 +38,17 @@ final class KeywordLexemeGeneratorTest extends TestCase
         $sequence = TerminalSequence::fromNames(['NOW_SYM', '(']);
         $right = new ResolvedOutput([new OutputPart(new Lexeme('(', 'symbol', $sequence->terminals[1], 'source'), '', 'open')]);
         $function = $generator->generate(new LexemeInput($sequence, 0, $right));
+        self::assertNotNull($function);
         self::assertSame('function', [...$function->sequences()][0]->lexemes[0]->kind);
         $identifier = new TerminalOccurrence('NOW_SYM', 0, [1], ['ident']);
         $name = $generator->generate(new LexemeInput(new TerminalSequence([$identifier]), 0, $right));
+        self::assertNotNull($name);
         self::assertSame('identifier', [...$name->sequences()][0]->lexemes[0]->kind);
     }
 
-    public function testGenerateReportsMissingRegistrationAtUse(): void
+    public function testGenerateLeavesUndeclaredTerminalsUnclaimed(): void
     {
         $generator = new KeywordLexemeGenerator([], []);
-        $this->expectException(LexicalException::class);
-        $this->expectExceptionMessage('UNKNOWN');
-        $generator->generate(new LexemeInput(TerminalSequence::fromNames(['UNKNOWN']), 0, new ResolvedOutput()));
+        self::assertNull($generator->generate(new LexemeInput(TerminalSequence::fromNames(['UNKNOWN']), 0, new ResolvedOutput())));
     }
 }

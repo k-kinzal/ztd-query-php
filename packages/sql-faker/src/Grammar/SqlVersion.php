@@ -8,13 +8,7 @@ use RuntimeException;
 use SqlFaker\Grammar\Resource\SqlVersionRegistry;
 
 /**
- * Binds the grammar and lexical profile generated for one SQL implementation version.
- *
- * The two artifacts describe the same release from either end — the AST says
- * what may be written, the lexical profile says how it is spelled — so a
- * generator that held one without the other would produce SQL its own lexer
- * could not read back. They are named together and travel together.
- *
+ * A supported SQL release and its grammar AST; lexical rules are declared in PHP.
  * @visibility root
  */
 final class SqlVersion
@@ -23,13 +17,11 @@ final class SqlVersion
      * @param string $dialect Dialect the artifacts describe
      * @param string $name Release the artifacts describe
      * @param string $astPath Where the grammar AST is read from or written to
-     * @param string $lexicalPath Where the lexical profile is read from or written to
      */
     public function __construct(
         public readonly string $dialect,
         public readonly string $name,
         public readonly string $astPath,
-        public readonly string $lexicalPath,
     ) {
     }
 

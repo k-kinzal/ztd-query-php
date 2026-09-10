@@ -21,9 +21,9 @@ use SqlFaker\Grammar\Generation\Lexeme\LexemeGenerator;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeInput;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeSequence;
 use SqlFaker\Grammar\Generation\Lexeme\MatchingLexemeGenerator;
-use SqlFaker\Grammar\Generation\Lexeme\PatternLexemeGenerator;
 use SqlFaker\Grammar\Generation\Lexeme\RegisteredLexemeGenerator;
 use SqlFaker\Grammar\Generation\Lexeme\SequenceLexemeGenerator;
+use SqlFaker\Grammar\Generation\Lexeme\ValueLexemeGenerator;
 use SqlFaker\Grammar\Generation\Output\CandidateResolver;
 use SqlFaker\Grammar\Generation\Output\OutputPart;
 use SqlFaker\Grammar\Generation\Output\ResolvedOutput;
@@ -71,7 +71,7 @@ use SqlFaker\Grammar\Terminal;
 #[UsesClass(SpacingConstraint::class)]
 #[UsesClass(Lexeme::class)]
 #[UsesClass(LexemeGenerator::class)]
-#[UsesClass(PatternLexemeGenerator::class)]
+#[UsesClass(ValueLexemeGenerator::class)]
 #[UsesClass(LexemeSequence::class)]
 #[UsesClass(RegisteredLexemeGenerator::class)]
 #[UsesClass(LexemeCandidates::class)]

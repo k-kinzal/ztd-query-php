@@ -51,4 +51,35 @@ final class CharacterDomain implements ValueDomain
         }
         return $value . $this->suffix;
     }
+    /**
+     * Reads complete atoms using the same delimiters and repetition as construction.
+     * Maximum bounds control sampling size; explicit lexical runs may be longer.
+     * @return list<int>
+     */
+    #[Override]
+    public function match(string $value, int $offset = 0): array
+    {
+        if (substr($value, $offset, strlen($this->prefix)) !== $this->prefix) {
+            return [];
+        }
+        $positions = [$offset + strlen($this->prefix)];
+        $ends = [];
+        for ($count = 0; $positions !== []; ++$count) {
+            $next = [];
+            foreach ($positions as $position) {
+                if ($count >= $this->minimum * $this->multiple && $count % $this->multiple === 0
+                    && substr($value, $position, strlen($this->suffix)) === $this->suffix) {
+                    $ends[] = $position + strlen($this->suffix);
+                }
+                foreach ($this->atoms as $atom) {
+                    if (substr($value, $position, strlen($atom)) === $atom) {
+                        $next[] = $position + strlen($atom);
+                    }
+                }
+            }
+            $positions = array_values(array_unique($next));
+        }
+        return array_values(array_unique($ends));
+    }
+
 }

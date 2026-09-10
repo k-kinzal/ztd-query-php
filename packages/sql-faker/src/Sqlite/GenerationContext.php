@@ -14,7 +14,7 @@ use SqlFaker\Sqlite\Generation\Rewrite\RewriteDefinitions;
 use SqlFaker\Sqlite\Grammar\SqliteGrammar;
 
 /**
- * Binds the Sqlite grammar and lexical profile to the common SQL generation engine.
+ * Binds the Sqlite grammar and lexical declarations to the common SQL generation engine.
  *
  * @visibility root
  */

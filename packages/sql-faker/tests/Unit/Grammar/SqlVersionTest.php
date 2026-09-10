@@ -15,17 +15,16 @@ use SqlFaker\Grammar\SqlVersion;
 #[UsesClass(SqlVersionRegistry::class)]
 final class SqlVersionTest extends TestCase
 {
-    public function testResolveAnswersTheDefaultReleaseWithBothArtifacts(): void
+    public function testResolveAnswersTheDefaultReleaseWithItsGrammar(): void
     {
         $version = SqlVersion::resolve('mysql');
 
         self::assertSame('mysql', $version->dialect);
         self::assertSame('mysql-8.4.7', $version->name);
         self::assertTrue(is_file($version->astPath));
-        self::assertTrue(is_file($version->lexicalPath));
     }
 
-    public function testAllEnumeratesEveryRegisteredArtifactPair(): void
+    public function testAllEnumeratesEveryRegisteredRelease(): void
     {
         $versions = SqlVersion::all();
 
@@ -36,7 +35,6 @@ final class SqlVersionTest extends TestCase
         );
         array_walk($versions, static function (SqlVersion $version): void {
             self::assertTrue(is_file($version->astPath));
-            self::assertTrue(is_file($version->lexicalPath));
         });
     }
 

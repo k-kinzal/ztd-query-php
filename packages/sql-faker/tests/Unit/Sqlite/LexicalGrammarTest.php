@@ -13,7 +13,6 @@ use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Derivation\GenerationPlan;
 use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 use SqlFaker\Grammar\Lexical\LexicalKeywordIndex;
-use SqlFaker\Grammar\Lexical\LexicalProfileSource;
 use SqlFaker\Grammar\Lexical\RandomCharacters;
 use SqlFaker\Grammar\Lexical\RandomStringGenerator;
 use SqlFaker\Grammar\LexicalException;
@@ -27,7 +26,6 @@ use SqlFaker\Sqlite\SqliteTokenizer;
 #[UsesClass(SqlVersion::class)]
 #[UsesClass(LexicalException::class)]
 #[UsesClass(LexicalKeywordIndex::class)]
-#[UsesClass(LexicalProfileSource::class)]
 #[UsesClass(RandomCharacters::class)]
 #[UsesClass(SqlVersionRegistry::class)]
 #[UsesClass(SqliteTokenizer::class)]
@@ -40,7 +38,7 @@ use SqlFaker\Sqlite\SqliteTokenizer;
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeInput::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeSequence::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\MatchingLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\PatternLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\ValueLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\RegisteredLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Output\CandidateResolver::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Output\OutputPart::class)]
@@ -55,8 +53,6 @@ use SqlFaker\Sqlite\SqliteTokenizer;
 #[UsesClass(\SqlFaker\Grammar\Generation\Version\VersionedLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\DefinitionFactory::class)]
 #[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\JoinLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\KeywordDefinitions::class)]
-#[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\ValueDefinitions::class)]
 #[UsesClass(\SqlFaker\Grammar\Derivation\ProductionPattern::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Spacing\LexemeBoundary::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
@@ -68,6 +64,10 @@ use SqlFaker\Sqlite\SqliteTokenizer;
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\SequenceDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\DollarQuotedDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Output\BoundaryCompletion::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\IdentifierDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\QuotedDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\RepeatDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
 final class LexicalGrammarTest extends TestCase
 {
     public function testGenerateQuotedIdentifierWritesWhatTheLexerReadsBackAsAnIdentifier(): void
@@ -153,7 +153,6 @@ final class LexicalGrammarTest extends TestCase
             static fn (LexicalGrammar $grammar): string => $grammar->generateDecimalLiteral(15, 2),
         ];
     }
-
 
     public function testTokenizesQuotedIdentifiersStringsVariablesAndComments(): void
     {
@@ -243,7 +242,6 @@ SQL;
 
         self::assertNotSame($terminal, $lexical->realize([$terminal]));
     }
-
 
     #[DataProvider('providerStringTerminal')]
     public function testRealizeOfString(string $terminal): void

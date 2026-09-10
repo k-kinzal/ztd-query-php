@@ -13,7 +13,6 @@ use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Derivation\GenerationPlan;
 use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 use SqlFaker\Grammar\Lexical\LexicalKeywordIndex;
-use SqlFaker\Grammar\Lexical\LexicalProfileSource;
 use SqlFaker\Grammar\Lexical\RandomCharacters;
 use SqlFaker\Grammar\Lexical\RandomStringGenerator;
 use SqlFaker\Grammar\LexicalException;
@@ -28,7 +27,6 @@ use SqlFaker\PostgreSql\PgTokenizer;
 #[UsesClass(SqlVersion::class)]
 #[UsesClass(LexicalException::class)]
 #[UsesClass(LexicalKeywordIndex::class)]
-#[UsesClass(LexicalProfileSource::class)]
 #[UsesClass(RandomCharacters::class)]
 #[UsesClass(SqlVersionRegistry::class)]
 #[UsesClass(PgLookahead::class)]
@@ -41,7 +39,7 @@ use SqlFaker\PostgreSql\PgTokenizer;
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeInput::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeSequence::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\MatchingLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\PatternLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\ValueLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\RegisteredLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Output\CandidateResolver::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Output\OutputPart::class)]
@@ -55,12 +53,9 @@ use SqlFaker\PostgreSql\PgTokenizer;
 #[UsesClass(TerminalSequence::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Version\VersionCase::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Version\VersionedLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\ContextualNameDefinitions::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\DefinitionFactory::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\HashBoundLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\KeywordDefinitions::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\KeywordLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\ValueDefinitions::class)]
 #[UsesClass(GenerationPlan::class)]
 #[UsesClass(\SqlFaker\Grammar\Derivation\ProductionPattern::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
@@ -71,6 +66,10 @@ use SqlFaker\PostgreSql\PgTokenizer;
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\DollarQuotedDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Output\BoundaryCompletion::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\IntegerLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\IdentifierDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\OperatorDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\QuotedDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
 final class LexicalGrammarTest extends TestCase
 {
     public function testGenerateQuotedIdentifierWritesWhatTheLexerReadsBackAsAnIdentifier(): void
