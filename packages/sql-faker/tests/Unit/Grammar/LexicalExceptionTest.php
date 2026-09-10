@@ -77,6 +77,7 @@ use SqlFaker\MySql\MySqlTokenizer;
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\QuotedDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\RadixDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Value\Utf8::class)]
 final class LexicalExceptionTest extends TestCase
 {
     public function testTokenizingUnsupportedInputReportsTheOffsetAndTheInput(): void

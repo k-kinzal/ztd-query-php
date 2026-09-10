@@ -33,6 +33,9 @@ use SqlFaker\MySql\Generation\Lexeme\CharsetLexemeGenerator;
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\DollarQuotedDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Output\OutputPart::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\ValueChoices::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Value\RadixDomain::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Value\Utf8::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
 final class CharsetLexemeGeneratorTest extends TestCase
 {
     #[DataProvider('providerEncodings')]
