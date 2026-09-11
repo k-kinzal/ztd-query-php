@@ -665,7 +665,7 @@ final class DefinitionFactory
                                 'src/build.c:sqlite3AddGenerated',
                             ),
                             new JoinLexemeGenerator(
-                                $keywords['JOIN_KW'] ?? [],
+                                $keywords['JOIN_KW'],
                             ),
                         ),
                         'sqlite-3.47.2-scanner',

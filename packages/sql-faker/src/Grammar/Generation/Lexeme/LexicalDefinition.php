@@ -13,6 +13,9 @@ use SqlFaker\Grammar\Generation\Spacing\SpacingRule;
  */
 final class LexicalDefinition
 {
+    /**
+     * Realizes the declared lexemes with their spacing rules for the selected release.
+     */
     public readonly ReverseLexemeGenerator $pipeline;
 
     /**
