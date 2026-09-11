@@ -27,14 +27,14 @@
 <nav class="crumbs"><a href="../../../../../index.html">src</a><span class="crumb-sep">::</span><span class="crumb-current">packages/sql-faker/tests/Fixtures/CoverageFixture.php</span></nav>
 <div class="topbar-tools">
 <input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
-<span class="diff-range" title="Comparing 9bf34977 to working tree">9bf34977 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><button id="theme-toggle" title="Toggle theme">◐</button>
+<span class="diff-range" title="Comparing 0582a980 to working tree">0582a980 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><button id="theme-toggle" title="Toggle theme">◐</button>
 </div>
 </header>
 <div class="search-results" id="search-results" hidden></div>
 <main class="content">
-<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 9bf34977 and working tree." data-off="This page documents what 9bf34977 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 0582a980 and working tree." data-off="This page documents what 0582a980 had and working tree no longer has. Switch to Diff to read it." hidden></p>
 <div class="symbol-head"><h1 class="source-title">packages/sql-faker/tests/Fixtures/CoverageFixture.php</h1></div>
-<div class="notice diff-banner" data-diff="added">Added in working tree, compared to 9bf34977.</div>
+<div class="notice diff-banner" data-diff="added">Added in working tree, compared to 0582a980.</div>
 <pre class="source" data-diff="added"><code><span class="src-line" id="L1" data-diff="added"><a class="ln" href="#L1">1</a>&lt;?php</span>
 <span class="src-line" id="L2" data-diff="added"><a class="ln" href="#L2">2</a></span>
 <span class="src-line" id="L3" data-diff="added"><a class="ln" href="#L3">3</a><span class="tok-kw">declare</span>(<span class="tok-id">strict_types</span>=<span class="tok-num">1</span>);</span>
@@ -214,44 +214,45 @@
 <span class="src-line" id="L177" data-diff="added"><a class="ln" href="#L177">177</a>        <span class="tok-kw">return</span> <span class="tok-id">null</span>;</span>
 <span class="src-line" id="L178" data-diff="added"><a class="ln" href="#L178">178</a>    }</span>
 <span class="src-line" id="L179" data-diff="added"><a class="ln" href="#L179">179</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L180" data-diff="added"><a class="ln" href="#L180">180</a><span class="tok-com">     * Resolves the fixture&#039;s literal terminal names through the production candidate pipeline.</span></span>
-<span class="src-line" id="L181" data-diff="added"><a class="ln" href="#L181">181</a><span class="tok-com">     * @param \SqlFaker\Grammar\Derivation\GenerationPlan&lt;bool&gt;|null $plan</span></span>
-<span class="src-line" id="L182" data-diff="added"><a class="ln" href="#L182">182</a><span class="tok-com">     * @param Closure(int): int $choose</span></span>
-<span class="src-line" id="L183" data-diff="added"><a class="ln" href="#L183">183</a><span class="tok-com">     * @param (Closure(positive-int): ?int)|null $valueChoice</span></span>
-<span class="src-line" id="L184" data-diff="added"><a class="ln" href="#L184">184</a><span class="tok-com">     * @param array&lt;string, non-empty-list&lt;string&gt;&gt; $spellings</span></span>
-<span class="src-line" id="L185" data-diff="added"><a class="ln" href="#L185">185</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L186" data-diff="added"><a class="ln" href="#L186">186</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">resolve</span>(</span>
-<span class="src-line" id="L187" data-diff="added"><a class="ln" href="#L187">187</a>        <span class="tok-id">\SqlFaker\Grammar\Generation\Token\TerminalSequence</span> <span class="tok-var">$sequence</span>,</span>
-<span class="src-line" id="L188" data-diff="added"><a class="ln" href="#L188">188</a>        ?<span class="tok-id">\SqlFaker\Grammar\Derivation\GenerationPlan</span> <span class="tok-var">$plan</span>,</span>
-<span class="src-line" id="L189" data-diff="added"><a class="ln" href="#L189">189</a>        <span class="tok-id">Closure</span> <span class="tok-var">$choose</span>,</span>
-<span class="src-line" id="L190" data-diff="added"><a class="ln" href="#L190">190</a>        ?<span class="tok-id">Closure</span> <span class="tok-var">$valueChoice</span> = <span class="tok-id">null</span>,</span>
-<span class="src-line" id="L191" data-diff="added"><a class="ln" href="#L191">191</a>        <span class="tok-kw">array</span> <span class="tok-var">$spellings</span> = [],</span>
-<span class="src-line" id="L192" data-diff="added"><a class="ln" href="#L192">192</a>    ): <span class="tok-id">\SqlFaker\Grammar\Generation\Output\ResolvedOutput</span> {</span>
-<span class="src-line" id="L193" data-diff="added"><a class="ln" href="#L193">193</a>        <span class="tok-var">$definitions</span> = [];</span>
-<span class="src-line" id="L194" data-diff="added"><a class="ln" href="#L194">194</a>        <span class="tok-kw">foreach</span> (<span class="tok-id">array_unique</span>(<span class="tok-var">$sequence</span>-&gt;<span class="tok-id">names</span>()) <span class="tok-kw">as</span> <span class="tok-var">$name</span>) {</span>
-<span class="src-line" id="L195" data-diff="added"><a class="ln" href="#L195">195</a>            <span class="tok-var">$definitions</span>[] = <span class="tok-kw">new</span> <span class="tok-id">\SqlFaker\Grammar\Generation\Lexeme\PatternLexemeGenerator</span>(</span>
-<span class="src-line" id="L196" data-diff="added"><a class="ln" href="#L196">196</a>                <span class="tok-var">$name</span>,</span>
-<span class="src-line" id="L197" data-diff="added"><a class="ln" href="#L197">197</a>                <span class="tok-str">&#039;~\\A.*\\z~Ds&#039;</span>,</span>
-<span class="src-line" id="L198" data-diff="added"><a class="ln" href="#L198">198</a>                <span class="tok-var">$spellings</span>[<span class="tok-var">$name</span>] ?? [<span class="tok-var">$name</span>],</span>
-<span class="src-line" id="L199" data-diff="added"><a class="ln" href="#L199">199</a>                <span class="tok-str">&#039;fixture&#039;</span>,</span>
-<span class="src-line" id="L200" data-diff="added"><a class="ln" href="#L200">200</a>                <span class="tok-str">&#039;fixture-literal&#039;</span></span>
-<span class="src-line" id="L201" data-diff="added"><a class="ln" href="#L201">201</a>            );</span>
-<span class="src-line" id="L202" data-diff="added"><a class="ln" href="#L202">202</a>        }</span>
-<span class="src-line" id="L203" data-diff="added"><a class="ln" href="#L203">203</a>        <span class="tok-kw">return</span> (<span class="tok-kw">new</span> <span class="tok-id">\SqlFaker\Grammar\Generation\Output\ReverseLexemeGenerator</span>(</span>
-<span class="src-line" id="L204" data-diff="added"><a class="ln" href="#L204">204</a>            <span class="tok-kw">new</span> <span class="tok-id">\SqlFaker\Grammar\Generation\Lexeme\ChoiceLexemeGenerator</span>(...<span class="tok-var">$definitions</span>),</span>
-<span class="src-line" id="L205" data-diff="added"><a class="ln" href="#L205">205</a>            <span class="tok-kw">new</span> <span class="tok-id">\SqlFaker\Grammar\Generation\Output\CandidateResolver</span>(<span class="tok-kw">new</span> <span class="tok-id">\SqlFaker\Grammar\Generation\Spacing\CombinedSpacingRule</span>()),</span>
-<span class="src-line" id="L206" data-diff="added"><a class="ln" href="#L206">206</a>            <span class="tok-str">&#039;fixture&#039;</span>,</span>
-<span class="src-line" id="L207" data-diff="added"><a class="ln" href="#L207">207</a>        ))-&gt;<span class="tok-id">generate</span>(<span class="tok-var">$sequence</span>, <span class="tok-var">$plan</span>, <span class="tok-var">$choose</span>, <span class="tok-var">$valueChoice</span>);</span>
-<span class="src-line" id="L208" data-diff="added"><a class="ln" href="#L208">208</a>    }</span>
-<span class="src-line" id="L209" data-diff="added"><a class="ln" href="#L209">209</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L210" data-diff="added"><a class="ln" href="#L210">210</a><span class="tok-com">     * Supplies a resolved literal response for lexical contract mocks.</span></span>
-<span class="src-line" id="L211" data-diff="added"><a class="ln" href="#L211">211</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L212" data-diff="added"><a class="ln" href="#L212">212</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">output</span>(<span class="tok-id">string</span> <span class="tok-var">$text</span>): <span class="tok-id">\SqlFaker\Grammar\Generation\Output\ResolvedOutput</span></span>
-<span class="src-line" id="L213" data-diff="added"><a class="ln" href="#L213">213</a>    {</span>
-<span class="src-line" id="L214" data-diff="added"><a class="ln" href="#L214">214</a>        <span class="tok-kw">return</span> <span class="tok-id">self</span>::<span class="tok-id">resolve</span>(<span class="tok-id">\SqlFaker\Grammar\Generation\Token\TerminalSequence</span>::<span class="tok-id">fromNames</span>([<span class="tok-var">$text</span>]), <span class="tok-id">null</span>, <span class="tok-kw">static</span> <span class="tok-kw">fn</span> (<span class="tok-id">int</span> <span class="tok-var">$count</span>): <span class="tok-id">int</span> =&gt; <span class="tok-num">0</span>);</span>
-<span class="src-line" id="L215" data-diff="added"><a class="ln" href="#L215">215</a>    }</span>
-<span class="src-line" id="L216" data-diff="added"><a class="ln" href="#L216">216</a>}</span>
-<span class="src-line" id="L217" data-diff="added"><a class="ln" href="#L217">217</a></span>
+<span class="src-line" id="L180" data-diff="added"><a class="ln" href="#L180">180</a><span class="tok-com">     * Resolves literal candidates and explicit values through the production pipeline.</span></span>
+<span class="src-line" id="L181" data-diff="added"><a class="ln" href="#L181">181</a><span class="tok-com">     * The fixture samples fixed candidates; it does not consume constructive-value decisions.</span></span>
+<span class="src-line" id="L182" data-diff="added"><a class="ln" href="#L182">182</a><span class="tok-com">     * @param \SqlFaker\Grammar\Derivation\GenerationPlan&lt;bool&gt;|null $plan</span></span>
+<span class="src-line" id="L183" data-diff="added"><a class="ln" href="#L183">183</a><span class="tok-com">     * @param Closure(int): int $choose</span></span>
+<span class="src-line" id="L184" data-diff="added"><a class="ln" href="#L184">184</a><span class="tok-com">     * @param (Closure(positive-int): ?int)|null $valueChoice</span></span>
+<span class="src-line" id="L185" data-diff="added"><a class="ln" href="#L185">185</a><span class="tok-com">     * @param array&lt;string, non-empty-list&lt;string&gt;&gt; $spellings</span></span>
+<span class="src-line" id="L186" data-diff="added"><a class="ln" href="#L186">186</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L187" data-diff="added"><a class="ln" href="#L187">187</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">resolve</span>(</span>
+<span class="src-line" id="L188" data-diff="added"><a class="ln" href="#L188">188</a>        <span class="tok-id">\SqlFaker\Grammar\Generation\Token\TerminalSequence</span> <span class="tok-var">$sequence</span>,</span>
+<span class="src-line" id="L189" data-diff="added"><a class="ln" href="#L189">189</a>        ?<span class="tok-id">\SqlFaker\Grammar\Derivation\GenerationPlan</span> <span class="tok-var">$plan</span>,</span>
+<span class="src-line" id="L190" data-diff="added"><a class="ln" href="#L190">190</a>        <span class="tok-id">Closure</span> <span class="tok-var">$choose</span>,</span>
+<span class="src-line" id="L191" data-diff="added"><a class="ln" href="#L191">191</a>        ?<span class="tok-id">Closure</span> <span class="tok-var">$valueChoice</span> = <span class="tok-id">null</span>,</span>
+<span class="src-line" id="L192" data-diff="added"><a class="ln" href="#L192">192</a>        <span class="tok-kw">array</span> <span class="tok-var">$spellings</span> = [],</span>
+<span class="src-line" id="L193" data-diff="added"><a class="ln" href="#L193">193</a>    ): <span class="tok-id">\SqlFaker\Grammar\Generation\Output\ResolvedOutput</span> {</span>
+<span class="src-line" id="L194" data-diff="added"><a class="ln" href="#L194">194</a>        <span class="tok-var">$definitions</span> = [];</span>
+<span class="src-line" id="L195" data-diff="added"><a class="ln" href="#L195">195</a>        <span class="tok-kw">foreach</span> (<span class="tok-id">array_unique</span>(<span class="tok-var">$sequence</span>-&gt;<span class="tok-id">names</span>()) <span class="tok-kw">as</span> <span class="tok-var">$name</span>) {</span>
+<span class="src-line" id="L196" data-diff="added"><a class="ln" href="#L196">196</a>            <span class="tok-var">$definitions</span>[] = <span class="tok-kw">new</span> <span class="tok-id">\SqlFaker\Grammar\Generation\Lexeme\ValueLexemeGenerator</span>(</span>
+<span class="src-line" id="L197" data-diff="added"><a class="ln" href="#L197">197</a>                <span class="tok-var">$name</span>,</span>
+<span class="src-line" id="L198" data-diff="added"><a class="ln" href="#L198">198</a>                <span class="tok-kw">new</span> <span class="tok-id">\SqlFaker\Grammar\Generation\Value\CharacterDomain</span>(<span class="tok-id">array_map</span>(<span class="tok-id">chr</span>(...), <span class="tok-id">range</span>(<span class="tok-num">0</span>, <span class="tok-num">255</span>)), <span class="tok-num">0</span>, <span class="tok-num">255</span>),</span>
+<span class="src-line" id="L199" data-diff="added"><a class="ln" href="#L199">199</a>                <span class="tok-var">$spellings</span>[<span class="tok-var">$name</span>] ?? [<span class="tok-var">$name</span>],</span>
+<span class="src-line" id="L200" data-diff="added"><a class="ln" href="#L200">200</a>                <span class="tok-str">&#039;fixture&#039;</span>,</span>
+<span class="src-line" id="L201" data-diff="added"><a class="ln" href="#L201">201</a>                <span class="tok-str">&#039;fixture-literal&#039;</span></span>
+<span class="src-line" id="L202" data-diff="added"><a class="ln" href="#L202">202</a>            );</span>
+<span class="src-line" id="L203" data-diff="added"><a class="ln" href="#L203">203</a>        }</span>
+<span class="src-line" id="L204" data-diff="added"><a class="ln" href="#L204">204</a>        <span class="tok-kw">return</span> (<span class="tok-kw">new</span> <span class="tok-id">\SqlFaker\Grammar\Generation\Output\ReverseLexemeGenerator</span>(</span>
+<span class="src-line" id="L205" data-diff="added"><a class="ln" href="#L205">205</a>            <span class="tok-kw">new</span> <span class="tok-id">\SqlFaker\Grammar\Generation\Lexeme\ChoiceLexemeGenerator</span>(...<span class="tok-var">$definitions</span>),</span>
+<span class="src-line" id="L206" data-diff="added"><a class="ln" href="#L206">206</a>            <span class="tok-kw">new</span> <span class="tok-id">\SqlFaker\Grammar\Generation\Output\CandidateResolver</span>(<span class="tok-kw">new</span> <span class="tok-id">\SqlFaker\Grammar\Generation\Spacing\CombinedSpacingRule</span>()),</span>
+<span class="src-line" id="L207" data-diff="added"><a class="ln" href="#L207">207</a>            <span class="tok-str">&#039;fixture&#039;</span>,</span>
+<span class="src-line" id="L208" data-diff="added"><a class="ln" href="#L208">208</a>        ))-&gt;<span class="tok-id">generate</span>(<span class="tok-var">$sequence</span>, <span class="tok-var">$plan</span>, <span class="tok-var">$choose</span>);</span>
+<span class="src-line" id="L209" data-diff="added"><a class="ln" href="#L209">209</a>    }</span>
+<span class="src-line" id="L210" data-diff="added"><a class="ln" href="#L210">210</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L211" data-diff="added"><a class="ln" href="#L211">211</a><span class="tok-com">     * Supplies a resolved literal response for lexical contract mocks.</span></span>
+<span class="src-line" id="L212" data-diff="added"><a class="ln" href="#L212">212</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L213" data-diff="added"><a class="ln" href="#L213">213</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">output</span>(<span class="tok-id">string</span> <span class="tok-var">$text</span>): <span class="tok-id">\SqlFaker\Grammar\Generation\Output\ResolvedOutput</span></span>
+<span class="src-line" id="L214" data-diff="added"><a class="ln" href="#L214">214</a>    {</span>
+<span class="src-line" id="L215" data-diff="added"><a class="ln" href="#L215">215</a>        <span class="tok-kw">return</span> <span class="tok-id">self</span>::<span class="tok-id">resolve</span>(<span class="tok-id">\SqlFaker\Grammar\Generation\Token\TerminalSequence</span>::<span class="tok-id">fromNames</span>([<span class="tok-var">$text</span>]), <span class="tok-id">null</span>, <span class="tok-kw">static</span> <span class="tok-kw">fn</span> (<span class="tok-id">int</span> <span class="tok-var">$count</span>): <span class="tok-id">int</span> =&gt; <span class="tok-num">0</span>);</span>
+<span class="src-line" id="L216" data-diff="added"><a class="ln" href="#L216">216</a>    }</span>
+<span class="src-line" id="L217" data-diff="added"><a class="ln" href="#L217">217</a>}</span>
+<span class="src-line" id="L218" data-diff="added"><a class="ln" href="#L218">218</a></span>
 </code></pre>
 </main>
 <footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
