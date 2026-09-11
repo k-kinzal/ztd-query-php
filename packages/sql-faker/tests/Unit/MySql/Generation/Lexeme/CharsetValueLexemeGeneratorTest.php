@@ -38,8 +38,8 @@ use SqlFaker\MySql\Generation\Lexeme\CharsetValueLexemeGenerator;
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\Utf8::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\DefinitionFactory::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Value\IdentifierDomain::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Value\QuotedDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\IdentifierDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\QuotedDomain::class)]
 final class CharsetValueLexemeGeneratorTest extends TestCase
 {
     #[DataProvider('providerBinaryTokens')]

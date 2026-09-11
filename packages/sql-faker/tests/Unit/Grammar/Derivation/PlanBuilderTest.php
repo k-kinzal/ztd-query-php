@@ -74,7 +74,7 @@ use Tests\Fixtures\SqlFaker\CoverageFixture;
 #[UsesClass(\SqlFaker\Grammar\Choice\BytePlanCompiler::class)]
 #[UsesClass(\SqlFaker\Grammar\Choice\PatternProductions::class)]
 #[UsesClass(\SqlFaker\Grammar\Choice\CompletionWitness::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Value\CharacterDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\CharacterDomain::class)]
 final class PlanBuilderTest extends TestCase
 {
     public function testRootResolvesOnlyAnExplicitReleaseAlias(): void

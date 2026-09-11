@@ -25,7 +25,7 @@ use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalOccurrence::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Spacing\SpacingConstraint::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Value\CharacterDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\CharacterDomain::class)]
 final class ValueLexemeGeneratorTest extends TestCase
 {
     public function testGenerateAcceptsExplicitValuesBeyondDefaultRepresentatives(): void

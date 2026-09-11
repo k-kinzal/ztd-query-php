@@ -222,8 +222,8 @@ use SqlFaker\MySqlProvider;
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Choice\PatternProductions::class)]
 #[UsesClass(\SqlFaker\Grammar\Choice\CompletionWitness::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Value\OperatorDomain::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Value\RepeatDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\OperatorDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\RepeatDomain::class)]
 final class MySqlProviderTest extends TestCase
 {
     #[Override]

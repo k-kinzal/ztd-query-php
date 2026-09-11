@@ -61,7 +61,7 @@ use SqlFaker\Grammar\Terminal;
 #[UsesClass(\SqlFaker\Grammar\Choice\BytePlanCompiler::class)]
 #[UsesClass(\SqlFaker\Grammar\Choice\PatternProductions::class)]
 #[UsesClass(\SqlFaker\Grammar\Choice\CompletionWitness::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Generation\Value\CharacterDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\CharacterDomain::class)]
 final class GenerationPlanTest extends TestCase
 {
     /**
