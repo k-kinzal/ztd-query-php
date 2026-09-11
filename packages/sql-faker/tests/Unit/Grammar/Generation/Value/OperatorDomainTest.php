@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Generation\Value\CharacterDomain;
 use SqlFaker\Grammar\Generation\Value\OperatorDomain;
+use Tests\Fixtures\SqlFaker\PhpDiagnosticGuard;
 
 #[CoversClass(OperatorDomain::class)]
 #[UsesClass(CharacterDomain::class)]
@@ -25,7 +26,7 @@ final class OperatorDomainTest extends TestCase
     public function testMatchHonorsFixedTokensCommentsAndTrailingSignRules(string $value, bool $valid): void
     {
         $domain = new OperatorDomain('+*/<>=!@#%^&|`?~-', '~!@#^&|`?%', ['+', '-', '/', '<=', '!='], ['--', '/*']);
-        self::assertSame($valid, in_array(strlen($value), $domain->match($value), true));
+        self::assertSame($valid, in_array(strlen($value), PhpDiagnosticGuard::run(static fn (): array => $domain->match($value)), true));
     }
 
     /**
