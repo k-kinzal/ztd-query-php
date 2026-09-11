@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Generation\Value\CharacterDomain;
 use SqlFaker\Grammar\Generation\Value\IdentifierDomain;
+use Tests\Fixtures\SqlFaker\PhpDiagnosticGuard;
 
 #[CoversClass(IdentifierDomain::class)]
 #[UsesClass(CharacterDomain::class)]
@@ -24,9 +25,9 @@ final class IdentifierDomainTest extends TestCase
     public function testMatchUsesStartAndContinuationClassesWithoutRequiringTheSamplePrefix(): void
     {
         $domain = new IdentifierDomain('a_', 'a0_');
-        self::assertSame([2, 3, 4], $domain->match('!a0_ ', 1));
-        self::assertSame([], $domain->match('0a'));
-        self::assertSame([], $domain->match(''));
-        self::assertNotContains(3, (new IdentifierDomain('Ss', 'QqLl', excluded: ['SQL']))->match('sQl'));
+        self::assertSame([2, 3, 4], PhpDiagnosticGuard::run(static fn (): array => $domain->match('!a0_ ', 1)));
+        self::assertSame([], PhpDiagnosticGuard::run(static fn (): array => $domain->match('0a')));
+        self::assertSame([], PhpDiagnosticGuard::run(static fn (): array => $domain->match('')));
+        self::assertNotContains(3, PhpDiagnosticGuard::run(static fn (): array => (new IdentifierDomain('Ss', 'QqLl', excluded: ['SQL']))->match('sQl')));
     }
 }
