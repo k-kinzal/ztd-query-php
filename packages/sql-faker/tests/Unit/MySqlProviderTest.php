@@ -214,6 +214,7 @@ use SqlFaker\MySqlProvider;
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\OperatorDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\RepeatDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexicalDefinition::class)]
 final class MySqlProviderTest extends TestCase
 {
     #[Override]

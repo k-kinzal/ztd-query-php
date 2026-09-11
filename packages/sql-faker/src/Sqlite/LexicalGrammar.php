@@ -55,12 +55,11 @@ final class LexicalGrammar implements LexicalGrammarContract
         private readonly string $profileVersion,
         ?LexicalKeywordIndex $index = null,
     ) {
-        $definitions = new DefinitionFactory();
-        $keywords = $definitions->keywords($profileVersion);
+        $definition = (new DefinitionFactory())->create($profileVersion);
         $index ??= new LexicalKeywordIndex();
         $this->strings = new RandomStringGenerator($faker);
-        $this->pipeline = $definitions->create($profileVersion);
-        $this->tokenizer = new SqliteTokenizer($index->reversed($keywords));
+        $this->pipeline = $definition->pipeline;
+        $this->tokenizer = new SqliteTokenizer($index->reversed($definition->keywords));
     }
 
     /**

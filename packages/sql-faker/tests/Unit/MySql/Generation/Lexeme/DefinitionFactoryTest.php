@@ -69,11 +69,12 @@ use SqlFaker\MySql\Generation\Lexeme\DefinitionFactory;
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Resource\SqlVersionRegistry::class)]
 #[UsesClass(\SqlFaker\Grammar\SqlVersion::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexicalDefinition::class)]
 final class DefinitionFactoryTest extends TestCase
 {
     public function testCreateCombinesLexicalOutputAndBoundaryDecisions(): void
     {
-        $pipeline = (new DefinitionFactory())->create('mysql-8.4.7');
+        $pipeline = (new DefinitionFactory())->create('mysql-8.4.7')->pipeline;
         $result = $pipeline->generate(TerminalSequence::fromNames(['NUM', 'END_OF_INPUT']), null, static fn (int $count): int => 0);
         self::assertSame('1', (new SqlSerializer())->serialize($result->pieces()));
     }
@@ -81,13 +82,13 @@ final class DefinitionFactoryTest extends TestCase
     public function testLexemesRejectsAnUnreviewedVersion(): void
     {
         $this->expectException(RuntimeException::class);
-        (new DefinitionFactory())->lexemes('future-version');
+        (new DefinitionFactory())->create('future-version')->lexemes;
     }
 
     #[DataProvider('providerKeyBlockSizes')]
     public function testLexemesUsesTheTwoByteKeyBlockSizeDomain(string $version, string $value, bool $valid): void
     {
-        $generator = (new DefinitionFactory())->lexemes($version);
+        $generator = (new DefinitionFactory())->create($version)->lexemes;
         $candidates = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['KEY_BLOCK_SIZE_NUMBER']), 0, new ResolvedOutput(), $value));
         self::assertNotNull($candidates);
         self::assertSame($valid ? [$value] : [], array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$candidates->sequences()]));
@@ -107,7 +108,7 @@ final class DefinitionFactoryTest extends TestCase
     #[DataProvider('providerNumericLimits')]
     public function testLexemesKeepsParserNumericBoundaries(string $terminal, string $value, bool $valid): void
     {
-        $generator = (new DefinitionFactory())->lexemes('mysql-8.4.7');
+        $generator = (new DefinitionFactory())->create('mysql-8.4.7')->lexemes;
         $candidates = $generator->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput(), $value));
         self::assertNotNull($candidates);
         self::assertSame($valid ? [$value] : [], array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$candidates->sequences()]));
@@ -166,12 +167,12 @@ final class DefinitionFactoryTest extends TestCase
 
     public function testValuesLeavesUnknownTerminalsUnclaimed(): void
     {
-        self::assertNull((new DefinitionFactory())->values()->generate(new LexemeInput(TerminalSequence::fromNames(['UNKNOWN']), 0, new ResolvedOutput())));
+        self::assertNull((new DefinitionFactory())->create('mysql-8.4.7')->lexemes->generate(new LexemeInput(TerminalSequence::fromNames(['UNKNOWN']), 0, new ResolvedOutput())));
     }
 
     public function testNamesChecksSourceDelimiterOrValueBoundariesValue(): void
     {
-        $generator = (new DefinitionFactory())->names();
+        $generator = (new DefinitionFactory())->create('mysql-8.4.7')->lexemes;
         $valid = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['IDENT_QUOTED']), 0, new ResolvedOutput(), '`a``b`'));
         $invalid = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['IDENT_QUOTED']), 0, new ResolvedOutput(), '`unclosed'));
         self::assertNotNull($valid);
@@ -182,7 +183,7 @@ final class DefinitionFactoryTest extends TestCase
 
     public function testStringsChecksSourceDelimiterOrValueBoundariesValue(): void
     {
-        $generator = (new DefinitionFactory())->strings();
+        $generator = (new DefinitionFactory())->create('mysql-8.4.7')->lexemes;
         $valid = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['TEXT_STRING']), 0, new ResolvedOutput(), "'a''b'"));
         $invalid = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['TEXT_STRING']), 0, new ResolvedOutput(), "'unclosed"));
         self::assertNotNull($valid);
@@ -193,7 +194,7 @@ final class DefinitionFactoryTest extends TestCase
 
     public function testNumbersChecksSourceDelimiterOrValueBoundariesValue(): void
     {
-        $generator = (new DefinitionFactory())->numbers();
+        $generator = (new DefinitionFactory())->create('mysql-8.4.7')->lexemes;
         $valid = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['NUM']), 0, new ResolvedOutput(), '2147483647'));
         $invalid = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['NUM']), 0, new ResolvedOutput(), '2147483648'));
         self::assertNotNull($valid);
@@ -204,7 +205,7 @@ final class DefinitionFactoryTest extends TestCase
 
     public function testBinaryChecksSourceDelimiterOrValueBoundariesValue(): void
     {
-        $generator = (new DefinitionFactory())->binary();
+        $generator = (new DefinitionFactory())->create('mysql-8.4.7')->lexemes;
         $valid = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['HEX_NUM']), 0, new ResolvedOutput(), "X'0f'"));
         $invalid = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['HEX_NUM']), 0, new ResolvedOutput(), "X'f'"));
         self::assertNotNull($valid);
@@ -216,7 +217,7 @@ final class DefinitionFactoryTest extends TestCase
     #[DataProvider('providerValueTokensValue')]
     public function testCreateOffersACompleteCandidateForEverySourceValueTokenValue(string $terminal): void
     {
-        $result = (new DefinitionFactory())->values()->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput()));
+        $result = (new DefinitionFactory())->create('mysql-8.4.7')->lexemes->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput()));
         self::assertNotNull($result);
         self::assertNotEmpty([...$result->sequences()]);
     }
@@ -235,7 +236,7 @@ final class DefinitionFactoryTest extends TestCase
     #[DataProvider('providerLexicalFormsValue')]
     public function testCreateRetainsValidSourceSpellingsAndRejectsMalformedOnesValue(string $terminal, string $spelling, array $expected): void
     {
-        $result = (new DefinitionFactory())->values()->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput(), $spelling));
+        $result = (new DefinitionFactory())->create('mysql-8.4.7')->lexemes->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput(), $spelling));
         self::assertNotNull($result);
         self::assertSame($expected, array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$result->sequences()]));
     }
@@ -273,7 +274,7 @@ final class DefinitionFactoryTest extends TestCase
     public function testBinaryDomainKeepsExplicitByteSpellingsAvailableForCompatibleCharsetsValue(): void
     {
         $input = new LexemeInput(TerminalSequence::fromNames(['HEX_NUM']), 0, new ResolvedOutput(), "X'ff'");
-        $result = (new DefinitionFactory())->binaryDomain(true)->generate($input);
+        $result = (new DefinitionFactory())->create('mysql-8.4.7')->lexemes->generate($input);
         self::assertNotNull($result);
         self::assertSame("X'ff'", [...$result->sequences()][0]->lexemes[0]->text);
     }
@@ -281,7 +282,7 @@ final class DefinitionFactoryTest extends TestCase
     public function testStringsKeepsConstructedIntroducedValuesValidUnderAnExplicitAsciiCharsetValue(): void
     {
         $tokens = TerminalSequence::fromNames(['UNDERSCORE_CHARSET', 'TEXT_STRING']);
-        $result = (new DefinitionFactory())->strings()->generate(new LexemeInput($tokens, 1, new ResolvedOutput(), values: new \SqlFaker\Grammar\Generation\Value\ValueChoices(static fn (int $count): int => $count - 1)));
+        $result = (new DefinitionFactory())->create('mysql-8.4.7')->lexemes->generate(new LexemeInput($tokens, 1, new ResolvedOutput(), values: new \SqlFaker\Grammar\Generation\Value\ValueChoices(static fn (int $count): int => $count - 1)));
         self::assertNotNull($result);
         self::assertSame(1, preg_match('/\A[\x00-\x7f]*\z/D', [...$result->sequences()][0]->lexemes[0]->text));
     }
@@ -296,7 +297,7 @@ final class DefinitionFactoryTest extends TestCase
         $values = new \SqlFaker\Grammar\Generation\Value\ValueChoices(static function (int $count) use (&$decisions): int {
             return array_shift($decisions) ?? $count - 1;
         });
-        $result = (new DefinitionFactory())->values()->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput(), values: $values));
+        $result = (new DefinitionFactory())->create('mysql-8.4.7')->lexemes->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput(), values: $values));
         self::assertNotNull($result);
         self::assertSame($expected, array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$result->sequences()]));
     }
@@ -350,7 +351,7 @@ final class DefinitionFactoryTest extends TestCase
         $values = new \SqlFaker\Grammar\Generation\Value\ValueChoices(static function (int $count) use (&$decisions): int {
             return array_shift($decisions) ?? $count - 1;
         });
-        $result = (new DefinitionFactory())->values()->generate(new LexemeInput(TerminalSequence::fromNames(['UNDERSCORE_CHARSET', $terminal]), 1, new ResolvedOutput(), values: $values));
+        $result = (new DefinitionFactory())->create('mysql-8.4.7')->lexemes->generate(new LexemeInput(TerminalSequence::fromNames(['UNDERSCORE_CHARSET', $terminal]), 1, new ResolvedOutput(), values: $values));
         self::assertNotNull($result);
         self::assertSame([$expected], array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$result->sequences()]));
     }
@@ -378,35 +379,35 @@ final class DefinitionFactoryTest extends TestCase
 
     public function testSymbolsKeepsTheCompleteOutput(): void
     {
-        $result = (new DefinitionFactory())->symbols('mysql-8.4.7')->generate(new LexemeInput(TerminalSequence::fromNames(['SET_VAR']), 0, new ResolvedOutput()));
+        $result = (new DefinitionFactory())->create('mysql-8.4.7')->lexemes->generate(new LexemeInput(TerminalSequence::fromNames(['SET_VAR']), 0, new ResolvedOutput()));
         self::assertNotNull($result);
         self::assertSame(':=', implode(' ', array_map(static fn ($lexeme): string => $lexeme->text, [...$result->sequences()][0]->lexemes)));
     }
 
     public function testJsonKeepsTheCompleteDeclaredOutputSymbol(): void
     {
-        $result = (new DefinitionFactory())->json('mysql-5.7.44')->generate(new LexemeInput(TerminalSequence::fromNames(['JSON_SEPARATOR_SYM']), 0, new ResolvedOutput()));
+        $result = (new DefinitionFactory())->create('mysql-5.7.44')->lexemes->generate(new LexemeInput(TerminalSequence::fromNames(['JSON_SEPARATOR_SYM']), 0, new ResolvedOutput()));
         self::assertNotNull($result);
         self::assertSame('->', implode(' ', array_map(static fn ($lexeme): string => $lexeme->text, [...$result->sequences()][0]->lexemes)));
     }
 
     public function testPhrasesKeepsTheCompleteDeclaredOutputSymbol(): void
     {
-        $result = (new DefinitionFactory())->phrases('mysql-8.4.7')->generate(new LexemeInput(TerminalSequence::fromNames(['WITH_ROLLUP_SYM']), 0, new ResolvedOutput()));
+        $result = (new DefinitionFactory())->create('mysql-8.4.7')->lexemes->generate(new LexemeInput(TerminalSequence::fromNames(['WITH_ROLLUP_SYM']), 0, new ResolvedOutput()));
         self::assertNotNull($result);
         self::assertSame('WITH ROLLUP', implode(' ', array_map(static fn ($lexeme): string => $lexeme->text, [...$result->sequences()][0]->lexemes)));
     }
 
     public function testSelectorsKeepsTheCompleteDeclaredOutputSymbol(): void
     {
-        $result = (new DefinitionFactory())->selectors('mysql-8.4.7')->generate(new LexemeInput(TerminalSequence::fromNames(['GRAMMAR_SELECTOR_EXPR']), 0, new ResolvedOutput()));
+        $result = (new DefinitionFactory())->create('mysql-8.4.7')->lexemes->generate(new LexemeInput(TerminalSequence::fromNames(['GRAMMAR_SELECTOR_EXPR']), 0, new ResolvedOutput()));
         self::assertNotNull($result);
         self::assertSame('', implode(' ', array_map(static fn ($lexeme): string => $lexeme->text, [...$result->sequences()][0]->lexemes)));
     }
 
     public function testPhraseKeepsBothWordsInTheSameOriginalOccurrenceSymbol(): void
     {
-        $result = (new DefinitionFactory())->phrase('ROLLUP')->generate(new LexemeInput(TerminalSequence::fromNames(['WITH_ROLLUP_SYM']), 0, new ResolvedOutput()));
+        $result = (new DefinitionFactory())->create('mysql-8.4.7')->lexemes->generate(new LexemeInput(TerminalSequence::fromNames(['WITH_ROLLUP_SYM']), 0, new ResolvedOutput()));
         self::assertNotNull($result);
         $lexemes = [...$result->sequences()][0]->lexemes;
         self::assertSame($lexemes[0]->origin, $lexemes[1]->origin);
@@ -415,7 +416,7 @@ final class DefinitionFactoryTest extends TestCase
 
     public function testNonOutputDoesNotMisclassifyAStatementKeywordAsAMarkerSymbol(): void
     {
-        $markers = (new DefinitionFactory())->nonOutput();
+        $markers = (new DefinitionFactory())->create('mysql-8.4.7')->nonOutput;
         self::assertContains('END_OF_INPUT', $markers);
         self::assertContains('GRAMMAR_SELECTOR_EXPR', $markers);
         self::assertNotContains('SELECT_SYM', $markers);
@@ -423,7 +424,7 @@ final class DefinitionFactoryTest extends TestCase
 
     public function testDollarStringsUsesTheFirstMatchingDelimiter(): void
     {
-        $generator = (new DefinitionFactory())->dollarStrings('mysql-8.4.7');
+        $generator = (new DefinitionFactory())->create('mysql-8.4.7')->lexemes;
         $valid = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['DOLLAR_QUOTED_STRING_SYM']), 0, new ResolvedOutput(), '$tag$a$other$b$tag$'));
         $invalid = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['DOLLAR_QUOTED_STRING_SYM']), 0, new ResolvedOutput(), '$tag$a$tag$b$tag$'));
         self::assertNotNull($valid);
@@ -435,9 +436,10 @@ final class DefinitionFactoryTest extends TestCase
     public function testDollarVersionsDoesNotAssumeFutureCompatibility(): void
     {
         $definitions = new DefinitionFactory();
-        self::assertNotContains('mysql-8.0.44', $definitions->dollarVersions());
-        self::assertContains('mysql-8.1.0', $definitions->dollarVersions());
-        self::assertNull($definitions->dollarStrings('mysql-9.2.0')->generate(new LexemeInput(TerminalSequence::fromNames(['DOLLAR_QUOTED_STRING_SYM']), 0, new ResolvedOutput())));
+        self::assertNotContains('mysql-8.0.44', $definitions->create('mysql-8.4.7')->dollarVersions);
+        self::assertContains('mysql-8.1.0', $definitions->create('mysql-8.4.7')->dollarVersions);
+        $this->expectException(RuntimeException::class);
+        $definitions->create('mysql-9.2.0');
     }
 
     /**
@@ -449,7 +451,7 @@ final class DefinitionFactoryTest extends TestCase
         $values = new \SqlFaker\Grammar\Generation\Value\ValueChoices(static function (int $count) use (&$decisions): int {
             return array_shift($decisions) ?? $count - 1;
         });
-        $result = (new DefinitionFactory())->dollarStrings('mysql-8.4.7')->generate(new LexemeInput(TerminalSequence::fromNames(['DOLLAR_QUOTED_STRING_SYM']), 0, new ResolvedOutput(), values: $values));
+        $result = (new DefinitionFactory())->create('mysql-8.4.7')->lexemes->generate(new LexemeInput(TerminalSequence::fromNames(['DOLLAR_QUOTED_STRING_SYM']), 0, new ResolvedOutput(), values: $values));
         self::assertNotNull($result);
         self::assertSame([$expected], array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$result->sequences()]));
     }
@@ -468,7 +470,7 @@ final class DefinitionFactoryTest extends TestCase
 
     public function testContextualValuesRestrictsTheDomain(): void
     {
-        $generator = (new DefinitionFactory())->contextualValues('mysql-8.4.7');
+        $generator = (new DefinitionFactory())->create('mysql-8.4.7')->lexemes;
         $result = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['ROTATE_KEY_ENGINE']), 0, new ResolvedOutput(), null));
         self::assertNotNull($result);
         self::assertSame(['INNODB', 'BINLOG'], array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$result->sequences()]));
@@ -479,14 +481,14 @@ final class DefinitionFactoryTest extends TestCase
 
     public function testContextualWordPreservesExplicitCase(): void
     {
-        $generator = (new DefinitionFactory())->contextualWord('MODE', ['VALID'], 'checked_rule');
-        $result = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['MODE']), 0, new ResolvedOutput(), 'valid'));
+        $generator = (new DefinitionFactory())->create('mysql-8.4.7')->lexemes;
+        $result = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['ROTATE_KEY_ENGINE']), 0, new ResolvedOutput(), 'innodb'));
         self::assertNotNull($result);
-        self::assertSame('valid', [...$result->sequences()][0]->lexemes[0]->text);
+        self::assertSame('innodb', [...$result->sequences()][0]->lexemes[0]->text);
     }
     public function testCreateEnumeratesOnlySourceAcceptedTernaryValuesContextualValue(): void
     {
-        $generator = (new DefinitionFactory())->contextualValues('mysql-8.4.7');
+        $generator = (new DefinitionFactory())->create('mysql-8.4.7')->lexemes;
         $input = new LexemeInput(TerminalSequence::fromNames(['TERNARY_OPTION_NUMBER']), 0, new ResolvedOutput());
         $result = $generator->generate($input);
         self::assertNotNull($result);
@@ -502,7 +504,7 @@ final class DefinitionFactoryTest extends TestCase
     #[DataProvider('providerContextualDomainsContextualValue')]
     public function testCreatePreservesTheVersionedParserValueDomainsContextualValue(string $version, string $terminal, array $spellings): void
     {
-        $result = (new DefinitionFactory())->contextualValues($version)->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput()));
+        $result = (new DefinitionFactory())->create($version)->lexemes->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput()));
         self::assertNotNull($result);
         self::assertSame($spellings, array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$result->sequences()]));
     }
@@ -526,16 +528,16 @@ final class DefinitionFactoryTest extends TestCase
     }
 
     #[DataProvider('providerLiteralNamesContextualValue')]
-    public function testDomainTreatsNamesLiterallyAndRetainsTheirSourceDefinitionContextualValue(string $spelling): void
+    public function testCreateRetainsContextualSpellingsAndTheirSourceDefinition(string $spelling): void
     {
-        $generator = (new DefinitionFactory())->contextualWord('NAME', ['A.B', 'C~D'], 'names');
-        $input = TerminalSequence::fromNames(['NAME']);
+        $generator = (new DefinitionFactory())->create('mysql-8.4.7')->lexemes;
+        $input = TerminalSequence::fromNames(['REDO_LOG_NAME']);
         $result = $generator->generate(new LexemeInput($input, 0, new ResolvedOutput(), $spelling));
         self::assertNotNull($result);
         $candidates = [...$result->sequences()];
         self::assertCount(1, $candidates);
         self::assertSame($spelling, $candidates[0]->lexemes[0]->text);
-        self::assertSame('sql/sql_yacc.yy:names', $candidates[0]->lexemes[0]->definition);
+        self::assertSame('sql/sql_yacc.yy:alter_instance_action', $candidates[0]->lexemes[0]->definition);
         $invalid = $generator->generate(new LexemeInput($input, 0, new ResolvedOutput(), 'axb'));
         self::assertNotNull($invalid);
         self::assertSame([], [...$invalid->sequences()]);
@@ -545,21 +547,21 @@ final class DefinitionFactoryTest extends TestCase
      */
     public static function providerLiteralNamesContextualValue(): iterable
     {
-        yield ['a.b'];
-        yield ['C~D'];
+        yield ['redo_log'];
+        yield ['REDO_LOG'];
     }
 
     public function testKeywordsKeepsAliasesFunctionCategoriesAndReleaseChangesExplicit(): void
     {
         $factory = new DefinitionFactory();
-        $current = $factory->keywords('mysql-8.4.7');
-        self::assertSame(['CURRENT_TIMESTAMP', 'LOCALTIME', 'LOCALTIMESTAMP'], $current['symbols']['NOW_SYM']);
-        self::assertSame(['NOW'], $current['functions']['NOW_SYM']);
-        self::assertSame(['BIGINT', 'INT8'], $current['symbols']['BIGINT_SYM']);
-        self::assertArrayNotHasKey('MASTER_HOST_SYM', $current['symbols']);
-        self::assertSame(['MASTER_HOST'], $factory->keywords('mysql-8.3.0')['symbols']['MASTER_HOST_SYM']);
-        self::assertSame(['BIGINT', 'INT8'], $factory->keywords('mysql-5.6.51')['symbols']['BIGINT']);
-        self::assertArrayNotHasKey('VECTOR_SYM', $current['symbols']);
-        self::assertSame(['VECTOR'], $factory->keywords('mysql-9.0.1')['symbols']['VECTOR_SYM']);
+        $current = $factory->create('mysql-8.4.7');
+        self::assertSame(['CURRENT_TIMESTAMP', 'LOCALTIME', 'LOCALTIMESTAMP'], $current->keywords['NOW_SYM']);
+        self::assertSame(['NOW'], $current->functions['NOW_SYM']);
+        self::assertSame(['BIGINT', 'INT8'], $current->keywords['BIGINT_SYM']);
+        self::assertArrayNotHasKey('MASTER_HOST_SYM', $current->keywords);
+        self::assertSame(['MASTER_HOST'], $factory->create('mysql-8.3.0')->keywords['MASTER_HOST_SYM']);
+        self::assertSame(['BIGINT', 'INT8'], $factory->create('mysql-5.6.51')->keywords['BIGINT']);
+        self::assertArrayNotHasKey('VECTOR_SYM', $current->keywords);
+        self::assertSame(['VECTOR'], $factory->create('mysql-9.0.1')->keywords['VECTOR_SYM']);
     }
 }

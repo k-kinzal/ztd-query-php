@@ -95,6 +95,7 @@ use SqlFaker\Sqlite\GenerationContext;
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\QuotedDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\RepeatDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexicalDefinition::class)]
 final class GenerationContextTest extends TestCase
 {
     public function testBindsTheRequestedReleaseAndPreservesTheGrammarStart(): void

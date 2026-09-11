@@ -40,12 +40,40 @@ use SqlFaker\MySql\Generation\Lexeme\CharsetValueLexemeGenerator;
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\DefinitionFactory::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\IdentifierDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\QuotedDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexicalDefinition::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\SqlSerializer::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\GenerationPlan::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\ProductionPattern::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\FixedLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\MatchingLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\SequenceLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\BoundaryCompletion::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\CandidateResolver::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Output\ReverseLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\CombinedSpacingRule::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\KeywordPhraseSpacingRule::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\LexemeBoundary::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Version\VersionCase::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Version\VersionedLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Grammar\LexicalException::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\BoundedIntegerLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\FactorLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\KeywordLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\PrecisionLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\ReplicationTablePatternLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\SizeNumberLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Spacing\CloneAddressSpacingRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Spacing\FunctionSpacingRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Spacing\QualifiedNameSpacingRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Spacing\VariableSpacingRule::class)]
+#[UsesClass(\SqlFaker\Grammar\Resource\SqlVersionRegistry::class)]
+#[UsesClass(\SqlFaker\Grammar\SqlVersion::class)]
 final class CharsetValueLexemeGeneratorTest extends TestCase
 {
     #[DataProvider('providerBinaryTokens')]
     public function testGenerateSamplesCharsetCompatibleBytesWithoutRestrictingOrdinaryBinaryValues(string $terminal): void
     {
-        $generator = (new \SqlFaker\MySql\Generation\Lexeme\DefinitionFactory())->binary();
+        $generator = (new \SqlFaker\MySql\Generation\Lexeme\DefinitionFactory())->create('mysql-8.4.7')->lexemes;
         $ordinary = TerminalSequence::fromNames([$terminal]);
         $introduced = TerminalSequence::fromNames(['UNDERSCORE_CHARSET', $terminal]);
         $unrestricted = $generator->generate(new LexemeInput($ordinary, 0, new ResolvedOutput(), values: new \SqlFaker\Grammar\Generation\Value\ValueChoices(static fn (int $count): int => $count - 1)));

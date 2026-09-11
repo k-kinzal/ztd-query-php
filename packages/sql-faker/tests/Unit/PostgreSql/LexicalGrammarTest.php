@@ -70,6 +70,7 @@ use SqlFaker\PostgreSql\PgTokenizer;
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\OperatorDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\QuotedDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexicalDefinition::class)]
 final class LexicalGrammarTest extends TestCase
 {
     public function testGenerateQuotedIdentifierWritesWhatTheLexerReadsBackAsAnIdentifier(): void

@@ -215,6 +215,7 @@ use SqlFaker\PostgreSqlProvider;
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\RadixDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\RepeatDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\Utf8::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexicalDefinition::class)]
 final class PostgreSqlProviderTest extends TestCase
 {
     #[DataProvider('providerTargetedGenerationSeed')]

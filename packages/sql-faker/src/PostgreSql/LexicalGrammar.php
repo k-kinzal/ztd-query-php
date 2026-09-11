@@ -34,6 +34,11 @@ final class LexicalGrammar implements LexicalGrammarContract
     private readonly ReverseLexemeGenerator $pipeline;
 
     /**
+     * @var list<string>
+     */
+    private readonly array $nonOutput;
+
+    /**
      * @readonly
      */
     private PgLookahead $lookahead;
@@ -55,13 +60,13 @@ final class LexicalGrammar implements LexicalGrammarContract
         private readonly string $profileVersion,
         ?LexicalKeywordIndex $index = null,
     ) {
-        $definitions = new DefinitionFactory();
-        $keywords = $definitions->keywords($profileVersion);
+        $definition = (new DefinitionFactory())->create($profileVersion);
         $index ??= new LexicalKeywordIndex();
         $this->strings = new RandomStringGenerator($faker);
-        $this->pipeline = $definitions->create($profileVersion);
+        $this->pipeline = $definition->pipeline;
+        $this->nonOutput = $definition->nonOutput;
         $this->lookahead = new PgLookahead(PgLookahead::definitions());
-        $this->tokenizer = new PgTokenizer($index->reversed($keywords), $this->lookahead);
+        $this->tokenizer = new PgTokenizer($index->reversed($definition->keywords), $this->lookahead);
     }
 
     /**
@@ -81,7 +86,7 @@ final class LexicalGrammar implements LexicalGrammarContract
     #[Override]
     public function isNonOutput(string $terminal): bool
     {
-        return in_array($terminal, (new DefinitionFactory())->nonOutput(), true);
+        return in_array($terminal, $this->nonOutput, true);
     }
 
     /**

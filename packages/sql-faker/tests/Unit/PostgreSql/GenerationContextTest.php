@@ -121,6 +121,7 @@ use SqlFaker\PostgreSql\GenerationContext;
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\OperatorDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\QuotedDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexicalDefinition::class)]
 final class GenerationContextTest extends TestCase
 {
     public function testBindsTheRequestedReleaseAndPreservesTheGrammarStart(): void
