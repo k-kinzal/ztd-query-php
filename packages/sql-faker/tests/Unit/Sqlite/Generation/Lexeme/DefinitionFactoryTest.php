@@ -58,11 +58,12 @@ use SqlFaker\Sqlite\Generation\Lexeme\DefinitionFactory;
 #[UsesClass(\SqlFaker\Grammar\Resource\SqlVersionRegistry::class)]
 #[UsesClass(\SqlFaker\Grammar\SqlVersion::class)]
 #[UsesClass(\SqlFaker\Grammar\Choice\BytePlanCompiler::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexicalDefinition::class)]
 final class DefinitionFactoryTest extends TestCase
 {
     public function testCreateCombinesLexicalOutputAndBoundaryDecisions(): void
     {
-        $pipeline = (new DefinitionFactory())->create('sqlite-3.47.2');
+        $pipeline = (new DefinitionFactory())->create('sqlite-3.47.2')->pipeline;
         $result = $pipeline->generate(TerminalSequence::fromNames(['INTEGER', 'SEMI']), null, static fn (int $count): int => 0);
         self::assertSame('1 ;', (new SqlSerializer())->serialize($result->pieces()));
     }
@@ -70,19 +71,19 @@ final class DefinitionFactoryTest extends TestCase
     public function testLexemesRejectsAnUnreviewedVersion(): void
     {
         $this->expectException(RuntimeException::class);
-        (new DefinitionFactory())->lexemes('future-version');
+        (new DefinitionFactory())->create('future-version')->lexemes;
     }
 
     public function testSymbolsKeepMultiCharacterOperatorsIndivisible(): void
     {
-        $result = (new DefinitionFactory())->symbols()->generate(new LexemeInput(TerminalSequence::fromNames(['CONCAT']), 0, new ResolvedOutput()));
+        $result = (new DefinitionFactory())->create('sqlite-3.47.2')->lexemes->generate(new LexemeInput(TerminalSequence::fromNames(['CONCAT']), 0, new ResolvedOutput()));
         self::assertNotNull($result);
         self::assertSame('||', [...$result->sequences()][0]->lexemes[0]->text);
     }
 
     public function testStrictTypesCoversTheSourceTypeTable(): void
     {
-        $result = (new DefinitionFactory())->strictTypes()->generate(new LexemeInput(TerminalSequence::fromNames(['STRICT_COLUMN_TYPE']), 0, new ResolvedOutput()));
+        $result = (new DefinitionFactory())->create('sqlite-3.47.2')->lexemes->generate(new LexemeInput(TerminalSequence::fromNames(['STRICT_COLUMN_TYPE']), 0, new ResolvedOutput()));
         self::assertNotNull($result);
         self::assertSame(['ANY', 'BLOB', 'INT', 'INTEGER', 'REAL', 'TEXT'], array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$result->sequences()]));
     }
@@ -93,7 +94,7 @@ final class DefinitionFactoryTest extends TestCase
     #[DataProvider('providerGeneratedStorage')]
     public function testLexemesRestrictsGeneratedStorageToTheBuildSourceNames(?string $spelling, array $expected): void
     {
-        $result = (new DefinitionFactory())->lexemes('sqlite-3.47.2')->generate(new LexemeInput(TerminalSequence::fromNames(['GENERATED_STORAGE']), 0, new ResolvedOutput(), $spelling));
+        $result = (new DefinitionFactory())->create('sqlite-3.47.2')->lexemes->generate(new LexemeInput(TerminalSequence::fromNames(['GENERATED_STORAGE']), 0, new ResolvedOutput(), $spelling));
         self::assertNotNull($result);
         self::assertSame($expected, array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$result->sequences()]));
     }
@@ -113,12 +114,12 @@ final class DefinitionFactoryTest extends TestCase
 
     public function testValuesLeavesUnknownTerminalsUnclaimed(): void
     {
-        self::assertNull((new DefinitionFactory())->values()->generate(new LexemeInput(TerminalSequence::fromNames(['UNKNOWN']), 0, new ResolvedOutput())));
+        self::assertNull((new DefinitionFactory())->create('sqlite-3.47.2')->lexemes->generate(new LexemeInput(TerminalSequence::fromNames(['UNKNOWN']), 0, new ResolvedOutput())));
     }
 
     public function testNamesChecksSourceDelimiterOrValueBoundariesValue(): void
     {
-        $generator = (new DefinitionFactory())->names();
+        $generator = (new DefinitionFactory())->create('sqlite-3.47.2')->lexemes;
         $valid = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['ID']), 0, new ResolvedOutput(), '"a""b"'));
         $invalid = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['ID']), 0, new ResolvedOutput(), '"unclosed'));
         self::assertNotNull($valid);
@@ -129,7 +130,7 @@ final class DefinitionFactoryTest extends TestCase
 
     public function testStringsChecksSourceDelimiterOrValueBoundariesValue(): void
     {
-        $generator = (new DefinitionFactory())->strings();
+        $generator = (new DefinitionFactory())->create('sqlite-3.47.2')->lexemes;
         $valid = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['BLOB']), 0, new ResolvedOutput(), "X'00'"));
         $invalid = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['BLOB']), 0, new ResolvedOutput(), "X'0'"));
         self::assertNotNull($valid);
@@ -140,7 +141,7 @@ final class DefinitionFactoryTest extends TestCase
 
     public function testNumbersChecksSourceDelimiterOrValueBoundariesValue(): void
     {
-        $generator = (new DefinitionFactory())->numbers();
+        $generator = (new DefinitionFactory())->create('sqlite-3.47.2')->lexemes;
         $valid = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['QNUMBER']), 0, new ResolvedOutput(), '1_2'));
         $invalid = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['QNUMBER']), 0, new ResolvedOutput(), '1__2'));
         self::assertNotNull($valid);
@@ -152,7 +153,7 @@ final class DefinitionFactoryTest extends TestCase
     #[DataProvider('providerValueTokensValue')]
     public function testCreateOffersACompleteCandidateForEverySourceValueTokenValue(string $terminal): void
     {
-        $result = (new DefinitionFactory())->values()->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput()));
+        $result = (new DefinitionFactory())->create('sqlite-3.47.2')->lexemes->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput()));
         self::assertNotNull($result);
         self::assertNotEmpty([...$result->sequences()]);
     }
@@ -171,7 +172,7 @@ final class DefinitionFactoryTest extends TestCase
     #[DataProvider('providerLexicalFormsValue')]
     public function testCreateRetainsValidSourceSpellingsAndRejectsMalformedOnesValue(string $terminal, string $spelling, array $expected): void
     {
-        $result = (new DefinitionFactory())->values()->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput(), $spelling));
+        $result = (new DefinitionFactory())->create('sqlite-3.47.2')->lexemes->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput(), $spelling));
         self::assertNotNull($result);
         self::assertSame($expected, array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$result->sequences()]));
     }
@@ -221,7 +222,7 @@ final class DefinitionFactoryTest extends TestCase
         $values = new \SqlFaker\Grammar\Generation\Value\ValueChoices(static function (int $count) use (&$decisions): int {
             return array_shift($decisions) ?? $count - 1;
         });
-        $result = (new DefinitionFactory())->values()->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput(), values: $values));
+        $result = (new DefinitionFactory())->create('sqlite-3.47.2')->lexemes->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput(), values: $values));
         self::assertNotNull($result);
         self::assertSame($expected, array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$result->sequences()]));
     }
@@ -265,7 +266,7 @@ final class DefinitionFactoryTest extends TestCase
 
     public function testKeywordsKeepsSourceSpellingsBesideTheirTerminals(): void
     {
-        $keywords = (new DefinitionFactory())->keywords('sqlite-3.47.2');
+        $keywords = (new DefinitionFactory())->create('sqlite-3.47.2')->keywords;
         self::assertSame(['SELECT'], $keywords['SELECT']);
         self::assertSame(['CURRENT_DATE', 'CURRENT_TIME', 'CURRENT_TIMESTAMP'], $keywords['CTIME_KW']);
     }
@@ -273,7 +274,7 @@ final class DefinitionFactoryTest extends TestCase
     public function testKeywordLexemesLeavesUnclaimedNamesAvailableToOtherDomains(): void
     {
         $factory = new DefinitionFactory();
-        $generator = $factory->keywordLexemes('sqlite-3.47.2', $factory->keywords('sqlite-3.47.2'));
+        $generator = $factory->create('sqlite-3.47.2')->lexemes;
         self::assertNull($generator->generate(new LexemeInput(TerminalSequence::fromNames(['UNKNOWN']), 0, new ResolvedOutput())));
         $result = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['SELECT']), 0, new ResolvedOutput()));
         self::assertNotNull($result);
@@ -283,6 +284,6 @@ final class DefinitionFactoryTest extends TestCase
     public function testKeywordsRejectsUnsupportedReleases(): void
     {
         $this->expectException(RuntimeException::class);
-        (new DefinitionFactory())->keywords('unknown');
+        (new DefinitionFactory())->create('unknown')->keywords;
     }
 }

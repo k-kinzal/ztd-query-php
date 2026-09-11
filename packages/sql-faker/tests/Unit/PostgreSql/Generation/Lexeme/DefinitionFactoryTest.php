@@ -59,11 +59,12 @@ use SqlFaker\PostgreSql\Generation\Lexeme\DefinitionFactory;
 #[UsesClass(\SqlFaker\Grammar\Resource\SqlVersionRegistry::class)]
 #[UsesClass(\SqlFaker\Grammar\SqlVersion::class)]
 #[UsesClass(\SqlFaker\Grammar\Choice\BytePlanCompiler::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexicalDefinition::class)]
 final class DefinitionFactoryTest extends TestCase
 {
     public function testCreateCombinesLexicalOutputAndBoundaryDecisions(): void
     {
-        $pipeline = (new DefinitionFactory())->create('pg-17.2');
+        $pipeline = (new DefinitionFactory())->create('pg-17.2')->pipeline;
         $result = $pipeline->generate(TerminalSequence::fromNames(['ICONST', 'MODE_TYPE_NAME']), null, static fn (int $count): int => 0);
         self::assertSame('1', (new SqlSerializer())->serialize($result->pieces()));
     }
@@ -71,31 +72,31 @@ final class DefinitionFactoryTest extends TestCase
     public function testLexemesRejectsAnUnreviewedVersion(): void
     {
         $this->expectException(RuntimeException::class);
-        (new DefinitionFactory())->lexemes('future-version');
+        (new DefinitionFactory())->create('future-version')->lexemes;
     }
 
     public function testSymbolsKeepMultiCharacterOperatorsIndivisible(): void
     {
-        $result = (new DefinitionFactory())->symbols()->generate(new LexemeInput(TerminalSequence::fromNames(['TYPECAST']), 0, new ResolvedOutput()));
+        $result = (new DefinitionFactory())->create('pg-17.2')->lexemes->generate(new LexemeInput(TerminalSequence::fromNames(['TYPECAST']), 0, new ResolvedOutput()));
         self::assertNotNull($result);
         self::assertSame('::', [...$result->sequences()][0]->lexemes[0]->text);
     }
 
     public function testNonOutputContainsParserSelectorsOnly(): void
     {
-        $markers = (new DefinitionFactory())->nonOutput();
+        $markers = (new DefinitionFactory())->create('pg-17.2')->nonOutput;
         self::assertContains('MODE_TYPE_NAME', $markers);
         self::assertNotContains('SELECT', $markers);
     }
 
     public function testValuesLeavesUnknownTerminalsUnclaimed(): void
     {
-        self::assertNull((new DefinitionFactory())->values()->generate(new LexemeInput(TerminalSequence::fromNames(['UNDECLARED_TEST_TOKEN']), 0, new ResolvedOutput())));
+        self::assertNull((new DefinitionFactory())->create('pg-17.2')->lexemes->generate(new LexemeInput(TerminalSequence::fromNames(['UNDECLARED_TEST_TOKEN']), 0, new ResolvedOutput())));
     }
 
     public function testNamesChecksSourceDelimiterOrValueBoundariesValue(): void
     {
-        $generator = (new DefinitionFactory())->names();
+        $generator = (new DefinitionFactory())->create('pg-17.2')->lexemes;
         $valid = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['IDENT']), 0, new ResolvedOutput(), '"a""b"'));
         $invalid = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['IDENT']), 0, new ResolvedOutput(), '"unclosed'));
         self::assertNotNull($valid);
@@ -106,7 +107,7 @@ final class DefinitionFactoryTest extends TestCase
 
     public function testStringsChecksSourceDelimiterOrValueBoundariesValue(): void
     {
-        $generator = (new DefinitionFactory())->strings();
+        $generator = (new DefinitionFactory())->create('pg-17.2')->lexemes;
         $valid = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['SCONST']), 0, new ResolvedOutput(), "'a''b'"));
         $invalid = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['SCONST']), 0, new ResolvedOutput(), "'unclosed"));
         self::assertNotNull($valid);
@@ -117,7 +118,7 @@ final class DefinitionFactoryTest extends TestCase
 
     public function testNumbersChecksSourceDelimiterOrValueBoundariesValue(): void
     {
-        $generator = (new DefinitionFactory())->numbers();
+        $generator = (new DefinitionFactory())->create('pg-17.2')->lexemes;
         $valid = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['Op']), 0, new ResolvedOutput(), '?&'));
         $invalid = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['Op']), 0, new ResolvedOutput(), '/*'));
         self::assertNotNull($valid);
@@ -129,7 +130,7 @@ final class DefinitionFactoryTest extends TestCase
     #[DataProvider('providerValueTokensValue')]
     public function testCreateOffersACompleteCandidateForEverySourceValueTokenValue(string $terminal): void
     {
-        $result = (new DefinitionFactory())->values()->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput()));
+        $result = (new DefinitionFactory())->create('pg-17.2')->lexemes->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput()));
         self::assertNotNull($result);
         self::assertNotEmpty([...$result->sequences()]);
     }
@@ -148,7 +149,7 @@ final class DefinitionFactoryTest extends TestCase
     #[DataProvider('providerLexicalFormsValue')]
     public function testCreateRetainsValidSourceSpellingsAndRejectsMalformedOnesValue(string $terminal, string $spelling, array $expected): void
     {
-        $result = (new DefinitionFactory())->values()->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput(), $spelling));
+        $result = (new DefinitionFactory())->create('pg-17.2')->lexemes->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput(), $spelling));
         self::assertNotNull($result);
         self::assertSame($expected, array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$result->sequences()]));
     }
@@ -197,7 +198,7 @@ final class DefinitionFactoryTest extends TestCase
     #[DataProvider('providerDollarStringsValue')]
     public function testStringsRecognizesDollarDelimitersLiterallyValue(string $value, bool $valid): void
     {
-        $result = (new DefinitionFactory())->strings()->generate(new LexemeInput(TerminalSequence::fromNames(['SCONST']), 0, new ResolvedOutput(), $value));
+        $result = (new DefinitionFactory())->create('pg-17.2')->lexemes->generate(new LexemeInput(TerminalSequence::fromNames(['SCONST']), 0, new ResolvedOutput(), $value));
         self::assertNotNull($result);
         self::assertSame($valid ? [$value] : [], array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$result->sequences()]));
     }
@@ -225,7 +226,7 @@ final class DefinitionFactoryTest extends TestCase
         $values = new \SqlFaker\Grammar\Generation\Value\ValueChoices(static function (int $count) use (&$decisions): int {
             return array_shift($decisions) ?? $count - 1;
         });
-        $result = (new DefinitionFactory())->values()->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput(), values: $values));
+        $result = (new DefinitionFactory())->create('pg-17.2')->lexemes->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput(), values: $values));
         self::assertNotNull($result);
         self::assertSame($expected, array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$result->sequences()]));
     }
@@ -278,7 +279,7 @@ final class DefinitionFactoryTest extends TestCase
 
     public function testContextualNamesRestrictsTheDomain(): void
     {
-        $generator = (new DefinitionFactory())->contextualNames();
+        $generator = (new DefinitionFactory())->create('pg-17.2')->lexemes;
         $result = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['POLICY_MODE']), 0, new ResolvedOutput(), null));
         self::assertNotNull($result);
         self::assertSame(['PERMISSIVE', 'RESTRICTIVE'], array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$result->sequences()]));
@@ -289,15 +290,15 @@ final class DefinitionFactoryTest extends TestCase
 
     public function testContextualWordPreservesExplicitCase(): void
     {
-        $generator = (new DefinitionFactory())->contextualWord('MODE', ['VALID'], 'checked_rule');
-        $result = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['MODE']), 0, new ResolvedOutput(), 'valid'));
+        $generator = (new DefinitionFactory())->create('pg-17.2')->lexemes;
+        $result = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['POLICY_MODE']), 0, new ResolvedOutput(), 'permissive'));
         self::assertNotNull($result);
-        self::assertSame('valid', [...$result->sequences()][0]->lexemes[0]->text);
+        self::assertSame('permissive', [...$result->sequences()][0]->lexemes[0]->text);
     }
 
     public function testCreateIncludesEveryGrammarEncodingAndPartitionStrategyContextualName(): void
     {
-        $generator = (new DefinitionFactory())->contextualNames();
+        $generator = (new DefinitionFactory())->create('pg-17.2')->lexemes;
         $encoding = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['JSON_ENCODING']), 0, new ResolvedOutput()));
         $strategy = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['PARTITION_STRATEGY']), 0, new ResolvedOutput()));
         self::assertNotNull($encoding);
@@ -308,7 +309,7 @@ final class DefinitionFactoryTest extends TestCase
 
     public function testKeywordsKeepsSourceSpellingsBesideTheirTerminals(): void
     {
-        $keywords = (new DefinitionFactory())->keywords('pg-17.2');
+        $keywords = (new DefinitionFactory())->create('pg-17.2')->keywords;
         self::assertSame(['SELECT'], $keywords['SELECT']);
         self::assertSame(['INTEGER'], $keywords['INTEGER']);
         self::assertSame(['INT'], $keywords['INT_P']);
@@ -317,7 +318,7 @@ final class DefinitionFactoryTest extends TestCase
     public function testKeywordLexemesLeavesUnclaimedNamesAvailableToOtherDomains(): void
     {
         $factory = new DefinitionFactory();
-        $generator = $factory->keywordLexemes('pg-17.2', $factory->keywords('pg-17.2'));
+        $generator = $factory->create('pg-17.2')->lexemes;
         self::assertNull($generator->generate(new LexemeInput(TerminalSequence::fromNames(['UNDECLARED_TEST_TOKEN']), 0, new ResolvedOutput())));
         $result = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['SELECT']), 0, new ResolvedOutput()));
         self::assertNotNull($result);
@@ -327,6 +328,6 @@ final class DefinitionFactoryTest extends TestCase
     public function testKeywordsRejectsUnsupportedReleases(): void
     {
         $this->expectException(RuntimeException::class);
-        (new DefinitionFactory())->keywords('unknown');
+        (new DefinitionFactory())->create('unknown')->keywords;
     }
 }

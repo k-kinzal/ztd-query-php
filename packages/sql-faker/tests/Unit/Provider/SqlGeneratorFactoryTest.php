@@ -207,6 +207,7 @@ use SqlFaker\Provider\SqlGeneratorFactory;
 #[UsesClass(\SqlFaker\Grammar\Choice\CompletionWitness::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\OperatorDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\Utf8::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexicalDefinition::class)]
 final class SqlGeneratorFactoryTest extends TestCase
 {
     public function testForMySqlPreservesTheGrammarEntryPointAndBindsLexicalDefinitions(): void

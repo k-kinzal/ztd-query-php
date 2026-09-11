@@ -36,6 +36,11 @@ final class LexicalGrammar implements LexicalGrammarContract
     private readonly ReverseLexemeGenerator $pipeline;
 
     /**
+     * @var list<string>
+     */
+    private readonly array $nonOutput;
+
+    /**
      * @readonly
      */
     private MySqlTokenizer $tokenizer;
@@ -52,15 +57,15 @@ final class LexicalGrammar implements LexicalGrammarContract
         private readonly string $profileVersion,
         ?LexicalKeywordIndex $index = null,
     ) {
-        $definitions = new DefinitionFactory();
-        $keywords = $definitions->keywords($profileVersion);
+        $definition = (new DefinitionFactory())->create($profileVersion);
         $index ??= new LexicalKeywordIndex();
         $this->strings = new RandomStringGenerator($faker);
-        $this->pipeline = $definitions->create($profileVersion);
+        $this->pipeline = $definition->pipeline;
+        $this->nonOutput = $definition->nonOutput;
         $this->tokenizer = new MySqlTokenizer(
-            $index->reversed($keywords['symbols']),
-            $index->reversed($keywords['functions']),
-            in_array($profileVersion, $definitions->dollarVersions(), true),
+            $index->reversed($definition->keywords),
+            $index->reversed($definition->functions),
+            in_array($profileVersion, $definition->dollarVersions, true),
         );
     }
 
@@ -81,7 +86,7 @@ final class LexicalGrammar implements LexicalGrammarContract
     #[Override]
     public function isNonOutput(string $terminal): bool
     {
-        return in_array($terminal, (new DefinitionFactory())->nonOutput(), true);
+        return in_array($terminal, $this->nonOutput, true);
     }
 
     /**
