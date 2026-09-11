@@ -9,8 +9,9 @@ use SqlFaker\Grammar\Generation\Token\RewriteRule;
 use SqlFaker\Grammar\Generation\Token\TerminalSequence;
 
 /**
- * Completes the ordering required by gram.y/insertSelectOptions for FETCH WITH TIES.
+ * Completes FETCH WITH TIES ordering in gram.y/insertSelectOptions and PLpgSQL_Expr.
  * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/gram.y
+ * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/gram.y#L16398-L16427
  */
 final class FetchWithTiesRule implements RewriteRule
 {
@@ -25,7 +26,8 @@ final class FetchWithTiesRule implements RewriteRule
             if ($range === null || $sequence->nameAt($range[1] - 1) !== 'TIES') {
                 continue;
             }
-            $query = $sequence->terminals[$range[0]]->ancestor('select_no_parens');
+            $query = $sequence->terminals[$range[0]]->ancestor('select_no_parens')
+                ?? $sequence->terminals[$range[0]]->ancestor('PLpgSQL_Expr');
             if ($query === null) {
                 continue;
             }
@@ -48,7 +50,7 @@ final class FetchWithTiesRule implements RewriteRule
     {
         foreach ($sequence->terminals as $terminal) {
             if (($terminal->within('sort_clause') || $terminal->within('opt_sort_clause'))
-                && $terminal->ancestor('select_no_parens') === $query) {
+                && ($terminal->ancestor('select_no_parens') ?? $terminal->ancestor('PLpgSQL_Expr')) === $query) {
                 return $sequence;
             }
         }
