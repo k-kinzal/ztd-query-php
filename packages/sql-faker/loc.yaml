@@ -41,10 +41,37 @@ policies:
         lines: 10
         cyclomatic_complexity: 1
 
+  mysql-scanner-declarations:
+    extends: standard
+    limits:
+      file:
+        lines: 1400
+        ncloc: 1200
+      class:
+        lines: 1350
+
+  postgres-scanner-declarations:
+    extends: standard
+    limits:
+      file:
+        lines: 800
+        ncloc: 700
+      class:
+        lines: 750
 
 apply:
   default: standard
   rules:
+    - name: mysql-scanner-declarations
+      match:
+        paths:
+          - src/MySql/Generation/Lexeme/DefinitionFactory.php
+      policy: mysql-scanner-declarations
+    - name: postgres-scanner-declarations
+      match:
+        paths:
+          - src/PostgreSql/Generation/Lexeme/DefinitionFactory.php
+      policy: postgres-scanner-declarations
     - name: faker-providers
       match:
         paths:
