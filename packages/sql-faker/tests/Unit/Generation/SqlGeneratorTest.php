@@ -373,7 +373,9 @@ final class SqlGeneratorTest extends TestCase
                 $choices = array_map($choose, array_fill(0, 32, 2));
                 self::assertContains(0, $choices);
                 self::assertContains(1, $choices);
-                self::assertSame([], array_filter($choices, static fn (mixed $choice): bool => $choice !== 0 && $choice !== 1));
+                self::assertContainsOnly('int', $choices);
+                self::assertSame(0, min($choices));
+                self::assertSame(1, max($choices));
                 self::assertSame(0, $choose(1));
                 return (new ReverseLexemeGenerator(
                     new FixedLexemeGenerator('T', 'fixture', 'fixture-literal'),
