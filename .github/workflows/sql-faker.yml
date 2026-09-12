@@ -79,6 +79,7 @@ jobs:
           php-version: '8.5'
           extensions: dom, json, libxml, mbstring, pcntl, xml, xmlwriter
           coverage: pcov
+          tools: infection:0.35.4
           # A mutant that turns a loop into an endless loop keeps allocating and emitting
           # PHP warnings; bounding memory ends it as a fatal error within seconds instead
           # of holding a thread until the Infection timeout.
@@ -90,22 +91,15 @@ jobs:
           dependency-versions: locked
           composer-options: --prefer-dist
           require-lock-file: true
-      - name: Install isolated Infection dependencies
-        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
-        with:
-          working-directory: packages/sql-faker/tools/infection
-          dependency-versions: locked
-          composer-options: --prefer-dist
-          require-lock-file: true
       - name: Check installed platform requirements
         run: |
-          # ParaTest is not used by this job; validate the package runtime and isolated tool.
+          # ParaTest is not used by this job; validate the package runtime and Infection PHAR.
           composer check-platform-reqs --no-dev
-          composer --working-dir=tools/infection check-platform-reqs
+          infection --version
       - name: Mutation testing on changed lines
         if: github.event_name == 'pull_request'
         run: >-
-          php -d memory_limit=4G tools/infection/vendor/bin/infection
+          php -d memory_limit=4G "$(command -v infection)"
           --configuration=infection.json5
           --threads=4
           --only-covering-test-cases
@@ -119,7 +113,7 @@ jobs:
       - name: Mutation testing on the whole source tree
         if: github.event_name != 'pull_request'
         run: >-
-          php -d memory_limit=4G tools/infection/vendor/bin/infection
+          php -d memory_limit=4G "$(command -v infection)"
           --configuration=infection.json5
           --threads=4
           --only-covering-test-cases
