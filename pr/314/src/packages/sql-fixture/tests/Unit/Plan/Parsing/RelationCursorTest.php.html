@@ -89,28 +89,27 @@
 <span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a></span>
 <span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testSkipWhitespaceStopsBeforeIdentifier</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a>    {</span>
-<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>        <span class="tok-var">$cursor</span> = <span class="tok-kw">new</span> <span class="tok-id">Subject</span>(<span class="tok-str">&#039; 	</span></span>
-<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a><span class="tok-str">        a&#039;</span>);</span>
-<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>        <span class="tok-var">$cursor</span>-&gt;<span class="tok-id">skipWhitespace</span>();</span>
-<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;a&#039;</span>, <span class="tok-var">$cursor</span>-&gt;<span class="tok-id">peek</span>());</span>
-<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>    }</span>
-<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a></span>
-<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testExpectEndAcceptsAnExhaustedStatement</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>    {</span>
-<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>        <span class="tok-var">$cursor</span> = <span class="tok-kw">new</span> <span class="tok-id">Subject</span>(<span class="tok-str">&#039;a&#039;</span>);</span>
-<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;a&#039;</span>, <span class="tok-var">$cursor</span>-&gt;<span class="tok-id">readIdentifier</span>(<span class="tok-str">&#039;table&#039;</span>));</span>
-<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>        <span class="tok-var">$cursor</span>-&gt;<span class="tok-id">expectEnd</span>();</span>
-<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>        <span class="tok-id">self</span>::<span class="tok-id">assertNull</span>(<span class="tok-var">$cursor</span>-&gt;<span class="tok-id">peek</span>());</span>
-<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>    }</span>
-<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a></span>
-<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testPeekDoesNotAdvance</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>    {</span>
-<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>        <span class="tok-var">$cursor</span> = <span class="tok-kw">new</span> <span class="tok-id">Subject</span>(<span class="tok-str">&#039;ab&#039;</span>);</span>
-<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;a&#039;</span>, <span class="tok-var">$cursor</span>-&gt;<span class="tok-id">peek</span>());</span>
-<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-num">0</span>, <span class="tok-var">$cursor</span>-&gt;<span class="tok-id">offset</span>);</span>
-<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>    }</span>
-<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>}</span>
-<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a></span>
+<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>        <span class="tok-var">$cursor</span> = <span class="tok-kw">new</span> <span class="tok-id">Subject</span>(<span class="tok-str">&quot; \t\n        a&quot;</span>);</span>
+<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a>        <span class="tok-var">$cursor</span>-&gt;<span class="tok-id">skipWhitespace</span>();</span>
+<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;a&#039;</span>, <span class="tok-var">$cursor</span>-&gt;<span class="tok-id">peek</span>());</span>
+<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>    }</span>
+<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a></span>
+<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testExpectEndAcceptsAnExhaustedStatement</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>    {</span>
+<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>        <span class="tok-var">$cursor</span> = <span class="tok-kw">new</span> <span class="tok-id">Subject</span>(<span class="tok-str">&#039;a&#039;</span>);</span>
+<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;a&#039;</span>, <span class="tok-var">$cursor</span>-&gt;<span class="tok-id">readIdentifier</span>(<span class="tok-str">&#039;table&#039;</span>));</span>
+<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>        <span class="tok-var">$cursor</span>-&gt;<span class="tok-id">expectEnd</span>();</span>
+<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>        <span class="tok-id">self</span>::<span class="tok-id">assertNull</span>(<span class="tok-var">$cursor</span>-&gt;<span class="tok-id">peek</span>());</span>
+<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>    }</span>
+<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a></span>
+<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testPeekDoesNotAdvance</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>    {</span>
+<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>        <span class="tok-var">$cursor</span> = <span class="tok-kw">new</span> <span class="tok-id">Subject</span>(<span class="tok-str">&#039;ab&#039;</span>);</span>
+<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;a&#039;</span>, <span class="tok-var">$cursor</span>-&gt;<span class="tok-id">peek</span>());</span>
+<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-num">0</span>, <span class="tok-var">$cursor</span>-&gt;<span class="tok-id">offset</span>);</span>
+<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>    }</span>
+<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>}</span>
+<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a></span>
 </code></pre>
 </main>
 <footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
